@@ -14,7 +14,12 @@ import {
   selectCuratedCasinos,
   type CuratedCasinoSelector as Selector,
 } from "@/lib/public-casino-discovery/curated-selector";
-import { classifyMediaRatio, isFeaturedCardMediaCompatible, mayPresentPromotionalMedia } from "@/lib/media/media-presentation";
+import { classifyMediaRatio, mayPresentPromotionalMedia } from "@/lib/media/media-presentation";
+import {
+  creativePresentationFamily,
+  isPromotionalPresentationFamily,
+  type CreativePresentationFamily,
+} from "@/lib/media/commercial-formats";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
@@ -64,14 +69,48 @@ function wagering(casino: PublicCasinoCardDto, messages: ProductPageMessages) {
   return value === null || value === undefined ? messages.common.notListed : `${value}x`;
 }
 
-function RecommendationMedia({ casino, messages }: { casino: PublicCasinoCardDto; messages: ProductPageMessages }) {
+function directoryPresentationFamilies(casino: PublicCasinoCardDto) {
+  const media = casino.hero;
+  const mobile = media?.variants?.MOBILE;
+  const presentationFamily = creativePresentationFamily({
+    height: media?.height,
+    placement: "CASINO_DIRECTORY_CARD",
+    source: media?.source,
+    width: media?.width,
+  });
+  const mobilePresentationFamily = mobile
+    ? creativePresentationFamily({
+        height: mobile.height,
+        placement: "CASINO_DIRECTORY_CARD",
+        source: media?.source,
+        width: mobile.width,
+      })
+    : presentationFamily;
+  return { presentationFamily, mobilePresentationFamily };
+}
+
+function RecommendationMedia({
+  casino,
+  messages,
+  mobilePresentationFamily,
+  presentationFamily,
+}: {
+  casino: PublicCasinoCardDto;
+  messages: ProductPageMessages;
+  mobilePresentationFamily: CreativePresentationFamily;
+  presentationFamily: CreativePresentationFamily;
+}) {
   const ratio = classifyMediaRatio({ width: casino.hero?.width, height: casino.hero?.height });
   const renderingMode = casino.hero?.renderingMode;
   const demonstration = casino.dataClassification !== "PUBLISHED_RECORD";
   const mediaAllowed = mayPresentPromotionalMedia({ demonstration, governedActionAvailable: hasGovernedVisitAction(casino) });
-  if (casino.hero && mediaAllowed && renderingMode !== "COMPOSED" && (renderingMode === "COVER" || isFeaturedCardMediaCompatible(ratio))) {
+  const promotional = mediaAllowed
+    && (isPromotionalPresentationFamily(presentationFamily) || isPromotionalPresentationFamily(mobilePresentationFamily));
+  const brandArt = presentationFamily === "BRAND_ART";
+  if (casino.hero && (promotional || brandArt)) {
     const media = <ResponsivePlacementImage
       alt={casino.hero.alt || casino.name}
+      className={styles.mediaArtwork}
       height={casino.hero.height ?? 900}
       loading="lazy"
       media={casino.hero}
@@ -79,25 +118,45 @@ function RecommendationMedia({ casino, messages }: { casino: PublicCasinoCardDto
       width={casino.hero.width ?? 1600}
     />;
     const action = governedVisitAction(casino, messages);
-    if (action) {
+    if (action && promotional) {
       const accessibleName = `${action.label} — ${casino.featuredBonus?.title ?? messages.profile.publishedReview}`;
       return <GovernedCommercialAction
         action={action}
-        anchorData={{ "data-commercial-clickable": "true", "data-media-mode": renderingMode ?? "CONTAIN", "data-media-ratio": ratio }}
+        anchorData={{
+          "data-commercial-clickable": "true",
+          "data-creative-scale-cap": "1",
+          "data-media-mode": renderingMode ?? "CONTAIN",
+          "data-media-ratio": ratio,
+          "data-mobile-presentation-family": mobilePresentationFamily,
+          "data-presentation-family": presentationFamily,
+        }}
         ariaLabel={accessibleName}
         className={styles.mediaFrame}
         context={{ source: "CREATIVE", placement: "CASINO_DIRECTORY_CARD" }}
         messages={messages.outbound}
       >{media}</GovernedCommercialAction>;
     }
-    return <div className={styles.mediaFrame} data-media-mode={renderingMode} data-media-ratio={ratio}>
+    return <div
+      className={styles.mediaFrame}
+      data-creative-scale-cap={promotional ? "1" : undefined}
+      data-media-mode={renderingMode}
+      data-media-ratio={ratio}
+      data-mobile-presentation-family={mobilePresentationFamily}
+      data-presentation-family={presentationFamily}
+    >
       {media}
     </div>;
   }
-  return <div className={styles.mediaFallback} data-media-ratio={casino.hero ? ratio : "missing"} role="img" aria-label={`${messages.common.mediaUnavailableTitle}: ${casino.name}`}>
-    <span>B4GAMBLE / {messages.common.controlledMedia.toUpperCase()}</span>
+  return <div
+    className={styles.mediaFallback}
+    data-media-ratio={casino.hero ? ratio : "missing"}
+    data-mobile-presentation-family={mobilePresentationFamily}
+    data-presentation-family="LOGO_ONLY"
+    role="img"
+    aria-label={`${messages.common.mediaUnavailableTitle}: ${casino.name}`}
+  >
+    <span>B4GAMBLE / {messages.profile.operatorReview.toUpperCase()}</span>
     <strong>{messages.common.mediaUnavailableTitle}</strong>
-    <p>{messages.common.mediaUnavailableCopy}</p>
     <i aria-hidden="true" />
   </div>;
 }
@@ -121,7 +180,13 @@ export function CuratedCasinoShortlist({ casinos, messages, presentation }: { ca
           const fixtureDisclosure = casino.dataClassification === "DEMO_FIXTURE" ? messages.common.demoDisclosure : messages.common.marketPresentationNotice;
           const reviewHref = publicCasinoReviewHref(casino);
           const strengths = casino.highlights.slice(0, 3);
-          return <article className={styles.card} key={casino.id}>
+          const { mobilePresentationFamily, presentationFamily } = directoryPresentationFamilies(casino);
+          return <article
+            className={styles.card}
+            data-mobile-presentation-family={mobilePresentationFamily}
+            data-presentation-family={presentationFamily}
+            key={casino.id}
+          >
             <div className={styles.cardBody}>
               <div className={styles.recommendationContext}><span>{selectedLabel}</span><b>{String(index + 1).padStart(2, "0")} / {String(top.length).padStart(2, "0")}</b></div>
               {fixture ? <p className={styles.demoLabel}><strong>{messages.common.demoData}</strong> · {fixtureDisclosure}</p> : null}
@@ -145,7 +210,12 @@ export function CuratedCasinoShortlist({ casinos, messages, presentation }: { ca
               <div className={styles.actions}><Visit casino={casino} messages={messages} />{reviewHref ? <Link href={productHref(presentation, reviewHref)}>{fixture ? messages.common.viewDemonstration : messages.common.readReview}</Link> : null}{!fixture ? <ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /> : null}</div>
               <p className={styles.disclosure}>{fixture ? fixtureDisclosure : messages.bestOffers.commissionNote}</p>
             </div>
-            <RecommendationMedia casino={casino} messages={messages} />
+            <RecommendationMedia
+              casino={casino}
+              messages={messages}
+              mobilePresentationFamily={mobilePresentationFamily}
+              presentationFamily={presentationFamily}
+            />
           </article>;
         })}
       </div>}

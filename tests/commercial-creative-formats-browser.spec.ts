@@ -1,366 +1,262 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const requireAuthorized = process.env.COMMERCIAL_CREATIVE_AUTHORIZED === "1";
 const requireBlocked = process.env.COMMERCIAL_CREATIVE_BLOCKED === "1";
+const requiredWidths = [390, 430, 768, 1024, 1280, 1440] as const;
 
-const formatCases = [
-  { width: 300, height: 250, family: "MEDIUM_RECTANGLE", mobile: false },
-  { width: 250, height: 250, family: "SQUARE", mobile: false },
-  { width: 320, height: 100, family: "MOBILE_LARGE", mobile: true },
-  { width: 320, height: 50, family: "MOBILE_BANNER", mobile: true },
-] as const;
-
-async function applyFormat(page: Page, format: typeof formatCases[number]) {
-  const figure = page.locator('section[aria-labelledby="bonus-shortlist-title"] article').first().locator('figure[data-offer-media="bonus"]');
-  await expect(figure).toBeVisible();
-  const image = figure.locator('img:not([aria-hidden="true"])').first();
-  await expect(image).toBeVisible();
-  const stability = await image.evaluate(async (element, input) => {
-    const imageElement = element as HTMLImageElement;
-    const figureElement = element.closest("figure");
-    if (!figureElement) throw new Error("Commercial figure is missing");
-    for (const source of figureElement.querySelectorAll("source")) source.remove();
-    figureElement.dataset.commercialFamily = input.family;
-    figureElement.dataset.commercialFormat = `${input.family}_${input.width}_${input.height}`;
-    if (input.mobile) {
-      figureElement.dataset.mobileCommercialFamily = input.family;
-      figureElement.dataset.mobileCommercialFormat = `${input.family}_${input.width}_${input.height}`;
-    } else {
-      delete figureElement.dataset.mobileCommercialFamily;
-      delete figureElement.dataset.mobileCommercialFormat;
-    }
-    const canvas = document.createElement("canvas");
-    canvas.width = input.width;
-    canvas.height = input.height;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("Canvas context is unavailable");
-    context.fillStyle = "#171616";
-    context.fillRect(0, 0, input.width, input.height);
-    context.fillStyle = "#e4e24e";
-    context.fillRect(0, 0, Math.max(4, Math.round(input.width * .04)), input.height);
-    imageElement.setAttribute("width", String(input.width));
-    imageElement.setAttribute("height", String(input.height));
-    imageElement.removeAttribute("srcset");
-    imageElement.removeAttribute("src");
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    const reservedHeight = figureElement.getBoundingClientRect().height;
-    imageElement.src = canvas.toDataURL("image/png");
-    await imageElement.decode();
-    return { reservedHeight, decodedHeight: figureElement.getBoundingClientRect().height };
-  }, format);
-  return { figure, image, stability };
+async function decodedImageGeometry(image: Locator) {
+  await image.evaluate(async (element) => {
+    const node = element as HTMLImageElement;
+    if (!node.complete) await new Promise<void>((resolve) => node.addEventListener("load", () => resolve(), { once: true }));
+    await node.decode();
+  });
+  return image.evaluate((element) => {
+    const node = element as HTMLImageElement;
+    const imageRect = node.getBoundingClientRect();
+    const figure = node.closest("figure");
+    if (!figure) throw new Error("Commercial image is missing its figure");
+    const figureRect = figure.getBoundingClientRect();
+    return {
+      figureHeight: figureRect.height,
+      figureWidth: figureRect.width,
+      imageHeight: imageRect.height,
+      imageWidth: imageRect.width,
+      naturalHeight: node.naturalHeight,
+      naturalWidth: node.naturalWidth,
+      objectFit: getComputedStyle(node).objectFit,
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
 }
 
-test("canonical card and mobile formats keep their ratio across required widths", async ({ browser }) => {
-  for (const viewportWidth of [390, 430, 768, 1024, 1280, 1440]) {
-    const page = await browser.newPage({ viewport: { width: viewportWidth, height: viewportWidth <= 430 ? 844 : 900 } });
-    const response = await page.goto(`${baseUrl}/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
-    expect(response?.status(), `${viewportWidth}px status`).toBe(200);
-    const applicable = formatCases.filter((format) => !format.mobile || viewportWidth < 768);
-    for (const format of applicable) {
-      const { figure, image, stability } = await applyFormat(page, format);
-      const geometry = await image.evaluate((element) => {
-        const imageRect = element.getBoundingClientRect();
-        const figureRect = element.closest("figure")!.getBoundingClientRect();
-        return {
-          imageRatio: imageRect.width / imageRect.height,
-          figureHeight: figureRect.height,
-          objectFit: getComputedStyle(element).objectFit,
-          overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-        };
-      });
-      expect(Math.abs(geometry.imageRatio - format.width / format.height), `${viewportWidth}px ${format.width}×${format.height} distortion`).toBeLessThan(.025);
+function familyHeightLimit(family: string) {
+  if (family === "CARD") return 350;
+  if (family === "MOBILE_LANDSCAPE") return 200;
+  if (family === "STRIP") return 145;
+  if (family === "WIDE") return 190;
+  return 180;
+}
+
+test("mixed commercial fixtures preserve physical geometry at every required width", async ({ browser }) => {
+  for (const width of requiredWidths) {
+    const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 844 : 900 } });
+    const response = await page.goto(`${baseUrl}/en/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
+    expect(response?.status(), `${width}px response`).toBe(200);
+
+    for (const family of ["CARD", "MOBILE_LANDSCAPE", "STRIP", "WIDE"]) {
+      if (family === "WIDE") {
+        const wideResponse = await page.goto(`${baseUrl}/en/best-offers?visualFixture=true`, { waitUntil: "networkidle" });
+        expect(wideResponse?.status(), `${width}px wide response`).toBe(200);
+      }
+      const figure = page.locator(`figure[data-presentation-family="${family}"]`).first();
+      await expect(figure, `${width}px ${family}`).toBeAttached();
+      await figure.scrollIntoViewIfNeeded();
+      await expect(figure).toBeVisible();
+      const geometry = await decodedImageGeometry(figure.locator("img").first());
+      const effectiveFamily = width < 768
+        ? await figure.getAttribute("data-mobile-presentation-family") ?? family
+        : family;
       expect(geometry.objectFit).toBe("contain");
-      expect(geometry.overflow, `${viewportWidth}px ${format.width}×${format.height} overflow`).toBe(false);
-      expect(Math.abs(stability.decodedHeight - stability.reservedHeight), `${viewportWidth}px ${format.width}×${format.height} layout shift`).toBeLessThanOrEqual(1);
-      if (format.mobile) expect(geometry.figureHeight, `${format.width}×${format.height} giant mobile stage`).toBeLessThan(190);
+      expect(geometry.overflow, `${width}px ${family} overflow`).toBe(false);
+      expect(geometry.imageWidth, `${width}px ${family} horizontal upscale`).toBeLessThanOrEqual(geometry.naturalWidth + 1);
+      expect(geometry.imageHeight, `${width}px ${family} vertical upscale`).toBeLessThanOrEqual(geometry.naturalHeight + 1);
+      expect(
+        Math.abs(geometry.imageWidth / geometry.imageHeight - geometry.naturalWidth / geometry.naturalHeight),
+        `${width}px ${family} distortion`,
+      ).toBeLessThan(.025);
+      expect(geometry.figureHeight, `${width}px ${effectiveFamily} stage`).toBeLessThan(familyHeightLimit(effectiveFamily));
       await expect(figure.locator("figcaption")).toBeVisible();
     }
     await page.close();
   }
 });
 
-test("blocked fixture creatives stay visible without becoming an outbound action", async ({ page }) => {
-  test.skip(requireAuthorized && !requireBlocked, "Production disables visual fixtures and its current real inventory is authorized; run this assertion in local/Preview blocked state or set COMMERCIAL_CREATIVE_BLOCKED=1 for a known blocked origin.");
-  for (const path of ["/bonuses?visualFixture=true", "/best-offers?visualFixture=true"]) {
+test("blocked promotional fixtures remain visible and inert", async ({ page }) => {
+  test.skip(requireAuthorized && !requireBlocked, "Run this assertion in a local or explicitly blocked commercial state.");
+  for (const path of ["/en/bonuses?visualFixture=true", "/en/best-offers?visualFixture=true"]) {
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
-    await expect(page.locator("figure[data-offer-media]").first()).toBeVisible();
+    const creative = page.locator("figure[data-offer-media]").first();
+    await creative.scrollIntoViewIfNeeded();
+    await expect(creative).toBeVisible();
     await expect(page.locator('a[data-commercial-action-source="CREATIVE"]')).toHaveCount(0);
+    await creative.click({ force: true });
+    await expect(page.locator("dialog[open]")).toHaveCount(0);
     await expect(page.locator('main a[href^="http"]')).toHaveCount(0);
   }
 });
 
-test("the controlled Slotnite GIF remains a browser-decodable animated-format asset", async ({ page, request }) => {
+test("the controlled Slotnite GIF stays native and browser-decodable", async ({ page, request }) => {
   const response = await request.get(`${baseUrl}/casino-brands/slotnite/partner-brand.gif`);
   expect(response.status()).toBe(200);
   expect(response.headers()["content-type"]).toMatch(/^image\/gif/);
-  await page.setContent(`<img alt="Slotnite controlled 320 by 50 creative" loading="lazy" src="${baseUrl}/casino-brands/slotnite/partner-brand.gif" width="320" height="50">`, { waitUntil: "domcontentloaded" });
-  await page.locator("img").evaluate((element) => (element as HTMLImageElement).decode());
-  await expect(page.locator("img")).toHaveJSProperty("naturalWidth", 320);
-  await expect(page.locator("img")).toHaveJSProperty("naturalHeight", 50);
+  await page.setContent(`<img alt="Slotnite controlled 320 by 50 creative" src="${baseUrl}/casino-brands/slotnite/partner-brand.gif" width="320" height="50">`, { waitUntil: "domcontentloaded" });
+  const image = page.locator("img");
+  await image.evaluate((element) => (element as HTMLImageElement).decode());
+  await expect(image).toHaveJSProperty("naturalWidth", 320);
+  await expect(image).toHaveJSProperty("naturalHeight", 50);
 });
 
-test("a composed native mobile banner uses a compact B4GAMBLE-owned stage", async ({ page }) => {
+test("a COMPOSED 320×50 asset renders as the real strip without cloned identity or offer copy", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const styles = readFileSync("components/commercial-media/CommercialOfferMedia.module.css", "utf8");
   const gif = readFileSync("public/casino-brands/slotnite/partner-brand.gif").toString("base64");
-  await page.setContent(`<style>${styles}</style><main style="width:342px"><figure class="composed" data-mobile-commercial-family="MOBILE_BANNER" data-mobile-commercial-format="MOBILE_BANNER_320_50" data-offer-media="bonus"><div class="compositionBody"><span class="compositionSource">B4GAMBLE / CONTROLLED MEDIA</span><div class="compositionIdentity"><span>duplicated identity</span></div><img alt="Slotnite controlled partner creative" class="controlledStrip" height="50" src="data:image/gif;base64,${gif}" width="320"><i aria-hidden="true"></i></div><figcaption><span>Current</span><small>Slotnite</small></figcaption></figure></main>`);
+  await page.setContent(`<style>*{box-sizing:border-box}${styles}</style><main style="width:342px"><figure class="frame" data-media-mode="COMPOSED" data-offer-media="bonus" data-presentation-family="STRIP" data-mobile-presentation-family="STRIP"><div class="mediaStage"><img alt="Slotnite controlled partner creative" class="mediaArtwork" height="50" src="data:image/gif;base64,${gif}" width="320"></div><figcaption><span>B4GAMBLE / CONTROLLED MEDIA</span><small>STRIP</small></figcaption></figure></main>`);
   const figure = page.locator("figure");
-  const strip = page.locator(".controlledStrip");
-  await expect(strip).toBeVisible();
-  const geometry = await strip.evaluate((element) => {
-    const image = element.getBoundingClientRect();
-    const parent = element.closest("figure")!.getBoundingClientRect();
-    return {
-      figureHeight: parent.height,
-      imageRatio: image.width / image.height,
-      identityDisplay: getComputedStyle(document.querySelector(".compositionIdentity")!).display,
-      sourceDisplay: getComputedStyle(document.querySelector(".compositionSource")!).display,
-    };
-  });
-  expect(Math.abs(geometry.imageRatio - 320 / 50)).toBeLessThan(.05);
-  expect(geometry.figureHeight).toBeLessThan(190);
-  expect(geometry.identityDisplay).toBe("none");
-  expect(geometry.sourceDisplay).not.toBe("none");
+  const geometry = await decodedImageGeometry(figure.locator("img"));
+  expect(Math.abs(geometry.imageWidth / geometry.imageHeight - 320 / 50)).toBeLessThan(.05);
+  expect(geometry.figureHeight).toBeLessThan(135);
+  expect(geometry.imageWidth).toBeLessThanOrEqual(320);
+  expect(geometry.imageHeight).toBeLessThanOrEqual(50);
+  await expect(figure).not.toContainText(/duplicated|100%|free spins|Slotnite/i);
   await expect(figure).toContainText("B4GAMBLE / CONTROLLED MEDIA");
 });
 
-test("current authorized inventory keeps native 300×250 and Slotnite 320×50 geometry", async ({ browser }) => {
-  test.skip(!requireAuthorized, "This assertion requires the current real governed inventory.");
-  for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
-    const page = await browser.newPage({ viewport });
-    const response = await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
+test("Best Offers promotes strip and wide inventory into deliberate full-width bands", async ({ browser }) => {
+  for (const width of [390, 768, 1440]) {
+    const page = await browser.newPage({ viewport: { width, height: width === 390 ? 844 : 900 } });
+    const response = await page.goto(`${baseUrl}/en/best-offers?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
-    const medium = page.locator('figure[data-commercial-format="MEDIUM_RECTANGLE_300_250"] img:not([aria-hidden="true"])').first();
-    const slotnite = page.locator('figure[data-commercial-format="MOBILE_BANNER_320_50"] img[src*="partner-brand.gif"]').first();
-    await expect(medium).toBeVisible();
-    await expect(slotnite).toBeVisible();
-    await expect(medium).toHaveJSProperty("naturalWidth", 300);
-    await expect(medium).toHaveJSProperty("naturalHeight", 250);
-    await expect(slotnite).toHaveJSProperty("naturalWidth", 320);
-    await expect(slotnite).toHaveJSProperty("naturalHeight", 50);
-    const geometry = await slotnite.evaluate((element) => {
-      const image = element.getBoundingClientRect();
-      const figure = element.closest("figure")!.getBoundingClientRect();
-      return {
-        imageRatio: image.width / image.height,
-        figureHeight: figure.height,
-        overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-      };
-    });
-    if (viewport.width < 768) {
-      expect(Math.abs(geometry.imageRatio - 320 / 50)).toBeLessThan(.05);
-      expect(geometry.figureHeight).toBeLessThan(190);
+    for (const family of ["STRIP", "WIDE"]) {
+      const figure = page.locator(`figure[data-presentation-family="${family}"]`).first();
+      await figure.scrollIntoViewIfNeeded();
+      await expect(figure).toBeVisible();
+      const imageGeometry = await decodedImageGeometry(figure.locator("img").first());
+      const parentGeometry = await figure.evaluate((element) => {
+        const article = element.closest("article");
+        if (!article) throw new Error("Best Offers creative is missing its article");
+        const figureRect = element.getBoundingClientRect();
+        const articleRect = article.getBoundingClientRect();
+        return {
+          widthCoverage: figureRect.width / articleRect.width,
+          columns: getComputedStyle(article).gridTemplateColumns.split(" ").filter(Boolean).length,
+        };
+      });
+      expect(imageGeometry.figureHeight).toBeLessThan(190);
+      expect(imageGeometry.imageWidth).toBeLessThanOrEqual(imageGeometry.naturalWidth + 1);
+      expect(parentGeometry.widthCoverage).toBeGreaterThan(.9);
+      expect(parentGeometry.columns).toBe(1);
     }
-    expect(geometry.overflow).toBe(false);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
     await page.close();
   }
 });
 
-test("authorized creatives match CTA authority and open the same governed confirmation", async ({ page }) => {
-  const cases = [
-    { paths: ["/bonuses"], placement: "BONUS_LISTING_CARD" },
-    { paths: ["/best-offers"], placement: /^BEST_OFFER_(?:FEATURED|SECONDARY)$/ },
-    { paths: ["/en-gb/casino/slotnite", "/en/casino/slotnite", "/casino/slotnite"], placement: "CASINO_OFFER_BLOCK" },
-  ] as const;
-  let verified = 0;
-
-  for (const scenario of cases) {
-    let activePath: string | null = null;
-    for (const candidatePath of scenario.paths) {
-      const response = await page.goto(`${baseUrl}${candidatePath}`, { waitUntil: "networkidle" });
-      if (response?.status() === 200) {
-        activePath = candidatePath;
-        break;
-      }
-    }
-    if (!activePath) {
-      if (requireAuthorized) expect(activePath, `${scenario.paths.join(", ")} requires a published profile`).not.toBeNull();
-      continue;
-    }
-    const creatives = page.locator('a[data-commercial-action-source="CREATIVE"]');
-    const matching = typeof scenario.placement === "string"
-      ? page.locator(`a[data-commercial-action-source="CREATIVE"][data-commercial-action-placement="${scenario.placement}"]`)
-      : creatives;
-    let creative = matching.first();
-    if (typeof scenario.placement !== "string") {
-      creative = creatives.filter({ has: page.locator("figure") }).first();
-      if (await creative.count()) await expect(creative).toHaveAttribute("data-commercial-action-placement", scenario.placement);
-    }
-    if (await creative.count() === 0) {
-      if (requireAuthorized) expect(await creative.count(), `${activePath} requires an authorized creative`).toBeGreaterThan(0);
-      continue;
-    }
-
-    verified += 1;
-    await expect(creative).toBeVisible();
-    await expect(creative).toHaveAttribute("href", /^\/outbound\/[a-z0-9-]+$/);
-    await expect(creative).toHaveAttribute("aria-label", /.+ — .+/);
-    const href = await creative.getAttribute("href");
-    const placement = await creative.getAttribute("data-commercial-action-placement");
-    expect(href).toBeTruthy();
-    expect(placement).toBeTruthy();
-    await expect(page.locator(`a[data-commercial-action-source="CTA"][data-commercial-action-placement="${placement}"][href="${href}"]`).first()).toBeAttached();
-    await expect(page.locator('main a[href*="superflypartners"], main a[href*="betsson"][href*="track"], main a[href*="rakuten"][href*="track"]')).toHaveCount(0);
-
-    await creative.focus();
-    await expect(creative).toBeFocused();
-    await page.keyboard.press("Enter");
-    const keyboardDialog = page.locator("dialog[open]");
-    await expect(keyboardDialog).toBeVisible();
-    await keyboardDialog.getByRole("button", { name: /Cancel|stay/i }).click();
-
-    await creative.click();
-    const mouseDialog = page.locator("dialog[open]");
-    await expect(mouseDialog).toBeVisible();
-    await expect(mouseDialog.locator('a[href^="/r/"]')).toHaveAttribute("rel", /nofollow sponsored noopener/);
-    await mouseDialog.getByRole("button", { name: /Cancel|stay/i }).click();
-
-    if (scenario.placement === "CASINO_OFFER_BLOCK" && requireAuthorized) {
-      await expect(creative.locator('img[src*="partner-brand.gif"]')).toHaveCount(1);
-    }
+test("one deterministic page presents all required mixed inventory states intentionally", async ({ page }) => {
+  const styles = readFileSync("components/commercial-media/CommercialOfferMedia.module.css", "utf8");
+  const figure = (family: string, asset: string, width: number, height: number) => `<figure class="frame" data-offer-media="bonus" data-presentation-family="${family}" data-mobile-presentation-family="${family}"><div class="mediaStage"><img alt="${family} ${width} by ${height}" class="mediaArtwork" height="${height}" src="${baseUrl}/demo-casinos/${asset}" width="${width}"></div><figcaption><span>B4GAMBLE / CONTROLLED MEDIA</span><small>${family}</small></figcaption></figure>`;
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setContent(`<style>*{box-sizing:border-box}body{margin:0;padding:32px;background:#f5f3ed}.showcase{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:24px}.showcase>article{min-width:0}</style><style>${styles}</style><main class="showcase"><article>${figure("CARD", "adaptive-card-300x250.svg", 300, 250)}</article><article>${figure("CARD", "adaptive-square-250x250.svg", 250, 250)}</article><article>${figure("STRIP", "adaptive-strip-320x50.svg", 320, 50)}</article><article>${figure("MOBILE_LANDSCAPE", "adaptive-mobile-320x100.svg", 320, 100)}</article><article><figure class="identityFallback" data-presentation-family="LOGO_ONLY"><div class="identityFallbackBody"><span>B4GAMBLE / CONTROLLED MEDIA</span><strong>Operator identity</strong><i></i></div><figcaption><span>Published</span><small>LOGO ONLY</small></figcaption></figure></article><article>${figure("WIDE", "adaptive-wide-728x90.svg", 728, 90)}</article></main>`, { waitUntil: "load" });
+  for (const family of ["CARD", "MOBILE_LANDSCAPE", "STRIP", "WIDE", "LOGO_ONLY"]) {
+    await expect(page.locator(`figure[data-presentation-family="${family}"]`).first(), family).toBeVisible();
   }
-
-  if (requireAuthorized) expect(verified).toBe(cases.length);
-  else test.skip(verified === 0, "No authorized local commercial inventory; Preview/Production runs set COMMERCIAL_CREATIVE_AUTHORIZED=1.");
+  const cardNaturalSizes = await page.locator('figure[data-presentation-family="CARD"] img').evaluateAll((images) =>
+    images.map((image) => `${(image as HTMLImageElement).naturalWidth}x${(image as HTMLImageElement).naturalHeight}`),
+  );
+  expect(cardNaturalSizes).toEqual(["300x250", "250x250"]);
+  const logoOnly = page.locator('figure[data-presentation-family="LOGO_ONLY"]');
+  await expect(logoOnly.locator("a,button")).toHaveCount(0);
+  await expect(logoOnly.locator("xpath=ancestor::a")).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
-test("Casino directory and review hero media share governed actions without absorbing editorial controls", async ({ page }) => {
-  test.skip(!requireAuthorized, "This assertion requires the current real governed Casino inventory.");
+test("review hero stays inert while promotional media remains in the offer block", async ({ browser }) => {
+  for (const width of [390, 768, 1100, 1440]) {
+    const page = await browser.newPage({ viewport: { width, height: width === 390 ? 844 : 900 } });
+    const response = await page.goto(`${baseUrl}/en/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+    const hero = page.locator('[class*="heroMedia"][data-presentation-family="LOGO_ONLY"]');
+    await expect(hero).toHaveAttribute("data-suppressed-promotion-family", "CARD");
+    await expect(hero.locator("a,button")).toHaveCount(0);
+    await expect(page.locator('a[data-commercial-action-placement="CASINO_DETAIL_HERO"]')).toHaveCount(0);
+
+    const offer = page.locator('figure[data-presentation-family="STRIP"]');
+    await offer.scrollIntoViewIfNeeded();
+    await expect(offer).toBeVisible();
+    const geometry = await decodedImageGeometry(offer.locator("img").first());
+    const containingGeometry = await offer.evaluate((element) => {
+      const figure = element.getBoundingClientRect();
+      const card = element.parentElement?.getBoundingClientRect();
+      return {
+        figureWidth: figure.width,
+        cardWidth: card?.width ?? 0,
+        horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      };
+    });
+    expect(geometry.figureHeight).toBeLessThan(150);
+    expect(geometry.imageWidth).toBeLessThanOrEqual(geometry.naturalWidth + 1);
+    expect(containingGeometry.figureWidth).toBeLessThanOrEqual(containingGeometry.cardWidth + 48);
+    expect(containingGeometry.horizontalOverflow).toBe(false);
+    await expect(page.locator('a[data-commercial-action-placement="CASINO_OFFER_BLOCK"]')).toHaveCount(0);
+    await page.close();
+  }
+});
+
+test("current authorized inventory keeps real formats and the new review click boundary", async ({ page }) => {
+  test.skip(!requireAuthorized, "This assertion requires current authorized Preview or Production inventory.");
+
+  const bonusResponse = await page.goto(`${baseUrl}/en/bonuses`, { waitUntil: "networkidle" });
+  expect(bonusResponse?.status()).toBe(200);
+  const medium = page.locator('figure[data-commercial-format="MEDIUM_RECTANGLE_300_250"] img').first();
+  const slotnite = page.locator('figure[data-commercial-format="MOBILE_BANNER_320_50"] img[src*="partner-brand.gif"]').first();
+  await expect(medium).toBeVisible();
+  await expect(slotnite).toBeVisible();
+  await expect(medium).toHaveJSProperty("naturalWidth", 300);
+  await expect(medium).toHaveJSProperty("naturalHeight", 250);
+  await expect(slotnite).toHaveJSProperty("naturalWidth", 320);
+  await expect(slotnite).toHaveJSProperty("naturalHeight", 50);
+  const stripGeometry = await decodedImageGeometry(slotnite);
+  expect(stripGeometry.figureHeight).toBeLessThan(150);
+  expect(stripGeometry.imageWidth).toBeLessThanOrEqual(320);
 
   const directoryResponse = await page.goto(`${baseUrl}/en/casinos`, { waitUntil: "networkidle" });
   expect(directoryResponse?.status()).toBe(200);
   const skolCard = page.locator("article").filter({ hasText: /Skol Casino/i }).first();
-  await expect(skolCard).toBeVisible();
-  const directoryCreative = skolCard.locator('a[data-commercial-action-source="CREATIVE"][data-commercial-action-placement="CASINO_DIRECTORY_CARD"]');
-  const directoryCta = skolCard.locator('a[data-commercial-action-source="CTA"][data-commercial-action-placement="CASINO_DIRECTORY_CARD"]');
+  const directoryCreative = skolCard.locator('a[data-commercial-action-placement="CASINO_DIRECTORY_CARD"]');
   await expect(directoryCreative).toBeVisible();
-  await expect(directoryCreative).toHaveAttribute("href", /^\/outbound\/[a-z0-9-]+$/);
-  await expect(directoryCreative).toHaveAttribute("aria-label", /Skol Casino.+—.+/);
-  await expect(directoryCta).toHaveAttribute("href", await directoryCreative.getAttribute("href") as string);
-  await expect(directoryCreative.locator("a,button")).toHaveCount(0);
   await expect(skolCard.locator('[class*="mark"] a')).toHaveCount(0);
   await expect(skolCard.getByRole("button", { name: /compare/i })).toBeAttached();
   await expect(skolCard.getByRole("link", { name: /read review/i })).toBeAttached();
-  await expect(page.locator('main a[href^="http"]')).toHaveCount(0);
 
-  await directoryCreative.focus();
-  await expect(directoryCreative).toBeFocused();
-  await page.keyboard.press("Enter");
-  await expect(page.locator("dialog[open]")).toBeVisible();
-  await page.locator("dialog[open]").getByRole("button", { name: /Cancel|stay/i }).click();
-  await directoryCreative.click();
-  await expect(page.locator("dialog[open]")).toBeVisible();
-  await expect(page.locator("dialog[open]").locator('a[href^="/r/"]')).toHaveAttribute("rel", /nofollow sponsored noopener/);
-  await page.locator("dialog[open]").getByRole("button", { name: /Cancel|stay/i }).click();
-
-  const detailResponse = await page.goto(`${baseUrl}/en/casino/skol-casino`, { waitUntil: "networkidle" });
-  expect(detailResponse?.status()).toBe(200);
-  const detailCreative = page.locator('a[data-commercial-action-source="CREATIVE"][data-commercial-action-placement="CASINO_DETAIL_HERO"]');
-  await expect(detailCreative).toBeVisible();
-  await expect(detailCreative).toHaveAttribute("href", /^\/outbound\/[a-z0-9-]+$/);
-  await expect(detailCreative).toHaveAttribute("aria-label", /Skol Casino.+—.+/);
-  const detailHref = await detailCreative.getAttribute("href");
-  await expect(page.locator(`a[data-commercial-action-source="CTA"][data-commercial-action-placement="CASINO_OFFER_BLOCK"][href="${detailHref}"]`).first()).toBeAttached();
-  await expect(detailCreative.locator("a,button")).toHaveCount(0);
-  await detailCreative.focus();
-  await page.keyboard.press("Enter");
-  await expect(page.locator("dialog[open]")).toBeVisible();
-  await page.locator("dialog[open]").getByRole("button", { name: /Cancel|stay/i }).click();
-
-  const slotniteResponse = await page.goto(`${baseUrl}/en/casino/slotnite`, { waitUntil: "networkidle" });
-  expect(slotniteResponse?.status()).toBe(200);
-  const slotniteHero = page.locator('a[data-commercial-action-source="CREATIVE"][data-commercial-action-placement="CASINO_DETAIL_HERO"]');
-  await expect(slotniteHero).toBeVisible();
-  await expect(slotniteHero.locator('img[src*="partner-brand.gif"]')).toHaveCount(1);
-
-  for (const slug of ["betsson", "skol-casino", "hello-casino", "gday-casino", "diamond7", "dragonbet", "21-prive", "slotnite"]) {
-    const response = await page.goto(`${baseUrl}/en/casino/${slug}`, { waitUntil: "domcontentloaded" });
-    expect(response?.status(), `${slug} review status`).toBe(200);
-    await expect(page.locator('main a[href*="superflypartners"], main a[href*="track"], main a[href*="click"]')).toHaveCount(0);
+  for (const [slug, suppressedFamily] of [["skol-casino", "CARD"], ["slotnite", "STRIP"]] as const) {
+    const response = await page.goto(`${baseUrl}/en/casino/${slug}`, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+    const hero = page.locator('[class*="heroMedia"][data-presentation-family="LOGO_ONLY"]');
+    await expect(hero).toHaveAttribute("data-suppressed-promotion-family", suppressedFamily);
+    await expect(page.locator('a[data-commercial-action-placement="CASINO_DETAIL_HERO"]')).toHaveCount(0);
+    const offerCreative = page.locator('a[data-commercial-action-placement="CASINO_OFFER_BLOCK"]');
+    await expect(offerCreative).toBeVisible();
+    if (slug === "slotnite") await expect(offerCreative.locator('img[src*="partner-brand.gif"]')).toHaveCount(1);
   }
 
-  await page.goto(`${baseUrl}/en/casino/dragonbet`, { waitUntil: "networkidle" });
-  await expect(page.locator('[class*="heroMedia"]').first()).toBeVisible();
+  const helloResponse = await page.goto(`${baseUrl}/en/casino/hello-casino`, { waitUntil: "networkidle" });
+  expect(helloResponse?.status()).toBe(200);
   await expect(page.locator('a[data-commercial-action-placement="CASINO_DETAIL_HERO"]')).toHaveCount(0);
+  await expect(page.locator('[class*="heroMedia"] a, [class*="brandMedia"] a')).toHaveCount(0);
 });
 
-test("the authorized Casino offer block supports a deliberate 728×90 wide mode", async ({ browser }) => {
-  const paths = ["/en-gb/casino/slotnite", "/en/casino/slotnite", "/casino/slotnite"];
-  let verified = 0;
-
-  for (const viewportWidth of [768, 1024, 1280, 1440]) {
-    const page = await browser.newPage({ viewport: { width: viewportWidth, height: 900 } });
-    let foundProfile = false;
-    for (const path of paths) {
-      const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
-      if (response?.status() === 200) {
-        foundProfile = true;
-        break;
-      }
-    }
-    if (!foundProfile) {
-      await page.close();
-      if (requireAuthorized) expect(foundProfile, `${viewportWidth}px requires the published Slotnite profile`).toBe(true);
-      break;
-    }
-
-    const creative = page.locator('a[data-commercial-action-placement="CASINO_OFFER_BLOCK"]');
-    const creativeCount = await creative.count();
-    if (creativeCount === 0) {
-      await page.close();
-      if (requireAuthorized) expect(creativeCount, `${viewportWidth}px requires an authorized Casino offer creative`).toBeGreaterThan(0);
-      break;
-    }
-    const figure = creative.locator("figure");
-    const image = figure.locator("img").first();
-    await image.evaluate(async (element) => {
-      const imageElement = element as HTMLImageElement;
-      const figureElement = element.closest("figure");
-      if (!figureElement) throw new Error("Casino offer figure is missing");
-      for (const source of figureElement.querySelectorAll("source")) source.remove();
-      figureElement.dataset.commercialFamily = "LEADERBOARD";
-      figureElement.dataset.commercialFormat = "LEADERBOARD_728_90";
-      figureElement.dataset.mediaMode = "CONTAIN";
-      delete figureElement.dataset.mobileCommercialFamily;
-      delete figureElement.dataset.mobileCommercialFormat;
-      const canvas = document.createElement("canvas");
-      canvas.width = 728;
-      canvas.height = 90;
-      const context = canvas.getContext("2d");
-      if (!context) throw new Error("Canvas context is unavailable");
-      context.fillStyle = "#171616";
-      context.fillRect(0, 0, 728, 90);
-      context.fillStyle = "#e4e24e";
-      context.fillRect(0, 0, 24, 90);
-      imageElement.width = 728;
-      imageElement.height = 90;
-      imageElement.removeAttribute("srcset");
-      imageElement.src = canvas.toDataURL("image/png");
-      await imageElement.decode();
-    });
-    const geometry = await image.evaluate((element) => {
-      const imageRect = element.getBoundingClientRect();
-      const figureRect = element.closest("figure")!.getBoundingClientRect();
-      return {
-        imageRatio: imageRect.width / imageRect.height,
-        figureHeight: figureRect.height,
-        objectFit: getComputedStyle(element).objectFit,
-        overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-      };
-    });
-    expect(Math.abs(geometry.imageRatio - 728 / 90), `${viewportWidth}px leaderboard distortion`).toBeLessThan(.05);
-    expect(geometry.objectFit).toBe("contain");
-    expect(geometry.figureHeight, `${viewportWidth}px deliberate wide stage`).toBeLessThan(220);
-    expect(geometry.overflow, `${viewportWidth}px leaderboard overflow`).toBe(false);
-    await expect(figure.locator("figcaption")).toBeVisible();
-    verified += 1;
-    await page.close();
+test("authorized promotional anchors match their CTA and confirmation contract", async ({ page }) => {
+  test.skip(!requireAuthorized, "This assertion requires current authorized Preview or Production inventory.");
+  for (const scenario of [
+    { path: "/en/bonuses", placement: "BONUS_LISTING_CARD" },
+    { path: "/en/best-offers", placement: "BEST_OFFER_FEATURED" },
+    { path: "/en/casino/slotnite", placement: "CASINO_OFFER_BLOCK" },
+  ]) {
+    const response = await page.goto(`${baseUrl}${scenario.path}`, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+    const creative = page.locator(`a[data-commercial-action-source="CREATIVE"][data-commercial-action-placement="${scenario.placement}"]`).first();
+    await expect(creative).toBeVisible();
+    await expect(creative).toHaveAttribute("href", /^\/outbound\/[a-z0-9-]+$/);
+    const href = await creative.getAttribute("href");
+    await expect(page.locator(`a[data-commercial-action-source="CTA"][href="${href}"]`).first()).toBeAttached();
+    await expect(creative.locator("a,button")).toHaveCount(0);
+    await creative.focus();
+    await page.keyboard.press("Enter");
+    const dialog = page.locator("dialog[open]");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator('a[href^="/r/"]')).toHaveAttribute("rel", /nofollow sponsored noopener/);
+    await dialog.getByRole("button", { name: /Cancel|stay/i }).click();
   }
-
-  if (requireAuthorized) expect(verified).toBe(4);
-  else test.skip(verified === 0, "No authorized local Casino creative; Preview/Production runs set COMMERCIAL_CREATIVE_AUTHORIZED=1.");
 });

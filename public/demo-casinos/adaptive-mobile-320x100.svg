@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="100" viewBox="0 0 320 100" role="img" aria-labelledby="title description">
+  <title id="title">B4GAMBLE mobile landscape creative fixture</title>
+  <desc id="description">A controlled 320 by 100 visual fixture used only for local layout verification.</desc>
+  <rect width="320" height="100" fill="#100f0f"/>
+  <path d="M0 0h10v100H0z" fill="#e4e24e"/>
+  <text x="28" y="34" fill="#e4e24e" font-family="Arial,sans-serif" font-size="10" font-weight="700" letter-spacing="1.5">B4GAMBLE / CONTROLLED DEMO</text>
+  <text x="28" y="69" fill="#fafaf7" font-family="Arial,sans-serif" font-size="23" font-weight="800">MOBILE · 320 × 100</text>
+</svg>

@@ -1,6 +1,8 @@
 import type {
+  MediaPlacementName,
   MediaPlacementVariantName,
   OfferMediaPlacementName,
+  PlacementMediaSource,
 } from "./placement-media";
 
 export type CommercialCreativeFamily =
@@ -22,6 +24,19 @@ export type CommercialCreativeFamily =
 export type CommercialCreativeSuitability = "DESKTOP" | "MOBILE" | "BOTH" | "INVENTORY";
 export type CommercialCreativeTier = "CORE" | "SQUARE" | "MOBILE" | "WIDE" | "SUPPORTED_INVENTORY" | "COMPATIBILITY";
 export type CommercialCreativeFrequency = "VERY_COMMON" | "COMMON" | "ESTABLISHED";
+
+/**
+ * Application presentation families. These are renderer decisions only: they
+ * deliberately do not add placements, variants, or persistence vocabulary.
+ */
+export type CreativePresentationFamily =
+  | "CARD"
+  | "MOBILE_LANDSCAPE"
+  | "STRIP"
+  | "WIDE"
+  | "BRAND_ART"
+  | "LOGO_ONLY"
+  | "PORTRAIT_INVENTORY";
 
 export interface CommercialCreativeFormat {
   id: string;
@@ -82,6 +97,92 @@ export interface CommercialCreativeAssessment {
 export function commercialCreativeFormat(width: number | null | undefined, height: number | null | undefined) {
   if (!width || !height) return null;
   return commercialCreativeFormats.find((candidate) => candidate.width === width && candidate.height === height) ?? null;
+}
+
+export function commercialCreativePresentationFamily(
+  width: number | null | undefined,
+  height: number | null | undefined,
+): CreativePresentationFamily | null {
+  const creativeFormat = commercialCreativeFormat(width, height);
+  if (!creativeFormat) return null;
+
+  if (
+    creativeFormat.family === "MEDIUM_RECTANGLE"
+    || creativeFormat.family === "SQUARE"
+    || creativeFormat.family === "LARGE_RECTANGLE"
+    || creativeFormat.family === "SMALL_RECTANGLE"
+  ) return "CARD";
+  if (creativeFormat.id === "MOBILE_LARGE_320_100" || creativeFormat.id === "MOBILE_LARGE_300_100") {
+    return "MOBILE_LANDSCAPE";
+  }
+  if (
+    creativeFormat.id === "MOBILE_BANNER_320_50"
+    || creativeFormat.id === "MOBILE_BANNER_300_50"
+    || creativeFormat.family === "FULL_BANNER"
+  ) return "STRIP";
+  if (
+    creativeFormat.family === "LEADERBOARD"
+    || creativeFormat.family === "BILLBOARD"
+    || creativeFormat.family === "LARGE_LEADERBOARD"
+  ) return "WIDE";
+  if (
+    creativeFormat.family === "WIDE_SKYSCRAPER"
+    || creativeFormat.family === "HALF_PAGE"
+    || creativeFormat.family === "SKYSCRAPER"
+  ) return "PORTRAIT_INVENTORY";
+  return null;
+}
+
+export function creativePresentationFamily(input: {
+  width: number | null | undefined;
+  height: number | null | undefined;
+  mediaType?: string | null;
+  placement?: MediaPlacementName;
+  source?: PlacementMediaSource | null;
+}): CreativePresentationFamily {
+  const mediaType = input.mediaType?.trim().toUpperCase();
+  if (
+    input.placement === "CASINO_LOGO"
+    || mediaType === "LOGO"
+    || mediaType === "FAVICON"
+    || input.source === "LEGACY_LOGO"
+    || input.source === "LOGO_COMPOSITION"
+    || input.source === "CODE_FALLBACK"
+  ) return "LOGO_ONLY";
+
+  const commercialFamily = commercialCreativePresentationFamily(input.width, input.height);
+  if (commercialFamily) return commercialFamily;
+
+  const width = input.width ?? 0;
+  const height = input.height ?? 0;
+  const ratio = width > 0 && height > 0 ? width / height : 0;
+  if (height >= 500 && ratio > 0 && ratio <= 0.6) return "PORTRAIT_INVENTORY";
+
+  // Hero art must have enough real pixels to carry an editorial composition.
+  // Smaller or unusual assets remain a compact identity fallback.
+  if (width >= 1200 && height >= 675 && ratio >= 1.2 && ratio <= 2.2) return "BRAND_ART";
+  return "LOGO_ONLY";
+}
+
+export function isPromotionalPresentationFamily(family: CreativePresentationFamily) {
+  return family === "CARD" || family === "MOBILE_LANDSCAPE" || family === "STRIP" || family === "WIDE";
+}
+
+export function creativePresentationGuidance(input: {
+  family: CreativePresentationFamily;
+  placement: MediaPlacementName;
+}) {
+  if (input.placement === "CASINO_DETAIL_HERO" && isPromotionalPresentationFamily(input.family)) {
+    const kind = input.family === "CARD" ? "card" : input.family === "MOBILE_LANDSCAPE" ? "mobile landscape" : input.family.toLowerCase();
+    return `Promotional ${kind} creative. Used as compact offer media, not enlarged as review hero art.`;
+  }
+  if (input.family === "CARD") return "Rendered as commercial card media at native size or smaller.";
+  if (input.family === "MOBILE_LANDSCAPE") return "Rendered as a shallow mobile landscape module, not a card-sized stage.";
+  if (input.family === "STRIP") return "Rendered as a compact horizontal banner. It will not occupy a card-sized media stage.";
+  if (input.family === "WIDE") return "Rendered only in a deliberate wide banner layout at native size or smaller.";
+  if (input.family === "BRAND_ART") return "Eligible for the review hero when crop-safe; the brand artwork remains inert.";
+  if (input.family === "PORTRAIT_INVENTORY") return "Portrait inventory is unsupported on current public surfaces.";
+  return "Rendered as a compact inert operator identity fallback, never as a commercial creative.";
 }
 
 function preferred(detail: string, creativeFormat: CommercialCreativeFormat): CommercialCreativeAssessment {

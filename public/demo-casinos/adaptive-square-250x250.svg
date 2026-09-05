@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="250" viewBox="0 0 250 250" role="img" aria-labelledby="title description">
+  <title id="title">B4GAMBLE square card creative fixture</title>
+  <desc id="description">A controlled 250 by 250 visual fixture used only for local layout verification.</desc>
+  <rect width="250" height="250" fill="#100f0f"/>
+  <path d="M0 0h12v250H0z" fill="#e4e24e"/>
+  <path d="M34 38h184M34 212h184" stroke="#fafaf7" stroke-opacity=".18"/>
+  <text x="34" y="65" fill="#e4e24e" font-family="Arial,sans-serif" font-size="10" font-weight="700" letter-spacing="1.5">B4GAMBLE / CONTROLLED</text>
+  <text x="34" y="132" fill="#fafaf7" font-family="Arial,sans-serif" font-size="31" font-weight="800">CARD</text>
+  <text x="34" y="163" fill="#fafaf7" fill-opacity=".64" font-family="Arial,sans-serif" font-size="16">250 × 250</text>
+</svg>

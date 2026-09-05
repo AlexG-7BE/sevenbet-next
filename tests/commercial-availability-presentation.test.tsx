@@ -171,11 +171,12 @@ test("casino directory promotional media follows the governed Visit action and f
   assert.match(fallback, /role="img"/);
   assert.doesNotMatch(fallback, /data-commercial-action-source="CREATIVE"/);
 
-  const composedFallback = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
+  const composedCreative = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
     hero: { ...promotional.hero!, renderingMode: "COMPOSED" },
   })]} messages={messages} presentation={presentation} />);
-  assert.match(composedFallback, /role="img"/);
-  assert.doesNotMatch(composedFallback, /data-commercial-action-source="CREATIVE"/);
+  assert.match(composedCreative, /data-presentation-family="CARD"/);
+  assert.match(composedCreative, /data-commercial-action-source="CREATIVE"/);
+  assert.match(composedCreative, /src="\/controlled\/truth-casino-300x250\.jpg"/);
 });
 
 test("bonus result summaries stay neutral while record labels reflect their classification", async () => {

@@ -9,8 +9,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   assessCommercialCreative,
   commercialCreativeFormat,
+  commercialCreativePresentationFamily,
   commercialCreativeFormats,
   commercialCreativeWeightWarning,
+  creativePresentationFamily,
+  creativePresentationGuidance,
 } from "../lib/media/commercial-formats";
 import { parseCommercialAssetManifest } from "../lib/commercial-activation/asset-contract";
 import { MediaValidationError, validateMediaUpload } from "../lib/media/image-validation";
@@ -122,6 +125,22 @@ test("the deterministic format registry covers core, mobile, wide, inventory, an
   }
   assert.equal(commercialCreativeFormat(300, 250)?.id, "MEDIUM_RECTANGLE_300_250");
   assert.equal(commercialCreativeFormat(251, 250), null);
+  assert.equal(commercialCreativePresentationFamily(300, 250), "CARD");
+  assert.equal(commercialCreativePresentationFamily(250, 250), "CARD");
+  assert.equal(commercialCreativePresentationFamily(336, 280), "CARD");
+  assert.equal(commercialCreativePresentationFamily(320, 100), "MOBILE_LANDSCAPE");
+  assert.equal(commercialCreativePresentationFamily(300, 100), "MOBILE_LANDSCAPE");
+  assert.equal(commercialCreativePresentationFamily(320, 50), "STRIP");
+  assert.equal(commercialCreativePresentationFamily(300, 50), "STRIP");
+  assert.equal(commercialCreativePresentationFamily(468, 60), "STRIP");
+  assert.equal(commercialCreativePresentationFamily(728, 90), "WIDE");
+  assert.equal(commercialCreativePresentationFamily(970, 90), "WIDE");
+  assert.equal(commercialCreativePresentationFamily(970, 250), "WIDE");
+  assert.equal(commercialCreativePresentationFamily(160, 600), "PORTRAIT_INVENTORY");
+  assert.equal(creativePresentationFamily({ placement: "CASINO_DETAIL_HERO", width: 1600, height: 900 }), "BRAND_ART");
+  assert.equal(creativePresentationFamily({ placement: "CASINO_DETAIL_HERO", mediaType: "LOGO", width: 250, height: 250 }), "LOGO_ONLY");
+  assert.match(creativePresentationGuidance({ family: "STRIP", placement: "BONUS_LISTING_CARD" }), /compact horizontal banner/i);
+  assert.match(creativePresentationGuidance({ family: "CARD", placement: "CASINO_DETAIL_HERO" }), /not enlarged as review hero art/i);
   assert.equal(assessCommercialCreative({ placement: "BONUS_LISTING_CARD", variant: "DEFAULT", width: 300, height: 250 }).state, "PREFERRED");
   assert.equal(assessCommercialCreative({ placement: "BONUS_LISTING_CARD", variant: "DEFAULT", width: 250, height: 250 }).state, "COMPATIBLE");
   assert.equal(assessCommercialCreative({ placement: "BONUS_LISTING_CARD", variant: "MOBILE", width: 320, height: 50 }).state, "PREFERRED");
@@ -275,8 +294,13 @@ test("governed batch ingestion and local media serving retain the validated GIF 
   assert.match(readFileSync("app/api/media/local/[...key]/route.ts", "utf8"), /gif:\s*"image\/gif"/);
 });
 
-function placementMedia(placement: "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_DETAIL_HERO", url = "/api/media/local/creative.gif", renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAIN"): PublicPlacementMedia {
-  const asset = { id: "creative", type: "other" as const, url, alt: "Current verified offer creative", width: 300, height: 250, caption: null };
+function placementMedia(
+  placement: "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_DETAIL_HERO" | "CASINO_OFFER_BLOCK",
+  url = "/api/media/local/creative.gif",
+  renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAIN",
+  dimensions = { width: 300, height: 250 },
+): PublicPlacementMedia {
+  const asset = { id: "creative", type: "other" as const, url, alt: "Current verified offer creative", ...dimensions, caption: null };
   const resolution = {
     asset,
     assignmentId: "assignment",
@@ -295,6 +319,7 @@ function placementMedia(placement: "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" 
 
 function profileCasino(renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAIN"): PublicCasinoDTO {
   const placement = placementMedia("CASINO_DETAIL_HERO", "/controlled/skol-300x250.jpg", renderingMode);
+  const offerPlacement = placementMedia("CASINO_OFFER_BLOCK", "/controlled/skol-300x250.jpg", renderingMode);
   return {
     source: "cms", id: "skol-id", slug: "skol-casino", name: "Skol Casino", title: "Skol Casino",
     domain: "operator.example", summary: "Published factual summary.", reviewContent: "Published editorial review.", operator: "Skol Operator",
@@ -310,6 +335,7 @@ function profileCasino(renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAI
       minimumDeposit: 10, maximumBonus: 150, maximumBet: 5, currency: "GBP", freeSpins: 20, wageringMultiplier: 30,
       wageringText: "30× wagering", eligibility: "New eligible customers only", importantConditions: ["Terms apply"], termsUrl: null,
       startsAt: null, expiresAt: null, affiliate: { href: "/r/skol-current-offer", available: true },
+      media: { CASINO_OFFER_BLOCK: offerPlacement },
     }],
     media: { logo: null, hero: placement.asset, screenshots: [], gallery: [], socialImage: null, placements: { CASINO_DETAIL_HERO: placement } },
     affiliate: { href: "/r/skol-casino", available: true },
@@ -345,13 +371,22 @@ test("authorized creative markup uses the governed route while blocked creative 
   assert.match(creative, /<a[^>]+data-commercial-action-source="CREATIVE"[^>]*>[\s\S]*?<figure[\s\S]*?<\/figure><\/a>/);
   assert.doesNotMatch(creative, /go\.superflypartners\.net|record\.[^\s"']+|betsson[^\s"']*tracker/i);
 
+  const stripPlacement = placementMedia("BONUS_LISTING_CARD", "/casino-brands/slotnite/partner-brand.gif", "COMPOSED", { width: 320, height: 50 });
+  const stripOffer: PublicOfferDTO = { ...available, bonus: { ...available.bonus, media: { BONUS_LISTING_CARD: stripPlacement } } };
+  const stripCreative = renderToStaticMarkup(React.createElement(CommercialOfferMedia, { messages, offer: stripOffer, variant: "bonus" }));
+  assert.match(stripCreative, /data-presentation-family="STRIP"/);
+  assert.match(stripCreative, /data-creative-scale-cap="1"/);
+  assert.match(stripCreative, /src="\/casino-brands\/slotnite\/partner-brand\.gif"/);
+  const stripFigure = stripCreative.match(/<figure[\s\S]*?<\/figure>/)?.[0] ?? "";
+  assert.doesNotMatch(stripFigure, /100% up to|compositionIdentity|controlledStrip/i);
+
   const blocked: PublicOfferDTO = { ...available, commercialAvailability: "UNAVAILABLE", action: { available: false, href: null } };
   const blockedCreative = renderToStaticMarkup(React.createElement(CommercialOfferMedia, { messages, offer: blocked, variant: "bonus" }));
   assert.match(blockedCreative, /data-media-state="presented"/);
   assert.doesNotMatch(blockedCreative, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
 });
 
-test("Casino detail hero promotional media is governed in every rendering mode while blocked and brand fallbacks stay inert", async () => {
+test("review heroes stay inert while promotional formats move to the governed Casino offer block", async () => {
   const require = createRequire(import.meta.url);
   require.extensions[".css"] = () => undefined;
   (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -367,8 +402,10 @@ test("Casino detail hero promotional media is governed in every rendering mode w
       messages,
       presentation,
     }));
-    assert.match(html, new RegExp(`<a[^>]+data-media-mode="${renderingMode}"[^>]+data-commercial-action-placement="CASINO_DETAIL_HERO"[^>]+data-commercial-action-source="CREATIVE"[^>]+href="/outbound/skol-current-offer"`));
-    assert.match(html, /aria-label="[^"]*Skol Casino[^"]*—[^"]*(?:Verified Skol welcome offer|100%)[^"]*"/);
+    assert.match(html, /<aside[^>]+data-media-mode="COMPOSED"[^>]+data-presentation-family="LOGO_ONLY"[^>]+data-suppressed-promotion-family="CARD"/);
+    assert.doesNotMatch(html, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
+    assert.match(html, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CREATIVE"[^>]+data-commercial-media-variant="casino-offer"[^>]+href="\/outbound\/skol-current-offer"/);
+    assert.match(html, /data-presentation-family="CARD"/);
     assert.match(html, /data-commercial-action-source="CTA"[^>]+href="\/outbound\/skol-current-offer"/);
     assert.doesNotMatch(html, /href="https?:\/\/operator\.example/);
   }
@@ -385,6 +422,25 @@ test("Casino detail hero promotional media is governed in every rendering mode w
   const fallback = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: brandOnly, editorial: null, messages, presentation }));
   assert.match(fallback, /data-media-ratio="brand"/);
   assert.doesNotMatch(fallback, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
+
+  const brandArtCasino = profileCasino();
+  const brandArt = { id: "brand-art", type: "hero" as const, url: "/controlled/skol-brand-art.jpg", alt: "Skol operator artwork", width: 1600, height: 900, caption: null };
+  const brandArtPlacement = placementMedia("CASINO_DETAIL_HERO", brandArt.url, "COVER", { width: 1600, height: 900 });
+  brandArtPlacement.asset = brandArt;
+  brandArtCasino.media = { ...brandArtCasino.media, hero: brandArt, placements: { ...brandArtCasino.media.placements, CASINO_DETAIL_HERO: brandArtPlacement } };
+  const brandArtHtml = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: brandArtCasino, editorial: null, messages, presentation }));
+  assert.match(brandArtHtml, /<aside[^>]+data-media-mode="COVER"[^>]+data-presentation-family="BRAND_ART"/);
+  assert.match(brandArtHtml, /src="\/controlled\/skol-brand-art\.jpg"/);
+  assert.doesNotMatch(brandArtHtml, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
+
+  const logoOfferCasino = profileCasino();
+  const logoOffer = placementMedia("CASINO_OFFER_BLOCK", "/controlled/skol-logo.png", "COMPOSED", { width: 250, height: 250 });
+  logoOffer.asset = { ...logoOffer.asset!, type: "logo" };
+  logoOffer.source = "LOGO_COMPOSITION";
+  logoOfferCasino.bonuses = logoOfferCasino.bonuses.map((entry) => ({ ...entry, media: { CASINO_OFFER_BLOCK: logoOffer } }));
+  const logoOfferHtml = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: logoOfferCasino, editorial: null, messages, presentation }));
+  assert.match(logoOfferHtml, /data-presentation-family="LOGO_ONLY"/);
+  assert.doesNotMatch(logoOfferHtml, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CREATIVE"/);
 });
 
 test("Admin and public components keep one format contract and no raw partner embed path", () => {
@@ -398,10 +454,15 @@ test("Admin and public components keep one format contract and no raw partner em
   assert.match(editor, /Valid unusual images remain assignable with a warning/);
   assert.match(selector, /image\/gif/);
   assert.match(commercial, /GovernedCommercialAction/);
-  assert.match(commercialStyles, /\.composed\[data-mobile-commercial-family="MOBILE_LARGE"\]/);
-  assert.match(commercialStyles, /\.composed\[data-mobile-commercial-family="MOBILE_BANNER"\]/);
-  assert.match(commercialStyles, /\.controlledStrip \{ width:100%; height:auto; max-width:none; max-height:none;/);
+  assert.match(editor, /Expected presentation/);
+  assert.match(editor, /creativePresentationGuidance/);
+  assert.match(commercialStyles, /\.frame\[data-presentation-family="CARD"\]/);
+  assert.match(commercialStyles, /\.frame\[data-presentation-family="STRIP"\] \.mediaStage \{ height:78px/);
+  assert.match(commercialStyles, /\.frame\[data-offer-media\]\[data-mobile-presentation-family="MOBILE_LANDSCAPE"\]/);
+  assert.match(commercialStyles, /\.mediaArtwork \{ width:auto; height:auto; max-width:100%; max-height:100%/);
+  assert.doesNotMatch(commercial, /compositionIdentity|controlledStrip/);
   assert.match(profile, /placement: "CASINO_OFFER_BLOCK"/);
+  assert.doesNotMatch(profile, /context=\{\{ source: "CREATIVE", placement: "CASINO_DETAIL_HERO" \}\}/);
   for (const source of [commercial, profile]) {
     assert.doesNotMatch(source, /dangerouslySetInnerHTML|<iframe|partnerClickUrl|impression(?:Pixel|Url)/i);
   }

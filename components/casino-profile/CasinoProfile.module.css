@@ -671,3 +671,128 @@
   .composedMedia .controlledStrip { max-width:min(100%,256px); max-height:40px; margin-top:2px; }
   .decisionBar { transition: opacity 160ms cubic-bezier(.2,.8,.2,1); }
 }
+
+/* Adaptive Creative Layouts: the review hero is editorial/brand space. Standard
+   commercial formats are rendered later by the bounded offer module. */
+.hero {
+  min-height:0;
+  grid-template-columns:minmax(0,60%) minmax(360px,40%);
+  align-items:start;
+}
+.heroReview { padding:72px 38px 32px; }
+.heroMedia {
+  width:auto;
+  height:600px;
+  min-height:0;
+  max-height:600px;
+  margin:32px 28px 32px 0;
+  padding:0;
+  align-self:start;
+}
+.heroMediaCanvas {
+  width:100%;
+  height:100%;
+  min-height:0;
+}
+.heroMediaCanvas img {
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+}
+.heroMediaCanvas[data-cover] img { object-fit:cover; }
+.brandMedia {
+  width:100%;
+  height:100%;
+  min-height:0;
+  padding:38px;
+  align-content:center;
+  gap:10px;
+}
+.brandMedia > span { top:28px; left:28px; }
+.brandMedia img { width:auto; height:auto; max-width:116px; max-height:116px; margin:0 auto 22px; }
+.brandMedia > i {
+  width:96px;
+  height:96px;
+  margin:0 auto 22px;
+  border:1px solid rgba(228,226,78,.36);
+  border-radius:50%;
+  display:block;
+}
+.brandMedia strong { font-size:clamp(30px,3vw,46px); }
+
+/* Casino offer media earns only the height required by its physical family. */
+.offerPlacementMedia {
+  height:320px;
+  min-height:0;
+  padding:20px;
+}
+.offerPlacementMedia[data-presentation-family] .offerPlacementArtwork,
+.offerPlacementMedia[data-mobile-presentation-family] .offerPlacementArtwork {
+  width:auto;
+  height:auto;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+}
+.offerPlacementMedia[data-presentation-family="CARD"] { height:320px; }
+.offerPlacementMedia[data-presentation-family="MOBILE_LANDSCAPE"] { height:142px; padding:18px; }
+.offerPlacementMedia[data-presentation-family="STRIP"] { height:98px; padding:20px; }
+.offerPlacementMedia[data-presentation-family="WIDE"] { height:134px; padding:20px; }
+.offerPlacementMedia[data-presentation-family="LOGO_ONLY"],
+.offerPlacementMedia[data-presentation-family="PORTRAIT_INVENTORY"] { height:112px; padding:18px 22px; }
+.offerPlacementFallback {
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+.offerPlacementFallback span { color:var(--acid); font-size:12px; font-weight:800; letter-spacing:.12em; }
+.offerPlacementFallback strong { color:var(--white); font-size:16px; text-transform:uppercase; }
+
+@media (min-width:761px) and (max-width:1099px) {
+  .hero { grid-template-columns:minmax(0,1fr); }
+  .heroReview { padding:82px 32px 32px; }
+  .heroMedia {
+    width:calc(100% - 64px);
+    height:300px;
+    min-height:0;
+    max-height:300px;
+    margin:0 32px 32px;
+  }
+  .brandMedia { min-height:0; padding:30px; }
+  .brandMedia img { max-width:82px; max-height:82px; margin-bottom:12px; }
+  .brandMedia strong { font-size:32px; }
+}
+
+@media (max-width:760px) {
+  .hero { display:grid; grid-template-columns:minmax(0,1fr); }
+  .heroReview { padding:92px var(--site-gutter) 28px; }
+  .heroMedia {
+    width:100%;
+    height:190px;
+    min-height:0;
+    max-height:190px;
+    margin:0;
+    padding:0;
+  }
+  .heroMediaCanvas { min-height:0; }
+  .brandMedia { min-height:0; padding:22px; gap:5px; }
+  .brandMedia > span { top:16px; left:18px; font-size:10px; }
+  .brandMedia img { max-width:62px; max-height:62px; margin:8px auto 6px; }
+  .brandMedia > i { width:52px; height:52px; margin:8px auto 6px; }
+  .brandMedia strong { font-size:26px; }
+  .brandMedia small { font-size:11px; }
+
+  .offerPlacementMedia,
+  .offerPlacementMedia[data-mobile-presentation-family] { aspect-ratio:auto; }
+  .offerPlacementMedia[data-mobile-presentation-family="CARD"] { height:292px; padding:16px; }
+  .offerPlacementMedia[data-mobile-presentation-family="MOBILE_LANDSCAPE"] { height:132px; padding:14px; }
+  .offerPlacementMedia[data-mobile-presentation-family="STRIP"] { height:86px; padding:14px; }
+  .offerPlacementMedia[data-mobile-presentation-family="WIDE"] { height:112px; padding:14px; }
+  .offerPlacementMedia[data-mobile-presentation-family="LOGO_ONLY"],
+  .offerPlacementMedia[data-mobile-presentation-family="PORTRAIT_INVENTORY"] { height:96px; padding:15px 18px; }
+}

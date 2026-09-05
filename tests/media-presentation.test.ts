@@ -66,7 +66,7 @@ test("controlled promotional media stays editorially visible independently of it
   assert.equal(mayPresentPromotionalMedia({ demonstration: true, governedActionAvailable: false }), true);
 });
 
-test("missing or incompatible artwork becomes a controlled composition without contradicting an available action", async () => {
+test("missing and portrait inventory become compact inert identity presentations", async () => {
   const require = createRequire(import.meta.url);
   require.extensions[".css"] = () => undefined;
   (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -79,15 +79,19 @@ test("missing or incompatible artwork becomes a controlled composition without c
     commercialAvailability: "AVAILABLE",
     dataClassification: "PUBLISHED_RECORD",
   };
-  for (const hero of [null, { id: "portrait", type: "hero" as const, url: "/portrait.jpg", alt: "Portrait", width: 300, height: 600, caption: null }]) {
+  for (const [hero, family] of [
+    [null, "LOGO_ONLY"],
+    [{ id: "portrait", type: "hero" as const, url: "/portrait.jpg", alt: "Portrait", width: 300, height: 600, caption: null }, "PORTRAIT_INVENTORY"],
+  ] as const) {
     const offer = { ...available, casino: { ...available.casino, hero } };
     const html = renderToStaticMarkup(React.createElement(CommercialOfferMedia, { messages, offer, variant: "featured" }));
     assert.equal(offer.action.available, true);
     assert.match(html, /data-media-mode="COMPOSED"/);
-    assert.match(html, new RegExp(offer.casino.name));
-    assert.match(html, new RegExp(offer.bonus.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-    assert.doesNotMatch(html, new RegExp(messages.common.mediaUnavailableTitle));
+    assert.match(html, new RegExp('data-presentation-family="' + family + '"'));
+    assert.match(html, new RegExp(messages.common.mediaUnavailableTitle));
     assert.doesNotMatch(html, new RegExp(messages.common.commercialUnavailable));
+    assert.doesNotMatch(html, /data-commercial-action-source="CREATIVE"|href="\/outbound\//);
+    assert.doesNotMatch(html, /Demo welcome presentation/);
   }
 });
 
