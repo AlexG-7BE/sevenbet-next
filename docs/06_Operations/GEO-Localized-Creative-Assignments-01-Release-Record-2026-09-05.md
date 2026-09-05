@@ -36,7 +36,8 @@ Vercel deployment `dpl_ANq5SXZAGB8XnE7ZQ9RuckN2gLhu` at
 **Release-record branch:**
 `codex/geo-localized-creative-assignments-01-release-record`
 
-**Release-record pull request:** pending creation
+**Release-record pull request:**
+[#164](https://github.com/AlexG-7BE/sevenbet-next/pull/164)
 
 This record contains no database credential, OAuth token/code, raw IP, raw
 partner destination, visitor data or Programme data. Claims use **DETECTED**,
