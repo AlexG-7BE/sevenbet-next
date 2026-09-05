@@ -11,7 +11,7 @@
 .frame,.identityFallback { width:100%; min-width:0; min-height:0; margin:0; position:relative; overflow:hidden; align-self:center; display:flex; flex-direction:column; background:#171616; color:#fafaf7; }
 .mediaStage { min-height:0; height:286px; padding:18px; flex:0 0 auto; display:grid; place-items:center; overflow:hidden; background:radial-gradient(circle at 50% 44%,#292929 0,#171717 72%); }
 .mediaArtwork { width:auto; height:auto; max-width:100%; max-height:100%; display:block; object-fit:contain; object-position:center; filter:drop-shadow(0 14px 24px rgba(0,0,0,.24)); }
-.frame figcaption,.identityFallback figcaption { min-height:42px; padding:10px 16px; border-top:1px solid rgba(250,250,247,.14); display:flex; align-items:center; justify-content:space-between; gap:16px; color:rgba(250,250,247,.64); font-size:11px; line-height:18px; letter-spacing:.08em; text-transform:uppercase; }
+.frame figcaption,.identityFallback figcaption { min-height:42px; padding:10px 16px; border-top:1px solid rgba(250,250,247,.14); display:flex; align-items:center; justify-content:space-between; gap:16px; color:rgba(250,250,247,.64); font-size:12px; line-height:18px; letter-spacing:.08em; text-transform:uppercase; }
 .frame figcaption small,.identityFallback figcaption small { font:inherit; }
 
 /* The physical family controls component geometry. Artwork remains intrinsic
@@ -29,7 +29,7 @@
 .identityFallback { height:150px; background:linear-gradient(135deg,#201f1f,#100f0f); }
 .identityFallbackBody { min-height:0; padding:24px; position:relative; flex:1; display:flex; flex-direction:column; justify-content:space-between; gap:12px; isolation:isolate; }
 .identityFallbackBody::after { position:absolute; inset:0; z-index:-1; content:""; background:repeating-linear-gradient(135deg,transparent 0 24px,rgba(255,255,255,.025) 24px 25px); }
-.identityFallbackBody span { color:#e4e24e; font-size:11px; line-height:16px; font-weight:750; letter-spacing:.13em; text-transform:uppercase; }
+.identityFallbackBody span { color:#e4e24e; font-size:12px; line-height:16px; font-weight:750; letter-spacing:.13em; text-transform:uppercase; }
 .identityFallbackBody strong { max-width:24ch; font-size:18px; line-height:1.1; text-transform:uppercase; }
 .identityFallbackBody i { width:74px; height:1px; position:absolute; top:28px; right:24px; background:#e4e24e; transform:rotate(-28deg); transform-origin:right; }
 .identityFallback[data-offer-media="bonus"] { height:150px; align-self:stretch; }
@@ -47,7 +47,7 @@
   .frame[data-offer-media][data-mobile-presentation-family="MOBILE_LANDSCAPE"] .mediaStage { height:126px; padding:13px; }
   .frame[data-offer-media][data-mobile-presentation-family="STRIP"] .mediaStage { height:72px; padding:11px 14px; }
   .frame[data-offer-media][data-mobile-presentation-family="WIDE"] .mediaStage { height:112px; padding:14px; }
-  .frame figcaption,.identityFallback figcaption { min-height:38px; padding:8px 12px; font-size:10px; }
+  .frame figcaption,.identityFallback figcaption { min-height:38px; padding:8px 12px; font-size:12px; }
   .identityFallback,.identityFallback[data-offer-media="bonus"] { height:132px; }
   .identityFallbackBody { padding:20px; }
   .identityFallbackBody i { display:none; }

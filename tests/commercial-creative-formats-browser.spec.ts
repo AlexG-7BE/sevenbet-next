@@ -120,6 +120,10 @@ test("a COMPOSED 320×50 asset renders as the real strip without cloned identity
   expect(geometry.imageHeight).toBeLessThanOrEqual(50);
   await expect(figure).not.toContainText(/duplicated|100%|free spins|Slotnite/i);
   await expect(figure).toContainText("B4GAMBLE / CONTROLLED MEDIA");
+  const captionSizes = await figure.locator("figcaption span, figcaption small").evaluateAll((elements) =>
+    elements.map((element) => Number.parseFloat(getComputedStyle(element).fontSize)),
+  );
+  expect(captionSizes.every((size) => size >= 12)).toBe(true);
 });
 
 test("Best Offers promotes strip and wide inventory into deliberate full-width bands", async ({ browser }) => {
