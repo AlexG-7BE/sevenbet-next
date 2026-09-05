@@ -5,6 +5,7 @@
 - **Baseline `origin/main`:** `2ebe1d76c9e70b278acbbfb3ac69d4864867c9c4`
 - **Accepted implementation head:** `2124d6c35dd916158342af8f37a8616474cac1a5`
 - **Application pull request:** [#165](https://github.com/AlexG-7BE/sevenbet-next/pull/165)
+- **Documentation closure pull request:** [#166](https://github.com/AlexG-7BE/sevenbet-next/pull/166)
 - **Production application merge SHA:** `02034b520ecd2c0c6f2ebd1605baa4c4b7275cb5`
 - **Production deployment:** `dpl_DcAiTyArEtqLYQZpNco1yrKymU47`
 - **Status:** COMPLETE — DEPLOYED AND VERIFIED IN PRODUCTION
