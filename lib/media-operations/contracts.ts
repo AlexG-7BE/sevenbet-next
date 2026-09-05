@@ -51,6 +51,32 @@ export const safeUrlEvidenceSchema = z.object({
   queryKeys: z.array(z.string().max(100)).max(50),
 }).strict();
 
+function isFirstPartyMediaReference(value: string) {
+  if (value.startsWith("/")) {
+    if (value.startsWith("//") || value.includes("\\") || /[\s?#]/.test(value)) return false;
+    try {
+      return value.split("/").slice(1).every((segment) => {
+        if (!segment) return false;
+        const decoded = decodeURIComponent(segment);
+        return decoded !== "." && decoded !== ".." && !decoded.includes("/") && !decoded.includes("\\");
+      });
+    } catch {
+      return false;
+    }
+  }
+  try {
+    const url = new URL(value);
+    return !url.username && !url.password && (
+      url.protocol === "https:"
+      || (url.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname))
+    );
+  } catch {
+    return false;
+  }
+}
+
+export const firstPartyMediaReferenceSchema = z.string().min(1).max(2048).refine(isFirstPartyMediaReference, "Invalid first-party media reference");
+
 const parsedCreativeSchema = z.object({
   id: z.string().uuid(),
   sourceKind: z.enum(["ANCHOR_IMAGE", "IMAGE", "DIRECT_URL", "SAFE_DATA_IMAGE"]),
@@ -73,7 +99,7 @@ const ingestedAssetSchema = z.object({
   creativeId: z.string().uuid(),
   state: z.enum(["INGESTED", "REUSED", "DRY_RUN_VALID", "REJECTED", "REVIEW_REQUIRED"]),
   assetId: z.string().uuid().nullable(),
-  firstPartyUrl: z.string().url().nullable(),
+  firstPartyUrl: firstPartyMediaReferenceSchema.nullable(),
   checksum: z.string().length(64).nullable(),
   mimeType: z.enum(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"]).nullable(),
   width: z.number().int().positive().nullable(),

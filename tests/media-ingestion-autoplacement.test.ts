@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { deflateSync } from "node:zlib";
 
-import { MEDIA_INGESTION_PLAN_VERSION, mediaIngestionPlanSchema, type MediaIngestionPlan, type MediaSemanticResult } from "../lib/media-operations/contracts";
+import { firstPartyMediaReferenceSchema, MEDIA_INGESTION_PLAN_VERSION, mediaIngestionPlanSchema, type MediaIngestionPlan, type MediaSemanticResult } from "../lib/media-operations/contracts";
 import { parsePartnerSnippet, persistedCreativeEvidence } from "../lib/media-operations/parser";
 import { buildMediaPlacementPlan } from "../lib/media-operations/planner";
 import { createPinnedLookup, fetchRemoteImage, isBlockedRemoteAddress, RemoteImageFetchError, type RemoteImageTransport } from "../lib/media-operations/remote-image-fetch";
@@ -280,6 +280,15 @@ test("Media Operations global checksum mode retains the processed-byte duplicate
   assert.equal(result.duplicate, true);
   assert.equal(result.record.id, existing.id);
   assert.equal(storageTouched, false);
+});
+
+test("durable plans accept governed root-relative media and reject ambiguous or executable references", () => {
+  assert.equal(firstPartyMediaReferenceSchema.parse("/casino-brands/diamond7/partner-offer.jpg"), "/casino-brands/diamond7/partner-offer.jpg");
+  assert.equal(firstPartyMediaReferenceSchema.parse("https://media.b4gamble.com/media/creative.jpg"), "https://media.b4gamble.com/media/creative.jpg");
+  assert.equal(firstPartyMediaReferenceSchema.parse("http://localhost:4173/api/media/local/creative.jpg"), "http://localhost:4173/api/media/local/creative.jpg");
+  for (const unsafe of ["//partner.example/creative.jpg", "/media/../secret", "/media/%2e%2e/secret", "/media/%2Fsecret", "javascript:alert(1)", "http://partner.example/creative.jpg"]) {
+    assert.throws(() => firstPartyMediaReferenceSchema.parse(unsafe));
+  }
 });
 
 const casinoId = "11111111-1111-4111-8111-111111111111";

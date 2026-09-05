@@ -127,6 +127,9 @@ by another Casino is retained without creating another object/row, but the plan
 becomes
 `DUPLICATE_OWNER_REVIEW_REQUIRED` and cannot auto-assign it. A post-upload
 lookup closes the concurrent unique-key race without deleting a shared object.
+Durable plan references accept controlled HTTPS URLs and normalized
+root-relative first-party media paths already used by the Media Library; they
+reject protocol-relative, traversal, executable and insecure remote forms.
 
 The durable plan adds source/provider evidence even when an existing asset is
 reused. It does not rewrite shared asset ownership merely to satisfy a new
