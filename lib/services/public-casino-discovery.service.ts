@@ -120,6 +120,45 @@ function matchesAny(selected: string[] | undefined, values: string[]) {
   return !selected?.length || selected.some((value) => values.includes(value));
 }
 
+function usesSingleConnectionPool() {
+  try {
+    return new URL(process.env.DATABASE_URL ?? "").searchParams.get("connection_limit") === "1";
+  } catch {
+    return false;
+  }
+}
+
+function discoveryRequestKey(
+  input: CasinoDiscoveryQuery,
+  authority: CommercialJurisdictionAuthority | null | undefined,
+  options: { defaultEditorialCountry?: string },
+) {
+  return JSON.stringify({ input, authority: authority ?? null, options });
+}
+
+class PublicDiscoveryDatabaseCoordinator {
+  private readonly inFlight = new Map<string, Promise<CasinoDiscoveryResult>>();
+  private tail: Promise<void> = Promise.resolve();
+
+  run(key: string, operation: () => Promise<CasinoDiscoveryResult>) {
+    if (!usesSingleConnectionPool()) return operation();
+
+    const existing = this.inFlight.get(key);
+    if (existing) return existing;
+
+    const previous = this.tail;
+    let release!: () => void;
+    this.tail = new Promise<void>((resolve) => { release = resolve; });
+    const pending = previous.then(operation).finally(release);
+    this.inFlight.set(key, pending);
+    const remove = () => {
+      if (this.inFlight.get(key) === pending) this.inFlight.delete(key);
+    };
+    void pending.then(remove, remove);
+    return pending;
+  }
+}
+
 function searchScore(item: WorkingCard, query: string) {
   if (!query) return 0;
   const name = normalizeDiscoverySearch(item.card.name);
@@ -140,6 +179,8 @@ function searchScore(item: WorkingCard, query: string) {
 }
 
 export class PublicCasinoDiscoveryService {
+  private readonly databaseCoordinator = new PublicDiscoveryDatabaseCoordinator();
+
   constructor(
     private readonly store: PublicCasinoDiscoveryStore = publicCasinoDiscoveryRepository,
     private readonly now = () => new Date(),
@@ -151,6 +192,17 @@ export class PublicCasinoDiscoveryService {
     input: CasinoDiscoveryQuery = {},
     authority?: CommercialJurisdictionAuthority | null,
     options: { defaultEditorialCountry?: string } = {},
+  ): Promise<CasinoDiscoveryResult> {
+    return this.databaseCoordinator.run(
+      discoveryRequestKey(input, authority, options),
+      () => this.performDiscovery(input, authority, options),
+    );
+  }
+
+  private async performDiscovery(
+    input: CasinoDiscoveryQuery,
+    authority: CommercialJurisdictionAuthority | null | undefined,
+    options: { defaultEditorialCountry?: string },
   ): Promise<CasinoDiscoveryResult> {
     const now = this.now();
     const requestCountryContext = options.defaultEditorialCountry?.trim().toUpperCase() || null;

@@ -15,6 +15,7 @@ import { resolveCommercialMcpConfig } from "../lib/mcp/commercial/config";
 import { hashCommercialMcpPresentedToken } from "../lib/mcp/commercial/provider";
 import { resolveMediaMcpConfig } from "../lib/mcp/media/config";
 import { publicCasinoDiscoveryRepository } from "../lib/repositories/public-casino-discovery.repository";
+import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 
 const fixture = {
   userId: "production-db-reliability-user",
@@ -182,13 +183,13 @@ async function withSaturatedApplicationPool<T>(database: PrismaClient, key: numb
   }
 }
 
-async function withDiscoveryTablesLocked<T>(database: PrismaClient, operation: () => Promise<T>) {
+async function withTablesLocked<T>(database: PrismaClient, tables: string, operation: () => Promise<T>) {
   let markReady!: () => void;
   let release!: () => void;
   const ready = new Promise<void>((resolve) => { markReady = resolve; });
   const released = new Promise<void>((resolve) => { release = resolve; });
   const holder = database.$transaction(async (transaction) => {
-    await transaction.$executeRawUnsafe('LOCK TABLE "CasinoAlias", "AffiliateOffer", "AffiliateRedirectSlug" IN ACCESS EXCLUSIVE MODE');
+    await transaction.$executeRawUnsafe(`LOCK TABLE ${tables} IN ACCESS EXCLUSIVE MODE`);
     markReady();
     await released;
   }, { timeout: 8_000 });
@@ -256,13 +257,44 @@ test("one-connection Production-shaped pool stays bounded across discovery, MCP,
     assert.equal(concurrent.filter((result) => result.status === "rejected").length, 0);
 
     const lockStarted = performance.now();
-    const lockedResult = await withDiscoveryTablesLocked(
+    const lockedResult = await withTablesLocked(
       database,
+      '"CasinoAlias", "AffiliateOffer", "AffiliateRedirectSlug"',
       () => publicCasinoDiscoveryRepository.loadContext([discoveryId]),
     );
     const lockedMs = performance.now() - lockStarted;
     assert.deepEqual(lockedResult, { aliases: [], offers: [], redirects: [] });
     assert.ok(lockedMs >= 1_300 && lockedMs < 4_000, `controlled lock completed in ${lockedMs}ms`);
+
+    let activePublishedReads = 0;
+    let maximumPublishedReadConcurrency = 0;
+    let publishedReadCount = 0;
+    const coordinatedDiscovery = new PublicCasinoDiscoveryService({
+      async listPublished() {
+        activePublishedReads += 1;
+        maximumPublishedReadConcurrency = Math.max(maximumPublishedReadConcurrency, activePublishedReads);
+        publishedReadCount += 1;
+        try {
+          await prisma.$queryRaw`SELECT cv."casinoId" FROM "CasinoVersion" cv LIMIT 0`;
+          return [];
+        } finally {
+          activePublishedReads -= 1;
+        }
+      },
+      async loadContext() { return { aliases: [], offers: [], redirects: [] }; },
+    } as never, undefined, undefined, () => false);
+    const coordinatedStarted = performance.now();
+    const coordinated = await withTablesLocked(
+      database,
+      '"CasinoVersion"',
+      () => Promise.allSettled(Array.from({ length: 8 }, (_, index) => coordinatedDiscovery.discover({ page: index + 1 }))),
+    );
+    const coordinatedMs = performance.now() - coordinatedStarted;
+    assert.equal(coordinated.filter((result) => result.status === "rejected").length, 0);
+    assert.equal(maximumPublishedReadConcurrency, 1);
+    assert.equal(publishedReadCount, 8);
+    await coordinatedDiscovery.discover({ page: 1 });
+    assert.equal(publishedReadCount, 9, "completed results are not retained as stale cache entries");
 
     await createFixtures(database);
     for (const [index, post] of [postCommercialMcp, postMediaMcp].entries()) {
@@ -309,6 +341,8 @@ test("one-connection Production-shaped pool stays bounded across discovery, MCP,
         eightConcurrentMs: Number(concurrentMs.toFixed(2)),
         p2024Count: 0,
         controlledLockMs: Number(lockedMs.toFixed(2)),
+        coordinatedConcurrentMs: Number(coordinatedMs.toFixed(2)),
+        coordinatedMaximumDatabaseConcurrency: maximumPublishedReadConcurrency,
       },
     }));
   } finally {
