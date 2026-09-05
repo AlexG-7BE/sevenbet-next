@@ -36,7 +36,7 @@ Repository evidence was reconciled from root `/Users/alex/Documents/Codex/2026-0
 - Unsafe Self-Check and budget-tool mechanics: replaced by the local non-score Self-Check and user-defined Personal Gambling Limit Tracker.
 - Legal placeholders: Privacy and Terms are substantive launch-candidate pages; external approval remains a release gate, not a page placeholder defect.
 - Known page-level missing-H1/nested-main defects addressed by FE-GAP-02.
-- FE-HANDOFF-01: confirmation-first managed handoff and neutral fail-closed recovery are implemented.
+- FE-HANDOFF-01: direct `/r/{slug}` managed handoff, legacy `/outbound/{slug}` internal compatibility redirect and neutral fail-closed recovery are implemented; the former confirmation-first flow was removed by `DIRECT-GOVERNED-OUTBOUND-01`.
 - FE-DS-01 frontend consolidation: recurring production colour roles, focus/motion roles and eligible internal actions are governed by Design System v1; five unreachable presentation wrappers were removed.
 - Cross-route visual baseline: ten bounded Playwright snapshots now cover public/protected shells, navigation, legal, forms/control outcomes and editorial surfaces.
 - OPS-01 linting/governance foundation: ESLint, deterministic three-job CI, fresh-database proof, build-secret scan, scheduled smoke and operational runbooks are delivered by OPS-01 / PR #45.

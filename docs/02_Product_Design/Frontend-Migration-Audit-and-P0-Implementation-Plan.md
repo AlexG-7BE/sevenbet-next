@@ -72,7 +72,7 @@ Both FE-GAP feature heads (`01c82cf2…` and `f2d04d5…`) are ancestors of this
 - **Personal Gambling Limit Tracker:** user chooses the limit; SevenBet does not calculate affordability, a safe-spend amount or a stop-loss recommendation; React-memory only; no commercial result CTA.
 - **Privacy / Terms:** substantive launch-candidate documents; correct legal identity/contact; server-rendered; `noindex, follow`; absent from sitemap. External counsel and processor/retention/transfer review remain.
 - **Protected Help:** dedicated shell, Hub, ten article routes, governed Cooling-off states and protected unknown-article recovery. Commercial recovery is prohibited.
-- **Commercial Handoff:** confirmation UI → managed `/r/[slug]` → server-authoritative resolution → external destination only when valid; failure → `/outbound/unavailable`; no substitute offer. `/go/[slug]` is compatibility-only.
+- **Commercial Handoff:** direct governed CTA/creative → managed `/r/[slug]` → server-authoritative resolution → external destination only when valid; failure → `/outbound/unavailable`; no substitute offer. `/outbound/[slug]` is an internal compatibility redirect to `/r/[slug]`, and `/go/[slug]` remains fail closed.
 
 ## Remaining dependencies outside page migration
 

@@ -167,7 +167,7 @@ All rows are **DETECTED** from `app/**/page.tsx`. Route-group directories do not
 | `/learn/[category]/[slug]` | PUBLIC | Dynamic article; invalid object 404. |
 | `/login` | AUTH / PUBLIC | Standalone email/password and optional Google identity. |
 | `/methodology` | PUBLIC | Editorial/ranking method. |
-| `/outbound/[slug]` | REDIRECT / PUBLIC | Managed commercial handoff confirmation; fails to unavailable when authority is absent. |
+| `/outbound/[slug]` | REDIRECT / PUBLIC | Legacy compatibility redirect to `/r/[slug]`; invalid slugs fail to unavailable and no confirmation UI renders. |
 | `/outbound/unavailable` | PUBLIC | Truthful no-action state. |
 | `/privacy` | PUBLIC | Noindex privacy notice. |
 | `/self-check` | PUBLIC | Local-only non-clinical reflection. |

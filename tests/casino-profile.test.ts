@@ -187,7 +187,7 @@ test("route and component keep Prisma, client fetching, raw destinations and dem
   const action = readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8");
   const source = `${route}\n${component}\n${action}`;
   assert.match(route, /publicCasinoService\.getCasino/);
-  assert.match(route, /boundedCandidate\?\.source === "cms"/);
+  assert.match(route, /candidate\?\.source === "cms"/);
   assert.match(route, /projectCasinoProfileSchemas/);
   assert.match(component, /messages\.profile\.offerUnavailable/);
   assert.match(component, /data-content-origin="localized-taxonomy"/);
@@ -196,12 +196,13 @@ test("route and component keep Prisma, client fetching, raw destinations and dem
   assert.match(component, /demo \? messages\.profile\.demoDisclosure : messages\.profile\.originalEditorialNotice/);
   assert.match(component, /data-content-origin=\{contentOrigin\}/);
   assert.match(component, /category\.key\.replaceAll\("-", " "\)/);
-  assert.match(component, /casino\.media\.logo \? <img alt=""/);
+  assert.match(component, /casino\.media\.logo \? <ResponsivePlacementImage alt=""/);
   assert.doesNotMatch(component, /alt=\{casino\.media\.logo\.alt \|\| casino\.name\}/);
   assert.doesNotMatch(component, /alt=\{casino\.media\.logo\.alt \|\| `\$\{casino\.name\} logo`\}/);
   assert.equal((action.match(/<a[^>]+href=\{action\.href\}/g) ?? []).length, 1);
-  assert.match(action, /href=\{confirmationHref\}/);
-  assert.match(action, /aria-haspopup="dialog"/);
+  assert.match(action, /outboundIntent\("direct", context\)/);
+  assert.match(action, /target="_blank"/);
+  assert.doesNotMatch(action, /confirmationHref|aria-haspopup="dialog"|showModal|You are leaving B4GAMBLE/);
   assert.doesNotMatch(source, /@prisma\/client|\bprisma\.|fetch\(|axios|startsWith\(["']demo-|destinationUrl|trackingUrl|casinoOfficialUrl/);
   assert.equal((component.match(/<h1/g) ?? []).length, 1);
 });

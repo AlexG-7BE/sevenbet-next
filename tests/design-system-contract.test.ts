@@ -93,12 +93,15 @@ test("public and protected shells retain separate landmark ownership", () => {
   assert.doesNotMatch(protectedLayout, /PublicHeader|PublicFooter/);
 });
 
-test("commercial actions remain confirmation-first and managed outside shared Action", () => {
+test("commercial actions use the direct governed route outside shared Action", () => {
   const outbound = read("components/casino-profile/CasinoOutboundAction.tsx");
-  const confirmation = read("components/commercial-handoff/CommercialHandoffPage.tsx");
-  assert.match(outbound, /confirmationHref = slug \? `\/outbound\/\$\{slug\}` : "\/outbound\/unavailable"/);
-  assert.match(outbound, /href=\{confirmationHref\}/);
-  assert.match(confirmation, /href=\{`\/r\/\$\{slug\}`\}/);
+  const legacy = read("app/(public)/outbound/[slug]/page.tsx");
+  assert.match(outbound, /href=\{action\.href\}/);
+  assert.match(outbound, /outboundIntent\("direct", context\)/);
+  assert.match(outbound, /rel="nofollow sponsored noopener"/);
+  assert.match(outbound, /target="_blank"/);
+  assert.doesNotMatch(outbound, /confirmationHref|showModal|aria-haspopup="dialog"|<dialog/);
+  assert.match(legacy, /redirect\(`\/r\/\$\{slug\}`\)/);
   assert.doesNotMatch(read("components/design-system/Action.tsx"), /\/outbound\/|\/r\/|target=|sponsored/);
 });
 

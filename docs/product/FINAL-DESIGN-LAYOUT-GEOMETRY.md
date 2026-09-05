@@ -38,7 +38,7 @@ The 1312px cap becomes active above a 1456px viewport. This is intentional: at t
 
 Section backgrounds, hero photography, paint strips, chapter media, sticky photographic stacks, the Programme canvas and the final CTA may extend to the viewport edge. Their content remains aligned to a shared shell unless the handoff deliberately centres the composition.
 
-Comparison dialogs, mobile bottom sheets, filter sheets and outbound confirmation dialogs are viewport overlays. Their dimensions are bounded by the viewport and are not page-shell widths.
+Comparison dialogs, mobile navigation and filter sheets are viewport overlays. Their dimensions are bounded by the viewport and are not page-shell widths. Commercial actions use direct governed anchors and no longer create an outbound confirmation overlay.
 
 ## Intentional narrow content
 
@@ -53,4 +53,3 @@ These are content roles, not alternative site shells. Their surrounding hero, na
 ## Responsive rule
 
 The same token formula applies at desktop, tablet and mobile. Media queries may change layout, ordering and full-bleed behaviour, but must not replace the global gutter with unrelated `32px`, `40px`, `48px`, `64px`, `96px` or `128px` shell subtraction rules.
-

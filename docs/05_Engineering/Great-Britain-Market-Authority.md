@@ -4,7 +4,7 @@
 
 Approved by Founder Office on 2026-08-08 through GB-MARKET-01 and governed by [RFC-014](../06_RFC/RFC-014-Great-Britain-Market-Eligibility-and-Evidence-Authority.md).
 
-**Detected:** the repository contains one server-authoritative, repository-controlled policy for the Great Britain online-casino market. It governs commercial and referral projection at public casino, bonus, comparison, confirmation and redirect boundaries. COMM-01 extends its lower commercial evidence chain without changing this policy and adds no Prisma model, migration, seed, dependency, operator, partner or destination.
+**Detected:** the repository contains one server-authoritative, repository-controlled policy for the Great Britain online-casino market. It governs commercial and referral projection at public casino, bonus, comparison, action and redirect boundaries. COMM-01 extends its lower commercial evidence chain without changing this policy and adds no Prisma model, migration, seed, dependency, operator, partner or destination.
 
 **Detected:** the initial policy supports editorial content but does not activate commercial or referral capability. **Not detected:** final Legal approval, a real GB partner authority, or machine-readable official evidence that a casino domain is covered by a licence. SevenBet is not GB launch-ready on the strength of this implementation.
 
@@ -75,13 +75,17 @@ Future GB commercial eligibility requires all of the following distinct layers:
 | `/bonuses` | Published offer terms | Current request policy AND batched operator evidence | Review-only offers |
 | `/best-offers` | Generic GB editorial shortlist | Current request policy AND batched operator evidence | Shortlist may remain; actions unavailable |
 | `/compare` | Declared market comparison context | Current request policy AND batched operator evidence AND managed route | Comparison remains; action unavailable |
-| `/outbound/[slug]` | Confirmation only after current full authority succeeds | Same full resolver used by `/r` plus rollout flag | Redirects internally to `/outbound/unavailable` |
+| `/outbound/[slug]` | Legacy compatibility input only | No independent commercial authority | Valid managed slugs redirect internally to `/r/[slug]`; invalid slugs go to `/outbound/unavailable` |
 | `/r/[slug]` | Not applicable | Current trusted request policy AND operator/domain/partner evidence AND current stored route | `303` to `/outbound/unavailable`; no substitute |
 | `/go/[slug]` | Not applicable | Permanently has no external authority | `303` to `/outbound/unavailable` |
 | Public casino/bonus APIs and sitemap | Published editorial projection | No request authority is supplied; actions default deny | Editorial data only; action fields unavailable |
 | Protected admin redirect preview | Candidate-routing preview only | Not a public eligibility decision and cannot redirect | Omits destination URLs and reports preview-only result |
 
-All request-dependent public pages and route handlers remain dynamic. A rendered action is never authority for a later click; `/r` resolves with a fresh `now` and current facts.
+All request-dependent public pages and route handlers remain dynamic. Normal
+commercial UI points directly to `/r/[slug]`; stale `/outbound/[slug]` links
+take one internal compatibility redirect to the same route. A rendered action
+is never authority for a later click; `/r` resolves with a fresh `now` and
+current facts.
 
 ## Fail-closed outcomes
 

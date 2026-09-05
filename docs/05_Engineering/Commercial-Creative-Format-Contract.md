@@ -185,24 +185,28 @@ before versus after decode across 390, 430, 768, 1024, 1280 and 1440 px.
 ## Governed click contract
 
 **DETECTED:** `GovernedCommercialAction` is shared by the existing CTA and
-commercial creative. It derives the first link from the same internal `/r/{slug}`
-action as `/outbound/{slug}`, opens the existing confirmation dialog, and keeps
-the final `/r/{slug}` continuation with `target="_blank"` and
-`rel="nofollow sponsored noopener"`.
+commercial creative. An authorized CTA or creative links directly to its
+server-owned `/r/{slug}` action with `target="_blank"` and
+`rel="nofollow sponsored noopener"`. It does not rewrite the action to
+`/outbound/{slug}`, intercept the click, render a confirmation dialog or require
+a second activation.
 
 **DETECTED:** when the server-authoritative CTA action is available, the whole
 eligible commercial or promotional media stage is a semantic anchor with a
 Casino/offer accessible name derived from current public data, native Enter
 activation, visible focus and pointer affordance. The separately visible CTA
-remains and resolves the same `/outbound/{slug}` confirmation and final
-`/r/{slug}` continuation. When action authority is absent because of GEO,
+remains and resolves the same `/r/{slug}` governed action. When action authority
+is absent because of GEO,
 legal, contract, account, destination, disabled, informational-only or route
 state, no creative anchor is rendered. Media visibility never creates action
 authority.
 
 **DETECTED:** CTA and creative events use the existing closed
 `outbound_intent` taxonomy with bounded source/placement origin values. The
-refinement adds `CTA_CASINO_DIRECTORY_CARD`,
+current direct activation emits the `direct` outcome; the historical
+`confirmation_opened` and `continued` outcomes remain parseable for backward
+compatibility but are no longer emitted by commercial actions. The earlier
+refinement added `CTA_CASINO_DIRECTORY_CARD`,
 `CREATIVE_CASINO_DIRECTORY_CARD`, and `CREATIVE_CASINO_DETAIL_HERO`; it adds no
 affiliate parameters or database migration. Public product analytics remains
 off under its current governing contract; this change does not activate it.

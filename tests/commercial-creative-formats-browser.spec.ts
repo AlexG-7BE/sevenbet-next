@@ -249,7 +249,7 @@ test("current authorized inventory keeps real formats and the new review click b
   await expect(page.locator('[class*="heroMedia"] a, [class*="brandMedia"] a')).toHaveCount(0);
 });
 
-test("authorized promotional anchors match their CTA and confirmation contract", async ({ page }) => {
+test("authorized promotional anchors match their CTA and direct governed route contract", async ({ page }) => {
   test.skip(!requireAuthorized, "This assertion requires current authorized Preview or Production inventory.");
   for (const scenario of [
     { path: "/en/bonuses", placement: "BONUS_LISTING_CARD" },
@@ -260,15 +260,14 @@ test("authorized promotional anchors match their CTA and confirmation contract",
     expect(response?.status()).toBe(200);
     const creative = page.locator(`a[data-commercial-action-source="CREATIVE"][data-commercial-action-placement="${scenario.placement}"]`).first();
     await expect(creative).toBeVisible();
-    await expect(creative).toHaveAttribute("href", /^\/outbound\/[a-z0-9-]+$/);
+    await expect(creative).toHaveAttribute("href", /^\/r\/[a-z0-9-]+$/);
+    await expect(creative).toHaveAttribute("rel", /nofollow sponsored noopener/);
+    await expect(creative).toHaveAttribute("target", "_blank");
     const href = await creative.getAttribute("href");
     await expect(page.locator(`a[data-commercial-action-source="CTA"][href="${href}"]`).first()).toBeAttached();
     await expect(creative.locator("a,button")).toHaveCount(0);
     await creative.focus();
-    await page.keyboard.press("Enter");
-    const dialog = page.locator("dialog[open]");
-    await expect(dialog).toBeVisible();
-    await expect(dialog.locator('a[href^="/r/"]')).toHaveAttribute("rel", /nofollow sponsored noopener/);
-    await dialog.getByRole("button", { name: /Cancel|stay/i }).click();
+    await expect(page.locator("dialog")).toHaveCount(0);
+    await expect(page.getByText("You are leaving B4GAMBLE.", { exact: true })).toHaveCount(0);
   }
 });

@@ -66,7 +66,7 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `CRON_SECRET` | Secret | Exact Bearer authentication for the Programme expiry cron; absent as of 2026-08-11 | Founder Office/config owner; repository maintainer technical consumer |
 | `VERCEL_TOKEN` | Secret operator credential | Aggregate Founder analytics report only; process environment, never hosted client configuration | Founder Office/Vercel owner |
 | `ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS` | High-risk exceptional flag | RFC-012 scripts/public guard | Founder Office under RFC-012 only |
-| `AFFILIATE_REDIRECT_ENGINE_ENABLED` | High-risk commercial kill switch | Server redirect and confirmation paths; public affiliate redirects disabled in Preview | Founder Office plus compliance review |
+| `AFFILIATE_REDIRECT_ENGINE_ENABLED` | High-risk commercial kill switch | Server `/r` redirect path; legacy `/outbound` compatibility reaches the same governed route | Founder Office plus compliance review |
 | `JURISDICTION_RESOLVER_SHADOW_ENABLED` | Diagnostic configuration | Obsolete bounded shadow-comparison helper only; no active public authority consumer | Repository maintainer |
 | `AFFILIATE_CREDENTIAL_REFERENCES`, `AFFILIATE_CREDENTIALS_<NORMALIZED_REFERENCE>` | Secret indirection/credentials | Server-only affiliate adapters; absent from Preview | Founder Office/partner operations; never client or logs |
 | `MEDIA_STORAGE_PROVIDER`, `MEDIA_LOCAL_STORAGE_ROOT`, `MEDIA_PUBLIC_BASE_URL`, `MEDIA_MAX_FILE_SIZE_BYTES`, `MEDIA_MAX_DIMENSION` | Configuration | Media storage/runtime limits; Preview is `LOCAL` | Repository maintainer |

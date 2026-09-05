@@ -118,6 +118,9 @@ test("commercial handoff remains absent while market authority denies referral",
 });
 
 test("invalid managed redirects and no-JS outbound flows use governed same-origin recovery", async ({ browser, page }) => {
+  const legacy = await page.request.get(`${baseUrl}/outbound/example-managed-action`, { maxRedirects: 0 });
+  expect(legacy.status()).toBe(307);
+  expect(legacy.headers().location).toBe("/r/example-managed-action");
   const response = await page.goto(`${baseUrl}/r/not-a-real-managed-destination`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page).toHaveURL(/\/outbound\/unavailable$/);
@@ -130,6 +133,7 @@ test("invalid managed redirects and no-JS outbound flows use governed same-origi
   await expect(noJsPage).toHaveURL(/\/outbound\/unavailable$/);
   await expect(noJsPage.getByRole("heading", { name: "Destination unavailable." })).toBeVisible();
   await expect(noJsPage.getByRole("link", { name: "Continue to eligible partner" })).toHaveCount(0);
+  await expect(noJsPage.getByText("You are leaving B4GAMBLE.", { exact: true })).toHaveCount(0);
   expect(await noOverflow(noJsPage)).toBe(true);
   await context.close();
 });

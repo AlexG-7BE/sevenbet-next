@@ -90,11 +90,15 @@ test("FAQ disclosures remain native and keyboard operable", async ({ page }) => 
   await expect(answer).toBeVisible();
 });
 
-test("commercial confirmation, no-JS, and invalid managed routes fail closed", async ({ browser, page }) => {
+test("legacy outbound routes redirect internally and governed failures remain fail closed without confirmation UI", async ({ browser, page }) => {
+  const legacy = await page.request.get(`${baseUrl}/outbound/example-managed-action`, { maxRedirects: 0 });
+  expect(legacy.status()).toBe(307);
+  expect(legacy.headers().location).toBe("/r/example-managed-action");
   await open(page, "/outbound/example-managed-action");
   await expect(page).toHaveURL(/\/outbound\/unavailable$/);
   await expect(page.getByText("No destination · No redirect · No substitute offer")).toBeVisible();
   await expect(page.getByRole("link", { name: "Continue to eligible partner" })).toHaveCount(0);
+  await expect(page.getByText("You are leaving B4GAMBLE.", { exact: true })).toHaveCount(0);
 
   const noJsContext = await browser.newContext({ javaScriptEnabled: false });
   const noJsPage = await noJsContext.newPage();

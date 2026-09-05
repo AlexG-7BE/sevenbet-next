@@ -76,7 +76,7 @@ export type ProductAnalyticsEventMap = {
   casino_review_opened: { sourceSurface: "best_offers" | "casinos" | "bonuses" | "comparison" };
   comparison_opened: { selectionCount: "two" | "three" };
   outbound_intent: {
-    outcome: "confirmation_opened" | "continued";
+    outcome: "direct" | "confirmation_opened" | "continued";
     origin:
       | "CTA_UNSPECIFIED"
       | "CTA_BONUS_LISTING_CARD"
@@ -143,7 +143,7 @@ const voiceResults = ["recording_started", "transcription_success", "permission_
 const commercialSurfaces = ["best_offers", "casinos", "bonuses", "casino_review"] as const;
 const reviewSources = ["best_offers", "casinos", "bonuses", "comparison"] as const;
 const comparisonCounts = ["two", "three"] as const;
-const outboundOutcomes = ["confirmation_opened", "continued"] as const;
+const outboundOutcomes = ["direct", "confirmation_opened", "continued"] as const;
 const outboundOrigins = [
   "CTA_UNSPECIFIED",
   "CTA_BONUS_LISTING_CARD",

@@ -8,6 +8,16 @@ Phase 3.7 introduces a production-safe redirect foundation for the PostgreSQL af
 
 `GET /r/[slug]` → global kill switch → trusted Vercel request-country adapter → `JurisdictionResolver` → `AffiliateRedirectService` → current candidate → GB commercial readiness authority → final URL validation → controlled HTTP response.
 
+Normal authorized commercial UI uses this path directly:
+
+`CTA/creative → /r/[slug] → governed server checks → authorized stored destination`
+
+There is no mandatory outbound confirmation or second click. The legacy
+`/outbound/[slug]` public path is compatibility-only: a valid managed slug
+redirects internally to `/r/[slug]`, while an invalid slug redirects to
+`/outbound/unavailable`. It has no independent resolver or external-destination
+authority.
+
 The public route never accepts a destination URL. A stored `AffiliateRedirectSlug` identifies one casino, an optional casino bonus, and an optional affiliate offer. The slug is lowercase, human-readable, unique, immutable after creation, and cannot contain reserved security terms or the mapped offer/program external IDs.
 
 ## Slug lifecycle

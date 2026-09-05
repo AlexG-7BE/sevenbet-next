@@ -58,20 +58,26 @@ test("Best Offers and Bonuses close their heading and landmark defects without d
   for (const path of ["app/(public)/bonuses/page.tsx", "app/(public)/bonuses/error.tsx"]) assert.doesNotMatch(read(path), /<main\b/);
 });
 
-test("commercial actions use confirmation first and neutral managed recovery", () => {
+test("commercial actions use the direct governed route and neutral managed recovery", () => {
   const handoff = read("components/casino-profile/CasinoOutboundAction.tsx");
-  const confirmation = read("components/commercial-handoff/CommercialHandoffPage.tsx");
+  const unavailable = read("components/commercial-handoff/CommercialHandoffPage.tsx");
+  const outboundLegacy = read("app/(public)/outbound/[slug]/page.tsx");
   const redirect = read("app/r/[slug]/route.ts");
   const legacy = read("app/go/[slug]/route.ts");
   for (const surface of ["components/casino-discovery/CasinoDiscoveryCard.tsx", "components/bonus-directory/BonusDirectory.tsx", "components/public-offers/PublicOffers.tsx", "components/comparison/ComparisonExperience.tsx", "components/casino-profile/CasinoProfile.tsx"]) assert.match(read(surface), /CasinoOutboundAction/);
-  assert.match(handoff, /href=\{confirmationHref\}/);
-  assert.match(handoff, /showModal\(\)/);
   assert.match(handoff, /href=\{action\.href\}/);
-  assert.match(confirmation, /href=\{`\/r\/\$\{slug\}`\}/);
-  assert.match(confirmation, /No raw destination URL/);
-  assert.match(confirmation, /No destination · No redirect · No substitute offer/);
+  assert.match(handoff, /outboundIntent\("direct", context\)/);
+  assert.match(handoff, /rel="nofollow sponsored noopener"/);
+  assert.doesNotMatch(handoff, /confirmationHref|confirmation_opened|showModal|aria-haspopup="dialog"|<dialog|You are leaving B4GAMBLE/);
+  assert.match(outboundLegacy, /const managedSlug/);
+  assert.match(outboundLegacy, /redirect\("\/outbound\/unavailable"\)/);
+  assert.match(outboundLegacy, /redirect\(`\/r\/\$\{slug\}`\)/);
+  assert.doesNotMatch(outboundLegacy, /affiliateRedirectService|CommercialHandoffConfirmation/);
+  assert.match(unavailable, /No destination · No redirect · No substitute offer/);
+  assert.doesNotMatch(unavailable, /CommercialHandoffConfirmation|You are leaving B4GAMBLE/);
   assert.match(redirect, /recoveryUrl\.pathname = "\/outbound\/unavailable"/);
   assert.match(redirect, /NextResponse\.redirect\(recoveryUrl, 303\)/);
+  for (const invariant of ["isAffiliateRedirectEnabled", "requestCountrySignalFromHeaders", "affiliateRedirectService.resolve", "safeAffiliateRedirectResponse", "recordOutboundClickBestEffort"]) assert.match(redirect, new RegExp(invariant.replace(".", "\\.")));
   assert.doesNotMatch(redirect, /destinationUrl|trackingUrl|\/casinos|\/bonuses|\/best-offers/);
   assert.match(legacy, /\/outbound\/unavailable/);
 });

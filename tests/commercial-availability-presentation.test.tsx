@@ -154,10 +154,11 @@ test("casino directory promotional media follows the governed Visit action and f
     hero: { url: "/controlled/truth-casino-300x250.jpg", alt: "Truth Casino verified offer creative", width: 300, height: 250, renderingMode: "CONTAIN", source: "EXPLICIT", focalPoint: null },
   });
   const authorized = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[promotional]} messages={messages} presentation={presentation} />);
-  assert.match(authorized, /<a[^>]+data-commercial-action-placement="CASINO_DIRECTORY_CARD"[^>]+data-commercial-action-source="CREATIVE"[^>]+href="\/outbound\/truth-casino-visit"/);
+  assert.match(authorized, /<a[^>]+data-commercial-action-placement="CASINO_DIRECTORY_CARD"[^>]+data-commercial-action-source="CREATIVE"[^>]+href="\/r\/truth-casino-visit"[^>]+rel="nofollow sponsored noopener"[^>]+target="_blank"/);
   assert.match(authorized, /aria-label="[^"]*Truth Casino[^"]*—[^"]*Verified welcome offer"/);
   assert.match(authorized, /data-commercial-action-placement="CASINO_DIRECTORY_CARD"[^>]+data-commercial-action-source="CTA"/);
-  assert.equal((authorized.match(/href="\/outbound\/truth-casino-visit"/g) ?? []).length, 2);
+  assert.equal((authorized.match(/href="\/r\/truth-casino-visit"/g) ?? []).length, 2);
+  assert.doesNotMatch(authorized, /href="\/outbound\/|aria-haspopup="dialog"|You are leaving B4GAMBLE|<dialog/);
   assert.doesNotMatch(authorized, /href="https?:\/\//);
 
   const blocked = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
