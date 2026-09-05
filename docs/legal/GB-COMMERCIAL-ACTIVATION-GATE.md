@@ -46,7 +46,7 @@ Every item must pass cumulatively; missing, unknown, stale or inconsistent evide
 5. **Real current offer:** active/effective offer for the exact operator and GB audience; no fictional, expired or inferred-global eligibility.
 6. **Exact tracking destination:** server-owned safe HTTPS destination, approved slug, current check, no credential or open-redirect path.
 7. **Significant offer terms:** eligibility, deposit, wagering basis, exclusions, stake/odds, deadlines, payment/withdrawal restrictions and direct full-terms link are complete and current.
-8. **Affiliate disclosure:** adjacent commercial label, commission statement, 18+/financial-risk/eligibility wording and outbound confirmation appear before the action; Programme/Help data remains excluded.
+8. **Affiliate disclosure:** adjacent commercial label, commission statement and 18+/financial-risk/eligibility wording appear before the direct first-party `/r/{slug}` action; Programme/Help data remains excluded. No separate outbound confirmation is required.
 9. **Preview validation:** exact-SHA focused unit/structural/browser checks prove allow and deny paths, exact-domain matching, no demo action, protected-data firewall and destination behaviour.
 10. **Founder activation approval:** a separate reviewed activation RFC/change names the approvers, environment and exact SHA. This legal-copy PR provides no such approval.
 11. **Kill switch and rollback:** the global switch, independent policy/evidence denials, monitoring, manual kill procedure, rollback owner and post-deploy read-only smoke are ready.

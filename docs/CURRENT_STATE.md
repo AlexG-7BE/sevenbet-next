@@ -44,6 +44,20 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 
 ### Recent implementation state
 
+**DETECTED — DIRECT-GOVERNED-OUTBOUND-01 RELEASE CANDIDATE, 6 September
+2026:** the protected implementation branch changes normal authorized
+commercial CTA and promotional-creative anchors from the two-step
+`/outbound/{slug}` confirmation journey to direct `/r/{slug}` navigation in a
+new tab. The existing server-owned `/r` route remains the only external redirect
+authority and retains its feature flag, trusted request GEO, cumulative
+commercial resolution, jurisdiction logging, safe 302 response and best-effort
+outbound-click recording. `/outbound/{valid-slug}` is compatibility-only and
+redirects internally to `/r/{slug}`; `/outbound/unavailable` remains the
+fail-closed terminal surface. The client event uses the backward-safe `direct`
+outcome; historical confirmation outcomes remain parseable, and public product
+analytics remains disabled. Preview, merge, Production and runtime evidence are
+not claimed until the release record is finalized.
+
 **DETECTED — GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01 COMPLETE, 5 September
 2026:** [PR #163](https://github.com/AlexG-7BE/sevenbet-next/pull/163)
 merged as `aedfaee48cefea34ac9b1fac71315ba7c8c3df19` after exact-head

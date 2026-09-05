@@ -369,9 +369,14 @@ test("authorized creative markup uses the governed route while blocked creative 
   const cta = renderToStaticMarkup(React.createElement(CasinoOutboundAction, { action: { href: available.action.href!, label: messages.common.actionAvailable }, context: { source: "CTA", placement: "BONUS_LISTING_CARD" }, messages: messages.outbound }));
   assert.match(creative, /data-commercial-action-source="CREATIVE"/);
   assert.match(creative, /data-commercial-action-placement="BONUS_LISTING_CARD"/);
-  assert.match(creative, /href="\/outbound\/slotnite-current-offer"/);
-  assert.match(cta, /href="\/outbound\/slotnite-current-offer"/);
+  assert.match(creative, /href="\/r\/slotnite-current-offer"/);
+  assert.match(cta, /href="\/r\/slotnite-current-offer"/);
   assert.match(cta, /data-commercial-action-placement="BONUS_LISTING_CARD"/);
+  for (const markup of [creative, cta]) {
+    assert.match(markup, /rel="nofollow sponsored noopener"/);
+    assert.match(markup, /target="_blank"/);
+    assert.doesNotMatch(markup, /\/outbound\/slotnite-current-offer|You are leaving B4GAMBLE|<dialog/);
+  }
   assert.match(creative, new RegExp(`${available.casino.name}[^<]*—[^<]*${available.bonus.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
   assert.match(creative, /<a[^>]+data-commercial-action-source="CREATIVE"[^>]*>[\s\S]*?<figure[\s\S]*?<\/figure><\/a>/);
   assert.doesNotMatch(creative, /go\.superflypartners\.net|record\.[^\s"']+|betsson[^\s"']*tracker/i);
@@ -409,9 +414,10 @@ test("review heroes stay inert while promotional formats move to the governed Ca
     }));
     assert.match(html, /<aside[^>]+data-media-mode="COMPOSED"[^>]+data-presentation-family="LOGO_ONLY"[^>]+data-suppressed-promotion-family="CARD"/);
     assert.doesNotMatch(html, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
-    assert.match(html, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CREATIVE"[^>]+data-commercial-media-variant="casino-offer"[^>]+href="\/outbound\/skol-current-offer"/);
+    assert.match(html, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CREATIVE"[^>]+data-commercial-media-variant="casino-offer"[^>]+href="\/r\/skol-current-offer"/);
     assert.match(html, /data-presentation-family="CARD"/);
-    assert.match(html, /data-commercial-action-source="CTA"[^>]+href="\/outbound\/skol-current-offer"/);
+    assert.match(html, /data-commercial-action-source="CTA"[^>]+href="\/r\/skol-current-offer"/);
+    assert.doesNotMatch(html, /\/outbound\/skol-current-offer|You are leaving B4GAMBLE|<dialog/);
     assert.doesNotMatch(html, /href="https?:\/\/operator\.example/);
   }
 

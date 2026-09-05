@@ -36,7 +36,7 @@ const validEvents = {
   commercial_surface_viewed: { surface: "casinos" },
   casino_review_opened: { sourceSurface: "casinos" },
   comparison_opened: { selectionCount: "two" },
-  outbound_intent: { outcome: "confirmation_opened", origin: "CREATIVE_BONUS_LISTING_CARD" },
+  outbound_intent: { outcome: "direct", origin: "CREATIVE_BONUS_LISTING_CARD" },
 } as const;
 
 test("the closed event taxonomy accepts every approved event and rejects unknown fields", () => {
@@ -59,13 +59,19 @@ test("casino promotional media origins stay bounded to governed directory and de
     "CREATIVE_CASINO_DIRECTORY_CARD",
     "CREATIVE_CASINO_DETAIL_HERO",
   ] as const) {
-    assert.deepEqual(parseProductAnalyticsEvent("outbound_intent", { outcome: "confirmation_opened", origin }).properties, {
-      outcome: "confirmation_opened",
+    assert.deepEqual(parseProductAnalyticsEvent("outbound_intent", { outcome: "direct", origin }).properties, {
+      outcome: "direct",
       origin,
     });
   }
-  assert.throws(() => parseProductAnalyticsEvent("outbound_intent", { outcome: "confirmation_opened", origin: "CREATIVE_CASINO_LOGO" }));
-  assert.throws(() => parseProductAnalyticsEvent("outbound_intent", { outcome: "confirmation_opened", origin: "CREATIVE_CASINO_COMPARE" }));
+  assert.throws(() => parseProductAnalyticsEvent("outbound_intent", { outcome: "direct", origin: "CREATIVE_CASINO_LOGO" }));
+  assert.throws(() => parseProductAnalyticsEvent("outbound_intent", { outcome: "direct", origin: "CREATIVE_CASINO_COMPARE" }));
+});
+
+test("legacy outbound outcomes remain parseable while direct is the current activation semantic", () => {
+  for (const outcome of ["confirmation_opened", "continued"] as const) {
+    assert.equal(parseProductAnalyticsEvent("outbound_intent", { outcome, origin: "CTA_UNSPECIFIED" }).properties.outcome, outcome);
+  }
 });
 
 test("every approved custom event uses at most two Vercel Pro properties", () => {

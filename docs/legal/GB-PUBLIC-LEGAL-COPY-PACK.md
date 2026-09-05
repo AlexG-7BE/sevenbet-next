@@ -60,11 +60,14 @@ Place one of the following labels before, within or immediately adjacent to the 
 | Editorial link | `Editorial review` or the specific neutral action, such as `Read review` |
 | No governed commercial route | `Review only` or `Offer unavailable` |
 
-Outbound confirmation:
+Direct governed action context:
 
-> You are about to visit a third-party gambling operator. B4GAMBLE may earn commission if you complete a qualifying action. This does not change Editor Score or natural editorial ranking.
-
-> 18+ · Eligibility and operator terms apply · Gambling involves financial risk
+The active affiliate label must remain visible immediately adjacent to the
+commercial action. The containing offer/profile surface must present its
+material terms and applicable `18+`, eligibility, operator-terms and
+financial-risk context before the direct first-party `/r/{slug}` link. No
+separate confirmation popup/page is required, and the commercial relationship
+must not be hidden by removal of that obsolete step.
 
 ## 3. Bonus and offer copy template
 

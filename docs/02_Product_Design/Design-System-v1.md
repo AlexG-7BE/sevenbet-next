@@ -32,7 +32,7 @@ The active repository root was confirmed as `/Users/alex/Documents/Codex/2026-07
 | Protected Help shell | `components/protected-help/` and `app/responsible-gambling/layout.tsx` | **Unchanged/domain-specific.** No Public Shell or commercial action. |
 | Foundations | `app/design-system.css`, `app/globals.css`, route CSS Modules | **Consolidated.** Semantic production palette, spacing, radius, focus and motion live in the global contract. Route composition remains local. |
 | Shared Action | `components/design-system/Action.tsx` | **Shared.** Internal navigation and application actions only; three visual styles and two sizes. |
-| Public commercial handoff | `components/public-offers/`, casino/public offer packages and managed outbound routes | **Domain-specific.** Confirmation and server-managed resolution are not part of shared Action. |
+| Public commercial handoff | `components/public-offers/`, casino/public offer packages and managed outbound routes | **Domain-specific.** Adjacent affiliate disclosure, direct `/r/{slug}` navigation and server-managed resolution are not part of shared Action. |
 | Programme | `components/active-control-program/`, Programme services and route modules | **Domain-specific.** Server owns progress, XP, completion and next Mission. |
 | Forms/control tools | Self-Check and Personal Limit Tracker route modules | **Domain-specific.** Local/private tool state and safety outcomes remain isolated from commercial components. |
 | Legal/editorial/evidence | Legal, learning, methodology, trust and evidence route modules | **Kept local.** Their hierarchy and source lifecycle differ despite recurring visual motifs. |
@@ -43,14 +43,14 @@ The active repository root was confirmed as `/Users/alex/Documents/Codex/2026-07
 | --- | --- | --- |
 | Primary action button/link | **Consolidated** as `ActionButton` and `ActionLink` | Repeated internal action geometry and states were production-proven; semantic elements remain distinct. |
 | Secondary and text actions | **Kept domain-specific** | Contrast context, disclosure hierarchy and safety meaning differ by domain. |
-| Commercial outbound action | **Kept domain-specific** | Must use confirmation and managed server handoff; cannot become a generic anchor. |
+| Commercial outbound action | **Kept domain-specific** | Must use the direct first-party governed route, commercial metadata/disclosure and managed server handoff; it cannot become a generic Action variant. |
 | Protected external support | **Kept domain-specific** | Protected Help owns support meaning and must never acquire commercial variants. |
 | Container and section intro | **Kept route-specific** | Approved page families use intentionally different theatre widths and rhythms. |
 | Eyebrow, badge and status panel | **Token-normalized; not extracted** | Visual recurrence was detected, but semantics and density were not uniform enough for a safe shared API. |
 | Field wrapper, labelled input and validation message | **Kept domain-specific** | Self-Check, limit, commercial and admin forms have different error and privacy contracts. |
 | Disclosure/accordion | **Kept native/domain-specific** | Native `details`/`summary` already supplies correct semantics without a speculative abstraction. |
 | Evidence/source row and recovery panel | **Kept domain-specific** | Evidence lifecycle and fail-closed recovery are architectural, not cosmetic, concerns. |
-| Modal/dialog frame | **Kept commercial-domain-specific** | Managed outbound confirmation has focus, Escape and recovery responsibilities unavailable to a generic shell. |
+| Modal/dialog frame | **Kept domain-specific** | Comparison, navigation and filter dialogs retain distinct focus, Escape and recovery responsibilities; commercial outbound no longer owns a confirmation dialog. |
 
 ## Token model
 
@@ -166,7 +166,7 @@ All 58 local production variables have exact WEB syntax; semantic aliases with C
 
 - Protected Help components cannot acquire commercial variants or Public Shell ownership.
 - Self-Check and Personal Limit Tracker cannot gain commercial result variants or recommendation formulas.
-- Commercial outbound components cannot bypass confirmation and the managed server handoff.
+- Commercial outbound components must point only to the managed first-party `/r/{slug}` handoff, preserve affiliate disclosure/metadata and never expose a raw destination.
 - Programme private/control state, pause/help data and completion state cannot become offer-personalization inputs.
 - Client components do not calculate Programme XP, progress, completion or next Mission.
 

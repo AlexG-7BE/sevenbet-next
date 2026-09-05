@@ -19,9 +19,10 @@ test("available actions remain governed internal redirects after material terms"
   const handoff = readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8");
   assert.ok(component.includes('/^\\/r\\/[a-z0-9][a-z0-9-]*$/i'));
   assert.match(component, /<CasinoOutboundAction action=\{\{ href, label: messages\.common\.actionAvailable \}\}/);
-  assert.match(handoff, /href=\{confirmationHref\}/);
   assert.match(handoff, /href=\{action\.href\}/);
+  assert.match(handoff, /outboundIntent\("direct", context\)/);
   assert.match(handoff, /rel="nofollow sponsored noopener"/);
+  assert.doesNotMatch(handoff, /confirmationHref|showModal|aria-haspopup="dialog"/);
   const styles = readFileSync("components/bonus-directory/BonusDirectory.module.css", "utf8");
   assert.match(styles, /\.page \.offerActionCompact \{ color: var\(--white\); \}/);
   assert.match(component, /String\(startPosition \+ index\)\.padStart/);
@@ -59,7 +60,8 @@ test("page source preserves SSR, metadata, canonical, noindex and ItemList posit
 
 test("all supported controls are GET parameters and no-JS filters and pagination remain links", () => {
   const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  for (const name of ["country", "type", "payment", "crypto", "maxDeposit", "maxWagering", "availability", "featured", "recommended", "sort"]) assert.match(component, new RegExp(`name=\\"${name}\\"`));
+  for (const name of ["type", "payment", "crypto", "maxDeposit", "maxWagering", "availability", "featured", "recommended", "sort"]) assert.match(component, new RegExp(`name=\\"${name}\\"`));
+  assert.doesNotMatch(component, /name="country"/);
   assert.match(component, /InstantDiscoveryForm/);
   assert.match(component, /<noscript>/);
   assert.match(component, /ariaLabel=\{messages\.bonuses\.directoryTitle\}/);

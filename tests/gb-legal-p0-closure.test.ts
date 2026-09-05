@@ -185,7 +185,8 @@ test("public safety, affiliate and demonstration disclosures remain at their gov
   assert.equal(footer.match(/"\/privacy"/g)?.length, 1);
   assert.equal(footer.match(/"\/contact"/g)?.length, 1);
   assert.match(demo, /messages\.common\.demoData/);
-  assert.match(outbound, /messages\?\.description/);
+  assert.match(outbound, /messages\?\.affiliateNote/);
+  assert.doesNotMatch(outbound, /messages\?\.description|You are leaving B4GAMBLE|<dialog/);
   assert.match(productCatalog, /demoData: "DEMONSTRATION DATA"/);
-  assert.match(productCatalog, /You are about to visit a third-party gambling operator/);
+  assert.match(productCatalog, /affiliateNote: "Affiliate link · We may earn commission\."/);
 });
