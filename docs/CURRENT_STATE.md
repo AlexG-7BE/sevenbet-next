@@ -4,9 +4,9 @@
 **Evidence date:** 5 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `b9965d5ca2744bdc510baadaad48fde3c1d39fba`
-**Verified post-release runtime baseline SHA:** `b9965d5ca2744bdc510baadaad48fde3c1d39fba`
-**Verified post-release runtime deployment:** Ready; `dpl_AWTHUgp2fp4XsVwRe4v25NKrcQoL`
+**Current Production application SHA (live provider evidence):** `491e1c51bc26c60ac10b2fe5bf8f15bba5cfe044`
+**Verified post-release runtime baseline SHA:** `491e1c51bc26c60ac10b2fe5bf8f15bba5cfe044`
+**Verified post-release runtime deployment:** Ready; `dpl_7VZfo7P55yAwgShrYK2wx1vDtk11`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -32,7 +32,8 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public legal implementation | **READY** | Current GB public legal copy/consent/disclosure implementation is in Production for the approved scope. |
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
-| ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
+| ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — DURABLE GRANT CODE AND DB FAILURE BOUNDARY DEPLOYED** | PRs #146/#147 superseded the historical 15-minute/browser-session lifecycle defect in repository/runtime code. Commercial retains four tools; Media retains five. PR #159 makes unsupported methods DB-free and authenticated transient DB failures bounded. No current authorised Founder connection was available to re-exercise a live refresh cycle in the reliability acceptance window. |
+| Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
 | Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
 | Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; SIX PUBLISHED OFFERS** | Eight real global editorial identities remain published with their scores, reviews, SEO and controlled marks. Six have complete global catalog facts, a published welcome offer and a governed route; Betsson and DragonBet remain review-only. Temporary demo identities are excluded from every released catalog and offer surface. |
 | Placement media | **RFC-040 OPTION C ACTIVE IN PRODUCTION** | Nine semantic placements resolve through typed Casino, Bonus and optional AffiliateOffer relationships, responsive variants and immutable publication snapshots. Production has 26 Casino and 20 Bonus assignments, zero partner-context assignments, and a strict rollback switch. |
@@ -41,6 +42,24 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
 
 ### Recent implementation state
+
+**DETECTED — PRODUCTION-DB-MCP-RELIABILITY-01 COMPLETE, 5 September 2026:**
+[PR #159](https://github.com/AlexG-7BE/sevenbet-next/pull/159) merged as
+`491e1c51bc26c60ac10b2fe5bf8f15bba5cfe044` after deterministic unavailable-
+database and one-connection PostgreSQL acceptance, exact-head CI and a corrected
+Preview passed. The first Preview transparently exposed six `P2024` failures
+among eight concurrent `/casinos` requests; merge remained paused until the
+complete one-connection discovery coordinator at accepted head
+`2d47933371b229267b885476c7c58ebdf9b3a62e` made the repeated test 8/8 HTTP
+200. Ready Production deployment `dpl_7VZfo7P55yAwgShrYK2wx1vDtk11` then
+passed both MCP method-only probes, eight concurrent Casino reads, seven public
+routes and an exact-deployment log scan with no P2024, Prisma initialization,
+unhandled rejection, process exit, 500 or 503. No schema, data, environment,
+provider/plan, R2, media, tool or authority change occurred. A safe current
+Founder Commercial credential was unavailable, so no live authenticated MCP
+read or refresh lifecycle is claimed beyond deterministic valid-token CI and
+current metadata. See the
+[PRODUCTION-DB-MCP-RELIABILITY-01 release record](06_Operations/Production-DB-MCP-Reliability-01-Release-Record-2026-09-05.md).
 
 **DETECTED — MEDIA-INGESTION-AUTOPLACEMENT-01 COMPLETE, 5 September 2026:**
 [PR #157](https://github.com/AlexG-7BE/sevenbet-next/pull/157) merged as
@@ -257,6 +276,20 @@ Execution sequence on 20 August 2026:
 The normal Vercel preflight is readiness-only again. This event does not establish a permanent automatic Production migration policy.
 
 ## Production Commercial MCP and refresh lifecycle
+
+**CONTRADICTION RESOLVED — CURRENT REPOSITORY/RUNTIME, 5 September 2026:** the
+historical 21 August text below predates
+[PR #146](https://github.com/AlexG-7BE/sevenbet-next/pull/146) and
+[PR #147](https://github.com/AlexG-7BE/sevenbet-next/pull/147). Those protected
+merges deployed durable delegated access and removed browser-session dependence
+from refresh. Current authorization/protected-resource metadata includes
+`offline_access`; refresh permits an omitted request resource only after the
+stored exact-resource grant and current delegated staff authority validate.
+PR #159 preserved that contract. **UNKNOWN:** this reliability workstream had
+no safe current Founder Commercial credential, so it did not independently
+re-run a live end-to-end refresh cycle. The following paragraphs remain the
+historical incident/root-cause record, but their “proposed/not deployed” state
+is superseded.
 
 **DETECTED — PRODUCTION RUNTIME, 2026-08-21:** Production serves the bounded Commercial MCP from application SHA `9d7ba9169df43f914a1fb05f44cfc10af87118e2` with Better Auth/OAuth Provider `1.7.1`. Public read-only checks returned HTTP 200 for both OAuth discovery documents. Authorization-server metadata advertises `authorization_code`, `refresh_token`, PKCE `S256`, the exact Commercial resource and `offline_access`; protected-resource metadata advertises only `commercial:read` and `commercial:safe_write`.
 
