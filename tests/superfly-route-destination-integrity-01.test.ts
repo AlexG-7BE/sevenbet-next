@@ -62,6 +62,9 @@ test("the executor is bounded to forward updates of route destination records", 
   assert.match(source, /affiliateTrackingLink\.updateMany/);
   assert.match(source, /affiliateTrackingLinkRevision\.create/);
   assert.match(source, /auditLog\.create/);
+  assert.match(source, /WRITE_TRANSACTION_MAX_WAIT_MS = 30_000/);
+  assert.match(source, /WRITE_TRANSACTION_TIMEOUT_MS = 120_000/);
+  assert.match(source, /isolationLevel: Prisma\.TransactionIsolationLevel\.Serializable/);
   assert.doesNotMatch(source, /\.(?:delete|deleteMany|createMany)\s*\(/);
   assert.doesNotMatch(source, /prisma\.(?:casino|casinoBonus|affiliateOffer|affiliateRedirectSlug)\.(?:update|upsert|create)/);
 });

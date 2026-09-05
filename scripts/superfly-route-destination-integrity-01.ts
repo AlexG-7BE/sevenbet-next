@@ -27,6 +27,8 @@ const RELEASE = "SUPERFLY-ROUTE-DESTINATION-INTEGRITY-01";
 const PROJECT_ID = "prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb";
 const ORG_ID = "team_WhkUGuXZeIMlU1uFHtowNUqa";
 const TARGET_MIGRATION = "0026_commercial_platform_completion";
+const WRITE_TRANSACTION_MAX_WAIT_MS = 30_000;
+const WRITE_TRANSACTION_TIMEOUT_MS = 120_000;
 const ALLOWED_COUNTRIES = ["KZ", "US", "DE", "IE", "MX"] as const;
 const PRE_REPAIR_SHA256 = {
   diamond7: "df2aaa6d61ecb0e6f62de629313fa0e1940417ea30f835feadb8f4bbe75c085b",
@@ -295,7 +297,11 @@ async function apply() {
         },
       });
     }
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }, {
+    isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    maxWait: WRITE_TRANSACTION_MAX_WAIT_MS,
+    timeout: WRITE_TRANSACTION_TIMEOUT_MS,
+  });
 
   const results = [];
   for (const row of pending) {
