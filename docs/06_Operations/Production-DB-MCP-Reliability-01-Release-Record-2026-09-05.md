@@ -36,6 +36,12 @@ Production acceptance passed
 
 **Production origin:** `https://b4gamble.com`
 
+**Release-record branch:**
+`codex/production-db-mcp-reliability-01-release-record`
+
+**Release-record pull request:**
+[#160](https://github.com/AlexG-7BE/sevenbet-next/pull/160)
+
 This record contains no database URL, credential, OAuth token/code, signed
 cookie, raw affiliate destination, visitor data or Programme data. Claims are
 classified as **DETECTED**, **INFERRED**, **PROPOSED**, **UNKNOWN** or
@@ -359,8 +365,9 @@ on the healthy attempt.
 passed Agent Core, Quality, Database/Migration, Build/Browser and Vercel. The
 exact merge-SHA run
 [`33966888922`](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/33966888922)
-passed Agent Core, Quality and Database/Migration; its final Build/Browser state
-is recorded by the live run and is not overstated here while still executing.
+passed Agent Core, Quality, Database/Migration and Build/Browser. The latter
+completed in 15 minutes 29 seconds, including the full browser and typography
+checks.
 
 ## Preview acceptance
 
