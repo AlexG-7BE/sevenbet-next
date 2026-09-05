@@ -4,9 +4,9 @@
 **Evidence date:** 5 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `491e1c51bc26c60ac10b2fe5bf8f15bba5cfe044`
-**Verified post-release runtime baseline SHA:** `491e1c51bc26c60ac10b2fe5bf8f15bba5cfe044`
-**Verified post-release runtime deployment:** Ready; `dpl_7VZfo7P55yAwgShrYK2wx1vDtk11`
+**Current Production application SHA (live provider evidence):** `edf191f9c52912fb1637b1f5952bf4f0e7830dfb`
+**Verified post-release runtime baseline SHA:** `edf191f9c52912fb1637b1f5952bf4f0e7830dfb`
+**Verified post-release runtime deployment:** Ready; `dpl_F5s4pBxa4jkkRg2hv3CD6grcam9g`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -32,7 +32,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public legal implementation | **READY** | Current GB public legal copy/consent/disclosure implementation is in Production for the approved scope. |
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
-| ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — DURABLE GRANT CODE AND DB FAILURE BOUNDARY DEPLOYED** | PRs #146/#147 superseded the historical 15-minute/browser-session lifecycle defect in repository/runtime code. Commercial retains four tools; Media retains five. PR #159 makes unsupported methods DB-free and authenticated transient DB failures bounded. No current authorised Founder connection was available to re-exercise a live refresh cycle in the reliability acceptance window. |
+| ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — RESOURCE-SPECIFIC DCR, DURABLE GRANTS AND DB FAILURE BOUNDARY DEPLOYED** | Commercial retains four tools; Media retains five. PR #161 binds standards-shaped DCR through resource-specific discovery while preserving strict one-resource clients and invalidating cross-resource use. PR #159 keeps unsupported methods DB-free and authenticated transient DB failures bounded. |
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
 | Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
 | Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; SIX PUBLISHED OFFERS** | Eight real global editorial identities remain published with their scores, reviews, SEO and controlled marks. Six have complete global catalog facts, a published welcome offer and a governed route; Betsson and DragonBet remain review-only. Temporary demo identities are excluded from every released catalog and offer surface. |
@@ -42,6 +42,20 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
 
 ### Recent implementation state
+
+**DETECTED — MEDIA-MCP-DCR-RESOURCE-FIX-01 COMPLETE, 5 September 2026:**
+[PR #161](https://github.com/AlexG-7BE/sevenbet-next/pull/161) merged as
+`edf191f9c52912fb1637b1f5952bf4f0e7830dfb` after exact-head CI and Preview
+acceptance. Media now advertises its own RFC 8414 path issuer and DCR endpoint;
+Commercial retains its existing issuer and endpoint. Neutral standard DCR
+without custom resource fields, a scope discriminator or a Media-bearing name
+creates exactly one resource-bound public client. Both valid resource flows
+reached login and both inverse flows failed `invalid_target` in Preview and
+Production. Ready Production deployment `dpl_F5s4pBxa4jkkRg2hv3CD6grcam9g`
+also passed nine public routes, ten DB-free MCP method probes and an exact-
+deployment error/credential log scan. No schema, migration, tool, CRM, Media,
+R2, CTA, offer, GEO or public-product change occurred. See the
+[MEDIA-MCP-DCR-RESOURCE-FIX-01 release record](06_Operations/Media-MCP-DCR-Resource-Fix-01-Release-Record-2026-09-05.md).
 
 **DETECTED — PRODUCTION-DB-MCP-RELIABILITY-01 COMPLETE, 5 September 2026:**
 [PR #159](https://github.com/AlexG-7BE/sevenbet-next/pull/159) merged as
