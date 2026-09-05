@@ -679,7 +679,7 @@
   grid-template-columns:minmax(0,60%) minmax(360px,40%);
   align-items:start;
 }
-.heroReview { padding:72px 38px 32px; }
+.heroReview { padding:92px 38px 32px; }
 .heroMedia {
   width:auto;
   height:600px;
@@ -755,7 +755,8 @@
 
 @media (min-width:761px) and (max-width:1099px) {
   .hero { grid-template-columns:minmax(0,1fr); }
-  .heroReview { padding:82px 32px 32px; }
+  .heroReview { padding:92px 32px 32px; }
+  .heroOfferCopy dl { grid-template-columns:minmax(0,1fr); }
   .heroMedia {
     width:calc(100% - 64px);
     height:300px;

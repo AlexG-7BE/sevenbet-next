@@ -283,7 +283,7 @@ async function expectNativeArticleHeroSeparation(page: import("@playwright/test"
   expect(geometry.separationGap, `${context}: title/summary separation`).toBeGreaterThanOrEqual(1);
 }
 
-test("localized mobile controls wrap while neutral global and composed copy stay bounded", async ({ page }) => {
+test("localized mobile controls wrap while neutral global and compact media stay bounded", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const response = await page.goto(`${baseUrl}/de/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
@@ -302,10 +302,10 @@ test("localized mobile controls wrap while neutral global and composed copy stay
   expect(positionBox!.x + positionBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1);
   expect(positionBox!.y + positionBox!.height).toBeLessThanOrEqual(rowBox!.y + rowBox!.height + 1);
 
-  const composed = page.locator('[data-media-state="presented"][data-media-mode="COMPOSED"][data-media-ratio="missing"][data-offer-media="bonus"]').first();
-  await expect(composed).toBeVisible();
-  await expect(composed.locator("strong").first()).toBeVisible();
-  const composedGeometry = await composed.evaluate((element) => {
+  const compactMedia = page.locator('[data-media-state="presented"][data-presentation-family="STRIP"][data-offer-media="bonus"]').first();
+  await expect(compactMedia).toBeVisible();
+  await expect(compactMedia.locator("img").first()).toBeVisible();
+  const compactMediaGeometry = await compactMedia.evaluate((element) => {
     const container = element.getBoundingClientRect();
     const children = Array.from(element.querySelectorAll("span, strong, small"));
     const bounds = children.map((child) => {
@@ -321,11 +321,11 @@ test("localized mobile controls wrap while neutral global and composed copy stay
     });
     return { container: { bottom: container.bottom, left: container.left, right: container.right, top: container.top }, bounds };
   });
-  for (const bounds of composedGeometry.bounds) {
-    expect(bounds.left).toBeGreaterThanOrEqual(composedGeometry.container.left - 1);
-    expect(bounds.right).toBeLessThanOrEqual(composedGeometry.container.right + 1);
-    expect(bounds.top).toBeGreaterThanOrEqual(composedGeometry.container.top - 1);
-    expect(bounds.bottom).toBeLessThanOrEqual(composedGeometry.container.bottom + 1);
+  for (const bounds of compactMediaGeometry.bounds) {
+    expect(bounds.left).toBeGreaterThanOrEqual(compactMediaGeometry.container.left - 1);
+    expect(bounds.right).toBeLessThanOrEqual(compactMediaGeometry.container.right + 1);
+    expect(bounds.top).toBeGreaterThanOrEqual(compactMediaGeometry.container.top - 1);
+    expect(bounds.bottom).toBeLessThanOrEqual(compactMediaGeometry.container.bottom + 1);
   }
 
   await page.goto(`${baseUrl}/de/casinos?visualFixture=true`, { waitUntil: "networkidle" });
@@ -844,7 +844,7 @@ test("bonus fixture review controls resolve only the matching localized Solvane 
   }
 });
 
-test("localized demo editorial declares fixture origin and keeps only adjacent logos decorative", async ({ page }) => {
+test("localized demo editorial declares fixture origin and keeps repeated identity logos decorative", async ({ page }) => {
   const messages = productPageMessages("de-DE");
   const response = await page.goto(`${baseUrl}/de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
@@ -852,7 +852,10 @@ test("localized demo editorial declares fixture origin and keeps only adjacent l
   const profile = page.locator('[data-runtime-renderer="casino-review"]');
   const identityLogo = profile.locator('[class*="identityRow"] [class*="logo"] img');
   await expect(identityLogo).toHaveAttribute("alt", "");
-  await expect(profile.locator('[class*="heroMediaCanvas"] img')).not.toHaveAttribute("alt", "");
+  const brandHero = profile.locator('[class*="heroMedia"][data-presentation-family="LOGO_ONLY"]');
+  await expect(brandHero).toHaveAttribute("aria-label", "Solvane Casino");
+  await expect(brandHero.locator('[class*="brandMedia"] img')).toHaveAttribute("alt", "");
+  await expect(brandHero.locator('[class*="heroMediaCanvas"] img')).toHaveCount(0);
   expect(await profile.locator('[data-content-origin="localized-fixture"]').count()).toBeGreaterThan(0);
   await expect(profile.locator('[data-content-origin="source-controlled"]')).toHaveCount(0);
   await expect(profile).toContainText(messages.profile.demoDisclosure);
