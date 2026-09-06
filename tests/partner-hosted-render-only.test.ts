@@ -67,11 +67,12 @@ test("render-only exception is Bannerflow embed specific and requires canonical 
   }), false);
 });
 
-test("Bannerflow frame routes render-only clicks to unavailable rather than /r", () => {
+test("Bannerflow render-only frame uses the same fail-closed creative /r contract", () => {
   const source = readFileSync("app/partner-creatives/[creativeId]/frame/route.ts", "utf8");
   assert.match(source, /isPartnerHostedRenderOnlyDestinationReview/);
-  assert.match(source, /new URL\("\/outbound\/unavailable", siteUrl\)/);
-  assert.match(source, /if \(clickVerified\) governed\.searchParams\.set\("creative", creativeId\)/);
+  assert.match(source, /new URL\(`\/r\/\$\{redirectSlug\}`/);
+  assert.match(source, /governed\.searchParams\.set\("creative", creativeId\)/);
+  assert.doesNotMatch(source, /destinationUrl/);
 });
 
 test("bootstrap keeps referral authority false while permitting bounded visual publication", () => {
@@ -80,4 +81,12 @@ test("bootstrap keeps referral authority false while permitting bounded visual p
   assert.match(source, /productionEligible: false/);
   assert.match(source, /validationReason: \{ startsWith: "DESTINATION_INTEGRITY_" \}/);
   assert.match(source, /referralAuthorityGranted: false/);
+});
+
+test("responsive media publication stays casino-level and does not activate tracking", () => {
+  const source = readFileSync("scripts/bga-visible-hosted-media-01.ts", "utf8");
+  assert.match(source, /placement: "CASINO_DIRECTORY_CARD"/);
+  assert.match(source, /variant: "MOBILE"|"MOBILE" \| "DESKTOP"/);
+  assert.match(source, /referralAuthorityGranted: false/);
+  assert.doesNotMatch(source, /productionEligible:\s*true/);
 });
