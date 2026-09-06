@@ -32,12 +32,13 @@ function privateIpv6(address: string) {
 }
 
 export function isPublicAddress(address: string) {
-  const family = isIP(address);
-  return family === 4 ? !privateIpv4(address) : family === 6 ? !privateIpv6(address) : false;
+  const normalized = address.toLowerCase().replace(/^\[|\]$/g, "").split("%")[0];
+  const family = isIP(normalized);
+  return family === 4 ? !privateIpv4(normalized) : family === 6 ? !privateIpv6(normalized) : false;
 }
 
 export async function assertPublicNetworkUrl(value: URL) {
-  const hostname = value.hostname.toLowerCase().replace(/\.$/, "");
+  const hostname = value.hostname.toLowerCase().replace(/\.$/, "").replace(/^\[|\]$/g, "");
   if (value.protocol !== "https:" || value.username || value.password || !hostname
     || hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local") || hostname.endsWith(".internal")) {
     throw new Error("UNSAFE_HEALTH_TARGET");

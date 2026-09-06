@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function MediaOperationsPage() {
   if (!await getAdminPageAccess(await headers(), "media-operations")) return <AdminPermissionDenied />;
   const casinos = await mediaOperationsService.references();
-  return <AdminPageShell area="media-operations" title="Media Operations" intro="Ingest partner creatives into first-party storage, inspect evidence, and prepare protected draft assignments without publishing.">
+  return <AdminPageShell area="media-operations" title="Media Operations" intro="Ingest first-party media or validate vetted partner-hosted creatives, inspect destination evidence, and prepare protected draft assignments without publishing.">
     <MediaOperationsWorkbench casinos={casinos} />
   </AdminPageShell>;
 }

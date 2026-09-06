@@ -98,6 +98,52 @@ test("HEAD fallback and CDN challenges are handled without hiding server failure
   assert.equal(ordinary503.status, "BROKEN");
 });
 
+test("new-destination inspection rejects same-host 200 error pages and JSON terminals", async () => {
+  const pageNotFound = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"), expectation,
+    fetcher: fetchSequence(
+      new Response("<!doctype html><title>Page not found</title>", { status: 200, headers: { "content-type": "text/html" } }),
+    ),
+    validateUrl: noNetworkValidation,
+    inspectTerminalContent: true,
+  });
+  assert.equal(pageNotFound.status, "BROKEN");
+  assert.equal(pageNotFound.reason, "TERMINAL_ERROR_PAGE");
+
+  const jsonError = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"), expectation,
+    fetcher: fetchSequence(
+      new Response('{"error":"invalid link"}', { status: 200, headers: { "content-type": "application/json" } }),
+    ),
+    validateUrl: noNetworkValidation,
+    inspectTerminalContent: true,
+  });
+  assert.equal(jsonError.status, "BROKEN");
+  assert.equal(jsonError.reason, "TERMINAL_JSON_RESPONSE");
+
+  const challenge = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"), expectation,
+    fetcher: fetchSequence(
+      new Response("<!doctype html><title>Just a moment...</title>", { status: 200, headers: { "content-type": "text/html" } }),
+    ),
+    validateUrl: noNetworkValidation,
+    inspectTerminalContent: true,
+  });
+  assert.equal(challenge.status, "BROKEN");
+  assert.equal(challenge.reason, "TERMINAL_CHALLENGE_PAGE");
+
+  const healthy = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"), expectation,
+    fetcher: fetchSequence(
+      new Response("<!doctype html><title>Casino welcome</title>", { status: 200, headers: { "content-type": "text/html" } }),
+    ),
+    validateUrl: noNetworkValidation,
+    inspectTerminalContent: true,
+  });
+  assert.equal(healthy.status, "HEALTHY");
+  assert.equal(healthy.method, "GET");
+});
+
 test("private, local, documentation, multicast, and IPv4-mapped private addresses are refused", () => {
   for (const address of [
     "127.0.0.1", "10.0.0.1", "169.254.169.254", "192.168.1.1",

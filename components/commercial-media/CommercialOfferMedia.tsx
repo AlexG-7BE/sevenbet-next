@@ -4,6 +4,7 @@ import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { GovernedCommercialAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
+import { PartnerHostedCommercialFigure } from "@/components/commercial-media/PartnerHostedCommercialFigure";
 import {
   commercialCreativeFormat,
   creativePresentationFamily,
@@ -82,6 +83,34 @@ export function CommercialOfferMedia({ offer, variant, messages }: { offer: Publ
     && media
     && (isPromotionalPresentationFamily(presentationFamily) || isPromotionalPresentationFamily(mobilePresentationFamily)),
   );
+
+  const partnerHosted = media?.sourceMode === "PARTNER_HOSTED_IMAGE"
+    || media?.sourceMode === "PARTNER_HOSTED_EMBED"
+    || mobileMedia?.sourceMode === "PARTNER_HOSTED_IMAGE"
+    || mobileMedia?.sourceMode === "PARTNER_HOSTED_EMBED";
+
+  if (promotionalMedia && media && partnerHosted) {
+    const firstPartyHero = offer.casino.hero
+      && (!offer.casino.hero.sourceMode || offer.casino.hero.sourceMode === "FIRST_PARTY_MEDIA")
+      ? offer.casino.hero
+      : null;
+    const firstPartyLogo = offer.casino.logo
+      && (!offer.casino.logo.sourceMode || offer.casino.logo.sourceMode === "FIRST_PARTY_MEDIA")
+      ? offer.casino.logo
+      : null;
+    return <PartnerHostedCommercialFigure
+      canonicalHref={offer.action.href}
+      casinoName={offer.casino.name}
+      fallbackMedia={firstPartyHero ?? firstPartyLogo}
+      governed={governed}
+      media={media}
+      messages={messages}
+      mobileMedia={mobileMedia}
+      offerTitle={offer.bonus.title}
+      placement={placement}
+      variant={variant}
+    />;
+  }
 
   function withGovernedAction(content: ReactNode, clickable = promotionalMedia) {
     if (!clickable || !governed || !offer.action.href) return content;

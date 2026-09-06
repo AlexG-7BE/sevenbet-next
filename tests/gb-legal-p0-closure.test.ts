@@ -79,7 +79,7 @@ test("provider review separates public frameworks, application controls and acco
   assert.match(openai, /does not prove Zero Data Retention/);
 });
 
-test("GB launch runtime has no non-essential analytics provider or activation path", () => {
+test("GB launch runtime has no non-essential product analytics provider or activation path", () => {
   const runtime = [
     ...filesBelow("app"),
     ...filesBelow("components"),
@@ -92,7 +92,10 @@ test("GB launch runtime has no non-essential analytics provider or activation pa
   assert.doesNotMatch(source(".env.example"), /NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED/);
   assert.match(source("lib/analytics/product-analytics.ts"), /DISABLED_GB_LAUNCH/);
   assert.doesNotMatch(source("lib/analytics/product-analytics.ts"), /process\.env/);
-  assert.match(source("app/(public)/privacy/page.tsx"), /do not run non-essential product analytics, advertising trackers, tracking pixels or session replay/);
+  const privacy = source("app/(public)/privacy/page.tsx");
+  assert.match(privacy, /do not run non-essential product analytics or session replay/);
+  assert.match(privacy, /vetted partner-hosted creative can make a no-referrer media or impression request/);
+  assert.match(privacy, /no response set a cookie and no cookie or browser-storage write was observed/);
 });
 
 test("Article 27 particulars publish the confirmed EU and UK representation", () => {

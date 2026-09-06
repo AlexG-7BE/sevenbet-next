@@ -67,17 +67,18 @@ orientation.
 | [RFC-037 — Internationalisation and Multi-Market Foundation](RFC-037-Internationalisation-and-Multi-Market-Foundation.md) | `ACTIVE` | Infrastructure-first internationalisation and market/commercial separation. RFC-039 supersedes its public locale-market URL and combined-selector semantics. |
 | [RFC-038 — Casino Market Data Architecture](RFC-038-Casino-Market-Data-Architecture.md) | `ACTIVE` | Casino global identity, `CasinoCountry` factual market grain, market-scoped facts, provenance, logical PartnerRoute projection, and exact fail-closed Production eligibility. RFC-039 supersedes its unqualified public-query fallback semantics. |
 | [RFC-039 — Language-Only Public Routing and Global Casino Catalog](RFC-039-Language-Only-Public-Routing-and-Global-Casino-Catalog.md) | `ACTIVE` | Language-only public canonicals, trusted request-market separation, global real-Casino publication, `UNKNOWN`/prohibition separation and governed country-block routing. |
-| [RFC-040 — Placement-Based Media Assignments](RFC-040-Placement-Based-Media-Assignments.md) | `ACTIVE` | Founder-approved Option C typed assignment tables, deterministic resolver, semantic Admin slots, immutable publication projection and non-destructive compatibility release. |
+| [RFC-040 — Placement-Based Media Assignments](RFC-040-Placement-Based-Media-Assignments.md) | `ACTIVE` | Founder-approved Option C typed assignment tables, deterministic resolver, semantic Admin slots and immutable publication projection. RFC-041 supersedes its narrower four-bucket presentation order for mixed hosted inventory. |
+| [RFC-041 — Vetted Partner-Hosted Creatives](RFC-041-Vetted-Partner-Hosted-Creatives.md) | `ACTIVE` | Exact Superfly/Bannerflow adapters, structured server-owned destinations, isolated rendering, creative-bound `/r` resolution and eight-tier global fallback policy. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 19 |
+| `ACTIVE` | 20 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 2 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **40** |
+| **Total RFC artifacts** | **41** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

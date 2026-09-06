@@ -7,13 +7,16 @@ import { marketProfileByCountry } from "@/lib/market/registry";
 
 export type ExistingMediaAssignment = {
   id: string;
-  mediaAssetId: string;
+  mediaAssetId: string | null;
+  hostedCreativeId?: string | null;
+  sourceMode?: MediaPlanRecommendation["sourceMode"];
   subjectType: "CASINO" | "CASINO_BONUS" | "AFFILIATE_OFFER";
   subjectId: string;
   placement: MediaPlanRecommendation["placement"];
   variant: MediaPlanRecommendation["variant"];
   countryCode?: string | null;
   languageCode?: string | null;
+  languageState?: MediaPlanRecommendation["languageState"];
   mediaAsset: { width: number | null; height: number | null };
 };
 
@@ -81,10 +84,11 @@ function formatRank(
 
 function compareExisting(
   existing: ExistingMediaAssignment | undefined,
-  input: { assetId: string; placement: MediaPlanRecommendation["placement"]; variant: MediaPlanRecommendation["variant"]; width: number; height: number },
+  input: { assetId: string | null; hostedCreativeId?: string | null; placement: MediaPlanRecommendation["placement"]; variant: MediaPlanRecommendation["variant"]; width: number; height: number },
 ): MediaPlanRecommendation["existingComparison"] {
   if (!existing) return "NEW_SLOT";
-  if (existing.mediaAssetId === input.assetId) return "EQUIVALENT";
+  if ((input.assetId && existing.mediaAssetId === input.assetId)
+    || (input.hostedCreativeId && existing.hostedCreativeId === input.hostedCreativeId)) return "EQUIVALENT";
   const currentRank = formatRank(input.placement, input.variant, existing.mediaAsset.width ?? 0, existing.mediaAsset.height ?? 0);
   const candidateRank = formatRank(input.placement, input.variant, input.width, input.height);
   if (currentRank === null || candidateRank === null) return "CONFLICT";
@@ -108,7 +112,9 @@ export function offerMatch(semantic: MediaSemanticResult, bonus: MediaPlannerCon
 
 type RecommendationInput = {
   creativeId: string;
-  assetId: string;
+  assetId: string | null;
+  hostedCreativeId?: string | null;
+  sourceMode?: MediaPlanRecommendation["sourceMode"];
   width: number;
   height: number;
   subjectType: MediaPlanRecommendation["subjectType"];
@@ -117,6 +123,7 @@ type RecommendationInput = {
   variant: MediaPlanRecommendation["variant"];
   countryCode: string | null;
   languageCode: string | null;
+  languageState?: MediaPlanRecommendation["languageState"];
   renderingMode: MediaPlanRecommendation["renderingMode"];
   cropSafe?: boolean;
   score: number;
@@ -130,12 +137,16 @@ type RecommendationInput = {
 };
 
 function makeRecommendation(input: RecommendationInput): MediaPlanRecommendation {
+  const languageState = input.languageState ?? (input.languageCode ? "EXPLICIT" : "NEUTRAL");
   const existing = input.existingAssignments.find((assignment) => assignment.subjectType === input.subjectType
     && assignment.subjectId === input.subjectId
     && assignment.placement === input.placement
     && assignment.variant === input.variant
     && (assignment.countryCode ?? null) === input.countryCode
-    && (assignment.languageCode ?? null) === input.languageCode);
+    && (assignment.languageCode ?? null) === input.languageCode
+    && (assignment.languageState ?? (assignment.languageCode ? "EXPLICIT" : "NEUTRAL")) === languageState);
+  const sameSourceMode = !existing
+    || (existing.sourceMode ?? "FIRST_PARTY_MEDIA") === (input.sourceMode ?? "FIRST_PARTY_MEDIA");
   const lowerPriorityMobileStrip = Boolean(input.lowerPriorityMobileStrip
     || (input.width === 320 && input.height === 50 && existing?.mediaAsset.width === 320 && existing.mediaAsset.height === 100));
   let existingComparison = compareExisting(existing, input);
@@ -155,12 +166,15 @@ function makeRecommendation(input: RecommendationInput): MediaPlanRecommendation
     id: randomUUID(),
     creativeId: input.creativeId,
     assetId: input.assetId,
+    hostedCreativeId: input.hostedCreativeId ?? null,
+    sourceMode: input.sourceMode ?? "FIRST_PARTY_MEDIA",
     subjectType: input.subjectType,
     subjectId: input.subjectId,
     placement: input.placement,
     variant: input.variant,
     countryCode: input.countryCode,
     languageCode: input.languageCode,
+    languageState,
     renderingMode: input.renderingMode,
     cropSafe: Boolean(input.cropSafe),
     state,
@@ -170,7 +184,8 @@ function makeRecommendation(input: RecommendationInput): MediaPlanRecommendation
     existingAssignmentId: existing?.id ?? null,
     existingComparison,
     replacementEligible: Boolean(existing
-      && existing.mediaAssetId !== input.assetId
+      && sameSourceMode
+      && !(input.assetId ? existing.mediaAssetId === input.assetId : existing.hostedCreativeId === input.hostedCreativeId)
       && deterministicallyEligible
       && ["BETTER_CANDIDATE", "EQUIVALENT"].includes(existingComparison)
       && !lowerPriorityMobileStrip),
@@ -332,7 +347,7 @@ function keepOnlyBestAutomaticCandidate(recommendations: MediaPlanRecommendation
   };
   for (const recommendation of recommendations) {
     if (recommendation.state !== "AUTO_ASSIGN_DRAFT" && !recommendation.replacementEligible) continue;
-    const key = `${recommendation.subjectType}:${recommendation.subjectId}:${recommendation.placement}:${recommendation.variant}:${recommendation.countryCode ?? "GLOBAL"}:${recommendation.languageCode ?? "neutral"}`;
+    const key = `${recommendation.subjectType}:${recommendation.subjectId}:${recommendation.placement}:${recommendation.variant}:${recommendation.countryCode ?? "GLOBAL"}:${recommendation.languageState ?? (recommendation.languageCode ? "EXPLICIT" : "NEUTRAL")}:${recommendation.languageCode ?? "none"}`;
     const winner = winners.get(key);
     if (!winner) { winners.set(key, recommendation); continue; }
     if (recommendation.score > winner.score) {
@@ -350,6 +365,72 @@ export function buildMediaPlacementPlan(plan: MediaIngestionPlan, context: Media
     : plan.resolvedContext.bonusId ? "CASINO_BONUS" : null;
   const subjectId = plan.resolvedContext.affiliateOfferId ?? plan.resolvedContext.bonusId;
   const batchHasMobileLandscape = plan.assets.some((asset) => asset.width === 320 && asset.height === 100 && Boolean(asset.assetId));
+
+  for (const asset of plan.assets) {
+    if (!asset.hostedCreativeId || !asset.width || !asset.height || !asset.sourceMode || asset.sourceMode === "FIRST_PARTY_MEDIA") continue;
+    const creative = plan.creatives.find((item) => item.id === asset.creativeId);
+    const resolvedSubjectType: MediaPlanRecommendation["subjectType"] | null = subjectType
+      ?? (plan.resolvedContext.casinoId ? "CASINO" : null);
+    const resolvedSubjectId = subjectId ?? plan.resolvedContext.casinoId;
+    if (!creative || !resolvedSubjectType || !resolvedSubjectId) continue;
+    const languageState = creative.languageState ?? "UNKNOWN";
+    const countryCode = creative.countryCode ?? null;
+    const languageCode = languageState === "EXPLICIT" ? creative.languageCode ?? null : null;
+    const marketHandling = countryCode ? "TARGETED" as const : "GLOBAL_SAFE" as const;
+    const baseState: MediaPlanRecommendation["state"] = asset.state === "HOSTED_INGESTED" && !asset.failureCode
+      ? "AUTO_ASSIGN_DRAFT"
+      : "SUGGEST_REVIEW";
+    const common = {
+      creativeId: asset.creativeId,
+      assetId: null,
+      hostedCreativeId: asset.hostedCreativeId,
+      sourceMode: asset.sourceMode,
+      width: asset.width,
+      height: asset.height,
+      subjectType: resolvedSubjectType,
+      subjectId: resolvedSubjectId,
+      countryCode,
+      languageCode,
+      languageState,
+      renderingMode: "CONTAIN" as const,
+      cropSafe: false,
+      semantic: {
+        creativeId: asset.creativeId, state: "COMPLETED", provider: creative.provider ?? null, model: "deterministic-partner-metadata-v1",
+        brandName: creative.brandLabel ?? null, assetPurpose: creative.purpose ? "PROMO" : "UNKNOWN", language: languageCode,
+        market: countryCode, currency: creative.currencyCode ?? null, offerText: creative.purpose ?? null, offerAmount: null,
+        offerPercentage: null, freeSpins: null, promoCode: null, callToActionText: null,
+        containsPromotionalText: Boolean(creative.purpose), containsFinePrint: false, containsResponsibleGamblingText: false,
+        cropSafety: "UNKNOWN", textReadability: "UNKNOWN", likelyMarkets: countryCode ? [countryCode] : [],
+        complianceConcerns: [], confidence: 1, explanation: "Structured partner metadata only; creative pixels were not inspected.",
+      } satisfies MediaSemanticResult,
+      offerMatch: "UNKNOWN" as const,
+      marketHandling,
+      baseState,
+      existingAssignments: context.existingAssignments,
+    };
+    const reasons = [
+      `${creative.provider} is allowlisted as ${asset.sourceMode}.`,
+      `Target scope is ${countryCode ?? "GLOBAL"}/${languageState === "EXPLICIT" ? languageCode : languageState}.`,
+      "No OCR, screenshot acquisition, or pixel-derived offer metadata was used.",
+      ...(asset.failureMessage ? [asset.failureMessage] : []),
+    ];
+    const offerPlacement = resolvedSubjectType !== "CASINO";
+    const card = [[300, 250], [250, 250], [336, 280]].some(([width, height]) => asset.width === width && asset.height === height);
+    const mobile = [[300, 100], [320, 100], [320, 50]].some(([width, height]) => asset.width === width && asset.height === height);
+    if (offerPlacement && card) {
+      for (const [placement, score] of [["BONUS_LISTING_CARD", 98], ["BEST_OFFER_FEATURED", 95], ["BEST_OFFER_SECONDARY", 92], ["CASINO_OFFER_BLOCK", 90]] as const) {
+        recommendations.push(makeRecommendation({ ...common, placement, variant: "DEFAULT", score, reasons }));
+      }
+    } else if (offerPlacement && mobile) {
+      for (const [placement, score] of [["BONUS_LISTING_CARD", 96], ["BEST_OFFER_FEATURED", 93], ["BEST_OFFER_SECONDARY", 90], ["CASINO_OFFER_BLOCK", 92]] as const) {
+        recommendations.push(makeRecommendation({ ...common, placement, variant: "MOBILE", score, reasons }));
+      }
+    } else if (offerPlacement) {
+      recommendations.push(makeRecommendation({ ...common, placement: "CASINO_OFFER_BLOCK", variant: "DEFAULT", score: 50, baseState: "SUGGEST_REVIEW", reasons: [...reasons, "The declared format requires deliberate placement review."] }));
+    } else {
+      recommendations.push(makeRecommendation({ ...common, placement: "CASINO_DIRECTORY_CARD", variant: "DEFAULT", score: 20, baseState: "SUGGEST_REVIEW", reasons: [...reasons, "A promotional hosted creative requires an offer subject before assignment."] }));
+    }
+  }
 
   for (const asset of plan.assets) {
     if (!asset.assetId || !asset.width || !asset.height || !["INGESTED", "REUSED"].includes(asset.state)) continue;

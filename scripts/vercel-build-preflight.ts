@@ -19,6 +19,11 @@ import {
   planPlacementMedia0027Preflight,
   runPlacementMedia0027Readiness,
 } from "@/lib/db/placement-media-0027-release";
+import {
+  VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION,
+  planVettedPartnerHostedCreatives0029Preflight,
+  runVettedPartnerHostedCreatives0029Readiness,
+} from "@/lib/db/vetted-partner-hosted-creatives-0029-release";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
 import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/release-runtime";
 
@@ -275,7 +280,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -284,6 +289,7 @@ async function maybeApplyProgrammeAccessMigration() {
   const prisma = createCasinoMarket0025AdminClient();
   let placementMediaState: ReturnType<typeof planPlacementMedia0027Preflight> | null = null;
   let geoLocalizedCreativeState: ReturnType<typeof planGeoLocalizedCreative0028Preflight> | null = null;
+  let partnerHostedCreativeState: ReturnType<typeof planVettedPartnerHostedCreatives0029Preflight> | null = null;
   try {
     const rows = await readMigrationRows(prisma);
     const unresolved = rows.filter((row) => row.finished_at === null && row.rolled_back_at === null);
@@ -301,7 +307,11 @@ async function maybeApplyProgrammeAccessMigration() {
       throw new Error(`Production migration guard requires completed ${TARGET_MIGRATION}; DB-first 0025 will not apply an older migration.`);
     }
     const pending = repositoryMigrations.filter((name) => !applied.has(name));
-    const expectedPending = applied.has(GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION) ? [] : [GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION];
+    const expectedPending = !applied.has(GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION)
+      ? [GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION]
+      : !applied.has(VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION)
+        ? [VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION]
+        : [];
 
     if (
       pending.length !== expectedPending.length
@@ -323,8 +333,19 @@ async function maybeApplyProgrammeAccessMigration() {
       assignmentFirstEnabled: process.env.PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED === "true",
     });
     writeEvent({ event: "production_placement_media_preflight", ...placementMediaState });
-    geoLocalizedCreativeState = planGeoLocalizedCreative0028Preflight({ rows, repositoryMigrations });
+    geoLocalizedCreativeState = planGeoLocalizedCreative0028Preflight({
+      rows,
+      repositoryMigrations: repositoryMigrations.slice(0, repositoryMigrations.indexOf(GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION) + 1),
+    });
     writeEvent({ event: "production_geo_localized_creative_preflight", ...geoLocalizedCreativeState });
+    if (geoLocalizedCreativeState.state === "schema_ready") {
+      partnerHostedCreativeState = planVettedPartnerHostedCreatives0029Preflight({
+        rows,
+        repositoryMigrations,
+        capabilityEnabled: process.env.VETTED_PARTNER_HOSTED_CREATIVES_ENABLED === "true",
+      });
+      writeEvent({ event: "production_vetted_partner_hosted_creatives_preflight", ...partnerHostedCreativeState });
+    }
     writeEvent({
       event: "production_programme_access_migration",
       state: "baseline_verified_read_only",
@@ -344,12 +365,12 @@ async function maybeApplyProgrammeAccessMigration() {
     return;
   }
   if (geoLocalizedCreativeState?.state === "schema_pending_global_compatibility") {
-    writeEvent({
-      event: "production_geo_localized_creative_staged_deploy",
-      migration: GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION,
-      state: "existing_null_targets_remain_global_neutral_until_governed_migration",
-    });
-    return;
+    throw new Error(
+      `Production DB-first release requires completed ${GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION} and ${VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION} before this application build.`,
+    );
+  }
+  if (partnerHostedCreativeState?.state === "schema_pending_capability_disabled") {
+    throw new Error(`Production DB-first release requires completed ${VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION} before this application build.`);
   }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();
@@ -360,6 +381,8 @@ async function maybeApplyProgrammeAccessMigration() {
   writeEvent({ event: "production_placement_media_readiness", ...placementMediaReadiness });
   const geoLocalizedCreativeReadiness = await runGeoLocalizedCreative0028Readiness();
   writeEvent({ event: "production_geo_localized_creative_readiness", ...geoLocalizedCreativeReadiness });
+  const partnerHostedCreativeReadiness = await runVettedPartnerHostedCreatives0029Readiness();
+  writeEvent({ event: "production_vetted_partner_hosted_creatives_readiness", ...partnerHostedCreativeReadiness });
 }
 
 maybeApplyProgrammeAccessMigration().catch((error) => {

@@ -18,6 +18,12 @@ export interface PublicCasinoMediaAsset {
   width: number | null;
   height: number | null;
   caption: string | null;
+  sourceMode?: "FIRST_PARTY_MEDIA" | "PARTNER_HOSTED_IMAGE" | "PARTNER_HOSTED_EMBED";
+  provider?: "SUPERFLY" | "BANNERFLOW" | null;
+  hostedCreativeId?: string | null;
+  externalCreativeId?: string | null;
+  currencyCode?: string | null;
+  purpose?: string | null;
 }
 
 export interface PublicCasinoMedia extends PublicCasinoMediaAsset {
