@@ -262,7 +262,7 @@ test("the isolated frame confines provider runtime and never embeds a raw partne
   assert.doesNotMatch(readFileSync("next.config.mjs", "utf8"), /unsafe-eval|c\.bannerflow\.net/);
 });
 
-test("only exact UUID hosted-frame routes own the provider CSP and same-origin framing exception", () => {
+test("only exact UUID hosted-frame routes own the provider CSP and CSP-only framing exception", () => {
   const creativeId = "41000000-0000-4000-8000-000000000001";
   assert.equal(ownsPartnerHostedFramePolicy(`/partner-creatives/${creativeId}/frame`), true);
   assert.equal(ownsPartnerHostedFramePolicy(`/api/admin/media-operations/hosted-creatives/${creativeId}/preview`), true);
@@ -276,8 +276,9 @@ test("only exact UUID hosted-frame routes own the provider CSP and same-origin f
 
   const middlewareSource = readFileSync("middleware.ts", "utf8");
   assert.match(middlewareSource, /if \(!partnerHostedFramePolicy\) \{[\s\S]*response\.headers\.set\(CONTENT_SECURITY_POLICY_HEADER/);
+  assert.match(middlewareSource, /if \(!partnerHostedFramePolicy\) \{[\s\S]*response\.headers\.set\("X-Frame-Options", "DENY"\)/);
   const nextConfig = readFileSync("next.config.mjs", "utf8");
-  assert.match(nextConfig, /partnerHostedFrameRoutes[\s\S]*X-Frame-Options[\s\S]*SAMEORIGIN/);
+  assert.doesNotMatch(nextConfig, /X-Frame-Options/);
 });
 
 test("selection implements the complete eight-tier order without country leakage", () => {

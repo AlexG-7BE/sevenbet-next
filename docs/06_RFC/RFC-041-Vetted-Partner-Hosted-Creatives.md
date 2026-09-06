@@ -119,6 +119,14 @@ font-src https://c.bannerflow.net data:; connect-src https://c.bannerflow.net;
 frame-src 'self' blob:; object-src 'none'
 ```
 
+The frame response intentionally uses CSP `frame-ancestors 'self'` without an
+`X-Frame-Options` header. The HTML sandbox keeps the document on an opaque
+origin, and the current XFO processing algorithm blocks `SAMEORIGIN` when the
+sandboxed origin or scripts flags are present. Every non-frame route retains
+the default `X-Frame-Options: DENY` response in middleware. This exact-path
+exception therefore enables the opaque-origin frame without weakening who may
+embed it.
+
 The broader capabilities required by the real HTML5 creative are confined to
 that frame; the main application CSP is unchanged. The iframe cannot read its
 parent, owns no public click surface and has pointer interaction disabled. A

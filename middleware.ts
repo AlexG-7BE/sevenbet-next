@@ -263,6 +263,7 @@ export async function middleware(request: NextRequest) {
   const secureResponse = (response: NextResponse) => {
     if (!partnerHostedFramePolicy) {
       response.headers.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
+      response.headers.set("X-Frame-Options", "DENY");
     }
     return response;
   };
