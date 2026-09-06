@@ -14,6 +14,7 @@ import {
 } from "../lib/media-operations/partner-hosted";
 import {
   evidencedOperatorHost,
+  selectPartnerHostedTrackingLink,
   superflyCanonicalCampaignMatches,
 } from "../lib/media-operations/partner-hosted-repository";
 import {
@@ -137,6 +138,54 @@ test("Superfly creative identity is subordinate to the exact canonical campaign 
   assert.equal(evidencedOperatorHost({
     commercialActivationV1: { records: { DE: { routeHealth: { expectedFinalHost: "www.skolcasino.com" } }, IE: { routeHealth: { expectedFinalHost: "www.skolcasino.com" } } } },
   }, null), "www.skolcasino.com");
+});
+
+test("Bannerflow selects the one exact governed URL from multiple active tracking links", () => {
+  const destinationUrl = "https://record.betsn.info/creative-route/1/";
+  const result = selectPartnerHostedTrackingLink("BANNERFLOW", destinationUrl, [
+    { id: "other", trackingUrl: "https://tracking.example/other", destinationUrl: "https://casino.example/", metadata: null },
+    { id: "exact", trackingUrl: `${destinationUrl}#provider-fragment`, destinationUrl: "https://casino.example/welcome", metadata: null },
+    { id: "another", trackingUrl: "https://tracking.example/another", destinationUrl: "https://casino.example/bonus", metadata: null },
+  ]);
+  assert.equal(result.trackingLink?.id, "exact");
+  assert.equal(result.exactBannerflowMatch, true);
+  assert.equal(result.reason, null);
+});
+
+test("Bannerflow blocks when no active tracking link exactly matches its governed URL", () => {
+  const result = selectPartnerHostedTrackingLink("BANNERFLOW", "https://record.betsn.info/creative-route/1/", [
+    { id: "one", trackingUrl: "https://tracking.example/one", destinationUrl: "https://casino.example/one", metadata: null },
+    { id: "two", trackingUrl: "https://tracking.example/two", destinationUrl: "https://casino.example/two", metadata: null },
+  ]);
+  assert.equal(result.trackingLink, null);
+  assert.equal(result.exactBannerflowMatch, false);
+  assert.equal(result.reason, "CREATIVE_CANONICAL_DESTINATION_CONFLICT");
+});
+
+test("Bannerflow blocks duplicate exact governed URL matches as ambiguous", () => {
+  const destinationUrl = "https://record.betsn.info/creative-route/1/";
+  const result = selectPartnerHostedTrackingLink("BANNERFLOW", destinationUrl, [
+    { id: "tracking-match", trackingUrl: destinationUrl, destinationUrl: "https://casino.example/one", metadata: null },
+    { id: "destination-match", trackingUrl: "https://tracking.example/two", destinationUrl, metadata: null },
+  ]);
+  assert.equal(result.trackingLink, null);
+  assert.equal(result.exactBannerflowMatch, false);
+  assert.equal(result.reason, "CANONICAL_TRACKING_LINK_AMBIGUOUS");
+});
+
+test("Superfly retains the existing single-active-link requirement", () => {
+  const one = { id: "one", trackingUrl: "https://go.superflypartners.net/c/one", destinationUrl: "https://casino.example/", metadata: null };
+  const selected = selectPartnerHostedTrackingLink("SUPERFLY", "https://go.superflypartners.net/click", [one]);
+  assert.equal(selected.trackingLink?.id, "one");
+  assert.equal(selected.exactBannerflowMatch, false);
+  assert.equal(selected.reason, null);
+
+  const blocked = selectPartnerHostedTrackingLink("SUPERFLY", "https://go.superflypartners.net/click", [
+    one,
+    { ...one, id: "two", trackingUrl: "https://go.superflypartners.net/c/two" },
+  ]);
+  assert.equal(blocked.trackingLink, null);
+  assert.equal(blocked.reason, "CANONICAL_TRACKING_LINK_AMBIGUOUS");
 });
 
 test("the exact Bannerflow fixture becomes structured safe config and retains UNKNOWN facts", () => {
