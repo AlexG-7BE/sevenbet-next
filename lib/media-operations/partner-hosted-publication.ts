@@ -6,7 +6,6 @@ type PartnerHostedPublicationState = {
   destinationVerificationState?: unknown;
   affiliateOfferId?: unknown;
   redirectSlugId?: unknown;
-  trackingLinkId?: unknown;
   redirectSlug?: unknown;
 };
 
@@ -28,7 +27,6 @@ export function isPartnerHostedRenderOnlyDestinationReview(value: PartnerHostedP
     && value.validationReason.startsWith("DESTINATION_INTEGRITY_")
     && nonEmptyString(value.affiliateOfferId)
     && nonEmptyString(value.redirectSlugId)
-    && nonEmptyString(value.trackingLinkId)
     && nonEmptyString(value.redirectSlug);
 }
 
