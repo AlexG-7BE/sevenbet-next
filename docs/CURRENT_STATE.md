@@ -4,9 +4,9 @@
 **Evidence date:** 6 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `0fc312db5bfbf4f6064454b94bb3a1e00f61dd59`
-**Verified post-release runtime baseline SHA:** `0fc312db5bfbf4f6064454b94bb3a1e00f61dd59`
-**Verified post-release runtime deployment:** Ready; `dpl_8GB8majgeNzx7v9wHdCVHZ16oxGb`
+**Current Production application SHA (live provider evidence):** `f429ba0f1f04d95a12086e7c7302d708103eec9a`
+**Verified post-release runtime baseline SHA:** `f429ba0f1f04d95a12086e7c7302d708103eec9a`
+**Verified post-release runtime deployment:** Ready; `dpl_AvipjKt4zVhPaCKrq7eAAmFH22C1`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -38,11 +38,34 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; SIX PUBLISHED OFFERS** | Eight real global editorial identities remain published with their scores, reviews, SEO and controlled marks. Six have complete global catalog facts, a published welcome offer and a governed route; Betsson and DragonBet remain review-only. Temporary demo identities are excluded from every released catalog and offer surface. |
 | Placement media | **RFC-040 OPTION C ACTIVE IN PRODUCTION** | Nine semantic placements resolve through typed Casino, Bonus and optional AffiliateOffer relationships, responsive variants and immutable publication snapshots. Production has 26 Casino and 20 Bonus assignments, zero partner-context assignments, and a strict rollback switch. |
 | GEO-localized creative assignments | **CAPABILITY READY IN PRODUCTION — REAL LOCALIZED INVENTORY NOT INSTALLED** | Additive migration 0028 is applied and verified. Trusted request GEO plus presentation language resolve exact-country/language, global/language and neutral assignment scopes without client-side inventory selection. All 46 existing assignments remain global-neutral and targeted rows remain zero. |
+| Vetted partner-hosted creatives | **CAPABILITY READY IN PRODUCTION — SUPERFLY/BANNERFLOW; NO HOSTED INVENTORY PUBLISHED** | Additive migration 0029 and the independent feature flag are deployed. Original provider media can be parsed and rendered through typed, allowlisted image/embed paths; B4 owns every action, and a new destination must reach its expected operator host before publication. Production hosted tables remain empty. |
 | Commercial creative formats | **READY IN PRODUCTION** | Common affiliate formats, security-valid animated GIF ingestion, native responsive commercial geometry and governed creative actions are active without changing editorial media or expanding commercial authority. |
 | Media ingestion / Media Operations | **READY IN PRODUCTION — FIRST-PARTY R2, REVIEW-SAFE DRAFT AUTHORITY** | Validated partner media persists through the existing S3 provider to approved Cloudflare R2 Standard and `media.b4gamble.com`; checksum dedupe, bounded analysis, protected draft plans and the separate five-tool Media MCP are active with no publish authority. |
 | Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
 
 ### Recent implementation state
+
+**DETECTED — VETTED-PARTNER-HOSTED-CREATIVES-01 COMPLETE, 6 September
+2026:** [PR #170](https://github.com/AlexG-7BE/sevenbet-next/pull/170) merged
+as `f429ba0f1f04d95a12086e7c7302d708103eec9a` after exact-head CI and real
+three-fixture Preview acceptance. Superfly #200 and #205 rendered as distinct
+250×250 browser-hosted Skol creatives with independent checksum-bound
+destinations; the original 300×100 Bannerflow Betsson CL creative rendered in
+the B4 sandbox with only `c.bannerflow.net` observed. Betsson correctly stayed
+review-required because no canonical B4 commercial route exists. Additive
+migration `0029_vetted_partner_hosted_creatives` was applied once to the exact
+fingerprinted Production resource with protected counts unchanged, and all
+four hosted tables remain at zero rows. Ready Production deployment
+`dpl_AvipjKt4zVhPaCKrq7eAAmFH22C1` carries the exact merge SHA. Nine-route,
+first-party-media, public-leakage, MCP-boundary and database smoke passed;
+exact-SHA Affiliate Route Health run
+[34025199955](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34025199955)
+proved every current route healthy through the partner tracker to its expected
+operator host, while all six B4 `/r` responses retained their canonical
+checksums. The accepted log window contained zero 5xx, error, `P2024`, Prisma
+or unhandled-rejection matches. No acceptance fixture was published to
+Production. See the [VETTED-PARTNER-HOSTED-CREATIVES-01 release
+record](06_Operations/Vetted-Partner-Hosted-Creatives-01-Release-Record-2026-09-06.md).
 
 **DETECTED — SUPERFLY-ROUTE-DESTINATION-INTEGRITY-01 COMPLETE, 6 September
 2026:** [PR #167](https://github.com/AlexG-7BE/sevenbet-next/pull/167)
