@@ -27,6 +27,7 @@ import type {
 } from "@/lib/public-casino/public-casino.types";
 import { isSafePublicSlug, safeCanonical, safePublicUrl, validatedStructuredData } from "@/lib/public-casino/public-casino-validation";
 import { isVettedPartnerHostedCreativesEnabled } from "@/lib/media-operations/partner-hosted";
+import { isPartnerHostedVisuallyPublishable } from "@/lib/media-operations/partner-hosted-publication";
 
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -225,8 +226,7 @@ function hostedPlacementAssignments(value: unknown): PlacementMediaAssignment[] 
       || (languageState === "EXPLICIT") !== Boolean(languageCode)
       || (suppliedCountry && !countryCode)
       || (sourceMode === "PARTNER_HOSTED_IMAGE" ? !hostedImageUrl : !frameUrl)
-      || text(creative.validationState) !== "VALIDATED"
-      || text(creative.destinationVerificationState) !== "VERIFIED") return [];
+      || !isPartnerHostedVisuallyPublishable(creative)) return [];
     const mediaAsset: PlacementMediaAsset = {
       id: creativeId,
       type: "AFFILIATE_CREATIVE",
