@@ -50,10 +50,30 @@ export function evidencedOperatorHost(metadata: unknown, countryCode: string | n
 export function superflyCanonicalCampaignMatches(
   parsed: Pick<ParsedPartnerHostedCreative, "provider" | "operatorProgramId" | "affiliateId" | "campaignId">,
   canonicalDestination: string,
+  canonicalMetadata?: unknown,
 ) {
   if (parsed.provider !== "SUPERFLY") return true;
   try {
     const url = new URL(canonicalDestination);
+    const isOpaqueCanonicalCampaign = url.protocol === "https:"
+      && url.hostname.toLowerCase().replace(/\.$/, "") === "go.superflypartners.net"
+      && /^\/c\/[a-f0-9]{8}$/i.test(url.pathname)
+      && !url.search
+      && !url.hash
+      && !url.username
+      && !url.password
+      && !url.port;
+    // The six existing governed routes use Superfly's opaque /c/{id} campaign
+    // form, which intentionally does not reveal o/a/c query parameters. The
+    // surrounding binding has already proved the exact Superfly programme and
+    // canonical Casino route; the creative destination still has to pass its
+    // own bounded terminal-operator verification before it can be activated.
+    if (isOpaqueCanonicalCampaign) {
+      const expectedHash = record(record(canonicalMetadata)?.commercialVisibility)?.canonicalUrlSha256;
+      return typeof expectedHash === "string"
+        && /^[a-f0-9]{64}$/.test(expectedHash)
+        && sha256(canonicalDestination) === expectedHash;
+    }
     const one = (key: string) => {
       const values = url.searchParams.getAll(key);
       return values.length === 1 ? values[0] : null;
@@ -161,7 +181,7 @@ export async function resolvePartnerHostedCommercialBinding(
     expectedOperatorHost: fallbackOperatorHost, relationshipState: "REVIEW_REQUIRED",
     reason: route.affiliateOffer.trackingLinks.length > 1 ? "CANONICAL_TRACKING_LINK_AMBIGUOUS" : "CANONICAL_TRACKING_LINK_REQUIRED",
   };
-  if (!superflyCanonicalCampaignMatches(parsed, trackingLink.destinationUrl)) return {
+  if (!superflyCanonicalCampaignMatches(parsed, trackingLink.destinationUrl, trackingLink.metadata)) return {
     affiliateOfferId: route.affiliateOfferId, redirectSlugId: route.id, redirectSlug: route.slug, trackingLinkId: trackingLink.id,
     expectedOperatorHost: fallbackOperatorHost, relationshipState: "REVIEW_REQUIRED", reason: "CREATIVE_CANONICAL_CAMPAIGN_CONFLICT",
   };

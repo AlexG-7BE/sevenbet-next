@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
@@ -93,6 +94,17 @@ test("the exact Founder Superfly fixtures parse as distinct direct visitor-brows
 
 test("Superfly creative identity is subordinate to the exact canonical campaign and terminal operator evidence", () => {
   const parsed = parsePartnerHostedCreative(SUPERFLY_200)!;
+  const opaqueCampaign = "https://go.superflypartners.net/c/deadbeef";
+  assert.equal(superflyCanonicalCampaignMatches(
+    parsed,
+    opaqueCampaign,
+    { commercialVisibility: { canonicalUrlSha256: createHash("sha256").update(opaqueCampaign).digest("hex") } },
+  ), true, "the governed opaque Superfly campaign form relies on terminal operator verification");
+  assert.equal(superflyCanonicalCampaignMatches(
+    parsed,
+    opaqueCampaign,
+    { commercialVisibility: { canonicalUrlSha256: "0".repeat(64) } },
+  ), false, "an opaque campaign must match its existing evidence-bound checksum");
   assert.equal(superflyCanonicalCampaignMatches(
     parsed,
     "https://go.superflypartners.net/click?o=3&a=16924502&c=46",
@@ -105,6 +117,11 @@ test("Superfly creative identity is subordinate to the exact canonical campaign 
     parsed,
     "https://unrelated.example/click?o=3&a=16924502&c=46",
   ), false);
+  assert.equal(superflyCanonicalCampaignMatches(
+    parsed,
+    "https://go.superflypartners.net/c/deadbeef?creative_id=200",
+    { commercialVisibility: { canonicalUrlSha256: "0".repeat(64) } },
+  ), false, "opaque canonical campaigns must retain their exact governed shape");
 
   const metadata = {
     commercialActivationV1: {

@@ -169,6 +169,13 @@ activation. A prior verification is reusable only when casino, offer, route,
 tracking link, expected operator host and destination checksum all remain
 exact.
 
+The six existing Superfly canonical routes use the provider's opaque exact
+`/c/{8-hex}` campaign form rather than exposing `o`, `a` and `c` query values.
+Binding accepts that form only when its URL still matches the current
+evidence-bound checksum. The new creative click is then independently checked
+through the provider to the expected operator host; the canonical `/r` 302 or
+the opaque campaign shape alone is never destination-integrity success.
+
 The creative UUID is not a URL input. `/r` resolves it server-side only when it
 belongs to the exact already-selected Casino, offer, canonical redirect slug
 and tracking link, remains active/validated/verified, and appears in the latest
