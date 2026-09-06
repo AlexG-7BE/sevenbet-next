@@ -215,18 +215,7 @@ export interface CasinoStore {
   create(data: Prisma.CasinoCreateInput, actorId: string): Promise<CasinoAggregate>;
   existsBySlug(slug: string, excludeCasinoId?: string): Promise<boolean>;
   existsByDomain(domain: string, excludeCasinoId?: string): Promise<boolean>;
-  findBonusIdentities(ids: string[], slugs: string[]) {
-    if (!ids.length && !slugs.length) return [];
-    return prisma.casinoBonus.findMany({
-      where: {
-        OR: [
-          ...(ids.length ? [{ id: { in: ids } }] : []),
-          ...(slugs.length ? [{ slug: { in: slugs } }] : []),
-        ],
-      },
-      select: { id: true, casinoId: true, slug: true },
-    });
-  }
+  findBonusIdentities(ids: string[], slugs: string[]): Promise<CasinoBonusIdentity[]>;
   findMarketScopedFactIds(input: { paymentIds: string[]; providerIds: string[]; categoryIds: string[]; bonusIds: string[] }): Promise<string[]>;
   updateWithRevision(
     id: string,
