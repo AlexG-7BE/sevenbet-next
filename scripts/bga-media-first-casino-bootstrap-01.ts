@@ -106,7 +106,13 @@ async function ensureBaseRows(actorId: string) {
         editorScore: null,
         domainLifecycleStatus: "UNKNOWN",
         domainPublicationStatus: "DRAFT",
-        trackingMetadata: json({ release: RELEASE, profilePublicationMode: "MEDIA_FIRST_PROVISIONAL", factualEnrichmentPending: true, commercialReferralAuthority: false }),
+        trackingMetadata: json({
+          release: RELEASE,
+          profilePublicationMode: "MEDIA_FIRST_PROVISIONAL",
+          factualEnrichmentPending: true,
+          commercialReferralAuthority: false,
+          mediaRenderOnlyWhenDestinationUnverified: true,
+        }),
         status: EditorialStatus.DRAFT,
         createdBy: actorId,
         updatedBy: actorId,
@@ -114,7 +120,13 @@ async function ensureBaseRows(actorId: string) {
       update: {
         summary: definition.summary,
         description: definition.description,
-        trackingMetadata: json({ release: RELEASE, profilePublicationMode: "MEDIA_FIRST_PROVISIONAL", factualEnrichmentPending: true, commercialReferralAuthority: false }),
+        trackingMetadata: json({
+          release: RELEASE,
+          profilePublicationMode: "MEDIA_FIRST_PROVISIONAL",
+          factualEnrichmentPending: true,
+          commercialReferralAuthority: false,
+          mediaRenderOnlyWhenDestinationUnverified: true,
+        }),
         updatedBy: actorId,
       },
     });
@@ -275,8 +287,35 @@ async function ensureAssignmentsAndPublish(actorId: string) {
     const offerId = id("offer", definition.slug);
     const wanted = [...definition.hosted.card, ...definition.hosted.mobile, ...definition.hosted.desktop];
     const creatives = await prisma.partnerHostedCreative.findMany({
-      where: { casinoId, externalCreativeId: { in: wanted }, active: true, archivedAt: null, validationState: "VALIDATED", destinationVerificationState: "VERIFIED", affiliateOfferId: offerId },
-      select: { id: true, externalCreativeId: true, countryCode: true, languageCode: true, languageState: true },
+      where: {
+        casinoId,
+        externalCreativeId: { in: wanted },
+        provider: "BANNERFLOW",
+        sourceMode: "PARTNER_HOSTED_EMBED",
+        active: true,
+        archivedAt: null,
+        affiliateOfferId: offerId,
+        redirectSlugId: { not: null },
+        trackingLinkId: { not: null },
+        OR: [
+          { validationState: "VALIDATED", destinationVerificationState: "VERIFIED" },
+          {
+            validationState: "REVIEW_REQUIRED",
+            destinationVerificationState: "FAILED",
+            validationReason: { startsWith: "DESTINATION_INTEGRITY_" },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        externalCreativeId: true,
+        countryCode: true,
+        languageCode: true,
+        languageState: true,
+        validationState: true,
+        validationReason: true,
+        destinationVerificationState: true,
+      },
     });
     const byExternal = new Map(creatives.map((creative) => [creative.externalCreativeId, creative]));
     if (wanted.some((externalId) => !byExternal.has(externalId))) continue;
@@ -302,12 +341,33 @@ async function ensureAssignmentsAndPublish(actorId: string) {
     }
 
     const casino = await prisma.casino.findUnique({ where: { id: casinoId }, select: { status: true } });
-    if (!casino || casino.status === EditorialStatus.PUBLISHED) continue;
+    if (!casino) continue;
+    if (casino.status === EditorialStatus.PUBLISHED) continue;
     if (casino.status !== EditorialStatus.DRAFT) throw new Error(`${RELEASE}: unexpected ${definition.slug} workflow state ${casino.status}`);
     const approved = await prisma.casino.update({ where: { id: casinoId }, data: { status: EditorialStatus.APPROVED, domainPublicationStatus: "APPROVED", updatedBy: actorId }, select: { updatedAt: true } });
     await casinoRepository.publishWithVersion(casinoId, actorId, approved.updatedAt);
     await prisma.casino.update({ where: { id: casinoId }, data: { domainPublicationStatus: "PUBLISHED", updatedBy: actorId } });
-    await prisma.auditLog.create({ data: { actorId, action: "media-first-provisional-publish", entityType: "casino", entityId: casinoId, summary: `${RELEASE}: published provisional ${definition.title} profile after hosted creative verification`, metadata: json({ release: RELEASE, factualEnrichmentPending: true, referralAuthorityGranted: false }) } });
+    await prisma.auditLog.create({
+      data: {
+        actorId,
+        action: "media-first-provisional-publish",
+        entityType: "casino",
+        entityId: casinoId,
+        summary: `${RELEASE}: published provisional ${definition.title} profile with bounded partner-hosted media`,
+        metadata: json({
+          release: RELEASE,
+          factualEnrichmentPending: true,
+          referralAuthorityGranted: false,
+          renderOnlyDestinationReviewAllowed: true,
+          creativeStates: creatives.map((creative) => ({
+            externalCreativeId: creative.externalCreativeId,
+            validationState: creative.validationState,
+            destinationVerificationState: creative.destinationVerificationState,
+            validationReason: creative.validationReason,
+          })),
+        }),
+      },
+    });
   }
 }
 
@@ -325,11 +385,22 @@ async function verifyState() {
         licenses: { select: { id: true } },
         paymentMethods: { select: { id: true } },
         versions: { where: { status: EditorialStatus.PUBLISHED }, select: { id: true } },
-        partnerHostedCreatives: { where: { active: true, archivedAt: null }, select: { id: true, validationState: true, destinationVerificationState: true } },
+        partnerHostedCreatives: { where: { active: true, archivedAt: null }, select: { id: true, validationState: true, destinationVerificationState: true, validationReason: true } },
         partnerHostedAssignments: { where: { active: true }, select: { id: true } },
       },
     });
-    state.push({ slug: definition.slug, status: casino?.status ?? "ABSENT", domainPublicationStatus: casino?.domainPublicationStatus ?? null, editorScore: casino?.editorScore ?? null, licences: casino?.licenses.length ?? 0, payments: casino?.paymentMethods.length ?? 0, publishedVersions: casino?.versions.length ?? 0, hostedCreatives: casino?.partnerHostedCreatives.length ?? 0, hostedCardAssignments: casino?.partnerHostedAssignments.length ?? 0 });
+    state.push({
+      slug: definition.slug,
+      status: casino?.status ?? "ABSENT",
+      domainPublicationStatus: casino?.domainPublicationStatus ?? null,
+      editorScore: casino?.editorScore ?? null,
+      licences: casino?.licenses.length ?? 0,
+      payments: casino?.paymentMethods.length ?? 0,
+      publishedVersions: casino?.versions.length ?? 0,
+      hostedCreatives: casino?.partnerHostedCreatives.length ?? 0,
+      hostedCardAssignments: casino?.partnerHostedAssignments.length ?? 0,
+      renderOnlyDestinationReviews: casino?.partnerHostedCreatives.filter((creative) => creative.validationState === "REVIEW_REQUIRED" && creative.destinationVerificationState === "FAILED" && creative.validationReason?.startsWith("DESTINATION_INTEGRITY_")).length ?? 0,
+    });
   }
   console.info(JSON.stringify({ release: RELEASE, state }, null, 2));
 }
