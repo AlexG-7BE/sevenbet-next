@@ -8,6 +8,7 @@ import {
 
 import { prisma } from "@/lib/db/prisma";
 import { partnerHostedBindingFingerprint } from "@/lib/media-operations/partner-hosted";
+import { isPartnerHostedVisuallyPublishable } from "@/lib/media-operations/partner-hosted-publication";
 
 const mediaAssignmentInclude = {
   include: { mediaAsset: true },
@@ -214,7 +215,18 @@ export interface CasinoStore {
   create(data: Prisma.CasinoCreateInput, actorId: string): Promise<CasinoAggregate>;
   existsBySlug(slug: string, excludeCasinoId?: string): Promise<boolean>;
   existsByDomain(domain: string, excludeCasinoId?: string): Promise<boolean>;
-  findBonusIdentities(ids: string[], slugs: string[]): Promise<CasinoBonusIdentity[]>;
+  findBonusIdentities(ids: string[], slugs: string[]) {
+    if (!ids.length && !slugs.length) return [];
+    return prisma.casinoBonus.findMany({
+      where: {
+        OR: [
+          ...(ids.length ? [{ id: { in: ids } }] : []),
+          ...(slugs.length ? [{ slug: { in: slugs } }] : []),
+        ],
+      },
+      select: { id: true, casinoId: true, slug: true },
+    });
+  }
   findMarketScopedFactIds(input: { paymentIds: string[]; providerIds: string[]; categoryIds: string[]; bonusIds: string[] }): Promise<string[]>;
   updateWithRevision(
     id: string,
@@ -330,7 +342,11 @@ function snapshotPartnerHostedCreative(creative: SnapshotHostedAssignment["creat
     languageCode: creative.languageCode,
     languageState: creative.languageState,
     currencyCode: creative.currencyCode,
+    affiliateOfferId: creative.affiliateOfferId,
+    redirectSlugId: creative.redirectSlugId,
+    trackingLinkId: creative.trackingLinkId,
     validationState: creative.validationState,
+    validationReason: creative.validationReason,
     destinationVerificationState: creative.destinationVerificationState,
     bindingFingerprint: publishedBindingFingerprint(creative),
     redirectSlug: creative.redirectSlug?.slug ?? null,
@@ -372,8 +388,10 @@ function publishablePartnerHostedAssignment(assignment: SnapshotHostedAssignment
     && subjectMatches
     && assignment.creative.active
     && !assignment.creative.archivedAt
-    && assignment.creative.validationState === "VALIDATED"
-    && assignment.creative.destinationVerificationState === "VERIFIED"
+    && isPartnerHostedVisuallyPublishable({
+      ...assignment.creative,
+      redirectSlug: assignment.creative.redirectSlug?.slug ?? null,
+    })
     && Boolean(assignment.creative.affiliateOfferId && assignment.creative.redirectSlugId && assignment.creative.trackingLinkId)
     && Boolean(assignment.creative.redirectSlug?.slug)
     && (assignment.countryCode ?? null) === (assignment.creative.countryCode ?? null)
