@@ -122,7 +122,6 @@ export async function assertVettedPartnerHostedCreatives0029Schema(client: Query
   const constraintNames = new Set(constraints.map((row) => row.constraint_name));
   for (const name of [
     "PartnerHostedCreative_source_shape_check",
-    "PartnerHostedCreative_validated_destination_check",
     "PartnerHostedCreative_verified_binding_check",
     "PartnerHostedCreative_language_check",
     "CasinoPartnerHostedCreativeAssignment_placement_check",
@@ -131,12 +130,20 @@ export async function assertVettedPartnerHostedCreatives0029Schema(client: Query
   ]) {
     if (!constraintNames.has(name)) throw new Error(`Vetted partner-hosted creative release found missing constraint ${name}.`);
   }
+  const validationCouplingPresent = constraintNames.has("PartnerHostedCreative_validated_destination_check");
+  const verifiedBinding = constraints.find((row) => row.constraint_name === "PartnerHostedCreative_verified_binding_check")?.definition ?? "";
+  for (const field of ["redirectSlugId", "trackingLinkId", "destinationVerifiedAt"]) {
+    if (!verifiedBinding.includes(field)) throw new Error(`Vetted partner-hosted creative release found incomplete verified binding constraint for ${field}.`);
+  }
+  if (!validationCouplingPresent && !verifiedBinding.includes("affiliateOfferId")) {
+    throw new Error("Vetted partner-hosted creative release found the 0030 media/route separation without exact offer authority.");
+  }
 
   const [integrity] = await client.$queryRawUnsafe<Array<{ invalid_creatives: bigint; invalid_assignments: bigint }>>(`
     SELECT
       (SELECT COUNT(*)::bigint FROM "PartnerHostedCreative" creative
-       WHERE (creative."validationState" = 'VALIDATED' AND creative."destinationVerificationState" <> 'VERIFIED')
-          OR (creative."destinationVerificationState" = 'VERIFIED' AND (creative."redirectSlugId" IS NULL OR creative."trackingLinkId" IS NULL OR creative."verifiedFinalHost" IS NULL))) AS invalid_creatives,
+       WHERE creative."destinationVerificationState" = 'VERIFIED'
+         AND (creative."affiliateOfferId" IS NULL OR creative."redirectSlugId" IS NULL OR creative."trackingLinkId" IS NULL OR creative."destinationVerifiedAt" IS NULL)) AS invalid_creatives,
       ((SELECT COUNT(*) FROM "CasinoPartnerHostedCreativeAssignment" assignment LEFT JOIN "PartnerHostedCreative" creative ON creative."id" = assignment."creativeId" WHERE creative."id" IS NULL)
        + (SELECT COUNT(*) FROM "CasinoBonusPartnerHostedCreativeAssignment" assignment LEFT JOIN "PartnerHostedCreative" creative ON creative."id" = assignment."creativeId" WHERE creative."id" IS NULL)
        + (SELECT COUNT(*) FROM "AffiliateOfferPartnerHostedCreativeAssignment" assignment LEFT JOIN "PartnerHostedCreative" creative ON creative."id" = assignment."creativeId" WHERE creative."id" IS NULL))::bigint AS invalid_assignments
@@ -151,7 +158,11 @@ export async function assertVettedPartnerHostedCreatives0029Schema(client: Query
     UNION ALL SELECT 'AffiliateOfferPartnerHostedCreativeAssignment', COUNT(*)::bigint FROM "AffiliateOfferPartnerHostedCreativeAssignment"
     ORDER BY table_name
   `);
-  return { tables: [...hostedTables], counts: counts.map((row) => ({ table: row.table_name, rows: Number(row.rows) })) };
+  return {
+    tables: [...hostedTables],
+    mediaValidationIndependent: !validationCouplingPresent,
+    counts: counts.map((row) => ({ table: row.table_name, rows: Number(row.rows) })),
+  };
 }
 
 export async function inspectVettedPartnerHostedCreatives0029(client: PrismaClient) {

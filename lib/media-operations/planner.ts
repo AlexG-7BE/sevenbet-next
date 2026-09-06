@@ -2,8 +2,47 @@ import { randomUUID } from "node:crypto";
 
 import { assessCommercialCreative, commercialCreativePresentationFamily } from "@/lib/media/commercial-formats";
 import type { MediaIngestionPlan, MediaPlanRecommendation, MediaSemanticResult } from "@/lib/media-operations/contracts";
-import { normalizeMediaCountryCode, normalizeMediaLanguageCode } from "@/lib/media/placement-media";
+import { isCasinoMediaPlacement, normalizeMediaCountryCode, normalizeMediaLanguageCode } from "@/lib/media/placement-media";
 import { marketProfileByCountry } from "@/lib/market/registry";
+
+export type MediaPlacementScore = {
+  placement: MediaPlanRecommendation["placement"];
+  variant: MediaPlanRecommendation["variant"];
+  score: number;
+  fit: "PREFERRED" | "COMPATIBLE" | "POOR_FIT" | "UNSUPPORTED";
+};
+
+export function scoreMediaPlacements(width: number, height: number): MediaPlacementScore[] {
+  const family = commercialCreativePresentationFamily(width, height);
+  const exactCard = [[300, 250], [250, 250], [336, 280]].some(([candidateWidth, candidateHeight]) => width === candidateWidth && height === candidateHeight);
+  const exactMobile = [[300, 100], [320, 100]].some(([candidateWidth, candidateHeight]) => width === candidateWidth && height === candidateHeight);
+  const exactWide = width === 728 && height === 90;
+  const offerScores = (
+    variant: MediaPlacementScore["variant"],
+    scores: readonly [MediaPlacementScore["placement"], number][],
+    fit: MediaPlacementScore["fit"],
+  ) => scores.map(([placement, score]) => ({ placement, variant, score, fit }));
+
+  if (family === "CARD") return [
+    ...offerScores("DEFAULT", [["BONUS_LISTING_CARD", exactCard ? 98 : 91], ["BEST_OFFER_FEATURED", exactCard ? 95 : 88], ["BEST_OFFER_SECONDARY", exactCard ? 92 : 85], ["CASINO_OFFER_BLOCK", exactCard ? 90 : 84]], exactCard ? "PREFERRED" : "COMPATIBLE"),
+    { placement: "OFFER_DETAIL", variant: "DEFAULT", score: exactCard ? 82 : 76, fit: "POOR_FIT" },
+    { placement: "CASINO_DIRECTORY_CARD", variant: "DEFAULT", score: 45, fit: "POOR_FIT" },
+  ];
+  if (family === "MOBILE_LANDSCAPE") return [
+    ...offerScores("MOBILE", [["BONUS_LISTING_CARD", exactMobile ? 96 : 89], ["BEST_OFFER_FEATURED", exactMobile ? 93 : 86], ["BEST_OFFER_SECONDARY", exactMobile ? 90 : 83], ["CASINO_OFFER_BLOCK", exactMobile ? 92 : 85]], exactMobile ? "PREFERRED" : "COMPATIBLE"),
+    { placement: "OFFER_DETAIL", variant: "MOBILE", score: exactMobile ? 80 : 73, fit: "POOR_FIT" },
+  ];
+  if (family === "STRIP") {
+    const mobile = width <= 400;
+    return offerScores(mobile ? "MOBILE" : "DESKTOP", [["CASINO_OFFER_BLOCK", mobile ? 68 : 72], ["BEST_OFFER_SECONDARY", mobile ? 65 : 67], ["BONUS_LISTING_CARD", mobile ? 70 : 62]], "POOR_FIT");
+  }
+  if (family === "WIDE") return [
+    { placement: "CASINO_OFFER_BLOCK", variant: "DESKTOP", score: exactWide ? 94 : 82, fit: exactWide ? "PREFERRED" : "COMPATIBLE" },
+    { placement: "BEST_OFFER_FEATURED", variant: "DESKTOP", score: exactWide ? 76 : 70, fit: "POOR_FIT" },
+    { placement: "OFFER_DETAIL", variant: "DESKTOP", score: exactWide ? 68 : 64, fit: "POOR_FIT" },
+  ];
+  return [{ placement: "CASINO_OFFER_BLOCK", variant: "DEFAULT", score: family === "PORTRAIT_INVENTORY" ? 40 : 25, fit: "UNSUPPORTED" }];
+}
 
 export type ExistingMediaAssignment = {
   id: string;
@@ -134,6 +173,7 @@ type RecommendationInput = {
   baseState: MediaPlanRecommendation["state"];
   existingAssignments: ExistingMediaAssignment[];
   lowerPriorityMobileStrip?: boolean;
+  applyBlocker?: string | null;
 };
 
 function makeRecommendation(input: RecommendationInput): MediaPlanRecommendation {
@@ -162,6 +202,13 @@ function makeRecommendation(input: RecommendationInput): MediaPlanRecommendation
     state = "SUGGEST_REVIEW";
     reasons.push("A 320×100 mobile creative is superior for this slot; the 320×50 strip cannot displace it.");
   }
+  const replacementEligible = Boolean(existing
+    && sameSourceMode
+    && !(input.assetId ? existing.mediaAssetId === input.assetId : existing.hostedCreativeId === input.hostedCreativeId)
+    && deterministicallyEligible
+    && ["BETTER_CANDIDATE", "EQUIVALENT"].includes(existingComparison)
+    && !lowerPriorityMobileStrip);
+  const applyEligibility = !input.applyBlocker && (state === "AUTO_ASSIGN_DRAFT" || replacementEligible) ? "ELIGIBLE" as const : "BLOCKED" as const;
   return {
     id: randomUUID(),
     creativeId: input.creativeId,
@@ -183,12 +230,11 @@ function makeRecommendation(input: RecommendationInput): MediaPlanRecommendation
     marketHandling: input.marketHandling,
     existingAssignmentId: existing?.id ?? null,
     existingComparison,
-    replacementEligible: Boolean(existing
-      && sameSourceMode
-      && !(input.assetId ? existing.mediaAssetId === input.assetId : existing.hostedCreativeId === input.hostedCreativeId)
-      && deterministicallyEligible
-      && ["BETTER_CANDIDATE", "EQUIVALENT"].includes(existingComparison)
-      && !lowerPriorityMobileStrip),
+    replacementEligible,
+    applyEligibility,
+    applyBlocker: applyEligibility === "BLOCKED"
+      ? input.applyBlocker ?? (state === "REJECT" ? "RECOMMENDATION_REJECTED" : "RECOMMENDATION_REQUIRES_REVIEW")
+      : null,
     reasons,
     appliedAssignmentId: null,
     replacedAssignmentId: null,
@@ -377,7 +423,10 @@ export function buildMediaPlacementPlan(plan: MediaIngestionPlan, context: Media
     const countryCode = creative.countryCode ?? null;
     const languageCode = languageState === "EXPLICIT" ? creative.languageCode ?? null : null;
     const marketHandling = countryCode ? "TARGETED" as const : "GLOBAL_SAFE" as const;
-    const baseState: MediaPlanRecommendation["state"] = asset.state === "HOSTED_INGESTED" && !asset.failureCode
+    const applyBlocker = asset.commercialRouteValidity !== "MATCH"
+      ? asset.commercialRouteReason ?? "CANONICAL_COMMERCIAL_ROUTE_REQUIRED"
+      : asset.mediaValidity !== "VALID" ? "MEDIA_VALIDATION_REQUIRED" : null;
+    const baseState: MediaPlanRecommendation["state"] = ["HOSTED_INGESTED", "REUSED"].includes(asset.state) && asset.mediaValidity === "VALID" && !applyBlocker
       ? "AUTO_ASSIGN_DRAFT"
       : "SUGGEST_REVIEW";
     const common = {
@@ -406,6 +455,7 @@ export function buildMediaPlacementPlan(plan: MediaIngestionPlan, context: Media
       offerMatch: "UNKNOWN" as const,
       marketHandling,
       baseState,
+      applyBlocker,
       existingAssignments: context.existingAssignments,
     };
     const reasons = [
@@ -414,21 +464,30 @@ export function buildMediaPlacementPlan(plan: MediaIngestionPlan, context: Media
       "No OCR, screenshot acquisition, or pixel-derived offer metadata was used.",
       ...(asset.failureMessage ? [asset.failureMessage] : []),
     ];
-    const offerPlacement = resolvedSubjectType !== "CASINO";
-    const card = [[300, 250], [250, 250], [336, 280]].some(([width, height]) => asset.width === width && asset.height === height);
-    const mobile = [[300, 100], [320, 100], [320, 50]].some(([width, height]) => asset.width === width && asset.height === height);
-    if (offerPlacement && card) {
-      for (const [placement, score] of [["BONUS_LISTING_CARD", 98], ["BEST_OFFER_FEATURED", 95], ["BEST_OFFER_SECONDARY", 92], ["CASINO_OFFER_BLOCK", 90]] as const) {
-        recommendations.push(makeRecommendation({ ...common, placement, variant: "DEFAULT", score, reasons }));
+    const placementScores = asset.placementScores ?? scoreMediaPlacements(asset.width, asset.height);
+    if (resolvedSubjectType !== "CASINO") {
+      for (const score of placementScores.filter((candidate) => !isCasinoMediaPlacement(candidate.placement))) {
+        recommendations.push(makeRecommendation({
+          ...common,
+          placement: score.placement,
+          variant: score.variant,
+          score: score.score,
+          baseState: score.fit === "UNSUPPORTED"
+            ? "LIBRARY_ONLY"
+            : score.fit === "PREFERRED" ? baseState : "SUGGEST_REVIEW",
+          reasons: [...reasons, `${asset.width}×${asset.height} is ${score.fit.toLowerCase().replace("_", " ")} for ${score.placement}/${score.variant}.`],
+        }));
       }
-    } else if (offerPlacement && mobile) {
-      for (const [placement, score] of [["BONUS_LISTING_CARD", 96], ["BEST_OFFER_FEATURED", 93], ["BEST_OFFER_SECONDARY", 90], ["CASINO_OFFER_BLOCK", 92]] as const) {
-        recommendations.push(makeRecommendation({ ...common, placement, variant: "MOBILE", score, reasons }));
-      }
-    } else if (offerPlacement) {
-      recommendations.push(makeRecommendation({ ...common, placement: "CASINO_OFFER_BLOCK", variant: "DEFAULT", score: 50, baseState: "SUGGEST_REVIEW", reasons: [...reasons, "The declared format requires deliberate placement review."] }));
     } else {
-      recommendations.push(makeRecommendation({ ...common, placement: "CASINO_DIRECTORY_CARD", variant: "DEFAULT", score: 20, baseState: "SUGGEST_REVIEW", reasons: [...reasons, "A promotional hosted creative requires an offer subject before assignment."] }));
+      const casinoScore = placementScores.find((candidate) => candidate.placement === "CASINO_DIRECTORY_CARD");
+      if (casinoScore) recommendations.push(makeRecommendation({
+        ...common,
+        placement: casinoScore.placement,
+        variant: casinoScore.variant,
+        score: casinoScore.score,
+        baseState: "SUGGEST_REVIEW",
+        reasons: [...reasons, "No governed offer subject exists; commercial placement scores remain advisory and directory use requires review."],
+      }));
     }
   }
 

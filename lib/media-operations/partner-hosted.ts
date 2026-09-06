@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { isIP } from "node:net";
 
 import { isPublicAddress } from "@/lib/affiliate-health/public-network-url";
+import type { MediaIngestPartnerBatchItem } from "@/lib/media-operations/contracts";
 import { decodeHtmlEntities, safeUrlEvidence, type SafeUrlEvidence } from "@/lib/media-operations/parser";
 
 export const vettedPartnerProviders = ["SUPERFLY", "BANNERFLOW"] as const;
@@ -28,6 +29,7 @@ export interface ParsedPartnerDescription {
   purpose: string | null;
   width: number | null;
   height: number | null;
+  dimensionProvenance: "EXPLICIT_PARTNER_METADATA" | "NORMALIZED_SOURCE_FIELD" | "TITLE_PATTERN" | "DESCRIPTION_PATTERN" | null;
   languageCode: string | null;
   languageState: PartnerCreativeLanguageState;
   currencyCode: string | null;
@@ -47,6 +49,7 @@ export interface ParsedPartnerHostedCreative {
   operatorProgramId: string | null;
   declaredWidth: number;
   declaredHeight: number;
+  dimensionProvenance: "EXPLICIT_PARTNER_METADATA" | "NORMALIZED_SOURCE_FIELD" | "TITLE_PATTERN" | "DESCRIPTION_PATTERN" | "PROVIDER_METADATA";
   altText: string | null;
   hostedImageUrl: string | null;
   providerEmbedPath: string | null;
@@ -99,7 +102,7 @@ export function splitPartnerCreativeInput(value: string) {
 function positiveDimension(value: string | undefined) {
   if (!value || !/^\d{1,5}$/.test(value)) return null;
   const number = Number(value);
-  return number > 0 && number <= 100_000 ? number : null;
+  return number > 0 && number <= 10_000 ? number : null;
 }
 
 function clean(value: string | null | undefined, maximum = 500) {
@@ -107,15 +110,36 @@ function clean(value: string | null | undefined, maximum = 500) {
   return result ? result.slice(0, maximum) : null;
 }
 
-export function parsePartnerDescription(value: string | null): ParsedPartnerDescription {
-  const raw = clean(value, 2_000);
+type PartnerItemMetadata = Pick<MediaIngestPartnerBatchItem,
+  "declaredWidth" | "declaredHeight" | "dimensionProvenance" | "title" | "description" | "providerReference"
+>;
+
+function textDimensions(value: string | null | undefined) {
+  const dimensions = value?.match(/\b(\d{2,5})\s*[x×]\s*(\d{2,5})\b/i);
+  const width = positiveDimension(dimensions?.[1]);
+  const height = positiveDimension(dimensions?.[2]);
+  return width && height ? { width, height } : null;
+}
+
+export function parsePartnerDescription(value: string | null, metadata: Partial<PartnerItemMetadata> = {}): ParsedPartnerDescription {
+  const compositeDescription = clean(value, 2_000);
+  const raw = clean([metadata.title, metadata.description, compositeDescription].filter(Boolean).join(" - "), 2_000);
+  const structuredDimensions = metadata.declaredWidth && metadata.declaredHeight
+    ? { width: metadata.declaredWidth, height: metadata.declaredHeight }
+    : null;
+  const titleDimensions = textDimensions(metadata.title);
+  const descriptionDimensions = textDimensions(metadata.description ?? compositeDescription);
+  const dimensions = structuredDimensions ?? titleDimensions ?? descriptionDimensions;
+  const dimensionProvenance = structuredDimensions
+    ? metadata.dimensionProvenance ?? "EXPLICIT_PARTNER_METADATA"
+    : titleDimensions ? "TITLE_PATTERN" as const
+      : descriptionDimensions ? "DESCRIPTION_PATTERN" as const : null;
   if (!raw) return {
     raw: null, externalLabel: null, brandLabel: null, countryName: null, countryCode: null,
-    purpose: null, width: null, height: null, languageCode: null, languageState: "UNKNOWN",
+    purpose: null, width: dimensions?.width ?? null, height: dimensions?.height ?? null, dimensionProvenance, languageCode: null, languageState: "UNKNOWN",
     currencyCode: null, contradiction: null,
   };
   const parts = raw.split(/\s+-\s+/).map((part) => part.trim()).filter(Boolean);
-  const dimensions = raw.match(/\b(\d{2,5})\s*[x×]\s*(\d{2,5})\b/i);
   const externalLabel = parts.find((part) => /^(?:studio|creative|banner|ad)[_ -]?[a-z0-9]+$/i.test(part)) ?? null;
   const countryEntry = Object.entries(countryNames)
     .sort(([left], [right]) => right.length - left.length)
@@ -129,12 +153,16 @@ export function parsePartnerDescription(value: string | null): ParsedPartnerDesc
     ? `DESCRIPTION_COUNTRY_CONTRADICTION:${countryFromName}:${explicitCountryCode}`
     : null;
   const countryCode = contradiction ? null : explicitCountryCode ?? countryFromName;
-  const brandPart = countryName
+  const countryBrandPart = countryName
     ? parts.find((part) => new RegExp(`\\b${countryName.replaceAll(" ", "\\s+")}\\b`, "i").test(part))
     : null;
-  const brandLabel = brandPart && countryName
-    ? clean(brandPart.replace(new RegExp(`\\s*${countryName.replaceAll(" ", "\\s+")}\\s*$`, "i"), ""), 200)
-    : null;
+  const explicitBrandPart = parts.find((part) => /^[A-Z][A-Z0-9 '&.]{2,80}$/.test(part)
+    && !supportedCountryCodes.has(part)
+    && !/^\d{2,5}\s*[x×]\s*\d{2,5}$/i.test(part)) ?? null;
+  const brandPart = countryBrandPart ?? explicitBrandPart;
+  const brandLabel = countryBrandPart && countryName
+    ? clean(countryBrandPart.replace(new RegExp(`\\s*${countryName.replaceAll(" ", "\\s+")}\\s*$`, "i"), ""), 200)
+    : clean(explicitBrandPart, 200);
   const purpose = parts.find((part) => part !== externalLabel && part !== brandPart
     && !/^[A-Z]{2}$/.test(part) && !/^\d{2,5}\s*[x×]\s*\d{2,5}$/i.test(part)) ?? null;
   const languageMatch = raw.match(/\b(?:language|lang)\s*[:=]\s*([a-z]{2,8})(?:[-_][a-z0-9]{2,8})?\b/i);
@@ -147,8 +175,9 @@ export function parsePartnerDescription(value: string | null): ParsedPartnerDesc
     countryName: clean(countryName, 100),
     countryCode,
     purpose: clean(purpose, 300),
-    width: positiveDimension(dimensions?.[1]),
-    height: positiveDimension(dimensions?.[2]),
+    width: dimensions?.width ?? null,
+    height: dimensions?.height ?? null,
+    dimensionProvenance,
     languageCode,
     languageState: languageCode ? "EXPLICIT" : "UNKNOWN",
     currencyCode: currencyMatch?.[1]?.toUpperCase() ?? null,
@@ -238,9 +267,12 @@ function parseSuperfly(embedCode: string, description: ParsedPartnerDescription)
     || oneQueryValue(impression, "affiliate_id", /^\d{1,20}$/, "SUPERFLY_AFFILIATE_INVALID") !== affiliateId) {
     throw new PartnerHostedCreativeParseError("Superfly click and impression identifiers do not match.", "SUPERFLY_IDENTIFIER_CONTRADICTION");
   }
-  const declaredWidth = positiveDimension(image.width) ?? description.width;
-  const declaredHeight = positiveDimension(image.height) ?? description.height;
+  const providerWidth = positiveDimension(image.width);
+  const providerHeight = positiveDimension(image.height);
+  const declaredWidth = description.width ?? providerWidth;
+  const declaredHeight = description.height ?? providerHeight;
   if (!declaredWidth || !declaredHeight) throw new PartnerHostedCreativeParseError("Superfly dimensions are required.", "SUPERFLY_DIMENSIONS_MISSING");
+  const dimensionProvenance = description.dimensionProvenance ?? "PROVIDER_METADATA";
   const normalizedSource = decodeHtmlEntities(embedCode.trim());
   return {
     provider: "SUPERFLY",
@@ -255,6 +287,7 @@ function parseSuperfly(embedCode: string, description: ParsedPartnerDescription)
     operatorProgramId,
     declaredWidth,
     declaredHeight,
+    dimensionProvenance,
     altText: clean(image.alt, 300) ?? description.brandLabel,
     hostedImageUrl: impression.href,
     providerEmbedPath: null,
@@ -307,6 +340,7 @@ function parseBannerflow(embedCode: string, description: ParsedPartnerDescriptio
     operatorProgramId: null,
     declaredWidth,
     declaredHeight,
+    dimensionProvenance: description.dimensionProvenance!,
     altText: description.brandLabel && description.purpose ? `${description.brandLabel} — ${description.purpose}` : description.brandLabel,
     hostedImageUrl: null,
     providerEmbedPath: script.pathname,
@@ -321,9 +355,9 @@ function parseBannerflow(embedCode: string, description: ParsedPartnerDescriptio
   };
 }
 
-export function parsePartnerHostedCreative(value: string): ParsedPartnerHostedCreative | null {
+export function parsePartnerHostedCreative(value: string, metadata: Partial<PartnerItemMetadata> = {}): ParsedPartnerHostedCreative | null {
   const { description: rawDescription, embedCode: wrappedEmbed } = splitPartnerCreativeInput(value);
-  const description = parsePartnerDescription(rawDescription);
+  const description = parsePartnerDescription(rawDescription, metadata);
   const embedCode = decodeHtmlEntities(decodeHtmlEntities(wrappedEmbed));
   const superfly = parseSuperfly(embedCode, description);
   if (superfly) return superfly;

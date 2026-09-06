@@ -352,3 +352,32 @@ placement planning. The durable implementation contract is
 This amendment does not add a tool to the isolated `agents/` package and does
 not broaden Commercial CRM authority. Release remains subject to RFC-013's
 branch, PR, CI, Preview, Production acceptance and rollback evidence.
+
+## 20. `MEDIA-OPERATIONS-BULK-01` amendment
+
+The explicit Founder instruction on 6 September 2026 supersedes section 19's
+five-tool and single-plan assumptions only for the existing Media Operations
+resource.
+
+1. `/api/mcp/media` has six tools. The additive
+   `media_ingest_partner_batch` accepts at most 100 independent items, uses
+   bounded concurrency and returns one explicit outcome per item. It has no
+   publish, route-creation, SQL, deployment or external-communication power.
+2. One batch may own multiple durable plans. Items group only under the same
+   resolved Casino and Bonus/Offer/Opportunity plus the same exact
+   country/language scope. A multi-Casino plan is forbidden.
+3. Official declared dimensions and bounded title, Description and provider
+   metadata are deterministic evidence with persisted provenance. First-party
+   decoded pixels remain authoritative where bytes are acquired.
+4. Media validity is independent from commercial-route validity. An exact
+   creative destination match to the current governed tracking link is
+   authoritative internal relationship evidence; remote HTTP status is
+   advisory and cannot override that exact match. Missing or conflicting
+   canonical routes still block apply with a precise reason.
+5. Migration `0030_media_operations_bulk_contract` changes only the hosted
+   validation checks needed for that separation. `VERIFIED` still requires an
+   exact offer, redirect slug, tracking link and verification timestamp. No
+   destructive migration or Production operation is authorised.
+
+All section 19 security, OAuth isolation, draft-only assignment, audit,
+publication and no-external-action boundaries remain in force.

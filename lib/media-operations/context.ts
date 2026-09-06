@@ -92,6 +92,9 @@ export async function resolveMediaIngestionContext(
       creative.source.pathname,
       creative.alt,
       creative.title,
+      creative.brandLabel,
+      creative.externalLabel,
+      creative.purpose,
       ...Object.values(creative.identifiers),
     ]).filter(Boolean).join(" "));
     const candidates = await prisma.casino.findMany({

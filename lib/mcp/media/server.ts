@@ -6,6 +6,7 @@ import {
   mediaAnalyzeAndPlanInputSchema,
   mediaApplyDraftPlanInputSchema,
   mediaGetPlanInputSchema,
+  mediaIngestPartnerBatchInputSchema,
   mediaIngestPartnerSnippetInputSchema,
   mediaListRecentIngestionsInputSchema,
 } from "@/lib/media-operations/contracts";
@@ -31,13 +32,14 @@ const writeSecurity = [{ type: "oauth2" as const, scopes: ["media:safe_write"] }
 
 export const mediaMcpTools: ToolDefinition[] = [
   { name: "media_ingest_partner_snippet", title: "Ingest a partner creative snippet", description: "Parse raw HTML or a Description/Embed Code composite without executing pasted code. Safe raster inputs use SSRF-safe first-party acquisition; exact Superfly image and Bannerflow embed shapes may instead create vetted partner-hosted records whose raw destinations stay server-side. The tool preserves explicit country/language evidence, treats unknown as distinct from neutral, and never creates a route, publication, or tracking activation.", inputSchema: z.toJSONSchema(mediaIngestPartnerSnippetInputSchema) as Record<string, unknown>, securitySchemes: writeSecurity, _meta: { securitySchemes: writeSecurity }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } },
+  { name: "media_ingest_partner_batch", title: "Ingest a partner creative batch", description: "Parse up to 100 independent partner creative items with bounded concurrency and per-item INGESTED, REUSED, REVIEW_REQUIRED, or REJECTED outcomes. Provider snippets are never executed. Items are grouped into separate durable plans only when they resolve to the same governed subject and target scope; missing commercial routes remain analyzable but explicitly blocked from apply.", inputSchema: z.toJSONSchema(mediaIngestPartnerBatchInputSchema) as Record<string, unknown>, securitySchemes: writeSecurity, _meta: { securitySchemes: writeSecurity }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } },
   { name: "media_analyze_and_plan", title: "Analyze media and build a placement plan", description: "Build scored draft-only placement recommendations. First-party assets may use approved bounded visual classification; vetted partner-hosted creatives use only deterministic provider and description metadata, never OCR, screenshots, or pixel-derived offer claims. Semantic output is advisory and never publishes.", inputSchema: z.toJSONSchema(mediaAnalyzeAndPlanInputSchema) as Record<string, unknown>, securitySchemes: writeSecurity, _meta: { securitySchemes: writeSecurity }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true } },
   { name: "media_apply_draft_plan", title: "Apply or roll back a draft media plan", description: "Apply only eligible recommendations to exact target-scoped draft media assignments, or remove only assignments owned by this plan in the same country/language scope. Existing assignments are protected unless replacement is explicitly requested. Assets are never deleted and nothing is published.", inputSchema: z.toJSONSchema(mediaApplyDraftPlanInputSchema) as Record<string, unknown>, securitySchemes: writeSecurity, _meta: { securitySchemes: writeSecurity }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } },
   { name: "media_get_plan", title: "Get a media ingestion plan", description: "Read one audit-safe Media Operations plan, including extracted evidence, safe first-party or partner-hosted preview references, semantic results, draft recommendations, and operations. Raw tracking destinations and pasted HTML are never returned.", inputSchema: z.toJSONSchema(mediaGetPlanInputSchema) as Record<string, unknown>, securitySchemes: readSecurity, _meta: { securitySchemes: readSecurity }, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } },
   { name: "media_list_recent_ingestions", title: "List recent media ingestions", description: "List a bounded set of recent audit-safe Media Operations plans for orientation and follow-up.", inputSchema: z.toJSONSchema(mediaListRecentIngestionsInputSchema) as Record<string, unknown>, securitySchemes: readSecurity, _meta: { securitySchemes: readSecurity }, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } },
 ];
 
-type Adapter = Pick<typeof mediaOperationsService, "ingest" | "analyze" | "apply" | "get" | "listRecent">;
+type Adapter = Pick<typeof mediaOperationsService, "ingest" | "ingestBatch" | "analyze" | "apply" | "get" | "listRecent">;
 type RateLimiter = typeof consumeCommercialMcpRateLimit;
 
 function result(value: unknown) {
@@ -71,6 +73,7 @@ export function createMediaMcpServer(
       const actor = { actorId: token.staff.id, source: "CHATGPT_WORK" as const };
       switch (tool.name) {
         case "media_ingest_partner_snippet": return result(await service.ingest(args, actor));
+        case "media_ingest_partner_batch": return result(await service.ingestBatch(args, actor));
         case "media_analyze_and_plan": return result(await service.analyze(args, actor));
         case "media_apply_draft_plan": return result(await service.apply(args, actor));
         case "media_get_plan": return result(await service.get(args));

@@ -4,7 +4,8 @@
 contract
 **Authority:** `B4GAMBLE — MEDIA-INGESTION-AUTOPLACEMENT-01` and the additive
 `B4GAMBLE — GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01` and
-`VETTED-PARTNER-HOSTED-CREATIVES-01`
+`VETTED-PARTNER-HOSTED-CREATIVES-01`, as amended by the explicit Founder
+instruction `B4GAMBLE — MEDIA-OPERATIONS-BULK-01`
 **Evidence date:** 6 September 2026
 **Architecture dependencies:**
 [RFC-027 — B4GAMBLE Operational Agent Foundation](../06_RFC/RFC-027-B4GAMBLE-Operational-Agent-Foundation.md),
@@ -19,10 +20,11 @@ evidence rule.
 
 ## Repository evidence boundary
 
-**DETECTED:** the Git root was confirmed before documentation work. The full
+**DETECTED IN THE AUTHORISED RELEASE CANDIDATE:** the isolated Git root was
+confirmed before documentation work. The full
 active repository was scanned with dependencies, generated output, build
-artefacts, caches and `tsconfig.tsbuildinfo` excluded. The pre-documentation
-inventory contained 2,200 active files at the start of this documentation pass.
+artefacts, caches and `tsconfig.tsbuildinfo` excluded. The final inventory
+contained 2,224 active files in this documentation pass.
 
 **DETECTED:** the first-party implementation uses the existing `MediaAsset`,
 `CasinoMediaAssignment`, `CasinoBonusMediaAssignment`,
@@ -74,6 +76,20 @@ adapter exactly. Its raw element is parsed but never evaluated during
 ingestion. Script bodies, event handlers, extra elements, arbitrary hosts and
 arbitrary iframe documents are rejected.
 
+`media_ingest_partner_batch` is the additive bulk contract. It accepts 1–100
+independent items. Each item has its own snippet, optional subject/target
+context, optional declared width/height pair, provenance
+`EXPLICIT_PARTNER_METADATA | NORMALIZED_SOURCE_FIELD`, title, description and
+provider reference. Work is bounded to four concurrent item preparations and
+four concurrent item ingestions within a subject group. One invalid item does
+not abort valid neighbours; every item returns exactly one of `INGESTED`,
+`REUSED`, `REVIEW_REQUIRED` or `REJECTED` plus bounded reason codes.
+
+Multiple snippets are never concatenated into one executable input. Each
+Bannerflow element must still satisfy the exact one-script parser contract in
+its own item. The 100-item ceiling and 100-total-parsed-creative ceiling are
+independent safety bounds.
+
 ## Untrusted HTML and raw-URL boundary
 
 **DETECTED:** ingestion parsing is a bounded text scanner. It does not use a browser,
@@ -94,8 +110,11 @@ offer. Exact evidence produces `MATCH`; a known disagreement produces
 `TRACKING_DESTINATION_REVIEW_REQUIRED`. No raw partner href becomes a public
 link, `AffiliateOffer`, canonical tracking link, redirect, PartnerRoute or CTA.
 RFC-041 may store an exact creative destination in the separate server-only
-record only after canonical relationship resolution and bounded terminal-
-operator verification.
+record. Media validity and commercial-route validity are separate facts. An
+exact match to the current governed tracking or destination URL is canonical
+route authority; a bounded external HTTP probe is advisory telemetry and an
+HTTP 400 cannot override that exact internal match. Non-exact provider-campaign
+bindings still require their governed terminal-destination evidence.
 
 ## Safe remote fetch
 
@@ -135,6 +154,13 @@ Accepted raster types remain JPEG, PNG, WebP, AVIF and GIF. Existing
 signature/container decoders determine actual MIME, decoded dimensions and
 animation state. Declared HTML dimensions are evidence only and never override
 decoded values. SVG and executable formats remain rejected.
+
+The bulk contract also accepts official declared dimensions outside HTML.
+Dimension provenance is persisted as explicit partner metadata, normalized
+source field, title pattern, Description pattern, provider metadata and, for
+first-party raster acquisition, pixel validation. When both declared and
+decoded dimensions exist, disagreement produces
+`DECLARED_DIMENSIONS_MISMATCH`; decoded pixels remain authoritative.
 
 Validated GIF87a/GIF89a bytes continue through the existing strict decoder.
 The original validated GIF is stored without a frame-flattening transform, and
@@ -213,7 +239,9 @@ market, language, currency or purpose is valid; the image or HTML5 pixels are
 not inspected, and no offer amount, wagering, spins, currency or terms are
 invented. A description country contradiction, invalid provider shape,
 unevidenced canonical relationship or failed terminal destination remains
-review-required.
+review-required for commercial application without invalidating otherwise
+valid media. Analysis and physical scoring still run when the commercial route
+is absent.
 
 ## Placement engine
 
@@ -229,11 +257,13 @@ Current rules are:
 | Evidence | Candidate treatment |
 | --- | --- |
 | 300×250, 250×250, 336×280 promo | `BONUS_LISTING_CARD`, `BEST_OFFER_FEATURED`, `BEST_OFFER_SECONDARY`, `CASINO_OFFER_BLOCK` / `DEFAULT`; directory review only; no detail hero |
+| 265×265 or another bounded card-ratio promo | compatible card scoring; exact standard cards remain preferred |
 | 320×100 or 300×100 promo | the four commercial surfaces / `MOBILE` |
 | 320×50 or 300×50 promo | lower-priority `MOBILE` fallback; cannot displace a superior landscape asset |
 | 468×60 strip | deliberate offer-block review |
+| 596×70 or 640×100 strip | desktop strip scoring; never coerced into a directory-card default |
 | 728×90 promo | `CASINO_OFFER_BLOCK` / `DESKTOP` wide candidate |
-| 970×90 or 970×250 | valid wide inventory requiring layout review |
+| 940×250, 970×90, 970×250 or 980×120 | compatible wide desktop offer inventory; exact 728×90 remains preferred |
 | 120×600, 160×600, 300×600 | library only; no current public placement |
 | visual `LOGO` | inert `CASINO_LOGO` and `CASINO_COMPARE` only |
 | visual `BRAND_ART` plus explicit safe crop | `CASINO_DETAIL_HERO` candidate |
@@ -269,6 +299,12 @@ Plan decisions are:
 - `REJECT`: unsafe, conflicting, wrong-subject or stale/mismatched promotional
   evidence.
 
+Every analyzed asset also retains per-placement fit/score evidence. Hosted
+recommendations persist `applyEligibility` and a precise `applyBlocker`.
+Absent commercial authority uses
+`CANONICAL_COMMERCIAL_ROUTE_REQUIRED`; it does not become a generic media
+validation failure or prevent analysis.
+
 ## Exact-country and creative-language targeting
 
 **DETECTED IN THE AUTHORISED RELEASE CANDIDATE:** RFC-040 assignments now carry
@@ -303,6 +339,13 @@ Each session writes a versioned strict plan under
 provenance, context, assets, semantic evidence, recommendations, state and a
 bounded operation history. Strict read validation fails closed on malformed
 stored data.
+
+A bulk session additionally writes
+`SiteSetting(media-ingestion-batch:<UUID>)` with its checksum, item outcomes,
+counts and the IDs of separate durable plans. Items group only when they resolve
+to the same Casino, Bonus/Offer/Opportunity and exact country/language scope;
+different Casinos never become one multi-subject plan. Bulk get, analyze,
+apply and rollback fan out only through those recorded plan IDs.
 
 Application runs in a serializable transaction. Casino and subject must still
 be draft, media or hosted creative must be active, validated and same-Casino,
@@ -357,16 +400,19 @@ only scopes are `media:read`, `media:safe_write` and optional
 `offline_access`. A valid delegated `AdminUser` with `media.manage` remains
 required at authorization, token/refresh and resource use.
 
-The surface contains exactly five tools:
+The authorised release-candidate surface contains exactly six tools:
 
 1. `media_ingest_partner_snippet` — parse raw or composite input, retain bounded
    explicit target evidence, and either acquire validated first-party media or
    create/reuse one exact vetted hosted record when context permits;
-2. `media_analyze_and_plan` — classify and generate the draft recommendation;
-3. `media_apply_draft_plan` — apply eligible draft recommendations or explicit
+2. `media_ingest_partner_batch` — process up to 100 independent items with
+   bounded concurrency, per-item outcomes and subject-isolated durable plans;
+3. `media_analyze_and_plan` — classify and generate draft recommendations for
+   one plan or all plans in one recorded batch;
+4. `media_apply_draft_plan` — apply eligible draft recommendations or explicit
    plan rollback;
-4. `media_get_plan` — read one safe plan; and
-5. `media_list_recent_ingestions` — read a bounded recent list.
+5. `media_get_plan` — read one safe plan or recorded batch with its plans; and
+6. `media_list_recent_ingestions` — read a bounded recent plan list.
 
 The OAuth issuer may serve both the existing Commercial and Media Operations
 resources, but each registered client, authorization code, access token and
@@ -377,7 +423,7 @@ Create this as a separate ChatGPT custom app named exactly `B4GAMBLE Media
 Operations` with MCP server URL `https://b4gamble.com/api/mcp/media`. Let
 discovery supply OAuth endpoints; do not paste an API key, shared secret,
 legacy Preview token or manually invented endpoint. The tool scan must show
-exactly the five tools above. A Commercial Ops client or grant must never be
+exactly the six tools above. A Commercial Ops client or grant must never be
 reused for this resource.
 
 The connector has no schema/tool for publish, approval, AffiliateOffer or
@@ -405,7 +451,7 @@ consent boundary and use first-party fallback meanwhile.
 
 ## Audit contract
 
-Every plan, asset creation and assignment mutation writes `AuditLog` metadata
+Every plan, batch, asset creation and assignment mutation writes `AuditLog` metadata
 with `source=MEDIA_OPERATIONS`, channel (`ADMIN` or `CHATGPT_WORK`), actor,
 plan ID, subject, checksum, provider reference, operation, previous state,
 result and timestamp. Assignment rollback records retained assets and any
@@ -424,7 +470,17 @@ must remain:
 No direct push to `main`, destructive migration or `prisma migrate reset` is
 permitted. Migration 0028 is the prior additive targeting extension. Migration
 0029 adds only hosted records, typed assignments, constraints and indexes and
-must complete before the hosted feature flag is enabled.
+must complete before the hosted feature flag is enabled. Migration 0030 changes
+only hosted validation constraints so valid media no longer depends on remote
+HTTP state, while a `VERIFIED` commercial route still requires exact offer,
+redirect, tracking-link and verification-time authority.
+
+Application rollback does not require reversing 0030: the older application
+remains fail-closed against `PENDING` commercial routes. A later constraint
+reversal is permitted only after a read-only preflight proves that no
+media-valid/non-verified rows would violate the older coupled check; otherwise
+the additive schema remains and the Media Operations capability stays disabled.
+Durable plans, batches and audit history are never rewritten for rollback.
 
 Editorial publication is explicitly unavailable during the brief code-first
 state where the 0027 assignment tables exist but the six 0028 target columns do
@@ -447,5 +503,15 @@ and final Production acceptance are preserved in the
 - The accepted Betsson Bannerflow fixture has no current canonical Betsson
   PartnerRoute, so it remains previewable but non-publishable until independent
   commercial authority exists.
+- **DETECTED IN DISPOSABLE LOCAL ACCEPTANCE:** one bulk call processed all 88
+  supplied Betsson Media Store rows as 88 unique Bannerflow identities and
+  produced three durable subject-isolated plans: Inkabet 29, Betsson 34 and
+  Betsafe Baltics 25. All 88 media records were valid and scored; all 88 lacked
+  canonical routes in the isolated fixture and remained `REVIEW_REQUIRED`.
+  Draft apply created zero assignments and returned
+  `CANONICAL_COMMERCIAL_ROUTE_REQUIRED` for all 17 generated recommendations.
+  Replay retained 88 hosted records and marked all 88 plan assets `REUSED`.
+  No raw script was persisted. This does not claim Preview deployment,
+  Production migration, publication or activation.
 - Semantic analysis is advisory and dependent on configured provider access;
   deterministic ingestion and review status remain usable without it.

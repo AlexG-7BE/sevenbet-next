@@ -104,32 +104,38 @@ export function commercialCreativePresentationFamily(
   height: number | null | undefined,
 ): CreativePresentationFamily | null {
   const creativeFormat = commercialCreativeFormat(width, height);
-  if (!creativeFormat) return null;
-
-  if (
+  if (creativeFormat && (
     creativeFormat.family === "MEDIUM_RECTANGLE"
     || creativeFormat.family === "SQUARE"
     || creativeFormat.family === "LARGE_RECTANGLE"
     || creativeFormat.family === "SMALL_RECTANGLE"
-  ) return "CARD";
-  if (creativeFormat.id === "MOBILE_LARGE_320_100" || creativeFormat.id === "MOBILE_LARGE_300_100") {
+  )) return "CARD";
+  if (creativeFormat && (creativeFormat.id === "MOBILE_LARGE_320_100" || creativeFormat.id === "MOBILE_LARGE_300_100")) {
     return "MOBILE_LANDSCAPE";
   }
-  if (
+  if (creativeFormat && (
     creativeFormat.id === "MOBILE_BANNER_320_50"
     || creativeFormat.id === "MOBILE_BANNER_300_50"
     || creativeFormat.family === "FULL_BANNER"
-  ) return "STRIP";
-  if (
+  )) return "STRIP";
+  if (creativeFormat && (
     creativeFormat.family === "LEADERBOARD"
     || creativeFormat.family === "BILLBOARD"
     || creativeFormat.family === "LARGE_LEADERBOARD"
-  ) return "WIDE";
-  if (
+  )) return "WIDE";
+  if (creativeFormat && (
     creativeFormat.family === "WIDE_SKYSCRAPER"
     || creativeFormat.family === "HALF_PAGE"
     || creativeFormat.family === "SKYSCRAPER"
-  ) return "PORTRAIT_INVENTORY";
+  )) return "PORTRAIT_INVENTORY";
+
+  if (!width || !height) return null;
+  const ratio = width / height;
+  if (height >= 500 && ratio <= 0.65) return "PORTRAIT_INVENTORY";
+  if (ratio >= 0.8 && ratio <= 1.35 && width >= 180 && height >= 150) return "CARD";
+  if (width <= 400 && height >= 70 && height <= 140 && ratio >= 2.4 && ratio <= 4.6) return "MOBILE_LANDSCAPE";
+  if (ratio >= 5 && height <= 140 && width < 700) return "STRIP";
+  if (width >= 700 && height <= 300 && ratio >= 3) return "WIDE";
   return null;
 }
 
