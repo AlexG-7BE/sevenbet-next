@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npm run build && node --import tsx scripts/bga-media-first-casino-bootstrap-01.ts build-preflight",
   "crons": [
     {
       "path": "/api/internal/cron/programme-expiry-purge",
