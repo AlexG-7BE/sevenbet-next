@@ -277,6 +277,7 @@ test("only exact UUID hosted-frame routes own the provider CSP and CSP-only fram
   const middlewareSource = readFileSync("middleware.ts", "utf8");
   assert.match(middlewareSource, /if \(!partnerHostedFramePolicy\) \{[\s\S]*response\.headers\.set\(CONTENT_SECURITY_POLICY_HEADER/);
   assert.match(middlewareSource, /if \(!partnerHostedFramePolicy\) \{[\s\S]*response\.headers\.set\("X-Frame-Options", "DENY"\)/);
+  assert.match(readFileSync("lib/security/content-security-policy.ts", "utf8"), /frame-src 'self' https:\/\/www\.youtube-nocookie\.com/);
   const nextConfig = readFileSync("next.config.mjs", "utf8");
   assert.doesNotMatch(nextConfig, /X-Frame-Options/);
 });

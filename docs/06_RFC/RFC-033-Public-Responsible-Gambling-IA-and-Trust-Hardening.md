@@ -78,7 +78,11 @@ Compatibility exceptions are deliberately narrow:
 
 - `style-src-attr 'unsafe-inline'` remains because existing React views use style attributes; style elements and stylesheets remain nonce/self restricted;
 - `img-src` permits self, `data:`, `blob:` and HTTPS because published CMS media can use a validated HTTPS public URL whose storage host is deployment-configured;
-- `frame-src` permits only `youtube-nocookie.com` and `player.vimeo.com`, the two validated editorial-review providers already in source; and
+- `frame-src` permits self plus `youtube-nocookie.com` and `player.vimeo.com`.
+  Self-framing is required only for the exact B4-controlled opaque-origin
+  partner-creative documents approved by RFC-041; every other same-origin
+  response retains `X-Frame-Options: DENY`, so this source expression does not
+  make ordinary B4 pages embeddable; and
 - `connect-src` remains same-origin because browser analytics uses B4GAMBLE's `/_vercel/insights` endpoint and OAuth/OpenAI/Resend calls are navigation or server-side concerns.
 
 The existing Referrer Policy, Permissions Policy, HSTS at the platform edge and Programme-only microphone permission are preserved. CSP is enforced, not report-only, on the Draft-PR Preview before any release decision.

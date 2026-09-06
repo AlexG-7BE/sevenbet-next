@@ -125,7 +125,9 @@ origin, and the current XFO processing algorithm blocks `SAMEORIGIN` when the
 sandboxed origin or scripts flags are present. Every non-frame route retains
 the default `X-Frame-Options: DENY` response in middleware. This exact-path
 exception therefore enables the opaque-origin frame without weakening who may
-embed it.
+embed it. The parent application CSP includes `frame-src 'self'` so it may load
+that B4-controlled document; response-level XFO still rejects attempts to
+frame every other same-origin route.
 
 The broader capabilities required by the real HTML5 creative are confined to
 that frame; the main application CSP is unchanged. The iframe cannot read its

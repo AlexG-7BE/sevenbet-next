@@ -31,7 +31,7 @@ export function buildContentSecurityPolicy(
     "font-src 'self' data:",
     `connect-src 'self'${development ? " ws: wss:" : ""}`,
     "media-src 'self' blob:",
-    "frame-src https://www.youtube-nocookie.com https://player.vimeo.com",
+    "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     "object-src 'none'",
