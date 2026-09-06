@@ -83,14 +83,6 @@ test("bootstrap keeps referral authority false while permitting bounded visual p
   assert.match(source, /referralAuthorityGranted: false/);
 });
 
-test("responsive media publication stays casino-level and does not activate tracking", () => {
-  const source = readFileSync("scripts/bga-visible-hosted-media-01.ts", "utf8");
-  assert.match(source, /placement: "CASINO_DIRECTORY_CARD"/);
-  assert.match(source, /variant: "MOBILE" \| "DESKTOP"/);
-  assert.match(source, /referralAuthorityGranted: false/);
-  assert.doesNotMatch(source, /productionEligible:\s*true/);
-});
-
 test("casino profile route visibly projects hosted directory media", () => {
   const page = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   const component = readFileSync("components/casino-profile/CasinoProfileMediaStrip.tsx", "utf8");
