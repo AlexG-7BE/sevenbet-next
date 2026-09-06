@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { NextResponse, type NextRequest } from "next/server";
 import { redirect } from "next/navigation";
 
@@ -53,6 +54,41 @@ export function isLegacyPreviewEnabled() {
   return process.env.CMS_PHASE1_ALLOW_DEV_ADMIN === "true";
 }
 
+async function resolveAdminAccess(
+  input: Request | NextRequest | Headers,
+): Promise<StaffContext> {
+  const headers = requestHeaders(input);
+
+  try {
+    return await requireStaff({ headers });
+  } catch (error) {
+    if (!isAdminAuthError(error)) throw error;
+
+    const legacyStaff = await getLegacyPreviewStaff(headers);
+    if (legacyStaff) return legacyStaff;
+    throw error;
+  }
+}
+
+const resolveServerComponentAdminAccess = cache(async (
+  cookieHeader: string | null,
+  previewTokenHeader: string | null,
+) => {
+  const headers = new Headers();
+  if (cookieHeader) headers.set("cookie", cookieHeader);
+  if (previewTokenHeader) headers.set("x-sevenbet-admin-token", previewTokenHeader);
+  return resolveAdminAccess(headers);
+});
+
+function resolveRequestAdminAccess(input: Request | NextRequest | Headers) {
+  return input instanceof Headers
+    ? resolveServerComponentAdminAccess(
+      input.get("cookie"),
+      input.get("x-sevenbet-admin-token"),
+    )
+    : resolveAdminAccess(input);
+}
+
 async function getLegacyPreviewStaff(
   input: Request | NextRequest | Headers,
 ): Promise<StaffContext | null> {
@@ -104,15 +140,10 @@ export async function requireAdminAccess(
     callbackUrl?: string;
   } = {},
 ) {
-  const headers = requestHeaders(input);
-
   try {
-    return await requireStaff({ headers });
+    return await resolveRequestAdminAccess(input);
   } catch (error) {
     if (!isAdminAuthError(error)) throw error;
-
-    const legacyStaff = await getLegacyPreviewStaff(headers);
-    if (legacyStaff) return legacyStaff;
 
     if (error.statusCode === 401 && onUnauthenticated === "redirect") {
       redirect(getAdminLoginUrl(callbackUrl));
