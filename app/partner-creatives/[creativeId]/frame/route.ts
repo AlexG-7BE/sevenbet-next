@@ -65,10 +65,12 @@ export async function GET(_: Request, { params }: { params: Promise<{ creativeId
   if (creative?.provider !== "BANNERFLOW" || creative.sourceMode !== "PARTNER_HOSTED_EMBED"
     || (!clickVerified && !renderOnly)
     || !providerEmbedPath || !providerEmbedParameters || !redirectSlug || !width || !height) return noPartnerHostedFrame();
-  const governed = clickVerified
-    ? new URL(`/r/${redirectSlug}`, siteUrl)
-    : new URL("/outbound/unavailable", siteUrl);
-  if (clickVerified) governed.searchParams.set("creative", creativeId);
+
+  // Bannerflow accepts only the governed B4 creative-route contract. For render-only
+  // destination-review creatives this same /r URL remains fail-closed because the
+  // commercial resolver still requires VALIDATED + VERIFIED before external referral.
+  const governed = new URL(`/r/${redirectSlug}`, siteUrl);
+  governed.searchParams.set("creative", creativeId);
   const document = buildBannerflowFrameDocument({
     providerEmbedPath,
     providerEmbedParameters,
