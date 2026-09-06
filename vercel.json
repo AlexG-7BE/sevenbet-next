@@ -1,4 +1,5 @@
 {
+  "buildCommand": "tsx scripts/vercel-build-preflight.ts && tsx scripts/bga-media-first-casino-bootstrap-01.ts build-preflight && next build",
   "crons": [
     {
       "path": "/api/internal/cron/programme-expiry-purge",
