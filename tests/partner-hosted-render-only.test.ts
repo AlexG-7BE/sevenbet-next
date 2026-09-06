@@ -13,7 +13,6 @@ const bound = {
   sourceMode: "PARTNER_HOSTED_EMBED",
   affiliateOfferId: "offer",
   redirectSlugId: "redirect",
-  trackingLinkId: "tracking",
   redirectSlug: "casino-route",
 };
 
@@ -51,7 +50,7 @@ test("unrelated review states remain non-publishable", () => {
   }
 });
 
-test("render-only exception is Bannerflow embed specific and requires canonical bindings", () => {
+test("render-only exception is Bannerflow embed specific and requires canonical binding identity", () => {
   assert.equal(isPartnerHostedRenderOnlyDestinationReview({
     ...bound,
     provider: "SUPERFLY",
@@ -61,7 +60,7 @@ test("render-only exception is Bannerflow embed specific and requires canonical 
   }), false);
   assert.equal(isPartnerHostedRenderOnlyDestinationReview({
     ...bound,
-    trackingLinkId: null,
+    redirectSlugId: null,
     validationState: "REVIEW_REQUIRED",
     destinationVerificationState: "FAILED",
     validationReason: "DESTINATION_INTEGRITY_HTTP_400",
