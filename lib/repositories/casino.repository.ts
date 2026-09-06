@@ -8,6 +8,7 @@ import {
 
 import { prisma } from "@/lib/db/prisma";
 import { partnerHostedBindingFingerprint } from "@/lib/media-operations/partner-hosted";
+import { isPartnerHostedVisuallyPublishable } from "@/lib/media-operations/partner-hosted-publication";
 
 const mediaAssignmentInclude = {
   include: { mediaAsset: true },
@@ -330,7 +331,10 @@ function snapshotPartnerHostedCreative(creative: SnapshotHostedAssignment["creat
     languageCode: creative.languageCode,
     languageState: creative.languageState,
     currencyCode: creative.currencyCode,
+    affiliateOfferId: creative.affiliateOfferId,
+    redirectSlugId: creative.redirectSlugId,
     validationState: creative.validationState,
+    validationReason: creative.validationReason,
     destinationVerificationState: creative.destinationVerificationState,
     bindingFingerprint: publishedBindingFingerprint(creative),
     redirectSlug: creative.redirectSlug?.slug ?? null,
@@ -372,8 +376,10 @@ function publishablePartnerHostedAssignment(assignment: SnapshotHostedAssignment
     && subjectMatches
     && assignment.creative.active
     && !assignment.creative.archivedAt
-    && assignment.creative.validationState === "VALIDATED"
-    && assignment.creative.destinationVerificationState === "VERIFIED"
+    && isPartnerHostedVisuallyPublishable({
+      ...assignment.creative,
+      redirectSlug: assignment.creative.redirectSlug?.slug ?? null,
+    })
     && Boolean(assignment.creative.affiliateOfferId && assignment.creative.redirectSlugId && assignment.creative.trackingLinkId)
     && Boolean(assignment.creative.redirectSlug?.slug)
     && (assignment.countryCode ?? null) === (assignment.creative.countryCode ?? null)
