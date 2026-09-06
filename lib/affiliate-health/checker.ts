@@ -36,6 +36,8 @@ interface SafeFetchResult {
 
 const maximumRedirects = 6;
 const challengeStatuses = new Set([401, 403, 429]);
+const healthCheckUserAgent = "B4Gamble-Affiliate-Route-Health/1.0";
+const visitorNavigationUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
 
 function timeoutSignal(deadline: number) {
   const remaining = Math.ceil(deadline - performance.now());
@@ -49,6 +51,7 @@ async function safeFetchChain(
   fetcher: typeof fetch,
   deadline: number,
   validateUrl: (url: URL) => Promise<void>,
+  userAgent: string,
 ): Promise<SafeFetchResult> {
   let current = initialUrl;
   const chain = [new URL(current)];
@@ -61,7 +64,7 @@ async function safeFetchChain(
       credentials: "omit",
       referrerPolicy: "no-referrer",
       headers: {
-        "User-Agent": "B4Gamble-Affiliate-Route-Health/1.0",
+        "User-Agent": userAgent,
         Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.1",
       },
       signal: timeoutSignal(deadline),
@@ -171,12 +174,13 @@ export async function checkAffiliateRouteHttp(input: {
   const timeoutMs = input.timeoutMs ?? 12_000;
   const validateUrl = input.validateUrl ?? assertPublicNetworkUrl;
   const deadline = started + timeoutMs;
+  let method: "HEAD" | "GET" = input.inspectTerminalContent ? "GET" : "HEAD";
+  const userAgent = input.inspectTerminalContent ? visitorNavigationUserAgent : healthCheckUserAgent;
   try {
-    let method: "HEAD" | "GET" = input.inspectTerminalContent ? "GET" : "HEAD";
-    let result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl);
+    let result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl, userAgent);
     if (!input.inspectTerminalContent && (result.response.status === 405 || result.response.status === 501)) {
       method = "GET";
-      result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl);
+      result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl, userAgent);
     }
     const classified = classify(result, method, input.expectation, performance.now() - started);
     if (!input.inspectTerminalContent || classified.status !== "HEALTHY") {
@@ -189,6 +193,6 @@ export async function checkAffiliateRouteHttp(input: {
     const reason = error instanceof Error && /^[A-Z0-9_]+$/.test(error.message) ? error.message
       : error instanceof DOMException && error.name === "TimeoutError" ? "TIMEOUT"
         : "NETWORK_ERROR";
-    return { status: "BROKEN", reason, method: "HEAD", statusCode: null, durationMs: Math.round(performance.now() - started), redirectCount: 0, finalHost: null };
+    return { status: "BROKEN", reason, method, statusCode: null, durationMs: Math.round(performance.now() - started), redirectCount: 0, finalHost: null };
   }
 }

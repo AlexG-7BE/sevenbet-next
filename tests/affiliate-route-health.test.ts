@@ -163,6 +163,7 @@ test("new-destination inspection uses an ordinary bounded GET rather than a trac
   assert.equal(result.status, "HEALTHY");
   assert.equal(observedHeaders.get("range"), null);
   assert.equal(observedHeaders.get("purpose"), null);
+  assert.match(observedHeaders.get("user-agent") ?? "", /^Mozilla\/5\.0 /);
 });
 
 test("private, local, documentation, multicast, and IPv4-mapped private addresses are refused", () => {
