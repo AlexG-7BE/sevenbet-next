@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/db/prisma";
 import { isVettedPartnerHostedCreativesEnabled } from "@/lib/media-operations/partner-hosted";
+import {
+  isPartnerHostedClickVerified,
+  isPartnerHostedRenderOnlyDestinationReview,
+} from "@/lib/media-operations/partner-hosted-publication";
 import { buildBannerflowFrameDocument, noPartnerHostedFrame, partnerHostedFrameHeaders } from "@/lib/media/partner-hosted-frame";
 import { siteUrl } from "@/lib/site";
 
@@ -56,11 +60,15 @@ export async function GET(_: Request, { params }: { params: Promise<{ creativeId
   const redirectSlug = typeof creative?.redirectSlug === "string" ? creative.redirectSlug : null;
   const width = typeof creative?.declaredWidth === "number" ? creative.declaredWidth : null;
   const height = typeof creative?.declaredHeight === "number" ? creative.declaredHeight : null;
+  const clickVerified = creative ? isPartnerHostedClickVerified(creative) : false;
+  const renderOnly = creative ? isPartnerHostedRenderOnlyDestinationReview(creative) : false;
   if (creative?.provider !== "BANNERFLOW" || creative.sourceMode !== "PARTNER_HOSTED_EMBED"
-    || creative.validationState !== "VALIDATED" || creative.destinationVerificationState !== "VERIFIED"
+    || (!clickVerified && !renderOnly)
     || !providerEmbedPath || !providerEmbedParameters || !redirectSlug || !width || !height) return noPartnerHostedFrame();
-  const governed = new URL(`/r/${redirectSlug}`, siteUrl);
-  governed.searchParams.set("creative", creativeId);
+  const governed = clickVerified
+    ? new URL(`/r/${redirectSlug}`, siteUrl)
+    : new URL("/outbound/unavailable", siteUrl);
+  if (clickVerified) governed.searchParams.set("creative", creativeId);
   const document = buildBannerflowFrameDocument({
     providerEmbedPath,
     providerEmbedParameters,
