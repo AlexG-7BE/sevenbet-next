@@ -825,6 +825,145 @@ async function verifyGeoLocalizedCreativeUpgrade(migrationEntries) {
   }
 }
 
+async function verifyVettedPartnerHostedCreativeUpgrade(migrationEntries) {
+  const migration = "0029_vetted_partner_hosted_creatives";
+  const migrationIndex = migrationEntries.indexOf(migration);
+  const programmeMigrationIndex = migrationEntries.indexOf("0015_active_control_program_flow");
+  if (migrationIndex < 1 || migrationEntries[migrationIndex - 1] !== "0028_geo_localized_creative_assignments") {
+    throw new Error(`Expected ${migration} immediately after 0028`);
+  }
+  const schema = "vetted_partner_hosted_creative_upgrade_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+
+  const beforeProgramme = await stageMigrations(migrationEntries.slice(0, programmeMigrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(beforeProgramme, "schema.prisma")], environment);
+    run("npx", [
+      "prisma", "db", "execute", "--schema", path.join(beforeProgramme, "schema.prisma"),
+      "--file", "prisma/preflight/0015_active_control_program_flow.sql",
+    ], environment);
+  } finally {
+    await rm(beforeProgramme, { recursive: true, force: true });
+  }
+
+  const through0028 = await stageMigrations(migrationEntries.slice(0, migrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(through0028, "schema.prisma")], environment);
+    for (const fixture of [
+      "prisma/fixtures/0025_pre_casino_market_profile.sql",
+      "prisma/fixtures/0026_pre_commercial_platform_completion.sql",
+      "prisma/fixtures/0027_pre_placement_media_assignments.sql",
+      "prisma/fixtures/0028_pre_geo_localized_creative_assignments.sql",
+      "prisma/fixtures/0029_pre_vetted_partner_hosted_creatives.sql",
+    ]) {
+      run("npx", ["prisma", "db", "execute", "--schema", path.join(through0028, "schema.prisma"), "--file", fixture], environment);
+    }
+  } finally {
+    await rm(through0028, { recursive: true, force: true });
+  }
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  const protectedState = async () => JSON.parse(JSON.stringify(await Promise.all([
+    prisma.siteSetting.findUnique({ where: { key: "0029-preservation-fixture" }, select: { key: true, value: true } }),
+    prisma.casino.findMany({ where: { id: "25000000-0000-4000-8000-000000000001" }, select: { id: true, slug: true, status: true, publishedVersion: true, draftVersion: true } }),
+    prisma.casinoBonus.findMany({ where: { id: "25000000-0000-4000-8000-000000000007" }, select: { id: true, casinoId: true, slug: true, status: true } }),
+    prisma.affiliateOffer.findMany({ where: { id: "26000000-0000-4000-8000-000000000003" }, select: { id: true, casinoId: true, programId: true, status: true } }),
+    prisma.affiliateTrackingLink.findMany({ where: { id: "26000000-0000-4000-8000-000000000006" }, select: { id: true, offerId: true, trackingUrl: true, destinationUrl: true, active: true } }),
+    prisma.affiliateRedirectSlug.findMany({ where: { id: "26000000-0000-4000-8000-000000000008" }, select: { id: true, slug: true, casinoId: true, affiliateOfferId: true, active: true } }),
+    prisma.mediaAsset.findMany({ where: { id: "27000000-0000-4000-8000-000000000090" }, select: { id: true, casinoId: true, storageKey: true, publicUrl: true, checksum: true, status: true } }),
+    prisma.casinoMediaAssignment.count(),
+    prisma.casinoBonusMediaAssignment.count(),
+    prisma.affiliateOfferMediaAssignment.count(),
+  ])));
+  try {
+    const before = await protectedState();
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+    const after = await protectedState();
+    if (JSON.stringify(after) !== JSON.stringify(before)) {
+      throw new Error("0029 changed protected editorial, commercial routing, media, or assignment state");
+    }
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+    const emptyHostedCounts = await Promise.all([
+      prisma.partnerHostedCreative.count(),
+      prisma.casinoPartnerHostedCreativeAssignment.count(),
+      prisma.casinoBonusPartnerHostedCreativeAssignment.count(),
+      prisma.affiliateOfferPartnerHostedCreativeAssignment.count(),
+    ]);
+    if (emptyHostedCounts.some((count) => count !== 0)) throw new Error("0029 invented hosted creative data");
+
+    await prisma.partnerHostedCreative.create({
+      data: {
+        id: "29000000-0000-4000-8000-000000000001",
+        provider: "SUPERFLY",
+        sourceMode: "PARTNER_HOSTED_IMAGE",
+        providerIdentityKey: "SUPERFLY:3:16924502:46:200",
+        casinoId: "25000000-0000-4000-8000-000000000001",
+        affiliateOfferId: "26000000-0000-4000-8000-000000000003",
+        redirectSlugId: "26000000-0000-4000-8000-000000000008",
+        trackingLinkId: "26000000-0000-4000-8000-000000000006",
+        externalCreativeId: "200",
+        affiliateId: "16924502",
+        campaignId: "46",
+        operatorProgramId: "3",
+        declaredWidth: 250,
+        declaredHeight: 250,
+        hostedImageUrl: "https://go.superflypartners.net/impression?creative_id=200&affiliate_id=16924502",
+        languageState: "UNKNOWN",
+        destinationUrl: "https://go.superflypartners.net/click?o=3&a=16924502&c=46&creative_id=200",
+        destinationUrlHash: "a".repeat(64),
+        destinationHost: "go.superflypartners.net",
+        expectedOperatorHost: "fixture.example",
+        verifiedFinalHost: "fixture.example",
+        destinationVerificationState: "VERIFIED",
+        destinationVerifiedAt: new Date("2030-01-01T00:00:00Z"),
+        validationState: "VALIDATED",
+        sourceChecksum: "b".repeat(64),
+        provenance: { source: "0029-ci" },
+        createdBy: "0029-ci",
+        updatedBy: "0029-ci",
+      },
+    });
+    await prisma.affiliateOfferPartnerHostedCreativeAssignment.create({
+      data: {
+        id: "29000000-0000-4000-8000-000000000002",
+        affiliateOfferId: "26000000-0000-4000-8000-000000000003",
+        creativeId: "29000000-0000-4000-8000-000000000001",
+        placement: "BEST_OFFER_FEATURED",
+        languageState: "UNKNOWN",
+      },
+    });
+    if (await prisma.partnerHostedCreative.count() !== 1 || await prisma.affiliateOfferPartnerHostedCreativeAssignment.count() !== 1) {
+      throw new Error("0029 valid hosted creative graph did not persist");
+    }
+
+    let rejected = false;
+    try {
+      await prisma.$executeRawUnsafe(`
+        INSERT INTO "${schema}"."PartnerHostedCreative"
+          ("id", "provider", "sourceMode", "providerIdentityKey", "casinoId", "externalCreativeId", "declaredWidth", "declaredHeight", "hostedImageUrl", "languageState", "destinationUrl", "destinationUrlHash", "destinationHost", "destinationVerificationState", "validationState", "sourceChecksum", "provenance", "createdBy", "updatedBy", "updatedAt")
+        VALUES
+          ('29000000-0000-4000-8000-000000000003', 'BANNERFLOW', 'PARTNER_HOSTED_IMAGE', 'invalid-provider-shape', '25000000-0000-4000-8000-000000000001', 'invalid', 300, 100, 'https://c.bannerflow.net/not-an-image', 'UNKNOWN', 'https://example.invalid', repeat('c',64), 'example.invalid', 'PENDING', 'REVIEW_REQUIRED', repeat('d',64), '{}'::jsonb, '0029-ci', '0029-ci', CURRENT_TIMESTAMP)
+      `);
+    } catch {
+      rejected = true;
+    }
+    if (!rejected) throw new Error("0029 accepted an invalid provider/source shape");
+
+    console.info("Vetted partner-hosted creative staged migration smoke passed", {
+      protectedStatePreserved: true,
+      hostedRowsInvented: 0,
+      validHostedGraph: true,
+      invalidProviderShapeRejected: true,
+      replayIdempotent: true,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 async function main() {
   if (process.env.CI !== "true") {
     throw new Error("Migration verification is restricted to an explicit CI environment");
@@ -897,6 +1036,7 @@ async function main() {
   await verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex);
   await verifyCommercialPlatformUpgrade(migrationEntries, programmeMigrationIndex);
   await verifyGeoLocalizedCreativeUpgrade(migrationEntries);
+  await verifyVettedPartnerHostedCreativeUpgrade(migrationEntries);
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();

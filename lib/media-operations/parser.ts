@@ -17,7 +17,9 @@ export type SafeUrlEvidence = {
 
 export type ParsedCreativeInternal = {
   id: string;
-  sourceKind: "ANCHOR_IMAGE" | "IMAGE" | "DIRECT_URL" | "SAFE_DATA_IMAGE";
+  sourceKind: "ANCHOR_IMAGE" | "IMAGE" | "DIRECT_URL" | "SAFE_DATA_IMAGE" | "HOSTED_EMBED";
+  sourceMode?: "FIRST_PARTY_MEDIA" | "PARTNER_HOSTED_IMAGE" | "PARTNER_HOSTED_EMBED";
+  provider?: "SUPERFLY" | "BANNERFLOW" | null;
   source: SafeUrlEvidence;
   anchor: SafeUrlEvidence | null;
   declaredWidth: number | null;
@@ -31,6 +33,13 @@ export type ParsedCreativeInternal = {
   marketClues: string[];
   currencyClues: string[];
   warnings: string[];
+  externalLabel?: string | null;
+  brandLabel?: string | null;
+  purpose?: string | null;
+  countryCode?: string | null;
+  languageCode?: string | null;
+  languageState?: "EXPLICIT" | "NEUTRAL" | "UNKNOWN";
+  currencyCode?: string | null;
   /** Ephemeral fetch input. This field must never be persisted or logged. */
   sourceUrl: string;
   /** Ephemeral comparison evidence. This field must never be persisted or logged. */

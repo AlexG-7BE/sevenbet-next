@@ -216,7 +216,7 @@ test("trusted GEO bounds the full language priority matrix without cross-country
   assert.notEqual(resolve(null, "it").asset?.id, "it-it");
 });
 
-test("same-language global media outranks exact-country neutral, while explicit other languages never become fallback", () => {
+test("exact-country neutral outranks global language and other global language remains the final usable fallback", () => {
   const globalEnglish = asset("global-en", "BONUS_CREATIVE");
   const finlandNeutral = asset("fi-neutral", "BONUS_CREATIVE");
   const globalNeutral = asset("global-neutral", "BONUS_CREATIVE");
@@ -226,8 +226,8 @@ test("same-language global media outranks exact-country neutral, while explicit 
     assignment("global-neutral", "BEST_OFFER_FEATURED", globalNeutral),
   ] });
   const english = resolveMedia({ placement: "BEST_OFFER_FEATURED", trustedCountryCode: "FI", presentationLanguage: "en", context: contextWithNeutral, now: NOW });
-  assert.equal(english.asset?.id, "global-en");
-  assert.equal(english.targetingResolution, "GLOBAL_LANGUAGE");
+  assert.equal(english.asset?.id, "fi-neutral");
+  assert.equal(english.targetingResolution, "EXACT_COUNTRY_NEUTRAL");
   const italian = resolveMedia({ placement: "BEST_OFFER_FEATURED", trustedCountryCode: "FI", presentationLanguage: "it", context: contextWithNeutral, now: NOW });
   assert.equal(italian.asset?.id, "fi-neutral");
   assert.equal(italian.targetingResolution, "EXACT_COUNTRY_NEUTRAL");
@@ -236,10 +236,10 @@ test("same-language global media outranks exact-country neutral, while explicit 
     assignment("fi-fi", "BEST_OFFER_FEATURED", asset("fi-fi", "BONUS_CREATIVE"), { countryCode: "FI", languageCode: "fi" }),
     assignment("global-de", "BEST_OFFER_FEATURED", asset("global-de", "BONUS_CREATIVE"), { languageCode: "de" }),
   ] });
-  const rejected = resolveMedia({ placement: "BEST_OFFER_FEATURED", trustedCountryCode: "FI", presentationLanguage: "en", context: wrongLanguagesOnly, now: NOW });
-  assert.equal(rejected.asset, null);
-  assert.equal(rejected.source, "CODE_FALLBACK");
-  assert.equal(rejected.targetingResolution, "CONTROLLED_FALLBACK");
+  const finalGlobal = resolveMedia({ placement: "BEST_OFFER_FEATURED", trustedCountryCode: "FI", presentationLanguage: "en", context: wrongLanguagesOnly, now: NOW });
+  assert.equal(finalGlobal.asset?.id, "global-de");
+  assert.equal(finalGlobal.source, "EXPLICIT");
+  assert.equal(finalGlobal.targetingResolution, "GLOBAL_OTHER");
 });
 
 test("target-scoped assets never re-enter through unscoped HERO or LOGO fallback", () => {
@@ -268,8 +268,9 @@ test("target-scoped assets never re-enter through unscoped HERO or LOGO fallback
     context: { ...resolutionContext, legacyMediaAssets: [finlandHero, globalItalianLogo] },
     now: NOW,
   });
-  assert.equal(noSafeLegacy.asset, null);
-  assert.equal(noSafeLegacy.source, "CODE_FALLBACK");
+  assert.equal(noSafeLegacy.asset?.id, "global-it-logo");
+  assert.equal(noSafeLegacy.source, "LOGO_COMPOSITION");
+  assert.equal(noSafeLegacy.targetingResolution, "GLOBAL_OTHER");
 });
 
 test("target specificity is evaluated before device and placement fallback specificity", () => {

@@ -3,11 +3,13 @@
 **Status:** ACTIVE Founder-authorised application, security and operations
 contract
 **Authority:** `B4GAMBLE — MEDIA-INGESTION-AUTOPLACEMENT-01` and the additive
-`B4GAMBLE — GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01`
-**Evidence date:** 5 September 2026
+`B4GAMBLE — GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01` and
+`VETTED-PARTNER-HOSTED-CREATIVES-01`
+**Evidence date:** 6 September 2026
 **Architecture dependencies:**
 [RFC-027 — B4GAMBLE Operational Agent Foundation](../06_RFC/RFC-027-B4GAMBLE-Operational-Agent-Foundation.md),
 [RFC-040 — Placement-Based Media Assignments](../06_RFC/RFC-040-Placement-Based-Media-Assignments.md),
+[RFC-041 — Vetted Partner-Hosted Creatives](../06_RFC/RFC-041-Vetted-Partner-Hosted-Creatives.md),
 and the [Commercial Creative Format Contract](Commercial-Creative-Format-Contract.md)
 
 This contract contains no secret value, raw affiliate destination, visitor
@@ -22,13 +24,19 @@ active repository was scanned with dependencies, generated output, build
 artefacts, caches and `tsconfig.tsbuildinfo` excluded. The pre-documentation
 inventory contained 2,200 active files at the start of this documentation pass.
 
-**DETECTED:** the implementation uses the existing `MediaAsset`,
+**DETECTED:** the first-party implementation uses the existing `MediaAsset`,
 `CasinoMediaAssignment`, `CasinoBonusMediaAssignment`,
 `AffiliateOfferMediaAssignment`, `SiteSetting` and `AuditLog` structures. It
 does not add an RFC-040 placement/variant. The 5 September extension adds only
 nullable `countryCode` and `languageCode` assignment fields through migration
 0028 and includes them in the existing immutable `CasinoVersion` publication
 projection.
+
+**DETECTED IN THE AUTHORISED RELEASE CANDIDATE:** migration 0029 adds the
+separate structured `PartnerHostedCreative` record and three typed hosted
+assignment tables. It does not force executable provider media into the
+first-party `MediaAsset` invariant and does not alter existing objects or
+assignments.
 
 **DETECTED:** public media rendering, governed clicks, CTA/GEO authority,
 Casino/offer terms, scores and publication remain owned by their existing
@@ -48,22 +56,27 @@ Supported forms are:
 - a block containing several of those forms;
 - one- or two-layer HTML-escaped markup;
 - single-quoted, double-quoted and mixed-whitespace attributes; and
-- partner metadata in bounded attributes or URL keys.
+- partner metadata in bounded attributes or URL keys;
+- an exact Superfly anchor/image provider contract;
+- an exact Bannerflow script-source provider contract; and
+- a composite `Description:` plus `Embed Code:` payload using the same
+  `snippet` field. Description is optional.
 
 The generic parser recognises image, creative, banner, campaign, programme,
 partner/operator and affiliate identifier keys. Affiliate and campaign values
 are hashed before persistence. Provider-specific metadata can be added later,
 but image validation and authority never depend on one network.
 
-`script`, `iframe` and HTML5 creative code are unsupported execution types.
-They are recorded as `SCRIPT`/`IFRAME` and
-`UNSAFE_OR_NON_IMAGE_CREATIVE`. A candidate proceeds only when an explicit
-allowlisted data-image attribute contains an independently valid HTTPS image
-URL. Script bodies, event handlers and iframe documents are never evaluated.
+Generic `script`, `iframe` and HTML5 creative code remain unsupported execution
+types. The only executable input shape accepted is one empty Bannerflow
+`<script>` whose HTTPS host, path, attributes and query keys match the RFC-041
+adapter exactly. Its raw element is parsed but never evaluated during
+ingestion. Script bodies, event handlers, extra elements, arbitrary hosts and
+arbitrary iframe documents are rejected.
 
 ## Untrusted HTML and raw-URL boundary
 
-**DETECTED:** parsing is a bounded text scanner. It does not use a browser,
+**DETECTED:** ingestion parsing is a bounded text scanner. It does not use a browser,
 DOM, `dangerouslySetInnerHTML`, `eval`, a JavaScript VM, a headless browser or
 partner-provided code.
 
@@ -79,11 +92,14 @@ existing governed `AffiliateTrackingLink` destinations for the resolved draft
 offer. Exact evidence produces `MATCH`; a known disagreement produces
 `MISMATCH`; anything else produces
 `TRACKING_DESTINATION_REVIEW_REQUIRED`. No raw partner href becomes a public
-link, `AffiliateOffer`, tracking link, redirect, PartnerRoute or CTA.
+link, `AffiliateOffer`, canonical tracking link, redirect, PartnerRoute or CTA.
+RFC-041 may store an exact creative destination in the separate server-only
+record only after canonical relationship resolution and bounded terminal-
+operator verification.
 
 ## Safe remote fetch
 
-**DETECTED:** only the server fetches creative bytes. Each hop must use HTTPS,
+**DETECTED FOR FIRST-PARTY ACQUISITION:** only the server fetches creative bytes. Each hop must use HTTPS,
 the standard HTTPS port and no URL user information. The client performs GET
 only, requests identity encoding, sends a fixed image `Accept` header and
 system user agent, and sends no Founder cookie, browser session, Authorization
@@ -108,6 +124,11 @@ limit and 10 MiB. Non-identity content encoding, a non-image Content-Type,
 HTML/script payloads, a declared/actual MIME disagreement, malformed image or
 invalid decoded dimensions fail before storage.
 
+RFC-041 provider-hosted inventory deliberately does not use this byte-fetch
+path. A Superfly impression image loads directly in the visitor browser. A
+Bannerflow script loads only inside its isolated B4 frame. Those exceptions are
+provider-specific rendering adapters, not an expansion of the generic fetcher.
+
 ## Media validation, storage and deduplication
 
 Accepted raster types remain JPEG, PNG, WebP, AVIF and GIF. Existing
@@ -119,8 +140,8 @@ Validated GIF87a/GIF89a bytes continue through the existing strict decoder.
 The original validated GIF is stored without a frame-flattening transform, and
 animation/frame metadata remains available.
 
-**DETECTED:** stored media uses the configured first-party provider. Public
-renderers never hotlink the partner source. Media Operations checks the
+**DETECTED:** acquired media uses the configured first-party provider. Public
+renderers never hotlink the original source for that first-party path. Media Operations checks the
 validated source-byte SHA-256 before metadata processing, then checks the
 processed-byte SHA-256 before using a checksum-derived unique storage key.
 Repeated bytes therefore reuse the earliest active same-Casino asset regardless
@@ -136,6 +157,12 @@ reject protocol-relative, traversal, executable and insecure remote forms.
 The durable plan adds source/provider evidence even when an existing asset is
 reused. It does not rewrite shared asset ownership merely to satisfy a new
 snippet.
+
+Hosted plans instead retain only an allowlisted provider render reference,
+safe URL evidence, source checksum and B4 creative identifier. The raw creative
+destination is excluded from durable plan output and public DTOs. Provider
+identity deduplication does not collapse Superfly `creative_id=200` and
+`creative_id=205`.
 
 ## Context detection
 
@@ -179,6 +206,14 @@ receive invented visual confidence. Image content and metadata are explicitly
 treated as untrusted evidence. OpenAI image processing remains an external
 provider boundary; `store: false` is not represented as a zero-retention
 guarantee. See the official [API data controls](https://developers.openai.com/api/docs/guides/your-data).
+
+Partner-hosted creatives never enter that visual adapter. Their semantic result
+is deterministic provider/Description metadata only. Missing description,
+market, language, currency or purpose is valid; the image or HTML5 pixels are
+not inspected, and no offer amount, wagering, spins, currency or terms are
+invented. A description country contradiction, invalid provider shape,
+unevidenced canonical relationship or failed terminal destination remains
+review-required.
 
 ## Placement engine
 
@@ -254,6 +289,13 @@ language is not treated as neutral. Only strong text-free logo/brand-art
 evidence can establish neutral identity media without an explicit neutral
 declaration.
 
+For effective presentation, RFC-041 extends the target order to: exact country
+and language; exact country and neutral/unknown; global matching language;
+global English/EUR; other global English; global neutral; global unknown; then
+any remaining usable global creative. Wrong-country media is never a fallback.
+Language rank precedes currency, while local currency can break a same-rank
+tie. One usable global creative is selected rather than leaving the slot empty.
+
 ## Durable plan, draft authority and rollback
 
 Each session writes a versioned strict plan under
@@ -263,7 +305,8 @@ bounded operation history. Strict read validation fails closed on malformed
 stored data.
 
 Application runs in a serializable transaction. Casino and subject must still
-be draft, media must be active and same-Casino, subject/placement must match,
+be draft, media or hosted creative must be active, validated and same-Casino,
+subject/placement and exact evidenced target must match,
 COVER must be crop-safe, and the recommendation must still be automatic (or an
 explicit eligible replacement). Assignment reference is exact:
 `MEDIA_OPERATIONS:<planId>:<recommendationId>`. Reapplying is idempotent.
@@ -283,6 +326,8 @@ Rollback deletes only the exact plan-owned assignment in the same country and
 language scope. If that assignment explicitly replaced an older draft
 assignment and that exact scoped slot is free, the older assignment is
 restored. MediaAssets are retained, including multi-country shared assets.
+Hosted records are also retained. Cross-source slot conflicts are review-only,
+and apply rechecks both table families to prevent a concurrent duplicate.
 
 ## Admin workflow and design lock
 
@@ -291,13 +336,14 @@ the existing Admin shell, Card/Badge system, Media Manager evidence patterns
 and placement-preview hierarchy. No new public design language or public
 navigation entry is introduced.
 
-The page provides `PASTE PARTNER CREATIVE CODE`, optional Casino/Bonus/partner
-context, exact target-country input, explicit/neutral/unknown language state,
-analysis controls, first-party previews, declared and decoded
+The page provides separate optional Description and required Embed Code fields,
+optional Casino/Bonus/partner context, exact target-country input,
+explicit/neutral/unknown language state, analysis controls, first-party and
+protected partner-hosted previews, declared and decoded
 dimensions, MIME/animation/family, source provider, semantic brand/purpose/
-confidence/crop evidence, market clues, offer match, assignment comparison,
-score/reasons, `APPLY TO DRAFT`, explicit replacement and plan-owned rollback.
-There is no automatic-publish action.
+confidence/crop evidence, market clues, canonical binding, offer match,
+assignment comparison, score/reasons, `APPLY TO DRAFT`, explicit replacement
+and plan-owned rollback. There is no automatic-publish action.
 
 Authenticated target-simulation links expose DEFAULT, MOBILE and DESKTOP
 projection with requested/resolved country-language diagnostics through the
@@ -313,9 +359,9 @@ required at authorization, token/refresh and resource use.
 
 The surface contains exactly five tools:
 
-1. `media_ingest_partner_snippet` — parse, retain bounded explicit target
-   context, fetch, validate, deduplicate and create/reuse first-party media when
-   context permits;
+1. `media_ingest_partner_snippet` — parse raw or composite input, retain bounded
+   explicit target evidence, and either acquire validated first-party media or
+   create/reuse one exact vetted hosted record when context permits;
 2. `media_analyze_and_plan` — classify and generate the draft recommendation;
 3. `media_apply_draft_plan` — apply eligible draft recommendations or explicit
    plan rollback;
@@ -339,6 +385,24 @@ PartnerRoute activation, tracking-route creation, offer/GEO/score mutation,
 external communication, asset deletion, SQL/Prisma access, repository changes
 or Vercel deployment.
 
+## Partner-hosted browser and privacy boundary
+
+Superfly media uses a direct no-referrer visitor-browser image request. The
+Bannerflow fixture uses an isolated same-site frame with only `allow-scripts`;
+its response CSP admits `c.bannerflow.net`, data/blob resources and the minimum
+frame-local `unsafe-eval` used by the observed provider runtime. The main CSP is
+not widened. The provider receives ordinary network request metadata and the
+non-sensitive identifiers required to render the creative, but no Programme,
+protected Help, account or commercial-eligibility data.
+
+**DETECTED IN BOUNDED PREVIEW EVIDENCE:** the exact Bannerflow fixture contacted
+only `c.bannerflow.net`; no response set a cookie and no cookie/localStorage/
+sessionStorage/IndexedDB write was observed. One downloaded runtime helper read
+`document.cookie`. This is a fixture/time-bounded finding. A provider contract
+or host change requires revalidation. If non-essential storage appears and
+current policy requires a choice, third-party loading must wait on the existing
+consent boundary and use first-party fallback meanwhile.
+
 ## Audit contract
 
 Every plan, asset creation and assignment mutation writes `AuditLog` metadata
@@ -358,8 +422,9 @@ must remain:
 `fixture/draft-only proof → durable release record`.
 
 No direct push to `main`, destructive migration or `prisma migrate reset` is
-permitted. Migration 0028 is an additive six-nullable-column extension and must
-follow the guarded migration-before-final-activation path.
+permitted. Migration 0028 is the prior additive targeting extension. Migration
+0029 adds only hosted records, typed assignments, constraints and indexes and
+must complete before the hosted feature flag is enabled.
 
 Editorial publication is explicitly unavailable during the brief code-first
 state where the 0027 assignment tables exist but the six 0028 target columns do
@@ -379,5 +444,8 @@ and final Production acceptance are preserved in the
 - Real localized inventory is not installed by the architecture release; each
   actual creative still needs governed intake, review, assignment and
   publication.
+- The accepted Betsson Bannerflow fixture has no current canonical Betsson
+  PartnerRoute, so it remains previewable but non-publishable until independent
+  commercial authority exists.
 - Semantic analysis is advisory and dependent on configured provider access;
   deterministic ingestion and review status remain usable without it.

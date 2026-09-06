@@ -7,9 +7,20 @@ import {
 } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { partnerHostedBindingFingerprint } from "@/lib/media-operations/partner-hosted";
 
 const mediaAssignmentInclude = {
   include: { mediaAsset: true },
+  orderBy: [
+    { placement: Prisma.SortOrder.asc },
+    { variant: Prisma.SortOrder.asc },
+    { sortOrder: Prisma.SortOrder.asc },
+    { id: Prisma.SortOrder.asc },
+  ],
+};
+
+const partnerHostedAssignmentInclude = {
+  include: { creative: { include: { redirectSlug: { select: { slug: true } } } } },
   orderBy: [
     { placement: Prisma.SortOrder.asc },
     { variant: Prisma.SortOrder.asc },
@@ -98,13 +109,17 @@ export const casinoAggregateInclude = {
 export const casinoPlacementAggregateInclude = {
   ...casinoAggregateInclude,
   mediaAssignments: mediaAssignmentInclude,
+  partnerHostedAssignments: partnerHostedAssignmentInclude,
   countries: {
     ...casinoAggregateInclude.countries,
     include: {
       ...casinoAggregateInclude.countries.include,
       bonuses: {
         ...casinoAggregateInclude.countries.include.bonuses,
-        include: { mediaAssignments: mediaAssignmentInclude },
+        include: {
+          mediaAssignments: mediaAssignmentInclude,
+          partnerHostedAssignments: partnerHostedAssignmentInclude,
+        },
       },
     },
   },
@@ -113,6 +128,7 @@ export const casinoPlacementAggregateInclude = {
     include: {
       ...casinoAggregateInclude.casinoBonuses.include,
       mediaAssignments: mediaAssignmentInclude,
+      partnerHostedAssignments: partnerHostedAssignmentInclude,
     },
   },
   affiliatePrograms: {
@@ -123,6 +139,7 @@ export const casinoPlacementAggregateInclude = {
         include: {
           ...casinoAggregateInclude.affiliatePrograms.include.offers.include,
           mediaAssignments: mediaAssignmentInclude,
+          partnerHostedAssignments: partnerHostedAssignmentInclude,
         },
       },
     },
@@ -278,6 +295,92 @@ function snapshotMediaAssignment(assignment: SnapshotAssignment) {
   };
 }
 
+type SnapshotHostedAssignment = CasinoPlacementAggregate["partnerHostedAssignments"][number]
+  | CasinoPlacementAggregate["casinoBonuses"][number]["partnerHostedAssignments"][number]
+  | CasinoPlacementAggregate["countries"][number]["bonuses"][number]["partnerHostedAssignments"][number]
+  | CasinoPlacementAggregate["affiliatePrograms"][number]["offers"][number]["partnerHostedAssignments"][number];
+
+function publishedBindingFingerprint(creative: SnapshotHostedAssignment["creative"]) {
+  return partnerHostedBindingFingerprint({
+    affiliateOfferId: creative.affiliateOfferId,
+    redirectSlugId: creative.redirectSlugId,
+    trackingLinkId: creative.trackingLinkId,
+    destinationUrlHash: creative.destinationUrlHash,
+  });
+}
+
+function snapshotPartnerHostedCreative(creative: SnapshotHostedAssignment["creative"]) {
+  return {
+    id: creative.id,
+    provider: creative.provider,
+    sourceMode: creative.sourceMode,
+    externalCreativeId: creative.externalCreativeId,
+    externalLabel: creative.externalLabel,
+    brandLabel: creative.brandLabel,
+    purpose: creative.purpose,
+    declaredWidth: creative.declaredWidth,
+    declaredHeight: creative.declaredHeight,
+    actualWidth: creative.actualWidth,
+    actualHeight: creative.actualHeight,
+    altText: creative.altText,
+    hostedImageUrl: creative.hostedImageUrl,
+    providerEmbedPath: creative.providerEmbedPath,
+    providerEmbedParameters: creative.providerEmbedParameters,
+    countryCode: creative.countryCode,
+    languageCode: creative.languageCode,
+    languageState: creative.languageState,
+    currencyCode: creative.currencyCode,
+    validationState: creative.validationState,
+    destinationVerificationState: creative.destinationVerificationState,
+    bindingFingerprint: publishedBindingFingerprint(creative),
+    redirectSlug: creative.redirectSlug?.slug ?? null,
+    active: creative.active,
+    archivedAt: creative.archivedAt,
+    createdAt: creative.createdAt,
+  };
+}
+
+function snapshotPartnerHostedAssignment(assignment: SnapshotHostedAssignment) {
+  return {
+    id: assignment.id,
+    creativeId: assignment.creativeId,
+    placement: assignment.placement,
+    variant: assignment.variant,
+    countryCode: assignment.countryCode,
+    languageCode: assignment.languageCode,
+    languageState: assignment.languageState,
+    renderingMode: assignment.renderingMode,
+    sortOrder: assignment.sortOrder,
+    active: assignment.active,
+    altTextOverride: assignment.altTextOverride,
+    validFrom: assignment.validFrom,
+    validUntil: assignment.validUntil,
+    reference: assignment.reference,
+    createdAt: assignment.createdAt,
+    updatedAt: assignment.updatedAt,
+    creative: snapshotPartnerHostedCreative(assignment.creative),
+  };
+}
+
+function publishablePartnerHostedAssignment(assignment: SnapshotHostedAssignment) {
+  const subjectMatches = "affiliateOfferId" in assignment
+    ? assignment.affiliateOfferId === assignment.creative.affiliateOfferId
+    : "casinoBonusId" in assignment
+      ? assignment.casinoBonusId === assignment.creative.casinoBonusId
+      : assignment.casinoId === assignment.creative.casinoId;
+  return assignment.active
+    && subjectMatches
+    && assignment.creative.active
+    && !assignment.creative.archivedAt
+    && assignment.creative.validationState === "VALIDATED"
+    && assignment.creative.destinationVerificationState === "VERIFIED"
+    && Boolean(assignment.creative.affiliateOfferId && assignment.creative.redirectSlugId && assignment.creative.trackingLinkId)
+    && Boolean(assignment.creative.redirectSlug?.slug)
+    && (assignment.countryCode ?? null) === (assignment.creative.countryCode ?? null)
+    && (assignment.languageCode ?? null) === (assignment.creative.languageCode ?? null)
+    && assignment.languageState === assignment.creative.languageState;
+}
+
 export function buildPublishedCasinoSnapshot(
   current: CasinoPlacementAggregate,
   input: { actorId: string; publishedAt: Date; versionNumber: number },
@@ -286,18 +389,21 @@ export function buildPublishedCasinoSnapshot(
     ...current,
     mediaAssets: current.mediaAssets.map(snapshotMediaAsset),
     mediaAssignments: current.mediaAssignments.map(snapshotMediaAssignment),
+    partnerHostedAssignments: (current.partnerHostedAssignments ?? []).filter(publishablePartnerHostedAssignment).map(snapshotPartnerHostedAssignment),
     countries: current.countries.map((country) => ({
       ...country,
       mediaAssets: country.mediaAssets.map(snapshotMediaAsset),
       bonuses: country.bonuses.map((bonus) => ({
         ...bonus,
         mediaAssignments: bonus.mediaAssignments.map(snapshotMediaAssignment),
+        partnerHostedAssignments: (bonus.partnerHostedAssignments ?? []).filter(publishablePartnerHostedAssignment).map(snapshotPartnerHostedAssignment),
       })),
     })),
     status: EditorialStatus.PUBLISHED,
     casinoBonuses: current.casinoBonuses.map((bonus) => ({
       ...bonus,
       mediaAssignments: bonus.mediaAssignments.map(snapshotMediaAssignment),
+      partnerHostedAssignments: (bonus.partnerHostedAssignments ?? []).filter(publishablePartnerHostedAssignment).map(snapshotPartnerHostedAssignment),
       status: EditorialStatus.PUBLISHED,
     })),
     affiliatePrograms: (current.affiliatePrograms ?? []).map((program) => ({
@@ -305,6 +411,7 @@ export function buildPublishedCasinoSnapshot(
       offers: program.offers.map((offer) => ({
         ...offer,
         mediaAssignments: offer.mediaAssignments.map(snapshotMediaAssignment),
+        partnerHostedAssignments: (offer.partnerHostedAssignments ?? []).filter(publishablePartnerHostedAssignment).map(snapshotPartnerHostedAssignment),
       })),
     })),
     publishedVersion: input.versionNumber,

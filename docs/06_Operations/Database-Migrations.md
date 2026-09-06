@@ -136,6 +136,29 @@ Application rollback remains a protected code release; columns are not dropped.
 A bad future targeted relationship is deactivated and republished through the
 existing governed assignment workflow without deleting its `MediaAsset`.
 
+## Production vetted partner-hosted creative migration 0029 — authorised release candidate
+
+**DETECTED IN THE RELEASE CANDIDATE:**
+`0029_vetted_partner_hosted_creatives` is an additive migration containing four
+new enums, the structured `PartnerHostedCreative` table, three RFC-040-shaped
+typed assignment tables, foreign keys, checks and resolver/identity indexes. It
+contains no `UPDATE`, `DELETE`, table replacement, destructive operation or
+change to an existing canonical partner destination.
+
+Compatibility is DB-first and fail-closed. Production build preflight accepts
+only exact 0029 pending with the hosted capability disabled, or exact
+checksum-matched 0029 ready. `VETTED_PARTNER_HOSTED_CREATIVES_ENABLED=true` is
+refused before schema readiness. The disposable PostgreSQL gate stages through
+0028 with protected representative records, applies 0029 twice, verifies every
+protected digest unchanged, requires all four new tables empty, persists one
+valid constrained hosted graph and rejects invalid source shapes.
+
+**PROPOSED EXECUTION FOR THIS AUTHORISED WORKSTREAM:** apply the sole pending
+0029 migration once through the exact direct binding after Preview/disposable
+database acceptance, verify checksum/schema/zero hosted rows and protected
+counts, then enable the independently reversible application flag. Rollback is
+code/flag-only; no table or row deletion is required.
+
 ## Production Better Auth 1.7 sequence — applied
 
 **DETECTED / APPLIED:** `0021_partner_ops_work_bridge_01` and

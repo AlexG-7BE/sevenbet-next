@@ -91,13 +91,26 @@ type AssignmentIdentity = {
   id: string;
   reference: string | null;
   active: boolean;
-  mediaAssetId: string;
+  sourceMode: "FIRST_PARTY_MEDIA" | "PARTNER_HOSTED_IMAGE" | "PARTNER_HOSTED_EMBED";
+  mediaAssetId: string | null;
+  creativeId: string | null;
   countryCode: string | null;
   languageCode: string | null;
 };
 
 function targetScope(recommendation: MediaPlanRecommendation) {
   return { countryCode: recommendation.countryCode, languageCode: recommendation.languageCode };
+}
+
+function hostedTargetScope(recommendation: MediaPlanRecommendation) {
+  return {
+    ...targetScope(recommendation),
+    languageState: recommendation.languageState ?? "NEUTRAL" as const,
+  };
+}
+
+function hostedRecommendation(recommendation: MediaPlanRecommendation) {
+  return Boolean(recommendation.sourceMode && recommendation.sourceMode !== "FIRST_PARTY_MEDIA");
 }
 
 async function subjectState(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation) {
@@ -120,13 +133,66 @@ async function activeAssignment(tx: Prisma.TransactionClient, recommendation: Me
     ...targetScope(recommendation),
     active: true,
   };
+  if (hostedRecommendation(recommendation)) {
+    const hostedWhere = {
+      placement: recommendation.placement as MediaPlacement,
+      variant: recommendation.variant as MediaPlacementVariant,
+      ...hostedTargetScope(recommendation),
+      active: true,
+    };
+    const select = { id: true, reference: true, active: true, creativeId: true, countryCode: true, languageCode: true } as const;
+    const record = recommendation.subjectType === "CASINO"
+      ? await tx.casinoPartnerHostedCreativeAssignment.findFirst({ where: { casinoId: recommendation.subjectId, ...hostedWhere }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] })
+      : recommendation.subjectType === "CASINO_BONUS"
+        ? await tx.casinoBonusPartnerHostedCreativeAssignment.findFirst({ where: { casinoBonusId: recommendation.subjectId, ...hostedWhere }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] })
+        : await tx.affiliateOfferPartnerHostedCreativeAssignment.findFirst({ where: { affiliateOfferId: recommendation.subjectId, ...hostedWhere }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
+    return record ? { ...record, sourceMode: recommendation.sourceMode as "PARTNER_HOSTED_IMAGE" | "PARTNER_HOSTED_EMBED", mediaAssetId: null } : null;
+  }
   const select = { id: true, reference: true, active: true, mediaAssetId: true, countryCode: true, languageCode: true } as const;
-  if (recommendation.subjectType === "CASINO") return tx.casinoMediaAssignment.findFirst({ where: { casinoId: recommendation.subjectId, ...where }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
-  if (recommendation.subjectType === "CASINO_BONUS") return tx.casinoBonusMediaAssignment.findFirst({ where: { casinoBonusId: recommendation.subjectId, ...where }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
-  return tx.affiliateOfferMediaAssignment.findFirst({ where: { affiliateOfferId: recommendation.subjectId, ...where }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
+  const record = recommendation.subjectType === "CASINO"
+    ? await tx.casinoMediaAssignment.findFirst({ where: { casinoId: recommendation.subjectId, ...where }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] })
+    : recommendation.subjectType === "CASINO_BONUS"
+      ? await tx.casinoBonusMediaAssignment.findFirst({ where: { casinoBonusId: recommendation.subjectId, ...where }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] })
+      : await tx.affiliateOfferMediaAssignment.findFirst({ where: { affiliateOfferId: recommendation.subjectId, ...where }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
+  return record ? { ...record, sourceMode: "FIRST_PARTY_MEDIA", creativeId: null } : null;
+}
+
+async function activeCrossSourceAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation): Promise<AssignmentIdentity | null> {
+  const base = {
+    placement: recommendation.placement as MediaPlacement,
+    variant: recommendation.variant as MediaPlacementVariant,
+    countryCode: recommendation.countryCode,
+    languageCode: recommendation.languageCode,
+    active: true,
+  };
+  if (hostedRecommendation(recommendation)) {
+    if ((recommendation.languageState ?? "UNKNOWN") === "UNKNOWN") return null;
+    const select = { id: true, reference: true, active: true, mediaAssetId: true, countryCode: true, languageCode: true } as const;
+    const record = recommendation.subjectType === "CASINO"
+      ? await tx.casinoMediaAssignment.findFirst({ where: { casinoId: recommendation.subjectId, ...base }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] })
+      : recommendation.subjectType === "CASINO_BONUS"
+        ? await tx.casinoBonusMediaAssignment.findFirst({ where: { casinoBonusId: recommendation.subjectId, ...base }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] })
+        : await tx.affiliateOfferMediaAssignment.findFirst({ where: { affiliateOfferId: recommendation.subjectId, ...base }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
+    return record ? { ...record, sourceMode: "FIRST_PARTY_MEDIA", creativeId: null } : null;
+  }
+  const languageState = recommendation.languageCode ? "EXPLICIT" as const : "NEUTRAL" as const;
+  const hostedWhere = { ...base, languageState };
+  const select = { id: true, reference: true, active: true, creativeId: true, countryCode: true, languageCode: true, creative: { select: { sourceMode: true } } } as const;
+  const record = recommendation.subjectType === "CASINO"
+    ? await tx.casinoPartnerHostedCreativeAssignment.findFirst({ where: { casinoId: recommendation.subjectId, ...hostedWhere }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] })
+    : recommendation.subjectType === "CASINO_BONUS"
+      ? await tx.casinoBonusPartnerHostedCreativeAssignment.findFirst({ where: { casinoBonusId: recommendation.subjectId, ...hostedWhere }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] })
+      : await tx.affiliateOfferPartnerHostedCreativeAssignment.findFirst({ where: { affiliateOfferId: recommendation.subjectId, ...hostedWhere }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
+  return record ? { ...record, sourceMode: record.creative.sourceMode, mediaAssetId: null } : null;
 }
 
 async function deactivateAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation, id: string) {
+  if (hostedRecommendation(recommendation)) {
+    const scope = { id, ...hostedTargetScope(recommendation), active: true };
+    if (recommendation.subjectType === "CASINO") return tx.casinoPartnerHostedCreativeAssignment.updateMany({ where: { casinoId: recommendation.subjectId, ...scope }, data: { active: false } });
+    if (recommendation.subjectType === "CASINO_BONUS") return tx.casinoBonusPartnerHostedCreativeAssignment.updateMany({ where: { casinoBonusId: recommendation.subjectId, ...scope }, data: { active: false } });
+    return tx.affiliateOfferPartnerHostedCreativeAssignment.updateMany({ where: { affiliateOfferId: recommendation.subjectId, ...scope }, data: { active: false } });
+  }
   const scope = { id, ...targetScope(recommendation), active: true };
   if (recommendation.subjectType === "CASINO") return tx.casinoMediaAssignment.updateMany({ where: { casinoId: recommendation.subjectId, ...scope }, data: { active: false } });
   if (recommendation.subjectType === "CASINO_BONUS") return tx.casinoBonusMediaAssignment.updateMany({ where: { casinoBonusId: recommendation.subjectId, ...scope }, data: { active: false } });
@@ -134,6 +200,23 @@ async function deactivateAssignment(tx: Prisma.TransactionClient, recommendation
 }
 
 async function createAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation, reference: string) {
+  if (hostedRecommendation(recommendation)) {
+    if (!recommendation.hostedCreativeId) throw new Error("HOSTED_CREATIVE_REQUIRED");
+    const data = {
+      creativeId: recommendation.hostedCreativeId,
+      placement: recommendation.placement as MediaPlacement,
+      variant: recommendation.variant as MediaPlacementVariant,
+      ...hostedTargetScope(recommendation),
+      renderingMode: recommendation.renderingMode as MediaRenderingMode,
+      sortOrder: 0,
+      active: true,
+      reference,
+    };
+    if (recommendation.subjectType === "CASINO") return tx.casinoPartnerHostedCreativeAssignment.create({ data: { casinoId: recommendation.subjectId, ...data } });
+    if (recommendation.subjectType === "CASINO_BONUS") return tx.casinoBonusPartnerHostedCreativeAssignment.create({ data: { casinoBonusId: recommendation.subjectId, ...data } });
+    return tx.affiliateOfferPartnerHostedCreativeAssignment.create({ data: { affiliateOfferId: recommendation.subjectId, ...data } });
+  }
+  if (!recommendation.assetId) throw new Error("MEDIA_ASSET_REQUIRED");
   const data = {
     mediaAssetId: recommendation.assetId,
     placement: recommendation.placement as MediaPlacement,
@@ -152,6 +235,12 @@ async function createAssignment(tx: Prisma.TransactionClient, recommendation: Me
 }
 
 async function deleteOwnedAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation, id: string, reference: string) {
+  if (hostedRecommendation(recommendation)) {
+    const scope = { id, reference, ...hostedTargetScope(recommendation) };
+    if (recommendation.subjectType === "CASINO") return (await tx.casinoPartnerHostedCreativeAssignment.deleteMany({ where: { casinoId: recommendation.subjectId, ...scope } })).count;
+    if (recommendation.subjectType === "CASINO_BONUS") return (await tx.casinoBonusPartnerHostedCreativeAssignment.deleteMany({ where: { casinoBonusId: recommendation.subjectId, ...scope } })).count;
+    return (await tx.affiliateOfferPartnerHostedCreativeAssignment.deleteMany({ where: { affiliateOfferId: recommendation.subjectId, ...scope } })).count;
+  }
   const scope = { id, reference, ...targetScope(recommendation) };
   if (recommendation.subjectType === "CASINO") return (await tx.casinoMediaAssignment.deleteMany({ where: { casinoId: recommendation.subjectId, ...scope } })).count;
   if (recommendation.subjectType === "CASINO_BONUS") return (await tx.casinoBonusMediaAssignment.deleteMany({ where: { casinoBonusId: recommendation.subjectId, ...scope } })).count;
@@ -160,7 +249,14 @@ async function deleteOwnedAssignment(tx: Prisma.TransactionClient, recommendatio
 
 async function restoreAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation, id: string) {
   const current = await activeAssignment(tx, recommendation);
-  if (current) return false;
+  const crossSource = await activeCrossSourceAssignment(tx, recommendation);
+  if (current || crossSource) return false;
+  if (hostedRecommendation(recommendation)) {
+    const scope = { id, ...hostedTargetScope(recommendation), active: false };
+    if (recommendation.subjectType === "CASINO") return Boolean(await tx.casinoPartnerHostedCreativeAssignment.updateMany({ where: { casinoId: recommendation.subjectId, ...scope }, data: { active: true } }).then((result) => result.count));
+    if (recommendation.subjectType === "CASINO_BONUS") return Boolean(await tx.casinoBonusPartnerHostedCreativeAssignment.updateMany({ where: { casinoBonusId: recommendation.subjectId, ...scope }, data: { active: true } }).then((result) => result.count));
+    return Boolean(await tx.affiliateOfferPartnerHostedCreativeAssignment.updateMany({ where: { affiliateOfferId: recommendation.subjectId, ...scope }, data: { active: true } }).then((result) => result.count));
+  }
   const scope = { id, ...targetScope(recommendation), active: false };
   if (recommendation.subjectType === "CASINO") return Boolean(await tx.casinoMediaAssignment.updateMany({ where: { casinoId: recommendation.subjectId, ...scope }, data: { active: true } }).then((result) => result.count));
   if (recommendation.subjectType === "CASINO_BONUS") return Boolean(await tx.casinoBonusMediaAssignment.updateMany({ where: { casinoBonusId: recommendation.subjectId, ...scope }, data: { active: true } }).then((result) => result.count));
@@ -178,7 +274,9 @@ async function auditAssignment(
   actorId: string,
   source: MediaOperationsSource,
 ) {
-  const asset = plan.assets.find((entry) => entry.assetId === recommendation.assetId);
+  const asset = plan.assets.find((entry) => recommendation.hostedCreativeId
+    ? entry.hostedCreativeId === recommendation.hostedCreativeId
+    : entry.assetId === recommendation.assetId);
   await tx.auditLog.create({
     data: {
       actorId,
@@ -197,6 +295,7 @@ async function auditAssignment(
           id: recommendation.subjectId,
           countryCode: recommendation.countryCode,
           languageCode: recommendation.languageCode,
+          languageState: recommendation.languageState ?? "NEUTRAL",
         },
         checksum: asset?.checksum ?? null,
         providerReference: plan.providerReference,
@@ -257,12 +356,55 @@ export class MediaIngestionRepository {
         if (!state || state.casinoStatus !== EditorialStatus.DRAFT || state.subjectStatus !== EditorialStatus.DRAFT || (state.offerStatus && state.offerStatus !== AffiliateStatus.DRAFT)) {
           skipped.push({ recommendationId: recommendation.id, reason: "SUBJECT_NOT_DRAFT" }); continue;
         }
-        const asset = await tx.mediaAsset.findUnique({ where: { id: recommendation.assetId }, select: { id: true, casinoId: true, status: true, archivedAt: true } });
-        if (!asset || asset.status !== MediaAssetStatus.ACTIVE || asset.archivedAt || asset.casinoId !== state.casinoId) {
-          skipped.push({ recommendationId: recommendation.id, reason: "ASSET_NOT_ELIGIBLE" }); continue;
+        if (hostedRecommendation(recommendation)) {
+          const creative = recommendation.hostedCreativeId
+            ? await tx.partnerHostedCreative.findUnique({ where: { id: recommendation.hostedCreativeId }, select: {
+              id: true,
+              casinoId: true,
+              casinoBonusId: true,
+              affiliateOfferId: true,
+              sourceMode: true,
+              active: true,
+              archivedAt: true,
+              validationState: true,
+              destinationVerificationState: true,
+              redirectSlugId: true,
+              trackingLinkId: true,
+              countryCode: true,
+              languageCode: true,
+              languageState: true,
+            } })
+            : null;
+          const subjectMatches = creative && (recommendation.subjectType === "CASINO"
+            || (recommendation.subjectType === "CASINO_BONUS" && creative.casinoBonusId === recommendation.subjectId)
+            || (recommendation.subjectType === "AFFILIATE_OFFER" && creative.affiliateOfferId === recommendation.subjectId));
+          if (!creative || !creative.active || creative.archivedAt || creative.casinoId !== state.casinoId
+            || creative.validationState !== "VALIDATED" || creative.destinationVerificationState !== "VERIFIED"
+            || !creative.redirectSlugId || !creative.trackingLinkId || creative.sourceMode !== recommendation.sourceMode
+            || !subjectMatches
+            || (creative.countryCode ?? null) !== recommendation.countryCode
+            || (creative.languageCode ?? null) !== recommendation.languageCode
+            || creative.languageState !== (recommendation.languageState ?? "UNKNOWN")) {
+            skipped.push({ recommendationId: recommendation.id, reason: "HOSTED_CREATIVE_NOT_ELIGIBLE" }); continue;
+          }
+        } else {
+          if ((recommendation.languageState ?? (recommendation.languageCode ? "EXPLICIT" : "NEUTRAL"))
+            !== (recommendation.languageCode ? "EXPLICIT" : "NEUTRAL")) {
+            skipped.push({ recommendationId: recommendation.id, reason: "FIRST_PARTY_LANGUAGE_STATE_UNREPRESENTABLE" }); continue;
+          }
+          const asset = recommendation.assetId
+            ? await tx.mediaAsset.findUnique({ where: { id: recommendation.assetId }, select: { id: true, casinoId: true, status: true, archivedAt: true } })
+            : null;
+          if (!asset || asset.status !== MediaAssetStatus.ACTIVE || asset.archivedAt || asset.casinoId !== state.casinoId) {
+            skipped.push({ recommendationId: recommendation.id, reason: "ASSET_NOT_ELIGIBLE" }); continue;
+          }
         }
         const reference = mediaIngestionAssignmentReference(plan.id, recommendation.id);
         const current = await activeAssignment(tx, recommendation);
+        const crossSource = await activeCrossSourceAssignment(tx, recommendation);
+        if (crossSource) {
+          skipped.push({ recommendationId: recommendation.id, reason: "CROSS_SOURCE_ASSIGNMENT_REQUIRES_EDITORIAL_RESOLUTION" }); continue;
+        }
         if (current?.reference === reference) {
           recommendation.appliedAssignmentId = current.id;
           recommendation.appliedAt = recommendation.appliedAt ?? now;
@@ -284,8 +426,8 @@ export class MediaIngestionRepository {
         plan.operations.push({
           id: randomUUID(), operation, recommendationId: recommendation.id,
           subject: `${recommendation.subjectType}:${recommendation.subjectId}:${recommendation.countryCode ?? "GLOBAL"}:${recommendation.languageCode ?? "neutral"}`,
-          previous: current ? { assignmentId: current.id, mediaAssetId: current.mediaAssetId, countryCode: current.countryCode, languageCode: current.languageCode, active: true } : null,
-          result: { assignmentId: created.id, mediaAssetId: recommendation.assetId, countryCode: recommendation.countryCode, languageCode: recommendation.languageCode, active: true },
+          previous: current ? { assignmentId: current.id, mediaAssetId: current.mediaAssetId, hostedCreativeId: current.creativeId, countryCode: current.countryCode, languageCode: current.languageCode, active: true } : null,
+          result: { assignmentId: created.id, mediaAssetId: recommendation.assetId, hostedCreativeId: recommendation.hostedCreativeId ?? null, countryCode: recommendation.countryCode, languageCode: recommendation.languageCode, languageState: recommendation.languageState ?? "NEUTRAL", active: true },
           actorId: input.actorId, source: input.source, timestamp: now,
         });
         await auditAssignment(tx, plan, recommendation, operation, created.id, current ? {
@@ -297,6 +439,7 @@ export class MediaIngestionRepository {
           assignmentId: created.id,
           countryCode: recommendation.countryCode,
           languageCode: recommendation.languageCode,
+          languageState: recommendation.languageState ?? "NEUTRAL",
           active: true,
         }, input.actorId, input.source);
         applied += 1;

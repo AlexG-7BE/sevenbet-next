@@ -200,7 +200,7 @@ test("production CSP is nonce-based and has only documented compatibility except
   assert.match(production, /style-src-attr 'unsafe-inline'/);
   assert.match(production, /object-src 'none'/);
   assert.match(production, /frame-ancestors 'none'/);
-  assert.match(production, /frame-src https:\/\/www\.youtube-nocookie\.com https:\/\/player\.vimeo\.com/);
+  assert.match(production, /frame-src 'self' https:\/\/www\.youtube-nocookie\.com https:\/\/player\.vimeo\.com/);
   assert.match(production, /upgrade-insecure-requests/);
 
   const development = buildContentSecurityPolicy(nonce, { development: true });

@@ -10,6 +10,8 @@
 PLACEMENT-MEDIA-ASSIGNMENTS-01 / RFC-040 OPTION C IMPLEMENTATION`, issued 4
 September 2026, plus the additive `B4GAMBLE —
 GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01` instruction issued 5 September 2026.
+[RFC-041](RFC-041-Vetted-Partner-Hosted-Creatives.md) is the newer authority
+for `UNKNOWN` language and mixed first-party/partner-hosted fallback order.
 
 ## Decision and history
 
@@ -207,6 +209,13 @@ requested variant, `DEFAULT` variant and placement-fallback rules apply. The
 target bucket is the outer priority: an exact-country/default-variant candidate
 therefore wins before a global/mobile candidate, and an exact-country placement
 fallback wins before a global direct-placement candidate.
+
+**Newer scope:** RFC-041 supersedes the four-bucket order above when vetted
+partner-hosted inventory participates. The current resolver adds exact-country
+unknown, global English/EUR, other English, global unknown and final usable
+global buckets while retaining the absolute wrong-country exclusion. Existing
+first-party `NULL` language remains neutral; it is not retroactively changed to
+unknown.
 
 Once an asset is referenced by any country- or language-targeted assignment,
 that asset is target-scoped inventory. It cannot re-enter resolution through

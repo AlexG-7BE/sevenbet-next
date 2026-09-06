@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import type { MediaAssetTypeName, SupportedImageMime } from "@/lib/media/image-validation";
 import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
@@ -15,6 +15,16 @@ import {
 } from "@/lib/media-operations/contracts";
 import { resolveMediaIngestionContext } from "@/lib/media-operations/context";
 import { parsePartnerSnippet, persistedCreativeEvidence, safeUrlEvidence } from "@/lib/media-operations/parser";
+import {
+  PartnerHostedCreativeParseError,
+  parsePartnerHostedCreative,
+  type ParsedPartnerHostedCreative,
+} from "@/lib/media-operations/partner-hosted";
+import {
+  resolvePartnerHostedCommercialBinding,
+  storePartnerHostedCreative,
+  verifyPartnerHostedDestination,
+} from "@/lib/media-operations/partner-hosted-repository";
 import { buildMediaPlacementPlan, type ExistingMediaAssignment } from "@/lib/media-operations/planner";
 import { fetchRemoteImage, RemoteImageFetchError } from "@/lib/media-operations/remote-image-fetch";
 import { mediaIngestionRepository, type MediaIngestionRepository } from "@/lib/media-operations/repository";
@@ -28,6 +38,55 @@ export type MediaOperationsActor = {
   actorId: string;
   source: MediaOperationsSource;
 };
+
+function sha256(value: string) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function equivalentHost(left: string | null | undefined, right: string | null | undefined) {
+  const canonical = (value: string) => value.toLowerCase().replace(/\.$/, "").replace(/^www\./, "");
+  return Boolean(left && right && canonical(left) === canonical(right));
+}
+
+function hostedParserCreative(hosted: ParsedPartnerHostedCreative) {
+  const id = randomUUID();
+  return {
+    id,
+    sourceKind: hosted.sourceMode === "PARTNER_HOSTED_EMBED" ? "HOSTED_EMBED" as const : "ANCHOR_IMAGE" as const,
+    sourceMode: hosted.sourceMode,
+    provider: hosted.provider,
+    source: hosted.sourceEvidence,
+    anchor: hosted.destinationEvidence,
+    declaredWidth: hosted.declaredWidth,
+    declaredHeight: hosted.declaredHeight,
+    alt: hosted.altText,
+    title: hosted.description.purpose,
+    providerDomain: hosted.provider === "BANNERFLOW" ? "c.bannerflow.net" : "go.superflypartners.net",
+    providerReference: `${hosted.provider}:${hosted.externalCreativeId}`,
+    identifiers: Object.fromEntries(Object.entries({
+      creative_id: hosted.externalCreativeId,
+      affiliate_id: hosted.affiliateId,
+      campaign_id: hosted.campaignId,
+      adgroupid: hosted.adGroupId,
+      did: hosted.did,
+      media: hosted.mediaId,
+      operator_program_id: hosted.operatorProgramId,
+    }).filter((entry): entry is [string, string] => Boolean(entry[1]))),
+    languageClues: hosted.description.languageCode ? [hosted.description.languageCode] : [],
+    marketClues: hosted.description.countryCode ? [hosted.description.countryCode] : [],
+    currencyClues: hosted.description.currencyCode ? [hosted.description.currencyCode] : [],
+    warnings: hosted.description.contradiction ? [hosted.description.contradiction] : [],
+    externalLabel: hosted.description.externalLabel,
+    brandLabel: hosted.description.brandLabel ?? hosted.altText,
+    purpose: hosted.description.purpose,
+    countryCode: hosted.description.countryCode,
+    languageCode: hosted.description.languageCode,
+    languageState: hosted.description.languageState,
+    currencyCode: hosted.description.currencyCode,
+    sourceUrl: hosted.hostedImageUrl ?? `https://c.bannerflow.net${hosted.providerEmbedPath}`,
+    anchorHref: hosted.destinationUrl,
+  };
+}
 
 function extension(mimeType: SupportedImageMime) {
   return mimeType === "image/jpeg" ? "jpg" : mimeType.slice("image/".length);
@@ -83,19 +142,21 @@ async function existingAssignments(plan: MediaIngestionPlan): Promise<ExistingMe
   const casinoId = plan.resolvedContext.casinoId;
   const bonusId = plan.resolvedContext.bonusId;
   const offerId = plan.resolvedContext.affiliateOfferId;
-  const casino = casinoId
-    ? await prisma.casinoMediaAssignment.findMany({ where: { casinoId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } })
-    : [];
-  const bonus = bonusId
-    ? await prisma.casinoBonusMediaAssignment.findMany({ where: { casinoBonusId: bonusId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } })
-    : [];
-  const offer = offerId
-    ? await prisma.affiliateOfferMediaAssignment.findMany({ where: { affiliateOfferId: offerId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } })
-    : [];
+  const [casino, bonus, offer, hostedCasino, hostedBonus, hostedOffer] = await Promise.all([
+    casinoId ? prisma.casinoMediaAssignment.findMany({ where: { casinoId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } }) : [],
+    bonusId ? prisma.casinoBonusMediaAssignment.findMany({ where: { casinoBonusId: bonusId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } }) : [],
+    offerId ? prisma.affiliateOfferMediaAssignment.findMany({ where: { affiliateOfferId: offerId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } }) : [],
+    casinoId ? prisma.casinoPartnerHostedCreativeAssignment.findMany({ where: { casinoId, active: true }, include: { creative: { select: { declaredWidth: true, declaredHeight: true, sourceMode: true } } } }) : [],
+    bonusId ? prisma.casinoBonusPartnerHostedCreativeAssignment.findMany({ where: { casinoBonusId: bonusId, active: true }, include: { creative: { select: { declaredWidth: true, declaredHeight: true, sourceMode: true } } } }) : [],
+    offerId ? prisma.affiliateOfferPartnerHostedCreativeAssignment.findMany({ where: { affiliateOfferId: offerId, active: true }, include: { creative: { select: { declaredWidth: true, declaredHeight: true, sourceMode: true } } } }) : [],
+  ]);
   return [
-    ...casino.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "CASINO" as const, subjectId: casinoId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: item.mediaAsset })),
-    ...bonus.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "CASINO_BONUS" as const, subjectId: bonusId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: item.mediaAsset })),
-    ...offer.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "AFFILIATE_OFFER" as const, subjectId: offerId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: item.mediaAsset })),
+    ...casino.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, sourceMode: "FIRST_PARTY_MEDIA" as const, languageState: item.languageCode ? "EXPLICIT" as const : "NEUTRAL" as const, subjectType: "CASINO" as const, subjectId: casinoId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: item.mediaAsset })),
+    ...bonus.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, sourceMode: "FIRST_PARTY_MEDIA" as const, languageState: item.languageCode ? "EXPLICIT" as const : "NEUTRAL" as const, subjectType: "CASINO_BONUS" as const, subjectId: bonusId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: item.mediaAsset })),
+    ...offer.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, sourceMode: "FIRST_PARTY_MEDIA" as const, languageState: item.languageCode ? "EXPLICIT" as const : "NEUTRAL" as const, subjectType: "AFFILIATE_OFFER" as const, subjectId: offerId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: item.mediaAsset })),
+    ...hostedCasino.map((item) => ({ id: item.id, mediaAssetId: null, hostedCreativeId: item.creativeId, sourceMode: item.creative.sourceMode, languageState: item.languageState, subjectType: "CASINO" as const, subjectId: casinoId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: { width: item.creative.declaredWidth, height: item.creative.declaredHeight } })),
+    ...hostedBonus.map((item) => ({ id: item.id, mediaAssetId: null, hostedCreativeId: item.creativeId, sourceMode: item.creative.sourceMode, languageState: item.languageState, subjectType: "CASINO_BONUS" as const, subjectId: bonusId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: { width: item.creative.declaredWidth, height: item.creative.declaredHeight } })),
+    ...hostedOffer.map((item) => ({ id: item.id, mediaAssetId: null, hostedCreativeId: item.creativeId, sourceMode: item.creative.sourceMode, languageState: item.languageState, subjectType: "AFFILIATE_OFFER" as const, subjectId: offerId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: { width: item.creative.declaredWidth, height: item.creative.declaredHeight } })),
   ];
 }
 
@@ -107,10 +168,33 @@ export class MediaOperationsService {
 
   async ingest(rawInput: unknown, actor: MediaOperationsActor) {
     const parsedInput = mediaIngestPartnerSnippetInputSchema.parse(rawInput);
+    if (new TextEncoder().encode(parsedInput.snippet).byteLength > 128 * 1024) {
+      throw new ValidationError("Partner snippet exceeds 128 KiB");
+    }
     const requestedContext = normalizeMediaIngestionContext(parsedInput.context ?? {});
     const input = { ...parsedInput, context: requestedContext };
-    const parsed = parsePartnerSnippet(input.snippet);
+    let hosted: ParsedPartnerHostedCreative | null = null;
+    try {
+      hosted = parsePartnerHostedCreative(input.snippet);
+    } catch (error) {
+      if (error instanceof PartnerHostedCreativeParseError) throw new ValidationError(`${error.code}: ${error.message}`);
+      throw error;
+    }
+    const hostedCreative = hosted ? hostedParserCreative(hosted) : null;
+    const parsed = hostedCreative ? {
+      snippetChecksum: sha256(input.snippet),
+      creatives: [hostedCreative],
+      unsupportedElements: [] as Array<"SCRIPT" | "IFRAME">,
+      warnings: hosted?.description.contradiction ? [hosted.description.contradiction] : [],
+    } : parsePartnerSnippet(input.snippet);
     const context = await resolveMediaIngestionContext(requestedContext, parsed.creatives);
+    const hostedBinding = hosted
+      ? await resolvePartnerHostedCommercialBinding(hosted, context)
+      : null;
+    if (hostedBinding?.affiliateOfferId && !context.persisted.affiliateOfferId) {
+      context.persisted.affiliateOfferId = hostedBinding.affiliateOfferId;
+    }
+    if (hostedBinding?.relationshipState === "MATCH") context.persisted.trackingDestinationState = "MATCH";
     const timestamp = new Date().toISOString();
     const plan: MediaIngestionPlan = {
       version: MEDIA_INGESTION_PLAN_VERSION,
@@ -152,6 +236,87 @@ export class MediaOperationsService {
     for (let index = 0; index < parsed.creatives.length; index += 1) {
       const creative = parsed.creatives[index];
       try {
+        if (hosted && hostedCreative && creative.id === hostedCreative.id) {
+          if (input.dryRun || context.persisted.state !== "RESOLVED" || !context.persisted.casinoId || !hostedBinding) {
+            const failureCode = context.persisted.state === "RESOLVED" ? hostedBinding?.reason ?? null : "CONTEXT_REVIEW_REQUIRED";
+            plan.assets.push({
+              creativeId: creative.id,
+              state: input.dryRun ? "DRY_RUN_VALID" : "REVIEW_REQUIRED",
+              sourceMode: hosted.sourceMode,
+              provider: hosted.provider,
+              assetId: null,
+              hostedCreativeId: null,
+              firstPartyUrl: null,
+              renderUrl: hosted.hostedImageUrl,
+              checksum: hosted.sourceChecksum,
+              mimeType: null,
+              width: hosted.declaredWidth,
+              height: hosted.declaredHeight,
+              animated: hosted.sourceMode === "PARTNER_HOSTED_EMBED" ? true : null,
+              formatFamily: physicalFamily(hosted.declaredWidth, hosted.declaredHeight),
+              resolvedSource: hosted.sourceEvidence,
+              redirectCount: null,
+              duplicate: false,
+              failureCode,
+              failureMessage: failureCode ? "A resolved casino and canonical commercial relationship are required before this hosted creative can become publishable." : null,
+            });
+            continue;
+          }
+          const existing = await prisma.partnerHostedCreative.findUnique({
+            where: { providerIdentityKey: hosted.providerIdentityKey },
+            select: {
+              id: true,
+              casinoId: true,
+              affiliateOfferId: true,
+              redirectSlugId: true,
+              trackingLinkId: true,
+              destinationUrlHash: true,
+              destinationVerificationState: true,
+              expectedOperatorHost: true,
+              verifiedFinalHost: true,
+            },
+          });
+          const existingVerificationMatchesBinding = existing?.casinoId === context.persisted.casinoId
+            && existing.affiliateOfferId === hostedBinding.affiliateOfferId
+            && existing.redirectSlugId === hostedBinding.redirectSlugId
+            && existing.trackingLinkId === hostedBinding.trackingLinkId
+            && existing.expectedOperatorHost === hostedBinding.expectedOperatorHost
+            && existing.destinationUrlHash === hosted.destinationUrlHash
+            && existing.destinationVerificationState === "VERIFIED"
+            && equivalentHost(existing.verifiedFinalHost, hostedBinding.expectedOperatorHost);
+          const verification = hostedBinding.relationshipState === "MATCH"
+            ? existingVerificationMatchesBinding
+              ? { status: "HEALTHY" as const, reason: "EXISTING_CHECKSUM_BOUND_VERIFICATION", method: "HEAD" as const, statusCode: 200, durationMs: 0, redirectCount: 0, finalHost: existing.verifiedFinalHost }
+              : await verifyPartnerHostedDestination(hosted, hostedBinding)
+            : null;
+          const stored = await storePartnerHostedCreative({ parsed: hosted, context, binding: hostedBinding, verification, actor });
+          const failureCode = stored.record.validationState === "REVIEW_REQUIRED" ? stored.record.validationReason : null;
+          plan.assets.push({
+            creativeId: creative.id,
+            state: failureCode ? "REVIEW_REQUIRED" : "HOSTED_INGESTED",
+            sourceMode: hosted.sourceMode,
+            provider: hosted.provider,
+            assetId: null,
+            hostedCreativeId: stored.record.id,
+            firstPartyUrl: null,
+            renderUrl: hosted.sourceMode === "PARTNER_HOSTED_IMAGE"
+              ? hosted.hostedImageUrl
+              : `/partner-creatives/${stored.record.id}/frame`,
+            checksum: hosted.sourceChecksum,
+            mimeType: null,
+            width: hosted.declaredWidth,
+            height: hosted.declaredHeight,
+            animated: hosted.sourceMode === "PARTNER_HOSTED_EMBED" ? true : null,
+            formatFamily: physicalFamily(hosted.declaredWidth, hosted.declaredHeight),
+            resolvedSource: hosted.sourceEvidence,
+            redirectCount: verification?.redirectCount ?? null,
+            duplicate: Boolean(existing),
+            failureCode,
+            failureMessage: failureCode ? `Hosted creative requires review: ${failureCode}.` : null,
+          });
+          if (failureCode) addWarning(plan, failureCode);
+          continue;
+        }
         const fetched = await fetchRemoteImage(creative.sourceUrl);
         if (input.dryRun || context.persisted.state !== "RESOLVED" || !context.persisted.casinoId) {
           plan.assets.push({
@@ -253,7 +418,7 @@ export class MediaOperationsService {
         addWarning(plan, `${rejected.code}: ${rejected.message}`);
       }
     }
-    const stored = plan.assets.filter((asset) => asset.assetId).length;
+    const stored = plan.assets.filter((asset) => asset.assetId || asset.hostedCreativeId).length;
     const rejected = plan.assets.filter((asset) => asset.state === "REJECTED").length;
     const reviewRequired = plan.assets.some((asset) => asset.state === "REVIEW_REQUIRED");
     plan.state = mediaIngestionCompletionState({
@@ -280,7 +445,33 @@ export class MediaOperationsService {
     if (!plan) throw new NotFoundError("Media ingestion plan", { planId: input.planId });
     if (plan.state === "INGESTING") throw new ValidationError("Media ingestion has not completed");
     const previousState = plan.state;
-    plan.semanticResults = await analyzeMediaPlan(plan, input.useSemanticAnalysis);
+    const hostedPlan = plan.assets.some((asset) => asset.sourceMode && asset.sourceMode !== "FIRST_PARTY_MEDIA");
+    plan.semanticResults = hostedPlan ? plan.creatives.map((creative) => ({
+      creativeId: creative.id,
+      state: "COMPLETED" as const,
+      provider: creative.provider ?? null,
+      model: "deterministic-partner-metadata-v1",
+      brandName: creative.brandLabel ?? null,
+      assetPurpose: creative.purpose ? "PROMO" as const : "UNKNOWN" as const,
+      language: creative.languageCode ?? null,
+      market: creative.countryCode ?? null,
+      currency: creative.currencyCode ?? null,
+      offerText: creative.purpose ?? null,
+      offerAmount: null,
+      offerPercentage: null,
+      freeSpins: null,
+      promoCode: null,
+      callToActionText: null,
+      containsPromotionalText: Boolean(creative.purpose),
+      containsFinePrint: false,
+      containsResponsibleGamblingText: false,
+      cropSafety: "UNKNOWN" as const,
+      textReadability: "UNKNOWN" as const,
+      likelyMarkets: creative.countryCode ? [creative.countryCode] : [],
+      complianceConcerns: [],
+      confidence: 1,
+      explanation: "Deterministic Description/provider metadata only; creative pixels were not inspected.",
+    })) : await analyzeMediaPlan(plan, input.useSemanticAnalysis);
     const bonus = plan.resolvedContext.bonusId ? await prisma.casinoBonus.findUnique({ where: { id: plan.resolvedContext.bonusId }, select: { percentage: true, maximumBonus: true, currency: true, freeSpins: true } }) : null;
     plan.recommendations = buildMediaPlacementPlan(plan, {
       bonus: bonus ? {
@@ -291,7 +482,7 @@ export class MediaOperationsService {
       } : null,
       existingAssignments: await existingAssignments(plan),
     });
-    if (plan.semanticResults.some((result) => result.state !== "COMPLETED")) addWarning(plan, "NEEDS_VISUAL_REVIEW");
+    if (!hostedPlan && plan.semanticResults.some((result) => result.state !== "COMPLETED")) addWarning(plan, "NEEDS_VISUAL_REVIEW");
     if (plan.recommendations.some((result) => result.marketHandling === "MARKET_SPECIFIC_REVIEW")) addWarning(plan, "MARKET_SPECIFIC_REVIEW");
     plan.state = plan.recommendations.length ? "PLANNED" : "REVIEW_REQUIRED";
     plan.analyzedAt = new Date().toISOString();
@@ -331,10 +522,10 @@ export class MediaOperationsService {
 
   async references() {
     return prisma.casino.findMany({
-      where: { status: "DRAFT", archivedAt: null },
+      where: { archivedAt: null },
       select: {
         id: true, slug: true, title: true,
-        casinoBonuses: { where: { status: "DRAFT" }, select: { id: true, title: true, slug: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] },
+        casinoBonuses: { select: { id: true, title: true, slug: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] },
       },
       orderBy: [{ title: "asc" }, { id: "asc" }],
       take: 500,

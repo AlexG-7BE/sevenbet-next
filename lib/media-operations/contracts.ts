@@ -97,7 +97,9 @@ export const firstPartyMediaReferenceSchema = z.string().min(1).max(2048).refine
 
 const parsedCreativeSchema = z.object({
   id: z.string().uuid(),
-  sourceKind: z.enum(["ANCHOR_IMAGE", "IMAGE", "DIRECT_URL", "SAFE_DATA_IMAGE"]),
+  sourceKind: z.enum(["ANCHOR_IMAGE", "IMAGE", "DIRECT_URL", "SAFE_DATA_IMAGE", "HOSTED_EMBED"]),
+  sourceMode: z.enum(["FIRST_PARTY_MEDIA", "PARTNER_HOSTED_IMAGE", "PARTNER_HOSTED_EMBED"]).optional(),
+  provider: z.enum(["SUPERFLY", "BANNERFLOW"]).nullable().optional(),
   source: safeUrlEvidenceSchema,
   anchor: safeUrlEvidenceSchema.nullable(),
   declaredWidth: z.number().int().positive().max(100_000).nullable(),
@@ -111,12 +113,23 @@ const parsedCreativeSchema = z.object({
   marketClues: z.array(z.string().max(20)).max(20),
   currencyClues: z.array(z.string().max(20)).max(20),
   warnings: z.array(z.string().max(200)).max(30),
+  externalLabel: z.string().max(300).nullable().optional(),
+  brandLabel: z.string().max(300).nullable().optional(),
+  purpose: z.string().max(300).nullable().optional(),
+  countryCode: z.string().regex(/^[A-Z]{2}$/).nullable().optional(),
+  languageCode: z.string().regex(/^[a-z]{2,8}$/).nullable().optional(),
+  languageState: z.enum(["EXPLICIT", "NEUTRAL", "UNKNOWN"]).optional(),
+  currencyCode: z.string().regex(/^[A-Z]{3}$/).nullable().optional(),
 }).strict();
 
 const ingestedAssetSchema = z.object({
   creativeId: z.string().uuid(),
-  state: z.enum(["INGESTED", "REUSED", "DRY_RUN_VALID", "REJECTED", "REVIEW_REQUIRED"]),
+  state: z.enum(["INGESTED", "REUSED", "HOSTED_INGESTED", "DRY_RUN_VALID", "REJECTED", "REVIEW_REQUIRED"]),
+  sourceMode: z.enum(["FIRST_PARTY_MEDIA", "PARTNER_HOSTED_IMAGE", "PARTNER_HOSTED_EMBED"]).optional(),
+  provider: z.enum(["SUPERFLY", "BANNERFLOW"]).nullable().optional(),
   assetId: z.string().uuid().nullable(),
+  hostedCreativeId: z.string().uuid().nullable().optional(),
+  renderUrl: firstPartyMediaReferenceSchema.nullable().optional(),
   firstPartyUrl: firstPartyMediaReferenceSchema.nullable(),
   checksum: z.string().length(64).nullable(),
   mimeType: z.enum(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"]).nullable(),
@@ -176,13 +189,16 @@ const resolvedContextSchema = z.object({
 export const mediaPlanRecommendationSchema = z.object({
   id: z.string().uuid(),
   creativeId: z.string().uuid(),
-  assetId: z.string().uuid(),
+  assetId: z.string().uuid().nullable(),
+  hostedCreativeId: z.string().uuid().nullable().optional(),
+  sourceMode: z.enum(["FIRST_PARTY_MEDIA", "PARTNER_HOSTED_IMAGE", "PARTNER_HOSTED_EMBED"]).optional(),
   subjectType: z.enum(["CASINO", "CASINO_BONUS", "AFFILIATE_OFFER"]),
   subjectId: z.string().uuid(),
   placement: z.enum(mediaPlacements),
   variant: z.enum(mediaPlacementVariants),
   countryCode: z.string().regex(/^[A-Z]{2}$/).nullable().default(null),
   languageCode: z.string().regex(/^[a-z]{2,8}$/).nullable().default(null),
+  languageState: z.enum(["EXPLICIT", "NEUTRAL", "UNKNOWN"]).optional(),
   renderingMode: z.enum(mediaRenderingModes),
   cropSafe: z.boolean(),
   state: z.enum(["AUTO_ASSIGN_DRAFT", "SUGGEST_REVIEW", "LIBRARY_ONLY", "REJECT"]),
@@ -197,7 +213,15 @@ export const mediaPlanRecommendationSchema = z.object({
   replacedAssignmentId: z.string().uuid().nullable(),
   appliedAt: z.string().datetime().nullable(),
   rolledBackAt: z.string().datetime().nullable(),
-}).strict();
+}).strict().superRefine((recommendation, issue) => {
+  const firstParty = !recommendation.sourceMode || recommendation.sourceMode === "FIRST_PARTY_MEDIA";
+  if (firstParty !== Boolean(recommendation.assetId) || firstParty === Boolean(recommendation.hostedCreativeId)) {
+    issue.addIssue({ code: "custom", path: ["sourceMode"], message: "Recommendation must reference exactly one compatible media record" });
+  }
+  if (recommendation.languageState === "EXPLICIT" && !recommendation.languageCode) {
+    issue.addIssue({ code: "custom", path: ["languageCode"], message: "Explicit language state requires a language code" });
+  }
+});
 
 const planOperationSchema = z.object({
   id: z.string().uuid(),

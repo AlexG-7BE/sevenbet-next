@@ -26,7 +26,7 @@ test("Privacy is the substantive final handoff document and stays noindex/follow
   assert.match(privacy, /title:\s*"Privacy Policy \| B4GAMBLE"/);
   assert.match(privacy, /canonical:\s*absoluteUrl\("\/privacy"\)/);
   assert.match(privacy, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true\s*\}/);
-  for (const content of ["Information we use", "Why we use it and our legal bases", "Cookies and similar technology", "Your UK data-protection rights", "How long we keep information", "We do not sell personal data", "updated=\"3 September 2026\""]) assert.ok(privacyDocument.includes(content), content);
+  for (const content of ["Information we use", "Why we use it and our legal bases", "Cookies and similar technology", "Your UK data-protection rights", "How long we keep information", "We do not sell personal data", "updated=\"6 September 2026\""]) assert.ok(privacyDocument.includes(content), content);
   assert.match(handoffLegalPage, /Privacy[\s\S]*by default/);
   assert.doesNotMatch(privacyDocument, placeholders);
   assert.doesNotMatch(privacyDocument + handoffLegalPage, /Accept Privacy Policy|cookie banner|consent checkbox/iu);
@@ -126,6 +126,11 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
       [
         "prisma/fixtures/0028_pre_geo_localized_creative_assignments.sql",
         "prisma/migrations/0028_geo_localized_creative_assignments/migration.sql",
+        "prisma/schema.prisma",
+      ],
+      [
+        "prisma/fixtures/0029_pre_vetted_partner_hosted_creatives.sql",
+        "prisma/migrations/0029_vetted_partner_hosted_creatives/migration.sql",
         "prisma/schema.prisma",
       ],
       ["prisma/schema.prisma"],

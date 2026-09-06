@@ -1,4 +1,5 @@
 import { isIsoCountryCode } from "@/lib/jurisdiction/country-code";
+import { marketProfileByCountry } from "@/lib/market/registry";
 
 export const casinoMediaPlacements = [
   "CASINO_LOGO",
@@ -28,9 +29,14 @@ export type MediaAssignmentSubjectType = "CASINO" | "CASINO_BONUS" | "AFFILIATE_
 
 export type MediaTargetingResolution =
   | "EXACT_COUNTRY_LANGUAGE"
-  | "GLOBAL_LANGUAGE"
   | "EXACT_COUNTRY_NEUTRAL"
+  | "EXACT_COUNTRY_UNKNOWN"
+  | "GLOBAL_LANGUAGE"
+  | "GLOBAL_ENGLISH_EUR"
+  | "GLOBAL_ENGLISH"
   | "GLOBAL_NEUTRAL"
+  | "GLOBAL_UNKNOWN"
+  | "GLOBAL_OTHER"
   | "CONTROLLED_FALLBACK";
 
 export type PlacementMediaSource =
@@ -62,6 +68,12 @@ export interface PlacementMediaAsset {
   checksum?: string | null;
   sortOrder?: number | null;
   createdAt?: Date | string | null;
+  sourceMode?: "FIRST_PARTY_MEDIA" | "PARTNER_HOSTED_IMAGE" | "PARTNER_HOSTED_EMBED";
+  provider?: "SUPERFLY" | "BANNERFLOW" | null;
+  hostedCreativeId?: string | null;
+  externalCreativeId?: string | null;
+  currencyCode?: string | null;
+  purpose?: string | null;
 }
 
 export interface PlacementMediaAssignment {
@@ -71,6 +83,7 @@ export interface PlacementMediaAssignment {
   variant: string;
   countryCode?: string | null;
   languageCode?: string | null;
+  languageState?: "EXPLICIT" | "NEUTRAL" | "UNKNOWN";
   renderingMode: string;
   sortOrder: number;
   active: boolean;
@@ -288,29 +301,79 @@ function activeAssignment(assignment: PlacementMediaAssignment, now: number) {
   return (validFrom === null || validFrom <= now) && (validUntil === null || validUntil > now);
 }
 
+type RankedMediaTarget = {
+  rank: number;
+  countryCode: string | null;
+  languageCode: string | null;
+  languageState: "EXPLICIT" | "NEUTRAL" | "UNKNOWN";
+  resolution: Exclude<MediaTargetingResolution, "CONTROLLED_FALLBACK">;
+};
+
+function rankedMediaTarget(
+  assignment: PlacementMediaAssignment,
+  input: { trustedCountryCode?: string | null; presentationLanguage?: string | null },
+): RankedMediaTarget | null {
+  const requestedCountry = normalizeMediaCountryCode(input.trustedCountryCode);
+  const requestedLanguage = normalizeMediaLanguageCode(input.presentationLanguage);
+  const hasCountry = assignment.countryCode !== null && assignment.countryCode !== undefined;
+  const countryCode = hasCountry ? normalizeMediaCountryCode(assignment.countryCode) : null;
+  if (hasCountry && !countryCode) return null;
+  const hasLanguage = assignment.languageCode !== null && assignment.languageCode !== undefined;
+  const languageCode = hasLanguage ? normalizeMediaLanguageCode(assignment.languageCode) : null;
+  const languageState = assignment.languageState ?? (hasLanguage ? "EXPLICIT" : "NEUTRAL");
+  if ((hasLanguage && !languageCode) || (languageState === "EXPLICIT") !== Boolean(languageCode)) return null;
+  if (countryCode) {
+    if (!requestedCountry || countryCode !== requestedCountry) return null;
+    if (requestedLanguage && languageState === "EXPLICIT" && languageCode === requestedLanguage) {
+      return { rank: 0, countryCode, languageCode, languageState, resolution: "EXACT_COUNTRY_LANGUAGE" };
+    }
+    if (languageState === "NEUTRAL") return { rank: 1, countryCode, languageCode: null, languageState, resolution: "EXACT_COUNTRY_NEUTRAL" };
+    if (languageState === "UNKNOWN") return { rank: 1, countryCode, languageCode: null, languageState, resolution: "EXACT_COUNTRY_UNKNOWN" };
+    return null;
+  }
+  if (requestedLanguage && languageState === "EXPLICIT" && languageCode === requestedLanguage) {
+    return { rank: 2, countryCode: null, languageCode, languageState, resolution: "GLOBAL_LANGUAGE" };
+  }
+  const currencyCode = assignment.mediaAsset?.currencyCode?.trim().toUpperCase() ?? null;
+  if (languageState === "EXPLICIT" && languageCode === "en" && currencyCode === "EUR") {
+    return { rank: 3, countryCode: null, languageCode, languageState, resolution: "GLOBAL_ENGLISH_EUR" };
+  }
+  if (languageState === "EXPLICIT" && languageCode === "en") {
+    return { rank: 4, countryCode: null, languageCode, languageState, resolution: "GLOBAL_ENGLISH" };
+  }
+  if (languageState === "NEUTRAL") return { rank: 5, countryCode: null, languageCode: null, languageState, resolution: "GLOBAL_NEUTRAL" };
+  if (languageState === "UNKNOWN") return { rank: 6, countryCode: null, languageCode: null, languageState, resolution: "GLOBAL_UNKNOWN" };
+  return { rank: 7, countryCode: null, languageCode, languageState, resolution: "GLOBAL_OTHER" };
+}
+
+function localCurrencyRank(assignment: PlacementMediaAssignment, countryCode: string | null) {
+  if (!countryCode) return 1;
+  const hints = marketProfileByCountry(countryCode)?.currencyHints ?? [];
+  const currency = assignment.mediaAsset?.currencyCode?.trim().toUpperCase();
+  return currency && hints.includes(currency) ? 0 : 1;
+}
+
 function stableCandidates(
   assignments: PlacementMediaAssignment[],
   placement: MediaPlacementName,
   variant: MediaPlacementVariantName,
-  target: MediaTargetBucket,
+  targetRank: number,
+  targeting: { trustedCountryCode?: string | null; presentationLanguage?: string | null },
   now: number,
 ) {
+  const requestedCountry = normalizeMediaCountryCode(targeting.trustedCountryCode);
   return assignments
-    .filter((assignment) => {
-      if (assignment.placement !== placement || assignment.variant !== variant || !activeAssignment(assignment, now)) return false;
-      const hasCountryTarget = assignment.countryCode !== null && assignment.countryCode !== undefined;
-      const hasLanguageTarget = assignment.languageCode !== null && assignment.languageCode !== undefined;
-      const assignmentCountry = !hasCountryTarget
-        ? null
-        : normalizeMediaCountryCode(assignment.countryCode);
-      const assignmentLanguage = !hasLanguageTarget
-        ? null
-        : normalizeMediaLanguageCode(assignment.languageCode);
-      if (hasCountryTarget && !assignmentCountry) return false;
-      if (hasLanguageTarget && !assignmentLanguage) return false;
-      return assignmentCountry === target.countryCode && assignmentLanguage === target.languageCode;
+    .flatMap((assignment) => {
+      if (assignment.placement !== placement || assignment.variant !== variant || !activeAssignment(assignment, now)) return [];
+      const target = rankedMediaTarget(assignment, targeting);
+      return target?.rank === targetRank ? [{ assignment, target }] : [];
     })
-    .sort((left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id));
+    .sort((left, right) => {
+      const localCurrency = localCurrencyRank(left.assignment, requestedCountry) - localCurrencyRank(right.assignment, requestedCountry);
+      if (localCurrency) return localCurrency;
+      const languageCertainty = (left.target.languageState === "UNKNOWN" ? 1 : 0) - (right.target.languageState === "UNKNOWN" ? 1 : 0);
+      return languageCertainty || left.assignment.sortOrder - right.assignment.sortOrder || left.assignment.id.localeCompare(right.assignment.id);
+    });
 }
 
 function assignmentGroups(context: PlacementMediaResolutionContext, placement: MediaPlacementName) {
@@ -322,14 +385,15 @@ function resolveAssignment(
   context: PlacementMediaResolutionContext,
   placement: MediaPlacementName,
   requestedVariant: MediaPlacementVariantName,
-  target: MediaTargetBucket,
+  targetRank: number,
+  targeting: { trustedCountryCode?: string | null; presentationLanguage?: string | null },
   now: number,
 ) {
   const variants = requestedVariant === "DEFAULT" ? ["DEFAULT"] as const : [requestedVariant, "DEFAULT"] as const;
   for (const assignments of assignmentGroups(context, placement)) {
     for (const variant of variants) {
-      const assignment = stableCandidates(assignments, placement, variant, target, now)[0];
-      if (assignment) return { assignment, variant };
+      const candidate = stableCandidates(assignments, placement, variant, targetRank, targeting, now)[0];
+      if (candidate) return { ...candidate, variant };
     }
   }
   return null;
@@ -403,11 +467,11 @@ export function resolveMedia(input: {
   const requestedLanguageCode = normalizeMediaLanguageCode(input.presentationLanguage);
   const now = (input.now ?? new Date()).getTime();
   const chain = [input.placement, ...placementFallbackChains[input.placement]];
-  const targets = mediaTargetBuckets(input);
+  const targetRanks = [0, 1, 2, 3, 4, 5, 6, 7] as const;
 
-  for (const target of targets) {
+  for (const targetRank of targetRanks) {
     for (const placement of chain) {
-      const resolved = resolveAssignment(input.context, placement, requestedVariant, target, now);
+      const resolved = resolveAssignment(input.context, placement, requestedVariant, targetRank, input, now);
       if (!resolved?.assignment.mediaAsset) continue;
       const directPlacement = placement === input.placement;
       const directVariant = resolved.variant === requestedVariant;
@@ -425,9 +489,9 @@ export function resolveMedia(input: {
         resolvedVariant: resolved.variant,
         requestedCountryCode,
         requestedLanguageCode,
-        resolvedCountryCode: target.countryCode,
-        resolvedLanguageCode: target.languageCode,
-        targetingResolution: target.resolution,
+        resolvedCountryCode: resolved.target.countryCode,
+        resolvedLanguageCode: resolved.target.languageCode,
+        targetingResolution: resolved.target.resolution,
         renderingMode: inheritedLogoComposition
           ? "COMPOSED"
           : effectiveMode(resolved.assignment.renderingMode, placement, resolved.assignment.mediaAsset),
@@ -463,7 +527,7 @@ export function resolveMedia(input: {
 
   const logoAssignment = input.placement === "CASINO_LOGO"
     ? null
-    : targets.map((target) => ({ target, resolved: resolveAssignment(input.context, "CASINO_LOGO", requestedVariant, target, now) }))
+    : targetRanks.map((targetRank) => ({ resolved: resolveAssignment(input.context, "CASINO_LOGO", requestedVariant, targetRank, input, now) }))
       .find((candidate) => candidate.resolved?.assignment.mediaAsset) ?? null;
   const logo = logoAssignment?.resolved?.assignment.mediaAsset ?? legacyAsset(input.context, "LOGO");
   if (logo) {
@@ -477,9 +541,9 @@ export function resolveMedia(input: {
       resolvedVariant: logoAssignment?.resolved?.variant ?? null,
       requestedCountryCode,
       requestedLanguageCode,
-      resolvedCountryCode: logoAssignment?.target.countryCode ?? null,
-      resolvedLanguageCode: logoAssignment?.target.languageCode ?? null,
-      targetingResolution: logoAssignment?.target.resolution ?? "CONTROLLED_FALLBACK",
+      resolvedCountryCode: logoAssignment?.resolved?.target.countryCode ?? null,
+      resolvedLanguageCode: logoAssignment?.resolved?.target.languageCode ?? null,
+      targetingResolution: logoAssignment?.resolved?.target.resolution ?? "CONTROLLED_FALLBACK",
       renderingMode: directLogo ? "CONTAIN" : "COMPOSED",
       source: directLogo ? "LEGACY_LOGO" : "LOGO_COMPOSITION",
       fallback: true,

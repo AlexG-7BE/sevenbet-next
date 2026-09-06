@@ -11,6 +11,7 @@ import {
   createCspNonce,
   CSP_NONCE_REQUEST_HEADER,
 } from "@/lib/security/content-security-policy";
+import { ownsPartnerHostedFramePolicy } from "@/lib/media/partner-hosted-frame-path";
 import {
   isLocalizedPublicDestination,
   parsePublicMarketRoute,
@@ -242,6 +243,7 @@ function isolateMarketResponse(response: NextResponse, equivalentPathname: strin
 
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
+  const partnerHostedFramePolicy = ownsPartnerHostedFramePolicy(pathname);
   const nonce = createCspNonce();
   const contentSecurityPolicy = buildContentSecurityPolicy(nonce, {
     development: process.env.NODE_ENV === "development",
@@ -259,7 +261,10 @@ export async function middleware(request: NextRequest) {
     ? NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } })
     : NextResponse.next({ request: { headers: requestHeaders } });
   const secureResponse = (response: NextResponse) => {
-    response.headers.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
+    if (!partnerHostedFramePolicy) {
+      response.headers.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
+      response.headers.set("X-Frame-Options", "DENY");
+    }
     return response;
   };
 

@@ -211,6 +211,10 @@ test("Public Shell keeps its approved architecture while exposing the current br
         "prisma/migrations/0028_geo_localized_creative_assignments/migration.sql",
         "prisma/schema.prisma",
       ],
+      [
+        "prisma/migrations/0029_vetted_partner_hosted_creatives/migration.sql",
+        "prisma/schema.prisma",
+      ],
       ["prisma/schema.prisma"],
     ];
     assert.ok(
