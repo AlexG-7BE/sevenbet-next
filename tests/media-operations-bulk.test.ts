@@ -148,6 +148,30 @@ test("an exact governed canonical route remains authoritative when its external 
   assert.equal(result.verifiedFinalHost, null, "a failed advisory probe does not become verified final-host evidence");
 });
 
+test("an exact governed Bannerflow match remains accepted when its external HTTP probe returns 403", () => {
+  const result = classifyPartnerHostedCommercialRoute({
+    affiliateOfferId: OFFER_ID, redirectSlugId: "route", redirectSlug: "inkabet", trackingLinkId: "tracking",
+    expectedOperatorHost: "inkabet.pe", relationshipState: "MATCH", reason: null, matchAuthority: "EXACT_GOVERNED_ROUTE",
+  }, {
+    status: "EXTERNAL_CHALLENGE", reason: "HTTP_403", method: "GET", statusCode: 403, durationMs: 15, redirectCount: 0, finalHost: "record.betsn.info",
+  });
+  assert.equal(result.validity, "MATCH");
+  assert.equal(result.destinationVerificationState, "VERIFIED");
+  assert.equal(result.reason, null);
+});
+
+test("an exact governed Bannerflow match remains accepted when its external HTTP probe times out", () => {
+  const result = classifyPartnerHostedCommercialRoute({
+    affiliateOfferId: OFFER_ID, redirectSlugId: "route", redirectSlug: "inkabet", trackingLinkId: "tracking",
+    expectedOperatorHost: "inkabet.pe", relationshipState: "MATCH", reason: null, matchAuthority: "EXACT_GOVERNED_ROUTE",
+  }, {
+    status: "BROKEN", reason: "TIMEOUT", method: "GET", statusCode: null, durationMs: 12_000, redirectCount: 0, finalHost: null,
+  });
+  assert.equal(result.validity, "MATCH");
+  assert.equal(result.destinationVerificationState, "VERIFIED");
+  assert.equal(result.reason, null);
+});
+
 test("missing canonical routes remain scored but carry the precise apply blocker", () => {
   const plan = hostedPlan({ width: 300, height: 250, commercialRouteValidity: "MISSING", commercialRouteReason: "CANONICAL_COMMERCIAL_ROUTE_REQUIRED" });
   const recommendations = buildMediaPlacementPlan(plan, { bonus: null, existingAssignments: [] });

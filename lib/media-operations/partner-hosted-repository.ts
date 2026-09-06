@@ -125,6 +125,46 @@ function exactCanonicalUrlMatch(candidate: string, governed: Array<string | null
   }
 }
 
+type PartnerHostedTrackingLinkEvidence = {
+  id: string;
+  trackingUrl: string;
+  destinationUrl: string;
+  metadata: unknown;
+};
+
+export function selectPartnerHostedTrackingLink(
+  provider: ParsedPartnerHostedCreative["provider"],
+  destinationUrl: string,
+  trackingLinks: PartnerHostedTrackingLinkEvidence[],
+) {
+  if (provider === "BANNERFLOW") {
+    const exactMatches = trackingLinks.filter((trackingLink) => exactCanonicalUrlMatch(
+      destinationUrl,
+      [trackingLink.trackingUrl, trackingLink.destinationUrl],
+    ));
+    if (exactMatches.length === 1) return {
+      trackingLink: exactMatches[0],
+      exactBannerflowMatch: true,
+      reason: null,
+    };
+    return {
+      trackingLink: null,
+      exactBannerflowMatch: false,
+      reason: exactMatches.length > 1
+        ? "CANONICAL_TRACKING_LINK_AMBIGUOUS"
+        : trackingLinks.length === 0
+          ? "CANONICAL_TRACKING_LINK_REQUIRED"
+          : "CREATIVE_CANONICAL_DESTINATION_CONFLICT",
+    };
+  }
+  return {
+    trackingLink: trackingLinks.length === 1 ? trackingLinks[0] : null,
+    exactBannerflowMatch: false,
+    reason: trackingLinks.length > 1 ? "CANONICAL_TRACKING_LINK_AMBIGUOUS"
+      : trackingLinks.length === 0 ? "CANONICAL_TRACKING_LINK_REQUIRED" : null,
+  };
+}
+
 export async function resolvePartnerHostedCommercialBinding(
   parsed: ParsedPartnerHostedCreative,
   context: MediaResolvedContextRuntime,
@@ -156,7 +196,7 @@ export async function resolvePartnerHostedCommercialBinding(
             select: {
               id: true, status: true,
               program: { select: { name: true, operator: true, providerType: true, network: { select: { name: true, slug: true } } } },
-              trackingLinks: { where: { active: true, archivedAt: null }, orderBy: [{ priority: "desc" }, { id: "asc" }], select: { id: true, trackingUrl: true, destinationUrl: true, metadata: true }, take: 2 },
+              trackingLinks: { where: { active: true, archivedAt: null }, orderBy: [{ priority: "desc" }, { id: "asc" }], select: { id: true, trackingUrl: true, destinationUrl: true, metadata: true } },
             },
           },
         },
@@ -189,14 +229,18 @@ export async function resolvePartnerHostedCommercialBinding(
   const providerMatches = parsed.provider === "SUPERFLY"
     ? programEvidence.includes("superfly")
     : programEvidence.includes("betsson");
-  const trackingLink = route.affiliateOffer.trackingLinks.length === 1 ? route.affiliateOffer.trackingLinks[0] : null;
+  const trackingLinkSelection = selectPartnerHostedTrackingLink(
+    parsed.provider,
+    parsed.destinationUrl,
+    route.affiliateOffer.trackingLinks,
+  );
+  const trackingLink = trackingLinkSelection.trackingLink;
   if (!trackingLink) return {
     affiliateOfferId: route.affiliateOfferId, redirectSlugId: route.id, redirectSlug: route.slug, trackingLinkId: null,
     expectedOperatorHost: fallbackOperatorHost, relationshipState: "REVIEW_REQUIRED",
-    reason: route.affiliateOffer.trackingLinks.length > 1 ? "CANONICAL_TRACKING_LINK_AMBIGUOUS" : "CANONICAL_TRACKING_LINK_REQUIRED",
+    reason: trackingLinkSelection.reason,
   };
-  const exactBannerflowMatch = parsed.provider === "BANNERFLOW"
-    && exactCanonicalUrlMatch(parsed.destinationUrl, [trackingLink.trackingUrl, trackingLink.destinationUrl]);
+  const exactBannerflowMatch = trackingLinkSelection.exactBannerflowMatch;
   if (!providerMatches && !exactBannerflowMatch) return {
     affiliateOfferId: route.affiliateOfferId, redirectSlugId: route.id, redirectSlug: route.slug, trackingLinkId: trackingLink.id,
     expectedOperatorHost: fallbackOperatorHost, relationshipState: "REVIEW_REQUIRED", reason: "CREATIVE_CANONICAL_PARTNER_CONFLICT",
