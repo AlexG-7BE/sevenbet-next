@@ -333,7 +333,6 @@ function snapshotPartnerHostedCreative(creative: SnapshotHostedAssignment["creat
     currencyCode: creative.currencyCode,
     affiliateOfferId: creative.affiliateOfferId,
     redirectSlugId: creative.redirectSlugId,
-    trackingLinkId: creative.trackingLinkId,
     validationState: creative.validationState,
     validationReason: creative.validationReason,
     destinationVerificationState: creative.destinationVerificationState,
