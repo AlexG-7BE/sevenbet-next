@@ -20,6 +20,7 @@ import {
   bannerflowFrameContentSecurityPolicy,
   buildBannerflowFrameDocument,
 } from "../lib/media/partner-hosted-frame";
+import { ownsPartnerHostedFramePolicy } from "../lib/media/partner-hosted-frame-path";
 import {
   resolveMedia,
   type PlacementMediaAssignment,
@@ -259,6 +260,24 @@ test("the isolated frame confines provider runtime and never embeds a raw partne
   assert.doesNotMatch(publicComponent, /superflypartners|bannerflow\.net|record\.betsn/i);
   assert.match(readFileSync("components/commercial-media/CommercialOfferMedia.module.css", "utf8"), /pointer-events:none/);
   assert.doesNotMatch(readFileSync("next.config.mjs", "utf8"), /unsafe-eval|c\.bannerflow\.net/);
+});
+
+test("only exact UUID hosted-frame routes own the provider CSP and same-origin framing exception", () => {
+  const creativeId = "41000000-0000-4000-8000-000000000001";
+  assert.equal(ownsPartnerHostedFramePolicy(`/partner-creatives/${creativeId}/frame`), true);
+  assert.equal(ownsPartnerHostedFramePolicy(`/api/admin/media-operations/hosted-creatives/${creativeId}/preview`), true);
+  for (const pathname of [
+    "/partner-creatives/not-a-uuid/frame",
+    `/partner-creatives/${creativeId}/frame/extra`,
+    `/api/admin/media-operations/hosted-creatives/${creativeId}`,
+    "/api/admin/media-operations/hosted-creatives/preview",
+    "/casino/skol-casino",
+  ]) assert.equal(ownsPartnerHostedFramePolicy(pathname), false, pathname);
+
+  const middlewareSource = readFileSync("middleware.ts", "utf8");
+  assert.match(middlewareSource, /if \(!partnerHostedFramePolicy\) \{[\s\S]*response\.headers\.set\(CONTENT_SECURITY_POLICY_HEADER/);
+  const nextConfig = readFileSync("next.config.mjs", "utf8");
+  assert.match(nextConfig, /partnerHostedFrameRoutes[\s\S]*X-Frame-Options[\s\S]*SAMEORIGIN/);
 });
 
 test("selection implements the complete eight-tier order without country leakage", () => {

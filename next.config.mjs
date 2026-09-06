@@ -14,6 +14,10 @@ const PROGRAMME_MICROPHONE_ROUTES = [
 
 const deniedBrowserCapabilities = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
 const programmeBrowserCapabilities = "camera=(), microphone=(self), geolocation=(), payment=(), usb=()";
+const partnerHostedFrameRoutes = [
+  "/partner-creatives/:creativeId/frame",
+  "/api/admin/media-operations/hosted-creatives/:creativeId/preview",
+];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -40,6 +44,14 @@ const nextConfig = {
         source,
         headers: [
           { key: "Permissions-Policy", value: programmeBrowserCapabilities },
+        ],
+      })),
+      ...partnerHostedFrameRoutes.map((source) => ({
+        // These exact same-origin documents own a narrower provider-specific
+        // CSP in their route handlers and must remain embeddable only by B4.
+        source,
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
         ],
       })),
     ];
