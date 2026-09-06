@@ -50,6 +50,8 @@ test("0029 migration, fixture and release inspection are additive, bounded, and 
   const migration = readFileSync(`prisma/migrations/${VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION}/migration.sql`, "utf8");
   const fixture = readFileSync("prisma/fixtures/0029_pre_vetted_partner_hosted_creatives.sql", "utf8");
   const release = readFileSync("lib/db/vetted-partner-hosted-creatives-0029-release.ts", "utf8");
+  const executor = readFileSync("scripts/vetted-partner-hosted-creatives-01.ts", "utf8");
+  const packageJson = readFileSync("package.json", "utf8");
   for (const sql of [migration, fixture]) assert.doesNotMatch(sql, /^\s*(?:DELETE|DROP|TRUNCATE|UPDATE)\b/im);
   assert.match(migration, /PartnerHostedCreative/);
   assert.match(migration, /ON DELETE RESTRICT/);
@@ -58,6 +60,14 @@ test("0029 migration, fixture and release inspection are additive, bounded, and 
   assert.match(migration, /PartnerCreativeLanguageState/);
   assert.match(release, /SET TRANSACTION READ ONLY/);
   assert.doesNotMatch(release, /migrate reset|DROP TABLE|TRUNCATE/i);
+  assert.match(executor, /schema_pending_capability_disabled/);
+  assert.match(executor, /VETTED_PARTNER_HOSTED_CREATIVES_DATABASE_RESOURCE_ID/);
+  assert.match(executor, /VETTED_PARTNER_HOSTED_CREATIVES_DATABASE_FINGERPRINT/);
+  assert.match(executor, /VETTED_PARTNER_HOSTED_CREATIVES_EXPECTED_SHA/);
+  assert.match(executor, /execFileSync\("npx", \["prisma", "migrate", "deploy"\]/);
+  assert.match(executor, /SET TRANSACTION READ ONLY/);
+  assert.doesNotMatch(executor, /migrate reset|DROP TABLE|TRUNCATE/i);
+  assert.match(packageJson, /vetted-partner-hosted-creatives:migrate/);
 });
 
 test("public snapshots and DTOs omit raw destination authority", () => {
