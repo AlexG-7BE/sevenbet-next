@@ -144,6 +144,27 @@ test("new-destination inspection rejects same-host 200 error pages and JSON term
   assert.equal(healthy.method, "GET");
 });
 
+test("new-destination inspection uses an ordinary bounded GET rather than a tracker-hostile range prefetch", async () => {
+  let observedHeaders = new Headers();
+  const result = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"),
+    expectation,
+    fetcher: (async (_input, init) => {
+      observedHeaders = new Headers(init?.headers);
+      return new Response("<!doctype html><title>Casino welcome</title>", {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      });
+    }) as typeof fetch,
+    validateUrl: noNetworkValidation,
+    inspectTerminalContent: true,
+  });
+
+  assert.equal(result.status, "HEALTHY");
+  assert.equal(observedHeaders.get("range"), null);
+  assert.equal(observedHeaders.get("purpose"), null);
+});
+
 test("private, local, documentation, multicast, and IPv4-mapped private addresses are refused", () => {
   for (const address of [
     "127.0.0.1", "10.0.0.1", "169.254.169.254", "192.168.1.1",

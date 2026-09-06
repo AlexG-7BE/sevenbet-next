@@ -49,7 +49,6 @@ async function safeFetchChain(
   fetcher: typeof fetch,
   deadline: number,
   validateUrl: (url: URL) => Promise<void>,
-  getRangeEnd = 0,
 ): Promise<SafeFetchResult> {
   let current = initialUrl;
   const chain = [new URL(current)];
@@ -64,7 +63,6 @@ async function safeFetchChain(
       headers: {
         "User-Agent": "B4Gamble-Affiliate-Route-Health/1.0",
         Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.1",
-        ...(method === "GET" ? { Range: `bytes=0-${getRangeEnd}`, Purpose: "prefetch" } : {}),
       },
       signal: timeoutSignal(deadline),
     });
@@ -175,7 +173,7 @@ export async function checkAffiliateRouteHttp(input: {
   const deadline = started + timeoutMs;
   try {
     let method: "HEAD" | "GET" = input.inspectTerminalContent ? "GET" : "HEAD";
-    let result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl, input.inspectTerminalContent ? 16_383 : 0);
+    let result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl);
     if (!input.inspectTerminalContent && (result.response.status === 405 || result.response.status === 501)) {
       method = "GET";
       result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl);
