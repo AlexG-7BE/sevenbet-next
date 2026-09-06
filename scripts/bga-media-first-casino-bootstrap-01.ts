@@ -5,8 +5,6 @@ import prisma from "../lib/db/prisma";
 import { casinoRepository } from "../lib/repositories/casino.repository";
 
 const RELEASE = "BGA-MEDIA-FIRST-CASINO-BOOTSTRAP-01";
-const ACTOR_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR"] as const;
-
 const INKABET_OPPORTUNITY_ID = "f915fdee-3426-449f-98ef-9309d20c1262";
 const BETSAFE_OPPORTUNITY_ID = "079c2e65-c94f-428d-a27d-8c9c0e808bfd";
 
@@ -17,14 +15,11 @@ const definitions = [
     domain: "inkabet.pe",
     websiteUrl: "https://www.inkabet.pe/",
     summary: "Inkabet casino profile. Detailed licensing, payments and market information are being verified and will be added separately.",
-    description: "B4GAMBLE has created this provisional Inkabet profile from current partner-supplied casino media and routing evidence. Detailed licensing, payment methods, game catalogue facts and editorial scoring are intentionally left unpopulated until separately verified.",
+    description: "B4GAMBLE has created this provisional Inkabet profile from current partner-supplied casino media and routing evidence. Licensing, payment methods, game catalogue facts and editorial scoring are intentionally left unpopulated until separately verified.",
     opportunityId: INKABET_OPPORTUNITY_ID,
-    countries: [
-      { code: "PE", localDomain: "inkabet.pe", localWebsiteUrl: "https://www.inkabet.pe/" },
-    ],
+    countries: [{ code: "PE", localDomain: "inkabet.pe", localWebsiteUrl: "https://www.inkabet.pe/" }],
     canonicalTrackingUrl: "https://record.inkabet.pe/_p1EHTRI5UEM4wXYzsHHtsGNd7ZgqdRLk/1/",
     routeSlug: "inkabet-casino",
-    offerLabel: "Inkabet Casino",
     hosted: {
       card: ["66a38fe590bf7ecba8e6ec20"],
       mobile: ["66a38fe590bf7ecba8e6ec21"],
@@ -37,7 +32,7 @@ const definitions = [
     domain: "betsafe.com",
     websiteUrl: "https://www.betsafe.com/",
     summary: "Betsafe casino profile. Detailed licensing, payments and market information are being verified and will be added separately.",
-    description: "B4GAMBLE has created this provisional Betsafe profile from current partner-supplied Baltics casino media and routing evidence. Detailed licensing, payment methods, game catalogue facts and editorial scoring are intentionally left unpopulated until separately verified.",
+    description: "B4GAMBLE has created this provisional Betsafe profile from current partner-supplied Baltics casino media and routing evidence. Licensing, payment methods, game catalogue facts and editorial scoring are intentionally left unpopulated until separately verified.",
     opportunityId: BETSAFE_OPPORTUNITY_ID,
     countries: [
       { code: "EE", localDomain: "betsafe.ee", localWebsiteUrl: "https://www.betsafe.ee/en/casino" },
@@ -45,7 +40,6 @@ const definitions = [
     ],
     canonicalTrackingUrl: "https://record.betssongroupaffiliates.com/_p1EHTRI5UENm9wicw_ZaAGNd7ZgqdRLk/1/",
     routeSlug: "betsafe-casino",
-    offerLabel: "Betsafe Casino",
     hosted: {
       card: ["6a1017fee7be921323b816c8", "666bf999137dd6c92914a2eb"],
       mobile: ["6a1017fee7be921323b816ca", "666bf999137dd6c92914a2ee"],
@@ -62,9 +56,9 @@ function json(value: Prisma.InputJsonValue): Prisma.InputJsonValue {
   return value;
 }
 
-async function actorId() {
+async function selectActor() {
   const actor = await prisma.adminUser.findFirst({
-    where: { role: { in: [...ACTOR_ROLES] } },
+    where: { role: { in: ["SUPER_ADMIN", "ADMIN", "EDITOR"] } },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
     select: { id: true },
   });
@@ -72,29 +66,29 @@ async function actorId() {
   return actor.id;
 }
 
-async function ensureBaseRows(actor: string) {
-  const networkId = id("network", "betsson-group-affiliates");
+async function ensureBaseRows(actorId: string) {
+  const networkId = id("network");
   await prisma.affiliateNetwork.upsert({
     where: { id: networkId },
     create: {
       id: networkId,
       name: "Betsson Group Affiliates",
-      slug: "betsson-group-affiliates",
-      type: "NETWORK",
+      slug: "betsson-group-affiliates-media-first",
+      type: "MYAFFILIATES",
       active: true,
-      notes: `${RELEASE}: media-first hosted-creative authority substrate; not an activation claim.`,
-      createdBy: actor,
-      updatedBy: actor,
+      notes: `${RELEASE}: hosted-media binding substrate; not a Production activation claim.`,
+      createdBy: actorId,
+      updatedBy: actorId,
     },
-    update: { active: true, updatedBy: actor },
+    update: { active: true, updatedBy: actorId },
   });
 
   for (const definition of definitions) {
     const casinoId = id("casino", definition.slug);
-    const existingBySlug = await prisma.casino.findUnique({ where: { slug: definition.slug }, select: { id: true, domain: true } });
-    if (existingBySlug && existingBySlug.id !== casinoId) throw new Error(`${RELEASE}: ${definition.slug} already exists with an unexpected identity`);
-    const existingByDomain = await prisma.casino.findUnique({ where: { domain: definition.domain }, select: { id: true, slug: true } });
-    if (existingByDomain && existingByDomain.id !== casinoId) throw new Error(`${RELEASE}: ${definition.domain} belongs to ${existingByDomain.slug}`);
+    const slugOwner = await prisma.casino.findUnique({ where: { slug: definition.slug }, select: { id: true } });
+    const domainOwner = await prisma.casino.findUnique({ where: { domain: definition.domain }, select: { id: true } });
+    if (slugOwner && slugOwner.id !== casinoId) throw new Error(`${RELEASE}: unexpected existing slug ${definition.slug}`);
+    if (domainOwner && domainOwner.id !== casinoId) throw new Error(`${RELEASE}: unexpected existing domain ${definition.domain}`);
 
     await prisma.casino.upsert({
       where: { id: casinoId },
@@ -109,31 +103,19 @@ async function ensureBaseRows(actor: string) {
         summary: definition.summary,
         description: definition.description,
         language: "en",
-        languages: [],
-        currencies: [],
         editorScore: null,
         domainLifecycleStatus: "UNKNOWN",
         domainPublicationStatus: "DRAFT",
-        trackingMetadata: json({
-          release: RELEASE,
-          profilePublicationMode: "MEDIA_FIRST_PROVISIONAL",
-          factualEnrichmentPending: true,
-          commercialReferralAuthority: false,
-        }),
+        trackingMetadata: json({ release: RELEASE, profilePublicationMode: "MEDIA_FIRST_PROVISIONAL", factualEnrichmentPending: true, commercialReferralAuthority: false }),
         status: EditorialStatus.DRAFT,
-        createdBy: actor,
-        updatedBy: actor,
+        createdBy: actorId,
+        updatedBy: actorId,
       },
       update: {
         summary: definition.summary,
         description: definition.description,
-        trackingMetadata: json({
-          release: RELEASE,
-          profilePublicationMode: "MEDIA_FIRST_PROVISIONAL",
-          factualEnrichmentPending: true,
-          commercialReferralAuthority: false,
-        }),
-        updatedBy: actor,
+        trackingMetadata: json({ release: RELEASE, profilePublicationMode: "MEDIA_FIRST_PROVISIONAL", factualEnrichmentPending: true, commercialReferralAuthority: false }),
+        updatedBy: actorId,
       },
     });
 
@@ -158,19 +140,19 @@ async function ensureBaseRows(actor: string) {
       await prisma.casinoCountry.upsert({
         where: { casinoId_countryCode: { casinoId, countryCode: country.code } },
         create: {
-          id: id("casino-country", definition.slug, country.code),
+          id: id("country", definition.slug, country.code),
           casinoId,
           countryCode: country.code,
           availability: "UNKNOWN",
           localDomain: country.localDomain,
           localWebsiteUrl: country.localWebsiteUrl,
-          notes: `${RELEASE}: market identity is supported by current partner media/routing evidence; availability facts are intentionally pending.`,
+          notes: `${RELEASE}: market identity only; detailed factual enrichment is pending.`,
         },
         update: {
           availability: "UNKNOWN",
           localDomain: country.localDomain,
           localWebsiteUrl: country.localWebsiteUrl,
-          notes: `${RELEASE}: market identity is supported by current partner media/routing evidence; availability facts are intentionally pending.`,
+          notes: `${RELEASE}: market identity only; detailed factual enrichment is pending.`,
         },
       });
     }
@@ -197,11 +179,11 @@ async function ensureBaseRows(actor: string) {
         supportedCountries: definition.countries.map((country) => country.code),
         metadata: json({ release: RELEASE, purpose: "HOSTED_CREATIVE_BINDING_ONLY" }),
         sourceOfTruth: json({ source: "FOUNDER_SUPPLIED_BGA_MEDIA_STORE_EXPORT", observedAt: "2026-09-06" }),
-        notes: `${RELEASE}: canonical binding substrate only. Program remains DRAFT and grants no Production referral authority.`,
-        createdBy: actor,
-        updatedBy: actor,
+        notes: `${RELEASE}: DRAFT binding substrate only; no Production referral authority.`,
+        createdBy: actorId,
+        updatedBy: actorId,
       },
-      update: { casinoId, updatedBy: actor },
+      update: { casinoId, status: "DRAFT", updatedBy: actorId },
     });
 
     await prisma.affiliateOffer.upsert({
@@ -211,24 +193,21 @@ async function ensureBaseRows(actor: string) {
         programId,
         casinoId,
         externalOfferId: `${RELEASE}:${definition.slug}:casino`,
-        externalName: `${definition.title} Casino`,
         internalName: `${definition.title} hosted creative binding`,
-        publicLabel: definition.offerLabel,
+        publicLabel: `${definition.title} Casino`,
         offerType: "CASINO",
         status: "DRAFT",
         payoutModel: "UNKNOWN",
         geoMode: "ALLOW",
-        languages: [],
-        devices: [],
         evergreen: true,
         featured: false,
         priority: 0,
-        notes: `${RELEASE}: media binding record; no bonus terms or Production commercial eligibility asserted.`,
-        metadata: json({ release: RELEASE, publicationPurpose: "PARTNER_HOSTED_CREATIVE_BINDING" }),
-        createdBy: actor,
-        updatedBy: actor,
+        notes: `${RELEASE}: no bonus terms or commercial eligibility asserted.`,
+        metadata: json({ release: RELEASE, purpose: "PARTNER_HOSTED_CREATIVE_BINDING" }),
+        createdBy: actorId,
+        updatedBy: actorId,
       },
-      update: { status: "DRAFT", updatedBy: actor },
+      update: { status: "DRAFT", updatedBy: actorId },
     });
 
     for (const country of definition.countries) {
@@ -253,21 +232,11 @@ async function ensureBaseRows(actor: string) {
         active: true,
         priority: 0,
         source: "FOUNDER_BGA_DIRECT_LINK_EXPORT",
-        metadata: json({
-          release: RELEASE,
-          bindingOnly: true,
-          productionEligibleByDefault: false,
-          exactSource: "betsson_media_store_direct_links_product_casino.csv",
-        }),
-        createdBy: actor,
-        updatedBy: actor,
+        metadata: json({ release: RELEASE, bindingOnly: true, productionEligibleByDefault: false, exactSource: "betsson_media_store_direct_links_product_casino.csv" }),
+        createdBy: actorId,
+        updatedBy: actorId,
       },
-      update: {
-        destinationUrl: definition.canonicalTrackingUrl,
-        trackingUrl: definition.canonicalTrackingUrl,
-        active: true,
-        updatedBy: actor,
-      },
+      update: { destinationUrl: definition.canonicalTrackingUrl, trackingUrl: definition.canonicalTrackingUrl, active: true, updatedBy: actorId },
     });
 
     for (const country of definition.countries) {
@@ -279,53 +248,34 @@ async function ensureBaseRows(actor: string) {
           mode: "ALLOW",
           productionEligible: false,
           productionEligibilityEvidence: RELEASE,
-          productionEligibilityNotes: "Media-first bootstrap only; Founder has not activated referral authority in this record.",
+          productionEligibilityNotes: "Media-first bootstrap only; no Production referral authority granted.",
         },
         update: {
           mode: "ALLOW",
           productionEligible: false,
           productionEligibilityEvidence: RELEASE,
-          productionEligibilityNotes: "Media-first bootstrap only; Founder has not activated referral authority in this record.",
+          productionEligibilityNotes: "Media-first bootstrap only; no Production referral authority granted.",
         },
       });
     }
 
     await prisma.affiliateRedirectSlug.upsert({
       where: { id: redirectId },
-      create: {
-        id: redirectId,
-        slug: definition.routeSlug,
-        casinoId,
-        affiliateOfferId: offerId,
-        active: true,
-        createdBy: actor,
-        updatedBy: actor,
-      },
-      update: { casinoId, affiliateOfferId: offerId, active: true, archivedAt: null, updatedBy: actor },
+      create: { id: redirectId, slug: definition.routeSlug, casinoId, affiliateOfferId: offerId, active: true, createdBy: actorId, updatedBy: actorId },
+      update: { casinoId, affiliateOfferId: offerId, active: true, archivedAt: null, updatedBy: actorId },
     });
 
-    await prisma.commercialOpportunity.updateMany({
-      where: { id: definition.opportunityId, casinoId: null },
-      data: { casinoId, updatedBy: actor },
-    });
+    await prisma.commercialOpportunity.updateMany({ where: { id: definition.opportunityId }, data: { casinoId, updatedBy: actorId } });
   }
 }
 
-async function ensureHostedAssignments(actor: string) {
+async function ensureAssignmentsAndPublish(actorId: string) {
   for (const definition of definitions) {
     const casinoId = id("casino", definition.slug);
     const offerId = id("offer", definition.slug);
     const wanted = [...definition.hosted.card, ...definition.hosted.mobile, ...definition.hosted.desktop];
     const creatives = await prisma.partnerHostedCreative.findMany({
-      where: {
-        casinoId,
-        externalCreativeId: { in: wanted },
-        active: true,
-        archivedAt: null,
-        validationState: "VALIDATED",
-        destinationVerificationState: "VERIFIED",
-        affiliateOfferId: offerId,
-      },
+      where: { casinoId, externalCreativeId: { in: wanted }, active: true, archivedAt: null, validationState: "VALIDATED", destinationVerificationState: "VERIFIED", affiliateOfferId: offerId },
       select: { id: true, externalCreativeId: true, countryCode: true, languageCode: true, languageState: true },
     });
     const byExternal = new Map(creatives.map((creative) => [creative.externalCreativeId, creative]));
@@ -335,74 +285,29 @@ async function ensureHostedAssignments(actor: string) {
       const creative = byExternal.get(externalId)!;
       const reference = `${RELEASE}:${definition.slug}:card:${externalId}`;
       const existing = await prisma.casinoPartnerHostedCreativeAssignment.findFirst({ where: { casinoId, reference } });
-      const data = {
-        casinoId,
-        creativeId: creative.id,
-        placement: "CASINO_DIRECTORY_CARD" as const,
-        variant: "DEFAULT" as const,
-        countryCode: creative.countryCode,
-        languageCode: creative.languageCode,
-        languageState: creative.languageState,
-        renderingMode: "CONTAIN" as const,
-        sortOrder: 0,
-        active: true,
-        reference,
-      };
+      const data = { casinoId, creativeId: creative.id, placement: "CASINO_DIRECTORY_CARD" as const, variant: "DEFAULT" as const, countryCode: creative.countryCode, languageCode: creative.languageCode, languageState: creative.languageState, renderingMode: "CONTAIN" as const, sortOrder: 0, active: true, reference };
       if (existing) await prisma.casinoPartnerHostedCreativeAssignment.update({ where: { id: existing.id }, data });
       else await prisma.casinoPartnerHostedCreativeAssignment.create({ data });
     }
 
-    for (const [variant, ids] of [["MOBILE", definition.hosted.mobile], ["DESKTOP", definition.hosted.desktop]] as const) {
-      for (const externalId of ids) {
+    for (const [variant, externalIds] of [["MOBILE", definition.hosted.mobile], ["DESKTOP", definition.hosted.desktop]] as const) {
+      for (const externalId of externalIds) {
         const creative = byExternal.get(externalId)!;
         const reference = `${RELEASE}:${definition.slug}:offer:${variant.toLowerCase()}:${externalId}`;
         const existing = await prisma.affiliateOfferPartnerHostedCreativeAssignment.findFirst({ where: { affiliateOfferId: offerId, reference } });
-        const data = {
-          affiliateOfferId: offerId,
-          creativeId: creative.id,
-          placement: "CASINO_OFFER_BLOCK" as const,
-          variant,
-          countryCode: creative.countryCode,
-          languageCode: creative.languageCode,
-          languageState: creative.languageState,
-          renderingMode: "CONTAIN" as const,
-          sortOrder: 0,
-          active: true,
-          reference,
-        };
+        const data = { affiliateOfferId: offerId, creativeId: creative.id, placement: "CASINO_OFFER_BLOCK" as const, variant, countryCode: creative.countryCode, languageCode: creative.languageCode, languageState: creative.languageState, renderingMode: "CONTAIN" as const, sortOrder: 0, active: true, reference };
         if (existing) await prisma.affiliateOfferPartnerHostedCreativeAssignment.update({ where: { id: existing.id }, data });
         else await prisma.affiliateOfferPartnerHostedCreativeAssignment.create({ data });
       }
     }
 
-    const casino = await prisma.casino.findUnique({ where: { id: casinoId }, select: { status: true, updatedAt: true } });
+    const casino = await prisma.casino.findUnique({ where: { id: casinoId }, select: { status: true } });
     if (!casino || casino.status === EditorialStatus.PUBLISHED) continue;
-    if (casino.status !== EditorialStatus.DRAFT) throw new Error(`${RELEASE}: ${definition.slug} is in unexpected workflow state ${casino.status}`);
-
-    const approved = await prisma.casino.update({
-      where: { id: casinoId },
-      data: {
-        status: EditorialStatus.APPROVED,
-        domainPublicationStatus: "APPROVED",
-        updatedBy: actor,
-      },
-      select: { updatedAt: true },
-    });
-    await casinoRepository.publishWithVersion(casinoId, actor, approved.updatedAt);
-    await prisma.casino.update({
-      where: { id: casinoId },
-      data: { domainPublicationStatus: "PUBLISHED", updatedBy: actor },
-    });
-    await prisma.auditLog.create({
-      data: {
-        actorId: actor,
-        action: "media-first-provisional-publish",
-        entityType: "casino",
-        entityId: casinoId,
-        summary: `${RELEASE}: published provisional ${definition.title} profile after hosted creative verification`,
-        metadata: json({ release: RELEASE, factualEnrichmentPending: true, referralAuthorityGranted: false }),
-      },
-    });
+    if (casino.status !== EditorialStatus.DRAFT) throw new Error(`${RELEASE}: unexpected ${definition.slug} workflow state ${casino.status}`);
+    const approved = await prisma.casino.update({ where: { id: casinoId }, data: { status: EditorialStatus.APPROVED, domainPublicationStatus: "APPROVED", updatedBy: actorId }, select: { updatedAt: true } });
+    await casinoRepository.publishWithVersion(casinoId, actorId, approved.updatedAt);
+    await prisma.casino.update({ where: { id: casinoId }, data: { domainPublicationStatus: "PUBLISHED", updatedBy: actorId } });
+    await prisma.auditLog.create({ data: { actorId, action: "media-first-provisional-publish", entityType: "casino", entityId: casinoId, summary: `${RELEASE}: published provisional ${definition.title} profile after hosted creative verification`, metadata: json({ release: RELEASE, factualEnrichmentPending: true, referralAuthorityGranted: false }) } });
   }
 }
 
@@ -420,24 +325,11 @@ async function verifyState() {
         licenses: { select: { id: true } },
         paymentMethods: { select: { id: true } },
         versions: { where: { status: EditorialStatus.PUBLISHED }, select: { id: true } },
-        partnerHostedCreatives: {
-          where: { active: true, archivedAt: null },
-          select: { externalCreativeId: true, validationState: true, destinationVerificationState: true },
-        },
-        partnerHostedAssignments: { where: { active: true }, select: { placement: true, variant: true, countryCode: true } },
+        partnerHostedCreatives: { where: { active: true, archivedAt: null }, select: { id: true, validationState: true, destinationVerificationState: true } },
+        partnerHostedAssignments: { where: { active: true }, select: { id: true } },
       },
     });
-    state.push({
-      slug: definition.slug,
-      status: casino?.status ?? "ABSENT",
-      domainPublicationStatus: casino?.domainPublicationStatus ?? null,
-      editorScore: casino?.editorScore ?? null,
-      licences: casino?.licenses.length ?? 0,
-      payments: casino?.paymentMethods.length ?? 0,
-      publishedVersions: casino?.versions.length ?? 0,
-      hostedCreatives: casino?.partnerHostedCreatives.length ?? 0,
-      casinoHostedAssignments: casino?.partnerHostedAssignments.length ?? 0,
-    });
+    state.push({ slug: definition.slug, status: casino?.status ?? "ABSENT", domainPublicationStatus: casino?.domainPublicationStatus ?? null, editorScore: casino?.editorScore ?? null, licences: casino?.licenses.length ?? 0, payments: casino?.paymentMethods.length ?? 0, publishedVersions: casino?.versions.length ?? 0, hostedCreatives: casino?.partnerHostedCreatives.length ?? 0, hostedCardAssignments: casino?.partnerHostedAssignments.length ?? 0 });
   }
   console.info(JSON.stringify({ release: RELEASE, state }, null, 2));
 }
@@ -449,10 +341,10 @@ async function main() {
     console.info(JSON.stringify({ release: RELEASE, skipped: true, reason: "non-production" }));
     return;
   }
-  const actor = await actorId();
+  const actorId = await selectActor();
   if (mode === "build-preflight") {
-    await ensureBaseRows(actor);
-    await ensureHostedAssignments(actor);
+    await ensureBaseRows(actorId);
+    await ensureAssignmentsAndPublish(actorId);
   }
   await verifyState();
 }
