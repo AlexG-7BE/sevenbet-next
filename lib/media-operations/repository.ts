@@ -13,9 +13,13 @@ import {
 import { prisma } from "@/lib/db/prisma";
 import {
   mediaIngestionAssignmentReference,
+  mediaIngestionBatchKey,
+  mediaIngestionBatchSchema,
   mediaIngestionPlanKey,
+  MEDIA_INGESTION_BATCH_KEY_PREFIX,
   mediaIngestionPlanSchema,
   MEDIA_INGESTION_PLAN_KEY_PREFIX,
+  type MediaIngestionBatch,
   type MediaIngestionPlan,
   type MediaOperationsSource,
   type MediaPlanRecommendation,
@@ -331,6 +335,52 @@ export class MediaIngestionRepository {
     return records.map((record) => planFromValue(record.value));
   }
 
+  async saveBatch(batch: MediaIngestionBatch, audit: { operation: string; result: Record<string, unknown> }) {
+    const parsed = mediaIngestionBatchSchema.parse(batch);
+    return prisma.$transaction(async (tx) => {
+      await tx.siteSetting.upsert({
+        where: { key: mediaIngestionBatchKey(parsed.id) },
+        create: { key: mediaIngestionBatchKey(parsed.id), value: json(parsed) },
+        update: { value: json(parsed) },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorId: parsed.actorId,
+          action: audit.operation.toLowerCase().replaceAll("_", "-"),
+          entityType: "media-ingestion-batch",
+          entityId: parsed.id,
+          summary: `Media ingestion batch ${audit.operation.toLowerCase().replaceAll("_", " ")}`,
+          metadata: json({
+            actorId: parsed.actorId,
+            source: "MEDIA_OPERATIONS",
+            channel: parsed.source,
+            batchId: parsed.id,
+            batchChecksum: parsed.batchChecksum,
+            planIds: parsed.planIds,
+            operation: audit.operation,
+            result: audit.result,
+            timestamp: parsed.updatedAt,
+          }),
+        },
+      });
+      return parsed;
+    });
+  }
+
+  async getBatch(batchId: string) {
+    const record = await prisma.siteSetting.findUnique({ where: { key: mediaIngestionBatchKey(batchId) } });
+    return record ? mediaIngestionBatchSchema.parse(record.value) : null;
+  }
+
+  async listRecentBatches(limit = 20) {
+    const records = await prisma.siteSetting.findMany({
+      where: { key: { startsWith: MEDIA_INGESTION_BATCH_KEY_PREFIX } },
+      orderBy: { updatedAt: "desc" },
+      take: Math.min(Math.max(limit, 1), 50),
+    });
+    return records.map((record) => mediaIngestionBatchSchema.parse(record.value));
+  }
+
   async applyDraftPlan(input: { planId: string; recommendationIds?: string[]; replaceExisting: boolean; actorId: string; source: MediaOperationsSource }) {
     return prisma.$transaction(async (tx) => {
       const setting = await tx.siteSetting.findUnique({ where: { key: mediaIngestionPlanKey(input.planId) } });
@@ -344,6 +394,10 @@ export class MediaIngestionRepository {
       for (const recommendation of plan.recommendations) {
         if (selected && !selected.has(recommendation.id)) continue;
         if (recommendation.appliedAssignmentId && !recommendation.rolledBackAt) continue;
+        if (recommendation.applyEligibility === "BLOCKED") {
+          skipped.push({ recommendationId: recommendation.id, reason: recommendation.applyBlocker ?? "RECOMMENDATION_REQUIRES_REVIEW" });
+          continue;
+        }
         const allowed = recommendation.state === "AUTO_ASSIGN_DRAFT" || (input.replaceExisting && recommendation.state === "SUGGEST_REVIEW" && recommendation.replacementEligible);
         if (!allowed) { skipped.push({ recommendationId: recommendation.id, reason: "RECOMMENDATION_REQUIRES_REVIEW" }); continue; }
         if (recommendation.subjectType === "CASINO" ? !isCasinoMediaPlacement(recommendation.placement) : isCasinoMediaPlacement(recommendation.placement)) {
@@ -378,6 +432,15 @@ export class MediaIngestionRepository {
           const subjectMatches = creative && (recommendation.subjectType === "CASINO"
             || (recommendation.subjectType === "CASINO_BONUS" && creative.casinoBonusId === recommendation.subjectId)
             || (recommendation.subjectType === "AFFILIATE_OFFER" && creative.affiliateOfferId === recommendation.subjectId));
+          if (creative && (!creative.redirectSlugId || !creative.trackingLinkId)) {
+            skipped.push({ recommendationId: recommendation.id, reason: "CANONICAL_COMMERCIAL_ROUTE_REQUIRED" }); continue;
+          }
+          if (creative && creative.validationState !== "VALIDATED") {
+            skipped.push({ recommendationId: recommendation.id, reason: "MEDIA_VALIDATION_REQUIRED" }); continue;
+          }
+          if (creative && creative.destinationVerificationState !== "VERIFIED") {
+            skipped.push({ recommendationId: recommendation.id, reason: "COMMERCIAL_ROUTE_VALIDATION_REQUIRED" }); continue;
+          }
           if (!creative || !creative.active || creative.archivedAt || creative.casinoId !== state.casinoId
             || creative.validationState !== "VALIDATED" || creative.destinationVerificationState !== "VERIFIED"
             || !creative.redirectSlugId || !creative.trackingLinkId || creative.sourceMode !== recommendation.sourceMode

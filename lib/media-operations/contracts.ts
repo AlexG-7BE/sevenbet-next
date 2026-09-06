@@ -8,8 +8,22 @@ import {
 import { isIsoCountryCode } from "@/lib/jurisdiction/country-code";
 
 export const MEDIA_INGESTION_PLAN_VERSION = 1 as const;
+export const MEDIA_INGESTION_BATCH_VERSION = 1 as const;
 export const MEDIA_INGESTION_PLAN_KEY_PREFIX = "media-ingestion-plan:";
+export const MEDIA_INGESTION_BATCH_KEY_PREFIX = "media-ingestion-batch:";
 export const MEDIA_INGESTION_ASSIGNMENT_REFERENCE_PREFIX = "MEDIA_OPERATIONS:";
+
+export const mediaDimensionProvenances = [
+  "EXPLICIT_PARTNER_METADATA",
+  "NORMALIZED_SOURCE_FIELD",
+  "TITLE_PATTERN",
+  "DESCRIPTION_PATTERN",
+  "PROVIDER_METADATA",
+  "PIXEL_VALIDATED",
+] as const;
+
+export const mediaValidityStates = ["VALID", "REVIEW_REQUIRED", "INVALID"] as const;
+export const commercialRouteValidityStates = ["MATCH", "REVIEW_REQUIRED", "MISSING", "CONFLICT", "NOT_APPLICABLE"] as const;
 
 export const mediaIngestionContextSchema = z.object({
   casinoId: z.string().uuid().optional(),
@@ -42,21 +56,63 @@ export const mediaIngestPartnerSnippetInputSchema = z.object({
   dryRun: z.boolean().default(false),
 }).strict();
 
-export const mediaAnalyzeAndPlanInputSchema = z.object({
+export const mediaIngestPartnerBatchItemSchema = z.object({
+  snippet: z.string().min(1).max(128 * 1024),
+  context: mediaIngestionContextSchema.optional(),
+  declaredWidth: z.number().int().min(1).max(10_000).optional(),
+  declaredHeight: z.number().int().min(1).max(10_000).optional(),
+  dimensionProvenance: z.enum(["EXPLICIT_PARTNER_METADATA", "NORMALIZED_SOURCE_FIELD"]).default("EXPLICIT_PARTNER_METADATA"),
+  title: z.string().trim().min(1).max(500).optional(),
+  description: z.string().trim().min(1).max(2_000).optional(),
+  providerReference: z.string().trim().min(1).max(200).optional(),
+}).strict().superRefine((item, issue) => {
+  if (Boolean(item.declaredWidth) !== Boolean(item.declaredHeight)) {
+    issue.addIssue({ code: "custom", path: [item.declaredWidth ? "declaredHeight" : "declaredWidth"], message: "Declared width and height must be supplied together" });
+  }
+});
+
+export const mediaIngestPartnerBatchInputSchema = z.object({
+  items: z.array(mediaIngestPartnerBatchItemSchema).min(1).max(100),
+  dryRun: z.boolean().default(false),
+}).strict();
+
+const mediaAnalyzePlanInputSchema = z.object({
   planId: z.string().uuid(),
   useSemanticAnalysis: z.boolean().default(true),
 }).strict();
 
-export const mediaApplyDraftPlanInputSchema = z.object({
+const mediaAnalyzeBatchInputSchema = z.object({
+  batchId: z.string().uuid(),
+  useSemanticAnalysis: z.boolean().default(true),
+}).strict();
+
+export const mediaAnalyzeAndPlanInputSchema = z.union([mediaAnalyzePlanInputSchema, mediaAnalyzeBatchInputSchema]);
+
+const mediaApplyDraftSinglePlanInputSchema = z.object({
   planId: z.string().uuid(),
   recommendationIds: z.array(z.string().uuid()).max(100).optional(),
   replaceExisting: z.boolean().default(false),
   mode: z.enum(["APPLY", "ROLLBACK"]).default("APPLY"),
 }).strict();
 
-export const mediaGetPlanInputSchema = z.object({
+const mediaApplyDraftBatchInputSchema = z.object({
+  batchId: z.string().uuid(),
+  recommendationIds: z.array(z.string().uuid()).max(500).optional(),
+  replaceExisting: z.boolean().default(false),
+  mode: z.enum(["APPLY", "ROLLBACK"]).default("APPLY"),
+}).strict();
+
+export const mediaApplyDraftPlanInputSchema = z.union([mediaApplyDraftSinglePlanInputSchema, mediaApplyDraftBatchInputSchema]);
+
+const mediaGetSinglePlanInputSchema = z.object({
   planId: z.string().uuid(),
 }).strict();
+
+const mediaGetBatchInputSchema = z.object({
+  batchId: z.string().uuid(),
+}).strict();
+
+export const mediaGetPlanInputSchema = z.union([mediaGetSinglePlanInputSchema, mediaGetBatchInputSchema]);
 
 export const mediaListRecentIngestionsInputSchema = z.object({
   limit: z.number().int().min(1).max(50).default(20),
@@ -104,6 +160,8 @@ const parsedCreativeSchema = z.object({
   anchor: safeUrlEvidenceSchema.nullable(),
   declaredWidth: z.number().int().positive().max(100_000).nullable(),
   declaredHeight: z.number().int().positive().max(100_000).nullable(),
+  dimensionProvenance: z.enum(mediaDimensionProvenances).nullable().optional(),
+  sourceItemIndex: z.number().int().min(0).max(99).optional(),
   alt: z.string().max(300).nullable(),
   title: z.string().max(300).nullable(),
   providerDomain: z.string().max(253),
@@ -137,6 +195,17 @@ const ingestedAssetSchema = z.object({
   height: z.number().int().positive().nullable(),
   animated: z.boolean().nullable(),
   formatFamily: z.enum(["CARD", "MOBILE_LANDSCAPE", "STRIP", "WIDE", "PORTRAIT_INVENTORY", "BRAND_ART", "LOGO_ONLY", "UNCLASSIFIED"]).nullable(),
+  dimensionProvenance: z.array(z.enum(mediaDimensionProvenances)).max(3).optional(),
+  dimensionsMatch: z.boolean().nullable().optional(),
+  mediaValidity: z.enum(mediaValidityStates).optional(),
+  commercialRouteValidity: z.enum(commercialRouteValidityStates).optional(),
+  commercialRouteReason: z.string().max(100).nullable().optional(),
+  placementScores: z.array(z.object({
+    placement: z.enum(mediaPlacements),
+    variant: z.enum(mediaPlacementVariants),
+    score: z.number().min(0).max(100),
+    fit: z.enum(["PREFERRED", "COMPATIBLE", "POOR_FIT", "UNSUPPORTED"]),
+  }).strict()).max(20).optional(),
   resolvedSource: safeUrlEvidenceSchema.nullable(),
   redirectCount: z.number().int().min(0).max(3).nullable(),
   duplicate: z.boolean(),
@@ -208,6 +277,8 @@ export const mediaPlanRecommendationSchema = z.object({
   existingAssignmentId: z.string().uuid().nullable(),
   existingComparison: z.enum(["NEW_SLOT", "BETTER_CANDIDATE", "EQUIVALENT", "LOWER_PRIORITY", "CONFLICT"]),
   replacementEligible: z.boolean(),
+  applyEligibility: z.enum(["ELIGIBLE", "BLOCKED"]).optional(),
+  applyBlocker: z.string().max(100).nullable().optional(),
   reasons: z.array(z.string().max(400)).min(1).max(30),
   appliedAssignmentId: z.string().uuid().nullable(),
   replacedAssignmentId: z.string().uuid().nullable(),
@@ -244,12 +315,14 @@ export const mediaIngestionPlanSchema = z.object({
   actorId: z.string().uuid(),
   source: z.enum(["ADMIN", "CHATGPT_WORK", "SYSTEM"]),
   providerReference: z.string().max(200).nullable(),
+  batchId: z.string().uuid().optional(),
+  batchItemIndexes: z.array(z.number().int().min(0).max(99)).max(100).optional(),
   requestedContext: mediaIngestionContextSchema,
   resolvedContext: resolvedContextSchema,
-  creatives: z.array(parsedCreativeSchema).max(20),
+  creatives: z.array(parsedCreativeSchema).max(100),
   unsupportedElements: z.array(z.enum(["SCRIPT", "IFRAME"])).max(20),
-  assets: z.array(ingestedAssetSchema).max(20),
-  semanticResults: z.array(mediaSemanticResultSchema).max(20),
+  assets: z.array(ingestedAssetSchema).max(100),
+  semanticResults: z.array(mediaSemanticResultSchema).max(100),
   recommendations: z.array(mediaPlanRecommendationSchema).max(100),
   warnings: z.array(z.string().max(500)).max(100),
   operations: z.array(planOperationSchema).max(300),
@@ -258,11 +331,45 @@ export const mediaIngestionPlanSchema = z.object({
   analyzedAt: z.string().datetime().nullable(),
 }).strict();
 
+const mediaBatchItemOutcomeSchema = z.object({
+  index: z.number().int().min(0).max(99),
+  state: z.enum(["INGESTED", "REUSED", "REVIEW_REQUIRED", "REJECTED"]),
+  planId: z.string().uuid().nullable(),
+  creativeIds: z.array(z.string().uuid()).max(100),
+  assetIds: z.array(z.string().uuid()).max(100),
+  hostedCreativeIds: z.array(z.string().uuid()).max(100),
+  reasonCodes: z.array(z.string().max(100)).max(30),
+}).strict();
+
+export const mediaIngestionBatchSchema = z.object({
+  version: z.literal(MEDIA_INGESTION_BATCH_VERSION),
+  id: z.string().uuid(),
+  batchChecksum: z.string().length(64),
+  state: z.enum(["INGESTED", "REVIEW_REQUIRED", "ANALYZED", "PARTIALLY_APPLIED", "APPLIED", "ROLLED_BACK", "FAILED"]),
+  dryRun: z.boolean(),
+  actorId: z.string().uuid(),
+  source: z.enum(["ADMIN", "CHATGPT_WORK", "SYSTEM"]),
+  planIds: z.array(z.string().uuid()).max(100),
+  items: z.array(mediaBatchItemOutcomeSchema).max(100),
+  counts: z.object({
+    total: z.number().int().min(1).max(100),
+    ingested: z.number().int().min(0).max(100),
+    reused: z.number().int().min(0).max(100),
+    reviewRequired: z.number().int().min(0).max(100),
+    rejected: z.number().int().min(0).max(100),
+  }).strict(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+}).strict();
+
 export type MediaIngestionContextInput = z.infer<typeof mediaIngestionContextSchema>;
 export type MediaIngestPartnerSnippetInput = z.infer<typeof mediaIngestPartnerSnippetInputSchema>;
+export type MediaIngestPartnerBatchInput = z.infer<typeof mediaIngestPartnerBatchInputSchema>;
+export type MediaIngestPartnerBatchItem = z.infer<typeof mediaIngestPartnerBatchItemSchema>;
 export type MediaAnalyzeAndPlanInput = z.infer<typeof mediaAnalyzeAndPlanInputSchema>;
 export type MediaApplyDraftPlanInput = z.infer<typeof mediaApplyDraftPlanInputSchema>;
 export type MediaIngestionPlan = z.infer<typeof mediaIngestionPlanSchema>;
+export type MediaIngestionBatch = z.infer<typeof mediaIngestionBatchSchema>;
 export type MediaPlanRecommendation = z.infer<typeof mediaPlanRecommendationSchema>;
 export type MediaSemanticResult = z.infer<typeof mediaSemanticResultSchema>;
 export type MediaOperationsSource = MediaIngestionPlan["source"];
@@ -290,6 +397,10 @@ export function normalizeMediaIngestionContext(
 
 export function mediaIngestionPlanKey(planId: string) {
   return `${MEDIA_INGESTION_PLAN_KEY_PREFIX}${planId}`;
+}
+
+export function mediaIngestionBatchKey(batchId: string) {
+  return `${MEDIA_INGESTION_BATCH_KEY_PREFIX}${batchId}`;
 }
 
 export function mediaIngestionAssignmentReference(planId: string, recommendationId: string) {

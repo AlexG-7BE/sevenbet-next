@@ -24,6 +24,8 @@ export type ParsedCreativeInternal = {
   anchor: SafeUrlEvidence | null;
   declaredWidth: number | null;
   declaredHeight: number | null;
+  dimensionProvenance?: "EXPLICIT_PARTNER_METADATA" | "NORMALIZED_SOURCE_FIELD" | "TITLE_PATTERN" | "DESCRIPTION_PATTERN" | "PROVIDER_METADATA" | "PIXEL_VALIDATED" | null;
+  sourceItemIndex?: number;
   alt: string | null;
   title: string | null;
   providerDomain: string;
@@ -225,6 +227,7 @@ export function parsePartnerSnippet(snippet: string): ParsedPartnerSnippet {
       anchor: anchorValue ? safeUrlEvidence(anchorValue) : null,
       declaredWidth,
       declaredHeight,
+      dimensionProvenance: declaredWidth && declaredHeight ? "PROVIDER_METADATA" : null,
       alt: cleanText(attributes.alt),
       title: cleanText(attributes.title),
       providerDomain: sourceUrl.hostname.toLowerCase(),

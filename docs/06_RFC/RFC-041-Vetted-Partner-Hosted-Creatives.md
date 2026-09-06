@@ -7,7 +7,8 @@
 **Decision date:** 6 September 2026
 
 **Implementation authority:** explicit Founder instruction `CONTINUE B4GAMBLE
-FOUNDER OFFICE — VETTED-PARTNER-HOSTED-CREATIVES-01`.
+FOUNDER OFFICE — VETTED-PARTNER-HOSTED-CREATIVES-01`, as amended by
+`B4GAMBLE — MEDIA-OPERATIONS-BULK-01` on 6 September 2026.
 
 ## Decision
 
@@ -28,8 +29,9 @@ Existing first-party `MediaAsset`/R2 media remains supported and unchanged.
 - **DETECTED:** `/r/{slug}` is the sole external commercial redirect authority
   and applies trusted GEO, current route, commercial, legal/account and safe
   destination checks before redirecting.
-- **DETECTED:** the Media MCP exposes five tools and the Commercial MCP exposes
-  four tools. Neither exposes a Media publish action.
+- **DETECTED IN THE AUTHORISED RELEASE CANDIDATE:** the Media MCP exposes six
+  tools and the Commercial MCP exposes four tools. Neither exposes a Media
+  publish action.
 - **DETECTED:** the real Founder Bannerflow fixture rendered from
   `c.bannerflow.net` in an isolated `sandbox="allow-scripts"` frame. Its
   observed subresources used only `c.bannerflow.net`.
@@ -59,6 +61,14 @@ Embed Code:
 The Admin page may expose those as separate fields, but joins them into the
 same contract. Markdown fences and bounded HTML entity encoding are removed
 before strict parsing. Pasted executable code is never run during ingestion.
+
+The additive `media_ingest_partner_batch` accepts up to 100 independent items.
+Each item preserves the same exact parser boundary and may additionally carry
+official declared dimensions, title, Description and provider reference. It
+never joins multiple scripts into one parser input. Items from different
+Casinos or different exact target/subject scopes become different durable
+plans, with independent `INGESTED | REUSED | REVIEW_REQUIRED | REJECTED`
+outcomes.
 
 Description parsing is deterministic. It may record an external label, brand,
 purpose, exact country, dimensions, explicitly labelled language and explicitly
@@ -150,6 +160,12 @@ checksums/provenance, validation, canonical route/tracking relations and
 destination-integrity result. The raw exact destination remains only in this
 server-side record.
 
+Migration `0030_media_operations_bulk_contract` separates `validationState`
+(media evidence) from `destinationVerificationState` (commercial-route
+authority). A valid provider shape and consistent Description can therefore
+remain valid media while a missing or conflicting canonical route remains
+commercially blocked.
+
 The assignment tables retain RFC-040 Option C typed foreign-key ownership and
 placement restrictions. They add explicit language state because the older
 first-party tables use null language to mean neutral. Hosted and first-party
@@ -171,13 +187,14 @@ publication.
 
 ## Destination integrity and commercial authority
 
-Every new or changed destination receives one bounded server-side redirect
-chain verification before it can become `VERIFIED`. The expected terminal
-operator host comes from the associated Casino evidence. HTTP error terminals,
-challenges, loops, attribution loss, unexpected hosts and malformed paths fail
-activation. A prior verification is reusable only when casino, offer, route,
-tracking link, expected operator host and destination checksum all remain
-exact.
+Every new or changed destination may receive one bounded server-side redirect
+chain probe. When the creative destination exactly matches the current
+governed tracking or destination URL, that stored internal relationship is the
+authoritative canonical match and remote HTTP status is advisory telemetry; an
+HTTP 400 does not overturn it. Non-exact provider-campaign bindings continue to
+require bounded terminal-operator verification. A prior terminal verification
+is reusable only when casino, offer, route, tracking link, expected operator
+host and destination checksum all remain exact.
 
 The six existing Superfly canonical routes use the provider's opaque exact
 `/c/{8-hex}` campaign form rather than exposing `o`, `a` and `c` query values.
@@ -254,9 +271,11 @@ The existing Admin Media Operations screen adds separate Description and Embed
 Code fields, structured provider/binding evidence, a clear `PARTNER-HOSTED`
 label and protected Preview. It is not a general HTML previewer.
 
-The Media MCP remains exactly five tools and accepts the composite syntax in
-the existing `snippet` field. The Commercial MCP remains exactly four tools.
-No unified MCP and no publish tool is introduced.
+The Media MCP has exactly six tools, including
+`media_ingest_partner_batch`; the single-item tool remains backwards
+compatible. Analyze, get, draft apply and rollback accept a recorded batch and
+fan out only through its subject-isolated plan IDs. The Commercial MCP remains
+exactly four tools. No unified MCP and no publish tool is introduced.
 
 `VETTED_PARTNER_HOSTED_CREATIVES_ENABLED=true` independently enables public
 hosted resolution and frame delivery. Disabling it makes hosted projections

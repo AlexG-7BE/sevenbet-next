@@ -105,7 +105,25 @@ export type PartnerHostedCommercialBinding = {
   expectedOperatorHost: string | null;
   relationshipState: "MATCH" | "REVIEW_REQUIRED";
   reason: string | null;
+  matchAuthority?: "EXACT_GOVERNED_ROUTE" | "PROVIDER_CAMPAIGN" | null;
 };
+
+function exactCanonicalUrlMatch(candidate: string, governed: Array<string | null | undefined>) {
+  const canonical = (value: string) => {
+    const url = new URL(value);
+    url.hash = "";
+    return url.href;
+  };
+  try {
+    const normalizedCandidate = canonical(candidate);
+    return governed.some((value) => {
+      if (!value) return false;
+      try { return canonical(value) === normalizedCandidate; } catch { return false; }
+    });
+  } catch {
+    return false;
+  }
+}
 
 export async function resolvePartnerHostedCommercialBinding(
   parsed: ParsedPartnerHostedCreative,
@@ -138,7 +156,7 @@ export async function resolvePartnerHostedCommercialBinding(
             select: {
               id: true, status: true,
               program: { select: { name: true, operator: true, providerType: true, network: { select: { name: true, slug: true } } } },
-              trackingLinks: { where: { active: true, archivedAt: null }, orderBy: [{ priority: "desc" }, { id: "asc" }], select: { id: true, destinationUrl: true, metadata: true }, take: 2 },
+              trackingLinks: { where: { active: true, archivedAt: null }, orderBy: [{ priority: "desc" }, { id: "asc" }], select: { id: true, trackingUrl: true, destinationUrl: true, metadata: true }, take: 2 },
             },
           },
         },
@@ -171,46 +189,33 @@ export async function resolvePartnerHostedCommercialBinding(
   const providerMatches = parsed.provider === "SUPERFLY"
     ? programEvidence.includes("superfly")
     : programEvidence.includes("betsson");
-  if (!providerMatches) return {
-    affiliateOfferId: route.affiliateOfferId, redirectSlugId: route.id, redirectSlug: route.slug, trackingLinkId: null,
-    expectedOperatorHost: fallbackOperatorHost, relationshipState: "REVIEW_REQUIRED", reason: "CREATIVE_CANONICAL_PARTNER_CONFLICT",
-  };
   const trackingLink = route.affiliateOffer.trackingLinks.length === 1 ? route.affiliateOffer.trackingLinks[0] : null;
   if (!trackingLink) return {
     affiliateOfferId: route.affiliateOfferId, redirectSlugId: route.id, redirectSlug: route.slug, trackingLinkId: null,
     expectedOperatorHost: fallbackOperatorHost, relationshipState: "REVIEW_REQUIRED",
     reason: route.affiliateOffer.trackingLinks.length > 1 ? "CANONICAL_TRACKING_LINK_AMBIGUOUS" : "CANONICAL_TRACKING_LINK_REQUIRED",
   };
+  const exactBannerflowMatch = parsed.provider === "BANNERFLOW"
+    && exactCanonicalUrlMatch(parsed.destinationUrl, [trackingLink.trackingUrl, trackingLink.destinationUrl]);
+  if (!providerMatches && !exactBannerflowMatch) return {
+    affiliateOfferId: route.affiliateOfferId, redirectSlugId: route.id, redirectSlug: route.slug, trackingLinkId: trackingLink.id,
+    expectedOperatorHost: fallbackOperatorHost, relationshipState: "REVIEW_REQUIRED", reason: "CREATIVE_CANONICAL_PARTNER_CONFLICT",
+  };
   if (!superflyCanonicalCampaignMatches(parsed, trackingLink.destinationUrl, trackingLink.metadata)) return {
     affiliateOfferId: route.affiliateOfferId, redirectSlugId: route.id, redirectSlug: route.slug, trackingLinkId: trackingLink.id,
     expectedOperatorHost: fallbackOperatorHost, relationshipState: "REVIEW_REQUIRED", reason: "CREATIVE_CANONICAL_CAMPAIGN_CONFLICT",
   };
+  if (parsed.provider === "BANNERFLOW" && !exactBannerflowMatch) return {
+    affiliateOfferId: route.affiliateOfferId, redirectSlugId: route.id, redirectSlug: route.slug, trackingLinkId: trackingLink.id,
+    expectedOperatorHost: fallbackOperatorHost, relationshipState: "REVIEW_REQUIRED", reason: "CREATIVE_CANONICAL_DESTINATION_CONFLICT",
+    matchAuthority: null,
+  };
   const expectedOperatorHost = evidencedOperatorHost(trackingLink.metadata, parsed.description.countryCode)
     ?? fallbackOperatorHost;
-  if (!expectedOperatorHost) return {
+  if (!expectedOperatorHost && !exactBannerflowMatch) return {
     affiliateOfferId: route.affiliateOfferId, redirectSlugId: route.id, redirectSlug: route.slug, trackingLinkId: trackingLink.id,
     expectedOperatorHost: null, relationshipState: "REVIEW_REQUIRED", reason: "EXPECTED_OPERATOR_HOST_REQUIRED",
   };
-  if (parsed.provider === "BANNERFLOW") {
-    const evidenced = await prisma.commercialEvidence.count({
-      where: {
-        status: "CURRENT",
-        classification: "DETECTED",
-        category: "ACTIVATION",
-        opportunity: { OR: [{ displayName: { contains: casino.title, mode: "insensitive" } }, { normalizedName: { contains: normalized(casino.title), mode: "insensitive" } }] },
-        OR: [
-          { sourceUrl: { contains: parsed.destinationHost, mode: "insensitive" } },
-          { sourceReference: { contains: parsed.destinationHost, mode: "insensitive" } },
-          { claim: { contains: parsed.destinationHost, mode: "insensitive" } },
-          { notes: { contains: parsed.destinationHost, mode: "insensitive" } },
-        ],
-      },
-    });
-    if (!evidenced) return {
-      affiliateOfferId: route.affiliateOfferId, redirectSlugId: route.id, redirectSlug: route.slug, trackingLinkId: trackingLink.id,
-      expectedOperatorHost, relationshipState: "REVIEW_REQUIRED", reason: "PARTNER_DESTINATION_RELATIONSHIP_UNEVIDENCED",
-    };
-  }
   return {
     affiliateOfferId: route.affiliateOfferId,
     redirectSlugId: route.id,
@@ -219,6 +224,7 @@ export async function resolvePartnerHostedCommercialBinding(
     expectedOperatorHost,
     relationshipState: "MATCH",
     reason: null,
+    matchAuthority: parsed.provider === "BANNERFLOW" ? "EXACT_GOVERNED_ROUTE" : "PROVIDER_CAMPAIGN",
   };
 }
 
@@ -245,6 +251,28 @@ export async function verifyPartnerHostedDestination(
   return check;
 }
 
+export function classifyPartnerHostedCommercialRoute(
+  binding: PartnerHostedCommercialBinding,
+  verification: AffiliateRouteHttpCheck | null,
+) {
+  const probeHealthy = verification?.status === "HEALTHY";
+  const exactGovernedMatch = binding.relationshipState === "MATCH" && binding.matchAuthority === "EXACT_GOVERNED_ROUTE";
+  const valid = exactGovernedMatch || (binding.relationshipState === "MATCH" && probeHealthy);
+  const reason = valid
+    ? null
+    : binding.reason ?? (verification ? `DESTINATION_INTEGRITY_${verification.reason}` : "CANONICAL_COMMERCIAL_ROUTE_REQUIRED");
+  return {
+    valid,
+    reason,
+    validity: valid ? "MATCH" as const
+      : binding.reason === "CANONICAL_COMMERCIAL_ROUTE_REQUIRED" ? "MISSING" as const
+        : binding.relationshipState === "MATCH" ? "REVIEW_REQUIRED" as const : "CONFLICT" as const,
+    destinationVerificationState: valid ? "VERIFIED" as const
+      : binding.relationshipState === "MATCH" && verification ? "FAILED" as const : "PENDING" as const,
+    verifiedFinalHost: probeHealthy ? verification?.finalHost ?? null : null,
+  };
+}
+
 export async function storePartnerHostedCreative(input: {
   parsed: ParsedPartnerHostedCreative;
   context: MediaResolvedContextRuntime;
@@ -254,12 +282,11 @@ export async function storePartnerHostedCreative(input: {
 }) {
   const { parsed, context, binding, verification, actor } = input;
   if (!context.persisted.casinoId) throw new Error("CASINO_ASSOCIATION_REQUIRED");
-  const verified = verification?.status === "HEALTHY";
-  const validationReason = parsed.description.contradiction
-    ?? binding.reason
-    ?? (verification && !verified ? `DESTINATION_INTEGRITY_${verification.reason}` : null);
-  const destinationVerificationState = verified ? "VERIFIED" as const
-    : verification ? "FAILED" as const : "PENDING" as const;
+  const commercialRoute = classifyPartnerHostedCommercialRoute(binding, verification);
+  const mediaValidationReason = parsed.description.contradiction;
+  const commercialRouteReason = commercialRoute.reason;
+  const destinationVerificationState = commercialRoute.destinationVerificationState;
+  const verifiedAt = commercialRoute.valid ? new Date() : null;
   const record = await prisma.$transaction(async (tx) => {
     const stored = await tx.partnerHostedCreative.upsert({
       where: { providerIdentityKey: parsed.providerIdentityKey },
@@ -297,17 +324,29 @@ export async function storePartnerHostedCreative(input: {
         destinationUrlHash: parsed.destinationUrlHash,
         destinationHost: parsed.destinationHost,
         expectedOperatorHost: binding.expectedOperatorHost,
-        verifiedFinalHost: verified ? verification?.finalHost : null,
+        verifiedFinalHost: commercialRoute.verifiedFinalHost,
         destinationVerificationState,
-        destinationVerifiedAt: verified ? new Date() : null,
+        destinationVerifiedAt: verifiedAt,
         destinationVerificationProvenance: verification ? json({
           method: verification.method, statusCode: verification.statusCode, redirectCount: verification.redirectCount,
           finalHost: verification.finalHost, result: verification.status, reason: verification.reason,
         }) : undefined,
-        validationState: validationReason ? "REVIEW_REQUIRED" : "VALIDATED",
-        validationReason,
+        validationState: mediaValidationReason ? "REVIEW_REQUIRED" : "VALIDATED",
+        validationReason: mediaValidationReason,
         sourceChecksum: parsed.sourceChecksum,
-        provenance: json({ source: "FOUNDER_PARTNER_INPUT", planChannel: actor.source, sourceEvidence: parsed.sourceEvidence, destinationEvidence: parsed.destinationEvidence }),
+        provenance: json({
+          source: "FOUNDER_PARTNER_INPUT",
+          planChannel: actor.source,
+          sourceEvidence: parsed.sourceEvidence,
+          destinationEvidence: parsed.destinationEvidence,
+          dimensionProvenance: parsed.dimensionProvenance,
+          commercialRoute: {
+            state: commercialRoute.validity,
+            reason: commercialRouteReason,
+            authority: binding.matchAuthority ?? null,
+            externalProbeAdvisory: verification ? { result: verification.status, reason: verification.reason, statusCode: verification.statusCode } : null,
+          },
+        }),
         createdBy: actor.actorId,
         updatedBy: actor.actorId,
       },
@@ -335,16 +374,29 @@ export async function storePartnerHostedCreative(input: {
         destinationUrlHash: parsed.destinationUrlHash,
         destinationHost: parsed.destinationHost,
         expectedOperatorHost: binding.expectedOperatorHost,
-        verifiedFinalHost: verified ? verification?.finalHost : null,
+        verifiedFinalHost: commercialRoute.verifiedFinalHost,
         destinationVerificationState,
-        destinationVerifiedAt: verified ? new Date() : null,
+        destinationVerifiedAt: verifiedAt,
         destinationVerificationProvenance: verification ? json({
           method: verification.method, statusCode: verification.statusCode, redirectCount: verification.redirectCount,
           finalHost: verification.finalHost, result: verification.status, reason: verification.reason,
         }) : undefined,
-        validationState: validationReason ? "REVIEW_REQUIRED" : "VALIDATED",
-        validationReason,
+        validationState: mediaValidationReason ? "REVIEW_REQUIRED" : "VALIDATED",
+        validationReason: mediaValidationReason,
         sourceChecksum: parsed.sourceChecksum,
+        provenance: json({
+          source: "FOUNDER_PARTNER_INPUT",
+          planChannel: actor.source,
+          sourceEvidence: parsed.sourceEvidence,
+          destinationEvidence: parsed.destinationEvidence,
+          dimensionProvenance: parsed.dimensionProvenance,
+          commercialRoute: {
+            state: commercialRoute.validity,
+            reason: commercialRouteReason,
+            authority: binding.matchAuthority ?? null,
+            externalProbeAdvisory: verification ? { result: verification.status, reason: verification.reason, statusCode: verification.statusCode } : null,
+          },
+        }),
         active: true,
         archivedAt: null,
         updatedBy: actor.actorId,
@@ -360,13 +412,21 @@ export async function storePartnerHostedCreative(input: {
         metadata: json({
           provider: parsed.provider, sourceMode: parsed.sourceMode, providerIdentityKey: parsed.providerIdentityKey,
           destinationUrlHash: parsed.destinationUrlHash, destinationHost: parsed.destinationHost,
-          canonicalRouteId: binding.redirectSlugId, destinationVerificationState, validationReason,
+          canonicalRouteId: binding.redirectSlugId, destinationVerificationState,
+          mediaValidationReason, commercialRouteReason, matchAuthority: binding.matchAuthority ?? null,
         }),
       },
     });
     return stored;
   });
-  return { record, binding, verification };
+  return {
+    record,
+    binding,
+    verification,
+    mediaValidity: mediaValidationReason ? "REVIEW_REQUIRED" as const : "VALID" as const,
+    commercialRouteValidity: commercialRoute.validity,
+    commercialRouteReason,
+  };
 }
 
 export async function resolvePublishedCreativeDestination(input: {

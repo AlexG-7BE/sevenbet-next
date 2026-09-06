@@ -419,10 +419,10 @@ test("creative attribution is resolved only after canonical GEO and Production r
   assert.equal(deniedCreativeReads, 0);
 });
 
-test("MCP surface remains exactly five Media tools and four Commercial tools with no publish action", async () => {
+test("MCP surface has six Media tools and four Commercial tools with no publish action", async () => {
   const { mediaMcpTools } = await import("../lib/mcp/media/server");
   const { commercialMcpTools } = await import("../lib/mcp/commercial/server");
-  assert.equal(mediaMcpTools.length, 5);
+  assert.equal(mediaMcpTools.length, 6);
   assert.equal(commercialMcpTools.length, 4);
   assert.equal([...mediaMcpTools, ...commercialMcpTools].some((tool) => /publish/i.test(tool.name)), false);
   assert.match(mediaMcpTools[0].description, /partner-hosted/);
