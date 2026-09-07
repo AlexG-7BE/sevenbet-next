@@ -75,7 +75,7 @@ test("reconciliation re-evaluates the canonical tracking candidate instead of pi
 
 test("reconciliation versions its idempotency key when payload semantics change", async () => {
   const source = await readFile(new URL("scripts/market-activation-v2.ts", root), "utf8");
-  assert.match(source, /const RECONCILIATION_SEMANTICS = "CANONICAL-CANDIDATE-RESELECTION-V2"/);
+  assert.match(source, /const RECONCILIATION_SEMANTICS = "CANONICAL-CANDIDATE-RESELECTION-V3"/);
   const reconcile = source.match(/async function reconcile[\s\S]*?async function schemaAvailable/)?.[0] ?? "";
   assert.match(reconcile, /reconcile:\$\{RECONCILIATION_SEMANTICS\}:\$\{record\.id\}:from-version-\$\{record\.version\}/);
   assert.doesNotMatch(reconcile, /reconcile:\$\{record\.id\}:from-version-\$\{record\.version\}/);
@@ -98,4 +98,14 @@ test("Production build is DB-first and checksum-verifies the canonical activatio
   assert.match(casinoMarketGuard, /productionEligible authority without a matching canonical MarketActivation projection/);
   assert.doesNotMatch(casinoMarketGuard, /authority\.eligible !== 0n/);
   assert.match(ciWorkflow, /npm run market-activation:postgres-test/);
+});
+
+test("Production media bootstrap never overwrites existing canonical facts or compatibility state", async () => {
+  const source = await readFile(new URL("scripts/bga-media-first-casino-bootstrap-01.ts", root), "utf8");
+  const ensureBaseRows = source.match(/async function ensureBaseRows[\s\S]*?async function ensureAssignmentsAndPublish/)?.[0] ?? "";
+  const upserts = ensureBaseRows.match(/\.upsert\(/g) ?? [];
+  const createOnlyUpdates = ensureBaseRows.match(/update:\s*\{\}/g) ?? [];
+  assert.ok(upserts.length > 0);
+  assert.equal(createOnlyUpdates.length, upserts.length, "every existing bootstrap row must be preserved");
+  assert.match(ensureBaseRows, /must never overwrite facts or compatibility state now owned by/);
 });

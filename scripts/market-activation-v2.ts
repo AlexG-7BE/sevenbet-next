@@ -16,7 +16,10 @@ import { partnerRouteService } from "../lib/services/partner-route.service";
 import { prisma } from "../lib/db/prisma";
 
 const RELEASE = MARKET_ACTIVATION_CONTROLLER_VERSION;
-const RECONCILIATION_SEMANTICS = "CANONICAL-CANDIDATE-RESELECTION-V2";
+// V3 is a one-time reconciliation epoch for repairing compatibility-state drift
+// caused by the retired Production media bootstrap writer. Canonical state may
+// be unchanged, so the prior V2 idempotency keys cannot safely drive this repair.
+const RECONCILIATION_SEMANTICS = "CANONICAL-CANDIDATE-RESELECTION-V3";
 const BASE_MIGRATION = "0031_market_activation_v2";
 const MIGRATION = "0032_market_activation_global_fallback";
 const GLOBAL_FALLBACK_SHADOW_COUNTRY = "KZ";
