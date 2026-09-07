@@ -129,7 +129,7 @@ export function isDraftMediaAssignmentSubjectState(
 ): state is MediaAssignmentSubjectState {
   if (!state) return false;
   if (state.subjectType === "AFFILIATE_OFFER") {
-    return state.subjectStatus === AffiliateStatus.DRAFT
+    return (state.subjectStatus === AffiliateStatus.DRAFT || state.subjectStatus === AffiliateStatus.ACTIVE)
       && (state.casinoStatus === EditorialStatus.DRAFT || state.casinoStatus === EditorialStatus.PUBLISHED);
   }
   return state.casinoStatus === EditorialStatus.DRAFT && state.subjectStatus === EditorialStatus.DRAFT;
