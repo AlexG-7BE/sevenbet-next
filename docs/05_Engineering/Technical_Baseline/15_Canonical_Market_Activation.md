@@ -79,8 +79,8 @@ bound `CasinoCountry` domain and classifies unexpected destinations before
 CDN challenges. Market-profile contradictions block activation only when they
 concern runtime-critical identity/GEO/domain fields; licence and incomplete
 bonus-term contradictions remain preserved enrichment evidence. Public
-presentation consumes the same shared boundary, so enrichment contradictions
-cannot independently downgrade a canonical CTA.
+presentation uses the same boundary to explain informational state only when
+no canonical route exists; a governed canonical route is the final CTA result.
 
 **DETECTED:** the release reconciler does not replay the stored tracking-link
 binding as an explicit intent. Each reconciliation re-runs exact-market

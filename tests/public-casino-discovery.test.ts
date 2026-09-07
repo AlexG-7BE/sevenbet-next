@@ -7,11 +7,32 @@ import { visitActionUnavailableCopy } from "../lib/public-casino-discovery/visit
 import type { CasinoDiscoveryQuery, DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
+import { decidePublicCasinoDisposition } from "../lib/public-casino/presentation-disposition";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 import { commercialAuthorityForPresentation } from "../lib/market/product-context";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
+
+test("a governed canonical route is final presentation authority while evidence still explains informational state", () => {
+  const marketProfile = {
+    countryCode: "PE",
+    availability: "NOT_AVAILABLE",
+    evidence: [{ classification: "CONTRADICTION", fieldKeys: ["availability"] }],
+  } as never;
+  assert.deepEqual(decidePublicCasinoDisposition({
+    casinoId: "canonical-casino",
+    requestCountryCode: "PE",
+    marketProfile,
+    governedVisitAvailable: true,
+  }), { disposition: "PROMOTABLE", reasonCode: "EXACT_MARKET_AND_ROUTE_ELIGIBLE" });
+  assert.deepEqual(decidePublicCasinoDisposition({
+    casinoId: "canonical-casino",
+    requestCountryCode: "PE",
+    marketProfile,
+    governedVisitAvailable: false,
+  }), { disposition: "INFORMATIONAL_ONLY", reasonCode: "EXACT_MARKET_EVIDENCE_CONTRADICTED" });
+});
 
 function record(id: string, slug: string, title: string, patch: Record<string, unknown> = {}): PublishedCasinoSnapshotRecord {
   const snapshot = {

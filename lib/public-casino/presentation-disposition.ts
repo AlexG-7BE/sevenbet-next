@@ -47,6 +47,9 @@ export function decidePublicCasinoDisposition(input: {
       ? { disposition: "PROMOTABLE", reasonCode: "EXACT_MARKET_AND_ROUTE_ELIGIBLE" }
       : { disposition: "INFORMATIONAL_ONLY", reasonCode: "GLOBAL_IDENTITY_MARKET_PROFILE_MISSING" };
   }
+  if (input.governedVisitAvailable) {
+    return { disposition: "PROMOTABLE", reasonCode: "EXACT_MARKET_AND_ROUTE_ELIGIBLE" };
+  }
   if (marketEvidenceBlocksActivation(input.marketProfile.evidence)) {
     return { disposition: "INFORMATIONAL_ONLY", reasonCode: "EXACT_MARKET_EVIDENCE_CONTRADICTED" };
   }
@@ -54,11 +57,7 @@ export function decidePublicCasinoDisposition(input: {
     return { disposition: "INFORMATIONAL_ONLY", reasonCode: "EXACT_MARKET_UNAVAILABLE_INFORMATION_ONLY" };
   }
   if (input.marketProfile.availability !== "AVAILABLE") {
-    return input.governedVisitAvailable
-      ? { disposition: "PROMOTABLE", reasonCode: "EXACT_MARKET_AND_ROUTE_ELIGIBLE" }
-      : { disposition: "INFORMATIONAL_ONLY", reasonCode: "EXACT_MARKET_STATUS_UNKNOWN_INFORMATION_ONLY" };
+    return { disposition: "INFORMATIONAL_ONLY", reasonCode: "EXACT_MARKET_STATUS_UNKNOWN_INFORMATION_ONLY" };
   }
-  return input.governedVisitAvailable
-    ? { disposition: "PROMOTABLE", reasonCode: "EXACT_MARKET_AND_ROUTE_ELIGIBLE" }
-    : { disposition: "INFORMATIONAL_ONLY", reasonCode: "EXACT_MARKET_INFORMATION_ONLY" };
+  return { disposition: "INFORMATIONAL_ONLY", reasonCode: "EXACT_MARKET_INFORMATION_ONLY" };
 }
