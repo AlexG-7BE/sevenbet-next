@@ -80,7 +80,10 @@ async function ensureBaseRows(actorId: string) {
       createdBy: actorId,
       updatedBy: actorId,
     },
-    update: { active: true, updatedBy: actorId },
+    // This Production build bootstrap may create missing historical substrate,
+    // but it must never overwrite facts or compatibility state now owned by
+    // canonical MarketActivation reconciliation.
+    update: {},
   });
 
   for (const definition of definitions) {
@@ -117,18 +120,7 @@ async function ensureBaseRows(actorId: string) {
         createdBy: actorId,
         updatedBy: actorId,
       },
-      update: {
-        summary: definition.summary,
-        description: definition.description,
-        trackingMetadata: json({
-          release: RELEASE,
-          profilePublicationMode: "MEDIA_FIRST_PROVISIONAL",
-          factualEnrichmentPending: true,
-          commercialReferralAuthority: false,
-          mediaRenderOnlyWhenDestinationUnverified: true,
-        }),
-        updatedBy: actorId,
-      },
+      update: {},
     });
 
     await prisma.casinoSeo.upsert({
@@ -140,12 +132,7 @@ async function ensureBaseRows(actorId: string) {
         canonicalUrl: `https://b4gamble.com/casino/${definition.slug}`,
         robots: "noindex,follow",
       },
-      update: {
-        title: `${definition.title} Casino | B4GAMBLE`,
-        description: `${definition.title} casino profile on B4GAMBLE. Detailed factual review is being completed.`,
-        canonicalUrl: `https://b4gamble.com/casino/${definition.slug}`,
-        robots: "noindex,follow",
-      },
+      update: {},
     });
 
     for (const country of definition.countries) {
@@ -160,12 +147,7 @@ async function ensureBaseRows(actorId: string) {
           localWebsiteUrl: country.localWebsiteUrl,
           notes: `${RELEASE}: market identity only; detailed factual enrichment is pending.`,
         },
-        update: {
-          availability: "UNKNOWN",
-          localDomain: country.localDomain,
-          localWebsiteUrl: country.localWebsiteUrl,
-          notes: `${RELEASE}: market identity only; detailed factual enrichment is pending.`,
-        },
+        update: {},
       });
     }
 
@@ -195,7 +177,7 @@ async function ensureBaseRows(actorId: string) {
         createdBy: actorId,
         updatedBy: actorId,
       },
-      update: { casinoId, status: "DRAFT", updatedBy: actorId },
+      update: {},
     });
 
     await prisma.affiliateOffer.upsert({
@@ -219,14 +201,14 @@ async function ensureBaseRows(actorId: string) {
         createdBy: actorId,
         updatedBy: actorId,
       },
-      update: { status: "DRAFT", updatedBy: actorId },
+      update: {},
     });
 
     for (const country of definition.countries) {
       await prisma.affiliateOfferCountry.upsert({
         where: { offerId_countryCode: { offerId, countryCode: country.code } },
         create: { offerId, countryCode: country.code, mode: "ALLOW" },
-        update: { mode: "ALLOW" },
+        update: {},
       });
     }
 
@@ -248,7 +230,7 @@ async function ensureBaseRows(actorId: string) {
         createdBy: actorId,
         updatedBy: actorId,
       },
-      update: { destinationUrl: definition.canonicalTrackingUrl, trackingUrl: definition.canonicalTrackingUrl, active: true, updatedBy: actorId },
+      update: {},
     });
 
     for (const country of definition.countries) {
@@ -262,19 +244,14 @@ async function ensureBaseRows(actorId: string) {
           productionEligibilityEvidence: RELEASE,
           productionEligibilityNotes: "Media-first bootstrap only; no Production referral authority granted.",
         },
-        update: {
-          mode: "ALLOW",
-          productionEligible: false,
-          productionEligibilityEvidence: RELEASE,
-          productionEligibilityNotes: "Media-first bootstrap only; no Production referral authority granted.",
-        },
+        update: {},
       });
     }
 
     await prisma.affiliateRedirectSlug.upsert({
       where: { id: redirectId },
       create: { id: redirectId, slug: definition.routeSlug, casinoId, affiliateOfferId: offerId, active: true, createdBy: actorId, updatedBy: actorId },
-      update: { casinoId, affiliateOfferId: offerId, active: true, archivedAt: null, updatedBy: actorId },
+      update: {},
     });
 
     await prisma.commercialOpportunity.updateMany({ where: { id: definition.opportunityId }, data: { casinoId, updatedBy: actorId } });

@@ -1,9 +1,9 @@
 # Canonical Market Activation Technical Baseline
 
-**Evidence date:** 7 September 2026
+**Evidence date:** 8 September 2026
 **Scope:** active repository rooted at
 `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` and release candidate
-`codex/canonical-global-route-verification-repair-20260907`
+`codex/market-activation-bootstrap-authority-repair-20260907`
 **Authority:** RFC-042 and the explicit Founder execution authorization
 
 This baseline was produced after scanning the active repository while
@@ -111,6 +111,13 @@ no canonical route exists; a governed canonical route is the final CTA result.
 binding as an explicit intent. Each reconciliation re-runs exact-market
 candidate selection while retaining the governed redirect and offer identity.
 
+**DETECTED on the bootstrap-authority repair candidate:** reconciliation uses
+a one-time V3 payload epoch for compatibility-state repair. The new epoch is
+required because canonical versions can remain unchanged when only a legacy
+compatibility projection drifts, while the earlier V2 idempotency key may
+already have been consumed. Route, offer and GEO selection semantics remain
+canonical and unchanged.
+
 **DETECTED:** public Casino/offer route projection and `/r` use
 `MarketActivationRuntime`. Exact active bindings are revalidated for entity
 shape and credential-free HTTPS safety. No legacy CRM, activation packet,
@@ -138,6 +145,14 @@ creative tracking link to equal the activation's primary tracking link.
 
 **DETECTED:** no activation-result cache was added. Exact database reads own
 the initial runtime cutover.
+
+**DETECTED on the bootstrap-authority repair candidate:** the historical
+media-first Production build bootstrap is create-only for every existing
+network, Casino, SEO, market, programme, offer, offer-country, tracking,
+tracking-country and redirect row. It may create missing historical substrate,
+but no longer overwrites facts or compatibility state owned by
+`MarketActivation` reconciliation. A release regression test requires every
+upsert in that bootstrap boundary to retain an empty update arm.
 
 ## Production correction execution and recovery
 
@@ -190,6 +205,51 @@ was never committed, and its temporary deployment was removed. Production
 aliases remained on the restored safe deployment throughout. No registration,
 deposit, wager, purchase, conversion or other downstream action was performed.
 
+**DETECTED:** PR #190 merged as
+`54059d27a67f6a92247f5e883d63d8f5b9a32b7f`. Exact deployment
+`dpl_33s4di3cCkqAYctbEnJMc6RDFpUq` reached `READY`, its source revision was
+verified, and it was promoted to Production. All six migrated Casino pages
+returned HTTP 200 with their canonical CTA. Each public `/r` response returned
+HTTP 302 and its redacted destination checksum matched the governed campaign.
+A final IAD verification beginning at each live B4GAMBLE route confirmed six
+of six complete chains: one B4GAMBLE redirect, one Superfly redirect to the
+intended operator, and an HTTP 200 terminal response, with no cross-market
+destination.
+
+**DETECTED:** post-cutover projection checks matched the governed active sets:
+the six explicit global fallbacks in KZ, Betsson in PE in addition to those
+fallbacks, Betsafe in EE and LV in addition to those fallbacks, and no canonical
+commercial action in CL or GB. Inkabet PE remained correctly unavailable under
+its external challenge. Bonus actions did not leak inactive markets, GB policy
+remained closed, and the exact disabled Betsson CL row shadowed global fallback.
+
+**DETECTED:** a later Production build exposed a second legacy writer in
+`bga-media-first-casino-bootstrap-01.ts`. Its existing-row upsert arms reset the
+shared Betsafe programme and offer to `DRAFT`, producing two legacy-shadow
+mismatches (`41/43`) while the canonical runtime and public routes remained
+correct. The same writer had reset Inkabet compatibility state. This was an
+internal build-time authority defect, not a canonical data loss or partner
+failure.
+
+**DETECTED on PR #191:** the build bootstrap is now create-only and the V3
+reconciliation epoch is covered by regression tests. Agent Core, Quality,
+Database / Migration Verification, Build / Browser, Vercel Preview and Preview
+Comments all passed. The disposable PostgreSQL job includes migration and
+concurrency coverage; the browser job completed the full release suite.
+
+**DETECTED in the bounded Production proof:** multiple non-aliased
+Production-environment builds of the correction left the pre-repair database
+snapshot unchanged, proving the fixed bootstrap does not mutate existing rows.
+A nonce-protected, three-row allow-listed endpoint then reconciled Betsafe EE,
+Betsafe LV and Inkabet PE through the canonical controller. Betsafe EE/LV are
+`ACTIVE / HEALTHY` with active/published compatibility state. Inkabet PE has
+active/published internal programme and offer state but remains
+`BLOCKED_EXTERNAL / EXTERNAL_CHALLENGE`; its legacy eligibility is correctly
+false. The resulting shadow is `43/43` (37 exact plus six fallback), with zero
+mismatches. The endpoint and all of its non-aliased deployments were removed,
+and Production aliases remained on the verified PR #190 deployment during the
+proof.
+
 ## Classified release state
 
 **DETECTED:** local unit/type/regression checks and the full 31-migration
@@ -215,10 +275,15 @@ existing disposable 0031 database, and the repository's full staged harness
 applies all 32 migrations to an empty disposable database with replay
 idempotency.
 
-**PROPOSED:** complete repair PR CI and Preview verification, deploy the exact
-merge, reconcile the preserved six rows through the repaired controller and
-require a `43/43` exact-plus-fallback shadow with zero mismatches before
-restoring the canonical application read path.
+**DETECTED:** the final canonical inventory before the bootstrap-authority
+merge contains 11 unique Casino × GEO × Product rows with no duplicate
+identity: nine `ACTIVE / HEALTHY`, one Inkabet PE
+`BLOCKED_EXTERNAL / EXTERNAL_CHALLENGE`, and one Betsson CL `DISABLED`.
+Migrations `0031_market_activation_v2` and
+`0032_market_activation_global_fallback` are each complete exactly once with
+their repository checksums. The canonical application read path is already
+live; PR #191 is the bounded repair preventing future Production builds from
+rewriting its compatibility projection.
 
 **DETECTED:** current external terminal behavior for all six affiliate-bearing
 campaigns is healthy from the intended Production runtime. Full tracking URLs,
