@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { isIP } from "node:net";
 
 import { isPublicAddress } from "@/lib/affiliate-health/public-network-url";
-import type { MediaIngestPartnerBatchItem } from "@/lib/media-operations/contracts";
+import type { MediaIngestionContextInput, MediaIngestPartnerBatchItem } from "@/lib/media-operations/contracts";
 import { decodeHtmlEntities, safeUrlEvidence, type SafeUrlEvidence } from "@/lib/media-operations/parser";
 
 export const vettedPartnerProviders = ["SUPERFLY", "BANNERFLOW"] as const;
@@ -61,6 +61,67 @@ export interface ParsedPartnerHostedCreative {
   sourceEvidence: SafeUrlEvidence;
   destinationEvidence: SafeUrlEvidence;
   description: ParsedPartnerDescription;
+}
+
+export function applyPartnerHostedTargetingContext(
+  creative: ParsedPartnerHostedCreative,
+  context: Pick<MediaIngestionContextInput, "targetCountryCodes" | "creativeLanguage" | "creativeLanguageState">,
+) {
+  const description = { ...creative.description };
+  const notes: string[] = [];
+  const targetCountries = context.targetCountryCodes ?? [];
+
+  if (!description.contradiction && targetCountries.length) {
+    if (description.countryCode && !targetCountries.includes(description.countryCode)) {
+      throw new PartnerHostedCreativeParseError(
+        "Provider country metadata conflicts with the explicit target country context.",
+        "HOSTED_TARGET_COUNTRY_CONTRADICTION",
+      );
+    }
+    if (!description.countryCode && targetCountries.length > 1) {
+      throw new PartnerHostedCreativeParseError(
+        "One hosted creative without provider country metadata cannot be assigned to multiple target countries.",
+        "HOSTED_TARGET_COUNTRY_AMBIGUOUS",
+      );
+    }
+    if (!description.countryCode && targetCountries.length === 1) {
+      description.countryCode = targetCountries[0];
+      notes.push(`HOSTED_COUNTRY_FROM_EXPLICIT_TARGET_CONTEXT:${targetCountries[0]}`);
+    }
+  }
+
+  const requestedLanguageState = context.creativeLanguageState ?? "UNKNOWN";
+  if (requestedLanguageState === "EXPLICIT") {
+    if (!context.creativeLanguage) {
+      throw new PartnerHostedCreativeParseError(
+        "Explicit hosted creative language context requires a language code.",
+        "HOSTED_TARGET_LANGUAGE_INVALID",
+      );
+    }
+    if (description.languageCode && description.languageCode !== context.creativeLanguage) {
+      throw new PartnerHostedCreativeParseError(
+        "Provider language metadata conflicts with the explicit creative language context.",
+        "HOSTED_TARGET_LANGUAGE_CONTRADICTION",
+      );
+    }
+    if (!description.languageCode) {
+      description.languageCode = context.creativeLanguage;
+      description.languageState = "EXPLICIT";
+      notes.push(`HOSTED_LANGUAGE_FROM_EXPLICIT_TARGET_CONTEXT:${context.creativeLanguage}`);
+    }
+  } else if (requestedLanguageState === "NEUTRAL") {
+    if (description.languageCode || description.languageState === "EXPLICIT") {
+      throw new PartnerHostedCreativeParseError(
+        "Provider language metadata conflicts with neutral creative language context.",
+        "HOSTED_TARGET_LANGUAGE_CONTRADICTION",
+      );
+    }
+    description.languageCode = null;
+    description.languageState = "NEUTRAL";
+    notes.push("HOSTED_LANGUAGE_FROM_EXPLICIT_TARGET_CONTEXT:NEUTRAL");
+  }
+
+  return { creative: { ...creative, description }, notes };
 }
 
 const countryNames: Readonly<Record<string, string>> = {

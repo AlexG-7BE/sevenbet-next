@@ -8,6 +8,7 @@ import {
   type MediaIngestionPlan,
 } from "../lib/media-operations/contracts";
 import {
+  applyPartnerHostedTargetingContext,
   parsePartnerDescription,
   parsePartnerHostedCreative,
   PartnerHostedCreativeParseError,
@@ -15,6 +16,7 @@ import {
 import { classifyPartnerHostedCommercialRoute } from "../lib/media-operations/partner-hosted-repository";
 import { buildMediaPlacementPlan, scoreMediaPlacements } from "../lib/media-operations/planner";
 import { mediaBatchItemOutcome } from "../lib/media-operations/service";
+import { isDraftMediaAssignmentSubjectState } from "../lib/media-operations/repository";
 import { commercialCreativePresentationFamily } from "../lib/media/commercial-formats";
 import {
   MEDIA_OPERATIONS_BULK_TARGET_MIGRATION,
@@ -118,6 +120,59 @@ test("dimension provenance follows explicit fields, title patterns, then Descrip
   assert.deepEqual([explicit.width, explicit.height, explicit.dimensionProvenance], [300, 250, "NORMALIZED_SOURCE_FIELD"]);
   assert.deepEqual([title.width, title.height, title.dimensionProvenance], [728, 90, "TITLE_PATTERN"]);
   assert.deepEqual([description.width, description.height, description.dimensionProvenance], [596, 70, "DESCRIPTION_PATTERN"]);
+});
+
+test("explicit hosted targeting fills silent provider metadata and rejects contradictions or ambiguous fan-out", () => {
+  const parsed = parsePartnerHostedCreative(bannerflow(0), {
+    declaredWidth: 300,
+    declaredHeight: 250,
+    title: "Inkabet 300 x 250",
+  });
+  assert.ok(parsed);
+  if (!parsed) return;
+  const scoped = applyPartnerHostedTargetingContext(parsed, {
+    targetCountryCodes: ["PE"],
+    creativeLanguage: null,
+    creativeLanguageState: "NEUTRAL",
+  });
+  assert.equal(parsed.description.countryCode, null, "the parsed source evidence stays immutable");
+  assert.equal(parsed.description.languageState, "UNKNOWN");
+  assert.equal(scoped.creative.description.countryCode, "PE");
+  assert.equal(scoped.creative.description.languageState, "NEUTRAL");
+  assert.deepEqual(scoped.notes, [
+    "HOSTED_COUNTRY_FROM_EXPLICIT_TARGET_CONTEXT:PE",
+    "HOSTED_LANGUAGE_FROM_EXPLICIT_TARGET_CONTEXT:NEUTRAL",
+  ]);
+
+  const sweden = parsePartnerHostedCreative(bannerflow(1), {
+    declaredWidth: 300,
+    declaredHeight: 250,
+    title: "Betsson - SE - 300 x 250",
+  });
+  assert.ok(sweden);
+  assert.throws(
+    () => applyPartnerHostedTargetingContext(sweden!, { targetCountryCodes: ["PE"] }),
+    (error) => error instanceof PartnerHostedCreativeParseError && error.code === "HOSTED_TARGET_COUNTRY_CONTRADICTION",
+  );
+  assert.throws(
+    () => applyPartnerHostedTargetingContext(parsed, { targetCountryCodes: ["EE", "LV"] }),
+    (error) => error instanceof PartnerHostedCreativeParseError && error.code === "HOSTED_TARGET_COUNTRY_AMBIGUOUS",
+  );
+});
+
+test("draft media subject policy permits a draft offer below a published Casino without weakening Casino or CasinoBonus controls", () => {
+  assert.equal(isDraftMediaAssignmentSubjectState({
+    subjectType: "AFFILIATE_OFFER", casinoId: CASINO_ID, casinoStatus: "PUBLISHED", subjectStatus: "DRAFT",
+  }), true);
+  assert.equal(isDraftMediaAssignmentSubjectState({
+    subjectType: "AFFILIATE_OFFER", casinoId: CASINO_ID, casinoStatus: "PUBLISHED", subjectStatus: "ACTIVE",
+  }), false);
+  assert.equal(isDraftMediaAssignmentSubjectState({
+    subjectType: "CASINO", casinoId: CASINO_ID, casinoStatus: "PUBLISHED", subjectStatus: "PUBLISHED",
+  }), false);
+  assert.equal(isDraftMediaAssignmentSubjectState({
+    subjectType: "CASINO_BONUS", casinoId: CASINO_ID, casinoStatus: "PUBLISHED", subjectStatus: "DRAFT",
+  }), false);
 });
 
 test("mixed real-world dimensions classify and score by physical placement fit", () => {

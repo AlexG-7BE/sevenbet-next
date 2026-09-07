@@ -117,17 +117,35 @@ function hostedRecommendation(recommendation: MediaPlanRecommendation) {
   return Boolean(recommendation.sourceMode && recommendation.sourceMode !== "FIRST_PARTY_MEDIA");
 }
 
-async function subjectState(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation) {
+type MediaAssignmentSubjectState = {
+  subjectType: MediaPlanRecommendation["subjectType"];
+  casinoId: string;
+  casinoStatus: EditorialStatus;
+  subjectStatus: EditorialStatus | AffiliateStatus;
+};
+
+export function isDraftMediaAssignmentSubjectState(
+  state: MediaAssignmentSubjectState | null,
+): state is MediaAssignmentSubjectState {
+  if (!state) return false;
+  if (state.subjectType === "AFFILIATE_OFFER") {
+    return state.subjectStatus === AffiliateStatus.DRAFT
+      && (state.casinoStatus === EditorialStatus.DRAFT || state.casinoStatus === EditorialStatus.PUBLISHED);
+  }
+  return state.casinoStatus === EditorialStatus.DRAFT && state.subjectStatus === EditorialStatus.DRAFT;
+}
+
+async function subjectState(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation): Promise<MediaAssignmentSubjectState | null> {
   if (recommendation.subjectType === "CASINO") {
     const casino = await tx.casino.findUnique({ where: { id: recommendation.subjectId }, select: { id: true, status: true } });
-    return casino ? { casinoId: casino.id, casinoStatus: casino.status, subjectStatus: casino.status, offerStatus: null } : null;
+    return casino ? { subjectType: "CASINO", casinoId: casino.id, casinoStatus: casino.status, subjectStatus: casino.status } : null;
   }
   if (recommendation.subjectType === "CASINO_BONUS") {
     const bonus = await tx.casinoBonus.findUnique({ where: { id: recommendation.subjectId }, select: { casinoId: true, status: true, casino: { select: { status: true } } } });
-    return bonus ? { casinoId: bonus.casinoId, casinoStatus: bonus.casino.status, subjectStatus: bonus.status, offerStatus: null } : null;
+    return bonus ? { subjectType: "CASINO_BONUS", casinoId: bonus.casinoId, casinoStatus: bonus.casino.status, subjectStatus: bonus.status } : null;
   }
   const offer = await tx.affiliateOffer.findUnique({ where: { id: recommendation.subjectId }, select: { casinoId: true, status: true, casino: { select: { status: true } } } });
-  return offer ? { casinoId: offer.casinoId, casinoStatus: offer.casino.status, subjectStatus: offer.status, offerStatus: offer.status } : null;
+  return offer ? { subjectType: "AFFILIATE_OFFER", casinoId: offer.casinoId, casinoStatus: offer.casino.status, subjectStatus: offer.status } : null;
 }
 
 async function activeAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation): Promise<AssignmentIdentity | null> {
@@ -407,7 +425,7 @@ export class MediaIngestionRepository {
           skipped.push({ recommendationId: recommendation.id, reason: "CROP_SAFETY_REQUIRED" }); continue;
         }
         const state = await subjectState(tx, recommendation);
-        if (!state || state.casinoStatus !== EditorialStatus.DRAFT || state.subjectStatus !== EditorialStatus.DRAFT || (state.offerStatus && state.offerStatus !== AffiliateStatus.DRAFT)) {
+        if (!isDraftMediaAssignmentSubjectState(state)) {
           skipped.push({ recommendationId: recommendation.id, reason: "SUBJECT_NOT_DRAFT" }); continue;
         }
         if (hostedRecommendation(recommendation)) {
@@ -530,7 +548,7 @@ export class MediaIngestionRepository {
         if (selected && !selected.has(recommendation.id)) continue;
         if (!recommendation.appliedAssignmentId || recommendation.rolledBackAt) continue;
         const state = await subjectState(tx, recommendation);
-        if (!state || state.casinoStatus !== EditorialStatus.DRAFT || state.subjectStatus !== EditorialStatus.DRAFT || (state.offerStatus && state.offerStatus !== AffiliateStatus.DRAFT)) {
+        if (!isDraftMediaAssignmentSubjectState(state)) {
           skipped.push({ recommendationId: recommendation.id, reason: "SUBJECT_NOT_DRAFT" }); continue;
         }
         const reference = mediaIngestionAssignmentReference(plan.id, recommendation.id);

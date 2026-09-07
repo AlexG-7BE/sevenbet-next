@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { PrismaClient } from "@prisma/client";
 
-import { MEDIA_INGESTION_PLAN_VERSION, mediaIngestionPlanSchema, MEDIA_INGESTION_PLAN_KEY_PREFIX, type MediaIngestionPlan } from "../lib/media-operations/contracts";
+import { MEDIA_INGESTION_PLAN_VERSION, mediaIngestionAssignmentReference, mediaIngestionPlanSchema, MEDIA_INGESTION_PLAN_KEY_PREFIX, type MediaIngestionPlan } from "../lib/media-operations/contracts";
 import { mediaIngestionRepository } from "../lib/media-operations/repository";
 
 const ids = {
@@ -15,6 +15,10 @@ const ids = {
   explicitAssignment: "58000000-0000-4000-8000-000000000006",
   changedAssignment: "58000000-0000-4000-8000-000000000007",
   globalScopedAssignment: "58000000-0000-4000-8000-000000000008",
+  network: "58000000-0000-4000-8000-000000000009",
+  program: "58000000-0000-4000-8000-00000000000a",
+  offer: "58000000-0000-4000-8000-00000000000b",
+  offerAsset: "58000000-0000-4000-8000-00000000000c",
 };
 
 function assertDisposablePostgres() {
@@ -28,11 +32,61 @@ function assertDisposablePostgres() {
 async function cleanup(prisma: PrismaClient) {
   await prisma.siteSetting.deleteMany({ where: { key: { startsWith: MEDIA_INGESTION_PLAN_KEY_PREFIX } } });
   await prisma.casinoBonusMediaAssignment.deleteMany({ where: { casinoBonusId: ids.bonus } });
-  await prisma.mediaAsset.deleteMany({ where: { id: { in: [ids.asset, ids.oldAsset] } } });
+  await prisma.affiliateOfferMediaAssignment.deleteMany({ where: { affiliateOfferId: ids.offer } });
+  await prisma.mediaAsset.deleteMany({ where: { id: { in: [ids.asset, ids.oldAsset, ids.offerAsset] } } });
+  await prisma.affiliateOffer.deleteMany({ where: { id: ids.offer } });
+  await prisma.affiliateProgram.deleteMany({ where: { id: ids.program } });
+  await prisma.affiliateNetwork.deleteMany({ where: { id: ids.network } });
   await prisma.casinoBonus.deleteMany({ where: { id: ids.bonus } });
   await prisma.casinoVersion.deleteMany({ where: { casinoId: ids.casino } });
   await prisma.casino.deleteMany({ where: { id: ids.casino } });
   await prisma.adminUser.deleteMany({ where: { id: ids.actor } });
+}
+
+function affiliateOfferPlan(planId: string): MediaIngestionPlan {
+  const creativeId = `${planId.slice(0, -1)}7`;
+  const recommendationId = `${planId.slice(0, -1)}8`;
+  return mediaIngestionPlanSchema.parse({
+    version: MEDIA_INGESTION_PLAN_VERSION,
+    id: planId,
+    snippetChecksum: "e".repeat(64),
+    state: "PLANNED",
+    dryRun: false,
+    actorId: ids.actor,
+    source: "ADMIN",
+    providerReference: "published-casino-draft-offer-fixture",
+    requestedContext: { casinoId: ids.casino, creativeLanguageState: "UNKNOWN" },
+    resolvedContext: {
+      state: "RESOLVED", source: "EXPLICIT", casinoId: ids.casino, casinoSlug: "media-offer-postgres",
+      casinoTitle: "Media offer PostgreSQL", bonusId: null, bonusTitle: null, affiliateOfferId: ids.offer,
+      opportunityId: null, partnerIdentifier: "fixture", trackingDestinationState: "NOT_PRESENT", notes: [],
+    },
+    creatives: [{
+      id: creativeId, sourceKind: "IMAGE",
+      source: { urlHash: "f".repeat(64), origin: "https://cdn.example", pathname: "/offer.png", queryKeys: [] },
+      anchor: null, declaredWidth: 300, declaredHeight: 250, alt: "Fixture offer", title: null,
+      providerDomain: "cdn.example", providerReference: "creative:offer-fixture", identifiers: {},
+      languageClues: [], marketClues: [], currencyClues: [], warnings: [],
+    }],
+    unsupportedElements: [],
+    assets: [{
+      creativeId, state: "INGESTED", assetId: ids.offerAsset, firstPartyUrl: "https://media.example/offer.png",
+      checksum: "1".repeat(64), mimeType: "image/png", width: 300, height: 250, animated: false,
+      formatFamily: "CARD", resolvedSource: { urlHash: "2".repeat(64), origin: "https://cdn.example", pathname: "/offer.png", queryKeys: [] },
+      redirectCount: 0, duplicate: false, failureCode: null, failureMessage: null,
+    }],
+    semanticResults: [],
+    recommendations: [{
+      id: recommendationId, creativeId, assetId: ids.offerAsset, subjectType: "AFFILIATE_OFFER", subjectId: ids.offer,
+      placement: "BONUS_LISTING_CARD", variant: "DEFAULT", countryCode: null, languageCode: null,
+      renderingMode: "CONTAIN", cropSafe: false, state: "AUTO_ASSIGN_DRAFT", score: 98, offerMatch: "MATCH",
+      marketHandling: "GLOBAL_SAFE", existingAssignmentId: null, existingComparison: "NEW_SLOT", replacementEligible: false,
+      reasons: ["PostgreSQL draft offer fixture"], appliedAssignmentId: null, replacedAssignmentId: null,
+      appliedAt: null, rolledBackAt: null,
+    }],
+    warnings: [], operations: [], createdAt: "2026-09-07T00:00:00.000Z", updatedAt: "2026-09-07T00:00:00.000Z",
+    analyzedAt: "2026-09-07T00:00:00.000Z",
+  });
 }
 
 function plan(
@@ -153,6 +207,73 @@ test("PostgreSQL persists plans, applies only draft assignments, protects explic
     const audits = await prisma.auditLog.findMany({ where: { actorId: ids.actor, entityType: { in: ["media-ingestion-plan", "media-assignment"] } } });
     assert.ok(audits.length >= 8);
     assert.ok(audits.every((entry) => entry.metadata && JSON.stringify(entry.metadata).includes("planId") && JSON.stringify(entry.metadata).includes("checksum") && JSON.stringify(entry.metadata).includes("operation")));
+  } finally {
+    await cleanup(prisma);
+    await prisma.$disconnect();
+  }
+});
+
+test("PostgreSQL applies and rolls back a draft AffiliateOffer below a published Casino while retaining offer-state and plan-ownership guards", async () => {
+  assertDisposablePostgres();
+  const prisma = new PrismaClient();
+  try {
+    await cleanup(prisma);
+    await prisma.adminUser.create({ data: { id: ids.actor, email: "media-offer-postgres@invalid.example", name: "Media offer fixture", role: "SUPER_ADMIN" } });
+    await prisma.casino.create({ data: {
+      id: ids.casino, slug: "media-offer-postgres", title: "Media offer PostgreSQL", domain: "media-offer-postgres.invalid",
+      status: "PUBLISHED", publishedVersion: 1, draftVersion: 2, publishedAt: new Date(), createdBy: "fixture", updatedBy: "fixture",
+    } });
+    await prisma.affiliateNetwork.create({ data: {
+      id: ids.network, name: "Media offer fixture network", slug: "media-offer-fixture-network", createdBy: "fixture", updatedBy: "fixture",
+    } });
+    await prisma.affiliateProgram.create({ data: {
+      id: ids.program, networkId: ids.network, casinoId: ids.casino, name: "Media offer fixture program", operator: "Fixture",
+      createdBy: "fixture", updatedBy: "fixture",
+    } });
+    await prisma.affiliateOffer.create({ data: {
+      id: ids.offer, programId: ids.program, casinoId: ids.casino, internalName: "Media offer fixture",
+      publicLabel: "Media offer fixture", offerType: "WELCOME", createdBy: "fixture", updatedBy: "fixture",
+    } });
+    await prisma.mediaAsset.create({ data: {
+      id: ids.offerAsset, type: "AFFILIATE_CREATIVE", storageKey: `media-offer-postgres/${ids.offerAsset}`,
+      publicUrl: "https://media.example/offer.png", originalFilename: "offer.png", mimeType: "image/png",
+      width: 300, height: 250, sizeBytes: 100, altText: "Fixture offer", checksum: "1".repeat(64),
+      createdBy: "fixture", casinoId: ids.casino,
+    } });
+
+    const first = affiliateOfferPlan("58000000-0000-4000-8000-000000000050");
+    await mediaIngestionRepository.savePlan(first, { operation: "TEST_CREATE", result: { fixture: true } });
+    const applied = await mediaIngestionRepository.applyDraftPlan({ planId: first.id, replaceExisting: false, actorId: ids.actor, source: "ADMIN" });
+    assert.equal(applied.applied, 1);
+    const assignment = await prisma.affiliateOfferMediaAssignment.findFirstOrThrow({ where: { affiliateOfferId: ids.offer, active: true } });
+    assert.equal(assignment.reference, mediaIngestionAssignmentReference(first.id, first.recommendations[0].id));
+    assert.equal((await prisma.casino.findUniqueOrThrow({ where: { id: ids.casino } })).status, "PUBLISHED");
+
+    await prisma.affiliateOffer.update({ where: { id: ids.offer }, data: { status: "ACTIVE" } });
+    const nonDraft = affiliateOfferPlan("58000000-0000-4000-8000-000000000060");
+    await mediaIngestionRepository.savePlan(nonDraft, { operation: "TEST_CREATE", result: { fixture: true } });
+    const blockedApply = await mediaIngestionRepository.applyDraftPlan({ planId: nonDraft.id, replaceExisting: false, actorId: ids.actor, source: "ADMIN" });
+    assert.equal(blockedApply.applied, 0);
+    assert.ok(blockedApply.skipped.some((item) => item.reason === "SUBJECT_NOT_DRAFT"));
+    const blockedRollback = await mediaIngestionRepository.rollbackDraftPlan({ planId: first.id, actorId: ids.actor, source: "ADMIN" });
+    assert.equal(blockedRollback.rolledBack, 0);
+    assert.ok(blockedRollback.skipped.some((item) => item.reason === "SUBJECT_NOT_DRAFT"));
+
+    await prisma.affiliateOffer.update({ where: { id: ids.offer }, data: { status: "DRAFT" } });
+    await prisma.affiliateOfferMediaAssignment.update({ where: { id: assignment.id }, data: { reference: "Foreign editorial assignment" } });
+    const foreignRollback = await mediaIngestionRepository.rollbackDraftPlan({ planId: first.id, actorId: ids.actor, source: "ADMIN" });
+    assert.equal(foreignRollback.rolledBack, 0);
+    assert.ok(foreignRollback.skipped.some((item) => item.reason === "PLAN_OWNED_ASSIGNMENT_NOT_FOUND"));
+    assert.ok(await prisma.affiliateOfferMediaAssignment.findUnique({ where: { id: assignment.id } }));
+
+    await prisma.affiliateOfferMediaAssignment.update({
+      where: { id: assignment.id },
+      data: { reference: mediaIngestionAssignmentReference(first.id, first.recommendations[0].id) },
+    });
+    const rolledBack = await mediaIngestionRepository.rollbackDraftPlan({ planId: first.id, actorId: ids.actor, source: "ADMIN" });
+    assert.equal(rolledBack.rolledBack, 1);
+    assert.equal(await prisma.affiliateOfferMediaAssignment.count({ where: { affiliateOfferId: ids.offer } }), 0);
+    assert.equal(await prisma.mediaAsset.count({ where: { id: ids.offerAsset } }), 1);
   } finally {
     await cleanup(prisma);
     await prisma.$disconnect();
