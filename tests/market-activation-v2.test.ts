@@ -396,6 +396,7 @@ test("route verification uses the stored exact-market expectation and persists n
     marketActivation: {
       findUnique: async () => ({
         countryCode: "PE",
+        casino: { domain: "operator.example", websiteUrl: "https://operator.example/" },
         marketProfile: { localDomain: "operator.example", localWebsiteUrl: "https://operator.example/casino" },
         primaryTrackingLink: {
           trackingUrl: "https://tracking.example/click",
@@ -445,6 +446,7 @@ test("route verification derives an exact market destination from imported evide
     marketActivation: {
       findUnique: async () => ({
         countryCode: "EE",
+        casino: { domain: "betsafe.com", websiteUrl: "https://www.betsafe.com/" },
         marketProfile: { localDomain: "betsafe.ee", localWebsiteUrl: "https://www.betsafe.ee/" },
         primaryTrackingLink: {
           trackingUrl: "https://record.betsafe.example/click",
@@ -471,4 +473,61 @@ test("route verification derives an exact market destination from imported evide
     allowWwwEquivalentFinalHost: true,
   });
   assert.equal(observed[0]?.inspectTerminalContent, true);
+});
+
+test("global fallback verification uses the canonical Casino host instead of the affiliate tracker host", async () => {
+  const verifier = new MarketActivationRouteVerifier({
+    marketActivation: {
+      findUnique: async () => ({
+        countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+        casino: { domain: "casino.example", websiteUrl: "https://www.casino.example/" },
+        marketProfile: null,
+        primaryTrackingLink: {
+          trackingUrl: "https://tracking.example/campaign",
+          destinationUrl: "https://tracking.example/campaign",
+          metadata: {},
+        },
+      }),
+    },
+  } as never, async (input) => {
+    assert.deepEqual(input.expectation, {
+      expectedFinalHost: "casino.example",
+      expectedPathPrefix: null,
+      requiredAttributionParameters: [],
+      allowWwwEquivalentFinalHost: true,
+    });
+    return { status: "HEALTHY", reason: "GET_FALLBACK_OK", method: "GET", statusCode: 200, durationMs: 2, redirectCount: 1, finalHost: "www.casino.example" };
+  });
+  assert.equal((await verifier.verify("activation", NOW)).status, "HEALTHY");
+});
+
+test("transport-only route verification failures are inconclusive rather than external blockers", async () => {
+  for (const reason of ["NETWORK_ERROR", "TIMEOUT"] as const) {
+    const verifier = new MarketActivationRouteVerifier({
+      marketActivation: {
+        findUnique: async () => ({
+          countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+          casino: { domain: "casino.example", websiteUrl: null },
+          marketProfile: null,
+          primaryTrackingLink: {
+            trackingUrl: "https://tracking.example/campaign",
+            destinationUrl: "https://tracking.example/campaign",
+            metadata: {},
+          },
+        }),
+      },
+    } as never, async () => ({
+      status: "BROKEN",
+      reason,
+      method: "GET",
+      statusCode: null,
+      durationMs: 12_000,
+      redirectCount: 0,
+      finalHost: null,
+    }));
+    await assert.rejects(
+      () => verifier.verify("activation", NOW),
+      /MARKET_ACTIVATION_ROUTE_VERIFICATION_INCONCLUSIVE/,
+    );
+  }
 });
