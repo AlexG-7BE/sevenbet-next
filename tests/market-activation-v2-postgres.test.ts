@@ -8,6 +8,7 @@ import {
   inspectCasinoMarket0025Release,
 } from "../lib/db/casino-market-0025-release";
 import { MarketActivationController } from "../lib/market-activation/controller";
+import { MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE } from "../lib/market-activation/contract";
 import { marketActivationRepository } from "../lib/market-activation/repository";
 import { marketActivationRuntime } from "../lib/market-activation/runtime";
 
@@ -19,6 +20,7 @@ const OFFER_ID = "a3100000-0000-4000-8000-000000000005";
 const TRACKING_ID = "a3100000-0000-4000-8000-000000000006";
 const REDIRECT_ID = "a3100000-0000-4000-8000-000000000007";
 const NOW = new Date("2031-01-15T00:00:00.000Z");
+const GLOBAL_BLOCKED_COUNTRIES = ["DK", "ES", "FI", "NO", "CL", "SE", "GB"];
 const marketActivationController = new MarketActivationController(marketActivationRepository, {
   verify: async (_activationId, checkedAt = new Date()) => ({
     status: "HEALTHY",
@@ -231,6 +233,62 @@ test("PostgreSQL controller is idempotent, concurrent, reconciling, exact-market
     assert.equal(disabled.activation.status, "DISABLED");
     assert.equal((await marketActivationRuntime.listActive([CASINO_ID], "CL")).length, 0);
     assert.equal((await marketActivationRuntime.listActive([CASINO_ID], "PE")).length, 1);
+
+    await prisma.affiliateProgram.update({
+      where: { id: PROGRAM_ID },
+      data: {
+        supportedCountries: [],
+        metadata: {
+          commercialVisibility: {
+            authority: "CASINO-COMMERCIAL-VISIBILITY-03",
+            productionEligibleByDefault: true,
+            blockedCountries: GLOBAL_BLOCKED_COUNTRIES,
+          },
+        },
+      },
+    });
+    await prisma.affiliateOffer.update({ where: { id: OFFER_ID }, data: { geoMode: "BLOCK" } });
+    await prisma.affiliateTrackingLink.update({
+      where: { id: TRACKING_ID },
+      data: {
+        geoMode: "BLOCK",
+        metadata: {
+          commercialVisibility: {
+            authority: "CASINO-COMMERCIAL-VISIBILITY-03",
+            productionEligibleByDefault: true,
+            blockedCountries: GLOBAL_BLOCKED_COUNTRIES,
+            evidenceId: "TEST:GLOBAL-DEFAULT",
+            canonicalUrlSha256: "b".repeat(64),
+          },
+        },
+      },
+    });
+    const globalFallback = await marketActivationController.activateCasinoInGeo({
+      casinoId: CASINO_ID,
+      countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+      product: "CASINO",
+      redirectSlugId: REDIRECT_ID,
+      affiliateOfferId: OFFER_ID,
+      primaryTrackingLinkId: TRACKING_ID,
+      actorId: "market-activation-postgres-test",
+      origin: "BACKFILL",
+      reason: "Preserve an evidenced legacy global-default route canonically.",
+      sourceReferences: ["TEST:CASINO-COMMERCIAL-VISIBILITY-03:GLOBAL-DEFAULT"],
+      idempotencyKey: "postgres:global-fallback",
+    }, new Date(NOW.getTime() + 6_000));
+    assert.equal(globalFallback.activation.status, "ACTIVE");
+    assert.equal(globalFallback.activation.marketProfileId, null);
+    assert.equal(globalFallback.activation.routeVerificationStatus, "HEALTHY");
+    assert.equal((await marketActivationRuntime.listActive([CASINO_ID], "KZ"))[0]?.id, globalFallback.activation.id);
+    assert.equal((await marketActivationRuntime.resolveRedirect("market-activation-test-casino", "KZ"))?.id, globalFallback.activation.id);
+    assert.equal((await marketActivationRuntime.listActive([CASINO_ID], "PE"))[0]?.id, first.activation.id, "an exact activation must win over the fallback");
+    assert.equal((await marketActivationRuntime.listActive([CASINO_ID], "CL")).length, 0, "an exact disabled row must shadow the fallback");
+    assert.equal((await marketActivationRuntime.listActive([CASINO_ID], "GB")).length, 0, "global Founder evidence must preserve the GB deny set");
+    assert.equal((await marketActivationRuntime.listActive([CASINO_ID], MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE)).length, 0, "ZZ is not a request GEO");
+    assert.deepEqual(await inspectCasinoMarket0025Release(prisma), { state: "already_applied_and_verified" });
+
+    await prisma.affiliateTrackingLink.update({ where: { id: TRACKING_ID }, data: { metadata: {} } });
+    assert.equal((await marketActivationRuntime.listActive([CASINO_ID], "KZ")).length, 1, "legacy metadata drift must not become a second runtime authority");
   } finally {
     await cleanup(prisma);
     await prisma.$disconnect();

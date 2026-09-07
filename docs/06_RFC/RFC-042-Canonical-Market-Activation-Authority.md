@@ -22,6 +22,21 @@ The initial product is `CASINO`. The database admits exactly one canonical row
 for `(casinoId, countryCode, product)`. Exact-market activation never implies a
 global or neighbouring-market activation.
 
+One narrow migration-compatibility scope preserves six pre-existing routes
+whose Founder evidence explicitly established `CASINO-COMMERCIAL-VISIBILITY-03`
+global-default authority. Such a row uses the ISO private-use sentinel `ZZ`,
+has no factual `CasinoCountry`, and stores its normalized denied-country scope
+on `MarketActivation`. It may be established only by Founder, backfill or
+reconciler origin after validating the complete programme/link evidence and
+global GEO shape. It is not a response to a country-specific activation intent
+and is not a general global-activation API.
+
+For every real request GEO, any exact row for the Casino takes precedence over
+the `ZZ` fallback, including an exact `PREPARING`, `BLOCKED_EXTERNAL` or
+`DISABLED` row. The fallback is considered only where no exact row exists and
+never applies to a country in its canonical deny scope. `ZZ` itself is not a
+request GEO.
+
 This decision changes internal commercial authority only. Trusted request-GEO
 resolution, explicit jurisdiction prohibition, GB operator/legal controls,
 safe-URL and network protections, Programme/commercial data separation, and
@@ -50,8 +65,10 @@ publication remain their existing controlled operations; an activation waits
 in `PREPARING` rather than inventing unknown licences, offer terms, URLs or
 media.
 
-An `ACTIVE` row binds the exact market profile, affiliate offer, primary
-tracking link and internal redirect route. It records a deterministic
+An exact `ACTIVE` row binds the exact market profile, affiliate offer, primary
+tracking link and internal redirect route. A compatibility `ZZ` row binds the
+same commercial objects, keeps `marketProfileId` null, and carries the
+controller-normalized denied-country scope. Both record a deterministic
 reconciliation fingerprint, current healthy route verification, version,
 actor, source references, timestamps and structured diagnostics. An immutable
 intent/event history records accepted intent, preparation, reconciliation,
@@ -91,6 +108,13 @@ identity but re-evaluates the primary tracking candidate. A previously selected
 link is historical state, not an explicit Founder pin, and cannot prevent a
 newer exact-market candidate from replacing it.
 
+For a `ZZ` compatibility backfill, the controller accepts only an existing
+global-default route with an empty programme country allow-list, `GLOBAL` or
+deny-list offer/link GEO modes, complete Founder authority/evidence hashes and
+the required historic deny set. It normalizes that policy into
+`MarketActivation.globalFallbackBlockedCountries`; runtime does not reread the
+legacy metadata as an independent authority.
+
 Duplicate keys replay the original intent. A reused key with a different
 payload is rejected. Optimistic versions, exact unique constraints,
 Serializable transactions and bounded conflict retries prevent duplicate
@@ -102,9 +126,11 @@ drift causes only the required reconciliation and re-verification.
 
 Public Casino pages, directory CTAs, public offer action projections,
 commercial media action bindings and `/r/{slug}` resolve an exact active
-`MarketActivation` plus its bound objects. Runtime validates relational shape
-and credential-free HTTPS safety, but does not rerun legacy commercial
-governance.
+`MarketActivation` plus its bound objects, or the explicit `ZZ` compatibility
+row only when no exact row exists and the real request country is outside its
+canonical deny scope. Runtime validates relational shape and credential-free
+HTTPS safety, but does not rerun legacy commercial governance or reread the
+global-evidence metadata.
 
 The redirect resolver still applies trusted GEO and jurisdiction controls. GB
 also retains the cumulative operator/legal safety chain required by RFC-014,
@@ -127,6 +153,7 @@ Legacy data is preserved. Its post-cutover role is one-way:
 | programme / offer workflow | controller-maintained compatibility projection |
 | `AffiliateTrackingLinkCountry.productionEligible` | deprecated stored compatibility projection |
 | PartnerRoute projection | migration/shadow/health input; bound route dependency |
+| Founder global-default metadata | one-time/reconciliation input for the bounded `ZZ` compatibility rows; never a direct runtime gate |
 | public Casino/offer projections | editorial/read-model input, never final authority |
 | Media Operations | creative provenance and assignment input, never commercial authority |
 
@@ -140,14 +167,23 @@ Migration `0031_market_activation_v2` is additive. It creates the canonical,
 intent and event tables plus enums, checks, foreign keys and exact unique
 indexes. It drops or rewrites no legacy data.
 
+Migration `0032_market_activation_global_fallback` adds the canonical fallback
+deny scope and adjusts only the active-binding check so an active `ZZ` row may
+omit a market profile. Database checks require exact rows to keep the fallback
+scope empty, require `ZZ` rows to omit a factual market profile, and require
+every active fallback to contain the full historic `DK/ES/FI/NO/CL/SE/GB`
+deny set. The migration performs no data rewrite and drops no table or column.
+
 The guarded release executor:
 
 1. proves environment, Vercel project/team, database fingerprint/resource and
    repository SHA;
 2. applies the exact migration once;
-3. snapshots currently working legacy exact-market routes and backfills them;
+3. snapshots currently working legacy exact-market routes and the exact six
+   reviewed global-default routes, then backfills them;
 4. applies the Founder golden desired states;
-5. runs legacy/canonical shadow comparison and refuses mismatches;
+5. runs legacy/canonical shadow comparison for every persisted exact profile
+   plus the six global fallbacks under KZ, and refuses mismatches;
 6. reconciles every canonical row idempotently; and
 7. verifies bindings, healthy route checks, exact-market media and the Betsson
    Chile negative invariant.

@@ -394,7 +394,7 @@ export function assertCasinoMarket0025CommercialFirewall(snapshot: CasinoMarket0
     || snapshot.orphanEligibleRouteCountries !== 0n
     || snapshot.ineligibleRouteCountries + snapshot.eligibleRouteCountries !== snapshot.routeCountries
   ) {
-    releaseFail("UNEXPECTED_PRODUCTION_ELIGIBILITY", "Casino market steady state found productionEligible authority without an exact canonical MarketActivation projection.");
+    releaseFail("UNEXPECTED_PRODUCTION_ELIGIBILITY", "Casino market steady state found productionEligible authority without a matching canonical MarketActivation projection.");
   }
 }
 

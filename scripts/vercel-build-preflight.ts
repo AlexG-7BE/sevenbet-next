@@ -34,7 +34,8 @@ import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/releas
 
 const BASELINE_MIGRATION = "0023_mcp_dcr_runtime_compat_fix";
 const TARGET_MIGRATION = "0024_programme_access_acceptance";
-const MARKET_ACTIVATION_TARGET_MIGRATION = "0031_market_activation_v2";
+const MARKET_ACTIVATION_BASE_MIGRATION = "0031_market_activation_v2";
+const MARKET_ACTIVATION_TARGET_MIGRATION = "0032_market_activation_global_fallback";
 
 type MigrationRow = {
   migration_name: string;
@@ -286,7 +287,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -316,14 +317,16 @@ async function maybeApplyProgrammeAccessMigration() {
     }
     const pending = repositoryMigrations.filter((name) => !applied.has(name));
     const expectedPending = !applied.has(GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION)
-      ? [GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
+      ? [GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
       : !applied.has(VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION)
-        ? [VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
+        ? [VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
         : !applied.has(MEDIA_OPERATIONS_BULK_TARGET_MIGRATION)
-          ? [MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
-          : !applied.has(MARKET_ACTIVATION_TARGET_MIGRATION)
-            ? [MARKET_ACTIVATION_TARGET_MIGRATION]
-            : [];
+          ? [MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
+          : !applied.has(MARKET_ACTIVATION_BASE_MIGRATION)
+            ? [MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
+            : !applied.has(MARKET_ACTIVATION_TARGET_MIGRATION)
+              ? [MARKET_ACTIVATION_TARGET_MIGRATION]
+              : [];
 
     if (
       pending.length !== expectedPending.length
@@ -366,14 +369,54 @@ async function maybeApplyProgrammeAccessMigration() {
       }
     }
     if (applied.has(MARKET_ACTIVATION_TARGET_MIGRATION)) {
+      assertChecksum(completedByName.get(MARKET_ACTIVATION_BASE_MIGRATION), MARKET_ACTIVATION_BASE_MIGRATION);
       assertChecksum(completedByName.get(MARKET_ACTIVATION_TARGET_MIGRATION), MARKET_ACTIVATION_TARGET_MIGRATION);
-      const [canonicalSchema] = await prisma.$queryRawUnsafe<Array<{ activation: string | null; intent: string | null; event: string | null }>>(`
+      const [canonicalSchema] = await prisma.$queryRawUnsafe<Array<{
+        activation: string | null;
+        intent: string | null;
+        event: string | null;
+        global_fallback_scope: boolean;
+        global_fallback_active_binding: boolean;
+      }>>(`
         SELECT
           to_regclass('public."MarketActivation"')::text AS activation,
           to_regclass('public."MarketActivationIntent"')::text AS intent,
-          to_regclass('public."MarketActivationEvent"')::text AS event
+          to_regclass('public."MarketActivationEvent"')::text AS event,
+          EXISTS (
+            SELECT 1
+            FROM pg_constraint AS con
+            JOIN pg_class AS rel ON rel.oid = con.conrelid
+            JOIN pg_namespace AS ns ON ns.oid = rel.relnamespace
+            WHERE ns.nspname = 'public'
+              AND rel.relname = 'MarketActivation'
+              AND con.conname = 'MarketActivation_global_fallback_scope_check'
+              AND pg_get_constraintdef(con.oid) LIKE '%"countryCode" <> ''ZZ''%'
+              AND pg_get_constraintdef(con.oid) LIKE '%"marketProfileId" IS NULL%'
+          ) AS global_fallback_scope,
+          EXISTS (
+            SELECT 1
+            FROM pg_constraint AS con
+            JOIN pg_class AS rel ON rel.oid = con.conrelid
+            JOIN pg_namespace AS ns ON ns.oid = rel.relnamespace
+            WHERE ns.nspname = 'public'
+              AND rel.relname = 'MarketActivation'
+              AND con.conname = 'MarketActivation_active_binding_check'
+              AND pg_get_constraintdef(con.oid) LIKE '%"countryCode" = ''ZZ''%'
+              AND pg_get_constraintdef(con.oid) LIKE '%"globalFallbackBlockedCountries"%'
+              AND pg_get_constraintdef(con.oid) LIKE '%''DK''%'
+              AND pg_get_constraintdef(con.oid) LIKE '%''ES''%'
+              AND pg_get_constraintdef(con.oid) LIKE '%''FI''%'
+              AND pg_get_constraintdef(con.oid) LIKE '%''NO''%'
+              AND pg_get_constraintdef(con.oid) LIKE '%''CL''%'
+              AND pg_get_constraintdef(con.oid) LIKE '%''SE''%'
+              AND pg_get_constraintdef(con.oid) LIKE '%''GB''%'
+          ) AS global_fallback_active_binding
       `);
-      marketActivationSchemaReady = Boolean(canonicalSchema?.activation && canonicalSchema.intent && canonicalSchema.event);
+      marketActivationSchemaReady = Boolean(canonicalSchema?.activation
+        && canonicalSchema.intent
+        && canonicalSchema.event
+        && canonicalSchema.global_fallback_scope
+        && canonicalSchema.global_fallback_active_binding);
       if (!marketActivationSchemaReady) throw new Error("Production migration guard found incomplete canonical MarketActivation schema.");
       writeEvent({
         event: "production_market_activation_preflight",

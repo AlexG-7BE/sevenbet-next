@@ -3,6 +3,19 @@ import { createHash } from "node:crypto";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 
 export const MARKET_ACTIVATION_CONTROLLER_VERSION = "MARKET-ACTIVATION-V2";
+// ISO 3166-1 reserves ZZ for private use. MarketActivation uses it only for a
+// pre-existing, explicitly evidenced global-default route. It is never a
+// factual CasinoCountry and exact country activations always take precedence.
+export const MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE = "ZZ";
+export const MARKET_ACTIVATION_GLOBAL_FALLBACK_REQUIRED_BLOCKED_COUNTRIES = [
+  "DK",
+  "ES",
+  "FI",
+  "NO",
+  "CL",
+  "SE",
+  "GB",
+] as const;
 
 export type MarketActivationProduct = "CASINO";
 export type MarketActivationDesiredState = "ACTIVE" | "DISABLED";
@@ -120,6 +133,12 @@ export function normalizeMarketActivationIntent(input: MarketActivationIntentInp
   } satisfies Omit<NormalizedMarketActivationIntent, "payloadHash">;
   if (!["FOUNDER", "ADMIN", "SYSTEM", "BACKFILL", "RECONCILER"].includes(normalizedWithoutHash.origin)) {
     throw new Error("MARKET_ACTIVATION_ORIGIN_INVALID");
+  }
+  if (
+    countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE
+    && !["FOUNDER", "BACKFILL", "RECONCILER"].includes(normalizedWithoutHash.origin)
+  ) {
+    throw new Error("MARKET_ACTIVATION_GLOBAL_FALLBACK_ORIGIN_INVALID");
   }
   return { ...normalizedWithoutHash, payloadHash: activationPayloadHash(normalizedWithoutHash) };
 }

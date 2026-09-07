@@ -1,8 +1,9 @@
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
+import { MARKET_ACTIVATION_GLOBAL_FALLBACK_REQUIRED_BLOCKED_COUNTRIES } from "@/lib/market-activation/contract";
 
 export const PARTNER_ROUTE_VERIFICATION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 export const CASINO_COMMERCIAL_VISIBILITY_AUTHORITY = "CASINO-COMMERCIAL-VISIBILITY-03";
-export const SUPERFLY_DETECTED_BLOCKED_COUNTRIES = ["DK", "ES", "FI", "NO", "CL", "SE", "GB"] as const;
+export const SUPERFLY_DETECTED_BLOCKED_COUNTRIES = MARKET_ACTIVATION_GLOBAL_FALLBACK_REQUIRED_BLOCKED_COUNTRIES;
 
 export type PartnerRouteReason =
   | "COMMERCIAL_POLICY_DENIED"
@@ -25,7 +26,7 @@ export type PartnerRouteReason =
   | "PRODUCTION_AUTHORITY_EXPIRED"
   | "REDIRECT_CONTRACT_INVALID";
 
-interface ExactCountryAuthority {
+export interface ExactCountryAuthority {
   countryCode: string;
   mode: string;
 }
@@ -141,7 +142,11 @@ function object(value: unknown): Record<string, unknown> {
 }
 
 function strings(value: unknown) {
-  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string").map((entry) => entry.toUpperCase()) : [];
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+      .map((entry) => entry.trim().toUpperCase())
+      .filter((entry) => /^[A-Z]{2}$/.test(entry))
+    : [];
 }
 
 export function hasFounderGlobalProductionAuthority(programMetadata: unknown, trackingMetadata: unknown, countryCode: string) {
@@ -167,6 +172,45 @@ function geoAllows(mode: string, authority: ExactCountryAuthority | null, countr
   if (mode === "ALLOW") return exactAllow(authority, countryCode);
   if (mode === "BLOCK") return !(authority?.countryCode.toUpperCase() === countryCode && authority.mode === "BLOCK");
   return false;
+}
+
+export function founderGlobalPartnerRouteAllows(input: {
+  programMetadata: unknown;
+  programSupportedCountries: string[];
+  offerGeoMode: string;
+  offerCountries: ExactCountryAuthority[];
+  trackingMetadata: unknown;
+  trackingGeoMode: string;
+  trackingCountries: ExactCountryAuthority[];
+}, countryCode: string) {
+  const country = countryCode.trim().toUpperCase();
+  const offerCountry = input.offerCountries.find((entry) => entry.countryCode.toUpperCase() === country) ?? null;
+  const trackingCountry = input.trackingCountries.find((entry) => entry.countryCode.toUpperCase() === country) ?? null;
+  return /^[A-Z]{2}$/.test(country)
+    && hasFounderGlobalProductionAuthority(input.programMetadata, input.trackingMetadata, country)
+    && (input.programSupportedCountries.length === 0
+      || input.programSupportedCountries.some((entry) => entry.toUpperCase() === country))
+    && geoAllows(input.offerGeoMode, offerCountry, country)
+    && geoAllows(input.trackingGeoMode, trackingCountry, country);
+}
+
+export function founderGlobalPartnerRoutePolicy(input: Parameters<typeof founderGlobalPartnerRouteAllows>[0]) {
+  const globallyScoped = input.programSupportedCountries.length === 0
+    && ["GLOBAL", "BLOCK"].includes(input.offerGeoMode)
+    && ["GLOBAL", "BLOCK"].includes(input.trackingGeoMode);
+  if (!globallyScoped || !founderGlobalPartnerRouteAllows(input, "ZZ")) return null;
+  const trackingVisibility = object(object(input.trackingMetadata).commercialVisibility);
+  const blockedCountries = new Set<string>([
+    ...SUPERFLY_DETECTED_BLOCKED_COUNTRIES,
+    ...strings(trackingVisibility.blockedCountries),
+    ...(input.offerGeoMode === "BLOCK"
+      ? input.offerCountries.filter((entry) => entry.mode === "BLOCK").map((entry) => entry.countryCode.toUpperCase())
+      : []),
+    ...(input.trackingGeoMode === "BLOCK"
+      ? input.trackingCountries.filter((entry) => entry.mode === "BLOCK").map((entry) => entry.countryCode.toUpperCase())
+      : []),
+  ]);
+  return { blockedCountries: [...blockedCountries].filter((country) => /^[A-Z]{2}$/.test(country)).sort() };
 }
 
 function intersects(left: string[], right: string[]) {

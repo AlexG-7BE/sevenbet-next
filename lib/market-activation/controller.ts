@@ -3,6 +3,7 @@ import { PARTNER_ROUTE_VERIFICATION_MAX_AGE_MS } from "@/lib/affiliate-routing/p
 import type { MarketActivationApplyResult } from "./repository";
 import { marketActivationRepository, type MarketActivationRepository } from "./repository";
 import {
+  MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
   normalizeMarketActivationIntent,
   type MarketActivationIntentInput,
 } from "./contract";
@@ -28,7 +29,8 @@ function routeVerificationRequired(result: MarketActivationApplyResult, now: Dat
     : {};
   const preparingReady = result.activation.status === "PREPARING"
     && !diagnostics.internalPending
-    && Boolean(result.activation.marketProfileId
+    && Boolean((result.activation.marketProfileId
+      || result.activation.countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE)
       && result.activation.affiliateOfferId
       && result.activation.primaryTrackingLinkId
       && result.activation.redirectSlugId);

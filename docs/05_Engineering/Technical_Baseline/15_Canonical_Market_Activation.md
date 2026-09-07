@@ -3,7 +3,7 @@
 **Evidence date:** 7 September 2026
 **Scope:** active repository rooted at
 `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` and release candidate
-`codex/canonical-market-activation-20260907`
+`codex/canonical-market-activation-global-fallback-20260907`
 **Authority:** RFC-042 and the explicit Founder execution authorization
 
 This baseline was produced after scanning the active repository while
@@ -42,7 +42,7 @@ commercial paths unavailable.
 | PartnerRoute projection | computed `productionEligible` and selected route | pure projection over affiliate graph | public Casino/offer/redirect and health | primary aggregate authority | bound route dependency; backfill/shadow/diagnostic adapter |
 | `CasinoVersion` public route projection | CTA/media route | publication snapshot builder | public Casino and offer mappers | duplicated visibility | editorial read model populated from canonical active routes |
 | Media Operations assignments | creative/placement eligibility | Media Admin/MCP and publication | public media resolver | media could indirectly suppress actions | media provenance/selection input only |
-| `MarketActivation` | desired state, canonical status and exact bindings | activation controller only | canonical public runtime and diagnostics | no predecessor row | sole B4GAMBLE Production commercial authority |
+| `MarketActivation` | desired state, canonical status, exact bindings and bounded fallback scope | activation controller only | canonical public runtime and diagnostics | no predecessor row | sole B4GAMBLE Production commercial authority |
 
 **DETECTED:** direct repository searches found no public runtime reader of CRM
 stage or activation-packet state after the candidate cutover. Legacy
@@ -58,6 +58,15 @@ Exact `(casinoId, countryCode, product)`, route/GEO and primary-link/GEO
 uniqueness plus state, binding, blocker, fingerprint and event-sequence checks
 are database-enforced.
 
+**DETECTED on the correction candidate:** migration
+`0032_market_activation_global_fallback` adds the canonical
+`globalFallbackBlockedCountries` scope and permits an active `ZZ` private-use
+fallback row to omit a factual market profile. Database checks require exact
+rows to keep that scope empty and every active fallback to contain the full
+historical `DK/ES/FI/NO/CL/SE/GB` deny set. The migration replaces one check
+constraint, adds one check constraint and one column, and performs no data DML
+or table/column deletion.
+
 **DETECTED:** `MarketActivationController` and
 `MarketActivationRepository` implement explicit desired state, deterministic
 fingerprints, Serializable transactions, optimistic versions, bounded
@@ -69,6 +78,13 @@ transaction. Its normalized status, check time, final host and reason persist
 on the activation; only `HEALTHY` finalizes `ACTIVE`. Internal verifier
 execution failure is retried once and is not converted into an external
 blocker.
+
+**DETECTED on the correction candidate:** the controller can preserve only an
+existing route with complete `CASINO-COMMERCIAL-VISIBILITY-03` global-default
+evidence, an empty programme country allow-list and `GLOBAL`/deny-list offer
+and tracking GEO shape. It normalizes the full deny scope onto the canonical
+row. Only Founder, backfill and reconciler origins can address `ZZ`; normal
+country-specific activation remains exact.
 
 **DETECTED:** exact-country Direct-Link selection rejects a source record
 explicitly classified for another country even when an older compatibility
@@ -93,6 +109,13 @@ workflow or `productionEligible` read can independently disable canonical
 `ACTIVE`; after resolving canonical state, `/r` does not call the legacy
 PartnerRoute eligibility service.
 
+**DETECTED on the correction candidate:** runtime checks an exact row first;
+the existence of any exact row, including `PREPARING`, `BLOCKED_EXTERNAL` or
+`DISABLED`, shadows a fallback. Only when no exact row exists may it read an
+active/healthy `ZZ` row and its canonical deny scope. `ZZ` is rejected as a
+request GEO. Runtime does not reread Founder global metadata, programme
+country scope, offer GEO or tracking GEO as a second authority.
+
 **DETECTED:** `PartnerRouteService.isProductionEligible` is a compatibility
 adapter to canonical state. The old full `resolve` calculation remains for
 bounded backfill, shadow comparison and route-health diagnostics. The old
@@ -116,10 +139,27 @@ reconciliation does not bump canonical version, compatibility drift is
 repaired, internal preparation stays `PREPARING`, and the exact CL negative
 state does not leak into PE.
 
-**PROPOSED:** apply the additive migration and guarded reconciliation first to
-isolated Preview, then to the fingerprinted Production resource after PR
-checks. Replace this classification with live evidence in the release record.
+**DETECTED after the initial Production cutover:** the exact-profile shadow
+was `37/37` matched, but a separate KZ audit found six previously working
+Founder-evidenced global-default routes with no canonical row: 21 Prive, Skol
+Casino, Slotnite, GDay Casino, Hello Casino and Diamond7. Certification was
+held because this was an internal migration regression, not an external
+blocker.
 
-**UNKNOWN:** exact final Production activation counts, deployed SHA and live
-route results remain unknown until the authorized release is executed and
-independently verified.
+**DETECTED on the correction candidate:** unit and disposable PostgreSQL
+coverage proves canonical policy derivation, exact-row precedence, `ZZ`
+request rejection, KZ fallback resolution, CL/GB denial, legacy metadata
+non-authority and exact timestamp parity for the one-way
+`productionEligible` projection. Migration `0032` applies successfully on the
+existing disposable 0031 database, and the repository's full staged harness
+applies all 32 migrations to an empty disposable database with replay
+idempotency.
+
+**PROPOSED:** complete PR CI and Preview verification, apply 0032 DB-first to
+the fingerprinted Production resource after PR checks, backfill exactly the
+six reviewed fallback rows, then require a `43/43` exact-plus-fallback shadow
+with zero mismatches before restoring certification.
+
+**UNKNOWN:** final 0032 Production checksum, resulting activation count,
+deployed correction SHA and live restored KZ redirect behavior remain unknown
+until the guarded correction is executed and independently verified.
