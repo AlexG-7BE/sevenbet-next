@@ -88,7 +88,8 @@ candidate selection while retaining the governed redirect and offer identity.
 `MarketActivationRuntime`. Exact active bindings are revalidated for entity
 shape and credential-free HTTPS safety. No legacy CRM, activation packet,
 workflow or `productionEligible` read can independently disable canonical
-`ACTIVE`.
+`ACTIVE`; after resolving canonical state, `/r` does not call the legacy
+PartnerRoute eligibility service.
 
 **DETECTED:** `PartnerRouteService.isProductionEligible` is a compatibility
 adapter to canonical state. The old full `resolve` calculation remains for

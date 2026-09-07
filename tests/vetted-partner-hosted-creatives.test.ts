@@ -419,7 +419,7 @@ function activeOffer() {
   };
 }
 
-test("creative attribution is resolved only after canonical GEO and Production route checks", async () => {
+test("creative attribution is resolved only after canonical GEO activation checks", async () => {
   const events: string[] = [];
   const canonicalActivation = {
     async resolveRedirect() {
@@ -437,7 +437,6 @@ test("creative attribution is resolved only after canonical GEO and Production r
     { activeCandidates: async () => [activeOffer()] as never },
     { async resolve() { events.push("geo"); return allowJurisdictionResolver.resolve(); } },
     allowGbCommercialReadinessAuthority,
-    { async isProductionEligible() { events.push("production"); return true; } },
     async (input) => {
       events.push("creative");
       assert.deepEqual(input, { creativeId: CREATIVE_UUID, redirectSlugId: "redirect-id", casinoId: "casino-id", affiliateOfferId: "offer-id", countryCode: "GB" });
@@ -449,14 +448,13 @@ test("creative attribution is resolved only after canonical GEO and Production r
   const result = await service.resolve("betsson", { creativeId: CREATIVE_UUID, now: new Date("2030-01-01T00:00:00Z") });
   assert.equal(result.ok, true);
   if (result.ok) assert.equal(result.destination.href, "https://record.betsn.info/creative-specific");
-  assert.deepEqual(events, ["geo", "canonical", "production", "creative"]);
+  assert.deepEqual(events, ["geo", "canonical", "creative"]);
 
   const disabled = new AffiliateRedirectService(
     redirectStore(),
     { activeCandidates: async () => [activeOffer()] as never },
     allowJurisdictionResolver,
     allowGbCommercialReadinessAuthority,
-    { async isProductionEligible() { return true; } },
     async () => { throw new Error("disabled capability must not resolve a creative"); },
     () => false,
     canonicalActivation,
@@ -471,7 +469,6 @@ test("creative attribution is resolved only after canonical GEO and Production r
     { activeCandidates: async () => { throw new Error("GEO denial must precede offer resolution"); } },
     { async resolve() { return { ...allowJurisdictionDecision, commercialAllowed: false, referralAllowed: false, reasonCode: "MARKET_RESTRICTED" }; } },
     allowGbCommercialReadinessAuthority,
-    { async isProductionEligible() { throw new Error("GEO denial must precede Production route checks"); } },
     async () => { deniedCreativeReads += 1; return new URL("https://should-never-resolve.example"); },
     () => true,
   );

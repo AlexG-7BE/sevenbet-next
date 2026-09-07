@@ -18,15 +18,18 @@ test("0031 is additive and enforces exact-market authority state", async () => {
 });
 
 test("runtime public-route readers use MarketActivation while legacy readiness remains a shadow comparator", async () => {
-  const [repository, runtime, script] = await Promise.all([
+  const [repository, runtime, redirect, script] = await Promise.all([
     readFile(new URL("lib/repositories/public-casino.repository.ts", root), "utf8"),
     readFile(new URL("lib/market-activation/runtime.ts", root), "utf8"),
+    readFile(new URL("lib/services/affiliate-redirect.service.ts", root), "utf8"),
     readFile(new URL("scripts/market-activation-v2.ts", root), "utf8"),
   ]);
   assert.match(repository, /marketActivationRuntime/);
   assert.doesNotMatch(repository, /partnerRouteService/);
   assert.match(runtime, /desiredState: "ACTIVE"/);
   assert.match(runtime, /status: "ACTIVE"/);
+  assert.match(redirect, /canonicalActivations\.resolveRedirect/);
+  assert.doesNotMatch(redirect, /partnerRouteService|isProductionEligible/);
   assert.match(script, /legacyEligibleSnapshot/);
   assert.match(script, /async function shadow/);
   assert.match(script, /Betsson × CL × CASINO must remain inactive/);
