@@ -15,6 +15,7 @@ import {
   type MarketActivationRouteVerificationResult,
   type NormalizedMarketActivationIntent,
 } from "./contract";
+import { marketEvidenceBlocksActivation } from "./market-evidence";
 
 type Transaction = Prisma.TransactionClient;
 
@@ -70,6 +71,85 @@ function snapshotMetadata(value: Prisma.JsonValue) {
 function globalEvidence(metadata: Prisma.JsonValue) {
   const visibility = snapshotMetadata(snapshotMetadata(metadata).commercialVisibility as Prisma.JsonValue);
   return typeof visibility.evidenceId === "string" ? visibility.evidenceId.trim() : "";
+}
+
+type ActivationTrackingCandidate = {
+  id: string;
+  active: boolean;
+  priority: number;
+  metadata: Prisma.JsonValue;
+  countries: Array<{
+    countryCode: string;
+    mode: string;
+    productionEligibilityEvidence: string | null;
+  }>;
+};
+
+function normalizedMarketHost(localWebsiteUrl: string | null, localDomain: string | null) {
+  if (localWebsiteUrl) {
+    try {
+      return new URL(localWebsiteUrl).hostname.toLowerCase().replace(/^www\./, "");
+    } catch {
+      // The ingestion contract normally rejects malformed URLs. A malformed
+      // historical value is not allowed to influence route selection.
+    }
+  }
+  return localDomain?.trim().toLowerCase().replace(/^www\./, "").replace(/\.$/, "") || null;
+}
+
+function hostBelongsToMarket(host: unknown, marketHost: string | null) {
+  if (typeof host !== "string" || !marketHost) return false;
+  const normalized = host.trim().toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
+  return normalized === marketHost || normalized.endsWith(`.${marketHost}`);
+}
+
+function importedRouteMetadata(metadata: Prisma.JsonValue) {
+  const imported = snapshotMetadata(snapshotMetadata(metadata).betssonCommercialRoutesV1 as Prisma.JsonValue);
+  return {
+    exactCountryCode: typeof imported.exactCountryCode === "string" ? imported.exactCountryCode.trim().toUpperCase() : null,
+    explicitLanguageCode: typeof imported.explicitLanguageCode === "string" ? imported.explicitLanguageCode.trim().toLowerCase() : null,
+    healthFinalHost: typeof imported.healthFinalHost === "string" ? imported.healthFinalHost.trim().toLowerCase() : null,
+    healthStatus: typeof imported.healthStatus === "string" ? imported.healthStatus.trim().toUpperCase() : null,
+    purpose: typeof imported.purpose === "string" ? imported.purpose.trim().toUpperCase() : null,
+  };
+}
+
+export function selectActivationTrackingCandidate<T extends ActivationTrackingCandidate>(input: {
+  candidates: T[];
+  countryCode: string;
+  localWebsiteUrl: string | null;
+  localDomain: string | null;
+  existingTrackingId: string | null;
+}) {
+  const countryCode = input.countryCode.trim().toUpperCase();
+  const marketHost = normalizedMarketHost(input.localWebsiteUrl, input.localDomain);
+  const scored = input.candidates.flatMap((candidate, order) => {
+    const country = candidate.countries.find((entry) => entry.countryCode.toUpperCase() === countryCode && entry.mode === "ALLOW");
+    if (!country) return [];
+    const imported = importedRouteMetadata(candidate.metadata);
+    if (imported.exactCountryCode && imported.exactCountryCode !== countryCode) return [];
+    const exactImportedRoute = imported.exactCountryCode === countryCode;
+    const finalHostMatchesMarket = hostBelongsToMarket(imported.healthFinalHost, marketHost);
+    const purposeScore = imported.purpose === "HOMEPAGE" || imported.purpose === "CASINO_LOBBY" ? 500
+      : imported.purpose === "CASINO_WELCOME_OFFER" ? 400
+        : imported.purpose === "REGISTRATION" ? 200
+          : imported.purpose ? 100 : 0;
+    const observedHealthScore = imported.healthStatus === "HEALTHY" ? 800
+      : finalHostMatchesMarket && imported.healthStatus === "EXTERNAL_CHALLENGE" ? 700
+        : finalHostMatchesMarket && imported.healthStatus === "CROSS_GEO" ? 600
+          : 0;
+    const score = (exactImportedRoute ? 10_000 : 0)
+      + (finalHostMatchesMarket ? 2_000 : 0)
+      + observedHealthScore
+      + purposeScore
+      + (imported.explicitLanguageCode ? 0 : 40)
+      + (candidate.active ? 20 : 0)
+      + Math.max(0, Math.min(candidate.priority, 100))
+      + (candidate.id === input.existingTrackingId ? 5 : 0)
+      + (country.productionEligibilityEvidence?.trim() ? 1 : 0);
+    return [{ candidate, score, order }];
+  });
+  return scored.sort((left, right) => right.score - left.score || left.order - right.order)[0]?.candidate ?? null;
 }
 
 function reconciliationFingerprint(value: unknown) {
@@ -401,10 +481,12 @@ export class MarketActivationRepository {
             casinoId: true,
             countryCode: true,
             availability: true,
+            localDomain: true,
+            localWebsiteUrl: true,
             primaryLanguage: true,
             primaryCurrency: true,
             lastVerifiedAt: true,
-            evidence: { select: { classification: true } },
+            evidence: { select: { classification: true, fieldKeys: true } },
             _count: { select: { licenses: true, paymentMethods: true } },
           },
         },
@@ -453,10 +535,20 @@ export class MarketActivationRepository {
           },
         });
     const offer = redirect?.affiliateOffer ?? null;
-    const selectedTrackingId = intent.primaryTrackingLinkId ?? existing?.primaryTrackingLinkId ?? null;
+    const selectedTrackingId = intent.primaryTrackingLinkId ?? null;
     const tracking = selectedTrackingId
       ? offer?.trackingLinks.find((entry) => entry.id === selectedTrackingId) ?? null
-      : offer?.trackingLinks.find((entry) => entry.countries.some((country) => country.countryCode === intent.countryCode && country.mode === "ALLOW")) ?? null;
+      : offer && marketProfile
+        ? selectActivationTrackingCandidate({
+            candidates: offer.trackingLinks,
+            countryCode: intent.countryCode,
+            localWebsiteUrl: marketProfile.localWebsiteUrl,
+            localDomain: marketProfile.localDomain,
+            existingTrackingId: existing?.primaryTrackingLinkId ?? null,
+          })
+        : offer?.trackingLinks.find((entry) => entry.id === existing?.primaryTrackingLinkId)
+          ?? offer?.trackingLinks.find((entry) => entry.countries.some((country) => country.countryCode === intent.countryCode && country.mode === "ALLOW"))
+          ?? null;
     const trackingCountry = tracking?.countries.find((entry) => entry.countryCode === intent.countryCode) ?? null;
     const offerCountry = offer?.countries.find((entry) => entry.countryCode === intent.countryCode) ?? null;
     const evidence = trackingCountry?.productionEligibilityEvidence?.trim() || (tracking ? globalEvidence(tracking.metadata) : "");
@@ -465,7 +557,7 @@ export class MarketActivationRepository {
     let internalPending: InternalPending | null = null;
     if (casino.archivedAt) internalPending = { code: "CASINO_RESTORE_PENDING", detail: "The internally archived Casino projection must be restored under the current desired state.", source: "Casino.archivedAt" };
     else if (!marketProfile) internalPending = { code: "MARKET_PROFILE_PENDING", detail: `The exact ${intent.countryCode} market profile must be ingested from evidence before finalization.`, source: "CasinoCountry" };
-    else if (marketProfile.evidence.some((entry) => entry.classification === "CONTRADICTION")) blocker = { code: "MARKET_EVIDENCE_CONTRADICTION", detail: "The exact market profile contains contradicted evidence.", source: "CasinoCountryEvidence" };
+    else if (marketEvidenceBlocksActivation(marketProfile.evidence)) blocker = { code: "MARKET_EVIDENCE_CONTRADICTION", detail: "The exact market profile contains a runtime-critical contradiction.", source: "CasinoCountryEvidence" };
     else if (["RESTRICTED", "NOT_AVAILABLE"].includes(marketProfile.availability)) blocker = { code: "MARKET_UNAVAILABLE", detail: `The exact market profile is ${marketProfile.availability}.`, source: "CasinoCountry.availability" };
     else if (!casino.versions.length) internalPending = { code: "PUBLIC_PROJECTION_PENDING", detail: "The evidence-backed Casino draft must be projected through the existing publication workflow.", source: "CasinoVersion" };
     else if (!redirect) blocker = { code: "AFFILIATE_DESTINATION_MISSING", detail: "No evidenced affiliate destination is available through a canonical route.", source: "AffiliateRedirectSlug" };

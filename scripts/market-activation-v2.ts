@@ -235,7 +235,6 @@ async function reconcile(now = new Date()) {
       desiredState: record.desiredState,
       redirectSlugId: record.redirectSlugId ?? undefined,
       affiliateOfferId: record.affiliateOfferId ?? undefined,
-      primaryTrackingLinkId: record.primaryTrackingLinkId ?? undefined,
       actorId: RELEASE,
       origin: "RECONCILER",
       reason: `Reconcile desired ${record.desiredState} state from canonical activation version ${record.version}.`,

@@ -70,11 +70,28 @@ on the activation; only `HEALTHY` finalizes `ACTIVE`. Internal verifier
 execution failure is retried once and is not converted into an external
 blocker.
 
+**DETECTED:** exact-country Direct-Link selection rejects a source record
+explicitly classified for another country even when an older compatibility
+row gives it higher priority. Among exact-country candidates it prefers a
+market-matching observed destination and the default-language record.
+Verification derives the expected host from explicit health evidence or the
+bound `CasinoCountry` domain and classifies unexpected destinations before
+CDN challenges. Market-profile contradictions block activation only when they
+concern runtime-critical identity/GEO/domain fields; licence and incomplete
+bonus-term contradictions remain preserved enrichment evidence. Public
+presentation uses the same boundary to explain informational state only when
+no canonical route exists; a governed canonical route is the final CTA result.
+
+**DETECTED:** the release reconciler does not replay the stored tracking-link
+binding as an explicit intent. Each reconciliation re-runs exact-market
+candidate selection while retaining the governed redirect and offer identity.
+
 **DETECTED:** public Casino/offer route projection and `/r` use
 `MarketActivationRuntime`. Exact active bindings are revalidated for entity
 shape and credential-free HTTPS safety. No legacy CRM, activation packet,
 workflow or `productionEligible` read can independently disable canonical
-`ACTIVE`.
+`ACTIVE`; after resolving canonical state, `/r` does not call the legacy
+PartnerRoute eligibility service.
 
 **DETECTED:** `PartnerRouteService.isProductionEligible` is a compatibility
 adapter to canonical state. The old full `resolve` calculation remains for

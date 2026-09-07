@@ -8,7 +8,6 @@ import type { CountrySignal, JurisdictionDecision } from "@/lib/jurisdiction/typ
 import { affiliateRedirectRepository, type AffiliateRedirectStore } from "@/lib/repositories/affiliate-redirect.repository";
 import { affiliateOfferService, type AffiliateOfferService } from "@/lib/services/affiliate-offer.service";
 import { gbCommercialReadinessService, type GbCommercialReadinessAuthority } from "@/lib/services/gb-commercial-readiness.service";
-import { partnerRouteService, type PartnerRouteService } from "@/lib/services/partner-route.service";
 import { resolvePublishedCreativeDestination } from "@/lib/media-operations/partner-hosted-repository";
 import { isVettedPartnerHostedCreativesEnabled } from "@/lib/media-operations/partner-hosted";
 import { marketActivationRuntime, type MarketActivationRuntime } from "@/lib/market-activation/runtime";
@@ -58,7 +57,6 @@ export class AffiliateRedirectService {
     private readonly offers: Pick<AffiliateOfferService, "activeCandidates"> = affiliateOfferService,
     private readonly jurisdiction: Pick<JurisdictionResolver, "resolve"> = jurisdictionResolver,
     private readonly commercialReadiness: GbCommercialReadinessAuthority = gbCommercialReadinessService,
-    private readonly productionRoutes: Pick<PartnerRouteService, "isProductionEligible"> = partnerRouteService,
     private readonly publishedCreativeDestination: PublishedCreativeDestinationResolver = resolvePublishedCreativeDestination,
     private readonly partnerHostedEnabled: PartnerHostedCapability = isVettedPartnerHostedCreativesEnabled,
     private readonly canonicalActivations: Pick<MarketActivationRuntime, "resolveRedirect"> = marketActivationRuntime,
@@ -204,26 +202,6 @@ export class AffiliateRedirectService {
       trackingLinkId: activation.primaryTrackingLink.id,
       candidates: [],
     };
-
-    let productionEligible = false;
-    try {
-      productionEligible = await this.productionRoutes.isProductionEligible({
-        casinoId: routing.casinoId,
-        countryCode: jurisdictionDecision.countryCode ?? "",
-        redirectId: routing.slugId,
-        offerId: routing.offerId,
-        trackingLinkId: routing.trackingLinkId,
-        now,
-        commercialAllowed: jurisdictionDecision.commercialAllowed,
-        referralAllowed: jurisdictionDecision.referralAllowed,
-        redirectEnabled: true,
-      });
-    } catch {
-      productionEligible = false;
-    }
-    if (!productionEligible) {
-      return { ok: false, reason: "COMMERCIAL_ROUTE_NOT_PRODUCTION_ELIGIBLE", slugId: routing.slugId, casinoId: routing.casinoId, candidates: routing.candidates, jurisdictionDecision };
-    }
 
     const creativeDestination = async () => {
       if (!input.creativeId) return routing.destination;

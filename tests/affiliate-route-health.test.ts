@@ -91,6 +91,16 @@ test("HEAD fallback and CDN challenges are handled without hiding server failure
   });
   assert.equal(challenge.status, "EXTERNAL_CHALLENGE");
 
+  const wrongHostChallenge = await checkAffiliateRouteHttp({
+    url: new URL("https://track.example/click?aff=42"), expectation,
+    fetcher: fetchSequence(
+      new Response(null, { status: 302, headers: { location: "https://wrong.example/pe?aff=42" } }),
+      new Response(null, { status: 403 }),
+    ),
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(wrongHostChallenge.status, "CROSS_GEO", "a challenge must not hide an unexpected destination");
+
   const ordinary503 = await checkAffiliateRouteHttp({
     url: new URL("https://casino.example/pe?aff=42"), expectation,
     fetcher: fetchSequence(new Response(null, { status: 503 })), validateUrl: noNetworkValidation,

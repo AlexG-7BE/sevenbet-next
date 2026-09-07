@@ -13,15 +13,33 @@ function object(value: Prisma.JsonValue | null | undefined): Record<string, unkn
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
+function normalizedMarketHost(profile: { localDomain: string | null; localWebsiteUrl: string | null } | null) {
+  if (profile?.localWebsiteUrl) {
+    try {
+      return new URL(profile.localWebsiteUrl).hostname.toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
+    } catch {
+      // Fall through to the separately stored domain. Invalid historical URL
+      // state must not broaden an external route expectation.
+    }
+  }
+  return profile?.localDomain?.trim().toLowerCase().replace(/^www\./, "").replace(/\.$/, "") || null;
+}
+
+function belongsToMarketHost(host: string, marketHost: string | null) {
+  const normalized = host.trim().toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
+  return Boolean(marketHost && (normalized === marketHost || normalized.endsWith(`.${marketHost}`)));
+}
+
 function storedExpectation(
   metadata: Prisma.JsonValue,
   countryCode: string,
   destination: URL,
+  marketProfile: { localDomain: string | null; localWebsiteUrl: string | null } | null,
 ): AffiliateRouteHealthExpectation {
   const activation = object(object(metadata).commercialActivationV1 as Prisma.JsonValue);
   const record = object(object(activation.records as Prisma.JsonValue)[countryCode] as Prisma.JsonValue);
   const health = object(record.routeHealth as Prisma.JsonValue);
-  const expectedFinalHost = typeof health.expectedFinalHost === "string"
+  const explicitFinalHost = typeof health.expectedFinalHost === "string"
     ? health.expectedFinalHost.trim().toLowerCase()
     : "";
   const expectedPathPrefix = health.expectedPathPrefix === null || health.expectedPathPrefix === undefined
@@ -33,12 +51,29 @@ function storedExpectation(
     && health.requiredAttributionParameters.every((value) => typeof value === "string")
     ? health.requiredAttributionParameters as string[]
     : [];
+  if (explicitFinalHost) {
+    return {
+      expectedFinalHost: explicitFinalHost,
+      expectedPathPrefix,
+      requiredAttributionParameters,
+      allowWwwEquivalentFinalHost: true,
+    };
+  }
+  const marketHost = normalizedMarketHost(marketProfile);
+  const imported = object(object(metadata).betssonCommercialRoutesV1 as Prisma.JsonValue);
+  const importedCountry = typeof imported.exactCountryCode === "string" ? imported.exactCountryCode.trim().toUpperCase() : null;
+  const importedFinalHost = typeof imported.healthFinalHost === "string" ? imported.healthFinalHost.trim().toLowerCase() : "";
+  const evidencedMarketFinalHost = importedCountry === countryCode
+    && belongsToMarketHost(importedFinalHost, marketHost)
+    ? importedFinalHost
+    : "";
   return {
-    expectedFinalHost: expectedFinalHost || destination.hostname.toLowerCase(),
-    expectedPathPrefix: expectedFinalHost
-      ? expectedPathPrefix
+    expectedFinalHost: evidencedMarketFinalHost || marketHost || destination.hostname.toLowerCase(),
+    expectedPathPrefix: evidencedMarketFinalHost || marketHost
+      ? null
       : destination.pathname === "/" ? null : destination.pathname,
     requiredAttributionParameters,
+    allowWwwEquivalentFinalHost: true,
   };
 }
 
@@ -57,6 +92,7 @@ export class MarketActivationRouteVerifier implements MarketActivationRouteVerif
       where: { id: activationId },
       select: {
         countryCode: true,
+        marketProfile: { select: { localDomain: true, localWebsiteUrl: true } },
         primaryTrackingLink: {
           select: { trackingUrl: true, destinationUrl: true, metadata: true },
         },
@@ -79,7 +115,8 @@ export class MarketActivationRouteVerifier implements MarketActivationRouteVerif
     }
     const checked = await this.httpCheck({
       url: target,
-      expectation: storedExpectation(tracking.metadata, activation.countryCode, destination),
+      expectation: storedExpectation(tracking.metadata, activation.countryCode, destination, activation.marketProfile),
+      inspectTerminalContent: true,
     });
     return { ...checked, checkedAt };
   }

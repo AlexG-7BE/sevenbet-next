@@ -37,9 +37,12 @@ Intent and result are separate:
 `PREPARING` means internal convergence is incomplete. It is resumable and is
 not a final external denial. `BLOCKED_EXTERNAL` is reserved for a concrete
 fact outside B4GAMBLE's ability to manufacture: contradicted or prohibited
-market evidence, absent evidenced destination, expired upstream offer/link,
-unsafe external URL, explicit partner-country block, or failed current route
-verification with no usable alternative.
+runtime-critical market evidence, absent evidenced destination, expired
+upstream offer/link, unsafe external URL, explicit partner-country block, or
+failed current route verification with no usable alternative. Contradictions
+limited to editorial enrichment such as licence transcription or incomplete
+bonus mechanics remain visible evidence; they do not disable an otherwise
+working Casino path.
 
 Internal workflow, CRM, publication, projection and compatibility state does
 not become `BLOCKED_EXTERNAL`. Evidence-backed market ingestion and public
@@ -73,6 +76,20 @@ time and an external blocker. A verifier execution/infrastructure failure does
 not fabricate external evidence: it leaves new work `PREPARING` or preserves
 an already canonical `ACTIVE` state for retry. Raw destinations are not placed
 in diagnostics or events.
+
+When more than one evidenced link exists, the controller deterministically
+prefers an exact-country Direct-Link record whose observed destination belongs
+to the bound market profile, then the market's default-language record. A
+higher-priority record explicitly sourced for another country is ineligible;
+historical compatibility rows cannot create cross-GEO selection. Verification
+derives its expected terminal host from explicit route-health evidence or the
+bound market profile and classifies an unexpected destination before any CDN
+challenge classification can obscure it.
+
+Reconciliation preserves the governed Casino, GEO, product, redirect and offer
+identity but re-evaluates the primary tracking candidate. A previously selected
+link is historical state, not an explicit Founder pin, and cannot prevent a
+newer exact-market candidate from replacing it.
 
 Duplicate keys replay the original intent. A reused key with a different
 payload is rejected. Optimistic versions, exact unique constraints,
