@@ -213,7 +213,7 @@ test("PostgreSQL persists plans, applies only draft assignments, protects explic
   }
 });
 
-test("PostgreSQL applies and rolls back a draft AffiliateOffer below a published Casino while retaining offer-state and plan-ownership guards", async () => {
+test("PostgreSQL applies and rolls back draft media on DRAFT and ACTIVE AffiliateOffers below a published Casino while retaining inactive-state and plan-ownership guards", async () => {
   assertDisposablePostgres();
   const prisma = new PrismaClient();
   try {
@@ -245,32 +245,43 @@ test("PostgreSQL applies and rolls back a draft AffiliateOffer below a published
     await mediaIngestionRepository.savePlan(first, { operation: "TEST_CREATE", result: { fixture: true } });
     const applied = await mediaIngestionRepository.applyDraftPlan({ planId: first.id, replaceExisting: false, actorId: ids.actor, source: "ADMIN" });
     assert.equal(applied.applied, 1);
-    const assignment = await prisma.affiliateOfferMediaAssignment.findFirstOrThrow({ where: { affiliateOfferId: ids.offer, active: true } });
-    assert.equal(assignment.reference, mediaIngestionAssignmentReference(first.id, first.recommendations[0].id));
     assert.equal((await prisma.casino.findUniqueOrThrow({ where: { id: ids.casino } })).status, "PUBLISHED");
 
     await prisma.affiliateOffer.update({ where: { id: ids.offer }, data: { status: "ACTIVE" } });
-    const nonDraft = affiliateOfferPlan("58000000-0000-4000-8000-000000000060");
-    await mediaIngestionRepository.savePlan(nonDraft, { operation: "TEST_CREATE", result: { fixture: true } });
-    const blockedApply = await mediaIngestionRepository.applyDraftPlan({ planId: nonDraft.id, replaceExisting: false, actorId: ids.actor, source: "ADMIN" });
+    const activeRollback = await mediaIngestionRepository.rollbackDraftPlan({ planId: first.id, actorId: ids.actor, source: "ADMIN" });
+    assert.equal(activeRollback.rolledBack, 1);
+    assert.equal(await prisma.affiliateOfferMediaAssignment.count({ where: { affiliateOfferId: ids.offer } }), 0);
+    assert.equal(await prisma.mediaAsset.count({ where: { id: ids.offerAsset } }), 1);
+
+    const activePlan = affiliateOfferPlan("58000000-0000-4000-8000-000000000060");
+    await mediaIngestionRepository.savePlan(activePlan, { operation: "TEST_CREATE", result: { fixture: true } });
+    const activeApply = await mediaIngestionRepository.applyDraftPlan({ planId: activePlan.id, replaceExisting: false, actorId: ids.actor, source: "ADMIN" });
+    assert.equal(activeApply.applied, 1);
+    const activeAssignment = await prisma.affiliateOfferMediaAssignment.findFirstOrThrow({ where: { affiliateOfferId: ids.offer, active: true } });
+    assert.equal(activeAssignment.reference, mediaIngestionAssignmentReference(activePlan.id, activePlan.recommendations[0].id));
+
+    await prisma.affiliateOffer.update({ where: { id: ids.offer }, data: { status: "PAUSED" } });
+    const pausedPlan = affiliateOfferPlan("58000000-0000-4000-8000-000000000070");
+    await mediaIngestionRepository.savePlan(pausedPlan, { operation: "TEST_CREATE", result: { fixture: true } });
+    const blockedApply = await mediaIngestionRepository.applyDraftPlan({ planId: pausedPlan.id, replaceExisting: false, actorId: ids.actor, source: "ADMIN" });
     assert.equal(blockedApply.applied, 0);
     assert.ok(blockedApply.skipped.some((item) => item.reason === "SUBJECT_NOT_DRAFT"));
-    const blockedRollback = await mediaIngestionRepository.rollbackDraftPlan({ planId: first.id, actorId: ids.actor, source: "ADMIN" });
+    const blockedRollback = await mediaIngestionRepository.rollbackDraftPlan({ planId: activePlan.id, actorId: ids.actor, source: "ADMIN" });
     assert.equal(blockedRollback.rolledBack, 0);
     assert.ok(blockedRollback.skipped.some((item) => item.reason === "SUBJECT_NOT_DRAFT"));
 
-    await prisma.affiliateOffer.update({ where: { id: ids.offer }, data: { status: "DRAFT" } });
-    await prisma.affiliateOfferMediaAssignment.update({ where: { id: assignment.id }, data: { reference: "Foreign editorial assignment" } });
-    const foreignRollback = await mediaIngestionRepository.rollbackDraftPlan({ planId: first.id, actorId: ids.actor, source: "ADMIN" });
+    await prisma.affiliateOffer.update({ where: { id: ids.offer }, data: { status: "ACTIVE" } });
+    await prisma.affiliateOfferMediaAssignment.update({ where: { id: activeAssignment.id }, data: { reference: "Foreign editorial assignment" } });
+    const foreignRollback = await mediaIngestionRepository.rollbackDraftPlan({ planId: activePlan.id, actorId: ids.actor, source: "ADMIN" });
     assert.equal(foreignRollback.rolledBack, 0);
     assert.ok(foreignRollback.skipped.some((item) => item.reason === "PLAN_OWNED_ASSIGNMENT_NOT_FOUND"));
-    assert.ok(await prisma.affiliateOfferMediaAssignment.findUnique({ where: { id: assignment.id } }));
+    assert.ok(await prisma.affiliateOfferMediaAssignment.findUnique({ where: { id: activeAssignment.id } }));
 
     await prisma.affiliateOfferMediaAssignment.update({
-      where: { id: assignment.id },
-      data: { reference: mediaIngestionAssignmentReference(first.id, first.recommendations[0].id) },
+      where: { id: activeAssignment.id },
+      data: { reference: mediaIngestionAssignmentReference(activePlan.id, activePlan.recommendations[0].id) },
     });
-    const rolledBack = await mediaIngestionRepository.rollbackDraftPlan({ planId: first.id, actorId: ids.actor, source: "ADMIN" });
+    const rolledBack = await mediaIngestionRepository.rollbackDraftPlan({ planId: activePlan.id, actorId: ids.actor, source: "ADMIN" });
     assert.equal(rolledBack.rolledBack, 1);
     assert.equal(await prisma.affiliateOfferMediaAssignment.count({ where: { affiliateOfferId: ids.offer } }), 0);
     assert.equal(await prisma.mediaAsset.count({ where: { id: ids.offerAsset } }), 1);
