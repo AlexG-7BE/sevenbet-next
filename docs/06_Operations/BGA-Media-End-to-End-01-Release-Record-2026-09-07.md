@@ -3,6 +3,7 @@
 - **Execution date:** 7 September 2026
 - **Authority:** explicit Founder instruction `B4GAMBLE FOUNDER OFFICE — END-TO-END BGA MEDIA COMPLETION`
 - **Application pull request:** [#178](https://github.com/AlexG-7BE/sevenbet-next/pull/178)
+- **Documentation closure pull request:** [#179](https://github.com/AlexG-7BE/sevenbet-next/pull/179)
 - **Accepted application commits:** `670f8a1` and `f07abc6`
 - **Production application merge SHA:** `6fc8a7cf2aa79ed435b427579c15e35f3218f538`
 - **Production deployment:** `dpl_WPgC21HgnvTNDDXMqieY5prqpDBL`
