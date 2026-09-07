@@ -5,8 +5,9 @@ contract
 **Authority:** `B4GAMBLE — MEDIA-INGESTION-AUTOPLACEMENT-01` and the additive
 `B4GAMBLE — GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01` and
 `VETTED-PARTNER-HOSTED-CREATIVES-01`, as amended by the explicit Founder
-instruction `B4GAMBLE — MEDIA-OPERATIONS-BULK-01`
-**Evidence date:** 6 September 2026
+instructions `B4GAMBLE — MEDIA-OPERATIONS-BULK-01` and
+`B4GAMBLE FOUNDER OFFICE — END-TO-END BGA MEDIA COMPLETION`
+**Evidence date:** 7 September 2026
 **Architecture dependencies:**
 [RFC-027 — B4GAMBLE Operational Agent Foundation](../06_RFC/RFC-027-B4GAMBLE-Operational-Agent-Foundation.md),
 [RFC-040 — Placement-Based Media Assignments](../06_RFC/RFC-040-Placement-Based-Media-Assignments.md),
@@ -24,7 +25,7 @@ evidence rule.
 confirmed before documentation work. The full
 active repository was scanned with dependencies, generated output, build
 artefacts, caches and `tsconfig.tsbuildinfo` excluded. The final inventory
-contained 2,224 active files in this documentation pass.
+contained 2,258 tracked active files in this documentation pass.
 
 **DETECTED:** the first-party implementation uses the existing `MediaAsset`,
 `CasinoMediaAssignment`, `CasinoBonusMediaAssignment`,
@@ -318,6 +319,15 @@ records a clear reason and changes the recommendation to review-only. It never
 auto-retargets to a detected market or makes a legal conclusion. Offer matching
 is independent: correct target scope does not hide a stale/mismatched offer.
 
+For a partner-hosted creative, one structured record has one exact target
+scope. When provider metadata is silent, one explicit target country and an
+explicit language or neutral-language declaration are applied to that record
+and recorded in the durable plan notes. Provider metadata that contradicts the
+requested scope is rejected. A country-silent hosted creative cannot fan out to
+multiple requested countries; it must be ingested separately with exact source
+or operational context for each country. The raw Description remains unchanged
+as source evidence.
+
 One stored asset expands to one recommendation per supplied exact country. The
 global checksum path still creates/reuses one R2 object and one `MediaAsset`;
 EE/en, LV/en and LT/en therefore reuse the same physical record. Unknown
@@ -347,9 +357,13 @@ to the same Casino, Bonus/Offer/Opportunity and exact country/language scope;
 different Casinos never become one multi-subject plan. Bulk get, analyze,
 apply and rollback fan out only through those recorded plan IDs.
 
-Application runs in a serializable transaction. Casino and subject must still
-be draft, media or hosted creative must be active, validated and same-Casino,
-subject/placement and exact evidenced target must match,
+Application runs in a serializable transaction. A Casino or CasinoBonus target
+still requires both the subject and parent Casino to be `DRAFT`. An
+`AFFILIATE_OFFER` target requires the offer itself to be `DRAFT`; its immutable
+same-Casino identity checks remain mandatory, while its parent Casino may be
+`DRAFT` or already `PUBLISHED`. A non-draft offer remains blocked. Media or
+hosted creative must be active, validated and same-Casino, subject/placement
+and exact evidenced target must match,
 COVER must be crop-safe, and the recommendation must still be automatic (or an
 explicit eligible replacement). Assignment reference is exact:
 `MEDIA_OPERATIONS:<planId>:<recommendationId>`. Reapplying is idempotent.

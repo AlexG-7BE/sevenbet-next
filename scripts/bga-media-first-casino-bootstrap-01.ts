@@ -325,6 +325,19 @@ async function ensureAssignmentsAndPublish(actorId: string) {
       const reference = `${RELEASE}:${definition.slug}:card:${externalId}`;
       const existing = await prisma.casinoPartnerHostedCreativeAssignment.findFirst({ where: { casinoId, reference } });
       const data = { casinoId, creativeId: creative.id, placement: "CASINO_DIRECTORY_CARD" as const, variant: "DEFAULT" as const, countryCode: creative.countryCode, languageCode: creative.languageCode, languageState: creative.languageState, renderingMode: "CONTAIN" as const, sortOrder: 0, active: true, reference };
+      const incumbent = await prisma.casinoPartnerHostedCreativeAssignment.findFirst({
+        where: {
+          casinoId,
+          placement: data.placement,
+          variant: data.variant,
+          countryCode: data.countryCode,
+          languageCode: data.languageCode,
+          languageState: data.languageState,
+          active: true,
+        },
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+      });
+      if (incumbent && incumbent.id !== existing?.id) continue;
       if (existing) await prisma.casinoPartnerHostedCreativeAssignment.update({ where: { id: existing.id }, data });
       else await prisma.casinoPartnerHostedCreativeAssignment.create({ data });
     }
@@ -335,6 +348,19 @@ async function ensureAssignmentsAndPublish(actorId: string) {
         const reference = `${RELEASE}:${definition.slug}:offer:${variant.toLowerCase()}:${externalId}`;
         const existing = await prisma.affiliateOfferPartnerHostedCreativeAssignment.findFirst({ where: { affiliateOfferId: offerId, reference } });
         const data = { affiliateOfferId: offerId, creativeId: creative.id, placement: "CASINO_OFFER_BLOCK" as const, variant, countryCode: creative.countryCode, languageCode: creative.languageCode, languageState: creative.languageState, renderingMode: "CONTAIN" as const, sortOrder: 0, active: true, reference };
+        const incumbent = await prisma.affiliateOfferPartnerHostedCreativeAssignment.findFirst({
+          where: {
+            affiliateOfferId: offerId,
+            placement: data.placement,
+            variant: data.variant,
+            countryCode: data.countryCode,
+            languageCode: data.languageCode,
+            languageState: data.languageState,
+            active: true,
+          },
+          orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+        });
+        if (incumbent && incumbent.id !== existing?.id) continue;
         if (existing) await prisma.affiliateOfferPartnerHostedCreativeAssignment.update({ where: { id: existing.id }, data });
         else await prisma.affiliateOfferPartnerHostedCreativeAssignment.create({ data });
       }

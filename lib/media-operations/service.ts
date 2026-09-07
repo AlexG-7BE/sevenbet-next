@@ -21,6 +21,7 @@ import { resolveMediaIngestionContext } from "@/lib/media-operations/context";
 import { parsePartnerSnippet, persistedCreativeEvidence, safeUrlEvidence } from "@/lib/media-operations/parser";
 import {
   PartnerHostedCreativeParseError,
+  applyPartnerHostedTargetingContext,
   parsePartnerDescription,
   parsePartnerHostedCreative,
   type ParsedPartnerHostedCreative,
@@ -260,8 +261,14 @@ export class MediaOperationsService {
     const requestedContext = normalizeMediaIngestionContext(input.context ?? {});
     const normalizedInput = { snippet: input.snippet, context: requestedContext, dryRun: input.dryRun };
     let hosted: ParsedPartnerHostedCreative | null = null;
+    let hostedTargetingNotes: string[] = [];
     try {
       hosted = parsePartnerHostedCreative(input.snippet, input.metadata);
+      if (hosted) {
+        const targeted = applyPartnerHostedTargetingContext(hosted, requestedContext);
+        hosted = targeted.creative;
+        hostedTargetingNotes = targeted.notes;
+      }
     } catch (error) {
       if (error instanceof PartnerHostedCreativeParseError) {
         throw new ValidationError(`${error.code}: ${error.message}`, { reasonCode: error.code });
@@ -299,6 +306,7 @@ export class MediaOperationsService {
       }
     }
     const context = await resolveMediaIngestionContext(requestedContext, parsed.creatives);
+    context.persisted.notes.push(...hostedTargetingNotes);
     const hostedBinding = hosted
       ? await resolvePartnerHostedCommercialBinding(hosted, context)
       : null;
