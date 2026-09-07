@@ -259,11 +259,11 @@ test("one-connection Production-shaped pool stays bounded across discovery, MCP,
     const lockStarted = performance.now();
     const lockedResult = await withTablesLocked(
       database,
-      '"CasinoAlias", "AffiliateOffer", "AffiliateRedirectSlug"',
+      '"CasinoAlias", "AffiliateOffer", "AffiliateRedirectSlug", "MarketActivation"',
       () => publicCasinoDiscoveryRepository.loadContext([discoveryId]),
     );
     const lockedMs = performance.now() - lockStarted;
-    assert.deepEqual(lockedResult, { aliases: [], offers: [], redirects: [] });
+    assert.deepEqual(lockedResult, { aliases: [], offers: [], redirects: [], activations: [] });
     assert.ok(lockedMs >= 1_300 && lockedMs < 4_000, `controlled lock completed in ${lockedMs}ms`);
 
     let activePublishedReads = 0;
@@ -333,7 +333,7 @@ test("one-connection Production-shaped pool stays bounded across discovery, MCP,
 
     console.info(JSON.stringify({
       productionDbReliability: {
-        discoveryQueriesPerRequest: 3,
+        discoveryQueriesPerRequest: 4,
         discoveryMaximumInternalConcurrency: 1,
         coldMs: Number(coldMs.toFixed(2)),
         warmMedianMs: Number([...warmSamples].sort((a, b) => a - b)[Math.floor(warmSamples.length / 2)].toFixed(2)),
