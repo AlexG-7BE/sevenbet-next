@@ -11,6 +11,7 @@ import { partnerRouteService } from "../lib/services/partner-route.service";
 import { prisma } from "../lib/db/prisma";
 
 const RELEASE = MARKET_ACTIVATION_CONTROLLER_VERSION;
+const RECONCILIATION_SEMANTICS = "CANONICAL-CANDIDATE-RESELECTION-V2";
 const MIGRATION = "0031_market_activation_v2";
 const PROJECT_ID = "prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb";
 const ORG_ID = "team_WhkUGuXZeIMlU1uFHtowNUqa";
@@ -239,7 +240,10 @@ async function reconcile(now = new Date()) {
       origin: "RECONCILER",
       reason: `Reconcile desired ${record.desiredState} state from canonical activation version ${record.version}.`,
       sourceReferences: record.sourceReferences.length ? record.sourceReferences : [FOUNDER_SOURCE],
-      idempotencyKey: `${RELEASE}:reconcile:${record.id}:from-version-${record.version}`,
+      // A reconciliation key identifies both the source activation version and
+      // the payload semantics. Changing route-selection inputs while reusing an
+      // older key would correctly raise an idempotency conflict in Production.
+      idempotencyKey: `${RELEASE}:reconcile:${RECONCILIATION_SEMANTICS}:${record.id}:from-version-${record.version}`,
       expectedVersion: record.version,
     };
     results.push(await marketActivationController.setDesiredState(input, now));

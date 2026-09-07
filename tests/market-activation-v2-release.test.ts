@@ -60,6 +60,14 @@ test("reconciliation re-evaluates the canonical tracking candidate instead of pi
   assert.doesNotMatch(reconcile, /primaryTrackingLinkId:/);
 });
 
+test("reconciliation versions its idempotency key when payload semantics change", async () => {
+  const source = await readFile(new URL("scripts/market-activation-v2.ts", root), "utf8");
+  assert.match(source, /const RECONCILIATION_SEMANTICS = "CANONICAL-CANDIDATE-RESELECTION-V2"/);
+  const reconcile = source.match(/async function reconcile[\s\S]*?async function schemaAvailable/)?.[0] ?? "";
+  assert.match(reconcile, /reconcile:\$\{RECONCILIATION_SEMANTICS\}:\$\{record\.id\}:from-version-\$\{record\.version\}/);
+  assert.doesNotMatch(reconcile, /reconcile:\$\{record\.id\}:from-version-\$\{record\.version\}/);
+});
+
 test("Production build is DB-first and checksum-verifies the canonical activation schema", async () => {
   const source = await readFile(new URL("scripts/vercel-build-preflight.ts", root), "utf8");
   assert.match(source, /MARKET_ACTIVATION_TARGET_MIGRATION = "0031_market_activation_v2"/);
