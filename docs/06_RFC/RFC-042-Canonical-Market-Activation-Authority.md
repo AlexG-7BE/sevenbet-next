@@ -86,6 +86,11 @@ derives its expected terminal host from explicit route-health evidence or the
 bound market profile and classifies an unexpected destination before any CDN
 challenge classification can obscure it.
 
+Reconciliation preserves the governed Casino, GEO, product, redirect and offer
+identity but re-evaluates the primary tracking candidate. A previously selected
+link is historical state, not an explicit Founder pin, and cannot prevent a
+newer exact-market candidate from replacing it.
+
 Duplicate keys replay the original intent. A reused key with a different
 payload is rejected. Optimistic versions, exact unique constraints,
 Serializable transactions and bounded conflict retries prevent duplicate

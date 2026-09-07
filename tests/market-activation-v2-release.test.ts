@@ -46,6 +46,14 @@ test("release executor requires bounded environment, database, project, and SHA 
   ]) assert.match(source, new RegExp(guard));
 });
 
+test("reconciliation re-evaluates the canonical tracking candidate instead of pinning a stale binding", async () => {
+  const source = await readFile(new URL("scripts/market-activation-v2.ts", root), "utf8");
+  const reconcile = source.match(/async function reconcile[\s\S]*?async function schemaAvailable/)?.[0] ?? "";
+  assert.match(reconcile, /redirectSlugId: record\.redirectSlugId/);
+  assert.match(reconcile, /affiliateOfferId: record\.affiliateOfferId/);
+  assert.doesNotMatch(reconcile, /primaryTrackingLinkId:/);
+});
+
 test("Production build is DB-first and checksum-verifies the canonical activation schema", async () => {
   const source = await readFile(new URL("scripts/vercel-build-preflight.ts", root), "utf8");
   assert.match(source, /MARKET_ACTIVATION_TARGET_MIGRATION = "0031_market_activation_v2"/);

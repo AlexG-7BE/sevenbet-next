@@ -80,6 +80,10 @@ CDN challenges. Market-profile contradictions block activation only when they
 concern runtime-critical identity/GEO/domain fields; licence and incomplete
 bonus-term contradictions remain preserved enrichment evidence.
 
+**DETECTED:** the release reconciler does not replay the stored tracking-link
+binding as an explicit intent. Each reconciliation re-runs exact-market
+candidate selection while retaining the governed redirect and offer identity.
+
 **DETECTED:** public Casino/offer route projection and `/r` use
 `MarketActivationRuntime`. Exact active bindings are revalidated for entity
 shape and credential-free HTTPS safety. No legacy CRM, activation packet,
