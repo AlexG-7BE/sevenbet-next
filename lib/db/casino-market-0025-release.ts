@@ -283,13 +283,12 @@ export async function assertCasinoMarket0025Schema(prisma: CasinoMarketQueryClie
     releaseFail("POSTFLIGHT_ENUMS_MISMATCH", "Casino market release postflight found unexpected 0025 enums.");
   }
 
-  const [authority] = await prisma.$queryRawUnsafe<Array<{ default_value: string | null; eligible: bigint }>>(`
+  const [authority] = await prisma.$queryRawUnsafe<Array<{ default_value: string | null }>>(`
     SELECT
-      (SELECT column_default FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'AffiliateTrackingLinkCountry' AND column_name = 'productionEligible') AS default_value,
-      (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry" WHERE "productionEligible" = true) AS eligible
+      (SELECT column_default FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'AffiliateTrackingLinkCountry' AND column_name = 'productionEligible') AS default_value
   `);
-  if (!authority || authority.default_value !== "false" || authority.eligible !== 0n) {
-    releaseFail("POSTFLIGHT_PRODUCTION_ELIGIBILITY_MISMATCH", "Casino market release found unexpected productionEligible authority.");
+  if (!authority || authority.default_value !== "false") {
+    releaseFail("POSTFLIGHT_PRODUCTION_ELIGIBILITY_DEFAULT_MISMATCH", "Casino market release found an unexpected productionEligible default.");
   }
 }
 
@@ -304,6 +303,8 @@ export type CasinoMarket0025AuthoritySnapshot = {
   routeCountries: bigint;
   ineligibleRouteCountries: bigint;
   eligibleRouteCountries: bigint;
+  canonicalEligibleRouteCountries: bigint;
+  orphanEligibleRouteCountries: bigint;
 };
 
 export async function casinoMarket0025AuthoritySnapshot(prisma: CasinoMarketQueryClient) {
@@ -318,7 +319,52 @@ export async function casinoMarket0025AuthoritySnapshot(prisma: CasinoMarketQuer
       (SELECT COUNT(*) FROM "MediaAsset" WHERE "casinoCountryId" IS NOT NULL) AS "scopedMedia",
       (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry") AS "routeCountries",
       (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry" WHERE "productionEligible" = false) AS "ineligibleRouteCountries",
-      (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry" WHERE "productionEligible" = true) AS "eligibleRouteCountries"
+      (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry" WHERE "productionEligible" = true) AS "eligibleRouteCountries",
+      (
+        SELECT COUNT(*)
+        FROM "AffiliateTrackingLinkCountry" AS country
+        JOIN "AffiliateTrackingLink" AS tracking
+          ON tracking."id" = country."trackingLinkId"
+        JOIN "MarketActivation" AS activation
+          ON activation."primaryTrackingLinkId" = country."trackingLinkId"
+          AND activation."countryCode" = country."countryCode"
+          AND activation."affiliateOfferId" = tracking."offerId"
+        WHERE country."productionEligible" = true
+          AND country."mode" = 'ALLOW'
+          AND country."productionEligibilityVerifiedAt" IS NOT NULL
+          AND country."productionEligibilityExpiresAt" IS NULL
+          AND country."productionEligibilityEvidence" IS NOT NULL
+          AND btrim(country."productionEligibilityEvidence") <> ''
+          AND activation."product" = 'CASINO'
+          AND activation."desiredState" = 'ACTIVE'
+          AND activation."status" = 'ACTIVE'
+          AND activation."routeVerificationStatus" = 'HEALTHY'
+          AND activation."routeLastCheckedAt" = country."productionEligibilityVerifiedAt"
+      ) AS "canonicalEligibleRouteCountries",
+      (
+        SELECT COUNT(*)
+        FROM "AffiliateTrackingLinkCountry" AS country
+        WHERE country."productionEligible" = true
+          AND NOT EXISTS (
+            SELECT 1
+            FROM "AffiliateTrackingLink" AS tracking
+            JOIN "MarketActivation" AS activation
+              ON activation."primaryTrackingLinkId" = tracking."id"
+              AND activation."countryCode" = country."countryCode"
+              AND activation."affiliateOfferId" = tracking."offerId"
+            WHERE tracking."id" = country."trackingLinkId"
+              AND country."mode" = 'ALLOW'
+              AND country."productionEligibilityVerifiedAt" IS NOT NULL
+              AND country."productionEligibilityExpiresAt" IS NULL
+              AND country."productionEligibilityEvidence" IS NOT NULL
+              AND btrim(country."productionEligibilityEvidence") <> ''
+              AND activation."product" = 'CASINO'
+              AND activation."desiredState" = 'ACTIVE'
+              AND activation."status" = 'ACTIVE'
+              AND activation."routeVerificationStatus" = 'HEALTHY'
+              AND activation."routeLastCheckedAt" = country."productionEligibilityVerifiedAt"
+          )
+      ) AS "orphanEligibleRouteCountries"
   `);
   if (!snapshot) releaseFail("AUTHORITY_SNAPSHOT_UNAVAILABLE", "Casino market authority state could not be verified.");
   return snapshot;
@@ -342,9 +388,13 @@ export function assertEmptyCasinoMarket0025Authority(snapshot: CasinoMarket0025A
   }
 }
 
-function assertCasinoMarket0025CommercialFirewall(snapshot: CasinoMarket0025AuthoritySnapshot) {
-  if (snapshot.eligibleRouteCountries !== 0n || snapshot.ineligibleRouteCountries !== snapshot.routeCountries) {
-    releaseFail("UNEXPECTED_PRODUCTION_ELIGIBILITY", "Casino market steady state found unexpected productionEligible authority.");
+export function assertCasinoMarket0025CommercialFirewall(snapshot: CasinoMarket0025AuthoritySnapshot) {
+  if (
+    snapshot.eligibleRouteCountries !== snapshot.canonicalEligibleRouteCountries
+    || snapshot.orphanEligibleRouteCountries !== 0n
+    || snapshot.ineligibleRouteCountries + snapshot.eligibleRouteCountries !== snapshot.routeCountries
+  ) {
+    releaseFail("UNEXPECTED_PRODUCTION_ELIGIBILITY", "Casino market steady state found productionEligible authority without an exact canonical MarketActivation projection.");
   }
 }
 

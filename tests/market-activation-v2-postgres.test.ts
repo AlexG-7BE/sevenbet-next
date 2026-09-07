@@ -3,6 +3,10 @@ import test from "node:test";
 
 import { PrismaClient } from "@prisma/client";
 
+import {
+  CasinoMarket0025ReadStageError,
+  inspectCasinoMarket0025Release,
+} from "../lib/db/casino-market-0025-release";
 import { MarketActivationController } from "../lib/market-activation/controller";
 import { marketActivationRepository } from "../lib/market-activation/repository";
 import { marketActivationRuntime } from "../lib/market-activation/runtime";
@@ -164,6 +168,32 @@ test("PostgreSQL controller is idempotent, concurrent, reconciling, exact-market
     assert.equal(authority.productionEligible, true);
     assert.equal(tracking.verifiedAt?.toISOString(), NOW.toISOString(), "only the injected successful route check may persist external verification");
     assert.equal(tracking.lastCheckedAt?.toISOString(), NOW.toISOString());
+    assert.deepEqual(
+      await inspectCasinoMarket0025Release(prisma),
+      { state: "already_applied_and_verified" },
+      "legacy steady-state preflight must accept eligibility projected from exact canonical ACTIVE state",
+    );
+
+    await prisma.affiliateTrackingLinkCountry.create({
+      data: {
+        trackingLinkId: TRACKING_ID,
+        countryCode: "CL",
+        mode: "ALLOW",
+        productionEligible: true,
+        productionEligibilityVerifiedAt: NOW,
+        productionEligibilityEvidence: "TEST:ORPHANED-LEGACY-AUTHORITY",
+      },
+    });
+    await assert.rejects(
+      inspectCasinoMarket0025Release(prisma),
+      (error: unknown) => error instanceof CasinoMarket0025ReadStageError
+        && error.stage === "authority_state"
+        && error.errorCode === "UNEXPECTED_PRODUCTION_ELIGIBILITY",
+      "an eligible compatibility row without exact canonical ACTIVE state must still fail closed",
+    );
+    await prisma.affiliateTrackingLinkCountry.delete({
+      where: { trackingLinkId_countryCode: { trackingLinkId: TRACKING_ID, countryCode: "CL" } },
+    });
 
     await prisma.affiliateProgram.update({ where: { id: PROGRAM_ID }, data: { status: "DRAFT", workflowStatus: "DRAFT" } });
     await prisma.affiliateOffer.update({ where: { id: OFFER_ID }, data: { status: "DRAFT" } });

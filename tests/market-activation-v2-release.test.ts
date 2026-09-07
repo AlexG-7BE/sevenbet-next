@@ -70,8 +70,16 @@ test("reconciliation versions its idempotency key when payload semantics change"
 
 test("Production build is DB-first and checksum-verifies the canonical activation schema", async () => {
   const source = await readFile(new URL("scripts/vercel-build-preflight.ts", root), "utf8");
+  const casinoMarketGuard = await readFile(new URL("lib/db/casino-market-0025-release.ts", root), "utf8");
+  const ciWorkflow = await readFile(new URL(".github/workflows/ci.yml", root), "utf8");
   assert.match(source, /MARKET_ACTIVATION_TARGET_MIGRATION = "0031_market_activation_v2"/);
   assert.match(source, /assertChecksum\(completedByName\.get\(MARKET_ACTIVATION_TARGET_MIGRATION\)/);
   assert.match(source, /to_regclass\('public\."MarketActivation"'\)/);
   assert.match(source, /Production DB-first release requires completed.*MARKET_ACTIVATION_TARGET_MIGRATION/s);
+  assert.match(casinoMarketGuard, /canonicalEligibleRouteCountries/);
+  assert.match(casinoMarketGuard, /orphanEligibleRouteCountries/);
+  assert.match(casinoMarketGuard, /activation\."routeVerificationStatus" = 'HEALTHY'/);
+  assert.match(casinoMarketGuard, /productionEligible authority without an exact canonical MarketActivation projection/);
+  assert.doesNotMatch(casinoMarketGuard, /authority\.eligible !== 0n/);
+  assert.match(ciWorkflow, /npm run market-activation:postgres-test/);
 });
