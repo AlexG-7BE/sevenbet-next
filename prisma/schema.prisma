@@ -219,6 +219,54 @@ enum AffiliateStatus {
   ARCHIVED
 }
 
+// MARKET-ACTIVATION-V2 is the sole durable Production authority for whether
+// one exact Casino × GEO × Product combination is commercially active.
+enum MarketActivationProduct {
+  CASINO
+}
+
+enum MarketActivationDesiredState {
+  ACTIVE
+  DISABLED
+}
+
+enum MarketActivationStatus {
+  DRAFT
+  PREPARING
+  ACTIVE
+  BLOCKED_EXTERNAL
+  DISABLED
+}
+
+enum MarketActivationRouteVerificationStatus {
+  NOT_CHECKED
+  HEALTHY
+  DEGRADED
+  EXTERNAL_CHALLENGE
+  BROKEN
+  EXPIRED
+  CROSS_GEO
+  ATTRIBUTION_FAILURE
+}
+
+enum MarketActivationIntentOrigin {
+  FOUNDER
+  ADMIN
+  SYSTEM
+  BACKFILL
+  RECONCILER
+}
+
+enum MarketActivationEventType {
+  INTENT_ACCEPTED
+  PREPARING
+  RECONCILED
+  ACTIVATED
+  BLOCKED_EXTERNAL
+  DISABLED
+  NOOP
+}
+
 enum AffiliatePayoutModel {
   CPA
   CPL
@@ -1511,6 +1559,7 @@ model Casino {
   brandProfile             CasinoBrand?                            @relation(fields: [brandProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   commercialOpportunities  CommercialOpportunity[]
   outboundClickDaily       AffiliateOutboundClickDaily[]
+  marketActivations        MarketActivation[]
 
   @@index([operatorProfileId])
   @@index([brandProfileId])
@@ -1698,15 +1747,16 @@ model CasinoCountry {
   createdAt              DateTime                  @default(now())
   updatedAt              DateTime                  @updatedAt
 
-  casino          Casino                  @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  operatorProfile CasinoOperator?         @relation("CasinoCountryOperator", fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  evidence        CasinoCountryEvidence[]
-  licenses        CasinoCountryLicense[]
-  paymentMethods  CasinoPaymentMethod[]
-  gameProviders   CasinoGameProvider[]
-  gameCategories  CasinoGameCategory[]
-  bonuses         CasinoBonus[]
-  mediaAssets     MediaAsset[]
+  casino            Casino                  @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  operatorProfile   CasinoOperator?         @relation("CasinoCountryOperator", fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  evidence          CasinoCountryEvidence[]
+  licenses          CasinoCountryLicense[]
+  paymentMethods    CasinoPaymentMethod[]
+  gameProviders     CasinoGameProvider[]
+  gameCategories    CasinoGameCategory[]
+  bonuses           CasinoBonus[]
+  mediaAssets       MediaAsset[]
+  marketActivations MarketActivation[]
 
   @@unique([casinoId, countryCode])
   @@unique([id, casinoId])
@@ -1903,6 +1953,7 @@ model CasinoBonus {
   mediaAssignments         CasinoBonusMediaAssignment[]
   partnerHostedCreatives   PartnerHostedCreative[]
   partnerHostedAssignments CasinoBonusPartnerHostedCreativeAssignment[]
+  marketActivations        MarketActivation[]
 
   @@index([casinoId, status, offerStatus])
   @@index([casinoId, sortOrder])
@@ -2067,6 +2118,7 @@ model AffiliateOffer {
   partnerHostedCreatives   PartnerHostedCreative[]
   partnerHostedAssignments AffiliateOfferPartnerHostedCreativeAssignment[]
   outboundClickDaily       AffiliateOutboundClickDaily[]
+  marketActivations        MarketActivation[]
 
   @@unique([programId, externalOfferId])
   @@index([casinoId, status, priority])
@@ -2133,6 +2185,7 @@ model AffiliateTrackingLink {
   revisions              AffiliateTrackingLinkRevision[]
   outboundClickDaily     AffiliateOutboundClickDaily[]
   partnerHostedCreatives PartnerHostedCreative[]
+  marketActivations      MarketActivation[]
 
   @@unique([offerId, externalLinkId])
   @@index([offerId, active, priority])
@@ -2225,6 +2278,8 @@ model AffiliateTrackingLinkCountry {
   trackingLinkId                  String           @db.Uuid
   countryCode                     String
   mode                            AffiliateGeoMode
+  /// Deprecated as an independent Production authority by RFC-042.
+  /// MARKET-ACTIVATION-V2 writes this only as a one-way compatibility projection.
   productionEligible              Boolean          @default(false)
   productionEligibilityVerifiedAt DateTime?
   productionEligibilityExpiresAt  DateTime?
@@ -2290,6 +2345,7 @@ model AffiliateRedirectSlug {
   revisions              AffiliateRedirectRevision[]
   outboundClickDaily     AffiliateOutboundClickDaily[]
   partnerHostedCreatives PartnerHostedCreative[]
+  marketActivations      MarketActivation[]
 
   @@index([casinoId, active])
   @@index([casinoBonusId, active])
@@ -2309,6 +2365,105 @@ model AffiliateRedirectRevision {
 
   @@unique([redirectSlugId, revisionNumber])
   @@index([redirectSlugId, createdAt])
+}
+
+model MarketActivation {
+  id                        String                                  @id @default(uuid()) @db.Uuid
+  casinoId                  String                                  @db.Uuid
+  countryCode               String                                  @db.Char(2)
+  product                   MarketActivationProduct                 @default(CASINO)
+  desiredState              MarketActivationDesiredState
+  status                    MarketActivationStatus                  @default(DRAFT)
+  marketProfileId           String?                                 @db.Uuid
+  affiliateOfferId          String?                                 @db.Uuid
+  primaryTrackingLinkId     String?                                 @db.Uuid
+  redirectSlugId            String?                                 @db.Uuid
+  casinoBonusId             String?                                 @db.Uuid
+  version                   Int                                     @default(0)
+  controllerVersion         String
+  reconciliationFingerprint String
+  requestedBy               String
+  requestedAt               DateTime                                @default(now())
+  requestReason             String
+  sourceReferences          String[]                                @default([])
+  activatedAt               DateTime?
+  disabledAt                DateTime?
+  blockedAt                 DateTime?
+  lastReconciledAt          DateTime?
+  routeVerificationStatus   MarketActivationRouteVerificationStatus @default(NOT_CHECKED)
+  routeLastCheckedAt        DateTime?
+  routeFinalHost            String?
+  routeVerificationDetail   String?
+  externalBlockerCode       String?
+  externalBlockerDetail     String?
+  externalBlockerSource     String?
+  diagnostics               Json                                    @default("{}")
+  createdAt                 DateTime                                @default(now())
+  updatedAt                 DateTime                                @updatedAt
+
+  casino              Casino                   @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  marketProfile       CasinoCountry?           @relation(fields: [marketProfileId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  affiliateOffer      AffiliateOffer?          @relation(fields: [affiliateOfferId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  primaryTrackingLink AffiliateTrackingLink?   @relation(fields: [primaryTrackingLinkId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  redirectSlug        AffiliateRedirectSlug?   @relation(fields: [redirectSlugId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casinoBonus         CasinoBonus?             @relation(fields: [casinoBonusId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  intents             MarketActivationIntent[]
+  events              MarketActivationEvent[]
+
+  @@unique([casinoId, countryCode, product])
+  @@unique([redirectSlugId, countryCode, product])
+  @@unique([primaryTrackingLinkId, countryCode, product])
+  @@index([countryCode, product, status])
+  @@index([desiredState, status, updatedAt])
+  @@index([routeVerificationStatus, routeLastCheckedAt])
+  @@index([marketProfileId])
+  @@index([affiliateOfferId])
+  @@index([casinoBonusId])
+}
+
+model MarketActivationIntent {
+  id               String                       @id @default(uuid()) @db.Uuid
+  activationId     String                       @db.Uuid
+  idempotencyKey   String                       @unique
+  desiredState     MarketActivationDesiredState
+  origin           MarketActivationIntentOrigin
+  actorId          String
+  reason           String
+  sourceReferences String[]                     @default([])
+  payloadHash      String
+  createdAt        DateTime                     @default(now())
+
+  activation MarketActivation        @relation(fields: [activationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  events     MarketActivationEvent[]
+
+  @@index([activationId, createdAt])
+  @@index([origin, createdAt])
+}
+
+model MarketActivationEvent {
+  id                   String                        @id @default(uuid()) @db.Uuid
+  activationId         String                        @db.Uuid
+  intentId             String?                       @db.Uuid
+  sequence             Int
+  type                 MarketActivationEventType
+  previousDesiredState MarketActivationDesiredState?
+  previousStatus       MarketActivationStatus?
+  desiredState         MarketActivationDesiredState
+  status               MarketActivationStatus
+  actorId              String
+  origin               MarketActivationIntentOrigin
+  reason               String
+  controllerVersion    String
+  metadata             Json                          @default("{}")
+  occurredAt           DateTime                      @default(now())
+
+  activation MarketActivation        @relation(fields: [activationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  intent     MarketActivationIntent? @relation(fields: [intentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([activationId, sequence])
+  @@index([activationId, occurredAt])
+  @@index([type, occurredAt])
+  @@index([intentId])
 }
 
 /// First-party aggregate commercial measurement. Each row is a UTC-day

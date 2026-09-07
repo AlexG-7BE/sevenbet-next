@@ -104,6 +104,16 @@ export interface CasinoDiscoveryResult {
 
 export interface DiscoveryAlias { casinoId: string; value: string }
 export interface DiscoveryRedirect { casinoId: string; casinoBonusId: string | null; affiliateOfferId: string | null; slug: string }
+export interface DiscoveryActivation {
+  casinoId: string;
+  countryCode: string;
+  product: "CASINO";
+  desiredState: "ACTIVE" | "DISABLED";
+  status: "DRAFT" | "PREPARING" | "ACTIVE" | "BLOCKED_EXTERNAL" | "DISABLED";
+  casinoBonusId: string | null;
+  affiliateOfferId: string | null;
+  redirectSlug: string | null;
+}
 export interface DiscoveryGeoRule {
   countryCode: string;
   mode: "GLOBAL" | "ALLOW" | "BLOCK";
@@ -140,6 +150,8 @@ export interface DiscoveryContext {
   aliases: DiscoveryAlias[];
   offers: DiscoveryOffer[];
   redirects: DiscoveryRedirect[];
+  /** Present for canonical runtime contexts. Undefined is reserved for legacy test fixtures. */
+  activations?: DiscoveryActivation[];
 }
 
 export interface PublicCasinoDiscoveryStore {

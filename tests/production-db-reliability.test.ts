@@ -170,16 +170,18 @@ test("public discovery preserves exact query results while limiting internal dat
   const aliases = [{ casinoId: "casino-1", value: "Alias" }];
   const offers = [{ id: "offer-1", casinoId: "casino-1" }];
   const redirects = [{ casinoId: "casino-1", slug: "visit" }];
+  const activations: never[] = [];
   const repository = new PublicCasinoDiscoveryRepository({
     casinoAlias: { findMany: () => query("aliases", aliases) },
     affiliateOffer: { findMany: () => query("offers", offers) },
     affiliateRedirectSlug: { findMany: () => query("redirects", redirects) },
+    marketActivation: { findMany: () => query("activations", activations) },
   } as never);
 
   const result = await repository.loadContext(["casino-1"]);
-  assert.deepEqual(result, { aliases, offers, redirects });
-  assert.deepEqual(order, ["aliases", "offers", "redirects"]);
-  assert.equal(order.length, 3);
+  assert.deepEqual(result, { aliases, offers, redirects, activations });
+  assert.deepEqual(order, ["aliases", "offers", "redirects", "activations"]);
+  assert.equal(order.length, 4);
   assert.equal(maximum, 1);
 });
 

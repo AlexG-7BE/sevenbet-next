@@ -478,24 +478,26 @@ export async function resolvePublishedCreativeDestination(input: {
   redirectSlugId: string;
   casinoId: string;
   affiliateOfferId: string;
-  trackingLinkId: string;
+  countryCode: string;
 }) {
+  const countryCode = input.countryCode.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(countryCode)) return null;
   const creative = await prisma.partnerHostedCreative.findFirst({
     where: {
       id: input.creativeId,
       redirectSlugId: input.redirectSlugId,
       casinoId: input.casinoId,
       affiliateOfferId: input.affiliateOfferId,
-      trackingLinkId: input.trackingLinkId,
+      OR: [{ countryCode }, { countryCode: null }],
       active: true,
       archivedAt: null,
       validationState: "VALIDATED",
       destinationVerificationState: "VERIFIED",
       casino: { status: "PUBLISHED", archivedAt: null },
     },
-    select: { destinationUrl: true, destinationUrlHash: true, casinoId: true },
+    select: { destinationUrl: true, destinationUrlHash: true, casinoId: true, trackingLinkId: true },
   });
-  if (!creative) return null;
+  if (!creative?.trackingLinkId) return null;
   const published = await prisma.casinoVersion.findFirst({
     where: { casinoId: creative.casinoId, status: "PUBLISHED" },
     orderBy: [{ version: "desc" }, { publishedAt: "desc" }],
@@ -525,7 +527,7 @@ export async function resolvePublishedCreativeDestination(input: {
   const expectedFingerprint = partnerHostedBindingFingerprint({
     affiliateOfferId: input.affiliateOfferId,
     redirectSlugId: input.redirectSlugId,
-    trackingLinkId: input.trackingLinkId,
+    trackingLinkId: creative.trackingLinkId,
     destinationUrlHash: creative.destinationUrlHash,
   });
   if (!projected || projected.bindingFingerprint !== expectedFingerprint) return null;

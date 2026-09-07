@@ -1,0 +1,172 @@
+# RFC-042 — Canonical Market Activation Authority
+
+**Lifecycle:** `ACTIVE`
+
+**Decision owner:** B4GAMBLE Founder
+
+**Decision date:** 7 September 2026
+
+**Implementation authority:** explicit Founder instruction `B4GAMBLE
+CANONICAL MARKET ACTIVATION MIGRATION — FOUNDER EXECUTION AUTHORIZATION`,
+SHA-256 `9601a2a66f0a566a1a08758fff303fe63133a9ab3e192df9a4d33f85cc9f25b8`.
+
+## Decision
+
+`MarketActivation` is the only B4GAMBLE-owned Production commercial authority
+for one exact `Casino × GEO × Product`. Facts remain distributed in their
+proper domains, but public runtime no longer reconstructs final authority from
+CRM stage, activation packets, workflow state, offer state, Media Operations,
+or an independently writable `productionEligible` value.
+
+The initial product is `CASINO`. The database admits exactly one canonical row
+for `(casinoId, countryCode, product)`. Exact-market activation never implies a
+global or neighbouring-market activation.
+
+This decision changes internal commercial authority only. Trusted request-GEO
+resolution, explicit jurisdiction prohibition, GB operator/legal controls,
+safe-URL and network protections, Programme/commercial data separation, and
+protected Help behaviour remain independent external or safety constraints.
+
+## Canonical state
+
+Intent and result are separate:
+
+- `desiredState`: `ACTIVE | DISABLED`;
+- `status`: `DRAFT | PREPARING | ACTIVE | BLOCKED_EXTERNAL | DISABLED`.
+
+`PREPARING` means internal convergence is incomplete. It is resumable and is
+not a final external denial. `BLOCKED_EXTERNAL` is reserved for a concrete
+fact outside B4GAMBLE's ability to manufacture: contradicted or prohibited
+market evidence, absent evidenced destination, expired upstream offer/link,
+unsafe external URL, explicit partner-country block, or failed current route
+verification with no usable alternative.
+
+Internal workflow, CRM, publication, projection and compatibility state does
+not become `BLOCKED_EXTERNAL`. Evidence-backed market ingestion and public
+publication remain their existing controlled operations; an activation waits
+in `PREPARING` rather than inventing unknown licences, offer terms, URLs or
+media.
+
+An `ACTIVE` row binds the exact market profile, affiliate offer, primary
+tracking link and internal redirect route. It records a deterministic
+reconciliation fingerprint, current healthy route verification, version,
+actor, source references, timestamps and structured diagnostics. An immutable
+intent/event history records accepted intent, preparation, reconciliation,
+activation, disabling, external blocking and same-state no-ops.
+
+## Controller and route verification
+
+`MarketActivationController` is the only application service that establishes
+canonical activation. Its high-level `launchCasinoMarket` /
+`activateCasinoInGeo` operation accepts Casino identity, GEO, optional exact
+offer/route/link references, desired state, actor/origin, evidence references
+and an idempotency key.
+
+The controller runs deterministic reconciliation in a Serializable database
+transaction. It repairs safe internal compatibility state, retains revisions
+before material offer/link/redirect changes, and persists `PREPARING` before
+network work. It then performs bounded route verification outside the
+transaction. Only a healthy, expected final route can finalize `ACTIVE` and
+project legacy eligibility. A completed check that establishes external route
+failure persists its normalized status, reason, final host when present, check
+time and an external blocker. A verifier execution/infrastructure failure does
+not fabricate external evidence: it leaves new work `PREPARING` or preserves
+an already canonical `ACTIVE` state for retry. Raw destinations are not placed
+in diagnostics or events.
+
+Duplicate keys replay the original intent. A reused key with a different
+payload is rejected. Optimistic versions, exact unique constraints,
+Serializable transactions and bounded conflict retries prevent duplicate
+canonical rows and lost updates. A new same-state intent records audit history
+but does not rewrite canonical state. A stale fingerprint or compatibility
+drift causes only the required reconciliation and re-verification.
+
+## Runtime readers
+
+Public Casino pages, directory CTAs, public offer action projections,
+commercial media action bindings and `/r/{slug}` resolve an exact active
+`MarketActivation` plus its bound objects. Runtime validates relational shape
+and credential-free HTTPS safety, but does not rerun legacy commercial
+governance.
+
+The redirect resolver still applies trusted GEO and jurisdiction controls. GB
+also retains the cumulative operator/legal safety chain required by RFC-014,
+RFC-015, RFC-017 and RFC-036. These are not CRM or workflow vetoes and are not
+weakened by this RFC.
+
+No activation cache is introduced in the initial cutover. Reads go to the
+canonical row so disable/block transitions cannot be hidden by a second stale
+authority. Any future cache must use exact Casino/GEO/Product keys and explicit
+transition invalidation.
+
+## Compatibility and legacy ownership
+
+Legacy data is preserved. Its post-cutover role is one-way:
+
+| Mechanism | Durable role |
+| --- | --- |
+| Commercial CRM stage | source fact and audit history |
+| activation packets / readiness | source fact and audit history |
+| programme / offer workflow | controller-maintained compatibility projection |
+| `AffiliateTrackingLinkCountry.productionEligible` | deprecated stored compatibility projection |
+| PartnerRoute projection | migration/shadow/health input; bound route dependency |
+| public Casino/offer projections | editorial/read-model input, never final authority |
+| Media Operations | creative provenance and assignment input, never commercial authority |
+
+The allowed synchronization direction is `MarketActivation → compatibility`.
+Legacy state may be inspected by backfill, diagnostics and shadow comparison,
+but cannot directly turn canonical `ACTIVE` off or create canonical `ACTIVE`.
+
+## Migration and cutover
+
+Migration `0031_market_activation_v2` is additive. It creates the canonical,
+intent and event tables plus enums, checks, foreign keys and exact unique
+indexes. It drops or rewrites no legacy data.
+
+The guarded release executor:
+
+1. proves environment, Vercel project/team, database fingerprint/resource and
+   repository SHA;
+2. applies the exact migration once;
+3. snapshots currently working legacy exact-market routes and backfills them;
+4. applies the Founder golden desired states;
+5. runs legacy/canonical shadow comparison and refuses mismatches;
+6. reconciles every canonical row idempotently; and
+7. verifies bindings, healthy route checks, exact-market media and the Betsson
+   Chile negative invariant.
+
+The Founder golden states are Inkabet PE, Betsson PE, Betsafe EE and Betsafe LV
+`ACTIVE`; Betsson CL is `DISABLED`.
+
+## Rollback and recovery
+
+The database migration is additive and remains useful after application
+rollback. Application rollback returns public readers to the prior legacy
+projection; therefore the controller maintains compatible programme, offer,
+route and `productionEligible` state. Canonical rows, intents, events and route
+verification evidence are retained and are not deleted during rollback.
+
+If release verification fails before runtime cutover, do not deploy the new
+reader. If it fails after cutover, roll the application back to the last Ready
+deployment, preserve all canonical evidence, set affected desired states to
+`DISABLED` when external safety requires immediate containment, correct the
+cause through the controller, re-run shadow/reconciliation, and cut over only
+after all exact-market checks pass. No destructive migration rollback or
+`prisma migrate reset` is authorized.
+
+## Privacy and Programme boundary
+
+Activation data contains commercial entity state and aggregate operational
+diagnostics only. It does not consume visitor identity, Programme progress,
+pause, reflection, voice, sensitive-input or Help data. Activation and Media
+data cannot be used for Programme targeting or commercial personalization.
+
+## Supersession
+
+This RFC supersedes older internal language only where it gave final
+Production commercial authority to a distributed CRM/workflow/readiness/
+`productionEligible` aggregation. RFC-038 remains authoritative for factual
+Casino-market grain and provenance. RFC-039 remains authoritative for trusted
+request market and editorial/commercial separation. RFC-040 and RFC-041 remain
+authoritative for Media ownership and rendering. External safety decisions in
+RFC-014, RFC-015, RFC-017 and RFC-036 remain active.

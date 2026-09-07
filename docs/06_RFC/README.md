@@ -69,16 +69,17 @@ orientation.
 | [RFC-039 — Language-Only Public Routing and Global Casino Catalog](RFC-039-Language-Only-Public-Routing-and-Global-Casino-Catalog.md) | `ACTIVE` | Language-only public canonicals, trusted request-market separation, global real-Casino publication, `UNKNOWN`/prohibition separation and governed country-block routing. |
 | [RFC-040 — Placement-Based Media Assignments](RFC-040-Placement-Based-Media-Assignments.md) | `ACTIVE` | Founder-approved Option C typed assignment tables, deterministic resolver, semantic Admin slots and immutable publication projection. RFC-041 supersedes its narrower four-bucket presentation order for mixed hosted inventory. |
 | [RFC-041 — Vetted Partner-Hosted Creatives](RFC-041-Vetted-Partner-Hosted-Creatives.md) | `ACTIVE` | Exact Superfly/Bannerflow adapters, structured server-owned destinations, isolated rendering, creative-bound `/r` resolution and eight-tier global fallback policy. |
+| [RFC-042 — Canonical Market Activation Authority](RFC-042-Canonical-Market-Activation-Authority.md) | `ACTIVE` | Single exact Casino × GEO × Product Production authority, desired-state controller/reconciler, canonical runtime cutover and one-way legacy compatibility. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 20 |
+| `ACTIVE` | 21 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 2 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **41** |
+| **Total RFC artifacts** | **42** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

@@ -224,6 +224,19 @@ function redirectOffer(): CandidateOffer {
   };
 }
 
+const canonicalGbActivation = {
+  resolveRedirect: async () => ({
+    casinoId: "casino",
+    redirectSlug: { id: "redirect", slug: "casino-visit" },
+    affiliateOffer: { id: "offer" },
+    primaryTrackingLink: {
+      id: "link",
+      destinationUrl: "https://casino.invalid/welcome",
+      trackingUrl: "https://tracking.invalid/click",
+    },
+  }),
+} as never;
+
 test("redirect authority is a strict AND and rechecks before returning a stored destination", async () => {
   let offerReads = 0;
   const offers = { activeCandidates: async () => { offerReads += 1; return [redirectOffer()] as never; } };
@@ -238,11 +251,11 @@ test("redirect authority is a strict AND and rechecks before returning a stored 
       return { jurisdictionAuthority: true, partnerAuthority: true, operatorAuthority: false, domainAuthority: false, programAuthority: true, offerAuthority: true, trackingAuthority: true, bonusAuthority: true, redirectAuthority: true, commercialReady: false, referralReady: false, reasonCodes: ["GB_DOMAIN_EVIDENCE_MISSING"], operatorEligibility: unavailableGbOperatorEligibility("GB_DOMAIN_EVIDENCE_MISSING"), checkedAt: now.toISOString(), evidenceCheckedAt: null, revalidateAt: null };
     },
   };
-  const incomplete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, operatorDenied, allowPartnerRouteProductionAuthority).resolve("casino-visit", { now, currencyCode: "GBP" });
+  const incomplete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, operatorDenied, allowPartnerRouteProductionAuthority, undefined, undefined, canonicalGbActivation).resolve("casino-visit", { now, currencyCode: "GBP" });
   assert.equal(incomplete.ok, false);
   if (!incomplete.ok) assert.equal(incomplete.reason, "OPERATOR_EVIDENCE_DENIED");
 
-  const complete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, allowPartnerRouteProductionAuthority).resolve("casino-visit", { now, currencyCode: "GBP" });
+  const complete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, allowPartnerRouteProductionAuthority, undefined, undefined, canonicalGbActivation).resolve("casino-visit", { now, currencyCode: "GBP" });
   assert.equal(complete.ok, true);
   if (complete.ok) assert.equal(complete.destination.toString(), "https://tracking.invalid/click");
 });
