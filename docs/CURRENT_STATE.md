@@ -1,12 +1,12 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 6 September 2026
+**Evidence date:** 7 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `f429ba0f1f04d95a12086e7c7302d708103eec9a`
-**Verified post-release runtime baseline SHA:** `f429ba0f1f04d95a12086e7c7302d708103eec9a`
-**Verified post-release runtime deployment:** Ready; `dpl_AvipjKt4zVhPaCKrq7eAAmFH22C1`
+**Current Production application SHA (live provider evidence):** `6fc8a7cf2aa79ed435b427579c15e35f3218f538`
+**Verified post-release runtime baseline SHA:** `6fc8a7cf2aa79ed435b427579c15e35f3218f538`
+**Verified post-release runtime deployment:** Ready; `dpl_WPgC21HgnvTNDDXMqieY5prqpDBL`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -32,18 +32,38 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public legal implementation | **READY** | Current GB public legal copy/consent/disclosure implementation is in Production for the approved scope. |
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
-| ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — RESOURCE-SPECIFIC DCR, DURABLE GRANTS AND DB FAILURE BOUNDARY DEPLOYED** | Commercial retains four tools; Media retains five. PR #161 binds standards-shaped DCR through resource-specific discovery while preserving strict one-resource clients and invalidating cross-resource use. PR #159 keeps unsupported methods DB-free and authenticated transient DB failures bounded. |
+| ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — RESOURCE-SPECIFIC DCR, DURABLE GRANTS AND DB FAILURE BOUNDARY DEPLOYED** | Commercial retains four tools; Media retains six, including bounded bulk ingestion. PR #161 binds standards-shaped DCR through resource-specific discovery while preserving strict one-resource clients and invalidating cross-resource use. PR #159 keeps unsupported methods DB-free and authenticated transient DB failures bounded. |
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
 | Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES, DESTINATIONS VERIFIED** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority and checksum-matched canonical campaigns. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
-| Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; SIX PUBLISHED OFFERS** | Eight real global editorial identities remain published with their scores, reviews, SEO and controlled marks. Six have complete global catalog facts, a published welcome offer and a governed route; Betsson and DragonBet remain review-only. Temporary demo identities are excluded from every released catalog and offer surface. |
-| Placement media | **RFC-040 OPTION C ACTIVE IN PRODUCTION** | Nine semantic placements resolve through typed Casino, Bonus and optional AffiliateOffer relationships, responsive variants and immutable publication snapshots. Production has 26 Casino and 20 Bonus assignments, zero partner-context assignments, and a strict rollback switch. |
-| GEO-localized creative assignments | **CAPABILITY READY IN PRODUCTION — REAL LOCALIZED INVENTORY NOT INSTALLED** | Additive migration 0028 is applied and verified. Trusted request GEO plus presentation language resolve exact-country/language, global/language and neutral assignment scopes without client-side inventory selection. All 46 existing assignments remain global-neutral and targeted rows remain zero. |
-| Vetted partner-hosted creatives | **CAPABILITY READY IN PRODUCTION — SUPERFLY/BANNERFLOW; NO HOSTED INVENTORY PUBLISHED** | Additive migration 0029 and the independent feature flag are deployed. Original provider media can be parsed and rendered through typed, allowlisted image/embed paths; B4 owns every action, and a new destination must reach its expected operator host before publication. Production hosted tables remain empty. |
+| Casino market data | **TEN REAL PUBLISHED IDENTITIES — EIGHT SCORED/REVIEWED; TWO PROVISIONAL MEDIA-FIRST** | The accepted eight-identity catalog baseline remains intact: six have complete global facts and a published welcome offer, while Betsson and DragonBet remain review-only. Inkabet and Betsafe are additional noindex provisional profiles whose detailed facts and scoring remain explicitly pending; their draft binding offers grant no referral authority. Temporary demo identities remain excluded. |
+| Placement media | **RFC-040 OPTION C ACTIVE IN PRODUCTION** | Nine semantic placements resolve through typed Casino, Bonus and optional AffiliateOffer relationships, responsive variants and immutable publication snapshots. The prior first-party baseline remains 26 Casino and 20 Bonus assignments; BGA partner-hosted assignments are tracked separately, and the strict rollback switch remains available. |
+| GEO-localized creative assignments | **ACTIVE IN PRODUCTION — BGA PE/EE/LV HOSTED INVENTORY INSTALLED** | Trusted request GEO plus presentation language resolve exact-country/language, global/language and neutral assignment scopes without client-side inventory selection. BGA-MEDIA-E2E-01 adds 11 exact active offer and 11 exact active profile hosted assignments across Inkabet PE, Betsson PE and Betsafe EE/LV; Inkabet mobile uses its exact-country DEFAULT fallback. |
+| Vetted partner-hosted creatives | **ACTIVE IN PRODUCTION — 52 VALIDATED BANNERFLOW RECORDS; COMMERCIAL ACTION ON HOLD** | Migrations 0029/0030 and the independent feature flag are deployed. Production retains 52 supported exact-country BGA creatives, 11 responsive selections and three immutable Casino snapshots. Media renders from the original provider through isolated B4 frames; all related referral routes remain unavailable because cumulative Production commercial authority is absent. |
 | Commercial creative formats | **READY IN PRODUCTION** | Common affiliate formats, security-valid animated GIF ingestion, native responsive commercial geometry and governed creative actions are active without changing editorial media or expanding commercial authority. |
-| Media ingestion / Media Operations | **READY IN PRODUCTION — FIRST-PARTY R2, REVIEW-SAFE DRAFT AUTHORITY** | Validated partner media persists through the existing S3 provider to approved Cloudflare R2 Standard and `media.b4gamble.com`; checksum dedupe, bounded analysis, protected draft plans and the separate five-tool Media MCP are active with no publish authority. |
+| Media ingestion / Media Operations | **READY IN PRODUCTION — FIRST-PARTY R2, HOSTED BGA, REVIEW-SAFE DRAFT AUTHORITY** | Validated first-party media persists through the existing S3 provider to approved Cloudflare R2 Standard and `media.b4gamble.com`; hosted media retains provider authority in isolated frames. Checksum/identity dedupe, bounded analysis, protected draft plans and the separate six-tool Media MCP are active with no commercial publish authority. |
 | Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
 
 ### Recent implementation state
+
+**DETECTED — BGA-MEDIA-E2E-01 MEDIA DEPLOYED; COMMERCIAL AUTHORITY ON HOLD, 7
+September 2026:** [PR #178](https://github.com/AlexG-7BE/sevenbet-next/pull/178)
+merged normally as `6fc8a7cf2aa79ed435b427579c15e35f3218f538` after Agent
+Core, Quality, Database / Migration Verification, Build / Browser and Vercel
+passed. Ready Production deployment `dpl_WPgC21HgnvTNDDXMqieY5prqpDBL`
+serves the exact merge. The complete 88-row BGA source reconciled to 52
+supported exact-country Bannerflow creatives: Inkabet PE 29, Betsson PE 7,
+Betsafe EE 9 and Betsafe LV 7; 36 out-of-scope or country-silent rows remained
+unassigned. Production has 11 exact active offer assignments, 11 exact active
+profile assignments and three new immutable Casino snapshots. Independent PE,
+EE and LV probes found the exact hosted component and expected responsive
+creative IDs on all four live Casino surfaces, and all 11 selected provider
+frames rendered. The operation created no offer, route or tracking authority,
+activated no link, left all 52 exact country records
+`productionEligible=false`, changed no commercial status and deleted no row.
+All four governed click probes failed closed through unavailable because the
+programmes/offers remain draft, tracking verification is missing or stale and
+Production authority is absent. See the
+[BGA-MEDIA-E2E-01 release record](06_Operations/BGA-Media-End-to-End-01-Release-Record-2026-09-07.md).
 
 **DETECTED — VETTED-PARTNER-HOSTED-CREATIVES-01 COMPLETE, 6 September
 2026:** [PR #170](https://github.com/AlexG-7BE/sevenbet-next/pull/170) merged

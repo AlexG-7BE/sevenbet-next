@@ -511,13 +511,18 @@ and final Production acceptance are preserved in the
   semantic model is claimed.
 - An image whose Casino cannot be resolved from explicit or textual evidence
   can be fetched/validated but is not stored or sent for visual analysis.
-- Real localized inventory is not installed by the architecture release; each
-  actual creative still needs governed intake, review, assignment and
-  publication.
-- The accepted Betsson Bannerflow fixture has no current canonical Betsson
-  PartnerRoute, so it remains previewable but non-publishable until independent
-  commercial authority exists.
-- **DETECTED IN DISPOSABLE LOCAL ACCEPTANCE:** one bulk call processed all 88
+- **DETECTED IN PRODUCTION:** BGA-MEDIA-E2E-01 installed 52 validated
+  exact-country Bannerflow records and selected 11 responsive creatives across
+  Inkabet PE, Betsson PE and Betsafe EE/LV. Three immutable Casino snapshots
+  publish their profile projection. All related commercial routes remain
+  unavailable because no Production authority was granted: programmes and
+  offers remain draft, tracking verification is missing or stale, and all 52
+  exact country records remain `productionEligible=false`. See the
+  [BGA-MEDIA-E2E-01 release record](../06_Operations/BGA-Media-End-to-End-01-Release-Record-2026-09-07.md).
+- **DETECTED:** the supported Betsson/BGA records now have exact canonical B4
+  route bindings. Canonical correlation is not activation authority and does
+  not make an external action available.
+- **DETECTED IN HISTORICAL DISPOSABLE LOCAL ACCEPTANCE:** one bulk call processed all 88
   supplied Betsson Media Store rows as 88 unique Bannerflow identities and
   produced three durable subject-isolated plans: Inkabet 29, Betsson 34 and
   Betsafe Baltics 25. All 88 media records were valid and scored; all 88 lacked
@@ -525,7 +530,9 @@ and final Production acceptance are preserved in the
   Draft apply created zero assignments and returned
   `CANONICAL_COMMERCIAL_ROUTE_REQUIRED` for all 17 generated recommendations.
   Replay retained 88 hosted records and marked all 88 plan assets `REUSED`.
-  No raw script was persisted. This does not claim Preview deployment,
-  Production migration, publication or activation.
+  No raw script was persisted. That historical fixture did not claim Preview
+  deployment, Production migration, publication or activation and is
+  superseded for current Production inventory by the bounded reconciliation
+  above.
 - Semantic analysis is advisory and dependent on configured provider access;
   deterministic ingestion and review status remain usable without it.
