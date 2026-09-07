@@ -157,11 +157,17 @@ canonical Casino host. The five transport failures had no HTTP response and
 could not distinguish verifier egress from upstream failure. Treating either
 outcome as final external evidence was an internal implementation defect.
 
-**DETECTED:** Production aliases were immediately rolled back to the last
-Ready application deployment `dpl_7eQSawYJXWBAZt95ULsbp8QjoZ9L`. The additive
-schema, 11 canonical rows, intents, events and route-check evidence were
-preserved. The legacy application read path therefore continues serving the
-six established routes while the canonical verifier repair is reviewed; no
+**DETECTED:** the first rollback target,
+`dpl_7eQSawYJXWBAZt95ULsbp8QjoZ9L`, was Ready but still contained the
+exact-only canonical reader. A B4-only, non-following smoke exposed that the
+six routes remained internally unavailable, so it was not accepted as the
+recovery target. Production aliases were then rolled back to the exact Ready
+pre-cutover deployment `dpl_B2ZEbKsgGELnGKWJy6JYvK7VKGkM`, source commit
+`7c8e62ad0163e61cd011ac350ed77ac445b06353`. All six public Casino pages
+returned 200 with their CTA present, and all six non-following `/r` responses
+returned 302 with Location checksums matching the governed campaigns. No
+partner destination was contacted during that smoke. The additive schema, 11
+canonical rows, intents, events and route-check evidence were preserved; no
 destructive database rollback or evidence deletion occurred.
 
 ## Classified release state
