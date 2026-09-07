@@ -83,6 +83,13 @@ test("bootstrap keeps referral authority false while permitting bounded visual p
   assert.match(source, /referralAuthorityGranted: false/);
 });
 
+test("bootstrap preserves an active exact-slot incumbent instead of reactivating a duplicate assignment", () => {
+  const source = readFileSync("scripts/bga-media-first-casino-bootstrap-01.ts", "utf8");
+  assert.equal(source.match(/if \(incumbent && incumbent\.id !== existing\?\.id\) continue;/g)?.length, 2);
+  assert.equal(source.match(/countryCode: data\.countryCode,[\s\S]{0,160}languageState: data\.languageState,[\s\S]{0,80}active: true/g)?.length, 2);
+  assert.match(source, /orderBy: \[\{ sortOrder: "asc" \}, \{ id: "asc" \}\]/);
+});
+
 test("casino profile route visibly projects hosted directory media", () => {
   const page = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   const component = readFileSync("components/casino-profile/CasinoProfileMediaStrip.tsx", "utf8");
