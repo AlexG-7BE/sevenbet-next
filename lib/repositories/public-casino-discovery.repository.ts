@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { publicCasinoRepository } from "@/lib/repositories/public-casino.repository";
 
-type DiscoveryPrisma = Pick<typeof prisma, "casinoAlias" | "affiliateOffer" | "affiliateRedirectSlug">;
+type DiscoveryPrisma = Pick<typeof prisma, "casinoAlias" | "affiliateOffer" | "affiliateRedirectSlug" | "marketActivation">;
 
 export class PublicCasinoDiscoveryRepository implements PublicCasinoDiscoveryStore {
   constructor(private readonly database: DiscoveryPrisma = prisma) {}
@@ -14,7 +14,7 @@ export class PublicCasinoDiscoveryRepository implements PublicCasinoDiscoverySto
   }
 
   async loadContext(casinoIds: string[], options: { includeAliases?: boolean; includeCommercial?: boolean } = {}): Promise<DiscoveryContext> {
-    if (!casinoIds.length) return { aliases: [], offers: [], redirects: [] };
+    if (!casinoIds.length) return { aliases: [], offers: [], redirects: [], activations: [] };
     const includeAliases = options.includeAliases ?? true;
     const includeCommercial = options.includeCommercial ?? true;
     const aliases = includeAliases ? await this.database.casinoAlias.findMany({
@@ -46,7 +46,29 @@ export class PublicCasinoDiscoveryRepository implements PublicCasinoDiscoverySto
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: { casinoId: true, casinoBonusId: true, affiliateOfferId: true, slug: true },
       }) : [];
-    return { aliases, offers, redirects };
+    const activations = includeCommercial ? await this.database.marketActivation.findMany({
+      where: { casinoId: { in: casinoIds }, product: "CASINO" },
+      orderBy: [{ countryCode: "asc" }, { casinoId: "asc" }, { id: "asc" }],
+      select: {
+        casinoId: true,
+        countryCode: true,
+        product: true,
+        desiredState: true,
+        status: true,
+        casinoBonusId: true,
+        affiliateOfferId: true,
+        redirectSlug: { select: { slug: true } },
+      },
+    }) : [];
+    return {
+      aliases,
+      offers,
+      redirects,
+      activations: activations.map((activation) => ({
+        ...activation,
+        redirectSlug: activation.redirectSlug?.slug ?? null,
+      })),
+    };
   }
 }
 

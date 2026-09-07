@@ -1,8 +1,8 @@
 import { EditorialStatus, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { marketActivationRuntime, type MarketActivationRuntime } from "@/lib/market-activation/runtime";
 import type { PublicAffiliateRoute, PublishedCasinoSnapshotRecord } from "@/lib/public-casino/public-casino.types";
-import { partnerRouteService, type PartnerRouteService } from "@/lib/services/partner-route.service";
 
 export interface PublicCasinoStore {
   findPublishedBySlug(slug: string, countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord | null>;
@@ -157,7 +157,7 @@ async function projectRuntimeMediaAssignments(rows: PublishedSnapshotRow[]): Pro
 }
 
 export class PublicCasinoRepository implements PublicCasinoStore {
-  constructor(private readonly partnerRoutes: Pick<PartnerRouteService, "resolve"> = partnerRouteService) {}
+  constructor(private readonly activations: Pick<MarketActivationRuntime, "listPublicRoutes"> = marketActivationRuntime) {}
 
   async hasManagedSlug(slug: string) {
     return (await prisma.casino.count({ where: { slug } })) > 0;
@@ -213,14 +213,8 @@ export class PublicCasinoRepository implements PublicCasinoStore {
 
   async listActiveAffiliateRoutes(casinoIds: string[], countryCode?: string, now?: Date) {
     if (!casinoIds.length || !countryCode) return [];
-    const candidates = await this.partnerRoutes.resolve(casinoIds, countryCode, { now, redirectEnabled: true });
-    const eligible = candidates.filter((route) => route.productionEligible);
-    return [...new Map(eligible.map((route) => [`${route.redirect.casinoId}:${route.redirect.casinoBonusId ?? ""}:${route.redirect.slug}`, {
-      casinoId: route.redirect.casinoId,
-      casinoBonusId: route.redirect.casinoBonusId,
-      affiliateOfferId: route.redirect.affiliateOfferId,
-      slug: route.redirect.slug,
-    }])).values()];
+    void now;
+    return this.activations.listPublicRoutes(casinoIds, countryCode);
   }
 }
 

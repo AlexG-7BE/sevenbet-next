@@ -71,6 +71,20 @@ export function resolvePublicVisitAction(
   if (countryCode === "GB" && !operatorEligibility?.referralEligible) {
     return { available: false, redirectSlug: null, label: "Visit casino", reasonCode: operatorEligibility?.reasonCodes[0] ?? "EVIDENCE_MISSING" };
   }
+  if (context.activations !== undefined) {
+    const exact = context.activations.filter((activation) => activation.casinoId === casinoId
+      && activation.countryCode === countryCode
+      && activation.product === "CASINO"
+      && activation.desiredState === "ACTIVE"
+      && activation.status === "ACTIVE"
+      && Boolean(activation.redirectSlug && isSafePublicSlug(activation.redirectSlug)));
+    const activation = exact.find((entry) => entry.casinoBonusId === casinoBonusId)
+      ?? exact.find((entry) => casinoBonusId !== null && entry.casinoBonusId === null)
+      ?? null;
+    return activation?.redirectSlug
+      ? { available: true, redirectSlug: activation.redirectSlug, label: "Visit casino", reasonCode: null }
+      : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "MARKET_ACTIVATION_NOT_ACTIVE" };
+  }
   const offers = eligibleDiscoveryOffers(context, casinoId, casinoBonusId, countryCode, now);
   if (!offers.length) return { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "NO_ACTIVE_OFFER" };
   const offerIds = new Set(offers.map((offer) => offer.id));

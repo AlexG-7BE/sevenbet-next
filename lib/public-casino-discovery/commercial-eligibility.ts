@@ -58,6 +58,20 @@ export function eligibleDiscoveryMediaRoutes(
   now: Date,
 ): PublicAffiliateRoute[] {
   if (!countryCode) return [];
+  if (context.activations !== undefined) {
+    const country = countryCode.toUpperCase();
+    return context.activations.flatMap((activation): PublicAffiliateRoute[] => {
+      if (activation.countryCode !== country || activation.product !== "CASINO"
+        || activation.desiredState !== "ACTIVE" || activation.status !== "ACTIVE"
+        || !activation.affiliateOfferId || !activation.redirectSlug || !isSafePublicSlug(activation.redirectSlug)) return [];
+      return [{
+        casinoId: activation.casinoId,
+        casinoBonusId: activation.casinoBonusId,
+        affiliateOfferId: activation.affiliateOfferId,
+        slug: activation.redirectSlug,
+      }];
+    });
+  }
   return context.redirects.flatMap((redirect) => {
     if (!redirect.affiliateOfferId || !isSafePublicSlug(redirect.slug)) return [];
     const eligible = eligibleDiscoveryOffers(context, redirect.casinoId, redirect.casinoBonusId, countryCode, now)

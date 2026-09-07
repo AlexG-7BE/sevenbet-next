@@ -11,6 +11,7 @@ import { gbCommercialReadinessService, type GbCommercialReadinessAuthority } fro
 import { partnerRouteService, type PartnerRouteService } from "@/lib/services/partner-route.service";
 import { resolvePublishedCreativeDestination } from "@/lib/media-operations/partner-hosted-repository";
 import { isVettedPartnerHostedCreativesEnabled } from "@/lib/media-operations/partner-hosted";
+import { marketActivationRuntime, type MarketActivationRuntime } from "@/lib/market-activation/runtime";
 
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 
@@ -60,6 +61,7 @@ export class AffiliateRedirectService {
     private readonly productionRoutes: Pick<PartnerRouteService, "isProductionEligible"> = partnerRouteService,
     private readonly publishedCreativeDestination: PublishedCreativeDestinationResolver = resolvePublishedCreativeDestination,
     private readonly partnerHostedEnabled: PartnerHostedCapability = isVettedPartnerHostedCreativesEnabled,
+    private readonly canonicalActivations: Pick<MarketActivationRuntime, "resolveRedirect"> = marketActivationRuntime,
   ) {}
 
   list(input?: Parameters<AffiliateRedirectStore["list"]>[0]) {
@@ -170,13 +172,38 @@ export class AffiliateRedirectService {
       return { ok: false, reason: "JURISDICTION_DENIED", candidates: [], jurisdictionDecision };
     }
 
-    const routing = await this.resolveRouting(slugValue, {
-      countryCode: jurisdictionDecision.countryCode,
-      currencyCode: input.currencyCode,
-      language: input.language,
-      now,
-    });
-    if (!routing.ok) return { ...routing, jurisdictionDecision };
+    let slug: string;
+    try {
+      slug = normalizeRedirectSlug(slugValue);
+    } catch {
+      return { ok: false, reason: "SLUG_NOT_FOUND", candidates: [], jurisdictionDecision };
+    }
+    const countryCode = jurisdictionDecision.countryCode ?? "";
+    const activation = await this.canonicalActivations.resolveRedirect(slug, countryCode);
+    if (!activation || !activation.redirectSlug || !activation.affiliateOffer || !activation.primaryTrackingLink) {
+      const mapping = await this.store.findBySlug(slug);
+      return {
+        ok: false,
+        reason: mapping ? "COMMERCIAL_ROUTE_NOT_PRODUCTION_ELIGIBLE" : "SLUG_NOT_FOUND",
+        ...(mapping ? { slugId: mapping.id, casinoId: mapping.casinoId } : {}),
+        candidates: [],
+        jurisdictionDecision,
+      };
+    }
+    const trackingUrl = validateRedirectTargetUrl(activation.primaryTrackingLink.trackingUrl);
+    const destinationUrl = validateRedirectTargetUrl(activation.primaryTrackingLink.destinationUrl);
+    if (!trackingUrl || !destinationUrl) {
+      return { ok: false, reason: "UNSAFE_REDIRECT_URL", slugId: activation.redirectSlug.id, casinoId: activation.casinoId, candidates: [], jurisdictionDecision };
+    }
+    const routing = {
+      ok: true as const,
+      destination: trackingUrl,
+      slugId: activation.redirectSlug.id,
+      casinoId: activation.casinoId,
+      offerId: activation.affiliateOffer.id,
+      trackingLinkId: activation.primaryTrackingLink.id,
+      candidates: [],
+    };
 
     let productionEligible = false;
     try {
@@ -206,20 +233,29 @@ export class AffiliateRedirectService {
         redirectSlugId: routing.slugId,
         casinoId: routing.casinoId,
         affiliateOfferId: routing.offerId,
-        trackingLinkId: routing.trackingLinkId,
+        countryCode,
       });
     };
 
     if (jurisdictionDecision.countryCode !== "GB") {
       const destination = await creativeDestination();
       if (!destination) return { ok: false, reason: "CREATIVE_DESTINATION_DENIED", slugId: routing.slugId, casinoId: routing.casinoId, candidates: routing.candidates, jurisdictionDecision };
-      const { selectedOffer: _selectedOffer, ...resolution } = routing;
-      return { ...resolution, destination, jurisdictionDecision };
+      return { ...routing, destination, jurisdictionDecision };
+    }
+
+    const legacyRouting = await this.resolveRouting(slug, {
+      countryCode,
+      currencyCode: input.currencyCode,
+      language: input.language,
+      now,
+    });
+    if (!legacyRouting.ok || legacyRouting.offerId !== routing.offerId) {
+      return { ok: false, reason: "COMMERCIAL_CONTRACT_DENIED", slugId: routing.slugId, casinoId: routing.casinoId, candidates: [], jurisdictionDecision };
     }
 
     const commercialReadiness = await this.commercialReadiness.evaluate({
       casinoId: routing.casinoId,
-      offer: routing.selectedOffer,
+      offer: legacyRouting.selectedOffer,
       trackingLinkId: routing.trackingLinkId,
       jurisdictionDecision,
       redirectContract: { slugActive: true, destinationServerOwned: true, destinationSafe: true },
@@ -234,8 +270,7 @@ export class AffiliateRedirectService {
     }
     const destination = await creativeDestination();
     if (!destination) return { ok: false, reason: "CREATIVE_DESTINATION_DENIED", slugId: routing.slugId, casinoId: routing.casinoId, candidates: routing.candidates, jurisdictionDecision, operatorEligibility, commercialReadiness };
-    const { selectedOffer: _selectedOffer, ...resolution } = routing;
-    return { ...resolution, destination, jurisdictionDecision, operatorEligibility, commercialReadiness };
+    return { ...routing, destination, jurisdictionDecision, operatorEligibility, commercialReadiness };
   }
 }
 

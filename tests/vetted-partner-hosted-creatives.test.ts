@@ -421,6 +421,17 @@ function activeOffer() {
 
 test("creative attribution is resolved only after canonical GEO and Production route checks", async () => {
   const events: string[] = [];
+  const canonicalActivation = {
+    async resolveRedirect() {
+      events.push("canonical");
+      return {
+        casinoId: "casino-id",
+        redirectSlug: { id: "redirect-id", slug: "betsson" },
+        affiliateOffer: { id: "offer-id" },
+        primaryTrackingLink: { id: "tracking-id", destinationUrl: "https://www.betsson.com/", trackingUrl: "https://canonical.example/click" },
+      };
+    },
+  } as never;
   const service = new AffiliateRedirectService(
     redirectStore(),
     { activeCandidates: async () => [activeOffer()] as never },
@@ -429,15 +440,16 @@ test("creative attribution is resolved only after canonical GEO and Production r
     { async isProductionEligible() { events.push("production"); return true; } },
     async (input) => {
       events.push("creative");
-      assert.deepEqual(input, { creativeId: CREATIVE_UUID, redirectSlugId: "redirect-id", casinoId: "casino-id", affiliateOfferId: "offer-id", trackingLinkId: "tracking-id" });
+      assert.deepEqual(input, { creativeId: CREATIVE_UUID, redirectSlugId: "redirect-id", casinoId: "casino-id", affiliateOfferId: "offer-id", countryCode: "GB" });
       return new URL("https://record.betsn.info/creative-specific");
     },
     () => true,
+    canonicalActivation,
   );
   const result = await service.resolve("betsson", { creativeId: CREATIVE_UUID, now: new Date("2030-01-01T00:00:00Z") });
   assert.equal(result.ok, true);
   if (result.ok) assert.equal(result.destination.href, "https://record.betsn.info/creative-specific");
-  assert.deepEqual(events, ["geo", "production", "creative"]);
+  assert.deepEqual(events, ["geo", "canonical", "production", "creative"]);
 
   const disabled = new AffiliateRedirectService(
     redirectStore(),
@@ -447,6 +459,7 @@ test("creative attribution is resolved only after canonical GEO and Production r
     { async isProductionEligible() { return true; } },
     async () => { throw new Error("disabled capability must not resolve a creative"); },
     () => false,
+    canonicalActivation,
   );
   const denied = await disabled.resolve("betsson", { creativeId: CREATIVE_UUID, now: new Date("2030-01-01T00:00:00Z") });
   assert.equal(denied.ok, false);

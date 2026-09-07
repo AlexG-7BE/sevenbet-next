@@ -228,6 +228,11 @@ export class CommercialActivationRepository {
     return inspectWithClient(prisma, record);
   }
 
+  /**
+   * @deprecated as a Production authority. This writer now prepares legacy
+   * commercial graph fields only; CommercialActivationService must always
+   * submit the resulting exact route to MARKET-ACTIVATION-V2.
+   */
   async apply(bundle: CommercialActivationBundle, actorId: string, now: Date) {
     const actor = await prisma.adminUser.findUnique({ where: { id: actorId }, select: { id: true, role: true } });
     if (!actor || !activationRoles.has(actor.role)) throw new Error("COMMERCIAL_ACTIVATION_ACTOR_UNAUTHORIZED");

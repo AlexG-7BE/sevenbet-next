@@ -125,6 +125,10 @@ function jurisdiction(commercialAllowed: boolean) {
   };
 }
 
+const canonicalActivation = {
+  activateCasinoInGeo: async () => ({ idempotent: false, activation: { status: "ACTIVE", externalBlockerCode: null } }),
+} as never;
+
 test("bundle schema represents exact portal identifiers and rejects unknown secret fields", () => {
   const parsed = bundle();
   assert.equal(parsed.records[0].trackingLink.campaignId, "campaign-42");
@@ -178,7 +182,7 @@ test("wrong GEO is a missing dependency and cannot mutate", async () => {
 test("apply is exact and idempotent while jurisdiction denial remains fail-closed", async () => {
   const input = bundle();
   const store = new MemoryActivationStore();
-  const allowed = new CommercialActivationService(store, { isProductionEligible: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(true));
+  const allowed = new CommercialActivationService(store, { isProductionEligible: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(true), canonicalActivation);
   const first = await allowed.apply(input, "99999999-9999-4999-8999-999999999999", now);
   assert.equal(first.changedRecords, 1);
   assert.equal(first.verification.verified, true);
@@ -188,7 +192,7 @@ test("apply is exact and idempotent while jurisdiction denial remains fail-close
   assert.equal(second.unchangedRecords, 1);
 
   const deniedStore = new MemoryActivationStore();
-  const denied = new CommercialActivationService(deniedStore, { isProductionEligible: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(false));
+  const denied = new CommercialActivationService(deniedStore, { isProductionEligible: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(false), canonicalActivation);
   const applied = await denied.apply(input, "99999999-9999-4999-8999-999999999999", now);
   assert.equal(applied.verification.verified, true);
   assert.equal(applied.verification.productionReady, false);

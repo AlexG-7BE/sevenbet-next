@@ -34,6 +34,7 @@ import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/releas
 
 const BASELINE_MIGRATION = "0023_mcp_dcr_runtime_compat_fix";
 const TARGET_MIGRATION = "0024_programme_access_acceptance";
+const MARKET_ACTIVATION_TARGET_MIGRATION = "0031_market_activation_v2";
 
 type MigrationRow = {
   migration_name: string;
@@ -285,7 +286,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -296,6 +297,7 @@ async function maybeApplyProgrammeAccessMigration() {
   let geoLocalizedCreativeState: ReturnType<typeof planGeoLocalizedCreative0028Preflight> | null = null;
   let partnerHostedCreativeState: ReturnType<typeof planVettedPartnerHostedCreatives0029Preflight> | null = null;
   let mediaOperationsBulkState: ReturnType<typeof planMediaOperationsBulk0030Preflight> | null = null;
+  let marketActivationSchemaReady = false;
   try {
     const rows = await readMigrationRows(prisma);
     const unresolved = rows.filter((row) => row.finished_at === null && row.rolled_back_at === null);
@@ -314,12 +316,14 @@ async function maybeApplyProgrammeAccessMigration() {
     }
     const pending = repositoryMigrations.filter((name) => !applied.has(name));
     const expectedPending = !applied.has(GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION)
-      ? [GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION]
+      ? [GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
       : !applied.has(VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION)
-        ? [VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION]
+        ? [VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
         : !applied.has(MEDIA_OPERATIONS_BULK_TARGET_MIGRATION)
-          ? [MEDIA_OPERATIONS_BULK_TARGET_MIGRATION]
-          : [];
+          ? [MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
+          : !applied.has(MARKET_ACTIVATION_TARGET_MIGRATION)
+            ? [MARKET_ACTIVATION_TARGET_MIGRATION]
+            : [];
 
     if (
       pending.length !== expectedPending.length
@@ -354,9 +358,29 @@ async function maybeApplyProgrammeAccessMigration() {
       });
       writeEvent({ event: "production_vetted_partner_hosted_creatives_preflight", ...partnerHostedCreativeState });
       if (partnerHostedCreativeState.state === "schema_ready") {
-        mediaOperationsBulkState = planMediaOperationsBulk0030Preflight({ rows, repositoryMigrations });
+        mediaOperationsBulkState = planMediaOperationsBulk0030Preflight({
+          rows,
+          repositoryMigrations: repositoryMigrations.slice(0, repositoryMigrations.indexOf(MEDIA_OPERATIONS_BULK_TARGET_MIGRATION) + 1),
+        });
         writeEvent({ event: "production_media_operations_bulk_preflight", ...mediaOperationsBulkState });
       }
+    }
+    if (applied.has(MARKET_ACTIVATION_TARGET_MIGRATION)) {
+      assertChecksum(completedByName.get(MARKET_ACTIVATION_TARGET_MIGRATION), MARKET_ACTIVATION_TARGET_MIGRATION);
+      const [canonicalSchema] = await prisma.$queryRawUnsafe<Array<{ activation: string | null; intent: string | null; event: string | null }>>(`
+        SELECT
+          to_regclass('public."MarketActivation"')::text AS activation,
+          to_regclass('public."MarketActivationIntent"')::text AS intent,
+          to_regclass('public."MarketActivationEvent"')::text AS event
+      `);
+      marketActivationSchemaReady = Boolean(canonicalSchema?.activation && canonicalSchema.intent && canonicalSchema.event);
+      if (!marketActivationSchemaReady) throw new Error("Production migration guard found incomplete canonical MarketActivation schema.");
+      writeEvent({
+        event: "production_market_activation_preflight",
+        migration: MARKET_ACTIVATION_TARGET_MIGRATION,
+        checksumMatched: true,
+        canonicalTablesReady: true,
+      });
     }
     writeEvent({
       event: "production_programme_access_migration",
@@ -386,6 +410,9 @@ async function maybeApplyProgrammeAccessMigration() {
   }
   if (mediaOperationsBulkState?.state === "schema_pending") {
     throw new Error(`Production DB-first release requires completed ${MEDIA_OPERATIONS_BULK_TARGET_MIGRATION} before this application build.`);
+  }
+  if (!marketActivationSchemaReady) {
+    throw new Error(`Production DB-first release requires completed ${MARKET_ACTIVATION_TARGET_MIGRATION} before this application build.`);
   }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();
