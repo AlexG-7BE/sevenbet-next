@@ -10,10 +10,8 @@ import {
   type MarketActivationIntentInput,
 } from "../lib/market-activation/contract";
 import { MarketActivationRuntime } from "../lib/market-activation/runtime";
-import {
-  marketEvidenceBlocksActivation,
-  selectActivationTrackingCandidate,
-} from "../lib/market-activation/repository";
+import { marketEvidenceBlocksActivation } from "../lib/market-activation/market-evidence";
+import { selectActivationTrackingCandidate } from "../lib/market-activation/repository";
 import { MarketActivationRouteVerifier } from "../lib/market-activation/verifier";
 import { eligibleDiscoveryMediaRoutes } from "../lib/public-casino-discovery/commercial-eligibility";
 import { resolvePublicVisitAction } from "../lib/services/public-casino-discovery.service";

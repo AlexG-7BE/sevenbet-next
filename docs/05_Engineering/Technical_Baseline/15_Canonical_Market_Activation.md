@@ -78,7 +78,9 @@ Verification derives the expected host from explicit health evidence or the
 bound `CasinoCountry` domain and classifies unexpected destinations before
 CDN challenges. Market-profile contradictions block activation only when they
 concern runtime-critical identity/GEO/domain fields; licence and incomplete
-bonus-term contradictions remain preserved enrichment evidence.
+bonus-term contradictions remain preserved enrichment evidence. Public
+presentation consumes the same shared boundary, so enrichment contradictions
+cannot independently downgrade a canonical CTA.
 
 **DETECTED:** the release reconciler does not replay the stored tracking-link
 binding as an explicit intent. Each reconciliation re-runs exact-market

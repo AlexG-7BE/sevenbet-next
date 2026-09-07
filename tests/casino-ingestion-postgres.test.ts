@@ -206,8 +206,8 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
     for (const [countryCode, profile] of [["PE", peProfile], ["SE", seProfile]] as const) {
       assert.ok(profile, `${countryCode} contradiction evidence must preserve the editorial profile`);
       assert.equal(profile.presentationDisposition, "INFORMATIONAL_ONLY");
-      assert.equal(profile.presentationDispositionReason, "EXACT_MARKET_EVIDENCE_CONTRADICTED");
-      assert.equal(profile.affiliate.available, false, `${countryCode} contradiction evidence must keep the CTA off`);
+      assert.equal(profile.presentationDispositionReason, "EXACT_MARKET_INFORMATION_ONLY");
+      assert.equal(profile.affiliate.available, false, `${countryCode} has no active canonical route`);
       assert.equal(profile.affiliate.href, null);
     }
 
@@ -232,8 +232,8 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
       assert.equal(result.total, 1, `${countryCode} contradiction evidence must preserve the exact-market discovery card`);
       assert.equal(result.items[0]?.slug, "betsson");
       assert.equal(result.items[0]?.disposition, "INFORMATIONAL_ONLY");
-      assert.equal(result.items[0]?.dispositionReason, "EXACT_MARKET_EVIDENCE_CONTRADICTED");
-      assert.equal(result.items[0]?.visitAction.available, false, `${countryCode} contradiction evidence must keep the CTA off`);
+      assert.equal(result.items[0]?.dispositionReason, "EXACT_MARKET_INFORMATION_ONLY");
+      assert.equal(result.items[0]?.visitAction.available, false, `${countryCode} has no active canonical route`);
     }
 
     const globalDiscovery = await discovery.discover({ country: ["PE"] });

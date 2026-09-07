@@ -15,6 +15,7 @@ import {
   type MarketActivationRouteVerificationResult,
   type NormalizedMarketActivationIntent,
 } from "./contract";
+import { marketEvidenceBlocksActivation } from "./market-evidence";
 
 type Transaction = Prisma.TransactionClient;
 
@@ -70,21 +71,6 @@ function snapshotMetadata(value: Prisma.JsonValue) {
 function globalEvidence(metadata: Prisma.JsonValue) {
   const visibility = snapshotMetadata(snapshotMetadata(metadata).commercialVisibility as Prisma.JsonValue);
   return typeof visibility.evidenceId === "string" ? visibility.evidenceId.trim() : "";
-}
-
-const activationCriticalMarketFields = new Set([
-  "availability",
-  "casino.domain",
-  "casino.title",
-  "countryCode",
-  "localDomain",
-  "localWebsiteUrl",
-]);
-
-export function marketEvidenceBlocksActivation(evidence: Array<{ classification: string; fieldKeys: string[] }>) {
-  return evidence.some((entry) => entry.classification === "CONTRADICTION"
-    && (entry.fieldKeys.length === 0 || entry.fieldKeys.some((field) =>
-      activationCriticalMarketFields.has(field) || field.startsWith("casino.identity"))));
 }
 
 type ActivationTrackingCandidate = {
