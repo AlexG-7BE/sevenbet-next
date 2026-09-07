@@ -288,6 +288,12 @@ recommendation with `ASSIGNMENT_CHANGED_SINCE_PLAN` and requires a fresh plan.
 Slot identity includes exact country and language scope. `GLOBAL/en`, `FI/en`
 and `FI/fi` are independent slots; none is a replacement conflict for another.
 
+A Production bootstrap is lifecycle-bounded initialization, not a continuing
+assignment owner. Once its Casino is `PUBLISHED`, it must exit before any
+assignment read or write. An inactive bootstrap-owned assignment is explicit
+governed state and must remain inactive; a build or deployment must never
+reactivate it merely because its exact slot is otherwise empty.
+
 Plan decisions are:
 
 - `AUTO_ASSIGN_DRAFT`: one resolved subject, valid same-Casino asset, strong
