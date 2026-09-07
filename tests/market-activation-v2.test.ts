@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { Prisma } from "@prisma/client";
+
 import { MarketActivationController } from "../lib/market-activation/controller";
 import {
   normalizeMarketActivationIntent,
@@ -8,6 +10,10 @@ import {
   type MarketActivationIntentInput,
 } from "../lib/market-activation/contract";
 import { MarketActivationRuntime } from "../lib/market-activation/runtime";
+import {
+  marketEvidenceBlocksActivation,
+  selectActivationTrackingCandidate,
+} from "../lib/market-activation/repository";
 import { MarketActivationRouteVerifier } from "../lib/market-activation/verifier";
 import { eligibleDiscoveryMediaRoutes } from "../lib/public-casino-discovery/commercial-eligibility";
 import { resolvePublicVisitAction } from "../lib/services/public-casino-discovery.service";
@@ -108,6 +114,43 @@ test("rejects ambiguous identity, missing evidence, and unsafe destinations", ()
   assert.equal(safeActivationDestination("https://operator.example/path"), true);
   assert.equal(safeActivationDestination("http://operator.example/path"), false);
   assert.equal(safeActivationDestination("https://user:secret@operator.example/path"), false);
+});
+
+test("only runtime-critical market contradictions block activation", () => {
+  assert.equal(marketEvidenceBlocksActivation([
+    { classification: "CONTRADICTION", fieldKeys: ["licenses.123", "bonuses.welcome.materialTerms"] },
+  ]), false);
+  assert.equal(marketEvidenceBlocksActivation([
+    { classification: "CONTRADICTION", fieldKeys: ["availability"] },
+  ]), true);
+  assert.equal(marketEvidenceBlocksActivation([
+    { classification: "CONTRADICTION", fieldKeys: ["casino.domain"] },
+  ]), true);
+  assert.equal(marketEvidenceBlocksActivation([
+    { classification: "CONTRADICTION", fieldKeys: [] },
+  ]), true);
+});
+
+test("canonical route selection rejects cross-country evidence and prefers the evidenced default-language market route", () => {
+  const candidate = (id: string, metadata: Prisma.JsonValue, countryCode = "EE", priority = 0) => ({
+    id,
+    active: id === "wrong-lv",
+    priority,
+    metadata,
+    countries: [{ countryCode, mode: "ALLOW", productionEligibilityEvidence: `TEST:${id}` }],
+  });
+  const selected = selectActivationTrackingCandidate({
+    countryCode: "EE",
+    localWebsiteUrl: "https://www.betsafe.ee/",
+    localDomain: "betsafe.ee",
+    existingTrackingId: "wrong-lv",
+    candidates: [
+      candidate("wrong-lv", { betssonCommercialRoutesV1: { exactCountryCode: "LV", purpose: "HOMEPAGE", healthStatus: "BROKEN" } }, "EE", 100),
+      candidate("ee-en", { betssonCommercialRoutesV1: { exactCountryCode: "EE", explicitLanguageCode: "en", purpose: "CASINO_WELCOME_OFFER", healthStatus: "CROSS_GEO", healthFinalHost: "offers.betsafe.ee" } }),
+      candidate("ee-default", { betssonCommercialRoutesV1: { exactCountryCode: "EE", explicitLanguageCode: null, purpose: "CASINO_WELCOME_OFFER", healthStatus: "CROSS_GEO", healthFinalHost: "offers.betsafe.ee" } }),
+    ],
+  });
+  assert.equal(selected?.id, "ee-default");
 });
 
 test("controller exposes single and batch operations and rejects duplicate batch idempotency keys", async () => {
@@ -238,6 +281,7 @@ test("route verification uses the stored exact-market expectation and persists n
     marketActivation: {
       findUnique: async () => ({
         countryCode: "PE",
+        marketProfile: { localDomain: "operator.example", localWebsiteUrl: "https://operator.example/casino" },
         primaryTrackingLink: {
           trackingUrl: "https://tracking.example/click",
           destinationUrl: "https://operator.example/casino",
@@ -264,6 +308,7 @@ test("route verification uses the stored exact-market expectation and persists n
       expectedFinalHost: "operator.example",
       expectedPathPrefix: "/casino",
       requiredAttributionParameters: ["click_id"],
+      allowWwwEquivalentFinalHost: true,
     });
     return { status: "HEALTHY", reason: "HEAD_OK", method: "HEAD", statusCode: 200, durationMs: 4, redirectCount: 1, finalHost: "operator.example" };
   });
@@ -277,4 +322,38 @@ test("route verification uses the stored exact-market expectation and persists n
     finalHost: "operator.example",
     checkedAt,
   });
+});
+
+test("route verification derives an exact market destination from imported evidence without trusting a foreign observed host", async () => {
+  const observed: Array<Record<string, unknown>> = [];
+  const verifier = new MarketActivationRouteVerifier({
+    marketActivation: {
+      findUnique: async () => ({
+        countryCode: "EE",
+        marketProfile: { localDomain: "betsafe.ee", localWebsiteUrl: "https://www.betsafe.ee/" },
+        primaryTrackingLink: {
+          trackingUrl: "https://record.betsafe.example/click",
+          destinationUrl: "https://record.betsafe.example/click",
+          metadata: {
+            betssonCommercialRoutesV1: {
+              exactCountryCode: "EE",
+              healthFinalHost: "offers.betsafe.ee",
+            },
+          },
+        },
+      }),
+    },
+  } as never, async (input) => {
+    observed.push(input as unknown as Record<string, unknown>);
+    return { status: "HEALTHY", reason: "GET_FALLBACK_OK", method: "GET", statusCode: 200, durationMs: 2, redirectCount: 1, finalHost: "offers.betsafe.ee" };
+  });
+  const result = await verifier.verify("activation", NOW);
+  assert.equal(result.status, "HEALTHY");
+  assert.deepEqual(observed[0]?.expectation, {
+    expectedFinalHost: "offers.betsafe.ee",
+    expectedPathPrefix: null,
+    requiredAttributionParameters: [],
+    allowWwwEquivalentFinalHost: true,
+  });
+  assert.equal(observed[0]?.inspectTerminalContent, true);
 });

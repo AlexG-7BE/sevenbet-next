@@ -138,13 +138,6 @@ function attributionPresent(chain: URL[], names: string[]) {
 function classify(result: SafeFetchResult, method: "HEAD" | "GET", expectation: AffiliateRouteHealthExpectation, durationMs: number): AffiliateRouteHttpCheck {
   const { response, finalUrl, chain } = result;
   const base = { method, statusCode: response.status, durationMs: Math.round(durationMs), redirectCount: chain.length - 1, finalHost: finalUrl.hostname.toLowerCase() };
-  if (response.status === 410) return { ...base, status: "EXPIRED", reason: "HTTP_410" };
-  const server = response.headers.get("server")?.toLowerCase() ?? "";
-  if (response.status === 503 && (response.headers.has("cf-ray") || response.headers.get("cf-mitigated") === "challenge" || server.includes("cloudflare"))) {
-    return { ...base, status: "EXTERNAL_CHALLENGE", reason: "HTTP_503_CDN_CHALLENGE" };
-  }
-  if (challengeStatuses.has(response.status)) return { ...base, status: "EXTERNAL_CHALLENGE", reason: `HTTP_${response.status}` };
-  if (response.status >= 400) return { ...base, status: "BROKEN", reason: `HTTP_${response.status}` };
   const expectedHost = expectation.expectedFinalHost.toLowerCase().replace(/\.$/, "");
   const finalHost = finalUrl.hostname.toLowerCase().replace(/\.$/, "");
   const finalHostMatches = finalHost === expectedHost
@@ -157,6 +150,13 @@ function classify(result: SafeFetchResult, method: "HEAD" | "GET", expectation: 
   if (!attributionPresent(chain, expectation.requiredAttributionParameters)) {
     return { ...base, status: "ATTRIBUTION_FAILURE", reason: "REQUIRED_ATTRIBUTION_PARAMETER_MISSING" };
   }
+  if (response.status === 410) return { ...base, status: "EXPIRED", reason: "HTTP_410" };
+  const server = response.headers.get("server")?.toLowerCase() ?? "";
+  if (response.status === 503 && (response.headers.has("cf-ray") || response.headers.get("cf-mitigated") === "challenge" || server.includes("cloudflare"))) {
+    return { ...base, status: "EXTERNAL_CHALLENGE", reason: "HTTP_503_CDN_CHALLENGE" };
+  }
+  if (challengeStatuses.has(response.status)) return { ...base, status: "EXTERNAL_CHALLENGE", reason: `HTTP_${response.status}` };
+  if (response.status >= 400) return { ...base, status: "BROKEN", reason: `HTTP_${response.status}` };
   if (response.status >= 200 && response.status < 300) return { ...base, status: "HEALTHY", reason: method === "GET" ? "GET_FALLBACK_OK" : "HEAD_OK" };
   return { ...base, status: "DEGRADED", reason: `UNEXPECTED_HTTP_${response.status}` };
 }

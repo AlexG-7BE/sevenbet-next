@@ -70,6 +70,16 @@ on the activation; only `HEALTHY` finalizes `ACTIVE`. Internal verifier
 execution failure is retried once and is not converted into an external
 blocker.
 
+**DETECTED:** exact-country Direct-Link selection rejects a source record
+explicitly classified for another country even when an older compatibility
+row gives it higher priority. Among exact-country candidates it prefers a
+market-matching observed destination and the default-language record.
+Verification derives the expected host from explicit health evidence or the
+bound `CasinoCountry` domain and classifies unexpected destinations before
+CDN challenges. Market-profile contradictions block activation only when they
+concern runtime-critical identity/GEO/domain fields; licence and incomplete
+bonus-term contradictions remain preserved enrichment evidence.
+
 **DETECTED:** public Casino/offer route projection and `/r` use
 `MarketActivationRuntime`. Exact active bindings are revalidated for entity
 shape and credential-free HTTPS safety. No legacy CRM, activation packet,
