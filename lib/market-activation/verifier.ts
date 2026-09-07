@@ -7,7 +7,10 @@ import {
 import { validateRedirectTargetUrl } from "@/lib/affiliate-routing/redirect-validation";
 import { prisma } from "@/lib/db/prisma";
 
-import type { MarketActivationRouteVerificationResult } from "./contract";
+import {
+  MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+  type MarketActivationRouteVerificationResult,
+} from "./contract";
 
 function object(value: Prisma.JsonValue | null | undefined): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -25,6 +28,18 @@ function normalizedMarketHost(profile: { localDomain: string | null; localWebsit
   return profile?.localDomain?.trim().toLowerCase().replace(/^www\./, "").replace(/\.$/, "") || null;
 }
 
+function normalizedCasinoHost(casino: { domain: string; websiteUrl: string | null }) {
+  if (casino.websiteUrl) {
+    try {
+      return new URL(casino.websiteUrl).hostname.toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
+    } catch {
+      // Fall through to the required canonical Casino domain. Invalid
+      // editorial URL state must not broaden the route expectation.
+    }
+  }
+  return casino.domain.trim().toLowerCase().replace(/^www\./, "").replace(/\.$/, "") || null;
+}
+
 function belongsToMarketHost(host: string, marketHost: string | null) {
   const normalized = host.trim().toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
   return Boolean(marketHost && (normalized === marketHost || normalized.endsWith(`.${marketHost}`)));
@@ -35,6 +50,7 @@ function storedExpectation(
   countryCode: string,
   destination: URL,
   marketProfile: { localDomain: string | null; localWebsiteUrl: string | null } | null,
+  casino: { domain: string; websiteUrl: string | null },
 ): AffiliateRouteHealthExpectation {
   const activation = object(object(metadata).commercialActivationV1 as Prisma.JsonValue);
   const record = object(object(activation.records as Prisma.JsonValue)[countryCode] as Prisma.JsonValue);
@@ -67,9 +83,13 @@ function storedExpectation(
     && belongsToMarketHost(importedFinalHost, marketHost)
     ? importedFinalHost
     : "";
+  const globalCasinoHost = countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE
+    ? normalizedCasinoHost(casino)
+    : null;
+  const expectedOperatorHost = evidencedMarketFinalHost || marketHost || globalCasinoHost;
   return {
-    expectedFinalHost: evidencedMarketFinalHost || marketHost || destination.hostname.toLowerCase(),
-    expectedPathPrefix: evidencedMarketFinalHost || marketHost
+    expectedFinalHost: expectedOperatorHost || destination.hostname.toLowerCase(),
+    expectedPathPrefix: expectedOperatorHost
       ? null
       : destination.pathname === "/" ? null : destination.pathname,
     requiredAttributionParameters,
@@ -92,6 +112,7 @@ export class MarketActivationRouteVerifier implements MarketActivationRouteVerif
       where: { id: activationId },
       select: {
         countryCode: true,
+        casino: { select: { domain: true, websiteUrl: true } },
         marketProfile: { select: { localDomain: true, localWebsiteUrl: true } },
         primaryTrackingLink: {
           select: { trackingUrl: true, destinationUrl: true, metadata: true },
@@ -115,9 +136,23 @@ export class MarketActivationRouteVerifier implements MarketActivationRouteVerif
     }
     const checked = await this.httpCheck({
       url: target,
-      expectation: storedExpectation(tracking.metadata, activation.countryCode, destination, activation.marketProfile),
+      expectation: storedExpectation(
+        tracking.metadata,
+        activation.countryCode,
+        destination,
+        activation.marketProfile,
+        activation.casino,
+      ),
       inspectTerminalContent: true,
     });
+    if (checked.status === "BROKEN"
+      && checked.statusCode === null
+      && (checked.reason === "NETWORK_ERROR" || checked.reason === "TIMEOUT")) {
+      // A transport failure cannot distinguish an upstream outage from the
+      // verifier's own egress/DNS path. Let the controller retry and retain a
+      // resumable PREPARING state instead of fabricating external evidence.
+      throw new Error("MARKET_ACTIVATION_ROUTE_VERIFICATION_INCONCLUSIVE");
+    }
     return { ...checked, checkedAt };
   }
 }

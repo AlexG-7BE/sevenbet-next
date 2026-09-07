@@ -94,6 +94,14 @@ not fabricate external evidence: it leaves new work `PREPARING` or preserves
 an already canonical `ACTIVE` state for retry. Raw destinations are not placed
 in diagnostics or events.
 
+For a `ZZ` compatibility row, the terminal-host expectation comes from
+explicit route-health evidence when present and otherwise from the canonical
+Casino website/domain; the affiliate tracker host is not mistaken for the
+operator destination. A transport-only timeout or network failure with no HTTP
+response is inconclusive verifier/egress state and follows the same resumable
+`PREPARING` rule. Completed HTTP responses, unsafe destinations and bounded
+redirect-chain failures remain classifiable route evidence.
+
 When more than one evidenced link exists, the controller deterministically
 prefers an exact-country Direct-Link record whose observed destination belongs
 to the bound market profile, then the market's default-language record. A

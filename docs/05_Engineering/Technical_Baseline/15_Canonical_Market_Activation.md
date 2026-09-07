@@ -3,7 +3,7 @@
 **Evidence date:** 7 September 2026
 **Scope:** active repository rooted at
 `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` and release candidate
-`codex/canonical-market-activation-global-fallback-20260907`
+`codex/canonical-global-route-verification-repair-20260907`
 **Authority:** RFC-042 and the explicit Founder execution authorization
 
 This baseline was produced after scanning the active repository while
@@ -79,6 +79,15 @@ on the activation; only `HEALTHY` finalizes `ACTIVE`. Internal verifier
 execution failure is retried once and is not converted into an external
 blocker.
 
+**DETECTED on the route-verification repair candidate:** a `ZZ` compatibility
+route derives its expected operator host from the canonical Casino website or
+domain when no explicit route-health expectation exists. It does not treat the
+affiliate tracker host as the expected terminal operator. A completed HTTP
+response or redirect-chain failure remains external evidence; a transport-only
+`NETWORK_ERROR` or `TIMEOUT` with no response is inconclusive, is retried and
+leaves reconciliation resumable in `PREPARING` rather than manufacturing a
+`BLOCKED_EXTERNAL` result.
+
 **DETECTED on the correction candidate:** the controller can preserve only an
 existing route with complete `CASINO-COMMERCIAL-VISIBILITY-03` global-default
 evidence, an empty programme country allow-list and `GLOBAL`/deny-list offer
@@ -130,6 +139,57 @@ creative tracking link to equal the activation's primary tracking link.
 **DETECTED:** no activation-result cache was added. Exact database reads own
 the initial runtime cutover.
 
+## Production correction execution and recovery
+
+**DETECTED:** PR #189 merged as
+`bd0e61e6ffa7d704ec187f0d0555c4ebddb5eb83`. Exact Production deployment
+`dpl_7ToMqX8P5eax1vA5gKqGQWB4ZS3L` reached `READY`. Additive migration
+`0032_market_activation_global_fallback` was applied exactly once to the
+fingerprinted Production database with checksum
+`a00e3c05b48acf642134492308c8163f5345e40cb7ddf259e8b6ac520cf1940d`.
+
+**DETECTED:** the guarded backfill created the exact six `ZZ` rows and brought
+the canonical inventory to 11 rows with no duplicate identity. The external
+verification step then classified five rows `BROKEN / NETWORK_ERROR` and one
+row `CROSS_GEO`. The latter used the Superfly tracking host as its expected
+terminal host even though the observed Diamond7 host matched the governed
+canonical Casino host. The five transport failures had no HTTP response and
+could not distinguish verifier egress from upstream failure. Treating either
+outcome as final external evidence was an internal implementation defect.
+
+**DETECTED:** the first rollback target,
+`dpl_7eQSawYJXWBAZt95ULsbp8QjoZ9L`, was Ready but still contained the
+exact-only canonical reader. A B4-only, non-following smoke exposed that the
+six routes remained internally unavailable, so it was not accepted as the
+recovery target. Production aliases were then rolled back to the exact Ready
+pre-cutover deployment `dpl_B2ZEbKsgGELnGKWJy6JYvK7VKGkM`, source commit
+`7c8e62ad0163e61cd011ac350ed77ac445b06353`. All six public Casino pages
+returned 200 with their CTA present, and all six non-following `/r` responses
+returned 302 with Location checksums matching the governed campaigns. No
+partner destination was contacted during that smoke. The additive schema, 11
+canonical rows, intents, events and route-check evidence were preserved; no
+destructive database rollback or evidence deletion occurred.
+
+**DETECTED:** after explicit Founder authorization for exactly the six stored
+campaigns, a bounded direct diagnostic first confirmed that all six Superfly
+tracker responses redirected to the intended governed operator host. The
+Diamond7 terminal returned HTTP 200 from the local Kazakhstan egress path; the
+other five terminal TLS handshakes timed out after public DNS resolution and
+were therefore retained as transport-inconclusive evidence rather than
+misclassified as upstream failures.
+
+**DETECTED:** an isolated, non-aliased Production-environment deployment of the
+repair candidate then repeated exactly one direct chain for each of the same
+six governed campaigns from the Vercel IAD runtime. The diagnostic verified the
+fingerprinted Production database, exact `ZZ` row, intended redirect slug,
+canonical operator host and stored campaign checksum before each request. All
+six checks returned one Superfly redirect to the intended operator and an HTTP
+200 terminal response on that operator; no route crossed into another governed
+market. The nonce-protected diagnostic returned only redacted host/status data,
+was never committed, and its temporary deployment was removed. Production
+aliases remained on the restored safe deployment throughout. No registration,
+deposit, wager, purchase, conversion or other downstream action was performed.
+
 ## Classified release state
 
 **DETECTED:** local unit/type/regression checks and the full 31-migration
@@ -155,11 +215,12 @@ existing disposable 0031 database, and the repository's full staged harness
 applies all 32 migrations to an empty disposable database with replay
 idempotency.
 
-**PROPOSED:** complete PR CI and Preview verification, apply 0032 DB-first to
-the fingerprinted Production resource after PR checks, backfill exactly the
-six reviewed fallback rows, then require a `43/43` exact-plus-fallback shadow
-with zero mismatches before restoring certification.
+**PROPOSED:** complete repair PR CI and Preview verification, deploy the exact
+merge, reconcile the preserved six rows through the repaired controller and
+require a `43/43` exact-plus-fallback shadow with zero mismatches before
+restoring the canonical application read path.
 
-**UNKNOWN:** final 0032 Production checksum, resulting activation count,
-deployed correction SHA and live restored KZ redirect behavior remain unknown
-until the guarded correction is executed and independently verified.
+**DETECTED:** current external terminal behavior for all six affiliate-bearing
+campaigns is healthy from the intended Production runtime. Full tracking URLs,
+query strings and identifiers were neither emitted nor retained in diagnostic
+output.
