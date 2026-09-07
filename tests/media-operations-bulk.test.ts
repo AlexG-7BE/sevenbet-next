@@ -160,12 +160,15 @@ test("explicit hosted targeting fills silent provider metadata and rejects contr
   );
 });
 
-test("draft media subject policy permits a draft offer below a published Casino without weakening Casino or CasinoBonus controls", () => {
+test("draft media subject policy permits draft and active offers below a published Casino without weakening Casino or CasinoBonus controls", () => {
   assert.equal(isDraftMediaAssignmentSubjectState({
     subjectType: "AFFILIATE_OFFER", casinoId: CASINO_ID, casinoStatus: "PUBLISHED", subjectStatus: "DRAFT",
   }), true);
   assert.equal(isDraftMediaAssignmentSubjectState({
     subjectType: "AFFILIATE_OFFER", casinoId: CASINO_ID, casinoStatus: "PUBLISHED", subjectStatus: "ACTIVE",
+  }), true);
+  assert.equal(isDraftMediaAssignmentSubjectState({
+    subjectType: "AFFILIATE_OFFER", casinoId: CASINO_ID, casinoStatus: "PUBLISHED", subjectStatus: "PAUSED",
   }), false);
   assert.equal(isDraftMediaAssignmentSubjectState({
     subjectType: "CASINO", casinoId: CASINO_ID, casinoStatus: "PUBLISHED", subjectStatus: "PUBLISHED",
