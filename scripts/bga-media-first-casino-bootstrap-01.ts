@@ -285,6 +285,10 @@ async function ensureAssignmentsAndPublish(actorId: string) {
   for (const definition of definitions) {
     const casinoId = id("casino", definition.slug);
     const offerId = id("offer", definition.slug);
+    const casino = await prisma.casino.findUnique({ where: { id: casinoId }, select: { status: true } });
+    if (!casino) continue;
+    if (casino.status === EditorialStatus.PUBLISHED) continue;
+    if (casino.status !== EditorialStatus.DRAFT) throw new Error(`${RELEASE}: unexpected ${definition.slug} workflow state ${casino.status}`);
     const wanted = [...definition.hosted.card, ...definition.hosted.mobile, ...definition.hosted.desktop];
     const creatives = await prisma.partnerHostedCreative.findMany({
       where: {
@@ -325,6 +329,7 @@ async function ensureAssignmentsAndPublish(actorId: string) {
       const reference = `${RELEASE}:${definition.slug}:card:${externalId}`;
       const existing = await prisma.casinoPartnerHostedCreativeAssignment.findFirst({ where: { casinoId, reference } });
       const data = { casinoId, creativeId: creative.id, placement: "CASINO_DIRECTORY_CARD" as const, variant: "DEFAULT" as const, countryCode: creative.countryCode, languageCode: creative.languageCode, languageState: creative.languageState, renderingMode: "CONTAIN" as const, sortOrder: 0, active: true, reference };
+      if (existing && !existing.active) continue;
       const incumbent = await prisma.casinoPartnerHostedCreativeAssignment.findFirst({
         where: {
           casinoId,
@@ -348,6 +353,7 @@ async function ensureAssignmentsAndPublish(actorId: string) {
         const reference = `${RELEASE}:${definition.slug}:offer:${variant.toLowerCase()}:${externalId}`;
         const existing = await prisma.affiliateOfferPartnerHostedCreativeAssignment.findFirst({ where: { affiliateOfferId: offerId, reference } });
         const data = { affiliateOfferId: offerId, creativeId: creative.id, placement: "CASINO_OFFER_BLOCK" as const, variant, countryCode: creative.countryCode, languageCode: creative.languageCode, languageState: creative.languageState, renderingMode: "CONTAIN" as const, sortOrder: 0, active: true, reference };
+        if (existing && !existing.active) continue;
         const incumbent = await prisma.affiliateOfferPartnerHostedCreativeAssignment.findFirst({
           where: {
             affiliateOfferId: offerId,
@@ -366,10 +372,6 @@ async function ensureAssignmentsAndPublish(actorId: string) {
       }
     }
 
-    const casino = await prisma.casino.findUnique({ where: { id: casinoId }, select: { status: true } });
-    if (!casino) continue;
-    if (casino.status === EditorialStatus.PUBLISHED) continue;
-    if (casino.status !== EditorialStatus.DRAFT) throw new Error(`${RELEASE}: unexpected ${definition.slug} workflow state ${casino.status}`);
     const approved = await prisma.casino.update({ where: { id: casinoId }, data: { status: EditorialStatus.APPROVED, domainPublicationStatus: "APPROVED", updatedBy: actorId }, select: { updatedAt: true } });
     await casinoRepository.publishWithVersion(casinoId, actorId, approved.updatedAt);
     await prisma.casino.update({ where: { id: casinoId }, data: { domainPublicationStatus: "PUBLISHED", updatedBy: actorId } });

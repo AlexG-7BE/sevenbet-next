@@ -83,8 +83,13 @@ test("bootstrap keeps referral authority false while permitting bounded visual p
   assert.match(source, /referralAuthorityGranted: false/);
 });
 
-test("bootstrap preserves an active exact-slot incumbent instead of reactivating a duplicate assignment", () => {
+test("bootstrap preserves published assignment state and never reactivates a disabled owned row", () => {
   const source = readFileSync("scripts/bga-media-first-casino-bootstrap-01.ts", "utf8");
+  const bootstrapStart = source.indexOf("async function ensureAssignmentsAndPublish");
+  const publishedGuard = source.indexOf("if (casino.status === EditorialStatus.PUBLISHED) continue;", bootstrapStart);
+  const firstAssignmentRead = source.indexOf("prisma.casinoPartnerHostedCreativeAssignment.findFirst", bootstrapStart);
+  assert.ok(publishedGuard > bootstrapStart && publishedGuard < firstAssignmentRead);
+  assert.equal(source.match(/if \(existing && !existing\.active\) continue;/g)?.length, 2);
   assert.equal(source.match(/if \(incumbent && incumbent\.id !== existing\?\.id\) continue;/g)?.length, 2);
   assert.equal(source.match(/countryCode: data\.countryCode,[\s\S]{0,160}languageState: data\.languageState,[\s\S]{0,80}active: true/g)?.length, 2);
   assert.match(source, /orderBy: \[\{ sortOrder: "asc" \}, \{ id: "asc" \}\]/);
