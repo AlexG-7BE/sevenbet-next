@@ -170,6 +170,26 @@ partner destination was contacted during that smoke. The additive schema, 11
 canonical rows, intents, events and route-check evidence were preserved; no
 destructive database rollback or evidence deletion occurred.
 
+**DETECTED:** after explicit Founder authorization for exactly the six stored
+campaigns, a bounded direct diagnostic first confirmed that all six Superfly
+tracker responses redirected to the intended governed operator host. The
+Diamond7 terminal returned HTTP 200 from the local Kazakhstan egress path; the
+other five terminal TLS handshakes timed out after public DNS resolution and
+were therefore retained as transport-inconclusive evidence rather than
+misclassified as upstream failures.
+
+**DETECTED:** an isolated, non-aliased Production-environment deployment of the
+repair candidate then repeated exactly one direct chain for each of the same
+six governed campaigns from the Vercel IAD runtime. The diagnostic verified the
+fingerprinted Production database, exact `ZZ` row, intended redirect slug,
+canonical operator host and stored campaign checksum before each request. All
+six checks returned one Superfly redirect to the intended operator and an HTTP
+200 terminal response on that operator; no route crossed into another governed
+market. The nonce-protected diagnostic returned only redacted host/status data,
+was never committed, and its temporary deployment was removed. Production
+aliases remained on the restored safe deployment throughout. No registration,
+deposit, wager, purchase, conversion or other downstream action was performed.
+
 ## Classified release state
 
 **DETECTED:** local unit/type/regression checks and the full 31-migration
@@ -200,8 +220,7 @@ merge, reconcile the preserved six rows through the repaired controller and
 require a `43/43` exact-plus-fallback shadow with zero mismatches before
 restoring the canonical application read path.
 
-**UNKNOWN:** current external terminal behavior for the six affiliate-bearing
-campaigns remains unverified in this correction window because a redacted
-direct diagnostic was refused at the sensitive-egress consent boundary. A new
-bounded partner-route probe requires explicit user consent; prior accepted
-route-health evidence is not being presented as a fresh check.
+**DETECTED:** current external terminal behavior for all six affiliate-bearing
+campaigns is healthy from the intended Production runtime. Full tracking URLs,
+query strings and identifiers were neither emitted nor retained in diagnostic
+output.
