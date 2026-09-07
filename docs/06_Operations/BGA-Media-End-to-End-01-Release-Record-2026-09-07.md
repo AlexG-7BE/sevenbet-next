@@ -4,9 +4,11 @@
 - **Authority:** explicit Founder instruction `B4GAMBLE FOUNDER OFFICE — END-TO-END BGA MEDIA COMPLETION`
 - **Application pull request:** [#178](https://github.com/AlexG-7BE/sevenbet-next/pull/178)
 - **Documentation closure pull request:** [#179](https://github.com/AlexG-7BE/sevenbet-next/pull/179)
+- **Bootstrap convergence pull request:** [#180](https://github.com/AlexG-7BE/sevenbet-next/pull/180)
 - **Accepted application commits:** `670f8a1` and `f07abc6`
 - **Production application merge SHA:** `6fc8a7cf2aa79ed435b427579c15e35f3218f538`
-- **Production deployment:** `dpl_WPgC21HgnvTNDDXMqieY5prqpDBL`
+- **Production application deployment:** `dpl_WPgC21HgnvTNDDXMqieY5prqpDBL`
+- **Documentation closure merge SHA / deployment:** `e0b86623eed07beb05070f7f26659ba8ea82f2bb` / `dpl_HGSwb59bKTh3ZUmJp84qf8AJvsSA`
 - **Canonical Production URL:** `https://b4gamble.com`
 - **Release status:** **HOLD — MEDIA DEPLOYED AND VERIFIED; COMMERCIAL AUTHORITY ABSENT**
 
@@ -81,6 +83,7 @@ transaction boundaries; committed writes remained idempotent and auditable.
 | Media ingestion plans | 16 | 16 analysis events and 5 committed apply-plan events | 0 | 0 | durable subject/country plans retained |
 | Offer hosted assignments | 9 | 2 exact incumbents retained | 4 | 0 | 11 active exact assignments |
 | Casino-profile hosted assignments | 7 | 4 exact incumbents retained | 5 | 0 | 11 active exact assignments |
+| Post-deployment convergence | 0 | 1 legacy bootstrap row reactivated by the documentation rebuild | 1 exact audited corrective deactivation | 0 | core final counts restored; relationship retained inactive |
 | `CasinoVersion` | 3 | 0 | 0 | 0 | one new immutable current snapshot per Casino |
 | Exact tracking links | 0 | 52 matched and reused; 0 activated | 0 | 0 | 52 active; 0 Production-eligible |
 
@@ -88,6 +91,13 @@ The four offer deactivations comprise two stale global Inkabet assignments and
 two replaced Betsafe mobile assignments. The five profile deactivations
 comprise three stale global Inkabet assignments and two replaced Betsafe mobile
 assignments. Final stale active assignment counts are zero for both families.
+
+The documentation closure Production build later reactivated one of those
+already-deactivated legacy Inkabet rows. The final verifier detected the
+divergence, and the same relationship was conditionally deactivated again.
+This convergence event does not change the unique-row or final-active totals in
+the ledger; it adds one reactivation and one corrective deactivation to the
+mutation history.
 
 The recorded batch IDs are:
 
@@ -169,13 +179,37 @@ as `dpl_WPgC21HgnvTNDDXMqieY5prqpDBL`. The sensitive Production variable
 `VETTED_PARTNER_HOSTED_CREATIVES_ENABLED` was enabled without recording its
 value in repository evidence.
 
+### Post-deployment convergence
+
+**DETECTED:** documentation closure deployment
+`dpl_HGSwb59bKTh3ZUmJp84qf8AJvsSA` ran the existing Production bootstrap and,
+at `2026-09-07T06:26:07.073Z`, reactivated bootstrap-owned Inkabet PE mobile
+offer assignment `4e5aaccd-3f87-4945-a4df-f95d8308f019` for legacy creative
+`66ccc3c1-d114-4cd0-9078-863352ca87cb`. Its profile counterpart remained
+inactive. The mandatory final invariant audit failed immediately instead of
+certifying this offer/profile divergence.
+
+**DETECTED:** the exact row was returned to `active=false` at
+`2026-09-07T06:43:48.137Z` under immutable audit
+`6824aafb-1a48-45f8-8bd1-21ffadd0ae5d`. The correction deleted no row and
+changed no tracking or Production-eligibility state. A repeated full audit then
+passed: 52 supported creatives, 11 active offer assignments, 11 active profile
+assignments, 12 responsive resolutions, zero stale active assignments and zero
+blocked-source assignments.
+
+**DETECTED IN PR #180:** the bootstrap now checks Casino publication state
+before any assignment read or write, and treats an inactive bootstrap-owned
+assignment as an explicit state to preserve. Its regression test locks both
+conditions, so a later Production rebuild cannot repeat this reactivation path.
+
 ## Production acceptance
 
 **DETECTED:** read-only service verification resolved all 12 responsive
 projections: 11 exact assignments plus the Inkabet PE mobile DEFAULT fallback.
 All 52 supported creative records retained their exact Casino, offer, tracking,
 redirect, country, source checksum and destination hash. Active stale assignment
-and blocked-source assignment counts were zero.
+and blocked-source assignment counts were zero. The complete invariant suite
+was repeated after the post-deployment convergence correction.
 
 **DETECTED:** independent country-origin probes reached the live Production
 casino-page component at HTTP 200. Each response contained the hosted-media

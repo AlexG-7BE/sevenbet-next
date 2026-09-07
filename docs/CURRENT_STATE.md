@@ -65,6 +65,16 @@ programmes/offers remain draft, tracking verification is missing or stale and
 Production authority is absent. See the
 [BGA-MEDIA-E2E-01 release record](06_Operations/BGA-Media-End-to-End-01-Release-Record-2026-09-07.md).
 
+The final post-documentation-deploy verifier detected that the legacy
+Production bootstrap had reactivated one previously deactivated Inkabet PE
+mobile offer relationship while its profile relationship remained inactive.
+The exact row was returned to inactive under audit
+`6824aafb-1a48-45f8-8bd1-21ffadd0ae5d`, with no deletion or eligibility
+change; repeated verification restored the stated `11/11` active counts. [PR
+#180](https://github.com/AlexG-7BE/sevenbet-next/pull/180) makes published
+Casino assignment state and explicitly inactive bootstrap-owned rows durable
+across later Production rebuilds.
+
 **DETECTED — VETTED-PARTNER-HOSTED-CREATIVES-01 COMPLETE, 6 September
 2026:** [PR #170](https://github.com/AlexG-7BE/sevenbet-next/pull/170) merged
 as `f429ba0f1f04d95a12086e7c7302d708103eec9a` after exact-head CI and real
