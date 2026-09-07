@@ -220,7 +220,9 @@ enum AffiliateStatus {
 }
 
 // MARKET-ACTIVATION-V2 is the sole durable Production authority for whether
-// one exact Casino × GEO × Product combination is commercially active.
+// one Casino × GEO × Product combination is commercially active. ISO private-
+// use ZZ is reserved for an evidenced legacy global-default fallback and is
+// never a factual CasinoCountry; an exact country row always takes precedence.
 enum MarketActivationProduct {
   CASINO
 }
@@ -2397,6 +2399,7 @@ model MarketActivation {
   externalBlockerCode       String?
   externalBlockerDetail     String?
   externalBlockerSource     String?
+  globalFallbackBlockedCountries String[]                            @default([])
   diagnostics               Json                                    @default("{}")
   createdAt                 DateTime                                @default(now())
   updatedAt                 DateTime                                @updatedAt

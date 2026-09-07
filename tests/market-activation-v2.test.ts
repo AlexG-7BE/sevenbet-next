@@ -3,8 +3,10 @@ import test from "node:test";
 
 import type { Prisma } from "@prisma/client";
 
+import { founderGlobalPartnerRoutePolicy } from "../lib/affiliate-routing/partner-route-projection";
 import { MarketActivationController } from "../lib/market-activation/controller";
 import {
+  MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
   normalizeMarketActivationIntent,
   safeActivationDestination,
   type MarketActivationIntentInput,
@@ -22,6 +24,18 @@ const PROFILE_ID = "10000000-0000-4000-8000-000000000002";
 const OFFER_ID = "10000000-0000-4000-8000-000000000003";
 const TRACKING_ID = "10000000-0000-4000-8000-000000000004";
 const REDIRECT_ID = "10000000-0000-4000-8000-000000000005";
+const GLOBAL_BLOCKED_COUNTRIES = ["DK", "ES", "FI", "NO", "CL", "SE", "GB"];
+
+function globalVisibilityMetadata(tracking = false) {
+  return {
+    commercialVisibility: {
+      authority: "CASINO-COMMERCIAL-VISIBILITY-03",
+      productionEligibleByDefault: true,
+      blockedCountries: GLOBAL_BLOCKED_COUNTRIES,
+      ...(tracking ? { evidenceId: "TEST:GLOBAL-DEFAULT", canonicalUrlSha256: "b".repeat(64) } : {}),
+    },
+  };
+}
 
 function intent(overrides: Partial<MarketActivationIntentInput> = {}): MarketActivationIntentInput {
   return {
@@ -67,18 +81,35 @@ function activation(overrides: Record<string, unknown> = {}) {
     externalBlockerCode: null,
     externalBlockerDetail: null,
     externalBlockerSource: null,
+    globalFallbackBlockedCountries: [] as string[],
     diagnostics: {},
     createdAt: NOW,
     updatedAt: NOW,
     casino: { id: CASINO_ID, slug: "inkabet", title: "Inkabet" },
     marketProfile: { id: PROFILE_ID, casinoId: CASINO_ID, countryCode: "PE" },
-    affiliateOffer: { id: OFFER_ID, casinoId: CASINO_ID, casinoBonusId: null, programId: "program" },
+    affiliateOffer: {
+      id: OFFER_ID,
+      casinoId: CASINO_ID,
+      casinoBonusId: null,
+      programId: "program",
+      geoMode: "ALLOW",
+      countries: [{ countryCode: "PE", mode: "ALLOW" }],
+      program: {
+        id: "program",
+        casinoId: CASINO_ID,
+        metadata: {},
+        supportedCountries: ["PE"],
+      },
+    },
     primaryTrackingLink: {
       id: TRACKING_ID,
       offerId: OFFER_ID,
       label: "Inkabet PE",
       destinationUrl: "https://operator.example/casino",
       trackingUrl: "https://tracking.example/click",
+      metadata: {},
+      geoMode: "ALLOW",
+      countries: [{ countryCode: "PE", mode: "ALLOW" }],
     },
     redirectSlug: { id: REDIRECT_ID, slug: "inkabet-casino", casinoId: CASINO_ID, casinoBonusId: null, affiliateOfferId: OFFER_ID },
     ...overrides,
@@ -88,8 +119,17 @@ function activation(overrides: Record<string, unknown> = {}) {
 function runtime(records: ReturnType<typeof activation>[]) {
   const database = {
     marketActivation: {
-      findMany: async ({ where }: { where: { casinoId: { in: string[] }; countryCode: string } }) => records.filter((record) => where.casinoId.in.includes(record.casinoId) && record.countryCode === where.countryCode),
-      findFirst: async ({ where }: { where: { countryCode: string; redirectSlug: { slug: string } } }) => records.find((record) => record.countryCode === where.countryCode && record.redirectSlug.slug === where.redirectSlug.slug) ?? null,
+      findMany: async ({ where }: { where: {
+        casinoId?: { in: string[] };
+        countryCode?: { in: string[] };
+        OR?: Array<{ countryCode: string; redirectSlug?: { slug: string } }>;
+      } }) => records.filter((record) => {
+        if (where.casinoId && !where.casinoId.in.includes(record.casinoId)) return false;
+        if (where.countryCode && !where.countryCode.in.includes(record.countryCode)) return false;
+        if (where.OR && !where.OR.some((condition) => record.countryCode === condition.countryCode
+          && (!condition.redirectSlug || record.redirectSlug.slug === condition.redirectSlug.slug))) return false;
+        return true;
+      }),
     },
   };
   return new MarketActivationRuntime(database as never);
@@ -112,6 +152,14 @@ test("rejects ambiguous identity, missing evidence, and unsafe destinations", ()
   assert.equal(safeActivationDestination("https://operator.example/path"), true);
   assert.equal(safeActivationDestination("http://operator.example/path"), false);
   assert.equal(safeActivationDestination("https://user:secret@operator.example/path"), false);
+  assert.throws(() => normalizeMarketActivationIntent(intent({
+    countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+    origin: "ADMIN",
+  })), /GLOBAL_FALLBACK_ORIGIN_INVALID/);
+  assert.equal(normalizeMarketActivationIntent(intent({
+    countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+    origin: "BACKFILL",
+  })).countryCode, MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE);
 });
 
 test("only runtime-critical market contradictions block activation", () => {
@@ -127,6 +175,24 @@ test("only runtime-critical market contradictions block activation", () => {
   assert.equal(marketEvidenceBlocksActivation([
     { classification: "CONTRADICTION", fieldKeys: [] },
   ]), true);
+});
+
+test("global fallback policy is derived only from complete Founder global-default evidence", () => {
+  const input = {
+    programMetadata: globalVisibilityMetadata(),
+    programSupportedCountries: [],
+    offerGeoMode: "BLOCK",
+    offerCountries: [{ countryCode: "BR", mode: "BLOCK" }],
+    trackingMetadata: globalVisibilityMetadata(true),
+    trackingGeoMode: "BLOCK",
+    trackingCountries: [{ countryCode: "CA", mode: "BLOCK" }],
+  };
+  assert.deepEqual(founderGlobalPartnerRoutePolicy(input), {
+    blockedCountries: ["BR", "CA", ...GLOBAL_BLOCKED_COUNTRIES].sort(),
+  });
+  assert.equal(founderGlobalPartnerRoutePolicy({ ...input, programSupportedCountries: ["KZ"] }), null);
+  assert.equal(founderGlobalPartnerRoutePolicy({ ...input, offerGeoMode: "ALLOW" }), null);
+  assert.equal(founderGlobalPartnerRoutePolicy({ ...input, trackingMetadata: {} }), null);
 });
 
 test("canonical route selection rejects cross-country evidence and prefers the evidenced default-language market route", () => {
@@ -236,6 +302,57 @@ test("canonical runtime resolves only the exact active market and ignores legacy
   assert.equal((await authority.listActive([CASINO_ID], "CL")).length, 0);
   assert.equal((await authority.resolveRedirect("inkabet-casino", "PE"))?.primaryTrackingLinkId, TRACKING_ID);
   assert.equal(await authority.resolveRedirect("inkabet-casino", "CL"), null);
+});
+
+test("canonical global fallback is explicitly evidenced, request-scoped, denied in protected countries, and shadowed by any exact row", async () => {
+  const globalFallback = activation({
+    id: "10000000-0000-4000-8000-000000000008",
+    countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+    marketProfileId: null,
+    marketProfile: null,
+    globalFallbackBlockedCountries: GLOBAL_BLOCKED_COUNTRIES,
+    affiliateOffer: {
+      ...activation().affiliateOffer,
+      geoMode: "BLOCK",
+      countries: GLOBAL_BLOCKED_COUNTRIES.map((countryCode) => ({ countryCode, mode: "BLOCK" })),
+      program: {
+        ...activation().affiliateOffer.program,
+        metadata: globalVisibilityMetadata(),
+        supportedCountries: [],
+      },
+    },
+    primaryTrackingLink: {
+      ...activation().primaryTrackingLink,
+      metadata: globalVisibilityMetadata(true),
+      geoMode: "BLOCK",
+      countries: [
+        { countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE, mode: "ALLOW" },
+        ...GLOBAL_BLOCKED_COUNTRIES.map((countryCode) => ({ countryCode, mode: "BLOCK" })),
+      ],
+    },
+  });
+  const fallbackRuntime = runtime([globalFallback]);
+  assert.equal((await fallbackRuntime.listActive([CASINO_ID], "KZ"))[0]?.id, globalFallback.id);
+  assert.equal((await fallbackRuntime.resolveRedirect("inkabet-casino", "KZ"))?.id, globalFallback.id);
+  assert.deepEqual(await fallbackRuntime.listActive([CASINO_ID], "CL"), []);
+  assert.deepEqual(await fallbackRuntime.listActive([CASINO_ID], "GB"), []);
+  assert.deepEqual(await fallbackRuntime.listActive([CASINO_ID], MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE), []);
+  assert.deepEqual(await runtime([{
+    ...globalFallback,
+    globalFallbackBlockedCountries: ["CL"],
+  }]).listActive([CASINO_ID], "KZ"), [], "an incomplete canonical deny set must fail closed");
+
+  const disabledExact = activation({
+    id: "10000000-0000-4000-8000-000000000009",
+    countryCode: "KZ",
+    desiredState: "DISABLED",
+    status: "DISABLED",
+    marketProfile: { id: "10000000-0000-4000-8000-000000000010", casinoId: CASINO_ID, countryCode: "KZ" },
+    redirectSlug: { ...activation().redirectSlug, slug: "inkabet-kz-exact" },
+  });
+  const shadowedRuntime = runtime([globalFallback, disabledExact]);
+  assert.deepEqual(await shadowedRuntime.listActive([CASINO_ID], "KZ"), []);
+  assert.equal(await shadowedRuntime.resolveRedirect("inkabet-casino", "KZ"), null);
 });
 
 test("canonical runtime fails closed for cross-entity or unsafe bindings", async () => {

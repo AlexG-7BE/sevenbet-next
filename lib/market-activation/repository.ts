@@ -7,10 +7,12 @@ import {
   type MarketActivation,
 } from "@prisma/client";
 
+import { founderGlobalPartnerRoutePolicy } from "@/lib/affiliate-routing/partner-route-projection";
 import { prisma } from "@/lib/db/prisma";
 
 import {
   MARKET_ACTIVATION_CONTROLLER_VERSION,
+  MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
   safeActivationDestination,
   type MarketActivationRouteVerificationResult,
   type NormalizedMarketActivationIntent,
@@ -171,6 +173,7 @@ function activationData(input: {
   primaryTrackingLinkId: string | null;
   redirectSlugId: string | null;
   casinoBonusId: string | null;
+  globalFallbackBlockedCountries: string[];
   blocker: ExternalBlocker | null;
   internalPending: InternalPending | null;
   diagnostics: Prisma.InputJsonValue;
@@ -200,6 +203,7 @@ function activationData(input: {
     primaryTrackingLinkId: input.primaryTrackingLinkId,
     redirectSlugId: input.redirectSlugId,
     casinoBonusId: input.casinoBonusId,
+    globalFallbackBlockedCountries: input.globalFallbackBlockedCountries,
     version: (input.current?.version ?? -1) + 1,
     controllerVersion: MARKET_ACTIVATION_CONTROLLER_VERSION,
     reconciliationFingerprint: input.reconciliationFingerprint,
@@ -309,6 +313,7 @@ function canonicalOutcomeUnchanged(current: MarketActivation, data: ReturnType<t
     && current.primaryTrackingLinkId === data.primaryTrackingLinkId
     && current.redirectSlugId === data.redirectSlugId
     && current.casinoBonusId === data.casinoBonusId
+    && JSON.stringify(current.globalFallbackBlockedCountries) === JSON.stringify(data.globalFallbackBlockedCountries)
     && current.controllerVersion === data.controllerVersion
     && current.reconciliationFingerprint === data.reconciliationFingerprint
     && current.externalBlockerCode === data.externalBlockerCode
@@ -507,7 +512,8 @@ export class MarketActivationRepository {
       return this.disableInTransaction(tx, intent, casino, existing, now);
     }
 
-    const marketProfile = casino.countries[0] ?? null;
+    const globalFallback = intent.countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE;
+    const marketProfile = globalFallback ? null : casino.countries[0] ?? null;
     const routeSelector = intent.redirectSlugId
       ? { id: intent.redirectSlugId }
       : intent.redirectSlug
@@ -538,7 +544,17 @@ export class MarketActivationRepository {
     const selectedTrackingId = intent.primaryTrackingLinkId ?? null;
     const tracking = selectedTrackingId
       ? offer?.trackingLinks.find((entry) => entry.id === selectedTrackingId) ?? null
-      : offer && marketProfile
+      : globalFallback && offer
+        ? offer.trackingLinks.find((entry) => founderGlobalPartnerRoutePolicy({
+            programMetadata: offer.program.metadata,
+            programSupportedCountries: offer.program.supportedCountries,
+            offerGeoMode: offer.geoMode,
+            offerCountries: offer.countries,
+            trackingMetadata: entry.metadata,
+            trackingGeoMode: entry.geoMode,
+            trackingCountries: entry.countries,
+          })) ?? null
+        : offer && marketProfile
         ? selectActivationTrackingCandidate({
             candidates: offer.trackingLinks,
             countryCode: intent.countryCode,
@@ -552,13 +568,23 @@ export class MarketActivationRepository {
     const trackingCountry = tracking?.countries.find((entry) => entry.countryCode === intent.countryCode) ?? null;
     const offerCountry = offer?.countries.find((entry) => entry.countryCode === intent.countryCode) ?? null;
     const evidence = trackingCountry?.productionEligibilityEvidence?.trim() || (tracking ? globalEvidence(tracking.metadata) : "");
+    const globalFallbackPolicy = globalFallback && offer && tracking ? founderGlobalPartnerRoutePolicy({
+      programMetadata: offer.program.metadata,
+      programSupportedCountries: offer.program.supportedCountries,
+      offerGeoMode: offer.geoMode,
+      offerCountries: offer.countries,
+      trackingMetadata: tracking.metadata,
+      trackingGeoMode: tracking.geoMode,
+      trackingCountries: tracking.countries,
+    }) : null;
+    const globalRouteAllowed = Boolean(globalFallbackPolicy);
 
     let blocker: ExternalBlocker | null = null;
     let internalPending: InternalPending | null = null;
     if (casino.archivedAt) internalPending = { code: "CASINO_RESTORE_PENDING", detail: "The internally archived Casino projection must be restored under the current desired state.", source: "Casino.archivedAt" };
-    else if (!marketProfile) internalPending = { code: "MARKET_PROFILE_PENDING", detail: `The exact ${intent.countryCode} market profile must be ingested from evidence before finalization.`, source: "CasinoCountry" };
-    else if (marketEvidenceBlocksActivation(marketProfile.evidence)) blocker = { code: "MARKET_EVIDENCE_CONTRADICTION", detail: "The exact market profile contains a runtime-critical contradiction.", source: "CasinoCountryEvidence" };
-    else if (["RESTRICTED", "NOT_AVAILABLE"].includes(marketProfile.availability)) blocker = { code: "MARKET_UNAVAILABLE", detail: `The exact market profile is ${marketProfile.availability}.`, source: "CasinoCountry.availability" };
+    else if (!marketProfile && !globalFallback) internalPending = { code: "MARKET_PROFILE_PENDING", detail: `The exact ${intent.countryCode} market profile must be ingested from evidence before finalization.`, source: "CasinoCountry" };
+    else if (marketProfile && marketEvidenceBlocksActivation(marketProfile.evidence)) blocker = { code: "MARKET_EVIDENCE_CONTRADICTION", detail: "The exact market profile contains a runtime-critical contradiction.", source: "CasinoCountryEvidence" };
+    else if (marketProfile && ["RESTRICTED", "NOT_AVAILABLE"].includes(marketProfile.availability)) blocker = { code: "MARKET_UNAVAILABLE", detail: `The exact market profile is ${marketProfile.availability}.`, source: "CasinoCountry.availability" };
     else if (!casino.versions.length) internalPending = { code: "PUBLIC_PROJECTION_PENDING", detail: "The evidence-backed Casino draft must be projected through the existing publication workflow.", source: "CasinoVersion" };
     else if (!redirect) blocker = { code: "AFFILIATE_DESTINATION_MISSING", detail: "No evidenced affiliate destination is available through a canonical route.", source: "AffiliateRedirectSlug" };
     else if (redirect.casinoId !== casino.id) throw new Error("MARKET_ACTIVATION_REDIRECT_CASINO_MISMATCH");
@@ -576,6 +602,7 @@ export class MarketActivationRepository {
     else if (tracking.expiresAt && tracking.expiresAt <= now) blocker = { code: "TRACKING_LINK_EXPIRED", detail: "The evidenced tracking link has expired.", source: "AffiliateTrackingLink.expiresAt" };
     else if (tracking.validFrom && tracking.validFrom > now) blocker = { code: "TRACKING_LINK_NOT_YET_VALID", detail: "The evidenced tracking link is not yet valid.", source: "AffiliateTrackingLink.validFrom" };
     else if (!safeActivationDestination(tracking.destinationUrl) || !safeActivationDestination(tracking.trackingUrl)) blocker = { code: "UNSAFE_TRACKING_DESTINATION", detail: "The stored destination is not a credential-free HTTPS URL.", source: "AffiliateTrackingLink" };
+    else if (globalFallback && !globalRouteAllowed) blocker = { code: "GLOBAL_FALLBACK_AUTHORITY_MISSING", detail: "The route does not carry the complete evidenced global-default authority and GEO policy.", source: "AffiliateProgram/AffiliateTrackingLink.metadata" };
     else if (trackingCountry?.mode === "BLOCK") blocker = { code: "TRACKING_MARKET_BLOCKED", detail: `The evidenced tracking record explicitly blocks ${intent.countryCode}.`, source: "AffiliateTrackingLinkCountry.mode" };
     else if (!evidence) blocker = { code: "TRACKING_EVIDENCE_MISSING", detail: "No source reference is attached to the stored exact-market destination.", source: "AffiliateTrackingLinkCountry.productionEligibilityEvidence" };
 
@@ -600,6 +627,7 @@ export class MarketActivationRepository {
       evidence: evidence || null,
       mediaAssignments: casino._count.mediaAssignments,
       hostedAssignments: casino._count.partnerHostedAssignments,
+      globalFallbackBlockedCountries: globalFallbackPolicy?.blockedCountries ?? [],
       internalPending,
       externalBlocker: blocker,
     });
@@ -611,12 +639,14 @@ export class MarketActivationRepository {
       && existing.reconciliationFingerprint === fingerprint,
     );
     const repairs: string[] = [];
-    if (!blocker && redirect && offer && tracking && marketProfile) {
+    if (!blocker && redirect && offer && tracking && (marketProfile || globalFallback)) {
       if (!offer.program.network.active) {
         await tx.affiliateNetwork.update({ where: { id: offer.program.networkId }, data: { active: true, updatedBy: intent.actorId } });
         repairs.push("AFFILIATE_NETWORK_ACTIVE");
       }
-      const supportedCountries = appendUnique(offer.program.supportedCountries.map((entry) => entry.toUpperCase()), intent.countryCode).sort();
+      const supportedCountries = globalFallback
+        ? [...offer.program.supportedCountries].map((entry) => entry.toUpperCase()).sort()
+        : appendUnique(offer.program.supportedCountries.map((entry) => entry.toUpperCase()), intent.countryCode).sort();
       if (offer.program.status !== "ACTIVE" || offer.program.workflowStatus !== "PUBLISHED" || lifecycleInactive(offer.program.domainLifecycleStatus)
         || JSON.stringify(supportedCountries) !== JSON.stringify([...offer.program.supportedCountries].map((entry) => entry.toUpperCase()).sort())) {
         await tx.affiliateProgram.update({ where: { id: offer.program.id }, data: {
@@ -628,7 +658,7 @@ export class MarketActivationRepository {
         } });
         repairs.push("AFFILIATE_PROGRAM_COMPATIBILITY_PROJECTED");
       }
-      if (offer.status !== "ACTIVE" || offer.geoMode !== "ALLOW" || lifecycleInactive(offer.domainLifecycleStatus)) {
+      if (offer.status !== "ACTIVE" || (!globalFallback && offer.geoMode !== "ALLOW") || lifecycleInactive(offer.domainLifecycleStatus)) {
         await tx.affiliateOfferRevision.create({ data: {
           offerId: offer.id,
           revisionNumber: await nextRevision(tx, "offer", offer.id),
@@ -638,20 +668,20 @@ export class MarketActivationRepository {
         } });
         await tx.affiliateOffer.update({ where: { id: offer.id }, data: {
           status: "ACTIVE",
-          geoMode: "ALLOW",
+          geoMode: globalFallback ? offer.geoMode : "ALLOW",
           domainLifecycleStatus: lifecycleInactive(offer.domainLifecycleStatus) ? "ACTIVE" : offer.domainLifecycleStatus,
           updatedBy: intent.actorId,
         } });
         repairs.push("AFFILIATE_OFFER_COMPATIBILITY_PROJECTED");
       }
-      if (!offerCountry) {
+      if (!globalFallback && !offerCountry) {
         await tx.affiliateOfferCountry.create({ data: { offerId: offer.id, countryCode: intent.countryCode, mode: "ALLOW" } });
         repairs.push("AFFILIATE_OFFER_COUNTRY_PROJECTED");
-      } else if (offerCountry.mode !== "ALLOW") {
+      } else if (!globalFallback && offerCountry && offerCountry.mode !== "ALLOW") {
         await tx.affiliateOfferCountry.update({ where: { id: offerCountry.id }, data: { mode: "ALLOW" } });
         repairs.push("AFFILIATE_OFFER_COUNTRY_PROJECTED");
       }
-      if (tracking.active !== true || tracking.geoMode !== "ALLOW") {
+      if (tracking.active !== true || (!globalFallback && tracking.geoMode !== "ALLOW")) {
         await tx.affiliateTrackingLinkRevision.create({ data: {
           trackingLinkId: tracking.id,
           revisionNumber: await nextRevision(tx, "tracking", tracking.id),
@@ -662,7 +692,7 @@ export class MarketActivationRepository {
         } });
         await tx.affiliateTrackingLink.update({ where: { id: tracking.id }, data: {
           active: true,
-          geoMode: "ALLOW",
+          geoMode: globalFallback ? tracking.geoMode : "ALLOW",
           updatedBy: intent.actorId,
         } });
         repairs.push("TRACKING_LINK_COMPATIBILITY_PROJECTED");
@@ -685,7 +715,7 @@ export class MarketActivationRepository {
             countryCode: intent.countryCode,
             mode: "ALLOW",
             productionEligible: compatibilityActive,
-            productionEligibilityVerifiedAt: compatibilityActive ? now : null,
+            productionEligibilityVerifiedAt: compatibilityActive ? existing?.routeLastCheckedAt ?? now : null,
             productionEligibilityEvidence: evidence,
             productionEligibilityNotes: projectionNote,
           },
@@ -693,9 +723,7 @@ export class MarketActivationRepository {
             mode: "ALLOW",
             productionEligible: compatibilityActive,
             productionEligibilityVerifiedAt: compatibilityActive
-              ? trackingCountry?.productionEligible === true && trackingCountry.productionEligibilityEvidence === evidence
-                ? trackingCountry.productionEligibilityVerifiedAt ?? now
-                : now
+              ? existing?.routeLastCheckedAt ?? now
               : trackingCountry?.productionEligibilityVerifiedAt,
             productionEligibilityExpiresAt: compatibilityActive ? null : trackingCountry?.productionEligibilityExpiresAt,
             productionEligibilityEvidence: evidence,
@@ -740,6 +768,7 @@ export class MarketActivationRepository {
       classification: "DETECTED",
       controllerVersion: MARKET_ACTIVATION_CONTROLLER_VERSION,
       publicIdentity: { publishedSnapshot: Boolean(casino.versions.length), casinoStatus: casino.status, domainPublicationStatus: casino.domainPublicationStatus },
+      activationScope: globalFallback ? "GLOBAL_FALLBACK" : "EXACT_COUNTRY",
       marketProfile: marketProfile ? {
         availability: marketProfile.availability,
         licenceRecords: marketProfile._count.licenses,
@@ -763,6 +792,7 @@ export class MarketActivationRepository {
       primaryTrackingLinkId: tracking?.id ?? null,
       redirectSlugId: redirect?.id ?? null,
       casinoBonusId: redirect?.casinoBonusId ?? offer?.casinoBonusId ?? null,
+      globalFallbackBlockedCountries: globalFallbackPolicy?.blockedCountries ?? [],
       blocker,
       internalPending,
       diagnostics,
@@ -815,6 +845,7 @@ export class MarketActivationRepository {
       affiliateOfferId: existing?.affiliateOfferId ?? null,
       primaryTrackingLinkId: existing?.primaryTrackingLinkId ?? null,
       redirectSlugId: existing?.redirectSlugId ?? null,
+      globalFallbackBlockedCountries: existing?.globalFallbackBlockedCountries ?? [],
     });
     const diagnostics = json({
       classification: "DETECTED",
@@ -831,6 +862,7 @@ export class MarketActivationRepository {
       primaryTrackingLinkId: existing?.primaryTrackingLinkId ?? null,
       redirectSlugId: existing?.redirectSlugId ?? null,
       casinoBonusId: existing?.casinoBonusId ?? null,
+      globalFallbackBlockedCountries: existing?.globalFallbackBlockedCountries ?? [],
       blocker: null,
       internalPending: null,
       diagnostics,
