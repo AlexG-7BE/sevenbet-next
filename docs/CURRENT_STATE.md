@@ -1,12 +1,12 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 7 September 2026
+**Evidence date:** 8 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `6fc8a7cf2aa79ed435b427579c15e35f3218f538`
-**Verified post-release runtime baseline SHA:** `6fc8a7cf2aa79ed435b427579c15e35f3218f538`
-**Verified post-release runtime deployment:** Ready; `dpl_WPgC21HgnvTNDDXMqieY5prqpDBL`
+**Current Production application SHA (live provider evidence):** `2656acfbb930143feec9c9a21233c647ef558597`
+**Verified post-release runtime baseline SHA:** `2656acfbb930143feec9c9a21233c647ef558597`
+**Verified post-release runtime deployment:** Ready; `dpl_5H9Ap4eeiCwBcrVUGaTPKGnyHRBr`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -36,7 +36,8 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
 | Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES, DESTINATIONS VERIFIED** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority and checksum-matched canonical campaigns. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
 | Casino market data | **TEN REAL PUBLISHED IDENTITIES — EIGHT SCORED/REVIEWED; TWO PROVISIONAL MEDIA-FIRST** | The accepted eight-identity catalog baseline remains intact: six have complete global facts and a published welcome offer, while Betsson and DragonBet remain review-only. Inkabet and Betsafe are additional noindex provisional profiles whose detailed facts and scoring remain explicitly pending; their draft binding offers grant no referral authority. Temporary demo identities remain excluded. |
-| Placement media | **RFC-040 OPTION C ACTIVE IN PRODUCTION** | Nine semantic placements resolve through typed Casino, Bonus and optional AffiliateOffer relationships, responsive variants and immutable publication snapshots. The prior first-party baseline remains 26 Casino and 20 Bonus assignments; BGA partner-hosted assignments are tracked separately, and the strict rollback switch remains available. |
+| Placement media | **RFC-043 MEDIA-GEO3 ACTIVE IN PRODUCTION** | The RFC-040 typed compatibility layer remains supported; MEDIA-GEO3 adds exact-offer creative sets, variants, persisted preflight, atomic revisions and `CASINO_REVIEW_RIGHT_HERO`. Three bounded current-offer families serve the review-right and directory-card placements through one resolver. |
+| Canonical public CTA authority | **RFC-042 SOLE B4GAMBLE AUTHORITY** | Public directory, comparison and review consumers use canonical `MarketActivation`, including its healthy global fallback. Legacy programme/offer/workflow/link/redirect lifecycle fields are not replacement CTA vetoes; external safety, jurisdiction, GB operator/legal, safe-URL, relational and trusted-GEO controls remain independent. |
 | GEO-localized creative assignments | **ACTIVE IN PRODUCTION — BGA PE/EE/LV HOSTED INVENTORY INSTALLED** | Trusted request GEO plus presentation language resolve exact-country/language, global/language and neutral assignment scopes without client-side inventory selection. BGA-MEDIA-E2E-01 adds 11 exact active offer and 11 exact active profile hosted assignments across Inkabet PE, Betsson PE and Betsafe EE/LV; Inkabet mobile uses its exact-country DEFAULT fallback. |
 | Vetted partner-hosted creatives | **ACTIVE IN PRODUCTION — 52 VALIDATED BANNERFLOW RECORDS; COMMERCIAL ACTION ON HOLD** | Migrations 0029/0030 and the independent feature flag are deployed. Production retains 52 supported exact-country BGA creatives, 11 responsive selections and three immutable Casino snapshots. Media renders from the original provider through isolated B4 frames; all related referral routes remain unavailable because cumulative Production commercial authority is absent. |
 | Commercial creative formats | **READY IN PRODUCTION** | Common affiliate formats, security-valid animated GIF ingestion, native responsive commercial geometry and governed creative actions are active without changing editorial media or expanding commercial authority. |
@@ -44,6 +45,39 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
 
 ### Recent implementation state
+
+**DETECTED — MEDIA-GEO3 PRODUCTION COMPLETE, 8 September 2026:**
+[PR #198](https://github.com/AlexG-7BE/sevenbet-next/pull/198) delivered the
+RFC-043 Production media pipeline and additive migration
+`0033_media_geo3_pipeline`; [PR #199](https://github.com/AlexG-7BE/sevenbet-next/pull/199)
+aligned postflight with PostgreSQL's physical index-name limit. The
+fingerprint-guarded migration completed once with checksum
+`39c7a672dc04dd1a4777b04db630a11d0c9403c7b07060e7db77b0a62970816e`.
+The bounded idempotent backfill activated exactly three creative sets, six
+variants and 12 READY preflight cells for Diamond7, G'day Casino and 21 Privé,
+with zero generic promotions, raw destinations or destructive writes.
+
+[PR #201](https://github.com/AlexG-7BE/sevenbet-next/pull/201) made the
+RFC-042 `MarketActivation` runtime, including healthy global fallback, the
+directory/comparison source of canonical CTA routes and removed retired legacy
+lifecycle vetoes without adding a decision layer. [PR #202](https://github.com/AlexG-7BE/sevenbet-next/pull/202)
+and [PR #203](https://github.com/AlexG-7BE/sevenbet-next/pull/203) closed real
+Production containment defects in the review-right hero and directory-card
+creative link box. [PR #205](https://github.com/AlexG-7BE/sevenbet-next/pull/205)
+added visitor-GET verification for partner endpoints that synthesize HEAD 404;
+[PR #206](https://github.com/AlexG-7BE/sevenbet-next/pull/206) made the external
+health monitor select active RFC-042 `MarketActivation` claims and reuse the
+existing canonical verifier instead of deprecated compatibility projection.
+Production route-health run
+[34232082558](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34232082558)
+passed all nine active claims and closed
+[issue #200](https://github.com/AlexG-7BE/sevenbet-next/issues/200); smoke run
+[34232077688](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34232077688)
+passed. Final runtime `2656acfbb930143feec9c9a21233c647ef558597` is Ready as
+`dpl_5H9Ap4eeiCwBcrVUGaTPKGnyHRBr`. Exact-offer media, canonical routes,
+independent GEO/legal/safety controls, migration/schema, rollback,
+mobile/desktop geometry and full CI passed. See the
+[MEDIA-GEO3 release record](06_Operations/MEDIA-GEO3-Release-Record-2026-09-08.md).
 
 **DETECTED — BGA-MEDIA-E2E-01 MEDIA DEPLOYED; COMMERCIAL AUTHORITY ON HOLD, 7
 September 2026:** [PR #178](https://github.com/AlexG-7BE/sevenbet-next/pull/178)
