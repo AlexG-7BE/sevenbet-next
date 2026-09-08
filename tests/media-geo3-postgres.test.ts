@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { PrismaClient } from "@prisma/client";
 
+import { assertMediaGeo3Schema } from "../lib/db/media-geo3-0033-release";
 import {
   MEDIA_INGESTION_BATCH_KEY_PREFIX,
   MEDIA_INGESTION_PLAN_KEY_PREFIX,
@@ -37,6 +38,16 @@ function assertDisposablePostgres() {
   assert.ok(["5432", "54329"].includes(url.port));
   assert.ok(url.pathname.endsWith("_ci"));
 }
+
+test("Production schema verifier accepts every physical MEDIA-GEO3 index", async () => {
+  assertDisposablePostgres();
+  const prisma = new PrismaClient();
+  try {
+    await assertMediaGeo3Schema(prisma);
+  } finally {
+    await prisma.$disconnect();
+  }
+});
 
 async function cleanup(prisma: PrismaClient) {
   await prisma.mediaRevision.updateMany({ where: { casinoId: ID.casino }, data: { previousRevisionId: null } });

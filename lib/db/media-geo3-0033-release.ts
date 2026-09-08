@@ -103,7 +103,10 @@ export async function assertMediaGeo3Schema(client: QueryClient) {
     "AffiliateOfferMediaAssignment_one_active_slot_key",
     "CasinoPartnerHostedCreativeAssignment_one_active_slot_key",
     "CasinoBonusPartnerHostedCreativeAssignment_one_active_slot_key",
-    "AffiliateOfferPartnerHostedCreativeAssignment_one_active_slot_key",
+    // PostgreSQL stores identifiers at a maximum of 63 bytes. The applied
+    // migration's final 65-byte ASCII identifier is therefore physically
+    // stored under this deterministic truncated name.
+    "AffiliateOfferPartnerHostedCreativeAssignment_one_active_slot_k",
   ];
   const indexes = await client.$queryRawUnsafe<Array<{ indexname: string; indexdef: string }>>(`
     SELECT indexname, indexdef
