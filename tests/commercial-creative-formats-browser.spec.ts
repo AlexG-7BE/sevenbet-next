@@ -207,6 +207,41 @@ test("review hero stays inert while promotional media remains in the offer block
   }
 });
 
+test("review-right promotional art stays fully boxed and contained on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const styles = readFileSync("components/casino-profile/CasinoProfile.module.css", "utf8");
+  const creative = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="250" viewBox="0 0 300 250"><rect width="300" height="250" fill="#e4e24e"/><text x="150" y="130" text-anchor="middle" font-size="24">300 by 250</text></svg>`;
+  await page.setContent(`<style>*{box-sizing:border-box}body{margin:0}.host{width:100%}${styles}</style><main class="host"><a class="heroMedia" data-media-ratio="landscape" data-media-source="EXACT_OFFER" data-presentation-family="EXACT_OFFER_PROMOTION"><div class="heroMediaCanvas" data-offer-media="true"><picture data-responsive-placement-media style="display:contents"><img alt="Controlled 300 by 250 offer" height="250" src="data:image/svg+xml,${encodeURIComponent(creative)}" width="300"></picture></div></a></main>`);
+  const hero = page.locator(".heroMedia");
+  const picture = hero.locator("picture");
+  const image = hero.locator("img");
+  await image.evaluate((element) => (element as HTMLImageElement).decode());
+  const geometry = await hero.evaluate((element) => {
+    const heroRect = element.getBoundingClientRect();
+    const canvasRect = element.querySelector(".heroMediaCanvas")!.getBoundingClientRect();
+    const pictureRect = element.querySelector("picture")!.getBoundingClientRect();
+    const imageNode = element.querySelector("img") as HTMLImageElement;
+    const imageRect = imageNode.getBoundingClientRect();
+    return {
+      hero: { top: heroRect.top, bottom: heroRect.bottom, width: heroRect.width, height: heroRect.height },
+      canvas: { top: canvasRect.top, bottom: canvasRect.bottom, width: canvasRect.width, height: canvasRect.height },
+      picture: { top: pictureRect.top, bottom: pictureRect.bottom, width: pictureRect.width, height: pictureRect.height },
+      image: { top: imageRect.top, bottom: imageRect.bottom, width: imageRect.width, height: imageRect.height },
+      objectFit: getComputedStyle(imageNode).objectFit,
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+  expect(await picture.evaluate((element) => getComputedStyle(element).display)).toBe("block");
+  expect(geometry.hero.height).toBe(190);
+  expect(geometry.canvas.height).toBe(190);
+  expect(geometry.picture.height).toBeLessThanOrEqual(geometry.canvas.height);
+  expect(geometry.image.height).toBeLessThanOrEqual(geometry.picture.height);
+  expect(geometry.image.top).toBeGreaterThanOrEqual(geometry.hero.top);
+  expect(geometry.image.bottom).toBeLessThanOrEqual(geometry.hero.bottom);
+  expect(geometry.objectFit).toBe("contain");
+  expect(geometry.overflow).toBe(false);
+});
+
 test("current authorized inventory keeps real formats and the new review click boundary", async ({ page }) => {
   test.skip(!requireAuthorized, "This assertion requires current authorized Preview or Production inventory.");
 
