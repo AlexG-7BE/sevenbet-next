@@ -211,6 +211,7 @@ test("the production candidate read is bounded to the latest published snapshot"
   );
   assert.match(method, /DISTINCT ON \(published_version\."casinoId"\)/);
   assert.match(method, /if \(!boundedIds\.length\) return \[\]/);
+  assert.match(method, /\$\{casinoId\}::uuid/);
   assert.match(method, /published_version\.status = \$\{EditorialStatus\.PUBLISHED\}/);
   assert.match(method, /current_casino\.status = \$\{EditorialStatus\.PUBLISHED\}/);
   assert.match(method, /snapshot -> 'casinoBonuses'/);

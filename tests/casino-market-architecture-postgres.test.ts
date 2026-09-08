@@ -5,7 +5,7 @@ import { CasinoCountryAvailability, EditorialStatus, PrismaClient } from "@prism
 
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
-import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
+import { publicCasinoRepository, type PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { PublicCasinoService } from "../lib/services/public-casino.service";
 
@@ -144,6 +144,46 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
         mediaAssets: [],
       } as PublishedCasinoSnapshotRecord["snapshot"],
     };
+    await prisma.casinoVersion.create({
+      data: {
+        casinoId: CASINO_ID,
+        version: 1,
+        status: EditorialStatus.PUBLISHED,
+        publishedAt: NOW,
+        createdBy: "casino-data-arch-01-test",
+        snapshot: {
+          id: CASINO_ID,
+          slug: "architecture-betsson",
+          title: "Betsson",
+          domain: "architecture-betsson.invalid",
+          status: "PUBLISHED",
+          casinoBonuses: [],
+          countries: [{
+            countryCode: "PE",
+            bonuses: [{
+              id: "c1110000-0000-4000-8000-000000000051",
+              slug: "architecture-betsson-pe-welcome",
+              title: "PE published offer",
+              summary: "Published offer evidence",
+              type: "WELCOME",
+              status: "PUBLISHED",
+              offerStatus: "ACTIVE",
+              importantConditions: [],
+            }],
+          }],
+          reviewBlocks: { __sevenbetCasinoEditor: { bonuses: {} } },
+        },
+      },
+    });
+
+    const persistedCandidates = await publicCasinoRepository.listPublishedOfferCandidates(
+      [CASINO_ID, "not-a-uuid"],
+      NOW,
+    );
+    assert.equal(persistedCandidates.length, 1);
+    assert.equal(persistedCandidates[0]?.casinoId, CASINO_ID);
+    assert.equal(persistedCandidates[0]?.sourceCountryCode, "PE");
+    assert.equal(persistedCandidates[0]?.bonus.slug, "architecture-betsson-pe-welcome");
     const publicStore: PublicCasinoStore = {
       findPublishedBySlug: async (slug) => slug === "architecture-betsson" ? published : null,
       hasManagedSlug: async (slug) => slug === "architecture-betsson",

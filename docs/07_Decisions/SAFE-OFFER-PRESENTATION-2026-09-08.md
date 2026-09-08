@@ -108,6 +108,20 @@ titles. `Published` alone is insufficient where it could imply local
 availability. `Review only` describes commercial action state, not offer
 absence. `Not listed` is reserved for `NONE`.
 
+## Phase A production acceptance finding
+
+**DETECTED:** the first Phase A production acceptance run reached the trusted
+Kazakhstan presentation but did not render `OTHER_MARKET`. PostgreSQL rejected
+the bounded candidate query because its UUID column was compared with text
+parameters. The service failed closed to the already market-projected snapshot:
+no foreign profile data, offer action, or media crossed the boundary.
+
+The Phase A corrective change validates candidate IDs as UUIDs and casts every
+bound parameter to PostgreSQL `uuid`. A disposable-PostgreSQL regression test
+executes the real repository path, including a rejected non-UUID input. This is
+a query-typing correction only; it does not broaden the whitelist or change the
+selection, commercial, media, or market-isolation rules above.
+
 ## UI reference lock and decision ledger
 
 **DETECTED:** the accepted Casino directory, casino profile, Bonuses, and Best

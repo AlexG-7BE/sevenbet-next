@@ -211,9 +211,13 @@ export class PublicCasinoRepository implements PublicCasinoStore {
   }
 
   async listPublishedOfferCandidates(casinoIds: string[], now = new Date()) {
-    const boundedIds = [...new Set(casinoIds.filter(Boolean))];
+    const boundedIds = [...new Set(casinoIds.filter((casinoId) => (
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(casinoId)
+    )))];
     if (!boundedIds.length) return [];
-    const casinoFilter = Prisma.sql`AND published_version."casinoId" IN (${Prisma.join(boundedIds)})`;
+    const casinoFilter = Prisma.sql`AND published_version."casinoId" IN (${Prisma.join(
+      boundedIds.map((casinoId) => Prisma.sql`${casinoId}::uuid`),
+    )})`;
     const rows = await prisma.$queryRaw<PublishedOfferCandidateRow[]>(Prisma.sql`
       WITH latest_published AS (
         SELECT DISTINCT ON (published_version."casinoId")
