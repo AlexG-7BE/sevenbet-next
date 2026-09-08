@@ -1,4 +1,4 @@
-import type { PublishedCasinoSnapshotRecord } from "@/lib/public-casino/public-casino.types";
+import type { PublishedCasinoSnapshotRecord, PublicAffiliateRoute } from "@/lib/public-casino/public-casino.types";
 import type { MediaPlacementVariantName, MediaRenderingModeName, PlacementMediaSource } from "@/lib/media/placement-media";
 import type { PublicCasinoDispositionReason, PublicCasinoPresentationDisposition } from "@/lib/public-casino/presentation-disposition";
 
@@ -151,11 +151,13 @@ export interface DiscoveryContext {
   aliases: DiscoveryAlias[];
   offers: DiscoveryOffer[];
   redirects: DiscoveryRedirect[];
-  /** Present for canonical runtime contexts. Undefined is reserved for legacy test fixtures. */
+  /** RFC-042 canonical output. Present in live runtime contexts, including an authoritative empty result. */
+  canonicalRoutes?: PublicAffiliateRoute[];
+  /** Historical fixture compatibility only; live runtime callers use canonicalRoutes. */
   activations?: DiscoveryActivation[];
 }
 
 export interface PublicCasinoDiscoveryStore {
   listPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]>;
-  loadContext(casinoIds: string[], options?: { includeAliases?: boolean; includeCommercial?: boolean }): Promise<DiscoveryContext>;
+  loadContext(casinoIds: string[], options?: { includeAliases?: boolean; includeCommercial?: boolean; countryCode?: string }): Promise<DiscoveryContext>;
 }

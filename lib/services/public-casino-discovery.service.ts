@@ -74,6 +74,14 @@ export function resolvePublicVisitAction(
   if (countryCode === "GB" && !operatorEligibility?.referralEligible) {
     return { available: false, redirectSlug: null, label: "Visit casino", reasonCode: operatorEligibility?.reasonCodes[0] ?? "EVIDENCE_MISSING" };
   }
+  if (context.canonicalRoutes !== undefined) {
+    const casinoRoutes = context.canonicalRoutes.filter((route) => route.casinoId === casinoId);
+    const route = casinoRoutes.find((entry) => entry.casinoBonusId === casinoBonusId)
+      ?? (casinoBonusId === null ? casinoRoutes[0] ?? null : null);
+    return route?.slug && isSafePublicSlug(route.slug)
+      ? { available: true, redirectSlug: route.slug, label: "Visit casino", reasonCode: null }
+      : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "MARKET_ACTIVATION_NOT_ACTIVE" };
+  }
   if (context.activations !== undefined) {
     const exact = context.activations.filter((activation) => activation.casinoId === casinoId
       && activation.countryCode === countryCode
@@ -227,7 +235,11 @@ export class PublicCasinoDiscoveryService {
     const published = (await this.store.listPublished(requestCountryContext)).filter((record) => !isTemporaryDemoCasinoId(record.casinoId));
     const redirectEnabled = this.redirectEnabled();
     const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
-    const context = await this.store.loadContext(published.map((record) => record.casinoId), { includeAliases: true, includeCommercial: commercialProjection });
+    const context = await this.store.loadContext(published.map((record) => record.casinoId), {
+      includeAliases: true,
+      includeCommercial: commercialProjection,
+      ...(commercialProjection && requestCountryContext ? { countryCode: requestCountryContext } : {}),
+    });
     const mediaRoutes = eligibleDiscoveryMediaRoutes(context, requestCountryContext ?? undefined, now);
     const operatorDecisions = commercialProjection && requestCountryContext === "GB"
       ? await this.operatorEligibility.evaluateMany(published.map((record) => record.casinoId), now)
@@ -255,9 +267,13 @@ export class PublicCasinoDiscoveryService {
         ? casino.marketProfiles.find((profile) => profile.countryCode === requestCountryContext) ?? null
         : null;
       const scoped = projectPublicCasinoMarket(casino, requestCountryContext ?? "");
-      const candidateBonus = scoped.bonuses[0] ?? null;
+      const canonicalRoute = context.canonicalRoutes?.find((route) => route.casinoId === scoped.id) ?? null;
+      const candidateBonus = (canonicalRoute?.casinoBonusId
+        ? scoped.bonuses.find((bonus) => bonus.id === canonicalRoute.casinoBonusId)
+        : null) ?? scoped.bonuses[0] ?? null;
+      const visitBonusId = canonicalRoute ? canonicalRoute.casinoBonusId : candidateBonus?.id ?? null;
       const visit = commercialCountryContext
-        ? resolvePublicVisitAction(context, scoped.id, candidateBonus?.id ?? null, commercialCountryContext, now, authority, operatorDecisions.get(scoped.id), redirectEnabled)
+        ? resolvePublicVisitAction(context, scoped.id, visitBonusId, commercialCountryContext, now, authority, operatorDecisions.get(scoped.id), redirectEnabled)
         : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "CASINO_COUNTRY_NOT_SUPPORTED" } satisfies PublicVisitAction;
       const decision = decidePublicCasinoDisposition({
         casinoId: scoped.id,

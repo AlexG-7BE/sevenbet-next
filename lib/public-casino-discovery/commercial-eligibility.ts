@@ -57,6 +57,9 @@ export function eligibleDiscoveryMediaRoutes(
   countryCode: string | undefined,
   now: Date,
 ): PublicAffiliateRoute[] {
+  // Live callers consume RFC-042's fully validated result directly. The raw
+  // activation/legacy branches remain only for isolated historical fixtures.
+  if (context.canonicalRoutes !== undefined) return context.canonicalRoutes;
   if (!countryCode) return [];
   if (context.activations !== undefined) {
     const country = countryCode.toUpperCase();
