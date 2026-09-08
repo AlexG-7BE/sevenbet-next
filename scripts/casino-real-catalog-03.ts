@@ -178,9 +178,9 @@ async function ingestFactualBundles(bundles: Awaited<ReturnType<typeof loadBundl
       ingestion.push(...await ingestCasinoBundlesInTransaction(tx, [bundle]));
     }
 
-    const idempotency = new Array<Awaited<ReturnType<typeof verifyCasinoBundlesIdempotencyInTransaction>>[number]>();
+    const idempotency = new Array<Awaited<ReturnType<typeof verifyCasinoBundlesIdempotencyInTransaction>>>();
     for (const bundle of bundles) {
-      idempotency.push(...await verifyCasinoBundlesIdempotencyInTransaction(tx, [bundle]));
+      idempotency.push(await verifyCasinoBundlesIdempotencyInTransaction(tx, [bundle]));
     }
 
     return { ingestion, idempotency };
