@@ -78,7 +78,7 @@ export const casinoRealCatalog = [
       { key: "terms-clarity", score: 8.1, comment: "Current headline offers still have material unknowns." },
       { key: "regulatory-record", score: 7.3, comment: "Serious Swedish AML enforcement materially constrains the score." },
     ],
-    brandMark: { path: "/casino-brands/betsson/logo.png", sourceDomain: "betsson.com", retrievalUrl: "https://www.google.com/s2/favicons?domain=betsson.com&sz=256", width: 180, height: 180, mimeType: "image/png", checksum: "0c83930c9cfa42a46ce836aed8af46dd754275f7279f0c60730901e92a770c4b" },
+    brandMark: { path: "/casino-brands/betsson/logo.png", sourceDomain: "betsson.com", retrievalUrl: "https://www.google.com/s2/favicons?domain=betsson.com&sz=256", width: 600, height: 100, mimeType: "image/png", checksum: "1b270e11624ee52c38493c36cfb32090051406357e2f69077b6f54d3aa768552" },
     previewOffers: [
       { label: "Peru observed welcome headline", scope: "PE", amount: "300 free spins + app gift", minimumDeposit: null, wagering: null, bonusExpiry: null, freeSpinExpiry: null, maximumBet: null, evidenceStatus: "DETECTED", availabilityNote: "Headline detected; material mechanics remain unknown. Preview only." },
       { label: "Sweden observed welcome headline", scope: "SE", amount: "100% up to SEK 1,000 + 50 free spins", minimumDeposit: null, wagering: null, bonusExpiry: null, freeSpinExpiry: null, maximumBet: null, evidenceStatus: "DETECTED", availabilityNote: "Headline detected; minimum deposit, wagering and expiry remain unknown. Preview only." },
