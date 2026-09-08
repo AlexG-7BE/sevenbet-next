@@ -21,6 +21,31 @@ test("trusted KZ presentation shows published other-market offer knowledge witho
     await expect(page.getByText(/Kazakhstan.*not.*verified|KZ.*not.*verified/i).first(), `${slug}: current-market qualification`).toBeVisible();
   }
 
+  const catalogResponse = await page.request.get(`${baseUrl}/api/public/casinos?limit=100`);
+  expect(catalogResponse.status()).toBe(200);
+  const catalog = await catalogResponse.json() as {
+    records: Array<{
+      slug: string;
+      countries: unknown[];
+      licenses: unknown[];
+      offerPresentation?: { relation?: string; affiliate?: { available?: boolean | null } };
+    }>;
+  };
+  for (const [slug, relation] of [
+    ["rizk", "OTHER_MARKET"],
+    ["nordicbet", "OTHER_MARKET"],
+    ["inkabet", "OTHER_MARKET"],
+    ["betsafe", "OTHER_MARKET"],
+    ["supercasino", "OTHER_MARKET"],
+    ["starcasino", "NONE"],
+  ] as const) {
+    const record = catalog.records.find((entry) => entry.slug === slug);
+    expect(record?.countries, `${slug}: no foreign market profile`).toEqual([]);
+    expect(record?.licenses, `${slug}: no foreign market licence`).toEqual([]);
+    expect(record?.offerPresentation?.relation, `${slug}: offer relation`).toBe(relation);
+    expect(record?.offerPresentation?.affiliate?.available, `${slug}: no transferred action`).toBeFalsy();
+  }
+
   await openOk(page, "/en/bonuses");
   const fallbackCards = page.locator('[data-bonus-directory-card][data-offer-relation="OTHER_MARKET"]');
   expect(await fallbackCards.count()).toBeGreaterThanOrEqual(4);

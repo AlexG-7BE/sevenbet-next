@@ -628,9 +628,19 @@ function unique(values: Array<string | null>) {
 export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: string): PublicCasinoDTO {
   const normalized = countryCode.toUpperCase();
   const profile = casino.marketProfiles.find((entry) => entry.countryCode === normalized);
+  const licenseIdentity = (entry: PublicCasinoLicense) => JSON.stringify([
+    entry.authority,
+    entry.licenseNumber ?? "",
+    entry.jurisdiction ?? "",
+  ]);
+  const scopedLicenseIdentities = new Set(casino.marketProfiles.flatMap((entry) => (
+    entry.licenses.map(licenseIdentity)
+  )));
+  const globalLicenses = casino.licenses.filter((entry) => !scopedLicenseIdentities.has(licenseIdentity(entry)));
   if (!profile) return {
     ...casino,
     countries: [],
+    licenses: globalLicenses,
     marketProfiles: [],
   };
   const localMedia = profile.media;
@@ -654,7 +664,7 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
       currency: profile.primaryCurrency,
       language: profile.primaryLanguage,
     }],
-    licenses: mergeBy(casino.licenses, profile.licenses, (entry) => `${entry.authority}:${entry.licenseNumber ?? ""}`),
+    licenses: mergeBy(globalLicenses, profile.licenses, licenseIdentity),
     payments: mergeBy(casino.payments, profile.payments, (entry) => entry.key),
     providers: mergeBy(casino.providers, profile.providers, (entry) => entry.key),
     categories: mergeBy(casino.categories, profile.categories, (entry) => entry.key),

@@ -14,6 +14,7 @@ const PE_PROFILE_ID = "c1110000-0000-4000-8000-000000000011";
 const SE_PROFILE_ID = "c1110000-0000-4000-8000-000000000012";
 const PE_LICENSE_ID = "c1110000-0000-4000-8000-000000000021";
 const SE_LICENSE_ID = "c1110000-0000-4000-8000-000000000022";
+const GLOBAL_LICENSE_ID = "c1110000-0000-4000-8000-000000000023";
 const NOW = new Date("2030-06-01T00:00:00.000Z");
 const EMPTY_CONTEXT: DiscoveryContext = { aliases: [], offers: [], redirects: [] };
 
@@ -157,20 +158,35 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
           title: "Betsson",
           domain: "architecture-betsson.invalid",
           status: "PUBLISHED",
+          licenses: [
+            { id: GLOBAL_LICENSE_ID, authority: "Global test authority", licenseNumber: "GLOBAL-ARCH-TEST", status: "ACTIVE" },
+            { id: PE_LICENSE_ID, authority: "MINCETUR", licenseNumber: "PE-ARCH-TEST", jurisdiction: "PE", status: "ACTIVE" },
+            { id: SE_LICENSE_ID, authority: "Spelinspektionen", licenseNumber: "SE-ARCH-TEST", jurisdiction: "SE", status: "ACTIVE" },
+          ],
           casinoBonuses: [],
-          countries: [{
-            countryCode: "PE",
-            bonuses: [{
-              id: "c1110000-0000-4000-8000-000000000051",
-              slug: "architecture-betsson-pe-welcome",
-              title: "PE published offer",
-              summary: "Published offer evidence",
-              type: "WELCOME",
-              status: "PUBLISHED",
-              offerStatus: "ACTIVE",
-              importantConditions: [],
-            }],
-          }],
+          countries: [
+            {
+              id: PE_PROFILE_ID,
+              countryCode: "PE",
+              licenses: [{ casinoLicenseId: PE_LICENSE_ID, license: { id: PE_LICENSE_ID, authority: "MINCETUR", licenseNumber: "PE-ARCH-TEST", jurisdiction: "PE", status: "ACTIVE" } }],
+              bonuses: [{
+                id: "c1110000-0000-4000-8000-000000000051",
+                slug: "architecture-betsson-pe-welcome",
+                title: "PE published offer",
+                summary: "Published offer evidence",
+                type: "WELCOME",
+                status: "PUBLISHED",
+                offerStatus: "ACTIVE",
+                importantConditions: [],
+              }],
+            },
+            {
+              id: SE_PROFILE_ID,
+              countryCode: "SE",
+              licenses: [{ casinoLicenseId: SE_LICENSE_ID, license: { id: SE_LICENSE_ID, authority: "Spelinspektionen", licenseNumber: "SE-ARCH-TEST", jurisdiction: "SE", status: "ACTIVE" } }],
+              bonuses: [],
+            },
+          ],
           reviewBlocks: { __sevenbetCasinoEditor: { bonuses: {} } },
         },
       },
@@ -184,6 +200,27 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
     assert.equal(persistedCandidates[0]?.casinoId, CASINO_ID);
     assert.equal(persistedCandidates[0]?.sourceCountryCode, "PE");
     assert.equal(persistedCandidates[0]?.bonus.slug, "architecture-betsson-pe-welcome");
+
+    const projectedPe = await publicCasinoRepository.findPublishedBySlug("architecture-betsson", "PE");
+    const projectedSe = await publicCasinoRepository.findPublishedBySlug("architecture-betsson", "SE");
+    const projectedKz = await publicCasinoRepository.findPublishedBySlug("architecture-betsson", "KZ");
+    const projectedUnqualified = await publicCasinoRepository.findPublishedBySlug("architecture-betsson");
+    const projectedAuthorities = (record: PublishedCasinoSnapshotRecord | null) => (
+      ((record?.snapshot as { licenses?: Array<{ authority?: string }> } | undefined)?.licenses ?? [])
+        .map((license) => license.authority)
+    );
+    const projectedCountries = (record: PublishedCasinoSnapshotRecord | null) => (
+      ((record?.snapshot as { countries?: Array<{ countryCode?: string }> } | undefined)?.countries ?? [])
+        .map((country) => country.countryCode)
+    );
+    assert.deepEqual(projectedAuthorities(projectedPe), ["Global test authority", "MINCETUR"]);
+    assert.deepEqual(projectedCountries(projectedPe), ["PE"]);
+    assert.deepEqual(projectedAuthorities(projectedSe), ["Global test authority", "Spelinspektionen"]);
+    assert.deepEqual(projectedCountries(projectedSe), ["SE"]);
+    assert.deepEqual(projectedAuthorities(projectedKz), ["Global test authority"]);
+    assert.deepEqual(projectedCountries(projectedKz), []);
+    assert.deepEqual(projectedAuthorities(projectedUnqualified), ["Global test authority"]);
+    assert.deepEqual(projectedCountries(projectedUnqualified), []);
     const publicStore: PublicCasinoStore = {
       findPublishedBySlug: async (slug) => slug === "architecture-betsson" ? published : null,
       hasManagedSlug: async (slug) => slug === "architecture-betsson",
