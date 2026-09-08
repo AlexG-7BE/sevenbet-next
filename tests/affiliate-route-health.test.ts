@@ -4,7 +4,6 @@ import test from "node:test";
 
 import { checkAffiliateRouteHttp } from "../lib/affiliate-health/checker";
 import { isPublicAddress } from "../lib/affiliate-health/public-network-url";
-import type { PartnerRouteProjection } from "../lib/affiliate-routing/partner-route-projection";
 import { AffiliateRouteHealthService } from "../lib/services/affiliate-route-health.service";
 
 const noNetworkValidation = async () => undefined;
@@ -21,6 +20,17 @@ function fetchSequence(...responses: Response[]) {
     return response;
   }) as typeof fetch;
 }
+
+const canonicalClaim = {
+  activationId: "activation",
+  casinoId: "casino",
+  casinoSlug: "casino",
+  countryCode: "ZZ",
+  offerId: "offer",
+  trackingLinkId: "tracking",
+  redirectId: "redirect",
+  redirectSlug: "casino-welcome",
+};
 
 test("health checker follows a finite chain and preserves required attribution", async () => {
   const result = await checkAffiliateRouteHttp({
@@ -248,7 +258,7 @@ test("private, local, documentation, multicast, and IPv4-mapped private addresse
 test("an empty active-route set is a valid healthy report", async () => {
   const service = new AffiliateRouteHealthService(
     { listClaims: async () => [] },
-    { resolve: async () => { throw new Error("must not resolve"); } },
+    { verify: async () => { throw new Error("must not verify"); } },
   );
   const report = await service.run({ now: new Date("2026-09-03T12:00:00.000Z") });
   assert.equal(report.healthy, true);
@@ -256,70 +266,65 @@ test("an empty active-route set is a valid healthy report", async () => {
   assert.equal(report.summary.routes, 0);
 });
 
-test("route-health service permits only canonical www host equivalence", async () => {
-  let observedAllowWww: boolean | undefined;
-  const route = {
-    countryCode: "ZZ",
-    productionEligible: true,
-    reasonCodes: [],
-    redirect: { id: "redirect" },
-    offer: { id: "offer" },
-    tracking: {
-      id: "tracking",
-      destinationUrl: "https://casino.example/",
-      trackingUrl: "https://track.example/click",
-      metadata: {
-        commercialActivationV1: {
-          records: {
-            ZZ: {
-              routeHealth: {
-                expectedFinalHost: "casino.example",
-                expectedPathPrefix: null,
-                requiredAttributionParameters: [],
-              },
-            },
-          },
-        },
-      },
-    },
-  } as unknown as PartnerRouteProjection;
+test("route-health service audits the exact canonical activation through its existing verifier", async () => {
+  let observedActivationId: string | null = null;
+  let observedCheckedAt: Date | null = null;
   const service = new AffiliateRouteHealthService(
-    { listClaims: async () => [{
-      casinoId: "casino",
-      casinoSlug: "casino",
-      countryCode: "ZZ",
-      offerId: "offer",
-      trackingLinkId: "tracking",
-      redirectId: "redirect",
-      redirectSlug: "casino-welcome",
-    }] },
-    { resolve: async () => [route] },
-    (async (input) => {
-      observedAllowWww = input.expectation.allowWwwEquivalentFinalHost;
+    { listClaims: async () => [canonicalClaim] },
+    { verify: async (activationId, checkedAt) => {
+      observedActivationId = activationId;
+      observedCheckedAt = checkedAt ?? null;
       return {
         status: "HEALTHY",
-        reason: "HEAD_OK",
-        method: "HEAD",
+        reason: "GET_FALLBACK_OK",
+        method: "GET",
         statusCode: 200,
         durationMs: 1,
         redirectCount: 1,
         finalHost: "www.casino.example",
+        checkedAt: checkedAt ?? new Date(),
       };
-    }) as typeof checkAffiliateRouteHttp,
+    } },
   );
-  const report = await service.run({ now: new Date("2026-09-08T12:00:00.000Z") });
-  assert.equal(observedAllowWww, true);
+  const now = new Date("2026-09-08T12:00:00.000Z");
+  const report = await service.run({ now });
+  assert.equal(observedActivationId, "activation");
+  assert.equal(observedCheckedAt, now);
   assert.equal(report.healthy, true);
+  assert.equal(report.results[0].finalHost, "www.casino.example");
 });
 
-test("claim selection is active-only and automation alerts through one deduplicated issue", () => {
+test("canonical relationship gaps and inconclusive verification fail closed without legacy projection", async () => {
+  let calls = 0;
+  const missing = new AffiliateRouteHealthService(
+    { listClaims: async () => [{ ...canonicalClaim, redirectId: null }] },
+    { verify: async () => { calls += 1; throw new Error("must not verify incomplete claim"); } },
+  );
+  const missingReport = await missing.run();
+  assert.equal(calls, 0);
+  assert.equal(missingReport.results[0].status, "BROKEN");
+  assert.equal(missingReport.results[0].reason, "ACTIVE_ACTIVATION_RELATIONSHIP_MISSING");
+
+  const inconclusive = new AffiliateRouteHealthService(
+    { listClaims: async () => [canonicalClaim] },
+    { verify: async () => { throw new Error("MARKET_ACTIVATION_ROUTE_VERIFICATION_INCONCLUSIVE"); } },
+  );
+  const inconclusiveReport = await inconclusive.run();
+  assert.equal(inconclusiveReport.results[0].status, "DEGRADED");
+  assert.equal(inconclusiveReport.results[0].reason, "ROUTE_VERIFICATION_INCONCLUSIVE");
+});
+
+test("claim selection follows canonical active MarketActivation and automation uses one deduplicated issue", () => {
   const repository = readFileSync("lib/repositories/affiliate-route-health.repository.ts", "utf8");
-  assert.match(repository, /productionEligible:\s*true/);
-  assert.match(repository, /trackingLink:\s*\{[\s\S]*active:\s*true[\s\S]*offer:\s*\{[\s\S]*status:\s*"ACTIVE"[\s\S]*workflowStatus:\s*"PUBLISHED"/);
+  assert.match(repository, /prisma\.marketActivation\.findMany/);
+  assert.match(repository, /product:\s*"CASINO"[\s\S]*desiredState:\s*"ACTIVE"[\s\S]*status:\s*"ACTIVE"/);
+  assert.doesNotMatch(repository, /productionEligible|workflowStatus|programme|program:/);
   const service = readFileSync("lib/services/affiliate-route-health.service.ts", "utf8");
-  assert.match(service, /PRODUCTION_AUTHORITY_EXPIRED/);
-  assert.match(service, /destinationUrl/);
-  assert.match(service, /allowWwwEquivalentFinalHost:\s*true/);
+  assert.match(service, /marketActivationRouteVerifier/);
+  assert.doesNotMatch(service, /PartnerRouteService|partnerRouteService|productionEligible|workflowStatus/);
+  const verifier = readFileSync("lib/market-activation/verifier.ts", "utf8");
+  assert.match(verifier, /allowWwwEquivalentFinalHost:\s*true/);
+  assert.match(verifier, /inspectTerminalContent:\s*true/);
   const workflow = readFileSync(".github/workflows/affiliate-route-health.yml", "utf8");
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /GH_REPO: \$\{\{ github\.repository \}\}/);

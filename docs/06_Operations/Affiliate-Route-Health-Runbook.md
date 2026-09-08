@@ -6,7 +6,12 @@ and deduplicated workflow are deployed and final manual dispatch passed. See the
 
 ## Scope
 
-`npm run affiliate:health` checks only route-country records explicitly marked Production-eligible whose network, programme, offer, tracking link, and redirect are active. It reads the existing PartnerRoute projection and never changes route, evidence, jurisdiction, or policy state.
+`npm run affiliate:health` checks only canonical Casino `MarketActivation`
+records whose desired and reconciled state are both `ACTIVE`. RFC-042 remains
+the sole route authority: the monitor does not select routes from deprecated
+`AffiliateTrackingLinkCountry.productionEligible` compatibility state and does
+not re-project programme, offer, workflow, link or redirect lifecycle fields.
+It never changes activation, route, evidence, jurisdiction or policy state.
 
 Supported filters:
 
@@ -19,19 +24,19 @@ No active routes is a healthy empty result. A real failed route produces a non-z
 
 ## Checks and states
 
-The checker validates HTTPS/public-network targets, current PartnerRoute
-eligibility, finite manual redirects, HTTP status, expected final host/path,
-and required attribution-key presence. It uses HEAD first. A `404`, `405` or
-`501` response to HEAD is rechecked with a bounded visitor-shaped GET because
-some governed partner endpoints reject HEAD while serving normal browser
-navigation. The GET result remains authoritative: a real GET error or a
-disguised 200 error page still fails closed. Canonical `www` and non-`www`
-forms of the same expected operator host are treated as equivalent.
+Each claim is passed to the existing RFC-042 `MarketActivation` route verifier,
+which validates HTTPS/public-network targets, finite manual redirects, HTTP
+status, the exact market/operator host and path expectation, required
+attribution-key presence and bounded terminal content. It uses an ordinary
+visitor-shaped GET. The shared low-level checker also retries a synthetic HEAD
+`404`, `405` or `501` with that GET when invoked by a HEAD-based caller. A real
+GET error or disguised 200 error page still fails closed. Canonical `www` and
+non-`www` forms of the same expected operator host are equivalent.
 
 - `HEALTHY`: safe finite route reached the expected destination;
-- `DEGRADED`: an unusual non-error HTTP response needs review;
+- `DEGRADED`: an unusual non-error response or inconclusive verifier transport needs review;
 - `EXTERNAL_CHALLENGE`: an identified CDN/bot challenge, not automatically a broken relationship;
-- `BROKEN`: unsafe URL, missing governed route, loop, network failure, 4xx/5xx, or projection failure;
+- `BROKEN`: unsafe URL, missing canonical relationship, loop, 4xx/5xx, or terminal error page;
 - `EXPIRED`: route authority or HTTP 410 expired;
 - `CROSS_GEO`: final host/path differs from the exact market expectation;
 - `ATTRIBUTION_FAILURE`: required attribution key is absent.
@@ -50,7 +55,9 @@ On failure the workflow opens or updates one issue titled `[Production] Affiliat
 2. Identify Casino × GEO × route and failure class.
 3. Re-run the scoped CLI command.
 4. Inspect current partner portal status and evidence without copying secrets into GitHub.
-5. Correct or expire the governed commercial record through the normal activation workflow; do not weaken jurisdiction or PartnerRoute rules.
+5. Correct or expire the governed route through the normal `MarketActivation`
+   controller workflow; do not weaken jurisdiction, safe-URL, relational,
+   attribution or trusted-GEO controls.
 6. Re-run health. The next successful workflow closes the alert automatically.
 
 ## Rollback
