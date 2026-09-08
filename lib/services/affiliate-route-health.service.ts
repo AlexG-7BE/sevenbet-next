@@ -39,7 +39,7 @@ function healthExpectation(route: PartnerRouteProjection): AffiliateRouteHealthE
     && health.requiredAttributionParameters.every((value) => typeof value === "string")
     ? health.requiredAttributionParameters as string[] : null;
   if (expectedFinalHost && requiredAttributionParameters && (expectedPathPrefix === null || expectedPathPrefix.startsWith("/"))) {
-    return { expectedFinalHost, expectedPathPrefix, requiredAttributionParameters };
+    return { expectedFinalHost, expectedPathPrefix, requiredAttributionParameters, allowWwwEquivalentFinalHost: true };
   }
   const destination = validateRedirectTargetUrl(route.tracking.destinationUrl, { production: true });
   if (!destination) return null;
@@ -47,6 +47,7 @@ function healthExpectation(route: PartnerRouteProjection): AffiliateRouteHealthE
     expectedFinalHost: destination.hostname.toLowerCase(),
     expectedPathPrefix: destination.pathname === "/" ? null : destination.pathname,
     requiredAttributionParameters: [],
+    allowWwwEquivalentFinalHost: true,
   };
 }
 

@@ -34,10 +34,31 @@ test("health checker follows a finite chain and preserves required attribution",
   assert.equal(result.status, "HEALTHY");
   assert.equal(result.redirectCount, 1);
   assert.equal(result.finalHost, "casino.example");
+
+  const wwwEquivalent = await checkAffiliateRouteHttp({
+    url: new URL("https://track.example/click?aff=42"),
+    expectation: { ...expectation, allowWwwEquivalentFinalHost: true },
+    fetcher: fetchSequence(
+      new Response(null, { status: 302, headers: { location: "https://www.casino.example/pe?aff=42" } }),
+      new Response(null, { status: 200 }),
+    ),
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(wwwEquivalent.status, "HEALTHY");
+  assert.equal(wwwEquivalent.finalHost, "www.casino.example");
 });
 
 test("4xx, 5xx, expiry, cross-GEO, attribution loss, and redirect loops are distinct", async () => {
-  const cases: Array<[number, string]> = [[404, "BROKEN"], [500, "BROKEN"], [410, "EXPIRED"]];
+  const headAndGet404 = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"), expectation,
+    fetcher: fetchSequence(new Response(null, { status: 404 }), new Response(null, { status: 404 })),
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(headAndGet404.status, "BROKEN");
+  assert.equal(headAndGet404.reason, "HTTP_404");
+  assert.equal(headAndGet404.method, "GET");
+
+  const cases: Array<[number, string]> = [[500, "BROKEN"], [410, "EXPIRED"]];
   for (const [status, expected] of cases) {
     const result = await checkAffiliateRouteHttp({
       url: new URL("https://casino.example/pe?aff=42"), expectation,
@@ -75,7 +96,7 @@ test("4xx, 5xx, expiry, cross-GEO, attribution loss, and redirect loops are dist
   assert.equal(loop.reason, "REDIRECT_LOOP");
 });
 
-test("HEAD fallback and CDN challenges are handled without hiding server failures", async () => {
+test("HEAD rejection fallback and CDN challenges are handled without hiding server failures", async () => {
   const fallback = await checkAffiliateRouteHttp({
     url: new URL("https://casino.example/pe?aff=42"), expectation,
     fetcher: fetchSequence(new Response(null, { status: 405 }), new Response(null, { status: 200 })),
@@ -83,6 +104,40 @@ test("HEAD fallback and CDN challenges are handled without hiding server failure
   });
   assert.equal(fallback.status, "HEALTHY");
   assert.equal(fallback.method, "GET");
+
+  const attempts: Array<{ method: string | undefined; userAgent: string | null }> = [];
+  const head404Fallback = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"), expectation,
+    fetcher: (async (_input, init) => {
+      attempts.push({
+        method: init?.method,
+        userAgent: new Headers(init?.headers).get("user-agent"),
+      });
+      return new Response("<!doctype html><title>Casino welcome</title>", {
+        status: attempts.length === 1 ? 404 : 200,
+        headers: { "content-type": "text/html" },
+      });
+    }) as typeof fetch,
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(head404Fallback.status, "HEALTHY");
+  assert.equal(head404Fallback.method, "GET");
+  assert.deepEqual(attempts.map((attempt) => attempt.method), ["HEAD", "GET"]);
+  assert.match(attempts[1].userAgent ?? "", /^Mozilla\/5\.0 /);
+
+  const head404ThenDisguisedError = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"), expectation,
+    fetcher: fetchSequence(
+      new Response(null, { status: 404 }),
+      new Response("<!doctype html><title>Page not found</title>", {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      }),
+    ),
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(head404ThenDisguisedError.status, "BROKEN");
+  assert.equal(head404ThenDisguisedError.reason, "TERMINAL_ERROR_PAGE");
 
   const challenge = await checkAffiliateRouteHttp({
     url: new URL("https://casino.example/pe?aff=42"), expectation,
@@ -207,6 +262,7 @@ test("claim selection is active-only and automation alerts through one deduplica
   const service = readFileSync("lib/services/affiliate-route-health.service.ts", "utf8");
   assert.match(service, /PRODUCTION_AUTHORITY_EXPIRED/);
   assert.match(service, /destinationUrl/);
+  assert.match(service, /allowWwwEquivalentFinalHost:\s*true/);
   const workflow = readFileSync(".github/workflows/affiliate-route-health.yml", "utf8");
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /GH_REPO: \$\{\{ github\.repository \}\}/);
