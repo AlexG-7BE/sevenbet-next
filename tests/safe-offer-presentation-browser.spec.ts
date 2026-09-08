@@ -13,12 +13,24 @@ async function openOk(page: import("@playwright/test").Page, pathname: string) {
   expect(await page.content(), `${pathname}: runtime error`).not.toMatch(/Application error|Internal Server Error|This page could not be found/i);
 }
 
-test("trusted KZ presentation shows published other-market offer knowledge without creating actions", async ({ page }) => {
-  for (const slug of ["rizk", "inkabet", "betsafe", "supercasino"] as const) {
+test("trusted KZ presentation shows published fallback offer knowledge without creating actions", async ({ page }) => {
+  for (const [slug, relation] of [
+    ["rizk", "ROW"],
+    ["nordicbet", "ROW"],
+    ["inkabet", "OTHER_MARKET"],
+    ["betsafe", "OTHER_MARKET"],
+    ["supercasino", "OTHER_MARKET"],
+    ["starcasino", "OTHER_MARKET"],
+  ] as const) {
     await openOk(page, `/en/casino/${slug}`);
-    await expect(page.locator('[data-offer-relation="OTHER_MARKET"]').first(), slug).toBeVisible();
-    await expect(page.locator('[data-offer-relation="OTHER_MARKET"] a[href^="/r/"]'), `${slug}: no transferred action`).toHaveCount(0);
-    await expect(page.getByText(/Kazakhstan.*not.*verified|KZ.*not.*verified/i).first(), `${slug}: current-market qualification`).toBeVisible();
+    const offer = page.locator(`[data-offer-relation="${relation}"]`).first();
+    await expect(offer, slug).toBeVisible();
+    await expect(offer.locator('a[href^="/r/"]'), `${slug}: no transferred action`).toHaveCount(0);
+    if (relation === "ROW") {
+      await expect(offer, `${slug}: global editorial qualification`).toContainText(/Global editorial evidence.*partner-link availability/i);
+    } else {
+      await expect(offer, `${slug}: current-market qualification`).toContainText(/Kazakhstan.*not.*verified|KZ.*not.*verified/i);
+    }
   }
 
   const catalogResponse = await page.request.get(`${baseUrl}/api/public/casinos?limit=100`);
@@ -32,12 +44,12 @@ test("trusted KZ presentation shows published other-market offer knowledge witho
     }>;
   };
   for (const [slug, relation] of [
-    ["rizk", "OTHER_MARKET"],
-    ["nordicbet", "OTHER_MARKET"],
+    ["rizk", "ROW"],
+    ["nordicbet", "ROW"],
     ["inkabet", "OTHER_MARKET"],
     ["betsafe", "OTHER_MARKET"],
     ["supercasino", "OTHER_MARKET"],
-    ["starcasino", "NONE"],
+    ["starcasino", "OTHER_MARKET"],
   ] as const) {
     const record = catalog.records.find((entry) => entry.slug === slug);
     expect(record?.countries, `${slug}: no foreign market profile`).toEqual([]);
@@ -50,4 +62,7 @@ test("trusted KZ presentation shows published other-market offer knowledge witho
   const fallbackCards = page.locator('[data-bonus-directory-card][data-offer-relation="OTHER_MARKET"]');
   expect(await fallbackCards.count()).toBeGreaterThanOrEqual(4);
   for (const card of await fallbackCards.all()) await expect(card.locator('a[href^="/r/"]')).toHaveCount(0);
+  const rowCards = page.locator('[data-bonus-directory-card][data-offer-relation="ROW"]');
+  expect(await rowCards.count()).toBeGreaterThanOrEqual(2);
+  for (const card of await rowCards.all()) await expect(card.locator('a[href^="/r/"]')).toHaveCount(0);
 });

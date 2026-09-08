@@ -60,6 +60,47 @@ country codes. `ZZ` remains the RFC-042 sentinel for global commercial
 fallback only. A country-specific offer is never automatically converted to
 ROW.
 
+## Phase B corpus reconciliation
+
+**DETECTED:** the three governed copies of the Betsson Product=Casino direct-
+link corpus each contain 60 ordered rows with identical title, description and
+tracking-URL triples after newline normalization. Twenty rows are labelled
+`WELCOME_OFFER`; 19 are casino offers and one is a sportsbook route. Of the 19
+casino offers, 15 are exact-market, two are genuine ROW and two are regional
+but not ROW. None of the 60 source rows has a direct production route mapping.
+
+**DETECTED / RECONCILED:** the complete row audit leaves exactly three safe
+editorial omissions:
+
+- StarCasino row 10 becomes `starcasino-it-welcome`, attached to its existing
+  Italian market profile;
+- Rizk row 38 becomes the global `rizk-row-welcome`; and
+- NordicBet row 56 becomes the global `nordicbet-row-welcome`.
+
+The two ROW records use the established global bonus mechanism. All three
+records state only that a welcome-offer route exists; amount, currency,
+wagering, deposit, expiry and eligibility mechanics remain null or explicitly
+unknown. The bounded reconciler is deterministic, transactional, idempotent
+and audit-logged. It is called from the existing CASINO-REAL-CATALOG-03
+production preflight, after which the established publisher creates immutable
+published snapshots.
+
+**UNKNOWN / INTENTIONAL EXCLUSION:** Betsson CL and IS have no published exact
+country profile. Betsson EN is not explicitly ROW. Betsson LATAM is regional
+and supplies no country list. These four records remain absent instead of
+being promoted to global evidence.
+
+**CONTRADICTION / INTENTIONAL EXCLUSION:** Rizk NZ remains absent while its
+legal/footer conflict is unresolved. SuperCasino row 28 is brand protection,
+not an offer, and Inkabet row 53 is sportsbook-only. The executable audit and
+all 60 row dispositions are recorded in
+`SAFE-OFFER-CORPUS-DIRECT-LINK-AUDIT-2026-09-08.md`.
+
+No Phase B reconciliation creates or updates an affiliate offer, tracking
+link, redirect slug, `MarketActivation`, media record, Editor Score, schema or
+migration. StarCasino remains informational/noindex and receives no outbound
+action.
+
 ## Deterministic selection
 
 After relation priority, candidates are ordered by:
