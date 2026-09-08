@@ -1,12 +1,12 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 8 September 2026
+**Evidence date:** 9 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `2656acfbb930143feec9c9a21233c647ef558597`
-**Verified post-release runtime baseline SHA:** `2656acfbb930143feec9c9a21233c647ef558597`
-**Verified post-release runtime deployment:** Ready; `dpl_5H9Ap4eeiCwBcrVUGaTPKGnyHRBr`
+**Current Production application SHA (live provider evidence):** `6deca5539812a72f5eac1c09fbd2f9b107da32d3`
+**Verified post-release runtime baseline SHA:** `6deca5539812a72f5eac1c09fbd2f9b107da32d3`
+**Verified post-release runtime deployment:** Ready; `dpl_5u5zVe8qMvbuUq2Kw2Y287v4bEkx`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -35,16 +35,50 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — RESOURCE-SPECIFIC DCR, DURABLE GRANTS AND DB FAILURE BOUNDARY DEPLOYED** | Commercial retains four tools; Media retains six, including bounded bulk ingestion. PR #161 binds standards-shaped DCR through resource-specific discovery while preserving strict one-resource clients and invalidating cross-resource use. PR #159 keeps unsupported methods DB-free and authenticated transient DB failures bounded. |
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
 | Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES, DESTINATIONS VERIFIED** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority and checksum-matched canonical campaigns. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
-| Casino market data | **TEN REAL PUBLISHED IDENTITIES — EIGHT SCORED/REVIEWED; TWO PROVISIONAL MEDIA-FIRST** | The accepted eight-identity catalog baseline remains intact: six have complete global facts and a published welcome offer, while Betsson and DragonBet remain review-only. Inkabet and Betsafe are additional noindex provisional profiles whose detailed facts and scoring remain explicitly pending; their draft binding offers grant no referral authority. Temporary demo identities remain excluded. |
+| Casino market data | **TEN REAL PUBLISHED IDENTITIES — SAFE CROSS-MARKET OFFER PRESENTATION ACTIVE** | Market-projected Casino facts remain isolated. A bounded immutable published-bonus corpus now resolves `EXACT > ROW > OTHER_MARKET > NONE`; StarCasino IT plus genuine Rizk and NordicBet ROW offers are reconciled without creating commercial or media authority. Founder-approved scores remain unchanged. |
 | Placement media | **RFC-043 MEDIA-GEO3 ACTIVE IN PRODUCTION** | The RFC-040 typed compatibility layer remains supported; MEDIA-GEO3 adds exact-offer creative sets, variants, persisted preflight, atomic revisions and `CASINO_REVIEW_RIGHT_HERO`. Three bounded current-offer families serve the review-right and directory-card placements through one resolver. |
 | Canonical public CTA authority | **RFC-042 SOLE B4GAMBLE AUTHORITY** | Public directory, comparison and review consumers use canonical `MarketActivation`, including its healthy global fallback. Legacy programme/offer/workflow/link/redirect lifecycle fields are not replacement CTA vetoes; external safety, jurisdiction, GB operator/legal, safe-URL, relational and trusted-GEO controls remain independent. |
 | GEO-localized creative assignments | **ACTIVE IN PRODUCTION — BGA PE/EE/LV HOSTED INVENTORY INSTALLED** | Trusted request GEO plus presentation language resolve exact-country/language, global/language and neutral assignment scopes without client-side inventory selection. BGA-MEDIA-E2E-01 adds 11 exact active offer and 11 exact active profile hosted assignments across Inkabet PE, Betsson PE and Betsafe EE/LV; Inkabet mobile uses its exact-country DEFAULT fallback. |
 | Vetted partner-hosted creatives | **ACTIVE IN PRODUCTION — 52 VALIDATED BANNERFLOW RECORDS; COMMERCIAL ACTION ON HOLD** | Migrations 0029/0030 and the independent feature flag are deployed. Production retains 52 supported exact-country BGA creatives, 11 responsive selections and three immutable Casino snapshots. Media renders from the original provider through isolated B4 frames; all related referral routes remain unavailable because cumulative Production commercial authority is absent. |
 | Commercial creative formats | **READY IN PRODUCTION** | Common affiliate formats, security-valid animated GIF ingestion, native responsive commercial geometry and governed creative actions are active without changing editorial media or expanding commercial authority. |
 | Media ingestion / Media Operations | **READY IN PRODUCTION — FIRST-PARTY R2, HOSTED BGA, REVIEW-SAFE DRAFT AUTHORITY** | Validated first-party media persists through the existing S3 provider to approved Cloudflare R2 Standard and `media.b4gamble.com`; hosted media retains provider authority in isolated frames. Checksum/identity dedupe, bounded analysis, protected draft plans and the separate six-tool Media MCP are active with no commercial publish authority. |
-| Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
+| Public language / market presentation | **READY IN PRODUCTION — PUBLICATION, MARKET VERIFICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language. Published offer knowledge may cross markets through the bonus-only resolver, while foreign licences, operators, payments, domains and media remain excluded and outbound eligibility stays independently governed. |
 
 ### Recent implementation state
+
+**DETECTED — SAFE OFFER CORPUS COMPLETION AND CROSS-MARKET PRESENTATION LIVE, 9
+September 2026:** Phase A [PR #208](https://github.com/AlexG-7BE/sevenbet-next/pull/208),
+[PR #209](https://github.com/AlexG-7BE/sevenbet-next/pull/209) and
+[PR #210](https://github.com/AlexG-7BE/sevenbet-next/pull/210) preserved the
+trusted market projection, added an immutable published-bonus-only read path
+and one deterministic `EXACT > ROW > OTHER_MARKET > NONE` resolver, and closed
+UUID-query and duplicated market-licence findings from live acceptance. Final
+Phase A runtime `c98ff14caea2077571b75ca61bea5642a38ae2c6` was Ready as
+`dpl_2iS9gpDrYJs2AGF7N5g3kqM4UK3q` before Phase B began.
+
+Phase B [PR #211](https://github.com/AlexG-7BE/sevenbet-next/pull/211)
+reconciled exactly three sparse, deterministic editorial records:
+StarCasino IT, Rizk ROW and NordicBet ROW. Its first Production build committed
+and published the transaction, then failed because postflight inspected only
+the top-level global snapshot container. Read-only inspection proved all three
+records and scopes before any replay. [PR #212](https://github.com/AlexG-7BE/sevenbet-next/pull/212)
+made verification understand both global and nested factual-market snapshot
+containers; the immediate replay reported all three unchanged. Runtime
+`6deca5539812a72f5eac1c09fbd2f9b107da32d3` is Ready and owns
+`b4gamble.com` and `www.b4gamble.com` as
+`dpl_5u5zVe8qMvbuUq2Kw2Y287v4bEkx`.
+
+Direct Production verification passed the catalog and MEDIA-GEO3 postflights,
+the internal MarketActivation invariants, trusted-KZ offer/API acceptance and
+all nine required public routes with rendered logos and no console, hydration,
+runtime or HTTP 5xx failure. The single Inkabet PE partner HTTP 403 remains the
+same bounded external route-health challenge. Pre/post fingerprints are exact
+matches for all 11 protected commercial, activation and media collections;
+all six governed offers have zero transferred action, and the three new offers
+have zero media bindings. No schema, migration, `vercel.json`, build-order,
+score, redirect, tracking-link, MarketActivation or MEDIA-GEO3 mutation was
+introduced. See the [decision record](07_Decisions/SAFE-OFFER-PRESENTATION-2026-09-08.md)
+and [60-row audit](07_Decisions/SAFE-OFFER-CORPUS-DIRECT-LINK-AUDIT-2026-09-08.md).
 
 **DETECTED — MEDIA-GEO3 PRODUCTION COMPLETE, 8 September 2026:**
 [PR #198](https://github.com/AlexG-7BE/sevenbet-next/pull/198) delivered the
