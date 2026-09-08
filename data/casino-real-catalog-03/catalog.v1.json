@@ -87,12 +87,40 @@
     }
   ],
   "logoProvenance": [
-    {"slug":"betsafe","status":"OFFICIAL_SOURCE_LOCATED_BINARY_NOT_IMPORTED","source":"https://www.betssongroupaffiliates.com/wp-content/uploads/2020/03/45742-Change-in-Betsafe-Logos_Betsafe-logo-RGB-Positive-1-e1752750646250.png"},
-    {"slug":"inkabet","status":"OFFICIAL_SOURCE_LOCATED_BINARY_NOT_IMPORTED","source":"https://www.betssongroupaffiliates.com/wp-content/uploads/2024/03/inkabet.svg"},
-    {"slug":"nordicbet","status":"OFFICIAL_SOURCE_LOCATED_BINARY_NOT_IMPORTED","source":"https://www.betssongroupaffiliates.com/wp-content/uploads/2020/04/NordicBet-1.svg"},
-    {"slug":"rizk","status":"OFFICIAL_SOURCE_LOCATED_BINARY_NOT_IMPORTED","source":"https://www.betssongroupaffiliates.com/wp-content/uploads/2020/06/Rizk.svg"},
+    {
+      "slug": "betsafe",
+      "status": "PARTNER_ASSET_IMPORTED",
+      "source": "Founder-uploaded Betsafe-Logo-Pack-November-2023 (1).zip",
+      "officialSource": "https://www.betssongroupaffiliates.com/wp-content/uploads/2020/03/45742-Change-in-Betsafe-Logos_Betsafe-logo-RGB-Positive-1-e1752750646250.png",
+      "asset": "/casino-brands/betsafe/logo.png",
+      "sha256": "add3398db34f3b46e4dd850ef72c7a54a4167642a402432aa9531527d792785b"
+    },
+    {
+      "slug": "inkabet",
+      "status": "PARTNER_ASSET_IMPORTED",
+      "source": "Founder-uploaded InkaBet-Main-Logo-Pack (1).zip",
+      "officialSource": "https://www.betssongroupaffiliates.com/wp-content/uploads/2024/03/inkabet.svg",
+      "asset": "/casino-brands/inkabet/logo.png",
+      "sha256": "1d7054aabe7ff923bd55e9906ef53ee19f000c5397d83420f66c6b5a9a8ec6dd"
+    },
+    {
+      "slug": "nordicbet",
+      "status": "PARTNER_ASSET_IMPORTED",
+      "source": "Founder-uploaded NB_Logos-updated (1).zip",
+      "officialSource": "https://www.betssongroupaffiliates.com/wp-content/uploads/2020/04/NordicBet-1.svg",
+      "asset": "/casino-brands/nordicbet/logo.png",
+      "sha256": "8aaddb51127d809f64fa015cf0f60bc5eca270b8c4e7b522abbe2465969cc5f6"
+    },
+    {
+      "slug": "rizk",
+      "status": "PARTNER_ASSET_IMPORTED",
+      "source": "Founder-uploaded Rizk-Logos (1).zip",
+      "officialSource": "https://www.betssongroupaffiliates.com/wp-content/uploads/2020/06/Rizk.svg",
+      "asset": "/casino-brands/rizk/logo.png",
+      "sha256": "e3e84d1d09fe78aa71a31d896ee35e685e7ef567ddd48ef6f0fff3d3359be55a"
+    },
     {"slug":"supercasino","status":"OFFICIAL_SOURCE_LOCATED_BINARY_NOT_IMPORTED","source":"https://supercasino.com/assets/img/logo-super.svg"},
     {"slug":"starcasino","status":"UNKNOWN","source":null}
   ],
-  "uploadedArchiveFinding": "BGA-Logos-2025.zip contains only the Betsson Group Affiliates corporate logo in PNG/SVG/PDF; it is not suitable as a casino brand logo."
+  "uploadedArchiveFinding": "The Founder-supplied logo packs contain release-ready assets for Betsafe, Inkabet, NordicBet and Rizk. Guts, JallaCasino, CasinoEuro, Betsson and the earlier BGA corporate logo pack are unrelated to the six-casino release and were intentionally excluded. No StarCasino or SuperCasino logo binary was present in the supplied archives."
 }
