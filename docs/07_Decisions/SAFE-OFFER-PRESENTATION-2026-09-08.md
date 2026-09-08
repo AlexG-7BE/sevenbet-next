@@ -194,6 +194,61 @@ No new accent, imagery, card system, motion, or CTA treatment is introduced.
 This preserves the current visual hierarchy while making the highest-risk
 misreading—foreign evidence presented as a Kazakhstan-verified offer—explicit.
 
+## Production completion evidence
+
+**DETECTED — PHASE A:** [PR #208](https://github.com/AlexG-7BE/sevenbet-next/pull/208)
+merged as `cf8bcac59501f15237fbb5702e777285cf259bcb`. Live acceptance then
+produced two bounded corrective findings: [PR #209](https://github.com/AlexG-7BE/sevenbet-next/pull/209)
+fixed PostgreSQL UUID parameter typing and [PR #210](https://github.com/AlexG-7BE/sevenbet-next/pull/210)
+closed duplicated top-level foreign-licence projection. The final Phase A
+runtime `c98ff14caea2077571b75ca61bea5642a38ae2c6` was Ready on the
+canonical aliases as `dpl_2iS9gpDrYJs2AGF7N5g3kqM4UK3q`; trusted Kazakhstan
+presentation, nine routes, commercial inventory and media invariants passed
+before Phase B started.
+
+**DETECTED — PHASE B:** [PR #211](https://github.com/AlexG-7BE/sevenbet-next/pull/211)
+merged as `b9251f0723ab20cd663da83ac0502e8312ebdd2c`. Deployment
+`dpl_AeUybayahufSMfhiy7sxTSCaf3Vf` reconciled and published the three
+governed records, then failed postflight: the verifier looked only in the
+top-level global `casinoBonuses` container even though the correct StarCasino
+IT record lives under its factual country's nested `bonuses` container.
+Read-only Production inspection first proved that the transaction had
+committed exactly once, each record was active/published in its intended scope,
+and all protected bindings remained zero. No blind replay was attempted.
+
+[PR #212](https://github.com/AlexG-7BE/sevenbet-next/pull/212) merged the
+container-aware verifier as `6deca5539812a72f5eac1c09fbd2f9b107da32d3`.
+Corrective deployment `dpl_5u5zVe8qMvbuUq2Kw2Y287v4bEkx` reported all three
+records unchanged on immediate replay, verified each exactly once in the
+correct global or factual-market snapshot container, reached Ready, and owns
+`b4gamble.com` plus `www.b4gamble.com`.
+
+The direct Production catalog verifier passed with StarCasino IT
+`COUNTRY/IT`, Rizk `ROW` and NordicBet `ROW`; all three have zero action and
+media bindings. The exact before/after hashes and counts match across
+AffiliateOffer, tracking-link, redirect, MarketActivation, creative-set,
+media-revision, MediaAsset, three typed assignment and hosted-creative
+inventories. All six Founder scores also match. MEDIA-GEO3 reports three active
+catalog creative sets, zero invalid sets/variants/preflight cells, zero
+duplicate active revisions, zero raw destinations and zero destructive writes.
+MarketActivation reports all internal invariants passed; its sole non-passing
+golden fixture remains the pre-existing bounded Inkabet PE partner HTTP 403.
+
+Trusted-KZ browser acceptance proves Rizk and NordicBet select `ROW`; Inkabet
+PE, Betsafe EE/LV, SuperCasino NZ and StarCasino IT select `OTHER_MARKET` with
+Kazakhstan explicitly unverified. Foreign countries and licences are empty in
+the public DTO, and no governed fallback card or profile receives a transferred
+`/r/` action. The casino directory, all six profiles, Bonuses and Best Offers
+return HTTP 200 with no horizontal overflow, runtime error, console error or
+page error; all six profile logos decode at non-zero intrinsic dimensions.
+
+The first directory acceptance harness incorrectly asserted that every ROW
+card on Bonuses must lack a commercial link, including unrelated, pre-existing
+RFC-042-authorised casinos. The corrected regression targets only the six
+casinos governed by this workstream and passes Production. This changes test
+scope only; it neither removes legitimate existing actions nor weakens any
+assertion on the new or fallback records.
+
 ## Protected invariants
 
 - Market-profile projection remains in place.

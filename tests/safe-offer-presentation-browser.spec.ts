@@ -61,8 +61,16 @@ test("trusted KZ presentation shows published fallback offer knowledge without c
   await openOk(page, "/en/bonuses");
   const fallbackCards = page.locator('[data-bonus-directory-card][data-offer-relation="OTHER_MARKET"]');
   expect(await fallbackCards.count()).toBeGreaterThanOrEqual(4);
-  for (const card of await fallbackCards.all()) await expect(card.locator('a[href^="/r/"]')).toHaveCount(0);
+  for (const casinoName of ["Inkabet", "Betsafe", "SuperCasino", "StarCasino"]) {
+    const card = fallbackCards.filter({ hasText: casinoName }).first();
+    await expect(card, `${casinoName}: other-market directory card`).toBeVisible();
+    await expect(card.locator('a[href^="/r/"]'), `${casinoName}: no transferred action`).toHaveCount(0);
+  }
   const rowCards = page.locator('[data-bonus-directory-card][data-offer-relation="ROW"]');
   expect(await rowCards.count()).toBeGreaterThanOrEqual(2);
-  for (const card of await rowCards.all()) await expect(card.locator('a[href^="/r/"]')).toHaveCount(0);
+  for (const casinoName of ["NordicBet", "Rizk"]) {
+    const card = rowCards.filter({ hasText: casinoName }).first();
+    await expect(card, `${casinoName}: ROW directory card`).toBeVisible();
+    await expect(card.locator('a[href^="/r/"]'), `${casinoName}: no transferred action`).toHaveCount(0);
+  }
 });
