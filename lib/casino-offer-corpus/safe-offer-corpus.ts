@@ -280,6 +280,22 @@ function list(value: Prisma.JsonValue | undefined): Prisma.JsonValue[] {
   return Array.isArray(value) ? value : [];
 }
 
+function publishedSnapshotBonusLocations(snapshot: Prisma.JsonObject) {
+  const global = list(snapshot.casinoBonuses).map((value) => ({
+    countryCode: null,
+    bonus: record(value),
+  }));
+  const marketSpecific = list(snapshot.countries).flatMap((value) => {
+    const country = record(value);
+    const countryCode = typeof country.countryCode === "string" ? country.countryCode : null;
+    return list(country.bonuses).map((bonus) => ({
+      countryCode,
+      bonus: record(bonus),
+    }));
+  });
+  return [...global, ...marketSpecific];
+}
+
 export async function verifySafeOfferCorpusInTransaction(tx: Prisma.TransactionClient) {
   const state = [];
   for (const definition of safeOfferCorpusDefinitions) {
@@ -328,10 +344,16 @@ export async function verifySafeOfferCorpusInTransaction(tx: Prisma.TransactionC
     }
 
     const snapshot = record(bonus.casino.versions[0]?.snapshot);
-    const publishedBonus = list(snapshot.casinoBonuses)
-      .map((entry) => record(entry))
-      .find((entry) => entry.id === id);
-    if (!publishedBonus || publishedBonus.status !== EditorialStatus.PUBLISHED || publishedBonus.offerStatus !== OfferStatus.ACTIVE) {
+    const publishedLocations = publishedSnapshotBonusLocations(snapshot)
+      .filter((entry) => entry.bonus.id === id);
+    const expectedCountryCode = definition.scope.kind === "COUNTRY"
+      ? definition.scope.countryCode
+      : null;
+    if (publishedLocations.length !== 1 || publishedLocations[0]?.countryCode !== expectedCountryCode) {
+      throw new Error(`${SAFE_OFFER_CORPUS_RELEASE}: ${definition.bonusSlug} published snapshot scope mismatch`);
+    }
+    const publishedBonus = publishedLocations[0].bonus;
+    if (publishedBonus.status !== EditorialStatus.PUBLISHED || publishedBonus.offerStatus !== OfferStatus.ACTIVE) {
       throw new Error(`${SAFE_OFFER_CORPUS_RELEASE}: ${definition.bonusSlug} is absent from the latest published snapshot`);
     }
     const metadata = readCasinoEditorMetadata(snapshot.reviewBlocks ?? null);

@@ -121,7 +121,16 @@ test("bounded offer corpus reconciliation is transactional, idempotent and autho
         select: {
           id: true,
           reviewBlocks: true,
-          casinoBonuses: { select: { id: true, slug: true, status: true, offerStatus: true } },
+          countries: {
+            select: {
+              countryCode: true,
+              bonuses: { select: { id: true, slug: true, status: true, offerStatus: true } },
+            },
+          },
+          casinoBonuses: {
+            where: { casinoCountryId: null },
+            select: { id: true, slug: true, status: true, offerStatus: true },
+          },
         },
       });
       await prisma.casinoVersion.create({
@@ -136,6 +145,7 @@ test("bounded offer corpus reconciliation is transactional, idempotent and autho
             slug: casinoSlug,
             status: EditorialStatus.PUBLISHED,
             reviewBlocks: casino.reviewBlocks,
+            countries: casino.countries,
             casinoBonuses: casino.casinoBonuses,
           },
         },
