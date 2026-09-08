@@ -9,6 +9,16 @@ const corpus = JSON.parse(read("data/casino-real-catalog-03/catalog.v1.json")) a
   release: string;
   commercialAuthority: boolean;
   entries: Array<{ slug: string; score: number; markets: string[]; publicationMode?: string }>;
+  existingBrandAssetUpgrades: Array<{
+    slug: string;
+    status: string;
+    source: string;
+    asset: string;
+    sourceDimensions: string;
+    webDimensions: string;
+    sha256: string;
+    note: string;
+  }>;
   uploadedArchiveFinding: string;
 };
 
@@ -70,9 +80,19 @@ test("all release ingestion bundles contain zero commercial mappings", () => {
   }
 });
 
-test("the supplied archive finding prevents corporate BGA art being mislabelled as a casino logo", () => {
-  assert.match(corpus.uploadedArchiveFinding, /only the Betsson Group Affiliates corporate logo/i);
-  assert.match(corpus.uploadedArchiveFinding, /not suitable as a casino brand logo/i);
+test("the supplied archive finding keeps corporate BGA art excluded while allowing the distinct Betsson brand upgrade", () => {
+  assert.match(corpus.uploadedArchiveFinding, /Betsson logo pack is used to upgrade the already-existing Betsson brand asset/i);
+  assert.match(corpus.uploadedArchiveFinding, /earlier BGA corporate logo pack remain excluded/i);
+
+  const betssonUpgrade = corpus.existingBrandAssetUpgrades.find(({ slug }) => slug === "betsson");
+  assert.ok(betssonUpgrade);
+  assert.equal(betssonUpgrade.status, "PARTNER_ASSET_UPGRADED");
+  assert.match(betssonUpgrade.source, /Betsson-Logo-Pack-1 \(1\)\.zip \/ betsson-orange\.png/);
+  assert.equal(betssonUpgrade.asset, "/casino-brands/betsson/logo.png");
+  assert.equal(betssonUpgrade.sourceDimensions, "2414x404");
+  assert.equal(betssonUpgrade.webDimensions, "600x100");
+  assert.match(betssonUpgrade.sha256, /^[a-f0-9]{64}$/);
+  assert.match(betssonUpgrade.note, /not a seventh catalog entry/i);
 });
 
 test("production mutation is bounded to Vercel production after the existing database preflight", () => {
