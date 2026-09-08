@@ -408,7 +408,10 @@ async function verifyState(corpus: CatalogCorpus) {
       robots: casino.seo?.robots ?? null,
     });
   }
-  const safeOfferCorpus = await prisma.$transaction((tx) => verifySafeOfferCorpusInTransaction(tx));
+  const safeOfferCorpus = await prisma.$transaction(
+    (tx) => verifySafeOfferCorpusInTransaction(tx),
+    { maxWait: 10_000, timeout: 30_000 },
+  );
   console.info(JSON.stringify({ release: RELEASE, verified: true, state, safeOfferCorpus }, null, 2));
 }
 
