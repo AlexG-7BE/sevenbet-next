@@ -11,6 +11,10 @@ FOUNDER-AUTHORIZED EXECUTION — MEDIA-GEO3 / PRODUCTION MEDIA PIPELINE
 HARDENING`, SHA-256
 `ac242ed0ae6a5c24549a319b21f86c00b46529e9d65b0c2d109ce9b357608067`.
 
+**Authority clarification:** explicit Founder instruction `B4GAMBLE FOUNDER
+DECISION — RFC-042 AUTHORITY CLARIFICATION AND EXECUTION APPROVAL`, SHA-256
+`140d37d62098834d98d3796a183a084d40cc3d92814855ad6cc061ec5969f5f1`.
+
 ## Decision
 
 B4GAMBLE Media Operations has one deterministic Production path from validated
@@ -23,6 +27,14 @@ Media never creates commercial authority. An active exact `MarketActivation`,
 the selected `AffiliateOffer`/`CasinoBonus`, trusted request GEO and the existing
 jurisdiction/legal controls remain prerequisites for promotional rendering.
 Programme, pause, Help and sensitive data are outside this pipeline.
+
+RFC-042 remains the sole B4GAMBLE-owned public CTA authority. Legacy programme,
+offer, workflow, link and redirect lifecycle fields may suppress stale or
+misleading promotional media, but they are not independent CTA vetoes. Actual
+upstream expiry, blocking or route failure changes CTA availability only after
+the canonical controller/reconciler records the corresponding
+`MarketActivation` state; runtime readers do not reconstruct the retired
+distributed authority model.
 
 ## Evidence and reference lock
 

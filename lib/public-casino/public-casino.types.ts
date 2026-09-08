@@ -220,4 +220,20 @@ export interface PublicAffiliateRoute {
   casinoBonusId: string | null;
   affiliateOfferId?: string | null;
   slug: string;
+  /** Live legacy lifecycle evidence used only to suppress stale promotional media. */
+  mediaOfferAuthority?: {
+    status: string;
+    startAt: Date | null;
+    expiresAt: Date | null;
+    archivedAt: Date | null;
+    programStatus: string;
+    programWorkflowStatus: string;
+    programArchivedAt: Date | null;
+    networkActive: boolean;
+    networkArchivedAt: Date | null;
+    bonusStatus: string | null;
+    bonusOfferStatus: string | null;
+    bonusStartsAt: Date | null;
+    bonusExpiresAt: Date | null;
+  };
 }

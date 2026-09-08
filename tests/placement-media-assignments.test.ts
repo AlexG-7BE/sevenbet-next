@@ -27,7 +27,7 @@ import {
   type PlacementMediaResolutionContext,
 } from "../lib/media/placement-media";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
-import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
+import type { PublishedCasinoSnapshotRecord, PublicAffiliateRoute } from "../lib/public-casino/public-casino.types";
 import {
   buildPublishedCasinoSnapshot,
   type CasinoPlacementAggregate,
@@ -587,6 +587,27 @@ function governedRoutes(record: PublishedCasinoSnapshotRecord) {
   }];
 }
 
+function governedRoutesWithStaleMediaOffer(record: PublishedCasinoSnapshotRecord): PublicAffiliateRoute[] {
+  return governedRoutes(record).map((route) => ({
+    ...route,
+    mediaOfferAuthority: {
+      status: "DRAFT",
+      startAt: null,
+      expiresAt: null,
+      archivedAt: null,
+      programStatus: "DRAFT",
+      programWorkflowStatus: "DRAFT",
+      programArchivedAt: null,
+      networkActive: false,
+      networkArchivedAt: null,
+      bonusStatus: "PUBLISHED",
+      bonusOfferStatus: "ACTIVE",
+      bonusStartsAt: null,
+      bonusExpiresAt: null,
+    },
+  }));
+}
+
 function governedOffer(record: PublishedCasinoSnapshotRecord) {
   const snapshot = record.snapshot as Record<string, unknown>;
   const programmes = snapshot.affiliatePrograms as Array<Record<string, unknown>>;
@@ -682,6 +703,29 @@ test("targeted creative presentation shares the exact governed CTA authority", (
   assert.equal(eligible?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "fi-targeted-creative");
   assert.deepEqual(eligible?.bonuses[0]?.affiliate, { href: "/r/governed-fi-offer", available: true });
   assert.doesNotMatch(JSON.stringify(eligible), /trackingUrl|destinationUrl|partner\.example/i);
+});
+
+test("canonical CTA survives stale compatibility while promotional media falls back to brand", () => {
+  const record = independenceRecord();
+  const mapped = mapPublishedCasino(record, governedRoutesWithStaleMediaOffer(record), {
+    redirectEnabled: true,
+    placementMediaEnabled: true,
+    countryCode: "FI",
+    presentationLanguage: "fi",
+    now: NOW,
+  });
+  assert.deepEqual(mapped?.bonuses[0]?.affiliate, { href: "/r/governed-fi-offer", available: true });
+  assert.equal(mapped?.bonuses[0]?.media?.CASINO_REVIEW_RIGHT_HERO?.asset?.id, "asset-b-detail");
+  assert.equal(mapped?.bonuses[0]?.media?.CASINO_REVIEW_RIGHT_HERO?.source, "BRAND_FALLBACK");
+  assert.equal(mapped?.bonuses[0]?.media?.CASINO_DIRECTORY_CARD?.asset?.id, "asset-a-directory");
+  assert.equal(mapped?.bonuses[0]?.media?.CASINO_DIRECTORY_CARD?.source, "BRAND_FALLBACK");
+  assert.doesNotMatch(
+    JSON.stringify({
+      review: mapped?.bonuses[0]?.media?.CASINO_REVIEW_RIGHT_HERO,
+      directory: mapped?.bonuses[0]?.media?.CASINO_DIRECTORY_CARD,
+    }),
+    /asset-[def]-|offer-(listing|featured|block)/,
+  );
 });
 
 test("historical snapshots without target fields remain global-neutral and malformed new targets fail closed", () => {

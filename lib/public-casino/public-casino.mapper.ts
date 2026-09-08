@@ -589,10 +589,10 @@ function mapScopedBonuses(
       casinoId,
       offer: affiliateOffer ? {
         ...affiliateOffer,
-        bonusStatus: text(record.status),
-        bonusOfferStatus: text(record.offerStatus),
-        bonusStartsAt: startsAt,
-        bonusExpiresAt: expiresAt,
+        bonusStatus: affiliateOffer.bonusStatus === undefined ? text(record.status) : affiliateOffer.bonusStatus,
+        bonusOfferStatus: affiliateOffer.bonusOfferStatus === undefined ? text(record.offerStatus) : affiliateOffer.bonusOfferStatus,
+        bonusStartsAt: affiliateOffer.bonusStartsAt === undefined ? startsAt : affiliateOffer.bonusStartsAt,
+        bonusExpiresAt: affiliateOffer.bonusExpiresAt === undefined ? expiresAt : affiliateOffer.bonusExpiresAt,
       } : null,
       commercialAuthority: Boolean(commercialMediaEnabled && affiliateOffer && routeRecordFor(routes, casinoId, bonusId)),
     });
@@ -714,12 +714,23 @@ export function mapPublishedCasino(
   const affiliateOfferFor = (casinoBonusId: string): CasinoMediaOfferAuthority | null => {
     const route = routeRecordFor(routes, published.casinoId, casinoBonusId);
     const offer = route?.affiliateOfferId ? affiliateOfferRecords.get(route.affiliateOfferId) : null;
-    if (!route?.affiliateOfferId || !offer) return null;
+    const live = route?.mediaOfferAuthority;
+    if (!route?.affiliateOfferId || (!offer && !live)) return null;
     return {
       id: route.affiliateOfferId,
-      status: text(offer.status),
-      startAt: date(offer.startAt),
-      expiresAt: date(offer.expiresAt),
+      status: live?.status ?? text(offer?.status),
+      startAt: live ? live.startAt : date(offer?.startAt),
+      expiresAt: live ? live.expiresAt : date(offer?.expiresAt),
+      archivedAt: live?.archivedAt,
+      programStatus: live?.programStatus,
+      programWorkflowStatus: live?.programWorkflowStatus,
+      programArchivedAt: live?.programArchivedAt,
+      networkActive: live?.networkActive,
+      networkArchivedAt: live?.networkArchivedAt,
+      bonusStatus: live?.bonusStatus,
+      bonusOfferStatus: live?.bonusOfferStatus,
+      bonusStartsAt: live?.bonusStartsAt,
+      bonusExpiresAt: live?.bonusExpiresAt,
     };
   };
   const targeting = {
@@ -827,10 +838,10 @@ export function mapPublishedCasino(
       casinoId: published.casinoId,
       offer: affiliateOffer ? {
         ...affiliateOffer,
-        bonusStatus: text(record.status),
-        bonusOfferStatus: text(record.offerStatus),
-        bonusStartsAt: startsAt,
-        bonusExpiresAt: expiresAt,
+        bonusStatus: affiliateOffer.bonusStatus === undefined ? text(record.status) : affiliateOffer.bonusStatus,
+        bonusOfferStatus: affiliateOffer.bonusOfferStatus === undefined ? text(record.offerStatus) : affiliateOffer.bonusOfferStatus,
+        bonusStartsAt: affiliateOffer.bonusStartsAt === undefined ? startsAt : affiliateOffer.bonusStartsAt,
+        bonusExpiresAt: affiliateOffer.bonusExpiresAt === undefined ? expiresAt : affiliateOffer.bonusExpiresAt,
       } : null,
       commercialAuthority: Boolean(commercialMediaEnabled && affiliateOffer && routeRecordFor(routes, published.casinoId, bonusId)),
     });

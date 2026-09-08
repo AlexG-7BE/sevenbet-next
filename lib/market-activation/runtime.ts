@@ -87,8 +87,6 @@ function activeRouteForCountry(
   record: CanonicalMarketActivationRoute,
   requestedCountry: string,
 ): record is BoundCanonicalMarketActivationRoute {
-  const now = Date.now();
-  const current = (start: Date | null, end: Date | null) => (!start || start.getTime() <= now) && (!end || end.getTime() > now);
   const exactCountry = record.countryCode === requestedCountry;
   const globalFallback = record.countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE;
   const scopeAllows = exactCountry
@@ -108,36 +106,22 @@ function activeRouteForCountry(
     && record.routeVerificationStatus === "HEALTHY"
     && record.routeLastCheckedAt !== null
     && scopeAllows
+    // RFC-042: MarketActivation is the sole positive and negative CTA authority.
+    // Compatibility lifecycle fields are returned for media freshness and
+    // controller diagnostics, but must not independently veto canonical ACTIVE.
     && Boolean(record.affiliateOffer
       && record.affiliateOffer.casinoId === record.casinoId
-      && record.affiliateOffer.program.casinoId === record.casinoId
-      && record.affiliateOffer.status === "ACTIVE"
-      && !record.affiliateOffer.archivedAt
-      && current(record.affiliateOffer.startAt, record.affiliateOffer.expiresAt)
-      && record.affiliateOffer.program.status === "ACTIVE"
-      && record.affiliateOffer.program.workflowStatus === "PUBLISHED"
-      && !record.affiliateOffer.program.archivedAt
-      && record.affiliateOffer.program.network.active
-      && !record.affiliateOffer.program.network.archivedAt)
+      && record.affiliateOffer.program.casinoId === record.casinoId)
     && Boolean(record.affiliateOffer?.casinoBonusId === record.casinoBonusId)
     && Boolean(!record.casinoBonusId || (record.casinoBonus
       && record.casinoBonus.id === record.casinoBonusId
       && record.casinoBonus.casinoId === record.casinoId
-      && record.affiliateOffer?.casinoBonusId === record.casinoBonusId
-      && record.casinoBonus.status === "PUBLISHED"
-      && record.casinoBonus.offerStatus === "ACTIVE"
-      && current(record.casinoBonus.startsAt, record.casinoBonus.expiresAt)))
-    && Boolean(record.primaryTrackingLink
-      && record.primaryTrackingLink.offerId === record.affiliateOfferId
-      && record.primaryTrackingLink.active
-      && !record.primaryTrackingLink.archivedAt
-      && current(record.primaryTrackingLink.validFrom, record.primaryTrackingLink.expiresAt))
+      && record.affiliateOffer?.casinoBonusId === record.casinoBonusId))
+    && Boolean(record.primaryTrackingLink && record.primaryTrackingLink.offerId === record.affiliateOfferId)
     && Boolean(record.redirectSlug
       && record.redirectSlug.casinoId === record.casinoId
       && record.redirectSlug.affiliateOfferId === record.affiliateOfferId
       && record.redirectSlug.casinoBonusId === record.casinoBonusId
-      && record.redirectSlug.active
-      && !record.redirectSlug.archivedAt
       && isSafePublicSlug(record.redirectSlug.slug))
     && Boolean(record.primaryTrackingLink
       && safeActivationDestination(record.primaryTrackingLink.trackingUrl)
@@ -189,6 +173,21 @@ export class MarketActivationRuntime {
       casinoBonusId: activation.casinoBonusId,
       affiliateOfferId: activation.affiliateOfferId,
       slug: activation.redirectSlug!.slug,
+      mediaOfferAuthority: {
+        status: activation.affiliateOffer!.status,
+        startAt: activation.affiliateOffer!.startAt,
+        expiresAt: activation.affiliateOffer!.expiresAt,
+        archivedAt: activation.affiliateOffer!.archivedAt,
+        programStatus: activation.affiliateOffer!.program.status,
+        programWorkflowStatus: activation.affiliateOffer!.program.workflowStatus,
+        programArchivedAt: activation.affiliateOffer!.program.archivedAt,
+        networkActive: activation.affiliateOffer!.program.network.active,
+        networkArchivedAt: activation.affiliateOffer!.program.network.archivedAt,
+        bonusStatus: activation.casinoBonus?.status ?? null,
+        bonusOfferStatus: activation.casinoBonus?.offerStatus ?? null,
+        bonusStartsAt: activation.casinoBonus?.startsAt ?? null,
+        bonusExpiresAt: activation.casinoBonus?.expiresAt ?? null,
+      },
     }));
   }
 

@@ -15,6 +15,12 @@ export type CasinoMediaOfferAuthority = {
   status: string;
   startAt?: Date | string | null;
   expiresAt?: Date | string | null;
+  archivedAt?: Date | string | null;
+  programStatus?: string | null;
+  programWorkflowStatus?: string | null;
+  programArchivedAt?: Date | string | null;
+  networkActive?: boolean | null;
+  networkArchivedAt?: Date | string | null;
   bonusStatus?: string | null;
   bonusOfferStatus?: string | null;
   bonusStartsAt?: Date | string | null;
@@ -211,6 +217,12 @@ function offerBlocker(offer: CasinoMediaOfferAuthority | null | undefined, comme
   if (!commercialAuthority) return "COMMERCIAL_AUTHORITY_UNAVAILABLE";
   if (!offer) return "EXACT_OFFER_REQUIRED";
   if (offer.status !== "ACTIVE") return "AFFILIATE_OFFER_INACTIVE";
+  if (offer.archivedAt) return "AFFILIATE_OFFER_ARCHIVED";
+  if (offer.programStatus && offer.programStatus !== "ACTIVE") return "AFFILIATE_PROGRAM_INACTIVE";
+  if (offer.programWorkflowStatus && offer.programWorkflowStatus !== "PUBLISHED") return "AFFILIATE_PROGRAM_NOT_PUBLISHED";
+  if (offer.programArchivedAt) return "AFFILIATE_PROGRAM_ARCHIVED";
+  if (offer.networkActive === false) return "AFFILIATE_NETWORK_INACTIVE";
+  if (offer.networkArchivedAt) return "AFFILIATE_NETWORK_ARCHIVED";
   if (offer.bonusStatus && offer.bonusStatus !== "PUBLISHED") return "CASINO_BONUS_NOT_PUBLISHED";
   if (offer.bonusOfferStatus && offer.bonusOfferStatus !== "ACTIVE") return "CASINO_BONUS_INACTIVE";
   if (!currentWindow({ validFrom: offer.startAt, validUntil: offer.expiresAt }, now)) return "AFFILIATE_OFFER_OUTSIDE_VALIDITY";
