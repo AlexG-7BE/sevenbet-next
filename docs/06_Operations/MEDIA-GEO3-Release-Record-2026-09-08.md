@@ -13,11 +13,13 @@
   [#198](https://github.com/AlexG-7BE/sevenbet-next/pull/198),
   [#199](https://github.com/AlexG-7BE/sevenbet-next/pull/199),
   [#201](https://github.com/AlexG-7BE/sevenbet-next/pull/201),
-  [#202](https://github.com/AlexG-7BE/sevenbet-next/pull/202) and
-  [#203](https://github.com/AlexG-7BE/sevenbet-next/pull/203)
+  [#202](https://github.com/AlexG-7BE/sevenbet-next/pull/202),
+  [#203](https://github.com/AlexG-7BE/sevenbet-next/pull/203),
+  [#205](https://github.com/AlexG-7BE/sevenbet-next/pull/205) and
+  [#206](https://github.com/AlexG-7BE/sevenbet-next/pull/206)
 - **Verified Production runtime baseline:**
-  `3f5dbb93b9008899c737a730a470152868ebe62a`
-- **Verified Production deployment:** `dpl_2LcUXp7119j9RH8Q5ehyEu66cdca`
+  `2656acfbb930143feec9c9a21233c647ef558597`
+- **Verified Production deployment:** `dpl_5H9Ap4eeiCwBcrVUGaTPKGnyHRBr`
 - **Canonical Production URL:** `https://b4gamble.com`
 - **Release status:** **COMPLETE**
 
@@ -138,6 +140,8 @@ and AffiliateOffer; hosted assignment counts were `16 / 0 / 79`.
 | #201 | `46f5ab267f832dc805aba995157d35f2a9ed86e1` | canonical RFC-042 directory/comparison route projection |
 | #202 | `ad172fa56463eb69af18b42168bc9f391820ae30` | review-right responsive picture and containment correction |
 | #203 | `3f5dbb93b9008899c737a730a470152868ebe62a` | directory-card mobile grid, picture box and full creative click boundary |
+| #205 | `82acdaed628508adaa7879bb1c8d4bae86e49ed0` | visitor GET verification after partner endpoints reject HEAD with a synthetic 404 |
+| #206 | `2656acfbb930143feec9c9a21233c647ef558597` | active RFC-042 claim selection through the existing canonical route verifier |
 
 **DETECTED:** PR #198 exact-head CI run
 [34208724909](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34208724909),
@@ -146,16 +150,22 @@ PR #199 run
 PR #201 run
 [34215312940](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34215312940),
 PR #202 run
-[34218508312](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34218508312)
-and PR #203 run
-[34221543631](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34221543631)
+[34218508312](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34218508312),
+PR #203 run
+[34221543631](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34221543631),
+PR #205 run
+[34226934372](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34226934372)
+and PR #206 run
+[34230005399](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34230005399)
 all passed Agent Core, Quality, Database / Migration Verification, Build /
 Browser and Vercel on their unchanged heads. Main runs
 [34210535885](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34210535885),
 [34212449065](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34212449065),
 [34216884894](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34216884894),
-[34220022729](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34220022729)
-and [34223025760](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34223025760)
+[34220022729](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34220022729),
+[34223025760](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34223025760),
+[34228678428](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34228678428)
+and [34231734242](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34231734242)
 provide the corresponding post-merge evidence.
 
 The Production deployment sequence was fail-closed:
@@ -172,9 +182,18 @@ The Production deployment sequence was fail-closed:
 - final #203 deployment `dpl_2LcUXp7119j9RH8Q5ehyEu66cdca` completed from
   exact merge SHA `3f5dbb9`, passed read-only 0033 readiness and promoted the
   canonical aliases.
+- #205 deployment `dpl_3smAywsxHMExR2AynAYkzve15nPX` deployed the bounded
+  HEAD-to-GET external route check. Its Production monitor exposed a second
+  fail-closed mismatch: canonical RFC-042 routes were still being compared
+  through deprecated compatibility projection.
+- final #206 deployment `dpl_5H9Ap4eeiCwBcrVUGaTPKGnyHRBr` moved only
+  monitor claim selection to active `MarketActivation` and reused the existing
+  RFC-042 verifier. It promoted exact merge SHA `2656acf` without schema or
+  data mutation.
 
-At every contained failure the preceding Ready Production deployment remained
-live. Neither failure rolled back or partially reapplied migration 0033.
+At every contained deployment failure the preceding Ready Production
+deployment remained live. Neither failed deployment rolled back or partially
+reapplied migration 0033.
 
 ## Production acceptance
 
@@ -188,6 +207,19 @@ activation binds the expected redirect and independently retains the detected
 cards as `PROMOTABLE`, with the canonical redirect, `EXACT_OFFER` media source,
 the expected first-party asset and `CONTAIN` rendering. The review-right hero
 resolved the same exact offer and route.
+
+**DETECTED:** scheduled route health initially produced false `HTTP_404` and
+then false tracker-host `CROSS_GEO` results because the legacy monitor used
+HEAD-only behavior and deprecated compatibility projection. Both failures
+remained observational: no `MarketActivation`, CTA, destination or safety state
+was changed. Production run
+[34232082558](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34232082558)
+then passed all nine active RFC-042 claims through the existing canonical
+verifier and automatically closed
+[issue #200](https://github.com/AlexG-7BE/sevenbet-next/issues/200). Final
+Production smoke run
+[34232077688](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34232077688)
+also passed.
 
 Browser acceptance produced the following physical evidence:
 
@@ -206,11 +238,12 @@ Browser acceptance produced the following physical evidence:
 ## Tests
 
 **DETECTED:** focused local acceptance passed 16 MEDIA-GEO3 tests, 97 commercial
-creative/placement tests, 149 Programme tests, 43 Agent Core checks, lint,
-typecheck, build and diff checks. The real-stylesheet Playwright regressions
-lock both review-right and directory-card geometry. Disposable PostgreSQL CI
-also exercises staged migration, replay, uniqueness/conflict rejection,
-Serializable activation, rollback and one-connection reliability.
+creative/placement tests, ten affiliate-route-health tests, 149 Programme
+tests, 43 Agent Core checks, lint, typecheck, build and diff checks. The
+real-stylesheet Playwright regressions lock both review-right and directory-card
+geometry. Disposable PostgreSQL CI also exercises staged migration, replay,
+uniqueness/conflict rejection, Serializable activation, rollback and
+one-connection reliability.
 
 The complete PR browser job passed at every required responsive width and the
 post-merge main job reran the same matrix from the merge commit.
@@ -238,7 +271,8 @@ a separately governed workstream.
 branch dependency alerts. This release changed no dependency and did not widen
 their exposure.
 
-No remaining issue blocks the bounded MEDIA-GEO3 Production release.
+The temporary route-health alert is recovered and closed. No remaining issue
+blocks the bounded MEDIA-GEO3 Production release.
 
 ## Final state
 

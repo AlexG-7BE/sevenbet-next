@@ -4,9 +4,9 @@
 **Evidence date:** 8 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `3f5dbb93b9008899c737a730a470152868ebe62a`
-**Verified post-release runtime baseline SHA:** `3f5dbb93b9008899c737a730a470152868ebe62a`
-**Verified post-release runtime deployment:** Ready; `dpl_2LcUXp7119j9RH8Q5ehyEu66cdca`
+**Current Production application SHA (live provider evidence):** `2656acfbb930143feec9c9a21233c647ef558597`
+**Verified post-release runtime baseline SHA:** `2656acfbb930143feec9c9a21233c647ef558597`
+**Verified post-release runtime deployment:** Ready; `dpl_5H9Ap4eeiCwBcrVUGaTPKGnyHRBr`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -63,9 +63,19 @@ directory/comparison source of canonical CTA routes and removed retired legacy
 lifecycle vetoes without adding a decision layer. [PR #202](https://github.com/AlexG-7BE/sevenbet-next/pull/202)
 and [PR #203](https://github.com/AlexG-7BE/sevenbet-next/pull/203) closed real
 Production containment defects in the review-right hero and directory-card
-creative link box. Final runtime `3f5dbb93b9008899c737a730a470152868ebe62a`
-is Ready as `dpl_2LcUXp7119j9RH8Q5ehyEu66cdca`. Exact-offer media, canonical
-routes, independent GEO/legal/safety controls, migration/schema, rollback,
+creative link box. [PR #205](https://github.com/AlexG-7BE/sevenbet-next/pull/205)
+added visitor-GET verification for partner endpoints that synthesize HEAD 404;
+[PR #206](https://github.com/AlexG-7BE/sevenbet-next/pull/206) made the external
+health monitor select active RFC-042 `MarketActivation` claims and reuse the
+existing canonical verifier instead of deprecated compatibility projection.
+Production route-health run
+[34232082558](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34232082558)
+passed all nine active claims and closed
+[issue #200](https://github.com/AlexG-7BE/sevenbet-next/issues/200); smoke run
+[34232077688](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34232077688)
+passed. Final runtime `2656acfbb930143feec9c9a21233c647ef558597` is Ready as
+`dpl_5H9Ap4eeiCwBcrVUGaTPKGnyHRBr`. Exact-offer media, canonical routes,
+independent GEO/legal/safety controls, migration/schema, rollback,
 mobile/desktop geometry and full CI passed. See the
 [MEDIA-GEO3 release record](06_Operations/MEDIA-GEO3-Release-Record-2026-09-08.md).
 
