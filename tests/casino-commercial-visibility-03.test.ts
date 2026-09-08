@@ -18,6 +18,7 @@ import type {
   PublishedCasinoSnapshotRecord,
   PublicAffiliateRoute,
 } from "../lib/public-casino/public-casino.types";
+import { selectCuratedCasinos } from "../lib/public-casino-discovery/curated-selector";
 import type { PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import { selectOverallShortlist } from "../lib/public-offer/best-offer-ranking";
 import { publicCasinoToOffers } from "../lib/public-offer/public-offer.mapper";
@@ -316,8 +317,18 @@ test("14. discovery filters contain meaningful global catalog values", async () 
   assert.ok(result.facets.gameProviders.some(({ label }) => label === "Evolution"));
   assert.ok(result.facets.categories.some(({ label }) => /slots/i.test(label)));
   assert.ok(result.facets.bonusTypes.some(({ key }) => key === "WELCOME"));
+  assert.ok(result.items.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && !casino.visitAction.available));
+  assert.equal(result.curated?.bestBonusCasinoIds.length, 3);
+  assert.equal(new Set(result.curated?.bestBonusCasinoIds).size, 3);
+  assert.equal(selectCuratedCasinos(result.items, "Best Bonuses", result.curated).length, 3);
+  assert.equal(selectCuratedCasinos(result.items, "Best Overall", result.curated).length, 3);
   assert.equal((await discovery.discover({ supportsMobile: true }, null, { defaultEditorialCountry: "KZ" })).total, 8);
   assert.equal((await discovery.discover({ hasResponsibleGambling: true }, null, { defaultEditorialCountry: "KZ" })).total, 8);
+
+  const additionalGeo = await discovery.discover({ pageSize: 12 }, null, { defaultEditorialCountry: "SE" });
+  assert.equal(additionalGeo.total, 8);
+  assert.equal(selectCuratedCasinos(additionalGeo.items, "Best Bonuses", additionalGeo.curated).length, 3);
+  assert.ok(additionalGeo.items.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && !casino.visitAction.available));
 });
 
 test("15. complete detail data uses global evidence instead of false Not listed states", () => {

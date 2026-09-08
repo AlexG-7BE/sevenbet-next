@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CasinoOutboundAction, GovernedCommercialAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
@@ -11,7 +11,8 @@ import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import {
   curatedCasinoSelectors as selectors,
-  selectCuratedCasinos,
+  resolveActiveCuratedCasinoSelector,
+  selectAvailableCuratedCasinoResults,
   type CuratedCasinoSelector as Selector,
 } from "@/lib/public-casino-discovery/curated-selector";
 import { classifyMediaRatio, mayPresentPromotionalMedia } from "@/lib/media/media-presentation";
@@ -161,20 +162,42 @@ function RecommendationMedia({
   </div>;
 }
 
-export function CuratedCasinoShortlist({ casinos, messages, presentation }: { casinos: PublicCasinoCardDto[]; messages: ProductPageMessages; presentation: PresentationResolution }) {
+export function CuratedCasinoShortlist({
+  bestBonusCasinoIds = [],
+  casinos,
+  messages,
+  presentation,
+}: {
+  bestBonusCasinoIds?: readonly string[];
+  casinos: PublicCasinoCardDto[];
+  messages: ProductPageMessages;
+  presentation: PresentationResolution;
+}) {
   const [selector, setSelector] = useState<Selector>("Best Overall");
-  const promotableCasinos = useMemo(() => casinos.filter((casino) => casino.disposition === "PROMOTABLE"), [casinos]);
-  const top = useMemo(() => selectCuratedCasinos(promotableCasinos, selector), [promotableCasinos, selector]);
-  const selectedLabel = selectorLabel(selector, messages);
+  const editorialCasinos = useMemo(() => casinos.filter((casino) => casino.disposition !== "HIDDEN"), [casinos]);
+  const availableResults = useMemo(
+    () => selectAvailableCuratedCasinoResults(editorialCasinos, { bestBonusCasinoIds }),
+    [bestBonusCasinoIds, editorialCasinos],
+  );
+  const availableSelectors = useMemo(() => availableResults.map((result) => result.selector), [availableResults]);
+  const activeSelector = resolveActiveCuratedCasinoSelector(selector, availableSelectors);
+  const top = activeSelector ? availableResults.find((result) => result.selector === activeSelector)?.items ?? [] : [];
+  const selectedLabel = activeSelector ? selectorLabel(activeSelector, messages) : "";
   const market = presentation.marketDisplayName;
+
+  useEffect(() => {
+    if (activeSelector && activeSelector !== selector) setSelector(activeSelector);
+  }, [activeSelector, selector]);
+
+  if (!activeSelector) return null;
 
   return <section className={styles.section} aria-labelledby="curated-title" data-motion-reveal data-nav-theme="light">
     <div className={styles.shell}>
-      {promotableCasinos.length ? <div className={styles.tabs} aria-label={messages.casinos.directoryTitle} data-selector-group="curated-casinos" role="group">
-        {selectors.map((label) => <button aria-pressed={selector === label} key={label} onClick={() => setSelector(label)} type="button">{selectorLabel(label, messages)}</button>)}
-      </div> : null}
+      <div className={styles.tabs} aria-label={messages.casinos.directoryTitle} data-selector-group="curated-casinos" role="group">
+        {selectors.filter((label) => availableSelectors.includes(label)).map((label) => <button aria-pressed={activeSelector === label} key={label} onClick={() => setSelector(label)} type="button">{selectorLabel(label, messages)}</button>)}
+      </div>
       <p className={styles.context} id="curated-title"><strong>{selectedLabel}</strong><span>{messages.casinos.proofLimit} · {messages.casinos.proofEvidence}</span></p>
-      {!top.length ? <div className={styles.empty} role="status"><strong>{formatProductMessage(messages.casinos.noMatchesTitle, { market })}</strong><p>{formatProductMessage(messages.casinos.noMatchesCopy, { market })}</p></div> : <div className={styles.cards}>
+      <div className={styles.cards}>
         {top.map((casino, index) => {
           const fixture = casino.dataClassification !== "PUBLISHED_RECORD";
           const fixtureDisclosure = casino.dataClassification === "DEMO_FIXTURE" ? messages.common.demoDisclosure : messages.common.marketPresentationNotice;
@@ -218,8 +241,8 @@ export function CuratedCasinoShortlist({ casinos, messages, presentation }: { ca
             />
           </article>;
         })}
-      </div>}
-      {top.length ? <div className={styles.why}><strong>{messages.bestOffers.whyTitle}</strong><span>{messages.casinos.proofEvidence}</span><span>{messages.casinos.proofPublished}</span><Link href={productHref(presentation, "/methodology")}>{messages.common.methodology} →</Link></div> : null}
+      </div>
+      <div className={styles.why}><strong>{messages.bestOffers.whyTitle}</strong><span>{messages.casinos.proofEvidence}</span><span>{messages.casinos.proofPublished}</span><Link href={productHref(presentation, "/methodology")}>{messages.common.methodology} →</Link></div>
     </div>
   </section>;
 }

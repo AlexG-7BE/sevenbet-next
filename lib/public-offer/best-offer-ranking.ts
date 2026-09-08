@@ -79,6 +79,29 @@ export function rankOverallOffers(offers: PublicOfferDTO[], country = "GB") {
     || editorialTieBreak(a, b));
 }
 
+export function rankBestBonusCasinoIds(
+  offers: PublicOfferDTO[],
+  options: { candidateCasinoIds?: readonly string[]; limit?: number } = {},
+) {
+  const candidateCasinoIds = options.candidateCasinoIds === undefined
+    ? null
+    : new Set(options.candidateCasinoIds);
+  const limit = Math.min(Math.max(options.limit ?? 3, 1), 3);
+  const seen = new Set<string>();
+  const casinoIds: string[] = [];
+
+  for (const offer of rankOverallOffers(offers.filter((item) => item.dataClassification === "PUBLISHED_RECORD"))) {
+    const casinoId = offer.casino.id;
+    if (candidateCasinoIds && !candidateCasinoIds.has(casinoId)) continue;
+    if (seen.has(casinoId)) continue;
+    seen.add(casinoId);
+    casinoIds.push(casinoId);
+    if (casinoIds.length === limit) break;
+  }
+
+  return casinoIds;
+}
+
 export function selectOverallShortlist(offers: PublicOfferDTO[], options: { country?: string; limit?: number } = {}) {
   const country = options.country ?? "GB";
   const limit = Math.min(Math.max(options.limit ?? 12, 1), 12);

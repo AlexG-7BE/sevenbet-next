@@ -93,6 +93,7 @@ export interface CasinoDiscoveryFacets {
 
 export interface CasinoDiscoveryResult {
   items: PublicCasinoCardDto[];
+  curated?: { bestBonusCasinoIds: string[] };
   inventoryMode: PublicCasinoInventoryMode;
   total: number;
   page: number;

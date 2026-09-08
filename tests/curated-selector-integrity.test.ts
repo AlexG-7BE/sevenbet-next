@@ -1,9 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { selectCuratedCasinos } from "../lib/public-casino-discovery/curated-selector";
+import {
+  resolveActiveCuratedCasinoSelector,
+  selectAvailableCuratedCasinoResults,
+  selectCuratedCasinos,
+} from "../lib/public-casino-discovery/curated-selector";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
-import { curatedBonusSelectors, selectCuratedBonuses } from "../lib/public-offer/curated-selector";
+import { rankBestBonusCasinoIds } from "../lib/public-offer/best-offer-ranking";
+import {
+  curatedBonusSelectors,
+  resolveActiveCuratedBonusSelector,
+  selectAvailableCuratedBonusResults,
+  selectCuratedBonuses,
+} from "../lib/public-offer/curated-selector";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
 
 function casino(slug: string, patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
@@ -93,8 +103,52 @@ test("casino Crypto and Mobile selectors use authoritative booleans and never la
   assert.deepEqual(selectCuratedCasinos([misleading], "Mobile"), []);
 });
 
-test("casino Best Bonuses fails closed without complete offer-ranking authority", () => {
-  assert.deepEqual(selectCuratedCasinos([casino("low-wagering", { featuredBonus: { title: "Offer", summary: "Terms", type: "WELCOME", keyTerms: [], wageringRequirement: 1, minimumDeposit: 1, currency: "GBP", validUntil: null, termsApply: true } })], "Best Bonuses"), []);
+test("casino Best Bonuses follows canonical offer ranking IDs and never infers rank from the card summary", () => {
+  const alpha = casino("alpha", { featuredBonus: { title: "Large headline", summary: "Terms", type: "WELCOME", keyTerms: [], wageringRequirement: 50, minimumDeposit: 100, currency: "GBP", validUntil: null, termsApply: true } });
+  const beta = casino("beta", { featuredBonus: null });
+  assert.deepEqual(selectCuratedCasinos([alpha, beta], "Best Bonuses"), []);
+  assert.deepEqual(
+    selectCuratedCasinos([alpha, beta], "Best Bonuses", { bestBonusCasinoIds: ["beta", "alpha"] }).map((item) => item.id),
+    ["beta", "alpha"],
+  );
+});
+
+test("canonical Best Bonuses ranking deduplicates casinos and continues to three unique published records", () => {
+  const alphaBest = offer("alpha", { deposit: 5 });
+  const alphaSecond = { ...alphaBest, bonus: { ...alphaBest.bonus, id: "alpha-second", slug: "alpha-second", minimumDeposit: 25 } };
+  const beta = offer("beta", { deposit: 10 });
+  const gamma = offer("gamma", { deposit: 15 });
+  assert.deepEqual(rankBestBonusCasinoIds([alphaSecond, gamma, alphaBest, beta]), ["alpha", "beta", "gamma"]);
+  assert.deepEqual(rankBestBonusCasinoIds([alphaBest, beta, gamma], { candidateCasinoIds: ["beta", "gamma"] }), ["beta", "gamma"]);
+});
+
+test("casino selectors include informational records, exclude hidden records, and derive availability from real results", () => {
+  const informational = casino("informational", { supportsMobile: true, publishedAt: "2026-03-01T00:00:00.000Z" });
+  const promotable = casino("promotable", { disposition: "PROMOTABLE", dispositionReason: "EXACT_MARKET_AND_ROUTE_ELIGIBLE", publishedAt: "2026-02-01T00:00:00.000Z" });
+  const hidden = casino("hidden", { disposition: "HIDDEN", dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY", supportsCrypto: true, publishedAt: "2026-04-01T00:00:00.000Z" });
+  const records = [promotable, hidden, informational];
+
+  assert.deepEqual(selectCuratedCasinos(records, "Best Overall").map((item) => item.id), ["promotable", "informational"]);
+  assert.deepEqual(selectCuratedCasinos(records, "Crypto"), []);
+  assert.deepEqual(selectCuratedCasinos(records, "Mobile").map((item) => item.id), ["informational"]);
+  assert.deepEqual(selectCuratedCasinos(records, "New Casinos").map((item) => item.id), ["informational", "promotable"]);
+  assert.deepEqual(
+    selectAvailableCuratedCasinoResults(records).map((result) => result.selector),
+    ["Best Overall", "Mobile", "New Casinos"],
+  );
+  assert.equal(resolveActiveCuratedCasinoSelector("Crypto", ["Best Overall", "Mobile"]), "Best Overall");
+  assert.equal(resolveActiveCuratedCasinoSelector("Crypto", ["Mobile"]), "Mobile");
+});
+
+test("casino Best Overall and New Casinos remain capped at three informational editorial records", () => {
+  const records = [
+    casino("one", { publishedAt: "2026-01-01T00:00:00.000Z" }),
+    casino("two", { publishedAt: "2026-02-01T00:00:00.000Z" }),
+    casino("three", { publishedAt: "2026-03-01T00:00:00.000Z" }),
+    casino("four", { publishedAt: "2026-04-01T00:00:00.000Z" }),
+  ];
+  assert.deepEqual(selectCuratedCasinos(records, "Best Overall").map((item) => item.id), ["one", "two", "three"]);
+  assert.deepEqual(selectCuratedCasinos(records, "New Casinos").map((item) => item.id), ["four", "three", "two"]);
 });
 
 test("bonus Crypto selector never falls back to a non-crypto record", () => {
@@ -102,6 +156,17 @@ test("bonus Crypto selector never falls back to a non-crypto record", () => {
   const crypto = offer("crypto", { crypto: true });
   assert.deepEqual(selectCuratedBonuses([nonCrypto, crypto], "Crypto").map((item) => item.casino.slug), ["crypto"]);
   assert.deepEqual(selectCuratedBonuses([nonCrypto], "Crypto"), []);
+});
+
+test("bonus selector availability removes known-empty categories and resolves stale selection", () => {
+  const sparse = offer("sparse", { crypto: false, deposit: null, wagering: null });
+  assert.deepEqual(
+    selectAvailableCuratedBonusResults([sparse]).map((result) => result.selector),
+    ["Best Overall", "Newest"],
+  );
+  assert.equal(resolveActiveCuratedBonusSelector("Crypto", ["Best Overall", "Newest"]), "Best Overall");
+  assert.equal(resolveActiveCuratedBonusSelector("Crypto", ["Newest"]), "Newest");
+  assert.equal(resolveActiveCuratedBonusSelector("Crypto", []), null);
 });
 
 test("bonus Best Overall uses the existing multi-signal ranking instead of lowest wagering alone", () => {

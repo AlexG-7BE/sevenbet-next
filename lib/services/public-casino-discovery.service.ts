@@ -15,6 +15,9 @@ import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authorit
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
 import { eligibleDiscoveryMediaRoutes, eligibleDiscoveryOffers } from "@/lib/public-casino-discovery/commercial-eligibility";
 import { decidePublicCasinoDisposition } from "@/lib/public-casino/presentation-disposition";
+import { rankBestBonusCasinoIds } from "@/lib/public-offer/best-offer-ranking";
+import { publicCasinoToOffers } from "@/lib/public-offer/public-offer.mapper";
+import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 
 export function publicCasinoInventoryMode(casinos: PublicCasinoCardDto[]) {
   const demoCount = casinos.filter((casino) => casino.dataClassification === "DEMO_FIXTURE").length;
@@ -104,6 +107,7 @@ export function resolvePublicVisitAction(
 
 interface WorkingCard {
   card: PublicCasinoCardDto;
+  offers: PublicOfferDTO[];
   marketCountry: string;
   marketCurrencies: string[];
   aliases: string[];
@@ -300,6 +304,7 @@ export class PublicCasinoDiscoveryService {
       };
       return [{
         card,
+        offers: publicCasinoToOffers(scoped),
         marketCountry,
         marketCurrencies: scoped.currencies,
         aliases: aliasesByCasino.get(scoped.id) ?? [],
@@ -365,8 +370,14 @@ export class PublicCasinoDiscoveryService {
     const pageCount = Math.max(1, Math.ceil(total / query.pageSize!));
     const page = Math.min(query.page!, pageCount);
     const start = (page - 1) * query.pageSize!;
+    const pageItems = filtered.slice(start, start + query.pageSize!);
+    const bestBonusCasinoIds = rankBestBonusCasinoIds(
+      pageItems.flatMap((item) => item.offers),
+      { candidateCasinoIds: pageItems.map((item) => item.card.id) },
+    );
     return {
-      items: filtered.slice(start, start + query.pageSize!).map((item) => item.card),
+      items: pageItems.map((item) => item.card),
+      curated: { bestBonusCasinoIds },
       inventoryMode: publicCasinoInventoryMode(filtered.map((item) => item.card)),
       total,
       page,

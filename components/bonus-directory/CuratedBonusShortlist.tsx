@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CommercialOfferMedia, hasGovernedCommercialOfferAction, OperatorLogo } from "@/components/commercial-media/CommercialOfferMedia";
@@ -9,11 +9,12 @@ import { formatProfileScore } from "@/lib/casino-profile/presentation";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import {
   curatedBonusSelectors as selectors,
-  selectCuratedBonuses,
+  resolveActiveCuratedBonusSelector,
+  selectAvailableCuratedBonusResults,
   type CuratedBonusSelector as Selector,
 } from "@/lib/public-offer/curated-selector";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
-import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
+import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
 
@@ -43,18 +44,28 @@ function payout(offer: PublicOfferDTO, messages: ProductPageMessages) {
 
 export function CuratedBonusShortlist({ offers, messages, presentation }: { offers: PublicOfferDTO[]; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const [selector, setSelector] = useState<Selector>("Best Overall");
-  const top = useMemo(() => selectCuratedBonuses(offers, selector), [offers, selector]);
+  const availableResults = useMemo(() => selectAvailableCuratedBonusResults(offers), [offers]);
+  const availableSelectors = useMemo(() => availableResults.map((result) => result.selector), [availableResults]);
+  const activeSelector = resolveActiveCuratedBonusSelector(selector, availableSelectors);
+  const top = activeSelector ? availableResults.find((result) => result.selector === activeSelector)?.items ?? [] : [];
+
+  useEffect(() => {
+    if (activeSelector && activeSelector !== selector) setSelector(activeSelector);
+  }, [activeSelector, selector]);
+
+  if (!activeSelector) return null;
+
   return <section className={styles.section} aria-labelledby="bonus-shortlist-title" data-motion-reveal data-nav-theme="light"><div className={styles.shell}>
-    {offers.length ? <div className={styles.tabs} aria-label={messages.bonuses.directoryTitle} data-selector-group="curated-bonuses" role="group">{selectors.map((label) => {
+    <div className={styles.tabs} aria-label={messages.bonuses.directoryTitle} data-selector-group="curated-bonuses" role="group">{selectors.filter((label) => availableSelectors.includes(label)).map((label) => {
       const localizedLabel = label === "Best Overall" ? messages.bonuses.selectorBestOverall
         : label === "Low Wagering" ? messages.bonuses.selectorLowWagering
           : label === "Low Deposit" ? messages.bonuses.selectorLowDeposit
             : label === "Crypto" ? messages.bonuses.selectorCrypto
               : messages.bonuses.selectorNewest;
-      return <button aria-pressed={selector === label} key={label} onClick={() => setSelector(label)} type="button">{localizedLabel}</button>;
-    })}</div> : null}
+      return <button aria-pressed={activeSelector === label} key={label} onClick={() => setSelector(label)} type="button">{localizedLabel}</button>;
+    })}</div>
     <p className={styles.label} id="bonus-shortlist-title">{messages.bestOffers.sectionTitle} · {messages.bonuses.sortedByValue}</p>
-    {!top.length ? <div className={styles.empty} role="status"><strong>{formatProductMessage(messages.bonuses.noMatchesTitle, { market: presentation.marketDisplayName })}</strong><p>{messages.bonuses.noMatchesCopy}</p></div> : <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
+    <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
       <header><small>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published}</small><span className={styles.rank}>0{index + 1}</span></header>
       <strong className={styles.headline}>{offer.bonus.title}</strong>
       <div className={styles.identity}><OperatorLogo offer={offer} prominent={index === 0} /><div><h2>{offer.casino.name}</h2><small>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} <span aria-hidden="true">★★★★★</span></small></div></div>
@@ -63,7 +74,7 @@ export function CuratedBonusShortlist({ offers, messages, presentation }: { offe
       <CommercialOfferMedia messages={messages} offer={offer} variant="bonus" />
       {offer.dataClassification === "DEMO_FIXTURE" ? <b className={styles.demo}>{messages.common.demoData} — {messages.common.demoDisclosure}</b> : null}
       <div className={styles.actions}><Action messages={messages} offer={offer} /><Review messages={messages} offer={offer} presentation={presentation} /></div>
-    </article>)}</div>}
-    {top.length ? <aside className={styles.method}><strong>{messages.bonuses.methodKicker}</strong><span>{messages.bonuses.sortedByValue}</span><span>{messages.bonuses.proofSources}</span><Link href="/bonus-guide">{messages.common.bonusGuide} →</Link></aside> : null}
+    </article>)}</div>
+    <aside className={styles.method}><strong>{messages.bonuses.methodKicker}</strong><span>{messages.bonuses.sortedByValue}</span><span>{messages.bonuses.proofSources}</span><Link href="/bonus-guide">{messages.common.bonusGuide} →</Link></aside>
   </div></section>;
 }
