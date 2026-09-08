@@ -95,6 +95,14 @@ test("the supplied archive finding keeps corporate BGA art excluded while allowi
   assert.match(betssonUpgrade.note, /not a seventh catalog entry/i);
 });
 
+test("mutable research_staging provenance cannot block Production deploys", () => {
+  const verifier = read("lib/casino-ingestion/source-verification.ts");
+  assert.match(verifier, /startsWith\("research_staging\/"\)/);
+  assert.match(verifier, /!isMutableResearchProvenance\(source\.path\) && digest !== source\.sha256/);
+  assert.match(verifier, /Source path escapes the explicit source root/);
+  assert.match(verifier, /symbolic link/);
+});
+
 test("production mutation is bounded to Vercel production after the existing database preflight", () => {
   const releaseSource = read("scripts/casino-real-catalog-03.ts");
   const vercel = JSON.parse(read("vercel.json")) as { buildCommand: string };
