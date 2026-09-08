@@ -180,7 +180,8 @@ test("review hero stays inert while promotional media remains in the offer block
     const response = await page.goto(`${baseUrl}/en/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
     const hero = page.locator('[class*="heroMedia"][data-presentation-family="LOGO_ONLY"]');
-    await expect(hero).toHaveAttribute("data-suppressed-promotion-family", "CARD");
+    await expect(hero).toHaveAttribute("data-media-source", "LOGO_COMPOSITION");
+    expect(await hero.getAttribute("data-creative-offer-id")).toBeNull();
     await expect(hero.locator("a,button")).toHaveCount(0);
     await expect(page.locator('a[data-commercial-action-placement="CASINO_DETAIL_HERO"]')).toHaveCount(0);
 

@@ -226,6 +226,10 @@ test("Public Shell keeps its approved architecture while exposing the current br
         "prisma/migrations/0032_market_activation_global_fallback/migration.sql",
         "prisma/schema.prisma",
       ],
+      [
+        "prisma/migrations/0033_media_geo3_pipeline/migration.sql",
+        "prisma/schema.prisma",
+      ],
       ["prisma/schema.prisma"],
     ];
     assert.ok(

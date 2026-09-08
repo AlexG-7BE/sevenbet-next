@@ -19,7 +19,7 @@ type ExistingOutboundPlacement = "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | 
 
 export type OutboundIntentContext =
   | { source: "CTA"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" }
-  | { source: "CREATIVE"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" | "CASINO_DETAIL_HERO" };
+  | { source: "CREATIVE"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" | "CASINO_DETAIL_HERO" | "CASINO_REVIEW_RIGHT_HERO" };
 
 function browserStorage(): StorageLike | undefined {
   try {

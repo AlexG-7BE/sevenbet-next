@@ -240,6 +240,8 @@ export class PublicCasinoDiscoveryService {
     const working = published.flatMap((record): WorkingCard[] => {
       const mapped = mapPublishedCasino(record, mediaRoutes, {
         redirectEnabled: false,
+        commercialMediaEnabled: Boolean(commercialCountryContext
+          && (requestCountryContext !== "GB" || operatorDecisions.get(record.casinoId)?.referralEligible === true)),
         now,
         countryCode: requestCountryContext,
         presentationLanguage: options.presentationLanguage,
@@ -270,7 +272,9 @@ export class PublicCasinoDiscoveryService {
         ? visit
         : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: decision.reasonCode } satisfies PublicVisitAction;
       const marketCountry = exactProfile?.countryCode ?? requestCountryContext ?? "UNKNOWN";
-      const directoryPlacement = scoped.media.placements?.CASINO_DIRECTORY_CARD;
+      const directoryPlacement = promotional
+        ? bonus?.media?.CASINO_DIRECTORY_CARD ?? scoped.media.placements?.CASINO_DIRECTORY_CARD
+        : scoped.media.placements?.CASINO_DIRECTORY_CARD;
       const directoryMedia = directoryPlacement?.asset ?? scoped.media.logo;
       const directoryMediaDto = publicMediaDto(directoryMedia, `${scoped.name} directory media`, directoryPlacement);
       const logoPlacement = scoped.media.placements?.CASINO_LOGO;

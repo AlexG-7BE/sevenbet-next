@@ -8,7 +8,7 @@ test("Media Operations publishes separate OAuth metadata and fails closed withou
   await expect(metadata.json()).resolves.toMatchObject({
     resource: `${baseUrl}/api/mcp/media`,
     authorization_servers: [`${baseUrl}/api/mcp/media`],
-    scopes_supported: ["media:read", "media:safe_write", "offline_access"],
+    scopes_supported: ["media:read", "media:safe_write", "media:production_write", "offline_access"],
   });
   const authorizationServer = await request.get(`${baseUrl}/.well-known/oauth-authorization-server/api/mcp/media`);
   expect(authorizationServer.status()).toBe(200);
@@ -17,7 +17,7 @@ test("Media Operations publishes separate OAuth metadata and fails closed withou
     registration_endpoint: `${baseUrl}/api/mcp/oauth/register/media`,
     authorization_endpoint: `${baseUrl}/api/mcp/oauth/authorize`,
     token_endpoint: `${baseUrl}/api/mcp/oauth/token`,
-    scopes_supported: ["media:read", "media:safe_write", "offline_access"],
+    scopes_supported: ["media:read", "media:safe_write", "media:production_write", "offline_access"],
     code_challenge_methods_supported: ["S256"],
     token_endpoint_auth_methods_supported: ["none"],
   });
@@ -45,7 +45,7 @@ test("discriminator-free DCR binds each discovery path to one resource and rejec
   expect(mediaClient).toMatchObject({
     token_endpoint_auth_method: "none",
     grant_types: ["authorization_code", "refresh_token"],
-    scope: "media:read media:safe_write offline_access",
+    scope: "media:read media:safe_write media:production_write offline_access",
   });
   expect(mediaClient.client_secret).toBeUndefined();
 

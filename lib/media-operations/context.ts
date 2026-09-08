@@ -59,6 +59,9 @@ export async function resolveMediaIngestionContext(
   const explicitBonus = requested.bonusId
     ? await prisma.casinoBonus.findUnique({ where: { id: requested.bonusId } })
     : null;
+  const explicitAffiliateOffer = requested.affiliateOfferId
+    ? await prisma.affiliateOffer.findUnique({ where: { id: requested.affiliateOfferId } })
+    : null;
   const opportunity = requested.opportunityId
     ? await prisma.commercialOpportunity.findUnique({
       where: { id: requested.opportunityId },
@@ -69,17 +72,22 @@ export async function resolveMediaIngestionContext(
   if (requested.casinoId && !casinoById) { notes.push("Explicit casinoId was not found."); conflict = true; }
   if (requested.casinoSlug && !casinoBySlug) { notes.push("Explicit casinoSlug was not found."); conflict = true; }
   if (requested.bonusId && !explicitBonus) { notes.push("Explicit bonusId was not found."); conflict = true; }
+  if (requested.affiliateOfferId && !explicitAffiliateOffer) { notes.push("Explicit affiliateOfferId was not found."); conflict = true; }
   if (requested.opportunityId && !opportunity) { notes.push("Explicit opportunityId was not found."); conflict = true; }
 
   const explicitCasinoIds = new Set([
     casinoById?.id,
     casinoBySlug?.id,
     explicitBonus?.casinoId,
+    explicitAffiliateOffer?.casinoId,
     opportunity?.casinoId,
   ].filter((value): value is string => Boolean(value)));
   if (explicitCasinoIds.size > 1) { notes.push("Explicit context resolves to different casinos."); conflict = true; }
 
   let casino = casinoById ?? casinoBySlug ?? opportunity?.casino ?? null;
+  if (!casino && explicitAffiliateOffer) {
+    casino = await prisma.casino.findUnique({ where: { id: explicitAffiliateOffer.casinoId }, include: { aliases: true, brandProfile: true, operatorProfile: true } });
+  }
   if (!casino && explicitBonus) {
     casino = await prisma.casino.findUnique({ where: { id: explicitBonus.casinoId }, include: { aliases: true, brandProfile: true, operatorProfile: true } });
   }
@@ -128,6 +136,9 @@ export async function resolveMediaIngestionContext(
   }
 
   let bonus = explicitBonus;
+  if (!bonus && explicitAffiliateOffer?.casinoBonusId) {
+    bonus = await prisma.casinoBonus.findUnique({ where: { id: explicitAffiliateOffer.casinoBonusId } });
+  }
   if (!bonus && casino && !conflict) {
     const bonuses = await prisma.casinoBonus.findMany({ where: { casinoId: casino.id, status: "DRAFT" }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }], take: 3 });
     if (bonuses.length === 1) {
@@ -151,8 +162,8 @@ export async function resolveMediaIngestionContext(
     } else notes.push("Partner identifier was retained as evidence but did not resolve to a governed partner record.");
   }
 
-  let affiliateOffer: AffiliateOffer | null = null;
-  if (casino && !conflict) {
+  let affiliateOffer: AffiliateOffer | null = explicitAffiliateOffer;
+  if (!affiliateOffer && casino && !conflict) {
     const offers = await prisma.affiliateOffer.findMany({
       where: {
         casinoId: casino.id,
@@ -166,6 +177,8 @@ export async function resolveMediaIngestionContext(
     if (offers.length === 1) affiliateOffer = offers[0];
     else if (offers.length > 1) notes.push("Multiple draft affiliate offers match the context; assignment will use the bonus subject unless reviewed.");
   }
+  if (affiliateOffer && casino && affiliateOffer.casinoId !== casino.id) { notes.push("Selected affiliate offer does not belong to the selected casino."); conflict = true; }
+  if (affiliateOffer && bonus && affiliateOffer.casinoBonusId !== bonus.id) { notes.push("Selected affiliate offer does not bind the selected bonus."); conflict = true; }
 
   const anchors = [...new Set(creatives.map((creative) => creative.anchorHref).filter((value): value is string => Boolean(value)).map(canonicalUrl))];
   let trackingDestinationState: PersistedResolvedContext["trackingDestinationState"] = anchors.length ? "TRACKING_DESTINATION_REVIEW_REQUIRED" : "NOT_PRESENT";

@@ -92,11 +92,19 @@ function activation(overrides: Record<string, unknown> = {}) {
       casinoId: CASINO_ID,
       casinoBonusId: null,
       programId: "program",
+      status: "ACTIVE",
+      startAt: null,
+      expiresAt: null,
+      archivedAt: null,
       geoMode: "ALLOW",
       countries: [{ countryCode: "PE", mode: "ALLOW" }],
       program: {
         id: "program",
         casinoId: CASINO_ID,
+        status: "ACTIVE",
+        workflowStatus: "PUBLISHED",
+        archivedAt: null,
+        network: { active: true, archivedAt: null },
         metadata: {},
         supportedCountries: ["PE"],
       },
@@ -107,11 +115,15 @@ function activation(overrides: Record<string, unknown> = {}) {
       label: "Inkabet PE",
       destinationUrl: "https://operator.example/casino",
       trackingUrl: "https://tracking.example/click",
+      active: true,
+      archivedAt: null,
+      validFrom: null,
+      expiresAt: null,
       metadata: {},
       geoMode: "ALLOW",
       countries: [{ countryCode: "PE", mode: "ALLOW" }],
     },
-    redirectSlug: { id: REDIRECT_ID, slug: "inkabet-casino", casinoId: CASINO_ID, casinoBonusId: null, affiliateOfferId: OFFER_ID },
+    redirectSlug: { id: REDIRECT_ID, slug: "inkabet-casino", casinoId: CASINO_ID, casinoBonusId: null, affiliateOfferId: OFFER_ID, active: true, archivedAt: null },
     ...overrides,
   };
 }
@@ -292,16 +304,83 @@ test("internal verifier execution failure never fabricates an external blocker",
   assert.equal(verificationWrites, 0);
 });
 
+test("controller-confirmed external route failure removes CTA through canonical state", async () => {
+  let verificationWrites = 0;
+  const staleCanonical = activation({ routeLastCheckedAt: new Date("2026-08-01T00:00:00.000Z") });
+  const blockedCanonical = activation({
+    status: "BLOCKED_EXTERNAL",
+    routeVerificationStatus: "BROKEN",
+    routeLastCheckedAt: NOW,
+    blockedAt: NOW,
+    externalBlockerCode: "ROUTE_VERIFICATION_BROKEN",
+    externalBlockerDetail: "HTTP_410",
+    externalBlockerSource: "AffiliateRouteHealth",
+  });
+  const controller = new MarketActivationController({
+    apply: async () => ({ idempotent: false, activation: staleCanonical }) as never,
+    recordRouteVerification: async () => {
+      verificationWrites += 1;
+      return { idempotent: false, activation: blockedCanonical } as never;
+    },
+  } as never, {
+    verify: async () => ({
+      status: "BROKEN",
+      reason: "HTTP_410",
+      checkedAt: NOW,
+      method: "GET",
+      statusCode: 410,
+      durationMs: 2,
+      redirectCount: 1,
+      finalHost: "operator.example",
+    }),
+  });
+  const outcome = await controller.activateCasinoInGeo(intent(), NOW);
+  assert.equal(outcome.activation.status, "BLOCKED_EXTERNAL");
+  assert.equal(verificationWrites, 2, "canonical external blockers remain re-verifiable");
+  assert.deepEqual(await runtime([blockedCanonical]).listActive([CASINO_ID], "PE"), []);
+  assert.equal(await runtime([blockedCanonical]).resolveRedirect("inkabet-casino", "PE"), null);
+});
+
 test("canonical runtime resolves only the exact active market and ignores legacy workflow flags", async () => {
+  const staleCompatibility = activation({
+    affiliateOffer: {
+      ...activation().affiliateOffer,
+      status: "DRAFT",
+      startAt: new Date("2030-01-01T00:00:00.000Z"),
+      expiresAt: new Date("2030-02-01T00:00:00.000Z"),
+      archivedAt: NOW,
+      program: {
+        ...activation().affiliateOffer.program,
+        status: "DRAFT",
+        workflowStatus: "DRAFT",
+        archivedAt: NOW,
+        network: { active: false, archivedAt: NOW },
+      },
+    },
+    primaryTrackingLink: {
+      ...activation().primaryTrackingLink,
+      active: false,
+      archivedAt: NOW,
+      validFrom: new Date("2030-01-01T00:00:00.000Z"),
+      expiresAt: new Date("2030-02-01T00:00:00.000Z"),
+    },
+    redirectSlug: { ...activation().redirectSlug, active: false, archivedAt: NOW },
+  });
   const records = [
-    activation(),
+    staleCompatibility,
     activation({ id: "10000000-0000-4000-8000-000000000007", countryCode: "CL", desiredState: "DISABLED", status: "DISABLED" }),
   ];
   const authority = runtime(records);
   assert.equal((await authority.listActive([CASINO_ID], "PE")).length, 1);
   assert.equal((await authority.listActive([CASINO_ID], "CL")).length, 0);
+  assert.equal((await authority.listActive([CASINO_ID], "EE")).length, 0, "a different request GEO cannot inherit PE authority");
   assert.equal((await authority.resolveRedirect("inkabet-casino", "PE"))?.primaryTrackingLinkId, TRACKING_ID);
   assert.equal(await authority.resolveRedirect("inkabet-casino", "CL"), null);
+  const publicRoute = (await authority.listPublicRoutes([CASINO_ID], "PE"))[0];
+  assert.equal(publicRoute?.slug, "inkabet-casino");
+  assert.equal(publicRoute?.mediaOfferAuthority?.status, "DRAFT");
+  assert.equal(publicRoute?.mediaOfferAuthority?.programWorkflowStatus, "DRAFT");
+  assert.equal(publicRoute?.mediaOfferAuthority?.networkActive, false);
 });
 
 test("canonical global fallback is explicitly evidenced, request-scoped, denied in protected countries, and shadowed by any exact row", async () => {
@@ -357,8 +436,12 @@ test("canonical global fallback is explicitly evidenced, request-scoped, denied 
 
 test("canonical runtime fails closed for cross-entity or unsafe bindings", async () => {
   const crossOffer = activation({ primaryTrackingLink: { ...activation().primaryTrackingLink, offerId: "another-offer" } });
+  const crossCasino = activation({ affiliateOffer: { ...activation().affiliateOffer, casinoId: "another-casino" } });
+  const crossRedirect = activation({ redirectSlug: { ...activation().redirectSlug, casinoId: "another-casino" } });
   const unsafe = activation({ primaryTrackingLink: { ...activation().primaryTrackingLink, trackingUrl: "http://unsafe.example" } });
   assert.deepEqual(await runtime([crossOffer]).listActive([CASINO_ID], "PE"), []);
+  assert.deepEqual(await runtime([crossCasino]).listActive([CASINO_ID], "PE"), []);
+  assert.deepEqual(await runtime([crossRedirect]).listActive([CASINO_ID], "PE"), []);
   assert.deepEqual(await runtime([unsafe]).listActive([CASINO_ID], "PE"), []);
 });
 

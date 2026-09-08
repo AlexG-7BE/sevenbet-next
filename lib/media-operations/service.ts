@@ -11,6 +11,9 @@ import {
   mediaIngestPartnerBatchInputSchema,
   mediaIngestPartnerSnippetInputSchema,
   mediaListRecentIngestionsInputSchema,
+  mediaOrchestrateProductionInputSchema,
+  mediaRollbackRevisionInputSchema,
+  mediaGetRevisionInputSchema,
   normalizeMediaIngestionContext,
   type MediaIngestPartnerBatchItem,
   type MediaIngestionBatch,
@@ -35,6 +38,7 @@ import { buildMediaPlacementPlan, scoreMediaPlacements, type ExistingMediaAssign
 import { fetchRemoteImage, RemoteImageFetchError } from "@/lib/media-operations/remote-image-fetch";
 import { mediaIngestionRepository, type MediaIngestionRepository } from "@/lib/media-operations/repository";
 import { analyzeMediaPlan } from "@/lib/media-operations/semantic-analysis";
+import { mediaProductionRevisionService } from "@/lib/media-operations/production-revisions";
 import { prisma } from "@/lib/db/prisma";
 import { commercialCreativePresentationFamily } from "@/lib/media/commercial-formats";
 import { mediaService, type MediaService } from "@/lib/services/media.service";
@@ -44,6 +48,12 @@ export type MediaOperationsActor = {
   actorId: string;
   source: MediaOperationsSource;
 };
+
+function assertProductionRevisionRuntime(environment: NodeJS.ProcessEnv = process.env) {
+  if (environment.VERCEL_ENV !== "production" && environment.CI !== "true") {
+    throw new ValidationError("Production media revision mutations require the Production runtime");
+  }
+}
 
 type PreparedIngestion = {
   input: {
@@ -930,6 +940,27 @@ export class MediaOperationsService {
     const plan = await this.repository.getPlan(input.planId);
     if (!plan) throw new NotFoundError("Media ingestion plan", { planId: input.planId });
     return plan;
+  }
+
+  async orchestrateProduction(rawInput: unknown, actor: MediaOperationsActor) {
+    assertProductionRevisionRuntime();
+    const input = mediaOrchestrateProductionInputSchema.parse(rawInput);
+    const batch = await this.repository.getBatch(input.batchId);
+    if (!batch) throw new NotFoundError("Media ingestion batch", { batchId: input.batchId });
+    if (!["ANALYZED", "APPLIED", "PARTIALLY_APPLIED"].includes(batch.state)) {
+      await this.analyze({ batchId: input.batchId, useSemanticAnalysis: input.useSemanticAnalysis }, actor);
+    }
+    return mediaProductionRevisionService.orchestrate(input, actor);
+  }
+
+  async rollbackProductionRevision(rawInput: unknown, actor: MediaOperationsActor) {
+    assertProductionRevisionRuntime();
+    return mediaProductionRevisionService.rollback(mediaRollbackRevisionInputSchema.parse(rawInput), actor);
+  }
+
+  async getProductionRevision(rawInput: unknown) {
+    const input = mediaGetRevisionInputSchema.parse(rawInput);
+    return mediaProductionRevisionService.get(input.revisionId);
   }
 
   async listRecent(rawInput: unknown) {

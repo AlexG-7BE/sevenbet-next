@@ -92,6 +92,7 @@ export type ProductAnalyticsEventMap = {
       | "CREATIVE_CASINO_OFFER_BLOCK"
       | "CREATIVE_CASINO_DIRECTORY_CARD"
       | "CREATIVE_CASINO_DETAIL_HERO"
+      | "CREATIVE_CASINO_REVIEW_RIGHT_HERO"
       | "CREATIVE_OFFER_DETAIL";
   };
 };

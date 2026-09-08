@@ -10,6 +10,11 @@
 FOUNDER OFFICE — VETTED-PARTNER-HOSTED-CREATIVES-01`, as amended by
 `B4GAMBLE — MEDIA-OPERATIONS-BULK-01` on 6 September 2026.
 
+[RFC-043](RFC-043-Production-Media-Pipeline.md) supersedes this RFC only for
+public promotional targeting order, `UNKNOWN` fallback, exact-offer hero/card
+selection and automatic Production revision authority. Provider isolation,
+structured destinations and hosted-media safety remain unchanged.
+
 ## Decision
 
 B4GAMBLE supports original partner-hosted commercial creatives from a small,
@@ -271,11 +276,12 @@ The existing Admin Media Operations screen adds separate Description and Embed
 Code fields, structured provider/binding evidence, a clear `PARTNER-HOSTED`
 label and protected Preview. It is not a general HTML previewer.
 
-The Media MCP has exactly six tools, including
-`media_ingest_partner_batch`; the single-item tool remains backwards
-compatible. Analyze, get, draft apply and rollback accept a recorded batch and
-fan out only through its subject-isolated plan IDs. The Commercial MCP remains
-exactly four tools. No unified MCP and no publish tool is introduced.
+RFC-043 extends the Media MCP from six to nine tools. The original six retain
+their draft/read meanings; three separately named revision tools add bounded
+Production orchestration, rollback and readback. Production mutation requires
+`media:production_write`, while `media:safe_write` remains draft-only. The
+Commercial MCP remains exactly four tools and no unified or generic publish
+tool is introduced.
 
 `VETTED_PARTNER_HOSTED_CREATIVES_ENABLED=true` independently enables public
 hosted resolution and frame delivery. Disabling it makes hosted projections

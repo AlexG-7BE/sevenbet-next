@@ -1,7 +1,7 @@
 import type { CommercialMcpConfig } from "@/lib/mcp/commercial/config";
 
 export const MEDIA_MCP_PATH = "/api/mcp/media";
-export const MEDIA_MCP_SCOPES = ["media:read", "media:safe_write"] as const;
+export const MEDIA_MCP_SCOPES = ["media:read", "media:safe_write", "media:production_write"] as const;
 export const MEDIA_MCP_AUTHORIZATION_SCOPES = [...MEDIA_MCP_SCOPES, "offline_access"] as const;
 
 type MediaMcpEnvironment = Record<string, string | undefined> & {

@@ -4,7 +4,6 @@ import type {
   MediaPlacementVariantName,
   MediaRenderingModeName,
   MediaTargetingResolution,
-  OfferMediaPlacementName,
   PlacementMediaSource,
 } from "@/lib/media/placement-media";
 
@@ -47,6 +46,11 @@ export interface PublicPlacementMediaResolution {
   fallback: boolean;
   effectiveAlt: string;
   focalPoint: { x: number; y: number } | null;
+  status?: "READY" | "FALLBACK" | "MISSING" | "CONFLICT" | "BLOCKED";
+  creativeSetId?: string | null;
+  creativeVariantId?: string | null;
+  mediaRevisionId?: string | null;
+  exactOfferId?: string | null;
 }
 
 export interface PublicPlacementMedia extends PublicPlacementMediaResolution {
@@ -78,7 +82,7 @@ export interface PublicCasinoBonus {
   startsAt: string | null;
   expiresAt: string | null;
   affiliate: PublicCasinoAffiliate;
-  media?: Partial<Record<OfferMediaPlacementName, PublicPlacementMedia>>;
+  media?: Partial<Record<MediaPlacementName, PublicPlacementMedia>>;
 }
 
 export interface PublicCasinoLicense {
@@ -216,4 +220,20 @@ export interface PublicAffiliateRoute {
   casinoBonusId: string | null;
   affiliateOfferId?: string | null;
   slug: string;
+  /** Live legacy lifecycle evidence used only to suppress stale promotional media. */
+  mediaOfferAuthority?: {
+    status: string;
+    startAt: Date | null;
+    expiresAt: Date | null;
+    archivedAt: Date | null;
+    programStatus: string;
+    programWorkflowStatus: string;
+    programArchivedAt: Date | null;
+    networkActive: boolean;
+    networkArchivedAt: Date | null;
+    bonusStatus: string | null;
+    bonusOfferStatus: string | null;
+    bonusStartsAt: Date | null;
+    bonusExpiresAt: Date | null;
+  };
 }

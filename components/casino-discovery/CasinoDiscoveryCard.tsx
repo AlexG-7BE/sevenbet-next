@@ -3,7 +3,7 @@ import Image from "next/image";
 import React from "react";
 import type { ReactNode } from "react";
 
-import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { CasinoOutboundAction, GovernedCommercialAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
 import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
@@ -22,6 +22,7 @@ const DIRECTORY_EDITORIAL_MEDIA = "/casino-directory/editorial-media.jpg";
 export type CasinoCardClassNames = Record<
   | "casinoCard" | "cardHeader" | "position" | "logo" | "identity" | "score"
   | "description" | "signals" | "signal" | "offerBlock" | "commission"
+  | "offerMedia"
   | "unavailable" | "cardActions" | "featurePlaceholder" | "featureTheatre"
   | "featureMedia" | "featureOverlay" | "featureCopy" | "featureMetrics"
   | "featureCard" | "featureEyebrow",
@@ -64,6 +65,19 @@ function ReviewCardContents({ casino, position, classNames, messages, presentati
     casino.paymentMethods.length ? casino.paymentMethods.slice(0, 2).map((item) => item.label).join(" + ") : null,
     casino.responsibleGamblingLabel,
   ].filter((value): value is string => Boolean(value));
+  const exactOfferMedia = Boolean(
+    canVisit
+    && casino.hero
+    && ["EXACT_OFFER", "EXACT_OFFER_FORMAT_FALLBACK"].includes(casino.hero.source ?? ""),
+  );
+  const offerMedia = exactOfferMedia && casino.hero && casino.visitAction.redirectSlug
+    ? <GovernedCommercialAction
+        action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }}
+        ariaLabel={`${casino.visitAction.label}: ${casino.featuredBonus?.title ?? casino.name}`}
+        className={classNames.offerMedia}
+        context={{ source: "CREATIVE", placement: "CASINO_DIRECTORY_CARD" }}
+      ><ResponsivePlacementImage alt={casino.hero.alt} fallbackMedia={casino.logo} height={casino.hero.height ?? 250} loading="lazy" media={casino.hero} width={casino.hero.width ?? 300} /></GovernedCommercialAction>
+    : null;
 
   return <>
     {position !== undefined && <span aria-label={`${messages.common.result} ${position}`} className={classNames.position}>{String(position).padStart(2, "0")}</span>}
@@ -74,7 +88,8 @@ function ReviewCardContents({ casino, position, classNames, messages, presentati
     </div>
     {casino.shortDescription && <p className={classNames.description}>{casino.shortDescription}</p>}
     {signals.length > 0 && <div className={classNames.signals}>{signals.map((signal) => <Signal classNames={classNames} key={signal}>{signal}</Signal>)}</div>}
-    <div className={classNames.offerBlock}>
+    <div className={classNames.offerBlock} data-offer-media={offerMedia ? "exact-offer" : undefined}>
+      {offerMedia}
       {casino.featuredBonus ? <><span>{demo ? messages.common.demoData : messages.common.published}</span><strong>{casino.featuredBonus.title}</strong>{casino.featuredBonus.summary && <p>{casino.featuredBonus.summary}</p>}{casino.featuredBonus.keyTerms.length > 0 && <small>{casino.featuredBonus.keyTerms.slice(0, 3).join(" · ")} · {demo ? messages.common.demoData : messages.common.published}</small>}</> : <><span>{messages.common.bonusAvailability}</span><strong>{messages.common.notListed}</strong></>}
     </div>
     <p className={classNames.commission}>{disclosure}</p>

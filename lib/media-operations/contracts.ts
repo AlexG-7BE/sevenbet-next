@@ -29,6 +29,7 @@ export const mediaIngestionContextSchema = z.object({
   casinoId: z.string().uuid().optional(),
   casinoSlug: z.string().trim().min(1).max(160).optional(),
   bonusId: z.string().uuid().optional(),
+  affiliateOfferId: z.string().uuid().optional(),
   opportunityId: z.string().uuid().optional(),
   partnerIdentifier: z.string().trim().min(1).max(200).optional(),
   targetCountryCodes: z.array(
@@ -103,6 +104,62 @@ const mediaApplyDraftBatchInputSchema = z.object({
 }).strict();
 
 export const mediaApplyDraftPlanInputSchema = z.union([mediaApplyDraftSinglePlanInputSchema, mediaApplyDraftBatchInputSchema]);
+
+const mediaProductionTargetSchema = z.object({
+  countryCode: z.string().trim().regex(/^[A-Z]{2}$/)
+    .refine(isIsoCountryCode, "Production targets require an exact ISO 3166-1 alpha-2 country"),
+  languageCode: z.string().trim().regex(/^[a-z]{2,8}$/).nullable(),
+  languageState: z.enum(["EXPLICIT", "NEUTRAL", "UNKNOWN"]),
+  devices: z.array(z.enum(mediaPlacementVariants)).min(1).max(3),
+}).strict().superRefine((target, issue) => {
+  if ((target.languageState === "EXPLICIT") !== Boolean(target.languageCode)) {
+    issue.addIssue({ code: "custom", path: ["languageCode"], message: "Only EXPLICIT targets carry a language code" });
+  }
+});
+
+export const mediaOrchestrateProductionInputSchema = z.object({
+  batchId: z.string().uuid(),
+  casinoId: z.string().uuid(),
+  affiliateOfferId: z.string().uuid(),
+  creativeSetIdentityKey: z.string().trim().min(8).max(240),
+  creativeSetName: z.string().trim().min(1).max(240),
+  externalCampaignId: z.string().trim().min(1).max(240).optional(),
+  idempotencyKey: z.string().trim().min(12).max(240),
+  targets: z.array(mediaProductionTargetSchema).min(1).max(60),
+  placements: z.array(z.enum(["CASINO_REVIEW_RIGHT_HERO", "CASINO_DIRECTORY_CARD"])).min(1).max(2)
+    .default(["CASINO_REVIEW_RIGHT_HERO", "CASINO_DIRECTORY_CARD"]),
+  useSemanticAnalysis: z.boolean().default(true),
+  activate: z.boolean().default(true),
+}).strict().superRefine((input, issue) => {
+  if (new Set(input.placements).size !== input.placements.length) {
+    issue.addIssue({ code: "custom", path: ["placements"], message: "Production placements must be unique" });
+  }
+  const cells = new Set<string>();
+  input.targets.forEach((target, targetIndex) => {
+    if (new Set(target.devices).size !== target.devices.length) {
+      issue.addIssue({ code: "custom", path: ["targets", targetIndex, "devices"], message: "Production target devices must be unique" });
+    }
+    for (const device of target.devices) {
+      for (const placement of input.placements) {
+        const cell = `${target.countryCode}:${target.languageState}:${target.languageCode ?? "none"}:${device}:${placement}`;
+        if (cells.has(cell)) {
+          issue.addIssue({ code: "custom", path: ["targets", targetIndex], message: "Production preflight cells must be unique" });
+        }
+        cells.add(cell);
+      }
+    }
+  });
+});
+
+export const mediaRollbackRevisionInputSchema = z.object({
+  revisionId: z.string().uuid(),
+  idempotencyKey: z.string().trim().min(12).max(240),
+  reason: z.string().trim().min(1).max(500),
+}).strict();
+
+export const mediaGetRevisionInputSchema = z.object({
+  revisionId: z.string().uuid(),
+}).strict();
 
 const mediaGetSinglePlanInputSchema = z.object({
   planId: z.string().uuid(),
@@ -368,6 +425,8 @@ export type MediaIngestPartnerBatchInput = z.infer<typeof mediaIngestPartnerBatc
 export type MediaIngestPartnerBatchItem = z.infer<typeof mediaIngestPartnerBatchItemSchema>;
 export type MediaAnalyzeAndPlanInput = z.infer<typeof mediaAnalyzeAndPlanInputSchema>;
 export type MediaApplyDraftPlanInput = z.infer<typeof mediaApplyDraftPlanInputSchema>;
+export type MediaOrchestrateProductionInput = z.infer<typeof mediaOrchestrateProductionInputSchema>;
+export type MediaRollbackRevisionInput = z.infer<typeof mediaRollbackRevisionInputSchema>;
 export type MediaIngestionPlan = z.infer<typeof mediaIngestionPlanSchema>;
 export type MediaIngestionBatch = z.infer<typeof mediaIngestionBatchSchema>;
 export type MediaPlanRecommendation = z.infer<typeof mediaPlanRecommendationSchema>;

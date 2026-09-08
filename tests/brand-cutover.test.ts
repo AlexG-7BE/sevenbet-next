@@ -377,6 +377,10 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
         "prisma/migrations/0032_market_activation_global_fallback/migration.sql",
         "prisma/schema.prisma",
       ],
+      [
+        "prisma/migrations/0033_media_geo3_pipeline/migration.sql",
+        "prisma/schema.prisma",
+      ],
       ["prisma/schema.prisma"],
     ];
     assert.ok(approvedExactSchemaChangeSets.some(
