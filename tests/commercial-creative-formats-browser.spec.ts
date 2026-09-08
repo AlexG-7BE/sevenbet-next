@@ -242,6 +242,36 @@ test("review-right promotional art stays fully boxed and contained on mobile", a
   expect(geometry.overflow).toBe(false);
 });
 
+test("directory-card promotional art owns its full mobile click boundary", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const styles = readFileSync("components/casino-discovery/CasinoDiscovery.module.css", "utf8");
+  const creative = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="250" viewBox="0 0 300 250"><rect width="300" height="250" fill="#e4e24e"/><text x="150" y="130" text-anchor="middle" font-size="24">300 by 250</text></svg>`;
+  await page.setContent(`<style>*{box-sizing:border-box}body{margin:0}.host{width:100%;padding:24px}${styles}</style><main class="host"><article class="casinoCard"><div class="offerBlock" data-offer-media="exact-offer"><a class="offerMedia"><picture data-responsive-placement-media style="display:contents"><img alt="Controlled 300 by 250 offer" height="250" src="data:image/svg+xml,${encodeURIComponent(creative)}" width="300"></picture></a><span>Published</span><strong>Welcome offer</strong><p>Current researched offer copy.</p><small>Terms apply.</small></div></article></main>`);
+  const offer = page.locator(".offerMedia");
+  const image = offer.locator("img");
+  await image.evaluate((element) => (element as HTMLImageElement).decode());
+  const geometry = await offer.evaluate((element) => {
+    const offerRect = element.getBoundingClientRect();
+    const imageNode = element.querySelector("img") as HTMLImageElement;
+    const imageRect = imageNode.getBoundingClientRect();
+    return {
+      offer: { top: offerRect.top, right: offerRect.right, bottom: offerRect.bottom, left: offerRect.left, width: offerRect.width, height: offerRect.height },
+      image: { top: imageRect.top, right: imageRect.right, bottom: imageRect.bottom, left: imageRect.left, width: imageRect.width, height: imageRect.height },
+      objectFit: getComputedStyle(imageNode).objectFit,
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+  expect(await offer.locator("picture").evaluate((element) => getComputedStyle(element).display)).toBe("block");
+  expect(geometry.offer.width).toBe(110);
+  expect(geometry.offer.height).toBeGreaterThanOrEqual(92);
+  expect(geometry.image.left).toBeGreaterThanOrEqual(geometry.offer.left);
+  expect(geometry.image.right).toBeLessThanOrEqual(geometry.offer.right);
+  expect(geometry.image.top).toBeGreaterThanOrEqual(geometry.offer.top);
+  expect(geometry.image.bottom).toBeLessThanOrEqual(geometry.offer.bottom);
+  expect(geometry.objectFit).toBe("contain");
+  expect(geometry.overflow).toBe(false);
+});
+
 test("current authorized inventory keeps real formats and the new review click boundary", async ({ page }) => {
   test.skip(!requireAuthorized, "This assertion requires current authorized Preview or Production inventory.");
 
