@@ -17,6 +17,7 @@ import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
+import { offerPresentationCopy } from "@/lib/public-offer/offer-presentation-copy";
 
 import styles from "./CuratedBonusShortlist.module.css";
 
@@ -65,8 +66,8 @@ export function CuratedBonusShortlist({ offers, messages, presentation }: { offe
       return <button aria-pressed={activeSelector === label} key={label} onClick={() => setSelector(label)} type="button">{localizedLabel}</button>;
     })}</div>
     <p className={styles.label} id="bonus-shortlist-title">{messages.bestOffers.sectionTitle} · {messages.bonuses.sortedByValue}</p>
-    <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
-      <header><small>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published}</small><span className={styles.rank}>0{index + 1}</span></header>
+    <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} data-offer-relation={offer.offerPresentation?.relation} key={`${offer.casino.id}:${offer.bonus.id}`}>
+      <header><small>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : offerPresentationCopy(offer.offerPresentation, messages, presentation).label}</small><span className={styles.rank}>0{index + 1}</span></header>
       <strong className={styles.headline}>{offer.bonus.title}</strong>
       <div className={styles.identity}><OperatorLogo offer={offer} prominent={index === 0} /><div><h2>{offer.casino.name}</h2><small>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} <span aria-hidden="true">★★★★★</span></small></div></div>
       <dl><div><dt>{messages.common.wagering}</dt><dd>{offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || messages.common.notListed : `${offer.bonus.wageringMultiplier}x`}</dd></div><div><dt>{messages.common.minimumDeposit}</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.maximumBonus}</dt><dd>{money(offer.bonus.maximumBonus, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.payout}</dt><dd>{payout(offer, messages)}</dd></div></dl>

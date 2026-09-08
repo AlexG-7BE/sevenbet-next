@@ -393,6 +393,7 @@
 /* Shared directory grammar: normalized identity, central offer, evidence, governed action. */
 .compactHeadline { min-width:0; margin:0; overflow-wrap:anywhere; }
 .compactOffer { min-width:0; }
+.compactOffer > small { display:block; color:var(--muted); font-size:12px; line-height:16px; overflow-wrap:anywhere; }
 .compactTerms dt { min-width:0; hyphens:none; overflow-wrap:normal; word-break:normal; }
 
 @media (min-width:1121px) {

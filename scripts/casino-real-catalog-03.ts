@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { EditorialStatus, Prisma } from "@prisma/client";
+import { EditorialStatus, OfferStatus, Prisma } from "@prisma/client";
 
 import { parseCasinoIngestionBundle } from "@/lib/casino-ingestion/contract";
 import {
@@ -183,7 +183,45 @@ async function ingestFactualBundles(bundles: Awaited<ReturnType<typeof loadBundl
       idempotency.push(await verifyCasinoBundlesIdempotencyInTransaction(tx, [bundle]));
     }
 
-    return { ingestion, idempotency };
+    const expectedOffers = bundles.flatMap((bundle) => bundle.markets.flatMap((market) =>
+      market.bonuses.map((bonus) => ({
+        casinoSlug: bundle.casino.slug,
+        countryCode: market.countryCode,
+        bonusSlug: bonus.slug,
+      })),
+    ));
+    const expectedBySlug = new Map(expectedOffers.map((offer) => [offer.bonusSlug, offer]));
+    if (expectedBySlug.size !== expectedOffers.length) throw new Error(`${RELEASE}: duplicate factual bonus slug in controlled bundles`);
+    const existingOffers = await tx.casinoBonus.findMany({
+      where: { slug: { in: [...expectedBySlug.keys()] } },
+      select: {
+        id: true,
+        slug: true,
+        casinoCountryId: true,
+        offerStatus: true,
+        casino: { select: { slug: true } },
+        marketProfile: { select: { countryCode: true } },
+      },
+    });
+    if (existingOffers.length !== expectedBySlug.size) throw new Error(`${RELEASE}: factual bonus publication set is incomplete`);
+    for (const offer of existingOffers) {
+      const expected = expectedBySlug.get(offer.slug);
+      if (!expected
+        || !offer.casinoCountryId
+        || offer.casino.slug !== expected.casinoSlug
+        || offer.marketProfile?.countryCode !== expected.countryCode) {
+        throw new Error(`${RELEASE}: factual bonus publication scope mismatch for ${offer.slug}`);
+      }
+    }
+    const activation = await tx.casinoBonus.updateMany({
+      where: {
+        id: { in: existingOffers.map((offer) => offer.id) },
+        offerStatus: { not: OfferStatus.ACTIVE },
+      },
+      data: { offerStatus: OfferStatus.ACTIVE },
+    });
+
+    return { ingestion, idempotency, publication: { expected: expectedOffers.length, activated: activation.count } };
   }, {
     isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     maxWait: 10_000,
@@ -336,6 +374,14 @@ async function verifyState(corpus: CatalogCorpus) {
     }
     const snapshot = casino.versions[0]?.snapshot as Prisma.JsonObject | undefined;
     if (!snapshot || snapshot.editorScore !== entry.score) throw new Error(`${RELEASE}: ${entry.slug} latest published snapshot is stale`);
+    const snapshotCountries = Array.isArray(snapshot.countries) ? snapshot.countries as Prisma.JsonObject[] : [];
+    const snapshotBonuses = snapshotCountries.flatMap((market) => Array.isArray(market.bonuses) ? market.bonuses as Prisma.JsonObject[] : []);
+    if (snapshotBonuses.length !== casino.countries.reduce((sum, market) => sum + market.bonuses.length, 0)) {
+      throw new Error(`${RELEASE}: ${entry.slug} published bonus snapshot count mismatch`);
+    }
+    if (snapshotBonuses.some((bonus) => bonus.status !== "PUBLISHED" || bonus.offerStatus !== "ACTIVE")) {
+      throw new Error(`${RELEASE}: ${entry.slug} contains a non-public bonus in its published snapshot`);
+    }
     state.push({
       slug: entry.slug,
       score: casino.editorScore,

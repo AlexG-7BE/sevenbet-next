@@ -17,3 +17,4 @@ Update when a material decision is approved, superseded, reversed, or retired.
 ## Product direction records
 
 - [PROGRAM-AI-01 Product Direction v2.2](PROGRAM-AI-01-Product-Direction-v2.2.md) — Founder-approved target Programme direction; implementation is not authorised.
+- [Safe cross-market offer presentation](SAFE-OFFER-PRESENTATION-2026-09-08.md) — Founder-approved published offer knowledge and presentation boundary.

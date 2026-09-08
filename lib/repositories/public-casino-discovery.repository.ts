@@ -17,6 +17,10 @@ export class PublicCasinoDiscoveryRepository implements PublicCasinoDiscoverySto
     return publicCasinoRepository.listPublished(countryCode);
   }
 
+  listPublishedOfferCandidates(casinoIds: string[], now?: Date) {
+    return publicCasinoRepository.listPublishedOfferCandidates(casinoIds, now);
+  }
+
   async loadContext(casinoIds: string[], options: { includeAliases?: boolean; includeCommercial?: boolean; countryCode?: string } = {}): Promise<DiscoveryContext> {
     const includeAliases = options.includeAliases ?? true;
     const includeCommercial = options.includeCommercial ?? true;

@@ -10,6 +10,7 @@ import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } fro
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
 import { temporaryDemoCasinoProfiles } from "@/lib/demo-data/temporary-demo-best-offers";
 import { decidePublicCasinoDisposition, type PublicCasinoDispositionDecision } from "@/lib/public-casino/presentation-disposition";
+import { extractOfferCandidatesFromPublishedRecords, withOfferPresentation } from "@/lib/public-offer/offer-presentation";
 
 export const enforceTemporaryDemoReviewOnly = currentPublicCasinoBrand;
 const sourceControlledDemoProfiles = temporaryDemoCasinoProfiles();
@@ -24,11 +25,18 @@ function projectRequestedMarket(casino: PublicCasinoDTO, countryCode: string | n
 }
 
 function boundForDisposition(casino: PublicCasinoDTO, decision: PublicCasinoDispositionDecision): PublicCasinoDTO {
+  const selectedOffer = casino.offerPresentation?.selectedOffer;
   return {
     ...casino,
     ...(decision.disposition === "PROMOTABLE" ? {} : {
       affiliate: { href: null, available: false },
       bonuses: casino.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } })),
+      ...(casino.offerPresentation ? {
+        offerPresentation: {
+          ...casino.offerPresentation,
+          selectedOffer: selectedOffer ? { ...selectedOffer, affiliate: { href: null, available: false } } : null,
+        },
+      } : {}),
     }),
     presentationDisposition: decision.disposition,
     presentationDispositionReason: decision.reasonCode,
@@ -69,6 +77,24 @@ export class PublicCasinoService {
   private localFixturesAllowed() {
     return this.options.allowLocalFixtures
       ?? (process.env.VERCEL_ENV !== "preview" && process.env.VERCEL_ENV !== "production");
+  }
+
+  private async publishedOfferCandidates(
+    published: Awaited<ReturnType<PublicCasinoStore["listPublished"]>>,
+  ) {
+    if (!this.repository.listPublishedOfferCandidates) {
+      return extractOfferCandidatesFromPublishedRecords(published, this.options.now);
+    }
+    try {
+      return await this.repository.listPublishedOfferCandidates(
+        published.map((entry) => entry.casinoId),
+        this.options.now,
+      );
+    } catch {
+      // Preserve the projected, already-published offer inventory if the
+      // additive corpus read is temporarily unavailable.
+      return extractOfferCandidatesFromPublishedRecords(published, this.options.now);
+    }
   }
 
   private legacy(slug: string) {
@@ -118,6 +144,7 @@ export class PublicCasinoService {
     }
 
     if (published) {
+      const candidates = await this.publishedOfferCandidates([published]);
       let routes: Awaited<ReturnType<PublicCasinoStore["listActiveAffiliateRoutes"]>> = [];
       const normalizedCountry = countryCode?.trim().toUpperCase() || null;
       const exactAuthority = normalizedCountry && authority?.countryCode === normalizedCountry
@@ -146,7 +173,11 @@ export class PublicCasinoService {
         const exactProfile = normalizedCountry
           ? casino.marketProfiles.find((profile) => profile.countryCode === normalizedCountry) ?? null
           : null;
-        const projected = projectRequestedMarket(casino, countryCode ?? null);
+        const projected = withOfferPresentation(
+          projectRequestedMarket(casino, countryCode ?? null),
+          candidates,
+          normalizedCountry,
+        );
         const decision = decidePublicCasinoDisposition({
           casinoId: casino.id,
           requestCountryCode: normalizedCountry,
@@ -183,6 +214,8 @@ export class PublicCasinoService {
       return [];
     }
 
+    const candidates = await this.publishedOfferCandidates(published);
+
     const normalizedCountry = countryCode?.trim().toUpperCase() || null;
     const exactAuthority = normalizedCountry && authority?.countryCode === normalizedCountry
       ? authority
@@ -213,7 +246,11 @@ export class PublicCasinoService {
       const exactProfile = normalizedCountry
         ? casino.marketProfiles.find((profile) => profile.countryCode === normalizedCountry) ?? null
         : null;
-      const projected = projectRequestedMarket(casino, countryCode ?? null);
+      const projected = withOfferPresentation(
+        projectRequestedMarket(casino, countryCode ?? null),
+        candidates,
+        normalizedCountry,
+      );
       const decision = decidePublicCasinoDisposition({
         casinoId: casino.id,
         requestCountryCode: normalizedCountry,
@@ -243,7 +280,14 @@ export class PublicCasinoService {
 
   async listBonuses(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null, presentationLanguage?: string | null) {
     const casinos = await this.listCasinos(authority, countryCode, presentationLanguage);
-    return casinos.flatMap((casino) => casino.bonuses.map((bonus) => ({ casino, bonus })))
+    return casinos.flatMap((casino) => {
+      if (casino.offerPresentation?.relation === "EXACT") {
+        return casino.bonuses.map((bonus) => ({ casino, bonus }));
+      }
+      return casino.offerPresentation?.selectedOffer
+        ? [{ casino, bonus: casino.offerPresentation.selectedOffer }]
+        : [];
+    })
       .sort((a, b) => (b.casino.editorScore ?? -1) - (a.casino.editorScore ?? -1) || a.casino.slug.localeCompare(b.casino.slug) || a.bonus.slug.localeCompare(b.bonus.slug));
   }
 }

@@ -1,4 +1,4 @@
-import type { PublishedCasinoSnapshotRecord, PublicAffiliateRoute } from "@/lib/public-casino/public-casino.types";
+import type { PublishedCasinoSnapshotRecord, PublicAffiliateRoute, PublicOfferPresentation, PublishedOfferCandidate } from "@/lib/public-casino/public-casino.types";
 import type { MediaPlacementVariantName, MediaRenderingModeName, PlacementMediaSource } from "@/lib/media/placement-media";
 import type { PublicCasinoDispositionReason, PublicCasinoPresentationDisposition } from "@/lib/public-casino/presentation-disposition";
 
@@ -50,6 +50,7 @@ export interface PublicBonusSummaryDto {
   currency: string | null;
   validUntil: string | null;
   termsApply: true;
+  presentation?: Omit<PublicOfferPresentation, "selectedOffer">;
 }
 
 export interface PublicCasinoCardDto {
@@ -159,5 +160,6 @@ export interface DiscoveryContext {
 
 export interface PublicCasinoDiscoveryStore {
   listPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]>;
+  listPublishedOfferCandidates?(casinoIds: string[], now?: Date): Promise<PublishedOfferCandidate[]>;
   loadContext(casinoIds: string[], options?: { includeAliases?: boolean; includeCommercial?: boolean; countryCode?: string }): Promise<DiscoveryContext>;
 }

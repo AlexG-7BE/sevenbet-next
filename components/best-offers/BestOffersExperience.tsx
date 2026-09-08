@@ -9,6 +9,7 @@ import type { PublicOfferDTO, PublicOfferInventoryMode } from "@/lib/public-offe
 import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
+import { offerPresentationCopy } from "@/lib/public-offer/offer-presentation-copy";
 
 import styles from "./BestOffers.module.css";
 
@@ -31,8 +32,10 @@ function hasGovernedAction(offer: PublicOfferDTO) {
   return hasGovernedCommercialOfferAction(offer);
 }
 
-function offerDataLabel(offer: PublicOfferDTO, messages: ProductPageMessages) {
-  return offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published;
+function offerDataLabel(offer: PublicOfferDTO, messages: ProductPageMessages, presentation: PresentationResolution) {
+  return offer.dataClassification === "DEMO_FIXTURE"
+    ? messages.common.demoData
+    : offerPresentationCopy(offer.offerPresentation, messages, presentation).label;
 }
 
 function OfferAction({ offer, messages, placement = "UNSPECIFIED" }: { offer: PublicOfferDTO; messages: ProductPageMessages; placement?: "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "UNSPECIFIED" }) {
@@ -87,13 +90,13 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
         <p className={styles.mobileAffiliateDisclosure}>{messages.bestOffers.commissionNote} <Link href="/affiliate-disclosure">{messages.common.affiliateDisclosure} →</Link></p>
         <article className={styles.featuredCard} data-testid="best-offer-product-card">
           <div className={styles.featuredCopy}>
-            <div className={styles.rankLine}><span>01</span><b>{offerDataLabel(featured, messages)}</b></div>
+            <div className={styles.rankLine}><span>01</span><b>{offerDataLabel(featured, messages, presentation)}</b></div>
             <OfferIdentity offer={featured} size="large" />
             <div className={styles.score}><small>{messages.common.editorScore}</small><strong>{formatProfileScore(featured.casino.editorScore, presentation.locale)}</strong><span aria-hidden="true">★★★★★</span></div>
             {featured.dataClassification === "DEMO_FIXTURE" ? <p className={styles.dataNotice}><strong>{messages.common.demoData}</strong> — {messages.common.demoDisclosure}</p> : null}
             <p className={`${styles.reason} ${styles.desktopReason}`}>{featured.casino.summary}</p>
             <p className={styles.mobileReason}>{messages.bestOffers.whyCopy}</p>
-            <small className={styles.termLabel}>{offerDataLabel(featured, messages)}</small>
+            <small className={styles.termLabel}>{offerDataLabel(featured, messages, presentation)}</small>
             <h4>{featured.bonus.title}</h4>
           </div>
           <CommercialOfferMedia messages={messages} offer={featured} variant="featured" />
@@ -115,7 +118,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
               <div className={styles.score}><small>{messages.common.editorScore}</small><strong>{formatProfileScore(offer.casino.editorScore, presentation.locale)}</strong><span aria-hidden="true">★★★★★</span></div>
               {offer.dataClassification === "DEMO_FIXTURE" ? <p className={styles.dataNotice}><strong>{messages.common.demoData}</strong> — {messages.common.demoDisclosure}</p> : null}
               <p className={styles.mobileReason}>{messages.bestOffers.whyCopy}</p>
-              <small className={styles.termLabel}>{offerDataLabel(offer, messages)}</small><h4>{offer.bonus.title}</h4>
+              <small className={styles.termLabel}>{offerDataLabel(offer, messages, presentation)}</small><h4>{offer.bonus.title}</h4>
               <p className={styles.termSummary}>{messages.common.wagering} {offer.bonus.wageringMultiplier === null ? messages.common.notListed : `${offer.bonus.wageringMultiplier}x`} · {messages.common.minimumDeposit} {money(offer.bonus.minimumDeposit, offer.bonus.currency, presentation.locale, messages.common.notListed)} · {messages.common.payout} {payout(offer, messages)}</p>
               <p className={`${styles.reason} ${styles.altReason}`}>{offer.casino.summary}</p>
               <MobileMaterialTerms locale={presentation.locale} messages={messages} offer={offer} />
@@ -130,7 +133,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
             {worthALook.map((offer, index) => <article key={`${offer.casino.id}-${offer.bonus.id}`}>
               <div className={styles.worthHead}><OfferIdentity offer={offer} /><b>0{index + 4}</b></div>
               <div className={styles.worthScore}><small>{messages.common.editorScore}</small><strong>{formatProfileScore(offer.casino.editorScore, presentation.locale)}</strong><span aria-hidden="true">★★★★★</span></div>
-              <div className={styles.worthOffer}><small>{offerDataLabel(offer, messages)}</small><strong>{offer.bonus.title}</strong></div>
+              <div className={styles.worthOffer}><small>{offerDataLabel(offer, messages, presentation)}</small><strong>{offer.bonus.title}</strong></div>
               <dl><div><dt>{messages.common.payout}</dt><dd>{payout(offer, messages)}</dd></div><div><dt>{messages.common.wagering}</dt><dd>{offer.bonus.wageringMultiplier === null ? messages.common.notListed : `${offer.bonus.wageringMultiplier}x`}</dd></div><div><dt>{messages.common.minimumDeposit}</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div></dl>
               <p className={styles.worthDesktopReason}>{offer.casino.summary}</p>
               <p className={styles.mobileReason}>{messages.bestOffers.whyCopy}</p>

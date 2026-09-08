@@ -16,6 +16,7 @@ import type { PresentationResolution } from "@/lib/market/presentation-resolver"
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
+import { offerPresentationCopy } from "@/lib/public-offer/offer-presentation-copy";
 
 const DIRECTORY_EDITORIAL_MEDIA = "/casino-directory/editorial-media.jpg";
 
@@ -60,6 +61,7 @@ function ReviewCardContents({ casino, position, classNames, messages, presentati
     : casino.dataClassification === "DEMO_FIXTURE"
       ? messages.common.demoDisclosure
       : messages.common.marketPresentationNotice;
+  const offerScope = offerPresentationCopy(casino.featuredBonus?.presentation, messages, presentation);
   const signals = [
     casino.licenses[0]?.label,
     casino.paymentMethods.length ? casino.paymentMethods.slice(0, 2).map((item) => item.label).join(" + ") : null,
@@ -90,7 +92,7 @@ function ReviewCardContents({ casino, position, classNames, messages, presentati
     {signals.length > 0 && <div className={classNames.signals}>{signals.map((signal) => <Signal classNames={classNames} key={signal}>{signal}</Signal>)}</div>}
     <div className={classNames.offerBlock} data-offer-media={offerMedia ? "exact-offer" : undefined}>
       {offerMedia}
-      {casino.featuredBonus ? <><span>{demo ? messages.common.demoData : messages.common.published}</span><strong>{casino.featuredBonus.title}</strong>{casino.featuredBonus.summary && <p>{casino.featuredBonus.summary}</p>}{casino.featuredBonus.keyTerms.length > 0 && <small>{casino.featuredBonus.keyTerms.slice(0, 3).join(" · ")} · {demo ? messages.common.demoData : messages.common.published}</small>}</> : <><span>{messages.common.bonusAvailability}</span><strong>{messages.common.notListed}</strong></>}
+      {casino.featuredBonus ? <><span>{demo ? messages.common.demoData : offerScope.label}</span><strong>{casino.featuredBonus.title}</strong>{casino.featuredBonus.summary && <p>{casino.featuredBonus.summary}</p>}{casino.featuredBonus.keyTerms.length > 0 || (!demo && offerScope.qualification) ? <small>{[...casino.featuredBonus.keyTerms.slice(0, 3), demo ? messages.common.demoData : offerScope.qualification].filter(Boolean).join(" · ")}</small> : null}</> : <><span>{messages.common.bonusAvailability}</span><strong>{messages.common.notListed}</strong></>}
     </div>
     <p className={classNames.commission}>{disclosure}</p>
     {unavailable && <p className={classNames.unavailable} role="note">{messages.common.reviewAvailableNoAction}</p>}

@@ -65,7 +65,8 @@ export function countryName(countryCode: string) {
 }
 
 export function selectProfileBonus(casino: PublicCasinoDTO) {
-  return casino.bonuses.find((bonus) => bonus.affiliate.available && internalRedirect.test(bonus.affiliate.href ?? ""))
+  return casino.offerPresentation?.selectedOffer
+    ?? casino.bonuses.find((bonus) => bonus.affiliate.available && internalRedirect.test(bonus.affiliate.href ?? ""))
     ?? casino.bonuses[0]
     ?? null;
 }

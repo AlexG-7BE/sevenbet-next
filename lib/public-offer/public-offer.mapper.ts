@@ -1,14 +1,33 @@
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
-import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
+import type { PublicCasinoBonus, PublicCasinoDTO, PublicOfferPresentation } from "@/lib/public-casino/public-casino.types";
 
-export function publicCasinoToOffers(casino: PublicCasinoDTO): PublicOfferDTO[] {
+export interface PublicCasinoOfferInventoryEntry {
+  bonus: PublicCasinoBonus;
+  presentation?: PublicOfferPresentation;
+}
+
+export function publicCasinoToOffers(casino: PublicCasinoDTO, inventory?: PublicCasinoOfferInventoryEntry[] | number): PublicOfferDTO[] {
   const editorScore = casino.editorScore;
   if (editorScore === null) return [];
-  return casino.bonuses.map((bonus) => {
+  const entries = Array.isArray(inventory) ? inventory : casino.bonuses.map((bonus) => ({
+    bonus,
+    ...(casino.offerPresentation?.selectedOffer?.id === bonus.id ? { presentation: casino.offerPresentation } : {}),
+  }));
+  return entries.map(({ bonus, presentation }) => {
     const minimumDeposit = bonus.minimumDeposit
       ?? casino.payments.find((payment) => payment.minimumDeposit !== null)?.minimumDeposit
       ?? null;
-    const action = bonus.affiliate.available ? bonus.affiliate : casino.affiliate;
+    const action = presentation
+      ? presentation.relation === "OTHER_MARKET" || presentation.relation === "NONE"
+        ? { href: null, available: false }
+        : bonus.affiliate
+      : bonus.affiliate.available ? bonus.affiliate : casino.affiliate;
+    const offerPresentation = presentation ? {
+      relation: presentation.relation,
+      sourceCountryCode: presentation.sourceCountryCode,
+      presentationCountryCode: presentation.presentationCountryCode,
+      currentMarketVerified: presentation.currentMarketVerified,
+    } : undefined;
     return {
       casino: {
         id: casino.id,
@@ -70,6 +89,7 @@ export function publicCasinoToOffers(casino: PublicCasinoDTO): PublicOfferDTO[] 
       action,
       commercialAvailability: action.available && action.href ? "AVAILABLE" : "UNAVAILABLE",
       dataClassification: "PUBLISHED_RECORD",
+      ...(offerPresentation ? { offerPresentation } : {}),
     };
   });
 }

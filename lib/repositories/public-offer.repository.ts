@@ -3,6 +3,13 @@ import { publicCasinoToOffers } from "@/lib/public-offer/public-offer.mapper";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import { publicCasinoRepository, type PublicCasinoStore } from "@/lib/repositories/public-casino.repository";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
+import type { PublishedOfferCandidate } from "@/lib/public-casino/public-casino.types";
+import {
+  extractOfferCandidatesFromPublishedRecords,
+  publicOfferPresentation,
+  resolvePublishedOfferInventory,
+  withOfferPresentation,
+} from "@/lib/public-offer/offer-presentation";
 
 export interface PublicOfferStore {
   listOffers(options?: { includeCommercial?: boolean; countryCode?: string; presentationLanguage?: string }): Promise<PublicOfferDTO[]>;
@@ -16,6 +23,19 @@ export class PublicOfferRepository implements PublicOfferStore {
 
   async listOffers(options: { includeCommercial?: boolean; countryCode?: string; presentationLanguage?: string } = {}) {
     const published = await this.casinoStore.listPublished(options.countryCode);
+    let candidates: PublishedOfferCandidate[];
+    if (!published.length) {
+      candidates = [];
+    } else if (!this.casinoStore.listPublishedOfferCandidates) {
+      candidates = extractOfferCandidatesFromPublishedRecords(published, this.options.now);
+    } else try {
+      candidates = await this.casinoStore.listPublishedOfferCandidates(
+        published.map((entry) => entry.casinoId),
+        this.options.now,
+      );
+    } catch {
+      candidates = extractOfferCandidatesFromPublishedRecords(published, this.options.now);
+    }
     const redirectEnabled = (options.includeCommercial ?? true) && (this.options.redirectEnabled ?? isAffiliateRedirectEnabled());
     let routes: Awaited<ReturnType<PublicCasinoStore["listActiveAffiliateRoutes"]>> = [];
     if (redirectEnabled && published.length) {
@@ -26,13 +46,26 @@ export class PublicOfferRepository implements PublicOfferStore {
       }
     }
     return published.flatMap((entry) => {
-      const casino = mapPublishedCasino(entry, routes, {
+      const mapped = mapPublishedCasino(entry, routes, {
         redirectEnabled,
         now: this.options.now,
         countryCode: options.countryCode,
         presentationLanguage: options.presentationLanguage,
       });
-      return casino ? publicCasinoToOffers(casino) : [];
+      if (!mapped) return [];
+      const casinoCandidates = candidates.filter((candidate) => candidate.casinoId === mapped.id);
+      const casino = withOfferPresentation(mapped, casinoCandidates, options.countryCode);
+      const inventory = resolvePublishedOfferInventory(casinoCandidates, options.countryCode).map((resolved) => {
+        const existing = resolved.relation !== "OTHER_MARKET"
+          ? casino.bonuses.find((bonus) => bonus.id === resolved.candidate.bonus.id) ?? null
+          : null;
+        const bonus = existing ?? resolved.candidate.bonus;
+        return {
+          bonus,
+          presentation: publicOfferPresentation(resolved, bonus, options.countryCode),
+        };
+      });
+      return publicCasinoToOffers(casino, inventory);
     });
   }
 }
