@@ -26,6 +26,7 @@ import {
 import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
+import { offerPresentationCopy } from "@/lib/public-offer/offer-presentation-copy";
 
 import styles from "./CasinoProfile.module.css";
 
@@ -150,6 +151,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const demo = isTemporaryDemoCasinoId(casino.id);
   const informationalOnly = casino.presentationDisposition === "INFORMATIONAL_ONLY";
   const bonus = selectProfileBonus(casino);
+  const offerScope = offerPresentationCopy(casino.offerPresentation, messages, presentation);
   const projectedAction = !informationalOnly ? profileAction(casino, bonus) : null;
   const action = projectedAction ? { ...projectedAction, label: `${messages.common.actionAvailable}: ${casino.name}` } : null;
   const faq = informationalOnly
@@ -277,12 +279,13 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             {payments.length ? <Signal>{demo ? messages.profile.demoPaymentFields : payments.join(" + ").toUpperCase()}</Signal> : null}
             {withdrawal ? <Signal>{demo ? messages.profile.demoWithdrawalField : withdrawal}</Signal> : null}
           </div>
-          {bonus ? <div className={styles.heroOfferSummary}>
-            <div className={styles.heroOfferCopy}><span>{demo ? messages.profile.demoOfferField : messages.common.current}</span><strong>{offerHeadline}</strong><dl>
+          {bonus ? <div className={styles.heroOfferSummary} data-offer-relation={casino.offerPresentation?.relation}>
+            <div className={styles.heroOfferCopy}><span>{demo ? messages.profile.demoOfferField : offerScope.label}</span><strong>{offerHeadline}</strong><dl>
               <div><dt>{messages.common.wagering}</dt><dd>{bonus.wageringText || (bonus.wageringMultiplier !== null ? `${bonus.wageringMultiplier}×` : messages.common.notListed)}</dd></div>
               <div><dt>{messages.common.minimumDeposit}</dt><dd>{minimumDeposit ?? messages.common.notListed}</dd></div>
               {bonus.eligibility ? <div><dt>{messages.common.eligibility}</dt><dd>{bonus.eligibility}</dd></div> : null}
               {bonus.expiresAt ? <div><dt>{messages.common.expiry}</dt><dd>{formatProfileDate(bonus.expiresAt, presentation.locale)}</dd></div> : null}
+              {!demo && offerScope.qualification ? <div><dt>{messages.common.sourceStatus}</dt><dd>{offerScope.qualification}</dd></div> : null}
             </dl></div>
             <div className={styles.heroOfferAction}>{action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}</div>
           </div> : null}
@@ -327,13 +330,13 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <h2 id="offer-heading">{messages.profile.offerTerms}</h2>
         </div>
         <div className={styles.offerComposition}>
-          <div className={styles.offerCopy}>
-            <span>{demo ? messages.profile.demoTerms : messages.common.materialTerms}</span>
+          <div className={styles.offerCopy} data-offer-relation={casino.offerPresentation?.relation}>
+            <span>{demo ? messages.profile.demoTerms : offerScope.label}</span>
             {bonus ? <>
               <h3>{structuredOfferHeading ? <><span>{structuredOfferHeading.primary}</span>{structuredOfferHeading.secondary ? <em>{structuredOfferHeading.secondary}</em> : null}</> : offerHeadline}</h3>
               <p>{bonus.summary}</p>
               {action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}
-              <small>18+ · {messages.common.materialTerms}</small>
+              <small>18+ · {messages.common.materialTerms}{offerScope.qualification ? ` · ${offerScope.qualification}` : ""}</small>
             </> : <div className={styles.neutralState}><strong>{messages.profile.offerUnavailable}</strong><p>{messages.common.reviewAvailableNoAction}</p></div>}
           </div>
           <div className={styles.offerTermsCard}>
@@ -400,7 +403,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <strong>{formattedEditorScore}</strong><span>{messages.common.editorScore}{hasEditorScore ? " / 10" : ""}</span>
           <dl>
             <div><dt>{messages.profile.licenceRecord}</dt><dd>{demo ? messages.common.demoData : licenceChecked ? messages.common.current : licence ? messages.common.published : messages.common.notListed}</dd></div>
-            <div><dt>{messages.profile.offerTerms}</dt><dd>{demo && bonus ? messages.common.demoData : bonus ? messages.common.published : messages.common.notListed}</dd></div>
+            <div><dt>{messages.profile.offerTerms}</dt><dd>{demo && bonus ? messages.common.demoData : bonus ? offerScope.label : messages.common.notListed}</dd></div>
             <div><dt>{messages.profile.paymentRecords}</dt><dd>{casino.payments.length || messages.common.notListed}</dd></div>
             <div><dt>{messages.profile.controlTools}</dt><dd>{casino.responsibleGamblingTools.length || messages.common.notListed}</dd></div>
           </dl>

@@ -85,6 +85,32 @@ export interface PublicCasinoBonus {
   media?: Partial<Record<MediaPlacementName, PublicPlacementMedia>>;
 }
 
+export type PublicOfferPresentationRelation = "EXACT" | "ROW" | "OTHER_MARKET" | "NONE";
+
+export interface PublicOfferPresentation {
+  selectedOffer: PublicCasinoBonus | null;
+  relation: PublicOfferPresentationRelation;
+  sourceCountryCode: string | null;
+  presentationCountryCode: string | null;
+  currentMarketVerified: boolean;
+}
+
+/**
+ * The deliberately bounded cross-market read model. It contains published
+ * bonus knowledge only and never carries a foreign market profile.
+ */
+export interface PublishedOfferCandidate {
+  casinoId: string;
+  bonus: PublicCasinoBonus;
+  sourceScope: "GLOBAL" | "MARKET";
+  sourceCountryCode: string | null;
+  geoMode: "GLOBAL" | "ALLOW" | "BLOCK";
+  allowedCountries: string[];
+  blockedCountries: string[];
+  sortOrder: number | null;
+  lastVerifiedAt: string | null;
+}
+
 export interface PublicCasinoLicense {
   authority: string;
   licenseNumber: string | null;
@@ -192,6 +218,7 @@ export interface PublicCasinoDTO {
   providers: Array<{ key: string; name: string; gameCount: number | null; liveCasino: boolean | null }>;
   categories: Array<{ key: string; name: string; gameCount: number | null; featured: boolean }>;
   bonuses: PublicCasinoBonus[];
+  offerPresentation?: PublicOfferPresentation;
   marketProfiles: PublicCasinoMarketProfile[];
   media: {
     logo: PublicCasinoMedia | null;

@@ -14,6 +14,7 @@ import type { PublicOfferSearchParams } from "@/lib/public-offer/query";
 import { productPageMessages, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
+import { offerPresentationCopy } from "@/lib/public-offer/offer-presentation-copy";
 
 const defaultMessages = productPageMessages("en-GB");
 
@@ -230,15 +231,16 @@ export function ActiveBonusFilters({ facets, query, raw, messages, presentation,
 export function BonusComparisonList({ offers, startPosition, messages, presentation }: { offers: PublicOfferDTO[]; startPosition: number; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const resultCountLabel = offers.length === 1 ? messages.common.result : messages.common.results;
   return <div className={styles.comparison}>
-    {offers.map((offer, index) => <article className={styles.comparisonRow} data-bonus-directory-card key={`${offer.casino.id}:${offer.bonus.id}`}>
+    {offers.map((offer, index) => <article className={styles.comparisonRow} data-bonus-directory-card data-offer-relation={offer.offerPresentation?.relation} key={`${offer.casino.id}:${offer.bonus.id}`}>
       <span className={styles.compactLogo} data-logo-state={offer.casino.logo ? "image" : "fallback"}><OfferLogo offer={offer} /></span>
       <div className={styles.compactIdentity}>
         <strong>{offer.casino.name}</strong>
         <span>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} · {offer.casino.licenses[0]?.authority || messages.common.notListed} · {offer.casino.payments.slice(0, 2).map((item) => item.name).join(" · ") || messages.common.notListed}</span>
       </div>
       <div className={styles.compactOffer}>
-        <span>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published}</span>
+        <span>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : offerPresentationCopy(offer.offerPresentation, messages, presentation).label}</span>
         <p className={styles.compactHeadline}>{offer.bonus.title}</p>
+        {offer.dataClassification !== "DEMO_FIXTURE" && offerPresentationCopy(offer.offerPresentation, messages, presentation).qualification ? <small>{offerPresentationCopy(offer.offerPresentation, messages, presentation).qualification}</small> : null}
       </div>
       <DemoFixtureNotice messages={messages} offer={offer} />
       <dl className={styles.compactTerms} data-material-terms>

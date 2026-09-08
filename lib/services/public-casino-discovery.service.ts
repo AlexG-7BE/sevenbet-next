@@ -18,6 +18,12 @@ import { decidePublicCasinoDisposition } from "@/lib/public-casino/presentation-
 import { rankBestBonusCasinoIds } from "@/lib/public-offer/best-offer-ranking";
 import { publicCasinoToOffers } from "@/lib/public-offer/public-offer.mapper";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
+import {
+  extractOfferCandidatesFromPublishedRecords,
+  publicOfferPresentation,
+  resolvePublishedOfferInventory,
+  withOfferPresentation,
+} from "@/lib/public-offer/offer-presentation";
 
 export function publicCasinoInventoryMode(casinos: PublicCasinoCardDto[]) {
   const demoCount = casinos.filter((casino) => casino.dataClassification === "DEMO_FIXTURE").length;
@@ -233,6 +239,14 @@ export class PublicCasinoDiscoveryService {
     const now = this.now();
     const requestCountryContext = options.defaultEditorialCountry?.trim().toUpperCase() || null;
     const published = (await this.store.listPublished(requestCountryContext)).filter((record) => !isTemporaryDemoCasinoId(record.casinoId));
+    const candidates = !published.length
+      ? []
+      : this.store.listPublishedOfferCandidates
+      ? await this.store.listPublishedOfferCandidates(
+          published.map((record) => record.casinoId),
+          now,
+        ).catch(() => extractOfferCandidatesFromPublishedRecords(published, now))
+      : extractOfferCandidatesFromPublishedRecords(published, now);
     const redirectEnabled = this.redirectEnabled();
     const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
     const context = await this.store.loadContext(published.map((record) => record.casinoId), {
@@ -267,12 +281,34 @@ export class PublicCasinoDiscoveryService {
         ? casino.marketProfiles.find((profile) => profile.countryCode === requestCountryContext) ?? null
         : null;
       const scoped = projectPublicCasinoMarket(casino, requestCountryContext ?? "");
+      const presented = withOfferPresentation(
+        scoped,
+        candidates,
+        requestCountryContext,
+      );
+      const offerInventory = resolvePublishedOfferInventory(
+        candidates.filter((candidate) => candidate.casinoId === scoped.id),
+        requestCountryContext,
+      ).map((resolved) => {
+        const existing = resolved.relation !== "OTHER_MARKET"
+          ? scoped.bonuses.find((candidate) => candidate.id === resolved.candidate.bonus.id) ?? null
+          : null;
+        const inventoryBonus = existing ?? resolved.candidate.bonus;
+        return {
+          bonus: inventoryBonus,
+          presentation: publicOfferPresentation(resolved, inventoryBonus, requestCountryContext),
+        };
+      });
       const canonicalRoute = context.canonicalRoutes?.find((route) => route.casinoId === scoped.id) ?? null;
-      const candidateBonus = (canonicalRoute?.casinoBonusId
-        ? scoped.bonuses.find((bonus) => bonus.id === canonicalRoute.casinoBonusId)
-        : null) ?? scoped.bonuses[0] ?? null;
-      const visitBonusId = canonicalRoute ? canonicalRoute.casinoBonusId : candidateBonus?.id ?? null;
-      const visit = commercialCountryContext
+      const candidateBonus = presented.offerPresentation?.selectedOffer
+        ?? (canonicalRoute?.casinoBonusId
+          ? scoped.bonuses.find((bonus) => bonus.id === canonicalRoute.casinoBonusId)
+          : null)
+        ?? scoped.bonuses[0] ?? null;
+      const visitBonusId = candidateBonus?.id ?? null;
+      const presentationCanBindAction = presented.offerPresentation?.relation !== "OTHER_MARKET"
+        && presented.offerPresentation?.relation !== "NONE";
+      const visit = commercialCountryContext && presentationCanBindAction
         ? resolvePublicVisitAction(context, scoped.id, visitBonusId, commercialCountryContext, now, authority, operatorDecisions.get(scoped.id), redirectEnabled)
         : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "CASINO_COUNTRY_NOT_SUPPORTED" } satisfies PublicVisitAction;
       const decision = decidePublicCasinoDisposition({
@@ -316,7 +352,25 @@ export class PublicCasinoDiscoveryService {
         highlights: scoped.pros.slice(0, 3),
         supportsCrypto: scoped.payments.some((payment) => payment.crypto === true),
         supportsMobile: bool(snapshot.mobileApp) || bool(general.supportsMobile),
-        featuredBonus: bonus ? { title: bonus.title, summary: bonus.summary, type: bonus.type, keyTerms: bonus.importantConditions.slice(0, 3), wageringRequirement: bonus.wageringMultiplier, minimumDeposit: bonus.minimumDeposit, currency: bonus.currency, validUntil: bonus.expiresAt, termsApply: true } : null,
+        featuredBonus: bonus ? {
+          title: bonus.title,
+          summary: bonus.summary,
+          type: bonus.type,
+          keyTerms: bonus.importantConditions.slice(0, 3),
+          wageringRequirement: bonus.wageringMultiplier,
+          minimumDeposit: bonus.minimumDeposit,
+          currency: bonus.currency,
+          validUntil: bonus.expiresAt,
+          termsApply: true,
+          ...(presented.offerPresentation ? {
+            presentation: {
+              relation: presented.offerPresentation.relation,
+              sourceCountryCode: presented.offerPresentation.sourceCountryCode,
+              presentationCountryCode: presented.offerPresentation.presentationCountryCode,
+              currentMarketVerified: presented.offerPresentation.currentMarketVerified,
+            },
+          } : {}),
+        } : null,
         visitAction: boundedVisit,
         responsibleGamblingLabel: scoped.responsibleGamblingTools.length ? "Responsible gambling tools available" : null,
         publishedAt: scoped.publishedAt,
@@ -324,7 +378,7 @@ export class PublicCasinoDiscoveryService {
       };
       return [{
         card,
-        offers: publicCasinoToOffers(scoped),
+        offers: publicCasinoToOffers(presented, offerInventory),
         marketCountry,
         marketCurrencies: scoped.currencies,
         aliases: aliasesByCasino.get(scoped.id) ?? [],
@@ -335,7 +389,7 @@ export class PublicCasinoDiscoveryService {
         supportsCrypto: scoped.payments.some((payment) => payment.crypto === true),
         supportsMobile: bool(snapshot.mobileApp) || bool(general.supportsMobile),
         hasResponsibleGambling: scoped.responsibleGamblingTools.length > 0,
-        bonusTypes: scoped.bonuses.map((entry) => entry.type),
+        bonusTypes: scoped.bonuses.concat(bonus ? [bonus] : []).map((entry) => entry.type).filter((type, index, values) => values.indexOf(type) === index),
         relevance: 0,
       }];
     });

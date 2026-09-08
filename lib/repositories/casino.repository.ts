@@ -403,6 +403,10 @@ export function buildPublishedCasinoSnapshot(
         ...bonus,
         mediaAssignments: bonus.mediaAssignments.map(snapshotMediaAssignment),
         partnerHostedAssignments: (bonus.partnerHostedAssignments ?? []).filter(publishablePartnerHostedAssignment).map(snapshotPartnerHostedAssignment),
+        // The immutable parent version is the publication boundary. Market
+        // bonuses must receive the same published snapshot state as global
+        // bonuses; their independently governed offerStatus is preserved.
+        status: EditorialStatus.PUBLISHED,
       })),
     })),
     status: EditorialStatus.PUBLISHED,
