@@ -253,6 +253,10 @@ test("24-25: promotion rendering is always contained and never carries a crop fo
   assert.deepEqual(mediaPlacementRegistry.CASINO_REVIEW_RIGHT_HERO.permittedModes, ["CONTAIN"]);
   const css = readFileSync("components/casino-profile/CasinoProfile.module.css", "utf8");
   assert.match(css, /\.heroMediaCanvas\[data-offer-media\] img \{ object-fit:\s*contain/);
+  assert.match(css, /\.heroMediaCanvas > \[data-responsive-placement-media\] \{\s*display:\s*block !important;\s*position:\s*absolute;\s*inset:\s*0;\s*width:\s*100%;\s*height:\s*100%;/);
+  assert.match(css, /\.heroMedia\[data-media-ratio\] \.heroMediaCanvas\[data-offer-media\] \{ width:\s*92%; height:\s*92%;/);
+  assert.match(css, /@media \(max-width:760px\)[\s\S]*?\.heroMedia\[data-media-ratio\] \.heroMediaCanvas\[data-offer-media\] \{ width:\s*100%; height:\s*100%;/);
+  assert.match(css, /@media \(max-width:760px\)[\s\S]*?\.heroMedia \{[\s\S]*?height:\s*190px;[\s\S]*?max-height:\s*190px;/);
 });
 
 function productionPlan(): MediaIngestionPlan {
