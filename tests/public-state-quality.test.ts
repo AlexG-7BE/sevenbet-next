@@ -20,18 +20,19 @@ test("commercial error boundaries use the locale-aware retry message", () => {
   }
 });
 
-test("empty curated shortlists omit selector controls but preserve their truthful empty states", () => {
+test("curated shortlists expose only result-backed selectors and collapse when none are available", () => {
   const bonuses = source("components/bonus-directory/CuratedBonusShortlist.tsx");
   const casinos = source("components/casino-discovery/CuratedCasinoShortlist.tsx");
 
-  assert.match(bonuses, /\{offers\.length \? <div[^>]+data-selector-group="curated-bonuses"[^>]+role="group"/);
-  assert.match(bonuses, /!top\.length \? <div[^>]+role="status"/);
-  assert.match(casinos, /\{promotableCasinos\.length \? <div[^>]+data-selector-group="curated-casinos"[^>]+role="group"/);
-  assert.match(casinos, /casinos\.filter\(\(casino\) => casino\.disposition === "PROMOTABLE"\)/);
-  assert.match(casinos, /!top\.length \? <div[^>]+role="status"/);
+  assert.match(bonuses, /selectAvailableCuratedBonusResults\(offers\)/);
+  assert.match(bonuses, /if \(!activeSelector\) return null/);
+  assert.match(casinos, /casinos\.filter\(\(casino\) => casino\.disposition !== "HIDDEN"\)/);
+  assert.match(casinos, /selectAvailableCuratedCasinoResults\(editorialCasinos, \{ bestBonusCasinoIds \}\)/);
+  assert.match(casinos, /if \(!activeSelector\) return null/);
   for (const shortlist of [bonuses, casinos]) {
-    assert.match(shortlist, /aria-pressed=\{selector === label\}/);
+    assert.match(shortlist, /aria-pressed=\{activeSelector === label\}/);
     assert.doesNotMatch(shortlist, /role="tab"|aria-selected/);
+    assert.doesNotMatch(shortlist, /className=\{styles\.empty\} role="status"/);
   }
 });
 

@@ -329,7 +329,8 @@ test("localized mobile controls wrap while neutral global and compact media stay
   }
 
   await page.goto(`${baseUrl}/de/casinos?visualFixture=true`, { waitUntil: "networkidle" });
-  await expect(page.locator('[data-selector-group="curated-casinos"]')).toHaveCount(0);
+  await expectWrappedControlContainment(page.locator('[data-selector-group="curated-casinos"]'), "button");
+  await expect(page.locator('section[aria-labelledby="curated-title"] [role="status"]')).toHaveCount(0);
   expect(await page.locator("#casino-results article").count()).toBeGreaterThan(0);
 
   await page.goto(`${baseUrl}/de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
@@ -395,12 +396,6 @@ test("authored display copy wraps between words across long mobile and desktop l
         selector: "[data-learning-article] header h1, [data-learning-article] #direct-answer-title",
         viewport: { width: 320, height: 700 },
       },
-      {
-        context: "NO curated bonus empty state at 390x844",
-        path: "/nb/bonuses?payment=localization-visual-no-match",
-        selector: 'section[aria-labelledby="bonus-shortlist-title"] [role="status"] strong',
-        viewport: { width: 390, height: 844 },
-      },
     ] as const;
 
     for (const surface of cases) {
@@ -411,6 +406,18 @@ test("authored display copy wraps between words across long mobile and desktop l
       await expectAuthoredWordsStayWhole(page.locator(surface.selector), surface.context);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${surface.context}: document overflow`).toBe(0);
     }
+    await page.setViewportSize({ width: 390, height: 844 });
+    const filteredBonusResponse = await page.goto(
+      `${baseUrl}/nb/bonuses?payment=localization-visual-no-match`,
+      { waitUntil: "domcontentloaded" },
+    );
+    expect(filteredBonusResponse?.status(), "NO filtered directory bonus empty state at 390x844").toBe(200);
+    await expect(page.locator('[data-public-empty-state="filtered"] h2')).toBeVisible();
+    await expect(page.locator('section[aria-labelledby="bonus-shortlist-title"]')).toHaveCount(0);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
+      "NO filtered directory bonus empty state at 390x844: document overflow",
+    ).toBe(0);
 
     const semanticCases = [
       {
@@ -532,10 +539,7 @@ test("commercial error and empty-state display headings preserve authored words"
     const response = await page.goto(`${baseUrl}/pt/bonuses?payment=localization-visual-no-match`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await page.evaluate(() => document.fonts.ready);
-    await expectAuthoredWordsStayWhole(
-      page.locator('[data-runtime-renderer="bonuses"] [role="status"] strong'),
-      "PT curated Bonuses empty heading at 390x844",
-    );
+    await expect(page.locator('section[aria-labelledby="bonus-shortlist-title"]')).toHaveCount(0);
     await expectSemanticLongWordContainment(
       page.locator('[data-public-empty-state="filtered"] h2'),
       "PT directory Bonuses empty heading at 390x844",

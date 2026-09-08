@@ -95,7 +95,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       </div>
     </section>
 
-    <CuratedCasinoShortlist casinos={result.items} messages={messages} presentation={presentation} />
+    <CuratedCasinoShortlist bestBonusCasinoIds={result.curated?.bestBonusCasinoIds} casinos={result.items} messages={messages} presentation={presentation} />
 
     <section className={styles.directory} data-motion-reveal data-nav-theme="cream" id="casino-directory"><div className={styles.shell}>
       <div className={styles.directoryHeading}><div><p>{messages.casinos.directoryTitle}</p><h2>{messages.casinos.directoryTitle}</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? messages.common.published : messages.common.classified} {result.total === 1 ? messages.common.record : messages.common.records}</span></div>

@@ -147,6 +147,58 @@ test("curated casino cards preserve visit actions when bonus data is absent and 
   assert.doesNotMatch(demoHtml, />Current</);
 });
 
+test("curated casino cards rank informational records editorially while commercial actions stay fail-closed", async () => {
+  const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
+  const informational = casino({
+    disposition: "INFORMATIONAL_ONLY",
+    dispositionReason: "EXACT_MARKET_INFORMATION_ONLY",
+    reviewHref: "/casino/truth-casino",
+    supportsMobile: true,
+    visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "MARKET_ACTIVATION_NOT_ACTIVE" },
+  });
+  const html = renderToStaticMarkup(<CuratedCasinoShortlist
+    bestBonusCasinoIds={[informational.id]}
+    casinos={[informational]}
+    messages={messages}
+    presentation={presentation}
+  />);
+
+  assert.ok(html.includes("Truth Casino"));
+  assert.ok(html.includes(messages.common.reviewOnly));
+  assert.ok(html.includes(messages.common.readReview));
+  assert.match(html, /href="\/casino\/truth-casino"/);
+  assert.doesNotMatch(html, /href="\/r\//);
+  assert.doesNotMatch(html, /data-commercial-action-source="(?:CTA|CREATIVE)"/);
+});
+
+test("mixed curated casino cards keep editorial inclusion independent from commercial action", async () => {
+  const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
+  const informational = casino({
+    id: "information-only",
+    slug: "information-only",
+    name: "Information Only",
+    disposition: "INFORMATIONAL_ONLY",
+    dispositionReason: "EXACT_MARKET_INFORMATION_ONLY",
+    visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "MARKET_ACTIVATION_NOT_ACTIVE" },
+  });
+  const promotable = casino({ id: "promotable", slug: "promotable", name: "Promotable" });
+  const html = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[informational, promotable]} messages={messages} presentation={presentation} />);
+
+  assert.ok(html.includes("Information Only"));
+  assert.ok(html.includes("Promotable"));
+  assert.equal((html.match(/href="\/r\/truth-casino-visit"/g) ?? []).length, 1);
+});
+
+test("curated casino shortlist omits hidden-only inventory instead of rendering a recommendation empty state", async () => {
+  const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
+  const html = renderToStaticMarkup(<CuratedCasinoShortlist
+    casinos={[casino({ disposition: "HIDDEN", dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY" })]}
+    messages={messages}
+    presentation={presentation}
+  />);
+  assert.equal(html, "");
+});
+
 test("casino directory promotional media follows the governed Visit action and fallbacks stay inert", async () => {
   const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
   const promotional = casino({
@@ -202,4 +254,20 @@ test("curated bonus cards never label demonstration records as current", async (
   const demoHtml = renderToStaticMarkup(<CuratedBonusShortlist offers={[offer(false)]} messages={messages} presentation={presentation} />);
   assert.ok(demoHtml.includes(`<small>${messages.common.demoData}</small>`));
   assert.ok(!demoHtml.includes(`<small>${messages.common.current}</small>`));
+});
+
+test("curated bonus shortlist hides known-empty selectors and collapses with zero offers", async () => {
+  const { CuratedBonusShortlist } = await import("../components/bonus-directory/CuratedBonusShortlist");
+  const sparse = offer();
+  sparse.casino.payments = sparse.casino.payments.map((payment) => ({ ...payment, crypto: false }));
+  sparse.bonus.wageringMultiplier = null;
+  sparse.bonus.minimumDeposit = null;
+  const html = renderToStaticMarkup(<CuratedBonusShortlist offers={[sparse]} messages={messages} presentation={presentation} />);
+
+  assert.ok(html.includes(messages.bonuses.selectorBestOverall));
+  assert.ok(html.includes(messages.bonuses.selectorNewest));
+  assert.ok(!html.includes(messages.bonuses.selectorCrypto));
+  assert.ok(!html.includes(messages.bonuses.selectorLowWagering));
+  assert.ok(!html.includes(messages.bonuses.selectorLowDeposit));
+  assert.equal(renderToStaticMarkup(<CuratedBonusShortlist offers={[]} messages={messages} presentation={presentation} />), "");
 });

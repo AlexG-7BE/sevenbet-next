@@ -3,6 +3,7 @@ import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 
 export const curatedBonusSelectors = ["Best Overall", "Low Wagering", "Low Deposit", "Crypto", "Newest"] as const;
 export type CuratedBonusSelector = typeof curatedBonusSelectors[number];
+export type CuratedBonusSelection = { selector: CuratedBonusSelector; items: PublicOfferDTO[] };
 
 function time(value: string | null) {
   const parsed = value ? new Date(value).valueOf() : 0;
@@ -27,4 +28,20 @@ export function selectCuratedBonuses(offers: PublicOfferDTO[], selector: Curated
     return offers.filter((offer) => offer.casino.payments.some((payment) => payment.crypto)).slice(0, 3);
   }
   return [...offers].sort((a, b) => time(b.casino.publishedAt) - time(a.casino.publishedAt)).slice(0, 3);
+}
+
+export function selectAvailableCuratedBonusResults(offers: PublicOfferDTO[]): CuratedBonusSelection[] {
+  return curatedBonusSelectors.flatMap((selector) => {
+    const selected = selectCuratedBonuses(offers, selector);
+    return selected.length ? [{ selector, items: selected }] : [];
+  });
+}
+
+export function resolveActiveCuratedBonusSelector(
+  current: CuratedBonusSelector,
+  available: readonly CuratedBonusSelector[],
+) {
+  if (available.includes(current)) return current;
+  if (available.includes("Best Overall")) return "Best Overall";
+  return available[0] ?? null;
 }
