@@ -4,6 +4,7 @@ import test from "node:test";
 
 import { checkAffiliateRouteHttp } from "../lib/affiliate-health/checker";
 import { isPublicAddress } from "../lib/affiliate-health/public-network-url";
+import type { PartnerRouteProjection } from "../lib/affiliate-routing/partner-route-projection";
 import { AffiliateRouteHealthService } from "../lib/services/affiliate-route-health.service";
 
 const noNetworkValidation = async () => undefined;
@@ -34,10 +35,31 @@ test("health checker follows a finite chain and preserves required attribution",
   assert.equal(result.status, "HEALTHY");
   assert.equal(result.redirectCount, 1);
   assert.equal(result.finalHost, "casino.example");
+
+  const wwwEquivalent = await checkAffiliateRouteHttp({
+    url: new URL("https://track.example/click?aff=42"),
+    expectation: { ...expectation, allowWwwEquivalentFinalHost: true },
+    fetcher: fetchSequence(
+      new Response(null, { status: 302, headers: { location: "https://www.casino.example/pe?aff=42" } }),
+      new Response(null, { status: 200 }),
+    ),
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(wwwEquivalent.status, "HEALTHY");
+  assert.equal(wwwEquivalent.finalHost, "www.casino.example");
 });
 
 test("4xx, 5xx, expiry, cross-GEO, attribution loss, and redirect loops are distinct", async () => {
-  const cases: Array<[number, string]> = [[404, "BROKEN"], [500, "BROKEN"], [410, "EXPIRED"]];
+  const headAndGet404 = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"), expectation,
+    fetcher: fetchSequence(new Response(null, { status: 404 }), new Response(null, { status: 404 })),
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(headAndGet404.status, "BROKEN");
+  assert.equal(headAndGet404.reason, "HTTP_404");
+  assert.equal(headAndGet404.method, "GET");
+
+  const cases: Array<[number, string]> = [[500, "BROKEN"], [410, "EXPIRED"]];
   for (const [status, expected] of cases) {
     const result = await checkAffiliateRouteHttp({
       url: new URL("https://casino.example/pe?aff=42"), expectation,
@@ -75,7 +97,7 @@ test("4xx, 5xx, expiry, cross-GEO, attribution loss, and redirect loops are dist
   assert.equal(loop.reason, "REDIRECT_LOOP");
 });
 
-test("HEAD fallback and CDN challenges are handled without hiding server failures", async () => {
+test("HEAD rejection fallback and CDN challenges are handled without hiding server failures", async () => {
   const fallback = await checkAffiliateRouteHttp({
     url: new URL("https://casino.example/pe?aff=42"), expectation,
     fetcher: fetchSequence(new Response(null, { status: 405 }), new Response(null, { status: 200 })),
@@ -83,6 +105,40 @@ test("HEAD fallback and CDN challenges are handled without hiding server failure
   });
   assert.equal(fallback.status, "HEALTHY");
   assert.equal(fallback.method, "GET");
+
+  const attempts: Array<{ method: string | undefined; userAgent: string | null }> = [];
+  const head404Fallback = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"), expectation,
+    fetcher: (async (_input, init) => {
+      attempts.push({
+        method: init?.method,
+        userAgent: new Headers(init?.headers).get("user-agent"),
+      });
+      return new Response("<!doctype html><title>Casino welcome</title>", {
+        status: attempts.length === 1 ? 404 : 200,
+        headers: { "content-type": "text/html" },
+      });
+    }) as typeof fetch,
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(head404Fallback.status, "HEALTHY");
+  assert.equal(head404Fallback.method, "GET");
+  assert.deepEqual(attempts.map((attempt) => attempt.method), ["HEAD", "GET"]);
+  assert.match(attempts[1].userAgent ?? "", /^Mozilla\/5\.0 /);
+
+  const head404ThenDisguisedError = await checkAffiliateRouteHttp({
+    url: new URL("https://casino.example/pe?aff=42"), expectation,
+    fetcher: fetchSequence(
+      new Response(null, { status: 404 }),
+      new Response("<!doctype html><title>Page not found</title>", {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      }),
+    ),
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(head404ThenDisguisedError.status, "BROKEN");
+  assert.equal(head404ThenDisguisedError.reason, "TERMINAL_ERROR_PAGE");
 
   const challenge = await checkAffiliateRouteHttp({
     url: new URL("https://casino.example/pe?aff=42"), expectation,
@@ -200,6 +256,62 @@ test("an empty active-route set is a valid healthy report", async () => {
   assert.equal(report.summary.routes, 0);
 });
 
+test("route-health service permits only canonical www host equivalence", async () => {
+  let observedAllowWww: boolean | undefined;
+  const route = {
+    countryCode: "ZZ",
+    productionEligible: true,
+    reasonCodes: [],
+    redirect: { id: "redirect" },
+    offer: { id: "offer" },
+    tracking: {
+      id: "tracking",
+      destinationUrl: "https://casino.example/",
+      trackingUrl: "https://track.example/click",
+      metadata: {
+        commercialActivationV1: {
+          records: {
+            ZZ: {
+              routeHealth: {
+                expectedFinalHost: "casino.example",
+                expectedPathPrefix: null,
+                requiredAttributionParameters: [],
+              },
+            },
+          },
+        },
+      },
+    },
+  } as unknown as PartnerRouteProjection;
+  const service = new AffiliateRouteHealthService(
+    { listClaims: async () => [{
+      casinoId: "casino",
+      casinoSlug: "casino",
+      countryCode: "ZZ",
+      offerId: "offer",
+      trackingLinkId: "tracking",
+      redirectId: "redirect",
+      redirectSlug: "casino-welcome",
+    }] },
+    { resolve: async () => [route] },
+    (async (input) => {
+      observedAllowWww = input.expectation.allowWwwEquivalentFinalHost;
+      return {
+        status: "HEALTHY",
+        reason: "HEAD_OK",
+        method: "HEAD",
+        statusCode: 200,
+        durationMs: 1,
+        redirectCount: 1,
+        finalHost: "www.casino.example",
+      };
+    }) as typeof checkAffiliateRouteHttp,
+  );
+  const report = await service.run({ now: new Date("2026-09-08T12:00:00.000Z") });
+  assert.equal(observedAllowWww, true);
+  assert.equal(report.healthy, true);
+});
+
 test("claim selection is active-only and automation alerts through one deduplicated issue", () => {
   const repository = readFileSync("lib/repositories/affiliate-route-health.repository.ts", "utf8");
   assert.match(repository, /productionEligible:\s*true/);
@@ -207,6 +319,7 @@ test("claim selection is active-only and automation alerts through one deduplica
   const service = readFileSync("lib/services/affiliate-route-health.service.ts", "utf8");
   assert.match(service, /PRODUCTION_AUTHORITY_EXPIRED/);
   assert.match(service, /destinationUrl/);
+  assert.match(service, /allowWwwEquivalentFinalHost:\s*true/);
   const workflow = readFileSync(".github/workflows/affiliate-route-health.yml", "utf8");
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /GH_REPO: \$\{\{ github\.repository \}\}/);

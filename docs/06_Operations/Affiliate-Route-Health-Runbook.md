@@ -19,7 +19,14 @@ No active routes is a healthy empty result. A real failed route produces a non-z
 
 ## Checks and states
 
-The checker validates HTTPS/public-network targets, current PartnerRoute eligibility, finite manual redirects, HTTP status, expected final host/path, and required attribution-key presence. It uses HEAD first and a non-converting one-byte GET only for servers that reject HEAD.
+The checker validates HTTPS/public-network targets, current PartnerRoute
+eligibility, finite manual redirects, HTTP status, expected final host/path,
+and required attribution-key presence. It uses HEAD first. A `404`, `405` or
+`501` response to HEAD is rechecked with a bounded visitor-shaped GET because
+some governed partner endpoints reject HEAD while serving normal browser
+navigation. The GET result remains authoritative: a real GET error or a
+disguised 200 error page still fails closed. Canonical `www` and non-`www`
+forms of the same expected operator host are treated as equivalent.
 
 - `HEALTHY`: safe finite route reached the expected destination;
 - `DEGRADED`: an unusual non-error HTTP response needs review;

@@ -36,6 +36,7 @@ interface SafeFetchResult {
 
 const maximumRedirects = 6;
 const challengeStatuses = new Set([401, 403, 429]);
+const headFallbackStatuses = new Set([404, 405, 501]);
 const healthCheckUserAgent = "B4Gamble-Affiliate-Route-Health/1.0";
 const visitorNavigationUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36";
 
@@ -178,12 +179,17 @@ export async function checkAffiliateRouteHttp(input: {
   const userAgent = input.inspectTerminalContent ? visitorNavigationUserAgent : healthCheckUserAgent;
   try {
     let result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl, userAgent);
-    if (!input.inspectTerminalContent && (result.response.status === 405 || result.response.status === 501)) {
+    // Some partner endpoints reject HEAD with a synthetic 404 while serving a
+    // normal browser GET. The GET result remains fully classified and a real
+    // GET 404 or disguised error page still fails closed.
+    if (!input.inspectTerminalContent && headFallbackStatuses.has(result.response.status)) {
+      await result.response.body?.cancel().catch(() => undefined);
       method = "GET";
-      result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl, userAgent);
+      result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl, visitorNavigationUserAgent);
     }
     const classified = classify(result, method, input.expectation, performance.now() - started);
-    if (!input.inspectTerminalContent || classified.status !== "HEALTHY") {
+    const inspectTerminal = input.inspectTerminalContent || method === "GET";
+    if (!inspectTerminal || classified.status !== "HEALTHY") {
       await result.response.body?.cancel().catch(() => undefined);
       return classified;
     }
