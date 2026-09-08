@@ -10,11 +10,6 @@
   },
   "sourceFiles": [
     {
-      "role": "CURRENT_EDITORIAL_RECONCILIATION_CORPUS",
-      "path": "lib/casino-real-catalog/catalog.ts",
-      "sha256": "2cfbadd92b0f96d51767f0850a2c3f442e47fd68b8738b62f9daaa6ea451e2dc"
-    },
-    {
       "role": "FROZEN_FACTUAL_BUNDLE",
       "path": "data/casino-ingestion/betsson-pe-se.v1.json",
       "sha256": "9f6d15e18e7217fbc9648c86eb8a2ba4ad8aa47fb1e8e06ac7ab60b672f3960c"
@@ -58,6 +53,13 @@
       "role": "FROZEN_FACTUAL_BUNDLE",
       "path": "data/casino-ingestion/casino-data-population-01/slotnite-gb.v1.json",
       "sha256": "013adbd77056271856b0e4a606336fe62f8f613a9836ddab626e5116244989f1"
+    }
+  ],
+  "mutableRuntimeSources": [
+    {
+      "role": "CURRENT_EDITORIAL_RECONCILIATION_CORPUS",
+      "path": "lib/casino-real-catalog/catalog.ts",
+      "reason": "The current runtime catalog may receive Founder-approved controlled asset metadata upgrades. Frozen factual sources and controlled asset binaries remain checksum-bound; the Betsson asset upgrade is recorded under CASINO-REAL-CATALOG-03."
     }
   ],
   "authoritativeLiveSources": [
@@ -176,7 +178,7 @@
     "activeCommercialRoutes": 0
   },
   "assets": [
-    { "slug": "betsson", "path": "public/casino-brands/betsson/logo.png", "dimensions": "180x180", "sha256": "0c83930c9cfa42a46ce836aed8af46dd754275f7279f0c60730901e92a770c4b", "usage": "PUBLIC_BRAND_IDENTIFICATION" },
+    { "slug": "betsson", "path": "public/casino-brands/betsson/logo.png", "dimensions": "600x100", "sha256": "1b270e11624ee52c38493c36cfb32090051406357e2f69077b6f54d3aa768552", "usage": "PUBLIC_BRAND_IDENTIFICATION", "provenance": "Founder-approved controlled asset upgrade recorded in CASINO-REAL-CATALOG-03" },
     { "slug": "skol-casino", "path": "public/casino-brands/skol-casino/logo.png", "dimensions": "48x48", "sha256": "ca5f337b5b02ebdef1a7a46cba902c430a53c2f7b42eb3cea7d476fee7b08d63", "usage": "PUBLIC_BRAND_IDENTIFICATION" },
     { "slug": "hello-casino", "path": "public/casino-brands/hello-casino/logo.png", "dimensions": "16x16", "sha256": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b", "usage": "PUBLIC_BRAND_IDENTIFICATION_AT_INTRINSIC_SIZE" },
     { "slug": "gday-casino", "path": "public/casino-brands/gday-casino/logo.png", "dimensions": "72x72", "sha256": "b6983467b8f9273814eaee8640d935f1a0c6cc57fc39249aefc16b359060b5ad", "usage": "PUBLIC_BRAND_IDENTIFICATION" },

@@ -1,0 +1,138 @@
+{
+  "schemaVersion": "casino-real-catalog-03.v1",
+  "release": "CASINO-REAL-CATALOG-03",
+  "classification": "FOUNDER_APPROVED_RUNTIME_AUTHORITY",
+  "approvedAt": "2026-09-08",
+  "scoreAuthority": "Founder instruction in B4GAMBLE Founder Office on 2026-09-08",
+  "commercialAuthority": false,
+  "entries": [
+    {
+      "slug": "inkabet",
+      "title": "Inkabet",
+      "score": 9.0,
+      "foundedYear": 2012,
+      "summary": "One of the cleanest profiles in this release: exact Peru regulation, broad local cashier evidence, detailed current welcome terms and responsible-gambling controls.",
+      "description": "Inkabet has a particularly strong Peru evidence set: current MINCETUR authorisations, detailed PEN payment coverage, explicit welcome mechanics and locally evidenced control tools. B4GAMBLE keeps those exact-market facts separate from commercial route authority, so the 9.0 Editor Score does not itself create or activate a referral link.",
+      "bestFor": ["Peruvian PEN users", "Players comparing explicit welcome terms", "Users who value broad local payment-method coverage"],
+      "whyWeLikeIt": ["Exact MINCETUR authorisations", "Detailed current offer mechanics", "Strong responsible-gambling controls"],
+      "thingsToKnow": ["Cashier availability can still vary by account", "Some payment limits originate from the partner matrix", "Commercial routing remains separately governed"],
+      "responsibleGamblingTools": ["Deposit limits", "Time-out", "Self-exclusion"],
+      "markets": ["PE"]
+    },
+    {
+      "slug": "betsafe",
+      "title": "Betsafe",
+      "score": 8.8,
+      "foundedYear": 2006,
+      "summary": "Strong Baltic regulatory evidence and broad product depth across the researched Estonia and Latvia profiles, with a remaining Estonia cashier-data gap.",
+      "description": "Betsafe combines strong exact-market regulatory evidence in Estonia and Latvia with a broad casino catalogue and established provider coverage. The release preserves the Estonia cashier gap and the incomplete Latvia welcome mechanics as explicit limitations rather than filling them by inference. The 8.8 Editor Score is editorial only and does not grant referral authority.",
+      "bestFor": ["Players comparing broad slots and live-casino catalogues", "Estonia and Latvia users wanting local-regulation evidence", "Multi-language Baltic users"],
+      "whyWeLikeIt": ["Strong exact-market regulator evidence", "Large catalogue and provider breadth", "Clear local support footprint"],
+      "thingsToKnow": ["Exact Estonia cashier inventory remains unknown", "Latvia welcome mechanics still require a final terms check", "Other Betsafe markets are not inferred from the Baltic profiles"],
+      "responsibleGamblingTools": [],
+      "markets": ["EE", "LV"]
+    },
+    {
+      "slug": "starcasino",
+      "title": "StarCasino",
+      "score": 8.7,
+      "foundedYear": 2012,
+      "summary": "A broad Italian casino catalogue with strong payment evidence and current concession 16026; publication remains informational because Italy has strict gambling-advertising restrictions.",
+      "description": "StarCasino has strong Italy-specific evidence for its current Azzurri Limited concession 16026, payment coverage and large game catalogue. B4GAMBLE publishes this review as neutral information only: this release creates no promotional route, no advertising claim and no referral authority for Italy. Current Italian advertising restrictions remain an independent commercial gate.",
+      "bestFor": ["Italian EUR users comparing factual casino information", "Users comparing a wide payment inventory", "Users looking for a large casino catalogue"],
+      "whyWeLikeIt": ["Current concession 16026 is identified", "Extensive Italy payment inventory", "Broad game-category coverage"],
+      "thingsToKnow": ["This release is informational only for Italy", "No current promotional bonus is published by this release", "Legacy concession 15230 evidence is excluded as stale/contradictory"],
+      "responsibleGamblingTools": [],
+      "markets": ["IT"],
+      "publicationMode": "INFORMATIONAL_ONLY"
+    },
+    {
+      "slug": "supercasino",
+      "title": "SuperCasino",
+      "score": 8.6,
+      "foundedYear": null,
+      "summary": "A well-documented NZ-facing casino with unusually clear current welcome mechanics; exact cashier method-level limits remain the main data gap.",
+      "description": "SuperCasino has current NZ-facing terms, detailed welcome mechanics and disclosed BML Group Limited/MGA operator evidence. B4GAMBLE does not present that MGA evidence as a New Zealand local licence. Exact method-level cashier limits remain incomplete, and commercial action stays separately governed.",
+      "bestFor": ["NZD users comparing a documented casino profile", "Players who value explicit bonus mechanics", "Casino and live-casino users comparing reward mechanics"],
+      "whyWeLikeIt": ["Detailed current welcome terms", "Current operator and MGA evidence", "Clear reward mechanics"],
+      "thingsToKnow": ["Exact cashier method-level limits remain incomplete", "MGA evidence is not presented as a New Zealand local licence", "Commercial routing remains separately governed"],
+      "responsibleGamblingTools": [],
+      "markets": ["NZ"]
+    },
+    {
+      "slug": "nordicbet",
+      "title": "NordicBet",
+      "score": 8.5,
+      "foundedYear": 2002,
+      "summary": "A strong Sweden-local profile with detailed payment evidence and a current licence; incomplete welcome mechanics and conflicting generic MGA evidence are kept separate.",
+      "description": "NordicBet has a strong Sweden-specific profile with current Spelinspektionen licence evidence and unusually detailed cashier coverage. Generic MGA snippets that conflict with the Sweden profile are not used as Swedish regulatory evidence. The current welcome headline is known but full mechanics remain incomplete.",
+      "bestFor": ["Swedish SEK users", "Users comparing Swish and Trustly coverage", "Nordic casino and poker users"],
+      "whyWeLikeIt": ["Current Swedish licence", "Excellent Sweden payment coverage", "Established provider set"],
+      "thingsToKnow": ["Generic MGA evidence is contradictory and excluded from Sweden", "Welcome-offer mechanics remain incomplete", "Commercial routing remains separately governed"],
+      "responsibleGamblingTools": [],
+      "markets": ["SE"]
+    },
+    {
+      "slug": "rizk",
+      "title": "Rizk",
+      "score": 8.4,
+      "foundedYear": null,
+      "summary": "Strong product and payment evidence in the published Canada and Serbia profiles, while the unresolved New Zealand legal-footer contradiction is deliberately withheld from this release.",
+      "description": "Rizk has strong product and payment evidence, especially in Serbia, with useful Canada-facing cashier information. B4GAMBLE does not claim a Canadian local gambling licence, and the researched New Zealand profile is not published in this release because its current legal presentation remains contradictory. That uncertainty materially constrains the 8.4 score.",
+      "bestFor": ["Serbia users comparing exact local payment evidence", "Canada users comparing broad payment options", "Users interested in broad provider and category coverage"],
+      "whyWeLikeIt": ["Strong Serbia exact-market evidence", "Detailed payment coverage", "Broad provider catalogue"],
+      "thingsToKnow": ["No Canadian local licence is established by this evidence", "The researched New Zealand profile remains withheld because of a legal-profile contradiction", "Commercial routing remains separately governed"],
+      "responsibleGamblingTools": [],
+      "markets": ["CA", "RS"]
+    }
+  ],
+  "logoProvenance": [
+    {
+      "slug": "betsafe",
+      "status": "PARTNER_ASSET_IMPORTED",
+      "source": "Founder-uploaded Betsafe-Logo-Pack-November-2023 (1).zip",
+      "officialSource": "https://www.betssongroupaffiliates.com/wp-content/uploads/2020/03/45742-Change-in-Betsafe-Logos_Betsafe-logo-RGB-Positive-1-e1752750646250.png",
+      "asset": "/casino-brands/betsafe/logo.png",
+      "sha256": "add3398db34f3b46e4dd850ef72c7a54a4167642a402432aa9531527d792785b"
+    },
+    {
+      "slug": "inkabet",
+      "status": "PARTNER_ASSET_IMPORTED",
+      "source": "Founder-uploaded InkaBet-Main-Logo-Pack (1).zip",
+      "officialSource": "https://www.betssongroupaffiliates.com/wp-content/uploads/2024/03/inkabet.svg",
+      "asset": "/casino-brands/inkabet/logo.png",
+      "sha256": "1d7054aabe7ff923bd55e9906ef53ee19f000c5397d83420f66c6b5a9a8ec6dd"
+    },
+    {
+      "slug": "nordicbet",
+      "status": "PARTNER_ASSET_IMPORTED",
+      "source": "Founder-uploaded NB_Logos-updated (1).zip",
+      "officialSource": "https://www.betssongroupaffiliates.com/wp-content/uploads/2020/04/NordicBet-1.svg",
+      "asset": "/casino-brands/nordicbet/logo.png",
+      "sha256": "8aaddb51127d809f64fa015cf0f60bc5eca270b8c4e7b522abbe2465969cc5f6"
+    },
+    {
+      "slug": "rizk",
+      "status": "PARTNER_ASSET_IMPORTED",
+      "source": "Founder-uploaded Rizk-Logos (1).zip",
+      "officialSource": "https://www.betssongroupaffiliates.com/wp-content/uploads/2020/06/Rizk.svg",
+      "asset": "/casino-brands/rizk/logo.png",
+      "sha256": "e3e84d1d09fe78aa71a31d896ee35e685e7ef567ddd48ef6f0fff3d3359be55a"
+    },
+    {"slug":"supercasino","status":"OFFICIAL_SOURCE_LOCATED_BINARY_NOT_IMPORTED","source":"https://supercasino.com/assets/img/logo-super.svg"},
+    {"slug":"starcasino","status":"UNKNOWN","source":null}
+  ],
+  "existingBrandAssetUpgrades": [
+    {
+      "slug": "betsson",
+      "status": "PARTNER_ASSET_UPGRADED",
+      "source": "Founder-uploaded Betsson-Logo-Pack-1 (1).zip / betsson-orange.png",
+      "asset": "/casino-brands/betsson/logo.png",
+      "sourceDimensions": "2414x404",
+      "webDimensions": "600x100",
+      "sha256": "1b270e11624ee52c38493c36cfb32090051406357e2f69077b6f54d3aa768552",
+      "note": "Existing Betsson brand asset upgraded only; Betsson is not a seventh catalog entry in CASINO-REAL-CATALOG-03."
+    }
+  ],
+  "uploadedArchiveFinding": "The Founder-supplied logo packs contain release-ready assets for Betsafe, Inkabet, NordicBet and Rizk. The Betsson logo pack is used to upgrade the already-existing Betsson brand asset and does not add Betsson as a seventh catalog entry. Guts, JallaCasino, CasinoEuro and the earlier BGA corporate logo pack remain excluded from this release. No StarCasino or SuperCasino logo binary was present in the supplied archives."
+}
