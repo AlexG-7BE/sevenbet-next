@@ -172,8 +172,17 @@ async function ingestFactualBundles(bundles: Awaited<ReturnType<typeof loadBundl
     await tx.$executeRawUnsafe("SET LOCAL statement_timeout = '150s'");
     await tx.$executeRawUnsafe("SET LOCAL lock_timeout = '10s'");
     await tx.$executeRawUnsafe("SET LOCAL idle_in_transaction_session_timeout = '180s'");
-    const ingestion = await ingestCasinoBundlesInTransaction(tx, bundles);
-    const idempotency = await verifyCasinoBundlesIdempotencyInTransaction(tx, bundles);
+
+    const ingestion = new Array<Awaited<ReturnType<typeof ingestCasinoBundlesInTransaction>>[number]>();
+    for (const bundle of bundles) {
+      ingestion.push(...await ingestCasinoBundlesInTransaction(tx, [bundle]));
+    }
+
+    const idempotency = new Array<Awaited<ReturnType<typeof verifyCasinoBundlesIdempotencyInTransaction>>[number]>();
+    for (const bundle of bundles) {
+      idempotency.push(...await verifyCasinoBundlesIdempotencyInTransaction(tx, [bundle]));
+    }
+
     return { ingestion, idempotency };
   }, {
     isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
