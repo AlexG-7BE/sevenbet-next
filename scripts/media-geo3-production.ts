@@ -232,7 +232,7 @@ async function backfillDefinition(definition: ReturnType<typeof assertMediaGeo3C
   const matrix = resolverMatrix(definition.slug, source, creativeSetId, revisionId);
 
   return prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${source.casino.id}:${source.offer.id}`}, 0))`;
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${source.casino.id}:${source.offer.id}`}, 0))::text AS locked`;
     const replay = await tx.mediaRevision.findUnique({ where: { idempotencyKey } });
     if (replay) {
       if (replay.payloadHash !== payloadHash || replay.status !== "ACTIVE") {

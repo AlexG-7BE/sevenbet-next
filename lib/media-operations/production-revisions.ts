@@ -257,7 +257,7 @@ function authorityForCountry(activations: Array<{
 type Transaction = Prisma.TransactionClient;
 
 async function lockRevisionScope(tx: Transaction, casinoId: string, affiliateOfferId: string) {
-  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${casinoId}:${affiliateOfferId}`}, 0))`;
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${casinoId}:${affiliateOfferId}`}, 0))::text AS locked`;
 }
 
 async function safeRevision(revisionId: string) {
