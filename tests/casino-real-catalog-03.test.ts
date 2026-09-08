@@ -9,6 +9,14 @@ const corpus = JSON.parse(read("data/casino-real-catalog-03/catalog.v1.json")) a
   release: string;
   commercialAuthority: boolean;
   entries: Array<{ slug: string; score: number; markets: string[]; publicationMode?: string }>;
+  logoProvenance: Array<{
+    slug: string;
+    status: string;
+    source: string | null;
+    officialSource?: string | null;
+    asset?: string | null;
+    sha256?: string | null;
+  }>;
   existingBrandAssetUpgrades: Array<{
     slug: string;
     status: string;
@@ -80,6 +88,30 @@ test("all release ingestion bundles contain zero commercial mappings", () => {
   }
 });
 
+test("Founder-supplied release logos are checksum-verified and bound into runtime media", () => {
+  const imported = corpus.logoProvenance.filter(({ status }) => status === "PARTNER_ASSET_IMPORTED");
+  assert.deepEqual(imported.map(({ slug }) => slug).sort(), ["betsafe", "inkabet", "nordicbet", "rizk"]);
+  for (const logo of imported) {
+    assert.equal(logo.asset, `/casino-brands/${logo.slug}/logo.png`);
+    assert.match(logo.sha256 ?? "", /^[a-f0-9]{64}$/);
+  }
+
+  const mediaSource = read("scripts/casino-real-catalog-03-media.ts");
+  assert.match(mediaSource, /EXPECTED_IMPORTED_SLUGS = \["betsafe", "inkabet", "nordicbet", "rizk"\]/);
+  assert.match(mediaSource, /digest !== logo\.sha256/);
+  assert.match(mediaSource, /tx\.mediaAsset\.upsert/);
+  assert.match(mediaSource, /tx\.casinoMediaAssignment\.upsert/);
+  assert.match(mediaSource, /placement: "CASINO_LOGO"/);
+  assert.match(mediaSource, /renderingMode: "CONTAIN"/);
+  assert.match(mediaSource, /non-imported StarCasino\/SuperCasino logo must not be fabricated/);
+
+  const vercel = JSON.parse(read("vercel.json")) as { buildCommand: string };
+  const catalogRelease = vercel.buildCommand.indexOf("scripts/casino-real-catalog-03.ts build-preflight");
+  const mediaBinding = vercel.buildCommand.indexOf("scripts/casino-real-catalog-03-media.ts build-preflight");
+  const nextBuild = vercel.buildCommand.indexOf("next build");
+  assert.ok(catalogRelease >= 0 && catalogRelease < mediaBinding && mediaBinding < nextBuild);
+});
+
 test("the supplied archive finding keeps corporate BGA art excluded while allowing the distinct Betsson brand upgrade", () => {
   assert.match(corpus.uploadedArchiveFinding, /Betsson logo pack is used to upgrade the already-existing Betsson brand asset/i);
   assert.match(corpus.uploadedArchiveFinding, /earlier BGA corporate logo pack remain excluded/i);
@@ -113,7 +145,10 @@ test("multi-market bundles for the same casino are applied sequentially inside o
 
 test("production mutation is bounded to Vercel production after the existing database preflight", () => {
   const releaseSource = read("scripts/casino-real-catalog-03.ts");
+  const mediaSource = read("scripts/casino-real-catalog-03-media.ts");
   const vercel = JSON.parse(read("vercel.json")) as { buildCommand: string };
   assert.match(releaseSource, /process\.env\.VERCEL_ENV !== "production"/);
+  assert.match(mediaSource, /process\.env\.VERCEL_ENV !== "production"/);
   assert.ok(vercel.buildCommand.indexOf("scripts/vercel-build-preflight.ts") < vercel.buildCommand.indexOf("scripts/casino-real-catalog-03.ts build-preflight"));
+  assert.ok(vercel.buildCommand.indexOf("scripts/casino-real-catalog-03.ts build-preflight") < vercel.buildCommand.indexOf("scripts/casino-real-catalog-03-media.ts build-preflight"));
 });
