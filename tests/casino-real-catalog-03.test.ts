@@ -103,6 +103,14 @@ test("mutable research_staging provenance cannot block Production deploys", () =
   assert.match(verifier, /symbolic link/);
 });
 
+test("multi-market bundles for the same casino are applied sequentially inside one release transaction", () => {
+  const source = read("scripts/casino-real-catalog-03.ts");
+  assert.match(source, /ingestCasinoBundlesInTransaction\(tx, \[bundle\]\)/);
+  assert.match(source, /verifyCasinoBundlesIdempotencyInTransaction\(tx, \[bundle\]\)/);
+  assert.doesNotMatch(source, /ingestCasinoBundlesInTransaction\(tx, bundles\)/);
+  assert.doesNotMatch(source, /verifyCasinoBundlesIdempotencyInTransaction\(tx, bundles\)/);
+});
+
 test("production mutation is bounded to Vercel production after the existing database preflight", () => {
   const releaseSource = read("scripts/casino-real-catalog-03.ts");
   const vercel = JSON.parse(read("vercel.json")) as { buildCommand: string };
