@@ -11,6 +11,7 @@ const CATALOG_RELEASE = "CASINO-REAL-CATALOG-03";
 const MEDIA_RELEASE = "CASINO-REAL-CATALOG-03-MEDIA";
 const CORPUS_PATH = "data/casino-real-catalog-03/catalog.v1.json";
 const EXPECTED_IMPORTED_SLUGS = ["betsafe", "inkabet", "nordicbet", "rizk"] as const;
+const ASSIGNMENT_SORT_ORDER = 0;
 
 type ImportedLogo = {
   slug: string;
@@ -197,7 +198,7 @@ async function applyBindings(logos: ImportedLogo[], actorId: string) {
           countryCode: null,
           languageCode: null,
           renderingMode: "CONTAIN",
-          sortOrder: -100,
+          sortOrder: ASSIGNMENT_SORT_ORDER,
           active: true,
           cropSafe: false,
           altTextOverride: `${casino.title} logo`,
@@ -211,7 +212,7 @@ async function applyBindings(logos: ImportedLogo[], actorId: string) {
           countryCode: null,
           languageCode: null,
           renderingMode: "CONTAIN",
-          sortOrder: -100,
+          sortOrder: ASSIGNMENT_SORT_ORDER,
           active: true,
           cropSafe: false,
           altTextOverride: `${casino.title} logo`,
