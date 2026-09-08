@@ -122,5 +122,17 @@
     {"slug":"supercasino","status":"OFFICIAL_SOURCE_LOCATED_BINARY_NOT_IMPORTED","source":"https://supercasino.com/assets/img/logo-super.svg"},
     {"slug":"starcasino","status":"UNKNOWN","source":null}
   ],
-  "uploadedArchiveFinding": "The Founder-supplied logo packs contain release-ready assets for Betsafe, Inkabet, NordicBet and Rizk. Guts, JallaCasino, CasinoEuro, Betsson and the earlier BGA corporate logo pack are unrelated to the six-casino release and were intentionally excluded. No StarCasino or SuperCasino logo binary was present in the supplied archives."
+  "existingBrandAssetUpgrades": [
+    {
+      "slug": "betsson",
+      "status": "PARTNER_ASSET_UPGRADED",
+      "source": "Founder-uploaded Betsson-Logo-Pack-1 (1).zip / betsson-orange.png",
+      "asset": "/casino-brands/betsson/logo.png",
+      "sourceDimensions": "2414x404",
+      "webDimensions": "600x100",
+      "sha256": "a4c7eda22c01a21ec7475356a5c2e97c9d008b1f6b1f52feea0ccbd7904be1cb",
+      "note": "Existing Betsson brand asset upgraded only; Betsson is not a seventh catalog entry in CASINO-REAL-CATALOG-03."
+    }
+  ],
+  "uploadedArchiveFinding": "The Founder-supplied logo packs contain release-ready assets for Betsafe, Inkabet, NordicBet and Rizk. The Betsson logo pack is used to upgrade the already-existing Betsson brand asset and does not add Betsson as a seventh catalog entry. Guts, JallaCasino, CasinoEuro and the earlier BGA corporate logo pack remain excluded from this release. No StarCasino or SuperCasino logo binary was present in the supplied archives."
 }
