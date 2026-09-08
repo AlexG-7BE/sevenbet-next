@@ -10,6 +10,10 @@ import {
 } from "@/lib/casino-ingestion/importer";
 import { verifyCasinoIngestionSources } from "@/lib/casino-ingestion/source-verification";
 import { readCasinoEditorMetadata, writeCasinoEditorMetadata } from "@/lib/casino-builder/editor-metadata";
+import {
+  reconcileSafeOfferCorpusInTransaction,
+  verifySafeOfferCorpusInTransaction,
+} from "@/lib/casino-offer-corpus/safe-offer-corpus";
 import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
 import prisma from "@/lib/db/prisma";
 import { casinoService } from "@/lib/services/casino.service";
@@ -167,7 +171,10 @@ function editorialDocument(entry: CatalogEntry): CasinoEditorialDocument {
   };
 }
 
-async function ingestFactualBundles(bundles: Awaited<ReturnType<typeof loadBundles>>) {
+async function ingestFactualBundles(
+  bundles: Awaited<ReturnType<typeof loadBundles>>,
+  actorId: string,
+) {
   return prisma.$transaction(async (tx) => {
     await tx.$executeRawUnsafe("SET LOCAL statement_timeout = '150s'");
     await tx.$executeRawUnsafe("SET LOCAL lock_timeout = '10s'");
@@ -221,7 +228,14 @@ async function ingestFactualBundles(bundles: Awaited<ReturnType<typeof loadBundl
       data: { offerStatus: OfferStatus.ACTIVE },
     });
 
-    return { ingestion, idempotency, publication: { expected: expectedOffers.length, activated: activation.count } };
+    const safeOfferCorpus = await reconcileSafeOfferCorpusInTransaction(tx, actorId);
+
+    return {
+      ingestion,
+      idempotency,
+      publication: { expected: expectedOffers.length, activated: activation.count },
+      safeOfferCorpus,
+    };
   }, {
     isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     maxWait: 10_000,
@@ -394,7 +408,8 @@ async function verifyState(corpus: CatalogCorpus) {
       robots: casino.seo?.robots ?? null,
     });
   }
-  console.info(JSON.stringify({ release: RELEASE, verified: true, state }, null, 2));
+  const safeOfferCorpus = await prisma.$transaction((tx) => verifySafeOfferCorpusInTransaction(tx));
+  console.info(JSON.stringify({ release: RELEASE, verified: true, state, safeOfferCorpus }, null, 2));
 }
 
 async function main() {
@@ -409,7 +424,7 @@ async function main() {
   if (mode === "build-preflight") {
     const bundles = await loadBundles();
     const actorId = await selectActor();
-    const ingestion = await ingestFactualBundles(bundles);
+    const ingestion = await ingestFactualBundles(bundles, actorId);
     console.info(JSON.stringify({ release: RELEASE, ingestion }, null, 2));
     for (const entry of corpus.entries) await syncCasino(entry, actorId);
   }
