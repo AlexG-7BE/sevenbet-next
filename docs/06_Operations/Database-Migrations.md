@@ -136,28 +136,54 @@ Application rollback remains a protected code release; columns are not dropped.
 A bad future targeted relationship is deactivated and republished through the
 existing governed assignment workflow without deleting its `MediaAsset`.
 
-## Production vetted partner-hosted creative migration 0029 — authorised release candidate
+## Production vetted partner-hosted creative migration 0029 — completed 6 September 2026
 
-**DETECTED IN THE RELEASE CANDIDATE:**
+**DETECTED / APPLIED:**
 `0029_vetted_partner_hosted_creatives` is an additive migration containing four
 new enums, the structured `PartnerHostedCreative` table, three RFC-040-shaped
 typed assignment tables, foreign keys, checks and resolver/identity indexes. It
 contains no `UPDATE`, `DELETE`, table replacement, destructive operation or
 change to an existing canonical partner destination.
 
-Compatibility is DB-first and fail-closed. Production build preflight accepts
-only exact 0029 pending with the hosted capability disabled, or exact
-checksum-matched 0029 ready. `VETTED_PARTNER_HOSTED_CREATIVES_ENABLED=true` is
-refused before schema readiness. The disposable PostgreSQL gate stages through
-0028 with protected representative records, applies 0029 twice, verifies every
-protected digest unchanged, requires all four new tables empty, persists one
-valid constrained hosted graph and rejects invalid source shapes.
+Compatibility remains DB-first and fail-closed. Production build preflight
+accepted exact 0029 pending only while the hosted capability was disabled, and
+now requires exact checksum-matched 0029 readiness before
+`VETTED_PARTNER_HOSTED_CREATIVES_ENABLED=true`. The disposable PostgreSQL gate
+staged through 0028 with protected representative records, applied 0029 twice,
+verified every protected digest unchanged, required all four new tables empty,
+persisted one valid constrained hosted graph and rejected invalid source
+shapes.
 
-**PROPOSED EXECUTION FOR THIS AUTHORISED WORKSTREAM:** apply the sole pending
-0029 migration once through the exact direct binding after Preview/disposable
-database acceptance, verify checksum/schema/zero hosted rows and protected
-counts, then enable the independently reversible application flag. Rollback is
-code/flag-only; no table or row deletion is required.
+The sole pending 0029 migration was applied once through the verified direct
+binding. Later Production verification through 0033 confirms its effective
+checksum and complete table schema. The separately governed hosted inventory
+release is recorded in the
+[VETTED-PARTNER-HOSTED-CREATIVES-01 release record](Vetted-Partner-Hosted-Creatives-01-Release-Record-2026-09-06.md).
+Rollback remains code/flag-only; no table or row deletion is required.
+
+## Production MEDIA-GEO3 migration 0033 — completed 8 September 2026
+
+**DETECTED / APPLIED:** `0033_media_geo3_pipeline` is an additive migration
+that creates `MediaCreativeSet`, `MediaCreativeVariant`, `MediaRevision` and
+`MediaPreflightEntry`, adds the `CASINO_REVIEW_RIGHT_HERO` placement and
+installs eight physical uniqueness indexes. It contains no update, delete,
+table replacement, reverse SQL or destructive reset. Its immutable SHA-256 is
+`39c7a672dc04dd1a4777b04db630a11d0c9403c7b07060e7db77b0a62970816e`.
+
+The fingerprint-guarded Production executor targeted database fingerprint
+`83dd8c5faf8c989a2bec0d59f9bfd8aa93e725d0cfa48b43453887583ebcc5f8`
+after verification of an 8.15 MiB provider snapshot and seven earlier retained
+snapshots. It applied exactly one checksum-matched 0033 attempt. Postflight
+verified 33 completed repository migrations, zero unresolved attempts, all
+four tables, all eight indexes and zero invalid or duplicate active scopes.
+
+The separate bounded, idempotent backfill activated exactly three exact-offer
+creative sets, six variants and 12 READY preflight cells. Immediate replay
+returned all three existing results unchanged. It promoted zero generic
+creatives, stored zero raw destinations and performed zero destructive writes.
+Application rollback leaves the compatible additive schema in place and uses
+the serialized revision rollback or scoped variant deactivation described in
+the [MEDIA-GEO3 release record](MEDIA-GEO3-Release-Record-2026-09-08.md).
 
 ## Production Better Auth 1.7 sequence — applied
 
