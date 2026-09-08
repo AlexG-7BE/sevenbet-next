@@ -295,7 +295,7 @@ test("governed batch ingestion and local media serving retain the validated GIF 
 });
 
 function placementMedia(
-  placement: "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_DETAIL_HERO" | "CASINO_OFFER_BLOCK",
+  placement: "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_DETAIL_HERO" | "CASINO_OFFER_BLOCK" | "CASINO_REVIEW_RIGHT_HERO",
   url = "/api/media/local/creative.gif",
   renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAIN",
   dimensions = { width: 300, height: 250 },
@@ -325,6 +325,11 @@ function placementMedia(
 function profileCasino(renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAIN"): PublicCasinoDTO {
   const placement = placementMedia("CASINO_DETAIL_HERO", "/controlled/skol-300x250.jpg", renderingMode);
   const offerPlacement = placementMedia("CASINO_OFFER_BLOCK", "/controlled/skol-300x250.jpg", renderingMode);
+  const reviewHeroPlacement = {
+    ...placementMedia("CASINO_REVIEW_RIGHT_HERO", "/controlled/skol-300x250.jpg", renderingMode),
+    source: "EXACT_OFFER" as const,
+    exactOfferId: "affiliate-offer-id",
+  };
   return {
     source: "cms", id: "skol-id", slug: "skol-casino", name: "Skol Casino", title: "Skol Casino",
     domain: "operator.example", summary: "Published factual summary.", reviewContent: "Published editorial review.", operator: "Skol Operator",
@@ -340,7 +345,7 @@ function profileCasino(renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAI
       minimumDeposit: 10, maximumBonus: 150, maximumBet: 5, currency: "GBP", freeSpins: 20, wageringMultiplier: 30,
       wageringText: "30× wagering", eligibility: "New eligible customers only", importantConditions: ["Terms apply"], termsUrl: null,
       startsAt: null, expiresAt: null, affiliate: { href: "/r/skol-current-offer", available: true },
-      media: { CASINO_OFFER_BLOCK: offerPlacement },
+      media: { CASINO_OFFER_BLOCK: offerPlacement, CASINO_REVIEW_RIGHT_HERO: reviewHeroPlacement },
     }],
     media: { logo: null, hero: placement.asset, screenshots: [], gallery: [], socialImage: null, placements: { CASINO_DETAIL_HERO: placement } },
     affiliate: { href: "/r/skol-casino", available: true },
@@ -396,7 +401,7 @@ test("authorized creative markup uses the governed route while blocked creative 
   assert.doesNotMatch(blockedCreative, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
 });
 
-test("review heroes stay inert while promotional formats move to the governed Casino offer block", async () => {
+test("review heroes use the exact governed offer, fail closed, then use canonical brand or logo fallback", async () => {
   const require = createRequire(import.meta.url);
   require.extensions[".css"] = () => undefined;
   (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -412,7 +417,11 @@ test("review heroes stay inert while promotional formats move to the governed Ca
       messages,
       presentation,
     }));
-    assert.match(html, /<aside[^>]+data-media-mode="COMPOSED"[^>]+data-presentation-family="LOGO_ONLY"[^>]+data-suppressed-promotion-family="CARD"/);
+    assert.match(html, /data-creative-offer-id="affiliate-offer-id"/);
+    assert.match(html, /data-media-mode="CONTAIN"/);
+    assert.match(html, /data-media-source="EXACT_OFFER"/);
+    assert.match(html, /data-presentation-family="EXACT_OFFER_PROMOTION"/);
+    assert.match(html, /data-commercial-action-placement="CASINO_REVIEW_RIGHT_HERO"[^>]+data-commercial-action-source="CREATIVE"[^>]+href="\/r\/skol-current-offer"/);
     assert.doesNotMatch(html, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
     assert.match(html, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CREATIVE"[^>]+data-commercial-media-variant="casino-offer"[^>]+href="\/r\/skol-current-offer"/);
     assert.match(html, /data-presentation-family="CARD"/);
@@ -425,10 +434,14 @@ test("review heroes stay inert while promotional formats move to the governed Ca
   blockedCasino.bonuses = blockedCasino.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } }));
   blockedCasino.affiliate = { href: null, available: false };
   const blocked = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: blockedCasino, editorial: null, messages, presentation }));
-  assert.match(blocked, /src="\/controlled\/skol-300x250\.jpg"/);
+  assert.match(blocked, /data-media-mode="COMPOSED"[^>]+data-media-source="CODE_FALLBACK"[^>]+data-presentation-family="LOGO_ONLY"/);
   assert.doesNotMatch(blocked, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
 
   const brandOnly = profileCasino();
+  brandOnly.bonuses = brandOnly.bonuses.map((entry) => ({
+    ...entry,
+    media: entry.media?.CASINO_OFFER_BLOCK ? { CASINO_OFFER_BLOCK: entry.media.CASINO_OFFER_BLOCK } : undefined,
+  }));
   brandOnly.media = { ...brandOnly.media, hero: null, placements: undefined, logo: { id: "skol-logo", type: "logo", url: "/controlled/skol-logo.png", alt: "Skol logo", width: 200, height: 100, caption: null } };
   const fallback = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: brandOnly, editorial: null, messages, presentation }));
   assert.match(fallback, /data-media-ratio="brand"/);
@@ -438,6 +451,8 @@ test("review heroes stay inert while promotional formats move to the governed Ca
   const brandArt = { id: "brand-art", type: "hero" as const, url: "/controlled/skol-brand-art.jpg", alt: "Skol operator artwork", width: 1600, height: 900, caption: null };
   const brandArtPlacement = placementMedia("CASINO_DETAIL_HERO", brandArt.url, "COVER", { width: 1600, height: 900 });
   brandArtPlacement.asset = brandArt;
+  const reviewBrandArtPlacement = { ...brandArtPlacement, requestedPlacement: "CASINO_REVIEW_RIGHT_HERO" as const, source: "BRAND_FALLBACK" as const };
+  brandArtCasino.bonuses = brandArtCasino.bonuses.map((entry) => ({ ...entry, media: { ...entry.media, CASINO_REVIEW_RIGHT_HERO: { ...reviewBrandArtPlacement, variants: { DEFAULT: reviewBrandArtPlacement } } } }));
   brandArtCasino.media = { ...brandArtCasino.media, hero: brandArt, placements: { ...brandArtCasino.media.placements, CASINO_DETAIL_HERO: brandArtPlacement } };
   const brandArtHtml = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: brandArtCasino, editorial: null, messages, presentation }));
   assert.match(brandArtHtml, /<aside[^>]+data-media-mode="COVER"[^>]+data-presentation-family="BRAND_ART"/);

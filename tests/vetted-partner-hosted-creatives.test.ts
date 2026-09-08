@@ -331,16 +331,12 @@ test("only exact UUID hosted-frame routes own the provider CSP and CSP-only fram
   assert.doesNotMatch(nextConfig, /X-Frame-Options/);
 });
 
-test("selection implements the complete eight-tier order without country leakage", () => {
+test("selection implements the strict four-tier target order without UNKNOWN or country leakage", () => {
   const candidates = [
     hostedAssignment("rank-0", hostedAsset("rank-0"), { countryCode: "FI", languageCode: "fi", languageState: "EXPLICIT" }),
-    hostedAssignment("rank-1", hostedAsset("rank-1"), { countryCode: "FI", languageState: "UNKNOWN" }),
+    hostedAssignment("rank-1", hostedAsset("rank-1"), { countryCode: "FI", languageState: "NEUTRAL" }),
     hostedAssignment("rank-2", hostedAsset("rank-2"), { languageCode: "fi", languageState: "EXPLICIT" }),
-    hostedAssignment("rank-3", hostedAsset("rank-3", { currencyCode: "EUR" }), { languageCode: "en", languageState: "EXPLICIT" }),
-    hostedAssignment("rank-4", hostedAsset("rank-4", { currencyCode: "USD" }), { languageCode: "en", languageState: "EXPLICIT" }),
-    hostedAssignment("rank-5", hostedAsset("rank-5"), { languageState: "NEUTRAL" }),
-    hostedAssignment("rank-6", hostedAsset("rank-6"), { languageState: "UNKNOWN" }),
-    hostedAssignment("rank-7", hostedAsset("rank-7"), { languageCode: "de", languageState: "EXPLICIT" }),
+    hostedAssignment("rank-3", hostedAsset("rank-3"), { languageState: "NEUTRAL" }),
   ];
   for (let index = 0; index < candidates.length; index += 1) {
     const resolved = resolveMedia({
@@ -351,6 +347,18 @@ test("selection implements the complete eight-tier order without country leakage
       now: new Date("2030-01-01T00:00:00Z"),
     });
     assert.equal(resolved.asset?.id, `rank-${index}`, `rank ${index}`);
+  }
+  for (const unsafe of [
+    hostedAssignment("unknown", hostedAsset("unknown"), { languageState: "UNKNOWN" }),
+    hostedAssignment("other-language", hostedAsset("other-language"), { languageCode: "de", languageState: "EXPLICIT" }),
+  ]) {
+    const resolved = resolveMedia({
+      placement: "BEST_OFFER_FEATURED",
+      trustedCountryCode: "FI",
+      presentationLanguage: "fi",
+      context: { casinoName: "Example", casinoAssignments: [], casinoBonusAssignments: [unsafe], legacyMediaAssets: [] },
+    });
+    assert.equal(resolved.asset, null);
   }
   const leaked = resolveMedia({
     placement: "BEST_OFFER_FEATURED",
@@ -363,8 +371,8 @@ test("selection implements the complete eight-tier order without country leakage
 });
 
 test("only one same-tier global creative wins deterministically", () => {
-  const first = hostedAssignment("global-one", hostedAsset("global-one"), { languageState: "UNKNOWN", sortOrder: 0 });
-  const second = hostedAssignment("global-two", hostedAsset("global-two"), { languageState: "UNKNOWN", sortOrder: 1 });
+  const first = hostedAssignment("global-one", hostedAsset("global-one"), { languageState: "NEUTRAL", sortOrder: 0 });
+  const second = hostedAssignment("global-two", hostedAsset("global-two"), { languageState: "NEUTRAL", sortOrder: 1 });
   const resolved = resolveMedia({
     placement: "BEST_OFFER_FEATURED",
     presentationLanguage: "es",
@@ -478,11 +486,15 @@ test("creative attribution is resolved only after canonical GEO activation check
   assert.equal(deniedCreativeReads, 0);
 });
 
-test("MCP surface has six Media tools and four Commercial tools with no publish action", async () => {
+test("MCP surface has nine Media tools, including bounded Production revision controls, and no generic publish action", async () => {
   const { mediaMcpTools } = await import("../lib/mcp/media/server");
   const { commercialMcpTools } = await import("../lib/mcp/commercial/server");
-  assert.equal(mediaMcpTools.length, 6);
+  assert.equal(mediaMcpTools.length, 9);
   assert.equal(commercialMcpTools.length, 4);
   assert.equal([...mediaMcpTools, ...commercialMcpTools].some((tool) => /publish/i.test(tool.name)), false);
+  assert.deepEqual(
+    mediaMcpTools.filter((tool) => tool.name.includes("production")).map((tool) => tool.name),
+    ["media_orchestrate_production", "media_rollback_production_revision", "media_get_production_revision"],
+  );
   assert.match(mediaMcpTools[0].description, /partner-hosted/);
 });

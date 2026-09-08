@@ -74,6 +74,7 @@ enum MediaPlacement {
   CASINO_LOGO
   CASINO_DIRECTORY_CARD
   CASINO_DETAIL_HERO
+  CASINO_REVIEW_RIGHT_HERO
   CASINO_COMPARE
   BONUS_LISTING_CARD
   BEST_OFFER_FEATURED
@@ -93,6 +94,54 @@ enum MediaRenderingMode {
   COVER
   CONTAIN
   COMPOSED
+}
+
+enum MediaCreativePurpose {
+  BRAND
+  PROMOTION
+}
+
+enum MediaCreativeSetStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum MediaCreativeVariantStatus {
+  PREPARED
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum MediaCreativeAvailability {
+  AVAILABLE
+  NOT_FOUND
+  UNSUPPORTED
+  ERROR
+  STALE
+}
+
+enum MediaLanguageState {
+  EXPLICIT
+  NEUTRAL
+  UNKNOWN
+}
+
+enum MediaRevisionStatus {
+  PREPARED
+  ACTIVE
+  SUPERSEDED
+  ROLLED_BACK
+  FAILED
+}
+
+enum MediaPreflightStatus {
+  READY
+  FALLBACK
+  MISSING
+  CONFLICT
+  BLOCKED
 }
 
 enum PartnerCreativeProvider {
@@ -1562,6 +1611,9 @@ model Casino {
   commercialOpportunities  CommercialOpportunity[]
   outboundClickDaily       AffiliateOutboundClickDaily[]
   marketActivations        MarketActivation[]
+  mediaCreativeSets        MediaCreativeSet[]
+  mediaRevisions           MediaRevision[]
+  mediaPreflightEntries    MediaPreflightEntry[]
 
   @@index([operatorProfileId])
   @@index([brandProfileId])
@@ -1956,6 +2008,7 @@ model CasinoBonus {
   partnerHostedCreatives   PartnerHostedCreative[]
   partnerHostedAssignments CasinoBonusPartnerHostedCreativeAssignment[]
   marketActivations        MarketActivation[]
+  mediaCreativeSets        MediaCreativeSet[]
 
   @@index([casinoId, status, offerStatus])
   @@index([casinoId, sortOrder])
@@ -2121,6 +2174,9 @@ model AffiliateOffer {
   partnerHostedAssignments AffiliateOfferPartnerHostedCreativeAssignment[]
   outboundClickDaily       AffiliateOutboundClickDaily[]
   marketActivations        MarketActivation[]
+  mediaCreativeSets        MediaCreativeSet[]
+  mediaRevisions           MediaRevision[]
+  mediaPreflightEntries    MediaPreflightEntry[]
 
   @@unique([programId, externalOfferId])
   @@index([casinoId, status, priority])
@@ -2370,39 +2426,39 @@ model AffiliateRedirectRevision {
 }
 
 model MarketActivation {
-  id                        String                                  @id @default(uuid()) @db.Uuid
-  casinoId                  String                                  @db.Uuid
-  countryCode               String                                  @db.Char(2)
-  product                   MarketActivationProduct                 @default(CASINO)
-  desiredState              MarketActivationDesiredState
-  status                    MarketActivationStatus                  @default(DRAFT)
-  marketProfileId           String?                                 @db.Uuid
-  affiliateOfferId          String?                                 @db.Uuid
-  primaryTrackingLinkId     String?                                 @db.Uuid
-  redirectSlugId            String?                                 @db.Uuid
-  casinoBonusId             String?                                 @db.Uuid
-  version                   Int                                     @default(0)
-  controllerVersion         String
-  reconciliationFingerprint String
-  requestedBy               String
-  requestedAt               DateTime                                @default(now())
-  requestReason             String
-  sourceReferences          String[]                                @default([])
-  activatedAt               DateTime?
-  disabledAt                DateTime?
-  blockedAt                 DateTime?
-  lastReconciledAt          DateTime?
-  routeVerificationStatus   MarketActivationRouteVerificationStatus @default(NOT_CHECKED)
-  routeLastCheckedAt        DateTime?
-  routeFinalHost            String?
-  routeVerificationDetail   String?
-  externalBlockerCode       String?
-  externalBlockerDetail     String?
-  externalBlockerSource     String?
-  globalFallbackBlockedCountries String[]                            @default([])
-  diagnostics               Json                                    @default("{}")
-  createdAt                 DateTime                                @default(now())
-  updatedAt                 DateTime                                @updatedAt
+  id                             String                                  @id @default(uuid()) @db.Uuid
+  casinoId                       String                                  @db.Uuid
+  countryCode                    String                                  @db.Char(2)
+  product                        MarketActivationProduct                 @default(CASINO)
+  desiredState                   MarketActivationDesiredState
+  status                         MarketActivationStatus                  @default(DRAFT)
+  marketProfileId                String?                                 @db.Uuid
+  affiliateOfferId               String?                                 @db.Uuid
+  primaryTrackingLinkId          String?                                 @db.Uuid
+  redirectSlugId                 String?                                 @db.Uuid
+  casinoBonusId                  String?                                 @db.Uuid
+  version                        Int                                     @default(0)
+  controllerVersion              String
+  reconciliationFingerprint      String
+  requestedBy                    String
+  requestedAt                    DateTime                                @default(now())
+  requestReason                  String
+  sourceReferences               String[]                                @default([])
+  activatedAt                    DateTime?
+  disabledAt                     DateTime?
+  blockedAt                      DateTime?
+  lastReconciledAt               DateTime?
+  routeVerificationStatus        MarketActivationRouteVerificationStatus @default(NOT_CHECKED)
+  routeLastCheckedAt             DateTime?
+  routeFinalHost                 String?
+  routeVerificationDetail        String?
+  externalBlockerCode            String?
+  externalBlockerDetail          String?
+  externalBlockerSource          String?
+  globalFallbackBlockedCountries String[]                                @default([])
+  diagnostics                    Json                                    @default("{}")
+  createdAt                      DateTime                                @default(now())
+  updatedAt                      DateTime                                @updatedAt
 
   casino              Casino                   @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   marketProfile       CasinoCountry?           @relation(fields: [marketProfileId], references: [id], onDelete: Restrict, onUpdate: Cascade)
@@ -2942,6 +2998,8 @@ model MediaAsset {
   casinoMediaAssignments         CasinoMediaAssignment[]
   casinoBonusMediaAssignments    CasinoBonusMediaAssignment[]
   affiliateOfferMediaAssignments AffiliateOfferMediaAssignment[]
+  creativeVariants               MediaCreativeVariant[]
+  mediaPreflightEntries          MediaPreflightEntry[]
 
   @@index([casinoId, type, status, sortOrder])
   @@index([casinoCountryId, type, status, sortOrder])
@@ -3101,6 +3159,8 @@ model PartnerHostedCreative {
   casinoAssignments         CasinoPartnerHostedCreativeAssignment[]
   casinoBonusAssignments    CasinoBonusPartnerHostedCreativeAssignment[]
   affiliateOfferAssignments AffiliateOfferPartnerHostedCreativeAssignment[]
+  creativeVariants          MediaCreativeVariant[]
+  mediaPreflightEntries     MediaPreflightEntry[]
 
   @@index([provider, externalCreativeId])
   @@index([redirectSlugId, destinationVerificationState, active])
@@ -3185,6 +3245,157 @@ model AffiliateOfferPartnerHostedCreativeAssignment {
 
   @@index([affiliateOfferId, placement, countryCode, languageCode, languageState, variant, active, sortOrder, id], map: "AffiliateOfferPartnerHostedCreativeAssignment_target_idx")
   @@index([creativeId])
+}
+
+/// A durable commercial campaign or Casino identity family. Promotional sets
+/// always bind one exact AffiliateOffer; variants carry independent GEO,
+/// language, device and placement dimensions.
+model MediaCreativeSet {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  casinoId              String                 @db.Uuid
+  affiliateOfferId      String?                @db.Uuid
+  casinoBonusId         String?                @db.Uuid
+  identityKey           String                 @unique
+  name                  String
+  purpose               MediaCreativePurpose
+  status                MediaCreativeSetStatus @default(DRAFT)
+  provider              String?
+  externalCampaignId    String?
+  externalCreativeSetId String?
+  metadata              Json                   @default("{}")
+  createdBy             String
+  updatedBy             String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  archivedAt            DateTime?
+
+  casino         Casino                 @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  affiliateOffer AffiliateOffer?        @relation(fields: [affiliateOfferId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casinoBonus    CasinoBonus?           @relation(fields: [casinoBonusId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  variants       MediaCreativeVariant[]
+  preflight      MediaPreflightEntry[]
+
+  @@index([casinoId, purpose, status])
+  @@index([affiliateOfferId, status])
+  @@index([casinoBonusId, status])
+  @@index([provider, externalCampaignId])
+}
+
+/// One prepared or active presentation of a creative set. Exactly one source
+/// relation is populated: first-party MediaAsset or vetted hosted creative.
+model MediaCreativeVariant {
+  id               String                     @id @default(uuid()) @db.Uuid
+  creativeSetId    String                     @db.Uuid
+  revisionId       String                     @db.Uuid
+  mediaAssetId     String?                    @db.Uuid
+  hostedCreativeId String?                    @db.Uuid
+  placement        MediaPlacement
+  variant          MediaPlacementVariant      @default(DEFAULT)
+  countryCode      String?
+  languageCode     String?
+  languageState    MediaLanguageState
+  renderingMode    MediaRenderingMode         @default(CONTAIN)
+  cropSafe         Boolean                    @default(false)
+  priority         Int                        @default(0)
+  status           MediaCreativeVariantStatus @default(PREPARED)
+  availability     MediaCreativeAvailability  @default(AVAILABLE)
+  sourceHash       String                     @db.Char(64)
+  altTextOverride  String?
+  validFrom        DateTime?
+  validUntil       DateTime?
+  activatedAt      DateTime?
+  deactivatedAt    DateTime?
+  metadata         Json                       @default("{}")
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+
+  creativeSet    MediaCreativeSet       @relation(fields: [creativeSetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  revision       MediaRevision          @relation(fields: [revisionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  mediaAsset     MediaAsset?            @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  hostedCreative PartnerHostedCreative? @relation(fields: [hostedCreativeId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  preflight      MediaPreflightEntry[]
+
+  @@index([creativeSetId, placement, countryCode, languageCode, languageState, variant, status, priority], map: "MediaCreativeVariant_resolver_idx")
+  @@index([revisionId, status])
+  @@index([mediaAssetId])
+  @@index([hostedCreativeId])
+  @@index([sourceHash])
+}
+
+/// Atomic publication unit for one exact Casino/offer scope and idempotent
+/// pipeline payload. Only one active revision per normalized scope is allowed.
+model MediaRevision {
+  id                 String              @id @default(uuid()) @db.Uuid
+  casinoId           String              @db.Uuid
+  affiliateOfferId   String?             @db.Uuid
+  previousRevisionId String?             @db.Uuid
+  batchId            String
+  idempotencyKey     String              @unique
+  payloadHash        String              @db.Char(64)
+  status             MediaRevisionStatus @default(PREPARED)
+  source             String
+  summary            String
+  failureCode        String?
+  failureDetail      Json?
+  createdBy          String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  preparedAt         DateTime            @default(now())
+  activatedAt        DateTime?
+  supersededAt       DateTime?
+  rolledBackAt       DateTime?
+  verificationAt     DateTime?
+  verificationResult Json?
+
+  casino           Casino                 @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  affiliateOffer   AffiliateOffer?        @relation(fields: [affiliateOfferId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  previousRevision MediaRevision?         @relation("MediaRevisionHistory", fields: [previousRevisionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  nextRevisions    MediaRevision[]        @relation("MediaRevisionHistory")
+  variants         MediaCreativeVariant[]
+  preflight        MediaPreflightEntry[]
+
+  @@unique([batchId, payloadHash])
+  @@index([casinoId, affiliateOfferId, status, activatedAt])
+  @@index([previousRevisionId])
+  @@index([createdAt])
+}
+
+/// Persisted resolver decision for one market/language/device/placement cell.
+model MediaPreflightEntry {
+  id                 String                @id @default(uuid()) @db.Uuid
+  revisionId         String                @db.Uuid
+  casinoId           String                @db.Uuid
+  affiliateOfferId   String?               @db.Uuid
+  creativeSetId      String?               @db.Uuid
+  creativeVariantId  String?               @db.Uuid
+  mediaAssetId       String?               @db.Uuid
+  hostedCreativeId   String?               @db.Uuid
+  countryCode        String?
+  languageCode       String?
+  languageState      MediaLanguageState
+  device             MediaPlacementVariant
+  placement          MediaPlacement
+  resolutionSource   String
+  status             MediaPreflightStatus
+  assetHash          String?               @db.Char(64)
+  provider           String?
+  externalCreativeId String?
+  result             Json                  @default("{}")
+  blockerCode        String?
+  createdAt          DateTime              @default(now())
+
+  revision        MediaRevision          @relation(fields: [revisionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  casino          Casino                 @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  affiliateOffer  AffiliateOffer?        @relation(fields: [affiliateOfferId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  creativeSet     MediaCreativeSet?      @relation(fields: [creativeSetId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  creativeVariant MediaCreativeVariant?  @relation(fields: [creativeVariantId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  mediaAsset      MediaAsset?            @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  hostedCreative  PartnerHostedCreative? @relation(fields: [hostedCreativeId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([revisionId, countryCode, languageCode, device, placement])
+  @@index([casinoId, affiliateOfferId, status])
+  @@index([creativeSetId])
+  @@index([creativeVariantId])
 }
 
 model SiteSetting {

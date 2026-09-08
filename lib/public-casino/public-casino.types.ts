@@ -4,7 +4,6 @@ import type {
   MediaPlacementVariantName,
   MediaRenderingModeName,
   MediaTargetingResolution,
-  OfferMediaPlacementName,
   PlacementMediaSource,
 } from "@/lib/media/placement-media";
 
@@ -47,6 +46,11 @@ export interface PublicPlacementMediaResolution {
   fallback: boolean;
   effectiveAlt: string;
   focalPoint: { x: number; y: number } | null;
+  status?: "READY" | "FALLBACK" | "MISSING" | "CONFLICT" | "BLOCKED";
+  creativeSetId?: string | null;
+  creativeVariantId?: string | null;
+  mediaRevisionId?: string | null;
+  exactOfferId?: string | null;
 }
 
 export interface PublicPlacementMedia extends PublicPlacementMediaResolution {
@@ -78,7 +82,7 @@ export interface PublicCasinoBonus {
   startsAt: string | null;
   expiresAt: string | null;
   affiliate: PublicCasinoAffiliate;
-  media?: Partial<Record<OfferMediaPlacementName, PublicPlacementMedia>>;
+  media?: Partial<Record<MediaPlacementName, PublicPlacementMedia>>;
 }
 
 export interface PublicCasinoLicense {

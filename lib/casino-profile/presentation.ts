@@ -72,7 +72,9 @@ export function selectProfileBonus(casino: PublicCasinoDTO) {
 
 export function profileAction(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | null): CasinoProfileAction | null {
   if (isTemporaryDemoCasinoId(casino.id)) return null;
-  const href = bonus?.affiliate.available ? bonus.affiliate.href : casino.affiliate.available ? casino.affiliate.href : null;
+  const href = bonus
+    ? bonus.affiliate.available ? bonus.affiliate.href : null
+    : casino.affiliate.available ? casino.affiliate.href : null;
   if (!href || !internalRedirect.test(href)) return null;
   return { href, label: `Visit ${casino.name}` };
 }

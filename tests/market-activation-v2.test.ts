@@ -92,11 +92,19 @@ function activation(overrides: Record<string, unknown> = {}) {
       casinoId: CASINO_ID,
       casinoBonusId: null,
       programId: "program",
+      status: "ACTIVE",
+      startAt: null,
+      expiresAt: null,
+      archivedAt: null,
       geoMode: "ALLOW",
       countries: [{ countryCode: "PE", mode: "ALLOW" }],
       program: {
         id: "program",
         casinoId: CASINO_ID,
+        status: "ACTIVE",
+        workflowStatus: "PUBLISHED",
+        archivedAt: null,
+        network: { active: true, archivedAt: null },
         metadata: {},
         supportedCountries: ["PE"],
       },
@@ -107,11 +115,15 @@ function activation(overrides: Record<string, unknown> = {}) {
       label: "Inkabet PE",
       destinationUrl: "https://operator.example/casino",
       trackingUrl: "https://tracking.example/click",
+      active: true,
+      archivedAt: null,
+      validFrom: null,
+      expiresAt: null,
       metadata: {},
       geoMode: "ALLOW",
       countries: [{ countryCode: "PE", mode: "ALLOW" }],
     },
-    redirectSlug: { id: REDIRECT_ID, slug: "inkabet-casino", casinoId: CASINO_ID, casinoBonusId: null, affiliateOfferId: OFFER_ID },
+    redirectSlug: { id: REDIRECT_ID, slug: "inkabet-casino", casinoId: CASINO_ID, casinoBonusId: null, affiliateOfferId: OFFER_ID, active: true, archivedAt: null },
     ...overrides,
   };
 }
@@ -358,8 +370,12 @@ test("canonical global fallback is explicitly evidenced, request-scoped, denied 
 test("canonical runtime fails closed for cross-entity or unsafe bindings", async () => {
   const crossOffer = activation({ primaryTrackingLink: { ...activation().primaryTrackingLink, offerId: "another-offer" } });
   const unsafe = activation({ primaryTrackingLink: { ...activation().primaryTrackingLink, trackingUrl: "http://unsafe.example" } });
+  const inactiveOffer = activation({ affiliateOffer: { ...activation().affiliateOffer, status: "ARCHIVED" } });
+  const inactiveRoute = activation({ redirectSlug: { ...activation().redirectSlug, active: false } });
   assert.deepEqual(await runtime([crossOffer]).listActive([CASINO_ID], "PE"), []);
   assert.deepEqual(await runtime([unsafe]).listActive([CASINO_ID], "PE"), []);
+  assert.deepEqual(await runtime([inactiveOffer]).listActive([CASINO_ID], "PE"), []);
+  assert.deepEqual(await runtime([inactiveRoute]).listActive([CASINO_ID], "PE"), []);
 });
 
 test("discovery media and CTA projections prefer canonical activation rows", () => {

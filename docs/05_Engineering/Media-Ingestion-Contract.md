@@ -415,12 +415,19 @@ current `/casinos`, `/bonuses`, `/best-offers` and Casino-review state.
 
 ## B4GAMBLE Media Operations bridge
 
+RFC-043 extends this bridge with a separately authorised Production revision
+boundary. The six operations below retain their existing draft/read semantics.
+Three additional tools provide Production orchestration, rollback and revision
+readback; the two mutations require `media:production_write` and fail outside
+the Production runtime. `media:safe_write` remains draft-only.
+
 The protected resource is the separate exact resource `/api/mcp/media`. Its
-only scopes are `media:read`, `media:safe_write` and optional
-`offline_access`. A valid delegated `AdminUser` with `media.manage` remains
+scopes are `media:read`, draft-only `media:safe_write`, separately consented
+`media:production_write`, and optional `offline_access`. A valid delegated
+`AdminUser` with `media.manage` remains
 required at authorization, token/refresh and resource use.
 
-The authorised release-candidate surface contains exactly six tools:
+The original release-candidate surface contains these six tools:
 
 1. `media_ingest_partner_snippet` — parse raw or composite input, retain bounded
    explicit target evidence, and either acquire validated first-party media or
@@ -433,6 +440,10 @@ The authorised release-candidate surface contains exactly six tools:
    plan rollback;
 5. `media_get_plan` — read one safe plan or recorded batch with its plans; and
 6. `media_list_recent_ingestions` — read a bounded recent plan list.
+
+RFC-043 adds `media_orchestrate_production`,
+`media_rollback_production_revision` and `media_get_production_revision` under
+the exact-offer, atomic-preflight and rollback rules recorded there.
 
 The OAuth issuer may serve both the existing Commercial and Media Operations
 resources, but each registered client, authorization code, access token and

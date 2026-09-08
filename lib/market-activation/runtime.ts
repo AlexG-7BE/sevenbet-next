@@ -19,7 +19,30 @@ const runtimeInclude = {
       casinoId: true,
       casinoBonusId: true,
       programId: true,
-      program: { select: { id: true, casinoId: true } },
+      status: true,
+      startAt: true,
+      expiresAt: true,
+      archivedAt: true,
+      program: {
+        select: {
+          id: true,
+          casinoId: true,
+          status: true,
+          workflowStatus: true,
+          archivedAt: true,
+          network: { select: { active: true, archivedAt: true } },
+        },
+      },
+    },
+  },
+  casinoBonus: {
+    select: {
+      id: true,
+      casinoId: true,
+      status: true,
+      offerStatus: true,
+      startsAt: true,
+      expiresAt: true,
     },
   },
   primaryTrackingLink: {
@@ -29,6 +52,10 @@ const runtimeInclude = {
       trackingUrl: true,
       destinationUrl: true,
       label: true,
+      active: true,
+      archivedAt: true,
+      validFrom: true,
+      expiresAt: true,
     },
   },
   redirectSlug: {
@@ -38,6 +65,8 @@ const runtimeInclude = {
       casinoId: true,
       casinoBonusId: true,
       affiliateOfferId: true,
+      active: true,
+      archivedAt: true,
     },
   },
 } satisfies Prisma.MarketActivationInclude;
@@ -58,6 +87,8 @@ function activeRouteForCountry(
   record: CanonicalMarketActivationRoute,
   requestedCountry: string,
 ): record is BoundCanonicalMarketActivationRoute {
+  const now = Date.now();
+  const current = (start: Date | null, end: Date | null) => (!start || start.getTime() <= now) && (!end || end.getTime() > now);
   const exactCountry = record.countryCode === requestedCountry;
   const globalFallback = record.countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE;
   const scopeAllows = exactCountry
@@ -79,12 +110,34 @@ function activeRouteForCountry(
     && scopeAllows
     && Boolean(record.affiliateOffer
       && record.affiliateOffer.casinoId === record.casinoId
-      && record.affiliateOffer.program.casinoId === record.casinoId)
-    && Boolean(record.primaryTrackingLink && record.primaryTrackingLink.offerId === record.affiliateOfferId)
+      && record.affiliateOffer.program.casinoId === record.casinoId
+      && record.affiliateOffer.status === "ACTIVE"
+      && !record.affiliateOffer.archivedAt
+      && current(record.affiliateOffer.startAt, record.affiliateOffer.expiresAt)
+      && record.affiliateOffer.program.status === "ACTIVE"
+      && record.affiliateOffer.program.workflowStatus === "PUBLISHED"
+      && !record.affiliateOffer.program.archivedAt
+      && record.affiliateOffer.program.network.active
+      && !record.affiliateOffer.program.network.archivedAt)
+    && Boolean(record.affiliateOffer?.casinoBonusId === record.casinoBonusId)
+    && Boolean(!record.casinoBonusId || (record.casinoBonus
+      && record.casinoBonus.id === record.casinoBonusId
+      && record.casinoBonus.casinoId === record.casinoId
+      && record.affiliateOffer?.casinoBonusId === record.casinoBonusId
+      && record.casinoBonus.status === "PUBLISHED"
+      && record.casinoBonus.offerStatus === "ACTIVE"
+      && current(record.casinoBonus.startsAt, record.casinoBonus.expiresAt)))
+    && Boolean(record.primaryTrackingLink
+      && record.primaryTrackingLink.offerId === record.affiliateOfferId
+      && record.primaryTrackingLink.active
+      && !record.primaryTrackingLink.archivedAt
+      && current(record.primaryTrackingLink.validFrom, record.primaryTrackingLink.expiresAt))
     && Boolean(record.redirectSlug
       && record.redirectSlug.casinoId === record.casinoId
       && record.redirectSlug.affiliateOfferId === record.affiliateOfferId
       && record.redirectSlug.casinoBonusId === record.casinoBonusId
+      && record.redirectSlug.active
+      && !record.redirectSlug.archivedAt
       && isSafePublicSlug(record.redirectSlug.slug))
     && Boolean(record.primaryTrackingLink
       && safeActivationDestination(record.primaryTrackingLink.trackingUrl)

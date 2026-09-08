@@ -70,16 +70,17 @@ orientation.
 | [RFC-040 — Placement-Based Media Assignments](RFC-040-Placement-Based-Media-Assignments.md) | `ACTIVE` | Founder-approved Option C typed assignment tables, deterministic resolver, semantic Admin slots and immutable publication projection. RFC-041 supersedes its narrower four-bucket presentation order for mixed hosted inventory. |
 | [RFC-041 — Vetted Partner-Hosted Creatives](RFC-041-Vetted-Partner-Hosted-Creatives.md) | `ACTIVE` | Exact Superfly/Bannerflow adapters, structured server-owned destinations, isolated rendering, creative-bound `/r` resolution and eight-tier global fallback policy. |
 | [RFC-042 — Canonical Market Activation Authority](RFC-042-Canonical-Market-Activation-Authority.md) | `ACTIVE` | Single exact Casino × GEO × Product Production authority, desired-state controller/reconciler, canonical runtime cutover and one-way legacy compatibility. |
+| [RFC-043 — Production Media Pipeline](RFC-043-Production-Media-Pipeline.md) | `ACTIVE` | Exact-offer creative sets, shared placement registry, strict GEO/language resolver, atomic media revisions, automatic preflight/activation and rollback. Supersedes RFC-040/041 promotional fallback and review-hero policy only. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 21 |
+| `ACTIVE` | 22 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 2 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **42** |
+| **Total RFC artifacts** | **43** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

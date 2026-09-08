@@ -9,6 +9,9 @@ import {
   mediaIngestPartnerBatchInputSchema,
   mediaIngestPartnerSnippetInputSchema,
   mediaListRecentIngestionsInputSchema,
+  mediaOrchestrateProductionInputSchema,
+  mediaRollbackRevisionInputSchema,
+  mediaGetRevisionInputSchema,
 } from "@/lib/media-operations/contracts";
 import { mediaOperationsService } from "@/lib/media-operations/service";
 import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
@@ -29,17 +32,21 @@ type ToolDefinition = {
 
 const readSecurity = [{ type: "oauth2" as const, scopes: ["media:read"] }];
 const writeSecurity = [{ type: "oauth2" as const, scopes: ["media:safe_write"] }];
+const productionWriteSecurity = [{ type: "oauth2" as const, scopes: ["media:production_write"] }];
 
 export const mediaMcpTools: ToolDefinition[] = [
   { name: "media_ingest_partner_snippet", title: "Ingest a partner creative snippet", description: "Parse raw HTML or a Description/Embed Code composite without executing pasted code. Safe raster inputs use SSRF-safe first-party acquisition; exact Superfly image and Bannerflow embed shapes may instead create vetted partner-hosted records whose raw destinations stay server-side. The tool preserves explicit country/language evidence, treats unknown as distinct from neutral, and never creates a route, publication, or tracking activation.", inputSchema: z.toJSONSchema(mediaIngestPartnerSnippetInputSchema) as Record<string, unknown>, securitySchemes: writeSecurity, _meta: { securitySchemes: writeSecurity }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } },
   { name: "media_ingest_partner_batch", title: "Ingest a partner creative batch", description: "Parse up to 100 independent partner creative items with bounded concurrency and per-item INGESTED, REUSED, REVIEW_REQUIRED, or REJECTED outcomes. Provider snippets are never executed. Items are grouped into separate durable plans only when they resolve to the same governed subject and target scope; missing commercial routes remain analyzable but explicitly blocked from apply.", inputSchema: z.toJSONSchema(mediaIngestPartnerBatchInputSchema) as Record<string, unknown>, securitySchemes: writeSecurity, _meta: { securitySchemes: writeSecurity }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } },
   { name: "media_analyze_and_plan", title: "Analyze media and build a placement plan", description: "Build scored draft-only placement recommendations. First-party assets may use approved bounded visual classification; vetted partner-hosted creatives use only deterministic provider and description metadata, never OCR, screenshots, or pixel-derived offer claims. Semantic output is advisory and never publishes.", inputSchema: z.toJSONSchema(mediaAnalyzeAndPlanInputSchema) as Record<string, unknown>, securitySchemes: writeSecurity, _meta: { securitySchemes: writeSecurity }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true } },
   { name: "media_apply_draft_plan", title: "Apply or roll back a draft media plan", description: "Apply only eligible recommendations to exact target-scoped draft media assignments, or remove only assignments owned by this plan in the same country/language scope. Existing assignments are protected unless replacement is explicitly requested. Assets are never deleted and nothing is published.", inputSchema: z.toJSONSchema(mediaApplyDraftPlanInputSchema) as Record<string, unknown>, securitySchemes: writeSecurity, _meta: { securitySchemes: writeSecurity }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } },
+  { name: "media_orchestrate_production", title: "Validate and activate a Production media batch", description: "Run the explicit MEDIA-GEO3 end-to-end path over an already ingested batch: analyze without changing analyze semantics, require exact supplied Casino and AffiliateOffer IDs, group valid variants into one creative set, persist the preflight matrix, and atomically activate only a fully READY revision. Unknown promotional language, ambiguous offer evidence, conflicts, unavailable media, or absent MarketActivation fail closed while the previous revision remains live.", inputSchema: z.toJSONSchema(mediaOrchestrateProductionInputSchema) as Record<string, unknown>, securitySchemes: productionWriteSecurity, _meta: { securitySchemes: productionWriteSecurity }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true } },
+  { name: "media_rollback_production_revision", title: "Roll back a Production media revision", description: "Atomically deactivate the named active MEDIA-GEO3 revision and restore its recorded previous known-good revision. Media files, preflight rows and audit evidence are retained.", inputSchema: z.toJSONSchema(mediaRollbackRevisionInputSchema) as Record<string, unknown>, securitySchemes: productionWriteSecurity, _meta: { securitySchemes: productionWriteSecurity }, annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false } },
+  { name: "media_get_production_revision", title: "Get a Production media revision", description: "Read one audit-safe media revision with scoped variants and its market/language/device/placement preflight matrix. Raw partner destinations are never returned.", inputSchema: z.toJSONSchema(mediaGetRevisionInputSchema) as Record<string, unknown>, securitySchemes: readSecurity, _meta: { securitySchemes: readSecurity }, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } },
   { name: "media_get_plan", title: "Get a media ingestion plan", description: "Read one audit-safe Media Operations plan, including extracted evidence, safe first-party or partner-hosted preview references, semantic results, draft recommendations, and operations. Raw tracking destinations and pasted HTML are never returned.", inputSchema: z.toJSONSchema(mediaGetPlanInputSchema) as Record<string, unknown>, securitySchemes: readSecurity, _meta: { securitySchemes: readSecurity }, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } },
   { name: "media_list_recent_ingestions", title: "List recent media ingestions", description: "List a bounded set of recent audit-safe Media Operations plans for orientation and follow-up.", inputSchema: z.toJSONSchema(mediaListRecentIngestionsInputSchema) as Record<string, unknown>, securitySchemes: readSecurity, _meta: { securitySchemes: readSecurity }, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } },
 ];
 
-type Adapter = Pick<typeof mediaOperationsService, "ingest" | "ingestBatch" | "analyze" | "apply" | "get" | "listRecent">;
+type Adapter = Pick<typeof mediaOperationsService, "ingest" | "ingestBatch" | "analyze" | "apply" | "get" | "listRecent" | "orchestrateProduction" | "rollbackProductionRevision" | "getProductionRevision">;
 type RateLimiter = typeof consumeCommercialMcpRateLimit;
 
 function result(value: unknown) {
@@ -63,8 +70,9 @@ export function createMediaMcpServer(
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const tool = mediaMcpTools.find((item) => item.name === request.params.name);
     if (!tool) throw new McpError(ErrorCode.MethodNotFound, "Unknown Media Operations MCP tool");
-    const write = !["media_get_plan", "media_list_recent_ingestions"].includes(tool.name);
-    const requiredScope = write ? "media:safe_write" : "media:read";
+    const write = !["media_get_plan", "media_get_production_revision", "media_list_recent_ingestions"].includes(tool.name);
+    const productionWrite = ["media_orchestrate_production", "media_rollback_production_revision"].includes(tool.name);
+    const requiredScope = productionWrite ? "media:production_write" : write ? "media:safe_write" : "media:read";
     if (!token.scopes.has(requiredScope)) return { content: [{ type: "text" as const, text: `OAuth scope ${requiredScope} is required` }], isError: true, _meta: { "mcp/www_authenticate": [mediaMcpAuthenticateHeader(config, requiredScope)] } } as never;
     try {
       const rate = await rateLimiter({ bucket: write ? "media-write" : "media-read", key: `${token.staff.id}:${token.clientId}`, limit: write ? 20 : 120, windowMs: 10 * 60 * 1_000 });
@@ -76,6 +84,9 @@ export function createMediaMcpServer(
         case "media_ingest_partner_batch": return result(await service.ingestBatch(args, actor));
         case "media_analyze_and_plan": return result(await service.analyze(args, actor));
         case "media_apply_draft_plan": return result(await service.apply(args, actor));
+        case "media_orchestrate_production": return result(await service.orchestrateProduction(args, actor));
+        case "media_rollback_production_revision": return result(await service.rollbackProductionRevision(args, actor));
+        case "media_get_production_revision": return result(await service.getProductionRevision(args));
         case "media_get_plan": return result(await service.get(args));
         case "media_list_recent_ingestions": return result({ plans: await service.listRecent(args) });
         default: throw new McpError(ErrorCode.MethodNotFound, "Unknown Media Operations MCP tool");

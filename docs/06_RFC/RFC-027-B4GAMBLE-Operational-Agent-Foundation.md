@@ -285,6 +285,12 @@ The four tools, `affiliate.manage`, `commercial:read`, `commercial:safe_write`, 
 
 ## 19. `MEDIA-INGESTION-AUTOPLACEMENT-01` Media Operations amendment
 
+RFC-043 supersedes this section only for the six-tool ceiling, the no-Production
+media-operation ceiling and the Media scope list. Its original six operations
+retain their meanings; Production revision mutation is separately named,
+Production-runtime-only and requires `media:production_write` rather than
+`media:safe_write`.
+
 Founder instruction on 5 September 2026 authorises a second, separately
 bounded application-side MCP resource for creative-media ingestion and draft
 placement planning. The durable implementation contract is

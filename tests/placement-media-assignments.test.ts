@@ -36,6 +36,9 @@ import type { MediaAssignmentRepository } from "../lib/repositories/media-assign
 import { MediaAssignmentService } from "../lib/services/media-assignment.service";
 
 const NOW = new Date("2030-06-01T00:00:00.000Z");
+const INDEPENDENCE_CASINO_ID = "11111111-1111-4111-8111-111111111111";
+const INDEPENDENCE_BONUS_ID = "22222222-2222-4222-8222-222222222222";
+const INDEPENDENCE_OFFER_ID = "44444444-4444-4444-8444-444444444444";
 
 test("the release executor binds Preview and Production to distinct exact database authorities", () => {
   const productionFingerprint = "production-fingerprint";
@@ -130,7 +133,10 @@ test("the resolver selects an exact deterministic assignment for every approved 
     assert.equal(result.source, "EXPLICIT", placement);
     assert.equal(result.resolvedPlacement, placement);
   }
-  assert.deepEqual([...casinoMediaPlacements, ...offerMediaPlacements], mediaPlacements);
+  assert.deepEqual(
+    [...casinoMediaPlacements, ...offerMediaPlacements, "CASINO_REVIEW_RIGHT_HERO"].sort(),
+    [...mediaPlacements].sort(),
+  );
 });
 
 test("requested variants use MOBILE exactly and then fall back to DEFAULT", () => {
@@ -216,7 +222,7 @@ test("trusted GEO bounds the full language priority matrix without cross-country
   assert.notEqual(resolve(null, "it").asset?.id, "it-it");
 });
 
-test("exact-country neutral outranks global language and other global language remains the final usable fallback", () => {
+test("exact-country neutral outranks global language and wrong-language global media fails closed", () => {
   const globalEnglish = asset("global-en", "BONUS_CREATIVE");
   const finlandNeutral = asset("fi-neutral", "BONUS_CREATIVE");
   const globalNeutral = asset("global-neutral", "BONUS_CREATIVE");
@@ -237,9 +243,9 @@ test("exact-country neutral outranks global language and other global language r
     assignment("global-de", "BEST_OFFER_FEATURED", asset("global-de", "BONUS_CREATIVE"), { languageCode: "de" }),
   ] });
   const finalGlobal = resolveMedia({ placement: "BEST_OFFER_FEATURED", trustedCountryCode: "FI", presentationLanguage: "en", context: wrongLanguagesOnly, now: NOW });
-  assert.equal(finalGlobal.asset?.id, "global-de");
-  assert.equal(finalGlobal.source, "EXPLICIT");
-  assert.equal(finalGlobal.targetingResolution, "GLOBAL_OTHER");
+  assert.equal(finalGlobal.asset, null);
+  assert.equal(finalGlobal.source, "CODE_FALLBACK");
+  assert.equal(finalGlobal.targetingResolution, "CONTROLLED_FALLBACK");
 });
 
 test("target-scoped assets never re-enter through unscoped HERO or LOGO fallback", () => {
@@ -268,9 +274,9 @@ test("target-scoped assets never re-enter through unscoped HERO or LOGO fallback
     context: { ...resolutionContext, legacyMediaAssets: [finlandHero, globalItalianLogo] },
     now: NOW,
   });
-  assert.equal(noSafeLegacy.asset?.id, "global-it-logo");
-  assert.equal(noSafeLegacy.source, "LOGO_COMPOSITION");
-  assert.equal(noSafeLegacy.targetingResolution, "GLOBAL_OTHER");
+  assert.equal(noSafeLegacy.asset, null);
+  assert.equal(noSafeLegacy.source, "CODE_FALLBACK");
+  assert.equal(noSafeLegacy.targetingResolution, "CONTROLLED_FALLBACK");
 });
 
 test("target specificity is evaluated before device and placement fallback specificity", () => {
@@ -508,13 +514,13 @@ function independenceRecord(): PublishedCasinoSnapshotRecord {
   const offerBlock = snapshotAsset("asset-f-offer-block", "BONUS_CREATIVE");
   const directoryMobile = snapshotAsset("asset-a-mobile", "HERO");
   return {
-    casinoId: "11111111-1111-4111-8111-111111111111",
+    casinoId: INDEPENDENCE_CASINO_ID,
     version: 7,
     status: "PUBLISHED",
     archivedAt: null,
     publishedAt: NOW,
     snapshot: {
-      id: "11111111-1111-4111-8111-111111111111",
+      id: INDEPENDENCE_CASINO_ID,
       slug: "independent-casino",
       title: "Independent Casino",
       domain: "independent.invalid",
@@ -537,7 +543,7 @@ function independenceRecord(): PublishedCasinoSnapshotRecord {
         snapshotAssignment("casino-compare", "CASINO_COMPARE", compare),
       ],
       casinoBonuses: [{
-        id: "22222222-2222-4222-8222-222222222222",
+        id: INDEPENDENCE_BONUS_ID,
         slug: "independent-welcome",
         title: "Independent welcome",
         summary: "Current controlled terms",
@@ -551,14 +557,47 @@ function independenceRecord(): PublishedCasinoSnapshotRecord {
           snapshotAssignment("bonus-offer-block", "CASINO_OFFER_BLOCK", offerBlock),
         ],
       }],
+      affiliatePrograms: [{
+        id: "33333333-3333-4333-8333-333333333333",
+        status: "ACTIVE",
+        offers: [{
+          id: INDEPENDENCE_OFFER_ID,
+          casinoBonusId: INDEPENDENCE_BONUS_ID,
+          status: "ACTIVE",
+          startAt: null,
+          expiresAt: null,
+          mediaAssignments: [
+            snapshotAssignment("offer-listing", "BONUS_LISTING_CARD", listing),
+            snapshotAssignment("offer-featured", "BEST_OFFER_FEATURED", featured),
+            snapshotAssignment("offer-block", "CASINO_OFFER_BLOCK", offerBlock),
+          ],
+        }],
+      }],
       seo: {},
     },
   };
 }
 
+function governedRoutes(record: PublishedCasinoSnapshotRecord) {
+  return [{
+    casinoId: record.casinoId,
+    casinoBonusId: INDEPENDENCE_BONUS_ID,
+    affiliateOfferId: INDEPENDENCE_OFFER_ID,
+    slug: "governed-fi-offer",
+  }];
+}
+
+function governedOffer(record: PublishedCasinoSnapshotRecord) {
+  const snapshot = record.snapshot as Record<string, unknown>;
+  const programmes = snapshot.affiliatePrograms as Array<Record<string, unknown>>;
+  return (programmes[0]?.offers as Array<Record<string, unknown>>)[0]!;
+}
+
 test("public projection proves six independently assigned surface assets and responsive variants", () => {
-  const mapped = mapPublishedCasino(independenceRecord(), [], {
+  const record = independenceRecord();
+  const mapped = mapPublishedCasino(record, governedRoutes(record), {
     redirectEnabled: false,
+    commercialMediaEnabled: true,
     placementMediaEnabled: true,
     now: NOW,
   });
@@ -569,16 +608,16 @@ test("public projection proves six independently assigned surface assets and res
   assert.equal(mapped.bonuses[0]?.media?.BONUS_LISTING_CARD?.asset?.id, "asset-d-listing");
   assert.equal(mapped.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "asset-e-featured");
   assert.equal(mapped.bonuses[0]?.media?.CASINO_OFFER_BLOCK?.asset?.id, "asset-f-offer-block");
+  assert.equal(mapped.bonuses[0]?.media?.CASINO_REVIEW_RIGHT_HERO?.asset?.id, "asset-f-offer-block");
+  assert.equal(mapped.bonuses[0]?.media?.CASINO_REVIEW_RIGHT_HERO?.renderingMode, "CONTAIN");
   assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.variants.MOBILE?.asset?.id, "asset-a-mobile");
   assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.variants.DESKTOP?.asset?.id, "asset-a-directory");
-  assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.variants.DESKTOP?.source, "VARIANT_FALLBACK");
+  assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.variants.DESKTOP?.source, "BRAND_FALLBACK");
   assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.asset?.variants?.MOBILE?.id, "asset-a-mobile");
 });
 
 test("one immutable publication snapshot resolves per request and exposes only the effective target", () => {
   const record = independenceRecord();
-  const snapshot = record.snapshot as Record<string, unknown>;
-  const bonuses = snapshot.casinoBonuses as Array<Record<string, unknown>>;
   const targets = [
     ["global-en", null, "en"],
     ["global-neutral", null, null],
@@ -587,15 +626,16 @@ test("one immutable publication snapshot resolves per request and exposes only t
     ["se-sv", "SE", "sv"],
     ["se-en", "SE", "en"],
   ] as const;
-  bonuses[0].mediaAssignments = targets.map(([id, countryCode, languageCode]) => snapshotAssignment(
+  governedOffer(record).mediaAssignments = targets.map(([id, countryCode, languageCode]) => snapshotAssignment(
     id,
     "BEST_OFFER_FEATURED",
     snapshotAsset(id, "BONUS_CREATIVE"),
     "DEFAULT",
     { countryCode, languageCode },
   ));
-  const resolve = (countryCode: string | null, presentationLanguage: string) => mapPublishedCasino(record, [], {
+  const resolve = (countryCode: string | null, presentationLanguage: string) => mapPublishedCasino(record, governedRoutes(record), {
     redirectEnabled: false,
+    commercialMediaEnabled: true,
     placementMediaEnabled: true,
     countryCode,
     presentationLanguage,
@@ -612,11 +652,9 @@ test("one immutable publication snapshot resolves per request and exposes only t
   assert.doesNotMatch(publicPayload, /fi-fi|fi-en/);
 });
 
-test("targeted creative presentation remains independent from governed CTA authority", () => {
+test("targeted creative presentation shares the exact governed CTA authority", () => {
   const record = independenceRecord();
-  const snapshot = record.snapshot as Record<string, unknown>;
-  const bonuses = snapshot.casinoBonuses as Array<Record<string, unknown>>;
-  bonuses[0].mediaAssignments = [snapshotAssignment(
+  governedOffer(record).mediaAssignments = [snapshotAssignment(
     "fi-targeted-creative",
     "BEST_OFFER_FEATURED",
     snapshotAsset("fi-targeted-creative", "BONUS_CREATIVE"),
@@ -630,14 +668,11 @@ test("targeted creative presentation remains independent from governed CTA autho
     presentationLanguage: "fi",
     now: NOW,
   });
-  assert.equal(blocked?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "fi-targeted-creative");
+  assert.equal(blocked?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset, null);
+  assert.equal(blocked?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.status, "BLOCKED");
   assert.deepEqual(blocked?.bonuses[0]?.affiliate, { href: null, available: false });
 
-  const eligible = mapPublishedCasino(record, [{
-    casinoId: record.casinoId,
-    casinoBonusId: "22222222-2222-4222-8222-222222222222",
-    slug: "governed-fi-offer",
-  }], {
+  const eligible = mapPublishedCasino(record, governedRoutes(record), {
     redirectEnabled: true,
     placementMediaEnabled: true,
     countryCode: "FI",
@@ -650,8 +685,10 @@ test("targeted creative presentation remains independent from governed CTA autho
 });
 
 test("historical snapshots without target fields remain global-neutral and malformed new targets fail closed", () => {
-  const historical = mapPublishedCasino(independenceRecord(), [], {
+  const historicalRecord = independenceRecord();
+  const historical = mapPublishedCasino(historicalRecord, governedRoutes(historicalRecord), {
     redirectEnabled: false,
+    commercialMediaEnabled: true,
     placementMediaEnabled: true,
     countryCode: "FI",
     presentationLanguage: "en",
@@ -662,8 +699,7 @@ test("historical snapshots without target fields remain global-neutral and malfo
 
   const malformed = independenceRecord();
   const malformedSnapshot = malformed.snapshot as Record<string, unknown>;
-  const bonuses = malformedSnapshot.casinoBonuses as Array<Record<string, unknown>>;
-  bonuses[0].mediaAssignments = [snapshotAssignment(
+  governedOffer(malformed).mediaAssignments = [snapshotAssignment(
     "invalid-target",
     "BEST_OFFER_FEATURED",
     snapshotAsset("invalid-target", "BONUS_CREATIVE"),
@@ -673,8 +709,9 @@ test("historical snapshots without target fields remain global-neutral and malfo
   malformedSnapshot.mediaAssets = [];
   malformedSnapshot.images = [];
   malformedSnapshot.mediaAssignments = [];
-  const result = mapPublishedCasino(malformed, [], {
+  const result = mapPublishedCasino(malformed, governedRoutes(malformed), {
     redirectEnabled: false,
+    commercialMediaEnabled: true,
     placementMediaEnabled: true,
     countryCode: "FI",
     presentationLanguage: "en",
@@ -946,7 +983,11 @@ test("0027 is an additive typed migration with domain, focal, validity, COVER an
     assert.match(migration, new RegExp(`${table}_cover_check`));
     assert.match(schema, new RegExp(`model ${table}`));
   }
-  for (const value of mediaPlacements) assert.match(migration, new RegExp(`'${value}'`));
+  for (const value of mediaPlacements.filter((placement) => placement !== "CASINO_REVIEW_RIGHT_HERO")) {
+    assert.match(migration, new RegExp(`'${value}'`));
+  }
+  assert.doesNotMatch(migration, /CASINO_REVIEW_RIGHT_HERO/);
+  assert.match(readFileSync("prisma/migrations/0033_media_geo3_pipeline/migration.sql", "utf8"), /CASINO_REVIEW_RIGHT_HERO/);
   for (const value of ["DEFAULT", "DESKTOP", "MOBILE", "AUTO", "COVER", "CONTAIN", "COMPOSED"]) assert.match(migration, new RegExp(`'${value}'`));
   assert.match(migration, /CasinoMediaAssignment_placement_check/);
   assert.match(migration, /CasinoBonusMediaAssignment_placement_check/);
@@ -995,7 +1036,10 @@ test("the governed live manifest is exact, checksummed, deterministic and covers
   assert.deepEqual([...new Set(manifest.rows.map((row) => row.casinoSlug))].sort(), [
     "21-prive", "betsson", "diamond7", "dragonbet", "gday-casino", "hello-casino", "skol-casino", "slotnite",
   ]);
-  assert.deepEqual([...new Set(manifest.rows.map((row) => row.placement))].sort(), [...mediaPlacements].sort());
+  assert.deepEqual(
+    [...new Set(manifest.rows.map((row) => row.placement))].sort(),
+    mediaPlacements.filter((placement) => placement !== "CASINO_REVIEW_RIGHT_HERO").sort(),
+  );
   for (const row of manifest.rows) if (row.newAssignment) {
     assert.equal(row.newAssignment.id, deterministicAssignmentId(`${row.subjectType}:${row.subjectId}:${row.placement}:DEFAULT:${row.newAssignment.mediaAssetId}`));
   }
@@ -1035,7 +1079,7 @@ test("real Admin surfaces expose semantic slots through the authorized centraliz
   const bonus = readFileSync("components/admin/casino-editors/BonusEditor.tsx", "utf8");
   const affiliate = readFileSync("components/admin/affiliate/AffiliateEditors.tsx", "utf8");
   const route = readFileSync("app/api/admin/media/assignments/route.ts", "utf8");
-  const placementContract = readFileSync("lib/media/placement-media.ts", "utf8");
+  const placementContract = `${readFileSync("lib/media/placement-registry.ts", "utf8")}\n${readFileSync("lib/media/placement-media.ts", "utf8")}`;
   for (const placement of mediaPlacements) assert.match(placementContract, new RegExp(placement));
   assert.match(editor, /casinoMediaPlacements/);
   assert.match(editor, /offerMediaPlacements/);
@@ -1061,8 +1105,8 @@ test("real Admin surfaces expose semantic slots through the authorized centraliz
 
 test("all required public surfaces read their dedicated semantic placement", () => {
   const files = {
-    CASINO_DIRECTORY_CARD: readFileSync("lib/services/public-casino-discovery.service.ts", "utf8"),
-    CASINO_DETAIL_HERO: readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8"),
+    CASINO_DIRECTORY_CARD: `${readFileSync("lib/services/public-casino-discovery.service.ts", "utf8")}\n${readFileSync("components/casino-discovery/CasinoDiscoveryCard.tsx", "utf8")}`,
+    CASINO_REVIEW_RIGHT_HERO: readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8"),
     CASINO_COMPARE: readFileSync("lib/services/public-comparison.service.ts", "utf8"),
     BONUS_LISTING_CARD: readFileSync("components/commercial-media/CommercialOfferMedia.tsx", "utf8"),
     BEST_OFFER_FEATURED: readFileSync("components/commercial-media/CommercialOfferMedia.tsx", "utf8"),

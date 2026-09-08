@@ -104,6 +104,12 @@ export default async function CommercialMcpConsentPage({
                 <span>Ingest validated raster media, analyze it, create draft plans, and apply or roll back only plan-owned draft assignments.</span>
               </article>
             ) : null}
+            {consent.scopes.includes("media:production_write") ? (
+              <article>
+                <strong>Activate bounded Production media revisions</strong>
+                <span>Preflight and atomically activate exact-offer media revisions, or restore their recorded previous known-good revision.</span>
+              </article>
+            ) : null}
             {consent.scopes.includes("offline_access") ? (
               <article>
                 <strong>Stay connected</strong>

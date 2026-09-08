@@ -1,30 +1,33 @@
 import { isIsoCountryCode } from "@/lib/jurisdiction/country-code";
 import { marketProfileByCountry } from "@/lib/market/registry";
+import {
+  casinoMediaPlacements,
+  mediaPlacementRegistry,
+  mediaPlacements,
+  mediaPlacementVariants,
+  mediaRenderingModes,
+  offerMediaPlacements,
+  offerSurfaceMediaPlacements,
+  placementAcceptsSubject,
+  type MediaPlacementName,
+  type MediaPlacementVariantName,
+  type MediaRenderingModeName,
+} from "@/lib/media/placement-registry";
 
-export const casinoMediaPlacements = [
-  "CASINO_LOGO",
-  "CASINO_DIRECTORY_CARD",
-  "CASINO_DETAIL_HERO",
-  "CASINO_COMPARE",
-] as const;
+export {
+  casinoMediaPlacements,
+  mediaPlacementRegistry,
+  mediaPlacements,
+  mediaPlacementVariants,
+  mediaRenderingModes,
+  offerMediaPlacements,
+  offerSurfaceMediaPlacements,
+  placementAcceptsSubject,
+};
+export type { MediaPlacementName, MediaPlacementVariantName, MediaRenderingModeName };
 
-export const offerMediaPlacements = [
-  "BONUS_LISTING_CARD",
-  "BEST_OFFER_FEATURED",
-  "BEST_OFFER_SECONDARY",
-  "CASINO_OFFER_BLOCK",
-  "OFFER_DETAIL",
-] as const;
-
-export const mediaPlacements = [...casinoMediaPlacements, ...offerMediaPlacements] as const;
-export const mediaPlacementVariants = ["DEFAULT", "DESKTOP", "MOBILE"] as const;
-export const mediaRenderingModes = ["AUTO", "COVER", "CONTAIN", "COMPOSED"] as const;
-
-export type MediaPlacementName = (typeof mediaPlacements)[number];
 export type CasinoMediaPlacementName = (typeof casinoMediaPlacements)[number];
 export type OfferMediaPlacementName = (typeof offerMediaPlacements)[number];
-export type MediaPlacementVariantName = (typeof mediaPlacementVariants)[number];
-export type MediaRenderingModeName = (typeof mediaRenderingModes)[number];
 export type MediaAssignmentSubjectType = "CASINO" | "CASINO_BONUS" | "AFFILIATE_OFFER";
 
 export type MediaTargetingResolution =
@@ -41,6 +44,9 @@ export type MediaTargetingResolution =
 
 export type PlacementMediaSource =
   | "EXPLICIT"
+  | "EXACT_OFFER"
+  | "EXACT_OFFER_FORMAT_FALLBACK"
+  | "BRAND_FALLBACK"
   | "VARIANT_FALLBACK"
   | "PLACEMENT_FALLBACK"
   | "LEGACY_HERO"
@@ -94,6 +100,15 @@ export interface PlacementMediaAssignment {
   validFrom?: Date | string | null;
   validUntil?: Date | string | null;
   reference?: string | null;
+  affiliateOfferId?: string | null;
+  casinoBonusId?: string | null;
+  creativeSetId?: string | null;
+  creativeVariantId?: string | null;
+  mediaRevisionId?: string | null;
+  purpose?: "BRAND" | "PROMOTION" | null;
+  priority?: number | null;
+  availability?: "AVAILABLE" | "NOT_FOUND" | "UNSUPPORTED" | "ERROR" | "STALE" | null;
+  sourceHash?: string | null;
   createdAt?: Date | string | null;
   updatedAt?: Date | string | null;
   mediaAsset?: PlacementMediaAsset | null;
@@ -125,9 +140,32 @@ export interface ResolvedPlacementMedia {
   fallback: boolean;
   effectiveAlt: string;
   focalPoint: { x: number; y: number } | null;
+  status?: "READY" | "FALLBACK" | "MISSING" | "CONFLICT" | "BLOCKED";
+  creativeSetId?: string | null;
+  creativeVariantId?: string | null;
+  mediaRevisionId?: string | null;
+  exactOfferId?: string | null;
+  evidence?: {
+    consideredAssignmentIds: string[];
+    rejected: Array<{ assignmentId: string; reason: string }>;
+    reason: string;
+  };
 }
 
-export const placementMediaGuidance: Record<MediaPlacementName, {
+export const placementMediaGuidance = Object.fromEntries(mediaPlacements.map((placement) => {
+  const spec = mediaPlacementRegistry[placement];
+  return [placement, {
+    label: spec.label,
+    ratio: spec.preferredFormats.default.join(" or "),
+    minimum: `${spec.minimum.width}×${spec.minimum.height}`,
+    subject: spec.subjects.includes("CASINO" as never) ? "casino" : "offer",
+    formatGuidance: {
+      default: `Preferred ${spec.preferredFormats.default.join(" · compatible ")}`,
+      mobile: `Preferred ${spec.preferredFormats.mobile.join(" · compatible ")}`,
+      note: `${spec.deviceBehavior} ${spec.safeArea}`,
+    },
+  }];
+})) as Record<MediaPlacementName, {
   label: string;
   ratio: string;
   minimum: string;
@@ -137,79 +175,12 @@ export const placementMediaGuidance: Record<MediaPlacementName, {
     mobile: string;
     note: string;
   };
-}> = {
-  CASINO_LOGO: { label: "Logo", ratio: "1:1", minimum: "256×256", subject: "casino" },
-  CASINO_DIRECTORY_CARD: { label: "Casino directory", ratio: "4:3", minimum: "800×600", subject: "casino" },
-  CASINO_DETAIL_HERO: { label: "Casino detail hero", ratio: "16:10 or 16:9", minimum: "1600×1000", subject: "casino" },
-  CASINO_COMPARE: { label: "Compare", ratio: "4:3", minimum: "640×480", subject: "casino" },
-  BONUS_LISTING_CARD: {
-    label: "Bonus listing",
-    ratio: "300×250 preferred; 250×250 compatible",
-    minimum: "security-valid image",
-    subject: "offer",
-    formatGuidance: {
-      default: "Preferred 300×250 · compatible 250×250",
-      mobile: "Preferred 320×100 or 320×50 · 300×250 remains a compatible fallback",
-      note: "DEFAULT and MOBILE assignments remain independent.",
-    },
-  },
-  BEST_OFFER_FEATURED: {
-    label: "Best Offer featured",
-    ratio: "300×250 preferred; 250×250 compatible",
-    minimum: "security-valid image",
-    subject: "offer",
-    formatGuidance: {
-      default: "Preferred 300×250 · compatible 250×250",
-      mobile: "Preferred 320×100 or 320×50 · 300×250 remains a compatible fallback",
-      note: "Wide banners are not stretched into the featured card.",
-    },
-  },
-  BEST_OFFER_SECONDARY: {
-    label: "Best Offer secondary",
-    ratio: "300×250 preferred; 250×250 compatible",
-    minimum: "security-valid image",
-    subject: "offer",
-    formatGuidance: {
-      default: "Preferred 300×250 · compatible 250×250",
-      mobile: "Preferred 320×100 or 320×50 · 300×250 remains a compatible fallback",
-      note: "Use a MOBILE assignment for a supplied mobile banner.",
-    },
-  },
-  CASINO_OFFER_BLOCK: {
-    label: "Casino offer block",
-    ratio: "300×250 card or deliberate 728×90 wide",
-    minimum: "security-valid image",
-    subject: "offer",
-    formatGuidance: {
-      default: "Preferred 300×250 card or 728×90 wide · compatible 250×250",
-      mobile: "Preferred 320×100 or 320×50 · card fallback remains supported",
-      note: "The review hero remains editorial and is not changed by this assignment.",
-    },
-  },
-  OFFER_DETAIL: {
-    label: "Offer detail",
-    ratio: "300×250 card; future wide compatibility",
-    minimum: "security-valid image",
-    subject: "offer",
-    formatGuidance: {
-      default: "Future contract: 300×250 preferred · 250×250 and 728×90 compatible",
-      mobile: "Future contract: 320×100 or 320×50 preferred",
-      note: "No public offer-detail surface is created by this contract.",
-    },
-  },
-};
+}>;
 
-export const placementFallbackChains: Record<MediaPlacementName, readonly MediaPlacementName[]> = {
-  CASINO_LOGO: [],
-  CASINO_DIRECTORY_CARD: [],
-  CASINO_DETAIL_HERO: ["CASINO_DIRECTORY_CARD"],
-  CASINO_COMPARE: ["CASINO_DIRECTORY_CARD"],
-  BONUS_LISTING_CARD: ["CASINO_DIRECTORY_CARD"],
-  BEST_OFFER_FEATURED: ["BEST_OFFER_SECONDARY", "BONUS_LISTING_CARD", "CASINO_DIRECTORY_CARD"],
-  BEST_OFFER_SECONDARY: ["BONUS_LISTING_CARD", "CASINO_DIRECTORY_CARD"],
-  CASINO_OFFER_BLOCK: ["BONUS_LISTING_CARD", "CASINO_DETAIL_HERO"],
-  OFFER_DETAIL: ["CASINO_OFFER_BLOCK", "BONUS_LISTING_CARD", "CASINO_DETAIL_HERO"],
-};
+export const placementFallbackChains = Object.fromEntries(mediaPlacements.map((placement) => {
+  const spec = mediaPlacementRegistry[placement];
+  return [placement, [...spec.promotionFallbacks, ...spec.brandFallbacks.filter((fallback) => fallback !== "CASINO_LOGO")]];
+})) as unknown as Record<MediaPlacementName, readonly MediaPlacementName[]>;
 
 export function isCasinoMediaPlacement(value: string): value is CasinoMediaPlacementName {
   return (casinoMediaPlacements as readonly string[]).includes(value);
@@ -261,8 +232,8 @@ export function mediaTargetBuckets(input: {
     ? languageCode
       ? [
           { countryCode, languageCode, resolution: "EXACT_COUNTRY_LANGUAGE" },
-          { countryCode: null, languageCode, resolution: "GLOBAL_LANGUAGE" },
           { countryCode, languageCode: null, resolution: "EXACT_COUNTRY_NEUTRAL" },
+          { countryCode: null, languageCode, resolution: "GLOBAL_LANGUAGE" },
           { countryCode: null, languageCode: null, resolution: "GLOBAL_NEUTRAL" },
         ]
       : [
@@ -328,22 +299,13 @@ function rankedMediaTarget(
       return { rank: 0, countryCode, languageCode, languageState, resolution: "EXACT_COUNTRY_LANGUAGE" };
     }
     if (languageState === "NEUTRAL") return { rank: 1, countryCode, languageCode: null, languageState, resolution: "EXACT_COUNTRY_NEUTRAL" };
-    if (languageState === "UNKNOWN") return { rank: 1, countryCode, languageCode: null, languageState, resolution: "EXACT_COUNTRY_UNKNOWN" };
     return null;
   }
   if (requestedLanguage && languageState === "EXPLICIT" && languageCode === requestedLanguage) {
     return { rank: 2, countryCode: null, languageCode, languageState, resolution: "GLOBAL_LANGUAGE" };
   }
-  const currencyCode = assignment.mediaAsset?.currencyCode?.trim().toUpperCase() ?? null;
-  if (languageState === "EXPLICIT" && languageCode === "en" && currencyCode === "EUR") {
-    return { rank: 3, countryCode: null, languageCode, languageState, resolution: "GLOBAL_ENGLISH_EUR" };
-  }
-  if (languageState === "EXPLICIT" && languageCode === "en") {
-    return { rank: 4, countryCode: null, languageCode, languageState, resolution: "GLOBAL_ENGLISH" };
-  }
-  if (languageState === "NEUTRAL") return { rank: 5, countryCode: null, languageCode: null, languageState, resolution: "GLOBAL_NEUTRAL" };
-  if (languageState === "UNKNOWN") return { rank: 6, countryCode: null, languageCode: null, languageState, resolution: "GLOBAL_UNKNOWN" };
-  return { rank: 7, countryCode: null, languageCode, languageState, resolution: "GLOBAL_OTHER" };
+  if (languageState === "NEUTRAL") return { rank: 3, countryCode: null, languageCode: null, languageState, resolution: "GLOBAL_NEUTRAL" };
+  return null;
 }
 
 function localCurrencyRank(assignment: PlacementMediaAssignment, countryCode: string | null) {
@@ -467,7 +429,7 @@ export function resolveMedia(input: {
   const requestedLanguageCode = normalizeMediaLanguageCode(input.presentationLanguage);
   const now = (input.now ?? new Date()).getTime();
   const chain = [input.placement, ...placementFallbackChains[input.placement]];
-  const targetRanks = [0, 1, 2, 3, 4, 5, 6, 7] as const;
+  const targetRanks = [0, 1, 2, 3] as const;
 
   for (const targetRank of targetRanks) {
     for (const placement of chain) {

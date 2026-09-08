@@ -66,6 +66,7 @@ async function projectRuntimeMediaAssignments(rows: PublishedSnapshotRow[]): Pro
     bonusPartnerHostedAssignments,
     offerMediaAssignments,
     offerPartnerHostedAssignments,
+    activeCreativeVariants,
   ] = await Promise.all([
     prisma.casinoMediaAssignment.findMany({
       where: { casinoId: { in: casinoIds } },
@@ -97,6 +98,21 @@ async function projectRuntimeMediaAssignments(rows: PublishedSnapshotRow[]): Pro
       include: { creative: true },
       orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
     }),
+    prisma.mediaCreativeVariant.findMany({
+      where: {
+        status: "ACTIVE",
+        availability: "AVAILABLE",
+        creativeSet: { casinoId: { in: casinoIds }, status: "ACTIVE", archivedAt: null },
+        revision: { status: "ACTIVE" },
+      },
+      include: {
+        mediaAsset: true,
+        hostedCreative: true,
+        creativeSet: true,
+        revision: { select: { id: true, status: true } },
+      },
+      orderBy: [{ priority: "desc" }, { id: "asc" }],
+    }),
   ]);
 
   const casinoMedia = groupBy(casinoMediaAssignments, (row) => row.casinoId);
@@ -105,6 +121,10 @@ async function projectRuntimeMediaAssignments(rows: PublishedSnapshotRow[]): Pro
   const bonusHosted = groupBy(bonusPartnerHostedAssignments, (row) => row.casinoBonusId);
   const offerMedia = groupBy(offerMediaAssignments, (row) => row.affiliateOfferId);
   const offerHosted = groupBy(offerPartnerHostedAssignments, (row) => row.affiliateOfferId);
+  const offerCreativeVariants = groupBy(
+    activeCreativeVariants.filter((row) => Boolean(row.creativeSet.affiliateOfferId)),
+    (row) => row.creativeSet.affiliateOfferId!,
+  );
 
   const withBonusAssignments = (entries: unknown[]) => entries.map((entry) => {
     const record = snapshotRecord(entry);
@@ -131,6 +151,7 @@ async function projectRuntimeMediaAssignments(rows: PublishedSnapshotRow[]): Pro
             ...offer,
             mediaAssignments: offerMedia.get(id) ?? [],
             partnerHostedAssignments: offerHosted.get(id) ?? [],
+            creativeVariants: offerCreativeVariants.get(id) ?? [],
           };
         }),
       };

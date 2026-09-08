@@ -186,26 +186,30 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         secondary: bonus.freeSpins ? `+ ${bonus.freeSpins} Free Spins` : null,
       }
     : null;
-  const detailPlacement = casino.media.placements?.CASINO_DETAIL_HERO;
-  const heroRatio = classifyMediaRatio({ width: casino.media.hero?.width, height: casino.media.hero?.height });
-  const resolvedHeroSource = detailPlacement?.source ?? (casino.media.hero ? "LEGACY_HERO" : casino.media.logo ? "LEGACY_LOGO" : "CODE_FALLBACK");
-  const resolvedHeroFamily = creativePresentationFamily({
-    height: casino.media.hero?.height,
-    mediaType: casino.media.hero?.type,
-    placement: "CASINO_DETAIL_HERO",
-    source: resolvedHeroSource,
-    width: casino.media.hero?.width,
-  });
-  const heroBrandArt = Boolean(casino.media.hero && resolvedHeroFamily === "BRAND_ART");
-  const heroDisplayFamily = heroBrandArt ? "BRAND_ART" : "LOGO_ONLY";
-  const suppressedPromotionalFamily = isPromotionalPresentationFamily(resolvedHeroFamily) ? resolvedHeroFamily : null;
-  const heroMediaCover = heroBrandArt && detailPlacement?.renderingMode === "COVER";
-  const heroFocalPoint = detailPlacement?.focalPoint
-    ? `${detailPlacement.focalPoint.x * 100}% ${detailPlacement.focalPoint.y * 100}%`
+  const reviewHeroPlacement = bonus?.media?.CASINO_REVIEW_RIGHT_HERO;
+  const exactOfferHero = Boolean(
+    !informationalOnly
+    && action
+    && reviewHeroPlacement?.asset
+    && ["EXACT_OFFER", "EXACT_OFFER_FORMAT_FALLBACK"].includes(reviewHeroPlacement.source),
+  );
+  const rightHeroAsset = reviewHeroPlacement?.asset;
+  const heroBrandArt = Boolean(
+    rightHeroAsset
+    && !exactOfferHero
+    && reviewHeroPlacement?.source === "BRAND_FALLBACK",
+  );
+  const heroRatio = classifyMediaRatio({ width: rightHeroAsset?.width, height: rightHeroAsset?.height });
+  const heroDisplayFamily = exactOfferHero ? "EXACT_OFFER_PROMOTION" : heroBrandArt ? "BRAND_ART" : "LOGO_ONLY";
+  const heroMediaCover = !exactOfferHero && heroBrandArt && reviewHeroPlacement?.renderingMode === "COVER";
+  const heroFocalPoint = reviewHeroPlacement?.focalPoint
+    ? `${reviewHeroPlacement.focalPoint.x * 100}% ${reviewHeroPlacement.focalPoint.y * 100}%`
     : "center";
-  const heroMediaMode = heroBrandArt ? heroMediaCover ? "COVER" : "CONTAIN" : "COMPOSED";
-  const heroMediaRatio = heroBrandArt ? heroRatio : casino.media.logo ? "brand" : "missing";
-  const heroMediaSource = heroBrandArt ? resolvedHeroSource : casino.media.logo ? "LOGO_COMPOSITION" : "CODE_FALLBACK";
+  const heroMediaMode = exactOfferHero ? "CONTAIN" : heroBrandArt ? heroMediaCover ? "COVER" : "CONTAIN" : "COMPOSED";
+  const heroMediaRatio = exactOfferHero || heroBrandArt ? heroRatio : casino.media.logo ? "brand" : "missing";
+  const heroMediaSource = exactOfferHero
+    ? reviewHeroPlacement!.source
+    : heroBrandArt ? reviewHeroPlacement?.source ?? "BRAND_FALLBACK" : casino.media.logo ? "LOGO_COMPOSITION" : "CODE_FALLBACK";
   const offerPlacement = bonus?.media?.CASINO_OFFER_BLOCK;
   const offerPresentation = offerPlacement ? offerPlacementPresentationFamilies(offerPlacement) : null;
   const offerPlacementPromotional = Boolean(
@@ -220,23 +224,30 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const formattedEditorScore = casino.editorScore === null
     ? messages.common.notListed
     : formatProfileScore(casino.editorScore, presentation.locale);
-  const heroMediaContent = heroBrandArt && casino.media.hero
-    ? <div className={styles.heroMediaCanvas} data-cover={heroMediaCover || undefined}><ResponsivePlacementImage style={{ objectPosition: heroFocalPoint }} alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 900} media={casino.media.hero} width={casino.media.hero.width ?? 1600} /></div>
+  const heroMediaContent = (exactOfferHero || heroBrandArt) && rightHeroAsset
+    ? <div className={styles.heroMediaCanvas} data-cover={heroMediaCover || undefined} data-offer-media={exactOfferHero || undefined}><ResponsivePlacementImage style={{ objectPosition: heroFocalPoint }} alt={rightHeroAsset.alt || casino.name} fallbackMedia={exactOfferHero ? casino.media.logo : null} height={rightHeroAsset.height ?? 900} media={rightHeroAsset} width={rightHeroAsset.width ?? 1600} /></div>
     : <div className={styles.brandMedia}>
         <span>B4GAMBLE · {messages.profile.operatorReview}</span>
         {casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 80} media={casino.media.logo} width={casino.media.logo.width ?? 80} /> : <i aria-hidden="true" />}
         <strong>B4GAMBLE</strong>
         <small>{demo ? messages.profile.demoReview : messages.profile.publishedReview}</small>
       </div>;
-  const heroMediaPresentation = <aside
-    aria-label={casino.name}
-    className={styles.heroMedia}
-    data-media-mode={heroMediaMode}
-    data-media-ratio={heroMediaRatio}
-    data-media-source={heroMediaSource}
-    data-presentation-family={heroDisplayFamily}
-    data-suppressed-promotion-family={suppressedPromotionalFamily ?? undefined}
-  >{heroMediaContent}</aside>;
+  const heroMediaData = {
+    "data-creative-offer-id": exactOfferHero ? reviewHeroPlacement?.exactOfferId ?? undefined : undefined,
+    "data-media-mode": heroMediaMode,
+    "data-media-ratio": heroMediaRatio,
+    "data-media-source": heroMediaSource,
+    "data-presentation-family": heroDisplayFamily,
+  };
+  const heroMediaPresentation = exactOfferHero && action
+    ? <GovernedCommercialAction
+        action={action}
+        anchorData={heroMediaData}
+        ariaLabel={`${action.label}: ${offerHeadline ?? casino.name}`}
+        className={styles.heroMedia}
+        context={{ source: "CREATIVE", placement: "CASINO_REVIEW_RIGHT_HERO" }}
+      >{heroMediaContent}</GovernedCommercialAction>
+    : <aside aria-label={casino.name} className={styles.heroMedia} {...heroMediaData}>{heroMediaContent}</aside>;
 
   return <article className={styles.page} data-runtime-renderer="casino-review">
     <div aria-hidden="true" className={styles.readProgress} data-casino-read-progress />

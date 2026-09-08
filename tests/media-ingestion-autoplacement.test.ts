@@ -503,7 +503,7 @@ test("offer mismatch stays independent from otherwise valid FI/en targeting", ()
   assert.ok(result.every((item) => item.state !== "AUTO_ASSIGN_DRAFT"));
 });
 
-test("Media Operations is a separate exact-resource MCP surface with six bounded tools", () => {
+test("Media Operations is a separate exact-resource MCP surface with nine bounded tools", () => {
   const config = resolveMediaMcpConfig("https://b4gamble.com/api/mcp/media", { MEDIA_OPERATIONS_MCP_ENABLED: "true", MEDIA_OPERATIONS_MCP_PUBLIC_ORIGIN: "https://b4gamble.com" });
   assert.ok(config);
   assert.equal(config.resource, "https://b4gamble.com/api/mcp/media");
@@ -512,15 +512,27 @@ test("Media Operations is a separate exact-resource MCP surface with six bounded
   assert.deepEqual(mediaMcpProtectedResourceMetadata(config), {
     resource: "https://b4gamble.com/api/mcp/media",
     authorization_servers: ["https://b4gamble.com/api/mcp/media"],
-    scopes_supported: ["media:read", "media:safe_write", "offline_access"],
+    scopes_supported: ["media:read", "media:safe_write", "media:production_write", "offline_access"],
     bearer_methods_supported: ["header"],
   });
-  assert.deepEqual(mediaMcpTools.map((tool) => tool.name), ["media_ingest_partner_snippet", "media_ingest_partner_batch", "media_analyze_and_plan", "media_apply_draft_plan", "media_get_plan", "media_list_recent_ingestions"]);
+  assert.deepEqual(mediaMcpTools.map((tool) => tool.name), [
+    "media_ingest_partner_snippet",
+    "media_ingest_partner_batch",
+    "media_analyze_and_plan",
+    "media_apply_draft_plan",
+    "media_orchestrate_production",
+    "media_rollback_production_revision",
+    "media_get_production_revision",
+    "media_get_plan",
+    "media_list_recent_ingestions",
+  ]);
   const ingestSchema = JSON.stringify(mediaMcpTools[0].inputSchema);
   assert.match(ingestSchema, /targetCountryCodes/);
   assert.match(ingestSchema, /creativeLanguage/);
   assert.match(ingestSchema, /creativeLanguageState/);
-  assert.deepEqual(MEDIA_MCP_SCOPES, ["media:read", "media:safe_write"]);
+  assert.deepEqual(MEDIA_MCP_SCOPES, ["media:read", "media:safe_write", "media:production_write"]);
+  assert.deepEqual(mediaMcpTools[4]?.securitySchemes, [{ type: "oauth2", scopes: ["media:production_write"] }]);
+  assert.deepEqual(mediaMcpTools[5]?.securitySchemes, [{ type: "oauth2", scopes: ["media:production_write"] }]);
 
   const staff = { id: "33333333-3333-4333-8333-333333333333", userId: "user-1", email: "staff@example.com", name: "Staff", role: "ADMIN" as const };
   const token = { id: "token", clientId: "client", userId: "user-1", sessionId: null, scopes: ["media:read"], resources: [config.resource], expiresAt: new Date("2099-01-01"), revoked: null, session: null, client: { disabled: false, tokenEndpointAuthMethod: "none", applicationType: "web", metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: config.resource } } };

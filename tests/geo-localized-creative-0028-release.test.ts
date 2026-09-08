@@ -106,6 +106,6 @@ test("public target authority and cache boundary stay server-side, trusted and p
   assert.match(comparisonApi, /X-Vercel-IP-Country, Accept-Language/);
   assert.match(publicMapper, /resolvedPlacementMap/);
   assert.match(publicMapper, /placementAssignments/);
-  assert.match(publicMapper, /resolveMedia/);
+  assert.match(publicMapper, /resolveCasinoMedia/);
   assert.doesNotMatch(resolver, /trackingUrl|affiliateHref|redirectSlug|commission|programme|cookie/i);
 });

@@ -12,6 +12,9 @@ September 2026, plus the additive `B4GAMBLE —
 GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01` instruction issued 5 September 2026.
 [RFC-041](RFC-041-Vetted-Partner-Hosted-Creatives.md) is the newer authority
 for `UNKNOWN` language and mixed first-party/partner-hosted fallback order.
+[RFC-043](RFC-043-Production-Media-Pipeline.md) is the newer authority for
+public promotional targeting, exact-offer commercial surfaces and Production
+media revisions.
 
 ## Decision and history
 

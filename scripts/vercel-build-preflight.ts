@@ -25,6 +25,11 @@ import {
   runMediaOperationsBulk0030Readiness,
 } from "@/lib/db/media-operations-bulk-0030-release";
 import {
+  MEDIA_GEO3_TARGET_MIGRATION,
+  planMediaGeo3Preflight,
+  runMediaGeo3Readiness,
+} from "@/lib/db/media-geo3-0033-release";
+import {
   VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION,
   planVettedPartnerHostedCreatives0029Preflight,
   runVettedPartnerHostedCreatives0029Readiness,
@@ -287,7 +292,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -298,6 +303,7 @@ async function maybeApplyProgrammeAccessMigration() {
   let geoLocalizedCreativeState: ReturnType<typeof planGeoLocalizedCreative0028Preflight> | null = null;
   let partnerHostedCreativeState: ReturnType<typeof planVettedPartnerHostedCreatives0029Preflight> | null = null;
   let mediaOperationsBulkState: ReturnType<typeof planMediaOperationsBulk0030Preflight> | null = null;
+  let mediaGeo3State: ReturnType<typeof planMediaGeo3Preflight> | null = null;
   let marketActivationSchemaReady = false;
   try {
     const rows = await readMigrationRows(prisma);
@@ -317,16 +323,18 @@ async function maybeApplyProgrammeAccessMigration() {
     }
     const pending = repositoryMigrations.filter((name) => !applied.has(name));
     const expectedPending = !applied.has(GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION)
-      ? [GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
+      ? [GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION]
       : !applied.has(VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION)
-        ? [VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
+        ? [VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION]
         : !applied.has(MEDIA_OPERATIONS_BULK_TARGET_MIGRATION)
-          ? [MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
+          ? [MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION]
           : !applied.has(MARKET_ACTIVATION_BASE_MIGRATION)
-            ? [MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION]
+            ? [MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION]
             : !applied.has(MARKET_ACTIVATION_TARGET_MIGRATION)
-              ? [MARKET_ACTIVATION_TARGET_MIGRATION]
-              : [];
+              ? [MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION]
+              : !applied.has(MEDIA_GEO3_TARGET_MIGRATION)
+                ? [MEDIA_GEO3_TARGET_MIGRATION]
+                : [];
 
     if (
       pending.length !== expectedPending.length
@@ -424,6 +432,11 @@ async function maybeApplyProgrammeAccessMigration() {
         checksumMatched: true,
         canonicalTablesReady: true,
       });
+      mediaGeo3State = planMediaGeo3Preflight({
+        rows,
+        repositoryMigrations: repositoryMigrations.slice(0, repositoryMigrations.indexOf(MEDIA_GEO3_TARGET_MIGRATION) + 1),
+      });
+      writeEvent({ event: "production_media_geo3_preflight", ...mediaGeo3State });
     }
     writeEvent({
       event: "production_programme_access_migration",
@@ -457,6 +470,9 @@ async function maybeApplyProgrammeAccessMigration() {
   if (!marketActivationSchemaReady) {
     throw new Error(`Production DB-first release requires completed ${MARKET_ACTIVATION_TARGET_MIGRATION} before this application build.`);
   }
+  if (mediaGeo3State?.state === "schema_pending") {
+    throw new Error(`Production DB-first release requires completed ${MEDIA_GEO3_TARGET_MIGRATION} before this application build.`);
+  }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();
   writeEvent({ event: "production_casino_market_readiness", ...casinoMarketReadiness });
@@ -470,6 +486,8 @@ async function maybeApplyProgrammeAccessMigration() {
   writeEvent({ event: "production_vetted_partner_hosted_creatives_readiness", ...partnerHostedCreativeReadiness });
   const mediaOperationsBulkReadiness = await runMediaOperationsBulk0030Readiness();
   writeEvent({ event: "production_media_operations_bulk_readiness", ...mediaOperationsBulkReadiness });
+  const mediaGeo3Readiness = await runMediaGeo3Readiness();
+  writeEvent({ event: "production_media_geo3_readiness", ...mediaGeo3Readiness });
 }
 
 maybeApplyProgrammeAccessMigration().catch((error) => {
