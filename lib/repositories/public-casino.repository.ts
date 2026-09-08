@@ -79,32 +79,10 @@ function projectedPublishedSnapshot(countryCode?: string | null) {
         )
     ), '[]'::jsonb)
   `;
-  const marketLinkedDomain = Prisma.sql`
-    NULLIF(BTRIM(cv.snapshot::jsonb ->> 'domain'), '') IS NOT NULL
-    AND EXISTS (
-      SELECT 1
-      FROM jsonb_array_elements(${sourceCountries}) AS profile(entry)
-      WHERE NULLIF(BTRIM(profile.entry ->> 'localDomain'), '') IS NOT NULL
-        AND REGEXP_REPLACE(
-          SPLIT_PART(LOWER(BTRIM(profile.entry ->> 'localDomain')), '/', 1),
-          '^www[.]',
-          ''
-        ) = REGEXP_REPLACE(
-          SPLIT_PART(LOWER(BTRIM(cv.snapshot::jsonb ->> 'domain')), '/', 1),
-          '^www[.]',
-          ''
-        )
-    )
-  `;
   return Prisma.sql`jsonb_set(
-    jsonb_set(
-      jsonb_set(cv.snapshot::jsonb, '{countries}', ${projectedCountries}, true),
-      '{licenses}',
-      ${projectedLicenses},
-      true
-    ),
-    '{__sevenbetMarketProjection}',
-    jsonb_build_object('marketLinkedDomain', ${marketLinkedDomain}),
+    jsonb_set(cv.snapshot::jsonb, '{countries}', ${projectedCountries}, true),
+    '{licenses}',
+    ${projectedLicenses},
     true
   )`;
 }

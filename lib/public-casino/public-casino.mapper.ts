@@ -628,16 +628,6 @@ function unique(values: Array<string | null>) {
 export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: string): PublicCasinoDTO {
   const normalized = countryCode.toUpperCase();
   const profile = casino.marketProfiles.find((entry) => entry.countryCode === normalized);
-  const normalizeDomain = (value: string) => value
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, "")
-    .split("/", 1)[0]!
-    .replace(/^www\./, "");
-  const scopedDomains = new Set(casino.marketProfiles.flatMap((entry) => (
-    entry.localDomain ? [normalizeDomain(entry.localDomain)] : []
-  )));
-  const globalDomain = scopedDomains.has(normalizeDomain(casino.domain)) ? "" : casino.domain;
   const licenseIdentity = (entry: PublicCasinoLicense) => JSON.stringify([
     entry.authority,
     entry.licenseNumber ?? "",
@@ -649,7 +639,6 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
   const globalLicenses = casino.licenses.filter((entry) => !scopedLicenseIdentities.has(licenseIdentity(entry)));
   if (!profile) return {
     ...casino,
-    domain: globalDomain,
     countries: [],
     licenses: globalLicenses,
     marketProfiles: [],
@@ -665,7 +654,7 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
     [...new Map([...global, ...local].map((value) => [identity(value), value])).values()];
   return {
     ...casino,
-    domain: profile.localDomain ?? globalDomain,
+    domain: profile.localDomain ?? casino.domain,
     languages: unique([...casino.languages, profile.primaryLanguage, ...profile.supportedLanguages]),
     currencies: unique([...casino.currencies, profile.primaryCurrency, ...profile.supportedCurrencies]),
     countries: [{
@@ -707,7 +696,6 @@ export function mapPublishedCasino(
   } = { redirectEnabled: false },
 ): PublicCasinoDTO | null {
   const snapshot = object(published.snapshot);
-  const marketProjection = object(snapshot.__sevenbetMarketProjection);
   const slug = text(snapshot.slug);
   if (published.status !== "PUBLISHED" || published.archivedAt || text(snapshot.status) !== "PUBLISHED" || !isSafePublicSlug(slug)) return null;
   const id = text(snapshot.id, published.casinoId);
@@ -972,7 +960,7 @@ export function mapPublishedCasino(
     slug,
     name,
     title: name,
-    domain: bool(marketProjection.marketLinkedDomain) ? "" : domain,
+    domain,
     summary,
     reviewContent: text(reviewBlocks.reviewContent, text(snapshot.description, summary)),
     operator: nullableText(snapshot.operator),

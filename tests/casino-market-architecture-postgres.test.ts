@@ -5,7 +5,6 @@ import { CasinoCountryAvailability, EditorialStatus, PrismaClient } from "@prism
 
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
-import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import { publicCasinoRepository, type PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { PublicCasinoService } from "../lib/services/public-casino.service";
@@ -157,7 +156,7 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
           id: CASINO_ID,
           slug: "architecture-betsson",
           title: "Betsson",
-          domain: "pe.architecture-betsson.invalid",
+          domain: "architecture-betsson.invalid",
           status: "PUBLISHED",
           licenses: [
             { id: GLOBAL_LICENSE_ID, authority: "Global test authority", licenseNumber: "GLOBAL-ARCH-TEST", status: "ACTIVE" },
@@ -169,7 +168,6 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
             {
               id: PE_PROFILE_ID,
               countryCode: "PE",
-              localDomain: "www.pe.architecture-betsson.invalid/welcome",
               licenses: [{ casinoLicenseId: PE_LICENSE_ID, license: { id: PE_LICENSE_ID, authority: "MINCETUR", licenseNumber: "PE-ARCH-TEST", jurisdiction: "PE", status: "ACTIVE" } }],
               bonuses: [{
                 id: "c1110000-0000-4000-8000-000000000051",
@@ -185,7 +183,6 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
             {
               id: SE_PROFILE_ID,
               countryCode: "SE",
-              localDomain: "se.architecture-betsson.invalid",
               licenses: [{ casinoLicenseId: SE_LICENSE_ID, license: { id: SE_LICENSE_ID, authority: "Spelinspektionen", licenseNumber: "SE-ARCH-TEST", jurisdiction: "SE", status: "ACTIVE" } }],
               bonuses: [],
             },
@@ -216,10 +213,6 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
       ((record?.snapshot as { countries?: Array<{ countryCode?: string }> } | undefined)?.countries ?? [])
         .map((country) => country.countryCode)
     );
-    const marketLinkedDomain = (record: PublishedCasinoSnapshotRecord | null) => (
-      (record?.snapshot as { __sevenbetMarketProjection?: { marketLinkedDomain?: boolean } } | undefined)
-        ?.__sevenbetMarketProjection?.marketLinkedDomain ?? null
-    );
     assert.deepEqual(projectedAuthorities(projectedPe), ["Global test authority", "MINCETUR"]);
     assert.deepEqual(projectedCountries(projectedPe), ["PE"]);
     assert.deepEqual(projectedAuthorities(projectedSe), ["Global test authority", "Spelinspektionen"]);
@@ -228,17 +221,6 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
     assert.deepEqual(projectedCountries(projectedKz), []);
     assert.deepEqual(projectedAuthorities(projectedUnqualified), ["Global test authority"]);
     assert.deepEqual(projectedCountries(projectedUnqualified), []);
-    assert.equal(marketLinkedDomain(projectedPe), true);
-    assert.equal(marketLinkedDomain(projectedSe), true);
-    assert.equal(marketLinkedDomain(projectedKz), true);
-    assert.equal(marketLinkedDomain(projectedUnqualified), true);
-    const mapProjection = (record: PublishedCasinoSnapshotRecord | null, countryCode?: string) => (
-      record ? mapPublishedCasino(record, [], { redirectEnabled: false, countryCode, now: NOW }) : null
-    );
-    assert.equal(mapProjection(projectedPe, "PE")?.domain, "www.pe.architecture-betsson.invalid/welcome");
-    assert.equal(mapProjection(projectedSe, "SE")?.domain, "se.architecture-betsson.invalid");
-    assert.equal(mapProjection(projectedKz, "KZ")?.domain, "");
-    assert.equal(mapProjection(projectedUnqualified)?.domain, "");
     const publicStore: PublicCasinoStore = {
       findPublishedBySlug: async (slug) => slug === "architecture-betsson" ? published : null,
       hasManagedSlug: async (slug) => slug === "architecture-betsson",

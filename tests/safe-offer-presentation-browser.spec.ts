@@ -26,7 +26,6 @@ test("trusted KZ presentation shows published other-market offer knowledge witho
   const catalog = await catalogResponse.json() as {
     records: Array<{
       slug: string;
-      domain: string;
       countries: unknown[];
       licenses: unknown[];
       offerPresentation?: { relation?: string; affiliate?: { available?: boolean | null } };
@@ -45,7 +44,6 @@ test("trusted KZ presentation shows published other-market offer knowledge witho
     expect(record?.licenses, `${slug}: no foreign market licence`).toEqual([]);
     expect(record?.offerPresentation?.relation, `${slug}: offer relation`).toBe(relation);
     expect(record?.offerPresentation?.affiliate?.available, `${slug}: no transferred action`).toBeFalsy();
-    if (slug !== "betsafe") expect(record?.domain, `${slug}: no market-linked domain`).toBe("");
   }
 
   await openOk(page, "/en/bonuses");
