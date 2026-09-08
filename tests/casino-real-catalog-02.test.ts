@@ -283,7 +283,9 @@ test("29. every current real identity is comparison-safe", () => {
 
 test("30. public bonus filtering preserves researched content while bounding the CTA", () => {
   const discovery = read("lib/services/public-casino-discovery.service.ts");
-  assert.match(discovery, /const candidateBonus = scoped\.bonuses\[0\] \?\? null/);
+  assert.match(discovery, /const canonicalRoute = context\.canonicalRoutes\?\.find/);
+  assert.match(discovery, /scoped\.bonuses\.find\(\(bonus\) => bonus\.id === canonicalRoute\.casinoBonusId\)/);
+  assert.match(discovery, /\?\? scoped\.bonuses\[0\] \?\? null/);
   assert.match(discovery, /const bonus = candidateBonus/);
   assert.match(discovery, /const boundedVisit = promotional/);
   assert.match(discovery, /bonusTypes: scoped\.bonuses/);

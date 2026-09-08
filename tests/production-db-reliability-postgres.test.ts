@@ -241,17 +241,17 @@ test("one-connection Production-shaped pool stays bounded across discovery, MCP,
 
     const discoveryId = "00000000-0000-4000-8000-000000000999";
     const coldStarted = performance.now();
-    await publicCasinoDiscoveryRepository.loadContext([discoveryId]);
+    await publicCasinoDiscoveryRepository.loadContext([discoveryId], { countryCode: "KZ" });
     const coldMs = performance.now() - coldStarted;
     const warmSamples: number[] = [];
     for (let index = 0; index < 5; index += 1) {
       const started = performance.now();
-      await publicCasinoDiscoveryRepository.loadContext([discoveryId]);
+      await publicCasinoDiscoveryRepository.loadContext([discoveryId], { countryCode: "KZ" });
       warmSamples.push(performance.now() - started);
     }
     const concurrentStarted = performance.now();
     const concurrent = await Promise.allSettled(
-      Array.from({ length: 8 }, () => publicCasinoDiscoveryRepository.loadContext([discoveryId])),
+      Array.from({ length: 8 }, () => publicCasinoDiscoveryRepository.loadContext([discoveryId], { countryCode: "KZ" })),
     );
     const concurrentMs = performance.now() - concurrentStarted;
     assert.equal(concurrent.filter((result) => result.status === "rejected").length, 0);
@@ -260,10 +260,10 @@ test("one-connection Production-shaped pool stays bounded across discovery, MCP,
     const lockedResult = await withTablesLocked(
       database,
       '"CasinoAlias", "AffiliateOffer", "AffiliateRedirectSlug", "MarketActivation"',
-      () => publicCasinoDiscoveryRepository.loadContext([discoveryId]),
+      () => publicCasinoDiscoveryRepository.loadContext([discoveryId], { countryCode: "KZ" }),
     );
     const lockedMs = performance.now() - lockStarted;
-    assert.deepEqual(lockedResult, { aliases: [], offers: [], redirects: [], activations: [] });
+    assert.deepEqual(lockedResult, { aliases: [], offers: [], redirects: [], canonicalRoutes: [] });
     assert.ok(lockedMs >= 1_300 && lockedMs < 4_000, `controlled lock completed in ${lockedMs}ms`);
 
     let activePublishedReads = 0;

@@ -282,7 +282,7 @@ test("every directory filter returns the expected classified identities and coun
   }
 });
 
-test("visit action requires active local program, offer, link, and safe redirect slug", async () => {
+test("legacy fixture fallback requires active local program, offer, link, and safe redirect slug", async () => {
   const casino = record("alpha-id", "alpha", "Alpha");
   const offer = activeOffer("alpha-id");
   const active = new PublicCasinoDiscoveryService(store([casino], { offers: [offer], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: offer.id, slug: "alpha-visit" }] }), () => now, allowOperatorAuthority, () => true);
@@ -291,6 +291,159 @@ test("visit action requires active local program, offer, link, and safe redirect
   assert.doesNotMatch(JSON.stringify(card), /trackingUrl|destinationUrl|providerType|externalId/);
   const inactive = new PublicCasinoDiscoveryService(store([casino], { offers: [activeOffer("alpha-id", { status: "PAUSED" })], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: null, slug: "alpha-visit" }] }), () => now, allowOperatorAuthority, () => true);
   assert.equal((await inactive.discover({}, allowJurisdictionAuthority, { defaultEditorialCountry: "GB" })).items[0].visitAction.available, false);
+});
+
+test("RFC-042 canonical routes, including global fallback output, are final directory CTA authority", async () => {
+  const casinoId = "canonical-global-id";
+  const bonusId = `${casinoId}-bonus`;
+  const casino = record(casinoId, "canonical-global", "Canonical Global", {
+    countries: [{ id: `${casinoId}-kz`, countryCode: "KZ", availability: "AVAILABLE" }],
+  });
+  const staleLegacyOffer = activeOffer(casinoId, {
+    casinoBonusId: bonusId,
+    status: "PAUSED",
+    program: {
+      casinoId,
+      status: "PAUSED",
+      workflowStatus: "DRAFT",
+      supportedCountries: [],
+      archivedAt: null,
+      network: { active: false, archivedAt: null },
+    },
+    trackingLinks: [],
+  });
+  const canonicalRoute = {
+    casinoId,
+    casinoBonusId: bonusId,
+    affiliateOfferId: staleLegacyOffer.id,
+    slug: "canonical-global-welcome",
+  };
+  const context: DiscoveryContext = {
+    aliases: [],
+    offers: [staleLegacyOffer],
+    redirects: [],
+    canonicalRoutes: [canonicalRoute],
+    activations: [{
+      casinoId,
+      countryCode: "ZZ",
+      product: "CASINO",
+      desiredState: "ACTIVE",
+      status: "ACTIVE",
+      casinoBonusId: bonusId,
+      affiliateOfferId: staleLegacyOffer.id,
+      redirectSlug: canonicalRoute.slug,
+    }],
+  };
+  const service = new PublicCasinoDiscoveryService(store([casino], context), () => now, allowOperatorAuthority, () => true);
+  const authority = { ...allowJurisdictionAuthority, countryCode: "KZ" };
+  const card = (await service.discover({}, authority, { defaultEditorialCountry: "KZ" })).items[0];
+
+  assert.deepEqual(card.visitAction, {
+    available: true,
+    redirectSlug: "canonical-global-welcome",
+    label: "Visit casino",
+    reasonCode: null,
+  });
+  assert.equal(card.disposition, "PROMOTABLE");
+  assert.equal((await service.discover({}, null, { defaultEditorialCountry: "KZ" })).items[0].visitAction.available, false);
+});
+
+test("canonical route evidence carries an active exact-offer variant into the directory card", async () => {
+  const casinoId = "canonical-media-id";
+  const bonusId = `${casinoId}-bonus`;
+  const offerId = `${casinoId}-offer`;
+  const checksum = "a".repeat(64);
+  const casino = record(casinoId, "canonical-media", "Canonical Media", {
+    countries: [{ id: `${casinoId}-kz`, countryCode: "KZ", availability: "AVAILABLE" }],
+    affiliatePrograms: [{
+      id: `${casinoId}-program`,
+      offers: [{
+        id: offerId,
+        casinoBonusId: bonusId,
+        creativeVariants: [{
+          id: `${casinoId}-variant`,
+          status: "ACTIVE",
+          availability: "AVAILABLE",
+          placement: "CASINO_DIRECTORY_CARD",
+          variant: "DEFAULT",
+          countryCode: null,
+          languageCode: null,
+          languageState: "NEUTRAL",
+          renderingMode: "CONTAIN",
+          cropSafe: false,
+          priority: 100,
+          sourceHash: checksum,
+          mediaAssetId: `${casinoId}-asset`,
+          creativeSet: {
+            id: `${casinoId}-set`,
+            casinoId,
+            affiliateOfferId: offerId,
+            casinoBonusId: bonusId,
+            purpose: "PROMOTION",
+            status: "ACTIVE",
+            archivedAt: null,
+          },
+          revision: { id: `${casinoId}-revision`, status: "ACTIVE" },
+          mediaAsset: {
+            id: `${casinoId}-asset`,
+            type: "BONUS_CREATIVE",
+            publicUrl: "/controlled/canonical-media-offer.jpg",
+            mimeType: "image/jpeg",
+            width: 1200,
+            height: 630,
+            altText: "Canonical Media current offer",
+            status: "ACTIVE",
+            archivedAt: null,
+            checksum,
+            metadata: { role: "CURRENT_OFFER_CREATIVE" },
+          },
+        }],
+      }],
+    }],
+  });
+  const route = {
+    casinoId,
+    casinoBonusId: bonusId,
+    affiliateOfferId: offerId,
+    slug: "canonical-media-welcome",
+    mediaOfferAuthority: {
+      status: "ACTIVE",
+      startAt: null,
+      expiresAt: null,
+      archivedAt: null,
+      programStatus: "ACTIVE",
+      programWorkflowStatus: "PUBLISHED",
+      programArchivedAt: null,
+      networkActive: true,
+      networkArchivedAt: null,
+      bonusStatus: "PUBLISHED",
+      bonusOfferStatus: "ACTIVE",
+      bonusStartsAt: null,
+      bonusExpiresAt: null,
+    },
+  };
+  const previousGate = process.env.PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED;
+  process.env.PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED = "true";
+  try {
+    const service = new PublicCasinoDiscoveryService(store([casino], { canonicalRoutes: [route] }), () => now, allowOperatorAuthority, () => true);
+    const card = (await service.discover({}, { ...allowJurisdictionAuthority, countryCode: "KZ" }, { defaultEditorialCountry: "KZ" })).items[0];
+    assert.deepEqual({
+      disposition: card.disposition,
+      redirectSlug: card.visitAction.redirectSlug,
+      mediaSource: card.hero?.source,
+      mediaUrl: card.hero?.url,
+      renderingMode: card.hero?.renderingMode,
+    }, {
+      disposition: "PROMOTABLE",
+      redirectSlug: "canonical-media-welcome",
+      mediaSource: "EXACT_OFFER",
+      mediaUrl: "/controlled/canonical-media-offer.jpg",
+      renderingMode: "CONTAIN",
+    });
+  } finally {
+    if (previousGate === undefined) delete process.env.PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED;
+    else process.env.PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED = previousGate;
+  }
 });
 
 test("exact-ID demo authority overrides otherwise permissive visit eligibility", async () => {

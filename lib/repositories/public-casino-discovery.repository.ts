@@ -1,22 +1,32 @@
 import { EditorialStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { marketActivationRuntime, type MarketActivationRuntime } from "@/lib/market-activation/runtime";
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { publicCasinoRepository } from "@/lib/repositories/public-casino.repository";
 
-type DiscoveryPrisma = Pick<typeof prisma, "casinoAlias" | "affiliateOffer" | "affiliateRedirectSlug" | "marketActivation">;
+type DiscoveryPrisma = Pick<typeof prisma, "casinoAlias" | "affiliateOffer" | "affiliateRedirectSlug">;
 
 export class PublicCasinoDiscoveryRepository implements PublicCasinoDiscoveryStore {
-  constructor(private readonly database: DiscoveryPrisma = prisma) {}
+  constructor(
+    private readonly database: DiscoveryPrisma = prisma,
+    private readonly activations: Pick<MarketActivationRuntime, "listPublicRoutes"> = marketActivationRuntime,
+  ) {}
 
   listPublished(countryCode?: string | null) {
     return publicCasinoRepository.listPublished(countryCode);
   }
 
-  async loadContext(casinoIds: string[], options: { includeAliases?: boolean; includeCommercial?: boolean } = {}): Promise<DiscoveryContext> {
-    if (!casinoIds.length) return { aliases: [], offers: [], redirects: [], activations: [] };
+  async loadContext(casinoIds: string[], options: { includeAliases?: boolean; includeCommercial?: boolean; countryCode?: string } = {}): Promise<DiscoveryContext> {
     const includeAliases = options.includeAliases ?? true;
     const includeCommercial = options.includeCommercial ?? true;
+    const countryCode = options.countryCode?.trim().toUpperCase();
+    if (!casinoIds.length) return {
+      aliases: [],
+      offers: [],
+      redirects: [],
+      ...(includeCommercial && countryCode ? { canonicalRoutes: [] } : {}),
+    };
     const aliases = includeAliases ? await this.database.casinoAlias.findMany({
         where: { casinoId: { in: casinoIds }, casino: { status: EditorialStatus.PUBLISHED, archivedAt: null } },
         select: { casinoId: true, value: true },
@@ -46,28 +56,14 @@ export class PublicCasinoDiscoveryRepository implements PublicCasinoDiscoverySto
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: { casinoId: true, casinoBonusId: true, affiliateOfferId: true, slug: true },
       }) : [];
-    const activations = includeCommercial ? await this.database.marketActivation.findMany({
-      where: { casinoId: { in: casinoIds }, product: "CASINO" },
-      orderBy: [{ countryCode: "asc" }, { casinoId: "asc" }, { id: "asc" }],
-      select: {
-        casinoId: true,
-        countryCode: true,
-        product: true,
-        desiredState: true,
-        status: true,
-        casinoBonusId: true,
-        affiliateOfferId: true,
-        redirectSlug: { select: { slug: true } },
-      },
-    }) : [];
+    const canonicalRoutes = includeCommercial && countryCode
+      ? await this.activations.listPublicRoutes(casinoIds, countryCode)
+      : undefined;
     return {
       aliases,
       offers,
       redirects,
-      activations: activations.map((activation) => ({
-        ...activation,
-        redirectSlug: activation.redirectSlug?.slug ?? null,
-      })),
+      ...(canonicalRoutes !== undefined ? { canonicalRoutes } : {}),
     };
   }
 }

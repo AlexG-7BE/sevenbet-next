@@ -96,7 +96,8 @@ function safeAction(
   if (isTemporaryDemoCasinoId(casino.id)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Fictional demonstration records never expose a commercial action." };
   if (!jurisdictionAllowsReferral(authority)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Current market authority does not permit a commercial action." };
   if (country === "GB" && !operatorEligibility?.referralEligible) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Required operator and commercial evidence is not currently complete." };
-  const visit = resolvePublicVisitAction(context, casino.id, selectComparisonBonus(casino)?.id ?? null, country, now, authority, operatorEligibility, redirectEnabled);
+  const canonicalRoute = context.canonicalRoutes?.find((route) => route.casinoId === casino.id) ?? null;
+  const visit = resolvePublicVisitAction(context, casino.id, canonicalRoute ? canonicalRoute.casinoBonusId : selectComparisonBonus(casino)?.id ?? null, country, now, authority, operatorEligibility, redirectEnabled);
   const href = visit.available && visit.redirectSlug ? `/r/${visit.redirectSlug}` : null;
   if (!href || !internalRedirect.test(href)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "No governed internal action is currently available." };
   return { available: true, href, label: `Visit ${casino.name}`, reason: "Rechecked by the governed internal redirect route." };
@@ -236,7 +237,11 @@ export class PublicComparisonService {
     );
     try {
       published = (await this.store.listPublished(query.country)).filter((record) => !isTemporaryDemoCasinoId(record.casinoId));
-      context = await this.store.loadContext(published.map((record) => record.casinoId), { includeAliases: false, includeCommercial: commercialProjection });
+      context = await this.store.loadContext(published.map((record) => record.casinoId), {
+        includeAliases: false,
+        includeCommercial: commercialProjection,
+        ...(commercialProjection ? { countryCode: query.country } : {}),
+      });
     } catch {
       return { status: "projection-unavailable", query, selectedSlugs: query.casinos, candidates: [], casinos: [], reasons: query.casinos.map((slug) => ({ slug, code: "PROJECTION_UNAVAILABLE", message: "The governed comparison projection is temporarily unavailable." })), groups: [], hiddenEqualRows: 0, defaulted: false, inventoryMode: "UNAVAILABLE" };
     }
