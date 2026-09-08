@@ -97,12 +97,16 @@ test("Founder-supplied release logos are checksum-verified and bound into runtim
   }
 
   const mediaSource = read("scripts/casino-real-catalog-03-media.ts");
+  const placementMigration = read("prisma/migrations/0027_placement_media_assignments/migration.sql");
   assert.match(mediaSource, /EXPECTED_IMPORTED_SLUGS = \["betsafe", "inkabet", "nordicbet", "rizk"\]/);
+  assert.match(mediaSource, /const ASSIGNMENT_SORT_ORDER = 0;/);
+  assert.match(placementMigration, /CasinoMediaAssignment_sortOrder_check" CHECK \("sortOrder" >= 0\)/);
   assert.match(mediaSource, /digest !== logo\.sha256/);
   assert.match(mediaSource, /tx\.mediaAsset\.upsert/);
   assert.match(mediaSource, /tx\.casinoMediaAssignment\.upsert/);
   assert.match(mediaSource, /placement: "CASINO_LOGO"/);
   assert.match(mediaSource, /renderingMode: "CONTAIN"/);
+  assert.match(mediaSource, /sortOrder: ASSIGNMENT_SORT_ORDER/);
   assert.match(mediaSource, /non-imported StarCasino\/SuperCasino logo must not be fabricated/);
 
   const vercel = JSON.parse(read("vercel.json")) as { buildCommand: string };
