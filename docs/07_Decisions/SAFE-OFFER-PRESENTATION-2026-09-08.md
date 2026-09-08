@@ -122,6 +122,27 @@ executes the real repository path, including a rejected non-UUID input. This is
 a query-typing correction only; it does not broaden the whitelist or change the
 selection, commercial, media, or market-isolation rules above.
 
+**DETECTED:** the follow-up production DTO audit found that top-level licence
+rows and market-linked root domains remained present after the requested
+country's profile array was removed. The immutable snapshot contains each
+licence both at casino level and through its `CasinoCountryLicense`
+relationship. Some root domains also normalize to a market profile's
+`localDomain`. Projecting only `countries` therefore left those duplicated
+market facts visible. No foreign operator, currency, payment, provider,
+category, bonus, market profile, action, or offer media was present in the
+audited Kazakhstan DTOs.
+
+The repository projection now classifies top-level licences and domains before
+removing foreign profiles. It retains only a licence that is unscoped or linked
+to the exact trusted market; an unqualified or unmatched request receives
+unscoped licences only. A root domain that normalizes to any `localDomain` is
+removed from the global projection and restored only through an exact profile.
+The mapper independently applies both rules before resolving the exact profile.
+Synthetic and disposable-PostgreSQL regressions cover both boundaries,
+including `PE`, `SE`, unmatched `KZ`, and unqualified projections. This closes
+a pre-existing projection defect without changing factual data, schema, or the
+offer whitelist.
+
 ## UI reference lock and decision ledger
 
 **DETECTED:** the accepted Casino directory, casino profile, Bonuses, and Best

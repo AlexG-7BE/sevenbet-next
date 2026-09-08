@@ -16,22 +16,95 @@ export interface PublicCasinoStore {
 
 function projectedPublishedSnapshot(countryCode?: string | null) {
   const market = countryCode?.trim().toUpperCase();
-  if (!market || !/^[A-Z]{2}$/.test(market)) {
-    return Prisma.sql`jsonb_set(cv.snapshot::jsonb, '{countries}', '[]'::jsonb, true)`;
-  }
-  return Prisma.sql`jsonb_set(
-    cv.snapshot::jsonb,
-    '{countries}',
+  const validMarket = Boolean(market && /^[A-Z]{2}$/.test(market));
+  const sourceCountries = Prisma.sql`
+    CASE
+      WHEN jsonb_typeof(cv.snapshot::jsonb -> 'countries') = 'array' THEN cv.snapshot::jsonb -> 'countries'
+      ELSE '[]'::jsonb
+    END
+  `;
+  const sourceLicenses = Prisma.sql`
+    CASE
+      WHEN jsonb_typeof(cv.snapshot::jsonb -> 'licenses') = 'array' THEN cv.snapshot::jsonb -> 'licenses'
+      ELSE '[]'::jsonb
+    END
+  `;
+  const projectedCountries = validMarket ? Prisma.sql`
     COALESCE((
-      SELECT jsonb_agg(profile)
-      FROM jsonb_array_elements(
+      SELECT jsonb_agg(profile.entry ORDER BY profile.position)
+      FROM jsonb_array_elements(${sourceCountries}) WITH ORDINALITY AS profile(entry, position)
+      WHERE upper(profile.entry ->> 'countryCode') = ${market!}
+    ), '[]'::jsonb)
+  ` : Prisma.sql`'[]'::jsonb`;
+  const exactMarketLicense = validMarket ? Prisma.sql`
+    OR EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements(${sourceCountries}) AS profile(entry)
+      CROSS JOIN LATERAL jsonb_array_elements(
         CASE
-          WHEN jsonb_typeof(cv.snapshot::jsonb -> 'countries') = 'array' THEN cv.snapshot::jsonb -> 'countries'
+          WHEN jsonb_typeof(profile.entry -> 'licenses') = 'array' THEN profile.entry -> 'licenses'
           ELSE '[]'::jsonb
         END
-      ) AS profile
-      WHERE upper(profile ->> 'countryCode') = ${market}
-    ), '[]'::jsonb),
+      ) AS scoped_license(entry)
+      WHERE upper(profile.entry ->> 'countryCode') = ${market!}
+        AND COALESCE(
+          NULLIF(scoped_license.entry ->> 'casinoLicenseId', ''),
+          NULLIF(scoped_license.entry -> 'license' ->> 'id', ''),
+          NULLIF(scoped_license.entry ->> 'id', '')
+        ) = top_license.entry ->> 'id'
+    )
+  ` : Prisma.sql``;
+  const projectedLicenses = Prisma.sql`
+    COALESCE((
+      SELECT jsonb_agg(top_license.entry ORDER BY top_license.position)
+      FROM jsonb_array_elements(${sourceLicenses}) WITH ORDINALITY AS top_license(entry, position)
+      WHERE NULLIF(top_license.entry ->> 'id', '') IS NOT NULL
+        AND (
+          NOT EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(${sourceCountries}) AS profile(entry)
+            CROSS JOIN LATERAL jsonb_array_elements(
+              CASE
+                WHEN jsonb_typeof(profile.entry -> 'licenses') = 'array' THEN profile.entry -> 'licenses'
+                ELSE '[]'::jsonb
+              END
+            ) AS scoped_license(entry)
+            WHERE COALESCE(
+              NULLIF(scoped_license.entry ->> 'casinoLicenseId', ''),
+              NULLIF(scoped_license.entry -> 'license' ->> 'id', ''),
+              NULLIF(scoped_license.entry ->> 'id', '')
+            ) = top_license.entry ->> 'id'
+          )
+          ${exactMarketLicense}
+        )
+    ), '[]'::jsonb)
+  `;
+  const marketLinkedDomain = Prisma.sql`
+    NULLIF(BTRIM(cv.snapshot::jsonb ->> 'domain'), '') IS NOT NULL
+    AND EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements(${sourceCountries}) AS profile(entry)
+      WHERE NULLIF(BTRIM(profile.entry ->> 'localDomain'), '') IS NOT NULL
+        AND REGEXP_REPLACE(
+          SPLIT_PART(LOWER(BTRIM(profile.entry ->> 'localDomain')), '/', 1),
+          '^www[.]',
+          ''
+        ) = REGEXP_REPLACE(
+          SPLIT_PART(LOWER(BTRIM(cv.snapshot::jsonb ->> 'domain')), '/', 1),
+          '^www[.]',
+          ''
+        )
+    )
+  `;
+  return Prisma.sql`jsonb_set(
+    jsonb_set(
+      jsonb_set(cv.snapshot::jsonb, '{countries}', ${projectedCountries}, true),
+      '{licenses}',
+      ${projectedLicenses},
+      true
+    ),
+    '{__sevenbetMarketProjection}',
+    jsonb_build_object('marketLinkedDomain', ${marketLinkedDomain}),
     true
   )`;
 }

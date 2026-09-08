@@ -180,11 +180,18 @@ test("Founder disposition matrix A-G is deterministic and cross-market safe", as
   const casinoC = record("de-matrix-c", "matrix-c", "Matrix C", { countries: [deCountry("matrix-c", "AVAILABLE", {
     evidence: [{ classification: "CONTRADICTION", sourceType: "REGULATOR", sourceUrl: "https://regulator.invalid/matrix-c", fieldKeys: ["availability"] }],
   })] });
-  const casinoD = record("matrix-d", "matrix-d", "Matrix D", { countries: [{
-    id: "matrix-d-pe", countryCode: "PE", availability: "AVAILABLE",
-    paymentMethods: [{ id: "matrix-d-yape", methodKey: "yape", name: "Yape", crypto: false }],
-    licenses: [{ license: { id: "matrix-d-pe-license", authority: "PE-only authority", status: "ACTIVE" } }],
-  }] });
+  const casinoD = record("matrix-d", "matrix-d", "Matrix D", {
+    domain: "pe.matrix-d.example",
+    licenses: [
+      { id: "matrix-d-global-license", authority: "MGA", status: "ACTIVE" },
+      { id: "matrix-d-pe-license", authority: "PE-only authority", status: "ACTIVE" },
+    ],
+    countries: [{
+      id: "matrix-d-pe", countryCode: "PE", availability: "AVAILABLE", localDomain: "www.pe.matrix-d.example/welcome",
+      paymentMethods: [{ id: "matrix-d-yape", methodKey: "yape", name: "Yape", crypto: false }],
+      licenses: [{ license: { id: "matrix-d-pe-license", authority: "PE-only authority", status: "ACTIVE" } }],
+    }],
+  });
   const casinoF = record("de-matrix-f", "matrix-f", "Matrix F", { countries: [deCountry("matrix-f", "UNKNOWN")] });
   const demoG = record(temporaryDemoCasinoIds[0], "matrix-g-demo", "Matrix G Demo");
   const draftG = record("matrix-g-draft", "matrix-g-draft", "Matrix G Draft", { status: "DRAFT" });
@@ -192,10 +199,11 @@ test("Founder disposition matrix A-G is deterministic and cross-market safe", as
 
   const offerA = activeOffer(casinoA.casinoId);
   const deAuthority = { ...allowJurisdictionAuthority, countryCode: "DE" };
-  const deResult = await new PublicCasinoDiscoveryService(store(
+  const deService = new PublicCasinoDiscoveryService(store(
     [casinoA, casinoB, casinoC, casinoD, casinoF, demoG, draftG],
     { offers: [offerA], redirects: [{ casinoId: casinoA.casinoId, casinoBonusId: null, affiliateOfferId: offerA.id, slug: "matrix-a-de" }] },
-  ), () => now, allowOperatorAuthority, () => true).discover({}, deAuthority, { defaultEditorialCountry: "DE" });
+  ), () => now, allowOperatorAuthority, () => true);
+  const deResult = await deService.discover({}, deAuthority, { defaultEditorialCountry: "DE" });
 
   const bySlug = new Map(deResult.items.map((item) => [item.slug, item]));
   assert.deepEqual([bySlug.get("matrix-a")?.disposition, bySlug.get("matrix-a")?.visitAction.available], ["PROMOTABLE", true], "A");
@@ -204,7 +212,8 @@ test("Founder disposition matrix A-G is deterministic and cross-market safe", as
   assert.deepEqual([bySlug.get("matrix-c")?.disposition, bySlug.get("matrix-c")?.visitAction.available], ["INFORMATIONAL_ONLY", false], "C");
   assert.equal(bySlug.get("matrix-d")?.disposition, "INFORMATIONAL_ONLY", "D");
   assert.deepEqual(bySlug.get("matrix-d")?.paymentMethods.map((entry) => entry.label), ["Bitcoin"], "D preserves global payments without borrowing PE-only payments");
-  assert.deepEqual(bySlug.get("matrix-d")?.licenses.map((entry) => entry.label), ["MGA"], "D preserves global licences without borrowing PE-only licences");
+  assert.deepEqual(bySlug.get("matrix-d")?.licenses.map((entry) => entry.label), ["MGA"], "D removes a market-linked top-level licence while preserving an unscoped global licence");
+  assert.equal((await deService.discover({ search: "pe.matrix-d.example" }, deAuthority, { defaultEditorialCountry: "DE" })).total, 0, "D removes a market-linked top-level domain");
   assert.equal(bySlug.get("matrix-f")?.dispositionReason, "EXACT_MARKET_STATUS_UNKNOWN_INFORMATION_ONLY", "F");
   assert.doesNotMatch(JSON.stringify(bySlug.get("matrix-f")), /not available/i, "F must preserve UNKNOWN");
   assert.equal(bySlug.has("matrix-g-demo"), false, "G demo");
@@ -551,8 +560,12 @@ test("discovery architecture is provider-independent and catalog is canonical", 
   }
   assert.doesNotMatch(repository, /externalMapping|providerType/);
   assert.match(publicationRepository, /jsonb_array_elements/);
-  assert.match(publicationRepository, /upper\(profile ->> 'countryCode'\) = \$\{market\}/);
-  assert.match(publicationRepository, /jsonb_set\(cv\.snapshot::jsonb, '\{countries\}', '\[\]'::jsonb/);
+  assert.match(publicationRepository, /upper\(profile\.entry ->> 'countryCode'\) = \$\{market!\}/);
+  assert.match(publicationRepository, /jsonb_set\(cv\.snapshot::jsonb, '\{countries\}', \$\{projectedCountries\}/);
+  assert.match(publicationRepository, /'\{licenses\}',\s+\$\{projectedLicenses\}/);
+  assert.match(publicationRepository, /scoped_license\.entry ->> 'casinoLicenseId'/);
+  assert.match(publicationRepository, /__sevenbetMarketProjection/);
+  assert.match(publicationRepository, /jsonb_build_object\('marketLinkedDomain', \$\{marketLinkedDomain\}\)/);
   const commercialEligibility = readFileSync("lib/public-casino-discovery/commercial-eligibility.ts", "utf8");
   assert.match(repository, /trackingUrl: true/);
   assert.match(commercialEligibility, /safeHttps\(link\.trackingUrl\)/);
