@@ -372,7 +372,9 @@ test("PostgreSQL enforces Option C typed ownership, checks, safe delete and non-
       subjectType: "CASINO",
       subjectId: IDS.casino,
     });
-    assert.equal(casinoPlacements.resolved.CASINO_DIRECTORY_CARD.source, "LEGACY_HERO");
+    assert.equal(casinoPlacements.resolved.CASINO_DIRECTORY_CARD.source, "PLACEMENT_FALLBACK");
+    assert.equal(casinoPlacements.resolved.CASINO_DIRECTORY_CARD.resolvedPlacement, "CASINO_DETAIL_HERO");
+    assert.equal(casinoPlacements.resolved.CASINO_DIRECTORY_CARD.asset?.id, IDS.detailB);
     assert.equal(casinoPlacements.resolved.CASINO_DETAIL_HERO.asset?.id, IDS.detailB);
     assert.equal(await prisma.mediaAsset.count({ where: { id: { in: [IDS.detailB, IDS.directoryC] } } }), 2);
 
