@@ -4,6 +4,7 @@ import test from "node:test";
 
 import { checkAffiliateRouteHttp } from "../lib/affiliate-health/checker";
 import { isPublicAddress } from "../lib/affiliate-health/public-network-url";
+import type { PartnerRouteProjection } from "../lib/affiliate-routing/partner-route-projection";
 import { AffiliateRouteHealthService } from "../lib/services/affiliate-route-health.service";
 
 const noNetworkValidation = async () => undefined;
@@ -253,6 +254,62 @@ test("an empty active-route set is a valid healthy report", async () => {
   assert.equal(report.healthy, true);
   assert.equal(report.noActiveRoutes, true);
   assert.equal(report.summary.routes, 0);
+});
+
+test("route-health service permits only canonical www host equivalence", async () => {
+  let observedAllowWww: boolean | undefined;
+  const route = {
+    countryCode: "ZZ",
+    productionEligible: true,
+    reasonCodes: [],
+    redirect: { id: "redirect" },
+    offer: { id: "offer" },
+    tracking: {
+      id: "tracking",
+      destinationUrl: "https://casino.example/",
+      trackingUrl: "https://track.example/click",
+      metadata: {
+        commercialActivationV1: {
+          records: {
+            ZZ: {
+              routeHealth: {
+                expectedFinalHost: "casino.example",
+                expectedPathPrefix: null,
+                requiredAttributionParameters: [],
+              },
+            },
+          },
+        },
+      },
+    },
+  } as unknown as PartnerRouteProjection;
+  const service = new AffiliateRouteHealthService(
+    { listClaims: async () => [{
+      casinoId: "casino",
+      casinoSlug: "casino",
+      countryCode: "ZZ",
+      offerId: "offer",
+      trackingLinkId: "tracking",
+      redirectId: "redirect",
+      redirectSlug: "casino-welcome",
+    }] },
+    { resolve: async () => [route] },
+    (async (input) => {
+      observedAllowWww = input.expectation.allowWwwEquivalentFinalHost;
+      return {
+        status: "HEALTHY",
+        reason: "HEAD_OK",
+        method: "HEAD",
+        statusCode: 200,
+        durationMs: 1,
+        redirectCount: 1,
+        finalHost: "www.casino.example",
+      };
+    }) as typeof checkAffiliateRouteHttp,
+  );
+  const report = await service.run({ now: new Date("2026-09-08T12:00:00.000Z") });
+  assert.equal(observedAllowWww, true);
+  assert.equal(report.healthy, true);
 });
 
 test("claim selection is active-only and automation alerts through one deduplicated issue", () => {
