@@ -202,7 +202,7 @@ async function syncEditorial(entry: CatalogEntry, casinoId: string, actorId: str
 }
 
 async function syncCasino(entry: CatalogEntry, actorId: string) {
-  let aggregate = await prisma.casino.findUnique({ where: { slug: entry.slug } });
+  const aggregate = await prisma.casino.findUnique({ where: { slug: entry.slug } });
   if (!aggregate) throw new Error(`${RELEASE}: factual importer did not create ${entry.slug}`);
   if (aggregate.slug.startsWith("demo-") || aggregate.domain.includes("example")) throw new Error(`${RELEASE}: synthetic identity detected for ${entry.slug}`);
 
