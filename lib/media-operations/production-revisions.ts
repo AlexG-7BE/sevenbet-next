@@ -83,6 +83,50 @@ function usableFor(placement: PreparedSource["placement"], width: number, height
   return width >= spec.minimum.width && height >= spec.minimum.height;
 }
 
+function normalizedBrand(value: string | null | undefined) {
+  return value?.toLowerCase().replace(/[^a-z0-9]+/g, "") ?? "";
+}
+
+function semanticBrandConflict(plan: MediaIngestionPlan, semantic: MediaIngestionPlan["semanticResults"][number]) {
+  const detected = normalizedBrand(semantic.brandName);
+  const resolved = normalizedBrand(plan.resolvedContext.casinoTitle);
+  return detected.length >= 4 && resolved.length >= 4 && !detected.includes(resolved) && !resolved.includes(detected);
+}
+
+function presentationalComplianceConcern(value: string) {
+  const normalized = value.toLowerCase();
+  const governedCopy = /(fine print|terms|eligibility|wager|responsible[- ]gambling|responsible gambling|age|18\+)/.test(normalized);
+  const readability = /(small|read|readable|legib|readily|limited|tiny)/.test(normalized);
+  return governedCopy && readability;
+}
+
+function hasBlockingProductionComplianceConcern(semantic: MediaIngestionPlan["semanticResults"][number]) {
+  if (!semantic.complianceConcerns.length) return false;
+  if (!semantic.containsFinePrint || semantic.textReadability === "UNREADABLE") return true;
+  return semantic.complianceConcerns.some((concern) => !presentationalComplianceConcern(concern));
+}
+
+function routeVerifiedStaticOverride(
+  plan: MediaIngestionPlan,
+  recommendation: MediaIngestionPlan["recommendations"][number],
+  creativeId: string,
+  mediaAssetId: string | null,
+  hostedCreativeId: string | null,
+  affiliateOfferId: string,
+) {
+  if (!mediaAssetId || hostedCreativeId || recommendation.sourceMode !== "FIRST_PARTY_MEDIA") return false;
+  if (plan.resolvedContext.state !== "RESOLVED" || plan.resolvedContext.source !== "EXPLICIT") return false;
+  if (plan.requestedContext.affiliateOfferId !== affiliateOfferId || plan.resolvedContext.affiliateOfferId !== affiliateOfferId) return false;
+  if (plan.resolvedContext.trackingDestinationState !== "MATCH" || recommendation.offerMatch === "MISMATCH") return false;
+  const semantic = plan.semanticResults.find((result) => result.creativeId === creativeId);
+  return Boolean(semantic
+    && semantic.state === "COMPLETED"
+    && semantic.assetPurpose === "PROMO"
+    && semantic.confidence >= SEMANTIC_CONFIDENCE
+    && !semanticBrandConflict(plan, semantic)
+    && !hasBlockingProductionComplianceConcern(semantic));
+}
+
 function productionRecommendations(
   plan: MediaIngestionPlan,
   creativeId: string,
@@ -90,15 +134,26 @@ function productionRecommendations(
   hostedCreativeId: string | null,
   affiliateOfferId: string,
 ) {
-  return plan.recommendations.filter((recommendation) => recommendation.creativeId === creativeId
-    && recommendation.subjectType === "AFFILIATE_OFFER"
-    && recommendation.subjectId === affiliateOfferId
-    && recommendation.offerMatch === "MATCH"
-    && ["GLOBAL_SAFE", "TARGETED"].includes(recommendation.marketHandling)
-    && recommendation.state === "AUTO_ASSIGN_DRAFT"
-    && recommendation.applyEligibility !== "BLOCKED"
-    && recommendation.assetId === mediaAssetId
-    && (recommendation.hostedCreativeId ?? null) === hostedCreativeId);
+  return plan.recommendations.filter((recommendation) => {
+    const exactSubject = recommendation.creativeId === creativeId
+      && recommendation.subjectType === "AFFILIATE_OFFER"
+      && recommendation.subjectId === affiliateOfferId
+      && ["GLOBAL_SAFE", "TARGETED"].includes(recommendation.marketHandling)
+      && recommendation.assetId === mediaAssetId
+      && (recommendation.hostedCreativeId ?? null) === hostedCreativeId;
+    if (!exactSubject) return false;
+    const exactAutomatic = recommendation.offerMatch === "MATCH"
+      && recommendation.state === "AUTO_ASSIGN_DRAFT"
+      && recommendation.applyEligibility !== "BLOCKED";
+    return exactAutomatic || routeVerifiedStaticOverride(
+      plan,
+      recommendation,
+      creativeId,
+      mediaAssetId,
+      hostedCreativeId,
+      affiliateOfferId,
+    );
+  });
 }
 
 function uniqueScopes(recommendations: MediaIngestionPlan["recommendations"]) {
@@ -155,7 +210,7 @@ export function prepareProductionSources(
         continue;
       }
       if (!hosted && (!semantic || semantic.state !== "COMPLETED" || semantic.assetPurpose !== "PROMO"
-        || semantic.confidence < SEMANTIC_CONFIDENCE || semantic.complianceConcerns.length)) {
+        || semantic.confidence < SEMANTIC_CONFIDENCE || hasBlockingProductionComplianceConcern(semantic))) {
         blockers.push(`FIRST_PARTY_PROMOTION_NOT_EXACTLY_VERIFIED:${plan.id}:${asset.creativeId}`);
         continue;
       }
