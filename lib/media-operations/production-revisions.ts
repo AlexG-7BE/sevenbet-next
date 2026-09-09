@@ -24,7 +24,7 @@ type PreparedSource = {
   languageCode: string | null;
   languageState: "EXPLICIT" | "NEUTRAL" | "UNKNOWN";
   variant: "DEFAULT" | "DESKTOP" | "MOBILE";
-  placement: "CASINO_REVIEW_RIGHT_HERO" | "CASINO_DIRECTORY_CARD";
+  placement: MediaOrchestrateProductionInput["placements"][number];
   priority: number;
   altText: string | null;
 };
@@ -100,17 +100,25 @@ function productionRecommendations(
   creativeId: string,
   mediaAssetId: string | null,
   hostedCreativeId: string | null,
+  provider: "SUPERFLY" | "BANNERFLOW" | null | undefined,
   affiliateOfferId: string,
+  placement: PreparedSource["placement"],
 ) {
   return plan.recommendations.filter((recommendation) => {
     const exactSubject = recommendation.creativeId === creativeId
       && recommendation.subjectType === "AFFILIATE_OFFER"
       && recommendation.subjectId === affiliateOfferId
+      && recommendation.placement === placement
       && ["GLOBAL_SAFE", "TARGETED"].includes(recommendation.marketHandling)
       && recommendation.assetId === mediaAssetId
       && (recommendation.hostedCreativeId ?? null) === hostedCreativeId;
     if (!exactSubject) return false;
-    const exactAutomatic = recommendation.offerMatch === "MATCH"
+    const vettedSuperflyHosted = Boolean(hostedCreativeId)
+      && provider === "SUPERFLY"
+      && ["PARTNER_HOSTED_IMAGE", "PARTNER_HOSTED_EMBED"].includes(recommendation.sourceMode ?? "")
+      && plan.resolvedContext.trackingDestinationState === "MATCH"
+      && recommendation.offerMatch !== "MISMATCH";
+    const exactAutomatic = (recommendation.offerMatch === "MATCH" || vettedSuperflyHosted)
       && recommendation.state === "AUTO_ASSIGN_DRAFT"
       && recommendation.applyEligibility !== "BLOCKED";
     return exactAutomatic || routeVerifiedStaticOverride(
@@ -163,25 +171,27 @@ export function prepareProductionSources(
         blockers.push(`SOURCE_RELATION_INVALID:${plan.id}:${asset.creativeId}`);
         continue;
       }
-      const matching = productionRecommendations(
-        plan,
-        asset.creativeId,
-        asset.assetId,
-        asset.hostedCreativeId ?? null,
-        input.affiliateOfferId,
-      );
-      if (!matching.length) {
-        blockers.push(`EXACT_PRODUCTION_RECOMMENDATION_REQUIRED:${plan.id}:${asset.creativeId}`);
-        continue;
-      }
-      const scopes = uniqueScopes(matching);
-      for (const scope of scopes) {
-        if (scope.languageState === "UNKNOWN") {
-          blockers.push(`UNKNOWN_PROMOTIONAL_LANGUAGE:${plan.id}:${asset.creativeId}`);
+      const variant = deviceFor(asset.width, asset.height);
+      for (const placement of input.placements) {
+        const matching = productionRecommendations(
+          plan,
+          asset.creativeId,
+          asset.assetId,
+          asset.hostedCreativeId ?? null,
+          asset.provider,
+          input.affiliateOfferId,
+          placement,
+        );
+        if (!matching.length) {
+          blockers.push(`EXACT_PRODUCTION_RECOMMENDATION_REQUIRED:${plan.id}:${asset.creativeId}:${placement}`);
           continue;
         }
-        const variant = deviceFor(asset.width, asset.height);
-        for (const placement of input.placements) {
+        const scopes = uniqueScopes(matching);
+        for (const scope of scopes) {
+          if (scope.languageState === "UNKNOWN") {
+            blockers.push(`UNKNOWN_PROMOTIONAL_LANGUAGE:${plan.id}:${asset.creativeId}:${placement}`);
+            continue;
+          }
           if (!usableFor(placement, asset.width, asset.height)) {
             blockers.push(`FORMAT_NOT_USABLE:${plan.id}:${asset.creativeId}:${placement}`);
             continue;
