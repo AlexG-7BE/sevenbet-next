@@ -10,7 +10,6 @@ import { mediaIngestionRepository } from "@/lib/media-operations/repository";
 import type { MediaOperationsActor } from "@/lib/media-operations/service";
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/services/service-error";
 
-const SEMANTIC_CONFIDENCE = 0.85;
 const MAX_SERIALIZABLE_ATTEMPTS = 3;
 
 type PreparedSource = {
@@ -83,33 +82,9 @@ function usableFor(placement: PreparedSource["placement"], width: number, height
   return width >= spec.minimum.width && height >= spec.minimum.height;
 }
 
-function normalizedBrand(value: string | null | undefined) {
-  return value?.toLowerCase().replace(/[^a-z0-9]+/g, "") ?? "";
-}
-
-function semanticBrandConflict(plan: MediaIngestionPlan, semantic: MediaIngestionPlan["semanticResults"][number]) {
-  const detected = normalizedBrand(semantic.brandName);
-  const resolved = normalizedBrand(plan.resolvedContext.casinoTitle);
-  return detected.length >= 4 && resolved.length >= 4 && !detected.includes(resolved) && !resolved.includes(detected);
-}
-
-function presentationalComplianceConcern(value: string) {
-  const normalized = value.toLowerCase();
-  const governedCopy = /(fine print|terms|eligibility|wager|responsible[- ]gambling|responsible gambling|age|18\+)/.test(normalized);
-  const readability = /(small|read|readable|legib|readily|limited|tiny)/.test(normalized);
-  return governedCopy && readability;
-}
-
-function hasBlockingProductionComplianceConcern(semantic: MediaIngestionPlan["semanticResults"][number]) {
-  if (!semantic.complianceConcerns.length) return false;
-  if (!semantic.containsFinePrint || semantic.textReadability === "UNREADABLE") return true;
-  return semantic.complianceConcerns.some((concern) => !presentationalComplianceConcern(concern));
-}
-
 function routeVerifiedStaticOverride(
   plan: MediaIngestionPlan,
   recommendation: MediaIngestionPlan["recommendations"][number],
-  creativeId: string,
   mediaAssetId: string | null,
   hostedCreativeId: string | null,
   affiliateOfferId: string,
@@ -117,14 +92,7 @@ function routeVerifiedStaticOverride(
   if (!mediaAssetId || hostedCreativeId || recommendation.sourceMode !== "FIRST_PARTY_MEDIA") return false;
   if (plan.resolvedContext.state !== "RESOLVED" || plan.resolvedContext.source !== "EXPLICIT") return false;
   if (plan.requestedContext.affiliateOfferId !== affiliateOfferId || plan.resolvedContext.affiliateOfferId !== affiliateOfferId) return false;
-  if (plan.resolvedContext.trackingDestinationState !== "MATCH" || recommendation.offerMatch === "MISMATCH") return false;
-  const semantic = plan.semanticResults.find((result) => result.creativeId === creativeId);
-  return Boolean(semantic
-    && semantic.state === "COMPLETED"
-    && semantic.assetPurpose === "PROMO"
-    && semantic.confidence >= SEMANTIC_CONFIDENCE
-    && !semanticBrandConflict(plan, semantic)
-    && !hasBlockingProductionComplianceConcern(semantic));
+  return plan.resolvedContext.trackingDestinationState === "MATCH" && recommendation.offerMatch !== "MISMATCH";
 }
 
 function productionRecommendations(
@@ -148,7 +116,6 @@ function productionRecommendations(
     return exactAutomatic || routeVerifiedStaticOverride(
       plan,
       recommendation,
-      creativeId,
       mediaAssetId,
       hostedCreativeId,
       affiliateOfferId,
@@ -196,8 +163,6 @@ export function prepareProductionSources(
         blockers.push(`SOURCE_RELATION_INVALID:${plan.id}:${asset.creativeId}`);
         continue;
       }
-      const hosted = !firstParty;
-      const semantic = plan.semanticResults.find((result) => result.creativeId === asset.creativeId);
       const matching = productionRecommendations(
         plan,
         asset.creativeId,
@@ -207,11 +172,6 @@ export function prepareProductionSources(
       );
       if (!matching.length) {
         blockers.push(`EXACT_PRODUCTION_RECOMMENDATION_REQUIRED:${plan.id}:${asset.creativeId}`);
-        continue;
-      }
-      if (!hosted && (!semantic || semantic.state !== "COMPLETED" || semantic.assetPurpose !== "PROMO"
-        || semantic.confidence < SEMANTIC_CONFIDENCE || hasBlockingProductionComplianceConcern(semantic))) {
-        blockers.push(`FIRST_PARTY_PROMOTION_NOT_EXACTLY_VERIFIED:${plan.id}:${asset.creativeId}`);
         continue;
       }
       const scopes = uniqueScopes(matching);
