@@ -24,6 +24,14 @@ export const mediaDimensionProvenances = [
 
 export const mediaValidityStates = ["VALID", "REVIEW_REQUIRED", "INVALID"] as const;
 export const commercialRouteValidityStates = ["MATCH", "REVIEW_REQUIRED", "MISSING", "CONFLICT", "NOT_APPLICABLE"] as const;
+export const mediaProductionPlacements = [
+  "CASINO_REVIEW_RIGHT_HERO",
+  "CASINO_DIRECTORY_CARD",
+  "BONUS_LISTING_CARD",
+  "BEST_OFFER_FEATURED",
+  "BEST_OFFER_SECONDARY",
+  "CASINO_OFFER_BLOCK",
+] as const;
 
 export const mediaIngestionContextSchema = z.object({
   casinoId: z.string().uuid().optional(),
@@ -126,7 +134,7 @@ export const mediaOrchestrateProductionInputSchema = z.object({
   externalCampaignId: z.string().trim().min(1).max(240).optional(),
   idempotencyKey: z.string().trim().min(12).max(240),
   targets: z.array(mediaProductionTargetSchema).min(1).max(60),
-  placements: z.array(z.enum(["CASINO_REVIEW_RIGHT_HERO", "CASINO_DIRECTORY_CARD"])).min(1).max(2)
+  placements: z.array(z.enum(mediaProductionPlacements)).min(1).max(mediaProductionPlacements.length)
     .default(["CASINO_REVIEW_RIGHT_HERO", "CASINO_DIRECTORY_CARD"]),
   useSemanticAnalysis: z.boolean().default(true),
   activate: z.boolean().default(true),
