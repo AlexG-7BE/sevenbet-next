@@ -338,9 +338,9 @@ test("15. complete detail data uses global evidence instead of false Not listed 
   assert.ok(mapped.languages.length && mapped.currencies.length && mapped.supportsMobile && mapped.bonuses.length);
   assert.ok(mapped.bonuses[0]?.importantConditions.includes("Bonus expires after 30 days; spins expire after 10 days."));
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
-  assert.match(profile, /messages\.profile\.marketUnavailable/);
-  assert.match(profile, /messages\.profile\.marketUnavailableCopy/);
-  assert.match(profile, /bonus\.importantConditions\.map/);
+  assert.match(profile, /commercialLabels\.noCurrentOffer/);
+  assert.match(profile, /casino\.offerPresentation\?\.relation === "EXACT" \|\| casino\.offerPresentation\?\.relation === "ROW"/);
+  assert.match(profile, /bonus\.importantConditions\.slice\(0, 2\)\.map/);
 });
 
 test("16. governed public records expose only internal redirects, never raw tracking destinations", async () => {

@@ -86,9 +86,10 @@ test("real dynamic release surfaces keep runtime renderers and fail-closed demo 
   assert.match(bestOffersPage, /data-runtime-renderer="best-offers"/);
   assert.match(casinos, /data-runtime-renderer="casinos"/);
   assert.match(programme, /data-public-programme-renderer="program-ai"/);
-  assert.match(bestOffers, /if \(offer\.dataClassification === "DEMO_FIXTURE"\) return null/);
-  assert.match(bestOffers, /messages\.common\.reviewAvailableNoAction/);
-  assert.equal(productMessages.common.reviewAvailableNoAction, "The review remains available, but there is no partner link.");
+  assert.match(bestOffers, /return offer\.dataClassification === "DEMO_FIXTURE" \? <p className=\{styles\.dataNotice\}>/);
+  assert.match(bestOffers, /hasGovernedCommercialOfferAction\(offer\)/);
+  assert.match(bestOffers, /messages\.common\.reviewOnly/);
+  assert.equal(productMessages.common.reviewOnly, "Review only");
   assert.doesNotMatch(bestOffersPage + bestOffers + casinos + programme, /<HandoffPage/);
 });
 
