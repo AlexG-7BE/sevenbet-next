@@ -78,6 +78,15 @@ async function stageMigrations(migrationEntries) {
   return stagedSchemaDirectory;
 }
 
+async function deployMigrationPrefix(migrationEntries, inclusiveIndex, environment) {
+  const staged = await stageMigrations(migrationEntries.slice(0, inclusiveIndex + 1));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(staged, "schema.prisma")], environment);
+  } finally {
+    await rm(staged, { recursive: true, force: true });
+  }
+}
+
 async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationIndex) {
   const migration0020Index = migrationEntries.indexOf("0020_commercial_ops_01");
   const migration0021Index = migrationEntries.indexOf("0021_partner_ops_work_bridge_01");
@@ -747,12 +756,12 @@ async function verifyGeoLocalizedCreativeUpgrade(migrationEntries) {
   };
   try {
     const before = await protectedCounts();
-    run("npx", ["prisma", "migrate", "deploy"], environment);
+    await deployMigrationPrefix(migrationEntries, migrationIndex, environment);
     const after = await protectedCounts();
     if (JSON.stringify(after) !== JSON.stringify(before)) {
       throw new Error("0028 changed protected entity or assignment counts");
     }
-    run("npx", ["prisma", "migrate", "deploy"], environment);
+    await deployMigrationPrefix(migrationEntries, migrationIndex, environment);
 
     const legacy = await prisma.$queryRawUnsafe(`
       SELECT "id", "countryCode", "languageCode"
@@ -813,11 +822,22 @@ async function verifyGeoLocalizedCreativeUpgrade(migrationEntries) {
       if (!rejected) throw new Error(`0028 accepted malformed target ${countryCode}/${languageCode}`);
     }
 
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+    const retiredTargets = await prisma.casinoMediaAssignment.count({
+      where: { id: { in: [
+        "28000000-0000-4000-8000-000000000011",
+        "28000000-0000-4000-8000-000000000012",
+        "28000000-0000-4000-8000-000000000013",
+      ] }, active: true },
+    });
+    if (retiredTargets !== 0) throw new Error("0034 did not retire staged 0028 assignment authority");
+
     console.info("Geo-localized creative staged migration smoke passed", {
       protectedCountsPreserved: true,
       existingAssignmentsGlobalNeutral: legacy.length,
       validTargetShapes: validTargets.length,
       malformedTargetsRejected: 4,
+      historicalAssignmentsRetiredBy0034: 3,
       replayIdempotent: true,
     });
   } finally {
@@ -880,12 +900,12 @@ async function verifyVettedPartnerHostedCreativeUpgrade(migrationEntries) {
   ])));
   try {
     const before = await protectedState();
-    run("npx", ["prisma", "migrate", "deploy"], environment);
+    await deployMigrationPrefix(migrationEntries, migrationIndex, environment);
     const after = await protectedState();
     if (JSON.stringify(after) !== JSON.stringify(before)) {
       throw new Error("0029 changed protected editorial, commercial routing, media, or assignment state");
     }
-    run("npx", ["prisma", "migrate", "deploy"], environment);
+    await deployMigrationPrefix(migrationEntries, migrationIndex, environment);
     const emptyHostedCounts = await Promise.all([
       prisma.partnerHostedCreative.count(),
       prisma.casinoPartnerHostedCreativeAssignment.count(),
@@ -952,11 +972,25 @@ async function verifyVettedPartnerHostedCreativeUpgrade(migrationEntries) {
     }
     if (!rejected) throw new Error("0029 accepted an invalid provider/source shape");
 
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+    const retiredHostedCreative = await prisma.partnerHostedCreative.findUnique({
+      where: { id: "29000000-0000-4000-8000-000000000001" },
+      select: { active: true, archivedAt: true },
+    });
+    const retiredHostedAssignment = await prisma.affiliateOfferPartnerHostedCreativeAssignment.findUnique({
+      where: { id: "29000000-0000-4000-8000-000000000002" },
+      select: { active: true },
+    });
+    if (retiredHostedCreative?.active !== false || !retiredHostedCreative.archivedAt || retiredHostedAssignment?.active !== false) {
+      throw new Error("0034 did not preserve and retire the staged 0029 hosted creative graph");
+    }
+
     console.info("Vetted partner-hosted creative staged migration smoke passed", {
       protectedStatePreserved: true,
       hostedRowsInvented: 0,
       validHostedGraph: true,
       invalidProviderShapeRejected: true,
+      historicalGraphRetiredBy0034: true,
       replayIdempotent: true,
     });
   } finally {

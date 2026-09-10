@@ -1,6 +1,6 @@
 # RFC-040 — Placement-Based Media Assignments
 
-**Lifecycle:** `ACTIVE`
+**Lifecycle:** `SUPERSEDED` by [RFC-044](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md). The schema and migration remain historical evidence; promotional assignment authority is retired.
 
 **Decision owner:** B4GAMBLE Founder
 

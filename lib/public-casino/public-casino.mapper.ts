@@ -1,33 +1,14 @@
 import type { Casino } from "@/lib/data";
-import {
-  casinoMediaPlacements,
-  isMediaPlacement,
-  isMediaPlacementVariant,
-  isMediaRenderingMode,
-  isPlacementMediaAssignmentsEnabled,
-  normalizeMediaCountryCode,
-  normalizeMediaLanguageCode,
-  offerSurfaceMediaPlacements,
-  type PlacementMediaAsset,
-  type PlacementMediaAssignment,
-  type PlacementMediaResolutionContext,
-  type ResolvedPlacementMedia,
-} from "@/lib/media/placement-media";
-import { resolveCasinoMedia, type CasinoMediaOfferAuthority } from "@/lib/media/casino-media-resolver";
 import type {
   PublicAffiliateRoute,
   PublicCasinoDTO,
   PublicCasinoLicense,
   PublicCasinoMarketProfile,
   PublicCasinoMedia,
-  PublicPlacementMedia,
-  PublicPlacementMediaResolution,
   PublicCasinoPayment,
   PublishedCasinoSnapshotRecord,
 } from "@/lib/public-casino/public-casino.types";
 import { isSafePublicSlug, safeCanonical, safePublicUrl, validatedStructuredData } from "@/lib/public-casino/public-casino-validation";
-import { isVettedPartnerHostedCreativesEnabled } from "@/lib/media-operations/partner-hosted";
-import { isPartnerHostedVisuallyPublishable } from "@/lib/media-operations/partner-hosted-publication";
 
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -108,7 +89,7 @@ function mediaFromSnapshot(snapshot: Record<string, unknown>) {
     const url = safePublicUrl(record.publicUrl ?? record.url, { allowInternal: true });
     const type = mediaType(text(record.type));
     const alt = text(record.altText ?? record.alt);
-    if (!url || (!alt && type !== "logo")) return [];
+    if (!url || type !== "logo") return [];
     return [{
       id: text(record.id, url),
       type,
@@ -125,372 +106,9 @@ function mediaFromSnapshot(snapshot: Record<string, unknown>) {
     const url = safePublicUrl(record.url, { allowInternal: true });
     const type = mediaType(text(record.kind));
     const alt = text(record.alt);
-    if (!url || (!alt && type !== "logo")) return [];
+    if (!url || type !== "logo") return [];
     return [{ id: text(record.id, url), type, url, alt, width: integer(record.width), height: integer(record.height), caption: null }];
   });
-}
-
-function placementAsset(value: unknown): PlacementMediaAsset | null {
-  const record = object(value);
-  const id = text(record.id);
-  const type = text(record.type);
-  const publicUrl = safePublicUrl(record.publicUrl ?? record.url, { allowInternal: true });
-  if (!id || !type || !publicUrl) return null;
-  return {
-    id,
-    type,
-    publicUrl,
-    originalFilename: nullableText(record.originalFilename),
-    mimeType: nullableText(record.mimeType),
-    width: integer(record.width),
-    height: integer(record.height),
-    altText: nullableText(record.altText ?? record.alt),
-    title: nullableText(record.title),
-    caption: nullableText(record.caption),
-    credit: nullableText(record.credit),
-    status: text(record.status),
-    archivedAt: date(record.archivedAt),
-    checksum: nullableText(record.checksum),
-    metadata: record.metadata,
-    sortOrder: integer(record.sortOrder),
-    createdAt: date(record.createdAt),
-  };
-}
-
-function placementAssignments(value: unknown): PlacementMediaAssignment[] {
-  return list(value).flatMap((entry) => {
-    const record = object(entry);
-    const id = text(record.id);
-    const mediaAssetId = text(record.mediaAssetId);
-    const placement = text(record.placement);
-    const variant = text(record.variant);
-    const renderingMode = text(record.renderingMode);
-    const suppliedCountry = record.countryCode !== undefined && record.countryCode !== null;
-    const suppliedLanguage = record.languageCode !== undefined && record.languageCode !== null;
-    const languageState = text(record.languageState, suppliedLanguage ? "EXPLICIT" : "NEUTRAL");
-    const countryCode = suppliedCountry && typeof record.countryCode === "string"
-      ? normalizeMediaCountryCode(record.countryCode)
-      : null;
-    const languageCode = suppliedLanguage && typeof record.languageCode === "string"
-      ? normalizeMediaLanguageCode(record.languageCode)
-      : null;
-    const asset = placementAsset(record.mediaAsset);
-    if (
-      !id || !mediaAssetId || !isMediaPlacement(placement) || !isMediaPlacementVariant(variant)
-      || !isMediaRenderingMode(renderingMode) || !asset
-      || (suppliedCountry && !countryCode) || (suppliedLanguage && !languageCode)
-      || !["EXPLICIT", "NEUTRAL", "UNKNOWN"].includes(languageState)
-      || (languageState === "EXPLICIT") !== Boolean(languageCode)
-    ) return [];
-    return [{
-      id,
-      mediaAssetId,
-      placement,
-      variant,
-      countryCode,
-      languageCode,
-      languageState: languageState as "EXPLICIT" | "NEUTRAL" | "UNKNOWN",
-      renderingMode,
-      sortOrder: integer(record.sortOrder) ?? 0,
-      active: bool(record.active),
-      cropSafe: bool(record.cropSafe),
-      altTextOverride: nullableText(record.altTextOverride),
-      focalPointX: number(record.focalPointX),
-      focalPointY: number(record.focalPointY),
-      validFrom: date(record.validFrom),
-      validUntil: date(record.validUntil),
-      reference: nullableText(record.reference),
-      affiliateOfferId: nullableText(record.affiliateOfferId),
-      casinoBonusId: nullableText(record.casinoBonusId),
-      creativeSetId: nullableText(record.creativeSetId),
-      creativeVariantId: nullableText(record.creativeVariantId),
-      mediaRevisionId: nullableText(record.mediaRevisionId),
-      purpose: ["BRAND", "PROMOTION"].includes(text(record.purpose)) ? text(record.purpose) as "BRAND" | "PROMOTION" : null,
-      priority: integer(record.priority),
-      availability: ["AVAILABLE", "NOT_FOUND", "UNSUPPORTED", "ERROR", "STALE"].includes(text(record.availability))
-        ? text(record.availability) as PlacementMediaAssignment["availability"] : null,
-      sourceHash: nullableText(record.sourceHash),
-      mediaAsset: asset,
-    }];
-  });
-}
-
-function creativeVariantAssignments(value: unknown, hostedEnabled: boolean): PlacementMediaAssignment[] {
-  return list(value).flatMap((entry) => {
-    const variant = object(entry);
-    const creativeSet = object(variant.creativeSet);
-    const revision = object(variant.revision);
-    if (text(variant.status) !== "ACTIVE" || text(variant.availability) !== "AVAILABLE"
-      || text(creativeSet.status) !== "ACTIVE" || date(creativeSet.archivedAt)
-      || text(revision.status) !== "ACTIVE") return [];
-    const common = {
-      id: variant.id,
-      placement: variant.placement,
-      variant: variant.variant,
-      countryCode: variant.countryCode,
-      languageCode: variant.languageCode,
-      languageState: variant.languageState,
-      renderingMode: variant.renderingMode,
-      cropSafe: variant.cropSafe,
-      active: true,
-      sortOrder: 0,
-      altTextOverride: variant.altTextOverride,
-      validFrom: variant.validFrom,
-      validUntil: variant.validUntil,
-      reference: `MEDIA-GEO3:${text(revision.id)}`,
-      affiliateOfferId: creativeSet.affiliateOfferId,
-      casinoBonusId: creativeSet.casinoBonusId,
-      creativeSetId: creativeSet.id,
-      creativeVariantId: variant.id,
-      mediaRevisionId: revision.id,
-      purpose: creativeSet.purpose,
-      priority: variant.priority,
-      availability: variant.availability,
-      sourceHash: variant.sourceHash,
-    };
-    const mediaAsset = object(variant.mediaAsset);
-    if (text(mediaAsset.id)) {
-      return placementAssignments([{ ...common, mediaAssetId: mediaAsset.id, mediaAsset }]);
-    }
-    if (!hostedEnabled) return [];
-    const hostedCreative = object(variant.hostedCreative);
-    if (!text(hostedCreative.id)) return [];
-    return hostedPlacementAssignments([{
-      ...common,
-      creativeId: hostedCreative.id,
-      creative: hostedCreative,
-    }]).map((assignment) => ({
-      ...assignment,
-      affiliateOfferId: nullableText(creativeSet.affiliateOfferId),
-      casinoBonusId: nullableText(creativeSet.casinoBonusId),
-      creativeSetId: nullableText(creativeSet.id),
-      creativeVariantId: nullableText(variant.id),
-      mediaRevisionId: nullableText(revision.id),
-      purpose: text(creativeSet.purpose) === "PROMOTION" ? "PROMOTION" : "BRAND",
-      priority: integer(variant.priority),
-      availability: "AVAILABLE",
-      sourceHash: nullableText(variant.sourceHash),
-    }));
-  });
-}
-
-function hostedPlacementAssignments(value: unknown): PlacementMediaAssignment[] {
-  return list(value).flatMap((entry) => {
-    const record = object(entry);
-    const creative = object(record.creative);
-    const id = text(record.id);
-    const creativeId = text(record.creativeId ?? creative.id);
-    const placement = text(record.placement);
-    const variant = text(record.variant);
-    const renderingMode = text(record.renderingMode);
-    const sourceMode = text(creative.sourceMode);
-    const provider = text(creative.provider);
-    const languageState = text(record.languageState ?? creative.languageState, "UNKNOWN");
-    const suppliedCountry = record.countryCode !== undefined && record.countryCode !== null;
-    const countryCode = suppliedCountry && typeof record.countryCode === "string" ? normalizeMediaCountryCode(record.countryCode) : null;
-    const suppliedLanguage = record.languageCode !== undefined && record.languageCode !== null;
-    const languageCode = suppliedLanguage && typeof record.languageCode === "string" ? normalizeMediaLanguageCode(record.languageCode) : null;
-    const width = integer(creative.actualWidth) ?? integer(creative.declaredWidth);
-    const height = integer(creative.actualHeight) ?? integer(creative.declaredHeight);
-    const hostedImageUrl = sourceMode === "PARTNER_HOSTED_IMAGE" ? safePublicUrl(creative.hostedImageUrl) : null;
-    const frameUrl = sourceMode === "PARTNER_HOSTED_EMBED" ? `/partner-creatives/${creativeId}/frame` : null;
-    if (!id || !creativeId || !isMediaPlacement(placement) || !isMediaPlacementVariant(variant)
-      || !isMediaRenderingMode(renderingMode) || !width || !height
-      || !["PARTNER_HOSTED_IMAGE", "PARTNER_HOSTED_EMBED"].includes(sourceMode)
-      || !["SUPERFLY", "BANNERFLOW"].includes(provider)
-      || !["EXPLICIT", "NEUTRAL", "UNKNOWN"].includes(languageState)
-      || (languageState === "EXPLICIT") !== Boolean(languageCode)
-      || (suppliedCountry && !countryCode)
-      || (sourceMode === "PARTNER_HOSTED_IMAGE" ? !hostedImageUrl : !frameUrl)
-      || !isPartnerHostedVisuallyPublishable(creative)) return [];
-    const mediaAsset: PlacementMediaAsset = {
-      id: creativeId,
-      type: "AFFILIATE_CREATIVE",
-      publicUrl: hostedImageUrl ?? frameUrl,
-      width,
-      height,
-      altText: nullableText(record.altTextOverride ?? creative.altText ?? creative.brandLabel),
-      title: nullableText(creative.purpose),
-      status: "ACTIVE",
-      archivedAt: date(creative.archivedAt),
-      createdAt: date(creative.createdAt),
-      sourceMode: sourceMode as "PARTNER_HOSTED_IMAGE" | "PARTNER_HOSTED_EMBED",
-      provider: provider as "SUPERFLY" | "BANNERFLOW",
-      hostedCreativeId: creativeId,
-      externalCreativeId: nullableText(creative.externalCreativeId),
-      currencyCode: nullableText(creative.currencyCode),
-      purpose: nullableText(creative.purpose),
-      checksum: nullableText(creative.sourceChecksum),
-    };
-    return [{
-      id,
-      mediaAssetId: creativeId,
-      placement,
-      variant,
-      countryCode,
-      languageCode,
-      languageState: languageState as "EXPLICIT" | "NEUTRAL" | "UNKNOWN",
-      renderingMode,
-      sortOrder: integer(record.sortOrder) ?? 0,
-      active: bool(record.active),
-      cropSafe: false,
-      altTextOverride: nullableText(record.altTextOverride),
-      validFrom: date(record.validFrom),
-      validUntil: date(record.validUntil),
-      reference: nullableText(record.reference),
-      sourceHash: nullableText(record.sourceHash),
-      mediaAsset,
-    }];
-  });
-}
-
-function affiliateOfferAssignmentMap(snapshot: Record<string, unknown>, hostedEnabled: boolean) {
-  const result = new Map<string, PlacementMediaAssignment[]>();
-  for (const programEntry of list(snapshot.affiliatePrograms)) {
-    for (const offerEntry of list(object(programEntry).offers)) {
-      const offer = object(offerEntry);
-      const offerId = text(offer.id);
-      if (offerId) result.set(offerId, [
-        ...placementAssignments(offer.mediaAssignments).map((assignment) => ({ ...assignment, affiliateOfferId: offerId })),
-        ...(hostedEnabled ? hostedPlacementAssignments(offer.partnerHostedAssignments).map((assignment) => ({ ...assignment, affiliateOfferId: offerId })) : []),
-        ...creativeVariantAssignments(offer.creativeVariants, hostedEnabled),
-      ]);
-    }
-  }
-  return result;
-}
-
-function affiliateOfferRecordMap(snapshot: Record<string, unknown>) {
-  const result = new Map<string, Record<string, unknown>>();
-  for (const programEntry of list(snapshot.affiliatePrograms)) {
-    for (const offerEntry of list(object(programEntry).offers)) {
-      const offer = object(offerEntry);
-      const offerId = text(offer.id);
-      if (offerId) result.set(offerId, offer);
-    }
-  }
-  return result;
-}
-
-function legacyPlacementAssets(snapshot: Record<string, unknown>): PlacementMediaAsset[] {
-  const modern = list(snapshot.mediaAssets).flatMap((entry) => placementAsset(entry) ?? []);
-  if (modern.length) return modern;
-  return list(snapshot.images).flatMap((entry) => {
-    const record = object(entry);
-    const asset = placementAsset({
-      ...record,
-      type: record.kind,
-      publicUrl: record.url,
-      altText: record.alt,
-      status: "ACTIVE",
-    });
-    return asset ? [asset] : [];
-  });
-}
-
-function targetScopedAssignmentAssetIds(snapshot: Record<string, unknown>) {
-  const ids = new Set<string>();
-  const collect = (entries: unknown[]) => {
-    for (const entry of entries) {
-      const record = object(entry);
-      if (record.countryCode === null || record.countryCode === undefined) {
-        if (record.languageCode === null || record.languageCode === undefined) continue;
-      }
-      const mediaAssetId = text(record.mediaAssetId) || text(object(record.mediaAsset).id);
-      if (mediaAssetId) ids.add(mediaAssetId);
-    }
-  };
-  collect(list(snapshot.mediaAssignments));
-  for (const bonusEntry of list(snapshot.casinoBonuses)) {
-    collect(list(object(bonusEntry).mediaAssignments));
-  }
-  for (const countryEntry of list(snapshot.countries)) {
-    for (const bonusEntry of list(object(countryEntry).bonuses)) {
-      collect(list(object(bonusEntry).mediaAssignments));
-    }
-  }
-  for (const programEntry of list(snapshot.affiliatePrograms)) {
-    for (const offerEntry of list(object(programEntry).offers)) {
-      collect(list(object(offerEntry).mediaAssignments));
-    }
-  }
-  return [...ids];
-}
-
-function publicPlacementMedia(resolution: ResolvedPlacementMedia): PublicPlacementMediaResolution {
-  const asset = resolution.asset;
-  const url = asset ? safePublicUrl(asset.publicUrl ?? asset.url, { allowInternal: true }) : null;
-  return {
-    asset: asset && url ? {
-      id: asset.id,
-      type: mediaType(asset.type),
-      url,
-      alt: resolution.effectiveAlt,
-      width: asset.width ?? null,
-      height: asset.height ?? null,
-      caption: asset.caption?.trim() || null,
-      sourceMode: asset.sourceMode ?? "FIRST_PARTY_MEDIA",
-      provider: asset.provider ?? null,
-      hostedCreativeId: asset.hostedCreativeId ?? null,
-      externalCreativeId: asset.externalCreativeId ?? null,
-      currencyCode: asset.currencyCode ?? null,
-      purpose: asset.purpose ?? null,
-    } : null,
-    assignmentId: resolution.assignment?.id ?? null,
-    requestedPlacement: resolution.requestedPlacement,
-    resolvedPlacement: resolution.resolvedPlacement,
-    requestedVariant: resolution.requestedVariant,
-    resolvedVariant: resolution.resolvedVariant,
-    requestedCountryCode: resolution.requestedCountryCode,
-    requestedLanguageCode: resolution.requestedLanguageCode,
-    resolvedCountryCode: resolution.resolvedCountryCode,
-    resolvedLanguageCode: resolution.resolvedLanguageCode,
-    targetingResolution: resolution.targetingResolution,
-    renderingMode: resolution.renderingMode,
-    source: resolution.source,
-    fallback: resolution.fallback,
-    effectiveAlt: resolution.effectiveAlt,
-    focalPoint: resolution.focalPoint,
-    status: resolution.status,
-    creativeSetId: resolution.creativeSetId ?? null,
-    creativeVariantId: resolution.creativeVariantId ?? null,
-    mediaRevisionId: resolution.mediaRevisionId ?? null,
-    exactOfferId: resolution.exactOfferId ?? null,
-  };
-}
-
-function resolvedPlacementMap(
-  placements: readonly (typeof offerSurfaceMediaPlacements[number] | typeof casinoMediaPlacements[number])[],
-  context: PlacementMediaResolutionContext,
-  now: Date,
-  targeting: { trustedCountryCode?: string | null; presentationLanguage?: string | null } = {},
-  authority: { casinoId: string; offer?: CasinoMediaOfferAuthority | null; commercialAuthority: boolean },
-) {
-  return Object.fromEntries(placements.map((placement) => {
-    const variants = Object.fromEntries((["DEFAULT", "DESKTOP", "MOBILE"] as const).map((requestedVariant) => [
-      requestedVariant,
-      publicPlacementMedia(resolveCasinoMedia({
-        casino: { id: authority.casinoId, name: context.casinoName },
-        offer: authority.offer,
-        placement,
-        country: targeting.trustedCountryCode,
-        language: targeting.presentationLanguage,
-        device: requestedVariant,
-        commercialAuthority: authority.commercialAuthority,
-        context,
-        now,
-      })),
-    ])) as PublicPlacementMedia["variants"];
-    const primary = variants.DEFAULT!;
-    const variantAssets = Object.fromEntries(Object.entries(variants).flatMap(([variant, resolution]) =>
-      resolution?.asset ? [[variant, resolution.asset]] : [],
-    ));
-    return [placement, {
-      ...primary,
-      asset: primary.asset ? { ...primary.asset, variants: variantAssets } : null,
-      variants,
-    } satisfies PublicPlacementMedia];
-  }));
 }
 
 function mapScopedLicenses(entries: unknown[], now: Date): PublicCasinoLicense[] {
@@ -556,14 +174,7 @@ function mapScopedBonuses(
   casinoId: string,
   routes: PublicAffiliateRoute[],
   redirectEnabled: boolean,
-  commercialMediaEnabled: boolean,
   now: Date,
-  placementContext: PlacementMediaResolutionContext,
-  placementMediaEnabled: boolean,
-  partnerHostedEnabled: boolean,
-  targeting: { trustedCountryCode?: string | null; presentationLanguage?: string | null },
-  affiliateAssignmentsFor: (casinoBonusId: string) => PlacementMediaAssignment[],
-  affiliateOfferFor: (casinoBonusId: string) => CasinoMediaOfferAuthority | null,
 ) {
   return entries.flatMap((entry) => {
     const record = object(entry);
@@ -577,25 +188,6 @@ function mapScopedBonuses(
     const title = text(record.title);
     if (!bonusId || !isSafePublicSlug(bonusSlug) || !title) return [];
     const affiliateHref = redirectEnabled ? routeFor(routes, casinoId, bonusId) : null;
-    const affiliateOffer = affiliateOfferFor(bonusId);
-    const bonusPlacementMedia = resolvedPlacementMap(offerSurfaceMediaPlacements, {
-      ...placementContext,
-      casinoBonusAssignments: [
-        ...placementAssignments(record.mediaAssignments),
-        ...(partnerHostedEnabled ? hostedPlacementAssignments(record.partnerHostedAssignments) : []),
-      ],
-      affiliateOfferAssignments: affiliateAssignmentsFor(bonusId),
-    }, now, targeting, {
-      casinoId,
-      offer: affiliateOffer ? {
-        ...affiliateOffer,
-        bonusStatus: affiliateOffer.bonusStatus === undefined ? text(record.status) : affiliateOffer.bonusStatus,
-        bonusOfferStatus: affiliateOffer.bonusOfferStatus === undefined ? text(record.offerStatus) : affiliateOffer.bonusOfferStatus,
-        bonusStartsAt: affiliateOffer.bonusStartsAt === undefined ? startsAt : affiliateOffer.bonusStartsAt,
-        bonusExpiresAt: affiliateOffer.bonusExpiresAt === undefined ? expiresAt : affiliateOffer.bonusExpiresAt,
-      } : null,
-      commercialAuthority: Boolean(commercialMediaEnabled && affiliateOffer && routeRecordFor(routes, casinoId, bonusId)),
-    });
     return [{
       id: bonusId,
       slug: bonusSlug,
@@ -616,7 +208,6 @@ function mapScopedBonuses(
       startsAt,
       expiresAt,
       affiliate: { href: affiliateHref, available: Boolean(affiliateHref) },
-      ...(placementMediaEnabled ? { media: bonusPlacementMedia } : {}),
     }];
   });
 }
@@ -644,12 +235,8 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
     marketProfiles: [],
   };
   const localMedia = profile.media;
-  const logo = casino.media.placements?.CASINO_LOGO?.asset
-    ?? localMedia.find((item) => item.type === "logo")
+  const logo = localMedia.find((item) => item.type === "logo")
     ?? casino.media.logo;
-  const hero = casino.media.placements?.CASINO_DETAIL_HERO?.asset
-    ?? localMedia.find((item) => item.type === "hero")
-    ?? casino.media.hero;
   const mergeBy = <T,>(global: T[], local: T[], identity: (value: T) => string) =>
     [...new Map([...global, ...local].map((value) => [identity(value), value])).values()];
   return {
@@ -672,11 +259,10 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
     marketProfiles: [profile],
     media: {
       logo,
-      hero,
+      hero: null,
       screenshots: [...localMedia.filter((item) => item.type === "screenshot"), ...casino.media.screenshots],
       gallery: [...localMedia.filter((item) => item.type === "gallery"), ...casino.media.gallery],
       socialImage: localMedia.find((item) => item.type === "social") ?? casino.media.socialImage,
-      ...(casino.media.placements ? { placements: casino.media.placements } : {}),
     },
     affiliate: casino.affiliate,
   };
@@ -703,55 +289,6 @@ export function mapPublishedCasino(
   const domain = text(snapshot.domain).toLowerCase();
   if (!id || !name || !domain) return null;
   const now = options.now ?? new Date();
-  const placementMediaEnabled = options.placementMediaEnabled ?? isPlacementMediaAssignmentsEnabled();
-  const partnerHostedEnabled = options.partnerHostedEnabled ?? isVettedPartnerHostedCreativesEnabled();
-  const commercialMediaEnabled = options.commercialMediaEnabled ?? options.redirectEnabled;
-  const placementContext: PlacementMediaResolutionContext = {
-    casinoName: name,
-    casinoAssignments: [
-      ...placementAssignments(snapshot.mediaAssignments),
-      ...(partnerHostedEnabled ? hostedPlacementAssignments(snapshot.partnerHostedAssignments) : []),
-    ],
-    legacyMediaAssets: legacyPlacementAssets(snapshot),
-    targetScopedAssetIds: targetScopedAssignmentAssetIds(snapshot),
-  };
-  const affiliateAssignmentsByOffer = affiliateOfferAssignmentMap(snapshot, partnerHostedEnabled);
-  const affiliateOfferRecords = affiliateOfferRecordMap(snapshot);
-  const affiliateAssignmentsFor = (casinoBonusId: string) => {
-    const route = routeRecordFor(routes, published.casinoId, casinoBonusId);
-    return route?.affiliateOfferId ? affiliateAssignmentsByOffer.get(route.affiliateOfferId) ?? [] : [];
-  };
-  const affiliateOfferFor = (casinoBonusId: string): CasinoMediaOfferAuthority | null => {
-    const route = routeRecordFor(routes, published.casinoId, casinoBonusId);
-    const offer = route?.affiliateOfferId ? affiliateOfferRecords.get(route.affiliateOfferId) : null;
-    const live = route?.mediaOfferAuthority;
-    if (!route?.affiliateOfferId || (!offer && !live)) return null;
-    return {
-      id: route.affiliateOfferId,
-      status: live?.status ?? text(offer?.status),
-      startAt: live ? live.startAt : date(offer?.startAt),
-      expiresAt: live ? live.expiresAt : date(offer?.expiresAt),
-      archivedAt: live?.archivedAt,
-      programStatus: live?.programStatus,
-      programWorkflowStatus: live?.programWorkflowStatus,
-      programArchivedAt: live?.programArchivedAt,
-      networkActive: live?.networkActive,
-      networkArchivedAt: live?.networkArchivedAt,
-      bonusStatus: live?.bonusStatus,
-      bonusOfferStatus: live?.bonusOfferStatus,
-      bonusStartsAt: live?.bonusStartsAt,
-      bonusExpiresAt: live?.bonusExpiresAt,
-    };
-  };
-  const targeting = {
-    trustedCountryCode: options.countryCode,
-    presentationLanguage: options.presentationLanguage,
-  };
-  const casinoPlacementMedia = resolvedPlacementMap(casinoMediaPlacements, placementContext, now, targeting, {
-    casinoId: published.casinoId,
-    offer: null,
-    commercialAuthority: false,
-  });
   const editorMetadata = metadata(snapshot);
   const general = object(editorMetadata.general);
   const licenseMetadata = object(editorMetadata.licenses);
@@ -836,25 +373,6 @@ export function mapPublishedCasino(
     if (!bonusId || !isSafePublicSlug(bonusSlug) || !title) return [];
     const bonusState = object(object(editorMetadata.bonuses)[bonusId]);
     const affiliateHref = options.redirectEnabled ? routeFor(routes, published.casinoId, bonusId) : null;
-    const affiliateOffer = affiliateOfferFor(bonusId);
-    const bonusPlacementMedia = resolvedPlacementMap(offerSurfaceMediaPlacements, {
-      ...placementContext,
-      casinoBonusAssignments: [
-        ...placementAssignments(record.mediaAssignments),
-        ...(partnerHostedEnabled ? hostedPlacementAssignments(record.partnerHostedAssignments) : []),
-      ],
-      affiliateOfferAssignments: affiliateAssignmentsFor(bonusId),
-    }, now, targeting, {
-      casinoId: published.casinoId,
-      offer: affiliateOffer ? {
-        ...affiliateOffer,
-        bonusStatus: affiliateOffer.bonusStatus === undefined ? text(record.status) : affiliateOffer.bonusStatus,
-        bonusOfferStatus: affiliateOffer.bonusOfferStatus === undefined ? text(record.offerStatus) : affiliateOffer.bonusOfferStatus,
-        bonusStartsAt: affiliateOffer.bonusStartsAt === undefined ? startsAt : affiliateOffer.bonusStartsAt,
-        bonusExpiresAt: affiliateOffer.bonusExpiresAt === undefined ? expiresAt : affiliateOffer.bonusExpiresAt,
-      } : null,
-      commercialAuthority: Boolean(commercialMediaEnabled && affiliateOffer && routeRecordFor(routes, published.casinoId, bonusId)),
-    });
     return [{
       id: bonusId,
       slug: bonusSlug,
@@ -875,7 +393,6 @@ export function mapPublishedCasino(
       startsAt,
       expiresAt,
       affiliate: { href: affiliateHref, available: Boolean(affiliateHref) },
-      ...(placementMediaEnabled ? { media: bonusPlacementMedia } : {}),
     }];
   });
 
@@ -936,14 +453,7 @@ export function mapPublishedCasino(
         published.casinoId,
         routes,
         options.redirectEnabled,
-        commercialMediaEnabled,
         now,
-        placementContext,
-        placementMediaEnabled,
-        partnerHostedEnabled,
-        targeting,
-        affiliateAssignmentsFor,
-        affiliateOfferFor,
       ),
       media: mediaFromSnapshot(record),
     }];
@@ -987,7 +497,7 @@ export function mapPublishedCasino(
       robots: text(seo.robots, "index,follow"),
       socialTitle: text(seo.socialTitle, text(seo.title, `${name} Review | B4GAMBLE`)),
       socialDescription: text(seo.socialDescription, text(seo.description, summary)),
-      socialImage: safePublicUrl(seo.socialImage, { allowInternal: true }) ?? socialImage?.url ?? null,
+      socialImage: safePublicUrl(seo.socialImage, { allowInternal: true }),
       structuredData: validatedStructuredData(seo.structuredData),
     },
     licenses,
@@ -998,12 +508,11 @@ export function mapPublishedCasino(
     bonuses,
     marketProfiles,
     media: {
-      logo: placementMediaEnabled ? casinoPlacementMedia.CASINO_LOGO.asset : allMedia.find((item) => item.type === "logo") ?? null,
-      hero: placementMediaEnabled ? casinoPlacementMedia.CASINO_DETAIL_HERO.asset : allMedia.find((item) => item.type === "hero") ?? null,
-      screenshots: allMedia.filter((item) => item.type === "screenshot"),
-      gallery: allMedia.filter((item) => item.type === "gallery"),
+      logo: allMedia.find((item) => item.type === "logo") ?? null,
+      hero: null,
+      screenshots: [],
+      gallery: [],
       socialImage,
-      ...(placementMediaEnabled ? { placements: casinoPlacementMedia } : {}),
     },
     affiliate: { href: redirectHref, available: Boolean(redirectHref) },
   };

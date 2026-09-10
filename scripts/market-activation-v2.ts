@@ -345,7 +345,6 @@ async function inventory() {
           id: true,
           countries: { where: { countryCode: fixture.countryCode }, select: { id: true, availability: true }, take: 2 },
           versions: { where: { status: "PUBLISHED" }, select: { id: true }, take: 2 },
-          _count: { select: { mediaAssignments: true, partnerHostedAssignments: true } },
           redirectSlugs: {
             where: { slug: fixture.redirectSlug },
             select: {
@@ -391,7 +390,6 @@ async function inventory() {
         storedEvidence: Boolean(tracking?.countries[0]?.productionEligibilityEvidence?.trim()),
         safeDestinations: Boolean(tracking && safeActivationDestination(tracking.destinationUrl) && safeActivationDestination(tracking.trackingUrl)),
         expectedFinalHost: tracking && safeActivationDestination(tracking.destinationUrl) ? new URL(tracking.destinationUrl).hostname.toLowerCase() : null,
-        mediaAssignments: (casino?._count.mediaAssignments ?? 0) + (casino?._count.partnerHostedAssignments ?? 0),
       };
     })),
     betssonCl: {
@@ -471,24 +469,16 @@ async function verify() {
     const activation = await prisma.marketActivation.findFirst({
       where: { casino: { slug: fixture.casinoSlug }, countryCode: fixture.countryCode, product: "CASINO" },
       include: {
-        casino: { select: { _count: { select: {
-          mediaAssignments: { where: { active: true, OR: [{ countryCode: fixture.countryCode }, { countryCode: null }] } },
-          partnerHostedAssignments: { where: { active: true, OR: [{ countryCode: fixture.countryCode }, { countryCode: null }] } },
-        } } } },
         redirectSlug: { select: { slug: true } },
       },
     });
     const route = await marketActivationRuntime.resolveRedirect(fixture.redirectSlug, fixture.countryCode);
-    const mediaAssignments = activation
-      ? activation.casino._count.mediaAssignments + activation.casino._count.partnerHostedAssignments
-      : 0;
     const exactInternalBindingsReady = Boolean(activation?.desiredState === "ACTIVE"
       && activation.marketProfileId
       && activation.affiliateOfferId
       && activation.primaryTrackingLinkId
       && activation.redirectSlugId
-      && activation.redirectSlug?.slug === fixture.redirectSlug
-      && mediaAssignments > 0);
+      && activation.redirectSlug?.slug === fixture.redirectSlug);
     const ok = exactInternalBindingsReady && activation?.status === "ACTIVE"
       && activation.routeVerificationStatus === "HEALTHY" && Boolean(activation.routeLastCheckedAt && activation.routeFinalHost)
       && Boolean(route);
@@ -512,7 +502,6 @@ async function verify() {
       externalBlockerCode: activation?.externalBlockerCode ?? null,
       externalBlockerDetail: activation?.externalBlockerDetail ?? null,
       externalBlockerSource: activation?.externalBlockerSource ?? null,
-      mediaAssignments,
     });
   }
   const betssonCl = await prisma.marketActivation.findFirst({ where: { casino: { slug: "betsson" }, countryCode: "CL", product: "CASINO" } });

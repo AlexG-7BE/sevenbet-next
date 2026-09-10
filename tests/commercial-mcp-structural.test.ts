@@ -43,7 +43,8 @@ test("stable OAuth Provider owns protocol issuance, rotation, and revocation", a
   assert.match(authConfig, /storeTokens: commercialMcpProviderTokenStorage/);
   assert.match(authConfig, /resources: \[/);
   assert.doesNotMatch(authConfig, /clientRegistrationDefaultResources/);
-  assert.match(authConfig, /clientRegistrationAllowedResources: \[commercialMcpResource, mediaMcpResource\]/);
+  assert.match(authConfig, /clientRegistrationAllowedResources: \[commercialMcpResource\]/);
+  assert.doesNotMatch(authConfig, /mediaMcpResource|media:(?:read|safe_write|production_write)/);
   assert.match(authConfig, /enforcePerClientResources: true/);
   assert.match(authConfig, /refreshTokenReuseInterval: 0/);
   assert.doesNotMatch(authConfig, /validAudiences/);

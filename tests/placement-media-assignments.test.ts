@@ -614,7 +614,7 @@ function governedOffer(record: PublishedCasinoSnapshotRecord) {
   return (programmes[0]?.offers as Array<Record<string, unknown>>)[0]!;
 }
 
-test("public projection proves six independently assigned surface assets and responsive variants", () => {
+test("public projection preserves the operator logo while retired promotional assignments stay private", () => {
   const record = independenceRecord();
   const mapped = mapPublishedCasino(record, governedRoutes(record), {
     redirectEnabled: false,
@@ -623,21 +623,13 @@ test("public projection proves six independently assigned surface assets and res
     now: NOW,
   });
   assert.ok(mapped);
-  assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.asset?.id, "asset-a-directory");
-  assert.equal(mapped.media.placements?.CASINO_DETAIL_HERO?.asset?.id, "asset-b-detail");
-  assert.equal(mapped.media.placements?.CASINO_COMPARE?.asset?.id, "asset-c-compare");
-  assert.equal(mapped.bonuses[0]?.media?.BONUS_LISTING_CARD?.asset?.id, "asset-d-listing");
-  assert.equal(mapped.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "asset-e-featured");
-  assert.equal(mapped.bonuses[0]?.media?.CASINO_OFFER_BLOCK?.asset?.id, "asset-f-offer-block");
-  assert.equal(mapped.bonuses[0]?.media?.CASINO_REVIEW_RIGHT_HERO?.asset?.id, "asset-f-offer-block");
-  assert.equal(mapped.bonuses[0]?.media?.CASINO_REVIEW_RIGHT_HERO?.renderingMode, "CONTAIN");
-  assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.variants.MOBILE?.asset?.id, "asset-a-mobile");
-  assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.variants.DESKTOP?.asset?.id, "asset-a-directory");
-  assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.variants.DESKTOP?.source, "BRAND_FALLBACK");
-  assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.asset?.variants?.MOBILE?.id, "asset-a-mobile");
+  assert.equal(mapped.media.logo?.id, "legacy-logo");
+  assert.equal(mapped.media.placements, undefined);
+  assert.equal(mapped.bonuses[0]?.media, undefined);
+  assert.doesNotMatch(JSON.stringify(mapped), /asset-[a-f]-(?:directory|detail|compare|listing|featured|offer-block|mobile)/);
 });
 
-test("one immutable publication snapshot resolves per request and exposes only the effective target", () => {
+test("historical targeting remains deterministic while retired assignments stay out of public projection", () => {
   const record = independenceRecord();
   const targets = [
     ["global-en", null, "en"],
@@ -654,7 +646,22 @@ test("one immutable publication snapshot resolves per request and exposes only t
     "DEFAULT",
     { countryCode, languageCode },
   ));
-  const resolve = (countryCode: string | null, presentationLanguage: string) => mapPublishedCasino(record, governedRoutes(record), {
+  const historicalContext = context({
+    casinoBonusAssignments: targets.map(([id, countryCode, languageCode]) => assignment(
+      id,
+      "BEST_OFFER_FEATURED",
+      asset(id, "BONUS_CREATIVE"),
+      { countryCode, languageCode },
+    )),
+  });
+  const resolve = (trustedCountryCode: string | null, presentationLanguage: string) => resolveMedia({
+    placement: "BEST_OFFER_FEATURED",
+    trustedCountryCode,
+    presentationLanguage,
+    context: historicalContext,
+    now: NOW,
+  });
+  const resolvePublic = (countryCode: string | null, presentationLanguage: string) => mapPublishedCasino(record, governedRoutes(record), {
     redirectEnabled: false,
     commercialMediaEnabled: true,
     placementMediaEnabled: true,
@@ -662,18 +669,18 @@ test("one immutable publication snapshot resolves per request and exposes only t
     presentationLanguage,
     now: NOW,
   });
-  assert.equal(resolve("FI", "fi")?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "fi-fi");
-  assert.equal(resolve("FI", "en")?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "fi-en");
-  assert.equal(resolve("SE", "sv")?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "se-sv");
-  assert.equal(resolve("SE", "en")?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "se-en");
-  assert.equal(resolve(null, "en")?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "global-en");
-  const sweden = resolve("SE", "sv");
-  const publicPayload = JSON.stringify(sweden?.bonuses[0]?.media);
-  assert.match(publicPayload, /se-sv/);
-  assert.doesNotMatch(publicPayload, /fi-fi|fi-en/);
+  assert.equal(resolve("FI", "fi").asset?.id, "fi-fi");
+  assert.equal(resolve("FI", "en").asset?.id, "fi-en");
+  assert.equal(resolve("SE", "sv").asset?.id, "se-sv");
+  assert.equal(resolve("SE", "en").asset?.id, "se-en");
+  assert.equal(resolve(null, "en").asset?.id, "global-en");
+  const sweden = resolvePublic("SE", "sv");
+  const publicPayload = JSON.stringify(sweden?.bonuses[0]?.media) ?? "";
+  assert.equal(sweden?.bonuses[0]?.media, undefined);
+  assert.doesNotMatch(publicPayload, /global-en|global-neutral|fi-fi|fi-en|se-sv|se-en/);
 });
 
-test("targeted creative presentation shares the exact governed CTA authority", () => {
+test("targeted creatives are retired while exact governed CTA authority remains independent", () => {
   const record = independenceRecord();
   governedOffer(record).mediaAssignments = [snapshotAssignment(
     "fi-targeted-creative",
@@ -689,8 +696,7 @@ test("targeted creative presentation shares the exact governed CTA authority", (
     presentationLanguage: "fi",
     now: NOW,
   });
-  assert.equal(blocked?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset, null);
-  assert.equal(blocked?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.status, "BLOCKED");
+  assert.equal(blocked?.bonuses[0]?.media, undefined);
   assert.deepEqual(blocked?.bonuses[0]?.affiliate, { href: null, available: false });
 
   const eligible = mapPublishedCasino(record, governedRoutes(record), {
@@ -700,12 +706,12 @@ test("targeted creative presentation shares the exact governed CTA authority", (
     presentationLanguage: "fi",
     now: NOW,
   });
-  assert.equal(eligible?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "fi-targeted-creative");
+  assert.equal(eligible?.bonuses[0]?.media, undefined);
   assert.deepEqual(eligible?.bonuses[0]?.affiliate, { href: "/r/governed-fi-offer", available: true });
-  assert.doesNotMatch(JSON.stringify(eligible), /trackingUrl|destinationUrl|partner\.example/i);
+  assert.doesNotMatch(JSON.stringify(eligible), /fi-targeted-creative|trackingUrl|destinationUrl|partner\.example/i);
 });
 
-test("canonical CTA survives stale compatibility while promotional media falls back to brand", () => {
+test("canonical CTA survives stale media compatibility without exposing promotional inventory", () => {
   const record = independenceRecord();
   const mapped = mapPublishedCasino(record, governedRoutesWithStaleMediaOffer(record), {
     redirectEnabled: true,
@@ -715,21 +721,22 @@ test("canonical CTA survives stale compatibility while promotional media falls b
     now: NOW,
   });
   assert.deepEqual(mapped?.bonuses[0]?.affiliate, { href: "/r/governed-fi-offer", available: true });
-  assert.equal(mapped?.bonuses[0]?.media?.CASINO_REVIEW_RIGHT_HERO?.asset?.id, "asset-b-detail");
-  assert.equal(mapped?.bonuses[0]?.media?.CASINO_REVIEW_RIGHT_HERO?.source, "BRAND_FALLBACK");
-  assert.equal(mapped?.bonuses[0]?.media?.CASINO_DIRECTORY_CARD?.asset?.id, "asset-a-directory");
-  assert.equal(mapped?.bonuses[0]?.media?.CASINO_DIRECTORY_CARD?.source, "BRAND_FALLBACK");
-  assert.doesNotMatch(
-    JSON.stringify({
-      review: mapped?.bonuses[0]?.media?.CASINO_REVIEW_RIGHT_HERO,
-      directory: mapped?.bonuses[0]?.media?.CASINO_DIRECTORY_CARD,
-    }),
-    /asset-[def]-|offer-(listing|featured|block)/,
-  );
+  assert.equal(mapped?.bonuses[0]?.media, undefined);
+  assert.equal(mapped?.media.placements, undefined);
+  assert.doesNotMatch(JSON.stringify(mapped), /asset-[a-f]-|offer-(listing|featured|block)/);
 });
 
-test("historical snapshots without target fields remain global-neutral and malformed new targets fail closed", () => {
+test("historical resolver targets stay fail-closed while neither form enters the retired public projection", () => {
   const historicalRecord = independenceRecord();
+  const historicalResolution = resolveMedia({
+    placement: "BEST_OFFER_FEATURED",
+    trustedCountryCode: "FI",
+    presentationLanguage: "en",
+    context: context({ casinoBonusAssignments: [assignment("asset-e-featured", "BEST_OFFER_FEATURED", asset("asset-e-featured", "BONUS_CREATIVE"))] }),
+    now: NOW,
+  });
+  assert.equal(historicalResolution.asset?.id, "asset-e-featured");
+  assert.equal(historicalResolution.targetingResolution, "GLOBAL_NEUTRAL");
   const historical = mapPublishedCasino(historicalRecord, governedRoutes(historicalRecord), {
     redirectEnabled: false,
     commercialMediaEnabled: true,
@@ -738,8 +745,8 @@ test("historical snapshots without target fields remain global-neutral and malfo
     presentationLanguage: "en",
     now: NOW,
   });
-  assert.equal(historical?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "asset-e-featured");
-  assert.equal(historical?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.targetingResolution, "GLOBAL_NEUTRAL");
+  assert.equal(historical?.bonuses[0]?.media, undefined);
+  assert.doesNotMatch(JSON.stringify(historical), /asset-e-featured/);
 
   const malformed = independenceRecord();
   const malformedSnapshot = malformed.snapshot as Record<string, unknown>;
@@ -761,15 +768,24 @@ test("historical snapshots without target fields remain global-neutral and malfo
     presentationLanguage: "en",
     now: NOW,
   });
-  assert.equal(result?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset, null);
-  assert.equal(result?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.source, "CODE_FALLBACK");
+  const malformedResolution = resolveMedia({
+    placement: "BEST_OFFER_FEATURED",
+    trustedCountryCode: "FI",
+    presentationLanguage: "en",
+    context: context({ casinoBonusAssignments: [assignment("invalid-target", "BEST_OFFER_FEATURED", asset("invalid-target"), { countryCode: "Finland", languageCode: "EN" })] }),
+    now: NOW,
+  });
+  assert.equal(malformedResolution.asset, null);
+  assert.equal(malformedResolution.source, "CODE_FALLBACK");
+  assert.equal(result?.bonuses[0]?.media, undefined);
+  assert.doesNotMatch(JSON.stringify(result), /invalid-target/);
 });
 
-test("published target-scoped assets cannot bypass targeting through historical media fallback", () => {
+test("published target-scoped assets cannot bypass retirement through historical media fallback", () => {
   const record = independenceRecord();
   const snapshot = record.snapshot as Record<string, unknown>;
   const targetedHero = snapshotAsset("published-fi-only-hero", "HERO");
-  snapshot.mediaAssets = [targetedHero];
+  snapshot.mediaAssets = [...(snapshot.mediaAssets as unknown[]), targetedHero];
   snapshot.mediaAssignments = [snapshotAssignment(
     "published-fi-only-assignment",
     "CASINO_DIRECTORY_CARD",
@@ -784,12 +800,12 @@ test("published target-scoped assets cannot bypass targeting through historical 
     presentationLanguage: "en",
     now: NOW,
   });
-  assert.equal(unknownEnglish?.media.placements?.CASINO_DIRECTORY_CARD?.asset, null);
-  assert.equal(unknownEnglish?.media.placements?.CASINO_DIRECTORY_CARD?.source, "CODE_FALLBACK");
-  assert.doesNotMatch(JSON.stringify(unknownEnglish?.media.placements), /published-fi-only-hero/);
+  assert.equal(unknownEnglish?.media.logo?.id, "legacy-logo");
+  assert.equal(unknownEnglish?.media.placements, undefined);
+  assert.doesNotMatch(JSON.stringify(unknownEnglish), /published-fi-only-hero|published-fi-only-assignment/);
 });
 
-test("legacy mode ignores assignment arrays and preserves the previous HERO/LOGO projection", () => {
+test("legacy feature flags cannot reactivate assignment or promotional HERO projection", () => {
   const mapped = mapPublishedCasino(independenceRecord(), [], {
     redirectEnabled: false,
     placementMediaEnabled: false,
@@ -797,9 +813,10 @@ test("legacy mode ignores assignment arrays and preserves the previous HERO/LOGO
   });
   assert.ok(mapped);
   assert.equal(mapped.media.logo?.id, "legacy-logo");
-  assert.equal(mapped.media.hero?.id, "legacy-hero");
+  assert.equal(mapped.media.hero, null);
   assert.equal(mapped.media.placements, undefined);
   assert.equal(mapped.bonuses[0]?.media, undefined);
+  assert.doesNotMatch(JSON.stringify(mapped), /legacy-hero|asset-[a-f]-/);
 });
 
 test("published assignment projections are deep immutable snapshots and public reads stay snapshot-bound", () => {
@@ -1117,51 +1134,45 @@ test("manifest generation is stable for identical source state and does not inve
   assert.equal(first.rows.find((row) => row.placement === "OFFER_DETAIL")?.newAssignment, null);
 });
 
-test("real Admin surfaces expose semantic slots through the authorized centralized API without asset deletion", () => {
+test("historical semantic slots remain documented while promotional Admin writes fail closed", () => {
   const editor = readFileSync("components/admin/media/PlacementMediaEditor.tsx", "utf8");
+  const selector = readFileSync("components/admin/media/MediaSelector.tsx", "utf8");
   const casino = readFileSync("components/admin/CasinoBuilder.tsx", "utf8");
   const bonus = readFileSync("components/admin/casino-editors/BonusEditor.tsx", "utf8");
   const affiliate = readFileSync("components/admin/affiliate/AffiliateEditors.tsx", "utf8");
   const route = readFileSync("app/api/admin/media/assignments/route.ts", "utf8");
+  const uploadRoute = readFileSync("app/api/admin/media/upload/route.ts", "utf8");
   const placementContract = `${readFileSync("lib/media/placement-registry.ts", "utf8")}\n${readFileSync("lib/media/placement-media.ts", "utf8")}`;
   for (const placement of mediaPlacements) assert.match(placementContract, new RegExp(placement));
-  assert.match(editor, /casinoMediaPlacements/);
-  assert.match(editor, /offerMediaPlacements/);
-  assert.match(casino, /PlacementMediaEditor/);
-  assert.match(bonus, /PlacementMediaEditor/);
+  assert.match(editor, /Promotional placement media retired/);
+  assert.match(editor, /MarketActivation/);
+  assert.doesNotMatch(casino, /PlacementMediaEditor/);
+  assert.doesNotMatch(bonus, /PlacementMediaEditor/);
   assert.match(affiliate, /PlacementMediaEditor/);
-  assert.match(editor, /EXPLICIT/);
-  assert.match(editor, /FALLBACK/);
-  assert.match(editor, /Optional Desktop\/Mobile overrides/);
-  assert.match(editor, /Upload and assign/);
-  assert.match(editor, /Choose an active asset/);
-  assert.match(editor, /Remove assignment/);
-  assert.match(editor, /Deactivate assignment/);
-  assert.match(editor, /Reactivate assignment/);
-  assert.match(editor, /Usage/);
-  assert.doesNotMatch(editor, /deleteMedia|DELETE ASSET|method:\s*["']DELETE/);
-  assert.match(route, /requireAdminPermission\(request, "media\.manage"\)/);
-  assert.match(route, /mediaAssignmentService\.assignMedia/);
-  assert.match(route, /mediaAssignmentService\.unassignMedia/);
-  assert.match(route, /mediaAssignmentService\.setAssignmentActive/);
+  assert.doesNotMatch(editor, /Upload and assign|Choose an active asset|Remove assignment|Deactivate assignment|Reactivate assignment/);
+  assert.match(selector, /props\.type !== "SOCIAL_IMAGE"/);
+  assert.match(selector, /Promotional media retired/);
+  assert.match(uploadRoute, /isActiveAdminMediaType\(input\.type\)/);
+  assert.match(uploadRoute, /input\.type === "SOCIAL_IMAGE"[\s\S]+cannot be linked to an offer, bonus, or market/);
+  assert.match(route, /retiredMediaResponse/);
+  assert.doesNotMatch(route, /mediaAssignmentService|assignMedia|unassignMedia|setAssignmentActive/);
   assert.doesNotMatch(route, /export async function DELETE/);
 });
 
-test("all required public surfaces read their dedicated semantic placement", () => {
-  const files = {
-    CASINO_DIRECTORY_CARD: `${readFileSync("lib/services/public-casino-discovery.service.ts", "utf8")}\n${readFileSync("components/casino-discovery/CasinoDiscoveryCard.tsx", "utf8")}`,
-    CASINO_REVIEW_RIGHT_HERO: readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8"),
-    CASINO_COMPARE: readFileSync("lib/services/public-comparison.service.ts", "utf8"),
-    BONUS_LISTING_CARD: readFileSync("components/commercial-media/CommercialOfferMedia.tsx", "utf8"),
-    BEST_OFFER_FEATURED: readFileSync("components/commercial-media/CommercialOfferMedia.tsx", "utf8"),
-    BEST_OFFER_SECONDARY: readFileSync("components/commercial-media/CommercialOfferMedia.tsx", "utf8"),
-    CASINO_OFFER_BLOCK: readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8"),
-  } as const;
-  for (const [placement, source] of Object.entries(files)) assert.match(source, new RegExp(placement));
-  const contextualComparison = readFileSync("components/comparison-context/ContextualComparison.tsx", "utf8");
-  assert.match(contextualComparison, /ResponsivePlacementImage/);
-  assert.match(contextualComparison, /data-media-placement="CASINO_COMPARE"/);
-  assert.match(contextualComparison, /casino\.logo/);
+test("all active public surfaces use logos or B4GAMBLE compositions while preserving governed CTA semantics", () => {
+  const discovery = readFileSync("lib/services/public-casino-discovery.service.ts", "utf8");
+  const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
+  const comparison = readFileSync("lib/services/public-comparison.service.ts", "utf8");
+  const bestOffers = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
+  const bonuses = readFileSync("components/bonus-directory/CuratedBonusShortlist.tsx", "utf8");
+  assert.match(discovery, /logo:\s*logoMediaDto/);
+  assert.match(discovery, /hero:\s*null/);
+  assert.match(profile, /casino\.media\.logo/);
+  assert.match(profile, /source: "CTA", placement: "CASINO_OFFER_BLOCK"/);
+  assert.doesNotMatch(profile, /source: "CREATIVE"|CASINO_REVIEW_RIGHT_HERO/);
+  assert.match(comparison, /casino\.media\.logo/);
+  assert.match(bestOffers, /OperatorIdentityPanel/);
+  assert.match(bonuses, /OperatorIdentityPanel/);
   const responsive = readFileSync("components/media/ResponsivePlacementImage.tsx", "utf8");
   assert.match(responsive, /max-width: 767px/);
   assert.match(responsive, /data-placement-variant="MOBILE"/);

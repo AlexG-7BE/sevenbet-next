@@ -86,7 +86,7 @@ test("the access screen is unchecked, account creation stays signed and authenti
   assert.match(accessContract, /x-sevenbet-privacy-acknowledgement/);
   assert.match(accessContract, /privacy:effective-2026-08-19:updated-2026-08-19/);
   assert.match(accessContract, /terms:effective-2026-08-19:updated-2026-08-19/);
-  assert.match(source("app/(public)/privacy/page.tsx"), /updated="6 September 2026"/);
+  assert.match(source("app/(public)/privacy/page.tsx"), /updated="10 September 2026"/);
   assert.match(source("app/(public)/terms/page.tsx"), /updated="19 August 2026"/);
 });
 

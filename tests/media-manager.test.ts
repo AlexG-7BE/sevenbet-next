@@ -243,8 +243,14 @@ test("admin routes enforce media.manage and client integrations never import Pri
     "components/admin/casino-editors/BonusEditor.tsx", "components/admin/casino-editors/GeneralSeoEditors.tsx", "components/admin/affiliate/AffiliateEditors.tsx",
   ]) assert.doesNotMatch(readFileSync(file, "utf8"), /@prisma\/client|prisma\./);
   assert.match(readFileSync("components/admin/CasinoBuilder.tsx", "utf8"), /MediaManager/);
-  assert.match(readFileSync("components/admin/casino-editors/BonusEditor.tsx", "utf8"), /subjectType="CASINO_BONUS"/);
+  assert.doesNotMatch(readFileSync("components/admin/casino-editors/BonusEditor.tsx", "utf8"), /subjectType="CASINO_BONUS"/);
   assert.match(readFileSync("components/admin/affiliate/AffiliateEditors.tsx", "utf8"), /subjectType="AFFILIATE_OFFER"[\s\S]+AFFILIATE_CREATIVE/);
+  const selector = readFileSync("components/admin/media/MediaSelector.tsx", "utf8");
+  assert.match(selector, /props\.type !== "SOCIAL_IMAGE"[\s\S]+Promotional media retired/);
+  const uploadRoute = readFileSync("app/api/admin/media/upload/route.ts", "utf8");
+  assert.match(uploadRoute, /isActiveAdminMediaType\(input\.type\)/);
+  assert.match(uploadRoute, /input\.type === "SOCIAL_IMAGE"[\s\S]+b4GambleEditorialMetadata/);
+  assert.match(readFileSync("lib/media-retirement/active-asset-policy.ts", "utf8"), /\["LOGO", "SOCIAL_IMAGE"\][\s\S]+b4gambleOwned === true/);
   assert.match(readFileSync("components/admin/casino-editors/GeneralSeoEditors.tsx", "utf8"), /SOCIAL_IMAGE/);
 });
 

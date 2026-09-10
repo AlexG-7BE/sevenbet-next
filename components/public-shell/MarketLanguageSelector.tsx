@@ -46,17 +46,19 @@ export function MarketLanguageSelector({
   messages,
   presentation,
   selectableLanguages,
+  surface = "public",
   variant,
 }: {
   messages: PublicShellMessages;
   presentation: PresentationResolution;
   selectableLanguages: readonly LanguageRouteProfile[];
+  surface?: "public" | "programme";
   variant: "desktop" | "mobile";
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const returnTo = `${pathname}${searchParams.size ? `?${searchParams}` : ""}`;
-  const menuId = `market-language-menu-${variant}`;
+  const menuId = `${surface}-language-menu-${variant}`;
   const activeChoice = presentation.language;
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -131,6 +133,7 @@ export function MarketLanguageSelector({
         <ChevronIcon />
       </button>
       <input name="returnTo" type="hidden" value={returnTo} />
+      <input name="surface" type="hidden" value={surface} />
       {open ? (
         <div
           aria-label={messages.changeMarketAndLanguage}

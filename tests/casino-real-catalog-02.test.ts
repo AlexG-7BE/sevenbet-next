@@ -339,17 +339,15 @@ test("serious enforcement and complaint signals remain prominent in the real rev
   assert.doesNotMatch(`${casinoRealCatalog.find(({ slug }) => slug === "21-prive")!.bestFor.join(" ")} ${casinoRealCatalog.find(({ slug }) => slug === "slotnite")!.bestFor.join(" ")}`, /best (?:for )?(?:payout|trust)|fastest withdrawal/i);
 });
 
-test("the Preview token is strict, scoped and requires an adequately strong configured value", () => {
+test("the retired Partner Preview has no middleware authentication or cookie exception", () => {
   const token = "preview-token-with-at-least-24-characters";
   assert.equal(partnerPreviewConfiguredToken({ VERCEL_ENV: "preview", SEVENBET_PARTNER_PREVIEW_TOKEN: "short" }), null);
   assert.equal(partnerPreviewAuthorized(token, { VERCEL_ENV: "preview", SEVENBET_PARTNER_PREVIEW_TOKEN: token }), true);
   assert.equal(partnerPreviewAuthorized(`${token}-wrong`, { VERCEL_ENV: "preview", SEVENBET_PARTNER_PREVIEW_TOKEN: token }), false);
   const middleware = read("middleware.ts");
-  assert.match(middleware, /httpOnly: true/);
-  assert.match(middleware, /sameSite: "strict"/);
-  assert.match(middleware, /path: "\/partner-preview"/);
+  assert.match(middleware, /pathname === "\/partner-preview"[\s\S]*status: 410/);
   assert.match(middleware, /noindex, nofollow, noarchive/);
-  assert.match(middleware, /destination\.searchParams\.delete\("token"\)/);
+  assert.doesNotMatch(middleware, /SEVENBET_PARTNER_PREVIEW_TOKEN|PARTNER_PREVIEW_COOKIE|partnerPreviewAuthorized/);
 });
 
 test("the bounded reconciler is guarded, idempotent, auditable and never writes affiliate routes", () => {

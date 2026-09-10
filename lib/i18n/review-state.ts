@@ -34,6 +34,11 @@ const firstWavePublicationAccepted: TranslationReviewState = {
   marketEvidenceReview: "FIRST_WAVE_EVIDENCE_REVIEWED",
 };
 
+const publishedLocaleCoreReady: TranslationReviewState = {
+  ...machineTranslated,
+  publicExperience: "PUBLIC_CORE_READY",
+};
+
 const authoritativeMarketPublicationAccepted: TranslationReviewState = {
   ...machineTranslated,
   publicExperience: "PUBLIC_CORE_READY",
@@ -56,16 +61,16 @@ const architectureOnlyTranslated: TranslationReviewState = {
 export const TRANSLATION_REVIEW_STATE = {
   "en-GB": sourceBaseline,
   "de-DE": firstWavePublicationAccepted,
-  "it-IT": machineTranslated,
+  "it-IT": publishedLocaleCoreReady,
   "es-ES": firstWavePublicationAccepted,
   "es-PE": authoritativeMarketPublicationAccepted,
-  "pt-PT": machineTranslated,
+  "pt-PT": publishedLocaleCoreReady,
   "el-GR": firstWavePublicationAccepted,
-  "nl-NL": machineTranslated,
+  "nl-NL": publishedLocaleCoreReady,
   "sv-SE": firstWavePublicationAccepted,
   "da-DK": firstWavePublicationAccepted,
-  "fi-FI": machineTranslated,
-  "nb-NO": machineTranslated,
+  "fi-FI": publishedLocaleCoreReady,
+  "nb-NO": publishedLocaleCoreReady,
   "en-CA": architectureOnlyTranslated,
   "fr-CA": architectureOnlyTranslated,
 } as const satisfies Record<SupportedLocale, TranslationReviewState>;

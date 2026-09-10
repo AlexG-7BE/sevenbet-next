@@ -31,6 +31,8 @@ export interface PublicMediaDto {
   alt: string;
   width: number | null;
   height: number | null;
+  /** Explicit server-owned classification; absence never implies editorial ownership. */
+  ownership?: "B4GAMBLE_EDITORIAL";
   variants?: Partial<Record<MediaPlacementVariantName, Omit<PublicMediaDto, "variants">>>;
   renderingMode?: Exclude<MediaRenderingModeName, "AUTO">;
   source?: PlacementMediaSource;

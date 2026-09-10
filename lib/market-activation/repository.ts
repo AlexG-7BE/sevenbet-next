@@ -496,7 +496,6 @@ export class MarketActivationRepository {
           },
         },
         versions: { where: { status: "PUBLISHED" }, orderBy: { version: "desc" }, take: 1, select: { id: true, version: true } },
-        _count: { select: { mediaAssignments: true, partnerHostedAssignments: true } },
       },
     });
     if (!casino) throw new Error("MARKET_ACTIVATION_CASINO_NOT_FOUND");
@@ -625,8 +624,6 @@ export class MarketActivationRepository {
       trackingExpiresAt: tracking?.expiresAt?.toISOString() ?? null,
       redirectSlugId: redirect?.id ?? null,
       evidence: evidence || null,
-      mediaAssignments: casino._count.mediaAssignments,
-      hostedAssignments: casino._count.partnerHostedAssignments,
       globalFallbackBlockedCountries: globalFallbackPolicy?.blockedCountries ?? [],
       internalPending,
       externalBlocker: blocker,
@@ -776,7 +773,6 @@ export class MarketActivationRepository {
         lastVerifiedAt: marketProfile.lastVerifiedAt,
         unknownFields: [!marketProfile.primaryLanguage && "primaryLanguage", !marketProfile.primaryCurrency && "primaryCurrency"].filter(Boolean),
       } : null,
-      media: { typedAssignments: casino._count.mediaAssignments, hostedAssignments: casino._count.partnerHostedAssignments },
       binding: { redirectSlug: redirect?.slug ?? null, evidenceReference: evidence || null },
       internalRepairs: repairs,
       internalPending,

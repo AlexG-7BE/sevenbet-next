@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const requireAuthorized = process.env.COMMERCIAL_CREATIVE_AUTHORIZED === "1";
-const requireBlocked = process.env.COMMERCIAL_CREATIVE_BLOCKED === "1";
 const requiredWidths = [390, 430, 768, 1024, 1280, 1440] as const;
 
 async function decodedImageGeometry(image: Locator) {
@@ -40,16 +39,20 @@ function familyHeightLimit(family: string) {
 }
 
 test("mixed commercial fixtures preserve physical geometry at every required width", async ({ browser }) => {
+  const styles = readFileSync("components/commercial-media/CommercialOfferMedia.module.css", "utf8");
+  const figure = (family: string, asset: string, width: number, height: number) => `<article><figure class="frame" data-offer-media="format-safety-fixture" data-presentation-family="${family}" data-mobile-presentation-family="${family}"><div class="mediaStage"><img alt="${family} ${width} by ${height}" class="mediaArtwork" height="${height}" src="${baseUrl}/demo-casinos/${asset}" style="object-fit:contain" width="${width}"></div><figcaption><span>B4GAMBLE / HISTORICAL FORMAT SAFETY</span><small>${family}</small></figcaption></figure><div class="actions" /></article>`;
   for (const width of requiredWidths) {
-    const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 844 : 900 } });
-    const response = await page.goto(`${baseUrl}/en/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
+    const livePage = await browser.newPage({ viewport: { width, height: width <= 430 ? 844 : 900 } });
+    const response = await livePage.goto(`${baseUrl}/en/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status(), `${width}px response`).toBe(200);
+    await expect(livePage.locator('figure[data-offer-media], a[data-commercial-action-source="CREATIVE"]')).toHaveCount(0);
+    await expect(livePage.locator("figure[data-offer-identity]").first()).toBeVisible();
+    await livePage.close();
+
+    const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 844 : 900 } });
+    await page.setContent(`<style>*{box-sizing:border-box}body{margin:0;padding:24px}.fixture{width:100%;display:grid;gap:24px}.fixture article{min-width:0}.actions{height:1px}</style><style>${styles}</style><main class="fixture">${figure("CARD", "adaptive-card-300x250.svg", 300, 250)}${figure("MOBILE_LANDSCAPE", "adaptive-mobile-320x100.svg", 320, 100)}${figure("STRIP", "adaptive-strip-320x50.svg", 320, 50)}${figure("WIDE", "adaptive-wide-728x90.svg", 728, 90)}</main>`, { waitUntil: "load" });
 
     for (const family of ["CARD", "MOBILE_LANDSCAPE", "STRIP", "WIDE"]) {
-      if (family === "WIDE") {
-        const wideResponse = await page.goto(`${baseUrl}/en/best-offers?visualFixture=true`, { waitUntil: "networkidle" });
-        expect(wideResponse?.status(), `${width}px wide response`).toBe(200);
-      }
       const figure = page.locator(`figure[data-presentation-family="${family}"]`).first();
       await expect(figure, `${width}px ${family}`).toBeAttached();
       await figure.scrollIntoViewIfNeeded();
@@ -81,16 +84,16 @@ test("mixed commercial fixtures preserve physical geometry at every required wid
   }
 });
 
-test("blocked promotional fixtures remain visible and inert", async ({ page }) => {
-  test.skip(requireAuthorized && !requireBlocked, "Run this assertion in a local or explicitly blocked commercial state.");
+test("retired promotional fixtures are absent and replacement operator identity stays inert", async ({ page }) => {
   for (const path of ["/en/bonuses?visualFixture=true", "/en/best-offers?visualFixture=true"]) {
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
-    const creative = page.locator("figure[data-offer-media]").first();
-    await creative.scrollIntoViewIfNeeded();
-    await expect(creative).toBeVisible();
+    const identity = page.locator("figure[data-offer-identity]").first();
+    await identity.scrollIntoViewIfNeeded();
+    await expect(identity).toBeVisible();
+    await expect(page.locator("figure[data-offer-media]")).toHaveCount(0);
     await expect(page.locator('a[data-commercial-action-source="CREATIVE"]')).toHaveCount(0);
-    await creative.click({ force: true });
+    await identity.click({ force: true });
     await expect(page.locator("dialog[open]")).toHaveCount(0);
     await expect(page.locator('main a[href^="http"]')).toHaveCount(0);
   }
@@ -126,30 +129,33 @@ test("a COMPOSED 320×50 asset renders as the real strip without cloned identity
   expect(captionSizes.every((size) => size >= 12)).toBe(true);
 });
 
-test("Best Offers promotes strip and wide inventory into deliberate full-width bands", async ({ browser }) => {
+test("Best Offers replaces promotional bands with contained operator-identity compositions", async ({ browser }) => {
   for (const width of [390, 768, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: width === 390 ? 844 : 900 } });
     const response = await page.goto(`${baseUrl}/en/best-offers?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
-    for (const family of ["STRIP", "WIDE"]) {
-      const figure = page.locator(`figure[data-presentation-family="${family}"]`).first();
+    await expect(page.locator('figure[data-offer-media], figure[data-presentation-family="STRIP"], figure[data-presentation-family="WIDE"]')).toHaveCount(0);
+    for (const variant of ["featured", "secondary"]) {
+      const figure = page.locator(`figure[data-offer-identity="${variant}"]`).first();
       await figure.scrollIntoViewIfNeeded();
       await expect(figure).toBeVisible();
-      const imageGeometry = await decodedImageGeometry(figure.locator("img").first());
       const parentGeometry = await figure.evaluate((element) => {
         const article = element.closest("article");
-        if (!article) throw new Error("Best Offers creative is missing its article");
+        if (!article) throw new Error("Best Offers operator identity is missing its article");
         const figureRect = element.getBoundingClientRect();
         const articleRect = article.getBoundingClientRect();
         return {
+          height: figureRect.height,
           widthCoverage: figureRect.width / articleRect.width,
           columns: getComputedStyle(article).gridTemplateColumns.split(" ").filter(Boolean).length,
+          horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
         };
       });
-      expect(imageGeometry.figureHeight).toBeLessThan(190);
-      expect(imageGeometry.imageWidth).toBeLessThanOrEqual(imageGeometry.naturalWidth + 1);
-      expect(parentGeometry.widthCoverage).toBeGreaterThan(.9);
-      expect(parentGeometry.columns).toBe(1);
+      expect(parentGeometry.height, `${width}px ${variant} height`).toBeLessThan(240);
+      expect(parentGeometry.widthCoverage, `${width}px ${variant} containment`).toBeGreaterThan(0);
+      expect(parentGeometry.widthCoverage, `${width}px ${variant} containment`).toBeLessThanOrEqual(1.01);
+      expect(parentGeometry.columns, `${width}px ${variant} columns`).toBeGreaterThanOrEqual(1);
+      expect(parentGeometry.horizontalOverflow, `${width}px ${variant} overflow`).toBe(false);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
     await page.close();
@@ -174,7 +180,7 @@ test("one deterministic page presents all required mixed inventory states intent
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
-test("review hero stays inert while promotional media remains in the offer block", async ({ browser }) => {
+test("review hero and offer block stay logo-only with responsive containment", async ({ browser }) => {
   for (const width of [390, 768, 1100, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: width === 390 ? 844 : 900 } });
     const response = await page.goto(`${baseUrl}/en/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
@@ -185,23 +191,21 @@ test("review hero stays inert while promotional media remains in the offer block
     await expect(hero.locator("a,button")).toHaveCount(0);
     await expect(page.locator('a[data-commercial-action-placement="CASINO_DETAIL_HERO"]')).toHaveCount(0);
 
-    const offer = page.locator('figure[data-presentation-family="STRIP"]');
-    await offer.scrollIntoViewIfNeeded();
-    await expect(offer).toBeVisible();
-    const geometry = await decodedImageGeometry(offer.locator("img").first());
-    const containingGeometry = await offer.evaluate((element) => {
+    const containingGeometry = await hero.evaluate((element) => {
       const figure = element.getBoundingClientRect();
       const card = element.parentElement?.getBoundingClientRect();
       return {
         figureWidth: figure.width,
+        figureHeight: figure.height,
         cardWidth: card?.width ?? 0,
         horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       };
     });
-    expect(geometry.figureHeight).toBeLessThan(150);
-    expect(geometry.imageWidth).toBeLessThanOrEqual(geometry.naturalWidth + 1);
-    expect(containingGeometry.figureWidth).toBeLessThanOrEqual(containingGeometry.cardWidth + 48);
+    expect(containingGeometry.figureHeight).toBeGreaterThan(0);
+    expect(containingGeometry.figureHeight).toBeLessThan(620);
+    expect(containingGeometry.figureWidth).toBeLessThanOrEqual(containingGeometry.cardWidth + 1);
     expect(containingGeometry.horizontalOverflow).toBe(false);
+    await expect(page.locator('figure[data-offer-media], a[data-commercial-action-source="CREATIVE"], [data-casino-profile-hosted-media]')).toHaveCount(0);
     await expect(page.locator('a[data-commercial-action-placement="CASINO_OFFER_BLOCK"]')).toHaveCount(0);
     await page.close();
   }

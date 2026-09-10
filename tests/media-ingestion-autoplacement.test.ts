@@ -503,7 +503,7 @@ test("offer mismatch stays independent from otherwise valid FI/en targeting", ()
   assert.ok(result.every((item) => item.state !== "AUTO_ASSIGN_DRAFT"));
 });
 
-test("Media Operations is a separate exact-resource MCP surface with nine bounded tools", () => {
+test("historical Media MCP definitions stay bounded while active operational authorization is retired", () => {
   const config = resolveMediaMcpConfig("https://b4gamble.com/api/mcp/media", { MEDIA_OPERATIONS_MCP_ENABLED: "true", MEDIA_OPERATIONS_MCP_PUBLIC_ORIGIN: "https://b4gamble.com" });
   assert.ok(config);
   assert.equal(config.resource, "https://b4gamble.com/api/mcp/media");
@@ -536,9 +536,14 @@ test("Media Operations is a separate exact-resource MCP surface with nine bounde
 
   const staff = { id: "33333333-3333-4333-8333-333333333333", userId: "user-1", email: "staff@example.com", name: "Staff", role: "ADMIN" as const };
   const token = { id: "token", clientId: "client", userId: "user-1", sessionId: null, scopes: ["media:read"], resources: [config.resource], expiresAt: new Date("2099-01-01"), revoked: null, session: null, client: { disabled: false, tokenEndpointAuthMethod: "none", applicationType: "web", metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: config.resource } } };
-  assert.equal(validateOperationalMcpTokenRecord(token, staff, config, "media:read").staff.id, staff.id);
+  assert.throws(() => validateOperationalMcpTokenRecord(token, staff, config, "media:read"), /Requested OAuth scope is not permitted/);
   assert.throws(() => validateOperationalMcpTokenRecord({ ...token, resources: ["https://b4gamble.com/api/mcp/commercial"] }, staff, config, "media:read"), /wrong resource/);
-  assert.throws(() => validateOperationalMcpTokenRecord({ ...token, scopes: ["commercial:read"] }, staff, config, "media:read"), /scope is not permitted/);
+  assert.throws(() => validateOperationalMcpTokenRecord({ ...token, scopes: ["commercial:read"] }, staff, config, "media:read"), /insufficient scope/);
+  const operationalRouting = readFileSync("lib/mcp/operational-routing.ts", "utf8");
+  const activeRoute = readFileSync("app/api/mcp/media/route.ts", "utf8");
+  assert.doesNotMatch(operationalRouting, /resolveMediaMcpConfig|MediaMcpConfig/);
+  assert.match(activeRoute, /retiredMediaResponse/);
+  assert.doesNotMatch(activeRoute, /mediaMcpServer|handleMediaMcpRequest/);
 });
 
 test("structural boundary contains no parser execution, publication, route creation, or destructive asset operation", () => {

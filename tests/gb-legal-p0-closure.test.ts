@@ -94,8 +94,8 @@ test("GB launch runtime has no non-essential product analytics provider or activ
   assert.doesNotMatch(source("lib/analytics/product-analytics.ts"), /process\.env/);
   const privacy = source("app/(public)/privacy/page.tsx");
   assert.match(privacy, /do not run non-essential product analytics or session replay/);
-  assert.match(privacy, /vetted partner-hosted creative can make a no-referrer media or impression request/);
-  assert.match(privacy, /no response set a cookie and no cookie or browser-storage write was observed/);
+  assert.match(privacy, /do not load partner-hosted promotional creatives/);
+  assert.match(privacy, /do not load partner-hosted promotional creative frames, media pixels or impression requests/);
 });
 
 test("Article 27 particulars publish the confirmed EU and UK representation", () => {

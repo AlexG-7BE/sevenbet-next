@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 
 import { CasinoProfile } from "@/components/casino-profile/CasinoProfile";
-import { CasinoProfileMediaStrip } from "@/components/casino-profile/CasinoProfileMediaStrip";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { profileEditorialDocument } from "@/lib/casino-profile/presentation";
@@ -99,7 +98,6 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
   return <>
     <CommercialSurfaceView surface="casino_review" />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
-    <CasinoProfileMediaStrip casino={runtimeCasino} messages={messages} />
     <CasinoProfile availableForPresentation={loaded.availableForPresentation} casino={runtimeCasino} editorial={editorial} messages={messages} presentation={presentation} />
   </>;
 }

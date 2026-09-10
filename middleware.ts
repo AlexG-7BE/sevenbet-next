@@ -11,7 +11,6 @@ import {
   createCspNonce,
   CSP_NONCE_REQUEST_HEADER,
 } from "@/lib/security/content-security-policy";
-import { ownsPartnerHostedFramePolicy } from "@/lib/media/partner-hosted-frame-path";
 import {
   isLocalizedPublicDestination,
   parsePublicMarketRoute,
@@ -25,6 +24,7 @@ import {
   languageRouteByLocale,
   languageRouteByPublicSlug,
   localeForLanguageSegment,
+  marketProfileByCountry,
   marketProfileByLocale,
   marketProfileByRouteMarket,
   publicMarketPath,
@@ -38,15 +38,8 @@ import {
   programmeLocaleFromPath,
   parseProgrammeRoute,
   PROGRAMME_PRESENTATION_CONTEXT,
-  programmeRoute,
 } from "@/lib/programme/presentation";
 import { programmeMutationAccessCategory } from "@/lib/programme/mutation-access";
-import {
-  PARTNER_PREVIEW_COOKIE,
-  partnerPreviewAuthorized,
-  partnerPreviewConfiguredToken,
-  partnerPreviewEnabled,
-} from "@/lib/partner-preview/authority";
 
 const adminCookieName = "sevenbet_admin_preview";
 const chatGptWorkOrigin = "https://chatgpt.com";
@@ -135,14 +128,15 @@ async function inheritedPresentation(request: NextRequest, pathname: string) {
   if (!token || (context !== "public-v1" && context !== PROGRAMME_PRESENTATION_CONTEXT)) return null;
 
   const market = marketProfileByRouteMarket(request.headers.get(PRESENTATION_MARKET_HEADER));
-  const locale = market
-    ? localeForLanguageSegment(market, request.headers.get(PRESENTATION_LANGUAGE_HEADER))
-    : null;
+  const locale = context === PROGRAMME_PRESENTATION_CONTEXT
+    ? languageRouteByPublicSlug(request.headers.get(PRESENTATION_LANGUAGE_HEADER))?.defaultLocale ?? null
+    : market
+      ? localeForLanguageSegment(market, request.headers.get(PRESENTATION_LANGUAGE_HEADER))
+      : null;
   if (!market || !locale) return null;
   const validDestination = context === "public-v1"
     ? isLocalizedPublicDestination(pathname, market)
     : isProgrammeLocale(locale)
-      && programmeRoute(locale).routeMarket === market.routeMarket
       && (pathname === "/program" || pathname.startsWith("/program/"));
   if (!validDestination) return null;
 
@@ -243,7 +237,6 @@ function isolateMarketResponse(response: NextResponse, equivalentPathname: strin
 
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
-  const partnerHostedFramePolicy = ownsPartnerHostedFramePolicy(pathname);
   const nonce = createCspNonce();
   const contentSecurityPolicy = buildContentSecurityPolicy(nonce, {
     development: process.env.NODE_ENV === "development",
@@ -261,10 +254,8 @@ export async function middleware(request: NextRequest) {
     ? NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } })
     : NextResponse.next({ request: { headers: requestHeaders } });
   const secureResponse = (response: NextResponse) => {
-    if (!partnerHostedFramePolicy) {
-      response.headers.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
-      response.headers.set("X-Frame-Options", "DENY");
-    }
+    response.headers.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
+    response.headers.set("X-Frame-Options", "DENY");
     return response;
   };
 
@@ -288,26 +279,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === "/partner-preview" || pathname.startsWith("/partner-preview/")) {
-    if (!partnerPreviewEnabled()) return secureResponse(nextResponse());
-    const configuredToken = partnerPreviewConfiguredToken();
-    const queryToken = searchParams.get("token");
-    if (configuredToken && partnerPreviewAuthorized(queryToken)) {
-      const destination = request.nextUrl.clone();
-      destination.searchParams.delete("token");
-      const response = NextResponse.redirect(destination);
-      response.cookies.set(PARTNER_PREVIEW_COOKIE, configuredToken, {
-        httpOnly: true,
-        sameSite: "strict",
-        secure: process.env.NODE_ENV === "production",
-        path: "/partner-preview",
-        maxAge: 4 * 60 * 60,
-      });
-      response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
-      return privateAdminResponse(secureResponse(response));
-    }
-    const response = nextResponse();
-    response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
-    return privateAdminResponse(secureResponse(response));
+    return secureResponse(new NextResponse(null, {
+      status: 410,
+      headers: { "Cache-Control": "private, no-store", "X-Robots-Tag": "noindex, nofollow, noarchive" },
+    }));
   }
 
   // Next invokes middleware again for an internal rewrite. Carry presentation
@@ -350,8 +325,8 @@ export async function middleware(request: NextRequest) {
     ? programmeLocaleFromPath(searchParams.get("returnTo"))
     : null;
   if (programmeLoginLocale) {
-    const route = programmeRoute(programmeLoginLocale);
-    const market = marketProfileByRouteMarket(route.routeMarket);
+    const trustedCountry = requestCountrySignalFromHeaders(request.headers)?.countryCode;
+    const market = marketProfileByCountry(trustedCountry) ?? DEFAULT_MARKET_PROFILE;
     if (market) {
       requestHeaders.set(PRESENTATION_CONTEXT_HEADER, PROGRAMME_PRESENTATION_CONTEXT);
       requestHeaders.set(PRESENTATION_MARKET_HEADER, market.routeMarket);
@@ -363,14 +338,19 @@ export async function middleware(request: NextRequest) {
   }
 
   const programmeMarketRoute = parseProgrammeRoute(pathname);
+  if (programmeMarketRoute?.legacy) {
+    const destination = new URL(request.url);
+    destination.pathname = programmeMarketRoute.canonicalPathname;
+    return secureResponse(NextResponse.redirect(destination, 308));
+  }
   if (programmeMarketRoute?.trailingSlash) {
     const destination = new URL(request.url);
     destination.pathname = programmeMarketRoute.pathname;
     return secureResponse(NextResponse.redirect(destination, 308));
   }
   if (programmeMarketRoute) {
-    const market = marketProfileByRouteMarket(programmeMarketRoute.route.routeMarket);
-    if (!market) return secureResponse(nextResponse());
+    const trustedCountry = requestCountrySignalFromHeaders(request.headers)?.countryCode;
+    const market = marketProfileByCountry(trustedCountry) ?? DEFAULT_MARKET_PROFILE;
     requestHeaders.set(PRESENTATION_CONTEXT_HEADER, PROGRAMME_PRESENTATION_CONTEXT);
     requestHeaders.set(PRESENTATION_MARKET_HEADER, market.routeMarket);
     requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, programmeMarketRoute.route.locale.split("-")[0].toLowerCase());

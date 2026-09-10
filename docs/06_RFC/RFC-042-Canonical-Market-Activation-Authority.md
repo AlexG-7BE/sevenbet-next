@@ -10,6 +10,10 @@
 CANONICAL MARKET ACTIVATION MIGRATION — FOUNDER EXECUTION AUTHORIZATION`,
 SHA-256 `9601a2a66f0a566a1a08758fff303fe63133a9ab3e192df9a4d33f85cc9f25b8`.
 
+**Authority amendment:** [RFC-044](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md)
+retires promotional-media bindings and inputs. `MarketActivation` remains the
+sole commercial authority; media can neither activate nor block it.
+
 ## Decision
 
 `MarketActivation` is the only B4GAMBLE-owned Production commercial authority
@@ -132,8 +136,8 @@ drift causes only the required reconciliation and re-verification.
 
 ## Runtime readers
 
-Public Casino pages, directory CTAs, public offer action projections,
-commercial media action bindings and `/r/{slug}` resolve an exact active
+Public Casino pages, directory CTAs, public offer action projections and
+`/r/{slug}` resolve an exact active
 `MarketActivation` plus its bound objects, or the explicit `ZZ` compatibility
 row only when no exact row exists and the real request country is outside its
 canonical deny scope. Runtime validates relational shape and credential-free
@@ -163,7 +167,7 @@ Legacy data is preserved. Its post-cutover role is one-way:
 | PartnerRoute projection | migration/shadow/health input; bound route dependency |
 | Founder global-default metadata | one-time/reconciliation input for the bounded `ZZ` compatibility rows; never a direct runtime gate |
 | public Casino/offer projections | editorial/read-model input, never final authority |
-| Media Operations | creative provenance and assignment input, never commercial authority |
+| Media Operations | historical audit evidence only; retired from controller, reconciliation and runtime input by RFC-044 |
 
 The allowed synchronization direction is `MarketActivation → compatibility`.
 Legacy state may be inspected by backfill, diagnostics and shadow comparison,

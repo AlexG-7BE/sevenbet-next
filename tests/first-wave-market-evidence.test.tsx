@@ -41,11 +41,12 @@ test("bounded automated language QA passes every European machine-translated cat
 test("review states distinguish source, machine translation, AI QA and Founder authority without human-review claims", () => {
   const source = readFileSync("lib/i18n/review-state.ts", "utf8");
   const acceptedLocales = new Set(["de-DE", "es-ES", "es-PE", "sv-SE", "da-DK", "el-GR"]);
+  const coreReadyLocales = new Set(["de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO"]);
   assert.doesNotMatch(source, /linguisticReview|HUMAN_REVIEW_REQUIRED|NATIVE_SPEAKER_REQUIRED/);
   for (const [locale, state] of Object.entries(TRANSLATION_REVIEW_STATE)) {
     if (locale === "en-GB") continue;
     assert.equal(state.content, "MACHINE_TRANSLATED", locale);
-    assert.equal(state.publicExperience, acceptedLocales.has(locale) || locale === "es-PE" ? "PUBLIC_CORE_READY" : ["en-CA", "fr-CA"].includes(locale) ? "ARCHITECTURE_ONLY" : "HOME_READY", locale);
+    assert.equal(state.publicExperience, coreReadyLocales.has(locale) ? "PUBLIC_CORE_READY" : ["en-CA", "fr-CA"].includes(locale) ? "ARCHITECTURE_ONLY" : "HOME_READY", locale);
     assert.equal(state.aiLanguageQa, ["en-CA", "fr-CA"].includes(locale) ? "AI_LANGUAGE_QA_REQUIRED" : "AI_LANGUAGE_QA_PASSED", locale);
     assert.equal(state.founderPublication, acceptedLocales.has(locale) ? "FOUNDER_PUBLICATION_ACCEPTED" : "FOUNDER_PUBLICATION_NOT_ACCEPTED", locale);
     assert.equal(founderEditorialPublicationAccepted(locale as keyof typeof TRANSLATION_REVIEW_STATE), acceptedLocales.has(locale), locale);

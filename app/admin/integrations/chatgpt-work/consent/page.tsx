@@ -15,7 +15,7 @@ import {
 import { commercialMcpDisabledResponse } from "@/lib/mcp/commercial/config";
 import { getCommercialMcpConsent } from "@/lib/mcp/commercial/oauth";
 import { resolveOperationalMcpResourceConfig } from "@/lib/mcp/operational-routing";
-import { isMediaMcpConfig, operationalMcpLabel, operationalMcpPermission } from "@/lib/mcp/operational-policy";
+import { operationalMcpLabel, operationalMcpPermission } from "@/lib/mcp/operational-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +68,7 @@ export default async function CommercialMcpConsentPage({
     <main className="pageShell mcpAuthShell">
       <Container className="narrow">
         <Card className="adminLogin mcpAuthCard">
-          <Badge tone="green">Delegated {isMediaMcpConfig(config) ? "media" : "commercial"} access</Badge>
+          <Badge tone="green">Delegated commercial access</Badge>
           <div>
             <p className="mcpAuthEyebrow">{consent.client.name ?? "ChatGPT Work"}</p>
             <h1>Allow access to B4GAMBLE {operationalMcpLabel(config)}?</h1>
@@ -92,24 +92,6 @@ export default async function CommercialMcpConsentPage({
                 <span>Create or update prospects, provenance, notes, tasks, next actions, drafts, evidenced received terms, and review proposals.</span>
               </article>
             ) : null}
-            {consent.scopes.includes("media:read") ? (
-              <article>
-                <strong>Read Media Operations plans</strong>
-                <span>Inspect audit-safe ingestion evidence, first-party previews, analysis, recommendations, and plan-owned draft operations.</span>
-              </article>
-            ) : null}
-            {consent.scopes.includes("media:safe_write") ? (
-              <article>
-                <strong>Prepare bounded draft media</strong>
-                <span>Ingest validated raster media, analyze it, create draft plans, and apply or roll back only plan-owned draft assignments.</span>
-              </article>
-            ) : null}
-            {consent.scopes.includes("media:production_write") ? (
-              <article>
-                <strong>Activate bounded Production media revisions</strong>
-                <span>Preflight and atomically activate exact-offer media revisions, or restore their recorded previous known-good revision.</span>
-              </article>
-            ) : null}
             {consent.scopes.includes("offline_access") ? (
               <article>
                 <strong>Stay connected</strong>
@@ -120,7 +102,7 @@ export default async function CommercialMcpConsentPage({
 
           <aside className="mcpAuthorityBoundary">
             <strong>Not granted</strong>
-            <p>{isMediaMcpConfig(config) ? "Publishing, routes, CTAs, tracking activation, GEO or offer changes, asset deletion, deployment, and Programme/private data." : "Approval, ACTIVE status, sending, submission, terms acceptance, tracking activation, Production administration, and Programme/private data."}</p>
+            <p>Approval, ACTIVE status, sending, submission, terms acceptance, tracking activation, Production administration, and Programme/private data.</p>
           </aside>
 
           <form className="mcpConsentActions" action="/api/mcp/oauth/consent" method="post">

@@ -6,10 +6,10 @@ import { cache } from "react";
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import { parsePresentationPreference, PRESENTATION_PREFERENCE_COOKIE } from "./presentation-preference";
 import { resolvePresentationContext } from "./presentation-resolver";
+import { languageRouteByPublicSlug } from "./registry";
 import {
   PRESENTATION_CONTEXT_HEADER,
   PRESENTATION_LANGUAGE_HEADER,
-  PRESENTATION_MARKET_HEADER,
 } from "./routing";
 import { PROGRAMME_PRESENTATION_CONTEXT } from "@/lib/programme/presentation";
 
@@ -18,25 +18,26 @@ export const resolveServerPresentationContext = cache(async function resolveServ
   const context = requestHeaders.get(PRESENTATION_CONTEXT_HEADER);
   const publicPresentation = context === "public-v1";
   const programmePresentation = context === PROGRAMME_PRESENTATION_CONTEXT;
-  const routeMarket = requestHeaders.get(PRESENTATION_MARKET_HEADER);
   const routeLanguage = requestHeaders.get(PRESENTATION_LANGUAGE_HEADER);
-  const preference = publicPresentation
+  const preference = publicPresentation || programmePresentation
     ? parsePresentationPreference(cookieStore.get(PRESENTATION_PREFERENCE_COOKIE)?.value)
     : null;
-  const trustedCountryCode = publicPresentation
+  const trustedCountryCode = publicPresentation || programmePresentation
     ? requestCountrySignalFromHeaders(requestHeaders)?.countryCode
     : null;
   const resolution = resolvePresentationContext({
-    routeMarket: programmePresentation ? routeMarket : null,
     routeLanguage: publicPresentation || programmePresentation ? routeLanguage : null,
-    routeControlsMarket: programmePresentation,
     preference,
     trustedCountryCode,
     acceptLanguage: requestHeaders.get("accept-language"),
   });
+  const programmeLocale = programmePresentation
+    ? languageRouteByPublicSlug(resolution.language)?.defaultLocale ?? "en-GB"
+    : null;
 
   return {
     ...resolution,
+    locale: programmeLocale ?? resolution.locale,
     context: programmePresentation ? PROGRAMME_PRESENTATION_CONTEXT : publicPresentation ? "public-v1" : null,
     isExplicitRoute: resolution.source === "EXPLICIT_ROUTE",
   } as const;

@@ -56,7 +56,7 @@ test("full canonical card renders published evidence and only the governed inter
 });
 
 test("casino card formats its visible and accessible score for the presentation locale", () => {
-  const presentation = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de" });
+  const presentation = resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "DE" });
   const messages = productPageMessages("de-DE");
   const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={card()} classNames={classNames} messages={messages} position={1} presentation={presentation} />);
   assert.match(html, /aria-label="Editor Score 8,4 \/ 10"/);
@@ -93,7 +93,13 @@ test("first-result theatre stays neutral for default, search, sort and later-pag
     assert.doesNotMatch(html, /Featured published review|recommended review|best review|top review/i);
   }
   const empty = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={undefined} classNames={classNames} />);
-  assert.match(empty, /No published reviews for United Kingdom yet\./);
+  assert.match(empty, /No published reviews for the global catalog yet\./);
+  const trustedGb = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup
+    casino={undefined}
+    classNames={classNames}
+    presentation={resolvePresentationContext({ trustedCountryCode: "GB" })}
+  />);
+  assert.match(trustedGb, /No published reviews for United Kingdom yet\./);
   assert.doesNotMatch(empty, /Featured published review|recommended review|best review|top review/i);
 });
 

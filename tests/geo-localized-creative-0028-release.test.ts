@@ -81,6 +81,7 @@ test("0028 staged migration fixture and release inspection are additive and read
   const migrationCi = readFileSync("scripts/ci-migrations.mjs", "utf8");
   const release = readFileSync("lib/db/geo-localized-creative-0028-release.ts", "utf8");
   const casinoRepository = readFileSync("lib/repositories/casino.repository.ts", "utf8");
+  const retirement = readFileSync("prisma/migrations/0034_logo_only_media_retirement/migration.sql", "utf8");
   assert.match(fixture, /CasinoMediaAssignment/);
   assert.match(fixture, /CasinoBonusMediaAssignment/);
   assert.match(fixture, /AffiliateOfferMediaAssignment/);
@@ -90,11 +91,13 @@ test("0028 staged migration fixture and release inspection are additive and read
   assert.match(migrationCi, /existingAssignmentsGlobalNeutral/);
   assert.match(release, /SET TRANSACTION READ ONLY/);
   assert.doesNotMatch(release, /prisma migrate deploy|migrate reset|DROP TABLE|TRUNCATE/);
-  assert.match(casinoRepository, /typedAssignments && !placementSchema\.localizedAssignments/);
-  assert.match(casinoRepository, /GEO_LOCALIZED_CREATIVE_SCHEMA_PENDING/);
+  assert.match(retirement, /UPDATE "CasinoMediaAssignment"/);
+  assert.match(retirement, /CasinoMediaAssignment_retired_inactive_check/);
+  assert.doesNotMatch(retirement, /DELETE\s+FROM|DROP\s+TABLE|UPDATE\s+"MediaAsset"/i);
+  assert.doesNotMatch(casinoRepository, /typedAssignments && !placementSchema\.localizedAssignments|GEO_LOCALIZED_CREATIVE_SCHEMA_PENDING/);
 });
 
-test("public target authority and cache boundary stay server-side, trusted and private", () => {
+test("historical target resolution stays server-side while the active public mapper remains logo-only", () => {
   const publicApi = readFileSync("app/api/public/[resource]/route.ts", "utf8");
   const comparisonApi = readFileSync("app/api/public/comparison/route.ts", "utf8");
   const resolver = readFileSync("lib/media/placement-media.ts", "utf8");
@@ -104,8 +107,7 @@ test("public target authority and cache boundary stay server-side, trusted and p
   assert.match(publicApi, /private, no-store/);
   assert.match(publicApi, /X-Vercel-IP-Country, Accept-Language/);
   assert.match(comparisonApi, /X-Vercel-IP-Country, Accept-Language/);
-  assert.match(publicMapper, /resolvedPlacementMap/);
-  assert.match(publicMapper, /placementAssignments/);
-  assert.match(publicMapper, /resolveCasinoMedia/);
+  assert.doesNotMatch(publicMapper, /resolvedPlacementMap|placementAssignments|resolveCasinoMedia/);
+  assert.match(publicMapper, /if \(!url \|\| type !== "logo"\) return \[\]/);
   assert.doesNotMatch(resolver, /trackingUrl|affiliateHref|redirectSlug|commission|programme|cookie/i);
 });

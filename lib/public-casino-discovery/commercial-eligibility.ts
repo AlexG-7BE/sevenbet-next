@@ -52,7 +52,7 @@ export function eligibleDiscoveryOffers(context: DiscoveryContext, casinoId: str
   }).sort((a, b) => Number(b.featured) - Number(a.featured) || b.priority - a.priority || a.id.localeCompare(b.id));
 }
 
-export function eligibleDiscoveryMediaRoutes(
+export function eligibleDiscoveryRoutes(
   context: DiscoveryContext,
   countryCode: string | undefined,
   now: Date,

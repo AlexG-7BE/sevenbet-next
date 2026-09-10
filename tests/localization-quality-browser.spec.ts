@@ -44,8 +44,8 @@ test("Preview and Production-grade selectors expose only published languages", a
   await page.getByRole("button", { name: messages.changeMarketAndLanguage }).first().click();
   const menu = page.getByRole("menu", { name: messages.changeMarketAndLanguage }).first();
   const values = await menu.locator('button[name="choice"]').evaluateAll((buttons) => buttons.map((button) => (button as HTMLButtonElement).value));
-  expect(values).toEqual(["automatic", "en", "de", "es", "el", "sv", "da"]);
-  for (const denied of ["it", "pt", "nl", "fi", "nb", "fr"]) {
+  expect(values).toEqual(["automatic", ...coreProfiles.map((profile) => profile.publicSlug)]);
+  for (const denied of ["fr"]) {
     await expect(menu.locator(`button[value="${denied}"]`)).toHaveCount(0);
   }
 });

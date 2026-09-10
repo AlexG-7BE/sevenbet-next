@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
-import { CommercialOfferMedia, hasGovernedCommercialOfferAction, OperatorLogo } from "@/components/commercial-media/CommercialOfferMedia";
+import { hasGovernedCommercialOfferAction, OperatorIdentityPanel, OperatorLogo } from "@/components/commercial-media/OperatorIdentityPanel";
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
@@ -99,7 +99,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
             <small className={styles.termLabel}>{offerDataLabel(featured, messages, presentation)}</small>
             <h4>{featured.bonus.title}</h4>
           </div>
-          <CommercialOfferMedia messages={messages} offer={featured} variant="featured" />
+          <OperatorIdentityPanel messages={messages} offer={featured} variant="featured" />
           <dl className={styles.featuredTerms}>
             <div><dt>{messages.common.payout}</dt><dd>{payout(featured, messages)}</dd></div>
             <div><dt>{messages.common.wagering}</dt><dd>{featured.bonus.wageringMultiplier === null ? messages.common.notListed : `${featured.bonus.wageringMultiplier}x`}</dd></div>
@@ -124,7 +124,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
               <MobileMaterialTerms locale={presentation.locale} messages={messages} offer={offer} />
               <div className={styles.actions}><OfferAction messages={messages} offer={offer} placement="BEST_OFFER_SECONDARY" /><OfferReview messages={messages} offer={offer} presentation={presentation} /><OfferCompare messages={messages} offer={offer} /></div>
             </div>
-            <CommercialOfferMedia messages={messages} offer={offer} variant="secondary" />
+            <OperatorIdentityPanel messages={messages} offer={offer} variant="secondary" />
           </article>)}
         </div>
         {worthALook.length ? <section className={styles.worthALook} aria-labelledby="worth-a-look-title">

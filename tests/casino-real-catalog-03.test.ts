@@ -88,7 +88,7 @@ test("all release ingestion bundles contain zero commercial mappings", () => {
   }
 });
 
-test("Founder-supplied release logos are checksum-verified and bound into runtime media", () => {
+test("Founder-supplied release logos stay checksum-verified without runtime placement bindings", () => {
   const imported = corpus.logoProvenance.filter(({ status }) => status === "PARTNER_ASSET_IMPORTED");
   assert.deepEqual(imported.map(({ slug }) => slug).sort(), ["betsafe", "inkabet", "nordicbet", "rizk"]);
   for (const logo of imported) {
@@ -110,10 +110,12 @@ test("Founder-supplied release logos are checksum-verified and bound into runtim
   assert.match(mediaSource, /non-imported StarCasino\/SuperCasino logo must not be fabricated/);
 
   const vercel = JSON.parse(read("vercel.json")) as { buildCommand: string };
+  const logoOnlyPreflight = vercel.buildCommand.indexOf("scripts/logo-only-media-build-preflight.ts");
   const catalogRelease = vercel.buildCommand.indexOf("scripts/casino-real-catalog-03.ts build-preflight");
   const mediaBinding = vercel.buildCommand.indexOf("scripts/casino-real-catalog-03-media.ts build-preflight");
   const nextBuild = vercel.buildCommand.indexOf("next build");
-  assert.ok(catalogRelease >= 0 && catalogRelease < mediaBinding && mediaBinding < nextBuild);
+  assert.equal(mediaBinding, -1);
+  assert.ok(logoOnlyPreflight >= 0 && logoOnlyPreflight < catalogRelease && catalogRelease < nextBuild);
 });
 
 test("the supplied archive finding keeps corporate BGA art excluded while allowing the distinct Betsson brand upgrade", () => {
@@ -154,5 +156,6 @@ test("production mutation is bounded to Vercel production after the existing dat
   assert.match(releaseSource, /process\.env\.VERCEL_ENV !== "production"/);
   assert.match(mediaSource, /process\.env\.VERCEL_ENV !== "production"/);
   assert.ok(vercel.buildCommand.indexOf("scripts/vercel-build-preflight.ts") < vercel.buildCommand.indexOf("scripts/casino-real-catalog-03.ts build-preflight"));
-  assert.ok(vercel.buildCommand.indexOf("scripts/casino-real-catalog-03.ts build-preflight") < vercel.buildCommand.indexOf("scripts/casino-real-catalog-03-media.ts build-preflight"));
+  assert.equal(vercel.buildCommand.indexOf("scripts/casino-real-catalog-03-media.ts build-preflight"), -1);
+  assert.ok(vercel.buildCommand.indexOf("scripts/logo-only-media-build-preflight.ts") < vercel.buildCommand.indexOf("scripts/casino-real-catalog-03.ts build-preflight"));
 });

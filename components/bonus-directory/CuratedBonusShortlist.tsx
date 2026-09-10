@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
-import { CommercialOfferMedia, hasGovernedCommercialOfferAction, OperatorLogo } from "@/components/commercial-media/CommercialOfferMedia";
+import { hasGovernedCommercialOfferAction, OperatorIdentityPanel, OperatorLogo } from "@/components/commercial-media/OperatorIdentityPanel";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import {
@@ -72,7 +72,7 @@ export function CuratedBonusShortlist({ offers, messages, presentation }: { offe
       <div className={styles.identity}><OperatorLogo offer={offer} prominent={index === 0} /><div><h2>{offer.casino.name}</h2><small>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} <span aria-hidden="true">★★★★★</span></small></div></div>
       <dl><div><dt>{messages.common.wagering}</dt><dd>{offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || messages.common.notListed : `${offer.bonus.wageringMultiplier}x`}</dd></div><div><dt>{messages.common.minimumDeposit}</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.maximumBonus}</dt><dd>{money(offer.bonus.maximumBonus, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.payout}</dt><dd>{payout(offer, messages)}</dd></div></dl>
       <p>{offer.bonus.importantConditions.slice(0, 2).join(" · ") || offer.bonus.summary}</p>
-      <CommercialOfferMedia messages={messages} offer={offer} variant="bonus" />
+      <OperatorIdentityPanel messages={messages} offer={offer} variant="bonus" />
       {offer.dataClassification === "DEMO_FIXTURE" ? <b className={styles.demo}>{messages.common.demoData} — {messages.common.demoDisclosure}</b> : null}
       <div className={styles.actions}><Action messages={messages} offer={offer} /><Review messages={messages} offer={offer} presentation={presentation} /></div>
     </article>)}</div>

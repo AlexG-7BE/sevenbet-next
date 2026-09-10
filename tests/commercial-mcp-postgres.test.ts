@@ -291,7 +291,7 @@ test("real PostgreSQL atomically enforces hashed fixed-window MCP rate limits", 
   assert.doesNotMatch(JSON.stringify(rows), new RegExp(source.replaceAll(".", "\\.")));
 });
 
-test("real PostgreSQL binds discriminator-free DCR clients to exactly one discovery resource", async () => {
+test("real PostgreSQL binds DCR clients to Commercial discovery and rejects the retired Media resource", async () => {
   assertDisposablePostgres();
   const clientIds: string[] = [];
   try {
@@ -300,10 +300,11 @@ test("real PostgreSQL binds discriminator-free DCR clients to exactly one discov
       mediaOauthConfig,
     );
     const mediaText = await mediaResponse.text();
-    assert.equal(mediaResponse.status, 201, mediaText);
-    const mediaRegistration = JSON.parse(mediaText) as { client_id: string; scope: string };
-    clientIds.push(mediaRegistration.client_id);
-    assert.equal(mediaRegistration.scope, MEDIA_MCP_AUTHORIZATION_SCOPES.join(" "));
+    assert.equal(mediaResponse.status, 400, mediaText);
+    assert.deepEqual(JSON.parse(mediaText), {
+      error: "invalid_target",
+      error_description: `requested resource ${mediaOauthConfig.resource} is not allowed for client registration`,
+    });
 
     const commercialResponse = await registerCommercialMcpClient(
       dcrRequest(oauthConfig.registrationEndpoint, "ChatGPT"),
@@ -315,33 +316,16 @@ test("real PostgreSQL binds discriminator-free DCR clients to exactly one discov
     clientIds.push(commercialRegistration.client_id);
     assert.equal(commercialRegistration.scope, "commercial:read commercial:safe_write offline_access");
 
-    for (const [clientId, expectedResource, expectedScopes] of [
-      [mediaRegistration.client_id, mediaOauthConfig.resource, MEDIA_MCP_AUTHORIZATION_SCOPES],
-      [commercialRegistration.client_id, oauthConfig.resource, ["commercial:read", "commercial:safe_write", "offline_access"]],
-    ] as const) {
-      const client = await prisma.oauthClient.findUniqueOrThrow({
-        where: { clientId },
-        include: { resources: { select: { resourceId: true } } },
-      });
-      assert.deepEqual(client.resources.map((relation) => relation.resourceId), [expectedResource]);
-      assert.deepEqual(client.scopes, [...expectedScopes]);
-      assert.deepEqual(client.metadata, {
-        integration: "CHATGPT_WORK",
-        b4gambleMcpResource: expectedResource,
-      });
-    }
-
-    await validateOperationalMcpAuthorizationRequest(
-      authorizationRequest(mediaRegistration.client_id, mediaOauthConfig.resource, MEDIA_MCP_AUTHORIZATION_SCOPES),
-      mediaOauthConfig,
-    );
-    await assert.rejects(
-      validateOperationalMcpAuthorizationRequest(
-        authorizationRequest(mediaRegistration.client_id, oauthConfig.resource, ["commercial:read", "commercial:safe_write", "offline_access"]),
-        oauthConfig,
-      ),
-      /resource does not match/,
-    );
+    const client = await prisma.oauthClient.findUniqueOrThrow({
+      where: { clientId: commercialRegistration.client_id },
+      include: { resources: { select: { resourceId: true } } },
+    });
+    assert.deepEqual(client.resources.map((relation) => relation.resourceId), [oauthConfig.resource]);
+    assert.deepEqual(client.scopes, ["commercial:read", "commercial:safe_write", "offline_access"]);
+    assert.deepEqual(client.metadata, {
+      integration: "CHATGPT_WORK",
+      b4gambleMcpResource: oauthConfig.resource,
+    });
 
     await validateOperationalMcpAuthorizationRequest(
       authorizationRequest(commercialRegistration.client_id, oauthConfig.resource, ["commercial:read", "commercial:safe_write", "offline_access"]),

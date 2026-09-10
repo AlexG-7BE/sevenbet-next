@@ -154,6 +154,11 @@ test("13: exact device variant wins and DEFAULT remains the compatible fallback"
 
 test("14-15: prepared duplicate bytes are reused once and repeated preparation has a stable payload shape", () => {
   const plan = productionPlan();
+  plan.recommendations.push({
+    ...plan.recommendations[0]!,
+    id: "83000000-0000-4000-8000-000000000015",
+    placement: "CASINO_DIRECTORY_CARD",
+  });
   const once = prepareProductionSources([plan, structuredClone(plan)], {
     casinoId: CASINO_ID,
     affiliateOfferId: OFFER_ID,
@@ -172,7 +177,7 @@ test("14-15: prepared duplicate bytes are reused once and repeated preparation h
   );
 
   const invalid = structuredClone(plan);
-  invalid.recommendations[0]!.offerMatch = "MISMATCH";
+  invalid.recommendations.forEach((recommendation) => { recommendation.offerMatch = "MISMATCH"; });
   const blocked = prepareProductionSources([invalid], {
     casinoId: CASINO_ID,
     affiliateOfferId: OFFER_ID,

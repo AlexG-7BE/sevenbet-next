@@ -2,12 +2,11 @@ import { prisma } from "@/lib/db/prisma";
 import { resolveCommercialMcpConfig, type CommercialMcpConfig } from "@/lib/mcp/commercial/config";
 import { readBoundedBody } from "@/lib/mcp/commercial/http";
 import { hashCommercialMcpPresentedToken } from "@/lib/mcp/commercial/provider";
-import { resolveMediaMcpConfig } from "@/lib/mcp/media/config";
 
 type Endpoint = "authorize" | "consent" | "register" | "token" | "revoke";
 
 function configs(requestUrl: string) {
-  return [resolveCommercialMcpConfig(requestUrl), resolveMediaMcpConfig(requestUrl)].filter((value): value is CommercialMcpConfig => Boolean(value));
+  return [resolveCommercialMcpConfig(requestUrl)].filter((value): value is CommercialMcpConfig => Boolean(value));
 }
 
 function exactResource(requestUrl: string, resource: string | null | undefined) {

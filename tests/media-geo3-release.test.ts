@@ -93,14 +93,17 @@ test("MCP isolates Production orchestration and rollback behind the explicit Pro
   assert.doesNotMatch(revision, /destinationUrl:\s|trackingUrl:\s/);
 });
 
-test("public consumers use the canonical resolver and exact-offer UI shares the governed CTA action", () => {
+test("public consumers retire GEO3 presentation while governed CTA action stays available", () => {
   const mapper = readFileSync("lib/public-casino/public-casino.mapper.ts", "utf8");
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
-  const directory = readFileSync("components/casino-discovery/CasinoDiscoveryCard.tsx", "utf8");
-  assert.match(mapper, /resolveCasinoMedia/);
-  assert.doesNotMatch(mapper, /resolvedPlacementMap[\s\S]{0,400}resolveMedia\(/);
-  assert.match(profile, /CASINO_REVIEW_RIGHT_HERO/);
-  assert.match(profile, /GovernedCommercialAction/);
-  assert.match(directory, /CASINO_DIRECTORY_CARD/);
-  assert.match(directory, /GovernedCommercialAction/);
+  const directory = readFileSync("lib/services/public-casino-discovery.service.ts", "utf8");
+  const activeProjection = mapper.slice(mapper.indexOf("export function mapPublishedCasino"), mapper.indexOf("export function mapLegacyCasino"));
+  assert.doesNotMatch(mapper, /resolveCasinoMedia|resolvedPlacementMap|MediaCreative|MediaRevision/);
+  assert.doesNotMatch(activeProjection, /resolveCasinoMedia|resolvedPlacementMap/);
+  assert.match(activeProjection, /logo: allMedia\.find/);
+  assert.match(profile, /data-presentation-family": "LOGO_ONLY"/);
+  assert.match(profile, /source: "CTA", placement: "CASINO_OFFER_BLOCK"/);
+  assert.doesNotMatch(profile, /CASINO_REVIEW_RIGHT_HERO|source: "CREATIVE"/);
+  assert.match(directory, /hero:\s*null/);
+  assert.match(directory, /logo:\s*logoMediaDto/);
 });

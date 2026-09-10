@@ -401,7 +401,7 @@ test("authorized creative markup uses the governed route while blocked creative 
   assert.doesNotMatch(blockedCreative, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
 });
 
-test("review heroes use the exact governed offer, fail closed, then use canonical brand or logo fallback", async () => {
+test("review heroes are always B4GAMBLE logo-only compositions while governed CTA authority stays separate", async () => {
   const require = createRequire(import.meta.url);
   require.extensions[".css"] = () => undefined;
   (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -417,15 +417,10 @@ test("review heroes use the exact governed offer, fail closed, then use canonica
       messages,
       presentation,
     }));
-    assert.match(html, /data-creative-offer-id="affiliate-offer-id"/);
-    assert.match(html, /data-media-mode="CONTAIN"/);
-    assert.match(html, /data-media-source="EXACT_OFFER"/);
-    assert.match(html, /data-presentation-family="EXACT_OFFER_PROMOTION"/);
-    assert.match(html, /data-commercial-action-placement="CASINO_REVIEW_RIGHT_HERO"[^>]+data-commercial-action-source="CREATIVE"[^>]+href="\/r\/skol-current-offer"/);
+    assert.match(html, /data-media-mode="COMPOSED"[^>]+data-media-ratio="missing"[^>]+data-media-source="CODE_FALLBACK"[^>]+data-presentation-family="LOGO_ONLY"/);
+    assert.doesNotMatch(html, /data-creative-offer-id|data-commercial-action-source="CREATIVE"|skol-300x250/);
     assert.doesNotMatch(html, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
-    assert.match(html, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CREATIVE"[^>]+data-commercial-media-variant="casino-offer"[^>]+href="\/r\/skol-current-offer"/);
-    assert.match(html, /data-presentation-family="CARD"/);
-    assert.match(html, /data-commercial-action-source="CTA"[^>]+href="\/r\/skol-current-offer"/);
+    assert.match(html, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CTA"[^>]+href="\/r\/skol-current-offer"/);
     assert.doesNotMatch(html, /\/outbound\/skol-current-offer|You are leaving B4GAMBLE|<dialog/);
     assert.doesNotMatch(html, /href="https?:\/\/operator\.example/);
   }
@@ -444,8 +439,9 @@ test("review heroes use the exact governed offer, fail closed, then use canonica
   }));
   brandOnly.media = { ...brandOnly.media, hero: null, placements: undefined, logo: { id: "skol-logo", type: "logo", url: "/controlled/skol-logo.png", alt: "Skol logo", width: 200, height: 100, caption: null } };
   const fallback = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: brandOnly, editorial: null, messages, presentation }));
-  assert.match(fallback, /data-media-ratio="brand"/);
-  assert.doesNotMatch(fallback, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
+  assert.match(fallback, /data-media-mode="COMPOSED"[^>]+data-media-ratio="brand"[^>]+data-media-source="LOGO_COMPOSITION"[^>]+data-presentation-family="LOGO_ONLY"/);
+  assert.match(fallback, /src="\/controlled\/skol-logo\.png"/);
+  assert.doesNotMatch(fallback, /data-commercial-action-source="CREATIVE"|data-commercial-action-placement="CASINO_DETAIL_HERO"/);
 
   const brandArtCasino = profileCasino();
   const brandArt = { id: "brand-art", type: "hero" as const, url: "/controlled/skol-brand-art.jpg", alt: "Skol operator artwork", width: 1600, height: 900, caption: null };
@@ -455,9 +451,8 @@ test("review heroes use the exact governed offer, fail closed, then use canonica
   brandArtCasino.bonuses = brandArtCasino.bonuses.map((entry) => ({ ...entry, media: { ...entry.media, CASINO_REVIEW_RIGHT_HERO: { ...reviewBrandArtPlacement, variants: { DEFAULT: reviewBrandArtPlacement } } } }));
   brandArtCasino.media = { ...brandArtCasino.media, hero: brandArt, placements: { ...brandArtCasino.media.placements, CASINO_DETAIL_HERO: brandArtPlacement } };
   const brandArtHtml = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: brandArtCasino, editorial: null, messages, presentation }));
-  assert.match(brandArtHtml, /<aside[^>]+data-media-mode="COVER"[^>]+data-presentation-family="BRAND_ART"/);
-  assert.match(brandArtHtml, /src="\/controlled\/skol-brand-art\.jpg"/);
-  assert.doesNotMatch(brandArtHtml, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
+  assert.match(brandArtHtml, /data-media-mode="COMPOSED"[^>]+data-media-source="CODE_FALLBACK"[^>]+data-presentation-family="LOGO_ONLY"/);
+  assert.doesNotMatch(brandArtHtml, /skol-brand-art|data-commercial-action-source="CREATIVE"|data-commercial-action-placement="CASINO_DETAIL_HERO"/);
 
   const logoOfferCasino = profileCasino();
   const logoOffer = placementMedia("CASINO_OFFER_BLOCK", "/controlled/skol-logo.png", "COMPOSED", { width: 250, height: 250 });
@@ -466,29 +461,35 @@ test("review heroes use the exact governed offer, fail closed, then use canonica
   logoOfferCasino.bonuses = logoOfferCasino.bonuses.map((entry) => ({ ...entry, media: { CASINO_OFFER_BLOCK: logoOffer } }));
   const logoOfferHtml = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: logoOfferCasino, editorial: null, messages, presentation }));
   assert.match(logoOfferHtml, /data-presentation-family="LOGO_ONLY"/);
-  assert.doesNotMatch(logoOfferHtml, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CREATIVE"/);
+  assert.doesNotMatch(logoOfferHtml, /skol-300x250|data-commercial-action-source="CREATIVE"/);
 });
 
-test("Admin and public components keep one format contract and no raw partner embed path", () => {
+test("active Admin and public surfaces keep CTA paths while promotional placement tooling is retired", () => {
   const editor = readFileSync("components/admin/media/PlacementMediaEditor.tsx", "utf8");
   const selector = readFileSync("components/admin/media/MediaSelector.tsx", "utf8");
   const commercial = readFileSync("components/commercial-media/CommercialOfferMedia.tsx", "utf8");
   const commercialStyles = readFileSync("components/commercial-media/CommercialOfferMedia.module.css", "utf8");
+  const identity = readFileSync("components/commercial-media/OperatorIdentityPanel.tsx", "utf8");
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
-  assert.match(editor, /assessCommercialCreative/);
-  assert.match(editor, /image\/gif/);
-  assert.match(editor, /Valid unusual images remain assignable with a warning/);
+  const assignmentRoute = readFileSync("app/api/admin/media/assignments/route.ts", "utf8");
+  assert.match(editor, /Promotional placement media retired/);
+  assert.match(editor, /MarketActivation/);
+  assert.match(editor, /Canonical operator logos/);
+  assert.doesNotMatch(editor, /assessCommercialCreative|Upload and assign|Remove assignment|Deactivate assignment/);
+  assert.match(assignmentRoute, /retiredMediaResponse/);
+  assert.doesNotMatch(assignmentRoute, /mediaAssignmentService|assignMedia|unassignMedia/);
   assert.match(selector, /image\/gif/);
+  assert.match(identity, /operator logo only, never promotional artwork/i);
+  assert.match(identity, /ResponsivePlacementImage/);
   assert.match(commercial, /GovernedCommercialAction/);
-  assert.match(editor, /Expected presentation/);
-  assert.match(editor, /creativePresentationGuidance/);
   assert.match(commercialStyles, /\.frame\[data-presentation-family="CARD"\]/);
   assert.match(commercialStyles, /\.frame\[data-presentation-family="STRIP"\] \.mediaStage \{ height:78px/);
   assert.match(commercialStyles, /\.frame\[data-offer-media\]\[data-mobile-presentation-family="MOBILE_LANDSCAPE"\]/);
   assert.match(commercialStyles, /\.mediaArtwork \{ width:auto; height:auto; max-width:100%; max-height:100%/);
   assert.doesNotMatch(commercial, /compositionIdentity|controlledStrip/);
-  assert.match(profile, /placement: "CASINO_OFFER_BLOCK"/);
-  assert.doesNotMatch(profile, /context=\{\{ source: "CREATIVE", placement: "CASINO_DETAIL_HERO" \}\}/);
+  assert.match(profile, /context=\{\{ source: "CTA", placement: "CASINO_OFFER_BLOCK" \}\}/);
+  assert.match(profile, /data-presentation-family": "LOGO_ONLY"/);
+  assert.doesNotMatch(profile, /source: "CREATIVE"|CASINO_REVIEW_RIGHT_HERO/);
   for (const source of [commercial, profile]) {
     assert.doesNotMatch(source, /dangerouslySetInnerHTML|<iframe|partnerClickUrl|impression(?:Pixel|Url)/i);
   }

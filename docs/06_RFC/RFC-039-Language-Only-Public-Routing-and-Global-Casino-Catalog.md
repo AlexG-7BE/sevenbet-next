@@ -21,6 +21,11 @@ RFC-037 and RFC-038. Their durable language/market separation, exact factual
 market grain, evidence, publication, Programme/privacy firewall and cumulative
 commercial-authority requirements remain active.
 
+[RFC-044](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md)
+extends the published-language inventory while retaining this RFC's routing
+and authority model. The single canonical registry currently publishes `en`,
+`de`, `es`, `el`, `sv`, `da`, `it`, `pt`, `nl`, `fi` and `nb`.
+
 ## Decision
 
 Public presentation has two independent dimensions:
@@ -34,8 +39,9 @@ The public URL expresses language only. Market never appears in the canonical
 public URL and cannot be granted by a path, query, cookie, `Accept-Language` or
 client-supplied country value.
 
-Canonical examples are `/en`, `/de`, `/es`, `/el`, `/sv` and `/da`, followed by
-the unchanged localizable route suffix. BCP-47 remains useful for internal
+Canonical examples are `/en`, `/de`, `/es`, `/el`, `/sv`, `/da`, `/it`, `/pt`,
+`/nl`, `/fi` and `/nb`, followed by the unchanged localizable route suffix.
+BCP-47 remains useful for internal
 catalog selection, `<html lang>` and content variants; it is not public market
 authority.
 

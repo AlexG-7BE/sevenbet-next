@@ -7,9 +7,9 @@
     "en-GB",
     "de-DE",
     "es-ES",
+    "el-GR",
     "sv-SE",
     "da-DK",
-    "el-GR",
     "it-IT",
     "pt-PT",
     "nl-NL",
@@ -17,7 +17,7 @@
     "nb-NO"
   ],
   "checkedCatalogueKeys": 633,
-  "catalogDigest": "a03c7de908675cd0a2e90fec40a40e4ca0a28e15006297d345dc458fa93423c7",
+  "catalogDigest": "aa0fc39783a203843a6006b0460f26c3ae66bc5530a8ea111609b44038f650eb",
   "status": "AI_LANGUAGE_QA_PASSED",
   "userOwnedContentPolicy": "EXCLUDED_FROM_SYSTEM_COPY_LEAKAGE_CHECKS_AND_PRESERVED_VERBATIM",
   "locales": [
@@ -88,6 +88,28 @@
       "findings": []
     },
     {
+      "locale": "el-GR",
+      "status": "PASS",
+      "checkedStrings": 653,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_TRANSLATIONS": "PASS",
+        "UNTRANSLATED_SOURCE_KEYS": "PASS",
+        "INTERPOLATION_INTEGRITY": "PASS",
+        "OBVIOUS_ENGLISH_SYSTEM_COPY_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "PROTECTED_NAME_INTEGRITY": "PASS",
+        "SEMANTIC_IDENTIFIER_SEPARATION": "PASS",
+        "ESTABLISHED_TERMINOLOGY_CONSISTENCY": "PASS",
+        "LOCALE_ORTHOGRAPHY": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "NO_COMMERCIAL_RECOMMENDATION_SEMANTICS": "PASS"
+      },
+      "findings": []
+    },
+    {
       "locale": "sv-SE",
       "status": "PASS",
       "checkedStrings": 653,
@@ -111,28 +133,6 @@
     },
     {
       "locale": "da-DK",
-      "status": "PASS",
-      "checkedStrings": 653,
-      "checks": {
-        "SOURCE_KEY_COMPLETENESS": "PASS",
-        "NON_EMPTY_TRANSLATIONS": "PASS",
-        "UNTRANSLATED_SOURCE_KEYS": "PASS",
-        "INTERPOLATION_INTEGRITY": "PASS",
-        "OBVIOUS_ENGLISH_SYSTEM_COPY_LEAKAGE": "PASS",
-        "WRONG_LOCALE_LEAKAGE": "PASS",
-        "UNICODE_INTEGRITY": "PASS",
-        "HTML_TEXT_SAFETY": "PASS",
-        "PROTECTED_NAME_INTEGRITY": "PASS",
-        "SEMANTIC_IDENTIFIER_SEPARATION": "PASS",
-        "ESTABLISHED_TERMINOLOGY_CONSISTENCY": "PASS",
-        "LOCALE_ORTHOGRAPHY": "PASS",
-        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "NO_COMMERCIAL_RECOMMENDATION_SEMANTICS": "PASS"
-      },
-      "findings": []
-    },
-    {
-      "locale": "el-GR",
       "status": "PASS",
       "checkedStrings": 653,
       "checks": {

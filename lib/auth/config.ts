@@ -14,7 +14,6 @@ import {
   commercialMcpProviderTokenStorage,
   resolveCommercialMcpProviderResource,
 } from "@/lib/mcp/commercial/provider";
-import { resolveMediaMcpProviderResource } from "@/lib/mcp/media/provider";
 
 const COMMERCIAL_MCP_DURABLE_TOKEN_TTL_SECONDS = 10 * 365 * 24 * 60 * 60;
 
@@ -32,7 +31,6 @@ export function createSevenBetAuth({
   const operationalMcpPlugins = operationalMcpProvider
     ? (() => {
         const commercialMcpResource = resolveCommercialMcpProviderResource();
-        const mediaMcpResource = resolveMediaMcpProviderResource();
         return [
           oauthProvider({
             loginPage: "/admin/integrations/chatgpt-work/login",
@@ -40,7 +38,7 @@ export function createSevenBetAuth({
             accessTokenExpiresIn: COMMERCIAL_MCP_DURABLE_TOKEN_TTL_SECONDS,
             refreshTokenExpiresIn: COMMERCIAL_MCP_DURABLE_TOKEN_TTL_SECONDS,
             codeExpiresIn: 5 * 60,
-            scopes: ["commercial:read", "commercial:safe_write", "media:read", "media:safe_write", "media:production_write", "offline_access"],
+            scopes: ["commercial:read", "commercial:safe_write", "offline_access"],
             grantTypes: ["authorization_code", "refresh_token"],
             allowDynamicClientRegistration: true,
             allowUnauthenticatedClientRegistration: true,
@@ -49,9 +47,6 @@ export function createSevenBetAuth({
             clientRegistrationAllowedScopes: [
               "commercial:read",
               "commercial:safe_write",
-              "media:read",
-              "media:safe_write",
-              "media:production_write",
               "offline_access",
             ],
             resources: [
@@ -66,17 +61,10 @@ export function createSevenBetAuth({
                   "offline_access",
                 ],
               },
-              {
-                identifier: mediaMcpResource,
-                name: "B4GAMBLE Media Operations MCP",
-                accessTokenTtl: COMMERCIAL_MCP_DURABLE_TOKEN_TTL_SECONDS,
-                refreshTokenTtl: COMMERCIAL_MCP_DURABLE_TOKEN_TTL_SECONDS,
-                allowedScopes: ["media:read", "media:safe_write", "media:production_write", "offline_access"],
-              },
             ],
             resourceSeedMode: "merge",
             enforcePerClientResources: true,
-            clientRegistrationAllowedResources: [commercialMcpResource, mediaMcpResource],
+            clientRegistrationAllowedResources: [commercialMcpResource],
             refreshTokenReuseInterval: 0,
             clientPrivileges: () => false,
             disableJwtPlugin: true,

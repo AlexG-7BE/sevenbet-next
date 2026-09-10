@@ -1,0 +1,21 @@
+.logo { width:48px; height:48px; flex:0 0 auto; overflow:hidden; border:1px solid rgba(16,15,15,.13); border-radius:12px; display:grid; place-items:center; background:#fff; color:#100f0f; font-size:20px; font-weight:850; }
+.logo[data-prominent] { width:58px; height:58px; }
+.logo img { width:100%; height:100%; padding:6px; display:block; object-fit:contain; object-position:center; }
+.logo > span { display:grid; place-items:center; }
+
+.panel { width:100%; min-width:0; height:150px; margin:0; overflow:hidden; align-self:center; display:flex; flex-direction:column; background:#171616; color:#fafaf7; }
+.body { min-height:0; padding:22px 24px; position:relative; flex:1; display:flex; align-items:center; gap:18px; isolation:isolate; }
+.body::after { position:absolute; inset:0; z-index:-1; content:""; background:repeating-linear-gradient(135deg,transparent 0 24px,rgba(255,255,255,.025) 24px 25px); }
+.body div { min-width:0; display:grid; gap:5px; }
+.body span { color:#e4e24e; font-size:12px; line-height:16px; font-weight:750; letter-spacing:.13em; text-transform:uppercase; }
+.body strong { overflow-wrap:anywhere; font-size:20px; line-height:1.05; text-transform:uppercase; }
+.body i { width:74px; height:1px; position:absolute; top:28px; right:24px; background:#e4e24e; transform:rotate(-28deg); transform-origin:right; }
+.panel figcaption { min-height:42px; padding:10px 16px; border-top:1px solid rgba(250,250,247,.14); overflow:hidden; color:rgba(250,250,247,.64); font-size:12px; line-height:20px; letter-spacing:.06em; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
+
+@media (max-width:767px) {
+  .logo,.logo[data-prominent] { width:46px; height:46px; }
+  .panel { height:132px; }
+  .body { padding:18px 20px; }
+  .body i { display:none; }
+  .panel figcaption { min-height:38px; padding:8px 12px; }
+}

@@ -303,7 +303,7 @@ test("Best Offers never replaces a repository failure or eligible published shor
   assert.deepEqual(available.records.map((item) => item.casino.slug), ["published-eligible"]);
 });
 
-test("redirect authority failure preserves published editorial offers without actions", async () => {
+test("redirect authority failure preserves published editorial offers without actions or promotional hero media", async () => {
   const casinoStore: PublicCasinoStore = {
     listPublished: async () => [{
       casinoId: "11111111-1111-4111-8111-111111111111", version: 2, status: "PUBLISHED", archivedAt: null,
@@ -327,7 +327,7 @@ test("redirect authority failure preserves published editorial offers without ac
   const records = await new PublicOfferRepository(casinoStore, { redirectEnabled: true, now: new Date("2030-02-01T00:00:00.000Z") }).listOffers();
   assert.equal(records.length, 1);
   assert.equal(records[0].casino.logo?.type, "logo");
-  assert.deepEqual(records[0].casino.hero && [records[0].casino.hero.type, records[0].casino.hero.width, records[0].casino.hero.height], ["hero", 1600, 900]);
+  assert.equal(records[0].casino.hero, null);
   assert.equal(records[0].commercialAvailability, "UNAVAILABLE");
   assert.equal(records[0].action.href, null);
 });

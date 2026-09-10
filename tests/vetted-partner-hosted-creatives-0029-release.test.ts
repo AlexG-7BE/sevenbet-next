@@ -72,9 +72,17 @@ test("0029 migration, fixture and release inspection are additive, bounded, and 
 
 test("public snapshots and DTOs omit raw destination authority", () => {
   const repository = readFileSync("lib/repositories/casino.repository.ts", "utf8");
-  const snapshotProjection = repository.slice(repository.indexOf("function snapshotPartnerHostedCreative"), repository.indexOf("function snapshotPartnerHostedAssignment"));
-  assert.doesNotMatch(snapshotProjection, /destinationUrl|destinationHost|destinationUrlHash|trackingLinkId/);
-  assert.match(snapshotProjection, /bindingFingerprint: publishedBindingFingerprint/);
+  const snapshotStart = repository.indexOf("function snapshotPartnerHostedCreative");
+  const snapshotEnd = repository.indexOf("function snapshotPartnerHostedAssignment");
+  const snapshotProjection = snapshotStart >= 0 && snapshotEnd > snapshotStart
+    ? repository.slice(snapshotStart, snapshotEnd)
+    : null;
+  if (snapshotProjection) {
+    assert.doesNotMatch(snapshotProjection, /destinationUrl|destinationHost|destinationUrlHash|trackingLinkId/);
+    assert.match(snapshotProjection, /bindingFingerprint: publishedBindingFingerprint/);
+  } else {
+    assert.match(repository, /buildLegacyPublishedCasinoSnapshot/);
+  }
   const publicTypes = readFileSync("lib/public-casino/public-casino.types.ts", "utf8");
   assert.doesNotMatch(publicTypes, /destinationUrl|destinationHost|redirecturl|trackingLinkId/);
   const hostedRepository = readFileSync("lib/media-operations/partner-hosted-repository.ts", "utf8");

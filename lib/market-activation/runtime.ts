@@ -19,18 +19,10 @@ const runtimeInclude = {
       casinoId: true,
       casinoBonusId: true,
       programId: true,
-      status: true,
-      startAt: true,
-      expiresAt: true,
-      archivedAt: true,
       program: {
         select: {
           id: true,
           casinoId: true,
-          status: true,
-          workflowStatus: true,
-          archivedAt: true,
-          network: { select: { active: true, archivedAt: true } },
         },
       },
     },
@@ -39,10 +31,6 @@ const runtimeInclude = {
     select: {
       id: true,
       casinoId: true,
-      status: true,
-      offerStatus: true,
-      startsAt: true,
-      expiresAt: true,
     },
   },
   primaryTrackingLink: {
@@ -106,9 +94,7 @@ function activeRouteForCountry(
     && record.routeVerificationStatus === "HEALTHY"
     && record.routeLastCheckedAt !== null
     && scopeAllows
-    // RFC-042: MarketActivation is the sole positive and negative CTA authority.
-    // Compatibility lifecycle fields are returned for media freshness and
-    // controller diagnostics, but must not independently veto canonical ACTIVE.
+    // MarketActivation is the sole positive and negative CTA authority.
     && Boolean(record.affiliateOffer
       && record.affiliateOffer.casinoId === record.casinoId
       && record.affiliateOffer.program.casinoId === record.casinoId)
@@ -173,21 +159,6 @@ export class MarketActivationRuntime {
       casinoBonusId: activation.casinoBonusId,
       affiliateOfferId: activation.affiliateOfferId,
       slug: activation.redirectSlug!.slug,
-      mediaOfferAuthority: {
-        status: activation.affiliateOffer!.status,
-        startAt: activation.affiliateOffer!.startAt,
-        expiresAt: activation.affiliateOffer!.expiresAt,
-        archivedAt: activation.affiliateOffer!.archivedAt,
-        programStatus: activation.affiliateOffer!.program.status,
-        programWorkflowStatus: activation.affiliateOffer!.program.workflowStatus,
-        programArchivedAt: activation.affiliateOffer!.program.archivedAt,
-        networkActive: activation.affiliateOffer!.program.network.active,
-        networkArchivedAt: activation.affiliateOffer!.program.network.archivedAt,
-        bonusStatus: activation.casinoBonus?.status ?? null,
-        bonusOfferStatus: activation.casinoBonus?.offerStatus ?? null,
-        bonusStartsAt: activation.casinoBonus?.startsAt ?? null,
-        bonusExpiresAt: activation.casinoBonus?.expiresAt ?? null,
-      },
     }));
   }
 

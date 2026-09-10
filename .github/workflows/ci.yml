@@ -194,9 +194,7 @@ jobs:
       - run: npm run market-activation:postgres-test
       - run: npm run casino-ingest:postgres-test
       - run: npm run casino-population:postgres-test
-      - run: npm run placement-media:postgres-test
-      - run: npm run media-ingestion:postgres-test
-      - run: npm run media-geo3:postgres-test
+      - run: npm run media-retirement:postgres-test
       - run: npm run mvp-runtime:postgres-test
       - run: npm run mcp-bridge:postgres-test
       - name: Run one-connection Production DB reliability acceptance
@@ -206,6 +204,5 @@ jobs:
           BETTER_AUTH_URL: http://127.0.0.1:4173
           COMMERCIAL_MCP_ENABLED: "true"
           COMMERCIAL_MCP_PUBLIC_ORIGIN: http://127.0.0.1:4173
-          MEDIA_OPERATIONS_MCP_ENABLED: "true"
-          MEDIA_OPERATIONS_MCP_PUBLIC_ORIGIN: http://127.0.0.1:4173
+          MEDIA_OPERATIONS_MCP_ENABLED: "false"
         run: npm run production-db-reliability:postgres-test
