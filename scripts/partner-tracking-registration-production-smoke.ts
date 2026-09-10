@@ -11,15 +11,9 @@ if (!process.env.DIRECT_URL && process.env.PRODDB_POSTGRES_URL) {
   process.env.DIRECT_URL = process.env.PRODDB_POSTGRES_URL;
 }
 
-const [
-  { commercialMcpService },
-  { default: prisma },
-  { hashCommercialMcpProviderToken },
-] = await Promise.all([
-  import("@/lib/commercial/commercial-mcp-service"),
-  import("@/lib/db/prisma"),
-  import("@/lib/mcp/commercial/provider"),
-]);
+let commercialMcpService: (typeof import("@/lib/commercial/commercial-mcp-service"))["commercialMcpService"];
+let prisma: (typeof import("@/lib/db/prisma"))["default"];
+let hashCommercialMcpProviderToken: (typeof import("@/lib/mcp/commercial/provider"))["hashCommercialMcpProviderToken"];
 
 const EXPECTED_DATABASE_FINGERPRINT = "ce94f1e2b465c25d62b13a8c3f2db47aa07b96b541603c818ef6219c9c970a5e";
 const EXPECTED_REPOSITORY = "AlexG-7BE/sevenbet-next";
@@ -292,6 +286,14 @@ async function runLiveSchemaSmoke(sha: string) {
 }
 
 async function main() {
+  const [commercialModule, prismaModule, providerModule] = await Promise.all([
+    import("@/lib/commercial/commercial-mcp-service"),
+    import("@/lib/db/prisma"),
+    import("@/lib/mcp/commercial/provider"),
+  ]);
+  commercialMcpService = commercialModule.commercialMcpService;
+  prisma = prismaModule.default;
+  hashCommercialMcpProviderToken = providerModule.hashCommercialMcpProviderToken;
   const sha = assertAuthority();
   const mode = process.argv[2];
   const result = mode === "snapshot" ? await runBeforeStateSnapshot(sha)
@@ -301,7 +303,7 @@ async function main() {
   process.stdout.write(`${JSON.stringify(await result, null, 2)}\n`);
 }
 
-main().finally(async () => prisma.$disconnect()).catch((error) => {
+main().finally(async () => { if (prisma) await prisma.$disconnect(); }).catch((error) => {
   const code = error instanceof Error && /^[A-Z0-9_]+$/.test(error.message) ? error.message : "PRODUCTION_SMOKE_FAILED";
   process.stderr.write(`${code}\n`);
   process.exitCode = 1;
