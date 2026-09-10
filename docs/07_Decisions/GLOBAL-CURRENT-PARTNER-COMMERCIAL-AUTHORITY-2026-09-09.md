@@ -57,6 +57,29 @@ Every supported Partner × Casino × GEO row must resolve to exactly one of:
 
 Only an exact MarketActivation that the RFC-042 controller has converged to `desiredState=ACTIVE`, `status=ACTIVE`, and `routeVerificationStatus=HEALTHY` may expose a Production CTA. Exact legal and regulatory blocks remain disabled. Province-specific authority must not be replaced by a country-wide Canada activation. Locale selection never grants market authority.
 
+## GB control reconciliation — 2026-09-10
+
+The current-partner authority closes partner, account, KYC/AML, market-approval
+and contract-review workflow gates; it does not itself switch on the independent
+GB jurisdiction policy. Public UK Gambling Commission checks on 2026-09-10
+confirmed White Hat Gaming Limited account 52894 and its Remote Casino activity
+as `Active`, and confirmed the six exact Superfly domains in this rollout as
+`Active`. The underlying partner routes are technically healthy.
+
+The code-backed GB policy nevertheless remains
+`commercialAllowed=false` / `referralAllowed=false`. The six exact Superfly GB
+rows therefore remain `ACTION_REQUIRED_REGULATORY`, with their canonical links
+and redirects retained but their exact MarketActivations disabled. Changing
+that legal/commercial policy switch requires explicit authority distinct from
+the bounded technical route-verification authorization. IE and MT are not
+affected by the GB policy.
+
+Evidence:
+
+- `https://www.gamblingcommission.gov.uk/public-register/business/detail/52894`
+- `https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894`
+- `lib/jurisdiction/policies/gb.ts`
+
 ## Implementation record
 
 The deterministic machine-readable rollout matrix is `data/current-partner-global-rollout/matrix.v1.json`. The operational release record is `docs/06_Operations/Global-Current-Partner-Commercial-Rollout-2026-09-10.md`.

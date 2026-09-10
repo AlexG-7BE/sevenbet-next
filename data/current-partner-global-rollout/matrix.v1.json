@@ -10,9 +10,9 @@
     "uniqueSupportedGeoCount": 25,
     "totalRows": 540,
     "classification": {
-      "ACTIVE_HEALTHY": 30,
+      "ACTIVE_HEALTHY": 24,
       "BLOCKED_BY_LAW": 24,
-      "ACTION_REQUIRED_REGULATORY": 11,
+      "ACTION_REQUIRED_REGULATORY": 17,
       "BROKEN_ROUTE": 1,
       "MISSING_TRACKING_ROUTE": 474
     }
@@ -14023,8 +14023,8 @@
       "accountAuthority": "FOUNDER_CONFIRMED_APPROVED",
       "kycAml": "FOUNDER_CONFIRMED_CLEARED",
       "operatorMarketSupported": true,
-      "legalState": "ALLOWED",
-      "regulatoryAction": null,
+      "legalState": "ACTION_REQUIRED_REGULATORY",
+      "regulatoryAction": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "partnerTrackingUrlPresent": true,
       "trackingScope": "GENERIC_GLOBAL",
       "affiliateProgram": "Superfly Partners / White Hat Gaming:21 Privé",
@@ -14034,12 +14034,15 @@
       "trackingVerification": "HEALTHY",
       "marketActivation": "21-prive:GB:CASINO",
       "routeHealth": "HEALTHY",
-      "finalState": "ACTIVE_HEALTHY",
-      "reason": "Founder-approved current partner market with a technically valid partner route and no remaining direct legal gate.",
+      "finalState": "ACTION_REQUIRED_REGULATORY",
+      "reason": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "evidenceReferences": [
         "CRM:EVIDENCE:52a27b72-0da5-4a66-83f6-08a4549d6b21",
         "CRM:EVIDENCE:c1da25a7-255d-4cb4-80b5-5ea3a5bbabcf",
-        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09"
+        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/52894:2026-09-10",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894:2026-09-10",
+        "REPOSITORY:lib/jurisdiction/policies/gb.ts"
       ]
     },
     {
@@ -14212,8 +14215,8 @@
       "accountAuthority": "FOUNDER_CONFIRMED_APPROVED",
       "kycAml": "FOUNDER_CONFIRMED_CLEARED",
       "operatorMarketSupported": true,
-      "legalState": "ALLOWED",
-      "regulatoryAction": null,
+      "legalState": "ACTION_REQUIRED_REGULATORY",
+      "regulatoryAction": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "partnerTrackingUrlPresent": true,
       "trackingScope": "GENERIC_GLOBAL",
       "affiliateProgram": "Superfly Partners / White Hat Gaming:Diamond7",
@@ -14223,12 +14226,15 @@
       "trackingVerification": "HEALTHY",
       "marketActivation": "diamond7:GB:CASINO",
       "routeHealth": "HEALTHY",
-      "finalState": "ACTIVE_HEALTHY",
-      "reason": "Founder-approved current partner market with a technically valid partner route and no remaining direct legal gate.",
+      "finalState": "ACTION_REQUIRED_REGULATORY",
+      "reason": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "evidenceReferences": [
         "CRM:EVIDENCE:52a27b72-0da5-4a66-83f6-08a4549d6b21",
         "CRM:EVIDENCE:c1da25a7-255d-4cb4-80b5-5ea3a5bbabcf",
-        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09"
+        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/52894:2026-09-10",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894:2026-09-10",
+        "REPOSITORY:lib/jurisdiction/policies/gb.ts"
       ]
     },
     {
@@ -14401,8 +14407,8 @@
       "accountAuthority": "FOUNDER_CONFIRMED_APPROVED",
       "kycAml": "FOUNDER_CONFIRMED_CLEARED",
       "operatorMarketSupported": true,
-      "legalState": "ALLOWED",
-      "regulatoryAction": null,
+      "legalState": "ACTION_REQUIRED_REGULATORY",
+      "regulatoryAction": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "partnerTrackingUrlPresent": true,
       "trackingScope": "GENERIC_GLOBAL",
       "affiliateProgram": "Superfly Partners / White Hat Gaming:G'day Casino",
@@ -14412,12 +14418,15 @@
       "trackingVerification": "HEALTHY",
       "marketActivation": "gday-casino:GB:CASINO",
       "routeHealth": "HEALTHY",
-      "finalState": "ACTIVE_HEALTHY",
-      "reason": "Founder-approved current partner market with a technically valid partner route and no remaining direct legal gate.",
+      "finalState": "ACTION_REQUIRED_REGULATORY",
+      "reason": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "evidenceReferences": [
         "CRM:EVIDENCE:52a27b72-0da5-4a66-83f6-08a4549d6b21",
         "CRM:EVIDENCE:c1da25a7-255d-4cb4-80b5-5ea3a5bbabcf",
-        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09"
+        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/52894:2026-09-10",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894:2026-09-10",
+        "REPOSITORY:lib/jurisdiction/policies/gb.ts"
       ]
     },
     {
@@ -14590,8 +14599,8 @@
       "accountAuthority": "FOUNDER_CONFIRMED_APPROVED",
       "kycAml": "FOUNDER_CONFIRMED_CLEARED",
       "operatorMarketSupported": true,
-      "legalState": "ALLOWED",
-      "regulatoryAction": null,
+      "legalState": "ACTION_REQUIRED_REGULATORY",
+      "regulatoryAction": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "partnerTrackingUrlPresent": true,
       "trackingScope": "GENERIC_GLOBAL",
       "affiliateProgram": "Superfly Partners / White Hat Gaming:Hello Casino",
@@ -14601,12 +14610,15 @@
       "trackingVerification": "HEALTHY",
       "marketActivation": "hello-casino:GB:CASINO",
       "routeHealth": "HEALTHY",
-      "finalState": "ACTIVE_HEALTHY",
-      "reason": "Founder-approved current partner market with a technically valid partner route and no remaining direct legal gate.",
+      "finalState": "ACTION_REQUIRED_REGULATORY",
+      "reason": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "evidenceReferences": [
         "CRM:EVIDENCE:52a27b72-0da5-4a66-83f6-08a4549d6b21",
         "CRM:EVIDENCE:c1da25a7-255d-4cb4-80b5-5ea3a5bbabcf",
-        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09"
+        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/52894:2026-09-10",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894:2026-09-10",
+        "REPOSITORY:lib/jurisdiction/policies/gb.ts"
       ]
     },
     {
@@ -14779,8 +14791,8 @@
       "accountAuthority": "FOUNDER_CONFIRMED_APPROVED",
       "kycAml": "FOUNDER_CONFIRMED_CLEARED",
       "operatorMarketSupported": true,
-      "legalState": "ALLOWED",
-      "regulatoryAction": null,
+      "legalState": "ACTION_REQUIRED_REGULATORY",
+      "regulatoryAction": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "partnerTrackingUrlPresent": true,
       "trackingScope": "GENERIC_GLOBAL",
       "affiliateProgram": "Superfly Partners / White Hat Gaming:Skol Casino",
@@ -14790,12 +14802,15 @@
       "trackingVerification": "HEALTHY",
       "marketActivation": "skol-casino:GB:CASINO",
       "routeHealth": "HEALTHY",
-      "finalState": "ACTIVE_HEALTHY",
-      "reason": "Founder-approved current partner market with a technically valid partner route and no remaining direct legal gate.",
+      "finalState": "ACTION_REQUIRED_REGULATORY",
+      "reason": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "evidenceReferences": [
         "CRM:EVIDENCE:52a27b72-0da5-4a66-83f6-08a4549d6b21",
         "CRM:EVIDENCE:c1da25a7-255d-4cb4-80b5-5ea3a5bbabcf",
-        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09"
+        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/52894:2026-09-10",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894:2026-09-10",
+        "REPOSITORY:lib/jurisdiction/policies/gb.ts"
       ]
     },
     {
@@ -14968,8 +14983,8 @@
       "accountAuthority": "FOUNDER_CONFIRMED_APPROVED",
       "kycAml": "FOUNDER_CONFIRMED_CLEARED",
       "operatorMarketSupported": true,
-      "legalState": "ALLOWED",
-      "regulatoryAction": null,
+      "legalState": "ACTION_REQUIRED_REGULATORY",
+      "regulatoryAction": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "partnerTrackingUrlPresent": true,
       "trackingScope": "GENERIC_GLOBAL",
       "affiliateProgram": "Superfly Partners / White Hat Gaming:Slotnite",
@@ -14979,12 +14994,15 @@
       "trackingVerification": "HEALTHY",
       "marketActivation": "slotnite:GB:CASINO",
       "routeHealth": "HEALTHY",
-      "finalState": "ACTIVE_HEALTHY",
-      "reason": "Founder-approved current partner market with a technically valid partner route and no remaining direct legal gate.",
+      "finalState": "ACTION_REQUIRED_REGULATORY",
+      "reason": "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
       "evidenceReferences": [
         "CRM:EVIDENCE:52a27b72-0da5-4a66-83f6-08a4549d6b21",
         "CRM:EVIDENCE:c1da25a7-255d-4cb4-80b5-5ea3a5bbabcf",
-        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09"
+        "FOUNDER_REPORTED_DIRECT_PARTNER_CONFIRMATION:2026-09-09",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/52894:2026-09-10",
+        "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894:2026-09-10",
+        "REPOSITORY:lib/jurisdiction/policies/gb.ts"
       ]
     },
     {
