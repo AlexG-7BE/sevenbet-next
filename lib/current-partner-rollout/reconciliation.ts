@@ -734,7 +734,10 @@ export async function runCurrentPartnerReconciliation(input: { expectedSha: stri
       superflyBindings: [...superfly.entries()],
       crm,
     };
-  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 15_000, timeout: 60_000 });
+  // The deterministic 60-link normalization also writes revisions, exact-GEO
+  // evidence and four CRM audit trails. Keep it atomic, but give the remote
+  // Production transaction a bounded window that reflects that fixed corpus.
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 30_000, timeout: 240_000 });
   const activations = await convergeActivations({
     bga: new Map(normalized.bgaBindings),
     superfly: new Map(normalized.superflyBindings),
