@@ -4,9 +4,9 @@
 **Evidence date:** 10 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `413ad041d21543f8fb421dc691b77c37bdae1c56`
-**Verified post-release runtime baseline SHA:** `413ad041d21543f8fb421dc691b77c37bdae1c56`
-**Verified post-release runtime deployment:** Ready; `dpl_EKNtfHi33WWzmuheEh2MUWybiFXb`
+**Current Production application SHA (live provider evidence):** `dea5d22d5b0c998fd0e4ca36cec52d6e30e63b8c`
+**Verified post-release runtime baseline SHA:** `dea5d22d5b0c998fd0e4ca36cec52d6e30e63b8c`
+**Verified post-release runtime deployment:** Ready; `dpl_A64EXh8tYj8toWexhdDovMAz7EYa`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -55,7 +55,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
 | ChatGPT Work MCP / Better Auth 1.7 | **COMMERCIAL MCP ENABLED; MEDIA MCP RETIRED BY RFC-044** | Commercial retains its governed resource. Migration 0034 prevents Media authority from being recreated; the application cutover makes the Media MCP, its DCR and discovery surfaces return cache-proof 410. |
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
-| Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES, DESTINATIONS VERIFIED** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority and checksum-matched canonical campaigns. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
+| Commercial partner activation | **READY IN PRODUCTION — 24 ACTIVE_HEALTHY / 540 TERMINALLY CLASSIFIED ROWS** | The exhaustive current-partner matrix covers four partners, 73 Casinos and 25 GEO labels: 24 ACTIVE_HEALTHY, 24 BLOCKED_BY_LAW, 17 ACTION_REQUIRED_REGULATORY, one BROKEN_ROUTE and 474 MISSING_TRACKING_ROUTE. RFC-042 is the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |
 | Casino market data | **FOURTEEN REAL PUBLISHED IDENTITIES — SAFE CROSS-MARKET OFFER PRESENTATION ACTIVE** | Market-projected Casino facts remain isolated. A bounded immutable published-bonus corpus now resolves `EXACT > ROW > OTHER_MARKET > NONE`; StarCasino IT plus genuine Rizk and NordicBet ROW offers are reconciled without creating commercial or media authority. Founder-approved scores remain unchanged. |
 | Placement media | **RETIRED — HISTORICAL ROWS INERT** | Migration 0034 preserves every historical assignment and asset row but forces all six assignment families inactive. Promotional placement state is no longer public, commercial or release authority. |
 | Canonical public CTA authority | **RFC-042 SOLE B4GAMBLE AUTHORITY** | Public directory, comparison and review consumers use canonical `MarketActivation`, including its healthy global fallback. Legacy programme/offer/workflow/link/redirect lifecycle fields are not replacement CTA vetoes; external safety, jurisdiction, GB operator/legal, safe-URL, relational and trusted-GEO controls remain independent. |
@@ -66,6 +66,42 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public language / market presentation | **ELEVEN LOCALES LIVE IN PRODUCTION** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
 
 ### Recent implementation state
+
+**VERIFIED — GLOBAL CURRENT-PARTNER COMMERCIAL ROLLOUT COMPLETE, 10 September
+2026:** [PR #223](https://github.com/AlexG-7BE/sevenbet-next/pull/223),
+[#224](https://github.com/AlexG-7BE/sevenbet-next/pull/224),
+[#225](https://github.com/AlexG-7BE/sevenbet-next/pull/225),
+[#226](https://github.com/AlexG-7BE/sevenbet-next/pull/226),
+[#227](https://github.com/AlexG-7BE/sevenbet-next/pull/227),
+[#229](https://github.com/AlexG-7BE/sevenbet-next/pull/229),
+[#230](https://github.com/AlexG-7BE/sevenbet-next/pull/230) and
+[#231](https://github.com/AlexG-7BE/sevenbet-next/pull/231) merged the
+Founder-authorized current-partner rollout. Runtime baseline
+`dea5d22d5b0c998fd0e4ca36cec52d6e30e63b8c` is Ready as
+`dpl_A64EXh8tYj8toWexhdDovMAz7EYa`. The fingerprint-guarded RFC-042
+controller reconciled four current opportunities, 60 normalized BGA links and
+72 exact activation records without a schema migration or destructive write.
+
+The canonical matrix now terminally classifies all 540 Partner × Casino × GEO
+rows across four current partners, 73 Casinos and 25 GEO labels: 24
+ACTIVE_HEALTHY, 24 BLOCKED_BY_LAW, 17 ACTION_REQUIRED_REGULATORY, one
+BROKEN_ROUTE and 474 MISSING_TRACKING_ROUTE. The 24 active rows comprise 12 BGA
+routes and the six Superfly brands in IE and MT. All six technically healthy
+Superfly GB routes remain canonically disabled because the independent
+B4GAMBLE GB jurisdiction policy still denies commercial/referral capability;
+Inkabet PE alone is BROKEN_ROUTE after persistent real HTTP 403 responses.
+
+Bounded external verification established the expected final operator host
+and retained attribution for all 25 authorized remaining underlying routes.
+The final isolated Production-runtime pass proved 24 governed 302 routes, six
+controlled GB-policy 303 responses and eight negative cross-GEO probes, with
+zero route leakage and zero raw tokenized URL emission. Read-only postflight
+closed at 540 matrix rows, four current CRM opportunities and seven legitimate
+current tasks. The eleven published locales and independent `noindex, follow`
+SEO gate remain unchanged; `fr-FR` was not fabricated or published. See the
+[Global Current-Partner Commercial Rollout release
+record](06_Operations/Global-Current-Partner-Commercial-Rollout-2026-09-10.md)
+for every row and the bounded Production evidence.
 
 **VERIFIED — LOGO-ONLY / MEDIA-GEO3 RETIREMENT / LOCALE REACTIVATION LIVE, 10
 September 2026:** [PR #218](https://github.com/AlexG-7BE/sevenbet-next/pull/218)
