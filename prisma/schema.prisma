@@ -2429,6 +2429,7 @@ model MarketActivation {
   id                             String                                  @id @default(uuid()) @db.Uuid
   casinoId                       String                                  @db.Uuid
   countryCode                    String                                  @db.Char(2)
+  marketCode                     String                                  @db.VarChar(16)
   product                        MarketActivationProduct                 @default(CASINO)
   desiredState                   MarketActivationDesiredState
   status                         MarketActivationStatus                  @default(DRAFT)
@@ -2469,9 +2470,10 @@ model MarketActivation {
   intents             MarketActivationIntent[]
   events              MarketActivationEvent[]
 
-  @@unique([casinoId, countryCode, product])
-  @@unique([redirectSlugId, countryCode, product])
-  @@unique([primaryTrackingLinkId, countryCode, product])
+  @@unique([casinoId, marketCode, product])
+  @@unique([redirectSlugId, marketCode, product])
+  @@unique([primaryTrackingLinkId, marketCode, product])
+  @@index([marketCode, product, status])
   @@index([countryCode, product, status])
   @@index([desiredState, status, updatedAt])
   @@index([routeVerificationStatus, routeLastCheckedAt])

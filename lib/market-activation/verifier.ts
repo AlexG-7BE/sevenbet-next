@@ -111,7 +111,7 @@ export class MarketActivationRouteVerifier implements MarketActivationRouteVerif
     const activation = await this.database.marketActivation.findUnique({
       where: { id: activationId },
       select: {
-        countryCode: true,
+        marketCode: true,
         casino: { select: { domain: true, websiteUrl: true } },
         marketProfile: { select: { localDomain: true, localWebsiteUrl: true } },
         primaryTrackingLink: {
@@ -138,7 +138,7 @@ export class MarketActivationRouteVerifier implements MarketActivationRouteVerif
       url: target,
       expectation: storedExpectation(
         tracking.metadata,
-        activation.countryCode,
+        activation.marketCode,
         destination,
         activation.marketProfile,
         activation.casino,

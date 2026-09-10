@@ -37,7 +37,7 @@ test("casino comparison is contextual, capped and backed by the existing public 
   const route = read("app/api/public/comparison/route.ts");
   assert.match(
     route,
-    /publicComparisonService\.compare\(query, authority, languageForLocale\(locale\)\)/,
+    /publicComparisonService\.compare\(query, authority, languageForLocale\(locale\), requestSignal\?\.marketCode\)/,
   );
   assert.match(route, /private, no-store/);
   assert.match(route, /noindex, nofollow/);

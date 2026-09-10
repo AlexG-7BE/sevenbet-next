@@ -12,7 +12,7 @@ import {
 } from "@/lib/public-offer/offer-presentation";
 
 export interface PublicOfferStore {
-  listOffers(options?: { includeCommercial?: boolean; countryCode?: string; presentationLanguage?: string }): Promise<PublicOfferDTO[]>;
+  listOffers(options?: { includeCommercial?: boolean; countryCode?: string; commercialMarketCode?: string; presentationLanguage?: string }): Promise<PublicOfferDTO[]>;
 }
 
 export class PublicOfferRepository implements PublicOfferStore {
@@ -21,7 +21,7 @@ export class PublicOfferRepository implements PublicOfferStore {
     private readonly options: { redirectEnabled?: boolean; now?: Date } = {},
   ) {}
 
-  async listOffers(options: { includeCommercial?: boolean; countryCode?: string; presentationLanguage?: string } = {}) {
+  async listOffers(options: { includeCommercial?: boolean; countryCode?: string; commercialMarketCode?: string; presentationLanguage?: string } = {}) {
     const published = await this.casinoStore.listPublished(options.countryCode);
     let candidates: PublishedOfferCandidate[];
     if (!published.length) {
@@ -40,7 +40,11 @@ export class PublicOfferRepository implements PublicOfferStore {
     let routes: Awaited<ReturnType<PublicCasinoStore["listActiveAffiliateRoutes"]>> = [];
     if (redirectEnabled && published.length) {
       try {
-        routes = await this.casinoStore.listActiveAffiliateRoutes(published.map((entry) => entry.casinoId), options.countryCode, this.options.now);
+        routes = await this.casinoStore.listActiveAffiliateRoutes(
+          published.map((entry) => entry.casinoId),
+          options.commercialMarketCode ?? options.countryCode,
+          this.options.now,
+        );
       } catch {
         // Published editorial offers remain visible without commercial actions.
       }

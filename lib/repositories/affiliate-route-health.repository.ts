@@ -14,6 +14,7 @@ export interface AffiliateRouteHealthClaim {
   casinoId: string;
   casinoSlug: string;
   countryCode: string;
+  marketCode: string;
   offerId: string | null;
   trackingLinkId: string | null;
   redirectId: string | null;
@@ -21,35 +22,38 @@ export interface AffiliateRouteHealthClaim {
 }
 
 export interface AffiliateRouteHealthClaimStore {
-  listClaims(filters?: { casino?: string; countryCode?: string; now?: Date }): Promise<AffiliateRouteHealthClaim[]>;
+  listClaims(filters?: { casino?: string; countryCode?: string; marketCode?: string; now?: Date }): Promise<AffiliateRouteHealthClaim[]>;
 }
 
 export class AffiliateRouteHealthRepository implements AffiliateRouteHealthClaimStore {
-  async listClaims(filters: { casino?: string; countryCode?: string; now?: Date } = {}) {
+  async listClaims(filters: { casino?: string; countryCode?: string; marketCode?: string; now?: Date } = {}) {
     const records = await prisma.marketActivation.findMany({
       where: {
         product: "CASINO",
         desiredState: "ACTIVE",
         status: "ACTIVE",
         ...(filters.countryCode ? { countryCode: filters.countryCode } : {}),
+        ...(filters.marketCode ? { marketCode: filters.marketCode } : {}),
         ...affiliateRouteHealthCasinoFilter(filters.casino),
       },
       select: {
         id: true,
         casinoId: true,
         countryCode: true,
+        marketCode: true,
         affiliateOfferId: true,
         primaryTrackingLinkId: true,
         casino: { select: { slug: true } },
         redirectSlug: { select: { id: true, slug: true } },
       },
-      orderBy: [{ countryCode: "asc" }, { casinoId: "asc" }, { id: "asc" }],
+      orderBy: [{ marketCode: "asc" }, { casinoId: "asc" }, { id: "asc" }],
     });
     return records.map((record): AffiliateRouteHealthClaim => ({
       activationId: record.id,
       casinoId: record.casinoId,
       casinoSlug: record.casino.slug,
       countryCode: record.countryCode,
+      marketCode: record.marketCode,
       offerId: record.affiliateOfferId,
       trackingLinkId: record.primaryTrackingLinkId,
       redirectId: record.redirectSlug?.id ?? null,

@@ -73,6 +73,6 @@ test("query projections can omit commercial relations after policy denial", () =
   assert.match(comparisonApi, /resolveServerJurisdiction/);
   assert.match(
     comparisonApi,
-    /publicComparisonService\.compare\(query, authority, languageForLocale\(locale\)\)/,
+    /publicComparisonService\.compare\(query, authority, languageForLocale\(locale\), requestSignal\?\.marketCode\)/,
   );
 });

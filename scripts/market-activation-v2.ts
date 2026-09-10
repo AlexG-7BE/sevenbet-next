@@ -269,6 +269,7 @@ function summary(result: Awaited<ReturnType<typeof marketActivationController.se
     idempotent: result.idempotent,
     casinoSlug: result.activation.casino.slug,
     countryCode: result.activation.countryCode,
+    marketCode: result.activation.marketCode,
     product: result.activation.product,
     desiredState: result.activation.desiredState,
     status: result.activation.status,
@@ -284,12 +285,12 @@ function summary(result: Awaited<ReturnType<typeof marketActivationController.se
 async function reconcile(now = new Date()) {
   const authority = assertWriteAuthority();
   await assertMigrationApplied();
-  const records = await prisma.marketActivation.findMany({ orderBy: [{ countryCode: "asc" }, { casinoId: "asc" }] });
+  const records = await prisma.marketActivation.findMany({ orderBy: [{ marketCode: "asc" }, { casinoId: "asc" }] });
   const results = [];
   for (const record of records) {
     const input: MarketActivationIntentInput = {
       casinoId: record.casinoId,
-      countryCode: record.countryCode,
+      countryCode: record.marketCode,
       product: record.product,
       desiredState: record.desiredState,
       redirectSlugId: record.redirectSlugId ?? undefined,

@@ -10,6 +10,7 @@ export interface GbCommercialReadinessRequest {
   trackingLinkId: string;
   jurisdictionDecision: JurisdictionDecision;
   redirectContract: { slugActive: boolean; destinationServerOwned: boolean; destinationSafe: boolean };
+  founderWorldwideAuthority?: boolean;
   now: Date;
 }
 
@@ -28,7 +29,7 @@ export class GbCommercialReadinessService implements GbCommercialReadinessAuthor
       const casino = await this.casinos.findById(input.casinoId);
       if (!casino) return unavailableGbCommercialReadiness();
       const domainEvidence = this.domains.findExact(casino.id, casino.domain);
-      return evaluateGbCommercialReadiness({ casino, domainEvidence, offer: input.offer, trackingLinkId: input.trackingLinkId, jurisdictionDecision: input.jurisdictionDecision, redirectContract: input.redirectContract, now: input.now });
+      return evaluateGbCommercialReadiness({ casino, domainEvidence, offer: input.offer, trackingLinkId: input.trackingLinkId, jurisdictionDecision: input.jurisdictionDecision, redirectContract: input.redirectContract, founderWorldwideAuthority: input.founderWorldwideAuthority, now: input.now });
     } catch {
       return unavailableGbCommercialReadiness();
     }

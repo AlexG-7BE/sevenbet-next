@@ -22,6 +22,7 @@ const MARKET_ACTIVATION_BASE_MIGRATION = "0031_market_activation_v2";
 const MARKET_ACTIVATION_TARGET_MIGRATION = "0032_market_activation_global_fallback";
 const MEDIA_GEO3_TARGET_MIGRATION = "0033_media_geo3_pipeline";
 const MEDIA_RETIREMENT_TARGET_MIGRATION = "0034_logo_only_media_retirement";
+const MARKET_ACTIVATION_EXACT_MARKET_MIGRATION = "0035_market_activation_exact_market_code";
 
 type MigrationRow = {
   migration_name: string;
@@ -346,7 +347,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -388,6 +389,7 @@ async function maybeApplyProgrammeAccessMigration() {
     const expectedPending = [
       ...expectedLegacyPending,
       ...(!applied.has(MEDIA_RETIREMENT_TARGET_MIGRATION) ? [MEDIA_RETIREMENT_TARGET_MIGRATION] : []),
+      ...(!applied.has(MARKET_ACTIVATION_EXACT_MARKET_MIGRATION) ? [MARKET_ACTIVATION_EXACT_MARKET_MIGRATION] : []),
     ];
 
     if (
@@ -412,13 +414,18 @@ async function maybeApplyProgrammeAccessMigration() {
     ]) {
       assertChecksum(completedByName.get(name), name);
     }
-    if (applied.has(MARKET_ACTIVATION_TARGET_MIGRATION)) {
+    if (applied.has(MARKET_ACTIVATION_EXACT_MARKET_MIGRATION)) {
       assertChecksum(completedByName.get(MARKET_ACTIVATION_BASE_MIGRATION), MARKET_ACTIVATION_BASE_MIGRATION);
       assertChecksum(completedByName.get(MARKET_ACTIVATION_TARGET_MIGRATION), MARKET_ACTIVATION_TARGET_MIGRATION);
+      assertChecksum(completedByName.get(MARKET_ACTIVATION_EXACT_MARKET_MIGRATION), MARKET_ACTIVATION_EXACT_MARKET_MIGRATION);
       const [canonicalSchema] = await prisma.$queryRawUnsafe<Array<{
         activation: string | null;
         intent: string | null;
         event: string | null;
+        exact_market_column: boolean;
+        exact_market_scope: boolean;
+        exact_market_unique: boolean;
+        exact_market_compatibility: boolean;
         global_fallback_scope: boolean;
         global_fallback_active_binding: boolean;
       }>>(`
@@ -428,13 +435,60 @@ async function maybeApplyProgrammeAccessMigration() {
           to_regclass('public."MarketActivationEvent"')::text AS event,
           EXISTS (
             SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'MarketActivation'
+              AND column_name = 'marketCode'
+              AND is_nullable = 'NO'
+              AND data_type = 'character varying'
+          ) AS exact_market_column,
+          EXISTS (
+            SELECT 1
+            FROM pg_constraint AS con
+            JOIN pg_class AS rel ON rel.oid = con.conrelid
+            JOIN pg_namespace AS ns ON ns.oid = rel.relnamespace
+            WHERE ns.nspname = 'public'
+              AND rel.relname = 'MarketActivation'
+              AND con.conname = 'MarketActivation_market_code_check'
+              AND regexp_replace(
+                lower(replace(pg_get_constraintdef(con.oid), '::text', '')),
+                '[^a-z0-9]',
+                '',
+                'g'
+              ) LIKE '%marketcodeaz2az09112%'
+              AND regexp_replace(
+                lower(replace(pg_get_constraintdef(con.oid), '::text', '')),
+                '[^a-z0-9]',
+                '',
+                'g'
+              ) LIKE '%marketcodezzandcountrycodezz%'
+              AND regexp_replace(
+                lower(replace(pg_get_constraintdef(con.oid), '::text', '')),
+                '[^a-z0-9]',
+                '',
+                'g'
+              ) LIKE '%leftmarketcode2countrycode%'
+          ) AS exact_market_scope,
+          to_regclass('public."MarketActivation_casinoId_marketCode_product_key"') IS NOT NULL AS exact_market_unique,
+          EXISTS (
+            SELECT 1
+            FROM pg_trigger AS trigger
+            JOIN pg_class AS rel ON rel.oid = trigger.tgrelid
+            JOIN pg_namespace AS ns ON ns.oid = rel.relnamespace
+            WHERE ns.nspname = 'public'
+              AND rel.relname = 'MarketActivation'
+              AND trigger.tgname = 'MarketActivation_fill_market_code_trigger'
+              AND NOT trigger.tgisinternal
+          ) AS exact_market_compatibility,
+          EXISTS (
+            SELECT 1
             FROM pg_constraint AS con
             JOIN pg_class AS rel ON rel.oid = con.conrelid
             JOIN pg_namespace AS ns ON ns.oid = rel.relnamespace
             WHERE ns.nspname = 'public'
               AND rel.relname = 'MarketActivation'
               AND con.conname = 'MarketActivation_global_fallback_scope_check'
-              AND pg_get_constraintdef(con.oid) LIKE '%"countryCode" <> ''ZZ''%'
+              AND pg_get_constraintdef(con.oid) LIKE '%"marketCode" <> ''ZZ''%'
               AND pg_get_constraintdef(con.oid) LIKE '%"marketProfileId" IS NULL%'
           ) AS global_fallback_scope,
           EXISTS (
@@ -445,7 +499,7 @@ async function maybeApplyProgrammeAccessMigration() {
             WHERE ns.nspname = 'public'
               AND rel.relname = 'MarketActivation'
               AND con.conname = 'MarketActivation_active_binding_check'
-              AND pg_get_constraintdef(con.oid) LIKE '%"countryCode" = ''ZZ''%'
+              AND pg_get_constraintdef(con.oid) LIKE '%"marketCode" = ''ZZ''%'
               AND pg_get_constraintdef(con.oid) LIKE '%"globalFallbackBlockedCountries"%'
               AND pg_get_constraintdef(con.oid) LIKE '%''DK''%'
               AND pg_get_constraintdef(con.oid) LIKE '%''ES''%'
@@ -459,12 +513,16 @@ async function maybeApplyProgrammeAccessMigration() {
       marketActivationSchemaReady = Boolean(canonicalSchema?.activation
         && canonicalSchema.intent
         && canonicalSchema.event
+        && canonicalSchema.exact_market_column
+        && canonicalSchema.exact_market_scope
+        && canonicalSchema.exact_market_unique
+        && canonicalSchema.exact_market_compatibility
         && canonicalSchema.global_fallback_scope
         && canonicalSchema.global_fallback_active_binding);
       if (!marketActivationSchemaReady) throw new Error("Production migration guard found incomplete canonical MarketActivation schema.");
       writeEvent({
         event: "production_market_activation_preflight",
-        migration: MARKET_ACTIVATION_TARGET_MIGRATION,
+        migration: MARKET_ACTIVATION_EXACT_MARKET_MIGRATION,
         checksumMatched: true,
         canonicalTablesReady: true,
       });
@@ -489,7 +547,7 @@ async function maybeApplyProgrammeAccessMigration() {
   }
 
   if (!marketActivationSchemaReady) {
-    throw new Error(`Production DB-first release requires completed ${MARKET_ACTIVATION_TARGET_MIGRATION} before this application build.`);
+    throw new Error(`Production DB-first release requires completed ${MARKET_ACTIVATION_EXACT_MARKET_MIGRATION} before this application build.`);
   }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();

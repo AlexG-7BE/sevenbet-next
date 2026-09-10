@@ -33,6 +33,7 @@ const loadCasinoDirectoryPage = cache(async (queryKey: string) => {
     commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
     {
       ...(presentation.marketCountryCode ? { defaultEditorialCountry: presentation.marketCountryCode } : {}),
+      ...(presentation.marketCode ? { commercialMarketCode: presentation.marketCode } : {}),
       presentationLanguage: presentation.language,
     },
   );

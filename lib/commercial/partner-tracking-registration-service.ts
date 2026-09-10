@@ -13,6 +13,8 @@ import {
   resolveCurrentPartnerCandidates,
 } from "@/lib/current-partner-rollout/inventory";
 import { jurisdictionResolver } from "@/lib/jurisdiction/resolver";
+import { exactSubdivisionCommercialAuthority } from "@/lib/jurisdiction/exact-market-authority";
+import { worldwideFounderGbAuthorityApplies } from "@/lib/current-partner-worldwide-authority/inventory";
 import { marketActivationController } from "@/lib/market-activation/controller";
 import {
   partnerTrackingRegistrationRepository,
@@ -62,7 +64,7 @@ type JurisdictionResolverPort = {
     administrativeOverride: null;
     policyVersion: null;
     now: Date;
-  }): Promise<{ commercialAllowed: boolean; referralAllowed: boolean; reasonCode: string }>;
+  }): Promise<{ countryCode: string | null; commercialAllowed: boolean; referralAllowed: boolean; reasonCode: string }>;
 };
 
 function safeTrackingUrl(value: string) {
@@ -160,14 +162,8 @@ export class PartnerTrackingRegistrationService {
       if (row.legalState === "ACTION_REQUIRED_REGULATORY") {
         return [row.geo, { finalState: "ACTION_REQUIRED_REGULATORY", reason: row.reason }] as const;
       }
-      if (!/^[A-Z]{2}$/.test(row.geo)) {
-        return [row.geo, {
-          finalState: "ACTION_REQUIRED_REGULATORY",
-          reason: "Exact subnational runtime authority is required before this supported market can expose a CTA.",
-        }] as const;
-      }
       const decision = await this.jurisdiction.resolve({
-        requestCountrySignal: { countryCode: row.geo, trust: "TRUSTED", observedAt: now },
+        requestCountrySignal: { countryCode: row.geo.slice(0, 2), trust: "TRUSTED", observedAt: now },
         userSelectedCountry: null,
         accountCountry: null,
         routeCountryOrMarketSlug: null,
@@ -175,7 +171,20 @@ export class PartnerTrackingRegistrationService {
         policyVersion: null,
         now,
       });
-      if (!decision.commercialAllowed || !decision.referralAllowed) {
+      if (row.geo.includes("-") && !exactSubdivisionCommercialAuthority({
+        casinoSlug: stage.target.casinoSlug,
+        marketCode: row.geo,
+        parentDecision: decision,
+      }).allowed) {
+        return [row.geo, {
+          finalState: "ACTION_REQUIRED_REGULATORY",
+          reason: "Exact detected subdivision legal authority is required before this market can expose a CTA.",
+        }] as const;
+      }
+      const scopedFounderGbOverride = row.geo === "GB"
+        && worldwideFounderGbAuthorityApplies(stage.target.casinoSlug)
+        && ["COMMERCIAL_NOT_ACTIVE", "POLICY_STALE"].includes(decision.reasonCode);
+      if ((!decision.commercialAllowed || !decision.referralAllowed) && !scopedFounderGbOverride) {
         return [row.geo, {
           finalState: "ACTION_REQUIRED_REGULATORY",
           reason: `Current jurisdiction authority denies commercial/referral capability: ${decision.reasonCode}.`,
@@ -213,6 +222,10 @@ export class PartnerTrackingRegistrationService {
       casino: input.casino,
       geo,
     });
+    const exactInventoryRow = geo ? target.rows.find((row) => row.geo === geo) ?? null : null;
+    const scope = geo && exactInventoryRow?.trackingScope === "REGIONAL_REUSE"
+      ? "REGIONAL_REUSE"
+      : geo ? "EXACT_GEO" : "GENERIC";
     const trackingUrl = safeTrackingUrl(input.trackingUrl);
     try {
       await this.publicUrlValidator(trackingUrl);
@@ -227,7 +240,7 @@ export class PartnerTrackingRegistrationService {
       target,
       trackingUrl: trackingUrl.href,
       linkHash,
-      scope: geo ? "EXACT_GEO" : "GENERIC",
+      scope,
       geo,
       actorId: context.actorId,
       now,

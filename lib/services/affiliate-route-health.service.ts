@@ -9,6 +9,7 @@ export interface AffiliateRouteHealthResult {
   casinoId: string;
   casinoSlug: string;
   countryCode: string;
+  marketCode: string;
   redirectId: string | null;
   redirectSlug: string | null;
   offerId: string | null;
@@ -23,7 +24,7 @@ export interface AffiliateRouteHealthResult {
 }
 
 function routeKey(claim: AffiliateRouteHealthClaim) {
-  return `${claim.casinoSlug}:${claim.countryCode}:${claim.redirectSlug ?? "missing-redirect"}:${claim.activationId}`;
+  return `${claim.casinoSlug}:${claim.marketCode}:${claim.redirectSlug ?? "missing-redirect"}:${claim.activationId}`;
 }
 
 function unavailableResult(claim: AffiliateRouteHealthClaim, status: AffiliateRouteHealthStatus, reason: string): AffiliateRouteHealthResult {
@@ -32,6 +33,7 @@ function unavailableResult(claim: AffiliateRouteHealthClaim, status: AffiliateRo
     casinoId: claim.casinoId,
     casinoSlug: claim.casinoSlug,
     countryCode: claim.countryCode,
+    marketCode: claim.marketCode,
     redirectId: claim.redirectId,
     redirectSlug: claim.redirectSlug,
     offerId: claim.offerId,
@@ -77,6 +79,7 @@ export class AffiliateRouteHealthService {
         casinoId: claim.casinoId,
         casinoSlug: claim.casinoSlug,
         countryCode: claim.countryCode,
+        marketCode: claim.marketCode,
         redirectId: claim.redirectId,
         redirectSlug: claim.redirectSlug,
         offerId: claim.offerId,
@@ -94,11 +97,14 @@ export class AffiliateRouteHealthService {
     }
   }
 
-  async run(filters: { casino?: string; countryCode?: string; now?: Date } = {}) {
+  async run(filters: { casino?: string; countryCode?: string; marketCode?: string; now?: Date } = {}) {
     const countryCode = filters.countryCode?.trim().toUpperCase();
     if (countryCode && !/^[A-Z]{2}$/.test(countryCode)) throw new ValidationError("countryCode must be an ISO alpha-2 code");
+    const marketCode = filters.marketCode?.trim().toUpperCase().replace(/_/g, "-");
+    if (marketCode && !/^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(marketCode)) throw new ValidationError("marketCode must be an ISO country or subdivision code");
+    if (countryCode && marketCode && marketCode.slice(0, 2) !== countryCode) throw new ValidationError("marketCode must belong to countryCode");
     const now = filters.now ?? new Date();
-    const claims = await this.claims.listClaims({ casino: filters.casino?.trim() || undefined, countryCode, now });
+    const claims = await this.claims.listClaims({ casino: filters.casino?.trim() || undefined, countryCode, marketCode, now });
     const results = await mapConcurrent(claims, 5, (claim) => this.checkClaim(claim, now));
     const statuses = ["HEALTHY", "DEGRADED", "EXTERNAL_CHALLENGE", "BROKEN", "EXPIRED", "CROSS_GEO", "ATTRIBUTION_FAILURE"] as const;
     const summary = Object.fromEntries(statuses.map((status) => [status, results.filter((result) => result.status === status).length])) as Record<AffiliateRouteHealthStatus, number>;
@@ -108,7 +114,7 @@ export class AffiliateRouteHealthService {
       checkedAt: now.toISOString(),
       healthy,
       noActiveRoutes: results.length === 0,
-      filters: { casino: filters.casino?.trim() || null, countryCode: countryCode ?? null },
+      filters: { casino: filters.casino?.trim() || null, countryCode: countryCode ?? null, marketCode: marketCode ?? null },
       summary: { routes: results.length, ...summary },
       results,
     } as const;

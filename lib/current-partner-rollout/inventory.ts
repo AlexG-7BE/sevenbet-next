@@ -60,7 +60,7 @@ export const FINAL_STATES = [
 
 export type FinalState = typeof FINAL_STATES[number];
 export type LegalState = "ALLOWED" | "BLOCKED_BY_LAW" | "ACTION_REQUIRED_REGULATORY";
-export type TrackingScope = "GENERIC_GLOBAL" | "EXACT_GEO" | "NONE";
+export type TrackingScope = "GENERIC_GLOBAL" | "REGIONAL_REUSE" | "EXACT_GEO" | "NONE";
 
 export interface CurrentPartnerInventorySeed {
   partner: typeof CURRENT_PARTNERS[number];
@@ -78,6 +78,8 @@ export interface CurrentPartnerInventorySeed {
   finalState: FinalState;
   reason: string;
   evidenceReferences: string[];
+  supportEvidenceClassification?: "DETECTED" | "INFERRED";
+  legalEvidenceClassification?: "DETECTED" | "INFERRED";
 }
 
 export interface CurrentPartnerMatrixRow {
@@ -322,10 +324,52 @@ const superPartnersSeeds = SUPER_PARTNERS_CASINOS.flatMap((casino) => SUPER_PART
   evidenceReferences: [FOUNDER_AUTHORITY, SUPER_PARTNERS_BRANDS, SUPER_PARTNERS_MARKETS, "CRM:EVIDENCE:a3953e99-fee6-4140-b263-91441eab94d6"],
 })));
 
-export const CURRENT_PARTNER_INVENTORY: CurrentPartnerInventorySeed[] = [
+/**
+ * Historical input to the completed 2026-09-10 one-time rollout. It remains
+ * isolated so that the retired reconciler cannot become a second registration
+ * path for the worldwide authority corpus.
+ */
+export const LEGACY_CURRENT_PARTNER_INVENTORY: CurrentPartnerInventorySeed[] = [
   ...superflySeeds,
   ...bgaSeeds,
   ...goldenPlaySeeds,
+  ...superPartnersSeeds,
+].sort((left, right) => left.partner.localeCompare(right.partner)
+  || left.casino.localeCompare(right.casino)
+  || left.geo.localeCompare(right.geo));
+
+const worldwideAuthoritySeeds: CurrentPartnerInventorySeed[] = buildWorldwideAuthorityMatrix()
+  .filter((row) => row.marketSupportState === "SUPPORTED")
+  .map((row) => ({
+    partner: row.partner,
+    casino: row.casino,
+    casinoSlug: row.casinoSlug,
+    geo: row.geo,
+    operatorMarketSupported: true,
+    legalState: row.legalState!,
+    regulatoryAction: row.regulatoryAction,
+    partnerTrackingUrlPresent: row.partnerTrackingUrlPresent,
+    trackingScope: row.trackingScope === "GENERIC"
+      ? "GENERIC_GLOBAL"
+      : row.trackingScope,
+    trackingIdentity: row.trackingIdentity,
+    redirectSlug: row.partnerTrackingUrlPresent ? `${row.casinoSlug}-casino` : null,
+    technicalRouteVerified: row.routeHealth === "HEALTHY",
+    finalState: row.targetFinalState!,
+    reason: row.reason,
+    evidenceReferences: row.evidenceReferences,
+    supportEvidenceClassification: row.supportEvidenceClassification === "DETECTED" ? "DETECTED" : "INFERRED",
+    legalEvidenceClassification: row.legalEvidenceClassification === "DETECTED" ? "DETECTED" : "INFERRED",
+  }));
+
+/**
+ * Canonical inventory consumed by the permanent tracking-registration service.
+ * The Founder-authorized worldwide rows replace the old 14-casino subset;
+ * Super Partners remains present only for its separate registrar workflow and
+ * is excluded from worldwide-authority totals and reconciliation.
+ */
+export const CURRENT_PARTNER_INVENTORY: CurrentPartnerInventorySeed[] = [
+  ...worldwideAuthoritySeeds,
   ...superPartnersSeeds,
 ].sort((left, right) => left.partner.localeCompare(right.partner)
   || left.casino.localeCompare(right.casino)
@@ -362,7 +406,7 @@ export function buildCurrentPartnerMatrix(): CurrentPartnerMatrixRow[] {
       trackingScope: row.trackingScope,
       ...commercialObjects,
       trackingVerification: technicallyHealthy ? "HEALTHY" : broken ? "BROKEN" : "NOT_APPLICABLE",
-      marketActivation: row.casinoSlug && /^[A-Z]{2}$/.test(row.geo) ? `${row.casinoSlug}:${row.geo}:CASINO` : null,
+      marketActivation: row.casinoSlug && /^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(row.geo) ? `${row.casinoSlug}:${row.geo}:CASINO` : null,
       routeHealth: technicallyHealthy ? "HEALTHY" : broken ? "BROKEN" : "NOT_APPLICABLE",
       finalState: row.finalState,
       reason: row.reason,
@@ -380,3 +424,4 @@ export function currentPartnerMatrixSummary(rows = buildCurrentPartnerMatrix()) 
     classification: Object.fromEntries(FINAL_STATES.map((state) => [state, rows.filter((row) => row.finalState === state).length])),
   };
 }
+import { buildWorldwideAuthorityMatrix } from "@/lib/current-partner-worldwide-authority/inventory";

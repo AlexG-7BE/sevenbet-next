@@ -362,7 +362,7 @@ test("comparison architecture remains database-driven, server-owned and raw-dest
   assert.match(page, /permanentRedirect\(productHref\(presentation, `\/casinos/);
   assert.match(
     api,
-    /publicComparisonService\.compare\(query, authority, languageForLocale\(locale\)\)/,
+    /publicComparisonService\.compare\(query, authority, languageForLocale\(locale\), requestSignal\?\.marketCode\)/,
   );
   assert.match(component, /sessionStorage/);
   assert.match(component, /showModal\(\)/);

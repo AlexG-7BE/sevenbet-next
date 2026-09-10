@@ -12,6 +12,7 @@ import {
   WORLDWIDE_AUTHORITY_FINAL_STATES,
   WORLDWIDE_AUTHORITY_PARTNERS,
 } from "../lib/current-partner-worldwide-authority/inventory";
+import { exactSubdivisionCommercialAuthority } from "../lib/jurisdiction/exact-market-authority";
 
 const rows = buildWorldwideAuthorityMatrix();
 const supported = rows.filter((row) => row.marketSupportState === "SUPPORTED");
@@ -35,17 +36,17 @@ test("the worldwide authority matrix is exhaustive for exactly the fourteen auth
     rows: 4_004,
     marketSupportState: { SUPPORTED: 134, RESTRICTED: 254, UNKNOWN: 3_616 },
     targetFinalState: {
-      ACTIVE_HEALTHY: 37,
+      ACTIVE_HEALTHY: 38,
       BLOCKED_BY_LAW: 35,
-      ACTION_REQUIRED_REGULATORY: 57,
+      ACTION_REQUIRED_REGULATORY: 56,
       BROKEN_ROUTE: 1,
       MISSING_TRACKING_ROUTE: 4,
     },
     supportedEvidence: {
       supportDetected: 122,
       supportInferred: 12,
-      legalDetected: 91,
-      legalInferred: 43,
+      legalDetected: 94,
+      legalInferred: 40,
     },
   });
 });
@@ -88,8 +89,26 @@ test("Argentina uses exact ISO subdivisions and keeps unsupported provinces unkn
   const betsson = rows.filter((row) => row.casino === "Betsson" && row.geo.startsWith("AR-"));
   assert.equal(betsson.length, 24);
   assert.deepEqual(betsson.filter((row) => row.marketSupportState === "SUPPORTED").map((row) => row.geo), ["AR-B", "AR-C", "AR-X"]);
-  assert.ok(betsson.filter((row) => row.marketSupportState === "SUPPORTED").every((row) => row.targetFinalState === "ACTIVE_HEALTHY" && row.legalEvidenceClassification === "DETECTED"));
+  assert.ok(betsson.filter((row) => row.marketSupportState === "SUPPORTED").every((row) => row.targetFinalState === "ACTIVE_HEALTHY" && row.legalEvidenceClassification === "INFERRED"));
   assert.ok(betsson.filter((row) => !["AR-B", "AR-C", "AR-X"].includes(row.geo)).every((row) => row.marketSupportState === "UNKNOWN"));
+});
+
+test("exact subdivision authority fails closed until exact legal evidence is detected", () => {
+  assert.equal(exactSubdivisionCommercialAuthority({
+    casinoSlug: "betsson",
+    marketCode: "AR-C",
+    parentDecision: { countryCode: "AR", commercialAllowed: true, referralAllowed: true },
+  }).allowed, false);
+  assert.equal(exactSubdivisionCommercialAuthority({
+    casinoSlug: "betsson",
+    marketCode: "AR-K",
+    parentDecision: { countryCode: "AR", commercialAllowed: true, referralAllowed: true },
+  }).allowed, false);
+  assert.equal(exactSubdivisionCommercialAuthority({
+    casinoSlug: "betsson",
+    marketCode: "AR-C",
+    parentDecision: { countryCode: "AR", commercialAllowed: false, referralAllowed: false },
+  }).allowed, false);
 });
 
 test("legal and regulatory gates take precedence over link presence", () => {
@@ -106,6 +125,16 @@ test("legal and regulatory gates take precedence over link presence", () => {
   ]) assert.equal(supported.find((row) => row.casino === casino && row.geo === geo)?.targetFinalState, "BLOCKED_BY_LAW");
   assert.equal(supported.find((row) => row.casino === "Betsson" && row.geo === "GR")?.targetFinalState, "ACTION_REQUIRED_REGULATORY");
   assert.equal(supported.find((row) => row.casino === "GoldenPlay" && row.geo === "GB")?.targetFinalState, "ACTION_REQUIRED_REGULATORY");
+  assert.deepEqual(
+    [supported.find((row) => row.casino === "Betsafe" && row.geo === "LV")?.targetFinalState,
+      supported.find((row) => row.casino === "Betsafe" && row.geo === "LV")?.legalEvidenceClassification],
+    ["BLOCKED_BY_LAW", "DETECTED"],
+  );
+  for (const geo of ["MV", "MC"]) {
+    const row = supported.find((candidate) => candidate.casino === "Betsson" && candidate.geo === geo);
+    assert.equal(row?.targetFinalState, "ACTIVE_HEALTHY");
+    assert.equal(row?.legalEvidenceClassification, "INFERRED", `${geo} remains fail-closed without invented law or registration authority`);
+  }
 });
 
 test("tracking identities encode exact-over-generic precedence without a second registrar", () => {

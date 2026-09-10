@@ -27,6 +27,19 @@ test("0032 admits only an explicitly scoped ZZ fallback without weakening exact 
   assert.doesNotMatch(migration, /DROP TABLE|DROP COLUMN|TRUNCATE|DELETE FROM|UPDATE\s+"MarketActivation"/);
 });
 
+test("0035 additively introduces exact subdivision market identity", async () => {
+  const migration = await readFile(new URL("prisma/migrations/0035_market_activation_exact_market_code/migration.sql", root), "utf8");
+  assert.match(migration, /ADD COLUMN "marketCode" VARCHAR\(16\)/);
+  assert.match(migration, /SET "marketCode" = "countryCode"/);
+  assert.match(migration, /MarketActivation_market_code_check/);
+  assert.match(migration, /\^\[A-Z\]\{2\}\(-\[A-Z0-9\]\{1,12\}\)\?\$/);
+  assert.match(migration, /MarketActivation_casinoId_marketCode_product_key/);
+  assert.match(migration, /left\("marketCode", 2\) = "countryCode"/);
+  assert.match(migration, /MarketActivation_fill_market_code_trigger/);
+  assert.match(migration, /IF NEW\."marketCode" IS NULL/);
+  assert.doesNotMatch(migration, /DROP TABLE|DROP COLUMN|TRUNCATE|DELETE FROM/);
+});
+
 test("runtime public-route readers use MarketActivation while legacy readiness remains a shadow comparator", async () => {
   const [repository, runtime, redirect, presentation, script] = await Promise.all([
     readFile(new URL("lib/repositories/public-casino.repository.ts", root), "utf8"),
@@ -68,6 +81,7 @@ test("release executor requires bounded environment, database, project, and SHA 
 test("reconciliation re-evaluates the canonical tracking candidate instead of pinning a stale binding", async () => {
   const source = await readFile(new URL("scripts/market-activation-v2.ts", root), "utf8");
   const reconcile = source.match(/async function reconcile[\s\S]*?async function schemaAvailable/)?.[0] ?? "";
+  assert.match(reconcile, /countryCode: record\.marketCode/);
   assert.match(reconcile, /redirectSlugId: record\.redirectSlugId/);
   assert.match(reconcile, /affiliateOfferId: record\.affiliateOfferId/);
   assert.doesNotMatch(reconcile, /primaryTrackingLinkId:/);
@@ -87,11 +101,14 @@ test("Production build is DB-first and checksum-verifies the canonical activatio
   const ciWorkflow = await readFile(new URL(".github/workflows/ci.yml", root), "utf8");
   assert.match(source, /MARKET_ACTIVATION_BASE_MIGRATION = "0031_market_activation_v2"/);
   assert.match(source, /MARKET_ACTIVATION_TARGET_MIGRATION = "0032_market_activation_global_fallback"/);
-  assert.match(source, /assertChecksum\(completedByName\.get\(MARKET_ACTIVATION_TARGET_MIGRATION\)/);
+  assert.match(source, /MARKET_ACTIVATION_EXACT_MARKET_MIGRATION = "0035_market_activation_exact_market_code"/);
+  assert.match(source, /assertChecksum\(completedByName\.get\(MARKET_ACTIVATION_EXACT_MARKET_MIGRATION\)/);
+  assert.match(source, /MarketActivation_market_code_check/);
+  assert.match(source, /exact_market_unique/);
   assert.match(source, /MarketActivation_global_fallback_scope_check/);
   assert.match(source, /global_fallback_active_binding/);
   assert.match(source, /to_regclass\('public\."MarketActivation"'\)/);
-  assert.match(source, /Production DB-first release requires completed.*MARKET_ACTIVATION_TARGET_MIGRATION/s);
+  assert.match(source, /Production DB-first release requires completed.*MARKET_ACTIVATION_EXACT_MARKET_MIGRATION/s);
   assert.match(casinoMarketGuard, /canonicalEligibleRouteCountries/);
   assert.match(casinoMarketGuard, /orphanEligibleRouteCountries/);
   assert.match(casinoMarketGuard, /activation\."routeVerificationStatus" = 'HEALTHY'/);

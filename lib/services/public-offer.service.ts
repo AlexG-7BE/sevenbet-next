@@ -9,7 +9,8 @@ import type {
 } from "@/lib/public-offer/public-offer.types";
 import { publicOfferRepository, type PublicOfferStore } from "@/lib/repositories/public-offer.repository";
 import { isPublicCasinoCmsEnabled } from "@/lib/services/public-casino.service";
-import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
+import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
+import { scopedCasinoReferralAllowed, scopedCommercialProjectionMayLoad } from "@/lib/jurisdiction/scoped-commercial-authority";
 import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
@@ -141,7 +142,7 @@ export class PublicOfferService {
     return this.options.cmsEnabled ?? isPublicCasinoCmsEnabled();
   }
 
-  private async listEligibleOffers(authority?: CommercialJurisdictionAuthority | null, options: { throwOnError?: boolean; countryCode?: string; presentationLanguage?: string } = {}) {
+  private async listEligibleOffers(authority?: CommercialJurisdictionAuthority | null, options: { throwOnError?: boolean; countryCode?: string; commercialMarketCode?: string; presentationLanguage?: string } = {}) {
     if (!this.cmsEnabled()) {
       return [];
     }
@@ -150,20 +151,24 @@ export class PublicOfferService {
       const commercialProjection = Boolean(
         redirectEnabled
         && options.countryCode
-        && jurisdictionAllowsReferral(authority)
+        && scopedCommercialProjectionMayLoad(authority, options.countryCode)
         && authority?.countryCode === options.countryCode,
       );
       const records = (await this.repository.listOffers({
         includeCommercial: commercialProjection,
         countryCode: options.countryCode,
+        commercialMarketCode: options.commercialMarketCode,
         presentationLanguage: options.presentationLanguage,
       }))
         .filter((record) => !isTemporaryDemoCasinoId(record.casino.id));
       if (!commercialProjection) return records.map(withoutAction).map(classifyOffer);
-      if (options.countryCode !== "GB") return records.map(classifyOffer);
+      if (options.countryCode !== "GB") return records
+        .map((record) => scopedCasinoReferralAllowed(authority, record.casino.slug) ? record : withoutAction(record))
+        .map(classifyOffer);
       const decisions = await this.operatorEligibility.evaluateMany(records.map((record) => record.casino.id), new Date());
       return records
-        .map((record) => decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record))
+        .map((record) => scopedCasinoReferralAllowed(authority, record.casino.slug)
+          && decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record))
         .map(classifyOffer);
     } catch (cause) {
       if (options.throwOnError) throw cause;
@@ -174,7 +179,7 @@ export class PublicOfferService {
   async searchOffers(
     query: PublicOfferQuery,
     authority?: CommercialJurisdictionAuthority | null,
-    options: { defaultEditorialCountry?: string; presentationLanguage?: string } = {},
+    options: { defaultEditorialCountry?: string; commercialMarketCode?: string; presentationLanguage?: string } = {},
   ): Promise<PublicOfferSearchResult> {
     const requestCountry = options.defaultEditorialCountry?.trim().toUpperCase();
     let all: PublicOfferDTO[];
@@ -182,6 +187,7 @@ export class PublicOfferService {
       all = await this.listEligibleOffers(authority, {
         throwOnError: true,
         countryCode: requestCountry,
+        commercialMarketCode: options.commercialMarketCode,
         presentationLanguage: options.presentationLanguage,
       });
     } catch {
@@ -216,17 +222,17 @@ export class PublicOfferService {
     };
   }
 
-  async getFeaturedOffers(options: { country?: string; presentationLanguage?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
+  async getFeaturedOffers(options: { country?: string; commercialMarketCode?: string; presentationLanguage?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
     const country = options.country;
-    const offers = await this.listEligibleOffers(authority, { countryCode: country, presentationLanguage: options.presentationLanguage });
+    const offers = await this.listEligibleOffers(authority, { countryCode: country, commercialMarketCode: options.commercialMarketCode, presentationLanguage: options.presentationLanguage });
     return selectOverallShortlist(offers, { country, limit: options.limit ?? 12 });
   }
 
-  async getBestOffersPageData(options: { country?: string; presentationLanguage?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
+  async getBestOffersPageData(options: { country?: string; commercialMarketCode?: string; presentationLanguage?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
     const country = options.country;
     const limit = options.limit ?? 12;
     if (!this.cmsEnabled()) {
-      const records = await this.getFeaturedOffers({ country, presentationLanguage: options.presentationLanguage, limit }, authority);
+      const records = await this.getFeaturedOffers({ country, commercialMarketCode: options.commercialMarketCode, presentationLanguage: options.presentationLanguage, limit }, authority);
       return records.length
         ? { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const
         : { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
@@ -235,6 +241,7 @@ export class PublicOfferService {
       const publishedRecords = await this.listEligibleOffers(authority, {
         throwOnError: true,
         countryCode: country,
+        commercialMarketCode: options.commercialMarketCode,
         presentationLanguage: options.presentationLanguage,
       });
       const records = selectOverallShortlist(publishedRecords, { country, limit });

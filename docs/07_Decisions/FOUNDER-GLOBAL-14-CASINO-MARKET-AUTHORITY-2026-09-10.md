@@ -49,9 +49,10 @@ offer and never an invented claim.
 
 [RFC-042](../06_RFC/RFC-042-Canonical-Market-Activation-Authority.md) remains
 the sole Production CTA authority. The permanent partner-tracking registration
-service under concurrent review is the one canonical route-registration path
-and this rollout must consume it after that work merges. This decision does not
-authorize a competing writer.
+service merged through PR #234 and is the one canonical route-registration
+path consumed by this rollout. [RFC-045](../06_RFC/RFC-045-Exact-Subdivision-Market-Activation.md)
+adds exact subdivision identity without creating another writer. This decision
+does not authorize a competing path.
 
 No merge, deployment or Production data mutation is recorded by this decision.
 Exact subnational runtime authority requires a durable additive design before

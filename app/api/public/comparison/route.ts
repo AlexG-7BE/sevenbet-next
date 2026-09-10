@@ -19,16 +19,17 @@ function comparisonFixtureLocale(value: string | null): SupportedLocale {
 export async function GET(request: NextRequest) {
   const headers = {
     "Cache-Control": "private, no-store",
-    "Vary": "X-Vercel-IP-Country, Accept-Language",
+    "Vary": "X-Vercel-IP-Country, X-Vercel-IP-Country-Region, Accept-Language",
     "X-Robots-Tag": "noindex, nofollow",
   };
   try {
-    const requestCountry = requestCountrySignalFromHeaders(request.headers)?.countryCode ?? "ZZ";
+    const requestSignal = requestCountrySignalFromHeaders(request.headers);
+    const requestCountry = requestSignal?.countryCode ?? "ZZ";
     const query = parsePublicComparisonQuery(request.nextUrl.searchParams, requestCountry);
     const authority = await resolveServerJurisdiction();
     const locale = comparisonFixtureLocale(request.nextUrl.searchParams.get("presentationLocale"));
     const result = withHandoffComparisonData(
-      await publicComparisonService.compare(query, authority, languageForLocale(locale)),
+      await publicComparisonService.compare(query, authority, languageForLocale(locale), requestSignal?.marketCode),
       isLocalHandoffVisualDataFixture(request.nextUrl.searchParams.get("visualFixture") ?? undefined),
       locale,
     );

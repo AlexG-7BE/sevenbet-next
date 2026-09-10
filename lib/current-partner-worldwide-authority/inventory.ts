@@ -81,9 +81,24 @@ const EVIDENCE = {
   lithuaniaLaw: "PUBLIC:https://lpt.lrv.lt/en/news/gaming-advertising-requirements-from-july-1-2025/",
   newZealandLaw: "PUBLIC:https://www.dia.govt.nz/Online-gambling-for-advertisers",
   bruneiLaw: "PUBLIC:https://www.aiti.gov.bn/regulatory/content-regulation/",
-  canadaOntario: "PUBLIC:IGAMING_ONTARIO_OPERATOR_REGISTRY:2026-09-01",
-  canadaAlberta: "PUBLIC:ALBERTA_GAMING_LIQUOR_CANNABIS_REGISTRANT_SEARCH:2026-09-10",
+  canadaOntario: "PUBLIC:https://www.igamingontario.ca/en/operator/operators",
+  canadaAlberta: "PUBLIC:https://www.abigaming.ca/players/registered-igaming-sites/",
   canadaFederal: "PUBLIC:https://laws-lois.justice.gc.ca/eng/acts/C-46/section-207.html",
+  cyprusLaw: "PUBLIC:https://www.cylaw.org/nomoi/enop/non-ind/2019_1_37/full.html",
+  latviaLaw: "PUBLIC:https://likumi.lv/ta/en/en/id/122941",
+  kazakhstanLaw: "PUBLIC:https://adilet.zan.kz/eng/docs/Z070000219_",
+  luxembourgLaw: "PUBLIC:https://legilux.public.lu/eli/etat/leg/loi/1977/04/20/n7/jo/fr",
+  argentinaBuenosAiresBetsson: "PUBLIC:https://www.loteria.gba.gov.ar/images/Reso795_20.pdf",
+  brazilBetsson: "PUBLIC:https://www.gov.br/fazenda/pt-br/composicao/orgaos/secretaria-de-premios-e-apostas/lista-de-empresas/empresas-autorizadas-1/empresas-autorizadas",
+  colombiaBetsson: "PUBLIC:https://www.coljuegos.gov.co/publicaciones/306375/juegos-operados-por-internet-autorizados/index.php",
+  denmarkBetsson: "PUBLIC:https://spillemyndigheden.dk/spiludbydere-med-tilladelse/nordic-spil-limited-betsson",
+  spainBetsson: "PUBLIC:https://www.ordenacionjuego.es/gl/operadores-juego/operadores-licencia/operadores/premiere-megaplex",
+  estoniaBetsafe: "PUBLIC:https://www.emta.ee/en/business-client/registration-business/gambling-operators/list-legal-gambling-operators",
+  maltaBml: "PUBLIC:https://authorisation.mga.org.mt/verification.aspx?company=0ec7b461-65ad-4d99-b4de-f740a9e188c7&details=1&lang=EN",
+  swedenBetsson: "PUBLIC:https://www.spelinspektionen.se/licens-o-tillstand/licensregister/licensurl/?url=betsson.com",
+  swedenBetsafe: "PUBLIC:https://www.spelinspektionen.se/nyhetsarkiv/bs-nordic-ltd-far-anmarkning-och-forelaggande---bristande-informationsansvar/",
+  swedenNordicBet: "PUBLIC:https://www.spelinspektionen.se/licens-o-tillstand/licensregister/licensurl/?url=nordicbet.com",
+  serbiaRizk: "PUBLIC:https://uis.gov.rs/rsc/spisakpnaziv",
 } as const;
 
 type TrackingDefinition = {
@@ -152,17 +167,17 @@ export type WorldwideAuthorityRow = {
 const blockedLegalReason: Record<string, { reason: string; evidence: string }> = {
   BN: { reason: "Brunei law prohibits promotion of unlawful online gambling content.", evidence: EVIDENCE.bruneiLaw },
   CL: { reason: "Chile's gambling regulator states that online gambling without special statutory authorization is illegal.", evidence: EVIDENCE.chileLaw },
-  CY: { reason: "Cyprus Betting Law 37(I)/2019 does not authorize online casino games for ordinary domestic promotion.", evidence: "STATUTE:CY:BETTING_LAW_37(I)/2019" },
+  CY: { reason: "Cyprus Betting Law 37(I)/2019 prohibits online casino games for ordinary domestic promotion.", evidence: EVIDENCE.cyprusLaw },
   EC: { reason: "Ecuador's current gambling prohibition does not establish a lawful ordinary online-casino referral path.", evidence: EVIDENCE.ecuadorLaw },
   EG: { reason: "Egypt's Penal Code and casino licensing framework do not authorize ordinary domestic online-casino promotion.", evidence: "STATUTE:EG:PENAL_CODE_ARTICLE_352|LAW_1_1973" },
   FI: { reason: "Finland's current exclusive-right regime prohibits affiliate links and marketing for unlicensed gambling services.", evidence: EVIDENCE.finlandLaw },
   IS: { reason: "Iceland's exclusive statutory gambling framework does not permit ordinary offshore online-casino promotion.", evidence: "PUBLIC:https://www.government.is/library/contentfiles/National%20Risk%20Assessment.pdf" },
   IT: { reason: "Italy's communications regulator applies the statutory direct and indirect gambling-advertising ban to online promotion.", evidence: EVIDENCE.italyLaw },
   LT: { reason: "Lithuania's current rules prohibit online casino advertising and hyperlinks to gambling operator websites.", evidence: EVIDENCE.lithuaniaLaw },
-  KZ: { reason: "Kazakhstan's gambling-business law prohibits online casinos; a payment path is not legal authority for casino referral.", evidence: "STATUTE:KZ:LAW_ON_GAMBLING_BUSINESS_ARTICLE_11" },
+  KZ: { reason: "Kazakhstan's gambling-business law prohibits online casinos; a payment path is not legal authority for casino referral.", evidence: EVIDENCE.kazakhstanLaw },
+  LV: { reason: "Latvia's Gambling and Lotteries Law prohibits gambling advertising outside licensed premises; the narrow trademark exception does not authorize a casino referral CTA.", evidence: EVIDENCE.latviaLaw },
   LK: { reason: "Sri Lanka's gaming statutes do not establish a lawful ordinary domestic online-casino referral path.", evidence: "STATUTE:LK:GAMING_ORDINANCE" },
-  LU: { reason: "Luxembourg's exclusive-right framework does not establish a lawful ordinary offshore online-casino referral path.", evidence: "STATUTE:LU:LAW_OF_20_APRIL_1977" },
-  MV: { reason: "Maldives law does not establish a lawful ordinary domestic online-casino referral path.", evidence: "STATUTE:MV:PENAL_CODE_GAMBLING_PROHIBITION" },
+  LU: { reason: "Luxembourg's Law of 20 April 1977 prohibits games of chance except within its narrow statutory exceptions.", evidence: EVIDENCE.luxembourgLaw },
   NZ: { reason: "New Zealand's Online Casino Gambling Act prohibits online-casino advertising, including affiliate marketing.", evidence: EVIDENCE.newZealandLaw },
   TH: { reason: "Thailand's Gambling Act does not establish a lawful ordinary domestic online-casino referral path.", evidence: "STATUTE:TH:GAMBLING_ACT_BE_2478" },
   UY: { reason: "Uruguay's exclusive lawful online-gambling channel does not permit ordinary offshore online-casino referral promotion.", evidence: "PUBLIC:https://www2.loteria.gub.uy/Comunicado_y_normativa_juego_online.php" },
@@ -178,7 +193,6 @@ const regulatoryActionByCountry: Record<string, { action: string; evidence: stri
   IM: { action: "Record the exact Isle of Man Gambling Supervision Commission authority required under the Online Gambling Regulation Act 2001.", evidence: "PUBLIC:https://www.gov.im/categories/business-and-industries/gambling-and-e-gaming/" },
   JE: { action: "Record the exact Jersey Gambling Commission authority required under the Gambling (Jersey) Law 2012.", evidence: "PUBLIC:https://www.jgc.je/" },
   LI: { action: "Record the exact Liechtenstein operator authorization required by the Gambling Act before online-casino referral activation.", evidence: "PUBLIC:https://www.llv.li/en/national-administration/office-of-economic-affairs/gambling" },
-  MC: { action: "Record the exact Monaco gambling authorization applicable to the supported service before referral activation.", evidence: "STATUTE:MC:GAMBLING_AUTHORIZATION_REQUIRED" },
   MG: { action: "Record the exact Madagascar gambling operator authorization applicable to the supported service before referral activation.", evidence: "STATUTE:MG:GAMBLING_OPERATOR_AUTHORIZATION_REQUIRED" },
   MX: { action: "Record the exact SEGOB-authorized operator/domain entry applicable to Betsson before referral activation in Mexico.", evidence: "PUBLIC:https://www.juegosysorteos.gob.mx/" },
   MK: { action: "Record the exact North Macedonia operator authorization required by the Games of Chance law before referral activation.", evidence: "STATUTE:MK:LAW_ON_GAMES_OF_CHANCE" },
@@ -228,7 +242,12 @@ function legalDecision(geo: string, specialAction: string | null = null, special
     };
   }
   if (["AR-B", "AR-C", "AR-X"].includes(geo)) {
-    return { legalState: "ALLOWED" as const, regulatoryAction: null, evidence: EVIDENCE.bgaTerms, evidenceClassification: "DETECTED" as const };
+    return {
+      legalState: "ALLOWED" as const,
+      regulatoryAction: null,
+      evidence: "RESEARCH_CONCLUSION:ARGENTINA_EXACT_SUBDIVISION_AFFILIATE_LAW_REQUIRES_PRIMARY_AUTHORITY:2026-09-10",
+      evidenceClassification: "INFERRED" as const,
+    };
   }
   return {
     legalState: "ALLOWED" as const,
@@ -296,6 +315,28 @@ const BETSAFE_COUNTRIES = [
 const NORDICBET_COUNTRIES = ["CL", "CY", "DK", "EG", "FI", "IS", "IE", "KZ", "MT", "SE", "TH", "UY"] as const;
 const RIZK_COUNTRIES = ["BN", "CL", "FI", "DE", "GG", "IS", "IM", "JE", "LI", "LU", "MT", "NZ"] as const;
 
+const PRIMARY_MARKET_LEGAL_EVIDENCE: Record<string, string> = {
+  "Betsson:AR-B": EVIDENCE.argentinaBuenosAiresBetsson,
+  "Betsson:BR": EVIDENCE.brazilBetsson,
+  "Betsson:CO": EVIDENCE.colombiaBetsson,
+  "Betsson:DK": EVIDENCE.denmarkBetsson,
+  "Betsson:ES": EVIDENCE.spainBetsson,
+  "Betsson:MT": EVIDENCE.maltaBml,
+  "Betsson:SE": EVIDENCE.swedenBetsson,
+  "Betsafe:EE": EVIDENCE.estoniaBetsafe,
+  "Betsafe:MT": EVIDENCE.maltaBml,
+  "Betsafe:SE": EVIDENCE.swedenBetsafe,
+  "NordicBet:DK": EVIDENCE.denmarkBetsson,
+  "NordicBet:MT": EVIDENCE.maltaBml,
+  "NordicBet:SE": EVIDENCE.swedenNordicBet,
+  "Rizk:RS": EVIDENCE.serbiaRizk,
+};
+
+function primaryMarketLegalEvidence(casino: string, geo: string) {
+  const source = PRIMARY_MARKET_LEGAL_EVIDENCE[`${casino}:${geo}`];
+  return source ? [source] : [];
+}
+
 const BGA_RESTRICTED = new Set(["FI", "HR", "NO"]);
 const RIZK_RESTRICTED = new Set([
   "CA-AB", "CA-ON",
@@ -317,22 +358,22 @@ function bgaEvidence(...extra: string[]) {
 }
 
 const betssonSupported = [
-  ...["AR-B", "AR-C", "AR-X"].map((geo) => supported(geo, { tracking: betssonTracking(geo), evidence: bgaEvidence(EVIDENCE.bgaBetsson) })),
+  ...["AR-B", "AR-C", "AR-X"].map((geo) => supported(geo, { tracking: betssonTracking(geo), evidence: bgaEvidence(EVIDENCE.bgaBetsson, ...primaryMarketLegalEvidence("Betsson", geo)) })),
   ...CANADA_SUBDIVISIONS.filter((geo) => geo !== "CA-ON").map((geo) => supported(geo, { tracking: betssonTracking(geo), evidence: bgaEvidence(EVIDENCE.bgaBetsson) })),
-  ...BETSSON_COUNTRIES.map((geo) => supported(geo, { tracking: betssonTracking(geo), evidence: bgaEvidence(EVIDENCE.bgaBetsson) })),
+  ...BETSSON_COUNTRIES.map((geo) => supported(geo, { tracking: betssonTracking(geo), evidence: bgaEvidence(EVIDENCE.bgaBetsson, ...primaryMarketLegalEvidence("Betsson", geo)) })),
 ];
 
 const betsafeSupported = [
   ...CANADA_SUBDIVISIONS.map((geo) => supported(geo, { tracking: null, evidence: bgaEvidence("PUBLIC:BETSAFE_CANADA_MARKET_SELECTOR") })),
   ...BETSAFE_COUNTRIES.map((geo) => supported(geo, {
     tracking: geo === "EE" ? tracking("BGA_DIRECT_LINK_ROW:30", "EXACT_GEO") : geo === "LV" ? tracking("BGA_DIRECT_LINK_ROW:1", "EXACT_GEO") : null,
-    evidence: bgaEvidence("PUBLIC:BETSAFE_CURRENT_MARKET_SELECTOR"),
+    evidence: bgaEvidence("PUBLIC:BETSAFE_CURRENT_MARKET_SELECTOR", ...primaryMarketLegalEvidence("Betsafe", geo)),
   })),
 ];
 
 const nordicBetSupported = NORDICBET_COUNTRIES.map((geo) => supported(geo, {
   tracking: geo === "SE" ? tracking("BGA_DIRECT_LINK_ROW:13", "EXACT_GEO") : tracking("BGA_DIRECT_LINK_ROW:14"),
-  evidence: bgaEvidence("PUBLIC:https://www.nordicbet.com/en/terms-and-conditions"),
+  evidence: bgaEvidence("PUBLIC:https://www.nordicbet.com/en/terms-and-conditions", ...primaryMarketLegalEvidence("NordicBet", geo)),
 }));
 
 const rizkSupported = [
@@ -346,7 +387,7 @@ const rizkSupported = [
   })),
   supported("RS", {
     tracking: tracking("BGA_DIRECT_LINK_ROW:5", "EXACT_GEO"),
-    evidence: bgaEvidence("PUBLIC:RIZK_RS_LOCAL_SERVICE"),
+    evidence: bgaEvidence("PUBLIC:RIZK_RS_LOCAL_SERVICE", ...primaryMarketLegalEvidence("Rizk", "RS")),
     reason: "The separately operated Rizk Serbia service is a detected local-market exception to rizk.com's restricted-jurisdiction list.",
   }),
 ];
@@ -531,6 +572,17 @@ export function buildWorldwideAuthorityMatrix() {
 }
 
 export const WORLDWIDE_AUTHORITY_CASINOS = casinoDefinitions.map(({ partner, casino, casinoSlug }) => ({ partner, casino, casinoSlug }));
+
+export function worldwideFounderGbAuthorityApplies(casinoSlug: string) {
+  const definition = casinoDefinitions.find((casino) => casino.casinoSlug === casinoSlug.trim().toLowerCase());
+  const gb = definition?.supported.find((market) => market.geo === "GB") ?? null;
+  return Boolean(
+    definition?.partner === WORLDWIDE_AUTHORITY_PARTNERS[2]
+    && gb?.legalState === "ALLOWED"
+    && gb.supportEvidenceClassification === "DETECTED"
+    && gb.legalEvidenceClassification === "DETECTED",
+  );
+}
 
 export function worldwideAuthoritySummary(rows: WorldwideAuthorityRow[] = buildWorldwideAuthorityMatrix()) {
   const supported = rows.filter((row) => row.marketSupportState === "SUPPORTED");

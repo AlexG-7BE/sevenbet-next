@@ -43,6 +43,29 @@ function registrationMetadata(value: Prisma.JsonValue | null | undefined) {
   return object(object(value)[REGISTRATION_METADATA_KEY] as Prisma.JsonValue);
 }
 
+export function partnerTrackingScopeMatches(
+  metadata: Record<string, unknown>,
+  scope: PartnerTrackingScope,
+  geo: string | null,
+  trackingIdentity: string | null,
+) {
+  if (metadata.scope !== scope) return false;
+  if (scope === "GENERIC") return true;
+  if (scope === "REGIONAL_REUSE") return Boolean(trackingIdentity && metadata.trackingIdentity === trackingIdentity);
+  return metadata.geo === geo;
+}
+
+export function partnerTrackingCoverageMatches(
+  link: { casino: string; casinoSlug: string; scope: unknown; geo: string | null; trackingIdentity: string | null },
+  row: CurrentPartnerInventorySeed,
+) {
+  const casinoMatches = normalizeCurrentPartnerIdentity(link.casino) === normalizeCurrentPartnerIdentity(row.casino)
+    || Boolean(row.casinoSlug && normalizeCurrentPartnerIdentity(link.casinoSlug) === normalizeCurrentPartnerIdentity(row.casinoSlug));
+  return casinoMatches && (link.scope === "GENERIC"
+    || (link.scope === "REGIONAL_REUSE" && link.trackingIdentity === row.trackingIdentity)
+    || (link.scope === "EXACT_GEO" && link.geo === row.geo));
+}
+
 function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -61,7 +84,8 @@ function normalizedHost(value: string | null) {
 }
 
 function countryFromGeo(geo: string) {
-  return /^[A-Z]{2}$/.test(geo) ? geo : null;
+  const normalized = geo.trim().toUpperCase();
+  return /^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(normalized) ? normalized.slice(0, 2) : null;
 }
 
 function boundedCandidate(casino: { id: string; title: string; slug: string }) {
@@ -84,6 +108,7 @@ export type PartnerTrackingStage = {
   target: PartnerTrackingTarget & { affiliateNetworkId: string };
   scope: PartnerTrackingScope;
   geo: string | null;
+  trackingIdentity: string | null;
   linkHash: string;
   trackingLinkId: string;
   affiliateProgramId: string;
@@ -380,8 +405,18 @@ export class PartnerTrackingRegistrationRepository {
       include: { countries: true },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
-    const sameScope = (metadata: ReturnType<typeof registrationMetadata>) => metadata.scope === input.scope
-      && (input.scope === "GENERIC" || metadata.geo === input.geo);
+    const regionalIdentity = input.scope === "REGIONAL_REUSE"
+      ? input.target.rows.find((row) => row.geo === input.geo)?.trackingIdentity ?? null
+      : null;
+    if (input.scope === "REGIONAL_REUSE" && !regionalIdentity) {
+      throw new ValidationError("Regional route identity is unavailable", {
+        reason: "PARTNER_TRACKING_REGIONAL_IDENTITY_MISSING",
+        geo: input.geo,
+      });
+    }
+    const sameScope = (metadata: ReturnType<typeof registrationMetadata>) => {
+      return partnerTrackingScopeMatches(metadata, input.scope, input.geo, regionalIdentity);
+    };
     const verifying = allLinks.find((link) => {
       const metadata = registrationMetadata(link.metadata);
       return sameScope(metadata)
@@ -405,20 +440,30 @@ export class PartnerTrackingRegistrationRepository {
         exactOverrides.add(metadata.geo);
       }
     }
-    const affectedRows = (input.scope === "EXACT_GEO"
+    const declaredScopeRows = input.scope === "EXACT_GEO"
       ? input.target.rows.filter((row) => row.geo === input.geo)
-      : input.target.rows.filter((row) => !exactOverrides.has(row.geo)))
+      : input.scope === "REGIONAL_REUSE"
+        ? input.target.rows.filter((row) => row.trackingScope === "REGIONAL_REUSE" && row.trackingIdentity === regionalIdentity)
+        : input.target.rows.filter((row) => !exactOverrides.has(row.geo)
+          && row.trackingScope !== "EXACT_GEO"
+          && row.trackingScope !== "REGIONAL_REUSE");
+    // Review-only inferred evidence remains visible in the worldwide corpus,
+    // but it cannot be promoted into runtime authority by the registrar.
+    // Historical inventories predate these fields and retain their behavior.
+    const affectedRows = declaredScopeRows
+      .filter((row) => row.supportEvidenceClassification !== "INFERRED"
+        && row.legalEvidenceClassification !== "INFERRED")
       .sort((left, right) => left.geo.localeCompare(right.geo));
     if (!affectedRows.length) {
-      throw new ValidationError("No supported GEO remains in the requested tracking scope", {
-        reason: "PARTNER_TRACKING_SCOPE_EMPTY",
+      throw new ValidationError("No evidence-ready supported GEO remains in the requested tracking scope", {
+        reason: declaredScopeRows.length ? "PARTNER_TRACKING_EVIDENCE_PENDING" : "PARTNER_TRACKING_SCOPE_EMPTY",
       });
     }
 
     const previousActivations = await tx.marketActivation.findMany({
       where: {
         casinoId: input.target.casinoId,
-        countryCode: { in: affectedRows.map((row) => row.geo).filter((geo) => /^[A-Z]{2}$/.test(geo)) },
+        marketCode: { in: affectedRows.map((row) => row.geo) },
         product: "CASINO",
         status: "ACTIVE",
         routeVerificationStatus: "HEALTHY",
@@ -426,7 +471,7 @@ export class PartnerTrackingRegistrationRepository {
       },
       select: {
         id: true,
-        countryCode: true,
+        marketCode: true,
         primaryTrackingLinkId: true,
         affiliateOfferId: true,
         redirectSlugId: true,
@@ -448,7 +493,11 @@ export class PartnerTrackingRegistrationRepository {
     const requiredAttributionParameters = [...new URL(input.trackingUrl).searchParams.keys()]
       .filter((value, index, values) => values.indexOf(value) === index)
       .sort();
-    const scopeIdentity = input.scope === "GENERIC" ? "GENERIC" : `EXACT:${input.geo}`;
+    const scopeIdentity = input.scope === "GENERIC"
+      ? "GENERIC"
+      : input.scope === "REGIONAL_REUSE"
+        ? `REGIONAL:${regionalIdentity}`
+        : `EXACT:${input.geo}`;
     const externalLinkId = `${REGISTRATION_VERSION}:${scopeIdentity}:${input.linkHash}`;
     const existingMetadata = object(link?.metadata);
     const alreadyCanonical = Boolean(link && (
@@ -461,12 +510,16 @@ export class PartnerTrackingRegistrationRepository {
         create: {
           offerId: offer.id,
           externalLinkId,
-          label: input.scope === "GENERIC" ? "Partner default tracking route" : `Partner ${input.geo} tracking route`,
+          label: input.scope === "GENERIC"
+            ? "Partner default tracking route"
+            : input.scope === "REGIONAL_REUSE"
+              ? "Partner regional reusable tracking route"
+              : `Partner ${input.geo} tracking route`,
           destinationUrl: input.trackingUrl,
           trackingUrl: input.trackingUrl,
           geoMode: "ALLOW",
           active: false,
-          priority: input.scope === "EXACT_GEO" ? 1_000 : 500,
+          priority: input.scope === "EXACT_GEO" ? 1_000 : input.scope === "REGIONAL_REUSE" ? 750 : 500,
           source: REGISTRATION_SOURCE,
           metadata: json({
             [REGISTRATION_METADATA_KEY]: {
@@ -475,6 +528,7 @@ export class PartnerTrackingRegistrationRepository {
               casinoId: input.target.casinoId,
               scope: input.scope,
               geo: input.geo,
+              trackingIdentity: regionalIdentity,
               linkHash: input.linkHash,
               stage: "VERIFYING",
               stagedAt: input.now.toISOString(),
@@ -502,6 +556,7 @@ export class PartnerTrackingRegistrationRepository {
               casinoId: input.target.casinoId,
               scope: input.scope,
               geo: input.geo,
+              trackingIdentity: regionalIdentity,
               linkHash: input.linkHash,
               stage: "VERIFYING",
               stagedAt: input.now.toISOString(),
@@ -520,7 +575,7 @@ export class PartnerTrackingRegistrationRepository {
           trackingLinkId: link.id,
           countryCode: row.geo,
           mode: "ALLOW",
-          productionEligible: alreadyCanonical && previousActivations.some((activation) => activation.countryCode === row.geo && activation.primaryTrackingLinkId === link?.id),
+          productionEligible: alreadyCanonical && previousActivations.some((activation) => activation.marketCode === row.geo && activation.primaryTrackingLinkId === link?.id),
           productionEligibilityEvidence: `FOUNDER_SUPPLIED_PARTNER_URL:${input.linkHash}`,
           productionEligibilityNotes: `${REGISTRATION_VERSION} staged scope ${scopeIdentity}`,
         },
@@ -550,9 +605,10 @@ export class PartnerTrackingRegistrationRepository {
       } });
     }
 
-    const exactProfile = input.geo && /^[A-Z]{2}$/.test(input.geo)
+    const exactProfileCountry = input.geo ? countryFromGeo(input.geo) : null;
+    const exactProfile = exactProfileCountry
       ? await tx.casinoCountry.findUnique({
-          where: { casinoId_countryCode: { casinoId: input.target.casinoId, countryCode: input.geo } },
+          where: { casinoId_countryCode: { casinoId: input.target.casinoId, countryCode: exactProfileCountry } },
           select: { localDomain: true, localWebsiteUrl: true },
         })
       : null;
@@ -574,6 +630,7 @@ export class PartnerTrackingRegistrationRepository {
       target,
       scope: input.scope,
       geo: input.geo,
+      trackingIdentity: regionalIdentity,
       linkHash: input.linkHash,
       trackingLinkId: link.id,
       affiliateProgramId: program.id,
@@ -588,7 +645,7 @@ export class PartnerTrackingRegistrationRepository {
         && activation.affiliateOfferId
         && activation.redirectSlugId ? [{
         id: activation.id,
-        geo: activation.countryCode,
+        geo: activation.marketCode,
         trackingLinkId: activation.primaryTrackingLinkId,
         affiliateOfferId: activation.affiliateOfferId,
         redirectId: activation.redirectSlugId,
@@ -674,8 +731,7 @@ export class PartnerTrackingRegistrationRepository {
             if (link.id === candidate.id) return false;
             const metadata = registrationMetadata(link.metadata);
             return metadata.stage === "CANONICAL"
-              && metadata.scope === input.stage.scope
-              && (input.stage.scope === "GENERIC" || metadata.geo === input.stage.geo);
+              && partnerTrackingScopeMatches(metadata, input.stage.scope, input.stage.geo, input.stage.trackingIdentity);
           });
           const existingMetadata = object(candidate.metadata);
           const activationMetadata = object(existingMetadata.commercialActivationV1 as Prisma.JsonValue);
@@ -699,7 +755,7 @@ export class PartnerTrackingRegistrationRepository {
               active: true,
               archivedAt: null,
               geoMode: "ALLOW",
-              priority: input.stage.scope === "EXACT_GEO" ? 1_000 : 500,
+              priority: input.stage.scope === "EXACT_GEO" ? 1_000 : input.stage.scope === "REGIONAL_REUSE" ? 750 : 500,
               verifiedAt: input.checkedAt,
               lastCheckedAt: input.checkedAt,
               source: REGISTRATION_SOURCE,
@@ -731,7 +787,7 @@ export class PartnerTrackingRegistrationRepository {
 
           const supportedCountries = [...new Set([
             ...offer.program.supportedCountries.map((value) => value.toUpperCase()),
-            ...input.stage.affectedRows.map((row) => row.geo),
+            ...input.stage.affectedRows.flatMap((row) => countryFromGeo(row.geo) ?? []),
           ])].sort();
           await tx.affiliateNetwork.update({ where: { id: offer.program.networkId }, data: { active: true, archivedAt: null, updatedBy: input.actorId } });
           await tx.affiliateProgram.update({
@@ -832,8 +888,7 @@ export class PartnerTrackingRegistrationRepository {
         if (prior.id === candidate.id) continue;
         const registration = registrationMetadata(prior.metadata);
         const sameScope = registration.stage === "CANONICAL"
-          && registration.scope === input.stage.scope
-          && (input.stage.scope === "GENERIC" || registration.geo === input.stage.geo);
+          && partnerTrackingScopeMatches(registration, input.stage.scope, input.stage.geo, input.stage.trackingIdentity);
         if (!sameScope) continue;
         await tx.affiliateTrackingLink.update({
           where: { id: prior.id },
@@ -910,15 +965,13 @@ export class PartnerTrackingRegistrationRepository {
           stage: typeof metadata.stage === "string" ? metadata.stage : "",
           scope: metadata.scope,
           geo: typeof metadata.geo === "string" ? metadata.geo : null,
+          trackingIdentity: typeof metadata.trackingIdentity === "string" ? metadata.trackingIdentity : null,
           casino: link.offer.casino.title,
           casinoSlug: link.offer.casino.slug,
         }];
       });
       const partnerRows = CURRENT_PARTNER_INVENTORY.filter((row) => row.partner === input.stage.target.partner);
-      const coversRow = (link: typeof coverage[number], row: CurrentPartnerInventorySeed) => (
-        normalizeCurrentPartnerIdentity(link.casino) === normalizeCurrentPartnerIdentity(row.casino)
-          || Boolean(row.casinoSlug && normalizeCurrentPartnerIdentity(link.casinoSlug) === normalizeCurrentPartnerIdentity(row.casinoSlug))
-      ) && (link.scope === "GENERIC" || (link.scope === "EXACT_GEO" && link.geo === row.geo));
+      const coversRow = partnerTrackingCoverageMatches;
       const missingRows = partnerRows.filter((row) => !row.partnerTrackingUrlPresent && !coverage.some((link) =>
         link.active && link.stage === "CANONICAL" && coversRow(link, row)));
       const brokenRows = partnerRows.filter((row) => coverage.some((link) => link.stage === "BROKEN" && coversRow(link, row)));

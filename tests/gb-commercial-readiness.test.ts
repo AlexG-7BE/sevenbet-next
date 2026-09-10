@@ -154,7 +154,7 @@ function domainEvidence(patch: Partial<GbCommercialDomainEvidenceRecord> = {}): 
   };
 }
 
-function evaluate(input: { casino?: CasinoDomain; offer?: CandidateOffer; domainEvidence?: GbCommercialDomainEvidenceRecord | null; jurisdiction?: JurisdictionDecision } = {}) {
+function evaluate(input: { casino?: CasinoDomain; offer?: CandidateOffer; domainEvidence?: GbCommercialDomainEvidenceRecord | null; jurisdiction?: JurisdictionDecision; founderWorldwideAuthority?: boolean } = {}) {
   return evaluateGbCommercialReadiness({
     casino: input.casino ?? casino(),
     offer: input.offer ?? offer(),
@@ -162,6 +162,7 @@ function evaluate(input: { casino?: CasinoDomain; offer?: CandidateOffer; domain
     domainEvidence: input.domainEvidence === undefined ? domainEvidence() : input.domainEvidence,
     jurisdictionDecision: input.jurisdiction ?? jurisdiction,
     redirectContract: { slugActive: true, destinationServerOwned: true, destinationSafe: true },
+    founderWorldwideAuthority: input.founderWorldwideAuthority,
     now,
   });
 }
@@ -176,6 +177,19 @@ test("the complete GB authority chain is eligible only under an explicitly allow
   assert.equal(denied.referralReady, false);
   assert.ok(denied.reasonCodes.includes("GB_JURISDICTION_COMMERCIAL_DENIED"));
   assert.ok(denied.reasonCodes.includes("GB_JURISDICTION_REFERRAL_DENIED"));
+});
+
+test("Founder worldwide authority supersedes only the scoped stale internal GB deny", () => {
+  const staleInternalDeny: JurisdictionDecision = {
+    ...jurisdiction,
+    commercialAllowed: false,
+    referralAllowed: false,
+    reasonCode: "POLICY_STALE",
+  };
+  assert.equal(evaluate({ jurisdiction: staleInternalDeny }).referralReady, false);
+  assert.equal(evaluate({ jurisdiction: staleInternalDeny, founderWorldwideAuthority: true }).referralReady, true);
+  const legalDeny: JurisdictionDecision = { ...staleInternalDeny, reasonCode: "MARKET_RESTRICTED" };
+  assert.equal(evaluate({ jurisdiction: legalDeny, founderWorldwideAuthority: true }).referralReady, false);
 });
 
 test("agreement authority fails closed for missing, malformed, stale, expired, wrong-market and identity-mismatched evidence", () => {

@@ -1,6 +1,7 @@
 # Global 14-casino worldwide market authority — 10 September 2026
 
-**Status:** IMPLEMENTATION STAGED — NOT MERGED, NOT DEPLOYED, NO PRODUCTION MUTATION
+**Status:** CANONICAL-RUNTIME INTEGRATION IMPLEMENTED — REVIEW REQUIRED — NOT
+MERGED, NOT DEPLOYED, NO PRODUCTION MUTATION
 
 **Authority:** [Founder global 14-casino market authority](../07_Decisions/FOUNDER-GLOBAL-14-CASINO-MARKET-AUTHORITY-2026-09-10.md)
 
@@ -38,8 +39,8 @@ rows carry authority.
 | --- | ---: |
 | Support DETECTED | 122 |
 | Support INFERRED | 12 |
-| Legal DETECTED | 91 |
-| Legal INFERRED | 43 |
+| Legal DETECTED | 94 |
+| Legal INFERRED | 40 |
 
 Inferred rows are explicit review inputs, not concealed Production clearance.
 
@@ -76,6 +77,14 @@ excludes other Betsson Group brands. Betsson CA-ON is therefore programme-
 restricted, while Betsafe CA-ON remains supported but requires current exact
 provincial operator/domain authority.
 
+**CONTRADICTION / DECISION REQUIRED:** a second-pass federal and provincial
+source review found an open private registration path only in Alberta and
+Ontario. It indicates that the other 33 supported Canadian subdivision rows
+should be legal blocks under the provincial conduct-and-manage schemes, not
+regulatory actions. This branch deliberately leaves those 33 rows in their
+earlier fail-closed action state until the Founder explicitly approves that
+legal reclassification. They cannot activate in the current state.
+
 ## Authorized target classification
 
 These figures are target reconciliation outcomes, not claims about current
@@ -84,19 +93,21 @@ legal/support evidence remains merge-gated until that evidence is closed.
 
 | Target final state | Rows |
 | --- | ---: |
-| ACTIVE_HEALTHY | 37 |
+| ACTIVE_HEALTHY | 38 |
 | BLOCKED_BY_LAW | 35 |
-| ACTION_REQUIRED_REGULATORY | 57 |
+| ACTION_REQUIRED_REGULATORY | 56 |
 | BROKEN_ROUTE | 1 |
 | MISSING_TRACKING_ROUTE | 4 |
 | **Supported total** | **134** |
 
 Legal/regulatory classification takes precedence over route presence. Current
-source-backed blocks include Brunei, Chile, Ecuador, Finland, Iceland, Italy,
-Lithuania, New Zealand and Uruguay as applicable to supported rows. Cyprus,
-Egypt, Kazakhstan, Luxembourg, Maldives, Sri Lanka and Thailand are conservative
+source-backed blocks include Brunei, Chile, Cyprus, Ecuador, Finland, Iceland,
+Italy, Kazakhstan, Latvia, Lithuania, Luxembourg, New Zealand and Uruguay as
+applicable to supported rows. Egypt, Sri Lanka and Thailand remain conservative
 **INFERRED** legal blocks whose exact retrievable official provision is a merge
-gate, not a completed current-source claim. Exact mandatory authority actions
+gate, not a completed current-source claim. Maldives' unsupported Penal Code
+claim and Monaco's unsupported online-registration action were removed; both
+remain inferred and fail-closed rather than being presented as law. Exact mandatory authority actions
 include Canadian provincial conduct-and-manage authority under Criminal Code
 section 207, the Greek affiliate suitability registration, and specified local
 operator registers.
@@ -117,10 +128,14 @@ manufactured.
   default.
 - A present link receives only the neutral `Visit Casino` internal offer label.
 
-The branch deliberately contains no route writer. After the concurrent
-registration service merges, this manifest must be adapted into its current
-partner inventory and all tracking registration must pass through that service.
-The old rollout reconciler must not become a second registrar.
+The permanent tracking-registration mechanism merged through PR #234 at commit
+`95b47be`. This branch was rebased on that commit. Its 134 supported rows are
+now the exact 14-casino portion of the registrar's canonical current-partner
+inventory. `REGIONAL_REUSE` is a first-class registration scope between exact
+and generic, and the old 540-row one-time rollout inventory remains explicitly
+historical inside the retired reconciler. There is still one route writer: the
+permanent `PartnerTrackingRegistrationService` and its RFC-042 controller
+boundary.
 
 ## GB reconciliation
 
@@ -135,38 +150,52 @@ regulatory authority.
 the older country-wide internal `commercialAllowed=false` and
 `referralAllowed=false` values. The current Founder decision removes that old
 internal deny for the exact six brands, but a global policy flip would exceed
-this rollout's scope. Before merge, the implementation must establish a scoped,
-reviewed path that preserves every exact UKGC/domain/operator/contract/route
-gate. Until then the target rows are not live.
+this rollout's scope. The implemented path bypasses only
+`COMMERCIAL_NOT_ACTIVE` or `POLICY_STALE` for those exact six slugs when the
+worldwide matrix contains detected GB support and legal evidence. It continues
+to require exact UKGC/domain/operator/partner/offer/tracking/redirect and
+RFC-042 route readiness. Other Casinos and every other jurisdiction denial
+remain fail-closed. The target rows are not yet live.
 
-## Subnational runtime gap
+## Exact subdivision runtime
 
-**DETECTED:** RFC-042 currently accepts only two-letter `countryCode` values;
-its schema uses `Char(2)`, its database constraint enforces alpha-2, and public
-request authority reads only `x-vercel-ip-country`. The concurrent registrar
-accepts some hyphenated labels syntactically but converts every subdivision
-into a regulatory action instead of activating it. That technical limitation
-must not be presented as law.
+**IMPLEMENTED TARGET:** [RFC-045](../06_RFC/RFC-045-Exact-Subdivision-Market-Activation.md)
+extends RFC-042 with exact `marketCode` while retaining parent `countryCode`
+for jurisdiction and factual authority. Additive migration
+`0035_market_activation_exact_market_code` backfills existing rows, replaces
+only activation uniqueness indexes and activates nothing. Runtime resolution,
+public commercial projections and redirects consume the trusted Vercel region
+header; no query, locale or account value can manufacture it.
 
-Exact Canada/Argentina activation therefore requires a material RFC/amendment
-and additive migration that keeps parent country law/policy separate from an
-exact market code, consumes trusted `x-vercel-ip-country-region`, and fails
-closed when a required region is missing or invalid.
+For a subdivision, parent jurisdiction approval remains necessary but is not
+sufficient. The exact 14-casino manifest must also contain `SUPPORTED`, legal
+`ALLOWED`, detected support evidence, detected legal evidence and matching
+Founder authority. Missing or invalid exact evidence fails closed as an
+internal readiness action, never as invented law. The migration and runtime
+remain undeployed.
 
 ## Required gates before merge or Production
 
-1. The concurrent tracking-registration mechanism is merged to `main`.
-2. This branch is updated from current `main`; the manifest is integrated into
-   that mechanism, with no competing route-registration path.
-3. Subnational market authority is implemented through an approved durable
-   design and exact request/runtime tests.
-4. The six scoped GB rows can pass without weakening exact operator evidence.
-5. Exact supported rows reconcile only through RFC-042; restricted/unknown,
-   legal-blocked and regulatory-action rows cannot expose a CTA.
-6. No active country-wide AR/CA row and no active `ZZ` fallback exists for the
-   14 casinos after exact convergence.
-7. Full tests, Production snapshot, guarded reconciliation, deployment and live
-   postflight complete before actual final-state totals are written to
-   `CURRENT_STATE.md`.
+1. **COMPLETE:** PR #234 merged and this branch is rebased onto its permanent
+   registration mechanism.
+2. **COMPLETE IN CODE:** the worldwide supported rows use the canonical
+   inventory/service; the historical reconciler cannot act as a second writer.
+3. **COMPLETE IN CODE:** RFC-045, migration 0035, trusted-region propagation and
+   exact request/runtime tests implement subdivision identity.
+4. **COMPLETE IN CODE:** the six scoped GB rows can pass only the stale internal
+   deny while every cumulative operator/commercial/route gate remains required.
+5. **MERGE GATE:** close 12 inferred support classifications and 40 inferred
+   legal classifications with current authoritative evidence, and explicitly
+   decide the proposed 33-row Canadian closed-market reclassification; no
+   unresolved row may be described as Production-cleared.
+6. **RELEASE GATE:** full CI, clean-database migration and PostgreSQL integration
+   suites must pass for the review SHA.
+7. **PRODUCTION GATE:** capture the pre-mutation snapshot, verify exact current
+   route/partner evidence, execute only through the canonical registrar and
+   RFC-042 controller, then prove there is no active country-wide AR/CA row or
+   applicable `ZZ` fallback for these 14 Casinos.
+8. **ACCEPTANCE GATE:** deployment and live postflight must succeed before
+   actual final-state totals are written to `CURRENT_STATE.md`.
 
-Until those gates pass: **WAITING FOR TRACKING REGISTRATION MECHANISM MERGE**.
+The tracking-mechanism dependency is closed. The PR remains open because the
+evidence, migration/CI and Production acceptance gates above are not closed.

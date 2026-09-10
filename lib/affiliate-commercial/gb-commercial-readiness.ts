@@ -90,6 +90,7 @@ export interface GbCommercialReadinessInput {
   domainEvidence: GbCommercialDomainEvidenceRecord | null;
   jurisdictionDecision: JurisdictionDecision;
   redirectContract: { slugActive: boolean; destinationServerOwned: boolean; destinationSafe: boolean };
+  founderWorldwideAuthority?: boolean;
   now: Date;
 }
 
@@ -186,8 +187,11 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
   const checkedDates: Date[] = [];
   const revalidationDates: Date[] = [];
 
-  if (input.jurisdictionDecision.countryCode !== "GB" || !input.jurisdictionDecision.commercialAllowed) reasons.push("GB_JURISDICTION_COMMERCIAL_DENIED");
-  if (input.jurisdictionDecision.countryCode !== "GB" || !input.jurisdictionDecision.referralAllowed) reasons.push("GB_JURISDICTION_REFERRAL_DENIED");
+  const founderSupersedesInternalGbDeny = input.founderWorldwideAuthority === true
+    && input.jurisdictionDecision.countryCode === "GB"
+    && ["COMMERCIAL_NOT_ACTIVE", "POLICY_STALE"].includes(input.jurisdictionDecision.reasonCode);
+  if (input.jurisdictionDecision.countryCode !== "GB" || (!input.jurisdictionDecision.commercialAllowed && !founderSupersedesInternalGbDeny)) reasons.push("GB_JURISDICTION_COMMERCIAL_DENIED");
+  if (input.jurisdictionDecision.countryCode !== "GB" || (!input.jurisdictionDecision.referralAllowed && !founderSupersedesInternalGbDeny)) reasons.push("GB_JURISDICTION_REFERRAL_DENIED");
 
   const program = offer.program;
   if (!program.casinoId) reasons.push("GB_PROGRAM_CASINO_MISSING");

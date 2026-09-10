@@ -22,18 +22,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
   // Market authority comes only from Vercel's trusted GEO header in Preview
   // and Production. A `country` query parameter is intentionally ignored.
-  const requestCountry = requestCountrySignalFromHeaders(request.headers)?.countryCode ?? null;
+  const requestSignal = requestCountrySignalFromHeaders(request.headers);
+  const requestCountry = requestSignal?.countryCode ?? null;
   const presentationLanguage = resolvePresentationContext({
     trustedCountryCode: requestCountry,
     acceptLanguage: request.headers.get("accept-language"),
   }).language;
   const marketResponseHeaders = {
     "Cache-Control": "private, no-store",
-    "Vary": "X-Vercel-IP-Country, Accept-Language",
+    "Vary": "X-Vercel-IP-Country, X-Vercel-IP-Country-Region, Accept-Language",
   };
   if (resource === "casinos") {
     const authority = await resolveServerJurisdiction();
-    const records = (await publicCasinoService.listCasinos(authority, requestCountry, presentationLanguage)).filter((casino) => casino.source === "cms").slice(0, limit).map((casino) => ({
+    const records = (await publicCasinoService.listCasinos(authority, requestCountry, presentationLanguage, requestSignal?.marketCode)).filter((casino) => casino.source === "cms").slice(0, limit).map((casino) => ({
       ...casino,
       affiliate: casino.affiliate.href?.startsWith("/r/") ? casino.affiliate : { href: null, available: false },
       bonuses: casino.bonuses.map((bonus) => ({ ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } })),
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
   if (resource === "bonuses") {
     const authority = await resolveServerJurisdiction();
-    const records = (await publicCasinoService.listBonuses(authority, requestCountry, presentationLanguage)).filter(({ casino }) => casino.source === "cms").slice(0, limit).map(({ casino, bonus }) => ({ casino: { id: casino.id, slug: casino.slug, name: casino.name }, ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } }));
+    const records = (await publicCasinoService.listBonuses(authority, requestCountry, presentationLanguage, requestSignal?.marketCode)).filter(({ casino }) => casino.source === "cms").slice(0, limit).map(({ casino, bonus }) => ({ casino: { id: casino.id, slug: casino.slug, name: casino.name }, ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } }));
     return NextResponse.json({ ok: true, resource, entity: "bonus", count: records.length, records }, { headers: marketResponseHeaders });
   }
   if (resource === "articles") {

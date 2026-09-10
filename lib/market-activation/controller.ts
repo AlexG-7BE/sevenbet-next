@@ -1,4 +1,6 @@
 import { PARTNER_ROUTE_VERIFICATION_MAX_AGE_MS } from "@/lib/affiliate-routing/partner-route-projection";
+import { prisma } from "@/lib/db/prisma";
+import { exactSubdivisionEvidenceAuthority } from "@/lib/jurisdiction/exact-market-authority";
 
 import type { MarketActivationApplyResult } from "./repository";
 import { marketActivationRepository, type MarketActivationRepository } from "./repository";
@@ -40,14 +42,33 @@ function routeVerificationRequired(result: MarketActivationApplyResult, now: Dat
       && result.activation.externalBlockerSource === "AffiliateRouteHealth");
 }
 
+export interface ExactSubdivisionActivationAuthorityPort {
+  allowed(intent: ReturnType<typeof normalizeMarketActivationIntent>): Promise<boolean>;
+}
+
+const exactSubdivisionActivationAuthority: ExactSubdivisionActivationAuthorityPort = {
+  async allowed(intent) {
+    const casinoSlug = intent.casinoSlug ?? (intent.casinoId
+      ? (await prisma.casino.findUnique({ where: { id: intent.casinoId }, select: { slug: true } }))?.slug
+      : null);
+    return Boolean(casinoSlug && exactSubdivisionEvidenceAuthority({ casinoSlug, marketCode: intent.marketCode }));
+  },
+};
+
 export class MarketActivationController {
   constructor(
     private readonly store: Pick<MarketActivationRepository, "apply" | "recordRouteVerification"> = marketActivationRepository,
     private readonly routeVerifier: MarketActivationRouteVerifierPort = marketActivationRouteVerifier,
+    private readonly exactSubdivisionAuthority: ExactSubdivisionActivationAuthorityPort = exactSubdivisionActivationAuthority,
   ) {}
 
   async setDesiredState(input: MarketActivationIntentInput, now = new Date()): Promise<MarketActivationApplyResult> {
     const intent = normalizeMarketActivationIntent(input);
+    if (intent.desiredState === "ACTIVE"
+      && intent.marketCode.includes("-")
+      && !await this.exactSubdivisionAuthority.allowed(intent)) {
+      throw new Error("MARKET_ACTIVATION_EXACT_SUBDIVISION_AUTHORITY_MISSING");
+    }
     let result = await this.store.apply(intent, now);
     if (intent.desiredState !== "ACTIVE") return result;
     for (let attempt = 1; attempt <= 2 && routeVerificationRequired(result, now); attempt += 1) {

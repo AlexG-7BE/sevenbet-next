@@ -10,16 +10,35 @@ if (command !== "audit") throw new Error("WORLDWIDE_AUTHORITY_COMMAND_UNSUPPORTE
 const rows = buildWorldwideAuthorityMatrix();
 const summary = validateWorldwideAuthorityMatrix(rows);
 const supported = rows.filter((row) => row.marketSupportState === "SUPPORTED");
+const inferredSupportRows = supported.filter((row) => row.supportEvidenceClassification !== "DETECTED").length;
+const inferredLegalRows = supported.filter((row) => row.legalEvidenceClassification !== "DETECTED").length;
+const releaseGates = {
+  canadaClosedMarketClassificationApproved: false,
+  cleanDatabaseMigrationRecorded: false,
+  productionSnapshotRecorded: false,
+  productionPostflightRecorded: false,
+};
 
 console.log(JSON.stringify({
   release: WORLDWIDE_AUTHORITY_RELEASE,
   targetClassification: "AUTHORIZED_TARGET",
   productionMutationPerformed: false,
+  mergeReady: inferredSupportRows === 0
+    && inferredLegalRows === 0
+    && Object.values(releaseGates).every(Boolean),
+  mergeBlockers: {
+    inferredSupportRows,
+    inferredLegalRows,
+    ...releaseGates,
+  },
   summary,
   stagingSnapshot: {
-    meaning: "Fixed branch state; re-evaluate from the rebased canonical runtime before merge.",
-    trackingRegistrationMechanismMerged: false,
-    exactSubdivisionRuntimeAvailable: false,
+    meaning: "Review branch state after rebasing onto the canonical registrar; this is not Production state.",
+    trackingRegistrationMechanismMerged: true,
+    trackingRegistrationMergeCommit: "95b47be",
+    canonicalRegistrationInventoryIntegrated: true,
+    exactSubdivisionRuntimeImplemented: true,
+    exactSubdivisionRuntimeAvailableInProduction: false,
     currentRuntimePostflightRecorded: false,
   },
   regulatoryActions: supported

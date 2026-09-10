@@ -22,9 +22,10 @@ export const resolveServerPresentationContext = cache(async function resolveServ
   const preference = publicPresentation || programmePresentation
     ? parsePresentationPreference(cookieStore.get(PRESENTATION_PREFERENCE_COOKIE)?.value)
     : null;
-  const trustedCountryCode = publicPresentation || programmePresentation
-    ? requestCountrySignalFromHeaders(requestHeaders)?.countryCode
+  const trustedSignal = publicPresentation || programmePresentation
+    ? requestCountrySignalFromHeaders(requestHeaders)
     : null;
+  const trustedCountryCode = trustedSignal?.countryCode ?? null;
   const resolution = resolvePresentationContext({
     routeLanguage: publicPresentation || programmePresentation ? routeLanguage : null,
     preference,
@@ -39,6 +40,7 @@ export const resolveServerPresentationContext = cache(async function resolveServ
     ...resolution,
     locale: programmeLocale ?? resolution.locale,
     context: programmePresentation ? PROGRAMME_PRESENTATION_CONTEXT : publicPresentation ? "public-v1" : null,
+    marketCode: trustedSignal?.marketCode ?? trustedCountryCode,
     isExplicitRoute: resolution.source === "EXPLICIT_ROUTE",
   } as const;
 });
