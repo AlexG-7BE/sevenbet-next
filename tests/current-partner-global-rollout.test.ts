@@ -11,6 +11,7 @@ import {
   SUPER_PARTNERS_CASINOS,
   SUPER_PARTNERS_SUPPORTED_GEOS,
 } from "../lib/current-partner-rollout/inventory";
+import { currentPartnerExpectedFinalHost } from "../lib/current-partner-rollout/reconciliation";
 import { MARKET_PROFILES, PUBLISHED_LANGUAGE_ROUTE_PROFILES } from "../lib/market/registry";
 import { PROGRAMME_LOCALES } from "../lib/programme/presentation";
 
@@ -55,6 +56,12 @@ test("generic partner links may serve exact GEO rows while exact routes remain p
   assert.ok(betssonGeneric.every((row) => row.trackingScope === "GENERIC_GLOBAL" && row.finalState === "ACTIVE_HEALTHY"));
   for (const geo of ["PE", "SE"]) assert.equal(rows.find((row) => row.casino === "Betsson" && row.geo === geo)?.trackingScope, "EXACT_GEO");
   for (const geo of ["EE", "LV"]) assert.equal(rows.find((row) => row.casino === "Betsafe" && row.geo === geo)?.trackingScope, "EXACT_GEO");
+});
+
+test("current terminal-host expectations match the exact live operator markets", () => {
+  assert.equal(currentPartnerExpectedFinalHost("betsafe", "LV"), "www.betsafe.lv");
+  assert.equal(currentPartnerExpectedFinalHost("betsson", "SE"), "casino.betsson.com");
+  assert.equal(currentPartnerExpectedFinalHost("betsson", "PE"), "www.betsson.pe");
 });
 
 test("Superfly uses exact active rows and retires global fallback authority", () => {

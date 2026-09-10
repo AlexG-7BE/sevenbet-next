@@ -126,12 +126,16 @@ function purpose(row: CsvRecord) {
   return row.routeKind || "OTHER";
 }
 
-function expectedFinalHost(casinoSlug: string, countryCode: string) {
-  if (casinoSlug === "betsafe") return countryCode === "EE" ? "offers.betsafe.ee" : "offers.betsafe.lv";
+export function currentPartnerExpectedFinalHost(casinoSlug: string, countryCode: string) {
+  if (casinoSlug === "betsafe") return countryCode === "EE" ? "offers.betsafe.ee" : "www.betsafe.lv";
   if (casinoSlug === "inkabet") return "inkabet.pe";
   if (casinoSlug === "nordicbet") return "www.nordicbet.com";
   if (casinoSlug === "rizk") return countryCode === "RS" ? "rizk.rs" : "rizk.com";
-  if (casinoSlug === "betsson") return countryCode === "PE" ? "www.betsson.pe" : "www.betsson.com";
+  if (casinoSlug === "betsson") {
+    if (countryCode === "PE") return "www.betsson.pe";
+    if (countryCode === "SE") return "casino.betsson.com";
+    return "www.betsson.com";
+  }
   return null;
 }
 
@@ -405,7 +409,7 @@ async function normalizeBga(tx: Transaction, actorId: string, now: Date) {
     const currentMetadata = record(tracking.metadata);
     const currentActivation = record(currentMetadata.commercialActivationV1 as Prisma.JsonValue);
     const records = record(currentActivation.records as Prisma.JsonValue);
-    const expectedHost = expectedFinalHost(seed.casinoSlug!, countryCode);
+    const expectedHost = currentPartnerExpectedFinalHost(seed.casinoSlug!, countryCode);
     await tx.affiliateTrackingLink.update({ where: { id: tracking.id }, data: {
       active: true,
       geoMode: "ALLOW",
