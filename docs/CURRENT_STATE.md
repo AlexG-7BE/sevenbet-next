@@ -4,17 +4,17 @@
 **Evidence date:** 10 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `6deca5539812a72f5eac1c09fbd2f9b107da32d3`
-**Verified post-release runtime baseline SHA:** `6deca5539812a72f5eac1c09fbd2f9b107da32d3`
-**Verified post-release runtime deployment:** Ready; `dpl_5u5zVe8qMvbuUq2Kw2Y287v4bEkx`
+**Current Production application SHA (live provider evidence):** `413ad041d21543f8fb421dc691b77c37bdae1c56`
+**Verified post-release runtime baseline SHA:** `413ad041d21543f8fb421dc691b77c37bdae1c56`
+**Verified post-release runtime deployment:** Ready; `dpl_EKNtfHi33WWzmuheEh2MUWybiFXb`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Founder-authorized release in progress — Production DB retired; application cutover pending
+## Logo-only Product, MEDIA-GEO3 retirement and eleven-locale cutover complete in Production
 
-**DETECTED (repository and Production DB):** RFC-044 records the current Founder decision for a
+**VERIFIED (repository, Production DB and live runtime):** RFC-044 records the current Founder decision for a
 logo-only operator Product, retirement of MEDIA-GEO3 runtime/business authority,
 media-independent commercial authority and locale/market separation. Migration
 `0034_logo_only_media_retirement` is non-destructive and makes historical
@@ -23,12 +23,13 @@ inert while leaving `MediaAsset` rows untouched. The canonical repository
 language registry contains `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`,
 `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO`.
 
-**DETECTED — DB-first release gate complete:** Migration 0034 is applied in
+**VERIFIED — DB-first release gate and application cutover complete:** Migration 0034 is applied in
 Production. Before/after evidence preserves all 254 hosted creatives, 148
 assignment rows and every `MediaAsset`, including 16 active logos, while active
 assignment, hosted-creative, creative-set/variant and revision authority is
-zero. Ten fail-closed retirement constraints are verified. The application
-release and eleven-locale live-runtime verification remain pending; the dated
+zero. Ten fail-closed retirement constraints are verified. Production runtime
+`413ad041d21543f8fb421dc691b77c37bdae1c56` serves the logo-only application,
+cache-proof retirement endpoints and all eleven language routes. The dated
 MEDIA-GEO3 entries below are historical delivery records, not current authority
 or permission to reverse the Founder decision.
 
@@ -55,16 +56,49 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | ChatGPT Work MCP / Better Auth 1.7 | **COMMERCIAL MCP ENABLED; MEDIA MCP RETIRED BY RFC-044** | Commercial retains its governed resource. Migration 0034 prevents Media authority from being recreated; the application cutover makes the Media MCP, its DCR and discovery surfaces return cache-proof 410. |
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
 | Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES, DESTINATIONS VERIFIED** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority and checksum-matched canonical campaigns. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
-| Casino market data | **TEN REAL PUBLISHED IDENTITIES — SAFE CROSS-MARKET OFFER PRESENTATION ACTIVE** | Market-projected Casino facts remain isolated. A bounded immutable published-bonus corpus now resolves `EXACT > ROW > OTHER_MARKET > NONE`; StarCasino IT plus genuine Rizk and NordicBet ROW offers are reconciled without creating commercial or media authority. Founder-approved scores remain unchanged. |
+| Casino market data | **FOURTEEN REAL PUBLISHED IDENTITIES — SAFE CROSS-MARKET OFFER PRESENTATION ACTIVE** | Market-projected Casino facts remain isolated. A bounded immutable published-bonus corpus now resolves `EXACT > ROW > OTHER_MARKET > NONE`; StarCasino IT plus genuine Rizk and NordicBet ROW offers are reconciled without creating commercial or media authority. Founder-approved scores remain unchanged. |
 | Placement media | **RETIRED — HISTORICAL ROWS INERT** | Migration 0034 preserves every historical assignment and asset row but forces all six assignment families inactive. Promotional placement state is no longer public, commercial or release authority. |
 | Canonical public CTA authority | **RFC-042 SOLE B4GAMBLE AUTHORITY** | Public directory, comparison and review consumers use canonical `MarketActivation`, including its healthy global fallback. Legacy programme/offer/workflow/link/redirect lifecycle fields are not replacement CTA vetoes; external safety, jurisdiction, GB operator/legal, safe-URL, relational and trusted-GEO controls remain independent. |
 | GEO-localized creative assignments | **RETIRED — HISTORICAL TARGETING EVIDENCE ONLY** | Exact-country/language assignment rows remain for audit but are inactive and database-constrained. Trusted GEO continues to govern jurisdiction independently of language and media. |
 | Vetted partner-hosted creatives | **RETIRED — 254 HISTORICAL ROWS PRESERVED AND ARCHIVED** | Hosted creatives remain inert evidence. Public frames/previews and active assignments are retired; they cannot supply Product or commercial authority. |
 | Commercial creative formats | **HISTORICAL COMPATIBILITY / TEST VOCABULARY** | Format parsers and pre-retirement tests may remain inert. Active public compositions accept operator logos or explicitly B4GAMBLE-owned editorial art, never promotional creative formats. |
 | Media ingestion / Media Operations | **PROMOTIONAL OPERATIONS RETIRED; LOGO AND B4GAMBLE EDITORIAL ASSETS ONLY** | Active Admin media is limited to canonical logos and authenticated `b4gambleOwned` editorial social imagery. Promotional ingestion/analyse/apply/assignment/MCP surfaces are 410 in the application cutover and retired states are rejected by Production constraints. |
-| Public language / market presentation | **ELEVEN LOCALES IMPLEMENTED; LIVE APPLICATION CUTOVER PENDING** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
+| Public language / market presentation | **ELEVEN LOCALES LIVE IN PRODUCTION** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
 
 ### Recent implementation state
+
+**VERIFIED — LOGO-ONLY / MEDIA-GEO3 RETIREMENT / LOCALE REACTIVATION LIVE, 10
+September 2026:** [PR #218](https://github.com/AlexG-7BE/sevenbet-next/pull/218)
+merged as `413ad041d21543f8fb421dc691b77c37bdae1c56`. Ready Production deployment
+`dpl_EKNtfHi33WWzmuheEh2MUWybiFXb` owns `b4gamble.com` and
+`www.b4gamble.com`. Its immutable build log verifies pooled/direct database
+identity, Migration `0034_logo_only_media_retirement`, all ten retirement
+constraints, zero active assignment/hosted-creative/set/variant/revision
+authority, 16 preserved active logo assets, 39 published Casinos, 14 real
+operators, all 14 required direct operator logos and zero active legacy media
+authority.
+
+Live acceptance returned 200 for all eleven Home and eleven Programme routes,
+and 308 for the four legacy Programme aliases. Home and Programme expose the
+same registry-backed language set. German presentation rendered `de-DE` while
+retaining independently trusted `KZ`; a `country=PE` query was removed and the
+public API returned the same isolated projection with or without that query.
+Programme exposes all eleven reciprocal locale alternates plus `x-default`;
+review-gated Product translations remain self-canonical `noindex, follow` and
+outside the sitemap until their independent indexing authority is approved.
+
+Casino directory, Best Offers, Bonuses and a published Casino review rendered
+only canonical operator logos or B4GAMBLE-owned composition, with no creative
+iframe, hosted frame, assignment marker, broken completed image, console error
+or empty promotional frame. Media MCP discovery/runtime, Media DCR, Admin
+ingestion/assignment and hosted-frame probes returned cache-proof 410 while
+Commercial MCP discovery remained live. Exact-head CI run
+[34449281173](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/34449281173)
+passed Agent Core, Quality, Database/Migration Verification and Build/Browser,
+including 279 public browser cases, 19 Programme cases and Programme-state
+preservation across locale changes. Application recovery remains an exact
+known-good Vercel rollback or a forward fix; Migration 0034 retains history and
+must not be reversed into promotional authority without a new Founder decision.
 
 **DETECTED — SAFE OFFER CORPUS COMPLETION AND CROSS-MARKET PRESENTATION LIVE, 9
 September 2026:** Phase A [PR #208](https://github.com/AlexG-7BE/sevenbet-next/pull/208),
