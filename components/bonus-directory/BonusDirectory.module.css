@@ -784,3 +784,28 @@
   .compactTerms { gap:10px; }
   .compactActions { grid-template-columns:1fr; }
 }
+
+/* Compact commercial directory override. */
+@media (min-width:901px) {
+  .comparison { gap:0; border-top:1px solid rgba(16,15,15,.18); }
+  .comparisonRow { min-height:128px; grid-template-columns:64px minmax(170px,.75fr) minmax(220px,1.15fr) minmax(280px,1fr) minmax(150px,.58fr); grid-template-areas:"logo identity offer terms actions"; grid-template-rows:1fr; gap:18px; padding:18px 0; overflow:visible; border:0 !important; border-bottom:1px solid rgba(16,15,15,.16) !important; border-radius:0; background:transparent; }
+  .comparisonRow:hover { background:#fffefa; }
+  .compactLogo { width:64px; height:52px; }
+  .compactLogo img { max-width:60px; max-height:48px; }
+  .compactIdentity > strong { font-size:17px; line-height:20px; }
+  .compactIdentity > span { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+  .compactOffer { align-self:center; padding:0 0 0 18px; border-left:1px solid rgba(16,15,15,.12); }
+  .compactOffer::before { display:none; }
+  .compactHeadline { font-size:18px; line-height:22px; }
+  .compactTerms { align-self:center; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; padding:0 0 0 18px; border-left:1px solid rgba(16,15,15,.12); }
+  .compactTerms div:last-child { grid-column:auto; }
+  .compactTerms dt { font-size:11px; line-height:15px; }
+  .compactTerms dd { font-size:13px; line-height:18px; }
+  .compactActions { align-self:center; padding-left:16px; border-left:1px solid rgba(16,15,15,.12); display:grid; gap:6px; }
+  .compactActions .offerActionCompact,.compactActions .actionUnavailableCompact { width:100%; min-height:42px; border-radius:4px; }
+  .comparisonRow > .conditions { display:none; }
+}
+@media (max-width:760px) {
+  .comparisonRow { padding:20px 0; border:0 !important; border-bottom:1px solid rgba(16,15,15,.16) !important; border-radius:0; }
+  .compactOffer { padding-inline:0; }
+}

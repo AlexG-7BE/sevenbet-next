@@ -7,6 +7,7 @@ import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutbound
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
+import { commercialUiLabels } from "@/lib/i18n/commercial-ui-labels";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import {
@@ -19,6 +20,7 @@ import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-c
 import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
+import { formatCompactWagering } from "@/lib/presentation/commercial-terms";
 
 import styles from "./CuratedCasinoShortlist.module.css";
 
@@ -29,11 +31,11 @@ function hasGovernedVisitAction(casino: PublicCasinoCardDto) {
     && Boolean(casino.visitAction.redirectSlug && isSafePublicSlug(casino.visitAction.redirectSlug));
 }
 
-function governedVisitAction(casino: PublicCasinoCardDto, messages: ProductPageMessages) {
+function governedVisitAction(casino: PublicCasinoCardDto, presentation: PresentationResolution) {
   if (!hasGovernedVisitAction(casino) || !casino.visitAction.redirectSlug) return null;
   return {
     href: `/r/${casino.visitAction.redirectSlug}`,
-    label: `${messages.common.actionAvailable}: ${casino.name}`,
+    label: commercialUiLabels(presentation.locale).visitCasino,
   };
 }
 
@@ -45,8 +47,8 @@ function selectorLabel(selector: Selector, messages: ProductPageMessages) {
   return messages.casinos.newCasinos;
 }
 
-function Visit({ casino, messages }: { casino: PublicCasinoCardDto; messages: ProductPageMessages }) {
-  const action = governedVisitAction(casino, messages);
+function Visit({ casino, messages, presentation }: { casino: PublicCasinoCardDto; messages: ProductPageMessages; presentation: PresentationResolution }) {
+  const action = governedVisitAction(casino, presentation);
   if (!action) return <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>;
   return <CasinoOutboundAction action={action} className={styles.visit} context={{ source: "CTA", placement: "CASINO_DIRECTORY_CARD" }} messages={messages.outbound} />;
 }
@@ -59,57 +61,11 @@ function minimumDeposit(casino: PublicCasinoCardDto, messages: ProductPageMessag
   catch { return `${offer.minimumDeposit} ${offer.currency}`; }
 }
 
-function wagering(casino: PublicCasinoCardDto, messages: ProductPageMessages) {
-  const value = casino.featuredBonus?.wageringRequirement;
-  return value === null || value === undefined ? messages.common.notListed : `${value}x`;
-}
-
-function RecommendationMedia({
-  casino,
-  messages,
-}: {
-  casino: PublicCasinoCardDto;
-  messages: ProductPageMessages;
-}) {
-  const editorial = casino.hero?.ownership === "B4GAMBLE_EDITORIAL" ? casino.hero : null;
-  if (editorial) {
-    return <div
-      className={styles.mediaFrame}
-      data-media-mode={editorial.renderingMode}
-      data-media-ratio="editorial"
-      data-mobile-presentation-family="B4GAMBLE_EDITORIAL"
-      data-presentation-family="B4GAMBLE_EDITORIAL"
-    >
-      <ResponsivePlacementImage
-        alt={editorial.alt || casino.name}
-        className={styles.mediaArtwork}
-        height={editorial.height ?? 900}
-        loading="lazy"
-        media={editorial}
-        style={{ objectPosition: editorial.focalPoint ? `${editorial.focalPoint.x * 100}% ${editorial.focalPoint.y * 100}%` : "center" }}
-        width={editorial.width ?? 1600}
-      />
-    </div>;
-  }
-  return <div
-    className={styles.mediaFallback}
-    data-media-ratio="identity"
-    data-mobile-presentation-family="LOGO_ONLY"
-    data-presentation-family="LOGO_ONLY"
-    role="img"
-    aria-label={`${casino.name} · ${messages.profile.operatorReview}`}
-  >
-    <span>B4GAMBLE / {messages.profile.operatorReview.toUpperCase()}</span>
-    {casino.logo ? <ResponsivePlacementImage
-      alt=""
-      className={styles.identityLogo}
-      height={casino.logo.height ?? 120}
-      loading="lazy"
-      media={casino.logo}
-      width={casino.logo.width ?? 240}
-    /> : <strong>{casino.name}</strong>}
-    <i aria-hidden="true" />
-  </div>;
+function wagering(casino: PublicCasinoCardDto, messages: ProductPageMessages, presentation: PresentationResolution) {
+  return formatCompactWagering(casino.featuredBonus?.wageringRequirement, null, {
+    notListed: messages.common.notListed,
+    notStated: commercialUiLabels(presentation.locale).notStated,
+  });
 }
 
 export function CuratedCasinoShortlist({
@@ -163,7 +119,7 @@ export function CuratedCasinoShortlist({
               <div className={styles.recommendationContext}><span>{selectedLabel}</span><b>{String(index + 1).padStart(2, "0")} / {String(top.length).padStart(2, "0")}</b></div>
               {fixture ? <p className={styles.demoLabel}><strong>{messages.common.demoData}</strong> · {fixtureDisclosure}</p> : null}
               <div className={styles.cardHead}>
-                <div className={styles.mark}>{casino.logo ? <ResponsivePlacementImage alt="" height={casino.logo.height ?? 120} media={casino.logo} width={casino.logo.width ?? 240} /> : <span aria-hidden="true">{casino.name.slice(0, 1)}</span>}</div>
+                <div className={styles.mark}>{casino.logo ? <ResponsivePlacementImage alt="" height={casino.logo.height ?? 120} media={casino.logo} width={casino.logo.width ?? 240} /> : null}</div>
                 <div className={styles.identity}><small>{messages.profile.operatorReview}</small><h2>{casino.name}</h2></div>
                 <div className={styles.score} aria-label={`${messages.common.editorScore} ${casino.rating === null ? messages.common.notListed : formatProfileScore(casino.rating, presentation.locale)} / 10`}><small>{messages.common.editorScore}</small><strong>{casino.rating === null ? "—" : formatProfileScore(casino.rating, presentation.locale)}<span>/10</span></strong></div>
               </div>
@@ -174,18 +130,13 @@ export function CuratedCasinoShortlist({
                 <small>{fixture ? messages.common.demoData : messages.common.published}</small>
                 <strong>{casino.featuredBonus?.title ?? messages.common.notListed}</strong>
                 {casino.featuredBonus ? <dl className={styles.terms}>
-                  <div><dt>{messages.common.wagering}</dt><dd>{wagering(casino, messages)}</dd></div>
+                  <div><dt>{messages.common.wagering}</dt><dd>{wagering(casino, messages, presentation)}</dd></div>
                   <div><dt>{messages.common.minimumDeposit}</dt><dd>{minimumDeposit(casino, messages, presentation.locale)}</dd></div>
                   <div><dt>{messages.common.materialTerms}</dt><dd>{casino.featuredBonus.keyTerms[0] ?? messages.common.readReview}</dd></div>
                 </dl> : null}
               </div>
-              <div className={styles.actions}><Visit casino={casino} messages={messages} />{reviewHref ? <Link href={productHref(presentation, reviewHref)}>{fixture ? messages.common.viewDemonstration : messages.common.readReview}</Link> : null}{!fixture ? <ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /> : null}</div>
-              <p className={styles.disclosure}>{fixture ? fixtureDisclosure : messages.bestOffers.commissionNote}</p>
+              <div className={styles.actions}><Visit casino={casino} messages={messages} presentation={presentation} />{reviewHref ? <Link href={productHref(presentation, reviewHref)}>{fixture ? messages.common.viewDemonstration : messages.common.readReview}</Link> : null}{!fixture ? <ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /> : null}</div>
             </div>
-            <RecommendationMedia
-              casino={casino}
-              messages={messages}
-            />
           </article>;
         })}
       </div>

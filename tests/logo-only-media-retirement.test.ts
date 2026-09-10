@@ -72,7 +72,8 @@ test("public compositions use direct logos and cannot render promotional card or
   assert.match(comparison, /casino\.media\.logo/);
   assert.doesNotMatch(profile, /CasinoProfileMediaStrip|offerPlacement/);
   assert.deepEqual([...new Set([...profile.matchAll(/casino\.media\.(\w+)/g)].map((match) => match[1]))], ["logo"]);
-  assert.match(shortlist, /casino\.hero\?\.ownership === "B4GAMBLE_EDITORIAL"/);
+  assert.match(shortlist, /casino\.logo \? <ResponsivePlacementImage/);
+  assert.doesNotMatch(shortlist, /casino\.hero|RecommendationMedia/);
   assert.doesNotMatch(shortlist, /creativePresentationFamily|mayPresentPromotionalMedia|source === "EXPLICIT"/);
   assert.match(shortlist, /data-presentation-family="LOGO_ONLY"/);
   assert.match(bestOffers, /OperatorIdentityPanel/);

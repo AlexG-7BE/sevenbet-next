@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import test from "node:test";
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 import {
   formatProfileScore,
@@ -14,10 +17,16 @@ import {
 import { casinoProfileMetadata, casinoProfileSchemas, projectCasinoProfileSchemas } from "../lib/casino-profile/seo";
 import type { CasinoEditorialDocument } from "../lib/editorial-review/types";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { commercialUiLabels } from "../lib/i18n/commercial-ui-labels";
+import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 import { absoluteUrl } from "../lib/site";
+
+const require = createRequire(import.meta.url);
+require.extensions[".css"] = (module) => { module.exports = {}; };
+(globalThis as typeof globalThis & { React: typeof React }).React = React;
 
 function casino(patch: Partial<PublicCasinoDTO> = {}): PublicCasinoDTO {
   return {
@@ -181,6 +190,25 @@ test("published maximum bet is projected from the existing immutable snapshot fi
   assert.equal(mapped?.bonuses[0]?.maximumBet, 7.5);
 });
 
+test("profile hero and verdict show only a current-context offer and one clean governed CTA", async () => {
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const presentation = resolvePresentationContext({ trustedCountryCode: "GB" });
+  const messages = productPageMessages(presentation.locale);
+  const current = casino();
+  current.offerPresentation = {
+    selectedOffer: current.bonuses[0]!, relation: "EXACT", sourceCountryCode: "GB", presentationCountryCode: "GB", currentMarketVerified: true,
+  };
+  const currentHtml = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: current, editorial, messages, presentation }));
+  assert.ok(currentHtml.includes(commercialUiLabels(presentation.locale).visitCasino));
+  assert.ok(!currentHtml.includes(messages.outbound.affiliateNote));
+  assert.doesNotMatch(currentHtml, /Partner link available|brandMedia|controlled media/i);
+
+  const unavailable = casino({ offerPresentation: { selectedOffer: null, relation: "NONE", sourceCountryCode: null, presentationCountryCode: "GB", currentMarketVerified: false } });
+  const unavailableHtml = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: unavailable, editorial: null, messages, presentation }));
+  assert.ok(unavailableHtml.includes(commercialUiLabels(presentation.locale).noCurrentOffer));
+  assert.doesNotMatch(unavailableHtml, /href="\/r\/|>Review only</);
+});
+
 test("route and component keep Prisma, client fetching, raw destinations and demo-prefix behavior outside the profile", () => {
   const route = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   const component = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
@@ -189,13 +217,14 @@ test("route and component keep Prisma, client fetching, raw destinations and dem
   assert.match(route, /publicCasinoService\.getCasino/);
   assert.match(route, /candidate\?\.source === "cms"/);
   assert.match(route, /projectCasinoProfileSchemas/);
-  assert.match(component, /messages\.profile\.offerUnavailable/);
+  assert.match(component, /commercialLabels\.noCurrentOffer/);
   assert.match(component, /data-content-origin="localized-taxonomy"/);
   assert.match(component, /editorialSectionLabel\(section\.kind, messages, locale\)/);
   assert.match(component, /demonstration \? "localized-fixture" : "source-controlled"/);
   assert.match(component, /demo \? messages\.profile\.demoDisclosure : messages\.profile\.originalEditorialNotice/);
   assert.match(component, /data-content-origin=\{contentOrigin\}/);
-  assert.match(component, /category\.key\.replaceAll\("-", " "\)/);
+  assert.match(component, /formatCompactWagering/);
+  assert.match(component, /formatCompactPayout/);
   assert.match(component, /casino\.media\.logo \? <ResponsivePlacementImage alt=""/);
   assert.doesNotMatch(component, /alt=\{casino\.media\.logo\.alt \|\| casino\.name\}/);
   assert.doesNotMatch(component, /alt=\{casino\.media\.logo\.alt \|\| `\$\{casino\.name\} logo`\}/);
@@ -203,6 +232,7 @@ test("route and component keep Prisma, client fetching, raw destinations and dem
   assert.match(action, /outboundIntent\("direct", context\)/);
   assert.match(action, /target="_blank"/);
   assert.doesNotMatch(action, /confirmationHref|aria-haspopup="dialog"|showModal|You are leaving B4GAMBLE/);
+  assert.doesNotMatch(action, /commercialOutboundDisclosure|affiliateNote \?\?/);
   assert.doesNotMatch(source, /@prisma\/client|\bprisma\.|fetch\(|axios|startsWith\(["']demo-|destinationUrl|trackingUrl|casinoOfficialUrl/);
   assert.equal((component.match(/<h1/g) ?? []).length, 1);
 });

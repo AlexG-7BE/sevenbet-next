@@ -13,23 +13,20 @@ import {
   profileOfferHeadline,
   profileReviewFreshness,
   selectProfileBonus,
-  summarizeWithdrawalTimes,
 } from "@/lib/casino-profile/presentation";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
-import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
+import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
+import { commercialUiLabels } from "@/lib/i18n/commercial-ui-labels";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
 import { offerPresentationCopy } from "@/lib/public-offer/offer-presentation-copy";
+import { formatCompactPayout, formatCompactWagering } from "@/lib/presentation/commercial-terms";
 
 import styles from "./CasinoProfile.module.css";
 
 function Signal({ children, verified = false }: { children: React.ReactNode; verified?: boolean }) {
   return <span className={verified ? styles.verifiedSignal : styles.signal}>{children}</span>;
-}
-
-function UnavailableAction({ messages }: { messages: ProductPageMessages }) {
-  return <span aria-disabled="true" className={styles.unavailableAction}>{messages.profile.offerUnavailable}</span>;
 }
 
 function editorialSectionLabel(kind: EditorialSectionKind, messages: ProductPageMessages, locale: string) {
@@ -89,10 +86,12 @@ function EditorialEvidence({ document, demonstration, messages, locale }: { docu
 export function CasinoProfile({ casino, editorial, messages, presentation, availableForPresentation }: { casino: PublicCasinoDTO; editorial: CasinoEditorialDocument | null; messages: ProductPageMessages; presentation: PresentationResolution; availableForPresentation: boolean }) {
   const demo = isTemporaryDemoCasinoId(casino.id);
   const informationalOnly = casino.presentationDisposition === "INFORMATIONAL_ONLY";
-  const bonus = selectProfileBonus(casino);
+  const selectedBonus = selectProfileBonus(casino);
+  const bonus = casino.offerPresentation?.relation === "EXACT" || casino.offerPresentation?.relation === "ROW" ? selectedBonus : null;
+  const commercialLabels = commercialUiLabels(presentation.locale);
   const offerScope = offerPresentationCopy(casino.offerPresentation, messages, presentation);
-  const projectedAction = !informationalOnly ? profileAction(casino, bonus) : null;
-  const action = projectedAction ? { ...projectedAction, label: `${messages.common.actionAvailable}: ${casino.name}` } : null;
+  const projectedAction = !informationalOnly && bonus ? profileAction(casino, bonus) : null;
+  const action = projectedAction ? { ...projectedAction, label: commercialLabels.visitCasino } : null;
   const faq = informationalOnly
     ? [
         { question: messages.casinos.faqReviewOnlyQuestion, answer: messages.casinos.faqReviewOnlyAnswer },
@@ -111,12 +110,12 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const licenceEvidence = casino.licenses.map((entry) => entry.licenseNumber ? `${entry.authority} ${entry.licenseNumber}` : entry.authority).join(" · ");
   const licenceChecked = Boolean(licence?.lastVerifiedAt);
   const payments = casino.payments.slice(0, 2).map((payment) => payment.name);
-  const withdrawal = summarizeWithdrawalTimes(casino.payments);
+  const withdrawal = formatCompactPayout(casino.payments, messages.common.notListed);
+  const wagering = bonus ? formatCompactWagering(bonus.wageringMultiplier, bonus.wageringText, { notListed: messages.common.notListed, notStated: commercialLabels.notStated }) : messages.common.notListed;
   const minimumDeposit = bonus ? formatProfileMoney(bonus.minimumDeposit, bonus.currency, presentation.locale) : null;
   const maximumBet = bonus ? formatProfileMoney(bonus.maximumBet, bonus.currency, presentation.locale) : null;
   const publishedGameCount = Math.max(0, ...casino.categories.map((category) => category.gameCount ?? 0), ...casino.providers.map((provider) => provider.gameCount ?? 0));
   const age = Math.max(18, ...casino.countries.flatMap((country) => country.minimumAge ? [country.minimumAge] : []));
-  const scoreCategories = editorial?.trustScore?.categories ?? [];
   const reviewEvidence = editorial?.trustScore?.evidence?.slice(0, 3) ?? casino.pros.slice(0, 3);
   const offerHeadline = bonus
     ? presentation.locale === "en-GB" ? profileOfferHeadline(bonus, presentation.locale) : bonus.title
@@ -131,21 +130,21 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const formattedEditorScore = casino.editorScore === null
     ? messages.common.notListed
     : formatProfileScore(casino.editorScore, presentation.locale);
-  const heroMediaContent = <div className={styles.brandMedia}>
-    <span>B4GAMBLE · {messages.profile.operatorReview}</span>
-    {casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 80} media={casino.media.logo} width={casino.media.logo.width ?? 80} /> : <i aria-hidden="true" />}
-    <strong>B4GAMBLE</strong>
-    <small>{demo ? messages.profile.demoReview : messages.profile.publishedReview}</small>
-  </div>;
-  const heroMediaData = {
-    "data-media-mode": "COMPOSED",
-    "data-media-ratio": casino.media.logo ? "brand" : "missing",
-    "data-media-source": casino.media.logo ? "LOGO_COMPOSITION" : "CODE_FALLBACK",
-    "data-presentation-family": "LOGO_ONLY",
-  };
-  const heroMediaPresentation = <aside aria-label={casino.name} className={styles.heroMedia} {...heroMediaData}>{heroMediaContent}</aside>;
+  const heroOfferPanel = <aside aria-label={messages.profile.offerTerms} className={styles.heroOfferPanel} data-offer-relation={casino.offerPresentation?.relation} data-offer-state={bonus ? "current" : "unavailable"}>
+    {bonus ? <>
+      <span>{demo ? messages.profile.demoOfferField : offerScope.label}</span>
+      <h2>{offerHeadline}</h2>
+      <dl>
+        <div><dt>{messages.common.wagering}</dt><dd>{wagering}</dd></div>
+        <div><dt>{messages.common.minimumDeposit}</dt><dd>{minimumDeposit ?? messages.common.notListed}</dd></div>
+        <div><dt>{messages.common.payout}</dt><dd>{withdrawal}</dd></div>
+        <div><dt>{messages.common.eligibility}</dt><dd>{bonus.eligibility || messages.common.notListed}</dd></div>
+      </dl>
+      {action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : null}
+    </> : <><span>{messages.profile.offerTerms}</span><h2>{commercialLabels.noCurrentOffer}</h2></>}
+  </aside>;
 
-  return <article className={styles.page} data-runtime-renderer="casino-review">
+  return <article className={styles.page} data-market-profile-available={availableForPresentation} data-runtime-renderer="casino-review">
     <div aria-hidden="true" className={styles.readProgress} data-casino-read-progress />
     <CasinoProfileInteractions />
     <div className={styles.shell}>
@@ -153,12 +152,10 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <div className={styles.heroReview}>
           <nav aria-label={messages.common.breadcrumb} className={styles.breadcrumb}><Link href={productHref(presentation, "/casinos")}>{messages.casinos.directoryTitle}</Link><span aria-hidden="true">/</span><span aria-current="page">{casino.name} {messages.profile.review}</span></nav>
           {demo ? <p className={styles.demoDisclosure} role="note"><strong>{messages.common.demoData}.</strong> {messages.profile.demoDisclosure}</p> : null}
-          {!availableForPresentation ? <p className={styles.demoDisclosure} role="note"><strong>{formatProductMessage(messages.profile.marketUnavailable, { market: presentation.marketDisplayName })}.</strong> {messages.profile.marketUnavailableCopy}</p> : null}
-          {informationalOnly ? <p className={styles.demoDisclosure} role="note"><strong>{messages.common.reviewOnly}.</strong> {messages.common.reviewAvailableNoAction}</p> : null}
           <p className={styles.heroKicker}>B4GAMBLE · {messages.profile.review} · {formatProfileDate(casino.lastReviewedAt || casino.publishedAt, presentation.locale) || messages.common.current}</p>
           <div className={styles.identityRow}>
             <div className={styles.logo}>
-              {casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height || 80} media={casino.media.logo} width={casino.media.logo.width || 80} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}
+              {casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height || 80} media={casino.media.logo} width={casino.media.logo.width || 80} /> : null}
             </div>
             <div><small>{messages.profile.operatorReview}</small><strong>{casino.name}</strong>{freshness ? <span>{demo ? messages.profile.demoReview : `${messages.common.current} ${freshness.value}`}</span> : <span>{demo ? messages.profile.demoReview : messages.profile.publishedReview}</span>}</div>
             <Signal>{demo ? messages.profile.demoAgeField : `${age}+`}</Signal>
@@ -173,26 +170,15 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             {payments.length ? <Signal>{demo ? messages.profile.demoPaymentFields : payments.join(" + ").toUpperCase()}</Signal> : null}
             {withdrawal ? <Signal>{demo ? messages.profile.demoWithdrawalField : withdrawal}</Signal> : null}
           </div>
-          {bonus ? <div className={styles.heroOfferSummary} data-offer-relation={casino.offerPresentation?.relation}>
-            <div className={styles.heroOfferCopy}><span>{demo ? messages.profile.demoOfferField : offerScope.label}</span><strong>{offerHeadline}</strong><dl>
-              <div><dt>{messages.common.wagering}</dt><dd>{bonus.wageringText || (bonus.wageringMultiplier !== null ? `${bonus.wageringMultiplier}×` : messages.common.notListed)}</dd></div>
-              <div><dt>{messages.common.minimumDeposit}</dt><dd>{minimumDeposit ?? messages.common.notListed}</dd></div>
-              {bonus.eligibility ? <div><dt>{messages.common.eligibility}</dt><dd>{bonus.eligibility}</dd></div> : null}
-              {bonus.expiresAt ? <div><dt>{messages.common.expiry}</dt><dd>{formatProfileDate(bonus.expiresAt, presentation.locale)}</dd></div> : null}
-              {!demo && offerScope.qualification ? <div><dt>{messages.common.sourceStatus}</dt><dd>{offerScope.qualification}</dd></div> : null}
-            </dl></div>
-            <div className={styles.heroOfferAction}>{action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}</div>
-          </div> : null}
-          <p className={styles.profileDisclosure}>{demo ? messages.common.demoDisclosure : informationalOnly ? messages.common.reviewAvailableNoAction : messages.bestOffers.commissionNote}</p>
         </div>
 
-        {heroMediaPresentation}
+        {heroOfferPanel}
       </section>
 
       <nav aria-label={messages.profile.currentReview} className={styles.decisionBar} data-casino-decision-bar>
-        <span className={styles.decisionIdentity}><b>{casino.name} · {formattedEditorScore}</b><small>{offerHeadline ?? messages.profile.publishedReview}</small></span>
+        <span className={styles.decisionIdentity}><b>{casino.name} · {formattedEditorScore}</b><small>{offerHeadline ?? (demo ? messages.profile.demoReview : messages.profile.publishedReview)}</small></span>
         <div><a href="#overview">{messages.profile.overview}</a><a href="#offer-evidence">{messages.profile.offerEvidence}</a><a href="#verdict">{messages.profile.verdict}</a><a href="#faq">{messages.profile.questions}</a></div>
-        {action ? <CasinoOutboundAction action={action} className={styles.compactAction} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}
+        {action ? <CasinoOutboundAction action={action} className={styles.compactAction} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : null}
       </nav>
 
       <section aria-labelledby="overview-heading" className={`${styles.section} ${styles.overviewSection}`} data-motion-reveal data-nav-theme="light" id="overview">
@@ -229,13 +215,13 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             {bonus ? <>
               <h3>{structuredOfferHeading ? <><span>{structuredOfferHeading.primary}</span>{structuredOfferHeading.secondary ? <em>{structuredOfferHeading.secondary}</em> : null}</> : offerHeadline}</h3>
               <p>{bonus.summary}</p>
-              {action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}
+              {action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : null}
               <small>18+ · {messages.common.materialTerms}{offerScope.qualification ? ` · ${offerScope.qualification}` : ""}</small>
-            </> : <div className={styles.neutralState}><strong>{messages.profile.offerUnavailable}</strong><p>{messages.common.reviewAvailableNoAction}</p></div>}
+            </> : <div className={styles.neutralState}><strong>{commercialLabels.noCurrentOffer}</strong></div>}
           </div>
           <div className={styles.offerTermsCard}>
             {bonus ? <dl className={styles.termRows}>
-              {bonus.wageringMultiplier !== null || bonus.wageringText ? <div><dt>{messages.common.wagering}</dt><dd>{bonus.wageringText || `${bonus.wageringMultiplier}×`}</dd></div> : null}
+              <div><dt>{messages.common.wagering}</dt><dd>{wagering}</dd></div>
               {minimumDeposit ? <div><dt>{messages.common.minimumDeposit}</dt><dd>{minimumDeposit}</dd></div> : null}
               {maximumBet ? <div><dt>{messages.common.maximumBet}</dt><dd>{maximumBet}</dd></div> : null}
               {bonus.expiresAt ? <div><dt>{messages.common.expiry}</dt><dd>{formatProfileDate(bonus.expiresAt, presentation.locale)}</dd></div> : null}
@@ -244,7 +230,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             </dl> : null}
             {bonus?.importantConditions.length ? <div className={styles.conditions}>
               <strong>{messages.common.materialTerms}</strong>
-              <ul>{bonus.importantConditions.map((condition) => <li key={condition}>{condition}</li>)}</ul>
+              <ul>{bonus.importantConditions.slice(0, 2).map((condition) => <li key={condition}>{condition}</li>)}</ul>
             </div> : null}
             <details className={styles.evidenceDisclosure}>
               <summary>{messages.profile.evidencePaymentsTools}</summary>
@@ -268,40 +254,26 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
 
       {editorial ? <><p className={styles.profileDisclosure}>{demo ? messages.profile.demoDisclosure : messages.profile.originalEditorialNotice}</p><EditorialEvidence demonstration={demo} document={editorial} locale={presentation.locale} messages={messages} /></> : null}
 
-      <section aria-labelledby="verdict-heading" className={`${styles.verdict} ${scoreCategories.length ? styles.verdictWithBreakdown : ""}`} data-motion-reveal data-nav-theme="cream" id="verdict">
-        <div>
+      <section aria-labelledby="verdict-heading" className={styles.verdict} data-motion-reveal data-nav-theme="cream" id="verdict">
+        <div className={styles.verdictIdentity}>
           <p>B4GAMBLE · {messages.profile.verdict}</p>
-          <h2 id="verdict-heading">{hasEditorScore ? <>{presentation.locale === "en-GB" ? "Why" : messages.profile.verdict.replace(/:\s*$/, "")} {formattedEditorScore}</> : casino.name}</h2>
-          <span>{scoreCategories.length ? messages.profile.scoreExplanation : editorial?.summary || casino.reviewContent}</span>
-          {!scoreCategories.length && casino.cons.length ? <div className={styles.verdictLimit}><strong>{messages.profile.keepInView}</strong><span>{casino.cons[0]}</span></div> : null}
+          <h2 id="verdict-heading">{casino.name} <em>{formattedEditorScore}</em></h2>
+          <span>{editorial?.summary || casino.summary}</span>
         </div>
-        {scoreCategories.length ? <div className={styles.scoreBreakdown}>
-          {scoreCategories.map((category, index) => <div className={styles.scoreRow} data-content-origin={demo ? "localized-fixture" : "source-controlled"} data-score-row key={category.key} style={{ "--score-delay": `${index * 90}ms`, "--score-width": `${Math.min(10, Math.max(0, category.score)) * 10}%` } as React.CSSProperties}>
-            <div><strong>{category.key.replaceAll("-", " ")}</strong><span>{formatProfileScore(category.score, presentation.locale)}</span></div>
-            <i aria-hidden="true"><b /></i>
-          </div>)}
-          <p>{messages.common.editorScore}: <Link href={productHref(presentation, "/methodology")}>{messages.common.methodology}</Link> · <Link href="/affiliate-disclosure">{messages.common.affiliateDisclosure}</Link>.</p>
-        </div> : <div className={styles.scorePanel}>
-          <strong>{formattedEditorScore}</strong><span>{messages.common.editorScore}{hasEditorScore ? " / 10" : ""}</span>
+        <div className={styles.verdictDecision}>
+          <strong>{offerHeadline ?? commercialLabels.noCurrentOffer}</strong>
           <dl>
-            <div><dt>{messages.profile.licenceRecord}</dt><dd>{demo ? messages.common.demoData : licenceChecked ? messages.common.current : licence ? messages.common.published : messages.common.notListed}</dd></div>
-            <div><dt>{messages.profile.offerTerms}</dt><dd>{demo && bonus ? messages.common.demoData : bonus ? offerScope.label : messages.common.notListed}</dd></div>
-            <div><dt>{messages.profile.paymentRecords}</dt><dd>{casino.payments.length || messages.common.notListed}</dd></div>
-            <div><dt>{messages.profile.controlTools}</dt><dd>{casino.responsibleGamblingTools.length || messages.common.notListed}</dd></div>
+            <div><dt>{messages.common.wagering}</dt><dd>{wagering}</dd></div>
+            <div><dt>{messages.common.payout}</dt><dd>{withdrawal}</dd></div>
+            <div><dt>{messages.common.licence}</dt><dd>{licence?.authority || messages.common.notListed}</dd></div>
           </dl>
-        </div>}
+          {action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : null}
+        </div>
       </section>
 
       <section aria-labelledby="faq-heading" className={styles.faqSection} data-motion-reveal data-nav-theme="cream" id="faq">
         <div className={styles.sectionHeading}><p>{messages.profile.questions}</p><h2 id="faq-heading">{messages.profile.questions}: {casino.name.replace(/\s+casino$/i, "")}</h2></div>
-        <div className={styles.faqGrid}>
-          <div>{faq.slice(0, 3).map((item, index) => <details key={item.question} open={index === 0}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div>
-          <aside className={styles.finalOffer} data-demo-state={demo ? "fictional" : undefined} data-motion-reveal data-nav-theme="dark">
-            <div className={styles.finalOfferInner}>
-              {bonus ? <><span>{demo ? messages.profile.demoFinalFields : messages.profile.verdict}</span><h3>{casino.name} — <em>{formattedEditorScore}</em></h3><p>{[offerHeadline, bonus.wageringText, minimumDeposit ? `${messages.common.minimumDeposit} ${minimumDeposit}` : null, withdrawal ? `${messages.common.payout} ${withdrawal}` : null].filter(Boolean).join(" · ")}</p>{action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}</> : <><span>{messages.profile.currentReview}</span><h3>{messages.profile.offerUnavailable}</h3><p>{messages.common.reviewAvailableNoAction}</p><UnavailableAction messages={messages} /></>}
-            </div>
-          </aside>
-        </div>
+        <div className={styles.faqGrid}><div>{faq.slice(0, 3).map((item, index) => <details key={item.question} open={index === 0}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div></div>
       </section>
 
       <nav aria-label={messages.profile.relatedTitle} className={styles.relatedLinks}>

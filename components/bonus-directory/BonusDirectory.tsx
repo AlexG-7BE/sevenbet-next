@@ -8,6 +8,9 @@ import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryFor
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import { MobileBonusFilters } from "@/components/bonus-directory/MobileBonusFilters";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
+import { commercialUiLabels } from "@/lib/i18n/commercial-ui-labels";
+import type { SupportedLocale } from "@/lib/market/registry";
+import { formatCompactPayout, formatCompactWagering } from "@/lib/presentation/commercial-terms";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import type { PublicOfferDTO, PublicOfferFacets, PublicOfferQuery } from "@/lib/public-offer/public-offer.types";
 import type { PublicOfferSearchParams } from "@/lib/public-offer/query";
@@ -68,7 +71,7 @@ function evidenceRows(offer: PublicOfferDTO) {
 }
 
 function payoutEvidence(offer: PublicOfferDTO, messages = defaultMessages) {
-  return offer.casino.payments.find((payment) => payment.supportsWithdrawals && payment.withdrawalTime?.trim())?.withdrawalTime?.trim() || messages.common.notListed;
+  return formatCompactPayout(offer.casino.payments, messages.common.notListed);
 }
 
 function mobileFeaturedTerms(offer: PublicOfferDTO) {
@@ -81,10 +84,10 @@ function mobileFeaturedTerms(offer: PublicOfferDTO) {
   ];
 }
 
-function OfferAction({ offer, compact = false, messages = defaultMessages }: { offer: PublicOfferDTO; compact?: boolean; messages?: ProductPageMessages }) {
+function OfferAction({ offer, compact = false, locale = "en-GB", messages = defaultMessages }: { offer: PublicOfferDTO; compact?: boolean; locale?: SupportedLocale; messages?: ProductPageMessages }) {
   const href = safeActionHref(offer);
-  if (!href) return <span aria-disabled="true" className={compact ? styles.actionUnavailableCompact : styles.actionUnavailable}>{messages.common.noGovernedVisit}</span>;
-  return <CasinoOutboundAction action={{ href, label: messages.common.actionAvailable }} className={compact ? styles.offerActionCompact : styles.offerAction} messages={messages.outbound} />;
+  if (!href) return <span aria-disabled="true" className={compact ? styles.actionUnavailableCompact : styles.actionUnavailable}>{messages.common.reviewOnly}</span>;
+  return <CasinoOutboundAction action={{ href, label: commercialUiLabels(locale).visitCasino }} className={compact ? styles.offerActionCompact : styles.offerAction} messages={messages.outbound} />;
 }
 
 function OfferLogo({ offer }: { offer: PublicOfferDTO }) {
@@ -94,14 +97,14 @@ function OfferLogo({ offer }: { offer: PublicOfferDTO }) {
     loading="lazy"
     src={offer.casino.logo.url}
     width={offer.casino.logo.width ?? 160}
-  /> : <span aria-hidden="true">{offer.casino.name.slice(0, 1)}</span>;
+  /> : null;
 }
 
 export function FeaturedBonusCard({ offer, position, primary = false, messages = defaultMessages }: { offer: PublicOfferDTO; position: number; primary?: boolean; messages?: ProductPageMessages }) {
   const reviewHref = publicCasinoReviewHref(offer.casino);
   const actionAvailable = Boolean(safeActionHref(offer));
   return <article className={`${styles.featureCard} ${primary ? styles.featureCardPrimary : ""}`}>
-    <div className={styles.featureMeta}><span>{String(position).padStart(2, "0")} / {offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published}</span><span>{actionAvailable ? messages.common.actionAvailable : messages.common.reviewOnly}</span></div>
+    <div className={styles.featureMeta}><span>{String(position).padStart(2, "0")} / {offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published}</span><span>{actionAvailable ? commercialUiLabels("en-GB").visitCasino : messages.common.reviewOnly}</span></div>
     <p className={styles.offerType}>{bonusType(offer.bonus.type)}</p>
     <h3>{offer.casino.name}</h3>
     <p className={styles.offerHeadline}>{offer.bonus.title}</p>
@@ -134,7 +137,7 @@ function FilterFields({ facets, query, messages }: { facets: PublicOfferFacets; 
     <label><span>{messages.common.cryptoSupport}</span><select defaultValue={query.crypto === undefined ? "" : String(query.crypto)} name="crypto"><option value="">{messages.common.cryptoSupport}</option>{facets.crypto.map((item) => <option key={item.value} value={item.value}>{item.value === "true" ? messages.common.cryptoSupported : messages.common.cryptoUnsupported} · {item.count}</option>)}</select></label>
     <label><span>{messages.common.minimumDeposit} ≤</span><input aria-label={`${messages.common.minimumDeposit} ≤`} defaultValue={query.maxDeposit} inputMode="decimal" min="0" name="maxDeposit" placeholder={`${messages.common.minimumDeposit} ≤`} step="1" type="number" /></label>
     <label><span>{messages.common.wagering}</span><input aria-label={messages.common.wagering} defaultValue={query.maxWagering} inputMode="decimal" min="0" name="maxWagering" placeholder={messages.common.wagering} step="1" type="number" /></label>
-    <label><span>{messages.common.availability}</span><select defaultValue={query.availability || ""} name="availability"><option value="">{messages.common.availability}</option>{facets.availability.map((item) => <option key={item.value} value={item.value}>{item.value === "AVAILABLE" ? messages.common.actionAvailable : messages.common.reviewOnly} · {item.count}</option>)}</select></label>
+    <label><span>{messages.common.availability}</span><select defaultValue={query.availability || ""} name="availability"><option value="">{messages.common.availability}</option>{facets.availability.map((item) => <option key={item.value} value={item.value}>{item.value === "AVAILABLE" ? messages.common.availability : messages.common.reviewOnly} · {item.count}</option>)}</select></label>
     <label><span>{messages.bonuses.featuredFilter}</span><select defaultValue={query.featured === undefined ? "" : String(query.featured)} name="featured"><option value="">{messages.bonuses.featuredFilter}</option><option value="true">{messages.bonuses.featuredTrue}</option><option value="false">{messages.bonuses.featuredFalse}</option></select></label>
     <label><span>{messages.bonuses.recommendedFilter}</span><select defaultValue={query.recommended === undefined ? "" : String(query.recommended)} name="recommended"><option value="">{messages.bonuses.recommendedFilter}</option><option value="true">{messages.bonuses.recommendedTrue}</option><option value="false">{messages.bonuses.recommendedFalse}</option></select></label>
     <label><span>{messages.common.sortResults}</span><select defaultValue={query.sort} name="sort"><option value="editorial">{messages.common.editorScore}</option><option value="newest">{messages.common.newest}</option><option value="highest-bonus">{messages.common.maximumBonus}</option><option value="lowest-wagering">{messages.common.wagering}</option><option value="lowest-deposit">{messages.common.minimumDeposit}</option></select></label>
@@ -153,7 +156,7 @@ function SecondaryBonusFields({ facets, query, messages }: { facets: PublicOffer
   return <div className={filterStyles.drawerGrid}>
     <label className={filterStyles.drawerField}><span>{messages.common.cryptoSupport}</span><select defaultValue={query.crypto === undefined ? "" : String(query.crypto)} name="crypto"><option value="">{messages.common.cryptoSupport}</option>{facets.crypto.map((item) => <option key={item.value} value={item.value}>{item.value === "true" ? messages.common.cryptoSupported : messages.common.cryptoUnsupported} · {item.count}</option>)}</select></label>
     <label className={filterStyles.drawerField}><span>{messages.common.minimumDeposit} ≤</span><input aria-label={`${messages.common.minimumDeposit} ≤`} defaultValue={query.maxDeposit} inputMode="decimal" min="0" name="maxDeposit" placeholder={`${messages.common.minimumDeposit} ≤`} step="1" type="number" /></label>
-    <label className={filterStyles.drawerField}><span>{messages.common.availability}</span><select defaultValue={query.availability || ""} name="availability"><option value="">{messages.common.availability}</option>{facets.availability.map((item) => <option key={item.value} value={item.value}>{item.value === "AVAILABLE" ? messages.common.actionAvailable : messages.common.reviewOnly} · {item.count}</option>)}</select></label>
+    <label className={filterStyles.drawerField}><span>{messages.common.availability}</span><select defaultValue={query.availability || ""} name="availability"><option value="">{messages.common.availability}</option>{facets.availability.map((item) => <option key={item.value} value={item.value}>{item.value === "AVAILABLE" ? messages.common.availability : messages.common.reviewOnly} · {item.count}</option>)}</select></label>
     <label className={filterStyles.drawerField}><span>{messages.bonuses.featuredFilter}</span><select defaultValue={query.featured === undefined ? "" : String(query.featured)} name="featured"><option value="">{messages.bonuses.featuredFilter}</option><option value="true">{messages.bonuses.featuredTrue}</option><option value="false">{messages.bonuses.featuredFalse}</option></select></label>
     <label className={filterStyles.drawerField}><span>{messages.bonuses.recommendedFilter}</span><select defaultValue={query.recommended === undefined ? "" : String(query.recommended)} name="recommended"><option value="">{messages.bonuses.recommendedFilter}</option><option value="true">{messages.bonuses.recommendedTrue}</option><option value="false">{messages.bonuses.recommendedFalse}</option></select></label>
     <label className={filterStyles.drawerField}><span>{messages.common.sortResults}</span><select defaultValue={query.sort} name="sort"><option value="editorial">{messages.common.editorScore}</option><option value="newest">{messages.common.newest}</option><option value="highest-bonus">{messages.common.maximumBonus}</option><option value="lowest-wagering">{messages.common.wagering}</option><option value="lowest-deposit">{messages.common.minimumDeposit}</option></select></label>
@@ -220,7 +223,7 @@ export function ActiveBonusFilters({ facets, query, raw, messages, presentation,
     ["crypto", query.crypto === undefined ? null : query.crypto ? messages.common.cryptoSupported : messages.common.cryptoUnsupported],
     ["maxDeposit", query.maxDeposit === undefined ? null : `${messages.common.minimumDeposit} ≤ ${query.maxDeposit}`],
     ["maxWagering", query.maxWagering === undefined ? null : `${messages.common.wagering} ≤ ${query.maxWagering}`],
-    ["availability", query.availability === "AVAILABLE" ? messages.common.actionAvailable : query.availability === "UNAVAILABLE" ? messages.common.reviewOnly : null],
+    ["availability", query.availability === "AVAILABLE" ? messages.common.availability : query.availability === "UNAVAILABLE" ? messages.common.reviewOnly : null],
     ["featured", query.featured === undefined ? null : query.featured ? messages.bonuses.featuredTrue : messages.bonuses.featuredFalse],
     ["recommended", query.recommended === undefined ? null : query.recommended ? messages.bonuses.recommendedTrue : messages.bonuses.recommendedFalse],
   ].filter((item): item is [string, string] => Boolean(item[1]));
@@ -232,23 +235,22 @@ export function BonusComparisonList({ offers, startPosition, messages, presentat
   const resultCountLabel = offers.length === 1 ? messages.common.result : messages.common.results;
   return <div className={styles.comparison}>
     {offers.map((offer, index) => <article className={styles.comparisonRow} data-bonus-directory-card data-offer-relation={offer.offerPresentation?.relation} key={`${offer.casino.id}:${offer.bonus.id}`}>
-      <span className={styles.compactLogo} data-logo-state={offer.casino.logo ? "image" : "fallback"}><OfferLogo offer={offer} /></span>
+      <span className={styles.compactLogo} data-logo-state={offer.casino.logo ? "image" : "missing"}><OfferLogo offer={offer} /></span>
       <div className={styles.compactIdentity}>
         <strong>{offer.casino.name}</strong>
-        <span>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} · {offer.casino.licenses[0]?.authority || messages.common.notListed} · {offer.casino.payments.slice(0, 2).map((item) => item.name).join(" · ") || messages.common.notListed}</span>
+        <span>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} · {offer.casino.summary}</span>
       </div>
       <div className={styles.compactOffer}>
         <span>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : offerPresentationCopy(offer.offerPresentation, messages, presentation).label}</span>
         <p className={styles.compactHeadline}>{offer.bonus.title}</p>
-        {offer.dataClassification !== "DEMO_FIXTURE" && offerPresentationCopy(offer.offerPresentation, messages, presentation).qualification ? <small>{offerPresentationCopy(offer.offerPresentation, messages, presentation).qualification}</small> : null}
       </div>
       <DemoFixtureNotice messages={messages} offer={offer} />
       <dl className={styles.compactTerms} data-material-terms>
-        <div><dt>{messages.common.wagering}</dt><dd>{offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || "—" : `${offer.bonus.wageringMultiplier}x`}</dd></div>
+        <div><dt>{messages.common.wagering}</dt><dd>{formatCompactWagering(offer.bonus.wageringMultiplier, offer.bonus.wageringText, { notListed: messages.common.notListed, notStated: commercialUiLabels(presentation.locale).notStated })}</dd></div>
         <div><dt>{messages.common.minimumDeposit}</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency, messages, presentation.locale)}</dd></div>
         <div><dt>{messages.common.payout}</dt><dd>{payoutEvidence(offer, messages)}</dd></div>
       </dl>
-      <div className={styles.compactActions} data-governed-actions><OfferAction compact messages={messages} offer={offer} />{publicCasinoReviewHref(offer.casino) ? <Link href={productHref(presentation, publicCasinoReviewHref(offer.casino)!)}>{messages.common.readReview}</Link> : null}</div>
+      <div className={styles.compactActions} data-governed-actions><OfferAction compact locale={presentation.locale} messages={messages} offer={offer} />{publicCasinoReviewHref(offer.casino) ? <Link href={productHref(presentation, publicCasinoReviewHref(offer.casino)!)}>{messages.common.readReview}</Link> : null}</div>
       <span className={styles.compactPosition} aria-label={`${messages.common.result} ${startPosition + index}`}>{String(startPosition + index).padStart(2, "0")}</span>
     </article>)}
     <aside className={styles.reviewSeparationNote}><strong>{offers.length} {resultCountLabel}</strong><p>{messages.common.marketPresentationNotice}</p></aside>

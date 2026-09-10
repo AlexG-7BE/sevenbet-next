@@ -83,7 +83,6 @@ export default async function CasinosPage({ searchParams }: PageProps) {
 
   return <div className={styles.page} data-page-theme="dark" data-runtime-renderer="casinos">
     <CommercialSurfaceView surface="casinos" />
-    <p className="srOnly">{messages.bestOffers.commissionNote}</p>
     <ContextualComparison messages={messages} presentation={presentation} />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
     <section className={styles.hero} data-nav-theme="dark">

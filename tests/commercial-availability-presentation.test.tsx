@@ -12,6 +12,7 @@ import {
 } from "../components/casino-discovery/CasinoDiscoveryCard";
 import { temporaryDemoBestOffers } from "../lib/demo-data/temporary-demo-best-offers";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { commercialUiLabels } from "../lib/i18n/commercial-ui-labels";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
@@ -68,7 +69,7 @@ test("Best Offers derives its page-level partner-link count and label from gover
   const source = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
   assert.match(source, /const governedActionCount = result\.records\.filter/);
   assert.match(source, /const actionAvailabilityLabel = governedActionCount > 0/);
-  assert.match(source, /String\(governedActionCount\), messages\.bestOffers\.inferredActions/);
+  assert.match(source, /String\(governedActionCount\), messages\.common\.availability/);
   assert.doesNotMatch(source, /\["0", messages\.bestOffers\.inferredActions\]/);
 });
 
@@ -87,7 +88,8 @@ test("Best Offers labels published and demonstration records without contradicti
     presentation={presentation}
     shortlist={[offer()]}
   />);
-  assert.ok(publishedHtml.includes(messages.common.actionAvailable));
+  assert.ok(publishedHtml.includes(commercialUiLabels(presentation.locale).visitCasino));
+  assert.ok(!publishedHtml.includes(messages.outbound.affiliateNote));
   assert.ok(!publishedHtml.includes(messages.common.commercialUnavailable));
   assert.match(publishedHtml, />Published</);
   assert.doesNotMatch(publishedHtml, />Current</);
@@ -113,7 +115,7 @@ test("casino cards keep missing bonus data separate from governed visit availabi
   assert.ok(!cardHtml.includes(messages.common.commercialUnavailable));
 
   const theatreHtml = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={record} classNames={classNames} />);
-  assert.ok(theatreHtml.includes(`<b>${messages.common.actionAvailable}</b>`));
+  assert.ok(theatreHtml.includes(`<b>${commercialUiLabels("en-GB").visitCasino}</b>`));
   assert.ok(!theatreHtml.includes(`<b>${messages.common.reviewOnly}</b>`));
 });
 
@@ -220,7 +222,7 @@ test("casino directory retires promotional artwork while CTA authority and first
   assert.doesNotMatch(blocked, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
 
   const fallback = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({ hero: null })]} messages={messages} presentation={presentation} />);
-  assert.match(fallback, /role="img"/);
+  assert.doesNotMatch(fallback, /role="img"|mediaFallback|mediaFrame/);
   assert.doesNotMatch(fallback, /data-commercial-action-source="CREATIVE"/);
 
   const composedCreative = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
@@ -232,7 +234,7 @@ test("casino directory retires promotional artwork while CTA authority and first
   const editorial = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
     hero: { url: "/casino-directory/editorial-review.jpg", alt: "B4GAMBLE editorial review", width: 1600, height: 900, renderingMode: "CONTAIN", focalPoint: null, ownership: "B4GAMBLE_EDITORIAL" },
   })]} messages={messages} presentation={presentation} />);
-  assert.match(editorial, /src="\/casino-directory\/editorial-review\.jpg"/);
+  assert.doesNotMatch(editorial, /casino-directory\/editorial-review\.jpg/);
   assert.doesNotMatch(editorial, /data-commercial-action-source="CREATIVE"/);
 });
 
@@ -242,7 +244,7 @@ test("bonus result summaries stay neutral while record labels reflect their clas
   const publishedHtml = renderToStaticMarkup(<BonusComparisonList messages={messages} offers={[published]} presentation={presentation} startPosition={1} />);
   assert.ok(publishedHtml.includes(`<strong>1 ${messages.common.result}</strong>`));
   assert.ok(!publishedHtml.includes(`<strong>${messages.common.reviewOnly}`));
-  assert.ok(publishedHtml.includes(messages.common.actionAvailable));
+  assert.ok(publishedHtml.includes(commercialUiLabels(presentation.locale).visitCasino));
   assert.match(publishedHtml, />Published</);
   assert.doesNotMatch(publishedHtml, />Current</);
 

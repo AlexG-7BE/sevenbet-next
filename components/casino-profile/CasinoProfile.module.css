@@ -810,3 +810,72 @@
   .offerPlacementMedia[data-mobile-presentation-family="LOGO_ONLY"],
   .offerPlacementMedia[data-mobile-presentation-family="PORTRAIT_INVENTORY"] { height:96px; padding:15px 18px; }
 }
+
+/* Founder scan-first profile composition. The right hero column is current
+   offer data, never decorative or operator-hosted media. */
+.hero { min-height:620px; grid-template-columns:minmax(0,1.25fr) minmax(340px,.75fr); align-items:stretch; border:0; border-radius:0; background:var(--night); color:var(--white); }
+.heroReview { min-width:0; padding:92px 42px 42px; }
+.hero .breadcrumb { color:#aaa79e; }
+.hero .breadcrumb a { color:var(--white); }
+.heroOfferPanel { min-width:0; margin:32px 32px 32px 0; padding:38px; display:flex; flex-direction:column; align-self:stretch; background:var(--field); color:var(--ink); }
+.heroOfferPanel > span { color:#777500; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.heroOfferPanel h2 { margin:28px 0 22px; font-size:clamp(28px,3vw,44px); line-height:1.04; letter-spacing:-.035em; text-transform:uppercase; overflow-wrap:anywhere; }
+.heroOfferPanel dl { margin:0 0 28px; }
+.heroOfferPanel dl div { padding:13px 0; border-bottom:1px solid rgba(16,15,15,.14); display:grid; grid-template-columns:minmax(105px,.72fr) minmax(0,1.28fr); gap:16px; }
+.heroOfferPanel dt { color:var(--muted); font-size:11px; letter-spacing:.04em; text-transform:uppercase; }
+.heroOfferPanel dd { margin:0; font-size:13px; line-height:1.45; font-weight:750; overflow-wrap:anywhere; }
+.heroOfferPanel :global(.commercialOutboundPrimary) { width:100%; min-height:50px; margin-top:auto; border-radius:4px; background:#b94b47; color:#fff; }
+.heroOfferPanel[data-offer-state="unavailable"] { justify-content:center; }
+.heroOfferPanel[data-offer-state="unavailable"] h2 { max-width:18ch; text-wrap:balance; }
+.decisionBar { border-radius:6px; }
+.decisionBar > :global(.commercialOutboundPrimary) { border-radius:4px; background:#b94b47; color:#fff; }
+
+.offerSection { padding-block:82px; }
+.offerComposition { min-height:0; grid-template-columns:minmax(0,.9fr) minmax(360px,1.1fr); gap:54px; }
+.offerCopy h3 { font-size:clamp(30px,3.7vw,50px); }
+.offerCopy > p { display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:3; }
+.offerTermsCard { padding:24px 30px; border-radius:0; }
+.offerTermsCard .termRows { margin:0; }
+.offerTermsCard .termRows > div { min-height:0; padding:13px 0; }
+.conditions { margin-top:18px; border-radius:0; }
+.evidenceDisclosure { margin-top:16px; }
+
+.verdict { min-height:0; margin-top:0; padding:58px; grid-template-columns:minmax(0,1fr) minmax(360px,.85fr); gap:70px; border-radius:0; }
+.verdictIdentity h2 { margin:18px 0; }
+.verdictIdentity h2 em { color:var(--acid); font-family:var(--font-seven-serif),Georgia,serif; font-style:normal; font-weight:400; }
+.verdictDecision { align-self:center; padding-left:34px; border-left:1px solid rgba(250,250,247,.18); }
+.verdictDecision > strong { display:block; font-size:22px; line-height:1.2; text-transform:uppercase; }
+.verdictDecision dl { margin:22px 0 28px; }
+.verdictDecision dl div { padding:11px 0; border-bottom:1px solid rgba(250,250,247,.16); display:flex; justify-content:space-between; gap:18px; }
+.verdictDecision dt { color:#aaa79e; font-size:11px; letter-spacing:.05em; text-transform:uppercase; }
+.verdictDecision dd { margin:0; color:var(--acid); font-size:13px; font-weight:750; text-align:right; }
+.verdictDecision :global(.commercialOutboundPrimary) { min-height:48px; padding:12px 24px; border-radius:4px; background:#b94b47; color:#fff; }
+
+.faqGrid { max-width:900px; grid-template-columns:minmax(0,1fr); }
+.faqGrid summary { font-size:17px; }
+.faqGrid details p { max-width:65ch; font-size:16px; line-height:1.65; }
+
+@media (max-width:1000px) {
+  .hero { grid-template-columns:minmax(0,1fr); }
+  .heroOfferPanel { margin:0 32px 32px; }
+  .offerComposition,.verdict { grid-template-columns:minmax(0,1fr); }
+  .verdictDecision { padding:32px 0 0; border-top:1px solid rgba(250,250,247,.18); border-left:0; }
+}
+@media (max-width:760px) {
+  .hero { width:100cqw; }
+  .heroReview { padding:92px var(--site-gutter) 30px; }
+  .scoreVerdict { grid-template-columns:minmax(0,1fr); gap:12px; }
+  .heroOfferPanel { margin:0; padding:28px var(--site-gutter) 32px; }
+  .heroOfferPanel h2 { margin-top:20px; font-size:28px; }
+  .heroOfferPanel dl div { grid-template-columns:1fr; gap:4px; }
+  .decisionBar > div { display:none; }
+  .offerSection { padding-block:68px; }
+  .offerComposition { gap:30px; }
+  .offerTermsCard { padding:8px 20px; }
+  .verdict { padding:68px var(--site-gutter); gap:36px; }
+  .verdict h2 { font-size:34px; }
+  .verdictDecision { padding-top:28px; }
+  .verdictDecision :global(.commercialOutboundPrimary) { width:100%; }
+  .faqGrid summary { font-size:17px; }
+  .faqGrid details p { font-size:16px; line-height:1.65; }
+}

@@ -58,11 +58,11 @@ export function CasinoOutboundAction({
 }) {
   return <GovernedCommercialAction
     action={action}
+    ariaLabel={action.label}
     className={`commercialOutboundPrimary ${className}`.trim()}
     context={context}
     messages={messages}
   >
     <span>{action.label}<span aria-hidden="true">→</span></span>
-    <small className="commercialOutboundDisclosure">{messages?.affiliateNote ?? "Affiliate link · We may earn commission."}</small>
   </GovernedCommercialAction>;
 }
