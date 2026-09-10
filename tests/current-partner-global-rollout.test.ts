@@ -23,9 +23,9 @@ test("the final current-partner inventory is exhaustive and exclusively classifi
   assert.equal(new Set(rows.map((row) => row.casino)).size, 73);
   assert.equal(new Set(rows.map((row) => `${row.partner}::${row.casino}::${row.geo}`)).size, rows.length);
   assert.deepEqual(currentPartnerMatrixSummary(rows).classification, {
-    ACTIVE_HEALTHY: 30,
+    ACTIVE_HEALTHY: 24,
     BLOCKED_BY_LAW: 24,
-    ACTION_REQUIRED_REGULATORY: 11,
+    ACTION_REQUIRED_REGULATORY: 17,
     BROKEN_ROUTE: 1,
     MISSING_TRACKING_ROUTE: 474,
   });
@@ -67,11 +67,15 @@ test("current terminal-host expectations match the exact live operator markets",
 test("Superfly uses exact active rows and retires global fallback authority", () => {
   const superfly = rows.filter((row) => row.partner === CURRENT_PARTNERS[0]);
   assert.equal(superfly.length, 42);
-  assert.equal(superfly.filter((row) => row.finalState === "ACTIVE_HEALTHY").length, 18);
+  assert.equal(superfly.filter((row) => row.finalState === "ACTIVE_HEALTHY").length, 12);
   assert.equal(superfly.filter((row) => row.finalState === "BLOCKED_BY_LAW").length, 18);
-  assert.equal(superfly.filter((row) => row.finalState === "ACTION_REQUIRED_REGULATORY").length, 6);
+  assert.equal(superfly.filter((row) => row.finalState === "ACTION_REQUIRED_REGULATORY").length, 12);
   assert.ok(superfly.every((row) => row.geo !== "ZZ"));
-  assert.ok(superfly.filter((row) => row.finalState === "ACTIVE_HEALTHY").every((row) => ["GB", "IE", "MT"].includes(row.geo)));
+  assert.ok(superfly.filter((row) => row.finalState === "ACTIVE_HEALTHY").every((row) => ["IE", "MT"].includes(row.geo)));
+  assert.ok(superfly.filter((row) => row.geo === "GB").every((row) => row.finalState === "ACTION_REQUIRED_REGULATORY"
+    && row.regulatoryAction?.includes("independent GB jurisdiction policy")
+    && row.trackingVerification === "HEALTHY"
+    && row.routeHealth === "HEALTHY"));
 });
 
 test("missing-route classification represents actual URL absence only", () => {

@@ -31,6 +31,7 @@ export interface CurrentPartnerInventorySeed {
   trackingScope: TrackingScope;
   trackingIdentity: string | null;
   redirectSlug: string | null;
+  technicalRouteVerified?: boolean;
   finalState: FinalState;
   reason: string;
   evidenceReferences: string[];
@@ -65,6 +66,9 @@ const BGA_MATRIX = "CRM:EVIDENCE:51eb50af-17f8-4bf2-b8c9-5aac6f88e659";
 const BGA_DIRECT_LINKS = "REPOSITORY:research_staging/betsson-network-2026-09-07/direct-links.normalized.csv";
 const SUPERFLY_MATRIX = "CRM:EVIDENCE:52a27b72-0da5-4a66-83f6-08a4549d6b21";
 const SUPERFLY_DOMAINS = "CRM:EVIDENCE:c1da25a7-255d-4cb4-80b5-5ea3a5bbabcf";
+const GB_POLICY = "REPOSITORY:lib/jurisdiction/policies/gb.ts";
+const GB_UKGC_LICENCE = "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/52894:2026-09-10";
+const GB_UKGC_DOMAINS = "PUBLIC:gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894:2026-09-10";
 const GOLDENPLAY_ROUTE = "CRM:EVIDENCE:ac9d82de-8eca-4230-8cc3-448395cfd53c";
 const GOLDENPLAY_GB = "PUBLIC:netopartners.com/news/maximize-your-ftd-volume-the-luckymate-goldenplay-grand-national-2026-strategy";
 const SUPER_PARTNERS_BRANDS = "CRM:EVIDENCE:a1ec6a1a-93a5-49e9-bb16-736622c3c615";
@@ -147,7 +151,14 @@ const superflySeeds = superflyCasinos.flatMap(([casino, casinoSlug, redirectSlug
     evidenceReferences: [FOUNDER_AUTHORITY, SUPERFLY_MATRIX, SUPERFLY_DOMAINS],
   };
   return [
-    ...["GB", "IE", "MT"].map((geo) => active({ ...base, geo })),
+    ...["IE", "MT"].map((geo) => active({ ...base, geo })),
+    regulatory({
+      ...base,
+      geo: "GB",
+      evidenceReferences: [...base.evidenceReferences, GB_POLICY, GB_UKGC_LICENCE, GB_UKGC_DOMAINS],
+      technicalRouteVerified: true,
+      regulatoryAction: "The exact White Hat Gaming licence and domain are currently active in the UKGC register, but B4GAMBLE's independent GB jurisdiction policy still denies commercial/referral capability. An explicit GB legal/commercial policy activation is required before the exact route may serve a CTA.",
+    }),
     ...["FI", "NO", "NZ"].map((geo) => blocked({ ...base, geo, partnerTrackingUrlPresent: true })),
     regulatory({
       ...base,
@@ -293,6 +304,7 @@ export function buildCurrentPartnerMatrix(): CurrentPartnerMatrixRow[] {
       : { affiliateProgram: null, affiliateOffer: null, trackingLink: null, internalRedirect: null };
     const active = row.finalState === "ACTIVE_HEALTHY";
     const broken = row.finalState === "BROKEN_ROUTE";
+    const technicallyHealthy = active || row.technicalRouteVerified === true;
     return {
       partner: row.partner,
       casino: row.casino,
@@ -306,9 +318,9 @@ export function buildCurrentPartnerMatrix(): CurrentPartnerMatrixRow[] {
       partnerTrackingUrlPresent: row.partnerTrackingUrlPresent,
       trackingScope: row.trackingScope,
       ...commercialObjects,
-      trackingVerification: active ? "HEALTHY" : broken ? "BROKEN" : "NOT_APPLICABLE",
+      trackingVerification: technicallyHealthy ? "HEALTHY" : broken ? "BROKEN" : "NOT_APPLICABLE",
       marketActivation: row.casinoSlug && /^[A-Z]{2}$/.test(row.geo) ? `${row.casinoSlug}:${row.geo}:CASINO` : null,
-      routeHealth: active ? "HEALTHY" : broken ? "BROKEN" : "NOT_APPLICABLE",
+      routeHealth: technicallyHealthy ? "HEALTHY" : broken ? "BROKEN" : "NOT_APPLICABLE",
       finalState: row.finalState,
       reason: row.reason,
       evidenceReferences: [...new Set(row.evidenceReferences)].sort(),
