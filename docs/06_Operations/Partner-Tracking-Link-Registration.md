@@ -25,9 +25,10 @@ not create partners or casinos.
 - The URL is staged inactive and checked through bounded HTTPS redirects with
   every-hop public-network validation, expected-operator-host validation and
   deterministic attribution checks.
-- Existing validated AffiliateOffers are reused without changing terms. A
-  missing normalization object becomes a neutral evergreen `Visit Casino`
-  offer with no bonus claim.
+- Existing validated affiliate records are reused without changing terms. A
+  missing internal network/program normalization is created only for the
+  resolved established relationship; a missing offer becomes a neutral
+  evergreen `Visit Casino` offer with no bonus claim.
 - `/r` remains the public handoff. RFC-042 remains the only controller that can
   converge an exact MarketActivation to `ACTIVE + HEALTHY`.
 - `BLOCKED_BY_LAW` and `ACTION_REQUIRED_REGULATORY` remain non-active even when

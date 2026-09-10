@@ -15,6 +15,7 @@ import type {
 } from "@/lib/commercial/partner-tracking-registration-contract";
 import {
   CURRENT_PARTNER_INVENTORY,
+  CURRENT_PARTNER_RECORDS,
   GLOBAL_CURRENT_PARTNER_RELEASE,
   normalizeCurrentPartnerIdentity,
   type CurrentPartnerName,
@@ -70,7 +71,7 @@ function boundedCandidate(casino: { id: string; title: string; slug: string }) {
 export type PartnerTrackingTarget = {
   partner: CurrentPartnerName;
   partnerId: string;
-  affiliateNetworkId: string;
+  affiliateNetworkId: string | null;
   casino: string;
   casinoId: string;
   casinoSlug: string;
@@ -80,7 +81,7 @@ export type PartnerTrackingTarget = {
 };
 
 export type PartnerTrackingStage = {
-  target: PartnerTrackingTarget;
+  target: PartnerTrackingTarget & { affiliateNetworkId: string };
   scope: PartnerTrackingScope;
   geo: string | null;
   linkHash: string;
@@ -137,13 +138,13 @@ export class PartnerTrackingRegistrationRepository {
         select: { id: true, name: true, slug: true },
       })).filter((network) => identities.has(normalizeCurrentPartnerIdentity(network.name))
         || identities.has(normalizeCurrentPartnerIdentity(network.slug)));
-      if (networks.length !== 1) {
+      if (networks.length > 1) {
         throw new ValidationError("Current partner network cannot be resolved unambiguously", {
-          reason: networks.length ? "PARTNER_NETWORK_AMBIGUOUS" : "PARTNER_NETWORK_NOT_FOUND",
+          reason: "PARTNER_NETWORK_AMBIGUOUS",
           candidates: networks.slice(0, 10).map((network) => ({ id: network.id, name: network.name })),
         });
       }
-      affiliateNetworkId = networks[0].id;
+      affiliateNetworkId = networks[0]?.id ?? null;
     }
 
     const allRows = CURRENT_PARTNER_INVENTORY;
@@ -241,8 +242,42 @@ export class PartnerTrackingRegistrationRepository {
     actorId: string;
     now: Date;
   }): Promise<PartnerTrackingStage> {
-    const network = await tx.affiliateNetwork.findUnique({ where: { id: input.target.affiliateNetworkId } });
-    if (!network || network.archivedAt) throw new Error("PARTNER_TRACKING_NETWORK_UNAVAILABLE");
+    let network = input.target.affiliateNetworkId
+      ? await tx.affiliateNetwork.findUnique({ where: { id: input.target.affiliateNetworkId } })
+      : null;
+    if (network?.archivedAt) throw new Error("PARTNER_TRACKING_NETWORK_UNAVAILABLE");
+    if (!network) {
+      const slug = normalizeCurrentPartnerIdentity(input.target.partner).replace(/\s+/g, "-");
+      const existing = await tx.affiliateNetwork.findUnique({ where: { slug } });
+      const acceptedIdentities = new Set([
+        input.target.partner,
+        ...CURRENT_PARTNER_RECORDS.find((partner) => partner.opportunityId === input.target.partnerId)?.aliases ?? [],
+      ].map(normalizeCurrentPartnerIdentity));
+      if (existing && !acceptedIdentities.has(normalizeCurrentPartnerIdentity(existing.name))
+        && !acceptedIdentities.has(normalizeCurrentPartnerIdentity(existing.slug))) {
+        throw new ConflictError("Canonical partner network slug belongs to another identity", {
+          reason: "PARTNER_NETWORK_IDENTITY_COLLISION",
+          candidates: [{ id: existing.id, name: existing.name }],
+        });
+      }
+      network = existing
+        ? await tx.affiliateNetwork.update({
+            where: { id: existing.id },
+            data: { active: true, archivedAt: null, updatedBy: input.actorId },
+          })
+        : await tx.affiliateNetwork.create({
+            data: {
+              name: input.target.partner,
+              slug,
+              type: "OTHER",
+              active: true,
+              notes: `${REGISTRATION_VERSION}: internal network normalization for an established current partner; no new relationship or terms inferred.`,
+              createdBy: input.actorId,
+              updatedBy: input.actorId,
+            },
+          });
+    }
+    const target = { ...input.target, affiliateNetworkId: network.id };
 
     const sameUrl = await tx.affiliateTrackingLink.findFirst({
       where: {
@@ -536,7 +571,7 @@ export class PartnerTrackingRegistrationRepository {
     if (!expectedFinalHost) throw new Error("PARTNER_TRACKING_EXPECTED_HOST_UNAVAILABLE");
 
     return {
-      target: input.target,
+      target,
       scope: input.scope,
       geo: input.geo,
       linkHash: input.linkHash,

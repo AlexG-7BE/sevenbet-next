@@ -412,9 +412,10 @@ tool on the existing Commercial MCP resource:
    operation does not reopen partner approval, Founder approval, KYC/AML,
    contracts or GEO approval. Current exact legal/regulatory classifications
    remain independent fail-closed gates.
-4. The bounded service may reconcile a missing canonical AffiliateProgram,
-   neutral evergreen AffiliateOffer and deterministic `/r` record without
-   inventing terms. It stages the route inactive, performs bounded every-hop
+4. The bounded service may reconcile a missing internal AffiliateNetwork or
+   AffiliateProgram normalization, neutral evergreen AffiliateOffer and
+   deterministic `/r` record without creating a partner or inventing terms.
+   It stages the route inactive, performs bounded every-hop
    SSRF-safe verification, and promotes only a healthy expected operator
    destination. A failed replacement cannot retire the prior healthy route.
 5. RFC-042 remains the sole CTA authority. Each eligible exact GEO is passed to

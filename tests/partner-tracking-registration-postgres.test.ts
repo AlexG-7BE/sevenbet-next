@@ -9,7 +9,6 @@ import { PartnerTrackingRegistrationRepository } from "../lib/repositories/partn
 
 const PARTNER = CURRENT_PARTNER_RECORDS.find((record) => record.name === "Super Partners")!;
 const ACTOR_ID = "71000000-0000-4000-8000-000000000001";
-const NETWORK_ID = "71000000-0000-4000-8000-000000000002";
 const CASINO_ID = "71000000-0000-4000-8000-000000000003";
 const NOW = new Date("2026-09-10T12:00:00.000Z");
 const GENERIC_URL = "https://tracking-fixture.example/click?token=redaction-fixture&campaign=generic";
@@ -32,7 +31,7 @@ async function cleanup(client: PrismaClient) {
   await client.affiliateRedirectSlug.deleteMany({ where: { casinoId: CASINO_ID } });
   await client.affiliateOffer.deleteMany({ where: { casinoId: CASINO_ID } });
   await client.affiliateProgram.deleteMany({ where: { casinoId: CASINO_ID } });
-  await client.affiliateNetwork.deleteMany({ where: { id: NETWORK_ID } });
+  await client.affiliateNetwork.deleteMany({ where: { slug: "super-partners" } });
   await client.casino.deleteMany({ where: { id: CASINO_ID } });
   await client.adminUser.deleteMany({ where: { id: ACTOR_ID } });
 }
@@ -48,14 +47,6 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       email: "partner-tracking-postgres@invalid.example",
       name: "Partner tracking PostgreSQL fixture",
       role: "AFFILIATE_MANAGER",
-    } });
-    await client.affiliateNetwork.create({ data: {
-      id: NETWORK_ID,
-      name: "Super Partners",
-      slug: "partner-tracking-super-partners-fixture",
-      active: true,
-      createdBy: ACTOR_ID,
-      updatedBy: ACTOR_ID,
     } });
     await client.casino.create({ data: {
       id: CASINO_ID,
@@ -82,7 +73,6 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       normalizedName: "super partners",
       organizationType: "AFFILIATE_NETWORK",
       stage: "ACTIVE",
-      affiliateNetworkId: NETWORK_ID,
       createdBy: ACTOR_ID,
       updatedBy: ACTOR_ID,
       tasks: { create: {
@@ -101,6 +91,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       geo: null,
     });
     assert.equal(target.casinoId, CASINO_ID);
+    assert.equal(target.affiliateNetworkId, null);
     assert.equal(target.rows.length, 8);
 
     const stageInput = {
@@ -113,6 +104,8 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       now: NOW,
     };
     const [first, second] = await Promise.all([repository.stage(stageInput), repository.stage(stageInput)]);
+    assert.ok(first.target.affiliateNetworkId);
+    assert.equal(await client.affiliateNetwork.count({ where: { slug: "super-partners" } }), 1);
     assert.equal(first.trackingLinkId, second.trackingLinkId);
     assert.equal(await client.affiliateTrackingLink.count({ where: { offerId: first.affiliateOfferId } }), 1);
     assert.equal(await client.affiliateOffer.count({ where: { casinoId: CASINO_ID } }), 1);
