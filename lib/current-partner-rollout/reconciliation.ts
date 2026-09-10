@@ -675,7 +675,11 @@ function activationSummary(result: Awaited<ReturnType<typeof marketActivationCon
 async function convergeActivations(input: { bga: Map<number, CommercialBinding>; superfly: Map<string, CommercialBinding>; actorId: string; now: Date }) {
   const exactRows = CURRENT_PARTNER_INVENTORY.filter((row) => row.casinoSlug && /^[A-Z]{2}$/.test(row.geo)
     && (row.partner === CURRENT_PARTNERS[0] || row.partner === CURRENT_PARTNERS[1]));
-  const outcomes = await mapConcurrent(exactRows, 4, async (row) => {
+  // Exact GEOs for one casino share offer/link compatibility rows. Applying
+  // them concurrently can produce SERIALIZABLE write conflicts even though
+  // each intent is individually idempotent, so converge this fixed corpus in
+  // deterministic matrix order.
+  const outcomes = await mapConcurrent(exactRows, 1, async (row) => {
     const activate = row.finalState === "ACTIVE_HEALTHY" || row.finalState === "BROKEN_ROUTE";
     let binding: CommercialBinding | undefined;
     if (activate && row.partner === CURRENT_PARTNERS[0]) binding = input.superfly.get(`${row.casinoSlug}:${row.geo}`)
