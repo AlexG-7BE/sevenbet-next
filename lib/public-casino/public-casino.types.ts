@@ -247,4 +247,5 @@ export interface PublicAffiliateRoute {
   casinoBonusId: string | null;
   affiliateOfferId?: string | null;
   slug: string;
+  operatorEligibilityContext?: Omit<import("@/lib/jurisdiction/gb-operator-eligibility").GbOperatorEligibilityInput, "casino" | "now" | "domainEvidence">;
 }

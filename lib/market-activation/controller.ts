@@ -1,6 +1,8 @@
 import { PARTNER_ROUTE_VERIFICATION_MAX_AGE_MS } from "@/lib/affiliate-routing/partner-route-projection";
 import { prisma } from "@/lib/db/prisma";
-import { exactSubdivisionEvidenceAuthority } from "@/lib/jurisdiction/exact-market-authority";
+import { exactSubdivisionCommercialAuthority } from "@/lib/jurisdiction/exact-market-authority";
+import { jurisdictionResolver, type JurisdictionResolver } from "@/lib/jurisdiction/resolver";
+import type { JurisdictionDecision } from "@/lib/jurisdiction/types";
 
 import type { MarketActivationApplyResult } from "./repository";
 import { marketActivationRepository, type MarketActivationRepository } from "./repository";
@@ -43,15 +45,23 @@ function routeVerificationRequired(result: MarketActivationApplyResult, now: Dat
 }
 
 export interface ExactSubdivisionActivationAuthorityPort {
-  allowed(intent: ReturnType<typeof normalizeMarketActivationIntent>): Promise<boolean>;
+  allowed(intent: ReturnType<typeof normalizeMarketActivationIntent>, parentDecision: JurisdictionDecision): Promise<boolean>;
+}
+
+export interface ParentJurisdictionAuthorityPort {
+  resolve: Pick<JurisdictionResolver, "resolve">["resolve"];
 }
 
 const exactSubdivisionActivationAuthority: ExactSubdivisionActivationAuthorityPort = {
-  async allowed(intent) {
+  async allowed(intent, parentDecision) {
     const casinoSlug = intent.casinoSlug ?? (intent.casinoId
       ? (await prisma.casino.findUnique({ where: { id: intent.casinoId }, select: { slug: true } }))?.slug
       : null);
-    return Boolean(casinoSlug && exactSubdivisionEvidenceAuthority({ casinoSlug, marketCode: intent.marketCode }));
+    return Boolean(casinoSlug && exactSubdivisionCommercialAuthority({
+      casinoSlug,
+      marketCode: intent.marketCode,
+      parentDecision,
+    }).allowed);
   },
 };
 
@@ -60,14 +70,20 @@ export class MarketActivationController {
     private readonly store: Pick<MarketActivationRepository, "apply" | "recordRouteVerification"> = marketActivationRepository,
     private readonly routeVerifier: MarketActivationRouteVerifierPort = marketActivationRouteVerifier,
     private readonly exactSubdivisionAuthority: ExactSubdivisionActivationAuthorityPort = exactSubdivisionActivationAuthority,
+    private readonly parentJurisdiction: ParentJurisdictionAuthorityPort = jurisdictionResolver,
   ) {}
 
   async setDesiredState(input: MarketActivationIntentInput, now = new Date()): Promise<MarketActivationApplyResult> {
     const intent = normalizeMarketActivationIntent(input);
-    if (intent.desiredState === "ACTIVE"
-      && intent.marketCode.includes("-")
-      && !await this.exactSubdivisionAuthority.allowed(intent)) {
-      throw new Error("MARKET_ACTIVATION_EXACT_SUBDIVISION_AUTHORITY_MISSING");
+    if (intent.desiredState === "ACTIVE" && intent.marketCode.includes("-")) {
+      const parentDecision = await this.parentJurisdiction.resolve({
+        requestCountrySignal: { countryCode: intent.countryCode, trust: "TRUSTED", observedAt: now },
+        accountCountry: null,
+        now,
+      });
+      if (!await this.exactSubdivisionAuthority.allowed(intent, parentDecision)) {
+        throw new Error("MARKET_ACTIVATION_EXACT_SUBDIVISION_AUTHORITY_MISSING");
+      }
     }
     let result = await this.store.apply(intent, now);
     if (intent.desiredState !== "ACTIVE") return result;

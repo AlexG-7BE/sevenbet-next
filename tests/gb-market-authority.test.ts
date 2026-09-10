@@ -19,6 +19,10 @@ import type { JurisdictionPolicy, JurisdictionPolicyStore } from "../lib/jurisdi
 import type { AffiliateRedirectStore } from "../lib/repositories/affiliate-redirect.repository";
 import { AffiliateRedirectService } from "../lib/services/affiliate-redirect.service";
 import type { GbCommercialReadinessAuthority } from "../lib/services/gb-commercial-readiness.service";
+import {
+  canonicalGbOperatorEligibilityContext,
+  GbOperatorEligibilityService,
+} from "../lib/services/gb-operator-eligibility.service";
 import { allowGbCommercialReadinessAuthority, allowJurisdictionResolver } from "./market-authority.fixtures";
 
 const now = new Date("2026-08-08T12:00:00.000Z");
@@ -141,6 +145,42 @@ test("GB operator eligibility accepts only the complete official evidence chain"
   assert.equal(result.commercialEligible, true);
   assert.equal(result.referralEligible, true);
   assert.deepEqual(result.reasonCodes, ["GB_OPERATOR_ELIGIBLE"]);
+});
+
+test("production operator service composes repository domain evidence with canonical route authority", async () => {
+  const value = casino();
+  const source = {
+    findById: async (id: string) => id === value.id ? value : null,
+    findManyByIds: async (ids: string[]) => ids.includes(value.id) ? [value] : [],
+    findBySlug: async (slug: string) => slug === value.slug ? value : null,
+  };
+  const domains = {
+    findExact: () => ({
+      evidenceId: "domain-evidence",
+      authorityVersion: "gb-domain-evidence.v1" as const,
+      casinoId: value.id,
+      operatorId: value.operator.id!,
+      brandId: value.brand.id,
+      licenceId: value.licences[0]!.id,
+      licenceAccountReference: value.licences[0]!.number!,
+      domain: value.domain,
+      officialSourceUrl: officialSource,
+      domainStatus: "ACTIVE" as const,
+      relationshipType: "DIRECT" as const,
+      observedAt: "2026-08-08T00:00:00.000Z",
+      revalidateAt: "2026-08-15T00:00:00.000Z",
+    }),
+  };
+  const service = new GbOperatorEligibilityService(source, domains);
+  const withoutRoute = await service.evaluate(value.id, now);
+  assert.equal(withoutRoute.referralEligible, false);
+  assert.ok(withoutRoute.reasonCodes.includes("GB_COMMERCIAL_CONTRACT_MISSING"));
+  const withRoute = await service.evaluate(value.id, now, canonicalGbOperatorEligibilityContext({
+    commercialContract,
+    redirectContract,
+  }));
+  assert.equal(withRoute.referralEligible, true);
+  assert.deepEqual(withRoute.reasonCodes, ["GB_OPERATOR_ELIGIBLE"]);
 });
 
 test("GB country, licence and canonical authority failures deny without hiding editorial", () => {

@@ -253,8 +253,7 @@ export class PublicCasinoRepository implements PublicCasinoStore {
 
   async listActiveAffiliateRoutes(casinoIds: string[], countryCode?: string, now?: Date) {
     if (!casinoIds.length || !countryCode) return [];
-    void now;
-    return this.activations.listPublicRoutes(casinoIds, countryCode);
+    return this.activations.listPublicRoutes(casinoIds, countryCode, now);
   }
 }
 

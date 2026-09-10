@@ -4,6 +4,7 @@ import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import { publicCasinoRepository, type PublicCasinoStore } from "@/lib/repositories/public-casino.repository";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import type { PublishedOfferCandidate } from "@/lib/public-casino/public-casino.types";
+import type { GbOperatorEligibilityEvidenceContext } from "@/lib/services/gb-operator-eligibility.service";
 import {
   extractOfferCandidatesFromPublishedRecords,
   publicOfferPresentation,
@@ -11,8 +12,13 @@ import {
   withOfferPresentation,
 } from "@/lib/public-offer/offer-presentation";
 
+export type PublicOfferRecord = PublicOfferDTO & {
+  /** Internal server projection context; stripped by PublicOfferService. */
+  operatorEligibilityContext?: GbOperatorEligibilityEvidenceContext;
+};
+
 export interface PublicOfferStore {
-  listOffers(options?: { includeCommercial?: boolean; countryCode?: string; commercialMarketCode?: string; presentationLanguage?: string }): Promise<PublicOfferDTO[]>;
+  listOffers(options?: { includeCommercial?: boolean; countryCode?: string; commercialMarketCode?: string; presentationLanguage?: string }): Promise<PublicOfferRecord[]>;
 }
 
 export class PublicOfferRepository implements PublicOfferStore {
@@ -69,7 +75,11 @@ export class PublicOfferRepository implements PublicOfferStore {
           presentation: publicOfferPresentation(resolved, bonus, options.countryCode),
         };
       });
-      return publicCasinoToOffers(casino, inventory);
+      const operatorEligibilityContext = routes.find((route) => route.casinoId === mapped.id)?.operatorEligibilityContext;
+      return publicCasinoToOffers(casino, inventory).map((offer) => ({
+        ...offer,
+        ...(operatorEligibilityContext ? { operatorEligibilityContext } : {}),
+      }));
     });
   }
 }

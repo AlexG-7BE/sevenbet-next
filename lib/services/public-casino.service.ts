@@ -7,7 +7,12 @@ import { publicCasinoRepository, type PublicCasinoStore } from "@/lib/repositori
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import { scopedCasinoReferralAllowed, scopedCommercialProjectionMayLoad } from "@/lib/jurisdiction/scoped-commercial-authority";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
-import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
+import {
+  canonicalGbOperatorEligibilityContext,
+  gbOperatorEligibilityService,
+  type GbOperatorEligibilityAuthority,
+  type GbOperatorEligibilityEvidenceContext,
+} from "@/lib/services/gb-operator-eligibility.service";
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
 import { temporaryDemoCasinoProfiles } from "@/lib/demo-data/temporary-demo-best-offers";
 import { decidePublicCasinoDisposition, type PublicCasinoDispositionDecision } from "@/lib/public-casino/presentation-disposition";
@@ -153,12 +158,8 @@ export class PublicCasinoService {
         ? authority
         : null;
       const scopedReferralAllowed = scopedCasinoReferralAllowed(exactAuthority, slug);
-      const operatorDecision = scopedReferralAllowed && operatorEvidenceRequired(normalizedCountry)
-        ? await this.operatorEligibility.evaluate(published.casinoId, this.options.now ?? new Date())
-        : null;
-      const referralAllowed = this.redirectEnabled() && scopedReferralAllowed
-        && (!operatorEvidenceRequired(normalizedCountry) || operatorDecision?.referralEligible === true);
-      if (referralAllowed) {
+      const commercialProjection = this.redirectEnabled() && scopedReferralAllowed;
+      if (commercialProjection) {
         try {
           routes = await this.repository.listActiveAffiliateRoutes(
             [published.casinoId],
@@ -169,6 +170,17 @@ export class PublicCasinoService {
           // Editorial content remains public without commercial actions when route authority is unavailable.
         }
       }
+      const operatorDecision = commercialProjection && operatorEvidenceRequired(normalizedCountry)
+        ? await this.operatorEligibility.evaluate(
+            published.casinoId,
+            this.options.now ?? new Date(),
+            canonicalGbOperatorEligibilityContext(
+              routes.find((route) => route.casinoId === published.casinoId)?.operatorEligibilityContext,
+            ),
+          )
+        : null;
+      const referralAllowed = commercialProjection
+        && (!operatorEvidenceRequired(normalizedCountry) || operatorDecision?.referralEligible === true);
 
       const casino = mapPublishedCasino(published, routes, {
         redirectEnabled: referralAllowed,
@@ -230,12 +242,6 @@ export class PublicCasinoService {
       : null;
     const commercialProjection = this.redirectEnabled()
       && scopedCommercialProjectionMayLoad(exactAuthority, normalizedCountry);
-    const operatorDecisions = commercialProjection && operatorEvidenceRequired(normalizedCountry)
-      ? await this.operatorEligibility.evaluateMany(published.map((entry) => entry.casinoId), this.options.now ?? new Date())
-      : new Map<string, GbOperatorEligibilityDecision>();
-    const referralAllowed = (casinoId: string, casinoSlug: string) => commercialProjection
-      && scopedCasinoReferralAllowed(exactAuthority, casinoSlug)
-      && (!operatorEvidenceRequired(normalizedCountry) || operatorDecisions.get(casinoId)?.referralEligible === true);
     let routes: Awaited<ReturnType<PublicCasinoStore["listActiveAffiliateRoutes"]>> = [];
     if (commercialProjection) {
       try {
@@ -248,6 +254,22 @@ export class PublicCasinoService {
         // Editorial profiles remain public without commercial actions when route authority is unavailable.
       }
     }
+    const operatorContexts = new Map<string, GbOperatorEligibilityEvidenceContext>(published.map((entry) => [
+      entry.casinoId,
+      canonicalGbOperatorEligibilityContext(
+        routes.find((route) => route.casinoId === entry.casinoId)?.operatorEligibilityContext,
+      ),
+    ]));
+    const operatorDecisions = commercialProjection && operatorEvidenceRequired(normalizedCountry)
+      ? await this.operatorEligibility.evaluateMany(
+          published.map((entry) => entry.casinoId),
+          this.options.now ?? new Date(),
+          operatorContexts,
+        )
+      : new Map<string, GbOperatorEligibilityDecision>();
+    const referralAllowed = (casinoId: string, casinoSlug: string) => commercialProjection
+      && scopedCasinoReferralAllowed(exactAuthority, casinoSlug)
+      && (!operatorEvidenceRequired(normalizedCountry) || operatorDecisions.get(casinoId)?.referralEligible === true);
 
     const cms = published.flatMap((entry) => {
       const identity = mapPublishedCasino(entry, [], {

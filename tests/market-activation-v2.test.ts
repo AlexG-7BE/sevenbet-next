@@ -183,6 +183,48 @@ test("canonical controller rejects an unsupported subdivision before repository 
   assert.equal(applied, false);
 });
 
+test("canonical controller requires a positive parent jurisdiction before exact subdivision mutation", async () => {
+  let applied = false;
+  let parentChecked = false;
+  const controller = new MarketActivationController(
+    {
+      apply: async () => { applied = true; throw new Error("must not apply"); },
+      recordRouteVerification: async () => { throw new Error("must not verify"); },
+    } as never,
+    { verify: async () => { throw new Error("must not verify"); } },
+    {
+      async allowed(_intent, parentDecision) {
+        parentChecked = true;
+        return parentDecision.commercialAllowed && parentDecision.referralAllowed;
+      },
+    },
+    {
+      async resolve() {
+        return {
+          decisionId: "parent-deny",
+          countryCode: "AR",
+          marketId: "ar",
+          jurisdictionId: "argentina",
+          editorialAllowed: true,
+          commercialAllowed: false,
+          referralAllowed: false,
+          reasonCode: "MARKET_RESTRICTED",
+          policyVersion: "test",
+          evaluatedAt: NOW.toISOString(),
+          revalidateAt: null,
+          inputSummary: [],
+        };
+      },
+    },
+  );
+  await assert.rejects(
+    () => controller.activateCasinoInGeo(intent({ countryCode: "AR-B", idempotencyKey: "parent-denied-ar-b" }), NOW),
+    /EXACT_SUBDIVISION_AUTHORITY_MISSING/,
+  );
+  assert.equal(parentChecked, true);
+  assert.equal(applied, false);
+});
+
 test("rejects ambiguous identity, missing evidence, and unsafe destinations", () => {
   assert.throws(() => normalizeMarketActivationIntent(intent({ casinoId: CASINO_ID })), /EXACTLY_ONE_CASINO_IDENTITY/);
   assert.throws(() => normalizeMarketActivationIntent(intent({ sourceReferences: [] })), /SOURCE_REFERENCE_REQUIRED/);
@@ -451,9 +493,11 @@ test("trusted regions retain country authority outside exact-only countries and 
     marketCode: "PE-LIM",
     desiredState: "DISABLED",
     status: "DISABLED",
+    redirectSlug: { ...activation().redirectSlug, slug: "inkabet-lima-disabled" },
   });
   assert.deepEqual(await runtime([peru, globalFallback, disabledRegion]).listActive([CASINO_ID], "PE-LIM"), []);
-  assert.equal(await runtime([peru, globalFallback, disabledRegion]).resolveRedirect("inkabet-casino", "PE-LIM"), null);
+  assert.equal(await runtime([peru, globalFallback, disabledRegion]).resolveRedirect("inkabet-casino", "PE-LIM"), null,
+    "an exact negative shadows the parent even when its redirect slug differs");
   assert.deepEqual(await runtime([globalFallback]).listActive([CASINO_ID], "AR-C"), []);
   assert.deepEqual(await runtime([globalFallback]).listActive([CASINO_ID], "CA-BC"), []);
   assert.deepEqual(await runtime([globalFallback]).listActive([CASINO_ID], "AR"), []);
@@ -524,6 +568,44 @@ test("canonical runtime fails closed for cross-entity or unsafe bindings", async
   assert.deepEqual(await runtime([unsafe]).listActive([CASINO_ID], "PE"), []);
   assert.deepEqual(await runtime([missingOfferMarket]).listActive([CASINO_ID], "PE"), []);
   assert.deepEqual(await runtime([missingTrackingMarket]).listActive([CASINO_ID], "PE"), []);
+});
+
+test("GB public routes carry current commercial facts into operator eligibility", async () => {
+  const gb = activation({
+    countryCode: "GB",
+    marketCode: "GB",
+    marketProfile: { id: PROFILE_ID, casinoId: CASINO_ID, countryCode: "GB" },
+    affiliateOffer: {
+      ...activation().affiliateOffer,
+      status: "ACTIVE",
+      archivedAt: null,
+      startAt: null,
+      expiresAt: null,
+      countries: [{ countryCode: "GB", mode: "ALLOW" }],
+      program: {
+        ...activation().affiliateOffer.program,
+        status: "ACTIVE",
+        workflowStatus: "PUBLISHED",
+        integrationMode: "MANUAL",
+        connectionStatus: "DISCONNECTED",
+        providerAccountId: null,
+        credentialReference: null,
+        supportedCountries: ["GB"],
+        archivedAt: null,
+        domainLifecycleStatus: "ACTIVE",
+        network: { active: true, archivedAt: null },
+      },
+    },
+    primaryTrackingLink: {
+      ...activation().primaryTrackingLink,
+      countries: [{ countryCode: "GB", mode: "ALLOW" }],
+    },
+  });
+  const route = (await runtime([gb]).listPublicRoutes([CASINO_ID], "GB", NOW))[0];
+  assert.equal(route?.operatorEligibilityContext?.commercialContract?.programConnected, true,
+    "manual programmes do not require a provider connection");
+  assert.equal(route?.operatorEligibilityContext?.commercialContract?.programSupportsGb, true);
+  assert.equal(route?.operatorEligibilityContext?.redirectContract?.destinationSafe, true);
 });
 
 test("discovery media and CTA projections prefer canonical activation rows", () => {

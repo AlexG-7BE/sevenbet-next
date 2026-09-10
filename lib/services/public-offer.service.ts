@@ -7,11 +7,16 @@ import type {
   PublicOfferQuery,
   PublicOfferSearchResult,
 } from "@/lib/public-offer/public-offer.types";
-import { publicOfferRepository, type PublicOfferStore } from "@/lib/repositories/public-offer.repository";
+import { publicOfferRepository, type PublicOfferRecord, type PublicOfferStore } from "@/lib/repositories/public-offer.repository";
 import { isPublicCasinoCmsEnabled } from "@/lib/services/public-casino.service";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import { scopedCasinoReferralAllowed, scopedCommercialProjectionMayLoad } from "@/lib/jurisdiction/scoped-commercial-authority";
-import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
+import {
+  canonicalGbOperatorEligibilityContext,
+  gbOperatorEligibilityService,
+  type GbOperatorEligibilityAuthority,
+  type GbOperatorEligibilityEvidenceContext,
+} from "@/lib/services/gb-operator-eligibility.service";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { currentPublicBrandText } from "@/lib/public-brand";
@@ -48,6 +53,11 @@ function classifyOffer(offer: PublicOfferDTO): PublicOfferDTO {
     commercialAvailability: "UNAVAILABLE",
     dataClassification: "DEMO_FIXTURE",
   };
+}
+
+function withoutOperatorEligibilityContext(offer: PublicOfferRecord): PublicOfferDTO {
+  const { operatorEligibilityContext: _internalContext, ...publicOffer } = offer;
+  return publicOffer;
 }
 
 export function publicOfferInventoryMode(offers: PublicOfferDTO[]) {
@@ -161,15 +171,25 @@ export class PublicOfferService {
         presentationLanguage: options.presentationLanguage,
       }))
         .filter((record) => !isTemporaryDemoCasinoId(record.casino.id));
-      if (!commercialProjection) return records.map(withoutAction).map(classifyOffer);
+      if (!commercialProjection) return records.map(withoutAction).map(classifyOffer).map(withoutOperatorEligibilityContext);
       if (options.countryCode !== "GB") return records
         .map((record) => scopedCasinoReferralAllowed(authority, record.casino.slug) ? record : withoutAction(record))
-        .map(classifyOffer);
-      const decisions = await this.operatorEligibility.evaluateMany(records.map((record) => record.casino.id), new Date());
+        .map(classifyOffer)
+        .map(withoutOperatorEligibilityContext);
+      const operatorContexts = new Map<string, GbOperatorEligibilityEvidenceContext>(records.map((record) => [
+        record.casino.id,
+        canonicalGbOperatorEligibilityContext(record.operatorEligibilityContext),
+      ]));
+      const decisions = await this.operatorEligibility.evaluateMany(
+        records.map((record) => record.casino.id),
+        new Date(),
+        operatorContexts,
+      );
       return records
         .map((record) => scopedCasinoReferralAllowed(authority, record.casino.slug)
           && decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record))
-        .map(classifyOffer);
+        .map(classifyOffer)
+        .map(withoutOperatorEligibilityContext);
     } catch (cause) {
       if (options.throwOnError) throw cause;
       return [];

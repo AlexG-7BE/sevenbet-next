@@ -15,27 +15,34 @@ const inferredLegalRows = supported.filter((row) => row.legalEvidenceClassificat
 const releaseGates = {
   canadaClosedMarketClassificationApproved: false,
   cleanDatabaseMigrationRecorded: false,
+};
+const productionGates = {
   productionSnapshotRecorded: false,
   productionPostflightRecorded: false,
 };
+const mergeReady = inferredSupportRows === 0
+  && inferredLegalRows === 0
+  && Object.values(releaseGates).every(Boolean);
 
 console.log(JSON.stringify({
   release: WORLDWIDE_AUTHORITY_RELEASE,
   targetClassification: "AUTHORIZED_TARGET",
   productionMutationPerformed: false,
-  mergeReady: inferredSupportRows === 0
-    && inferredLegalRows === 0
-    && Object.values(releaseGates).every(Boolean),
+  mergeReady,
+  productionReleaseReady: mergeReady && Object.values(productionGates).every(Boolean),
   mergeBlockers: {
     inferredSupportRows,
     inferredLegalRows,
     ...releaseGates,
   },
+  productionBlockers: {
+    ...productionGates,
+  },
   summary,
   stagingSnapshot: {
     meaning: "Review branch state after rebasing onto the canonical registrar; this is not Production state.",
     trackingRegistrationMechanismMerged: true,
-    trackingRegistrationMergeCommit: "95b47be",
+    trackingRegistrationMergeCommit: "6366906",
     canonicalRegistrationInventoryIntegrated: true,
     exactSubdivisionRuntimeImplemented: true,
     exactSubdivisionRuntimeAvailableInProduction: false,

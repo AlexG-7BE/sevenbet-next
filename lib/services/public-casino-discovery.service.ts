@@ -10,7 +10,12 @@ import { publicCasinoDiscoveryRepository } from "@/lib/repositories/public-casin
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import { scopedCasinoReferralAllowed, scopedCommercialProjectionMayLoad } from "@/lib/jurisdiction/scoped-commercial-authority";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
-import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
+import {
+  canonicalGbOperatorEligibilityContext,
+  gbOperatorEligibilityService,
+  type GbOperatorEligibilityAuthority,
+  type GbOperatorEligibilityEvidenceContext,
+} from "@/lib/services/gb-operator-eligibility.service";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
@@ -253,8 +258,14 @@ export class PublicCasinoDiscoveryService {
       ...(commercialProjection && commercialMarketContext ? { countryCode: commercialMarketContext } : {}),
     });
     const commercialRoutes = eligibleDiscoveryRoutes(context, commercialMarketContext ?? undefined, now);
+    const operatorContexts = new Map<string, GbOperatorEligibilityEvidenceContext>(published.map((record) => [
+      record.casinoId,
+      canonicalGbOperatorEligibilityContext(
+        commercialRoutes.find((route) => route.casinoId === record.casinoId)?.operatorEligibilityContext,
+      ),
+    ]));
     const operatorDecisions = commercialProjection && requestCountryContext === "GB"
-      ? await this.operatorEligibility.evaluateMany(published.map((record) => record.casinoId), now)
+      ? await this.operatorEligibility.evaluateMany(published.map((record) => record.casinoId), now, operatorContexts)
       : new Map<string, GbOperatorEligibilityDecision>();
     const aliasesByCasino = new Map<string, string[]>();
     for (const alias of context.aliases) aliasesByCasino.set(alias.casinoId, [...(aliasesByCasino.get(alias.casinoId) ?? []), alias.value]);

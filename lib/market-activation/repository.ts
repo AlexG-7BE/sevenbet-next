@@ -9,7 +9,8 @@ import {
 
 import { founderGlobalPartnerRoutePolicy } from "@/lib/affiliate-routing/partner-route-projection";
 import { prisma } from "@/lib/db/prisma";
-import { exactSubdivisionEvidenceAuthority } from "@/lib/jurisdiction/exact-market-authority";
+import { exactSubdivisionCommercialAuthority } from "@/lib/jurisdiction/exact-market-authority";
+import { jurisdictionResolver } from "@/lib/jurisdiction/resolver";
 
 import {
   MARKET_ACTIVATION_CONTROLLER_VERSION,
@@ -532,11 +533,19 @@ export class MarketActivationRepository {
     if (intent.desiredState === "DISABLED") {
       return this.disableInTransaction(tx, intent, casino, existing, now);
     }
-    if (intent.marketCode.includes("-") && !exactSubdivisionEvidenceAuthority({
-      casinoSlug: casino.slug,
-      marketCode: intent.marketCode,
-    })) {
-      throw new Error("MARKET_ACTIVATION_EXACT_SUBDIVISION_AUTHORITY_MISSING");
+    if (intent.marketCode.includes("-")) {
+      const parentDecision = await jurisdictionResolver.resolve({
+        requestCountrySignal: { countryCode: intent.countryCode, trust: "TRUSTED", observedAt: now },
+        accountCountry: null,
+        now,
+      });
+      if (!exactSubdivisionCommercialAuthority({
+        casinoSlug: casino.slug,
+        marketCode: intent.marketCode,
+        parentDecision,
+      }).allowed) {
+        throw new Error("MARKET_ACTIVATION_EXACT_SUBDIVISION_AUTHORITY_MISSING");
+      }
     }
 
     const globalFallback = intent.marketCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE;

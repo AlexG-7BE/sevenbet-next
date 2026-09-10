@@ -129,7 +129,8 @@ manufactured.
 - A present link receives only the neutral `Visit Casino` internal offer label.
 
 The permanent tracking-registration mechanism merged through PR #234 at commit
-`95b47be`. This branch was rebased on that commit. Its 134 supported rows are
+`95b47be`, followed by its Production live-fix merge in PR #236 at `6366906`.
+This branch is rebased on the latter. Its 134 supported rows are
 now the exact 14-casino portion of the registrar's canonical current-partner
 inventory. `REGIONAL_REUSE` is a first-class registration scope between exact
 and generic, and the old 540-row one-time rollout inventory remains explicitly
@@ -155,7 +156,11 @@ this rollout's scope. The implemented path bypasses only
 worldwide matrix contains detected GB support and legal evidence. It continues
 to require exact UKGC/domain/operator/partner/offer/tracking/redirect and
 RFC-042 route readiness. Other Casinos and every other jurisdiction denial
-remain fail-closed. The target rows are not yet live.
+remain fail-closed. Canonical GB public projections now carry current bounded
+programme, offer, link and redirect facts into the operator/domain evaluator;
+the stricter click-time readiness service still rechecks the complete chain.
+The repository exact-domain evidence store remains fail-closed until reviewed
+records exist. The target rows are not yet live.
 
 ## Exact subdivision runtime
 
@@ -172,7 +177,10 @@ sufficient. The exact 14-casino manifest must also contain `SUPPORTED`, legal
 `ALLOWED`, detected support evidence, detected legal evidence and matching
 Founder authority. Missing or invalid exact evidence fails closed as an
 internal readiness action, never as invented law. The migration and runtime
-remain undeployed.
+remain undeployed. Both the public controller and the repository transaction
+resolve the current parent jurisdiction before any exact activation mutation,
+and an exact negative row shadows a parent redirect even when their slugs
+differ.
 
 ## Required gates before merge or Production
 
@@ -188,7 +196,7 @@ remain undeployed.
    legal classifications with current authoritative evidence, and explicitly
    decide the proposed 33-row Canadian closed-market reclassification; no
    unresolved row may be described as Production-cleared.
-6. **RELEASE GATE:** full CI, clean-database migration and PostgreSQL integration
+6. **MERGE GATE:** full CI, clean-database migration and PostgreSQL integration
    suites must pass for the review SHA.
 7. **PRODUCTION GATE:** capture the pre-mutation snapshot, verify exact current
    route/partner evidence, execute only through the canonical registrar and
@@ -199,3 +207,5 @@ remain undeployed.
 
 The tracking-mechanism dependency is closed. The PR remains open because the
 evidence, migration/CI and Production acceptance gates above are not closed.
+The audit reports merge readiness separately from post-merge Production
+snapshot/postflight readiness so those later proofs cannot deadlock review.

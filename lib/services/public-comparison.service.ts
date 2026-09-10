@@ -18,7 +18,12 @@ import { resolvePublicVisitAction } from "@/lib/services/public-casino-discovery
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import { scopedCasinoReferralAllowed, scopedCommercialProjectionMayLoad } from "@/lib/jurisdiction/scoped-commercial-authority";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
-import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
+import {
+  canonicalGbOperatorEligibilityContext,
+  gbOperatorEligibilityService,
+  type GbOperatorEligibilityAuthority,
+  type GbOperatorEligibilityEvidenceContext,
+} from "@/lib/services/gb-operator-eligibility.service";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
@@ -261,8 +266,14 @@ export class PublicComparisonService {
       return casino?.source === "cms" && !isTemporaryDemoCasinoId(casino.id) ? [casino] : [];
     });
     const inventoryMode: PublicCasinoInventoryMode = "PUBLISHED_ONLY";
+    const operatorContexts = new Map<string, GbOperatorEligibilityEvidenceContext>(globalCasinos.map((casino) => [
+      casino.id,
+      canonicalGbOperatorEligibilityContext(
+        commercialRoutes.find((route) => route.casinoId === casino.id)?.operatorEligibilityContext,
+      ),
+    ]));
     const operatorDecisions = commercialProjection && query.country === "GB"
-      ? await this.operatorEligibility.evaluateMany(globalCasinos.map((casino) => casino.id), now)
+      ? await this.operatorEligibility.evaluateMany(globalCasinos.map((casino) => casino.id), now, operatorContexts)
       : new Map<string, GbOperatorEligibilityDecision>();
     const all: DispositionedCasino[] = globalCasinos.flatMap((globalCasino): DispositionedCasino[] => {
       const exactProfile = globalCasino.marketProfiles.find((profile) => profile.countryCode === query.country) ?? null;
