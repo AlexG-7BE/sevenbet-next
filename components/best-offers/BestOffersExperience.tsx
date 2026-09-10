@@ -88,13 +88,13 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
             <Score messages={messages} offer={featured} presentation={presentation} />
             <OfferNotice messages={messages} offer={featured} />
             <h4>{featured.bonus.title}</h4>
-            <p className={styles.reason}>{featured.casino.summary}</p>
-            <Actions messages={messages} offer={featured} placement="BEST_OFFER_FEATURED" presentation={presentation} />
           </div>
           <div className={styles.featuredFacts}>
             <small>{messages.common.materialOfferTerms}</small>
             <Terms messages={messages} offer={featured} presentation={presentation} />
+            <p className={styles.reason}>{featured.casino.summary}</p>
             <p>{featured.bonus.importantConditions.slice(0, 2).join(" · ") || featured.bonus.summary}</p>
+            <Actions messages={messages} offer={featured} placement="BEST_OFFER_FEATURED" presentation={presentation} />
           </div>
         </article>
 

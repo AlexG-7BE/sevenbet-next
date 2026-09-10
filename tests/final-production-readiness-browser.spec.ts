@@ -193,7 +193,7 @@ test("contextual comparison auto-opens on the second eligible selection and fail
   await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toContainText("2 of 3 selected");
 });
 
-test("casino review stays readable through final governed state and fixed decision bar", async ({ page }) => {
+test("casino review stays readable through its compact verdict, FAQ and fixed decision bar", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/casino/demo-northstar?visualFixture=true");
   await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
@@ -204,8 +204,10 @@ test("casino review stays readable through final governed state and fixed decisi
     expect(Math.min(keepBox!.x + keepBox!.width, scoreBox!.x + scoreBox!.width) - Math.max(keepBox!.x, scoreBox!.x) > 0
       && Math.min(keepBox!.y + keepBox!.height, scoreBox!.y + scoreBox!.height) - Math.max(keepBox!.y, scoreBox!.y) > 0).toBe(false);
   }
-  const finalState = page.getByText("FICTIONAL DEMONSTRATION FIELDS", { exact: true });
+  await expect(page.locator('[data-demo-state="fictional"]')).toHaveCount(0);
+  const finalState = page.locator("#faq");
   await finalState.scrollIntoViewIfNeeded();
+  await expect(page.locator("#verdict")).toBeVisible();
   await expect(finalState).toBeVisible();
   const gap = await page.evaluate(() => {
     const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]');

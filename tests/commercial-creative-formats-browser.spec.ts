@@ -46,7 +46,7 @@ test("mixed commercial fixtures preserve physical geometry at every required wid
     const response = await livePage.goto(`${baseUrl}/en/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status(), `${width}px response`).toBe(200);
     await expect(livePage.locator('figure[data-offer-media], a[data-commercial-action-source="CREATIVE"]')).toHaveCount(0);
-    await expect(livePage.locator("figure[data-offer-identity]").first()).toBeVisible();
+    await expect(livePage.locator("[data-bonus-directory-card]").first()).toBeVisible();
     await livePage.close();
 
     const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 844 : 900 } });
@@ -84,16 +84,18 @@ test("mixed commercial fixtures preserve physical geometry at every required wid
   }
 });
 
-test("retired promotional fixtures are absent and replacement operator identity stays inert", async ({ page }) => {
+test("retired promotional fixtures are absent and editorial operator identity stays inert", async ({ page }) => {
   for (const path of ["/en/bonuses?visualFixture=true", "/en/best-offers?visualFixture=true"]) {
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
-    const identity = page.locator("figure[data-offer-identity]").first();
-    await identity.scrollIntoViewIfNeeded();
-    await expect(identity).toBeVisible();
+    const card = path.includes("bonuses")
+      ? page.locator("[data-bonus-directory-card]").first()
+      : page.getByTestId("best-offer-product-card");
+    await card.scrollIntoViewIfNeeded();
+    await expect(card).toBeVisible();
     await expect(page.locator("figure[data-offer-media]")).toHaveCount(0);
+    await expect(page.locator("figure[data-offer-identity]")).toHaveCount(0);
     await expect(page.locator('a[data-commercial-action-source="CREATIVE"]')).toHaveCount(0);
-    await identity.click({ force: true });
     await expect(page.locator("dialog[open]")).toHaveCount(0);
     await expect(page.locator('main a[href^="http"]')).toHaveCount(0);
   }
@@ -129,34 +131,33 @@ test("a COMPOSED 320×50 asset renders as the real strip without cloned identity
   expect(captionSizes.every((size) => size >= 12)).toBe(true);
 });
 
-test("Best Offers replaces promotional bands with contained operator-identity compositions", async ({ browser }) => {
+test("Best Offers replaces promotional bands with contained editorial ranking cards", async ({ browser }) => {
   for (const width of [390, 768, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: width === 390 ? 844 : 900 } });
     const response = await page.goto(`${baseUrl}/en/best-offers?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
     await expect(page.locator('figure[data-offer-media], figure[data-presentation-family="STRIP"], figure[data-presentation-family="WIDE"]')).toHaveCount(0);
-    for (const variant of ["featured", "secondary"]) {
-      const figure = page.locator(`figure[data-offer-identity="${variant}"]`).first();
-      await figure.scrollIntoViewIfNeeded();
-      await expect(figure).toBeVisible();
-      const parentGeometry = await figure.evaluate((element) => {
-        const article = element.closest("article");
-        if (!article) throw new Error("Best Offers operator identity is missing its article");
-        const figureRect = element.getBoundingClientRect();
-        const articleRect = article.getBoundingClientRect();
+    await expect(page.locator("figure[data-offer-identity]")).toHaveCount(0);
+    const featured = page.getByTestId("best-offer-product-card");
+    const alternatives = page.getByTestId("ranked-offer-card");
+    await expect(featured).toBeVisible();
+    await expect(alternatives).toHaveCount(2);
+    for (const card of [featured, alternatives.first()]) {
+      await card.scrollIntoViewIfNeeded();
+      const geometry = await card.evaluate((element) => {
+        const cardRect = element.getBoundingClientRect();
         return {
-          height: figureRect.height,
-          widthCoverage: figureRect.width / articleRect.width,
-          columns: getComputedStyle(article).gridTemplateColumns.split(" ").filter(Boolean).length,
+          left: cardRect.left,
+          right: cardRect.right,
           horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
         };
       });
-      expect(parentGeometry.height, `${width}px ${variant} height`).toBeLessThan(240);
-      expect(parentGeometry.widthCoverage, `${width}px ${variant} containment`).toBeGreaterThan(0);
-      expect(parentGeometry.widthCoverage, `${width}px ${variant} containment`).toBeLessThanOrEqual(1.01);
-      expect(parentGeometry.columns, `${width}px ${variant} columns`).toBeGreaterThanOrEqual(1);
-      expect(parentGeometry.horizontalOverflow, `${width}px ${variant} overflow`).toBe(false);
+      expect(geometry.left, `${width}px card left containment`).toBeGreaterThanOrEqual(0);
+      expect(geometry.right, `${width}px card right containment`).toBeLessThanOrEqual(width + 1);
+      expect(geometry.horizontalOverflow, `${width}px card overflow`).toBe(false);
     }
+    const featuredColumns = await featured.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").filter(Boolean).length);
+    expect(featuredColumns).toBe(width > 900 ? 2 : 1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
     await page.close();
   }
@@ -180,33 +181,32 @@ test("one deterministic page presents all required mixed inventory states intent
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
-test("review hero and offer block stay logo-only with responsive containment", async ({ browser }) => {
+test("review hero keeps promotional media retired and the offer panel responsive", async ({ browser }) => {
   for (const width of [390, 768, 1100, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: width === 390 ? 844 : 900 } });
     const response = await page.goto(`${baseUrl}/en/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
-    const hero = page.locator('[class*="heroMedia"][data-presentation-family="LOGO_ONLY"]');
-    await expect(hero).toHaveAttribute("data-media-source", "LOGO_COMPOSITION");
-    expect(await hero.getAttribute("data-creative-offer-id")).toBeNull();
-    await expect(hero.locator("a,button")).toHaveCount(0);
-    await expect(page.locator('a[data-commercial-action-placement="CASINO_DETAIL_HERO"]')).toHaveCount(0);
-
+    const hero = page.locator('section[aria-labelledby="casino-profile-title"]');
+    const offerPanel = hero.locator('aside[data-offer-state]');
+    await expect(hero).toBeVisible();
+    await expect(offerPanel).toBeVisible();
+    await expect(hero.locator('[class*="heroMedia"], figure[data-offer-media], figure[data-offer-identity]')).toHaveCount(0);
+    await expect(offerPanel.locator('a[href^="/r/"]')).toHaveCount(0);
     const containingGeometry = await hero.evaluate((element) => {
-      const figure = element.getBoundingClientRect();
-      const card = element.parentElement?.getBoundingClientRect();
+      const review = element.firstElementChild!.getBoundingClientRect();
+      const panel = element.querySelector<HTMLElement>('aside[data-offer-state]')!.getBoundingClientRect();
+      const bounds = element.getBoundingClientRect();
       return {
-        figureWidth: figure.width,
-        figureHeight: figure.height,
-        cardWidth: card?.width ?? 0,
+        panelContained: panel.left >= bounds.left - 1 && panel.right <= bounds.right + 1,
+        sideBySide: panel.left >= review.right - 1 && panel.top < review.bottom,
+        stacked: panel.top >= review.bottom - 1,
         horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       };
     });
-    expect(containingGeometry.figureHeight).toBeGreaterThan(0);
-    expect(containingGeometry.figureHeight).toBeLessThan(620);
-    expect(containingGeometry.figureWidth).toBeLessThanOrEqual(containingGeometry.cardWidth + 1);
+    expect(containingGeometry.panelContained).toBe(true);
+    expect(width >= 1100 ? containingGeometry.sideBySide : containingGeometry.stacked).toBe(true);
     expect(containingGeometry.horizontalOverflow).toBe(false);
     await expect(page.locator('figure[data-offer-media], a[data-commercial-action-source="CREATIVE"], [data-casino-profile-hosted-media]')).toHaveCount(0);
-    await expect(page.locator('a[data-commercial-action-placement="CASINO_OFFER_BLOCK"]')).toHaveCount(0);
     await page.close();
   }
 });

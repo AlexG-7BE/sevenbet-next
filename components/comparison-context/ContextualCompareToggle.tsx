@@ -23,10 +23,11 @@ export function ContextualCompareToggle({ casinoSlug, casinoName, messages }: { 
 
   return <button
     aria-disabled={atCapacity && !selected}
+    aria-label={selected ? `${messages?.remove ?? "Remove"} ${casinoName}` : undefined}
     aria-pressed={selected}
     data-comparison-toggle={casinoSlug}
     disabled={atCapacity && !selected}
     onClick={() => window.dispatchEvent(new CustomEvent("b4gamble:comparison-toggle", { detail: { slug: casinoSlug } }))}
     type="button"
-  >{selected ? `${messages?.remove ?? "Remove"} ${casinoName}` : messages?.add ?? "Compare"}</button>;
+  >{selected ? messages?.remove ?? "Remove" : messages?.add ?? "Compare"}</button>;
 }

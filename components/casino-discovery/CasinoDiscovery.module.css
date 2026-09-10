@@ -1052,6 +1052,7 @@
   .casinoCard .offerBlock > small { margin-top:4px; font-size:12px; line-height:14px; }
   .casinoCard .signals,.casinoCard .commission { display:none; }
   .casinoCard .cardActions { grid-area:actions; align-self:center; display:grid; grid-template-columns:1fr; gap:5px; margin:0; padding:0 0 0 16px; border:0; border-left:1px solid rgba(16,15,15,.13); background:transparent; }
+  .casinoCard .cardActions > * { grid-area:auto; min-width:0; }
   .casinoCard .cardActions a,.casinoCard .cardActions button,.casinoCard .cardActions .unavailable { width:100%; min-height:40px; padding:7px 8px; border:0; border-bottom:1px solid rgba(16,15,15,.42); border-radius:0; }
   .casinoCard .cardActions > :global(.commercialOutboundPrimary) { border:0; border-radius:4px; background:#b94b47; color:#fff; }
 }
