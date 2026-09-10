@@ -382,9 +382,15 @@ async function verifyState(corpus: CatalogCorpus) {
     for (const market of entry.markets) if (!actualMarkets.includes(market)) throw new Error(`${RELEASE}: ${entry.slug} missing market ${market}`);
     if (entry.slug === "rizk" && actualMarkets.includes("NZ")) throw new Error(`${RELEASE}: Rizk NZ unexpectedly entered runtime publication`);
     const activeRedirects = await prisma.affiliateRedirectSlug.count({ where: { casinoId: casino.id, active: true, archivedAt: null } });
+    const activeMarketActivations = await prisma.marketActivation.count({ where: {
+      casinoId: casino.id,
+      desiredState: "ACTIVE",
+      status: "ACTIVE",
+      routeVerificationStatus: "HEALTHY",
+    } });
     if (entry.slug === "starcasino") {
       if (casino.seo?.robots !== "noindex,follow") throw new Error(`${RELEASE}: StarCasino must remain noindex informational-only`);
-      if (activeRedirects !== 0) throw new Error(`${RELEASE}: StarCasino must not gain an outbound route`);
+      if (activeMarketActivations !== 0) throw new Error(`${RELEASE}: StarCasino must not gain an active MarketActivation`);
     }
     const snapshot = casino.versions[0]?.snapshot as Prisma.JsonObject | undefined;
     if (!snapshot || snapshot.editorScore !== entry.score) throw new Error(`${RELEASE}: ${entry.slug} latest published snapshot is stale`);
@@ -405,6 +411,7 @@ async function verifyState(corpus: CatalogCorpus) {
       categories: casino.countries.reduce((sum, market) => sum + market.gameCategories.length, 0),
       bonuses: casino.countries.reduce((sum, market) => sum + market.bonuses.length, 0),
       activeRedirects,
+      activeMarketActivations,
       robots: casino.seo?.robots ?? null,
     });
   }
