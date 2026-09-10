@@ -1,0 +1,28 @@
+import {
+  buildWorldwideAuthorityMatrix,
+  validateWorldwideAuthorityMatrix,
+  WORLDWIDE_AUTHORITY_RELEASE,
+} from "@/lib/current-partner-worldwide-authority/inventory";
+
+const command = process.argv[2] ?? "audit";
+if (command !== "audit") throw new Error("WORLDWIDE_AUTHORITY_COMMAND_UNSUPPORTED");
+
+const rows = buildWorldwideAuthorityMatrix();
+const summary = validateWorldwideAuthorityMatrix(rows);
+const supported = rows.filter((row) => row.marketSupportState === "SUPPORTED");
+
+console.log(JSON.stringify({
+  release: WORLDWIDE_AUTHORITY_RELEASE,
+  targetClassification: "AUTHORIZED_TARGET",
+  productionMutationPerformed: false,
+  summary,
+  stagingSnapshot: {
+    meaning: "Fixed branch state; re-evaluate from the rebased canonical runtime before merge.",
+    trackingRegistrationMechanismMerged: false,
+    exactSubdivisionRuntimeAvailable: false,
+    currentRuntimePostflightRecorded: false,
+  },
+  regulatoryActions: supported
+    .filter((row) => row.targetFinalState === "ACTION_REQUIRED_REGULATORY")
+    .map((row) => ({ partner: row.partner, casino: row.casino, geo: row.geo, action: row.regulatoryAction })),
+}, null, 2));

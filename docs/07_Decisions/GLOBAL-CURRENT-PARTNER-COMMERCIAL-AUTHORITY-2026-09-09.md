@@ -4,6 +4,13 @@
 
 ACCEPTED — Founder decision effective 2026-09-09.
 
+**Partially superseded on 2026-09-10:** for the exact 14 casinos in
+[FOUNDER-GLOBAL-14-CASINO-MARKET-AUTHORITY-2026-09-10](FOUNDER-GLOBAL-14-CASINO-MARKET-AUTHORITY-2026-09-10.md),
+the worldwide universe replaces the historical 25-GEO subset, Super Partners
+is excluded, and the stale internal GB deny is not a regulatory prerequisite.
+This document remains authoritative for current partners outside that exact
+scope and as historical delivery evidence.
+
 ## Decision
 
 For the exact set of current established B4GAMBLE partners, the Founder records the following internal commercial authority:

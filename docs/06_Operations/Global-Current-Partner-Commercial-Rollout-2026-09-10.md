@@ -7,6 +7,12 @@
 **Authority:** Founder decision of 9 September 2026  
 **Implementation classification:** **DETECTED** unless explicitly labelled otherwise
 
+**Historical scope notice:** this remains the factual 25-GEO Production release
+record. For the exact 14 casinos governed by the
+[2026-09-10 worldwide Founder override](../07_Decisions/FOUNDER-GLOBAL-14-CASINO-MARKET-AUTHORITY-2026-09-10.md),
+the worldwide authority manifest supersedes this document's universe and
+target policy. No worldwide Production activation is implied by that decision.
+
 ## Authority and durable boundary
 
 The Founder-approved current-partner commercial authority is recorded in [GLOBAL-CURRENT-PARTNER-COMMERCIAL-AUTHORITY-2026-09-09](../07_Decisions/GLOBAL-CURRENT-PARTNER-COMMERCIAL-AUTHORITY-2026-09-09.md). It closes Founder, partner, account, KYC, AML, GEO, country, market, contract-review, written-confirmation, creative, banner and MEDIA-GEO3 approval workstreams for current established partners. Partner-provided tracking URLs are sufficient tracking authority; generic links may serve several exact GEO activations and exact-GEO links take precedence.
