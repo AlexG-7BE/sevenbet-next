@@ -116,6 +116,15 @@ function importedRouteMetadata(metadata: Prisma.JsonValue) {
   };
 }
 
+function registeredRouteMetadata(metadata: Prisma.JsonValue) {
+  const registration = snapshotMetadata(snapshotMetadata(metadata).partnerTrackingRegistration as Prisma.JsonValue);
+  return {
+    stage: typeof registration.stage === "string" ? registration.stage.trim().toUpperCase() : null,
+    scope: typeof registration.scope === "string" ? registration.scope.trim().toUpperCase() : null,
+    geo: typeof registration.geo === "string" ? registration.geo.trim().toUpperCase() : null,
+  };
+}
+
 export function selectActivationTrackingCandidate<T extends ActivationTrackingCandidate>(input: {
   candidates: T[];
   countryCode: string;
@@ -129,6 +138,8 @@ export function selectActivationTrackingCandidate<T extends ActivationTrackingCa
     const country = candidate.countries.find((entry) => entry.countryCode.toUpperCase() === countryCode && entry.mode === "ALLOW");
     if (!country) return [];
     const imported = importedRouteMetadata(candidate.metadata);
+    const registered = registeredRouteMetadata(candidate.metadata);
+    if (registered.stage === "CANONICAL" && registered.scope === "EXACT_GEO" && registered.geo !== countryCode) return [];
     if (imported.exactCountryCode && imported.exactCountryCode !== countryCode) return [];
     const exactImportedRoute = imported.exactCountryCode === countryCode;
     const finalHostMatchesMarket = hostBelongsToMarket(imported.healthFinalHost, marketHost);
@@ -140,7 +151,13 @@ export function selectActivationTrackingCandidate<T extends ActivationTrackingCa
       : finalHostMatchesMarket && imported.healthStatus === "EXTERNAL_CHALLENGE" ? 700
         : finalHostMatchesMarket && imported.healthStatus === "CROSS_GEO" ? 600
           : 0;
-    const score = (exactImportedRoute ? 10_000 : 0)
+    const registeredScopeScore = registered.stage === "CANONICAL" && registered.scope === "EXACT_GEO" && registered.geo === countryCode
+      ? 30_000
+      : registered.stage === "CANONICAL" && registered.scope === "GENERIC"
+        ? 15_000
+        : 0;
+    const score = registeredScopeScore
+      + (exactImportedRoute ? 20_000 : 0)
       + (finalHostMatchesMarket ? 2_000 : 0)
       + observedHealthScore
       + purposeScore

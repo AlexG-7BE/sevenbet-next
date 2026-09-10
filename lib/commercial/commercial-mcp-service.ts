@@ -6,6 +6,8 @@ import {
   CommercialMcpListSchema,
   CommercialMcpResearchBundleSchema,
 } from "@/lib/commercial/commercial-mcp-contract";
+import { PartnerTrackingRegistrationSchema } from "@/lib/commercial/partner-tracking-registration-contract";
+import { partnerTrackingRegistrationService } from "@/lib/commercial/partner-tracking-registration-service";
 import { commercialRepository } from "@/lib/repositories/commercial.repository";
 import { NotFoundError, ValidationError } from "@/lib/services/service-error";
 
@@ -61,5 +63,13 @@ export const commercialMcpService = {
       }
       throw error;
     }
+  },
+
+  async registerPartnerTrackingLink(
+    value: unknown,
+    context: { actorId: string; clientId: string },
+  ) {
+    const input = parse(PartnerTrackingRegistrationSchema, value);
+    return plainJson(await partnerTrackingRegistrationService.register(input, context));
   },
 };

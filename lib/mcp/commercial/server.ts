@@ -13,11 +13,16 @@ import {
   CommercialMcpListSchema,
   CommercialMcpResearchBundleSchema,
 } from "@/lib/commercial/commercial-mcp-contract";
+import { PartnerTrackingRegistrationSchema } from "@/lib/commercial/partner-tracking-registration-contract";
 import { commercialMcpService } from "@/lib/commercial/commercial-mcp-service";
 import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
 import { commercialMcpAuthenticateHeader, type CommercialMcpConfig } from "@/lib/mcp/commercial/config";
 import type { CommercialMcpTokenContext } from "@/lib/mcp/commercial/oauth";
-import { consumeCommercialMcpRateLimit } from "@/lib/mcp/commercial/rate-limit";
+import {
+  consumeCommercialMcpRateLimit,
+  recordPartnerTrackingRegistrationMetric,
+  type PartnerTrackingRegistrationMetric,
+} from "@/lib/mcp/commercial/rate-limit";
 import { ServiceError } from "@/lib/services/service-error";
 
 type ToolDefinition = {
@@ -40,9 +45,14 @@ type CommercialMcpServiceAdapter = {
   get(value: unknown): Promise<Record<string, unknown>>;
   findPossibleDuplicates(value: unknown): Promise<Record<string, unknown>>;
   upsertResearchBundle(value: unknown, context: { actorId: string; clientId: string }): Promise<Record<string, unknown>>;
+  registerPartnerTrackingLink(value: unknown, context: { actorId: string; clientId: string }): Promise<Record<string, unknown>>;
 };
 
 type CommercialMcpRateLimiter = typeof consumeCommercialMcpRateLimit;
+type PartnerTrackingObserver = (input: {
+  metric: PartnerTrackingRegistrationMetric;
+  increment?: number;
+}) => Promise<void>;
 
 const readSecurity = [{ type: "oauth2" as const, scopes: ["commercial:read"] }];
 const writeSecurity = [{ type: "oauth2" as const, scopes: ["commercial:safe_write"] }];
@@ -84,6 +94,15 @@ export const commercialMcpTools: ToolDefinition[] = [
     _meta: { securitySchemes: writeSecurity },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
+  {
+    name: "commercial_register_partner_tracking_link",
+    title: "Register partner tracking link",
+    description: "Register or replace a partner-provided affiliate tracking URL for an existing current Partner × Casino, optionally scoped to one GEO. The operation validates the route, normalizes canonical tracking and offer records, and reconciles legally eligible MarketActivations. It never creates partners or casinos and never bypasses legal or regulatory blocks.",
+    inputSchema: z.toJSONSchema(PartnerTrackingRegistrationSchema) as Record<string, unknown>,
+    securitySchemes: writeSecurity,
+    _meta: { securitySchemes: writeSecurity },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+  },
 ];
 
 function toolResult(value: Record<string, unknown>) {
@@ -101,6 +120,36 @@ function toolError(error: unknown) {
   };
 }
 
+function registrationToolError(error: unknown) {
+  if (!(error instanceof ServiceError) || !error.details || typeof error.details !== "object") return toolError(error);
+  const details = error.details as Record<string, unknown>;
+  const reason = typeof details.reason === "string" && /^[A-Z0-9_]+$/.test(details.reason)
+    ? details.reason
+    : "PARTNER_TRACKING_REGISTRATION_FAILED";
+  const candidates = Array.isArray(details.candidates)
+    ? details.candidates.slice(0, 10).flatMap((candidate) => {
+        if (!candidate || typeof candidate !== "object") return [];
+        const record = candidate as Record<string, unknown>;
+        const id = typeof record.id === "string" ? record.id : null;
+        const name = typeof record.name === "string" ? record.name.slice(0, 200) : null;
+        const slug = typeof record.slug === "string" ? record.slug.slice(0, 200) : null;
+        return id && name ? [{ id, name, ...(slug ? { slug } : {}) }] : [];
+      })
+    : [];
+  const value = {
+    status: "ERROR",
+    code: error.code,
+    reason,
+    message: error.message,
+    candidates,
+  };
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(value) }],
+    structuredContent: value,
+    isError: true,
+  };
+}
+
 function insufficientScope(config: CommercialMcpConfig, scope: string) {
   return {
     content: [{ type: "text" as const, text: `OAuth scope ${scope} is required` }],
@@ -109,12 +158,39 @@ function insufficientScope(config: CommercialMcpConfig, scope: string) {
   };
 }
 
+async function observeRegistrationResult(
+  observer: PartnerTrackingObserver,
+  result: Record<string, unknown>,
+) {
+  const metrics: Array<{ metric: PartnerTrackingRegistrationMetric; increment?: number }> = [];
+  const verification = result.verification;
+  if (verification === "HEALTHY" || verification === "ALREADY_REGISTERED") metrics.push({ metric: "HEALTHY_VERIFICATION" });
+  if (verification === "BROKEN") metrics.push({ metric: "BROKEN_VERIFICATION" });
+  if (verification === "INCONCLUSIVE") metrics.push({ metric: "INCONCLUSIVE_VERIFICATION" });
+  const rows = Array.isArray(result.results) ? result.results : [];
+  const count = (finalState: string) => rows.filter((row) => row && typeof row === "object" && "finalState" in row && row.finalState === finalState).length;
+  const activated = count("ACTIVE_HEALTHY");
+  const blocked = count("BLOCKED_BY_LAW");
+  const regulatory = count("ACTION_REQUIRED_REGULATORY");
+  if (activated) metrics.push({ metric: "ACTIVATED_GEO", increment: activated });
+  if (blocked) metrics.push({ metric: "BLOCKED_LEGAL_GEO", increment: blocked });
+  if (regulatory) metrics.push({ metric: "REGULATORY_ACTION_GEO", increment: regulatory });
+  await Promise.allSettled(metrics.map((metric) => observer(metric)));
+}
+
+function isResolutionFailure(error: unknown) {
+  if (!(error instanceof ServiceError) || !error.details || typeof error.details !== "object") return false;
+  const reason = "reason" in error.details && typeof error.details.reason === "string" ? error.details.reason : "";
+  return /^(CURRENT_PARTNER|PARTNER_NETWORK|CASINO|PARTNER_CASINO)/.test(reason);
+}
+
 export function createCommercialMcpServer(
   token: CommercialMcpTokenContext,
   config: CommercialMcpConfig,
   service: CommercialMcpServiceAdapter = commercialMcpService,
   rateLimiter: CommercialMcpRateLimiter = consumeCommercialMcpRateLimit,
   onTransientDatabaseFailure: (error: unknown) => void = () => {},
+  partnerTrackingObserver: PartnerTrackingObserver = recordPartnerTrackingRegistrationMetric,
 ) {
   const server = new Server(
     { name: "b4gamble-commercial-ops", version: "1.0.0" },
@@ -128,7 +204,8 @@ export function createCommercialMcpServer(
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const tool = commercialMcpTools.find((item) => item.name === request.params.name);
     if (!tool) throw new McpError(ErrorCode.MethodNotFound, "Unknown Commercial MCP tool");
-    const write = tool.name === "commercial_upsert_research_bundle";
+    const write = tool.name === "commercial_upsert_research_bundle"
+      || tool.name === "commercial_register_partner_tracking_link";
     const requiredScope = write ? "commercial:safe_write" : "commercial:read";
     if (!token.scopes.has(requiredScope)) return insufficientScope(config, requiredScope) as never;
 
@@ -152,11 +229,22 @@ export function createCommercialMcpServer(
         case "commercial_get_opportunity": return toolResult(await service.get(args));
         case "commercial_find_possible_duplicates": return toolResult(await service.findPossibleDuplicates(args));
         case "commercial_upsert_research_bundle": return toolResult(await service.upsertResearchBundle(args, { actorId: token.staff.id, clientId: token.clientId }));
+        case "commercial_register_partner_tracking_link": {
+          await Promise.allSettled([partnerTrackingObserver({ metric: "REQUEST" })]);
+          const result = await service.registerPartnerTrackingLink(args, { actorId: token.staff.id, clientId: token.clientId });
+          await observeRegistrationResult(partnerTrackingObserver, result);
+          return toolResult(result);
+        }
         default: throw new McpError(ErrorCode.MethodNotFound, "Unknown Commercial MCP tool");
       }
     } catch (error) {
       if (isTransientDatabaseAvailabilityError(error)) onTransientDatabaseFailure(error);
-      return toolError(error);
+      if (tool.name === "commercial_register_partner_tracking_link" && isResolutionFailure(error)) {
+        await Promise.allSettled([partnerTrackingObserver({ metric: "RESOLUTION_FAILURE" })]);
+      }
+      return tool.name === "commercial_register_partner_tracking_link"
+        ? registrationToolError(error)
+        : toolError(error);
     }
   });
 
