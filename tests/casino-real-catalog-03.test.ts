@@ -73,12 +73,13 @@ test("Rizk NZ contradictory profile is withheld from runtime release", () => {
   assert.match(read("scripts/casino-real-catalog-03.ts"), /Rizk NZ must remain excluded/);
 });
 
-test("StarCasino is informational-only and cannot gain a release-created outbound route", () => {
+test("StarCasino is informational-only and cannot gain canonical CTA authority", () => {
   const star = corpus.entries.find(({ slug }) => slug === "starcasino");
   assert.equal(star?.publicationMode, "INFORMATIONAL_ONLY");
   const source = read("scripts/casino-real-catalog-03.ts");
   assert.match(source, /StarCasino must remain noindex informational-only/);
-  assert.match(source, /StarCasino must not gain an outbound route/);
+  assert.match(source, /StarCasino must not gain an active MarketActivation/);
+  assert.match(source, /desiredState: "ACTIVE"[\s\S]*status: "ACTIVE"[\s\S]*routeVerificationStatus: "HEALTHY"/);
 });
 
 test("all release ingestion bundles contain zero commercial mappings", () => {
