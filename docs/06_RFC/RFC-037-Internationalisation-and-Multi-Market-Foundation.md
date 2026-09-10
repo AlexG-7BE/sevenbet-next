@@ -13,6 +13,12 @@ conflicting examples below using canonical `/en-gb`, `/sv-se`, `/es-pe`, a
 manual market selection, or `?country=` as presentation state are historical
 decision context rather than current architecture.
 
+[RFC-044](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md)
+supersedes the older six-locale publication table below. The canonical
+Production-ready repository inventory is now the eleven routes derived from
+`PUBLISHED_LANGUAGE_ROUTE_PROFILES`; locale publication still grants no market
+or commercial authority.
+
 ## Decision
 
 B4GAMBLE will become a market-aware, multi-language product **before** additional affiliate networks or operators approve B4GAMBLE for those markets.

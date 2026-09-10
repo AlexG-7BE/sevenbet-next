@@ -139,7 +139,7 @@ export function ProgrammeLanguageSelector({
                 <span aria-hidden="true" className={styles.languageBadge}>{languageCode(route.locale)}</span>
                 <span className={styles.selectorOptionCopy}>
                   <strong>{languageName(route.locale, locale)}</strong>
-                  <small>{regionName(route.marketCode, locale)}</small>
+                  <small>{regionName(route.locale.split("-")[1] ?? "", locale)}</small>
                 </span>
                 <span aria-hidden="true" className={styles.selectorCheckSlot}>{selected ? <CheckIcon /> : null}</span>
               </a>

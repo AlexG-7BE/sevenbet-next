@@ -68,6 +68,7 @@
 .mediaFrame[data-media-ratio="unknown"] { padding: clamp(28px,4vw,58px); }
 .mediaFallback { padding: 34px; display: flex; flex-direction: column; justify-content: flex-end; isolation: isolate; }
 .mediaFallback > span { margin-bottom: auto; color: var(--acid); font-size: 12px; font-weight: 750; letter-spacing: .16em; }
+.mediaFallback .identityLogo { width: min(72%,240px); height: min(50%,120px); margin: auto; display: block; object-fit: contain; filter: drop-shadow(0 16px 24px rgba(0,0,0,.3)); }
 .mediaFallback strong { max-width: 100%; font-size: clamp(34px,3.6vw,54px); line-height: .94; letter-spacing: -.045em; hyphens: auto; overflow-wrap: anywhere; text-wrap: balance; text-transform: uppercase; }
 .mediaFallback p { max-width: 33ch; margin: 18px 0 0; color: #b9b6ad; font-size: 13px; line-height: 1.5; }
 .mediaFallback i { position: absolute; inset: 19% -26% auto auto; z-index: -1; width: 76%; aspect-ratio: 1; border: 1px solid rgba(228,226,78,.3); border-radius: 50%; }

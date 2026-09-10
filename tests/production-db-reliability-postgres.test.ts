@@ -2,8 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { PrismaClient } from "@prisma/client";
-import { makeSignature } from "better-auth/crypto";
-import { NextRequest } from "next/server";
 
 import { GET as getAdminMediaIngestions } from "../app/api/admin/media-operations/ingestions/route";
 import { POST as postCommercialMcp } from "../app/api/mcp/commercial/route";
@@ -13,15 +11,12 @@ import prisma from "../lib/db/prisma";
 import { isTransientDatabaseAvailabilityError } from "../lib/db/transient-availability";
 import { resolveCommercialMcpConfig } from "../lib/mcp/commercial/config";
 import { hashCommercialMcpPresentedToken } from "../lib/mcp/commercial/provider";
-import { resolveMediaMcpConfig } from "../lib/mcp/media/config";
 import { publicCasinoDiscoveryRepository } from "../lib/repositories/public-casino-discovery.repository";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 
 const fixture = {
   userId: "production-db-reliability-user",
   adminId: "00000000-0000-4000-8000-000000000901",
-  sessionId: "production-db-reliability-session",
-  sessionToken: "production-db-reliability-session-token",
 };
 
 function assertDisposablePostgres() {
@@ -44,23 +39,22 @@ function directDatabaseUrl() {
 
 function config() {
   const commercial = resolveCommercialMcpConfig("http://127.0.0.1:4173/api/mcp/commercial");
-  const media = resolveMediaMcpConfig("http://127.0.0.1:4173/api/mcp/media");
   assert.ok(commercial);
-  assert.ok(media);
-  return { commercial, media };
+  return commercial;
 }
 
 async function cleanup(database: PrismaClient) {
   await database.oauthAccessToken.deleteMany({ where: { id: { startsWith: "production-db-reliability-token-" } } });
   await database.oauthClient.deleteMany({ where: { clientId: { startsWith: "production-db-reliability-client-" } } });
-  await database.session.deleteMany({ where: { id: fixture.sessionId } });
   await database.adminUser.deleteMany({ where: { id: fixture.adminId } });
   await database.user.deleteMany({ where: { id: fixture.userId } });
   await database.commercialMcpRateLimitBucket.deleteMany();
 }
 
 async function createFixtures(database: PrismaClient) {
-  const resources = config();
+  const resource = config();
+  const scopes = ["commercial:read", "offline_access"];
+  const clientId = "production-db-reliability-client-commercial";
   await database.user.create({
     data: {
       id: fixture.userId,
@@ -78,70 +72,57 @@ async function createFixtures(database: PrismaClient) {
       role: "SUPER_ADMIN",
     },
   });
-  await database.session.create({
+  await database.oauthResource.upsert({
+    where: { identifier: resource.resource },
+    create: {
+      id: "production-db-reliability-resource-commercial",
+      identifier: resource.resource,
+      name: "B4GAMBLE Commercial MCP",
+      allowedScopes: scopes,
+    },
+    update: {},
+  });
+  await database.oauthClient.create({
     data: {
-      id: fixture.sessionId,
-      token: fixture.sessionToken,
-      userId: fixture.userId,
-      expiresAt: new Date(Date.now() + 60 * 60 * 1_000),
+      id: "production-db-reliability-client-row-commercial",
+      clientId,
+      disabled: false,
+      scopes,
+      contacts: [],
+      redirectUris: ["https://chatgpt.com/connector_platform_oauth_redirect"],
+      postLogoutRedirectUris: [],
+      tokenEndpointAuthMethod: "none",
+      applicationType: "web",
+      grantTypes: ["authorization_code", "refresh_token"],
+      responseTypes: ["code"],
+      requirePKCE: true,
+      metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: resource.resource },
     },
   });
-
-  for (const [kind, resource, scopes] of [
-    ["commercial", resources.commercial.resource, ["commercial:read", "offline_access"]],
-    ["media", resources.media.resource, ["media:read", "offline_access"]],
-  ] as const) {
-    const clientId = `production-db-reliability-client-${kind}`;
-    await database.oauthResource.upsert({
-      where: { identifier: resource },
-      create: {
-        id: `production-db-reliability-resource-${kind}`,
-        identifier: resource,
-        name: kind === "commercial" ? "B4GAMBLE Commercial MCP" : "B4GAMBLE Media Operations MCP",
-        allowedScopes: [...scopes],
-      },
-      update: {},
-    });
-    await database.oauthClient.create({
-      data: {
-        id: `production-db-reliability-client-row-${kind}`,
-        clientId,
-        disabled: false,
-        scopes: [...scopes],
-        contacts: [],
-        redirectUris: ["https://chatgpt.com/connector_platform_oauth_redirect"],
-        postLogoutRedirectUris: [],
-        tokenEndpointAuthMethod: "none",
-        applicationType: "web",
-        grantTypes: ["authorization_code", "refresh_token"],
-        responseTypes: ["code"],
-        requirePKCE: true,
-        metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: resource },
-      },
-    });
-    await database.oauthClientResource.create({
-      data: {
-        id: `production-db-reliability-client-resource-${kind}`,
-        clientId,
-        resourceId: resource,
-      },
-    });
-    const presented = `b4mcp_at_production_db_reliability_${kind}`;
-    const token = await hashCommercialMcpPresentedToken(presented, "access_token");
-    assert.ok(token);
-    await database.oauthAccessToken.create({
-      data: {
-        id: `production-db-reliability-token-${kind}`,
-        token,
-        clientId,
-        userId: fixture.userId,
-        resources: [resource],
-        expiresAt: new Date(Date.now() + 60 * 60 * 1_000),
-        createdAt: new Date(),
-        scopes: [...scopes],
-      },
-    });
-  }
+  await database.oauthClientResource.create({
+    data: {
+      id: "production-db-reliability-client-resource-commercial",
+      clientId,
+      resourceId: resource.resource,
+    },
+  });
+  const token = await hashCommercialMcpPresentedToken(
+    "b4mcp_at_production_db_reliability_commercial",
+    "access_token",
+  );
+  assert.ok(token);
+  await database.oauthAccessToken.create({
+    data: {
+      id: "production-db-reliability-token-commercial",
+      token,
+      clientId,
+      userId: fixture.userId,
+      resources: [resource.resource],
+      expiresAt: new Date(Date.now() + 60 * 60 * 1_000),
+      createdAt: new Date(),
+      scopes,
+    },
+  });
 }
 
 async function waitForQueuedAdvisoryLock(database: PrismaClient, key: number) {
@@ -233,7 +214,14 @@ async function assertSafeUnavailable(response: Response) {
   assert.doesNotMatch(text, /Prisma|P2024|pool|postgres|127\.0\.0\.1|stack|oauth/i);
 }
 
-test("one-connection Production-shaped pool stays bounded across discovery, MCP, and Admin Media paths", async () => {
+async function assertRetiredMedia(response: Response) {
+  assert.equal(response.status, 410);
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  assert.equal(response.headers.get("retry-after"), null);
+  assert.deepEqual(await response.json(), { error: "MEDIA_OPERATIONS_RETIRED" });
+}
+
+test("one-connection Production-shaped pool stays bounded across discovery, Commercial MCP, and retired Media boundaries", async () => {
   assertDisposablePostgres();
   const database = new PrismaClient({ datasourceUrl: directDatabaseUrl() });
   try {
@@ -297,27 +285,30 @@ test("one-connection Production-shaped pool stays bounded across discovery, MCP,
     assert.equal(publishedReadCount, 9, "completed results are not retained as stale cache entries");
 
     await createFixtures(database);
-    for (const [index, post] of [postCommercialMcp, postMediaMcp].entries()) {
-      const kind = index === 0 ? "commercial" as const : "media" as const;
-      const unavailable = await withSaturatedApplicationPool(database, 790_100 + index, () => post(mcpRequest(kind)));
-      await assertSafeUnavailable(unavailable);
-      const healthy = await post(mcpRequest(kind));
-      assert.equal(healthy.status, 200, await healthy.text());
-    }
+    const unavailableCommercial = await withSaturatedApplicationPool(
+      database,
+      790_100,
+      () => postCommercialMcp(mcpRequest("commercial")),
+    );
+    await assertSafeUnavailable(unavailableCommercial);
+    const healthyCommercial = await postCommercialMcp(mcpRequest("commercial"));
+    assert.equal(healthyCommercial.status, 200, await healthyCommercial.text());
 
-    const secret = process.env.BETTER_AUTH_SECRET;
-    assert.ok(secret);
-    const signedSession = `${fixture.sessionToken}.${await makeSignature(fixture.sessionToken, secret)}`;
-    const adminRequest = () => new NextRequest("http://127.0.0.1:4173/api/admin/media-operations/ingestions?limit=1", {
-      headers: { cookie: `better-auth.session_token=${signedSession}` },
-    });
-    const unavailableAdmin = await withSaturatedApplicationPool(database, 790_200, () => getAdminMediaIngestions(adminRequest()));
-    assert.equal(unavailableAdmin.status, 503);
-    assert.equal(unavailableAdmin.headers.get("retry-after"), "3");
-    assert.match(unavailableAdmin.headers.get("cache-control") ?? "", /no-store/);
-    assert.doesNotMatch(await unavailableAdmin.text(), /Prisma|P2024|pool|postgres|stack/i);
-    const healthyAdmin = await getAdminMediaIngestions(adminRequest());
-    assert.equal(healthyAdmin.status, 200, await healthyAdmin.text());
+    const retiredMediaMcp = await withSaturatedApplicationPool(
+      database,
+      790_101,
+      () => postMediaMcp(mcpRequest("media")),
+    );
+    await assertRetiredMedia(retiredMediaMcp);
+    await assertRetiredMedia(await postMediaMcp(mcpRequest("media")));
+
+    const retiredAdminMedia = await withSaturatedApplicationPool(
+      database,
+      790_200,
+      () => getAdminMediaIngestions(),
+    );
+    await assertRetiredMedia(retiredAdminMedia);
+    await assertRetiredMedia(await getAdminMediaIngestions());
 
     const initializationError = await withSaturatedApplicationPool(
       database,
@@ -328,8 +319,8 @@ test("one-connection Production-shaped pool stays bounded across discovery, MCP,
     const operationalAuth = await getOperationalMcpAuth();
     await operationalAuth.$context;
     assert.equal(await database.oauthResource.count({
-      where: { identifier: { in: [config().commercial.resource, config().media.resource] } },
-    }), 2);
+      where: { identifier: config().resource },
+    }), 1);
 
     console.info(JSON.stringify({
       productionDbReliability: {

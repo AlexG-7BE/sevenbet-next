@@ -10,7 +10,7 @@ import {
   type ProgrammeMessageKey,
 } from "../lib/i18n/programme-catalog";
 import { publicShellMessages } from "../lib/i18n/public-shell-catalog";
-import { marketProfileByCountry, publicMarketPath } from "../lib/market/registry";
+import { marketProfileByLocale, publicMarketPath } from "../lib/market/registry";
 import {
   PROGRAMME_PRIVACY_VERSION,
   PROGRAMME_TERMS_VERSION,
@@ -412,8 +412,8 @@ test("ordinary pages retain deny-all capabilities while localized public Program
   }
 
   for (const route of PROGRAMME_ROUTES) {
-    const market = marketProfileByCountry(route.marketCode);
-    expect(market, route.marketCode).not.toBeNull();
+    const market = marketProfileByLocale(route.locale);
+    expect(market, route.locale).not.toBeNull();
     const homePath = publicMarketPath(market!, route.locale, "/");
     const prefix = homePath;
     for (const pathname of [homePath, `${prefix}/10-steps`, `${prefix}/learn`]) {

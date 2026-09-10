@@ -42,8 +42,8 @@ test("noindex languages keep self canonicals without contradictory hreflang", ()
   const previous = process.env.VERCEL_ENV;
   process.env.VERCEL_ENV = "production";
   try {
-    for (const [market, language, locale, canonical] of [["SE", "sv", "sv-SE", "/sv/casinos"], ["PE", "es", "es-ES", "/es/casinos"]] as const) {
-      const presentation = resolvePresentationContext({ routeMarket: market.toLowerCase(), routeLanguage: language });
+    for (const [_market, language, locale, canonical] of [["SE", "sv", "sv-SE", "/sv/casinos"], ["PE", "es", "es-ES", "/es/casinos"]] as const) {
+      const presentation = resolvePresentationContext({ routeLanguage: language });
       const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Casinos", description: "Localized casinos" });
       assert.equal(presentation.locale, locale);
       assert.equal(presentation.market, null);
@@ -60,7 +60,7 @@ test("GB is indexable with canonical, reciprocal-ready hreflang, and x-default",
   const previous = process.env.VERCEL_ENV;
   process.env.VERCEL_ENV = "production";
   try {
-    const presentation = resolvePresentationContext({ routeMarket: "gb", routeLanguage: "en" });
+    const presentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
     const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Casinos", description: "Casinos", robots: { index: true, follow: true } });
     assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/en/casinos");
     assert.deepEqual(metadata.robots, { index: true, follow: true });

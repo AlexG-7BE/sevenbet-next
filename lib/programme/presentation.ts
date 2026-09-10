@@ -1,52 +1,62 @@
-import type { MarketCode, SupportedLocale } from "@/lib/market/registry";
+import { isLocalizedPublicDestination } from "@/lib/market/routing";
+import {
+  PUBLISHED_LANGUAGE_ROUTE_PROFILES,
+  languageRouteByLocale,
+  marketProfileByLocale,
+  publicMarketPath,
+  type SupportedLanguage,
+  type SupportedLocale,
+} from "@/lib/market/registry";
 
 export const PROGRAMME_PRESENTATION_CONTEXT = "programme-v1";
 
-export const PROGRAMME_LOCALES = [
-  "en-GB",
-  "de-DE",
-  "es-ES",
-  "sv-SE",
-  "da-DK",
-  "el-GR",
-  "it-IT",
-  "pt-PT",
-  "nl-NL",
-  "fi-FI",
-  "nb-NO",
-] as const satisfies readonly SupportedLocale[];
-
-export type ProgrammeLocale = (typeof PROGRAMME_LOCALES)[number];
+export type ProgrammeLocale = Exclude<SupportedLocale, "es-PE" | "en-CA" | "fr-CA">;
 
 export type ProgrammeRouteDefinition = Readonly<{
   locale: ProgrammeLocale;
-  marketCode: MarketCode;
-  routeMarket: string;
+  language: SupportedLanguage;
   path: string;
+  legacyPaths: readonly string[];
   transcriptionLanguage: string;
 }>;
 
-export const PROGRAMME_ROUTES = [
-  { locale: "en-GB", marketCode: "GB", routeMarket: "gb", path: "/program", transcriptionLanguage: "en" },
-  { locale: "de-DE", marketCode: "DE", routeMarket: "de", path: "/de/program", transcriptionLanguage: "de" },
-  { locale: "es-ES", marketCode: "ES", routeMarket: "es", path: "/es/program", transcriptionLanguage: "es" },
-  { locale: "sv-SE", marketCode: "SE", routeMarket: "se", path: "/se/program", transcriptionLanguage: "sv" },
-  { locale: "da-DK", marketCode: "DK", routeMarket: "dk", path: "/dk/program", transcriptionLanguage: "da" },
-  { locale: "el-GR", marketCode: "GR", routeMarket: "gr", path: "/gr/program", transcriptionLanguage: "el" },
-  { locale: "it-IT", marketCode: "IT", routeMarket: "it", path: "/it/program", transcriptionLanguage: "it" },
-  { locale: "pt-PT", marketCode: "PT", routeMarket: "pt", path: "/pt/program", transcriptionLanguage: "pt" },
-  { locale: "nl-NL", marketCode: "NL", routeMarket: "nl", path: "/nl/program", transcriptionLanguage: "nl" },
-  { locale: "fi-FI", marketCode: "FI", routeMarket: "fi", path: "/fi/program", transcriptionLanguage: "fi" },
-  { locale: "nb-NO", marketCode: "NO", routeMarket: "no", path: "/no/program", transcriptionLanguage: "no" },
-] as const satisfies readonly ProgrammeRouteDefinition[];
+const legacyProgrammePaths: Partial<Record<SupportedLanguage, readonly string[]>> = {
+  sv: ["/se/program"],
+  da: ["/dk/program"],
+  el: ["/gr/program"],
+  nb: ["/no/program"],
+};
 
-const localeSet = new Set<string>(PROGRAMME_LOCALES);
+function isProgrammeCatalogLocale(locale: SupportedLocale): locale is ProgrammeLocale {
+  return locale !== "es-PE" && locale !== "en-CA" && locale !== "fr-CA";
+}
+
+/** One canonical published-language registry drives both Home and Programme. */
+export const PROGRAMME_ROUTES: readonly ProgrammeRouteDefinition[] = PUBLISHED_LANGUAGE_ROUTE_PROFILES.map((profile) => {
+  if (!isProgrammeCatalogLocale(profile.defaultLocale)) {
+    throw new Error(`Published language ${profile.language} has no Programme catalog`);
+  }
+  return {
+    locale: profile.defaultLocale,
+    language: profile.language,
+    path: profile.language === "en" ? "/program" : `/${profile.publicSlug}/program`,
+    legacyPaths: legacyProgrammePaths[profile.language] ?? [],
+    transcriptionLanguage: profile.language === "nb" ? "no" : profile.language,
+  };
+});
+
+export const PROGRAMME_LOCALES: readonly ProgrammeLocale[] = PROGRAMME_ROUTES.map((route) => route.locale);
+
+const localeSet = new Set<SupportedLocale>(PROGRAMME_LOCALES);
 const routeByLocale = new Map<ProgrammeLocale, ProgrammeRouteDefinition>(
   PROGRAMME_ROUTES.map((route) => [route.locale, route]),
 );
+const routeByLanguage = new Map<SupportedLanguage, ProgrammeRouteDefinition>(
+  PROGRAMME_ROUTES.map((route) => [route.language, route]),
+);
 
 export function isProgrammeLocale(value: unknown): value is ProgrammeLocale {
-  return typeof value === "string" && localeSet.has(value);
+  return typeof value === "string" && localeSet.has(value as SupportedLocale);
 }
 
 export function parseProgrammeLocale(value: unknown): ProgrammeLocale {
@@ -64,9 +74,9 @@ export function programmePath(locale: ProgrammeLocale) {
   return programmeRoute(locale).path;
 }
 
-/** Resolve a public presentation locale through the canonical Programme route contract. */
+/** Resolve any internal locale variant through its canonical Programme language route. */
 export function programmePathForPresentationLocale(locale: SupportedLocale) {
-  return programmePath(isProgrammeLocale(locale) ? locale : "en-GB");
+  return routeByLanguage.get(languageRouteByLocale(locale).language)?.path ?? "/program";
 }
 
 export function programmeTranscriptionLanguage(locale: ProgrammeLocale) {
@@ -78,15 +88,18 @@ const localizedHelpLocales = new Set<ProgrammeLocale>([
 ]);
 
 export function programmeHelpPath(locale: ProgrammeLocale) {
-  const route = programmeRoute(locale);
-  return localizedHelpLocales.has(locale) ? `/${route.routeMarket}/help` : "/help";
+  const profile = marketProfileByLocale(locale);
+  return profile && localizedHelpLocales.has(locale)
+    ? publicMarketPath(profile, locale, "/help")
+    : "/help";
 }
 
-/** Localize ordinary public links only for the already publication-approved first wave. */
+/** Localize ordinary public links for every published language route. */
 export function programmePublicHref(locale: ProgrammeLocale, pathname: string) {
-  if (!localizedHelpLocales.has(locale)) return pathname;
-  const prefix = `/${programmeRoute(locale).routeMarket}`;
-  return pathname === "/" ? prefix : `${prefix}${pathname}`;
+  const profile = marketProfileByLocale(locale);
+  return profile && isLocalizedPublicDestination(pathname, profile)
+    ? publicMarketPath(profile, locale, pathname)
+    : pathname;
 }
 
 function cleanPathname(value: string) {
@@ -98,13 +111,15 @@ function cleanPathname(value: string) {
 export type ProgrammeRouteParse = Readonly<{
   route: ProgrammeRouteDefinition;
   pathname: string;
+  canonicalPathname: string;
   rendererPathname: string;
   trailingSlash: boolean;
+  legacy: boolean;
 }>;
 
 /**
- * Parse only the Founder-approved Programme route family. A suffix is accepted
- * solely so an unknown child can reach the shared Programme not-found boundary.
+ * Parse canonical language routes and bounded legacy market-shaped aliases. A
+ * suffix is accepted solely for the shared Programme not-found boundary.
  */
 export function parseProgrammeRoute(pathname: string): ProgrammeRouteParse | null {
   const clean = cleanPathname(pathname);
@@ -112,14 +127,18 @@ export function parseProgrammeRoute(pathname: string): ProgrammeRouteParse | nul
   const trailingSlash = clean.length > 1 && clean.endsWith("/");
   const normalized = trailingSlash ? clean.replace(/\/+$/, "") : clean;
   for (const route of PROGRAMME_ROUTES) {
-    if (normalized !== route.path && !normalized.startsWith(`${route.path}/`)) continue;
-    const suffix = normalized.slice(route.path.length);
-    return {
-      route,
-      pathname: normalized,
-      rendererPathname: `/program${suffix}`,
-      trailingSlash,
-    };
+    for (const candidate of [route.path, ...route.legacyPaths]) {
+      if (normalized !== candidate && !normalized.startsWith(`${candidate}/`)) continue;
+      const suffix = normalized.slice(candidate.length);
+      return {
+        route,
+        pathname: normalized,
+        canonicalPathname: `${route.path}${suffix}`,
+        rendererPathname: `/program${suffix}`,
+        trailingSlash,
+        legacy: candidate !== route.path,
+      };
+    }
   }
   return null;
 }

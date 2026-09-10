@@ -302,7 +302,7 @@ test("localized mobile controls wrap while neutral global and compact media stay
   expect(positionBox!.x + positionBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1);
   expect(positionBox!.y + positionBox!.height).toBeLessThanOrEqual(rowBox!.y + rowBox!.height + 1);
 
-  const compactMedia = page.locator('[data-media-state="presented"][data-presentation-family="STRIP"][data-offer-media="bonus"]').first();
+  const compactMedia = page.locator('figure[data-offer-identity="bonus"]').first();
   await expect(compactMedia).toBeVisible();
   await expect(compactMedia.locator("img").first()).toBeVisible();
   const compactMediaGeometry = await compactMedia.evaluate((element) => {

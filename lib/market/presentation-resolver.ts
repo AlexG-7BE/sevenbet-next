@@ -3,7 +3,6 @@ import {
   languageRouteByPublicSlug,
   localeForLanguageAndMarket,
   marketProfileByCountry,
-  marketProfileByRouteMarket,
   type MarketProfile,
   type SupportedLanguage,
   type SupportedLocale,
@@ -23,7 +22,7 @@ export type PresentationResolution = Readonly<{
   /** Internal BCP-47 content variant; never public market authority. */
   locale: SupportedLocale;
   source: "EXPLICIT_ROUTE" | "USER_PREFERENCE" | "TRUSTED_GEO" | "ACCEPT_LANGUAGE" | "DEFAULT";
-  marketSource: "PROGRAMME_ROUTE" | "TRUSTED_GEO" | "UNKNOWN";
+  marketSource: "TRUSTED_GEO" | "UNKNOWN";
   explicitRouteValid: boolean;
 }>;
 
@@ -72,29 +71,18 @@ function knownMarketDisplayName(market: MarketProfile | null, countryCode: strin
 /**
  * Resolve the two independent dimensions of presentation. Public language can
  * come from the path, a language-only cookie or Accept-Language. Public market
- * can come only from trusted request GEO. Programme routes opt into their
- * existing route-owned market semantics through `routeControlsMarket`.
+ * can come only from trusted request GEO. A language route never grants or
+ * changes market, legal or commercial authority.
  */
 export function resolvePresentationContext(input: {
-  routeMarket?: string | null;
   routeLanguage?: string | null;
-  routeControlsMarket?: boolean;
   preference?: PresentationPreference | null;
   trustedCountryCode?: string | null;
   acceptLanguage?: string | null;
 }): PresentationResolution {
-  const programmeMarket = input.routeControlsMarket
-    ? marketProfileByRouteMarket(input.routeMarket)
-    : null;
-  const trustedCountryCode = input.routeControlsMarket
-    ? programmeMarket?.countryCode ?? null
-    : normalizedCountryCode(input.trustedCountryCode);
-  const market = programmeMarket ?? marketProfileByCountry(trustedCountryCode);
-  const marketSource = programmeMarket
-    ? "PROGRAMME_ROUTE" as const
-    : trustedCountryCode
-      ? "TRUSTED_GEO" as const
-      : "UNKNOWN" as const;
+  const trustedCountryCode = normalizedCountryCode(input.trustedCountryCode);
+  const market = marketProfileByCountry(trustedCountryCode);
+  const marketSource = trustedCountryCode ? "TRUSTED_GEO" as const : "UNKNOWN" as const;
 
   const explicitLanguage = languageRouteByPublicSlug(input.routeLanguage);
   const preferredLanguage = input.preference

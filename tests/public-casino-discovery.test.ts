@@ -354,7 +354,7 @@ test("RFC-042 canonical routes, including global fallback output, are final dire
   assert.equal((await service.discover({}, null, { defaultEditorialCountry: "KZ" })).items[0].visitAction.available, false);
 });
 
-test("canonical route evidence carries an active exact-offer variant into the directory card", async () => {
+test("canonical route evidence enables the CTA without carrying an exact-offer creative into the directory card", async () => {
   const casinoId = "canonical-media-id";
   const bonusId = `${casinoId}-bonus`;
   const offerId = `${casinoId}-offer`;
@@ -412,21 +412,6 @@ test("canonical route evidence carries an active exact-offer variant into the di
     casinoBonusId: bonusId,
     affiliateOfferId: offerId,
     slug: "canonical-media-welcome",
-    mediaOfferAuthority: {
-      status: "ACTIVE",
-      startAt: null,
-      expiresAt: null,
-      archivedAt: null,
-      programStatus: "ACTIVE",
-      programWorkflowStatus: "PUBLISHED",
-      programArchivedAt: null,
-      networkActive: true,
-      networkArchivedAt: null,
-      bonusStatus: "PUBLISHED",
-      bonusOfferStatus: "ACTIVE",
-      bonusStartsAt: null,
-      bonusExpiresAt: null,
-    },
   };
   const previousGate = process.env.PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED;
   process.env.PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED = "true";
@@ -442,9 +427,9 @@ test("canonical route evidence carries an active exact-offer variant into the di
     }, {
       disposition: "PROMOTABLE",
       redirectSlug: "canonical-media-welcome",
-      mediaSource: "EXACT_OFFER",
-      mediaUrl: "/controlled/canonical-media-offer.jpg",
-      renderingMode: "CONTAIN",
+      mediaSource: undefined,
+      mediaUrl: undefined,
+      renderingMode: undefined,
     });
   } finally {
     if (previousGate === undefined) delete process.env.PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED;

@@ -8,6 +8,11 @@ import {
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
 import { isLocalizedPublicDestination, localizePublicPath, parsePublicMarketRoute } from "@/lib/market/routing";
 import { languageRouteByPublicSlug, marketProfileByLocale } from "@/lib/market/registry";
+import {
+  parseProgrammeRoute,
+  programmePathForPresentationLocale,
+  safeProgrammePresentationSearch,
+} from "@/lib/programme/presentation";
 
 const oneYearInSeconds = 365 * 24 * 60 * 60;
 const maximumReturnPathLength = 2_048;
@@ -28,8 +33,13 @@ export async function POST(request: NextRequest) {
   }
 
   const choice = formData.get("choice");
+  const requestedSurface = formData.get("surface");
   const requestedReturnPath = formData.get("returnTo");
   if (typeof choice !== "string") return invalidPreference();
+  if (requestedSurface !== null && requestedSurface !== "public" && requestedSurface !== "programme") {
+    return invalidPreference();
+  }
+  const surface = requestedSurface === "programme" ? "programme" : "public";
 
   const automatic = choice === "automatic";
   const requestedLanguage = automatic ? null : languageRouteByPublicSlug(choice);
@@ -58,16 +68,23 @@ export async function POST(request: NextRequest) {
   } catch {
     return invalidPreference();
   }
-  const parsedReturnPath = parsePublicMarketRoute(returnUrl.pathname);
-  if (parsedReturnPath.kind === "INVALID" && parsedReturnPath.reason === "ENCODED_SEPARATOR") {
-    return invalidPreference();
+  let destination: string;
+  if (surface === "programme") {
+    const parsedProgramme = parseProgrammeRoute(returnUrl.pathname);
+    if (!parsedProgramme || parsedProgramme.pathname !== parsedProgramme.route.path) return invalidPreference();
+    destination = `${programmePathForPresentationLocale(resolution.locale)}${safeProgrammePresentationSearch(returnUrl.searchParams)}`;
+  } else {
+    const parsedReturnPath = parsePublicMarketRoute(returnUrl.pathname);
+    if (parsedReturnPath.kind === "INVALID" && parsedReturnPath.reason === "ENCODED_SEPARATOR") {
+      return invalidPreference();
+    }
+    const equivalentPathname = parsedReturnPath.kind === "INVALID" ? "/" : parsedReturnPath.pathname;
+    const returnPath = isLocalizedPublicDestination(equivalentPathname, destinationProfile) ? equivalentPathname : "/";
+    returnUrl.searchParams.delete("country");
+    const safeQuery = returnUrl.searchParams.toString();
+    const equivalentReturnPath = `${returnPath}${safeQuery ? `?${safeQuery}` : ""}`;
+    destination = localizePublicPath(destinationProfile, resolution.locale, equivalentReturnPath);
   }
-  const equivalentPathname = parsedReturnPath.kind === "INVALID" ? "/" : parsedReturnPath.pathname;
-  const returnPath = isLocalizedPublicDestination(equivalentPathname, destinationProfile) ? equivalentPathname : "/";
-  returnUrl.searchParams.delete("country");
-  const safeQuery = returnUrl.searchParams.toString();
-  const equivalentReturnPath = `${returnPath}${safeQuery ? `?${safeQuery}` : ""}`;
-  const destination = localizePublicPath(destinationProfile, resolution.locale, equivalentReturnPath);
 
   const response = new NextResponse(null, {
     status: 303,

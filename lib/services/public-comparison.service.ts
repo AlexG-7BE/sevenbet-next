@@ -23,7 +23,7 @@ import { currentPublicCasinoBrand } from "@/lib/public-brand";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import type { PublicCasinoInventoryMode } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { decidePublicCasinoDisposition, type PublicCasinoPresentationDisposition } from "@/lib/public-casino/presentation-disposition";
-import { eligibleDiscoveryMediaRoutes } from "@/lib/public-casino-discovery/commercial-eligibility";
+import { eligibleDiscoveryRoutes } from "@/lib/public-casino-discovery/commercial-eligibility";
 
 const internalRedirect = /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 type ComparablePublicCasinoDTO = PublicCasinoDTO;
@@ -247,9 +247,9 @@ export class PublicComparisonService {
     }
 
     const now = this.now();
-    const mediaRoutes = eligibleDiscoveryMediaRoutes(context, query.country, now);
+    const commercialRoutes = eligibleDiscoveryRoutes(context, query.country, now);
     const globalCasinos: ComparablePublicCasinoDTO[] = published.flatMap((record) => {
-      const mapped = mapPublishedCasino(record, mediaRoutes, {
+      const mapped = mapPublishedCasino(record, commercialRoutes, {
         redirectEnabled: false,
         now,
         countryCode: query.country,
@@ -279,7 +279,7 @@ export class PublicComparisonService {
     });
     const candidates: PublicComparisonCandidate[] = all.map(({ casino, disposition }): PublicComparisonCandidate => {
       const state = marketState(casino, query.country);
-      return { dataClassification: "PUBLISHED_RECORD", disposition, slug: casino.slug, name: casino.name, logo: casino.media.placements?.CASINO_COMPARE?.asset ?? casino.media.logo, editorScore: casino.editorScore, marketState: state, marketLabel: marketLabel(state, query.country) };
+      return { dataClassification: "PUBLISHED_RECORD", disposition, slug: casino.slug, name: casino.name, logo: casino.media.logo, editorScore: casino.editorScore, marketState: state, marketLabel: marketLabel(state, query.country) };
     }).sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name, "en", { sensitivity: "base" }) || a.slug.localeCompare(b.slug));
 
     const selected = query.selectionMode === "default" ? defaultCandidates(all) : query.casinos.flatMap((slug) => {
@@ -303,7 +303,7 @@ export class PublicComparisonService {
         slug: casino.slug,
         name: casino.name,
         summary: casino.summary,
-        logo: casino.media.placements?.CASINO_COMPARE?.asset ?? casino.media.logo,
+        logo: casino.media.logo,
         editorScore: casino.editorScore,
         publishedAt: casino.publishedAt,
         lastReviewedAt: casino.lastReviewedAt,

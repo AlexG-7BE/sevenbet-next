@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ImgHTMLAttributes } from "react";
+import React, { useEffect, useState, type ImgHTMLAttributes } from "react";
 
 import type { MediaPlacementVariantName } from "@/lib/media/placement-media";
 

@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAdminPermission } from "@/lib/auth/admin";
 import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
 import { readLimitedJson, requiredUuid } from "@/lib/media/http";
+import { isActiveAdminMediaAsset } from "@/lib/media-retirement/active-asset-policy";
+import { retiredMediaResponse } from "@/lib/media-retirement/http";
 import { mediaService, ValidationError } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
@@ -11,9 +13,11 @@ type Context = { params: Promise<{ mediaId: string }> };
 export async function POST(request: NextRequest, { params }: Context) {
   try {
     const actor = await requireAdminPermission(request, "media.manage");
+    const mediaId = (await params).mediaId;
+    if (!isActiveAdminMediaAsset(await mediaService.get(mediaId))) return retiredMediaResponse();
     const body = await readLimitedJson(request);
     if (typeof body.archived !== "boolean") throw new ValidationError("archived must be a boolean");
-    const media = await mediaService.setArchived((await params).mediaId, requiredUuid(body.casinoId, "casinoId"), body.archived, actor.id);
+    const media = await mediaService.setArchived(mediaId, requiredUuid(body.casinoId, "casinoId"), body.archived, actor.id);
     return NextResponse.json({ ok: true, media });
   } catch (error) {
     return adminServiceErrorResponse(error, "Unable to change media archive status");

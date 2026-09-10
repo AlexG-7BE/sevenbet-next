@@ -222,7 +222,9 @@ test("the production candidate read is bounded to the latest published snapshot"
 
 test("publication gives market bonuses the same immutable published state as global bonuses", () => {
   const source = readFileSync(new URL("../lib/repositories/casino.repository.ts", import.meta.url), "utf8");
-  const builder = source.slice(source.indexOf("export function buildPublishedCasinoSnapshot"), source.indexOf("function buildLegacyPublishedCasinoSnapshot"));
+  const publicBuilder = source.slice(source.indexOf("export function buildPublishedCasinoSnapshot"), source.indexOf("function buildLegacyPublishedCasinoSnapshot"));
+  const builder = source.slice(source.indexOf("function buildLegacyPublishedCasinoSnapshot"), source.indexOf("async function findAggregate"));
+  assert.match(publicBuilder, /return buildLegacyPublishedCasinoSnapshot\(current, input\)/);
   assert.match(builder, /countries:[\s\S]*bonuses:[\s\S]*status: EditorialStatus\.PUBLISHED/);
   assert.match(builder, /casinoBonuses:[\s\S]*status: EditorialStatus\.PUBLISHED/);
 });

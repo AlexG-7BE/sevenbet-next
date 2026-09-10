@@ -21,7 +21,6 @@ import {
   bannerflowFrameContentSecurityPolicy,
   buildBannerflowFrameDocument,
 } from "../lib/media/partner-hosted-frame";
-import { ownsPartnerHostedFramePolicy } from "../lib/media/partner-hosted-frame-path";
 import {
   resolveMedia,
   type PlacementMediaAssignment,
@@ -31,7 +30,6 @@ import type { AffiliateRedirectStore } from "../lib/repositories/affiliate-redir
 import { AffiliateRedirectService } from "../lib/services/affiliate-redirect.service";
 import {
   allowGbCommercialReadinessAuthority,
-  allowJurisdictionDecision,
   allowJurisdictionResolver,
 } from "./market-authority.fixtures";
 
@@ -311,21 +309,14 @@ test("the isolated frame confines provider runtime and never embeds a raw partne
   assert.doesNotMatch(readFileSync("next.config.mjs", "utf8"), /unsafe-eval|c\.bannerflow\.net/);
 });
 
-test("only exact UUID hosted-frame routes own the provider CSP and CSP-only framing exception", () => {
-  const creativeId = "41000000-0000-4000-8000-000000000001";
-  assert.equal(ownsPartnerHostedFramePolicy(`/partner-creatives/${creativeId}/frame`), true);
-  assert.equal(ownsPartnerHostedFramePolicy(`/api/admin/media-operations/hosted-creatives/${creativeId}/preview`), true);
-  for (const pathname of [
-    "/partner-creatives/not-a-uuid/frame",
-    `/partner-creatives/${creativeId}/frame/extra`,
-    `/api/admin/media-operations/hosted-creatives/${creativeId}`,
-    "/api/admin/media-operations/hosted-creatives/preview",
-    "/casino/skol-casino",
-  ]) assert.equal(ownsPartnerHostedFramePolicy(pathname), false, pathname);
-
+test("retired hosted-frame routes no longer own a provider CSP or framing exception", async () => {
   const middlewareSource = readFileSync("middleware.ts", "utf8");
-  assert.match(middlewareSource, /if \(!partnerHostedFramePolicy\) \{[\s\S]*response\.headers\.set\(CONTENT_SECURITY_POLICY_HEADER/);
-  assert.match(middlewareSource, /if \(!partnerHostedFramePolicy\) \{[\s\S]*response\.headers\.set\("X-Frame-Options", "DENY"\)/);
+  assert.doesNotMatch(middlewareSource, /partnerHostedFramePolicy|ownsPartnerHostedFramePolicy/);
+  assert.match(middlewareSource, /response\.headers\.set\("X-Frame-Options", "DENY"\)/);
+  const publicFrame = await import("../app/partner-creatives/[creativeId]/frame/route");
+  const adminPreview = await import("../app/api/admin/media-operations/hosted-creatives/[creativeId]/preview/route");
+  assert.equal((await publicFrame.GET(new Request("https://b4gamble.com/"), { params: Promise.resolve({ creativeId: "41000000-0000-4000-8000-000000000001" }) })).status, 410);
+  assert.equal((await adminPreview.GET()).status, 410);
   assert.match(readFileSync("lib/security/content-security-policy.ts", "utf8"), /frame-src 'self' https:\/\/www\.youtube-nocookie\.com/);
   const nextConfig = readFileSync("next.config.mjs", "utf8");
   assert.doesNotMatch(nextConfig, /X-Frame-Options/);
@@ -427,7 +418,7 @@ function activeOffer() {
   };
 }
 
-test("creative attribution is resolved only after canonical GEO activation checks", async () => {
+test("affiliate redirects ignore retired creative attribution and use only canonical MarketActivation", async () => {
   const events: string[] = [];
   const canonicalActivation = {
     async resolveRedirect() {
@@ -445,56 +436,24 @@ test("creative attribution is resolved only after canonical GEO activation check
     { activeCandidates: async () => [activeOffer()] as never },
     { async resolve() { events.push("geo"); return allowJurisdictionResolver.resolve(); } },
     allowGbCommercialReadinessAuthority,
-    async (input) => {
-      events.push("creative");
-      assert.deepEqual(input, { creativeId: CREATIVE_UUID, redirectSlugId: "redirect-id", casinoId: "casino-id", affiliateOfferId: "offer-id", countryCode: "GB" });
-      return new URL("https://record.betsn.info/creative-specific");
-    },
-    () => true,
     canonicalActivation,
   );
-  const result = await service.resolve("betsson", { creativeId: CREATIVE_UUID, now: new Date("2030-01-01T00:00:00Z") });
+  const result = await service.resolve("betsson", { now: new Date("2030-01-01T00:00:00Z") });
   assert.equal(result.ok, true);
-  if (result.ok) assert.equal(result.destination.href, "https://record.betsn.info/creative-specific");
-  assert.deepEqual(events, ["geo", "canonical", "creative"]);
-
-  const disabled = new AffiliateRedirectService(
-    redirectStore(),
-    { activeCandidates: async () => [activeOffer()] as never },
-    allowJurisdictionResolver,
-    allowGbCommercialReadinessAuthority,
-    async () => { throw new Error("disabled capability must not resolve a creative"); },
-    () => false,
-    canonicalActivation,
-  );
-  const denied = await disabled.resolve("betsson", { creativeId: CREATIVE_UUID, now: new Date("2030-01-01T00:00:00Z") });
-  assert.equal(denied.ok, false);
-  if (!denied.ok) assert.equal(denied.reason, "CREATIVE_DESTINATION_DENIED");
-
-  let deniedCreativeReads = 0;
-  const geoDenied = new AffiliateRedirectService(
-    redirectStore(),
-    { activeCandidates: async () => { throw new Error("GEO denial must precede offer resolution"); } },
-    { async resolve() { return { ...allowJurisdictionDecision, commercialAllowed: false, referralAllowed: false, reasonCode: "MARKET_RESTRICTED" }; } },
-    allowGbCommercialReadinessAuthority,
-    async () => { deniedCreativeReads += 1; return new URL("https://should-never-resolve.example"); },
-    () => true,
-  );
-  const geoDeniedResult = await geoDenied.resolve("betsson", { creativeId: CREATIVE_UUID, now: new Date("2030-01-01T00:00:00Z") });
-  assert.equal(geoDeniedResult.ok, false);
-  if (!geoDeniedResult.ok) assert.equal(geoDeniedResult.reason, "JURISDICTION_DENIED");
-  assert.equal(deniedCreativeReads, 0);
+  if (result.ok) assert.equal(result.destination.href, "https://canonical.example/click");
+  assert.deepEqual(events, ["geo", "canonical"]);
+  const serviceSource = readFileSync("lib/services/affiliate-redirect.service.ts", "utf8");
+  const routeSource = readFileSync("app/r/[slug]/route.ts", "utf8");
+  assert.doesNotMatch(serviceSource, /creativeId|PartnerHostedCreative|mediaOfferAuthority/);
+  assert.doesNotMatch(routeSource, /searchParams.*creative|creativeId/);
 });
 
-test("MCP surface has nine Media tools, including bounded Production revision controls, and no generic publish action", async () => {
-  const { mediaMcpTools } = await import("../lib/mcp/media/server");
+test("Media MCP is retired with 410 while Commercial MCP remains registered", async () => {
   const { commercialMcpTools } = await import("../lib/mcp/commercial/server");
-  assert.equal(mediaMcpTools.length, 9);
   assert.equal(commercialMcpTools.length, 4);
-  assert.equal([...mediaMcpTools, ...commercialMcpTools].some((tool) => /publish/i.test(tool.name)), false);
-  assert.deepEqual(
-    mediaMcpTools.filter((tool) => tool.name.includes("production")).map((tool) => tool.name),
-    ["media_orchestrate_production", "media_rollback_production_revision", "media_get_production_revision"],
-  );
-  assert.match(mediaMcpTools[0].description, /partner-hosted/);
+  const { GET } = await import("../app/api/mcp/media/route");
+  const response = await GET();
+  assert.equal(response.status, 410);
+  assert.deepEqual(await response.json(), { error: "MEDIA_OPERATIONS_RETIRED" });
+  assert.doesNotMatch(readFileSync("lib/mcp/operational-routing.ts", "utf8"), /mediaMcp|MEDIA_MCP/);
 });

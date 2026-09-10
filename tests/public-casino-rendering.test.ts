@@ -125,7 +125,7 @@ test("public DTO removes storage, affiliate, notes, and draft metadata", () => {
   assert.equal(dto.bonuses[0].affiliate.href, "/r/cms-10bet-welcome");
   assert.deepEqual(dto.bonuses.map((bonus) => bonus.slug), ["welcome"]);
   assert.equal(dto.media.logo?.alt, "CMS 10Bet logo");
-  assert.equal(dto.media.hero?.width, 1280);
+  assert.equal(dto.media.hero, null);
   assert.equal(dto.media.gallery.length, 0);
   assert.equal(dto.seo.structuredData, null);
   assert.match(dto.seo.canonical, /\/casino\/10bet$/);

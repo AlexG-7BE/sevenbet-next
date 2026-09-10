@@ -1,6 +1,6 @@
 # RFC-043 — Production Media Pipeline
 
-**Lifecycle:** `ACTIVE`
+**Lifecycle:** `SUPERSEDED` by [RFC-044](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md). MEDIA-GEO3 data and release evidence remain historical; its runtime and business authority are retired.
 
 **Decision owner:** B4GAMBLE Founder
 

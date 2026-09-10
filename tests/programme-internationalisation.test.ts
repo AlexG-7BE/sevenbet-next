@@ -67,17 +67,17 @@ import {
 import { middleware } from "../middleware";
 
 const expectedRoutes = [
-  ["en-GB", "GB", "gb", "/program", "en"],
-  ["de-DE", "DE", "de", "/de/program", "de"],
-  ["es-ES", "ES", "es", "/es/program", "es"],
-  ["sv-SE", "SE", "se", "/se/program", "sv"],
-  ["da-DK", "DK", "dk", "/dk/program", "da"],
-  ["el-GR", "GR", "gr", "/gr/program", "el"],
-  ["it-IT", "IT", "it", "/it/program", "it"],
-  ["pt-PT", "PT", "pt", "/pt/program", "pt"],
-  ["nl-NL", "NL", "nl", "/nl/program", "nl"],
-  ["fi-FI", "FI", "fi", "/fi/program", "fi"],
-  ["nb-NO", "NO", "no", "/no/program", "no"],
+  ["en-GB", "en", "/program", "en"],
+  ["de-DE", "de", "/de/program", "de"],
+  ["es-ES", "es", "/es/program", "es"],
+  ["el-GR", "el", "/el/program", "el"],
+  ["sv-SE", "sv", "/sv/program", "sv"],
+  ["da-DK", "da", "/da/program", "da"],
+  ["it-IT", "it", "/it/program", "it"],
+  ["pt-PT", "pt", "/pt/program", "pt"],
+  ["nl-NL", "nl", "/nl/program", "nl"],
+  ["fi-FI", "fi", "/fi/program", "fi"],
+  ["nb-NO", "nb", "/nb/program", "no"],
 ] as const;
 
 const providerEnvelope = {
@@ -118,9 +118,9 @@ class MemoryStorage implements Storage {
 }
 
 test("Programme presentation exposes exactly the Founder-approved locale and route contract", () => {
-  assert.deepEqual(PROGRAMME_ROUTES.map((route) => [route.locale, route.marketCode, route.routeMarket, route.path, route.transcriptionLanguage]), expectedRoutes);
+  assert.deepEqual(PROGRAMME_ROUTES.map((route) => [route.locale, route.language, route.path, route.transcriptionLanguage]), expectedRoutes);
   assert.deepEqual(PROGRAMME_LOCALES, expectedRoutes.map(([locale]) => locale));
-  for (const [locale, , , path] of expectedRoutes) {
+  for (const [locale, , path] of expectedRoutes) {
     assert.equal(programmePath(locale), path);
     assert.equal(programmeLocaleFromPath(path), locale);
     assert.equal(parseProgrammeRoute(path)?.route.locale, locale);
@@ -184,9 +184,10 @@ test("Programme access failures remain stage-specific, localized and free of ser
 });
 
 test("Programme middleware establishes a distinct request-local context for all routes and sanitises spoofed authority", async () => {
-  for (const [locale, , routeMarket, path] of expectedRoutes) {
+  for (const [locale, language, path] of expectedRoutes) {
     const response = await middleware(new NextRequest(`http://127.0.0.1:4173${path}`, {
       headers: {
+        "x-vercel-ip-country": "GB",
         [PRESENTATION_CONTEXT_HEADER]: "public-v1",
         [PRESENTATION_MARKET_HEADER]: "gb",
         [PRESENTATION_LANGUAGE_HEADER]: "en",
@@ -194,8 +195,8 @@ test("Programme middleware establishes a distinct request-local context for all 
     }));
     assert.equal(response.headers.get("Content-Language"), locale, path);
     assert.equal(response.headers.get(`x-middleware-request-${PRESENTATION_CONTEXT_HEADER}`), PROGRAMME_PRESENTATION_CONTEXT, path);
-    assert.equal(response.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), routeMarket, path);
-    assert.equal(response.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), locale.split("-")[0].toLowerCase(), path);
+    assert.equal(response.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "gb", path);
+    assert.equal(response.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), language, path);
     const rewrite = response.headers.get("x-middleware-rewrite");
     assert.equal(rewrite ? new URL(rewrite).pathname : path, "/program", path);
   }
@@ -213,12 +214,14 @@ test("Programme switching preserves only bounded callback state and keeps public
   assert.equal(programmeLocaleHref("fi-FI", "auth=google-return&private=value"), "/fi/program?auth=google-return");
 
   for (const locale of ["de-DE", "es-ES", "sv-SE", "da-DK", "el-GR"] as const) {
-    assert.equal(programmeHelpPath(locale), `/${PROGRAMME_ROUTES.find((route) => route.locale === locale)!.routeMarket}/help`);
-    assert.equal(programmePublicHref(locale, "/casinos"), `/${PROGRAMME_ROUTES.find((route) => route.locale === locale)!.routeMarket}/casinos`);
+    const language = PROGRAMME_ROUTES.find((route) => route.locale === locale)!.language;
+    assert.equal(programmeHelpPath(locale), `/${language}/help`);
   }
   for (const locale of ["en-GB", "it-IT", "pt-PT", "nl-NL", "fi-FI", "nb-NO"] as const) {
     assert.equal(programmeHelpPath(locale), "/help");
-    assert.equal(programmePublicHref(locale, "/casinos"), "/casinos");
+  }
+  for (const route of PROGRAMME_ROUTES) {
+    assert.equal(programmePublicHref(route.locale, "/casinos"), `/${route.language}/casinos`);
   }
 });
 
@@ -242,7 +245,7 @@ test("Google callbacks are the exact bounded Programme pairs for all locales", (
 });
 
 test("every Programme locale is mandatory at HTTP/application boundaries and maps to a verified transcription language", async () => {
-  assert.deepEqual(PROGRAMME_LOCALES.map((locale) => programmeTranscriptionLanguage(locale)), expectedRoutes.map((route) => route[4]));
+  assert.deepEqual(PROGRAMME_LOCALES.map((locale) => programmeTranscriptionLanguage(locale)), expectedRoutes.map((route) => route[3]));
   for (const locale of PROGRAMME_LOCALES) {
     assert.equal(parseProgrammeAiTurn({ locale, inputMode: "text", situation: "I open an app after a difficult working day.", clarificationAnswers: [] }).locale, locale);
     assert.equal(parseProgramAiLocalWording({ locale, localWording: "Kept in this tab" }).locale, locale);

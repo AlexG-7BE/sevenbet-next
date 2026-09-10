@@ -285,6 +285,11 @@ The four tools, `affiliate.manage`, `commercial:read`, `commercial:safe_write`, 
 
 ## 19. `MEDIA-INGESTION-AUTOPLACEMENT-01` Media Operations amendment
 
+> **Lifecycle note (10 September 2026):** [RFC-044](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md)
+> supersedes this amendment as active authority. The Media MCP resource and
+> promotional ingestion/autoplacement operations are retired; this section is
+> retained only as historical implementation and safety evidence.
+
 RFC-043 supersedes this section only for the six-tool ceiling, the no-Production
 media-operation ceiling and the Media scope list. Its original six operations
 retain their meanings; Production revision mutation is separately named,

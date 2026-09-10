@@ -1,6 +1,6 @@
 # RFC-041 — Vetted Partner-Hosted Creatives
 
-**Lifecycle:** `ACTIVE`
+**Lifecycle:** `SUPERSEDED` by [RFC-044](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md). Provider records remain inert history; hosted creatives are no longer an active Product surface.
 
 **Decision owner:** B4GAMBLE Founder
 
@@ -10,10 +10,10 @@
 FOUNDER OFFICE — VETTED-PARTNER-HOSTED-CREATIVES-01`, as amended by
 `B4GAMBLE — MEDIA-OPERATIONS-BULK-01` on 6 September 2026.
 
-[RFC-043](RFC-043-Production-Media-Pipeline.md) supersedes this RFC only for
-public promotional targeting order, `UNKNOWN` fallback, exact-offer hero/card
-selection and automatic Production revision authority. Provider isolation,
-structured destinations and hosted-media safety remain unchanged.
+[RFC-043](RFC-043-Production-Media-Pipeline.md) previously superseded this RFC
+for promotional targeting and Production revision authority. RFC-044 now
+supersedes both active promotional-media models. The safety design below is
+retained only as historical evidence for inert rows and parsers.
 
 ## Decision
 

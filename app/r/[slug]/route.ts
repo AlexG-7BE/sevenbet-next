@@ -36,13 +36,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
   const now = new Date();
   const requestCountrySignal = requestCountrySignalFromHeaders(request.headers, now);
-  const creativeId = request.nextUrl.searchParams.get("creative");
-  if (creativeId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(creativeId)) {
-    safeDiagnostic("INVALID_CREATIVE_IDENTIFIER", { countryCode: requestCountrySignal?.countryCode, ...hints });
-    return recoveryResponse(request);
-  }
   try {
-    const result = await affiliateRedirectService.resolve(slug, { requestCountrySignal, ...hints, now, creativeId });
+    const result = await affiliateRedirectService.resolve(slug, { requestCountrySignal, ...hints, now });
     if (result.jurisdictionDecision) logJurisdictionDecision("AFFILIATE_REDIRECT", result.jurisdictionDecision);
     if (!result.ok) {
       safeDiagnostic(result.reason, { slugId: result.slugId, casinoId: result.casinoId, countryCode: result.jurisdictionDecision?.countryCode, ...hints });

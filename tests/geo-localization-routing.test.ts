@@ -52,7 +52,7 @@ test("language and trusted market resolve independently for the required matrix"
 });
 
 test("URL, language preference and Accept-Language never grant another market", () => {
-  const routeAttempt = resolvePresentationContext({ routeMarket: "pe", routeLanguage: "es", trustedCountryCode: "DE" });
+  const routeAttempt = resolvePresentationContext({ routeLanguage: "es", trustedCountryCode: "DE" });
   const cookieAttempt = resolvePresentationContext({ preference: { language: "es" }, trustedCountryCode: "DE" });
   const acceptAttempt = resolvePresentationContext({ trustedCountryCode: "DE", acceptLanguage: "es-PE" });
   for (const result of [routeAttempt, cookieAttempt, acceptAttempt]) {

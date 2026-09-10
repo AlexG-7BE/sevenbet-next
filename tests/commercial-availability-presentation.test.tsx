@@ -199,17 +199,16 @@ test("curated casino shortlist omits hidden-only inventory instead of rendering 
   assert.equal(html, "");
 });
 
-test("casino directory promotional media follows the governed Visit action and fallbacks stay inert", async () => {
+test("casino directory retires promotional artwork while CTA authority and first-party editorial art stay independent", async () => {
   const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
   const promotional = casino({
     featuredBonus: { title: "Verified welcome offer", summary: "Current published terms", type: "WELCOME", keyTerms: ["Terms apply"], wageringRequirement: 30, minimumDeposit: 10, currency: "GBP", validUntil: null, termsApply: true },
     hero: { url: "/controlled/truth-casino-300x250.jpg", alt: "Truth Casino verified offer creative", width: 300, height: 250, renderingMode: "CONTAIN", source: "EXPLICIT", focalPoint: null },
   });
   const authorized = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[promotional]} messages={messages} presentation={presentation} />);
-  assert.match(authorized, /<a[^>]+data-commercial-action-placement="CASINO_DIRECTORY_CARD"[^>]+data-commercial-action-source="CREATIVE"[^>]+href="\/r\/truth-casino-visit"[^>]+rel="nofollow sponsored noopener"[^>]+target="_blank"/);
-  assert.match(authorized, /aria-label="[^"]*Truth Casino[^"]*—[^"]*Verified welcome offer"/);
   assert.match(authorized, /data-commercial-action-placement="CASINO_DIRECTORY_CARD"[^>]+data-commercial-action-source="CTA"/);
-  assert.equal((authorized.match(/href="\/r\/truth-casino-visit"/g) ?? []).length, 2);
+  assert.equal((authorized.match(/href="\/r\/truth-casino-visit"/g) ?? []).length, 1);
+  assert.doesNotMatch(authorized, /truth-casino-300x250|data-commercial-action-source="CREATIVE"/);
   assert.doesNotMatch(authorized, /href="\/outbound\/|aria-haspopup="dialog"|You are leaving B4GAMBLE|<dialog/);
   assert.doesNotMatch(authorized, /href="https?:\/\//);
 
@@ -217,7 +216,7 @@ test("casino directory promotional media follows the governed Visit action and f
     ...promotional,
     visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "GEO_BLOCKED" },
   })]} messages={messages} presentation={presentation} />);
-  assert.match(blocked, /src="\/controlled\/truth-casino-300x250\.jpg"/);
+  assert.doesNotMatch(blocked, /truth-casino-300x250/);
   assert.doesNotMatch(blocked, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
 
   const fallback = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({ hero: null })]} messages={messages} presentation={presentation} />);
@@ -227,9 +226,14 @@ test("casino directory promotional media follows the governed Visit action and f
   const composedCreative = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
     hero: { ...promotional.hero!, renderingMode: "COMPOSED" },
   })]} messages={messages} presentation={presentation} />);
-  assert.match(composedCreative, /data-presentation-family="CARD"/);
-  assert.match(composedCreative, /data-commercial-action-source="CREATIVE"/);
-  assert.match(composedCreative, /src="\/controlled\/truth-casino-300x250\.jpg"/);
+  assert.match(composedCreative, /data-presentation-family="LOGO_ONLY"/);
+  assert.doesNotMatch(composedCreative, /data-commercial-action-source="CREATIVE"|truth-casino-300x250/);
+
+  const editorial = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
+    hero: { url: "/casino-directory/editorial-review.jpg", alt: "B4GAMBLE editorial review", width: 1600, height: 900, renderingMode: "CONTAIN", focalPoint: null, ownership: "B4GAMBLE_EDITORIAL" },
+  })]} messages={messages} presentation={presentation} />);
+  assert.match(editorial, /src="\/casino-directory\/editorial-review\.jpg"/);
+  assert.doesNotMatch(editorial, /data-commercial-action-source="CREATIVE"/);
 });
 
 test("bonus result summaries stay neutral while record labels reflect their classification", async () => {

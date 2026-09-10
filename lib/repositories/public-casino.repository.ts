@@ -89,147 +89,6 @@ function projectedPublishedSnapshot(countryCode?: string | null) {
 
 type PublishedSnapshotRow = Omit<PublishedCasinoSnapshotRecord, "status"> & { status: EditorialStatus };
 
-type SnapshotRecord = Record<string, unknown>;
-
-function snapshotRecord(value: unknown): SnapshotRecord {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as SnapshotRecord : {};
-}
-
-function snapshotList(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
-function groupBy<T>(rows: T[], key: (row: T) => string) {
-  const grouped = new Map<string, T[]>();
-  for (const row of rows) {
-    const id = key(row);
-    grouped.set(id, [...(grouped.get(id) ?? []), row]);
-  }
-  return grouped;
-}
-
-async function projectRuntimeMediaAssignments(rows: PublishedSnapshotRow[]): Promise<PublishedSnapshotRow[]> {
-  const casinoIds = [...new Set(rows.map((row) => row.casinoId))];
-  if (!casinoIds.length) return rows;
-
-  const [
-    casinoMediaAssignments,
-    casinoPartnerHostedAssignments,
-    bonusMediaAssignments,
-    bonusPartnerHostedAssignments,
-    offerMediaAssignments,
-    offerPartnerHostedAssignments,
-    activeCreativeVariants,
-  ] = await Promise.all([
-    prisma.casinoMediaAssignment.findMany({
-      where: { casinoId: { in: casinoIds } },
-      include: { mediaAsset: true },
-      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-    }),
-    prisma.casinoPartnerHostedCreativeAssignment.findMany({
-      where: { casinoId: { in: casinoIds } },
-      include: { creative: true },
-      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-    }),
-    prisma.casinoBonusMediaAssignment.findMany({
-      where: { casinoBonus: { casinoId: { in: casinoIds } } },
-      include: { mediaAsset: true },
-      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-    }),
-    prisma.casinoBonusPartnerHostedCreativeAssignment.findMany({
-      where: { casinoBonus: { casinoId: { in: casinoIds } } },
-      include: { creative: true },
-      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-    }),
-    prisma.affiliateOfferMediaAssignment.findMany({
-      where: { affiliateOffer: { casinoId: { in: casinoIds } } },
-      include: { mediaAsset: true },
-      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-    }),
-    prisma.affiliateOfferPartnerHostedCreativeAssignment.findMany({
-      where: { affiliateOffer: { casinoId: { in: casinoIds } } },
-      include: { creative: true },
-      orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-    }),
-    prisma.mediaCreativeVariant.findMany({
-      where: {
-        status: "ACTIVE",
-        availability: "AVAILABLE",
-        creativeSet: { casinoId: { in: casinoIds }, status: "ACTIVE", archivedAt: null },
-        revision: { status: "ACTIVE" },
-      },
-      include: {
-        mediaAsset: true,
-        hostedCreative: true,
-        creativeSet: true,
-        revision: { select: { id: true, status: true } },
-      },
-      orderBy: [{ priority: "desc" }, { id: "asc" }],
-    }),
-  ]);
-
-  const casinoMedia = groupBy(casinoMediaAssignments, (row) => row.casinoId);
-  const casinoHosted = groupBy(casinoPartnerHostedAssignments, (row) => row.casinoId);
-  const bonusMedia = groupBy(bonusMediaAssignments, (row) => row.casinoBonusId);
-  const bonusHosted = groupBy(bonusPartnerHostedAssignments, (row) => row.casinoBonusId);
-  const offerMedia = groupBy(offerMediaAssignments, (row) => row.affiliateOfferId);
-  const offerHosted = groupBy(offerPartnerHostedAssignments, (row) => row.affiliateOfferId);
-  const offerCreativeVariants = groupBy(
-    activeCreativeVariants.filter((row) => Boolean(row.creativeSet.affiliateOfferId)),
-    (row) => row.creativeSet.affiliateOfferId!,
-  );
-
-  const withBonusAssignments = (entries: unknown[]) => entries.map((entry) => {
-    const record = snapshotRecord(entry);
-    const id = typeof record.id === "string" ? record.id : null;
-    if (!id) return entry;
-    return {
-      ...record,
-      mediaAssignments: bonusMedia.get(id) ?? [],
-      partnerHostedAssignments: bonusHosted.get(id) ?? [],
-    };
-  });
-
-  return rows.map((row) => {
-    const snapshot = snapshotRecord(row.snapshot);
-    const affiliatePrograms = snapshotList(snapshot.affiliatePrograms).map((programEntry) => {
-      const program = snapshotRecord(programEntry);
-      return {
-        ...program,
-        offers: snapshotList(program.offers).map((offerEntry) => {
-          const offer = snapshotRecord(offerEntry);
-          const id = typeof offer.id === "string" ? offer.id : null;
-          if (!id) return offerEntry;
-          return {
-            ...offer,
-            mediaAssignments: offerMedia.get(id) ?? [],
-            partnerHostedAssignments: offerHosted.get(id) ?? [],
-            creativeVariants: offerCreativeVariants.get(id) ?? [],
-          };
-        }),
-      };
-    });
-    const countries = snapshotList(snapshot.countries).map((countryEntry) => {
-      const country = snapshotRecord(countryEntry);
-      return {
-        ...country,
-        bonuses: withBonusAssignments(snapshotList(country.bonuses)),
-      };
-    });
-    return {
-      ...row,
-      snapshot: {
-        ...snapshot,
-        mediaAssignments: casinoMedia.get(row.casinoId) ?? [],
-        partnerHostedAssignments: casinoHosted.get(row.casinoId) ?? [],
-        casinoBonuses: withBonusAssignments(snapshotList(snapshot.casinoBonuses)),
-        countries,
-        affiliatePrograms,
-      },
-    };
-  });
-}
-
 export class PublicCasinoRepository implements PublicCasinoStore {
   constructor(private readonly activations: Pick<MarketActivationRuntime, "listPublicRoutes"> = marketActivationRuntime) {}
 
@@ -258,7 +117,7 @@ export class PublicCasinoRepository implements PublicCasinoStore {
         AND c."archivedAt" IS NULL
       ORDER BY cv."casinoId" ASC, cv.version DESC
     `);
-    return projectRuntimeMediaAssignments(rows);
+    return rows;
   }
 
   async listPublishedOfferCandidates(casinoIds: string[], now = new Date()) {
@@ -389,9 +248,7 @@ export class PublicCasinoRepository implements PublicCasinoStore {
       ORDER BY cv.version DESC
       LIMIT 1
     `);
-    if (!version) return null;
-    const [projected] = await projectRuntimeMediaAssignments([version]);
-    return projected ?? null;
+    return version ?? null;
   }
 
   async listActiveAffiliateRoutes(casinoIds: string[], countryCode?: string, now?: Date) {

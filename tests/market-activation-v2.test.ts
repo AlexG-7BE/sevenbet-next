@@ -15,7 +15,7 @@ import { MarketActivationRuntime } from "../lib/market-activation/runtime";
 import { marketEvidenceBlocksActivation } from "../lib/market-activation/market-evidence";
 import { selectActivationTrackingCandidate } from "../lib/market-activation/repository";
 import { MarketActivationRouteVerifier } from "../lib/market-activation/verifier";
-import { eligibleDiscoveryMediaRoutes } from "../lib/public-casino-discovery/commercial-eligibility";
+import { eligibleDiscoveryRoutes } from "../lib/public-casino-discovery/commercial-eligibility";
 import { resolvePublicVisitAction } from "../lib/services/public-casino-discovery.service";
 
 const NOW = new Date("2026-09-07T12:00:00.000Z");
@@ -378,9 +378,12 @@ test("canonical runtime resolves only the exact active market and ignores legacy
   assert.equal(await authority.resolveRedirect("inkabet-casino", "CL"), null);
   const publicRoute = (await authority.listPublicRoutes([CASINO_ID], "PE"))[0];
   assert.equal(publicRoute?.slug, "inkabet-casino");
-  assert.equal(publicRoute?.mediaOfferAuthority?.status, "DRAFT");
-  assert.equal(publicRoute?.mediaOfferAuthority?.programWorkflowStatus, "DRAFT");
-  assert.equal(publicRoute?.mediaOfferAuthority?.networkActive, false);
+  assert.deepEqual(publicRoute, {
+    casinoId: CASINO_ID,
+    casinoBonusId: null,
+    affiliateOfferId: OFFER_ID,
+    slug: "inkabet-casino",
+  });
 });
 
 test("canonical global fallback is explicitly evidenced, request-scoped, denied in protected countries, and shadowed by any exact row", async () => {
@@ -461,8 +464,8 @@ test("discovery media and CTA projections prefer canonical activation rows", () 
       redirectSlug: "inkabet-casino",
     }],
   };
-  assert.deepEqual(eligibleDiscoveryMediaRoutes(context, "PE", NOW), [{ casinoId: CASINO_ID, casinoBonusId: null, affiliateOfferId: OFFER_ID, slug: "inkabet-casino" }]);
-  assert.equal(eligibleDiscoveryMediaRoutes(context, "CL", NOW).length, 0);
+  assert.deepEqual(eligibleDiscoveryRoutes(context, "PE", NOW), [{ casinoId: CASINO_ID, casinoBonusId: null, affiliateOfferId: OFFER_ID, slug: "inkabet-casino" }]);
+  assert.equal(eligibleDiscoveryRoutes(context, "CL", NOW).length, 0);
   const visit = resolvePublicVisitAction(context, CASINO_ID, null, "PE", NOW, {
     countryCode: "PE",
     commercialAllowed: true,

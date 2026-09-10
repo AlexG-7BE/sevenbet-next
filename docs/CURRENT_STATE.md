@@ -1,7 +1,7 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 9 September 2026
+**Evidence date:** 10 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
 **Current Production application SHA (live provider evidence):** `6deca5539812a72f5eac1c09fbd2f9b107da32d3`
@@ -11,6 +11,26 @@
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
+
+## Founder-authorized release in progress — Production DB retired; application cutover pending
+
+**DETECTED (repository and Production DB):** RFC-044 records the current Founder decision for a
+logo-only operator Product, retirement of MEDIA-GEO3 runtime/business authority,
+media-independent commercial authority and locale/market separation. Migration
+`0034_logo_only_media_retirement` is non-destructive and makes historical
+assignment, hosted-creative, creative-set/variant and media-revision authority
+inert while leaving `MediaAsset` rows untouched. The canonical repository
+language registry contains `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`,
+`da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO`.
+
+**DETECTED — DB-first release gate complete:** Migration 0034 is applied in
+Production. Before/after evidence preserves all 254 hosted creatives, 148
+assignment rows and every `MediaAsset`, including 16 active logos, while active
+assignment, hosted-creative, creative-set/variant and revision authority is
+zero. Ten fail-closed retirement constraints are verified. The application
+release and eleven-locale live-runtime verification remain pending; the dated
+MEDIA-GEO3 entries below are historical delivery records, not current authority
+or permission to reverse the Founder decision.
 
 ## Governance and read order
 
@@ -32,17 +52,17 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public legal implementation | **READY** | Current GB public legal copy/consent/disclosure implementation is in Production for the approved scope. |
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
-| ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — RESOURCE-SPECIFIC DCR, DURABLE GRANTS AND DB FAILURE BOUNDARY DEPLOYED** | Commercial retains four tools; Media retains six, including bounded bulk ingestion. PR #161 binds standards-shaped DCR through resource-specific discovery while preserving strict one-resource clients and invalidating cross-resource use. PR #159 keeps unsupported methods DB-free and authenticated transient DB failures bounded. |
+| ChatGPT Work MCP / Better Auth 1.7 | **COMMERCIAL MCP ENABLED; MEDIA MCP RETIRED BY RFC-044** | Commercial retains its governed resource. Migration 0034 prevents Media authority from being recreated; the application cutover makes the Media MCP, its DCR and discovery surfaces return cache-proof 410. |
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
 | Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES, DESTINATIONS VERIFIED** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority and checksum-matched canonical campaigns. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
 | Casino market data | **TEN REAL PUBLISHED IDENTITIES — SAFE CROSS-MARKET OFFER PRESENTATION ACTIVE** | Market-projected Casino facts remain isolated. A bounded immutable published-bonus corpus now resolves `EXACT > ROW > OTHER_MARKET > NONE`; StarCasino IT plus genuine Rizk and NordicBet ROW offers are reconciled without creating commercial or media authority. Founder-approved scores remain unchanged. |
-| Placement media | **RFC-043 MEDIA-GEO3 ACTIVE IN PRODUCTION** | The RFC-040 typed compatibility layer remains supported; MEDIA-GEO3 adds exact-offer creative sets, variants, persisted preflight, atomic revisions and `CASINO_REVIEW_RIGHT_HERO`. Three bounded current-offer families serve the review-right and directory-card placements through one resolver. |
+| Placement media | **RETIRED — HISTORICAL ROWS INERT** | Migration 0034 preserves every historical assignment and asset row but forces all six assignment families inactive. Promotional placement state is no longer public, commercial or release authority. |
 | Canonical public CTA authority | **RFC-042 SOLE B4GAMBLE AUTHORITY** | Public directory, comparison and review consumers use canonical `MarketActivation`, including its healthy global fallback. Legacy programme/offer/workflow/link/redirect lifecycle fields are not replacement CTA vetoes; external safety, jurisdiction, GB operator/legal, safe-URL, relational and trusted-GEO controls remain independent. |
-| GEO-localized creative assignments | **ACTIVE IN PRODUCTION — BGA PE/EE/LV HOSTED INVENTORY INSTALLED** | Trusted request GEO plus presentation language resolve exact-country/language, global/language and neutral assignment scopes without client-side inventory selection. BGA-MEDIA-E2E-01 adds 11 exact active offer and 11 exact active profile hosted assignments across Inkabet PE, Betsson PE and Betsafe EE/LV; Inkabet mobile uses its exact-country DEFAULT fallback. |
-| Vetted partner-hosted creatives | **ACTIVE IN PRODUCTION — 52 VALIDATED BANNERFLOW RECORDS; COMMERCIAL ACTION ON HOLD** | Migrations 0029/0030 and the independent feature flag are deployed. Production retains 52 supported exact-country BGA creatives, 11 responsive selections and three immutable Casino snapshots. Media renders from the original provider through isolated B4 frames; all related referral routes remain unavailable because cumulative Production commercial authority is absent. |
-| Commercial creative formats | **READY IN PRODUCTION** | Common affiliate formats, security-valid animated GIF ingestion, native responsive commercial geometry and governed creative actions are active without changing editorial media or expanding commercial authority. |
-| Media ingestion / Media Operations | **READY IN PRODUCTION — FIRST-PARTY R2, HOSTED BGA, REVIEW-SAFE DRAFT AUTHORITY** | Validated first-party media persists through the existing S3 provider to approved Cloudflare R2 Standard and `media.b4gamble.com`; hosted media retains provider authority in isolated frames. Checksum/identity dedupe, bounded analysis, protected draft plans and the separate six-tool Media MCP are active with no commercial publish authority. |
-| Public language / market presentation | **READY IN PRODUCTION — PUBLICATION, MARKET VERIFICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language. Published offer knowledge may cross markets through the bonus-only resolver, while foreign licences, operators, payments, domains and media remain excluded and outbound eligibility stays independently governed. |
+| GEO-localized creative assignments | **RETIRED — HISTORICAL TARGETING EVIDENCE ONLY** | Exact-country/language assignment rows remain for audit but are inactive and database-constrained. Trusted GEO continues to govern jurisdiction independently of language and media. |
+| Vetted partner-hosted creatives | **RETIRED — 254 HISTORICAL ROWS PRESERVED AND ARCHIVED** | Hosted creatives remain inert evidence. Public frames/previews and active assignments are retired; they cannot supply Product or commercial authority. |
+| Commercial creative formats | **HISTORICAL COMPATIBILITY / TEST VOCABULARY** | Format parsers and pre-retirement tests may remain inert. Active public compositions accept operator logos or explicitly B4GAMBLE-owned editorial art, never promotional creative formats. |
+| Media ingestion / Media Operations | **PROMOTIONAL OPERATIONS RETIRED; LOGO AND B4GAMBLE EDITORIAL ASSETS ONLY** | Active Admin media is limited to canonical logos and authenticated `b4gambleOwned` editorial social imagery. Promotional ingestion/analyse/apply/assignment/MCP surfaces are 410 in the application cutover and retired states are rejected by Production constraints. |
+| Public language / market presentation | **ELEVEN LOCALES IMPLEMENTED; LIVE APPLICATION CUTOVER PENDING** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
 
 ### Recent implementation state
 

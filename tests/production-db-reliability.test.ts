@@ -90,17 +90,22 @@ test("MCP transient boundary is bounded JSON-RPC and does not reclassify program
 test("method-only MCP requests never initialize Prisma, Better Auth, OAuth, or services", async () => {
   const { stdout, stderr } = await probe("method");
   const result = JSON.parse(finalJsonLine(stdout)) as ProbeResult;
-  assert.deepEqual(result.statuses, Array(10).fill(405));
-  assert.deepEqual(result.allow, Array(10).fill("POST"));
-  assert.deepEqual(result.cacheControl, Array(10).fill("no-store"));
+  assert.deepEqual(result.statuses, [...Array(5).fill(405), ...Array(5).fill(410)]);
+  assert.deepEqual(result.allow, [...Array(5).fill("POST"), ...Array(5).fill(null)]);
+  assert.deepEqual(result.cacheControl, [
+    ...Array(5).fill("no-store"),
+    ...Array(5).fill("private, no-store"),
+  ]);
   assert.deepEqual(result.unhandled, []);
   assert.equal(stderr, "");
 
-  for (const path of ["commercial", "media"]) {
-    const source = await readFile(new URL(`../app/api/mcp/${path}/route.ts`, import.meta.url), "utf8");
-    assert.doesNotMatch(source, /lib\/db\/prisma|lib\/auth|rate-limit|\/oauth|\/server|service/i);
-    assert.match(source, /await import\("@\/lib\/mcp\/(commercial|media)\/post-handler"\)/);
-  }
+  const commercialSource = await readFile(new URL("../app/api/mcp/commercial/route.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(commercialSource, /lib\/db\/prisma|lib\/auth|rate-limit|\/oauth|\/server|service/i);
+  assert.match(commercialSource, /await import\("@\/lib\/mcp\/commercial\/post-handler"\)/);
+
+  const mediaSource = await readFile(new URL("../app/api/mcp/media/route.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(mediaSource, /lib\/db\/prisma|lib\/auth|rate-limit|\/oauth|\/server|service|post-handler/i);
+  assert.match(mediaSource, /retiredMediaResponse/);
 });
 
 test("Better Auth is lazy, separates ordinary sessions from operational OAuth, and resets rejected initialization", async () => {
@@ -116,28 +121,33 @@ test("Better Auth is lazy, separates ordinary sessions from operational OAuth, a
   assert.match(instance, /getAuth[\s\S]*false/);
   assert.match(instance, /getOperationalMcpAuth[\s\S]*true/);
   assert.match(config, /resourceSeedMode: "merge"/);
-  assert.match(config, /clientRegistrationAllowedResources: \[commercialMcpResource, mediaMcpResource\]/);
+  assert.match(config, /clientRegistrationAllowedResources: \[commercialMcpResource\]/);
+  assert.doesNotMatch(config, /mediaMcpResource|media:(?:read|safe_write|production_write)/);
   assert.match(session, /if \(!hasBetterAuthSessionCookie\(resolvedHeaders\)\) return null/);
   assert.match(bootstrap, /operationalMcpProvider: false/);
 });
 
-test("unreachable database produces bounded 503s for both authenticated MCP POST boundaries", async () => {
+test("unreachable database produces a bounded commercial 503 while retired Media MCP stays database-independent", async () => {
   const { stdout } = await probe("post");
   const result = JSON.parse(finalJsonLine(stdout)) as PostProbeResult;
   assert.equal(result.elapsedMs < 8_000, true, `unreachable probe took ${result.elapsedMs}ms`);
   assert.deepEqual(result.unhandled, []);
   assert.deepEqual(result.responses.map((item) => item.name), ["commercial", "media"]);
-  for (const response of result.responses) {
-    assert.equal(response.status, 503);
-    assert.equal(response.cacheControl, "no-store");
-    assert.equal(response.retryAfter, "3");
-    assert.deepEqual(response.body, {
-      jsonrpc: "2.0",
-      error: { code: -32003, message: "Operational data is temporarily unavailable" },
-      id: null,
-    });
-    assert.doesNotMatch(JSON.stringify(response.body), /Prisma|P1001|127\.0\.0\.1|postgres|stack|oauth/i);
-  }
+  const [commercial, media] = result.responses;
+  assert.equal(commercial.status, 503);
+  assert.equal(commercial.cacheControl, "no-store");
+  assert.equal(commercial.retryAfter, "3");
+  assert.deepEqual(commercial.body, {
+    jsonrpc: "2.0",
+    error: { code: -32003, message: "Operational data is temporarily unavailable" },
+    id: null,
+  });
+  assert.doesNotMatch(JSON.stringify(commercial.body), /Prisma|P1001|127\.0\.0\.1|postgres|stack|oauth/i);
+
+  assert.equal(media.status, 410);
+  assert.equal(media.cacheControl, "private, no-store");
+  assert.equal(media.retryAfter, null);
+  assert.deepEqual(media.body, { error: "MEDIA_OPERATIONS_RETIRED" });
 });
 
 test("Admin Media boundaries map only transient database failures to safe 503 responses", async () => {

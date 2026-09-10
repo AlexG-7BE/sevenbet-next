@@ -10,12 +10,12 @@ import {
   type PublicAccountNavigation,
 } from "@/lib/public-shell";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
+import { ProgrammeLanguageSelector } from "@/components/programme/ProgrammeLanguageSelector";
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { localizePublicHref, stripPublicMarketPrefix } from "@/lib/market/routing";
 import { DEFAULT_MARKET_PROFILE, marketProfileByLocale, publicMarketPath, type LanguageRouteProfile } from "@/lib/market/registry";
 import { MarketLanguageSelector } from "./MarketLanguageSelector";
-import { ProgrammeLanguageSelector } from "@/components/programme/ProgrammeLanguageSelector";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./PublicShell.module.css";
 
@@ -123,9 +123,17 @@ export function PublicNavigation({
           ))}
         </nav>
         <div className={styles.accountNavigation}>
-          {programme
-            ? <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="desktop" />
-            : <MarketLanguageSelector messages={messages} presentation={presentation} selectableLanguages={selectableLanguages} variant="desktop" />}
+          {programme ? (
+            <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="desktop" />
+          ) : (
+            <MarketLanguageSelector
+              messages={messages}
+              presentation={presentation}
+              selectableLanguages={selectableLanguages}
+              surface="public"
+              variant="desktop"
+            />
+          )}
           {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
           {!authenticated ? <Link className={styles.accountLink} href={account.accountHref}>{accountLabel}</Link> : null}
           <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
@@ -177,9 +185,17 @@ export function PublicNavigation({
               </Link>
             ))}
           </nav>
-          {programme
-            ? <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="mobile" />
-            : <MarketLanguageSelector messages={messages} presentation={presentation} selectableLanguages={selectableLanguages} variant="mobile" />}
+          {programme ? (
+            <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="mobile" />
+          ) : (
+            <MarketLanguageSelector
+              messages={messages}
+              presentation={presentation}
+              selectableLanguages={selectableLanguages}
+              surface="public"
+              variant="mobile"
+            />
+          )}
           <div className={styles.mobileHelp}>
             <span>{messages.controlAndSupport}</span>
             <Link href={publicHref("/help")} onClick={() => closeMenu({ restoreFocus: false })}>{messages.openHelp}</Link>

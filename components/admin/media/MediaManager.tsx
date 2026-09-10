@@ -6,7 +6,7 @@ import { Badge, Card } from "@/components/ui";
 import { mediaJson, type MediaAssetAdminRecord, type MediaAssetTypeValue } from "@/lib/media/admin-types";
 import { mediaMetadataDraft, persistMediaMetadata } from "@/lib/media/editor-state";
 
-const uploadTypes: MediaAssetTypeValue[] = ["LOGO", "FAVICON", "HERO", "SCREENSHOT", "GALLERY", "SOCIAL_IMAGE", "OTHER"];
+const uploadTypes: MediaAssetTypeValue[] = ["LOGO"];
 
 function bytes(value: number) {
   if (value < 1024 * 1024) return `${Math.max(1, Math.round(value / 1024))} KB`;
@@ -200,7 +200,7 @@ export function MediaManager({ casinoId }: { casinoId: string }) {
           <label className="editorCheck"><input checked={featured} type="checkbox" onChange={(event) => setFeatured(event.target.checked)} /> Use as featured {type.toLowerCase().replaceAll("_", " ")}</label>
         </div>
         <div className="mediaDropzone" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); chooseFile(event.dataTransfer.files[0] || null); }}>
-          <strong>{file ? file.name : "Drop a JPEG, PNG, WebP, AVIF or GIF image"}</strong>
+          <strong>{file ? file.name : "Drop a canonical operator logo"}</strong>
           <span>Maximum 10 MB. SVG and remote URL imports are disabled.</span>
           <input ref={inputRef} accept="image/jpeg,image/png,image/webp,image/avif,image/gif" type="file" onChange={(event) => chooseFile(event.target.files?.[0] || null)} />
         </div>

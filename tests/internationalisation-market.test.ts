@@ -28,6 +28,7 @@ import {
   FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES,
   INITIAL_EUROPEAN_MARKET_PROFILES,
   MARKET_PROFILES,
+  PUBLISHED_LANGUAGE_ROUTE_PROFILES,
   PUBLICATION_APPROVED_MARKET_PROFILES,
   publicMarketPath,
   marketProfileByCountry,
@@ -279,7 +280,7 @@ test("all eleven European product catalogs are complete Preview drafts without E
       PRODUCT_TRANSLATION_REVIEW_STATE[profile.defaultLocale],
       profile.defaultLocale === "en-GB" ? "SOURCE_BASELINE" : "MACHINE_TRANSLATED",
     );
-    const presentation = resolvePresentationContext({ routeMarket: profile.routeMarket, routeLanguage: profile.defaultLocale.split("-")[0] });
+    const presentation = resolvePresentationContext({ routeLanguage: profile.defaultLocale.split("-")[0], trustedCountryCode: profile.countryCode });
     for (const pathname of ["/best-offers", "/casinos", "/bonuses", "/casino/example", "/compare?casino=example"]) {
       assert.equal(productHref(presentation, pathname), publicMarketPath(profile, profile.defaultLocale, pathname));
     }
@@ -289,7 +290,7 @@ test("all eleven European product catalogs are complete Preview drafts without E
 });
 
 test("localized product links and canonicals preserve explicit presentation while noindex stays outside hreflang", () => {
-  const presentation = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de", trustedCountryCode: "GB" });
+  const presentation = resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "GB" });
   assert.equal(productHref(presentation, "/casino/example?from=compare"), "/de/casino/example?from=compare");
   assert.equal(productHref(presentation, "/methodology"), "/de/methodology");
   const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
@@ -298,7 +299,7 @@ test("localized product links and canonicals preserve explicit presentation whil
   assert.deepEqual(metadata.robots, { index: false, follow: true });
   assert.equal(metadata.openGraph && "locale" in metadata.openGraph ? metadata.openGraph.locale : null, "de_DE");
 
-  const gbPresentation = resolvePresentationContext({ routeMarket: "gb", routeLanguage: "en" });
+  const gbPresentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
   const gbMetadata = productMetadata({
     presentation: gbPresentation,
     pathname: "/casinos",
@@ -309,7 +310,7 @@ test("localized product links and canonicals preserve explicit presentation whil
   assert.deepEqual(gbMetadata.robots, { index: true, follow: true }, "the approved English baseline must retain its data-driven indexing policy");
   assert.deepEqual(Object.keys(gbMetadata.alternates?.languages ?? {}).sort(), ["en", "x-default"]);
 
-  const differentGeo = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de", trustedCountryCode: "NO" });
+  const differentGeo = resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "NO" });
   const second = productMetadata({ presentation: differentGeo, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
   assert.equal(second.alternates?.canonical, metadata.alternates?.canonical, "geo cannot mutate an explicit canonical");
 });
@@ -350,7 +351,7 @@ test("presentation and commercial jurisdiction must match before any authority r
   assert.equal(commercialAuthorityForPresentation(gb, "DE"), null);
   assert.equal(commercialAuthorityForPresentation(de, "GB"), null);
   assert.equal(commercialAuthorityForPresentation(gb, "GB"), gb);
-  const presentation = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de", trustedCountryCode: "GB" });
+  const presentation = resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "GB" });
   assert.equal("commercialAllowed" in presentation, false);
 });
 
@@ -375,7 +376,6 @@ test("localized sitemap publication is review-gated and its market loader has no
 
 test("explicit language wins for language while trusted geo remains market authority", () => {
   const result = resolvePresentationContext({
-    routeMarket: "se",
     routeLanguage: "sv",
     preference: { language: "de" },
     trustedCountryCode: "GB",
@@ -442,7 +442,7 @@ test("trusted geo selects configured markets and unsupported geo retains no fabr
 });
 
 test("invalid explicit route never force-enables an unsupported market", () => {
-  const result = resolvePresentationContext({ routeMarket: "xx", routeLanguage: "xx", trustedCountryCode: "DK" });
+  const result = resolvePresentationContext({ routeLanguage: "xx", trustedCountryCode: "DK" });
   assert.equal(result.market?.countryCode, "DK");
   assert.equal(result.source, "TRUSTED_GEO");
   assert.equal(result.explicitRouteValid, false);
@@ -484,10 +484,9 @@ test("every European Home locale has complete localized copy and metadata", () =
 });
 
 test("Home and public-core readiness are explicit and selector-safe", () => {
-  const core = new Set(["GB", "DE", "ES", "PE", "GR", "SE", "DK"]);
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
     assert.equal(homeTranslationReady(profile.defaultLocale), true, profile.countryCode);
-    assert.equal(publicCoreTranslationReady(profile.defaultLocale), core.has(profile.countryCode), profile.countryCode);
+    assert.equal(publicCoreTranslationReady(profile.defaultLocale), true, profile.countryCode);
   }
   assert.equal(homeTranslationReady("es-PE"), true);
   assert.equal(publicCoreTranslationReady("es-PE"), true);
@@ -548,9 +547,10 @@ test("translation review state records only first-wave Founder publication accep
     marketEvidenceReview: "GB_BASELINE",
   });
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES.filter((profile) => profile.countryCode !== "GB")) {
+    const localeCoreReady = PUBLISHED_LANGUAGE_ROUTE_PROFILES.some((language) => language.defaultLocale === profile.defaultLocale);
     assert.deepEqual(TRANSLATION_REVIEW_STATE[profile.defaultLocale], {
       content: "MACHINE_TRANSLATED",
-      publicExperience: (FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES as readonly string[]).includes(profile.countryCode)
+      publicExperience: localeCoreReady
         ? "PUBLIC_CORE_READY"
         : "HOME_READY",
       aiLanguageQa: "AI_LANGUAGE_QA_PASSED",
@@ -930,12 +930,14 @@ test("Production routing and preference selection expose only published language
     assert.equal(crossHostReplay.status, 308);
     assert.equal(crossHostReplay.headers.get("location"), "https://b4gamble.com/casinos");
 
-    for (const language of ["it", "pt", "nl", "fi", "nb", "fr"]) {
-      const denied = await middleware(new NextRequest(`https://b4gamble.com/${language}`));
-      assert.equal(denied.headers.get("x-middleware-rewrite"), null, language);
-      assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), null, language);
-      assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), null, language);
+    for (const language of ["it", "pt", "nl", "fi", "nb"]) {
+      const accepted = await middleware(new NextRequest(`https://b4gamble.com/${language}`));
+      assert.equal(new URL(accepted.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/", language);
+      assert.equal(accepted.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), language === "nb" ? "no" : language, language);
+      assert.equal(accepted.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), language, language);
     }
+    const deniedFrench = await middleware(new NextRequest("https://b4gamble.com/fr"));
+    assert.equal(deniedFrench.headers.get("x-middleware-rewrite"), null);
 
     const acceptedSelection = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
       method: "POST",
@@ -945,12 +947,13 @@ test("Production routing and preference selection expose only published language
     assert.equal(acceptedSelection.status, 303);
     assert.equal(acceptedSelection.headers.get("location"), "/de/casinos");
 
-    const unapprovedSelection = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
+    const newlyPublishedSelection = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
       method: "POST",
       body: new URLSearchParams({ choice: "it", returnTo: "/casinos" }),
       headers: { "content-type": "application/x-www-form-urlencoded" },
     }));
-    assert.equal(unapprovedSelection.status, 400);
+    assert.equal(newlyPublishedSelection.status, 303);
+    assert.equal(newlyPublishedSelection.headers.get("location"), "/it/casinos");
   } finally {
     if (previousVercelEnvironment === undefined) delete process.env.VERCEL_ENV;
     else process.env.VERCEL_ENV = previousVercelEnvironment;

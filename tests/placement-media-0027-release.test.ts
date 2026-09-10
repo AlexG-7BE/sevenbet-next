@@ -78,15 +78,20 @@ test("Production preflight requires verified 0027 before assignment-first enable
   assert.equal(ready.migration.applied, true);
 });
 
-test("build preflight retains an exact pending-suffix guard and steady-state verification is read-only", () => {
+test("build preflight retains exact migration guards while promotional readiness is retired", () => {
   const preflight = readFileSync("scripts/vercel-build-preflight.ts", "utf8");
   const release = readFileSync("lib/db/placement-media-0027-release.ts", "utf8");
-  assert.match(preflight, /const expectedPending = !applied\.has\(GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION\)/);
+  assert.match(preflight, /const expectedLegacyPending = !applied\.has\(GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION\)/);
+  assert.match(preflight, /MEDIA_RETIREMENT_TARGET_MIGRATION/);
   assert.match(preflight, /VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION/);
   assert.match(preflight, /pending\.length !== expectedPending\.length/);
-  assert.match(preflight, /planPlacementMedia0027Preflight/);
-  assert.match(preflight, /runPlacementMedia0027Readiness/);
-  assert.match(preflight, /planGeoLocalizedCreative0028Preflight/);
+  assert.doesNotMatch(preflight, /planPlacementMedia0027Preflight/);
+  assert.doesNotMatch(preflight, /runPlacementMedia0027Readiness/);
+  assert.doesNotMatch(preflight, /planGeoLocalizedCreative0028Preflight/);
+  assert.doesNotMatch(preflight, /planMediaGeo3Preflight/);
+  assert.match(preflight, /assertChecksum\(completedByName\.get\(MEDIA_GEO3_TARGET_MIGRATION\)/);
+  assert.match(preflight, /production_media_authority_readiness/);
+  assert.match(preflight, /retired_inert_history_verified/);
   assert.match(release, /SET TRANSACTION READ ONLY/);
   assert.doesNotMatch(release + preflight, /prisma migrate deploy|migrate reset|DROP TABLE|TRUNCATE/);
 });

@@ -54,7 +54,7 @@ orientation.
 | [RFC-024 — Database Recovery and Isolated Restore](RFC-024-Database-Recovery-and-Isolated-Restore.md) | `ACTIVE` | Restore-to-new-target, identity-guard and Production read-only recovery architecture. |
 | [RFC-025 — PROGRAM-AI Missions 02–10](RFC-025-PROGRAM-AI-Missions-02-10-MVP.md) | `ACTIVE` | Mission, prerequisite, reward, Review and Programme/commercial-separation authority. |
 | [RFC-026 — Analytics and Programme Runtime Hardening](RFC-026-MVP-Analytics-and-Programme-Runtime-Hardening.md) | `HISTORICAL` | Records the delivered analytics and Programme runtime-hardening workstream. |
-| [RFC-027 — Operational Agent Foundation](RFC-027-B4GAMBLE-Operational-Agent-Foundation.md) | `ACTIVE` | Isolated internal-agent capability plus exact-resource Commercial and Media Operations adapter authority ceilings. |
+| [RFC-027 — Operational Agent Foundation](RFC-027-B4GAMBLE-Operational-Agent-Foundation.md) | `ACTIVE` | Isolated internal-agent capability and Commercial Operations adapter authority ceilings. RFC-044 retires its Media Operations MCP amendment. |
 | [RFC-028 — Public Contact and Transactional Mail](RFC-028-Public-Contact-and-Transactional-Mail-Boundary.md) | `ACTIVE` | Contact purpose, no-database handling and delivery separation from other communications. |
 | [RFC-029 — Runtime Product Polish](RFC-029-Runtime-Product-Polish.md) | `HISTORICAL` | Records the completed microphone, account-linking, login and demo-fallback fixes. |
 | [RFC-030 — Production Canonical Host Enforcement](RFC-030-Production-Canonical-Host-Enforcement.md) | `HISTORICAL` | Records the delivered Production canonical-host fix. |
@@ -64,23 +64,24 @@ orientation.
 | [RFC-034 — Final Design Handoff Public Site](RFC-034-Final-Design-Handoff-Public-Site.md) | `HISTORICAL` | Records the completed final public-design handoff. |
 | [RFC-035 — Home Performance and Motion Polish](RFC-035-Home-Performance-and-Motion-Polish.md) | `HISTORICAL` | Records the completed Home motion and final site-polish delivery. |
 | [RFC-036 — GB Public Legal P0 Closure](RFC-036-GB-Public-Legal-P0-Closure.md) | `ACTIVE` | GB public legal, necessary-technology, licence-evidence and accepted-deferral authority. |
-| [RFC-037 — Internationalisation and Multi-Market Foundation](RFC-037-Internationalisation-and-Multi-Market-Foundation.md) | `ACTIVE` | Infrastructure-first internationalisation and market/commercial separation. RFC-039 supersedes its public locale-market URL and combined-selector semantics. |
+| [RFC-037 — Internationalisation and Multi-Market Foundation](RFC-037-Internationalisation-and-Multi-Market-Foundation.md) | `ACTIVE` | Infrastructure-first internationalisation and market/commercial separation. RFC-039 supersedes its URL/selector semantics; RFC-044 supersedes its older locale publication set. |
 | [RFC-038 — Casino Market Data Architecture](RFC-038-Casino-Market-Data-Architecture.md) | `ACTIVE` | Casino global identity, `CasinoCountry` factual market grain, market-scoped facts, provenance, logical PartnerRoute projection, and exact fail-closed Production eligibility. RFC-039 supersedes its unqualified public-query fallback semantics. |
-| [RFC-039 — Language-Only Public Routing and Global Casino Catalog](RFC-039-Language-Only-Public-Routing-and-Global-Casino-Catalog.md) | `ACTIVE` | Language-only public canonicals, trusted request-market separation, global real-Casino publication, `UNKNOWN`/prohibition separation and governed country-block routing. |
-| [RFC-040 — Placement-Based Media Assignments](RFC-040-Placement-Based-Media-Assignments.md) | `ACTIVE` | Founder-approved Option C typed assignment tables, deterministic resolver, semantic Admin slots and immutable publication projection. RFC-041 supersedes its narrower four-bucket presentation order for mixed hosted inventory. |
-| [RFC-041 — Vetted Partner-Hosted Creatives](RFC-041-Vetted-Partner-Hosted-Creatives.md) | `ACTIVE` | Exact Superfly/Bannerflow adapters, structured server-owned destinations, isolated rendering, creative-bound `/r` resolution and eight-tier global fallback policy. |
+| [RFC-039 — Language-Only Public Routing and Global Casino Catalog](RFC-039-Language-Only-Public-Routing-and-Global-Casino-Catalog.md) | `ACTIVE` | Language-only public canonicals, trusted request-market separation, global real-Casino publication, `UNKNOWN`/prohibition separation and governed country-block routing; RFC-044 extends its locale inventory. |
+| [RFC-040 — Placement-Based Media Assignments](RFC-040-Placement-Based-Media-Assignments.md) | `SUPERSEDED` | Historical typed assignment design; RFC-044 retires assignment-driven promotional authority while retaining its data inertly. |
+| [RFC-041 — Vetted Partner-Hosted Creatives](RFC-041-Vetted-Partner-Hosted-Creatives.md) | `SUPERSEDED` | Historical provider-isolation design; RFC-044 retires hosted creatives from active Product and runtime authority. |
 | [RFC-042 — Canonical Market Activation Authority](RFC-042-Canonical-Market-Activation-Authority.md) | `ACTIVE` | Single exact Casino × GEO × Product Production authority, desired-state controller/reconciler, canonical runtime cutover and one-way legacy compatibility. |
-| [RFC-043 — Production Media Pipeline](RFC-043-Production-Media-Pipeline.md) | `ACTIVE` | Exact-offer creative sets, shared placement registry, strict GEO/language resolver, atomic media revisions, automatic preflight/activation and rollback. Supersedes RFC-040/041 promotional fallback and review-hero policy only. |
+| [RFC-043 — Production Media Pipeline](RFC-043-Production-Media-Pipeline.md) | `SUPERSEDED` | Historical MEDIA-GEO3 pipeline and release evidence; RFC-044 retires its active runtime and business authority. |
+| [RFC-044 — Logo-Only Media Retirement and Locale/Market Separation](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md) | `ACTIVE` | Logo-only operator presentation, inert MEDIA-GEO3 history, media-independent commercial authority and one language registry independent from trusted GEO. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 22 |
+| `ACTIVE` | 20 |
 | `HISTORICAL` | 18 |
-| `SUPERSEDED` | 2 |
+| `SUPERSEDED` | 5 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **43** |
+| **Total RFC artifacts** | **44** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

@@ -295,11 +295,11 @@ export const LANGUAGE_ROUTE_PROFILES = [
   { language: "el", publicSlug: "el", defaultLocale: "el-GR", localeVariants: ["el-GR"], label: "Ελληνικά", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "sv", publicSlug: "sv", defaultLocale: "sv-SE", localeVariants: ["sv-SE"], label: "Svenska", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "da", publicSlug: "da", defaultLocale: "da-DK", localeVariants: ["da-DK"], label: "Dansk", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
-  { language: "it", publicSlug: "it", defaultLocale: "it-IT", localeVariants: ["it-IT"], label: "Italiano", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
-  { language: "pt", publicSlug: "pt", defaultLocale: "pt-PT", localeVariants: ["pt-PT"], label: "Português", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
-  { language: "nl", publicSlug: "nl", defaultLocale: "nl-NL", localeVariants: ["nl-NL"], label: "Nederlands", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
-  { language: "fi", publicSlug: "fi", defaultLocale: "fi-FI", localeVariants: ["fi-FI"], label: "Suomi", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
-  { language: "nb", publicSlug: "nb", defaultLocale: "nb-NO", localeVariants: ["nb-NO"], label: "Norsk bokmål", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
+  { language: "it", publicSlug: "it", defaultLocale: "it-IT", localeVariants: ["it-IT"], label: "Italiano", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "pt", publicSlug: "pt", defaultLocale: "pt-PT", localeVariants: ["pt-PT"], label: "Português", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "nl", publicSlug: "nl", defaultLocale: "nl-NL", localeVariants: ["nl-NL"], label: "Nederlands", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "fi", publicSlug: "fi", defaultLocale: "fi-FI", localeVariants: ["fi-FI"], label: "Suomi", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "nb", publicSlug: "nb", defaultLocale: "nb-NO", localeVariants: ["nb-NO"], label: "Norsk bokmål", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "fr", publicSlug: "fr", defaultLocale: "fr-CA", localeVariants: ["fr-CA"], label: "Français", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
 ] as const satisfies readonly LanguageRouteProfile[];
 
