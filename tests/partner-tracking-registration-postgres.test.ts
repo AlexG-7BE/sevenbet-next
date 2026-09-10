@@ -147,18 +147,18 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     await repository.recordVerification({ stage: exact, verification: "HEALTHY", reason: "GET_FALLBACK_OK", finalHost: "betway.example", redirectCount: 1, statusCode: 200, checkedAt: new Date(NOW.getTime() + 2_000), actorId: ACTOR_ID });
     await repository.promote({ stage: exact, finalHost: "betway.example", redirectCount: 1, checkedAt: new Date(NOW.getTime() + 2_000), actorId: ACTOR_ID });
 
-    const exactDkUsingGenericValue = await repository.stage({
+    const exactIeUsingGenericValue = await repository.stage({
       ...stageInput,
       trackingUrl: GENERIC_URL,
       linkHash: partnerTrackingLinkHash(GENERIC_URL),
       scope: "EXACT_GEO",
-      geo: "DK",
+      geo: "IE",
       now: new Date(NOW.getTime() + 2_500),
     });
-    assert.notEqual(exactDkUsingGenericValue.trackingLinkId, first.trackingLinkId, "scope identity must not be overwritten when the URL value is reused");
-    assert.deepEqual(exactDkUsingGenericValue.affectedRows.map((row) => row.geo), ["DK"]);
-    await repository.recordVerification({ stage: exactDkUsingGenericValue, verification: "HEALTHY", reason: "GET_FALLBACK_OK", finalHost: "betway.example", redirectCount: 1, statusCode: 200, checkedAt: new Date(NOW.getTime() + 2_700), actorId: ACTOR_ID });
-    await repository.promote({ stage: exactDkUsingGenericValue, finalHost: "betway.example", redirectCount: 1, checkedAt: new Date(NOW.getTime() + 2_700), actorId: ACTOR_ID });
+    assert.notEqual(exactIeUsingGenericValue.trackingLinkId, first.trackingLinkId, "scope identity must not be overwritten when the URL value is reused");
+    assert.deepEqual(exactIeUsingGenericValue.affectedRows.map((row) => row.geo), ["IE"]);
+    await repository.recordVerification({ stage: exactIeUsingGenericValue, verification: "HEALTHY", reason: "GET_FALLBACK_OK", finalHost: "betway.example", redirectCount: 1, statusCode: 200, checkedAt: new Date(NOW.getTime() + 2_700), actorId: ACTOR_ID });
+    await repository.promote({ stage: exactIeUsingGenericValue, finalHost: "betway.example", redirectCount: 1, checkedAt: new Date(NOW.getTime() + 2_700), actorId: ACTOR_ID });
 
     const replacement = await repository.stage({
       ...stageInput,
@@ -167,7 +167,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       now: new Date(NOW.getTime() + 3_000),
     });
     assert.equal(replacement.affectedRows.some((row) => row.geo === "ES"), false);
-    assert.equal(replacement.affectedRows.some((row) => row.geo === "DK"), false);
+    assert.equal(replacement.affectedRows.some((row) => row.geo === "IE"), false);
     await repository.recordVerification({ stage: replacement, verification: "BROKEN", reason: "HTTP_404", finalHost: "betway.example", redirectCount: 1, statusCode: 404, checkedAt: new Date(NOW.getTime() + 4_000), actorId: ACTOR_ID });
     assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active, true);
     assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: exact.trackingLinkId } })).active, true);
@@ -225,7 +225,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     await repository.finalizePromotion({ stage: healthyReplacement, checkedAt: new Date(NOW.getTime() + 5_900), actorId: ACTOR_ID });
     assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active, false);
     assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: exact.trackingLinkId } })).active, true);
-    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: exactDkUsingGenericValue.trackingLinkId } })).active, true);
+    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: exactIeUsingGenericValue.trackingLinkId } })).active, true);
     assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: healthyReplacement.trackingLinkId } })).active, true);
 
     const results = first.affectedRows.map((entry) => ({
