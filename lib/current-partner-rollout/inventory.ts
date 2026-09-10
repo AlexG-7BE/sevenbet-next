@@ -7,6 +7,49 @@ export const CURRENT_PARTNERS = [
   "Super Partners",
 ] as const;
 
+export type CurrentPartnerName = typeof CURRENT_PARTNERS[number];
+
+export const CURRENT_PARTNER_RECORDS: ReadonlyArray<{
+  name: CurrentPartnerName;
+  opportunityId: string;
+  aliases: readonly string[];
+}> = [
+  {
+    name: CURRENT_PARTNERS[0],
+    opportunityId: "122745ed-cd40-4816-b017-1647f40a903c",
+    aliases: ["Superfly Partners", "Superfly", "White Hat Gaming", "WHG", "Super"],
+  },
+  {
+    name: CURRENT_PARTNERS[1],
+    opportunityId: "2756e86b-f88d-496a-bc29-0600cabe3d89",
+    aliases: ["Betsson Group Affiliates", "BGA"],
+  },
+  {
+    name: CURRENT_PARTNERS[2],
+    opportunityId: "5588e200-e16c-4818-ab27-139787fb9e8a",
+    aliases: ["NetoPartners", "Anakatech", "GoldenPlay", "GoldenPlay Partners"],
+  },
+  {
+    name: CURRENT_PARTNERS[3],
+    opportunityId: "26981381-f765-4947-92c9-4f81691fc354",
+    aliases: ["Super Partners", "SuperPartners", "Super"],
+  },
+] as const;
+
+export function normalizeCurrentPartnerIdentity(value: string) {
+  return value.trim().toLowerCase().normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+export function resolveCurrentPartnerCandidates(value: string) {
+  const normalized = normalizeCurrentPartnerIdentity(value);
+  if (!normalized) return [];
+  return CURRENT_PARTNER_RECORDS.filter((record) => [record.name, ...record.aliases]
+    .some((candidate) => normalizeCurrentPartnerIdentity(candidate) === normalized));
+}
+
 export const FINAL_STATES = [
   "ACTIVE_HEALTHY",
   "BLOCKED_BY_LAW",

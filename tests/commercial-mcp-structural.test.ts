@@ -5,6 +5,9 @@ import test from "node:test";
 const files = [
   "../lib/commercial/commercial-mcp-contract.ts",
   "../lib/commercial/commercial-mcp-service.ts",
+  "../lib/commercial/partner-tracking-registration-contract.ts",
+  "../lib/commercial/partner-tracking-registration-service.ts",
+  "../lib/repositories/partner-tracking-registration.repository.ts",
   "../lib/mcp/commercial/server.ts",
   "../app/api/mcp/commercial/route.ts",
 ];
@@ -17,10 +20,33 @@ test("Commercial MCP boundary has no Programme/private-domain coupling", async (
 });
 
 test("MCP adapter and service do not import Prisma directly", async () => {
-  for (const file of ["../lib/commercial/commercial-mcp-service.ts", "../lib/mcp/commercial/server.ts", "../app/api/mcp/commercial/route.ts"]) {
+  for (const file of ["../lib/commercial/commercial-mcp-service.ts", "../lib/commercial/partner-tracking-registration-service.ts", "../lib/mcp/commercial/server.ts", "../app/api/mcp/commercial/route.ts"]) {
     const source = await readFile(new URL(file, import.meta.url), "utf8");
     assert.doesNotMatch(source, /@prisma\/client|lib\/db\/prisma|\.commercialOpportunity\./, file);
   }
+});
+
+test("tracking registration exposes no tokenized URL in result, logs, audit, or metrics", async () => {
+  const contract = await readFile(new URL("../lib/commercial/partner-tracking-registration-contract.ts", import.meta.url), "utf8");
+  const service = await readFile(new URL("../lib/commercial/partner-tracking-registration-service.ts", import.meta.url), "utf8");
+  const repository = await readFile(new URL("../lib/repositories/partner-tracking-registration.repository.ts", import.meta.url), "utf8");
+  const responseType = contract.slice(contract.indexOf("export type PartnerTrackingRegistrationResult ="));
+  assert.doesNotMatch(responseType, /trackingUrl\s*:/);
+  assert.doesNotMatch(service, /console\.(?:log|info|warn|error)/);
+  assert.doesNotMatch(repository, /console\.(?:log|info|warn|error)/);
+  const auditSection = repository.slice(repository.indexOf("await tx.auditLog.create"));
+  assert.doesNotMatch(auditSection, /trackingUrl|destinationUrl/);
+  assert.match(repository, /oauthClientIdHash: sha256\(input\.clientId\)/);
+  assert.match(repository, /linkHash: input\.stage\.linkHash/);
+});
+
+test("tracking registration remains one bounded Commercial MCP mutation with no media dependency", async () => {
+  const server = await readFile(new URL("../lib/mcp/commercial/server.ts", import.meta.url), "utf8");
+  const service = await readFile(new URL("../lib/commercial/partner-tracking-registration-service.ts", import.meta.url), "utf8");
+  assert.match(server, /commercial_register_partner_tracking_link/);
+  assert.doesNotMatch(service, /media|MEDIA-GEO3/i);
+  assert.match(service, /marketActivationController/);
+  assert.match(service, /assertPublicNetworkUrl/);
 });
 
 test("provider internals are blocked and token/code material is never logged", async () => {

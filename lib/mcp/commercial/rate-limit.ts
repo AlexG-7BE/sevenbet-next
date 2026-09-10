@@ -42,6 +42,45 @@ export async function consumeCommercialMcpRateLimit({
   };
 }
 
+export type PartnerTrackingRegistrationMetric =
+  | "REQUEST"
+  | "RESOLUTION_FAILURE"
+  | "HEALTHY_VERIFICATION"
+  | "BROKEN_VERIFICATION"
+  | "INCONCLUSIVE_VERIFICATION"
+  | "ACTIVATED_GEO"
+  | "BLOCKED_LEGAL_GEO"
+  | "REGULATORY_ACTION_GEO";
+
+export async function recordPartnerTrackingRegistrationMetric({
+  metric,
+  increment = 1,
+  now = Date.now(),
+}: {
+  metric: PartnerTrackingRegistrationMetric;
+  increment?: number;
+  now?: number;
+}) {
+  const boundedIncrement = Math.max(1, Math.min(10_000, Math.trunc(increment)));
+  const windowMs = 24 * 60 * 60 * 1_000;
+  const windowStartedAt = Math.floor(now / windowMs) * windowMs;
+  const scope = `partner-tracking-registration:${metric.toLowerCase()}`;
+  const bucketKey = createHash("sha256")
+    .update(`${scope}\0${windowStartedAt}`)
+    .digest("hex");
+  await prisma.commercialMcpRateLimitBucket.upsert({
+    where: { bucketKey },
+    create: {
+      bucketKey,
+      scope,
+      count: boundedIncrement,
+      windowStartedAt: new Date(windowStartedAt),
+      expiresAt: new Date(windowStartedAt + 35 * windowMs),
+    },
+    update: { count: { increment: boundedIncrement } },
+  });
+}
+
 export function commercialMcpRateLimitKey(request: Request) {
   return request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
     ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()

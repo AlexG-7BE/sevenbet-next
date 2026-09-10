@@ -1,7 +1,7 @@
 # RFC-027: B4GAMBLE Operational Agent Foundation
 
-- **Status:** Approved for bounded implementation; Partner Operations, ChatGPT Work Commercial and separate Media Operations bridge amendments approved
-- **Decision authority:** Founder Office `AGENT-CORE-01`; amended by `COMMERCIAL-OPS-01`, `PARTNER-OPS-WORK-BRIDGE-01`, `PARTNER-OPS-WORK-BRIDGE-02` and `MEDIA-INGESTION-AUTOPLACEMENT-01` instructions
+- **Status:** Approved for bounded implementation; Partner Operations, ChatGPT Work Commercial, partner tracking registration and separate Media Operations bridge amendments approved
+- **Decision authority:** Founder Office `AGENT-CORE-01`; amended by `COMMERCIAL-OPS-01`, `PARTNER-OPS-WORK-BRIDGE-01`, `PARTNER-OPS-WORK-BRIDGE-02`, `PARTNER-TRACKING-REGISTRATION-MECHANISM` and `MEDIA-INGESTION-AUTOPLACEMENT-01` instructions
 - **Approved:** 2026-08-13
 - **Scope:** Isolated internal OpenAI Agents SDK foundation, eight specialist definitions, shared policy/result contracts, explicit cost-aware routing, bounded manual runner, no-key structural evaluation, one narrow application-side Partner Operations CRM executor, one Commercial CRM remote MCP resource, and one separate exact-resource Media Operations MCP adapter
 - **Implementation:** merged to `main` by PR #69 at `7c36bffb901db62863b02cb8c2cf771cdadaaf89`
@@ -254,7 +254,7 @@ One non-personal Partner Operations connectivity smoke was executed under this a
 
 Founder instruction on 2026-08-20 authorises one remote MCP application inside the existing B4GAMBLE application so an authorised ChatGPT Work Agent can read and perform strictly bounded safe writes to the Commercial CRM.
 
-1. The resource is `/api/mcp/commercial`, using official MCP stateless Streamable HTTP and exactly four purpose-built tools: list, get, possible-duplicate lookup, and one transactional research-bundle upsert. It is not a generic Admin, HTTP, SQL or Prisma surface.
+1. The resource is `/api/mcp/commercial`, using official MCP stateless Streamable HTTP. This amendment originally authorised exactly four purpose-built tools: list, get, possible-duplicate lookup, and one transactional research-bundle upsert. Section 21 separately authorises one fifth bounded tracking-registration tool. The resource is not a generic Admin, HTTP, SQL or Prisma surface.
 2. OAuth uses Better Auth `1.6.30` plus `@better-auth/oauth-provider` `1.6.30` with the existing staff identity. The provider owns authorization codes, PKCE S256, explicit consent, short-lived opaque access tokens, protected token storage, rotating refresh-token families and revocation. The application owns current ChatGPT public-client/callback policy, the exact resource, Commercial scopes and tool authorization. A valid consumer identity is insufficient; `AdminUser` and `affiliate.manage` are checked at authorization, token/refresh and resource use. DCR alone has zero Commercial authority.
 3. The existing consumer, Google identity-only, Admin session and Programme authentication semantics remain unchanged. The additive provider tables are `oauthClient`, `oauthRefreshToken`, `oauthAccessToken` and `oauthConsent`; reusable token/code values are never stored in plaintext. The MCP feature is explicitly gated and fails closed without affecting ordinary application startup or CRM use.
 4. The remote adapter is an external evidence-provider boundary. It accepts bounded claims and provenance, requires `observedAt` for public web, never stores page/mailbox archives, exposes no `sourceAuthority` input, and persists Work evidence authority as `null`.
@@ -281,7 +281,7 @@ Founder instruction on 2026-08-20 authorises a coordinated dependency, schema an
 6. Migration `0021_partner_ops_work_bridge_01` is immutable. New migration `0022_better_auth_17_schema_upgrade` is additive, preserves the 1.6 OAuth compatibility columns, and provides deterministic credential/Google issuer overlap writes so the current application can remain deployed while migrations are applied with MCP disabled.
 7. The new 1.7 application requires schema through 0022 and therefore must not be promoted against Production through only 0020 or 0021. A future controlled release must apply 0021 then 0022 while the current 1.6 application and disabled MCP remain in place, verify existing auth and migration state, and only then promote 1.7 code. This amendment does not authorise that Production migration, deployment or feature enablement.
 
-The four tools, `affiliate.manage`, `commercial:read`, `commercial:safe_write`, explicit consent, PKCE S256, safe CRM transaction, commercial/private-data firewall and all section 17 forbidden powers remain unchanged. This amendment creates no APPROVED/ACTIVE/send/submit/terms/tracking/affiliate/deployment/Production capability.
+The original four tools, `affiliate.manage`, `commercial:read`, `commercial:safe_write`, explicit consent, PKCE S256, safe CRM transaction and commercial/private-data firewall remain unchanged. This amendment itself creates no APPROVED/ACTIVE/send/submit/terms/tracking/affiliate/deployment/Production capability; section 21 records the later narrowly authorised tracking-registration capability.
 
 ## 19. `MEDIA-INGESTION-AUTOPLACEMENT-01` Media Operations amendment
 
@@ -392,3 +392,46 @@ resource.
 
 All section 19 security, OAuth isolation, draft-only assignment, audit,
 publication and no-external-action boundaries remain in force.
+
+## 21. `PARTNER-TRACKING-REGISTRATION-MECHANISM` amendment
+
+The explicit Founder instruction on 10 September 2026 authorises one fifth
+tool on the existing Commercial MCP resource:
+`commercial_register_partner_tracking_link`.
+
+1. Public input is strictly `partner`, `casino`, `trackingUrl` and optional
+   `geo`. The authenticated caller supplies no internal ID or commercial/legal
+   state. Partner and Casino resolution is limited to current established
+   records and aliases; unknown, ambiguous or mismatched identity cannot create
+   or reassign either entity.
+2. An omitted GEO means a reusable default tracking route for the current
+   supported Partner × Casino inventory. It is not global market authority.
+   A supplied canonical exact GEO applies only there, and exact tracking always
+   outranks the default. Locale and `ZZ` do not grant commercial authority.
+3. The supplied current-partner URL is sufficient tracking authority. The
+   operation does not reopen partner approval, Founder approval, KYC/AML,
+   contracts or GEO approval. Current exact legal/regulatory classifications
+   remain independent fail-closed gates.
+4. The bounded service may reconcile a missing canonical AffiliateProgram,
+   neutral evergreen AffiliateOffer and deterministic `/r` record without
+   inventing terms. It stages the route inactive, performs bounded every-hop
+   SSRF-safe verification, and promotes only a healthy expected operator
+   destination. A failed replacement cannot retire the prior healthy route.
+5. RFC-042 remains the sole CTA authority. Each eligible exact GEO is passed to
+   its controller; direct `ACTIVE` or `HEALTHY` writes are forbidden. Prior
+   same-scope route retirement occurs only after successful convergence.
+6. Canonical application route fields are the only permitted durable location
+   for an executable raw tracking value. Responses, logs, metrics, audit,
+   diagnostics and CRM records use only bounded IDs, hashes, counts, final host
+   and status. Failed non-canonical values are redacted after classification.
+7. Serializable transactions, deterministic keys and upserts govern concurrent
+   staging and promotion. The prior route and bounded audit remain available
+   for rollback. Temporary DNS, timeout or egress uncertainty is retriable and
+   never becomes a new business terminal state.
+8. Authority is limited to this workflow under existing
+   `commercial:safe_write` plus `affiliate.manage`. It adds no arbitrary SQL,
+   prospect approval, partner/Casino creation, legal-policy mutation,
+   communications, personal-account access, media dependency or deployment
+   surface.
+
+The permanent operating contract is [Partner Tracking Link Registration](../06_Operations/Partner-Tracking-Link-Registration.md).
