@@ -106,6 +106,7 @@ test("Production mutation is one-time, exact-target guarded, and snapshot-first"
     "PRODUCTION_DATABASE_FINGERPRINT",
   ]) assert.match(service, new RegExp(guard));
   assert.match(service, /timeout: 240_000/);
+  assert.match(service, /mapConcurrent\(exactRows, 1,/);
   assert.match(command, /snapshot = await writePrivateJson[\s\S]+currentPartnerProductionSnapshot\(\)[\s\S]+const result = await runCurrentPartnerReconciliation/);
   assert.match(command, /mode: 0o600/);
 });
