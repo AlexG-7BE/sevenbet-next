@@ -1,4 +1,13 @@
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/db/prisma";
+
+const uuidPattern = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
+
+export function affiliateRouteHealthCasinoFilter(casino?: string): Prisma.MarketActivationWhereInput {
+  if (!casino) return {};
+  return { casino: uuidPattern.test(casino) ? { id: casino } : { slug: casino } };
+}
 
 export interface AffiliateRouteHealthClaim {
   activationId: string;
@@ -23,7 +32,7 @@ export class AffiliateRouteHealthRepository implements AffiliateRouteHealthClaim
         desiredState: "ACTIVE",
         status: "ACTIVE",
         ...(filters.countryCode ? { countryCode: filters.countryCode } : {}),
-        ...(filters.casino ? { casino: { OR: [{ id: filters.casino }, { slug: filters.casino }] } } : {}),
+        ...affiliateRouteHealthCasinoFilter(filters.casino),
       },
       select: {
         id: true,

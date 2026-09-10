@@ -4,6 +4,7 @@ import test from "node:test";
 
 import { checkAffiliateRouteHttp } from "../lib/affiliate-health/checker";
 import { isPublicAddress } from "../lib/affiliate-health/public-network-url";
+import { affiliateRouteHealthCasinoFilter } from "../lib/repositories/affiliate-route-health.repository";
 import { AffiliateRouteHealthService } from "../lib/services/affiliate-route-health.service";
 
 const noNetworkValidation = async () => undefined;
@@ -312,6 +313,15 @@ test("canonical relationship gaps and inconclusive verification fail closed with
   const inconclusiveReport = await inconclusive.run();
   assert.equal(inconclusiveReport.results[0].status, "DEGRADED");
   assert.equal(inconclusiveReport.results[0].reason, "ROUTE_VERIFICATION_INCONCLUSIVE");
+});
+
+test("casino claim filters select either a UUID or a slug without an invalid mixed relation", () => {
+  assert.deepEqual(affiliateRouteHealthCasinoFilter("rizk"), { casino: { slug: "rizk" } });
+  assert.deepEqual(
+    affiliateRouteHealthCasinoFilter("3fa466e8-7680-53ef-b92b-650d9d18b927"),
+    { casino: { id: "3fa466e8-7680-53ef-b92b-650d9d18b927" } },
+  );
+  assert.deepEqual(affiliateRouteHealthCasinoFilter(), {});
 });
 
 test("claim selection follows canonical active MarketActivation and automation uses one deduplicated issue", () => {
