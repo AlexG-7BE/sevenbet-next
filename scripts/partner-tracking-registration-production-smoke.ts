@@ -2,7 +2,11 @@ import { createHash, randomBytes } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
-import { CURRENT_PARTNER_INVENTORY, CURRENT_PARTNER_RECORDS } from "@/lib/current-partner-rollout/inventory";
+import {
+  CURRENT_PARTNER_INVENTORY,
+  CURRENT_PARTNER_RECORDS,
+  normalizeCurrentPartnerIdentity,
+} from "@/lib/current-partner-rollout/inventory";
 
 if (!process.env.DATABASE_URL && process.env.PRODDB_DATABASE_URL) {
   process.env.DATABASE_URL = process.env.PRODDB_DATABASE_URL;
@@ -78,7 +82,20 @@ async function runBeforeStateSnapshot(sha: string) {
     select: { id: true, stage: true, affiliateNetworkId: true },
     orderBy: { id: "asc" },
   });
-  const networkIds = [...new Set(opportunities.flatMap((opportunity) => opportunity.affiliateNetworkId ? [opportunity.affiliateNetworkId] : []))];
+  const networks = await prisma.affiliateNetwork.findMany({
+    where: { archivedAt: null },
+    select: { id: true, name: true, slug: true },
+  });
+  const networkResolution = CURRENT_PARTNER_RECORDS.map((partner) => {
+    const identities = new Set([partner.name, ...partner.aliases].map(normalizeCurrentPartnerIdentity));
+    const matches = networks.filter((network) => identities.has(normalizeCurrentPartnerIdentity(network.name))
+      || identities.has(normalizeCurrentPartnerIdentity(network.slug)));
+    return { partnerId: partner.opportunityId, matchCount: matches.length, ids: matches.map((network) => network.id) };
+  });
+  const networkIds = [...new Set([
+    ...opportunities.flatMap((opportunity) => opportunity.affiliateNetworkId ? [opportunity.affiliateNetworkId] : []),
+    ...networkResolution.flatMap((resolution) => resolution.ids),
+  ])];
   const casinoNames = [...new Set(CURRENT_PARTNER_INVENTORY.map((row) => row.casino))];
   const casinoSlugs = [...new Set(CURRENT_PARTNER_INVENTORY.flatMap((row) => row.casinoSlug ? [row.casinoSlug] : []))];
   const casinos = await prisma.casino.findMany({
@@ -108,6 +125,7 @@ async function runBeforeStateSnapshot(sha: string) {
     foundPartnerRecords: opportunities.length,
     activePartnerRecords: opportunities.filter((opportunity) => opportunity.stage === "ACTIVE").length,
     boundPartnerNetworks: networkIds.length,
+    networkResolution: networkResolution.map(({ partnerId, matchCount }) => ({ partnerId, matchCount })),
     canonicalInventoryRows: CURRENT_PARTNER_INVENTORY.length,
     resolvedCanonicalCasinos: casinos.length,
     objects: { programCount, offerCount, trackingLinkCount, redirectCount, marketActivationCount: activations.length },
