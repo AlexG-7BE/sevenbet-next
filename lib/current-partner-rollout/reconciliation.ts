@@ -709,7 +709,7 @@ async function convergeActivations(input: { bga: Map<number, CommercialBinding>;
     ...["21-prive", "skol-casino", "slotnite", "hello-casino", "gday-casino", "diamond7"].map((casinoSlug) => ({ casinoSlug, countryCode: "ZZ" })),
     { casinoSlug: "rizk", countryCode: "CA" },
   ];
-  const disabled = await mapConcurrent(extraDisabled, 4, async (row) => activationSummary(await marketActivationController.disableCasinoInGeo({
+  const disabled = await mapConcurrent(extraDisabled, 1, async (row) => activationSummary(await marketActivationController.disableCasinoInGeo({
     ...row,
     product: "CASINO",
     actorId: input.actorId,
