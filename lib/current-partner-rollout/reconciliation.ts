@@ -546,7 +546,10 @@ function staleBlocker(value: string) {
 }
 
 const remainingTasks = new Map([
-  [CURRENT_PARTNERS[0], ["ACTION_REQUIRED_REGULATORY: implement exact Canadian province routing and authority before any Canada CTA."]],
+  [CURRENT_PARTNERS[0], [
+    "ACTION_REQUIRED_REGULATORY: implement exact Canadian province routing and authority before any Canada CTA.",
+    "ACTION_REQUIRED_REGULATORY: complete explicit GB legal/commercial policy activation before any exact GB CTA.",
+  ]],
   [CURRENT_PARTNERS[1], [
     "ROUTE_REPAIR: monitor or replace the persistent HTTP 403 on the partner-provided Inkabet PE routes.",
     "ACTION_REQUIRED_REGULATORY: complete the exact Argentina/Iceland/Canadian provincial requirements recorded in the rollout matrix.",
