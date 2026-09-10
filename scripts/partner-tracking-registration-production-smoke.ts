@@ -2,10 +2,24 @@ import { createHash, randomBytes } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
-import { commercialMcpService } from "@/lib/commercial/commercial-mcp-service";
 import { CURRENT_PARTNER_INVENTORY, CURRENT_PARTNER_RECORDS } from "@/lib/current-partner-rollout/inventory";
-import prisma from "@/lib/db/prisma";
-import { hashCommercialMcpProviderToken } from "@/lib/mcp/commercial/provider";
+
+if (!process.env.DATABASE_URL && process.env.PRODDB_DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.PRODDB_DATABASE_URL;
+}
+if (!process.env.DIRECT_URL && process.env.PRODDB_POSTGRES_URL) {
+  process.env.DIRECT_URL = process.env.PRODDB_POSTGRES_URL;
+}
+
+const [
+  { commercialMcpService },
+  { default: prisma },
+  { hashCommercialMcpProviderToken },
+] = await Promise.all([
+  import("@/lib/commercial/commercial-mcp-service"),
+  import("@/lib/db/prisma"),
+  import("@/lib/mcp/commercial/provider"),
+]);
 
 const EXPECTED_DATABASE_FINGERPRINT = "ce94f1e2b465c25d62b13a8c3f2db47aa07b96b541603c818ef6219c9c970a5e";
 const EXPECTED_REPOSITORY = "AlexG-7BE/sevenbet-next";
