@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import React from "react";
-import type { ReactNode } from "react";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
@@ -10,12 +9,13 @@ import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacement
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
-import { visitActionUnavailableCopy } from "@/lib/public-casino-discovery/visit-action-presentation";
 import { formatProductMessage, productPageMessages, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
+import { commercialUiLabels } from "@/lib/i18n/commercial-ui-labels";
+import { formatCompactWagering } from "@/lib/presentation/commercial-terms";
 import { offerPresentationCopy } from "@/lib/public-offer/offer-presentation-copy";
 
 const DIRECTORY_EDITORIAL_MEDIA = "/casino-directory/editorial-media.jpg";
@@ -36,10 +36,6 @@ function formatDate(value: string | null, locale: string) {
   return Number.isNaN(date.valueOf()) ? null : new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(date);
 }
 
-function Signal({ children, classNames }: { children: ReactNode; classNames: CasinoCardClassNames }) {
-  return <span className={classNames.signal}><i aria-hidden="true" />{children}</span>;
-}
-
 function hasGovernedVisitAction(casino: PublicCasinoCardDto) {
   return casino.disposition === "PROMOTABLE"
     && casino.dataClassification !== "DEMO_FIXTURE"
@@ -50,38 +46,26 @@ function hasGovernedVisitAction(casino: PublicCasinoCardDto) {
 function ReviewCardContents({ casino, position, classNames, messages, presentation }: { casino: PublicCasinoCardDto; position?: number; classNames: CasinoCardClassNames; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const demo = casino.dataClassification !== "PUBLISHED_RECORD";
   const canVisit = hasGovernedVisitAction(casino);
-  const unavailable = visitActionUnavailableCopy(casino.visitAction);
   const reviewHref = publicCasinoReviewHref(casino);
   const freshness = formatDate(casino.editorialUpdatedAt ?? casino.publishedAt, presentation.locale);
   const formattedRating = casino.rating === null ? null : formatProfileScore(casino.rating, presentation.locale);
-  const disclosure = casino.dataClassification === "PUBLISHED_RECORD"
-    ? casino.disposition === "PROMOTABLE"
-      ? messages.bestOffers.commissionNote
-      : messages.common.reviewAvailableNoAction
-    : casino.dataClassification === "DEMO_FIXTURE"
-      ? messages.common.demoDisclosure
-      : messages.common.marketPresentationNotice;
   const offerScope = offerPresentationCopy(casino.featuredBonus?.presentation, messages, presentation);
-  const signals = [
-    casino.licenses[0]?.label,
-    casino.paymentMethods.length ? casino.paymentMethods.slice(0, 2).map((item) => item.label).join(" + ") : null,
-    casino.responsibleGamblingLabel,
-  ].filter((value): value is string => Boolean(value));
+  const labels = commercialUiLabels(presentation.locale);
+  const wagering = casino.featuredBonus
+    ? formatCompactWagering(casino.featuredBonus.wageringRequirement, null, { notListed: messages.common.notListed, notStated: labels.notStated })
+    : messages.common.notListed;
   return <>
     {position !== undefined && <span aria-label={`${messages.common.result} ${position}`} className={classNames.position}>{String(position).padStart(2, "0")}</span>}
     <div className={classNames.cardHeader}>
-      <div className={classNames.logo}>{casino.logo ? <ResponsivePlacementImage alt="" height={casino.logo.height ?? 72} loading="lazy" media={casino.logo} width={casino.logo.width ?? 144} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}</div>
+      <div className={classNames.logo}>{casino.logo ? <ResponsivePlacementImage alt="" height={casino.logo.height ?? 72} loading="lazy" media={casino.logo} width={casino.logo.width ?? 144} /> : null}</div>
       <div className={classNames.identity}><h2>{reviewHref ? <Link href={productHref(presentation, reviewHref)}>{casino.name}</Link> : casino.name}</h2>{demo ? <small>{messages.common.demoData}</small> : casino.highlights.length ? <small>{casino.highlights.slice(0, 2).join(" · ")}</small> : freshness && <small>{messages.common.current} {freshness}</small>}</div>
       {formattedRating !== null && <div aria-label={`${messages.common.editorScore} ${formattedRating} / 10`} className={classNames.score}><strong>{formattedRating}</strong><span>/10</span></div>}
     </div>
     {casino.shortDescription && <p className={classNames.description}>{casino.shortDescription}</p>}
-    {signals.length > 0 && <div className={classNames.signals}>{signals.map((signal) => <Signal classNames={classNames} key={signal}>{signal}</Signal>)}</div>}
     <div className={classNames.offerBlock}>
-      {casino.featuredBonus ? <><span>{demo ? messages.common.demoData : offerScope.label}</span><strong>{casino.featuredBonus.title}</strong>{casino.featuredBonus.summary && <p>{casino.featuredBonus.summary}</p>}{casino.featuredBonus.keyTerms.length > 0 || (!demo && offerScope.qualification) ? <small>{[...casino.featuredBonus.keyTerms.slice(0, 3), demo ? messages.common.demoData : offerScope.qualification].filter(Boolean).join(" · ")}</small> : null}</> : <><span>{messages.common.bonusAvailability}</span><strong>{messages.common.notListed}</strong></>}
+      {casino.featuredBonus ? <><span>{demo ? messages.common.demoData : offerScope.label}</span><strong>{casino.featuredBonus.title}</strong><small>{messages.common.wagering} {wagering}{casino.featuredBonus.minimumDeposit !== null ? ` · ${messages.common.minimumDeposit} ${casino.featuredBonus.minimumDeposit}${casino.featuredBonus.currency ? ` ${casino.featuredBonus.currency}` : ""}` : ""}</small></> : <><span>{messages.common.bonusAvailability}</span><strong>{messages.common.notListed}</strong></>}
     </div>
-    <p className={classNames.commission}>{disclosure}</p>
-    {unavailable && <p className={classNames.unavailable} role="note">{messages.common.reviewAvailableNoAction}</p>}
-    <div className={classNames.cardActions}>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} messages={messages.outbound} />}{reviewHref ? <TrackedReviewLink href={productHref(presentation, reviewHref)} sourceSurface="casinos">{demo ? messages.common.viewDemonstration : messages.common.readReview}</TrackedReviewLink> : null}<ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /></div>
+    <div className={classNames.cardActions}>{canVisit ? <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: labels.visitCasino }} messages={messages.outbound} /> : <span className={classNames.unavailable}>{messages.common.reviewOnly}</span>}{reviewHref ? <TrackedReviewLink href={productHref(presentation, reviewHref)} sourceSurface="casinos">{demo ? messages.common.viewDemonstration : messages.common.readReview}</TrackedReviewLink> : null}<ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /></div>
   </>;
 }
 
@@ -92,7 +76,7 @@ export function CasinoDiscoveryCardMarkup({ casino, position, classNames, messag
 export function DirectoryFeaturedTheatreMarkup({ casino, classNames, messages = productPageMessages("en-GB"), presentation = resolvePresentationContext({}) }: { casino: PublicCasinoCardDto | undefined; classNames: CasinoCardClassNames; messages?: ProductPageMessages; presentation?: PresentationResolution }) {
   if (!casino) return <div className={classNames.featurePlaceholder}><span>{messages.casinos.directoryTitle}</span><strong>{formatProductMessage(messages.casinos.noPublishedTitle, { market: presentation.marketDisplayName })}</strong><p>{formatProductMessage(messages.casinos.noMatchesCopy, { market: presentation.marketDisplayName })}</p></div>;
   const formattedRating = casino.rating === null ? messages.common.notListed : `${formatProfileScore(casino.rating, presentation.locale)} / 10`;
-  const visitAvailability = hasGovernedVisitAction(casino) ? messages.common.actionAvailable : messages.common.reviewOnly;
+  const visitAvailability = hasGovernedVisitAction(casino) ? commercialUiLabels(presentation.locale).visitCasino : messages.common.reviewOnly;
   return <section aria-label={messages.casinos.directoryTitle} className={classNames.featureTheatre}>
     <Image alt="" aria-hidden="true" className={classNames.featureMedia} fill priority sizes="(max-width: 760px) 1px, (max-width: 1280px) 100vw, 1280px" src={DIRECTORY_EDITORIAL_MEDIA} />
     <div aria-hidden="true" className={classNames.featureOverlay} />

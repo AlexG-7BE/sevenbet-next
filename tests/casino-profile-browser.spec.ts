@@ -41,161 +41,53 @@ test("casino profile has no horizontal overflow across approved and defensive wi
   }
 });
 
-test("localized profile facts preserve whole words at the tablet composition and on long desktop terms", async ({ browser }) => {
-  const tabletContext = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 768, height: 1024 } });
-  const tabletPage = await tabletContext.newPage();
-  const tabletResponse = await tabletPage.goto(`${baseUrl}/el/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
-  expect(tabletResponse?.status()).toBe(200);
-  await expect(tabletPage.locator("html")).toHaveAttribute("lang", "el-GR");
-  await expect(tabletPage.locator("#overview-heading")).toContainText("Έλεγχος 30 δευτερολέπτων");
+test("localized profile facts and no-offer panels preserve whole words", async ({ browser }) => {
+  const cases = [
+    { locale: "el", lang: "el-GR", width: 768 },
+    { locale: "es", lang: "es-ES", width: 768 },
+    { locale: "nl", lang: "nl-NL", width: 1440 },
+  ] as const;
 
-  const tabletLayout = await tabletPage.evaluate(() => {
-    const visibleWordFragments = (elements: Element[]) => elements.flatMap((element) => {
+  for (const item of cases) {
+    const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: item.width, height: 1024 } });
+    const page = await context.newPage();
+    const response = await page.goto(`${baseUrl}/${item.locale}/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+    await expect(page.locator("html")).toHaveAttribute("lang", item.lang);
+    await expect(page.locator('[data-offer-state="unavailable"]')).toBeVisible();
+    await expect(page.locator('[data-offer-state="unavailable"] a[href^="/r/"]')).toHaveCount(0);
+    const layout = await page.evaluate(() => {
       const fragments: Array<{ lines: number; word: string }> = [];
-      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-      let node = walker.nextNode();
-      while (node) {
-        const text = node.textContent ?? "";
-        for (const match of text.matchAll(/\p{L}[\p{L}\p{M}]*/gu)) {
-          const word = match[0];
-          if (word.length < 4 || match.index === undefined) continue;
-          const range = document.createRange();
-          range.setStart(node, match.index);
-          range.setEnd(node, match.index + word.length);
-          const lines = new Set(Array.from(range.getClientRects())
-            .filter((rect) => rect.width > 0.5 && rect.height > 0.5)
-            .map((rect) => Math.round(rect.top * 2) / 2)).size;
-          if (lines > 1) fragments.push({ lines, word });
+      for (const element of document.querySelectorAll('[data-offer-state="unavailable"] h2, #overview-heading, #overview dt, #overview dd')) {
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        let node = walker.nextNode();
+        while (node) {
+          const text = node.textContent ?? "";
+          for (const match of text.matchAll(/\p{L}[\p{L}\p{M}]*/gu)) {
+            if (match[0].length < 4 || match.index === undefined) continue;
+            const range = document.createRange();
+            range.setStart(node, match.index);
+            range.setEnd(node, match.index + match[0].length);
+            const lines = new Set(Array.from(range.getClientRects()).filter((rect) => rect.width > .5 && rect.height > .5).map((rect) => Math.round(rect.top * 2) / 2)).size;
+            if (lines > 1) fragments.push({ lines, word: match[0] });
+          }
+          node = walker.nextNode();
         }
-        node = walker.nextNode();
       }
-      return fragments;
+      const hero = document.querySelector<HTMLElement>('section[aria-labelledby="casino-profile-title"]')!;
+      const review = hero.firstElementChild as HTMLElement;
+      const panel = hero.querySelector<HTMLElement>('[data-offer-state="unavailable"]')!;
+      return {
+        fragments,
+        horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        panelStacked: innerWidth <= 1000 ? panel.getBoundingClientRect().top >= review.getBoundingClientRect().bottom - 1 : true,
+      };
     });
-
-    const overview = document.querySelector<HTMLElement>("#overview")!;
-    const overviewHeading = overview.querySelector<HTMLElement>("#overview-heading")!;
-    const overviewHeader = overviewHeading.parentElement!;
-    const overviewKicker = overviewHeader.querySelector<HTMLElement>(":scope > p")!;
-    const overviewCopy = overviewHeader.querySelector<HTMLElement>(":scope > span")!;
-    const overviewGrid = overview.children[1] as HTMLElement;
-    const overviewCards = Array.from(overviewGrid.children) as HTMLElement[];
-    const overviewFacts = overview.querySelector<HTMLDListElement>("dl")!;
-
-    const offer = document.querySelector<HTMLElement>("#offer-evidence")!;
-    const offerComposition = offer.children[1] as HTMLElement;
-    const offerCopy = offerComposition.children[0] as HTMLElement;
-    const offerTerms = offerComposition.children[1] as HTMLElement;
-
-    const hero = document.querySelector<HTMLElement>('section[aria-labelledby="casino-profile-title"]')!;
-    const heroTerms = hero.querySelector<HTMLDListElement>("dl")!;
-    const heroRows = Array.from(heroTerms.children) as HTMLElement[];
-
-    const kickerRect = overviewKicker.getBoundingClientRect();
-    const headingRect = overviewHeading.getBoundingClientRect();
-    const copyRect = overviewCopy.getBoundingClientRect();
-    const cardRects = overviewCards.map((card) => card.getBoundingClientRect());
-    return {
-      fragmentedFacts: visibleWordFragments(Array.from(overviewFacts.querySelectorAll("dt, dd"))),
-      fragmentedOverviewHeading: visibleWordFragments([overviewHeading]),
-      fragmentedTerms: visibleWordFragments([
-        ...Array.from(heroTerms.querySelectorAll("dt, dd")),
-        ...Array.from(offerTerms.querySelectorAll("dt, dd")),
-      ]),
-      headingFollowsKicker: headingRect.top >= kickerRect.bottom - 1,
-      copyFollowsHeading: copyRect.top >= headingRect.bottom - 1,
-      overviewCardsStack: cardRects.slice(1).every((rect, index) => rect.top >= cardRects[index].bottom - 1),
-      offerTermsFollowCopy: offerTerms.getBoundingClientRect().top >= offerCopy.getBoundingClientRect().bottom - 1,
-      heroTermsUseRows: heroRows.length > 1 && heroRows[1].getBoundingClientRect().top >= heroRows[0].getBoundingClientRect().bottom - 1,
-      horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    };
-  });
-
-  expect(tabletLayout.headingFollowsKicker).toBe(true);
-  expect(tabletLayout.copyFollowsHeading).toBe(true);
-  expect(tabletLayout.overviewCardsStack).toBe(true);
-  expect(tabletLayout.offerTermsFollowCopy).toBe(true);
-  expect(tabletLayout.heroTermsUseRows).toBe(true);
-  expect(tabletLayout.fragmentedOverviewHeading).toEqual([]);
-  expect(tabletLayout.fragmentedFacts).toEqual([]);
-  expect(tabletLayout.fragmentedTerms).toEqual([]);
-  expect(tabletLayout.horizontalOverflow).toBe(0);
-
-  const spanishResponse = await tabletPage.goto(`${baseUrl}/es/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
-  expect(spanishResponse?.status()).toBe(200);
-  await expect(tabletPage.locator("html")).toHaveAttribute("lang", "es-ES");
-  const spanishHeroTerms = tabletPage.locator('section[aria-labelledby="casino-profile-title"] [class*="heroOfferCopy"] dl');
-  await expect(spanishHeroTerms).toBeVisible();
-  const spanishTermLayout = await spanishHeroTerms.evaluate((terms) => {
-    const fragments: Array<{ lines: number; word: string }> = [];
-    for (const value of terms.querySelectorAll("dt, dd")) {
-      const walker = document.createTreeWalker(value, NodeFilter.SHOW_TEXT);
-      let node = walker.nextNode();
-      while (node) {
-        const text = node.textContent ?? "";
-        for (const match of text.matchAll(/\p{L}[\p{L}\p{M}]*/gu)) {
-          if (match[0].length < 4 || match.index === undefined) continue;
-          const range = document.createRange();
-          range.setStart(node, match.index);
-          range.setEnd(node, match.index + match[0].length);
-          const lines = new Set(Array.from(range.getClientRects())
-            .filter((rect) => rect.width > .5 && rect.height > .5)
-            .map((rect) => Math.round(rect.top * 2) / 2)).size;
-          if (lines > 1) fragments.push({ lines, word: match[0] });
-        }
-        node = walker.nextNode();
-      }
-    }
-    return {
-      fragments,
-      styles: Array.from(terms.querySelectorAll("dt, dd"), (item) => ({
-        hyphens: getComputedStyle(item).hyphens,
-        overflowWrap: getComputedStyle(item).overflowWrap,
-        wordBreak: getComputedStyle(item).wordBreak,
-      })),
-      text: terms.textContent?.replace(/\s+/g, " ").trim(),
-      viewportOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    };
-  });
-  expect(spanishTermLayout.text).toContain("Se aplican términos y condiciones");
-  expect(spanishTermLayout.fragments).toEqual([]);
-  expect(spanishTermLayout.styles.every((style) => style.hyphens === "none" && style.overflowWrap === "normal" && style.wordBreak === "normal")).toBe(true);
-  expect(spanishTermLayout.viewportOverflow).toBe(0);
-  await tabletContext.close();
-
-  const desktopContext = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
-  const desktopPage = await desktopContext.newPage();
-  const desktopResponse = await desktopPage.goto(`${baseUrl}/nl/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
-  expect(desktopResponse?.status()).toBe(200);
-  await expect(desktopPage.locator("html")).toHaveAttribute("lang", "nl-NL");
-
-  const desktopEligibility = await desktopPage.evaluate(() => {
-    const hero = document.querySelector<HTMLElement>('section[aria-labelledby="casino-profile-title"]')!;
-    const row = Array.from(hero.querySelectorAll("dl > div")).find((candidate) => candidate.querySelector("dt")?.textContent?.trim() === "Deelnamevoorwaarden")!;
-    const value = row.querySelector<HTMLElement>("dd")!;
-    const fragments: Array<{ lines: number; word: string }> = [];
-    const walker = document.createTreeWalker(value, NodeFilter.SHOW_TEXT);
-    let node = walker.nextNode();
-    while (node) {
-      const text = node.textContent ?? "";
-      for (const match of text.matchAll(/\p{L}[\p{L}\p{M}]*/gu)) {
-        if (match[0].length < 4 || match.index === undefined) continue;
-        const range = document.createRange();
-        range.setStart(node, match.index);
-        range.setEnd(node, match.index + match[0].length);
-        const lines = new Set(Array.from(range.getClientRects())
-          .filter((rect) => rect.width > 0.5 && rect.height > 0.5)
-          .map((rect) => Math.round(rect.top * 2) / 2)).size;
-        if (lines > 1) fragments.push({ lines, word: match[0] });
-      }
-      node = walker.nextNode();
-    }
-    return { fragments, text: value.textContent?.trim(), width: value.getBoundingClientRect().width };
-  });
-
-  expect(desktopEligibility.text).toBe("18+ · Nieuwe klanten · Voorwaarden zijn van toepassing");
-  expect(desktopEligibility.width).toBeGreaterThan(0);
-  expect(desktopEligibility.fragments).toEqual([]);
-  await desktopContext.close();
+    expect(layout.fragments).toEqual([]);
+    expect(layout.horizontalOverflow).toBe(0);
+    expect(layout.panelStacked).toBe(true);
+    await context.close();
+  }
 });
 
 test("casino profile breadcrumb clears the fixed public header across responsive widths", async ({ browser }) => {
@@ -253,7 +145,7 @@ test("casino profile breadcrumb clears the fixed public header across responsive
   }
 });
 
-test("shared casino profile composition joins the final offer to the footer and separates the mobile score", async ({ browser }) => {
+test("shared casino profile composition removes the final offer banner and keeps verdict and FAQ ordered", async ({ browser }) => {
   const viewports = [
     { width: 1440, height: 900 },
     { width: 1024, height: 768 },
@@ -272,53 +164,21 @@ test("shared casino profile composition joins the final offer to the footer and 
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
     await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
 
+    await expect(page.locator('[data-runtime-renderer="casino-review"] [data-demo-state="fictional"]')).toHaveCount(0);
     const geometry = await page.evaluate(() => {
-      const finalOffer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"] [data-demo-state="fictional"]')!;
+      const verdict = document.querySelector<HTMLElement>("#verdict")!;
+      const faq = document.querySelector<HTMLElement>("#faq")!;
       const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!;
-      const verdictColumns = Array.from(document.querySelectorAll<HTMLElement>("#verdict > div"));
-      const decisionBar = document.querySelector<HTMLElement>("[data-casino-decision-bar]")!;
-      const finalRect = finalOffer.getBoundingClientRect();
-      const footerRect = footer.getBoundingClientRect();
-      const verdictCopyRect = verdictColumns[0]?.getBoundingClientRect() ?? null;
-      const verdictEvidenceRect = verdictColumns[1]?.getBoundingClientRect() ?? null;
-      const decisionRect = decisionBar.getBoundingClientRect();
       return {
-        finalToFooterGap: footerRect.top - finalRect.bottom,
+        faqAfterVerdict: faq.getBoundingClientRect().top >= verdict.getBoundingClientRect().bottom - 1,
+        footerAfterFaq: footer.getBoundingClientRect().top >= faq.getBoundingClientRect().bottom - 1,
         horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-        scoreGap: verdictCopyRect && verdictEvidenceRect ? verdictEvidenceRect.top - verdictCopyRect.bottom : null,
-        decisionBottomGap: innerHeight - decisionRect.bottom,
-        decisionPosition: getComputedStyle(decisionBar).position,
-        mobileVisible: decisionBar.dataset.mobileVisible,
       };
     });
 
-    expect(Math.abs(geometry.finalToFooterGap), `${viewport.width}px final offer/footer join`).toBeLessThanOrEqual(1);
     expect(geometry.horizontalOverflow, `${viewport.width}px horizontal overflow`).toBe(0);
-    if (mobile) {
-      expect(geometry.scoreGap, `${viewport.width}px Keep in view/score gap`).not.toBeNull();
-      expect(geometry.scoreGap!, `${viewport.width}px Keep in view/score gap`).toBeGreaterThanOrEqual(40);
-      expect(geometry.decisionPosition, `${viewport.width}px decision bar position`).toBe("fixed");
-      expect(geometry.mobileVisible, `${viewport.width}px action follows hero information`).toBe("false");
-      await page.locator("#overview").scrollIntoViewIfNeeded();
-      await expect(page.locator("[data-casino-decision-bar]"), `${viewport.width}px decision bar reveals after hero`).toHaveAttribute("data-mobile-visible", "true");
-      const revealedBottomGap = await page.locator("[data-casino-decision-bar]").evaluate((element) => innerHeight - element.getBoundingClientRect().bottom);
-      expect(Math.abs(revealedBottomGap), `${viewport.width}px revealed decision bar bottom`).toBeLessThanOrEqual(1.5);
-    }
-    await context.close();
-  }
-
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }] as const) {
-    const mobile = viewport.width <= 430;
-    const context = await browser.newContext({ hasTouch: mobile, isMobile: mobile, reducedMotion: "reduce", viewport });
-    const page = await context.newPage();
-    const response = await page.goto(`${baseUrl}/casino/demo-meadow?visualFixture=true`, { waitUntil: "networkidle" });
-    expect(response?.status(), `shared profile ${viewport.width}px status`).toBe(200);
-    const gap = await page.evaluate(() => {
-      const finalOffer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"] [data-demo-state="fictional"]')!;
-      const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!;
-      return footer.getBoundingClientRect().top - finalOffer.getBoundingClientRect().bottom;
-    });
-    expect(Math.abs(gap), `shared profile ${viewport.width}px final offer/footer join`).toBeLessThanOrEqual(1);
+    expect(geometry.faqAfterVerdict, `${viewport.width}px verdict/FAQ order`).toBe(true);
+    expect(geometry.footerAfterFaq, `${viewport.width}px FAQ/footer order`).toBe(true);
     await context.close();
   }
 });
@@ -327,7 +187,7 @@ test("commercially unavailable state keeps editorial review and removes visit ac
   const response = await page.goto(`${baseUrl}/casino/demo-meadow?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Solvane Casino" })).toBeVisible();
-  await expect(page.getByText("Offer unavailable").first()).toBeVisible();
+  await expect(page.getByText("No current offer in your jurisdiction.").first()).toBeVisible();
   expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
   await expect(page.getByRole("contentinfo").getByRole("link", { name: /Help — protected support/ })).toBeVisible();
 });
@@ -358,8 +218,8 @@ test("outbound confirmation is absent while market authority denies referral", a
   const page = await browser.newPage({ viewport: { width: 375, height: 812 }, isMobile: true });
   await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
   const hero = page.getByRole("region", { exact: true, name: "Solvane Casino" });
-  await expect(hero.getByRole("link", { name: "Visit Solvane Casino" })).toHaveCount(0);
-  await expect(hero.getByText("Offer unavailable")).toBeVisible();
+  await expect(hero.getByRole("link", { name: "Visit Casino" })).toHaveCount(0);
+  await expect(hero.getByText("No current offer in your jurisdiction.")).toBeVisible();
   await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
   await page.close();
 });
@@ -393,8 +253,8 @@ test("server HTML remains useful with JavaScript disabled", async ({ browser }) 
   const response = await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Solvane Casino" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Visit Solvane Casino" })).toHaveCount(0);
-  await expect(page.getByText("Offer unavailable").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Visit Casino" })).toHaveCount(0);
+  await expect(page.getByText("No current offer in your jurisdiction.").first()).toBeVisible();
   await context.close();
 });
 

@@ -119,7 +119,7 @@ for (const viewport of [
   { width: 375, height: 812 },
   { width: 360, height: 800 },
 ] as const) {
-  test(`Casino final demonstration block is one centered runtime stack at ${viewport.width}px`, async ({ browser }) => {
+  test(`Casino detail closes with the compact verdict and FAQ at ${viewport.width}px`, async ({ browser }) => {
     const mobile = viewport.width <= 430;
     const context = await browser.newContext({ hasTouch: mobile, isMobile: mobile, reducedMotion: "reduce", viewport });
     const page = await context.newPage();
@@ -127,39 +127,37 @@ for (const viewport of [
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
     await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
 
-    const finalOffer = page.locator('[data-demo-state="fictional"]');
-    await finalOffer.scrollIntoViewIfNeeded();
+    await expect(page.locator('[data-demo-state="fictional"]')).toHaveCount(0);
+    const verdict = page.locator("#verdict");
+    const faq = page.locator("#faq");
+    await faq.scrollIntoViewIfNeeded();
+    await expect(verdict).toBeVisible();
+    await expect(faq).toBeVisible();
     const geometry = await page.evaluate(() => {
-      const final = document.querySelector<HTMLElement>('[data-demo-state="fictional"]')!;
-      const inner = final.querySelector<HTMLElement>('[class*="finalOfferInner"]')!;
+      const verdict = document.querySelector<HTMLElement>("#verdict")!;
+      const faq = document.querySelector<HTMLElement>("#faq")!;
       const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!;
       const verdictCopy = document.querySelector<HTMLElement>("#verdict > div:first-child")!;
       const score = document.querySelector<HTMLElement>("#verdict > div:nth-child(2)")!;
-      const finalRect = final.getBoundingClientRect();
-      const center = (element: Element) => {
-        const rect = element.getBoundingClientRect();
-        return rect.left + rect.width / 2;
-      };
       return {
-        childCenters: [...inner.children].map(center),
-        finalCenter: center(final),
-        footerGap: footer.getBoundingClientRect().top - finalRect.bottom,
+        faqAfterVerdict: Boolean(verdict.compareDocumentPosition(faq) & Node.DOCUMENT_POSITION_FOLLOWING),
+        footerAfterFaq: Boolean(faq.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING),
         horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-        innerWidth: inner.getBoundingClientRect().width,
+        verdictWidth: verdict.getBoundingClientRect().width,
         scoreGap: score.getBoundingClientRect().top - verdictCopy.getBoundingClientRect().bottom,
       };
     });
-    expect(geometry.childCenters.every((center) => Math.abs(center - geometry.finalCenter) <= 1)).toBe(true);
-    expect(geometry.innerWidth).toBeLessThanOrEqual(960.5);
-    expect(Math.abs(geometry.footerGap)).toBeLessThanOrEqual(1);
+    expect(geometry.faqAfterVerdict).toBe(true);
+    expect(geometry.footerAfterFaq).toBe(true);
+    expect(geometry.verdictWidth).toBeLessThanOrEqual(viewport.width + 1);
     expect(geometry.horizontalOverflow).toBe(0);
     if (mobile) expect(geometry.scoreGap).toBeGreaterThanOrEqual(40);
 
     if (captureEvidence && (viewport.width === 1440 || viewport.width === 390)) {
       const suffix = viewport.width === 1440 ? "1440" : "390";
-      await saveLocatorWebp(page, '[data-demo-state="fictional"]', resolve(evidenceRoot, `founder-casino-final-block-review/casino-final-demo-${suffix}.webp`));
+      await saveLocatorWebp(page, "#verdict", resolve(evidenceRoot, `founder-casino-final-block-review/casino-verdict-${suffix}.webp`));
       await instantScroll(page, await page.evaluate(() => document.documentElement.scrollHeight));
-      await saveWebp(page, resolve(evidenceRoot, `founder-casino-final-block-review/casino-final-demo-footer-${suffix}.webp`));
+      await saveWebp(page, resolve(evidenceRoot, `founder-casino-final-block-review/casino-faq-footer-${suffix}.webp`));
     }
     await context.close();
   });

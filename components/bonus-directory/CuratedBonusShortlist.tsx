@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
-import { hasGovernedCommercialOfferAction, OperatorIdentityPanel, OperatorLogo } from "@/components/commercial-media/OperatorIdentityPanel";
+import { hasGovernedCommercialOfferAction, OperatorLogo } from "@/components/commercial-media/OperatorIdentityPanel";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
+import { commercialUiLabels } from "@/lib/i18n/commercial-ui-labels";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import {
   curatedBonusSelectors as selectors,
@@ -17,6 +18,7 @@ import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
+import { formatCompactPayout, formatCompactWagering } from "@/lib/presentation/commercial-terms";
 import { offerPresentationCopy } from "@/lib/public-offer/offer-presentation-copy";
 
 import styles from "./CuratedBonusShortlist.module.css";
@@ -28,19 +30,15 @@ function money(value: number | null, currency: string | null, locale: string, no
   catch { return `${value} ${currency || ""}`.trim(); }
 }
 
-function Action({ offer, messages }: { offer: PublicOfferDTO; messages: ProductPageMessages }) {
+function Action({ offer, messages, presentation }: { offer: PublicOfferDTO; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const href = hasGovernedCommercialOfferAction(offer) ? offer.action.href : null;
   if (!href) return <span className={styles.unavailable}>{messages.common.reviewOnly}</span>;
-  return <CasinoOutboundAction action={{ href, label: messages.common.actionAvailable }} className={styles.action} context={{ source: "CTA", placement: "BONUS_LISTING_CARD" }} messages={messages.outbound} />;
+  return <CasinoOutboundAction action={{ href, label: commercialUiLabels(presentation.locale).visitCasino }} className={styles.action} context={{ source: "CTA", placement: "BONUS_LISTING_CARD" }} messages={messages.outbound} />;
 }
 
 function Review({ offer, messages, presentation }: { offer: PublicOfferDTO; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const href = publicCasinoReviewHref(offer.casino);
   return href ? <Link href={productHref(presentation, href)}>{messages.common.readReview}</Link> : null;
-}
-
-function payout(offer: PublicOfferDTO, messages: ProductPageMessages) {
-  return offer.casino.payments.find((payment) => payment.supportsWithdrawals && payment.withdrawalTime)?.withdrawalTime || messages.common.notListed;
 }
 
 export function CuratedBonusShortlist({ offers, messages, presentation }: { offers: PublicOfferDTO[]; messages: ProductPageMessages; presentation: PresentationResolution }) {
@@ -66,15 +64,14 @@ export function CuratedBonusShortlist({ offers, messages, presentation }: { offe
       return <button aria-pressed={activeSelector === label} key={label} onClick={() => setSelector(label)} type="button">{localizedLabel}</button>;
     })}</div>
     <p className={styles.label} id="bonus-shortlist-title">{messages.bestOffers.sectionTitle} · {messages.bonuses.sortedByValue}</p>
-    <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} data-offer-relation={offer.offerPresentation?.relation} key={`${offer.casino.id}:${offer.bonus.id}`}>
+    <div className={styles.cards}>{top.map((offer, index) => <article className={styles.card} data-offer-relation={offer.offerPresentation?.relation} key={`${offer.casino.id}:${offer.bonus.id}`}>
       <header><small>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : offerPresentationCopy(offer.offerPresentation, messages, presentation).label}</small><span className={styles.rank}>0{index + 1}</span></header>
       <strong className={styles.headline}>{offer.bonus.title}</strong>
-      <div className={styles.identity}><OperatorLogo offer={offer} prominent={index === 0} /><div><h2>{offer.casino.name}</h2><small>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} <span aria-hidden="true">★★★★★</span></small></div></div>
-      <dl><div><dt>{messages.common.wagering}</dt><dd>{offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || messages.common.notListed : `${offer.bonus.wageringMultiplier}x`}</dd></div><div><dt>{messages.common.minimumDeposit}</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.maximumBonus}</dt><dd>{money(offer.bonus.maximumBonus, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.payout}</dt><dd>{payout(offer, messages)}</dd></div></dl>
+      <div className={styles.identity}>{offer.casino.logo ? <OperatorLogo offer={offer} prominent /> : null}<div><h2>{offer.casino.name}</h2><small>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} <span aria-hidden="true">★★★★★</span></small></div></div>
+      <dl><div><dt>{messages.common.wagering}</dt><dd>{formatCompactWagering(offer.bonus.wageringMultiplier, offer.bonus.wageringText, { notListed: messages.common.notListed, notStated: commercialUiLabels(presentation.locale).notStated })}</dd></div><div><dt>{messages.common.minimumDeposit}</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.maximumBonus}</dt><dd>{money(offer.bonus.maximumBonus, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.payout}</dt><dd>{formatCompactPayout(offer.casino.payments, messages.common.notListed)}</dd></div></dl>
       <p>{offer.bonus.importantConditions.slice(0, 2).join(" · ") || offer.bonus.summary}</p>
-      <OperatorIdentityPanel messages={messages} offer={offer} variant="bonus" />
       {offer.dataClassification === "DEMO_FIXTURE" ? <b className={styles.demo}>{messages.common.demoData} — {messages.common.demoDisclosure}</b> : null}
-      <div className={styles.actions}><Action messages={messages} offer={offer} /><Review messages={messages} offer={offer} presentation={presentation} /></div>
+      <div className={styles.actions}><Action messages={messages} offer={offer} presentation={presentation} /><Review messages={messages} offer={offer} presentation={presentation} /></div>
     </article>)}</div>
     <aside className={styles.method}><strong>{messages.bonuses.methodKicker}</strong><span>{messages.bonuses.sortedByValue}</span><span>{messages.bonuses.proofSources}</span><Link href="/bonus-guide">{messages.common.bonusGuide} →</Link></aside>
   </div></section>;

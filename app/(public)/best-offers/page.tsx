@@ -64,7 +64,7 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   const governedActionCount = result.records.filter((offer) => (
     offer.dataClassification === "PUBLISHED_RECORD" && offer.action.available && Boolean(offer.action.href)
   )).length;
-  const actionAvailabilityLabel = governedActionCount > 0 ? messages.common.actionAvailable : messages.common.commercialUnavailable;
+  const actionAvailabilityLabel = governedActionCount > 0 ? messages.common.availability : messages.common.commercialUnavailable;
   const hero = demoOnly ? {
     copy: messages.bestOffers.demoCopy,
     kicker: messages.bestOffers.demoKicker,
@@ -73,12 +73,12 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   } : containsDemo ? {
     copy: messages.bestOffers.demoCopy,
     kicker: `${messages.common.sourceStatus} · ${messages.common.classified}`,
-    stats: [[String(result.records.length), messages.common.records], [presentation.marketCountryCode ?? "—", messages.bestOffers.currentMarket], [String(governedActionCount), messages.bestOffers.inferredActions]],
+    stats: [[String(result.records.length), messages.common.records], [presentation.marketCountryCode ?? "—", messages.bestOffers.currentMarket], [String(governedActionCount), messages.common.availability]],
     ticker: [messages.common.sourceStatus, messages.common.materialTerms, actionAvailabilityLabel],
   } : {
     copy: formatProductMessage(messages.bestOffers.heroCopy, { market }),
     kicker: formatProductMessage(messages.bestOffers.heroKicker, { market }),
-    stats: [[String(result.records.length), messages.bestOffers.eligibleRecords], [presentation.marketCountryCode ?? "—", messages.bestOffers.currentMarket], [String(governedActionCount), messages.bestOffers.inferredActions]],
+    stats: [[String(result.records.length), messages.bestOffers.eligibleRecords], [presentation.marketCountryCode ?? "—", messages.bestOffers.currentMarket], [String(governedActionCount), messages.common.availability]],
     ticker: [messages.common.published, messages.common.materialTerms, actionAvailabilityLabel],
   };
   const schema = result.status === "available" && result.inventoryMode === "PUBLISHED_ONLY" ? {
@@ -95,7 +95,6 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   } : null;
 
   return <div className={styles.page} data-runtime-renderer="best-offers">
-    <p className="srOnly">{messages.bestOffers.commissionNote}</p>
     <CommercialSurfaceView surface="best_offers" />
     <ContextualComparison messages={messages} presentation={presentation} />
     {schema ? <JsonLd data={schema} /> : null}

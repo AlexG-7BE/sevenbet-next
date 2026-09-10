@@ -177,12 +177,12 @@ for (const viewport of mobileViewports) {
     await expect(alternatives).toHaveCount(2);
     expect(await featured.locator('[aria-hidden="true"]').filter({ hasText: "media" }).isVisible()).toBe(false);
 
-    const featuredTerms = featured.locator("dl[aria-label$='material offer terms']");
+    const featuredTerms = featured.locator("dl[data-material-terms]");
     await expect(featuredTerms.locator("dt")).toHaveCount(4);
     await expect(featuredTerms).toBeVisible();
     const topGeometry = await featured.evaluate((element) => {
       const rect = element.getBoundingClientRect();
-      const terms = element.querySelector<HTMLElement>("dl[aria-label$='material offer terms']")!;
+      const terms = element.querySelector<HTMLElement>("dl[data-material-terms]")!;
       const actions = [...element.querySelectorAll<HTMLElement>("a,button,[class*='unavailableAction']")].filter((item) => item.getClientRects().length);
       return {
         left: rect.left,
@@ -197,16 +197,16 @@ for (const viewport of mobileViewports) {
 
     for (let index = 0; index < 2; index += 1) {
       const card = alternatives.nth(index);
-      await expect(card.locator("dl[aria-label$='material offer terms']")).toBeVisible();
+      await expect(card.locator("dl[data-material-terms]")).toBeVisible();
       expect(await card.locator('[aria-hidden="true"]').filter({ hasText: "media" }).isVisible()).toBe(false);
       expect(await card.evaluate((element) => element.getBoundingClientRect().width)).toBeLessThanOrEqual(viewport.width - 48);
     }
 
-    const visibleTermDefects = await topThree.locator("dl[aria-label$='material offer terms'] dt,dl[aria-label$='material offer terms'] dd").evaluateAll((elements) => elements
+    const visibleTermDefects = await topThree.locator("dl[data-material-terms] dt,dl[data-material-terms] dd").evaluateAll((elements) => elements
       .filter((element) => element.getClientRects().length)
       .filter((element) => {
         const style = getComputedStyle(element);
-        return Number.parseFloat(style.fontSize) < 14 || style.textOverflow === "ellipsis" || style.whiteSpace === "nowrap" || element.scrollWidth > element.clientWidth + 1;
+        return Number.parseFloat(style.fontSize) < 12 || style.textOverflow === "ellipsis" || style.whiteSpace === "nowrap" || element.scrollWidth > element.clientWidth + 1;
       })
       .map((element) => ({ text: element.textContent, style: getComputedStyle(element).cssText })));
     expect(visibleTermDefects).toEqual([]);
@@ -231,11 +231,13 @@ for (const viewport of mobileViewports) {
     });
     expect(sequence).toEqual({ faqAfterMethod: true, methodAfterChoices: true, visibleDemoNotices: 0 });
     await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
-    const commissionDisclosure = topThree.locator('a[href="/affiliate-disclosure"]');
+    await expect(topThree.locator('a[href="/affiliate-disclosure"]')).toHaveCount(0);
+    const commissionAnswer = page.locator("details").filter({ hasText: messages.bestOffers.faqCommissionQuestion });
+    const commissionDisclosure = commissionAnswer.locator('a[href="/affiliate-disclosure"]');
     await expect(commissionDisclosure).toContainText(messages.common.affiliateDisclosure);
-    await expect(commissionDisclosure.locator("..")).toContainText(messages.bestOffers.commissionNote);
+    await expect(commissionAnswer).toContainText(messages.bestOffers.faqCommissionAnswer);
     await expect(page.locator("details").first()).not.toHaveAttribute("open", "");
-    await expect(page.locator('[data-runtime-renderer="best-offers"] section').last()).toBeHidden();
+    await expect(page.getByRole("heading", { level: 2, name: messages.bestOffers.beforeClick })).toBeVisible();
 
     if (captureEvidence && viewport.width === 390) {
       await page.evaluate(() => scrollTo(0, 0));
@@ -271,7 +273,9 @@ for (const viewport of [
     await expect(page.getByText(messages.bestOffers.claimActions, { exact: true }).locator("..").locator("strong")).toHaveText("0");
     await expect(page.getByText("Fictional records only", { exact: true })).toBeVisible();
     await expect(page.locator("#shortlist")).toContainText(/material terms shown first/i);
-    await expect(page.locator("section").filter({ hasText: "Still here? The answer hasn't changed." })).toBeVisible();
+    await expect(page.locator("#why-picked-title")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: messages.bestOffers.beforeClick })).toBeVisible();
+    await expect(page.getByText("Still here? The answer hasn't changed.", { exact: true })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   });
 }

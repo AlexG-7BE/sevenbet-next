@@ -101,7 +101,7 @@ test("public consumers retire GEO3 presentation while governed CTA action stays 
   assert.doesNotMatch(mapper, /resolveCasinoMedia|resolvedPlacementMap|MediaCreative|MediaRevision/);
   assert.doesNotMatch(activeProjection, /resolveCasinoMedia|resolvedPlacementMap/);
   assert.match(activeProjection, /logo: allMedia\.find/);
-  assert.match(profile, /data-presentation-family": "LOGO_ONLY"/);
+  assert.match(profile, /casino\.media\.logo \? <ResponsivePlacementImage alt=""/);
   assert.match(profile, /source: "CTA", placement: "CASINO_OFFER_BLOCK"/);
   assert.doesNotMatch(profile, /CASINO_REVIEW_RIGHT_HERO|source: "CREATIVE"/);
   assert.match(directory, /hero:\s*null/);

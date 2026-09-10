@@ -34,13 +34,13 @@ test("Best Offers keeps native cards, material terms, and reachable controls", (
   const experience = read("components/best-offers/BestOffersExperience.tsx");
 
   assert.match(experience, /<article className=\{styles\.featuredCard\} data-testid="best-offer-product-card">/);
-  assert.match(experience, /<dl className=\{styles\.mobileMaterialTerms\} aria-label=\{`\$\{offer\.casino\.name\} · \$\{messages\.common\.materialOfferTerms\}`\}>/);
+  assert.match(experience, /return <dl className=\{compact \? styles\.compactTerms : styles\.terms\} data-material-terms>/);
   assert.match(experience, /<details><summary>\{messages\.bestOffers\.faqWageringQuestion\}<\/summary>/);
-  assert.match(experience, /if \(offer\.dataClassification === "DEMO_FIXTURE"\) return null;/);
-  assert.match(cssRule(styles, ".commercialCta"), /min-height:50px/);
+  assert.match(experience, /return offer\.dataClassification === "DEMO_FIXTURE" \? <p className=\{styles\.dataNotice\}>/);
+  assert.match(cssRule(styles, ".commercialCta"), /min-height:48px/);
   assert.match(cssRule(styles, ".actions > button"), /min-height:44px/);
-  assert.match(styles, /\.commercialCta,\.unavailableAction,\.actions > a,\.actions > button\s*\{[^}]*min-height:44px;/);
-  assert.match(styles, /@media \(prefers-reduced-motion:reduce\)[\s\S]*?animation:none;/);
+  assert.match(cssRule(styles, ".unavailableAction"), /min-height:44px/);
+  assert.match(styles, /@media \(prefers-reduced-motion:reduce\)[\s\S]*?scroll-behavior:auto;/);
 });
 
 test("bonus comparison uses native article semantics and readable state labels", () => {
@@ -71,7 +71,7 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   assert.match(filterDialog, /overscroll-behavior: contain/);
   assert.match(discovery, /\.readingGuide \.sectionIntro > p, \.compare p\s*\{\s*color: #4f4e48;\s*\}/);
 
-  assert.match(profile, /<article className=\{styles\.page\} data-runtime-renderer="casino-review">/);
+  assert.match(profile, /<article className=\{styles\.page\} data-market-profile-available=\{availableForPresentation\} data-runtime-renderer="casino-review">/);
   assert.match(offerMedia, /export function OperatorLogo[\s\S]*?offer\.casino\.logo \? <ResponsivePlacementImage\s+alt=""/);
   assert.match(discoveryCard, /casino\.logo \? <ResponsivePlacementImage alt=""/);
   assert.match(bonusDirectory, /return offer\.casino\.logo \? <img\s+alt=""/);

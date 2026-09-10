@@ -474,6 +474,66 @@
   .casinoCard .logo img { max-width:72px; max-height:56px; }
 }
 
+/* Founder scan-first directory: one compact comparison row on desktop, one
+   ordered stack on mobile. These rules intentionally supersede the retired
+   card/media variants above without changing filter or pagination geometry. */
+.cards { gap:0; border-top:1px solid rgba(16,15,15,.18); }
+.casinoCard {
+  position:relative;
+  min-width:0;
+  padding:20px 0;
+  border:0;
+  border-bottom:1px solid rgba(16,15,15,.16);
+  border-radius:0;
+  display:grid;
+  grid-template-columns:42px minmax(210px,.9fr) minmax(170px,.8fr) minmax(230px,1.2fr) minmax(170px,.7fr);
+  grid-template-areas:"position header description offer actions";
+  gap:20px;
+  align-items:center;
+  background:transparent;
+  box-shadow:none;
+}
+.casinoCard .position { position:static; grid-area:position; color:#777500; font-size:13px; font-weight:800; }
+.casinoCard .cardHeader { grid-area:header; grid-template-columns:64px minmax(0,1fr); grid-template-areas:"logo identity" "logo score"; gap:4px 14px; }
+.casinoCard .logo { grid-area:logo; width:64px; height:50px; border:0; border-radius:0; background:transparent; }
+.casinoCard .logo img { width:auto; height:auto; max-width:60px; max-height:46px; object-fit:contain; }
+.casinoCard .identity { grid-area:identity; align-self:end; }
+.casinoCard .identity h2 { font-size:18px; line-height:1.05; text-transform:uppercase; }
+.casinoCard .identity small { display:block; max-width:26ch; color:#6d6b64; font-size:12px; line-height:1.35; }
+.casinoCard .score { grid-area:score; width:max-content; min-width:0; height:auto; padding:0; border:0; border-radius:0; background:transparent; flex-direction:row; gap:4px; }
+.casinoCard .score::after { content:"★★★★★"; color:#777500; font-size:12px; letter-spacing:.02em; }
+.casinoCard .score strong { font-size:17px; }
+.casinoCard .score span { color:#6d6b64; font-size:12px; }
+.casinoCard .description { grid-area:description; min-height:0; margin:0; color:#595751; font-size:13px; line-height:1.48; -webkit-line-clamp:3; }
+.casinoCard .offerBlock { grid-area:offer; min-height:0; margin:0; padding:0 0 0 20px; border:0; border-left:1px solid rgba(16,15,15,.13); border-radius:0; background:transparent; }
+.casinoCard .offerBlock::before { display:none; }
+.casinoCard .offerBlock > span { color:#777500; font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+.casinoCard .offerBlock > strong { margin-top:4px; display:block; font-size:17px; line-height:1.2; text-transform:uppercase; }
+.casinoCard .offerBlock > p { display:none; }
+.casinoCard .offerBlock > small { margin-top:8px; display:block; color:#66645d; font-size:12px; line-height:1.4; }
+.casinoCard .signals,.casinoCard .commission { display:none; }
+.casinoCard .cardActions { grid-area:actions; margin:0; padding:0 0 0 18px; border:0; border-left:1px solid rgba(16,15,15,.13); display:grid; grid-template-columns:1fr; gap:5px; }
+.casinoCard .cardActions a,.casinoCard .cardActions button,.casinoCard .cardActions .unavailable { width:100%; min-height:40px; padding:8px 10px; border:0; border-bottom:1px solid rgba(16,15,15,.45); border-radius:0; display:flex; align-items:center; justify-content:center; background:transparent; color:#100f0f; font-size:12px; font-weight:750; text-align:center; }
+.casinoCard .cardActions > :global(.commercialOutboundPrimary) { border:0; border-radius:4px; background:#b94b47; color:#fff; }
+.casinoCard .cardActions .unavailable { color:#66645d; }
+
+@media (hover:hover) and (pointer:fine) { .casinoCard:hover { border-color:rgba(16,15,15,.28); background:#fffefa; } }
+@media (max-width:900px) {
+  .casinoCard { grid-template-columns:36px minmax(0,1fr) minmax(190px,.9fr); grid-template-areas:"position header offer" ". description offer" ". actions actions"; }
+  .casinoCard .cardActions { padding:14px 0 0; border-top:1px solid rgba(16,15,15,.1); border-left:0; grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media (max-width:640px) {
+  .cards { margin-top:18px; }
+  .casinoCard { padding:22px 0; grid-template-columns:1fr; grid-template-areas:"header" "description" "offer" "actions"; gap:14px; }
+  .casinoCard .position { position:absolute; top:22px; right:0; }
+  .casinoCard .cardHeader { padding:0 38px 0 0; }
+  .casinoCard .logo { width:64px; height:52px; }
+  .casinoCard .description { padding:0; border:0; }
+  .casinoCard .offerBlock { padding:16px 0 0; border-top:1px solid rgba(16,15,15,.12); border-left:0; background:transparent; }
+  .casinoCard .cardActions { padding-top:14px; grid-template-columns:1fr; }
+  .casinoCard .cardActions a,.casinoCard .cardActions button,.casinoCard .cardActions .unavailable { min-height:44px; }
+}
+
 .hero header { animation:casinoHeroCopyIn 600ms cubic-bezier(.2,.8,.2,1) both; }
 .faq details::details-content { block-size:0; overflow:hidden; opacity:0; transition:block-size 400ms cubic-bezier(.2,.8,.2,1),content-visibility 400ms allow-discrete,opacity 350ms ease; }
 .faq details[open]::details-content { block-size:auto; opacity:1; }
@@ -952,4 +1012,47 @@
   .casinoCard .logo > span { width:56px; height:56px; }
   .casinoCard .offerBlock,.casinoCard .description,.casinoCard .signals,.casinoCard .commission,.casinoCard .unavailable { padding-left:16px; padding-right:16px; }
   .casinoCard .cardActions { grid-template-columns:1fr; padding:14px 16px 16px; }
+}
+
+/* Final directory contract: flat, scan-first rows supersede the historical
+   card art direction above at desktop widths. */
+@media (min-width:901px) {
+  .cards { gap:0; border-top:1px solid rgba(16,15,15,.18); }
+  .casinoCard {
+    min-height:142px;
+    padding:18px 0;
+    grid-template-columns:42px minmax(200px,.9fr) minmax(165px,.76fr) minmax(220px,1.14fr) minmax(150px,.66fr);
+    grid-template-areas:"position header description offer actions";
+    grid-template-rows:1fr;
+    gap:18px;
+    align-items:center;
+    overflow:visible;
+    border:0;
+    border-bottom:1px solid rgba(16,15,15,.16);
+    border-radius:0;
+    background:transparent;
+  }
+  .casinoCard:hover { background:#fffefa; }
+  .casinoCard .position { position:static; grid-area:position; }
+  .casinoCard .cardHeader { grid-area:header; display:grid; grid-template-columns:58px minmax(0,1fr); grid-template-areas:"logo identity" "logo score"; gap:4px 12px; }
+  .casinoCard .logo { grid-area:logo; width:58px; height:48px; margin:0; border:0; border-radius:0; background:transparent; }
+  .casinoCard .logo img { max-width:54px; max-height:44px; }
+  .casinoCard .identity { grid-area:identity; align-self:end; margin:0; }
+  .casinoCard .identity h2 { font-size:16px; line-height:19px; }
+  .casinoCard .identity small { max-width:24ch; margin-top:2px; font-size:12px; line-height:14px; }
+  .casinoCard .score { grid-area:score; width:max-content; min-width:0; min-height:0; display:flex; align-items:center; gap:4px; padding:0; border:0; border-radius:0; background:transparent; }
+  .casinoCard .score::before { display:none; }
+  .casinoCard .score::after { content:"★★★★★"; font-size:12px; }
+  .casinoCard .score strong { font-size:16px; line-height:18px; }
+  .casinoCard .score span { padding:0; font-size:12px; line-height:14px; }
+  .casinoCard .description { grid-area:description; min-height:0; margin:0; padding:0; border:0; font-size:12px; line-height:17px; -webkit-line-clamp:3; }
+  .casinoCard .offerBlock { grid-area:offer; min-height:0; align-self:center; gap:4px; margin:0; padding:0 0 0 18px; border:0; border-left:1px solid rgba(16,15,15,.13); background:transparent; }
+  .casinoCard .offerBlock > span { font-size:12px; line-height:14px; }
+  .casinoCard .offerBlock > strong { max-width:none; margin:2px 0 0; font-size:16px; line-height:19px; }
+  .casinoCard .offerBlock > small { margin-top:4px; font-size:12px; line-height:14px; }
+  .casinoCard .signals,.casinoCard .commission { display:none; }
+  .casinoCard .cardActions { grid-area:actions; align-self:center; display:grid; grid-template-columns:1fr; gap:5px; margin:0; padding:0 0 0 16px; border:0; border-left:1px solid rgba(16,15,15,.13); background:transparent; }
+  .casinoCard .cardActions > * { grid-area:auto; min-width:0; }
+  .casinoCard .cardActions a,.casinoCard .cardActions button,.casinoCard .cardActions .unavailable { width:100%; min-height:40px; padding:7px 8px; border:0; border-bottom:1px solid rgba(16,15,15,.42); border-radius:0; }
+  .casinoCard .cardActions > :global(.commercialOutboundPrimary) { border:0; border-radius:4px; background:#b94b47; color:#fff; }
 }

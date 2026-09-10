@@ -370,7 +370,7 @@ test("public offer pages use the service boundary and expose no raw destination 
   assert.match(experience, /data-testid="best-offer-product-card"/);
   assert.match(experience, /top\.slice\(1\)\.map/);
   const styles = readFileSync("components/best-offers/BestOffers.module.css", "utf8");
-  assert.match(styles, /@media \(max-width:900px\)[\s\S]*\.featuredCard,\.alternativeCard \{ grid-template-columns:1fr/);
+  assert.match(styles, /@media \(max-width:900px\)[\s\S]*\.featuredCard \{ grid-template-columns:1fr/);
   assert.doesNotMatch(styles, /\.termSummary \{[^}]*white-space:\s*nowrap/s);
   const serializedTypes = readFileSync("lib/public-offer/public-offer.types.ts", "utf8");
   assert.doesNotMatch(serializedTypes, /destinationUrl|trackingUrl|credential|internalNotes/);

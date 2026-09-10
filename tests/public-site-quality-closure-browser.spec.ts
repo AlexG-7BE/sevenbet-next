@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { commercialUiLabels } from "../lib/i18n/commercial-ui-labels";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import {
   INITIAL_EUROPEAN_MARKET_PROFILES,
@@ -498,7 +499,8 @@ test("German local visual profile localizes system UI while remaining informatio
     ].join(",")).allInnerTexts();
     expect(systemUi.join("\n"), "localized profile system UI").not.toMatch(/\b(?:Why|Demonstration)\b/);
     const messages = productPageMessages("de-DE");
-    await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText(messages.common.reviewAvailableNoAction);
+    await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText(commercialUiLabels("de-DE").noCurrentOffer);
+    await expect(page.locator('[data-runtime-renderer="casino-review"]')).not.toContainText(messages.common.reviewAvailableNoAction);
     await expect(page.locator('[data-runtime-renderer="casino-review"] a[href^="/r/"]')).toHaveCount(0);
     await expectCriticalTextFits(page, [
       "[data-casino-decision-bar]",

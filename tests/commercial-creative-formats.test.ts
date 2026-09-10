@@ -330,6 +330,13 @@ function profileCasino(renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAI
     source: "EXACT_OFFER" as const,
     exactOfferId: "affiliate-offer-id",
   };
+  const bonus: PublicCasinoDTO["bonuses"][number] = {
+    id: "bonus-id", slug: "skol-welcome", title: "Verified Skol welcome offer", summary: "Current published offer", type: "WELCOME", percentage: 100,
+    minimumDeposit: 10, maximumBonus: 150, maximumBet: 5, currency: "GBP", freeSpins: 20, wageringMultiplier: 30,
+    wageringText: "30× wagering", eligibility: "New eligible customers only", importantConditions: ["Terms apply"], termsUrl: null,
+    startsAt: null, expiresAt: null, affiliate: { href: "/r/skol-current-offer", available: true },
+    media: { CASINO_OFFER_BLOCK: offerPlacement, CASINO_REVIEW_RIGHT_HERO: reviewHeroPlacement },
+  };
   return {
     source: "cms", id: "skol-id", slug: "skol-casino", name: "Skol Casino", title: "Skol Casino",
     domain: "operator.example", summary: "Published factual summary.", reviewContent: "Published editorial review.", operator: "Skol Operator",
@@ -340,13 +347,8 @@ function profileCasino(renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAI
     licenses: [{ authority: "Published Authority", licenseNumber: null, jurisdiction: "GB", status: "ACTIVE", verificationUrl: null, expiresAt: null, lastVerifiedAt: "2030-01-15T00:00:00.000Z" }],
     countries: [{ countryCode: "GB", availability: "AVAILABLE", minimumAge: 18, currency: "GBP", language: "en" }],
     payments: [], providers: [], categories: [], marketProfiles: [],
-    bonuses: [{
-      id: "bonus-id", slug: "skol-welcome", title: "Verified Skol welcome offer", summary: "Current published offer", type: "WELCOME", percentage: 100,
-      minimumDeposit: 10, maximumBonus: 150, maximumBet: 5, currency: "GBP", freeSpins: 20, wageringMultiplier: 30,
-      wageringText: "30× wagering", eligibility: "New eligible customers only", importantConditions: ["Terms apply"], termsUrl: null,
-      startsAt: null, expiresAt: null, affiliate: { href: "/r/skol-current-offer", available: true },
-      media: { CASINO_OFFER_BLOCK: offerPlacement, CASINO_REVIEW_RIGHT_HERO: reviewHeroPlacement },
-    }],
+    bonuses: [bonus],
+    offerPresentation: { selectedOffer: bonus, relation: "EXACT", sourceCountryCode: "GB", presentationCountryCode: "GB", currentMarketVerified: true },
     media: { logo: null, hero: placement.asset, screenshots: [], gallery: [], socialImage: null, placements: { CASINO_DETAIL_HERO: placement } },
     affiliate: { href: "/r/skol-casino", available: true },
     presentationDisposition: "PROMOTABLE",
@@ -401,7 +403,7 @@ test("authorized creative markup uses the governed route while blocked creative 
   assert.doesNotMatch(blockedCreative, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
 });
 
-test("review heroes are always B4GAMBLE logo-only compositions while governed CTA authority stays separate", async () => {
+test("review heroes contain no promotional media while governed CTA authority stays separate", async () => {
   const require = createRequire(import.meta.url);
   require.extensions[".css"] = () => undefined;
   (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -417,7 +419,7 @@ test("review heroes are always B4GAMBLE logo-only compositions while governed CT
       messages,
       presentation,
     }));
-    assert.match(html, /data-media-mode="COMPOSED"[^>]+data-media-ratio="missing"[^>]+data-media-source="CODE_FALLBACK"[^>]+data-presentation-family="LOGO_ONLY"/);
+    assert.doesNotMatch(html, /data-media-mode|data-media-source|data-presentation-family|skol-300x250/);
     assert.doesNotMatch(html, /data-creative-offer-id|data-commercial-action-source="CREATIVE"|skol-300x250/);
     assert.doesNotMatch(html, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
     assert.match(html, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CTA"[^>]+href="\/r\/skol-current-offer"/);
@@ -427,9 +429,10 @@ test("review heroes are always B4GAMBLE logo-only compositions while governed CT
 
   const blockedCasino = profileCasino();
   blockedCasino.bonuses = blockedCasino.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } }));
+  blockedCasino.offerPresentation = { ...blockedCasino.offerPresentation!, selectedOffer: blockedCasino.bonuses[0] };
   blockedCasino.affiliate = { href: null, available: false };
   const blocked = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: blockedCasino, editorial: null, messages, presentation }));
-  assert.match(blocked, /data-media-mode="COMPOSED"[^>]+data-media-source="CODE_FALLBACK"[^>]+data-presentation-family="LOGO_ONLY"/);
+  assert.doesNotMatch(blocked, /data-media-mode|data-media-source|data-presentation-family|skol-300x250/);
   assert.doesNotMatch(blocked, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
 
   const brandOnly = profileCasino();
@@ -439,7 +442,7 @@ test("review heroes are always B4GAMBLE logo-only compositions while governed CT
   }));
   brandOnly.media = { ...brandOnly.media, hero: null, placements: undefined, logo: { id: "skol-logo", type: "logo", url: "/controlled/skol-logo.png", alt: "Skol logo", width: 200, height: 100, caption: null } };
   const fallback = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: brandOnly, editorial: null, messages, presentation }));
-  assert.match(fallback, /data-media-mode="COMPOSED"[^>]+data-media-ratio="brand"[^>]+data-media-source="LOGO_COMPOSITION"[^>]+data-presentation-family="LOGO_ONLY"/);
+  assert.doesNotMatch(fallback, /data-media-mode|data-media-source|data-presentation-family/);
   assert.match(fallback, /src="\/controlled\/skol-logo\.png"/);
   assert.doesNotMatch(fallback, /data-commercial-action-source="CREATIVE"|data-commercial-action-placement="CASINO_DETAIL_HERO"/);
 
@@ -451,7 +454,7 @@ test("review heroes are always B4GAMBLE logo-only compositions while governed CT
   brandArtCasino.bonuses = brandArtCasino.bonuses.map((entry) => ({ ...entry, media: { ...entry.media, CASINO_REVIEW_RIGHT_HERO: { ...reviewBrandArtPlacement, variants: { DEFAULT: reviewBrandArtPlacement } } } }));
   brandArtCasino.media = { ...brandArtCasino.media, hero: brandArt, placements: { ...brandArtCasino.media.placements, CASINO_DETAIL_HERO: brandArtPlacement } };
   const brandArtHtml = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: brandArtCasino, editorial: null, messages, presentation }));
-  assert.match(brandArtHtml, /data-media-mode="COMPOSED"[^>]+data-media-source="CODE_FALLBACK"[^>]+data-presentation-family="LOGO_ONLY"/);
+  assert.doesNotMatch(brandArtHtml, /data-media-mode|data-media-source|data-presentation-family/);
   assert.doesNotMatch(brandArtHtml, /skol-brand-art|data-commercial-action-source="CREATIVE"|data-commercial-action-placement="CASINO_DETAIL_HERO"/);
 
   const logoOfferCasino = profileCasino();
@@ -460,7 +463,7 @@ test("review heroes are always B4GAMBLE logo-only compositions while governed CT
   logoOffer.source = "LOGO_COMPOSITION";
   logoOfferCasino.bonuses = logoOfferCasino.bonuses.map((entry) => ({ ...entry, media: { CASINO_OFFER_BLOCK: logoOffer } }));
   const logoOfferHtml = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: logoOfferCasino, editorial: null, messages, presentation }));
-  assert.match(logoOfferHtml, /data-presentation-family="LOGO_ONLY"/);
+  assert.doesNotMatch(logoOfferHtml, /data-media-mode|data-media-source|data-presentation-family/);
   assert.doesNotMatch(logoOfferHtml, /skol-300x250|data-commercial-action-source="CREATIVE"/);
 });
 
@@ -488,7 +491,8 @@ test("active Admin and public surfaces keep CTA paths while promotional placemen
   assert.match(commercialStyles, /\.mediaArtwork \{ width:auto; height:auto; max-width:100%; max-height:100%/);
   assert.doesNotMatch(commercial, /compositionIdentity|controlledStrip/);
   assert.match(profile, /context=\{\{ source: "CTA", placement: "CASINO_OFFER_BLOCK" \}\}/);
-  assert.match(profile, /data-presentation-family": "LOGO_ONLY"/);
+  assert.match(profile, /casino\.media\.logo/);
+  assert.doesNotMatch(profile, /data-media-mode|data-media-source|data-presentation-family/);
   assert.doesNotMatch(profile, /source: "CREATIVE"|CASINO_REVIEW_RIGHT_HERO/);
   for (const source of [commercial, profile]) {
     assert.doesNotMatch(source, /dangerouslySetInnerHTML|<iframe|partnerClickUrl|impression(?:Pixel|Url)/i);

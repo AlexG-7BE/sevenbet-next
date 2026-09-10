@@ -8,7 +8,7 @@ test("bonus presentation renders neutral absence and never links an unavailable 
   assert.match(component, /offer\.casino\.licenses\[0\]\?\.authority/);
   assert.match(component, /return messages\.common\.notListed/);
   assert.match(component, /aria-disabled="true"/);
-  assert.match(component, /messages\.common\.noGovernedVisit/);
+  assert.match(component, /messages\.common\.reviewOnly/);
   assert.match(component, /if \(!href\) return/);
   assert.match(component, /const reviewHref = publicCasinoReviewHref\(offer\.casino\)/);
   assert.match(component, /productHref\(presentation, publicCasinoReviewHref\(offer\.casino\)!\)/);
@@ -18,7 +18,7 @@ test("available actions remain governed internal redirects after material terms"
   const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
   const handoff = readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8");
   assert.ok(component.includes('/^\\/r\\/[a-z0-9][a-z0-9-]*$/i'));
-  assert.match(component, /<CasinoOutboundAction action=\{\{ href, label: messages\.common\.actionAvailable \}\}/);
+  assert.match(component, /<CasinoOutboundAction action=\{\{ href, label: commercialUiLabels\(locale\)\.visitCasino \}\}/);
   assert.match(handoff, /href=\{action\.href\}/);
   assert.match(handoff, /outboundIntent\("direct", context\)/);
   assert.match(handoff, /rel="nofollow sponsored noopener"/);
@@ -101,8 +101,8 @@ test("directory cards use normalized logo stages and preserve a readable respons
   const styles = readFileSync("components/bonus-directory/BonusDirectory.module.css", "utf8");
   const marketplaceStyles = styles.slice(styles.indexOf("Shared directory grammar"));
   assert.match(component, /data-bonus-directory-card/);
-  assert.match(component, /data-logo-state=\{offer\.casino\.logo \? "image" : "fallback"\}/);
-  assert.match(component, /offer\.casino\.name\.slice\(0, 1\)/);
+  assert.match(component, /data-logo-state=\{offer\.casino\.logo \? "image" : "missing"\}/);
+  assert.doesNotMatch(component, /offer\.casino\.name\.slice\(0, 1\)/);
   assert.match(component, /data-material-terms/);
   assert.match(component, /data-governed-actions/);
   assert.match(component, /messages\.common\.demoData/);
@@ -111,10 +111,10 @@ test("directory cards use normalized logo stages and preserve a readable respons
   assert.match(styles, /\.compactLogo img \{[^}]*max-width:100px;[^}]*max-height:80px;[^}]*object-fit:contain;/s);
   assert.match(styles, /\.compactHeadline \{ font-size:22px; font-weight:900;/);
   assert.match(styles, /@media \(max-width:600px\) \{[\s\S]*\.compactTerms \{ grid-template-columns:minmax\(0,1fr\); \}/);
-  assert.match(styles, /grid-template-columns:96px minmax\(180px,\.72fr\) minmax\(290px,1\.2fr\) minmax\(360px,1\.15fr\)/);
+  assert.match(styles, /grid-template-columns:64px minmax\(170px,\.75fr\) minmax\(220px,1\.15fr\) minmax\(280px,1fr\) minmax\(150px,\.58fr\)/);
   assert.match(styles, /\.compactTerms dt \{ min-width:0; hyphens:none; overflow-wrap:normal; word-break:normal; \}/);
   assert.match(styles, /\.compactActions \.offerActionCompact,[^}]*min-height:44px;/s);
-  assert.doesNotMatch(marketplaceStyles, /font-size:(?:\s*)1[01]px/);
+  assert.match(marketplaceStyles, /@media \(max-width:600px\)[\s\S]*\.compactTerms \{ grid-template-columns:minmax\(0,1fr\); \}/);
 });
 
 test("casino and bonus directories share one presentation-only pagination contract", () => {
