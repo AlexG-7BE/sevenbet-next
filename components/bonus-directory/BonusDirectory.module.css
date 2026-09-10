@@ -799,7 +799,7 @@
   .compactHeadline { font-size:18px; line-height:22px; }
   .compactTerms { align-self:center; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; padding:0 0 0 18px; border-left:1px solid rgba(16,15,15,.12); }
   .compactTerms div:last-child { grid-column:auto; }
-  .compactTerms dt { font-size:11px; line-height:15px; }
+  .compactTerms dt { font-size:12px; line-height:15px; }
   .compactTerms dd { font-size:13px; line-height:18px; }
   .compactActions { align-self:center; padding-left:16px; border-left:1px solid rgba(16,15,15,.12); display:grid; gap:6px; }
   .compactActions .offerActionCompact,.compactActions .actionUnavailableCompact { width:100%; min-height:42px; border-radius:4px; }

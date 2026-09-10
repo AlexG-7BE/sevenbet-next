@@ -7,21 +7,21 @@
 .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
 .card { min-width:0; padding:28px; border:1px solid rgba(16,15,15,.14); display:flex; flex-direction:column; background:#fff; }
 .card header { display:flex; align-items:center; justify-content:space-between; color:var(--olive); }
-.card header small { font-size:10px; letter-spacing:.1em; text-transform:uppercase; }
+.card header small { font-size:12px; letter-spacing:.1em; text-transform:uppercase; }
 .rank { font-size:32px; font-weight:800; }
 .headline { min-height:72px; margin-top:18px; display:block; font-size:24px; line-height:1.12; text-transform:uppercase; }
 .identity { padding:18px 0; border-block:1px solid rgba(16,15,15,.1); display:flex; align-items:center; gap:14px; }
 .identity > span { width:56px; height:42px; display:grid; place-items:center; }
 .identity img { max-width:100%; max-height:100%; object-fit:contain; }
 .identity h2 { margin:0; font-size:21px; line-height:1.05; text-transform:uppercase; }
-.identity small { color:var(--muted); font-size:11px; }
+.identity small { color:var(--muted); font-size:12px; }
 .identity small span { color:var(--olive); letter-spacing:.03em; }
 .card dl { margin:12px 0 0; }
 .card dl div { padding:9px 0; border-bottom:1px solid rgba(16,15,15,.08); display:grid; grid-template-columns:minmax(95px,.8fr) minmax(0,1.2fr); gap:10px; }
-.card dt { color:var(--muted); font-size:11px; }
+.card dt { color:var(--muted); font-size:12px; }
 .card dd { margin:0; font-size:12px; line-height:1.4; font-weight:750; text-align:right; overflow-wrap:anywhere; }
 .card > p { min-height:62px; margin:16px 0 0; display:-webkit-box; overflow:hidden; color:var(--muted); font-size:13px; line-height:1.55; -webkit-box-orient:vertical; -webkit-line-clamp:3; }
-.demo { margin-top:14px; color:var(--muted); font-size:11px; line-height:1.4; }
+.demo { margin-top:14px; color:var(--muted); font-size:12px; line-height:1.4; }
 .actions { margin-top:auto; padding-top:20px; display:flex; align-items:center; flex-wrap:wrap; gap:10px 14px; }
 .action { min-height:44px; padding:10px 18px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; background:var(--red); color:#fff; font-weight:750; }
 .unavailable { min-height:44px; display:inline-flex; align-items:center; color:var(--muted); font-size:13px; font-weight:700; }

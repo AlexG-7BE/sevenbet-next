@@ -27,7 +27,7 @@
 .featuredFacts > p { margin:26px 0 0; color:var(--muted); font-size:14px; line-height:1.6; }
 .rankLine { display:flex; align-items:center; gap:16px; }
 .rankLine > span { color:var(--olive); font-size:50px; line-height:1; font-weight:800; }
-.rankLine > b { color:var(--olive); font-size:11px; letter-spacing:.12em; text-transform:uppercase; }
+.rankLine > b { color:var(--olive); font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
 .identity { margin:24px 0 16px; display:flex; align-items:center; gap:14px; }
 .identity > span { width:64px; height:46px; display:grid; place-items:center; }
 .identity img { max-width:100%; max-height:100%; object-fit:contain; }
@@ -35,7 +35,7 @@
 .score { display:flex; align-items:baseline; gap:10px; }
 .score strong { font-size:30px; }
 .score span { color:var(--olive); font-size:12px; letter-spacing:.06em; }
-.score small { color:var(--muted); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+.score small { color:var(--muted); font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
 .featuredLead h4,.alternativeCard h4 { margin:24px 0 0; font-size:clamp(25px,2.2vw,36px); line-height:1.08; text-transform:uppercase; }
 .reason { display:-webkit-box; margin:16px 0 0; overflow:hidden; color:var(--muted); font-size:14px; line-height:1.62; -webkit-box-orient:vertical; -webkit-line-clamp:3; }
 .terms,.compactTerms { margin:20px 0 0; padding:0; }
