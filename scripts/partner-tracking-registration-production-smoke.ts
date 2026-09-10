@@ -138,8 +138,8 @@ async function runBeforeStateSnapshot(sha: string) {
 async function runServiceSmoke(sha: string) {
   const activation = await prisma.marketActivation.findUniqueOrThrow({
     where: { casinoId_countryCode_product: {
-      casinoId: (await prisma.casino.findUniqueOrThrow({ where: { slug: "betsson" }, select: { id: true } })).id,
-      countryCode: "PE",
+      casinoId: (await prisma.casino.findUniqueOrThrow({ where: { slug: "rizk" }, select: { id: true } })).id,
+      countryCode: "RS",
       product: "CASINO",
     } },
     include: {
@@ -169,7 +169,40 @@ async function runServiceSmoke(sha: string) {
     throw new Error("PRODUCTION_SMOKE_RESPONSE_LEAK");
   }
   if (result.status !== "NO_CHANGE" || result.verification !== "ALREADY_REGISTERED" || result.linkHash !== linkHash) {
-    throw new Error("PRODUCTION_SMOKE_NOT_IDEMPOTENT");
+    const checkedLink = await prisma.affiliateTrackingLink.findUniqueOrThrow({
+      where: { id: result.trackingLinkId },
+      select: { metadata: true },
+    });
+    const registration = checkedLink.metadata && typeof checkedLink.metadata === "object" && !Array.isArray(checkedLink.metadata)
+      ? (checkedLink.metadata as Record<string, unknown>).partnerTrackingRegistration
+      : null;
+    const verification = registration && typeof registration === "object" && !Array.isArray(registration)
+      ? (registration as Record<string, unknown>).verification
+      : null;
+    const verificationFields = verification && typeof verification === "object" && !Array.isArray(verification)
+      ? verification as Record<string, unknown>
+      : {};
+    const boundedVerification = {
+      outcome: typeof verificationFields.outcome === "string" && /^[A-Z_]+$/.test(verificationFields.outcome) ? verificationFields.outcome : null,
+      reason: typeof verificationFields.reason === "string" && /^[A-Z0-9_]+$/.test(verificationFields.reason) ? verificationFields.reason : null,
+      finalHost: typeof verificationFields.finalHost === "string" && /^[a-z0-9.-]+$/i.test(verificationFields.finalHost) ? verificationFields.finalHost : null,
+      statusCode: typeof verificationFields.statusCode === "number" ? verificationFields.statusCode : null,
+      redirectCount: typeof verificationFields.redirectCount === "number" ? verificationFields.redirectCount : null,
+    };
+    throw new Error(`PRODUCTION_SMOKE_NOT_IDEMPOTENT:${JSON.stringify({
+      status: result.status,
+      verification: result.verification,
+      linkHashMatches: result.linkHash === linkHash,
+      finalHost: result.finalHost,
+      redirectCount: result.redirectCount,
+      boundedVerification,
+      affectedGeoCount: result.affectedGeoCount,
+      resultStates: result.results.map((row) => ({
+        geo: row.geo,
+        finalState: row.finalState,
+        routeHealth: row.routeHealth,
+      })),
+    })}`);
   }
   const after = await scopedCounts(activation.casinoId, networkId, activation.countryCode);
   if (JSON.stringify(before) !== JSON.stringify(after)) throw new Error("PRODUCTION_SMOKE_DUPLICATE_OBJECT_CREATED");
@@ -322,7 +355,11 @@ async function main() {
 }
 
 main().finally(async () => { if (prisma) await prisma.$disconnect(); }).catch((error) => {
-  const code = error instanceof Error && /^[A-Z0-9_]+$/.test(error.message) ? error.message : "PRODUCTION_SMOKE_FAILED";
+  const boundedIdempotencyDiagnostic = error instanceof Error
+    && error.message.startsWith("PRODUCTION_SMOKE_NOT_IDEMPOTENT:");
+  const code = boundedIdempotencyDiagnostic ? error.message
+    : error instanceof Error && /^[A-Z0-9_]+$/.test(error.message) ? error.message
+      : "PRODUCTION_SMOKE_FAILED";
   process.stderr.write(`${code}\n`);
   process.exitCode = 1;
 });

@@ -4,9 +4,9 @@
 **Evidence date:** 10 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `dea5d22d5b0c998fd0e4ca36cec52d6e30e63b8c`
-**Verified post-release runtime baseline SHA:** `dea5d22d5b0c998fd0e4ca36cec52d6e30e63b8c`
-**Verified post-release runtime deployment:** Ready; `dpl_A64EXh8tYj8toWexhdDovMAz7EYa`
+**Current Production application SHA (live provider evidence):** `95b47beb8721900b3803163b13b66beba0ab2828`
+**Verified post-release runtime baseline SHA:** `95b47beb8721900b3803163b13b66beba0ab2828`
+**Verified post-release runtime deployment:** Ready; `dpl_FwaFucGtxGmrw3yocNLxQg6825t9`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -54,6 +54,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
 | ChatGPT Work MCP / Better Auth 1.7 | **COMMERCIAL MCP ENABLED; MEDIA MCP RETIRED BY RFC-044** | Commercial retains its governed resource. Migration 0034 prevents Media authority from being recreated; the application cutover makes the Media MCP, its DCR and discovery surfaces return cache-proof 410. |
+| Partner tracking registration | **LIVE IN COMMERCIAL MCP** | `commercial_register_partner_tracking_link` accepts only Partner, Casino, tracking URL and optional exact GEO. It stages, verifies and promotes through existing commercial records and RFC-042, preserving exact-over-generic precedence, legal/regulatory blocks, idempotency and raw-URL redaction. |
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
 | Commercial partner activation | **READY IN PRODUCTION — 24 ACTIVE_HEALTHY / 540 TERMINALLY CLASSIFIED ROWS** | The exhaustive current-partner matrix covers four partners, 73 Casinos and 25 GEO labels: 24 ACTIVE_HEALTHY, 24 BLOCKED_BY_LAW, 17 ACTION_REQUIRED_REGULATORY, one BROKEN_ROUTE and 474 MISSING_TRACKING_ROUTE. RFC-042 is the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |
 | Casino market data | **FOURTEEN REAL PUBLISHED IDENTITIES — SAFE CROSS-MARKET OFFER PRESENTATION ACTIVE** | Market-projected Casino facts remain isolated. A bounded immutable published-bonus corpus now resolves `EXACT > ROW > OTHER_MARKET > NONE`; StarCasino IT plus genuine Rizk and NordicBet ROW offers are reconciled without creating commercial or media authority. Founder-approved scores remain unchanged. |
@@ -66,6 +67,30 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public language / market presentation | **ELEVEN LOCALES LIVE IN PRODUCTION** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
 
 ### Recent implementation state
+
+**VERIFIED — PARTNER TRACKING REGISTRATION MECHANISM LIVE, 10 September
+2026:** [PR #234](https://github.com/AlexG-7BE/sevenbet-next/pull/234)
+merged normally as `95b47beb8721900b3803163b13b66beba0ab2828`; Ready
+Production deployment `dpl_FwaFucGtxGmrw3yocNLxQg6825t9` owns the canonical
+aliases. No schema migration or backfill was required. Authenticated Production
+MCP discovery exposes five tools and the new strict
+`commercial_register_partner_tracking_link` contract requires exactly
+`partner`, `casino` and `trackingUrl`, with optional `geo`.
+
+The guarded idempotent Production smoke re-registered the existing Betsson
+Group Affiliates × Rizk × RS exact route using only its in-memory canonical
+value. It returned `NO_CHANGE / ALREADY_REGISTERED`, link hash
+`1288d3b46c980a4fccad33c57cde77ac19ec02553502def3296bd37221f085c5`,
+final host `rizk.rs` after two redirects and preserved the same
+`ACTIVE + HEALTHY` MarketActivation. Before/after counts were identical: one
+Program, one Offer, 17 historical/canonical TrackingLinks, one `/r` mapping and
+one exact MarketActivation. Response and audit leak checks passed. A 24-entry
+deployment-log scan found zero raw canonical URLs, known token values or
+sensitive-field markers. KZ and spoofed-RS public `/r` probes both failed
+closed to the no-store internal recovery surface, confirming no cross-GEO
+leakage or client-header authority. The pre-release Ready deployment
+`dpl_HTY6fLMQgW6VWfgxm2enroUMXvTV` remains the rollback target. See the
+[Partner Tracking Link Registration runbook](06_Operations/Partner-Tracking-Link-Registration.md).
 
 **VERIFIED — GLOBAL CURRENT-PARTNER COMMERCIAL ROLLOUT COMPLETE, 10 September
 2026:** [PR #223](https://github.com/AlexG-7BE/sevenbet-next/pull/223),
