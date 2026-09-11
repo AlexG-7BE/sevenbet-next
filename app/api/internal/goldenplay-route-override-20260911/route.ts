@@ -304,7 +304,7 @@ export async function GET() {
     seo: current.seo,
   };
 
-  await casinoService.saveCoreDraft(CASINO_ID, next, actor.id, current.updatedAt);
+  await casinoService.saveCoreDraft(CASINO_ID, next, actor.id, new Date(current.updatedAt));
 
   await prisma.casino.update({
     where: { id: CASINO_ID },
