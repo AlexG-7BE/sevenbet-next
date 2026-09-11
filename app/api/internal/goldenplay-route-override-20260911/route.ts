@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import prisma from "@/lib/db/prisma";
 import { PartnerTrackingRegistrationService } from "@/lib/commercial/partner-tracking-registration-service";
+import { marketActivationController } from "@/lib/market-activation/controller";
 import { partnerTrackingRegistrationRepository } from "@/lib/repositories/partner-tracking-registration.repository";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +41,8 @@ export async function GET() {
       redirectCount: 2,
       finalHost: "goldenplaywin.com",
     }),
+    marketActivationController,
+    async () => undefined,
   );
 
   const result = await service.register({
