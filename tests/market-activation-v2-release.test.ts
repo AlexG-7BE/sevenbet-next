@@ -107,6 +107,10 @@ test("Production build is DB-first and checksum-verifies the canonical activatio
   assert.match(source, /exact_market_unique/);
   assert.match(source, /MarketActivation_global_fallback_scope_check/);
   assert.match(source, /global_fallback_active_binding/);
+  assert.match(source, /marketcode=''zz''andmarketprofileidisnull/);
+  assert.match(source, /marketcode<>''zz''andcardinalityglobalfallbackblockedcountries=0/);
+  assert.match(source, /marketcode=''zz''ormarketprofileidisnotnull/);
+  assert.doesNotMatch(source, /pg_get_constraintdef\(con\.oid\) LIKE '%"marketCode"/);
   assert.match(source, /to_regclass\('public\."MarketActivation"'\)/);
   assert.match(source, /Production DB-first release requires completed.*MARKET_ACTIVATION_EXACT_MARKET_MIGRATION/s);
   assert.match(casinoMarketGuard, /canonicalEligibleRouteCountries/);

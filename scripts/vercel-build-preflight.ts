@@ -488,8 +488,18 @@ async function maybeApplyProgrammeAccessMigration() {
             WHERE ns.nspname = 'public'
               AND rel.relname = 'MarketActivation'
               AND con.conname = 'MarketActivation_global_fallback_scope_check'
-              AND pg_get_constraintdef(con.oid) LIKE '%"marketCode" <> ''ZZ''%'
-              AND pg_get_constraintdef(con.oid) LIKE '%"marketProfileId" IS NULL%'
+              AND regexp_replace(
+                lower(replace(pg_get_constraintdef(con.oid), '::text', '')),
+                '[[:space:]()"]',
+                '',
+                'g'
+              ) LIKE '%marketcode=''zz''andmarketprofileidisnull%'
+              AND regexp_replace(
+                lower(replace(pg_get_constraintdef(con.oid), '::text', '')),
+                '[[:space:]()"]',
+                '',
+                'g'
+              ) LIKE '%marketcode<>''zz''andcardinalityglobalfallbackblockedcountries=0%'
           ) AS global_fallback_scope,
           EXISTS (
             SELECT 1
@@ -499,7 +509,12 @@ async function maybeApplyProgrammeAccessMigration() {
             WHERE ns.nspname = 'public'
               AND rel.relname = 'MarketActivation'
               AND con.conname = 'MarketActivation_active_binding_check'
-              AND pg_get_constraintdef(con.oid) LIKE '%"marketCode" = ''ZZ''%'
+              AND regexp_replace(
+                lower(replace(pg_get_constraintdef(con.oid), '::text', '')),
+                '[[:space:]()"]',
+                '',
+                'g'
+              ) LIKE '%marketcode=''zz''ormarketprofileidisnotnull%'
               AND pg_get_constraintdef(con.oid) LIKE '%"globalFallbackBlockedCountries"%'
               AND pg_get_constraintdef(con.oid) LIKE '%''DK''%'
               AND pg_get_constraintdef(con.oid) LIKE '%''ES''%'
