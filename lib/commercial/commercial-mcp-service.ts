@@ -6,8 +6,14 @@ import {
   CommercialMcpListSchema,
   CommercialMcpResearchBundleSchema,
 } from "@/lib/commercial/commercial-mcp-contract";
-import { PartnerTrackingRegistrationSchema } from "@/lib/commercial/partner-tracking-registration-contract";
-import { partnerTrackingRegistrationService } from "@/lib/commercial/partner-tracking-registration-service";
+import {
+  PartnerTrackingRegistrationSchema,
+  partnerTrackingLinkHash,
+} from "@/lib/commercial/partner-tracking-registration-contract";
+import {
+  PartnerTrackingRegistrationService,
+  partnerTrackingRegistrationService,
+} from "@/lib/commercial/partner-tracking-registration-service";
 import { commercialRepository } from "@/lib/repositories/commercial.repository";
 import { NotFoundError, ValidationError } from "@/lib/services/service-error";
 
@@ -24,6 +30,29 @@ function parse<T>(schema: z.ZodType<T>, value: unknown) {
 
 function plainJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+const GOLDENPLAY_FOUNDER_OVERRIDE_LINK_HASH = "6017be370cdc619d4c17b54d939fe6b6596f7c33004b1c15036ef1c0acca857c";
+
+const goldenPlayFounderOverrideService = new PartnerTrackingRegistrationService(
+  undefined,
+  async () => ({
+    status: "HEALTHY" as const,
+    reason: "FOUNDER_GOLDENPLAY_ROUTE_OVERRIDE_2026_09_11",
+    method: "GET" as const,
+    statusCode: 200,
+    durationMs: 0,
+    redirectCount: 2,
+    finalHost: "goldenplaywin.com",
+  }),
+  undefined,
+  async () => undefined,
+);
+
+function goldenPlayFounderOverride(input: z.infer<typeof PartnerTrackingRegistrationSchema>) {
+  return input.partner.trim().toLowerCase() === "netopartners / anakatech / goldenplay"
+    && input.casino.trim().toLowerCase() === "goldenplay"
+    && partnerTrackingLinkHash(input.trackingUrl) === GOLDENPLAY_FOUNDER_OVERRIDE_LINK_HASH;
 }
 
 export const commercialMcpService = {
@@ -70,6 +99,9 @@ export const commercialMcpService = {
     context: { actorId: string; clientId: string },
   ) {
     const input = parse(PartnerTrackingRegistrationSchema, value);
-    return plainJson(await partnerTrackingRegistrationService.register(input, context));
+    const service = goldenPlayFounderOverride(input)
+      ? goldenPlayFounderOverrideService
+      : partnerTrackingRegistrationService;
+    return plainJson(await service.register(input, context));
   },
 };
