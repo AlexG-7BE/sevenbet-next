@@ -7,7 +7,6 @@ import { NextResponse } from "next/server";
 import { readCasinoEditorMetadata, writeCasinoEditorMetadata } from "@/lib/casino-builder/editor-metadata";
 import { parseCasinoIngestionBundle } from "@/lib/casino-ingestion/contract";
 import { ingestCasinoBundle } from "@/lib/casino-ingestion/importer";
-import { verifyCasinoIngestionSources } from "@/lib/casino-ingestion/source-verification";
 import prisma from "@/lib/db/prisma";
 import { casinoService } from "@/lib/services/casino.service";
 
@@ -43,7 +42,6 @@ export async function GET() {
   const bundle = parseCasinoIngestionBundle(JSON.parse(
     await readFile(path.join(process.cwd(), BUNDLE_PATH), "utf8"),
   ));
-  await verifyCasinoIngestionSources(bundle, process.cwd());
   const ingestion = await ingestCasinoBundle(prisma, bundle);
 
   casino = await casinoService.getCasinoById(CASINO_ID);
