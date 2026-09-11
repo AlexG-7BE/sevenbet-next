@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 
 import { partnerTrackingLinkHash } from "../lib/commercial/partner-tracking-registration-contract";
 import { PartnerTrackingRegistrationService } from "../lib/commercial/partner-tracking-registration-service";
-import { CURRENT_PARTNER_RECORDS } from "../lib/current-partner-rollout/inventory";
+import { CURRENT_PARTNER_INVENTORY, CURRENT_PARTNER_RECORDS } from "../lib/current-partner-rollout/inventory";
 import { MarketActivationController } from "../lib/market-activation/controller";
 import { MarketActivationRepository } from "../lib/market-activation/repository";
 import { MarketActivationRuntime } from "../lib/market-activation/runtime";
@@ -444,6 +444,181 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     assert.match(missingTask.title, /^MISSING_TRACKING_ROUTE: 464 supported/);
   } finally {
     await cleanup(client);
+    await client.$disconnect();
+  }
+});
+
+test("an inferred seeded market may reverify only its already-canonical exact route", async () => {
+  assertDisposablePostgres();
+  const client = new PrismaClient();
+  const repository = new PartnerTrackingRegistrationRepository(client);
+  const partner = CURRENT_PARTNER_RECORDS.find((record) => record.name === "Betsson Group Affiliates")!;
+  const actorId = "72000000-0000-4000-8000-000000000001";
+  const networkId = "72000000-0000-4000-8000-000000000002";
+  const casinoId = "72000000-0000-4000-8000-000000000003";
+  const trackingUrl = "https://tracking-fixture.example/click?token=seeded-idempotency&campaign=rizk-rs";
+
+  await client.marketActivation.deleteMany({ where: { casinoId } });
+  await client.partnerCasinoMarketSupport.deleteMany({ where: { casinoId } });
+  await client.commercialOpportunity.deleteMany({ where: { id: partner.opportunityId } });
+  await client.affiliateRedirectSlug.deleteMany({ where: { casinoId } });
+  await client.affiliateOffer.deleteMany({ where: { casinoId } });
+  await client.affiliateProgram.deleteMany({ where: { casinoId } });
+  await client.affiliateNetwork.deleteMany({ where: { id: networkId } });
+  await client.casino.deleteMany({ where: { id: casinoId } });
+  await client.adminUser.deleteMany({ where: { id: actorId } });
+
+  try {
+    await client.adminUser.create({ data: {
+      id: actorId,
+      email: "partner-tracking-seeded-idempotency@invalid.example",
+      name: "Seeded idempotency fixture",
+      role: "AFFILIATE_MANAGER",
+    } });
+    await client.casino.create({ data: {
+      id: casinoId,
+      title: "Rizk",
+      slug: "rizk",
+      domain: "rizk.com",
+      websiteUrl: "https://rizk.com/",
+      status: "PUBLISHED",
+      domainPublicationStatus: "PUBLISHED",
+      publishedAt: NOW,
+      createdBy: actorId,
+      updatedBy: actorId,
+    } });
+    const profile = await client.casinoCountry.create({ data: {
+      casinoId,
+      countryCode: "RS",
+      availability: "AVAILABLE",
+      localDomain: "rizk.rs",
+      localWebsiteUrl: "https://rizk.rs/sr",
+      lastVerifiedAt: NOW,
+    } });
+    await client.affiliateNetwork.create({ data: {
+      id: networkId,
+      name: partner.name,
+      slug: "betsson-group-affiliates",
+      active: true,
+      createdBy: actorId,
+      updatedBy: actorId,
+    } });
+    await client.commercialOpportunity.create({ data: {
+      id: partner.opportunityId,
+      displayName: partner.name,
+      normalizedName: "betsson group affiliates",
+      organizationType: "AFFILIATE_NETWORK",
+      stage: "ACTIVE",
+      affiliateNetworkId: networkId,
+      createdBy: actorId,
+      updatedBy: actorId,
+    } });
+
+    const inferredTarget = await repository.resolveTarget({
+      partner: partner.name,
+      partnerId: partner.opportunityId,
+      partnerAliases: partner.aliases,
+      casino: "Rizk",
+      requestedGeos: ["RS"],
+    });
+    const seededRs = inferredTarget.rows.find((row) => row.geo === "RS")!;
+    const inventoryRs = CURRENT_PARTNER_INVENTORY.find((row) => row.partner === partner.name && row.casino === "Rizk" && row.geo === "RS")!;
+    assert.equal(seededRs.supportOrigin, "SEEDED");
+    assert.ok(inventoryRs.supportEvidenceClassification === "INFERRED" || inventoryRs.legalEvidenceClassification === "INFERRED");
+
+    const evidenceReadyTarget = {
+      ...inferredTarget,
+      rows: inferredTarget.rows.map((row) => row.geo === "RS" ? {
+        ...row,
+        supportEvidenceClassification: "DETECTED" as const,
+        legalEvidenceClassification: "DETECTED" as const,
+      } : row),
+    };
+    const initial = await repository.stage({
+      target: evidenceReadyTarget,
+      trackingUrl,
+      linkHash: partnerTrackingLinkHash(trackingUrl),
+      scope: "EXACT_GEO",
+      geo: "RS",
+      supportedGeos: null,
+      actorId,
+      now: NOW,
+    });
+    await repository.recordVerification({
+      stage: initial,
+      verification: "HEALTHY",
+      reason: "GET_FALLBACK_OK",
+      finalHost: "rizk.rs",
+      redirectCount: 2,
+      statusCode: 200,
+      checkedAt: NOW,
+      actorId,
+    });
+    await repository.promote({ stage: initial, finalHost: "rizk.rs", redirectCount: 2, checkedAt: NOW, actorId });
+    await client.marketActivation.create({ data: {
+      casinoId,
+      countryCode: "RS",
+      marketCode: "RS",
+      product: "CASINO",
+      desiredState: "ACTIVE",
+      status: "ACTIVE",
+      marketProfileId: profile.id,
+      affiliateOfferId: initial.affiliateOfferId,
+      primaryTrackingLinkId: initial.trackingLinkId,
+      redirectSlugId: initial.redirectId,
+      version: 1,
+      controllerVersion: "RFC-042",
+      reconciliationFingerprint: "a".repeat(64),
+      requestedBy: actorId,
+      requestedAt: NOW,
+      requestReason: "Existing exact route fixture",
+      sourceReferences: ["seeded-idempotency-fixture"],
+      activatedAt: NOW,
+      lastReconciledAt: NOW,
+      routeVerificationStatus: "HEALTHY",
+      routeLastCheckedAt: NOW,
+      routeFinalHost: "rizk.rs",
+    } });
+
+    const existingLinkCount = await client.affiliateTrackingLink.count({ where: { offerId: initial.affiliateOfferId } });
+    const idempotent = await repository.stage({
+      target: inferredTarget,
+      trackingUrl,
+      linkHash: partnerTrackingLinkHash(trackingUrl),
+      scope: "EXACT_GEO",
+      geo: "RS",
+      supportedGeos: null,
+      actorId,
+      now: new Date(NOW.getTime() + 1_000),
+    });
+    assert.equal(idempotent.alreadyCanonical, true);
+    assert.equal(idempotent.candidateCreated, false);
+    assert.equal(idempotent.trackingLinkId, initial.trackingLinkId);
+    assert.deepEqual(idempotent.affectedRows.map((row) => row.geo), ["RS"]);
+    assert.equal(await client.affiliateTrackingLink.count({ where: { offerId: initial.affiliateOfferId } }), existingLinkCount);
+    assert.equal(await client.partnerCasinoMarketSupport.count({ where: { casinoId } }), 0);
+
+    await assert.rejects(() => repository.stage({
+      target: inferredTarget,
+      trackingUrl: `${trackingUrl}-replacement`,
+      linkHash: partnerTrackingLinkHash(`${trackingUrl}-replacement`),
+      scope: "EXACT_GEO",
+      geo: "RS",
+      supportedGeos: null,
+      actorId,
+      now: new Date(NOW.getTime() + 2_000),
+    }), (error: unknown) => error instanceof Error && "details" in error
+      && (error.details as { reason?: string }).reason === "PARTNER_TRACKING_EVIDENCE_PENDING");
+  } finally {
+    await client.marketActivation.deleteMany({ where: { casinoId } });
+    await client.partnerCasinoMarketSupport.deleteMany({ where: { casinoId } });
+    await client.commercialOpportunity.deleteMany({ where: { id: partner.opportunityId } });
+    await client.affiliateRedirectSlug.deleteMany({ where: { casinoId } });
+    await client.affiliateOffer.deleteMany({ where: { casinoId } });
+    await client.affiliateProgram.deleteMany({ where: { casinoId } });
+    await client.affiliateNetwork.deleteMany({ where: { id: networkId } });
+    await client.casino.deleteMany({ where: { id: casinoId } });
+    await client.adminUser.deleteMany({ where: { id: actorId } });
     await client.$disconnect();
   }
 });
