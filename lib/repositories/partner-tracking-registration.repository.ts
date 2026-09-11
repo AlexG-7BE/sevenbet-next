@@ -633,13 +633,32 @@ export class PartnerTrackingRegistrationRepository {
           && !exactOverrides.has(row.geo)
           && row.trackingScope !== "EXACT_GEO"
           && row.trackingScope !== "REGIONAL_REUSE");
+    const sameUrlRegistration = registrationMetadata(sameUrl?.metadata);
+    const sameUrlHasDeclaredScope = Boolean(sameUrl && sameScope(sameUrlRegistration));
+    const existingCanonicalSameUrlGeos = new Set(sameUrl && (sameUrlHasDeclaredScope || !sameUrlRegistration.scope)
+      ? (await tx.marketActivation.findMany({
+          where: {
+            casinoId: input.target.casinoId,
+            marketCode: { in: declaredScopeRows.map((row) => row.geo) },
+            product: "CASINO",
+            status: "ACTIVE",
+            routeVerificationStatus: "HEALTHY",
+            primaryTrackingLinkId: sameUrl.id,
+          },
+          select: { marketCode: true },
+        })).map((activation) => activation.marketCode)
+      : []);
     // Review-only inferred evidence remains visible in the worldwide corpus,
-    // but it cannot be promoted into runtime authority by the registrar.
+    // but it cannot be promoted into new runtime authority by the registrar.
+    // A same-scope URL that is already bound to an ACTIVE + HEALTHY exact
+    // market remains eligible only for that existing market, preserving the
+    // registrar's no-change/idempotency contract without broadening coverage.
     // Historical inventories predate these fields and retain their behavior.
     const affectedRows = declaredScopeRows
       .filter((row) => row.supportOrigin === "RUNTIME"
         || (row.supportEvidenceClassification !== "INFERRED"
-          && row.legalEvidenceClassification !== "INFERRED"))
+          && row.legalEvidenceClassification !== "INFERRED")
+        || existingCanonicalSameUrlGeos.has(row.geo))
       .sort((left, right) => left.geo.localeCompare(right.geo));
     if (!affectedRows.length) {
       throw new ValidationError("No evidence-ready supported GEO remains in the requested tracking scope", {
@@ -670,9 +689,8 @@ export class PartnerTrackingRegistrationRepository {
     });
     const previousTrackingLinkIds = [...new Set(previousActivations.flatMap((row) => row.primaryTrackingLinkId ? [row.primaryTrackingLinkId] : []))];
 
-    const sameUrlRegistration = registrationMetadata(sameUrl?.metadata);
     const sameUrlMatchesScope = sameUrl && sameUrl.offerId === offer.id && (
-      sameScope(sameUrlRegistration)
+      sameUrlHasDeclaredScope
       || (!sameUrlRegistration.scope && previousActivations.some((activation) => activation.primaryTrackingLinkId === sameUrl.id))
     );
     let link: AffiliateTrackingLink | null = sameUrlMatchesScope ? sameUrl : allLinks.find((candidate) => {
