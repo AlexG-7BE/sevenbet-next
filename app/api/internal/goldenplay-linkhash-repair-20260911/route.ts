@@ -9,7 +9,7 @@ import prisma from "@/lib/db/prisma";
 export const dynamic = "force-dynamic";
 
 const GOLDENPLAY_CASINO_ID = "d9fcfd4c-bc96-4ed5-b9ea-192c6bf2f712";
-const EXPECTED_TRACKING_LINK_ID = "b527efa1-2d0d-44a4-ba8d-135404ee68c7";
+const EXPECTED_TRACKING_LINK_ID = "577a59f8-c16a-42b0-b59e-d3452dce0e7a";
 const EXPECTED_LINK_HASH = "75c41114c11b4f12d411e6e3fe4ca1823959f02ae5668acd49e0970241dc950e";
 const REGISTRATION_METADATA_KEY = "partnerTrackingRegistration";
 
