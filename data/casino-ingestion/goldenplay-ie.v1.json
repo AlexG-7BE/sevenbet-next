@@ -1,0 +1,257 @@
+{
+  "schemaVersion": "casino-market-ingestion.v1",
+  "actor": "founder-office-goldenplay-draft-2026-09-11",
+  "sourceFiles": [
+    {
+      "path": "data/casino-ingestion/goldenplay-draft-source-20260911.md",
+      "sha256": "aeda63b9215138d88d51da1075a94cbaa1e7e59ba02e8db608421818832df07e"
+    }
+  ],
+  "casino": {
+    "key": "goldenplay",
+    "slug": "goldenplay",
+    "internalName": "GoldenPlay",
+    "title": "GoldenPlay",
+    "domain": "goldenplaywin.com",
+    "websiteUrl": "https://goldenplaywin.com/",
+    "summary": "GoldenPlay is a 2025 casino and sportsbook brand in the NetoPartners portfolio, offering 950+ games, live casino, major game providers and crypto support. Market availability and legal eligibility remain GEO-specific.",
+    "brand": {
+      "key": "goldenplay",
+      "name": "GoldenPlay",
+      "domain": "goldenplaywin.com"
+    }
+  },
+  "markets": [
+    {
+      "countryCode": "IE",
+      "availability": "AVAILABLE",
+      "localDomain": "goldenplaywin.com",
+      "localWebsiteUrl": "https://goldenplaywin.com/",
+      "operator": {
+        "key": "orgona-llc",
+        "name": "Orgona LLC",
+        "legalName": "Orgona LLC",
+        "websiteUrl": null
+      },
+      "operatingLegalEntity": "Orgona LLC",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "en",
+      "supportedLanguages": ["en", "fr", "it", "de", "nl", "pl", "pt"],
+      "supportLanguages": ["en"],
+      "primaryCurrency": "EUR",
+      "supportedCurrencies": ["EUR"],
+      "minimumAge": 18,
+      "kycSummary": "Identity and account verification may be requested. The exact current public document list was not extracted and remains market/account dependent.",
+      "withdrawalSummary": "Ireland-scoped research reported standard withdrawal processing around 1–2 business days, with method-specific timing and verification requirements able to vary.",
+      "supportSummary": "GoldenPlay provides customer support; exact current support hours and language coverage were not primary-verified for every market.",
+      "lastVerifiedAt": "2026-09-11T12:26:15.306Z",
+      "notes": "Detailed IE draft profile built from the existing Founder Office GoldenPlay research snapshot. Independent legal/regulatory routing gates remain authoritative.",
+      "evidence": [
+        {
+          "key": "founder-office-product",
+          "classification": "DETECTED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/goldenplay-draft-source-20260911.md#detected",
+          "fieldKeys": ["availability", "countryCode", "operatorProfile", "primaryLanguage", "supportedLanguages", "primaryCurrency", "supportedCurrencies", "minimumAge", "providers", "categories", "bonuses.goldenplay-ie-welcome"],
+          "observedAt": "2026-09-11T12:26:15.306Z",
+          "lastVerifiedAt": "2026-09-11T12:26:15.306Z",
+          "notes": "Existing Founder Office research only; no new external verification performed for this population action."
+        },
+        {
+          "key": "ie-payments",
+          "classification": "DETECTED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/goldenplay-draft-source-20260911.md#detected",
+          "fieldKeys": ["payments", "kycSummary", "withdrawalSummary"],
+          "observedAt": "2026-09-11T12:26:15.306Z",
+          "lastVerifiedAt": "2026-09-11T12:26:15.306Z",
+          "notes": "Payment facts are IE-scoped and must not be generalized to every GoldenPlay market."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "tobique-orgona-b2c",
+          "authority": "Tobique Gaming Commission",
+          "licenseNumber": null,
+          "jurisdiction": "Tobique First Nation",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": null,
+          "issuedAt": null,
+          "expiresAt": "2027-07-25T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-11T00:00:00.000Z",
+          "notes": "Current Founder Office regulator research associates Orgona LLC with a Tobique B2C licence. Exact licence number was not exposed on the current primary holder page.",
+          "evidence": [
+            {
+              "key": "tobique-holder-orgona",
+              "sourceUrl": null,
+              "sourceReference": "data/casino-ingestion/goldenplay-draft-source-20260911.md#detected",
+              "status": "VERIFIED",
+              "observedAt": "2026-09-11T00:00:00.000Z",
+              "expiresAt": "2027-07-25T00:00:00.000Z",
+              "reviewedAt": "2026-09-11T00:00:00.000Z",
+              "notes": "Primary regulator holder record was reviewed in the existing Founder Office workstream."
+            }
+          ]
+        }
+      ],
+      "payments": [
+        {
+          "key": "visa",
+          "name": "Visa",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": ["EUR"],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Immediate / method-dependent",
+          "withdrawalTime": "1–2 business days / method-dependent",
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-11T00:00:00.000Z",
+          "notes": "IE-scoped current research; exact limits can vary by account and market.",
+          "sortOrder": 0
+        },
+        {
+          "key": "mastercard",
+          "name": "Mastercard",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": ["EUR"],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Immediate / method-dependent",
+          "withdrawalTime": "1–2 business days / method-dependent",
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-11T00:00:00.000Z",
+          "notes": "IE-scoped current research; exact limits can vary by account and market.",
+          "sortOrder": 1
+        },
+        {
+          "key": "instant-banking",
+          "name": "Instant Banking",
+          "supportsDeposits": true,
+          "supportsWithdrawals": null,
+          "currencies": ["EUR"],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Immediate / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-11T00:00:00.000Z",
+          "notes": "IE-scoped deposit method; withdrawal availability not asserted.",
+          "sortOrder": 2
+        },
+        {
+          "key": "skrill",
+          "name": "Skrill",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": ["EUR"],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Immediate / method-dependent",
+          "withdrawalTime": "1–2 business days / method-dependent",
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-11T00:00:00.000Z",
+          "notes": "IE-scoped current research.",
+          "sortOrder": 3
+        },
+        {
+          "key": "neteller",
+          "name": "Neteller",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": ["EUR"],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Immediate / method-dependent",
+          "withdrawalTime": "1–2 business days / method-dependent",
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-11T00:00:00.000Z",
+          "notes": "IE-scoped current research.",
+          "sortOrder": 4
+        },
+        {
+          "key": "crypto",
+          "name": "Crypto (BTC, ETH, USDT, USDC)",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": ["EUR"],
+          "minimumDeposit": null,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Network / method-dependent",
+          "withdrawalTime": "Network / verification-dependent",
+          "fees": null,
+          "crypto": true,
+          "lastVerifiedAt": "2026-09-11T00:00:00.000Z",
+          "notes": "NetoPartners material confirms BTC, ETH, USDT and USDC support; availability varies by GEO. Account currency remains represented as EUR in this draft schema.",
+          "sortOrder": 5
+        }
+      ],
+      "bonuses": [
+        {
+          "key": "goldenplay-ie-welcome",
+          "slug": "goldenplay-ie-welcome",
+          "title": "100% up to €555 + 100 free spins",
+          "summary": "GoldenPlay casino welcome offer: 100% match up to €555 plus 100 free spins on Book of Dead, with a €10 minimum deposit.",
+          "type": "WELCOME",
+          "percentage": 100,
+          "minimumDeposit": 10,
+          "maximumBonus": 555,
+          "currency": "EUR",
+          "freeSpins": 100,
+          "wageringMultiplier": 35,
+          "wageringText": "35× bonus wagering; free-spin winnings reported at 40× in secondary direct-partner/tested material.",
+          "eligibility": "New eligible players in supported markets; exact market terms and legal eligibility apply.",
+          "importantConditions": [
+            "Minimum deposit €10",
+            "100 free spins on Book of Dead",
+            "35× bonus wagering reported in direct-partner/tested material",
+            "40× wagering on free-spin winnings reported in direct-partner/tested material",
+            "Maximum bonus bet €2 reported in direct-partner/tested material",
+            "30-day bonus window reported in direct-partner/tested material",
+            "5× conversion cap reported in direct-partner/tested material",
+            "Free spins reported to expire after 24 hours",
+            "Exact market terms must be checked before public promotional claims"
+          ],
+          "termsUrl": null,
+          "startsAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-11T00:00:00.000Z",
+          "sortOrder": 0
+        }
+      ],
+      "providers": [
+        {"key": "pragmatic-play", "name": "Pragmatic Play", "websiteUrl": null, "gameCount": null, "liveCasino": true, "verifiedAt": "2026-09-11T00:00:00.000Z", "sortOrder": 0},
+        {"key": "netent", "name": "NetEnt", "websiteUrl": null, "gameCount": null, "liveCasino": false, "verifiedAt": "2026-09-11T00:00:00.000Z", "sortOrder": 1},
+        {"key": "evolution-gaming", "name": "Evolution Gaming", "websiteUrl": null, "gameCount": null, "liveCasino": true, "verifiedAt": "2026-09-11T00:00:00.000Z", "sortOrder": 2},
+        {"key": "playngo", "name": "Play'n GO", "websiteUrl": null, "gameCount": null, "liveCasino": false, "verifiedAt": "2026-09-11T00:00:00.000Z", "sortOrder": 3},
+        {"key": "spinoro", "name": "Spinoro", "websiteUrl": null, "gameCount": null, "liveCasino": null, "verifiedAt": "2026-09-11T00:00:00.000Z", "sortOrder": 4}
+      ],
+      "categories": [
+        {"key": "slots", "name": "Slots", "gameCount": null, "featured": true, "sortOrder": 0},
+        {"key": "live-casino", "name": "Live Casino", "gameCount": null, "featured": true, "sortOrder": 1},
+        {"key": "table-games", "name": "Table Games", "gameCount": null, "featured": true, "sortOrder": 2},
+        {"key": "instant-win", "name": "Instant Win", "gameCount": null, "featured": false, "sortOrder": 3}
+      ]
+    }
+  ],
+  "commercialMappings": []
+}
