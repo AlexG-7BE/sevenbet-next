@@ -171,3 +171,18 @@ export function registrationElapsedBucket(elapsedMs: number | null) {
 }
 
 export const productAnalyticsClient = createProductAnalyticsClient();
+
+let lastRecordedPagePath: string | null = null;
+
+/**
+ * Records the current page once after affirmative consent. Keeping the marker
+ * beside the singleton client lets both the route observer and the consent
+ * control use the same authority even when React hydrates them out of order.
+ */
+export function recordConsentedBrowserPageView(pathname: string | null | undefined) {
+  if (!pathname || lastRecordedPagePath === pathname
+    || browserAnalyticsConsentState() !== "granted") return false;
+  lastRecordedPagePath = pathname;
+  productAnalyticsClient.pageViewed({ pagePath: pathname });
+  return true;
+}

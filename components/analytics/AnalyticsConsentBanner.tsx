@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
+import { recordConsentedBrowserPageView } from "@/lib/analytics/product-analytics-client";
+
 export function AnalyticsConsentBanner() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -38,7 +40,10 @@ export function AnalyticsConsentBanner() {
       });
       if (!response.ok) throw new Error("Consent update failed");
       close();
-      if (analytics) window.dispatchEvent(new Event("b4g:analytics-consent-granted"));
+      if (analytics) {
+        recordConsentedBrowserPageView(window.location.pathname);
+        window.dispatchEvent(new Event("b4g:analytics-consent-granted"));
+      }
     } catch {
       setError(true);
     } finally {
