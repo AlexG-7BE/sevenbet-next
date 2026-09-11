@@ -1,5 +1,7 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
+
 import prisma from "@/lib/db/prisma";
 
 export type CustomerEmailPreferenceInput = {
@@ -20,37 +22,28 @@ export async function updateCustomerEmailPreference(
   const now = new Date();
   await prisma.$transaction(async (transaction) => {
     if (input.marketingAllowed) {
-      const liftAllowedPreference = () => transaction.customerEmailPreference.updateMany({
-        where: {
-          userId,
-          OR: [
-            { suppressionScope: "NONE" },
-            { suppressionScope: "MARKETING", suppressionReason: "UNSUBSCRIBE" },
-          ],
-        },
-        data: {
-          marketingAllowed: true,
-          consentedAt: now,
-          unsubscribedAt: null,
-          suppressionScope: "NONE",
-          suppressedAt: null,
-          suppressionReason: null,
-        },
-      });
-      let updated = await liftAllowedPreference();
-      if (!updated.count) {
-        try {
-          await transaction.customerEmailPreference.create({
-            data: { userId, marketingAllowed: true, consentedAt: now },
-          });
-          updated = { count: 1 };
-        } catch (error) {
-          const unique = Boolean(error && typeof error === "object" && "code" in error && error.code === "P2002");
-          if (!unique) throw error;
-          updated = await liftAllowedPreference();
-        }
-      }
-      if (!updated.count) throw new Error("Email suppression cannot be removed by a marketing preference");
+      const updated = await transaction.$queryRaw<Array<{ id: string }>>`
+        INSERT INTO "CustomerEmailPreference" (
+          "id", "userId", "marketingAllowed", "consentedAt", "createdAt", "updatedAt"
+        ) VALUES (
+          ${randomUUID()}::uuid, ${userId}, true, ${now}, ${now}, ${now}
+        )
+        ON CONFLICT ("userId") DO UPDATE SET
+          "marketingAllowed" = true,
+          "consentedAt" = ${now},
+          "unsubscribedAt" = NULL,
+          "suppressionScope" = 'NONE'::"EmailSuppressionScope",
+          "suppressedAt" = NULL,
+          "suppressionReason" = NULL,
+          "updatedAt" = ${now}
+        WHERE "CustomerEmailPreference"."suppressionScope" = 'NONE'::"EmailSuppressionScope"
+          OR (
+            "CustomerEmailPreference"."suppressionScope" = 'MARKETING'::"EmailSuppressionScope"
+            AND "CustomerEmailPreference"."suppressionReason" = 'UNSUBSCRIBE'
+          )
+        RETURNING "id"
+      `;
+      if (!updated.length) throw new Error("Email suppression cannot be removed by a marketing preference");
     } else {
       await transaction.customerEmailPreference.upsert({
         where: { userId },
