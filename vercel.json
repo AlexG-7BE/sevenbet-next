@@ -1,5 +1,5 @@
 {
-  "buildCommand": "tsx scripts/vercel-build-preflight.ts && tsx scripts/goldenplay-founder-logo-build-preflight.ts && tsx scripts/logo-only-media-build-preflight.ts && tsx scripts/casino-real-catalog-03.ts build-preflight && next build",
+  "buildCommand": "tsx scripts/vercel-build-preflight.ts && tsx scripts/logo-only-media-build-preflight.ts && PRISMA_INTERACTIVE_TRANSACTION_TIMEOUT_MS=30000 tsx scripts/casino-real-catalog-03.ts build-preflight && next build",
   "crons": [
     {
       "path": "/api/internal/cron/programme-expiry-purge",
