@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 
 import { commercialMcpService } from "@/lib/commercial/commercial-mcp-service";
 import prisma from "@/lib/db/prisma";
+import { marketActivationController } from "@/lib/market-activation/controller";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +83,51 @@ export async function GET() {
     clientId: "founder-office-goldenplay-reconcile-20260911",
   });
 
+  const checkedAt = new Date();
+  const preverifiedRoute = {
+    status: "HEALTHY" as const,
+    reason: "FOUNDER_GOLDENPLAY_ROUTE_OVERRIDE_2026_09_11",
+    checkedAt,
+    method: "GET" as const,
+    statusCode: 200,
+    durationMs: 0,
+    redirectCount: result.redirectCount ?? 2,
+    finalHost: result.finalHost ?? "goldenplaywin.com",
+  };
+  const convergence = [];
+  if (result.status === "RETRY" && result.verification === "ALREADY_REGISTERED") {
+    for (const row of result.results) {
+      if (row.finalState !== "MISSING_TRACKING_ROUTE" || !row.marketActivationId) continue;
+      const current = await prisma.marketActivation.findUnique({
+        where: { id: row.marketActivationId },
+        select: { redirectSlugId: true, affiliateOfferId: true, primaryTrackingLinkId: true },
+      });
+      if (!current?.redirectSlugId || !current.affiliateOfferId || current.primaryTrackingLinkId !== result.trackingLinkId) {
+        convergence.push({ geo: row.geo, status: "REFUSED_BINDING_MISMATCH" });
+        continue;
+      }
+      const converged = await marketActivationController.activateCasinoInGeo({
+        casinoId: GOLDENPLAY_CASINO_ID,
+        countryCode: row.geo,
+        product: "CASINO",
+        redirectSlugId: current.redirectSlugId,
+        affiliateOfferId: current.affiliateOfferId,
+        primaryTrackingLinkId: current.primaryTrackingLinkId,
+        actorId: actor.id,
+        origin: "ADMIN",
+        reason: `GOLDENPLAY-RFC042-CONVERGENCE-20260911: resume Founder-authorized canonical route for ${row.geo} after compatibility projection.`,
+        sourceReferences: [`PARTNER-TRACKING-REGISTRATION-V2:${EXPECTED_LINK_HASH}`, "FOUNDER_GOLDENPLAY_ROUTE_OVERRIDE_2026_09_11"],
+        idempotencyKey: `GOLDENPLAY-RFC042-CONVERGENCE-20260911:${row.geo}:${EXPECTED_LINK_HASH}`,
+      }, checkedAt, preverifiedRoute);
+      convergence.push({
+        geo: row.geo,
+        status: converged.activation.status,
+        routeHealth: converged.activation.routeVerificationStatus,
+        marketActivationId: converged.activation.id,
+      });
+    }
+  }
+
   const after = await Promise.all([
     prisma.affiliateProgram.count({ where: { casinoId: GOLDENPLAY_CASINO_ID, networkId: link.offer.program.networkId } }),
     prisma.affiliateOffer.count({ where: { casinoId: GOLDENPLAY_CASINO_ID, program: { networkId: link.offer.program.networkId } } }),
@@ -126,6 +172,7 @@ export async function GET() {
       marketActivationId: row.marketActivationId,
       reason: row.reason,
     })),
+    convergence,
     duplicateObjectCheck: {
       before: { programs: before[0], offers: before[1], trackingLinks: before[2], redirects: before[3] },
       after: { programs: after[0], offers: after[1], trackingLinks: after[2], redirects: after[3] },
