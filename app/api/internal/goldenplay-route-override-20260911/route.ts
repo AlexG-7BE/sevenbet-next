@@ -17,7 +17,7 @@ export async function GET() {
   if (!actor) return NextResponse.json({ status: "NO_GOVERNED_ACTOR" }, { status: 500 });
 
   let casino = await casinoService.getCasinoById(CASINO_ID);
-  if (casino.status === EditorialStatus.PUBLISHED && casino.versions.some((version) => version.status === EditorialStatus.PUBLISHED)) {
+  if (casino.status === EditorialStatus.PUBLISHED) {
     return NextResponse.json({ status: "ALREADY_PUBLISHED", casinoId: casino.id, slug: casino.slug, publishedVersion: casino.publishedVersion });
   }
 
