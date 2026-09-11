@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { authClient, useSession } from "@/lib/auth/client";
-import { saveProgrammeMarketingPreference } from "@/lib/customers/email-preference-client";
+import { PROGRAMME_MARKETING_OPT_IN_LABEL, saveProgrammeMarketingPreference } from "@/lib/customers/email-preference-client";
 import { GOOGLE_AUTH_CALLBACK, GOOGLE_AUTH_ERROR_CALLBACK } from "@/lib/auth/google-flow";
 import {
   PROGRAMME_ACCESS_HEADERS,
@@ -750,7 +750,7 @@ function Registration({
           ) : null}
           <Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="you@example.com" hint="Used to sign in and recover access." />
           <Field label={mode === "sign-up" ? "Create a password" : "Password"} type="password" value={password} onChange={setPassword} placeholder="At least 12 characters" hint="Use a unique password you can save." />
-          {mode === "sign-up" ? <label className={styles.marketingChoice}><input checked={marketingAllowed} onChange={(event) => setMarketingAllowed(event.target.checked)} type="checkbox" /><span>Email me occasional B4GAMBLE product and Programme updates. Optional; unsubscribe any time.</span></label> : null}
+          {mode === "sign-up" ? <label className={styles.marketingChoice}><input checked={marketingAllowed} onChange={(event) => setMarketingAllowed(event.target.checked)} type="checkbox" /><span>{PROGRAMME_MARKETING_OPT_IN_LABEL}</span></label> : null}
           {error ? <p className={styles.error} role="alert">{error}</p> : null}
           <PrimaryButton disabled={busy || !email || (mode === "sign-up" ? password.length < 12 : !password)} type="submit">{busy ? "Saving…" : mode === "sign-up" ? "Create private account" : returning ? "Sign in to my Dashboard" : "Sign in and save progress"}</PrimaryButton>
           <button className={styles.textButton} onClick={() => setMode(mode === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button>

@@ -5,6 +5,10 @@ type PreferenceFetcher = (
   init?: RequestInit,
 ) => Promise<Pick<Response, "ok" | "status">>;
 
+// Compliance copy remains an explicit English fallback until approved
+// localized versions exist; keep the two signup surfaces byte-identical.
+export const PROGRAMME_MARKETING_OPT_IN_LABEL = "Email me occasional B4GAMBLE product and Programme updates. Optional; I can unsubscribe at any time.";
+
 /**
  * Persists the separate, optional Programme-signup marketing choice. A 503 is
  * safe to retry because the server transaction did not commit. Network

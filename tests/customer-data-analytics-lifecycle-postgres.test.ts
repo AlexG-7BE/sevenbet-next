@@ -88,6 +88,7 @@ test("Customer Core v1 persists one end-to-end relational lifecycle without exte
   const old = {
     NODE_ENV: process.env.NODE_ENV,
     VERCEL_ENV: process.env.VERCEL_ENV,
+    NEXT_PUBLIC_ANALYTICS_ENABLED: process.env.NEXT_PUBLIC_ANALYTICS_ENABLED,
     ANALYTICS_SIGNING_SECRET: process.env.ANALYTICS_SIGNING_SECRET,
     PROGRAMME_REMINDER_INACTIVITY_DAYS: process.env.PROGRAMME_REMINDER_INACTIVITY_DAYS,
     LIFECYCLE_EMAIL_DELIVERY_ENABLED: process.env.LIFECYCLE_EMAIL_DELIVERY_ENABLED,
@@ -95,6 +96,7 @@ test("Customer Core v1 persists one end-to-end relational lifecycle without exte
   setEnvironment({
     NODE_ENV: "production",
     VERCEL_ENV: "production",
+    NEXT_PUBLIC_ANALYTICS_ENABLED: "true",
     ANALYTICS_SIGNING_SECRET: analyticsSecret,
     PROGRAMME_REMINDER_INACTIVITY_DAYS: "7",
     LIFECYCLE_EMAIL_DELIVERY_ENABLED: "false",
@@ -457,6 +459,7 @@ test("Customer Core v1 persists one end-to-end relational lifecycle without exte
     if (programId) await prisma.program.deleteMany({ where: { id: programId } }).catch(() => undefined);
     restoreEnvironment("NODE_ENV", old.NODE_ENV);
     restoreEnvironment("VERCEL_ENV", old.VERCEL_ENV);
+    restoreEnvironment("NEXT_PUBLIC_ANALYTICS_ENABLED", old.NEXT_PUBLIC_ANALYTICS_ENABLED);
     restoreEnvironment("ANALYTICS_SIGNING_SECRET", old.ANALYTICS_SIGNING_SECRET);
     restoreEnvironment("PROGRAMME_REMINDER_INACTIVITY_DAYS", old.PROGRAMME_REMINDER_INACTIVITY_DAYS);
     restoreEnvironment("LIFECYCLE_EMAIL_DELIVERY_ENABLED", old.LIFECYCLE_EMAIL_DELIVERY_ENABLED);
