@@ -29,7 +29,7 @@
     "customer-data-core:sanity": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local --env-file-if-exists=.env.production.local scripts/customer-data-analytics-lifecycle-sanity.ts",
     "mvp-runtime:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/product-analytics.test.ts tests/programme-http-boundary.test.ts tests/programme-runtime-rate-limit.test.ts tests/programme-runtime-purge.test.ts tests/programme-legacy-mode-boundary.test.ts tests/mvp-runtime-structural.test.ts && node --test tests/programme-analytics-report.test.mjs",
     "mvp-runtime:postgres-test": "node --import tsx --test tests/programme-runtime-postgres.test.ts",
-    "mcp-bridge:postgres-test": "node --import tsx --test --test-concurrency=1 tests/commercial-mcp-postgres.test.ts tests/partner-tracking-registration-postgres.test.ts",
+    "mcp-bridge:postgres-test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test --test-concurrency=1 tests/commercial-mcp-postgres.test.ts tests/partner-tracking-registration-postgres.test.ts",
     "partner-tracking:production-smoke": "tsx --env-file-if-exists=.env.production.local scripts/partner-tracking-registration-production-smoke.ts",
     "production-db-reliability:test": "node --import tsx --test tests/production-db-reliability.test.ts",
     "production-db-reliability:postgres-test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/production-db-reliability-postgres.test.ts",
