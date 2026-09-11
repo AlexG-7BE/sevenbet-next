@@ -146,6 +146,7 @@ async function setup(prisma: PrismaClient) {
     id: ID.activation,
     casinoId: ID.casino,
     countryCode: "KZ",
+    marketCode: "KZ",
     desiredState: "ACTIVE",
     status: "ACTIVE",
     marketProfileId: ID.profile,

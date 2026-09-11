@@ -16,6 +16,7 @@ export const MARKET_ACTIVATION_GLOBAL_FALLBACK_REQUIRED_BLOCKED_COUNTRIES = [
   "SE",
   "GB",
 ] as const;
+export const MARKET_ACTIVATION_EXACT_SUBDIVISION_COUNTRIES = ["AR", "CA"] as const;
 
 export type MarketActivationProduct = "CASINO";
 export type MarketActivationDesiredState = "ACTIVE" | "DISABLED";
@@ -52,6 +53,7 @@ export interface MarketActivationIntentInput {
 export interface NormalizedMarketActivationIntent {
   casinoId: string | null;
   casinoSlug: string | null;
+  marketCode: string;
   countryCode: string;
   product: MarketActivationProduct;
   desiredState: MarketActivationDesiredState;
@@ -98,8 +100,9 @@ export function normalizeMarketActivationIntent(input: MarketActivationIntentInp
     throw new Error("MARKET_ACTIVATION_EXACTLY_ONE_CASINO_IDENTITY_REQUIRED");
   }
   if (casinoSlug && !isSafePublicSlug(casinoSlug)) throw new Error("MARKET_ACTIVATION_CASINO_SLUG_INVALID");
-  const countryCode = requiredText(input.countryCode, "country_code", 2).toUpperCase();
-  if (!/^[A-Z]{2}$/.test(countryCode)) throw new Error("MARKET_ACTIVATION_COUNTRY_CODE_INVALID");
+  const marketCode = requiredText(input.countryCode, "country_code", 16).toUpperCase().replace(/_/g, "-");
+  if (!/^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(marketCode)) throw new Error("MARKET_ACTIVATION_COUNTRY_CODE_INVALID");
+  const countryCode = marketCode.slice(0, 2);
   const product = input.product ?? "CASINO";
   if (product !== "CASINO") throw new Error("MARKET_ACTIVATION_PRODUCT_UNSUPPORTED");
   const desiredState = input.desiredState ?? "ACTIVE";
@@ -117,6 +120,7 @@ export function normalizeMarketActivationIntent(input: MarketActivationIntentInp
   const normalizedWithoutHash = {
     casinoId,
     casinoSlug,
+    marketCode,
     countryCode,
     product,
     desiredState,
@@ -135,7 +139,7 @@ export function normalizeMarketActivationIntent(input: MarketActivationIntentInp
     throw new Error("MARKET_ACTIVATION_ORIGIN_INVALID");
   }
   if (
-    countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE
+    marketCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE
     && !["FOUNDER", "BACKFILL", "RECONCILER"].includes(normalizedWithoutHash.origin)
   ) {
     throw new Error("MARKET_ACTIVATION_GLOBAL_FALLBACK_ORIGIN_INVALID");

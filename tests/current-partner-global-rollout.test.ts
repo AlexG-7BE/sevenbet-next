@@ -19,17 +19,26 @@ const rows = buildCurrentPartnerMatrix();
 
 test("the final current-partner inventory is exhaustive and exclusively classified", () => {
   assert.deepEqual([...new Set(rows.map((row) => row.partner))].sort(), [...CURRENT_PARTNERS].sort());
-  assert.equal(rows.length, 540);
+  assert.equal(rows.length, 606);
   assert.equal(new Set(rows.map((row) => row.casino)).size, 73);
   assert.equal(new Set(rows.map((row) => `${row.partner}::${row.casino}::${row.geo}`)).size, rows.length);
   assert.deepEqual(currentPartnerMatrixSummary(rows).classification, {
-    ACTIVE_HEALTHY: 24,
-    BLOCKED_BY_LAW: 24,
-    ACTION_REQUIRED_REGULATORY: 17,
+    ACTIVE_HEALTHY: 38,
+    BLOCKED_BY_LAW: 35,
+    ACTION_REQUIRED_REGULATORY: 56,
     BROKEN_ROUTE: 1,
-    MISSING_TRACKING_ROUTE: 474,
+    MISSING_TRACKING_ROUTE: 476,
   });
   for (const row of rows) assert.ok(FINAL_STATES.includes(row.finalState), `${row.partner}/${row.casino}/${row.geo}`);
+});
+
+test("canonical worldwide rows retain evidence readiness for the registrar fail-closed gate", () => {
+  const argentina = CURRENT_PARTNER_INVENTORY.find((row) => row.casino === "Betsson" && row.geo === "AR-C");
+  assert.equal(argentina?.supportEvidenceClassification, "DETECTED");
+  assert.equal(argentina?.legalEvidenceClassification, "INFERRED");
+  const scopedGb = CURRENT_PARTNER_INVENTORY.find((row) => row.casino === "21 Privé" && row.geo === "GB");
+  assert.equal(scopedGb?.supportEvidenceClassification, "DETECTED");
+  assert.equal(scopedGb?.legalEvidenceClassification, "DETECTED");
 });
 
 test("ACTIVE_HEALTHY rows satisfy the exact commercial activation equation", () => {
@@ -50,10 +59,11 @@ test("ACTIVE_HEALTHY rows satisfy the exact commercial activation equation", () 
   }
 });
 
-test("generic partner links may serve exact GEO rows while exact routes remain preferred", () => {
-  const betssonGeneric = rows.filter((row) => row.partner === CURRENT_PARTNERS[1] && row.casino === "Betsson" && ["BR", "MX", "CO", "ES"].includes(row.geo));
-  assert.equal(new Set(betssonGeneric.map((row) => row.trackingLink)).size, 1);
-  assert.ok(betssonGeneric.every((row) => row.trackingScope === "GENERIC_GLOBAL" && row.finalState === "ACTIVE_HEALTHY"));
+test("exact routes precede regional reuse, which precedes the generic default", () => {
+  const betssonRegional = rows.filter((row) => row.partner === CURRENT_PARTNERS[1] && row.casino === "Betsson" && ["BR", "MX", "CO", "AR-B", "AR-C", "AR-X"].includes(row.geo));
+  assert.equal(new Set(betssonRegional.map((row) => row.trackingLink)).size, 1);
+  assert.ok(betssonRegional.every((row) => row.trackingScope === "REGIONAL_REUSE"));
+  assert.equal(rows.find((row) => row.casino === "Betsson" && row.geo === "ES")?.trackingScope, "GENERIC_GLOBAL");
   for (const geo of ["PE", "SE"]) assert.equal(rows.find((row) => row.casino === "Betsson" && row.geo === geo)?.trackingScope, "EXACT_GEO");
   for (const geo of ["EE", "LV"]) assert.equal(rows.find((row) => row.casino === "Betsafe" && row.geo === geo)?.trackingScope, "EXACT_GEO");
 });
@@ -66,25 +76,25 @@ test("current terminal-host expectations match the exact live operator markets",
 
 test("Superfly uses exact active rows and retires global fallback authority", () => {
   const superfly = rows.filter((row) => row.partner === CURRENT_PARTNERS[0]);
-  assert.equal(superfly.length, 42);
-  assert.equal(superfly.filter((row) => row.finalState === "ACTIVE_HEALTHY").length, 12);
-  assert.equal(superfly.filter((row) => row.finalState === "BLOCKED_BY_LAW").length, 18);
-  assert.equal(superfly.filter((row) => row.finalState === "ACTION_REQUIRED_REGULATORY").length, 12);
+  assert.equal(superfly.length, 18);
+  assert.equal(superfly.filter((row) => row.finalState === "ACTIVE_HEALTHY").length, 18);
+  assert.equal(superfly.filter((row) => row.finalState === "BLOCKED_BY_LAW").length, 0);
+  assert.equal(superfly.filter((row) => row.finalState === "ACTION_REQUIRED_REGULATORY").length, 0);
   assert.ok(superfly.every((row) => row.geo !== "ZZ"));
-  assert.ok(superfly.filter((row) => row.finalState === "ACTIVE_HEALTHY").every((row) => ["IE", "MT"].includes(row.geo)));
-  assert.ok(superfly.filter((row) => row.geo === "GB").every((row) => row.finalState === "ACTION_REQUIRED_REGULATORY"
-    && row.regulatoryAction?.includes("independent GB jurisdiction policy")
+  assert.ok(superfly.filter((row) => row.finalState === "ACTIVE_HEALTHY").every((row) => ["GB", "IE", "MT"].includes(row.geo)));
+  assert.ok(superfly.filter((row) => row.geo === "GB").every((row) => row.legalState === "ALLOWED"
     && row.trackingVerification === "HEALTHY"
     && row.routeHealth === "HEALTHY"));
 });
 
 test("missing-route classification represents actual URL absence only", () => {
   const missing = rows.filter((row) => row.finalState === "MISSING_TRACKING_ROUTE");
-  assert.equal(missing.length, 474);
+  assert.equal(missing.length, 476);
   assert.ok(missing.every((row) => !row.partnerTrackingUrlPresent && row.trackingLink === null && row.internalRedirect === null));
   assert.equal(missing.filter((row) => row.partner === CURRENT_PARTNERS[3]).length, SUPER_PARTNERS_CASINOS.length * SUPER_PARTNERS_SUPPORTED_GEOS.length);
-  assert.ok(missing.some((row) => row.casino === "GoldenPlay" && row.geo === "GB"));
-  assert.ok(missing.some((row) => row.casino === "Betsafe" && row.geo === "LT"));
+  assert.deepEqual(missing.filter((row) => row.partner !== CURRENT_PARTNERS[3]).map((row) => `${row.casino}:${row.geo}`), [
+    "Betsafe:IE", "Betsafe:MT", "Betsafe:PE", "Betsafe:SE",
+  ]);
 });
 
 test("direct law and regulation remain independent fail-closed gates", () => {
@@ -136,5 +146,5 @@ test("the normalization uses neutral offers and all sixty partner-provided BGA r
   assert.match(source, /publicLabel: "Visit Casino"/);
   assert.match(source, /Neutral evergreen commercial object; no unsupported bonus claim/);
   assert.doesNotMatch(source, /generic affiliate-URL fallback/i);
-  assert.equal(CURRENT_PARTNER_INVENTORY.filter((row) => row.partner === CURRENT_PARTNERS[1]).length, 25);
+  assert.equal(CURRENT_PARTNER_INVENTORY.filter((row) => row.partner === CURRENT_PARTNERS[1]).length, 115);
 });

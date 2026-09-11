@@ -9,7 +9,7 @@ import { prisma } from "@/lib/db/prisma";
 import { marketActivationController } from "@/lib/market-activation/controller";
 
 import {
-  CURRENT_PARTNER_INVENTORY,
+  LEGACY_CURRENT_PARTNER_INVENTORY,
   CURRENT_PARTNERS,
   GLOBAL_CURRENT_PARTNER_RELEASE,
   type CurrentPartnerInventorySeed,
@@ -113,7 +113,7 @@ function countryFromGeo(geo: string) {
 }
 
 function supportedCountriesFor(casinoSlug: string) {
-  return [...new Set(CURRENT_PARTNER_INVENTORY
+  return [...new Set(LEGACY_CURRENT_PARTNER_INVENTORY
     .filter((row) => row.partner === CURRENT_PARTNERS[1] && row.casinoSlug === casinoSlug)
     .flatMap((row) => countryFromGeo(row.geo) ?? []))].sort();
 }
@@ -399,7 +399,7 @@ async function normalizeBga(tx: Transaction, actorId: string, now: Date) {
     }
   }
 
-  for (const seed of CURRENT_PARTNER_INVENTORY.filter((row) => row.partner === CURRENT_PARTNERS[1] && row.trackingIdentity?.startsWith("BGA_DIRECT_LINK_ROW:") && row.casinoSlug)) {
+  for (const seed of LEGACY_CURRENT_PARTNER_INVENTORY.filter((row) => row.partner === CURRENT_PARTNERS[1] && row.trackingIdentity?.startsWith("BGA_DIRECT_LINK_ROW:") && row.casinoSlug)) {
     const countryCode = countryFromGeo(seed.geo);
     if (!countryCode || seed.geo !== countryCode) continue;
     const rowNumber = Number(seed.trackingIdentity?.split(":").at(-1));
@@ -445,7 +445,7 @@ async function normalizeBga(tx: Transaction, actorId: string, now: Date) {
     });
   }
 
-  for (const seed of CURRENT_PARTNER_INVENTORY.filter((row) => row.partner === CURRENT_PARTNERS[1])) {
+  for (const seed of LEGACY_CURRENT_PARTNER_INVENTORY.filter((row) => row.partner === CURRENT_PARTNERS[1])) {
     await ensureMarketProfile(tx, actorId, seed, now);
   }
   return { selected, createdPrograms, createdOffers, createdTrackingLinks, normalizedTrackingLinks: rows.length };
@@ -453,7 +453,7 @@ async function normalizeBga(tx: Transaction, actorId: string, now: Date) {
 
 async function normalizeSuperfly(tx: Transaction, actorId: string, now: Date) {
   const bindings = new Map<string, CommercialBinding>();
-  for (const seed of CURRENT_PARTNER_INVENTORY.filter((row) => row.partner === CURRENT_PARTNERS[0] && row.finalState === "ACTIVE_HEALTHY" && row.casinoSlug)) {
+  for (const seed of LEGACY_CURRENT_PARTNER_INVENTORY.filter((row) => row.partner === CURRENT_PARTNERS[0] && row.finalState === "ACTIVE_HEALTHY" && row.casinoSlug)) {
     const casino = await tx.casino.findUniqueOrThrow({ where: { slug: seed.casinoSlug }, select: { id: true, domain: true } });
     const redirect = await tx.affiliateRedirectSlug.findUniqueOrThrow({
       where: { slug: seed.redirectSlug! },
@@ -680,7 +680,7 @@ function activationSummary(result: Awaited<ReturnType<typeof marketActivationCon
 }
 
 async function convergeActivations(input: { bga: Map<number, CommercialBinding>; superfly: Map<string, CommercialBinding>; actorId: string; now: Date }) {
-  const exactRows = CURRENT_PARTNER_INVENTORY.filter((row) => row.casinoSlug && /^[A-Z]{2}$/.test(row.geo)
+  const exactRows = LEGACY_CURRENT_PARTNER_INVENTORY.filter((row) => row.casinoSlug && /^[A-Z]{2}$/.test(row.geo)
     && (row.partner === CURRENT_PARTNERS[0] || row.partner === CURRENT_PARTNERS[1]));
   // Exact GEOs for one casino share offer/link compatibility rows. Applying
   // them concurrently can produce SERIALIZABLE write conflicts even though
@@ -818,7 +818,7 @@ export async function currentPartnerProductionSnapshot(client: PrismaClient = pr
 }
 
 export async function verifyCurrentPartnerProduction(client: PrismaClient = prisma) {
-  const exactRows = CURRENT_PARTNER_INVENTORY.filter((row) => row.casinoSlug && /^[A-Z]{2}$/.test(row.geo)
+  const exactRows = LEGACY_CURRENT_PARTNER_INVENTORY.filter((row) => row.casinoSlug && /^[A-Z]{2}$/.test(row.geo)
     && (row.partner === CURRENT_PARTNERS[0] || row.partner === CURRENT_PARTNERS[1]));
   const [activations, opportunities, normalizedBgaLinks] = await Promise.all([
     client.marketActivation.findMany({
@@ -881,7 +881,7 @@ export async function verifyCurrentPartnerProduction(client: PrismaClient = pris
     pass: failures.length === 0,
     failures,
     counts: {
-      expectedMatrixRows: CURRENT_PARTNER_INVENTORY.length,
+      expectedMatrixRows: LEGACY_CURRENT_PARTNER_INVENTORY.length,
       expectedActiveHealthy: activeHealthy,
       verifiedActivationRecords: activations.length,
       normalizedBgaLinks,

@@ -105,8 +105,8 @@ test("historical target resolution stays server-side while the active public map
   assert.match(publicApi, /requestCountrySignalFromHeaders/);
   assert.match(publicApi, /accept-language/);
   assert.match(publicApi, /private, no-store/);
-  assert.match(publicApi, /X-Vercel-IP-Country, Accept-Language/);
-  assert.match(comparisonApi, /X-Vercel-IP-Country, Accept-Language/);
+  assert.match(publicApi, /X-Vercel-IP-Country, X-Vercel-IP-Country-Region, Accept-Language/);
+  assert.match(comparisonApi, /X-Vercel-IP-Country, X-Vercel-IP-Country-Region, Accept-Language/);
   assert.doesNotMatch(publicMapper, /resolvedPlacementMap|placementAssignments|resolveCasinoMedia/);
   assert.match(publicMapper, /if \(!url \|\| type !== "logo"\) return \[\]/);
   assert.doesNotMatch(resolver, /trackingUrl|affiliateHref|redirectSlug|commission|programme|cookie/i);

@@ -7,6 +7,7 @@ import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import {
   MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
   MARKET_ACTIVATION_GLOBAL_FALLBACK_REQUIRED_BLOCKED_COUNTRIES,
+  MARKET_ACTIVATION_EXACT_SUBDIVISION_COUNTRIES,
   safeActivationDestination,
 } from "./contract";
 
@@ -19,12 +20,27 @@ const runtimeInclude = {
       casinoId: true,
       casinoBonusId: true,
       programId: true,
+      status: true,
+      archivedAt: true,
+      startAt: true,
+      expiresAt: true,
       program: {
         select: {
           id: true,
           casinoId: true,
+          status: true,
+          workflowStatus: true,
+          integrationMode: true,
+          connectionStatus: true,
+          providerAccountId: true,
+          credentialReference: true,
+          supportedCountries: true,
+          archivedAt: true,
+          domainLifecycleStatus: true,
+          network: { select: { active: true, archivedAt: true } },
         },
       },
+      countries: { select: { countryCode: true, mode: true } },
     },
   },
   casinoBonus: {
@@ -44,6 +60,7 @@ const runtimeInclude = {
       archivedAt: true,
       validFrom: true,
       expiresAt: true,
+      countries: { select: { countryCode: true, mode: true } },
     },
   },
   redirectSlug: {
@@ -73,14 +90,22 @@ type BoundCanonicalMarketActivationRoute = CanonicalMarketActivationRoute & {
 
 function activeRouteForCountry(
   record: CanonicalMarketActivationRoute,
-  requestedCountry: string,
+  requestedMarket: string,
 ): record is BoundCanonicalMarketActivationRoute {
-  const exactCountry = record.countryCode === requestedCountry;
-  const globalFallback = record.countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE;
-  const scopeAllows = exactCountry
+  const requestedCountry = requestedMarket.slice(0, 2);
+  const exactMarket = record.marketCode === requestedMarket;
+  const globalFallback = record.marketCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE;
+  const offerMarketAllows = globalFallback || Boolean(record.affiliateOffer?.countries.some((entry) => (
+    entry.countryCode === record.marketCode && entry.mode === "ALLOW"
+  )));
+  const trackingMarketAllows = globalFallback || Boolean(record.primaryTrackingLink?.countries.some((entry) => (
+    entry.countryCode === record.marketCode && entry.mode === "ALLOW"
+  )));
+  const scopeAllows = exactMarket
     ? Boolean(record.marketProfile
       && record.marketProfile.casinoId === record.casinoId
-      && record.marketProfile.countryCode === requestedCountry)
+      && record.marketProfile.countryCode === record.countryCode
+      && record.countryCode === requestedCountry)
     : globalFallback
       && record.marketProfile === null
       && record.globalFallbackBlockedCountries.length > 0
@@ -94,6 +119,8 @@ function activeRouteForCountry(
     && record.routeVerificationStatus === "HEALTHY"
     && record.routeLastCheckedAt !== null
     && scopeAllows
+    && offerMarketAllows
+    && trackingMarketAllows
     // MarketActivation is the sole positive and negative CTA authority.
     && Boolean(record.affiliateOffer
       && record.affiliateOffer.casinoId === record.casinoId
@@ -114,79 +141,139 @@ function activeRouteForCountry(
       && safeActivationDestination(record.primaryTrackingLink.destinationUrl));
 }
 
-function requestedCountryCode(value: string) {
-  const country = value.trim().toUpperCase();
-  return /^[A-Z]{2}$/.test(country) && country !== MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE
-    ? country
+function requestedMarketCode(value: string) {
+  const market = value.trim().toUpperCase().replace(/_/g, "-");
+  return /^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(market) && market !== MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE
+    ? market
     : null;
 }
 
 function selectActiveRoutes(
   records: CanonicalMarketActivationRoute[],
-  requestedCountry: string,
+  requestedMarket: string,
 ) {
   const casinoIds = [...new Set(records.map((record) => record.casinoId))].sort();
   return casinoIds.flatMap((casinoId) => {
-    const exact = records.find((record) => record.casinoId === casinoId && record.countryCode === requestedCountry);
-    if (exact) return activeRouteForCountry(exact, requestedCountry) ? [exact] : [];
+    const exact = records.find((record) => record.casinoId === casinoId && record.marketCode === requestedMarket);
+    if (exact) return activeRouteForCountry(exact, requestedMarket) ? [exact] : [];
+    const requestedCountry = requestedMarket.slice(0, 2);
+    const subdivision = requestedMarket.includes("-");
+    if (subdivision && MARKET_ACTIVATION_EXACT_SUBDIVISION_COUNTRIES.includes(requestedCountry as "AR" | "CA")) return [];
+    const parent = subdivision
+      ? records.find((record) => record.casinoId === casinoId && record.marketCode === requestedCountry)
+      : null;
+    if (parent) return activeRouteForCountry(parent, requestedCountry) ? [parent] : [];
+    if (MARKET_ACTIVATION_EXACT_SUBDIVISION_COUNTRIES.includes(requestedCountry as "AR" | "CA")) return [];
     const globalFallback = records.find((record) => record.casinoId === casinoId
-      && record.countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE);
-    return globalFallback && activeRouteForCountry(globalFallback, requestedCountry) ? [globalFallback] : [];
+      && record.marketCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE);
+    return globalFallback && activeRouteForCountry(globalFallback, requestedMarket) ? [globalFallback] : [];
   });
 }
 
 export class MarketActivationRuntime {
   constructor(private readonly database: Pick<typeof prisma, "marketActivation"> = prisma) {}
 
-  async listActive(casinoIds: string[], countryCode: string): Promise<CanonicalMarketActivationRoute[]> {
-    const country = requestedCountryCode(countryCode);
-    if (!casinoIds.length || !country) return [];
+  async listActive(casinoIds: string[], countryCode: string): Promise<BoundCanonicalMarketActivationRoute[]> {
+    const market = requestedMarketCode(countryCode);
+    if (!casinoIds.length || !market) return [];
     const records = await this.database.marketActivation.findMany({
       where: {
         casinoId: { in: casinoIds },
-        countryCode: { in: [country, MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE] },
+        marketCode: { in: [...new Set([
+          market,
+          ...(market.includes("-") ? [market.slice(0, 2)] : []),
+          MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+        ])] },
         product: "CASINO",
       },
       include: runtimeInclude,
-      orderBy: [{ casinoId: "asc" }, { countryCode: "asc" }, { updatedAt: "desc" }, { id: "asc" }],
+      orderBy: [{ casinoId: "asc" }, { marketCode: "asc" }, { updatedAt: "desc" }, { id: "asc" }],
     });
-    return selectActiveRoutes(records, country);
+    return selectActiveRoutes(records, market);
   }
 
-  async listPublicRoutes(casinoIds: string[], countryCode: string): Promise<PublicAffiliateRoute[]> {
+  async listPublicRoutes(casinoIds: string[], countryCode: string, now = new Date()): Promise<PublicAffiliateRoute[]> {
     return (await this.listActive(casinoIds, countryCode)).map((activation) => ({
       casinoId: activation.casinoId,
       casinoBonusId: activation.casinoBonusId,
       affiliateOfferId: activation.affiliateOfferId,
       slug: activation.redirectSlug!.slug,
+      ...(activation.countryCode === "GB" ? {
+        operatorEligibilityContext: {
+          commercialContract: {
+            programActive: activation.affiliateOffer.program.status === "ACTIVE"
+              && !activation.affiliateOffer.program.archivedAt
+              && !["SUSPENDED", "ARCHIVED"].includes(activation.affiliateOffer.program.domainLifecycleStatus ?? "")
+              && activation.affiliateOffer.program.network.active
+              && !activation.affiliateOffer.program.network.archivedAt,
+            programPublished: activation.affiliateOffer.program.workflowStatus === "PUBLISHED",
+            programConnected: activation.affiliateOffer.program.integrationMode === "MANUAL"
+              || (activation.affiliateOffer.program.connectionStatus === "CONNECTED"
+                && Boolean(activation.affiliateOffer.program.providerAccountId)
+                && Boolean(activation.affiliateOffer.program.credentialReference)),
+            programSupportsGb: activation.affiliateOffer.program.supportedCountries.includes("GB"),
+            offerActive: activation.affiliateOffer.status === "ACTIVE"
+              && !activation.affiliateOffer.archivedAt
+              && (!activation.affiliateOffer.startAt || activation.affiliateOffer.startAt <= now)
+              && (!activation.affiliateOffer.expiresAt || activation.affiliateOffer.expiresAt > now),
+            trackingLinkActive: activation.primaryTrackingLink.active
+              && !activation.primaryTrackingLink.archivedAt
+              && (!activation.primaryTrackingLink.validFrom || activation.primaryTrackingLink.validFrom <= now)
+              && (!activation.primaryTrackingLink.expiresAt || activation.primaryTrackingLink.expiresAt > now),
+          },
+          redirectContract: {
+            slugActive: activation.redirectSlug.active && !activation.redirectSlug.archivedAt,
+            destinationServerOwned: true,
+            destinationSafe: safeActivationDestination(activation.primaryTrackingLink.trackingUrl)
+              && safeActivationDestination(activation.primaryTrackingLink.destinationUrl),
+          },
+        },
+      } : {}),
     }));
   }
 
   async resolveRedirect(redirectSlug: string, countryCode: string) {
-    const country = requestedCountryCode(countryCode);
-    if (!isSafePublicSlug(redirectSlug) || !country) return null;
+    const market = requestedMarketCode(countryCode);
+    if (!isSafePublicSlug(redirectSlug) || !market) return null;
+    const requestedCountry = market.slice(0, 2);
+    const marketCodes = [...new Set([
+      market,
+      ...(market.includes("-") ? [requestedCountry] : []),
+    ])];
     const records = await this.database.marketActivation.findMany({
       where: {
         product: "CASINO",
         OR: [
-          { countryCode: country },
+          { marketCode: { in: marketCodes } },
           {
-            countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+            marketCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
             redirectSlug: { slug: redirectSlug },
           },
         ],
       },
       include: runtimeInclude,
-      orderBy: [{ countryCode: "asc" }, { updatedAt: "desc" }, { id: "asc" }],
+      orderBy: [{ marketCode: "asc" }, { updatedAt: "desc" }, { id: "asc" }],
     });
-    const exact = records.find((record) => record.countryCode === country && record.redirectSlug?.slug === redirectSlug);
-    if (exact && activeRouteForCountry(exact, country)) return exact;
-    const globalFallback = records.find((record) => record.countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE
+    const exact = records.find((record) => record.marketCode === market && record.redirectSlug?.slug === redirectSlug);
+    if (exact && activeRouteForCountry(exact, market)) return exact;
+    if (records.some((record) => record.marketCode === market && record.redirectSlug?.slug === redirectSlug)) return null;
+    if (market.includes("-") && MARKET_ACTIVATION_EXACT_SUBDIVISION_COUNTRIES.includes(requestedCountry as "AR" | "CA")) return null;
+    const parent = market.includes("-")
+      ? records.find((record) => record.marketCode === requestedCountry && record.redirectSlug?.slug === redirectSlug)
+      : null;
+    if (parent) {
+      const exactAuthorityExists = records.some((record) => record.marketCode === market
+        && record.casinoId === parent.casinoId);
+      if (exactAuthorityExists) return null;
+      return activeRouteForCountry(parent, requestedCountry) ? parent : null;
+    }
+    if (MARKET_ACTIVATION_EXACT_SUBDIVISION_COUNTRIES.includes(requestedCountry as "AR" | "CA")) return null;
+    const globalFallback = records.find((record) => record.marketCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE
       && record.redirectSlug?.slug === redirectSlug);
     if (!globalFallback) return null;
-    const exactAuthorityExists = records.some((record) => record.countryCode === country
+    const exactAuthorityExists = records.some((record) => marketCodes.includes(record.marketCode)
       && record.casinoId === globalFallback.casinoId);
-    return !exactAuthorityExists && activeRouteForCountry(globalFallback, country) ? globalFallback : null;
+    return !exactAuthorityExists && activeRouteForCountry(globalFallback, market) ? globalFallback : null;
   }
 
   async isActive(input: { casinoId: string; countryCode: string; redirectId?: string; offerId?: string; trackingLinkId?: string }) {
@@ -208,7 +295,7 @@ export class MarketActivationRuntime {
     });
     return records.map((record) => {
       const storedDiagnostics = object(record.diagnostics);
-      const authority = record.primaryTrackingLink?.countries.find((entry) => entry.countryCode === record.countryCode);
+      const authority = record.primaryTrackingLink?.countries.find((entry) => entry.countryCode === record.marketCode);
       const drift = record.status === "ACTIVE" ? [
         record.affiliateOffer?.status !== "ACTIVE" && "LEGACY_OFFER_STATUS_DRIFT",
         record.affiliateOffer?.program.status !== "ACTIVE" && "LEGACY_PROGRAM_STATUS_DRIFT",
@@ -222,6 +309,7 @@ export class MarketActivationRuntime {
         id: record.id,
         casinoSlug: record.casino.slug,
         countryCode: record.countryCode,
+        marketCode: record.marketCode,
         product: record.product,
         desiredState: record.desiredState,
         status: record.status,

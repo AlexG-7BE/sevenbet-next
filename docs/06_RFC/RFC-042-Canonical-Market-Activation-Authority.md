@@ -14,6 +14,10 @@ SHA-256 `9601a2a66f0a566a1a08758fff303fe63133a9ab3e192df9a4d33f85cc9f25b8`.
 retires promotional-media bindings and inputs. `MarketActivation` remains the
 sole commercial authority; media can neither activate nor block it.
 
+**Exact-market amendment:** [RFC-045](RFC-045-Exact-Subdivision-Market-Activation.md)
+adds an exact country-or-subdivision `marketCode` while retaining parent
+`countryCode` for jurisdiction and factual market authority.
+
 ## Decision
 
 `MarketActivation` is the only B4GAMBLE-owned Production commercial authority
@@ -23,7 +27,7 @@ CRM stage, activation packets, workflow state, offer state, Media Operations,
 or an independently writable `productionEligible` value.
 
 The initial product is `CASINO`. The database admits exactly one canonical row
-for `(casinoId, countryCode, product)`. Exact-market activation never implies a
+for `(casinoId, marketCode, product)`. Exact-market activation never implies a
 global or neighbouring-market activation.
 
 One narrow migration-compatibility scope preserves six pre-existing routes

@@ -12,11 +12,17 @@ import {
 } from "../lib/jurisdiction/gb-operator-eligibility";
 import { GB_POLICY_VALID_UNTIL } from "../lib/jurisdiction/policies/gb";
 import { requestCountrySignalFromHeaders } from "../lib/jurisdiction/request-country";
+import { scopedCasinoReferralAllowed, scopedCommercialProjectionMayLoad } from "../lib/jurisdiction/scoped-commercial-authority";
+import type { CommercialJurisdictionAuthority } from "../lib/jurisdiction/commercial-authority";
 import { JurisdictionResolver } from "../lib/jurisdiction/resolver";
 import type { JurisdictionPolicy, JurisdictionPolicyStore } from "../lib/jurisdiction/types";
 import type { AffiliateRedirectStore } from "../lib/repositories/affiliate-redirect.repository";
 import { AffiliateRedirectService } from "../lib/services/affiliate-redirect.service";
 import type { GbCommercialReadinessAuthority } from "../lib/services/gb-commercial-readiness.service";
+import {
+  canonicalGbOperatorEligibilityContext,
+  GbOperatorEligibilityService,
+} from "../lib/services/gb-operator-eligibility.service";
 import { allowGbCommercialReadinessAuthority, allowJurisdictionResolver } from "./market-authority.fixtures";
 
 const now = new Date("2026-08-08T12:00:00.000Z");
@@ -141,6 +147,42 @@ test("GB operator eligibility accepts only the complete official evidence chain"
   assert.deepEqual(result.reasonCodes, ["GB_OPERATOR_ELIGIBLE"]);
 });
 
+test("production operator service composes repository domain evidence with canonical route authority", async () => {
+  const value = casino();
+  const source = {
+    findById: async (id: string) => id === value.id ? value : null,
+    findManyByIds: async (ids: string[]) => ids.includes(value.id) ? [value] : [],
+    findBySlug: async (slug: string) => slug === value.slug ? value : null,
+  };
+  const domains = {
+    findExact: () => ({
+      evidenceId: "domain-evidence",
+      authorityVersion: "gb-domain-evidence.v1" as const,
+      casinoId: value.id,
+      operatorId: value.operator.id!,
+      brandId: value.brand.id,
+      licenceId: value.licences[0]!.id,
+      licenceAccountReference: value.licences[0]!.number!,
+      domain: value.domain,
+      officialSourceUrl: officialSource,
+      domainStatus: "ACTIVE" as const,
+      relationshipType: "DIRECT" as const,
+      observedAt: "2026-08-08T00:00:00.000Z",
+      revalidateAt: "2026-08-15T00:00:00.000Z",
+    }),
+  };
+  const service = new GbOperatorEligibilityService(source, domains);
+  const withoutRoute = await service.evaluate(value.id, now);
+  assert.equal(withoutRoute.referralEligible, false);
+  assert.ok(withoutRoute.reasonCodes.includes("GB_COMMERCIAL_CONTRACT_MISSING"));
+  const withRoute = await service.evaluate(value.id, now, canonicalGbOperatorEligibilityContext({
+    commercialContract,
+    redirectContract,
+  }));
+  assert.equal(withRoute.referralEligible, true);
+  assert.deepEqual(withRoute.reasonCodes, ["GB_OPERATOR_ELIGIBLE"]);
+});
+
 test("GB country, licence and canonical authority failures deny without hiding editorial", () => {
   const cases: Array<[CasinoDomain, string]> = [
     [casino({ availability: [] }), "GB_COUNTRY_MISSING"],
@@ -202,11 +244,11 @@ test("domain, commercial and redirect layers remain distinct and fail closed", (
   assert.ok(missingRedirect.reasonCodes.includes("GB_REDIRECT_CONTRACT_MISSING"));
 });
 
-function redirectStore(): AffiliateRedirectStore {
+function redirectStore(casinoSlug = "casino"): AffiliateRedirectStore {
   const mapping = {
     id: "redirect", slug: "casino-visit", casinoId: "casino", casinoBonusId: null, affiliateOfferId: null,
     defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
-    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
+    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: casinoSlug }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
   return {
     list: async () => [], findById: async () => mapping, findBySlug: async () => mapping, existsBySlug: async () => true,
@@ -258,6 +300,66 @@ test("redirect authority is a strict AND and rechecks before returning a stored 
   const complete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalGbActivation).resolve("casino-visit", { now, currencyCode: "GBP" });
   assert.equal(complete.ok, true);
   if (complete.ok) assert.equal(complete.destination.toString(), "https://tracking.invalid/click");
+});
+
+test("only an exact Founder-authorized Superfly casino can pass the stale internal GB deny", async () => {
+  const offers = { activeCandidates: async () => [redirectOffer()] as never };
+  let founderScopeObserved = false;
+  const readiness: GbCommercialReadinessAuthority = {
+    async evaluate(input) {
+      founderScopeObserved = input.founderWorldwideAuthority === true;
+      return allowGbCommercialReadinessAuthority.evaluate(input);
+    },
+  };
+  const exactSuperfly = await new AffiliateRedirectService(
+    redirectStore("21-prive"),
+    offers,
+    undefined,
+    readiness,
+    canonicalGbActivation,
+  ).resolve("casino-visit", {
+    requestCountrySignal: { countryCode: "GB", trust: "TRUSTED", observedAt: now },
+    now,
+    currencyCode: "GBP",
+  });
+  assert.equal(exactSuperfly.ok, true);
+  assert.equal(founderScopeObserved, true);
+
+  const unrelated = await new AffiliateRedirectService(
+    redirectStore("unrelated-casino"),
+    offers,
+    undefined,
+    readiness,
+    canonicalGbActivation,
+  ).resolve("casino-visit", {
+    requestCountrySignal: { countryCode: "GB", trust: "TRUSTED", observedAt: now },
+    now,
+    currencyCode: "GBP",
+  });
+  assert.equal(unrelated.ok, false);
+  if (!unrelated.ok) assert.equal(unrelated.reason, "JURISDICTION_DENIED");
+});
+
+test("the Founder GB exception remains per-casino across public projection services", () => {
+  const staleGb: CommercialJurisdictionAuthority = {
+    countryCode: "GB",
+    commercialAllowed: false,
+    referralAllowed: false,
+    reasonCode: "POLICY_STALE",
+    policyVersion: "gb-stale",
+  };
+  assert.equal(scopedCommercialProjectionMayLoad(staleGb, "GB"), true);
+  assert.equal(scopedCasinoReferralAllowed(staleGb, "21-prive"), true);
+  assert.equal(scopedCasinoReferralAllowed(staleGb, "unrelated-casino"), false);
+  assert.equal(scopedCasinoReferralAllowed({ ...staleGb, reasonCode: "MARKET_RESTRICTED" }, "21-prive"), false);
+  for (const file of [
+    "lib/services/public-casino-discovery.service.ts",
+    "lib/services/public-casino.service.ts",
+    "lib/services/public-offer.service.ts",
+    "lib/services/public-comparison.service.ts",
+  ]) {
+    assert.match(readFileSync(file, "utf8"), /scopedCasinoReferralAllowed/);
+  }
 });
 
 test("market authority source has no Programme, Self-Check or Protected Help dependency", () => {

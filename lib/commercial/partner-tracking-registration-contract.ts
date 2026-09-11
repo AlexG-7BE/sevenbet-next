@@ -10,7 +10,7 @@ export const PartnerTrackingRegistrationSchema = z.object({
 }).strict();
 
 export type PartnerTrackingRegistrationInput = z.infer<typeof PartnerTrackingRegistrationSchema>;
-export type PartnerTrackingScope = "GENERIC" | "EXACT_GEO";
+export type PartnerTrackingScope = "GENERIC" | "REGIONAL_REUSE" | "EXACT_GEO";
 export type PartnerTrackingVerification = "HEALTHY" | "BROKEN" | "INCONCLUSIVE" | "ALREADY_REGISTERED";
 
 export function partnerTrackingLinkHash(value: string) {
@@ -20,7 +20,7 @@ export function partnerTrackingLinkHash(value: string) {
 export function normalizePartnerTrackingGeo(value: string | undefined) {
   if (value === undefined) return null;
   const normalized = value.trim().toUpperCase().replace(/_/g, "-");
-  if (!/^[A-Z]{2}(?:-[A-Z0-9]{2,12})?$/.test(normalized)) {
+  if (!/^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(normalized)) {
     throw new Error("PARTNER_TRACKING_GEO_INVALID");
   }
   return normalized;

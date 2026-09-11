@@ -9,6 +9,7 @@ import { affiliateRedirectRepository, type AffiliateRedirectStore } from "@/lib/
 import { affiliateOfferService, type AffiliateOfferService } from "@/lib/services/affiliate-offer.service";
 import { gbCommercialReadinessService, type GbCommercialReadinessAuthority } from "@/lib/services/gb-commercial-readiness.service";
 import { marketActivationRuntime, type MarketActivationRuntime } from "@/lib/market-activation/runtime";
+import { worldwideFounderGbAuthorityApplies } from "@/lib/current-partner-worldwide-authority/inventory";
 
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 
@@ -153,12 +154,19 @@ export class AffiliateRedirectService {
 
   async resolve(slugValue: string, input: AffiliateRedirectRequestInput = {}): Promise<AffiliateRedirectResolution> {
     const now = input.now ?? new Date();
+    let normalizedSlug: string | null = null;
+    try { normalizedSlug = normalizeRedirectSlug(slugValue); } catch { /* handled after jurisdiction resolution */ }
+    const scopedMapping = normalizedSlug ? await this.store.findBySlug(normalizedSlug) : null;
+    const founderGbScope = input.requestCountrySignal?.countryCode === "GB"
+      && Boolean(scopedMapping?.casino.slug && worldwideFounderGbAuthorityApplies(scopedMapping.casino.slug));
     const jurisdictionDecision = await this.jurisdiction.resolve({
       requestCountrySignal: input.requestCountrySignal ?? null,
       accountCountry: null,
       now,
     });
-    if (!jurisdictionDecision.commercialAllowed || !jurisdictionDecision.referralAllowed) {
+    const internalGbDenySuperseded = founderGbScope
+      && ["COMMERCIAL_NOT_ACTIVE", "POLICY_STALE"].includes(jurisdictionDecision.reasonCode);
+    if ((!jurisdictionDecision.commercialAllowed || !jurisdictionDecision.referralAllowed) && !internalGbDenySuperseded) {
       return { ok: false, reason: "JURISDICTION_DENIED", candidates: [], jurisdictionDecision };
     }
 
@@ -169,7 +177,10 @@ export class AffiliateRedirectService {
       return { ok: false, reason: "SLUG_NOT_FOUND", candidates: [], jurisdictionDecision };
     }
     const countryCode = jurisdictionDecision.countryCode ?? "";
-    const activation = await this.canonicalActivations.resolveRedirect(slug, countryCode);
+    const marketCode = input.requestCountrySignal?.countryCode === countryCode
+      ? input.requestCountrySignal.marketCode ?? countryCode
+      : countryCode;
+    const activation = await this.canonicalActivations.resolveRedirect(slug, marketCode);
     if (!activation || !activation.redirectSlug || !activation.affiliateOffer || !activation.primaryTrackingLink) {
       const mapping = await this.store.findBySlug(slug);
       return {
@@ -219,6 +230,7 @@ export class AffiliateRedirectService {
       trackingLinkId: routing.trackingLinkId,
       jurisdictionDecision,
       redirectContract: { slugActive: true, destinationServerOwned: true, destinationSafe: true },
+      founderWorldwideAuthority: founderGbScope,
       now,
     });
     const operatorEligibility = commercialReadiness.operatorEligibility;

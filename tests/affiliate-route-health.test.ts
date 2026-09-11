@@ -27,6 +27,7 @@ const canonicalClaim = {
   casinoId: "casino",
   casinoSlug: "casino",
   countryCode: "ZZ",
+  marketCode: "ZZ",
   offerId: "offer",
   trackingLinkId: "tracking",
   redirectId: "redirect",
@@ -331,10 +332,12 @@ test("claim selection follows canonical active MarketActivation and automation u
   assert.doesNotMatch(repository, /productionEligible|workflowStatus|programme|program:/);
   const service = readFileSync("lib/services/affiliate-route-health.service.ts", "utf8");
   assert.match(service, /marketActivationRouteVerifier/);
+  assert.match(service, /marketCode/);
   assert.doesNotMatch(service, /PartnerRouteService|partnerRouteService|productionEligible|workflowStatus/);
   const verifier = readFileSync("lib/market-activation/verifier.ts", "utf8");
   assert.match(verifier, /allowWwwEquivalentFinalHost:\s*true/);
   assert.match(verifier, /inspectTerminalContent:\s*true/);
+  assert.match(verifier, /activation\.marketCode/);
   const workflow = readFileSync(".github/workflows/affiliate-route-health.yml", "utf8");
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /GH_REPO: \$\{\{ github\.repository \}\}/);

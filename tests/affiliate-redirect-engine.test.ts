@@ -128,9 +128,22 @@ test("public country uses platform headers and ignores ordinary query override",
   assert.equal(requestCountrySignalFromHeaders(new Headers({ "x-vercel-ip-country": "XX" }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" }), null);
   assert.deepEqual(requestCountrySignalFromHeaders(new Headers({ "x-vercel-ip-country": "GB" }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" }), {
     countryCode: "GB",
+    marketCode: "GB",
     trust: "TRUSTED",
     observedAt,
   });
+  assert.deepEqual(requestCountrySignalFromHeaders(new Headers({
+    "x-vercel-ip-country": "AR",
+    "x-vercel-ip-country-region": "C",
+  }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" })?.marketCode, "AR-C");
+  assert.equal(requestCountrySignalFromHeaders(new Headers({
+    "x-vercel-ip-country": "AR",
+    "x-vercel-ip-country-region": "unsafe/value",
+  }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" })?.marketCode, "AR");
+  assert.equal(requestCountrySignalFromHeaders(new Headers({
+    "x-vercel-ip-country": "CA",
+    "x-vercel-ip-country-region": "TOOLONG",
+  }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" })?.marketCode, "CA");
 });
 
 test("HTTP helpers produce controlled 302 and safe no-store 404 responses", () => {

@@ -113,6 +113,48 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
     assert.equal(casino?.bonuses[0]?.affiliate.href, "/r/cms-bonus-route");
   });
 
+  await t.test("GB public projection supplies canonical route context to operator eligibility", async () => {
+    const record = publishedRecord();
+    let receivedCanonicalContext = false;
+    const contextualAuthority = {
+      async evaluate(casinoId: string, checkedAt: Date, context?: Parameters<typeof allowOperatorAuthority.evaluate>[2]) {
+        receivedCanonicalContext = Boolean(
+          context?.commercialContract?.programActive
+          && context.redirectContract?.destinationServerOwned,
+        );
+        return allowOperatorAuthority.evaluate(casinoId, checkedAt, context);
+      },
+      evaluateMany: allowOperatorAuthority.evaluateMany.bind(allowOperatorAuthority),
+    };
+    const casino = await new PublicCasinoService(
+      store([record], [managedSlug], [{
+        casinoId: record.casinoId,
+        casinoBonusId: null,
+        slug: "cms-route",
+        operatorEligibilityContext: {
+          commercialContract: {
+            programActive: true,
+            programPublished: true,
+            programConnected: true,
+            programSupportsGb: true,
+            offerActive: true,
+            trackingLinkActive: true,
+          },
+          redirectContract: {
+            slugActive: true,
+            destinationServerOwned: true,
+            destinationSafe: true,
+          },
+        },
+      }]),
+      legacy,
+      { cmsEnabled: true, redirectEnabled: true, now },
+      contextualAuthority,
+    ).getCasino(managedSlug, allowJurisdictionAuthority, "GB");
+    assert.equal(receivedCanonicalContext, true);
+    assert.equal(casino?.affiliate.href, "/r/cms-route");
+  });
+
   await t.test("3. no published record and managed=true returns null", async () => {
     assert.equal(await service(store([], [managedSlug])).getCasino(managedSlug), null);
   });

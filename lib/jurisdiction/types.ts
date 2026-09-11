@@ -14,6 +14,8 @@ export type JurisdictionReasonCode =
 
 export type CountrySignal = {
   countryCode: string | null;
+  /** Trusted exact ISO subdivision market when the platform supplies one. */
+  marketCode?: string | null;
   trust: "TRUSTED" | "UNTRUSTED";
   observedAt: Date | null;
 };

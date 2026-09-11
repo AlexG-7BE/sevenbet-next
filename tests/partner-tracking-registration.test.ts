@@ -3,12 +3,17 @@ import test from "node:test";
 
 import {
   PartnerTrackingRegistrationSchema,
+  normalizePartnerTrackingGeo,
   partnerTrackingLinkHash,
 } from "../lib/commercial/partner-tracking-registration-contract";
 import { PartnerTrackingRegistrationService } from "../lib/commercial/partner-tracking-registration-service";
 import type { CurrentPartnerInventorySeed } from "../lib/current-partner-rollout/inventory";
 import { selectActivationTrackingCandidate } from "../lib/market-activation/repository";
-import type { PartnerTrackingStage } from "../lib/repositories/partner-tracking-registration.repository";
+import {
+  partnerTrackingCoverageMatches,
+  partnerTrackingScopeMatches,
+  type PartnerTrackingStage,
+} from "../lib/repositories/partner-tracking-registration.repository";
 import { ConflictError, ValidationError } from "../lib/services/service-error";
 
 const sensitiveUrl = "https://tracker.invalid/click?token=super-secret-value&campaign=fixture";
@@ -65,6 +70,7 @@ function stage(overrides: Partial<PartnerTrackingStage> = {}): PartnerTrackingSt
     alreadyCanonical: false,
     candidateCreated: true,
     ...overrides,
+    trackingIdentity: overrides.trackingIdentity ?? null,
   };
 }
 
@@ -130,8 +136,9 @@ function harness(options: {
     },
   };
   const jurisdiction = {
-    async resolve() {
+    async resolve(input: { requestCountrySignal: { countryCode: string } }) {
       return {
+        countryCode: input.requestCountrySignal.countryCode,
         commercialAllowed: options.jurisdictionAllowed ?? true,
         referralAllowed: options.jurisdictionAllowed ?? true,
         reasonCode: options.jurisdictionAllowed === false ? "POLICY_DENIED" : "POLICY_ALLOWED",
@@ -155,6 +162,7 @@ test("public input schema contains exactly three required fields and optional GE
   assert.equal(json.additionalProperties, false);
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }).success, true);
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl, routeId: "forbidden" }).success, false);
+  assert.equal(normalizePartnerTrackingGeo("ar_c"), "AR-C");
 });
 
 test("generic healthy registration activates allowed GEOs and preserves legal/regulatory rows", async () => {
@@ -321,7 +329,7 @@ test("RFC-042 route failure rejects a promoted replacement and restores the prio
     },
   };
   const service = new PartnerTrackingRegistrationService(repository as never, (async () => healthyCheck()) as never, activation as never, async () => {}, {
-    async resolve() { return { commercialAllowed: true, referralAllowed: true, reasonCode: "POLICY_ALLOWED" }; },
+    async resolve() { return { countryCode: "DE", commercialAllowed: true, referralAllowed: true, reasonCode: "POLICY_ALLOWED" }; },
   });
   const result = await service.register({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }, context, now);
   assert.equal(result.status, "NOT_PROMOTED");
@@ -343,7 +351,7 @@ test("idempotent canonical re-registration reverifies without duplicating or pro
   assert.equal(calls.finalize, 1);
 });
 
-test("candidate selection deterministically preserves exact-over-generic precedence", () => {
+test("candidate selection deterministically preserves exact-over-regional-over-generic precedence", () => {
   const generic = { active: true, priority: 500, countries: [
     { countryCode: "ES", mode: "ALLOW", productionEligibilityEvidence: "evidence" },
     { countryCode: "DE", mode: "ALLOW", productionEligibilityEvidence: "evidence" },
@@ -351,18 +359,51 @@ test("candidate selection deterministically preserves exact-over-generic precede
   const exact = { active: true, priority: 500, countries: [
     { countryCode: "ES", mode: "ALLOW", productionEligibilityEvidence: "evidence" },
   ], id: "exact", metadata: { partnerTrackingRegistration: { stage: "CANONICAL", scope: "EXACT_GEO", geo: "ES" } } };
+  const regional = { active: true, priority: 500, countries: [
+    { countryCode: "ES", mode: "ALLOW", productionEligibilityEvidence: "evidence" },
+    { countryCode: "DE", mode: "ALLOW", productionEligibilityEvidence: "evidence" },
+  ], id: "regional", metadata: { partnerTrackingRegistration: { stage: "CANONICAL", scope: "REGIONAL_REUSE", trackingIdentity: "REGION:EU" } } };
   assert.equal(selectActivationTrackingCandidate({
-    candidates: [generic, exact],
+    candidates: [generic, regional, exact],
     countryCode: "ES",
     localWebsiteUrl: "https://casino.example/",
     localDomain: "casino.example",
     existingTrackingId: "generic",
   })?.id, "exact");
   assert.equal(selectActivationTrackingCandidate({
-    candidates: [exact, generic],
+    candidates: [exact, regional, generic],
     countryCode: "DE",
     localWebsiteUrl: "https://casino.example/",
     localDomain: "casino.example",
     existingTrackingId: null,
-  })?.id, "generic");
+  })?.id, "regional");
+});
+
+test("regional replacement and audit coverage follow tracking identity across member GEOs", () => {
+  const regionalRow = {
+    ...row("AR-C", "ALLOWED"),
+    casino: "Betsson",
+    casinoSlug: "betsson",
+    trackingScope: "REGIONAL_REUSE" as const,
+    trackingIdentity: "BGA_DIRECT_LINK_ROW:54",
+  };
+  assert.equal(partnerTrackingScopeMatches(
+    { scope: "REGIONAL_REUSE", geo: "AR-B", trackingIdentity: "BGA_DIRECT_LINK_ROW:54" },
+    "REGIONAL_REUSE",
+    "AR-C",
+    "BGA_DIRECT_LINK_ROW:54",
+  ), true, "another member GEO still identifies the same regional canonical scope");
+  assert.equal(partnerTrackingScopeMatches(
+    { scope: "REGIONAL_REUSE", geo: "AR-B", trackingIdentity: "another-region" },
+    "REGIONAL_REUSE",
+    "AR-C",
+    "BGA_DIRECT_LINK_ROW:54",
+  ), false);
+  assert.equal(partnerTrackingCoverageMatches({
+    casino: "Betsson",
+    casinoSlug: "betsson",
+    scope: "REGIONAL_REUSE",
+    geo: "AR-B",
+    trackingIdentity: "BGA_DIRECT_LINK_ROW:54",
+  }, regionalRow), true);
 });

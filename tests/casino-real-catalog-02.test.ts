@@ -181,7 +181,7 @@ test("15. a country query cannot replace trusted GEO authority", () => {
 test("16. a presentation cookie cannot create commercial authority", () => {
   const discovery = read("lib/services/public-casino-discovery.service.ts");
   assert.doesNotMatch(discovery, /cookie|PRESENTATION_PREFERENCE_COOKIE/);
-  assert.match(discovery, /jurisdictionAllowsReferral\(authority\)/);
+  assert.match(discovery, /scopedCommercialProjectionMayLoad\(authority, requestCountryContext\)/);
 });
 
 test("17. information-only casinos keep editorial substance but have no governed action", () => {
@@ -205,7 +205,7 @@ test("19. promotable presentation requires cumulative governed route authority",
   const discovery = read("lib/services/public-casino-discovery.service.ts");
   const projection = read("lib/affiliate-routing/partner-route-projection.ts");
   assert.match(discovery, /commercialCountryContext/);
-  assert.match(discovery, /jurisdictionAllowsReferral\(authority\)/);
+  assert.match(discovery, /scopedCasinoReferralAllowed\(authority, casinoSlug\)|scopedCasinoReferralAllowed\(authority, scoped\.slug\)/);
   assert.match(discovery, /operatorEligibility\?\.referralEligible/);
   assert.match(discovery, /eligibleDiscoveryOffers/);
   assert.match(discovery, /isSafePublicSlug\(redirect\.slug\)/);

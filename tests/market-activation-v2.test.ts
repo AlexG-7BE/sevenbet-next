@@ -51,10 +51,11 @@ function intent(overrides: Partial<MarketActivationIntentInput> = {}): MarketAct
 }
 
 function activation(overrides: Record<string, unknown> = {}) {
-  return {
+  const record = {
     id: "10000000-0000-4000-8000-000000000006",
     casinoId: CASINO_ID,
     countryCode: "PE",
+    marketCode: "PE",
     product: "CASINO",
     desiredState: "ACTIVE",
     status: "ACTIVE",
@@ -126,6 +127,8 @@ function activation(overrides: Record<string, unknown> = {}) {
     redirectSlug: { id: REDIRECT_ID, slug: "inkabet-casino", casinoId: CASINO_ID, casinoBonusId: null, affiliateOfferId: OFFER_ID, active: true, archivedAt: null },
     ...overrides,
   };
+  if (!("marketCode" in overrides) && typeof overrides.countryCode === "string") record.marketCode = overrides.countryCode;
+  return record;
 }
 
 function runtime(records: ReturnType<typeof activation>[]) {
@@ -133,12 +136,14 @@ function runtime(records: ReturnType<typeof activation>[]) {
     marketActivation: {
       findMany: async ({ where }: { where: {
         casinoId?: { in: string[] };
-        countryCode?: { in: string[] };
-        OR?: Array<{ countryCode: string; redirectSlug?: { slug: string } }>;
+        marketCode?: { in: string[] };
+        OR?: Array<{ marketCode: string | { in: string[] }; redirectSlug?: { slug: string } }>;
       } }) => records.filter((record) => {
         if (where.casinoId && !where.casinoId.in.includes(record.casinoId)) return false;
-        if (where.countryCode && !where.countryCode.in.includes(record.countryCode)) return false;
-        if (where.OR && !where.OR.some((condition) => record.countryCode === condition.countryCode
+        if (where.marketCode && !where.marketCode.in.includes(record.marketCode)) return false;
+        if (where.OR && !where.OR.some((condition) => (typeof condition.marketCode === "string"
+          ? record.marketCode === condition.marketCode
+          : condition.marketCode.in.includes(record.marketCode))
           && (!condition.redirectSlug || record.redirectSlug.slug === condition.redirectSlug.slug))) return false;
         return true;
       }),
@@ -151,11 +156,73 @@ test("normalizes a concise Casino × GEO activation intent and hashes it determi
   const first = normalizeMarketActivationIntent(intent({ sourceReferences: ["B", "A", "A"] }));
   const second = normalizeMarketActivationIntent(intent({ countryCode: "PE", sourceReferences: ["A", "B"] }));
   assert.equal(first.countryCode, "PE");
+  assert.equal(first.marketCode, "PE");
   assert.equal(first.product, "CASINO");
   assert.equal(first.desiredState, "ACTIVE");
   assert.deepEqual(first.sourceReferences, ["A", "B"]);
   assert.equal(first.payloadHash, second.payloadHash);
   assert.match(first.payloadHash, /^[a-f0-9]{64}$/);
+});
+
+test("normalizes an exact subdivision while retaining its parent legal jurisdiction", () => {
+  const exact = normalizeMarketActivationIntent(intent({ countryCode: "ar_c", idempotencyKey: "exact-ar-c" }));
+  assert.equal(exact.marketCode, "AR-C");
+  assert.equal(exact.countryCode, "AR");
+});
+
+test("canonical controller rejects an unsupported subdivision before repository mutation", async () => {
+  let applied = false;
+  const controller = new MarketActivationController({
+    apply: async () => { applied = true; throw new Error("must not apply"); },
+    recordRouteVerification: async () => { throw new Error("must not verify"); },
+  } as never);
+  await assert.rejects(
+    () => controller.activateCasinoInGeo(intent({ countryCode: "AR-K", idempotencyKey: "unsupported-ar-k" }), NOW),
+    /EXACT_SUBDIVISION_AUTHORITY_MISSING/,
+  );
+  assert.equal(applied, false);
+});
+
+test("canonical controller requires a positive parent jurisdiction before exact subdivision mutation", async () => {
+  let applied = false;
+  let parentChecked = false;
+  const controller = new MarketActivationController(
+    {
+      apply: async () => { applied = true; throw new Error("must not apply"); },
+      recordRouteVerification: async () => { throw new Error("must not verify"); },
+    } as never,
+    { verify: async () => { throw new Error("must not verify"); } },
+    {
+      async allowed(_intent, parentDecision) {
+        parentChecked = true;
+        return parentDecision.commercialAllowed && parentDecision.referralAllowed;
+      },
+    },
+    {
+      async resolve() {
+        return {
+          decisionId: "parent-deny",
+          countryCode: "AR",
+          marketId: "ar",
+          jurisdictionId: "argentina",
+          editorialAllowed: true,
+          commercialAllowed: false,
+          referralAllowed: false,
+          reasonCode: "MARKET_RESTRICTED",
+          policyVersion: "test",
+          evaluatedAt: NOW.toISOString(),
+          revalidateAt: null,
+          inputSummary: [],
+        };
+      },
+    },
+  );
+  await assert.rejects(
+    () => controller.activateCasinoInGeo(intent({ countryCode: "AR-B", idempotencyKey: "parent-denied-ar-b" }), NOW),
+    /EXACT_SUBDIVISION_AUTHORITY_MISSING/,
+  );
+  assert.equal(parentChecked, true);
+  assert.equal(applied, false);
 });
 
 test("rejects ambiguous identity, missing evidence, and unsafe destinations", () => {
@@ -386,6 +453,57 @@ test("canonical runtime resolves only the exact active market and ignores legacy
   });
 });
 
+test("canonical runtime requires the exact subdivision and binds it to the parent market profile", async () => {
+  const argentinaCity = activation({
+    id: "10000000-0000-4000-8000-000000000011",
+    countryCode: "AR",
+    marketCode: "AR-C",
+    marketProfile: { id: PROFILE_ID, casinoId: CASINO_ID, countryCode: "AR" },
+    affiliateOffer: {
+      ...activation().affiliateOffer,
+      countries: [{ countryCode: "AR-C", mode: "ALLOW" }],
+    },
+    primaryTrackingLink: {
+      ...activation().primaryTrackingLink,
+      countries: [{ countryCode: "AR-C", mode: "ALLOW" }],
+    },
+  });
+  const authority = runtime([argentinaCity]);
+  assert.equal((await authority.listActive([CASINO_ID], "AR-C"))[0]?.id, argentinaCity.id);
+  assert.deepEqual(await authority.listActive([CASINO_ID], "AR-B"), []);
+  assert.deepEqual(await authority.listActive([CASINO_ID], "AR"), []);
+});
+
+test("trusted regions retain country authority outside exact-only countries and negative shadows prevent fallback", async () => {
+  const peru = activation();
+  const globalFallback = activation({
+    id: "10000000-0000-4000-8000-000000000019",
+    countryCode: "ZZ",
+    marketCode: "ZZ",
+    marketProfileId: null,
+    marketProfile: null,
+    globalFallbackBlockedCountries: GLOBAL_BLOCKED_COUNTRIES,
+  });
+  assert.equal((await runtime([peru]).listActive([CASINO_ID], "PE-LIM"))[0]?.id, peru.id);
+  assert.equal((await runtime([peru]).resolveRedirect("inkabet-casino", "PE-LIM"))?.id, peru.id);
+
+  const disabledRegion = activation({
+    id: "10000000-0000-4000-8000-000000000020",
+    countryCode: "PE",
+    marketCode: "PE-LIM",
+    desiredState: "DISABLED",
+    status: "DISABLED",
+    redirectSlug: { ...activation().redirectSlug, slug: "inkabet-lima-disabled" },
+  });
+  assert.deepEqual(await runtime([peru, globalFallback, disabledRegion]).listActive([CASINO_ID], "PE-LIM"), []);
+  assert.equal(await runtime([peru, globalFallback, disabledRegion]).resolveRedirect("inkabet-casino", "PE-LIM"), null,
+    "an exact negative shadows the parent even when its redirect slug differs");
+  assert.deepEqual(await runtime([globalFallback]).listActive([CASINO_ID], "AR-C"), []);
+  assert.deepEqual(await runtime([globalFallback]).listActive([CASINO_ID], "CA-BC"), []);
+  assert.deepEqual(await runtime([globalFallback]).listActive([CASINO_ID], "AR"), []);
+  assert.deepEqual(await runtime([globalFallback]).listActive([CASINO_ID], "CA"), []);
+});
+
 test("canonical global fallback is explicitly evidenced, request-scoped, denied in protected countries, and shadowed by any exact row", async () => {
   const globalFallback = activation({
     id: "10000000-0000-4000-8000-000000000008",
@@ -442,10 +560,52 @@ test("canonical runtime fails closed for cross-entity or unsafe bindings", async
   const crossCasino = activation({ affiliateOffer: { ...activation().affiliateOffer, casinoId: "another-casino" } });
   const crossRedirect = activation({ redirectSlug: { ...activation().redirectSlug, casinoId: "another-casino" } });
   const unsafe = activation({ primaryTrackingLink: { ...activation().primaryTrackingLink, trackingUrl: "http://unsafe.example" } });
+  const missingOfferMarket = activation({ affiliateOffer: { ...activation().affiliateOffer, countries: [] } });
+  const missingTrackingMarket = activation({ primaryTrackingLink: { ...activation().primaryTrackingLink, countries: [] } });
   assert.deepEqual(await runtime([crossOffer]).listActive([CASINO_ID], "PE"), []);
   assert.deepEqual(await runtime([crossCasino]).listActive([CASINO_ID], "PE"), []);
   assert.deepEqual(await runtime([crossRedirect]).listActive([CASINO_ID], "PE"), []);
   assert.deepEqual(await runtime([unsafe]).listActive([CASINO_ID], "PE"), []);
+  assert.deepEqual(await runtime([missingOfferMarket]).listActive([CASINO_ID], "PE"), []);
+  assert.deepEqual(await runtime([missingTrackingMarket]).listActive([CASINO_ID], "PE"), []);
+});
+
+test("GB public routes carry current commercial facts into operator eligibility", async () => {
+  const gb = activation({
+    countryCode: "GB",
+    marketCode: "GB",
+    marketProfile: { id: PROFILE_ID, casinoId: CASINO_ID, countryCode: "GB" },
+    affiliateOffer: {
+      ...activation().affiliateOffer,
+      status: "ACTIVE",
+      archivedAt: null,
+      startAt: null,
+      expiresAt: null,
+      countries: [{ countryCode: "GB", mode: "ALLOW" }],
+      program: {
+        ...activation().affiliateOffer.program,
+        status: "ACTIVE",
+        workflowStatus: "PUBLISHED",
+        integrationMode: "MANUAL",
+        connectionStatus: "DISCONNECTED",
+        providerAccountId: null,
+        credentialReference: null,
+        supportedCountries: ["GB"],
+        archivedAt: null,
+        domainLifecycleStatus: "ACTIVE",
+        network: { active: true, archivedAt: null },
+      },
+    },
+    primaryTrackingLink: {
+      ...activation().primaryTrackingLink,
+      countries: [{ countryCode: "GB", mode: "ALLOW" }],
+    },
+  });
+  const route = (await runtime([gb]).listPublicRoutes([CASINO_ID], "GB", NOW))[0];
+  assert.equal(route?.operatorEligibilityContext?.commercialContract?.programConnected, true,
+    "manual programmes do not require a provider connection");
+  assert.equal(route?.operatorEligibilityContext?.commercialContract?.programSupportsGb, true);
+  assert.equal(route?.operatorEligibilityContext?.redirectContract?.destinationSafe, true);
 });
 
 test("discovery media and CTA projections prefer canonical activation rows", () => {
@@ -482,6 +642,7 @@ test("route verification uses the stored exact-market expectation and persists n
     marketActivation: {
       findUnique: async () => ({
         countryCode: "PE",
+        marketCode: "PE",
         casino: { domain: "operator.example", websiteUrl: "https://operator.example/" },
         marketProfile: { localDomain: "operator.example", localWebsiteUrl: "https://operator.example/casino" },
         primaryTrackingLink: {
@@ -526,12 +687,44 @@ test("route verification uses the stored exact-market expectation and persists n
   });
 });
 
+test("route verification reads subdivision expectations by marketCode rather than parent country", async () => {
+  const verifier = new MarketActivationRouteVerifier({
+    marketActivation: {
+      findUnique: async () => ({
+        countryCode: "AR",
+        marketCode: "AR-C",
+        casino: { domain: "operator.example", websiteUrl: "https://operator.example/" },
+        marketProfile: { localDomain: "operator.example", localWebsiteUrl: "https://operator.example/" },
+        primaryTrackingLink: {
+          trackingUrl: "https://tracking.example/click",
+          destinationUrl: "https://operator.example/",
+          metadata: {
+            commercialActivationV1: {
+              records: {
+                AR: { routeHealth: { expectedFinalHost: "wrong.example" } },
+                "AR-C": { routeHealth: { expectedFinalHost: "operator.example", expectedPathPrefix: "/city", requiredAttributionParameters: ["aff"] } },
+              },
+            },
+          },
+        },
+      }),
+    },
+  } as never, async ({ expectation }) => {
+    assert.equal(expectation.expectedFinalHost, "operator.example");
+    assert.equal(expectation.expectedPathPrefix, "/city");
+    assert.deepEqual(expectation.requiredAttributionParameters, ["aff"]);
+    return { status: "HEALTHY", reason: "GET_OK", method: "GET", statusCode: 200, durationMs: 2, redirectCount: 1, finalHost: "operator.example" };
+  });
+  assert.equal((await verifier.verify("activation", NOW)).status, "HEALTHY");
+});
+
 test("route verification derives an exact market destination from imported evidence without trusting a foreign observed host", async () => {
   const observed: Array<Record<string, unknown>> = [];
   const verifier = new MarketActivationRouteVerifier({
     marketActivation: {
       findUnique: async () => ({
         countryCode: "EE",
+        marketCode: "EE",
         casino: { domain: "betsafe.com", websiteUrl: "https://www.betsafe.com/" },
         marketProfile: { localDomain: "betsafe.ee", localWebsiteUrl: "https://www.betsafe.ee/" },
         primaryTrackingLink: {
@@ -566,6 +759,7 @@ test("global fallback verification uses the canonical Casino host instead of the
     marketActivation: {
       findUnique: async () => ({
         countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+        marketCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
         casino: { domain: "casino.example", websiteUrl: "https://www.casino.example/" },
         marketProfile: null,
         primaryTrackingLink: {
@@ -593,6 +787,7 @@ test("transport-only route verification failures are inconclusive rather than ex
       marketActivation: {
         findUnique: async () => ({
           countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+          marketCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
           casino: { domain: "casino.example", websiteUrl: null },
           marketProfile: null,
           primaryTrackingLink: {

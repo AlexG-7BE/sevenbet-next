@@ -28,7 +28,12 @@ const loadBestOffersPageData = cache(async () => {
   ]);
   const commercialAuthority = commercialAuthorityForPresentation(authority, presentation.marketCountryCode);
   const result = await publicOfferService.getBestOffersPageData(
-    { country: presentation.marketCountryCode ?? undefined, presentationLanguage: presentation.language, limit: 12 },
+    {
+      country: presentation.marketCountryCode ?? undefined,
+      commercialMarketCode: presentation.marketCode ?? undefined,
+      presentationLanguage: presentation.language,
+      limit: 12,
+    },
     commercialAuthority,
   );
   return { commercialAuthority, presentation, result };

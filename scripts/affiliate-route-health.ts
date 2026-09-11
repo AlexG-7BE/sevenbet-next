@@ -8,13 +8,17 @@ function option(name: string) {
 }
 
 async function main() {
-  const report = await affiliateRouteHealthService.run({ casino: option("--casino"), countryCode: option("--geo") });
+  const geo = option("--geo")?.trim().toUpperCase().replace(/_/g, "-");
+  const report = await affiliateRouteHealthService.run({
+    casino: option("--casino"),
+    ...(geo?.includes("-") ? { marketCode: geo } : { countryCode: geo }),
+  });
   if (process.argv.includes("--json")) console.info(JSON.stringify(report, null, 2));
   else {
     console.info(`Affiliate route health: ${report.noActiveRoutes ? "no active routes" : report.healthy ? "healthy" : "attention required"}`);
     console.info(`Checked ${report.summary.routes} route(s) at ${report.checkedAt}`);
     for (const result of report.results) {
-      console.info(`${result.status.padEnd(20)} ${result.casinoSlug} × ${result.countryCode} /r/${result.redirectSlug ?? "missing"} — ${result.reason}`);
+      console.info(`${result.status.padEnd(20)} ${result.casinoSlug} × ${result.marketCode} (${result.countryCode}) /r/${result.redirectSlug ?? "missing"} — ${result.reason}`);
     }
   }
   if (!report.healthy) process.exitCode = 1;

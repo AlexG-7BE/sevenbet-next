@@ -64,13 +64,13 @@ function assertAuthority() {
   return actualSha;
 }
 
-async function scopedCounts(casinoId: string, networkId: string, countryCode: string) {
+async function scopedCounts(casinoId: string, networkId: string, marketCode: string) {
   const [programs, offers, trackingLinks, redirects, activations] = await Promise.all([
     prisma.affiliateProgram.count({ where: { casinoId, networkId } }),
     prisma.affiliateOffer.count({ where: { casinoId, program: { networkId } } }),
     prisma.affiliateTrackingLink.count({ where: { offer: { casinoId, program: { networkId } } } }),
     prisma.affiliateRedirectSlug.count({ where: { casinoId } }),
-    prisma.marketActivation.count({ where: { casinoId, countryCode, product: "CASINO" } }),
+    prisma.marketActivation.count({ where: { casinoId, marketCode, product: "CASINO" } }),
   ]);
   return { programs, offers, trackingLinks, redirects, activations };
 }
@@ -137,9 +137,9 @@ async function runBeforeStateSnapshot(sha: string) {
 
 async function runServiceSmoke(sha: string) {
   const activation = await prisma.marketActivation.findUniqueOrThrow({
-    where: { casinoId_countryCode_product: {
+    where: { casinoId_marketCode_product: {
       casinoId: (await prisma.casino.findUniqueOrThrow({ where: { slug: "rizk" }, select: { id: true } })).id,
-      countryCode: "RS",
+      marketCode: "RS",
       product: "CASINO",
     } },
     include: {
@@ -157,12 +157,12 @@ async function runServiceSmoke(sha: string) {
   const linkHash = sha256(rawTrackingUrl);
   const tokenValues = [...new URL(rawTrackingUrl).searchParams.values()].filter((value) => value.length >= 4);
   const networkId = activation.primaryTrackingLink.offer.program.networkId;
-  const before = await scopedCounts(activation.casinoId, networkId, activation.countryCode);
+  const before = await scopedCounts(activation.casinoId, networkId, activation.marketCode);
   const result = await commercialMcpService.registerPartnerTrackingLink({
     partner: "Betsson Group Affiliates",
     casino: activation.casino.title,
     trackingUrl: rawTrackingUrl,
-    geo: activation.countryCode,
+    geo: activation.marketCode,
   }, { actorId: actor.id, clientId: "production-idempotent-smoke" });
   const serialized = JSON.stringify(result);
   if (serialized.includes(rawTrackingUrl) || tokenValues.some((value) => serialized.includes(value))) {
@@ -204,7 +204,7 @@ async function runServiceSmoke(sha: string) {
       })),
     })}`);
   }
-  const after = await scopedCounts(activation.casinoId, networkId, activation.countryCode);
+  const after = await scopedCounts(activation.casinoId, networkId, activation.marketCode);
   if (JSON.stringify(before) !== JSON.stringify(after)) throw new Error("PRODUCTION_SMOKE_DUPLICATE_OBJECT_CREATED");
   const current = await prisma.marketActivation.findUniqueOrThrow({ where: { id: activation.id } });
   if (current.status !== "ACTIVE" || current.routeVerificationStatus !== "HEALTHY" || current.primaryTrackingLinkId !== activation.primaryTrackingLinkId) {

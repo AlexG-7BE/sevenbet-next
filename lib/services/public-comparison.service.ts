@@ -15,9 +15,15 @@ import type {
 import { publicCasinoDiscoveryRepository } from "@/lib/repositories/public-casino-discovery.repository";
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { resolvePublicVisitAction } from "@/lib/services/public-casino-discovery.service";
-import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
+import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
+import { scopedCasinoReferralAllowed, scopedCommercialProjectionMayLoad } from "@/lib/jurisdiction/scoped-commercial-authority";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
-import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
+import {
+  canonicalGbOperatorEligibilityContext,
+  gbOperatorEligibilityService,
+  type GbOperatorEligibilityAuthority,
+  type GbOperatorEligibilityEvidenceContext,
+} from "@/lib/services/gb-operator-eligibility.service";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
@@ -94,10 +100,10 @@ function safeAction(
   redirectEnabled = isAffiliateRedirectEnabled(),
 ): PublicComparisonAction {
   if (isTemporaryDemoCasinoId(casino.id)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Fictional demonstration records never expose a commercial action." };
-  if (!jurisdictionAllowsReferral(authority)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Current market authority does not permit a commercial action." };
+  if (!scopedCasinoReferralAllowed(authority, casino.slug)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Current market authority does not permit a commercial action." };
   if (country === "GB" && !operatorEligibility?.referralEligible) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Required operator and commercial evidence is not currently complete." };
   const canonicalRoute = context.canonicalRoutes?.find((route) => route.casinoId === casino.id) ?? null;
-  const visit = resolvePublicVisitAction(context, casino.id, canonicalRoute ? canonicalRoute.casinoBonusId : selectComparisonBonus(casino)?.id ?? null, country, now, authority, operatorEligibility, redirectEnabled);
+  const visit = resolvePublicVisitAction(context, casino.id, canonicalRoute ? canonicalRoute.casinoBonusId : selectComparisonBonus(casino)?.id ?? null, country, now, authority, operatorEligibility, redirectEnabled, casino.slug);
   const href = visit.available && visit.redirectSlug ? `/r/${visit.redirectSlug}` : null;
   if (!href || !internalRedirect.test(href)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "No governed internal action is currently available." };
   return { available: true, href, label: `Visit ${casino.name}`, reason: "Rechecked by the governed internal redirect route." };
@@ -226,13 +232,14 @@ export class PublicComparisonService {
     query: PublicComparisonQuery,
     authority?: CommercialJurisdictionAuthority | null,
     presentationLanguage?: string | null,
+    commercialMarketCode?: string | null,
   ): Promise<PublicComparisonResult> {
     let published: Awaited<ReturnType<PublicCasinoDiscoveryStore["listPublished"]>>;
     let context: DiscoveryContext;
     const redirectEnabled = this.redirectEnabled();
     const commercialProjection = Boolean(
       redirectEnabled
-      && jurisdictionAllowsReferral(authority)
+      && scopedCommercialProjectionMayLoad(authority, query.country)
       && authority?.countryCode === query.country,
     );
     try {
@@ -240,14 +247,14 @@ export class PublicComparisonService {
       context = await this.store.loadContext(published.map((record) => record.casinoId), {
         includeAliases: false,
         includeCommercial: commercialProjection,
-        ...(commercialProjection ? { countryCode: query.country } : {}),
+        ...(commercialProjection ? { countryCode: commercialMarketCode?.trim().toUpperCase() || query.country } : {}),
       });
     } catch {
       return { status: "projection-unavailable", query, selectedSlugs: query.casinos, candidates: [], casinos: [], reasons: query.casinos.map((slug) => ({ slug, code: "PROJECTION_UNAVAILABLE", message: "The governed comparison projection is temporarily unavailable." })), groups: [], hiddenEqualRows: 0, defaulted: false, inventoryMode: "UNAVAILABLE" };
     }
 
     const now = this.now();
-    const commercialRoutes = eligibleDiscoveryRoutes(context, query.country, now);
+    const commercialRoutes = eligibleDiscoveryRoutes(context, commercialMarketCode?.trim().toUpperCase() || query.country, now);
     const globalCasinos: ComparablePublicCasinoDTO[] = published.flatMap((record) => {
       const mapped = mapPublishedCasino(record, commercialRoutes, {
         redirectEnabled: false,
@@ -259,8 +266,14 @@ export class PublicComparisonService {
       return casino?.source === "cms" && !isTemporaryDemoCasinoId(casino.id) ? [casino] : [];
     });
     const inventoryMode: PublicCasinoInventoryMode = "PUBLISHED_ONLY";
+    const operatorContexts = new Map<string, GbOperatorEligibilityEvidenceContext>(globalCasinos.map((casino) => [
+      casino.id,
+      canonicalGbOperatorEligibilityContext(
+        commercialRoutes.find((route) => route.casinoId === casino.id)?.operatorEligibilityContext,
+      ),
+    ]));
     const operatorDecisions = commercialProjection && query.country === "GB"
-      ? await this.operatorEligibility.evaluateMany(globalCasinos.map((casino) => casino.id), now)
+      ? await this.operatorEligibility.evaluateMany(globalCasinos.map((casino) => casino.id), now, operatorContexts)
       : new Map<string, GbOperatorEligibilityDecision>();
     const all: DispositionedCasino[] = globalCasinos.flatMap((globalCasino): DispositionedCasino[] => {
       const exactProfile = globalCasino.marketProfiles.find((profile) => profile.countryCode === query.country) ?? null;
