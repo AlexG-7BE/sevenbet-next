@@ -223,7 +223,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <p>{messages.profile.offerEvidence}</p>
           <h2 id="offer-heading">{messages.profile.offerTerms}</h2>
         </div>
-        <div className={styles.offerComposition}>
+        <div className={styles.offerComposition} data-analytics-casino-id={!demo && bonus ? casino.id : undefined} data-analytics-offer-key={!demo && bonus ? bonus.id : undefined}>
           <div className={styles.offerCopy} data-offer-relation={casino.offerPresentation?.relation}>
             <span>{demo ? messages.profile.demoTerms : offerScope.label}</span>
             {bonus ? <>

@@ -34,7 +34,8 @@ type PostProbeResult = {
 
 async function probe(mode: "method" | "post") {
   const fixture = new URL("./fixtures/production-db-reliability-probe.ts", import.meta.url);
-  return executeFile(process.execPath, ["--import", "tsx", fixture.pathname, mode], {
+  const serverOnlyFixture = new URL("./fixtures/register-server-only.mjs", import.meta.url);
+  return executeFile(process.execPath, ["--import", "tsx", "--import", serverOnlyFixture.pathname, fixture.pathname, mode], {
     cwd: new URL("..", import.meta.url).pathname,
     env: {
       ...process.env,

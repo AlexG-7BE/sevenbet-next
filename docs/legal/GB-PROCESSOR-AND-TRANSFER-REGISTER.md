@@ -1,7 +1,9 @@
 # GB Processor and Transfer Register
 
 - **Controller:** 7BE Inc., trading as B4GAMBLE
-- **Evidence date:** 19 August 2026
+- **Original evidence date:** 19 August 2026
+- **Repository amendment:** 11 September 2026 (RFC-046 candidate; account and
+  Production applicability remain unverified)
 - **Status:** PROVIDER PUBLIC LEGAL FRAMEWORK REVIEW: COMPLETE
 - **Owner:** Internal Legal/Compliance with Security and account owners
 
@@ -22,9 +24,16 @@ Repository data flows and the active managed services are mapped. Current offici
 - Vercel hosts the Next.js application and receives request, network, security, session and application traffic.
 - Prisma ORM is a code library, not a recipient. The active managed database is **Prisma Postgres through the existing Vercel integration**, evidenced by the approved pooled/direct hosts, the Vercel-billed Prisma workspace and isolated Preview/Production database resources recorded in the technical baseline.
 - Google sign-in is identity-only. B4GAMBLE requests basic identity, strips OAuth token fields before account persistence and does not send Programme words to Google.
-- Resend delivers Contact messages to the documented Google Workspace support mailbox. Contact content is not stored in an application Contact table.
+- Resend delivers Contact messages to the documented Google Workspace support
+  mailbox. RFC-046 adds a provider-abstracted customer lifecycle/email adapter,
+  normalized webhook and message store, but no live route/callback/cron invokes
+  the external sender in the implementation candidate. Customer transfer is a
+  hold, not an active-flow claim.
 - OpenAI receives optional typed input or audio/transcript only after active Programme authority. Requests are server-side; Responses use `store: false`; audio is handled in memory; application logs intentionally exclude narrative content.
-- Better Auth is self-hosted application code, not a hosted processor. Vercel Analytics is removed. Stripe, a live affiliate network and a live operator recipient are not detected.
+- Better Auth is self-hosted application code, not a hosted processor. Vercel
+  Analytics remains removed; RFC-046 first-party event storage uses the
+  existing managed PostgreSQL service. Stripe, a live affiliate network and a
+  live operator recipient are not detected.
 
 ### Inferred
 
@@ -43,7 +52,7 @@ Repository data flows and the active managed services are mapped. Current offici
 | Vercel | Hosting/customer data processor; defined service-generated/account data may be separate-controller data | **VERIFIED.** Current DPA (updated 17 March 2026; effective 31 March 2026) contains processor instructions, Article 28-type subprocessor duties and UK transfer mechanisms. It states applicability to Pro and Enterprise plans. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** Exact B4GAMBLE plan, agreement, contracting entity and DPA applicability/acceptance are not evidenced. | **NOT VERIFIED.** Region, retention, subprocessor notice and transfer-route packet absent. |
 | Prisma Postgres through the Vercel integration | Managed database for accounts, sessions, Programme authority/progress/confirmed structured output, editorial/affiliate administration and security state. Prisma ORM itself is only a library. | **NOT VERIFIED.** Current official Prisma Terms and Privacy pages were reviewed, but no current public Prisma Article 28 DPA for Prisma Postgres was located. Public privacy/compliance statements are not substituted for a DPA. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** Applicable Prisma/Vercel order, plan, terms and processor contract are absent. | **NOT VERIFIED.** Live region, DPA, subprocessors, backup/deletion periods and transfer mechanism absent. |
 | Google identity | Google subject identifier, name, email and image for optional identity-only sign-in; transient OAuth tokens are stripped before account persistence | **PUBLIC TERMS REVIEWED.** OAuth and current Google Cloud terms are public, but the identity interaction's separate-controller/processor boundary is account- and use-specific. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** Exact project, entity, agreement and any CDPA applicability are absent. | **NOT VERIFIED.** Project/scopes/consent-screen/owner and transfer evidence packet absent. |
-| Resend | Processor for Contact email delivery; account data may be separate-controller data | **VERIFIED.** Current public DPA covers processor instructions, subprocessors and international transfers, and states it becomes binding through acceptance of the agreement or execution. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** B4GAMBLE agreement acceptance/execution and exact account entity are absent. | **NOT VERIFIED.** Account retention/tracking settings, subprocessor notice and applicable UK transfer evidence absent. |
+| Resend | Processor for active Contact delivery and candidate transactional/lifecycle/marketing message delivery; account/service data may be separate-controller data | **VERIFIED.** Current public DPA covers processor instructions, subprocessors and international transfers, and states it becomes binding through acceptance of the agreement or execution. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** B4GAMBLE agreement acceptance/execution, exact account entity and authority for the new customer-data transfer are absent. | **NOT VERIFIED.** Lifecycle sender invocation is unwired; exact sender/domain, webhook, tracking, retention, subprocessor-notice and applicable UK transfer evidence are absent. |
 | Google Workspace support mailbox / Cloud Identity | Processor framework for message content and mailbox records if the qualifying business service and CDPA apply | **VERIFIED.** Google publishes a Cloud Data Processing Addendum with processor, subprocessor and EU/UK/Swiss transfer terms; Admin documentation explains incorporation or review/acceptance. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** Workspace edition, contracting entity and CDPA incorporation/acceptance are absent. | **NOT VERIFIED.** Admin retention/deletion, access review, routing and transfer packet absent. |
 | OpenAI API | Processor framework for optional Programme customer content; defined account/service data may be separate-controller data | **VERIFIED.** Current DPA supplements/is incorporated into the Services Agreement and includes processor, subprocessor and UK transfer terms. Official API policy says API inputs/outputs are not used for training by default unless the organisation opts in. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** Applicable Services Agreement/DPA acceptance and exact organisation/project are absent. | **NOT VERIFIED — DEFERRED BY FOUNDER.** ZDR/MAM, region, sharing/training controls, retention and transfer evidence absent. `store: false` is not ZDR. |
 
@@ -57,6 +66,8 @@ Repository data flows and the active managed services are mapped. Current offici
 | Application logs | Technical counts/durations/results only; no intentional typed words, transcript, audio or generated narrative logging | VERIFIED |
 | Google identity | Identity only; Programme words not sent to Google; token fields stripped before account persistence | VERIFIED |
 | Contact | Delivered through Resend to Workspace; no application Contact table or marketing permission | VERIFIED |
+| RFC-046 analytics | First-party explicit columns in existing PostgreSQL; no raw IP/email/Programme text/affiliate destination; consent required for browser identity and events | VERIFIED IN REPOSITORY; PRODUCTION ACTIVATION NOT VERIFIED |
+| RFC-046 lifecycle email | Current consent/suppression recheck, minimal provider envelope, normalized signed webhook and no raw provider payload retention | VERIFIED IN REPOSITORY; EXTERNAL SEND INVOCATION/ACCOUNT EVIDENCE ON HOLD |
 
 ## Non-recipient and inactive register
 
@@ -64,6 +75,7 @@ Repository data flows and the active managed services are mapped. Current offici
 |---|---|---|
 | Better Auth | Self-hosted code using the application's Prisma database; not a hosted processor | COMPLETE |
 | Vercel Analytics | Runtime package, root mount, SDK calls and enable flag removed | COMPLETE |
+| RFC-046 first-party analytics | Existing Vercel hosting and Prisma Postgres receive bounded events only after consent; not a separate analytics provider | CANDIDATE / PRODUCTION NOT VERIFIED |
 | Stripe/payment processor | No package, adapter, route or payment-data flow detected | NOT DETECTED |
 | Affiliate network/operator | Fail-closed models/routing exist; no real partner authority or active GB outbound flow | COMMERCIAL PARTNER: NOT YET ACTIVE |
 | Optional S3 media | Capability exists for staff-managed public media; no live provider/account evidenced | INACTIVE / ACCOUNT NOT EVIDENCED |

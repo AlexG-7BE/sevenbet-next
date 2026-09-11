@@ -3,7 +3,10 @@ import { Archivo, Instrument_Serif } from "next/font/google";
 import { connection } from "next/server";
 import { SiteMotionController } from "@/components/motion/SiteMotionController";
 import { ProgrammeDocumentPolicyBoundary } from "@/components/programme/ProgrammeDocumentPolicyBoundary";
+import { AnalyticsConsentBanner } from "@/components/analytics/AnalyticsConsentBanner";
+import { AnalyticsPageView } from "@/components/analytics/AnalyticsPageView";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { absoluteUrl, siteUrl } from "@/lib/site";
 import "./design-system.css";
@@ -44,11 +47,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Child route params are not exposed to the root layout, so middleware supplies
   // a validated request-local presentation context for the server-rendered lang.
   const presentation = await resolveServerPresentationContext();
+  const analyticsEnabled = isProductAnalyticsEnabled();
   return (
     <html lang={presentation.locale}>
       <body className={`${archivo.variable} ${instrumentSerif.variable}`}>
         <JsonLd data={{ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }} />
         {children}
+        {analyticsEnabled ? <AnalyticsPageView /> : null}
+        {analyticsEnabled ? <AnalyticsConsentBanner /> : null}
         <ProgrammeDocumentPolicyBoundary />
         <SiteMotionController />
       </body>

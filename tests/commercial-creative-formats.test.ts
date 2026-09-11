@@ -374,8 +374,8 @@ test("authorized creative markup uses the governed route while blocked creative 
   const cta = renderToStaticMarkup(React.createElement(CasinoOutboundAction, { action: { href: available.action.href!, label: messages.common.actionAvailable }, context: { source: "CTA", placement: "BONUS_LISTING_CARD" }, messages: messages.outbound }));
   assert.match(creative, /data-commercial-action-source="CREATIVE"/);
   assert.match(creative, /data-commercial-action-placement="BONUS_LISTING_CARD"/);
-  assert.match(creative, /href="\/r\/slotnite-current-offer"/);
-  assert.match(cta, /href="\/r\/slotnite-current-offer"/);
+  assert.match(creative, /href="\/r\/slotnite-current-offer\?placement=CREATIVE_BONUS_LISTING_CARD"/);
+  assert.match(cta, /href="\/r\/slotnite-current-offer\?placement=CTA_BONUS_LISTING_CARD"/);
   assert.match(cta, /data-commercial-action-placement="BONUS_LISTING_CARD"/);
   for (const markup of [creative, cta]) {
     assert.match(markup, /rel="nofollow sponsored noopener"/);
@@ -420,7 +420,7 @@ test("review heroes are always B4GAMBLE logo-only compositions while governed CT
     assert.match(html, /data-media-mode="COMPOSED"[^>]+data-media-ratio="missing"[^>]+data-media-source="CODE_FALLBACK"[^>]+data-presentation-family="LOGO_ONLY"/);
     assert.doesNotMatch(html, /data-creative-offer-id|data-commercial-action-source="CREATIVE"|skol-300x250/);
     assert.doesNotMatch(html, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
-    assert.match(html, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CTA"[^>]+href="\/r\/skol-current-offer"/);
+    assert.match(html, /data-commercial-action-placement="CASINO_OFFER_BLOCK" data-commercial-action-source="CTA"[^>]+href="\/r\/skol-current-offer\?placement=CTA_CASINO_OFFER_BLOCK"/);
     assert.doesNotMatch(html, /\/outbound\/skol-current-offer|You are leaving B4GAMBLE|<dialog/);
     assert.doesNotMatch(html, /href="https?:\/\/operator\.example/);
   }

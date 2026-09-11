@@ -172,7 +172,7 @@ test("directory metadata, canonical rules and fail-closed action state remain in
   if (!defaultHtml.includes(messages.common.demoData)) {
     expect(defaultHtml).toContain(formatProductMessage(messages.casinos.noPublishedTitle, { market: DEFAULT_MARKET_PROFILE.seoDisplayName }));
   }
-  expect(defaultHtml).not.toMatch(/href="\/r\/[a-z0-9-]+"/);
+  expect(defaultHtml).not.toMatch(/href="\/r\/[a-z0-9-]+(?:\?[^" ]*)?"/);
 
   const pageTwoResponse = await request.get(`${baseUrl}/casinos?page=2`);
   const pageTwoHtml = await pageTwoResponse.text();

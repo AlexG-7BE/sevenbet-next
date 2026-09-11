@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { authClient, useSession } from "@/lib/auth/client";
+import { PROGRAMME_MARKETING_OPT_IN_LABEL, saveProgrammeMarketingPreference } from "@/lib/customers/email-preference-client";
 import { GOOGLE_AUTH_CALLBACK, GOOGLE_AUTH_ERROR_CALLBACK } from "@/lib/auth/google-flow";
 import {
   PROGRAMME_ACCESS_HEADERS,
@@ -696,7 +697,7 @@ function Registration({
   gate: boolean;
   map: MomentMap;
   onContinue: () => void;
-  onSubmit: (input: { email: string; password: string; mode: "sign-up" | "sign-in" }) => Promise<void>;
+  onSubmit: (input: { email: string; password: string; mode: "sign-up" | "sign-in"; marketingAllowed: boolean }) => Promise<void>;
   onGoogle: (input: { mode: "sign-up" | "sign-in" }) => Promise<void>;
   googleAvailable: boolean;
   busy: boolean;
@@ -709,6 +710,7 @@ function Registration({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"sign-up" | "sign-in">(returning ? "sign-in" : "sign-up");
+  const [marketingAllowed, setMarketingAllowed] = useState(false);
 
   if (gate) {
     return (
@@ -718,7 +720,7 @@ function Registration({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await onSubmit({ email, password, mode });
+    await onSubmit({ email, password, mode, marketingAllowed: mode === "sign-up" && marketingAllowed });
   }
 
   return (
@@ -748,6 +750,7 @@ function Registration({
           ) : null}
           <Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="you@example.com" hint="Used to sign in and recover access." />
           <Field label={mode === "sign-up" ? "Create a password" : "Password"} type="password" value={password} onChange={setPassword} placeholder="At least 12 characters" hint="Use a unique password you can save." />
+          {mode === "sign-up" ? <label className={styles.marketingChoice}><input checked={marketingAllowed} onChange={(event) => setMarketingAllowed(event.target.checked)} type="checkbox" /><span>{PROGRAMME_MARKETING_OPT_IN_LABEL}</span></label> : null}
           {error ? <p className={styles.error} role="alert">{error}</p> : null}
           <PrimaryButton disabled={busy || !email || (mode === "sign-up" ? password.length < 12 : !password)} type="submit">{busy ? "Saving…" : mode === "sign-up" ? "Create private account" : returning ? "Sign in to my Dashboard" : "Sign in and save progress"}</PrimaryButton>
           <button className={styles.textButton} onClick={() => setMode(mode === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
@@ -1128,7 +1131,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
   const [dashboard, setDashboard] = useState<DashboardModel | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [oauthNotice, setOAuthNotice] = useState("");
+  const [accountNotice, setAccountNotice] = useState("");
   const [editType, setEditType] = useState<"moment" | "goal" | "signal" | "boundary" | null>(null);
   const [returningSignIn, setReturningSignIn] = useState(false);
   const [accessGranted, setAccessGranted] = useState(false);
@@ -1251,7 +1254,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
       setError("Google sign-in was not completed. Your local Programme work remains in this tab.");
       window.history.replaceState({}, "", "/program");
     } else if (authAction === "google-return" && sessionUserId && !oauthJourney) {
-      setOAuthNotice("You signed in, but this browser session could not be matched to an active Programme claim. No anonymous content was moved.");
+      setAccountNotice("You signed in, but this browser session could not be matched to an active Programme claim. No anonymous content was moved.");
       window.history.replaceState({}, "", "/program");
     } else if (authAction === "google-return" && sessionUserId) {
       window.history.replaceState({}, "", "/program");
@@ -1319,7 +1322,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     const startEntryRequested = new URLSearchParams(window.location.search).get("entry") === "start";
     request<{ dashboard: DashboardModel }>("/api/program/dashboard")
       .then((payload) => { if (!cancelled) { const next = mergeDashboardLocal(payload.dashboard, local); setDashboard(next); setMomentMap(next.momentMap || emptyMomentMap); setGoal(next.currentGoal || emptyGoal(next.momentMap?.id)); setUrgeLearning({ ...emptyUrgeLearning, ...(local.urgeLearning || {}) }); setActiveBoundary(next.activeBoundary || emptyBoundary); setView(startEntryRequested && next.currentMission === 1 ? "mission-01" : "dashboard"); if (startEntryRequested) window.history.replaceState({}, "", "/program"); } })
-      .catch(() => { if (!cancelled) setOAuthNotice("Your Programme home could not be loaded. No anonymous Mission was started."); })
+      .catch(() => { if (!cancelled) setAccountNotice("Your Programme home could not be loaded. No anonymous Mission was started."); })
       .finally(() => { if (!cancelled) setDashboardPending(false); });
     return () => { cancelled = true; };
   }, [activeSubject, authenticated, claimTransitionFailed, claimTransitionPending, request, sessionPending, subjectMatchesSession]);
@@ -1401,7 +1404,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
       setClaimTransitionFailed(false);
       setDashboard(null);
       setView("dashboard");
-      setOAuthNotice(CLAIM_REDEMPTION_UNAVAILABLE_MESSAGE);
+      setAccountNotice(CLAIM_REDEMPTION_UNAVAILABLE_MESSAGE);
       setError("");
       return;
     }
@@ -1433,7 +1436,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     } catch (cause) { settleClaimFailure(cause); } finally { setBusy(false); }
   }
 
-  async function handleAuth(input: { email: string; password: string; mode: "sign-up" | "sign-in" }) {
+  async function handleAuth(input: { email: string; password: string; mode: "sign-up" | "sign-in"; marketingAllowed: boolean }) {
     if (!activeSubject || !hasProgrammeAccessAuthority(window.sessionStorage, activeSubject)) {
       setAccessGranted(false);
       return;
@@ -1450,6 +1453,8 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
       if (result.error) throw new Error(input.mode === "sign-up" ? "This account could not be created. Try signing in if the email already exists." : "Email or password is incorrect.");
       const targetUserId = result.data?.user.id;
       if (!targetUserId) throw new Error("The authenticated account could not be resolved");
+      const marketingPreferenceSaved = input.mode !== "sign-up" || !input.marketingAllowed
+        || await saveProgrammeMarketingPreference("en");
       pendingAuthenticatedUserId.current = targetUserId;
       if (!continuingCurrentClaim) {
         const targetSubject = userProgrammeSubject(targetUserId);
@@ -1464,6 +1469,9 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
         setActiveSubject(targetSubject);
         setAccessGranted(hasProgrammeAccessAuthority(window.sessionStorage, targetSubject));
       } else await redeemClaim(targetUserId);
+      if (!marketingPreferenceSaved) {
+        setAccountNotice("Your account was created, but your optional email choice could not be saved. No marketing email will be sent.");
+      }
     } catch (cause) {
       if (continuingCurrentClaim && pendingAuthenticatedUserId.current) {
         setClaimTransitionFailed(true);
@@ -1691,7 +1699,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
   return (
     <div className={`activeProgrammePage ${styles.page}`}>
       {view === "mission-01" ? <MissionOneScreen step={m1Step} map={momentMap} setMap={setMomentMap} onNext={saveMissionOneStep} busy={busy} error={error} /> : null}
-      {oauthNotice ? <div className={styles.authNotice} role="status"><span>{oauthNotice}</span><button onClick={() => setOAuthNotice("")} type="button">Dismiss</button></div> : null}
+      {accountNotice ? <div className={styles.authNotice} role="status"><span>{accountNotice}</span><button onClick={() => setAccountNotice("")} type="button">Dismiss</button></div> : null}
       {view === "registration-gate" || view === "registration" ? <Registration gate={view === "registration-gate"} map={momentMap} onContinue={handleRegistrationContinue} onSubmit={handleAuth} onGoogle={handleGoogle} googleAvailable={googleAvailable} busy={busy} error={error} claimRetry={claimTransitionFailed} returning={returningSignIn} /> : null}
       {view === "dashboard" && dashboard ? <Dashboard dashboard={dashboard} onStartMission={startCurrentMission} onEdit={setEditType} onClearLocal={clearLocalContent} /> : null}
       {view === "mission-02" && dashboard?.momentMap ? <MissionTwoScreen step={m2Step} goal={goal} setGoal={setGoal} map={dashboard.momentMap} onNext={saveMissionTwoStep} busy={busy} error={error} /> : null}

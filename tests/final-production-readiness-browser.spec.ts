@@ -266,7 +266,7 @@ test("fresh Mission 01 delivers value before account continuation and preserves 
   }
   await capture(page, "critical-states", "programme-starting-point-registration");
   await page.getByRole("button", { name: "Use email instead" }).click();
-  await expect(page.getByLabel("Email")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
 });
 
@@ -274,11 +274,11 @@ test("login exposes returning-user Google intent when configured and keeps email
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/login");
   await expect(page.getByRole("button", { name: "Continue with Google" })).toHaveCount(expectGoogle ? 1 : 0);
-  await expect(page.getByLabel("Email")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
   await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
   await capture(page, "critical-states", "login-mobile");
-  await page.getByLabel("Email").fill("not-an-email");
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill("not-an-email");
   await page.getByLabel("Password").fill("wrong-password");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page.locator('[role="alert"]')).toBeVisible();

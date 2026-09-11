@@ -108,7 +108,7 @@ test("casino cards keep missing bonus data separate from governed visit availabi
   const cardHtml = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={record} classNames={classNames} position={1} />);
   assert.ok(cardHtml.includes(messages.common.bonusAvailability));
   assert.ok(cardHtml.includes(messages.common.notListed));
-  assert.match(cardHtml, /href="\/r\/truth-casino-visit"/);
+  assert.match(cardHtml, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/);
   assert.ok(!cardHtml.includes(messages.common.reviewAvailableNoAction));
   assert.ok(!cardHtml.includes(messages.common.commercialUnavailable));
 
@@ -120,7 +120,7 @@ test("casino cards keep missing bonus data separate from governed visit availabi
 test("curated casino cards preserve visit actions when bonus data is absent and never mark demos Current", async () => {
   const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
   const publishedHtml = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino()]} messages={messages} presentation={presentation} />);
-  assert.match(publishedHtml, /href="\/r\/truth-casino-visit"/);
+  assert.match(publishedHtml, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/);
   assert.ok(publishedHtml.includes(messages.common.notListed));
   assert.ok(!publishedHtml.includes(messages.common.reviewAvailableNoAction));
   assert.ok(!publishedHtml.includes(messages.common.commercialUnavailable));
@@ -130,7 +130,7 @@ test("curated casino cards preserve visit actions when bonus data is absent and 
     messages={messages}
     presentation={presentation}
   />);
-  assert.match(previewHtml, /href="\/r\/truth-casino-visit"/);
+  assert.match(previewHtml, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/);
   assert.ok(previewHtml.includes(messages.common.marketPresentationNotice));
   assert.ok(!previewHtml.includes(messages.common.demoDisclosure));
 
@@ -186,7 +186,7 @@ test("mixed curated casino cards keep editorial inclusion independent from comme
 
   assert.ok(html.includes("Information Only"));
   assert.ok(html.includes("Promotable"));
-  assert.equal((html.match(/href="\/r\/truth-casino-visit"/g) ?? []).length, 1);
+  assert.equal((html.match(/href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/g) ?? []).length, 1);
 });
 
 test("curated casino shortlist omits hidden-only inventory instead of rendering a recommendation empty state", async () => {
@@ -207,7 +207,7 @@ test("casino directory retires promotional artwork while CTA authority and first
   });
   const authorized = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[promotional]} messages={messages} presentation={presentation} />);
   assert.match(authorized, /data-commercial-action-placement="CASINO_DIRECTORY_CARD"[^>]+data-commercial-action-source="CTA"/);
-  assert.equal((authorized.match(/href="\/r\/truth-casino-visit"/g) ?? []).length, 1);
+  assert.equal((authorized.match(/href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/g) ?? []).length, 1);
   assert.doesNotMatch(authorized, /truth-casino-300x250|data-commercial-action-source="CREATIVE"/);
   assert.doesNotMatch(authorized, /href="\/outbound\/|aria-haspopup="dialog"|You are leaving B4GAMBLE|<dialog/);
   assert.doesNotMatch(authorized, /href="https?:\/\//);

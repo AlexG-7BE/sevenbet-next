@@ -19,6 +19,7 @@ import { assertLegacyProgrammeMutationAllowed } from "@/lib/programme/legacy-run
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import type { UserProgressService } from "@/lib/services/user-progress.service";
 import type { ServerProgramState } from "@/lib/progress/types";
+import { scheduleProgrammeStateObservation } from "@/lib/analytics/programme-observer.server";
 
 type CurrentUser = { id: string };
 
@@ -77,6 +78,7 @@ export async function handleStartProgress(
     await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const input = parseStartProgramBody(await readProgressJson(request));
     const state = await dependencies.service.startProgram(user.id, input);
+    scheduleProgrammeStateObservation(user.id, request.headers);
     return programmeResponse({ ok: true, ...state });
   } catch (error) {
     return progressErrorResponse(error);
@@ -92,6 +94,7 @@ async function handleProgressAction<T>(
     userId: string,
     input: T,
   ) => Promise<ServerProgramState>,
+  observeState = false,
 ) {
   try {
     assertLegacyProgrammeMutationAllowed();
@@ -99,6 +102,7 @@ async function handleProgressAction<T>(
     await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const input = parse(await readProgressJson(request));
     const state = await action(dependencies.service, user.id, input);
+    if (observeState) scheduleProgrammeStateObservation(user.id, request.headers);
     return programmeResponse({ ok: true, ...state });
   } catch (error) {
     return progressErrorResponse(error);
@@ -174,6 +178,7 @@ export function handleStepProgress(
     dependencies,
     parseStepBody,
     (service, userId, input) => service.completeStep(userId, input),
+    true,
   );
 }
 
@@ -186,6 +191,7 @@ export function handleCompleteProgress(
     dependencies,
     parseCompleteProgramBody,
     (service, userId, input) => service.completeProgram(userId, input),
+    true,
   );
 }
 
@@ -198,5 +204,6 @@ export function handleMergeProgress(
     dependencies,
     parseMergeProgressBody,
     (service, userId, input) => service.mergeLocalProgress(userId, input),
+    true,
   );
 }

@@ -7,6 +7,7 @@ These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-
 | [Production Release Governance](Production-Release-Governance.md) | Pull-request, deployment, verification and rollback path |
 | [Environment and Secrets](Environment-and-Secrets.md) | Trust zones, variable inventory, ownership and isolation gates |
 | [Product Analytics](Product-Analytics.md) | Vercel plan boundary, privacy contract, aggregate report, activation and rollback |
+| [Customer Data, Analytics & Lifecycle Core](Customer-Data-Analytics-Lifecycle-Core.md) | RFC-046 customer registry, consented first-party analytics, click attribution, fixed dashboards, email queues, migration, verification and rollback |
 | [Programme Runtime Hardening](Programme-Runtime-Hardening.md) | Distributed limits, database bindings, migration, purge and cron operations |
 | [Google Authentication and Email Readiness](Google-Authentication-and-Email-Readiness.md) | Exact OAuth callbacks, account-linking controls, sender architecture and deliverability activation gates |
 | [Database Migrations](Database-Migrations.md) | Expand/contract policy and fresh-database verification |

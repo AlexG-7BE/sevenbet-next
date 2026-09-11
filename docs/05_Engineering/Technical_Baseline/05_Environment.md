@@ -1,5 +1,22 @@
 # Environments
 
+## RFC-046 candidate delta
+
+**DETECTED in source, not hosted configuration:** `.env.example`, runtime
+parsers and CI fixtures define the exact default-off
+`NEXT_PUBLIC_ANALYTICS_ENABLED` gate, a server-only analytics signing secret,
+an internal-traffic marker, 395-day analytics and 730-day terminal-email
+retention defaults, a 7/30-day reminder cadence, an exact Production-only
+lifecycle-delivery flag, lifecycle sender/reply-to names and a Resend webhook
+secret. `CRON_SECRET` protects the new daily queue/retention route as well as
+the existing protected jobs.
+
+**DETECTED fail-closed boundary:** even a true lifecycle-delivery flag cannot
+cause outbound mail in this candidate because no live route, auth callback or
+cron invokes the provider processor. CI uses synthetic values and a disposable
+database. **UNKNOWN:** every corresponding Preview/Production value, provider
+registration and runtime activation until verified through hosted evidence.
+
 ## Detected workflow
 
 | Environment | Evidence | Approval boundary |

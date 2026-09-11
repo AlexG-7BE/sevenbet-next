@@ -429,6 +429,151 @@ enum AdminRole {
   SUPPORT
 }
 
+enum CustomerAccountState {
+  ACTIVE
+  SUSPENDED
+}
+
+enum AnalyticsEnvironment {
+  LOCAL
+  PREVIEW
+  PRODUCTION
+  TEST
+}
+
+enum AnalyticsTrafficKind {
+  HUMAN
+  BOT
+  INTERNAL
+  TEST
+}
+
+enum AnalyticsDeviceCategory {
+  DESKTOP
+  MOBILE
+  TABLET
+  UNKNOWN
+}
+
+enum AnalyticsEventType {
+  SESSION_STARTED
+  PAGE_VIEWED
+  SIGNUP_COMPLETED
+  LOGIN_COMPLETED
+  PROGRAMME_STARTED
+  PROGRAMME_STEP_VIEWED
+  PROGRAMME_STEP_COMPLETED
+  PROGRAMME_COMPLETED
+  CASINO_VIEWED
+  OFFER_VIEWED
+  COMMERCIAL_CTA_CLICKED
+  OUTBOUND_REDIRECT_ATTEMPTED
+  OUTBOUND_REDIRECT_SUCCEEDED
+  OUTBOUND_REDIRECT_BLOCKED
+  EMAIL_SENT
+  EMAIL_DELIVERED
+  EMAIL_BOUNCED
+  EMAIL_CLICKED
+  EMAIL_UNSUBSCRIBED
+}
+
+enum ConsentPurpose {
+  ANALYTICS
+  MARKETING_EMAIL
+}
+
+enum ConsentAction {
+  GRANTED
+  DENIED
+  WITHDRAWN
+  SUPPRESSED
+  UNSUPPRESSED
+}
+
+enum ConsentSource {
+  ANALYTICS_PREFERENCE
+  PROGRAMME_SIGNUP
+  ACCOUNT_PREFERENCES
+  UNSUBSCRIBE_LINK
+  PROVIDER_WEBHOOK
+  ADMIN
+  SYSTEM
+}
+
+enum EmailSuppressionScope {
+  NONE
+  MARKETING
+  ALL
+}
+
+enum EmailTemplateKey {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  ACCOUNT_SECURITY
+  WELCOME
+  PROGRAMME_REMINDER
+  MARKETING_BROADCAST
+}
+
+enum EmailTemplateType {
+  TRANSACTIONAL
+  LIFECYCLE
+  MARKETING
+}
+
+enum EmailPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  ACCOUNT_SECURITY
+  WELCOME
+  PROGRAMME_REMINDER
+  MARKETING_BROADCAST
+  TEST
+}
+
+enum EmailMessageStatus {
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  BOUNCED
+  FAILED
+  UNKNOWN
+  SUPPRESSED
+  CANCELLED
+}
+
+enum EmailProviderEventType {
+  DELIVERED
+  BOUNCED
+  CLICKED
+  COMPLAINED
+  SUPPRESSED
+}
+
+enum EmailCampaignStatus {
+  DRAFT
+  REVIEWED
+  QUEUED
+  SENDING
+  COMPLETED
+  PARTIALLY_FAILED
+  FAILED
+  CANCELLED
+}
+
+enum EmailProgrammeSegment {
+  ANY
+  STARTED
+  COMPLETED
+  NOT_COMPLETED
+}
+
+enum OutboundClickState {
+  SUCCEEDED
+  BLOCKED
+}
+
 enum CmsBlockType {
   TEXT
   HEADING
@@ -700,16 +845,29 @@ model AdminUser {
   commercialApplications  CommercialApplication[] @relation("CommercialApplicationOwner")
   commercialTasks         CommercialTask[]        @relation("CommercialTaskOwner")
   commercialActivities    CommercialActivity[]    @relation("CommercialActivityActor")
+  emailCampaignsCreated   EmailCampaign[]         @relation("EmailCampaignCreatedBy")
+  emailCampaignsReviewed  EmailCampaign[]         @relation("EmailCampaignReviewedBy")
 }
 
 model User {
-  id            String   @id
-  name          String
-  email         String   @unique
-  emailVerified Boolean  @default(false)
-  image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                 String               @id
+  name               String
+  email              String               @unique
+  emailVerified      Boolean              @default(false)
+  image              String?
+  accountState       CustomerAccountState @default(ACTIVE)
+  preferredLocale    String?              @db.VarChar(16)
+  signupCountryCode  String?              @db.VarChar(2)
+  signupSource       String?              @db.VarChar(64)
+  signupReferrerHost String?              @db.VarChar(253)
+  signupUtmSource    String?              @db.VarChar(100)
+  signupUtmMedium    String?              @db.VarChar(100)
+  signupUtmCampaign  String?              @db.VarChar(100)
+  signupUtmContent   String?              @db.VarChar(100)
+  signupUtmTerm      String?              @db.VarChar(100)
+  lastSeenAt         DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
   sessions                           Session[]
   accounts                           Account[]
@@ -726,6 +884,19 @@ model User {
   programmeSensitiveInputAuthorities ProgrammeSensitiveInputAuthority[]
   programmeStartingPoints            ProgrammeStartingPoint[]
   programmeAccessAcceptance          ProgrammeAccessAcceptance?
+  analyticsSessions                  AnalyticsSession[]
+  analyticsEvents                    AnalyticsEvent[]
+  outboundClicks                     OutboundClick[]
+  consentEvents                      ConsentEvent[]
+  emailPreference                    CustomerEmailPreference?
+  emailMessages                      EmailMessage[]
+  emailUnsubscribeTokens             EmailUnsubscribeToken[]
+
+  @@index([createdAt])
+  @@index([lastSeenAt])
+  @@index([accountState, createdAt])
+  @@index([preferredLocale])
+  @@index([signupCountryCode])
 }
 
 model Session {
@@ -1127,6 +1298,7 @@ model ProgramEnrollment {
 
   @@unique([userId, programId])
   @@index([programVersionId])
+  @@index([startedAt])
 }
 
 /// Private participant-authored text. This is deliberately separate from the
@@ -1611,6 +1783,8 @@ model Casino {
   commercialOpportunities  CommercialOpportunity[]
   partnerMarketSupports    PartnerCasinoMarketSupport[]
   outboundClickDaily       AffiliateOutboundClickDaily[]
+  analyticsEvents          AnalyticsEvent[]
+  outboundClicks           OutboundClick[]
   marketActivations        MarketActivation[]
   mediaCreativeSets        MediaCreativeSet[]
   mediaRevisions           MediaRevision[]
@@ -2065,6 +2239,8 @@ model AffiliateNetwork {
   programs                AffiliateProgram[]
   commercialOpportunities CommercialOpportunity[]
   partnerMarketSupports   PartnerCasinoMarketSupport[]
+  analyticsEvents         AnalyticsEvent[]
+  outboundClicks          OutboundClick[]
 
   @@index([active, name])
 }
@@ -2177,6 +2353,8 @@ model AffiliateOffer {
   partnerHostedCreatives   PartnerHostedCreative[]
   partnerHostedAssignments AffiliateOfferPartnerHostedCreativeAssignment[]
   outboundClickDaily       AffiliateOutboundClickDaily[]
+  analyticsEvents          AnalyticsEvent[]
+  outboundClicks           OutboundClick[]
   marketActivations        MarketActivation[]
   mediaCreativeSets        MediaCreativeSet[]
   mediaRevisions           MediaRevision[]
@@ -2246,6 +2424,7 @@ model AffiliateTrackingLink {
   countries              AffiliateTrackingLinkCountry[]
   revisions              AffiliateTrackingLinkRevision[]
   outboundClickDaily     AffiliateOutboundClickDaily[]
+  outboundClicks         OutboundClick[]
   partnerHostedCreatives PartnerHostedCreative[]
   marketActivations      MarketActivation[]
 
@@ -2406,6 +2585,7 @@ model AffiliateRedirectSlug {
   affiliateOffer         AffiliateOffer?               @relation(fields: [affiliateOfferId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   revisions              AffiliateRedirectRevision[]
   outboundClickDaily     AffiliateOutboundClickDaily[]
+  outboundClicks         OutboundClick[]
   partnerHostedCreatives PartnerHostedCreative[]
   marketActivations      MarketActivation[]
 
@@ -2561,6 +2741,336 @@ model MarketActivationEvent {
   @@index([activationId, occurredAt])
   @@index([type, occurredAt])
   @@index([intentId])
+}
+
+/// One consented logical browsing session. Browser identifiers are opaque,
+/// first-party and never authentication or commercial-routing authority.
+model AnalyticsSession {
+  id                String                  @id @db.Uuid
+  anonymousId       String                  @db.Uuid
+  userId            String?
+  environment       AnalyticsEnvironment
+  trafficKind       AnalyticsTrafficKind    @default(HUMAN)
+  startedAt         DateTime
+  lastActivityAt    DateTime
+  expiresAt         DateTime
+  landingPath       String?                 @db.VarChar(512)
+  locale            String?                 @db.VarChar(16)
+  countryCode       String?                 @db.Char(2)
+  referrerHost      String?                 @db.VarChar(253)
+  acquisitionSource String?                 @db.VarChar(64)
+  utmSource         String?                 @db.VarChar(100)
+  utmMedium         String?                 @db.VarChar(100)
+  utmCampaign       String?                 @db.VarChar(100)
+  utmContent        String?                 @db.VarChar(100)
+  utmTerm           String?                 @db.VarChar(100)
+  deviceCategory    AnalyticsDeviceCategory @default(UNKNOWN)
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  user           User?            @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  events         AnalyticsEvent[]
+  outboundClicks OutboundClick[]
+
+  @@index([anonymousId, startedAt])
+  @@index([userId, startedAt])
+  @@index([environment, trafficKind, startedAt])
+  @@index([expiresAt])
+}
+
+/// Closed-schema Product Core event. Dimensions are explicit by design; this
+/// model must not grow an arbitrary event-properties JSON column.
+model AnalyticsEvent {
+  id                 String                  @id @db.Uuid
+  dedupeKey          String                  @unique @db.VarChar(200)
+  schemaVersion      Int                     @default(1)
+  type               AnalyticsEventType
+  environment        AnalyticsEnvironment
+  trafficKind        AnalyticsTrafficKind    @default(HUMAN)
+  occurredAt         DateTime
+  receivedAt         DateTime                @default(now())
+  anonymousId        String?                 @db.Uuid
+  analyticsSessionId String?                 @db.Uuid
+  userId             String?
+  pagePath           String?                 @db.VarChar(512)
+  locale             String?                 @db.VarChar(16)
+  countryCode        String?                 @db.Char(2)
+  referrerHost       String?                 @db.VarChar(253)
+  acquisitionSource  String?                 @db.VarChar(64)
+  utmSource          String?                 @db.VarChar(100)
+  utmMedium          String?                 @db.VarChar(100)
+  utmCampaign        String?                 @db.VarChar(100)
+  utmContent         String?                 @db.VarChar(100)
+  utmTerm            String?                 @db.VarChar(100)
+  deviceCategory     AnalyticsDeviceCategory @default(UNKNOWN)
+  casinoId           String?                 @db.Uuid
+  affiliateOfferId   String?                 @db.Uuid
+  affiliateNetworkId String?                 @db.Uuid
+  placement          String?                 @db.VarChar(64)
+  programmeStep      Int?
+  outboundClickId    String?                 @db.Uuid
+  emailMessageId     String?                 @db.Uuid
+  createdAt          DateTime                @default(now())
+
+  session          AnalyticsSession? @relation(fields: [analyticsSessionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  user             User?             @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  casino           Casino?           @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateOffer   AffiliateOffer?   @relation(fields: [affiliateOfferId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateNetwork AffiliateNetwork? @relation(fields: [affiliateNetworkId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  outboundClick    OutboundClick?    @relation(fields: [outboundClickId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  emailMessage     EmailMessage?     @relation(fields: [emailMessageId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([environment, trafficKind, occurredAt])
+  @@index([environment, type, occurredAt])
+  @@index([occurredAt])
+  @@index([userId, occurredAt])
+  @@index([analyticsSessionId, occurredAt])
+  @@index([anonymousId, occurredAt])
+  @@index([casinoId, occurredAt])
+  @@index([affiliateOfferId, occurredAt])
+  @@index([countryCode, occurredAt])
+  @@index([pagePath, occurredAt])
+  @@index([outboundClickId])
+  @@index([emailMessageId])
+}
+
+/// Final server-authoritative observation of one controlled /r/{slug}
+/// attempt. Destination and tracking URLs are intentionally absent.
+model OutboundClick {
+  id                 String               @id @db.Uuid
+  state              OutboundClickState
+  blockedReason      String?              @db.VarChar(64)
+  environment        AnalyticsEnvironment
+  trafficKind        AnalyticsTrafficKind @default(HUMAN)
+  attemptedAt        DateTime
+  resolvedAt         DateTime
+  anonymousId        String?              @db.Uuid
+  analyticsSessionId String?              @db.Uuid
+  userId             String?
+  sourcePage         String?              @db.VarChar(512)
+  locale             String?              @db.VarChar(16)
+  countryCode        String?              @db.Char(2)
+  acquisitionSource  String?              @db.VarChar(64)
+  placement          String?              @db.VarChar(64)
+  requestedSlug      String               @db.VarChar(80)
+  casinoId           String?              @db.Uuid
+  affiliateOfferId   String?              @db.Uuid
+  affiliateNetworkId String?              @db.Uuid
+  redirectSlugId     String?              @db.Uuid
+  trackingLinkId     String?              @db.Uuid
+  createdAt          DateTime             @default(now())
+
+  session          AnalyticsSession?      @relation(fields: [analyticsSessionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  user             User?                  @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  casino           Casino?                @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateOffer   AffiliateOffer?        @relation(fields: [affiliateOfferId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateNetwork AffiliateNetwork?      @relation(fields: [affiliateNetworkId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  redirectSlug     AffiliateRedirectSlug? @relation(fields: [redirectSlugId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  trackingLink     AffiliateTrackingLink? @relation(fields: [trackingLinkId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  events           AnalyticsEvent[]
+
+  @@index([environment, trafficKind, attemptedAt])
+  @@index([state, attemptedAt])
+  @@index([attemptedAt])
+  @@index([userId, attemptedAt])
+  @@index([analyticsSessionId, attemptedAt])
+  @@index([casinoId, attemptedAt])
+  @@index([affiliateOfferId, attemptedAt])
+  @@index([countryCode, attemptedAt])
+  @@index([sourcePage, attemptedAt])
+}
+
+/// Current email send authority. Append-only ConsentEvent rows preserve the
+/// material change history without making every send query replay the ledger.
+model CustomerEmailPreference {
+  id                String                @id @default(uuid()) @db.Uuid
+  userId            String                @unique
+  marketingAllowed  Boolean               @default(false)
+  consentedAt       DateTime?
+  unsubscribedAt    DateTime?
+  suppressedAt      DateTime?
+  suppressionScope  EmailSuppressionScope @default(NONE)
+  suppressionReason String?               @db.VarChar(64)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([marketingAllowed, suppressionScope])
+  @@index([unsubscribedAt])
+}
+
+model ConsentEvent {
+  id            String         @id @default(uuid()) @db.Uuid
+  userId        String?
+  anonymousId   String?        @db.Uuid
+  purpose       ConsentPurpose
+  action        ConsentAction
+  source        ConsentSource
+  policyVersion String?        @db.VarChar(64)
+  locale        String?        @db.VarChar(16)
+  occurredAt    DateTime
+  createdAt     DateTime       @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId, purpose, occurredAt])
+  @@index([userId, occurredAt])
+  @@index([anonymousId, purpose, occurredAt])
+  @@index([purpose, action, occurredAt])
+}
+
+model EmailTemplate {
+  id        String            @id @default(uuid()) @db.Uuid
+  key       EmailTemplateKey
+  type      EmailTemplateType
+  locale    String            @db.VarChar(16)
+  subject   String            @db.VarChar(200)
+  htmlBody  String
+  textBody  String
+  version   Int               @default(1)
+  active    Boolean           @default(false)
+  createdBy String            @db.VarChar(100)
+  updatedBy String            @db.VarChar(100)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  messages  EmailMessage[]
+  campaigns EmailCampaign[]
+
+  @@unique([key, locale, version])
+  @@index([key, locale, active])
+  @@index([type, active])
+}
+
+model EmailCampaign {
+  id                       String                @id @default(uuid()) @db.Uuid
+  environment              AnalyticsEnvironment
+  name                     String                @db.VarChar(160)
+  templateId               String                @db.Uuid
+  locale                   String?               @db.VarChar(16)
+  countryCode              String?               @db.Char(2)
+  programmeSegment         EmailProgrammeSegment @default(ANY)
+  inactiveDays             Int?
+  newUsersOnly             Boolean               @default(false)
+  status                   EmailCampaignStatus   @default(DRAFT)
+  idempotencyKey           String                @db.VarChar(200)
+  estimatedEligibleCount   Int                   @default(0)
+  estimatedExcludedCount   Int                   @default(0)
+  estimatedSuppressedCount Int                   @default(0)
+  queuedCount              Int                   @default(0)
+  sentCount                Int                   @default(0)
+  failedCount              Int                   @default(0)
+  createdByAdminId         String                @db.Uuid
+  reviewedByAdminId        String?               @db.Uuid
+  reviewedAt               DateTime?
+  queuedAt                 DateTime?
+  completedAt              DateTime?
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+
+  template   EmailTemplate  @relation(fields: [templateId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdBy  AdminUser      @relation("EmailCampaignCreatedBy", fields: [createdByAdminId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  reviewedBy AdminUser?     @relation("EmailCampaignReviewedBy", fields: [reviewedByAdminId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  messages   EmailMessage[]
+
+  @@unique([environment, idempotencyKey])
+  @@index([environment, status, createdAt])
+  @@index([templateId, createdAt])
+  @@index([createdByAdminId, createdAt])
+}
+
+model EmailMessage {
+  id                String               @id @default(uuid()) @db.Uuid
+  userId            String
+  campaignId        String?              @db.Uuid
+  templateId        String               @db.Uuid
+  purpose           EmailPurpose
+  status            EmailMessageStatus   @default(QUEUED)
+  environment       AnalyticsEnvironment
+  locale            String               @db.VarChar(16)
+  recipientEmail    String
+  subject           String               @db.VarChar(200)
+  templateVersion   Int
+  idempotencyKey    String               @db.VarChar(200)
+  provider          String?              @db.VarChar(32)
+  providerMessageId String?              @unique @db.VarChar(200)
+  attemptCount      Int                  @default(0)
+  queuedAt          DateTime             @default(now())
+  lastAttemptAt     DateTime?
+  nextAttemptAt     DateTime?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  bouncedAt         DateTime?
+  clickedAt         DateTime?
+  unsubscribedAt    DateTime?
+  failedAt          DateTime?
+  deliveryErrorCode String?              @db.VarChar(64)
+  isTest            Boolean              @default(false)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  campaign         EmailCampaign?         @relation(fields: [campaignId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  template         EmailTemplate          @relation(fields: [templateId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  providerEvents   EmailProviderEvent[]
+  unsubscribeToken EmailUnsubscribeToken?
+  analyticsEvents  AnalyticsEvent[]
+
+  @@unique([campaignId, userId])
+  @@unique([environment, idempotencyKey])
+  @@index([userId, createdAt])
+  @@index([status, nextAttemptAt, queuedAt])
+  @@index([purpose, createdAt])
+  @@index([environment, status, createdAt])
+  @@index([environment, sentAt])
+  @@index([status, createdAt])
+  @@index([campaignId, status])
+}
+
+model EmailProviderEvent {
+  id                String                 @id @default(uuid()) @db.Uuid
+  providerEventId   String                 @unique @db.VarChar(200)
+  messageId         String                 @db.Uuid
+  providerMessageId String                 @db.VarChar(200)
+  type              EmailProviderEventType
+  occurredAt        DateTime
+  receivedAt        DateTime               @default(now())
+  createdAt         DateTime               @default(now())
+
+  message EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([messageId, occurredAt])
+  @@index([type, occurredAt])
+  @@index([occurredAt])
+  @@index([providerMessageId])
+}
+
+model EmailUnsubscribeToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  messageId  String    @unique @db.Uuid
+  userId     String
+  tokenHash  String    @unique @db.Char(64)
+  createdAt  DateTime  @default(now())
+  consumedAt DateTime?
+
+  message EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId, consumedAt])
+}
+
+/// One-way transient abuse counter. bucketKey is a purpose-separated HMAC and
+/// cannot be reversed to a request IP or customer identity.
+model AnalyticsRateLimitBucket {
+  bucketKey       String   @id @db.Char(64)
+  count           Int
+  windowStartedAt DateTime
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([expiresAt])
 }
 
 /// First-party aggregate commercial measurement. Each row is a UTC-day

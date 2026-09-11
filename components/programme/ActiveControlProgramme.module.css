@@ -340,6 +340,8 @@
 .googleButton:hover:not(:disabled) { border-color: var(--ink); background: #fff; }
 .googleButton:disabled { cursor: not-allowed; opacity: .45; }
 .googleBoundary { margin: -8px 0 0; color: var(--muted); font-size: 12px; line-height: 17px; }
+.marketingChoice { display: grid; grid-template-columns: 18px 1fr; align-items: start; gap: 10px; color: var(--muted); font-size: 13px; line-height: 19px; }
+.marketingChoice input { width: 18px; height: 18px; margin-top: 1px; accent-color: var(--gold); }
 .authDivider { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; line-height: 18px; font-weight: 650; letter-spacing: .3px; text-transform: uppercase; }
 .authDivider::before, .authDivider::after { content: ""; height: 1px; background: var(--muted); }
 .textButton { width: max-content; padding: 4px 0; color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--ink); font-size: 13px; cursor: pointer; }

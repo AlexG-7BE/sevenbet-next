@@ -4,6 +4,10 @@
     {
       "path": "/api/internal/cron/programme-expiry-purge",
       "schedule": "17 4 * * *"
+    },
+    {
+      "path": "/api/internal/cron/customer-lifecycle",
+      "schedule": "47 3 * * *"
     }
   ]
 }

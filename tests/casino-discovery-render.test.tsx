@@ -46,7 +46,7 @@ test("full canonical card renders published evidence and only the governed inter
   assert.match(html, /aria-label="Editor Score 8\.4 \/ 10"/);
   assert.match(html, /<img alt=""/);
   assert.match(html, /aria-label="result 7"/);
-  assert.match(html, /href="\/r\/full-casino-visit"/);
+  assert.match(html, /href="\/r\/full-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/);
   assert.match(html, /rel="nofollow sponsored noopener"/);
   assert.match(html, /target="_blank"/);
   assert.doesNotMatch(html, /aria-haspopup="dialog"|\/outbound\/full-casino-visit|You are leaving B4GAMBLE|<dialog/);

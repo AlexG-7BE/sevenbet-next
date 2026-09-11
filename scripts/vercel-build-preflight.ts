@@ -24,6 +24,7 @@ const MEDIA_GEO3_TARGET_MIGRATION = "0033_media_geo3_pipeline";
 const MEDIA_RETIREMENT_TARGET_MIGRATION = "0034_logo_only_media_retirement";
 const MARKET_ACTIVATION_EXACT_MARKET_MIGRATION = "0035_market_activation_exact_market_code";
 const RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION = "0036_partner_casino_runtime_market_support";
+const CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION = "0037_customer_data_analytics_lifecycle_core";
 
 type MigrationRow = {
   migration_name: string;
@@ -62,6 +63,114 @@ function assertChecksum(row: MigrationRow | undefined, name: string) {
   if (row.checksum !== expected) {
     throw new Error(`Production migration guard checksum mismatch for ${name}; refusing to continue.`);
   }
+}
+
+async function assertCustomerDataAnalyticsLifecycleInvariants(prisma: PrismaClient) {
+  const [schema] = await prisma.$queryRawUnsafe<Array<{
+    analytics_session: string | null;
+    analytics_event: string | null;
+    outbound_click: string | null;
+    email_preference: string | null;
+    consent_event: string | null;
+    email_template: string | null;
+    email_campaign: string | null;
+    email_message: string | null;
+    provider_event: string | null;
+    unsubscribe_token: string | null;
+    rate_limit_bucket: string | null;
+    normalized_email_index: string | null;
+    active_template_index: string | null;
+    campaign_environment_idempotency_index: string | null;
+    message_environment_idempotency_index: string | null;
+    outbound_state_constraint: string | null;
+    email_preference_state_constraint: string | null;
+    consent_subject_constraint: string | null;
+    template_key_type_constraint: string | null;
+    message_provider_pair_constraint: string | null;
+    message_test_purpose_constraint: string | null;
+    message_provider_state_constraint: string | null;
+    message_outcome_time_constraint: string | null;
+  }>>(`
+    SELECT
+      to_regclass('public."AnalyticsSession"')::text AS analytics_session,
+      to_regclass('public."AnalyticsEvent"')::text AS analytics_event,
+      to_regclass('public."OutboundClick"')::text AS outbound_click,
+      to_regclass('public."CustomerEmailPreference"')::text AS email_preference,
+      to_regclass('public."ConsentEvent"')::text AS consent_event,
+      to_regclass('public."EmailTemplate"')::text AS email_template,
+      to_regclass('public."EmailCampaign"')::text AS email_campaign,
+      to_regclass('public."EmailMessage"')::text AS email_message,
+      to_regclass('public."EmailProviderEvent"')::text AS provider_event,
+      to_regclass('public."EmailUnsubscribeToken"')::text AS unsubscribe_token,
+      to_regclass('public."AnalyticsRateLimitBucket"')::text AS rate_limit_bucket,
+      to_regclass('public."User_email_normalized_key"')::text AS normalized_email_index,
+      to_regclass('public."EmailTemplate_active_key_locale_key"')::text AS active_template_index,
+      to_regclass('public."EmailCampaign_environment_idempotencyKey_key"')::text AS campaign_environment_idempotency_index,
+      to_regclass('public."EmailMessage_environment_idempotencyKey_key"')::text AS message_environment_idempotency_index,
+      (SELECT con.conname FROM pg_constraint con JOIN pg_class rel ON rel.oid = con.conrelid JOIN pg_namespace ns ON ns.oid = rel.relnamespace WHERE ns.nspname = 'public' AND rel.relname = 'OutboundClick' AND con.conname = 'OutboundClick_state_check') AS outbound_state_constraint,
+      (SELECT con.conname FROM pg_constraint con JOIN pg_class rel ON rel.oid = con.conrelid JOIN pg_namespace ns ON ns.oid = rel.relnamespace WHERE ns.nspname = 'public' AND rel.relname = 'CustomerEmailPreference' AND con.conname = 'CustomerEmailPreference_state_check') AS email_preference_state_constraint,
+      (SELECT con.conname FROM pg_constraint con JOIN pg_class rel ON rel.oid = con.conrelid JOIN pg_namespace ns ON ns.oid = rel.relnamespace WHERE ns.nspname = 'public' AND rel.relname = 'ConsentEvent' AND con.conname = 'ConsentEvent_subject_check') AS consent_subject_constraint,
+      (SELECT con.conname FROM pg_constraint con JOIN pg_class rel ON rel.oid = con.conrelid JOIN pg_namespace ns ON ns.oid = rel.relnamespace WHERE ns.nspname = 'public' AND rel.relname = 'EmailTemplate' AND con.conname = 'EmailTemplate_key_type_check') AS template_key_type_constraint,
+      (SELECT con.conname FROM pg_constraint con JOIN pg_class rel ON rel.oid = con.conrelid JOIN pg_namespace ns ON ns.oid = rel.relnamespace WHERE ns.nspname = 'public' AND rel.relname = 'EmailMessage' AND con.conname = 'EmailMessage_provider_pair_check') AS message_provider_pair_constraint,
+      (SELECT con.conname FROM pg_constraint con JOIN pg_class rel ON rel.oid = con.conrelid JOIN pg_namespace ns ON ns.oid = rel.relnamespace WHERE ns.nspname = 'public' AND rel.relname = 'EmailMessage' AND con.conname = 'EmailMessage_test_purpose_check') AS message_test_purpose_constraint,
+      (SELECT con.conname FROM pg_constraint con JOIN pg_class rel ON rel.oid = con.conrelid JOIN pg_namespace ns ON ns.oid = rel.relnamespace WHERE ns.nspname = 'public' AND rel.relname = 'EmailMessage' AND con.conname = 'EmailMessage_provider_state_check') AS message_provider_state_constraint,
+      (SELECT con.conname FROM pg_constraint con JOIN pg_class rel ON rel.oid = con.conrelid JOIN pg_namespace ns ON ns.oid = rel.relnamespace WHERE ns.nspname = 'public' AND rel.relname = 'EmailMessage' AND con.conname = 'EmailMessage_outcome_time_check') AS message_outcome_time_constraint
+  `);
+  if (!schema || Object.values(schema).some((value) => !value)) {
+    throw new Error("Production migration guard found incomplete Customer Data, Analytics & Lifecycle schema.");
+  }
+  const [integrity] = await prisma.$queryRawUnsafe<Array<{
+    duplicate_normalized_emails: bigint;
+    emails_requiring_normalization: bigint;
+    duplicate_event_keys: bigint;
+    duplicate_provider_events: bigint;
+    active_template_collisions: bigint;
+    cross_environment_campaign_messages: bigint;
+    unsubscribe_owner_mismatches: bigint;
+    provider_event_provider_mismatches: bigint;
+    provider_event_message_id_mismatches: bigint;
+    message_provider_state_defects: bigint;
+    message_test_purpose_defects: bigint;
+    analytics_session_environment_mismatches: bigint;
+    outbound_session_environment_mismatches: bigint;
+  }>>(`
+    SELECT
+      (SELECT COUNT(*)::bigint FROM (
+        SELECT lower(btrim("email")) FROM "User" GROUP BY lower(btrim("email")) HAVING COUNT(*) > 1
+      ) AS duplicates) AS duplicate_normalized_emails,
+      (SELECT COUNT(*)::bigint FROM "User" WHERE "email" <> lower(btrim("email"))) AS emails_requiring_normalization,
+      (SELECT COUNT(*) - COUNT(DISTINCT "dedupeKey") FROM "AnalyticsEvent")::bigint AS duplicate_event_keys,
+      (SELECT COUNT(*) - COUNT(DISTINCT "providerEventId") FROM "EmailProviderEvent")::bigint AS duplicate_provider_events,
+      (SELECT COUNT(*)::bigint FROM (
+        SELECT "key", "locale" FROM "EmailTemplate" WHERE "active" = true
+        GROUP BY "key", "locale" HAVING COUNT(*) > 1
+      ) AS collisions) AS active_template_collisions,
+      (SELECT COUNT(*)::bigint FROM "EmailMessage" message JOIN "EmailCampaign" campaign ON campaign."id" = message."campaignId" WHERE message."environment" <> campaign."environment") AS cross_environment_campaign_messages,
+      (SELECT COUNT(*)::bigint FROM "EmailUnsubscribeToken" token JOIN "EmailMessage" message ON message."id" = token."messageId" WHERE token."userId" <> message."userId") AS unsubscribe_owner_mismatches,
+      (SELECT COUNT(*)::bigint FROM "EmailProviderEvent" event JOIN "EmailMessage" message ON message."id" = event."messageId" WHERE message."provider" IS DISTINCT FROM 'resend') AS provider_event_provider_mismatches,
+      (SELECT COUNT(*)::bigint FROM "EmailProviderEvent" event JOIN "EmailMessage" message ON message."id" = event."messageId" WHERE event."providerMessageId" <> message."providerMessageId") AS provider_event_message_id_mismatches,
+      (SELECT COUNT(*)::bigint FROM "EmailMessage" WHERE
+        ("provider" IS NULL) <> ("providerMessageId" IS NULL)
+        OR ("status" IN ('SENT', 'DELIVERED', 'BOUNCED') AND ("provider" IS NULL OR "providerMessageId" IS NULL OR "sentAt" IS NULL))
+        OR ("status" = 'DELIVERED' AND "deliveredAt" IS NULL)
+        OR ("status" = 'BOUNCED' AND "bouncedAt" IS NULL)
+      ) AS message_provider_state_defects,
+      (SELECT COUNT(*)::bigint FROM "EmailMessage" WHERE ("purpose" = 'TEST') <> "isTest") AS message_test_purpose_defects,
+      (SELECT COUNT(*)::bigint FROM "AnalyticsEvent" event JOIN "AnalyticsSession" session ON session."id" = event."analyticsSessionId" WHERE event."environment" <> session."environment") AS analytics_session_environment_mismatches,
+      (SELECT COUNT(*)::bigint FROM "OutboundClick" click JOIN "AnalyticsSession" session ON session."id" = click."analyticsSessionId" WHERE click."environment" <> session."environment") AS outbound_session_environment_mismatches
+  `);
+  if (!integrity || Object.values(integrity).some((value) => value !== 0n)) {
+    throw new Error("Production migration guard found Customer Data, Analytics & Lifecycle integrity violations.");
+  }
+  writeEvent({
+    event: "production_customer_data_analytics_lifecycle_preflight",
+    migration: CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION,
+    checksumMatched: true,
+    canonicalTablesVerified: 11,
+    constraintsVerified: 8,
+    criticalIndexesVerified: 4,
+    integrityViolations: 0,
+  });
 }
 
 async function assertMcpDcrInvariants(prisma: PrismaClient) {
@@ -348,7 +457,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -357,6 +466,7 @@ async function maybeApplyProgrammeAccessMigration() {
   const prisma = createCasinoMarket0025AdminClient();
   let marketActivationSchemaReady = false;
   let runtimePartnerMarketSupportSchemaReady = false;
+  let customerDataAnalyticsLifecycleSchemaReady = false;
   let mediaRetirementReady = false;
   try {
     const rows = await readMigrationRows(prisma);
@@ -393,6 +503,7 @@ async function maybeApplyProgrammeAccessMigration() {
       ...(!applied.has(MEDIA_RETIREMENT_TARGET_MIGRATION) ? [MEDIA_RETIREMENT_TARGET_MIGRATION] : []),
       ...(!applied.has(MARKET_ACTIVATION_EXACT_MARKET_MIGRATION) ? [MARKET_ACTIVATION_EXACT_MARKET_MIGRATION] : []),
       ...(!applied.has(RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION) ? [RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION] : []),
+      ...(!applied.has(CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION) ? [CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION] : []),
     ];
 
     if (
@@ -585,6 +696,11 @@ async function maybeApplyProgrammeAccessMigration() {
         canonicalTableReady: true,
       });
     }
+    if (applied.has(CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION)) {
+      assertChecksum(completedByName.get(CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION), CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION);
+      await assertCustomerDataAnalyticsLifecycleInvariants(prisma);
+      customerDataAnalyticsLifecycleSchemaReady = true;
+    }
     if (applied.has(MEDIA_RETIREMENT_TARGET_MIGRATION)) {
       assertChecksum(completedByName.get(MEDIA_RETIREMENT_TARGET_MIGRATION), MEDIA_RETIREMENT_TARGET_MIGRATION);
       await assertMediaRetirementInvariants(prisma);
@@ -609,6 +725,10 @@ async function maybeApplyProgrammeAccessMigration() {
 
   if (!runtimePartnerMarketSupportSchemaReady) {
     throw new Error(`Production DB-first release requires completed ${RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION} before this application build.`);
+  }
+
+  if (!customerDataAnalyticsLifecycleSchemaReady) {
+    throw new Error(`Production DB-first release requires completed ${CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION} before this application build.`);
   }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();

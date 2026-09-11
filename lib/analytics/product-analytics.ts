@@ -1,24 +1,19 @@
-import type {
-  ProductAnalyticsEvent,
-  ProductAnalyticsEventMap,
-  ProductAnalyticsEventName,
+import {
+  createClientProductAnalyticsEvent,
+  type ClientProductAnalyticsEvent,
+  type ClientProductAnalyticsEventName,
 } from "@/lib/analytics/product-analytics-events";
-import { parseProductAnalyticsEvent } from "@/lib/analytics/product-analytics-events";
 
-export type ProductAnalyticsSink = (event: ProductAnalyticsEvent) => void | Promise<void>;
+export type ProductAnalyticsSink = (event: ClientProductAnalyticsEvent) => void | Promise<void>;
 
-export const NON_ESSENTIAL_ANALYTICS_POLICY = "DISABLED_GB_LAUNCH" as const;
+export const NON_ESSENTIAL_ANALYTICS_POLICY = "AFFIRMATIVE_CONSENT_RFC_046" as const;
 
-/** RFC-036: public product analytics has no runtime activation path. */
-export function isProductAnalyticsEnabled(_environment?: Record<string, string | undefined>) {
-  return false;
-}
-
-export function productAnalyticsEvent<N extends ProductAnalyticsEventName>(
-  name: N,
-  properties: ProductAnalyticsEventMap[N],
+/** Consent is enforced by the browser sink and again by the ingestion route. */
+export function isProductAnalyticsEnabled(
+  environment?: Record<string, string | undefined>,
 ) {
-  return parseProductAnalyticsEvent(name, properties);
+  if (environment) return environment.NEXT_PUBLIC_ANALYTICS_ENABLED === "true";
+  return process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === "true";
 }
 
 export function createProductAnalyticsEmitter({
@@ -28,16 +23,16 @@ export function createProductAnalyticsEmitter({
 }: {
   enabled: boolean;
   sink: ProductAnalyticsSink;
-  onError?: (eventName: ProductAnalyticsEventName) => void;
+  onError?: (eventName: ClientProductAnalyticsEventName) => void;
 }) {
-  return <N extends ProductAnalyticsEventName>(
-    name: N,
-    properties: ProductAnalyticsEventMap[N],
+  return (
+    name: ClientProductAnalyticsEventName,
+    dimensions: Omit<ClientProductAnalyticsEvent, "eventId" | "schemaVersion" | "name" | "occurredAt"> = {},
   ) => {
     if (!enabled) return;
-    let event: ProductAnalyticsEvent<N>;
+    let event: ClientProductAnalyticsEvent;
     try {
-      event = productAnalyticsEvent(name, properties);
+      event = createClientProductAnalyticsEvent(name, dimensions);
     } catch {
       onError(name);
       return;

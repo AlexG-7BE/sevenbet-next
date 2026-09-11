@@ -81,7 +81,7 @@ function ReviewCardContents({ casino, position, classNames, messages, presentati
     </div>
     <p className={classNames.commission}>{disclosure}</p>
     {unavailable && <p className={classNames.unavailable} role="note">{messages.common.reviewAvailableNoAction}</p>}
-    <div className={classNames.cardActions}>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} messages={messages.outbound} />}{reviewHref ? <TrackedReviewLink href={productHref(presentation, reviewHref)} sourceSurface="casinos">{demo ? messages.common.viewDemonstration : messages.common.readReview}</TrackedReviewLink> : null}<ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /></div>
+    <div className={classNames.cardActions}>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} context={{ source: "CTA", placement: "CASINO_DIRECTORY_CARD" }} messages={messages.outbound} />}{reviewHref ? <TrackedReviewLink href={productHref(presentation, reviewHref)} sourceSurface="casinos">{demo ? messages.common.viewDemonstration : messages.common.readReview}</TrackedReviewLink> : null}<ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /></div>
   </>;
 }
 

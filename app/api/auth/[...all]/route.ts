@@ -1,4 +1,5 @@
 import { toNextJsHandler } from "better-auth/next-js";
+import { after } from "next/server";
 
 import { getAuth } from "@/lib/auth/server";
 import { withAuthDatabaseAvailabilityCapture } from "@/lib/auth/database-availability";
@@ -9,6 +10,7 @@ import { programmeAccessSigningSecret } from "@/lib/auth/programme-access-proof"
 import { readBoundedRequestText } from "@/lib/programme/http";
 import { ServiceError } from "@/lib/services/service-error";
 import { isCommercialMcpInternalAuthPath } from "@/lib/mcp/commercial/config";
+import { observeSuccessfulAuthentication } from "@/lib/customers/auth-observer.server";
 
 const authJsonPayloadLimit = 32 * 1024;
 
@@ -50,6 +52,7 @@ export async function POST(request: Request) {
     return privateAuthResponse(Response.json({ code: "NOT_FOUND" }, { status: 404 }));
   }
   const accountCreation = pathname.endsWith("/sign-up/email");
+  const accountLogin = pathname.endsWith("/sign-in/email");
   const socialAuthentication = pathname.endsWith("/sign-in/social");
   const socialLink = pathname.endsWith("/link-social");
   let downstreamRequest = request;
@@ -117,5 +120,20 @@ export async function POST(request: Request) {
     ));
   }
   if (accessDenial) return privateAuthResponse(accessDenial);
-  return privateAuthResponse(await dispatchAuth("POST", downstreamRequest));
+  const response = await dispatchAuth("POST", downstreamRequest);
+  if (response.ok && (accountCreation || accountLogin)) {
+    const responseBody = await response.clone().json().catch(() => null) as unknown;
+    const observe = () => observeSuccessfulAuthentication({
+      request,
+      responseBody,
+      kind: accountCreation ? "signup" : "login",
+    }).catch(() => {
+      console.warn("[customer] auth observation failed", {
+        customer_failure_category: "database",
+        authentication_kind: accountCreation ? "signup" : "login",
+      });
+    });
+    try { after(observe); } catch { void observe(); }
+  }
+  return privateAuthResponse(response);
 }

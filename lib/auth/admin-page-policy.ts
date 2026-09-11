@@ -17,7 +17,10 @@ export type AdminArea =
   | "commercial"
   | "media-operations"
   | "users"
+  | "customers"
   | "analytics"
+  | "email"
+  | "templates"
   | "settings";
 
 export const adminAreaPermissions: Record<AdminArea, readonly CmsPermission[]> = {
@@ -36,7 +39,10 @@ export const adminAreaPermissions: Record<AdminArea, readonly CmsPermission[]> =
   commercial: ["affiliate.manage"],
   "media-operations": ["media.manage"],
   users: ["user.view"],
+  customers: ["user.view"],
   analytics: ["analytics.view"],
+  email: ["email.manage"],
+  templates: ["template.manage"],
   settings: ["settings.manage"],
 };
 

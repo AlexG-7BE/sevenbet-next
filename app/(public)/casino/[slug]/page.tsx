@@ -97,7 +97,7 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
   });
 
   return <>
-    <CommercialSurfaceView surface="casino_review" />
+    <CommercialSurfaceView casinoId={runtimeCasino.id} surface="casino_review" />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
     <CasinoProfile availableForPresentation={loaded.availableForPresentation} casino={runtimeCasino} editorial={editorial} messages={messages} presentation={presentation} />
   </>;

@@ -12,6 +12,28 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Customer Data, Analytics & Lifecycle Core v1 — implementation candidate
+
+**DETECTED IN SOURCE / NOT YET PRODUCTION, 11 September 2026:** the isolated
+`codex/customer-data-analytics-lifecycle-v1` candidate based on
+`230e652af0e53e1e378051e33955943f788cd94a` implements the Founder-authorized
+RFC-046 customer, first-party analytics, Programme observation, commercial
+click-attribution, consent, fixed-dashboard and email-ledger core. Additive
+migration `0037_customer_data_analytics_lifecycle_core`, preflight/postflight
+guards, unit/structural/PostgreSQL/browser acceptance and an aggregate-only
+sanity command are repository evidence. This entry does not alter the live
+Production SHA or migration boundary stated above.
+
+**HOLD — external lifecycle email:** templates, consent, eligibility,
+campaigns, durable messages, unsubscribe and a verified webhook boundary are
+implemented, but no live route, Better Auth callback or cron invokes the
+external Resend processor. Queued messages are not sent messages. Production
+migration, runtime analytics, dashboards over live observations, webhook
+registration and provider delivery all remain **UNKNOWN** until release
+evidence proves them. See [RFC-046](06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md),
+the [technical baseline](05_Engineering/Technical_Baseline/16_Customer_Data_Analytics_Lifecycle_Core.md)
+and [operations runbook](06_Operations/Customer-Data-Analytics-Lifecycle-Core.md).
+
 ## Logo-only Product, MEDIA-GEO3 retirement and eleven-locale cutover complete in Production
 
 **VERIFIED (repository, Production DB and live runtime):** RFC-044 records the current Founder decision for a
@@ -65,6 +87,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial creative formats | **HISTORICAL COMPATIBILITY / TEST VOCABULARY** | Format parsers and pre-retirement tests may remain inert. Active public compositions accept operator logos or explicitly B4GAMBLE-owned editorial art, never promotional creative formats. |
 | Media ingestion / Media Operations | **PROMOTIONAL OPERATIONS RETIRED; LOGO AND B4GAMBLE EDITORIAL ASSETS ONLY** | Active Admin media is limited to canonical logos and authenticated `b4gambleOwned` editorial social imagery. Promotional ingestion/analyse/apply/assignment/MCP surfaces are 410 in the application cutover and retired states are rejected by Production constraints. |
 | Public language / market presentation | **ELEVEN LOCALES LIVE IN PRODUCTION** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
+| Customer data / analytics / lifecycle | **IMPLEMENTATION CANDIDATE; EMAIL DELIVERY HOLD** | RFC-046 source and migration 0037 exist on an isolated branch. Nothing in this row asserts a Production migration, runtime collection, webhook registration or outbound lifecycle email. |
 
 ### Recent implementation state
 

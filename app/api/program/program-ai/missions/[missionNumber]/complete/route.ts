@@ -5,6 +5,7 @@ import { programmeErrorResponse, programmeResponse, readProgrammeJson } from "@/
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { routeMissionNumber } from "@/lib/programme/program-ai/mission-http";
 import { assertOnlyKeys, objectInput } from "@/lib/programme/validation";
+import { scheduleProgrammeStateObservation } from "@/lib/analytics/programme-observer.server";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ export async function POST(
       productAnalyticsServer.missionCompleted(missionNumber);
       if (missionNumber === 10) productAnalyticsServer.programmeCompleted();
     }
+    scheduleProgrammeStateObservation(user.id, request.headers);
     return programmeResponse({ ok: true, ...result });
   } catch (error) {
     return programmeErrorResponse(error);

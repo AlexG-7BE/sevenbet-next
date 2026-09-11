@@ -96,7 +96,8 @@ test("public and protected shells retain separate landmark ownership", () => {
 test("commercial actions use the direct governed route outside shared Action", () => {
   const outbound = read("components/casino-profile/CasinoOutboundAction.tsx");
   const legacy = read("app/(public)/outbound/[slug]/page.tsx");
-  assert.match(outbound, /href=\{action\.href\}/);
+  assert.match(outbound, /href=\{attributedCommercialHref\(action\.href, context\)\}/);
+  assert.match(outbound, /if \(!\/\^\\\/r\\\//);
   assert.match(outbound, /outboundIntent\("direct", context\)/);
   assert.match(outbound, /rel="nofollow sponsored noopener"/);
   assert.match(outbound, /target="_blank"/);

@@ -33,7 +33,7 @@ test("Best Offers keeps native cards, material terms, and reachable controls", (
   const styles = read("components/best-offers/BestOffers.module.css");
   const experience = read("components/best-offers/BestOffersExperience.tsx");
 
-  assert.match(experience, /<article className=\{styles\.featuredCard\} data-testid="best-offer-product-card">/);
+  assert.match(experience, /<article className=\{styles\.featuredCard\}[^>]*data-testid="best-offer-product-card">/);
   assert.match(experience, /<dl className=\{styles\.mobileMaterialTerms\} aria-label=\{`\$\{offer\.casino\.name\} · \$\{messages\.common\.materialOfferTerms\}`\}>/);
   assert.match(experience, /<details><summary>\{messages\.bestOffers\.faqWageringQuestion\}<\/summary>/);
   assert.match(experience, /if \(offer\.dataClassification === "DEMO_FIXTURE"\) return null;/);

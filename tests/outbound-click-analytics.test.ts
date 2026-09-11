@@ -79,8 +79,10 @@ test("redirect integration counts only after governed success and safe 302 valid
   const success = source.indexOf("if (!result.ok)");
   const safeResponse = source.indexOf("safeAffiliateRedirectResponse(result.destination)");
   const statusGate = source.indexOf("response.status !== 302");
-  const accounting = source.indexOf("await recordOutboundClickBestEffort");
-  assert.ok(success >= 0 && safeResponse > success && statusGate > safeResponse && accounting > statusGate);
+  const successfulAccounting = source.indexOf("scheduleObservation(observation,");
+  assert.ok(success >= 0 && safeResponse > success && statusGate > safeResponse && successfulAccounting > statusGate);
+  assert.match(source, /\.\.\.\(aggregate \? \[recordOutboundClickBestEffort\(/);
+  assert.equal(source.match(/scheduleObservation\(observation,/g)?.length, 1);
   assert.doesNotMatch(source, /userId|sessionId|x-forwarded-for|user-agent|Programme|Mission|request\.url/);
 });
 

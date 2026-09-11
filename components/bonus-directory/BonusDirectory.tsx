@@ -84,7 +84,7 @@ function mobileFeaturedTerms(offer: PublicOfferDTO) {
 function OfferAction({ offer, compact = false, messages = defaultMessages }: { offer: PublicOfferDTO; compact?: boolean; messages?: ProductPageMessages }) {
   const href = safeActionHref(offer);
   if (!href) return <span aria-disabled="true" className={compact ? styles.actionUnavailableCompact : styles.actionUnavailable}>{messages.common.noGovernedVisit}</span>;
-  return <CasinoOutboundAction action={{ href, label: messages.common.actionAvailable }} className={compact ? styles.offerActionCompact : styles.offerAction} messages={messages.outbound} />;
+  return <CasinoOutboundAction action={{ href, label: messages.common.actionAvailable }} className={compact ? styles.offerActionCompact : styles.offerAction} context={{ source: "CTA", placement: "BONUS_LISTING_CARD" }} messages={messages.outbound} />;
 }
 
 function OfferLogo({ offer }: { offer: PublicOfferDTO }) {
@@ -100,7 +100,7 @@ function OfferLogo({ offer }: { offer: PublicOfferDTO }) {
 export function FeaturedBonusCard({ offer, position, primary = false, messages = defaultMessages }: { offer: PublicOfferDTO; position: number; primary?: boolean; messages?: ProductPageMessages }) {
   const reviewHref = publicCasinoReviewHref(offer.casino);
   const actionAvailable = Boolean(safeActionHref(offer));
-  return <article className={`${styles.featureCard} ${primary ? styles.featureCardPrimary : ""}`}>
+  return <article className={`${styles.featureCard} ${primary ? styles.featureCardPrimary : ""}`} data-analytics-casino-id={offer.dataClassification === "PUBLISHED_RECORD" ? offer.casino.id : undefined} data-analytics-offer-key={offer.dataClassification === "PUBLISHED_RECORD" ? offer.bonus.id : undefined}>
     <div className={styles.featureMeta}><span>{String(position).padStart(2, "0")} / {offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published}</span><span>{actionAvailable ? messages.common.actionAvailable : messages.common.reviewOnly}</span></div>
     <p className={styles.offerType}>{bonusType(offer.bonus.type)}</p>
     <h3>{offer.casino.name}</h3>
@@ -231,7 +231,7 @@ export function ActiveBonusFilters({ facets, query, raw, messages, presentation,
 export function BonusComparisonList({ offers, startPosition, messages, presentation }: { offers: PublicOfferDTO[]; startPosition: number; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const resultCountLabel = offers.length === 1 ? messages.common.result : messages.common.results;
   return <div className={styles.comparison}>
-    {offers.map((offer, index) => <article className={styles.comparisonRow} data-bonus-directory-card data-offer-relation={offer.offerPresentation?.relation} key={`${offer.casino.id}:${offer.bonus.id}`}>
+    {offers.map((offer, index) => <article className={styles.comparisonRow} data-analytics-casino-id={offer.dataClassification === "PUBLISHED_RECORD" ? offer.casino.id : undefined} data-analytics-offer-key={offer.dataClassification === "PUBLISHED_RECORD" ? offer.bonus.id : undefined} data-bonus-directory-card data-offer-relation={offer.offerPresentation?.relation} key={`${offer.casino.id}:${offer.bonus.id}`}>
       <span className={styles.compactLogo} data-logo-state={offer.casino.logo ? "image" : "fallback"}><OfferLogo offer={offer} /></span>
       <div className={styles.compactIdentity}>
         <strong>{offer.casino.name}</strong>

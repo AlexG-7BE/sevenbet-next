@@ -9,9 +9,10 @@ import { assertPrivacyDeletionAuthority, parsePrivacyTargetEnvironment } from ".
 type Row = Record<string, unknown>;
 
 function matches(row: Row, where: Row = {}): boolean {
-  if (Array.isArray(where.OR)) return where.OR.some((item) => matches(row, item as Row));
+  if (Array.isArray(where.AND) && !where.AND.every((item) => matches(row, item as Row))) return false;
+  if (Array.isArray(where.OR) && !where.OR.some((item) => matches(row, item as Row))) return false;
   return Object.entries(where).every(([key, value]) => {
-    if (key === "OR") return true;
+    if (key === "AND" || key === "OR") return true;
     if (value && typeof value === "object" && !Array.isArray(value)) {
       const rule = value as Row;
       if (Array.isArray(rule.in)) return rule.in.includes(row[key]);
@@ -66,6 +67,48 @@ function fakeDatabase() {
       { id: "claim-unconsumed", anonymousSessionId: "anonymous-unconsumed", consumedByUserId: null, anonymousSession: { id: "anonymous-unconsumed", draft: { momentMap: "UNCONSUMED-DRAFT-SENTINEL" } } },
     ] as Row[],
     verifications: [{ id: "verification-a", identifier: "a@example.test" }, { id: "verification-b", identifier: "b@example.test" }] as Row[],
+    analyticsSessions: [
+      { id: "analytics-session-a", anonymousId: "anonymous-analytics-a", userId: "user-a" },
+      { id: "analytics-session-a-edge", anonymousId: "anonymous-analytics-a-edge", userId: null },
+      { id: "analytics-session-shared-b", anonymousId: "anonymous-analytics-a", userId: "user-b" },
+      { id: "analytics-session-b", anonymousId: "anonymous-analytics-b", userId: "user-b" },
+    ] as Row[],
+    analyticsEvents: [
+      { id: "analytics-event-a", userId: "user-a", analyticsSessionId: "analytics-session-a", anonymousId: "anonymous-analytics-a", type: "PAGE_VIEWED" },
+      { id: "analytics-event-a-edge-link", userId: "user-a", analyticsSessionId: "analytics-session-a-edge", anonymousId: "anonymous-analytics-a-edge", type: "LOGIN_COMPLETED" },
+      { id: "analytics-event-a-cross-user-session", userId: "user-a", analyticsSessionId: "analytics-session-shared-b", anonymousId: "anonymous-analytics-a", type: "LOGIN_COMPLETED" },
+      { id: "analytics-event-a-edge-anonymous", userId: null, analyticsSessionId: "analytics-session-a-edge", anonymousId: "anonymous-analytics-a-edge", type: "PAGE_VIEWED" },
+      { id: "analytics-event-shared-b", userId: "user-b", analyticsSessionId: "analytics-session-shared-b", anonymousId: "anonymous-analytics-a", type: "PAGE_VIEWED" },
+      { id: "analytics-event-b", userId: "user-b", analyticsSessionId: "analytics-session-b", anonymousId: "anonymous-analytics-b", type: "PAGE_VIEWED" },
+    ] as Row[],
+    outboundClicks: [
+      { id: "outbound-a", userId: "user-a", analyticsSessionId: "analytics-session-a", anonymousId: "anonymous-analytics-a", requestedSlug: "safe-a" },
+      { id: "outbound-a-edge-anonymous", userId: null, analyticsSessionId: "analytics-session-a-edge", anonymousId: "anonymous-analytics-a-edge", requestedSlug: "safe-a-edge" },
+      { id: "outbound-shared-b", userId: "user-b", analyticsSessionId: "analytics-session-shared-b", anonymousId: "anonymous-analytics-a", requestedSlug: "safe-shared-b" },
+      { id: "outbound-b", userId: "user-b", analyticsSessionId: "analytics-session-b", anonymousId: "anonymous-analytics-b", requestedSlug: "safe-b" },
+    ] as Row[],
+    consentEvents: [
+      { id: "consent-a", userId: "user-a", anonymousId: "anonymous-analytics-a", purpose: "ANALYTICS" },
+      { id: "consent-a-edge-anonymous", userId: null, anonymousId: "anonymous-analytics-a-edge", purpose: "ANALYTICS" },
+      { id: "consent-shared-b", userId: "user-b", anonymousId: "anonymous-analytics-a", purpose: "ANALYTICS" },
+      { id: "consent-b", userId: "user-b", anonymousId: "anonymous-analytics-b", purpose: "ANALYTICS" },
+    ] as Row[],
+    emailPreferences: [
+      { id: "preference-a", userId: "user-a", marketingAllowed: true },
+      { id: "preference-b", userId: "user-b", marketingAllowed: false },
+    ] as Row[],
+    emailMessages: [
+      { id: "email-a", userId: "user-a", recipientEmail: "a@example.test", subject: "A message" },
+      { id: "email-b", userId: "user-b", recipientEmail: "b@example.test", subject: "B message" },
+    ] as Row[],
+    emailProviderEvents: [
+      { id: "provider-a", messageId: "email-a", providerEventId: "event-a" },
+      { id: "provider-b", messageId: "email-b", providerEventId: "event-b" },
+    ] as Row[],
+    emailUnsubscribeTokens: [
+      { id: "unsubscribe-a", messageId: "email-a", userId: "user-a", tokenHash: "hash-a" },
+      { id: "unsubscribe-b", messageId: "email-b", userId: "user-b", tokenHash: "hash-b" },
+    ] as Row[],
     globalCasinos: [{ id: "editorial-casino", status: "PUBLISHED" }] as Row[],
   };
   const child = () => model(rows.enrollmentChildren);
@@ -106,6 +149,15 @@ function fakeDatabase() {
           programmeActiveDays: rows.activeDays.filter((row) => row.userId === userId),
           programmeSensitiveInputAuthorities: rows.sensitiveInputAuthorities.filter((row) => row.userId === userId),
           programmeAccessAcceptance: rows.accessAcceptances.find((row) => row.userId === userId) ?? null,
+          analyticsSessions: rows.analyticsSessions.filter((row) => row.userId === userId),
+          analyticsEvents: rows.analyticsEvents.filter((row) => row.userId === userId),
+          outboundClicks: rows.outboundClicks.filter((row) => row.userId === userId),
+          consentEvents: rows.consentEvents.filter((row) => row.userId === userId),
+          emailPreference: rows.emailPreferences.find((row) => row.userId === userId) ?? null,
+          emailMessages: rows.emailMessages.filter((row) => row.userId === userId).map((message) => ({
+            ...message,
+            providerEvents: rows.emailProviderEvents.filter((event) => event.messageId === message.id),
+          })),
         };
       },
       delete: async ({ where }: { where: Row }) => {
@@ -133,6 +185,14 @@ function fakeDatabase() {
     pendingProgrammeClaim: model(rows.claims),
     anonymousProgrammeSession: model(rows.anonymousSessions),
     verification: model(rows.verifications),
+    analyticsSession: model(rows.analyticsSessions),
+    analyticsEvent: model(rows.analyticsEvents),
+    outboundClick: model(rows.outboundClicks),
+    consentEvent: model(rows.consentEvents),
+    customerEmailPreference: model(rows.emailPreferences),
+    emailMessage: model(rows.emailMessages),
+    emailProviderEvent: model(rows.emailProviderEvents),
+    emailUnsubscribeToken: model(rows.emailUnsubscribeTokens),
     $transaction: async (operation: (transaction: unknown) => Promise<unknown>) => operation(database),
   };
   return { database: database as unknown as PrismaClient, rows };
@@ -144,6 +204,9 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   const serializedExport = JSON.stringify(exported);
   assert.match(serializedExport, /user-a/);
   assert.match(serializedExport, /A-LEGACY-DRAFT-SENTINEL/);
+  assert.match(serializedExport, /analytics-event-a-edge-anonymous/);
+  assert.match(serializedExport, /outbound-a-edge-anonymous/);
+  assert.match(serializedExport, /consent-a-edge-anonymous/);
   assert.match(serializedExport, /google-sub-a|email profile openid/);
   assert.doesNotMatch(serializedExport, /PASSWORD-HASH-SENTINEL|GOOGLE-(ACCESS|REFRESH|ID)-TOKEN-SENTINEL/);
   assert.doesNotMatch(serializedExport, /user-b|b@example\.test|B-DRAFT-SENTINEL/);
@@ -158,6 +221,13 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   assert.equal(plan?.counts.startingPoints, 1);
   assert.equal(plan?.counts.sensitiveInputAuthorities, 1);
   assert.equal(plan?.counts.accessAcceptances, 1);
+  assert.equal(plan?.counts.analyticsSessions, 2);
+  assert.equal(plan?.counts.analyticsEvents, 4);
+  assert.equal(plan?.counts.outboundClicks, 2);
+  assert.equal(plan?.counts.consentEvents, 2);
+  assert.equal(plan?.counts.emailMessages, 1);
+  assert.equal(plan?.counts.emailPreference, 1);
+  assert.equal(plan?.counts.emailUnsubscribeTokens, 1);
   assert.equal(rows.users.length, 2, "planning must not mutate either user");
 
   await executeDataSubjectDeletion(database, "user-a");
@@ -173,6 +243,14 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   assert.deepEqual(rows.sensitiveInputAuthorities.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.accessAcceptances.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.verifications.map((row) => row.identifier), ["b@example.test"]);
+  assert.deepEqual(rows.analyticsSessions.map((row) => row.id).sort(), ["analytics-session-b", "analytics-session-shared-b"]);
+  assert.deepEqual(rows.analyticsEvents.map((row) => row.id).sort(), ["analytics-event-b", "analytics-event-shared-b"]);
+  assert.deepEqual(rows.outboundClicks.map((row) => row.id).sort(), ["outbound-b", "outbound-shared-b"]);
+  assert.deepEqual(rows.consentEvents.map((row) => row.id).sort(), ["consent-b", "consent-shared-b"]);
+  assert.deepEqual(rows.emailPreferences.map((row) => row.userId), ["user-b"]);
+  assert.deepEqual(rows.emailMessages.map((row) => row.userId), ["user-b"]);
+  assert.deepEqual(rows.emailProviderEvents.map((row) => row.messageId), ["email-b"]);
+  assert.deepEqual(rows.emailUnsubscribeTokens.map((row) => row.userId), ["user-b"]);
   assert.equal(rows.claims.find((row) => row.id === "claim-a"), undefined);
   assert.equal(rows.claims.find((row) => row.id === "claim-b")?.consumedByUserId, "user-b");
   assert.equal(rows.claims.find((row) => row.id === "claim-unconsumed")?.consumedByUserId, null);

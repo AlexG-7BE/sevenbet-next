@@ -72,4 +72,7 @@ async function main() {
   console.log(JSON.stringify(result));
 }
 
-void main();
+void main().catch((error) => {
+  console.error(`[production-db-reliability-probe] ${error instanceof Error ? error.name : "UnknownError"}`);
+  process.exitCode = 1;
+});

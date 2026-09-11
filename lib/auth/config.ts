@@ -9,6 +9,7 @@ import {
   IDENTITY_ONLY_DISABLED_AUTH_PATHS,
   identityOnlyOAuthAccountDatabaseHooks,
 } from "@/lib/auth/identity-only-oauth";
+import { customerAuthDatabaseHooks } from "@/lib/customers/auth-hooks.server";
 import { resolveBetterAuthRuntimeConfig } from "@/lib/auth/runtime-config";
 import {
   commercialMcpProviderTokenStorage,
@@ -114,7 +115,10 @@ export function createSevenBetAuth({
           },
         }
       : {}),
-    databaseHooks: identityOnlyOAuthAccountDatabaseHooks,
+    databaseHooks: {
+      ...customerAuthDatabaseHooks,
+      ...identityOnlyOAuthAccountDatabaseHooks,
+    },
     plugins: operationalMcpPlugins,
     disabledPaths: [...IDENTITY_ONLY_DISABLED_AUTH_PATHS],
     trustedOrigins: runtimeConfig.trustedOrigins,

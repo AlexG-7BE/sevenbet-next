@@ -1,40 +1,72 @@
 "use client";
 
+import { browserAnalyticsConsentState } from "@/lib/analytics/consent-contract";
 import {
   createProductAnalyticsEmitter,
   isProductAnalyticsEnabled,
   type ProductAnalyticsSink,
 } from "@/lib/analytics/product-analytics";
 import type {
-  ProductAnalyticsEventMap,
+  ClientProductAnalyticsEvent,
+  ClientProductAnalyticsEventName,
   ProgrammeMissionNumber,
 } from "@/lib/analytics/product-analytics-events";
 
-const M1_STARTED_AT_KEY = "b4gamble:analytics:m1-started-at:v1";
-const EVENT_MARKER_PREFIX = "b4gamble:analytics:fired:v1:";
-
+const EVENT_MARKER_PREFIX = "b4gamble:analytics:fired:v2:";
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
-
-type ExistingOutboundPlacement = "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_OFFER_BLOCK" | "OFFER_DETAIL" | "UNSPECIFIED";
+type ExistingOutboundPlacement = "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_OFFER_BLOCK" | "CASINO_COMPARE" | "OFFER_DETAIL" | "UNSPECIFIED";
 
 export type OutboundIntentContext =
   | { source: "CTA"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" }
   | { source: "CREATIVE"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" | "CASINO_DETAIL_HERO" | "CASINO_REVIEW_RIGHT_HERO" };
 
 function browserStorage(): StorageLike | undefined {
-  try {
-    return window.sessionStorage;
-  } catch {
-    return undefined;
-  }
+  try { return window.sessionStorage; } catch { return undefined; }
 }
 
-function defaultSink(event: Parameters<ProductAnalyticsSink>[0]) {
-  void event;
+function currentPageDimensions() {
+  if (typeof window === "undefined") return {};
+  const search = new URLSearchParams(window.location.search);
+  let referrerHost: string | undefined;
+  try { referrerHost = document.referrer ? new URL(document.referrer).hostname : undefined; } catch { /* invalid referrer is omitted */ }
+  const bounded = (value: string | null, maximum: number) => {
+    const normalized = value?.trim().slice(0, maximum);
+    return normalized && /^[\p{L}\p{N}][\p{L}\p{N} ._+():-]*$/u.test(normalized)
+      ? normalized
+      : undefined;
+  };
+  const safeHost = referrerHost && /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(referrerHost)
+    ? referrerHost.slice(0, 253)
+    : undefined;
+  return {
+    pagePath: window.location.pathname.slice(0, 512),
+    locale: /^[a-z]{2}(?:-[A-Z]{2})?$/.test(document.documentElement.lang) ? document.documentElement.lang : undefined,
+    referrerHost: safeHost,
+    acquisitionSource: bounded(search.get("source"), 64),
+    utmSource: bounded(search.get("utm_source"), 100),
+    utmMedium: bounded(search.get("utm_medium"), 100),
+    utmCampaign: bounded(search.get("utm_campaign"), 100),
+    utmContent: bounded(search.get("utm_content"), 100),
+    utmTerm: bounded(search.get("utm_term"), 100),
+  };
 }
+
+export const browserAnalyticsSink: ProductAnalyticsSink = async (event) => {
+  if (browserAnalyticsConsentState() !== "granted") return;
+  const response = await fetch("/api/analytics/events", {
+    method: "POST",
+    credentials: "same-origin",
+    keepalive: true,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ events: [event] }),
+  });
+  if (!response.ok && response.status !== 207 && response.status !== 403) {
+    throw new Error("Analytics delivery failed");
+  }
+};
 
 function operationalError(eventName: string) {
-  console.warn("[product-analytics] event delivery failed", {
+  console.warn("[analytics] browser delivery failed", {
     analytics_event_name: eventName,
     analytics_result: "failed",
   });
@@ -42,9 +74,8 @@ function operationalError(eventName: string) {
 
 export function createProductAnalyticsClient({
   enabled: configuredEnabled,
-  sink = defaultSink,
+  sink = browserAnalyticsSink,
   storage: configuredStorage,
-  now = () => Date.now(),
 }: {
   enabled?: boolean;
   sink?: ProductAnalyticsSink;
@@ -56,92 +87,70 @@ export function createProductAnalyticsClient({
     ? configuredStorage === undefined ? browserStorage() : configuredStorage ?? undefined
     : undefined;
   const emit = createProductAnalyticsEmitter({ enabled, sink, onError: operationalError });
-  const once = <N extends keyof ProductAnalyticsEventMap>(
+  const send = (
+    name: ClientProductAnalyticsEventName,
+    dimensions: Omit<ClientProductAnalyticsEvent, "eventId" | "schemaVersion" | "name" | "occurredAt"> = {},
+  ) => emit(name, { ...currentPageDimensions(), ...dimensions });
+  const once = (
     marker: string,
-    name: N,
-    properties: ProductAnalyticsEventMap[N],
+    name: ClientProductAnalyticsEventName,
+    dimensions: Omit<ClientProductAnalyticsEvent, "eventId" | "schemaVersion" | "name" | "occurredAt"> = {},
   ) => {
     if (!enabled) return;
     const key = `${EVENT_MARKER_PREFIX}${marker}`;
     if (storage?.getItem(key) === "1") return;
-    emit(name, properties);
-    try {
-      storage?.setItem(key, "1");
-    } catch {
-      // Analytics markers are never product authority.
-    }
+    send(name, dimensions);
+    try { storage?.setItem(key, "1"); } catch { /* marker is not product authority */ }
   };
-  const m1Elapsed = () => elapsedSince(storage?.getItem(M1_STARTED_AT_KEY), now());
 
   return {
-    startClicked(sourceSurface: ProductAnalyticsEventMap["programme_start_clicked"]["sourceSurface"]) {
-      if (!enabled) return;
-      try {
-        if (!storage?.getItem(M1_STARTED_AT_KEY)) storage?.setItem(M1_STARTED_AT_KEY, String(now()));
-      } catch {
-        // A missing timestamp maps to the approved unknown bucket.
-      }
-      once("start-clicked", "programme_start_clicked", { sourceSurface });
+    pageViewed(dimensions: Parameters<typeof send>[1] = {}) {
+      send("page_viewed", dimensions);
     },
-    accessGranted(entryMode: ProductAnalyticsEventMap["programme_access_granted"]["entryMode"]) {
-      once("access-granted", "programme_access_granted", { entryMode });
+    programmeStarted() {
+      // Start is persisted server-side from canonical Programme state.
     },
-    personalisedValue(resultType: ProductAnalyticsEventMap["programme_m1_personalised_value_presented"]["resultType"]) {
-      once(
-        `m1-value:${resultType}`,
-        "programme_m1_personalised_value_presented",
-        { resultType, elapsedBucket: personalisedValueElapsedBucket(m1Elapsed()) },
-      );
+    programmeStepViewed(mission: ProgrammeMissionNumber) {
+      once(`programme-step:${mission}:${globalThis.location?.pathname ?? ""}`, "programme_step_viewed", { programmeStep: mission });
     },
-    registrationCtaPresented() {
-      once(
-        "registration-cta",
-        "programme_registration_cta_presented",
-        { elapsedBucket: registrationElapsedBucket(m1Elapsed()) },
-      );
+    casinoViewed(casinoId?: string) {
+      once(`casino:${casinoId ?? "unknown"}:${globalThis.location?.pathname ?? ""}`, "casino_viewed", { ...(casinoId ? { casinoId } : {}) });
     },
-    homeViewed(properties: ProductAnalyticsEventMap["programme_home_viewed"]) {
-      once(
-        `home:${properties.currentMission}:${properties.engagementDayBucket}`,
-        "programme_home_viewed",
-        properties,
-      );
+    offerViewed(affiliateOfferId?: string, casinoId?: string, viewKey?: string) {
+      once(`offer:${viewKey?.slice(0, 200) ?? affiliateOfferId ?? casinoId ?? "unknown"}:${globalThis.location?.pathname ?? ""}`, "offer_viewed", {
+        ...(affiliateOfferId ? { affiliateOfferId } : {}),
+        ...(casinoId ? { casinoId } : {}),
+      });
     },
-    missionOpened(mission: ProgrammeMissionNumber, mode: ProductAnalyticsEventMap["programme_mission_opened"]["mode"]) {
-      once(`mission:${mission}:${mode}`, "programme_mission_opened", { mission, mode });
+    commercialCtaClicked(placement?: string) {
+      send("commercial_cta_clicked", { ...(placement ? { placement: placement.slice(0, 64) } : {}) });
     },
-    reviewOpened(milestone: ProductAnalyticsEventMap["programme_review_opened"]["milestone"]) {
-      once(`review:${milestone}`, "programme_review_opened", { milestone });
+
+    // Compatibility surface for existing UI call sites. Only concepts in the
+    // RFC-046 dictionary persist; legacy interaction aliases are intentionally
+    // not emitted.
+    startClicked(_sourceSurface: "ten_steps" | "public_header" | "home" | "other_public") {},
+    accessGranted(_entryMode: "start" | "resume" | "unknown") {},
+    personalisedValue(_resultType: "starting_point" | "clarification") {},
+    registrationCtaPresented() {},
+    homeViewed(properties: { currentMission: ProgrammeMissionNumber; engagementDayBucket: string }) {
+      this.programmeStepViewed(properties.currentMission);
     },
-    discoveryClicked(properties: ProductAnalyticsEventMap["programme_discovery_clicked"]) {
-      emit("programme_discovery_clicked", properties);
+    missionOpened(mission: ProgrammeMissionNumber, _mode: "start" | "resume" | "review") {
+      this.programmeStepViewed(mission);
     },
-    voiceOutcome(result: ProductAnalyticsEventMap["programme_voice_outcome"]["result"]) {
-      emit("programme_voice_outcome", { result });
+    reviewOpened(_milestone: "first" | "mid" | "full") {},
+    discoveryClicked(_properties: { sourceSurface: string; destinationRoute: string }) {},
+    voiceOutcome(_result: string) {},
+    commercialSurfaceViewed(surface: "best_offers" | "casinos" | "bonuses" | "casino_review") {
+      if (surface === "casino_review") this.casinoViewed();
     },
-    commercialSurfaceViewed(surface: ProductAnalyticsEventMap["commercial_surface_viewed"]["surface"]) {
-      once(`commercial-surface:${surface}`, "commercial_surface_viewed", { surface });
-    },
-    casinoReviewOpened(sourceSurface: ProductAnalyticsEventMap["casino_review_opened"]["sourceSurface"]) {
-      emit("casino_review_opened", { sourceSurface });
-    },
-    comparisonOpened(selectionCount: ProductAnalyticsEventMap["comparison_opened"]["selectionCount"]) {
-      emit("comparison_opened", { selectionCount });
-    },
-    outboundIntent(
-      outcome: ProductAnalyticsEventMap["outbound_intent"]["outcome"],
-      context: OutboundIntentContext = { source: "CTA", placement: "UNSPECIFIED" },
-    ) {
-      emit("outbound_intent", { outcome, origin: `${context.source}_${context.placement}` as ProductAnalyticsEventMap["outbound_intent"]["origin"] });
+    casinoReviewOpened(_sourceSurface: string) {},
+    comparisonOpened(_selectionCount: "two" | "three") {},
+    outboundIntent(_outcome: "direct" | "confirmation_opened" | "continued", context: OutboundIntentContext = { source: "CTA", placement: "UNSPECIFIED" }) {
+      this.commercialCtaClicked(`${context.source}_${context.placement}`);
     },
   };
-}
-
-function elapsedSince(raw: string | null | undefined, now: number) {
-  if (!raw) return null;
-  const startedAt = Number(raw);
-  if (!Number.isFinite(startedAt) || startedAt < 0 || startedAt > now) return null;
-  return now - startedAt;
 }
 
 export function personalisedValueElapsedBucket(elapsedMs: number | null) {
@@ -162,3 +171,18 @@ export function registrationElapsedBucket(elapsedMs: number | null) {
 }
 
 export const productAnalyticsClient = createProductAnalyticsClient();
+
+let lastRecordedPagePath: string | null = null;
+
+/**
+ * Records the current page once after affirmative consent. Keeping the marker
+ * beside the singleton client lets both the route observer and the consent
+ * control use the same authority even when React hydrates them out of order.
+ */
+export function recordConsentedBrowserPageView(pathname: string | null | undefined) {
+  if (!pathname || lastRecordedPagePath === pathname
+    || browserAnalyticsConsentState() !== "granted") return false;
+  lastRecordedPagePath = pathname;
+  productAnalyticsClient.pageViewed({ pagePath: pathname });
+  return true;
+}
