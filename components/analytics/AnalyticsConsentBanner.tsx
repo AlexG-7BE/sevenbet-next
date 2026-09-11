@@ -1,20 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-import {
-  browserAnalyticsConsentState,
-  type AnalyticsConsentState,
-} from "@/lib/analytics/consent-contract";
-
 export function AnalyticsConsentBanner() {
-  const [state, setState] = useState<AnalyticsConsentState>("unknown");
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dismissRef = useRef<HTMLButtonElement>(null);
+  const restoreTriggerFocus = useRef(false);
 
-  useEffect(() => setState(browserAnalyticsConsentState()), []);
+  useEffect(() => {
+    if (editing) {
+      dismissRef.current?.focus();
+    } else if (restoreTriggerFocus.current) {
+      restoreTriggerFocus.current = false;
+      triggerRef.current?.focus();
+    }
+  }, [editing]);
+
+  const close = () => {
+    setError(false);
+    restoreTriggerFocus.current = true;
+    setEditing(false);
+  };
 
   const update = async (analytics: boolean) => {
     setSaving(true);
@@ -27,8 +37,7 @@ export function AnalyticsConsentBanner() {
         body: JSON.stringify({ analytics }),
       });
       if (!response.ok) throw new Error("Consent update failed");
-      setState(analytics ? "granted" : "denied");
-      setEditing(false);
+      close();
       if (analytics) window.dispatchEvent(new Event("b4g:analytics-consent-granted"));
     } catch {
       setError(true);
@@ -37,16 +46,16 @@ export function AnalyticsConsentBanner() {
     }
   };
 
-  if (state !== "unknown" && !editing) {
+  if (!editing) {
     return (
-      <button className="privacyChoiceTrigger" type="button" onClick={() => setEditing(true)}>
+      <button ref={triggerRef} className="privacyChoiceTrigger" type="button" aria-haspopup="dialog" onClick={() => setEditing(true)}>
         Privacy choices
       </button>
     );
   }
 
   return (
-    <aside className="analyticsConsent" aria-label="Analytics privacy choices" aria-live="polite">
+    <aside className="analyticsConsent" role="dialog" aria-modal="false" aria-label="Analytics privacy choices" aria-live="polite">
       <div>
         <strong>Your privacy choices</strong>
         <p>
@@ -55,6 +64,7 @@ export function AnalyticsConsentBanner() {
         {error ? <p role="alert" className="analyticsConsentError">Your choice could not be saved. Please try again.</p> : null}
       </div>
       <div className="analyticsConsentActions">
+        <button ref={dismissRef} type="button" disabled={saving} onClick={close}>Not now</button>
         <button type="button" disabled={saving} onClick={() => void update(false)}>Decline analytics</button>
         <button type="button" className="button gold" disabled={saving} onClick={() => void update(true)}>Allow analytics</button>
       </div>

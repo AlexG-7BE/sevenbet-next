@@ -56,7 +56,8 @@ test("affirmative analytics consent persists, emits a minimal event, and dedupli
   });
   const response = await page.goto(`${baseUrl}/privacy`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
-  const choices = page.getByRole("complementary", { name: "Analytics privacy choices" });
+  await page.getByRole("button", { name: "Privacy choices" }).click();
+  const choices = page.getByRole("dialog", { name: "Analytics privacy choices" });
   await expect(choices).toBeVisible();
   await choices.getByRole("button", { name: "Decline analytics" }).click();
   await expect(page.getByRole("button", { name: "Privacy choices" })).toBeVisible();
