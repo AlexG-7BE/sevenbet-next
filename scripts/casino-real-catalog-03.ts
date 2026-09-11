@@ -62,6 +62,13 @@ function jsonRecord(value: Prisma.JsonValue | null): Prisma.JsonObject {
     : {};
 }
 
+function isRetryableTransactionConflict(error: unknown) {
+  return typeof error === "object"
+    && error !== null
+    && "code" in error
+    && (error as { code?: unknown }).code === "P2034";
+}
+
 async function loadCorpus() {
   const corpus = JSON.parse(await readFile(path.join(process.cwd(), CORPUS_PATH), "utf8")) as CatalogCorpus;
   if (corpus.schemaVersion !== "casino-real-catalog-03.v1" || corpus.release !== RELEASE) {
@@ -175,72 +182,83 @@ async function ingestFactualBundles(
   bundles: Awaited<ReturnType<typeof loadBundles>>,
   actorId: string,
 ) {
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRawUnsafe("SET LOCAL statement_timeout = '150s'");
-    await tx.$executeRawUnsafe("SET LOCAL lock_timeout = '10s'");
-    await tx.$executeRawUnsafe("SET LOCAL idle_in_transaction_session_timeout = '180s'");
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        await tx.$executeRawUnsafe("SET LOCAL statement_timeout = '150s'");
+        await tx.$executeRawUnsafe("SET LOCAL lock_timeout = '10s'");
+        await tx.$executeRawUnsafe("SET LOCAL idle_in_transaction_session_timeout = '180s'");
 
-    const ingestion = new Array<Awaited<ReturnType<typeof ingestCasinoBundlesInTransaction>>[number]>();
-    for (const bundle of bundles) {
-      ingestion.push(...await ingestCasinoBundlesInTransaction(tx, [bundle]));
+        const ingestion = new Array<Awaited<ReturnType<typeof ingestCasinoBundlesInTransaction>>[number]>();
+        for (const bundle of bundles) {
+          ingestion.push(...await ingestCasinoBundlesInTransaction(tx, [bundle]));
+        }
+
+        const idempotency = new Array<Awaited<ReturnType<typeof verifyCasinoBundlesIdempotencyInTransaction>>>();
+        for (const bundle of bundles) {
+          idempotency.push(await verifyCasinoBundlesIdempotencyInTransaction(tx, [bundle]));
+        }
+
+        const expectedOffers = bundles.flatMap((bundle) => bundle.markets.flatMap((market) =>
+          market.bonuses.map((bonus) => ({
+            casinoSlug: bundle.casino.slug,
+            countryCode: market.countryCode,
+            bonusSlug: bonus.slug,
+          })),
+        ));
+        const expectedBySlug = new Map(expectedOffers.map((offer) => [offer.bonusSlug, offer]));
+        if (expectedBySlug.size !== expectedOffers.length) throw new Error(`${RELEASE}: duplicate factual bonus slug in controlled bundles`);
+        const existingOffers = await tx.casinoBonus.findMany({
+          where: { slug: { in: [...expectedBySlug.keys()] } },
+          select: {
+            id: true,
+            slug: true,
+            casinoCountryId: true,
+            offerStatus: true,
+            casino: { select: { slug: true } },
+            marketProfile: { select: { countryCode: true } },
+          },
+        });
+        if (existingOffers.length !== expectedBySlug.size) throw new Error(`${RELEASE}: factual bonus publication set is incomplete`);
+        for (const offer of existingOffers) {
+          const expected = expectedBySlug.get(offer.slug);
+          if (!expected
+            || !offer.casinoCountryId
+            || offer.casino.slug !== expected.casinoSlug
+            || offer.marketProfile?.countryCode !== expected.countryCode) {
+            throw new Error(`${RELEASE}: factual bonus publication scope mismatch for ${offer.slug}`);
+          }
+        }
+        const activation = await tx.casinoBonus.updateMany({
+          where: {
+            id: { in: existingOffers.map((offer) => offer.id) },
+            offerStatus: { not: OfferStatus.ACTIVE },
+          },
+          data: { offerStatus: OfferStatus.ACTIVE },
+        });
+
+        const safeOfferCorpus = await reconcileSafeOfferCorpusInTransaction(tx, actorId);
+
+        return {
+          ingestion,
+          idempotency,
+          publication: { expected: expectedOffers.length, activated: activation.count },
+          safeOfferCorpus,
+        };
+      }, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        maxWait: 10_000,
+        timeout: 180_000,
+      });
+    } catch (error) {
+      if (!isRetryableTransactionConflict(error) || attempt === maxAttempts) throw error;
+      const delayMs = 250 * attempt;
+      console.warn(`${RELEASE}: Prisma P2034 write-conflict/deadlock; retrying factual bundle transaction (${attempt + 1}/${maxAttempts}) after ${delayMs}ms`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
-
-    const idempotency = new Array<Awaited<ReturnType<typeof verifyCasinoBundlesIdempotencyInTransaction>>>();
-    for (const bundle of bundles) {
-      idempotency.push(await verifyCasinoBundlesIdempotencyInTransaction(tx, [bundle]));
-    }
-
-    const expectedOffers = bundles.flatMap((bundle) => bundle.markets.flatMap((market) =>
-      market.bonuses.map((bonus) => ({
-        casinoSlug: bundle.casino.slug,
-        countryCode: market.countryCode,
-        bonusSlug: bonus.slug,
-      })),
-    ));
-    const expectedBySlug = new Map(expectedOffers.map((offer) => [offer.bonusSlug, offer]));
-    if (expectedBySlug.size !== expectedOffers.length) throw new Error(`${RELEASE}: duplicate factual bonus slug in controlled bundles`);
-    const existingOffers = await tx.casinoBonus.findMany({
-      where: { slug: { in: [...expectedBySlug.keys()] } },
-      select: {
-        id: true,
-        slug: true,
-        casinoCountryId: true,
-        offerStatus: true,
-        casino: { select: { slug: true } },
-        marketProfile: { select: { countryCode: true } },
-      },
-    });
-    if (existingOffers.length !== expectedBySlug.size) throw new Error(`${RELEASE}: factual bonus publication set is incomplete`);
-    for (const offer of existingOffers) {
-      const expected = expectedBySlug.get(offer.slug);
-      if (!expected
-        || !offer.casinoCountryId
-        || offer.casino.slug !== expected.casinoSlug
-        || offer.marketProfile?.countryCode !== expected.countryCode) {
-        throw new Error(`${RELEASE}: factual bonus publication scope mismatch for ${offer.slug}`);
-      }
-    }
-    const activation = await tx.casinoBonus.updateMany({
-      where: {
-        id: { in: existingOffers.map((offer) => offer.id) },
-        offerStatus: { not: OfferStatus.ACTIVE },
-      },
-      data: { offerStatus: OfferStatus.ACTIVE },
-    });
-
-    const safeOfferCorpus = await reconcileSafeOfferCorpusInTransaction(tx, actorId);
-
-    return {
-      ingestion,
-      idempotency,
-      publication: { expected: expectedOffers.length, activated: activation.count },
-      safeOfferCorpus,
-    };
-  }, {
-    isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    maxWait: 10_000,
-    timeout: 180_000,
-  });
+  }
+  throw new Error(`${RELEASE}: transaction retry loop exhausted`);
 }
 
 async function returnToDraft(casinoId: string, actorId: string) {
