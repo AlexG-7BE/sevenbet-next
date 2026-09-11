@@ -175,7 +175,7 @@ test("canonical Programme registration keeps access proof on email auth and fail
     journeyHeader = await route.request().headerValue("x-sevenbet-programme-access-journey");
     await route.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ code: "TEST_SIGNUP_STOP" }) });
   });
-  await page.getByLabel("Email").fill("proof-check@example.test");
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill("proof-check@example.test");
   await page.getByLabel("Password").fill("test-password-1234");
   await page.getByRole("button", { name: "Create account with email" }).click();
   await expect(page.locator('p[role="alert"]')).toContainText("could not be created");

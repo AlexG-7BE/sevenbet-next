@@ -26,17 +26,15 @@
 
 /* RFC-046: small, reversible first-party analytics choice. */
 .analyticsConsent {
-  position: fixed;
-  z-index: 120;
-  right: clamp(1rem, 3vw, 2rem);
-  bottom: clamp(1rem, 3vw, 2rem);
-  left: clamp(1rem, 3vw, 2rem);
+  position: relative;
+  z-index: 20;
+  width: calc(100% - clamp(2rem, 6vw, 4rem));
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
   max-width: 72rem;
-  margin-inline: auto;
+  margin: clamp(1rem, 3vw, 2rem) auto;
   padding: 1.15rem 1.25rem;
   color: #f6f3ec;
   background: color-mix(in srgb, #101a23 96%, transparent);
@@ -65,11 +63,12 @@
 .analyticsConsentActions button:disabled { cursor: wait; opacity: 0.62; }
 .analyticsConsentError { margin-top: 0.45rem !important; color: #ffb5ae !important; }
 .privacyChoiceTrigger {
-  position: fixed;
-  z-index: 80;
-  left: 0.75rem;
-  bottom: 0.75rem;
-  min-height: auto;
+  position: relative;
+  z-index: 20;
+  display: block;
+  min-height: 2.75rem;
+  margin: 0.75rem;
+  margin-left: auto;
   padding: 0.45rem 0.65rem;
   color: #f6f3ec;
   background: rgba(16, 26, 35, 0.92);

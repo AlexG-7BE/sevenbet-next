@@ -732,7 +732,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   const email = `program-ai-happy-${randomUUID()}@example.test`;
   const wrongUserEmail = `program-ai-wrong-${randomUUID()}@example.test`;
   await page.getByRole("button", { name: "Use email instead" }).click();
-  await page.getByLabel("Email").fill(email);
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
   await page.getByLabel("Password").fill("Programme-test-password-42!");
   await page.getByRole("button", { name: "Create account with email" }).click();
   await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();

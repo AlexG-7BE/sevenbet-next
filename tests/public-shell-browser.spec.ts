@@ -38,7 +38,7 @@ test("standalone login is a responsive public account surface with Programme acc
   await page.goto(`${baseUrl}/login?returnTo=https%3A%2F%2Fattacker.invalid`, { waitUntil: "networkidle" });
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
   await expect(page.getByRole("heading", { name: /Log in.*Pick up your plan/ })).toBeVisible();
-  await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
+  await expect(page.getByRole("textbox", { name: "Email", exact: true })).toHaveAttribute("autocomplete", "email");
   await expect(page.getByLabel("Password")).toHaveAttribute("autocomplete", "current-password");
   await expect(page.getByRole("button", { name: "Log in", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Start the 10-Step Programme" })).toHaveAttribute("href", "/program?entry=start");

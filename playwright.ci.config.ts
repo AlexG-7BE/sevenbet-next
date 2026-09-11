@@ -23,7 +23,7 @@ export default defineConfig({
     video: "off",
   },
   webServer: {
-    command: "npm start",
+    command: "npm start -- --hostname 127.0.0.1",
     url: baseUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

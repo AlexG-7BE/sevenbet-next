@@ -84,7 +84,16 @@ test("consent ledger transitions distinguish a first denial from withdrawal", ()
 test("unsafe browser mutations require exact same-origin evidence", () => {
   const url = "https://b4gamble.com/api/consent/analytics";
   assert.equal(isSameOriginMutation(new Request(url, { headers: { origin: "https://b4gamble.com" } })), true);
+  assert.equal(isSameOriginMutation(new Request("http://localhost:4173/api/consent/analytics", {
+    headers: { host: "127.0.0.1:4173", origin: "http://127.0.0.1:4173" },
+  })), true);
+  assert.equal(isSameOriginMutation(new Request("http://internal:4173/api/consent/analytics", {
+    headers: { host: "b4gamble.com", origin: "https://b4gamble.com", "x-forwarded-proto": "https" },
+  })), true);
   assert.equal(isSameOriginMutation(new Request(url, { headers: { origin: "https://b4gamble.com/path" } })), false);
+  assert.equal(isSameOriginMutation(new Request("http://localhost:4173/api/consent/analytics", {
+    headers: { host: "127.0.0.1:4173", origin: "https://127.0.0.1:4173" },
+  })), false);
   assert.equal(isSameOriginMutation(new Request(url, { headers: { origin: "https://attacker.invalid" } })), false);
   assert.equal(isSameOriginMutation(new Request(url)), false);
   assert.equal(isSameOriginMutation(new Request(url, { headers: { "sec-fetch-site": "same-origin" } })), true);
