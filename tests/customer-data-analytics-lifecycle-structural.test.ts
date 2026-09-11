@@ -120,6 +120,10 @@ test("roles expose only the intended Customer Core areas", () => {
 });
 
 test("consent, ingestion, unsubscribe, webhook, and cron public mutations fail closed", () => {
+  const analyticsRuntime = source("lib/analytics/product-analytics.ts");
+  assert.match(analyticsRuntime, /process\.env\.NEXT_PUBLIC_ANALYTICS_ENABLED/);
+  assert.doesNotMatch(analyticsRuntime, /= process\.env[,)\n]/);
+
   const analytics = source("app/api/analytics/events/route.ts");
   assert.match(analytics, /MAX_ANALYTICS_BODY_BYTES = 32 \* 1024/);
   assert.match(analytics, /MAX_EVENTS_PER_REQUEST = 20/);

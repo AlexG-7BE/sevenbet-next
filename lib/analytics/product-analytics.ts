@@ -10,9 +10,10 @@ export const NON_ESSENTIAL_ANALYTICS_POLICY = "AFFIRMATIVE_CONSENT_RFC_046" as c
 
 /** Consent is enforced by the browser sink and again by the ingestion route. */
 export function isProductAnalyticsEnabled(
-  environment: Record<string, string | undefined> = process.env,
+  environment?: Record<string, string | undefined>,
 ) {
-  return environment.NEXT_PUBLIC_ANALYTICS_ENABLED === "true";
+  if (environment) return environment.NEXT_PUBLIC_ANALYTICS_ENABLED === "true";
+  return process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === "true";
 }
 
 export function createProductAnalyticsEmitter({
