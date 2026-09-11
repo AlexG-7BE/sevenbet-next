@@ -25,7 +25,6 @@ export async function GET() {
   const links = await prisma.affiliateTrackingLink.findMany({
     where: {
       offer: { casinoId: GOLDENPLAY_CASINO_ID },
-      trackingUrl: { not: null },
     },
     select: {
       id: true,
@@ -34,7 +33,7 @@ export async function GET() {
     },
   });
 
-  const matching = links.filter((link) => link.trackingUrl && sha256(link.trackingUrl) === EXPECTED_LINK_HASH);
+  const matching = links.filter((link) => sha256(link.trackingUrl) === EXPECTED_LINK_HASH);
 
   if (matching.length !== 1) {
     return NextResponse.json(
