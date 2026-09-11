@@ -54,7 +54,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
 | ChatGPT Work MCP / Better Auth 1.7 | **COMMERCIAL MCP ENABLED; MEDIA MCP RETIRED BY RFC-044** | Commercial retains its governed resource. Migration 0034 prevents Media authority from being recreated; the application cutover makes the Media MCP, its DCR and discovery surfaces return cache-proof 410. |
-| Partner tracking registration | **LIVE IN COMMERCIAL MCP** | `commercial_register_partner_tracking_link` accepts only Partner, Casino, tracking URL and optional exact GEO. It stages, verifies and promotes through existing commercial records and RFC-042, preserving exact-over-generic precedence, legal/regulatory blocks, idempotency and raw-URL redaction. |
+| Partner tracking registration | **LIVE BASELINE; RUNTIME-MARKET EXTENSION PROPOSED** | Production accepts Partner, Casino, tracking URL and optional exact GEO. The 11 September review candidate adds mutually exclusive `supportedGeos`, durable database-backed support and one-check generic batches; migration 0036 and the application are not yet released. |
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
 | Commercial partner activation | **READY IN PRODUCTION — 24 ACTIVE_HEALTHY / 540 TERMINALLY CLASSIFIED ROWS** | The exhaustive current-partner matrix covers four partners, 73 Casinos and 25 GEO labels: 24 ACTIVE_HEALTHY, 24 BLOCKED_BY_LAW, 17 ACTION_REQUIRED_REGULATORY, one BROKEN_ROUTE and 474 MISSING_TRACKING_ROUTE. RFC-042 is the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |
 | Casino market data | **FOURTEEN REAL PUBLISHED IDENTITIES — SAFE CROSS-MARKET OFFER PRESENTATION ACTIVE** | Market-projected Casino facts remain isolated. A bounded immutable published-bonus corpus now resolves `EXACT > ROW > OTHER_MARKET > NONE`; StarCasino IT plus genuine Rizk and NordicBet ROW offers are reconciled without creating commercial or media authority. Founder-approved scores remain unchanged. |
@@ -67,6 +67,20 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public language / market presentation | **ELEVEN LOCALES LIVE IN PRODUCTION** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
 
 ### Recent implementation state
+
+**PROPOSED — RUNTIME MARKET REGISTRATION REVIEW CANDIDATE, 11 September
+2026:** repository evidence adds additive migration
+`0036_partner_casino_runtime_market_support`, extends the existing fifth
+Commercial MCP tool with mutually exclusive `geo` / `supportedGeos`, and makes
+the code-generated worldwide matrix seed authority rather than the runtime
+ceiling. Exact runtime support persists through `CasinoCountry`, truthful
+internal-workflow evidence and `PartnerCasinoMarketSupport`; legal/regulatory
+classification and RFC-042 activation remain independent. A generic batch
+performs one external route check and RFC-042 records that bounded result for
+each eligible market. This is review-candidate state only: no Production
+migration, application deployment or data mutation has occurred. Required
+release order is migration 0036 first, verification, then the compatible
+application under separate authority.
 
 **VERIFIED — PARTNER TRACKING REGISTRATION MECHANISM LIVE, 10 September
 2026:** [PR #234](https://github.com/AlexG-7BE/sevenbet-next/pull/234)

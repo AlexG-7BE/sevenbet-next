@@ -371,6 +371,88 @@ test("internal verifier execution failure never fabricates an external blocker",
   assert.equal(verificationWrites, 0);
 });
 
+test("controller records a caller-supplied bounded verification without repeating the external check", async () => {
+  let verificationWrites = 0;
+  let verifierAttempts = 0;
+  const preparing = activation({
+    status: "PREPARING",
+    routeVerificationStatus: "NOT_CHECKED",
+    routeLastCheckedAt: null,
+    activatedAt: null,
+    diagnostics: {},
+  });
+  const healthy = activation({ routeLastCheckedAt: NOW });
+  const controller = new MarketActivationController({
+    apply: async () => ({ idempotent: false, activation: preparing }) as never,
+    recordRouteVerification: async (_id: string, _version: number, verification: { status: string; finalHost: string | null }) => {
+      verificationWrites += 1;
+      assert.equal(verification.status, "HEALTHY");
+      assert.equal(verification.finalHost, "operator.example");
+      return { idempotent: false, activation: healthy } as never;
+    },
+  } as never, {
+    verify: async () => {
+      verifierAttempts += 1;
+      throw new Error("must not repeat the external check");
+    },
+  });
+  const outcome = await controller.activateCasinoInGeo(intent(), NOW, {
+    status: "HEALTHY",
+    reason: "GET_FALLBACK_OK",
+    checkedAt: NOW,
+    method: "GET",
+    statusCode: 200,
+    durationMs: 12,
+    redirectCount: 2,
+    finalHost: "operator.example",
+  });
+  assert.equal(outcome.activation.status, "ACTIVE");
+  assert.equal(verificationWrites, 1);
+  assert.equal(verifierAttempts, 0);
+});
+
+test("preverified reconciliation recovers from a concurrent stale version without another external check", async () => {
+  let applyCalls = 0;
+  let verificationWrites = 0;
+  let verifierAttempts = 0;
+  const preparing = activation({
+    status: "PREPARING",
+    routeVerificationStatus: "NOT_CHECKED",
+    routeLastCheckedAt: null,
+    activatedAt: null,
+    diagnostics: {},
+  });
+  const concurrent = { ...preparing, version: preparing.version + 1 };
+  const healthy = activation({ routeLastCheckedAt: NOW, version: concurrent.version + 1 });
+  const controller = new MarketActivationController({
+    apply: async () => ({ idempotent: applyCalls++ > 0, activation: applyCalls > 1 ? concurrent : preparing }) as never,
+    recordRouteVerification: async () => {
+      verificationWrites += 1;
+      if (verificationWrites === 1) throw new Error("MARKET_ACTIVATION_VERIFICATION_STALE");
+      return { idempotent: false, activation: healthy } as never;
+    },
+  } as never, {
+    verify: async () => {
+      verifierAttempts += 1;
+      throw new Error("must not repeat the external check");
+    },
+  });
+  const outcome = await controller.activateCasinoInGeo(intent(), NOW, {
+    status: "HEALTHY",
+    reason: "GET_FALLBACK_OK",
+    checkedAt: NOW,
+    method: "GET",
+    statusCode: 200,
+    durationMs: 12,
+    redirectCount: 2,
+    finalHost: "operator.example",
+  });
+  assert.equal(outcome.activation.status, "ACTIVE");
+  assert.equal(applyCalls, 2);
+  assert.equal(verificationWrites, 2);
+  assert.equal(verifierAttempts, 0);
+});
+
 test("controller-confirmed external route failure removes CTA through canonical state", async () => {
   let verificationWrites = 0;
   const staleCanonical = activation({ routeLastCheckedAt: new Date("2026-08-01T00:00:00.000Z") });

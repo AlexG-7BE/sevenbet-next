@@ -1609,6 +1609,7 @@ model Casino {
   operatorProfile          CasinoOperator?                         @relation(fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   brandProfile             CasinoBrand?                            @relation(fields: [brandProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   commercialOpportunities  CommercialOpportunity[]
+  partnerMarketSupports    PartnerCasinoMarketSupport[]
   outboundClickDaily       AffiliateOutboundClickDaily[]
   marketActivations        MarketActivation[]
   mediaCreativeSets        MediaCreativeSet[]
@@ -1801,8 +1802,8 @@ model CasinoCountry {
   createdAt              DateTime                  @default(now())
   updatedAt              DateTime                  @updatedAt
 
-  casino            Casino                  @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  operatorProfile   CasinoOperator?         @relation("CasinoCountryOperator", fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  casino            Casino                       @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  operatorProfile   CasinoOperator?              @relation("CasinoCountryOperator", fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   evidence          CasinoCountryEvidence[]
   licenses          CasinoCountryLicense[]
   paymentMethods    CasinoPaymentMethod[]
@@ -1811,9 +1812,11 @@ model CasinoCountry {
   bonuses           CasinoBonus[]
   mediaAssets       MediaAsset[]
   marketActivations MarketActivation[]
+  partnerSupports   PartnerCasinoMarketSupport[]
 
   @@unique([casinoId, countryCode])
   @@unique([id, casinoId])
+  @@unique([id, casinoId, countryCode])
   @@index([casinoId, availability])
   @@index([countryCode, availability])
   @@index([operatorProfileId])
@@ -2061,6 +2064,7 @@ model AffiliateNetwork {
 
   programs                AffiliateProgram[]
   commercialOpportunities CommercialOpportunity[]
+  partnerMarketSupports   PartnerCasinoMarketSupport[]
 
   @@index([active, name])
 }
@@ -2482,6 +2486,38 @@ model MarketActivation {
   @@index([casinoBonusId])
 }
 
+/// Positive operator-market support asserted for one already-established
+/// Partner × Casino relationship. CasinoCountry remains factual availability,
+/// legal authority remains independent, and MarketActivation remains the only
+/// Production commercial authority.
+model PartnerCasinoMarketSupport {
+  id                      String                         @id @default(uuid()) @db.Uuid
+  opportunityId           String                         @db.Uuid
+  affiliateNetworkId      String                         @db.Uuid
+  casinoId                String                         @db.Uuid
+  casinoCountryId         String                         @db.Uuid
+  countryCode             String                         @db.Char(2)
+  marketCode              String                         @db.VarChar(16)
+  operatorMarketSupported Boolean                        @default(true)
+  sourceType              CasinoMarketEvidenceSourceType @default(INTERNAL_RECORD)
+  sourceReference         String
+  observedAt              DateTime
+  lastVerifiedAt          DateTime
+  createdBy               String
+  createdAt               DateTime                       @default(now())
+  updatedAt               DateTime                       @updatedAt
+
+  opportunity      CommercialOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  affiliateNetwork AffiliateNetwork      @relation(fields: [affiliateNetworkId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casino           Casino                @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  marketProfile    CasinoCountry         @relation(fields: [casinoCountryId, casinoId, countryCode], references: [id, casinoId, countryCode], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([opportunityId, casinoId, marketCode])
+  @@index([affiliateNetworkId, casinoId, marketCode])
+  @@index([casinoCountryId])
+  @@index([marketCode, operatorMarketSupported])
+}
+
 model MarketActivationIntent {
   id               String                       @id @default(uuid()) @db.Uuid
   activationId     String                       @db.Uuid
@@ -2664,23 +2700,24 @@ model CommercialOpportunity {
   createdAt              DateTime                   @default(now())
   updatedAt              DateTime                   @updatedAt
 
-  owner               AdminUser?                   @relation("CommercialOpportunityOwner", fields: [ownerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  operator            CasinoOperator?              @relation(fields: [operatorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  brand               CasinoBrand?                 @relation(fields: [brandId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  casino              Casino?                      @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  affiliateNetwork    AffiliateNetwork?            @relation(fields: [affiliateNetworkId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  affiliateProgram    AffiliateProgram?            @relation(fields: [affiliateProgramId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  possibleDuplicateOf CommercialOpportunity?       @relation("CommercialOpportunityDuplicates", fields: [possibleDuplicateOfId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  possibleDuplicates  CommercialOpportunity[]      @relation("CommercialOpportunityDuplicates")
-  evidence            CommercialEvidence[]
-  contacts            CommercialContact[]
-  activities          CommercialActivity[]
-  applications        CommercialApplication[]
-  terms               CommercialTerm[]
-  tasks               CommercialTask[]
-  agentRuns           CommercialAgentRun[]
-  agentOperations     CommercialAgentOperation[]
-  activationPackets   CommercialActivationPacket[]
+  owner                 AdminUser?                   @relation("CommercialOpportunityOwner", fields: [ownerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  operator              CasinoOperator?              @relation(fields: [operatorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  brand                 CasinoBrand?                 @relation(fields: [brandId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  casino                Casino?                      @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateNetwork      AffiliateNetwork?            @relation(fields: [affiliateNetworkId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateProgram      AffiliateProgram?            @relation(fields: [affiliateProgramId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  possibleDuplicateOf   CommercialOpportunity?       @relation("CommercialOpportunityDuplicates", fields: [possibleDuplicateOfId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  possibleDuplicates    CommercialOpportunity[]      @relation("CommercialOpportunityDuplicates")
+  evidence              CommercialEvidence[]
+  contacts              CommercialContact[]
+  activities            CommercialActivity[]
+  applications          CommercialApplication[]
+  terms                 CommercialTerm[]
+  tasks                 CommercialTask[]
+  agentRuns             CommercialAgentRun[]
+  agentOperations       CommercialAgentOperation[]
+  activationPackets     CommercialActivationPacket[]
+  partnerMarketSupports PartnerCasinoMarketSupport[]
 
   @@index([stage, priority, updatedAt])
   @@index([ownerId, stage])

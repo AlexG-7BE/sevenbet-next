@@ -436,3 +436,41 @@ tool on the existing Commercial MCP resource:
    surface.
 
 The permanent operating contract is [Partner Tracking Link Registration](../06_Operations/Partner-Tracking-Link-Registration.md).
+
+### Runtime market-registration extension
+
+The explicit Founder instruction on 11 September 2026 extends the same fifth
+tool; it does not create a sixth tool or a generic mutation surface.
+
+1. Public input remains `partner`, `casino` and `trackingUrl`, with mutually
+   exclusive optional `geo` or `supportedGeos` (maximum 100 normalized,
+   deduplicated exact market codes). `ZZ` cannot be asserted as a factual
+   market.
+2. `geo` registers one exact supported market when absent. `supportedGeos`
+   registers the supplied exact markets and one reusable generic link. With
+   neither field, the generic link covers all already-known seeded and runtime
+   support for that established Partner × Casino.
+3. `CURRENT_PARTNER_INVENTORY` is seed authority, not a runtime ceiling.
+   Positive runtime support is durable exact-market data and must survive a
+   new process or deployment. Static support continues to prove the bounded
+   Partner × Casino relationship; this mutation still cannot create a Casino
+   or a new partner relationship.
+4. Runtime support records truthful Founder-workflow provenance through
+   `CasinoCountry`, `CasinoCountryEvidence` and the exact-market
+   `PartnerCasinoMarketSupport` relationship. It does not fabricate an
+   operator/regulator URL, legal authority or route health.
+5. Legal and regulatory authority remains independent per exact market.
+   One blocked market does not fail an otherwise healthy batch. Only eligible
+   rows are offered to RFC-042, which remains the sole activation and health
+   state writer.
+6. A generic multi-market registration performs one bounded external redirect
+   verification. RFC-042 consumes the same bounded result for each eligible
+   exact reconciliation rather than repeating the identical network chain.
+7. Serializable transactions, deterministic evidence IDs and exact-market
+   uniqueness make repeat, concurrent and post-restart calls convergent. A
+   later generic replacement resolves runtime support from the database, so no
+   repository change is required for the added market.
+8. Migration `0036_partner_casino_runtime_market_support` is additive, creates
+   no support backfill, rewrites no existing route or activation, and requires
+   DB-first deployment before the application binary. This amendment does not
+   authorise that Production migration or deployment.

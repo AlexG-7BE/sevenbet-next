@@ -23,6 +23,7 @@ const MARKET_ACTIVATION_TARGET_MIGRATION = "0032_market_activation_global_fallba
 const MEDIA_GEO3_TARGET_MIGRATION = "0033_media_geo3_pipeline";
 const MEDIA_RETIREMENT_TARGET_MIGRATION = "0034_logo_only_media_retirement";
 const MARKET_ACTIVATION_EXACT_MARKET_MIGRATION = "0035_market_activation_exact_market_code";
+const RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION = "0036_partner_casino_runtime_market_support";
 
 type MigrationRow = {
   migration_name: string;
@@ -347,7 +348,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -355,6 +356,7 @@ async function maybeApplyProgrammeAccessMigration() {
 
   const prisma = createCasinoMarket0025AdminClient();
   let marketActivationSchemaReady = false;
+  let runtimePartnerMarketSupportSchemaReady = false;
   let mediaRetirementReady = false;
   try {
     const rows = await readMigrationRows(prisma);
@@ -390,6 +392,7 @@ async function maybeApplyProgrammeAccessMigration() {
       ...expectedLegacyPending,
       ...(!applied.has(MEDIA_RETIREMENT_TARGET_MIGRATION) ? [MEDIA_RETIREMENT_TARGET_MIGRATION] : []),
       ...(!applied.has(MARKET_ACTIVATION_EXACT_MARKET_MIGRATION) ? [MARKET_ACTIVATION_EXACT_MARKET_MIGRATION] : []),
+      ...(!applied.has(RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION) ? [RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION] : []),
     ];
 
     if (
@@ -543,6 +546,45 @@ async function maybeApplyProgrammeAccessMigration() {
       });
       assertChecksum(completedByName.get(MEDIA_GEO3_TARGET_MIGRATION), MEDIA_GEO3_TARGET_MIGRATION);
     }
+    if (applied.has(RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION)) {
+      assertChecksum(completedByName.get(RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION), RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION);
+      const [runtimeSupportSchema] = await prisma.$queryRawUnsafe<Array<{
+        support_table: string | null;
+        support_unique: string | null;
+        profile_composite_unique: string | null;
+        exact_market_check: boolean;
+        profile_binding: boolean;
+      }>>(`
+        SELECT
+          to_regclass('public."PartnerCasinoMarketSupport"')::text AS support_table,
+          to_regclass('public."PartnerCasinoMarketSupport_opportunityId_casinoId_marketCode_key"')::text AS support_unique,
+          to_regclass('public."CasinoCountry_id_casinoId_countryCode_key"')::text AS profile_composite_unique,
+          EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'PartnerCasinoMarketSupport_marketCode_check'
+          ) AS exact_market_check,
+          EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'PartnerCasinoMarketSupport_marketProfile_fkey'
+          ) AS profile_binding
+      `);
+      runtimePartnerMarketSupportSchemaReady = Boolean(
+        runtimeSupportSchema?.support_table
+        && runtimeSupportSchema.support_unique
+        && runtimeSupportSchema.profile_composite_unique
+        && runtimeSupportSchema.exact_market_check
+        && runtimeSupportSchema.profile_binding,
+      );
+      if (!runtimePartnerMarketSupportSchemaReady) {
+        throw new Error("Production migration guard found incomplete runtime Partner market support schema.");
+      }
+      writeEvent({
+        event: "production_runtime_partner_market_support_preflight",
+        migration: RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION,
+        checksumMatched: true,
+        canonicalTableReady: true,
+      });
+    }
     if (applied.has(MEDIA_RETIREMENT_TARGET_MIGRATION)) {
       assertChecksum(completedByName.get(MEDIA_RETIREMENT_TARGET_MIGRATION), MEDIA_RETIREMENT_TARGET_MIGRATION);
       await assertMediaRetirementInvariants(prisma);
@@ -563,6 +605,10 @@ async function maybeApplyProgrammeAccessMigration() {
 
   if (!marketActivationSchemaReady) {
     throw new Error(`Production DB-first release requires completed ${MARKET_ACTIVATION_EXACT_MARKET_MIGRATION} before this application build.`);
+  }
+
+  if (!runtimePartnerMarketSupportSchemaReady) {
+    throw new Error(`Production DB-first release requires completed ${RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION} before this application build.`);
   }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();

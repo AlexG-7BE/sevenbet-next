@@ -347,7 +347,8 @@ function canonicalOutcomeUnchanged(current: MarketActivation, data: ReturnType<t
 export class MarketActivationRepository {
   async apply(intent: NormalizedMarketActivationIntent, now = new Date()): Promise<MarketActivationApplyResult> {
     let lastError: unknown;
-    for (let attempt = 1; attempt <= 4; attempt += 1) {
+    const retryLimit = 6;
+    for (let attempt = 1; attempt <= retryLimit; attempt += 1) {
       try {
         return await prisma.$transaction((tx) => this.applyInTransaction(tx, intent, now), {
           isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -356,7 +357,8 @@ export class MarketActivationRepository {
         });
       } catch (error) {
         lastError = error;
-        if (!["P2002", "P2034"].includes(errorCode(error) ?? "") || attempt === 4) throw error;
+        if (!["P2002", "P2034"].includes(errorCode(error) ?? "") || attempt === retryLimit) throw error;
+        await new Promise((resolve) => setTimeout(resolve, attempt * 25));
       }
     }
     throw lastError;
@@ -368,7 +370,8 @@ export class MarketActivationRepository {
     verification: MarketActivationRouteVerificationResult,
   ): Promise<MarketActivationApplyResult> {
     let lastError: unknown;
-    for (let attempt = 1; attempt <= 4; attempt += 1) {
+    const retryLimit = 6;
+    for (let attempt = 1; attempt <= retryLimit; attempt += 1) {
       try {
         return await prisma.$transaction(async (tx) => {
           const current = await tx.marketActivation.findUnique({ where: { id: activationId } });
@@ -477,7 +480,8 @@ export class MarketActivationRepository {
         });
       } catch (error) {
         lastError = error;
-        if (!["P2002", "P2034"].includes(errorCode(error) ?? "") || attempt === 4) throw error;
+        if (!["P2002", "P2034"].includes(errorCode(error) ?? "") || attempt === retryLimit) throw error;
+        await new Promise((resolve) => setTimeout(resolve, attempt * 25));
       }
     }
     throw lastError;

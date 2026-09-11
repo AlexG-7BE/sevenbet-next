@@ -10,6 +10,7 @@ import {
   MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
   normalizeMarketActivationIntent,
   type MarketActivationIntentInput,
+  type MarketActivationRouteVerificationResult,
 } from "./contract";
 import {
   marketActivationRouteVerifier,
@@ -73,7 +74,11 @@ export class MarketActivationController {
     private readonly parentJurisdiction: ParentJurisdictionAuthorityPort = jurisdictionResolver,
   ) {}
 
-  async setDesiredState(input: MarketActivationIntentInput, now = new Date()): Promise<MarketActivationApplyResult> {
+  async setDesiredState(
+    input: MarketActivationIntentInput,
+    now = new Date(),
+    preverifiedRoute: MarketActivationRouteVerificationResult | null = null,
+  ): Promise<MarketActivationApplyResult> {
     const intent = normalizeMarketActivationIntent(input);
     if (intent.desiredState === "ACTIVE" && intent.marketCode.includes("-")) {
       const parentDecision = await this.parentJurisdiction.resolve({
@@ -87,6 +92,27 @@ export class MarketActivationController {
     }
     let result = await this.store.apply(intent, now);
     if (intent.desiredState !== "ACTIVE") return result;
+    if (preverifiedRoute && routeVerificationRequired(result, now)) {
+      // A bounded upstream workflow may verify one canonical partner URL once
+      // and reconcile it across several exact markets. RFC-042 still owns the
+      // state transition and persistence of that verification result; it just
+      // must not repeat the external request for every market in the batch.
+      for (let attempt = 1; attempt <= 2 && routeVerificationRequired(result, now); attempt += 1) {
+        try {
+          result = await this.store.recordRouteVerification(
+            result.activation.id,
+            result.activation.version,
+            preverifiedRoute,
+          );
+        } catch (error) {
+          if (!(error instanceof Error)
+            || error.message !== "MARKET_ACTIVATION_VERIFICATION_STALE"
+            || attempt === 2) throw error;
+          result = await this.store.apply(intent, now);
+        }
+      }
+      return result;
+    }
     for (let attempt = 1; attempt <= 2 && routeVerificationRequired(result, now); attempt += 1) {
       let verification;
       try {
@@ -111,8 +137,9 @@ export class MarketActivationController {
   activateCasinoInGeo(
     input: Omit<MarketActivationIntentInput, "desiredState">,
     now = new Date(),
+    preverifiedRoute: MarketActivationRouteVerificationResult | null = null,
   ) {
-    return this.setDesiredState({ ...input, desiredState: "ACTIVE" }, now);
+    return this.setDesiredState({ ...input, desiredState: "ACTIVE" }, now, preverifiedRoute);
   }
 
   disableCasinoInGeo(

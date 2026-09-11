@@ -46,6 +46,16 @@ The same Casino can therefore have distinct PE and SE profiles without becoming 
 
 Licence provenance continues through `CasinoLicenseEvidence`. Missing, stale, unknown, or contradictory evidence does not become a positive fact.
 
+The 11 September 2026 runtime market-registration amendment permits an
+established Partner × Casino workflow to assert positive operator-market
+support without inventing external provenance. It records the parent
+`CasinoCountry.availability=AVAILABLE`, a `DETECTED / INTERNAL_RECORD`
+`CasinoCountryEvidence` row whose source reference identifies the authorized
+Founder workflow, and one exact-market `PartnerCasinoMarketSupport` row. The
+new relationship is keyed by Commercial opportunity, Casino and `marketCode`;
+subdivisions share the factual parent `CasinoCountry` while retaining their
+exact code. It is neither legal evidence nor commercial activation authority.
+
 ## Logical PartnerRoute
 
 There is no `PartnerRoute` table. `PartnerRouteService` projects existing normalized records for an exact Casino and country:
@@ -101,3 +111,12 @@ The partial indexes retaining uniqueness for null-scoped legacy payments/provide
 ## Ingestion boundary
 
 The frozen Phase 1/1.5 research corpus is read-only architecture evidence in this workstream. `CASINO-DATA-INGEST-02` will map that corpus into the canonical schema and test Betsson PE and SE in a non-Production environment. Ingestion must retain evidence classification, unknowns and contradictions and must independently establish any commercial authority. It may not infer an affiliate route from a factual profile.
+
+## Runtime support migration amendment
+
+Migration `0036_partner_casino_runtime_market_support` is additive. It adds the
+exact Partner × Casino × market support relation and the composite
+`CasinoCountry` key required to bind it to the correct parent profile. It
+performs no backfill or rewrite. Runtime records are created only by the
+bounded registration workflow, and RFC-042 remains the only path from those
+facts to public commercial state.

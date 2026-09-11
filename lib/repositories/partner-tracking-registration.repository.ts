@@ -21,15 +21,21 @@ import {
   type CurrentPartnerName,
   type CurrentPartnerInventorySeed,
 } from "@/lib/current-partner-rollout/inventory";
+import { worldwideLegalDecisionForGeo } from "@/lib/current-partner-worldwide-authority/inventory";
 import prisma from "@/lib/db/prisma";
 import { ConflictError, ValidationError } from "@/lib/services/service-error";
 
 type Transaction = Prisma.TransactionClient;
 
 const REGISTRATION_METADATA_KEY = "partnerTrackingRegistration";
-const REGISTRATION_VERSION = "PARTNER-TRACKING-REGISTRATION-V1";
+const REGISTRATION_VERSION = "PARTNER-TRACKING-REGISTRATION-V2";
 const REGISTRATION_SOURCE = "COMMERCIAL_MCP_PARTNER_PROVIDED";
 const VERIFYING_TTL_MS = 2 * 60_000;
+const SERIALIZABLE_RETRY_LIMIT = 6;
+
+function waitForSerializableRetry(attempt: number) {
+  return new Promise((resolve) => setTimeout(resolve, attempt * 25));
+}
 
 function json(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
@@ -70,6 +76,15 @@ function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
+function deterministicUuid(value: string) {
+  const hash = sha256(value).slice(0, 32);
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-8${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
+}
+
+function runtimeSupportReference(opportunityId: string, casinoId: string, marketCode: string) {
+  return `COMMERCIAL_MCP_FOUNDER_MARKET_ASSERTION:${opportunityId}:${casinoId}:${marketCode}`;
+}
+
 function hostFromUrl(value: string | null) {
   if (!value) return null;
   try {
@@ -92,6 +107,51 @@ function boundedCandidate(casino: { id: string; title: string; slug: string }) {
   return { id: casino.id, name: casino.title, slug: casino.slug };
 }
 
+export type PartnerTrackingMarketRow = CurrentPartnerInventorySeed & {
+  supportOrigin: "SEEDED" | "RUNTIME";
+  marketSupport: "CREATED" | "ALREADY_SUPPORTED";
+};
+
+function runtimeMarketRow(input: {
+  partner: CurrentPartnerName;
+  casino: string;
+  casinoSlug: string;
+  geo: string;
+  evidenceReference: string;
+  marketSupport?: PartnerTrackingMarketRow["marketSupport"];
+}): PartnerTrackingMarketRow {
+  const legal = worldwideLegalDecisionForGeo(input.geo);
+  const finalState = legal.legalState === "BLOCKED_BY_LAW"
+    ? "BLOCKED_BY_LAW"
+    : legal.legalState === "ACTION_REQUIRED_REGULATORY"
+      ? "ACTION_REQUIRED_REGULATORY"
+      : "MISSING_TRACKING_ROUTE";
+  return {
+    partner: input.partner,
+    casino: input.casino,
+    casinoSlug: input.casinoSlug,
+    geo: input.geo,
+    operatorMarketSupported: true,
+    legalState: legal.legalState,
+    regulatoryAction: legal.regulatoryAction,
+    partnerTrackingUrlPresent: false,
+    trackingScope: "NONE",
+    trackingIdentity: null,
+    redirectSlug: null,
+    finalState,
+    reason: legal.legalState === "BLOCKED_BY_LAW"
+      ? "Current canonical legal authority blocks ordinary commercial activation."
+      : legal.legalState === "ACTION_REQUIRED_REGULATORY"
+        ? legal.regulatoryAction ?? "An exact regulatory action is required before activation."
+        : "Founder-authorized runtime market support is present; no canonical tracking route has yet been promoted.",
+    evidenceReferences: [input.evidenceReference, legal.evidence],
+    supportEvidenceClassification: "DETECTED",
+    legalEvidenceClassification: legal.evidenceClassification,
+    supportOrigin: "RUNTIME",
+    marketSupport: input.marketSupport ?? "ALREADY_SUPPORTED",
+  };
+}
+
 export type PartnerTrackingTarget = {
   partner: CurrentPartnerName;
   partnerId: string;
@@ -101,7 +161,8 @@ export type PartnerTrackingTarget = {
   casinoSlug: string;
   casinoDomain: string;
   casinoWebsiteUrl: string | null;
-  rows: CurrentPartnerInventorySeed[];
+  rows: PartnerTrackingMarketRow[];
+  requestedGeos: string[] | null;
 };
 
 export type PartnerTrackingStage = {
@@ -117,7 +178,10 @@ export type PartnerTrackingStage = {
   internalRedirect: string;
   expectedFinalHost: string;
   requiredAttributionParameters: string[];
-  affectedRows: CurrentPartnerInventorySeed[];
+  affectedRows: PartnerTrackingMarketRow[];
+  supportedGeos: string[] | null;
+  newSupportedGeoCount: number;
+  existingSupportedGeoCount: number;
   previousTrackingLinkIds: string[];
   previousActivations: Array<{
     id: string;
@@ -142,7 +206,7 @@ export class PartnerTrackingRegistrationRepository {
     partnerId: string;
     partnerAliases: readonly string[];
     casino: string;
-    geo: string | null;
+    requestedGeos: string[] | null;
   }): Promise<PartnerTrackingTarget> {
     const opportunity = await this.database.commercialOpportunity.findUnique({
       where: { id: input.partnerId },
@@ -212,12 +276,37 @@ export class PartnerTrackingRegistrationRepository {
         casino: boundedCandidate(casino),
       });
     }
-    if (input.geo && !relationshipRows.some((row) => row.geo === input.geo)) {
-      throw new ValidationError("GEO is not in the current supported Partner × Casino inventory", {
-        reason: "PARTNER_CASINO_GEO_UNSUPPORTED",
-        geo: input.geo,
-        supportedGeos: relationshipRows.map((row) => row.geo).sort(),
-      });
+    const runtimeSupports = await this.database.partnerCasinoMarketSupport.findMany({
+      where: {
+        opportunityId: opportunity.id,
+        casinoId: casino.id,
+        operatorMarketSupported: true,
+      },
+      select: { marketCode: true, sourceReference: true },
+      orderBy: [{ marketCode: "asc" }, { id: "asc" }],
+    });
+    const rows = new Map<string, PartnerTrackingMarketRow>();
+    for (const row of relationshipRows) {
+      rows.set(row.geo, { ...row, supportOrigin: "SEEDED", marketSupport: "ALREADY_SUPPORTED" });
+    }
+    for (const support of runtimeSupports) {
+      if (!rows.has(support.marketCode)) rows.set(support.marketCode, runtimeMarketRow({
+        partner: input.partner,
+        casino: casino.title,
+        casinoSlug: casino.slug,
+        geo: support.marketCode,
+        evidenceReference: support.sourceReference,
+      }));
+    }
+    for (const geo of input.requestedGeos ?? []) {
+      if (!rows.has(geo)) rows.set(geo, runtimeMarketRow({
+        partner: input.partner,
+        casino: casino.title,
+        casinoSlug: casino.slug,
+        geo,
+        evidenceReference: runtimeSupportReference(opportunity.id, casino.id, geo),
+        marketSupport: "CREATED",
+      }));
     }
 
     return {
@@ -229,7 +318,8 @@ export class PartnerTrackingRegistrationRepository {
       casinoSlug: casino.slug,
       casinoDomain: casino.domain,
       casinoWebsiteUrl: casino.websiteUrl,
-      rows: relationshipRows.sort((left, right) => left.geo.localeCompare(right.geo)),
+      rows: [...rows.values()].sort((left, right) => left.geo.localeCompare(right.geo)),
+      requestedGeos: input.requestedGeos,
     };
   }
 
@@ -239,11 +329,12 @@ export class PartnerTrackingRegistrationRepository {
     linkHash: string;
     scope: PartnerTrackingScope;
     geo: string | null;
+    supportedGeos?: string[] | null;
     actorId: string;
     now: Date;
   }): Promise<PartnerTrackingStage> {
     let lastError: unknown;
-    for (let attempt = 1; attempt <= 4; attempt += 1) {
+    for (let attempt = 1; attempt <= SERIALIZABLE_RETRY_LIMIT; attempt += 1) {
       try {
         return await this.database.$transaction(
           (tx) => this.stageInTransaction(tx, input),
@@ -252,7 +343,8 @@ export class PartnerTrackingRegistrationRepository {
       } catch (error) {
         lastError = error;
         const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
-        if (!["P2002", "P2034"].includes(code) || attempt === 4) throw error;
+        if (!["P2002", "P2034"].includes(code) || attempt === SERIALIZABLE_RETRY_LIMIT) throw error;
+        await waitForSerializableRetry(attempt);
       }
     }
     throw lastError;
@@ -264,6 +356,7 @@ export class PartnerTrackingRegistrationRepository {
     linkHash: string;
     scope: PartnerTrackingScope;
     geo: string | null;
+    supportedGeos?: string[] | null;
     actorId: string;
     now: Date;
   }): Promise<PartnerTrackingStage> {
@@ -302,7 +395,98 @@ export class PartnerTrackingRegistrationRepository {
             },
           });
     }
-    const target = { ...input.target, affiliateNetworkId: network.id };
+    const supportState = new Map(input.target.rows.map((row) => [row.geo, row.marketSupport]));
+    for (const marketCode of input.target.requestedGeos ?? []) {
+      const row = input.target.rows.find((entry) => entry.geo === marketCode);
+      if (row?.supportOrigin === "SEEDED") {
+        supportState.set(marketCode, "ALREADY_SUPPORTED");
+        continue;
+      }
+      const countryCode = countryFromGeo(marketCode);
+      if (!countryCode) throw new ValidationError("Runtime market code is invalid", { reason: "PARTNER_TRACKING_GEO_INVALID" });
+      const sourceReference = runtimeSupportReference(input.target.partnerId, input.target.casinoId, marketCode);
+      const profile = await tx.casinoCountry.upsert({
+        where: { casinoId_countryCode: { casinoId: input.target.casinoId, countryCode } },
+        create: {
+          casinoId: input.target.casinoId,
+          countryCode,
+          availability: "AVAILABLE",
+          lastVerifiedAt: input.now,
+          notes: `${REGISTRATION_VERSION}: Founder-authorized Commercial MCP runtime market assertion; legal and route state remain independent.`,
+        },
+        update: { availability: "AVAILABLE", lastVerifiedAt: input.now },
+        select: { id: true },
+      });
+      const evidenceId = deterministicUuid(`${REGISTRATION_VERSION}:MARKET_SUPPORT:${input.target.partnerId}:${input.target.casinoId}:${marketCode}`);
+      await tx.casinoCountryEvidence.upsert({
+        where: { id: evidenceId },
+        create: {
+          id: evidenceId,
+          casinoCountryId: profile.id,
+          classification: "DETECTED",
+          sourceType: "INTERNAL_RECORD",
+          sourceReference,
+          fieldKeys: ["availability", `operatorMarketSupported:${marketCode}`],
+          observedAt: input.now,
+          lastVerifiedAt: input.now,
+          notes: `${REGISTRATION_VERSION}: supplied through the Founder-authorized Commercial MCP workflow; no external regulator/operator source is claimed.`,
+        },
+        update: {
+          casinoCountryId: profile.id,
+          classification: "DETECTED",
+          sourceType: "INTERNAL_RECORD",
+          sourceReference,
+          fieldKeys: ["availability", `operatorMarketSupported:${marketCode}`],
+          lastVerifiedAt: input.now,
+        },
+      });
+      const existingSupport = await tx.partnerCasinoMarketSupport.findUnique({
+        where: { opportunityId_casinoId_marketCode: {
+          opportunityId: input.target.partnerId,
+          casinoId: input.target.casinoId,
+          marketCode,
+        } },
+        select: { id: true, operatorMarketSupported: true },
+      });
+      if (existingSupport) {
+        await tx.partnerCasinoMarketSupport.update({
+          where: { id: existingSupport.id },
+          data: {
+            affiliateNetworkId: network.id,
+            casinoCountryId: profile.id,
+            countryCode,
+            operatorMarketSupported: true,
+            sourceType: "INTERNAL_RECORD",
+            sourceReference,
+            lastVerifiedAt: input.now,
+          },
+        });
+      } else {
+        await tx.partnerCasinoMarketSupport.create({ data: {
+          opportunityId: input.target.partnerId,
+          affiliateNetworkId: network.id,
+          casinoId: input.target.casinoId,
+          casinoCountryId: profile.id,
+          countryCode,
+          marketCode,
+          operatorMarketSupported: true,
+          sourceType: "INTERNAL_RECORD",
+          sourceReference,
+          observedAt: input.now,
+          lastVerifiedAt: input.now,
+          createdBy: input.actorId,
+        } });
+      }
+      supportState.set(marketCode, existingSupport?.operatorMarketSupported ? "ALREADY_SUPPORTED" : "CREATED");
+    }
+    const target = {
+      ...input.target,
+      affiliateNetworkId: network.id,
+      rows: input.target.rows.map((row) => ({
+        ...row,
+        marketSupport: supportState.get(row.geo) ?? row.marketSupport,
+      })),
+    };
 
     const sameUrl = await tx.affiliateTrackingLink.findFirst({
       where: {
@@ -406,7 +590,7 @@ export class PartnerTrackingRegistrationRepository {
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
     const regionalIdentity = input.scope === "REGIONAL_REUSE"
-      ? input.target.rows.find((row) => row.geo === input.geo)?.trackingIdentity ?? null
+      ? target.rows.find((row) => row.geo === input.geo)?.trackingIdentity ?? null
       : null;
     if (input.scope === "REGIONAL_REUSE" && !regionalIdentity) {
       throw new ValidationError("Regional route identity is unavailable", {
@@ -431,7 +615,7 @@ export class PartnerTrackingRegistrationRepository {
       });
     }
 
-    const exactOverrides = new Set(input.target.rows
+    const exactOverrides = new Set(target.rows
       .filter((row) => row.partnerTrackingUrlPresent && row.trackingScope === "EXACT_GEO")
       .map((row) => row.geo));
     for (const link of allLinks) {
@@ -440,25 +624,31 @@ export class PartnerTrackingRegistrationRepository {
         exactOverrides.add(metadata.geo);
       }
     }
+    const explicitlySupported = new Set(input.supportedGeos ?? []);
     const declaredScopeRows = input.scope === "EXACT_GEO"
-      ? input.target.rows.filter((row) => row.geo === input.geo)
+      ? target.rows.filter((row) => row.geo === input.geo)
       : input.scope === "REGIONAL_REUSE"
-        ? input.target.rows.filter((row) => row.trackingScope === "REGIONAL_REUSE" && row.trackingIdentity === regionalIdentity)
-        : input.target.rows.filter((row) => !exactOverrides.has(row.geo)
+        ? target.rows.filter((row) => row.trackingScope === "REGIONAL_REUSE" && row.trackingIdentity === regionalIdentity)
+        : target.rows.filter((row) => (!input.supportedGeos || explicitlySupported.has(row.geo))
+          && !exactOverrides.has(row.geo)
           && row.trackingScope !== "EXACT_GEO"
           && row.trackingScope !== "REGIONAL_REUSE");
     // Review-only inferred evidence remains visible in the worldwide corpus,
     // but it cannot be promoted into runtime authority by the registrar.
     // Historical inventories predate these fields and retain their behavior.
     const affectedRows = declaredScopeRows
-      .filter((row) => row.supportEvidenceClassification !== "INFERRED"
-        && row.legalEvidenceClassification !== "INFERRED")
+      .filter((row) => row.supportOrigin === "RUNTIME"
+        || (row.supportEvidenceClassification !== "INFERRED"
+          && row.legalEvidenceClassification !== "INFERRED"))
       .sort((left, right) => left.geo.localeCompare(right.geo));
     if (!affectedRows.length) {
       throw new ValidationError("No evidence-ready supported GEO remains in the requested tracking scope", {
         reason: declaredScopeRows.length ? "PARTNER_TRACKING_EVIDENCE_PENDING" : "PARTNER_TRACKING_SCOPE_EMPTY",
       });
     }
+    const supportSummaryGeos = target.requestedGeos ?? affectedRows.map((row) => row.geo);
+    const newSupportedGeoCount = supportSummaryGeos.filter((geo) => supportState.get(geo) === "CREATED").length;
+    const existingSupportedGeoCount = supportSummaryGeos.length - newSupportedGeoCount;
 
     const previousActivations = await tx.marketActivation.findMany({
       where: {
@@ -640,6 +830,9 @@ export class PartnerTrackingRegistrationRepository {
       expectedFinalHost,
       requiredAttributionParameters,
       affectedRows,
+      supportedGeos: input.supportedGeos ?? null,
+      newSupportedGeoCount,
+      existingSupportedGeoCount,
       previousTrackingLinkIds,
       previousActivations: previousActivations.flatMap((activation) => activation.primaryTrackingLinkId
         && activation.affiliateOfferId
@@ -715,7 +908,7 @@ export class PartnerTrackingRegistrationRepository {
     actorId: string;
   }): Promise<PartnerTrackingPromotion> {
     let lastError: unknown;
-    for (let attempt = 1; attempt <= 4; attempt += 1) {
+    for (let attempt = 1; attempt <= SERIALIZABLE_RETRY_LIMIT; attempt += 1) {
       try {
         return await this.database.$transaction(async (tx) => {
           const candidate = await tx.affiliateTrackingLink.findUniqueOrThrow({ where: { id: input.stage.trackingLinkId } });
@@ -832,23 +1025,24 @@ export class PartnerTrackingRegistrationRepository {
                 update: { lastVerifiedAt: input.checkedAt },
                 select: { id: true },
               });
-              const evidenceId = sha256(`${REGISTRATION_VERSION}:${profile.id}`).slice(0, 32);
-              const uuid = `${evidenceId.slice(0, 8)}-${evidenceId.slice(8, 12)}-4${evidenceId.slice(13, 16)}-8${evidenceId.slice(17, 20)}-${evidenceId.slice(20, 32)}`;
-              await tx.casinoCountryEvidence.upsert({
-                where: { id: uuid },
-                create: {
-                  id: uuid,
-                  casinoCountryId: profile.id,
-                  classification: "DETECTED",
-                  sourceType: "PARTNER_COMMUNICATION",
-                  sourceReference: `FOUNDER_SUPPLIED_PARTNER_URL:${input.stage.linkHash}; ${GLOBAL_CURRENT_PARTNER_RELEASE}`,
-                  fieldKeys: ["availability", "countryCode"],
-                  observedAt: input.checkedAt,
-                  lastVerifiedAt: input.checkedAt,
-                  notes: `${REGISTRATION_VERSION}; no tokenized URL retained in evidence`,
-                },
-                update: { lastVerifiedAt: input.checkedAt },
-              });
+              if (row.supportOrigin === "SEEDED") {
+                const evidenceId = deterministicUuid(`${REGISTRATION_VERSION}:SEEDED_SUPPORT:${profile.id}`);
+                await tx.casinoCountryEvidence.upsert({
+                  where: { id: evidenceId },
+                  create: {
+                    id: evidenceId,
+                    casinoCountryId: profile.id,
+                    classification: "DETECTED",
+                    sourceType: "PARTNER_COMMUNICATION",
+                    sourceReference: `FOUNDER_SUPPLIED_PARTNER_URL:${input.stage.linkHash}; ${GLOBAL_CURRENT_PARTNER_RELEASE}`,
+                    fieldKeys: ["availability", "countryCode"],
+                    observedAt: input.checkedAt,
+                    lastVerifiedAt: input.checkedAt,
+                    notes: `${REGISTRATION_VERSION}; no tokenized URL retained in evidence`,
+                  },
+                  update: { lastVerifiedAt: input.checkedAt },
+                });
+              }
             }
           }
           await tx.affiliateRedirectSlug.update({
@@ -869,7 +1063,8 @@ export class PartnerTrackingRegistrationRepository {
       } catch (error) {
         lastError = error;
         const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
-        if (!["P2002", "P2034"].includes(code) || attempt === 4) throw error;
+        if (!["P2002", "P2034"].includes(code) || attempt === SERIALIZABLE_RETRY_LIMIT) throw error;
+        await waitForSerializableRetry(attempt);
       }
     }
     throw lastError;
@@ -970,7 +1165,28 @@ export class PartnerTrackingRegistrationRepository {
           casinoSlug: link.offer.casino.slug,
         }];
       });
-      const partnerRows = CURRENT_PARTNER_INVENTORY.filter((row) => row.partner === input.stage.target.partner);
+      const runtimeSupports = await tx.partnerCasinoMarketSupport.findMany({
+        where: { opportunityId: input.stage.target.partnerId, operatorMarketSupported: true },
+        select: {
+          marketCode: true,
+          sourceReference: true,
+          casino: { select: { title: true, slug: true } },
+        },
+      });
+      const partnerRowsByKey = new Map(CURRENT_PARTNER_INVENTORY
+        .filter((row) => row.partner === input.stage.target.partner)
+        .map((row) => [`${normalizeCurrentPartnerIdentity(row.casino)}:${row.geo}`, row]));
+      for (const support of runtimeSupports) {
+        const key = `${normalizeCurrentPartnerIdentity(support.casino.title)}:${support.marketCode}`;
+        if (!partnerRowsByKey.has(key)) partnerRowsByKey.set(key, runtimeMarketRow({
+          partner: input.stage.target.partner,
+          casino: support.casino.title,
+          casinoSlug: support.casino.slug,
+          geo: support.marketCode,
+          evidenceReference: support.sourceReference,
+        }));
+      }
+      const partnerRows = [...partnerRowsByKey.values()];
       const coversRow = partnerTrackingCoverageMatches;
       const missingRows = partnerRows.filter((row) => !row.partnerTrackingUrlPresent && !coverage.some((link) =>
         link.active && link.stage === "CANONICAL" && coversRow(link, row)));
@@ -1053,6 +1269,9 @@ export class PartnerTrackingRegistrationRepository {
           casinoId: input.stage.target.casinoId,
           scope: input.stage.scope,
           geo: input.stage.geo,
+          supportedGeos: input.stage.supportedGeos,
+          newSupportedGeoCount: input.stage.newSupportedGeoCount,
+          existingSupportedGeoCount: input.stage.existingSupportedGeoCount,
           linkHash: input.stage.linkHash,
           previousTrackingLinkId: input.previousTrackingLinkId,
           newTrackingLinkId: input.stage.trackingLinkId,
