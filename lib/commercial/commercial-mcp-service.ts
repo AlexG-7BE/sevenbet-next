@@ -32,7 +32,7 @@ function plainJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-const GOLDENPLAY_FOUNDER_OVERRIDE_LINK_HASH = "6017be370cdc619d4c17b54d939fe6b6596f7c33004b1c15036ef1c0acca857c";
+const GOLDENPLAY_FOUNDER_OVERRIDE_LINK_HASH = "75c41114c11b4f12d411e6e3fe4ca1823959f02ae5668acd49e0970241dc950e";
 
 const goldenPlayFounderOverrideService = new PartnerTrackingRegistrationService(
   undefined,
