@@ -257,6 +257,20 @@ function legalDecision(geo: string, specialAction: string | null = null, special
   };
 }
 
+/**
+ * Legal/regulatory classification is independent from the code-seeded
+ * Partner × Casino support matrix. Runtime market registration reuses this
+ * bounded authority so a newly asserted supported market still preserves
+ * known prohibitions and mandatory regulatory actions.
+ */
+export function worldwideLegalDecisionForGeo(value: string) {
+  const geo = value.trim().toUpperCase().replace(/_/g, "-");
+  if (!/^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(geo) || geo === "ZZ") {
+    throw new Error("WORLDWIDE_AUTHORITY_GEO_INVALID");
+  }
+  return legalDecision(geo);
+}
+
 function tracking(
   identity: string,
   scope: TrackingDefinition["scope"] = "GENERIC",

@@ -97,7 +97,7 @@ export const commercialMcpTools: ToolDefinition[] = [
   {
     name: "commercial_register_partner_tracking_link",
     title: "Register partner tracking link",
-    description: "Register or replace a partner-provided affiliate tracking URL for an existing current Partner × Casino, optionally scoped to one GEO. The operation validates the route, normalizes canonical tracking and offer records, and reconciles legally eligible MarketActivations. It never creates partners or casinos and never bypasses legal or regulatory blocks.",
+    description: "Register or replace a partner-provided affiliate tracking URL for an existing current Partner × Casino. Optional geo adds one exact supported market; optional supportedGeos adds a bounded set for generic-link reuse. The operation persists runtime market support, validates the route once, normalizes canonical tracking and offer records, and reconciles legally eligible MarketActivations. It never creates partners or casinos and never bypasses legal or regulatory blocks.",
     inputSchema: z.toJSONSchema(PartnerTrackingRegistrationSchema) as Record<string, unknown>,
     securitySchemes: writeSecurity,
     _meta: { securitySchemes: writeSecurity },

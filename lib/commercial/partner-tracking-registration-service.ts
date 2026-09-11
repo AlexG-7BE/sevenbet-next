@@ -2,7 +2,7 @@ import type { AffiliateRouteHttpCheck } from "@/lib/affiliate-health/checker";
 import { checkAffiliateRouteHttp } from "@/lib/affiliate-health/checker";
 import { assertPublicNetworkUrl } from "@/lib/affiliate-health/public-network-url";
 import {
-  normalizePartnerTrackingGeo,
+  normalizePartnerTrackingMarkets,
   partnerTrackingLinkHash,
   type PartnerTrackingRegistrationInput,
   type PartnerTrackingRegistrationResult,
@@ -16,6 +16,7 @@ import { jurisdictionResolver } from "@/lib/jurisdiction/resolver";
 import { exactSubdivisionCommercialAuthority } from "@/lib/jurisdiction/exact-market-authority";
 import { worldwideFounderGbAuthorityApplies } from "@/lib/current-partner-worldwide-authority/inventory";
 import { marketActivationController } from "@/lib/market-activation/controller";
+import type { MarketActivationRouteVerificationResult } from "@/lib/market-activation/contract";
 import {
   partnerTrackingRegistrationRepository,
   type PartnerTrackingRegistrationRepository,
@@ -41,7 +42,7 @@ type ActivationControllerPort = {
     reason: string;
     sourceReferences: string[];
     idempotencyKey: string;
-  }, now?: Date): Promise<{
+  }, now?: Date, preverifiedRoute?: MarketActivationRouteVerificationResult | null): Promise<{
     activation: {
       id: string;
       desiredState: string;
@@ -97,12 +98,13 @@ function preservedOrFailedRows(
   return stage.affectedRows.map<PartnerTrackingRegistrationResultRow>((row) => {
     const restriction = restrictions.get(row.geo);
     if (restriction) {
-      return { geo: row.geo, finalState: restriction.finalState, marketActivationId: null, routeHealth: "NOT_APPLICABLE", reason: restriction.reason };
+      return { geo: row.geo, marketSupport: row.marketSupport, finalState: restriction.finalState, marketActivationId: null, routeHealth: "NOT_APPLICABLE", reason: restriction.reason };
     }
     const existing = stage.previousActivations.find((activation) => activation.geo === row.geo);
     if (existing) {
       return {
         geo: row.geo,
+        marketSupport: row.marketSupport,
         finalState: "ACTIVE_HEALTHY",
         marketActivationId: existing.id,
         routeHealth: "HEALTHY",
@@ -110,8 +112,8 @@ function preservedOrFailedRows(
       };
     }
     return outcome === "BROKEN"
-      ? { geo: row.geo, finalState: "BROKEN_ROUTE", marketActivationId: null, routeHealth: "BROKEN", reason: "Partner route failed bounded verification and was not activated." }
-      : { geo: row.geo, finalState: "MISSING_TRACKING_ROUTE", marketActivationId: null, routeHealth: "NOT_APPLICABLE", reason: "Verification infrastructure was inconclusive; retry without changing terminal commercial state." };
+      ? { geo: row.geo, marketSupport: row.marketSupport, finalState: "BROKEN_ROUTE", marketActivationId: null, routeHealth: "BROKEN", reason: "Partner route failed bounded verification and was not activated." }
+      : { geo: row.geo, marketSupport: row.marketSupport, finalState: "MISSING_TRACKING_ROUTE", marketActivationId: null, routeHealth: "NOT_APPLICABLE", reason: "Verification infrastructure was inconclusive; retry without changing terminal commercial state." };
   });
 }
 
@@ -132,6 +134,9 @@ function registrationResponse(input: {
     casinoId: input.stage.target.casinoId,
     trackingScope: input.stage.scope,
     geo: input.stage.geo,
+    supportedGeos: input.stage.supportedGeos,
+    newSupportedGeoCount: input.stage.newSupportedGeoCount,
+    existingSupportedGeoCount: input.stage.existingSupportedGeoCount,
     linkHash: input.stage.linkHash,
     trackingLinkId: input.stage.trackingLinkId,
     affiliateOfferId: input.stage.affiliateOfferId,
@@ -210,8 +215,10 @@ export class PartnerTrackingRegistrationService {
     }
     const partner = CURRENT_PARTNER_RECORDS.find((record) => record.opportunityId === partnerCandidates[0].opportunityId)!;
     let geo: string | null;
+    let supportedGeos: string[] | null;
+    let requestedGeos: string[] | null;
     try {
-      geo = normalizePartnerTrackingGeo(input.geo);
+      ({ geo, supportedGeos, requestedGeos } = normalizePartnerTrackingMarkets(input));
     } catch {
       throw new ValidationError("GEO is invalid", { reason: "PARTNER_TRACKING_GEO_INVALID" });
     }
@@ -220,12 +227,9 @@ export class PartnerTrackingRegistrationService {
       partnerId: partner.opportunityId,
       partnerAliases: partner.aliases,
       casino: input.casino,
-      geo,
+      requestedGeos,
     });
-    const exactInventoryRow = geo ? target.rows.find((row) => row.geo === geo) ?? null : null;
-    const scope = geo && exactInventoryRow?.trackingScope === "REGIONAL_REUSE"
-      ? "REGIONAL_REUSE"
-      : geo ? "EXACT_GEO" : "GENERIC";
+    const scope = geo ? "EXACT_GEO" : "GENERIC";
     const trackingUrl = safeTrackingUrl(input.trackingUrl);
     try {
       await this.publicUrlValidator(trackingUrl);
@@ -242,6 +246,7 @@ export class PartnerTrackingRegistrationService {
       linkHash,
       scope,
       geo,
+      supportedGeos,
       actorId: context.actorId,
       now,
     });
@@ -300,6 +305,16 @@ export class PartnerTrackingRegistrationService {
       });
     }
     if (!verification.finalHost) throw new Error("PARTNER_TRACKING_HEALTHY_FINAL_HOST_MISSING");
+    const preverifiedRoute: MarketActivationRouteVerificationResult = {
+      status: verification.status,
+      reason: verification.reason,
+      checkedAt,
+      method: verification.method,
+      statusCode: verification.statusCode,
+      durationMs: verification.durationMs,
+      redirectCount: verification.redirectCount,
+      finalHost: verification.finalHost,
+    };
     const promotion = stage.alreadyCanonical
       ? { ...stage, previousTrackingLinkId: null }
       : await this.repository.promote({
@@ -318,7 +333,7 @@ export class PartnerTrackingRegistrationService {
     for (const row of stage.affectedRows) {
       const restriction = restrictions.get(row.geo);
       if (restriction) {
-        results.push({ geo: row.geo, finalState: restriction.finalState, marketActivationId: null, routeHealth: "NOT_APPLICABLE", reason: restriction.reason });
+        results.push({ geo: row.geo, marketSupport: row.marketSupport, finalState: restriction.finalState, marketActivationId: null, routeHealth: "NOT_APPLICABLE", reason: restriction.reason });
         continue;
       }
       const result = await this.activationController.activateCasinoInGeo({
@@ -333,11 +348,12 @@ export class PartnerTrackingRegistrationService {
         reason: `${REGISTRATION_VERSION}: verified partner-provided route for ${target.partner} / ${target.casino} / ${row.geo}.`,
         sourceReferences: [...new Set([...row.evidenceReferences, `FOUNDER_SUPPLIED_PARTNER_URL:${linkHash}`])],
         idempotencyKey: `${REGISTRATION_VERSION}:${target.partnerId}:${target.casinoId}:${row.geo}:${linkHash}`,
-      }, checkedAt);
+      }, checkedAt, preverifiedRoute);
       attemptedActivationIds.set(row.geo, result.activation.id);
       if (result.activation.status === "ACTIVE" && result.activation.routeVerificationStatus === "HEALTHY") {
         results.push({
           geo: row.geo,
+          marketSupport: row.marketSupport,
           finalState: "ACTIVE_HEALTHY",
           marketActivationId: result.activation.id,
           routeHealth: "HEALTHY",
@@ -348,6 +364,7 @@ export class PartnerTrackingRegistrationService {
         controllerFailureReason = result.activation.routeVerificationDetail || controllerFailureReason;
         results.push({
           geo: row.geo,
+          marketSupport: row.marketSupport,
           finalState: "BROKEN_ROUTE",
           marketActivationId: result.activation.id,
           routeHealth: "BROKEN",
@@ -358,6 +375,7 @@ export class PartnerTrackingRegistrationService {
         activationIncomplete = true;
         results.push({
           geo: row.geo,
+          marketSupport: row.marketSupport,
           finalState: stage.previousActivations.some((activation) => activation.geo === row.geo) ? "ACTIVE_HEALTHY" : "MISSING_TRACKING_ROUTE",
           marketActivationId: result.activation.id,
           routeHealth: stage.previousActivations.some((activation) => activation.geo === row.geo) ? "HEALTHY" : "NOT_APPLICABLE",
@@ -372,9 +390,10 @@ export class PartnerTrackingRegistrationService {
         rollbackResults = stage.affectedRows.map((row) => {
           const restriction = restrictions.get(row.geo);
           return restriction
-            ? { geo: row.geo, finalState: restriction.finalState, marketActivationId: null, routeHealth: "NOT_APPLICABLE", reason: restriction.reason }
+            ? { geo: row.geo, marketSupport: row.marketSupport, finalState: restriction.finalState, marketActivationId: null, routeHealth: "NOT_APPLICABLE", reason: restriction.reason }
             : {
                 geo: row.geo,
+                marketSupport: row.marketSupport,
                 finalState: "BROKEN_ROUTE",
                 marketActivationId: attemptedActivationIds.get(row.geo) ?? null,
                 routeHealth: "BROKEN",
@@ -386,7 +405,7 @@ export class PartnerTrackingRegistrationService {
         for (const row of stage.affectedRows) {
           const restriction = restrictions.get(row.geo);
           if (restriction) {
-            rollbackResults.push({ geo: row.geo, finalState: restriction.finalState, marketActivationId: null, routeHealth: "NOT_APPLICABLE", reason: restriction.reason });
+            rollbackResults.push({ geo: row.geo, marketSupport: row.marketSupport, finalState: restriction.finalState, marketActivationId: null, routeHealth: "NOT_APPLICABLE", reason: restriction.reason });
             continue;
           }
           const previous = stage.previousActivations.find((activation) => activation.geo === row.geo);
@@ -409,6 +428,7 @@ export class PartnerTrackingRegistrationService {
             }
             rollbackResults.push({
               geo: row.geo,
+              marketSupport: row.marketSupport,
               finalState: "ACTIVE_HEALTHY",
               marketActivationId: restored.activation.id,
               routeHealth: "HEALTHY",
@@ -417,6 +437,7 @@ export class PartnerTrackingRegistrationService {
           } else if (previous) {
             rollbackResults.push({
               geo: row.geo,
+              marketSupport: row.marketSupport,
               finalState: "ACTIVE_HEALTHY",
               marketActivationId: previous.id,
               routeHealth: "HEALTHY",
@@ -425,6 +446,7 @@ export class PartnerTrackingRegistrationService {
           } else {
             rollbackResults.push({
               geo: row.geo,
+              marketSupport: row.marketSupport,
               finalState: "BROKEN_ROUTE",
               marketActivationId: attemptedActivationIds.get(row.geo) ?? null,
               routeHealth: "BROKEN",
@@ -485,6 +507,6 @@ export class PartnerTrackingRegistrationService {
   }
 }
 
-const REGISTRATION_VERSION = "PARTNER-TRACKING-REGISTRATION-V1";
+const REGISTRATION_VERSION = "PARTNER-TRACKING-REGISTRATION-V2";
 
 export const partnerTrackingRegistrationService = new PartnerTrackingRegistrationService();

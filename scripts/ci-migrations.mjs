@@ -413,6 +413,89 @@ async function verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrat
   }
 }
 
+async function verifyRuntimePartnerMarketSupportUpgrade(migrationEntries, programmeMigrationIndex) {
+  const migrationIndex = migrationEntries.indexOf("0036_partner_casino_runtime_market_support");
+  const priorIndex = migrationEntries.indexOf("0035_market_activation_exact_market_code");
+  if (migrationIndex !== priorIndex + 1) {
+    throw new Error("Expected runtime Partner market support migration directly after 0035");
+  }
+  const schema = "partner_market_support_upgrade_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+
+  const preProgramme = await stageMigrations(migrationEntries.slice(0, programmeMigrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(preProgramme, "schema.prisma")], environment);
+    run("npx", [
+      "prisma",
+      "db",
+      "execute",
+      "--schema",
+      "prisma/schema.prisma",
+      "--file",
+      "prisma/preflight/0015_active_control_program_flow.sql",
+    ], environment);
+  } finally {
+    await rm(preProgramme, { recursive: true, force: true });
+  }
+
+  const through0035 = await stageMigrations(migrationEntries.slice(0, priorIndex + 1));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(through0035, "schema.prisma")], environment);
+  } finally {
+    await rm(through0035, { recursive: true, force: true });
+  }
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  const actorId = "36000000-0000-4000-8000-000000000001";
+  const casinoId = "36000000-0000-4000-8000-000000000002";
+  try {
+    await prisma.adminUser.create({ data: {
+      id: actorId,
+      email: "runtime-market-upgrade@invalid.example",
+      name: "Runtime market migration fixture",
+      role: "AFFILIATE_MANAGER",
+    } });
+    await prisma.casino.create({ data: {
+      id: casinoId,
+      title: "Runtime market upgrade fixture",
+      slug: "runtime-market-upgrade-fixture",
+      domain: "runtime-market-upgrade.invalid",
+      status: "DRAFT",
+      domainPublicationStatus: "DRAFT",
+      createdBy: actorId,
+      updatedBy: actorId,
+    } });
+    await prisma.casinoCountry.create({ data: {
+      casinoId,
+      countryCode: "PT",
+      availability: "AVAILABLE",
+      lastVerifiedAt: new Date("2026-09-11T00:00:00.000Z"),
+      notes: "0035 preservation fixture",
+    } });
+
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+
+    const [preservedProfiles, supportRows] = await Promise.all([
+      prisma.casinoCountry.count({ where: { casinoId, countryCode: "PT", notes: "0035 preservation fixture" } }),
+      prisma.partnerCasinoMarketSupport.count(),
+    ]);
+    if (preservedProfiles !== 1 || supportRows !== 0) {
+      throw new Error("Runtime Partner market support upgrade did not preserve current schema data");
+    }
+    console.info("Runtime Partner market support staged upgrade passed", {
+      from: "0035_market_activation_exact_market_code",
+      to: "0036_partner_casino_runtime_market_support",
+      preservedCasinoCountries: preservedProfiles,
+      backfilledSupportRows: supportRows,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 async function verifyProgrammeAccessUpgrade(migrationEntries) {
   const migrationIndex = migrationEntries.indexOf("0024_programme_access_acceptance");
   if (migrationIndex < 1) throw new Error("Expected migration 0024_programme_access_acceptance");
@@ -1071,6 +1154,7 @@ async function main() {
   await verifyCommercialPlatformUpgrade(migrationEntries, programmeMigrationIndex);
   await verifyGeoLocalizedCreativeUpgrade(migrationEntries);
   await verifyVettedPartnerHostedCreativeUpgrade(migrationEntries);
+  await verifyRuntimePartnerMarketSupportUpgrade(migrationEntries, programmeMigrationIndex);
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();

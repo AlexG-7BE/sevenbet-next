@@ -66,7 +66,7 @@ test("official MCP client discovers the bounded Commercial tools including track
     assert.equal(registration.annotations.openWorldHint, true);
     assert.deepEqual(registration.securitySchemes[0].scopes, ["commercial:safe_write"]);
     assert.deepEqual(registration._meta.securitySchemes, registration.securitySchemes);
-    assert.deepEqual(Object.keys(registration.inputSchema.properties as object).sort(), ["casino", "geo", "partner", "trackingUrl"]);
+    assert.deepEqual(Object.keys(registration.inputSchema.properties as object).sort(), ["casino", "geo", "partner", "supportedGeos", "trackingUrl"]);
     assert.deepEqual(registration.inputSchema.required, ["partner", "casino", "trackingUrl"]);
   } finally {
     await client.close();

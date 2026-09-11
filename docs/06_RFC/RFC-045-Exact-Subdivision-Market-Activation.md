@@ -55,6 +55,20 @@ Technical inability to represent a subdivision is an engineering defect, not
 a regulatory state. Legal and mandatory regulatory classifications remain
 external evidence decisions.
 
+The 11 September 2026 runtime-registration amendment allows the bounded
+registration service to persist an absent exact `marketCode` for an already
+established Partner × Casino. Country codes and permitted subdivision-shaped
+codes use the same canonical normalization; `ZZ` remains reserved. Persisting
+support does not bypass exact subdivision legal authority: absent detected
+exact legal evidence remains `ACTION_REQUIRED_REGULATORY`, and RFC-042 is still
+the sole writer of `ACTIVE + HEALTHY` state.
+
+For `supportedGeos`, one generic URL is externally verified once and the
+bounded verification result is handed to RFC-042 for each eligible exact
+market. Later generic replacement discovers both seeded and database-backed
+runtime support. Exact routes continue to shadow the generic route only for
+their exact `marketCode`.
+
 ## Migration and rollback
 
 Migration `0035_market_activation_exact_market_code` adds and backfills
