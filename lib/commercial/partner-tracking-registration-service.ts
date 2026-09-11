@@ -229,12 +229,7 @@ export class PartnerTrackingRegistrationService {
       casino: input.casino,
       requestedGeos,
     });
-    const exactInventoryRow = geo ? target.rows.find((row) => row.geo === geo) ?? null : null;
-    const scope = supportedGeos
-      ? "GENERIC"
-      : geo && exactInventoryRow?.trackingScope === "REGIONAL_REUSE"
-      ? "REGIONAL_REUSE"
-      : geo ? "EXACT_GEO" : "GENERIC";
+    const scope = geo ? "EXACT_GEO" : "GENERIC";
     const trackingUrl = safeTrackingUrl(input.trackingUrl);
     try {
       await this.publicUrlValidator(trackingUrl);

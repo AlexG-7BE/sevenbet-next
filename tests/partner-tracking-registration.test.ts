@@ -8,7 +8,11 @@ import {
   partnerTrackingLinkHash,
 } from "../lib/commercial/partner-tracking-registration-contract";
 import { PartnerTrackingRegistrationService } from "../lib/commercial/partner-tracking-registration-service";
-import type { CurrentPartnerInventorySeed } from "../lib/current-partner-rollout/inventory";
+import {
+  CURRENT_PARTNER_INVENTORY,
+  CURRENT_PARTNER_RECORDS,
+  type CurrentPartnerInventorySeed,
+} from "../lib/current-partner-rollout/inventory";
 import { selectActivationTrackingCandidate } from "../lib/market-activation/repository";
 import {
   partnerTrackingCoverageMatches,
@@ -82,7 +86,7 @@ function stage(overrides: Partial<PartnerTrackingStage> = {}): PartnerTrackingSt
   };
 }
 
-function healthyCheck() {
+function healthyCheck(finalHost = "betway.example") {
   return {
     status: "HEALTHY" as const,
     reason: "GET_FALLBACK_OK",
@@ -90,7 +94,7 @@ function healthyCheck() {
     statusCode: 200,
     durationMs: 42,
     redirectCount: 2,
-    finalHost: "betway.example",
+    finalHost,
   };
 }
 
@@ -106,10 +110,13 @@ function harness(options: {
     finalHost: string | null;
   }>;
   resolutionError?: Error;
+  resolvedTarget?: PartnerTrackingStage["target"];
   jurisdictionAllowed?: boolean;
 } = {}) {
   const calls = {
     stage: 0,
+    stageScopes: [] as PartnerTrackingStage["scope"][],
+    stageGeos: [] as Array<string | null>,
     verification: 0,
     promote: 0,
     finalize: 0,
@@ -119,13 +126,22 @@ function harness(options: {
     preverified: [] as Array<{ status: string; finalHost: string | null }>,
     checks: 0,
   };
+  const resolvedTarget = options.resolvedTarget ?? target;
   const staged = options.staged ?? stage();
   const checks = options.checks ?? [healthyCheck()];
   const repository = {
-    async resolveTarget() { if (options.resolutionError) throw options.resolutionError; return target; },
-    async stage() { calls.stage += 1; return staged; },
+    async resolveTarget() { if (options.resolutionError) throw options.resolutionError; return resolvedTarget; },
+    async stage(input: { scope: PartnerTrackingStage["scope"]; geo: string | null }) {
+      calls.stage += 1;
+      calls.stageScopes.push(input.scope);
+      calls.stageGeos.push(input.geo);
+      return { ...staged, scope: input.scope, geo: input.geo };
+    },
     async recordVerification() { calls.verification += 1; },
-    async promote() { calls.promote += 1; return { ...staged, previousTrackingLinkId: null }; },
+    async promote(input: { stage: PartnerTrackingStage }) {
+      calls.promote += 1;
+      return { ...input.stage, previousTrackingLinkId: null };
+    },
     async finalizePromotion() { calls.finalize += 1; },
     async rejectPromotion() { calls.reject += 1; },
     async reconcileAuditAndCrm() { calls.audit += 1; },
@@ -261,6 +277,63 @@ test("exact GEO registration affects only that canonical market", async () => {
   assert.equal(result.geo, "DE");
   assert.deepEqual(calls.activate, ["DE"]);
   assert.equal(result.affectedGeoCount, 1);
+});
+
+test("explicit geo remains exact for an existing seeded REGIONAL_REUSE market", async () => {
+  const partner = CURRENT_PARTNER_RECORDS.find((record) => record.name === "Betsson Group Affiliates")!;
+  const seededRegionalRow = (geo: string): PartnerTrackingMarketRow => {
+    const seed = CURRENT_PARTNER_INVENTORY.find((entry) => entry.partner === partner.name
+      && entry.casino === "Betsson"
+      && entry.geo === geo)!;
+    assert.equal(seed.trackingScope, "REGIONAL_REUSE");
+    return { ...seed, supportOrigin: "SEEDED", marketSupport: "ALREADY_SUPPORTED" };
+  };
+  const mx = seededRegionalRow("MX");
+  const sibling = seededRegionalRow("BO");
+  assert.equal(mx.trackingIdentity, sibling.trackingIdentity);
+  const regionalTarget = {
+    ...target,
+    partner: partner.name,
+    partnerId: partner.opportunityId,
+    casino: "Betsson",
+    casinoId: "00000000-0000-4000-8000-000000000021",
+    casinoSlug: "betsson",
+    casinoDomain: "betsson.example",
+    casinoWebsiteUrl: "https://betsson.example/",
+    rows: [mx, sibling],
+    requestedGeos: ["MX"],
+  };
+  const exact = stage({
+    target: regionalTarget,
+    scope: "EXACT_GEO",
+    geo: "MX",
+    affectedRows: [mx],
+    supportedGeos: null,
+    newSupportedGeoCount: 0,
+    existingSupportedGeoCount: 1,
+    expectedFinalHost: "betsson.example",
+  });
+  const { service, calls } = harness({
+    resolvedTarget: regionalTarget,
+    staged: exact,
+    checks: [healthyCheck("betsson.example")],
+  });
+
+  const result = await service.register({
+    partner: partner.name,
+    casino: "Betsson",
+    trackingUrl: sensitiveUrl,
+    geo: "MX",
+  }, context, now);
+
+  assert.deepEqual(calls.stageScopes, ["EXACT_GEO"]);
+  assert.deepEqual(calls.stageGeos, ["MX"]);
+  assert.equal(result.trackingScope, "EXACT_GEO");
+  assert.equal(result.affectedGeoCount, 1);
+  assert.deepEqual(result.results.map((entry) => entry.geo), ["MX"]);
+  assert.equal(result.results[0]?.finalState, "ACTION_REQUIRED_REGULATORY");
+  assert.deepEqual(calls.activate, []);
+  assert.equal(result.results.some((entry) => entry.geo === sibling.geo), false);
 });
 
 test("an exact runtime-added GEO remains exact and does not broaden route scope", async () => {
