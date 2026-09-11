@@ -7,6 +7,7 @@ import {
 } from "../lib/analytics/consent-contract";
 import { analyticsConsentLedgerAction } from "../lib/analytics/consent.server";
 import {
+  analyticsCookieSecure,
   analyticsDeviceCategory,
   analyticsEnvironment,
   analyticsSigningSecret,
@@ -101,6 +102,13 @@ test("unsafe browser mutations require exact same-origin evidence", () => {
 });
 
 test("analytics environment, bot/device classification, and referrer context stay bounded", () => {
+  assert.equal(analyticsCookieSecure({ NODE_ENV: "production" }), true);
+  assert.equal(analyticsCookieSecure({ NODE_ENV: "production", CI: "true", BETTER_AUTH_URL: "http://127.0.0.1:4173" }), false);
+  assert.equal(analyticsCookieSecure({ NODE_ENV: "production", CI: "true", BETTER_AUTH_URL: "http://localhost:4173" }), false);
+  assert.equal(analyticsCookieSecure({ NODE_ENV: "production", CI: "true", BETTER_AUTH_URL: "https://b4gamble.com" }), true);
+  assert.equal(analyticsCookieSecure({ NODE_ENV: "production", CI: "true", BETTER_AUTH_URL: "http://127.0.0.1:4173", VERCEL_ENV: "production" }), true);
+  assert.equal(analyticsCookieSecure({ NODE_ENV: "production", CI: "true", BETTER_AUTH_URL: "http://127.0.0.1.attacker.invalid", VERCEL_ENV: "production" }), true);
+  assert.equal(analyticsCookieSecure({ NODE_ENV: "development", CI: "true", BETTER_AUTH_URL: "http://127.0.0.1:4173" }), false);
   assert.equal(analyticsEnvironment({ NODE_ENV: "test" }), "TEST");
   assert.equal(analyticsEnvironment({ VERCEL_ENV: "production", NODE_ENV: "production" }), "PRODUCTION");
   assert.equal(analyticsEnvironment({ VERCEL_ENV: "preview" }), "PREVIEW");

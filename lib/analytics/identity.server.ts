@@ -16,7 +16,9 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 
 type AnalyticsRuntimeEnvironment = {
   ANALYTICS_SIGNING_SECRET?: string;
+  BETTER_AUTH_URL?: string;
   BETTER_AUTH_SECRET?: string;
+  CI?: string;
   VERCEL_ENV?: string;
   NODE_ENV?: string;
 };
@@ -86,11 +88,23 @@ export function signedAnalyticsUuid(value: string, secret = analyticsSigningSecr
   return signedValue(value.toLowerCase(), secret);
 }
 
-const commonCookieOptions = {
-  sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
-  path: "/",
-};
+export function analyticsCookieSecure(
+  environment: AnalyticsRuntimeEnvironment = process.env,
+) {
+  if (environment.VERCEL_ENV === "production" || environment.VERCEL_ENV === "preview") return true;
+  const authOrigin = environment.BETTER_AUTH_URL?.trim() ?? "";
+  const loopbackCiHttp = environment.CI === "true"
+    && /^http:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?$/.test(authOrigin);
+  return environment.NODE_ENV === "production" && !loopbackCiHttp;
+}
+
+function commonCookieOptions() {
+  return {
+    sameSite: "lax" as const,
+    secure: analyticsCookieSecure(),
+    path: "/",
+  };
+}
 
 export function applyAnalyticsConsentCookie(
   response: NextResponse,
@@ -98,7 +112,7 @@ export function applyAnalyticsConsentCookie(
   secret = analyticsSigningSecret(),
 ) {
   response.cookies.set(ANALYTICS_CONSENT_COOKIE, signedAnalyticsConsent(state, secret), {
-    ...commonCookieOptions,
+    ...commonCookieOptions(),
     httpOnly: false,
     maxAge: 180 * 24 * 60 * 60,
   });
@@ -110,20 +124,20 @@ export function applyAnalyticsIdentityCookies(
   secret = analyticsSigningSecret(),
 ) {
   response.cookies.set(ANALYTICS_ANONYMOUS_COOKIE, signedAnalyticsUuid(identity.anonymousId, secret), {
-    ...commonCookieOptions,
+    ...commonCookieOptions(),
     httpOnly: true,
     maxAge: 365 * 24 * 60 * 60,
   });
   response.cookies.set(ANALYTICS_SESSION_COOKIE, signedAnalyticsUuid(identity.sessionId, secret), {
-    ...commonCookieOptions,
+    ...commonCookieOptions(),
     httpOnly: true,
     maxAge: ANALYTICS_SESSION_INACTIVITY_MS / 1000,
   });
 }
 
 export function clearAnalyticsIdentityCookies(response: NextResponse) {
-  response.cookies.set(ANALYTICS_ANONYMOUS_COOKIE, "", { ...commonCookieOptions, httpOnly: true, maxAge: 0 });
-  response.cookies.set(ANALYTICS_SESSION_COOKIE, "", { ...commonCookieOptions, httpOnly: true, maxAge: 0 });
+  response.cookies.set(ANALYTICS_ANONYMOUS_COOKIE, "", { ...commonCookieOptions(), httpOnly: true, maxAge: 0 });
+  response.cookies.set(ANALYTICS_SESSION_COOKIE, "", { ...commonCookieOptions(), httpOnly: true, maxAge: 0 });
 }
 
 export function analyticsEnvironment(environment: AnalyticsRuntimeEnvironment = process.env) {
