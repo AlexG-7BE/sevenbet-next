@@ -203,5 +203,5 @@ test("client components do not import Prisma and public HTML uses internal redir
   for (const file of ["components/CasinoReviewSections.tsx", "components/ui.tsx", "components/casino-profile/CasinoProfile.tsx", "components/casino-profile/CasinoOutboundAction.tsx"]) assert.doesNotMatch(readFileSync(file, "utf8"), /@prisma\/client|prisma\./);
   assert.doesNotMatch(readFileSync("lib/public-casino/public-casino.types.ts", "utf8"), /trackingUrl|destinationUrl|storageKey|checksum|internalNotes/);
   assert.match(readFileSync("components/CasinoReviewSections.tsx", "utf8"), /nofollow sponsored noopener/);
-  assert.match(readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8"), /href=\{action\.href\}/);
+  assert.match(readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8"), /href=\{attributedCommercialHref\(action\.href, context\)\}/);
 });

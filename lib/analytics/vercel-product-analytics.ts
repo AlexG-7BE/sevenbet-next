@@ -1,74 +1,52 @@
 import { after } from "next/server";
 
 import {
-  createProductAnalyticsEmitter,
-  isProductAnalyticsEnabled,
-  type ProductAnalyticsSink,
-} from "@/lib/analytics/product-analytics";
-import type {
-  ProductAnalyticsEventMap,
-  ProgrammeMissionNumber,
-} from "@/lib/analytics/product-analytics-events";
+  recordServerAnalyticsEventBestEffort,
+  type ServerAnalyticsEventInput,
+} from "@/lib/analytics/service.server";
+import type { ProgrammeMissionNumber } from "@/lib/analytics/product-analytics-events";
 
 type Schedule = (work: () => void | Promise<void>) => void;
 
-function defaultSink(event: Parameters<ProductAnalyticsSink>[0]) {
-  void event;
-}
-
-function metadataOnlyFailure(eventName: string) {
-  console.warn("[product-analytics] event delivery failed", {
-    analytics_event_name: eventName,
-    analytics_result: "failed",
-  });
-}
-
+/**
+ * Compatibility facade for existing Programme call sites. Authoritative
+ * Programme events are emitted by observeProgrammeState after persistence;
+ * free-text/AI/action telemetry is deliberately outside RFC-046.
+ */
 export function createProductAnalyticsServer({
-  enabled = isProductAnalyticsEnabled(),
-  sink = defaultSink,
   schedule = after,
+  recorder = recordServerAnalyticsEventBestEffort,
 }: {
   enabled?: boolean;
-  sink?: ProductAnalyticsSink;
+  sink?: unknown;
   schedule?: Schedule;
+  recorder?: (event: ServerAnalyticsEventInput) => Promise<unknown>;
 } = {}) {
-  const scheduledSink: ProductAnalyticsSink = (event) => {
-    try {
-      schedule(async () => {
-        try {
-          await sink(event);
-        } catch {
-          metadataOnlyFailure(event.name);
-        }
-      });
-    } catch {
-      metadataOnlyFailure(event.name);
-    }
+  const scheduleEvent = (event: ServerAnalyticsEventInput) => {
+    try { schedule(() => recorder(event).then(() => undefined)); } catch { /* analytics never controls the Programme */ }
   };
-  const emit = createProductAnalyticsEmitter({
-    enabled,
-    sink: scheduledSink,
-    onError: metadataOnlyFailure,
-  });
   return {
-    m1SituationSubmitted(inputMode: ProductAnalyticsEventMap["programme_m1_situation_submitted"]["inputMode"]) {
-      emit("programme_m1_situation_submitted", { inputMode });
+    m1SituationSubmitted(_inputMode: "voice" | "text") {},
+    claimRedeemed(_authMethod: "google" | "email" | "unknown") {},
+    missionActionCompleted(_mission: ProgrammeMissionNumber, _actionPosition: 1 | 2 | 3) {},
+    missionCompleted(mission: ProgrammeMissionNumber, userId?: string) {
+      if (!userId) return;
+      scheduleEvent({
+        name: "programme_step_completed",
+        dedupeKey: `programme:${userId}:step:${mission}:completed`,
+        userId,
+        programmeStep: mission,
+      });
     },
-    claimRedeemed(authMethod: ProductAnalyticsEventMap["programme_claim_redeemed"]["authMethod"]) {
-      emit("programme_claim_redeemed", { authMethod });
+    programmeCompleted(userId?: string) {
+      if (!userId) return;
+      scheduleEvent({
+        name: "programme_completed",
+        dedupeKey: `programme:${userId}:completed`,
+        userId,
+      });
     },
-    missionActionCompleted(mission: ProgrammeMissionNumber, actionPosition: 1 | 2 | 3) {
-      emit("programme_mission_action_completed", { mission, actionPosition });
-    },
-    missionCompleted(mission: ProgrammeMissionNumber) {
-      emit("programme_mission_completed", { mission });
-    },
-    programmeCompleted() {
-      emit("programme_completed", { pathVersion: "program_ai_v1" });
-    },
-    aiOutcome(properties: ProductAnalyticsEventMap["programme_ai_outcome"]) {
-      emit("programme_ai_outcome", properties);
-    },
+    aiOutcome(_properties: { operation: string; result: string }) {},
   };
 }
 

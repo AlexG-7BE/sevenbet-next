@@ -14,6 +14,7 @@ import {
 } from "@/lib/programme/rate-limit";
 import { hashOpaqueToken } from "@/lib/programme/security";
 import { isProgramAiRealProviderEnabled } from "@/lib/programme/program-ai/runtime-config";
+import { scheduleAnonymousProgrammeStartedObservation } from "@/lib/analytics/programme-observer.server";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
     );
     if (turn.situationFirstAccepted) {
       productAnalyticsServer.m1SituationSubmitted(turn.inputMode);
+      scheduleAnonymousProgrammeStartedObservation(request);
     }
     productAnalyticsServer.aiOutcome({
       operation: "programme_ai",

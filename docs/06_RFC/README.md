@@ -73,16 +73,17 @@ orientation.
 | [RFC-043 — Production Media Pipeline](RFC-043-Production-Media-Pipeline.md) | `SUPERSEDED` | Historical MEDIA-GEO3 pipeline and release evidence; RFC-044 retires its active runtime and business authority. |
 | [RFC-044 — Logo-Only Media Retirement and Locale/Market Separation](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md) | `ACTIVE` | Logo-only operator presentation, inert MEDIA-GEO3 history, media-independent commercial authority and one language registry independent from trusted GEO. |
 | [RFC-045 — Exact Subdivision Market Activation](RFC-045-Exact-Subdivision-Market-Activation.md) | `ACTIVE` | RFC-042 exact `marketCode`, parent-country legal separation, trusted region signal and exact-over-regional-over-generic route precedence. |
+| [RFC-046 — Customer Data, Analytics and Lifecycle Core](RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md) | `ACTIVE` | Canonical customer identity, consent-gated first-party analytics, Programme observation, RFC-042 click attribution, lifecycle email and fixed internal dashboards. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 21 |
+| `ACTIVE` | 22 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 5 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **45** |
+| **Total RFC artifacts** | **46** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

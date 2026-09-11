@@ -15,24 +15,27 @@ const rateLimit = read("lib/programme/rate-limit.ts");
 const purge = read("lib/programme/runtime-expiry-purge.ts");
 const packageJson = JSON.parse(read("package.json")) as { dependencies: Record<string, string> };
 
-test("RFC-036 removes the non-essential analytics provider from the public runtime", () => {
+test("RFC-046 keeps analytics first-party and affirmative-consent gated", () => {
   assert.equal(packageJson.dependencies["@vercel/analytics"], undefined);
   assert.doesNotMatch(analyticsClient + analyticsServer, /@vercel\/analytics|\btrack\(/);
-  assert.match(read("lib/analytics/product-analytics.ts"), /DISABLED_GB_LAUNCH/);
-  assert.doesNotMatch(read("app/layout.tsx") + read(".env.example"), /ProductAnalytics|NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED/);
+  assert.match(read("lib/analytics/product-analytics.ts"), /AFFIRMATIVE_CONSENT_RFC_046/);
+  assert.match(read("lib/analytics/product-analytics.ts"), /NEXT_PUBLIC_ANALYTICS_ENABLED === "true"/);
+  assert.doesNotMatch(read("app/layout.tsx") + read(".env.example"), /@vercel\/analytics|NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED/);
+  assert.match(read("app/layout.tsx"), /AnalyticsConsentBanner/);
 });
 
-test("analytics has a closed 15-event contract with no identity, narrative, reward, or arbitrary metadata fields", () => {
+test("analytics has a closed 19-event contract with no identity, narrative, reward, or arbitrary metadata fields", () => {
   const eventNameArray = analyticsContract.slice(
     analyticsContract.indexOf("export const productAnalyticsEventNames"),
     analyticsContract.indexOf("] as const;"),
   );
-  assert.equal((eventNameArray.match(/^  "programme_[^"]+",$/gm) ?? []).length, 15);
+  assert.equal((eventNameArray.match(/^  "[a-z_]+",$/gm) ?? []).length, 19);
+  assert.equal((eventNameArray.match(/^  "programme_[^"]+",$/gm) ?? []).length, 4);
   assert.doesNotMatch(
     analyticsContract,
     /\b(?:userId|emailAddress|situationText|transcript|reviewText|startingPoint|desiredChange|continuationCue|xp|metadata)\s*:/,
   );
-  assert.match(analyticsContract, /exactKeys/);
+  assert.match(analyticsContract, /\.strict\(\)/);
   assert.doesNotMatch(analyticsClient + analyticsServer, /export function track|return \{\s*track\s*:/);
   assert.doesNotMatch(analyticsClient + analyticsServer, /@\/lib\/(?:affiliate|affiliate-commercial|services\/public-offer|services\/public-casino)/);
 });
@@ -88,16 +91,21 @@ test("purge scope is restricted to anonymous sessions, unconsumed claims, and ex
   assert.doesNotMatch(purge, /userProgress|programmeEnrollment|programmeProgress|userProgramme|deleteMany\(\s*\{\s*\}/);
 });
 
-test("one daily Vercel cron calls only the authenticated internal purge route", () => {
+test("the two exact daily Vercel crons call only authenticated internal maintenance routes", () => {
   const configuration = JSON.parse(read("vercel.json")) as { crons: Array<{ path: string; schedule: string }> };
-  assert.deepEqual(configuration.crons, [{
-    path: "/api/internal/cron/programme-expiry-purge",
-    schedule: "17 4 * * *",
-  }]);
+  assert.deepEqual(configuration.crons, [
+    { path: "/api/internal/cron/programme-expiry-purge", schedule: "17 4 * * *" },
+    { path: "/api/internal/cron/customer-lifecycle", schedule: "47 3 * * *" },
+  ]);
   const route = read("app/api/internal/cron/programme-expiry-purge/route.ts");
   const handler = read("lib/programme/runtime-expiry-purge-cron.ts");
+  const customerRoute = read("app/api/internal/cron/customer-lifecycle/route.ts");
+  const customerHandler = read("lib/email/lifecycle-queue-cron.server.ts");
   assert.match(route, /createProgrammeExpiryPurgeCronHandler/);
   assert.match(handler, /CRON_SECRET/);
   assert.match(handler, /timingSafeEqual/);
-  assert.doesNotMatch(route + handler, /VERCEL_TOKEN|DATABASE_URL|BETTER_AUTH_SECRET/);
+  assert.match(customerRoute, /createLifecycleQueueCronHandler/);
+  assert.match(customerHandler, /CRON_SECRET/);
+  assert.match(customerHandler, /timingSafeEqual/);
+  assert.doesNotMatch(route + handler + customerRoute + customerHandler, /VERCEL_TOKEN|DATABASE_URL|BETTER_AUTH_SECRET/);
 });

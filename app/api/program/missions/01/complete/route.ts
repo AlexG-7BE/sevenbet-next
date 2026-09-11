@@ -8,6 +8,7 @@ import {
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { assertOnlyKeys, objectInput } from "@/lib/programme/validation";
 import { assertLegacyProgrammeMutationAllowed } from "@/lib/programme/legacy-runtime";
+import { scheduleProgrammeStateObservation } from "@/lib/analytics/programme-observer.server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
     const body = objectInput(await readProgrammeJson(request));
     assertOnlyKeys(body, ["timeZone"]);
     const dashboard = await missionOneService.complete(user.id, body.timeZone);
+    scheduleProgrammeStateObservation(user.id, request.headers);
     return programmeResponse({ ok: true, dashboard });
   } catch (error) {
     return programmeErrorResponse(error);

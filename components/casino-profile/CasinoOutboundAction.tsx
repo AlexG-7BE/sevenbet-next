@@ -9,6 +9,11 @@ import type { OutboundIntentContext } from "@/lib/analytics/product-analytics-cl
 
 type OutboundContext = OutboundIntentContext;
 
+export function attributedCommercialHref(href: string, context: OutboundContext) {
+  if (!/^\/r\/[a-z0-9][a-z0-9-]*$/i.test(href)) return href;
+  return `${href}?placement=${context.source}_${context.placement}`;
+}
+
 export function GovernedCommercialAction({
   action,
   anchorData,
@@ -35,7 +40,7 @@ export function GovernedCommercialAction({
       data-commercial-action-placement={context.placement}
       data-commercial-action-source={context.source}
       data-commercial-media-variant={offerMediaVariant}
-      href={action.href}
+      href={attributedCommercialHref(action.href, context)}
       onClick={() => productAnalyticsClient.outboundIntent("direct", context)}
       rel="nofollow sponsored noopener"
       target="_blank"

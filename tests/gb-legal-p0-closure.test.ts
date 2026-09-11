@@ -36,6 +36,7 @@ const allowedStatuses = new Set([
   "ICO REGISTRATION/FEE: OPEN — DEFERRED BY FOUNDER",
   "FINAL — READY FOR INTERNAL CONTROLLER APPROVAL",
   "COMMERCIAL PARTNER: NOT YET ACTIVE",
+  "ANALYTICS CONSENT IMPLEMENTATION: CANDIDATE — PRODUCTION ACTIVATION NOT VERIFIED",
 ]);
 
 test("the P0 legal pack is exact, non-duplicative and uses only the closure vocabulary", () => {
@@ -79,7 +80,7 @@ test("provider review separates public frameworks, application controls and acco
   assert.match(openai, /does not prove Zero Data Retention/);
 });
 
-test("GB launch runtime has no non-essential product analytics provider or activation path", () => {
+test("GB analytics remains first-party, affirmative-consent gated, and free of third-party analytics", () => {
   const runtime = [
     ...filesBelow("app"),
     ...filesBelow("components"),
@@ -88,12 +89,17 @@ test("GB launch runtime has no non-essential product analytics provider or activ
   const packageJson = JSON.parse(source("package.json")) as { dependencies: Record<string, string> };
   assert.equal(packageJson.dependencies["@vercel/analytics"], undefined);
   assert.doesNotMatch(runtime, /@vercel\/analytics/);
-  assert.doesNotMatch(source("app/layout.tsx"), /ProductAnalytics/);
+  assert.doesNotMatch(source("app/layout.tsx"), /<ProductAnalytics\b|import\s+\{\s*ProductAnalytics\b/);
   assert.doesNotMatch(source(".env.example"), /NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED/);
-  assert.match(source("lib/analytics/product-analytics.ts"), /DISABLED_GB_LAUNCH/);
-  assert.doesNotMatch(source("lib/analytics/product-analytics.ts"), /process\.env/);
+  assert.match(source(".env.example"), /NEXT_PUBLIC_ANALYTICS_ENABLED="false"/);
+  const analytics = source("lib/analytics/product-analytics.ts");
+  assert.match(analytics, /AFFIRMATIVE_CONSENT_RFC_046/);
+  assert.match(analytics, /NEXT_PUBLIC_ANALYTICS_ENABLED === "true"/);
+  assert.match(source("app/api/analytics/events/route.ts"), /AnalyticsConsentRequiredError/);
+  assert.match(source("app/api/consent/analytics/route.ts"), /recordAnalyticsConsentPreference/);
   const privacy = source("app/(public)/privacy/page.tsx");
-  assert.match(privacy, /do not run non-essential product analytics or session replay/);
+  assert.match(privacy, /affirmative permission/);
+  assert.match(privacy, /We do not use session replay or third-party advertising pixels/);
   assert.match(privacy, /do not load partner-hosted promotional creatives/);
   assert.match(privacy, /do not load partner-hosted promotional creative frames, media pixels or impression requests/);
 });

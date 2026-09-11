@@ -36,6 +36,8 @@ export type CmsPermission =
   | "media.manage"
   | "user.view"
   | "analytics.view"
+  | "email.manage"
+  | "template.manage"
   | "settings.manage";
 
 export type CmsEntity =

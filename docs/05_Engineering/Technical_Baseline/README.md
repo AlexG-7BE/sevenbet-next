@@ -4,14 +4,19 @@
 
 | Field | Value |
 | --- | --- |
-| Audit date | 2026-09-02 |
+| Audit date | 2026-09-11 |
 | Verified repository root | `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` |
 | Audit method | Recursive repository inspection, excluding `.git/`, `node_modules/`, `.next/`, `test-results/`, `coverage/`, caches, and `tsconfig.tsbuildinfo` from source analysis. |
-| Change scope | Entire active repository rescanned after updating the isolated `CASINO-DATA-ARCH-01` candidate onto authoritative post-migration main `5d16a2615a642625c916f63899ba1748e895d689`. Dependencies, generated directories, build artefacts, caches, research staging and `tsconfig.tsbuildinfo` were excluded from source claims. |
+| Change scope | Entire active repository rescanned for the isolated `codex/customer-data-analytics-lifecycle-v1` candidate based on authoritative main `230e652af0e53e1e378051e33955943f788cd94a`. Dependencies, generated directories, build artefacts, caches, research staging and `tsconfig.tsbuildinfo` were excluded from source claims. Live Production state is classified separately. |
 
 ## Current counted inventory
 
-**DETECTED on the reconciled implementation candidate:** 102 `app/api/**/route.ts` files, 71 `app/**/page.tsx` files, 25 ordered Prisma migration directories, 161 TS/TSX/MJS/CJS `.test`/`.spec` files under `tests/`, and 132 tracked assets under `public/`. The architecture scan covered 2,014 active repository files under the exclusions above.
+**DETECTED on the 11 September implementation candidate:** 125
+`app/api/**/route.ts` files, 79 `app/**/page.tsx` files, 37 ordered Prisma
+migration directories, 220 `.test`/`.spec` files under `tests/`, 116 Prisma
+models and 99 enums. The architecture scan covered 2,388 active repository
+files under the exclusions above. Migration 0037 and its application code are
+candidate evidence only until release evidence establishes otherwise.
 
 ## Evidence vocabulary
 
@@ -40,3 +45,4 @@ This baseline describes the observed implementation, not a target architecture o
 - [13_Casino_Market_Data_Architecture.md](13_Casino_Market_Data_Architecture.md) — global Casino, exact-market facts, provenance, public projection, commercial-route separation and migration evidence.
 - [14_Geo_Language_Global_Catalog.md](14_Geo_Language_Global_Catalog.md) — language-only public routing, trusted request market, global published Casino projection and three-state presentation.
 - [15_Canonical_Market_Activation.md](15_Canonical_Market_Activation.md) — single exact-market commercial authority, desired-state controller, route verification, canonical runtime cutover and legacy compatibility baseline.
+- [16_Customer_Data_Analytics_Lifecycle_Core.md](16_Customer_Data_Analytics_Lifecycle_Core.md) — candidate customer, first-party analytics, outbound attribution, email lifecycle, consent and fixed-dashboard implementation evidence.

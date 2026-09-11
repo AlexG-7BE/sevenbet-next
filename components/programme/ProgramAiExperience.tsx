@@ -20,6 +20,7 @@ import type {
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import type { ProgrammeMissionNumber } from "@/lib/analytics/product-analytics-events";
 import { authClient, useSession } from "@/lib/auth/client";
+import { saveProgrammeMarketingPreference } from "@/lib/customers/email-preference-client";
 import {
   programmeGoogleCallbacks,
 } from "@/lib/auth/google-flow";
@@ -503,7 +504,7 @@ export function ProgramAiExperience({
     finally { setBusy(false); }
   }
 
-  async function handleEmail(input: { email: string; password: string; mode: "sign-up" | "sign-in" }) {
+  async function handleEmail(input: { email: string; password: string; mode: "sign-up" | "sign-in"; marketingAllowed: boolean }) {
     if (!subject) return;
     emailRedeemStarted.current = true;
     setBusy(true); setError("");
@@ -522,7 +523,12 @@ export function ProgramAiExperience({
         await startGoogleLink();
         return;
       }
+      const marketingPreferenceSaved = input.mode !== "sign-up" || !input.marketingAllowed
+        || await saveProgrammeMarketingPreference(locale);
       await redeem(result.data.user.id, subject, local);
+      if (!marketingPreferenceSaved) {
+        setError("Your account was created, but your optional email choice could not be saved. No marketing email will be sent.");
+      }
     } catch { setError(programmeText(locale, "Account access failed")); }
     finally { emailRedeemStarted.current = false; setBusy(false); }
   }

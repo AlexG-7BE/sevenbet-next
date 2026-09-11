@@ -38,7 +38,7 @@ function offerDataLabel(offer: PublicOfferDTO, messages: ProductPageMessages, pr
     : offerPresentationCopy(offer.offerPresentation, messages, presentation).label;
 }
 
-function OfferAction({ offer, messages, placement = "UNSPECIFIED" }: { offer: PublicOfferDTO; messages: ProductPageMessages; placement?: "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "UNSPECIFIED" }) {
+function OfferAction({ offer, messages, placement }: { offer: PublicOfferDTO; messages: ProductPageMessages; placement: "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" }) {
   const governed = hasGovernedAction(offer);
   if (!governed || !offer.action.href) return <span className={styles.unavailableAction}>{messages.common.reviewAvailableNoAction}</span>;
   return <CasinoOutboundAction action={{ href: offer.action.href, label: `${messages.common.actionAvailable}: ${offer.casino.name}` }} className={styles.commercialCta} context={{ source: "CTA", placement }} messages={messages.outbound} />;
@@ -88,7 +88,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
       <div className={styles.shell}>
         <div className={styles.sectionRule}><span id="top-three-title">{messages.bestOffers.sectionTitle}</span><i /></div>
         <p className={styles.mobileAffiliateDisclosure}>{messages.bestOffers.commissionNote} <Link href="/affiliate-disclosure">{messages.common.affiliateDisclosure} →</Link></p>
-        <article className={styles.featuredCard} data-testid="best-offer-product-card">
+        <article className={styles.featuredCard} data-analytics-casino-id={featured.dataClassification === "PUBLISHED_RECORD" ? featured.casino.id : undefined} data-analytics-offer-key={featured.dataClassification === "PUBLISHED_RECORD" ? featured.bonus.id : undefined} data-testid="best-offer-product-card">
           <div className={styles.featuredCopy}>
             <div className={styles.rankLine}><span>01</span><b>{offerDataLabel(featured, messages, presentation)}</b></div>
             <OfferIdentity offer={featured} size="large" />
@@ -112,7 +112,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
         </article>
 
         <div className={styles.alternatives}>
-          {top.slice(1).map((offer, index) => <article className={styles.alternativeCard} data-testid="ranked-offer-card" key={`${offer.casino.id}-${offer.bonus.id}`}>
+          {top.slice(1).map((offer, index) => <article className={styles.alternativeCard} data-analytics-casino-id={offer.dataClassification === "PUBLISHED_RECORD" ? offer.casino.id : undefined} data-analytics-offer-key={offer.dataClassification === "PUBLISHED_RECORD" ? offer.bonus.id : undefined} data-testid="ranked-offer-card" key={`${offer.casino.id}-${offer.bonus.id}`}>
             <div className={styles.altCopy}>
               <div className={styles.rankLine}><span>0{index + 2}</span><OfferIdentity offer={offer} /></div>
               <div className={styles.score}><small>{messages.common.editorScore}</small><strong>{formatProfileScore(offer.casino.editorScore, presentation.locale)}</strong><span aria-hidden="true">★★★★★</span></div>
@@ -130,7 +130,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
         {worthALook.length ? <section className={styles.worthALook} aria-labelledby="worth-a-look-title">
           <div className={styles.sectionRule}><span id="worth-a-look-title">{messages.bestOffers.worthALookTitle}</span><i /></div>
           <div className={styles.worthCards}>
-            {worthALook.map((offer, index) => <article key={`${offer.casino.id}-${offer.bonus.id}`}>
+            {worthALook.map((offer, index) => <article data-analytics-casino-id={offer.dataClassification === "PUBLISHED_RECORD" ? offer.casino.id : undefined} data-analytics-offer-key={offer.dataClassification === "PUBLISHED_RECORD" ? offer.bonus.id : undefined} key={`${offer.casino.id}-${offer.bonus.id}`}>
               <div className={styles.worthHead}><OfferIdentity offer={offer} /><b>0{index + 4}</b></div>
               <div className={styles.worthScore}><small>{messages.common.editorScore}</small><strong>{formatProfileScore(offer.casino.editorScore, presentation.locale)}</strong><span aria-hidden="true">★★★★★</span></div>
               <div className={styles.worthOffer}><small>{offerDataLabel(offer, messages, presentation)}</small><strong>{offer.bonus.title}</strong></div>
@@ -138,7 +138,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
               <p className={styles.worthDesktopReason}>{offer.casino.summary}</p>
               <p className={styles.mobileReason}>{messages.bestOffers.whyCopy}</p>
               <MobileMaterialTerms locale={presentation.locale} messages={messages} offer={offer} />
-              <div className={styles.actions}><OfferAction messages={messages} offer={offer} /><OfferReview messages={messages} offer={offer} presentation={presentation} /><OfferCompare messages={messages} offer={offer} /></div>
+              <div className={styles.actions}><OfferAction messages={messages} offer={offer} placement="BEST_OFFER_SECONDARY" /><OfferReview messages={messages} offer={offer} presentation={presentation} /><OfferCompare messages={messages} offer={offer} /></div>
             </article>)}
           </div>
           <Link className={styles.viewAll} href={productHref(presentation, "/casinos")}>{messages.common.browseReviews} →</Link>
@@ -166,7 +166,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
       <p className={styles.darkKicker}>{messages.bestOffers.finalKicker}</p>
       <h2 id="final-offer-title">{featured.casino.name}.<em>{messages.bestOffers.sectionTitle}</em></h2>
       <p>{featured.bonus.title} · {messages.common.wagering} {featured.bonus.wageringMultiplier === null ? messages.common.notListed : `${featured.bonus.wageringMultiplier}x`} · {messages.common.minimumDeposit} {money(featured.bonus.minimumDeposit, featured.bonus.currency, presentation.locale, messages.common.notListed)} · {messages.common.payout} {payout(featured, messages)}</p>
-      <OfferAction messages={messages} offer={featured} />
+      <OfferAction messages={messages} offer={featured} placement="BEST_OFFER_FEATURED" />
       <small>{messages.common.marketPresentationNotice}</small>
     </div></section>
   </>;

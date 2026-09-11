@@ -166,7 +166,7 @@ test("canonical Programme registration keeps access proof on email auth and fail
   const google = page.getByRole("button", { name: /Continue with Google/ });
   await expect(google).toHaveCount(expectGoogle ? 1 : 0);
   await page.getByRole("button", { name: "Use email instead" }).click();
-  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  await expect(page.getByRole("checkbox", { name: /Email me occasional B4GAMBLE product/ })).toHaveCount(1);
 
   let proofHeader: string | null = null;
   let journeyHeader: string | null = null;

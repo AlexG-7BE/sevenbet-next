@@ -27,6 +27,8 @@ export const permissionsByRole: Record<AdminRole, CmsPermission[]> = {
     "media.manage",
     "user.view",
     "analytics.view",
+    "email.manage",
+    "template.manage",
     "settings.manage",
   ],
   ADMIN: [
@@ -55,6 +57,8 @@ export const permissionsByRole: Record<AdminRole, CmsPermission[]> = {
     "media.manage",
     "user.view",
     "analytics.view",
+    "email.manage",
+    "template.manage",
   ],
   EDITOR: [
     "article.create", "article.edit", "article.review", "program.view", "program.create", "program.edit",

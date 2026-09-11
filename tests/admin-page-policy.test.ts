@@ -26,6 +26,11 @@ test("every direct-data admin page checks its area before reading records", () =
     "app/admin/(protected)/casinos/[casinoId]/preview/page.tsx",
     "app/admin/(protected)/casinos/[casinoId]/revisions/page.tsx",
     "app/admin/(protected)/media-operations/page.tsx",
+    "app/admin/(protected)/customers/page.tsx",
+    "app/admin/(protected)/customers/[customerId]/page.tsx",
+    "app/admin/(protected)/analytics/page.tsx",
+    "app/admin/(protected)/email/page.tsx",
+    "app/admin/(protected)/templates/page.tsx",
   ];
   for (const path of guardedPages) {
     const text = source(path);

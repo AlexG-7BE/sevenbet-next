@@ -180,7 +180,7 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
               {!presentationRows.length && <p className={styles.noEvidence}>{messages.comparison.evidenceUnavailable}</p>}
               <div className={styles.columnActions}>
                 {casino?.action.available && casino.action.href
-                  ? <CasinoOutboundAction action={{ href: casino.action.href, label: casino.action.label }} className={styles.visitAction} messages={messages.outbound} />
+                  ? <CasinoOutboundAction action={{ href: casino.action.href, label: casino.action.label }} className={styles.visitAction} context={{ source: "CTA", placement: "CASINO_COMPARE" }} messages={messages.outbound} />
                   : casino ? <Link className={styles.reviewAction} href={productHref(presentation, casino.reviewHref)}>{messages.comparison.fullReview}</Link> : null}
                 <button onClick={() => commit(slugs.filter((entry) => entry !== slug), false)} type="button">{messages.comparison.remove}</button>
               </div>

@@ -24,6 +24,64 @@
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* RFC-046: small, reversible first-party analytics choice. */
+.analyticsConsent {
+  position: fixed;
+  z-index: 120;
+  right: clamp(1rem, 3vw, 2rem);
+  bottom: clamp(1rem, 3vw, 2rem);
+  left: clamp(1rem, 3vw, 2rem);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding: 1.15rem 1.25rem;
+  color: #f6f3ec;
+  background: color-mix(in srgb, #101a23 96%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 1rem;
+  box-shadow: 0 1.25rem 4rem rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(14px);
+}
+
+.analyticsConsent strong { display: block; margin-bottom: 0.25rem; }
+.analyticsConsent p { max-width: 54rem; margin: 0; color: rgba(246, 243, 236, 0.78); font-size: 0.92rem; line-height: 1.5; }
+.analyticsConsent a { color: #f3c96b; }
+.analyticsConsentActions { display: flex; flex: 0 0 auto; gap: 0.65rem; }
+.analyticsConsentActions button,
+.privacyChoiceTrigger {
+  min-height: 2.75rem;
+  padding: 0.65rem 0.9rem;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.7rem;
+  cursor: pointer;
+}
+.analyticsConsentActions button:disabled { cursor: wait; opacity: 0.62; }
+.analyticsConsentError { margin-top: 0.45rem !important; color: #ffb5ae !important; }
+.privacyChoiceTrigger {
+  position: fixed;
+  z-index: 80;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  min-height: auto;
+  padding: 0.45rem 0.65rem;
+  color: #f6f3ec;
+  background: rgba(16, 26, 35, 0.92);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .analyticsConsent { align-items: stretch; flex-direction: column; gap: 1rem; }
+  .analyticsConsentActions { display: grid; grid-template-columns: 1fr; }
+  .analyticsConsentActions button { width: 100%; }
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
@@ -2517,6 +2575,224 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   overflow-wrap: anywhere;
 }
 
+/* RFC-046 Customer Data, Analytics & Lifecycle admin surfaces. */
+.customerFilters,
+.analyticsRange,
+.emailCampaignForm,
+.templateForm,
+.templateFormPair {
+  display: grid;
+  gap: 12px;
+}
+
+.customerFilters {
+  grid-template-columns: minmax(240px, 1.4fr) repeat(3, minmax(140px, .7fr)) auto;
+  align-items: end;
+}
+
+.customerFilters label,
+.analyticsRange label,
+.emailCampaignForm label,
+.templateForm label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.customerFilters input,
+.customerFilters select,
+.analyticsRange input,
+.analyticsRange select,
+.emailCampaignForm input,
+.emailCampaignForm select,
+.templateForm input,
+.templateForm select,
+.templateForm textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  background: rgba(255, 255, 255, .045);
+  font: inherit;
+}
+
+.templateForm textarea {
+  min-height: 150px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.customerTable {
+  display: grid;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.customerTableRow {
+  display: grid;
+  grid-template-columns: minmax(250px, 1.4fr) 150px 135px 145px 180px;
+  gap: 14px;
+  align-items: center;
+  min-width: 900px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.customerTableRow:first-child { border-top: 0; }
+.customerTableRow:not(.customerTableHead):hover { background: rgba(255, 255, 255, .035); }
+.customerTableRow > span { display: grid; gap: 5px; min-width: 0; }
+.customerTableRow strong { overflow: hidden; color: var(--text); text-overflow: ellipsis; }
+.customerTableRow small { color: var(--subtle); overflow-wrap: anywhere; }
+.customerTableHead { color: var(--subtle); background: rgba(255, 255, 255, .035); font-size: .78rem; font-weight: 850; }
+.adminEmptyState { margin: 0; padding: 28px; color: var(--muted); }
+
+.customerDetailGrid,
+.analyticsGrid,
+.templateLayout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.customerFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--border);
+}
+
+.customerFacts div { min-width: 0; padding: 12px; background: rgba(13, 27, 46, .97); }
+.customerFacts dt { color: var(--subtle); font-size: .69rem; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.customerFacts dd { margin: 5px 0 0; color: var(--text); overflow-wrap: anywhere; }
+.customerTimeline { display: grid; }
+.customerTimeline p { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px 10px; align-items: center; margin: 0; padding: 12px 0; border-top: 1px solid var(--border); }
+.customerTimeline p:first-child { border-top: 0; }
+.customerTimeline p > span:last-child { grid-column: 2; color: var(--subtle); font-size: .75rem; overflow-wrap: anywhere; }
+.programmeAdminSummary { display: grid; gap: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.programmeAdminSummary:first-of-type { padding-top: 0; border-top: 0; }
+.programmeAdminSummary > div { display: flex; justify-content: space-between; gap: 16px; }
+.programmeAdminSummary > div span { color: var(--muted); font-size: .8rem; }
+.programmeAdminSummary ol { display: grid; grid-template-columns: repeat(10, minmax(72px, 1fr)); gap: 7px; overflow-x: auto; margin: 0; padding: 0 0 4px; list-style: none; }
+.programmeAdminSummary li { display: grid; gap: 4px; min-width: 72px; padding: 9px; border: 1px solid var(--border); border-radius: 9px; color: var(--muted); font-size: .76rem; }
+.programmeAdminSummary li.complete { border-color: var(--border-emerald); color: var(--text); background: rgba(0, 226, 138, .06); }
+.programmeAdminSummary small { color: var(--subtle); font-size: .62rem; }
+
+.analyticsTabs {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .025);
+}
+.analyticsTabs a { min-height: 40px; padding: 9px 13px; border-radius: 9px; color: var(--muted); font-size: .83rem; font-weight: 850; white-space: nowrap; }
+.analyticsTabs a:hover,
+.analyticsTabs a[aria-current="page"] { color: var(--text); background: rgba(255, 255, 255, .08); }
+.analyticsRange { grid-template-columns: repeat(3, minmax(140px, 1fr)) auto; align-items: end; }
+.analyticsRange p { grid-column: 1 / -1; margin: 0; color: var(--subtle); font-size: .76rem; }
+.analyticsRanks { display: grid; gap: 12px; }
+.analyticsRanks > div { display: grid; grid-template-columns: minmax(120px, .8fr) minmax(100px, 1.4fr) auto; gap: 10px; align-items: center; color: var(--muted); font-size: .82rem; }
+.analyticsRanks i { display: block; height: 8px; max-width: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--emerald), #5ee6bd); }
+.analyticsRanks strong { color: var(--text); }
+.analyticsStepTable { display: grid; overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+.analyticsStepTable > div { display: grid; grid-template-columns: minmax(120px, 1fr) repeat(4, minmax(100px, .7fr)); gap: 12px; min-width: 650px; padding: 12px 14px; border-top: 1px solid var(--border); color: var(--muted); }
+.analyticsStepTable > div:first-child { border-top: 0; color: var(--subtle); background: rgba(255, 255, 255, .035); }
+.metricDefinitions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin: 14px 0 0; border: 1px solid var(--border); border-radius: 12px; background: var(--border); }
+.metricDefinitions div { padding: 12px; background: rgba(13, 27, 46, .97); }
+.metricDefinitions dt { color: var(--text); font-weight: 850; }
+.metricDefinitions dd { margin: 5px 0 0; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+
+.emailWorkbench,
+.templateWorkbench,
+.emailCampaignList,
+.templateList {
+  display: grid;
+  gap: 16px;
+}
+
+.emailBoundary {
+  padding: 14px 16px;
+  border: 1px solid var(--border-gold);
+  border-left-width: 3px;
+  border-radius: 10px;
+  background: rgba(245, 196, 81, .07);
+}
+.emailBoundary p { margin: 5px 0 0; color: var(--muted); font-size: .84rem; line-height: 1.55; }
+.emailSectionHead,
+.emailCampaignList article > header,
+.emailCampaignList article > footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.emailSectionHead h2,
+.emailSectionHead p,
+.emailCampaignList article p { margin: 0; }
+.emailSectionHead small { color: var(--subtle); }
+.emailStatus { display: inline-flex; align-items: center; min-height: 26px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: rgba(255, 255, 255, .04); font-size: .68rem; font-weight: 900; letter-spacing: .04em; white-space: nowrap; }
+.emailStatusGood { border-color: var(--border-emerald); color: var(--emerald); }
+.emailStatusBad { border-color: rgba(239, 68, 68, .38); color: #ffb4ae; }
+.emailCampaignForm { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
+.emailFieldWide { grid-column: span 2; }
+.emailCheckbox { display: flex !important; min-height: 44px; flex-direction: row !important; align-items: center; gap: 9px !important; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255, 255, 255, .025); cursor: pointer; }
+.emailCheckbox input { width: 18px; min-height: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--emerald); }
+.emailActionMessage { margin: 0; padding: 11px 13px; border: 1px solid var(--border-emerald); border-radius: 9px; color: var(--text); background: rgba(0, 226, 138, .06); }
+.emailCampaignList article { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: 13px; background: rgba(255, 255, 255, .018); }
+.emailCampaignList header > div { display: grid; gap: 4px; }
+.emailCampaignList header small,
+.emailCampaignList footer small { color: var(--subtle); }
+.emailCampaignList dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin: 0; border: 1px solid var(--border); border-radius: 9px; background: var(--border); }
+.emailCampaignList dl div { min-width: 0; padding: 10px; background: rgba(13, 27, 46, .96); }
+.emailCampaignList dt { color: var(--subtle); font-size: .64rem; font-weight: 850; text-transform: uppercase; }
+.emailCampaignList dd { margin: 4px 0 0; color: var(--muted); font-size: .76rem; overflow-wrap: anywhere; }
+.emailCampaignList footer { align-items: center; }
+.emailCampaignList footer > div,
+.templateActions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.templateLayout { grid-template-columns: minmax(260px, .7fr) minmax(0, 1.3fr); align-items: start; }
+.templateList { gap: 7px; max-height: 850px; overflow: auto; }
+.templateList button { display: flex; justify-content: space-between; gap: 12px; align-items: center; width: 100%; padding: 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: rgba(255, 255, 255, .025); text-align: left; cursor: pointer; }
+.templateList button:hover,
+.templateList button.selected { border-color: var(--border-emerald); background: rgba(0, 226, 138, .06); }
+.templateList button > span { display: grid; gap: 4px; min-width: 0; }
+.templateList button > span:last-child { justify-items: end; }
+.templateList small { color: var(--subtle); }
+.templateList b { font-size: .72rem; }
+.templateList i { color: var(--subtle); font-size: .62rem; font-style: normal; font-weight: 900; letter-spacing: .04em; }
+.templateList i.active { color: var(--emerald); }
+.templateFormPair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.templateForm code { color: var(--gold); }
+
+.unsubscribePage {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 32px 16px;
+}
+.unsubscribePage section { display: grid; gap: 18px; width: min(100%, 620px); padding: clamp(24px, 6vw, 48px); border: 1px solid var(--border); border-radius: 24px; background: rgba(17, 31, 53, .92); box-shadow: var(--shadow); }
+.unsubscribePage h1,
+.unsubscribePage p { margin: 0; }
+.unsubscribePage h1 { font-size: clamp(2rem, 6vw, 3.8rem); line-height: 1; }
+.unsubscribePage p { color: var(--muted); line-height: 1.65; }
+.unsubscribePage form { display: flex; }
+
 @media (max-width: 980px) {
   .adminShell,
   .adminStatsGrid,
@@ -2542,6 +2818,35 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   .adminTableRow {
     min-width: 720px;
   }
+
+  .customerFilters,
+  .analyticsRange,
+  .emailCampaignForm,
+  .templateLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .emailFieldWide { grid-column: auto; }
+  .emailCampaignList dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 680px) {
+  .adminPage { padding-top: 20px; }
+  .adminHeader { padding: 20px; }
+  .customerDetailGrid,
+  .analyticsGrid,
+  .customerFacts,
+  .metricDefinitions,
+  .templateFormPair,
+  .emailCampaignList dl { grid-template-columns: 1fr; }
+  .emailSectionHead,
+  .emailCampaignList article > header,
+  .emailCampaignList article > footer,
+  .programmeAdminSummary > div { flex-direction: column; align-items: stretch; }
+  .emailCampaignList footer > div,
+  .templateActions { display: grid; width: 100%; }
+  .emailCampaignList footer .button,
+  .templateActions .button { width: 100%; min-height: 44px; }
 }
 
 .mediaManager { display: grid; gap: 24px; }

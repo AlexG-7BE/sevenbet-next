@@ -66,7 +66,7 @@ export function CuratedBonusShortlist({ offers, messages, presentation }: { offe
       return <button aria-pressed={activeSelector === label} key={label} onClick={() => setSelector(label)} type="button">{localizedLabel}</button>;
     })}</div>
     <p className={styles.label} id="bonus-shortlist-title">{messages.bestOffers.sectionTitle} · {messages.bonuses.sortedByValue}</p>
-    <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} data-offer-relation={offer.offerPresentation?.relation} key={`${offer.casino.id}:${offer.bonus.id}`}>
+    <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} data-analytics-casino-id={offer.dataClassification === "PUBLISHED_RECORD" ? offer.casino.id : undefined} data-analytics-offer-key={offer.dataClassification === "PUBLISHED_RECORD" ? offer.bonus.id : undefined} data-offer-relation={offer.offerPresentation?.relation} key={`${offer.casino.id}:${offer.bonus.id}`}>
       <header><small>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : offerPresentationCopy(offer.offerPresentation, messages, presentation).label}</small><span className={styles.rank}>0{index + 1}</span></header>
       <strong className={styles.headline}>{offer.bonus.title}</strong>
       <div className={styles.identity}><OperatorLogo offer={offer} prominent={index === 0} /><div><h2>{offer.casino.name}</h2><small>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} <span aria-hidden="true">★★★★★</span></small></div></div>

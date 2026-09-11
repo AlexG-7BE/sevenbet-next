@@ -1,5 +1,39 @@
 # Current Data Model
 
+## 11 September RFC-046 candidate delta
+
+**DETECTED in the complete candidate repository scan:** `prisma/schema.prisma`
+declares 116 models and 99 enums across 37 ordered migration directories. The
+new additive migration is `0037_customer_data_analytics_lifecycle_core`; it is
+not a claim that Production has advanced past its separately verified
+migration boundary.
+
+Migration 0037 extends canonical Better Auth `User` with account state,
+preferred locale, bounded acquisition metadata and `lastSeenAt`, and creates:
+
+- `AnalyticsSession`, `AnalyticsEvent` and `AnalyticsRateLimitBucket` for a
+  signed-consent, closed, versioned and deduplicated first-party contract;
+- `OutboundClick` for one final server-observed success/block result without a
+  destination URL or tracking token;
+- `CustomerEmailPreference` and append-only `ConsentEvent` for current and
+  historical consent/suppression authority; and
+- `EmailTemplate`, `EmailCampaign`, `EmailMessage`, `EmailProviderEvent` and
+  `EmailUnsubscribeToken` for versioning, review, durable idempotency, minimal
+  normalized provider outcomes and hashed message-bound unsubscribe tokens.
+
+**DETECTED constraints:** functional trimmed/lowercase email uniqueness,
+explicit state/time/content/type checks, one active template per key/locale,
+unique event/message/provider idempotency keys, bounded attempts, appropriate
+`CASCADE`/`SET NULL`/`RESTRICT` foreign keys and reporting/retention indexes.
+The migration seeds only deterministic English template content; it does not
+seed identities, analytics observations, clicks, campaigns or messages.
+
+**DETECTED release controls:** a read-only duplicate/normalization preflight,
+immutable migration/invariant checks in the build preflight, disposable
+PostgreSQL acceptance coverage and aggregate-only sanity SQL. **UNKNOWN:**
+Production preflight results, migration application and postflight data quality
+until release evidence exists.
+
 ## Persistence foundation
 
 **DETECTED in a full active-repository scan for
