@@ -6,9 +6,9 @@
 | --- | --- |
 | Audit date | 12 September 2026 |
 | Canonical repository | `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` |
-| Current release | PR #271 merged at `dea4476a5681129ad67ce0d8cbb1d410e3b4ed10`; Production delivery is fail-closed |
-| Scan | Entire active repository: 2,393 files after excluding dependencies, generated/build output, caches and `tsconfig.tsbuildinfo` |
-| Inventory | 125 API route handlers, 79 pages, 220 test/spec files, 116 Prisma models, 99 enums and 37 ordered migrations |
+| Current release | PR #274 merged at `22cf696b31b6adc3e456508b1a140044a5061698`; Production delivery is active after 6/6 acceptance |
+| Scan | Entire active repository: 2,422 files after excluding dependencies, generated/build output, caches and `tsconfig.tsbuildinfo` |
+| Inventory | 125 API route handlers, 79 pages, 230 test/spec files, 116 Prisma models, 99 enums and 37 ordered migrations |
 
 **DETECTED** means established from repository or named live authoritative
 evidence. **UNKNOWN** means live Preview/Production or provider evidence has
@@ -29,11 +29,11 @@ authorities.
 are applied, consented analytics is enabled and aggregate sanity passed. The
 12 September Founder instruction approves bounded Resend processing.
 
-**DETECTED / HOLD:** the webhook and complete sender configuration exist and
-the PR #271 worker is deployed from the exact merge SHA. Delivery is exactly
-disabled because safe Production fixture/staff/database access was unavailable
-and the six live acceptance cases therefore did not all pass. Provider
-credential acceptance and lifecycle delivery remain unproved.
+**DETECTED / GO:** the webhook and complete sender configuration exist. PRs
+#271/#273/#274 deploy the worker and acceptance fixes. All six controlled live
+cases pass with marked provider-safe fixtures; lifecycle delivery is enabled.
+This live operational evidence does not establish still-open provider
+agreement, entity, location or international-transfer facts.
 
 ## Detected runtime architecture
 
@@ -135,11 +135,13 @@ campaign and user.
 **DETECTED for the Core release:** successful full migration replay,
 build/browser acceptance, Production preflight/postflight and live aggregate
 sanity are linked from PR #269 and current records. **DETECTED for the Resend
-release:** PR #271 exact-head hosted CI, worker deployment, webhook and
-configuration evidence passed; the canonical webhook rejected an unsigned
-event with the expected 401. **HOLD:** valid delivery/webhook replay and the
-remaining six-case Production acceptance require a safe fixture plus
-authorised Production database and staff access. The operational procedure is
+release:** PRs #271/#273/#274 passed exact-head hosted CI. Worker, configuration,
+valid delivery, signed/invalid/replay webhook outcomes, unsubscribe, separate
+transactional delivery and fixed-filter broadcast safety pass all six
+controlled Production cases. Post-test sanity records five delivered messages,
+five distinct delivered provider events, four completed campaigns and zero
+queued, sending, failed, duplicate, post-unsubscribe or non-fixture messages.
+The operational procedure is
 [Customer Data, Analytics & Lifecycle Core v1](../../06_Operations/Customer-Data-Analytics-Lifecycle-Core.md).
 
 ## External integration boundary
@@ -157,11 +159,11 @@ The canonical lifecycle webhook is enabled for the five required events; its
 signing secret plus the approved sender/reply-to are present only in Vercel
 Production and were not disclosed.
 
-**HOLD:** Founder processor authority, provider configuration and deployed code
-now exist, but queued messages remain durable intent rather than delivery
-evidence until all six controlled Production acceptance checks succeed.
-Delivery is exact `false` in fail-closed deployment
-`dpl_XfWtrA94y9FkypcueURb54dzUWUk`.
+**DETECTED / ACTIVE:** Founder processor authority, provider configuration,
+deployment and six of six controlled Production acceptance exist. Delivery is
+exact `true`. Ready canonical deployment
+`5i5N2H2xWqMySWysU78EdinEwK2v` serves
+`22cf696b31b6adc3e456508b1a140044a5061698`.
 
 ## Contradictions reconciled
 
@@ -170,9 +172,9 @@ Delivery is exact `false` in fail-closed deployment
   first-party, consented relational contract.
 - Older claims that no receiving webhook or account/Programme email boundary
   exists are historical. A receiver, ledger and provider registration are
-  live; accepted delivery remains absent.
+  live, and bounded accepted delivery is recorded.
 - Older claims that Founder transfer approval is missing are superseded by the
   explicit 12 September 2026 decision. That decision is authority, not proof of
   live configuration or delivery.
-- PR #271 and the fail-closed redeploy are the authoritative release evidence
-  for the current Production SHA and provider-ready, delivery-disabled state.
+- PRs #271/#273/#274 and the dated activation record are the authoritative
+  release evidence for the current Production SHA and active delivery state.

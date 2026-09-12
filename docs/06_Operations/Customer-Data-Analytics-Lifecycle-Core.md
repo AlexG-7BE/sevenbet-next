@@ -10,17 +10,17 @@
 
 **VERIFIED in Production:** PR #269, additive migration 0037, application
 deployment, consented analytics collection and aggregate-only Core sanity.
-Lifecycle delivery remains exactly disabled and no message/provider outcome
-exists in the verified Production baseline.
 
-**FOUNDER APPROVED / ACTIVATION HOLD:** the explicit 12 September 2026
+**FOUNDER APPROVED / ACTIVATION GO:** the explicit 12 September 2026
 Founder instruction approves Resend for the bounded RFC-046 purposes and
 removes the former missing-transfer-approval hold. The approval does not prove
-live delivery. PR #271 connects a bounded 50-message processor batch only to
-the existing exact-Bearer protected daily cron. Provider, sender, webhook,
-Production variables and worker deployment are verified; the six controlled
-acceptance checks are not. Keep `LIFECYCLE_EMAIL_DELIVERY_ENABLED=false` until
-all six pass.
+every independent legal requirement. PR #271 connects a bounded 50-message
+processor batch only to the existing exact-Bearer protected daily cron. PRs
+#273 and #274 corrected the cron host boundary, transactional reset entry point
+and form-response defect exposed during controlled testing. Provider, sender,
+webhook, Production variables, worker deployment and all six controlled
+acceptance checks are verified. The accepted state is
+`LIFECYCLE_EMAIL_DELIVERY_ENABLED=true`.
 
 **LIVE PROVIDER FACTS:** `b4gamble.com`, DKIM, and SPF return-path MX/TXT are
 verified; sending is enabled in `us-east-1`; two existing credentials have
@@ -197,9 +197,9 @@ database key remains the durable authority after the provider's 24-hour
 window. Provider idempotency values contain an opaque SHA-256 subject digest,
 not a customer ID. Real delivery is possible only in Vercel Production with the exact
 flag and valid sender/reply-to/site/webhook configuration. The activation
-candidate invokes a maximum of 50 queued messages from the protected daily
-lifecycle cron; the currently deployed Core remains disabled until that
-candidate is released and the exact switch is enabled.
+worker invokes a maximum of 50 queued messages from the protected daily
+lifecycle cron. It is released and the exact Production switch is enabled
+after six of six controlled acceptance checks passed.
 
 Final eligibility is read after a worker claims a message and then read again
 immediately before synchronous template rendering/provider invocation. The
@@ -406,15 +406,17 @@ expand recipients or run a general broadcast.
 
 Immediate collection rollback is
 `NEXT_PUBLIC_ANALYTICS_ENABLED=false` plus redeploy. Email rollback is
-`LIFECYCLE_EMAIL_DELIVERY_ENABLED=false`; before acceptance it must already be
-false. Application rollback deploys the last known-good commit.
+`LIFECYCLE_EMAIL_DELIVERY_ENABLED=false` plus redeploy. Application rollback
+deploys the last known-good commit.
 Migration 0037 remains because it is additive and older code ignores the new
 columns/tables. Do not down-migrate or drop data. Queue/history rows remain for
 forensic inspection and later controlled recovery.
 
 Known external dependencies are Vercel, Prisma Postgres, Better Auth and
 Founder-approved Resend. Core Production completion is already recorded;
-Resend activation additionally requires Vercel deployment evidence, provider
-sender/domain state, webhook registration/signature proof and all six safe
-acceptance checks. Repository implementation or historical Contact-domain
-verification is not a substitute for those checks.
+Resend activation has Vercel deployment evidence, provider sender/domain state,
+webhook registration/signature proof and six of six safe acceptance checks.
+The detailed record is
+[Resend Production Activation — 12 September 2026](Resend-Production-Activation-2026-09-12.md).
+Repository implementation or historical Contact-domain verification remains
+insufficient without that live evidence.
