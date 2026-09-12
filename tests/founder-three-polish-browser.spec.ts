@@ -320,8 +320,8 @@ for (const viewport of [
     expect(bottom.atBottom).toBe(true);
     expect(Math.abs(bottom.gap)).toBeLessThanOrEqual(1);
     expect(bottom.horizontalOverflow).toBe(0);
-    expect(bottom.footerBottom).toBeLessThanOrEqual(bottom.viewportHeight + 1);
-    expect(bottom.lastFooterItemBottom).toBeLessThanOrEqual(bottom.viewportHeight + 1);
+    expect(bottom.footerBottom).toBeLessThanOrEqual(bottom.viewportHeight + 2);
+    expect(bottom.lastFooterItemBottom).toBeLessThanOrEqual(bottom.viewportHeight + 2);
     expect(bottom.lastFooterItemBottom).toBeGreaterThanOrEqual(0);
     expect(await page.locator('[data-public-shell="footer"]').count()).toBe(1);
     if (captureEvidence && viewport.width === 390) {

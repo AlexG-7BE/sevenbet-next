@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
 import { homeTranslation } from "../lib/i18n/home-catalog";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { publicShellMessages } from "../lib/i18n/public-shell-catalog";
@@ -50,16 +51,17 @@ test("Preview and Production-grade selectors expose only published languages", a
   }
 });
 
-test("Danish Bonuses renders the five real curated controls and no raw token", async ({ page }) => {
+test("Danish Bonuses renders the five core views and no raw token", async ({ page }) => {
   await page.goto(`${baseUrl}/da/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
-  const labels = ["Bedst samlet", "Lavt omsætningskrav", "Lav indbetaling", "Krypto", "Nyeste"];
-  const controls = page.getByRole("group", { name: productPageMessages("da-DK").bonuses.directoryTitle }).getByRole("button");
+  const copy = commercialUxMessages("da-DK");
+  const labels = [copy.all, copy.welcome, copy.lowWagering, copy.lowDeposit, copy.freeSpins];
+  const controls = page.getByRole("tablist", { name: productPageMessages("da-DK").bonuses.directoryTitle }).getByRole("tab");
   await expect(controls).toHaveCount(5);
   await expect(controls).toHaveText(labels);
   for (const label of labels) {
-    const control = page.getByRole("button", { name: label, exact: true });
+    const control = page.getByRole("tab", { name: label, exact: true });
     await control.click();
-    await expect(control).toHaveAttribute("aria-pressed", "true");
+    await expect(control).toHaveAttribute("aria-selected", "true");
   }
   const visibleText = await page.locator("body").innerText();
   expect(visibleText).not.toMatch(unresolvedToken);

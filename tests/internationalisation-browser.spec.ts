@@ -203,13 +203,13 @@ for (const language of PUBLISHED_LANGUAGE_ROUTE_PROFILES) {
   const locale = language.defaultLocale;
   const prefix = `/${language.publicSlug}`;
   const messages = productPageMessages(locale);
-  test(`${language.language.toUpperCase()} local visual profile and Compare preserve the published language prefix`, async ({ page, request }) => {
+  test(`${language.language.toUpperCase()} local visual profile and legacy Compare redirect preserve the published language prefix`, async ({ page, request }) => {
     const profilePath = `${prefix}/casino/demo-northstar`;
     const response = await page.goto(`${baseUrl}${profilePath}?visualFixture=true`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
     expect(new URL(canonical ?? "http://invalid").pathname).toBe(profilePath);
-    await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText(messages.common.demoDisclosure);
+    await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText(messages.profile.demoDisclosure);
     await expect(page.locator(`a[href="${prefix}/casinos"]`).first()).toBeVisible();
     expect(await page.locator('main a[href^="/r/"]').count()).toBe(0);
 
