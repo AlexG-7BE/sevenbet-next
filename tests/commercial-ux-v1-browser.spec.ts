@@ -210,6 +210,10 @@ test("all Commercial UX surfaces remain readable at Founder-approved breakpoints
       if (path.includes("best-offers")) {
         expect(await page.locator('[data-premium-section="best-offers-method"] li p').evaluateAll((items) => items.length === 3 && items.every((item) => getComputedStyle(item).display !== "none")), `${viewport.width}px trust principles`).toBe(true);
       }
+      if (path.includes("/casino/")) {
+        const sectionNavFits = await page.locator("[data-casino-section-nav]").evaluate((nav) => nav.scrollWidth <= nav.clientWidth);
+        expect(sectionNavFits, `${viewport.width}px casino section navigation`).toBe(true);
+      }
       await expect(page.locator("body")).not.toContainText(rawEvidence);
     }
   }
