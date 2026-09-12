@@ -54,6 +54,7 @@ import {
   DEFAULT_ANALYTICS_RETENTION_DAYS,
   DEFAULT_EMAIL_HISTORY_RETENTION_DAYS,
 } from "../lib/privacy/customer-data-retention.server";
+import { POST as postEmailUnsubscribe } from "../app/api/email/unsubscribe/route";
 
 const secret = "customer-analytics-unit-test-secret-32";
 
@@ -99,6 +100,21 @@ test("unsafe browser mutations require exact same-origin evidence", () => {
   assert.equal(isSameOriginMutation(new Request(url)), false);
   assert.equal(isSameOriginMutation(new Request(url, { headers: { "sec-fetch-site": "same-origin" } })), true);
   assert.equal(isSameOriginMutation(new Request(url, { headers: { "sec-fetch-site": "same-site" } })), false);
+});
+
+test("unsubscribe browser forms return a private redirect without mutating immutable headers", async () => {
+  const response = await postEmailUnsubscribe(new Request("https://b4gamble.com/api/email/unsubscribe", {
+    method: "POST",
+    headers: {
+      origin: "https://b4gamble.com",
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: "token=tampered",
+  }));
+
+  assert.equal(response.status, 303);
+  assert.equal(response.headers.get("location"), "https://b4gamble.com/unsubscribe?status=invalid");
+  assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
 });
 
 test("analytics environment, bot/device classification, and referrer context stay bounded", () => {
