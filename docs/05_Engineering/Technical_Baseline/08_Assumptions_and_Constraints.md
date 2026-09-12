@@ -19,9 +19,9 @@
 - Generic article CMS/editor functionality, complete user self-service account
   UI, payments or general notifications. A narrow Contact-to-support Resend
   adapter and the RFC-046 lifecycle provider boundary are detected. Founder
-  authority and a protected-cron activation candidate do not establish
-  operational account/Programme/marketing mail while Production delivery,
-  webhook and acceptance remain incomplete.
+  authority, the deployed protected-cron worker and the registered webhook do
+  not establish operational account/Programme/marketing mail while Production
+  delivery and six-case acceptance remain incomplete.
 
 ## Audit boundary
 

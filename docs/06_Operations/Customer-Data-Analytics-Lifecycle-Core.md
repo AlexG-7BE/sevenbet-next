@@ -13,14 +13,14 @@ deployment, consented analytics collection and aggregate-only Core sanity.
 Lifecycle delivery remains exactly disabled and no message/provider outcome
 exists in the verified Production baseline.
 
-**FOUNDER APPROVED / ACTIVATION PENDING:** the explicit 12 September 2026
+**FOUNDER APPROVED / ACTIVATION HOLD:** the explicit 12 September 2026
 Founder instruction approves Resend for the bounded RFC-046 purposes and
 removes the former missing-transfer-approval hold. The approval does not prove
-live configuration or delivery. The activation candidate connects a bounded
-50-message processor batch only to the existing exact-Bearer protected daily
-cron. Keep `LIFECYCLE_EMAIL_DELIVERY_ENABLED=false` until the sender, webhook,
-Production variables, deployed worker and all six controlled acceptance checks
-are verified.
+live delivery. PR #271 connects a bounded 50-message processor batch only to
+the existing exact-Bearer protected daily cron. Provider, sender, webhook,
+Production variables and worker deployment are verified; the six controlled
+acceptance checks are not. Keep `LIFECYCLE_EMAIL_DELIVERY_ENABLED=false` until
+all six pass.
 
 **LIVE PROVIDER FACTS:** `b4gamble.com`, DKIM, and SPF return-path MX/TXT are
 verified; sending is enabled in `us-east-1`; two existing credentials have

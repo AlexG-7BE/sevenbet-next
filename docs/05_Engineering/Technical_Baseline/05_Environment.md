@@ -11,13 +11,14 @@ lifecycle-delivery flag, lifecycle sender/reply-to names and a Resend webhook
 secret. `CRON_SECRET` protects the new daily queue/retention route as well as
 the existing protected jobs.
 
-**DETECTED fail-closed boundary:** the activation candidate invokes only a
+**DETECTED fail-closed boundary:** PR #271 invokes only a
 bounded batch from the exact-Bearer protected daily cron, and incomplete or
 disabled runtime configuration leaves queued intent untouched. CI uses
 synthetic values and a disposable database. Production analytics and retention
 configuration are present. The exact sender/reply-to/webhook secret and
 provider registration are now present only in Production; lifecycle delivery
-is disabled and candidate-worker deployment/live delivery remain incomplete.
+is disabled. Worker deployment is verified; live delivery and six-case
+acceptance remain incomplete.
 
 ## Detected workflow
 
