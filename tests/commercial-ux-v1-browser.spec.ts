@@ -102,6 +102,7 @@ test("Bonuses is an offer-first directory with five bounded intent views", async
 });
 
 test("casino review is concise, facts-first and suppresses non-governed CTA systems", async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 932 });
   const response = await page.goto(`${baseUrl}/en/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Solvane Casino" })).toBeVisible();
@@ -111,7 +112,13 @@ test("casino review is concise, facts-first and suppresses non-governed CTA syst
   await expect(page.locator('section[aria-labelledby="casino-profile-title"] dl > div')).toHaveCount(3);
   await expect(page.locator("#why-we-rate li")).toHaveCount(3);
   await expect(page.locator("#current-offer dl > div")).toHaveCount(4);
-  await expect(page.locator('[class*="verdict"]')).toContainText("Solvane Casino:");
+  const verdict = page.locator('[class*="verdict"]');
+  await expect(verdict).toContainText("Solvane Casino:");
+  await expect(verdict).toHaveAttribute("data-intentional-line-clamp", "2");
+  expect(await verdict.evaluate((element) => ({
+    lineClamp: getComputedStyle(element).webkitLineClamp,
+    overflow: getComputedStyle(element).overflow,
+  }))).toEqual({ lineClamp: "2", overflow: "hidden" });
   await expect(page.locator('#why-we-rate [data-reason-tone="strength"]')).toHaveCount(2);
   await expect(page.locator('#why-we-rate [data-reason-tone="caveat"]')).toHaveCount(1);
   await expect(page.locator("#support")).not.toContainText("Mobile support");

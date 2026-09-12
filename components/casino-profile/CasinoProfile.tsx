@@ -93,7 +93,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <div className={styles.heroIdentity}>
             <div className={styles.logo}>{casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 100} media={casino.media.logo} width={casino.media.logo.width ?? 200} /> : <span aria-hidden="true">{casino.name.slice(0, 1)}</span>}</div>
             <div className={styles.titleLine}><div><p>{messages.profile.operatorReview}</p><h1 id="casino-profile-title">{casino.name}</h1></div><CommercialScore label={messages.common.editorScore} locale={presentation.locale} score={score} /></div>
-            <p className={styles.verdict}>{decision.verdict}</p>
+            <p className={styles.verdict} data-intentional-line-clamp="2">{decision.verdict}</p>
             <CommercialBadges badges={heroBadges} />
           </div>
           <div className={styles.heroOffer}>

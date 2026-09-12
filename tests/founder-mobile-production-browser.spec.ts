@@ -101,8 +101,13 @@ async function mobileGeometryAudit(page: Page) {
       const style = getComputedStyle(element);
       const clipsWidth = /hidden|clip/.test(style.overflowX) && element.scrollWidth > element.clientWidth + tolerance;
       const clipsHeight = /hidden|clip/.test(style.overflowY) && element.scrollHeight > element.clientHeight + tolerance;
-      const truncates = style.textOverflow === "ellipsis" || Number.parseInt(style.webkitLineClamp || "0", 10) > 0;
-      if (clipsWidth || clipsHeight || (truncates && (element.scrollWidth > element.clientWidth + tolerance || element.scrollHeight > element.clientHeight + tolerance))) {
+      const renderedLineClamp = Number.parseInt(style.webkitLineClamp || "0", 10);
+      const declaredLineClamp = Number.parseInt(element.dataset.intentionalLineClamp || "0", 10);
+      const intentionalLineClamp = declaredLineClamp > 0
+        && renderedLineClamp === declaredLineClamp
+        && /hidden|clip/.test(style.overflowY);
+      const truncates = style.textOverflow === "ellipsis" || renderedLineClamp > 0;
+      if (!intentionalLineClamp && (clipsWidth || clipsHeight || (truncates && (element.scrollWidth > element.clientWidth + tolerance || element.scrollHeight > element.clientHeight + tolerance)))) {
         issues.push({ kind: "text-clipping", ...name(element), size: [element.clientWidth, element.scrollWidth, element.clientHeight, element.scrollHeight] });
       }
     }
