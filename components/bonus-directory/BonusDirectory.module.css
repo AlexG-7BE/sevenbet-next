@@ -334,6 +334,7 @@
 .commercialFooterNote > a { align-items:center; display:inline-flex; font-size:.72rem; font-weight:800; min-height:44px; text-decoration:underline; text-underline-offset:4px; }
 @media (max-width:760px) {
   .directorySection { padding:42px 0 58px; }
+  .errorDirectorySection { padding-top:calc(105px + env(safe-area-inset-top)); }
   .sectionHeading { display:block; margin-bottom:24px; }
   .sectionHeading .display { font-size:2.4rem; }
   .sectionHeading > p { margin-top:12px; }

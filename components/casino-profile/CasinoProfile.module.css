@@ -6,7 +6,7 @@
 .shell { margin:0 auto; width:var(--site-content-width); }
 .hero { background:var(--night); color:var(--paper); margin-inline:calc(var(--site-gutter) * -1); padding:118px max(var(--site-gutter),calc((100vw - var(--site-content-max)) / 2)) 58px; }
 .breadcrumb { align-items:center; color:rgba(250,250,247,.62); display:flex; flex-wrap:wrap; font-size:.73rem; gap:9px; margin-bottom:30px; }
-.breadcrumb a { align-items:center; display:inline-flex; min-height:36px; }
+.breadcrumb a { align-items:center; display:inline-flex; min-height:44px; }
 .stateNote { border-left:3px solid var(--acid); color:rgba(250,250,247,.72); font-size:.74rem; line-height:1.5; margin:0 0 24px; padding:8px 12px; }
 .stateNote strong { color:var(--paper); }
 .heroGrid { align-items:stretch; display:grid; gap:clamp(36px,6vw,88px); grid-template-columns:minmax(0,1.05fr) minmax(330px,.75fr); }
@@ -20,7 +20,7 @@
 .verdict { font-size:clamp(1.05rem,2vw,1.4rem); font-weight:650; line-height:1.35; margin:0; max-width:38ch; }
 .heroOffer { align-content:start; background:#f4f1e9; color:var(--ink); display:grid; gap:18px; padding:clamp(24px,4vw,38px); }
 .heroOffer > span { color:#6d6b63; font-size:.67rem; font-weight:850; letter-spacing:.11em; text-transform:uppercase; }
-.heroOffer h2 { display:-webkit-box; font-size:clamp(1.8rem,3.5vw,3rem); -webkit-box-orient:vertical; -webkit-line-clamp:2; letter-spacing:-.045em; line-height:.96; margin:0; overflow:hidden; text-transform:uppercase; }
+.heroOffer h2 { font-size:clamp(1.8rem,3.5vw,3rem); letter-spacing:-.045em; line-height:.96; margin:0; text-transform:uppercase; }
 .heroOffer small { color:var(--muted); font-size:.67rem; line-height:1.45; }
 .heroAction { margin-top:2px; }
 .heroAction :global(.commercialOutboundPrimary),.offerActions :global(.commercialOutboundPrimary) { justify-content:center; min-height:50px; width:100%; }
@@ -68,6 +68,20 @@
 .relatedLinks { background:var(--night); color:var(--paper); display:flex; gap:12px; justify-content:center; margin-inline:calc(var(--site-gutter) * -1); padding:28px var(--site-gutter) calc(28px + env(safe-area-inset-bottom)); }
 .relatedLinks a { align-items:center; border:1px solid rgba(250,250,247,.35); display:inline-flex; font-size:.75rem; font-weight:800; justify-content:center; min-height:44px; padding:10px 16px; text-align:center; }
 
+.unavailablePage { min-height:100svh; padding:clamp(124px,12vw,164px) var(--site-gutter) 72px; }
+.unavailableShell { background:var(--field); border:1px solid var(--ink); margin:0 auto; max-width:780px; padding:clamp(32px,5vw,58px); }
+.tealLabel { color:#777500; font-size:.7rem; font-weight:850; letter-spacing:.1em; margin:0; text-transform:uppercase; }
+.unavailableShell h1 { font-size:clamp(2.35rem,6vw,5rem); hyphens:none; letter-spacing:-.045em; line-height:.96; margin:16px 0 20px; overflow-wrap:normal; text-transform:uppercase; word-break:normal; }
+.unavailableShell > p:not(.tealLabel) { color:var(--muted); font-size:1rem; line-height:1.55; margin:0; max-width:58ch; }
+.unavailableMarker { border-left:3px solid #85831b; display:grid; gap:6px; margin-top:28px; padding:10px 14px; }
+.unavailableMarker strong { font-size:.78rem; text-transform:uppercase; }
+.unavailableMarker span { color:var(--muted); font-size:.82rem; line-height:1.45; }
+.unavailableLinks { display:flex; flex-wrap:wrap; gap:12px; margin-top:30px; }
+.primaryAction,.secondaryAction,.helpLink { align-items:center; display:inline-flex; font:inherit; font-size:.78rem; font-weight:850; justify-content:center; min-height:48px; padding:10px 18px; text-align:center; text-transform:uppercase; }
+.primaryAction { appearance:none; background:var(--night); border:1px solid var(--night); color:var(--paper); cursor:pointer; }
+.secondaryAction { background:transparent; border:1px solid var(--ink); }
+.helpLink { color:#676500; margin-top:12px; min-height:44px; padding-inline:0; text-decoration:underline; text-underline-offset:4px; }
+
 @media (max-width:800px) {
   .hero { padding-top:104px; }
   .heroGrid,.section { grid-template-columns:1fr; }
@@ -82,6 +96,11 @@
   .offerPanel .sectionFacts div:nth-child(n+3) { border-top-color:rgba(250,250,247,.2); }
 }
 @media (max-width:600px) {
+  .unavailablePage { padding:calc(104px + env(safe-area-inset-top)) var(--site-gutter) 58px; }
+  .unavailableShell { padding:28px 22px; }
+  .unavailableShell h1 { font-size:clamp(1.7rem,8.5vw,2.65rem); }
+  .unavailableLinks { display:grid; grid-template-columns:minmax(0,1fr); }
+  .primaryAction,.secondaryAction { width:100%; }
   .hero { margin-inline:calc(var(--site-gutter) * -1); padding:96px var(--site-gutter) 34px; }
   .breadcrumb { margin-bottom:22px; }
   .heroGrid { gap:30px; }

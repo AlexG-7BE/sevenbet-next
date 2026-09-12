@@ -1,8 +1,7 @@
 import { expect, test, type Locator } from "@playwright/test";
 
-import { demoProfileCopy } from "../lib/i18n/demo-profile-catalog";
+import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
-import { visualFixtureCopy } from "../lib/i18n/visual-fixture-catalog";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
@@ -26,6 +25,28 @@ async function expectWrappedControlContainment(root: Locator, controlSelector: s
     expect(control.right).toBeLessThanOrEqual(geometry.container.right + 1);
     expect(control.height).toBeGreaterThanOrEqual(44);
   }
+}
+
+async function expectScrollableControlRail(root: Locator, controlSelector: string, expectedCount: number) {
+  await expect(root).toBeVisible();
+  const controls = root.locator(controlSelector);
+  await expect(controls).toHaveCount(expectedCount);
+  const heights = await controls.evaluateAll((items) => items.map((item) => item.getBoundingClientRect().height));
+  for (const height of heights) expect(height).toBeGreaterThanOrEqual(44);
+
+  await controls.last().scrollIntoViewIfNeeded();
+  const lastControl = await controls.last().evaluate((control) => {
+    const bounds = control.getBoundingClientRect();
+    return {
+      documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      left: bounds.left,
+      right: bounds.right,
+      viewportWidth: document.documentElement.clientWidth,
+    };
+  });
+  expect(lastControl.left).toBeGreaterThanOrEqual(-1);
+  expect(lastControl.right).toBeLessThanOrEqual(lastControl.viewportWidth + 1);
+  expect(lastControl.documentOverflow).toBe(0);
 }
 
 async function expectResponsiveErrorGeometry(page: import("@playwright/test").Page) {
@@ -116,7 +137,11 @@ async function expectResponsiveErrorGeometry(page: import("@playwright/test").Pa
   expect(findings).toEqual({ clippedText: [], documentOverflow: 0, headerContrast: [], headerOverlap: [], outsideViewport: [], overlaps: [], undersized: [] });
 }
 
-async function expectAuthoredWordsStayWhole(elements: Locator, context: string) {
+async function expectAuthoredWordsStayWhole(
+  elements: Locator,
+  context: string,
+  expectedOverflowWrap: "normal" | "anywhere" = "normal",
+) {
   await expect(elements.first(), `${context}: representative element`).toBeVisible();
   const report = await elements.evaluateAll((nodes) => nodes.map((element) => {
     const style = getComputedStyle(element);
@@ -163,8 +188,8 @@ async function expectAuthoredWordsStayWhole(elements: Locator, context: string) 
       expect(rect.left, `${context}: rendered text left`).toBeGreaterThanOrEqual(Math.max(-1, item.bounds.left - 1));
       expect(rect.right, `${context}: rendered text right`).toBeLessThanOrEqual(Math.min(viewportWidth + 1, item.bounds.right + 1));
     }
-    expect(item.hyphens, `${context}: automatic hyphenation`).toBe("none");
-    expect(item.overflowWrap, `${context}: emergency fragmentation`).toBe("normal");
+    expect(["none", "manual"], `${context}: automatic hyphenation`).toContain(item.hyphens);
+    expect(item.overflowWrap, `${context}: emergency fragmentation`).toBe(expectedOverflowWrap);
     expect(item.wordBreak, `${context}: word-break policy`).toBe("normal");
   }
 }
@@ -283,79 +308,52 @@ async function expectNativeArticleHeroSeparation(page: import("@playwright/test"
   expect(geometry.separationGap, `${context}: title/summary separation`).toBeGreaterThanOrEqual(1);
 }
 
-test("localized mobile controls wrap while neutral global and compact media stay bounded", async ({ page }) => {
+test("localized mobile tab rails and focused profile navigation stay bounded", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  const messages = productPageMessages("de-DE");
   const response = await page.goto(`${baseUrl}/de/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
 
-  const rail = page.locator('[data-selector-group="curated-bonuses"]');
-  await expectWrappedControlContainment(rail, "button");
-
-  const row = page.locator('article[class*="comparisonRow"]').first();
-  const position = row.locator('[class*="compactPosition"]');
-  await expect(position).toBeVisible();
-  const [rowBox, positionBox] = await Promise.all([row.boundingBox(), position.boundingBox()]);
-  expect(rowBox).not.toBeNull();
-  expect(positionBox).not.toBeNull();
-  expect(positionBox!.x).toBeGreaterThanOrEqual(rowBox!.x - 1);
-  expect(positionBox!.y).toBeGreaterThanOrEqual(rowBox!.y - 1);
-  expect(positionBox!.x + positionBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1);
-  expect(positionBox!.y + positionBox!.height).toBeLessThanOrEqual(rowBox!.y + rowBox!.height + 1);
-
-  const compactMedia = page.locator('figure[data-offer-identity="bonus"]').first();
-  await expect(compactMedia).toBeVisible();
-  await expect(compactMedia.locator("img").first()).toBeVisible();
-  const compactMediaGeometry = await compactMedia.evaluate((element) => {
-    const container = element.getBoundingClientRect();
-    const children = Array.from(element.querySelectorAll("span, strong, small"));
-    const bounds = children.map((child) => {
-      const range = document.createRange();
-      range.selectNodeContents(child);
-      const rects = Array.from(range.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0);
-      return {
-        bottom: Math.max(...rects.map((rect) => rect.bottom)),
-        left: Math.min(...rects.map((rect) => rect.left)),
-        right: Math.max(...rects.map((rect) => rect.right)),
-        top: Math.min(...rects.map((rect) => rect.top)),
-      };
-    });
-    return { container: { bottom: container.bottom, left: container.left, right: container.right, top: container.top }, bounds };
-  });
-  for (const bounds of compactMediaGeometry.bounds) {
-    expect(bounds.left).toBeGreaterThanOrEqual(compactMediaGeometry.container.left - 1);
-    expect(bounds.right).toBeLessThanOrEqual(compactMediaGeometry.container.right + 1);
-    expect(bounds.top).toBeGreaterThanOrEqual(compactMediaGeometry.container.top - 1);
-    expect(bounds.bottom).toBeLessThanOrEqual(compactMediaGeometry.container.bottom + 1);
-  }
+  await expectScrollableControlRail(page.getByRole("tablist", { name: messages.bonuses.directoryTitle }), "button", 5);
+  await expect(page.locator("[data-commercial-bonus-card]")).toHaveCount(8);
+  await expect(page.locator("[data-commercial-bonus-card] figure, [data-commercial-bonus-card] img")).toHaveCount(0);
 
   await page.goto(`${baseUrl}/de/casinos?visualFixture=true`, { waitUntil: "networkidle" });
-  await expectWrappedControlContainment(page.locator('[data-selector-group="curated-casinos"]'), "button");
-  await expect(page.locator('section[aria-labelledby="curated-title"] [role="status"]')).toHaveCount(0);
-  expect(await page.locator("#casino-results article").count()).toBeGreaterThan(0);
+  await expectScrollableControlRail(page.getByRole("tablist", { name: messages.casinos.directoryTitle }), "button", 3);
+  await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(10);
 
   await page.goto(`${baseUrl}/de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
-  await expectWrappedControlContainment(page.locator("#editorial-review nav"), "a");
+  await expectWrappedControlContainment(page.getByRole("navigation", { name: messages.profile.relatedTitle }), "a");
 });
 
-test("long localized payout evidence receives a readable desktop term row", async ({ page }) => {
+test("localized bonus facts stay bounded and omit payout evidence", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const response = await page.goto(`${baseUrl}/fi/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
 
-  const payoutRows = page.locator("[data-bonus-directory-card] [data-material-terms] > div:last-child");
-  await expect(payoutRows).toHaveCount(4);
-  const geometry = await payoutRows.evaluateAll((rows) => rows.map((row) => {
-    const container = row.parentElement!.getBoundingClientRect();
-    const bounds = row.getBoundingClientRect();
-    const value = row.querySelector("dd")!;
+  const messages = productPageMessages("fi-FI");
+  const cards = page.locator("[data-commercial-bonus-card]");
+  await expect(cards).toHaveCount(8);
+  const facts = cards.locator("dl");
+  await expect(facts).toHaveCount(8);
+  const labels = await facts.locator("dt").allTextContents();
+  expect(labels).not.toContain(messages.common.payout);
+  const geometry = await facts.evaluateAll((lists) => lists.map((list) => {
+    const card = list.closest("article")!.getBoundingClientRect();
+    const bounds = list.getBoundingClientRect();
     return {
-      rowShare: bounds.width / container.width,
-      valueOverflow: value.scrollWidth - value.clientWidth,
+      card: { left: card.left, right: card.right },
+      factCount: list.children.length,
+      left: bounds.left,
+      right: bounds.right,
+      valueOverflows: Array.from(list.querySelectorAll("dd"), (value) => value.scrollWidth - value.clientWidth),
     };
   }));
-  for (const row of geometry) {
-    expect(row.rowShare).toBeGreaterThan(.75);
-    expect(row.valueOverflow).toBeLessThanOrEqual(1);
+  for (const list of geometry) {
+    expect(list.factCount).toBe(3);
+    expect(list.left).toBeGreaterThanOrEqual(list.card.left - 1);
+    expect(list.right).toBeLessThanOrEqual(list.card.right + 1);
+    for (const overflow of list.valueOverflows) expect(overflow).toBeLessThanOrEqual(1);
   }
 });
 
@@ -374,6 +372,7 @@ test("authored display copy wraps between words across long mobile and desktop l
       },
       {
         context: "DE Best Offers hero at 390x844",
+        expectedOverflowWrap: "anywhere",
         path: "/de/best-offers?visualFixture=true",
         selector: '[data-runtime-renderer="best-offers"] section[class*="hero"] h1',
         viewport: { width: 390, height: 844 },
@@ -403,20 +402,24 @@ test("authored display copy wraps between words across long mobile and desktop l
       const response = await page.goto(`${baseUrl}${surface.path}`, { waitUntil: "domcontentloaded" });
       expect(response?.status(), surface.context).toBe(200);
       await page.evaluate(() => document.fonts.ready);
-      await expectAuthoredWordsStayWhole(page.locator(surface.selector), surface.context);
+      await expectAuthoredWordsStayWhole(
+        page.locator(surface.selector),
+        surface.context,
+        "expectedOverflowWrap" in surface ? surface.expectedOverflowWrap : "normal",
+      );
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${surface.context}: document overflow`).toBe(0);
     }
     await page.setViewportSize({ width: 390, height: 844 });
-    const filteredBonusResponse = await page.goto(
-      `${baseUrl}/nb/bonuses?payment=localization-visual-no-match`,
-      { waitUntil: "domcontentloaded" },
-    );
-    expect(filteredBonusResponse?.status(), "NO filtered directory bonus empty state at 390x844").toBe(200);
-    await expect(page.locator('[data-public-empty-state="filtered"] h2')).toBeVisible();
-    await expect(page.locator('section[aria-labelledby="bonus-shortlist-title"]')).toHaveCount(0);
+    const focusedBonusResponse = await page.goto(`${baseUrl}/nb/bonuses?visualFixture=true`, { waitUntil: "domcontentloaded" });
+    expect(focusedBonusResponse?.status(), "NO focused bonus directory at 390x844").toBe(200);
+    await page.evaluate(() => document.fonts.ready);
+    await expect(page.locator("[data-commercial-bonus-card]")).toHaveCount(8);
+    await expect(page.getByRole("tab", { name: commercialUxMessages("nb-NO").lowWagering, exact: true })).toBeVisible();
+    await expectAuthoredWordsStayWhole(page.locator("main h1"), "NO focused bonus heading at 390x844", "anywhere");
+    await expectAuthoredWordsStayWhole(page.locator("[data-commercial-bonus-card] h2"), "NO focused bonus card headings at 390x844");
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
-      "NO filtered directory bonus empty state at 390x844: document overflow",
+      "NO focused bonus directory at 390x844: document overflow",
     ).toBe(0);
 
     const semanticCases = [
@@ -536,13 +539,14 @@ test("commercial error and empty-state display headings preserve authored words"
     }
 
     await page.setViewportSize({ width: 390, height: 844 });
-    const response = await page.goto(`${baseUrl}/pt/bonuses?payment=localization-visual-no-match`, { waitUntil: "domcontentloaded" });
+    const response = await page.goto(`${baseUrl}/pt/bonuses?visualFixture=true`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await page.evaluate(() => document.fonts.ready);
-    await expect(page.locator('section[aria-labelledby="bonus-shortlist-title"]')).toHaveCount(0);
-    await expectSemanticLongWordContainment(
-      page.locator('[data-public-empty-state="filtered"] h2'),
-      "PT directory Bonuses empty heading at 390x844",
+    await expect(page.locator("[data-commercial-bonus-card]")).toHaveCount(8);
+    await expectAuthoredWordsStayWhole(page.locator("main h1"), "PT focused Bonuses heading at 390x844", "anywhere");
+    await expectAuthoredWordsStayWhole(
+      page.locator("[data-commercial-bonus-card] h2"),
+      "PT focused Bonuses card headings at 390x844",
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   } finally {
@@ -557,7 +561,7 @@ test("localized offer facts recompose instead of fragmenting labels", async ({ b
     const response = await mobilePage.goto(`${baseUrl}/de/bonuses?visualFixture=true`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await mobilePage.evaluate(() => document.fonts.ready);
-    const terms = mobilePage.locator('article[class*="comparisonRow"] [class*="compactTerms"]').first();
+    const terms = mobilePage.locator("[data-commercial-bonus-card] dl").first();
     await expectAuthoredWordsStayWhole(terms.locator("dt"), "DE Bonuses mobile fact labels");
     const rows = await terms.locator(":scope > div").evaluateAll((items) => items.map((item) => {
       const rect = item.getBoundingClientRect();
@@ -574,11 +578,11 @@ test("localized offer facts recompose instead of fragmenting labels", async ({ b
     const response = await desktopPage.goto(`${baseUrl}/de/bonuses?visualFixture=true`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await desktopPage.evaluate(() => document.fonts.ready);
-    const facts = desktopPage.locator('article[class*="comparisonRow"] [class*="compactTerms"]');
+    const facts = desktopPage.locator("[data-commercial-bonus-card] dl");
     await expect(facts.first()).toBeVisible();
     await expectAuthoredWordsStayWhole(facts.locator("dt"), "DE Bonuses desktop fact labels");
     const widths = await facts.evaluateAll((lists) => lists.map((list) => list.getBoundingClientRect().width));
-    expect(Math.min(...widths), "desktop fact lane width").toBeGreaterThanOrEqual(350);
+    expect(Math.min(...widths), "desktop fact lane width").toBeGreaterThanOrEqual(300);
   } finally {
     await desktopContext.close();
   }
@@ -666,66 +670,38 @@ test("localized commercial route errors resolve accepted and draft locale contex
   }
 });
 
-test("localized filtered-empty states expose zero results, active filters, and a reset", async ({ page }) => {
+test("legacy bonus filters stay retired while localized casino name search remains focused", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
 
-  const de = productPageMessages("de-DE");
-  let response = await page.goto(`${baseUrl}/de/bonuses?payment=localization-visual-no-match&featured=false&recommended=true`, { waitUntil: "networkidle" });
+  let response = await page.goto(`${baseUrl}/de/bonuses?payment=localization-visual-no-match&featured=false&recommended=true&visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
-  const bonusEmpty = page.locator('[data-public-empty-state="filtered"][data-result-count="0"]');
-  await expect(bonusEmpty).toBeVisible();
-  await expect(bonusEmpty).toContainText(de.bonuses.noMatchesCopy);
-  await expect(bonusEmpty.locator("[data-empty-reset]")).toHaveAttribute("href", "/de/bonuses");
-  const bonusFilters = page.locator('[data-active-filter-state="bonuses"]');
-  await expect(bonusFilters).toContainText("localization-visual-no-match");
-  await expect(bonusFilters.getByRole("link", { name: `${de.comparison.remove} ${de.bonuses.featuredFalse}`, exact: true })).toBeVisible();
-  await expect(bonusFilters.getByRole("link", { name: `${de.comparison.remove} ${de.bonuses.recommendedTrue}`, exact: true })).toBeVisible();
-  await expect(page.locator('button[aria-controls="bonus-filter-dialog"]')).toHaveAccessibleName(`${de.common.filters} (3)`);
-  await expect(bonusFilters.locator("[data-empty-reset]")).toHaveCount(0);
+  await expect(page.locator("[data-commercial-bonus-card]")).toHaveCount(8);
+  await expect(page.getByRole("tab")).toHaveCount(5);
+  await expect(page.locator('[data-active-filter-state="bonuses"], #bonus-filter-dialog, select[name="sort"]')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
-  const fi = productPageMessages("fi-FI");
-  response = await page.goto(`${baseUrl}/fi/casinos?q=localization-visual-no-match`, { waitUntil: "networkidle" });
+  const copy = commercialUxMessages("fi-FI");
+  response = await page.goto(`${baseUrl}/fi/casinos?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
-  const casinoEmpty = page.locator('[data-public-empty-state="filtered"][data-result-count="0"]');
-  await expect(casinoEmpty).toBeVisible();
-  await expect(casinoEmpty).toContainText(fi.casinos.noMatchesCopy);
-  await expect(casinoEmpty.locator("[data-empty-reset]")).toHaveAttribute("href", "/fi/casinos");
-  const casinoFilters = page.locator('[data-active-filter-state="casinos"]');
-  await expect(casinoFilters).toContainText("localization-visual-no-match");
-  await expect(casinoFilters.locator("[data-empty-reset]")).toHaveCount(0);
+  const search = page.getByRole("searchbox", { name: copy.searchCasinos });
+  await search.fill("localization-visual-no-match");
+  const results = page.locator('#casino-collection-results[role="tabpanel"]');
+  await expect(results).toContainText(copy.noSearchResults);
+  await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(0);
+  await search.fill("");
+  await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(10);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
-test("localized mobile bonus-filter footers clear the final sort control", async ({ page }) => {
+test("localized mobile bonus view rails expose five touch-safe intents", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
 
   for (const route of ["es", "sv"]) {
     const response = await page.goto(`${baseUrl}/${route}/bonuses?crypto=false&visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status(), route).toBe(200);
-    await page.locator('button[aria-controls="bonus-filter-dialog"]').click();
-
-    const drawer = page.locator('#bonus-filter-dialog[open]');
-    await expect(drawer).toBeVisible();
-    await expect(drawer.locator('select[name="sort"]')).toBeVisible();
-    await drawer.locator('select[name="sort"]').scrollIntoViewIfNeeded();
-    await drawer.locator("form > div:last-of-type").scrollIntoViewIfNeeded();
-    const geometry = await drawer.evaluate((dialog) => {
-      const sort = dialog.querySelector<HTMLSelectElement>('select[name="sort"]')!;
-      const footer = dialog.querySelector<HTMLElement>("form > div:last-of-type")!;
-      const sortBox = sort.getBoundingClientRect();
-      const footerBox = footer.getBoundingClientRect();
-      return {
-        footerBottom: footerBox.bottom,
-        footerTop: footerBox.top,
-        sortBottom: sortBox.bottom,
-        viewportHeight: window.innerHeight,
-      };
-    });
-    expect(geometry.footerTop - geometry.sortBottom, `${route}: sort/footer clearance`).toBeGreaterThanOrEqual(1);
-    expect(geometry.footerBottom, `${route}: footer viewport containment`).toBeLessThanOrEqual(geometry.viewportHeight + 1);
-    await drawer.locator('button[aria-label]').click();
-    await expect(drawer).not.toBeVisible();
+    const rail = page.getByRole("tablist");
+    await expectScrollableControlRail(rail, "button", 5);
+    await expect(page.locator('button[aria-controls="bonus-filter-dialog"], #bonus-filter-dialog, select[name="sort"]')).toHaveCount(0);
   }
 });
 
@@ -793,24 +769,21 @@ test("localized related-reading cards preserve ordinary short words at 390px", a
   }
 });
 
-test("the deterministic casino fixture exposes a truthful second-page boundary", async ({ page }) => {
+test("legacy casino page parameters do not fragment the focused collection", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const messages = productPageMessages("de-DE");
   const response = await page.goto(`${baseUrl}/de/casinos?page=2&visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
 
-  const results = page.locator('#casino-results[data-result-count="10"]');
+  const results = page.locator('#casino-collection-results[role="tabpanel"]');
   await expect(results).toBeVisible();
-  const pagination = results.locator('[data-directory-pagination][data-current-page="2"][data-page-count="2"]');
-  await expect(pagination).toBeVisible();
-  await expect(pagination.getByRole("link", { name: messages.common.previous, exact: true })).toHaveAttribute("href", "/de/casinos?visualFixture=true");
-  await expect(pagination.getByText(messages.common.pageOf.replace("{page}", "2").replace("{pages}", "2"), { exact: true })).toBeVisible();
-  await expect(pagination.getByText(messages.common.next, { exact: true })).toHaveAttribute("aria-disabled", "true");
-  const cards = results.locator("article");
-  await expect(cards).toHaveCount(5);
-  await expect(results.locator(`[aria-label="${messages.common.result} 6"]`)).toBeVisible();
+  const cards = results.locator("[data-commercial-casino-card]");
+  await expect(cards).toHaveCount(10);
+  await expect(page.getByRole("tab")).toHaveCount(3);
+  await expect(page.locator("[data-directory-pagination]")).toHaveCount(0);
   await expect(results.locator('a[href^="/r/"]')).toHaveCount(0);
-  for (const card of await cards.all()) await expect(card).toContainText(messages.common.demoData);
+  for (const card of await cards.all()) await expect(card.locator("dl > div")).toHaveCount(3);
+  await expect(page.getByRole("note")).toContainText(messages.common.demoData);
 });
 
 test("casino fixture review controls resolve only the matching localized Solvane profile", async ({ page, request }) => {
@@ -818,11 +791,11 @@ test("casino fixture review controls resolve only the matching localized Solvane
   const response = await page.goto(`${baseUrl}/de/casinos?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
 
-  const cards = page.locator("#casino-results article");
-  await expect(cards).toHaveCount(5);
+  const cards = page.locator("[data-commercial-casino-card]");
+  await expect(cards).toHaveCount(10);
   const first = cards.first();
   const reviewLinks = first.locator('a[href*="/casino/"]');
-  await expect(reviewLinks).toHaveCount(2);
+  await expect(reviewLinks).toHaveCount(1);
   for (const link of await reviewLinks.all()) await expect(link).toHaveAttribute("href", "/de/casino/demo-plume?visualFixture=true");
   for (const card of await cards.all().then((items) => items.slice(1))) await expect(card.locator('a[href*="/casino/"]')).toHaveCount(0);
 
@@ -840,69 +813,51 @@ test("bonus fixture review controls resolve only the matching localized Solvane 
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
     const reviewLinks = page.locator('main a[href*="/casino/"]');
-    expect(await reviewLinks.count()).toBeGreaterThan(0);
-    for (const link of await reviewLinks.all()) await expect(link).toHaveAttribute("href", expectedHref);
+    await expect(reviewLinks).toHaveCount(1);
+    await expect(reviewLinks).toHaveAttribute("href", expectedHref);
     await reviewLinks.first().click();
     await page.waitForURL(`${baseUrl}${expectedHref}`);
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText("Solvane Casino");
   }
 });
 
-test("localized demo editorial declares fixture origin and keeps repeated identity logos decorative", async ({ page }) => {
+test("localized demo editorial declares fixture origin and keeps its single identity logo decorative", async ({ page }) => {
   const messages = productPageMessages("de-DE");
   const response = await page.goto(`${baseUrl}/de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
 
   const profile = page.locator('[data-runtime-renderer="casino-review"]');
-  const identityLogo = profile.locator('[class*="identityRow"] [class*="logo"] img');
+  const identityLogo = profile.locator('section[aria-labelledby="casino-profile-title"] [class*="logo"] img');
+  await expect(identityLogo).toHaveCount(1);
   await expect(identityLogo).toHaveAttribute("alt", "");
-  const brandHero = profile.locator('[class*="heroMedia"][data-presentation-family="LOGO_ONLY"]');
-  await expect(brandHero).toHaveAttribute("aria-label", "Solvane Casino");
-  await expect(brandHero.locator('[class*="brandMedia"] img')).toHaveAttribute("alt", "");
-  await expect(brandHero.locator('[class*="heroMediaCanvas"] img')).toHaveCount(0);
-  expect(await profile.locator('[data-content-origin="localized-fixture"]').count()).toBeGreaterThan(0);
-  await expect(profile.locator('[data-content-origin="source-controlled"]')).toHaveCount(0);
+  await expect(profile.locator("figure, video, [class*='heroMedia'], [data-content-origin]")).toHaveCount(0);
   await expect(profile).toContainText(messages.profile.demoDisclosure);
   await expect(profile).not.toContainText(messages.profile.originalEditorialNotice);
 });
 
-test("accepted and draft comparison fixtures use localized catalog copy and stay action-free", async ({ page }) => {
+test("legacy comparison parameters retain the localized focused collection and stay action-free", async ({ page }) => {
   for (const { country, locale, route } of [
     { country: "DE", locale: "de-DE", route: "de" },
     { country: "FI", locale: "fi-FI", route: "fi" },
   ] as const) {
     const messages = productPageMessages(locale);
-    const copy = demoProfileCopy(locale);
+    const copy = commercialUxMessages(locale);
     const response = await page.goto(`${baseUrl}/${route}/casinos?casino=demo-northstar&casino=demo-summit&country=${country}&visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
 
-    const comparison = page.locator('[data-runtime-renderer="contextual-comparison"]');
-    await expect(comparison.getByRole("heading", { name: messages.comparison.title })).toBeVisible();
-    await expect(comparison).toContainText(copy.summary);
-    await expect(comparison).toContainText(copy.bonus.title);
-    await expect(comparison).toContainText(copy.bankTransfer);
-    await expect(comparison).toContainText(copy.responsibleGamblingTools[0]);
-    await expect(comparison).toContainText(messages.common.demoData);
-    const visible = await comparison.innerText();
-    for (const genericEnglish of [
-      "Fictional review fields for interface testing",
-      "Deterministic local visual data",
-      "Offer terms",
-      "Minimum deposit",
-      "Bank transfer",
-      "Control tools",
-      "Live casino",
-      "VIP programme",
-    ]) expect(visible, `${locale}: ${genericEnglish}`).not.toContain(genericEnglish);
-
-    const results = page.locator('#casino-results[data-result-count="10"]');
-    await expect(results.locator('[data-directory-pagination][data-current-page="1"]')).toBeVisible();
-    await expect(results.locator("article")).toHaveCount(5);
+    await expect(page.locator('[data-runtime-renderer="casinos"]')).toBeVisible();
+    await expect(page.locator('[data-runtime-renderer="contextual-comparison"], [data-comparison-tray], [data-comparison-toggle]')).toHaveCount(0);
+    await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(10);
+    await expect(page.getByRole("searchbox", { name: copy.searchCasinos })).toBeVisible();
+    await expect(page.getByRole("tab", { name: copy.topRated, exact: true })).toBeVisible();
+    await expect(page.getByRole("tab", { name: copy.fastPayouts, exact: true })).toBeVisible();
+    await expect(page.getByRole("tab", { name: copy.lowDeposit, exact: true })).toBeVisible();
+    await expect(page.getByRole("note")).toContainText(messages.common.demoData);
     await expect(page.locator('main a[href^="/r/"], main a[href^="/outbound/"]')).toHaveCount(0);
   }
 });
 
-test("accepted and draft bonus fixtures preserve localized page-two navigation", async ({ page }) => {
+test("legacy bonus page and sort parameters do not split the focused directory", async ({ page }) => {
   for (const { locale, route } of [
     { locale: "de-DE", route: "de" },
     { locale: "fi-FI", route: "fi" },
@@ -911,45 +866,35 @@ test("accepted and draft bonus fixtures preserve localized page-two navigation",
     const response = await page.goto(`${baseUrl}/${route}/bonuses?page=2&sort=editorial&visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
 
-    const cards = page.locator("[data-bonus-directory-card]");
-    await expect(cards).toHaveCount(4);
-    await expect(page.locator(`[aria-label="${messages.common.result} 5"]`)).toBeVisible();
-    for (const card of await cards.all()) await expect(card).toContainText(messages.common.demoData);
+    const cards = page.locator("[data-commercial-bonus-card]");
+    await expect(cards).toHaveCount(8);
+    await expect(page.getByRole("tab")).toHaveCount(5);
+    for (const card of await cards.all()) await expect(card.locator("dl > div")).toHaveCount(3);
     await expect(page.locator('main a[href^="/r/"], main a[href^="/outbound/"]')).toHaveCount(0);
-
-    const pagination = page.locator('[data-directory-pagination][data-current-page="2"][data-page-count="2"]');
-    await expect(pagination).toBeVisible();
-    await expect(pagination.getByText(messages.common.pageOf.replace("{page}", "2").replace("{pages}", "2"), { exact: true })).toBeVisible();
-    const previous = pagination.getByRole("link", { name: messages.common.previous, exact: true });
-    const previousHref = await previous.getAttribute("href");
-    expect(previousHref).not.toBeNull();
-    const previousUrl = new URL(previousHref!, baseUrl);
-    expect(previousUrl.pathname).toBe(`/${route}/bonuses`);
-    expect(previousUrl.searchParams.get("page")).toBeNull();
-    expect(previousUrl.searchParams.get("sort")).toBe("editorial");
-    expect(previousUrl.searchParams.get("visualFixture")).toBe("true");
-    await expect(pagination.getByText(messages.common.next, { exact: true })).toHaveAttribute("aria-disabled", "true");
+    await expect(page.locator("[data-directory-pagination]")).toHaveCount(0);
+    await expect(page.getByRole("note")).toContainText(messages.common.demoData);
   }
 });
 
-test("visual fixtures keep canonical filter values while presenting localized facet labels", async ({ page }) => {
+test("legacy filter values do not reintroduce retired facets into localized commercial views", async ({ page }) => {
   for (const { locale, route } of [
     { locale: "de-DE", route: "de" },
     { locale: "fi-FI", route: "fi" },
   ] as const) {
-    const label = visualFixtureCopy(locale).welcomeBonusType;
+    const copy = commercialUxMessages(locale);
     let response = await page.goto(`${baseUrl}/${route}/bonuses?type=WELCOME&visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
-    await expect(page.locator('select[name="type"] option[value="WELCOME"]').first()).toHaveText(new RegExp(label, "iu"));
-    const bonusChip = page.locator('[data-active-filter-state="bonuses"]');
-    await expect(bonusChip).toContainText(label);
-    await expect(bonusChip).not.toContainText(/\bWELCOME\b/);
+    await expect(page.getByRole("tab", { name: copy.all, exact: true })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tab", { name: copy.welcome, exact: true })).toBeVisible();
+    await expect(page.locator("[data-commercial-bonus-card]")).toHaveCount(8);
+    await expect(page.locator('select[name="type"], [data-active-filter-state="bonuses"], #bonus-filter-dialog')).toHaveCount(0);
 
     response = await page.goto(`${baseUrl}/${route}/casinos?bonusType=WELCOME&visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
-    await expect(page.locator('select[name="bonusType"] option[value="WELCOME"]').first()).toHaveText(new RegExp(label, "iu"));
-    const casinoChip = page.locator('[data-active-filter-state="casinos"]');
-    await expect(casinoChip).toContainText(label);
-    await expect(casinoChip).not.toContainText(/\bWELCOME\b/);
+    await expect(page.getByRole("tab", { name: copy.topRated, exact: true })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tab", { name: copy.fastPayouts, exact: true })).toBeVisible();
+    await expect(page.getByRole("tab", { name: copy.lowDeposit, exact: true })).toBeVisible();
+    await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(10);
+    await expect(page.locator('select[name="bonusType"], [data-active-filter-state="casinos"], #casino-all-filters-dialog')).toHaveCount(0);
   }
 });

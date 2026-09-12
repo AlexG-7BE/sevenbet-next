@@ -1,9 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { productPageMessages } from "../lib/i18n/product-pages-catalog";
-
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
-const messages = productPageMessages("en-GB");
 
 const viewports = [
   { width: 360, height: 800 },
@@ -17,10 +14,10 @@ const viewports = [
 
 const routes = [
   "/",
-  "/best-offers",
-  "/casinos",
+  "/best-offers?visualFixture=true",
+  "/casinos?visualFixture=true",
   "/casino/demo-northstar?visualFixture=true",
-  "/bonuses",
+  "/bonuses?visualFixture=true",
   "/program",
   "/10-steps",
   "/learn",
@@ -206,28 +203,13 @@ async function expectBoundedDialog(page: Page, selector: string) {
   return dialog;
 }
 
-async function selectTwoCasinosForComparison(page: Page) {
+async function expectFocusedCasinoCollection(page: Page) {
   await expect(page.locator('[data-runtime-renderer="casinos"]')).toHaveCount(1);
   await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
-  const controls = page.locator('[data-comparison-toggle][aria-pressed="false"]');
-  if (await controls.count()) {
-    await controls.first().click();
-    await expect(page.locator("[data-comparison-tray]")).toHaveAttribute("data-comparison-count", "1");
-    await controls.first().click();
-    return;
-  }
-
-  // CI deliberately permits an empty current inventory. Exercise the same
-  // public selection event emitted by ContextualCompareToggle without
-  // inserting a casino card, renderer or commercial record.
-  for (const slug of ["demo-northstar", "demo-summit"]) {
-    await page.evaluate((casinoSlug) => {
-      window.dispatchEvent(new CustomEvent("b4gamble:comparison-toggle", { detail: { slug: casinoSlug } }));
-    }, slug);
-    if (slug === "demo-northstar") {
-      await expect(page.locator("[data-comparison-tray]")).toHaveAttribute("data-comparison-count", "1");
-    }
-  }
+  await expect(page.getByRole("tab")).toHaveCount(3);
+  await expect(page.getByRole("searchbox", { name: "Search casinos" })).toBeVisible();
+  await expect(page.locator("[data-comparison-toggle],[data-comparison-tray]")).toHaveCount(0);
+  await expect(page.locator('dialog[data-runtime-renderer="contextual-comparison"]')).toHaveCount(0);
 }
 
 async function installAnonymousProgramme(page: Page) {
@@ -276,7 +258,7 @@ test("mobile visible bounds, text clipping, touch targets and fixed controls pas
   if (failures.length) throw new Error(`${failures.length} route/viewport audits failed\n${JSON.stringify(failures.slice(0, 60), null, 2)}`);
 });
 
-test("mobile navigation, filters and contextual comparison remain bounded sheets", async ({ browser }) => {
+test("mobile navigation and commercial category rails remain bounded", async ({ browser }) => {
   test.setTimeout(3 * 60_000);
   for (const viewport of viewports.filter(({ width }) => width <= 430)) {
     const context = await browser.newContext({ viewport, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
@@ -291,39 +273,16 @@ test("mobile navigation, filters and contextual comparison remain bounded sheets
     await expect(menu).toBeHidden();
     await expect(menuButton).toBeFocused();
 
-    await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
-    const filterTrigger = page.getByRole("button", { name: /Open bonus filters|Filters/i });
-    if (await filterTrigger.count()) {
-      await filterTrigger.click();
-      const filters = await expectBoundedDialog(page, "#bonus-filter-dialog");
-      const filterInputs = filters.locator("input,select");
-      for (let index = 0; index < await filterInputs.count(); index += 1) {
-        expect(await filterInputs.nth(index).evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
-      }
-      await page.keyboard.press("Escape");
-      await expect(filters).toBeHidden();
-      await expect(filterTrigger).toBeFocused();
-    } else {
-      await expect(page.locator("main")).toContainText(/No comparison records match/i);
-    }
+    await page.goto(`${baseUrl}/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
+    const bonusTabs = page.getByRole("tab");
+    await expect(bonusTabs).toHaveCount(5);
+    expect((await bonusTabs.evaluateAll((tabs) => tabs.map((tab) => tab.getBoundingClientRect().height))).every((height) => height >= 44)).toBe(true);
+    await expect(page.locator("#bonus-filter-dialog")).toHaveCount(0);
 
-    await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
-    await page.evaluate(() => sessionStorage.removeItem("b4gamble:public-comparison:v1"));
-    await page.reload({ waitUntil: "networkidle" });
-    await selectTwoCasinosForComparison(page);
-    const comparison = await expectBoundedDialog(page, 'dialog[data-runtime-renderer="contextual-comparison"]');
-    const close = comparison.getByRole("button", { name: messages.comparison.close });
-    const closeBox = await close.boundingBox();
-    expect(closeBox?.width).toBeGreaterThanOrEqual(44);
-    expect(closeBox?.height).toBeGreaterThanOrEqual(44);
-    const before = await page.evaluate(() => scrollY);
-    await comparison.hover();
-    await page.mouse.wheel(0, 700);
-    expect(await page.evaluate(() => scrollY)).toBe(before);
-    await close.click();
-    await expect(comparison).toBeHidden();
-    await page.getByRole("button", { name: messages.comparison.open }).click();
-    await expect(comparison).toBeVisible();
+    await page.goto(`${baseUrl}/casinos?visualFixture=true`, { waitUntil: "networkidle" });
+    await expectFocusedCasinoCollection(page);
+    const casinoTabs = page.getByRole("tab");
+    expect((await casinoTabs.evaluateAll((tabs) => tabs.map((tab) => tab.getBoundingClientRect().height))).every((height) => height >= 44)).toBe(true);
     await context.close();
   }
 });
@@ -333,28 +292,31 @@ test("390px touch journeys preserve commercial, learning and canonical Programme
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
   const page = await context.newPage();
 
-  await page.goto(`${baseUrl}/best-offers`, { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("link", { name: /Review|details/i }).first()).toBeVisible();
+  await page.goto(`${baseUrl}/best-offers?visualFixture=true`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("[data-commercial-best-offer-card]")).toHaveCount(3);
+  await page.getByRole("tab", { name: "Fast Payouts", exact: true }).click();
+  await expect(page.getByRole("tab", { name: "Fast Payouts", exact: true })).toHaveAttribute("aria-selected", "true");
 
-  await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
-  await page.evaluate(() => sessionStorage.removeItem("b4gamble:public-comparison:v1"));
-  await page.reload({ waitUntil: "networkidle" });
-  await selectTwoCasinosForComparison(page);
-  await expect(page.locator('dialog[data-runtime-renderer="contextual-comparison"]')).toBeVisible();
+  await page.goto(`${baseUrl}/casinos?visualFixture=true`, { waitUntil: "networkidle" });
+  await expectFocusedCasinoCollection(page);
+  const search = page.getByRole("searchbox", { name: "Search casinos" });
+  await search.fill("Marlowe");
+  await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(1);
+  await search.fill("");
 
   await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
-  await page.locator("#faq").scrollIntoViewIfNeeded();
-  const faq = page.locator("#faq details").first();
-  await faq.locator("summary").click();
-  await expect(faq).not.toHaveAttribute("open", "");
-  await faq.locator("summary").click();
-  await expect(faq).toHaveAttribute("open", "");
+  const sources = page.locator("#sources details");
+  await sources.scrollIntoViewIfNeeded();
+  await sources.locator("summary").click();
+  await expect(sources).toHaveAttribute("open", "");
+  await sources.locator("summary").click();
+  await expect(sources).not.toHaveAttribute("open", "");
+  await expect(page.locator("[data-casino-decision-bar]")).toHaveCount(0);
 
-  await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
-  await page.getByLabel("Bonus amount").fill("100");
-  await page.getByRole("radio", { name: "Deposit + bonus" }).check({ force: true });
-  await page.getByRole("radio", { name: "Blackjack · 10%" }).check({ force: true });
-  await expect(page.locator("output")).toContainText("€70,000");
+  await page.goto(`${baseUrl}/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
+  await page.getByRole("tab", { name: "Low Wagering", exact: true }).click();
+  await expect(page.locator("[data-commercial-bonus-card]").first()).toContainText("Novara Casino");
+  await expect(page.locator("output")).toHaveCount(0);
 
   await page.goto(`${baseUrl}/learn`, { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: "Bonuses", exact: true }).click();

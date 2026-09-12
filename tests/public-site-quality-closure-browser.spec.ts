@@ -422,18 +422,14 @@ test("reported localized critical surfaces have unclipped, non-overlapping conte
     ], "DE Responsible Gambling mobile hero");
     await expectNoDocumentOverflow(page, "DE Responsible Gambling 390x844");
 
-    await gotoOk(page, "/de/bonuses?payment=localization-visual-no-match");
-    const emptyBonus = page.locator('[data-public-empty-state="filtered"][data-result-count="0"]');
-    await expect(emptyBonus).toBeVisible();
-    const emptyBonusHeading = emptyBonus.locator("h2");
-    await expect(emptyBonusHeading).toBeVisible();
-    await expect(emptyBonusHeading).not.toContainText("{market}");
-    const activeBonusFilters = page.locator('[data-active-filter-state="bonuses"]');
-    await expect(activeBonusFilters).toContainText("localization-visual-no-match");
-    await expect(emptyBonus.locator("[data-empty-reset]")).toHaveAttribute("href", "/de/bonuses");
-    await expect(activeBonusFilters.locator("[data-empty-reset]")).toHaveCount(0);
-    await expectCriticalTextFits(page, ['[data-runtime-renderer="bonuses"] h2'], "DE Bonuses empty heading 390x844");
-    await expectNoDocumentOverflow(page, "DE Bonuses empty state 390x844");
+    await gotoOk(page, "/de/bonuses?visualFixture=true");
+    const bonusTabs = page.getByRole("tab");
+    await expect(bonusTabs).toHaveCount(5);
+    await expect(page.getByRole("tab", { name: "Niedrige Umsatzbedingung", exact: true })).toBeVisible();
+    await expect(page.locator("[data-commercial-bonus-card]")).toHaveCount(8);
+    await expect(page.locator('[data-active-filter-state="bonuses"],#bonus-filter-dialog')).toHaveCount(0);
+    await expectCriticalTextFits(page, ['[data-runtime-renderer="bonuses"] h1', '[data-commercial-bonus-card] h2'], "DE Bonuses decision flow 390x844");
+    await expectNoDocumentOverflow(page, "DE Bonuses decision flow 390x844");
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await gotoOk(page, "/de/learn/responsible-gambling/responsible-gambling-tools");
@@ -488,25 +484,29 @@ test("German local visual profile localizes system UI while remaining informatio
     await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
     const systemUi = await page.locator([
-      "[data-casino-decision-bar] > div",
-      "#overview > [class*='sectionHeading']",
-      "#offer-evidence > [class*='sectionHeading']",
-      "#verdict > div:first-child > p",
-      "#verdict-heading",
-      "#faq > [class*='sectionHeading']",
+      "#why-we-rate > header",
+      "#payments > header",
+      "#current-offer > header",
+      "#games > header",
+      "#support > header",
+      "#regulation > header",
       "[class*='relatedLinks']",
+      "#sources summary",
     ].join(",")).allInnerTexts();
     expect(systemUi.join("\n"), "localized profile system UI").not.toMatch(/\b(?:Why|Demonstration)\b/);
     const messages = productPageMessages("de-DE");
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText(messages.common.reviewAvailableNoAction);
     await expect(page.locator('[data-runtime-renderer="casino-review"] a[href^="/r/"]')).toHaveCount(0);
+    await expect(page.locator('[data-runtime-renderer="casino-review"] [data-casino-decision-bar]')).toHaveCount(0);
     await expectCriticalTextFits(page, [
-      "[data-casino-decision-bar]",
-      "#overview > [class*='sectionHeading']",
-      "#offer-evidence > [class*='sectionHeading']",
-      "#verdict > div:first-child",
-      "#faq > [class*='sectionHeading']",
+      "#why-we-rate > header",
+      "#payments > header",
+      "#current-offer > header",
+      "#games > header",
+      "#support > header",
+      "#regulation > header",
       "[class*='relatedLinks']",
+      "#sources summary",
     ], "DE demo profile system UI");
     await expectNoDocumentOverflow(page, "DE demo profile 390x844");
   } finally {

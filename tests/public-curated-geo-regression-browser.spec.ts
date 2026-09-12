@@ -2,16 +2,15 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
-async function expectEveryVisibleSelectorHasCards(section: Locator) {
-  const selectors = section.locator('[role="group"] button');
-  expect(await selectors.count()).toBeGreaterThan(0);
-  for (const selector of await selectors.all()) {
-    await selector.click();
-    await expect(selector).toHaveAttribute("aria-pressed", "true");
-    const count = await section.locator("article").count();
+async function expectEveryVisibleViewHasCards(tablist: Locator, cards: Locator, expectedViews: number, maximumCards: number) {
+  const tabs = tablist.getByRole("tab");
+  await expect(tabs).toHaveCount(expectedViews);
+  for (const tab of await tabs.all()) {
+    await tab.click();
+    await expect(tab).toHaveAttribute("aria-selected", "true");
+    const count = await cards.count();
     expect(count).toBeGreaterThan(0);
-    expect(count).toBeLessThanOrEqual(3);
-    await expect(section.locator('[role="status"]')).toHaveCount(0);
+    expect(count).toBeLessThanOrEqual(maximumCards);
   }
 }
 
@@ -20,27 +19,24 @@ async function expectNoHorizontalOverflow(page: Page) {
 }
 
 for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 1000 }]) {
-  test(`curated casino and bonus navigation never exposes a known-empty result at ${viewport.width}px`, async ({ browser }) => {
+  test(`focused casino and bonus views never expose a known-empty result at ${viewport.width}px`, async ({ browser }) => {
     const page = await browser.newPage({ viewport, isMobile: viewport.width <= 430, hasTouch: viewport.width <= 430 });
 
     await page.goto(`${baseUrl}/en/casinos?visualFixture=true`, { waitUntil: "networkidle" });
-    const casinos = page.locator('section[aria-labelledby="curated-title"]');
-    await expect(casinos).toBeVisible();
-    await expectEveryVisibleSelectorHasCards(casinos);
+    await expectEveryVisibleViewHasCards(page.getByRole("tablist"), page.locator("[data-commercial-casino-card]"), 3, 10);
     await expectNoHorizontalOverflow(page);
 
     await page.goto(`${baseUrl}/en/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
-    const bonuses = page.locator('section[aria-labelledby="bonus-shortlist-title"]');
-    await expect(bonuses).toBeVisible();
-    await expectEveryVisibleSelectorHasCards(bonuses);
+    await expectEveryVisibleViewHasCards(page.getByRole("tablist"), page.locator("[data-commercial-bonus-card]"), 5, 8);
     await expectNoHorizontalOverflow(page);
 
     await page.close();
   });
 }
 
-test("an explicit full-directory bonus filter may still render its recovery empty state", async ({ page }) => {
-  await page.goto(`${baseUrl}/en/bonuses?payment=definitely-not-present`, { waitUntil: "networkidle" });
-  await expect(page.locator('[data-public-empty-state="filtered"][data-result-count="0"]')).toBeVisible();
-  await expect(page.locator('section[aria-labelledby="bonus-shortlist-title"]')).toHaveCount(0);
+test("a legacy bonus filter cannot reintroduce the retired catalogue state", async ({ page }) => {
+  await page.goto(`${baseUrl}/en/bonuses?payment=definitely-not-present&visualFixture=true`, { waitUntil: "networkidle" });
+  await expect(page.locator("[data-commercial-bonus-card]")).toHaveCount(8);
+  await expect(page.getByRole("tab")).toHaveCount(5);
+  await expect(page.locator('[data-public-empty-state="filtered"], [data-active-filter-state="bonuses"]')).toHaveCount(0);
 });

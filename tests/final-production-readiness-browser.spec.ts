@@ -142,11 +142,11 @@ test("representative major surfaces keep the public shell and intended runtime r
     if (sample.programme) await expect(page.locator('[data-public-programme-renderer="program-ai"]')).toHaveCount(1);
     await expect(page.locator('[data-runtime-renderer] [data-handoff-page]')).toHaveCount(0);
     if (sample.name === "casino-review" && sample.width === 1024) {
-      const disclosure = await page.getByText("DEMONSTRATION DATA.", { exact: true }).locator("..").boundingBox();
-      const badge = await page.getByText("FICTIONAL 18+ FIELD", { exact: true }).boundingBox();
-      const overlaps = disclosure && badge
-        ? Math.min(disclosure.x + disclosure.width, badge.x + badge.width) > Math.max(disclosure.x, badge.x)
-          && Math.min(disclosure.y + disclosure.height, badge.y + badge.height) > Math.max(disclosure.y, badge.y)
+      const disclosure = await page.getByText("DEMONSTRATION DATA", { exact: true }).locator("..").boundingBox();
+      const heading = await page.getByRole("heading", { level: 1, name: "Solvane Casino" }).boundingBox();
+      const overlaps = disclosure && heading
+        ? Math.min(disclosure.x + disclosure.width, heading.x + heading.width) > Math.max(disclosure.x, heading.x)
+          && Math.min(disclosure.y + disclosure.height, heading.y + heading.height) > Math.max(disclosure.y, heading.y)
         : true;
       expect(overlaps).toBe(false);
     }
@@ -160,80 +160,57 @@ test("Best Offers local visual fixture preserves decision hierarchy and remains 
   await open(page, "/best-offers?visualFixture=true");
   await expect(page.locator('[data-runtime-renderer="best-offers"]')).toHaveCount(1);
   await expect(page.getByText("Fictional product demonstration")).toBeVisible();
-  await expect(page.getByText("live offers", { exact: true }).locator("..")).toContainText("0");
-  await expect(page.locator('[data-inventory-mode="DEMO_ONLY"]')).toBeVisible();
+  await expect(page.getByRole("tab")).toHaveCount(4);
+  await expect(page.locator("[data-commercial-best-offer-card]")).toHaveCount(3);
   await expect(page.getByRole("link", { name: /View .* offer|Visit /i })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Compare", exact: true })).toHaveCount(0);
+  await expect(page.getByText("Review only", { exact: true })).toHaveCount(3);
+  await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
   await expect(page.locator("dt:visible").filter({ hasText: /^Wagering$/ }).first()).toBeVisible();
   await expect(page.locator("dt:visible").filter({ hasText: /^Minimum deposit$/ }).first()).toBeVisible();
   await capture(page, "mobile-390", "best-offers-demo", true);
 });
 
-test("contextual comparison auto-opens on the second eligible selection and fails closed without inventory", async ({ page }) => {
+test("casino collection keeps comparison UI retired from the focused decision flow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/casinos?visualFixture=true");
-  await page.evaluate(() => sessionStorage.removeItem("b4gamble:public-comparison:v1"));
-  await page.reload({ waitUntil: "networkidle" });
   const toggles = page.getByRole("button", { name: "Compare", exact: true });
-  if (await toggles.count() === 0) {
-    await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toHaveCount(0);
-    await expect(page.locator('dialog[data-runtime-renderer="contextual-comparison"]')).toHaveCount(0);
-    return;
-  }
-  await toggles.first().click();
-  await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toContainText("1 of 3 selected");
-  await toggles.first().click();
-  const dialog = page.locator('dialog[data-runtime-renderer="contextual-comparison"]');
-  await expect(dialog).toBeVisible();
-  await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toContainText("2 of 3 selected");
-  await expect(dialog.getByText("Building the comparison…", { exact: true })).toHaveCount(0);
-  await capture(page, "critical-states", "comparison-mobile-open");
-  await page.getByRole("button", { name: "Close comparison" }).click();
-  await expect(dialog).toBeHidden();
-  await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toContainText("2 of 3 selected");
+  await expect(toggles).toHaveCount(0);
+  await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toHaveCount(0);
+  await expect(page.locator('dialog[data-runtime-renderer="contextual-comparison"]')).toHaveCount(0);
+  await expect(page.getByRole("tab")).toHaveCount(3);
+  await expect(page.getByRole("searchbox", { name: "Search casinos" })).toBeVisible();
+  await capture(page, "critical-states", "casino-collection-mobile");
 });
 
-test("casino review stays readable through final governed state and fixed decision bar", async ({ page }) => {
+test("casino review stays readable through the concise Review Only decision state", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/casino/demo-northstar?visualFixture=true");
   await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
-  const keep = page.getByText(/keep in view/i).first();
-  const score = page.getByText("9.5", { exact: true }).last();
-  if (await keep.count() && await score.count()) {
-    const [keepBox, scoreBox] = await Promise.all([keep.boundingBox(), score.boundingBox()]);
-    expect(Math.min(keepBox!.x + keepBox!.width, scoreBox!.x + scoreBox!.width) - Math.max(keepBox!.x, scoreBox!.x) > 0
-      && Math.min(keepBox!.y + keepBox!.height, scoreBox!.y + scoreBox!.height) - Math.max(keepBox!.y, scoreBox!.y) > 0).toBe(false);
-  }
-  const finalState = page.getByText("FICTIONAL DEMONSTRATION FIELDS", { exact: true });
-  await finalState.scrollIntoViewIfNeeded();
-  await expect(finalState).toBeVisible();
-  const gap = await page.evaluate(() => {
-    const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
-    const renderer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"]');
-    return footer && renderer ? Math.round(footer.getBoundingClientRect().top - renderer.getBoundingClientRect().bottom) : 999;
-  });
-  expect(gap).toBe(0);
-  const decision = await page.locator("[data-casino-decision-bar]").boundingBox();
-  expect(Math.abs(844 - decision!.y - decision!.height)).toBeLessThanOrEqual(1.5);
-  await capture(page, "critical-states", "casino-review-mobile-final-state");
+  expect(await page.locator("main section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
+    "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "sources",
+  ]);
+  await expect(page.getByText("Review only", { exact: true })).toHaveCount(2);
+  await expect(page.locator("[data-casino-decision-bar]")).toHaveCount(0);
+  await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  await capture(page, "critical-states", "casino-review-mobile-review-only");
 });
 
-test("bonus calculator range and decision inputs change the visible turnover", async ({ page }) => {
+test("bonus directory keeps five bounded intent views and three decision facts", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/bonuses?visualFixture=true");
-  const output = page.locator("output");
-  await expect(output).toContainText("€7,000");
-  const range = page.getByLabel("Wagering multiplier");
-  await range.focus();
-  await page.keyboard.press("Home");
-  await expect(output).toContainText("€200");
-  await page.keyboard.press("ArrowRight");
-  await expect(output).toContainText("€400");
-  await page.getByRole("radio", { name: "Deposit + bonus" }).locator("..").click();
-  await expect(output).toContainText("€800");
-  await page.getByRole("radio", { name: "Blackjack · 10%" }).locator("..").click();
-  await expect(output).toContainText("€8,000");
-  await capture(page, "critical-states", "bonus-calculator-mobile");
+  const tabs = page.getByRole("tab");
+  const cards = page.locator("[data-commercial-bonus-card]");
+  expect(await tabs.allTextContents()).toEqual(["All", "Welcome", "Low Wagering", "Low Deposit", "Free Spins"]);
+  await expect(cards).toHaveCount(8);
+  expect(await cards.first().locator("dl > div").count()).toBe(3);
+  await expect(cards.locator("dt").filter({ hasText: /^Payout$/ })).toHaveCount(0);
+  await page.getByRole("tab", { name: "Free Spins", exact: true }).click();
+  expect(await cards.count()).toBeLessThan(8);
+  await expect(page.getByText("Bonus calculator", { exact: true })).toHaveCount(0);
+  await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
+  await capture(page, "critical-states", "bonus-directory-mobile");
 });
 
 test("Learn search, facets, no-result recovery and real article navigation work", async ({ page }) => {
