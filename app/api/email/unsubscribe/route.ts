@@ -26,7 +26,11 @@ export async function POST(request: Request) {
   }
   const destination = new URL("/unsubscribe", request.url);
   destination.searchParams.set("status", result.status === "unsubscribed" || result.status === "already-unsubscribed" ? "confirmed" : "invalid");
-  const redirect = Response.redirect(destination, 303);
-  redirect.headers.set("Cache-Control", "private, no-store, max-age=0");
-  return redirect;
+  return new Response(null, {
+    status: 303,
+    headers: {
+      Location: destination.toString(),
+      "Cache-Control": "private, no-store, max-age=0",
+    },
+  });
 }
