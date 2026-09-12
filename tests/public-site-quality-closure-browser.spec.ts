@@ -490,8 +490,8 @@ test("German local visual profile localizes system UI while remaining informatio
       "#games > header",
       "#support > header",
       "#regulation > header",
-      "[class*='relatedLinks']",
-      "#sources summary",
+      "#casino-faq > h2",
+      "#our-verdict > div > p:first-child",
     ].join(",")).allInnerTexts();
     expect(systemUi.join("\n"), "localized profile system UI").not.toMatch(/\b(?:Why|Demonstration)\b/);
     const messages = productPageMessages("de-DE");
@@ -505,8 +505,8 @@ test("German local visual profile localizes system UI while remaining informatio
       "#games > header",
       "#support > header",
       "#regulation > header",
-      "[class*='relatedLinks']",
-      "#sources summary",
+      "#casino-faq > h2",
+      "#our-verdict > div > p:first-child",
     ], "DE demo profile system UI");
     await expectNoDocumentOverflow(page, "DE demo profile 390x844");
   } finally {

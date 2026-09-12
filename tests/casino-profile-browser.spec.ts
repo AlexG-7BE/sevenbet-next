@@ -264,21 +264,31 @@ test("shared casino profile keeps the concise decision sequence and Review Only 
 
     const profile = page.locator('[data-runtime-renderer="casino-review"]');
     expect(await profile.locator("section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
-      "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "our-verdict", "casino-faq", "sources",
+      "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "casino-faq", "our-verdict",
     ]);
     await expect(profile.locator("[data-casino-decision-bar]"), `${viewport.width}px non-governed sticky action`).toHaveCount(0);
     await expect(profile.locator('a[href^="/r/"]'), `${viewport.width}px non-governed referral`).toHaveCount(0);
     await expect(profile.getByText("Review only", { exact: true }), `${viewport.width}px Review Only labels`).toHaveCount(2);
     const geometry = await profile.evaluate((element) => {
-      const alternatives = element.querySelector<HTMLElement>('nav[aria-label="Keep comparing"]')!;
-      const sources = element.querySelector<HTMLElement>("#sources")!;
+      const faq = element.querySelector<HTMLElement>("#casino-faq")!;
+      const verdict = element.querySelector<HTMLElement>("#our-verdict")!;
+      const footer = document.querySelector<HTMLElement>("footer")!;
       return {
-        alternativesBeforeSources: alternatives.getBoundingClientRect().top < sources.getBoundingClientRect().top,
+        faqBeforeVerdict: faq.getBoundingClientRect().top < verdict.getBoundingClientRect().top,
+        verdictBeforeFooter: verdict.getBoundingClientRect().bottom <= footer.getBoundingClientRect().top + 1,
         horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       };
     });
-    expect(geometry.alternativesBeforeSources, `${viewport.width}px alternatives before sources`).toBe(true);
+    expect(geometry.faqBeforeVerdict, `${viewport.width}px FAQ before verdict`).toBe(true);
+    expect(geometry.verdictBeforeFooter, `${viewport.width}px verdict before footer`).toBe(true);
     expect(geometry.horizontalOverflow, `${viewport.width}px horizontal overflow`).toBe(0);
+    await expect(profile.getByText("Play responsibly", { exact: true })).toHaveCount(0);
+    await expect(profile.getByText("Methodology & sources", { exact: true })).toHaveCount(0);
+    await expect(profile.getByRole("link", { name: "Browse casino reviews", exact: true })).toHaveCount(0);
+    const footer = page.getByRole("contentinfo", { name: "Control and support" });
+    await expect(footer.getByRole("heading", { name: "Explore" })).toBeVisible();
+    await expect(footer.getByRole("heading", { name: "Programme & Support" })).toBeVisible();
+    await expect(footer.getByRole("heading", { name: "Trust" })).toBeVisible();
     await context.close();
   }
 

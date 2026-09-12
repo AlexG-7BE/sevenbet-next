@@ -121,7 +121,7 @@ test("casino review is concise, facts-first and suppresses non-governed CTA syst
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Solvane Casino" })).toBeVisible();
   expect(await page.locator("main section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
-    "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "our-verdict", "casino-faq", "sources",
+    "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "casino-faq", "our-verdict",
   ]);
   await expect(page.locator('section[aria-labelledby="casino-profile-title"] dl > div')).toHaveCount(3);
   await expect(page.locator("#why-we-rate li")).toHaveCount(3);
@@ -142,9 +142,26 @@ test("casino review is concise, facts-first and suppresses non-governed CTA syst
   await expect(page.locator("#current-offer [class*='materialWarning']")).toContainText("Terms shown before action");
   const sectionNav = page.locator("[data-casino-section-nav]");
   await expect(sectionNav.getByRole("link")).toHaveCount(4);
-  expect(await sectionNav.getByRole("link").allTextContents()).toEqual(["Overview", "Offer & terms", "Our verdict", "FAQ"]);
+  expect(await sectionNav.getByRole("link").allTextContents()).toEqual(["Overview", "Offer & terms", "FAQ", "Our verdict"]);
   await expect(page.locator('[data-premium-section="casino-verdict"]')).toContainText(/Solvane Casino.*9\.6/is);
   expect(await page.locator("#casino-faq details").count()).toBeLessThanOrEqual(3);
+  await expect(page.getByText("Play responsibly", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Browse casino reviews", exact: true })).toHaveCount(0);
+  await expect(page.getByText("Methodology & sources", { exact: true })).toHaveCount(0);
+  const ending = await page.evaluate(() => {
+    const faq = document.querySelector<HTMLElement>("#casino-faq")!;
+    const verdict = document.querySelector<HTMLElement>("#our-verdict")!;
+    const footer = document.querySelector<HTMLElement>("footer")!;
+    return {
+      faqBeforeVerdict: faq.offsetTop < verdict.offsetTop,
+      verdictBeforeFooter: verdict.getBoundingClientRect().bottom <= footer.getBoundingClientRect().top + 1,
+    };
+  });
+  expect(ending).toEqual({ faqBeforeVerdict: true, verdictBeforeFooter: true });
+  const footer = page.getByRole("contentinfo", { name: "Control and support" });
+  await expect(footer.getByRole("heading", { name: "Explore" })).toBeVisible();
+  await expect(footer.getByRole("heading", { name: "Programme & Support" })).toBeVisible();
+  await expect(footer.getByRole("heading", { name: "Trust" })).toBeVisible();
   await expectNoCommercialLeak(page);
 });
 

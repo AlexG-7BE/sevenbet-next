@@ -2,32 +2,19 @@ import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CasinoProfileInteractions } from "@/components/casino-profile/CasinoProfileInteractions";
-import { CommercialBadges, CommercialFacts, CommercialScore, CompactProtection } from "@/components/commercial/CommercialPrimitives";
+import { CommercialBadges, CommercialFacts, CommercialScore } from "@/components/commercial/CommercialPrimitives";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { casinoProfileDecisionPresentation, formatCommercialMoney, safeCommercialTermsUrl, structuredOfferHeadline, type CommercialFact } from "@/lib/commercial/commercial-presentation";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
 import { formatProfileDate, profileAction, profileFaqItems, selectProfileBonus } from "@/lib/casino-profile/presentation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
-import type { CasinoEditorialDocument, EditorialBlock } from "@/lib/editorial-review/types";
+import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
 import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 
 import styles from "./CasinoProfile.module.css";
-
-function SourceBlock({ block }: { block: EditorialBlock }) {
-  if (block.type === "paragraph") return <p>{block.text}</p>;
-  if (block.type === "heading") return <h4>{block.text}</h4>;
-  if (block.type === "quote") return <blockquote>{block.text}</blockquote>;
-  if (block.type === "divider") return <hr />;
-  if (block.type === "faq" || block.type === "image" || block.type === "video") return null;
-  if ("items" in block) {
-    const List = block.type === "numbered-list" ? "ol" : "ul";
-    return <List>{block.items.map((item) => <li key={item}>{item}</li>)}</List>;
-  }
-  return <aside><strong>{block.title}</strong><p>{block.text}</p></aside>;
-}
 
 function SectionFacts({ facts }: { facts: readonly CommercialFact[] }) {
   return <dl className={styles.sectionFacts}>{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>;
@@ -115,8 +102,8 @@ export function CasinoProfile({ casino, commercialProductsAvailable = true, edit
       <nav aria-label={messages.profile.overview} className={styles.sectionNav} data-casino-section-nav>
         <a href="#overview">{messages.profile.overview}</a>
         <a href="#current-offer">{messages.profile.offerTerms}</a>
-        <a href="#our-verdict">{verdictLabel}</a>
         <a href="#casino-faq">{messages.profile.questions}</a>
+        <a href="#our-verdict">{verdictLabel}</a>
       </nav>
 
       {action ? <aside className={styles.stickyAction} data-casino-decision-bar data-mobile-visible="false">
@@ -159,34 +146,20 @@ export function CasinoProfile({ casino, commercialProductsAvailable = true, edit
         <SectionFacts facts={regulationFacts} />
       </section>
 
-      <section aria-labelledby="verdict-heading" className={`${styles.section} ${styles.verdictSection}`} data-premium-section="casino-verdict" id="our-verdict">
-        <header><p>07</p><h2 id="verdict-heading">{verdictLabel}</h2></header>
-        <div className={styles.verdictBody}>
-          <div className={styles.verdictScore}><strong>{casino.name}</strong><span>{score === null ? copy.notVerified : new Intl.NumberFormat(presentation.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(score)}</span></div>
-          <p className={styles.finalVerdict}>{finalVerdict}</p>
-          <dl>{bestFor ? <div><dt>{messages.profile.bestFor}</dt><dd>{bestFor}</dd></div> : null}{watch ? <div><dt>{messages.profile.keepInView}</dt><dd>{watch}</dd></div> : null}</dl>
-        </div>
-      </section>
-
       <section aria-labelledby="faq-heading" className={styles.profileFaq} data-premium-section="casino-faq" id="casino-faq">
         <h2 id="faq-heading">{messages.profile.questions}</h2>
         {faqItems.map((item) => <details key={item.question}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}
       </section>
 
-      <section className={styles.protectionSection}>
-        <CompactProtection copy={copy} presentation={presentation} />
-      </section>
-
-      <nav aria-label={messages.profile.relatedTitle} className={styles.relatedLinks}><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link>{commercialProductsAvailable ? <Link href={productHref(presentation, "/bonuses")}>{messages.profile.compareBonusTerms}</Link> : null}</nav>
-
-      <section className={styles.sourceAccess} id="sources">
-        <details>
-          <summary>{copy.methodologyAndSources}<span aria-hidden="true">+</span></summary>
-          <div className={styles.sourceBody}>
-            <p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link> · <Link href={productHref(presentation, "/affiliate-disclosure")}>{messages.common.affiliateDisclosure}</Link></p>
-            {editorial ? <><h2>{editorial.title}</h2><p>{editorial.author}{formatProfileDate(editorial.factCheckedAt, presentation.locale) ? ` · ${formatProfileDate(editorial.factCheckedAt, presentation.locale)}` : ""}</p>{editorial.sections.slice().sort((a, b) => a.order - b.order).map((section) => <section key={section.id}><h3>{section.title}</h3>{section.blocks.map((block) => <SourceBlock block={block} key={block.id} />)}</section>)}</> : <p>{messages.common.originalSourceCopy}</p>}
-          </div>
-        </details>
+      <section aria-labelledby="verdict-heading" className={styles.finalVerdictSection} data-nav-theme="dark" data-premium-section="casino-verdict" id="our-verdict">
+        <div className={styles.finalVerdictInner}>
+          <p className={styles.finalVerdictKicker}>{messages.profile.verdict}</p>
+          <h2 className={styles.finalVerdictHeading} id="verdict-heading">
+            <span>{casino.name}</span><span aria-hidden="true">—</span><em>{score === null ? copy.notVerified : new Intl.NumberFormat(presentation.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(score)}</em>
+          </h2>
+          <p className={styles.finalVerdictSummary}>{finalVerdict}</p>
+          {bestFor || watch ? <dl className={styles.finalVerdictFacts}>{bestFor ? <div><dt>{messages.profile.bestFor}</dt><dd>{bestFor}</dd></div> : null}{watch ? <div><dt>{messages.profile.keepInView}</dt><dd>{watch}</dd></div> : null}</dl> : null}
+        </div>
       </section>
     </div>
   </article>;

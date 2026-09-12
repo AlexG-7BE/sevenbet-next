@@ -117,9 +117,11 @@ test("decision-page composition renders three governed VIEW OFFER placements and
   }
   assert.match(actionableHtml, /data-premium-section="casino-verdict"/);
   assert.match(actionableHtml, /data-premium-section="casino-faq"/);
-  assert.ok(actionableHtml.indexOf('id="current-offer"') < actionableHtml.indexOf('id="our-verdict"'));
-  assert.ok(actionableHtml.indexOf('id="our-verdict"') < actionableHtml.indexOf('id="casino-faq"'));
-  const expectedOrder = ["why-we-rate", "payments", "current-offer", "games", "support", "regulation", "sources"];
+  assert.ok(actionableHtml.indexOf('id="current-offer"') < actionableHtml.indexOf('id="casino-faq"'));
+  assert.ok(actionableHtml.indexOf('id="casino-faq"') < actionableHtml.indexOf('id="our-verdict"'));
+  assert.doesNotMatch(actionableHtml, />07</);
+  assert.doesNotMatch(actionableHtml, /Play responsibly|Browse casino reviews|Methodology &amp; sources/);
+  const expectedOrder = ["why-we-rate", "payments", "current-offer", "games", "support", "regulation", "casino-faq", "our-verdict"];
   assert.deepEqual([...expectedOrder].sort((left, right) => actionableHtml.indexOf(`id="${left}"`) - actionableHtml.indexOf(`id="${right}"`)), expectedOrder);
 
   const reviewOnly = casino({

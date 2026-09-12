@@ -133,22 +133,25 @@ for (const viewport of [
     const geometry = await page.evaluate(() => {
       const profile = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"]')!;
       const offer = profile.querySelector<HTMLElement>("#current-offer")!;
-      const alternatives = profile.querySelector<HTMLElement>('nav[aria-label="Keep comparing"]')!;
-      const sources = profile.querySelector<HTMLElement>("#sources")!;
+      const faq = profile.querySelector<HTMLElement>("#casino-faq")!;
+      const verdict = profile.querySelector<HTMLElement>("#our-verdict")!;
+      const footer = document.querySelector<HTMLElement>("footer")!;
       const sectionRects = Array.from(profile.querySelectorAll<HTMLElement>("section[id]"), (section) => section.getBoundingClientRect());
       return {
-        alternativesBeforeSources: alternatives.getBoundingClientRect().top < sources.getBoundingClientRect().top,
+        faqBeforeVerdict: faq.getBoundingClientRect().top < verdict.getBoundingClientRect().top,
+        verdictBeforeFooter: verdict.getBoundingClientRect().bottom <= footer.getBoundingClientRect().top + 1,
         horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         offerContentFollowsHeading: innerWidth > 800 || offer.children[1].getBoundingClientRect().top >= offer.children[0].getBoundingClientRect().bottom - 1,
         sectionsInViewport: sectionRects.every((rect) => rect.left >= -1 && rect.right <= innerWidth + 1),
       };
     });
-    expect(geometry.alternativesBeforeSources).toBe(true);
+    expect(geometry.faqBeforeVerdict).toBe(true);
+    expect(geometry.verdictBeforeFooter).toBe(true);
     expect(geometry.offerContentFollowsHeading).toBe(true);
     expect(geometry.sectionsInViewport).toBe(true);
     expect(geometry.horizontalOverflow).toBe(0);
     expect(await profile.locator("section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
-      "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "our-verdict", "casino-faq", "sources",
+      "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "casino-faq", "our-verdict",
     ]);
     await expect(profile.getByText("Review only", { exact: true })).toHaveCount(2);
     await expect(profile.locator("[data-casino-decision-bar]")).toHaveCount(0);
@@ -158,7 +161,7 @@ for (const viewport of [
       const suffix = viewport.width === 1440 ? "1440" : "390";
       await saveLocatorWebp(page, "#current-offer", resolve(evidenceRoot, `founder-casino-final-block-review/casino-current-offer-${suffix}.webp`));
       await instantScroll(page, await page.evaluate(() => document.documentElement.scrollHeight));
-      await saveWebp(page, resolve(evidenceRoot, `founder-casino-final-block-review/casino-alternatives-sources-${suffix}.webp`));
+      await saveWebp(page, resolve(evidenceRoot, `founder-casino-final-block-review/casino-faq-verdict-footer-${suffix}.webp`));
     }
     await context.close();
   });

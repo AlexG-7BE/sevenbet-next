@@ -315,6 +315,10 @@ test("commercial routes keep the approved task first and restore only bounded pr
   assert.match(profile, /href="#casino-faq"/);
   assert.match(profile, /data-premium-section="casino-verdict"/);
   assert.equal((profile.match(/slice\(0, 3\)/g) ?? []).length, 1);
+  assert.ok(profile.indexOf('href="#casino-faq"') < profile.indexOf('href="#our-verdict"'));
+  assert.ok(profile.indexOf('id="casino-faq"') < profile.indexOf('id="our-verdict"'));
+  assert.doesNotMatch(profile, /CompactProtection|styles\.protectionSection|styles\.relatedLinks|styles\.sourceAccess/);
+  assert.doesNotMatch(profile, /<p>07<\/p>/);
   assert.doesNotMatch(profile, /payoutScore|bonusScore|gamesScore|supportScore|verificationScore/);
 });
 

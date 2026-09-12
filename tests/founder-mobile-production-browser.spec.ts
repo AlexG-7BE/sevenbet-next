@@ -310,12 +310,12 @@ test("390px touch journeys preserve commercial, learning and canonical Programme
   await search.fill("");
 
   await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
-  const sources = page.locator("#sources details");
-  await sources.scrollIntoViewIfNeeded();
-  await sources.locator("summary").click();
-  await expect(sources).toHaveAttribute("open", "");
-  await sources.locator("summary").click();
-  await expect(sources).not.toHaveAttribute("open", "");
+  const firstFaq = page.locator("#casino-faq details").first();
+  await firstFaq.scrollIntoViewIfNeeded();
+  await firstFaq.locator("summary").click();
+  await expect(firstFaq).toHaveAttribute("open", "");
+  await firstFaq.locator("summary").click();
+  await expect(firstFaq).not.toHaveAttribute("open", "");
   await expect(page.locator("[data-casino-decision-bar]")).toHaveCount(0);
 
   await page.goto(`${baseUrl}/bonuses?visualFixture=true`, { waitUntil: "networkidle" });

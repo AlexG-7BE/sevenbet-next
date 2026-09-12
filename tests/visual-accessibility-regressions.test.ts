@@ -81,10 +81,11 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   assert.match(profile, /<nav aria-label=\{messages\.common\.breadcrumb\}/);
   assert.match(profile, /<CommercialScore label=\{messages\.common\.editorScore\} locale=\{presentation\.locale\} score=\{score\}/);
   assert.match(primitives, /aria-label=\{`\$\{label\} \$\{value\} \/ 10`\}/);
-  assert.match(profile, /<details>\s*<summary>\{copy\.methodologyAndSources\}/);
+  assert.match(profile, /id="casino-faq"[\s\S]*?id="our-verdict"/);
+  assert.doesNotMatch(profile, /copy\.methodologyAndSources/);
   assert.match(profile, /<SectionFacts facts=\{paymentFacts\}/);
   assert.match(profileStyles, /\.stickyAction :global\(\.commercialOutboundPrimary\)\s*\{[^}]*min-height:44px;/);
-  assert.match(profileStyles, /\.sourceAccess summary\s*\{[^}]*min-height:72px;/);
+  assert.match(profileStyles, /\.profileFaq summary\s*\{[^}]*min-height:\s*68px;/);
   assert.match(cssRule(profileStyles, ".page"), /overflow-x: clip/);
   assert.match(profileStyles, /:global\(html\):has\(\.page\),\s*:global\(body\):has\(\.page\)\s*\{\s*overflow-x: clip;/);
 });
