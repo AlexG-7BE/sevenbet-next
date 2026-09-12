@@ -385,10 +385,12 @@ function handoffOffer(
       currency: "EUR",
       freeSpins: sample.freeSpins,
       minimumDeposit: sample.deposit,
+      maximumBet: 5,
       wageringMultiplier: sample.wagering,
       wageringText: localizedNumericFixtureCopy(copy.bonus.wagering, String(sample.wagering)),
       eligibility: copy.bonus.eligibility,
       importantConditions: [...copy.bonus.conditions],
+      termsUrl: null,
       startsAt: null,
       expiresAt: null,
       media: {
@@ -412,7 +414,7 @@ export function withHandoffOfferData<T extends { readonly records: readonly Publ
   return { ...result, status: "available", records, inventoryMode: "DEMO_ONLY" } as unknown as T;
 }
 
-function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPreviewAction: boolean, locale: SupportedLocale): PublicCasinoCardDto {
+function handoffCasino(seed: PublicCasinoCardDto, index: number, locale: SupportedLocale): PublicCasinoCardDto {
   const sample = casinoDirectorySamples[index];
   const copy = demoProfileCopy(locale);
   const messages = productPageMessages(locale);
@@ -426,13 +428,12 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPrevi
     { url: "/demo-casinos/phase-11-square.svg", width: 1000, height: 1000, label: "1:1" },
     null,
   ][index % 4];
-  const previewAction = allowLocalPreviewAction && index === 0;
   return {
     ...seed,
-    id: previewAction ? "local-commercial-phase-preview" : temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
-    dataClassification: previewAction ? "LOCAL_PREVIEW_FIXTURE" : "DEMO_FIXTURE",
-    disposition: previewAction ? "PROMOTABLE" : "INFORMATIONAL_ONLY",
-    dispositionReason: previewAction ? "EXACT_MARKET_AND_ROUTE_ELIGIBLE" : "NON_PUBLIC_SYNTHETIC_IDENTITY",
+    id: temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
+    dataClassification: "DEMO_FIXTURE",
+    disposition: "INFORMATIONAL_ONLY",
+    dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY",
     slug: key,
     reviewHref: index === 0 ? "/casino/demo-plume?visualFixture=true" : null,
     name: sample.name,
@@ -443,6 +444,7 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPrevi
     licenses: [],
     countries: [{ key: market.countryCode, label: market.seoDisplayName }],
     paymentMethods: [{ key: "visa", label: "Visa" }, { key: "mastercard", label: "Mastercard" }],
+    withdrawalTimes: [formatFixturePayout(sample.payout, locale)],
     highlights: localizedHighlights(index, locale),
     featuredBonus: {
       title: localizedOfferTitle(sample, locale),
@@ -459,9 +461,7 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPrevi
       validUntil: null,
       termsApply: true,
     },
-    visitAction: previewAction
-      ? { available: true, redirectSlug: "local-preview-no-destination", label: `${messages.common.actionAvailable}: ${sample.name}`, reasonCode: null }
-      : { available: false, redirectSlug: null, label: messages.common.commercialUnavailable, reasonCode: "NO_GOVERNED_ROUTE" },
+    visitAction: { available: false, redirectSlug: null, label: messages.common.commercialUnavailable, reasonCode: "NO_GOVERNED_ROUTE" },
     responsibleGamblingLabel: messages.profile.controlTools,
   };
 }
@@ -481,6 +481,7 @@ const casinoFixtureSeed: PublicCasinoCardDto = {
   licenses: [],
   countries: [],
   paymentMethods: [],
+  withdrawalTimes: [],
   gameProviders: [],
   categories: [],
   highlights: [],
@@ -494,17 +495,16 @@ const casinoFixtureSeed: PublicCasinoCardDto = {
 export function withHandoffCasinoDiscoveryData(
   result: CasinoDiscoveryResult,
   enabled: boolean,
-  allowLocalPreviewAction = false,
   locale: SupportedLocale = "en-GB",
   requestedQuery: CasinoDiscoveryQuery = { ...result.appliedFilters, page: result.page },
 ): CasinoDiscoveryResult {
   if (!enabled) return result;
   const seeds = result.items.length ? result.items : [casinoFixtureSeed];
-  const allItems = casinoDirectorySamples.map((_, index) => handoffCasino(seeds[index % seeds.length], index, allowLocalPreviewAction, locale));
-  const pageCount = 2;
-  const pageSize = Math.ceil(allItems.length / pageCount);
-  const page = Math.min(pageCount, Math.max(1, requestedQuery.page ?? result.page));
-  const items = allItems.slice((page - 1) * pageSize, page * pageSize);
+  const allItems = casinoDirectorySamples.map((_, index) => handoffCasino(seeds[index % seeds.length], index, locale));
+  const pageCount = 1;
+  const pageSize = allItems.length;
+  const page = 1;
+  const items = allItems;
   return {
     ...result,
     items,
@@ -665,10 +665,10 @@ export function withHandoffBonusDirectoryData(
   const seeds = result.records.length ? result.records : temporaryDemoBestOffers();
   if (!seeds.length) return result;
   const allRecords = bonusDirectorySamples.map((_, index) => handoffOffer(seeds[index % seeds.length], index, bonusDirectorySamples, "bonuses", locale));
-  const pageCount = 2;
-  const pageSize = Math.ceil(allRecords.length / pageCount);
-  const page = Math.min(pageCount, Math.max(1, requestedQuery.page));
-  const records = allRecords.slice((page - 1) * pageSize, page * pageSize);
+  const pageCount = 1;
+  const pageSize = allRecords.length;
+  const page = 1;
+  const records = allRecords;
   return {
     ...result,
     records,

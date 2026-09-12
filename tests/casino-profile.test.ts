@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import test from "node:test";
+import * as React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
+import { shouldShowCasinoDecisionBar } from "../components/casino-profile/CasinoProfileInteractions";
 import {
   formatProfileScore,
   profileAction,
@@ -14,6 +18,7 @@ import {
 import { casinoProfileMetadata, casinoProfileSchemas, projectCasinoProfileSchemas } from "../lib/casino-profile/seo";
 import type { CasinoEditorialDocument } from "../lib/editorial-review/types";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
@@ -82,6 +87,64 @@ test("sparse and unsafe action states fail closed without invented profile facts
   assert.equal(profileReviewFreshness(sparse), null);
   assert.deepEqual(profileFacts(sparse), []);
   assert.doesNotMatch(JSON.stringify(profileFaqItems(sparse, bonus, null)), /verified|48 hours|official website/i);
+});
+
+test("decision-page composition renders three governed VIEW OFFER placements and no CTA for Review Only", async () => {
+  const require = createRequire(import.meta.url);
+  require.extensions[".css"] = () => undefined;
+  (globalThis as typeof globalThis & { React: typeof React }).React = React;
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const presentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
+  const messages = productPageMessages(presentation.locale);
+  const actionable = casino({
+    presentationDisposition: "PROMOTABLE",
+    presentationDispositionReason: "EXACT_MARKET_AND_ROUTE_ELIGIBLE",
+    media: { ...casino().media, logo: null },
+  });
+  const actionableHtml = renderToStaticMarkup(React.createElement(CasinoProfile, {
+    availableForPresentation: true,
+    casino: actionable,
+    editorial,
+    messages,
+    presentation,
+  }));
+  assert.equal((actionableHtml.match(/href="\/r\/published-bonus\?placement=CTA_CASINO_(?:HERO|MOBILE_STICKY|OFFER_SECTION)"/g) ?? []).length, 3);
+  assert.equal((actionableHtml.match(/VIEW OFFER/g) ?? []).length, 3);
+  assert.match(actionableHtml, /data-casino-decision-bar/);
+  const expectedOrder = ["why-we-rate", "payments", "current-offer", "games", "support", "regulation", "sources"];
+  assert.deepEqual([...expectedOrder].sort((left, right) => actionableHtml.indexOf(`id="${left}"`) - actionableHtml.indexOf(`id="${right}"`)), expectedOrder);
+
+  const reviewOnly = casino({
+    presentationDisposition: "INFORMATIONAL_ONLY",
+    presentationDispositionReason: "EXACT_MARKET_INFORMATION_ONLY",
+    media: { ...casino().media, logo: null },
+  });
+  const reviewOnlyHtml = renderToStaticMarkup(React.createElement(CasinoProfile, {
+    availableForPresentation: true,
+    casino: reviewOnly,
+    editorial,
+    messages,
+    presentation,
+  }));
+  assert.doesNotMatch(reviewOnlyHtml, /href="\/r\//);
+  assert.doesNotMatch(reviewOnlyHtml, /data-casino-decision-bar/);
+  assert.equal((reviewOnlyHtml.match(/Review only/g) ?? []).length, 2);
+});
+
+test("mobile decision bar appears only after the hero and clears before the footer", () => {
+  const base = {
+    barHeight: 68,
+    footerTop: 1200,
+    headerHeight: 64,
+    heroBottom: 68,
+    mobile: true,
+    viewportHeight: 844,
+  };
+  assert.equal(shouldShowCasinoDecisionBar(base), true);
+  assert.equal(shouldShowCasinoDecisionBar({ ...base, mobile: false }), false);
+  assert.equal(shouldShowCasinoDecisionBar({ ...base, heroBottom: 69 }), false);
+  assert.equal(shouldShowCasinoDecisionBar({ ...base, footerTop: 912 }), false);
+  assert.equal(shouldShowCasinoDecisionBar({ ...base, footerTop: null }), true);
 });
 
 test("metadata and structured data contain no raw operator destination or fabricated Offer schema", () => {
@@ -181,7 +244,7 @@ test("published maximum bet is projected from the existing immutable snapshot fi
   assert.equal(mapped?.bonuses[0]?.maximumBet, 7.5);
 });
 
-test("route and component keep Prisma, client fetching, raw destinations and demo-prefix behavior outside the profile", () => {
+test("route and decision composition keep authority, raw destinations and Prisma outside the profile", () => {
   const route = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   const component = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
   const action = readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8");
@@ -190,16 +253,19 @@ test("route and component keep Prisma, client fetching, raw destinations and dem
   assert.match(route, /candidate\?\.source === "cms"/);
   assert.match(route, /projectCasinoProfileSchemas/);
   assert.match(component, /messages\.profile\.offerUnavailable/);
-  assert.match(component, /data-content-origin="localized-taxonomy"/);
-  assert.match(component, /editorialSectionLabel\(section\.kind, messages, locale\)/);
-  assert.match(component, /demonstration \? "localized-fixture" : "source-controlled"/);
-  assert.match(component, /demo \? messages\.profile\.demoDisclosure : messages\.profile\.originalEditorialNotice/);
-  assert.match(component, /data-content-origin=\{contentOrigin\}/);
-  assert.match(component, /category\.key\.replaceAll\("-", " "\)/);
+  assert.match(component, /casinoProfileDecisionPresentation/);
+  assert.match(component, /CASINO_HERO/);
+  assert.match(component, /CASINO_OFFER_SECTION/);
+  assert.match(component, /CASINO_MOBILE_STICKY/);
+  assert.match(component, /decision\.bullets\.map/);
+  assert.match(component, /bonus\?\.importantConditions\.length \|\| bonus\?\.eligibility/);
   assert.match(component, /casino\.media\.logo \? <ResponsivePlacementImage alt=""/);
   assert.doesNotMatch(component, /alt=\{casino\.media\.logo\.alt \|\| casino\.name\}/);
   assert.doesNotMatch(component, /alt=\{casino\.media\.logo\.alt \|\| `\$\{casino\.name\} logo`\}/);
-  assert.equal((action.match(/<a[^>]+href=\{action\.href\}/g) ?? []).length, 1);
+  assert.equal((component.match(/<CasinoOutboundAction/g) ?? []).length, 3);
+  assert.equal((action.match(/<a/g) ?? []).length, 1);
+  assert.match(action, /href=\{attributedCommercialHref\(action\.href, context\)\}/);
+  assert.match(action, /return `\$\{href\}\?placement=\$\{context\.source\}_\$\{context\.placement\}`/);
   assert.match(action, /outboundIntent\("direct", context\)/);
   assert.match(action, /target="_blank"/);
   assert.doesNotMatch(action, /confirmationHref|aria-haspopup="dialog"|showModal|You are leaving B4GAMBLE/);

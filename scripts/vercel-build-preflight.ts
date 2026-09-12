@@ -25,6 +25,7 @@ const MEDIA_RETIREMENT_TARGET_MIGRATION = "0034_logo_only_media_retirement";
 const MARKET_ACTIVATION_EXACT_MARKET_MIGRATION = "0035_market_activation_exact_market_code";
 const RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION = "0036_partner_casino_runtime_market_support";
 const CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION = "0037_customer_data_analytics_lifecycle_core";
+const COMMERCIAL_UX_ANALYTICS_MIGRATION = "0038_commercial_ux_analytics_events";
 
 type MigrationRow = {
   migration_name: string;
@@ -170,6 +171,55 @@ async function assertCustomerDataAnalyticsLifecycleInvariants(prisma: PrismaClie
     constraintsVerified: 8,
     criticalIndexesVerified: 4,
     integrityViolations: 0,
+  });
+}
+
+async function assertCommercialUxAnalyticsInvariants(prisma: PrismaClient) {
+  const [schema] = await prisma.$queryRawUnsafe<Array<{
+    event_types_ready: boolean;
+    position_column_ready: boolean;
+    position_constraint_ready: boolean;
+  }>>(`
+    SELECT
+      (SELECT COUNT(*) = 3
+       FROM pg_enum value
+       JOIN pg_type type ON type.oid = value.enumtypid
+       JOIN pg_namespace namespace ON namespace.oid = type.typnamespace
+       WHERE type.typname = 'AnalyticsEventType'
+         AND namespace.nspname = 'public'
+         AND value.enumlabel IN ('COMMERCIAL_VIEW_SELECTED', 'COMMERCIAL_CARD_VIEWED', 'CASINO_REVIEW_CLICKED')) AS event_types_ready,
+      EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'AnalyticsEvent'
+          AND column_name = 'position'
+          AND data_type = 'integer'
+          AND is_nullable = 'YES'
+      ) AS position_column_ready,
+      EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'AnalyticsEvent_position_check'
+          AND contype = 'c'
+          AND conrelid = 'public."AnalyticsEvent"'::regclass
+      ) AS position_constraint_ready
+  `);
+  if (!schema?.event_types_ready || !schema.position_column_ready || !schema.position_constraint_ready) {
+    throw new Error("Production migration guard found incomplete Commercial UX analytics schema.");
+  }
+  const [integrity] = await prisma.$queryRawUnsafe<Array<{ invalid_positions: bigint }>>(`
+    SELECT COUNT(*)::bigint AS invalid_positions
+    FROM "AnalyticsEvent"
+    WHERE "position" IS NOT NULL AND ("position" < 1 OR "position" > 1000)
+  `);
+  if (!integrity || integrity.invalid_positions !== 0n) {
+    throw new Error("Production migration guard found invalid Commercial UX analytics positions.");
+  }
+  writeEvent({
+    event: "production_commercial_ux_analytics_preflight",
+    migration: COMMERCIAL_UX_ANALYTICS_MIGRATION,
+    checksumMatched: true,
+    eventTypesVerified: 3,
+    invalidPositions: 0,
   });
 }
 
@@ -457,7 +507,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION, COMMERCIAL_UX_ANALYTICS_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -467,6 +517,7 @@ async function maybeApplyProgrammeAccessMigration() {
   let marketActivationSchemaReady = false;
   let runtimePartnerMarketSupportSchemaReady = false;
   let customerDataAnalyticsLifecycleSchemaReady = false;
+  let commercialUxAnalyticsSchemaReady = false;
   let mediaRetirementReady = false;
   try {
     const rows = await readMigrationRows(prisma);
@@ -504,6 +555,7 @@ async function maybeApplyProgrammeAccessMigration() {
       ...(!applied.has(MARKET_ACTIVATION_EXACT_MARKET_MIGRATION) ? [MARKET_ACTIVATION_EXACT_MARKET_MIGRATION] : []),
       ...(!applied.has(RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION) ? [RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION] : []),
       ...(!applied.has(CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION) ? [CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION] : []),
+      ...(!applied.has(COMMERCIAL_UX_ANALYTICS_MIGRATION) ? [COMMERCIAL_UX_ANALYTICS_MIGRATION] : []),
     ];
 
     if (
@@ -701,6 +753,11 @@ async function maybeApplyProgrammeAccessMigration() {
       await assertCustomerDataAnalyticsLifecycleInvariants(prisma);
       customerDataAnalyticsLifecycleSchemaReady = true;
     }
+    if (applied.has(COMMERCIAL_UX_ANALYTICS_MIGRATION)) {
+      assertChecksum(completedByName.get(COMMERCIAL_UX_ANALYTICS_MIGRATION), COMMERCIAL_UX_ANALYTICS_MIGRATION);
+      await assertCommercialUxAnalyticsInvariants(prisma);
+      commercialUxAnalyticsSchemaReady = true;
+    }
     if (applied.has(MEDIA_RETIREMENT_TARGET_MIGRATION)) {
       assertChecksum(completedByName.get(MEDIA_RETIREMENT_TARGET_MIGRATION), MEDIA_RETIREMENT_TARGET_MIGRATION);
       await assertMediaRetirementInvariants(prisma);
@@ -729,6 +786,10 @@ async function maybeApplyProgrammeAccessMigration() {
 
   if (!customerDataAnalyticsLifecycleSchemaReady) {
     throw new Error(`Production DB-first release requires completed ${CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION} before this application build.`);
+  }
+
+  if (!commercialUxAnalyticsSchemaReady) {
+    throw new Error(`Production DB-first release requires completed ${COMMERCIAL_UX_ANALYTICS_MIGRATION} before this application build.`);
   }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();

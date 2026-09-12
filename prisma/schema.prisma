@@ -466,6 +466,9 @@ enum AnalyticsEventType {
   PROGRAMME_COMPLETED
   CASINO_VIEWED
   OFFER_VIEWED
+  COMMERCIAL_VIEW_SELECTED
+  COMMERCIAL_CARD_VIEWED
+  CASINO_REVIEW_CLICKED
   COMMERCIAL_CTA_CLICKED
   OUTBOUND_REDIRECT_ATTEMPTED
   OUTBOUND_REDIRECT_SUCCEEDED
@@ -2807,6 +2810,7 @@ model AnalyticsEvent {
   affiliateOfferId   String?                 @db.Uuid
   affiliateNetworkId String?                 @db.Uuid
   placement          String?                 @db.VarChar(64)
+  position           Int?
   programmeStep      Int?
   outboundClickId    String?                 @db.Uuid
   emailMessageId     String?                 @db.Uuid

@@ -52,8 +52,8 @@ test("handoff visual fixtures are data-only and dynamic routes cannot switch pre
   assert.doesNotMatch(guard, /HandoffPage|generated-pages\.json|dangerouslySetInnerHTML/);
   const runtimeRoutes = [
     ["app/(public)/best-offers/page.tsx", /BestOffersExperience/],
-    ["app/(public)/casinos/page.tsx", /CuratedCasinoShortlist/],
-    ["app/(public)/bonuses/page.tsx", /BonusComparisonList/],
+    ["app/(public)/casinos/page.tsx", /CasinoCollection/],
+    ["app/(public)/bonuses/page.tsx", /BonusOfferDirectory/],
     ["app/(public)/casino/[slug]/page.tsx", /CasinoProfile/],
     ["app/(public)/learn/[category]/[slug]/page.tsx", /LearningArticleView/],
   ] as const;

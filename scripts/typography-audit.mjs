@@ -4,8 +4,6 @@ import path from "node:path";
 import postcss from "postcss";
 
 const allowedDecorativeMicrotype = new Map([
-  ["components/casino-profile/CasinoProfile.module.css::.prosCons section:first-child li::before, .controlTools li::before::8px", "DECORATIVE glyph marker; adjacent list copy carries the meaning"],
-  ["components/casino-profile/CasinoProfile.module.css::.prosCons section:last-child li::before, .conditions li::before::8px", "DECORATIVE glyph marker; adjacent list copy carries the meaning"],
   ["components/home/TiltHome.module.css::.cardEyebrow::11px", "DECORATIVE carousel chapter eyebrow; the card title repeats the meaning"],
   ["components/home/TiltHome.module.css::.miniScreen b, .miniScreen small::11px", "DECORATIVE product-theatre screen embedded inside a labelled Programme card"],
   ["components/home/TiltHome.module.css::.heroKicker::9px", "DECORATIVE hero eyebrow; the H1 and body carry the message"],

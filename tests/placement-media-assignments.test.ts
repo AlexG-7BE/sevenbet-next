@@ -1159,20 +1159,22 @@ test("historical semantic slots remain documented while promotional Admin writes
   assert.doesNotMatch(route, /export async function DELETE/);
 });
 
-test("all active public surfaces use logos or B4GAMBLE compositions while preserving governed CTA semantics", () => {
+test("active public surfaces exclude promotional media while preserving governed CTA semantics", () => {
   const discovery = readFileSync("lib/services/public-casino-discovery.service.ts", "utf8");
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
   const comparison = readFileSync("lib/services/public-comparison.service.ts", "utf8");
   const bestOffers = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
-  const bonuses = readFileSync("components/bonus-directory/CuratedBonusShortlist.tsx", "utf8");
+  const bonuses = readFileSync("components/bonus-directory/BonusOfferDirectory.tsx", "utf8");
   assert.match(discovery, /logo:\s*logoMediaDto/);
   assert.match(discovery, /hero:\s*null/);
   assert.match(profile, /casino\.media\.logo/);
-  assert.match(profile, /source: "CTA", placement: "CASINO_OFFER_BLOCK"/);
+  assert.match(profile, /source: "CTA", placement: "CASINO_OFFER_SECTION"/);
   assert.doesNotMatch(profile, /source: "CREATIVE"|CASINO_REVIEW_RIGHT_HERO/);
   assert.match(comparison, /casino\.media\.logo/);
-  assert.match(bestOffers, /OperatorIdentityPanel/);
-  assert.match(bonuses, /OperatorIdentityPanel/);
+  assert.match(bestOffers, /ResponsivePlacementImage/);
+  assert.match(bonuses, /offerCardPresentation/);
+  assert.match(bonuses, /CommercialFacts/);
+  assert.doesNotMatch(`${bestOffers}\n${bonuses}`, /CommercialOfferMedia|OperatorIdentityPanel/);
   const responsive = readFileSync("components/media/ResponsivePlacementImage.tsx", "utf8");
   assert.match(responsive, /max-width: 767px/);
   assert.match(responsive, /data-placement-variant="MOBILE"/);

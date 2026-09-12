@@ -66,7 +66,7 @@ test("public compositions use direct logos and cannot render promotional card or
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
   const shortlist = readFileSync("components/casino-discovery/CuratedCasinoShortlist.tsx", "utf8");
   const bestOffers = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
-  const bonuses = readFileSync("components/bonus-directory/CuratedBonusShortlist.tsx", "utf8");
+  const bonuses = readFileSync("components/bonus-directory/BonusOfferDirectory.tsx", "utf8");
   assert.match(discovery, /hero:\s*null/);
   assert.match(discovery, /scoped\.media\.logo/);
   assert.match(comparison, /casino\.media\.logo/);
@@ -75,8 +75,9 @@ test("public compositions use direct logos and cannot render promotional card or
   assert.match(shortlist, /casino\.hero\?\.ownership === "B4GAMBLE_EDITORIAL"/);
   assert.doesNotMatch(shortlist, /creativePresentationFamily|mayPresentPromotionalMedia|source === "EXPLICIT"/);
   assert.match(shortlist, /data-presentation-family="LOGO_ONLY"/);
-  assert.match(bestOffers, /OperatorIdentityPanel/);
-  assert.match(bonuses, /OperatorIdentityPanel/);
+  assert.match(bestOffers, /ResponsivePlacementImage/);
+  assert.match(bonuses, /offerCardPresentation/);
+  assert.doesNotMatch(`${bestOffers}\n${bonuses}`, /CommercialOfferMedia|OperatorIdentityPanel/);
 });
 
 test("Production logo preflight uses exact demo authority while requiring every operator logo", () => {

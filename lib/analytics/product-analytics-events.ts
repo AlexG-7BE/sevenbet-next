@@ -15,6 +15,9 @@ export const productAnalyticsEventNames = [
   "programme_completed",
   "casino_viewed",
   "offer_viewed",
+  "commercial_view_selected",
+  "commercial_card_viewed",
+  "casino_review_clicked",
   "commercial_cta_clicked",
   "outbound_redirect_attempted",
   "outbound_redirect_succeeded",
@@ -48,6 +51,9 @@ export const clientProductAnalyticsEventNames = [
   "programme_step_viewed",
   "casino_viewed",
   "offer_viewed",
+  "commercial_view_selected",
+  "commercial_card_viewed",
+  "casino_review_clicked",
   "commercial_cta_clicked",
 ] as const satisfies readonly ProductAnalyticsEventName[];
 
@@ -85,6 +91,7 @@ export const clientAnalyticsEventSchema = z.object({
   casinoId: optionalUuid,
   affiliateOfferId: optionalUuid,
   placement: optionalPlacement,
+  position: z.number().int().min(1).max(1000).optional(),
   programmeStep: z.number().int().min(1).max(10).optional(),
 }).strict().superRefine((event, context) => {
   const programmeStepEvent = event.name === "programme_step_viewed";
@@ -95,14 +102,32 @@ export const clientAnalyticsEventSchema = z.object({
       message: "programmeStep is required only for a Programme step view",
     });
   }
-  if (event.casinoId !== undefined && event.name !== "casino_viewed" && event.name !== "offer_viewed") {
-    context.addIssue({ code: "custom", path: ["casinoId"], message: "casinoId is allowed only for casino or offer views" });
+  const casinoEvents: ClientProductAnalyticsEventName[] = ["casino_viewed", "offer_viewed", "commercial_card_viewed", "casino_review_clicked"];
+  if (event.casinoId !== undefined && !casinoEvents.includes(event.name)) {
+    context.addIssue({ code: "custom", path: ["casinoId"], message: "casinoId is allowed only for bounded casino or offer interactions" });
   }
   if (event.affiliateOfferId !== undefined && event.name !== "offer_viewed") {
     context.addIssue({ code: "custom", path: ["affiliateOfferId"], message: "affiliateOfferId is allowed only for offer views" });
   }
-  if (event.placement !== undefined && event.name !== "commercial_cta_clicked") {
-    context.addIssue({ code: "custom", path: ["placement"], message: "placement is allowed only for commercial CTA clicks" });
+  const placementEvents: ClientProductAnalyticsEventName[] = ["commercial_view_selected", "commercial_card_viewed", "casino_review_clicked", "commercial_cta_clicked"];
+  if (event.placement !== undefined && !placementEvents.includes(event.name)) {
+    context.addIssue({ code: "custom", path: ["placement"], message: "placement is allowed only for bounded commercial interactions" });
+  }
+  const positionedEvents: ClientProductAnalyticsEventName[] = ["commercial_card_viewed", "casino_review_clicked"];
+  if (event.position !== undefined && !positionedEvents.includes(event.name)) {
+    context.addIssue({ code: "custom", path: ["position"], message: "position is allowed only for commercial card or review interactions" });
+  }
+  if (event.name === "commercial_view_selected" && event.placement === undefined) {
+    context.addIssue({ code: "custom", path: ["placement"], message: "selected view is required" });
+  }
+  if ((event.name === "commercial_card_viewed" || event.name === "casino_review_clicked") && event.placement === undefined) {
+    context.addIssue({ code: "custom", path: ["placement"], message: "commercial placement is required for this interaction" });
+  }
+  if (event.name === "commercial_card_viewed" && event.position === undefined) {
+    context.addIssue({ code: "custom", path: ["position"], message: "card position is required for a commercial card view" });
+  }
+  if ((event.name === "commercial_card_viewed" || event.name === "casino_review_clicked") && event.casinoId === undefined) {
+    context.addIssue({ code: "custom", path: ["casinoId"], message: "casinoId is required for this interaction" });
   }
 });
 

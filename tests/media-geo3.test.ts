@@ -245,7 +245,7 @@ test("22-23: review hero is offer-first and uses logo/brand only when exact offe
   assert.equal(fallback.status, "FALLBACK");
 });
 
-test("24-25: promotion rendering is always contained and never carries a crop focal point", () => {
+test("24-25: resolver promotion rendering stays contained while the active review uses logo-only media", () => {
   const result = resolve({ assignments: [assignment("unsafe-cover-request", {
     renderingMode: "COVER",
     cropSafe: true,
@@ -257,11 +257,9 @@ test("24-25: promotion rendering is always contained and never carries a crop fo
   assert.equal(mediaPlacementRegistry.CASINO_REVIEW_RIGHT_HERO.crop, "NEVER");
   assert.deepEqual(mediaPlacementRegistry.CASINO_REVIEW_RIGHT_HERO.permittedModes, ["CONTAIN"]);
   const css = readFileSync("components/casino-profile/CasinoProfile.module.css", "utf8");
-  assert.match(css, /\.heroMediaCanvas\[data-offer-media\] img \{ object-fit:\s*contain/);
-  assert.match(css, /\.heroMediaCanvas > \[data-responsive-placement-media\] \{\s*display:\s*block !important;\s*position:\s*absolute;\s*inset:\s*0;\s*width:\s*100%;\s*height:\s*100%;/);
-  assert.match(css, /\.heroMedia\[data-media-ratio\] \.heroMediaCanvas\[data-offer-media\] \{ width:\s*92%; height:\s*92%;/);
-  assert.match(css, /@media \(max-width:760px\)[\s\S]*?\.heroMedia\[data-media-ratio\] \.heroMediaCanvas\[data-offer-media\] \{ width:\s*100%; height:\s*100%;/);
-  assert.match(css, /@media \(max-width:760px\)[\s\S]*?\.heroMedia \{[\s\S]*?height:\s*190px;[\s\S]*?max-height:\s*190px;/);
+  const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
+  assert.match(css, /\.logo img \{ height:100%; object-fit:contain; width:100%; \}/);
+  assert.doesNotMatch(`${profile}\n${css}`, /heroMediaCanvas|CASINO_REVIEW_RIGHT_HERO|CommercialOfferMedia/);
 });
 
 function productionPlan(): MediaIngestionPlan {

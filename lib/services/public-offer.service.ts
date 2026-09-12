@@ -1,5 +1,5 @@
 import type { Casino } from "@/lib/data";
-import { selectOverallShortlist } from "@/lib/public-offer/best-offer-ranking";
+import { selectCommercialBestOfferPool, selectOverallShortlist } from "@/lib/public-offer/best-offer-ranking";
 import type {
   PublicOfferDTO,
   PublicOfferFacetValue,
@@ -252,7 +252,10 @@ export class PublicOfferService {
     const country = options.country;
     const limit = options.limit ?? 12;
     if (!this.cmsEnabled()) {
-      const records = await this.getFeaturedOffers({ country, commercialMarketCode: options.commercialMarketCode, presentationLanguage: options.presentationLanguage, limit }, authority);
+      const records = selectCommercialBestOfferPool(
+        await this.getFeaturedOffers({ country, commercialMarketCode: options.commercialMarketCode, presentationLanguage: options.presentationLanguage, limit: 100 }, authority),
+        { country, limit },
+      );
       return records.length
         ? { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const
         : { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
@@ -264,7 +267,7 @@ export class PublicOfferService {
         commercialMarketCode: options.commercialMarketCode,
         presentationLanguage: options.presentationLanguage,
       });
-      const records = selectOverallShortlist(publishedRecords, { country, limit });
+      const records = selectCommercialBestOfferPool(publishedRecords, { country, limit });
       if (records.length) return { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const;
       return { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
     } catch {

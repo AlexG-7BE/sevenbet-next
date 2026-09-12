@@ -170,6 +170,9 @@ programme_step_completed
 programme_completed
 casino_viewed
 offer_viewed
+commercial_view_selected
+commercial_card_viewed
+casino_review_clicked
 commercial_cta_clicked
 outbound_redirect_attempted
 outbound_redirect_succeeded
@@ -200,6 +203,15 @@ For v1, a casino view is a rendered casino-review page. An offer view is a
 published offer card or review offer block intersecting the viewport. Its
 stable card key exists only as a browser dedupe marker; it is not promoted to
 an `AffiliateOffer` foreign key. Demo fixtures never emit offer views.
+
+The 12 September 2026 Commercial UX amendment adds three bounded client
+observations to this same dictionary: a selected commercial view, an
+intersecting commercial card and a casino-review click. They reuse the Core's
+consent, identity, page, device, coarse-GEO, casino and placement dimensions.
+Card/review position is a constrained integer from 1 to 1000. View/category is
+stored in the existing bounded placement grammar. No arbitrary property bag,
+affiliate token, destination, new customer identifier or parallel ingestion
+path is introduced. Controlled `/r` outcomes remain server authoritative.
 
 ## 6. Programme observations and purpose limitation
 

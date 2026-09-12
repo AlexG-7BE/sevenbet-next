@@ -91,3 +91,12 @@
   .hero>.heroCopy{animation:none}
   .segmented label,.gameWeights label,.calculatorOutput dd{transition:none}
 }
+
+/* Commercial UX v1: concise offer-directory introduction. */
+.hero { min-height:0; padding-bottom:64px; padding-top:clamp(132px,14vw,178px); }
+.hero h1 { font-size:clamp(3.2rem,7vw,7rem); }
+@media(max-width:760px){
+  .hero { min-height:0; padding:120px var(--site-gutter) 44px; }
+  .hero h1 { font-size:clamp(2.65rem,12vw,3.65rem); }
+  .hero p { font-size:15px; line-height:1.5; margin-top:20px; }
+}

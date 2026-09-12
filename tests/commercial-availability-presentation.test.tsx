@@ -64,19 +64,18 @@ function casino(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
   };
 }
 
-test("Best Offers derives its page-level partner-link count and label from governed actions", () => {
+test("Best Offers delegates action visibility to the governed normalized shortlist", () => {
   const source = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
-  assert.match(source, /const governedActionCount = result\.records\.filter/);
-  assert.match(source, /const actionAvailabilityLabel = governedActionCount > 0/);
-  assert.match(source, /String\(governedActionCount\), messages\.bestOffers\.inferredActions/);
-  assert.doesNotMatch(source, /\["0", messages\.bestOffers\.inferredActions\]/);
+  assert.match(source, /rankBestOffersForCategory\(result\.records, "best_overall"/);
+  assert.match(source, /<BestOffersExperience[^>]+shortlist=\{result\.records\}/);
+  assert.doesNotMatch(source, /governedActionCount|inferredActions/);
 });
 
-test("casino directory disclosure does not deny a governed action in mixed inventory", () => {
+test("casino directory keeps disclosure separate from per-card governed actions", () => {
   const source = readFileSync("app/(public)/casinos/page.tsx", "utf8");
-  assert.match(source, /const hasGovernedAction = result\.items\.some/);
-  assert.match(source, /result\.inventoryMode === "MIXED" && hasGovernedAction/);
-  assert.doesNotMatch(source, /messages\.common\.demoDisclosure\} \{hasLocalPreviewAction/);
+  assert.match(source, /result\.inventoryMode !== "PUBLISHED_ONLY"/);
+  assert.match(source, /<CasinoCollection casinos=\{result\.items\}/);
+  assert.doesNotMatch(source, /visitAction:\s*\{\s*available:\s*false/);
 });
 
 test("Best Offers labels published and demonstration records without contradicting an available action", async () => {
@@ -87,9 +86,8 @@ test("Best Offers labels published and demonstration records without contradicti
     presentation={presentation}
     shortlist={[offer()]}
   />);
-  assert.ok(publishedHtml.includes(messages.common.actionAvailable));
+  assert.match(publishedHtml, /href="\/r\/truth-test\?placement=CTA_BEST_OFFERS_CARD"/);
   assert.ok(!publishedHtml.includes(messages.common.commercialUnavailable));
-  assert.match(publishedHtml, />Published</);
   assert.doesNotMatch(publishedHtml, />Current</);
 
   const demoHtml = renderToStaticMarkup(<BestOffersExperience
@@ -98,7 +96,8 @@ test("Best Offers labels published and demonstration records without contradicti
     presentation={presentation}
     shortlist={[offer(false)]}
   />);
-  assert.ok(demoHtml.includes(messages.common.demoData));
+  assert.ok(demoHtml.includes(messages.common.reviewOnly));
+  assert.doesNotMatch(demoHtml, /href="\/r\//);
   assert.ok(!demoHtml.includes(`<small>${messages.common.current}</small>`));
   assert.doesNotMatch(demoHtml, />Current</);
 });

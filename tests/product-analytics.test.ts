@@ -25,11 +25,12 @@ const base = {
   occurredAt: "2026-09-11T10:00:00.000Z",
 };
 
-test("Product Core v1 locks the canonical 19-event dictionary", () => {
+test("Product Core v1 locks the canonical closed event dictionary", () => {
   assert.deepEqual(productAnalyticsEventNames, [
     "session_started", "page_viewed", "signup_completed", "login_completed",
     "programme_started", "programme_step_viewed", "programme_step_completed",
-    "programme_completed", "casino_viewed", "offer_viewed", "commercial_cta_clicked",
+    "programme_completed", "casino_viewed", "offer_viewed", "commercial_view_selected",
+    "commercial_card_viewed", "casino_review_clicked", "commercial_cta_clicked",
     "outbound_redirect_attempted", "outbound_redirect_succeeded", "outbound_redirect_blocked",
     "email_sent", "email_delivered", "email_bounced", "email_clicked", "email_unsubscribed",
   ]);
@@ -46,6 +47,13 @@ test("browser ingestion accepts only closed, non-sensitive Product Core events",
   assert.equal(safeParseProductAnalyticsEvent({ ...base, name: "page_viewed", programmeStep: 2 }).success, false);
   assert.equal(safeParseProductAnalyticsEvent({ ...base, name: "page_viewed", utmCampaign: "person@example.com" }).success, false);
   assert.equal(safeParseProductAnalyticsEvent({ ...base, name: "page_viewed", placement: "CASINO_DETAIL_HERO" }).success, false);
+  assert.equal(safeParseProductAnalyticsEvent({ ...base, name: "commercial_view_selected", placement: "BONUSES_LOW_WAGERING" }).success, true);
+  assert.equal(safeParseProductAnalyticsEvent({ ...base, name: "commercial_view_selected" }).success, false);
+  assert.equal(safeParseProductAnalyticsEvent({ ...base, name: "commercial_card_viewed", casinoId: "00000000-0000-4000-8000-000000000001", placement: "BONUS_CARD", position: 2 }).success, true);
+  assert.equal(safeParseProductAnalyticsEvent({ ...base, name: "commercial_card_viewed", placement: "BONUS_CARD", position: 2 }).success, false);
+  assert.equal(safeParseProductAnalyticsEvent({ ...base, name: "commercial_card_viewed", casinoId: "00000000-0000-4000-8000-000000000001", position: 2 }).success, false);
+  assert.equal(safeParseProductAnalyticsEvent({ ...base, name: "commercial_card_viewed", casinoId: "00000000-0000-4000-8000-000000000001", placement: "BONUS_CARD" }).success, false);
+  assert.equal(safeParseProductAnalyticsEvent({ ...base, name: "casino_review_clicked", casinoId: "00000000-0000-4000-8000-000000000001" }).success, false);
 });
 
 test("client event creation emits schema v1 IDs and bounded dimensions", () => {
@@ -99,12 +107,19 @@ test("canonical client methods emit only approved event names and dedupe stable 
   client.offerViewed(undefined, "00000000-0000-4000-8000-000000000001", "bonus-a");
   client.offerViewed(undefined, "00000000-0000-4000-8000-000000000001", "bonus-b");
   client.commercialCtaClicked("CTA_CASINO_DIRECTORY_CARD");
+  client.commercialViewSelected("CASINOS_FAST_PAYOUTS");
+  client.commercialCardViewed("00000000-0000-4000-8000-000000000001", "CASINOS_FAST_PAYOUTS", 1, "casino-a");
+  client.commercialCardViewed("00000000-0000-4000-8000-000000000001", "CASINOS_FAST_PAYOUTS", 1, "casino-a");
+  client.casinoReviewClicked("00000000-0000-4000-8000-000000000001", "CASINO_COLLECTION_CARD", 1);
   assert.deepEqual(events.map(({ name }) => name), [
     "page_viewed",
     "programme_step_viewed",
     "offer_viewed",
     "offer_viewed",
     "commercial_cta_clicked",
+    "commercial_view_selected",
+    "commercial_card_viewed",
+    "casino_review_clicked",
   ]);
   assert.doesNotMatch(JSON.stringify(events), /email|transcript|reviewText|password|token/i);
 });

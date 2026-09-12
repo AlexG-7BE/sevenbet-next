@@ -349,6 +349,7 @@ export class PublicCasinoDiscoveryService {
         licenses: scoped.licenses.map((license) => ({ key: key(license.authority), label: license.authority })),
         countries: exactProfile ? [{ key: exactProfile.countryCode, label: exactProfile.countryCode }] : [],
         paymentMethods: scoped.payments.map((payment) => ({ key: payment.key.toLowerCase(), label: payment.name })),
+        withdrawalTimes: scoped.payments.flatMap((payment) => payment.supportsWithdrawals && payment.withdrawalTime ? [payment.withdrawalTime] : []),
         gameProviders: scoped.providers.map((provider) => ({ key: provider.key.toLowerCase(), label: provider.name })),
         categories: scoped.categories.map((category) => ({ key: category.key.toLowerCase(), label: category.name })),
         highlights: scoped.pros.slice(0, 3),

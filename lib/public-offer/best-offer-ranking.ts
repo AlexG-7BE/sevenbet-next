@@ -1,10 +1,13 @@
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 
 export type BestFitCriterion = "overall" | "wagering" | "payout";
+export type BestOfferCategory = "best_overall" | "fast_payouts" | "best_bonus_terms" | "low_deposit";
+export const BEST_OFFER_CATEGORIES = ["best_overall", "fast_payouts", "best_bonus_terms", "low_deposit"] as const satisfies readonly BestOfferCategory[];
 export type WithdrawalTimeBucket = "instant" | "under-2-hours" | "same-day" | "one-day" | "one-to-two-days" | "three-or-more-days" | "unknown";
 
 const missingHigh = Number.POSITIVE_INFINITY;
 const payoutOrder: WithdrawalTimeBucket[] = ["instant", "under-2-hours", "same-day", "one-day", "one-to-two-days", "three-or-more-days", "unknown"];
+export const LOW_DEPOSIT_EDITOR_SCORE_FLOOR = 7.5;
 
 function textCompare(a: string, b: string) {
   return a.localeCompare(b, "en", { sensitivity: "base" });
@@ -15,6 +18,15 @@ export function materialTermCompleteness(offer: PublicOfferDTO) {
     + Number(offer.bonus.wageringMultiplier !== null || Boolean(offer.bonus.wageringText?.trim()))
     + Number(Boolean(offer.bonus.eligibility?.trim()))
     + Number(offer.bonus.importantConditions.length > 0);
+}
+
+export function bonusMechanicsCompleteness(offer: PublicOfferDTO) {
+  return Number(offer.bonus.wageringMultiplier !== null)
+    + Number(offer.bonus.minimumDeposit !== null)
+    + Number(offer.bonus.maximumBet !== null)
+    + Number(Boolean(offer.bonus.eligibility?.trim()))
+    + Number(offer.bonus.importantConditions.length > 0)
+    + Number(Boolean(offer.bonus.expiresAt));
 }
 
 export function hasCompleteMaterialTerms(offer: PublicOfferDTO) {
@@ -32,6 +44,23 @@ export function hasPayoutEvidence(offer: PublicOfferDTO) {
 export function normalizeWithdrawalTime(value: string | null | undefined): WithdrawalTimeBucket {
   if (!value) return "unknown";
   const text = value.toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ").trim();
+  const hourUnit = "(?:h|hr|hrs|hour|hours|std\\.?|stunde|stunden|hora|horas|ore|uur|timmar|timer|tunti|tuntia|ώρες|ωρες|heure|heures)";
+  const dayUnit = "(?:d|day|days|tag|tage|día|días|dia|dias|giorno|giorni|dag|dagen|dage|päivä|päivää|paiva|paivaa|ημέρα|ημέρες|ημερα|ημερες|jour|jours)";
+  const hourRange = text.match(new RegExp(`\\b(\\d{1,3})\\s*(?:-|to|a|à)\\s*(\\d{1,3})\\s*${hourUnit}\\b`));
+  if (hourRange) {
+    const maximum = Number(hourRange[2]);
+    if (maximum <= 2) return "under-2-hours";
+    if (maximum <= 24) return "same-day";
+    if (maximum <= 48) return "one-to-two-days";
+    return "three-or-more-days";
+  }
+  const dayRange = text.match(new RegExp(`\\b(\\d{1,2})\\s*(?:-|to|a|à)\\s*(\\d{1,2})\\s*${dayUnit}\\b`));
+  if (dayRange) {
+    const maximum = Number(dayRange[2]);
+    if (maximum <= 1) return "one-day";
+    if (maximum <= 2) return "one-to-two-days";
+    return "three-or-more-days";
+  }
   if (/\binstant(?:ly)?\b|immediate/.test(text)) return "instant";
   if (/\b(?:under|within|up to|less than)\s*2\s*(?:h|hr|hrs|hour|hours)\b|\b[01]\s*(?:h|hr|hrs|hour|hours)\b/.test(text)) return "under-2-hours";
   if (/same[- ]day|within the day|\b(?:under|within|up to|less than)\s*(?:12|24)\s*(?:h|hr|hrs|hour|hours)\b/.test(text)) return "same-day";
@@ -51,6 +80,24 @@ export function offerWithdrawalBucket(offer: PublicOfferDTO) {
 
 function editorialTieBreak(a: PublicOfferDTO, b: PublicOfferDTO) {
   return textCompare(a.casino.slug, b.casino.slug) || textCompare(a.bonus.slug, b.bonus.slug);
+}
+
+function reviewedAt(offer: PublicOfferDTO) {
+  return Date.parse(offer.casino.lastReviewedAt ?? offer.casino.publishedAt ?? "") || 0;
+}
+
+/**
+ * Natural editorial order. Commercial compensation and route metadata never
+ * participate. Editor Score is the primary authority and every tie-break is
+ * stable and based on published editorial data.
+ */
+export function rankOffersByEditorialAuthority(offers: PublicOfferDTO[]) {
+  return [...offers].sort((a, b) => b.casino.editorScore - a.casino.editorScore
+    || Number(b.casino.featured) - Number(a.casino.featured)
+    || Number(b.casino.recommended) - Number(a.casino.recommended)
+    || materialTermCompleteness(b) - materialTermCompleteness(a)
+    || reviewedAt(b) - reviewedAt(a)
+    || editorialTieBreak(a, b));
 }
 
 function overallOfferBalance(offer: PublicOfferDTO) {
@@ -77,6 +124,77 @@ export function rankOverallOffers(offers: PublicOfferDTO[], country = "GB") {
     || Number(b.casino.recommended) - Number(a.casino.recommended)
     || Number(hasPayoutEvidence(b)) - Number(hasPayoutEvidence(a))
     || editorialTieBreak(a, b));
+}
+
+export function isGovernedBestOfferCandidate(offer: PublicOfferDTO, country?: string) {
+  return offer.dataClassification === "PUBLISHED_RECORD"
+    && offer.commercialAvailability === "AVAILABLE"
+    && offer.action.available
+    && Boolean(offer.action.href && /^\/r\/[a-z0-9][a-z0-9-]*$/i.test(offer.action.href))
+    && (!country || isMarketAvailable(offer, country));
+}
+
+function uniqueCasinos(offers: PublicOfferDTO[], limit: number) {
+  const seen = new Set<string>();
+  return offers.filter((offer) => {
+    if (seen.has(offer.casino.id)) return false;
+    seen.add(offer.casino.id);
+    return true;
+  }).slice(0, limit);
+}
+
+function payoutReliability(offer: PublicOfferDTO) {
+  return offer.casino.payments.filter((payment) => payment.supportsWithdrawals === true
+    && normalizeWithdrawalTime(payment.withdrawalTime) !== "unknown").length;
+}
+
+export function rankBestOffersForCategory(
+  offers: readonly PublicOfferDTO[],
+  category: BestOfferCategory,
+  options: { country?: string; includeDemonstration?: boolean; limit?: number } = {},
+) {
+  const eligible = offers.filter((offer) => options.includeDemonstration
+    ? offer.dataClassification === "DEMO_FIXTURE"
+    : isGovernedBestOfferCandidate(offer, options.country));
+  const categoryEligible = eligible.filter((offer) => {
+    if (category === "best_overall") return Number.isFinite(offer.casino.editorScore) && materialTermCompleteness(offer) >= 2;
+    if (category === "fast_payouts") return hasPayoutEvidence(offer) && offerWithdrawalBucket(offer) !== "unknown";
+    if (category === "best_bonus_terms") return offer.bonus.wageringMultiplier !== null && bonusMechanicsCompleteness(offer) >= 4;
+    return offer.bonus.minimumDeposit !== null && offer.casino.editorScore >= LOW_DEPOSIT_EDITOR_SCORE_FLOOR;
+  });
+  const ranked = [...categoryEligible].sort((a, b) => {
+    if (category === "best_overall") {
+      return b.casino.editorScore - a.casino.editorScore
+        || materialTermCompleteness(b) - materialTermCompleteness(a)
+        || reviewedAt(b) - reviewedAt(a)
+        || editorialTieBreak(a, b);
+    }
+    if (category === "fast_payouts") {
+      return payoutOrder.indexOf(offerWithdrawalBucket(a)) - payoutOrder.indexOf(offerWithdrawalBucket(b))
+        || payoutReliability(b) - payoutReliability(a)
+        || b.casino.editorScore - a.casino.editorScore
+        || reviewedAt(b) - reviewedAt(a)
+        || editorialTieBreak(a, b);
+    }
+    if (category === "best_bonus_terms") {
+      return bonusMechanicsCompleteness(b) - bonusMechanicsCompleteness(a)
+        || (a.bonus.wageringMultiplier ?? missingHigh) - (b.bonus.wageringMultiplier ?? missingHigh)
+        || b.casino.editorScore - a.casino.editorScore
+        || reviewedAt(b) - reviewedAt(a)
+        || editorialTieBreak(a, b);
+    }
+    return (a.bonus.minimumDeposit ?? missingHigh) - (b.bonus.minimumDeposit ?? missingHigh)
+      || b.casino.editorScore - a.casino.editorScore
+      || materialTermCompleteness(b) - materialTermCompleteness(a)
+      || reviewedAt(b) - reviewedAt(a)
+      || editorialTieBreak(a, b);
+  });
+  return uniqueCasinos(ranked, Math.min(Math.max(options.limit ?? 3, 1), 3));
+}
+
+export function selectCommercialBestOfferPool(offers: PublicOfferDTO[], options: { country?: string; limit?: number } = {}) {
+  const limit = Math.min(Math.max(options.limit ?? 48, 1), 100);
+  return rankOffersByEditorialAuthority(offers.filter((offer) => isGovernedBestOfferCandidate(offer, options.country))).slice(0, limit);
 }
 
 export function rankBestBonusCasinoIds(

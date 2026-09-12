@@ -32,19 +32,21 @@ const loadEditorial = cache(async (slug: string) => {
     return null;
   }
 });
-const loadCasinoPage = cache(async (slug: string) => {
+const loadCasinoPage = cache(async (slug: string, visualFixture: boolean) => {
   const [presentation, authority, editorialResult] = await Promise.all([
     resolveServerPresentationContext(),
     resolveServerJurisdiction(),
-    loadEditorial(slug),
+    visualFixture ? Promise.resolve(null) : loadEditorial(slug),
   ]);
-  const candidate = await publicCasinoService.getCasino(
-    slug,
-    commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
-    presentation.marketCountryCode,
-    presentation.language,
-    presentation.marketCode,
-  );
+  const candidate = visualFixture
+    ? publicCasinoService.getLocalVisualFixture(slug)
+    : await publicCasinoService.getCasino(
+        slug,
+        commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
+        presentation.marketCountryCode,
+        presentation.language,
+        presentation.marketCode,
+      );
   const availableForPresentation = candidate
     ? Boolean(presentation.marketCountryCode && candidate.countries.some((country) => country.countryCode === presentation.marketCountryCode && country.availability === "AVAILABLE"))
     : false;
@@ -56,9 +58,11 @@ const loadCasinoPage = cache(async (slug: string) => {
   };
 });
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
   const { slug } = await params;
-  const { casino, editorialResult, presentation } = await loadCasinoPage(slug);
+  const raw = await searchParams;
+  const visualFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
+  const { casino, editorialResult, presentation } = await loadCasinoPage(slug, visualFixture);
   const messages = productPageMessages(presentation.locale);
   if (!casino) return productMetadata({ presentation, pathname: `/casino/${slug}`, title: messages.profile.unavailableTitle, description: messages.profile.unavailableDescription, robots: { index: false, follow: false }, openGraphType: "article" });
   const base = casinoProfileMetadata(casino, profileEditorialDocument(editorialResult, casino.id));
@@ -79,8 +83,8 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const { slug } = await params;
   const visualDataFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
-  const loaded = await loadCasinoPage(slug);
-  const casino = loaded.casino ?? (visualDataFixture ? publicCasinoService.getLocalVisualFixture(slug) : null);
+  const loaded = await loadCasinoPage(slug, visualDataFixture);
+  const casino = loaded.casino;
   if (!casino) notFound();
   const { presentation } = loaded;
   const runtimeCasino = withHandoffCasinoProfileData(casino, visualDataFixture, presentation.locale);

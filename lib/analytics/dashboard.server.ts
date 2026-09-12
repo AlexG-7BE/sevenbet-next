@@ -111,7 +111,10 @@ function dailyCounts(values: Date[]) {
 
 export async function commercialDashboard(range: AnalyticsRange) {
   const occurredAt = { gte: range.from, lt: range.until };
-  const eventTypes: AnalyticsEventType[] = ["CASINO_VIEWED", "OFFER_VIEWED", "COMMERCIAL_CTA_CLICKED"];
+  const eventTypes: AnalyticsEventType[] = [
+    "CASINO_VIEWED", "OFFER_VIEWED", "COMMERCIAL_VIEW_SELECTED",
+    "COMMERCIAL_CARD_VIEWED", "CASINO_REVIEW_CLICKED", "COMMERCIAL_CTA_CLICKED",
+  ];
   const [events, outbound] = await Promise.all([
     prisma.analyticsEvent.findMany({
       where: { ...productionHumanEvent, type: { in: eventTypes }, occurredAt },
@@ -125,6 +128,7 @@ export async function commercialDashboard(range: AnalyticsRange) {
   const count = (type: AnalyticsEventType) => events.filter((event) => event.type === type).length;
   const ctaClicks = count("COMMERCIAL_CTA_CLICKED");
   const offerViews = count("OFFER_VIEWED");
+  const cardViews = count("COMMERCIAL_CARD_VIEWED");
   const successes = outbound.filter((item) => item.state === "SUCCEEDED").length;
   const casinoIds = countBy(outbound.map((item) => item.casinoId)).slice(0, 12);
   const casinos = await prisma.casino.findMany({ where: { id: { in: casinoIds.map(([id]) => id) } }, select: { id: true, title: true } });
@@ -132,6 +136,9 @@ export async function commercialDashboard(range: AnalyticsRange) {
   return {
     casinoViews: count("CASINO_VIEWED"),
     offerViews,
+    cardViews,
+    viewSelections: count("COMMERCIAL_VIEW_SELECTED"),
+    reviewClicks: count("CASINO_REVIEW_CLICKED"),
     ctaClicks,
     outboundAttempts: outbound.length,
     outboundSuccesses: successes,

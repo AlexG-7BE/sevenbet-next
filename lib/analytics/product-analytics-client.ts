@@ -14,7 +14,8 @@ import type {
 
 const EVENT_MARKER_PREFIX = "b4gamble:analytics:fired:v2:";
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
-type ExistingOutboundPlacement = "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_OFFER_BLOCK" | "CASINO_COMPARE" | "OFFER_DETAIL" | "UNSPECIFIED";
+type ExistingOutboundPlacement = "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_OFFER_BLOCK" | "CASINO_COMPARE" | "OFFER_DETAIL" | "UNSPECIFIED"
+  | "BEST_OFFERS_CARD" | "CASINO_COLLECTION_CARD" | "BONUS_CARD" | "CASINO_HERO" | "CASINO_OFFER_SECTION" | "CASINO_MOBILE_STICKY";
 
 export type OutboundIntentContext =
   | { source: "CTA"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" }
@@ -124,6 +125,23 @@ export function createProductAnalyticsClient({
     },
     commercialCtaClicked(placement?: string) {
       send("commercial_cta_clicked", { ...(placement ? { placement: placement.slice(0, 64) } : {}) });
+    },
+    commercialViewSelected(view: string) {
+      send("commercial_view_selected", { placement: view.slice(0, 64) });
+    },
+    commercialCardViewed(casinoId: string, placement: string, position: number, cardKey: string) {
+      once(`commercial-card:${cardKey.slice(0, 160)}:${placement}:${globalThis.location?.pathname ?? ""}`, "commercial_card_viewed", {
+        casinoId,
+        placement: placement.slice(0, 64),
+        position,
+      });
+    },
+    casinoReviewClicked(casinoId: string, placement: string, position?: number) {
+      send("casino_review_clicked", {
+        casinoId,
+        placement: placement.slice(0, 64),
+        ...(position ? { position } : {}),
+      });
     },
 
     // Compatibility surface for existing UI call sites. Only concepts in the
