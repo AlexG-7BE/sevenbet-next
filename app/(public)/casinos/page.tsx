@@ -8,7 +8,7 @@ import { CompactProtection } from "@/components/commercial/CommercialPrimitives"
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
-import { isLocalHandoffVisualDataFixture, withHandoffCasinoDiscoveryData } from "@/lib/final-handoff/visual-data-fixture";
+import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffCasinoDiscoveryData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { commercialAuthorityForPresentation, productHref, productMetadata } from "@/lib/market/product-context";
@@ -64,7 +64,7 @@ const loadCasinoCollection = cache(async (visualFixture: boolean) => {
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const raw = await searchParams;
   const query = parseCasinoDiscoveryQuery(raw);
-  const visualFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
+  const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
   const { presentation, result } = await loadCasinoCollection(visualFixture);
   const messages = productPageMessages(presentation.locale);
   const market = presentation.marketDisplayName;
@@ -84,13 +84,14 @@ export default async function CasinosPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const query = parseCasinoDiscoveryQuery(raw);
-  const visualFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
+  const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
   const loaded = await loadCasinoCollection(visualFixture);
-  const { presentation } = loaded;
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, visualFixture);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
   const messages = productPageMessages(presentation.locale);
   const copy = commercialUxMessages(presentation.locale);
   const market = presentation.marketDisplayName;
-  const result = withHandoffCasinoDiscoveryData(loaded.result, visualFixture, presentation.locale, collectionQuery());
+  const result = withHandoffCasinoDiscoveryData(loaded.result, visualFixture, presentation.locale, collectionQuery(), fixtureMarket);
   const containsLocalPreview = result.items.some((casino) => casino.dataClassification === "LOCAL_PREVIEW_FIXTURE");
   const disclosure = containsLocalPreview ? messages.common.marketPresentationNotice : messages.common.demoDisclosure;
   const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {

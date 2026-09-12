@@ -10,7 +10,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import finalStyles from "./BonusesFinal.module.css";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
-import { isLocalHandoffVisualDataFixture, withHandoffBonusDirectoryData } from "@/lib/final-handoff/visual-data-fixture";
+import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffBonusDirectoryData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { commercialAuthorityForPresentation, productHref, productMetadata } from "@/lib/market/product-context";
@@ -61,13 +61,14 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const loaded = await loadBonusDirectory();
-  const { presentation } = loaded;
+  const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, visualFixture);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
   const messages = productPageMessages(presentation.locale);
   const copy = commercialUxMessages(presentation.locale);
   const market = presentation.marketDisplayName;
-  const visualFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
   const query = parsePublicOfferQuery({}, 100);
-  const result = withHandoffBonusDirectoryData(loaded.result, visualFixture, presentation.locale, query);
+  const result = withHandoffBonusDirectoryData(loaded.result, visualFixture, presentation.locale, query, fixtureMarket);
   const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",

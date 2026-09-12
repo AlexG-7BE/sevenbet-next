@@ -4,7 +4,7 @@ import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutbound
 import { CasinoProfileInteractions } from "@/components/casino-profile/CasinoProfileInteractions";
 import { CommercialBadges, CommercialFacts, CommercialScore, CompactProtection } from "@/components/commercial/CommercialPrimitives";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
-import { casinoProfileDecisionPresentation, formatCommercialMoney, structuredOfferHeadline, type CommercialFact } from "@/lib/commercial/commercial-presentation";
+import { casinoProfileDecisionPresentation, formatCommercialMoney, safeCommercialTermsUrl, structuredOfferHeadline, type CommercialFact } from "@/lib/commercial/commercial-presentation";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
 import { formatProfileDate, profileAction, selectProfileBonus } from "@/lib/casino-profile/presentation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
@@ -44,7 +44,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const demo = isTemporaryDemoCasinoId(casino.id);
   const informationalOnly = casino.presentationDisposition === "INFORMATIONAL_ONLY";
   const bonus = selectProfileBonus(casino);
-  const decision = casinoProfileDecisionPresentation(casino, presentation.locale, messages, copy);
+  const decision = casinoProfileDecisionPresentation(casino, presentation.locale, messages, copy, presentation.marketCountryCode);
   const governed = informationalOnly ? null : profileAction(casino, bonus);
   const action = governed ? { ...governed, label: copy.viewOffer } : null;
   const score = casino.editorScore;
@@ -52,11 +52,12 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const hasClearTerms = Boolean(bonus && bonus.wageringMultiplier !== null && bonus.minimumDeposit !== null);
   const heroBadges = [decision.payout.bucket !== "unknown" ? copy.fastPayouts : null, hasClearTerms ? copy.clearTerms : null].filter((value): value is string => Boolean(value)).slice(0, 2);
   const paymentCurrency = bonus?.currency ?? casino.payments.flatMap((payment) => payment.currencies)[0] ?? casino.currencies[0] ?? null;
-  const minimumWithdrawal = casino.payments.find((payment) => payment.minimumWithdrawal !== null)?.minimumWithdrawal ?? null;
+  const profilePayments = decision.marketProfile?.payments.length ? decision.marketProfile.payments : casino.payments;
+  const minimumWithdrawal = profilePayments.find((payment) => payment.minimumWithdrawal !== null)?.minimumWithdrawal ?? null;
   const paymentFacts: CommercialFact[] = [
     { label: messages.common.payout, value: decision.payout.primary },
     { label: copy.minimumWithdrawal, value: formatCommercialMoney(minimumWithdrawal, paymentCurrency, presentation.locale, copy.notVerified) },
-    { label: copy.fees, value: casino.payments.some((payment) => Boolean(payment.fees?.trim())) ? copy.detailsRecorded : copy.notVerified },
+    { label: copy.fees, value: profilePayments.some((payment) => Boolean(payment.fees?.trim())) ? copy.detailsRecorded : copy.notVerified },
   ];
   const offerFacts: CommercialFact[] = bonus ? [
     { label: messages.common.wagering, value: bonus.wageringMultiplier === null ? copy.notVerified : `${new Intl.NumberFormat(presentation.locale, { maximumFractionDigits: 2 }).format(bonus.wageringMultiplier)}×` },
@@ -64,7 +65,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
     { label: messages.common.maximumBet, value: formatCommercialMoney(bonus.maximumBet, bonus.currency, presentation.locale, copy.notVerified) },
     { label: messages.common.expiry, value: formatProfileDate(bonus.expiresAt, presentation.locale) ?? copy.notVerified },
   ] : [];
-  const marketProfile = casino.marketProfiles[0] ?? null;
+  const marketProfile = decision.marketProfile;
   const licence = decision.licence;
   const regulationFacts: CommercialFact[] = [
     { label: copy.operator, value: casino.operator ?? copy.notVerified },
@@ -73,8 +74,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   ];
   const supportFacts: CommercialFact[] = [
     { label: copy.supportLanguages, value: marketProfile?.supportLanguages.join(" · ") || casino.languages.join(" · ") || copy.notVerified },
-    { label: messages.common.mobileSupport, value: casino.supportsMobile ? messages.common.supported : copy.notVerified },
-    { label: messages.common.sourceStatus, value: marketProfile?.supportSummary ? copy.detailsRecorded : copy.notVerified },
+    ...(marketProfile?.supportSummary ? [{ label: copy.support, value: marketProfile.supportSummary }] : []),
   ];
   const gameFacts = casino.categories.slice(0, 4).map((category) => ({
     label: category.name,
@@ -113,12 +113,12 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
 
       <section aria-labelledby="why-heading" className={styles.section} id="why-we-rate">
         <header><p>01</p><h2 id="why-heading">{copy.whyWeRate}</h2></header>
-        <ul className={styles.ratingReasons}>{decision.bullets.map((item) => <li key={item}><span aria-hidden="true">✓</span>{item}</li>)}</ul>
+        <ul className={styles.ratingReasons}>{decision.reasons.map((item) => <li className={item.tone === "caveat" ? styles.ratingCaveat : undefined} data-reason-tone={item.tone} key={`${item.tone}:${item.text}`}><span aria-hidden="true">{item.tone === "caveat" ? "!" : "+"}</span>{item.text}</li>)}</ul>
       </section>
 
       <section aria-labelledby="payments-heading" className={`${styles.section} ${styles.altSection}`} id="payments">
         <header><p>02</p><h2 id="payments-heading">{copy.paymentsAndPayouts}</h2></header>
-        <div><SectionFacts facts={paymentFacts} />{casino.payments.length ? <div className={styles.methodLabels}>{casino.payments.slice(0, 6).map((payment) => <span key={payment.key}>{payment.name}</span>)}</div> : null}</div>
+        <div><SectionFacts facts={paymentFacts} />{profilePayments.length ? <div className={styles.methodLabels}>{profilePayments.slice(0, 6).map((payment) => <span key={payment.key}>{payment.name}</span>)}</div> : null}</div>
       </section>
 
       <section aria-labelledby="offer-heading" className={`${styles.section} ${styles.offerSection}`} id="current-offer">
@@ -126,8 +126,8 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <div className={styles.offerPanel} data-analytics-casino-id={!demo && bonus ? casino.id : undefined} data-analytics-offer-key={!demo && bonus ? bonus.id : undefined}>
           <h3>{offerHeadline}</h3>
           {bonus ? <SectionFacts facts={offerFacts} /> : <p>{messages.common.reviewAvailableNoAction}</p>}
-          {bonus?.importantConditions.length || bonus?.eligibility ? <p className={styles.materialWarning}>{copy.importantRestrictions}</p> : null}
-          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}{bonus?.termsUrl ? <a href={bonus.termsUrl} rel="noopener" target="_blank">{copy.terms}</a> : null}</div>
+          {bonus ? <p className={styles.materialWarning}>{decision.restriction}</p> : null}
+          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}{safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms}</a> : null}</div>
         </div>
       </section>
 

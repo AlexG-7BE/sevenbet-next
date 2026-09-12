@@ -11,18 +11,28 @@ import {
   filterCasinosByName,
   offerCardPresentation,
   offersForBonusView,
+  selectCasinoMarketProfile,
   structuredOfferHeadline,
 } from "../lib/commercial/commercial-presentation";
 import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import {
+  commercialUxFixtureMarket,
+  isCommercialUxVisualDataFixture,
+  withCommercialUxFixturePresentation,
+} from "../lib/final-handoff/visual-data-fixture";
+import { resolvePresentationContext } from "../lib/market/presentation-resolver";
+import {
   BEST_OFFER_CATEGORIES,
   LOW_DEPOSIT_EDITOR_SCORE_FLOOR,
   normalizeWithdrawalTime,
+  payoutEvidenceStrength,
   rankBestOffersForCategory,
+  severeBonusRestrictionCount,
 } from "../lib/public-offer/best-offer-ranking";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
+import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
 
 const controlledHref = "/r/governed-offer";
 
@@ -138,8 +148,35 @@ test("Best Bonus Terms and Fast Payouts require category evidence", () => {
   incomplete.bonus.eligibility = null;
   incomplete.bonus.expiresAt = null;
   const unknownPayout = offer(2, { payout: "Pending review and bank/card processing" });
-  assert.deepEqual(rankBestOffersForCategory([incomplete], "best_bonus_terms"), []);
+  assert.equal(rankBestOffersForCategory([incomplete], "best_bonus_terms").length, 1, "known wagering is usable without pretending unknown terms are favourable");
   assert.deepEqual(rankBestOffersForCategory([unknownPayout], "fast_payouts"), []);
+});
+
+test("Best Bonus Terms ranks favourability, penalises severe restrictions, and sends unknowns to tie-break loss", () => {
+  const severeLowWagering = offer(1, { wagering: 5, conditions: ["Maximum cashout is capped at £100."] });
+  const clearHigherWagering = offer(2, { wagering: 20, conditions: ["Standard bonus terms apply."] });
+  const sparse = offer(3, { wagering: 20, maximumBet: null, deposit: null, conditions: [] });
+  sparse.bonus.eligibility = null;
+  sparse.bonus.expiresAt = null;
+  assert.equal(severeBonusRestrictionCount(severeLowWagering), 1);
+  assert.deepEqual(
+    rankBestOffersForCategory([severeLowWagering, sparse, clearHigherWagering], "best_bonus_terms").map((item) => item.bonus.id),
+    [clearHigherWagering.bonus.id, sparse.bonus.id, severeLowWagering.bonus.id],
+  );
+});
+
+test("Fast Payouts prefers stronger timing evidence, then editor score, never method count", () => {
+  const explicit = offer(1, { score: 8.1, payout: "0–24 hours" });
+  const vagueMany = offer(2, { score: 9.5, payout: "same day" });
+  vagueMany.casino.payments.push(
+    { ...vagueMany.casino.payments[0]!, key: "mastercard", name: "Mastercard" },
+    { ...vagueMany.casino.payments[0]!, key: "bank", name: "Bank" },
+  );
+  assert.equal(payoutEvidenceStrength(explicit), 3);
+  assert.equal(payoutEvidenceStrength(vagueMany), 2);
+  assert.equal(rankBestOffersForCategory([vagueMany, explicit], "fast_payouts")[0]?.bonus.id, explicit.bonus.id);
+  const explicitHighScore = offer(3, { score: 9.2, payout: "0–24 hours" });
+  assert.equal(rankBestOffersForCategory([explicit, explicitHighScore], "fast_payouts")[0]?.bonus.id, explicitHighScore.bonus.id);
 });
 
 test("Casino views reorder the same collection and name search is the only narrowing control", () => {
@@ -173,20 +210,40 @@ test("presentation adapters never expose raw evidence prose and preserve governe
   assert.equal(actionable.action?.href, controlledHref);
   assert.equal(actionable.action?.label, "VIEW OFFER");
   assert.equal(reviewOnly.action, null);
-  assert.equal(reviewOnly.facts[0]?.value, "Not verified");
+  assert.equal(reviewOnly.facts.some((fact) => fact.value === "Not verified"), false, "known useful facts replace a redundant unknown");
   assert.doesNotMatch(JSON.stringify(actionable), /Players comparing|regulatory evidence and broad product depth|Material offer mechanics are not established/i);
   const casinoCard = casinoCardPresentation(casino(1, { action: false }), "en-GB", messages, copy);
   assert.equal(casinoCard.action, null);
+  assert.deepEqual(casinoCard.facts.map((fact) => fact.label), ["Payout", "Minimum deposit", "Current offer"]);
   assert.doesNotMatch(JSON.stringify(casinoCard), /Raw editorial verdict|raw offer prose|raw evidence/i);
   const missingCurrency = offer(3);
   missingCurrency.bonus.currency = null;
   assert.doesNotMatch(structuredOfferHeadline(missingCurrency.bonus, "en-GB", copy), /up to Not verified/i);
+
+  const safeTerms = offer(5);
+  safeTerms.bonus.termsUrl = "https://casino.example/terms";
+  assert.equal(offerCardPresentation(safeTerms, "en-GB", messages, copy, "bonus_directory").termsUrl, "https://casino.example/terms");
+  safeTerms.bonus.termsUrl = "javascript:alert(1)";
+  assert.equal(offerCardPresentation(safeTerms, "en-GB", messages, copy, "bonus_directory").termsUrl, null);
 
   const demonstration = offer(4);
   demonstration.dataClassification = "DEMO_FIXTURE";
   assert.equal(offerCardPresentation(demonstration, "en-GB", messages, copy, "bonus_directory").action, null);
   assert.deepEqual(rankBestOffersForCategory([demonstration], "best_overall"), []);
   assert.equal(rankBestOffersForCategory([demonstration], "best_overall", { includeDemonstration: true }).length, 1);
+});
+
+test("casino profiles select the exact current market deterministically", () => {
+  const profiles = [
+    { id: "lv", countryCode: "LV" },
+    { id: "ee", countryCode: "EE" },
+    { id: "dk", countryCode: "DK" },
+  ] as PublicCasinoDTO["marketProfiles"];
+  const record = { marketProfiles: profiles } as PublicCasinoDTO;
+  assert.equal(selectCasinoMarketProfile(record, "ee")?.id, "ee");
+  assert.equal(selectCasinoMarketProfile(record, "LV")?.id, "lv");
+  assert.equal(selectCasinoMarketProfile(record, "KZ"), null);
+  assert.equal(selectCasinoMarketProfile(record, null), null);
 });
 
 test("localized payout ranges normalize without exposing source phrasing", () => {
@@ -200,8 +257,37 @@ test("commercial routes remove the obsolete interaction systems from rendered pa
   const best = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
   const casinos = readFileSync("app/(public)/casinos/page.tsx", "utf8");
   const bonuses = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
+  const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
   assert.doesNotMatch(best, /Worth a look|ContextualComparison|advanced filter/i);
   assert.doesNotMatch(casinos, /CuratedCasinoShortlist|DiscoveryControls|ActiveDiscoveryFilters|ContextualComparison/);
   assert.doesNotMatch(bonuses, /CuratedBonusShortlist|BonusFilters|ActiveBonusFilters|BonusPagination|BonusCalculator/);
   assert.doesNotMatch(bonuses, /What a bonus really costs|More Filters|Sort control/i);
+  assert.doesNotMatch(profile, /marketProfiles\[0\]/);
+});
+
+test("Commercial UX market fixtures are Preview-only, allowlisted, and presentation-only", () => {
+  const previousVercel = process.env.VERCEL;
+  const previousEnvironment = process.env.VERCEL_ENV;
+  const previousLocalFlag = process.env.B4GAMBLE_HANDOFF_VISUAL_FIXTURE;
+  try {
+    process.env.VERCEL = "1";
+    process.env.VERCEL_ENV = "production";
+    delete process.env.B4GAMBLE_HANDOFF_VISUAL_FIXTURE;
+    assert.equal(isCommercialUxVisualDataFixture("true"), false);
+    assert.equal(commercialUxFixtureMarket("EE", false), null);
+
+    process.env.VERCEL_ENV = "preview";
+    assert.equal(isCommercialUxVisualDataFixture("true"), true);
+    assert.equal(commercialUxFixtureMarket("EE", true), "EE");
+    assert.equal(commercialUxFixtureMarket("KZ", true), null);
+    const base = { ...resolvePresentationContext({ trustedCountryCode: "KZ" }), marketCode: "KZ" };
+    const fixture = withCommercialUxFixturePresentation(base, "LV");
+    assert.equal(fixture.marketCountryCode, "LV");
+    assert.equal(fixture.marketCode, "LV");
+    assert.equal(fixture.market, null, "an inspection context never creates a durable market profile");
+  } finally {
+    if (previousVercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = previousVercel;
+    if (previousEnvironment === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previousEnvironment;
+    if (previousLocalFlag === undefined) delete process.env.B4GAMBLE_HANDOFF_VISUAL_FIXTURE; else process.env.B4GAMBLE_HANDOFF_VISUAL_FIXTURE = previousLocalFlag;
+  }
 });

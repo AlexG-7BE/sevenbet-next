@@ -5,12 +5,13 @@ import {
   normalizeWithdrawalTime,
   offerWithdrawalBucket,
   rankOffersByEditorialAuthority,
+  severeBonusRestrictionCount,
   type BestOfferCategory,
   type WithdrawalTimeBucket,
 } from "@/lib/public-offer/best-offer-ranking";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
-import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
+import type { PublicCasinoDTO, PublicCasinoMarketProfile } from "@/lib/public-casino/public-casino.types";
 import type { CommercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
 
 export type CommercialFact = Readonly<{ label: string; value: string }>;
@@ -25,6 +26,20 @@ function singleLine(value: string, maximum = 88) {
   const normalized = value.replace(/\s+/g, " ").trim();
   if (normalized.length <= maximum) return normalized;
   return `${normalized.slice(0, maximum - 1).trimEnd()}…`;
+}
+
+function firstSentence(value: string, maximum = 156) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  const sentence = normalized.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? normalized;
+  const concise = singleLine(sentence, maximum);
+  return /[.!?…]$/.test(concise) ? concise : `${concise}.`;
+}
+
+function formatCommercialDate(value: string | null | undefined, locale: SupportedLocale) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }).format(date);
 }
 
 export function formatCommercialMoney(value: number | null, currency: string | null, locale: string, unknown: string) {
@@ -95,6 +110,16 @@ export function governedCasinoAction(casino: PublicCasinoCardDto) {
     && Boolean(casino.visitAction.redirectSlug && /^[a-z0-9][a-z0-9-]*$/i.test(casino.visitAction.redirectSlug));
 }
 
+export function safeCommercialTermsUrl(value: string | null | undefined) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 function offerBadges(offer: PublicOfferDTO, copy: CommercialUxMessages) {
   const badges = [
     payoutOrder.indexOf(offerWithdrawalBucket(offer)) <= payoutOrder.indexOf("same-day") ? copy.fastPayouts : null,
@@ -117,12 +142,16 @@ export function offerCardPresentation(
     : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(offer.bonus.wageringMultiplier)}×`;
   const deposit = formatCommercialMoney(offer.bonus.minimumDeposit, offer.bonus.currency, locale, copy.notVerified);
   const maximumBet = formatCommercialMoney(offer.bonus.maximumBet ?? null, offer.bonus.currency, locale, copy.notVerified);
+  const bonusFacts: CommercialFact[] = [
+    offer.bonus.wageringMultiplier !== null ? { label: messages.common.wagering, value: wagering } : null,
+    offer.bonus.minimumDeposit !== null && offer.bonus.currency ? { label: messages.common.minimumDeposit, value: deposit } : null,
+    offer.bonus.maximumBet !== null && offer.bonus.currency ? { label: messages.common.maximumBet, value: maximumBet } : null,
+    formatCommercialDate(offer.bonus.expiresAt, locale) ? { label: messages.common.expiry, value: formatCommercialDate(offer.bonus.expiresAt, locale) as string } : null,
+  ].filter((fact): fact is CommercialFact => Boolean(fact));
+  if (bonusFacts.length < 3 && offer.bonus.wageringMultiplier === null) bonusFacts.push({ label: messages.common.wagering, value: copy.notVerified });
+  if (bonusFacts.length < 3 && (offer.bonus.minimumDeposit === null || !offer.bonus.currency)) bonusFacts.push({ label: messages.common.minimumDeposit, value: copy.notVerified });
   const facts = context === "bonus_directory"
-    ? [
-        { label: messages.common.wagering, value: wagering },
-        { label: messages.common.minimumDeposit, value: deposit },
-        { label: messages.common.maximumBet, value: maximumBet },
-      ]
+    ? bonusFacts.slice(0, 3)
     : [
         { label: messages.common.payout, value: payout.primary },
         { label: messages.common.wagering, value: wagering },
@@ -138,13 +167,37 @@ export function offerCardPresentation(
     logo: offer.casino.logo,
     score: offer.casino.editorScore,
     headline: structuredOfferHeadline(offer.bonus, locale, copy),
+    reason: context === "bonus_directory" ? null : bestOfferReason(offer, locale, messages, copy, context),
     badges,
     facts,
     action: governedOfferAction(offer) && offer.action.href ? { href: offer.action.href, label: copy.viewOffer } : null,
     reviewOnly: !governedOfferAction(offer),
-    termsUrl: offer.bonus.termsUrl,
+    termsUrl: safeCommercialTermsUrl(offer.bonus.termsUrl),
     demonstration: offer.dataClassification === "DEMO_FIXTURE",
   };
+}
+
+export function bestOfferReason(
+  offer: PublicOfferDTO,
+  locale: SupportedLocale,
+  messages: ProductPageMessages,
+  copy: CommercialUxMessages,
+  category: BestOfferCategory,
+) {
+  const score = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(offer.casino.editorScore);
+  const wagering = offer.bonus.wageringMultiplier === null ? copy.notVerified : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(offer.bonus.wageringMultiplier)}×`;
+  const deposit = formatCommercialMoney(offer.bonus.minimumDeposit, offer.bonus.currency, locale, copy.notVerified);
+  if (category === "fast_payouts") {
+    return `${messages.common.payout}: ${payoutDisplayForBucket(offerWithdrawalBucket(offer), copy)} · ${messages.common.editorScore}: ${score}`;
+  }
+  if (category === "best_bonus_terms") {
+    const restriction = severeBonusRestrictionCount(offer)
+      ? offer.bonus.importantConditions.find((condition) => Boolean(condition.trim())) ?? offer.bonus.eligibility
+      : null;
+    return `${messages.common.wagering}: ${wagering} · ${restriction ? singleLine(restriction, 72) : `${messages.common.minimumDeposit}: ${deposit}`}`;
+  }
+  if (category === "low_deposit") return `${messages.common.minimumDeposit}: ${deposit} · ${messages.common.editorScore}: ${score}`;
+  return `${messages.common.editorScore}: ${score} · ${messages.common.wagering}: ${wagering}`;
 }
 
 export function availableBonusViews(offers: readonly PublicOfferDTO[]) {
@@ -180,7 +233,6 @@ function casinoPayout(casino: PublicCasinoCardDto, copy: CommercialUxMessages) {
 export function casinoCardPresentation(casino: PublicCasinoCardDto, locale: SupportedLocale, messages: ProductPageMessages, copy: CommercialUxMessages) {
   const payout = casinoPayout(casino, copy);
   const deposit = formatCommercialMoney(casino.featuredBonus?.minimumDeposit ?? null, casino.featuredBonus?.currency ?? null, locale, copy.notVerified);
-  const wagering = casino.featuredBonus?.wageringRequirement;
   const badges = [
     payoutOrder.indexOf(payout.bucket) <= payoutOrder.indexOf("same-day") ? copy.fastPayouts : null,
     casino.featuredBonus?.minimumDeposit !== null && casino.featuredBonus?.minimumDeposit !== undefined && casino.featuredBonus.minimumDeposit <= 10 ? copy.lowDeposit : null,
@@ -193,11 +245,11 @@ export function casinoCardPresentation(casino: PublicCasinoCardDto, locale: Supp
     logo: casino.logo,
     score: casino.rating,
     badges,
-    headline: casino.featuredBonus ? singleLine(casino.featuredBonus.title) : null,
+    headline: casino.highlights.find((highlight) => Boolean(highlight.trim())) ? singleLine(casino.highlights.find((highlight) => Boolean(highlight.trim())) as string, 112) : null,
     facts: [
       { label: messages.common.payout, value: payout.primary },
       { label: messages.common.minimumDeposit, value: deposit },
-      { label: messages.common.wagering, value: wagering === null || wagering === undefined ? copy.notVerified : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(wagering)}×` },
+      { label: copy.currentOffer, value: casino.featuredBonus ? singleLine(casino.featuredBonus.title, 64) : copy.notVerified },
     ] satisfies CommercialFact[],
     action: governedCasinoAction(casino) && casino.visitAction.redirectSlug
       ? { href: `/r/${casino.visitAction.redirectSlug}`, label: copy.viewOffer }
@@ -234,24 +286,39 @@ export function filterCasinosByName(casinos: readonly PublicCasinoCardDto[], sea
   return query ? casinos.filter((casino) => casino.name.toLocaleLowerCase(locale).includes(query)) : [...casinos];
 }
 
-export function casinoProfileDecisionPresentation(casino: PublicCasinoDTO, locale: SupportedLocale, messages: ProductPageMessages, copy: CommercialUxMessages) {
+export function selectCasinoMarketProfile(casino: PublicCasinoDTO, countryCode: string | null | undefined): PublicCasinoMarketProfile | null {
+  const normalized = countryCode?.trim().toUpperCase();
+  if (!normalized) return null;
+  return casino.marketProfiles.find((profile) => profile.countryCode.toUpperCase() === normalized) ?? null;
+}
+
+export function casinoProfileDecisionPresentation(casino: PublicCasinoDTO, locale: SupportedLocale, messages: ProductPageMessages, copy: CommercialUxMessages, countryCode?: string | null) {
   const bonus = casino.offerPresentation?.selectedOffer ?? casino.bonuses[0] ?? null;
-  const payout = normalizedPayoutDisplay(casino.payments.map((payment) => payment.supportsWithdrawals ? payment.withdrawalTime : null), copy);
-  const licence = casino.licenses[0] ?? null;
-  const hasTerms = Boolean(bonus && bonus.wageringMultiplier !== null && bonus.minimumDeposit !== null);
-  const bullets = [
-    payout.bucket !== "unknown" ? copy.verifiedPayoutTiming : null,
-    hasTerms ? copy.verifiedOfferTerms : null,
-    licence ? copy.currentLicenceRecord : null,
-  ].filter((value): value is string => Boolean(value)).slice(0, 3);
-  const score = casino.editorScore;
-  const verdict = score !== null && score >= 8.5 && bullets.length >= 2
-    ? copy.verdictStrong
-    : score !== null && score >= 7.5 ? copy.verdictSolid : copy.verdictReviewed;
+  const marketProfile = selectCasinoMarketProfile(casino, countryCode);
+  const payments = marketProfile?.payments.length ? marketProfile.payments : casino.payments;
+  const payout = normalizedPayoutDisplay(payments.map((payment) => payment.supportsWithdrawals ? payment.withdrawalTime : null), copy);
+  const licence = marketProfile?.licenses[0] ?? casino.licenses[0] ?? null;
+  const strengthSources = [...casino.pros, casino.summary].filter((value, index, values) => Boolean(value.trim()) && values.indexOf(value) === index);
+  const reasons = [
+    ...strengthSources.slice(0, 2).map((text) => ({ text: firstSentence(text, 124), tone: "strength" as const })),
+    ...casino.cons.slice(0, 1).map((text) => ({ text: firstSentence(text, 124), tone: "caveat" as const })),
+  ];
+  const verdictSource = casino.summary || casino.pros[0] || casino.cons[0] || copy.notVerified;
+  const specificSource = verdictSource.toLocaleLowerCase(locale).includes(casino.name.toLocaleLowerCase(locale))
+    ? verdictSource
+    : `${casino.name}: ${verdictSource}`;
+  const verdict = firstSentence(specificSource, 164);
+  const restriction = bonus?.importantConditions.find((condition) => Boolean(condition.trim()))
+    ? firstSentence(bonus.importantConditions.find((condition) => Boolean(condition.trim())) as string, 148)
+    : bonus?.maximumBet !== null && bonus?.maximumBet !== undefined
+      ? `${messages.common.maximumBet}: ${formatCommercialMoney(bonus.maximumBet, bonus.currency, locale, copy.notVerified)}.`
+      : bonus?.expiresAt && formatCommercialDate(bonus.expiresAt, locale)
+        ? `${messages.common.expiry}: ${formatCommercialDate(bonus.expiresAt, locale)}.`
+        : copy.importantRestrictions;
   const heroFacts: CommercialFact[] = [
     { label: messages.common.wagering, value: bonus?.wageringMultiplier === null || bonus?.wageringMultiplier === undefined ? copy.notVerified : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(bonus.wageringMultiplier)}×` },
     { label: messages.common.minimumDeposit, value: formatCommercialMoney(bonus?.minimumDeposit ?? null, bonus?.currency ?? null, locale, copy.notVerified) },
     { label: messages.common.payout, value: payout.primary },
   ];
-  return { bonus, payout, licence, bullets, verdict, heroFacts };
+  return { bonus, licence, marketProfile, payout, reasons, restriction, verdict, heroFacts };
 }

@@ -63,8 +63,10 @@ test("handoff visual fixtures are data-only and dynamic routes cannot switch pre
     assert.doesNotMatch(source, /import \{ HandoffPage \}|<HandoffPage|isLocalHandoffVisualFixture/, page);
   }
   for (const page of runtimeRoutes.slice(0, 4).map(([path]) => path)) {
-    assert.match(read(page), /isLocalHandoffVisualDataFixture/, page);
+    assert.match(read(page), /isCommercialUxVisualDataFixture/, page);
   }
+  assert.match(guard, /value !== "true" \|\| process\.env\.VERCEL_ENV === "production"/);
+  assert.match(guard, /COMMERCIAL_UX_FIXTURE_MARKETS = \["DK", "EE", "LV"\]/);
   assert.doesNotMatch(read("components/comparison-context/ContextualComparison.tsx"), /HandoffPage|dangerouslySetInnerHTML/);
   assert.match(read("components/programme/ProgramAiExperience.tsx"), /data-runtime-renderer="programme"/);
 });

@@ -41,6 +41,19 @@ export function hasPayoutEvidence(offer: PublicOfferDTO) {
   return offer.casino.payments.some((payment) => payment.supportsWithdrawals && Boolean(payment.withdrawalTime?.trim()));
 }
 
+const severeBonusRestriction = /\b(?:max(?:imum)?\s+(?:cash[ -]?out|withdrawal|winnings?)|winnings?\s+(?:are\s+)?cap(?:ped)?|(?:selected\s+)?games?\s+(?:are\s+)?(?:excluded|ineligible|do\s+not\s+count)|(?:slots|selected\s+games?)\s+only|(?:invite|invitation|vip)\s+only|(?:deposit|payment)\s+methods?\s+(?:are\s+)?(?:excluded|ineligible)|(?:bonus|winnings?)\s+(?:will\s+be|are)\s+void)\b/i;
+
+/**
+ * A deliberately narrow signal from canonical terms. This is not a complete
+ * legal interpretation: it only prevents a clearly restrictive known term
+ * from winning because its wagering multiplier happens to be lower.
+ */
+export function severeBonusRestrictionCount(offer: PublicOfferDTO) {
+  return [offer.bonus.eligibility, offer.bonus.wageringText, ...offer.bonus.importantConditions]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .filter((value) => severeBonusRestriction.test(value)).length;
+}
+
 export function normalizeWithdrawalTime(value: string | null | undefined): WithdrawalTimeBucket {
   if (!value) return "unknown";
   const text = value.toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ").trim();
@@ -76,6 +89,17 @@ export function offerWithdrawalBucket(offer: PublicOfferDTO) {
     const candidate = normalizeWithdrawalTime(payment.withdrawalTime);
     return payoutOrder.indexOf(candidate) < payoutOrder.indexOf(best) ? candidate : best;
   }, "unknown");
+}
+
+/** Strongest single timing statement, never a payment-method count. */
+export function payoutEvidenceStrength(offer: PublicOfferDTO) {
+  return offer.casino.payments.reduce((strongest, payment) => {
+    if (!payment.supportsWithdrawals || normalizeWithdrawalTime(payment.withdrawalTime) === "unknown") return strongest;
+    const text = payment.withdrawalTime?.toLowerCase().replace(/[–—]/g, "-").trim() ?? "";
+    const explicitRangeOrDuration = /\b\d{1,3}\s*(?:-|to|a|à)?\s*\d{0,3}\s*(?:h|hr|hrs|hour|hours|d|day|days|std\.?|stunden?|horas?|ore|uur|timer|tunti|tuntia|heures?|jours?)\b/.test(text);
+    const explicitNamedTiming = /\b(?:instant(?:ly)?|immediate|same[- ]day|next[- ]day)\b/.test(text);
+    return Math.max(strongest, explicitRangeOrDuration ? 3 : explicitNamedTiming ? 2 : 1);
+  }, 0);
 }
 
 function editorialTieBreak(a: PublicOfferDTO, b: PublicOfferDTO) {
@@ -143,11 +167,6 @@ function uniqueCasinos(offers: PublicOfferDTO[], limit: number) {
   }).slice(0, limit);
 }
 
-function payoutReliability(offer: PublicOfferDTO) {
-  return offer.casino.payments.filter((payment) => payment.supportsWithdrawals === true
-    && normalizeWithdrawalTime(payment.withdrawalTime) !== "unknown").length;
-}
-
 export function rankBestOffersForCategory(
   offers: readonly PublicOfferDTO[],
   category: BestOfferCategory,
@@ -159,7 +178,7 @@ export function rankBestOffersForCategory(
   const categoryEligible = eligible.filter((offer) => {
     if (category === "best_overall") return Number.isFinite(offer.casino.editorScore) && materialTermCompleteness(offer) >= 2;
     if (category === "fast_payouts") return hasPayoutEvidence(offer) && offerWithdrawalBucket(offer) !== "unknown";
-    if (category === "best_bonus_terms") return offer.bonus.wageringMultiplier !== null && bonusMechanicsCompleteness(offer) >= 4;
+    if (category === "best_bonus_terms") return offer.bonus.wageringMultiplier !== null;
     return offer.bonus.minimumDeposit !== null && offer.casino.editorScore >= LOW_DEPOSIT_EDITOR_SCORE_FLOOR;
   });
   const ranked = [...categoryEligible].sort((a, b) => {
@@ -171,14 +190,23 @@ export function rankBestOffersForCategory(
     }
     if (category === "fast_payouts") {
       return payoutOrder.indexOf(offerWithdrawalBucket(a)) - payoutOrder.indexOf(offerWithdrawalBucket(b))
-        || payoutReliability(b) - payoutReliability(a)
+        || payoutEvidenceStrength(b) - payoutEvidenceStrength(a)
         || b.casino.editorScore - a.casino.editorScore
         || reviewedAt(b) - reviewedAt(a)
         || editorialTieBreak(a, b);
     }
     if (category === "best_bonus_terms") {
-      return bonusMechanicsCompleteness(b) - bonusMechanicsCompleteness(a)
+      const aExpiry = Date.parse(a.bonus.expiresAt ?? "") || 0;
+      const bExpiry = Date.parse(b.bonus.expiresAt ?? "") || 0;
+      return severeBonusRestrictionCount(a) - severeBonusRestrictionCount(b)
         || (a.bonus.wageringMultiplier ?? missingHigh) - (b.bonus.wageringMultiplier ?? missingHigh)
+        || Number(b.bonus.importantConditions.length > 0) - Number(a.bonus.importantConditions.length > 0)
+        || Number(Boolean(b.bonus.eligibility?.trim())) - Number(Boolean(a.bonus.eligibility?.trim()))
+        || (a.bonus.minimumDeposit ?? missingHigh) - (b.bonus.minimumDeposit ?? missingHigh)
+        || Number(b.bonus.maximumBet !== null) - Number(a.bonus.maximumBet !== null)
+        || (b.bonus.maximumBet ?? Number.NEGATIVE_INFINITY) - (a.bonus.maximumBet ?? Number.NEGATIVE_INFINITY)
+        || Number(bExpiry > 0) - Number(aExpiry > 0)
+        || bExpiry - aExpiry
         || b.casino.editorScore - a.casino.editorScore
         || reviewedAt(b) - reviewedAt(a)
         || editorialTieBreak(a, b);

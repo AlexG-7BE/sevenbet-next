@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
@@ -80,7 +81,7 @@ export function BestOffersExperience({ inventoryMode, messages, presentation, sh
               <div><h3>{card.casinoName}</h3><CommercialBadges badges={card.badges} /></div>
               <CommercialScore label={messages.common.editorScore} locale={presentation.locale} score={card.score} />
             </div>
-            <h4>{card.headline}</h4>
+            <div className={styles.rankOffer}><h4>{card.headline}</h4>{card.reason ? <p>{card.reason}</p> : null}</div>
             <CommercialFacts facts={card.facts} />
             <div className={styles.rankActions}>
               {card.action ? <CasinoOutboundAction action={card.action} context={{ source: "CTA", placement: "BEST_OFFERS_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
@@ -96,6 +97,7 @@ export function BestOffersExperience({ inventoryMode, messages, presentation, sh
         }) : <div className={styles.categoryEmpty} role="status">
           <strong>{messages.common.commercialUnavailable}</strong>
           <p>{messages.bestOffers.emptyCopy}</p>
+          <Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link>
         </div>}
       </div>
       <p className={styles.compactCommission}>{copy.compactDisclosure} · {messages.bestOffers.commissionNote}</p>

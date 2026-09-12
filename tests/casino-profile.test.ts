@@ -257,8 +257,9 @@ test("route and decision composition keep authority, raw destinations and Prisma
   assert.match(component, /CASINO_HERO/);
   assert.match(component, /CASINO_OFFER_SECTION/);
   assert.match(component, /CASINO_MOBILE_STICKY/);
-  assert.match(component, /decision\.bullets\.map/);
-  assert.match(component, /bonus\?\.importantConditions\.length \|\| bonus\?\.eligibility/);
+  assert.match(component, /decision\.reasons\.map/);
+  assert.match(component, /data-reason-tone=\{item\.tone\}/);
+  assert.match(component, /decision\.restriction/);
   assert.match(component, /casino\.media\.logo \? <ResponsivePlacementImage alt=""/);
   assert.doesNotMatch(component, /alt=\{casino\.media\.logo\.alt \|\| casino\.name\}/);
   assert.doesNotMatch(component, /alt=\{casino\.media\.logo\.alt \|\| `\$\{casino\.name\} logo`\}/);

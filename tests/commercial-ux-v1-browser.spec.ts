@@ -23,6 +23,7 @@ test("Best Offers is an exact four-view, governed Top 3 decision flow", async ({
     for (const card of await cards.all()) {
       expect(await card.locator("dl > div").count()).toBeLessThanOrEqual(3);
       expect(await card.locator('[class*="badges"] > span').count()).toBeLessThanOrEqual(2);
+      await expect(card.locator('[class*="rankOffer"] p')).toHaveCount(1);
     }
   }
 
@@ -61,6 +62,13 @@ test("Casinos keeps one collection with name search and three reorder views", as
   for (const removed of ["All Filters", "More Filters", "Results per page", "Sort results", "Compare"]) {
     await expect(page.getByText(removed, { exact: true })).toHaveCount(0);
   }
+  await expect(cards.locator("dt").filter({ hasText: /^Wagering$/ })).toHaveCount(0);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const firstTop = await cards.first().evaluate((element) => Math.round(element.getBoundingClientRect().top));
+  const secondTop = await cards.nth(1).evaluate((element) => Math.round(element.getBoundingClientRect().top));
+  const thirdTop = await cards.nth(2).evaluate((element) => Math.round(element.getBoundingClientRect().top));
+  expect(secondTop).toBe(firstTop);
+  expect(thirdTop).toBeGreaterThan(firstTop);
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
   await expectNoCommercialLeak(page);
 });
@@ -84,6 +92,7 @@ test("Bonuses is an offer-first directory with five bounded intent views", async
   await expect(cards).toHaveCount(8);
 
   expect(await cards.first().locator("dl > div").count()).toBe(3);
+  await expect(page.getByText("Current offer", { exact: true })).toHaveCount(0);
   await expect(cards.locator("dt").filter({ hasText: /^Payout$/ })).toHaveCount(0);
   for (const removed of ["More Filters", "Sort results", "What a bonus really costs", "Bonus calculator"]) {
     await expect(page.getByText(removed, { exact: true })).toHaveCount(0);
@@ -102,11 +111,30 @@ test("casino review is concise, facts-first and suppresses non-governed CTA syst
   await expect(page.locator('section[aria-labelledby="casino-profile-title"] dl > div')).toHaveCount(3);
   await expect(page.locator("#why-we-rate li")).toHaveCount(3);
   await expect(page.locator("#current-offer dl > div")).toHaveCount(4);
-  await expect(page.getByText("Strong all-round record with clear decision facts.", { exact: true })).toHaveCount(1);
+  await expect(page.locator('[class*="verdict"]')).toContainText("Solvane Casino:");
+  await expect(page.locator('#why-we-rate [data-reason-tone="strength"]')).toHaveCount(2);
+  await expect(page.locator('#why-we-rate [data-reason-tone="caveat"]')).toHaveCount(1);
+  await expect(page.locator("#support")).not.toContainText("Mobile support");
   await expect(page.locator("[data-casino-decision-bar]")).toHaveCount(0);
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
   await expect(page.getByText("Review only", { exact: true })).toHaveCount(2);
+  await expect(page.locator("#current-offer [class*='materialWarning']")).toContainText("Terms shown before action");
   await expectNoCommercialLeak(page);
+});
+
+test("Preview market inspection is allowlisted, market-aware, and always non-actionable", async ({ page }) => {
+  for (const market of ["DK", "EE", "LV"]) {
+    const response = await page.goto(`${baseUrl}/en/casinos?visualFixture=true&qaMarket=${market}`, { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    await expect(page.locator('[data-commercial-casino-card]')).toHaveCount(10);
+    await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
+    const reviewHref = await page.locator('[data-commercial-casino-card] a[href*="/casino/"]').first().getAttribute("href");
+    expect(reviewHref).toContain(`qaMarket=${market}`);
+  }
+  const profile = await page.goto(`${baseUrl}/en/casino/demo-plume?visualFixture=true&qaMarket=EE`, { waitUntil: "domcontentloaded" });
+  expect(profile?.status()).toBe(200);
+  await expect(page.locator("#regulation dd").filter({ hasText: /^EE$/ })).toHaveCount(1);
+  await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
 });
 
 test("all Commercial UX surfaces remain readable at Founder-approved breakpoints", async ({ page }) => {

@@ -9,7 +9,7 @@ import styles from "@/components/best-offers/BestOffers.module.css";
 import { publicOfferService } from "@/lib/services/public-offer.service";
 import { absoluteUrl } from "@/lib/site";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
-import { isLocalHandoffVisualDataFixture, withHandoffOfferData } from "@/lib/final-handoff/visual-data-fixture";
+import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffOfferData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import {
   commercialAuthorityForPresentation,
@@ -60,10 +60,12 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const loaded = await loadBestOffersPageData();
-  const { presentation } = loaded;
+  const fixtureEnabled = isCommercialUxVisualDataFixture(raw.visualFixture);
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, fixtureEnabled);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
   const messages = productPageMessages(presentation.locale);
   const market = presentation.marketDisplayName;
-  const result = withHandoffOfferData(loaded.result, isLocalHandoffVisualDataFixture(raw.visualFixture), presentation.locale);
+  const result = withHandoffOfferData(loaded.result, fixtureEnabled, presentation.locale, fixtureMarket);
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const demoOnly = result.inventoryMode === "DEMO_ONLY";
   const hero = demoOnly

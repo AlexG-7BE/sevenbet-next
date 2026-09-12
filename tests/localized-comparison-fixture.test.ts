@@ -118,7 +118,7 @@ test("comparison locale transport is explicit and local visual actions remain un
   assert.match(client, /params\.set\("presentationLocale", presentation\.locale\)/);
   assert.match(route, /comparisonFixtureLocale\(request\.nextUrl\.searchParams\.get\("presentationLocale"\)\)/);
   assert.match(route, /MARKET_PROFILES\.some/);
-  assert.match(casinosPage, /withHandoffCasinoDiscoveryData\(loaded\.result, visualFixture, presentation\.locale, collectionQuery\(\)\)/);
+  assert.match(casinosPage, /withHandoffCasinoDiscoveryData\(loaded\.result, visualFixture, presentation\.locale, collectionQuery\(\), fixtureMarket\)/);
   assert.doesNotMatch(casinosPage, /presentation\.marketCountryCode === "GB"/);
   assert.match(visualFixture, /visitAction: \{ available: false, redirectSlug: null/);
 
