@@ -9,20 +9,32 @@ import { contactMessages } from "../lib/i18n/static-pages/contact";
 import { methodologyMessages } from "../lib/i18n/static-pages/methodology";
 import { learningMessages, localizedLearningArticles } from "../lib/i18n/learning-center";
 import { publicErrorMessages } from "../lib/i18n/public-errors";
+import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
 import {
   INITIAL_EUROPEAN_MARKET_PROFILES,
   PUBLISHED_LANGUAGE_ROUTE_PROFILES,
   languageRouteByLocale,
   publicMarketPath,
 } from "../lib/market/registry";
-import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { formatProductMessage, productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
+function editorialOnlyHeading(locale: Parameters<typeof commercialUxMessages>[0], product: "best-offers" | "bonuses") {
+  const routeLanguage = languageRouteByLocale(locale).publicSlug;
+  const market = resolvePresentationContext({ routeLanguage }).marketDisplayName;
+  const messages = commercialUxMessages(locale);
+  const template = product === "best-offers"
+    ? messages.bestOffersMarketUnavailableTitle
+    : messages.bonusesMarketUnavailableTitle;
+  return formatProductMessage(template, { market });
+}
+
 const founderPublicationSmoke = [
   { market: "DE", locale: "de-DE", representativePath: "/casinos", representativeCopy: productPageMessages("de-DE").casinos.heroLead },
-  { market: "ES", locale: "es-ES", representativePath: "/bonuses", representativeCopy: productPageMessages("es-ES").bonuses.heroLead },
-  { market: "SE", locale: "sv-SE", representativePath: "/best-offers", representativeCopy: productPageMessages("sv-SE").bestOffers.heroLead },
+  { market: "ES", locale: "es-ES", representativePath: "/bonuses", representativeCopy: editorialOnlyHeading("es-ES", "bonuses") },
+  { market: "SE", locale: "sv-SE", representativePath: "/best-offers", representativeCopy: editorialOnlyHeading("sv-SE", "best-offers") },
   { market: "DK", locale: "da-DK", representativePath: "/methodology", representativeCopy: methodologyMessages("da-DK").copy.get("Evidence before") ?? "" },
   { market: "GR", locale: "el-GR", representativePath: "/about", representativeCopy: aboutMessages("el-GR").titleLead },
 ] as const;
@@ -180,9 +192,9 @@ for (const profile of representativeProductMarkets) {
   const messages = productPageMessages(locale);
   test(`${profile.countryCode} product pages use localized bodies, self canonicals and no inferred outbound action`, async ({ page }) => {
     for (const [route, expected] of [
-      ["/best-offers", messages.bestOffers.heroLead],
+      ["/best-offers", editorialOnlyHeading(locale, "best-offers")],
       ["/casinos", messages.casinos.heroLead],
-      ["/bonuses", messages.bonuses.heroLead],
+      ["/bonuses", editorialOnlyHeading(locale, "bonuses")],
     ] as const) {
       const response = await page.goto(`${baseUrl}${prefix}${route}`, { waitUntil: "domcontentloaded" });
       expect(response?.status(), `${profile.countryCode}${route}`).toBe(200);
@@ -203,13 +215,13 @@ for (const language of PUBLISHED_LANGUAGE_ROUTE_PROFILES) {
   const locale = language.defaultLocale;
   const prefix = `/${language.publicSlug}`;
   const messages = productPageMessages(locale);
-  test(`${language.language.toUpperCase()} local visual profile and Compare preserve the published language prefix`, async ({ page, request }) => {
+  test(`${language.language.toUpperCase()} local visual profile and legacy Compare redirect preserve the published language prefix`, async ({ page, request }) => {
     const profilePath = `${prefix}/casino/demo-northstar`;
     const response = await page.goto(`${baseUrl}${profilePath}?visualFixture=true`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
     expect(new URL(canonical ?? "http://invalid").pathname).toBe(profilePath);
-    await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText(messages.common.demoDisclosure);
+    await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText(messages.profile.demoDisclosure);
     await expect(page.locator(`a[href="${prefix}/casinos"]`).first()).toBeVisible();
     expect(await page.locator('main a[href^="/r/"]').count()).toBe(0);
 

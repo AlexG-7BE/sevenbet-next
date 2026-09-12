@@ -3,113 +3,138 @@ import Link from "next/link";
 import { cache } from "react";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
-import { ActiveDiscoveryFilters, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
-import { CuratedCasinoShortlist } from "@/components/casino-discovery/CuratedCasinoShortlist";
-import { ContextualComparison } from "@/components/comparison-context/ContextualComparison";
+import { CasinoCollection } from "@/components/casino-discovery/CasinoCollection";
+import { CompactProtection } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
-import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
-import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
-import type { CasinoDiscoveryQuery } from "@/lib/public-casino-discovery/public-casino-discovery.types";
-import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
-import { absoluteUrl } from "@/lib/site";
-import { isLocalHandoffVisualDataFixture, withHandoffCasinoDiscoveryData } from "@/lib/final-handoff/visual-data-fixture";
+import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
+import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffCasinoDiscoveryData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
+import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { commercialAuthorityForPresentation, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
+import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
+import { parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
+import type { CasinoDiscoveryQuery, CasinoDiscoveryResult } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
+import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
+import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-const loadCasinoDirectoryPage = cache(async (queryKey: string) => {
-  const query = JSON.parse(queryKey) as CasinoDiscoveryQuery;
-  const [presentation, authority] = await Promise.all([
-    resolveServerPresentationContext(),
-    resolveServerJurisdiction(),
-  ]);
-  const result = await publicCasinoDiscoveryService.discover(
-    query,
-    commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
-    {
-      ...(presentation.marketCountryCode ? { defaultEditorialCountry: presentation.marketCountryCode } : {}),
-      ...(presentation.marketCode ? { commercialMarketCode: presentation.marketCode } : {}),
-      presentationLanguage: presentation.language,
+function collectionQuery(): CasinoDiscoveryQuery {
+  return {
+    country: [], currency: [], license: [], payment: [], gameProvider: [], category: [], bonusType: [],
+    sort: "FEATURED", page: 1, pageSize: 48,
+  };
+}
+
+function emptyCasinoCollection(query: CasinoDiscoveryQuery): CasinoDiscoveryResult {
+  return {
+    items: [],
+    inventoryMode: "PUBLISHED_ONLY",
+    total: 0,
+    page: 1,
+    pageSize: query.pageSize ?? 48,
+    pageCount: 0,
+    facets: {
+      countries: [], currencies: [], licenses: [], payments: [], gameProviders: [], categories: [], bonusTypes: [],
     },
-  );
-  return { presentation, result };
+    appliedFilters: query,
+  };
+}
+
+const loadCasinoCollection = cache(async (visualFixture: boolean) => {
+  const [presentation, authority, commercialProductState] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction(), resolveServerCommercialProductState()]);
+  const query = collectionQuery();
+  const result = visualFixture
+    ? emptyCasinoCollection(query)
+    : await publicCasinoDiscoveryService.discover(
+        query,
+        commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
+        {
+          ...(presentation.marketCountryCode ? { defaultEditorialCountry: presentation.marketCountryCode } : {}),
+          ...(presentation.marketCode ? { commercialMarketCode: presentation.marketCode } : {}),
+          presentationLanguage: presentation.language,
+        },
+      );
+  return { commercialProductState, presentation, result };
 });
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const query = parseCasinoDiscoveryQuery(await searchParams);
-  const filtered = hasDiscoveryFilters(query);
-  const { presentation, result } = await loadCasinoDirectoryPage(JSON.stringify(query));
+  const raw = await searchParams;
+  const query = parseCasinoDiscoveryQuery(raw);
+  const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
+  const loaded = await loadCasinoCollection(visualFixture);
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, visualFixture);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
+  const result = withHandoffCasinoDiscoveryData(loaded.result, visualFixture, presentation.locale, collectionQuery(), fixtureMarket);
   const messages = productPageMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const containsDemo = result.inventoryMode !== "PUBLISHED_ONLY";
-  const empty = result.total === 0;
-  const canonicalParams = new URLSearchParams();
-  if (!filtered && (query.page ?? 1) > 1) canonicalParams.set("page", String(query.page));
-  const canonicalPath = `/casinos${canonicalParams.size ? `?${canonicalParams}` : ""}`;
   const title = formatProductMessage(containsDemo ? messages.casinos.demoTitle : messages.casinos.title, { market });
   const description = formatProductMessage(containsDemo ? messages.casinos.demoDescription : messages.casinos.description, { market });
-  return productMetadata({ presentation, pathname: canonicalPath, title, description, robots: filtered || containsDemo || empty ? { index: false, follow: true } : { index: true, follow: true } });
+  return productMetadata({
+    presentation,
+    pathname: "/casinos",
+    title,
+    description,
+    robots: containsDemo || result.total === 0 || Boolean(query.search) ? { index: false, follow: true } : { index: true, follow: true },
+  });
 }
 
 export default async function CasinosPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const query = parseCasinoDiscoveryQuery(raw);
-  const loaded = await loadCasinoDirectoryPage(JSON.stringify(query));
-  const { presentation } = loaded;
+  const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
+  const loaded = await loadCasinoCollection(visualFixture);
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, visualFixture);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
   const messages = productPageMessages(presentation.locale);
+  const copy = commercialUxMessages(presentation.locale);
   const market = presentation.marketDisplayName;
-  const result = withHandoffCasinoDiscoveryData(
-    loaded.result,
-    isLocalHandoffVisualDataFixture(raw.visualFixture),
-    presentation.marketCountryCode === "GB",
-    presentation.locale,
-    query,
-  );
+  const result = withHandoffCasinoDiscoveryData(loaded.result, visualFixture, presentation.locale, collectionQuery(), fixtureMarket);
+  const showCommercialProducts = commercialProductsAvailable(loaded.commercialProductState);
   const containsLocalPreview = result.items.some((casino) => casino.dataClassification === "LOCAL_PREVIEW_FIXTURE");
-  const hasGovernedAction = result.items.some((casino) => casino.dataClassification !== "DEMO_FIXTURE" && casino.visitAction.available && casino.visitAction.redirectSlug);
-  const fixtureDisclosure = containsLocalPreview || (result.inventoryMode === "MIXED" && hasGovernedAction)
-    ? `${messages.common.marketPresentationNotice}${hasGovernedAction ? "" : ` ${messages.common.commercialUnavailable}`}`
-    : messages.common.demoDisclosure;
-  const showDiscoveryControls = result.total > 0 || hasDiscoveryFilters(result.appliedFilters);
-  const schemas = [
-    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "B4GAMBLE", item: absoluteUrl(productHref(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.casinos.directoryTitle, item: absoluteUrl(productHref(presentation, "/casinos")) }] },
-    ...(result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? [{ "@context": "https://schema.org", "@type": "ItemList", name: messages.casinos.directoryTitle, numberOfItems: result.total, itemListElement: result.items.map((casino, index) => ({ "@type": "ListItem", position: (result.page - 1) * result.pageSize + index + 1, name: casino.name, url: absoluteUrl(productHref(presentation, `/casino/${casino.slug}`)) })) }] : []),
-  ];
+  const disclosure = containsLocalPreview ? messages.common.marketPresentationNotice : messages.common.demoDisclosure;
+  const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: messages.casinos.directoryTitle,
+    numberOfItems: result.total,
+    itemListElement: result.items.map((casino, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: casino.name,
+      url: absoluteUrl(productHref(presentation, `/casino/${casino.slug}`)),
+    })),
+  } : null;
 
   return <div className={styles.page} data-page-theme="dark" data-runtime-renderer="casinos">
     <CommercialSurfaceView surface="casinos" />
-    <p className="srOnly">{messages.bestOffers.commissionNote}</p>
-    <ContextualComparison messages={messages} presentation={presentation} />
-    {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
+    {schema ? <JsonLd data={schema} /> : null}
     <section className={styles.hero} data-nav-theme="dark">
       <div className={styles.shell}>
-        <div className={styles.heroIntro}>
-          <header><p>{formatProductMessage(messages.casinos.heroKicker, { market })}</p><h1>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h1><span>{formatProductMessage(messages.casinos.heroCopy, { market })}</span></header>
-        </div>
-        <div className={styles.heroProof}><span>{messages.casinos.proofEvidence}</span><span>{messages.casinos.proofLimit}</span><span>{messages.casinos.proofPublished}</span></div>
+        <div className={styles.heroIntro}><header>
+          <p>{formatProductMessage(messages.casinos.heroKicker, { market })}</p>
+          <h1>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h1>
+          <span>{formatProductMessage(messages.casinos.heroCopy, { market })}</span>
+        </header></div>
       </div>
     </section>
-
-    <CuratedCasinoShortlist bestBonusCasinoIds={result.curated?.bestBonusCasinoIds} casinos={result.items} messages={messages} presentation={presentation} />
-
-    <section className={styles.directory} data-motion-reveal data-nav-theme="cream" id="casino-directory"><div className={styles.shell}>
-      <div className={styles.directoryHeading}><div><p>{messages.casinos.directoryTitle}</p><h2>{messages.casinos.directoryTitle}</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? messages.common.published : messages.common.classified} {result.total === 1 ? messages.common.record : messages.common.records}</span></div>
-      {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{fixtureDisclosure}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} →</Link></div> : null}
-      {showDiscoveryControls ? <DiscoveryControls messages={messages} presentation={presentation} result={result} /> : null}
-      <ActiveDiscoveryFilters messages={messages} presentation={presentation} result={result} />
-      <DiscoveryResults messages={messages} presentation={presentation} result={result} />
+    <section className={styles.directory} data-nav-theme="cream" id="casino-directory"><div className={styles.shell}>
+      <div className={styles.directoryHeading}><div><p>{copy.casinosShown}</p><h2>{messages.casinos.directoryTitle}</h2></div><span>{result.total} {messages.common.records}</span></div>
+      {result.inventoryMode !== "PUBLISHED_ONLY" ? <aside className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{disclosure}</p></aside> : null}
+      {result.items.length ? <CasinoCollection casinos={result.items} commercialProductsAvailable={showCommercialProducts} initialSearch={query.search} messages={messages} presentation={presentation} /> : <section className={styles.empty} role="status"><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market })}</h2><p>{messages.casinos.reviewOnlyNotice}</p></section>}
+      <div className={styles.commercialFooterNote}><p>{copy.compactDisclosure} · {messages.bestOffers.commissionNote}</p><Link href={productHref(presentation, "/affiliate-disclosure")}>{messages.common.affiliateDisclosure}</Link><CompactProtection copy={copy} presentation={presentation} /></div>
     </div></section>
-
-    <section className={styles.faq} data-motion-reveal data-nav-theme="cream"><div className={styles.shell}><div className={styles.sectionIntro}><p>{messages.casinos.faqTitle}</p><h2>{messages.casinos.faqTitle}</h2></div><div>{[
-      [messages.casinos.faqDifferenceQuestion, messages.casinos.faqDifferenceAnswer],
-      [messages.casinos.faqReviewOnlyQuestion, messages.casinos.faqReviewOnlyAnswer],
-      [messages.casinos.faqCommissionQuestion, messages.casinos.faqCommissionAnswer],
-    ].map(([question, answer], index) => <details key={question} open={index === 0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{formatProductMessage(answer, { market })}</p></details>)}</div></div></section>
+    <section className={styles.faq} data-premium-section="casinos-before-you-choose"><div className={styles.shell}><div className={styles.sectionIntro}><h2>{messages.casinos.faqTitle}</h2></div>
+      <details><summary>{messages.casinos.faqDifferenceQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqDifferenceAnswer}</p></details>
+      <details><summary>{messages.casinos.faqReviewOnlyQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqReviewOnlyAnswer}</p></details>
+      <details><summary>{messages.casinos.faqCommissionQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqCommissionAnswer}</p></details>
+    </div></section>
   </div>;
 }

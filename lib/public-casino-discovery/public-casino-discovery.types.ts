@@ -71,6 +71,8 @@ export interface PublicCasinoCardDto {
   licenses: PublicLabelDto[];
   countries: PublicLabelDto[];
   paymentMethods: PublicLabelDto[];
+  /** Canonical source strings; consumer components must normalize before rendering. */
+  withdrawalTimes?: string[];
   gameProviders: PublicLabelDto[];
   categories: PublicLabelDto[];
   highlights: string[];

@@ -474,6 +474,30 @@
   .casinoCard .logo img { max-width:72px; max-height:56px; }
 }
 
+/* Commercial UX v1 keeps this page a small reorderable collection. */
+.hero { min-height:0; padding:clamp(132px,14vw,178px) 0 66px; }
+.hero header > p { margin-bottom:22px; }
+.hero h1 { font-size:clamp(3rem,6.4vw,5.9rem); }
+.directory { padding:64px 0 84px; }
+.commercialFooterNote { align-items:center; border-top:1px solid rgba(16,15,15,.16); display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:34px; padding-top:18px; }
+.commercialFooterNote > p { color:#66645d; font-size:.75rem; line-height:1.5; margin:0; }
+.commercialFooterNote > a { font-size:.75rem; font-weight:800; min-height:44px; align-items:center; display:inline-flex; text-decoration:underline; text-underline-offset:4px; }
+.empty { background:var(--night); color:var(--white); padding:32px; }
+.empty h2 { font-size:clamp(1.8rem,5vw,3rem); margin:0; text-transform:uppercase; }
+.empty p { max-width:52ch; opacity:.7; }
+@media (max-width:700px) {
+  .hero { padding:120px 0 44px; }
+  .hero h1 { font-size:clamp(2.65rem,12vw,3.65rem); }
+  .hero header > span { margin-top:18px; }
+  .directory { padding:42px 0 58px; }
+  .directoryHeading { align-items:start; display:block; margin-bottom:24px; }
+  .directoryHeading h2 { font-size:2.4rem; }
+  .directoryHeading > span { display:block; margin-top:12px; }
+  .disclosure { display:block; padding:15px; }
+  .disclosure p { margin-top:8px; }
+  .commercialFooterNote { align-items:flex-start; display:grid; }
+}
+
 .hero header { animation:casinoHeroCopyIn 600ms cubic-bezier(.2,.8,.2,1) both; }
 .faq details::details-content { block-size:0; overflow:hidden; opacity:0; transition:block-size 400ms cubic-bezier(.2,.8,.2,1),content-visibility 400ms allow-discrete,opacity 350ms ease; }
 .faq details[open]::details-content { block-size:auto; opacity:1; }

@@ -171,42 +171,30 @@ for (const viewport of mobileViewports) {
     expect(await hero.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(viewport.height * .72);
 
     const topThree = page.locator("#shortlist");
-    const featured = page.getByTestId("best-offer-product-card");
-    const alternatives = page.getByTestId("ranked-offer-card");
-    await expect(featured).toBeVisible();
-    await expect(alternatives).toHaveCount(2);
-    expect(await featured.locator('[aria-hidden="true"]').filter({ hasText: "media" }).isVisible()).toBe(false);
+    const tabs = topThree.getByRole("tab");
+    const cards = topThree.locator("[data-commercial-best-offer-card]");
+    await expect(tabs).toHaveCount(4);
+    expect(await tabs.allTextContents()).toEqual(["Best Overall", "Fast Payouts", "Best Bonus Terms", "Low Deposit"]);
+    await expect(cards).toHaveCount(3);
+    await expect(cards.first()).toHaveClass(/rankPrimary/);
+    await expect(cards.nth(1)).toHaveClass(/rankSecondary/);
+    await expect(cards.nth(2)).toHaveClass(/rankSecondary/);
+    await expect(cards.locator("[data-offer-media]")).toHaveCount(0);
 
-    const featuredTerms = featured.locator("dl[aria-label$='material offer terms']");
-    await expect(featuredTerms.locator("dt")).toHaveCount(4);
-    await expect(featuredTerms).toBeVisible();
-    const topGeometry = await featured.evaluate((element) => {
-      const rect = element.getBoundingClientRect();
-      const terms = element.querySelector<HTMLElement>("dl[aria-label$='material offer terms']")!;
-      const actions = [...element.querySelectorAll<HTMLElement>("a,button,[class*='unavailableAction']")].filter((item) => item.getClientRects().length);
-      return {
-        left: rect.left,
-        right: rect.right,
-        termsBottom: terms.getBoundingClientRect().bottom,
-        firstActionTop: Math.min(...actions.map((item) => item.getBoundingClientRect().top)),
-      };
-    });
-    expect(topGeometry.left).toBeGreaterThanOrEqual(23);
-    expect(topGeometry.right).toBeLessThanOrEqual(viewport.width - 23);
-    expect(topGeometry.firstActionTop).toBeGreaterThanOrEqual(topGeometry.termsBottom - 1);
-
-    for (let index = 0; index < 2; index += 1) {
-      const card = alternatives.nth(index);
-      await expect(card.locator("dl[aria-label$='material offer terms']")).toBeVisible();
-      expect(await card.locator('[aria-hidden="true"]').filter({ hasText: "media" }).isVisible()).toBe(false);
-      expect(await card.evaluate((element) => element.getBoundingClientRect().width)).toBeLessThanOrEqual(viewport.width - 48);
+    for (let index = 0; index < 3; index += 1) {
+      const card = cards.nth(index);
+      await expect(card.locator("dl")).toBeVisible();
+      expect(await card.locator("dl > div").count(), `${viewport.width}px card ${index + 1} fact count`).toBeLessThanOrEqual(3);
+      const cardRect = await card.boundingBox();
+      expect(cardRect?.x, `${viewport.width}px card ${index + 1} left`).toBeGreaterThanOrEqual(23);
+      expect((cardRect?.x ?? 0) + (cardRect?.width ?? viewport.width), `${viewport.width}px card ${index + 1} right`).toBeLessThanOrEqual(viewport.width - 23);
     }
 
-    const visibleTermDefects = await topThree.locator("dl[aria-label$='material offer terms'] dt,dl[aria-label$='material offer terms'] dd").evaluateAll((elements) => elements
+    const visibleTermDefects = await topThree.locator("dl dt,dl dd").evaluateAll((elements) => elements
       .filter((element) => element.getClientRects().length)
       .filter((element) => {
         const style = getComputedStyle(element);
-        return Number.parseFloat(style.fontSize) < 14 || style.textOverflow === "ellipsis" || style.whiteSpace === "nowrap" || element.scrollWidth > element.clientWidth + 1;
+        return style.textOverflow === "ellipsis" || style.whiteSpace === "nowrap" || element.scrollWidth > element.clientWidth + 1;
       })
       .map((element) => ({ text: element.textContent, style: getComputedStyle(element).cssText })));
     expect(visibleTermDefects).toEqual([]);
@@ -218,34 +206,26 @@ for (const viewport of mobileViewports) {
       .filter((item) => item.height < 44));
     expect(undersizedControls).toEqual([]);
 
-    const sequence = await page.evaluate(() => {
-      const top = document.querySelector<HTMLElement>("#shortlist")!;
-      const why = [...document.querySelectorAll<HTMLElement>("section")].find((section) => section.textContent?.includes("Why these records are shown"))!;
-      const faq = [...document.querySelectorAll<HTMLElement>("section")].find((section) => section.textContent?.includes("Before you click"))!;
-      const visibleDemoNotices = [...top.querySelectorAll<HTMLElement>("p")].filter((item) => item.textContent?.includes("DEMONSTRATION DATA") && item.getClientRects().length).length;
-      return {
-        faqAfterMethod: faq.offsetTop > why.offsetTop,
-        methodAfterChoices: why.offsetTop > top.offsetTop + top.offsetHeight - 2,
-        visibleDemoNotices,
-      };
-    });
-    expect(sequence).toEqual({ faqAfterMethod: true, methodAfterChoices: true, visibleDemoNotices: 0 });
+    const cardTops = await cards.evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().top));
+    expect(cardTops.slice(1).every((top, index) => top > cardTops[index]), `${viewport.width}px ranked sequence`).toBe(true);
     await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
-    const commissionDisclosure = topThree.locator('a[href="/affiliate-disclosure"]');
-    await expect(commissionDisclosure).toContainText(messages.common.affiliateDisclosure);
-    await expect(commissionDisclosure.locator("..")).toContainText(messages.bestOffers.commissionNote);
-    await expect(page.locator("details").first()).not.toHaveAttribute("open", "");
-    await expect(page.locator('[data-runtime-renderer="best-offers"] section').last()).toBeHidden();
+    await expect(topThree).toContainText(messages.bestOffers.commissionNote);
+    await expect(page.getByText(/Worth a look/i)).toHaveCount(0);
+    await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
+
+    for (const label of ["Fast Payouts", "Best Bonus Terms", "Low Deposit", "Best Overall"]) {
+      await page.getByRole("tab", { name: label, exact: true }).click();
+      await expect(page.getByRole("tab", { name: label, exact: true })).toHaveAttribute("aria-selected", "true");
+      expect(await cards.count(), `${viewport.width}px ${label} bounded shortlist`).toBeLessThanOrEqual(3);
+    }
 
     if (captureEvidence && viewport.width === 390) {
       await page.evaluate(() => scrollTo(0, 0));
       await capturePage(page, resolve(offersEvidenceRoot, "01-hero-390.webp"));
-      await captureLocatorWithoutChrome(page, featured, resolve(offersEvidenceRoot, "02-top1-390.webp"));
-      await captureLocatorWithoutChrome(page, alternatives.nth(0), resolve(offersEvidenceRoot, "03-top2-390.webp"));
-      await captureLocatorWithoutChrome(page, alternatives.nth(1), resolve(offersEvidenceRoot, "04-top3-390.webp"));
-      await captureViewportAtWithoutChrome(page, page.locator("#shortlist section").last(), resolve(offersEvidenceRoot, "05-worth-a-look-390.webp"));
-      const methodology = page.locator("section").filter({ hasText: "Why these records are shown" }).first();
-      await captureLocatorWithoutChrome(page, methodology, resolve(offersEvidenceRoot, "06-methodology-390.webp"));
+      await captureLocatorWithoutChrome(page, cards.nth(0), resolve(offersEvidenceRoot, "02-top1-390.webp"));
+      await captureLocatorWithoutChrome(page, cards.nth(1), resolve(offersEvidenceRoot, "03-top2-390.webp"));
+      await captureLocatorWithoutChrome(page, cards.nth(2), resolve(offersEvidenceRoot, "04-top3-390.webp"));
+      await captureViewportAtWithoutChrome(page, topThree, resolve(offersEvidenceRoot, "05-shortlist-390.webp"));
     }
     if (captureEvidence && (viewport.width === 360 || viewport.width === 430)) {
       await withEvidenceChromeHidden(page, () => capturePage(page, resolve(offersEvidenceRoot, `best-offers-${viewport.width}.webp`), true));
@@ -263,15 +243,20 @@ for (const viewport of [
     await page.setViewportSize(viewport);
     await page.goto(`${baseUrl}/best-offers?visualFixture=true`, { waitUntil: "networkidle" });
     await expect(page.locator('[data-runtime-renderer="best-offers"]')).toHaveCount(1);
-    await expect(page.locator(".does-not-exist")).toHaveCount(0);
-    const recordLabel = page.getByText("fictional records", { exact: true });
-    await expect(recordLabel).toBeVisible();
-    expect(Number(await recordLabel.locator("..").locator("strong").textContent())).toBeGreaterThan(0);
-    await expect(page.getByText("live offers", { exact: true }).locator("..").locator("strong")).toHaveText("0");
-    await expect(page.getByText(messages.bestOffers.claimActions, { exact: true }).locator("..").locator("strong")).toHaveText("0");
-    await expect(page.getByText("Fictional records only", { exact: true })).toBeVisible();
-    await expect(page.locator("#shortlist")).toContainText(/material terms shown first/i);
-    await expect(page.locator("section").filter({ hasText: "Still here? The answer hasn't changed." })).toBeVisible();
+    const shortlist = page.locator("#shortlist");
+    const tabs = shortlist.getByRole("tab");
+    const cards = shortlist.locator("[data-commercial-best-offer-card]");
+    await expect(tabs).toHaveCount(4);
+    expect(await tabs.allTextContents()).toEqual(["Best Overall", "Fast Payouts", "Best Bonus Terms", "Low Deposit"]);
+    await expect(cards).toHaveCount(3);
+    await expect(cards.first()).toHaveClass(/rankPrimary/);
+    await expect(cards.nth(1)).toHaveClass(/rankSecondary/);
+    await expect(cards.nth(2)).toHaveClass(/rankSecondary/);
+    await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
+    await expect(shortlist).toContainText(messages.bestOffers.commissionNote);
+    await expect(page.getByText(/Worth a look/i)).toHaveCount(0);
+    await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
+    for (const card of await cards.all()) expect(await card.locator("dl > div").count()).toBeLessThanOrEqual(3);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   });
 }

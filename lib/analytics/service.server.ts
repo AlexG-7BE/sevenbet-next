@@ -254,6 +254,7 @@ export async function persistClientAnalyticsEvent({
         casinoId: event.casinoId,
         affiliateOfferId: event.affiliateOfferId,
         placement: event.placement,
+        position: event.position,
         programmeStep: event.programmeStep,
       },
     });

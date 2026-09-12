@@ -36,13 +36,14 @@ test("curated shortlists expose only result-backed selectors and collapse when n
   }
 });
 
-test("zero-inventory directories expose filters only when they have records or active recovery state", () => {
+test("zero-inventory commercial directories use bounded states without retired filters", () => {
   const bonuses = source("app/(public)/bonuses/page.tsx");
   const casinos = source("app/(public)/casinos/page.tsx");
 
-  assert.match(bonuses, /result\.total > 0 \|\| activeCount > 0 \? <BonusFilters/);
-  assert.match(casinos, /const showDiscoveryControls = result\.total > 0 \|\| hasDiscoveryFilters\(result\.appliedFilters\)/);
-  assert.match(casinos, /\{showDiscoveryControls \? <DiscoveryControls/);
+  assert.match(bonuses, /result\.inventoryMode === "UNAVAILABLE" \? <section[^>]+role="status"/);
+  assert.match(bonuses, /<BonusOfferDirectory messages=\{messages\} offers=\{result\.records\}/);
+  assert.match(casinos, /result\.items\.length \? <CasinoCollection casinos=\{result\.items\}/);
+  assert.doesNotMatch(`${bonuses}\n${casinos}`, /BonusFilters|DiscoveryControls|More Filters/);
 });
 
 test("comparison controls disable unselected choices at capacity and restore dialog focus", () => {
@@ -55,14 +56,12 @@ test("comparison controls disable unselected choices at capacity and restore dia
   assert.match(comparison, /restoreDialogFocus/);
 });
 
-test("filtered bonus absence offers localized recovery without localizing protected routes", () => {
+test("bonus directory ignores retired filter recovery and keeps localized research routes", () => {
   const page = source("app/(public)/bonuses/page.tsx");
 
-  assert.match(page, /activeCount > 0 \? <Link data-empty-reset href=\{productHref\(presentation, "\/bonuses"\)\}>\{messages\.common\.clearAll\}<\/Link>/);
   assert.match(page, /<Link href=\{productHref\(presentation, "\/methodology"\)\}>\{messages\.common\.reviewMethodology\}<\/Link>/);
-  assert.match(page, /<Link className=\{finalStyles\.guideAction\} href="\/bonus-guide">/);
-  assert.match(page, /<Link href="\/affiliate-disclosure">/);
-  assert.doesNotMatch(page, /productHref\(presentation, "\/(?:bonus-guide|affiliate-disclosure)"\)/);
+  assert.match(page, /productHref\(presentation, "\/affiliate-disclosure"\)/);
+  assert.doesNotMatch(page, /activeCount|data-empty-reset|clearAll|BonusFilters/);
 });
 
 test("directory filter landmarks use the supplied localized controls label", () => {

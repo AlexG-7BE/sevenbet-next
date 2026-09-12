@@ -4,6 +4,8 @@ import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { resolvePresentationContext, type PresentationResolution } from "@/lib/market/presentation-resolver";
 import { DEFAULT_MARKET_PROFILE, PUBLISHED_LANGUAGE_ROUTE_PROFILES, marketProfileByLocale, publicMarketPath } from "@/lib/market/registry";
 import type { PublicAccountNavigation } from "@/lib/public-shell";
+import type { CommercialProductState } from "@/lib/market/commercial-product-state";
+import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { PublicHeaderThemeController } from "./PublicHeaderThemeController";
 import { PublicNavigation } from "./PublicNavigation";
@@ -14,11 +16,13 @@ export function PublicHeader({
   authenticated,
   presentation = resolvePresentationContext({}),
   programme,
+  commercialProductState = "SUPPORTED_COMMERCIAL",
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
   presentation?: PresentationResolution;
   programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
+  commercialProductState?: CommercialProductState;
 }) {
   const messages = publicShellMessages(presentation.locale);
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
@@ -31,7 +35,7 @@ export function PublicHeader({
         <Link className={styles.brand} href={homeHref} aria-label={messages.homeLabel} translate="no">
           B4GAMBLE
         </Link>
-        <PublicNavigation account={account} authenticated={authenticated} messages={messages} presentation={presentation} programme={programme} selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES} />
+        <PublicNavigation account={account} authenticated={authenticated} commercialProductsAvailable={commercialProductsAvailable(commercialProductState)} messages={messages} presentation={presentation} programme={programme} selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES} />
       </div>
       <PublicHeaderThemeController />
     </header>

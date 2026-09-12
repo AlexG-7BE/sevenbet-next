@@ -99,7 +99,7 @@ test("trusted presentation country owns action projection without hiding global 
   assert.deepEqual((await service.searchOffers(baseQuery, { ...allowJurisdictionAuthority, countryCode: "ES" }, { defaultEditorialCountry: "ES" })).records.map((item) => item.casino.slug), ["germany", "great-britain"]);
   assert.deepEqual((await service.searchOffers(parsePublicOfferQuery({ country: "GB" }), deAuthority, { defaultEditorialCountry: "DE" })).records.map((item) => item.casino.slug), ["germany", "great-britain"]);
   const bestOffers = await service.getBestOffersPageData({ country: "DE" }, deAuthority);
-  assert.deepEqual(bestOffers.records.map((item) => item.casino.slug), ["germany", "great-britain"]);
+  assert.deepEqual(bestOffers.records.map((item) => item.casino.slug), ["germany"], "Best Offers excludes records without exact governed market eligibility");
 });
 
 test("DE/GB and GB/DE authority mismatches preserve offers but suppress actions", async () => {
@@ -365,12 +365,13 @@ test("public offer pages use the service boundary and expose no raw destination 
   assert.match(bestOffersPage, /result\.status === "unavailable"/);
   assert.match(bestOffersPage, /messages\.bestOffers\.unavailableTitle/);
   const experience = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
-  assert.match(experience, /const top = shortlist\.slice\(0, 3\)/);
-  assert.match(experience, /const featured = top\[0\] \?\? null/);
-  assert.match(experience, /data-testid="best-offer-product-card"/);
-  assert.match(experience, /top\.slice\(1\)\.map/);
+  assert.match(experience, /BEST_OFFER_CATEGORIES\.map/);
+  assert.match(experience, /rankBestOffersForCategory\(shortlist, category/);
+  assert.match(experience, /limit: 3/);
+  assert.match(experience, /className=\{index === 0 \? styles\.rankPrimary : styles\.rankSecondary\}/);
+  assert.match(experience, /data-commercial-best-offer-card/);
   const styles = readFileSync("components/best-offers/BestOffers.module.css", "utf8");
-  assert.match(styles, /@media \(max-width:900px\)[\s\S]*\.featuredCard,\.alternativeCard \{ grid-template-columns:1fr/);
+  assert.match(styles, /@media \(max-width:900px\)[\s\S]*\.rankPrimary,\.rankSecondary \{[^}]*grid-template-columns:minmax\(0,1fr\)/);
   assert.doesNotMatch(styles, /\.termSummary \{[^}]*white-space:\s*nowrap/s);
   const serializedTypes = readFileSync("lib/public-offer/public-offer.types.ts", "utf8");
   assert.doesNotMatch(serializedTypes, /destinationUrl|trackingUrl|credential|internalNotes/);

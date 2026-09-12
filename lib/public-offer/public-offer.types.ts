@@ -48,10 +48,12 @@ export interface PublicOfferDTO {
     currency: string | null;
     freeSpins: number | null;
     minimumDeposit: number | null;
+    maximumBet?: number | null;
     wageringMultiplier: number | null;
     wageringText: string | null;
     eligibility: string | null;
     importantConditions: string[];
+    termsUrl?: string | null;
     startsAt: string | null;
     expiresAt: string | null;
     media?: Partial<Record<OfferMediaPlacementName, PublicPlacementMedia>>;

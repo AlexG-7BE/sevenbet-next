@@ -55,11 +55,13 @@ export function CasinoOutboundAction({
   className = "",
   context = { source: "CTA", placement: "UNSPECIFIED" },
   messages,
+  showDisclosure = true,
 }: {
   action: CasinoProfileAction;
   className?: string;
   context?: OutboundContext;
   messages?: ProductPageMessages["outbound"];
+  showDisclosure?: boolean;
 }) {
   return <GovernedCommercialAction
     action={action}
@@ -68,6 +70,6 @@ export function CasinoOutboundAction({
     messages={messages}
   >
     <span>{action.label}<span aria-hidden="true">→</span></span>
-    <small className="commercialOutboundDisclosure">{messages?.affiliateNote ?? "Affiliate link · We may earn commission."}</small>
+    {showDisclosure ? <small className="commercialOutboundDisclosure">{messages?.affiliateNote ?? "Affiliate link · We may earn commission."}</small> : null}
   </GovernedCommercialAction>;
 }

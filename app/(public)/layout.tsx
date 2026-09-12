@@ -6,17 +6,18 @@ import { PublicHeader } from "@/components/public-shell/PublicHeader";
 import { hasBetterAuthSessionCookie } from "@/lib/auth/session-cookie";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { accountNavigationFor } from "@/lib/public-shell";
 
 export default async function PublicLayout({ children }: { children: ReactNode }) {
-  const [requestHeaders, presentation] = await Promise.all([
+  const [requestHeaders, presentation, commercialProductState] = await Promise.all([
     headers(),
     resolveServerPresentationContext(),
+    resolveServerCommercialProductState(),
   ]);
-  // The shell only chooses navigation copy. Authoritative identity is resolved
-  // by protected pages and APIs; keeping that database read out of the shared
-  // layout prevents it competing with public projections on small pools.
+  // The shell reads only session-cookie presence for account chrome. Protected
+  // pages and APIs remain the authority for identity and Programme state.
   const authenticated = hasBetterAuthSessionCookie(requestHeaders);
   const programmePath = programmePathForPresentationLocale(presentation.locale);
   const account = accountNavigationFor({ authenticated, programmePath });
@@ -25,9 +26,9 @@ export default async function PublicLayout({ children }: { children: ReactNode }
   return (
     <>
       <a className="skipLink" href="#main-content">{messages.skipToMain}</a>
-      <PublicHeader account={account} authenticated={authenticated} presentation={presentation} />
+      <PublicHeader account={account} authenticated={authenticated} commercialProductState={commercialProductState} presentation={presentation} />
       <main id="main-content">{children}</main>
-      <PublicFooter presentation={presentation} programme={{ path: programmePath, localizePublicLinks: true }} />
+      <PublicFooter commercialProductState={commercialProductState} presentation={presentation} programme={{ path: programmePath, localizePublicLinks: true }} />
     </>
   );
 }

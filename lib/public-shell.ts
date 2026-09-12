@@ -7,6 +7,16 @@ export const PUBLIC_NAVIGATION = [
   { label: "Learn", href: "/learn" },
 ] as const;
 
+const commercialMarketOnlyRoutes = new Set(["/best-offers", "/bonuses"]);
+
+export function publicNavigationForCommercialState(commercialProductsAvailable: boolean) {
+  return PUBLIC_NAVIGATION.filter((item) => commercialProductsAvailable || !commercialMarketOnlyRoutes.has(item.href));
+}
+
+export function publicCommercialDestinationVisible(href: string, commercialProductsAvailable: boolean) {
+  return commercialProductsAvailable || !commercialMarketOnlyRoutes.has(href);
+}
+
 const protectedHelpPrefixes = ["/help"];
 const internalPrefixes = ["/admin", "/editorial-preview"];
 

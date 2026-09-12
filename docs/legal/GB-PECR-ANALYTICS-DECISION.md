@@ -1,7 +1,7 @@
 # GB PECR and Analytics Decision
 
 - **Original strictly-necessary decision:** 19 August 2026
-- **Current amendment:** 11 September 2026
+- **Current amendment:** 12 September 2026
 - **Status:** ANALYTICS CONSENT IMPLEMENTATION: CANDIDATE — PRODUCTION ACTIVATION NOT VERIFIED
 - **Owner:** Privacy / Engineering under explicit Founder authority
 
@@ -36,8 +36,10 @@ Programme, Help, GEO, legal or commercial authority.
   anonymous/session cookies are HTTP-only and issued only on a grant.
 - The server verifies the consent signature at ingestion and clears identity
   cookies on denial/withdrawal.
-- The event schema is a strict 19-event relational dictionary with no arbitrary
+- The event schema is a strict 22-event relational dictionary with no arbitrary
   JSON, email, raw IP, auth token, affiliate destination or Programme wording.
+  The three Commercial UX additions observe only selected view, bounded card
+  position and casino-review click through the existing consented Core.
 - Local, Preview, test, internal and obvious bot traffic is tagged and excluded
   from Production human dashboards.
 - Individual analytics/session/click data defaults to 395-day bounded
@@ -55,7 +57,9 @@ Programme, Help, GEO, legal or commercial authority.
 
 ### NOT YET VERIFIED
 
-- Production migration 0037, public analytics flag and consent/event flow.
+- Additive Production migration 0038 and the three new Commercial UX event
+  observations. Migration 0037, the analytics flag and the prior Core flow are
+  already verified under PR #269.
 - Production controller/processor agreement applicability, hosting/database
   region and transfer evidence for the exact accounts.
 - Any consent record created by a real Production visitor under this version.

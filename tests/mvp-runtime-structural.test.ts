@@ -24,12 +24,12 @@ test("RFC-046 keeps analytics first-party and affirmative-consent gated", () => 
   assert.match(read("app/layout.tsx"), /AnalyticsConsentBanner/);
 });
 
-test("analytics has a closed 19-event contract with no identity, narrative, reward, or arbitrary metadata fields", () => {
+test("analytics has a closed 22-event contract with no identity, narrative, reward, or arbitrary metadata fields", () => {
   const eventNameArray = analyticsContract.slice(
     analyticsContract.indexOf("export const productAnalyticsEventNames"),
     analyticsContract.indexOf("] as const;"),
   );
-  assert.equal((eventNameArray.match(/^  "[a-z_]+",$/gm) ?? []).length, 19);
+  assert.equal((eventNameArray.match(/^  "[a-z_]+",$/gm) ?? []).length, 22);
   assert.equal((eventNameArray.match(/^  "programme_[^"]+",$/gm) ?? []).length, 4);
   assert.doesNotMatch(
     analyticsContract,

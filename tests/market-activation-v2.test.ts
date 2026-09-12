@@ -520,6 +520,9 @@ test("canonical runtime resolves only the exact active market and ignores legacy
     activation({ id: "10000000-0000-4000-8000-000000000007", countryCode: "CL", desiredState: "DISABLED", status: "DISABLED" }),
   ];
   const authority = runtime(records);
+  assert.equal(await authority.hasActiveRouteForMarket("PE"), true);
+  assert.equal(await authority.hasActiveRouteForMarket("CL"), false);
+  assert.equal(await authority.hasActiveRouteForMarket("EE"), false);
   assert.equal((await authority.listActive([CASINO_ID], "PE")).length, 1);
   assert.equal((await authority.listActive([CASINO_ID], "CL")).length, 0);
   assert.equal((await authority.listActive([CASINO_ID], "EE")).length, 0, "a different request GEO cannot inherit PE authority");

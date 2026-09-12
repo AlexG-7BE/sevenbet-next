@@ -165,6 +165,10 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
         "prisma/preflight/0037_customer_data_analytics_lifecycle_core.sql",
         "prisma/schema.prisma",
       ],
+      [
+        "prisma/migrations/0038_commercial_ux_analytics_events/migration.sql",
+        "prisma/schema.prisma",
+      ],
       ["prisma/schema.prisma"],
     ];
     assert.ok(approvedExactPrismaChangeSets.some(
@@ -176,7 +180,8 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
     assert.match(publicLayout, /resolveServerPresentationContext/);
     assert.match(publicLayout, /publicShellMessages\(presentation\.locale\)/);
     assert.match(publicLayout, /<PublicHeader[^>]+presentation=\{presentation\}/s);
-    assert.match(publicLayout, /<PublicFooter presentation=\{presentation\}/);
+    assert.match(publicLayout, /<PublicFooter[^>]+presentation=\{presentation\}/s);
+    assert.match(publicLayout, /resolveServerCommercialProductState/);
     assert.doesNotMatch(publicLayout, /@prisma|commercialAllowed|referralAllowed|affiliate/i);
   }
 });

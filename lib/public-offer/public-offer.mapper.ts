@@ -1,5 +1,6 @@
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import type { PublicCasinoBonus, PublicCasinoDTO, PublicOfferPresentation } from "@/lib/public-casino/public-casino.types";
+import { safePublicUrl } from "@/lib/public-casino/public-casino-validation";
 
 export interface PublicCasinoOfferInventoryEntry {
   bonus: PublicCasinoBonus;
@@ -78,10 +79,12 @@ export function publicCasinoToOffers(casino: PublicCasinoDTO, inventory?: Public
         currency: bonus.currency,
         freeSpins: bonus.freeSpins,
         minimumDeposit,
+        maximumBet: bonus.maximumBet,
         wageringMultiplier: bonus.wageringMultiplier,
         wageringText: bonus.wageringText,
         eligibility: bonus.eligibility,
         importantConditions: bonus.importantConditions,
+        termsUrl: safePublicUrl(bonus.termsUrl),
         startsAt: bonus.startsAt,
         expiresAt: bonus.expiresAt,
         media: bonus.media,

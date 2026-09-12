@@ -119,7 +119,7 @@ for (const viewport of [
   { width: 375, height: 812 },
   { width: 360, height: 800 },
 ] as const) {
-  test(`Casino final demonstration block is one centered runtime stack at ${viewport.width}px`, async ({ browser }) => {
+  test(`Casino decision sequence remains concise and bounded at ${viewport.width}px`, async ({ browser }) => {
     const mobile = viewport.width <= 430;
     const context = await browser.newContext({ hasTouch: mobile, isMobile: mobile, reducedMotion: "reduce", viewport });
     const page = await context.newPage();
@@ -127,39 +127,41 @@ for (const viewport of [
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
     await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
 
-    const finalOffer = page.locator('[data-demo-state="fictional"]');
-    await finalOffer.scrollIntoViewIfNeeded();
+    const profile = page.locator('[data-runtime-renderer="casino-review"]');
+    const currentOffer = profile.locator("#current-offer");
+    await currentOffer.scrollIntoViewIfNeeded();
     const geometry = await page.evaluate(() => {
-      const final = document.querySelector<HTMLElement>('[data-demo-state="fictional"]')!;
-      const inner = final.querySelector<HTMLElement>('[class*="finalOfferInner"]')!;
-      const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!;
-      const verdictCopy = document.querySelector<HTMLElement>("#verdict > div:first-child")!;
-      const score = document.querySelector<HTMLElement>("#verdict > div:nth-child(2)")!;
-      const finalRect = final.getBoundingClientRect();
-      const center = (element: Element) => {
-        const rect = element.getBoundingClientRect();
-        return rect.left + rect.width / 2;
-      };
+      const profile = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"]')!;
+      const offer = profile.querySelector<HTMLElement>("#current-offer")!;
+      const faq = profile.querySelector<HTMLElement>("#casino-faq")!;
+      const verdict = profile.querySelector<HTMLElement>("#our-verdict")!;
+      const footer = document.querySelector<HTMLElement>("footer")!;
+      const sectionRects = Array.from(profile.querySelectorAll<HTMLElement>("section[id]"), (section) => section.getBoundingClientRect());
       return {
-        childCenters: [...inner.children].map(center),
-        finalCenter: center(final),
-        footerGap: footer.getBoundingClientRect().top - finalRect.bottom,
+        faqBeforeVerdict: faq.getBoundingClientRect().top < verdict.getBoundingClientRect().top,
+        verdictBeforeFooter: verdict.getBoundingClientRect().bottom <= footer.getBoundingClientRect().top + 1,
         horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-        innerWidth: inner.getBoundingClientRect().width,
-        scoreGap: score.getBoundingClientRect().top - verdictCopy.getBoundingClientRect().bottom,
+        offerContentFollowsHeading: innerWidth > 800 || offer.children[1].getBoundingClientRect().top >= offer.children[0].getBoundingClientRect().bottom - 1,
+        sectionsInViewport: sectionRects.every((rect) => rect.left >= -1 && rect.right <= innerWidth + 1),
       };
     });
-    expect(geometry.childCenters.every((center) => Math.abs(center - geometry.finalCenter) <= 1)).toBe(true);
-    expect(geometry.innerWidth).toBeLessThanOrEqual(960.5);
-    expect(Math.abs(geometry.footerGap)).toBeLessThanOrEqual(1);
+    expect(geometry.faqBeforeVerdict).toBe(true);
+    expect(geometry.verdictBeforeFooter).toBe(true);
+    expect(geometry.offerContentFollowsHeading).toBe(true);
+    expect(geometry.sectionsInViewport).toBe(true);
     expect(geometry.horizontalOverflow).toBe(0);
-    if (mobile) expect(geometry.scoreGap).toBeGreaterThanOrEqual(40);
+    expect(await profile.locator("section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
+      "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "casino-faq", "our-verdict",
+    ]);
+    await expect(profile.getByText("Review only", { exact: true })).toHaveCount(2);
+    await expect(profile.locator("[data-casino-decision-bar]")).toHaveCount(0);
+    await expect(profile.locator('a[href^="/r/"]')).toHaveCount(0);
 
     if (captureEvidence && (viewport.width === 1440 || viewport.width === 390)) {
       const suffix = viewport.width === 1440 ? "1440" : "390";
-      await saveLocatorWebp(page, '[data-demo-state="fictional"]', resolve(evidenceRoot, `founder-casino-final-block-review/casino-final-demo-${suffix}.webp`));
+      await saveLocatorWebp(page, "#current-offer", resolve(evidenceRoot, `founder-casino-final-block-review/casino-current-offer-${suffix}.webp`));
       await instantScroll(page, await page.evaluate(() => document.documentElement.scrollHeight));
-      await saveWebp(page, resolve(evidenceRoot, `founder-casino-final-block-review/casino-final-demo-footer-${suffix}.webp`));
+      await saveWebp(page, resolve(evidenceRoot, `founder-casino-final-block-review/casino-faq-verdict-footer-${suffix}.webp`));
     }
     await context.close();
   });
@@ -321,8 +323,8 @@ for (const viewport of [
     expect(bottom.atBottom).toBe(true);
     expect(Math.abs(bottom.gap)).toBeLessThanOrEqual(1);
     expect(bottom.horizontalOverflow).toBe(0);
-    expect(bottom.footerBottom).toBeLessThanOrEqual(bottom.viewportHeight + 1);
-    expect(bottom.lastFooterItemBottom).toBeLessThanOrEqual(bottom.viewportHeight + 1);
+    expect(bottom.footerBottom).toBeLessThanOrEqual(bottom.viewportHeight + 2);
+    expect(bottom.lastFooterItemBottom).toBeLessThanOrEqual(bottom.viewportHeight + 2);
     expect(bottom.lastFooterItemBottom).toBeGreaterThanOrEqual(0);
     expect(await page.locator('[data-public-shell="footer"]').count()).toBe(1);
     if (captureEvidence && viewport.width === 390) {

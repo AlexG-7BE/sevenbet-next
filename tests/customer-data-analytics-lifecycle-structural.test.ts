@@ -56,6 +56,23 @@ test("0037 is additive, constrained, indexed, preflighted, and seeds no customer
   assert.match(releaseGuard, /analytics_session_environment_mismatches/);
 });
 
+test("0038 extends the closed Core dictionary additively and is DB-first guarded", () => {
+  const migration = source("prisma/migrations/0038_commercial_ux_analytics_events/migration.sql");
+  assert.equal((migration.match(/ALTER TYPE "AnalyticsEventType" ADD VALUE IF NOT EXISTS/g) ?? []).length, 3);
+  for (const event of ["COMMERCIAL_VIEW_SELECTED", "COMMERCIAL_CARD_VIEWED", "CASINO_REVIEW_CLICKED"]) {
+    assert.match(migration, new RegExp(`'${event}'`));
+  }
+  assert.match(migration, /ALTER TABLE "AnalyticsEvent" ADD COLUMN "position" INTEGER/);
+  assert.match(migration, /AnalyticsEvent_position_check/);
+  assert.match(migration, /"position" >= 1 AND "position" <= 1000/);
+  assert.doesNotMatch(migration, /\b(?:DROP|TRUNCATE|DELETE|INSERT|UPDATE)\b/i);
+
+  const releaseGuard = source("scripts/vercel-build-preflight.ts");
+  assert.match(releaseGuard, /COMMERCIAL_UX_ANALYTICS_MIGRATION = "0038_commercial_ux_analytics_events"/);
+  assert.match(releaseGuard, /assertCommercialUxAnalyticsInvariants/);
+  assert.match(releaseGuard, /Production DB-first release requires completed.*COMMERCIAL_UX_ANALYTICS_MIGRATION/s);
+});
+
 test("analytics has one closed relational dictionary with no arbitrary JSON or PII fields", () => {
   const schema = source("prisma/schema.prisma");
   const model = schema.slice(schema.indexOf("model AnalyticsEvent"), schema.indexOf("model OutboundClick"));

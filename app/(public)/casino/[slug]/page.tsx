@@ -10,7 +10,7 @@ import { casinoProfileMetadata, casinoProfileSchemas, projectCasinoProfileSchema
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
-import { isLocalHandoffVisualDataFixture, withHandoffCasinoEditorialData, withHandoffCasinoProfileData } from "@/lib/final-handoff/visual-data-fixture";
+import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffCasinoEditorialData, withHandoffCasinoProfileData } from "@/lib/final-handoff/visual-data-fixture";
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import {
   commercialAuthorityForPresentation,
@@ -18,6 +18,8 @@ import {
   productMetadata,
 } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
+import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { absoluteUrl } from "@/lib/site";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
@@ -32,19 +34,22 @@ const loadEditorial = cache(async (slug: string) => {
     return null;
   }
 });
-const loadCasinoPage = cache(async (slug: string) => {
-  const [presentation, authority, editorialResult] = await Promise.all([
+const loadCasinoPage = cache(async (slug: string, visualFixture: boolean) => {
+  const [presentation, authority, editorialResult, commercialProductState] = await Promise.all([
     resolveServerPresentationContext(),
     resolveServerJurisdiction(),
-    loadEditorial(slug),
+    visualFixture ? Promise.resolve(null) : loadEditorial(slug),
+    resolveServerCommercialProductState(),
   ]);
-  const candidate = await publicCasinoService.getCasino(
-    slug,
-    commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
-    presentation.marketCountryCode,
-    presentation.language,
-    presentation.marketCode,
-  );
+  const candidate = visualFixture
+    ? publicCasinoService.getCommercialUxVisualFixture(slug)
+    : await publicCasinoService.getCasino(
+        slug,
+        commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
+        presentation.marketCountryCode,
+        presentation.language,
+        presentation.marketCode,
+      );
   const availableForPresentation = candidate
     ? Boolean(presentation.marketCountryCode && candidate.countries.some((country) => country.countryCode === presentation.marketCountryCode && country.availability === "AVAILABLE"))
     : false;
@@ -52,16 +57,22 @@ const loadCasinoPage = cache(async (slug: string) => {
     casino: candidate?.source === "cms" ? candidate : null,
     editorialResult: candidate ? editorialResult : null,
     presentation,
+    commercialProductState,
     availableForPresentation,
   };
 });
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
   const { slug } = await params;
-  const { casino, editorialResult, presentation } = await loadCasinoPage(slug);
+  const raw = await searchParams;
+  const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
+  const loaded = await loadCasinoPage(slug, visualFixture);
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, visualFixture);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
+  const casino = loaded.casino ? withHandoffCasinoProfileData(loaded.casino, visualFixture, presentation.locale, fixtureMarket) : null;
   const messages = productPageMessages(presentation.locale);
   if (!casino) return productMetadata({ presentation, pathname: `/casino/${slug}`, title: messages.profile.unavailableTitle, description: messages.profile.unavailableDescription, robots: { index: false, follow: false }, openGraphType: "article" });
-  const base = casinoProfileMetadata(casino, profileEditorialDocument(editorialResult, casino.id));
+  const base = casinoProfileMetadata(casino, profileEditorialDocument(loaded.editorialResult, casino.id));
   const title = `${casino.name} ${messages.profile.review} | B4GAMBLE`;
   const description = `${messages.profile.currentReview}: ${casino.name}. ${casino.summary || messages.common.originalSourceCopy}`;
   return productMetadata({
@@ -78,13 +89,14 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const { slug } = await params;
-  const visualDataFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
-  const loaded = await loadCasinoPage(slug);
-  const casino = loaded.casino ?? (visualDataFixture ? publicCasinoService.getLocalVisualFixture(slug) : null);
+  const visualDataFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
+  const loaded = await loadCasinoPage(slug, visualDataFixture);
+  const casino = loaded.casino;
   if (!casino) notFound();
-  const { presentation } = loaded;
-  const runtimeCasino = withHandoffCasinoProfileData(casino, visualDataFixture, presentation.locale);
-  const editorial = withHandoffCasinoEditorialData(profileEditorialDocument(loaded.editorialResult, casino.id), visualDataFixture, loaded.presentation.locale);
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, visualDataFixture);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
+  const runtimeCasino = withHandoffCasinoProfileData(casino, visualDataFixture, presentation.locale, fixtureMarket);
+  const editorial = withHandoffCasinoEditorialData(profileEditorialDocument(loaded.editorialResult, casino.id), visualDataFixture, presentation.locale);
   const messages = productPageMessages(presentation.locale);
   const profileUrl = absoluteUrl(productHref(presentation, `/casino/${runtimeCasino.slug}`));
   const casinoDirectoryUrl = absoluteUrl(productHref(presentation, "/casinos"));
@@ -99,6 +111,6 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
   return <>
     <CommercialSurfaceView casinoId={runtimeCasino.id} surface="casino_review" />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
-    <CasinoProfile availableForPresentation={loaded.availableForPresentation} casino={runtimeCasino} editorial={editorial} messages={messages} presentation={presentation} />
+    <CasinoProfile availableForPresentation={loaded.availableForPresentation} casino={runtimeCasino} commercialProductsAvailable={commercialProductsAvailable(loaded.commercialProductState)} editorial={editorial} messages={messages} presentation={presentation} />
   </>;
 }

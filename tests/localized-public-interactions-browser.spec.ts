@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
 import { publicShellMessages } from "../lib/i18n/public-shell-catalog";
 import { faqMessages } from "../lib/i18n/static-pages/faq";
 
@@ -69,7 +69,7 @@ for (const acceptance of cases) {
     await context.close();
   });
 
-  test(`${acceptance.language} mobile casino filters preserve state, reset and browser history`, async ({ browser }) => {
+  test(`${acceptance.language} mobile casino search and views preserve focused state and browser history`, async ({ browser }) => {
     const context = await browser.newContext({
       hasTouch: true,
       isMobile: true,
@@ -77,40 +77,28 @@ for (const acceptance of cases) {
       viewport: { width: 390, height: 844 },
     });
     const page = await context.newPage();
-    const messages = productPageMessages(acceptance.locale);
-    const trigger = page.locator('[aria-controls="casino-filter-dialog"]');
+    const copy = commercialUxMessages(acceptance.locale);
+    const directoryUrl = `${baseUrl}${acceptance.prefix}/casinos?q=Solvane&visualFixture=true`;
+    await page.goto(directoryUrl, { waitUntil: "networkidle" });
 
-    await page.goto(`${baseUrl}${acceptance.prefix}/casinos`, { waitUntil: "networkidle" });
-    const total = Number((await page.locator("#casino-results [role=status]").innerText()).match(/^\d+/)?.[0] ?? "0");
-    await expect(trigger).toHaveCount(total > 0 ? 1 : 0);
+    const search = page.getByRole("searchbox", { name: copy.searchCasinos });
+    await expect(search).toHaveValue("Solvane");
+    await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(1);
+    await page.getByRole("tab", { name: copy.fastPayouts, exact: true }).click();
+    await expect(page.getByRole("tab", { name: copy.fastPayouts, exact: true })).toHaveAttribute("aria-selected", "true");
+    await expect(search).toHaveValue("Solvane");
+    await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(1);
 
-    await page.goto(`${baseUrl}${acceptance.prefix}/casinos?hasBonus=true`, { waitUntil: "networkidle" });
-    await expect(trigger).toBeVisible();
-    await trigger.click();
-    const dialog = page.locator("#casino-filter-dialog");
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("button", { name: messages.common.closeFilters })).toBeFocused();
-    expect(await page.evaluate(() => document.body.style.overflow)).toBe("hidden");
+    await search.fill("localization-visual-no-match");
+    await expect(page.locator('#casino-collection-results[role="tabpanel"]')).toContainText(copy.noSearchResults);
+    await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(0);
+    await expect(page.locator("#casino-filter-dialog, [data-active-filter-state='casinos']")).toHaveCount(0);
 
-    await dialog.locator('select[name="supportsMobile"]').selectOption("true");
-    await expect(page).toHaveURL(/hasBonus=true/);
-    await expect(page).toHaveURL(/supportsMobile=true/);
-    await dialog.getByRole("button", { name: messages.common.closeFilters }).click();
-    await expect(dialog).toBeHidden();
-    await expect(trigger).toBeFocused();
-    await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe("");
-
-    const filteredTotal = Number(await page.locator("#casino-results").getAttribute("data-result-count") ?? "0");
-    const reset = filteredTotal > 0
-      ? page.getByLabel(messages.common.activeFilters).getByRole("link", { name: messages.common.clearAll, exact: true })
-      : page.locator('[data-public-empty-state="filtered"] [data-empty-reset]');
-    await expect(reset).toHaveText(messages.common.clearAll);
-    await reset.click();
-    await expect(page).toHaveURL(`${baseUrl}${acceptance.prefix}/casinos`);
+    await page.goto(`${baseUrl}${acceptance.prefix}/faq`, { waitUntil: "domcontentloaded" });
     await page.goBack({ waitUntil: "networkidle" });
-    await expect(page).toHaveURL(/hasBonus=true/);
-    await expect(page).toHaveURL(/supportsMobile=true/);
-    await expect(trigger).toContainText("(2)");
+    await expect(page).toHaveURL(directoryUrl);
+    await expect(search).toHaveValue("Solvane");
+    await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(1);
     await context.close();
   });
 }

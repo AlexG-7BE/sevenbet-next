@@ -32,14 +32,14 @@ test("home and contact keep text contrast, focus, and touch contracts", () => {
 test("Best Offers keeps native cards, material terms, and reachable controls", () => {
   const styles = read("components/best-offers/BestOffers.module.css");
   const experience = read("components/best-offers/BestOffersExperience.tsx");
+  const primitives = read("components/commercial/CommercialPrimitives.tsx");
 
-  assert.match(experience, /<article className=\{styles\.featuredCard\}[^>]*data-testid="best-offer-product-card">/);
-  assert.match(experience, /<dl className=\{styles\.mobileMaterialTerms\} aria-label=\{`\$\{offer\.casino\.name\} · \$\{messages\.common\.materialOfferTerms\}`\}>/);
-  assert.match(experience, /<details><summary>\{messages\.bestOffers\.faqWageringQuestion\}<\/summary>/);
-  assert.match(experience, /if \(offer\.dataClassification === "DEMO_FIXTURE"\) return null;/);
-  assert.match(cssRule(styles, ".commercialCta"), /min-height:50px/);
-  assert.match(cssRule(styles, ".actions > button"), /min-height:44px/);
-  assert.match(styles, /\.commercialCta,\.unavailableAction,\.actions > a,\.actions > button\s*\{[^}]*min-height:44px;/);
+  assert.match(experience, /<article[\s\S]*?data-commercial-best-offer-card/);
+  assert.match(experience, /BEST_OFFER_CATEGORIES\.map[\s\S]*?role="tab"/);
+  assert.match(experience, /<CommercialFacts facts=\{card\.facts\}/);
+  assert.match(primitives, /facts\.slice\(0, 3\)\.map/);
+  assert.match(cssRule(styles, ".categoryRail button"), /min-height:44px/);
+  assert.match(cssRule(styles, ".rankActions > a:not(:first-child)"), /min-height:44px/);
   assert.match(styles, /@media \(prefers-reduced-motion:reduce\)[\s\S]*?animation:none;/);
 });
 
@@ -62,6 +62,7 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   const offerMedia = read("components/commercial-media/CommercialOfferMedia.tsx");
   const profile = read("components/casino-profile/CasinoProfile.tsx");
   const profileStyles = read("components/casino-profile/CasinoProfile.module.css");
+  const primitives = read("components/commercial/CommercialPrimitives.tsx");
 
   const searchButton = cssRule(discovery, ".heroSearch button");
   assert.match(searchButton, /width: 48px/);
@@ -77,13 +78,14 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   assert.match(bonusDirectory, /return offer\.casino\.logo \? <img\s+alt=""/);
   assert.match(curated, /casino\.logo \? <ResponsivePlacementImage alt=""/);
   assert.match(profile, /casino\.media\.logo \? <ResponsivePlacementImage alt=""/);
-  assert.match(profile, /<nav aria-label=\{messages\.profile\.currentReview\}/);
-  assert.match(profile, /aria-label=\{hasEditorScore \? `\$\{messages\.common\.editorScore\} \$\{formattedEditorScore\} \/ 10` : `\$\{messages\.common\.editorScore\} \$\{messages\.common\.notListed\}`\}/);
-  assert.match(profile, /\{hasEditorScore \? <span aria-hidden="true">★★★★★<\/span> : null\}/);
-  assert.match(profile, /<details className=\{styles\.evidenceDisclosure\}>\s*<summary>\{messages\.profile\.evidencePaymentsTools\}<\/summary>/);
-  assert.match(profile, /<dl className=\{`\$\{styles\.facts\} \$\{styles\.checkCard\}`\}>/);
-  assert.match(profileStyles, /\.decisionBar > div a\s*\{[^}]*min-height: 44px;/);
-  assert.match(profileStyles, /\.faqGrid summary\s*\{[^}]*min-height: 66px;/);
+  assert.match(profile, /<nav aria-label=\{messages\.common\.breadcrumb\}/);
+  assert.match(profile, /<CommercialScore label=\{messages\.common\.editorScore\} locale=\{presentation\.locale\} score=\{score\}/);
+  assert.match(primitives, /aria-label=\{`\$\{label\} \$\{value\} \/ 10`\}/);
+  assert.match(profile, /id="casino-faq"[\s\S]*?id="our-verdict"/);
+  assert.doesNotMatch(profile, /copy\.methodologyAndSources/);
+  assert.match(profile, /<SectionFacts facts=\{paymentFacts\}/);
+  assert.match(profileStyles, /\.stickyAction :global\(\.commercialOutboundPrimary\)\s*\{[^}]*min-height:44px;/);
+  assert.match(profileStyles, /\.profileFaq summary\s*\{[^}]*min-height:\s*68px;/);
   assert.match(cssRule(profileStyles, ".page"), /overflow-x: clip/);
   assert.match(profileStyles, /:global\(html\):has\(\.page\),\s*:global\(body\):has\(\.page\)\s*\{\s*overflow-x: clip;/);
 });

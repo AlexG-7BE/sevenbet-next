@@ -110,14 +110,17 @@ for (const { locale, country } of [
   });
 }
 
-test("comparison locale transport is explicit and local preview actions require the GB presentation", () => {
+test("comparison locale transport is explicit and local visual actions remain unavailable", () => {
   const client = readFileSync("components/comparison-context/ContextualComparison.tsx", "utf8");
   const route = readFileSync("app/api/public/comparison/route.ts", "utf8");
   const casinosPage = readFileSync("app/(public)/casinos/page.tsx", "utf8");
+  const visualFixture = readFileSync("lib/final-handoff/visual-data-fixture.ts", "utf8");
   assert.match(client, /params\.set\("presentationLocale", presentation\.locale\)/);
   assert.match(route, /comparisonFixtureLocale\(request\.nextUrl\.searchParams\.get\("presentationLocale"\)\)/);
   assert.match(route, /MARKET_PROFILES\.some/);
-  assert.match(casinosPage, /withHandoffCasinoDiscoveryData[\s\S]*presentation\.marketCountryCode === "GB"/);
+  assert.match(casinosPage, /withHandoffCasinoDiscoveryData\(loaded\.result, visualFixture, presentation\.locale, collectionQuery\(\), fixtureMarket\)/);
+  assert.doesNotMatch(casinosPage, /presentation\.marketCountryCode === "GB"/);
+  assert.match(visualFixture, /visitAction: \{ available: false, redirectSlug: null/);
 
   const seed = comparisonSeed("DE");
   assert.equal(withHandoffComparisonData(seed, false, "de-DE"), seed);

@@ -45,9 +45,21 @@
 .method li strong { text-transform:uppercase; }
 .method h2 em { color:#777500; font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; text-transform:none; }
 .method li p { margin:5px 0 0; color:#64635c; font-size:14px; line-height:1.6; }
+.method a { min-height:44px; display:inline-flex; align-items:center; color:#8f302d; font-size:14px; font-weight:750; text-decoration:underline; text-underline-offset:4px; }
+.unavailable { min-height:100svh; padding:clamp(132px,14vw,180px) var(--site-gutter) 72px; display:grid; place-items:center; background:#100f0f; color:#fafaf7; font-family:var(--font-seven-sans),Arial,sans-serif; }
+.unavailable > div { width:min(760px,100%); padding:clamp(30px,5vw,58px); border:1px solid rgba(250,250,247,.24); background:#171616; }
+.unavailable small { color:#e4e24e; font-size:13px; letter-spacing:.2em; text-transform:uppercase; }
+.unavailable h1 { max-width:16ch; margin:20px 0; font-size:clamp(40px,6vw,76px); line-height:.98; letter-spacing:-.035em; text-transform:uppercase; text-wrap:balance; }
+.unavailable p { max-width:52ch; margin:0; color:rgba(250,250,247,.7); font-size:17px; line-height:1.55; }
+.unavailable nav { margin-top:30px; display:flex; flex-wrap:wrap; gap:10px 26px; }
+.unavailable nav a { min-height:48px; display:inline-flex; align-items:center; color:#e4e24e; font-size:14px; font-weight:750; text-decoration:underline; text-underline-offset:4px; }
 .guideAction { min-height:48px; width:fit-content; margin-top:24px; padding:12px 28px; border:1px solid rgba(16,15,15,.3); border-radius:999px; display:inline-flex; align-items:center; color:#100f0f; font-size:14px; text-decoration:none; }
 @keyframes bonus-hero-enter { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 @media(max-width:760px){
+  .unavailable { padding:112px 12px 48px; place-items:start stretch; }
+  .unavailable > div { padding:28px 22px; }
+  .unavailable h1 { max-width:none; font-size:clamp(30px,9.5vw,42px); }
+  .unavailable nav { display:grid; grid-template-columns:minmax(0,1fr); gap:4px; }
   .hero{height:auto;min-height:620px;padding:132px var(--site-gutter) 0;position:relative;display:flex;align-items:stretch;flex-direction:column}
   .hero::after{content:"";position:absolute;right:0;bottom:0;left:0;height:10px;background:linear-gradient(90deg,#100f0f,#171616 48%,#100f0f)}
   .hero>.heroCopy{position:static;width:100%;margin:0}
@@ -90,4 +102,13 @@
 @media(prefers-reduced-motion:reduce){
   .hero>.heroCopy{animation:none}
   .segmented label,.gameWeights label,.calculatorOutput dd{transition:none}
+}
+
+/* Commercial UX v1: concise offer-directory introduction. */
+.hero { min-height:0; padding-bottom:64px; padding-top:clamp(132px,14vw,178px); }
+.hero h1 { font-size:clamp(3.2rem,7vw,7rem); }
+@media(max-width:760px){
+  .hero { min-height:0; padding:120px var(--site-gutter) 44px; }
+  .hero h1 { font-size:clamp(2.65rem,12vw,3.65rem); }
+  .hero p { font-size:15px; line-height:1.5; margin-top:20px; }
 }

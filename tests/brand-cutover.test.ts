@@ -398,6 +398,10 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
         "prisma/preflight/0037_customer_data_analytics_lifecycle_core.sql",
         "prisma/schema.prisma",
       ],
+      [
+        "prisma/migrations/0038_commercial_ux_analytics_events/migration.sql",
+        "prisma/schema.prisma",
+      ],
       ["prisma/schema.prisma"],
     ];
     assert.ok(approvedExactSchemaChangeSets.some(

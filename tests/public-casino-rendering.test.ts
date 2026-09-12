@@ -153,8 +153,8 @@ test("public routes use the service boundary and invalidate all publication surf
   for (const file of ["app/(public)/best-offers/page.tsx", "app/(public)/bonuses/page.tsx"]) assert.match(readFileSync(file, "utf8"), /publicOfferService/);
   assert.match(readFileSync("app/(public)/casinos/page.tsx", "utf8"), /publicCasinoDiscoveryService/);
   const directory = readFileSync("app/(public)/casinos/page.tsx", "utf8");
-  assert.match(directory, /const empty = result\.total === 0/);
-  assert.match(directory, /filtered \|\| containsDemo \|\| empty/);
+  assert.match(directory, /containsDemo \|\| result\.total === 0 \|\| Boolean\(query\.search\)/);
+  assert.match(directory, /CasinoCollection casinos=\{result\.items\}/);
   assert.match(directory, /result\.inventoryMode === "PUBLISHED_ONLY" && result\.total > 0/);
   assert.match(readFileSync("app/(public)/catalog/page.tsx", "utf8"), /permanentRedirect/);
   const page = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
@@ -165,7 +165,7 @@ test("public routes use the service boundary and invalidate all publication surf
   assert.match(page, /if \(!casino\) notFound\(\)/);
   assert.match(page, /casinoProfileSchemas/);
   assert.match(seo, /BreadcrumbList/);
-  for (const section of ["casino-profile-title", "overview-heading", "offer-heading", "verdict-heading", "faq-heading"]) assert.match(profile, new RegExp(section));
+  for (const section of ["casino-profile-title", "why-heading", "payments-heading", "offer-heading", "games-heading", "support-heading", "regulation-heading"]) assert.match(profile, new RegExp(section));
   assert.doesNotMatch(`${page}\n${seo}`, /AggregateRating|reviewCount|ratingCount|casinoOfficialUrl/);
   const cache = readFileSync("lib/public-casino/cache.ts", "utf8");
   for (const path of ["/casinos", "/best-offers", "/bonuses", "/sitemap.xml"]) assert.match(cache, new RegExp(path.replace("/", "\\/")));

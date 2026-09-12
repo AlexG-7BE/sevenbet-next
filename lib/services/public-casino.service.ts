@@ -133,6 +133,12 @@ export class PublicCasinoService {
     return this.sourceControlledDemo(slug) ?? this.legacy(slug);
   }
 
+  /** Route-guarded Commercial UX fixture: source-controlled and always review-only. */
+  getCommercialUxVisualFixture(slug: string): PublicCasinoDTO | null {
+    if (!isSafePublicSlug(slug)) return null;
+    return this.sourceControlledDemo(slug);
+  }
+
   async getCasino(
     slug: string,
     authority?: CommercialJurisdictionAuthority | null,

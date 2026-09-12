@@ -16,7 +16,7 @@ test("German local visual profile fact labels and values never intersect", async
     await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
     await page.evaluate(() => document.fonts.ready);
 
-    const factRows = await page.locator("#overview dl > div").evaluateAll((rows) => {
+    const factRows = await page.locator("#payments dl > div").evaluateAll((rows) => {
       const intersectionArea = (first: DOMRect, second: DOMRect) => {
         const width = Math.max(0, Math.min(first.right, second.right) - Math.max(first.left, second.left));
         const height = Math.max(0, Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top));
@@ -48,7 +48,7 @@ test("German local visual profile fact labels and values never intersect", async
       });
     });
 
-    expect(factRows.map(({ label }) => label), `${viewport.width}px fact labels`).toContain("Gründungsjahr");
+    expect(factRows.map(({ label }) => label), `${viewport.width}px fact labels`).toContain("Mindestabhebung");
     for (const row of factRows) {
       const description = `${viewport.width}px ${row.label} / ${row.value}`;
       expect(row.elementIntersection, `${description} element boxes`).toBe(0);

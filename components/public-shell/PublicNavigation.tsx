@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import {
-  PUBLIC_NAVIGATION,
   isCurrentPublicRoute,
+  publicNavigationForCommercialState,
   type PublicAccountNavigation,
 } from "@/lib/public-shell";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
@@ -42,6 +42,7 @@ export function PublicNavigation({
   presentation,
   programme,
   selectableLanguages,
+  commercialProductsAvailable,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
@@ -49,6 +50,7 @@ export function PublicNavigation({
   presentation: PresentationResolution;
   programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
   selectableLanguages: readonly LanguageRouteProfile[];
+  commercialProductsAvailable: boolean;
 }) {
   const pathname = usePathname();
   const unprefixedPathname = stripPublicMarketPrefix(pathname);
@@ -69,6 +71,7 @@ export function PublicNavigation({
   const navigationLabel = (href: string) => navigationLabels[href] ?? href;
   const accountLabel = authenticated ? messages.myProgramme : messages.logIn;
   const primaryLabel = authenticated ? messages.myProgramme : messages.startProgramme;
+  const publicNavigation = publicNavigationForCommercialState(commercialProductsAvailable);
   const [menuOpen, setMenuOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -111,7 +114,7 @@ export function PublicNavigation({
     <>
       <div className={styles.desktopNavigation}>
         <nav className={styles.primaryNavigation} aria-label={messages.primaryNavigation}>
-          {PUBLIC_NAVIGATION.map((item) => (
+          {publicNavigation.map((item) => (
             <Link
               className={"safety" in item && item.safety ? styles.helpLink : undefined}
               href={publicHref(item.href)}
@@ -174,7 +177,7 @@ export function PublicNavigation({
             <button aria-label={messages.closeNavigation} className={styles.menuButton} onClick={() => closeMenu()} ref={closeRef} type="button"><CloseIcon /></button>
           </div>
           <nav className={styles.mobileRouteList} aria-label={messages.mobilePrimaryNavigation}>
-            {PUBLIC_NAVIGATION.filter((item) => !("safety" in item && item.safety)).map((item) => (
+            {publicNavigation.filter((item) => !("safety" in item && item.safety)).map((item) => (
               <Link
                 href={publicHref(item.href)}
                 key={item.href}

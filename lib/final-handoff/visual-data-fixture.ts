@@ -23,6 +23,7 @@ import { demoProfileCopy } from "@/lib/i18n/demo-profile-catalog";
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { visualFixtureCopy } from "@/lib/i18n/visual-fixture-catalog";
 import { MARKET_PROFILES, type SupportedLocale } from "@/lib/market/registry";
+import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import type { MediaPlacementName, MediaPlacementVariantName } from "@/lib/media/placement-media";
 
 /**
@@ -35,6 +36,42 @@ export function isLocalHandoffVisualDataFixture(value: string | string[] | undef
     && process.env.B4GAMBLE_HANDOFF_VISUAL_FIXTURE === "true"
     && process.env.VERCEL !== "1"
     && process.env.VERCEL_ENV !== "production";
+}
+
+export const COMMERCIAL_UX_FIXTURE_MARKETS = ["DK", "EE", "LV"] as const;
+export type CommercialUxFixtureMarket = (typeof COMMERCIAL_UX_FIXTURE_MARKETS)[number];
+
+/** Commercial UX fixtures are non-actionable and may be inspected on Preview. */
+export function isCommercialUxVisualDataFixture(value: string | string[] | undefined) {
+  if (value !== "true" || process.env.VERCEL_ENV === "production") return false;
+  if (isLocalHandoffVisualDataFixture(value)) return true;
+  return process.env.VERCEL === "1" && process.env.VERCEL_ENV === "preview";
+}
+
+export function commercialUxFixtureMarket(value: string | string[] | undefined, fixtureEnabled: boolean): CommercialUxFixtureMarket | null {
+  if (!fixtureEnabled || typeof value !== "string") return null;
+  const normalized = value.trim().toUpperCase();
+  return COMMERCIAL_UX_FIXTURE_MARKETS.find((countryCode) => countryCode === normalized) ?? null;
+}
+
+export function withCommercialUxFixturePresentation<T extends PresentationResolution & { readonly marketCode?: string | null }>(
+  presentation: T,
+  fixtureCountryCode: CommercialUxFixtureMarket | null,
+): T {
+  if (!fixtureCountryCode) return presentation;
+  const market = MARKET_PROFILES.find((profile) => profile.countryCode === fixtureCountryCode) ?? null;
+  let displayName = market?.seoDisplayName ?? fixtureCountryCode;
+  try {
+    displayName = new Intl.DisplayNames([presentation.locale], { type: "region" }).of(fixtureCountryCode) ?? displayName;
+  } catch {}
+  return {
+    ...presentation,
+    market,
+    marketCode: fixtureCountryCode,
+    marketCountryCode: fixtureCountryCode,
+    marketDisplayName: displayName,
+    marketSource: "UNKNOWN",
+  } as T;
 }
 
 export function withHandoffLearningArticleData(article: LearningArticle, enabled: boolean): LearningArticle {
@@ -151,12 +188,20 @@ const casinoDirectorySamples = [
   { name: "Perla Casino", score: 7.5, wagering: 45, deposit: 25, percentage: 100, maximumBonus: 150, freeSpins: 30, titleStyle: "amount", payout: { minimumHours: 48, maximumHours: null } },
 ] as const satisfies readonly FixtureOfferSample[];
 
-function fixtureMarket(locale: SupportedLocale) {
-  return MARKET_PROFILES.find((profile) => profile.supportedLocales.includes(locale)) ?? MARKET_PROFILES[0];
+function fixtureMarket(locale: SupportedLocale, countryCode?: CommercialUxFixtureMarket | null) {
+  const exact = countryCode ? MARKET_PROFILES.find((profile) => profile.countryCode === countryCode) : null;
+  const localized = MARKET_PROFILES.find((profile) => profile.supportedLocales.includes(locale)) ?? MARKET_PROFILES[0];
+  if (exact) return exact;
+  if (!countryCode) return localized;
+  let seoDisplayName: string = countryCode;
+  try {
+    seoDisplayName = new Intl.DisplayNames([locale], { type: "region" }).of(countryCode) ?? countryCode;
+  } catch {}
+  return { countryCode, seoDisplayName, currencyHints: ["EUR"] };
 }
 
-function casinoFixtureFacets(locale: SupportedLocale): CasinoDiscoveryResult["facets"] {
-  const market = fixtureMarket(locale);
+function casinoFixtureFacets(locale: SupportedLocale, countryCode?: CommercialUxFixtureMarket | null): CasinoDiscoveryResult["facets"] {
+  const market = fixtureMarket(locale, countryCode);
   return {
     countries: [{ key: market.countryCode, label: market.seoDisplayName, count: casinoDirectorySamples.length }],
     currencies: market.currencyHints.map((currency) => ({ key: currency, label: currency, count: casinoDirectorySamples.length })),
@@ -171,8 +216,8 @@ function casinoFixtureFacets(locale: SupportedLocale): CasinoDiscoveryResult["fa
   };
 }
 
-function offerFixtureFacets(locale: SupportedLocale): PublicOfferSearchResult["facets"] {
-  const market = fixtureMarket(locale);
+function offerFixtureFacets(locale: SupportedLocale, countryCode?: CommercialUxFixtureMarket | null): PublicOfferSearchResult["facets"] {
+  const market = fixtureMarket(locale, countryCode);
   const messages = productPageMessages(locale);
   return {
     countries: [{ value: market.countryCode, label: market.seoDisplayName, count: bonusDirectorySamples.length }],
@@ -328,10 +373,11 @@ function handoffOffer(
   samples: readonly FixtureOfferSample[] = offerSamples,
   mediaMode: OfferMediaFixtureMode = "best-offers",
   locale: SupportedLocale = "en-GB",
+  fixtureCountryCode: CommercialUxFixtureMarket | null = null,
 ): PublicOfferDTO {
   const sample = samples[index];
   const copy = demoProfileCopy(locale);
-  const market = fixtureMarket(locale);
+  const market = fixtureMarket(locale, fixtureCountryCode);
   const key = sample.name.toLowerCase().replaceAll(" ", "-");
   const paymentName = index % 2 === 0 ? "Visa" : "Mastercard";
   const asset = ["northstar", "aurora", "beacon", "canopy", "cedar"][index % 5];
@@ -350,7 +396,7 @@ function handoffOffer(
       ...seed.casino,
       id: temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
       slug: key,
-      reviewHref: index === 0 ? "/casino/demo-plume?visualFixture=true" : null,
+      reviewHref: index === 0 ? `/casino/demo-plume?visualFixture=true${fixtureCountryCode ? `&qaMarket=${fixtureCountryCode}` : ""}` : null,
       name: sample.name,
       summary: copy.summary,
       logo: { id: `visual-offer-${index}-logo`, type: "logo", url: `/demo-casinos/demo-${asset}-logo.svg`, alt: `${sample.name} ${copy.media.logo}`, width: 320, height: 160, caption: null },
@@ -385,10 +431,12 @@ function handoffOffer(
       currency: "EUR",
       freeSpins: sample.freeSpins,
       minimumDeposit: sample.deposit,
+      maximumBet: 5,
       wageringMultiplier: sample.wagering,
       wageringText: localizedNumericFixtureCopy(copy.bonus.wagering, String(sample.wagering)),
       eligibility: copy.bonus.eligibility,
       importantConditions: [...copy.bonus.conditions],
+      termsUrl: null,
       startsAt: null,
       expiresAt: null,
       media: {
@@ -404,19 +452,19 @@ function handoffOffer(
   };
 }
 
-export function withHandoffOfferData<T extends { readonly records: readonly PublicOfferDTO[]; readonly inventoryMode: unknown }>(result: T, enabled: boolean, locale: SupportedLocale = "en-GB"): T {
+export function withHandoffOfferData<T extends { readonly records: readonly PublicOfferDTO[]; readonly inventoryMode: unknown }>(result: T, enabled: boolean, locale: SupportedLocale = "en-GB", fixtureCountryCode: CommercialUxFixtureMarket | null = null): T {
   if (!enabled) return result;
   const seeds = result.records.length ? result.records : temporaryDemoBestOffers();
   if (!seeds.length) return result;
-  const records = offerSamples.map((_, index) => handoffOffer(seeds[index % seeds.length], index, offerSamples, "best-offers", locale));
+  const records = offerSamples.map((_, index) => handoffOffer(seeds[index % seeds.length], index, offerSamples, "best-offers", locale, fixtureCountryCode));
   return { ...result, status: "available", records, inventoryMode: "DEMO_ONLY" } as unknown as T;
 }
 
-function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPreviewAction: boolean, locale: SupportedLocale): PublicCasinoCardDto {
+function handoffCasino(seed: PublicCasinoCardDto, index: number, locale: SupportedLocale, fixtureCountryCode: CommercialUxFixtureMarket | null): PublicCasinoCardDto {
   const sample = casinoDirectorySamples[index];
   const copy = demoProfileCopy(locale);
   const messages = productPageMessages(locale);
-  const market = fixtureMarket(locale);
+  const market = fixtureMarket(locale, fixtureCountryCode);
   const key = sample.name.toLowerCase().replaceAll(" ", "-");
   const asset = ["northstar", "aurora", "beacon", "canopy", "cedar"][index % 5];
   const hasLogo = index % 5 !== 3;
@@ -426,15 +474,14 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPrevi
     { url: "/demo-casinos/phase-11-square.svg", width: 1000, height: 1000, label: "1:1" },
     null,
   ][index % 4];
-  const previewAction = allowLocalPreviewAction && index === 0;
   return {
     ...seed,
-    id: previewAction ? "local-commercial-phase-preview" : temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
-    dataClassification: previewAction ? "LOCAL_PREVIEW_FIXTURE" : "DEMO_FIXTURE",
-    disposition: previewAction ? "PROMOTABLE" : "INFORMATIONAL_ONLY",
-    dispositionReason: previewAction ? "EXACT_MARKET_AND_ROUTE_ELIGIBLE" : "NON_PUBLIC_SYNTHETIC_IDENTITY",
+    id: temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
+    dataClassification: "DEMO_FIXTURE",
+    disposition: "INFORMATIONAL_ONLY",
+    dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY",
     slug: key,
-    reviewHref: index === 0 ? "/casino/demo-plume?visualFixture=true" : null,
+    reviewHref: index === 0 ? `/casino/demo-plume?visualFixture=true${fixtureCountryCode ? `&qaMarket=${fixtureCountryCode}` : ""}` : null,
     name: sample.name,
     logo: hasLogo ? { url: `/demo-casinos/demo-${asset}-logo.svg`, alt: `${sample.name} ${copy.media.logo}`, width: 320, height: 160 } : null,
     hero: ratioFixture ? { url: ratioFixture.url, alt: `${sample.name} ${copy.media.hero.replace("{ratio}", ratioFixture.label)}`, width: ratioFixture.width, height: ratioFixture.height } : null,
@@ -443,6 +490,7 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPrevi
     licenses: [],
     countries: [{ key: market.countryCode, label: market.seoDisplayName }],
     paymentMethods: [{ key: "visa", label: "Visa" }, { key: "mastercard", label: "Mastercard" }],
+    withdrawalTimes: [formatFixturePayout(sample.payout, locale)],
     highlights: localizedHighlights(index, locale),
     featuredBonus: {
       title: localizedOfferTitle(sample, locale),
@@ -459,9 +507,7 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPrevi
       validUntil: null,
       termsApply: true,
     },
-    visitAction: previewAction
-      ? { available: true, redirectSlug: "local-preview-no-destination", label: `${messages.common.actionAvailable}: ${sample.name}`, reasonCode: null }
-      : { available: false, redirectSlug: null, label: messages.common.commercialUnavailable, reasonCode: "NO_GOVERNED_ROUTE" },
+    visitAction: { available: false, redirectSlug: null, label: messages.common.commercialUnavailable, reasonCode: "NO_GOVERNED_ROUTE" },
     responsibleGamblingLabel: messages.profile.controlTools,
   };
 }
@@ -481,6 +527,7 @@ const casinoFixtureSeed: PublicCasinoCardDto = {
   licenses: [],
   countries: [],
   paymentMethods: [],
+  withdrawalTimes: [],
   gameProviders: [],
   categories: [],
   highlights: [],
@@ -494,17 +541,17 @@ const casinoFixtureSeed: PublicCasinoCardDto = {
 export function withHandoffCasinoDiscoveryData(
   result: CasinoDiscoveryResult,
   enabled: boolean,
-  allowLocalPreviewAction = false,
   locale: SupportedLocale = "en-GB",
   requestedQuery: CasinoDiscoveryQuery = { ...result.appliedFilters, page: result.page },
+  fixtureCountryCode: CommercialUxFixtureMarket | null = null,
 ): CasinoDiscoveryResult {
   if (!enabled) return result;
   const seeds = result.items.length ? result.items : [casinoFixtureSeed];
-  const allItems = casinoDirectorySamples.map((_, index) => handoffCasino(seeds[index % seeds.length], index, allowLocalPreviewAction, locale));
-  const pageCount = 2;
-  const pageSize = Math.ceil(allItems.length / pageCount);
-  const page = Math.min(pageCount, Math.max(1, requestedQuery.page ?? result.page));
-  const items = allItems.slice((page - 1) * pageSize, page * pageSize);
+  const allItems = casinoDirectorySamples.map((_, index) => handoffCasino(seeds[index % seeds.length], index, locale, fixtureCountryCode));
+  const pageCount = 1;
+  const pageSize = allItems.length;
+  const page = 1;
+  const items = allItems;
   return {
     ...result,
     items,
@@ -513,16 +560,16 @@ export function withHandoffCasinoDiscoveryData(
     page,
     pageSize,
     pageCount,
-    facets: casinoFixtureFacets(locale),
+    facets: casinoFixtureFacets(locale, fixtureCountryCode),
     appliedFilters: { ...requestedQuery, page },
   };
 }
 
-export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: boolean, locale: SupportedLocale = "en-GB"): PublicCasinoDTO {
+export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: boolean, locale: SupportedLocale = "en-GB", fixtureCountryCode: CommercialUxFixtureMarket | null = null): PublicCasinoDTO {
   if (!enabled) return casino;
   const sample = offerSamples[0];
   const copy = demoProfileCopy(locale);
-  const market = fixtureMarket(locale);
+  const market = fixtureMarket(locale, fixtureCountryCode);
   const currency = market.currencyHints[0] ?? "EUR";
   const bonus = casino.bonuses[0];
   const mediaKey = casino.slug.includes("aurora") ? "aurora" : casino.slug.includes("beacon") ? "beacon" : casino.slug.includes("canopy") ? "canopy" : casino.slug.includes("cedar") ? "cedar" : "northstar";
@@ -536,6 +583,46 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
   const profileHeroFixture = casino.slug.includes("demo-plume")
     ? adaptiveCreativeMediaFixtures.card
     : profileRatioFixture;
+  const fixtureLicenses = [{ authority: "MGA", licenseNumber: "REFERENCE", jurisdiction: "MT", status: "ACTIVE", verificationUrl: null, expiresAt: null, lastVerifiedAt: "2026-08-12T00:00:00.000Z" }];
+  const fixturePayments = ["Visa", "Skrill", copy.bankTransfer].map((name, index) => ({
+    key: `visual-profile-payment-${index}`,
+    name,
+    supportsDeposits: true,
+    supportsWithdrawals: true,
+    currencies: [currency],
+    withdrawalTime: formatFixturePayout(sample.payout, locale),
+    minimumDeposit: sample.deposit,
+    minimumWithdrawal: null,
+    maximumWithdrawal: null,
+    depositProcessingTime: copy.instant,
+    fees: null,
+    crypto: false,
+  }));
+  const fixtureProviders = [{ key: "visual-slots", name: "Orbit Studios", gameCount: 2400, liveCasino: false }];
+  const fixtureCategories = [{ key: "visual-live", name: copy.liveDealer, gameCount: 40, featured: true }];
+  const fixtureBonuses = bonus ? [{
+    ...bonus,
+    id: "visual-solvane-bonus",
+    slug: "visual-solvane-bonus",
+    title: copy.bonus.title,
+    summary: copy.bonus.summary,
+    type: "WELCOME",
+    percentage: 100,
+    minimumDeposit: sample.deposit,
+    maximumBonus: 500,
+    maximumBet: 5,
+    currency,
+    freeSpins: 200,
+    wageringMultiplier: sample.wagering,
+    wageringText: copy.bonus.wagering,
+    eligibility: copy.bonus.eligibility,
+    importantConditions: [...copy.bonus.conditions],
+    termsUrl: null,
+    startsAt: null,
+    expiresAt: null,
+    affiliate: { available: false, href: null },
+    media: { CASINO_OFFER_BLOCK: adaptiveCreativePlacement("CASINO_OFFER_BLOCK", 1) },
+  }] : [];
   return {
     ...casino,
     id: temporaryDemoCasinoIds[0],
@@ -564,47 +651,47 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
       socialImage: null,
       structuredData: null,
     },
-    licenses: [{ authority: "MGA", licenseNumber: "REFERENCE", jurisdiction: "MT", status: "ACTIVE", verificationUrl: null, expiresAt: null, lastVerifiedAt: "2026-08-12T00:00:00.000Z" }],
+    licenses: fixtureLicenses,
     countries: [{ countryCode: market.countryCode, availability: "AVAILABLE", minimumAge: 18, currency, language: locale }],
-    payments: ["Visa", "Skrill", copy.bankTransfer].map((name, index) => ({
-      key: `visual-profile-payment-${index}`,
-      name,
-      supportsDeposits: true,
-      supportsWithdrawals: true,
-      currencies: [currency],
-      withdrawalTime: formatFixturePayout(sample.payout, locale),
-      minimumDeposit: sample.deposit,
-      minimumWithdrawal: null,
-      maximumWithdrawal: null,
-      depositProcessingTime: copy.instant,
-      fees: null,
-      crypto: false,
-    })),
-    providers: [{ key: "visual-slots", name: "Orbit Studios", gameCount: 2400, liveCasino: false }],
-    categories: [{ key: "visual-live", name: copy.liveDealer, gameCount: 40, featured: true }],
-    bonuses: bonus ? [{
-      ...bonus,
-      id: "visual-solvane-bonus",
-      slug: "visual-solvane-bonus",
-      title: copy.bonus.title,
-      summary: copy.bonus.summary,
-      type: "WELCOME",
-      percentage: 100,
-      minimumDeposit: sample.deposit,
-      maximumBonus: 500,
-      maximumBet: 5,
-      currency,
-      freeSpins: 200,
-      wageringMultiplier: sample.wagering,
-      wageringText: copy.bonus.wagering,
-      eligibility: copy.bonus.eligibility,
-      importantConditions: [...copy.bonus.conditions],
+    payments: fixturePayments,
+    providers: fixtureProviders,
+    categories: fixtureCategories,
+    bonuses: fixtureBonuses,
+    offerPresentation: {
+      selectedOffer: fixtureBonuses.find(() => true) ?? null,
+      relation: "EXACT",
+      sourceCountryCode: market.countryCode,
+      presentationCountryCode: market.countryCode,
+      currentMarketVerified: true,
+    },
+    marketProfiles: [{
+      id: `visual-${market.countryCode.toLowerCase()}-profile`,
+      countryCode: market.countryCode,
+      availability: "AVAILABLE",
+      localDomain: null,
+      localWebsiteUrl: null,
+      operatingLegalEntity: null,
       termsUrl: null,
-      startsAt: null,
-      expiresAt: null,
-      affiliate: { available: false, href: null },
-      media: { CASINO_OFFER_BLOCK: adaptiveCreativePlacement("CASINO_OFFER_BLOCK", 1) },
-    }] : [],
+      privacyUrl: null,
+      responsibleGamblingUrl: null,
+      primaryLanguage: locale,
+      supportedLanguages: [locale],
+      supportLanguages: [locale],
+      primaryCurrency: currency,
+      supportedCurrencies: [currency],
+      minimumAge: 18,
+      kycSummary: null,
+      withdrawalSummary: formatFixturePayout(sample.payout, locale),
+      supportSummary: null,
+      lastVerifiedAt: "2026-08-12T00:00:00.000Z",
+      evidence: [],
+      licenses: fixtureLicenses,
+      payments: fixturePayments,
+      providers: fixtureProviders,
+      categories: fixtureCategories,
+      bonuses: fixtureBonuses,
+      media: [],
+    }],
     media: {
       logo: profileHasLogo ? { id: `visual-${mediaKey}-logo`, type: "logo", url: `/demo-casinos/demo-${mediaKey}-logo.svg`, alt: `${sample.name} ${copy.media.logo}`, width: 320, height: 160, caption: null } : null,
       hero: profileHeroFixture ? { id: `visual-${mediaKey}-hero`, type: "hero", url: profileHeroFixture.url, alt: `${sample.name} ${copy.media.hero.replace("{ratio}", profileHeroFixture.label)}`, width: profileHeroFixture.width, height: profileHeroFixture.height, caption: null } : null,
@@ -660,15 +747,16 @@ export function withHandoffBonusDirectoryData(
   enabled: boolean,
   locale: SupportedLocale = "en-GB",
   requestedQuery: PublicOfferQuery = result.query,
+  fixtureCountryCode: CommercialUxFixtureMarket | null = null,
 ): PublicOfferSearchResult {
   if (!enabled) return result;
   const seeds = result.records.length ? result.records : temporaryDemoBestOffers();
   if (!seeds.length) return result;
-  const allRecords = bonusDirectorySamples.map((_, index) => handoffOffer(seeds[index % seeds.length], index, bonusDirectorySamples, "bonuses", locale));
-  const pageCount = 2;
-  const pageSize = Math.ceil(allRecords.length / pageCount);
-  const page = Math.min(pageCount, Math.max(1, requestedQuery.page));
-  const records = allRecords.slice((page - 1) * pageSize, page * pageSize);
+  const allRecords = bonusDirectorySamples.map((_, index) => handoffOffer(seeds[index % seeds.length], index, bonusDirectorySamples, "bonuses", locale, fixtureCountryCode));
+  const pageCount = 1;
+  const pageSize = allRecords.length;
+  const page = 1;
+  const records = allRecords;
   return {
     ...result,
     records,
@@ -677,7 +765,7 @@ export function withHandoffBonusDirectoryData(
     pageSize,
     pageCount,
     query: { ...requestedQuery, page },
-    facets: offerFixtureFacets(locale),
+    facets: offerFixtureFacets(locale, fixtureCountryCode),
     inventoryMode: "DEMO_ONLY",
   };
 }

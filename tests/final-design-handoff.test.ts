@@ -52,8 +52,8 @@ test("handoff visual fixtures are data-only and dynamic routes cannot switch pre
   assert.doesNotMatch(guard, /HandoffPage|generated-pages\.json|dangerouslySetInnerHTML/);
   const runtimeRoutes = [
     ["app/(public)/best-offers/page.tsx", /BestOffersExperience/],
-    ["app/(public)/casinos/page.tsx", /CuratedCasinoShortlist/],
-    ["app/(public)/bonuses/page.tsx", /BonusComparisonList/],
+    ["app/(public)/casinos/page.tsx", /CasinoCollection/],
+    ["app/(public)/bonuses/page.tsx", /BonusOfferDirectory/],
     ["app/(public)/casino/[slug]/page.tsx", /CasinoProfile/],
     ["app/(public)/learn/[category]/[slug]/page.tsx", /LearningArticleView/],
   ] as const;
@@ -63,8 +63,10 @@ test("handoff visual fixtures are data-only and dynamic routes cannot switch pre
     assert.doesNotMatch(source, /import \{ HandoffPage \}|<HandoffPage|isLocalHandoffVisualFixture/, page);
   }
   for (const page of runtimeRoutes.slice(0, 4).map(([path]) => path)) {
-    assert.match(read(page), /isLocalHandoffVisualDataFixture/, page);
+    assert.match(read(page), /isCommercialUxVisualDataFixture/, page);
   }
+  assert.match(guard, /value !== "true" \|\| process\.env\.VERCEL_ENV === "production"/);
+  assert.match(guard, /COMMERCIAL_UX_FIXTURE_MARKETS = \["DK", "EE", "LV"\]/);
   assert.doesNotMatch(read("components/comparison-context/ContextualComparison.tsx"), /HandoffPage|dangerouslySetInnerHTML/);
   assert.match(read("components/programme/ProgramAiExperience.tsx"), /data-runtime-renderer="programme"/);
 });

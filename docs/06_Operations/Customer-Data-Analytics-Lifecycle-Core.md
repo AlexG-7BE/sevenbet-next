@@ -4,12 +4,20 @@
 **Runbook date:** 12 September 2026<br>
 **Application:** B4GAMBLE / `sevenbet-next`<br>
 **Production origin:** `https://b4gamble.com`<br>
-**Migration:** `0037_customer_data_analytics_lifecycle_core`
+**Migrations:** `0037_customer_data_analytics_lifecycle_core` (Production);
+`0038_commercial_ux_analytics_events` (candidate)
 
 ## 1. Current release state
 
 **VERIFIED in Production:** PR #269, additive migration 0037, application
 deployment, consented analytics collection and aggregate-only Core sanity.
+
+**IMPLEMENTED / PRODUCTION HOLD (Commercial UX v1):** Commercial UX v1 adds the bounded additive
+0038 candidate: three closed commercial event values and an optional
+constraint-bounded card position. Repository and Preview evidence do not prove
+that 0038 exists in Production. Apply it DB-first and satisfy the read-only
+Production preflight before deploying an application revision that emits the
+new events.
 
 **FOUNDER APPROVED / ACTIVATION GO:** the explicit 12 September 2026
 Founder instruction approves Resend for the bounded RFC-046 purposes and
@@ -102,7 +110,7 @@ Email is never an analytics identifier.
 | --- | --- | --- |
 | Acquisition/site | `session_started`, `page_viewed`, `signup_completed`, `login_completed` | Session start and auth outcomes are server-observed; page view is consented client observation |
 | Programme | `programme_started`, `programme_step_viewed`, `programme_step_completed`, `programme_completed` | Starts/completions are derived from canonical persisted Programme state; view is consented client observation |
-| Commercial | `casino_viewed`, `offer_viewed`, `commercial_cta_clicked`, `outbound_redirect_attempted`, `outbound_redirect_succeeded`, `outbound_redirect_blocked` | Redirect events are server-authoritative observations after RFC-042 |
+| Commercial | `casino_viewed`, `offer_viewed`, `commercial_view_selected`, `commercial_card_viewed`, `casino_review_clicked`, `commercial_cta_clicked`, `outbound_redirect_attempted`, `outbound_redirect_succeeded`, `outbound_redirect_blocked` | View/selection/review events are consented presentation observations; redirect events are server-authoritative observations after RFC-042 |
 | Email | `email_sent`, `email_delivered`, `email_bounced`, `email_clicked`, `email_unsubscribed` | Provider acceptance, verified webhook or local unsubscribe |
 
 Client ingestion accepts at most 20 events and 32 KiB per request. The Zod
@@ -120,6 +128,12 @@ only in session storage to prevent duplicate browser impressions; it is not
 sent as an affiliate-offer foreign key. The event stores the canonical casino
 ID and stores an affiliate-offer ID only when that authority is genuinely
 available. Demo fixtures do not emit offer impressions.
+
+`commercial_view_selected` records one of the closed shared presentation views.
+`commercial_card_viewed` records a governed card intersecting the viewport and
+may include only its 1–1000 position. `casino_review_clicked` records navigation
+to the canonical internal review. None of these events creates commercial
+eligibility or records a partner destination.
 
 Never add email, name, raw IP, user agent, password, auth/reset token, affiliate
 destination/token, Programme answer, transcript, Help use or arbitrary object
@@ -378,6 +392,17 @@ The Production build preflight refuses to build this application revision
 until migration 0037 is completed and its checksum/tables/indexes/uniqueness
 invariants pass.
 
+### 16.1 Commercial UX analytics extension candidate
+
+For an application revision that emits the Commercial UX v1 events, first
+confirm the verified 0037 Core, run a disposable full-history migration replay,
+then apply `0038_commercial_ux_analytics_events` DB-first with
+`prisma migrate deploy`. Run the read-only preflight and Core sanity before the
+application deployment. The preflight requires the exact 0038 checksum, all
+three closed enum values, the nullable position column and its 1–1000 check.
+Do not use `db push`, `migrate dev`, `migrate reset`, destructive repair or
+seeded analytics evidence. This runbook does not authorize a Production deploy.
+
 ## 17. Production smoke and data sanity
 
 Run:
@@ -408,9 +433,10 @@ Immediate collection rollback is
 `NEXT_PUBLIC_ANALYTICS_ENABLED=false` plus redeploy. Email rollback is
 `LIFECYCLE_EMAIL_DELIVERY_ENABLED=false` plus redeploy. Application rollback
 deploys the last known-good commit.
-Migration 0037 remains because it is additive and older code ignores the new
-columns/tables. Do not down-migrate or drop data. Queue/history rows remain for
-forensic inspection and later controlled recovery.
+Migrations 0037 and, if separately applied, 0038 remain because they are
+additive and older code ignores the new columns/tables/event values. Do not
+down-migrate or drop data. Queue/history rows remain for forensic inspection
+and later controlled recovery.
 
 Known external dependencies are Vercel, Prisma Postgres, Better Auth and
 Founder-approved Resend. Core Production completion is already recorded;

@@ -7,13 +7,19 @@ and the complete [Customer Data, Analytics & Lifecycle Core runbook](Customer-Da
 It supersedes the old RFC-026 Vercel custom-event operating procedure.
 
 **DETECTED in the current candidate:** B4GAMBLE uses a first-party,
-PostgreSQL-backed, closed 19-event dictionary. The runtime does not import or
+PostgreSQL-backed, closed 22-event dictionary. The three Commercial UX
+observations added by migration 0038 remain bounded to selected view, card
+impression and casino-review click; they add no arbitrary payload or new
+identity. The runtime does not import or
 mount `@vercel/analytics`, and there is no Vercel Web Analytics plan dependency
 for Product Core events.
 
-**NOT YET VERIFIED in Production:** migration 0037, the exact analytics flag,
-event ingestion, retention and fixed dashboards. Do not treat repository code
-or an old Vercel Analytics setting as activation evidence.
+**VERIFIED in Production:** migration 0037, the exact analytics flag, consented
+event ingestion, retention and aggregate Core sanity under PR #269.
+
+**NOT YET VERIFIED in Production:** additive migration 0038 and the three new
+Commercial UX observations. Do not treat repository or Preview behavior as
+Production activation evidence.
 
 ## Runtime controls
 
@@ -77,7 +83,7 @@ It prints aggregate counts only and exits nonzero for integrity defects.
 
 ## Activation and rollback
 
-1. Complete migration 0037 DB-first and pass its read-only preflight.
+1. Confirm migration 0037, then apply additive migration 0038 DB-first.
 2. Deploy with the public flag false.
 3. Verify consent grant/decline/withdrawal, cookie signing, event dedupe,
    environment tags, dashboard authorization and data sanity.
@@ -87,4 +93,4 @@ It prints aggregate counts only and exits nonzero for integrity defects.
 
 Rollback sets the flag false and redeploys. Existing observations remain under
 the documented retention/deletion rules; rollback never changes Programme or
-commercial authority and never drops migration 0037.
+commercial authority and never drops migrations 0037 or 0038.

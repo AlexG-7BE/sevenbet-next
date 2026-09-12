@@ -39,10 +39,10 @@ async function main() {
       SELECT
         COUNT(*) FILTER (
           WHERE event."anonymousId" IS NULL AND event."userId" IS NULL
-            AND event."type" NOT IN ('PAGE_VIEWED', 'PROGRAMME_STEP_VIEWED', 'CASINO_VIEWED', 'OFFER_VIEWED', 'COMMERCIAL_CTA_CLICKED')
+            AND event."type" NOT IN ('PAGE_VIEWED', 'PROGRAMME_STEP_VIEWED', 'CASINO_VIEWED', 'OFFER_VIEWED', 'COMMERCIAL_VIEW_SELECTED', 'COMMERCIAL_CARD_VIEWED', 'CASINO_REVIEW_CLICKED', 'COMMERCIAL_CTA_CLICKED')
         )::bigint AS "identityOptionalServerEvents",
         COUNT(*) FILTER (
-          WHERE event."type" IN ('PAGE_VIEWED', 'PROGRAMME_STEP_VIEWED', 'CASINO_VIEWED', 'OFFER_VIEWED', 'COMMERCIAL_CTA_CLICKED')
+          WHERE event."type" IN ('PAGE_VIEWED', 'PROGRAMME_STEP_VIEWED', 'CASINO_VIEWED', 'OFFER_VIEWED', 'COMMERCIAL_VIEW_SELECTED', 'COMMERCIAL_CARD_VIEWED', 'CASINO_REVIEW_CLICKED', 'COMMERCIAL_CTA_CLICKED')
             AND (event."anonymousId" IS NULL OR event."analyticsSessionId" IS NULL)
         )::bigint AS "clientEventsMissingAnonymousOrSession",
         (COUNT(*) - COUNT(DISTINCT event."dedupeKey"))::bigint AS "duplicateEventKeys",
