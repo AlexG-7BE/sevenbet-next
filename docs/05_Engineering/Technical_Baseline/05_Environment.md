@@ -1,8 +1,8 @@
 # Environments
 
-## RFC-046 candidate delta
+## RFC-046 Production Core and Resend activation delta
 
-**DETECTED in source, not hosted configuration:** `.env.example`, runtime
+**DETECTED in source and named hosted evidence:** `.env.example`, runtime
 parsers and CI fixtures define the exact default-off
 `NEXT_PUBLIC_ANALYTICS_ENABLED` gate, a server-only analytics signing secret,
 an internal-traffic marker, 395-day analytics and 730-day terminal-email
@@ -11,11 +11,13 @@ lifecycle-delivery flag, lifecycle sender/reply-to names and a Resend webhook
 secret. `CRON_SECRET` protects the new daily queue/retention route as well as
 the existing protected jobs.
 
-**DETECTED fail-closed boundary:** even a true lifecycle-delivery flag cannot
-cause outbound mail in this candidate because no live route, auth callback or
-cron invokes the provider processor. CI uses synthetic values and a disposable
-database. **UNKNOWN:** every corresponding Preview/Production value, provider
-registration and runtime activation until verified through hosted evidence.
+**DETECTED fail-closed boundary:** the activation candidate invokes only a
+bounded batch from the exact-Bearer protected daily cron, and incomplete or
+disabled runtime configuration leaves queued intent untouched. CI uses
+synthetic values and a disposable database. Production analytics and retention
+configuration are present. The exact sender/reply-to/webhook secret and
+provider registration are now present only in Production; lifecycle delivery
+is disabled and candidate-worker deployment/live delivery remain incomplete.
 
 ## Detected workflow
 

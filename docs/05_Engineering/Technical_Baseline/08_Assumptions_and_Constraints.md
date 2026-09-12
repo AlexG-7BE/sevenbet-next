@@ -16,7 +16,12 @@
 - Active Everflow or S3 credentials/connections, even though adapters/providers exist.
 - APM/paging, central log retention, performance budgets or service-level objectives. The RFC-046 customer/analytics/email ledger candidate, managed snapshot metadata, bounded Programme transient purge, Vercel logs, incident runbooks and an hourly read-only smoke are detected but do not establish hosted activation or those broader capabilities.
 - A generic multi-market/multi-jurisdiction persistence model, final GB legal approval, verified age/account authority or a real commercially eligible GB partner. COMM-01 adds a bounded repository-controlled GB licensed-domain evidence representation; its real record set is empty.
-- Generic article CMS/editor functionality, complete user self-service account UI, payments or general notifications. A narrow Contact-to-support Resend adapter and the RFC-046 lifecycle provider boundary are detected; because the latter has no live sender invocation, they do not establish operational account/Programme/marketing mail.
+- Generic article CMS/editor functionality, complete user self-service account
+  UI, payments or general notifications. A narrow Contact-to-support Resend
+  adapter and the RFC-046 lifecycle provider boundary are detected. Founder
+  authority and a protected-cron activation candidate do not establish
+  operational account/Programme/marketing mail while Production delivery,
+  webhook and acceptance remain incomplete.
 
 ## Audit boundary
 

@@ -4,16 +4,16 @@
 
 | Field | Evidence |
 | --- | --- |
-| Audit date | 11 September 2026 |
+| Audit date | 12 September 2026 |
 | Canonical repository | `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` |
-| Candidate worktree | `codex/customer-data-analytics-lifecycle-v1`, based on `230e652af0e53e1e378051e33955943f788cd94a` |
-| Scan | Entire active repository: 2,388 files after excluding dependencies, generated/build output, caches and `tsconfig.tsbuildinfo` |
+| Current activation worktree | `codex/resend-production-activation`, based on Production Core SHA `e4268c9031cdf92704c529225ef71edcb16d20a5` |
+| Scan | Entire active repository: 2,393 files after excluding dependencies, generated/build output, caches and `tsconfig.tsbuildinfo` |
 | Inventory | 125 API route handlers, 79 pages, 220 test/spec files, 116 Prisma models, 99 enums and 37 ordered migrations |
 
-**DETECTED** below means present in the isolated implementation candidate.
-**UNKNOWN** means live Preview/Production or provider evidence has not yet
-established the fact. Planned work is explicitly **PROPOSED**. This document
-does not convert candidate source into deployed state.
+**DETECTED** means established from repository or named live authoritative
+evidence. **UNKNOWN** means live Preview/Production or provider evidence has
+not established the fact. Planned work is explicitly **PROPOSED**. Candidate
+source is never presented as deployed state.
 
 ## Governing decision and release classification
 
@@ -24,10 +24,16 @@ The implementation uses additive migration
 Programme persistence and RFC-042 as identity, progress and commercial-routing
 authorities.
 
-**UNKNOWN:** migration 0037 in Production, application deployment, analytics
-observations, dashboard values, provider registration and live lifecycle
-delivery. The outbound lifecycle sender is intentionally unwired, so email
-delivery is **HOLD**, not Production-complete.
+**DETECTED:** PR #269 is live at
+`e4268c9031cdf92704c529225ef71edcb16d20a5`, all 37 migrations including 0037
+are applied, consented analytics is enabled and aggregate sanity passed. The
+12 September Founder instruction approves bounded Resend processing.
+
+**UNKNOWN / HOLD:** the webhook and complete sender configuration now exist,
+but no candidate-worker deployment, credential acceptance or live lifecycle
+delivery is established. Delivery is exactly disabled. The activation worker
+below is candidate source until its separate release and Production acceptance
+evidence exist.
 
 ## Detected runtime architecture
 
@@ -36,7 +42,8 @@ browser/server observations -> strict services -> PostgreSQL ledgers -> fixed Ad
 Better Auth User -----------^          |                 |
 Programme authority ------------------|                 +-> aggregate-only sanity
 RFC-042 /r authority -> final click observation
-email consent -> eligibility -> durable queue -X-> external provider (unwired)
+email consent -> eligibility -> durable queue -> protected daily worker -> external provider
+                                               (exact Production config only)
                                       ^
 verified Resend webhook -> normalized outcomes
 ```
@@ -125,22 +132,32 @@ campaign and user.
   only and fails on identity, cross-session identity/environment, event, click,
   provider/message, suppression or environment defects.
 
-**UNKNOWN until CI/release evidence is linked:** successful full migration
-replay, build/browser acceptance, Production preflight/postflight and live
-aggregate sanity. The operational procedure is
+**DETECTED for the Core release:** successful full migration replay,
+build/browser acceptance, Production preflight/postflight and live aggregate
+sanity are linked from PR #269 and current records. **UNKNOWN for this
+activation candidate:** exact-head hosted CI, worker deployment, webhook,
+configuration and six-case Production acceptance. The operational procedure is
 [Customer Data, Analytics & Lifecycle Core v1](../../06_Operations/Customer-Data-Analytics-Lifecycle-Core.md).
 
 ## External integration boundary
 
 **DETECTED:** the direct-HTTPS Resend adapter has an eight-second timeout,
 provider idempotency header and exact Production-only configuration contract.
-The webhook verifier and memory-test provider are implemented.
+The raw-body webhook verifier, memory-test provider and normalized delivered,
+bounced, clicked, complained and suppressed outcomes are implemented. The
+activation candidate calls a maximum 50-message batch only from the existing
+exact-Bearer protected daily cron and then refreshes campaign states.
 
-**DETECTED HOLD:** no public/Admin route, Better Auth callback or cron imports
-and invokes the external processor. Queued messages are therefore durable
-intent, never evidence of send. **PROPOSED:** connect that processor only after
-explicit privacy/security/provider-transfer authority, configure verified
-sender/webhook state and pass controlled non-customer canary delivery.
+**DETECTED live provider evidence:** `b4gamble.com`, DKIM and SPF return-path
+MX/TXT are verified and sending is enabled. Two existing keys are sending-only.
+The canonical lifecycle webhook is enabled for the five required events; its
+signing secret plus the approved sender/reply-to are present only in Vercel
+Production and were not disclosed.
+
+**HOLD:** Founder processor authority now exists, but queued messages remain
+durable intent rather than delivery evidence until the candidate is deployed,
+the exact webhook/configuration contract passes and all six controlled
+Production acceptance checks succeed.
 
 ## Contradictions reconciled
 
@@ -148,8 +165,10 @@ sender/webhook state and pass controlled non-customer canary delivery.
   stale for RFC-046; the candidate retires that transport in favor of the
   first-party, consented relational contract.
 - Older claims that no receiving webhook or account/Programme email boundary
-  exists are historical. A receiver and ledger now exist in candidate source,
-  while external lifecycle sending remains absent.
-- No candidate fact changes the separately recorded live Production SHA,
-  migration history or provider activation without authoritative release
-  evidence.
+  exists are historical. A receiver and ledger are live; provider registration
+  and delivery remain absent.
+- Older claims that Founder transfer approval is missing are superseded by the
+  explicit 12 September 2026 decision. That decision is authority, not proof of
+  live configuration or delivery.
+- The activation candidate does not change the separately recorded live
+  Production SHA or provider state without authoritative release evidence.

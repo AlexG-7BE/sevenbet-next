@@ -4,10 +4,20 @@
 
 **Decision owner:** B4GAMBLE Founder
 
-**Decision date:** 11 September 2026
+**Decision date:** 11 September 2026; Resend Production activation amendment
+approved 12 September 2026
 
 **Implementation authority:** explicit Founder instruction `B4GAMBLE Customer
 Data, Analytics & Lifecycle — Production Core v1`.
+
+**Resend Production authority:** the explicit 12 September 2026 Founder
+instruction `CONTINUE B4GAMBLE FOUNDER OFFICE — RESEND PRODUCTION ACTIVATION`
+approves Resend as the B4GAMBLE processor for the bounded account,
+transactional, welcome, consented Programme-reminder and consented
+broadcast/marketing purposes in this RFC. That decision removes the former
+missing-Founder-transfer-approval hold. It does not itself prove provider
+configuration, delivery, contract, transfer-mechanism or every legal
+requirement; those remain evidence gates.
 
 **Depends on:** Product Vision & Principles v2.0, RFC-002, RFC-013, RFC-014,
 RFC-015, RFC-017, RFC-018, RFC-020, RFC-021, RFC-022, RFC-023, RFC-025,
@@ -234,11 +244,13 @@ attempt/success/block states.
 Resend is reused as a server-only delivery provider behind a purpose-neutral
 transport. Contact retains its separate RFC-028 adapter. The new adapter can be
 constructed only by exact Production configuration and uses provider
-idempotency keys in addition to database uniqueness. This release deliberately
-does not invoke that adapter from a route, Better Auth callback or cron, so
-configuration alone cannot send a lifecycle message. Resend documents a
-24-hour provider idempotency window; B4GAMBLE's environment-scoped database
-keys remain durable beyond that window.
+idempotency keys in addition to database uniqueness. The 12 September 2026
+activation amendment connects one bounded 50-message worker batch to the
+existing exact-Bearer protected daily lifecycle cron, after reminder selection
+and before campaign-state refresh. The worker remains inert unless every exact
+Production runtime check passes. Resend documents a 24-hour provider
+idempotency window; B4GAMBLE's environment-scoped database keys remain durable
+beyond that window.
 
 The bounded purposes are:
 
@@ -268,9 +280,10 @@ fails only that message. Retries are bounded.
 
 Provider webhooks are verified against the raw body and Resend/Svix signature
 headers before parsing. The unique `svix-id` is the durable replay key.
-Only delivered, bounced, clicked and complaint/suppression outcomes are
-normalized. Complaint suppression is not represented as a customer
-unsubscribe. Raw payloads and clicked URLs are not retained.
+Only delivered, bounced, clicked, complained and suppressed outcomes are
+normalized. Complaints and provider suppressions create distinct reason codes
+under the same all-email suppression authority; neither is represented as a
+customer unsubscribe. Raw payloads and clicked URLs are not retained.
 
 Sources:
 
@@ -372,19 +385,21 @@ tables, foreign keys, checks and reporting indexes. It neither deletes nor
 rewrites Programme/commercial/auth records. Template seed rows are fixed
 operational configuration, not fake customers or analytics.
 
-Before Production application rollout:
+The Core application and migration were released before this activation
+amendment. For Resend Production activation:
 
-1. verify actual User volume and normalized-email duplicate count;
-2. apply all pending migrations in order, including 0036;
-3. run schema/migration integrity probes;
-4. deploy application code with provider delivery disabled by default;
-5. verify customer, analytics, redirect, email-disabled and admin boundaries;
-6. retain lifecycle delivery disabled until outbound customer-data transfer is
-   explicitly authorised and the sender invocation is separately reviewed;
-7. configure the exact provider/webhook secrets only in Production;
-8. register and verify the signed webhook endpoint; and
-9. in an authorised follow-up, connect the bounded processor, enable delivery,
-   run one controlled test and inspect provider state.
+1. preserve the verified Core, migration and five previously accepted areas;
+2. verify the existing credential's live sending permission and the exact
+   `b4gamble.com` sender/domain SPF and DKIM state;
+3. deploy the bounded protected-cron worker with delivery still disabled;
+4. register the exact signed webhook and delivered, bounced, clicked,
+   complained and suppressed events;
+5. store sender, reply-to and webhook values only in Vercel Production;
+6. enable the exact Production switch only after configuration is complete;
+7. run the six controlled Founder acceptance checks with non-customer fixtures
+   and aggregate-only data/log review; and
+8. disable delivery immediately on any eligibility, signature, duplicate-send,
+   privacy or provider-state defect.
 
 Rollback disables analytics client collection and email delivery by exact
 configuration and redeploys the prior application. The additive schema remains
@@ -402,18 +417,21 @@ from Programme/Help/vulnerability data.
 
 ## 14. External evidence boundary
 
-Repository and historical provider evidence shows the `b4gamble.com` Resend
-sending domain was verified for the RFC-028 Contact purpose. That does not
-prove the new webhook is registered, its Production signing secret exists, the
-new delivery variables are configured, or a lifecycle message is delivered.
-Those are verified only against the live provider and Production environment.
+Live provider evidence on 12 September 2026 shows `b4gamble.com` verified and
+ready to send, with verified DKIM plus SPF return-path MX/TXT records. Both
+existing API keys are sending-only. The exact lifecycle webhook is registered
+and enabled for delivered, bounced, clicked, complained and suppressed events;
+its signing secret, approved sender and reply-to are present only in Vercel
+Production. This does not prove the candidate worker is deployed, the existing
+credential can send lifecycle mail or that a lifecycle message is delivered;
+those facts require live Production evidence.
 
-The implementation candidate intentionally queues welcome, reminder, test and
-broadcast messages but does not connect a live route, Better Auth callback or
-cron to the external send processor. This is a release hold, not evidence that
-delivery works. Activating that transfer requires an explicit authorised
-follow-up plus provider/domain/webhook verification; configuration alone does
-not cause a queued message to leave B4GAMBLE.
+The Founder has now explicitly authorised the bounded Resend transfer. The
+former approval hold is removed. Delivery nevertheless remains operationally
+disabled until the exact webhook/configuration gates and the six controlled
+Production acceptance checks pass. The protected-cron worker in the activation
+candidate is implementation evidence, not evidence that Production delivery
+is active or correct.
 
 The standing RFC-036 processor/transfer and account-applicability evidence
 levels continue. This RFC does not fabricate a contract acceptance, transfer

@@ -10,6 +10,7 @@ const providerTypes = {
   "email.bounced": "BOUNCED",
   "email.clicked": "CLICKED",
   "email.complained": "COMPLAINED",
+  "email.suppressed": "SUPPRESSED",
 } as const satisfies Record<string, EmailProviderEventType>;
 
 export type NormalizedResendWebhook = {
@@ -75,11 +76,14 @@ export async function processResendWebhook(event: NormalizedResendWebhook) {
       } else if (event.type === "CLICKED") {
         await transaction.emailMessage.update({ where: { id: message.id }, data: { clickedAt: event.occurredAt } });
       } else {
+        const suppressionReason = event.type === "COMPLAINED"
+          ? "PROVIDER_COMPLAINT"
+          : "PROVIDER_SUPPRESSION";
         await transaction.emailMessage.update({ where: { id: message.id }, data: { status: "SUPPRESSED" } });
         await transaction.customerEmailPreference.upsert({
           where: { userId: message.userId },
-          create: { userId: message.userId, marketingAllowed: false, suppressedAt: event.occurredAt, suppressionScope: "ALL", suppressionReason: "PROVIDER_COMPLAINT" },
-          update: { marketingAllowed: false, suppressedAt: event.occurredAt, suppressionScope: "ALL", suppressionReason: "PROVIDER_COMPLAINT" },
+          create: { userId: message.userId, marketingAllowed: false, suppressedAt: event.occurredAt, suppressionScope: "ALL", suppressionReason },
+          update: { marketingAllowed: false, suppressedAt: event.occurredAt, suppressionScope: "ALL", suppressionReason },
         });
         await transaction.consentEvent.create({ data: { userId: message.userId, purpose: "MARKETING_EMAIL", action: "SUPPRESSED", source: "PROVIDER_WEBHOOK", occurredAt: event.occurredAt } });
       }
