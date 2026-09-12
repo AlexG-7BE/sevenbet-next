@@ -2,7 +2,7 @@
 
 ## Status and authority
 
-**DETECTED — UNMERGED PR:** this document describes the Commercial UX v1 correction implemented on PR #276. It does not claim a Production release, market activation, partner-state change, migration application, or legal/commercial authority.
+This document describes Commercial UX v1 introduced through PR #276. Production deployment state must be verified from the recorded release evidence. It does not itself claim market activation, partner-state change, migration application, or legal/commercial authority.
 
 The public presentation adapter in `lib/commercial/commercial-presentation.ts` remains the boundary between canonical public DTOs and concise commercial UI. Governed action helpers remain fail-closed. Demonstration fixtures remain non-actionable.
 
