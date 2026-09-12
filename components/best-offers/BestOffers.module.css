@@ -236,7 +236,7 @@
   .whyPicked > div > div > p:last-child { margin-top:16px; font-size:14px; line-height:1.55; }
   .whyPicked li { padding:16px 0; grid-template-columns:34px 1fr; }
   .whyPicked li strong { font-size:16px; }
-  .whyPicked li p { display:none; }
+  .whyPicked li p { display:block; font-size:13px; line-height:1.45; }
   .faqGrid { width:var(--site-content-width); }
   .faq { padding-bottom:58px; }
   .faq h2 { margin-bottom:24px; font-size:27px; }

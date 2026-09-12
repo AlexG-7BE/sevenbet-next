@@ -207,6 +207,9 @@ test("all Commercial UX surfaces remain readable at Founder-approved breakpoints
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${viewport.width}px ${path}`).toBe(0);
       const targetHeights = await page.getByRole("tab").evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().height));
       expect(targetHeights.every((height) => height >= 44), `${viewport.width}px ${path} tab targets`).toBe(true);
+      if (path.includes("best-offers")) {
+        expect(await page.locator('[data-premium-section="best-offers-method"] li p').evaluateAll((items) => items.length === 3 && items.every((item) => getComputedStyle(item).display !== "none")), `${viewport.width}px trust principles`).toBe(true);
+      }
       await expect(page.locator("body")).not.toContainText(rawEvidence);
     }
   }
