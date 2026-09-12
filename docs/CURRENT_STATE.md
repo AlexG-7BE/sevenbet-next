@@ -4,15 +4,15 @@
 **Evidence date:** 12 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `dea4476a5681129ad67ce0d8cbb1d410e3b4ed10`
-**Verified post-release runtime baseline SHA:** `dea4476a5681129ad67ce0d8cbb1d410e3b4ed10`
-**Verified post-release runtime deployment:** Ready fail-closed redeploy; `dpl_XfWtrA94y9FkypcueURb54dzUWUk`
+**Current Production application SHA (live provider evidence):** `22cf696b31b6adc3e456508b1a140044a5061698`
+**Verified post-release runtime baseline SHA:** `22cf696b31b6adc3e456508b1a140044a5061698`
+**Verified post-release runtime deployment:** Ready; `5i5N2H2xWqMySWysU78EdinEwK2v`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Customer Data, Analytics & Lifecycle Core v1 — Resend code/provider ready; delivery on HOLD
+## Customer Data, Analytics & Lifecycle Core v1 — Resend Production activation GO
 
 **VERIFIED IN PRODUCTION, 12 September 2026:** PR #269 merged normally as
 `e4268c9031cdf92704c529225ef71edcb16d20a5`; Ready deployment
@@ -25,7 +25,7 @@ sanity found three canonical users, zero normalized-email duplicates, five
 active English templates, no campaigns/messages/provider events and no
 integrity defect; no email addresses were emitted.
 
-**RESEND ACTIVATION HOLD:** the explicit 12 September 2026 Founder decision
+**RESEND ACTIVATION GO:** the explicit 12 September 2026 Founder decision
 approves Resend for bounded account, transactional, welcome, consented
 Programme-reminder and consented broadcast/marketing processing. This removes
 the former missing-Founder-transfer-approval hold but does not prove provider
@@ -34,20 +34,30 @@ shows the `b4gamble.com` domain, DKIM and SPF return-path records verified and
 two existing sending-only credentials. The canonical lifecycle webhook is now
 enabled for delivered, bounced, clicked, complained and suppressed events;
 its signing secret plus the approved sender and reply-to are stored in Vercel
-Production without disclosure. PR #271 merged normally as
-`dea4476a5681129ad67ce0d8cbb1d410e3b4ed10`; its exact-head checks passed and
-its bounded worker is live behind the exact delivery gate. A Node.js 24 smoke
-passed all nine read-only routes, the canonical webhook rejected an unsigned
-event with `401 INVALID_SIGNATURE`, and the inspected aggregate log window had
-zero warning, error or fatal console records.
+Production without disclosure. PRs #271, #273 and #274 merged normally. PR
+#273 corrected the Production canonical-host cron boundary and wired the
+standard password-reset entry point to the existing transactional transport;
+PR #274 corrected the browser-form unsubscribe response after live acceptance
+found an immutable redirect-header failure. Every exact-head gate passed
+before merge.
 
-The six live acceptance cases could not be completed safely: the Production
-database editor requires interactive authenticator/passkey re-verification and
-no authenticated B4GAMBLE staff session was available. No fixture or email was
-created, Resend still showed no sends/events, and delivery was restored to
-exact `false` in fail-closed deployment
-`dpl_XfWtrA94y9FkypcueURb54dzUWUk`. Overall activation remains `HOLD` until an
-authorised operator provides those access conditions and all six cases pass.
+All six controlled Production cases now pass. Welcome, consented Programme
+reminder, bounded broadcast and password-reset messages were delivered only to
+a marked provider-safe non-customer fixture. Signed unsubscribe persisted and
+rendered a `303` confirmation; an identical second campaign had zero eligible,
+one suppressed and zero queued recipients. Marketing withdrawal did not block
+the separate transactional reset path. Unsigned and forged webhooks returned
+`401`; authentic, duplicate and signed-unknown cases returned their governed
+`200`/`202` outcomes without replay or cross-customer mutation. Aggregate
+post-test sanity records five delivered Production messages, five distinct
+delivered provider events, four completed campaigns, zero queued/sending/
+failed messages, zero duplicate keys/events/lifecycle sends, zero post-
+unsubscribe marketing and zero non-fixture messages. The two fixtures remain
+marked `INTERNAL_ACCEPTANCE` as audit evidence; no real customer was contacted.
+Lifecycle delivery is enabled. Ready canonical deployment
+`5i5N2H2xWqMySWysU78EdinEwK2v` serves source
+`22cf696b31b6adc3e456508b1a140044a5061698`; the post-release nine-route smoke
+passed.
 See [RFC-046](06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md),
 the [technical baseline](05_Engineering/Technical_Baseline/16_Customer_Data_Analytics_Lifecycle_Core.md),
 the [operations runbook](06_Operations/Customer-Data-Analytics-Lifecycle-Core.md)
@@ -106,7 +116,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial creative formats | **HISTORICAL COMPATIBILITY / TEST VOCABULARY** | Format parsers and pre-retirement tests may remain inert. Active public compositions accept operator logos or explicitly B4GAMBLE-owned editorial art, never promotional creative formats. |
 | Media ingestion / Media Operations | **PROMOTIONAL OPERATIONS RETIRED; LOGO AND B4GAMBLE EDITORIAL ASSETS ONLY** | Active Admin media is limited to canonical logos and authenticated `b4gambleOwned` editorial social imagery. Promotional ingestion/analyse/apply/assignment/MCP surfaces are 410 in the application cutover and retired states are rejected by Production constraints. |
 | Public language / market presentation | **ELEVEN LOCALES LIVE IN PRODUCTION** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
-| Customer data / analytics / lifecycle | **CORE VERIFIED IN PRODUCTION; RESEND ACTIVATION PENDING** | PR #269, migration 0037, runtime analytics and aggregate sanity are verified. Founder processing authority now exists; lifecycle delivery remains disabled until the webhook, Production variables, deployment and all six controlled acceptance checks pass. |
+| Customer data / analytics / lifecycle | **CORE VERIFIED; RESEND ACTIVE IN PRODUCTION** | PR #269 and migration 0037 remain verified. Founder processing authority, provider configuration, signed webhook controls and all six controlled acceptance checks pass; lifecycle delivery is enabled with zero non-fixture acceptance messages. |
 
 ### Recent implementation state
 

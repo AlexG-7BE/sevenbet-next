@@ -428,14 +428,18 @@ read-only Production smoke passed. This does not prove the existing credential
 can send lifecycle mail or that a lifecycle message is delivered; those facts
 still require live Production evidence.
 
-The Founder has now explicitly authorised the bounded Resend transfer. The
-former approval hold is removed. Provider/configuration gates and unsigned
-webhook rejection passed, but safe fixture execution was blocked by required
-Production database account re-verification and the absence of a current
-B4GAMBLE staff session. Delivery is therefore exact `false` in fail-closed
-deployment `dpl_XfWtrA94y9FkypcueURb54dzUWUk` until all six controlled
-Production acceptance checks pass. Deployed worker code is not evidence that
-Production delivery is active or correct.
+The Founder has explicitly authorised the bounded Resend transfer. Production
+database re-verification and a current staff session allowed all six controlled
+acceptance cases to pass on 12 September 2026. Welcome, Programme reminder,
+unsubscribe, transactional separation, webhook security and bounded-broadcast
+safety were verified with marked provider-safe non-customer fixtures. PRs #273
+and #274 corrected defects exposed by that evidence without changing this
+architecture. Aggregate post-test sanity records five delivered messages, five
+distinct delivered provider events, four completed campaigns and zero queued,
+sending, failed, duplicate, post-unsubscribe or non-fixture messages. Canonical
+Ready deployment `5i5N2H2xWqMySWysU78EdinEwK2v` serves source
+`22cf696b31b6adc3e456508b1a140044a5061698`. Production lifecycle delivery is
+enabled; the dated activation record is the detailed operational evidence.
 
 The standing RFC-036 processor/transfer and account-applicability evidence
 levels continue. This RFC does not fabricate a contract acceptance, transfer

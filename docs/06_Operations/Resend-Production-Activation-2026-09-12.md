@@ -5,7 +5,7 @@
 [RFC-046](../06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md)<br>
 **Scope:** bounded Production activation and verification only<br>
 **Production origin:** `https://b4gamble.com`<br>
-**State:** `HOLD — PROVIDER AND CODE READY; DELIVERY DISABLED`
+**State:** `GO — SIX OF SIX ACCEPTED; DELIVERY ENABLED`
 
 ## Founder decision
 
@@ -33,16 +33,16 @@ reopening those accepted areas.
 | Check | Current evidence | State |
 | --- | --- | --- |
 | Resend account access | Authenticated Founder account inspected | `PASS` |
-| Existing credentials | Two credentials; sending-only permission; last used 30 days ago | `PASS FOR SEND / NOT WEBHOOK ADMIN` |
+| Existing credentials | Two credentials with sending-only permission; bounded acceptance sends succeeded | `PASS FOR SEND / NOT WEBHOOK ADMIN` |
 | Sending domain | `b4gamble.com`, `us-east-1`, sending enabled | `PASS` |
 | DKIM | Provider dashboard reports verified | `PASS` |
 | SPF return path | Provider dashboard reports MX and TXT verified | `PASS` |
 | Webhook endpoint | Canonical endpoint registered and enabled | `PASS` |
 | Required events | Exactly delivered, bounced, clicked, complained and suppressed subscribed | `PASS` |
 | Provider unsubscribe event | Not supported in the Resend event selector; local signed unsubscribe remains authoritative | `NOT APPLICABLE` |
-| Production provider credential | `RESEND_API_KEY` exists in Vercel Production; protected value not disclosed | `CONFIGURED / LIVE SEND NOT PROVEN` |
+| Production provider credential | `RESEND_API_KEY` exists in Vercel Production; protected value not disclosed; bounded live sends accepted | `PASS` |
 | Production sender/reply-to/webhook secret | Approved sender/reply-to and protected signing secret stored in Vercel Production | `PASS` |
-| Delivery switch | Present and restored to exact `false` after incomplete acceptance | `PASS FAIL-CLOSED HOLD` |
+| Delivery switch | Present, enabled only after fail-closed queue proof and retained through the accepted deployment | `PASS / ENABLED` |
 | Click tracking | Provider metrics/tracking is off | `KNOWN LIMITATION` |
 
 No secret value, full or partial credential, DNS key, recipient address or
@@ -70,6 +70,16 @@ idempotency key. It does not transmit Programme answers, vulnerability or Help
 data, analytics identifiers, affiliate data, browsing history, raw IP,
 password/auth/reset tokens or arbitrary metadata.
 
+PR #273, merged as `cd4f2dee23f4d7f42d18725ac4b24366aaf5780a`,
+corrected two defects found by controlled acceptance: the exact protected cron
+path is exempt from canonical-host redirect middleware, and the standard
+password-reset request invokes the existing transactional email transport. PR
+#274, merged as `22cf696b31b6adc3e456508b1a140044a5061698`,
+constructs the unsubscribe form `303` response with its no-store headers in a
+single mutable response after Production exposed the former immutable-header
+exception. Both fixes have regression coverage and passed all exact-head
+quality, database, build/browser and Vercel gates.
+
 ## Webhook activation contract
 
 Register exactly `https://b4gamble.com/api/email/webhooks/resend` and subscribe
@@ -88,48 +98,75 @@ stored in the normalized provider ledger nor logged.
 
 ## Production execution evidence
 
-- all exact-head GitHub checks passed before normal merge: Agent Core,
-  Quality, Database/Migration, Build/Browser and Vercel Preview;
-- Ready Production deployment `dpl_8txeXABXbXkD9KCCeKFj4a3wnQMD` proved the
-  merged source and canonical-domain assignment;
-- the Node.js 24 Production smoke passed all nine read-only routes;
-- an unsigned synthetic webhook request returned `401 INVALID_SIGNATURE` and
-  the aggregate Vercel log recorded the expected 401;
-- Vercel's inspected 30-minute aggregate showed zero warning, error or fatal
-  console records;
-- Resend still showed zero sent emails and zero webhook events; no real
-  recipient was contacted; and
-- a direct account-creation request without current access authority returned
-  the expected 403. No account, consent or email fixture was created.
+- Production re-verification and a current B4GAMBLE staff session allowed two
+  provider-safe non-customer fixtures to be created with exact
+  `INTERNAL_ACCEPTANCE` provenance;
+- delivery-disabled worker runs queued the single eligible reminder exactly
+  once and consumed no attempt or provider ID; the repeat run was a no-op;
+- after configuration verification and switch enablement, one welcome and one
+  Programme reminder were accepted and reported delivered by Resend; a repeat
+  worker run selected zero;
+- one fixed-filter campaign reviewed one eligible, zero excluded and zero
+  suppressed recipients, queued once and delivered once. The signed
+  unsubscribe persisted withdrawal, consumed its token and made an identical
+  second campaign review zero eligible, one excluded/suppressed and zero
+  queued;
+- the normal password-reset endpoint returned its generic `200` response and
+  delivered a transactional message after marketing withdrawal;
+- unsigned and forged webhook probes returned `401 INVALID_SIGNATURE`;
+  authentic events returned `200`, an authentic replay added no row, and a
+  validly signed unknown-provider-message event returned `202 ignored` without
+  creating a cross-customer message or event;
+- the first unsubscribe transaction exposed a response-only defect: state was
+  committed, then mutation of `Response.redirect()` headers threw. PR #274
+  fixed that defect. A fresh bounded campaign then delivered once, its signed
+  unsubscribe returned `303`, rendered `You are unsubscribed.`, persisted a
+  second withdrawal/token consumption, and another identical campaign again
+  queued zero recipients;
+- the post-hotfix worker log is `200` with one selected, one sent, zero
+  suppressed/failed and one campaign refreshed; the unsubscribe log is `303`
+  with zero warning, error or fatal records for the filtered window; and
+- Ready canonical deployment `5i5N2H2xWqMySWysU78EdinEwK2v` serves merge
+  `22cf696b31b6adc3e456508b1a140044a5061698`. The documented nine-route
+  read-only Production smoke passed.
 
-The current Production database editor requires interactive account
-re-verification by authenticator code or passkey. No authenticated B4GAMBLE
-staff session was available: `/admin/email` correctly redirected to the Admin
-login. Creating a substitute account by fabricating adult, Terms or privacy
-affirmations was rejected as unsafe and was not performed. Those constraints
-prevented a bounded safe fixture from being created, inspected and removed and
-prevented aggregate before/after database evidence for the six cases.
-
-Delivery was therefore restored to exact `false`; Ready deployment
-`dpl_XfWtrA94y9FkypcueURb54dzUWUk` now serves `b4gamble.com` from the same
-merged source. The additive provider, webhook and code configuration remains
-in place. A second nine-route smoke passed against this final state.
+No real customer was contacted. Provider-safe addresses, opaque tokens,
+provider IDs, webhook signatures and secret values are intentionally omitted.
 
 ## Controlled Production acceptance
 
 | # | Acceptance | State |
 | ---: | --- | --- |
-| 1 | Welcome delivery to a provider-safe non-customer recipient | `BLOCKED — NO SAFE AUTHORISED FIXTURE` |
-| 2 | Programme reminder consent/suppression/final-check and duplicate-job exactly-once | `BLOCKED — FIXTURE/DB ACCESS REQUIRED` |
-| 3 | Marketing unsubscribe audit/suppression and second-send pre-provider block | `BLOCKED — FIXTURE/STAFF ACCESS REQUIRED` |
-| 4 | Transactional rules remain separate after marketing unsubscribe | `BLOCKED — FIXTURE/STAFF ACCESS REQUIRED` |
-| 5 | Webhook invalid/valid/replay/cross-customer/secret controls | `PARTIAL — INVALID REJECTION PASS; VALID/REPLAY/CROSS-CUSTOMER BLOCKED` |
-| 6 | Bounded broadcast preview/exclusions/idempotency/retry/history | `BLOCKED — FIXTURE/STAFF ACCESS REQUIRED` |
+| 1 | Welcome delivery to a provider-safe non-customer recipient | `PASS` |
+| 2 | Programme reminder consent/suppression/final-check and duplicate-job exactly-once | `PASS` |
+| 3 | Marketing unsubscribe audit/suppression and second-send pre-provider block | `PASS` |
+| 4 | Transactional rules remain separate after marketing unsubscribe | `PASS` |
+| 5 | Webhook invalid/valid/replay/cross-customer/secret controls | `PASS` |
+| 6 | Bounded broadcast preview/exclusions/idempotency/retry/history | `PASS` |
 
-Overall activation is `HOLD`. To resume, an authorised operator must complete
-Vercel database re-verification and provide a current B4GAMBLE staff session,
-then create the named provider-safe fixture and execute all six cases. Delivery
-must remain `false` until every row is evidenced `PASS`.
+Overall activation is `GO`. `LIFECYCLE_EMAIL_DELIVERY_ENABLED=true` is the
+accepted Production state. Any eligibility, signature, duplicate-send,
+privacy, provider-state or material log regression returns the activation to
+`HOLD` and requires the rollback below.
+
+## Post-test data sanity
+
+| Aggregate | Result |
+| --- | ---: |
+| Canonical users / marked acceptance fixtures | 5 / 2 |
+| Active templates | 5 |
+| Production messages / delivered | 5 / 5 |
+| Welcome / reminder / marketing / password reset | 1 / 1 / 2 / 1 |
+| Provider events / distinct delivered events | 5 / 5 |
+| Completed campaigns | 4 |
+| Consumed unsubscribe tokens | 2 |
+| Queued / sending / failed-or-unknown | 0 / 0 / 0 |
+| Duplicate provider IDs / message keys / lifecycle sends | 0 / 0 / 0 |
+| Marketing after current withdrawal / non-fixture messages | 0 / 0 |
+
+The active fixture preference is marketing-disabled, `MARKETING` suppressed
+and unsubscribed. The two controlled fixtures are retained as explicitly
+marked audit evidence; no silent destructive cleanup was performed.
 
 ## Rollback
 
