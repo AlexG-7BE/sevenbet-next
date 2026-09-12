@@ -51,7 +51,8 @@ test("Best Offers and Bonuses close their heading and landmark defects without d
   const best = read("app/(public)/best-offers/page.tsx");
   const bestError = read("app/(public)/best-offers/error.tsx");
   assert.equal(existsSync("app/(public)/best-offers/loading.tsx"), false);
-  assert.equal((best.match(/<h1\b/g) ?? []).length, 1);
+  assert.equal((best.match(/<h1\b/g) ?? []).length, 2, "the mutually exclusive editorial-only and supported branches each own one h1");
+  assert.match(best, /if \(marketUnavailable\).*data-commercial-market-state="editorial-only"/s);
   assert.equal((bestError.match(/<h1\b/g) ?? []).length, 1);
   assert.match(best, /result\.status === "available"/);
   assert.match(best, /<h2>\{result\.status === "unavailable"/);
