@@ -332,6 +332,11 @@ test("webhook normalization is closed and unsubscribe tokens are opaque", () => 
     type: "DELIVERED",
     occurredAt: new Date("2026-09-11T10:00:00.000Z"),
   });
+  assert.equal(normalizeResendWebhook("evt_suppressed", {
+    type: "email.suppressed",
+    created_at: "2026-09-11T10:01:00.000Z",
+    data: { email_id: "provider-124", suppressed: { type: "OnAccountSuppressionList" } },
+  }).type, "SUPPRESSED");
   assert.throws(() => normalizeResendWebhook("bad event", { type: "email.opened", data: { email_id: "id" } }), /Invalid|Unsupported/);
   assert.throws(() => normalizeResendWebhook("evt_124", { type: "email.delivered", created_at: "2026-09-11T10:00:00.000Z", data: { email_id: "" } }), /Unsupported/);
   assert.throws(() => normalizeResendWebhook("evt_125", { type: "email.delivered", created_at: "2026-09-11T10:00:00.000Z", data: { email_id: "bad id" } }), /Unsupported/);
@@ -388,12 +393,20 @@ test("retention configuration stays bounded and deterministic", () => {
   assert.equal(customerDataRetentionConfig({ ANALYTICS_RETENTION_DAYS: "90days" }).analyticsDays, DEFAULT_ANALYTICS_RETENTION_DAYS);
 });
 
-test("lifecycle cron is fail-closed, exact-Bearer protected, and queue-only", async () => {
+test("lifecycle cron is fail-closed, exact-Bearer protected, and processes the bounded delivery queue", async () => {
   let queueCalls = 0;
+  let processCalls = 0;
+  let refreshCalls = 0;
   let retentionCalls = 0;
   const handler = createLifecycleQueueCronHandler({
     environment: { CRON_SECRET: "cron-unit-secret" },
     queueReminders: async () => { queueCalls += 1; return { eligible: 2, queued: 1 }; },
+    processMessages: async (limit) => {
+      processCalls += 1;
+      assert.equal(limit, 50);
+      return { selected: 3, sent: 2, suppressed: 1, failed: 0 };
+    },
+    refreshCampaigns: async () => { refreshCalls += 1; return 1; },
     purgeRetention: async () => {
       retentionCalls += 1;
       return {
@@ -420,6 +433,8 @@ test("lifecycle cron is fail-closed, exact-Bearer protected, and queue-only", as
     ok: true,
     reminderEligible: 2,
     reminderQueued: 1,
+    delivery: { selected: 3, sent: 2, suppressed: 1, failed: 0 },
+    campaignsRefreshed: 1,
     retention: {
       analyticsEvents: 1,
       outboundClicks: 2,
@@ -431,7 +446,10 @@ test("lifecycle cron is fail-closed, exact-Bearer protected, and queue-only", as
     },
     durationMs: 0,
   });
-  assert.deepEqual({ queueCalls, retentionCalls }, { queueCalls: 1, retentionCalls: 1 });
+  assert.deepEqual(
+    { queueCalls, processCalls, refreshCalls, retentionCalls },
+    { queueCalls: 1, processCalls: 1, refreshCalls: 1, retentionCalls: 1 },
+  );
   const unavailable = createLifecycleQueueCronHandler({ environment: {} });
   assert.equal((await unavailable(new Request("https://b4gamble.com/api/internal/cron/customer-lifecycle"))).status, 503);
 });

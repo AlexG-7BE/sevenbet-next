@@ -1,38 +1,46 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 10 September 2026
+**Evidence date:** 12 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `95b47beb8721900b3803163b13b66beba0ab2828`
-**Verified post-release runtime baseline SHA:** `95b47beb8721900b3803163b13b66beba0ab2828`
-**Verified post-release runtime deployment:** Ready; `dpl_FwaFucGtxGmrw3yocNLxQg6825t9`
+**Current Production application SHA (live provider evidence):** `e4268c9031cdf92704c529225ef71edcb16d20a5`
+**Verified post-release runtime baseline SHA:** `e4268c9031cdf92704c529225ef71edcb16d20a5`
+**Verified post-release runtime deployment:** Ready; `dpl_GnfsYABERTGLeQTDzKkNfdfg41xw`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Customer Data, Analytics & Lifecycle Core v1 — implementation candidate
+## Customer Data, Analytics & Lifecycle Core v1 — Production core verified; Resend activation pending
 
-**DETECTED IN SOURCE / NOT YET PRODUCTION, 11 September 2026:** the isolated
-`codex/customer-data-analytics-lifecycle-v1` candidate based on
-`230e652af0e53e1e378051e33955943f788cd94a` implements the Founder-authorized
-RFC-046 customer, first-party analytics, Programme observation, commercial
-click-attribution, consent, fixed-dashboard and email-ledger core. Additive
-migration `0037_customer_data_analytics_lifecycle_core`, preflight/postflight
-guards, unit/structural/PostgreSQL/browser acceptance and an aggregate-only
-sanity command are repository evidence. This entry does not alter the live
-Production SHA or migration boundary stated above.
+**VERIFIED IN PRODUCTION, 12 September 2026:** PR #269 merged normally as
+`e4268c9031cdf92704c529225ef71edcb16d20a5`; Ready deployment
+`dpl_GnfsYABERTGLeQTDzKkNfdfg41xw` owns `b4gamble.com`. Additive migration
+`0037_customer_data_analytics_lifecycle_core` is applied with all 37 ordered
+migrations present. Analytics is enabled and the Core's customer, consent,
+Programme observation, commercial attribution, fixed-dashboard and durable
+email-ledger boundaries passed their release evidence. Aggregate Production
+sanity found three canonical users, zero normalized-email duplicates, five
+active English templates, no campaigns/messages/provider events and no
+integrity defect; no email addresses were emitted.
 
-**HOLD — external lifecycle email:** templates, consent, eligibility,
-campaigns, durable messages, unsubscribe and a verified webhook boundary are
-implemented, but no live route, Better Auth callback or cron invokes the
-external Resend processor. Queued messages are not sent messages. Production
-migration, runtime analytics, dashboards over live observations, webhook
-registration and provider delivery all remain **UNKNOWN** until release
-evidence proves them. See [RFC-046](06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md),
-the [technical baseline](05_Engineering/Technical_Baseline/16_Customer_Data_Analytics_Lifecycle_Core.md)
-and [operations runbook](06_Operations/Customer-Data-Analytics-Lifecycle-Core.md).
+**RESEND ACTIVATION PENDING:** the explicit 12 September 2026 Founder decision
+approves Resend for bounded account, transactional, welcome, consented
+Programme-reminder and consented broadcast/marketing processing. This removes
+the former missing-Founder-transfer-approval hold but does not prove provider
+configuration, delivery or every legal requirement. Live provider inspection
+shows the `b4gamble.com` domain, DKIM and SPF return-path records verified and
+two existing sending-only credentials. No lifecycle webhook exists yet;
+`LIFECYCLE_EMAIL_FROM`, `LIFECYCLE_EMAIL_REPLY_TO` and
+`RESEND_WEBHOOK_SECRET` are absent from Vercel Production; delivery remains
+exactly disabled. The isolated `codex/resend-production-activation` candidate
+connects the bounded worker only to the protected daily cron and normalizes
+provider suppression. No Production email, customer fixture, Resend webhook or
+configuration mutation is claimed. See [RFC-046](06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md),
+the [technical baseline](05_Engineering/Technical_Baseline/16_Customer_Data_Analytics_Lifecycle_Core.md),
+the [operations runbook](06_Operations/Customer-Data-Analytics-Lifecycle-Core.md)
+and the [Resend activation record](06_Operations/Resend-Production-Activation-2026-09-12.md).
 
 ## Logo-only Product, MEDIA-GEO3 retirement and eleven-locale cutover complete in Production
 
@@ -87,7 +95,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial creative formats | **HISTORICAL COMPATIBILITY / TEST VOCABULARY** | Format parsers and pre-retirement tests may remain inert. Active public compositions accept operator logos or explicitly B4GAMBLE-owned editorial art, never promotional creative formats. |
 | Media ingestion / Media Operations | **PROMOTIONAL OPERATIONS RETIRED; LOGO AND B4GAMBLE EDITORIAL ASSETS ONLY** | Active Admin media is limited to canonical logos and authenticated `b4gambleOwned` editorial social imagery. Promotional ingestion/analyse/apply/assignment/MCP surfaces are 410 in the application cutover and retired states are rejected by Production constraints. |
 | Public language / market presentation | **ELEVEN LOCALES LIVE IN PRODUCTION** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
-| Customer data / analytics / lifecycle | **IMPLEMENTATION CANDIDATE; EMAIL DELIVERY HOLD** | RFC-046 source and migration 0037 exist on an isolated branch. Nothing in this row asserts a Production migration, runtime collection, webhook registration or outbound lifecycle email. |
+| Customer data / analytics / lifecycle | **CORE VERIFIED IN PRODUCTION; RESEND ACTIVATION PENDING** | PR #269, migration 0037, runtime analytics and aggregate sanity are verified. Founder processing authority now exists; lifecycle delivery remains disabled until the webhook, Production variables, deployment and all six controlled acceptance checks pass. |
 
 ### Recent implementation state
 

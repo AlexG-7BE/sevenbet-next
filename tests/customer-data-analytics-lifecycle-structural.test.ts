@@ -157,13 +157,17 @@ test("consent, ingestion, unsubscribe, webhook, and cron public mutations fail c
   assert.match(webhook, /svix-id/);
   assert.match(webhook, /svix-timestamp/);
   assert.match(webhook, /svix-signature/);
+  assert.match(source("lib/email/webhook.server.ts"), /"email\.suppressed": "SUPPRESSED"/);
+  assert.match(source("lib/email/webhook.server.ts"), /PROVIDER_SUPPRESSION/);
   assert.doesNotMatch(webhook.slice(0, webhook.indexOf(".verify(rawBody")), /JSON\.parse\(rawBody\)/);
   const cron = source("lib/email/lifecycle-queue-cron.server.ts");
   assert.match(cron, /timingSafeEqual/);
-  assert.doesNotMatch(cron, /processQueuedEmail|ResendLifecycleEmailProvider|\.send\(/);
+  assert.match(cron, /processQueuedEmailBatch/);
+  assert.match(cron, /refreshCampaignStates/);
+  assert.doesNotMatch(cron, /ResendLifecycleEmailProvider|\.send\(/);
 });
 
-test("email delivery remains provider-abstracted, idempotent, and uninvoked by live routes", () => {
+test("email delivery remains provider-abstracted, idempotent, and invoked only by the protected lifecycle worker", () => {
   const provider = source("lib/email/provider.server.ts");
   assert.match(provider, /interface LifecycleEmailProvider/);
   assert.match(provider, /Idempotency-Key/);
@@ -175,6 +179,8 @@ test("email delivery remains provider-abstracted, idempotent, and uninvoked by l
   assert.match(service, /purpose: \{ in: \["WELCOME", "PROGRAMME_REMINDER", "MARKETING_BROADCAST", "TEST"\] \}/);
   assert.match(service, /ensureCurrentUnsubscribeToken/);
   assert.match(service, /UNSUBSCRIBE_TOKEN_MISMATCH/);
+  assert.match(service, /message\.isTest \? `\[TEST\]/);
+  assert.match(service, /if \(!resolveLifecycleEmailRuntimeConfig\(\)\)[\s\S]*selected: 0, sent: 0, suppressed: 0, failed: 0/);
   assert.doesNotMatch(service, /emailUnsubscribeToken\.upsert[\s\S]*update:\s*\{\s*tokenHash/);
   assert.doesNotMatch(service, /console\.(?:info|warn|error)\([^\n]*(?:recipientEmail|user\.email|apiKey|token)/);
 
@@ -186,6 +192,7 @@ test("email delivery remains provider-abstracted, idempotent, and uninvoked by l
     assert.doesNotMatch(text, /\b(?:processQueuedEmailMessage|processQueuedEmailBatch|sendAuthEmail|queueAndProcessWelcomeEmail)\b/, file);
   }
   assert.match(source("lib/customers/auth-observer.server.ts"), /queueWelcomeEmail\(user\.id\)/);
+  assert.match(source("lib/email/lifecycle-queue-cron.server.ts"), /processQueuedEmailBatch/);
   const authConfig = source("lib/auth/config.ts");
   assert.match(authConfig, /customerAuthDatabaseHooks/);
   assert.match(source("lib/customers/auth-hooks.server.ts"), /normalizeCustomerEmail/);

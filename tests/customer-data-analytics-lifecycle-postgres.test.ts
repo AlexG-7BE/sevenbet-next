@@ -31,6 +31,7 @@ import {
 } from "../lib/email/campaigns.server";
 import type { EmailProviderEnvelope, LifecycleEmailProvider } from "../lib/email/provider.server";
 import {
+  processQueuedEmailBatch,
   processQueuedEmailMessage,
   queueEmailMessage,
   queueProgrammeReminders,
@@ -157,6 +158,8 @@ test("Customer Core v1 persists one end-to-end relational lifecycle without exte
     await observeSuccessfulAuthentication({ request: signupRequest, responseBody, kind: "login" });
     assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).email, email);
     assert.equal(await prisma.emailMessage.count({ where: { userId, purpose: "WELCOME" } }), 1);
+    assert.deepEqual(await processQueuedEmailBatch(), { selected: 0, sent: 0, suppressed: 0, failed: 0 });
+    assert.equal((await prisma.emailMessage.findFirstOrThrow({ where: { userId, purpose: "WELCOME" } })).status, "QUEUED");
     assert.equal(await prisma.analyticsEvent.count({ where: { userId, type: "SIGNUP_COMPLETED" } }), 1);
     assert.equal(await prisma.analyticsEvent.count({ where: { userId, type: "LOGIN_COMPLETED" } }), 1);
 
@@ -351,10 +354,20 @@ test("Customer Core v1 persists one end-to-end relational lifecycle without exte
     });
     assert.equal(queuedBeforeUnsubscribe?.status, "QUEUED");
     const provider = new FakeResendLifecycleEmailProvider();
+    const testMessage = await queueEmailMessage({
+      userId,
+      templateKey: "MARKETING_BROADCAST",
+      templateId: marketingTemplate.id,
+      idempotencyKey: `customer-core:test:${suffix}`,
+      isTest: true,
+    });
+    assert.equal(testMessage?.status, "QUEUED");
+    assert.equal((await processQueuedEmailMessage(testMessage!.id, { provider, siteUrl: "https://b4gamble.com" })).status, "sent");
+    assert.match(provider.messages()[0]!.subject, /^\[TEST\] /);
     assert.equal((await processQueuedEmailMessage(campaignMessage.id, { provider, siteUrl: "https://b4gamble.com" })).status, "sent");
     assert.equal((await processQueuedEmailMessage(campaignMessage.id, { provider, siteUrl: "https://b4gamble.com" })).status, "not-claimed");
-    assert.equal(provider.messages().length, 1);
-    const providerMessageId = provider.messages()[0]!.messageId;
+    assert.equal(provider.messages().length, 2);
+    const providerMessageId = provider.messages()[1]!.messageId;
     const delivered = normalizeResendWebhook(`customer-core-delivered-${suffix}`, {
       type: "email.delivered", created_at: now.toISOString(), data: { email_id: providerMessageId },
     });
@@ -373,7 +386,7 @@ test("Customer Core v1 persists one end-to-end relational lifecycle without exte
     });
     assert.equal((await unsubscribeWithToken(token, new Date(now.getTime() + 2_250))).status, "unsubscribed");
     assert.equal((await processQueuedEmailMessage(queuedBeforeUnsubscribe!.id, { provider, siteUrl: "https://b4gamble.com" })).status, "suppressed");
-    assert.equal(provider.messages().length, 1);
+    assert.equal(provider.messages().length, 2);
     const suppressed = await queueEmailMessage({
       userId, templateKey: "MARKETING_BROADCAST", idempotencyKey: `customer-core:suppressed:${suffix}`,
     });
@@ -401,6 +414,13 @@ test("Customer Core v1 persists one end-to-end relational lifecycle without exte
     }), /suppression cannot be removed/);
     assert.equal((await unsubscribeWithToken(token, new Date(now.getTime() + 3_000))).status, "already-unsubscribed");
     assert.equal((await prisma.customerEmailPreference.findUniqueOrThrow({ where: { userId } })).suppressionScope, "ALL");
+    const providerSuppressed = normalizeResendWebhook(`customer-core-suppressed-${suffix}`, {
+      type: "email.suppressed", created_at: new Date(now.getTime() + 3_250).toISOString(), data: { email_id: provider.messages()[0]!.messageId },
+    });
+    assert.equal((await processResendWebhook(providerSuppressed)).status, "processed");
+    assert.equal((await processResendWebhook(providerSuppressed)).status, "duplicate");
+    assert.equal((await prisma.emailMessage.findUniqueOrThrow({ where: { id: testMessage!.id } })).status, "SUPPRESSED");
+    assert.equal((await prisma.customerEmailPreference.findUniqueOrThrow({ where: { userId } })).suppressionReason, "PROVIDER_SUPPRESSION");
     await refreshCampaignStates();
 
     const range = analyticsRange({ range: "90" }, now);

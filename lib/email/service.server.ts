@@ -316,15 +316,16 @@ export async function processQueuedEmailMessage(
     });
     return { status: "failed", code: "TEMPLATE_RENDER_INVALID" } as const;
   }
-  if (currentRecipientEmail !== message.recipientEmail || rendered.subject !== message.subject) {
+  const currentSubject = message.isTest ? `[TEST] ${rendered.subject}` : rendered.subject;
+  if (currentRecipientEmail !== message.recipientEmail || currentSubject !== message.subject) {
     await prisma.emailMessage.update({
       where: { id: message.id },
-      data: { recipientEmail: currentRecipientEmail, subject: rendered.subject },
+      data: { recipientEmail: currentRecipientEmail, subject: currentSubject },
     });
   }
   const result = await provider.send({
     to: currentRecipientEmail,
-    subject: rendered.subject,
+    subject: currentSubject,
     html: rendered.html,
     text: rendered.text,
     idempotencyKey: message.idempotencyKey,
@@ -370,6 +371,12 @@ export async function processQueuedEmailMessage(
 }
 
 export async function processQueuedEmailBatch(limit = 50) {
+  // A disabled or incomplete Production runtime is an intentional operational
+  // state, not a delivery attempt. Leave durable intent untouched so a staged
+  // deployment or kill-switch rollback cannot exhaust message retries.
+  if (!resolveLifecycleEmailRuntimeConfig()) {
+    return { selected: 0, sent: 0, suppressed: 0, failed: 0 };
+  }
   const boundedLimit = Math.max(1, Math.min(100, Math.trunc(limit)));
   const environment = analyticsEnvironment();
   const stale = new Date(Date.now() - 15 * 60_000);

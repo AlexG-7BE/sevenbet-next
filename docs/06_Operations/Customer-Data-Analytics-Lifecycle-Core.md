@@ -1,29 +1,35 @@
 # Customer Data, Analytics & Lifecycle Core v1
 
 **Authority:** [RFC-046](../06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md)<br>
-**Runbook date:** 11 September 2026<br>
+**Runbook date:** 12 September 2026<br>
 **Application:** B4GAMBLE / `sevenbet-next`<br>
 **Production origin:** `https://b4gamble.com`<br>
 **Migration:** `0037_customer_data_analytics_lifecycle_core`
 
 ## 1. Current release state
 
-**DETECTED in the implementation candidate:** the relational models, additive
-migration, customer/admin surfaces, closed analytics ingestion, fixed
-dashboards, Programme observers, outbound attribution, consent history,
-template/campaign queues, provider adapter, signed webhook, unsubscribe flow,
-retention job, aggregate sanity command, unit/integration/browser acceptance
-tests and DB-first release guard exist in the repository.
+**VERIFIED in Production:** PR #269, additive migration 0037, application
+deployment, consented analytics collection and aggregate-only Core sanity.
+Lifecycle delivery remains exactly disabled and no message/provider outcome
+exists in the verified Production baseline.
 
-**NOT YET VERIFIED in Production:** migration 0037, application deployment,
-runtime analytics collection, dashboards over Production observations, Resend
-webhook registration, lifecycle sender configuration and live delivery.
+**FOUNDER APPROVED / ACTIVATION PENDING:** the explicit 12 September 2026
+Founder instruction approves Resend for the bounded RFC-046 purposes and
+removes the former missing-transfer-approval hold. The approval does not prove
+live configuration or delivery. The activation candidate connects a bounded
+50-message processor batch only to the existing exact-Bearer protected daily
+cron. Keep `LIFECYCLE_EMAIL_DELIVERY_ENABLED=false` until the sender, webhook,
+Production variables, deployed worker and all six controlled acceptance checks
+are verified.
 
-**DELIVERY HOLD:** welcome, reminder, test and broadcast records may be queued,
-but no Better Auth callback, public route or cron invokes the external email
-processor. Do not claim that lifecycle email is operational. An explicitly
-authorised follow-up must connect the bounded processor and verify the provider
-before `LIFECYCLE_EMAIL_DELIVERY_ENABLED=true` is allowed.
+**LIVE PROVIDER FACTS:** `b4gamble.com`, DKIM, and SPF return-path MX/TXT are
+verified; sending is enabled in `us-east-1`; two existing credentials have
+sending-only permission. There is no lifecycle webhook. Resend supports the
+required delivered, bounced, clicked, complained and suppressed webhook
+events, but no provider unsubscribe event; B4GAMBLE's signed local unsubscribe
+flow remains the unsubscribe authority. Provider click tracking is currently
+off, so subscribing to `email.clicked` establishes receipt readiness but does
+not create a live click event by itself.
 
 ## 2. Architecture and authority
 
@@ -189,8 +195,10 @@ uses direct HTTPS, an eight-second timeout and provider idempotency header; the
 database key remains the durable authority after the provider's 24-hour
 window. Provider idempotency values contain an opaque SHA-256 subject digest,
 not a customer ID. Real delivery is possible only in Vercel Production with the exact
-flag and valid sender/reply-to/site configuration, but no live invocation is
-wired in this candidate.
+flag and valid sender/reply-to/site/webhook configuration. The activation
+candidate invokes a maximum of 50 queued messages from the protected daily
+lifecycle cron; the currently deployed Core remains disabled until that
+candidate is released and the exact switch is enabled.
 
 Final eligibility is read after a worker claims a message and then read again
 immediately before synchronous template rendering/provider invocation. The
@@ -230,6 +238,14 @@ threshold. Stable environment-scoped message keys make cron replay a no-op;
 the scan excludes identities already holding the same reminder intent so one
 full early page cannot starve later eligible identities.
 
+After queue and retention selection, the activation worker claims at most 50
+eligible messages, performs the final preference/account/address check,
+invokes the provider with the durable idempotency key and refreshes aggregate
+campaign state. A staff test message retains `[TEST]` after the final template
+render. Disabled or incomplete Production configuration returns zero delivery
+counts without claiming queue rows or consuming retries. Logs contain only
+purpose/result aggregates.
+
 Manual campaigns use only locale, country, new-user, Programme
 started/completed/not-completed and 7-/30-day inactivity filters. Draft must be
 reviewed with current eligible/excluded counts and separate
@@ -258,12 +274,13 @@ may already exist in an inbox.
 
 `POST /api/email/webhooks/resend` reads at most 64 KiB of raw request text and
 passes that exact body plus `svix-id`, `svix-timestamp` and `svix-signature` to
-Svix verification. Only then is a delivered/bounced/clicked/complained event
+Svix verification. Only then is a delivered/bounced/clicked/complained/suppressed event
 normalized. Provider event and provider message identifiers must match the
 closed bounded identifier grammar. Provider event ID is unique; replay returns
 `duplicate`. Payloads, clicked URLs and recipient addresses are not retained or
-logged. Complaint events create provider suppression, not a false customer
-unsubscribe timestamp or `email_unsubscribed` event.
+logged. Complaint and provider-suppressed events create distinct reason codes
+under all-email suppression, not a false customer unsubscribe timestamp or
+`email_unsubscribed` event.
 
 ## 12. Access control
 
@@ -290,7 +307,7 @@ the page-level authorization gate.
 | `EMAIL_HISTORY_RETENTION_DAYS` | 365–2555; invalid value falls back to 730 |
 | `PROGRAMME_REMINDER_INACTIVITY_DAYS` | Exact supported cadence is 7 or 30; otherwise 7 |
 | `CRON_SECRET` | Exact Bearer secret for lifecycle/retention and existing protected cron routes |
-| `LIFECYCLE_EMAIL_DELIVERY_ENABLED` | Exact Production-only switch; keep false under the current hold |
+| `LIFECYCLE_EMAIL_DELIVERY_ENABLED` | Exact Production-only switch; keep false until activation configuration and controlled acceptance are ready |
 | `LIFECYCLE_EMAIL_FROM`, `LIFECYCLE_EMAIL_REPLY_TO` | Valid, newline-free provider identities |
 | `RESEND_API_KEY` | Server-only provider credential; never log or expose |
 | `RESEND_WEBHOOK_SECRET` | Required server-only Svix verification secret; delivery stays disabled without it |
@@ -306,7 +323,7 @@ Logs use fixed categories and aggregate counts only:
 - outbound attribution database failure and final state;
 - email provider failure category and purpose, never recipient;
 - webhook configuration/verification/processing failure;
-- lifecycle queue/retention counts, limit flag and duration.
+- lifecycle queue/delivery/retention and campaign-refresh counts, limit flag and duration.
 
 Dashboard zeroes are not hidden. Failed, suppressed, stale-sending and bounded
 retry states remain inspectable in tables. Bounce spikes and sudden outbound
@@ -347,7 +364,14 @@ must run before database/browser tests.
    lifecycle delivery disabled.
 8. Verify public/auth/Programme/redirect/admin behavior, then enable consented
    analytics only if the privacy/runtime configuration is ready.
-9. Keep email delivery disabled until the separate hold is cleared.
+9. Keep email delivery disabled through the Resend worker deployment.
+10. Register the exact signed webhook with delivered, bounced, clicked,
+    complained and suppressed subscriptions; store its secret only in
+    Production.
+11. Add the exact sender and reply-to, verify the redacted runtime contract,
+    then enable delivery for the controlled acceptance window.
+12. Complete all six Founder acceptance checks; on any defect, set delivery
+    false immediately and retain queue/history evidence.
 
 The Production build preflight refuses to build this application revision
 until migration 0037 is completed and its checksum/tables/indexes/uniqueness
@@ -372,22 +396,24 @@ provider outcomes. It never prints email or an individual identifier.
 Then verify homepage, Programme, auth, representative casino/offer pages,
 permitted and blocked `/r` behavior, analytics consent/dedupe/dashboard,
 unauthorized admin denial, authorized desktop/mobile admin, unsubscribe, forged
-webhook rejection, no 5xx regression and no partner-token exposure. A live
-email check is forbidden until the delivery hold is cleared.
+webhook rejection, no 5xx regression and no partner-token exposure. After the
+12 September 2026 Founder approval, live email checks are permitted only as the
+bounded non-customer acceptance cases in the Resend activation record. Do not
+expand recipients or run a general broadcast.
 
 ## 18. Rollback, recovery and external dependencies
 
 Immediate collection rollback is
 `NEXT_PUBLIC_ANALYTICS_ENABLED=false` plus redeploy. Email rollback is
-`LIFECYCLE_EMAIL_DELIVERY_ENABLED=false`; under the current release it must
-already be false. Application rollback deploys the last known-good commit.
+`LIFECYCLE_EMAIL_DELIVERY_ENABLED=false`; before acceptance it must already be
+false. Application rollback deploys the last known-good commit.
 Migration 0037 remains because it is additive and older code ignores the new
 columns/tables. Do not down-migrate or drop data. Queue/history rows remain for
 forensic inspection and later controlled recovery.
 
-Known external dependencies are Vercel, Prisma Postgres, Better Auth and—only
-after explicit activation—Resend. Production completion additionally requires
-live database preflight/migration evidence, Vercel deployment evidence,
-provider sender/domain state, webhook registration/signature proof and one
-safe test delivery. Repository implementation or historical Contact-domain
+Known external dependencies are Vercel, Prisma Postgres, Better Auth and
+Founder-approved Resend. Core Production completion is already recorded;
+Resend activation additionally requires Vercel deployment evidence, provider
+sender/domain state, webhook registration/signature proof and all six safe
+acceptance checks. Repository implementation or historical Contact-domain
 verification is not a substitute for those checks.
