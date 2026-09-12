@@ -15,6 +15,9 @@ import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pa
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { commercialAuthorityForPresentation, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
+import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
+import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { hasPublicOfferFilters, parsePublicOfferQuery, type PublicOfferSearchParams } from "@/lib/public-offer/query";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 import { publicOfferService } from "@/lib/services/public-offer.service";
@@ -25,7 +28,7 @@ export const dynamic = "force-dynamic";
 type PageProps = { searchParams: Promise<PublicOfferSearchParams> };
 
 const loadBonusDirectory = cache(async () => {
-  const [presentation, authority] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction()]);
+  const [presentation, authority, commercialProductState] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction(), resolveServerCommercialProductState()]);
   const query = parsePublicOfferQuery({}, 100);
   const result = await publicOfferService.searchOffers(
     { ...query, country: presentation.marketCountryCode ?? undefined },
@@ -36,7 +39,7 @@ const loadBonusDirectory = cache(async () => {
       presentationLanguage: presentation.language,
     },
   );
-  return { presentation, result };
+  return { commercialProductState, presentation, result };
 });
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
@@ -48,17 +51,20 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
   const result = withHandoffBonusDirectoryData(loaded.result, visualFixture, presentation.locale, parsePublicOfferQuery({}, 100), fixtureMarket);
   const messages = productPageMessages(presentation.locale);
+  const shell = publicShellMessages(presentation.locale);
+  const copy = commercialUxMessages(presentation.locale);
   const market = presentation.marketDisplayName;
+  const marketUnavailable = !visualFixture && !commercialProductsAvailable(loaded.commercialProductState);
   const unavailable = result.inventoryMode === "UNAVAILABLE";
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
-  const title = formatProductMessage(unavailable ? `${messages.bonuses.unavailableTitleBody} | B4GAMBLE` : containsDemo ? messages.bonuses.demoTitle : messages.bonuses.title, { market });
-  const description = formatProductMessage(unavailable ? messages.bonuses.unavailableCopy : containsDemo ? messages.bonuses.demoDescription : messages.bonuses.description, { market });
+  const title = marketUnavailable ? `${shell.bonuses} — ${market} | B4GAMBLE` : formatProductMessage(unavailable ? `${messages.bonuses.unavailableTitleBody} | B4GAMBLE` : containsDemo ? messages.bonuses.demoTitle : messages.bonuses.title, { market });
+  const description = marketUnavailable ? formatProductMessage(copy.bonusesMarketUnavailableCopy, { market }) : formatProductMessage(unavailable ? messages.bonuses.unavailableCopy : containsDemo ? messages.bonuses.demoDescription : messages.bonuses.description, { market });
   return productMetadata({
     presentation,
     pathname: "/bonuses",
     title,
     description,
-    robots: unavailable || containsDemo || result.total === 0 || hasPublicOfferFilters(legacyQuery) ? { index: false, follow: true } : { index: true, follow: true },
+    robots: marketUnavailable || unavailable || containsDemo || result.total === 0 || hasPublicOfferFilters(legacyQuery) ? { index: false, follow: true } : { index: true, follow: true },
   });
 }
 
@@ -71,9 +77,20 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
   const messages = productPageMessages(presentation.locale);
   const copy = commercialUxMessages(presentation.locale);
+  const shell = publicShellMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const query = parsePublicOfferQuery({}, 100);
   const result = withHandoffBonusDirectoryData(loaded.result, visualFixture, presentation.locale, query, fixtureMarket);
+  const marketUnavailable = !visualFixture && !commercialProductsAvailable(loaded.commercialProductState);
+  if (marketUnavailable) return <div className={`${styles.page} ${instrumentSerif.variable}`} data-commercial-market-state="editorial-only" data-runtime-renderer="bonuses">
+    <CommercialSurfaceView surface="bonuses" />
+    <section className={finalStyles.unavailable} data-nav-theme="dark"><div>
+      <small>{shell.bonuses}</small>
+      <h1>{formatProductMessage(copy.bonusesMarketUnavailableTitle, { market })}</h1>
+      <p>{copy.bonusesMarketUnavailableCopy}</p>
+      <nav aria-label={shell.bonuses}><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link><Link href="/bonus-guide">{messages.common.bonusGuide}</Link></nav>
+    </div></section>
+  </div>;
   const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -105,5 +122,13 @@ export default async function BonusesPage({ searchParams }: PageProps) {
         <div className={styles.commercialFooterNote}><p>{copy.compactDisclosure} · {messages.bonuses.disclosureCopy}</p><Link href={productHref(presentation, "/affiliate-disclosure")}>{messages.common.affiliateDisclosure}</Link><CompactProtection copy={copy} presentation={presentation} /></div>
       </div>
     </section>
+    <section className={finalStyles.method} data-premium-section="bonus-terms-method" data-nav-theme="cream"><div>
+      <div><small>{messages.bonuses.methodKicker}</small><h2>{messages.bonuses.methodLead}<br /><em>{messages.bonuses.methodEmphasis}</em></h2><p>{messages.bonuses.methodCopy}</p><Link href="/bonus-guide">{messages.bonuses.guideAction}</Link></div>
+      <ol>
+        <li><span>01</span><div><strong>{messages.common.wagering}</strong><p>{messages.bonuses.methodCopy}</p></div></li>
+        <li><span>02</span><div><strong>{messages.common.materialTerms}</strong><p>{copy.importantRestrictions}</p></div></li>
+        <li><span>03</span><div><strong>{messages.common.sourceStatus}</strong><p>{messages.bonuses.proofSources}</p></div></li>
+      </ol>
+    </div></section>
   </div>;
 }

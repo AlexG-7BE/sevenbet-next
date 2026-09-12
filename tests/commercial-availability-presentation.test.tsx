@@ -116,6 +116,22 @@ test("casino cards keep missing bonus data separate from governed visit availabi
   assert.ok(!theatreHtml.includes(`<b>${messages.common.reviewOnly}</b>`));
 });
 
+test("editorial-only market state keeps casino collection records and suppresses every governed action", async () => {
+  const { CasinoCollection } = await import("../components/casino-discovery/CasinoCollection");
+  const html = renderToStaticMarkup(<CasinoCollection
+    casinos={[casino()]}
+    commercialProductsAvailable={false}
+    initialSearch=""
+    messages={messages}
+    presentation={presentation}
+  />);
+  assert.match(html, /Truth Casino/);
+  assert.match(html, /href="\/casino\/truth-casino"/);
+  assert.match(html, /Review only/);
+  assert.doesNotMatch(html, /href="\/r\//);
+  assert.doesNotMatch(html, /data-commercial-action-source="CTA"/);
+});
+
 test("curated casino cards preserve visit actions when bonus data is absent and never mark demos Current", async () => {
   const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
   const publishedHtml = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino()]} messages={messages} presentation={presentation} />);

@@ -111,6 +111,14 @@ test("decision-page composition renders three governed VIEW OFFER placements and
   assert.equal((actionableHtml.match(/href="\/r\/published-bonus\?placement=CTA_CASINO_(?:HERO|MOBILE_STICKY|OFFER_SECTION)"/g) ?? []).length, 3);
   assert.equal((actionableHtml.match(/VIEW OFFER/g) ?? []).length, 3);
   assert.match(actionableHtml, /data-casino-decision-bar/);
+  assert.match(actionableHtml, /data-casino-section-nav/);
+  for (const href of ["#overview", "#current-offer", "#our-verdict", "#casino-faq"]) {
+    assert.match(actionableHtml, new RegExp(`href="${href}"`));
+  }
+  assert.match(actionableHtml, /data-premium-section="casino-verdict"/);
+  assert.match(actionableHtml, /data-premium-section="casino-faq"/);
+  assert.ok(actionableHtml.indexOf('id="current-offer"') < actionableHtml.indexOf('id="our-verdict"'));
+  assert.ok(actionableHtml.indexOf('id="our-verdict"') < actionableHtml.indexOf('id="casino-faq"'));
   const expectedOrder = ["why-we-rate", "payments", "current-offer", "games", "support", "regulation", "sources"];
   assert.deepEqual([...expectedOrder].sort((left, right) => actionableHtml.indexOf(`id="${left}"`) - actionableHtml.indexOf(`id="${right}"`)), expectedOrder);
 
@@ -129,6 +137,20 @@ test("decision-page composition renders three governed VIEW OFFER placements and
   assert.doesNotMatch(reviewOnlyHtml, /href="\/r\//);
   assert.doesNotMatch(reviewOnlyHtml, /data-casino-decision-bar/);
   assert.equal((reviewOnlyHtml.match(/Review only/g) ?? []).length, 2);
+
+  const unsupportedMarketHtml = renderToStaticMarkup(React.createElement(CasinoProfile, {
+    availableForPresentation: true,
+    casino: actionable,
+    commercialProductsAvailable: false,
+    editorial,
+    messages,
+    presentation,
+  }));
+  assert.match(unsupportedMarketHtml, /Structured metadata title|Published Casino/);
+  assert.doesNotMatch(unsupportedMarketHtml, /href="\/r\//);
+  assert.doesNotMatch(unsupportedMarketHtml, /data-casino-decision-bar/);
+  assert.doesNotMatch(unsupportedMarketHtml, /href="\/bonuses"/);
+  assert.equal((unsupportedMarketHtml.match(/Review only/g) ?? []).length, 2);
 });
 
 test("mobile decision bar appears only after the hero and clears before the footer", () => {

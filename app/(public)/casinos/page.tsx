@@ -13,6 +13,8 @@ import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pa
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { commercialAuthorityForPresentation, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
+import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryQuery, CasinoDiscoveryResult } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
@@ -45,7 +47,7 @@ function emptyCasinoCollection(query: CasinoDiscoveryQuery): CasinoDiscoveryResu
 }
 
 const loadCasinoCollection = cache(async (visualFixture: boolean) => {
-  const [presentation, authority] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction()]);
+  const [presentation, authority, commercialProductState] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction(), resolveServerCommercialProductState()]);
   const query = collectionQuery();
   const result = visualFixture
     ? emptyCasinoCollection(query)
@@ -58,7 +60,7 @@ const loadCasinoCollection = cache(async (visualFixture: boolean) => {
           presentationLanguage: presentation.language,
         },
       );
-  return { presentation, result };
+  return { commercialProductState, presentation, result };
 });
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
@@ -95,6 +97,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
   const copy = commercialUxMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const result = withHandoffCasinoDiscoveryData(loaded.result, visualFixture, presentation.locale, collectionQuery(), fixtureMarket);
+  const showCommercialProducts = commercialProductsAvailable(loaded.commercialProductState);
   const containsLocalPreview = result.items.some((casino) => casino.dataClassification === "LOCAL_PREVIEW_FIXTURE");
   const disclosure = containsLocalPreview ? messages.common.marketPresentationNotice : messages.common.demoDisclosure;
   const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {
@@ -125,8 +128,13 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     <section className={styles.directory} data-nav-theme="cream" id="casino-directory"><div className={styles.shell}>
       <div className={styles.directoryHeading}><div><p>{copy.casinosShown}</p><h2>{messages.casinos.directoryTitle}</h2></div><span>{result.total} {messages.common.records}</span></div>
       {result.inventoryMode !== "PUBLISHED_ONLY" ? <aside className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{disclosure}</p></aside> : null}
-      {result.items.length ? <CasinoCollection casinos={result.items} initialSearch={query.search} messages={messages} presentation={presentation} /> : <section className={styles.empty} role="status"><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market })}</h2><p>{messages.casinos.reviewOnlyNotice}</p></section>}
+      {result.items.length ? <CasinoCollection casinos={result.items} commercialProductsAvailable={showCommercialProducts} initialSearch={query.search} messages={messages} presentation={presentation} /> : <section className={styles.empty} role="status"><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market })}</h2><p>{messages.casinos.reviewOnlyNotice}</p></section>}
       <div className={styles.commercialFooterNote}><p>{copy.compactDisclosure} · {messages.bestOffers.commissionNote}</p><Link href={productHref(presentation, "/affiliate-disclosure")}>{messages.common.affiliateDisclosure}</Link><CompactProtection copy={copy} presentation={presentation} /></div>
+    </div></section>
+    <section className={styles.faq} data-premium-section="casinos-before-you-choose"><div className={styles.shell}><div className={styles.sectionIntro}><h2>{messages.casinos.faqTitle}</h2></div>
+      <details><summary>{messages.casinos.faqDifferenceQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqDifferenceAnswer}</p></details>
+      <details><summary>{messages.casinos.faqReviewOnlyQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqReviewOnlyAnswer}</p></details>
+      <details><summary>{messages.casinos.faqCommissionQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqCommissionAnswer}</p></details>
     </div></section>
   </div>;
 }

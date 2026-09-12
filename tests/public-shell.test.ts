@@ -6,6 +6,8 @@ import {
   PUBLIC_NAVIGATION,
   accountNavigationFor,
   classifyShellRoute,
+  publicCommercialDestinationVisible,
+  publicNavigationForCommercialState,
 } from "../lib/public-shell";
 
 test("public navigation follows the approved Figma information architecture", () => {
@@ -15,6 +17,22 @@ test("public navigation follows the approved Figma information architecture", ()
     { label: "Bonuses", href: "/bonuses", commercial: true },
     { label: "Learn", href: "/learn" },
   ]);
+});
+
+test("public navigation and footer destinations follow the canonical commercial product state", () => {
+  assert.deepEqual(
+    publicNavigationForCommercialState(true).map((item) => item.href),
+    ["/best-offers", "/casinos", "/bonuses", "/learn"],
+  );
+  assert.deepEqual(
+    publicNavigationForCommercialState(false).map((item) => item.href),
+    ["/casinos", "/learn"],
+  );
+  assert.equal(publicCommercialDestinationVisible("/best-offers", false), false);
+  assert.equal(publicCommercialDestinationVisible("/bonuses", false), false);
+  for (const href of ["/casinos", "/learn", "/methodology", "/help", "/responsible-gambling", "/affiliate-disclosure"]) {
+    assert.equal(publicCommercialDestinationVisible(href, false), true, href);
+  }
 });
 
 test("ordinary public, Programme, protected Help and internal routes stay separated", () => {

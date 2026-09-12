@@ -23,6 +23,10 @@ import {
 } from "../lib/final-handoff/visual-data-fixture";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import {
+  commercialProductsAvailable,
+  resolveCommercialProductState,
+} from "../lib/market/commercial-product-state";
+import {
   BEST_OFFER_CATEGORIES,
   LOW_DEPOSIT_EDITOR_SCORE_FLOOR,
   normalizeWithdrawalTime,
@@ -124,6 +128,22 @@ test("Commercial UX exposes exactly the Founder-approved view sets", () => {
   assert.deepEqual(BEST_OFFER_CATEGORIES, ["best_overall", "fast_payouts", "best_bonus_terms", "low_deposit"]);
   assert.deepEqual(CASINO_COLLECTION_VIEWS, ["top_rated", "fast_payouts", "low_deposit"]);
   assert.deepEqual(CORE_BONUS_DIRECTORY_VIEWS, ["all", "welcome", "low_wagering", "low_deposit", "free_spins"]);
+});
+
+test("commercial product state is authority-derived and independent from page result count", () => {
+  const presentation = { marketCountryCode: "EE" };
+  const jurisdiction = {
+    countryCode: "EE",
+    editorialAllowed: true,
+    commercialAllowed: true,
+    referralAllowed: true,
+  };
+  assert.equal(resolveCommercialProductState({ presentation, jurisdiction, canonicalRouteAvailable: true }), "SUPPORTED_COMMERCIAL");
+  assert.equal(resolveCommercialProductState({ presentation, jurisdiction, canonicalRouteAvailable: false }), "EDITORIAL_ONLY");
+  assert.equal(resolveCommercialProductState({ presentation, jurisdiction: { ...jurisdiction, referralAllowed: false }, canonicalRouteAvailable: true }), "EDITORIAL_ONLY");
+  assert.equal(resolveCommercialProductState({ presentation, jurisdiction: { ...jurisdiction, countryCode: "LV" }, canonicalRouteAvailable: true }), "EDITORIAL_ONLY");
+  assert.equal(commercialProductsAvailable("SUPPORTED_COMMERCIAL"), true);
+  assert.equal(commercialProductsAvailable("EDITORIAL_ONLY"), false);
 });
 
 test("Best Offers gates Review Only records and ranks each category deterministically", () => {
@@ -267,6 +287,47 @@ test("commercial routes remove the obsolete interaction systems from rendered pa
   for (const route of [best, casinos, bonuses, profileRoute]) {
     assert.ok((route.match(/withCommercialUxFixturePresentation/g) ?? []).length >= 3, "metadata and page body must share the Preview fixture presentation");
   }
+});
+
+test("commercial routes keep the approved task first and restore only bounded premium framing", () => {
+  const best = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
+  const casinos = readFileSync("app/(public)/casinos/page.tsx", "utf8");
+  const bonuses = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
+  const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
+
+  assert.ok(best.indexOf("<BestOffersExperience") < best.indexOf('data-premium-section="best-offers-method"'));
+  assert.ok(best.indexOf('data-premium-section="best-offers-method"') < best.indexOf('data-premium-section="best-offers-faq"'));
+  assert.equal((best.match(/<details>/g) ?? []).length, 3);
+  assert.doesNotMatch(best, /finalOffer|Worth a look/);
+
+  assert.ok(casinos.indexOf("<CasinoCollection") < casinos.indexOf('data-premium-section="casinos-before-you-choose"'));
+  assert.equal((casinos.match(/<details>/g) ?? []).length, 3);
+
+  assert.ok(bonuses.indexOf("<BonusOfferDirectory") < bonuses.indexOf('data-premium-section="bonus-terms-method"'));
+  assert.equal((bonuses.match(/<li>/g) ?? []).length, 3);
+  assert.match(bonuses, /href="\/bonus-guide"/);
+  assert.doesNotMatch(bonuses, /BonusCalculator|What a bonus really costs/);
+
+  assert.match(profile, /data-casino-section-nav/);
+  assert.match(profile, /href="#overview"/);
+  assert.match(profile, /href="#current-offer"/);
+  assert.match(profile, /href="#our-verdict"/);
+  assert.match(profile, /href="#casino-faq"/);
+  assert.match(profile, /data-premium-section="casino-verdict"/);
+  assert.equal((profile.match(/slice\(0, 3\)/g) ?? []).length, 1);
+  assert.doesNotMatch(profile, /payoutScore|bonusScore|gamesScore|supportScore|verificationScore/);
+});
+
+test("unsupported commercial routes short-circuit before normal product rails", () => {
+  const best = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
+  const bonuses = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
+  for (const source of [best, bonuses]) {
+    assert.match(source, /data-commercial-market-state="editorial-only"/);
+    assert.match(source, /!.*commercialProductsAvailable\(loaded\.commercialProductState\)/);
+  }
+  assert.ok(best.indexOf('data-commercial-market-state="editorial-only"') < best.indexOf("<section className={styles.hero}"));
+  assert.ok(bonuses.indexOf('data-commercial-market-state="editorial-only"') < bonuses.indexOf("<BonusOfferDirectory"));
+  assert.doesNotMatch(readFileSync("lib/market/commercial-product-state.ts", "utf8"), /\b(?:result|total|count|KZ)\b/);
 });
 
 test("Commercial UX market fixtures are Preview-only, allowlisted, and presentation-only", () => {

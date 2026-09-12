@@ -41,6 +41,14 @@ Inspection paths:
 
 All fixture records remain `DEMO_FIXTURE` or informational-only, all `/r/` actions remain absent, and market inspection does not create a durable market profile.
 
+## Final product polish
+
+**DETECTED — PR #276:** the public shell now resolves a generic `SUPPORTED_COMMERCIAL` / `EDITORIAL_ONLY` product state from the request jurisdiction plus the canonical `MarketActivation` runtime. A market is commercially supported only when editorial, commercial, and referral policy all permit the resolved country and at least one active, healthy canonical route applies to that market. Page result count is not an input, and no country-specific exception exists.
+
+In `EDITORIAL_ONLY` state, primary and footer navigation omit Best Offers and Bonuses while Casinos, Learn, Methodology, Help, Responsible Gambling, Affiliate Disclosure, and the other applicable editorial/legal routes remain available. Direct Best Offers and Bonuses requests return short, market-accurate product states rather than empty selectors or foreign-market records. Casino collections and published casino reviews remain editorial, with every governed action placement suppressed.
+
+The scan-first product architecture is unchanged. Bounded editorial framing now follows the primary task: Best Offers adds three trust principles and three “Before You Click” questions; Casinos adds three “Before You Choose” questions; Bonuses adds three evaluation principles plus the Bonus Guide; casino reviews add section navigation, a canonical overall-score verdict, and at most three FAQ items. No score dimensions, offer records, redirect authority, analytics events, or migrations were added.
+
 ## Analytics
 
 Existing commercial surface views, selector changes, card impressions/positions, review clicks, and governed outbound actions remain intact. No additional Terms-click event or schema change is introduced in this correction pass. Migration `0038_commercial_ux_analytics_events` remains unapplied by this work.

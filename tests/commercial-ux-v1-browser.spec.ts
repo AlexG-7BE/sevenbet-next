@@ -30,6 +30,13 @@ test("Best Offers is an exact four-view, governed Top 3 decision flow", async ({
   await expect(page.locator("[data-commercial-best-offer-card]")).toHaveCount(3);
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
   await expect(page.getByText(/Worth a look/i)).toHaveCount(0);
+  const method = page.locator('[data-premium-section="best-offers-method"]');
+  const faq = page.locator('[data-premium-section="best-offers-faq"]');
+  await expect(method).toContainText(/Material terms/i);
+  await expect(method.locator("li")).toHaveCount(3);
+  await expect(faq).toContainText(/Before you click/i);
+  await expect(faq.locator("details")).toHaveCount(3);
+  expect(await page.locator("[data-commercial-best-offer-card]").last().evaluate((card) => card.compareDocumentPosition(document.querySelector('[data-premium-section="best-offers-method"]')!) & Node.DOCUMENT_POSITION_FOLLOWING)).toBeTruthy();
   await expectNoCommercialLeak(page);
 });
 
@@ -70,6 +77,9 @@ test("Casinos keeps one collection with name search and three reorder views", as
   expect(secondTop).toBe(firstTop);
   expect(thirdTop).toBeGreaterThan(firstTop);
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
+  const faq = page.locator('[data-premium-section="casinos-before-you-choose"]');
+  await expect(faq).toContainText(/Before you choose/i);
+  await expect(faq.locator("details")).toHaveCount(3);
   await expectNoCommercialLeak(page);
 });
 
@@ -98,6 +108,10 @@ test("Bonuses is an offer-first directory with five bounded intent views", async
     await expect(page.getByText(removed, { exact: true })).toHaveCount(0);
   }
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
+  const method = page.locator('[data-premium-section="bonus-terms-method"]');
+  await expect(method).toContainText(/How we evaluate bonus terms/i);
+  await expect(method.locator("li")).toHaveCount(3);
+  await expect(method.getByRole("link", { name: /Bonus Guide/i })).toHaveAttribute("href", "/bonus-guide");
   await expectNoCommercialLeak(page);
 });
 
@@ -107,12 +121,12 @@ test("casino review is concise, facts-first and suppresses non-governed CTA syst
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Solvane Casino" })).toBeVisible();
   expect(await page.locator("main section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
-    "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "sources",
+    "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "our-verdict", "casino-faq", "sources",
   ]);
   await expect(page.locator('section[aria-labelledby="casino-profile-title"] dl > div')).toHaveCount(3);
   await expect(page.locator("#why-we-rate li")).toHaveCount(3);
   await expect(page.locator("#current-offer dl > div")).toHaveCount(4);
-  const verdict = page.locator('[class*="verdict"]');
+  const verdict = page.locator('[data-intentional-line-clamp="2"]');
   await expect(verdict).toContainText("Solvane Casino:");
   await expect(verdict).toHaveAttribute("data-intentional-line-clamp", "2");
   expect(await verdict.evaluate((element) => ({
@@ -126,7 +140,32 @@ test("casino review is concise, facts-first and suppresses non-governed CTA syst
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
   await expect(page.getByText("Review only", { exact: true })).toHaveCount(2);
   await expect(page.locator("#current-offer [class*='materialWarning']")).toContainText("Terms shown before action");
+  const sectionNav = page.locator("[data-casino-section-nav]");
+  await expect(sectionNav.getByRole("link")).toHaveCount(4);
+  expect(await sectionNav.getByRole("link").allTextContents()).toEqual(["Overview", "Offer & terms", "Our verdict", "FAQ"]);
+  await expect(page.locator('[data-premium-section="casino-verdict"]')).toContainText(/Solvane Casino.*9\.6/is);
+  expect(await page.locator("#casino-faq details").count()).toBeLessThanOrEqual(3);
   await expectNoCommercialLeak(page);
+});
+
+test("editorial-only market state is deliberate across navigation and direct commercial routes", async ({ page }) => {
+  const best = await page.goto(`${baseUrl}/en/best-offers`, { waitUntil: "networkidle" });
+  expect(best?.status()).toBe(200);
+  await expect(page.locator('[data-commercial-market-state="editorial-only"]')).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/Offers aren.t available/i);
+  await expect(page.getByText(/Three picks/i)).toHaveCount(0);
+  await expect(page.getByRole("tab")).toHaveCount(0);
+  await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
+  await expect(page.locator('header a[href$="/best-offers"], header a[href$="/bonuses"]')).toHaveCount(0);
+  await expect(page.locator('footer a[href$="/best-offers"], footer a[href$="/bonuses"]')).toHaveCount(0);
+  await expect(page.locator('header a[href$="/casinos"], header a[href$="/learn"]')).toHaveCount(4);
+
+  const bonuses = await page.goto(`${baseUrl}/en/bonuses`, { waitUntil: "networkidle" });
+  expect(bonuses?.status()).toBe(200);
+  await expect(page.locator('[data-commercial-market-state="editorial-only"]')).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/Partner bonus offers aren.t available/i);
+  await expect(page.getByRole("tab")).toHaveCount(0);
+  await expect(page.locator('[data-commercial-bonus-card], a[href^="/r/"]')).toHaveCount(0);
 });
 
 test("Preview market inspection is allowlisted, market-aware, and always non-actionable", async ({ page }) => {

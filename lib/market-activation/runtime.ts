@@ -173,6 +173,24 @@ function selectActiveRoutes(
 export class MarketActivationRuntime {
   constructor(private readonly database: Pick<typeof prisma, "marketActivation"> = prisma) {}
 
+  async hasActiveRouteForMarket(countryCode: string) {
+    const market = requestedMarketCode(countryCode);
+    if (!market) return false;
+    const records = await this.database.marketActivation.findMany({
+      where: {
+        marketCode: { in: [...new Set([
+          market,
+          ...(market.includes("-") ? [market.slice(0, 2)] : []),
+          MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
+        ])] },
+        product: "CASINO",
+      },
+      include: runtimeInclude,
+      orderBy: [{ casinoId: "asc" }, { marketCode: "asc" }, { updatedAt: "desc" }, { id: "asc" }],
+    });
+    return selectActiveRoutes(records, market).length > 0;
+  }
+
   async listActive(casinoIds: string[], countryCode: string): Promise<BoundCanonicalMarketActivationRoute[]> {
     const market = requestedMarketCode(countryCode);
     if (!casinoIds.length || !market) return [];

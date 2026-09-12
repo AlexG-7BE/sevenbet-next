@@ -55,6 +55,10 @@ export type CommercialUxMessages = Readonly<{
   verifiedOfferTerms: string;
   currentLicenceRecord: string;
   compactDisclosure: string;
+  bestOffersMarketUnavailableTitle: string;
+  bestOffersMarketUnavailableCopy: string;
+  bonusesMarketUnavailableTitle: string;
+  bonusesMarketUnavailableCopy: string;
 }>;
 
 const en: CommercialUxMessages = {
@@ -112,6 +116,27 @@ const en: CommercialUxMessages = {
   verifiedOfferTerms: "Clear bonus terms",
   currentLicenceRecord: "Current licence record",
   compactDisclosure: "18+ · Terms apply · Affiliate link",
+  bestOffersMarketUnavailableTitle: "Offers aren’t available in {market} yet.",
+  bestOffersMarketUnavailableCopy: "We currently don’t publish verified partner offers for this market.",
+  bonusesMarketUnavailableTitle: "Partner bonus offers aren’t available in {market} yet.",
+  bonusesMarketUnavailableCopy: "You can still browse our independent casino reviews.",
+};
+
+const marketStateTranslations: Partial<Record<SupportedLocale, Pick<CommercialUxMessages,
+  "bestOffersMarketUnavailableTitle" | "bestOffersMarketUnavailableCopy" | "bonusesMarketUnavailableTitle" | "bonusesMarketUnavailableCopy"
+>>> = {
+  "de-DE": { bestOffersMarketUnavailableTitle:"Angebote sind in {market} noch nicht verfügbar.",bestOffersMarketUnavailableCopy:"Wir veröffentlichen derzeit keine verifizierten Partnerangebote für diesen Markt.",bonusesMarketUnavailableTitle:"Partner-Bonusangebote sind in {market} noch nicht verfügbar.",bonusesMarketUnavailableCopy:"Du kannst weiterhin unsere unabhängigen Casinobewertungen lesen." },
+  "it-IT": { bestOffersMarketUnavailableTitle:"Le offerte non sono ancora disponibili in {market}.",bestOffersMarketUnavailableCopy:"Al momento non pubblichiamo offerte partner verificate per questo mercato.",bonusesMarketUnavailableTitle:"Le offerte bonus dei partner non sono ancora disponibili in {market}.",bonusesMarketUnavailableCopy:"Puoi comunque consultare le nostre recensioni indipendenti dei casinò." },
+  "es-ES": { bestOffersMarketUnavailableTitle:"Las ofertas aún no están disponibles en {market}.",bestOffersMarketUnavailableCopy:"Actualmente no publicamos ofertas verificadas de socios para este mercado.",bonusesMarketUnavailableTitle:"Las ofertas de bonos de socios aún no están disponibles en {market}.",bonusesMarketUnavailableCopy:"Aún puedes consultar nuestras reseñas independientes de casinos." },
+  "es-PE": { bestOffersMarketUnavailableTitle:"Las ofertas aún no están disponibles en {market}.",bestOffersMarketUnavailableCopy:"Actualmente no publicamos ofertas verificadas de socios para este mercado.",bonusesMarketUnavailableTitle:"Las ofertas de bonos de socios aún no están disponibles en {market}.",bonusesMarketUnavailableCopy:"Aún puedes consultar nuestras reseñas independientes de casinos." },
+  "pt-PT": { bestOffersMarketUnavailableTitle:"As ofertas ainda não estão disponíveis em {market}.",bestOffersMarketUnavailableCopy:"Atualmente não publicamos ofertas verificadas de parceiros para este mercado.",bonusesMarketUnavailableTitle:"As ofertas de bónus de parceiros ainda não estão disponíveis em {market}.",bonusesMarketUnavailableCopy:"Pode continuar a consultar as nossas análises independentes de casinos." },
+  "el-GR": { bestOffersMarketUnavailableTitle:"Οι προσφορές δεν είναι ακόμη διαθέσιμες στην αγορά {market}.",bestOffersMarketUnavailableCopy:"Προς το παρόν δεν δημοσιεύουμε επαληθευμένες προσφορές συνεργατών για αυτή την αγορά.",bonusesMarketUnavailableTitle:"Οι προσφορές μπόνους συνεργατών δεν είναι ακόμη διαθέσιμες στην αγορά {market}.",bonusesMarketUnavailableCopy:"Μπορείτε ακόμη να δείτε τις ανεξάρτητες αξιολογήσεις καζίνο μας." },
+  "nl-NL": { bestOffersMarketUnavailableTitle:"Aanbiedingen zijn nog niet beschikbaar in {market}.",bestOffersMarketUnavailableCopy:"We publiceren momenteel geen geverifieerde partneraanbiedingen voor deze markt.",bonusesMarketUnavailableTitle:"Partnerbonusaanbiedingen zijn nog niet beschikbaar in {market}.",bonusesMarketUnavailableCopy:"Je kunt onze onafhankelijke casinoreviews nog steeds bekijken." },
+  "sv-SE": { bestOffersMarketUnavailableTitle:"Erbjudanden är ännu inte tillgängliga i {market}.",bestOffersMarketUnavailableCopy:"Vi publicerar för närvarande inga verifierade partnererbjudanden för denna marknad.",bonusesMarketUnavailableTitle:"Partnerbonusar är ännu inte tillgängliga i {market}.",bonusesMarketUnavailableCopy:"Du kan fortfarande läsa våra oberoende casinorecensioner." },
+  "da-DK": { bestOffersMarketUnavailableTitle:"Tilbud er endnu ikke tilgængelige i {market}.",bestOffersMarketUnavailableCopy:"Vi offentliggør i øjeblikket ingen verificerede partnertilbud for dette marked.",bonusesMarketUnavailableTitle:"Partnerbonustilbud er endnu ikke tilgængelige i {market}.",bonusesMarketUnavailableCopy:"Du kan stadig læse vores uafhængige kasinoanmeldelser." },
+  "fi-FI": { bestOffersMarketUnavailableTitle:"Tarjouksia ei ole vielä saatavilla markkinalla {market}.",bestOffersMarketUnavailableCopy:"Emme tällä hetkellä julkaise vahvistettuja kumppanitarjouksia tälle markkinalle.",bonusesMarketUnavailableTitle:"Kumppanien bonustarjouksia ei ole vielä saatavilla markkinalla {market}.",bonusesMarketUnavailableCopy:"Voit silti tutustua riippumattomiin kasinoarvioihimme." },
+  "nb-NO": { bestOffersMarketUnavailableTitle:"Tilbud er ennå ikke tilgjengelige i {market}.",bestOffersMarketUnavailableCopy:"Vi publiserer for øyeblikket ingen verifiserte partnertilbud for dette markedet.",bonusesMarketUnavailableTitle:"Partnerbonustilbud er ennå ikke tilgjengelige i {market}.",bonusesMarketUnavailableCopy:"Du kan fortsatt lese våre uavhengige kasinoanmeldelser." },
+  "fr-CA": { bestOffersMarketUnavailableTitle:"Les offres ne sont pas encore disponibles au {market}.",bestOffersMarketUnavailableCopy:"Nous ne publions actuellement aucune offre partenaire vérifiée pour ce marché.",bonusesMarketUnavailableTitle:"Les offres de bonus partenaires ne sont pas encore disponibles au {market}.",bonusesMarketUnavailableCopy:"Vous pouvez toujours consulter nos avis indépendants sur les casinos." },
 };
 
 const de: CommercialUxMessages = {
@@ -161,5 +186,5 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "nb-NO": { minimumWithdrawal: "Minste uttak", fees: "Gebyrer" },
     "fr-CA": { minimumWithdrawal: "Retrait minimum", fees: "Frais" },
   };
-  return { ...(translations[locale] ?? en), ...(factLabels[locale] ?? {}) };
+  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}) };
 }

@@ -5,18 +5,24 @@ import type { PresentationResolution } from "@/lib/market/presentation-resolver"
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
 import { isLocalizedPublicDestination, localizePublicPath } from "@/lib/market/routing";
 import { DEFAULT_MARKET_PROFILE, marketProfileByLocale } from "@/lib/market/registry";
+import type { CommercialProductState } from "@/lib/market/commercial-product-state";
+import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
+import { publicCommercialDestinationVisible } from "@/lib/public-shell";
 import styles from "./PublicShell.module.css";
 
 export function PublicFooter({
   presentation = resolvePresentationContext({}),
   programme,
+  commercialProductState = "SUPPORTED_COMMERCIAL",
 }: {
   presentation?: PresentationResolution;
   programme?: Readonly<{ path: string; localizePublicLinks: boolean }>;
+  commercialProductState?: CommercialProductState;
 }) {
   const shell = publicShellMessages(presentation.locale);
   const footer = publicFooterMessages(presentation.locale);
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
+  const showCommercialProducts = commercialProductsAvailable(commercialProductState);
   const groups = [
     { title: footer.explore, links: [[shell.bestOffers, "/best-offers"], [shell.casinos, "/casinos"], [shell.bonuses, "/bonuses"], [shell.learn, "/learn"]] },
     { title: footer.programmeAndSupport, links: [[shell.startProgramme, "/program"], [footer.tenSteps, "/10-steps"], [footer.responsibleGambling, "/responsible-gambling"], [footer.protectedHelp, "/help"]] },
@@ -41,7 +47,7 @@ export function PublicFooter({
           {groups.map((group) => (
             <div className={styles.footerGroup} key={group.title}>
               <h2>{group.title}</h2>
-              {group.links.map(([label, href]) => <Link href={localizedHref(href)} key={href}>{label}</Link>)}
+              {group.links.filter(([, href]) => publicCommercialDestinationVisible(href, showCommercialProducts)).map(([label, href]) => <Link href={localizedHref(href)} key={href}>{label}</Link>)}
             </div>
           ))}
         </div>

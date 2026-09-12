@@ -6,7 +6,7 @@ import { CommercialBadges, CommercialFacts, CommercialScore, CompactProtection }
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { casinoProfileDecisionPresentation, formatCommercialMoney, safeCommercialTermsUrl, structuredOfferHeadline, type CommercialFact } from "@/lib/commercial/commercial-presentation";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
-import { formatProfileDate, profileAction, selectProfileBonus } from "@/lib/casino-profile/presentation";
+import { formatProfileDate, profileAction, profileFaqItems, selectProfileBonus } from "@/lib/casino-profile/presentation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import type { CasinoEditorialDocument, EditorialBlock } from "@/lib/editorial-review/types";
 import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
@@ -33,8 +33,9 @@ function SectionFacts({ facts }: { facts: readonly CommercialFact[] }) {
   return <dl className={styles.sectionFacts}>{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>;
 }
 
-export function CasinoProfile({ casino, editorial, messages, presentation, availableForPresentation }: {
+export function CasinoProfile({ casino, commercialProductsAvailable = true, editorial, messages, presentation, availableForPresentation }: {
   casino: PublicCasinoDTO;
+  commercialProductsAvailable?: boolean;
   editorial: CasinoEditorialDocument | null;
   messages: ProductPageMessages;
   presentation: PresentationResolution;
@@ -45,7 +46,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const informationalOnly = casino.presentationDisposition === "INFORMATIONAL_ONLY";
   const bonus = selectProfileBonus(casino);
   const decision = casinoProfileDecisionPresentation(casino, presentation.locale, messages, copy, presentation.marketCountryCode);
-  const governed = informationalOnly ? null : profileAction(casino, bonus);
+  const governed = informationalOnly || !commercialProductsAvailable ? null : profileAction(casino, bonus);
   const action = governed ? { ...governed, label: copy.viewOffer } : null;
   const score = casino.editorScore;
   const offerHeadline = bonus ? structuredOfferHeadline(bonus, presentation.locale, copy) : messages.profile.offerUnavailable;
@@ -81,11 +82,16 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
     value: category.gameCount === null ? copy.detailsRecorded : new Intl.NumberFormat(presentation.locale).format(category.gameCount),
   }));
   const providers = casino.providers.slice(0, 6).map((provider) => provider.name);
+  const faqItems = profileFaqItems(casino, bonus, editorial).slice(0, 3);
+  const verdictLabel = messages.profile.verdict.replace(/:\s*$/, "");
+  const finalVerdict = score !== null && score >= 8.5 ? copy.verdictStrong : score !== null && score >= 7 ? copy.verdictSolid : copy.verdictReviewed;
+  const bestFor = decision.reasons.find((reason) => reason.tone === "strength")?.text ?? null;
+  const watch = decision.reasons.find((reason) => reason.tone === "caveat")?.text ?? decision.restriction;
 
   return <article className={styles.page} data-runtime-renderer="casino-review">
     <CasinoProfileInteractions />
     <div className={styles.shell}>
-      <section aria-labelledby="casino-profile-title" className={styles.hero} data-nav-theme="dark">
+      <section aria-labelledby="casino-profile-title" className={styles.hero} data-nav-theme="dark" id="overview">
         <nav aria-label={messages.common.breadcrumb} className={styles.breadcrumb}><Link href={productHref(presentation, "/casinos")}>{messages.casinos.directoryTitle}</Link><span aria-hidden="true">/</span><span aria-current="page">{casino.name}</span></nav>
         {demo ? <p className={styles.stateNote}><strong>{messages.common.demoData}</strong> · {action ? messages.common.marketPresentationNotice : messages.profile.demoDisclosure}</p> : null}
         {!availableForPresentation && !demo ? <p className={styles.stateNote}>{formatProductMessage(messages.profile.marketUnavailable, { market: presentation.marketDisplayName })}</p> : null}
@@ -105,6 +111,13 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           </div>
         </div>
       </section>
+
+      <nav aria-label={messages.profile.overview} className={styles.sectionNav} data-casino-section-nav>
+        <a href="#overview">{messages.profile.overview}</a>
+        <a href="#current-offer">{messages.profile.offerTerms}</a>
+        <a href="#our-verdict">{verdictLabel}</a>
+        <a href="#casino-faq">{messages.profile.questions}</a>
+      </nav>
 
       {action ? <aside className={styles.stickyAction} data-casino-decision-bar data-mobile-visible="false">
         <span>{casino.name}{score === null ? "" : ` · ${new Intl.NumberFormat(presentation.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(score)}`}</span>
@@ -146,11 +159,25 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <SectionFacts facts={regulationFacts} />
       </section>
 
+      <section aria-labelledby="verdict-heading" className={`${styles.section} ${styles.verdictSection}`} data-premium-section="casino-verdict" id="our-verdict">
+        <header><p>07</p><h2 id="verdict-heading">{verdictLabel}</h2></header>
+        <div className={styles.verdictBody}>
+          <div className={styles.verdictScore}><strong>{casino.name}</strong><span>{score === null ? copy.notVerified : new Intl.NumberFormat(presentation.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(score)}</span></div>
+          <p className={styles.finalVerdict}>{finalVerdict}</p>
+          <dl>{bestFor ? <div><dt>{messages.profile.bestFor}</dt><dd>{bestFor}</dd></div> : null}{watch ? <div><dt>{messages.profile.keepInView}</dt><dd>{watch}</dd></div> : null}</dl>
+        </div>
+      </section>
+
+      <section aria-labelledby="faq-heading" className={styles.profileFaq} data-premium-section="casino-faq" id="casino-faq">
+        <h2 id="faq-heading">{messages.profile.questions}</h2>
+        {faqItems.map((item) => <details key={item.question}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}
+      </section>
+
       <section className={styles.protectionSection}>
         <CompactProtection copy={copy} presentation={presentation} />
       </section>
 
-      <nav aria-label={messages.profile.relatedTitle} className={styles.relatedLinks}><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link><Link href={productHref(presentation, "/bonuses")}>{messages.profile.compareBonusTerms}</Link></nav>
+      <nav aria-label={messages.profile.relatedTitle} className={styles.relatedLinks}><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link>{commercialProductsAvailable ? <Link href={productHref(presentation, "/bonuses")}>{messages.profile.compareBonusTerms}</Link> : null}</nav>
 
       <section className={styles.sourceAccess} id="sources">
         <details>
