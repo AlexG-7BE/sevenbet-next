@@ -28,18 +28,18 @@ active English templates and zero campaigns, messages or provider events.
 
 ## Live provider and configuration audit
 
-| Check | Evidence at start | State |
+| Check | Current evidence | State |
 | --- | --- | --- |
 | Resend account access | Authenticated Founder account inspected | `PASS` |
 | Existing credentials | Two credentials; sending-only permission; last used 30 days ago | `PASS FOR SEND / NOT WEBHOOK ADMIN` |
 | Sending domain | `b4gamble.com`, `us-east-1`, sending enabled | `PASS` |
 | DKIM | Provider dashboard reports verified | `PASS` |
 | SPF return path | Provider dashboard reports MX and TXT verified | `PASS` |
-| Webhook endpoint | No webhook registered | `PENDING` |
-| Required events | Provider offers delivered, bounced, clicked, complained and suppressed | `AVAILABLE / NOT SUBSCRIBED` |
+| Webhook endpoint | Canonical endpoint registered and enabled | `PASS` |
+| Required events | Exactly delivered, bounced, clicked, complained and suppressed subscribed | `PASS` |
 | Provider unsubscribe event | Not supported in the Resend event selector; local signed unsubscribe remains authoritative | `NOT APPLICABLE` |
 | Production provider credential | `RESEND_API_KEY` exists in Vercel Production; protected value not disclosed | `PENDING LIVE SEND PROOF` |
-| Production sender/reply-to/webhook secret | Absent at start | `PENDING` |
+| Production sender/reply-to/webhook secret | Approved sender/reply-to and protected signing secret stored in Vercel Production | `PASS` |
 | Delivery switch | Present and exactly disabled at start | `PASS SAFE DEFAULT` |
 | Click tracking | Provider metrics/tracking is off | `KNOWN LIMITATION` |
 

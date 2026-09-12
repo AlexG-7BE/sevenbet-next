@@ -29,10 +29,11 @@ authorities.
 are applied, consented analytics is enabled and aggregate sanity passed. The
 12 September Founder instruction approves bounded Resend processing.
 
-**UNKNOWN / HOLD:** no lifecycle webhook, signing secret, complete sender
-configuration or live lifecycle delivery is established. Delivery is exactly
-disabled. The activation worker below is candidate source until its separate
-release and Production acceptance evidence exist.
+**UNKNOWN / HOLD:** the webhook and complete sender configuration now exist,
+but no candidate-worker deployment, credential acceptance or live lifecycle
+delivery is established. Delivery is exactly disabled. The activation worker
+below is candidate source until its separate release and Production acceptance
+evidence exist.
 
 ## Detected runtime architecture
 
@@ -149,8 +150,9 @@ exact-Bearer protected daily cron and then refreshes campaign states.
 
 **DETECTED live provider evidence:** `b4gamble.com`, DKIM and SPF return-path
 MX/TXT are verified and sending is enabled. Two existing keys are sending-only.
-No lifecycle webhook is registered and the required sender/reply-to/signing
-secret configuration is incomplete in Vercel Production.
+The canonical lifecycle webhook is enabled for the five required events; its
+signing secret plus the approved sender/reply-to are present only in Vercel
+Production and were not disclosed.
 
 **HOLD:** Founder processor authority now exists, but queued messages remain
 durable intent rather than delivery evidence until the candidate is deployed,

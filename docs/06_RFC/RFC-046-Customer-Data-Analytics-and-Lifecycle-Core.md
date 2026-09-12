@@ -419,10 +419,12 @@ from Programme/Help/vulnerability data.
 
 Live provider evidence on 12 September 2026 shows `b4gamble.com` verified and
 ready to send, with verified DKIM plus SPF return-path MX/TXT records. Both
-existing API keys are sending-only. This does not prove the new webhook is
-registered, its Production signing secret exists, all lifecycle variables are
-configured, or that a lifecycle message is delivered; those facts require
-live provider and Production evidence.
+existing API keys are sending-only. The exact lifecycle webhook is registered
+and enabled for delivered, bounced, clicked, complained and suppressed events;
+its signing secret, approved sender and reply-to are present only in Vercel
+Production. This does not prove the candidate worker is deployed, the existing
+credential can send lifecycle mail or that a lifecycle message is delivered;
+those facts require live Production evidence.
 
 The Founder has now explicitly authorised the bounded Resend transfer. The
 former approval hold is removed. Delivery nevertheless remains operationally

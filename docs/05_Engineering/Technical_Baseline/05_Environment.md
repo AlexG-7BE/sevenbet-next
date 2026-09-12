@@ -15,9 +15,9 @@ the existing protected jobs.
 bounded batch from the exact-Bearer protected daily cron, and incomplete or
 disabled runtime configuration leaves queued intent untouched. CI uses
 synthetic values and a disposable database. Production analytics and retention
-configuration are present; lifecycle delivery is disabled and the exact
-sender/reply-to/webhook secret, provider registration and live delivery remain
-incomplete.
+configuration are present. The exact sender/reply-to/webhook secret and
+provider registration are now present only in Production; lifecycle delivery
+is disabled and candidate-worker deployment/live delivery remain incomplete.
 
 ## Detected workflow
 

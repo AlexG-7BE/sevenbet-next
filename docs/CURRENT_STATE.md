@@ -31,13 +31,14 @@ Programme-reminder and consented broadcast/marketing processing. This removes
 the former missing-Founder-transfer-approval hold but does not prove provider
 configuration, delivery or every legal requirement. Live provider inspection
 shows the `b4gamble.com` domain, DKIM and SPF return-path records verified and
-two existing sending-only credentials. No lifecycle webhook exists yet;
-`LIFECYCLE_EMAIL_FROM`, `LIFECYCLE_EMAIL_REPLY_TO` and
-`RESEND_WEBHOOK_SECRET` are absent from Vercel Production; delivery remains
-exactly disabled. The isolated `codex/resend-production-activation` candidate
+two existing sending-only credentials. The canonical lifecycle webhook is now
+enabled for delivered, bounced, clicked, complained and suppressed events;
+its signing secret plus the approved sender and reply-to are stored in Vercel
+Production without disclosure. Delivery remains exactly disabled. The isolated
+`codex/resend-production-activation` candidate
 connects the bounded worker only to the protected daily cron and normalizes
-provider suppression. No Production email, customer fixture, Resend webhook or
-configuration mutation is claimed. See [RFC-046](06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md),
+provider suppression. No Production email, customer fixture, worker deployment
+or enabled delivery is claimed. See [RFC-046](06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md),
 the [technical baseline](05_Engineering/Technical_Baseline/16_Customer_Data_Analytics_Lifecycle_Core.md),
 the [operations runbook](06_Operations/Customer-Data-Analytics-Lifecycle-Core.md)
 and the [Resend activation record](06_Operations/Resend-Production-Activation-2026-09-12.md).

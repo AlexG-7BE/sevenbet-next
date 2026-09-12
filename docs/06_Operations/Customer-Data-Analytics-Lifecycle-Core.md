@@ -24,12 +24,13 @@ are verified.
 
 **LIVE PROVIDER FACTS:** `b4gamble.com`, DKIM, and SPF return-path MX/TXT are
 verified; sending is enabled in `us-east-1`; two existing credentials have
-sending-only permission. There is no lifecycle webhook. Resend supports the
-required delivered, bounced, clicked, complained and suppressed webhook
-events, but no provider unsubscribe event; B4GAMBLE's signed local unsubscribe
-flow remains the unsubscribe authority. Provider click tracking is currently
-off, so subscribing to `email.clicked` establishes receipt readiness but does
-not create a live click event by itself.
+sending-only permission. The canonical lifecycle webhook is enabled for the
+required delivered, bounced, clicked, complained and suppressed events, and
+its secret plus the approved sender/reply-to are stored only in Vercel
+Production. Resend offers no provider unsubscribe event; B4GAMBLE's signed
+local unsubscribe flow remains the unsubscribe authority. Provider click
+tracking is currently off, so the `email.clicked` subscription establishes
+receipt readiness but does not create a live click event by itself.
 
 ## 2. Architecture and authority
 
