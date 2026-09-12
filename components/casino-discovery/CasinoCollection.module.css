@@ -1,13 +1,13 @@
 .collection { color:#11100f; }
 .controls { align-items:end; border-bottom:1px solid rgba(17,16,15,.16); display:grid; gap:20px; grid-template-columns:minmax(230px,.55fr) minmax(0,1fr); padding-bottom:20px; }
 .controls label { display:grid; gap:8px; }
-.controls label span { font-size:.7rem; font-weight:850; letter-spacing:.1em; text-transform:uppercase; }
+.controls label span { font-size:.75rem; font-weight:850; letter-spacing:.1em; text-transform:uppercase; }
 .controls input { appearance:none; background:#fff; border:1px solid rgba(17,16,15,.3); border-radius:0; color:#11100f; font:inherit; min-height:48px; padding:10px 14px; width:100%; }
 .controls input:focus-visible,.viewRail button:focus-visible,.actions a:focus-visible { outline:3px solid #777500; outline-offset:3px; }
 .viewRail { display:flex; gap:8px; justify-content:flex-end; overflow-x:auto; padding:3px; }
 .viewRail button { background:transparent; border:1px solid rgba(17,16,15,.24); border-radius:999px; color:inherit; cursor:pointer; flex:0 0 auto; font:inherit; font-size:.75rem; font-weight:850; min-height:44px; padding:10px 16px; }
 .viewRail button[aria-selected="true"] { background:#bedb39; border-color:#11100f; box-shadow:0 0 0 2px #f7f4ed,0 0 0 3px #11100f; }
-.count { color:#6b6961; font-size:.72rem; font-weight:750; margin:16px 0; text-transform:uppercase; }
+.count { color:#6b6961; font-size:.75rem; font-weight:750; margin:16px 0; text-transform:uppercase; }
 .cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
 .card { background:#fbfaf5; border-bottom:1px solid rgba(17,16,15,.15); display:flex; flex-direction:column; gap:22px; min-width:0; padding:32px; }
 .card:nth-child(odd) { border-right:1px solid rgba(17,16,15,.15); }
@@ -21,7 +21,7 @@
 .actions { align-items:center; display:flex; flex-wrap:wrap; gap:10px 18px; margin-top:auto; }
 .actions > a:first-child { min-height:48px; }
 .actions > a:not(:first-child) { align-items:center; color:inherit; display:inline-flex; font-size:.76rem; font-weight:800; min-height:44px; text-decoration:underline; text-underline-offset:4px; }
-.reviewOnly { align-items:center; background:#ebe8df; display:inline-flex; font-size:.7rem; font-weight:850; min-height:44px; padding:10px 14px; text-transform:uppercase; }
+.reviewOnly { align-items:center; background:#ebe8df; display:inline-flex; font-size:.75rem; font-weight:850; min-height:44px; padding:10px 14px; text-transform:uppercase; }
 .empty { background:#11100f; color:#f8f7f1; padding:32px; }
 @media (max-width:800px) {
   .controls { align-items:start; grid-template-columns:1fr; }

@@ -480,8 +480,8 @@
 .hero h1 { font-size:clamp(3rem,6.4vw,5.9rem); }
 .directory { padding:64px 0 84px; }
 .commercialFooterNote { align-items:center; border-top:1px solid rgba(16,15,15,.16); display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:34px; padding-top:18px; }
-.commercialFooterNote > p { color:#66645d; font-size:.72rem; line-height:1.5; margin:0; }
-.commercialFooterNote > a { font-size:.72rem; font-weight:800; min-height:44px; align-items:center; display:inline-flex; text-decoration:underline; text-underline-offset:4px; }
+.commercialFooterNote > p { color:#66645d; font-size:.75rem; line-height:1.5; margin:0; }
+.commercialFooterNote > a { font-size:.75rem; font-weight:800; min-height:44px; align-items:center; display:inline-flex; text-decoration:underline; text-underline-offset:4px; }
 .empty { background:var(--night); color:var(--white); padding:32px; }
 .empty h2 { font-size:clamp(1.8rem,5vw,3rem); margin:0; text-transform:uppercase; }
 .empty p { max-width:52ch; opacity:.7; }

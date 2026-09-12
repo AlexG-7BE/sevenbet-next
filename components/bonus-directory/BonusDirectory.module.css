@@ -330,8 +330,8 @@
 }
 
 .commercialFooterNote { align-items:center; border-top:1px solid rgba(16,15,15,.16); display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:34px; padding-top:18px; }
-.commercialFooterNote > p { color:var(--metal); font-size:.72rem; line-height:1.5; margin:0; }
-.commercialFooterNote > a { align-items:center; display:inline-flex; font-size:.72rem; font-weight:800; min-height:44px; text-decoration:underline; text-underline-offset:4px; }
+.commercialFooterNote > p { color:var(--metal); font-size:.75rem; line-height:1.5; margin:0; }
+.commercialFooterNote > a { align-items:center; display:inline-flex; font-size:.75rem; font-weight:800; min-height:44px; text-decoration:underline; text-underline-offset:4px; }
 @media (max-width:760px) {
   .directorySection { padding:42px 0 58px; }
   .errorDirectorySection { padding-top:calc(105px + env(safe-area-inset-top)); }

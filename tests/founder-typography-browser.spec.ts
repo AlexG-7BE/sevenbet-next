@@ -133,7 +133,7 @@ test("final public routes keep sub-12 text decorative-only and remain overflow-f
   }
 });
 
-test("Casinos and Bonuses filter fields use the functional scale at every Founder viewport", async ({ browser }) => {
+test("Commercial search, view tabs and material facts use the functional scale at every Founder viewport", async ({ browser }) => {
   test.setTimeout(12 * 60_000);
   for (const viewport of viewports) {
     const context = await browser.newContext({ viewport, isMobile: viewport.width <= 430 });
@@ -141,37 +141,18 @@ test("Casinos and Bonuses filter fields use the functional scale at every Founde
 
     await page.goto(`${baseUrl}/casinos?visualFixture=true`, { waitUntil: "networkidle" });
     await expect(page.locator('[data-runtime-renderer="casinos"]')).toHaveCount(1);
-    if (viewport.width <= 430) {
-      await page.getByRole("button", { name: /Filters/i }).click();
-      await expectMinimum(page.getByRole("dialog", { name: /Filter Casinos/i }).locator("select,input"), 16, `mobile casino fields at ${viewport.width}px`);
-      await page.keyboard.press("Escape");
-    } else {
-      await expectMinimum(page.locator('form[action$="/casinos"]').first().locator("select,input"), 15, `desktop casino fields at ${viewport.width}px`);
-    }
+    await expectMinimum(page.locator('input[name="casino-search"]'), 16, `casino name search at ${viewport.width}px`);
+    await expectMinimum(page.locator('[data-runtime-renderer="casinos"] [role="tab"]'), 12, `casino view tabs at ${viewport.width}px`);
+    await expectMinimum(page.locator("[data-commercial-casino-card] dl dt"), 12, `casino fact labels at ${viewport.width}px`);
+    await expectMinimum(page.locator("[data-commercial-casino-card] dl dd"), 14, `casino fact values at ${viewport.width}px`);
     await expectNoOverflow(page, `Casinos overflow at ${viewport.width}px`);
 
     await page.goto(`${baseUrl}/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
     await expect(page.locator('[data-runtime-renderer="bonuses"]')).toHaveCount(1);
     await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
-    await expectMinimum(page.locator('section[aria-labelledby="bonus-shortlist-title"] dl div'), 14, `Top 3 terms at ${viewport.width}px`);
-    await expectMinimum(page.locator('section[aria-labelledby="bonus-shortlist-title"] [class*="actions"] :is(a,button,span)'), 14, `Top 3 actions at ${viewport.width}px`);
-    await expectMinimum(page.locator('[class*="calculatorControls"] :is(legend,label)'), 14, `calculator controls at ${viewport.width}px`);
-    await expectMinimum(page.locator('[class*="calculatorOutput"] dt'), 14, `calculator result labels at ${viewport.width}px`);
-    await expectMinimum(page.locator('[class*="calculatorOutput"] > p'), 14, `calculator explanation at ${viewport.width}px`);
-    if (viewport.width <= 430) {
-      await page.getByRole("button", { name: /Filters/i }).click();
-      await expectMinimum(page.getByRole("dialog", { name: /Filter Bonuses/i }).locator("select,input"), 16, `mobile bonus fields at ${viewport.width}px`);
-      await page.keyboard.press("Escape");
-    } else {
-      await expectMinimum(page.locator('form[action$="/bonuses"]').first().locator("select,input"), 15, `desktop bonus fields at ${viewport.width}px`);
-    }
-    if (viewport.width <= 430) {
-      await expectMinimum(page.locator('article[class*="comparisonRow"] [class*="compactTerms"] dt'), 13, `mobile bonus comparison labels at ${viewport.width}px`);
-      await expectMinimum(page.locator('article[class*="comparisonRow"] [class*="compactTerms"] dd'), 14, `mobile bonus comparison values at ${viewport.width}px`);
-    } else {
-      await expectMinimum(page.locator('article[class*="comparisonRow"] [class*="compactTerms"] dt'), 13, `bonus comparison labels at ${viewport.width}px`);
-      await expectMinimum(page.locator('article[class*="comparisonRow"] [class*="compactTerms"] dd'), 14, `bonus comparison values at ${viewport.width}px`);
-    }
+    await expectMinimum(page.locator('[data-runtime-renderer="bonuses"] [role="tab"]'), 12, `bonus view tabs at ${viewport.width}px`);
+    await expectMinimum(page.locator("[data-commercial-bonus-card] dl dt"), 12, `bonus fact labels at ${viewport.width}px`);
+    await expectMinimum(page.locator("[data-commercial-bonus-card] dl dd"), 14, `bonus fact values at ${viewport.width}px`);
     await expectNoOverflow(page, `Bonuses overflow at ${viewport.width}px`);
     await context.close();
   }

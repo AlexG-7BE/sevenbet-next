@@ -1,16 +1,16 @@
 .score { display: inline-flex; align-items: baseline; gap: 2px; color: inherit; white-space: nowrap; }
 .score strong { font-size: 1.5rem; line-height: 1; letter-spacing: -.045em; }
-.score small { font-size: .65rem; font-weight: 800; opacity: .66; }
+.score small { font-size: .75rem; font-weight: 800; opacity: .66; }
 .badges { display: flex; flex-wrap: wrap; gap: 6px; }
-.badges span { border: 1px solid currentColor; border-radius: 999px; font-size: .64rem; font-weight: 850; letter-spacing: .045em; line-height: 1; padding: 7px 9px; text-transform: uppercase; }
+.badges span { border: 1px solid currentColor; border-radius: 999px; font-size: .75rem; font-weight: 850; letter-spacing: .045em; line-height: 1; padding: 7px 9px; text-transform: uppercase; }
 .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
 .facts div { border-left: 1px solid color-mix(in srgb, currentColor 22%, transparent); min-width: 0; padding: 3px 10px; }
 .facts div:first-child { border-left: 0; padding-left: 0; }
-.facts dt { font-size: .66rem; font-weight: 760; letter-spacing: .045em; opacity: .62; text-transform: uppercase; }
+.facts dt { font-size: .75rem; font-weight: 760; letter-spacing: .045em; opacity: .62; text-transform: uppercase; }
 .facts dd { font-size: .9rem; font-weight: 850; line-height: 1.2; margin: 5px 0 0; overflow-wrap: anywhere; }
 .reviewLink { color: inherit; display: inline-flex; font-size: .76rem; font-weight: 800; min-height: 44px; align-items: center; text-decoration: underline; text-underline-offset: 4px; }
 .reviewLink:focus-visible, .protection a:focus-visible { outline: 3px solid #bedb39; outline-offset: 3px; }
-.protection { font-size: .72rem; line-height: 1.5; margin: 0; opacity: .78; }
+.protection { font-size: .75rem; line-height: 1.5; margin: 0; opacity: .78; }
 .protection a { color: inherit; font-weight: 800; }
 @media (max-width: 520px) {
   .facts { grid-template-columns: 1fr; }
