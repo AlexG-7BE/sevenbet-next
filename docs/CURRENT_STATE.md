@@ -4,15 +4,15 @@
 **Evidence date:** 12 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `e4268c9031cdf92704c529225ef71edcb16d20a5`
-**Verified post-release runtime baseline SHA:** `e4268c9031cdf92704c529225ef71edcb16d20a5`
-**Verified post-release runtime deployment:** Ready; `dpl_GnfsYABERTGLeQTDzKkNfdfg41xw`
+**Current Production application SHA (live provider evidence):** `dea4476a5681129ad67ce0d8cbb1d410e3b4ed10`
+**Verified post-release runtime baseline SHA:** `dea4476a5681129ad67ce0d8cbb1d410e3b4ed10`
+**Verified post-release runtime deployment:** Ready fail-closed redeploy; `dpl_XfWtrA94y9FkypcueURb54dzUWUk`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Customer Data, Analytics & Lifecycle Core v1 — Production core verified; Resend activation pending
+## Customer Data, Analytics & Lifecycle Core v1 — Resend code/provider ready; delivery on HOLD
 
 **VERIFIED IN PRODUCTION, 12 September 2026:** PR #269 merged normally as
 `e4268c9031cdf92704c529225ef71edcb16d20a5`; Ready deployment
@@ -25,7 +25,7 @@ sanity found three canonical users, zero normalized-email duplicates, five
 active English templates, no campaigns/messages/provider events and no
 integrity defect; no email addresses were emitted.
 
-**RESEND ACTIVATION PENDING:** the explicit 12 September 2026 Founder decision
+**RESEND ACTIVATION HOLD:** the explicit 12 September 2026 Founder decision
 approves Resend for bounded account, transactional, welcome, consented
 Programme-reminder and consented broadcast/marketing processing. This removes
 the former missing-Founder-transfer-approval hold but does not prove provider
@@ -34,11 +34,21 @@ shows the `b4gamble.com` domain, DKIM and SPF return-path records verified and
 two existing sending-only credentials. The canonical lifecycle webhook is now
 enabled for delivered, bounced, clicked, complained and suppressed events;
 its signing secret plus the approved sender and reply-to are stored in Vercel
-Production without disclosure. Delivery remains exactly disabled. The isolated
-`codex/resend-production-activation` candidate
-connects the bounded worker only to the protected daily cron and normalizes
-provider suppression. No Production email, customer fixture, worker deployment
-or enabled delivery is claimed. See [RFC-046](06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md),
+Production without disclosure. PR #271 merged normally as
+`dea4476a5681129ad67ce0d8cbb1d410e3b4ed10`; its exact-head checks passed and
+its bounded worker is live behind the exact delivery gate. A Node.js 24 smoke
+passed all nine read-only routes, the canonical webhook rejected an unsigned
+event with `401 INVALID_SIGNATURE`, and the inspected aggregate log window had
+zero warning, error or fatal console records.
+
+The six live acceptance cases could not be completed safely: the Production
+database editor requires interactive authenticator/passkey re-verification and
+no authenticated B4GAMBLE staff session was available. No fixture or email was
+created, Resend still showed no sends/events, and delivery was restored to
+exact `false` in fail-closed deployment
+`dpl_XfWtrA94y9FkypcueURb54dzUWUk`. Overall activation remains `HOLD` until an
+authorised operator provides those access conditions and all six cases pass.
+See [RFC-046](06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md),
 the [technical baseline](05_Engineering/Technical_Baseline/16_Customer_Data_Analytics_Lifecycle_Core.md),
 the [operations runbook](06_Operations/Customer-Data-Analytics-Lifecycle-Core.md)
 and the [Resend activation record](06_Operations/Resend-Production-Activation-2026-09-12.md).
