@@ -323,7 +323,10 @@ test("localized mobile tab rails and focused profile navigation stay bounded", a
   await expect(page.locator("[data-commercial-casino-card]")).toHaveCount(10);
 
   await page.goto(`${baseUrl}/de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
-  await expectWrappedControlContainment(page.getByRole("navigation", { name: messages.profile.relatedTitle }), "a");
+  const profileNav = page.locator("[data-casino-section-nav]");
+  await expectWrappedControlContainment(profileNav, "a");
+  await expect(profileNav.locator("a")).toHaveCount(4);
+  await expect(page.getByRole("navigation", { name: messages.profile.relatedTitle })).toHaveCount(0);
 });
 
 test("localized bonus facts stay bounded and omit payout evidence", async ({ page }) => {
