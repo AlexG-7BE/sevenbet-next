@@ -188,7 +188,7 @@ test("casino review stays readable through the concise Review Only decision stat
   await open(page, "/casino/demo-northstar?visualFixture=true");
   await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
   expect(await page.locator("main section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
-    "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "sources",
+    "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "our-verdict", "casino-faq", "sources",
   ]);
   await expect(page.getByText("Review only", { exact: true })).toHaveCount(2);
   await expect(page.locator("[data-casino-decision-bar]")).toHaveCount(0);

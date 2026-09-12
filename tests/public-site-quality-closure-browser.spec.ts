@@ -454,7 +454,7 @@ test("Spanish empty-state actions remain visually distinct", async ({ browser })
   try {
     await gotoOk(page, "/es/best-offers");
     const messages = productPageMessages("es-ES");
-    const methodology = page.getByRole("link", { name: messages.common.reviewMethodology, exact: true });
+    const methodology = page.getByRole("link", { name: messages.bestOffers.rankingLink, exact: true });
     const reviews = page.getByRole("link", { name: messages.common.browseReviews, exact: true });
     await expect(methodology).toBeVisible();
     await expect(reviews).toBeVisible();
@@ -469,7 +469,7 @@ test("Spanish empty-state actions remain visually distinct", async ({ browser })
         : Math.max(second.y - (first.y + first.height), first.y - (second.y + second.height));
       expect(gap, `ES Best Offers ${rowsOverlap ? "horizontal" : "vertical"} action gap`).toBeGreaterThanOrEqual(rowsOverlap ? 12 : 8);
     }
-    await expectCriticalTextFits(page, ['[data-runtime-renderer="best-offers"] #shortlist'], "ES Best Offers empty state");
+    await expectCriticalTextFits(page, ['[data-commercial-market-state="editorial-only"]'], "ES Best Offers editorial-only state");
     await expectNoDocumentOverflow(page, "ES Best Offers 390x844");
   } finally {
     await context.close();

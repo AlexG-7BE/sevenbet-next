@@ -148,7 +148,7 @@ for (const viewport of [
     expect(geometry.sectionsInViewport).toBe(true);
     expect(geometry.horizontalOverflow).toBe(0);
     expect(await profile.locator("section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
-      "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "sources",
+      "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "our-verdict", "casino-faq", "sources",
     ]);
     await expect(profile.getByText("Review only", { exact: true })).toHaveCount(2);
     await expect(profile.locator("[data-casino-decision-bar]")).toHaveCount(0);

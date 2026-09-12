@@ -264,7 +264,7 @@ test("shared casino profile keeps the concise decision sequence and Review Only 
 
     const profile = page.locator('[data-runtime-renderer="casino-review"]');
     expect(await profile.locator("section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
-      "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "sources",
+      "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "our-verdict", "casino-faq", "sources",
     ]);
     await expect(profile.locator("[data-casino-decision-bar]"), `${viewport.width}px non-governed sticky action`).toHaveCount(0);
     await expect(profile.locator('a[href^="/r/"]'), `${viewport.width}px non-governed referral`).toHaveCount(0);
