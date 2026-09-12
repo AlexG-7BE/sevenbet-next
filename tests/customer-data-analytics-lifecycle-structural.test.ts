@@ -167,7 +167,7 @@ test("consent, ingestion, unsubscribe, webhook, and cron public mutations fail c
   assert.doesNotMatch(cron, /ResendLifecycleEmailProvider|\.send\(/);
 });
 
-test("email delivery remains provider-abstracted, idempotent, and invoked only by the protected lifecycle worker", () => {
+test("email delivery remains provider-abstracted, idempotent, and invoked only by approved server authorities", () => {
   const provider = source("lib/email/provider.server.ts");
   assert.match(provider, /interface LifecycleEmailProvider/);
   assert.match(provider, /Idempotency-Key/);
@@ -186,7 +186,9 @@ test("email delivery remains provider-abstracted, idempotent, and invoked only b
 
   const runtimeFiles = ["app", "components", "lib/customers", "lib/auth"]
     .flatMap(filesUnder)
-    .filter((path) => /\.(?:ts|tsx)$/.test(path) && path !== "lib/email/service.server.ts");
+    .filter((path) => /\.(?:ts|tsx)$/.test(path)
+      && path !== "lib/email/service.server.ts"
+      && path !== "lib/auth/config.ts");
   for (const file of runtimeFiles) {
     const text = source(file);
     assert.doesNotMatch(text, /\b(?:processQueuedEmailMessage|processQueuedEmailBatch|sendAuthEmail|queueAndProcessWelcomeEmail)\b/, file);
@@ -195,6 +197,8 @@ test("email delivery remains provider-abstracted, idempotent, and invoked only b
   assert.match(source("lib/email/lifecycle-queue-cron.server.ts"), /processQueuedEmailBatch/);
   const authConfig = source("lib/auth/config.ts");
   assert.match(authConfig, /customerAuthDatabaseHooks/);
+  assert.match(authConfig, /sendResetPassword:[\s\S]*sendAuthEmail[\s\S]*templateKey: "PASSWORD_RESET"/);
+  assert.doesNotMatch(authConfig, /processQueuedEmailMessage|processQueuedEmailBatch|queueEmailMessage/);
   assert.match(source("lib/customers/auth-hooks.server.ts"), /normalizeCustomerEmail/);
 });
 

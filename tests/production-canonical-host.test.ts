@@ -5,6 +5,7 @@ import { NextRequest } from "next/server";
 import {
   PRODUCTION_CANONICAL_ORIGIN,
   PRODUCTION_CRON_PATH,
+  PRODUCTION_LIFECYCLE_CRON_PATH,
   resolveRuntimeCanonicalHost,
 } from "../lib/auth/runtime-canonical-host";
 import { middleware } from "../middleware";
@@ -100,23 +101,25 @@ test("Production middleware uses a method-preserving permanent redirect before r
   }
 });
 
-test("the exact authenticated Vercel Cron path bypasses public-host canonicalisation", () => {
+test("the exact authenticated Vercel Cron paths bypass public-host canonicalisation", () => {
   for (const origin of [
     "https://sevenbet-next.vercel.app",
     "https://sevenbet-next-hvvjqn3nd-alexg-7bes-projects.vercel.app",
   ]) {
-    assert.deepEqual(
-      resolveRuntimeCanonicalHost(`${origin}${PRODUCTION_CRON_PATH}`, productionEnvironment),
-      { kind: "next" },
-    );
-    assert.deepEqual(
-      resolveRuntimeCanonicalHost(`${origin}${PRODUCTION_CRON_PATH}/unexpected`, productionEnvironment),
-      {
-        kind: "redirect",
-        location: `${PRODUCTION_CANONICAL_ORIGIN}${PRODUCTION_CRON_PATH}/unexpected`,
-        status: 308,
-      },
-    );
+    for (const path of [PRODUCTION_CRON_PATH, PRODUCTION_LIFECYCLE_CRON_PATH]) {
+      assert.deepEqual(
+        resolveRuntimeCanonicalHost(`${origin}${path}`, productionEnvironment),
+        { kind: "next" },
+      );
+      assert.deepEqual(
+        resolveRuntimeCanonicalHost(`${origin}${path}/unexpected`, productionEnvironment),
+        {
+          kind: "redirect",
+          location: `${PRODUCTION_CANONICAL_ORIGIN}${path}/unexpected`,
+          status: 308,
+        },
+      );
+    }
   }
 });
 

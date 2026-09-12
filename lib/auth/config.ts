@@ -90,6 +90,10 @@ export function createSevenBetAuth({
     emailAndPassword: {
       enabled: true,
       autoSignIn,
+      sendResetPassword: async ({ user, url }) => {
+        const { sendAuthEmail } = await import("@/lib/email/service.server");
+        await sendAuthEmail({ user, actionUrl: url, templateKey: "PASSWORD_RESET" });
+      },
     },
     account: {
       encryptOAuthTokens: true,

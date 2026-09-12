@@ -12,6 +12,7 @@ type RuntimeCanonicalHostEnvironment = {
 
 export const PRODUCTION_CANONICAL_ORIGIN = "https://b4gamble.com";
 export const PRODUCTION_CRON_PATH = "/api/internal/cron/programme-expiry-purge";
+export const PRODUCTION_LIFECYCLE_CRON_PATH = "/api/internal/cron/customer-lifecycle";
 
 export type RuntimeCanonicalHostDecision =
   | { kind: "next" }
@@ -38,8 +39,11 @@ function resolveProductionCanonicalHost(
 
   // Vercel invokes project Cron Jobs on a generated Production deployment
   // hostname. Redirecting that authenticated request to the public canonical
-  // host prevents the purge handler from running.
-  if (requested.pathname === PRODUCTION_CRON_PATH) return { kind: "next" };
+  // host prevents the authenticated handler from running.
+  if (
+    requested.pathname === PRODUCTION_CRON_PATH
+    || requested.pathname === PRODUCTION_LIFECYCLE_CRON_PATH
+  ) return { kind: "next" };
 
   const canonical = new URL(PRODUCTION_CANONICAL_ORIGIN);
   if (
