@@ -132,9 +132,9 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
       <section className={styles.whyPicked} data-premium-section="best-offers-method" data-nav-theme="cream"><div className={styles.shell}>
         <div><p className={styles.lightKicker}>{presentation.language === "en" ? "How we choose" : messages.bestOffers.whyTitle}</p><h2>{messages.common.materialTerms} · {messages.common.sourceStatus}</h2><p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></p></div>
         <ol>
-          <li><span>01</span><div><strong>{messages.common.availability}</strong><p>{formatProductMessage(messages.bestOffers.heroCopy, { market })}</p></div></li>
+          <li><span>01</span><div><strong>{messages.common.availability}</strong><p>{messages.bestOffers.whyCopy}</p></div></li>
           <li><span>02</span><div><strong>{messages.common.materialTerms}</strong><p>{messages.bonuses.methodCopy}</p></div></li>
-          <li><span>03</span><div><strong>{messages.common.sourceStatus}</strong><p>{messages.bestOffers.whyCopy}</p></div></li>
+          <li><span>03</span><div><strong>{messages.common.sourceStatus}</strong><p>{messages.bonuses.proofSources}</p></div></li>
         </ol>
       </div></section>
       <section className={styles.faq} data-premium-section="best-offers-faq"><div className={styles.faqGrid}><h2>{messages.bestOffers.beforeClick}</h2>
