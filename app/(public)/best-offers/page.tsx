@@ -39,8 +39,13 @@ const loadBestOffersPageData = cache(async () => {
   return { commercialAuthority, presentation, result };
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { presentation, result } = await loadBestOffersPageData();
+export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
+  const raw = await searchParams;
+  const loaded = await loadBestOffersPageData();
+  const fixtureEnabled = isCommercialUxVisualDataFixture(raw.visualFixture);
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, fixtureEnabled);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
+  const result = withHandoffOfferData(loaded.result, fixtureEnabled, presentation.locale, fixtureMarket);
   const messages = productPageMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const unavailable = result.status === "unavailable";

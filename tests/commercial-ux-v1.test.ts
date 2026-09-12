@@ -257,12 +257,16 @@ test("commercial routes remove the obsolete interaction systems from rendered pa
   const best = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
   const casinos = readFileSync("app/(public)/casinos/page.tsx", "utf8");
   const bonuses = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
+  const profileRoute = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
   assert.doesNotMatch(best, /Worth a look|ContextualComparison|advanced filter/i);
   assert.doesNotMatch(casinos, /CuratedCasinoShortlist|DiscoveryControls|ActiveDiscoveryFilters|ContextualComparison/);
   assert.doesNotMatch(bonuses, /CuratedBonusShortlist|BonusFilters|ActiveBonusFilters|BonusPagination|BonusCalculator/);
   assert.doesNotMatch(bonuses, /What a bonus really costs|More Filters|Sort control/i);
   assert.doesNotMatch(profile, /marketProfiles\[0\]/);
+  for (const route of [best, casinos, bonuses, profileRoute]) {
+    assert.ok((route.match(/withCommercialUxFixturePresentation/g) ?? []).length >= 3, "metadata and page body must share the Preview fixture presentation");
+  }
 });
 
 test("Commercial UX market fixtures are Preview-only, allowlisted, and presentation-only", () => {

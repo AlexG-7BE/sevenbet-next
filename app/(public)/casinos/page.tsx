@@ -65,7 +65,10 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const raw = await searchParams;
   const query = parseCasinoDiscoveryQuery(raw);
   const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
-  const { presentation, result } = await loadCasinoCollection(visualFixture);
+  const loaded = await loadCasinoCollection(visualFixture);
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, visualFixture);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
+  const result = withHandoffCasinoDiscoveryData(loaded.result, visualFixture, presentation.locale, collectionQuery(), fixtureMarket);
   const messages = productPageMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const containsDemo = result.inventoryMode !== "PUBLISHED_ONLY";

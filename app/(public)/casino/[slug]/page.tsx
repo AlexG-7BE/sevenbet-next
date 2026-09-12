@@ -62,10 +62,13 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const { slug } = await params;
   const raw = await searchParams;
   const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
-  const { casino, editorialResult, presentation } = await loadCasinoPage(slug, visualFixture);
+  const loaded = await loadCasinoPage(slug, visualFixture);
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, visualFixture);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
+  const casino = loaded.casino ? withHandoffCasinoProfileData(loaded.casino, visualFixture, presentation.locale, fixtureMarket) : null;
   const messages = productPageMessages(presentation.locale);
   if (!casino) return productMetadata({ presentation, pathname: `/casino/${slug}`, title: messages.profile.unavailableTitle, description: messages.profile.unavailableDescription, robots: { index: false, follow: false }, openGraphType: "article" });
-  const base = casinoProfileMetadata(casino, profileEditorialDocument(editorialResult, casino.id));
+  const base = casinoProfileMetadata(casino, profileEditorialDocument(loaded.editorialResult, casino.id));
   const title = `${casino.name} ${messages.profile.review} | B4GAMBLE`;
   const description = `${messages.profile.currentReview}: ${casino.name}. ${casino.summary || messages.common.originalSourceCopy}`;
   return productMetadata({

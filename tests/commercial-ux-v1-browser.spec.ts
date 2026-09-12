@@ -123,9 +123,11 @@ test("casino review is concise, facts-first and suppresses non-governed CTA syst
 });
 
 test("Preview market inspection is allowlisted, market-aware, and always non-actionable", async ({ page }) => {
-  for (const market of ["DK", "EE", "LV"]) {
+  for (const [market, displayName] of [["DK", "Denmark"], ["EE", "Estonia"], ["LV", "Latvia"]] as const) {
     const response = await page.goto(`${baseUrl}/en/casinos?visualFixture=true&qaMarket=${market}`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
+    await expect(page.locator("body")).toContainText(new RegExp(displayName, "i"));
+    expect(await page.title()).not.toContain("KZ");
     await expect(page.locator('[data-commercial-casino-card]')).toHaveCount(10);
     await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
     const reviewHref = await page.locator('[data-commercial-casino-card] a[href*="/casino/"]').first().getAttribute("href");

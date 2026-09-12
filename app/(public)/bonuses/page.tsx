@@ -40,8 +40,13 @@ const loadBonusDirectory = cache(async () => {
 });
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const legacyQuery = parsePublicOfferQuery(await searchParams, 100);
-  const { presentation, result } = await loadBonusDirectory();
+  const raw = await searchParams;
+  const legacyQuery = parsePublicOfferQuery(raw, 100);
+  const loaded = await loadBonusDirectory();
+  const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
+  const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, visualFixture);
+  const presentation = withCommercialUxFixturePresentation(loaded.presentation, fixtureMarket);
+  const result = withHandoffBonusDirectoryData(loaded.result, visualFixture, presentation.locale, parsePublicOfferQuery({}, 100), fixtureMarket);
   const messages = productPageMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const unavailable = result.inventoryMode === "UNAVAILABLE";
