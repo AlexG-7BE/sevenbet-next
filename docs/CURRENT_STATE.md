@@ -1,7 +1,7 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 13 September 2026
+**Evidence date:** 14 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
 **Current Production application SHA (live provider evidence):** `7fda5b3be20e69a0dfa41595a19aaffd3818391f`
@@ -12,9 +12,42 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Legacy demo Casino retirement — review only, not executed
+## Commercial Core Simplification PR4 — affiliate lifecycle collapse ready for review
 
-**DETECTED IN THE RETIREMENT BRANCH, 13 September 2026:** a repository-wide
+**DETECTED IN THE PR4 BRANCH, 14 September 2026:** RFC-050 removes generic
+Affiliate lifecycle/status state from the public commercial authority plane.
+One exact canonical `MarketActivation` remains the business routing decision;
+Casino publication, coherent route bindings, safe/effective destination,
+current route health, legal permission and narrow factual GB evidence remain
+fail-closed. `AffiliateTrackingLink.active`, Network/Program/Offer status and
+archive fields, Program workflow/connection state and the old GB
+`commercialContract` aggregate are absent from CTA and controlled `/r`
+authority.
+
+GB now rechecks the exact route's Partner agreement, structured operator,
+licence, exact official domain, Program/Casino identity, Offer/Tracking
+ownership and effective dates, fresh tracking evidence, optional Bonus facts
+and controlled redirect contract. Lifecycle values can neither satisfy nor
+defeat that evidence chain. Canonical Partner registration no longer toggles
+those compatibility values, and obsolete historical activation/seed write
+entry points are retired. No migration or Production data write is part of
+PR4.
+
+**DETECTED, READ-ONLY PRODUCTION EVIDENCE:** committed code
+`72bdff959d5ae9e2fe59d18cdc32ae61e6689b94` compared the current and PR4
+semantics in a repeatable-read, database-enforced read-only transaction. It
+checked all 81 canonical routes (plus six inactive legacy `ZZ` rows): 81 were
+unchanged, with zero intended differences, unintended regressions, legal
+changes or technical changes. Production mutation was not performed. See
+[RFC-050](06_RFC/RFC-050-Affiliate-Lifecycle-Authority-Collapse.md) and the
+[PR4 runbook](06_Operations/Commercial-Core-PR4-Affiliate-Lifecycle-Collapse.md).
+
+**REVIEW ONLY:** PR4 is not merged or deployed.
+
+## Legacy demo Casino retirement — merged; Production deletion not executed
+
+**DETECTED IN CURRENT MAIN, 14 September 2026:** PR #281 merged the reviewed
+retirement implementation. Its repository-wide
 inventory traced the Production synthetic-Casino authority to the exact 25
 immutable RFC-012 identities and five internal-only affiliate graphs. A
 repeatable-read, read-only Production plan found all 25 Casinos still present
@@ -22,7 +55,7 @@ and `ARCHIVED`; the exact affiliate graph is present; no real Partner,
 commercial-route, media or CRM ownership conflict was detected. Plan SHA-256
 is `97dd77552657709bba4e80cbb86a13e8a69bc684f51293926e1ccd5d59948696`.
 
-**PROPOSED, NOT RELEASED:** the review branch removes the RFC-012 runtime
+**IMPLEMENTED IN MAIN, NOT EXECUTED IN PRODUCTION:** the merged code removes the RFC-012 runtime
 classifier, special public/commercial handling, seed/bootstrap/recovery paths,
 obsolete enablement flag and unneeded generated assets. Generic local/Preview
 visual-QA fixtures remain isolated from database identity and fail closed in
@@ -37,9 +70,9 @@ Truthful `AuditLog` history is deliberately retained. Separate Founder
 authority is required after independent review. See
 [Demo Casino Retirement](06_Operations/Demo-Casino-Retirement.md).
 
-## Commercial Core Simplification PR3 — exact routes implemented for review, not released
+## Commercial Core Simplification PR3 — merged; deployment not reverified here
 
-**DETECTED IN THE PR3 BRANCH, 13 September 2026:** RFC-049 implements one
+**DETECTED IN CURRENT MAIN, 14 September 2026:** PR #280 merged RFC-049 and its one
 central trusted-GEO-to-commercial-market normalization seam and one exact
 `MarketActivation` lookup for both public CTA and controlled `/r/...`
 resolution. Post-normalization parent fallback, active `ZZ` fallback,
@@ -67,10 +100,11 @@ fallback scope is also a blocker; ISO inventory, CRM and Partner market-support
 evidence cannot manufacture routes. Generic Production build verification
 remains read-only and fails before rollout when exact-route readiness is false.
 
-**NOT PRODUCTION EVIDENCE:** PR3 has not been merged or deployed, migration
-0040 has not been applied to Production, and the business-data operation has
-not been run on Production. Current Production route/materialization state is
-`UNKNOWN` until the separately authorised read-only plan is executed. See
+**DETECTED:** the PR4 read-only Production projector successfully evaluated 81
+canonical non-`ZZ` routes and found six inactive legacy `ZZ` rows. This proves
+the current data shape used by PR4; it does not independently certify PR3's
+historical migration/materialization/deployment procedure, which was not
+rerun in this work. See
 [RFC-049](06_RFC/RFC-049-Exact-Canonical-Commercial-Routes.md) and the
 [PR3 release runbook](06_Operations/Commercial-Core-PR3-Exact-Routes.md).
 

@@ -1,21 +1,34 @@
 # GB Commercial Partner Authority
 
-- **Status:** Implementation complete on COMM-01 delivery branch; Founder review required
-- **Decision:** [RFC-015](../06_RFC/RFC-015-GB-Commercial-Partner-Authority.md)
+- **Status:** RFC-050 lifecycle-collapse implementation is review-ready; not merged or deployed
+- **Decision:** [RFC-015](../06_RFC/RFC-015-GB-Commercial-Partner-Authority.md), as amended by [RFC-050](../06_RFC/RFC-050-Affiliate-Lifecycle-Authority-Collapse.md)
 - **Market authority:** [Great Britain Market Authority](Great-Britain-Market-Authority.md)
 - **Operating procedure:** [GB Partner Onboarding Runbook](../06_Operations/GB-Partner-Onboarding-Runbook.md)
 - **Research package:** [GB Partner Readiness Package](../08_Research/GB-Partner-Readiness-Package.md)
-- **Reconciled:** 2026-08-08
+- **Reconciled:** 2026-09-14
 
 ## Current outcome
 
-**Detected:** COMM-01 adds a server-owned GB commercial readiness authority over the existing affiliate models. It composes jurisdiction, partner agreement, structured operator/brand/casino, licence, exact domain, programme, offer, tracking-link, optional bonus and redirect facts. Every missing, stale, inconsistent or unknown required fact denies.
+**DETECTED:** RFC-050 retains the server-owned GB commercial readiness
+authority while removing generic Affiliate lifecycle from it. The exact
+canonical route supplies factual Program, Offer and TrackingLink evidence; the
+evaluator composes jurisdiction, Partner agreement, structured
+operator/brand/Casino, licence, exact domain, effective dates, tracking-link
+safety/freshness, optional Bonus and redirect facts. Every missing, stale,
+unsafe, inconsistent or unknown required fact denies.
 
-**Detected:** no Prisma model or migration was added. Partner agreement evidence uses the typed `AffiliateProgram.metadata.gbCommercialAuthority` namespace. Exact official-domain evidence uses a bounded repository store that is empty in Production code.
+**DETECTED:** PR4 adds no Prisma model or migration. Partner agreement evidence
+continues to use typed `AffiliateProgram.metadata.gbCommercialAuthority`.
+Exact official-domain evidence remains in the bounded repository store.
 
-**Detected:** policy `gb-2026-08-08.1` still sets `editorialAllowed=true`, `commercialAllowed=false` and `referralAllowed=false`. `AFFILIATE_REDIRECT_ENGINE_ENABLED` still defaults to false. No real partner, agreement, programme, offer, tracking destination or redirect was added.
+**DETECTED:** PR4 does not change jurisdiction policy, the controlled redirect
+kill switch or any evidence record. It changes only which existing facts may
+act as runtime authority.
 
-**Not verified:** Production affiliate and casino counts were not queried because no secure read-only Production database credential was established. Counts are not inferred from schema, local data or the RFC-012 temporary dataset.
+**DETECTED, READ ONLY:** the PR4 Production projector checked 81 canonical
+routes and found 81 unchanged outcomes, zero legal or technical changes and an
+empty difference list. Distribution evidence is recorded in the
+[PR4 runbook](../06_Operations/Commercial-Core-PR4-Affiliate-Lifecycle-Collapse.md).
 
 ## Repository evidence scope
 
@@ -23,25 +36,26 @@ The repository root was confirmed as `/Users/alex/Documents/Codex/2026-07-09/ns/
 
 The following classifications apply throughout this document:
 
-- **Detected:** directly supported by the active repository or an official primary source checked on 2026-08-08.
-- **Inferred:** an architectural conclusion drawn from detected repository evidence.
-- **Planned:** a future action that is not implemented or approved for activation.
-- **Not detected:** evidence was sought but not found; it must not be treated as implemented.
+- **DETECTED:** directly supported by the active repository or an official primary source checked on the stated evidence date.
+- **INFERRED:** an architectural conclusion drawn from detected repository evidence.
+- **PROPOSED:** a future action that is not implemented or approved for activation.
+- **UNKNOWN:** current evidence is insufficient for a factual conclusion.
+- **CONTRADICTION:** active evidence disagrees and requires reconciliation.
 
 ## Commercial authority map
 
 | Entity | Purpose | Source of truth | Current validation | Runtime consumer | Public exposure | Activation risk | Remaining gap |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Jurisdiction policy | GB capability ceiling | `lib/jurisdiction/policies/gb.ts` | Version, evidence IDs and validity window | Jurisdiction resolver and `/r` | Capability result only | A permissive change could enable evaluation | Separate Founder/Legal policy decision required |
-| Casino | Canonical editorial identity/domain | Prisma `Casino` | Publication, lifecycle, exact structured relations | Casino domain repository and readiness service | Governed editorial DTO | Legacy strings can disagree | Real canonical operator data not verified in Production |
-| Operator and brand | Legal/brand relationship | Prisma `CasinoOperator`, `CasinoBrand` | Structured IDs, lifecycle and brand-to-operator equality | GB readiness evaluator | Published operator context only | Name inference or relationship conflict | Real first-partner mapping absent |
-| Licence/evidence | GB remote-casino authority | `CasinoLicense`, `CasinoLicenseEvidence` | Exact accepted authority, GB scope, active state, official source, seven-day freshness | Existing GB operator evaluator | Published licence context only | Stale or unofficial evidence | Real Production inventory not verified |
+| Casino | Canonical editorial identity/domain | Prisma `Casino` | Publication, lifecycle, exact structured relations | Casino domain repository and readiness service | Governed editorial DTO | Legacy strings can disagree | Per-route structured identity must remain current |
+| Operator and brand | Legal/brand relationship | Prisma `CasinoOperator`, `CasinoBrand` | Structured IDs, lifecycle and brand-to-operator equality | GB readiness evaluator | Published operator context only | Name inference or relationship conflict | Per-route relationship must remain current |
+| Licence/evidence | GB remote-casino authority | `CasinoLicense`, `CasinoLicenseEvidence` | Exact accepted authority, GB scope, active state, official source, seven-day freshness | Existing GB operator evaluator | Published licence context only | Stale or unofficial evidence | Per-route validity remains required |
 | Exact domain evidence | Proves destination domain relationship | `gbCommercialDomainEvidenceRecords` | Exact normalized domain, exact IDs, official source, active state, seven-day freshness | GB readiness service | Never exposed | Incorrect or stale record could grant authority | Store intentionally empty |
-| Partner agreement | Proves real contractual permission | `AffiliateProgram.metadata.gbCommercialAuthority` | Versioned parser, active/effective state, 90-day review, market, required channel and identity | Programme/offer services and readiness evaluator | Never exposed | Content approval mistaken for outbound authority | No real agreement record |
-| Affiliate programme | Commercial owner and provider state | `AffiliateProgram` | Active, published, exact casino/operator, explicit GB, agreement, no GB auto-activation | Offer save/import and readiness evaluator | Availability only | Active database state mistaken for contract | Real programme absent |
-| Affiliate offer | Commercial terms and targeting | `AffiliateOffer` | Active/effective, exact programme/casino, explicit GB allow-list | Candidate resolver and readiness evaluator | Governed internal route only | Global targeting or stale terms | Real offer absent |
-| Tracking link | Server-owned destination | `AffiliateTrackingLink` | Active, HTTPS, explicit GB, `verifiedAt` and `lastCheckedAt` under seven days, effective dates | Candidate resolver and readiness evaluator | Raw URL never projected | Unsafe/stale destination | Real link absent |
-| Bonus | Significant-condition facts | `CasinoBonus` | Published/active/effective, headline value, eligibility, terms, conditions and freshness | Readiness evaluator when linked | Governed editorial terms | Incomplete or stale promotion | Legal approval and real terms absent |
+| Partner agreement | Proves real contractual permission | `AffiliateProgram.metadata.gbCommercialAuthority` | Versioned parser, active/effective state, 90-day review, market, required channel and identity | Programme/offer services and readiness evaluator | Never exposed | Content approval mistaken for outbound authority | Per-route current agreement required |
+| Affiliate Program | Partner/provider identity and agreement carrier | `AffiliateProgram` | Exact Casino/operator identity and current agreement; lifecycle/workflow/connection values are non-authoritative | Admin/provider writes and exact-route readiness evidence | Availability only | Lifecycle mistaken for contract | Evidence must remain exact and current |
+| Affiliate Offer | Commercial terms and effective window | `AffiliateOffer` | Exact Program/Casino binding and effective dates; status/GEO values are non-authoritative | Admin/provider facts and exact-route readiness evidence | Governed internal route only | Status mistaken for route authority | Real terms must remain current |
+| Tracking link | Server-owned destination endpoint | `AffiliateTrackingLink` | Exact Offer binding, credential-free HTTPS, effective dates, `verifiedAt` and `lastCheckedAt` under seven days | Exact canonical runtime and readiness evaluator | Raw URL never projected | Unsafe/stale destination | Current endpoint evidence required |
+| Bonus | Significant-condition facts | `CasinoBonus` | Published/active/effective, headline value, eligibility, terms, conditions and freshness | Readiness evaluator when linked | Governed editorial terms | Incomplete or stale promotion | Per-bound Bonus terms must remain current |
 | Redirect slug | Stable internal handoff | `AffiliateRedirectSlug` | Active, immutable casino ownership, current candidate and URL safety | `/r/[slug]` | Internal slug only | Stale rendered CTA used as authority | Engine remains disabled |
 | Payout economics | Internal reporting/reconciliation | Affiliate offer fields | Format/model validation only | Admin/reporting; never readiness or ranking | Not exposed in public DTOs | Commission-driven eligibility/ranking | Real negotiated economics unknown |
 
@@ -49,20 +63,23 @@ The following classifications apply throughout this document:
 
 The request-time path is:
 
-`/r/[slug]` → global kill switch → trusted Vercel country signal → jurisdiction policy → current stored redirect/candidate → GB commercial readiness → final URL validation → redirect or neutral unavailable recovery.
+`/r/[slug]` → global kill switch → trusted country signal → exact canonical
+`MarketActivation` → coherent route bindings/health → jurisdiction policy →
+GB factual readiness → final URL validation → redirect or neutral unavailable
+recovery.
 
 The final result is a strict conjunction. A prior render, Preview result, active database status, provider payload, affiliate-network listing, brand similarity or high payout cannot replace any authority.
 
 The central evaluator returns one `GbCommercialReadinessDecision` with independent `jurisdictionAuthority`, `partnerAuthority`, `operatorAuthority`, `domainAuthority`, `programAuthority`, `offerAuthority`, `trackingAuthority`, `bonusAuthority` and `redirectAuthority` booleans, plus `commercialReady`, `referralReady`, reason codes, `checkedAt`, evidence check time and the earliest `revalidateAt`. It returns deterministic internal reason codes grouped as:
 
 - jurisdiction commercial/referral deny;
-- programme state, market, casino and unsafe automatic activation;
+- Program/Casino and operator identity mismatch;
 - agreement missing, invalid, not effective, expired, stale, wrong market, required channel absent or identity mismatch;
 - structured operator/brand mismatch;
-- offer state, date, casino or GB targeting failure;
+- Offer effective-date or Casino-binding failure;
 - domain evidence missing, invalid, inactive, stale, white-label review or relationship mismatch;
 - underlying operator/licence evidence denial;
-- tracking-link state, URL, market, health, freshness or expiry failure;
+- tracking-link ownership, URL safety, health, freshness or expiry failure;
 - linked-bonus state, date, technical terms or freshness failure; and
 - redirect-contract failure.
 
@@ -109,9 +126,10 @@ Only official status `ACTIVE` can pass. `INACTIVE` denies. `WHITE_LABEL` is mode
 
 The source is the [UK Gambling Commission business register](https://www.gamblingcommission.gov.uk/public-register/businesses) and its [official downloadable business-licence data](https://www.gamblingcommission.gov.uk/public-register/businesses/download). Records are activation-sensitive code changes. No record may be added merely because a candidate appears in the register.
 
-## State-transition gates
+## Admin/provider lifecycle display
 
-The onboarding progression is an operational interpretation of existing state combinations, not a new persisted enum:
+The onboarding progression is an operational interpretation for backoffice
+coordination, not a persisted or runtime permission machine:
 
 | Operational stage | Existing state/evidence interpretation |
 | --- | --- |
@@ -120,24 +138,36 @@ The onboarding progression is an operational interpretation of existing state co
 | Agreement pending | Programme `DRAFT`; agreement absent/pending and non-authoritative |
 | Approved | External agreement approved/active, but programme remains non-public while setup is incomplete |
 | Technical setup | Draft/in-review programme, provider/account configuration and inactive offers/links |
-| Ready | Agreement and technical evidence pass; programme may be active with workflow `APPROVED`, but referral remains denied until published and policy/kill-switch authority exists |
-| Active | Programme `ACTIVE`, workflow `PUBLISHED`, connected where applicable, all runtime layers pass and separate policy/Founder activation exists |
-| Paused | Programme/offer `PAUSED`, suspended lifecycle or inactive link; referral denies immediately |
-| Terminated | Programme/offer `EXPIRED` or `ARCHIVED`; retained for audit and never selected |
+| Ready | Agreement and technical evidence appear complete for review; no route authority is implied |
+| Active | An exact canonical `MarketActivation` exists and every factual runtime layer passes; Affiliate labels may describe provider/Admin state only |
+| Paused | Admin/provider record indicates a pause; routing changes only through the canonical activation controller or an independent legal/technical blocker |
+| Terminated | Admin/provider record is retained for audit; every affected canonical route must be explicitly disabled rather than inferred from the label |
 
-An operational label never overrides the canonical database states or the request-time readiness decision.
+An operational label never overrides the exact canonical route or the
+request-time factual readiness decision.
 
 ### Programme
 
-A GB-supporting programme cannot be saved into `ACTIVE` or `PUBLISHED` activation state unless it has an exact casino, structured operator, coherent optional brand relation, matching operator identity and current agreement evidence. `trustedAutoActivation=true` is rejected for every GB-supporting programme.
+Admin writes continue to require an exact Casino, structured operator,
+coherent optional brand relation, matching operator identity and current
+agreement evidence before presenting a GB Program as active/published.
+`trustedAutoActivation=true` remains rejected for GB-supporting Programs. These
+are evidence-quality controls, not route authority.
 
 ### Offer
 
-An active offer under a GB-supporting programme requires the programme to be active/published, exact casino ownership, current agreement evidence explicitly containing `DIRECT_LINK`, explicit `ALLOW` targeting containing `GB`, and at least one active explicitly GB-scoped link with current verification and health evidence. Content-only agreement channels cannot authorize an active outbound offer. Draft offer/evidence preparation remains available before that channel is approved.
+Admin presentation of a GB Offer as active continues to require exact Casino
+ownership, current agreement evidence explicitly containing `DIRECT_LINK` and
+a recently verified safe TrackingLink. Content-only agreement channels cannot
+authorize outbound use. At runtime, the exact GB route supplies market scope;
+Program/Offer/Tracking status and GEO fields are ignored.
 
 ### Provider import
 
-Provider preview and repository apply independently calculate `allowAutoActivation = trustedAutoActivation && !supportsGb`. A GB-supporting provider record is projected and persisted as draft/inactive even when an unsafe historical trust flag is present. Provider status, connection success, webhook or payload never grants agreement/domain/licence authority.
+Provider preview/import may calculate and persist provider-facing lifecycle
+facts. A GB-supporting record remains protected from automatic activation.
+Provider status, connection success, webhook or payload never grants
+agreement/domain/licence or route authority.
 
 ### Bonus
 
@@ -169,7 +199,11 @@ The commercial authority imports no Active Control Programme, Moment Map, goals,
 
 Names must be added only from an authoritative company source; COMM-01 does not invent them.
 
-## Current activation status
+## Original COMM-01 activation status
+
+The following table is the historical 8 August 2026 COMM-01 checkpoint, not a
+current Production inventory. Current PR4 route/distribution evidence is in
+the PR4 runbook and `CURRENT_STATE.md`.
 
 | Fact | State |
 | --- | --- |
