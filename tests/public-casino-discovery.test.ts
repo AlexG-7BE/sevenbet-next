@@ -8,7 +8,6 @@ import type { CasinoDiscoveryQuery, DiscoveryContext, PublicCasinoDiscoveryStore
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { allowJurisdictionAuthority } from "./market-authority.fixtures";
-import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 import { commercialActionAuthority, commercialActionsByCasino, noCommercialActions } from "./commercial-action.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
@@ -162,13 +161,13 @@ test("Founder editorial matrix remains deterministic while only canonical action
     }],
   });
   const casinoF = record("de-matrix-f", "matrix-f", "Matrix F", { countries: [deCountry("matrix-f", "UNKNOWN")] });
-  const demoG = record(temporaryDemoCasinoIds[0], "matrix-g-demo", "Matrix G Demo");
+  const casinoG = record("matrix-g", "matrix-g", "Matrix G");
   const draftG = record("matrix-g-draft", "matrix-g-draft", "Matrix G Draft", { status: "DRAFT" });
   draftG.status = "DRAFT";
 
   const deAuthority = { ...allowJurisdictionAuthority, countryCode: "DE" };
   const deResult = await new PublicCasinoDiscoveryService(
-    store([casinoA, casinoB, casinoC, casinoD, casinoF, demoG, draftG]),
+    store([casinoA, casinoB, casinoC, casinoD, casinoF, casinoG, draftG]),
     () => now,
     commercialActionsByCasino({ [casinoA.casinoId]: "/r/matrix-a-de" }),
   ).discover({}, deAuthority, { defaultEditorialCountry: "DE" });
@@ -183,7 +182,7 @@ test("Founder editorial matrix remains deterministic while only canonical action
   assert.deepEqual(bySlug.get("matrix-d")?.licenses.map((entry) => entry.label), ["MGA"], "D removes a market-linked top-level licence while preserving an unscoped global licence");
   assert.equal(bySlug.get("matrix-f")?.action, null, "F");
   assert.doesNotMatch(JSON.stringify(bySlug.get("matrix-f")), /not available/i, "F must preserve UNKNOWN");
-  assert.equal(bySlug.has("matrix-g-demo"), false, "G demo");
+  assert.equal(bySlug.has("matrix-g"), true, "G published");
   assert.equal(bySlug.has("matrix-g-draft"), false, "G unpublished");
 
   const universal = record("matrix-e", "matrix-e", "Matrix E", {
@@ -348,12 +347,12 @@ test("media availability neither authorizes nor suppresses the canonical action"
   }
 });
 
-test("exact-ID demo authority overrides otherwise permissive visit eligibility", async () => {
-  const casinoId = temporaryDemoCasinoIds[0];
-  const casino = record(casinoId, "fictional-demo", "Fictional Demo", {
-    summary: "A fictional SevenBet product demonstration.",
-    pros: ["SevenBet presentation strength"],
-    casinoBonuses: [{ id: `${casinoId}-bonus`, slug: "fictional-demo-welcome", title: "SevenBet demo terms", summary: "SevenBet demonstration only", type: "WELCOME", status: "PUBLISHED", offerStatus: "ACTIVE" }],
+test("published Casino records receive generic discovery and commercial handling", async () => {
+  const casinoId = "generic-published-id";
+  const casino = record(casinoId, "generic-published", "Generic Published", {
+    summary: "A published casino profile.",
+    pros: ["Published presentation strength"],
+    casinoBonuses: [{ id: `${casinoId}-bonus`, slug: "generic-welcome", title: "Published terms", summary: "Published summary", type: "WELCOME", status: "PUBLISHED", offerStatus: "ACTIVE" }],
   });
   const service = new PublicCasinoDiscoveryService(
     store([casino]),
@@ -362,12 +361,12 @@ test("exact-ID demo authority overrides otherwise permissive visit eligibility",
   );
   const result = await service.discover({}, allowJurisdictionAuthority);
   assert.equal(result.inventoryMode, "PUBLISHED_ONLY");
-  assert.equal(result.total, 0);
-  assert.deepEqual(result.items, []);
+  assert.equal(result.total, 1);
+  assert.deepEqual(result.items.map((item) => [item.slug, item.action]), [["generic-published", { href: "/r/generic-published" }]]);
 
   const mixed = await new PublicCasinoDiscoveryService(store([casino, record("real-id", "real-record", "Real Record")]), () => now).discover();
   assert.equal(mixed.inventoryMode, "PUBLISHED_ONLY");
-  assert.deepEqual(mixed.items.map((item) => [item.slug, item.dataClassification]), [["real-record", "PUBLISHED_RECORD"]]);
+  assert.deepEqual(mixed.items.map((item) => item.dataClassification), ["PUBLISHED_RECORD", "PUBLISHED_RECORD"]);
 });
 
 test("GEO rules remove the action without removing the published review", async () => {

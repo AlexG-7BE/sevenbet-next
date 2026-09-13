@@ -7,7 +7,6 @@ import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacement
 import { casinoProfileDecisionPresentation, formatCommercialMoney, safeCommercialTermsUrl, structuredOfferHeadline, type CommercialFact } from "@/lib/commercial/commercial-presentation";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
 import { formatProfileDate, profileAction, profileFaqItems, selectProfileBonus } from "@/lib/casino-profile/presentation";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
 import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
@@ -28,7 +27,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   availableForPresentation: boolean;
 }) {
   const copy = commercialUxMessages(presentation.locale);
-  const demo = isTemporaryDemoCasinoId(casino.id);
+  const demo = casino.dataClassification === "DEMO_FIXTURE";
   const bonus = selectProfileBonus(casino);
   const decision = casinoProfileDecisionPresentation(casino, presentation.locale, messages, copy, presentation.marketCountryCode);
   const governed = profileAction(casino);

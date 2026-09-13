@@ -6,12 +6,7 @@ import test from "node:test";
 
 import robots from "../app/robots";
 import sitemap from "../app/sitemap";
-import { profileEditorialDocument } from "../lib/casino-profile/presentation";
-import type { CasinoEditorialDocument } from "../lib/editorial-review/types";
-import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
-import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import { absoluteUrl, resolveSiteUrl, siteUrl } from "../lib/site";
-import { enforceTemporaryDemoReviewOnly } from "../lib/services/public-casino.service";
 import { publicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { publicComparisonService } from "../lib/services/public-comparison.service";
 import { publicOfferService } from "../lib/services/public-offer.service";
@@ -74,21 +69,18 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   assert.match(shellCatalog, /operatorDisclaimer: "Not a gambling operator\."/);
   assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk\."/);
   assert.match(shellCatalog, /clearly labelled affiliate links/);
-  assert.match(source("lib/services/public-casino-discovery.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
-  assert.match(source("lib/services/public-comparison.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
-  assert.match(source("lib/services/public-offer.service.ts"), /currentPublicBrandText/);
+  for (const service of ["lib/services/public-casino-discovery.service.ts", "lib/services/public-comparison.service.ts", "lib/services/public-offer.service.ts"]) {
+    assert.doesNotMatch(source(service), /temporary-demo|isTemporaryDemo|currentPublicCasinoBrand|currentPublicBrandText/);
+  }
 });
 
-test("staff UI and generated demonstration assets expose only B4GAMBLE branding", () => {
+test("staff UI and visual QA assets expose only B4GAMBLE branding", () => {
   const staffAndDemoSources = [
     ...filesBelow("app/admin"),
     ...filesBelow("components/admin"),
     ...filesBelow("public/demo-casinos"),
     "lib/cms/seed.ts",
     "lib/auth/staff.ts",
-    "scripts/generate-temporary-demo-assets.mjs",
-    "scripts/temporary-production-demo-casino.manifest.ts",
-    "scripts/temporary-production-demo-casinos.ts",
     "app/editorial-preview/[token]/page.tsx",
   ].filter((path) => /\.(?:ts|tsx|mjs|svg)$/.test(path));
   const renderedSources = staffAndDemoSources.map(source).join("\n");
@@ -185,7 +177,6 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   }
   assert.ok(entries.length > 10);
   assert.ok(entries.some((entry) => entry.url === "https://b4gamble.com/en/10-steps"));
-  assert.ok(entries.every((entry) => !temporaryDemoCasinoIds.some((id) => entry.url.includes(id))));
   assert.ok(entries.every((entry) => !/\/casino\/demo-/.test(entry.url)));
   assert.ok(entries.every((entry) => !["https://b4gamble.com/en/casinos", "https://b4gamble.com/en/bonuses"].includes(entry.url)));
   for (const entry of entries) {
@@ -259,67 +250,6 @@ test("Better Auth and disabled communication templates expose only B4GAMBLE", ()
   assert.doesNotMatch(templates, OLD_PUBLIC_BRAND);
   assert.match(source("lib/communications/purpose-policy.ts"), /COMMERCIAL_MARKETING/);
   assert.match(source("lib/communications/transports.ts"), /DisabledEmailTransport/);
-});
-
-test("exact demo presentation reconciles legacy stored brand text without changing fixture identity", () => {
-  const casinoId = temporaryDemoCasinoIds[0];
-  const mapped = mapPublishedCasino({
-    casinoId,
-    version: 1,
-    status: "PUBLISHED",
-    publishedAt: new Date("2026-08-09T00:00:00.000Z"),
-    archivedAt: null,
-    snapshot: {
-      id: casinoId,
-      slug: "demo-brand-cutover",
-      title: "Demo Brand Cutover",
-      domain: "demo.invalid",
-      status: "PUBLISHED",
-      summary: "A fictional SevenBet demonstration.",
-      description: "SevenBet editorial presentation only.",
-      operator: "Fictional SevenBet Demo Studio",
-      pros: ["SevenBet presentation strength"],
-      cons: ["SevenBet presentation limitation"],
-      responsibleGamblingTools: ["Protected SevenBet Help remains available"],
-      seo: {
-        title: "Demo | SevenBet",
-        description: "SevenBet demonstration metadata.",
-        socialTitle: "SEVENBET DEMO",
-        socialDescription: "A SevenBet social description.",
-      },
-      casinoBonuses: [{
-        id: "demo-bonus",
-        slug: "demo-bonus",
-        title: "SevenBet demo terms",
-        summary: "SevenBet demonstration only",
-        status: "PUBLISHED",
-        offerStatus: "ACTIVE",
-        importantConditions: ["SevenBet fixture condition"],
-      }],
-    },
-  }, { now: new Date("2026-08-09T00:00:00.000Z") });
-  assert.ok(mapped);
-  const presented = enforceTemporaryDemoReviewOnly(mapped);
-  assert.equal(presented.id, casinoId);
-  assert.equal(presented.slug, "demo-brand-cutover");
-  assert.equal(presented.action, null);
-  assert.doesNotMatch(JSON.stringify(presented), OLD_PUBLIC_BRAND);
-  assert.match(JSON.stringify(presented), /B4GAMBLE/);
-
-  const editorial: CasinoEditorialDocument = {
-    version: 1,
-    title: "SevenBet demo editorial",
-    summary: "SevenBet demo summary",
-    author: "SevenBet Demo Editorial Team",
-    sections: [{ id: "overview", kind: "overview", title: "SevenBet overview", order: 1, blocks: [{ id: "copy", type: "paragraph", text: "SevenBet demonstration copy" }] }],
-    relatedCasinoIds: [],
-    seo: { title: "SevenBet demo SEO", description: "SevenBet demo description" },
-  };
-  const normalized = profileEditorialDocument({
-    review: { publishedRevisionId: "revision", revisions: [{ id: "revision", content: editorial }] },
-  } as never, casinoId);
-  assert.ok(normalized);
-  assert.doesNotMatch(JSON.stringify(normalized), OLD_PUBLIC_BRAND);
 });
 
 test("legacy compatibility identifiers and data architecture remain intact", () => {

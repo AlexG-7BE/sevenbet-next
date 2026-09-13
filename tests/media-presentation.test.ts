@@ -18,7 +18,7 @@ import {
   withHandoffOfferData,
   withHandoffCasinoProfileData,
 } from "../lib/final-handoff/visual-data-fixture";
-import { temporaryDemoBestOffers, temporaryDemoCasinoProfiles } from "../lib/demo-data/temporary-demo-best-offers";
+import { publicCasinoProfilesFixture, publicOffersFixture } from "./fixtures/public-presentation-fixtures";
 import { demoProfileCopy } from "../lib/i18n/demo-profile-catalog";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { visualFixtureCopy } from "../lib/i18n/visual-fixture-catalog";
@@ -72,7 +72,7 @@ test("missing and portrait inventory become compact inert identity presentations
   (globalThis as typeof globalThis & { React: typeof React }).React = React;
   const { CommercialOfferMedia } = await import("../components/commercial-media/CommercialOfferMedia");
   const messages = productPageMessages("en-GB");
-  const seed = temporaryDemoBestOffers()[0];
+  const seed = publicOffersFixture()[0];
   const available: PublicOfferDTO = {
     ...seed,
     action: { href: "/r/media-test" },
@@ -107,7 +107,7 @@ test("identity logos next to the same visible casino name are decorative", async
   require.extensions[".css"] = () => undefined;
   (globalThis as typeof globalThis & { React: typeof React }).React = React;
   const { OperatorLogo } = await import("../components/commercial-media/CommercialOfferMedia");
-  const offer = temporaryDemoBestOffers()[0];
+  const offer = publicOffersFixture()[0];
   const html = renderToStaticMarkup(React.createElement(OperatorLogo, { offer }));
   assert.match(html, /<img alt=""/);
   assert.doesNotMatch(html, new RegExp(`alt="[^"]*${offer.casino.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
@@ -172,7 +172,7 @@ test("casino discovery fixtures include the required wide, landscape, square and
 });
 
 test("Phase 2 offer fixtures expose only fictional logo and governed media-ratio states", () => {
-  const seed = temporaryDemoBestOffers()[0];
+  const seed = publicOffersFixture()[0];
   const bestOffers = withHandoffOfferData({ records: [seed], inventoryMode: "DEMO_ONLY" }, true);
   assert.deepEqual(bestOffers.records.slice(0, 4).map((offer) => offer.casino.hero ? [offer.casino.hero.width, offer.casino.hero.height] : null), [
     [1600, 900],
@@ -233,7 +233,7 @@ test("all European visual fixtures localize reader-facing copy and expose only t
   const locales = [
     "en-GB", "de-DE", "it-IT", "es-ES", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO",
   ] as const satisfies readonly SupportedLocale[];
-  const offerSeed = temporaryDemoBestOffers()[0];
+  const offerSeed = publicOffersFixture()[0];
   const query = parsePublicOfferQuery({});
   const discoverySeed: CasinoDiscoveryResult = {
     items: [],
@@ -320,8 +320,8 @@ test("all European visual fixtures localize reader-facing copy and expose only t
 });
 
 test("fixture copy preserves machine values while rendering natural DE, EL and FI labels", () => {
-  const offerSeed = temporaryDemoBestOffers()[0];
-  const profileSeed = temporaryDemoCasinoProfiles()[0];
+  const offerSeed = publicOffersFixture()[0];
+  const profileSeed = publicCasinoProfilesFixture()[0];
   const query = parsePublicOfferQuery({});
   const bonusSeed = {
     records: [offerSeed],

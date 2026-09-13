@@ -10,7 +10,7 @@ import {
   DirectoryFeaturedTheatreMarkup,
   type CasinoCardClassNames,
 } from "../components/casino-discovery/CasinoDiscoveryCard";
-import { temporaryDemoBestOffers } from "../lib/demo-data/temporary-demo-best-offers";
+import { publicOffersFixture } from "./fixtures/public-presentation-fixtures";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
@@ -26,7 +26,7 @@ const classNames = Object.fromEntries([
 ].map((name) => [name, name])) as CasinoCardClassNames;
 
 function offer(published = true): PublicOfferDTO {
-  const seed = temporaryDemoBestOffers()[0];
+  const seed = publicOffersFixture()[0];
   assert.ok(seed);
   return {
     ...seed,

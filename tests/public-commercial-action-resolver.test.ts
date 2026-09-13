@@ -8,7 +8,6 @@ import {
 } from "../lib/commercial/public-commercial-action-resolver";
 import type { CommercialJurisdictionAuthority } from "../lib/jurisdiction/commercial-authority";
 import type { MarketActivationPublicRoute } from "../lib/market-activation/runtime";
-import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 import { allowOperatorAuthority, allowOperatorDecision } from "./market-authority.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
@@ -80,14 +79,11 @@ test("legal denial is intrinsic and prevents the route source from authorizing",
   assert.equal(routeReads, 0);
 });
 
-test("publication, demo, redirect-engine and trusted-market failures remain non-actionable", async () => {
+test("publication, redirect-engine and trusted-market failures remain non-actionable", async () => {
   const routes = routeSource(() => [{ casinoId: subject.casinoId, slug: "published-casino-pe" }]);
   const enabled = new PublicCommercialActionResolver(routes, allowOperatorAuthority, () => true);
   const disabled = new PublicCommercialActionResolver(routes, allowOperatorAuthority, () => false);
   assert.equal((await decision(enabled, { subject: { ...subject, published: false } })).reasonCode, "PRODUCT_NOT_PUBLISHED");
-  assert.equal((await decision(enabled, {
-    subject: { ...subject, casinoId: temporaryDemoCasinoIds[0] },
-  })).reasonCode, "DEMONSTRATION_RECORD");
   assert.equal((await decision(disabled)).reasonCode, "REDIRECT_ENGINE_DISABLED");
   assert.equal((await decision(enabled, { jurisdiction: authority("DE") })).reasonCode, "MARKET_CONTEXT_INVALID");
 });

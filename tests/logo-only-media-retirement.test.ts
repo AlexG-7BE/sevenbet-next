@@ -80,12 +80,11 @@ test("public compositions use direct logos and cannot render promotional card or
   assert.doesNotMatch(`${bestOffers}\n${bonuses}`, /CommercialOfferMedia|OperatorIdentityPanel/);
 });
 
-test("Production logo preflight uses exact demo authority while requiring every operator logo", () => {
+test("Production logo preflight requires a direct logo for every published Casino", () => {
   const preflight = readFileSync("scripts/logo-only-media-build-preflight.ts", "utf8");
-  assert.match(preflight, /import \{ isTemporaryDemoCasinoId \} from "@\/lib\/demo-data\/temporary-demo-authority"/);
-  assert.match(preflight, /publishedOperators = publishedCasinos\.filter\(\(casino\) => !isTemporaryDemoCasinoId\(casino\.id\)\)/);
+  assert.doesNotMatch(preflight, /isTemporaryDemoCasinoId|publishedDemonstrations/);
+  assert.match(preflight, /missingOperatorLogos = publishedCasinos/);
   assert.match(preflight, /published operator Casinos missing a direct active LOGO asset/);
-  assert.match(preflight, /publishedDemonstrations: publishedDemonstrations\.length/);
 });
 
 test("retired media HTTP surfaces return a cache-proof 410", async () => {

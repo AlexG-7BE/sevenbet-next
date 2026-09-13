@@ -73,7 +73,7 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `PROGRAMME_REMINDER_INACTIVITY_DAYS` | Bounded operational configuration | One deterministic lifecycle cadence; exact 7 or 30 days, otherwise 7 | Product/operations owner |
 | `CRON_SECRET` | Secret | Exact Bearer authentication for Programme expiry and RFC-046 lifecycle queue/retention routes; hosted presence must be verified | Founder Office/config owner; repository maintainer technical consumer |
 | `VERCEL_TOKEN` | Secret operator credential | Aggregate Founder analytics report only; process environment, never hosted client configuration | Founder Office/Vercel owner |
-| `ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS` | High-risk exceptional flag | RFC-012 scripts/public guard | Founder Office under RFC-012 only |
+| `DEMO_CASINO_RETIREMENT_APPLY_CONFIRMATION` | High-risk one-time execution acknowledgement | Exact-ID RFC-012 retirement APPLY only; absent from ordinary runtime, CI and builds | Founder Office supplies only after independent review and separate execution authority |
 | `AFFILIATE_REDIRECT_ENGINE_ENABLED` | High-risk commercial kill switch | Server `/r` redirect path; legacy `/outbound` compatibility reaches the same governed route | Founder Office plus compliance review |
 | `JURISDICTION_RESOLVER_SHADOW_ENABLED` | Diagnostic configuration | Obsolete bounded shadow-comparison helper only; no active public authority consumer | Repository maintainer |
 | `AFFILIATE_CREDENTIAL_REFERENCES`, `AFFILIATE_CREDENTIALS_<NORMALIZED_REFERENCE>` | Secret indirection/credentials | Server-only affiliate adapters; absent from Preview | Founder Office/partner operations; never client or logs |

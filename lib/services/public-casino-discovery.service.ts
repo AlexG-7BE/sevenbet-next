@@ -11,8 +11,6 @@ import {
   publicCommercialActionResolver,
   type PublicCommercialActionAuthority,
 } from "@/lib/commercial/public-commercial-action-resolver";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
-import { currentPublicCasinoBrand } from "@/lib/public-brand";
 import { rankBestBonusCasinoIds } from "@/lib/public-offer/best-offer-ranking";
 import { publicCasinoToOffers } from "@/lib/public-offer/public-offer.mapper";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
@@ -173,7 +171,7 @@ export class PublicCasinoDiscoveryService {
     const now = this.now();
     const requestCountryContext = options.defaultEditorialCountry?.trim().toUpperCase() || null;
     const commercialMarketContext = options.commercialMarketCode?.trim().toUpperCase() || requestCountryContext;
-    const published = (await this.store.listPublished(requestCountryContext)).filter((record) => !isTemporaryDemoCasinoId(record.casinoId));
+    const published = await this.store.listPublished(requestCountryContext);
     const candidates = !published.length
       ? []
       : this.store.listPublishedOfferCandidates
@@ -192,8 +190,7 @@ export class PublicCasinoDiscoveryService {
         now,
         countryCode: requestCountryContext,
       });
-      const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
-      return casino ? [{ record, casino }] : [];
+      return mapped ? [{ record, casino: mapped }] : [];
     });
     const actionDecisions = await this.actionAuthority.resolveMany({
       subjects: mappedRecords.map(({ casino }) => ({ casinoId: casino.id, casinoSlug: casino.slug, published: true })),

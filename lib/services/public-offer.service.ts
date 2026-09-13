@@ -14,37 +14,9 @@ import {
   publicCommercialActionResolver,
   type PublicCommercialActionAuthority,
 } from "@/lib/commercial/public-commercial-action-resolver";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
-import { currentPublicBrandText } from "@/lib/public-brand";
 
 const missingHigh = Number.POSITIVE_INFINITY;
 const missingLow = Number.NEGATIVE_INFINITY;
-
-function classifyOffer(offer: PublicOfferDTO): PublicOfferDTO {
-  if (!isTemporaryDemoCasinoId(offer.casino.id)) return { ...offer, dataClassification: "PUBLISHED_RECORD" };
-  const brand = (value: string) => currentPublicBrandText(value);
-  return {
-    ...offer,
-    casino: {
-      ...offer.casino,
-      name: brand(offer.casino.name),
-      summary: brand(offer.casino.summary),
-      logo: offer.casino.logo ? { ...offer.casino.logo, alt: brand(offer.casino.logo.alt), caption: offer.casino.logo.caption ? brand(offer.casino.logo.caption) : null } : null,
-      hero: offer.casino.hero ? { ...offer.casino.hero, alt: brand(offer.casino.hero.alt), caption: offer.casino.hero.caption ? brand(offer.casino.hero.caption) : null } : null,
-      responsibleGamblingTools: offer.casino.responsibleGamblingTools.map(brand),
-    },
-    bonus: {
-      ...offer.bonus,
-      title: brand(offer.bonus.title),
-      summary: brand(offer.bonus.summary),
-      wageringText: offer.bonus.wageringText ? brand(offer.bonus.wageringText) : null,
-      eligibility: offer.bonus.eligibility ? brand(offer.bonus.eligibility) : null,
-      importantConditions: offer.bonus.importantConditions.map(brand),
-    },
-    action: null,
-    dataClassification: "DEMO_FIXTURE",
-  };
-}
 
 export function publicOfferInventoryMode(offers: PublicOfferDTO[]) {
   const fixtures = offers.filter((offer) => offer.dataClassification === "DEMO_FIXTURE").length;
@@ -144,11 +116,10 @@ export class PublicOfferService {
       return [];
     }
     try {
-      const records = (await this.repository.listOffers({
+      const records = await this.repository.listOffers({
         countryCode: options.countryCode,
         presentationLanguage: options.presentationLanguage,
-      }))
-        .filter((record) => !isTemporaryDemoCasinoId(record.casino.id));
+      });
       const decisions = await this.actionAuthority.resolveMany({
         subjects: records.map((record) => ({ casinoId: record.casino.id, casinoSlug: record.casino.slug, published: true })),
         authority,
@@ -156,9 +127,10 @@ export class PublicOfferService {
         marketCode: options.commercialMarketCode,
         product: "CASINO",
       });
-      return records.map((record) => classifyOffer({
+      return records.map((record) => ({
         ...record,
         action: decisions.get(record.casino.id)?.action ?? null,
+        dataClassification: "PUBLISHED_RECORD" as const,
       }));
     } catch (cause) {
       if (options.throwOnError) throw cause;

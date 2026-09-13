@@ -7,7 +7,6 @@ import type { PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { PublicComparisonService } from "../lib/services/public-comparison.service";
 import { allowJurisdictionAuthority } from "./market-authority.fixtures";
-import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 import { commercialActionsByCasino, noCommercialActions } from "./commercial-action.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
@@ -143,15 +142,15 @@ test("clean comparison uses global editorial candidates without requiring an exa
   assert.equal(result.inventoryMode, "PUBLISHED_ONLY");
 });
 
-test("exact-ID demonstrations are absent from comparison", async () => {
+test("all published Casino records use the same comparison projection", async () => {
   const result = await new PublicComparisonService(store([
-    record("fictional-one", { id: temporaryDemoCasinoIds[0], score: 9 }),
-    record("fictional-two", { id: temporaryDemoCasinoIds[1], score: 8 }),
+    record("fictional-one", { score: 9 }),
+    record("fictional-two", { score: 8 }),
   ]), () => now, noCommercialActions).compare(parsePublicComparisonQuery({}, "GB"), allowJurisdictionAuthority);
-  assert.equal(result.status, "no-comparable");
+  assert.equal(result.status, "available");
   assert.equal(result.inventoryMode, "PUBLISHED_ONLY");
-  assert.deepEqual(result.candidates, []);
-  assert.deepEqual(result.casinos, []);
+  assert.deepEqual(result.candidates.map((candidate) => candidate.slug), ["fictional-one", "fictional-two"]);
+  assert.deepEqual(result.casinos.map((casino) => casino.slug), ["fictional-one", "fictional-two"]);
 });
 
 test("offer completeness treats zero minimum deposit as present and null as missing", async () => {

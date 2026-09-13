@@ -1,5 +1,4 @@
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
 import { scopedCasinoReferralAllowed } from "@/lib/jurisdiction/scoped-commercial-authority";
@@ -78,10 +77,6 @@ export class PublicCommercialActionResolver implements PublicCommercialActionAut
     const candidates = subjects.filter((subject) => {
       if (!subject.published) {
         decisions.set(subject.casinoId, unavailable("PRODUCT_NOT_PUBLISHED"));
-        return false;
-      }
-      if (isTemporaryDemoCasinoId(subject.casinoId)) {
-        decisions.set(subject.casinoId, unavailable("DEMONSTRATION_RECORD"));
         return false;
       }
       if (!countryCode || !marketCode || !authorityMatches) {

@@ -1,7 +1,5 @@
 import type { CasinoEditorialDocument, EditorialBlock } from "@/lib/editorial-review/types";
 import type { PublicCasinoBonus, PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
-import { currentPublicBrandText } from "@/lib/public-brand";
 import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 
 export function summarizeWithdrawalTimes(payments: Array<{ supportsWithdrawals: boolean | null; withdrawalTime: string | null }>) {
@@ -87,7 +85,7 @@ export function profileOfferHeadline(bonus: PublicCasinoBonus, locale = "en-GB")
 }
 
 export function profileReviewFreshness(casino: PublicCasinoDTO, locale = "en-GB") {
-  if (isTemporaryDemoCasinoId(casino.id)) {
+  if (casino.dataClassification === "DEMO_FIXTURE") {
     return { label: "Fictional review", value: "Demonstration" };
   }
   const reviewed = formatProfileDate(casino.lastReviewedAt, locale);
@@ -98,7 +96,7 @@ export function profileReviewFreshness(casino: PublicCasinoDTO, locale = "en-GB"
 
 export function profileFacts(casino: PublicCasinoDTO): CasinoProfileFact[] {
   const facts: CasinoProfileFact[] = [];
-  const demo = isTemporaryDemoCasinoId(casino.id);
+  const demo = casino.dataClassification === "DEMO_FIXTURE";
   const licence = casino.licenses[0];
   if (licence) {
     const verifiedAt = formatProfileDate(licence.lastVerifiedAt);
@@ -169,7 +167,7 @@ function editorialFaq(document: CasinoEditorialDocument | null) {
 }
 
 export function profileFaqItems(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | null, editorial: CasinoEditorialDocument | null): CasinoProfileFaqItem[] {
-  if (isTemporaryDemoCasinoId(casino.id)) {
+  if (casino.dataClassification === "DEMO_FIXTURE") {
     return [
       {
         question: `Is ${casino.name} a real current operator or partner?`,
@@ -204,51 +202,10 @@ export function profileFaqItems(casino: PublicCasinoDTO, bonus: PublicCasinoBonu
   return items.slice(0, 6);
 }
 
-function currentBrandEditorialBlock(block: EditorialBlock): EditorialBlock {
-  if (block.type === "divider") return block;
-  if ("items" in block) {
-    return { ...block, items: block.items.map(currentPublicBrandText) };
-  }
-  if (block.type === "faq") return { ...block, question: currentPublicBrandText(block.question), answer: currentPublicBrandText(block.answer) };
-  if (block.type === "image") return { ...block, alt: currentPublicBrandText(block.alt), caption: block.caption ? currentPublicBrandText(block.caption) : undefined };
-  if (block.type === "video") return { ...block, title: currentPublicBrandText(block.title) };
-  if (block.type === "quote") return { ...block, text: currentPublicBrandText(block.text), attribution: block.attribution ? currentPublicBrandText(block.attribution) : undefined };
-  if (block.type === "heading" || block.type === "paragraph") return { ...block, text: currentPublicBrandText(block.text) };
-  return { ...block, title: currentPublicBrandText(block.title), text: currentPublicBrandText(block.text) };
-}
-
-function currentBrandEditorialDocument(document: CasinoEditorialDocument): CasinoEditorialDocument {
-  return {
-    ...document,
-    title: currentPublicBrandText(document.title),
-    summary: currentPublicBrandText(document.summary),
-    author: currentPublicBrandText(document.author),
-    trustScore: document.trustScore ? {
-      ...document.trustScore,
-      categories: document.trustScore.categories.map((category) => ({ ...category, comment: category.comment ? currentPublicBrandText(category.comment) : undefined })),
-      evidence: document.trustScore.evidence.map(currentPublicBrandText),
-    } : undefined,
-    sections: document.sections.map((section) => ({
-      ...section,
-      title: currentPublicBrandText(section.title),
-      blocks: section.blocks.map(currentBrandEditorialBlock),
-    })),
-    seo: {
-      ...document.seo,
-      title: currentPublicBrandText(document.seo.title),
-      description: currentPublicBrandText(document.seo.description),
-      socialTitle: document.seo.socialTitle ? currentPublicBrandText(document.seo.socialTitle) : undefined,
-      socialDescription: document.seo.socialDescription ? currentPublicBrandText(document.seo.socialDescription) : undefined,
-      keywords: document.seo.keywords?.map(currentPublicBrandText),
-    },
-  };
-}
-
 export function profileEditorialDocument(
   result: Awaited<ReturnType<import("@/lib/services/editorial-review.service").EditorialReviewService["getPublishedBySlug"]>>,
-  casinoId?: string,
+  _casinoId?: string,
 ) {
   if (!result?.review.publishedRevisionId) return null;
-  const document = result.review.revisions.find((revision) => revision.id === result.review.publishedRevisionId)?.content ?? null;
-  return document && casinoId && isTemporaryDemoCasinoId(casinoId) ? currentBrandEditorialDocument(document) : document;
+  return result.review.revisions.find((revision) => revision.id === result.review.publishedRevisionId)?.content ?? null;
 }

@@ -192,11 +192,11 @@ test("17. information-only casinos keep editorial substance but have no governed
   assert.match(discovery, /highlights: scoped\.pros\.slice\(0, 3\)/);
 });
 
-test("18. hidden identities do not render through list or detail services", () => {
+test("18. list and detail services rely on publication state, not identity classifiers", () => {
   const publicService = read("lib/services/public-casino.service.ts");
   const discovery = read("lib/services/public-casino-discovery.service.ts");
   assert.match(publicService, /mapPublishedCasino/);
-  assert.match(discovery, /isTemporaryDemoCasinoId/);
+  assert.doesNotMatch(`${publicService}\n${discovery}`, /isTemporaryDemoCasinoId|temporary-demo-authority/);
   assert.match(discovery, /mapPublishedCasino/);
 });
 
