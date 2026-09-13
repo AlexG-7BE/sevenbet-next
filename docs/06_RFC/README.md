@@ -69,23 +69,24 @@ orientation.
 | [RFC-039 — Language-Only Public Routing and Global Casino Catalog](RFC-039-Language-Only-Public-Routing-and-Global-Casino-Catalog.md) | `ACTIVE` | Language-only public canonicals, trusted request-market separation, global real-Casino publication, `UNKNOWN`/prohibition separation and governed country-block routing; RFC-044 extends its locale inventory. |
 | [RFC-040 — Placement-Based Media Assignments](RFC-040-Placement-Based-Media-Assignments.md) | `SUPERSEDED` | Historical typed assignment design; RFC-044 retires assignment-driven promotional authority while retaining its data inertly. |
 | [RFC-041 — Vetted Partner-Hosted Creatives](RFC-041-Vetted-Partner-Hosted-Creatives.md) | `SUPERSEDED` | Historical provider-isolation design; RFC-044 retires hosted creatives from active Product and runtime authority. |
-| [RFC-042 — Canonical Market Activation Authority](RFC-042-Canonical-Market-Activation-Authority.md) | `ACTIVE` | Canonical persisted activation intent, exact route source, controller/reconciler and one-way legacy compatibility; RFC-047 owns the final public action seam. |
+| [RFC-042 — Canonical Market Activation Authority](RFC-042-Canonical-Market-Activation-Authority.md) | `ACTIVE` | Canonical persisted activation intent, route health and controller/reconciler; RFC-049 supersedes its fallback and duplicate GEO-authority semantics, while RFC-047 owns the final public action seam. |
 | [RFC-043 — Production Media Pipeline](RFC-043-Production-Media-Pipeline.md) | `SUPERSEDED` | Historical MEDIA-GEO3 pipeline and release evidence; RFC-044 retires its active runtime and business authority. |
 | [RFC-044 — Logo-Only Media Retirement and Locale/Market Separation](RFC-044-Logo-Only-Media-Retirement-and-Locale-Market-Separation.md) | `ACTIVE` | Logo-only operator presentation, inert MEDIA-GEO3 history, media-independent commercial authority and one language registry independent from trusted GEO. |
-| [RFC-045 — Exact Subdivision Market Activation](RFC-045-Exact-Subdivision-Market-Activation.md) | `ACTIVE` | RFC-042 exact `marketCode`, parent-country legal separation, trusted region signal and exact-over-regional-over-generic route precedence. |
+| [RFC-045 — Exact Subdivision Market Activation](RFC-045-Exact-Subdivision-Market-Activation.md) | `ACTIVE` | Exact subdivision identity, parent-country legal separation and trusted region signal; RFC-049 supersedes its post-normalization route-precedence semantics. |
 | [RFC-046 — Customer Data, Analytics and Lifecycle Core](RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md) | `ACTIVE` | Canonical customer identity, consent-gated first-party analytics, Programme observation, RFC-042 click attribution, lifecycle email and fixed internal dashboards; the 12 September 2026 amendment authorises bounded Resend Production processing subject to live configuration and acceptance evidence. |
 | [RFC-047 — Single Public Commercial Action Authority](RFC-047-Single-Public-Commercial-Action-Authority.md) | `ACTIVE` | One server-side nullable `/r/...` action decision for each published Casino and trusted market; public services, ranking and presentation have no shadow commercial authority. |
 | [RFC-048 — CRM-Independent Commercial Write Core](RFC-048-CRM-Independent-Commercial-Write-Core.md) | `ACTIVE` | Persisted Partner identity and one Partner × Casino relationship outside CRM; explicit commands flow through a transport-independent application service while CRM and MCP have no commercial authority. |
+| [RFC-049 — Exact Canonical Commercial Routes](RFC-049-Exact-Canonical-Commercial-Routes.md) | `ACTIVE` | One trusted-GEO normalization seam, one exact commercial-route lookup, no parent/ZZ fallback or Offer/Tracking country/production-eligibility authority, and a separately governed materialization operation. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 24 |
+| `ACTIVE` | 25 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 5 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **48** |
+| **Total RFC artifacts** | **49** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

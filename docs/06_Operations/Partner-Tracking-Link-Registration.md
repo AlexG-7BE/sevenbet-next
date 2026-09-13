@@ -1,6 +1,6 @@
 # Partner Tracking Link Registration
 
-**Authority:** RFC-048, RFC-027 section 21 and RFC-042
+**Authority:** RFC-049, RFC-048, RFC-027 section 21 and RFC-042
 **Scope:** canonical registration for already-persisted Partner and Casino identities
 
 ## Commercial authority
@@ -39,6 +39,9 @@ Provide only:
 `geo` and `supportedGeos` are mutually exclusive. Values are uppercased,
 underscores become hyphens, duplicates are removed, and newly asserted `ZZ` or
 malformed/non-assigned country codes are rejected before mutation.
+RFC-049 normalization produces exactly one canonical key per requested GEO:
+country-scoped regions collapse before route creation, while AR and CA require
+a recognized exact subdivision.
 
 The retained MCP action is `commercial_register_partner_tracking_link`. It
 resolves internal IDs and does not create Partner or Casino identities. In the
@@ -73,6 +76,9 @@ source.
   evergreen `Visit Casino` offer with no bonus claim.
 - `/r` remains the public handoff. RFC-042 remains the only controller that can
   converge an exact MarketActivation to `ACTIVE + HEALTHY`.
+- Registration writes no OfferCountry or TrackingCountry permission and does
+  not set `productionEligible`. Those retained fields are non-authoritative
+  compatibility metadata; the exact MarketActivation is the GEO decision.
 - `BLOCKED_BY_LAW` and `ACTION_REQUIRED_REGULATORY` remain non-active even when
   tracking is healthy.
 - Identical scope registration is idempotent and may reverify. A replacement is

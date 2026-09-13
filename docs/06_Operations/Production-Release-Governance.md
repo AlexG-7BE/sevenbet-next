@@ -42,6 +42,7 @@ The canonical build-side-effect classification is:
 | --- | --- |
 | `prisma generate` during dependency install | Writes generated build files only; no database connection or business mutation |
 | `scripts/vercel-build-preflight.ts` | Reads environment, repository migration files, migration/schema/business invariants; its Production queries and optional historical commercial audit are PostgreSQL-enforced read-only |
+| RFC-049 exact-route readiness inside `scripts/vercel-build-preflight.ts` | Reads canonical route, binding and legacy-scope state in the same read-only transaction; emits blockers and never materializes or repairs routes |
 | `scripts/logo-only-media-build-preflight.ts production-verify` | Skips isolated Preview data; in Production, reads published-logo and retired-media authority state in a PostgreSQL read-only transaction |
 | `scripts/casino-real-catalog-03.ts production-verify` | Skips isolated Preview data; in Production, reads six governed catalog publications, scores, market facts, snapshots, safe offers and protected authority state in a PostgreSQL read-only transaction |
 | `next build` | Writes application build artefacts; database-backed application routes remain dynamic and no business-data mutation is authorised |
@@ -62,12 +63,13 @@ republished the governed catalog, creating 30 `CasinoRevision` rows, six
 already current and it performed no write in that deployment. Commercial
 routes and PR2 authority state were unchanged.
 
-The remediation removes both writers from the build, uses explicit catalog and
-logo `production-verify` modes, and retains all historical revision/publication/audit rows
-as truthful evidence. It does not authorise cleanup or rewriting of that
-history. Until the remediation PR is reviewed, merged and deployed, treat the
-current canonical Production build configuration as an open release-control
-defect.
+PR #279 merged the remediation at
+`edf59ba379e6f7a7839c86fa153ec8c1418eed3a`. It removes both writers from the
+build, uses explicit catalog and logo `production-verify` modes, and retains
+all historical revision/publication/audit rows as truthful evidence. It does
+not authorise cleanup or rewriting of that history. Live deployment adoption
+must be verified separately before treating the incident as operationally
+closed.
 
 ## Risk classification
 
