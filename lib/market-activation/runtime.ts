@@ -1,8 +1,8 @@
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
-import type { PublicAffiliateRoute } from "@/lib/public-casino/public-casino.types";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
+import type { GbOperatorEligibilityInput } from "@/lib/jurisdiction/gb-operator-eligibility";
 
 import {
   MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
@@ -78,6 +78,16 @@ const runtimeInclude = {
 
 export type CanonicalMarketActivationRoute = Prisma.MarketActivationGetPayload<{ include: typeof runtimeInclude }>;
 
+/**
+ * Transitional, bounded output consumed only by the canonical public action
+ * resolver. Legacy affiliate lifecycle details remain private to this source.
+ */
+export interface MarketActivationPublicRoute {
+  casinoId: string;
+  slug: string;
+  operatorEligibilityContext?: Omit<GbOperatorEligibilityInput, "casino" | "now" | "domainEvidence">;
+}
+
 function object(value: Prisma.JsonValue): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
@@ -121,7 +131,7 @@ function activeRouteForCountry(
     && scopeAllows
     && offerMarketAllows
     && trackingMarketAllows
-    // MarketActivation is the sole positive and negative CTA authority.
+    // MarketActivation is the canonical resolver's bounded route-safety source.
     && Boolean(record.affiliateOffer
       && record.affiliateOffer.casinoId === record.casinoId
       && record.affiliateOffer.program.casinoId === record.casinoId)
@@ -173,24 +183,6 @@ function selectActiveRoutes(
 export class MarketActivationRuntime {
   constructor(private readonly database: Pick<typeof prisma, "marketActivation"> = prisma) {}
 
-  async hasActiveRouteForMarket(countryCode: string) {
-    const market = requestedMarketCode(countryCode);
-    if (!market) return false;
-    const records = await this.database.marketActivation.findMany({
-      where: {
-        marketCode: { in: [...new Set([
-          market,
-          ...(market.includes("-") ? [market.slice(0, 2)] : []),
-          MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
-        ])] },
-        product: "CASINO",
-      },
-      include: runtimeInclude,
-      orderBy: [{ casinoId: "asc" }, { marketCode: "asc" }, { updatedAt: "desc" }, { id: "asc" }],
-    });
-    return selectActiveRoutes(records, market).length > 0;
-  }
-
   async listActive(casinoIds: string[], countryCode: string): Promise<BoundCanonicalMarketActivationRoute[]> {
     const market = requestedMarketCode(countryCode);
     if (!casinoIds.length || !market) return [];
@@ -210,11 +202,9 @@ export class MarketActivationRuntime {
     return selectActiveRoutes(records, market);
   }
 
-  async listPublicRoutes(casinoIds: string[], countryCode: string, now = new Date()): Promise<PublicAffiliateRoute[]> {
+  async listPublicRoutes(casinoIds: string[], countryCode: string, now = new Date()): Promise<MarketActivationPublicRoute[]> {
     return (await this.listActive(casinoIds, countryCode)).map((activation) => ({
       casinoId: activation.casinoId,
-      casinoBonusId: activation.casinoBonusId,
-      affiliateOfferId: activation.affiliateOfferId,
       slug: activation.redirectSlug!.slug,
       ...(activation.countryCode === "GB" ? {
         operatorEligibilityContext: {

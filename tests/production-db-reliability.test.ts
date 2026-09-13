@@ -166,7 +166,7 @@ test("Admin Media boundaries map only transient database failures to safe 503 re
   assert.equal(mediaOperationsErrorResponse(new Error("bug"), "Unable to load media ingestion plans").status, 500);
 });
 
-test("public discovery preserves exact query results while limiting internal database concurrency to one", async () => {
+test("public discovery repository reads editorial aliases without affiliate or route queries", async () => {
   let active = 0;
   let maximum = 0;
   const order: string[] = [];
@@ -179,24 +179,14 @@ test("public discovery preserves exact query results while limiting internal dat
     return value;
   };
   const aliases = [{ casinoId: "casino-1", value: "Alias" }];
-  const offers = [{ id: "offer-1", casinoId: "casino-1" }];
-  const redirects = [{ casinoId: "casino-1", slug: "visit" }];
-  const canonicalRoutes = [{ casinoId: "casino-1", casinoBonusId: null, affiliateOfferId: "offer-1", slug: "visit" }];
   const repository = new PublicCasinoDiscoveryRepository({
     casinoAlias: { findMany: () => query("aliases", aliases) },
-    affiliateOffer: { findMany: () => query("offers", offers) },
-    affiliateRedirectSlug: { findMany: () => query("redirects", redirects) },
-  } as never, {
-    listPublicRoutes: (_casinoIds: string[], countryCode: string) => {
-      assert.equal(countryCode, "KZ");
-      return query("canonical-routes", canonicalRoutes) as never;
-    },
   } as never);
 
-  const result = await repository.loadContext(["casino-1"], { countryCode: "KZ" });
-  assert.deepEqual(result, { aliases, offers, redirects, canonicalRoutes });
-  assert.deepEqual(order, ["aliases", "offers", "redirects", "canonical-routes"]);
-  assert.equal(order.length, 4);
+  const result = await repository.loadContext(["casino-1"]);
+  assert.deepEqual(result, { aliases });
+  assert.deepEqual(order, ["aliases"]);
+  assert.equal(order.length, 1);
   assert.equal(maximum, 1);
 });
 

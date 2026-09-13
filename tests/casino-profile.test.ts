@@ -45,11 +45,11 @@ function casino(patch: Partial<PublicCasinoDTO> = {}): PublicCasinoDTO {
       id: "bonus-id", slug: "published-welcome", title: "Published welcome terms", summary: "Published offer summary", type: "WELCOME", percentage: 100,
       minimumDeposit: 10, maximumBonus: 150, maximumBet: 5, currency: "GBP", freeSpins: 20, wageringMultiplier: 30,
       wageringText: "30× wagering on bonus funds", eligibility: "New eligible customers only", importantConditions: ["Terms apply"], termsUrl: null,
-      startsAt: null, expiresAt: null, affiliate: { href: "/r/published-bonus", available: true },
+      startsAt: null, expiresAt: null,
     }],
     marketProfiles: [],
     media: { logo: { id: "logo", type: "logo", url: "https://media.example/logo.png", alt: "Published Casino logo", width: 320, height: 160, caption: null }, hero: null, screenshots: [], gallery: [], socialImage: null },
-    affiliate: { href: "/r/published-casino", available: true },
+    action: { href: "/r/published-bonus" },
     ...patch,
   };
 }
@@ -66,7 +66,7 @@ test("profile presentation uses only published values and a governed internal ac
   const bonus = selectProfileBonus(record);
   assert.ok(bonus);
   assert.equal(profileOfferHeadline(bonus), "100% up to £150 + 20 free spins");
-  assert.deepEqual(profileAction(record, bonus), { href: "/r/published-bonus", label: "Visit Published Casino" });
+  assert.deepEqual(profileAction(record), { href: "/r/published-bonus", label: "Visit Published Casino" });
   assert.deepEqual(profileReviewFreshness(record), { label: "Reviewed", value: "3 Feb 2030" });
   assert.equal(profileReviewFreshness(record, "de-DE")?.value, new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "short", year: "numeric" }).format(new Date(record.lastReviewedAt!)));
   assert.equal(formatProfileScore(8.7, "de-DE"), "8,7");
@@ -77,12 +77,12 @@ test("profile presentation uses only published values and a governed internal ac
 test("sparse and unsafe action states fail closed without invented profile facts", () => {
   const sparse = casino({
     operator: null, publishedAt: null, lastReviewedAt: null, licenses: [], countries: [], payments: [], providers: [], categories: [], responsibleGamblingTools: [],
-    bonuses: [{ ...casino().bonuses[0], percentage: null, maximumBonus: null, maximumBet: null, freeSpins: null, wageringMultiplier: null, wageringText: null, eligibility: null, importantConditions: [], affiliate: { href: "https://tracking.example/unsafe", available: true } }],
-    affiliate: { href: null, available: false },
+    bonuses: [{ ...casino().bonuses[0], percentage: null, maximumBonus: null, maximumBet: null, freeSpins: null, wageringMultiplier: null, wageringText: null, eligibility: null, importantConditions: [] }],
+    action: { href: "https://tracking.example/unsafe" } as never,
   });
   const bonus = selectProfileBonus(sparse);
   assert.ok(bonus);
-  assert.equal(profileAction(sparse, bonus), null);
+  assert.equal(profileAction(sparse), null);
   assert.equal(profileOfferHeadline(bonus), "Published welcome terms");
   assert.equal(profileReviewFreshness(sparse), null);
   assert.deepEqual(profileFacts(sparse), []);
@@ -97,8 +97,6 @@ test("decision-page composition renders three governed VIEW OFFER placements and
   const presentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
   const messages = productPageMessages(presentation.locale);
   const actionable = casino({
-    presentationDisposition: "PROMOTABLE",
-    presentationDispositionReason: "EXACT_MARKET_AND_ROUTE_ELIGIBLE",
     media: { ...casino().media, logo: null },
   });
   const actionableHtml = renderToStaticMarkup(React.createElement(CasinoProfile, {
@@ -125,8 +123,7 @@ test("decision-page composition renders three governed VIEW OFFER placements and
   assert.deepEqual([...expectedOrder].sort((left, right) => actionableHtml.indexOf(`id="${left}"`) - actionableHtml.indexOf(`id="${right}"`)), expectedOrder);
 
   const reviewOnly = casino({
-    presentationDisposition: "INFORMATIONAL_ONLY",
-    presentationDispositionReason: "EXACT_MARKET_INFORMATION_ONLY",
+    action: null,
     media: { ...casino().media, logo: null },
   });
   const reviewOnlyHtml = renderToStaticMarkup(React.createElement(CasinoProfile, {
@@ -140,19 +137,15 @@ test("decision-page composition renders three governed VIEW OFFER placements and
   assert.doesNotMatch(reviewOnlyHtml, /data-casino-decision-bar/);
   assert.equal((reviewOnlyHtml.match(/Review only/g) ?? []).length, 2);
 
-  const unsupportedMarketHtml = renderToStaticMarkup(React.createElement(CasinoProfile, {
+  const repeatedActionableHtml = renderToStaticMarkup(React.createElement(CasinoProfile, {
     availableForPresentation: true,
     casino: actionable,
-    commercialProductsAvailable: false,
     editorial,
     messages,
     presentation,
   }));
-  assert.match(unsupportedMarketHtml, /Structured metadata title|Published Casino/);
-  assert.doesNotMatch(unsupportedMarketHtml, /href="\/r\//);
-  assert.doesNotMatch(unsupportedMarketHtml, /data-casino-decision-bar/);
-  assert.doesNotMatch(unsupportedMarketHtml, /href="\/bonuses"/);
-  assert.equal((unsupportedMarketHtml.match(/Review only/g) ?? []).length, 2);
+  assert.equal((repeatedActionableHtml.match(/href="\/r\/published-bonus\?placement=CTA_CASINO_(?:HERO|MOBILE_STICKY|OFFER_SECTION)"/g) ?? []).length, 3);
+  assert.doesNotMatch(readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8"), /commercialProductsAvailable/);
 });
 
 test("mobile decision bar appears only after the hero and clears before the footer", () => {
@@ -210,9 +203,9 @@ test("exact-ID demo profiles are noindex, truthful and suppress review/commercia
         caption: null,
       },
     },
-    affiliate: { href: "/r/demo", available: true },
+    action: null,
   });
-  assert.equal(profileAction(record, selectProfileBonus(record)), null);
+  assert.equal(profileAction(record), null);
   const metadata = casinoProfileMetadata(record, editorial);
   assert.deepEqual(metadata.robots, { index: false, follow: true });
   assert.match(String(metadata.title), /Fictional Review Demonstration/);
@@ -264,7 +257,7 @@ test("published maximum bet is projected from the existing immutable snapshot fi
       id: "casino-id", slug: "mapped-casino", title: "Mapped Casino", domain: "mapped.example", status: "PUBLISHED", editorScore: 8,
       casinoBonuses: [{ id: "bonus-id", slug: "mapped-welcome", title: "Mapped terms", status: "PUBLISHED", offerStatus: "ACTIVE", maximumBet: "7.50" }],
     },
-  }, [], { redirectEnabled: false, now: new Date("2030-02-01T00:00:00.000Z") });
+  }, { now: new Date("2030-02-01T00:00:00.000Z") });
   assert.equal(mapped?.bonuses[0]?.maximumBet, 7.5);
 });
 

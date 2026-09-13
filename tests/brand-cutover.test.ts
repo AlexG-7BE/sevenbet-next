@@ -297,12 +297,12 @@ test("exact demo presentation reconciles legacy stored brand text without changi
         importantConditions: ["SevenBet fixture condition"],
       }],
     },
-  }, [], { redirectEnabled: false, now: new Date("2026-08-09T00:00:00.000Z") });
+  }, { now: new Date("2026-08-09T00:00:00.000Z") });
   assert.ok(mapped);
   const presented = enforceTemporaryDemoReviewOnly(mapped);
   assert.equal(presented.id, casinoId);
   assert.equal(presented.slug, "demo-brand-cutover");
-  assert.equal(presented.affiliate.available, false);
+  assert.equal(presented.action, null);
   assert.doesNotMatch(JSON.stringify(presented), OLD_PUBLIC_BRAND);
   assert.match(JSON.stringify(presented), /B4GAMBLE/);
 

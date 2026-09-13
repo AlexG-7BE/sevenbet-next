@@ -10,6 +10,7 @@ import type { PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { PublicCasinoService } from "../lib/services/public-casino.service";
+import { noCommercialActions } from "./commercial-action.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -72,7 +73,7 @@ function twoMarketRecord(): PublishedCasinoSnapshotRecord {
 }
 
 test("global editorial facts merge with exact-market facts without cross-market leakage", () => {
-  const mapped = mapPublishedCasino(twoMarketRecord(), [], { redirectEnabled: false, now });
+  const mapped = mapPublishedCasino(twoMarketRecord(), { now });
   assert.ok(mapped);
   assert.equal(mapped.id, "reference-casino");
   assert.equal(mapped.marketProfiles.length, 2);
@@ -108,9 +109,8 @@ test("an unqualified direct service result exposes global identity without selec
     hasManagedSlug: async () => true,
     listPublished: async () => [record],
     listManagedSlugs: async () => ["reference-casino"],
-    listActiveAffiliateRoutes: async () => [],
   };
-  const service = new PublicCasinoService(repository, [], { cmsEnabled: true, redirectEnabled: false, now });
+  const service = new PublicCasinoService(repository, [], { cmsEnabled: true, now }, noCommercialActions);
 
   for (const casino of [await service.getCasino("reference-casino"), ...(await service.listCasinos())]) {
     assert.ok(casino);
@@ -127,9 +127,9 @@ test("an unqualified direct service result exposes global identity without selec
 test("trusted market and product predicates compose within one market profile while query country is inert", async () => {
   const store: PublicCasinoDiscoveryStore = {
     listPublished: async () => [twoMarketRecord()],
-    loadContext: async () => ({ aliases: [], offers: [], redirects: [] }),
+    loadContext: async () => ({ aliases: [] }),
   };
-  const service = new PublicCasinoDiscoveryService(store, () => now, undefined, () => false);
+  const service = new PublicCasinoDiscoveryService(store, () => now, noCommercialActions);
   assert.equal((await service.discover({ country: ["SE"], payment: ["swish"] }, null, { defaultEditorialCountry: "PE" })).total, 0);
   assert.equal((await service.discover({ currency: ["SEK"] }, null, { defaultEditorialCountry: "PE" })).total, 0);
   assert.equal((await service.discover({ license: ["swedish-test-authority"] }, null, { defaultEditorialCountry: "PE" })).total, 0);

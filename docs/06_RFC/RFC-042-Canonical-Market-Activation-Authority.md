@@ -18,6 +18,13 @@ sole commercial authority; media can neither activate nor block it.
 adds an exact country-or-subdivision `marketCode` while retaining parent
 `countryCode` for jurisdiction and factual market authority.
 
+**Public action seam amendment:** [RFC-047](RFC-047-Single-Public-Commercial-Action-Authority.md)
+supersedes this RFC only where it describes `MarketActivation` as the complete
+final public application decision. `MarketActivation` remains PR1's canonical
+persisted activation-intent and route-safety source; RFC-047 combines that
+bounded result with publication, trusted-market, jurisdiction, redirect-switch
+and GB safeguards once into the sole nullable public action.
+
 ## Decision
 
 `MarketActivation` is the only B4GAMBLE-owned Production commercial authority

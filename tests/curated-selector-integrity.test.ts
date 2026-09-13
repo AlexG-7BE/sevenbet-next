@@ -20,8 +20,6 @@ function casino(slug: string, patch: Partial<PublicCasinoCardDto> = {}): PublicC
   return {
     id: slug,
     dataClassification: "PUBLISHED_RECORD",
-    disposition: "INFORMATIONAL_ONLY",
-    dispositionReason: "EXACT_MARKET_INFORMATION_ONLY",
     slug,
     name: slug,
     logo: null,
@@ -37,7 +35,7 @@ function casino(slug: string, patch: Partial<PublicCasinoCardDto> = {}): PublicC
     supportsCrypto: false,
     supportsMobile: false,
     featuredBonus: null,
-    visitAction: { available: false, redirectSlug: null, label: "Review", reasonCode: null },
+    action: null,
     responsibleGamblingLabel: null,
     publishedAt: "2026-01-01T00:00:00.000Z",
     editorialUpdatedAt: null,
@@ -82,8 +80,7 @@ function offer(slug: string, patch: { crypto?: boolean; deposit?: number | null;
       startsAt: null,
       expiresAt: null,
     },
-    action: { href: null, available: false },
-    commercialAvailability: "UNAVAILABLE",
+    action: { href: `/r/${slug}` },
     dataClassification: "PUBLISHED_RECORD",
   };
 }
@@ -122,19 +119,19 @@ test("canonical Best Bonuses ranking deduplicates casinos and continues to three
   assert.deepEqual(rankBestBonusCasinoIds([alphaBest, beta, gamma], { candidateCasinoIds: ["beta", "gamma"] }), ["beta", "gamma"]);
 });
 
-test("casino selectors include informational records, exclude hidden records, and derive availability from real results", () => {
+test("casino selectors rank supplied editorial records without taking commercial authority", () => {
   const informational = casino("informational", { supportsMobile: true, publishedAt: "2026-03-01T00:00:00.000Z" });
-  const promotable = casino("promotable", { disposition: "PROMOTABLE", dispositionReason: "EXACT_MARKET_AND_ROUTE_ELIGIBLE", publishedAt: "2026-02-01T00:00:00.000Z" });
-  const hidden = casino("hidden", { disposition: "HIDDEN", dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY", supportsCrypto: true, publishedAt: "2026-04-01T00:00:00.000Z" });
-  const records = [promotable, hidden, informational];
+  const actionable = casino("actionable", { action: { href: "/r/actionable" }, publishedAt: "2026-02-01T00:00:00.000Z" });
+  const crypto = casino("crypto", { supportsCrypto: true, publishedAt: "2026-04-01T00:00:00.000Z" });
+  const records = [actionable, crypto, informational];
 
-  assert.deepEqual(selectCuratedCasinos(records, "Best Overall").map((item) => item.id), ["promotable", "informational"]);
-  assert.deepEqual(selectCuratedCasinos(records, "Crypto"), []);
+  assert.deepEqual(selectCuratedCasinos(records, "Best Overall").map((item) => item.id), ["actionable", "crypto", "informational"]);
+  assert.deepEqual(selectCuratedCasinos(records, "Crypto").map((item) => item.id), ["crypto"]);
   assert.deepEqual(selectCuratedCasinos(records, "Mobile").map((item) => item.id), ["informational"]);
-  assert.deepEqual(selectCuratedCasinos(records, "New Casinos").map((item) => item.id), ["informational", "promotable"]);
+  assert.deepEqual(selectCuratedCasinos(records, "New Casinos").map((item) => item.id), ["crypto", "informational", "actionable"]);
   assert.deepEqual(
     selectAvailableCuratedCasinoResults(records).map((result) => result.selector),
-    ["Best Overall", "Mobile", "New Casinos"],
+    ["Best Overall", "Crypto", "Mobile", "New Casinos"],
   );
   assert.equal(resolveActiveCuratedCasinoSelector("Crypto", ["Best Overall", "Mobile"]), "Best Overall");
   assert.equal(resolveActiveCuratedCasinoSelector("Crypto", ["Mobile"]), "Mobile");

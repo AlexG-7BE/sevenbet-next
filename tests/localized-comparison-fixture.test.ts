@@ -17,7 +17,6 @@ function comparisonSeed(country: string): PublicComparisonResult {
     selectedSlugs,
     candidates: selectedSlugs.map((slug, index) => ({
       dataClassification: "DEMO_FIXTURE",
-      disposition: "INFORMATIONAL_ONLY",
       slug,
       name: `Seed ${index}`,
       logo: null,
@@ -36,7 +35,7 @@ function comparisonSeed(country: string): PublicComparisonResult {
 
 function visibleFixtureCopy(result: PublicComparisonResult) {
   return [
-    ...result.casinos.flatMap((casino) => [casino.summary, casino.action.label, casino.action.reason]),
+    ...result.casinos.map((casino) => casino.summary),
     ...result.candidates.map((candidate) => candidate.marketLabel),
     ...result.groups.flatMap((group) => [
       group.label,
@@ -67,10 +66,7 @@ for (const { locale, country } of [
       casino.dataClassification === "DEMO_FIXTURE"
       && casino.summary === copy.summary
       && casino.reviewHref === "/casino/demo-plume?visualFixture=true"
-      && !casino.action.available
-      && casino.action.href === null
-      && casino.action.label === messages.common.commercialUnavailable
-      && casino.action.reason === messages.profile.demoDisclosure
+      && casino.action === null
     )));
     assert.ok(fixture.candidates.every((candidate) => candidate.marketLabel === messages.common.demoData));
 
@@ -120,7 +116,7 @@ test("comparison locale transport is explicit and local visual actions remain un
   assert.match(route, /MARKET_PROFILES\.some/);
   assert.match(casinosPage, /withHandoffCasinoDiscoveryData\(loaded\.result, visualFixture, presentation\.locale, collectionQuery\(\), fixtureMarket\)/);
   assert.doesNotMatch(casinosPage, /presentation\.marketCountryCode === "GB"/);
-  assert.match(visualFixture, /visitAction: \{ available: false, redirectSlug: null/);
+  assert.match(visualFixture, /action: null/);
 
   const seed = comparisonSeed("DE");
   assert.equal(withHandoffComparisonData(seed, false, "de-DE"), seed);

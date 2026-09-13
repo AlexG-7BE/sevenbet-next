@@ -94,8 +94,7 @@ function offer(index: number, patch: {
       startsAt: null,
       expiresAt: "2026-12-01T00:00:00.000Z",
     },
-    action: action ? { available: true, href: controlledHref } : { available: false, href: null },
-    commercialAvailability: action ? "AVAILABLE" : "UNAVAILABLE",
+    action: action ? { href: controlledHref } : null,
     dataClassification: "PUBLISHED_RECORD",
   };
 }
@@ -105,8 +104,6 @@ function casino(index: number, patch: { score?: number; payout?: string; deposit
   return {
     id: `20000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
     dataClassification: "PUBLISHED_RECORD",
-    disposition: action ? "PROMOTABLE" : "INFORMATIONAL_ONLY",
-    dispositionReason: action ? "EXACT_MARKET_AND_ROUTE_ELIGIBLE" : "EXACT_MARKET_INFORMATION_ONLY",
     slug: `collection-${index}`,
     name: `Collection ${index}`,
     logo: null,
@@ -117,7 +114,7 @@ function casino(index: number, patch: { score?: number; payout?: string; deposit
     licenses: [], countries: [], paymentMethods: [], gameProviders: [], categories: [], highlights: [],
     withdrawalTimes: [patch.payout ?? "24 hours"],
     featuredBonus: { title: "100% up to £100", summary: "raw offer prose", type: "WELCOME", keyTerms: ["raw evidence"], wageringRequirement: 20, minimumDeposit: patch.deposit === undefined ? 10 : patch.deposit, currency: "GBP", validUntil: null, termsApply: true },
-    visitAction: action ? { available: true, redirectSlug: "governed-offer", label: "Visit", reasonCode: null } : { available: false, redirectSlug: null, label: "Visit", reasonCode: "NO_GOVERNED_ROUTE" },
+    action: action ? { href: controlledHref } : null,
     responsibleGamblingLabel: null,
     publishedAt: "2026-09-01T00:00:00.000Z",
     editorialUpdatedAt: "2026-09-02T00:00:00.000Z",
@@ -130,18 +127,9 @@ test("Commercial UX exposes exactly the Founder-approved view sets", () => {
   assert.deepEqual(CORE_BONUS_DIRECTORY_VIEWS, ["all", "welcome", "low_wagering", "low_deposit", "free_spins"]);
 });
 
-test("commercial product state is authority-derived and independent from page result count", () => {
-  const presentation = { marketCountryCode: "EE" };
-  const jurisdiction = {
-    countryCode: "EE",
-    editorialAllowed: true,
-    commercialAllowed: true,
-    referralAllowed: true,
-  };
-  assert.equal(resolveCommercialProductState({ presentation, jurisdiction, canonicalRouteAvailable: true }), "SUPPORTED_COMMERCIAL");
-  assert.equal(resolveCommercialProductState({ presentation, jurisdiction, canonicalRouteAvailable: false }), "EDITORIAL_ONLY");
-  assert.equal(resolveCommercialProductState({ presentation, jurisdiction: { ...jurisdiction, referralAllowed: false }, canonicalRouteAvailable: true }), "EDITORIAL_ONLY");
-  assert.equal(resolveCommercialProductState({ presentation, jurisdiction: { ...jurisdiction, countryCode: "LV" }, canonicalRouteAvailable: true }), "EDITORIAL_ONLY");
+test("commercial product state summarizes canonical action availability", () => {
+  assert.equal(resolveCommercialProductState({ canonicalActionAvailable: true }), "SUPPORTED_COMMERCIAL");
+  assert.equal(resolveCommercialProductState({ canonicalActionAvailable: false }), "EDITORIAL_ONLY");
   assert.equal(commercialProductsAvailable("SUPPORTED_COMMERCIAL"), true);
   assert.equal(commercialProductsAvailable("EDITORIAL_ONLY"), false);
 });
@@ -248,6 +236,7 @@ test("presentation adapters never expose raw evidence prose and preserve governe
 
   const demonstration = offer(4);
   demonstration.dataClassification = "DEMO_FIXTURE";
+  demonstration.action = null;
   assert.equal(offerCardPresentation(demonstration, "en-GB", messages, copy, "bonus_directory").action, null);
   assert.deepEqual(rankBestOffersForCategory([demonstration], "best_overall"), []);
   assert.equal(rankBestOffersForCategory([demonstration], "best_overall", { includeDemonstration: true }).length, 1);
@@ -322,12 +311,13 @@ test("commercial routes keep the approved task first and restore only bounded pr
   assert.doesNotMatch(profile, /payoutScore|bonusScore|gamesScore|supportScore|verificationScore/);
 });
 
-test("unsupported commercial routes short-circuit before normal product rails", () => {
+test("market summary frames only actionless commercial routes and cannot veto a canonical action", () => {
   const best = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
   const bonuses = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
   for (const source of [best, bonuses]) {
     assert.match(source, /data-commercial-market-state="editorial-only"/);
-    assert.match(source, /!.*commercialProductsAvailable\(loaded\.commercialProductState\)/);
+    assert.match(source, /result\.records\.some\(\(offer\) => offer\.action !== null\)/);
+    assert.match(source, /!hasCanonicalAction && !commercialProductsAvailable\(loaded\.commercialProductState\)/);
   }
   assert.ok(best.indexOf('data-commercial-market-state="editorial-only"') < best.indexOf("<section className={styles.hero}"));
   assert.ok(bonuses.indexOf('data-commercial-market-state="editorial-only"') < bonuses.indexOf("<BonusOfferDirectory"));

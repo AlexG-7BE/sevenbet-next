@@ -29,7 +29,7 @@ function money(value: number | null, currency: string | null, locale: string, no
 }
 
 function Action({ offer, messages }: { offer: PublicOfferDTO; messages: ProductPageMessages }) {
-  const href = hasGovernedCommercialOfferAction(offer) ? offer.action.href : null;
+  const href = hasGovernedCommercialOfferAction(offer) && offer.action ? offer.action.href : null;
   if (!href) return <span className={styles.unavailable}>{messages.common.reviewOnly}</span>;
   return <CasinoOutboundAction action={{ href, label: messages.common.actionAvailable }} className={styles.action} context={{ source: "CTA", placement: "BONUS_LISTING_CARD" }} messages={messages.outbound} />;
 }

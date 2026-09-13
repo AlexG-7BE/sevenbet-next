@@ -1,5 +1,5 @@
+import type { GovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 import type { PublicCasinoMedia } from "@/lib/public-casino/public-casino.types";
-import type { PublicCasinoPresentationDisposition } from "@/lib/public-casino/presentation-disposition";
 import type { PublicCasinoDataClassification, PublicCasinoInventoryMode } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 
 export type PublicComparisonEvidenceStatus =
@@ -30,7 +30,6 @@ export interface PublicComparisonQuery {
 
 export interface PublicComparisonCandidate {
   dataClassification: PublicCasinoDataClassification;
-  disposition: PublicCasinoPresentationDisposition;
   slug: string;
   name: string;
   logo: PublicCasinoMedia | null;
@@ -45,17 +44,9 @@ export interface PublicComparisonReason {
   message: string;
 }
 
-export interface PublicComparisonAction {
-  available: boolean;
-  href: string | null;
-  label: string;
-  reason: string;
-}
-
 export interface PublicComparisonCasino {
   id: string;
   dataClassification: PublicCasinoDataClassification;
-  disposition: PublicCasinoPresentationDisposition;
   slug: string;
   name: string;
   summary: string;
@@ -65,7 +56,7 @@ export interface PublicComparisonCasino {
   lastReviewedAt: string | null;
   reviewHref: string;
   marketState: PublicComparisonMarketState;
-  action: PublicComparisonAction;
+  action: GovernedCommercialAction | null;
 }
 
 export interface PublicComparisonValue {

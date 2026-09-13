@@ -8,6 +8,7 @@ import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-
 import { publicCasinoRepository, type PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { PublicCasinoService } from "../lib/services/public-casino.service";
+import { noCommercialActions } from "./commercial-action.fixtures";
 
 const CASINO_ID = "c1110000-0000-4000-8000-000000000001";
 const PE_PROFILE_ID = "c1110000-0000-4000-8000-000000000011";
@@ -16,7 +17,7 @@ const PE_LICENSE_ID = "c1110000-0000-4000-8000-000000000021";
 const SE_LICENSE_ID = "c1110000-0000-4000-8000-000000000022";
 const GLOBAL_LICENSE_ID = "c1110000-0000-4000-8000-000000000023";
 const NOW = new Date("2030-06-01T00:00:00.000Z");
-const EMPTY_CONTEXT: DiscoveryContext = { aliases: [], offers: [], redirects: [] };
+const EMPTY_CONTEXT: DiscoveryContext = { aliases: [] };
 
 function assertDisposableDatabase(value: string | undefined) {
   if (!value) throw new Error("DATABASE_URL is required");
@@ -226,7 +227,6 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
       hasManagedSlug: async (slug) => slug === "architecture-betsson",
       listPublished: async () => [published],
       listManagedSlugs: async () => ["architecture-betsson"],
-      listActiveAffiliateRoutes: async () => [],
     };
     const discoveryStore: PublicCasinoDiscoveryStore = {
       listPublished: async () => [published],
@@ -234,10 +234,9 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
     };
     const publicService = new PublicCasinoService(publicStore, [], {
       cmsEnabled: true,
-      redirectEnabled: false,
       now: NOW,
-    });
-    const discovery = new PublicCasinoDiscoveryService(discoveryStore, () => NOW, undefined, () => false);
+    }, noCommercialActions);
+    const discovery = new PublicCasinoDiscoveryService(discoveryStore, () => NOW, noCommercialActions);
 
     const pe = await publicService.getCasino("architecture-betsson", undefined, "PE");
     const se = await publicService.getCasino("architecture-betsson", undefined, "SE");
@@ -265,7 +264,7 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
     assert.deepEqual(unqualified?.licenses, []);
     assert.deepEqual(unqualified?.categories, []);
     assert.doesNotMatch(JSON.stringify(unqualified), /PEN|Yape|MINCETUR|PE slots|SEK|Swish|Spelinspektionen|SE live casino/);
-    assert.equal(unqualified?.affiliate.available, false);
+    assert.equal(unqualified?.action, null);
 
     assert.equal((await discovery.discover(
       { country: ["SE"], currency: ["PEN"], payment: ["yape"], license: ["mincetur"], category: ["slots-pe"] },
@@ -286,7 +285,7 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
     assert.deepEqual(unqualifiedDiscovery.items[0]?.licenses, []);
     assert.deepEqual(unqualifiedDiscovery.items[0]?.paymentMethods, []);
     assert.deepEqual(unqualifiedDiscovery.items[0]?.categories, []);
-    assert.equal(unqualifiedDiscovery.items[0]?.visitAction.available, false);
+    assert.equal(unqualifiedDiscovery.items[0]?.action, null);
 
     assert.equal(await prisma.affiliateProgram.count({ where: { casinoId: CASINO_ID } }), 0);
     assert.equal(await prisma.affiliateOffer.count({ where: { casinoId: CASINO_ID } }), 0);

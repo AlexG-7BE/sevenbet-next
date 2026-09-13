@@ -13,6 +13,7 @@ import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublicCasinoDTO, PublicCasinoMarketProfile } from "@/lib/public-casino/public-casino.types";
 import type { CommercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
+import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 
 export type CommercialFact = Readonly<{ label: string; value: string }>;
 export type CasinoCollectionView = "top_rated" | "fast_payouts" | "low_deposit";
@@ -97,17 +98,11 @@ export function structuredOfferHeadline(
 }
 
 export function governedOfferAction(offer: PublicOfferDTO) {
-  return offer.dataClassification === "PUBLISHED_RECORD"
-    && offer.commercialAvailability === "AVAILABLE"
-    && offer.action.available
-    && Boolean(offer.action.href && /^\/r\/[a-z0-9][a-z0-9-]*$/i.test(offer.action.href));
+  return isGovernedCommercialAction(offer.action) ? offer.action : null;
 }
 
 export function governedCasinoAction(casino: PublicCasinoCardDto) {
-  return casino.dataClassification !== "DEMO_FIXTURE"
-    && casino.disposition === "PROMOTABLE"
-    && casino.visitAction.available
-    && Boolean(casino.visitAction.redirectSlug && /^[a-z0-9][a-z0-9-]*$/i.test(casino.visitAction.redirectSlug));
+  return isGovernedCommercialAction(casino.action) ? casino.action : null;
 }
 
 export function safeCommercialTermsUrl(value: string | null | undefined) {
@@ -136,6 +131,7 @@ export function offerCardPresentation(
   copy: CommercialUxMessages,
   context: BestOfferCategory | "bonus_directory",
 ) {
+  const action = governedOfferAction(offer);
   const payout = normalizedPayoutDisplay(offer.casino.payments.map((payment) => payment.supportsWithdrawals ? payment.withdrawalTime : null), copy);
   const wagering = offer.bonus.wageringMultiplier === null
     ? copy.notVerified
@@ -170,8 +166,8 @@ export function offerCardPresentation(
     reason: context === "bonus_directory" ? null : bestOfferReason(offer, locale, messages, copy, context),
     badges,
     facts,
-    action: governedOfferAction(offer) && offer.action.href ? { href: offer.action.href, label: copy.viewOffer } : null,
-    reviewOnly: !governedOfferAction(offer),
+    action: action ? { href: action.href, label: copy.viewOffer } : null,
+    reviewOnly: !action,
     termsUrl: safeCommercialTermsUrl(offer.bonus.termsUrl),
     demonstration: offer.dataClassification === "DEMO_FIXTURE",
   };
@@ -231,6 +227,7 @@ function casinoPayout(casino: PublicCasinoCardDto, copy: CommercialUxMessages) {
 }
 
 export function casinoCardPresentation(casino: PublicCasinoCardDto, locale: SupportedLocale, messages: ProductPageMessages, copy: CommercialUxMessages) {
+  const action = governedCasinoAction(casino);
   const payout = casinoPayout(casino, copy);
   const deposit = formatCommercialMoney(casino.featuredBonus?.minimumDeposit ?? null, casino.featuredBonus?.currency ?? null, locale, copy.notVerified);
   const badges = [
@@ -251,10 +248,10 @@ export function casinoCardPresentation(casino: PublicCasinoCardDto, locale: Supp
       { label: messages.common.minimumDeposit, value: deposit },
       { label: copy.currentOffer, value: casino.featuredBonus ? singleLine(casino.featuredBonus.title, 64) : copy.notVerified },
     ] satisfies CommercialFact[],
-    action: governedCasinoAction(casino) && casino.visitAction.redirectSlug
-      ? { href: `/r/${casino.visitAction.redirectSlug}`, label: copy.viewOffer }
+    action: action
+      ? { href: action.href, label: copy.viewOffer }
       : null,
-    reviewOnly: !governedCasinoAction(casino),
+    reviewOnly: !action,
     demonstration: casino.dataClassification === "DEMO_FIXTURE",
   };
 }

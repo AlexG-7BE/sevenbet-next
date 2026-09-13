@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import { TRANSLATION_REVIEW_STATE } from "@/lib/i18n/review-state";
 import { absoluteUrl } from "@/lib/site";
 import type { PresentationResolution } from "./presentation-resolver";
@@ -132,18 +131,4 @@ export function productMetadata(input: {
       ...(input.images ? { images: input.images } : {}),
     },
   };
-}
-
-export function commercialAuthorityForPresentation(
-  authority: CommercialJurisdictionAuthority | null | undefined,
-  presentationCountry: string | null,
-) {
-  return presentationCountry && authority?.countryCode === presentationCountry ? authority : null;
-}
-
-export function marketAvailability(
-  countries: ReadonlyArray<{ countryCode: string; availability: string }>,
-  presentationCountry: string | null,
-) {
-  return Boolean(presentationCountry && countries.some((country) => country.countryCode === presentationCountry && country.availability === "AVAILABLE"));
 }

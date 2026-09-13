@@ -1,16 +1,14 @@
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
+import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 
 import styles from "./OperatorIdentityPanel.module.css";
 
 export type OperatorIdentityVariant = "featured" | "secondary" | "bonus";
 
 export function hasGovernedCommercialOfferAction(offer: PublicOfferDTO) {
-  return offer.dataClassification === "PUBLISHED_RECORD"
-    && offer.commercialAvailability === "AVAILABLE"
-    && offer.action.available
-    && Boolean(offer.action.href && /^\/r\/[a-z0-9][a-z0-9-]*$/i.test(offer.action.href));
+  return isGovernedCommercialAction(offer.action);
 }
 
 export function OperatorLogo({ offer, prominent = false }: { offer: PublicOfferDTO; prominent?: boolean }) {

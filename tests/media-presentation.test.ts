@@ -75,8 +75,7 @@ test("missing and portrait inventory become compact inert identity presentations
   const seed = temporaryDemoBestOffers()[0];
   const available: PublicOfferDTO = {
     ...seed,
-    action: { available: true, href: "/r/media-test" },
-    commercialAvailability: "AVAILABLE",
+    action: { href: "/r/media-test" },
     dataClassification: "PUBLISHED_RECORD",
   };
   for (const [hero, family] of [
@@ -85,7 +84,7 @@ test("missing and portrait inventory become compact inert identity presentations
   ] as const) {
     const offer = { ...available, casino: { ...available.casino, hero } };
     const html = renderToStaticMarkup(React.createElement(CommercialOfferMedia, { messages, offer, variant: "featured" }));
-    assert.equal(offer.action.available, true);
+    assert.deepEqual(offer.action, { href: "/r/media-test" });
     assert.match(html, /data-media-mode="COMPOSED"/);
     assert.match(html, new RegExp('data-presentation-family="' + family + '"'));
     assert.match(html, new RegExp(messages.common.mediaUnavailableTitle));
@@ -118,8 +117,6 @@ test("casino discovery fixtures include the required wide, landscape, square and
   const seed: PublicCasinoCardDto = {
     id: "seed",
     dataClassification: "DEMO_FIXTURE",
-    disposition: "INFORMATIONAL_ONLY",
-    dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY",
     slug: "seed",
     name: "Seed Casino",
     logo: null,
@@ -134,7 +131,7 @@ test("casino discovery fixtures include the required wide, landscape, square and
     categories: [],
     highlights: [],
     featuredBonus: null,
-    visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "NO_GOVERNED_ROUTE" },
+    action: null,
     responsibleGamblingLabel: null,
     publishedAt: null,
     editorialUpdatedAt: null,
@@ -168,10 +165,10 @@ test("casino discovery fixtures include the required wide, landscape, square and
   assert.equal(secondPage.pageCount, 1);
   assert.deepEqual(new Set([...fixture.items, ...secondPage.items].map((casino) => casino.id)).size, 10);
   assert.ok(secondPage.items.every((casino) => casino.dataClassification === "DEMO_FIXTURE"));
-  assert.ok(secondPage.items.every((casino) => !casino.visitAction.available && casino.visitAction.redirectSlug === null));
+  assert.ok(secondPage.items.every((casino) => casino.action === null));
 
   assert.ok(fixture.items.every((casino) => casino.dataClassification === "DEMO_FIXTURE"));
-  assert.ok(fixture.items.every((casino) => !casino.visitAction.available && casino.visitAction.redirectSlug === null));
+  assert.ok(fixture.items.every((casino) => casino.action === null));
 });
 
 test("Phase 2 offer fixtures expose only fictional logo and governed media-ratio states", () => {
@@ -184,7 +181,7 @@ test("Phase 2 offer fixtures expose only fictional logo and governed media-ratio
     null,
   ]);
   assert.ok(bestOffers.records.every((offer) => offer.casino.logo?.url.startsWith("/demo-casinos/demo-")));
-  assert.ok(bestOffers.records.every((offer) => offer.dataClassification === "DEMO_FIXTURE" && !offer.action.available && offer.action.href === null));
+  assert.ok(bestOffers.records.every((offer) => offer.dataClassification === "DEMO_FIXTURE" && offer.action === null));
 
   const query = parsePublicOfferQuery({});
   const bonuses = withHandoffBonusDirectoryData({
@@ -208,7 +205,7 @@ test("Phase 2 offer fixtures expose only fictional logo and governed media-ratio
     [1000, 1000],
     null,
   ]);
-  assert.ok(bonuses.records.every((offer) => !offer.action.available && offer.action.href === null));
+  assert.ok(bonuses.records.every((offer) => offer.action === null));
 
   const secondPageQuery = { ...query, page: 2 };
   const secondBonusPage = withHandoffBonusDirectoryData({
@@ -229,7 +226,7 @@ test("Phase 2 offer fixtures expose only fictional logo and governed media-ratio
   assert.deepEqual(secondBonusPage.query, { ...secondPageQuery, page: 1 });
   assert.equal(new Set([...bonuses.records, ...secondBonusPage.records].map((offer) => offer.bonus.id)).size, 8);
   assert.ok(secondBonusPage.records.every((offer) => offer.dataClassification === "DEMO_FIXTURE"));
-  assert.ok(secondBonusPage.records.every((offer) => !offer.action.available && offer.action.href === null));
+  assert.ok(secondBonusPage.records.every((offer) => offer.action === null));
 });
 
 test("all European visual fixtures localize reader-facing copy and expose only the matching Solvane review", () => {
@@ -275,8 +272,8 @@ test("all European visual fixtures localize reader-facing copy and expose only t
     assert.deepEqual(casinos.map((casino) => casino.reviewHref), ["/casino/demo-plume?visualFixture=true", null, null, null, null, null, null, null, null, null]);
     assert.equal(new Set(bonusPageOne.records.map((offer) => offer.bonus.id)).size, 8);
     assert.deepEqual(bonusPageOne.records.map((offer) => offer.casino.reviewHref), ["/casino/demo-plume?visualFixture=true", null, null, null, null, null, null, null]);
-    assert.ok(offers.every((offer) => !offer.action.available && offer.action.href === null));
-    assert.ok(casinos.every((casino) => !casino.visitAction.available && casino.visitAction.redirectSlug === null));
+    assert.ok(offers.every((offer) => offer.action === null));
+    assert.ok(casinos.every((casino) => casino.action === null));
     assert.ok(offers.every((offer) => offer.casino.summary === copy.summary));
     assert.ok(offers.every((offer) => offer.bonus.type === "WELCOME"));
     assert.ok(offers.every((offer) => offer.bonus.eligibility === copy.bonus.eligibility));
@@ -309,7 +306,6 @@ test("all European visual fixtures localize reader-facing copy and expose only t
         casino.featuredBonus?.title,
         casino.featuredBonus?.summary,
         ...(casino.featuredBonus?.keyTerms ?? []),
-        casino.visitAction.label,
         casino.responsibleGamblingLabel,
       ]),
       ...bonusPageOne.facets.types.map((facet) => facet.label),

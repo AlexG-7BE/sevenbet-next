@@ -2,6 +2,7 @@ import type { CasinoEditorialDocument, EditorialBlock } from "@/lib/editorial-re
 import type { PublicCasinoBonus, PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { currentPublicBrandText } from "@/lib/public-brand";
+import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 
 export function summarizeWithdrawalTimes(payments: Array<{ supportsWithdrawals: boolean | null; withdrawalTime: string | null }>) {
   const timings = payments
@@ -28,8 +29,6 @@ export interface CasinoProfileFaqItem {
   question: string;
   answer: string;
 }
-
-const internalRedirect = /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function formatProfileDate(value: string | null | undefined, locale = "en-GB") {
   if (!value) return null;
@@ -66,18 +65,14 @@ export function countryName(countryCode: string) {
 
 export function selectProfileBonus(casino: PublicCasinoDTO) {
   return casino.offerPresentation?.selectedOffer
-    ?? casino.bonuses.find((bonus) => bonus.affiliate.available && internalRedirect.test(bonus.affiliate.href ?? ""))
     ?? casino.bonuses[0]
     ?? null;
 }
 
-export function profileAction(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | null): CasinoProfileAction | null {
-  const href = bonus
-    ? bonus.affiliate.available ? bonus.affiliate.href : null
-    : casino.affiliate.available ? casino.affiliate.href : null;
-  if (isTemporaryDemoCasinoId(casino.id)) return null;
-  if (!href || !internalRedirect.test(href)) return null;
-  return { href, label: `Visit ${casino.name}` };
+export function profileAction(casino: PublicCasinoDTO): CasinoProfileAction | null {
+  return isGovernedCommercialAction(casino.action)
+    ? { href: casino.action.href, label: `Visit ${casino.name}` }
+    : null;
 }
 
 export function profileOfferHeadline(bonus: PublicCasinoBonus, locale = "en-GB") {

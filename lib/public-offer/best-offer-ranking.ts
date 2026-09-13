@@ -1,4 +1,5 @@
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
+import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 
 export type BestFitCriterion = "overall" | "wagering" | "payout";
 export type BestOfferCategory = "best_overall" | "fast_payouts" | "best_bonus_terms" | "low_deposit";
@@ -31,10 +32,6 @@ export function bonusMechanicsCompleteness(offer: PublicOfferDTO) {
 
 export function hasCompleteMaterialTerms(offer: PublicOfferDTO) {
   return materialTermCompleteness(offer) === 4;
-}
-
-export function isMarketAvailable(offer: PublicOfferDTO, country = "GB") {
-  return offer.casino.countries.some((item) => item.countryCode === country && item.availability === "AVAILABLE");
 }
 
 export function hasPayoutEvidence(offer: PublicOfferDTO) {
@@ -151,11 +148,8 @@ export function rankOverallOffers(offers: PublicOfferDTO[], country = "GB") {
 }
 
 export function isGovernedBestOfferCandidate(offer: PublicOfferDTO, country?: string) {
-  return offer.dataClassification === "PUBLISHED_RECORD"
-    && offer.commercialAvailability === "AVAILABLE"
-    && offer.action.available
-    && Boolean(offer.action.href && /^\/r\/[a-z0-9][a-z0-9-]*$/i.test(offer.action.href))
-    && (!country || isMarketAvailable(offer, country));
+  void country;
+  return isGovernedCommercialAction(offer.action);
 }
 
 function uniqueCasinos(offers: PublicOfferDTO[], limit: number) {
@@ -236,7 +230,7 @@ export function rankBestBonusCasinoIds(
   const seen = new Set<string>();
   const casinoIds: string[] = [];
 
-  for (const offer of rankOverallOffers(offers.filter((item) => item.dataClassification === "PUBLISHED_RECORD"))) {
+  for (const offer of rankOverallOffers(offers.filter((item) => isGovernedBestOfferCandidate(item)))) {
     const casinoId = offer.casino.id;
     if (candidateCasinoIds && !candidateCasinoIds.has(casinoId)) continue;
     if (seen.has(casinoId)) continue;
@@ -249,9 +243,8 @@ export function rankBestBonusCasinoIds(
 }
 
 export function selectOverallShortlist(offers: PublicOfferDTO[], options: { country?: string; limit?: number } = {}) {
-  const country = options.country ?? "GB";
   const limit = Math.min(Math.max(options.limit ?? 12, 1), 12);
-  return rankOverallOffers(offers.filter((offer) => offer.dataClassification === "PUBLISHED_RECORD" && hasCompleteMaterialTerms(offer)), country).slice(0, limit);
+  return rankOverallOffers(offers.filter((offer) => isGovernedBestOfferCandidate(offer, options.country) && hasCompleteMaterialTerms(offer))).slice(0, limit);
 }
 
 export function selectBestOverall(offers: PublicOfferDTO[]) {

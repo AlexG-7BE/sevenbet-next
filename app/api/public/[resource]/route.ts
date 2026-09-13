@@ -34,16 +34,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   };
   if (resource === "casinos") {
     const authority = await resolveServerJurisdiction();
-    const records = (await publicCasinoService.listCasinos(authority, requestCountry, presentationLanguage, requestSignal?.marketCode)).filter((casino) => casino.source === "cms").slice(0, limit).map((casino) => ({
-      ...casino,
-      affiliate: casino.affiliate.href?.startsWith("/r/") ? casino.affiliate : { href: null, available: false },
-      bonuses: casino.bonuses.map((bonus) => ({ ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } })),
-    }));
+    const records = (await publicCasinoService.listCasinos(authority, requestCountry, presentationLanguage, requestSignal?.marketCode)).filter((casino) => casino.source === "cms").slice(0, limit);
     return NextResponse.json({ ok: true, resource, entity: "casino", count: records.length, records }, { headers: marketResponseHeaders });
   }
   if (resource === "bonuses") {
     const authority = await resolveServerJurisdiction();
-    const records = (await publicCasinoService.listBonuses(authority, requestCountry, presentationLanguage, requestSignal?.marketCode)).filter(({ casino }) => casino.source === "cms").slice(0, limit).map(({ casino, bonus }) => ({ casino: { id: casino.id, slug: casino.slug, name: casino.name }, ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } }));
+    const records = (await publicCasinoService.listBonuses(authority, requestCountry, presentationLanguage, requestSignal?.marketCode)).filter(({ casino }) => casino.source === "cms").slice(0, limit).map(({ casino, bonus }) => ({ casino: { id: casino.id, slug: casino.slug, name: casino.name }, ...bonus, action: casino.action }));
     return NextResponse.json({ ok: true, resource, entity: "bonus", count: records.length, records }, { headers: marketResponseHeaders });
   }
   if (resource === "articles") {

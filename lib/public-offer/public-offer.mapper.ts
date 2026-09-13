@@ -18,11 +18,6 @@ export function publicCasinoToOffers(casino: PublicCasinoDTO, inventory?: Public
     const minimumDeposit = bonus.minimumDeposit
       ?? casino.payments.find((payment) => payment.minimumDeposit !== null)?.minimumDeposit
       ?? null;
-    const action = presentation
-      ? presentation.relation === "OTHER_MARKET" || presentation.relation === "NONE"
-        ? { href: null, available: false }
-        : bonus.affiliate
-      : bonus.affiliate.available ? bonus.affiliate : casino.affiliate;
     const offerPresentation = presentation ? {
       relation: presentation.relation,
       sourceCountryCode: presentation.sourceCountryCode,
@@ -89,8 +84,7 @@ export function publicCasinoToOffers(casino: PublicCasinoDTO, inventory?: Public
         expiresAt: bonus.expiresAt,
         media: bonus.media,
       },
-      action,
-      commercialAvailability: action.available && action.href ? "AVAILABLE" : "UNAVAILABLE",
+      action: casino.action,
       dataClassification: "PUBLISHED_RECORD",
       ...(offerPresentation ? { offerPresentation } : {}),
     };

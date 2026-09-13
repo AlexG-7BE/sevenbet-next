@@ -7,26 +7,18 @@ import type {
   PublicOfferQuery,
   PublicOfferSearchResult,
 } from "@/lib/public-offer/public-offer.types";
-import { publicOfferRepository, type PublicOfferRecord, type PublicOfferStore } from "@/lib/repositories/public-offer.repository";
+import { publicOfferRepository, type PublicOfferStore } from "@/lib/repositories/public-offer.repository";
 import { isPublicCasinoCmsEnabled } from "@/lib/services/public-casino.service";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
-import { scopedCasinoReferralAllowed, scopedCommercialProjectionMayLoad } from "@/lib/jurisdiction/scoped-commercial-authority";
 import {
-  canonicalGbOperatorEligibilityContext,
-  gbOperatorEligibilityService,
-  type GbOperatorEligibilityAuthority,
-  type GbOperatorEligibilityEvidenceContext,
-} from "@/lib/services/gb-operator-eligibility.service";
-import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
+  publicCommercialActionResolver,
+  type PublicCommercialActionAuthority,
+} from "@/lib/commercial/public-commercial-action-resolver";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { currentPublicBrandText } from "@/lib/public-brand";
 
 const missingHigh = Number.POSITIVE_INFINITY;
 const missingLow = Number.NEGATIVE_INFINITY;
-
-function withoutAction(offer: PublicOfferDTO): PublicOfferDTO {
-  return { ...offer, action: { href: null, available: false }, commercialAvailability: "UNAVAILABLE" };
-}
 
 function classifyOffer(offer: PublicOfferDTO): PublicOfferDTO {
   if (!isTemporaryDemoCasinoId(offer.casino.id)) return { ...offer, dataClassification: "PUBLISHED_RECORD" };
@@ -49,15 +41,9 @@ function classifyOffer(offer: PublicOfferDTO): PublicOfferDTO {
       eligibility: offer.bonus.eligibility ? brand(offer.bonus.eligibility) : null,
       importantConditions: offer.bonus.importantConditions.map(brand),
     },
-    action: { href: null, available: false },
-    commercialAvailability: "UNAVAILABLE",
+    action: null,
     dataClassification: "DEMO_FIXTURE",
   };
-}
-
-function withoutOperatorEligibilityContext(offer: PublicOfferRecord): PublicOfferDTO {
-  const { operatorEligibilityContext: _internalContext, ...publicOffer } = offer;
-  return publicOffer;
 }
 
 export function publicOfferInventoryMode(offers: PublicOfferDTO[]) {
@@ -98,7 +84,7 @@ function matches(offer: PublicOfferDTO, query: PublicOfferQuery) {
   if (query.crypto !== undefined && offer.casino.payments.some((item) => item.crypto) !== query.crypto) return false;
   if (query.maxDeposit !== undefined && (offer.bonus.minimumDeposit === null || offer.bonus.minimumDeposit > query.maxDeposit)) return false;
   if (query.maxWagering !== undefined && (offer.bonus.wageringMultiplier === null || offer.bonus.wageringMultiplier > query.maxWagering)) return false;
-  if (query.availability && offer.commercialAvailability !== query.availability) return false;
+  if (query.availability && (offer.action ? "AVAILABLE" : "UNAVAILABLE") !== query.availability) return false;
   if (query.featured !== undefined && offer.casino.featured !== query.featured) return false;
   if (query.recommended !== undefined && offer.casino.recommended !== query.recommended) return false;
   return true;
@@ -124,9 +110,10 @@ export function buildOfferFacets(offers: PublicOfferDTO[]): PublicOfferFacets {
       payments.set(payment.key, { label: payment.name, count: (payments.get(payment.key)?.count ?? 0) + 1 });
     }
     if (offer.casino.payments.some((item) => item.crypto)) cryptoCount += 1;
-    availability.set(offer.commercialAvailability, {
-      label: offer.commercialAvailability === "AVAILABLE" ? "Action available" : "Review only",
-      count: (availability.get(offer.commercialAvailability)?.count ?? 0) + 1,
+    const actionAvailability = offer.action ? "AVAILABLE" : "UNAVAILABLE";
+    availability.set(actionAvailability, {
+      label: actionAvailability === "AVAILABLE" ? "Action available" : "Review only",
+      count: (availability.get(actionAvailability)?.count ?? 0) + 1,
     });
   }
   return {
@@ -144,52 +131,35 @@ export function buildOfferFacets(offers: PublicOfferDTO[]): PublicOfferFacets {
 export class PublicOfferService {
   constructor(
     private readonly repository: PublicOfferStore = publicOfferRepository,
-    private readonly options: { cmsEnabled?: boolean; legacyCasinos?: Casino[]; redirectEnabled?: boolean } = {},
-    private readonly operatorEligibility: GbOperatorEligibilityAuthority = gbOperatorEligibilityService,
+    private readonly options: { cmsEnabled?: boolean; legacyCasinos?: Casino[] } = {},
+    private readonly actionAuthority: PublicCommercialActionAuthority = publicCommercialActionResolver,
   ) {}
 
   private cmsEnabled() {
     return this.options.cmsEnabled ?? isPublicCasinoCmsEnabled();
   }
 
-  private async listEligibleOffers(authority?: CommercialJurisdictionAuthority | null, options: { throwOnError?: boolean; countryCode?: string; commercialMarketCode?: string; presentationLanguage?: string } = {}) {
+  private async listOffers(authority?: CommercialJurisdictionAuthority | null, options: { throwOnError?: boolean; countryCode?: string; commercialMarketCode?: string; presentationLanguage?: string } = {}) {
     if (!this.cmsEnabled()) {
       return [];
     }
     try {
-      const redirectEnabled = this.options.redirectEnabled ?? isAffiliateRedirectEnabled();
-      const commercialProjection = Boolean(
-        redirectEnabled
-        && options.countryCode
-        && scopedCommercialProjectionMayLoad(authority, options.countryCode)
-        && authority?.countryCode === options.countryCode,
-      );
       const records = (await this.repository.listOffers({
-        includeCommercial: commercialProjection,
         countryCode: options.countryCode,
-        commercialMarketCode: options.commercialMarketCode,
         presentationLanguage: options.presentationLanguage,
       }))
         .filter((record) => !isTemporaryDemoCasinoId(record.casino.id));
-      if (!commercialProjection) return records.map(withoutAction).map(classifyOffer).map(withoutOperatorEligibilityContext);
-      if (options.countryCode !== "GB") return records
-        .map((record) => scopedCasinoReferralAllowed(authority, record.casino.slug) ? record : withoutAction(record))
-        .map(classifyOffer)
-        .map(withoutOperatorEligibilityContext);
-      const operatorContexts = new Map<string, GbOperatorEligibilityEvidenceContext>(records.map((record) => [
-        record.casino.id,
-        canonicalGbOperatorEligibilityContext(record.operatorEligibilityContext),
-      ]));
-      const decisions = await this.operatorEligibility.evaluateMany(
-        records.map((record) => record.casino.id),
-        new Date(),
-        operatorContexts,
-      );
-      return records
-        .map((record) => scopedCasinoReferralAllowed(authority, record.casino.slug)
-          && decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record))
-        .map(classifyOffer)
-        .map(withoutOperatorEligibilityContext);
+      const decisions = await this.actionAuthority.resolveMany({
+        subjects: records.map((record) => ({ casinoId: record.casino.id, casinoSlug: record.casino.slug, published: true })),
+        authority,
+        countryCode: options.countryCode,
+        marketCode: options.commercialMarketCode,
+        product: "CASINO",
+      });
+      return records.map((record) => classifyOffer({
+        ...record,
+        action: decisions.get(record.casino.id)?.action ?? null,
+      }));
     } catch (cause) {
       if (options.throwOnError) throw cause;
       return [];
@@ -204,7 +174,7 @@ export class PublicOfferService {
     const requestCountry = options.defaultEditorialCountry?.trim().toUpperCase();
     let all: PublicOfferDTO[];
     try {
-      all = await this.listEligibleOffers(authority, {
+      all = await this.listOffers(authority, {
         throwOnError: true,
         countryCode: requestCountry,
         commercialMarketCode: options.commercialMarketCode,
@@ -244,7 +214,7 @@ export class PublicOfferService {
 
   async getFeaturedOffers(options: { country?: string; commercialMarketCode?: string; presentationLanguage?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
     const country = options.country;
-    const offers = await this.listEligibleOffers(authority, { countryCode: country, commercialMarketCode: options.commercialMarketCode, presentationLanguage: options.presentationLanguage });
+    const offers = await this.listOffers(authority, { countryCode: country, commercialMarketCode: options.commercialMarketCode, presentationLanguage: options.presentationLanguage });
     return selectOverallShortlist(offers, { country, limit: options.limit ?? 12 });
   }
 
@@ -261,7 +231,7 @@ export class PublicOfferService {
         : { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
     }
     try {
-      const publishedRecords = await this.listEligibleOffers(authority, {
+      const publishedRecords = await this.listOffers(authority, {
         throwOnError: true,
         countryCode: country,
         commercialMarketCode: options.commercialMarketCode,
@@ -276,7 +246,7 @@ export class PublicOfferService {
   }
 
   async getOfferFacets(authority?: CommercialJurisdictionAuthority | null) {
-    return buildOfferFacets(await this.listEligibleOffers(authority));
+    return buildOfferFacets(await this.listOffers(authority));
   }
 }
 

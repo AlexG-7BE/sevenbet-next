@@ -87,7 +87,7 @@
     "casino-editorial:test": "node --import tsx --test tests/casino-domain.test.ts tests/editorial-builder.test.ts tests/editorial-review.test.ts",
     "casino-builder:test": "node --import tsx --test tests/casino-builder-shell.test.ts",
     "casino-editor:test": "node --import tsx --test tests/casino-core-editors.test.ts",
-    "casino-market:test": "node --import tsx --test tests/casino-market-architecture.test.ts tests/public-casino-discovery.test.ts tests/public-casino-service.test.ts tests/public-offer-service.test.ts tests/public-comparison.test.ts tests/affiliate-redirect-engine.test.ts",
+    "casino-market:test": "node --import tsx --test tests/casino-market-architecture.test.ts tests/public-commercial-action-resolver.test.ts tests/public-casino-discovery.test.ts tests/public-casino-service.test.ts tests/public-offer-service.test.ts tests/public-comparison.test.ts tests/affiliate-redirect-engine.test.ts",
     "offer-presentation:test": "node --import tsx --test tests/offer-presentation.test.ts",
     "casino-market:postgres-test": "node --import tsx --test --test-concurrency=1 tests/casino-market-architecture-postgres.test.ts tests/safe-offer-corpus-postgres.test.ts",
     "casino-market:ingest": "tsx scripts/casino-market-ingest.ts",

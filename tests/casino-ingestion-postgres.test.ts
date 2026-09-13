@@ -15,8 +15,9 @@ import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { PublicCasinoService } from "../lib/services/public-casino.service";
+import { noCommercialActions } from "./commercial-action.fixtures";
 
-const EMPTY_CONTEXT: DiscoveryContext = { aliases: [], offers: [], redirects: [] };
+const EMPTY_CONTEXT: DiscoveryContext = { aliases: [] };
 
 function json(value: unknown) {
   return JSON.parse(JSON.stringify(value));
@@ -193,22 +194,18 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
       hasManagedSlug: async (slug) => slug === "betsson",
       listPublished: async () => [published],
       listManagedSlugs: async () => ["betsson"],
-      listActiveAffiliateRoutes: async () => [],
     };
     const discoveryStore: PublicCasinoDiscoveryStore = {
       listPublished: async () => [published],
       loadContext: async () => EMPTY_CONTEXT,
     };
-    const publicService = new PublicCasinoService(publicStore, [], { cmsEnabled: true, redirectEnabled: false, now: new Date("2026-09-01T00:00:00.000Z") });
-    const discovery = new PublicCasinoDiscoveryService(discoveryStore, () => new Date("2026-09-01T00:00:00.000Z"), undefined, () => false);
+    const publicService = new PublicCasinoService(publicStore, [], { cmsEnabled: true, now: new Date("2026-09-01T00:00:00.000Z") }, noCommercialActions);
+    const discovery = new PublicCasinoDiscoveryService(discoveryStore, () => new Date("2026-09-01T00:00:00.000Z"), noCommercialActions);
     const peProfile = await publicService.getCasino("betsson", undefined, "PE");
     const seProfile = await publicService.getCasino("betsson", undefined, "SE");
     for (const [countryCode, profile] of [["PE", peProfile], ["SE", seProfile]] as const) {
       assert.ok(profile, `${countryCode} contradiction evidence must preserve the editorial profile`);
-      assert.equal(profile.presentationDisposition, "INFORMATIONAL_ONLY");
-      assert.equal(profile.presentationDispositionReason, "EXACT_MARKET_INFORMATION_ONLY");
-      assert.equal(profile.affiliate.available, false, `${countryCode} has no active canonical route`);
-      assert.equal(profile.affiliate.href, null);
+      assert.equal(profile.action, null, `${countryCode} has no canonical action`);
     }
 
     const globalProfile = await publicService.getCasino("betsson");
@@ -221,7 +218,7 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
     assert.deepEqual(globalProfile?.payments, []);
     assert.deepEqual(globalProfile?.licenses, []);
     assert.deepEqual(globalProfile?.bonuses, []);
-    assert.equal(globalProfile?.affiliate.available, false);
+    assert.equal(globalProfile?.action, null);
 
     const informationalDiscoveryCases: Array<[string, Parameters<typeof discovery.discover>[0]]> = [
       ["PE", { country: ["SE"], currency: ["PEN"], payment: ["yape"], license: ["mincetur"] }],
@@ -231,19 +228,16 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
       const result = await discovery.discover(query, null, { defaultEditorialCountry: countryCode });
       assert.equal(result.total, 1, `${countryCode} contradiction evidence must preserve the exact-market discovery card`);
       assert.equal(result.items[0]?.slug, "betsson");
-      assert.equal(result.items[0]?.disposition, "INFORMATIONAL_ONLY");
-      assert.equal(result.items[0]?.dispositionReason, "EXACT_MARKET_INFORMATION_ONLY");
-      assert.equal(result.items[0]?.visitAction.available, false, `${countryCode} has no active canonical route`);
+      assert.equal(result.items[0]?.action, null, `${countryCode} has no canonical action`);
     }
 
     const globalDiscovery = await discovery.discover({ country: ["PE"] });
     assert.equal(globalDiscovery.total, 1, "a query country is not trusted GEO authority");
-    assert.equal(globalDiscovery.items[0]?.disposition, "INFORMATIONAL_ONLY");
     assert.equal(globalDiscovery.items[0]?.rating, null);
     assert.deepEqual(globalDiscovery.items[0]?.countries, []);
     assert.deepEqual(globalDiscovery.items[0]?.licenses, []);
     assert.deepEqual(globalDiscovery.items[0]?.paymentMethods, []);
-    assert.equal(globalDiscovery.items[0]?.visitAction.available, false);
+    assert.equal(globalDiscovery.items[0]?.action, null);
 
     assert.equal(await prisma.affiliateProgram.count({ where: { casinoId: persisted.id } }), 0);
     assert.equal(await prisma.affiliateOffer.count({ where: { casinoId: persisted.id } }), 0);

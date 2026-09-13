@@ -16,8 +16,8 @@ test("FE-MIG-06 keeps SSR discovery and published DTO boundaries", () => {
   assert.doesNotMatch(page + components + card, /trackingUrl|destinationUrl|providerType|externalId/);
   assert.match(card, /\/casino-directory\/editorial-media\.jpg/);
   assert.doesNotMatch(card, /casino\.hero/);
-  assert.match(card, /\/r\/\$\{casino\.visitAction\.redirectSlug\}/);
-  assert.match(card, /casino\.visitAction\.available/);
+  assert.match(card, /casino\.action/);
+  assert.match(card, /action=\{\{ href: casino\.action\.href/);
 });
 
 test("public copy has no unsupported verification, featured, ranking-independence, or local-offer claims", () => {

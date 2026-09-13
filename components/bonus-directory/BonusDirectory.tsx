@@ -15,6 +15,7 @@ import { productPageMessages, type ProductPageMessages } from "@/lib/i18n/produc
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
 import { offerPresentationCopy } from "@/lib/public-offer/offer-presentation-copy";
+import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 
 const defaultMessages = productPageMessages("en-GB");
 
@@ -36,7 +37,7 @@ function date(value: string | null, messages = defaultMessages, locale = "en-GB"
 }
 
 function safeActionHref(offer: PublicOfferDTO) {
-  return offer.dataClassification !== "DEMO_FIXTURE" && offer.action.available && offer.action.href && /^\/r\/[a-z0-9][a-z0-9-]*$/i.test(offer.action.href) ? offer.action.href : null;
+  return isGovernedCommercialAction(offer.action) ? offer.action.href : null;
 }
 
 function DemoFixtureNotice({ offer, messages = defaultMessages }: { offer: PublicOfferDTO; messages?: ProductPageMessages }) {

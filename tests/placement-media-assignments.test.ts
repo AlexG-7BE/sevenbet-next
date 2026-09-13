@@ -27,7 +27,7 @@ import {
   type PlacementMediaResolutionContext,
 } from "../lib/media/placement-media";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
-import type { PublishedCasinoSnapshotRecord, PublicAffiliateRoute } from "../lib/public-casino/public-casino.types";
+import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import {
   buildPublishedCasinoSnapshot,
   type CasinoPlacementAggregate,
@@ -578,36 +578,6 @@ function independenceRecord(): PublishedCasinoSnapshotRecord {
   };
 }
 
-function governedRoutes(record: PublishedCasinoSnapshotRecord) {
-  return [{
-    casinoId: record.casinoId,
-    casinoBonusId: INDEPENDENCE_BONUS_ID,
-    affiliateOfferId: INDEPENDENCE_OFFER_ID,
-    slug: "governed-fi-offer",
-  }];
-}
-
-function governedRoutesWithStaleMediaOffer(record: PublishedCasinoSnapshotRecord): PublicAffiliateRoute[] {
-  return governedRoutes(record).map((route) => ({
-    ...route,
-    mediaOfferAuthority: {
-      status: "DRAFT",
-      startAt: null,
-      expiresAt: null,
-      archivedAt: null,
-      programStatus: "DRAFT",
-      programWorkflowStatus: "DRAFT",
-      programArchivedAt: null,
-      networkActive: false,
-      networkArchivedAt: null,
-      bonusStatus: "PUBLISHED",
-      bonusOfferStatus: "ACTIVE",
-      bonusStartsAt: null,
-      bonusExpiresAt: null,
-    },
-  }));
-}
-
 function governedOffer(record: PublishedCasinoSnapshotRecord) {
   const snapshot = record.snapshot as Record<string, unknown>;
   const programmes = snapshot.affiliatePrograms as Array<Record<string, unknown>>;
@@ -616,10 +586,7 @@ function governedOffer(record: PublishedCasinoSnapshotRecord) {
 
 test("public projection preserves the operator logo while retired promotional assignments stay private", () => {
   const record = independenceRecord();
-  const mapped = mapPublishedCasino(record, governedRoutes(record), {
-    redirectEnabled: false,
-    commercialMediaEnabled: true,
-    placementMediaEnabled: true,
+  const mapped = mapPublishedCasino(record, {
     now: NOW,
   });
   assert.ok(mapped);
@@ -661,12 +628,8 @@ test("historical targeting remains deterministic while retired assignments stay 
     context: historicalContext,
     now: NOW,
   });
-  const resolvePublic = (countryCode: string | null, presentationLanguage: string) => mapPublishedCasino(record, governedRoutes(record), {
-    redirectEnabled: false,
-    commercialMediaEnabled: true,
-    placementMediaEnabled: true,
+  const resolvePublic = (countryCode: string | null, _presentationLanguage: string) => mapPublishedCasino(record, {
     countryCode,
-    presentationLanguage,
     now: NOW,
   });
   assert.equal(resolve("FI", "fi").asset?.id, "fi-fi");
@@ -689,38 +652,29 @@ test("targeted creatives are retired while exact governed CTA authority remains 
     "DEFAULT",
     { countryCode: "FI", languageCode: "fi" },
   )];
-  const blocked = mapPublishedCasino(record, [], {
-    redirectEnabled: true,
-    placementMediaEnabled: true,
+  const blocked = mapPublishedCasino(record, {
     countryCode: "FI",
-    presentationLanguage: "fi",
     now: NOW,
   });
   assert.equal(blocked?.bonuses[0]?.media, undefined);
-  assert.deepEqual(blocked?.bonuses[0]?.affiliate, { href: null, available: false });
+  assert.equal(blocked?.action, null);
 
-  const eligible = mapPublishedCasino(record, governedRoutes(record), {
-    redirectEnabled: true,
-    placementMediaEnabled: true,
+  const eligible = mapPublishedCasino(record, {
     countryCode: "FI",
-    presentationLanguage: "fi",
     now: NOW,
   });
   assert.equal(eligible?.bonuses[0]?.media, undefined);
-  assert.deepEqual(eligible?.bonuses[0]?.affiliate, { href: "/r/governed-fi-offer", available: true });
+  assert.equal(eligible?.action, null, "the editorial mapper cannot mint commercial authority from route input");
   assert.doesNotMatch(JSON.stringify(eligible), /fi-targeted-creative|trackingUrl|destinationUrl|partner\.example/i);
 });
 
 test("canonical CTA survives stale media compatibility without exposing promotional inventory", () => {
   const record = independenceRecord();
-  const mapped = mapPublishedCasino(record, governedRoutesWithStaleMediaOffer(record), {
-    redirectEnabled: true,
-    placementMediaEnabled: true,
+  const mapped = mapPublishedCasino(record, {
     countryCode: "FI",
-    presentationLanguage: "fi",
     now: NOW,
   });
-  assert.deepEqual(mapped?.bonuses[0]?.affiliate, { href: "/r/governed-fi-offer", available: true });
+  assert.equal(mapped?.action, null, "media compatibility never creates a public action");
   assert.equal(mapped?.bonuses[0]?.media, undefined);
   assert.equal(mapped?.media.placements, undefined);
   assert.doesNotMatch(JSON.stringify(mapped), /asset-[a-f]-|offer-(listing|featured|block)/);
@@ -737,12 +691,8 @@ test("historical resolver targets stay fail-closed while neither form enters the
   });
   assert.equal(historicalResolution.asset?.id, "asset-e-featured");
   assert.equal(historicalResolution.targetingResolution, "GLOBAL_NEUTRAL");
-  const historical = mapPublishedCasino(historicalRecord, governedRoutes(historicalRecord), {
-    redirectEnabled: false,
-    commercialMediaEnabled: true,
-    placementMediaEnabled: true,
+  const historical = mapPublishedCasino(historicalRecord, {
     countryCode: "FI",
-    presentationLanguage: "en",
     now: NOW,
   });
   assert.equal(historical?.bonuses[0]?.media, undefined);
@@ -760,12 +710,8 @@ test("historical resolver targets stay fail-closed while neither form enters the
   malformedSnapshot.mediaAssets = [];
   malformedSnapshot.images = [];
   malformedSnapshot.mediaAssignments = [];
-  const result = mapPublishedCasino(malformed, governedRoutes(malformed), {
-    redirectEnabled: false,
-    commercialMediaEnabled: true,
-    placementMediaEnabled: true,
+  const result = mapPublishedCasino(malformed, {
     countryCode: "FI",
-    presentationLanguage: "en",
     now: NOW,
   });
   const malformedResolution = resolveMedia({
@@ -793,11 +739,8 @@ test("published target-scoped assets cannot bypass retirement through historical
     "DEFAULT",
     { countryCode: "FI", languageCode: "fi" },
   )];
-  const unknownEnglish = mapPublishedCasino(record, [], {
-    redirectEnabled: false,
-    placementMediaEnabled: true,
+  const unknownEnglish = mapPublishedCasino(record, {
     countryCode: null,
-    presentationLanguage: "en",
     now: NOW,
   });
   assert.equal(unknownEnglish?.media.logo?.id, "legacy-logo");
@@ -806,9 +749,7 @@ test("published target-scoped assets cannot bypass retirement through historical
 });
 
 test("legacy feature flags cannot reactivate assignment or promotional HERO projection", () => {
-  const mapped = mapPublishedCasino(independenceRecord(), [], {
-    redirectEnabled: false,
-    placementMediaEnabled: false,
+  const mapped = mapPublishedCasino(independenceRecord(), {
     now: NOW,
   });
   assert.ok(mapped);

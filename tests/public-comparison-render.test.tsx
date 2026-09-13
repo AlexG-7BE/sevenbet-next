@@ -16,7 +16,6 @@ function casino(dataClassification: PublicComparisonCasino["dataClassification"]
   return {
     id: dataClassification === "DEMO_FIXTURE" ? "demo-id" : "published-id",
     dataClassification,
-    disposition: "INFORMATIONAL_ONLY",
     slug: dataClassification === "DEMO_FIXTURE" ? "fictional-profile" : "published-profile",
     name: dataClassification === "DEMO_FIXTURE" ? "Fictional Profile" : "Published Profile",
     summary: "Profile summary.",
@@ -26,7 +25,7 @@ function casino(dataClassification: PublicComparisonCasino["dataClassification"]
     lastReviewedAt: "2030-05-02T00:00:00.000Z",
     reviewHref: dataClassification === "DEMO_FIXTURE" ? "/casino/fictional-profile" : "/casino/published-profile",
     marketState: "AVAILABLE",
-    action: { available: false, href: null, label: "Visit casino", reason: "Commercial action unavailable." },
+    action: null,
     ...patch,
   };
 }

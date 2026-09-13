@@ -34,10 +34,7 @@ test("the local profile fixture localizes B4GAMBLE-authored copy across every Eu
     assert.equal(profile.editorScore, englishProfile.editorScore, locale);
     assert.equal(profile.licenses[0]?.authority, "MGA", locale);
     assert.equal(profile.providers[0]?.name, "Orbit Studios", locale);
-    assert.equal(profile.affiliate.available, false, locale);
-    assert.equal(profile.affiliate.href, null, locale);
-    assert.equal(profile.bonuses[0]?.affiliate.available, false, locale);
-    assert.equal(profile.bonuses[0]?.affiliate.href, null, locale);
+    assert.equal(profile.action, null, locale);
     assert.equal(profile.bonuses[0]?.percentage, 100, locale);
     assert.equal(profile.bonuses[0]?.maximumBonus, 500, locale);
     assert.equal(profile.bonuses[0]?.freeSpins, 200, locale);

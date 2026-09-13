@@ -446,8 +446,7 @@ function handoffOffer(
         CASINO_OFFER_BLOCK: adaptiveCreativePlacement("CASINO_OFFER_BLOCK", index),
       },
     },
-    action: { available: false, href: null },
-    commercialAvailability: "UNAVAILABLE",
+    action: null,
     dataClassification: "DEMO_FIXTURE",
   };
 }
@@ -478,8 +477,6 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, locale: Support
     ...seed,
     id: temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
     dataClassification: "DEMO_FIXTURE",
-    disposition: "INFORMATIONAL_ONLY",
-    dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY",
     slug: key,
     reviewHref: index === 0 ? `/casino/demo-plume?visualFixture=true${fixtureCountryCode ? `&qaMarket=${fixtureCountryCode}` : ""}` : null,
     name: sample.name,
@@ -507,7 +504,7 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, locale: Support
       validUntil: null,
       termsApply: true,
     },
-    visitAction: { available: false, redirectSlug: null, label: messages.common.commercialUnavailable, reasonCode: "NO_GOVERNED_ROUTE" },
+    action: null,
     responsibleGamblingLabel: messages.profile.controlTools,
   };
 }
@@ -515,8 +512,6 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, locale: Support
 const casinoFixtureSeed: PublicCasinoCardDto = {
   id: temporaryDemoCasinoIds[0],
   dataClassification: "DEMO_FIXTURE",
-  disposition: "INFORMATIONAL_ONLY",
-  dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY",
   slug: "local-visual-fixture",
   name: "B4GAMBLE visual fixture",
   logo: null,
@@ -532,7 +527,7 @@ const casinoFixtureSeed: PublicCasinoCardDto = {
   categories: [],
   highlights: [],
   featuredBonus: null,
-  visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "DEMO_FIXTURE" },
+  action: null,
   responsibleGamblingLabel: null,
   publishedAt: null,
   editorialUpdatedAt: null,
@@ -620,14 +615,11 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
     termsUrl: null,
     startsAt: null,
     expiresAt: null,
-    affiliate: { available: false, href: null },
     media: { CASINO_OFFER_BLOCK: adaptiveCreativePlacement("CASINO_OFFER_BLOCK", 1) },
   }] : [];
   return {
     ...casino,
     id: temporaryDemoCasinoIds[0],
-    presentationDisposition: "INFORMATIONAL_ONLY",
-    presentationDispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY",
     domain: "example.invalid",
     name: sample.name,
     title: copy.title,
@@ -699,7 +691,7 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
       gallery: [],
       socialImage: null,
     },
-    affiliate: { available: false, href: null },
+    action: null,
   };
 }
 
@@ -780,18 +772,12 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
   if (!enabled) return result;
   const messages = productPageMessages(locale);
   const copy = demoProfileCopy(locale);
-  const unavailableAction = () => ({
-    available: false,
-    href: null,
-    label: messages.common.commercialUnavailable,
-    reason: messages.profile.demoDisclosure,
-  });
+  const unavailableAction = () => null;
   const casinos = (result.casinos.length ? result.casinos : result.selectedSlugs.map((slug, index) => {
     const candidate = result.candidates[index % Math.max(1, result.candidates.length)];
     return {
       id: `visual-comparison-${index}`,
       dataClassification: "DEMO_FIXTURE" as const,
-      disposition: "INFORMATIONAL_ONLY" as const,
       slug,
       name: offerSamples[index % offerSamples.length].name,
       summary: copy.summary,
@@ -809,7 +795,6 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
       ...casino,
       id: `visual-comparison-${index}`,
       dataClassification: "DEMO_FIXTURE" as const,
-      disposition: "INFORMATIONAL_ONLY" as const,
       reviewHref: "/casino/demo-plume?visualFixture=true",
       name: sample.name,
       summary: copy.summary,
@@ -862,7 +847,6 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
     candidates: result.candidates.map((candidate, index) => ({
       ...candidate,
       dataClassification: "DEMO_FIXTURE",
-      disposition: "INFORMATIONAL_ONLY",
       name: offerSamples[index % offerSamples.length].name,
       logo: null,
       editorScore: offerSamples[index % offerSamples.length].score,

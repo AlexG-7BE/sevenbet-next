@@ -37,7 +37,6 @@ import {
 } from "../lib/market/registry";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import {
-  commercialAuthorityForPresentation,
   localizedProductIndexingApproved,
   productHref,
   productMetadata,
@@ -61,7 +60,6 @@ import {
 import { POST as updatePresentationPreference } from "../app/api/presentation/route";
 import { middleware } from "../middleware";
 import { parsePublicComparisonQuery, serializePublicComparisonQuery } from "../lib/public-comparison/query";
-import { allowJurisdictionAuthority } from "./market-authority.fixtures";
 
 function middlewareRequestHeaders(response: { headers: Headers }) {
   const requestHeaders = new Headers();
@@ -345,12 +343,7 @@ test("Methodology, Contact, Learning and generic-error catalogs cover all eleven
   assert.doesNotMatch(learn, />Read →</);
 });
 
-test("presentation and commercial jurisdiction must match before any authority reaches a product service", () => {
-  const gb = allowJurisdictionAuthority;
-  const de = { ...gb, countryCode: "DE" } as const;
-  assert.equal(commercialAuthorityForPresentation(gb, "DE"), null);
-  assert.equal(commercialAuthorityForPresentation(de, "GB"), null);
-  assert.equal(commercialAuthorityForPresentation(gb, "GB"), gb);
+test("presentation resolution never creates commercial jurisdiction authority", () => {
   const presentation = resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "GB" });
   assert.equal("commercialAllowed" in presentation, false);
 });

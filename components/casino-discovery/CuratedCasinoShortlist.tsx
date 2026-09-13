@@ -8,7 +8,7 @@ import { ContextualCompareToggle } from "@/components/comparison-context/Context
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
-import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
+import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 import {
   curatedCasinoSelectors as selectors,
   resolveActiveCuratedCasinoSelector,
@@ -23,16 +23,13 @@ import { productHref } from "@/lib/market/product-context";
 import styles from "./CuratedCasinoShortlist.module.css";
 
 function hasGovernedVisitAction(casino: PublicCasinoCardDto) {
-  return casino.disposition === "PROMOTABLE"
-    && casino.dataClassification !== "DEMO_FIXTURE"
-    && casino.visitAction.available
-    && Boolean(casino.visitAction.redirectSlug && isSafePublicSlug(casino.visitAction.redirectSlug));
+  return isGovernedCommercialAction(casino.action);
 }
 
 function governedVisitAction(casino: PublicCasinoCardDto, messages: ProductPageMessages) {
-  if (!hasGovernedVisitAction(casino) || !casino.visitAction.redirectSlug) return null;
+  if (!hasGovernedVisitAction(casino) || !casino.action) return null;
   return {
-    href: `/r/${casino.visitAction.redirectSlug}`,
+    href: casino.action.href,
     label: `${messages.common.actionAvailable}: ${casino.name}`,
   };
 }
@@ -124,7 +121,7 @@ export function CuratedCasinoShortlist({
   presentation: PresentationResolution;
 }) {
   const [selector, setSelector] = useState<Selector>("Best Overall");
-  const editorialCasinos = useMemo(() => casinos.filter((casino) => casino.disposition !== "HIDDEN"), [casinos]);
+  const editorialCasinos = useMemo(() => casinos, [casinos]);
   const availableResults = useMemo(
     () => selectAvailableCuratedCasinoResults(editorialCasinos, { bestBonusCasinoIds }),
     [bestBonusCasinoIds, editorialCasinos],

@@ -20,7 +20,6 @@ export function currentPublicCasinoBrand(casino: PublicCasinoDTO) {
     wageringText: bonus.wageringText ? brand(bonus.wageringText) : null,
     eligibility: bonus.eligibility ? brand(bonus.eligibility) : null,
     importantConditions: bonus.importantConditions.map(brand),
-    affiliate: { href: null, available: false },
   });
   return {
     ...casino,
@@ -45,7 +44,7 @@ export function currentPublicCasinoBrand(casino: PublicCasinoDTO) {
       gallery: casino.media.gallery.map((item) => ({ ...item, alt: brand(item.alt), caption: item.caption ? brand(item.caption) : null })),
       socialImage: casino.media.socialImage ? { ...casino.media.socialImage, alt: brand(casino.media.socialImage.alt), caption: casino.media.socialImage.caption ? brand(casino.media.socialImage.caption) : null } : null,
     },
-    affiliate: { href: null, available: false },
+    action: null,
     bonuses: casino.bonuses.map(brandedBonus),
     marketProfiles: casino.marketProfiles.map((profile) => ({
       ...profile,

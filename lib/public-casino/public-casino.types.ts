@@ -6,6 +6,7 @@ import type {
   MediaTargetingResolution,
   PlacementMediaSource,
 } from "@/lib/media/placement-media";
+import type { GovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 
 export type PublicCasinoSource = "cms" | "legacy";
 
@@ -57,11 +58,6 @@ export interface PublicPlacementMedia extends PublicPlacementMediaResolution {
   variants: Partial<Record<MediaPlacementVariantName, PublicPlacementMediaResolution>>;
 }
 
-export interface PublicCasinoAffiliate {
-  href: string | null;
-  available: boolean;
-}
-
 export interface PublicCasinoBonus {
   id: string;
   slug: string;
@@ -81,7 +77,6 @@ export interface PublicCasinoBonus {
   termsUrl: string | null;
   startsAt: string | null;
   expiresAt: string | null;
-  affiliate: PublicCasinoAffiliate;
   media?: Partial<Record<MediaPlacementName, PublicPlacementMedia>>;
 }
 
@@ -228,9 +223,7 @@ export interface PublicCasinoDTO {
     socialImage: PublicCasinoMedia | null;
     placements?: Partial<Record<CasinoMediaPlacementName, PublicPlacementMedia>>;
   };
-  affiliate: PublicCasinoAffiliate;
-  presentationDisposition?: import("./presentation-disposition").PublicCasinoPresentationDisposition;
-  presentationDispositionReason?: import("./presentation-disposition").PublicCasinoDispositionReason;
+  action: GovernedCommercialAction | null;
 }
 
 export interface PublishedCasinoSnapshotRecord {
@@ -240,12 +233,4 @@ export interface PublishedCasinoSnapshotRecord {
   snapshot: unknown;
   publishedAt: Date | null;
   archivedAt: Date | null;
-}
-
-export interface PublicAffiliateRoute {
-  casinoId: string;
-  casinoBonusId: string | null;
-  affiliateOfferId?: string | null;
-  slug: string;
-  operatorEligibilityContext?: Omit<import("@/lib/jurisdiction/gb-operator-eligibility").GbOperatorEligibilityInput, "casino" | "now" | "domainEvidence">;
 }

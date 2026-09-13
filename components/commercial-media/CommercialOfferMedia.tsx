@@ -15,16 +15,14 @@ import {
   mayPresentPromotionalMedia,
   offerMediaRenderingMode,
 } from "@/lib/media/media-presentation";
+import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 
 import styles from "./CommercialOfferMedia.module.css";
 
 export type CommercialOfferMediaVariant = "featured" | "secondary" | "bonus";
 
 export function hasGovernedCommercialOfferAction(offer: PublicOfferDTO) {
-  return offer.dataClassification === "PUBLISHED_RECORD"
-    && offer.commercialAvailability === "AVAILABLE"
-    && offer.action.available
-    && Boolean(offer.action.href && /^\/r\/[a-z0-9][a-z0-9-]*$/i.test(offer.action.href));
+  return isGovernedCommercialAction(offer.action);
 }
 
 export function OperatorLogo({ offer, prominent = false }: { offer: PublicOfferDTO; prominent?: boolean }) {
@@ -69,7 +67,8 @@ export function CommercialOfferMedia({ offer, variant, messages }: { offer: Publ
     : presentationFamily;
   const ratio = classifyMediaRatio({ width: media?.width, height: media?.height });
   const demonstration = offer.dataClassification === "DEMO_FIXTURE";
-  const governed = hasGovernedCommercialOfferAction(offer);
+  const action = isGovernedCommercialAction(offer.action) ? offer.action : null;
+  const governed = Boolean(action);
   const allowed = mayPresentPromotionalMedia({ demonstration, governedActionAvailable: governed });
   const mode = resolved?.renderingMode ?? offerMediaRenderingMode({ hasMedia: Boolean(media), ratio });
   const sourceLabel = messages.common.controlledMedia.toUpperCase();
@@ -99,7 +98,7 @@ export function CommercialOfferMedia({ offer, variant, messages }: { offer: Publ
       ? offer.casino.logo
       : null;
     return <PartnerHostedCommercialFigure
-      canonicalHref={offer.action.href}
+      canonicalHref={action?.href ?? null}
       casinoName={offer.casino.name}
       fallbackMedia={firstPartyHero ?? firstPartyLogo}
       governed={governed}
@@ -113,9 +112,9 @@ export function CommercialOfferMedia({ offer, variant, messages }: { offer: Publ
   }
 
   function withGovernedAction(content: ReactNode, clickable = promotionalMedia) {
-    if (!clickable || !governed || !offer.action.href) return content;
+    if (!clickable || !action) return content;
     return <GovernedCommercialAction
-      action={{ href: offer.action.href, label: creativeAriaLabel }}
+      action={{ href: action.href, label: creativeAriaLabel }}
       anchorData={{
         "data-presentation-family": presentationFamily,
         "data-mobile-presentation-family": mobilePresentationFamily,

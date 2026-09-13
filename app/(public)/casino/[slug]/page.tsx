@@ -12,14 +12,8 @@ import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffCasinoEditorialData, withHandoffCasinoProfileData } from "@/lib/final-handoff/visual-data-fixture";
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
-import {
-  commercialAuthorityForPresentation,
-  productHref,
-  productMetadata,
-} from "@/lib/market/product-context";
+import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
-import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { absoluteUrl } from "@/lib/site";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
@@ -35,17 +29,16 @@ const loadEditorial = cache(async (slug: string) => {
   }
 });
 const loadCasinoPage = cache(async (slug: string, visualFixture: boolean) => {
-  const [presentation, authority, editorialResult, commercialProductState] = await Promise.all([
+  const [presentation, authority, editorialResult] = await Promise.all([
     resolveServerPresentationContext(),
     resolveServerJurisdiction(),
     visualFixture ? Promise.resolve(null) : loadEditorial(slug),
-    resolveServerCommercialProductState(),
   ]);
   const candidate = visualFixture
     ? publicCasinoService.getCommercialUxVisualFixture(slug)
     : await publicCasinoService.getCasino(
         slug,
-        commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
+        authority,
         presentation.marketCountryCode,
         presentation.language,
         presentation.marketCode,
@@ -57,7 +50,6 @@ const loadCasinoPage = cache(async (slug: string, visualFixture: boolean) => {
     casino: candidate?.source === "cms" ? candidate : null,
     editorialResult: candidate ? editorialResult : null,
     presentation,
-    commercialProductState,
     availableForPresentation,
   };
 });
@@ -111,6 +103,6 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
   return <>
     <CommercialSurfaceView casinoId={runtimeCasino.id} surface="casino_review" />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
-    <CasinoProfile availableForPresentation={loaded.availableForPresentation} casino={runtimeCasino} commercialProductsAvailable={commercialProductsAvailable(loaded.commercialProductState)} editorial={editorial} messages={messages} presentation={presentation} />
+    <CasinoProfile availableForPresentation={loaded.availableForPresentation} casino={runtimeCasino} editorial={editorial} messages={messages} presentation={presentation} />
   </>;
 }

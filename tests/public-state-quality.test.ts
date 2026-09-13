@@ -26,7 +26,9 @@ test("curated shortlists expose only result-backed selectors and collapse when n
 
   assert.match(bonuses, /selectAvailableCuratedBonusResults\(offers\)/);
   assert.match(bonuses, /if \(!activeSelector\) return null/);
-  assert.match(casinos, /casinos\.filter\(\(casino\) => casino\.disposition !== "HIDDEN"\)/);
+  assert.match(casinos, /const editorialCasinos = useMemo\(\(\) => casinos, \[casinos\]\)/);
+  assert.match(casinos, /isGovernedCommercialAction\(casino\.action\)/);
+  assert.doesNotMatch(casinos, /disposition/);
   assert.match(casinos, /selectAvailableCuratedCasinoResults\(editorialCasinos, \{ bestBonusCasinoIds \}\)/);
   assert.match(casinos, /if \(!activeSelector\) return null/);
   for (const shortlist of [bonuses, casinos]) {
