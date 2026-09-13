@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 
 import {
+  acquireDemoRetirementTransactionLock,
   applyDemoCasinoRetirement,
   assertDemoRetirementApplyAuthority,
   inspectDemoCasinoRetirementPlan,
@@ -89,7 +90,7 @@ async function main() {
   });
   const reviewedPlanSha256 = argument("plan-sha256")!;
   const result = await prisma.$transaction(async (transaction) => {
-    await transaction.$queryRawUnsafe("SELECT pg_advisory_xact_lock(hashtext('b4gamble:rfc-012-demo-retirement'))");
+    await acquireDemoRetirementTransactionLock(transaction);
     return applyDemoCasinoRetirement(transaction, reviewedPlanSha256);
   }, {
     isolationLevel: Prisma.TransactionIsolationLevel.Serializable,

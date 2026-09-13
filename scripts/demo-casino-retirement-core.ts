@@ -14,6 +14,12 @@ import {
 
 type Database = Prisma.TransactionClient;
 
+const DEMO_CASINO_RETIREMENT_TRANSACTION_LOCK_SQL = `
+  SELECT pg_advisory_xact_lock(
+    hashtext('b4gamble:rfc-012-demo-retirement')
+  )::text AS "lockResult"
+`;
+
 type ForeignKeyRow = {
   constraintName: string;
   childTable: string;
@@ -124,6 +130,15 @@ export type DemoCasinoRetirementPlan = Readonly<{
   readyToApply: boolean;
   planSha256: string;
 }>;
+
+export async function acquireDemoRetirementTransactionLock(database: Database) {
+  const rows = await database.$queryRawUnsafe<Array<{ lockResult: string }>>(
+    DEMO_CASINO_RETIREMENT_TRANSACTION_LOCK_SQL,
+  );
+  if (rows.length !== 1 || typeof rows[0]?.lockResult !== "string") {
+    throw new Error("DEMO_RETIREMENT_TRANSACTION_LOCK_RESULT_INVALID");
+  }
+}
 
 const EXPECTED_REACHABLE_TABLES = new Set([
   "AffiliateExternalMapping",

@@ -4,6 +4,7 @@ import test from "node:test";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 import {
+  acquireDemoRetirementTransactionLock,
   applyDemoCasinoRetirement,
   inspectDemoCasinoRetirementPlan,
 } from "../scripts/demo-casino-retirement-core";
@@ -193,9 +194,24 @@ async function serializableApply(
   options?: Parameters<typeof applyDemoCasinoRetirement>[2],
 ) {
   return prisma.$transaction(
-    (transaction) => applyDemoCasinoRetirement(transaction, planSha256, options),
+    async (transaction) => {
+      await acquireDemoRetirementTransactionLock(transaction);
+      return applyDemoCasinoRetirement(transaction, planSha256, options);
+    },
     { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 120_000 },
   );
+}
+
+async function waitForQueuedAdvisoryLock(waiterPid: number) {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const rows = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+      "SELECT count(*) AS count FROM pg_locks WHERE locktype = 'advisory' AND granted = false AND pid = $1",
+      waiterPid,
+    );
+    if (Number(rows[0]?.count ?? 0) === 1) return;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error("Second retirement transaction did not enter the advisory-lock wait");
 }
 
 test.beforeEach(cleanup);
@@ -203,6 +219,92 @@ test.afterEach(cleanup);
 test.after(async () => {
   await cleanup();
   await prisma.$disconnect();
+});
+
+test("Prisma transaction lock deserializes a supported scalar and retirement inspection continues", async () => {
+  await seedExactRetirementGraph();
+
+  const plan = await prisma.$transaction(async (transaction) => {
+    await acquireDemoRetirementTransactionLock(transaction);
+    return inspectDemoCasinoRetirementPlan(transaction);
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 120_000 });
+
+  assert.equal(plan.existingDemoCasinoCount, 25);
+  assert.equal(plan.readyToApply, true);
+});
+
+test("transaction advisory lock blocks a second Prisma transaction and releases after commit", async () => {
+  const holder = new PrismaClient({ datasourceUrl: databaseUrl });
+  const waiter = new PrismaClient({ datasourceUrl: databaseUrl });
+  let markHolderReady!: () => void;
+  let releaseHolder!: () => void;
+  let markWaiterStarted!: (pid: number) => void;
+  const holderReady = new Promise<void>((resolve) => { markHolderReady = resolve; });
+  const holderRelease = new Promise<void>((resolve) => { releaseHolder = resolve; });
+  const waiterStarted = new Promise<number>((resolve) => { markWaiterStarted = resolve; });
+  let waiterAcquired = false;
+  let waiterTransaction: Promise<void> | undefined;
+
+  const holderTransaction = holder.$transaction(async (transaction) => {
+    await acquireDemoRetirementTransactionLock(transaction);
+    markHolderReady();
+    await holderRelease;
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 15_000 });
+
+  try {
+    await Promise.race([
+      holderReady,
+      holderTransaction.then(() => { throw new Error("Holder transaction ended before acquiring the lock"); }),
+    ]);
+    waiterTransaction = waiter.$transaction(async (transaction) => {
+      const rows = await transaction.$queryRawUnsafe<Array<{ pid: number }>>(
+        "SELECT pg_backend_pid()::int AS pid",
+      );
+      markWaiterStarted(rows[0]!.pid);
+      await acquireDemoRetirementTransactionLock(transaction);
+      waiterAcquired = true;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 15_000 });
+
+    const waiterPid = await Promise.race([
+      waiterStarted,
+      waiterTransaction.then(() => { throw new Error("Waiter transaction ended before attempting the lock"); }),
+    ]);
+    await waitForQueuedAdvisoryLock(waiterPid);
+    assert.equal(waiterAcquired, false);
+
+    releaseHolder();
+    await holderTransaction;
+    await waiterTransaction;
+    assert.equal(waiterAcquired, true);
+  } finally {
+    releaseHolder();
+    await Promise.allSettled([
+      holderTransaction,
+      ...(waiterTransaction ? [waiterTransaction] : []),
+    ]);
+    await holder.$disconnect();
+    await waiter.$disconnect();
+  }
+});
+
+test("transaction advisory lock releases automatically after rollback", async () => {
+  const holder = new PrismaClient({ datasourceUrl: databaseUrl });
+  const successor = new PrismaClient({ datasourceUrl: databaseUrl });
+
+  try {
+    await assert.rejects(holder.$transaction(async (transaction) => {
+      await acquireDemoRetirementTransactionLock(transaction);
+      throw new Error("FORCED_ADVISORY_LOCK_ROLLBACK");
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 15_000 }), /FORCED_ADVISORY_LOCK_ROLLBACK/);
+
+    await successor.$transaction(async (transaction) => {
+      await acquireDemoRetirementTransactionLock(transaction);
+      await inspectDemoCasinoRetirementPlan(transaction);
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, timeout: 15_000 });
+  } finally {
+    await holder.$disconnect();
+    await successor.$disconnect();
+  }
 });
 
 test("real PLAN + APPLY + VERIFY retires exact roots, owned children, and is idempotent", async () => {
