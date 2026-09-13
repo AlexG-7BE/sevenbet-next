@@ -134,21 +134,24 @@ test("duplicate external program ID is rejected within a network", async () => {
   await assert.rejects(() => service.create({ networkId: ids.network, externalProgramId: "p-1", name: "Program", operator: "Operator", status: AffiliateStatus.DRAFT, supportedCountries: [], supportedCurrencies: [] }, actorId), /External program ID already exists/);
 });
 
-test("bonus ownership and archived ancestor checks are enforced by offer service", async () => {
+test("bonus ownership is enforced while ancestor lifecycle fields are non-authoritative", async () => {
+  let creates = 0;
   const offerStore = {
     list: async () => [], findById: async () => null, existsExternalOfferId: async () => false,
     findDuplicateExternalLinkId: async () => null,
     findCasinoBonus: async (): Promise<{ casinoExists: boolean; bonusCasinoId: string | null }> => ({ casinoExists: true, bonusCasinoId: "another-casino" }),
-    create: async () => { throw new Error("must not create"); }, update: async () => { throw new Error("unused"); }, findLegacyAdminPreviewCandidates: async () => [],
+    create: async () => { creates += 1; return null as never; }, update: async () => { throw new Error("unused"); }, findLegacyAdminPreviewCandidates: async () => [],
     archive: async () => { throw new Error("unused"); }, listRevisions: async () => [], listTrackingHistory: async () => [],
   };
   const activeProgram = { id: ids.program, networkId: ids.network, externalProgramId: null, name: "Program", operator: "Operator", status: AffiliateStatus.ACTIVE, accountReference: null, supportedCountries: [], supportedCurrencies: [], notes: null, archivedAt: null, createdAt: new Date(), updatedAt: new Date(), createdBy: actorId, updatedBy: actorId, network: { id: ids.network, name: "Network", slug: "network", type: AffiliateNetworkType.DIRECT, websiteUrl: null, apiCapable: false, exportCapable: false, active: true, notes: null, archivedAt: null, createdAt: new Date(), updatedAt: new Date(), createdBy: actorId, updatedBy: actorId }, _count: { offers: 0 } };
   const service = new AffiliateOfferService(offerStore, { list: async () => [], findById: async () => activeProgram, existsExternalProgramId: async () => false, create: async () => activeProgram, update: async () => activeProgram, archive: async () => activeProgram });
   await assert.rejects(() => service.create(validOffer({ casinoBonusId: ids.bonus }), actorId), /does not belong/);
+  assert.equal(creates, 0);
 
   offerStore.findCasinoBonus = async () => ({ casinoExists: true, bonusCasinoId: null });
   activeProgram.network.active = false;
-  await assert.rejects(() => service.create(validOffer({ status: AffiliateStatus.ACTIVE }), actorId), /inactive network\/program/);
+  await service.create(validOffer({ status: AffiliateStatus.ACTIVE }), actorId);
+  assert.equal(creates, 1);
 });
 
 test("active GB offers require direct-link agreement authority while draft preparation does not", async () => {
