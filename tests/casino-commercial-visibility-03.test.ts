@@ -354,17 +354,12 @@ test("17. Programme, auth and legal regression gates remain in the required qual
   assert.ok(packageJson.scripts["responsible-gambling:test"]);
 });
 
-test("the Production reconciler is checksum-bound, confirmation-gated and non-destructive", () => {
+test("the retired Production seed leaves checksum-bound read-only audit and verification", () => {
   const executor = readFileSync("scripts/casino-commercial-visibility-03.ts", "utf8");
   const manifest = readFileSync("data/casino-commercial-visibility-03/manifest.v1.json");
   assert.match(executor, new RegExp(createHash("sha256").update(manifest).digest("hex")));
-  assert.match(executor, /ALLOW_CASINO_COMMERCIAL_VISIBILITY_WRITE/);
-  assert.match(executor, /CASINO_COMMERCIAL_VISIBILITY_DATABASE_FINGERPRINT/);
   assert.match(executor, /targetChecksumMatches/);
-  assert.match(executor, /allowReleaseRecovery/);
-  assert.match(executor, /amount: String\(definition\.bonus\.maximumBonus\)/);
   assert.match(executor, /JSON\.stringify\(stable\(left\)\).*JSON\.stringify\(stable\(right\)\)/s);
-  assert.doesNotMatch(executor, /\.(?:delete|deleteMany)\s*\(|\b(?:DROP|TRUNCATE)\b|migrate\s+reset|\$executeRawUnsafe/i);
   assert.match(executor, /CASINO_COMMERCIAL_VISIBILITY_SEED_RETIRED_BY_PR4/);
-  assert.doesNotMatch(executor, /if \(mode === "seed"\) await seed\(\)/);
+  assert.doesNotMatch(executor, /prisma\.[A-Za-z0-9_]+\.(?:create|update|upsert|delete|deleteMany)\s*\(|\b(?:DROP|TRUNCATE)\b|migrate\s+reset|\$executeRawUnsafe/i);
 });
