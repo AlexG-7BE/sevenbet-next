@@ -165,8 +165,8 @@ collapse PR.
 
 ## Production semantic projection
 
-**DETECTED, READ ONLY:** at `2026-09-13T21:06:13.286Z`, committed code
-`72bdff959d5ae9e2fe59d18cdc32ae61e6689b94` ran against the trusted Production
+**DETECTED, READ ONLY:** at `2026-09-13T21:14:41.645Z`, committed code
+`0f9578305d801d1e7dd4f63ac8ec1f26290ed450` ran against the trusted Production
 target inside a repeatable-read transaction after `SET TRANSACTION READ ONLY`.
 It found 87 `MarketActivation` rows: 81 canonical non-`ZZ` routes and six
 inactive legacy `ZZ` rows. Every canonical route had identical current/PR4

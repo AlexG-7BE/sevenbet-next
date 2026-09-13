@@ -34,7 +34,7 @@ entry points are retired. No migration or Production data write is part of
 PR4.
 
 **DETECTED, READ-ONLY PRODUCTION EVIDENCE:** committed code
-`72bdff959d5ae9e2fe59d18cdc32ae61e6689b94` compared the current and PR4
+`0f9578305d801d1e7dd4f63ac8ec1f26290ed450` compared the current and PR4
 semantics in a repeatable-read, database-enforced read-only transaction. It
 checked all 81 canonical routes (plus six inactive legacy `ZZ` rows): 81 were
 unchanged, with zero intended differences, unintended regressions, legal

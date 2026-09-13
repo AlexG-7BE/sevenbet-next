@@ -112,8 +112,8 @@ Final committed-code capture:
 
 | Evidence | Result |
 | --- | --- |
-| Captured at | `2026-09-13T21:06:13.286Z` |
-| Code revision | `72bdff959d5ae9e2fe59d18cdc32ae61e6689b94` |
+| Captured at | `2026-09-13T21:14:41.645Z` |
+| Code revision | `0f9578305d801d1e7dd4f63ac8ec1f26290ed450` |
 | Total MarketActivation rows | 87 |
 | Canonical routes checked | 81 |
 | Inactive legacy `ZZ` rows excluded | 6 |
