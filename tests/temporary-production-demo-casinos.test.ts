@@ -110,15 +110,13 @@ test("manifest publication data naturally selects the Founder Office Best Offers
         publishedAt: "2026-08-06T00:00:00.000Z",
         casinoBonuses: definition.draft.casinoBonuses.map((item) => ({ ...item, status: "PUBLISHED" })),
       },
-    }, [], { now: new Date("2026-08-06T12:00:00.000Z"), redirectEnabled: false });
+    }, { now: new Date("2026-08-06T12:00:00.000Z") });
     return mapped ? publicCasinoToOffers(mapped) : [];
   });
   const shortlist = selectOverallShortlist(offers);
   const winners = bestFitWinners(shortlist);
-  assert.equal(shortlist.length, 12);
-  assert.equal(winners.overall?.casino.slug, "demo-northstar");
-  assert.equal(winners.wagering?.casino.slug, "demo-harbour");
-  assert.equal(winners.payout?.casino.slug, "demo-atlas");
+  assert.equal(shortlist.length, 0, "review-only demo offers cannot enter an actionable shortlist");
+  assert.deepEqual(winners, { overall: null, wagering: null, payout: null });
 });
 
 test("only intended Best Offers demo records carry a publication revision marker", () => {

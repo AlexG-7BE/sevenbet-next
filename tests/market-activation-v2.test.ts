@@ -15,8 +15,8 @@ import { MarketActivationRuntime } from "../lib/market-activation/runtime";
 import { marketEvidenceBlocksActivation } from "../lib/market-activation/market-evidence";
 import { selectActivationTrackingCandidate } from "../lib/market-activation/repository";
 import { MarketActivationRouteVerifier } from "../lib/market-activation/verifier";
-import { eligibleDiscoveryRoutes } from "../lib/public-casino-discovery/commercial-eligibility";
-import { resolvePublicVisitAction } from "../lib/services/public-casino-discovery.service";
+import { PublicCommercialActionResolver } from "../lib/commercial/public-commercial-action-resolver";
+import { allowOperatorAuthority } from "./market-authority.fixtures";
 
 const NOW = new Date("2026-09-07T12:00:00.000Z");
 const CASINO_ID = "10000000-0000-4000-8000-000000000001";
@@ -520,9 +520,6 @@ test("canonical runtime resolves only the exact active market and ignores legacy
     activation({ id: "10000000-0000-4000-8000-000000000007", countryCode: "CL", desiredState: "DISABLED", status: "DISABLED" }),
   ];
   const authority = runtime(records);
-  assert.equal(await authority.hasActiveRouteForMarket("PE"), true);
-  assert.equal(await authority.hasActiveRouteForMarket("CL"), false);
-  assert.equal(await authority.hasActiveRouteForMarket("EE"), false);
   assert.equal((await authority.listActive([CASINO_ID], "PE")).length, 1);
   assert.equal((await authority.listActive([CASINO_ID], "CL")).length, 0);
   assert.equal((await authority.listActive([CASINO_ID], "EE")).length, 0, "a different request GEO cannot inherit PE authority");
@@ -532,8 +529,6 @@ test("canonical runtime resolves only the exact active market and ignores legacy
   assert.equal(publicRoute?.slug, "inkabet-casino");
   assert.deepEqual(publicRoute, {
     casinoId: CASINO_ID,
-    casinoBonusId: null,
-    affiliateOfferId: OFFER_ID,
     slug: "inkabet-casino",
   });
 });
@@ -693,32 +688,34 @@ test("GB public routes carry current commercial facts into operator eligibility"
   assert.equal(route?.operatorEligibilityContext?.redirectContract?.destinationSafe, true);
 });
 
-test("discovery media and CTA projections prefer canonical activation rows", () => {
-  const context = {
-    aliases: [],
-    offers: [],
-    redirects: [],
-    activations: [{
-      casinoId: CASINO_ID,
-      countryCode: "PE",
-      product: "CASINO" as const,
-      desiredState: "ACTIVE" as const,
-      status: "ACTIVE" as const,
-      casinoBonusId: null,
-      affiliateOfferId: OFFER_ID,
-      redirectSlug: "inkabet-casino",
-    }],
-  };
-  assert.deepEqual(eligibleDiscoveryRoutes(context, "PE", NOW), [{ casinoId: CASINO_ID, casinoBonusId: null, affiliateOfferId: OFFER_ID, slug: "inkabet-casino" }]);
-  assert.equal(eligibleDiscoveryRoutes(context, "CL", NOW).length, 0);
-  const visit = resolvePublicVisitAction(context, CASINO_ID, null, "PE", NOW, {
+test("the canonical public resolver consumes activation output with exact-market isolation", async () => {
+  const resolver = new PublicCommercialActionResolver({
+    async listPublicRoutes(_casinoIds: string[], marketCode: string) {
+      return marketCode === "PE" ? [{ casinoId: CASINO_ID, slug: "inkabet-casino" }] : [];
+    },
+  } as never, allowOperatorAuthority, () => true);
+  const authority = {
     countryCode: "PE",
     commercialAllowed: true,
     referralAllowed: true,
     reasonCode: "POLICY_APPROVED",
     policyVersion: "test",
-  }, null, true);
-  assert.deepEqual(visit, { available: true, redirectSlug: "inkabet-casino", label: "Visit casino", reasonCode: null });
+  } as const;
+  const input = {
+    subjects: [{ casinoId: CASINO_ID, casinoSlug: "inkabet", published: true }],
+    authority,
+    countryCode: "PE",
+    marketCode: "PE",
+    product: "CASINO" as const,
+    now: NOW,
+  };
+  assert.deepEqual((await resolver.resolveMany(input)).get(CASINO_ID)?.action, { href: "/r/inkabet-casino" });
+  assert.equal((await resolver.resolveMany({
+    ...input,
+    authority: { ...authority, countryCode: "CL" },
+    countryCode: "CL",
+    marketCode: "CL",
+  })).get(CASINO_ID)?.action, null);
 });
 
 test("route verification uses the stored exact-market expectation and persists no URL in its result", async () => {

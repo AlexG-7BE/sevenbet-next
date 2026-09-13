@@ -340,7 +340,7 @@ test("only an exact Founder-authorized Superfly casino can pass the stale intern
   if (!unrelated.ok) assert.equal(unrelated.reason, "JURISDICTION_DENIED");
 });
 
-test("the Founder GB exception remains per-casino across public projection services", () => {
+test("the Founder GB exception remains per-casino inside canonical public action authority", () => {
   const staleGb: CommercialJurisdictionAuthority = {
     countryCode: "GB",
     commercialAllowed: false,
@@ -352,13 +352,17 @@ test("the Founder GB exception remains per-casino across public projection servi
   assert.equal(scopedCasinoReferralAllowed(staleGb, "21-prive"), true);
   assert.equal(scopedCasinoReferralAllowed(staleGb, "unrelated-casino"), false);
   assert.equal(scopedCasinoReferralAllowed({ ...staleGb, reasonCode: "MARKET_RESTRICTED" }, "21-prive"), false);
+  const resolver = readFileSync("lib/commercial/public-commercial-action-resolver.ts", "utf8");
+  assert.match(resolver, /scopedCasinoReferralAllowed/);
   for (const file of [
     "lib/services/public-casino-discovery.service.ts",
     "lib/services/public-casino.service.ts",
     "lib/services/public-offer.service.ts",
     "lib/services/public-comparison.service.ts",
   ]) {
-    assert.match(readFileSync(file, "utf8"), /scopedCasinoReferralAllowed/);
+    const service = readFileSync(file, "utf8");
+    assert.match(service, /PublicCommercialActionAuthority/);
+    assert.doesNotMatch(service, /scopedCasinoReferralAllowed/);
   }
 });
 

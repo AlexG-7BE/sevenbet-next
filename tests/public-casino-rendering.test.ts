@@ -9,6 +9,7 @@ import { parseRobotsMetadata } from "../lib/public-casino/public-casino-validati
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { PublicCasinoService } from "../lib/services/public-casino.service";
+import { commercialActionsByCasino } from "./commercial-action.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -70,16 +71,12 @@ function store(records: PublishedCasinoSnapshotRecord[], managedSlugs = records.
     listManagedSlugs: async () => managedSlugs,
     findPublishedBySlug: async (slug) => records.find((entry) => (entry.snapshot as Record<string, unknown>).slug === slug) ?? null,
     hasManagedSlug: async (slug) => managedSlugs.includes(slug),
-    listActiveAffiliateRoutes: async () => [
-      { casinoId: records[0]?.casinoId ?? "", casinoBonusId: null, slug: "cms-10bet" },
-      { casinoId: records[0]?.casinoId ?? "", casinoBonusId: "22222222-2222-4222-8222-222222222222", slug: "cms-10bet-welcome" },
-    ],
   };
 }
 
 test("published CMS wins over a duplicate legacy slug without expanding to legacy fallback", async () => {
   const legacy = getCasinos().slice(0, 2);
-  const service = new PublicCasinoService(store([publishedRecord()]), legacy, { cmsEnabled: true, redirectEnabled: true, now });
+  const service = new PublicCasinoService(store([publishedRecord()]), legacy, { cmsEnabled: true, now });
   assert.equal((await service.getCasino("10bet"))?.name, "CMS 10Bet");
   assert.equal(await service.getCasino(legacy[1].slug), null);
   assert.equal(await service.getCasino("unknown-casino"), null);
@@ -91,16 +88,16 @@ test("published CMS wins over a duplicate legacy slug without expanding to legac
 });
 
 test("draft and archived snapshots never become public", async () => {
-  assert.equal(mapPublishedCasino(publishedRecord({ status: "DRAFT" }), [], { redirectEnabled: true, now }), null);
-  assert.equal(mapPublishedCasino(publishedRecord({ archivedAt: now }), [], { redirectEnabled: true, now }), null);
+  assert.equal(mapPublishedCasino(publishedRecord({ status: "DRAFT" }), { now }), null);
+  assert.equal(mapPublishedCasino(publishedRecord({ archivedAt: now }), { now }), null);
   const snapshot = { ...(publishedRecord().snapshot as Record<string, unknown>), status: "APPROVED" };
-  assert.equal(mapPublishedCasino(publishedRecord({ snapshot }), [], { redirectEnabled: true, now }), null);
+  assert.equal(mapPublishedCasino(publishedRecord({ snapshot }), { now }), null);
 });
 
 test("draft and archived CMS slugs cannot reappear through legacy fallback or sitemap data", async () => {
   const legacy = getCasinos();
   const managedSlug = legacy[0].slug;
-  const service = new PublicCasinoService(store([], [managedSlug]), legacy, { cmsEnabled: true, redirectEnabled: true, now });
+  const service = new PublicCasinoService(store([], [managedSlug]), legacy, { cmsEnabled: true, now });
 
   assert.equal(await service.getCasino(managedSlug), null);
   assert.equal((await service.listCasinos()).some((casino) => casino.slug === managedSlug), false);
@@ -115,14 +112,10 @@ test("the repository exposes a published version only while its current casino i
   assert.doesNotMatch(repository, /status: \{ not: EditorialStatus\.ARCHIVED \}/);
 });
 
-test("public DTO removes storage, affiliate, notes, and draft metadata", () => {
-  const dto = mapPublishedCasino(publishedRecord(), [
-    { casinoId: "11111111-1111-4111-8111-111111111111", casinoBonusId: null, slug: "cms-10bet" },
-    { casinoId: "11111111-1111-4111-8111-111111111111", casinoBonusId: "22222222-2222-4222-8222-222222222222", slug: "cms-10bet-welcome" },
-  ], { redirectEnabled: true, now });
+test("public editorial DTO removes storage, affiliate, notes, and draft metadata", () => {
+  const dto = mapPublishedCasino(publishedRecord(), { now });
   assert.ok(dto);
-  assert.equal(dto.affiliate.href, "/r/cms-10bet");
-  assert.equal(dto.bonuses[0].affiliate.href, "/r/cms-10bet-welcome");
+  assert.equal(dto.action, null);
   assert.deepEqual(dto.bonuses.map((bonus) => bonus.slug), ["welcome"]);
   assert.equal(dto.media.logo?.alt, "CMS 10Bet logo");
   assert.equal(dto.media.hero, null);
@@ -133,11 +126,16 @@ test("public DTO removes storage, affiliate, notes, and draft metadata", () => {
   for (const forbidden of ["trackingUrl", "destinationUrl", "storageKey", "checksum", "internalNotes", "PRIVATE", "archived.png", "Draft"]) assert.doesNotMatch(serialized, new RegExp(forbidden));
 });
 
-test("missing or disabled redirect mapping produces a non-clickable affiliate state", () => {
-  const missing = mapPublishedCasino(publishedRecord(), [], { redirectEnabled: true, now });
-  const disabled = mapPublishedCasino(publishedRecord(), [{ casinoId: "11111111-1111-4111-8111-111111111111", casinoBonusId: null, slug: "cms-10bet" }], { redirectEnabled: false, now });
-  assert.deepEqual(missing?.affiliate, { href: null, available: false });
-  assert.deepEqual(disabled?.affiliate, { href: null, available: false });
+test("only the service resolver can add an action to the editorial projection", async () => {
+  const mapped = mapPublishedCasino(publishedRecord(), { now });
+  assert.equal(mapped?.action, null);
+  const service = new PublicCasinoService(
+    store([publishedRecord()]),
+    [],
+    { cmsEnabled: true, now },
+    commercialActionsByCasino({ "11111111-1111-4111-8111-111111111111": "/r/cms-10bet" }),
+  );
+  assert.deepEqual((await service.getCasino("10bet", undefined, "GB"))?.action, { href: "/r/cms-10bet" });
 });
 
 test("casino robots directives preserve noindex and treat none as noindex, nofollow", () => {

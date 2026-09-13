@@ -11,11 +11,7 @@ import { absoluteUrl } from "@/lib/site";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffOfferData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
-import {
-  commercialAuthorityForPresentation,
-  productHref,
-  productMetadata,
-} from "@/lib/market/product-context";
+import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
@@ -31,7 +27,6 @@ const loadBestOffersPageData = cache(async () => {
     resolveServerJurisdiction(),
     resolveServerCommercialProductState(),
   ]);
-  const commercialAuthority = commercialAuthorityForPresentation(authority, presentation.marketCountryCode);
   const result = await publicOfferService.getBestOffersPageData(
     {
       country: presentation.marketCountryCode ?? undefined,
@@ -39,9 +34,9 @@ const loadBestOffersPageData = cache(async () => {
       presentationLanguage: presentation.language,
       limit: 48,
     },
-    commercialAuthority,
+    authority,
   );
-  return { commercialAuthority, commercialProductState, presentation, result };
+  return { commercialProductState, presentation, result };
 });
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
@@ -55,7 +50,8 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const shell = publicShellMessages(presentation.locale);
   const copy = commercialUxMessages(presentation.locale);
   const market = presentation.marketDisplayName;
-  const marketUnavailable = !fixtureEnabled && !commercialProductsAvailable(loaded.commercialProductState);
+  const hasCanonicalAction = result.records.some((offer) => offer.action !== null);
+  const marketUnavailable = !fixtureEnabled && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState);
   const unavailable = result.status === "unavailable";
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const title = marketUnavailable
@@ -85,7 +81,8 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   const copy = commercialUxMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const result = withHandoffOfferData(loaded.result, fixtureEnabled, presentation.locale, fixtureMarket);
-  const marketUnavailable = !fixtureEnabled && !commercialProductsAvailable(loaded.commercialProductState);
+  const hasCanonicalAction = result.records.some((offer) => offer.action !== null);
+  const marketUnavailable = !fixtureEnabled && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState);
   if (marketUnavailable) return <div className={styles.page} data-commercial-market-state="editorial-only" data-runtime-renderer="best-offers">
     <CommercialSurfaceView surface="best_offers" />
     <section className={styles.statePage} data-nav-theme="dark"><div className={styles.shell}><div className={styles.statePanel} role="status">

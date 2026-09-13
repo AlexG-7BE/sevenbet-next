@@ -1,7 +1,7 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 12 September 2026
+**Evidence date:** 13 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
 **Current Production application SHA (live provider evidence):** `22cf696b31b6adc3e456508b1a140044a5061698`
@@ -11,6 +11,24 @@
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
+
+## Commercial Core Simplification PR1 — review candidate
+
+**DETECTED IN THE REPOSITORY CANDIDATE; NOT DEPLOYED:** the explicit 13
+September 2026 Founder instruction establishes RFC-047's single public
+commercial-action seam. Public Casino, discovery, offer and comparison
+services now consume one server-owned `GovernedCommercialAction | null` result.
+Public DTOs, ranking, PR #276 presentation adapters and UI consumers no longer
+combine shadow permission booleans or dispositions. `MarketActivation` remains
+the transitional persisted activation/route-safety source, while legal,
+trusted-GEO, GB operator, route-health, safe-destination and controlled `/r`
+requirements remain fail closed in the canonical path.
+
+The candidate is based on `origin/main`
+`23355a961782c8ff9296ff48fdb829808fc12bf8`, which includes merged PR #276.
+It contains no Prisma schema/migration, database, Vercel, environment, CRM,
+MCP, Partner, tracking URL or Production mutation. Merge and deployment have
+not occurred.
 
 ## Customer Data, Analytics & Lifecycle Core v1 — Resend Production activation GO
 
@@ -110,7 +128,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial partner activation | **READY IN PRODUCTION — 24 ACTIVE_HEALTHY / 540 TERMINALLY CLASSIFIED ROWS** | The exhaustive current-partner matrix covers four partners, 73 Casinos and 25 GEO labels: 24 ACTIVE_HEALTHY, 24 BLOCKED_BY_LAW, 17 ACTION_REQUIRED_REGULATORY, one BROKEN_ROUTE and 474 MISSING_TRACKING_ROUTE. RFC-042 is the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |
 | Casino market data | **FOURTEEN REAL PUBLISHED IDENTITIES — SAFE CROSS-MARKET OFFER PRESENTATION ACTIVE** | Market-projected Casino facts remain isolated. A bounded immutable published-bonus corpus now resolves `EXACT > ROW > OTHER_MARKET > NONE`; StarCasino IT plus genuine Rizk and NordicBet ROW offers are reconciled without creating commercial or media authority. Founder-approved scores remain unchanged. |
 | Placement media | **RETIRED — HISTORICAL ROWS INERT** | Migration 0034 preserves every historical assignment and asset row but forces all six assignment families inactive. Promotional placement state is no longer public, commercial or release authority. |
-| Canonical public CTA authority | **RFC-042 SOLE B4GAMBLE AUTHORITY** | Public directory, comparison and review consumers use canonical `MarketActivation`, including its healthy global fallback. Legacy programme/offer/workflow/link/redirect lifecycle fields are not replacement CTA vetoes; external safety, jurisdiction, GB operator/legal, safe-URL, relational and trusted-GEO controls remain independent. |
+| Canonical public CTA authority | **RFC-047 SINGLE PUBLIC ACTION SEAM — REVIEW CANDIDATE** | Public directory, offer, comparison and review consumers use one nullable governed action. RFC-042 `MarketActivation` remains the transitional persisted route source; external safety, jurisdiction, GB operator/legal, safe-URL, relational, route-health and trusted-GEO controls are consolidated once before projection. Production is unchanged pending separate merge/deployment. |
 | GEO-localized creative assignments | **RETIRED — HISTORICAL TARGETING EVIDENCE ONLY** | Exact-country/language assignment rows remain for audit but are inactive and database-constrained. Trusted GEO continues to govern jurisdiction independently of language and media. |
 | Vetted partner-hosted creatives | **RETIRED — 254 HISTORICAL ROWS PRESERVED AND ARCHIVED** | Hosted creatives remain inert evidence. Public frames/previews and active assignments are retired; they cannot supply Product or commercial authority. |
 | Commercial creative formats | **HISTORICAL COMPATIBILITY / TEST VOCABULARY** | Format parsers and pre-retirement tests may remain inert. Active public compositions accept operator logos or explicitly B4GAMBLE-owned editorial art, never promotional creative formats. |

@@ -17,8 +17,6 @@ function card(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
   return {
     id: "casino-full",
     dataClassification: "PUBLISHED_RECORD",
-    disposition: "PROMOTABLE",
-    dispositionReason: "EXACT_MARKET_AND_ROUTE_ELIGIBLE",
     slug: "full-casino",
     name: "Full Casino",
     logo: { url: "https://media.example/full.png", alt: "Full Casino logo", width: 320, height: 160 },
@@ -32,7 +30,7 @@ function card(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
     categories: [{ key: "slots", label: "Slots" }],
     highlights: ["Published terms"],
     featuredBonus: { title: "Welcome terms", summary: "Published summary", type: "WELCOME", keyTerms: ["x30 wagering"], wageringRequirement: 30, minimumDeposit: 10, currency: "GBP", validUntil: "2031-01-01T00:00:00.000Z", termsApply: true },
-    visitAction: { available: true, redirectSlug: "full-casino-visit", label: "Visit casino", reasonCode: null },
+    action: { href: "/r/full-casino-visit" },
     responsibleGamblingLabel: "Control tools published",
     publishedAt: "2030-05-01T00:00:00.000Z",
     editorialUpdatedAt: "2030-05-15T00:00:00.000Z",
@@ -67,7 +65,7 @@ test("sparse review-only card omits unexplained fact rows and invented values", 
   const sparse = card({
     id: "casino-sparse", slug: "sparse-casino", name: "Sparse Casino", logo: null, shortDescription: null, rating: null,
     licenses: [], countries: [], paymentMethods: [], gameProviders: [], categories: [], highlights: [], featuredBonus: null,
-    visitAction: { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "NO_ACTIVE_TRACKING_LINK" },
+    action: null,
     publishedAt: null, editorialUpdatedAt: null,
   });
   const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={sparse} classNames={classNames} position={2} />);
@@ -107,6 +105,7 @@ test("local preview theatre is disclosed as demonstration data rather than publi
   const html = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={card({
     dataClassification: "LOCAL_PREVIEW_FIXTURE",
     reviewHref: "/casino/demo-plume?visualFixture=true",
+    action: null,
   })} classNames={classNames} />);
   assert.match(html, /DEMONSTRATION DATA · 18\+/);
   assert.ok(html.includes(defaultMessages.common.marketPresentationNotice));
@@ -117,7 +116,7 @@ test("local preview theatre is disclosed as demonstration data rather than publi
 test("demo cards disclose fictional status and never render a commercial action", () => {
   const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={card({
     dataClassification: "DEMO_FIXTURE",
-    visitAction: { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "DEMO_FIXTURE" },
+    action: null,
   })} classNames={classNames} position={1} />);
   assert.match(html, /DEMONSTRATION DATA/);
   assert.match(html, /not current operators, partner offers or live promotions/i);
@@ -129,7 +128,7 @@ test("explicit fixture review targets suppress dead links and preserve the one m
   const layoutOnly = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={card({
     dataClassification: "DEMO_FIXTURE",
     reviewHref: null,
-    visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "DEMO_FIXTURE" },
+    action: null,
   })} classNames={classNames} position={1} />);
   assert.match(layoutOnly, /<h2>Full Casino<\/h2>/);
   assert.doesNotMatch(layoutOnly, /href="\/casino\/full-casino"|View demonstration/);
@@ -139,7 +138,7 @@ test("explicit fixture review targets suppress dead links and preserve the one m
     name: "Solvane Casino",
     reviewHref: "/casino/demo-plume?visualFixture=true",
     slug: "solvane-casino",
-    visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "DEMO_FIXTURE" },
+    action: null,
   })} classNames={classNames} position={1} />);
   assert.equal((matching.match(/href="\/casino\/demo-plume\?visualFixture=true"/g) ?? []).length, 2);
   assert.match(matching, /View demonstration/);

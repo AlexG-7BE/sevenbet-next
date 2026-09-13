@@ -174,7 +174,7 @@ export function DirectoryFeaturedTheatre({ casino, messages, presentation }: { c
 
 export function DiscoveryResults({ result, messages, presentation }: { result: CasinoDiscoveryResult; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const firstPosition = (result.page - 1) * result.pageSize + 1;
-  const noVisitActions = result.items.length > 0 && result.items.every((casino) => !casino.visitAction.available);
+  const noVisitActions = result.items.length > 0 && result.items.every((casino) => !casino.action);
   const hasActiveFilters = activeFilterCount(result.appliedFilters) > 0;
   return <div className={styles.results} data-result-count={result.total} id="casino-results">
     <div className={styles.resultsHeader}><div><span>{messages.casinos.directoryTitle}</span><h2>{result.total} {result.total === 1 ? messages.common.record : messages.common.records}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? messages.common.result : messages.common.results} · {messages.common.pageOf.replace("{page}", String(result.page)).replace("{pages}", String(result.pageCount))}</p></div>

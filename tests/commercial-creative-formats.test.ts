@@ -344,13 +344,11 @@ function profileCasino(renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAI
       id: "bonus-id", slug: "skol-welcome", title: "Verified Skol welcome offer", summary: "Current published offer", type: "WELCOME", percentage: 100,
       minimumDeposit: 10, maximumBonus: 150, maximumBet: 5, currency: "GBP", freeSpins: 20, wageringMultiplier: 30,
       wageringText: "30× wagering", eligibility: "New eligible customers only", importantConditions: ["Terms apply"], termsUrl: null,
-      startsAt: null, expiresAt: null, affiliate: { href: "/r/skol-current-offer", available: true },
+      startsAt: null, expiresAt: null,
       media: { CASINO_OFFER_BLOCK: offerPlacement, CASINO_REVIEW_RIGHT_HERO: reviewHeroPlacement },
     }],
     media: { logo: null, hero: placement.asset, screenshots: [], gallery: [], socialImage: null, placements: { CASINO_DETAIL_HERO: placement } },
-    affiliate: { href: "/r/skol-casino", available: true },
-    presentationDisposition: "PROMOTABLE",
-    presentationDispositionReason: "EXACT_MARKET_AND_ROUTE_ELIGIBLE",
+    action: { href: "/r/skol-current-offer" },
   };
 }
 
@@ -366,12 +364,11 @@ test("authorized creative markup uses the governed route while blocked creative 
   const available: PublicOfferDTO = {
     ...seed,
     dataClassification: "PUBLISHED_RECORD",
-    commercialAvailability: "AVAILABLE",
-    action: { available: true, href: "/r/slotnite-current-offer" },
+    action: { href: "/r/slotnite-current-offer" },
     bonus: { ...seed.bonus, media: { ...seed.bonus.media, BONUS_LISTING_CARD: placement } },
   };
   const creative = renderToStaticMarkup(React.createElement(CommercialOfferMedia, { messages, offer: available, variant: "bonus" }));
-  const cta = renderToStaticMarkup(React.createElement(CasinoOutboundAction, { action: { href: available.action.href!, label: messages.common.actionAvailable }, context: { source: "CTA", placement: "BONUS_LISTING_CARD" }, messages: messages.outbound }));
+  const cta = renderToStaticMarkup(React.createElement(CasinoOutboundAction, { action: { href: available.action!.href, label: messages.common.actionAvailable }, context: { source: "CTA", placement: "BONUS_LISTING_CARD" }, messages: messages.outbound }));
   assert.match(creative, /data-commercial-action-source="CREATIVE"/);
   assert.match(creative, /data-commercial-action-placement="BONUS_LISTING_CARD"/);
   assert.match(creative, /href="\/r\/slotnite-current-offer\?placement=CREATIVE_BONUS_LISTING_CARD"/);
@@ -395,7 +392,7 @@ test("authorized creative markup uses the governed route while blocked creative 
   const stripFigure = stripCreative.match(/<figure[\s\S]*?<\/figure>/)?.[0] ?? "";
   assert.doesNotMatch(stripFigure, /100% up to|compositionIdentity|controlledStrip/i);
 
-  const blocked: PublicOfferDTO = { ...available, commercialAvailability: "UNAVAILABLE", action: { available: false, href: null } };
+  const blocked: PublicOfferDTO = { ...available, action: null };
   const blockedCreative = renderToStaticMarkup(React.createElement(CommercialOfferMedia, { messages, offer: blocked, variant: "bonus" }));
   assert.match(blockedCreative, /data-media-state="presented"/);
   assert.doesNotMatch(blockedCreative, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
@@ -427,8 +424,7 @@ test("review heroes use canonical logos only while governed CTA authority stays 
   }
 
   const blockedCasino = profileCasino();
-  blockedCasino.bonuses = blockedCasino.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } }));
-  blockedCasino.affiliate = { href: null, available: false };
+  blockedCasino.action = null;
   const blocked = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: blockedCasino, editorial: null, messages, presentation }));
   assert.doesNotMatch(blocked, /skol-300x250|data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
 

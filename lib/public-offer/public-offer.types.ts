@@ -1,5 +1,6 @@
 import type { CasinoMediaPlacementName, OfferMediaPlacementName } from "@/lib/media/placement-media";
-import type { PublicCasinoAffiliate, PublicCasinoMedia, PublicOfferPresentation, PublicPlacementMedia } from "@/lib/public-casino/public-casino.types";
+import type { GovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
+import type { PublicCasinoMedia, PublicOfferPresentation, PublicPlacementMedia } from "@/lib/public-casino/public-casino.types";
 
 export type PublicOfferAvailability = "AVAILABLE" | "UNAVAILABLE";
 export type PublicOfferSort = "editorial" | "newest" | "highest-bonus" | "lowest-wagering" | "lowest-deposit";
@@ -58,8 +59,7 @@ export interface PublicOfferDTO {
     expiresAt: string | null;
     media?: Partial<Record<OfferMediaPlacementName, PublicPlacementMedia>>;
   };
-  action: PublicCasinoAffiliate;
-  commercialAvailability: PublicOfferAvailability;
+  action: GovernedCommercialAction | null;
   dataClassification: PublicOfferDataClassification;
   offerPresentation?: Omit<PublicOfferPresentation, "selectedOffer">;
 }

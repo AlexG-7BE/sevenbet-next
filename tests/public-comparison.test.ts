@@ -3,11 +3,12 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { comparisonHref, parsePublicComparisonQuery, serializePublicComparisonQuery } from "../lib/public-comparison/query";
-import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
+import type { PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { PublicComparisonService } from "../lib/services/public-comparison.service";
-import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
+import { allowJurisdictionAuthority } from "./market-authority.fixtures";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
+import { commercialActionsByCasino, noCommercialActions } from "./commercial-action.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -93,37 +94,15 @@ function record(slug: string, patch: {
 }
 
 async function selectedOfferTitle(bonuses: ReturnType<typeof snapshotBonus>[]) {
-  const context = commercialContext(["alpha", "beta"]);
-  const result = await new PublicComparisonService(store([record("alpha", { bonuses }), record("beta")], context), () => now, allowOperatorAuthority, () => true)
+  const result = await new PublicComparisonService(store([record("alpha", { bonuses }), record("beta")]), () => now, noCommercialActions)
     .compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"), allowJurisdictionAuthority);
   return result.groups.flatMap((group) => group.rows).find((row) => row.id === "offer-title")?.values.alpha.text;
 }
 
-function activeOffer(casinoId: string): DiscoveryContext["offers"][number] {
-  return {
-    id: `${casinoId}-offer`, casinoId, casinoBonusId: null, status: "ACTIVE", archivedAt: null, startAt: null, expiresAt: null,
-    featured: false, priority: 10, geoMode: "ALLOW", countries: [{ countryCode: "GB", mode: "ALLOW" }],
-    program: { casinoId, status: "ACTIVE", workflowStatus: "PUBLISHED", supportedCountries: ["GB"], archivedAt: null, network: { active: true, archivedAt: null } },
-    trackingLinks: [{
-      id: `${casinoId}-tracking`, active: true, archivedAt: null, validFrom: null, expiresAt: null, verifiedAt: now, lastCheckedAt: now,
-      destinationUrl: "https://casino.example/welcome", trackingUrl: "https://tracking.example/click", priority: 10, geoMode: "ALLOW",
-      countries: [{ countryCode: "GB", mode: "ALLOW", productionEligible: true, productionEligibilityVerifiedAt: now, productionEligibilityExpiresAt: new Date("2030-06-08T00:00:00.000Z"), productionEligibilityEvidence: "Synthetic explicit authority" }],
-    }],
-  };
-}
-
-function commercialContext(slugs: string[]): Pick<DiscoveryContext, "offers" | "redirects"> {
-  const offers = slugs.map((slug) => activeOffer(`${slug}-id`));
-  return {
-    offers,
-    redirects: offers.map((offer) => ({ casinoId: offer.casinoId, casinoBonusId: null, affiliateOfferId: offer.id, slug: `${offer.casinoId}-governed` })),
-  };
-}
-
-function store(records: PublishedCasinoSnapshotRecord[], context: Partial<DiscoveryContext> = {}, fail = false): PublicCasinoDiscoveryStore {
+function store(records: PublishedCasinoSnapshotRecord[], fail = false): PublicCasinoDiscoveryStore {
   return {
     listPublished: async () => { if (fail) throw new Error("database unavailable"); return records; },
-    loadContext: async () => { if (fail) throw new Error("context unavailable"); return { aliases: [], offers: [], redirects: [], ...context }; },
+    loadContext: async () => { if (fail) throw new Error("context unavailable"); return { aliases: [] }; },
   };
 }
 
@@ -155,7 +134,7 @@ test("clean comparison uses global editorial candidates without requiring an exa
     record("bravo", { score: 9.8, recommended: true }),
     record("canada", { score: 10, featured: true, country: "CA" }),
   ];
-  const service = new PublicComparisonService(store(records, commercialContext(["zulu", "alpha", "bravo"])), () => now, allowOperatorAuthority, () => true);
+  const service = new PublicComparisonService(store(records), () => now, noCommercialActions);
   const result = await service.compare(parsePublicComparisonQuery({}, "GB"), allowJurisdictionAuthority);
   assert.equal(result.defaulted, true);
   assert.equal(result.status, "available");
@@ -168,7 +147,7 @@ test("exact-ID demonstrations are absent from comparison", async () => {
   const result = await new PublicComparisonService(store([
     record("fictional-one", { id: temporaryDemoCasinoIds[0], score: 9 }),
     record("fictional-two", { id: temporaryDemoCasinoIds[1], score: 8 }),
-  ]), () => now, allowOperatorAuthority, () => true).compare(parsePublicComparisonQuery({}, "GB"), allowJurisdictionAuthority);
+  ]), () => now, noCommercialActions).compare(parsePublicComparisonQuery({}, "GB"), allowJurisdictionAuthority);
   assert.equal(result.status, "no-comparable");
   assert.equal(result.inventoryMode, "PUBLISHED_ONLY");
   assert.deepEqual(result.candidates, []);
@@ -280,9 +259,9 @@ test("declared unavailable and missing-market states remain neutral, explicit co
   assert.equal(result.status, "available");
   assert.deepEqual(result.reasons, []);
   assert.deepEqual(result.casinos.map((casino) => casino.marketState), ["AVAILABLE", "UNAVAILABLE", "UNKNOWN"]);
-  assert.ok(result.casinos.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && casino.editorScore !== null));
-  assert.ok(result.candidates.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && casino.editorScore !== null));
-  assert.ok(result.casinos.every((casino) => !casino.action.available && casino.action.href === null));
+  assert.ok(result.casinos.every((casino) => casino.editorScore !== null));
+  assert.ok(result.candidates.every((casino) => casino.editorScore !== null));
+  assert.ok(result.casinos.every((casino) => casino.action === null));
   const offerRows = result.groups.find((group) => group.id === "offer")?.rows ?? [];
   assert.ok(offerRows.length > 0);
   assert.ok(offerRows.some((row) => row.id === "offer-title" && Object.values(row.values).every((cell) => cell.status === "Operator-published")));
@@ -292,7 +271,7 @@ test("declared unavailable and missing-market states remain neutral, explicit co
 test("show differences hides only identical text and status pairs", async () => {
   const alpha = record("alpha", { score: 9, wagering: null, withdrawal: null });
   const beta = record("beta", { score: 8, wagering: 30, withdrawal: null });
-  const service = new PublicComparisonService(store([alpha, beta], commercialContext(["alpha", "beta"])), () => now, allowOperatorAuthority, () => true);
+  const service = new PublicComparisonService(store([alpha, beta]), () => now, noCommercialActions);
   const all = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"), allowJurisdictionAuthority);
   const differences = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"], differences: "true" }, "GB"), allowJurisdictionAuthority);
   const allRows = all.groups.flatMap((group) => group.rows);
@@ -306,7 +285,7 @@ test("show differences hides only identical text and status pairs", async () => 
 test("missing values remain truthful evidence states", async () => {
   const alpha = record("alpha", { wagering: null, withdrawal: null, responsibleTools: [] });
   const beta = record("beta");
-  const result = await new PublicComparisonService(store([alpha, beta], commercialContext(["alpha", "beta"])), () => now, allowOperatorAuthority, () => true)
+  const result = await new PublicComparisonService(store([alpha, beta]), () => now, noCommercialActions)
     .compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"), allowJurisdictionAuthority);
   const rows = new Map(result.groups.flatMap((group) => group.rows).map((row) => [row.id, row]));
   assert.deepEqual(rows.get("wagering")?.values.alpha, { text: "Unknown", status: "Unknown" });
@@ -314,40 +293,36 @@ test("missing values remain truthful evidence states", async () => {
   assert.deepEqual(rows.get("control-tools")?.values.alpha, { text: "Unknown", status: "Unknown" });
 });
 
-test("commercial action requires an active governed offer and safe internal redirect", async () => {
+test("comparison consumes only the canonical safe internal action", async () => {
   const alpha = record("alpha");
   const beta = record("beta");
-  const offer = activeOffer("alpha-id");
-  const context = { offers: [offer], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: offer.id, slug: "alpha-governed" }] };
-  const result = await new PublicComparisonService(store([alpha, beta], context), () => now, allowOperatorAuthority, () => true).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"), allowJurisdictionAuthority);
-  assert.deepEqual(result.casinos[0].action, { available: true, href: "/r/alpha-governed", label: "Visit Casino alpha", reason: "Rechecked by the governed internal redirect route." });
-  assert.equal(result.casinos[1].action.available, false);
-  assert.equal(result.casinos[1].action.href, null);
+  const result = await new PublicComparisonService(
+    store([alpha, beta]),
+    () => now,
+    commercialActionsByCasino({ "alpha-id": "/r/alpha-governed" }),
+  ).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"), allowJurisdictionAuthority);
+  assert.deepEqual(result.casinos[0].action, { href: "/r/alpha-governed" });
+  assert.equal(result.casinos[1].action, null);
   assert.doesNotMatch(JSON.stringify(result), /destinationUrl|trackingUrl|https?:\/\//);
 });
 
-test("commercial denial omits aliases, affiliate context and operator evaluation", async () => {
-  let contextOptions: { includeAliases?: boolean; includeCommercial?: boolean } | undefined;
-  let operatorCalls = 0;
+test("comparison consumes canonical denial without loading affiliate context", async () => {
+  let contextCalls = 0;
   const service = new PublicComparisonService({
     listPublished: async () => [record("alpha"), record("beta")],
-    loadContext: async (_ids, options) => {
-      contextOptions = options;
-      return { aliases: [], offers: [], redirects: [] };
+    loadContext: async () => {
+      contextCalls += 1;
+      return { aliases: [] };
     },
-  }, () => now, {
-    async evaluate() { operatorCalls += 1; throw new Error("must not evaluate"); },
-    async evaluateMany() { operatorCalls += 1; return new Map(); },
-  }, () => true);
+  }, () => now, noCommercialActions);
   const result = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"));
-  assert.deepEqual(contextOptions, { includeAliases: false, includeCommercial: false });
-  assert.equal(operatorCalls, 0);
+  assert.equal(contextCalls, 0);
   assert.equal(result.status, "available");
-  assert.ok(result.casinos.every((casino) => !casino.action.available));
+  assert.ok(result.casinos.every((casino) => casino.action === null));
 });
 
 test("repository failures fail closed without legacy or fabricated records", async () => {
-  const result = await new PublicComparisonService(store([], {}, true), () => now).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"));
+  const result = await new PublicComparisonService(store([], true), () => now).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"));
   assert.equal(result.status, "projection-unavailable");
   assert.deepEqual(result.casinos, []);
   assert.deepEqual(result.candidates, []);

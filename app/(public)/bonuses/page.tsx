@@ -13,7 +13,7 @@ import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffBonusDirectoryData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
-import { commercialAuthorityForPresentation, productHref, productMetadata } from "@/lib/market/product-context";
+import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
@@ -32,7 +32,7 @@ const loadBonusDirectory = cache(async () => {
   const query = parsePublicOfferQuery({}, 100);
   const result = await publicOfferService.searchOffers(
     { ...query, country: presentation.marketCountryCode ?? undefined },
-    commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
+    authority,
     {
       ...(presentation.marketCountryCode ? { defaultEditorialCountry: presentation.marketCountryCode } : {}),
       ...(presentation.marketCode ? { commercialMarketCode: presentation.marketCode } : {}),
@@ -54,7 +54,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const shell = publicShellMessages(presentation.locale);
   const copy = commercialUxMessages(presentation.locale);
   const market = presentation.marketDisplayName;
-  const marketUnavailable = !visualFixture && !commercialProductsAvailable(loaded.commercialProductState);
+  const hasCanonicalAction = result.records.some((offer) => offer.action !== null);
+  const marketUnavailable = !visualFixture && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState);
   const unavailable = result.inventoryMode === "UNAVAILABLE";
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const title = marketUnavailable ? `${shell.bonuses} — ${market} | B4GAMBLE` : formatProductMessage(unavailable ? `${messages.bonuses.unavailableTitleBody} | B4GAMBLE` : containsDemo ? messages.bonuses.demoTitle : messages.bonuses.title, { market });
@@ -81,7 +82,8 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   const market = presentation.marketDisplayName;
   const query = parsePublicOfferQuery({}, 100);
   const result = withHandoffBonusDirectoryData(loaded.result, visualFixture, presentation.locale, query, fixtureMarket);
-  const marketUnavailable = !visualFixture && !commercialProductsAvailable(loaded.commercialProductState);
+  const hasCanonicalAction = result.records.some((offer) => offer.action !== null);
+  const marketUnavailable = !visualFixture && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState);
   if (marketUnavailable) return <div className={`${styles.page} ${instrumentSerif.variable}`} data-commercial-market-state="editorial-only" data-runtime-renderer="bonuses">
     <CommercialSurfaceView surface="bonuses" />
     <section className={finalStyles.unavailable} data-nav-theme="dark"><div>

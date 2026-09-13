@@ -42,7 +42,6 @@ function bonus(slug: string, patch: Partial<PublicCasinoBonus> = {}): PublicCasi
     termsUrl: null,
     startsAt: null,
     expiresAt: null,
-    affiliate: { href: null, available: false },
     ...patch,
   };
 }
@@ -172,7 +171,7 @@ test("other-market bonus knowledge survives without leaking its market profile",
     }],
     bonusMetadata: {},
   }], now);
-  const mapped = mapPublishedCasino(projected, [], { redirectEnabled: false, countryCode: "KZ", now });
+  const mapped = mapPublishedCasino(projected, { countryCode: "KZ", now });
   assert.ok(mapped);
   const presented = withOfferPresentation(mapped, corpus, "KZ");
   assert.equal(presented.offerPresentation?.selectedOffer?.slug, "inkabet-pe-welcome");
@@ -231,7 +230,8 @@ test("publication gives market bonuses the same immutable published state as glo
 
 test("presentation resolution creates no affiliate or media authority", () => {
   const selected = resolvePublishedOfferCandidate([candidate("inkabet-pe", "PE")], "KZ");
-  assert.deepEqual(selected?.candidate.bonus.affiliate, { href: null, available: false });
+  assert.equal(Object.hasOwn(selected?.candidate.bonus ?? {}, "affiliate"), false);
+  assert.equal(Object.hasOwn(selected?.candidate.bonus ?? {}, "action"), false);
   assert.equal(selected?.candidate.bonus.media, undefined);
 });
 
@@ -261,24 +261,21 @@ test("the bonus directory receives one other-market representative without inher
   const store: PublicCasinoStore = {
     listPublished: async () => [published],
     listPublishedOfferCandidates: async () => [candidate("inkabet-pe", "PE", { casinoId: "inkabet-id" })],
-    listActiveAffiliateRoutes: async () => [{ casinoId: "inkabet-id", casinoBonusId: "inkabet-pe-id", slug: "unrelated-current-route" }],
     findPublishedBySlug: async () => published,
     hasManagedSlug: async () => true,
     listManagedSlugs: async () => ["inkabet"],
   };
-  const offers = await new PublicOfferRepository(store, { redirectEnabled: true, now }).listOffers({
-    includeCommercial: true,
+  const offers = await new PublicOfferRepository(store, { now }).listOffers({
     countryCode: "KZ",
   });
   assert.equal(offers.length, 1);
   assert.equal(offers[0]?.bonus.slug, "inkabet-pe");
   assert.equal(offers[0]?.offerPresentation?.relation, "OTHER_MARKET");
   assert.equal(offers[0]?.offerPresentation?.currentMarketVerified, false);
-  assert.deepEqual(offers[0]?.action, { href: null, available: false });
-  assert.equal(offers[0]?.commercialAvailability, "UNAVAILABLE");
+  assert.equal(offers[0]?.action, null);
 });
 
-test("an exact editorial candidate cannot inherit a route not bound to that bonus", async () => {
+test("an exact editorial candidate receives no action from the editorial repository", async () => {
   const published: PublishedCasinoSnapshotRecord = {
     casinoId: "casino-id",
     version: 1,
@@ -304,17 +301,15 @@ test("an exact editorial candidate cannot inherit a route not bound to that bonu
   const store: PublicCasinoStore = {
     listPublished: async () => [published],
     listPublishedOfferCandidates: async () => [candidate("casino-kz", "KZ", { casinoId: "casino-id" })],
-    listActiveAffiliateRoutes: async () => [{ casinoId: "casino-id", casinoBonusId: null, slug: "casino-level-route" }],
     findPublishedBySlug: async () => published,
     hasManagedSlug: async () => true,
     listManagedSlugs: async () => ["casino"],
   };
-  const [offer] = await new PublicOfferRepository(store, { redirectEnabled: true, now }).listOffers({
-    includeCommercial: true,
+  const [offer] = await new PublicOfferRepository(store, { now }).listOffers({
     countryCode: "KZ",
   });
   assert.equal(offer?.offerPresentation?.relation, "EXACT");
-  assert.deepEqual(offer?.action, { href: null, available: false });
+  assert.equal(offer?.action, null);
 });
 
 test("other-market tie breaker is stable under shuffled input", () => {

@@ -41,15 +41,17 @@ test("0035 additively introduces exact subdivision market identity", async () =>
 });
 
 test("runtime public-route readers use MarketActivation while legacy readiness remains a shadow comparator", async () => {
-  const [repository, runtime, redirect, presentation, script] = await Promise.all([
-    readFile(new URL("lib/repositories/public-casino.repository.ts", root), "utf8"),
+  const [resolver, runtime, redirect, script] = await Promise.all([
+    readFile(new URL("lib/commercial/public-commercial-action-resolver.ts", root), "utf8"),
     readFile(new URL("lib/market-activation/runtime.ts", root), "utf8"),
     readFile(new URL("lib/services/affiliate-redirect.service.ts", root), "utf8"),
-    readFile(new URL("lib/public-casino/presentation-disposition.ts", root), "utf8"),
     readFile(new URL("scripts/market-activation-v2.ts", root), "utf8"),
   ]);
-  assert.match(repository, /marketActivationRuntime/);
-  assert.doesNotMatch(repository, /partnerRouteService/);
+  assert.match(resolver, /marketActivationRuntime/);
+  assert.match(resolver, /this\.routes\.listPublicRoutes/);
+  assert.match(resolver, /scopedCasinoReferralAllowed/);
+  assert.match(resolver, /gbOperatorEligibility\.evaluateMany/);
+  assert.doesNotMatch(resolver, /partnerRouteService/);
   assert.match(runtime, /record\.desiredState === "ACTIVE"/);
   assert.match(runtime, /record\.status === "ACTIVE"/);
   assert.match(runtime, /globalFallbackBlockedCountries/);
@@ -57,8 +59,6 @@ test("runtime public-route readers use MarketActivation while legacy readiness r
   assert.match(runtime, /exactAuthorityExists/);
   assert.match(redirect, /canonicalActivations\.resolveRedirect/);
   assert.doesNotMatch(redirect, /partnerRouteService|isProductionEligible/);
-  assert.match(presentation, /marketEvidenceBlocksActivation/);
-  assert.doesNotMatch(presentation, /classification === "CONTRADICTION"/);
   assert.match(script, /legacyEligibleSnapshot/);
   assert.match(script, /async function shadow/);
   assert.match(script, /Betsson × CL × CASINO must remain inactive/);

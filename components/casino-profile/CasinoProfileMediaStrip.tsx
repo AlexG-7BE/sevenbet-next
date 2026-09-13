@@ -21,7 +21,7 @@ export function CasinoProfileMediaStrip({ casino, messages }: { casino: PublicCa
   if (!hosted(desktop)) return null;
 
   const safeMobile = hosted(mobile) ? mobile : desktop;
-  const canonicalHref = casino.affiliate.available ? casino.affiliate.href : null;
+  const canonicalHref = casino.action?.href ?? null;
   return <aside aria-label={`${casino.name} · ${messages.common.controlledMedia}`} className={styles.shell} data-casino-profile-hosted-media>
     <PartnerHostedCommercialFigure
       canonicalHref={canonicalHref}

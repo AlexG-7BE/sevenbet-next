@@ -14,10 +14,7 @@ import {
 } from "../lib/casino-commercial-visibility/catalog";
 import type { CommercialJurisdictionAuthority } from "../lib/jurisdiction/commercial-authority";
 import { mapPublishedCasino, projectPublicCasinoMarket } from "../lib/public-casino/public-casino.mapper";
-import type {
-  PublishedCasinoSnapshotRecord,
-  PublicAffiliateRoute,
-} from "../lib/public-casino/public-casino.types";
+import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { selectCuratedCasinos } from "../lib/public-casino-discovery/curated-selector";
 import type { PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import { selectOverallShortlist } from "../lib/public-offer/best-offer-ranking";
@@ -25,6 +22,7 @@ import { publicCasinoToOffers } from "../lib/public-offer/public-offer.mapper";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { PublicCasinoService } from "../lib/services/public-casino.service";
+import { commercialActionAuthority } from "./commercial-action.fixtures";
 
 const now = new Date("2026-09-03T12:00:00.000Z");
 const expectedRealSlugs = [
@@ -134,29 +132,19 @@ function publishedRecord(slug: (typeof expectedRealSlugs)[number]): PublishedCas
 }
 
 const records = expectedRealSlugs.map(publishedRecord);
-const routes: PublicAffiliateRoute[] = superflyCommercialCatalog.flatMap((definition) => {
-  const casinoId = `real-${definition.slug}`;
-  const bonusId = `${casinoId}-bonus`;
-  return [
-    { casinoId, casinoBonusId: null, slug: `${definition.slug}-welcome` },
-    { casinoId, casinoBonusId: bonusId, slug: `${definition.slug}-welcome` },
-  ];
-});
-
 function publicStore(): PublicCasinoStore {
   return {
     listPublished: async () => records,
     listManagedSlugs: async () => [...expectedRealSlugs],
     findPublishedBySlug: async (slug) => records.find((record) => record.snapshot && (record.snapshot as { slug?: string }).slug === slug) ?? null,
     hasManagedSlug: async (slug) => expectedRealSlugs.includes(slug as (typeof expectedRealSlugs)[number]),
-    listActiveAffiliateRoutes: async () => routes,
   };
 }
 
 function discoveryStore(): PublicCasinoDiscoveryStore {
   return {
     listPublished: async () => records,
-    loadContext: async () => ({ aliases: [], offers: [], redirects: [] }),
+    loadContext: async () => ({ aliases: [] }),
   };
 }
 
@@ -165,8 +153,14 @@ function authority(countryCode: string): CommercialJurisdictionAuthority {
 }
 
 function publicService() {
-  return new PublicCasinoService(publicStore(), [], { cmsEnabled: true, redirectEnabled: true, now });
+  return new PublicCasinoService(publicStore(), [], { cmsEnabled: true, now }, commercialFixtureAuthority);
 }
+
+const commercialFixtureAuthority = commercialActionAuthority((subject, input) => {
+  if (!input.authority || input.authority.countryCode !== input.countryCode) return null;
+  if (superflyBlockedCountries.includes(input.countryCode as (typeof superflyBlockedCountries)[number])) return null;
+  return commercialDefinition(subject.casinoSlug) ? { href: `/r/${subject.casinoSlug}-welcome` } : null;
+});
 
 function globalRoute(countryCode: string): PartnerRouteCandidate {
   const blocked = superflyBlockedCountries.includes(countryCode as (typeof superflyBlockedCountries)[number]);
@@ -213,11 +207,11 @@ function globalRoute(countryCode: string): PartnerRouteCandidate {
 test("1. missing CasinoCountry does not hide a real casino", async () => {
   const casino = await publicService().getCasino("diamond7", null, "KZ");
   assert.equal(casino?.slug, "diamond7");
-  assert.equal(casino?.presentationDisposition, "INFORMATIONAL_ONLY");
+  assert.equal(casino?.action, null);
 });
 
 test("2. missing exact market preserves global payments, providers and categories", () => {
-  const mapped = mapPublishedCasino(publishedRecord("diamond7"), [], { redirectEnabled: false, now });
+  const mapped = mapPublishedCasino(publishedRecord("diamond7"), { now });
   assert.ok(mapped);
   const kz = projectPublicCasinoMarket(mapped, "KZ");
   assert.ok(kz.payments.length >= 10);
@@ -226,7 +220,7 @@ test("2. missing exact market preserves global payments, providers and categorie
 });
 
 test("3. missing exact market preserves researched bonus content", () => {
-  const mapped = mapPublishedCasino(publishedRecord("hello-casino"), [], { redirectEnabled: false, now });
+  const mapped = mapPublishedCasino(publishedRecord("hello-casino"), { now });
   assert.ok(mapped);
   const kz = projectPublicCasinoMarket(mapped, "KZ");
   assert.equal(kz.bonuses[0]?.maximumBonus, 300);
@@ -281,7 +275,7 @@ test("9. a non-blocked GEO with a real Superfly route has an available CTA", () 
 test("10. DragonBet stays visible with no CTA", async () => {
   const casino = await publicService().getCasino("dragonbet", authority("KZ"), "KZ");
   assert.equal(casino?.slug, "dragonbet");
-  assert.deepEqual(casino?.affiliate, { href: null, available: false });
+  assert.equal(casino?.action, null);
 });
 
 test("11. no synthetic or demo casino enters the public catalog", async () => {
@@ -298,8 +292,9 @@ test("12. the bonuses catalog contains all six real current Superfly records", a
 
 test("13. Best Offers receives a real complete published shortlist", () => {
   const offers = records.flatMap((record) => {
-    const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now, countryCode: "KZ" });
-    return mapped ? publicCasinoToOffers(mapped) : [];
+    const mapped = mapPublishedCasino(record, { now, countryCode: "KZ" });
+    const action = mapped && commercialDefinition(mapped.slug) ? { href: `/r/${mapped.slug}-welcome` as const } : null;
+    return mapped ? publicCasinoToOffers({ ...mapped, action }) : [];
   });
   const shortlist = selectOverallShortlist(offers, { country: "KZ" });
   assert.equal(shortlist.length, 6);
@@ -308,8 +303,8 @@ test("13. Best Offers receives a real complete published shortlist", () => {
 });
 
 test("14. discovery filters contain meaningful global catalog values", async () => {
-  const discovery = new PublicCasinoDiscoveryService(discoveryStore(), () => now, undefined, () => false);
-  const result = await discovery.discover({ pageSize: 12 }, null, { defaultEditorialCountry: "KZ" });
+  const discovery = new PublicCasinoDiscoveryService(discoveryStore(), () => now, commercialFixtureAuthority);
+  const result = await discovery.discover({ pageSize: 12 }, authority("KZ"), { defaultEditorialCountry: "KZ" });
   assert.equal(result.total, 8);
   assert.ok(result.facets.currencies.some(({ key }) => key === "EUR"));
   assert.ok(result.facets.licenses.length > 0);
@@ -317,7 +312,7 @@ test("14. discovery filters contain meaningful global catalog values", async () 
   assert.ok(result.facets.gameProviders.some(({ label }) => label === "Evolution"));
   assert.ok(result.facets.categories.some(({ label }) => /slots/i.test(label)));
   assert.ok(result.facets.bonusTypes.some(({ key }) => key === "WELCOME"));
-  assert.ok(result.items.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && !casino.visitAction.available));
+  assert.equal(result.items.filter((casino) => casino.action).length, 6);
   assert.equal(result.curated?.bestBonusCasinoIds.length, 3);
   assert.equal(new Set(result.curated?.bestBonusCasinoIds).size, 3);
   assert.equal(selectCuratedCasinos(result.items, "Best Bonuses", result.curated).length, 3);
@@ -325,14 +320,14 @@ test("14. discovery filters contain meaningful global catalog values", async () 
   assert.equal((await discovery.discover({ supportsMobile: true }, null, { defaultEditorialCountry: "KZ" })).total, 8);
   assert.equal((await discovery.discover({ hasResponsibleGambling: true }, null, { defaultEditorialCountry: "KZ" })).total, 8);
 
-  const additionalGeo = await discovery.discover({ pageSize: 12 }, null, { defaultEditorialCountry: "SE" });
+  const additionalGeo = await discovery.discover({ pageSize: 12 }, authority("SE"), { defaultEditorialCountry: "SE" });
   assert.equal(additionalGeo.total, 8);
-  assert.equal(selectCuratedCasinos(additionalGeo.items, "Best Bonuses", additionalGeo.curated).length, 3);
-  assert.ok(additionalGeo.items.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && !casino.visitAction.available));
+  assert.equal(selectCuratedCasinos(additionalGeo.items, "Best Bonuses", additionalGeo.curated).length, 0);
+  assert.ok(additionalGeo.items.every((casino) => casino.action === null));
 });
 
 test("15. complete detail data uses global evidence instead of false Not listed states", () => {
-  const mapped = mapPublishedCasino(publishedRecord("hello-casino"), [], { redirectEnabled: false, now, countryCode: "KZ" });
+  const mapped = mapPublishedCasino(publishedRecord("hello-casino"), { now, countryCode: "KZ" });
   assert.ok(mapped);
   assert.ok(mapped.licenses.length && mapped.payments.length && mapped.providers.length && mapped.categories.length);
   assert.ok(mapped.languages.length && mapped.currencies.length && mapped.supportsMobile && mapped.bonuses.length);
@@ -344,7 +339,7 @@ test("15. complete detail data uses global evidence instead of false Not listed 
 
 test("16. governed public records expose only internal redirects, never raw tracking destinations", async () => {
   const casino = await publicService().getCasino("diamond7", authority("KZ"), "KZ");
-  assert.equal(casino?.affiliate.href, "/r/diamond7-welcome");
+  assert.equal(casino?.action?.href, "/r/diamond7-welcome");
   assert.doesNotMatch(JSON.stringify(casino), /route\.test\.invalid|go\.superflypartners\.net|trackingUrl|destinationUrl/);
   for (const source of ["app/(public)/casino/[slug]/page.tsx", "components/casino-profile/CasinoProfile.tsx"]) {
     assert.doesNotMatch(readFileSync(source, "utf8"), /go\.superflypartners\.net/);

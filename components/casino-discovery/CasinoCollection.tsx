@@ -16,9 +16,8 @@ import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-c
 
 import styles from "./CasinoCollection.module.css";
 
-export function CasinoCollection({ casinos, commercialProductsAvailable = true, initialSearch = "", messages, presentation }: {
+export function CasinoCollection({ casinos, initialSearch = "", messages, presentation }: {
   casinos: readonly PublicCasinoCardDto[];
-  commercialProductsAvailable?: boolean;
   initialSearch?: string;
   messages: ProductPageMessages;
   presentation: PresentationResolution;
@@ -81,7 +80,7 @@ export function CasinoCollection({ casinos, commercialProductsAvailable = true, 
           {card.headline ? <h3>{card.headline}</h3> : null}
           <CommercialFacts facts={card.facts} />
           <div className={styles.actions}>
-            {commercialProductsAvailable && card.action ? <CasinoOutboundAction action={card.action} context={{ source: "CTA", placement: "CASINO_COLLECTION_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
+            {card.action ? <CasinoOutboundAction action={card.action} context={{ source: "CTA", placement: "CASINO_COLLECTION_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
             {card.reviewHref ? <TrackedReviewLink
               casinoId={published ? card.casinoId : undefined}
               href={productHref(presentation, card.reviewHref)}

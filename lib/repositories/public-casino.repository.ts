@@ -1,9 +1,8 @@
 import { EditorialStatus, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
-import { marketActivationRuntime, type MarketActivationRuntime } from "@/lib/market-activation/runtime";
 import { extractPublishedOfferCandidateRows, type PublishedOfferCandidateRow } from "@/lib/public-offer/offer-presentation";
-import type { PublicAffiliateRoute, PublishedCasinoSnapshotRecord, PublishedOfferCandidate } from "@/lib/public-casino/public-casino.types";
+import type { PublishedCasinoSnapshotRecord, PublishedOfferCandidate } from "@/lib/public-casino/public-casino.types";
 
 export interface PublicCasinoStore {
   findPublishedBySlug(slug: string, countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord | null>;
@@ -11,7 +10,6 @@ export interface PublicCasinoStore {
   listPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]>;
   listPublishedOfferCandidates?(casinoIds: string[], now?: Date): Promise<PublishedOfferCandidate[]>;
   listManagedSlugs(): Promise<string[]>;
-  listActiveAffiliateRoutes(casinoIds: string[], countryCode?: string, now?: Date): Promise<PublicAffiliateRoute[]>;
 }
 
 function projectedPublishedSnapshot(countryCode?: string | null) {
@@ -90,8 +88,6 @@ function projectedPublishedSnapshot(countryCode?: string | null) {
 type PublishedSnapshotRow = Omit<PublishedCasinoSnapshotRecord, "status"> & { status: EditorialStatus };
 
 export class PublicCasinoRepository implements PublicCasinoStore {
-  constructor(private readonly activations: Pick<MarketActivationRuntime, "listPublicRoutes"> = marketActivationRuntime) {}
-
   async hasManagedSlug(slug: string) {
     return (await prisma.casino.count({ where: { slug } })) > 0;
   }
@@ -251,10 +247,6 @@ export class PublicCasinoRepository implements PublicCasinoStore {
     return version ?? null;
   }
 
-  async listActiveAffiliateRoutes(casinoIds: string[], countryCode?: string, now?: Date) {
-    if (!casinoIds.length || !countryCode) return [];
-    return this.activations.listPublicRoutes(casinoIds, countryCode, now);
-  }
 }
 
 export const publicCasinoRepository = new PublicCasinoRepository();

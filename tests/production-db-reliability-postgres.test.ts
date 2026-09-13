@@ -229,17 +229,17 @@ test("one-connection Production-shaped pool stays bounded across discovery, Comm
 
     const discoveryId = "00000000-0000-4000-8000-000000000999";
     const coldStarted = performance.now();
-    await publicCasinoDiscoveryRepository.loadContext([discoveryId], { countryCode: "KZ" });
+    await publicCasinoDiscoveryRepository.loadContext([discoveryId]);
     const coldMs = performance.now() - coldStarted;
     const warmSamples: number[] = [];
     for (let index = 0; index < 5; index += 1) {
       const started = performance.now();
-      await publicCasinoDiscoveryRepository.loadContext([discoveryId], { countryCode: "KZ" });
+      await publicCasinoDiscoveryRepository.loadContext([discoveryId]);
       warmSamples.push(performance.now() - started);
     }
     const concurrentStarted = performance.now();
     const concurrent = await Promise.allSettled(
-      Array.from({ length: 8 }, () => publicCasinoDiscoveryRepository.loadContext([discoveryId], { countryCode: "KZ" })),
+      Array.from({ length: 8 }, () => publicCasinoDiscoveryRepository.loadContext([discoveryId])),
     );
     const concurrentMs = performance.now() - concurrentStarted;
     assert.equal(concurrent.filter((result) => result.status === "rejected").length, 0);
@@ -247,11 +247,11 @@ test("one-connection Production-shaped pool stays bounded across discovery, Comm
     const lockStarted = performance.now();
     const lockedResult = await withTablesLocked(
       database,
-      '"CasinoAlias", "AffiliateOffer", "AffiliateRedirectSlug", "MarketActivation"',
-      () => publicCasinoDiscoveryRepository.loadContext([discoveryId], { countryCode: "KZ" }),
+      '"CasinoAlias"',
+      () => publicCasinoDiscoveryRepository.loadContext([discoveryId]),
     );
     const lockedMs = performance.now() - lockStarted;
-    assert.deepEqual(lockedResult, { aliases: [], offers: [], redirects: [], canonicalRoutes: [] });
+    assert.deepEqual(lockedResult, { aliases: [] });
     assert.ok(lockedMs >= 1_300 && lockedMs < 4_000, `controlled lock completed in ${lockedMs}ms`);
 
     let activePublishedReads = 0;
@@ -269,8 +269,8 @@ test("one-connection Production-shaped pool stays bounded across discovery, Comm
           activePublishedReads -= 1;
         }
       },
-      async loadContext() { return { aliases: [], offers: [], redirects: [] }; },
-    } as never, undefined, undefined, () => false);
+      async loadContext() { return { aliases: [] }; },
+    } as never);
     const coordinatedStarted = performance.now();
     const coordinated = await withTablesLocked(
       database,

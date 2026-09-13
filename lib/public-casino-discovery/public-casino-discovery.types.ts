@@ -1,6 +1,6 @@
-import type { PublishedCasinoSnapshotRecord, PublicAffiliateRoute, PublicOfferPresentation, PublishedOfferCandidate } from "@/lib/public-casino/public-casino.types";
+import type { PublishedCasinoSnapshotRecord, PublicOfferPresentation, PublishedOfferCandidate } from "@/lib/public-casino/public-casino.types";
+import type { GovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 import type { MediaPlacementVariantName, MediaRenderingModeName, PlacementMediaSource } from "@/lib/media/placement-media";
-import type { PublicCasinoDispositionReason, PublicCasinoPresentationDisposition } from "@/lib/public-casino/presentation-disposition";
 
 export type CasinoDiscoverySort = "FEATURED" | "RELEVANCE" | "NEWEST" | "NAME_ASC" | "NAME_DESC";
 
@@ -38,7 +38,6 @@ export interface PublicMediaDto {
   source?: PlacementMediaSource;
   focalPoint?: { x: number; y: number } | null;
 }
-export interface PublicVisitAction { available: boolean; redirectSlug: string | null; label: string; reasonCode: string | null }
 export type PublicCasinoDataClassification = "DEMO_FIXTURE" | "LOCAL_PREVIEW_FIXTURE" | "PUBLISHED_RECORD";
 export type PublicCasinoInventoryMode = "DEMO_ONLY" | "MIXED" | "PUBLISHED_ONLY";
 
@@ -61,8 +60,6 @@ export interface PublicCasinoCardDto {
   slug: string;
   reviewHref?: string | null;
   name: string;
-  disposition: PublicCasinoPresentationDisposition;
-  dispositionReason: PublicCasinoDispositionReason;
   logo: PublicMediaDto | null;
   hero?: PublicMediaDto | null;
   shortDescription: string | null;
@@ -79,7 +76,7 @@ export interface PublicCasinoCardDto {
   supportsCrypto?: boolean;
   supportsMobile?: boolean;
   featuredBonus: PublicBonusSummaryDto | null;
-  visitAction: PublicVisitAction;
+  action: GovernedCommercialAction | null;
   responsibleGamblingLabel: string | null;
   publishedAt: string | null;
   editorialUpdatedAt: string | null;
@@ -109,61 +106,12 @@ export interface CasinoDiscoveryResult {
 }
 
 export interface DiscoveryAlias { casinoId: string; value: string }
-export interface DiscoveryRedirect { casinoId: string; casinoBonusId: string | null; affiliateOfferId: string | null; slug: string }
-export interface DiscoveryActivation {
-  casinoId: string;
-  countryCode: string;
-  product: "CASINO";
-  desiredState: "ACTIVE" | "DISABLED";
-  status: "DRAFT" | "PREPARING" | "ACTIVE" | "BLOCKED_EXTERNAL" | "DISABLED";
-  casinoBonusId: string | null;
-  affiliateOfferId: string | null;
-  redirectSlug: string | null;
-}
-export interface DiscoveryGeoRule {
-  countryCode: string;
-  mode: "GLOBAL" | "ALLOW" | "BLOCK";
-  productionEligible?: boolean;
-  productionEligibilityVerifiedAt?: Date | null;
-  productionEligibilityExpiresAt?: Date | null;
-  productionEligibilityEvidence?: string | null;
-}
-export interface DiscoveryOffer {
-  id: string;
-  casinoId: string;
-  casinoBonusId: string | null;
-  status: string;
-  archivedAt: Date | null;
-  startAt: Date | null;
-  expiresAt: Date | null;
-  featured: boolean;
-  priority: number;
-  geoMode: "GLOBAL" | "ALLOW" | "BLOCK";
-  countries: DiscoveryGeoRule[];
-  program: {
-    casinoId: string | null; status: string; workflowStatus: string; supportedCountries: string[]; archivedAt: Date | null;
-    metadata?: unknown;
-    network: { active: boolean; archivedAt: Date | null };
-  };
-  trackingLinks: Array<{
-    id: string; active: boolean; archivedAt: Date | null; validFrom: Date | null; expiresAt: Date | null;
-    verifiedAt: Date | null; lastCheckedAt: Date | null; destinationUrl: string; trackingUrl: string;
-    priority: number; geoMode: "GLOBAL" | "ALLOW" | "BLOCK"; countries: DiscoveryGeoRule[];
-    metadata?: unknown;
-  }>;
-}
 export interface DiscoveryContext {
   aliases: DiscoveryAlias[];
-  offers: DiscoveryOffer[];
-  redirects: DiscoveryRedirect[];
-  /** RFC-042 canonical output. Present in live runtime contexts, including an authoritative empty result. */
-  canonicalRoutes?: PublicAffiliateRoute[];
-  /** Historical fixture compatibility only; live runtime callers use canonicalRoutes. */
-  activations?: DiscoveryActivation[];
 }
 
 export interface PublicCasinoDiscoveryStore {
   listPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]>;
   listPublishedOfferCandidates?(casinoIds: string[], now?: Date): Promise<PublishedOfferCandidate[]>;
-  loadContext(casinoIds: string[], options?: { includeAliases?: boolean; includeCommercial?: boolean; countryCode?: string }): Promise<DiscoveryContext>;
+  loadContext(casinoIds: string[], options?: { includeAliases?: boolean }): Promise<DiscoveryContext>;
 }

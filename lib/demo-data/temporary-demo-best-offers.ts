@@ -52,7 +52,7 @@ export function temporaryDemoCasinoProfiles() {
         },
       },
     };
-    const casino = mapPublishedCasino(published, [], { redirectEnabled: false, now: manifestPublishedAt });
+    const casino = mapPublishedCasino(published, { now: manifestPublishedAt });
     return casino ? [casino] : [];
   });
 }

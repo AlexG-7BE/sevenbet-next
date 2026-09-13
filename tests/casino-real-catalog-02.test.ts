@@ -107,9 +107,8 @@ test("6. affiliate compensation and offer size do not determine Editor Score", (
 
 test("7. Editor Score cannot grant commercial eligibility", () => {
   const service = read("lib/services/public-casino-discovery.service.ts");
-  assert.match(service, /decidePublicCasinoDisposition/);
-  assert.match(service, /eligibleDiscoveryOffers/);
-  assert.doesNotMatch(service, /rating\s*[><=].*(?:PROMOTABLE|available)/);
+  assert.match(service, /actionAuthority\.resolveMany/);
+  assert.doesNotMatch(service, /rating\s*[><=].*(?:action|available)/);
 });
 
 test("8. exact-market facts are projected from one exact market profile", () => {
@@ -181,14 +180,14 @@ test("15. a country query cannot replace trusted GEO authority", () => {
 test("16. a presentation cookie cannot create commercial authority", () => {
   const discovery = read("lib/services/public-casino-discovery.service.ts");
   assert.doesNotMatch(discovery, /cookie|PRESENTATION_PREFERENCE_COOKIE/);
-  assert.match(discovery, /scopedCommercialProjectionMayLoad\(authority, requestCountryContext\)/);
+  assert.match(discovery, /actionAuthority\.resolveMany/);
 });
 
 test("17. information-only casinos keep editorial substance but have no governed action", () => {
   const publicService = read("lib/services/public-casino.service.ts");
   const discovery = read("lib/services/public-casino-discovery.service.ts");
-  assert.match(publicService, /bonuses: casino\.bonuses\.map\(\(bonus\) => \(\{ \.\.\.bonus, affiliate: \{ href: null, available: false \} \}\)\)/);
-  assert.match(publicService, /affiliate: \{ href: null, available: false \}/);
+  assert.match(publicService, /action: decisions\.get\(casino\.id\)\?\.action \?\? null/);
+  assert.match(publicService, /actionAuthority\.resolveMany/);
   assert.match(discovery, /rating: scoped\.editorScore \?\? null/);
   assert.match(discovery, /highlights: scoped\.pros\.slice\(0, 3\)/);
 });
@@ -196,19 +195,18 @@ test("17. information-only casinos keep editorial substance but have no governed
 test("18. hidden identities do not render through list or detail services", () => {
   const publicService = read("lib/services/public-casino.service.ts");
   const discovery = read("lib/services/public-casino-discovery.service.ts");
-  assert.match(publicService, /decision\.disposition === "HIDDEN" \? null/);
-  assert.match(publicService, /decision\.disposition === "HIDDEN" \? \[\] :/);
-  assert.match(discovery, /if \(decision\.disposition === "HIDDEN"\) return \[\]/);
+  assert.match(publicService, /mapPublishedCasino/);
+  assert.match(discovery, /isTemporaryDemoCasinoId/);
+  assert.match(discovery, /mapPublishedCasino/);
 });
 
-test("19. promotable presentation requires cumulative governed route authority", () => {
-  const discovery = read("lib/services/public-casino-discovery.service.ts");
+test("19. a governed action requires the complete canonical authority chain", () => {
+  const resolver = read("lib/commercial/public-commercial-action-resolver.ts");
   const projection = read("lib/affiliate-routing/partner-route-projection.ts");
-  assert.match(discovery, /commercialCountryContext/);
-  assert.match(discovery, /scopedCasinoReferralAllowed\(authority, casinoSlug\)|scopedCasinoReferralAllowed\(authority, scoped\.slug\)/);
-  assert.match(discovery, /operatorEligibility\?\.referralEligible/);
-  assert.match(discovery, /eligibleDiscoveryOffers/);
-  assert.match(discovery, /isSafePublicSlug\(redirect\.slug\)/);
+  assert.match(resolver, /scopedCasinoReferralAllowed/);
+  assert.match(resolver, /gbOperatorEligibility\.evaluateMany/);
+  assert.match(resolver, /listPublicRoutes/);
+  assert.match(resolver, /isSafePublicSlug\(route\.slug\)/);
   assert.match(projection, /hasFounderGlobalProductionAuthority/);
   assert.match(projection, /SUPERFLY_DETECTED_BLOCKED_COUNTRIES/);
   assert.match(projection, /TRACKING_VERIFICATION_MISSING_OR_STALE/);
@@ -232,9 +230,9 @@ test("22. no affiliate account identifier is present in public release DTO conte
   assert.doesNotMatch(publicSurface, /affiliate(?:Id|_id| account)|affid|btag|clickid/i);
 });
 
-test("23. Programme state is not read for ranking or commercial disposition", () => {
+test("23. Programme state is not read for ranking or commercial action resolution", () => {
   for (const file of ["lib/services/public-casino.service.ts", "lib/services/public-casino-discovery.service.ts", "lib/services/public-comparison.service.ts"]) {
-    assert.doesNotMatch(read(file), /programme|programEnrollment|progressEvent|mission/i);
+    assert.doesNotMatch(read(file), /\bprogramme\b|\bprogramEnrollment\b|\bprogressEvent\b|\bmission\b/i);
   }
 });
 
@@ -283,13 +281,14 @@ test("29. every current real identity is comparison-safe", () => {
 
 test("30. public bonus filtering preserves researched content while bounding the CTA", () => {
   const discovery = read("lib/services/public-casino-discovery.service.ts");
-  assert.match(discovery, /const canonicalRoute = context\.canonicalRoutes\?\.find/);
-  assert.match(discovery, /scoped\.bonuses\.find\(\(bonus\) => bonus\.id === canonicalRoute\.casinoBonusId\)/);
+  assert.match(discovery, /this\.actionAuthority\.resolveMany/);
+  assert.match(discovery, /const candidateBonus = presented\.offerPresentation\?\.selectedOffer/);
   assert.match(discovery, /\?\? scoped\.bonuses\[0\] \?\? null/);
   assert.match(discovery, /const bonus = candidateBonus/);
-  assert.match(discovery, /const boundedVisit = promotional/);
+  assert.match(discovery, /action: presented\.action/);
   assert.match(discovery, /bonusTypes: scoped\.bonuses/);
   assert.match(discovery, /matchesAny\(query\.bonusType, item\.bonusTypes\)/);
+  assert.doesNotMatch(discovery, /canonicalRoutes|const canonicalRoute|casinoBonusId|boundedVisit/);
 });
 
 test("controlled logo and Preview creative binaries match their recorded provenance checksums", () => {

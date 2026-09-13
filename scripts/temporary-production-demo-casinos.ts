@@ -189,7 +189,7 @@ async function verify() {
     const redirect = redirects.find((item) => item.id === expected.redirectId);
     if (!redirect?.active || redirect.slug !== expected.redirectSlug || redirect.casinoId !== expected.casinoId || redirect.casinoBonusId !== expected.casinoBonusId || redirect.affiliateOffer?.id !== expected.offerId || redirect.affiliateOffer.status !== "ACTIVE" || redirect.affiliateOffer.trackingLinks.length !== 1 || redirect.affiliateOffer.trackingLinks.some((link) => !link.active || link.trackingUrl !== expected.internalDestination)) issues.push(`${expected.redirectSlug} controlled internal redirect graph is incomplete or unsafe`);
   }
-  const offers = (await new PublicOfferRepository(publicCasinoRepository, { redirectEnabled: true }).listOffers()).filter((offer) => temporaryDemoCasinoIds.includes(offer.casino.id));
+  const offers = (await new PublicOfferRepository(publicCasinoRepository).listOffers()).filter((offer) => temporaryDemoCasinoIds.includes(offer.casino.id));
   const gbEligible = offers.filter((offer) => offer.casino.countries.some((country) => country.countryCode === "GB" && country.availability === "AVAILABLE"));
   const defaultShortlist = selectOverallShortlist(offers, { country: "GB" });
   if (offers.length < 25) issues.push(`Expected at least 25 eligible public offers, found ${offers.length}`);

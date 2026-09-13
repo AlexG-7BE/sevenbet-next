@@ -165,7 +165,7 @@ test("commercial evidence cannot move from unknown to verified by timestamp", ()
   assert.match(builder, /record\.evidence\.some\(\(evidence\) => evidence\.status === "VERIFIED"\)/);
   assert.doesNotMatch(builder, /verified: Boolean\(record\.lastVerifiedAt\)/);
   assert.doesNotMatch(licenceWrite, /record\.verified|new Date\(\)/);
-  assert.match(publicMapper, /isVerified: false/);
+  assert.doesNotMatch(publicMapper, /\bisVerified\b|affiliateAvailable|affiliateUrl/);
   assert.match(evidence, /gbCommercialDomainEvidenceRecords:[^=]+\[\] = \[\]/);
   assert.match(policy, /commercialAllowed: false/);
   assert.match(policy, /referralAllowed: false/);

@@ -8,9 +8,8 @@ import { ContextualCompareToggle } from "@/components/comparison-context/Context
 import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
-import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
-import { visitActionUnavailableCopy } from "@/lib/public-casino-discovery/visit-action-presentation";
+import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 import { formatProductMessage, productPageMessages, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
@@ -41,21 +40,17 @@ function Signal({ children, classNames }: { children: ReactNode; classNames: Cas
 }
 
 function hasGovernedVisitAction(casino: PublicCasinoCardDto) {
-  return casino.disposition === "PROMOTABLE"
-    && casino.dataClassification !== "DEMO_FIXTURE"
-    && casino.visitAction.available
-    && Boolean(casino.visitAction.redirectSlug && isSafePublicSlug(casino.visitAction.redirectSlug));
+  return isGovernedCommercialAction(casino.action);
 }
 
 function ReviewCardContents({ casino, position, classNames, messages, presentation }: { casino: PublicCasinoCardDto; position?: number; classNames: CasinoCardClassNames; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const demo = casino.dataClassification !== "PUBLISHED_RECORD";
   const canVisit = hasGovernedVisitAction(casino);
-  const unavailable = visitActionUnavailableCopy(casino.visitAction);
   const reviewHref = publicCasinoReviewHref(casino);
   const freshness = formatDate(casino.editorialUpdatedAt ?? casino.publishedAt, presentation.locale);
   const formattedRating = casino.rating === null ? null : formatProfileScore(casino.rating, presentation.locale);
   const disclosure = casino.dataClassification === "PUBLISHED_RECORD"
-    ? casino.disposition === "PROMOTABLE"
+    ? canVisit
       ? messages.bestOffers.commissionNote
       : messages.common.reviewAvailableNoAction
     : casino.dataClassification === "DEMO_FIXTURE"
@@ -80,8 +75,8 @@ function ReviewCardContents({ casino, position, classNames, messages, presentati
       {casino.featuredBonus ? <><span>{demo ? messages.common.demoData : offerScope.label}</span><strong>{casino.featuredBonus.title}</strong>{casino.featuredBonus.summary && <p>{casino.featuredBonus.summary}</p>}{casino.featuredBonus.keyTerms.length > 0 || (!demo && offerScope.qualification) ? <small>{[...casino.featuredBonus.keyTerms.slice(0, 3), demo ? messages.common.demoData : offerScope.qualification].filter(Boolean).join(" · ")}</small> : null}</> : <><span>{messages.common.bonusAvailability}</span><strong>{messages.common.notListed}</strong></>}
     </div>
     <p className={classNames.commission}>{disclosure}</p>
-    {unavailable && <p className={classNames.unavailable} role="note">{messages.common.reviewAvailableNoAction}</p>}
-    <div className={classNames.cardActions}>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} context={{ source: "CTA", placement: "CASINO_DIRECTORY_CARD" }} messages={messages.outbound} />}{reviewHref ? <TrackedReviewLink href={productHref(presentation, reviewHref)} sourceSurface="casinos">{demo ? messages.common.viewDemonstration : messages.common.readReview}</TrackedReviewLink> : null}<ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /></div>
+    {!canVisit && <p className={classNames.unavailable} role="note">{messages.common.reviewAvailableNoAction}</p>}
+    <div className={classNames.cardActions}>{canVisit && casino.action ? <CasinoOutboundAction action={{ href: casino.action.href, label: messages.common.actionAvailable }} context={{ source: "CTA", placement: "CASINO_DIRECTORY_CARD" }} messages={messages.outbound} /> : null}{reviewHref ? <TrackedReviewLink href={productHref(presentation, reviewHref)} sourceSurface="casinos">{demo ? messages.common.viewDemonstration : messages.common.readReview}</TrackedReviewLink> : null}<ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /></div>
   </>;
 }
 

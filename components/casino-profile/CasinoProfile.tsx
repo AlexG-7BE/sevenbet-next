@@ -20,9 +20,8 @@ function SectionFacts({ facts }: { facts: readonly CommercialFact[] }) {
   return <dl className={styles.sectionFacts}>{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>;
 }
 
-export function CasinoProfile({ casino, commercialProductsAvailable = true, editorial, messages, presentation, availableForPresentation }: {
+export function CasinoProfile({ casino, editorial, messages, presentation, availableForPresentation }: {
   casino: PublicCasinoDTO;
-  commercialProductsAvailable?: boolean;
   editorial: CasinoEditorialDocument | null;
   messages: ProductPageMessages;
   presentation: PresentationResolution;
@@ -30,10 +29,9 @@ export function CasinoProfile({ casino, commercialProductsAvailable = true, edit
 }) {
   const copy = commercialUxMessages(presentation.locale);
   const demo = isTemporaryDemoCasinoId(casino.id);
-  const informationalOnly = casino.presentationDisposition === "INFORMATIONAL_ONLY";
   const bonus = selectProfileBonus(casino);
   const decision = casinoProfileDecisionPresentation(casino, presentation.locale, messages, copy, presentation.marketCountryCode);
-  const governed = informationalOnly || !commercialProductsAvailable ? null : profileAction(casino, bonus);
+  const governed = profileAction(casino);
   const action = governed ? { ...governed, label: copy.viewOffer } : null;
   const score = casino.editorScore;
   const offerHeadline = bonus ? structuredOfferHeadline(bonus, presentation.locale, copy) : messages.profile.offerUnavailable;
@@ -81,7 +79,7 @@ export function CasinoProfile({ casino, commercialProductsAvailable = true, edit
       <section aria-labelledby="casino-profile-title" className={styles.hero} data-nav-theme="dark" id="overview">
         <nav aria-label={messages.common.breadcrumb} className={styles.breadcrumb}><Link href={productHref(presentation, "/casinos")}>{messages.casinos.directoryTitle}</Link><span aria-hidden="true">/</span><span aria-current="page">{casino.name}</span></nav>
         {demo ? <p className={styles.stateNote}><strong>{messages.common.demoData}</strong> · {action ? messages.common.marketPresentationNotice : messages.profile.demoDisclosure}</p> : null}
-        {!availableForPresentation && !demo ? <p className={styles.stateNote}>{formatProductMessage(messages.profile.marketUnavailable, { market: presentation.marketDisplayName })}</p> : null}
+        {!availableForPresentation && !demo && !action ? <p className={styles.stateNote}>{formatProductMessage(messages.profile.marketUnavailable, { market: presentation.marketDisplayName })}</p> : null}
         <div className={styles.heroGrid}>
           <div className={styles.heroIdentity}>
             <div className={styles.logo}>{casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 100} media={casino.media.logo} width={casino.media.logo.width ?? 200} /> : <span aria-hidden="true">{casino.name.slice(0, 1)}</span>}</div>

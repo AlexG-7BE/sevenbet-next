@@ -15,7 +15,7 @@ export function selectCuratedCasinos(
   selector: CuratedCasinoSelector,
   context: CuratedCasinoRankingContext = {},
 ) {
-  const editorialItems = items.filter((casino) => casino.disposition !== "HIDDEN");
+  const editorialItems = items;
   if (selector === "Crypto") return editorialItems.filter((casino) => casino.supportsCrypto === true).slice(0, 3);
   if (selector === "Mobile") return editorialItems.filter((casino) => casino.supportsMobile === true).slice(0, 3);
   if (selector === "Best Bonuses") {

@@ -109,7 +109,6 @@ function mapPublishedBonus(value: unknown, now: Date): PublicCasinoBonus | null 
     termsUrl: safePublicUrl(bonus.termsUrl),
     startsAt,
     expiresAt,
-    affiliate: { href: null, available: false },
   };
 }
 

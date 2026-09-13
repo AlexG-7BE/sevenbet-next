@@ -30,8 +30,7 @@ function offer(published = true): PublicOfferDTO {
   assert.ok(seed);
   return {
     ...seed,
-    action: published ? { available: true, href: "/r/truth-test" } : { available: false, href: null },
-    commercialAvailability: published ? "AVAILABLE" : "UNAVAILABLE",
+    action: published ? { href: "/r/truth-test" } : null,
     dataClassification: published ? "PUBLISHED_RECORD" : "DEMO_FIXTURE",
   };
 }
@@ -40,8 +39,6 @@ function casino(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
   return {
     id: "truth-casino",
     dataClassification: "PUBLISHED_RECORD",
-    disposition: "PROMOTABLE",
-    dispositionReason: "EXACT_MARKET_AND_ROUTE_ELIGIBLE",
     slug: "truth-casino",
     name: "Truth Casino",
     logo: null,
@@ -56,7 +53,7 @@ function casino(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
     categories: [],
     highlights: [],
     featuredBonus: null,
-    visitAction: { available: true, redirectSlug: "truth-casino-visit", label: "Visit casino", reasonCode: null },
+    action: { href: "/r/truth-casino-visit" },
     responsibleGamblingLabel: null,
     publishedAt: "2030-01-01T00:00:00.000Z",
     editorialUpdatedAt: "2030-01-02T00:00:00.000Z",
@@ -116,20 +113,19 @@ test("casino cards keep missing bonus data separate from governed visit availabi
   assert.ok(!theatreHtml.includes(`<b>${messages.common.reviewOnly}</b>`));
 });
 
-test("editorial-only market state keeps casino collection records and suppresses every governed action", async () => {
+test("an unrelated page-level commercial state cannot suppress a canonical card action", async () => {
   const { CasinoCollection } = await import("../components/casino-discovery/CasinoCollection");
   const html = renderToStaticMarkup(<CasinoCollection
     casinos={[casino()]}
-    commercialProductsAvailable={false}
     initialSearch=""
     messages={messages}
     presentation={presentation}
   />);
   assert.match(html, /Truth Casino/);
   assert.match(html, /href="\/casino\/truth-casino"/);
-  assert.match(html, /Review only/);
-  assert.doesNotMatch(html, /href="\/r\//);
-  assert.doesNotMatch(html, /data-commercial-action-source="CTA"/);
+  assert.match(html, /href="\/r\/truth-casino-visit/);
+  assert.match(html, /data-commercial-action-source="CTA"/);
+  assert.doesNotMatch(readFileSync("components/casino-discovery/CasinoCollection.tsx", "utf8"), /commercialProductsAvailable/);
 });
 
 test("curated casino cards preserve visit actions when bonus data is absent and never mark demos Current", async () => {
@@ -141,11 +137,11 @@ test("curated casino cards preserve visit actions when bonus data is absent and 
   assert.ok(!publishedHtml.includes(messages.common.commercialUnavailable));
 
   const previewHtml = renderToStaticMarkup(<CuratedCasinoShortlist
-    casinos={[casino({ dataClassification: "LOCAL_PREVIEW_FIXTURE" })]}
+    casinos={[casino({ dataClassification: "LOCAL_PREVIEW_FIXTURE", action: null })]}
     messages={messages}
     presentation={presentation}
   />);
-  assert.match(previewHtml, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/);
+  assert.doesNotMatch(previewHtml, /href="\/r\//);
   assert.ok(previewHtml.includes(messages.common.marketPresentationNotice));
   assert.ok(!previewHtml.includes(messages.common.demoDisclosure));
 
@@ -153,7 +149,7 @@ test("curated casino cards preserve visit actions when bonus data is absent and 
     casinos={[casino({
       dataClassification: "DEMO_FIXTURE",
       featuredBonus: { title: "Fictional terms", summary: "Demonstration only", type: "WELCOME", keyTerms: [], wageringRequirement: null, minimumDeposit: null, currency: null, validUntil: null, termsApply: true },
-      visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "DEMO_FIXTURE" },
+      action: null,
     })]}
     messages={messages}
     presentation={presentation}
@@ -165,11 +161,9 @@ test("curated casino cards preserve visit actions when bonus data is absent and 
 test("curated casino cards rank informational records editorially while commercial actions stay fail-closed", async () => {
   const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
   const informational = casino({
-    disposition: "INFORMATIONAL_ONLY",
-    dispositionReason: "EXACT_MARKET_INFORMATION_ONLY",
     reviewHref: "/casino/truth-casino",
     supportsMobile: true,
-    visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "MARKET_ACTIVATION_NOT_ACTIVE" },
+    action: null,
   });
   const html = renderToStaticMarkup(<CuratedCasinoShortlist
     bestBonusCasinoIds={[informational.id]}
@@ -192,9 +186,7 @@ test("mixed curated casino cards keep editorial inclusion independent from comme
     id: "information-only",
     slug: "information-only",
     name: "Information Only",
-    disposition: "INFORMATIONAL_ONLY",
-    dispositionReason: "EXACT_MARKET_INFORMATION_ONLY",
-    visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "MARKET_ACTIVATION_NOT_ACTIVE" },
+    action: null,
   });
   const promotable = casino({ id: "promotable", slug: "promotable", name: "Promotable" });
   const html = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[informational, promotable]} messages={messages} presentation={presentation} />);
@@ -204,14 +196,15 @@ test("mixed curated casino cards keep editorial inclusion independent from comme
   assert.equal((html.match(/href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/g) ?? []).length, 1);
 });
 
-test("curated casino shortlist omits hidden-only inventory instead of rendering a recommendation empty state", async () => {
+test("curated casino shortlist keeps editorial inventory when its canonical action is absent", async () => {
   const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
   const html = renderToStaticMarkup(<CuratedCasinoShortlist
-    casinos={[casino({ disposition: "HIDDEN", dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY" })]}
+    casinos={[casino({ action: null })]}
     messages={messages}
     presentation={presentation}
   />);
-  assert.equal(html, "");
+  assert.match(html, /Truth Casino/);
+  assert.doesNotMatch(html, /href="\/r\//);
 });
 
 test("casino directory retires promotional artwork while CTA authority and first-party editorial art stay independent", async () => {
@@ -229,7 +222,7 @@ test("casino directory retires promotional artwork while CTA authority and first
 
   const blocked = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
     ...promotional,
-    visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "GEO_BLOCKED" },
+    action: null,
   })]} messages={messages} presentation={presentation} />);
   assert.doesNotMatch(blocked, /truth-casino-300x250/);
   assert.doesNotMatch(blocked, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
