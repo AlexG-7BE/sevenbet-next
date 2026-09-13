@@ -24,7 +24,7 @@ AffiliateNetwork exposed as Partner identity
         +
 PartnerCasinoRelationship(partnerId, casinoId, confirmedAt, endedAt?)
         +
-explicit Founder-authorized tracking command
+trusted Founder commercial-authority context + tracking command
         ↓
 PartnerTrackingRegistrationService
         ↓
@@ -34,8 +34,9 @@ transitional Affiliate records + MarketActivation
 `AffiliateNetwork` is reused as the persisted Partner identity. PR2 does not
 create a duplicate Partner table. Its legacy `active` and `archivedAt` fields
 are compatibility projections and are not identity or write-permission gates.
-An explicit canonical registration command may restore the selected
-AffiliateNetwork, AffiliateProgram, AffiliateOffer and AffiliateTrackingLink
+An explicitly authorised canonical registration command may restore the
+selected AffiliateNetwork, AffiliateProgram, AffiliateOffer and
+AffiliateTrackingLink
 projections from `archivedAt`; RFC-042 still owns their technical convergence
 and route health. That bounded repair never creates or terminates a Partner ×
 Casino relationship by itself.
@@ -53,11 +54,28 @@ establish legal eligibility. Those remain separate facts and controls.
 
 ## Explicit write intent and application owner
 
-Calling the authenticated internal registration operation with Partner,
-Casino, market scope and a tracking destination is the explicit bounded
-commercial command. Approval is not inferred from CRM, public programme pages,
-static inventories, market-support evidence, media, Affiliate lifecycle state,
-another Casino or another market.
+Calling the authenticated registration operation is execution intent, not
+commercial authority. Every registration command, including an idempotent
+re-verification for a current relationship, requires a trusted
+`FOUNDER_DIRECT` or `FOUNDER_DELEGATED` authority context with the opaque
+reference of the real decision. A current relationship does not by itself
+authorise a new or replacement destination, new market support, route
+verification or MarketActivation convergence.
+
+`affiliate.manage`, `commercial:safe_write`, a staff role, OAuth consent and a
+valid MCP token are technical execution permissions only. The Partner, Casino,
+URL and market fields are untrusted command data. Approval is not inferred from
+those values, CRM, public programme pages, static inventories, market-support
+evidence, media, Affiliate lifecycle state, another Casino or another market.
+
+The trusted context is created only by a reviewed internal application
+boundary after it has obtained the real Founder decision reference. PR2
+represents that context as a process-local, non-serializable capability; a
+plain object with matching fields is rejected. The canonical application
+service validates it as its first operation, before identity resolution, URL
+safety work, relationship confirmation, runtime support, tracking persistence,
+route verification, audit or activation. A public transport cannot mint the
+capability by accepting a request field.
 
 `lib/commercial/partner-tracking-registration-service.ts` is the canonical,
 transport-independent application service. It owns orchestration of persisted
@@ -68,9 +86,26 @@ MarketActivation convergence, rollback and structured results.
 
 The Commercial MCP retains authentication, OAuth scope enforcement, rate
 limiting, input parsing, result mapping and operational metrics. Its tracking
-tool delegates to the application service. It does not own Partner resolution,
-relationship authority, CRM gates, route verification exceptions, legal
-decisions or activation orchestration.
+tool delegates to the application service but supplies no trusted commercial
+authority, so the PR2 adapter fails closed before canonical commercial
+relationship, support, tracking, audit or MarketActivation writes. The public
+schema has no authority, approval or decision-reference field. MCP does not
+own Partner resolution, relationship authority, CRM gates, route verification
+exceptions, legal decisions or activation orchestration. MCP's independent
+rate-limit and request-metric controls remain transport operations. A later
+transport may invoke the service only if a separately reviewed internal
+boundary supplies the trusted context from real Founder provenance.
+
+With trusted authority, a missing canonical relationship is created, an ended
+relationship is reopened in the same row, and a current relationship is left
+unchanged. All three dispositions still require authority for the registration
+command. Creation and reopening persist the actual decision reference on the
+relationship. Registration metadata, exact-market evidence, MarketActivation
+source references and bounded audit record the actual decision reference plus
+a technical link hash where useful; neither a URL hash nor an invented label is
+Founder provenance. An unchanged relationship retains its original
+confirmation evidence while the new command authority is recorded in its own
+registration and audit evidence.
 
 The existing GoldenPlay Founder-confirmed verification record is preserved in
 `founder-route-verification-evidence.ts` at the application boundary. Its
@@ -130,10 +165,12 @@ activation require separate release authority.
 
 ## Supersession and compatibility
 
-This RFC supersedes RFC-015 and RFC-027 only where older wording makes CRM
-opportunity state, a static current-partner inventory or Affiliate lifecycle
-state a prerequisite or grant for commercial writes. Their evidence,
-operational-agent containment, legal and GB safeguards remain active.
+This RFC supersedes RFC-015 and RFC-027 where older wording makes CRM
+opportunity state, a static current-partner inventory, Affiliate lifecycle
+state, possession of a tracking URL, an authenticated invocation, MCP scope or
+staff permission a prerequisite or grant for commercial writes. Their
+evidence, operational-agent containment, legal and GB safeguards remain
+active.
 
 It amends RFC-038 so PartnerCasinoMarketSupport is non-authoritative evidence
 bound to the canonical relationship for new writes; CasinoCountry remains a

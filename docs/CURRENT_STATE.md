@@ -134,7 +134,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
 | ChatGPT Work MCP / Better Auth 1.7 | **COMMERCIAL MCP ENABLED; MEDIA MCP RETIRED BY RFC-044** | Commercial retains its governed resource. Migration 0034 prevents Media authority from being recreated; the application cutover makes the Media MCP, its DCR and discovery surfaces return cache-proof 410. |
-| Partner tracking registration | **LIVE BASELINE; RFC-048 WRITE-CORE REVIEW CANDIDATE** | Production retains the prior MCP registration baseline. The PR2 repository candidate removes CRM/static/lifecycle permission gates, confirms one canonical Partner × Casino relationship, and delegates transport to the application service. Additive migration 0039 and the compatible application are not deployed. |
+| Partner tracking registration | **LIVE BASELINE; RFC-048 WRITE-CORE REVIEW CANDIDATE** | Production retains the prior MCP registration baseline. The PR2 repository candidate removes CRM/static/lifecycle permission gates, adds one canonical Partner × Casino relationship and requires non-serializable trusted Founder provenance before every registration. OAuth scope and staff permission are execution gates only; the retained MCP has no trusted authority source and fails closed before canonical commercial mutation. Additive migration 0039 and the compatible application are not deployed. |
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
 | Commercial partner activation | **READY IN PRODUCTION — 24 ACTIVE_HEALTHY / 540 TERMINALLY CLASSIFIED ROWS** | The exhaustive current-partner matrix covers four partners, 73 Casinos and 25 GEO labels: 24 ACTIVE_HEALTHY, 24 BLOCKED_BY_LAW, 17 ACTION_REQUIRED_REGULATORY, one BROKEN_ROUTE and 474 MISSING_TRACKING_ROUTE. RFC-042 is the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |
 | Casino market data | **FOURTEEN REAL PUBLISHED IDENTITIES — SAFE CROSS-MARKET OFFER PRESENTATION ACTIVE** | Market-projected Casino facts remain isolated. A bounded immutable published-bonus corpus now resolves `EXACT > ROW > OTHER_MARKET > NONE`; StarCasino IT plus genuine Rizk and NordicBet ROW offers are reconciled without creating commercial or media authority. Founder-approved scores remain unchanged. |
@@ -148,6 +148,22 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Customer data / analytics / lifecycle | **CORE VERIFIED; RESEND ACTIVE IN PRODUCTION** | PR #269 and migration 0037 remain verified. Founder processing authority, provider configuration, signed webhook controls and all six controlled acceptance checks pass; lifecycle delivery is enabled with zero non-fixture acceptance messages. |
 
 ### Recent implementation state
+
+**PROPOSED — CRM-INDEPENDENT COMMERCIAL WRITE CORE AUTHORITY CORRECTION, 13
+September 2026:** PR #278's repository candidate requires a process-local
+trusted `FOUNDER_DIRECT` or `FOUNDER_DELEGATED` context with the actual opaque
+decision reference before any registration work. Validation occurs before
+identity resolution or data mutation. A current, missing or ended canonical
+relationship all require command authority; trusted execution respectively
+leaves it unchanged, creates it or reopens the same row. Actual decision
+references flow to new/reopened relationship evidence, registration metadata,
+exact-market evidence, MarketActivation source references and bounded audit;
+URL hashes remain technical identifiers. The public MCP schema cannot mint the
+capability and the adapter supplies none, so even a permitted caller fails
+closed. CRM, static inventory and GoldenPlay route evidence provide no general
+commercial authority. This is review-candidate state only: migration 0039 is
+not applied in Production, the application is not deployed, and no Production
+data was changed.
 
 **PROPOSED — RUNTIME MARKET REGISTRATION REVIEW CANDIDATE, 11 September
 2026:** repository evidence adds additive migration

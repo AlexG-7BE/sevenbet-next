@@ -3,6 +3,8 @@ import test from "node:test";
 
 import { PrismaClient } from "@prisma/client";
 
+import { commercialMcpService } from "../lib/commercial/commercial-mcp-service";
+import { establishTrustedCommercialWriteAuthority } from "../lib/commercial/commercial-write-authority";
 import { partnerTrackingLinkHash } from "../lib/commercial/partner-tracking-registration-contract";
 import { PartnerTrackingRegistrationService } from "../lib/commercial/partner-tracking-registration-service";
 import { CURRENT_PARTNER_INVENTORY, CURRENT_PARTNER_RECORDS } from "../lib/current-partner-rollout/inventory";
@@ -10,6 +12,7 @@ import { MarketActivationController } from "../lib/market-activation/controller"
 import { MarketActivationRepository } from "../lib/market-activation/repository";
 import { MarketActivationRuntime } from "../lib/market-activation/runtime";
 import { PartnerTrackingRegistrationRepository } from "../lib/repositories/partner-tracking-registration.repository";
+import { ValidationError } from "../lib/services/service-error";
 
 const PARTNER = CURRENT_PARTNER_RECORDS.find((record) => record.name === "Super Partners")!;
 const ACTOR_ID = "71000000-0000-4000-8000-000000000001";
@@ -22,10 +25,16 @@ const EXACT_URL = "https://tracking-fixture.example/click?token=redaction-fixtur
 const EXACT_ABSENT_URL = "https://tracking-fixture.example/click?token=redaction-fixture&campaign=exact-fr";
 const REPLACEMENT_URL = "https://tracking-fixture.example/click?token=redaction-fixture&campaign=replacement";
 const HEALTHY_REPLACEMENT_URL = "https://tracking-fixture.example/click?token=redaction-fixture&campaign=healthy-replacement";
+const COMMERCIAL_DECISION_REF = "FOUNDER_DECISION:PARTNER-TRACKING-POSTGRES-001";
+const commercialAuthority = establishTrustedCommercialWriteAuthority({
+  kind: "FOUNDER_DELEGATED",
+  decisionRef: COMMERCIAL_DECISION_REF,
+});
 const registrationContext = {
   actorId: ACTOR_ID,
   auditSource: "INTERNAL_APPLICATION" as const,
   correlationId: "partner-tracking-postgres-command",
+  commercialAuthority,
 };
 
 function assertDisposablePostgres() {
@@ -51,6 +60,207 @@ async function cleanup(client: PrismaClient) {
   await client.casino.deleteMany({ where: { id: CASINO_ID } });
   await client.adminUser.deleteMany({ where: { id: ACTOR_ID } });
 }
+
+test("trusted Founder provenance gates new and reopened relationships before every mutation", async () => {
+  assertDisposablePostgres();
+  const client = new PrismaClient();
+  const actorId = "73000000-0000-4000-8000-000000000001";
+  const networkId = "73000000-0000-4000-8000-000000000002";
+  const casinoId = "73000000-0000-4000-8000-000000000003";
+  const opportunityId = "73000000-0000-4000-8000-000000000004";
+  const trackingUrl = "https://tracking-fixture.example/click?token=authority-secret&campaign=authority";
+  const createDecisionRef = "FOUNDER_DECISION:PARTNER-RELATIONSHIP-CREATE-001";
+  const reopenDecisionRef = "FOUNDER_DECISION:PARTNER-RELATIONSHIP-REOPEN-001";
+  const createAuthority = establishTrustedCommercialWriteAuthority({
+    kind: "FOUNDER_DELEGATED",
+    decisionRef: createDecisionRef,
+  });
+  const reopenAuthority = establishTrustedCommercialWriteAuthority({
+    kind: "FOUNDER_DIRECT",
+    decisionRef: reopenDecisionRef,
+  });
+  const activationCalls: string[] = [];
+  const repository = new PartnerTrackingRegistrationRepository(client);
+  const service = new PartnerTrackingRegistrationService(
+    repository,
+    (async () => ({
+      status: "HEALTHY",
+      reason: "GET_FALLBACK_OK",
+      method: "GET",
+      statusCode: 200,
+      durationMs: 8,
+      redirectCount: 1,
+      finalHost: "betway.example",
+    })) as never,
+    {
+      async activateCasinoInGeo(input: { countryCode: string }) {
+        activationCalls.push(input.countryCode);
+        return { activation: {
+          id: `authority-activation-${input.countryCode}`,
+          desiredState: "ACTIVE",
+          status: "ACTIVE",
+          routeVerificationStatus: "HEALTHY",
+          routeVerificationDetail: "GET_FALLBACK_OK",
+          externalBlockerSource: null,
+        } };
+      },
+    },
+    async () => {},
+    { async resolve(input) { return { countryCode: input.requestCountrySignal.countryCode, commercialAllowed: true, referralAllowed: true, reasonCode: "POLICY_ALLOWED" }; } },
+  );
+  const command = { partner: "Super Partners", casino: "Betway", trackingUrl, geo: "PT" };
+  const missingAuthorityContext = {
+    actorId,
+    auditSource: "COMMERCIAL_MCP" as const,
+    correlationId: "generic-affiliate-manager",
+    commercialAuthority: null,
+  };
+
+  const clearFixture = async () => {
+    await client.auditLog.deleteMany({ where: { actorId } });
+    await client.marketActivation.deleteMany({ where: { casinoId } });
+    await client.partnerCasinoMarketSupport.deleteMany({ where: { casinoId } });
+    await client.partnerCasinoRelationship.deleteMany({ where: { casinoId } });
+    await client.commercialOpportunity.deleteMany({ where: { id: opportunityId } });
+    await client.affiliateRedirectSlug.deleteMany({ where: { casinoId } });
+    await client.affiliateOffer.deleteMany({ where: { casinoId } });
+    await client.affiliateProgram.deleteMany({ where: { casinoId } });
+    await client.affiliateNetwork.deleteMany({ where: { id: networkId } });
+    await client.casino.deleteMany({ where: { id: casinoId } });
+    await client.adminUser.deleteMany({ where: { id: actorId } });
+  };
+
+  await clearFixture();
+  try {
+    await client.adminUser.create({ data: {
+      id: actorId,
+      email: "partner-authority-postgres@invalid.example",
+      name: "Partner authority PostgreSQL fixture",
+      role: "AFFILIATE_MANAGER",
+    } });
+    await client.casino.create({ data: {
+      id: casinoId,
+      title: "Betway",
+      slug: "betway-authority-fixture",
+      domain: "betway.example",
+      websiteUrl: "https://betway.example/",
+      createdBy: actorId,
+      updatedBy: actorId,
+    } });
+    await client.affiliateNetwork.create({ data: {
+      id: networkId,
+      name: "Super Partners",
+      slug: "super-partners-authority-fixture",
+      active: true,
+      createdBy: actorId,
+      updatedBy: actorId,
+    } });
+    await client.commercialOpportunity.create({ data: {
+      id: opportunityId,
+      displayName: "Super Partners",
+      normalizedName: "super partners authority fixture",
+      organizationType: "AFFILIATE_NETWORK",
+      stage: "ACTIVE",
+      affiliateNetworkId: networkId,
+      createdBy: actorId,
+      updatedBy: actorId,
+    } });
+
+    await assert.rejects(
+      () => commercialMcpService.registerPartnerTrackingLink(command, {
+        actorId,
+        clientId: "generic-affiliate-manager",
+      }),
+      (error: unknown) => error instanceof ValidationError
+        && (error.details as { reason?: string }).reason === "PARTNER_TRACKING_COMMERCIAL_AUTHORITY_REQUIRED",
+    );
+    assert.deepEqual(activationCalls, []);
+    assert.deepEqual(await Promise.all([
+      client.partnerCasinoRelationship.count({ where: { casinoId } }),
+      client.partnerCasinoMarketSupport.count({ where: { casinoId } }),
+      client.affiliateProgram.count({ where: { casinoId } }),
+      client.affiliateOffer.count({ where: { casinoId } }),
+      client.affiliateTrackingLink.count({ where: { offer: { casinoId } } }),
+      client.marketActivation.count({ where: { casinoId } }),
+      client.auditLog.count({ where: { actorId } }),
+    ]), [0, 0, 0, 0, 0, 0, 0], "CRM ACTIVE, static inventory, and MCP execution access must not replace Founder authority");
+
+    const created = await service.register(command, {
+      ...missingAuthorityContext,
+      auditSource: "INTERNAL_APPLICATION",
+      commercialAuthority: createAuthority,
+    }, NOW);
+    const relationship = await client.partnerCasinoRelationship.findUniqueOrThrow({
+      where: { partnerId_casinoId: { partnerId: networkId, casinoId } },
+    });
+    assert.equal(created.partnerCasinoRelationshipId, relationship.id);
+    assert.equal(relationship.evidenceRef, createDecisionRef);
+    assert.equal(relationship.endedAt, null);
+
+    const currentCountsBeforeDeniedReplacement = await Promise.all([
+      client.partnerCasinoMarketSupport.count({ where: { casinoId } }),
+      client.affiliateTrackingLink.count({ where: { offer: { casinoId } } }),
+      client.auditLog.count({ where: { actorId } }),
+    ]);
+    const activationCountBeforeDeniedReplacement = activationCalls.length;
+    await assert.rejects(() => service.register(
+      { ...command, trackingUrl: `${trackingUrl}&replacement=1` },
+      missingAuthorityContext,
+      new Date(NOW.getTime() + 500),
+    ));
+    assert.deepEqual(await Promise.all([
+      client.partnerCasinoMarketSupport.count({ where: { casinoId } }),
+      client.affiliateTrackingLink.count({ where: { offer: { casinoId } } }),
+      client.auditLog.count({ where: { actorId } }),
+    ]), currentCountsBeforeDeniedReplacement, "an existing current relationship does not delegate tracking replacement authority");
+    assert.equal(activationCalls.length, activationCountBeforeDeniedReplacement);
+
+    await client.partnerCasinoRelationship.update({
+      where: { id: relationship.id },
+      data: { endedAt: new Date(NOW.getTime() + 1_000), updatedBy: actorId },
+    });
+    const countsBeforeDeniedReopen = await Promise.all([
+      client.partnerCasinoMarketSupport.count({ where: { casinoId } }),
+      client.affiliateProgram.count({ where: { casinoId } }),
+      client.affiliateOffer.count({ where: { casinoId } }),
+      client.affiliateTrackingLink.count({ where: { offer: { casinoId } } }),
+      client.auditLog.count({ where: { actorId } }),
+    ]);
+    const activationCountBeforeDeniedReopen = activationCalls.length;
+    await assert.rejects(() => service.register(command, missingAuthorityContext, new Date(NOW.getTime() + 2_000)));
+    assert.equal((await client.partnerCasinoRelationship.findUniqueOrThrow({ where: { id: relationship.id } })).endedAt?.toISOString(), new Date(NOW.getTime() + 1_000).toISOString());
+    assert.deepEqual(await Promise.all([
+      client.partnerCasinoMarketSupport.count({ where: { casinoId } }),
+      client.affiliateProgram.count({ where: { casinoId } }),
+      client.affiliateOffer.count({ where: { casinoId } }),
+      client.affiliateTrackingLink.count({ where: { offer: { casinoId } } }),
+      client.auditLog.count({ where: { actorId } }),
+    ]), countsBeforeDeniedReopen);
+    assert.equal(activationCalls.length, activationCountBeforeDeniedReopen);
+
+    await service.register(command, {
+      ...missingAuthorityContext,
+      auditSource: "INTERNAL_APPLICATION",
+      commercialAuthority: reopenAuthority,
+    }, new Date(NOW.getTime() + 3_000));
+    const reopened = await client.partnerCasinoRelationship.findUniqueOrThrow({ where: { id: relationship.id } });
+    assert.equal(reopened.endedAt, null);
+    assert.equal(reopened.evidenceRef, reopenDecisionRef);
+
+    const audits = await client.auditLog.findMany({ where: { actorId, action: "commercial-partner-tracking-link-registered" } });
+    const auditJson = JSON.stringify(audits.map((audit) => audit.metadata));
+    assert.match(auditJson, new RegExp(createDecisionRef));
+    assert.match(auditJson, new RegExp(reopenDecisionRef));
+    assert.match(auditJson, /"relationshipDisposition":"CREATED"/);
+    assert.match(auditJson, /"relationshipDisposition":"REOPENED"/);
+    assert.doesNotMatch(auditJson, /FOUNDER_(?:AUTHORIZED|SUPPLIED)/);
+    assert.equal(auditJson.includes(trackingUrl), false);
+    assert.equal(auditJson.includes("authority-secret"), false);
+  } finally {
+    await clearFixture();
+    await client.$disconnect();
+  }
+});
 
 test("PostgreSQL tracking registration is concurrent, idempotent, precedence-safe, replaceable, and redacted", async () => {
   assertDisposablePostgres();
@@ -126,13 +336,16 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       geo: null,
       supportedGeos: ["AT", "PT", "US"],
       actorId: ACTOR_ID,
+      commercialAuthority,
       now: NOW,
     };
     const [first, second] = await Promise.all([repository.stage(stageInput), repository.stage(stageInput)]);
     assert.ok(first.target.affiliateNetworkId);
+    assert.deepEqual(new Set([first.relationshipDisposition, second.relationshipDisposition]), new Set(["CREATED", "UNCHANGED"]));
     assert.equal(await client.affiliateNetwork.count({ where: { slug: "super-partners" } }), 1);
     assert.equal(first.partnerCasinoRelationshipId, second.partnerCasinoRelationshipId);
     assert.equal(await client.partnerCasinoRelationship.count({ where: { partnerId: NETWORK_ID, casinoId: CASINO_ID } }), 1);
+    assert.equal((await client.partnerCasinoRelationship.findUniqueOrThrow({ where: { id: first.partnerCasinoRelationshipId } })).evidenceRef, COMMERCIAL_DECISION_REF);
     await client.casino.create({ data: {
       id: OTHER_CASINO_ID,
       title: "Other Casino",
@@ -169,7 +382,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     assert.equal(await client.casinoCountryEvidence.count({
       where: {
         marketProfile: { casinoId: CASINO_ID },
-        sourceReference: { startsWith: "FOUNDER_AUTHORIZED_PARTNER_ROUTE:" },
+        sourceReference: COMMERCIAL_DECISION_REF,
       },
     }), 3);
     assert.equal(first.newSupportedGeoCount + second.newSupportedGeoCount, 3);
@@ -191,6 +404,13 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     const promotedGeneric = await repository.promote({ stage: first, finalHost: "betway.example", redirectCount: 1, checkedAt: NOW, actorId: ACTOR_ID });
     assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active, true);
     assert.equal(await client.affiliateTrackingLinkCountry.count({ where: { trackingLinkId: first.trackingLinkId } }), 3);
+    const trackingCountryEvidence = await client.affiliateTrackingLinkCountry.findMany({
+      where: { trackingLinkId: first.trackingLinkId },
+      select: { productionEligibilityEvidence: true },
+    });
+    assert.ok(trackingCountryEvidence.every((row) => row.productionEligibilityEvidence?.includes(`DECISION_REF:${COMMERCIAL_DECISION_REF}`)));
+    assert.ok(trackingCountryEvidence.every((row) => row.productionEligibilityEvidence?.includes(`CANONICAL_TRACKING_REGISTRATION:${partnerTrackingLinkHash(GENERIC_URL)}`)));
+    assert.doesNotMatch(JSON.stringify(trackingCountryEvidence), /FOUNDER_(?:AUTHORIZED|SUPPLIED)/);
     assert.equal((await client.affiliateRedirectSlug.findUniqueOrThrow({ where: { id: first.redirectId } })).active, true);
 
     await client.affiliateOffer.update({ where: { id: first.affiliateOfferId }, data: {
@@ -310,7 +530,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     ]);
     const durableCounts = await Promise.all([
       client.partnerCasinoMarketSupport.count({ where: { casinoId: CASINO_ID } }),
-      client.casinoCountryEvidence.count({ where: { marketProfile: { casinoId: CASINO_ID }, sourceReference: { startsWith: "FOUNDER_AUTHORIZED_PARTNER_ROUTE:" } } }),
+      client.casinoCountryEvidence.count({ where: { marketProfile: { casinoId: CASINO_ID }, sourceReference: COMMERCIAL_DECISION_REF } }),
       client.affiliateProgram.count({ where: { casinoId: CASINO_ID } }),
       client.affiliateOffer.count({ where: { casinoId: CASINO_ID } }),
       client.affiliateTrackingLink.count({ where: { offerId: first.affiliateOfferId } }),
@@ -323,7 +543,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     );
     assert.deepEqual(await Promise.all([
       client.partnerCasinoMarketSupport.count({ where: { casinoId: CASINO_ID } }),
-      client.casinoCountryEvidence.count({ where: { marketProfile: { casinoId: CASINO_ID }, sourceReference: { startsWith: "FOUNDER_AUTHORIZED_PARTNER_ROUTE:" } } }),
+      client.casinoCountryEvidence.count({ where: { marketProfile: { casinoId: CASINO_ID }, sourceReference: COMMERCIAL_DECISION_REF } }),
       client.affiliateProgram.count({ where: { casinoId: CASINO_ID } }),
       client.affiliateOffer.count({ where: { casinoId: CASINO_ID } }),
       client.affiliateTrackingLink.count({ where: { offerId: first.affiliateOfferId } }),
@@ -347,7 +567,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     assert.equal(await client.casinoCountryEvidence.count({
       where: {
         marketProfile: { casinoId: CASINO_ID },
-        sourceReference: { startsWith: "FOUNDER_AUTHORIZED_PARTNER_ROUTE:" },
+        sourceReference: COMMERCIAL_DECISION_REF,
         OR: [
           { fieldKeys: { has: "operatorMarketSupported:PL" } },
           { fieldKeys: { has: "operatorMarketSupported:CZ" } },
@@ -501,6 +721,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     assert.equal(diagnostics.includes(GENERIC_URL), false);
     assert.equal(diagnostics.includes("redaction-fixture"), false);
     assert.equal(diagnostics.includes(partnerTrackingLinkHash(GENERIC_URL)), true);
+    assert.equal(diagnostics.includes(COMMERCIAL_DECISION_REF), true);
   } finally {
     await cleanup(client);
     await client.$disconnect();
@@ -516,6 +737,10 @@ test("an explicit market command is not vetoed by inferred static support eviden
   const networkId = "72000000-0000-4000-8000-000000000002";
   const casinoId = "72000000-0000-4000-8000-000000000003";
   const trackingUrl = "https://tracking-fixture.example/click?token=seeded-idempotency&campaign=rizk-rs";
+  const explicitAuthority = establishTrustedCommercialWriteAuthority({
+    kind: "FOUNDER_DIRECT",
+    decisionRef: "FOUNDER_DECISION:SEEDED-IDEMPOTENCY-001",
+  });
 
   await client.marketActivation.deleteMany({ where: { casinoId } });
   await client.partnerCasinoMarketSupport.deleteMany({ where: { casinoId } });
@@ -587,6 +812,7 @@ test("an explicit market command is not vetoed by inferred static support eviden
       geo: "RS",
       supportedGeos: null,
       actorId,
+      commercialAuthority: explicitAuthority,
       now: NOW,
     });
     await repository.recordVerification({
@@ -634,6 +860,7 @@ test("an explicit market command is not vetoed by inferred static support eviden
       geo: "RS",
       supportedGeos: null,
       actorId,
+      commercialAuthority: explicitAuthority,
       now: new Date(NOW.getTime() + 1_000),
     });
     assert.equal(idempotent.alreadyCanonical, true);
@@ -651,6 +878,7 @@ test("an explicit market command is not vetoed by inferred static support eviden
       geo: "RS",
       supportedGeos: null,
       actorId,
+      commercialAuthority: explicitAuthority,
       now: new Date(NOW.getTime() + 2_000),
     });
     assert.deepEqual(replacement.affectedRows.map((row) => row.geo), ["RS"]);

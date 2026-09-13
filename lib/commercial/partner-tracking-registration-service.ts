@@ -8,6 +8,11 @@ import {
   type PartnerTrackingRegistrationResult,
   type PartnerTrackingRegistrationResultRow,
 } from "@/lib/commercial/partner-tracking-registration-contract";
+import {
+  commercialDecisionSourceReference,
+  requireTrustedCommercialWriteAuthority,
+  type TrustedCommercialWriteAuthority,
+} from "@/lib/commercial/commercial-write-authority";
 import { founderRouteVerificationEvidence } from "@/lib/commercial/founder-route-verification-evidence";
 import { jurisdictionResolver } from "@/lib/jurisdiction/resolver";
 import { exactSubdivisionCommercialAuthority } from "@/lib/jurisdiction/exact-market-authority";
@@ -25,6 +30,7 @@ export type PartnerTrackingRegistrationContext = {
   actorId: string;
   auditSource: "COMMERCIAL_MCP" | "INTERNAL_APPLICATION";
   correlationId?: string;
+  commercialAuthority: TrustedCommercialWriteAuthority | null;
 };
 
 type RegistrationRepositoryPort = Pick<PartnerTrackingRegistrationRepository,
@@ -209,6 +215,7 @@ export class PartnerTrackingRegistrationService {
     context: PartnerTrackingRegistrationContext,
     now = new Date(),
   ): Promise<PartnerTrackingRegistrationResult> {
+    const commercialAuthority = requireTrustedCommercialWriteAuthority(context.commercialAuthority);
     let geo: string | null;
     let supportedGeos: string[] | null;
     let requestedGeos: string[] | null;
@@ -244,6 +251,7 @@ export class PartnerTrackingRegistrationService {
       geo,
       supportedGeos,
       actorId: context.actorId,
+      commercialAuthority,
       now,
     });
     const restrictions = await this.operationalRestrictions(stage, now);
@@ -344,8 +352,12 @@ export class PartnerTrackingRegistrationService {
         primaryTrackingLinkId: stage.trackingLinkId,
         actorId: context.actorId,
         origin: "ADMIN",
-        reason: `${REGISTRATION_VERSION}: verified partner-provided route for ${target.partner} / ${target.casino} / ${row.geo}.`,
-        sourceReferences: [...new Set([...row.evidenceReferences, `FOUNDER_SUPPLIED_PARTNER_URL:${linkHash}`])],
+        reason: `${REGISTRATION_VERSION}: verified canonical tracking command for ${target.partner} / ${target.casino} / ${row.geo}.`,
+        sourceReferences: [...new Set([
+          ...row.evidenceReferences,
+          commercialDecisionSourceReference(commercialAuthority),
+          `CANONICAL_TRACKING_REGISTRATION:${linkHash}`,
+        ])],
         idempotencyKey: `${REGISTRATION_VERSION}:${target.partnerId}:${target.casinoId}:${row.geo}:${linkHash}`,
       }, checkedAt, preverifiedRoute);
       attemptedActivationIds.set(row.geo, result.activation.id);
@@ -419,7 +431,11 @@ export class PartnerTrackingRegistrationService {
               actorId: context.actorId,
               origin: "ADMIN",
               reason: `${REGISTRATION_VERSION}: restore previous healthy route after candidate verification failure.`,
-              sourceReferences: [`${REGISTRATION_VERSION}:ROLLBACK`, `TRACKING_LINK:${previous.trackingLinkId}`],
+              sourceReferences: [
+                `${REGISTRATION_VERSION}:ROLLBACK`,
+                commercialDecisionSourceReference(commercialAuthority),
+                `TRACKING_LINK:${previous.trackingLinkId}`,
+              ],
               idempotencyKey: `${REGISTRATION_VERSION}:ROLLBACK:${target.casinoId}:${row.geo}:${linkHash}`,
             }, checkedAt);
             if (restored.activation.status !== "ACTIVE" || restored.activation.routeVerificationStatus !== "HEALTHY") {

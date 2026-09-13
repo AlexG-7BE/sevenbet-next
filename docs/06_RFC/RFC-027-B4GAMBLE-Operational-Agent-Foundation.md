@@ -401,17 +401,19 @@ tool on the existing Commercial MCP resource:
 
 1. Public input is strictly `partner`, `casino`, `trackingUrl` and optional
    `geo`. The authenticated caller supplies no internal ID or commercial/legal
-   state. Partner and Casino resolution is limited to current established
-   records and aliases; unknown, ambiguous or mismatched identity cannot create
-   or reassign either entity.
+   state. Partner and Casino resolution requires unambiguous persisted
+   `AffiliateNetwork` and Casino identities; bounded aliases may normalize a
+   persisted identity. Unknown or ambiguous input cannot create or reassign
+   either entity.
 2. An omitted GEO means a reusable default tracking route for the current
    supported Partner × Casino inventory. It is not global market authority.
    A supplied canonical exact GEO applies only there, and exact tracking always
    outranks the default. Locale and `ZZ` do not grant commercial authority.
-3. The supplied current-partner URL is sufficient tracking authority. The
-   operation does not reopen partner approval, Founder approval, KYC/AML,
-   contracts or GEO approval. Current exact legal/regulatory classifications
-   remain independent fail-closed gates.
+3. As corrected by the newer explicit Founder decision in RFC-048, a supplied
+   URL is untrusted command data and is never sufficient tracking authority.
+   Every registration, including re-verification for a current relationship,
+   requires trusted Founder commercial provenance. Current exact
+   legal/regulatory classifications remain independent fail-closed gates.
 4. The bounded service may reconcile a missing internal AffiliateNetwork or
    AffiliateProgram normalization, neutral evergreen AffiliateOffer and
    deterministic `/r` record without creating a partner or inventing terms.
@@ -429,9 +431,11 @@ tool on the existing Commercial MCP resource:
    staging and promotion. The prior route and bounded audit remain available
    for rollback. Temporary DNS, timeout or egress uncertainty is retriable and
    never becomes a new business terminal state.
-8. Authority is limited to this workflow under existing
-   `commercial:safe_write` plus `affiliate.manage`. It adds no arbitrary SQL,
-   prospect approval, partner/Casino creation, legal-policy mutation,
+8. `commercial:safe_write` plus `affiliate.manage` permit technical execution
+   of this workflow but do not supply Founder commercial authority. RFC-048's
+   trusted, non-public authority context is independently required before any
+   registration mutation. The workflow adds no arbitrary SQL, prospect
+   approval, Partner/Casino identity creation, legal-policy mutation,
    communications, personal-account access, media dependency or deployment
    surface.
 
@@ -450,15 +454,18 @@ tool; it does not create a sixth tool or a generic mutation surface.
    registers the supplied exact markets and one reusable generic link. With
    neither field, the generic link covers all already-known seeded and runtime
    support for that established Partner × Casino.
-3. `CURRENT_PARTNER_INVENTORY` is seed authority, not a runtime ceiling.
-   Positive runtime support is durable exact-market data and must survive a
-   new process or deployment. Static support continues to prove the bounded
-   Partner × Casino relationship; this mutation still cannot create a Casino
-   or a new partner relationship.
-4. Runtime support records truthful Founder-workflow provenance through
-   `CasinoCountry`, `CasinoCountryEvidence` and the exact-market
-   `PartnerCasinoMarketSupport` relationship. It does not fabricate an
-   operator/regulator URL, legal authority or route health.
+3. `CURRENT_PARTNER_INVENTORY` is seed and normalization evidence, not a
+   runtime ceiling or proof of a Partner × Casino relationship. Positive
+   runtime support is durable exact-market data and must survive a new process
+   or deployment. Under RFC-048, trusted command authority may create or reopen
+   the one canonical relationship for already-persisted Partner and Casino
+   identities; the mutation cannot create either identity.
+4. Runtime support records the actual opaque Founder decision reference plus
+   bounded technical registration evidence through `CasinoCountry`,
+   `CasinoCountryEvidence` and `PartnerCasinoMarketSupport`. A URL hash or
+   synthetic `FOUNDER_AUTHORIZED`/`FOUNDER_SUPPLIED` label is not provenance.
+   These rows do not fabricate an operator/regulator URL, legal authority or
+   route health.
 5. Legal and regulatory authority remains independent per exact market.
    One blocked market does not fail an otherwise healthy batch. Only eligible
    rows are offered to RFC-042, which remains the sole activation and health

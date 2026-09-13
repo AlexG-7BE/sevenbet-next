@@ -1,7 +1,29 @@
 # Partner Tracking Link Registration
 
-**Authority:** RFC-027 section 21 and RFC-042
-**Scope:** current established Partner × Casino relationships only
+**Authority:** RFC-048, RFC-027 section 21 and RFC-042
+**Scope:** canonical registration for already-persisted Partner and Casino identities
+
+## Commercial authority
+
+An authenticated call is execution intent, not approval. Every canonical
+registration requires a trusted `FOUNDER_DIRECT` or `FOUNDER_DELEGATED`
+application context containing the opaque reference of the real Founder
+decision. This includes an unchanged current relationship, a missing
+relationship and an explicitly ended relationship.
+
+The process-local capability can be established only inside a reviewed
+application boundary. It cannot be supplied as JSON or reconstructed from a
+plain object. `affiliate.manage`, `commercial:safe_write`, a staff role, CRM
+state, static inventory, runtime support, possession of the URL and the URL
+hash do not supply commercial authority.
+
+The PR2 Commercial MCP adapter deliberately supplies no trusted authority and
+therefore fails closed before identity resolution or any canonical commercial
+relationship, support, tracking, audit or MarketActivation mutation. Its
+strict public schema has no approval, authority or decision-reference field.
+Independent MCP rate limiting and request metrics remain transport controls. A
+future transport must obtain real Founder provenance at a trusted internal
+boundary; it must not turn a public field into a capability.
 
 ## Input
 
@@ -18,9 +40,10 @@ Provide only:
 underscores become hyphens, duplicates are removed, and newly asserted `ZZ` or
 malformed/non-assigned country codes are rejected before mutation.
 
-The Production action is
-`commercial_register_partner_tracking_link`. It resolves internal IDs and does
-not create partners or casinos.
+The retained MCP action is `commercial_register_partner_tracking_link`. It
+resolves internal IDs and does not create Partner or Casino identities. In the
+PR2 repository candidate it cannot mutate because MCP has no trusted authority
+source.
 
 ## Behaviour
 
@@ -34,14 +57,19 @@ not create partners or casinos.
   its bounded result is reused by RFC-042 for each eligible exact market.
 - Runtime support is stored in `PartnerCasinoMarketSupport`, backed by
   `CasinoCountry.availability=AVAILABLE` and truthful
-  `CasinoCountryEvidence` internal-workflow provenance. It is not legal,
-  regulatory or activation authority.
+  `CasinoCountryEvidence` containing the actual Founder decision reference.
+  It is not legal, regulatory or activation authority.
+- Trusted registration creates a missing canonical
+  `PartnerCasinoRelationship`, reopens the same row when it was explicitly
+  ended, or leaves a current row unchanged. All three dispositions require the
+  authority context. Creation and reopening store the actual decision
+  reference; a current row retains its original confirmation evidence.
 - The URL is staged inactive and checked through bounded HTTPS redirects with
   every-hop public-network validation, expected-operator-host validation and
   deterministic attribution checks.
 - Existing validated affiliate records are reused without changing terms. A
   missing internal network/program normalization is created only for the
-  resolved established relationship; a missing offer becomes a neutral
+  resolved canonical relationship; a missing offer becomes a neutral
   evergreen `Visit Casino` offer with no bonus claim.
 - `/r` remains the public handoff. RFC-042 remains the only controller that can
   converge an exact MarketActivation to `ACTIVE + HEALTHY`.
@@ -52,37 +80,45 @@ not create partners or casinos.
   restores the prior healthy binding.
 - Raw tracking values remain only in executable canonical route fields. MCP
   output, logs, metrics, CRM and audit use hashes and bounded diagnostics.
+- Registration metadata, market evidence, activation source references and
+  audit retain the actual decision reference. Technical link hashes remain
+  technical identifiers and are never labelled as Founder provenance.
 
 Temporary DNS, timeout or verifier-egress failures return a retriable result and
 do not become `BROKEN_ROUTE`. Persistent HTTP, redirect, destination or
 deterministic attribution failures do not promote the candidate.
 
-## Future Founder workflow
+## Trusted invocation workflow
 
-Provide `Partner + Casino + URL`, plus either one optional exact GEO or an
-optional list of supported GEOs. A normal registration is a runtime data
-operation and requires no repository edit, PR or deployment. A later generic
-replacement automatically includes database-backed markets even when they do
-not exist in `CURRENT_PARTNER_INVENTORY`.
+After a reviewed internal boundary has obtained the real Founder decision,
+establish the trusted context and invoke the application service with
+`Partner + Casino + URL`, plus either one optional exact GEO or an optional
+list of supported GEOs. A later generic replacement automatically includes
+database-backed markets even when they do not exist in
+`CURRENT_PARTNER_INVENTORY`. The current public MCP is not that boundary.
 
 ## Runtime extension release order
 
-Migration `0036_partner_casino_runtime_market_support` must be applied first.
-Verify migration completion and the empty/no-backfill support-table baseline,
-then deploy the compatible application, verify authenticated MCP discovery,
-and run a deterministic non-secret registration smoke. Application rollback is
-compatible with the additive table; the migration is not destructively
-reversed. This sequence is documentation only and does not authorise a
-Production migration or deployment.
+Migration `0036_partner_casino_runtime_market_support` precedes additive PR2
+migration `0039_commercial_core_partner_relationship`. Verify both migration
+states and 0039's no-relationship/no-support-backfill baseline, then deploy the
+compatible application, verify authenticated MCP discovery, and run a
+deterministic authority-denial smoke proving zero canonical commercial
+mutation. Application rollback is compatible with the additive tables;
+migrations are not destructively reversed. This sequence is documentation only
+and does not authorise a Production migration or deployment.
 
 ## Pending review candidate — not Production
 
-**PROPOSED, 11 September 2026:** the review candidate extends the existing
-fifth MCP tool with `supportedGeos`, durable runtime support, one-check batch
-verification, per-market legal outcomes and database-backed reuse. Clean
-PostgreSQL replay and staged 0035→0036 preservation tests are required release
-evidence. Until merged and released under separate authority, the Production
-contract and Production schema remain the 10 September baseline below.
+**PROPOSED, 13 September 2026:** the PR2 review candidate adds the canonical
+relationship and trusted Founder-provenance boundary while retaining the fifth
+MCP tool and its `supportedGeos`, durable runtime support, one-check batch
+verification, per-market legal outcomes and database-backed reuse. MCP remains
+discoverable but is not an authority source and must deny registration before
+canonical commercial mutation. Clean PostgreSQL replay and
+migration-preservation tests are required release evidence. Until merged and
+released under separate authority, the Production contract and Production
+schema remain the 10 September baseline below.
 
 ## Production release evidence
 
@@ -91,8 +127,8 @@ Released 10 September 2026 through
 `95b47beb8721900b3803163b13b66beba0ab2828`, Ready deployment
 `dpl_FwaFucGtxGmrw3yocNLxQg6825t9`. No migration or backfill was required.
 
-Live authenticated MCP discovery verified five tools and the exact strict
-three-required-plus-one-optional contract above. The idempotent Production
+Live authenticated MCP discovery verified five tools and the then-live strict
+three-required-plus-optional-`geo` contract. The idempotent Production
 service smoke used the existing Betsson Group Affiliates × Rizk × RS exact
 route and hash
 `1288d3b46c980a4fccad33c57cde77ac19ec02553502def3296bd37221f085c5`.

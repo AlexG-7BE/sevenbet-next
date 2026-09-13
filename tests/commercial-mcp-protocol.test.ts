@@ -114,6 +114,29 @@ test("tracking registration captures a bounded resolution-failure metric", async
   }
 });
 
+test("safe-write scope surfaces canonical Founder-authority denial without inventing approval", async () => {
+  const error = new ValidationError("Explicit Founder commercial authority is required", {
+    reason: "PARTNER_TRACKING_COMMERCIAL_AUTHORITY_REQUIRED",
+  });
+  const { client, server, calls, observations } = await connectedClient(token.scopes, error);
+  try {
+    const result = await client.callTool({ name: "commercial_register_partner_tracking_link", arguments: {} });
+    assert.equal(result.isError, true);
+    assert.deepEqual(result.structuredContent, {
+      status: "ERROR",
+      code: "VALIDATION_ERROR",
+      reason: "PARTNER_TRACKING_COMMERCIAL_AUTHORITY_REQUIRED",
+      message: "Explicit Founder commercial authority is required",
+      candidates: [],
+    });
+    assert.deepEqual(calls, ["register-tracking"]);
+    assert.deepEqual(observations, [{ metric: "REQUEST" }]);
+  } finally {
+    await client.close();
+    await server.close();
+  }
+});
+
 test("read-only OAuth scope cannot call the write tool", async () => {
   const { client, server, calls } = await connectedClient(new Set(["commercial:read"]));
   try {

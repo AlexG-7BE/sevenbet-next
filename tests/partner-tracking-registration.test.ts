@@ -7,6 +7,7 @@ import {
   normalizePartnerTrackingMarkets,
   partnerTrackingLinkHash,
 } from "../lib/commercial/partner-tracking-registration-contract";
+import { establishTrustedCommercialWriteAuthority } from "../lib/commercial/commercial-write-authority";
 import { PartnerTrackingRegistrationService } from "../lib/commercial/partner-tracking-registration-service";
 import { founderRouteVerificationEvidence } from "../lib/commercial/founder-route-verification-evidence";
 import {
@@ -26,11 +27,17 @@ import { ConflictError, ValidationError } from "../lib/services/service-error";
 
 const sensitiveUrl = "https://tracker.invalid/click?token=super-secret-value&campaign=fixture";
 const now = new Date("2026-09-10T12:00:00.000Z");
+const commercialAuthority = establishTrustedCommercialWriteAuthority({
+  kind: "FOUNDER_DELEGATED",
+  decisionRef: "FOUNDER_DECISION:PARTNER-TRACKING-UNIT-001",
+});
 const context = {
   actorId: "00000000-0000-4000-8000-000000000001",
   auditSource: "INTERNAL_APPLICATION" as const,
   correlationId: "fixture-command",
+  commercialAuthority,
 };
+const mcpContext = { ...context, auditSource: "COMMERCIAL_MCP" as const, commercialAuthority: null };
 
 function row(geo: string, legalState: CurrentPartnerInventorySeed["legalState"]): PartnerTrackingMarketRow {
   return {
@@ -70,6 +77,8 @@ function stage(overrides: Partial<PartnerTrackingStage> = {}): PartnerTrackingSt
   return {
     target,
     partnerCasinoRelationshipId: "00000000-0000-4000-8000-000000000016",
+    relationshipDisposition: "CREATED",
+    commercialAuthority,
     scope: "GENERIC",
     geo: null,
     linkHash: partnerTrackingLinkHash(sensitiveUrl),
@@ -121,6 +130,7 @@ function harness(options: {
   jurisdictionAllowed?: boolean;
 } = {}) {
   const calls = {
+    resolve: 0,
     stage: 0,
     stageScopes: [] as PartnerTrackingStage["scope"][],
     stageGeos: [] as Array<string | null>,
@@ -130,6 +140,7 @@ function harness(options: {
     reject: 0,
     audit: 0,
     activate: [] as string[],
+    activationSourceReferences: [] as string[][],
     preverified: [] as Array<{ status: string; finalHost: string | null }>,
     checks: 0,
   };
@@ -137,7 +148,7 @@ function harness(options: {
   const staged = options.staged ?? stage();
   const checks = options.checks ?? [healthyCheck()];
   const repository = {
-    async resolveTarget() { if (options.resolutionError) throw options.resolutionError; return resolvedTarget; },
+    async resolveTarget() { calls.resolve += 1; if (options.resolutionError) throw options.resolutionError; return resolvedTarget; },
     async stage(input: { scope: PartnerTrackingStage["scope"]; geo: string | null }) {
       calls.stage += 1;
       calls.stageScopes.push(input.scope);
@@ -156,11 +167,12 @@ function harness(options: {
   const checker = async () => checks[Math.min(calls.checks++, checks.length - 1)];
   const activation = {
     async activateCasinoInGeo(
-      input: { countryCode: string },
+      input: { countryCode: string; sourceReferences: string[] },
       _checkedAt?: Date,
       preverified?: { status: string; finalHost: string | null },
     ) {
       calls.activate.push(input.countryCode);
+      calls.activationSourceReferences.push(input.sourceReferences);
       if (preverified) calls.preverified.push(preverified);
       return { activation: {
         id: `activation-${input.countryCode}`,
@@ -199,6 +211,18 @@ test("public input schema keeps three required fields and adds mutually exclusiv
   assert.equal(json.additionalProperties, false);
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }).success, true);
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl, routeId: "forbidden" }).success, false);
+  assert.equal(PartnerTrackingRegistrationSchema.safeParse({
+    partner: "Super Partners",
+    casino: "Betway",
+    trackingUrl: sensitiveUrl,
+    commercialAuthority: { kind: "FOUNDER_DIRECT", decisionRef: "forged" },
+  }).success, false);
+  assert.equal(PartnerTrackingRegistrationSchema.safeParse({
+    partner: "Super Partners",
+    casino: "Betway",
+    trackingUrl: sensitiveUrl,
+    founderApproved: true,
+  }).success, false);
   assert.equal(normalizePartnerTrackingGeo("ar_c"), "AR-C");
   assert.deepEqual(normalizePartnerTrackingMarkets({ supportedGeos: ["nl", "PT", "nl"] }), {
     geo: null,
@@ -210,6 +234,45 @@ test("public input schema keeps three required fields and adds mutually exclusiv
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl, geo: "US-NOTREAL" }).success, false);
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl, supportedGeos: Array.from({ length: 101 }, () => "NL") }).success, false);
   assert.equal(founderRouteVerificationEvidence({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }), null);
+});
+
+test("normal MCP execution permission cannot manufacture trusted Founder commercial authority", async () => {
+  const { service, calls } = harness();
+  await assert.rejects(
+    () => service.register({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }, mcpContext, now),
+    (error: unknown) => error instanceof ValidationError
+      && (error.details as { reason?: string }).reason === "PARTNER_TRACKING_COMMERCIAL_AUTHORITY_REQUIRED",
+  );
+  assert.equal(calls.resolve, 0);
+  assert.equal(calls.stage, 0);
+  assert.equal(calls.verification, 0);
+  assert.equal(calls.promote, 0);
+  assert.equal(calls.audit, 0);
+  assert.deepEqual(calls.activate, []);
+  assert.equal(calls.checks, 0);
+});
+
+test("a plain object cannot forge the process-local trusted authority capability", async () => {
+  const { service, calls } = harness();
+  await assert.rejects(
+    () => service.register(
+      { partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl },
+      {
+        ...context,
+        commercialAuthority: {
+          kind: "FOUNDER_DIRECT",
+          decisionRef: "FOUNDER_DECISION:FORGED-PUBLIC-INPUT",
+        } as never,
+      },
+      now,
+    ),
+    (error: unknown) => error instanceof ValidationError
+      && (error.details as { reason?: string }).reason === "PARTNER_TRACKING_COMMERCIAL_AUTHORITY_UNTRUSTED",
+  );
+  assert.equal(calls.resolve, 0);
+  assert.equal(calls.stage, 0);
+  assert.equal(calls.checks, 0);
+  assert.deepEqual(calls.activate, []);
 });
 
 test("persisted Partner and Casino identity resolve without CRM or static inventory membership", async () => {
@@ -316,6 +379,9 @@ test("generic healthy registration activates allowed GEOs and preserves legal/re
   assert.equal(calls.promote, 1);
   assert.equal(calls.finalize, 1);
   assert.equal(calls.audit, 1);
+  assert.ok(calls.activationSourceReferences[0]?.includes(`DECISION_REF:${commercialAuthority.decisionRef}`));
+  assert.ok(calls.activationSourceReferences[0]?.includes(`CANONICAL_TRACKING_REGISTRATION:${partnerTrackingLinkHash(sensitiveUrl)}`));
+  assert.doesNotMatch(JSON.stringify(calls.activationSourceReferences), /FOUNDER_(?:AUTHORIZED|SUPPLIED)/);
 });
 
 test("generic URL plus supportedGeos deduplicates markets, verifies once, and returns per-GEO support outcomes", async () => {

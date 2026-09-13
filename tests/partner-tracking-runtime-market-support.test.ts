@@ -7,6 +7,7 @@ const migrationPath = new URL("../prisma/migrations/0036_partner_casino_runtime_
 const commercialCoreMigrationPath = new URL("../prisma/migrations/0039_commercial_core_partner_relationship/migration.sql", import.meta.url);
 const repositoryPath = new URL("../lib/repositories/partner-tracking-registration.repository.ts", import.meta.url);
 const servicePath = new URL("../lib/commercial/partner-tracking-registration-service.ts", import.meta.url);
+const authorityPath = new URL("../lib/commercial/commercial-write-authority.ts", import.meta.url);
 const mcpServicePath = new URL("../lib/commercial/commercial-mcp-service.ts", import.meta.url);
 const founderEvidencePath = new URL("../lib/commercial/founder-route-verification-evidence.ts", import.meta.url);
 const publicResolverPath = new URL("../lib/commercial/public-commercial-action-resolver.ts", import.meta.url);
@@ -66,9 +67,10 @@ test("PR2 relationship migration is additive, CRM-independent, and strongly boun
 });
 
 test("PR2 canonical registration path contains no CRM permission dependency and MCP only delegates", async () => {
-  const [repository, service, mcpService, founderEvidence, publicResolver] = await Promise.all([
+  const [repository, service, authority, mcpService, founderEvidence, publicResolver] = await Promise.all([
     readFile(repositoryPath, "utf8"),
     readFile(servicePath, "utf8"),
+    readFile(authorityPath, "utf8"),
     readFile(mcpServicePath, "utf8"),
     readFile(founderEvidencePath, "utf8"),
     readFile(publicResolverPath, "utf8"),
@@ -87,11 +89,31 @@ test("PR2 canonical registration path contains no CRM permission dependency and 
   assert.match(service, /marketActivationController/);
   assert.match(service, /founderRouteVerificationEvidence/);
   assert.match(service, /repository\.recordAudit/);
+  assert.ok(
+    service.indexOf("requireTrustedCommercialWriteAuthority(context.commercialAuthority)")
+      < service.indexOf("repository.resolveTarget"),
+    "trusted authority must be established before target resolution or staging",
+  );
+  assert.ok(
+    service.indexOf("requireTrustedCommercialWriteAuthority(context.commercialAuthority)")
+      < service.indexOf("founderRouteVerificationEvidence(input)"),
+    "bounded GoldenPlay route evidence must never establish command authority",
+  );
 
   assert.match(mcpService, /partnerTrackingRegistrationService\.register/);
+  assert.match(mcpService, /commercialAuthority: null/);
+  assert.doesNotMatch(mcpService, /establishTrustedCommercialWriteAuthority/);
   assert.doesNotMatch(mcpService, /GOLDENPLAY|goldenPlayFounderOverride|new PartnerTrackingRegistrationService/);
+  assert.match(authority, /new WeakSet<object>\(\)/);
+  assert.match(authority, /PARTNER_TRACKING_COMMERCIAL_AUTHORITY_REQUIRED/);
+  assert.match(authority, /PARTNER_TRACKING_COMMERCIAL_AUTHORITY_UNTRUSTED/);
+  assert.doesNotMatch(authority, /commercialOpportunity|CURRENT_PARTNER_(?:RECORDS|INVENTORY)|trackingUrl/);
+  assert.match(repository, /commercialAuthority: TrustedCommercialWriteAuthority/);
+  assert.match(repository, /evidenceRef: commercialAuthority\.decisionRef/);
+  assert.doesNotMatch(repository, /FOUNDER_AUTHORIZED|FOUNDER_SUPPLIED/);
   assert.match(founderEvidence, /FOUNDER_GOLDENPLAY_ROUTE_OVERRIDE_2026_09_11/);
   assert.match(founderEvidence, /This is verification evidence, not Partner, relationship/);
+  assert.doesNotMatch(founderEvidence, /commercial-write-authority|establishTrustedCommercialWriteAuthority/);
 
   assert.doesNotMatch(publicResolver, /commercialOpportunity|CommercialMcp|PartnerCasinoMarketSupport|PartnerCasinoRelationship/i);
 });

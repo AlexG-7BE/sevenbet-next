@@ -5,6 +5,7 @@ import test from "node:test";
 const files = [
   "../lib/commercial/commercial-mcp-contract.ts",
   "../lib/commercial/commercial-mcp-service.ts",
+  "../lib/commercial/commercial-write-authority.ts",
   "../lib/commercial/partner-tracking-registration-contract.ts",
   "../lib/commercial/partner-tracking-registration-service.ts",
   "../lib/repositories/partner-tracking-registration.repository.ts",

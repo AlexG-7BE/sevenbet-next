@@ -74,6 +74,7 @@ export const commercialMcpService = {
       actorId: context.actorId,
       auditSource: "COMMERCIAL_MCP",
       correlationId: context.clientId,
+      commercialAuthority: null,
     }));
   },
 };
