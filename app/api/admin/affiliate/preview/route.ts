@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     if (!casinoId) throw new ValidationError("casinoId is required");
     if (countryCode && !isIsoCountryCode(countryCode)) throw new ValidationError("countryCode must be ISO 3166-1 alpha-2");
     if (currencyCode && !isIsoCurrency(currencyCode)) throw new ValidationError("currencyCode must be ISO 4217");
-    const offers = await affiliateOfferService.activeCandidates({ casinoId, casinoBonusId, countryCode, currencyCode });
+    const offers = await affiliateOfferService.legacyAdminPreviewCandidates({ casinoId, casinoBonusId, countryCode, currencyCode });
     const candidates = rankRoutingCandidates(offers, { casinoId, casinoBonusId, countryCode, currencyCode });
     return NextResponse.json({ ok: true, candidates, winner: candidates[0] ?? null, previewOnly: true });
   } catch (error) {

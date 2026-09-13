@@ -139,7 +139,7 @@ test("bonus ownership and archived ancestor checks are enforced by offer service
     list: async () => [], findById: async () => null, existsExternalOfferId: async () => false,
     findDuplicateExternalLinkId: async () => null,
     findCasinoBonus: async (): Promise<{ casinoExists: boolean; bonusCasinoId: string | null }> => ({ casinoExists: true, bonusCasinoId: "another-casino" }),
-    create: async () => { throw new Error("must not create"); }, update: async () => { throw new Error("unused"); }, findActiveCandidates: async () => [],
+    create: async () => { throw new Error("must not create"); }, update: async () => { throw new Error("unused"); }, findLegacyAdminPreviewCandidates: async () => [],
     archive: async () => { throw new Error("unused"); }, listRevisions: async () => [], listTrackingHistory: async () => [],
   };
   const activeProgram = { id: ids.program, networkId: ids.network, externalProgramId: null, name: "Program", operator: "Operator", status: AffiliateStatus.ACTIVE, accountReference: null, supportedCountries: [], supportedCurrencies: [], notes: null, archivedAt: null, createdAt: new Date(), updatedAt: new Date(), createdBy: actorId, updatedBy: actorId, network: { id: ids.network, name: "Network", slug: "network", type: AffiliateNetworkType.DIRECT, websiteUrl: null, apiCapable: false, exportCapable: false, active: true, notes: null, archivedAt: null, createdAt: new Date(), updatedAt: new Date(), createdBy: actorId, updatedBy: actorId }, _count: { offers: 0 } };
@@ -157,7 +157,7 @@ test("active GB offers require direct-link agreement authority while draft prepa
     list: async () => [], findById: async () => null, existsExternalOfferId: async () => false,
     findDuplicateExternalLinkId: async () => null,
     findCasinoBonus: async (): Promise<{ casinoExists: boolean; bonusCasinoId: string | null }> => ({ casinoExists: true, bonusCasinoId: null }),
-    create: async () => { created = true; return null as never; }, update: async () => { throw new Error("unused"); }, findActiveCandidates: async () => [],
+    create: async () => { created = true; return null as never; }, update: async () => { throw new Error("unused"); }, findLegacyAdminPreviewCandidates: async () => [],
     archive: async () => { throw new Error("unused"); }, listRevisions: async () => [], listTrackingHistory: async () => [],
   };
   const reviewedAt = new Date();

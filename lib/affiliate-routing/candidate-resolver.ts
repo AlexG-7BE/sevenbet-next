@@ -1,3 +1,7 @@
+/**
+ * Legacy status/GEO ranking model used only by authenticated admin preview.
+ * It is not a public CTA or controlled redirect authority.
+ */
 export interface CandidateResolverInput {
   casinoId: string;
   casinoBonusId?: string | null;

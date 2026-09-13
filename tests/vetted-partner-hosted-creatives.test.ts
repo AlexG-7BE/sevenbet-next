@@ -433,7 +433,7 @@ test("affiliate redirects ignore retired creative attribution and use only canon
   } as never;
   const service = new AffiliateRedirectService(
     redirectStore(),
-    { activeCandidates: async () => [activeOffer()] as never },
+    { legacyAdminPreviewCandidates: async () => [activeOffer()] as never },
     { async resolve() { events.push("geo"); return allowJurisdictionResolver.resolve(); } },
     allowGbCommercialReadinessAuthority,
     canonicalActivation,

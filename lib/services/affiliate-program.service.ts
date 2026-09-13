@@ -2,7 +2,7 @@ import { AffiliateStatus } from "@prisma/client";
 
 import { assessGbPartnerAgreement } from "@/lib/affiliate-commercial/gb-partner-agreement";
 import type { AffiliateProgramInput } from "@/lib/affiliate/types";
-import { assertAffiliateStatusTransition, normalizeAffiliateProgram } from "@/lib/affiliate/validation";
+import { normalizeAffiliateProgram } from "@/lib/affiliate/validation";
 import { affiliateNetworkRepository, type AffiliateNetworkStore } from "@/lib/repositories/affiliate-network.repository";
 import { affiliateProgramRepository, type AffiliateProgramStore } from "@/lib/repositories/affiliate-program.repository";
 import { casinoRepository, type CasinoStore } from "@/lib/repositories/casino.repository";
@@ -37,7 +37,6 @@ export class AffiliateProgramService {
     if (input.casinoId && !casino) {
       throw new NotFoundError("Casino", { id: input.casinoId });
     }
-    if (input.status === "ACTIVE" && (!network.active || network.archivedAt)) throw new ValidationError("An archived or inactive network cannot have an active program");
     if (input.providerType === "MANUAL" && input.integrationMode === "API") {
       throw new ValidationError("Manual programs cannot use API integration mode");
     }
@@ -69,7 +68,6 @@ export class AffiliateProgramService {
   async update(id: string, input: AffiliateProgramInput | unknown, actorId: string, expectedUpdatedAt?: Date) {
     const current = await this.get(id);
     const normalized = normalizeAffiliateProgram({ ...current, ...(input as object) });
-    assertAffiliateStatusTransition(current.status, normalized.status);
     await this.validate(normalized, id);
     try {
       return await this.store.update(id, normalized, actorId, expectedUpdatedAt);
@@ -84,7 +82,6 @@ export class AffiliateProgramService {
   async archive(id: string, actorId: string) {
     const current = await this.get(id);
     if (current.status === AffiliateStatus.ARCHIVED) return current;
-    assertAffiliateStatusTransition(current.status, AffiliateStatus.ARCHIVED);
     return this.store.archive(id, actorId);
   }
 }

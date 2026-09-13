@@ -535,8 +535,8 @@ async function main() {
   const mode = process.argv[2] as Mode | undefined;
   if (!mode || !["audit", "seed", "verify"].includes(mode)) throw new Error("Usage: casino-commercial-visibility-03.ts <audit|seed|verify>");
   try {
+    if (mode === "seed") throw new Error("CASINO_COMMERCIAL_VISIBILITY_SEED_RETIRED_BY_PR4");
     if (mode === "audit") await audit();
-    if (mode === "seed") await seed();
     if (mode === "verify") await verify();
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : "Unknown executor failure";

@@ -8,15 +8,9 @@ import {
 } from "./planner";
 import { jurisdictionResolver, type JurisdictionResolver } from "@/lib/jurisdiction/resolver";
 import { partnerRouteService, type PartnerRouteService } from "@/lib/services/partner-route.service";
-import { marketActivationController, type MarketActivationController } from "@/lib/market-activation/controller";
 
 export interface CommercialActivationStore {
   inspect(record: CommercialActivationBundle["records"][number]): Promise<CommercialActivationInspection>;
-  apply(bundle: CommercialActivationBundle, actorId: string, now: Date): Promise<Array<{
-    key: string;
-    changed: boolean;
-    ids: { networkId: string; programId: string; offerId: string; trackingLinkId: string; redirectId: string };
-  }>>;
 }
 
 export interface CommercialActivationVerification {
@@ -39,7 +33,6 @@ export class CommercialActivationService {
     private readonly store: CommercialActivationStore = commercialActivationRepository as CommercialActivationRepository,
     private readonly routes: Pick<PartnerRouteService, "isCanonicalRouteActive"> = partnerRouteService,
     private readonly jurisdiction: Pick<JurisdictionResolver, "resolve"> = jurisdictionResolver,
-    private readonly activations: Pick<MarketActivationController, "activateCasinoInGeo"> = marketActivationController,
   ) {}
 
   async preview(bundle: CommercialActivationBundle, now = new Date()): Promise<CommercialActivationPlan> {
@@ -90,45 +83,6 @@ export class CommercialActivationService {
     };
   }
 
-  async apply(bundle: CommercialActivationBundle, actorId: string, now = new Date()) {
-    const preview = await this.preview(bundle, now);
-    if (!preview.ready) {
-      const reasons = preview.records.flatMap((record) => record.blockedReasons.map((reason) => `${record.key}:${reason}`));
-      throw new Error(`COMMERCIAL_ACTIVATION_BLOCKED:${reasons.join(",")}`);
-    }
-    const records = await this.store.apply(bundle, actorId, now);
-    const canonical = [];
-    for (const [index, applied] of records.entries()) {
-      const record = bundle.records[index];
-      if (!record) throw new Error("COMMERCIAL_ACTIVATION_RESULT_ALIGNMENT_FAILED");
-      canonical.push(await this.activations.activateCasinoInGeo({
-        casinoSlug: record.casino.slug,
-        countryCode: record.market.countryCode,
-        product: "CASINO",
-        redirectSlugId: applied.ids.redirectId,
-        affiliateOfferId: applied.ids.offerId,
-        primaryTrackingLinkId: applied.ids.trackingLinkId,
-        actorId,
-        origin: "ADMIN",
-        reason: `Canonical activation requested by commercial bundle ${bundle.bundleId}.`,
-        sourceReferences: [bundle.source.exportReference, record.commercialEvidence.sourceReference],
-        idempotencyKey: `MARKET-ACTIVATION-V2:commercial-bundle:${bundle.bundleId}:${applied.key}`,
-      }, now));
-    }
-    const blocked = canonical.filter((result) => result.activation.status !== "ACTIVE");
-    if (blocked.length) throw new Error(`COMMERCIAL_ACTIVATION_CANONICAL_BLOCKED:${blocked.map((result) => result.activation.externalBlockerCode ?? result.activation.status).join(",")}`);
-    const verification = await this.verify(bundle, now);
-    if (!verification.verified) throw new Error("COMMERCIAL_ACTIVATION_POST_APPLY_VERIFICATION_FAILED");
-    return {
-      schemaVersion: bundle.schemaVersion,
-      bundleId: bundle.bundleId,
-      applied: true,
-      changedRecords: records.filter((record) => record.changed).length,
-      unchangedRecords: records.filter((record) => !record.changed).length,
-      records: records.map((record) => ({ key: record.key, changed: record.changed, ids: record.ids })),
-      verification,
-    };
-  }
 }
 
 export const commercialActivationService = new CommercialActivationService();

@@ -1,19 +1,11 @@
-import { Prisma, type AdminRole } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 
-import type { CommercialActivationBundle, CommercialActivationRecord } from "./contract";
-import {
-  desiredActivationState,
-  type CommercialActivationInspection,
-  planCommercialActivationRecord,
-} from "./planner";
+import type { CommercialActivationRecord } from "./contract";
+import type { CommercialActivationInspection } from "./planner";
 
 type CommercialClient = Prisma.TransactionClient | typeof prisma;
-
-function json(value: unknown): Prisma.InputJsonValue {
-  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
-}
 
 function number(value: Prisma.Decimal | number | null) {
   return value === null ? null : Number(value);
@@ -195,133 +187,10 @@ async function inspectWithClient(client: CommercialClient, record: CommercialAct
   };
 }
 
-async function nextRevision(client: Prisma.TransactionClient, model: "offer" | "tracking" | "redirect", id: string) {
-  if (model === "offer") return (await client.affiliateOfferRevision.aggregate({ where: { offerId: id }, _max: { revisionNumber: true } }))._max.revisionNumber ?? 0;
-  if (model === "tracking") return (await client.affiliateTrackingLinkRevision.aggregate({ where: { trackingLinkId: id }, _max: { revisionNumber: true } }))._max.revisionNumber ?? 0;
-  return (await client.affiliateRedirectRevision.aggregate({ where: { redirectSlugId: id }, _max: { revisionNumber: true } }))._max.revisionNumber ?? 0;
-}
-
-const activationRoles = new Set<AdminRole>(["SUPER_ADMIN", "ADMIN", "AFFILIATE_MANAGER"]);
-
+/** Read-only compatibility inspection for the retired activation-bundle preview. */
 export class CommercialActivationRepository {
   inspect(record: CommercialActivationRecord) {
     return inspectWithClient(prisma, record);
-  }
-
-  /**
-   * @deprecated as a Production authority. This writer now prepares legacy
-   * commercial graph fields only; CommercialActivationService must always
-   * submit the resulting exact route to MARKET-ACTIVATION-V2.
-   */
-  async apply(bundle: CommercialActivationBundle, actorId: string, now: Date) {
-    const actor = await prisma.adminUser.findUnique({ where: { id: actorId }, select: { id: true, role: true } });
-    if (!actor || !activationRoles.has(actor.role)) throw new Error("COMMERCIAL_ACTIVATION_ACTOR_UNAUTHORIZED");
-    return prisma.$transaction(async (tx) => {
-      const applied: Array<{ key: string; changed: boolean; ids: { networkId: string; programId: string; offerId: string; trackingLinkId: string; redirectId: string } }> = [];
-      for (const record of bundle.records) {
-        const inspection = await inspectWithClient(tx, record);
-        const plan = planCommercialActivationRecord(bundle, record, inspection, now);
-        if (!plan.ready) throw new Error(`COMMERCIAL_ACTIVATION_BLOCKED:${plan.blockedReasons.join(",")}`);
-        const desired = desiredActivationState(bundle, record, inspection);
-        const changed = Object.values(plan.actions).some((action) => action === "CREATE" || action === "UPDATE");
-
-        const network = inspection.network
-          ? plan.actions.network === "UPDATE"
-            ? await tx.affiliateNetwork.update({ where: { id: inspection.network.id }, data: { ...desired.network, updatedBy: actorId } })
-            : await tx.affiliateNetwork.findUniqueOrThrow({ where: { id: inspection.network.id } })
-          : await tx.affiliateNetwork.create({ data: { ...desired.network, createdBy: actorId, updatedBy: actorId } });
-
-        const programData = { ...desired.program, metadata: json(desired.program.metadata), updatedBy: actorId };
-        const program = inspection.program
-          ? plan.actions.program === "UPDATE"
-            ? await tx.affiliateProgram.update({ where: { id: inspection.program.id }, data: programData })
-            : await tx.affiliateProgram.findUniqueOrThrow({ where: { id: inspection.program.id } })
-          : await tx.affiliateProgram.create({
-            data: {
-              ...programData,
-              networkId: network.id,
-              providerType: "MANUAL",
-              integrationMode: "MANUAL",
-              connectionStatus: "CONFIGURED",
-              sourceOfTruth: json({ authorityVersion: bundle.schemaVersion, sourceSystem: bundle.source.system, bundleId: bundle.bundleId }),
-              createdBy: actorId,
-            },
-          });
-
-        const { currencies, ...desiredOffer } = desired.offer;
-        let offer;
-        if (inspection.offer) {
-          const current = await tx.affiliateOffer.findUniqueOrThrow({ where: { id: inspection.offer.id }, include: { currencies: true } });
-          if (plan.actions.offer === "UPDATE") {
-            await tx.affiliateOfferRevision.create({
-              data: { offerId: current.id, revisionNumber: (await nextRevision(tx, "offer", current.id)) + 1, snapshot: json(current), summary: `Before ${bundle.schemaVersion} apply`, createdBy: actorId },
-            });
-            offer = await tx.affiliateOffer.update({ where: { id: current.id }, data: { ...desiredOffer, metadata: json(desiredOffer.metadata), updatedBy: actorId } });
-          } else offer = current;
-        } else {
-          offer = await tx.affiliateOffer.create({ data: { ...desiredOffer, casinoId: inspection.casino!.id, programId: program.id, metadata: json(desiredOffer.metadata), createdBy: actorId, updatedBy: actorId } });
-        }
-        for (const currencyCode of currencies) {
-          await tx.affiliateOfferCurrency.upsert({
-            where: { offerId_currencyCode: { offerId: offer.id, currencyCode } },
-            create: { offerId: offer.id, currencyCode },
-            update: {},
-          });
-        }
-
-        let trackingLink;
-        if (inspection.trackingLink) {
-          const current = await tx.affiliateTrackingLink.findUniqueOrThrow({ where: { id: inspection.trackingLink.id } });
-          if (plan.actions.trackingLink === "UPDATE") {
-            await tx.affiliateTrackingLinkRevision.create({
-              data: {
-                trackingLinkId: current.id,
-                revisionNumber: (await nextRevision(tx, "tracking", current.id)) + 1,
-                destinationUrl: current.destinationUrl,
-                trackingUrl: current.trackingUrl,
-                summary: `Before ${bundle.schemaVersion} apply`,
-                createdBy: actorId,
-              },
-            });
-            trackingLink = await tx.affiliateTrackingLink.update({ where: { id: current.id }, data: { ...desired.trackingLink, metadata: json(desired.trackingLink.metadata), updatedBy: actorId } });
-          } else trackingLink = current;
-        } else {
-          trackingLink = await tx.affiliateTrackingLink.create({ data: { ...desired.trackingLink, offerId: offer.id, metadata: json(desired.trackingLink.metadata), createdBy: actorId, updatedBy: actorId } });
-        }
-
-        const redirectData = { ...desired.redirect, casinoId: inspection.casino!.id, affiliateOfferId: offer.id, updatedBy: actorId };
-        let redirect;
-        if (inspection.redirect) {
-          const current = await tx.affiliateRedirectSlug.findUniqueOrThrow({ where: { id: inspection.redirect.id } });
-          if (plan.actions.redirect === "UPDATE") {
-            await tx.affiliateRedirectRevision.create({
-              data: { redirectSlugId: current.id, revisionNumber: (await nextRevision(tx, "redirect", current.id)) + 1, snapshot: json(current), summary: `Before ${bundle.schemaVersion} apply`, createdBy: actorId },
-            });
-            redirect = await tx.affiliateRedirectSlug.update({ where: { id: current.id }, data: redirectData });
-          } else redirect = current;
-        } else {
-          redirect = await tx.affiliateRedirectSlug.create({ data: { ...redirectData, createdBy: actorId } });
-          await tx.affiliateRedirectRevision.create({
-            data: { redirectSlugId: redirect.id, revisionNumber: 1, snapshot: json(redirect), summary: `Created by ${bundle.schemaVersion}`, createdBy: actorId },
-          });
-        }
-
-        if (changed) {
-          await tx.auditLog.create({
-            data: {
-              actorId,
-              action: "commercial-activation-apply",
-              entityType: "partner-route",
-              entityId: redirect.id,
-              summary: `Applied ${bundle.schemaVersion} for ${record.casino.slug} × ${record.market.countryCode}`,
-              metadata: json({ bundleId: bundle.bundleId, recordFingerprint: plan.fingerprint, countryCode: record.market.countryCode }),
-            },
-          });
-        }
-        applied.push({ key: plan.key, changed, ids: { networkId: network.id, programId: program.id, offerId: offer.id, trackingLinkId: trackingLink.id, redirectId: redirect.id } });
-      }
-      return applied;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 }
 

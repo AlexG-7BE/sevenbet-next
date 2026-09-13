@@ -30,16 +30,9 @@ async function readBundle() {
   return parseCommercialActivationBundle(JSON.parse(await readFile(absolute, "utf8")));
 }
 
-function actorId() {
-  const value = option("--actor-id") ?? process.env.COMMERCIAL_ACTIVATION_ACTOR_ID;
-  if (!value || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
-    throw new Error("AUTHORIZED_ACTOR_ID_REQUIRED");
-  }
-  return value;
-}
-
 async function main() {
   const command = operation();
+  if (command === "apply") throw new Error("COMMERCIAL_ACTIVATION_LEGACY_WRITE_RETIRED_BY_PR4");
   const bundle = await readBundle();
   if (command === "validate") {
     console.info(JSON.stringify({
@@ -61,8 +54,6 @@ async function main() {
     if (!verification.verified) process.exitCode = 1;
     return;
   }
-  if (option("--confirm") !== bundle.bundleId) throw new Error("BUNDLE_CONFIRMATION_REQUIRED");
-  console.info(JSON.stringify(await commercialActivationService.apply(bundle, actorId()), null, 2));
 }
 
 main().catch((error: unknown) => {

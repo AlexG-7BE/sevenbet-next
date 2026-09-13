@@ -425,7 +425,7 @@ export class MarketActivationRepository {
         : tx.affiliateRedirectSlug.findUnique({ where: { slug: intent.redirectSlug! } }),
       tx.affiliateOffer.findUnique({
         where: { id: intent.affiliateOfferId! },
-        include: { program: { include: { network: true } } },
+        include: { program: { select: { casinoId: true } } },
       }),
       tx.affiliateTrackingLink.findUnique({ where: { id: intent.primaryTrackingLinkId! } }),
     ]);
@@ -454,8 +454,6 @@ export class MarketActivationRepository {
       throw new Error("MARKET_ACTIVATION_REDIRECT_BONUS_MISMATCH");
     } else if (!redirect.active || redirect.archivedAt) {
       internalPending = { code: "REDIRECT_RESTORE_PENDING", detail: "The explicitly selected controlled redirect is inactive or archived.", source: "AffiliateRedirectSlug" };
-    } else if (offer.archivedAt || offer.program.archivedAt || offer.program.network.archivedAt) {
-      internalPending = { code: "COMMERCIAL_SOURCE_RESTORE_PENDING", detail: "An explicitly bound commercial identity record is archived.", source: "AffiliateNetwork/AffiliateProgram/AffiliateOffer" };
     } else if (offer.expiresAt && offer.expiresAt <= now) {
       blocker = { code: "OFFER_EXPIRED", detail: "The evidenced affiliate offer has expired.", source: "AffiliateOffer.expiresAt" };
     } else if (offer.startAt && offer.startAt > now) {
@@ -464,8 +462,6 @@ export class MarketActivationRepository {
       blocker = { code: "TRACKING_LINK_MISSING", detail: "The explicitly selected tracking link does not exist.", source: "AffiliateTrackingLink" };
     } else if (tracking.offerId !== offer.id) {
       throw new Error("MARKET_ACTIVATION_TRACKING_OFFER_MISMATCH");
-    } else if (!tracking.active || tracking.archivedAt) {
-      internalPending = { code: "TRACKING_LINK_RESTORE_PENDING", detail: "The explicitly bound tracking link is inactive or archived.", source: "AffiliateTrackingLink" };
     } else if (tracking.expiresAt && tracking.expiresAt <= now) {
       blocker = { code: "TRACKING_LINK_EXPIRED", detail: "The evidenced tracking link has expired.", source: "AffiliateTrackingLink.expiresAt" };
     } else if (tracking.validFrom && tracking.validFrom > now) {
@@ -485,12 +481,9 @@ export class MarketActivationRepository {
       marketAvailability: marketProfile?.availability ?? null,
       publishedVersion: casino.versions[0]?.version ?? null,
       affiliateOfferId: offer?.id ?? intent.affiliateOfferId,
-      offerArchivedAt: offer?.archivedAt?.toISOString() ?? null,
       offerStartAt: offer?.startAt?.toISOString() ?? null,
       offerExpiresAt: offer?.expiresAt?.toISOString() ?? null,
       primaryTrackingLinkId: tracking?.id ?? intent.primaryTrackingLinkId,
-      trackingActive: tracking?.active ?? null,
-      trackingArchivedAt: tracking?.archivedAt?.toISOString() ?? null,
       trackingDestinationHash: tracking ? reconciliationFingerprint(tracking.destinationUrl) : null,
       trackingUrlHash: tracking ? reconciliationFingerprint(tracking.trackingUrl) : null,
       trackingValidFrom: tracking?.validFrom?.toISOString() ?? null,
@@ -525,6 +518,7 @@ export class MarketActivationRepository {
       internalPending,
       externalBlocker: blocker,
       legacyGeoFieldsAreNonAuthoritative: true,
+      legacyAffiliateLifecycleFieldsAreNonAuthoritative: true,
     });
     const data = activationData({
       current: existing,
@@ -589,6 +583,7 @@ export class MarketActivationRepository {
       controllerVersion: MARKET_ACTIVATION_CONTROLLER_VERSION,
       disabledByIntent: true,
       legacyGeoFieldsAreNonAuthoritative: true,
+      legacyAffiliateLifecycleFieldsAreNonAuthoritative: true,
     });
     const data = activationData({
       current: existing,

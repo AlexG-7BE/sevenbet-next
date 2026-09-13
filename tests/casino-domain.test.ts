@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { evaluateAffiliateOfferEligibility, evaluateCasinoEligibility } from "@/lib/casino-domain/eligibility";
+import { evaluateCasinoEligibility } from "@/lib/casino-domain/eligibility";
 import { mapCasinoAggregateToDomain } from "@/lib/repositories/casino-domain.mapper";
 import type { CasinoDomain } from "@/lib/casino-domain/types";
 import type { CasinoAggregate } from "@/lib/repositories/casino.repository";
@@ -27,12 +27,13 @@ test("canonical eligibility fails closed for missing, expired, and suspended rec
   assert.deepEqual(evaluateCasinoEligibility(casino({ brand: { id: "brand", operatorId: "operator", name: "Brand", lifecycleStatus: "SUSPENDED" } }), "GB"), { eligible: false, reason: "ENTITY_SUSPENDED" });
 });
 
-test("suspended affiliate programs and offers are ineligible without suppressing the editorial casino", () => {
+test("affiliate lifecycle data does not suppress the editorial casino", () => {
   const activeOffer = { id: "offer", programId: "program", status: "ACTIVE" as const, lifecycleStatus: "ACTIVE" as const, countries: ["GB"], currencies: [], startsAt: null, expiresAt: null };
   const activeProgram = { id: "program", name: "Program", operator: "Operator", status: "ACTIVE" as const, publicationStatus: "PUBLISHED" as const, lifecycleStatus: "ACTIVE" as const };
-  assert.deepEqual(evaluateAffiliateOfferEligibility(casino({ affiliatePrograms: [{ ...activeProgram, lifecycleStatus: "SUSPENDED" }], affiliateOffers: [activeOffer] }), "offer", "GB"), { eligible: false, reason: "ENTITY_SUSPENDED" });
-  assert.deepEqual(evaluateAffiliateOfferEligibility(casino({ affiliatePrograms: [activeProgram], affiliateOffers: [{ ...activeOffer, lifecycleStatus: "SUSPENDED" }] }), "offer", "GB"), { eligible: false, reason: "ENTITY_SUSPENDED" });
-  assert.deepEqual(evaluateCasinoEligibility(casino({ affiliatePrograms: [{ ...activeProgram, lifecycleStatus: "SUSPENDED" }] }), "GB"), { eligible: true, reason: "ELIGIBLE" });
+  assert.deepEqual(evaluateCasinoEligibility(casino({
+    affiliatePrograms: [{ ...activeProgram, lifecycleStatus: "SUSPENDED" }],
+    affiliateOffers: [{ ...activeOffer, lifecycleStatus: "SUSPENDED" }],
+  }), "GB"), { eligible: true, reason: "ELIGIBLE" });
 });
 
 test("Prisma mapping keeps legacy records compatible while preferring governed states and evidence", () => {

@@ -1,16 +1,15 @@
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
+import type { GbCommercialReadinessDecision } from "@/lib/affiliate-commercial/gb-commercial-route-readiness";
+import { worldwideFounderGbAuthorityApplies } from "@/lib/current-partner-worldwide-authority/inventory";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
 import { scopedCasinoReferralAllowed } from "@/lib/jurisdiction/scoped-commercial-authority";
-import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { marketActivationRuntime, type MarketActivationRuntime } from "@/lib/market-activation/runtime";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import {
-  canonicalGbOperatorEligibilityContext,
-  gbOperatorEligibilityService,
-  type GbOperatorEligibilityAuthority,
-  type GbOperatorEligibilityEvidenceContext,
-} from "@/lib/services/gb-operator-eligibility.service";
+  gbCommercialReadinessService,
+  type GbCommercialReadinessAuthority,
+} from "@/lib/services/gb-commercial-readiness.service";
 
 import type {
   CommercialActionDecision,
@@ -56,7 +55,7 @@ function normalizedCountry(value: string | null | undefined) {
 export class PublicCommercialActionResolver implements PublicCommercialActionAuthority {
   constructor(
     private readonly routes: Pick<MarketActivationRuntime, "listPublicRoutes"> = marketActivationRuntime,
-    private readonly gbOperatorEligibility: GbOperatorEligibilityAuthority = gbOperatorEligibilityService,
+    private readonly gbCommercialReadiness: GbCommercialReadinessAuthority = gbCommercialReadinessService,
     private readonly redirectEnabled: () => boolean = isAffiliateRedirectEnabled,
   ) {}
 
@@ -113,22 +112,23 @@ export class PublicCommercialActionResolver implements PublicCommercialActionAut
       routesByCasino.set(route.casinoId, [...(routesByCasino.get(route.casinoId) ?? []), route]);
     }
 
-    let gbDecisions = new Map<string, GbOperatorEligibilityDecision>();
+    let gbDecisions = new Map<string, GbCommercialReadinessDecision>();
     if (countryCode === "GB") {
-      const routeContexts = new Map<string, GbOperatorEligibilityEvidenceContext>();
-      for (const subject of candidates) {
-        const route = routesByCasino.get(subject.casinoId)?.[0];
-        routeContexts.set(
-          subject.casinoId,
-          canonicalGbOperatorEligibilityContext(route?.operatorEligibilityContext),
-        );
-      }
       try {
-        gbDecisions = await this.gbOperatorEligibility.evaluateMany(
-          candidates.map((subject) => subject.casinoId),
-          input.now ?? new Date(),
-          routeContexts,
-        );
+        const now = input.now ?? new Date();
+        const requests = candidates.flatMap((subject) => {
+          const route = routesByCasino.get(subject.casinoId)?.[0];
+          const context = route?.gbCommercialReadinessContext;
+          return context && input.authority ? [{
+            casinoId: subject.casinoId,
+            route: context.route,
+            jurisdictionDecision: input.authority,
+            redirectContract: context.redirectContract,
+            founderWorldwideAuthority: worldwideFounderGbAuthorityApplies(subject.casinoSlug),
+            now,
+          }] : [];
+        });
+        gbDecisions = await this.gbCommercialReadiness.evaluateMany(requests);
       } catch {
         for (const subject of candidates) {
           decisions.set(subject.casinoId, unavailable("EVIDENCE_SOURCE_UNAVAILABLE"));
@@ -154,11 +154,11 @@ export class PublicCommercialActionResolver implements PublicCommercialActionAut
         continue;
       }
       if (countryCode === "GB") {
-        const operatorDecision = gbDecisions.get(subject.casinoId);
-        if (!operatorDecision?.referralEligible) {
+        const readiness = gbDecisions.get(subject.casinoId);
+        if (!readiness?.referralReady) {
           decisions.set(
             subject.casinoId,
-            unavailable(operatorDecision?.reasonCodes[0] ?? "EVIDENCE_SOURCE_UNAVAILABLE"),
+            unavailable(readiness?.reasonCodes[0] ?? "GB_COMMERCIAL_EVIDENCE_UNAVAILABLE"),
           );
           continue;
         }

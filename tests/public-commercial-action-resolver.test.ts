@@ -8,7 +8,7 @@ import {
 } from "../lib/commercial/public-commercial-action-resolver";
 import type { CommercialJurisdictionAuthority } from "../lib/jurisdiction/commercial-authority";
 import type { MarketActivationPublicRoute } from "../lib/market-activation/runtime";
-import { allowOperatorAuthority, allowOperatorDecision } from "./market-authority.fixtures";
+import { allowGbCommercialReadinessAuthority } from "./market-authority.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 const subject = { casinoId: "casino-id", casinoSlug: "published-casino", published: true } as const;
@@ -29,6 +29,21 @@ function routeSource(
   return {
     async listPublicRoutes(_casinoIds: string[], marketCode: string) {
       return resolve(marketCode);
+    },
+  };
+}
+
+function gbRoute(slug = "published-casino-gb"): MarketActivationPublicRoute {
+  return {
+    casinoId: subject.casinoId,
+    slug,
+    gbCommercialReadinessContext: {
+      route: {
+        program: { id: "program", casinoId: subject.casinoId, operator: "Operator", metadata: {} },
+        offer: { id: "offer", casinoId: subject.casinoId, casinoBonusId: null, startAt: null, expiresAt: null },
+        trackingLink: { id: "link", offerId: "offer", destinationUrl: "https://casino.invalid", trackingUrl: "https://tracking.invalid", verifiedAt: now, lastCheckedAt: now, validFrom: null, expiresAt: null },
+      },
+      redirectContract: { slugActive: true, destinationServerOwned: true, destinationSafe: true },
     },
   };
 }
@@ -58,7 +73,7 @@ test("a valid canonical route produces the sole controlled public action", async
   const resolver = new PublicCommercialActionResolver(routeSource((marketCode) => {
     requestedMarket = marketCode;
     return [{ casinoId: subject.casinoId, slug: "published-casino-pe" }];
-  }), allowOperatorAuthority, () => true);
+  }), allowGbCommercialReadinessAuthority, () => true);
 
   const result = await decision(resolver);
   assert.equal(requestedMarket, "PE");
@@ -71,7 +86,7 @@ test("legal denial is intrinsic and prevents the route source from authorizing",
   const resolver = new PublicCommercialActionResolver(routeSource(() => {
     routeReads += 1;
     return [{ casinoId: subject.casinoId, slug: "must-not-authorize" }];
-  }), allowOperatorAuthority, () => true);
+  }), allowGbCommercialReadinessAuthority, () => true);
 
   const result = await decision(resolver, { jurisdiction: authority("PE", false) });
   assert.equal(result.action, null);
@@ -81,8 +96,8 @@ test("legal denial is intrinsic and prevents the route source from authorizing",
 
 test("publication, redirect-engine and trusted-market failures remain non-actionable", async () => {
   const routes = routeSource(() => [{ casinoId: subject.casinoId, slug: "published-casino-pe" }]);
-  const enabled = new PublicCommercialActionResolver(routes, allowOperatorAuthority, () => true);
-  const disabled = new PublicCommercialActionResolver(routes, allowOperatorAuthority, () => false);
+  const enabled = new PublicCommercialActionResolver(routes, allowGbCommercialReadinessAuthority, () => true);
+  const disabled = new PublicCommercialActionResolver(routes, allowGbCommercialReadinessAuthority, () => false);
   assert.equal((await decision(enabled, { subject: { ...subject, published: false } })).reasonCode, "PRODUCT_NOT_PUBLISHED");
   assert.equal((await decision(disabled)).reasonCode, "REDIRECT_ENGINE_DISABLED");
   assert.equal((await decision(enabled, { jurisdiction: authority("DE") })).reasonCode, "MARKET_CONTEXT_INVALID");
@@ -99,21 +114,22 @@ test("missing, failed, ambiguous and unsafe route output fails closed", async ()
     ["unsafe", () => [{ casinoId: subject.casinoId, slug: "../tracking" }], "UNSAFE_GOVERNED_ROUTE"],
   ];
   for (const [label, routes, reasonCode] of cases) {
-    const result = await decision(new PublicCommercialActionResolver(routeSource(routes), allowOperatorAuthority, () => true));
+    const result = await decision(new PublicCommercialActionResolver(routeSource(routes), allowGbCommercialReadinessAuthority, () => true));
     assert.equal(result.action, null, label);
     assert.equal(result.reasonCode, reasonCode, label);
   }
 });
 
-test("GB operator protection and its evidence source both fail closed", async () => {
-  const routes = routeSource(() => [{ casinoId: subject.casinoId, slug: "published-casino-gb" }]);
+test("complete GB factual protection and its evidence source both fail closed", async () => {
+  const routes = routeSource(() => [gbRoute()]);
   const blockedOperator = {
-    async evaluate() {
-      return { ...allowOperatorDecision, referralEligible: false, reasonCodes: ["GB_REDIRECT_CONTRACT_INVALID" as const] };
+    async evaluate(input: Parameters<typeof allowGbCommercialReadinessAuthority.evaluate>[0]) {
+      const allowed = await allowGbCommercialReadinessAuthority.evaluate(input);
+      return { ...allowed, referralReady: false, commercialReady: false, redirectAuthority: false, reasonCodes: ["GB_REDIRECT_CONTRACT_INVALID" as const] };
     },
-    async evaluateMany(casinoIds: string[]) {
-      const blocked = await this.evaluate();
-      return new Map(casinoIds.map((casinoId) => [casinoId, blocked]));
+    async evaluateMany(inputs: Parameters<typeof allowGbCommercialReadinessAuthority.evaluateMany>[0]) {
+      const blocked = await this.evaluate(inputs[0]!);
+      return new Map(inputs.map((input) => [input.casinoId, blocked]));
     },
   };
   const unavailableOperator = {
@@ -131,7 +147,7 @@ test("GB operator protection and its evidence source both fail closed", async ()
 test("one market's missing route cannot suppress another market's valid action", async () => {
   const resolver = new PublicCommercialActionResolver(routeSource((marketCode) => (
     marketCode === "PE" ? [{ casinoId: subject.casinoId, slug: "published-casino-pe" }] : []
-  )), allowOperatorAuthority, () => true);
+  )), allowGbCommercialReadinessAuthority, () => true);
   const peru = await decision(resolver, { countryCode: "PE", marketCode: "PE", jurisdiction: authority("PE") });
   const chile = await decision(resolver, { countryCode: "CL", marketCode: "CL", jurisdiction: authority("CL") });
   assert.deepEqual(peru.action, { href: "/r/published-casino-pe" });

@@ -61,6 +61,10 @@ export const allowGbCommercialReadinessAuthority: GbCommercialReadinessAuthority
       revalidateAt: allowOperatorDecision.revalidateAt,
     };
   },
+  async evaluateMany(inputs) {
+    const decision = await this.evaluate(inputs[0]!);
+    return new Map(inputs.map((input) => [input.casinoId, decision]));
+  },
 };
 
 export const allowJurisdictionResolver = {

@@ -49,7 +49,7 @@ export interface AffiliateOfferStore {
   archive(id: string, actorId: string): Promise<AffiliateOfferAggregate>;
   listRevisions(id: string): Promise<AffiliateOfferAggregate["revisions"]>;
   listTrackingHistory(trackingLinkId: string): Promise<Array<{ id: string; revisionNumber: number; destinationUrl: string; trackingUrl: string; summary: string; createdBy: string; createdAt: Date }>>;
-  findActiveCandidates(input: ActiveOfferQuery): Promise<AffiliateOfferAggregate[]>;
+  findLegacyAdminPreviewCandidates(input: ActiveOfferQuery): Promise<AffiliateOfferAggregate[]>;
 }
 
 function jsonSnapshot(value: unknown): Prisma.InputJsonValue {
@@ -229,7 +229,8 @@ export class AffiliateOfferRepository implements AffiliateOfferStore {
     });
   }
 
-  async findActiveCandidates(input: ActiveOfferQuery) {
+  /** Legacy status/GEO projection retained only for authenticated admin previews. */
+  async findLegacyAdminPreviewCandidates(input: ActiveOfferQuery) {
     const now = input.now ?? new Date();
     return prisma.affiliateOffer.findMany({
       where: {

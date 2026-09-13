@@ -12,7 +12,7 @@ import { MarketActivationRuntime } from "../lib/market-activation/runtime";
 import { marketEvidenceBlocksActivation } from "../lib/market-activation/market-evidence";
 import { MarketActivationRouteVerifier } from "../lib/market-activation/verifier";
 import { PublicCommercialActionResolver } from "../lib/commercial/public-commercial-action-resolver";
-import { allowOperatorAuthority } from "./market-authority.fixtures";
+import { allowGbCommercialReadinessAuthority } from "./market-authority.fixtures";
 
 const NOW = new Date("2026-09-07T12:00:00.000Z");
 const CASINO_ID = "10000000-0000-4000-8000-000000000001";
@@ -90,6 +90,7 @@ function activation(overrides: Record<string, unknown> = {}) {
       program: {
         id: "program",
         casinoId: CASINO_ID,
+        operator: "Operator Limited",
         status: "ACTIVE",
         workflowStatus: "PUBLISHED",
         archivedAt: null,
@@ -106,6 +107,8 @@ function activation(overrides: Record<string, unknown> = {}) {
       trackingUrl: "https://tracking.example/click",
       active: true,
       archivedAt: null,
+      verifiedAt: NOW,
+      lastCheckedAt: NOW,
       validFrom: null,
       expiresAt: null,
       metadata: {},
@@ -441,8 +444,8 @@ test("canonical runtime resolves the exact route without legacy Offer/Program GE
     affiliateOffer: {
       ...activation().affiliateOffer,
       status: "DRAFT",
-      startAt: new Date("2030-01-01T00:00:00.000Z"),
-      expiresAt: new Date("2030-02-01T00:00:00.000Z"),
+      startAt: null,
+      expiresAt: null,
       archivedAt: NOW,
       program: {
         ...activation().affiliateOffer.program,
@@ -451,6 +454,11 @@ test("canonical runtime resolves the exact route without legacy Offer/Program GE
         archivedAt: NOW,
         network: { active: false, archivedAt: NOW },
       },
+    },
+    primaryTrackingLink: {
+      ...activation().primaryTrackingLink,
+      active: false,
+      archivedAt: NOW,
     },
   });
   const records = [
@@ -542,7 +550,7 @@ test("duplicate exact route authority fails closed", async () => {
   assert.equal(await runtime([activation(), duplicate]).resolveRedirect("inkabet-casino", "PE"), null);
 });
 
-test("GB public routes carry current commercial facts into operator eligibility", async () => {
+test("GB public routes carry factual evidence without Affiliate lifecycle state", async () => {
   const gb = activation({
     countryCode: "GB",
     marketCode: "GB",
@@ -574,10 +582,15 @@ test("GB public routes carry current commercial facts into operator eligibility"
     },
   });
   const route = (await runtime([gb]).listPublicRoutes([CASINO_ID], "GB", NOW))[0];
-  assert.equal(route?.operatorEligibilityContext?.commercialContract?.programConnected, true,
-    "manual programmes do not require a provider connection");
-  assert.equal(Object.hasOwn(route?.operatorEligibilityContext?.commercialContract ?? {}, "programSupportsGb"), false);
-  assert.equal(route?.operatorEligibilityContext?.redirectContract?.destinationSafe, true);
+  const context = route?.gbCommercialReadinessContext;
+  assert.equal(context?.route.program.casinoId, CASINO_ID);
+  assert.equal(context?.route.offer.id, OFFER_ID);
+  assert.equal(context?.route.trackingLink?.id, TRACKING_ID);
+  assert.equal(context?.redirectContract.destinationSafe, true);
+  assert.equal(Object.hasOwn(context?.route.program ?? {}, "status"), false);
+  assert.equal(Object.hasOwn(context?.route.program ?? {}, "workflowStatus"), false);
+  assert.equal(Object.hasOwn(context?.route.offer ?? {}, "status"), false);
+  assert.equal(Object.hasOwn(context?.route.trackingLink ?? {}, "active"), false);
 });
 
 test("the canonical public resolver consumes activation output with exact-market isolation", async () => {
@@ -585,7 +598,7 @@ test("the canonical public resolver consumes activation output with exact-market
     async listPublicRoutes(_casinoIds: string[], marketCode: string) {
       return marketCode === "PE" ? [{ casinoId: CASINO_ID, slug: "inkabet-casino" }] : [];
     },
-  } as never, allowOperatorAuthority, () => true);
+  } as never, allowGbCommercialReadinessAuthority, () => true);
   const authority = {
     countryCode: "PE",
     commercialAllowed: true,
@@ -615,7 +628,7 @@ test("the canonical public resolver consumes activation output with exact-market
       requestedMarket = marketCode;
       return [{ casinoId: CASINO_ID, slug: "inkabet-casino" }];
     },
-  } as never, allowOperatorAuthority, () => true);
+  } as never, allowGbCommercialReadinessAuthority, () => true);
   assert.deepEqual((await regionalResolver.resolveMany({
     ...input,
     authority: { ...authority, countryCode: "US" },

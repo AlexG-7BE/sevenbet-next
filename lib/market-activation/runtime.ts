@@ -1,12 +1,13 @@
 import { Prisma } from "@prisma/client";
 
+import type { GbCommercialRouteEvidence } from "@/lib/affiliate-commercial/gb-commercial-route-readiness";
 import { prisma } from "@/lib/db/prisma";
 import {
   canonicalCommercialCountryCode,
   canonicalCommercialMarketKey,
   type CanonicalCommercialMarketKey,
 } from "@/lib/jurisdiction/canonical-commercial-market";
-import type { GbOperatorEligibilityInput } from "@/lib/jurisdiction/gb-operator-eligibility";
+import type { GbRedirectContractEvidence } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 
 import { safeActivationDestination } from "./contract";
@@ -20,23 +21,14 @@ const runtimeInclude = {
       casinoId: true,
       casinoBonusId: true,
       programId: true,
-      status: true,
-      archivedAt: true,
       startAt: true,
       expiresAt: true,
       program: {
         select: {
           id: true,
           casinoId: true,
-          status: true,
-          workflowStatus: true,
-          integrationMode: true,
-          connectionStatus: true,
-          providerAccountId: true,
-          credentialReference: true,
-          archivedAt: true,
-          domainLifecycleStatus: true,
-          network: { select: { active: true, archivedAt: true } },
+          operator: true,
+          metadata: true,
         },
       },
     },
@@ -54,8 +46,8 @@ const runtimeInclude = {
       trackingUrl: true,
       destinationUrl: true,
       label: true,
-      active: true,
-      archivedAt: true,
+      verifiedAt: true,
+      lastCheckedAt: true,
       validFrom: true,
       expiresAt: true,
     },
@@ -78,7 +70,10 @@ export type CanonicalMarketActivationRoute = Prisma.MarketActivationGetPayload<{
 export interface MarketActivationPublicRoute {
   casinoId: string;
   slug: string;
-  operatorEligibilityContext?: Omit<GbOperatorEligibilityInput, "casino" | "now" | "domainEvidence">;
+  gbCommercialReadinessContext?: {
+    route: GbCommercialRouteEvidence;
+    redirectContract: GbRedirectContractEvidence;
+  };
 }
 
 function object(value: Prisma.JsonValue): Record<string, unknown> {
@@ -119,7 +114,9 @@ function activeExactRoute(
     && profileCoherent
     && Boolean(record.affiliateOffer
       && record.affiliateOffer.casinoId === record.casinoId
-      && record.affiliateOffer.program.casinoId === record.casinoId)
+      && record.affiliateOffer.program.casinoId === record.casinoId
+      && (!record.affiliateOffer.startAt || record.affiliateOffer.startAt <= now)
+      && (!record.affiliateOffer.expiresAt || record.affiliateOffer.expiresAt > now))
     && Boolean(record.affiliateOffer?.casinoBonusId === record.casinoBonusId)
     && Boolean(!record.casinoBonusId || (record.casinoBonus
       && record.casinoBonus.id === record.casinoBonusId
@@ -127,8 +124,6 @@ function activeExactRoute(
       && record.affiliateOffer?.casinoBonusId === record.casinoBonusId))
     && Boolean(record.primaryTrackingLink
       && record.primaryTrackingLink.offerId === record.affiliateOfferId
-      && record.primaryTrackingLink.active
-      && !record.primaryTrackingLink.archivedAt
       && (!record.primaryTrackingLink.validFrom || record.primaryTrackingLink.validFrom <= now)
       && (!record.primaryTrackingLink.expiresAt || record.primaryTrackingLink.expiresAt > now))
     && Boolean(record.redirectSlug
@@ -141,6 +136,44 @@ function activeExactRoute(
     && Boolean(record.primaryTrackingLink
       && safeActivationDestination(record.primaryTrackingLink.trackingUrl)
       && safeActivationDestination(record.primaryTrackingLink.destinationUrl));
+}
+
+export function canonicalGbCommercialReadinessContext(
+  activation: BoundCanonicalMarketActivationRoute,
+): NonNullable<MarketActivationPublicRoute["gbCommercialReadinessContext"]> {
+  return {
+    route: {
+      program: {
+        id: activation.affiliateOffer.program.id,
+        casinoId: activation.affiliateOffer.program.casinoId,
+        operator: activation.affiliateOffer.program.operator,
+        metadata: activation.affiliateOffer.program.metadata,
+      },
+      offer: {
+        id: activation.affiliateOffer.id,
+        casinoId: activation.affiliateOffer.casinoId,
+        casinoBonusId: activation.affiliateOffer.casinoBonusId,
+        startAt: activation.affiliateOffer.startAt,
+        expiresAt: activation.affiliateOffer.expiresAt,
+      },
+      trackingLink: {
+        id: activation.primaryTrackingLink.id,
+        offerId: activation.primaryTrackingLink.offerId,
+        destinationUrl: activation.primaryTrackingLink.destinationUrl,
+        trackingUrl: activation.primaryTrackingLink.trackingUrl,
+        verifiedAt: activation.primaryTrackingLink.verifiedAt,
+        lastCheckedAt: activation.primaryTrackingLink.lastCheckedAt,
+        validFrom: activation.primaryTrackingLink.validFrom,
+        expiresAt: activation.primaryTrackingLink.expiresAt,
+      },
+    },
+    redirectContract: {
+      slugActive: activation.redirectSlug.active && !activation.redirectSlug.archivedAt,
+      destinationServerOwned: true,
+      destinationSafe: safeActivationDestination(activation.primaryTrackingLink.trackingUrl)
+        && safeActivationDestination(activation.primaryTrackingLink.destinationUrl),
+    },
+  };
 }
 
 function selectUnambiguousExactRoutes(
@@ -191,34 +224,7 @@ export class MarketActivationRuntime {
       casinoId: activation.casinoId,
       slug: activation.redirectSlug!.slug,
       ...(activation.countryCode === "GB" ? {
-        operatorEligibilityContext: {
-          commercialContract: {
-            programActive: activation.affiliateOffer.program.status === "ACTIVE"
-              && !activation.affiliateOffer.program.archivedAt
-              && !["SUSPENDED", "ARCHIVED"].includes(activation.affiliateOffer.program.domainLifecycleStatus ?? "")
-              && activation.affiliateOffer.program.network.active
-              && !activation.affiliateOffer.program.network.archivedAt,
-            programPublished: activation.affiliateOffer.program.workflowStatus === "PUBLISHED",
-            programConnected: activation.affiliateOffer.program.integrationMode === "MANUAL"
-              || (activation.affiliateOffer.program.connectionStatus === "CONNECTED"
-                && Boolean(activation.affiliateOffer.program.providerAccountId)
-                && Boolean(activation.affiliateOffer.program.credentialReference)),
-            offerActive: activation.affiliateOffer.status === "ACTIVE"
-              && !activation.affiliateOffer.archivedAt
-              && (!activation.affiliateOffer.startAt || activation.affiliateOffer.startAt <= now)
-              && (!activation.affiliateOffer.expiresAt || activation.affiliateOffer.expiresAt > now),
-            trackingLinkActive: activation.primaryTrackingLink.active
-              && !activation.primaryTrackingLink.archivedAt
-              && (!activation.primaryTrackingLink.validFrom || activation.primaryTrackingLink.validFrom <= now)
-              && (!activation.primaryTrackingLink.expiresAt || activation.primaryTrackingLink.expiresAt > now),
-          },
-          redirectContract: {
-            slugActive: activation.redirectSlug.active && !activation.redirectSlug.archivedAt,
-            destinationServerOwned: true,
-            destinationSafe: safeActivationDestination(activation.primaryTrackingLink.trackingUrl)
-              && safeActivationDestination(activation.primaryTrackingLink.destinationUrl),
-          },
-        },
+        gbCommercialReadinessContext: canonicalGbCommercialReadinessContext(activation),
       } : {}),
     }));
   }
@@ -267,22 +273,15 @@ export class MarketActivationRuntime {
     const records = await this.database.marketActivation.findMany({
       include: {
         casino: { select: { slug: true } },
-        affiliateOffer: { select: { status: true, program: { select: { status: true, workflowStatus: true, network: { select: { active: true } } } } } },
-        primaryTrackingLink: { select: { active: true } },
         redirectSlug: { select: { active: true, archivedAt: true, slug: true } },
       },
       orderBy: [{ marketCode: "asc" }, { casinoId: "asc" }],
     });
     return records.map((record) => {
       const storedDiagnostics = object(record.diagnostics);
-      const drift = record.status === "ACTIVE" ? [
-        record.affiliateOffer?.status !== "ACTIVE" && "LEGACY_OFFER_STATUS_DRIFT",
-        record.affiliateOffer?.program.status !== "ACTIVE" && "LEGACY_PROGRAM_STATUS_DRIFT",
-        record.affiliateOffer?.program.workflowStatus !== "PUBLISHED" && "LEGACY_PROGRAM_WORKFLOW_DRIFT",
-        record.affiliateOffer?.program.network.active !== true && "LEGACY_NETWORK_DRIFT",
-        record.primaryTrackingLink?.active !== true && "LEGACY_TRACKING_DRIFT",
-        record.redirectSlug?.active !== true && "LEGACY_REDIRECT_DRIFT",
-      ].filter(Boolean) : [];
+      const controlledRouteDrift = record.status === "ACTIVE" && (record.redirectSlug?.active !== true || record.redirectSlug.archivedAt)
+        ? ["CONTROLLED_REDIRECT_DRIFT"]
+        : [];
       return {
         id: record.id,
         casinoSlug: record.casino.slug,
@@ -305,7 +304,7 @@ export class MarketActivationRuntime {
           finalHost: record.routeFinalHost,
           detail: record.routeVerificationDetail,
         },
-        compatibilityDrift: drift,
+        controlledRouteDrift,
         lastReconciledAt: record.lastReconciledAt,
       };
     });

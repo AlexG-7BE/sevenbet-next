@@ -390,13 +390,6 @@ export class PartnerTrackingRegistrationRepository {
       });
       relationshipDisposition = "REOPENED";
     }
-    // These Affiliate rows are transitional route projections. An explicit
-    // canonical command may restore the selected projection, but their legacy
-    // lifecycle fields neither establish nor terminate the relationship.
-    await tx.affiliateNetwork.update({
-      where: { id: network.id },
-      data: { archivedAt: null, updatedBy: input.actorId },
-    });
     const supportState = new Map(input.target.rows.map((row) => [row.geo, row.marketSupport]));
     for (const marketCode of input.target.requestedGeos ?? []) {
       const row = input.target.rows.find((entry) => entry.geo === marketCode);
@@ -503,7 +496,7 @@ export class PartnerTrackingRegistrationRepository {
 
     let program: AffiliateProgram | null = sameUrl?.offer.program ?? await tx.affiliateProgram.findFirst({
       where: { networkId: network.id, casinoId: input.target.casinoId },
-      orderBy: [{ status: "desc" }, { createdAt: "asc" }, { id: "asc" }],
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
     if (!program) {
       const externalProgramId = `${REGISTRATION_VERSION}:${input.target.casinoId}`;
@@ -526,7 +519,7 @@ export class PartnerTrackingRegistrationRepository {
           createdBy: input.actorId,
           updatedBy: input.actorId,
         },
-        update: { casinoId: input.target.casinoId, archivedAt: null, updatedBy: input.actorId },
+        update: { casinoId: input.target.casinoId, updatedBy: input.actorId },
       });
     }
     if (program.casinoId && program.casinoId !== input.target.casinoId) {
@@ -535,11 +528,6 @@ export class PartnerTrackingRegistrationRepository {
         affiliateProgramId: program.id,
       });
     }
-    await tx.affiliateProgram.update({
-      where: { id: program.id },
-      data: { archivedAt: null, updatedBy: input.actorId },
-    });
-
     let offer: AffiliateOffer | null = sameUrl?.offer ?? null;
     let redirect: AffiliateRedirectSlug | null = offer ? await tx.affiliateRedirectSlug.findFirst({
       where: { casinoId: input.target.casinoId, affiliateOfferId: offer.id },
@@ -559,8 +547,8 @@ export class PartnerTrackingRegistrationRepository {
     }
     if (!offer) {
       offer = await tx.affiliateOffer.findFirst({
-        where: { programId: program.id, casinoId: input.target.casinoId, archivedAt: null },
-        orderBy: [{ status: "desc" }, { priority: "desc" }, { createdAt: "asc" }, { id: "asc" }],
+        where: { programId: program.id, casinoId: input.target.casinoId },
+        orderBy: [{ priority: "desc" }, { createdAt: "asc" }, { id: "asc" }],
       });
     }
     if (!offer) {
@@ -583,7 +571,7 @@ export class PartnerTrackingRegistrationRepository {
           createdBy: input.actorId,
           updatedBy: input.actorId,
         },
-        update: { archivedAt: null, updatedBy: input.actorId },
+        update: { updatedBy: input.actorId },
       });
     }
 
@@ -592,7 +580,7 @@ export class PartnerTrackingRegistrationRepository {
     // surface to transports.
     await tx.affiliateOffer.update({
       where: { id: offer.id },
-      data: { archivedAt: null, updatedBy: input.actorId },
+      data: { updatedBy: input.actorId },
     });
 
     const allLinks = await tx.affiliateTrackingLink.findMany({
@@ -736,7 +724,6 @@ export class PartnerTrackingRegistrationRepository {
               : `Partner ${input.geo} tracking route`,
           destinationUrl: input.trackingUrl,
           trackingUrl: input.trackingUrl,
-          active: false,
           priority: input.scope === "EXACT_GEO" ? 1_000 : input.scope === "REGIONAL_REUSE" ? 750 : 500,
           source: REGISTRATION_SOURCE,
           metadata: json({
@@ -793,11 +780,6 @@ export class PartnerTrackingRegistrationRepository {
       });
     }
     if (!link) throw new Error("PARTNER_TRACKING_CANDIDATE_UNAVAILABLE");
-    await tx.affiliateTrackingLink.update({
-      where: { id: link.id },
-      data: { archivedAt: null, updatedBy: input.actorId },
-    });
-
     if (!redirect) {
       const slug = `${input.target.casinoSlug}-casino`;
       const collision = await tx.affiliateRedirectSlug.findUnique({ where: { slug } });
@@ -972,8 +954,6 @@ export class PartnerTrackingRegistrationRepository {
             where: { id: candidate.id },
             data: {
               destinationUrl: `https://${input.finalHost}/`,
-              active: true,
-              archivedAt: null,
               priority: input.stage.scope === "EXACT_GEO" ? 1_000 : input.stage.scope === "REGIONAL_REUSE" ? 750 : 500,
               verifiedAt: input.checkedAt,
               lastCheckedAt: input.checkedAt,
@@ -1010,7 +990,7 @@ export class PartnerTrackingRegistrationRepository {
           ])].sort();
           await tx.affiliateProgram.update({
             where: { id: offer.program.id },
-            data: { casinoId: input.stage.target.casinoId, supportedCountries, archivedAt: null, updatedBy: input.actorId },
+            data: { casinoId: input.stage.target.casinoId, supportedCountries, updatedBy: input.actorId },
           });
           for (const row of input.stage.affectedRows) {
             const countryCode = countryFromGeo(row.geo);
@@ -1089,7 +1069,6 @@ export class PartnerTrackingRegistrationRepository {
         await tx.affiliateTrackingLink.update({
           where: { id: prior.id },
           data: {
-            active: false,
             metadata: json({
               ...object(prior.metadata),
               [REGISTRATION_METADATA_KEY]: {
@@ -1118,7 +1097,6 @@ export class PartnerTrackingRegistrationRepository {
     await this.database.affiliateTrackingLink.update({
       where: { id: link.id },
       data: {
-        active: false,
         metadata: json({
           ...object(link.metadata),
           [REGISTRATION_METADATA_KEY]: {

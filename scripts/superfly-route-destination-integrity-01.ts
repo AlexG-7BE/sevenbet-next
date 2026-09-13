@@ -10,11 +10,10 @@ import {
 } from "../lib/affiliate-routing/superfly-destination-evidence";
 import {
   SUPERFLY_DETECTED_BLOCKED_COUNTRIES,
-  projectPartnerRoutes,
 } from "../lib/affiliate-routing/partner-route-projection";
 import { superflyCommercialCatalog } from "../lib/casino-commercial-visibility/catalog";
 import prisma from "../lib/db/prisma";
-import { partnerRouteRepository } from "../lib/repositories/partner-route.repository";
+import { marketActivationRuntime } from "../lib/market-activation/runtime";
 
 if (!process.env.DATABASE_URL?.trim() && process.env.PRODDB_DATABASE_URL?.trim()) {
   process.env.DATABASE_URL = process.env.PRODDB_DATABASE_URL;
@@ -175,15 +174,13 @@ async function inspectRoutes() {
 
     const programVisibility = object(object(link.offer.program.metadata).commercialVisibility as Prisma.JsonValue | undefined);
     const trackingVisibility = object(object(link.metadata).commercialVisibility as Prisma.JsonValue | undefined);
-    if (!link.active || link.archivedAt || link.source !== "COMMERCIAL_CRM"
-      || link.offer.status !== "ACTIVE" || link.offer.geoMode !== "BLOCK"
-      || link.offer.program.status !== "ACTIVE" || link.offer.program.workflowStatus !== "PUBLISHED"
+    if (link.source !== "COMMERCIAL_CRM"
       || programVisibility.authority !== "CASINO-COMMERCIAL-VISIBILITY-03"
       || trackingVisibility.authority !== "CASINO-COMMERCIAL-VISIBILITY-03"
       || programVisibility.evidenceId !== definition.evidence.routeId
       || trackingVisibility.evidenceId !== definition.evidence.routeId
       || programVisibility.canonicalUrlSha256 !== actualHash
-      || trackingVisibility.canonicalUrlSha256 !== actualHash) throw new Error(`${slug}: route authority or destination provenance changed unexpectedly.`);
+      || trackingVisibility.canonicalUrlSha256 !== actualHash) throw new Error(`${slug}: destination provenance changed unexpectedly.`);
 
     const expectedBlocks = SUPERFLY_DETECTED_BLOCKED_COUNTRIES;
     const offerBlocks = link.offer.countries.filter((country) => country.mode === "BLOCK").map((country) => country.countryCode);
@@ -245,8 +242,6 @@ async function apply() {
           id: row.link.id,
           destinationUrl: row.link.destinationUrl,
           trackingUrl: row.link.trackingUrl,
-          active: true,
-          archivedAt: null,
         },
         data: {
           destinationUrl: row.destination,
@@ -322,17 +317,10 @@ async function verify() {
   const casinoIds = rows.map((row) => row.link.offer.casino.id);
   const matrix: Record<string, Record<string, "ON" | "OFF">> = {};
   for (const countryCode of [...ALLOWED_COUNTRIES, ...SUPERFLY_DETECTED_BLOCKED_COUNTRIES]) {
-    const candidates = await partnerRouteRepository.listCandidates(casinoIds, countryCode);
-    const projected = projectPartnerRoutes(candidates, {
-      countryCode,
-      now: new Date(),
-      commercialAllowed: true,
-      referralAllowed: true,
-      redirectEnabled: true,
-    });
+    const projected = await marketActivationRuntime.listActive(casinoIds, countryCode, new Date());
     matrix[countryCode] = Object.fromEntries(rows.map((row) => [
       row.definition.slug,
-      projected.some((route) => route.casino.slug === row.definition.slug && route.productionEligible) ? "ON" : "OFF",
+      projected.some((route) => route.casino.slug === row.definition.slug) ? "ON" : "OFF",
     ]));
   }
   for (const countryCode of ALLOWED_COUNTRIES) {

@@ -10,11 +10,9 @@ import { casinoDomainRepository, type CasinoDomainStore } from "@/lib/repositori
 export type GbOperatorEligibilityEvidenceContext = Omit<GbOperatorEligibilityInput, "casino" | "now">;
 type EvidenceContexts = GbOperatorEligibilityEvidenceContext | ReadonlyMap<string, GbOperatorEligibilityEvidenceContext>;
 
-/**
- * A current canonical MarketActivation is the public projection's commercial
- * and server-owned redirect authority. The stricter request-time GB readiness
- * service still rechecks the full partner, link, offer and domain chain before
- * returning an external destination.
+/** Legal/operator evidence evaluator. Commercial market authority belongs to
+ * MarketActivation and the complete request-time GB chain belongs to the GB
+ * commercial readiness service.
  */
 export function canonicalGbOperatorEligibilityContext(
   context: GbOperatorEligibilityEvidenceContext | null | undefined,
