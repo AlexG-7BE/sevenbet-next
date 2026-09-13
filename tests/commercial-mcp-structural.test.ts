@@ -5,6 +5,7 @@ import test from "node:test";
 const files = [
   "../lib/commercial/commercial-mcp-contract.ts",
   "../lib/commercial/commercial-mcp-service.ts",
+  "../lib/commercial/commercial-write-authority.ts",
   "../lib/commercial/partner-tracking-registration-contract.ts",
   "../lib/commercial/partner-tracking-registration-service.ts",
   "../lib/repositories/partner-tracking-registration.repository.ts",
@@ -34,9 +35,9 @@ test("tracking registration exposes no tokenized URL in result, logs, audit, or 
   assert.doesNotMatch(responseType, /trackingUrl\s*:/);
   assert.doesNotMatch(service, /console\.(?:log|info|warn|error)/);
   assert.doesNotMatch(repository, /console\.(?:log|info|warn|error)/);
-  const auditSection = repository.slice(repository.indexOf("await tx.auditLog.create"));
+  const auditSection = repository.slice(repository.indexOf("await this.database.auditLog.create"));
   assert.doesNotMatch(auditSection, /trackingUrl|destinationUrl/);
-  assert.match(repository, /oauthClientIdHash: sha256\(input\.clientId\)/);
+  assert.match(repository, /correlationIdHash: sha256\(input\.correlationId\)/);
   assert.match(repository, /linkHash: input\.stage\.linkHash/);
 });
 

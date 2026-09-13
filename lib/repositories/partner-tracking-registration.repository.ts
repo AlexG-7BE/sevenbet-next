@@ -14,11 +14,15 @@ import type {
   PartnerTrackingScope,
 } from "@/lib/commercial/partner-tracking-registration-contract";
 import {
+  commercialDecisionSourceReference,
+  requireTrustedCommercialWriteAuthority,
+  type TrustedCommercialWriteAuthority,
+} from "@/lib/commercial/commercial-write-authority";
+import {
   CURRENT_PARTNER_INVENTORY,
   CURRENT_PARTNER_RECORDS,
   GLOBAL_CURRENT_PARTNER_RELEASE,
   normalizeCurrentPartnerIdentity,
-  type CurrentPartnerName,
   type CurrentPartnerInventorySeed,
 } from "@/lib/current-partner-rollout/inventory";
 import { worldwideLegalDecisionForGeo } from "@/lib/current-partner-worldwide-authority/inventory";
@@ -29,7 +33,7 @@ type Transaction = Prisma.TransactionClient;
 
 const REGISTRATION_METADATA_KEY = "partnerTrackingRegistration";
 const REGISTRATION_VERSION = "PARTNER-TRACKING-REGISTRATION-V2";
-const REGISTRATION_SOURCE = "COMMERCIAL_MCP_PARTNER_PROVIDED";
+const REGISTRATION_SOURCE = "CANONICAL_PARTNER_TRACKING_REGISTRATION";
 const VERIFYING_TTL_MS = 2 * 60_000;
 const SERIALIZABLE_RETRY_LIMIT = 6;
 
@@ -63,7 +67,7 @@ export function partnerTrackingScopeMatches(
 
 export function partnerTrackingCoverageMatches(
   link: { casino: string; casinoSlug: string; scope: unknown; geo: string | null; trackingIdentity: string | null },
-  row: CurrentPartnerInventorySeed,
+  row: Pick<CurrentPartnerInventorySeed, "casino" | "casinoSlug" | "geo" | "trackingIdentity">,
 ) {
   const casinoMatches = normalizeCurrentPartnerIdentity(link.casino) === normalizeCurrentPartnerIdentity(row.casino)
     || Boolean(row.casinoSlug && normalizeCurrentPartnerIdentity(link.casinoSlug) === normalizeCurrentPartnerIdentity(row.casinoSlug));
@@ -81,8 +85,15 @@ function deterministicUuid(value: string) {
   return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-4${hash.slice(13, 16)}-8${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
 }
 
-function runtimeSupportReference(opportunityId: string, casinoId: string, marketCode: string) {
-  return `COMMERCIAL_MCP_FOUNDER_MARKET_ASSERTION:${opportunityId}:${casinoId}:${marketCode}`;
+function requestedMarketSupportReference(partnerId: string, casinoId: string, marketCode: string) {
+  return `REQUESTED_PARTNER_MARKET_SUPPORT:${partnerId}:${casinoId}:${marketCode}`;
+}
+
+function trackingRegistrationEvidence(
+  authority: TrustedCommercialWriteAuthority,
+  linkHash: string,
+) {
+  return `${commercialDecisionSourceReference(authority)}; CANONICAL_TRACKING_REGISTRATION:${linkHash}`;
 }
 
 function hostFromUrl(value: string | null) {
@@ -107,13 +118,14 @@ function boundedCandidate(casino: { id: string; title: string; slug: string }) {
   return { id: casino.id, name: casino.title, slug: casino.slug };
 }
 
-export type PartnerTrackingMarketRow = CurrentPartnerInventorySeed & {
+export type PartnerTrackingMarketRow = Omit<CurrentPartnerInventorySeed, "partner"> & {
+  partner: string;
   supportOrigin: "SEEDED" | "RUNTIME";
   marketSupport: "CREATED" | "ALREADY_SUPPORTED";
 };
 
 function runtimeMarketRow(input: {
-  partner: CurrentPartnerName;
+  partner: string;
   casino: string;
   casinoSlug: string;
   geo: string;
@@ -143,7 +155,7 @@ function runtimeMarketRow(input: {
       ? "Current canonical legal authority blocks ordinary commercial activation."
       : legal.legalState === "ACTION_REQUIRED_REGULATORY"
         ? legal.regulatoryAction ?? "An exact regulatory action is required before activation."
-        : "Founder-authorized runtime market support is present; no canonical tracking route has yet been promoted.",
+        : "Non-authoritative market-support evidence is present; only a validated commercial command plus canonical legal and route controls may create route intent.",
     evidenceReferences: [input.evidenceReference, legal.evidence],
     supportEvidenceClassification: "DETECTED",
     legalEvidenceClassification: legal.evidenceClassification,
@@ -153,9 +165,9 @@ function runtimeMarketRow(input: {
 }
 
 export type PartnerTrackingTarget = {
-  partner: CurrentPartnerName;
+  partner: string;
   partnerId: string;
-  affiliateNetworkId: string | null;
+  affiliateNetworkId: string;
   casino: string;
   casinoId: string;
   casinoSlug: string;
@@ -166,7 +178,10 @@ export type PartnerTrackingTarget = {
 };
 
 export type PartnerTrackingStage = {
-  target: PartnerTrackingTarget & { affiliateNetworkId: string };
+  target: PartnerTrackingTarget;
+  partnerCasinoRelationshipId: string;
+  relationshipDisposition: "CREATED" | "REOPENED" | "UNCHANGED";
+  commercialAuthority: TrustedCommercialWriteAuthority;
   scope: PartnerTrackingScope;
   geo: string | null;
   trackingIdentity: string | null;
@@ -198,49 +213,53 @@ export type PartnerTrackingPromotion = PartnerTrackingStage & {
   previousTrackingLinkId: string | null;
 };
 
+type PartnerTrackingStageInput = {
+  target: PartnerTrackingTarget;
+  trackingUrl: string;
+  linkHash: string;
+  scope: PartnerTrackingScope;
+  geo: string | null;
+  supportedGeos?: string[] | null;
+  actorId: string;
+  commercialAuthority: TrustedCommercialWriteAuthority;
+  now: Date;
+};
+
 export class PartnerTrackingRegistrationRepository {
   constructor(private readonly database: PrismaClient = prisma) {}
 
   async resolveTarget(input: {
-    partner: CurrentPartnerName;
-    partnerId: string;
-    partnerAliases: readonly string[];
+    partner: string;
     casino: string;
     requestedGeos: string[] | null;
   }): Promise<PartnerTrackingTarget> {
-    const opportunity = await this.database.commercialOpportunity.findUnique({
-      where: { id: input.partnerId },
-      select: { id: true, displayName: true, stage: true, affiliateNetworkId: true },
+    const requestedPartner = normalizeCurrentPartnerIdentity(input.partner);
+    const allNetworks = await this.database.affiliateNetwork.findMany({
+      select: { id: true, name: true, slug: true },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
-    if (!opportunity || opportunity.stage !== "ACTIVE") {
-      throw new ValidationError("Current partner record is unavailable", {
-        reason: "CURRENT_PARTNER_RECORD_UNAVAILABLE",
-        partner: input.partner,
+    const partnerCandidates = allNetworks.filter((network) => {
+      const persistedIdentities = [network.name, network.slug].map(normalizeCurrentPartnerIdentity);
+      const aliases = CURRENT_PARTNER_RECORDS.flatMap((record) => {
+        const recordIdentities = [record.name, ...record.aliases].map(normalizeCurrentPartnerIdentity);
+        return persistedIdentities.some((identity) => recordIdentities.includes(identity))
+          ? [record.name, ...record.aliases]
+          : [];
+      });
+      return [...persistedIdentities, ...aliases.map(normalizeCurrentPartnerIdentity)].includes(requestedPartner);
+    });
+    if (partnerCandidates.length === 0) {
+      throw new ValidationError("Partner cannot be resolved", { reason: "PARTNER_NOT_FOUND", candidates: [] });
+    }
+    if (partnerCandidates.length > 1) {
+      throw new ConflictError("Partner identity is ambiguous", {
+        reason: "PARTNER_AMBIGUOUS",
+        candidates: partnerCandidates.slice(0, 10).map((partner) => ({ id: partner.id, name: partner.name })),
       });
     }
+    const partner = partnerCandidates[0];
 
-    let affiliateNetworkId = opportunity.affiliateNetworkId;
-    if (!affiliateNetworkId) {
-      const identities = new Set([input.partner, ...input.partnerAliases].map(normalizeCurrentPartnerIdentity));
-      const networks = (await this.database.affiliateNetwork.findMany({
-        where: { archivedAt: null },
-        select: { id: true, name: true, slug: true },
-      })).filter((network) => identities.has(normalizeCurrentPartnerIdentity(network.name))
-        || identities.has(normalizeCurrentPartnerIdentity(network.slug)));
-      if (networks.length > 1) {
-        throw new ValidationError("Current partner network cannot be resolved unambiguously", {
-          reason: "PARTNER_NETWORK_AMBIGUOUS",
-          candidates: networks.slice(0, 10).map((network) => ({ id: network.id, name: network.name })),
-        });
-      }
-      affiliateNetworkId = networks[0]?.id ?? null;
-    }
-
-    const allRows = CURRENT_PARTNER_INVENTORY;
-    const allCanonicalNames = [...new Set(allRows.map((row) => row.casino))];
-    const allCanonicalSlugs = [...new Set(allRows.flatMap((row) => row.casinoSlug ? [row.casinoSlug] : []))];
     const casinos = await this.database.casino.findMany({
-      where: { OR: [{ title: { in: allCanonicalNames } }, { slug: { in: allCanonicalSlugs } }] },
       select: {
         id: true,
         title: true,
@@ -249,6 +268,7 @@ export class PartnerTrackingRegistrationRepository {
         websiteUrl: true,
         aliases: { select: { value: true, normalizedValue: true } },
       },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
     const requested = normalizeCurrentPartnerIdentity(input.casino);
     const candidates = casinos.filter((casino) => [
@@ -267,18 +287,16 @@ export class PartnerTrackingRegistrationRepository {
       });
     }
     const casino = candidates[0];
-    const relationshipRows = allRows.filter((row) => row.partner === input.partner
+    const partnerRecords = CURRENT_PARTNER_RECORDS.filter((record) => [record.name, ...record.aliases]
+      .some((identity) => [partner.name, partner.slug]
+        .map(normalizeCurrentPartnerIdentity)
+        .includes(normalizeCurrentPartnerIdentity(identity))));
+    const relationshipRows = CURRENT_PARTNER_INVENTORY.filter((row) => partnerRecords.some((record) => record.name === row.partner)
       && (normalizeCurrentPartnerIdentity(row.casino) === normalizeCurrentPartnerIdentity(casino.title)
         || (row.casinoSlug && normalizeCurrentPartnerIdentity(row.casinoSlug) === normalizeCurrentPartnerIdentity(casino.slug))));
-    if (!relationshipRows.length) {
-      throw new ConflictError("Casino is not associated with the supplied current partner", {
-        reason: "PARTNER_CASINO_RELATIONSHIP_MISMATCH",
-        casino: boundedCandidate(casino),
-      });
-    }
     const runtimeSupports = await this.database.partnerCasinoMarketSupport.findMany({
       where: {
-        opportunityId: opportunity.id,
+        affiliateNetworkId: partner.id,
         casinoId: casino.id,
         operatorMarketSupported: true,
       },
@@ -287,11 +305,11 @@ export class PartnerTrackingRegistrationRepository {
     });
     const rows = new Map<string, PartnerTrackingMarketRow>();
     for (const row of relationshipRows) {
-      rows.set(row.geo, { ...row, supportOrigin: "SEEDED", marketSupport: "ALREADY_SUPPORTED" });
+      rows.set(row.geo, { ...row, partner: partner.name, supportOrigin: "SEEDED", marketSupport: "ALREADY_SUPPORTED" });
     }
     for (const support of runtimeSupports) {
       if (!rows.has(support.marketCode)) rows.set(support.marketCode, runtimeMarketRow({
-        partner: input.partner,
+        partner: partner.name,
         casino: casino.title,
         casinoSlug: casino.slug,
         geo: support.marketCode,
@@ -299,20 +317,21 @@ export class PartnerTrackingRegistrationRepository {
       }));
     }
     for (const geo of input.requestedGeos ?? []) {
-      if (!rows.has(geo)) rows.set(geo, runtimeMarketRow({
-        partner: input.partner,
+      const existing = rows.get(geo);
+      rows.set(geo, runtimeMarketRow({
+        partner: partner.name,
         casino: casino.title,
         casinoSlug: casino.slug,
         geo,
-        evidenceReference: runtimeSupportReference(opportunity.id, casino.id, geo),
-        marketSupport: "CREATED",
+        evidenceReference: requestedMarketSupportReference(partner.id, casino.id, geo),
+        marketSupport: existing ? "ALREADY_SUPPORTED" : "CREATED",
       }));
     }
 
     return {
-      partner: input.partner,
-      partnerId: opportunity.id,
-      affiliateNetworkId,
+      partner: partner.name,
+      partnerId: partner.id,
+      affiliateNetworkId: partner.id,
       casino: casino.title,
       casinoId: casino.id,
       casinoSlug: casino.slug,
@@ -323,16 +342,8 @@ export class PartnerTrackingRegistrationRepository {
     };
   }
 
-  async stage(input: {
-    target: PartnerTrackingTarget;
-    trackingUrl: string;
-    linkHash: string;
-    scope: PartnerTrackingScope;
-    geo: string | null;
-    supportedGeos?: string[] | null;
-    actorId: string;
-    now: Date;
-  }): Promise<PartnerTrackingStage> {
+  async stage(input: PartnerTrackingStageInput): Promise<PartnerTrackingStage> {
+    requireTrustedCommercialWriteAuthority(input.commercialAuthority);
     let lastError: unknown;
     for (let attempt = 1; attempt <= SERIALIZABLE_RETRY_LIMIT; attempt += 1) {
       try {
@@ -350,51 +361,42 @@ export class PartnerTrackingRegistrationRepository {
     throw lastError;
   }
 
-  private async stageInTransaction(tx: Transaction, input: {
-    target: PartnerTrackingTarget;
-    trackingUrl: string;
-    linkHash: string;
-    scope: PartnerTrackingScope;
-    geo: string | null;
-    supportedGeos?: string[] | null;
-    actorId: string;
-    now: Date;
-  }): Promise<PartnerTrackingStage> {
-    let network = input.target.affiliateNetworkId
-      ? await tx.affiliateNetwork.findUnique({ where: { id: input.target.affiliateNetworkId } })
-      : null;
-    if (network?.archivedAt) throw new Error("PARTNER_TRACKING_NETWORK_UNAVAILABLE");
-    if (!network) {
-      const slug = normalizeCurrentPartnerIdentity(input.target.partner).replace(/\s+/g, "-");
-      const existing = await tx.affiliateNetwork.findUnique({ where: { slug } });
-      const acceptedIdentities = new Set([
-        input.target.partner,
-        ...CURRENT_PARTNER_RECORDS.find((partner) => partner.opportunityId === input.target.partnerId)?.aliases ?? [],
-      ].map(normalizeCurrentPartnerIdentity));
-      if (existing && !acceptedIdentities.has(normalizeCurrentPartnerIdentity(existing.name))
-        && !acceptedIdentities.has(normalizeCurrentPartnerIdentity(existing.slug))) {
-        throw new ConflictError("Canonical partner network slug belongs to another identity", {
-          reason: "PARTNER_NETWORK_IDENTITY_COLLISION",
-          candidates: [{ id: existing.id, name: existing.name }],
-        });
-      }
-      network = existing
-        ? await tx.affiliateNetwork.update({
-            where: { id: existing.id },
-            data: { active: true, archivedAt: null, updatedBy: input.actorId },
-          })
-        : await tx.affiliateNetwork.create({
-            data: {
-              name: input.target.partner,
-              slug,
-              type: "OTHER",
-              active: true,
-              notes: `${REGISTRATION_VERSION}: internal network normalization for an established current partner; no new relationship or terms inferred.`,
-              createdBy: input.actorId,
-              updatedBy: input.actorId,
-            },
-          });
+  private async stageInTransaction(tx: Transaction, input: PartnerTrackingStageInput): Promise<PartnerTrackingStage> {
+    const commercialAuthority = requireTrustedCommercialWriteAuthority(input.commercialAuthority);
+    const network = await tx.affiliateNetwork.findUniqueOrThrow({ where: { id: input.target.affiliateNetworkId } });
+    let relationship = await tx.partnerCasinoRelationship.findUnique({
+      where: { partnerId_casinoId: { partnerId: network.id, casinoId: input.target.casinoId } },
+    });
+    let relationshipDisposition: PartnerTrackingStage["relationshipDisposition"] = "UNCHANGED";
+    if (!relationship) {
+      relationship = await tx.partnerCasinoRelationship.create({ data: {
+        partnerId: network.id,
+        casinoId: input.target.casinoId,
+        confirmedAt: input.now,
+        evidenceRef: commercialAuthority.decisionRef,
+        createdBy: input.actorId,
+        updatedBy: input.actorId,
+      } });
+      relationshipDisposition = "CREATED";
+    } else if (relationship.endedAt) {
+      relationship = await tx.partnerCasinoRelationship.update({
+        where: { id: relationship.id },
+        data: {
+          confirmedAt: input.now,
+          endedAt: null,
+          evidenceRef: commercialAuthority.decisionRef,
+          updatedBy: input.actorId,
+        },
+      });
+      relationshipDisposition = "REOPENED";
     }
+    // These Affiliate rows are transitional route projections. An explicit
+    // canonical command may restore the selected projection, but their legacy
+    // lifecycle fields neither establish nor terminate the relationship.
+    await tx.affiliateNetwork.update({
+      where: { id: network.id },
+      data: { archivedAt: null, updatedBy: input.actorId },
+    });
     const supportState = new Map(input.target.rows.map((row) => [row.geo, row.marketSupport]));
     for (const marketCode of input.target.requestedGeos ?? []) {
       const row = input.target.rows.find((entry) => entry.geo === marketCode);
@@ -404,7 +406,7 @@ export class PartnerTrackingRegistrationRepository {
       }
       const countryCode = countryFromGeo(marketCode);
       if (!countryCode) throw new ValidationError("Runtime market code is invalid", { reason: "PARTNER_TRACKING_GEO_INVALID" });
-      const sourceReference = runtimeSupportReference(input.target.partnerId, input.target.casinoId, marketCode);
+      const sourceReference = commercialAuthority.decisionRef;
       const profile = await tx.casinoCountry.upsert({
         where: { casinoId_countryCode: { casinoId: input.target.casinoId, countryCode } },
         create: {
@@ -412,12 +414,12 @@ export class PartnerTrackingRegistrationRepository {
           countryCode,
           availability: "AVAILABLE",
           lastVerifiedAt: input.now,
-          notes: `${REGISTRATION_VERSION}: Founder-authorized Commercial MCP runtime market assertion; legal and route state remain independent.`,
+          notes: `${REGISTRATION_VERSION}: validated commercial decision reference recorded; legal and route state remain independent.`,
         },
         update: { availability: "AVAILABLE", lastVerifiedAt: input.now },
         select: { id: true },
       });
-      const evidenceId = deterministicUuid(`${REGISTRATION_VERSION}:MARKET_SUPPORT:${input.target.partnerId}:${input.target.casinoId}:${marketCode}`);
+      const evidenceId = deterministicUuid(`${REGISTRATION_VERSION}:MARKET_SUPPORT:${relationship.id}:${marketCode}`);
       await tx.casinoCountryEvidence.upsert({
         where: { id: evidenceId },
         create: {
@@ -429,7 +431,7 @@ export class PartnerTrackingRegistrationRepository {
           fieldKeys: ["availability", `operatorMarketSupported:${marketCode}`],
           observedAt: input.now,
           lastVerifiedAt: input.now,
-          notes: `${REGISTRATION_VERSION}: supplied through the Founder-authorized Commercial MCP workflow; no external regulator/operator source is claimed.`,
+          notes: `${REGISTRATION_VERSION}: supplied through a validated internal commercial command; no external regulator/operator source is claimed.`,
         },
         update: {
           casinoCountryId: profile.id,
@@ -441,9 +443,8 @@ export class PartnerTrackingRegistrationRepository {
         },
       });
       const existingSupport = await tx.partnerCasinoMarketSupport.findUnique({
-        where: { opportunityId_casinoId_marketCode: {
-          opportunityId: input.target.partnerId,
-          casinoId: input.target.casinoId,
+        where: { relationshipId_marketCode: {
+          relationshipId: relationship.id,
           marketCode,
         } },
         select: { id: true, operatorMarketSupported: true },
@@ -453,6 +454,8 @@ export class PartnerTrackingRegistrationRepository {
           where: { id: existingSupport.id },
           data: {
             affiliateNetworkId: network.id,
+            relationshipId: relationship.id,
+            opportunityId: null,
             casinoCountryId: profile.id,
             countryCode,
             operatorMarketSupported: true,
@@ -463,7 +466,8 @@ export class PartnerTrackingRegistrationRepository {
         });
       } else {
         await tx.partnerCasinoMarketSupport.create({ data: {
-          opportunityId: input.target.partnerId,
+          relationshipId: relationship.id,
+          opportunityId: null,
           affiliateNetworkId: network.id,
           casinoId: input.target.casinoId,
           casinoCountryId: profile.id,
@@ -513,11 +517,11 @@ export class PartnerTrackingRegistrationRepository {
           operator: input.target.partner,
           status: "DRAFT",
           workflowStatus: "DRAFT",
-          providerType: "COMMERCIAL_MCP",
+          providerType: "CANONICAL_APPLICATION_SERVICE",
           connectionStatus: "CONFIGURED",
           integrationMode: "MANUAL",
           metadata: json({ registrationVersion: REGISTRATION_VERSION, internalNormalizationOnly: true }),
-          sourceOfTruth: json({ source: "FOUNDER_SUPPLIED_PARTNER_URL" }),
+          sourceOfTruth: json({ source: REGISTRATION_SOURCE }),
           notes: "Internal normalization for an established current Partner × Casino; RFC-042 remains final activation authority.",
           createdBy: input.actorId,
           updatedBy: input.actorId,
@@ -531,6 +535,10 @@ export class PartnerTrackingRegistrationRepository {
         affiliateProgramId: program.id,
       });
     }
+    await tx.affiliateProgram.update({
+      where: { id: program.id },
+      data: { archivedAt: null, updatedBy: input.actorId },
+    });
 
     let offer: AffiliateOffer | null = sameUrl?.offer ?? null;
     let redirect: AffiliateRedirectSlug | null = offer ? await tx.affiliateRedirectSlug.findFirst({
@@ -580,9 +588,13 @@ export class PartnerTrackingRegistrationRepository {
       });
     }
 
-    // This bounded no-op update is the common scope lock. It serializes stage
-    // decisions without exposing a generic SQL or Prisma surface to MCP.
-    await tx.affiliateOffer.update({ where: { id: offer.id }, data: { updatedBy: input.actorId } });
+    // This bounded projection update is also the common scope lock. It
+    // serializes stage decisions without exposing a generic SQL or Prisma
+    // surface to transports.
+    await tx.affiliateOffer.update({
+      where: { id: offer.id },
+      data: { archivedAt: null, updatedBy: input.actorId },
+    });
 
     const allLinks = await tx.affiliateTrackingLink.findMany({
       where: { offerId: offer.id },
@@ -738,6 +750,10 @@ export class PartnerTrackingRegistrationRepository {
               geo: input.geo,
               trackingIdentity: regionalIdentity,
               linkHash: input.linkHash,
+              commercialAuthority: {
+                kind: commercialAuthority.kind,
+                decisionRef: commercialAuthority.decisionRef,
+              },
               stage: "VERIFYING",
               stagedAt: input.now.toISOString(),
             },
@@ -766,6 +782,10 @@ export class PartnerTrackingRegistrationRepository {
               geo: input.geo,
               trackingIdentity: regionalIdentity,
               linkHash: input.linkHash,
+              commercialAuthority: {
+                kind: commercialAuthority.kind,
+                decisionRef: commercialAuthority.decisionRef,
+              },
               stage: "VERIFYING",
               stagedAt: input.now.toISOString(),
             },
@@ -775,6 +795,10 @@ export class PartnerTrackingRegistrationRepository {
       });
     }
     if (!link) throw new Error("PARTNER_TRACKING_CANDIDATE_UNAVAILABLE");
+    await tx.affiliateTrackingLink.update({
+      where: { id: link.id },
+      data: { archivedAt: null, updatedBy: input.actorId },
+    });
 
     for (const row of affectedRows) {
       await tx.affiliateTrackingLinkCountry.upsert({
@@ -784,12 +808,12 @@ export class PartnerTrackingRegistrationRepository {
           countryCode: row.geo,
           mode: "ALLOW",
           productionEligible: alreadyCanonical && previousActivations.some((activation) => activation.marketCode === row.geo && activation.primaryTrackingLinkId === link?.id),
-          productionEligibilityEvidence: `FOUNDER_SUPPLIED_PARTNER_URL:${input.linkHash}`,
+          productionEligibilityEvidence: trackingRegistrationEvidence(commercialAuthority, input.linkHash),
           productionEligibilityNotes: `${REGISTRATION_VERSION} staged scope ${scopeIdentity}`,
         },
         update: {
           mode: "ALLOW",
-          productionEligibilityEvidence: `FOUNDER_SUPPLIED_PARTNER_URL:${input.linkHash}`,
+          productionEligibilityEvidence: trackingRegistrationEvidence(commercialAuthority, input.linkHash),
         },
       });
     }
@@ -836,6 +860,9 @@ export class PartnerTrackingRegistrationRepository {
 
     return {
       target,
+      partnerCasinoRelationshipId: relationship.id,
+      relationshipDisposition,
+      commercialAuthority,
       scope: input.scope,
       geo: input.geo,
       trackingIdentity: regionalIdentity,
@@ -876,6 +903,7 @@ export class PartnerTrackingRegistrationRepository {
     checkedAt: Date;
     actorId: string;
   }) {
+    requireTrustedCommercialWriteAuthority(input.stage.commercialAuthority);
     const link = await this.database.affiliateTrackingLink.findUnique({ where: { id: input.stage.trackingLinkId } });
     if (!link) throw new Error("PARTNER_TRACKING_CANDIDATE_NOT_FOUND");
     const existing = object(link.metadata);
@@ -925,6 +953,7 @@ export class PartnerTrackingRegistrationRepository {
     checkedAt: Date;
     actorId: string;
   }): Promise<PartnerTrackingPromotion> {
+    requireTrustedCommercialWriteAuthority(input.stage.commercialAuthority);
     let lastError: unknown;
     for (let attempt = 1; attempt <= SERIALIZABLE_RETRY_LIMIT; attempt += 1) {
       try {
@@ -1000,7 +1029,6 @@ export class PartnerTrackingRegistrationRepository {
             ...offer.program.supportedCountries.map((value) => value.toUpperCase()),
             ...input.stage.affectedRows.flatMap((row) => countryFromGeo(row.geo) ?? []),
           ])].sort();
-          await tx.affiliateNetwork.update({ where: { id: offer.program.networkId }, data: { active: true, archivedAt: null, updatedBy: input.actorId } });
           await tx.affiliateProgram.update({
             where: { id: offer.program.id },
             data: { casinoId: input.stage.target.casinoId, supportedCountries, archivedAt: null, updatedBy: input.actorId },
@@ -1018,12 +1046,12 @@ export class PartnerTrackingRegistrationRepository {
                 countryCode: row.geo,
                 mode: "ALLOW",
                 productionEligible: false,
-                productionEligibilityEvidence: `FOUNDER_SUPPLIED_PARTNER_URL:${input.stage.linkHash}`,
+                productionEligibilityEvidence: trackingRegistrationEvidence(input.stage.commercialAuthority, input.stage.linkHash),
                 productionEligibilityNotes: `${REGISTRATION_VERSION} verified and promoted; RFC-042 controls eligibility`,
               },
               update: {
                 mode: "ALLOW",
-                productionEligibilityEvidence: `FOUNDER_SUPPLIED_PARTNER_URL:${input.stage.linkHash}`,
+                productionEligibilityEvidence: trackingRegistrationEvidence(input.stage.commercialAuthority, input.stage.linkHash),
                 productionEligibilityNotes: `${REGISTRATION_VERSION} verified and promoted; RFC-042 controls eligibility`,
               },
             });
@@ -1052,7 +1080,7 @@ export class PartnerTrackingRegistrationRepository {
                     casinoCountryId: profile.id,
                     classification: "DETECTED",
                     sourceType: "PARTNER_COMMUNICATION",
-                    sourceReference: `FOUNDER_SUPPLIED_PARTNER_URL:${input.stage.linkHash}; ${GLOBAL_CURRENT_PARTNER_RELEASE}`,
+                    sourceReference: `${trackingRegistrationEvidence(input.stage.commercialAuthority, input.stage.linkHash)}; ${GLOBAL_CURRENT_PARTNER_RELEASE}`,
                     fieldKeys: ["availability", "countryCode"],
                     observedAt: input.checkedAt,
                     lastVerifiedAt: input.checkedAt,
@@ -1066,10 +1094,6 @@ export class PartnerTrackingRegistrationRepository {
           await tx.affiliateRedirectSlug.update({
             where: { id: input.stage.redirectId },
             data: { casinoId: input.stage.target.casinoId, affiliateOfferId: offer.id, active: true, archivedAt: null, updatedBy: input.actorId },
-          });
-          await tx.commercialOpportunity.update({
-            where: { id: input.stage.target.partnerId },
-            data: { affiliateNetworkId: input.stage.target.affiliateNetworkId, updatedBy: input.actorId },
           });
           return {
             ...input.stage,
@@ -1093,6 +1117,7 @@ export class PartnerTrackingRegistrationRepository {
     checkedAt: Date;
     actorId: string;
   }) {
+    requireTrustedCommercialWriteAuthority(input.stage.commercialAuthority);
     await this.database.$transaction(async (tx) => {
       const candidate = await tx.affiliateTrackingLink.findUniqueOrThrow({ where: { id: input.stage.trackingLinkId } });
       await tx.affiliateOffer.update({ where: { id: candidate.offerId }, data: { updatedBy: input.actorId } });
@@ -1129,6 +1154,7 @@ export class PartnerTrackingRegistrationRepository {
     checkedAt: Date;
     actorId: string;
   }) {
+    requireTrustedCommercialWriteAuthority(input.stage.commercialAuthority);
     const link = await this.database.affiliateTrackingLink.findUniqueOrThrow({ where: { id: input.stage.trackingLinkId } });
     const registration = registrationMetadata(link.metadata);
     await this.database.affiliateTrackingLink.update({
@@ -1152,139 +1178,35 @@ export class PartnerTrackingRegistrationRepository {
     });
   }
 
-  async reconcileAuditAndCrm(input: {
+  async recordAudit(input: {
     stage: PartnerTrackingStage;
     verification: "HEALTHY" | "BROKEN" | "INCONCLUSIVE" | "ALREADY_REGISTERED";
     previousTrackingLinkId: string | null;
     results: PartnerTrackingRegistrationResultRow[];
     actorId: string;
-    clientId: string;
+    auditSource: "COMMERCIAL_MCP" | "INTERNAL_APPLICATION";
+    correlationId?: string;
     now: Date;
   }) {
-    await this.database.$transaction(async (tx) => {
-      const allLinks = await tx.affiliateTrackingLink.findMany({
-        where: { offer: { program: { networkId: input.stage.target.affiliateNetworkId } } },
-        select: {
-          active: true,
-          metadata: true,
-          offer: { select: { casino: { select: { title: true, slug: true } } } },
-        },
-      });
-      const coverage = allLinks.flatMap((link) => {
-        const metadata = registrationMetadata(link.metadata);
-        if (metadata.partnerId !== input.stage.target.partnerId) return [];
-        return [{
-          active: link.active,
-          stage: typeof metadata.stage === "string" ? metadata.stage : "",
-          scope: metadata.scope,
-          geo: typeof metadata.geo === "string" ? metadata.geo : null,
-          trackingIdentity: typeof metadata.trackingIdentity === "string" ? metadata.trackingIdentity : null,
-          casino: link.offer.casino.title,
-          casinoSlug: link.offer.casino.slug,
-        }];
-      });
-      const runtimeSupports = await tx.partnerCasinoMarketSupport.findMany({
-        where: { opportunityId: input.stage.target.partnerId, operatorMarketSupported: true },
-        select: {
-          marketCode: true,
-          sourceReference: true,
-          casino: { select: { title: true, slug: true } },
-        },
-      });
-      const partnerRowsByKey = new Map(CURRENT_PARTNER_INVENTORY
-        .filter((row) => row.partner === input.stage.target.partner)
-        .map((row) => [`${normalizeCurrentPartnerIdentity(row.casino)}:${row.geo}`, row]));
-      for (const support of runtimeSupports) {
-        const key = `${normalizeCurrentPartnerIdentity(support.casino.title)}:${support.marketCode}`;
-        if (!partnerRowsByKey.has(key)) partnerRowsByKey.set(key, runtimeMarketRow({
-          partner: input.stage.target.partner,
-          casino: support.casino.title,
-          casinoSlug: support.casino.slug,
-          geo: support.marketCode,
-          evidenceReference: support.sourceReference,
-        }));
-      }
-      const partnerRows = [...partnerRowsByKey.values()];
-      const coversRow = partnerTrackingCoverageMatches;
-      const missingRows = partnerRows.filter((row) => !row.partnerTrackingUrlPresent && !coverage.some((link) =>
-        link.active && link.stage === "CANONICAL" && coversRow(link, row)));
-      const brokenRows = partnerRows.filter((row) => coverage.some((link) => link.stage === "BROKEN" && coversRow(link, row)));
-      const missingTasks = await tx.commercialTask.findMany({
-        where: { opportunityId: input.stage.target.partnerId, completedAt: null, title: { startsWith: "MISSING_TRACKING_ROUTE:" } },
-        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-      });
-      if (missingRows.length === 0) {
-        await tx.commercialTask.updateMany({ where: { id: { in: missingTasks.map((task) => task.id) } }, data: { completedAt: input.now } });
-      } else if (missingTasks[0]) {
-        await tx.commercialTask.update({
-          where: { id: missingTasks[0].id },
-          data: { title: `MISSING_TRACKING_ROUTE: ${missingRows.length} supported ${input.stage.target.partner} Partner × Casino × GEO rows remain without a healthy canonical route.` },
-        });
-      }
-      if (input.verification === "BROKEN" && input.stage.previousTrackingLinkIds.length === 0) {
-        const key = `${REGISTRATION_VERSION}:route-repair:${input.stage.linkHash}:${input.stage.scope}:${input.stage.geo ?? "GENERIC"}`;
-        await tx.commercialTask.upsert({
-          where: { opportunityId_idempotencyKey: { opportunityId: input.stage.target.partnerId, idempotencyKey: key } },
-          create: {
-            opportunityId: input.stage.target.partnerId,
-            type: "ACTIVATION",
-            title: `ROUTE_REPAIR: verified partner route for ${input.stage.target.casino} did not reach a healthy expected operator destination.`,
-            idempotencyKey: key,
-            createdBy: input.actorId,
-          },
-          update: { completedAt: null },
-        });
-      }
-      if (["HEALTHY", "ALREADY_REGISTERED"].includes(input.verification)) {
-        await tx.commercialTask.updateMany({
-          where: {
-            opportunityId: input.stage.target.partnerId,
-            completedAt: null,
-            idempotencyKey: { startsWith: `${REGISTRATION_VERSION}:route-repair:${input.stage.linkHash}:` },
-          },
-          data: { completedAt: input.now },
-        });
-      }
-      const openTasks = await tx.commercialTask.findMany({
-        where: { opportunityId: input.stage.target.partnerId, completedAt: null },
-        select: { title: true },
-      });
-      const states = [...new Set(openTasks.map((task) => task.title.split(":")[0]))];
-      await tx.commercialOpportunity.update({
-        where: { id: input.stage.target.partnerId },
-        data: {
-          nextActionSummary: states.length ? `ACTIVE; remaining current states: ${states.join(", ")}.` : "ACTIVE",
-          updatedBy: input.actorId,
-        },
-      });
-      const activityKey = `${REGISTRATION_VERSION}:${input.stage.scope}:${input.stage.geo ?? "GENERIC"}:${input.stage.linkHash}:${input.verification}`;
-      await tx.commercialActivity.upsert({
-        where: { opportunityId_idempotencyKey: { opportunityId: input.stage.target.partnerId, idempotencyKey: activityKey } },
-        create: {
-          opportunityId: input.stage.target.partnerId,
-          actorId: input.actorId,
-          actorKind: "PARTNER_OPERATIONS_AGENT",
-          type: "ACTIVATION_EVENT",
-          summary: `${input.stage.target.casino} ${input.stage.scope} tracking registration ${input.verification}`,
-          details: `linkHash=${input.stage.linkHash}; affectedGeoCount=${input.results.length}; active=${input.results.filter((row) => row.finalState === "ACTIVE_HEALTHY").length}; blocked=${input.results.filter((row) => row.finalState === "BLOCKED_BY_LAW").length}; regulatory=${input.results.filter((row) => row.finalState === "ACTION_REQUIRED_REGULATORY").length}; missing=${missingRows.length}; broken=${brokenRows.length}`,
-          reason: `${REGISTRATION_VERSION}; raw tracking URL excluded`,
-          occurredAt: input.now,
-          idempotencyKey: activityKey,
-        },
-        update: {},
-      });
-      await tx.auditLog.create({ data: {
+    const commercialAuthority = requireTrustedCommercialWriteAuthority(input.stage.commercialAuthority);
+    await this.database.auditLog.create({ data: {
         actorId: input.actorId,
         action: "commercial-partner-tracking-link-registered",
-        entityType: "commercial-opportunity",
-        entityId: input.stage.target.partnerId,
+        entityType: "partner-casino-relationship",
+        entityId: input.stage.partnerCasinoRelationshipId,
         summary: `${input.stage.target.partner} / ${input.stage.target.casino}: ${input.verification}`,
         metadata: json({
           version: REGISTRATION_VERSION,
-          source: "MCP_WORK",
-          oauthClientIdHash: sha256(input.clientId),
+          source: input.auditSource,
+          ...(input.correlationId ? { correlationIdHash: sha256(input.correlationId) } : {}),
           partnerId: input.stage.target.partnerId,
           casinoId: input.stage.target.casinoId,
+          partnerCasinoRelationshipId: input.stage.partnerCasinoRelationshipId,
+          relationshipDisposition: input.stage.relationshipDisposition,
+          commercialAuthority: {
+            kind: commercialAuthority.kind,
+            decisionRef: commercialAuthority.decisionRef,
+          },
           scope: input.stage.scope,
           geo: input.stage.geo,
           supportedGeos: input.stage.supportedGeos,
@@ -1305,7 +1227,6 @@ export class PartnerTrackingRegistrationRepository {
         }),
         timestamp: input.now,
       } });
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 10_000, timeout: 30_000 });
   }
 }
 

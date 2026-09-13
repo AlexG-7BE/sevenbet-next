@@ -9,9 +9,11 @@ import {
   type PartnerTrackingRegistrationResultRow,
 } from "@/lib/commercial/partner-tracking-registration-contract";
 import {
-  CURRENT_PARTNER_RECORDS,
-  resolveCurrentPartnerCandidates,
-} from "@/lib/current-partner-rollout/inventory";
+  commercialDecisionSourceReference,
+  requireTrustedCommercialWriteAuthority,
+  type TrustedCommercialWriteAuthority,
+} from "@/lib/commercial/commercial-write-authority";
+import { founderRouteVerificationEvidence } from "@/lib/commercial/founder-route-verification-evidence";
 import { jurisdictionResolver } from "@/lib/jurisdiction/resolver";
 import { exactSubdivisionCommercialAuthority } from "@/lib/jurisdiction/exact-market-authority";
 import { worldwideFounderGbAuthorityApplies } from "@/lib/current-partner-worldwide-authority/inventory";
@@ -22,12 +24,17 @@ import {
   type PartnerTrackingRegistrationRepository,
   type PartnerTrackingStage,
 } from "@/lib/repositories/partner-tracking-registration.repository";
-import { ConflictError, ServiceError, ValidationError } from "@/lib/services/service-error";
+import { ServiceError, ValidationError } from "@/lib/services/service-error";
 
-type RegistrationContext = { actorId: string; clientId: string };
+export type PartnerTrackingRegistrationContext = {
+  actorId: string;
+  auditSource: "COMMERCIAL_MCP" | "INTERNAL_APPLICATION";
+  correlationId?: string;
+  commercialAuthority: TrustedCommercialWriteAuthority | null;
+};
 
 type RegistrationRepositoryPort = Pick<PartnerTrackingRegistrationRepository,
-  "resolveTarget" | "stage" | "recordVerification" | "promote" | "finalizePromotion" | "rejectPromotion" | "reconcileAuditAndCrm">;
+  "resolveTarget" | "stage" | "recordVerification" | "promote" | "finalizePromotion" | "rejectPromotion" | "recordAudit">;
 
 type ActivationControllerPort = {
   activateCasinoInGeo(input: {
@@ -132,6 +139,7 @@ function registrationResponse(input: {
     partnerId: input.stage.target.partnerId,
     casino: input.stage.target.casino,
     casinoId: input.stage.target.casinoId,
+    partnerCasinoRelationshipId: input.stage.partnerCasinoRelationshipId,
     trackingScope: input.stage.scope,
     geo: input.stage.geo,
     supportedGeos: input.stage.supportedGeos,
@@ -202,18 +210,12 @@ export class PartnerTrackingRegistrationService {
     );
   }
 
-  async register(input: PartnerTrackingRegistrationInput, context: RegistrationContext, now = new Date()): Promise<PartnerTrackingRegistrationResult> {
-    const partnerCandidates = resolveCurrentPartnerCandidates(input.partner);
-    if (partnerCandidates.length === 0) {
-      throw new ValidationError("Partner cannot be resolved", { reason: "CURRENT_PARTNER_NOT_FOUND", candidates: [] });
-    }
-    if (partnerCandidates.length > 1) {
-      throw new ConflictError("Partner identity is ambiguous", {
-        reason: "CURRENT_PARTNER_AMBIGUOUS",
-        candidates: partnerCandidates.map((partner) => ({ id: partner.opportunityId, name: partner.name })),
-      });
-    }
-    const partner = CURRENT_PARTNER_RECORDS.find((record) => record.opportunityId === partnerCandidates[0].opportunityId)!;
+  async register(
+    input: PartnerTrackingRegistrationInput,
+    context: PartnerTrackingRegistrationContext,
+    now = new Date(),
+  ): Promise<PartnerTrackingRegistrationResult> {
+    const commercialAuthority = requireTrustedCommercialWriteAuthority(context.commercialAuthority);
     let geo: string | null;
     let supportedGeos: string[] | null;
     let requestedGeos: string[] | null;
@@ -223,21 +225,22 @@ export class PartnerTrackingRegistrationService {
       throw new ValidationError("GEO is invalid", { reason: "PARTNER_TRACKING_GEO_INVALID" });
     }
     const target = await this.repository.resolveTarget({
-      partner: partner.name,
-      partnerId: partner.opportunityId,
-      partnerAliases: partner.aliases,
+      partner: input.partner,
       casino: input.casino,
       requestedGeos,
     });
     const scope = geo ? "EXACT_GEO" : "GENERIC";
     const trackingUrl = safeTrackingUrl(input.trackingUrl);
-    try {
-      await this.publicUrlValidator(trackingUrl);
-    } catch (error) {
-      if (error instanceof Error && error.message === "UNSAFE_HEALTH_TARGET") {
-        throw new ValidationError("Tracking URL resolves to an unsafe network target", { reason: "PARTNER_TRACKING_URL_UNSAFE" });
+    const founderVerification = founderRouteVerificationEvidence(input);
+    if (!founderVerification) {
+      try {
+        await this.publicUrlValidator(trackingUrl);
+      } catch (error) {
+        if (error instanceof Error && error.message === "UNSAFE_HEALTH_TARGET") {
+          throw new ValidationError("Tracking URL resolves to an unsafe network target", { reason: "PARTNER_TRACKING_URL_UNSAFE" });
+        }
+        throw new ServiceError("Tracking URL safety validation is temporarily unavailable", "PARTNER_TRACKING_VERIFICATION_INCONCLUSIVE", 503, { retriable: true });
       }
-      throw new ServiceError("Tracking URL safety validation is temporarily unavailable", "PARTNER_TRACKING_VERIFICATION_INCONCLUSIVE", 503, { retriable: true });
     }
     const linkHash = partnerTrackingLinkHash(trackingUrl.href);
     const stage = await this.repository.stage({
@@ -248,24 +251,27 @@ export class PartnerTrackingRegistrationService {
       geo,
       supportedGeos,
       actorId: context.actorId,
+      commercialAuthority,
       now,
     });
     const restrictions = await this.operationalRestrictions(stage, now);
 
-    let verification: AffiliateRouteHttpCheck | null = null;
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
-      verification = await this.checker({
-        url: trackingUrl,
-        expectation: {
-          expectedFinalHost: stage.expectedFinalHost,
-          expectedPathPrefix: null,
-          requiredAttributionParameters: stage.requiredAttributionParameters,
-          allowWwwEquivalentFinalHost: true,
-        },
-        timeoutMs: 12_000,
-        inspectTerminalContent: true,
-      });
-      if (!transientVerification(verification)) break;
+    let verification: AffiliateRouteHttpCheck | null = founderVerification;
+    if (!verification) {
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        verification = await this.checker({
+          url: trackingUrl,
+          expectation: {
+            expectedFinalHost: stage.expectedFinalHost,
+            expectedPathPrefix: null,
+            requiredAttributionParameters: stage.requiredAttributionParameters,
+            allowWwwEquivalentFinalHost: true,
+          },
+          timeoutMs: 12_000,
+          inspectTerminalContent: true,
+        });
+        if (!transientVerification(verification)) break;
+      }
     }
     if (!verification) throw new Error("PARTNER_TRACKING_VERIFIER_NO_RESULT");
     const checkedAt = new Date();
@@ -285,13 +291,14 @@ export class PartnerTrackingRegistrationService {
 
     if (!healthy) {
       const results = preservedOrFailedRows(stage, inconclusive ? "INCONCLUSIVE" : "BROKEN", restrictions);
-      await this.repository.reconcileAuditAndCrm({
+      await this.repository.recordAudit({
         stage,
         verification: inconclusive ? "INCONCLUSIVE" : "BROKEN",
         previousTrackingLinkId: stage.previousTrackingLinkIds[0] ?? null,
         results,
         actorId: context.actorId,
-        clientId: context.clientId,
+        auditSource: context.auditSource,
+        correlationId: context.correlationId,
         now: checkedAt,
       });
       return registrationResponse({
@@ -345,8 +352,12 @@ export class PartnerTrackingRegistrationService {
         primaryTrackingLinkId: stage.trackingLinkId,
         actorId: context.actorId,
         origin: "ADMIN",
-        reason: `${REGISTRATION_VERSION}: verified partner-provided route for ${target.partner} / ${target.casino} / ${row.geo}.`,
-        sourceReferences: [...new Set([...row.evidenceReferences, `FOUNDER_SUPPLIED_PARTNER_URL:${linkHash}`])],
+        reason: `${REGISTRATION_VERSION}: verified canonical tracking command for ${target.partner} / ${target.casino} / ${row.geo}.`,
+        sourceReferences: [...new Set([
+          ...row.evidenceReferences,
+          commercialDecisionSourceReference(commercialAuthority),
+          `CANONICAL_TRACKING_REGISTRATION:${linkHash}`,
+        ])],
         idempotencyKey: `${REGISTRATION_VERSION}:${target.partnerId}:${target.casinoId}:${row.geo}:${linkHash}`,
       }, checkedAt, preverifiedRoute);
       attemptedActivationIds.set(row.geo, result.activation.id);
@@ -420,7 +431,11 @@ export class PartnerTrackingRegistrationService {
               actorId: context.actorId,
               origin: "ADMIN",
               reason: `${REGISTRATION_VERSION}: restore previous healthy route after candidate verification failure.`,
-              sourceReferences: [`${REGISTRATION_VERSION}:ROLLBACK`, `TRACKING_LINK:${previous.trackingLinkId}`],
+              sourceReferences: [
+                `${REGISTRATION_VERSION}:ROLLBACK`,
+                commercialDecisionSourceReference(commercialAuthority),
+                `TRACKING_LINK:${previous.trackingLinkId}`,
+              ],
               idempotencyKey: `${REGISTRATION_VERSION}:ROLLBACK:${target.casinoId}:${row.geo}:${linkHash}`,
             }, checkedAt);
             if (restored.activation.status !== "ACTIVE" || restored.activation.routeVerificationStatus !== "HEALTHY") {
@@ -461,13 +476,14 @@ export class PartnerTrackingRegistrationService {
           actorId: context.actorId,
         });
       }
-      await this.repository.reconcileAuditAndCrm({
+      await this.repository.recordAudit({
         stage,
         verification: "BROKEN",
         previousTrackingLinkId: promotion.previousTrackingLinkId,
         results: rollbackResults,
         actorId: context.actorId,
-        clientId: context.clientId,
+        auditSource: context.auditSource,
+        correlationId: context.correlationId,
         now: checkedAt,
       });
       return registrationResponse({
@@ -486,13 +502,14 @@ export class PartnerTrackingRegistrationService {
     }
 
     const auditVerification = stage.alreadyCanonical ? "ALREADY_REGISTERED" : "HEALTHY";
-    await this.repository.reconcileAuditAndCrm({
+    await this.repository.recordAudit({
       stage,
       verification: auditVerification,
       previousTrackingLinkId: promotion.previousTrackingLinkId,
       results,
       actorId: context.actorId,
-      clientId: context.clientId,
+      auditSource: context.auditSource,
+      correlationId: context.correlationId,
       now: checkedAt,
     });
     return registrationResponse({

@@ -1784,6 +1784,7 @@ model Casino {
   operatorProfile          CasinoOperator?                         @relation(fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   brandProfile             CasinoBrand?                            @relation(fields: [brandProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   commercialOpportunities  CommercialOpportunity[]
+  partnerRelationships     PartnerCasinoRelationship[]
   partnerMarketSupports    PartnerCasinoMarketSupport[]
   outboundClickDaily       AffiliateOutboundClickDaily[]
   analyticsEvents          AnalyticsEvent[]
@@ -2241,6 +2242,7 @@ model AffiliateNetwork {
 
   programs                AffiliateProgram[]
   commercialOpportunities CommercialOpportunity[]
+  casinoRelationships     PartnerCasinoRelationship[]
   partnerMarketSupports   PartnerCasinoMarketSupport[]
   analyticsEvents         AnalyticsEvent[]
   outboundClicks          OutboundClick[]
@@ -2669,13 +2671,38 @@ model MarketActivation {
   @@index([casinoBonusId])
 }
 
-/// Positive operator-market support asserted for one already-established
-/// Partner × Casino relationship. CasinoCountry remains factual availability,
-/// legal authority remains independent, and MarketActivation remains the only
-/// Production commercial authority.
+/// The canonical, CRM-independent fact that one persisted Partner identity has
+/// a commercial relationship with one Casino. A current relationship has no
+/// endedAt value. Relationship existence is not public CTA or route authority.
+model PartnerCasinoRelationship {
+  id          String    @id @default(uuid()) @db.Uuid
+  partnerId   String    @db.Uuid
+  casinoId    String    @db.Uuid
+  confirmedAt DateTime
+  endedAt     DateTime?
+  evidenceRef String?
+  createdBy   String
+  updatedBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  partner       AffiliateNetwork             @relation(fields: [partnerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casino        Casino                       @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  marketSupport PartnerCasinoMarketSupport[]
+
+  @@unique([partnerId, casinoId])
+  @@unique([id, partnerId, casinoId])
+  @@index([endedAt])
+}
+
+/// Non-authoritative Partner market-support evidence. It may inform operations
+/// but cannot grant or veto a route. New rows bind to the canonical Partner ×
+/// Casino relationship; opportunityId is retained only for historical CRM
+/// evidence and is never a registration prerequisite.
 model PartnerCasinoMarketSupport {
   id                      String                         @id @default(uuid()) @db.Uuid
-  opportunityId           String                         @db.Uuid
+  relationshipId          String?                        @db.Uuid
+  opportunityId           String?                        @db.Uuid
   affiliateNetworkId      String                         @db.Uuid
   casinoId                String                         @db.Uuid
   casinoCountryId         String                         @db.Uuid
@@ -2690,12 +2717,14 @@ model PartnerCasinoMarketSupport {
   createdAt               DateTime                       @default(now())
   updatedAt               DateTime                       @updatedAt
 
-  opportunity      CommercialOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  affiliateNetwork AffiliateNetwork      @relation(fields: [affiliateNetworkId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  casino           Casino                @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  marketProfile    CasinoCountry         @relation(fields: [casinoCountryId, casinoId, countryCode], references: [id, casinoId, countryCode], onDelete: Restrict, onUpdate: Cascade)
+  relationship     PartnerCasinoRelationship? @relation(fields: [relationshipId, affiliateNetworkId, casinoId], references: [id, partnerId, casinoId], onDelete: Restrict, onUpdate: Cascade)
+  opportunity      CommercialOpportunity?     @relation(fields: [opportunityId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateNetwork AffiliateNetwork           @relation(fields: [affiliateNetworkId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casino           Casino                     @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  marketProfile    CasinoCountry              @relation(fields: [casinoCountryId, casinoId, countryCode], references: [id, casinoId, countryCode], onDelete: Restrict, onUpdate: Cascade)
 
   @@unique([opportunityId, casinoId, marketCode])
+  @@unique([relationshipId, marketCode])
   @@index([affiliateNetworkId, casinoId, marketCode])
   @@index([casinoCountryId])
   @@index([marketCode, operatorMarketSupported])

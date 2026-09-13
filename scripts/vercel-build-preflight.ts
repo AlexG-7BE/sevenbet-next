@@ -26,6 +26,7 @@ const MARKET_ACTIVATION_EXACT_MARKET_MIGRATION = "0035_market_activation_exact_m
 const RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION = "0036_partner_casino_runtime_market_support";
 const CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION = "0037_customer_data_analytics_lifecycle_core";
 const COMMERCIAL_UX_ANALYTICS_MIGRATION = "0038_commercial_ux_analytics_events";
+const COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION = "0039_commercial_core_partner_relationship";
 
 type MigrationRow = {
   migration_name: string;
@@ -507,7 +508,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION, COMMERCIAL_UX_ANALYTICS_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION, COMMERCIAL_UX_ANALYTICS_MIGRATION, COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -518,6 +519,7 @@ async function maybeApplyProgrammeAccessMigration() {
   let runtimePartnerMarketSupportSchemaReady = false;
   let customerDataAnalyticsLifecycleSchemaReady = false;
   let commercialUxAnalyticsSchemaReady = false;
+  let commercialCorePartnerRelationshipSchemaReady = false;
   let mediaRetirementReady = false;
   try {
     const rows = await readMigrationRows(prisma);
@@ -556,6 +558,7 @@ async function maybeApplyProgrammeAccessMigration() {
       ...(!applied.has(RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION) ? [RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION] : []),
       ...(!applied.has(CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION) ? [CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION] : []),
       ...(!applied.has(COMMERCIAL_UX_ANALYTICS_MIGRATION) ? [COMMERCIAL_UX_ANALYTICS_MIGRATION] : []),
+      ...(!applied.has(COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION) ? [COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION] : []),
     ];
 
     if (
@@ -758,6 +761,48 @@ async function maybeApplyProgrammeAccessMigration() {
       await assertCommercialUxAnalyticsInvariants(prisma);
       commercialUxAnalyticsSchemaReady = true;
     }
+    if (applied.has(COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION)) {
+      assertChecksum(completedByName.get(COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION), COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION);
+      const [commercialCoreSchema] = await prisma.$queryRawUnsafe<Array<{
+        relationship_table: string | null;
+        relationship_unique: string | null;
+        support_relationship_unique: string | null;
+        relationship_binding: boolean;
+        optional_crm_link: boolean;
+      }>>(`
+        SELECT
+          to_regclass('public."PartnerCasinoRelationship"')::text AS relationship_table,
+          to_regclass('public."PartnerCasinoRelationship_partnerId_casinoId_key"')::text AS relationship_unique,
+          to_regclass('public."PartnerCasinoMarketSupport_relationshipId_marketCode_key"')::text AS support_relationship_unique,
+          EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'PartnerCasinoMarketSupport_relationship_fkey'
+          ) AS relationship_binding,
+          EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'PartnerCasinoMarketSupport'
+              AND column_name = 'opportunityId'
+              AND is_nullable = 'YES'
+          ) AS optional_crm_link
+      `);
+      commercialCorePartnerRelationshipSchemaReady = Boolean(
+        commercialCoreSchema?.relationship_table
+        && commercialCoreSchema.relationship_unique
+        && commercialCoreSchema.support_relationship_unique
+        && commercialCoreSchema.relationship_binding
+        && commercialCoreSchema.optional_crm_link,
+      );
+      if (!commercialCorePartnerRelationshipSchemaReady) {
+        throw new Error("Production migration guard found incomplete canonical Partner x Casino relationship schema.");
+      }
+      writeEvent({
+        event: "production_commercial_core_partner_relationship_preflight",
+        migration: COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION,
+        checksumMatched: true,
+        canonicalTableReady: true,
+      });
+    }
     if (applied.has(MEDIA_RETIREMENT_TARGET_MIGRATION)) {
       assertChecksum(completedByName.get(MEDIA_RETIREMENT_TARGET_MIGRATION), MEDIA_RETIREMENT_TARGET_MIGRATION);
       await assertMediaRetirementInvariants(prisma);
@@ -790,6 +835,10 @@ async function maybeApplyProgrammeAccessMigration() {
 
   if (!commercialUxAnalyticsSchemaReady) {
     throw new Error(`Production DB-first release requires completed ${COMMERCIAL_UX_ANALYTICS_MIGRATION} before this application build.`);
+  }
+
+  if (!commercialCorePartnerRelationshipSchemaReady) {
+    throw new Error(`Production DB-first release requires completed ${COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION} before this application build.`);
   }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();

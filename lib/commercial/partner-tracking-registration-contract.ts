@@ -82,6 +82,7 @@ export type PartnerTrackingRegistrationResult = {
   partnerId: string;
   casino: string;
   casinoId: string;
+  partnerCasinoRelationshipId: string;
   trackingScope: PartnerTrackingScope;
   geo: string | null;
   supportedGeos: string[] | null;

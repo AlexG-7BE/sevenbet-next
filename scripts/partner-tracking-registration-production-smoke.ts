@@ -7,6 +7,7 @@ import {
   CURRENT_PARTNER_RECORDS,
   normalizeCurrentPartnerIdentity,
 } from "@/lib/current-partner-rollout/inventory";
+import { ServiceError } from "@/lib/services/service-error";
 
 if (!process.env.DATABASE_URL && process.env.PRODDB_DATABASE_URL) {
   process.env.DATABASE_URL = process.env.PRODDB_DATABASE_URL;
@@ -158,84 +159,50 @@ async function runServiceSmoke(sha: string) {
   const tokenValues = [...new URL(rawTrackingUrl).searchParams.values()].filter((value) => value.length >= 4);
   const networkId = activation.primaryTrackingLink.offer.program.networkId;
   const before = await scopedCounts(activation.casinoId, networkId, activation.marketCode);
-  const result = await commercialMcpService.registerPartnerTrackingLink({
-    partner: "Betsson Group Affiliates",
-    casino: activation.casino.title,
-    trackingUrl: rawTrackingUrl,
-    geo: activation.marketCode,
-  }, { actorId: actor.id, clientId: "production-idempotent-smoke" });
-  const serialized = JSON.stringify(result);
-  if (serialized.includes(rawTrackingUrl) || tokenValues.some((value) => serialized.includes(value))) {
-    throw new Error("PRODUCTION_SMOKE_RESPONSE_LEAK");
+  const auditBefore = await prisma.auditLog.count({
+    where: { actorId: actor.id, action: "commercial-partner-tracking-link-registered" },
+  });
+  let denial: ServiceError | null = null;
+  try {
+    await commercialMcpService.registerPartnerTrackingLink({
+      partner: "Betsson Group Affiliates",
+      casino: activation.casino.title,
+      trackingUrl: rawTrackingUrl,
+      geo: activation.marketCode,
+    }, { actorId: actor.id, clientId: "production-authority-denial-smoke" });
+  } catch (error) {
+    if (error instanceof ServiceError) denial = error;
+    else throw error;
   }
-  if (result.status !== "NO_CHANGE" || result.verification !== "ALREADY_REGISTERED" || result.linkHash !== linkHash) {
-    const checkedLink = await prisma.affiliateTrackingLink.findUniqueOrThrow({
-      where: { id: result.trackingLinkId },
-      select: { metadata: true },
-    });
-    const registration = checkedLink.metadata && typeof checkedLink.metadata === "object" && !Array.isArray(checkedLink.metadata)
-      ? (checkedLink.metadata as Record<string, unknown>).partnerTrackingRegistration
-      : null;
-    const verification = registration && typeof registration === "object" && !Array.isArray(registration)
-      ? (registration as Record<string, unknown>).verification
-      : null;
-    const verificationFields = verification && typeof verification === "object" && !Array.isArray(verification)
-      ? verification as Record<string, unknown>
-      : {};
-    const boundedVerification = {
-      outcome: typeof verificationFields.outcome === "string" && /^[A-Z_]+$/.test(verificationFields.outcome) ? verificationFields.outcome : null,
-      reason: typeof verificationFields.reason === "string" && /^[A-Z0-9_]+$/.test(verificationFields.reason) ? verificationFields.reason : null,
-      finalHost: typeof verificationFields.finalHost === "string" && /^[a-z0-9.-]+$/i.test(verificationFields.finalHost) ? verificationFields.finalHost : null,
-      statusCode: typeof verificationFields.statusCode === "number" ? verificationFields.statusCode : null,
-      redirectCount: typeof verificationFields.redirectCount === "number" ? verificationFields.redirectCount : null,
-    };
-    throw new Error(`PRODUCTION_SMOKE_NOT_IDEMPOTENT:${JSON.stringify({
-      status: result.status,
-      verification: result.verification,
-      linkHashMatches: result.linkHash === linkHash,
-      finalHost: result.finalHost,
-      redirectCount: result.redirectCount,
-      boundedVerification,
-      affectedGeoCount: result.affectedGeoCount,
-      resultStates: result.results.map((row) => ({
-        geo: row.geo,
-        finalState: row.finalState,
-        routeHealth: row.routeHealth,
-      })),
-    })}`);
+  const denialReason = denial?.details && typeof denial.details === "object"
+    && "reason" in denial.details && typeof denial.details.reason === "string"
+    ? denial.details.reason
+    : null;
+  if (denial?.code !== "VALIDATION_ERROR" || denialReason !== "PARTNER_TRACKING_COMMERCIAL_AUTHORITY_REQUIRED") {
+    throw new Error("PRODUCTION_SMOKE_COMMERCIAL_AUTHORITY_NOT_DENIED");
   }
   const after = await scopedCounts(activation.casinoId, networkId, activation.marketCode);
-  if (JSON.stringify(before) !== JSON.stringify(after)) throw new Error("PRODUCTION_SMOKE_DUPLICATE_OBJECT_CREATED");
+  if (JSON.stringify(before) !== JSON.stringify(after)) throw new Error("PRODUCTION_SMOKE_AUTHORITY_DENIAL_MUTATED_OBJECTS");
   const current = await prisma.marketActivation.findUniqueOrThrow({ where: { id: activation.id } });
   if (current.status !== "ACTIVE" || current.routeVerificationStatus !== "HEALTHY" || current.primaryTrackingLinkId !== activation.primaryTrackingLinkId) {
     throw new Error("PRODUCTION_SMOKE_ACTIVATION_REGRESSION");
   }
-  const audit = await prisma.auditLog.findFirstOrThrow({
-    where: { action: "commercial-partner-tracking-link-registered", entityId: result.partnerId },
-    orderBy: { timestamp: "desc" },
+  const auditAfter = await prisma.auditLog.count({
+    where: { actorId: actor.id, action: "commercial-partner-tracking-link-registered" },
   });
-  const boundedAudit = JSON.stringify({ summary: audit.summary, metadata: audit.metadata });
-  if (boundedAudit.includes(rawTrackingUrl) || tokenValues.some((value) => boundedAudit.includes(value))) {
-    throw new Error("PRODUCTION_SMOKE_AUDIT_LEAK");
-  }
+  if (auditAfter !== auditBefore) throw new Error("PRODUCTION_SMOKE_AUTHORITY_DENIAL_CREATED_AUDIT");
+  const serialized = JSON.stringify({ code: denial.code, reason: denialReason });
+  if (serialized.includes(rawTrackingUrl) || tokenValues.some((value) => serialized.includes(value))) throw new Error("PRODUCTION_SMOKE_RESPONSE_LEAK");
   return {
     sha,
-    status: result.status,
-    partner: result.partner,
-    casino: result.casino,
-    scope: result.trackingScope,
-    geo: result.geo,
-    linkHash: result.linkHash,
-    verification: result.verification,
-    finalHost: result.finalHost,
-    redirectCount: result.redirectCount,
-    marketActivationId: result.results[0]?.marketActivationId ?? null,
+    status: "DENIED_BEFORE_COMMERCIAL_MUTATION",
+    reason: denialReason,
+    linkHash,
     marketActivationStatus: current.status,
     routeHealth: current.routeVerificationStatus,
-    internalRedirect: result.internalRedirect,
-    duplicateObjectCheck: before,
+    unchangedObjectCheck: before,
+    auditRowsCreated: 0,
     responseLeak: false,
-    auditLeak: false,
   };
 }
 
@@ -313,7 +280,7 @@ async function runLiveSchemaSmoke(sha: string) {
     const tool = tools.find((entry) => entry.name === "commercial_register_partner_tracking_link");
     if (!tool) throw new Error("PRODUCTION_MCP_TOOL_MISSING");
     const properties = Object.keys(tool.inputSchema.properties ?? {}).sort();
-    if (JSON.stringify(properties) !== JSON.stringify(["casino", "geo", "partner", "trackingUrl"])) throw new Error("PRODUCTION_MCP_SCHEMA_PROPERTIES_MISMATCH");
+    if (JSON.stringify(properties) !== JSON.stringify(["casino", "geo", "partner", "supportedGeos", "trackingUrl"])) throw new Error("PRODUCTION_MCP_SCHEMA_PROPERTIES_MISMATCH");
     if (JSON.stringify(tool.inputSchema.required) !== JSON.stringify(["partner", "casino", "trackingUrl"])) throw new Error("PRODUCTION_MCP_SCHEMA_REQUIRED_MISMATCH");
     if (tool.inputSchema.additionalProperties !== false) throw new Error("PRODUCTION_MCP_SCHEMA_NOT_STRICT");
     return {
@@ -322,7 +289,7 @@ async function runLiveSchemaSmoke(sha: string) {
       toolCount: tools.length,
       tool: tool.name,
       required: tool.inputSchema.required,
-      optional: ["geo"],
+      optional: ["geo", "supportedGeos"],
       properties,
       strict: true,
       ephemeralAuthorizationFixtureRemoved: true,
@@ -355,11 +322,9 @@ async function main() {
 }
 
 main().finally(async () => { if (prisma) await prisma.$disconnect(); }).catch((error) => {
-  const boundedIdempotencyDiagnostic = error instanceof Error
-    && error.message.startsWith("PRODUCTION_SMOKE_NOT_IDEMPOTENT:");
-  const code = boundedIdempotencyDiagnostic ? error.message
-    : error instanceof Error && /^[A-Z0-9_]+$/.test(error.message) ? error.message
-      : "PRODUCTION_SMOKE_FAILED";
+  const code = error instanceof Error && /^[A-Z0-9_]+$/.test(error.message)
+    ? error.message
+    : "PRODUCTION_SMOKE_FAILED";
   process.stderr.write(`${code}\n`);
   process.exitCode = 1;
 });

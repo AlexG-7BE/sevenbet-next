@@ -7,7 +7,9 @@ import {
   normalizePartnerTrackingMarkets,
   partnerTrackingLinkHash,
 } from "../lib/commercial/partner-tracking-registration-contract";
+import { establishTrustedCommercialWriteAuthority } from "../lib/commercial/commercial-write-authority";
 import { PartnerTrackingRegistrationService } from "../lib/commercial/partner-tracking-registration-service";
+import { founderRouteVerificationEvidence } from "../lib/commercial/founder-route-verification-evidence";
 import {
   CURRENT_PARTNER_INVENTORY,
   CURRENT_PARTNER_RECORDS,
@@ -15,6 +17,7 @@ import {
 } from "../lib/current-partner-rollout/inventory";
 import { selectActivationTrackingCandidate } from "../lib/market-activation/repository";
 import {
+  PartnerTrackingRegistrationRepository,
   partnerTrackingCoverageMatches,
   partnerTrackingScopeMatches,
   type PartnerTrackingMarketRow,
@@ -24,7 +27,17 @@ import { ConflictError, ValidationError } from "../lib/services/service-error";
 
 const sensitiveUrl = "https://tracker.invalid/click?token=super-secret-value&campaign=fixture";
 const now = new Date("2026-09-10T12:00:00.000Z");
-const context = { actorId: "00000000-0000-4000-8000-000000000001", clientId: "fixture-client" };
+const commercialAuthority = establishTrustedCommercialWriteAuthority({
+  kind: "FOUNDER_DELEGATED",
+  decisionRef: "FOUNDER_DECISION:PARTNER-TRACKING-UNIT-001",
+});
+const context = {
+  actorId: "00000000-0000-4000-8000-000000000001",
+  auditSource: "INTERNAL_APPLICATION" as const,
+  correlationId: "fixture-command",
+  commercialAuthority,
+};
+const mcpContext = { ...context, auditSource: "COMMERCIAL_MCP" as const, commercialAuthority: null };
 
 function row(geo: string, legalState: CurrentPartnerInventorySeed["legalState"]): PartnerTrackingMarketRow {
   return {
@@ -49,7 +62,7 @@ function row(geo: string, legalState: CurrentPartnerInventorySeed["legalState"])
 
 const target = {
   partner: "Super Partners" as const,
-  partnerId: "26981381-f765-4947-92c9-4f81691fc354",
+  partnerId: "00000000-0000-4000-8000-000000000010",
   affiliateNetworkId: "00000000-0000-4000-8000-000000000010",
   casino: "Betway",
   casinoId: "00000000-0000-4000-8000-000000000011",
@@ -63,6 +76,9 @@ const target = {
 function stage(overrides: Partial<PartnerTrackingStage> = {}): PartnerTrackingStage {
   return {
     target,
+    partnerCasinoRelationshipId: "00000000-0000-4000-8000-000000000016",
+    relationshipDisposition: "CREATED",
+    commercialAuthority,
     scope: "GENERIC",
     geo: null,
     linkHash: partnerTrackingLinkHash(sensitiveUrl),
@@ -114,6 +130,7 @@ function harness(options: {
   jurisdictionAllowed?: boolean;
 } = {}) {
   const calls = {
+    resolve: 0,
     stage: 0,
     stageScopes: [] as PartnerTrackingStage["scope"][],
     stageGeos: [] as Array<string | null>,
@@ -123,6 +140,7 @@ function harness(options: {
     reject: 0,
     audit: 0,
     activate: [] as string[],
+    activationSourceReferences: [] as string[][],
     preverified: [] as Array<{ status: string; finalHost: string | null }>,
     checks: 0,
   };
@@ -130,7 +148,7 @@ function harness(options: {
   const staged = options.staged ?? stage();
   const checks = options.checks ?? [healthyCheck()];
   const repository = {
-    async resolveTarget() { if (options.resolutionError) throw options.resolutionError; return resolvedTarget; },
+    async resolveTarget() { calls.resolve += 1; if (options.resolutionError) throw options.resolutionError; return resolvedTarget; },
     async stage(input: { scope: PartnerTrackingStage["scope"]; geo: string | null }) {
       calls.stage += 1;
       calls.stageScopes.push(input.scope);
@@ -144,16 +162,17 @@ function harness(options: {
     },
     async finalizePromotion() { calls.finalize += 1; },
     async rejectPromotion() { calls.reject += 1; },
-    async reconcileAuditAndCrm() { calls.audit += 1; },
+    async recordAudit() { calls.audit += 1; },
   };
   const checker = async () => checks[Math.min(calls.checks++, checks.length - 1)];
   const activation = {
     async activateCasinoInGeo(
-      input: { countryCode: string },
+      input: { countryCode: string; sourceReferences: string[] },
       _checkedAt?: Date,
       preverified?: { status: string; finalHost: string | null },
     ) {
       calls.activate.push(input.countryCode);
+      calls.activationSourceReferences.push(input.sourceReferences);
       if (preverified) calls.preverified.push(preverified);
       return { activation: {
         id: `activation-${input.countryCode}`,
@@ -192,6 +211,18 @@ test("public input schema keeps three required fields and adds mutually exclusiv
   assert.equal(json.additionalProperties, false);
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }).success, true);
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl, routeId: "forbidden" }).success, false);
+  assert.equal(PartnerTrackingRegistrationSchema.safeParse({
+    partner: "Super Partners",
+    casino: "Betway",
+    trackingUrl: sensitiveUrl,
+    commercialAuthority: { kind: "FOUNDER_DIRECT", decisionRef: "forged" },
+  }).success, false);
+  assert.equal(PartnerTrackingRegistrationSchema.safeParse({
+    partner: "Super Partners",
+    casino: "Betway",
+    trackingUrl: sensitiveUrl,
+    founderApproved: true,
+  }).success, false);
   assert.equal(normalizePartnerTrackingGeo("ar_c"), "AR-C");
   assert.deepEqual(normalizePartnerTrackingMarkets({ supportedGeos: ["nl", "PT", "nl"] }), {
     geo: null,
@@ -202,6 +233,131 @@ test("public input schema keeps three required fields and adds mutually exclusiv
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl, geo: "ZZ" }).success, false);
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl, geo: "US-NOTREAL" }).success, false);
   assert.equal(PartnerTrackingRegistrationSchema.safeParse({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl, supportedGeos: Array.from({ length: 101 }, () => "NL") }).success, false);
+  assert.equal(founderRouteVerificationEvidence({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }), null);
+});
+
+test("normal MCP execution permission cannot manufacture trusted Founder commercial authority", async () => {
+  const { service, calls } = harness();
+  await assert.rejects(
+    () => service.register({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }, mcpContext, now),
+    (error: unknown) => error instanceof ValidationError
+      && (error.details as { reason?: string }).reason === "PARTNER_TRACKING_COMMERCIAL_AUTHORITY_REQUIRED",
+  );
+  assert.equal(calls.resolve, 0);
+  assert.equal(calls.stage, 0);
+  assert.equal(calls.verification, 0);
+  assert.equal(calls.promote, 0);
+  assert.equal(calls.audit, 0);
+  assert.deepEqual(calls.activate, []);
+  assert.equal(calls.checks, 0);
+});
+
+test("a plain object cannot forge the process-local trusted authority capability", async () => {
+  const { service, calls } = harness();
+  await assert.rejects(
+    () => service.register(
+      { partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl },
+      {
+        ...context,
+        commercialAuthority: {
+          kind: "FOUNDER_DIRECT",
+          decisionRef: "FOUNDER_DECISION:FORGED-PUBLIC-INPUT",
+        } as never,
+      },
+      now,
+    ),
+    (error: unknown) => error instanceof ValidationError
+      && (error.details as { reason?: string }).reason === "PARTNER_TRACKING_COMMERCIAL_AUTHORITY_UNTRUSTED",
+  );
+  assert.equal(calls.resolve, 0);
+  assert.equal(calls.stage, 0);
+  assert.equal(calls.checks, 0);
+  assert.deepEqual(calls.activate, []);
+});
+
+test("persisted Partner and Casino identity resolve without CRM or static inventory membership", async () => {
+  const queries: unknown[] = [];
+  const repository = new PartnerTrackingRegistrationRepository({
+    affiliateNetwork: {
+      async findMany() {
+        return [{ id: "partner-custom", name: "Independent Partner", slug: "independent-partner" }];
+      },
+    },
+    casino: {
+      async findMany() {
+        return [{
+          id: "casino-custom",
+          title: "Independent Casino",
+          slug: "independent-casino",
+          domain: "independent.example",
+          websiteUrl: "https://independent.example/",
+          aliases: [],
+        }];
+      },
+    },
+    partnerCasinoMarketSupport: {
+      async findMany(query: unknown) {
+        queries.push(query);
+        return [];
+      },
+    },
+  } as never);
+
+  const resolved = await repository.resolveTarget({
+    partner: "Independent Partner",
+    casino: "Independent Casino",
+    requestedGeos: ["PT"],
+  });
+  assert.equal(resolved.partnerId, "partner-custom");
+  assert.equal(resolved.affiliateNetworkId, "partner-custom");
+  assert.equal(resolved.casinoId, "casino-custom");
+  assert.deepEqual(resolved.rows.map((entry) => [entry.geo, entry.supportOrigin]), [["PT", "RUNTIME"]]);
+  assert.equal(queries.length, 1);
+});
+
+test("repository identity resolution fails closed for ambiguous Partner and Casino records", async () => {
+  const casino = {
+    id: "casino-one",
+    title: "Collision Casino",
+    slug: "collision-casino-one",
+    domain: "one.example",
+    websiteUrl: null,
+    aliases: [],
+  };
+  const ambiguousPartnerRepository = new PartnerTrackingRegistrationRepository({
+    affiliateNetwork: {
+      async findMany() {
+        return [
+          { id: "partner-superfly", name: "Superfly Partners / White Hat Gaming", slug: "superfly-partners" },
+          { id: "partner-super", name: "Super Partners", slug: "super-partners" },
+        ];
+      },
+    },
+    casino: { async findMany() { return [casino]; } },
+    partnerCasinoMarketSupport: { async findMany() { return []; } },
+  } as never);
+  await assert.rejects(
+    () => ambiguousPartnerRepository.resolveTarget({ partner: "Super", casino: casino.title, requestedGeos: ["PT"] }),
+    /ambiguous/i,
+  );
+
+  const ambiguousCasinoRepository = new PartnerTrackingRegistrationRepository({
+    affiliateNetwork: {
+      async findMany() {
+        return [{ id: "partner-one", name: "Independent Partner", slug: "independent-partner" }];
+      },
+    },
+    casino: {
+      async findMany() {
+        return [casino, { ...casino, id: "casino-two", slug: "collision-casino-two", domain: "two.example" }];
+      },
+    },
+    partnerCasinoMarketSupport: { async findMany() { return []; } },
+  } as never);
+  await assert.rejects(
+    () => ambiguousCasinoRepository.resolveTarget({ partner: "Independent Partner", casino: casino.title, requestedGeos: ["PT"] }),
+    /ambiguous/i,
+  );
 });
 
 test("generic healthy registration activates allowed GEOs and preserves legal/regulatory rows", async () => {
@@ -219,9 +375,13 @@ test("generic healthy registration activates allowed GEOs and preserves legal/re
   assert.equal(JSON.stringify(result).includes(sensitiveUrl), false);
   assert.equal(JSON.stringify(result).includes("super-secret-value"), false);
   assert.equal(result.linkHash, partnerTrackingLinkHash(sensitiveUrl));
+  assert.equal(result.partnerCasinoRelationshipId, "00000000-0000-4000-8000-000000000016");
   assert.equal(calls.promote, 1);
   assert.equal(calls.finalize, 1);
   assert.equal(calls.audit, 1);
+  assert.ok(calls.activationSourceReferences[0]?.includes(`DECISION_REF:${commercialAuthority.decisionRef}`));
+  assert.ok(calls.activationSourceReferences[0]?.includes(`CANONICAL_TRACKING_REGISTRATION:${partnerTrackingLinkHash(sensitiveUrl)}`));
+  assert.doesNotMatch(JSON.stringify(calls.activationSourceReferences), /FOUNDER_(?:AUTHORIZED|SUPPLIED)/);
 });
 
 test("generic URL plus supportedGeos deduplicates markets, verifies once, and returns per-GEO support outcomes", async () => {
@@ -357,17 +517,21 @@ test("an exact runtime-added GEO remains exact and does not broaden route scope"
   assert.deepEqual(calls.activate, ["US"]);
 });
 
-test("ambiguous partner alias and unknown partner fail before mutation", async () => {
-  const { service, calls } = harness();
-  await assert.rejects(() => service.register({ partner: "Super", casino: "Betway", trackingUrl: sensitiveUrl }, context, now), /ambiguous/i);
-  await assert.rejects(() => service.register({ partner: "Unknown Partner", casino: "Betway", trackingUrl: sensitiveUrl }, context, now), /cannot be resolved/i);
-  assert.equal(calls.stage, 0);
+test("ambiguous and unknown Partner identity fail before mutation", async () => {
+  for (const resolutionError of [
+    new ConflictError("Partner identity is ambiguous", { reason: "PARTNER_AMBIGUOUS" }),
+    new ValidationError("Partner cannot be resolved", { reason: "PARTNER_NOT_FOUND" }),
+  ]) {
+    const { service, calls } = harness({ resolutionError });
+    await assert.rejects(() => service.register({ partner: "Unresolved Partner", casino: "Betway", trackingUrl: sensitiveUrl }, context, now));
+    assert.equal(calls.stage, 0);
+  }
 });
 
-test("unknown casino and Partner × Casino mismatch fail before mutation", async () => {
+test("unknown and ambiguous Casino identity fail before mutation", async () => {
   for (const resolutionError of [
     new ValidationError("Casino cannot be resolved", { reason: "CASINO_NOT_FOUND", candidates: [] }),
-    new ConflictError("Casino is not associated with the supplied current partner", { reason: "PARTNER_CASINO_RELATIONSHIP_MISMATCH" }),
+    new ConflictError("Casino identity is ambiguous", { reason: "CASINO_AMBIGUOUS" }),
   ]) {
     const { service, calls } = harness({ resolutionError });
     await assert.rejects(() => service.register({ partner: "Super Partners", casino: "Unknown Casino", trackingUrl: sensitiveUrl }, context, now));
@@ -457,7 +621,7 @@ test("RFC-042 route failure rejects a promoted replacement and restores the prio
     async promote() { return { ...replacement, previousTrackingLinkId: "old-link" }; },
     async finalizePromotion() { calls.finalize += 1; },
     async rejectPromotion() { calls.reject += 1; },
-    async reconcileAuditAndCrm() {},
+    async recordAudit() {},
   };
   const activation = {
     async activateCasinoInGeo(input: { primaryTrackingLinkId: string }) {

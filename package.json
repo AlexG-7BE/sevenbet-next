@@ -144,7 +144,7 @@
     "gb-market:test": "node --import tsx --test tests/gb-market-authority.test.ts tests/jurisdiction-resolver.test.ts tests/affiliate-redirect-engine.test.ts tests/public-casino-discovery.test.ts tests/public-casino-rendering.test.ts tests/public-casino-service.test.ts tests/public-offer-service.test.ts tests/public-comparison.test.ts tests/public-comparison-render.test.tsx",
     "comm-01:test": "node --import tsx --test tests/gb-commercial-readiness.test.ts tests/gb-market-authority.test.ts tests/affiliate-integration-framework.test.ts tests/affiliate-redirect-engine.test.ts",
     "commercial-ops:test": "node --import tsx --test tests/commercial-ops.test.ts",
-    "mcp-bridge:test": "node --import tsx --test tests/commercial-mcp-contract.test.ts tests/commercial-mcp-auth.test.ts tests/commercial-mcp-protocol.test.ts tests/commercial-mcp-structural.test.ts tests/partner-tracking-registration.test.ts tests/partner-tracking-runtime-market-support.test.ts",
+    "mcp-bridge:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/commercial-mcp-contract.test.ts tests/commercial-mcp-auth.test.ts tests/commercial-mcp-protocol.test.ts tests/commercial-mcp-structural.test.ts tests/partner-tracking-registration.test.ts tests/partner-tracking-runtime-market-support.test.ts",
     "affiliate-integration:test": "node --import tsx --test tests/affiliate-integration-framework.test.ts",
     "commercial-activation": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/commercial-activation.ts",
     "commercial:activation:validate": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/commercial-activation.ts validate --bundle",
