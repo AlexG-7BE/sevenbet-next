@@ -53,7 +53,8 @@ catalog republication/timestamp reconciliation. The same build chain also
 contained the write-capable GoldenPlay metadata repair, which was already
 current and did not write during this release. The bounded remediation branch
 removes both writers, changes catalog/logo checks to explicit read-only
-verification, and adds all-table disposable-PostgreSQL digest proof. The
+Production verification that skips isolated Preview data, and adds all-table
+disposable-PostgreSQL digest proof. The
 historical rows are retained. No remediation deployment or Production mutation
 is authorised while its PR remains under review.
 

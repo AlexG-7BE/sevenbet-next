@@ -5,10 +5,10 @@ const RELEASE = "LOGO-ONLY-MEDIA-RETIREMENT-01";
 
 async function verifyLogoOnlyMediaState() {
   const mode = process.argv[2] ?? "build-preflight";
-  if (!["build-preflight", "verify"].includes(mode)) {
-    throw new Error(`${RELEASE}: use build-preflight or verify`);
+  if (!["build-preflight", "production-verify", "verify"].includes(mode)) {
+    throw new Error(`${RELEASE}: use build-preflight, production-verify or verify`);
   }
-  if (mode === "build-preflight" && process.env.VERCEL_ENV !== "production") {
+  if (["build-preflight", "production-verify"].includes(mode) && process.env.VERCEL_ENV !== "production") {
     console.info(JSON.stringify({ release: RELEASE, skipped: true, reason: "non-production" }));
     return;
   }

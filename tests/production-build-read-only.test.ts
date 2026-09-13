@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
@@ -13,8 +14,8 @@ test("canonical Vercel build is an explicit read-only compatibility gate", () =>
   const vercel = JSON.parse(read("vercel.json")) as { buildCommand: string };
   assert.deepEqual(vercel.buildCommand.split(" && "), [
     "tsx scripts/vercel-build-preflight.ts",
-    "tsx scripts/logo-only-media-build-preflight.ts verify",
-    "tsx scripts/casino-real-catalog-03.ts verify",
+    "tsx scripts/logo-only-media-build-preflight.ts production-verify",
+    "tsx scripts/casino-real-catalog-03.ts production-verify",
     "next build",
   ]);
 
@@ -22,6 +23,35 @@ test("canonical Vercel build is an explicit read-only compatibility gate", () =>
   assert.doesNotMatch(vercel.buildCommand, /casino-real-catalog-03\.ts build-preflight/);
   assert.doesNotMatch(vercel.buildCommand, /\b(?:reconcile|repair|seed|ingest|publish)\b/i);
   assert.doesNotMatch(vercel.buildCommand, /prisma\s+migrate\s+deploy/i);
+});
+
+test("Production verifiers skip isolated Preview data but execute in Production", () => {
+  const catalog = read("scripts/casino-real-catalog-03.ts");
+  const logo = read("scripts/logo-only-media-build-preflight.ts");
+  for (const source of [catalog, logo]) {
+    assert.match(source, /"production-verify"/);
+    assert.match(source, /process\.env\.VERCEL_ENV !== "production"/);
+  }
+  assert.match(catalog, /mode === "build-preflight" \|\| mode === "production-verify"/);
+  assert.match(logo, /\["build-preflight", "production-verify"\]\.includes\(mode\)/);
+
+  for (const script of [
+    "scripts/logo-only-media-build-preflight.ts",
+    "scripts/casino-real-catalog-03.ts",
+  ]) {
+    const result = spawnSync(process.execPath, ["--import", "tsx", script, "production-verify"], {
+      cwd: root,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        VERCEL_ENV: "preview",
+        DATABASE_URL: "postgresql://invalid:invalid@127.0.0.1:1/invalid",
+        DIRECT_URL: "postgresql://invalid:invalid@127.0.0.1:1/invalid",
+      },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /"skipped":true/);
+  }
 });
 
 test("catalog and logo build verification are PostgreSQL-enforced read-only paths", () => {

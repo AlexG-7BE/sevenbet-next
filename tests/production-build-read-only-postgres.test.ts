@@ -137,8 +137,8 @@ test("Production-mode catalog and logo verifiers leave every application table b
       assert.ok(before[requiredTable], `${requiredTable} must be covered by the digest proof`);
     }
 
-    const logoOutput = runScript("scripts/logo-only-media-build-preflight.ts", "verify");
-    const catalogOutput = runScript("scripts/casino-real-catalog-03.ts", "verify");
+    const logoOutput = runScript("scripts/logo-only-media-build-preflight.ts", "production-verify");
+    const catalogOutput = runScript("scripts/casino-real-catalog-03.ts", "production-verify");
     assert.match(logoOutput, /"verified":true/);
     assert.match(catalogOutput, /"verified": true/);
 
@@ -147,7 +147,7 @@ test("Production-mode catalog and logo verifiers leave every application table b
 
     await prisma.casino.delete({ where: { slug: "inkabet" } });
     const incompatibleBefore = await applicationTableDigests(prisma);
-    const failedVerification = executeScript("scripts/casino-real-catalog-03.ts", "verify");
+    const failedVerification = executeScript("scripts/casino-real-catalog-03.ts", "production-verify");
     assert.notEqual(failedVerification.status, 0);
     assert.match(failedVerification.stderr, /CASINO-REAL-CATALOG-03: inkabet missing after release/);
     assert.deepEqual(await applicationTableDigests(prisma), incompatibleBefore);

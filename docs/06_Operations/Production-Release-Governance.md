@@ -42,8 +42,8 @@ The canonical build-side-effect classification is:
 | --- | --- |
 | `prisma generate` during dependency install | Writes generated build files only; no database connection or business mutation |
 | `scripts/vercel-build-preflight.ts` | Reads environment, repository migration files, migration/schema/business invariants; its Production queries and optional historical commercial audit are PostgreSQL-enforced read-only |
-| `scripts/logo-only-media-build-preflight.ts verify` | Reads published-logo and retired-media authority state in a PostgreSQL read-only transaction |
-| `scripts/casino-real-catalog-03.ts verify` | Reads six governed catalog publications, scores, market facts, snapshots, safe offers and protected authority state in a PostgreSQL read-only transaction |
+| `scripts/logo-only-media-build-preflight.ts production-verify` | Skips isolated Preview data; in Production, reads published-logo and retired-media authority state in a PostgreSQL read-only transaction |
+| `scripts/casino-real-catalog-03.ts production-verify` | Skips isolated Preview data; in Production, reads six governed catalog publications, scores, market facts, snapshots, safe offers and protected authority state in a PostgreSQL read-only transaction |
 | `next build` | Writes application build artefacts; database-backed application routes remain dynamic and no business-data mutation is authorised |
 
 Do not add reconciliation, repair, seed, ingestion, publication, activation or
@@ -63,7 +63,7 @@ already current and it performed no write in that deployment. Commercial
 routes and PR2 authority state were unchanged.
 
 The remediation removes both writers from the build, uses explicit catalog and
-logo `verify` modes, and retains all historical revision/publication/audit rows
+logo `production-verify` modes, and retains all historical revision/publication/audit rows
 as truthful evidence. It does not authorise cleanup or rewriting of that
 history. Until the remediation PR is reviewed, merged and deployed, treat the
 current canonical Production build configuration as an open release-control

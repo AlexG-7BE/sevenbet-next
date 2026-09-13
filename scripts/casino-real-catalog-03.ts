@@ -456,9 +456,11 @@ async function verifyState(corpus: CatalogCorpus) {
 
 async function main() {
   const mode = process.argv[2];
-  if (mode !== "build-preflight" && mode !== "verify") throw new Error(`${RELEASE}: use build-preflight or verify`);
+  if (mode !== "build-preflight" && mode !== "production-verify" && mode !== "verify") {
+    throw new Error(`${RELEASE}: use build-preflight, production-verify or verify`);
+  }
   const corpus = await loadCorpus();
-  if (mode === "build-preflight" && process.env.VERCEL_ENV !== "production") {
+  if ((mode === "build-preflight" || mode === "production-verify") && process.env.VERCEL_ENV !== "production") {
     console.info(JSON.stringify({ release: RELEASE, skipped: true, reason: "non-production" }));
     return;
   }
