@@ -17,14 +17,15 @@ import type {
 import type { PublicComparisonResult } from "@/lib/public-comparison/public-comparison.types";
 import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
 import type { LearningArticle } from "@/lib/learning-center";
-import { temporaryDemoBestOffers } from "@/lib/demo-data/temporary-demo-best-offers";
-import { temporaryDemoCasinoIds } from "@/lib/demo-data/temporary-demo-authority";
 import { demoProfileCopy } from "@/lib/i18n/demo-profile-catalog";
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { visualFixtureCopy } from "@/lib/i18n/visual-fixture-catalog";
 import { MARKET_PROFILES, type SupportedLocale } from "@/lib/market/registry";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import type { MediaPlacementName, MediaPlacementVariantName } from "@/lib/media/placement-media";
+import { publicCasinoToOffers } from "@/lib/public-offer/public-offer.mapper";
+
+const visualCasinoIds = Array.from({ length: 25 }, (_, index) => `visual-casino-fixture-${String(index + 1).padStart(2, "0")}`);
 
 /**
  * Enables deterministic data for local reference comparison. This flag may only
@@ -367,6 +368,86 @@ function adaptiveCreativePlacement(placement: MediaPlacementName, index: number)
   };
 }
 
+function baseVisualCasinoProfile(slug: string): PublicCasinoDTO {
+  const bonus: PublicCasinoDTO["bonuses"][number] = {
+    id: "visual-profile-bonus",
+    slug: "visual-profile-bonus",
+    title: "Visual offer fixture",
+    summary: "Non-actionable visual QA fixture.",
+    type: "WELCOME",
+    percentage: 100,
+    minimumDeposit: 20,
+    maximumBonus: 500,
+    maximumBet: 5,
+    currency: "EUR",
+    freeSpins: 200,
+    wageringMultiplier: 35,
+    wageringText: "35× wagering",
+    eligibility: "Visual QA only.",
+    importantConditions: ["Not a live offer"],
+    termsUrl: null,
+    startsAt: null,
+    expiresAt: null,
+  };
+  return {
+    dataClassification: "DEMO_FIXTURE",
+    source: "legacy",
+    id: visualCasinoIds[0],
+    slug,
+    name: "B4GAMBLE visual fixture",
+    title: "B4GAMBLE visual fixture",
+    domain: "example.invalid",
+    summary: "Non-actionable, environment-gated visual QA fixture.",
+    reviewContent: "Visual QA fixture content.",
+    operator: null,
+    foundedYear: null,
+    editorScore: 9.6,
+    trustScore: null,
+    featured: false,
+    recommended: false,
+    publishedAt: null,
+    lastReviewedAt: null,
+    version: 1,
+    languages: ["en-GB"],
+    currencies: ["EUR"],
+    pros: [],
+    cons: [],
+    responsibleGamblingTools: [],
+    seo: {
+      title: "B4GAMBLE visual fixture",
+      description: "Non-actionable visual QA fixture.",
+      canonical: `/casino/${slug}`,
+      robots: "noindex,nofollow",
+      socialTitle: "B4GAMBLE visual fixture",
+      socialDescription: "Non-actionable visual QA fixture.",
+      socialImage: null,
+      structuredData: null,
+    },
+    licenses: [],
+    countries: [],
+    payments: [],
+    providers: [],
+    categories: [],
+    bonuses: [bonus],
+    offerPresentation: {
+      selectedOffer: bonus,
+      relation: "EXACT",
+      sourceCountryCode: null,
+      presentationCountryCode: null,
+      currentMarketVerified: false,
+    },
+    marketProfiles: [],
+    media: { logo: null, hero: null, screenshots: [], gallery: [], socialImage: null },
+    action: null,
+  };
+}
+
+const visualOfferSeed = publicCasinoToOffers(baseVisualCasinoProfile("visual-offer-seed"))[0]!;
+
+export function visualCasinoProfileFixture(slug: string) {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ? baseVisualCasinoProfile(slug) : null;
+}
+
 function handoffOffer(
   seed: PublicOfferDTO,
   index: number,
@@ -394,7 +475,7 @@ function handoffOffer(
     ...seed,
     casino: {
       ...seed.casino,
-      id: temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
+      id: visualCasinoIds[index % visualCasinoIds.length],
       slug: key,
       reviewHref: index === 0 ? `/casino/demo-plume?visualFixture=true${fixtureCountryCode ? `&qaMarket=${fixtureCountryCode}` : ""}` : null,
       name: sample.name,
@@ -453,7 +534,7 @@ function handoffOffer(
 
 export function withHandoffOfferData<T extends { readonly records: readonly PublicOfferDTO[]; readonly inventoryMode: unknown }>(result: T, enabled: boolean, locale: SupportedLocale = "en-GB", fixtureCountryCode: CommercialUxFixtureMarket | null = null): T {
   if (!enabled) return result;
-  const seeds = result.records.length ? result.records : temporaryDemoBestOffers();
+  const seeds = result.records.length ? result.records : [visualOfferSeed];
   if (!seeds.length) return result;
   const records = offerSamples.map((_, index) => handoffOffer(seeds[index % seeds.length], index, offerSamples, "best-offers", locale, fixtureCountryCode));
   return { ...result, status: "available", records, inventoryMode: "DEMO_ONLY" } as unknown as T;
@@ -475,7 +556,7 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, locale: Support
   ][index % 4];
   return {
     ...seed,
-    id: temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
+    id: visualCasinoIds[index % visualCasinoIds.length],
     dataClassification: "DEMO_FIXTURE",
     slug: key,
     reviewHref: index === 0 ? `/casino/demo-plume?visualFixture=true${fixtureCountryCode ? `&qaMarket=${fixtureCountryCode}` : ""}` : null,
@@ -510,7 +591,7 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, locale: Support
 }
 
 const casinoFixtureSeed: PublicCasinoCardDto = {
-  id: temporaryDemoCasinoIds[0],
+  id: visualCasinoIds[0],
   dataClassification: "DEMO_FIXTURE",
   slug: "local-visual-fixture",
   name: "B4GAMBLE visual fixture",
@@ -619,7 +700,8 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
   }] : [];
   return {
     ...casino,
-    id: temporaryDemoCasinoIds[0],
+    dataClassification: "DEMO_FIXTURE",
+    id: visualCasinoIds[0],
     domain: "example.invalid",
     name: sample.name,
     title: copy.title,
@@ -742,7 +824,7 @@ export function withHandoffBonusDirectoryData(
   fixtureCountryCode: CommercialUxFixtureMarket | null = null,
 ): PublicOfferSearchResult {
   if (!enabled) return result;
-  const seeds = result.records.length ? result.records : temporaryDemoBestOffers();
+  const seeds = result.records.length ? result.records : [visualOfferSeed];
   if (!seeds.length) return result;
   const allRecords = bonusDirectorySamples.map((_, index) => handoffOffer(seeds[index % seeds.length], index, bonusDirectorySamples, "bonuses", locale, fixtureCountryCode));
   const pageCount = 1;

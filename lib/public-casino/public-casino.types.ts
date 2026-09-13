@@ -168,6 +168,8 @@ export interface PublicCasinoMarketProfile {
 }
 
 export interface PublicCasinoDTO {
+  /** Present only on the environment-gated visual QA fixture, never on CMS records. */
+  dataClassification?: "DEMO_FIXTURE";
   source: PublicCasinoSource;
   id: string;
   slug: string;

@@ -16,7 +16,7 @@ import { PublicOfferRepository } from "../lib/repositories/public-offer.reposito
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { buildOfferFacets, PublicOfferService } from "../lib/services/public-offer.service";
 import { allowJurisdictionAuthority } from "./market-authority.fixtures";
-import { temporaryDemoBestOffers } from "../lib/demo-data/temporary-demo-best-offers";
+import { publicOffersFixture } from "./fixtures/public-presentation-fixtures";
 import { commercialActionAuthority, noCommercialActions } from "./commercial-action.fixtures";
 
 function offer(slug: string, patch: {
@@ -255,15 +255,16 @@ test("CMS retrieval failures project unavailable without conflating legitimate e
   assert.deepEqual(legacy.records, []);
 });
 
-test("temporary Production demonstrations never enter public offer inventory", async () => {
+test("repository records receive generic published-offer handling", async () => {
   const published = offer("published-real", { available: true, featured: true });
-  const demonstration = temporaryDemoBestOffers()[0]!;
+  const demonstration = publicOffersFixture()[0]!;
   const mixed = await new PublicOfferService(
     store([demonstration, published]),
     { cmsEnabled: true },
     allCommercialActions,
   ).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "GB" });
-  assert.deepEqual(mixed.records.map((item) => item.casino.slug), ["published-real"]);
+  assert.deepEqual(mixed.records.map((item) => item.casino.slug), ["published-real", "test-casino-profile"]);
+  assert.ok(mixed.records.every((item) => item.dataClassification === "PUBLISHED_RECORD"));
   assert.equal(mixed.inventoryMode, "PUBLISHED_ONLY");
 
   const demoOnly = await new PublicOfferService(
@@ -271,7 +272,7 @@ test("temporary Production demonstrations never enter public offer inventory", a
     { cmsEnabled: true },
     allCommercialActions,
   ).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "GB" });
-  assert.equal(demoOnly.total, 0);
+  assert.equal(demoOnly.total, 1);
   assert.equal(demoOnly.inventoryMode, "PUBLISHED_ONLY");
 });
 
@@ -284,7 +285,7 @@ test("Best Offers returns a genuine no-eligible state when the published shortli
   assert.deepEqual(result, { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" });
 });
 
-test("Best Offers never publishes compatibility demonstrations when CMS is disabled", async () => {
+test("Best Offers has no source-controlled fallback when CMS is disabled", async () => {
   const result = await new PublicOfferService(store([], true), {
     cmsEnabled: false,
     legacyCasinos: [],
@@ -293,7 +294,7 @@ test("Best Offers never publishes compatibility demonstrations when CMS is disab
   assert.deepEqual(result, { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" });
 });
 
-test("Best Offers never replaces a repository failure or eligible published shortlist with demonstrations", async () => {
+test("Best Offers never replaces a repository failure or eligible published shortlist with fixtures", async () => {
   const unavailable = await new PublicOfferService(store([], true), { cmsEnabled: true }, allCommercialActions)
     .getBestOffersPageData({ country: "GB" }, allowJurisdictionAuthority);
   assert.deepEqual(unavailable, { status: "unavailable", records: [], inventoryMode: "UNAVAILABLE" });

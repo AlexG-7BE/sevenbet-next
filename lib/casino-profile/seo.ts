@@ -6,7 +6,6 @@ import { profileFaqItems, selectProfileBonus } from "@/lib/casino-profile/presen
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { parseRobotsMetadata } from "@/lib/public-casino/public-casino-validation";
 import { absoluteUrl } from "@/lib/site";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 
 function editorialCanonical(document: CasinoEditorialDocument | null, fallback: string) {
   const path = document?.seo.canonicalPath;
@@ -14,7 +13,7 @@ function editorialCanonical(document: CasinoEditorialDocument | null, fallback: 
 }
 
 function profileCanonical(casino: PublicCasinoDTO, editorial: CasinoEditorialDocument | null) {
-  return isTemporaryDemoCasinoId(casino.id)
+  return casino.dataClassification === "DEMO_FIXTURE"
     ? absoluteUrl(`/casino/${casino.slug}`)
     : editorialCanonical(editorial, casino.seo.canonical);
 }
@@ -35,7 +34,7 @@ export function casinoProfileMetadata(casino: PublicCasinoDTO | null, editorial:
     };
   }
 
-  const demo = isTemporaryDemoCasinoId(casino.id);
+  const demo = casino.dataClassification === "DEMO_FIXTURE";
   const legacy = casino.source === "legacy";
   const seo = editorial?.seo;
   const title = demo ? `${casino.name} Fictional Review Demonstration | B4GAMBLE` : seo?.title || casino.seo.title;
@@ -62,7 +61,7 @@ export function casinoProfileMetadata(casino: PublicCasinoDTO | null, editorial:
 
 export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoEditorialDocument | null) {
   const canonical = profileCanonical(casino, editorial);
-  const demo = isTemporaryDemoCasinoId(casino.id);
+  const demo = casino.dataClassification === "DEMO_FIXTURE";
   const legacy = casino.source === "legacy";
   const faq = profileFaqItems(casino, selectProfileBonus(casino), editorial);
   const schemas: Array<Record<string, unknown>> = [
@@ -117,7 +116,7 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
 export function projectCasinoProfileSchemas(
   schemas: readonly Record<string, unknown>[],
   input: {
-    casino: Pick<PublicCasinoDTO, "id" | "name">;
+    casino: Pick<PublicCasinoDTO, "id" | "name" | "dataClassification">;
     casinoDirectoryUrl: string;
     locale: string;
     messages: ProductPageMessages;
@@ -125,7 +124,7 @@ export function projectCasinoProfileSchemas(
   },
 ) {
   const localized = input.locale !== "en-GB";
-  const demo = isTemporaryDemoCasinoId(input.casino.id);
+  const demo = input.casino.dataClassification === "DEMO_FIXTURE";
   return schemas.flatMap((schema) => {
     if (localized && schema["@type"] === "FAQPage") return [];
     if (schema["@type"] === "BreadcrumbList") {

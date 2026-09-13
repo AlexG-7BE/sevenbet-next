@@ -12,6 +12,31 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Legacy demo Casino retirement — review only, not executed
+
+**DETECTED IN THE RETIREMENT BRANCH, 13 September 2026:** a repository-wide
+inventory traced the Production synthetic-Casino authority to the exact 25
+immutable RFC-012 identities and five internal-only affiliate graphs. A
+repeatable-read, read-only Production plan found all 25 Casinos still present
+and `ARCHIVED`; the exact affiliate graph is present; no real Partner,
+commercial-route, media or CRM ownership conflict was detected. Plan SHA-256
+is `97dd77552657709bba4e80cbb86a13e8a69bc684f51293926e1ccd5d59948696`.
+
+**PROPOSED, NOT RELEASED:** the review branch removes the RFC-012 runtime
+classifier, special public/commercial handling, seed/bootstrap/recovery paths,
+obsolete enablement flag and unneeded generated assets. Generic local/Preview
+visual-QA fixtures remain isolated from database identity and fail closed in
+Production. A one-time retirement CLI discovers the live foreign-key graph,
+uses only literal reviewed IDs and blocks on identity drift, unexpected
+dependencies or real-data ownership. Its PLAN mode is read-only and ordinary
+build/postinstall paths cannot invoke APPLY.
+
+**NOT PRODUCTION EVIDENCE:** no Production delete was run. Production still
+contains the 25 archived synthetic Casinos and their bounded dependencies.
+Truthful `AuditLog` history is deliberately retained. Separate Founder
+authority is required after independent review. See
+[Demo Casino Retirement](06_Operations/Demo-Casino-Retirement.md).
+
 ## Commercial Core Simplification PR3 — exact routes implemented for review, not released
 
 **DETECTED IN THE PR3 BRANCH, 13 September 2026:** RFC-049 implements one

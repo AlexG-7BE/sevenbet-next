@@ -20,7 +20,7 @@ import { MediaValidationError, validateMediaUpload } from "../lib/media/image-va
 import { processImage } from "../lib/media/image-processing";
 import type { PublicCasinoDTO, PublicPlacementMedia } from "../lib/public-casino/public-casino.types";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
-import { temporaryDemoBestOffers } from "../lib/demo-data/temporary-demo-best-offers";
+import { publicOffersFixture } from "./fixtures/public-presentation-fixtures";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import type { MediaRepository } from "../lib/repositories/media.repository";
@@ -359,7 +359,7 @@ test("authorized creative markup uses the governed route while blocked creative 
   const { CommercialOfferMedia } = await import("../components/commercial-media/CommercialOfferMedia");
   const { CasinoOutboundAction } = await import("../components/casino-profile/CasinoOutboundAction");
   const messages = productPageMessages("en-GB");
-  const seed = temporaryDemoBestOffers()[0];
+  const seed = publicOffersFixture()[0];
   const placement = placementMedia("BONUS_LISTING_CARD", "/api/media/local/slotnite-300x250.gif");
   const available: PublicOfferDTO = {
     ...seed,

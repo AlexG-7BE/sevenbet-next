@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db/prisma";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 
 const RELEASE = "LOGO-ONLY-MEDIA-RETIREMENT-01";
 
@@ -75,9 +74,7 @@ async function verifyLogoOnlyMediaState() {
       throw new Error(`${RELEASE}: active MEDIA-GEO3 or placement authority remains (${activeLegacyAuthority} rows)`);
     }
 
-    const publishedOperators = publishedCasinos.filter((casino) => !isTemporaryDemoCasinoId(casino.id));
-    const publishedDemonstrations = publishedCasinos.filter((casino) => isTemporaryDemoCasinoId(casino.id));
-    const missingOperatorLogos = publishedOperators
+    const missingOperatorLogos = publishedCasinos
       .filter((casino) => casino.mediaAssets.length === 0)
       .map((casino) => casino.slug);
     if (missingOperatorLogos.length > 0) {
@@ -88,9 +85,7 @@ async function verifyLogoOnlyMediaState() {
       release: RELEASE,
       verified: true,
       publishedCasinos: publishedCasinos.length,
-      publishedOperators: publishedOperators.length,
-      publishedDemonstrations: publishedDemonstrations.length,
-      preservedDirectOperatorLogos: publishedOperators.length - missingOperatorLogos.length,
+      preservedDirectOperatorLogos: publishedCasinos.length - missingOperatorLogos.length,
       activeLegacyAuthority,
     }));
   }, { isolationLevel: "RepeatableRead", maxWait: 10_000, timeout: 30_000 });

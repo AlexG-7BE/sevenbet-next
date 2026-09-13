@@ -18,8 +18,6 @@ import {
   publicCommercialActionResolver,
   type PublicCommercialActionAuthority,
 } from "@/lib/commercial/public-commercial-action-resolver";
-import { currentPublicCasinoBrand } from "@/lib/public-brand";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import type { PublicCasinoInventoryMode } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 
 type ComparablePublicCasinoDTO = PublicCasinoDTO;
@@ -204,7 +202,7 @@ export class PublicComparisonService {
   ): Promise<PublicComparisonResult> {
     let published: Awaited<ReturnType<PublicCasinoDiscoveryStore["listPublished"]>>;
     try {
-      published = (await this.store.listPublished(query.country)).filter((record) => !isTemporaryDemoCasinoId(record.casinoId));
+      published = await this.store.listPublished(query.country);
     } catch {
       return { status: "projection-unavailable", query, selectedSlugs: query.casinos, candidates: [], casinos: [], reasons: query.casinos.map((slug) => ({ slug, code: "PROJECTION_UNAVAILABLE", message: "The governed comparison projection is temporarily unavailable." })), groups: [], hiddenEqualRows: 0, defaulted: false, inventoryMode: "UNAVAILABLE" };
     }
@@ -215,8 +213,7 @@ export class PublicComparisonService {
         now,
         countryCode: query.country,
       });
-      const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
-      return casino?.source === "cms" && !isTemporaryDemoCasinoId(casino.id) ? [casino] : [];
+      return mapped?.source === "cms" ? [mapped] : [];
     });
     const inventoryMode: PublicCasinoInventoryMode = "PUBLISHED_ONLY";
     const actionDecisions = await this.actionAuthority.resolveMany({

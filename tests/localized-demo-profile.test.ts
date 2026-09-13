@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { temporaryDemoCasinoProfiles } from "../lib/demo-data/temporary-demo-best-offers";
+import { publicCasinoProfilesFixture } from "./fixtures/public-presentation-fixtures";
 import {
   withHandoffCasinoEditorialData,
   withHandoffCasinoProfileData,
@@ -17,7 +17,7 @@ function strings(value: unknown): string[] {
 }
 
 test("the local profile fixture localizes B4GAMBLE-authored copy across every European locale", () => {
-  const seed = temporaryDemoCasinoProfiles()[0];
+  const seed = publicCasinoProfilesFixture()[0];
   assert.ok(seed);
   const englishProfile = withHandoffCasinoProfileData(seed, true, "en-GB");
   const englishEditorial = withHandoffCasinoEditorialData(null, true, "en-GB");
@@ -106,7 +106,7 @@ test("the local profile fixture localizes B4GAMBLE-authored copy across every Eu
 });
 
 test("profile-fixture localization is inert unless the local visual fixture is enabled", () => {
-  const seed = temporaryDemoCasinoProfiles()[0];
+  const seed = publicCasinoProfilesFixture()[0];
   assert.ok(seed);
   assert.strictEqual(withHandoffCasinoProfileData(seed, false, "de-DE"), seed);
   const editorial = withHandoffCasinoEditorialData(null, false, "de-DE");

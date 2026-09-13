@@ -10,11 +10,10 @@ import { casinoProfileMetadata, casinoProfileSchemas, projectCasinoProfileSchema
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
-import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffCasinoEditorialData, withHandoffCasinoProfileData } from "@/lib/final-handoff/visual-data-fixture";
+import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, visualCasinoProfileFixture, withCommercialUxFixturePresentation, withHandoffCasinoEditorialData, withHandoffCasinoProfileData } from "@/lib/final-handoff/visual-data-fixture";
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { absoluteUrl } from "@/lib/site";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 
@@ -35,7 +34,7 @@ const loadCasinoPage = cache(async (slug: string, visualFixture: boolean) => {
     visualFixture ? Promise.resolve(null) : loadEditorial(slug),
   ]);
   const candidate = visualFixture
-    ? publicCasinoService.getCommercialUxVisualFixture(slug)
+    ? visualCasinoProfileFixture(slug)
     : await publicCasinoService.getCasino(
         slug,
         authority,
@@ -47,7 +46,7 @@ const loadCasinoPage = cache(async (slug: string, visualFixture: boolean) => {
     ? Boolean(presentation.marketCountryCode && candidate.countries.some((country) => country.countryCode === presentation.marketCountryCode && country.availability === "AVAILABLE"))
     : false;
   return {
-    casino: candidate?.source === "cms" ? candidate : null,
+    casino: candidate && (visualFixture || candidate.source === "cms") ? candidate : null,
     editorialResult: candidate ? editorialResult : null,
     presentation,
     availableForPresentation,
@@ -72,7 +71,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
     pathname: `/casino/${casino.slug}`,
     title,
     description,
-    robots: isTemporaryDemoCasinoId(casino.id) ? { index: false, follow: true } : base.robots,
+    robots: base.robots,
     openGraphType: "article",
   });
 }

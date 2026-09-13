@@ -9,7 +9,6 @@ export type GovernedCommercialAction = Readonly<{
 export type CommercialActionDecisionReason =
   | "AVAILABLE"
   | "PRODUCT_NOT_PUBLISHED"
-  | "DEMONSTRATION_RECORD"
   | "MARKET_CONTEXT_INVALID"
   | "REDIRECT_ENGINE_DISABLED"
   | "NO_GOVERNED_ROUTE"

@@ -6,8 +6,6 @@ import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { isPublicCasinoCmsEnabled, PublicCasinoService } from "../lib/services/public-casino.service";
 import { allowJurisdictionAuthority } from "./market-authority.fixtures";
-import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
-import { temporaryDemoCasinoProfiles } from "../lib/demo-data/temporary-demo-best-offers";
 import { commercialActionAuthority, noCommercialActions } from "./commercial-action.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
@@ -95,16 +93,6 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
     assert.equal(casino?.slug, managedSlug);
   });
 
-  await t.test("CMS disabled preserves only exact source-controlled demo detail profiles", async () => {
-    const expected = temporaryDemoCasinoProfiles()[0];
-    const casino = await service(store(), false).getCasino(expected.slug, allowJurisdictionAuthority);
-    assert.ok(casino);
-    assert.equal(casino.id, temporaryDemoCasinoIds[0]);
-    assert.equal(casino.slug, expected.slug);
-    assert.equal(casino.action, null);
-    assert.equal(await service(store(), false).getCasino("unknown-demo-profile"), null);
-  });
-
   await t.test("2. a published CMS record wins and consumes the canonical governed action", async () => {
     const record = publishedRecord();
     const casino = await authorizedService(store([record], [managedSlug])).getCasino(managedSlug, allowJurisdictionAuthority, "GB");
@@ -168,33 +156,6 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
     assert.equal(await service(repository).getCasino(managedSlug), null);
   });
 
-  await t.test("an exact source-controlled demo slug retains a disclosed review-only detail page", async () => {
-    const expected = temporaryDemoCasinoProfiles()[0];
-    const result = await service(store()).getCasino(expected.slug, allowJurisdictionAuthority);
-    assert.ok(result);
-    assert.equal(result.id, temporaryDemoCasinoIds[0]);
-    assert.equal(result.slug, expected.slug);
-    assert.equal(result.action, null);
-    assert.ok(result.bonuses.every((bonus) => !Object.hasOwn(bonus, "affiliate") && !Object.hasOwn(bonus, "action")));
-  });
-
-  await t.test("a managed unpublished demo slug never falls through to source-controlled detail", async () => {
-    const expected = temporaryDemoCasinoProfiles()[0];
-    assert.equal(await service(store([], [expected.slug])).getCasino(expected.slug, allowJurisdictionAuthority), null);
-  });
-
-  await t.test("a malformed published demo slug never falls through to source-controlled detail", async () => {
-    const expected = temporaryDemoCasinoProfiles()[0];
-    const malformed = publishedRecord(expected.slug);
-    (malformed.snapshot as Record<string, unknown>).domain = "";
-    let managedLookups = 0;
-    const repository = store([malformed], [], {
-      hasManagedSlug: async () => { managedLookups += 1; return false; },
-    });
-    assert.equal(await service(repository).getCasino(expected.slug), null);
-    assert.equal(managedLookups, 0);
-  });
-
   await t.test("8. an invalid slug returns null without repository access", async () => {
     let calls = 0;
     const repository = store([], [], {
@@ -238,12 +199,11 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
     assert.doesNotMatch(JSON.stringify(casino?.bonuses[0]), /affiliate|action/);
   });
 
-  await t.test("exact-ID demo profiles remain hidden under otherwise permissive authority", async () => {
-    const record = publishedRecord("fictional-demo");
-    record.casinoId = temporaryDemoCasinoIds[0];
-    (record.snapshot as Record<string, unknown>).id = temporaryDemoCasinoIds[0];
-    const result = await authorizedService(store([record], ["fictional-demo"])).getCasino("fictional-demo", allowJurisdictionAuthority, "GB");
-    assert.equal(result, null);
+  await t.test("every valid published Casino uses the same generic authority path", async () => {
+    const record = publishedRecord("generic-published");
+    const result = await authorizedService(store([record], ["generic-published"])).getCasino("generic-published", allowJurisdictionAuthority, "GB");
+    assert.equal(result?.source, "cms");
+    assert.deepEqual(result?.action, { href: "/r/generic-published" });
   });
 });
 

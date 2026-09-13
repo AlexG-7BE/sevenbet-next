@@ -21,7 +21,6 @@ import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
-import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 import { absoluteUrl } from "../lib/site";
 
 function casino(patch: Partial<PublicCasinoDTO> = {}): PublicCasinoDTO {
@@ -181,9 +180,10 @@ test("metadata and structured data contain no raw operator destination or fabric
   assert.deepEqual(unavailable.robots, { index: false, follow: false });
 });
 
-test("exact-ID demo profiles are noindex, truthful and suppress review/commercial schemas", () => {
+test("environment-gated visual fixtures are noindex, truthful and suppress review/commercial schemas", () => {
   const record = casino({
-    id: temporaryDemoCasinoIds[0],
+    id: "visual-casino-fixture",
+    dataClassification: "DEMO_FIXTURE",
     slug: "demo-northstar",
     name: "Fictional Demo",
     seo: {
@@ -223,7 +223,7 @@ test("exact-ID demo profiles are noindex, truthful and suppress review/commercia
 
 test("localized schema projection translates demo chrome, omits unsafe FAQ chrome and preserves source evidence", () => {
   const messages = productPageMessages("de-DE");
-  const demo = casino({ id: temporaryDemoCasinoIds[0], name: "Fictional Demo" });
+  const demo = casino({ id: "visual-casino-fixture", dataClassification: "DEMO_FIXTURE", name: "Fictional Demo" });
   const demoSchemas = projectCasinoProfileSchemas(casinoProfileSchemas(demo, editorial), {
     casino: demo,
     casinoDirectoryUrl: absoluteUrl("/de-de/casinos"),
@@ -267,7 +267,7 @@ test("route and decision composition keep authority, raw destinations and Prisma
   const action = readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8");
   const source = `${route}\n${component}\n${action}`;
   assert.match(route, /publicCasinoService\.getCasino/);
-  assert.match(route, /candidate\?\.source === "cms"/);
+  assert.match(route, /visualFixture \|\| candidate\.source === "cms"/);
   assert.match(route, /projectCasinoProfileSchemas/);
   assert.match(component, /messages\.profile\.offerUnavailable/);
   assert.match(component, /casinoProfileDecisionPresentation/);

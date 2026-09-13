@@ -8,13 +8,7 @@ import {
   publicCommercialActionResolver,
   type PublicCommercialActionAuthority,
 } from "@/lib/commercial/public-commercial-action-resolver";
-import { currentPublicCasinoBrand } from "@/lib/public-brand";
-import { temporaryDemoCasinoProfiles } from "@/lib/demo-data/temporary-demo-best-offers";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { extractOfferCandidatesFromPublishedRecords, withOfferPresentation } from "@/lib/public-offer/offer-presentation";
-
-export const enforceTemporaryDemoReviewOnly = currentPublicCasinoBrand;
-const sourceControlledDemoProfiles = temporaryDemoCasinoProfiles();
 
 function projectRequestedMarket(casino: PublicCasinoDTO, countryCode: string | null | undefined) {
   if (countryCode !== undefined) return projectPublicCasinoMarket(casino, countryCode ?? "");
@@ -77,29 +71,7 @@ export class PublicCasinoService {
   }
 
   private legacyForMode(casino: Casino) {
-    return enforceTemporaryDemoReviewOnly(mapLegacyCasino(casino));
-  }
-
-  private sourceControlledDemo(slug: string) {
-    const casino = sourceControlledDemoProfiles.find((entry) => entry.slug === slug);
-    return casino ? enforceTemporaryDemoReviewOnly(casino) : null;
-  }
-
-  /**
-   * Local visual QA may render the deterministic profile fixture even when a
-   * managed Production record with the same slug is deliberately hidden. The
-   * route-level harness owns the stronger Vercel/environment guard; this
-   * method never participates in ordinary public resolution.
-   */
-  getLocalVisualFixture(slug: string): PublicCasinoDTO | null {
-    if (!isSafePublicSlug(slug) || !this.localFixturesAllowed()) return null;
-    return this.sourceControlledDemo(slug) ?? this.legacy(slug);
-  }
-
-  /** Route-guarded Commercial UX fixture: source-controlled and always review-only. */
-  getCommercialUxVisualFixture(slug: string): PublicCasinoDTO | null {
-    if (!isSafePublicSlug(slug)) return null;
-    return this.sourceControlledDemo(slug);
+    return mapLegacyCasino(casino);
   }
 
   async getCasino(
@@ -110,7 +82,7 @@ export class PublicCasinoService {
     commercialMarketCode?: string | null,
   ): Promise<PublicCasinoDTO | null> {
     if (!isSafePublicSlug(slug)) return null;
-    if (!this.cmsEnabled()) return this.localFixturesAllowed() ? this.legacy(slug) ?? this.sourceControlledDemo(slug) : null;
+    if (!this.cmsEnabled()) return this.localFixturesAllowed() ? this.legacy(slug) : null;
 
     let published = null;
     try {
@@ -120,10 +92,6 @@ export class PublicCasinoService {
     }
 
     if (published) {
-      // Temporary Production demonstrations are an editorial/publication
-      // classification, not a commercial-permission decision. Preserve their
-      // established public exclusion before consulting action authority.
-      if (isTemporaryDemoCasinoId(published.casinoId)) return null;
       const candidates = await this.publishedOfferCandidates([published]);
       const normalizedCountry = countryCode?.trim().toUpperCase() || null;
       const casino = mapPublishedCasino(published, {
@@ -155,7 +123,7 @@ export class PublicCasinoService {
       return null;
     }
 
-    return this.localFixturesAllowed() ? this.sourceControlledDemo(slug) : null;
+    return null;
   }
 
   async listCasinos(
@@ -175,7 +143,6 @@ export class PublicCasinoService {
       return [];
     }
 
-    published = published.filter((entry) => !isTemporaryDemoCasinoId(entry.casinoId));
     const candidates = await this.publishedOfferCandidates(published);
 
     const normalizedCountry = countryCode?.trim().toUpperCase() || null;
