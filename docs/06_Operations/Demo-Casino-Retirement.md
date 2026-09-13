@@ -6,7 +6,13 @@
 
 **Base:** `73c1c2b52d12dd32f1b8ba7d7e3df0b962334766`
 
-**Plan SHA-256:** `97dd77552657709bba4e80cbb86a13e8a69bc684f51293926e1ccd5d59948696` is **OBSOLETE**. It was produced by the superseded single-path planner and is not execution authority. A fresh corrected-plan hash must be reviewed and explicitly authorised.
+**Corrected read-only Production plan SHA-256:** `f48ecdbd0f96fe2120bc388ed50c304ac0582d75e6ddf60e4a9635d46542ca9e`
+
+**Obsolete plan SHA-256:**
+`97dd77552657709bba4e80cbb86a13e8a69bc684f51293926e1ccd5d59948696`
+was produced by the superseded single-path planner and is not execution
+authority. The corrected hash is evidence for review and still requires
+separate explicit Founder authorisation before APPLY.
 
 ## Independent review correction
 
@@ -92,7 +98,7 @@ relationship or active commercial route. The safe delete set is these literal
 
 ## Production read-only dependency plan
 
-The corrected plan runs against trusted Production access inside
+The corrected plan ran against trusted Production access inside
 `REPEATABLE READ` with `SET TRANSACTION READ ONLY`. It discovers the current
 `public`-schema foreign keys and primary keys from `pg_catalog`, computes the
 complete affected-row closure from exact Casino and affiliate roots, and
@@ -172,9 +178,12 @@ primary key.
 
 ## Conflicts
 
-No conflicts were returned. `readyToApply` is `true` for the observed snapshot.
-This is evidence for review, not execution authority. Any changed plan will
-produce a different SHA-256 and requires renewed review.
+The fresh corrected Production closure returned no conflicts and no affected
+protected or unkeyed rows. `readyToApply` is `true` for the observed snapshot
+and the corrected hash is
+`f48ecdbd0f96fe2120bc388ed50c304ac0582d75e6ddf60e4a9635d46542ca9e`.
+This is evidence for review, not execution authority. Any changed plan requires
+renewed review and explicit Founder authorisation of its exact hash.
 
 ## Code removed
 
