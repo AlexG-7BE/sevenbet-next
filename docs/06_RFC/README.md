@@ -42,7 +42,7 @@ orientation.
 | [RFC-012 — Temporary Synthetic Casino Dataset](RFC-012-Temporary-Production-Synthetic-Casino-Dataset.md) | `HISTORICAL` | Records the temporary fictional dataset and public-offer projection delivery. |
 | [RFC-013 — Production Engineering and Release Governance](RFC-013-Production-Engineering-and-Release-Governance.md) | `ACTIVE` | Branch, CI, migration, release, smoke and rollback architecture. |
 | [RFC-014 — Great Britain Market Eligibility](RFC-014-Great-Britain-Market-Eligibility-and-Evidence-Authority.md) | `ACTIVE` | GB jurisdiction resolution and fail-closed market authority. |
-| [RFC-015 — GB Commercial Partner Authority](RFC-015-GB-Commercial-Partner-Authority.md) | `ACTIVE` | Cumulative partner-evidence and referral-activation authority. |
+| [RFC-015 — GB Commercial Partner Authority](RFC-015-GB-Commercial-Partner-Authority.md) | `ACTIVE` | Cumulative GB evidence and referral safeguards; RFC-048 supersedes CRM/static/lifecycle state as commercial write authority. |
 | [RFC-016 — Production Performance and Instant Discovery](RFC-016-Production-Performance-and-Instant-Discovery.md) | `HISTORICAL` | Records the completed UX-PERF-01 delivery. |
 | [RFC-017 — GB Legal, Privacy and Launch Remediation](RFC-017-GB-Legal-Privacy-and-Launch-Remediation.md) | `ACTIVE` | Programme data minimisation, privacy operations, demo truthfulness and commercial firewall. |
 | [RFC-018 — Google Authentication and Email Foundation](RFC-018-Google-Authentication-and-Email-Communications-Foundation.md) | `ACTIVE` | Optional Google identity and closed account/Programme communications purposes. |
@@ -54,7 +54,7 @@ orientation.
 | [RFC-024 — Database Recovery and Isolated Restore](RFC-024-Database-Recovery-and-Isolated-Restore.md) | `ACTIVE` | Restore-to-new-target, identity-guard and Production read-only recovery architecture. |
 | [RFC-025 — PROGRAM-AI Missions 02–10](RFC-025-PROGRAM-AI-Missions-02-10-MVP.md) | `ACTIVE` | Mission, prerequisite, reward, Review and Programme/commercial-separation authority. |
 | [RFC-026 — Analytics and Programme Runtime Hardening](RFC-026-MVP-Analytics-and-Programme-Runtime-Hardening.md) | `HISTORICAL` | Records the delivered analytics and Programme runtime-hardening workstream. |
-| [RFC-027 — Operational Agent Foundation](RFC-027-B4GAMBLE-Operational-Agent-Foundation.md) | `ACTIVE` | Isolated internal-agent capability and Commercial Operations adapter authority ceilings. RFC-044 retires its Media Operations MCP amendment. |
+| [RFC-027 — Operational Agent Foundation](RFC-027-B4GAMBLE-Operational-Agent-Foundation.md) | `ACTIVE` | Isolated internal-agent capability and authority ceilings. RFC-044 retires its Media Operations MCP amendment; RFC-048 makes Commercial MCP transport-only for route registration. |
 | [RFC-028 — Public Contact and Transactional Mail](RFC-028-Public-Contact-and-Transactional-Mail-Boundary.md) | `ACTIVE` | Contact purpose, no-database handling and delivery separation from other communications. |
 | [RFC-029 — Runtime Product Polish](RFC-029-Runtime-Product-Polish.md) | `HISTORICAL` | Records the completed microphone, account-linking, login and demo-fallback fixes. |
 | [RFC-030 — Production Canonical Host Enforcement](RFC-030-Production-Canonical-Host-Enforcement.md) | `HISTORICAL` | Records the delivered Production canonical-host fix. |
@@ -65,7 +65,7 @@ orientation.
 | [RFC-035 — Home Performance and Motion Polish](RFC-035-Home-Performance-and-Motion-Polish.md) | `HISTORICAL` | Records the completed Home motion and final site-polish delivery. |
 | [RFC-036 — GB Public Legal P0 Closure](RFC-036-GB-Public-Legal-P0-Closure.md) | `ACTIVE` | GB public legal, necessary-technology, licence-evidence and accepted-deferral authority. |
 | [RFC-037 — Internationalisation and Multi-Market Foundation](RFC-037-Internationalisation-and-Multi-Market-Foundation.md) | `ACTIVE` | Infrastructure-first internationalisation and market/commercial separation. RFC-039 supersedes its URL/selector semantics; RFC-044 supersedes its older locale publication set. |
-| [RFC-038 — Casino Market Data Architecture](RFC-038-Casino-Market-Data-Architecture.md) | `ACTIVE` | Casino global identity, `CasinoCountry` factual market grain, market-scoped facts, provenance, logical PartnerRoute projection, and exact fail-closed Production eligibility. RFC-039 supersedes its unqualified public-query fallback semantics. |
+| [RFC-038 — Casino Market Data Architecture](RFC-038-Casino-Market-Data-Architecture.md) | `ACTIVE` | Casino global identity, `CasinoCountry` factual market grain and exact fail-closed Production eligibility. RFC-039 supersedes unqualified public-query fallback semantics; RFC-048 makes Partner market support non-authoritative evidence. |
 | [RFC-039 — Language-Only Public Routing and Global Casino Catalog](RFC-039-Language-Only-Public-Routing-and-Global-Casino-Catalog.md) | `ACTIVE` | Language-only public canonicals, trusted request-market separation, global real-Casino publication, `UNKNOWN`/prohibition separation and governed country-block routing; RFC-044 extends its locale inventory. |
 | [RFC-040 — Placement-Based Media Assignments](RFC-040-Placement-Based-Media-Assignments.md) | `SUPERSEDED` | Historical typed assignment design; RFC-044 retires assignment-driven promotional authority while retaining its data inertly. |
 | [RFC-041 — Vetted Partner-Hosted Creatives](RFC-041-Vetted-Partner-Hosted-Creatives.md) | `SUPERSEDED` | Historical provider-isolation design; RFC-044 retires hosted creatives from active Product and runtime authority. |
@@ -75,16 +75,17 @@ orientation.
 | [RFC-045 — Exact Subdivision Market Activation](RFC-045-Exact-Subdivision-Market-Activation.md) | `ACTIVE` | RFC-042 exact `marketCode`, parent-country legal separation, trusted region signal and exact-over-regional-over-generic route precedence. |
 | [RFC-046 — Customer Data, Analytics and Lifecycle Core](RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md) | `ACTIVE` | Canonical customer identity, consent-gated first-party analytics, Programme observation, RFC-042 click attribution, lifecycle email and fixed internal dashboards; the 12 September 2026 amendment authorises bounded Resend Production processing subject to live configuration and acceptance evidence. |
 | [RFC-047 — Single Public Commercial Action Authority](RFC-047-Single-Public-Commercial-Action-Authority.md) | `ACTIVE` | One server-side nullable `/r/...` action decision for each published Casino and trusted market; public services, ranking and presentation have no shadow commercial authority. |
+| [RFC-048 — CRM-Independent Commercial Write Core](RFC-048-CRM-Independent-Commercial-Write-Core.md) | `ACTIVE` | Persisted Partner identity and one Partner × Casino relationship outside CRM; explicit commands flow through a transport-independent application service while CRM and MCP have no commercial authority. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 23 |
+| `ACTIVE` | 24 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 5 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **47** |
+| **Total RFC artifacts** | **48** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

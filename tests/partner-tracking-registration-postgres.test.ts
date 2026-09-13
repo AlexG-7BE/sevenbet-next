@@ -13,13 +13,20 @@ import { PartnerTrackingRegistrationRepository } from "../lib/repositories/partn
 
 const PARTNER = CURRENT_PARTNER_RECORDS.find((record) => record.name === "Super Partners")!;
 const ACTOR_ID = "71000000-0000-4000-8000-000000000001";
+const NETWORK_ID = "71000000-0000-4000-8000-000000000002";
 const CASINO_ID = "71000000-0000-4000-8000-000000000003";
+const OTHER_CASINO_ID = "71000000-0000-4000-8000-000000000004";
 const NOW = new Date("2026-09-10T12:00:00.000Z");
 const GENERIC_URL = "https://tracking-fixture.example/click?token=redaction-fixture&campaign=generic";
 const EXACT_URL = "https://tracking-fixture.example/click?token=redaction-fixture&campaign=exact-es";
 const EXACT_ABSENT_URL = "https://tracking-fixture.example/click?token=redaction-fixture&campaign=exact-fr";
 const REPLACEMENT_URL = "https://tracking-fixture.example/click?token=redaction-fixture&campaign=replacement";
 const HEALTHY_REPLACEMENT_URL = "https://tracking-fixture.example/click?token=redaction-fixture&campaign=healthy-replacement";
+const registrationContext = {
+  actorId: ACTOR_ID,
+  auditSource: "INTERNAL_APPLICATION" as const,
+  correlationId: "partner-tracking-postgres-command",
+};
 
 function assertDisposablePostgres() {
   assert.equal(process.env.CI, "true");
@@ -31,13 +38,16 @@ function assertDisposablePostgres() {
 }
 
 async function cleanup(client: PrismaClient) {
+  await client.auditLog.deleteMany({ where: { actorId: ACTOR_ID } });
   await client.marketActivation.deleteMany({ where: { casinoId: CASINO_ID } });
-  await client.partnerCasinoMarketSupport.deleteMany({ where: { casinoId: CASINO_ID } });
+  await client.partnerCasinoMarketSupport.deleteMany({ where: { casinoId: { in: [CASINO_ID, OTHER_CASINO_ID] } } });
+  await client.partnerCasinoRelationship.deleteMany({ where: { casinoId: { in: [CASINO_ID, OTHER_CASINO_ID] } } });
   await client.commercialOpportunity.deleteMany({ where: { id: PARTNER.opportunityId } });
   await client.affiliateRedirectSlug.deleteMany({ where: { casinoId: CASINO_ID } });
   await client.affiliateOffer.deleteMany({ where: { casinoId: CASINO_ID } });
   await client.affiliateProgram.deleteMany({ where: { casinoId: CASINO_ID } });
-  await client.affiliateNetwork.deleteMany({ where: { slug: "super-partners" } });
+  await client.affiliateNetwork.deleteMany({ where: { id: NETWORK_ID } });
+  await client.casino.deleteMany({ where: { id: OTHER_CASINO_ID } });
   await client.casino.deleteMany({ where: { id: CASINO_ID } });
   await client.adminUser.deleteMany({ where: { id: ACTOR_ID } });
 }
@@ -73,6 +83,17 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
         createdBy: ACTOR_ID,
       } },
     } });
+    await client.affiliateNetwork.create({ data: {
+      id: NETWORK_ID,
+      name: PARTNER.name,
+      slug: "super-partners",
+      active: false,
+      archivedAt: NOW,
+      createdBy: ACTOR_ID,
+      updatedBy: ACTOR_ID,
+    } });
+
+    // ACTIVE is only CRM workflow state and cannot create canonical authority.
     await client.commercialOpportunity.create({ data: {
       id: PARTNER.opportunityId,
       displayName: PARTNER.name,
@@ -81,23 +102,20 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       stage: "ACTIVE",
       createdBy: ACTOR_ID,
       updatedBy: ACTOR_ID,
-      tasks: { create: {
-        type: "ACTIVATION",
-        title: "MISSING_TRACKING_ROUTE: no current Super Partners route is captured.",
-        idempotencyKey: "partner-tracking-postgres-missing",
-        createdBy: ACTOR_ID,
-      } },
+      affiliateNetworkId: NETWORK_ID,
     } });
+    assert.equal(await client.partnerCasinoRelationship.count({ where: { partnerId: NETWORK_ID, casinoId: CASINO_ID } }), 0);
+    assert.equal(await client.affiliateTrackingLink.count({ where: { offer: { casinoId: CASINO_ID } } }), 0);
+    await client.commercialOpportunity.delete({ where: { id: PARTNER.opportunityId } });
 
     const target = await repository.resolveTarget({
       partner: PARTNER.name,
-      partnerId: PARTNER.opportunityId,
-      partnerAliases: PARTNER.aliases,
       casino: "betway",
       requestedGeos: ["AT", "PT", "US"],
     });
     assert.equal(target.casinoId, CASINO_ID);
-    assert.equal(target.affiliateNetworkId, null);
+    assert.equal(target.partnerId, NETWORK_ID);
+    assert.equal(target.affiliateNetworkId, NETWORK_ID);
     assert.equal(target.rows.length, 11);
 
     const stageInput = {
@@ -113,6 +131,34 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     const [first, second] = await Promise.all([repository.stage(stageInput), repository.stage(stageInput)]);
     assert.ok(first.target.affiliateNetworkId);
     assert.equal(await client.affiliateNetwork.count({ where: { slug: "super-partners" } }), 1);
+    assert.equal(first.partnerCasinoRelationshipId, second.partnerCasinoRelationshipId);
+    assert.equal(await client.partnerCasinoRelationship.count({ where: { partnerId: NETWORK_ID, casinoId: CASINO_ID } }), 1);
+    await client.casino.create({ data: {
+      id: OTHER_CASINO_ID,
+      title: "Other Casino",
+      slug: "other-casino-pr2-fixture",
+      domain: "other-pr2.example",
+      createdBy: ACTOR_ID,
+      updatedBy: ACTOR_ID,
+    } });
+    const otherProfile = await client.casinoCountry.create({ data: {
+      casinoId: OTHER_CASINO_ID,
+      countryCode: "DE",
+      availability: "AVAILABLE",
+    } });
+    await assert.rejects(() => client.partnerCasinoMarketSupport.create({ data: {
+      relationshipId: first.partnerCasinoRelationshipId,
+      opportunityId: null,
+      affiliateNetworkId: NETWORK_ID,
+      casinoId: OTHER_CASINO_ID,
+      casinoCountryId: otherProfile.id,
+      countryCode: "DE",
+      marketCode: "DE",
+      sourceReference: "PR2_CROSS_CASINO_REFUSAL_FIXTURE",
+      observedAt: NOW,
+      lastVerifiedAt: NOW,
+      createdBy: ACTOR_ID,
+    } }), /foreign key constraint/i);
     assert.equal(first.trackingLinkId, second.trackingLinkId);
     assert.equal(await client.affiliateTrackingLink.count({ where: { offerId: first.affiliateOfferId } }), 1);
     assert.equal(await client.affiliateOffer.count({ where: { casinoId: CASINO_ID } }), 1);
@@ -123,7 +169,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     assert.equal(await client.casinoCountryEvidence.count({
       where: {
         marketProfile: { casinoId: CASINO_ID },
-        sourceReference: { startsWith: "COMMERCIAL_MCP_FOUNDER_MARKET_ASSERTION:" },
+        sourceReference: { startsWith: "FOUNDER_AUTHORIZED_PARTNER_ROUTE:" },
       },
     }), 3);
     assert.equal(first.newSupportedGeoCount + second.newSupportedGeoCount, 3);
@@ -155,8 +201,6 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     const restartedRepository = new PartnerTrackingRegistrationRepository(client);
     const restartedTarget = await restartedRepository.resolveTarget({
       partner: PARTNER.name,
-      partnerId: PARTNER.opportunityId,
-      partnerAliases: PARTNER.aliases,
       casino: "betway",
       requestedGeos: null,
     });
@@ -185,10 +229,13 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       casino: "Betway",
       trackingUrl: GENERIC_URL,
       supportedGeos: ["US", "at", "PT", "US"],
-    }, { actorId: ACTOR_ID, clientId: "partner-tracking-postgres-client" }, new Date(NOW.getTime() + 500));
-    assert.equal(registeredBatch.status, "NO_CHANGE");
+    }, registrationContext, new Date(NOW.getTime() + 500));
+    assert.equal(registeredBatch.status, "NO_CHANGE", JSON.stringify(registeredBatch, null, 2));
     assert.equal(registrationVerifierCalls, 1);
     assert.equal(controllerVerifierCalls, 0);
+    const restoredNetwork = await client.affiliateNetwork.findUniqueOrThrow({ where: { id: NETWORK_ID } });
+    assert.equal(restoredNetwork.active, true);
+    assert.equal(restoredNetwork.archivedAt, null);
     assert.equal(await client.marketActivation.count({
       where: { casinoId: CASINO_ID, marketCode: { in: ["AT", "PT", "US"] }, status: "ACTIVE", routeVerificationStatus: "HEALTHY" },
     }), 3);
@@ -199,23 +246,43 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     assert.equal((await runtime.resolveRedirect("betway-casino", "US"))?.marketCode, "US");
     assert.equal((await runtime.listPublicRoutes([CASINO_ID], "NZ", new Date(NOW.getTime() + 600))).length, 0);
 
+    // A non-ACTIVE CRM opportunity may coexist, but cannot block the command.
+    await client.commercialOpportunity.create({ data: {
+      id: PARTNER.opportunityId,
+      displayName: PARTNER.name,
+      normalizedName: "super partners",
+      organizationType: "AFFILIATE_NETWORK",
+      stage: "PROSPECT",
+      affiliateNetworkId: NETWORK_ID,
+      createdBy: ACTOR_ID,
+      updatedBy: ACTOR_ID,
+    } });
     const exactAbsent = await registrationService.register({
       partner: PARTNER.name,
       casino: "Betway",
       trackingUrl: EXACT_ABSENT_URL,
       geo: "FR",
-    }, { actorId: ACTOR_ID, clientId: "partner-tracking-postgres-client" }, new Date(NOW.getTime() + 650));
+    }, registrationContext, new Date(NOW.getTime() + 650));
     assert.equal(exactAbsent.results[0]?.marketSupport, "CREATED");
     assert.equal(exactAbsent.results[0]?.finalState, "ACTIVE_HEALTHY");
     assert.equal(await client.partnerCasinoMarketSupport.count({ where: { casinoId: CASINO_ID, marketCode: "FR" } }), 1);
     assert.equal((await runtime.listActive([CASINO_ID], "FR"))[0]?.primaryTrackingLinkId, exactAbsent.trackingLinkId);
+    await client.commercialOpportunity.update({
+      where: { id: PARTNER.opportunityId },
+      data: { stage: "ON_HOLD", updatedBy: ACTOR_ID },
+    });
+    const relationshipAfterCrmChange = await client.partnerCasinoRelationship.findUniqueOrThrow({
+      where: { partnerId_casinoId: { partnerId: NETWORK_ID, casinoId: CASINO_ID } },
+    });
+    assert.equal(relationshipAfterCrmChange.id, first.partnerCasinoRelationshipId);
+    assert.equal(relationshipAfterCrmChange.endedAt, null);
 
     const exactRuntime = await registrationService.register({
       partner: PARTNER.name,
       casino: "Betway",
       trackingUrl: EXACT_URL,
       geo: "US",
-    }, { actorId: ACTOR_ID, clientId: "partner-tracking-postgres-client" }, new Date(NOW.getTime() + 700));
+    }, registrationContext, new Date(NOW.getTime() + 700));
     assert.equal(exactRuntime.trackingScope, "EXACT_GEO");
     assert.equal(exactRuntime.results.length, 1);
     assert.equal(exactRuntime.results[0]?.finalState, "ACTIVE_HEALTHY");
@@ -232,7 +299,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     };
     const legalBatch = await registrationService.register(
       legalBatchInput,
-      { actorId: ACTOR_ID, clientId: "partner-tracking-postgres-client" },
+      registrationContext,
       new Date(NOW.getTime() + 800),
     );
     assert.equal(registrationVerifierCalls - beforeLegalBatchChecks, 1);
@@ -243,7 +310,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     ]);
     const durableCounts = await Promise.all([
       client.partnerCasinoMarketSupport.count({ where: { casinoId: CASINO_ID } }),
-      client.casinoCountryEvidence.count({ where: { marketProfile: { casinoId: CASINO_ID }, sourceReference: { startsWith: "COMMERCIAL_MCP_FOUNDER_MARKET_ASSERTION:" } } }),
+      client.casinoCountryEvidence.count({ where: { marketProfile: { casinoId: CASINO_ID }, sourceReference: { startsWith: "FOUNDER_AUTHORIZED_PARTNER_ROUTE:" } } }),
       client.affiliateProgram.count({ where: { casinoId: CASINO_ID } }),
       client.affiliateOffer.count({ where: { casinoId: CASINO_ID } }),
       client.affiliateTrackingLink.count({ where: { offerId: first.affiliateOfferId } }),
@@ -251,12 +318,12 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     ]);
     await registrationService.register(
       legalBatchInput,
-      { actorId: ACTOR_ID, clientId: "partner-tracking-postgres-client" },
+      registrationContext,
       new Date(NOW.getTime() + 900),
     );
     assert.deepEqual(await Promise.all([
       client.partnerCasinoMarketSupport.count({ where: { casinoId: CASINO_ID } }),
-      client.casinoCountryEvidence.count({ where: { marketProfile: { casinoId: CASINO_ID }, sourceReference: { startsWith: "COMMERCIAL_MCP_FOUNDER_MARKET_ASSERTION:" } } }),
+      client.casinoCountryEvidence.count({ where: { marketProfile: { casinoId: CASINO_ID }, sourceReference: { startsWith: "FOUNDER_AUTHORIZED_PARTNER_ROUTE:" } } }),
       client.affiliateProgram.count({ where: { casinoId: CASINO_ID } }),
       client.affiliateOffer.count({ where: { casinoId: CASINO_ID } }),
       client.affiliateTrackingLink.count({ where: { offerId: first.affiliateOfferId } }),
@@ -271,8 +338,8 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     };
     const beforeConcurrentChecks = registrationVerifierCalls;
     const concurrentResults = await Promise.all([
-      registrationService.register(concurrentInput, { actorId: ACTOR_ID, clientId: "partner-tracking-postgres-client" }, new Date(NOW.getTime() + 950)),
-      registrationService.register(concurrentInput, { actorId: ACTOR_ID, clientId: "partner-tracking-postgres-client" }, new Date(NOW.getTime() + 951)),
+      registrationService.register(concurrentInput, registrationContext, new Date(NOW.getTime() + 950)),
+      registrationService.register(concurrentInput, registrationContext, new Date(NOW.getTime() + 951)),
     ]);
     assert.equal(registrationVerifierCalls - beforeConcurrentChecks, 2, "each concurrent invocation verifies its batch once");
     assert.ok(concurrentResults.every((result) => result.results.length === 3 && result.results.every((row) => row.finalState === "ACTIVE_HEALTHY")));
@@ -280,7 +347,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     assert.equal(await client.casinoCountryEvidence.count({
       where: {
         marketProfile: { casinoId: CASINO_ID },
-        sourceReference: { startsWith: "COMMERCIAL_MCP_FOUNDER_MARKET_ASSERTION:" },
+        sourceReference: { startsWith: "FOUNDER_AUTHORIZED_PARTNER_ROUTE:" },
         OR: [
           { fieldKeys: { has: "operatorMarketSupported:PL" } },
           { fieldKeys: { has: "operatorMarketSupported:CZ" } },
@@ -293,8 +360,6 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
 
     const exactTarget = await restartedRepository.resolveTarget({
       partner: PARTNER.name,
-      partnerId: PARTNER.opportunityId,
-      partnerAliases: PARTNER.aliases,
       casino: "betway",
       requestedGeos: ["ES"],
     });
@@ -314,8 +379,6 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
 
     const exactIeTarget = await restartedRepository.resolveTarget({
       partner: PARTNER.name,
-      partnerId: PARTNER.opportunityId,
-      partnerAliases: PARTNER.aliases,
       casino: "betway",
       requestedGeos: ["IE"],
     });
@@ -336,8 +399,6 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
 
     const replacementTarget = await restartedRepository.resolveTarget({
       partner: PARTNER.name,
-      partnerId: PARTNER.opportunityId,
-      partnerAliases: PARTNER.aliases,
       casino: "betway",
       requestedGeos: null,
     });
@@ -423,32 +484,30 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       routeHealth: "HEALTHY" as const,
       reason: "PostgreSQL fixture canonical convergence.",
     }));
-    await repository.reconcileAuditAndCrm({
+    await repository.recordAudit({
       stage: first,
       verification: "HEALTHY",
       previousTrackingLinkId: promotedGeneric.previousTrackingLinkId,
       results,
       actorId: ACTOR_ID,
-      clientId: "partner-tracking-postgres-client",
+      auditSource: "INTERNAL_APPLICATION",
+      correlationId: "partner-tracking-postgres-command",
       now: new Date(NOW.getTime() + 6_000),
     });
     const audit = await client.auditLog.findFirstOrThrow({ where: { actorId: ACTOR_ID, action: "commercial-partner-tracking-link-registered" } });
-    const activity = await client.commercialActivity.findFirstOrThrow({ where: { opportunityId: PARTNER.opportunityId, type: "ACTIVATION_EVENT" } });
-    const diagnostics = JSON.stringify({ audit: { summary: audit.summary, metadata: audit.metadata }, activity: { summary: activity.summary, details: activity.details, reason: activity.reason } });
+    assert.equal(audit.entityType, "partner-casino-relationship");
+    assert.equal(audit.entityId, first.partnerCasinoRelationshipId);
+    const diagnostics = JSON.stringify({ audit: { summary: audit.summary, metadata: audit.metadata } });
     assert.equal(diagnostics.includes(GENERIC_URL), false);
     assert.equal(diagnostics.includes("redaction-fixture"), false);
     assert.equal(diagnostics.includes(partnerTrackingLinkHash(GENERIC_URL)), true);
-
-    const missingTask = await client.commercialTask.findFirstOrThrow({ where: { opportunityId: PARTNER.opportunityId, idempotencyKey: "partner-tracking-postgres-missing" } });
-    assert.equal(missingTask.completedAt, null);
-    assert.match(missingTask.title, /^MISSING_TRACKING_ROUTE: 464 supported/);
   } finally {
     await cleanup(client);
     await client.$disconnect();
   }
 });
 
-test("an inferred seeded market may reverify only its already-canonical exact route", async () => {
+test("an explicit market command is not vetoed by inferred static support evidence", async () => {
   assertDisposablePostgres();
   const client = new PrismaClient();
   const repository = new PartnerTrackingRegistrationRepository(client);
@@ -460,6 +519,7 @@ test("an inferred seeded market may reverify only its already-canonical exact ro
 
   await client.marketActivation.deleteMany({ where: { casinoId } });
   await client.partnerCasinoMarketSupport.deleteMany({ where: { casinoId } });
+  await client.partnerCasinoRelationship.deleteMany({ where: { casinoId } });
   await client.commercialOpportunity.deleteMany({ where: { id: partner.opportunityId } });
   await client.affiliateRedirectSlug.deleteMany({ where: { casinoId } });
   await client.affiliateOffer.deleteMany({ where: { casinoId } });
@@ -503,39 +563,24 @@ test("an inferred seeded market may reverify only its already-canonical exact ro
       createdBy: actorId,
       updatedBy: actorId,
     } });
-    await client.commercialOpportunity.create({ data: {
-      id: partner.opportunityId,
-      displayName: partner.name,
-      normalizedName: "betsson group affiliates",
-      organizationType: "AFFILIATE_NETWORK",
-      stage: "ACTIVE",
-      affiliateNetworkId: networkId,
-      createdBy: actorId,
-      updatedBy: actorId,
-    } });
-
-    const inferredTarget = await repository.resolveTarget({
+    const inferredEvidenceTarget = await repository.resolveTarget({
       partner: partner.name,
-      partnerId: partner.opportunityId,
-      partnerAliases: partner.aliases,
       casino: "Rizk",
-      requestedGeos: ["RS"],
+      requestedGeos: null,
     });
-    const seededRs = inferredTarget.rows.find((row) => row.geo === "RS")!;
+    const seededRs = inferredEvidenceTarget.rows.find((row) => row.geo === "RS")!;
     const inventoryRs = CURRENT_PARTNER_INVENTORY.find((row) => row.partner === partner.name && row.casino === "Rizk" && row.geo === "RS")!;
     assert.equal(seededRs.supportOrigin, "SEEDED");
     assert.ok(inventoryRs.supportEvidenceClassification === "INFERRED" || inventoryRs.legalEvidenceClassification === "INFERRED");
 
-    const evidenceReadyTarget = {
-      ...inferredTarget,
-      rows: inferredTarget.rows.map((row) => row.geo === "RS" ? {
-        ...row,
-        supportEvidenceClassification: "DETECTED" as const,
-        legalEvidenceClassification: "DETECTED" as const,
-      } : row),
-    };
+    const explicitTarget = await repository.resolveTarget({
+      partner: partner.name,
+      casino: "Rizk",
+      requestedGeos: ["RS"],
+    });
+    assert.equal(explicitTarget.rows.find((row) => row.geo === "RS")?.supportOrigin, "RUNTIME");
     const initial = await repository.stage({
-      target: evidenceReadyTarget,
+      target: explicitTarget,
       trackingUrl,
       linkHash: partnerTrackingLinkHash(trackingUrl),
       scope: "EXACT_GEO",
@@ -582,7 +627,7 @@ test("an inferred seeded market may reverify only its already-canonical exact ro
 
     const existingLinkCount = await client.affiliateTrackingLink.count({ where: { offerId: initial.affiliateOfferId } });
     const idempotent = await repository.stage({
-      target: inferredTarget,
+      target: explicitTarget,
       trackingUrl,
       linkHash: partnerTrackingLinkHash(trackingUrl),
       scope: "EXACT_GEO",
@@ -596,10 +641,10 @@ test("an inferred seeded market may reverify only its already-canonical exact ro
     assert.equal(idempotent.trackingLinkId, initial.trackingLinkId);
     assert.deepEqual(idempotent.affectedRows.map((row) => row.geo), ["RS"]);
     assert.equal(await client.affiliateTrackingLink.count({ where: { offerId: initial.affiliateOfferId } }), existingLinkCount);
-    assert.equal(await client.partnerCasinoMarketSupport.count({ where: { casinoId } }), 0);
+    assert.equal(await client.partnerCasinoMarketSupport.count({ where: { casinoId } }), 1);
 
-    await assert.rejects(() => repository.stage({
-      target: inferredTarget,
+    const replacement = await repository.stage({
+      target: explicitTarget,
       trackingUrl: `${trackingUrl}-replacement`,
       linkHash: partnerTrackingLinkHash(`${trackingUrl}-replacement`),
       scope: "EXACT_GEO",
@@ -607,11 +652,12 @@ test("an inferred seeded market may reverify only its already-canonical exact ro
       supportedGeos: null,
       actorId,
       now: new Date(NOW.getTime() + 2_000),
-    }), (error: unknown) => error instanceof Error && "details" in error
-      && (error.details as { reason?: string }).reason === "PARTNER_TRACKING_EVIDENCE_PENDING");
+    });
+    assert.deepEqual(replacement.affectedRows.map((row) => row.geo), ["RS"]);
   } finally {
     await client.marketActivation.deleteMany({ where: { casinoId } });
     await client.partnerCasinoMarketSupport.deleteMany({ where: { casinoId } });
+    await client.partnerCasinoRelationship.deleteMany({ where: { casinoId } });
     await client.commercialOpportunity.deleteMany({ where: { id: partner.opportunityId } });
     await client.affiliateRedirectSlug.deleteMany({ where: { casinoId } });
     await client.affiliateOffer.deleteMany({ where: { casinoId } });
