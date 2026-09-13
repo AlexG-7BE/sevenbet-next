@@ -13,77 +13,87 @@ async function verifyLogoOnlyMediaState() {
     return;
   }
 
-  const [
-    publishedCasinos,
-    casinoAssignments,
-    casinoBonusAssignments,
-    offerAssignments,
-    hostedCasinoAssignments,
-    hostedBonusAssignments,
-    hostedOfferAssignments,
-    hostedCreatives,
-    creativeSets,
-    creativeVariants,
-    mediaRevisions,
-  ] = await Promise.all([
-    prisma.casino.findMany({
-      where: { status: "PUBLISHED", archivedAt: null },
-      orderBy: { slug: "asc" },
-      select: {
-        id: true,
-        slug: true,
-        mediaAssets: {
-          where: { type: "LOGO", status: "ACTIVE", archivedAt: null },
-          orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { id: "asc" }],
-          take: 1,
-          select: { id: true, publicUrl: true },
+  await prisma.$transaction(async (transaction) => {
+    await transaction.$executeRawUnsafe("SET TRANSACTION READ ONLY");
+    const [transactionSafety] = await transaction.$queryRawUnsafe<Array<{ transaction_read_only: string }>>(
+      "SHOW transaction_read_only",
+    );
+    if (transactionSafety?.transaction_read_only !== "on") {
+      throw new Error(`${RELEASE}: PostgreSQL did not enforce the read-only verification transaction`);
+    }
+
+    const [
+      publishedCasinos,
+      casinoAssignments,
+      casinoBonusAssignments,
+      offerAssignments,
+      hostedCasinoAssignments,
+      hostedBonusAssignments,
+      hostedOfferAssignments,
+      hostedCreatives,
+      creativeSets,
+      creativeVariants,
+      mediaRevisions,
+    ] = await Promise.all([
+      transaction.casino.findMany({
+        where: { status: "PUBLISHED", archivedAt: null },
+        orderBy: { slug: "asc" },
+        select: {
+          id: true,
+          slug: true,
+          mediaAssets: {
+            where: { type: "LOGO", status: "ACTIVE", archivedAt: null },
+            orderBy: [{ featured: "desc" }, { sortOrder: "asc" }, { id: "asc" }],
+            take: 1,
+            select: { id: true, publicUrl: true },
+          },
         },
-      },
-    }),
-    prisma.casinoMediaAssignment.count({ where: { active: true } }),
-    prisma.casinoBonusMediaAssignment.count({ where: { active: true } }),
-    prisma.affiliateOfferMediaAssignment.count({ where: { active: true } }),
-    prisma.casinoPartnerHostedCreativeAssignment.count({ where: { active: true } }),
-    prisma.casinoBonusPartnerHostedCreativeAssignment.count({ where: { active: true } }),
-    prisma.affiliateOfferPartnerHostedCreativeAssignment.count({ where: { active: true } }),
-    prisma.partnerHostedCreative.count({ where: { OR: [{ active: true }, { archivedAt: null }] } }),
-    prisma.mediaCreativeSet.count({ where: { OR: [{ status: { not: "ARCHIVED" } }, { archivedAt: null }] } }),
-    prisma.mediaCreativeVariant.count({ where: { status: { in: ["PREPARED", "ACTIVE"] } } }),
-    prisma.mediaRevision.count({ where: { status: { in: ["PREPARED", "ACTIVE"] } } }),
-  ]);
+      }),
+      transaction.casinoMediaAssignment.count({ where: { active: true } }),
+      transaction.casinoBonusMediaAssignment.count({ where: { active: true } }),
+      transaction.affiliateOfferMediaAssignment.count({ where: { active: true } }),
+      transaction.casinoPartnerHostedCreativeAssignment.count({ where: { active: true } }),
+      transaction.casinoBonusPartnerHostedCreativeAssignment.count({ where: { active: true } }),
+      transaction.affiliateOfferPartnerHostedCreativeAssignment.count({ where: { active: true } }),
+      transaction.partnerHostedCreative.count({ where: { OR: [{ active: true }, { archivedAt: null }] } }),
+      transaction.mediaCreativeSet.count({ where: { OR: [{ status: { not: "ARCHIVED" } }, { archivedAt: null }] } }),
+      transaction.mediaCreativeVariant.count({ where: { status: { in: ["PREPARED", "ACTIVE"] } } }),
+      transaction.mediaRevision.count({ where: { status: { in: ["PREPARED", "ACTIVE"] } } }),
+    ]);
 
-  const activeLegacyAuthority = casinoAssignments
-    + casinoBonusAssignments
-    + offerAssignments
-    + hostedCasinoAssignments
-    + hostedBonusAssignments
-    + hostedOfferAssignments
-    + hostedCreatives
-    + creativeSets
-    + creativeVariants
-    + mediaRevisions;
-  if (activeLegacyAuthority !== 0) {
-    throw new Error(`${RELEASE}: active MEDIA-GEO3 or placement authority remains (${activeLegacyAuthority} rows)`);
-  }
+    const activeLegacyAuthority = casinoAssignments
+      + casinoBonusAssignments
+      + offerAssignments
+      + hostedCasinoAssignments
+      + hostedBonusAssignments
+      + hostedOfferAssignments
+      + hostedCreatives
+      + creativeSets
+      + creativeVariants
+      + mediaRevisions;
+    if (activeLegacyAuthority !== 0) {
+      throw new Error(`${RELEASE}: active MEDIA-GEO3 or placement authority remains (${activeLegacyAuthority} rows)`);
+    }
 
-  const publishedOperators = publishedCasinos.filter((casino) => !isTemporaryDemoCasinoId(casino.id));
-  const publishedDemonstrations = publishedCasinos.filter((casino) => isTemporaryDemoCasinoId(casino.id));
-  const missingOperatorLogos = publishedOperators
-    .filter((casino) => casino.mediaAssets.length === 0)
-    .map((casino) => casino.slug);
-  if (missingOperatorLogos.length > 0) {
-    throw new Error(`${RELEASE}: published operator Casinos missing a direct active LOGO asset: ${missingOperatorLogos.join(", ")}`);
-  }
+    const publishedOperators = publishedCasinos.filter((casino) => !isTemporaryDemoCasinoId(casino.id));
+    const publishedDemonstrations = publishedCasinos.filter((casino) => isTemporaryDemoCasinoId(casino.id));
+    const missingOperatorLogos = publishedOperators
+      .filter((casino) => casino.mediaAssets.length === 0)
+      .map((casino) => casino.slug);
+    if (missingOperatorLogos.length > 0) {
+      throw new Error(`${RELEASE}: published operator Casinos missing a direct active LOGO asset: ${missingOperatorLogos.join(", ")}`);
+    }
 
-  console.info(JSON.stringify({
-    release: RELEASE,
-    verified: true,
-    publishedCasinos: publishedCasinos.length,
-    publishedOperators: publishedOperators.length,
-    publishedDemonstrations: publishedDemonstrations.length,
-    preservedDirectOperatorLogos: publishedOperators.length - missingOperatorLogos.length,
-    activeLegacyAuthority,
-  }));
+    console.info(JSON.stringify({
+      release: RELEASE,
+      verified: true,
+      publishedCasinos: publishedCasinos.length,
+      publishedOperators: publishedOperators.length,
+      publishedDemonstrations: publishedDemonstrations.length,
+      preservedDirectOperatorLogos: publishedOperators.length - missingOperatorLogos.length,
+      activeLegacyAuthority,
+    }));
+  }, { isolationLevel: "RepeatableRead", maxWait: 10_000, timeout: 30_000 });
 }
 
 void verifyLogoOnlyMediaState()

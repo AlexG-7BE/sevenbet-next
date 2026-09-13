@@ -33,6 +33,8 @@
     "partner-tracking:production-smoke": "tsx --env-file-if-exists=.env.production.local scripts/partner-tracking-registration-production-smoke.ts",
     "production-db-reliability:test": "node --import tsx --test tests/production-db-reliability.test.ts",
     "production-db-reliability:postgres-test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/production-db-reliability-postgres.test.ts",
+    "release-governance:test": "node --import tsx --test tests/production-build-read-only.test.ts",
+    "release-governance:postgres-test": "node --import tsx --test --test-concurrency=1 tests/production-build-read-only-postgres.test.ts",
     "mcp-bridge:browser": "playwright test --config=playwright.ci.config.ts tests/commercial-mcp-browser.spec.ts tests/commercial-ops-browser.spec.ts",
     "visual:qa": "node scripts/visual-qa.mjs",
     "typography:audit": "node scripts/typography-audit.mjs",
