@@ -438,7 +438,10 @@ test("affiliate redirects ignore retired creative attribution and use only canon
     allowGbCommercialReadinessAuthority,
     canonicalActivation,
   );
-  const result = await service.resolve("betsson", { now: new Date("2030-01-01T00:00:00Z") });
+  const result = await service.resolve("betsson", {
+    requestCountrySignal: { countryCode: "GB", marketCode: "GB", trust: "TRUSTED", observedAt: new Date("2030-01-01T00:00:00Z") },
+    now: new Date("2030-01-01T00:00:00Z"),
+  });
   assert.equal(result.ok, true);
   if (result.ok) assert.equal(result.destination.href, "https://canonical.example/click");
   assert.deepEqual(events, ["geo", "canonical"]);

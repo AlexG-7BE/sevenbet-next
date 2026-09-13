@@ -12,7 +12,44 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Commercial Core Simplification PR2 — released; build-governance remediation pending
+## Commercial Core Simplification PR3 — exact routes implemented for review, not released
+
+**DETECTED IN THE PR3 BRANCH, 13 September 2026:** RFC-049 implements one
+central trusted-GEO-to-commercial-market normalization seam and one exact
+`MarketActivation` lookup for both public CTA and controlled `/r/...`
+resolution. Post-normalization parent fallback, active `ZZ` fallback,
+OfferCountry/TrackingCountry permission and `productionEligible` permission
+are absent from the canonical runtime. Argentina and Canada remain exact
+subdivision jurisdictions; country-scoped regional signals such as `US-VA`
+normalize once to `US`. Missing, ambiguous, unhealthy, unsafe or legally
+blocked routes fail closed without hiding editorial Casino content.
+
+Migration `0040_commercial_core_exact_routes_geo_simplification` is structural
+only. It permits active routes without a fabricated `CasinoCountry` profile,
+uses a scope-change trigger rather than a row-wide `NOT VALID` CHECK, and
+rejects every new or change-to-`ZZ` row plus every new/change-to-active invalid
+canonical scope. The narrower guard allows the previous binary to maintain
+health/status/version fields on an unchanged pre-existing legacy row during
+the DB-first cutover window.
+
+Any legacy `ZZ` transformation is a separate deterministic
+`plan`/`apply`/`verify` business-data operation bounded to the six already
+evidenced Superfly IE/MT replacements. The read-only plan now reports
+`cutoverSafe` and blocks with `PREVIOUS_RUNTIME_CUTOVER_UNSAFE` if a proposed
+exact target lacks an existing prerequisite required by the currently deployed
+pre-PR3 runtime. It never repairs or recreates compatibility state. Unknown
+fallback scope is also a blocker; ISO inventory, CRM and Partner market-support
+evidence cannot manufacture routes. Generic Production build verification
+remains read-only and fails before rollout when exact-route readiness is false.
+
+**NOT PRODUCTION EVIDENCE:** PR3 has not been merged or deployed, migration
+0040 has not been applied to Production, and the business-data operation has
+not been run on Production. Current Production route/materialization state is
+`UNKNOWN` until the separately authorised read-only plan is executed. See
+[RFC-049](06_RFC/RFC-049-Exact-Canonical-Commercial-Routes.md) and the
+[PR3 release runbook](06_Operations/Commercial-Core-PR3-Exact-Routes.md).
+
+## Commercial Core Simplification PR2 — released; build-governance remediation merged
 
 **VERIFIED IN PRODUCTION, 13 September 2026:** PR #277 / RFC-047 remains the
 single public `GovernedCommercialAction | null` decision seam. PR #278 merged
@@ -45,18 +82,19 @@ redirects remained unchanged; CRM remained operational and non-authoritative;
 and MCP tracking mutation continued to fail closed without trusted Founder
 authority.
 
-**OPEN RELEASE-CONTROL DEFECT; REMEDIATION IMPLEMENTED FOR REVIEW:** PR2 itself
+**REPOSITORY REMEDIATION MERGED; LIVE ADOPTION NOT REVERIFIED HERE:** PR2 itself
 is healthy and did not introduce the defect, but its Production Vercel build
 ran the pre-existing catalog reconciliation command. That build created 30
 `CasinoRevision`, six `EditorialReviewRevision` and 66 `AuditLog` rows through
 catalog republication/timestamp reconciliation. The same build chain also
 contained the write-capable GoldenPlay metadata repair, which was already
-current and did not write during this release. The bounded remediation branch
+current and did not write during this release. PR #279, merged at
+`edf59ba379e6f7a7839c86fa153ec8c1418eed3a`,
 removes both writers, changes catalog/logo checks to explicit read-only
 Production verification that skips isolated Preview data, and adds all-table
 disposable-PostgreSQL digest proof. The
-historical rows are retained. No remediation deployment or Production mutation
-is authorised while its PR remains under review.
+historical rows are retained. This PR3 preparation did not inspect or mutate
+Production and therefore does not claim a live PR #279 deployment.
 
 ## Customer Data, Analytics & Lifecycle Core v1 — Resend Production activation GO
 

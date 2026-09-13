@@ -25,7 +25,6 @@ export type GbCommercialReadinessReasonCode =
   | "GB_PROGRAM_INACTIVE"
   | "GB_PROGRAM_UNPUBLISHED"
   | "GB_PROGRAM_DISCONNECTED"
-  | "GB_PROGRAM_MARKET_MISSING"
   | "GB_PROGRAM_TRUSTED_AUTO_ACTIVATION_FORBIDDEN"
   | "GB_PARTNER_AGREEMENT_MISSING"
   | "GB_PARTNER_AGREEMENT_INVALID"
@@ -41,7 +40,6 @@ export type GbCommercialReadinessReasonCode =
   | "GB_OFFER_INACTIVE"
   | "GB_OFFER_NOT_EFFECTIVE"
   | "GB_OFFER_CASINO_MISMATCH"
-  | "GB_OFFER_MARKET_NOT_EXPLICITLY_ALLOWED"
   | "GB_DOMAIN_EVIDENCE_MISSING"
   | "GB_DOMAIN_EVIDENCE_INVALID"
   | "GB_DOMAIN_INACTIVE"
@@ -53,7 +51,6 @@ export type GbCommercialReadinessReasonCode =
   | "GB_TRACKING_LINK_MISSING"
   | "GB_TRACKING_LINK_INACTIVE"
   | "GB_TRACKING_LINK_UNSAFE"
-  | "GB_TRACKING_MARKET_NOT_EXPLICITLY_ALLOWED"
   | "GB_TRACKING_EVIDENCE_MISSING"
   | "GB_TRACKING_EVIDENCE_STALE"
   | "GB_TRACKING_LINK_EXPIRED"
@@ -123,10 +120,6 @@ function safeHttps(value: string) {
 
 function unique<T>(values: T[]) {
   return [...new Set(values)];
-}
-
-function explicitGbAllow(mode: CandidateOffer["geoMode"], rules: CandidateOffer["countries"]) {
-  return mode === "ALLOW" && rules.some((rule) => rule.mode === "ALLOW" && rule.countryCode.toUpperCase() === "GB");
 }
 
 function bonusReasons(bonus: CasinoBonus | null, casinoDomain: string, now: Date) {
@@ -199,7 +192,6 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
   if (program.status !== "ACTIVE" || program.archivedAt || ["SUSPENDED", "ARCHIVED"].includes(program.domainLifecycleStatus ?? "") || program.network.active !== true || program.network.archivedAt) reasons.push("GB_PROGRAM_INACTIVE");
   if (program.workflowStatus !== "PUBLISHED") reasons.push("GB_PROGRAM_UNPUBLISHED");
   if (program.integrationMode !== "MANUAL" && (program.connectionStatus !== "CONNECTED" || !program.providerAccountId || !program.credentialReference)) reasons.push("GB_PROGRAM_DISCONNECTED");
-  if (!program.supportedCountries?.includes("GB")) reasons.push("GB_PROGRAM_MARKET_MISSING");
   if (program.trustedAutoActivation) reasons.push("GB_PROGRAM_TRUSTED_AUTO_ACTIVATION_FORBIDDEN");
 
   const structuredOperatorIdentity = casino.operator.legalName || casino.operator.name;
@@ -237,7 +229,6 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
   const offerEnd = asDate(offer.expiresAt);
   if ((offerStart && offerStart > now) || (offerEnd && offerEnd <= now)) reasons.push("GB_OFFER_NOT_EFFECTIVE");
   if (offer.casinoId !== casino.id || (offer.casinoBonus && offer.casinoBonus.casinoId !== casino.id)) reasons.push("GB_OFFER_CASINO_MISMATCH");
-  if (!explicitGbAllow(offer.geoMode, offer.countries)) reasons.push("GB_OFFER_MARKET_NOT_EXPLICITLY_ALLOWED");
 
   const domainEvidence = input.domainEvidence;
   let validDomainEvidence = false;
@@ -275,7 +266,6 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
   } else {
     if (!link.active || link.archivedAt) reasons.push("GB_TRACKING_LINK_INACTIVE");
     if (!safeHttps(link.destinationUrl) || !safeHttps(link.trackingUrl)) reasons.push("GB_TRACKING_LINK_UNSAFE");
-    if (!explicitGbAllow(link.geoMode, link.countries)) reasons.push("GB_TRACKING_MARKET_NOT_EXPLICITLY_ALLOWED");
     const verifiedAt = asDate(link.verifiedAt);
     const lastCheckedAt = asDate(link.lastCheckedAt);
     if (!verifiedAt || !lastCheckedAt) {
@@ -305,7 +295,6 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
     programActive: program.status === "ACTIVE" && !program.archivedAt && !["SUSPENDED", "ARCHIVED"].includes(program.domainLifecycleStatus ?? "") && program.network.active === true && !program.network.archivedAt,
     programPublished: program.workflowStatus === "PUBLISHED",
     programConnected: program.integrationMode === "MANUAL" || (program.connectionStatus === "CONNECTED" && Boolean(program.providerAccountId) && Boolean(program.credentialReference)),
-    programSupportsGb: program.supportedCountries?.includes("GB") === true,
     offerActive: offer.status === "ACTIVE" && !offer.archivedAt && !["SUSPENDED", "ARCHIVED"].includes(offer.domainLifecycleStatus ?? ""),
     trackingLinkActive: link?.active === true && !link.archivedAt,
   };

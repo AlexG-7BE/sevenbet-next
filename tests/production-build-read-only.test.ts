@@ -21,6 +21,7 @@ test("canonical Vercel build is an explicit read-only compatibility gate", () =>
 
   assert.doesNotMatch(vercel.buildCommand, /gp-meta\.ts/);
   assert.doesNotMatch(vercel.buildCommand, /casino-real-catalog-03\.ts build-preflight/);
+  assert.doesNotMatch(vercel.buildCommand, /commercial-core-exact-routes|materializ/i);
   assert.doesNotMatch(vercel.buildCommand, /\b(?:reconcile|repair|seed|ingest|publish)\b/i);
   assert.doesNotMatch(vercel.buildCommand, /prisma\s+migrate\s+deploy/i);
 });
@@ -90,7 +91,8 @@ test("Vercel schema and compatibility preflight has no migration or business-dat
   const activationAudit = read("lib/casino-commercial-activation/production-release.ts");
   const casinoMarket = read("lib/db/casino-market-0025-release.ts");
   const commercialPlatform = read("lib/db/commercial-platform-0026-release.ts");
-  const transitiveDatabaseChecks = [activationAudit, casinoMarket, commercialPlatform].join("\n");
+  const exactRouteReadiness = read("lib/market-activation/exact-route-readiness.ts");
+  const transitiveDatabaseChecks = [activationAudit, casinoMarket, commercialPlatform, exactRouteReadiness].join("\n");
 
   assert.match(preflight, /verifyVercelBuildCompatibility/);
   assert.match(preflight, /SET TRANSACTION READ ONLY/);
@@ -102,6 +104,8 @@ test("Vercel schema and compatibility preflight has no migration or business-dat
   assert.match(activationAudit, /SET TRANSACTION READ ONLY/);
   assert.match(casinoMarket, /SET TRANSACTION READ ONLY/);
   assert.match(commercialPlatform, /SET TRANSACTION READ ONLY/);
+  assert.match(preflight, /inspectExactRouteReadiness\(prisma\)/);
+  assert.match(exactRouteReadiness, /LEGACY_ZZ_ROUTE_REQUIRES_MATERIALIZATION/);
   assert.doesNotMatch(transitiveDatabaseChecks, directBusinessMutation);
   assert.doesNotMatch(transitiveDatabaseChecks, mutatingSql);
 });
@@ -110,14 +114,17 @@ test("known historical repair and reconciliation writers cannot regain build aut
   const vercel = JSON.parse(read("vercel.json")) as { buildCommand: string };
   const goldenPlayRepair = read("scripts/gp-meta.ts");
   const catalog = read("scripts/casino-real-catalog-03.ts");
+  const exactRouteMaterialization = read("lib/market-activation/exact-route-materialization.ts");
 
   assert.match(goldenPlayRepair, /prisma\.affiliateTrackingLink\.update\(/);
   assert.match(catalog, /async function ingestFactualBundles/);
   assert.match(catalog, /reconcileSafeOfferCorpusInTransaction/);
   assert.match(catalog, /casinoService\.publishCasino/);
   assert.match(catalog, /prisma\.auditLog\.create/);
+  assert.match(exactRouteMaterialization, /marketActivation\.create\(/);
   assert.equal(vercel.buildCommand.includes("scripts/gp-meta.ts"), false);
   assert.equal(vercel.buildCommand.includes("scripts/casino-real-catalog-03.ts build-preflight"), false);
+  assert.equal(vercel.buildCommand.includes("scripts/commercial-core-exact-routes.ts"), false);
 });
 
 test("Next build keeps database-backed application routes dynamic", () => {

@@ -256,12 +256,9 @@ test("program, offer and relationship states are necessary but never sufficient"
     [offer({ program: { ...offer().program, network: { ...offer().program.network, active: false } } }), "GB_PROGRAM_INACTIVE", "offer"],
     [offer({ program: { ...offer().program, workflowStatus: "DRAFT" } }), "GB_PROGRAM_UNPUBLISHED", "offer"],
     [offer({ program: { ...offer().program, integrationMode: "API", connectionStatus: "DISCONNECTED" } }), "GB_PROGRAM_DISCONNECTED", "offer"],
-    [offer({ program: { ...offer().program, supportedCountries: ["IE"] } }), "GB_PROGRAM_MARKET_MISSING", "offer"],
     [offer({ program: { ...offer().program, trustedAutoActivation: true } }), "GB_PROGRAM_TRUSTED_AUTO_ACTIVATION_FORBIDDEN", "offer"],
     [offer({ status: "PAUSED" }), "GB_OFFER_INACTIVE", "offer"],
     [offer({ startAt: "2026-08-09T00:00:00.000Z" }), "GB_OFFER_NOT_EFFECTIVE", "offer"],
-    [offer({ geoMode: "GLOBAL", countries: [] }), "GB_OFFER_MARKET_NOT_EXPLICITLY_ALLOWED", "offer"],
-    [offer({ geoMode: "BLOCK", countries: [{ countryCode: "GB", mode: "BLOCK" }] }), "GB_OFFER_MARKET_NOT_EXPLICITLY_ALLOWED", "offer"],
     [offer({ casinoId: "other-casino" }), "GB_OFFER_CASINO_MISMATCH", "offer"],
     [casino({ brand: { ...casino().brand, operatorId: "different-operator" } }), "GB_BRAND_OPERATOR_MISMATCH", "casino"],
   ];
@@ -291,11 +288,29 @@ test("exact regulator-domain evidence rejects unknown, inactive, stale, white-la
   assert.deepEqual(gbCommercialDomainEvidenceRecords, []);
 });
 
-test("tracking authority requires explicit GB scope and fresh verification plus health checks", () => {
+test("legacy Program, Offer and Tracking GEO metadata cannot veto an exact GB route", () => {
+  const base = offer();
+  const result = evaluate({
+    offer: {
+      ...base,
+      geoMode: "BLOCK",
+      countries: [{ countryCode: "GB", mode: "BLOCK" }],
+      program: { ...base.program, supportedCountries: ["IE"] },
+      trackingLinks: base.trackingLinks.map((link) => ({
+        ...link,
+        geoMode: "BLOCK" as const,
+        countries: [{ countryCode: "GB", mode: "BLOCK" as const }],
+      })),
+    },
+  });
+  assert.equal(result.referralReady, true);
+  assert.deepEqual(result.reasonCodes, ["GB_COMMERCIAL_READY"]);
+});
+
+test("tracking authority requires fresh verification plus health checks", () => {
   const withLink = (patch: Partial<CandidateOffer["trackingLinks"][number]>) => offer({ trackingLinks: [{ ...offer().trackingLinks[0], ...patch }] });
   const cases: Array<[CandidateOffer, string]> = [
     [withLink({ active: false }), "GB_TRACKING_LINK_INACTIVE"],
-    [withLink({ geoMode: "GLOBAL", countries: [] }), "GB_TRACKING_MARKET_NOT_EXPLICITLY_ALLOWED"],
     [withLink({ lastCheckedAt: null }), "GB_TRACKING_EVIDENCE_MISSING"],
     [withLink({ verifiedAt: "2026-08-01T12:00:00.000Z" }), "GB_TRACKING_EVIDENCE_STALE"],
     [withLink({ trackingUrl: "http://tracking.invalid/click" }), "GB_TRACKING_LINK_UNSAFE"],

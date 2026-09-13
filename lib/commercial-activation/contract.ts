@@ -1,9 +1,16 @@
 import { z } from "zod";
 
+import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
+
 export const COMMERCIAL_ACTIVATION_BUNDLE_VERSION = "commercial-activation-bundle.v1" as const;
 
 const slug = z.string().trim().min(1).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const countryCode = z.string().trim().regex(/^[A-Za-z]{2}$/).transform((value) => value.toUpperCase());
+const canonicalCountryMarket = countryCode.refine((value) => canonicalCommercialMarketKey({
+  countryCode: value,
+  marketCode: value,
+  trust: "TRUSTED",
+}) === value, "Market must be an assigned canonical country scope; subdivision-scoped countries require an exact-route registrar");
 const currencyCode = z.string().trim().regex(/^[A-Za-z]{3}$/).transform((value) => value.toUpperCase());
 const languageCode = z.string().trim().min(2).max(35).regex(/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/);
 const boundedText = z.string().trim().min(1).max(1_000);
@@ -76,7 +83,7 @@ const routeHealthSchema = z.object({
 const activationRecordSchema = z.object({
   casino: z.object({ slug, expectedName: boundedText.nullable().optional() }).strict(),
   market: z.object({
-    countryCode,
+    countryCode: canonicalCountryMarket,
     currencyCode,
     languageCode,
   }).strict(),

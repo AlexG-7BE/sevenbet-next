@@ -27,7 +27,7 @@ export interface CommercialActivationVerification {
   records: Array<{
     key: string;
     exactState: boolean;
-    productionEligible: boolean;
+    canonicalRouteReady: boolean;
     ctaReady: boolean;
     jurisdictionReason: string;
     blockedReasons: string[];
@@ -37,7 +37,7 @@ export interface CommercialActivationVerification {
 export class CommercialActivationService {
   constructor(
     private readonly store: CommercialActivationStore = commercialActivationRepository as CommercialActivationRepository,
-    private readonly productionRoutes: Pick<PartnerRouteService, "isProductionEligible"> = partnerRouteService,
+    private readonly routes: Pick<PartnerRouteService, "isCanonicalRouteActive"> = partnerRouteService,
     private readonly jurisdiction: Pick<JurisdictionResolver, "resolve"> = jurisdictionResolver,
     private readonly activations: Pick<MarketActivationController, "activateCasinoInGeo"> = marketActivationController,
   ) {}
@@ -53,7 +53,7 @@ export class CommercialActivationService {
       const inspection = await this.store.inspect(record);
       const plan = planCommercialActivationRecord(bundle, record, inspection, now);
       const exactState = plan.ready && Object.values(plan.actions).every((action) => action === "UNCHANGED");
-      let productionEligible = false;
+      let canonicalRouteReady = false;
       let jurisdictionReason = "JURISDICTION_DECISION_UNAVAILABLE";
       if (exactState && inspection.casino && inspection.offer && inspection.trackingLink && inspection.redirect) {
         try {
@@ -62,22 +62,24 @@ export class CommercialActivationService {
             now,
           });
           jurisdictionReason = jurisdictionDecision.reasonCode;
-          productionEligible = await this.productionRoutes.isProductionEligible({
-            casinoId: inspection.casino.id,
-            countryCode: record.market.countryCode,
-            redirectId: inspection.redirect.id,
-            offerId: inspection.offer.id,
-            trackingLinkId: inspection.trackingLink.id,
-            now,
-            commercialAllowed: jurisdictionDecision.commercialAllowed,
-            referralAllowed: jurisdictionDecision.referralAllowed,
-            redirectEnabled: true,
-          });
+          canonicalRouteReady = jurisdictionDecision.commercialAllowed
+            && jurisdictionDecision.referralAllowed
+            && await this.routes.isCanonicalRouteActive({
+              casinoId: inspection.casino.id,
+              countryCode: record.market.countryCode,
+              redirectId: inspection.redirect.id,
+              offerId: inspection.offer.id,
+              trackingLinkId: inspection.trackingLink.id,
+              now,
+              commercialAllowed: jurisdictionDecision.commercialAllowed,
+              referralAllowed: jurisdictionDecision.referralAllowed,
+              redirectEnabled: true,
+            });
         } catch {
-          productionEligible = false;
+          canonicalRouteReady = false;
         }
       }
-      return { key: plan.key, exactState, productionEligible, ctaReady: productionEligible, jurisdictionReason, blockedReasons: plan.blockedReasons };
+      return { key: plan.key, exactState, canonicalRouteReady, ctaReady: canonicalRouteReady, jurisdictionReason, blockedReasons: plan.blockedReasons };
     }));
     return {
       schemaVersion: bundle.schemaVersion,

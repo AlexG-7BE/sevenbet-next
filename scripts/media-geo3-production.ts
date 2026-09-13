@@ -13,6 +13,7 @@ import {
   planMediaGeo3Preflight,
 } from "../lib/db/media-geo3-0033-release";
 import prisma from "../lib/db/prisma";
+import { canonicalCommercialMarketKey } from "../lib/jurisdiction/canonical-commercial-market";
 import { resolveCasinoMedia } from "../lib/media/casino-media-resolver";
 import {
   MEDIA_GEO3_CATALOG_PLACEMENTS,
@@ -125,17 +126,20 @@ async function exactSource(definition: ReturnType<typeof assertMediaGeo3Catalog>
     || metadata.role !== "CURRENT_OFFER_CREATIVE" || metadata.evidenceId !== definition.media.evidenceId) {
     throw new Error(`${definition.slug}: controlled MediaAsset differs from exact current-offer evidence.`);
   }
-  const activations = await prisma.marketActivation.findMany({
-    where: { casinoId: casino.id, countryCode: { in: [MEDIA_GEO3_PREFLIGHT_TARGET.countryCode, "ZZ"] } },
-    select: { countryCode: true, status: true, desiredState: true, affiliateOfferId: true, globalFallbackBlockedCountries: true },
+  const marketKey = canonicalCommercialMarketKey({
+    countryCode: MEDIA_GEO3_PREFLIGHT_TARGET.countryCode,
+    marketCode: MEDIA_GEO3_PREFLIGHT_TARGET.countryCode,
+    trust: "TRUSTED",
   });
-  const exact = activations.find((activation) => activation.countryCode === MEDIA_GEO3_PREFLIGHT_TARGET.countryCode);
-  const global = activations.find((activation) => activation.countryCode === "ZZ");
-  const authority = exact
-    ? exact.status === "ACTIVE" && exact.desiredState === "ACTIVE" && exact.affiliateOfferId === offer.id
-    : Boolean(global && global.status === "ACTIVE" && global.desiredState === "ACTIVE"
-      && global.affiliateOfferId === offer.id
-      && !global.globalFallbackBlockedCountries.includes(MEDIA_GEO3_PREFLIGHT_TARGET.countryCode));
+  const activations = marketKey ? await prisma.marketActivation.findMany({
+    where: { casinoId: casino.id, marketCode: marketKey },
+    select: { marketCode: true, status: true, desiredState: true, affiliateOfferId: true },
+  }) : [];
+  const exact = activations.length === 1 ? activations[0] : null;
+  const authority = Boolean(exact
+    && exact.status === "ACTIVE"
+    && exact.desiredState === "ACTIVE"
+    && exact.affiliateOfferId === offer.id);
   if (!authority) throw new Error(`${definition.slug}: exact governed commercial authority is unavailable for the preflight target.`);
   return { casino, offer, mediaAsset };
 }

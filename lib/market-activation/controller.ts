@@ -7,7 +7,6 @@ import type { JurisdictionDecision } from "@/lib/jurisdiction/types";
 import type { MarketActivationApplyResult } from "./repository";
 import { marketActivationRepository, type MarketActivationRepository } from "./repository";
 import {
-  MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
   normalizeMarketActivationIntent,
   type MarketActivationIntentInput,
   type MarketActivationRouteVerificationResult,
@@ -34,9 +33,7 @@ function routeVerificationRequired(result: MarketActivationApplyResult, now: Dat
     : {};
   const preparingReady = result.activation.status === "PREPARING"
     && !diagnostics.internalPending
-    && Boolean((result.activation.marketProfileId
-      || result.activation.countryCode === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE)
-      && result.activation.affiliateOfferId
+    && Boolean(result.activation.affiliateOfferId
       && result.activation.primaryTrackingLinkId
       && result.activation.redirectSlugId);
   return result.activation.status === "ACTIVE"

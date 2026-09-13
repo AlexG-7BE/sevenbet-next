@@ -35,7 +35,6 @@ export interface GbCommercialContractEvidence {
   programActive: boolean;
   programPublished: boolean;
   programConnected: boolean;
-  programSupportsGb: boolean;
   offerActive: boolean;
   trackingLinkActive: boolean;
 }

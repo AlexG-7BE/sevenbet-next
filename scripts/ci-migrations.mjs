@@ -1081,6 +1081,221 @@ async function verifyVettedPartnerHostedCreativeUpgrade(migrationEntries) {
   }
 }
 
+async function verifyExactCanonicalRouteUpgrade(migrationEntries, programmeMigrationIndex) {
+  const migration = "0040_commercial_core_exact_routes_geo_simplification";
+  const migrationIndex = migrationEntries.indexOf(migration);
+  const priorMigration = "0039_commercial_core_partner_relationship";
+  const priorIndex = migrationEntries.indexOf(priorMigration);
+  if (migrationIndex !== priorIndex + 1) {
+    throw new Error(`Expected ${migration} directly after ${priorMigration}`);
+  }
+
+  const schema = "exact_canonical_route_upgrade_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+  const preProgramme = await stageMigrations(migrationEntries.slice(0, programmeMigrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(preProgramme, "schema.prisma")], environment);
+    run("npx", [
+      "prisma", "db", "execute", "--schema", "prisma/schema.prisma",
+      "--file", "prisma/preflight/0015_active_control_program_flow.sql",
+    ], environment);
+  } finally {
+    await rm(preProgramme, { recursive: true, force: true });
+  }
+
+  const through0039 = await stageMigrations(migrationEntries.slice(0, migrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(through0039, "schema.prisma")], environment);
+  } finally {
+    await rm(through0039, { recursive: true, force: true });
+  }
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  const ids = {
+    casino: "40000000-0000-4000-8000-000000000001",
+    secondCasino: "40000000-0000-4000-8000-000000000002",
+    network: "40000000-0000-4000-8000-000000000003",
+    program: "40000000-0000-4000-8000-000000000004",
+    offer: "40000000-0000-4000-8000-000000000005",
+    tracking: "40000000-0000-4000-8000-000000000006",
+    redirect: "40000000-0000-4000-8000-000000000007",
+    legacyRoute: "40000000-0000-4000-8000-000000000008",
+    rejectedRoute: "40000000-0000-4000-8000-000000000009",
+    exactRoute: "40000000-0000-4000-8000-000000000010",
+    scopeChangeRoute: "40000000-0000-4000-8000-000000000011",
+    invalidActiveRoute: "40000000-0000-4000-8000-000000000012",
+  };
+  const now = new Date("2031-01-15T00:00:00.000Z");
+  try {
+    await prisma.casino.createMany({ data: [
+      { id: ids.casino, slug: "exact-route-upgrade-fixture", title: "Exact route upgrade fixture", domain: "exact-route-upgrade.invalid", createdBy: "ci", updatedBy: "ci" },
+      { id: ids.secondCasino, slug: "exact-route-upgrade-rejection", title: "Exact route rejection fixture", domain: "exact-route-rejection.invalid", createdBy: "ci", updatedBy: "ci" },
+    ] });
+    await prisma.affiliateNetwork.create({ data: {
+      id: ids.network, name: "Exact route upgrade network", slug: "exact-route-upgrade-network", createdBy: "ci", updatedBy: "ci",
+    } });
+    await prisma.affiliateProgram.create({ data: {
+      id: ids.program, networkId: ids.network, casinoId: ids.casino, name: "Exact route upgrade program", operator: "Fixture operator", createdBy: "ci", updatedBy: "ci",
+    } });
+    await prisma.affiliateOffer.create({ data: {
+      id: ids.offer, programId: ids.program, casinoId: ids.casino, internalName: "Exact route upgrade offer", publicLabel: "Visit", offerType: "CASINO", createdBy: "ci", updatedBy: "ci",
+    } });
+    await prisma.affiliateTrackingLink.create({ data: {
+      id: ids.tracking, offerId: ids.offer, label: "Exact route upgrade link", destinationUrl: "https://operator.invalid/casino", trackingUrl: "https://tracking.invalid/click", active: true, createdBy: "ci", updatedBy: "ci",
+    } });
+    await prisma.affiliateTrackingLinkCountry.create({ data: {
+      trackingLinkId: ids.tracking, countryCode: "ZZ", mode: "BLOCK", productionEligible: true,
+      productionEligibilityVerifiedAt: now, productionEligibilityEvidence: "CI:LEGACY-ZZ",
+    } });
+    await prisma.affiliateRedirectSlug.create({ data: {
+      id: ids.redirect, slug: "exact-route-upgrade-visit", casinoId: ids.casino, affiliateOfferId: ids.offer, active: true, createdBy: "ci", updatedBy: "ci",
+    } });
+    await prisma.marketActivation.create({ data: {
+      id: ids.legacyRoute, casinoId: ids.casino, countryCode: "ZZ", marketCode: "ZZ", product: "CASINO",
+      desiredState: "ACTIVE", status: "ACTIVE", affiliateOfferId: ids.offer, primaryTrackingLinkId: ids.tracking,
+      redirectSlugId: ids.redirect, version: 1, controllerVersion: "MARKET-ACTIVATION-V2",
+      reconciliationFingerprint: "a".repeat(64), requestedBy: "ci", requestedAt: now,
+      requestReason: "Pre-0040 legacy route preservation fixture.", sourceReferences: ["CI:LEGACY-ZZ"],
+      activatedAt: now, lastReconciledAt: now, routeVerificationStatus: "HEALTHY", routeLastCheckedAt: now,
+      globalFallbackBlockedCountries: ["CL", "DK", "ES", "FI", "GB", "NO", "SE"],
+    } });
+
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+    const [legacyAfterUpgrade, exactConstraint, scopeGuard] = await Promise.all([
+      prisma.marketActivation.findUnique({ where: { id: ids.legacyRoute } }),
+      prisma.$queryRawUnsafe(`
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'MarketActivation_exact_canonical_scope_check'
+          AND conrelid = '${schema}."MarketActivation"'::regclass
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT trigger.tgenabled
+        FROM pg_trigger trigger
+        JOIN pg_proc procedure ON procedure.oid = trigger.tgfoid
+        WHERE trigger.tgname = 'MarketActivation_guard_new_scope_trigger'
+          AND trigger.tgrelid = '${schema}."MarketActivation"'::regclass
+          AND procedure.proname = 'MarketActivation_guard_new_scope'
+          AND NOT trigger.tgisinternal
+      `),
+    ]);
+    if (legacyAfterUpgrade?.marketCode !== "ZZ" || legacyAfterUpgrade.desiredState !== "ACTIVE") {
+      throw new Error("0040 staged upgrade changed legacy business route state");
+    }
+    if (exactConstraint.length !== 0 || scopeGuard.length !== 1 || scopeGuard[0].tgenabled === "D") {
+      throw new Error("0040 must replace the row-wide exact-route CHECK with the scope-change guard");
+    }
+
+    const healthCheckedAt = new Date(now.getTime() + 1_000);
+    const previousBinaryHealthUpdate = await prisma.$transaction(async (transaction) => {
+      await transaction.affiliateTrackingLink.update({
+        where: { id: ids.tracking },
+        data: { lastCheckedAt: healthCheckedAt, verifiedAt: healthCheckedAt, updatedBy: "MARKET-ACTIVATION-V2" },
+      });
+      const compatibility = await transaction.affiliateTrackingLinkCountry.updateMany({
+        where: { trackingLinkId: ids.tracking, countryCode: "ZZ" },
+        data: {
+          productionEligible: true,
+          productionEligibilityVerifiedAt: healthCheckedAt,
+          productionEligibilityExpiresAt: null,
+        },
+      });
+      if (compatibility.count !== 1) throw new Error("Previous-binary ZZ compatibility projection is missing");
+      return transaction.marketActivation.update({
+        where: { id: ids.legacyRoute },
+        data: {
+          status: "ACTIVE",
+          version: 2,
+          activatedAt: now,
+          blockedAt: null,
+          lastReconciledAt: healthCheckedAt,
+          routeVerificationStatus: "HEALTHY",
+          routeLastCheckedAt: healthCheckedAt,
+          routeFinalHost: "operator.invalid",
+          routeVerificationDetail: "PREVIOUS_BINARY_HEALTH_UPDATE",
+          externalBlockerCode: null,
+          externalBlockerDetail: null,
+          externalBlockerSource: null,
+        },
+      });
+    });
+    if (previousBinaryHealthUpdate.marketCode !== "ZZ" || previousBinaryHealthUpdate.version !== 2) {
+      throw new Error("0040 blocked the previous binary's legitimate legacy ZZ health update");
+    }
+
+    let rejectedNewZz = false;
+    try {
+      await prisma.marketActivation.create({ data: {
+        id: ids.rejectedRoute, casinoId: ids.secondCasino, countryCode: "ZZ", marketCode: "ZZ", product: "CASINO",
+        desiredState: "DISABLED", status: "DISABLED", version: 1, controllerVersion: "MARKET-ACTIVATION-V2",
+        reconciliationFingerprint: "b".repeat(64), requestedBy: "ci", requestedAt: now,
+        requestReason: "0040 new-ZZ rejection fixture.", sourceReferences: ["CI:REJECT-ZZ"], disabledAt: now,
+      } });
+    } catch (error) {
+      rejectedNewZz = String(error).includes("MARKET_ACTIVATION_GLOBAL_FALLBACK_CREATION_FORBIDDEN");
+    }
+    if (!rejectedNewZz) throw new Error("0040 admitted a new ZZ route");
+
+    await prisma.marketActivation.create({ data: {
+      id: ids.scopeChangeRoute, casinoId: ids.secondCasino, countryCode: "IE", marketCode: "IE", product: "CASINO",
+      desiredState: "DISABLED", status: "DISABLED", version: 1, controllerVersion: "MARKET-ACTIVATION-V2",
+      reconciliationFingerprint: "d".repeat(64), requestedBy: "ci", requestedAt: now,
+      requestReason: "0040 scope-change guard fixture.", sourceReferences: ["CI:SCOPE-CHANGE"], disabledAt: now,
+    } });
+    let rejectedScopeChangeToZz = false;
+    try {
+      await prisma.marketActivation.update({
+        where: { id: ids.scopeChangeRoute },
+        data: { countryCode: "ZZ", marketCode: "ZZ" },
+      });
+    } catch (error) {
+      rejectedScopeChangeToZz = String(error).includes("MARKET_ACTIVATION_GLOBAL_FALLBACK_CREATION_FORBIDDEN");
+    }
+    if (!rejectedScopeChangeToZz) throw new Error("0040 admitted a non-ZZ to ZZ scope change");
+
+    await prisma.marketActivation.create({ data: {
+      id: ids.invalidActiveRoute, casinoId: ids.secondCasino, countryCode: "US", marketCode: "US-VA", product: "CASINO",
+      desiredState: "DISABLED", status: "DISABLED", version: 1, controllerVersion: "MARKET-ACTIVATION-V2",
+      reconciliationFingerprint: "e".repeat(64), requestedBy: "ci", requestedAt: now,
+      requestReason: "0040 canonical activation-transition fixture.", sourceReferences: ["CI:CANONICAL-SCOPE"], disabledAt: now,
+    } });
+    let rejectedInvalidActivation = false;
+    try {
+      await prisma.marketActivation.update({
+        where: { id: ids.invalidActiveRoute },
+        data: { desiredState: "ACTIVE", status: "PREPARING", disabledAt: null },
+      });
+    } catch (error) {
+      rejectedInvalidActivation = String(error).includes("MARKET_ACTIVATION_CANONICAL_SCOPE_REQUIRED");
+    }
+    if (!rejectedInvalidActivation) throw new Error("0040 admitted a non-canonical active scope transition");
+
+    await prisma.marketActivation.create({ data: {
+      id: ids.exactRoute, casinoId: ids.casino, countryCode: "IE", marketCode: "IE", product: "CASINO",
+      desiredState: "ACTIVE", status: "ACTIVE", affiliateOfferId: ids.offer, primaryTrackingLinkId: ids.tracking,
+      redirectSlugId: ids.redirect, version: 1, controllerVersion: "MARKET-ACTIVATION-V2",
+      reconciliationFingerprint: "c".repeat(64), requestedBy: "ci", requestedAt: now,
+      requestReason: "0040 exact route fixture.", sourceReferences: ["CI:EXACT-IE"],
+      activatedAt: now, lastReconciledAt: now, routeVerificationStatus: "HEALTHY", routeLastCheckedAt: now,
+    } });
+    console.info("Exact canonical route staged migration smoke passed", {
+      from: priorMigration,
+      to: migration,
+      legacyBusinessRowsMutatedByMigration: 0,
+      previousBinaryLegacyZzHealthUpdateSucceeded: true,
+      newZzRejected: true,
+      nonZzToZzScopeChangeRejected: true,
+      nonCanonicalActivationRejected: true,
+      exactRouteWithoutMarketProfileAccepted: true,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 async function main() {
   if (process.env.CI !== "true") {
     throw new Error("Migration verification is restricted to an explicit CI environment");
@@ -1155,6 +1370,7 @@ async function main() {
   await verifyGeoLocalizedCreativeUpgrade(migrationEntries);
   await verifyVettedPartnerHostedCreativeUpgrade(migrationEntries);
   await verifyRuntimePartnerMarketSupportUpgrade(migrationEntries, programmeMigrationIndex);
+  await verifyExactCanonicalRouteUpgrade(migrationEntries, programmeMigrationIndex);
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();

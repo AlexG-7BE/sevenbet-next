@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
 import { resolveCasinoMedia } from "@/lib/media/casino-media-resolver";
 import { mediaPlacementRegistry, type MediaPlacementName, type PlacementMediaAssignment, type PlacementMediaAsset } from "@/lib/media/placement-media";
 import type { MediaIngestionPlan, MediaOrchestrateProductionInput, MediaRollbackRevisionInput } from "@/lib/media-operations/contracts";
@@ -270,13 +271,19 @@ function publicAsset(source: PreparedSource, firstParty: {
 }
 
 function authorityForCountry(activations: Array<{
-  countryCode: string; status: string; desiredState: string; affiliateOfferId: string | null; globalFallbackBlockedCountries: string[];
+  marketCode: string; status: string; desiredState: string; affiliateOfferId: string | null;
 }>, countryCode: string, offerId: string) {
-  const exact = activations.find((activation) => activation.countryCode === countryCode);
-  if (exact) return exact.status === "ACTIVE" && exact.desiredState === "ACTIVE" && exact.affiliateOfferId === offerId;
-  const global = activations.find((activation) => activation.countryCode === "ZZ");
-  return Boolean(global && global.status === "ACTIVE" && global.desiredState === "ACTIVE"
-    && global.affiliateOfferId === offerId && !global.globalFallbackBlockedCountries.includes(countryCode));
+  const marketKey = canonicalCommercialMarketKey({
+    countryCode: countryCode.slice(0, 2),
+    marketCode: countryCode,
+    trust: "TRUSTED",
+  });
+  if (!marketKey) return false;
+  const exact = activations.filter((activation) => activation.marketCode === marketKey);
+  return exact.length === 1
+    && exact[0]!.status === "ACTIVE"
+    && exact[0]!.desiredState === "ACTIVE"
+    && exact[0]!.affiliateOfferId === offerId;
 }
 
 type Transaction = Prisma.TransactionClient;
@@ -378,8 +385,18 @@ export class MediaProductionRevisionService {
         tx.casino.findUnique({ where: { id: input.casinoId }, select: { id: true, title: true, status: true, archivedAt: true } }),
         tx.affiliateOffer.findUnique({ where: { id: input.affiliateOfferId }, include: { casinoBonus: true } }),
         tx.marketActivation.findMany({
-          where: { casinoId: input.casinoId, countryCode: { in: [...new Set([...input.targets.map((target) => target.countryCode), "ZZ"])] } },
-          select: { countryCode: true, status: true, desiredState: true, affiliateOfferId: true, globalFallbackBlockedCountries: true },
+          where: {
+            casinoId: input.casinoId,
+            marketCode: { in: [...new Set(input.targets.flatMap((target) => {
+              const key = canonicalCommercialMarketKey({
+                countryCode: target.countryCode.slice(0, 2),
+                marketCode: target.countryCode,
+                trust: "TRUSTED",
+              });
+              return key ? [key] : [];
+            }))] },
+          },
+          select: { marketCode: true, status: true, desiredState: true, affiliateOfferId: true },
         }),
       ]);
       if (!casino || casino.archivedAt || casino.status !== "PUBLISHED") throw new ValidationError("Exact published Casino is required for Production media");

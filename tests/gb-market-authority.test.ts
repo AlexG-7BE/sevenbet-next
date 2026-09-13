@@ -85,7 +85,6 @@ const commercialContract = {
   programActive: true,
   programPublished: true,
   programConnected: true,
-  programSupportsGb: true,
   offerActive: true,
   trackingLinkActive: true,
 };
@@ -293,11 +292,12 @@ test("redirect authority is a strict AND and rechecks before returning a stored 
       return { jurisdictionAuthority: true, partnerAuthority: true, operatorAuthority: false, domainAuthority: false, programAuthority: true, offerAuthority: true, trackingAuthority: true, bonusAuthority: true, redirectAuthority: true, commercialReady: false, referralReady: false, reasonCodes: ["GB_DOMAIN_EVIDENCE_MISSING"], operatorEligibility: unavailableGbOperatorEligibility("GB_DOMAIN_EVIDENCE_MISSING"), checkedAt: now.toISOString(), evidenceCheckedAt: null, revalidateAt: null };
     },
   };
-  const incomplete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, operatorDenied, canonicalGbActivation).resolve("casino-visit", { now, currencyCode: "GBP" });
+  const trustedGbSignal = { countryCode: "GB", marketCode: "GB", trust: "TRUSTED" as const, observedAt: now };
+  const incomplete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, operatorDenied, canonicalGbActivation).resolve("casino-visit", { requestCountrySignal: trustedGbSignal, now, currencyCode: "GBP" });
   assert.equal(incomplete.ok, false);
   if (!incomplete.ok) assert.equal(incomplete.reason, "OPERATOR_EVIDENCE_DENIED");
 
-  const complete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalGbActivation).resolve("casino-visit", { now, currencyCode: "GBP" });
+  const complete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalGbActivation).resolve("casino-visit", { requestCountrySignal: trustedGbSignal, now, currencyCode: "GBP" });
   assert.equal(complete.ok, true);
   if (complete.ok) assert.equal(complete.destination.toString(), "https://tracking.invalid/click");
 });

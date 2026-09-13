@@ -3,6 +3,7 @@ import { resolveAffiliateCandidates, type CandidateOffer, type CandidateResolver
 import { normalizeCurrencyHint, normalizeLanguageHint, normalizeRedirectSlug, validateRedirectTargetUrl } from "@/lib/affiliate-routing/redirect-validation";
 import type { GbCommercialReadinessDecision } from "@/lib/affiliate-commercial/gb-commercial-readiness";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
+import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
 import { jurisdictionResolver, type JurisdictionResolver } from "@/lib/jurisdiction/resolver";
 import type { CountrySignal, JurisdictionDecision } from "@/lib/jurisdiction/types";
 import { affiliateRedirectRepository, type AffiliateRedirectStore } from "@/lib/repositories/affiliate-redirect.repository";
@@ -13,7 +14,7 @@ import { worldwideFounderGbAuthorityApplies } from "@/lib/current-partner-worldw
 
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 
-export type RedirectFailureReason = "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED" | "COMMERCIAL_ROUTE_NOT_PRODUCTION_ELIGIBLE" | "SLUG_NOT_FOUND" | "SLUG_INACTIVE" | "NO_ACTIVE_OFFER" | "NO_ELIGIBLE_TRACKING_LINK" | "UNSAFE_REDIRECT_URL";
+export type RedirectFailureReason = "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED" | "NO_GOVERNED_ROUTE" | "SLUG_NOT_FOUND" | "SLUG_INACTIVE" | "NO_ACTIVE_OFFER" | "NO_ELIGIBLE_TRACKING_LINK" | "UNSAFE_REDIRECT_URL";
 
 export type AffiliateRedirectResolution =
   | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision: JurisdictionDecision; operatorEligibility?: GbOperatorEligibilityDecision; commercialReadiness?: GbCommercialReadinessDecision }
@@ -177,15 +178,23 @@ export class AffiliateRedirectService {
       return { ok: false, reason: "SLUG_NOT_FOUND", candidates: [], jurisdictionDecision };
     }
     const countryCode = jurisdictionDecision.countryCode ?? "";
-    const marketCode = input.requestCountrySignal?.countryCode === countryCode
-      ? input.requestCountrySignal.marketCode ?? countryCode
-      : countryCode;
-    const activation = await this.canonicalActivations.resolveRedirect(slug, marketCode);
+    const trustedSignalMatches = input.requestCountrySignal?.trust === "TRUSTED"
+      && input.requestCountrySignal.countryCode?.trim().toUpperCase() === countryCode;
+    const marketCode = canonicalCommercialMarketKey({
+      countryCode,
+      marketCode: trustedSignalMatches
+        ? input.requestCountrySignal?.marketCode ?? countryCode
+        : null,
+      trust: trustedSignalMatches ? "TRUSTED" : "UNTRUSTED",
+    });
+    const activation = marketCode
+      ? await this.canonicalActivations.resolveRedirect(slug, marketCode, now)
+      : null;
     if (!activation || !activation.redirectSlug || !activation.affiliateOffer || !activation.primaryTrackingLink) {
       const mapping = await this.store.findBySlug(slug);
       return {
         ok: false,
-        reason: mapping ? "COMMERCIAL_ROUTE_NOT_PRODUCTION_ELIGIBLE" : "SLUG_NOT_FOUND",
+        reason: mapping ? "NO_GOVERNED_ROUTE" : "SLUG_NOT_FOUND",
         ...(mapping ? { slugId: mapping.id, casinoId: mapping.casinoId } : {}),
         candidates: [],
         jurisdictionDecision,
@@ -214,19 +223,21 @@ export class AffiliateRedirectService {
       return { ...routing, destination, jurisdictionDecision };
     }
 
-    const legacyRouting = await this.resolveRouting(slug, {
-      countryCode,
-      currencyCode: input.currencyCode,
-      language: input.language,
+    // GB keeps its lifecycle/operator evidence checks, but the selected Offer
+    // is loaded by the exact MarketActivation binding. The legacy affiliate
+    // candidate resolver (and its Offer/Tracking GEO rules) is not consulted.
+    const selectedOffer = (await this.offers.activeCandidates({
+      casinoId: routing.casinoId,
+      casinoBonusId: activation.casinoBonusId ?? undefined,
       now,
-    });
-    if (!legacyRouting.ok || legacyRouting.offerId !== routing.offerId) {
+    })).find((offer) => offer.id === routing.offerId);
+    if (!selectedOffer) {
       return { ok: false, reason: "COMMERCIAL_CONTRACT_DENIED", slugId: routing.slugId, casinoId: routing.casinoId, candidates: [], jurisdictionDecision };
     }
 
     const commercialReadiness = await this.commercialReadiness.evaluate({
       casinoId: routing.casinoId,
-      offer: legacyRouting.selectedOffer,
+      offer: selectedOffer,
       trackingLinkId: routing.trackingLinkId,
       jurisdictionDecision,
       redirectContract: { slugActive: true, destinationServerOwned: true, destinationSafe: true },

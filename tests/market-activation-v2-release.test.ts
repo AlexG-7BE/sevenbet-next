@@ -40,59 +40,46 @@ test("0035 additively introduces exact subdivision market identity", async () =>
   assert.doesNotMatch(migration, /DROP TABLE|DROP COLUMN|TRUNCATE|DELETE FROM/);
 });
 
-test("runtime public-route readers use MarketActivation while legacy readiness remains a shadow comparator", async () => {
-  const [resolver, runtime, redirect, script] = await Promise.all([
+test("0040 separates exact-route structure from business-data materialization", async () => {
+  const migration = await readFile(new URL("prisma/migrations/0040_commercial_core_exact_routes_geo_simplification/migration.sql", root), "utf8");
+  assert.doesNotMatch(migration, /MarketActivation_exact_canonical_scope_check/);
+  assert.match(migration, /MarketActivation_guard_new_scope_trigger/);
+  assert.match(migration, /scope_changed OR activation_started/);
+  assert.match(migration, /MARKET_ACTIVATION_GLOBAL_FALLBACK_CREATION_FORBIDDEN/);
+  assert.match(migration, /MARKET_ACTIVATION_CANONICAL_SCOPE_REQUIRED/);
+  assert.match(migration, /MarketActivation_active_binding_check/);
+  assert.doesNotMatch(migration, /\) NOT VALID/);
+  assert.doesNotMatch(migration, /INSERT INTO|UPDATE\s+"MarketActivation"|DELETE FROM|TRUNCATE/);
+});
+
+test("runtime public-route readers perform one exact canonical lookup", async () => {
+  const [resolver, runtime, redirect, materializationCommand, materializationPlan, legacyScript] = await Promise.all([
     readFile(new URL("lib/commercial/public-commercial-action-resolver.ts", root), "utf8"),
     readFile(new URL("lib/market-activation/runtime.ts", root), "utf8"),
     readFile(new URL("lib/services/affiliate-redirect.service.ts", root), "utf8"),
+    readFile(new URL("scripts/commercial-core-exact-routes.ts", root), "utf8"),
+    readFile(new URL("lib/market-activation/exact-route-materialization.ts", root), "utf8"),
     readFile(new URL("scripts/market-activation-v2.ts", root), "utf8"),
   ]);
   assert.match(resolver, /marketActivationRuntime/);
+  assert.match(resolver, /canonicalCommercialMarketKey/);
   assert.match(resolver, /this\.routes\.listPublicRoutes/);
   assert.match(resolver, /scopedCasinoReferralAllowed/);
   assert.match(resolver, /gbOperatorEligibility\.evaluateMany/);
   assert.doesNotMatch(resolver, /partnerRouteService/);
   assert.match(runtime, /record\.desiredState === "ACTIVE"/);
   assert.match(runtime, /record\.status === "ACTIVE"/);
-  assert.match(runtime, /globalFallbackBlockedCountries/);
-  assert.doesNotMatch(runtime, /founderGlobalPartnerRouteAllows/);
-  assert.match(runtime, /exactAuthorityExists/);
+  assert.match(runtime, /marketCode: marketKey/);
+  assert.doesNotMatch(runtime, /globalFallbackBlockedCountries|exactAuthorityExists|parentMarket|marketCandidates/);
   assert.match(redirect, /canonicalActivations\.resolveRedirect/);
+  assert.match(redirect, /canonicalCommercialMarketKey/);
   assert.doesNotMatch(redirect, /partnerRouteService|isProductionEligible/);
-  assert.match(script, /legacyEligibleSnapshot/);
-  assert.match(script, /async function shadow/);
-  assert.match(script, /Betsson × CL × CASINO must remain inactive/);
-});
-
-test("release executor requires bounded environment, database, project, and SHA authority", async () => {
-  const source = await readFile(new URL("scripts/market-activation-v2.ts", root), "utf8");
-  for (const guard of [
-    "MARKET_ACTIVATION_V2_CONFIRM",
-    "ALLOW_MARKET_ACTIVATION_V2_WRITE",
-    "MARKET_ACTIVATION_V2_TARGET",
-    "MARKET_ACTIVATION_V2_DATABASE_FINGERPRINT",
-    "MARKET_ACTIVATION_V2_DATABASE_RESOURCE_ID",
-    "MARKET_ACTIVATION_V2_PROJECT_ID",
-    "MARKET_ACTIVATION_V2_ORG_ID",
-    "MARKET_ACTIVATION_V2_EXPECTED_SHA",
-  ]) assert.match(source, new RegExp(guard));
-});
-
-test("reconciliation re-evaluates the canonical tracking candidate instead of pinning a stale binding", async () => {
-  const source = await readFile(new URL("scripts/market-activation-v2.ts", root), "utf8");
-  const reconcile = source.match(/async function reconcile[\s\S]*?async function schemaAvailable/)?.[0] ?? "";
-  assert.match(reconcile, /countryCode: record\.marketCode/);
-  assert.match(reconcile, /redirectSlugId: record\.redirectSlugId/);
-  assert.match(reconcile, /affiliateOfferId: record\.affiliateOfferId/);
-  assert.doesNotMatch(reconcile, /primaryTrackingLinkId:/);
-});
-
-test("reconciliation versions its idempotency key when payload semantics change", async () => {
-  const source = await readFile(new URL("scripts/market-activation-v2.ts", root), "utf8");
-  assert.match(source, /const RECONCILIATION_SEMANTICS = "CANONICAL-CANDIDATE-RESELECTION-V3"/);
-  const reconcile = source.match(/async function reconcile[\s\S]*?async function schemaAvailable/)?.[0] ?? "";
-  assert.match(reconcile, /reconcile:\$\{RECONCILIATION_SEMANTICS\}:\$\{record\.id\}:from-version-\$\{record\.version\}/);
-  assert.doesNotMatch(reconcile, /reconcile:\$\{record\.id\}:from-version-\$\{record\.version\}/);
+  assert.match(materializationCommand, /SET TRANSACTION READ ONLY/);
+  assert.match(materializationCommand, /"plan", "apply", "verify"/);
+  assert.match(materializationCommand, /EXACT_ROUTE_APPLY_CONFIRMATION_REQUIRED/);
+  assert.match(materializationPlan, /cutoverSafe/);
+  assert.match(materializationPlan, /PREVIOUS_RUNTIME_CUTOVER_UNSAFE/);
+  assert.match(legacyScript, /MARKET_ACTIVATION_V2_COMMAND_RETIRED_BY_RFC_049/);
 });
 
 test("Production build is DB-first and checksum-verifies the canonical activation schema", async () => {
@@ -102,22 +89,19 @@ test("Production build is DB-first and checksum-verifies the canonical activatio
   assert.match(source, /MARKET_ACTIVATION_BASE_MIGRATION = "0031_market_activation_v2"/);
   assert.match(source, /MARKET_ACTIVATION_TARGET_MIGRATION = "0032_market_activation_global_fallback"/);
   assert.match(source, /MARKET_ACTIVATION_EXACT_MARKET_MIGRATION = "0035_market_activation_exact_market_code"/);
-  assert.match(source, /assertChecksum\(completedByName\.get\(MARKET_ACTIVATION_EXACT_MARKET_MIGRATION\)/);
+  assert.match(source, /COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION = "0040_commercial_core_exact_routes_geo_simplification"/);
+  assert.match(source, /assertChecksum\(completedByName\.get\(COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION\)/);
   assert.match(source, /MarketActivation_market_code_check/);
   assert.match(source, /exact_market_unique/);
-  assert.match(source, /MarketActivation_global_fallback_scope_check/);
-  assert.match(source, /global_fallback_active_binding/);
-  assert.match(source, /marketcode=''zz''andmarketprofileidisnull/);
-  assert.match(source, /marketcode<>''zz''andcardinalityglobalfallbackblockedcountries=0/);
-  assert.match(source, /marketcode=''zz''ormarketprofileidisnotnull/);
+  assert.match(source, /legacy_row_wide_scope_constraint_absent/);
+  assert.match(source, /MarketActivation_guard_new_scope_trigger/);
+  assert.match(source, /inspectExactRouteReadiness/);
+  assert.match(source, /EXACT_ROUTE_READINESS_FAILED/);
   assert.doesNotMatch(source, /pg_get_constraintdef\(con\.oid\) LIKE '%"marketCode"/);
   assert.match(source, /to_regclass\('public\."MarketActivation"'\)/);
-  assert.match(source, /Production DB-first release requires completed.*MARKET_ACTIVATION_EXACT_MARKET_MIGRATION/s);
-  assert.match(casinoMarketGuard, /canonicalEligibleRouteCountries/);
-  assert.match(casinoMarketGuard, /orphanEligibleRouteCountries/);
-  assert.match(casinoMarketGuard, /activation\."routeVerificationStatus" = 'HEALTHY'/);
-  assert.match(casinoMarketGuard, /productionEligible authority without a matching canonical MarketActivation projection/);
-  assert.doesNotMatch(casinoMarketGuard, /authority\.eligible !== 0n/);
+  assert.match(source, /Production DB-first release requires completed.*COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION/s);
+  const steadyStateReadiness = casinoMarketGuard.match(/export async function inspectCasinoMarket0025Release\([\s\S]*?export async function runCasinoMarket0025Readiness/)?.[0] ?? "";
+  assert.doesNotMatch(steadyStateReadiness, /casinoMarket0025AuthoritySnapshot|assertCasinoMarket0025CommercialFirewall|authority_state/);
   assert.match(ciWorkflow, /npm run market-activation:postgres-test/);
 });
 

@@ -5,6 +5,7 @@ These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-
 | Runbook | Purpose |
 | --- | --- |
 | [Production Release Governance](Production-Release-Governance.md) | Pull-request, deployment, verification and rollback path |
+| [Commercial Core PR3 — Exact Routes](Commercial-Core-PR3-Exact-Routes.md) | Migration 0040, separately authorised exact-route materialization, read-only readiness, deployment and rollback order |
 | [Environment and Secrets](Environment-and-Secrets.md) | Trust zones, variable inventory, ownership and isolation gates |
 | [Product Analytics](Product-Analytics.md) | Vercel plan boundary, privacy contract, aggregate report, activation and rollback |
 | [Customer Data, Analytics & Lifecycle Core](Customer-Data-Analytics-Lifecycle-Core.md) | RFC-046 customer registry, consented first-party analytics, click attribution, fixed dashboards, email queues, migration, verification and rollback |

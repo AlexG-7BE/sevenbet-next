@@ -403,14 +403,16 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     });
     const promotedGeneric = await repository.promote({ stage: first, finalHost: "betway.example", redirectCount: 1, checkedAt: NOW, actorId: ACTOR_ID });
     assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active, true);
-    assert.equal(await client.affiliateTrackingLinkCountry.count({ where: { trackingLinkId: first.trackingLinkId } }), 3);
-    const trackingCountryEvidence = await client.affiliateTrackingLinkCountry.findMany({
-      where: { trackingLinkId: first.trackingLinkId },
-      select: { productionEligibilityEvidence: true },
-    });
-    assert.ok(trackingCountryEvidence.every((row) => row.productionEligibilityEvidence?.includes(`DECISION_REF:${COMMERCIAL_DECISION_REF}`)));
-    assert.ok(trackingCountryEvidence.every((row) => row.productionEligibilityEvidence?.includes(`CANONICAL_TRACKING_REGISTRATION:${partnerTrackingLinkHash(GENERIC_URL)}`)));
-    assert.doesNotMatch(JSON.stringify(trackingCountryEvidence), /FOUNDER_(?:AUTHORIZED|SUPPLIED)/);
+    assert.equal(
+      await client.affiliateTrackingLinkCountry.count({ where: { trackingLinkId: first.trackingLinkId } }),
+      0,
+      "exact routes must not manufacture a second TrackingCountry permission graph",
+    );
+    assert.equal(
+      await client.affiliateOfferCountry.count({ where: { offerId: first.affiliateOfferId } }),
+      0,
+      "exact routes must not manufacture a second OfferCountry permission graph",
+    );
     assert.equal((await client.affiliateRedirectSlug.findUniqueOrThrow({ where: { id: first.redirectId } })).active, true);
 
     await client.affiliateOffer.update({ where: { id: first.affiliateOfferId }, data: {
@@ -454,8 +456,8 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     assert.equal(registrationVerifierCalls, 1);
     assert.equal(controllerVerifierCalls, 0);
     const restoredNetwork = await client.affiliateNetwork.findUniqueOrThrow({ where: { id: NETWORK_ID } });
-    assert.equal(restoredNetwork.active, true);
-    assert.equal(restoredNetwork.archivedAt, null);
+    assert.equal(restoredNetwork.active, false, "route registration must not repair legacy lifecycle state");
+    assert.equal(restoredNetwork.archivedAt, null, "the selected compatibility projection may be unarchived without becoming authority");
     assert.equal(await client.marketActivation.count({
       where: { casinoId: CASINO_ID, marketCode: { in: ["AT", "PT", "US"] }, status: "ACTIVE", routeVerificationStatus: "HEALTHY" },
     }), 3);

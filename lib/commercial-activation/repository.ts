@@ -58,10 +58,10 @@ function programCurrent(record: {
 function offerCurrent(record: {
   casinoId: string; externalOfferId: string | null; externalName: string | null; internalName: string; publicLabel: string; offerType: string;
   status: string; domainLifecycleStatus: string | null; payoutModel: string; payoutAmount: Prisma.Decimal | null; payoutCurrency: string | null;
-  revenueSharePercentage: Prisma.Decimal | null; hybridTerms: string | null; geoMode: string; languages: string[]; devices: string[];
+  revenueSharePercentage: Prisma.Decimal | null; hybridTerms: string | null; languages: string[]; devices: string[];
   landingPageUrl: string | null; startAt: Date | null; expiresAt: Date | null; evergreen: boolean; priority: number; archivedAt: Date | null;
-  metadata: Prisma.JsonValue; countries: Array<{ countryCode: string; mode: string }>; currencies: Array<{ currencyCode: string }>;
-}, countryCode: string) {
+  metadata: Prisma.JsonValue; currencies: Array<{ currencyCode: string }>;
+}) {
   return {
     casinoId: record.casinoId,
     externalOfferId: record.externalOfferId,
@@ -76,7 +76,6 @@ function offerCurrent(record: {
     payoutCurrency: record.payoutCurrency,
     revenueSharePercentage: number(record.revenueSharePercentage),
     hybridTerms: record.hybridTerms,
-    geoMode: record.geoMode,
     languages: [...record.languages].sort(),
     devices: [...record.devices].sort(),
     landingPageUrl: record.landingPageUrl,
@@ -86,13 +85,12 @@ function offerCurrent(record: {
     priority: record.priority,
     archivedAt: record.archivedAt,
     metadata: record.metadata,
-    countryAuthority: record.countries.find((entry) => entry.countryCode.toUpperCase() === countryCode) ?? null,
     currencies: record.currencies.map((entry) => entry.currencyCode).sort(),
   };
 }
 
 function trackingCurrent(record: {
-  externalLinkId: string | null; label: string; destinationUrl: string; trackingUrl: string; landingPage: string | null; geoMode: string;
+  externalLinkId: string | null; label: string; destinationUrl: string; trackingUrl: string; landingPage: string | null;
   currencyCode: string | null; language: string | null; campaign: string | null; subIdTemplate: string | null; verifiedAt: Date | null;
   lastCheckedAt: Date | null; validFrom: Date | null; expiresAt: Date | null; active: boolean; priority: number; source: string;
   archivedAt: Date | null; metadata: Prisma.JsonValue;
@@ -103,7 +101,6 @@ function trackingCurrent(record: {
     destinationUrl: record.destinationUrl,
     trackingUrl: record.trackingUrl,
     landingPage: record.landingPage,
-    geoMode: record.geoMode,
     currencyCode: record.currencyCode,
     language: record.language,
     campaign: record.campaign,
@@ -117,21 +114,6 @@ function trackingCurrent(record: {
     source: record.source,
     archivedAt: record.archivedAt,
     metadata: record.metadata,
-  };
-}
-
-function trackingCountryCurrent(record: {
-  countryCode: string; mode: string; productionEligible: boolean; productionEligibilityVerifiedAt: Date | null;
-  productionEligibilityExpiresAt: Date | null; productionEligibilityEvidence: string | null; productionEligibilityNotes: string | null;
-}) {
-  return {
-    countryCode: record.countryCode,
-    mode: record.mode,
-    productionEligible: record.productionEligible,
-    productionEligibilityVerifiedAt: record.productionEligibilityVerifiedAt,
-    productionEligibilityExpiresAt: record.productionEligibilityExpiresAt,
-    productionEligibilityEvidence: record.productionEligibilityEvidence,
-    productionEligibilityNotes: record.productionEligibilityNotes,
   };
 }
 
@@ -174,11 +156,10 @@ async function inspectWithClient(client: CommercialClient, record: CommercialAct
   }) : null;
   const offer = program ? await client.affiliateOffer.findFirst({
     where: { programId: program.id, externalOfferId: record.offer.externalOfferId },
-    include: { countries: true, currencies: true },
+    include: { currencies: true },
   }) : null;
   const trackingLink = offer ? await client.affiliateTrackingLink.findFirst({
     where: { offerId: offer.id, externalLinkId: record.trackingLink.externalLinkId },
-    include: { countries: { where: { countryCode: record.market.countryCode }, take: 1 } },
   }) : null;
   const redirect = await client.affiliateRedirectSlug.findUnique({ where: { slug: record.redirect.slug } });
   return {
@@ -194,7 +175,7 @@ async function inspectWithClient(client: CommercialClient, record: CommercialAct
       id: offer.id,
       casinoId: offer.casinoId,
       casinoBonusId: offer.casinoBonusId,
-      current: offerCurrent(offer, record.market.countryCode),
+      current: offerCurrent(offer),
       metadata: offer.metadata,
       currencies: offer.currencies.map((entry) => entry.currencyCode),
     } : null,
@@ -204,7 +185,6 @@ async function inspectWithClient(client: CommercialClient, record: CommercialAct
       current: trackingCurrent(trackingLink),
       metadata: trackingLink.metadata,
     } : null,
-    trackingCountry: trackingLink?.countries[0] ? { id: trackingLink.countries[0].id, current: trackingCountryCurrent(trackingLink.countries[0]) } : null,
     redirect: redirect ? {
       id: redirect.id,
       casinoId: redirect.casinoId,
@@ -268,10 +248,10 @@ export class CommercialActivationRepository {
             },
           });
 
-        const { countryAuthority, currencies, ...desiredOffer } = desired.offer;
+        const { currencies, ...desiredOffer } = desired.offer;
         let offer;
         if (inspection.offer) {
-          const current = await tx.affiliateOffer.findUniqueOrThrow({ where: { id: inspection.offer.id }, include: { countries: true, currencies: true } });
+          const current = await tx.affiliateOffer.findUniqueOrThrow({ where: { id: inspection.offer.id }, include: { currencies: true } });
           if (plan.actions.offer === "UPDATE") {
             await tx.affiliateOfferRevision.create({
               data: { offerId: current.id, revisionNumber: (await nextRevision(tx, "offer", current.id)) + 1, snapshot: json(current), summary: `Before ${bundle.schemaVersion} apply`, createdBy: actorId },
@@ -281,11 +261,6 @@ export class CommercialActivationRepository {
         } else {
           offer = await tx.affiliateOffer.create({ data: { ...desiredOffer, casinoId: inspection.casino!.id, programId: program.id, metadata: json(desiredOffer.metadata), createdBy: actorId, updatedBy: actorId } });
         }
-        await tx.affiliateOfferCountry.upsert({
-          where: { offerId_countryCode: { offerId: offer.id, countryCode: countryAuthority.countryCode } },
-          create: { offerId: offer.id, ...countryAuthority },
-          update: { mode: countryAuthority.mode },
-        });
         for (const currencyCode of currencies) {
           await tx.affiliateOfferCurrency.upsert({
             where: { offerId_currencyCode: { offerId: offer.id, currencyCode } },
@@ -313,11 +288,6 @@ export class CommercialActivationRepository {
         } else {
           trackingLink = await tx.affiliateTrackingLink.create({ data: { ...desired.trackingLink, offerId: offer.id, metadata: json(desired.trackingLink.metadata), createdBy: actorId, updatedBy: actorId } });
         }
-        await tx.affiliateTrackingLinkCountry.upsert({
-          where: { trackingLinkId_countryCode: { trackingLinkId: trackingLink.id, countryCode: desired.trackingCountry.countryCode } },
-          create: { trackingLinkId: trackingLink.id, ...desired.trackingCountry },
-          update: desired.trackingCountry,
-        });
 
         const redirectData = { ...desired.redirect, casinoId: inspection.casino!.id, affiliateOfferId: offer.id, updatedBy: actorId };
         let redirect;

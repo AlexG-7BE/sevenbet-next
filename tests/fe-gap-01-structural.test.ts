@@ -173,6 +173,10 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
         "prisma/migrations/0039_commercial_core_partner_relationship/migration.sql",
         "prisma/schema.prisma",
       ],
+      [
+        "prisma/migrations/0040_commercial_core_exact_routes_geo_simplification/migration.sql",
+        "prisma/schema.prisma",
+      ],
       ["prisma/schema.prisma"],
     ];
     assert.ok(approvedExactPrismaChangeSets.some(

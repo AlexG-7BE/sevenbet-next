@@ -188,11 +188,12 @@ test("missing 0024 still refuses release", () => {
   assert.throws(() => planCasinoMarket0025Release(through0025().filter((entry) => entry.migration_name !== "0024_programme_access_acceptance")), /requires completed baseline/);
 });
 
-test("H through J — steady-state guard is authority, index, constraint and pending-state fail-closed", () => {
+test("H through J — steady-state guard is schema, index, constraint and pending-state fail-closed", () => {
   const guard = readFileSync("lib/db/casino-market-0025-release.ts", "utf8");
   const preflight = readFileSync("scripts/vercel-build-preflight.ts", "utf8");
   assert.match(guard, /must already be applied; the steady-state guard is read-only/);
-  assert.match(guard, /productionEligible authority/);
+  assert.match(guard, /productionEligible is retained only as historical metadata/);
+  assert.doesNotMatch(guard, /assertCasinoMarket0025CommercialFirewall|UNEXPECTED_PRODUCTION_ELIGIBILITY/);
   assert.match(guard, /missing 0025 indexes/);
   assert.match(guard, /missing 0025 constraints/);
   assert.doesNotMatch(guard + preflight, /allowMutation\s*:\s*true|spawnSync\([^)]*prisma[^)]*migrate/);
