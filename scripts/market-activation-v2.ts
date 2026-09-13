@@ -576,6 +576,9 @@ async function release() {
 
 async function main() {
   const mode = process.argv[2] ?? "audit";
+  if (mode !== "audit") {
+    throw new Error("MARKET_ACTIVATION_V2_COMMAND_RETIRED_BY_RFC_049");
+  }
   const result = mode === "audit" ? await inventory()
     : mode === "migrate" ? await migrate()
       : mode === "backfill" ? await backfill()

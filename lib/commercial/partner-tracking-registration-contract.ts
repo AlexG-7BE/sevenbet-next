@@ -2,11 +2,7 @@ import { createHash } from "node:crypto";
 
 import { z } from "zod";
 
-import {
-  ARGENTINA_SUBDIVISIONS,
-  CANADA_SUBDIVISIONS,
-  ISO_3166_1_ALPHA_2,
-} from "@/lib/current-partner-worldwide-authority/inventory";
+import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
 
 const PartnerTrackingGeoSchema = z.string().trim().min(2).max(24);
 
@@ -28,7 +24,7 @@ export const PartnerTrackingRegistrationSchema = z.object({
       context.addIssue({
         code: "custom",
         path: value.geo === undefined ? ["supportedGeos", index] : ["geo"],
-        message: "GEO must be an assigned ISO 3166-1 alpha-2 country or an exact subdivision; ZZ is reserved",
+        message: "GEO must resolve to one canonical assigned country or required exact subdivision; ZZ is reserved",
       });
     }
   }
@@ -45,17 +41,13 @@ export function partnerTrackingLinkHash(value: string) {
 export function normalizePartnerTrackingGeo(value: string | undefined) {
   if (value === undefined) return null;
   const normalized = value.trim().toUpperCase().replace(/_/g, "-");
-  const countryCode = normalized.slice(0, 2);
-  const allowedSubdivision = !normalized.includes("-")
-    || (ARGENTINA_SUBDIVISIONS as readonly string[]).includes(normalized)
-    || (CANADA_SUBDIVISIONS as readonly string[]).includes(normalized);
-  if (!/^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(normalized)
-    || normalized === "ZZ"
-    || !ISO_3166_1_ALPHA_2.includes(countryCode as typeof ISO_3166_1_ALPHA_2[number])
-    || !allowedSubdivision) {
-    throw new Error("PARTNER_TRACKING_GEO_INVALID");
-  }
-  return normalized;
+  const marketKey = canonicalCommercialMarketKey({
+    countryCode: normalized.slice(0, 2),
+    marketCode: normalized,
+    trust: "TRUSTED",
+  });
+  if (!marketKey) throw new Error("PARTNER_TRACKING_GEO_INVALID");
+  return marketKey;
 }
 
 export function normalizePartnerTrackingMarkets(input: Pick<PartnerTrackingRegistrationInput, "geo" | "supportedGeos">) {

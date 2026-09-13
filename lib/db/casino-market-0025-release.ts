@@ -303,8 +303,6 @@ export type CasinoMarket0025AuthoritySnapshot = {
   routeCountries: bigint;
   ineligibleRouteCountries: bigint;
   eligibleRouteCountries: bigint;
-  canonicalEligibleRouteCountries: bigint;
-  orphanEligibleRouteCountries: bigint;
 };
 
 export async function casinoMarket0025AuthoritySnapshot(prisma: CasinoMarketQueryClient) {
@@ -319,52 +317,7 @@ export async function casinoMarket0025AuthoritySnapshot(prisma: CasinoMarketQuer
       (SELECT COUNT(*) FROM "MediaAsset" WHERE "casinoCountryId" IS NOT NULL) AS "scopedMedia",
       (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry") AS "routeCountries",
       (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry" WHERE "productionEligible" = false) AS "ineligibleRouteCountries",
-      (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry" WHERE "productionEligible" = true) AS "eligibleRouteCountries",
-      (
-        SELECT COUNT(*)
-        FROM "AffiliateTrackingLinkCountry" AS country
-        JOIN "AffiliateTrackingLink" AS tracking
-          ON tracking."id" = country."trackingLinkId"
-        JOIN "MarketActivation" AS activation
-          ON activation."primaryTrackingLinkId" = country."trackingLinkId"
-          AND activation."countryCode" = country."countryCode"
-          AND activation."affiliateOfferId" = tracking."offerId"
-        WHERE country."productionEligible" = true
-          AND country."mode" = 'ALLOW'
-          AND country."productionEligibilityVerifiedAt" IS NOT NULL
-          AND country."productionEligibilityExpiresAt" IS NULL
-          AND country."productionEligibilityEvidence" IS NOT NULL
-          AND btrim(country."productionEligibilityEvidence") <> ''
-          AND activation."product" = 'CASINO'
-          AND activation."desiredState" = 'ACTIVE'
-          AND activation."status" = 'ACTIVE'
-          AND activation."routeVerificationStatus" = 'HEALTHY'
-          AND activation."routeLastCheckedAt" = country."productionEligibilityVerifiedAt"
-      ) AS "canonicalEligibleRouteCountries",
-      (
-        SELECT COUNT(*)
-        FROM "AffiliateTrackingLinkCountry" AS country
-        WHERE country."productionEligible" = true
-          AND NOT EXISTS (
-            SELECT 1
-            FROM "AffiliateTrackingLink" AS tracking
-            JOIN "MarketActivation" AS activation
-              ON activation."primaryTrackingLinkId" = tracking."id"
-              AND activation."countryCode" = country."countryCode"
-              AND activation."affiliateOfferId" = tracking."offerId"
-            WHERE tracking."id" = country."trackingLinkId"
-              AND country."mode" = 'ALLOW'
-              AND country."productionEligibilityVerifiedAt" IS NOT NULL
-              AND country."productionEligibilityExpiresAt" IS NULL
-              AND country."productionEligibilityEvidence" IS NOT NULL
-              AND btrim(country."productionEligibilityEvidence") <> ''
-              AND activation."product" = 'CASINO'
-              AND activation."desiredState" = 'ACTIVE'
-              AND activation."status" = 'ACTIVE'
-              AND activation."routeVerificationStatus" = 'HEALTHY'
-              AND activation."routeLastCheckedAt" = country."productionEligibilityVerifiedAt"
-          )
-      ) AS "orphanEligibleRouteCountries"
+      (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry" WHERE "productionEligible" = true) AS "eligibleRouteCountries"
   `);
   if (!snapshot) releaseFail("AUTHORITY_SNAPSHOT_UNAVAILABLE", "Casino market authority state could not be verified.");
   return snapshot;
@@ -385,16 +338,6 @@ export function assertEmptyCasinoMarket0025Authority(snapshot: CasinoMarket0025A
   }
   if (snapshot.eligibleRouteCountries !== 0n || snapshot.ineligibleRouteCountries !== snapshot.routeCountries) {
     releaseFail("INVENTED_PRODUCTION_ELIGIBILITY", "Migration verification found unexpected Production route eligibility.");
-  }
-}
-
-export function assertCasinoMarket0025CommercialFirewall(snapshot: CasinoMarket0025AuthoritySnapshot) {
-  if (
-    snapshot.eligibleRouteCountries !== snapshot.canonicalEligibleRouteCountries
-    || snapshot.orphanEligibleRouteCountries !== 0n
-    || snapshot.ineligibleRouteCountries + snapshot.eligibleRouteCountries !== snapshot.routeCountries
-  ) {
-    releaseFail("UNEXPECTED_PRODUCTION_ELIGIBILITY", "Casino market steady state found productionEligible authority without a matching canonical MarketActivation projection.");
   }
 }
 
@@ -572,11 +515,8 @@ export async function inspectCasinoMarket0025Release(
     const rows = await stage("migration_history", () => casinoMarketMigrationRows(transaction));
     await stage("effective_history", async () => planCasinoMarket0025Release(rows, repositoryMigrations));
     await stage("postflight_schema", () => assertCasinoMarket0025Schema(transaction));
-    await stage("authority_state", async () => {
-      const authority = await casinoMarket0025AuthoritySnapshot(transaction);
-      assertCasinoMarket0025CommercialFirewall(authority);
-      return authority;
-    });
+    // RFC-049: productionEligible is retained only as historical metadata.
+    // Generic deployment must not accept or reject canonical routes from it.
     await stage("post_read_verification", () => readCasinoMarket0025TransactionSafety(transaction));
     return { state: "already_applied_and_verified" as const };
   });

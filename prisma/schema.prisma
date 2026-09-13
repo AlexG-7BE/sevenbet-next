@@ -2270,6 +2270,7 @@ model AffiliateProgram {
   accountManagerEmail   String?
   defaultCurrency       String?
   timezone              String?
+  /// Non-authoritative provider/import market evidence (RFC-049).
   supportedCountries    String[]                  @default([])
   supportedCurrencies   String[]                  @default([])
   metadata              Json                      @default("{}")
@@ -2325,6 +2326,7 @@ model AffiliateOffer {
   revenueSharePercentage Decimal?               @db.Decimal(5, 2)
   hybridTerms            String?
   cookieDurationDays     Int?
+  /// Non-authoritative provider/import compatibility metadata (RFC-049).
   geoMode                AffiliateGeoMode       @default(GLOBAL)
   languages              String[]               @default([])
   devices                String[]               @default([])
@@ -2376,6 +2378,7 @@ model AffiliateOfferCountry {
   id          String           @id @default(uuid()) @db.Uuid
   offerId     String           @db.Uuid
   countryCode String
+  /// Non-authoritative provider/import compatibility metadata (RFC-049).
   mode        AffiliateGeoMode
 
   offer AffiliateOffer @relation(fields: [offerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -2403,6 +2406,7 @@ model AffiliateTrackingLink {
   destinationUrl    String
   trackingUrl       String
   landingPage       String?
+  /// Non-authoritative provider/import compatibility metadata (RFC-049).
   geoMode           AffiliateGeoMode @default(GLOBAL)
   currencyCode      String?
   deviceTarget      String           @default("ALL")
@@ -2523,9 +2527,10 @@ model AffiliateTrackingLinkCountry {
   id                              String           @id @default(uuid()) @db.Uuid
   trackingLinkId                  String           @db.Uuid
   countryCode                     String
+  /// Non-authoritative provider/import compatibility metadata (RFC-049).
   mode                            AffiliateGeoMode
-  /// Deprecated as an independent Production authority by RFC-042.
-  /// MARKET-ACTIVATION-V2 writes this only as a one-way compatibility projection.
+  /// Deprecated compatibility projection retained only for rollback evidence.
+  /// RFC-049 canonical reads and writes never consult or update this value.
   productionEligible              Boolean          @default(false)
   productionEligibilityVerifiedAt DateTime?
   productionEligibilityExpiresAt  DateTime?
@@ -2622,6 +2627,7 @@ model MarketActivation {
   product                        MarketActivationProduct                 @default(CASINO)
   desiredState                   MarketActivationDesiredState
   status                         MarketActivationStatus                  @default(DRAFT)
+  /// Optional factual/editorial evidence; not commercial route authority.
   marketProfileId                String?                                 @db.Uuid
   affiliateOfferId               String?                                 @db.Uuid
   primaryTrackingLinkId          String?                                 @db.Uuid
@@ -2645,6 +2651,7 @@ model MarketActivation {
   externalBlockerCode            String?
   externalBlockerDetail          String?
   externalBlockerSource          String?
+  /// Deprecated historical ZZ rollback evidence; ignored by RFC-049 runtime.
   globalFallbackBlockedCountries String[]                                @default([])
   diagnostics                    Json                                    @default("{}")
   createdAt                      DateTime                                @default(now())

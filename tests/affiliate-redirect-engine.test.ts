@@ -13,6 +13,10 @@ import { allowGbCommercialReadinessAuthority, allowJurisdictionDecision, allowJu
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
+function trustedSignal(countryCode: string, marketCode = countryCode) {
+  return { countryCode, marketCode, trust: "TRUSTED" as const, observedAt: now };
+}
+
 function link(id: string, patch: Partial<CandidateOffer["trackingLinks"][number]> = {}): CandidateOffer["trackingLinks"][number] {
   return {
     id,
@@ -139,11 +143,11 @@ test("public country uses platform headers and ignores ordinary query override",
   assert.equal(requestCountrySignalFromHeaders(new Headers({
     "x-vercel-ip-country": "AR",
     "x-vercel-ip-country-region": "unsafe/value",
-  }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" })?.marketCode, "AR");
+  }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" }), null);
   assert.equal(requestCountrySignalFromHeaders(new Headers({
     "x-vercel-ip-country": "CA",
     "x-vercel-ip-country-region": "TOOLONG",
-  }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" })?.marketCode, "CA");
+  }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" }), null);
 });
 
 test("HTTP helpers produce controlled 302 and safe no-store 404 responses", () => {
@@ -217,12 +221,12 @@ test("redirect service selects only stored safe tracking URLs", async () => {
     createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
   const safeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [offer("safe")] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalRoute({ offerId: "safe", trackingLinkId: "link-safe", trackingUrl: "https://tracking.example/link-safe" }));
-  const safe = await safeService.resolve("casino-offer", { now });
+  const safe = await safeService.resolve("casino-offer", { now, requestCountrySignal: trustedSignal("GB") });
   assert.equal(safe.ok, true);
   if (safe.ok) assert.equal(safe.destination.toString(), "https://tracking.example/link-safe");
   const unsafeOffer = offer("unsafe", { trackingLinks: [link("unsafe", { trackingUrl: "javascript:alert(1)" })] });
   const unsafeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [unsafeOffer] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalRoute({ offerId: "unsafe", trackingLinkId: "link-unsafe", trackingUrl: "javascript:alert(1)" }));
-  const unsafe = await unsafeService.resolve("casino-offer", { now });
+  const unsafe = await unsafeService.resolve("casino-offer", { now, requestCountrySignal: trustedSignal("GB") });
   assert.equal(unsafe.ok, false);
   if (!unsafe.ok) assert.equal(unsafe.reason, "UNSAFE_REDIRECT_URL");
 });
@@ -240,10 +244,46 @@ test("direct redirect resolution obeys exact canonical authority without a legac
     allowGbCommercialReadinessAuthority,
     canonicalRoute({ offerId: "safe", trackingLinkId: "link-safe", trackingUrl: "https://tracking.example/link-safe" }),
   );
-  const result = await service.resolve("casino-offer", { now });
+  const result = await service.resolve("casino-offer", { now, requestCountrySignal: trustedSignal("PE") });
   assert.equal(result.ok, true);
   const source = readFileSync("lib/services/affiliate-redirect.service.ts", "utf8");
   assert.doesNotMatch(source, /partnerRouteService|isProductionEligible/);
+});
+
+test("redirect canonicalizes a trusted country-scoped region before its single route lookup", async () => {
+  const mapping = {
+    id: "redirect-id", slug: "casino-offer", casinoId: "casino", casinoBonusId: null, affiliateOfferId: "safe",
+    defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
+    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
+  };
+  let requestedMarket: string | null = null;
+  const service = new AffiliateRedirectService(
+    redirectStore(mapping),
+    { activeCandidates: async () => { throw new Error("non-GB route must not use legacy offer selection"); } },
+    { async resolve() { return { ...allowJurisdictionDecision, countryCode: "US" }; } },
+    allowGbCommercialReadinessAuthority,
+    {
+      async resolveRedirect(_slug: string, marketCode: string) {
+        requestedMarket = marketCode;
+        return {
+          casinoId: "casino",
+          redirectSlug: { id: "redirect-id", slug: "casino-offer" },
+          affiliateOffer: { id: "safe" },
+          primaryTrackingLink: {
+            id: "link-safe",
+            trackingUrl: "https://tracking.example/link-safe",
+            destinationUrl: "https://casino.example/welcome",
+          },
+        };
+      },
+    } as never,
+  );
+  const result = await service.resolve("casino-offer", {
+    now,
+    requestCountrySignal: trustedSignal("US", "US-VA"),
+  });
+  assert.equal(result.ok, true);
+  assert.equal(requestedMarket, "US");
 });
 
 test("admin routes require affiliate.manage and public requests are not audited", () => {

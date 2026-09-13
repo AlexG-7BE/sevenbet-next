@@ -11,6 +11,7 @@ import { CASINO_MARKET_TARGET_MIGRATION, runCasinoMarket0025Readiness } from "@/
 import { COMMERCIAL_PLATFORM_TARGET_MIGRATION, runCommercialPlatform0026Readiness } from "@/lib/db/commercial-platform-0026-release";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
 import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/release-runtime";
+import { inspectExactRouteReadiness } from "@/lib/market-activation/exact-route-readiness";
 
 const BASELINE_MIGRATION = "0023_mcp_dcr_runtime_compat_fix";
 const TARGET_MIGRATION = "0024_programme_access_acceptance";
@@ -27,6 +28,7 @@ const RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION = "0036_partner_casino_runtime_ma
 const CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION = "0037_customer_data_analytics_lifecycle_core";
 const COMMERCIAL_UX_ANALYTICS_MIGRATION = "0038_commercial_ux_analytics_events";
 const COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION = "0039_commercial_core_partner_relationship";
+const COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION = "0040_commercial_core_exact_routes_geo_simplification";
 
 type MigrationRow = {
   migration_name: string;
@@ -511,7 +513,7 @@ async function verifyVercelBuildCompatibility() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION, COMMERCIAL_UX_ANALYTICS_MIGRATION, COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION, COMMERCIAL_UX_ANALYTICS_MIGRATION, COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION, COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -523,6 +525,7 @@ async function verifyVercelBuildCompatibility() {
   let customerDataAnalyticsLifecycleSchemaReady = false;
   let commercialUxAnalyticsSchemaReady = false;
   let commercialCorePartnerRelationshipSchemaReady = false;
+  let commercialCoreExactRoutesSchemaReady = false;
   let mediaRetirementReady = false;
   try {
     await prisma.$transaction(async (transaction) => {
@@ -571,6 +574,7 @@ async function verifyVercelBuildCompatibility() {
       ...(!applied.has(CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION) ? [CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION] : []),
       ...(!applied.has(COMMERCIAL_UX_ANALYTICS_MIGRATION) ? [COMMERCIAL_UX_ANALYTICS_MIGRATION] : []),
       ...(!applied.has(COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION) ? [COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION] : []),
+      ...(!applied.has(COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION) ? [COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION] : []),
     ];
 
     if (
@@ -714,7 +718,8 @@ async function verifyVercelBuildCompatibility() {
         && canonicalSchema.exact_market_unique
         && canonicalSchema.exact_market_compatibility
         && canonicalSchema.global_fallback_scope
-        && canonicalSchema.global_fallback_active_binding);
+        && (applied.has(COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION)
+          || canonicalSchema.global_fallback_active_binding));
       if (!marketActivationSchemaReady) throw new Error("Production migration guard found incomplete canonical MarketActivation schema.");
       writeEvent({
         event: "production_market_activation_preflight",
@@ -815,6 +820,54 @@ async function verifyVercelBuildCompatibility() {
         canonicalTableReady: true,
       });
     }
+    if (applied.has(COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION)) {
+      assertChecksum(completedByName.get(COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION), COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION);
+      const [exactRouteSchema] = await prisma.$queryRawUnsafe<Array<{
+        exact_scope_constraint: boolean;
+        active_binding_without_profile: boolean;
+        reject_new_zz_trigger: boolean;
+      }>>(`
+        SELECT
+          EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'MarketActivation_exact_canonical_scope_check'
+              AND conrelid = 'public."MarketActivation"'::regclass
+              AND contype = 'c'
+          ) AS exact_scope_constraint,
+          EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'MarketActivation_active_binding_check'
+              AND conrelid = 'public."MarketActivation"'::regclass
+              AND pg_get_constraintdef(oid) NOT LIKE '%marketProfileId%'
+              AND pg_get_constraintdef(oid) NOT LIKE '%globalFallbackBlockedCountries%'
+          ) AS active_binding_without_profile,
+          EXISTS (
+            SELECT 1 FROM pg_trigger
+            WHERE tgname = 'MarketActivation_reject_new_zz_trigger'
+              AND tgrelid = 'public."MarketActivation"'::regclass
+              AND NOT tgisinternal
+          ) AS reject_new_zz_trigger
+      `);
+      commercialCoreExactRoutesSchemaReady = Boolean(
+        exactRouteSchema?.exact_scope_constraint
+        && exactRouteSchema.active_binding_without_profile
+        && exactRouteSchema.reject_new_zz_trigger,
+      );
+      if (!commercialCoreExactRoutesSchemaReady) {
+        throw new Error("Production migration guard found incomplete exact-route schema.");
+      }
+      const exactRouteReadiness = await inspectExactRouteReadiness(prisma);
+      writeEvent({
+        event: "production_exact_route_readiness",
+        migration: COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION,
+        ...exactRouteReadiness,
+      });
+      if (!exactRouteReadiness.ready) {
+        throw new Error(`EXACT_ROUTE_READINESS_FAILED:${exactRouteReadiness.blockers
+          .map((entry) => `${entry.code}=${entry.count}`)
+          .join(",")}`);
+      }
+    }
     if (applied.has(MEDIA_RETIREMENT_TARGET_MIGRATION)) {
       assertChecksum(completedByName.get(MEDIA_RETIREMENT_TARGET_MIGRATION), MEDIA_RETIREMENT_TARGET_MIGRATION);
       await assertMediaRetirementInvariants(prisma);
@@ -856,6 +909,10 @@ async function verifyVercelBuildCompatibility() {
 
   if (!commercialCorePartnerRelationshipSchemaReady) {
     throw new Error(`Production DB-first release requires completed ${COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION} before this application build.`);
+  }
+
+  if (!commercialCoreExactRoutesSchemaReady) {
+    throw new Error(`Production DB-first release requires completed ${COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION} before this application build.`);
   }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();

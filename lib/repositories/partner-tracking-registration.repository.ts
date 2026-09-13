@@ -576,7 +576,6 @@ export class PartnerTrackingRegistrationRepository {
           offerType: "CASINO",
           status: "DRAFT",
           payoutModel: "UNKNOWN",
-          geoMode: "ALLOW",
           evergreen: true,
           priority: 0,
           notes: "Neutral evergreen route; no unsupported promotional or commercial terms.",
@@ -737,7 +736,6 @@ export class PartnerTrackingRegistrationRepository {
               : `Partner ${input.geo} tracking route`,
           destinationUrl: input.trackingUrl,
           trackingUrl: input.trackingUrl,
-          geoMode: "ALLOW",
           active: false,
           priority: input.scope === "EXACT_GEO" ? 1_000 : input.scope === "REGIONAL_REUSE" ? 750 : 500,
           source: REGISTRATION_SOURCE,
@@ -799,24 +797,6 @@ export class PartnerTrackingRegistrationRepository {
       where: { id: link.id },
       data: { archivedAt: null, updatedBy: input.actorId },
     });
-
-    for (const row of affectedRows) {
-      await tx.affiliateTrackingLinkCountry.upsert({
-        where: { trackingLinkId_countryCode: { trackingLinkId: link.id, countryCode: row.geo } },
-        create: {
-          trackingLinkId: link.id,
-          countryCode: row.geo,
-          mode: "ALLOW",
-          productionEligible: alreadyCanonical && previousActivations.some((activation) => activation.marketCode === row.geo && activation.primaryTrackingLinkId === link?.id),
-          productionEligibilityEvidence: trackingRegistrationEvidence(commercialAuthority, input.linkHash),
-          productionEligibilityNotes: `${REGISTRATION_VERSION} staged scope ${scopeIdentity}`,
-        },
-        update: {
-          mode: "ALLOW",
-          productionEligibilityEvidence: trackingRegistrationEvidence(commercialAuthority, input.linkHash),
-        },
-      });
-    }
 
     if (!redirect) {
       const slug = `${input.target.casinoSlug}-casino`;
@@ -994,7 +974,6 @@ export class PartnerTrackingRegistrationRepository {
               destinationUrl: `https://${input.finalHost}/`,
               active: true,
               archivedAt: null,
-              geoMode: "ALLOW",
               priority: input.stage.scope === "EXACT_GEO" ? 1_000 : input.stage.scope === "REGIONAL_REUSE" ? 750 : 500,
               verifiedAt: input.checkedAt,
               lastCheckedAt: input.checkedAt,
@@ -1034,27 +1013,6 @@ export class PartnerTrackingRegistrationRepository {
             data: { casinoId: input.stage.target.casinoId, supportedCountries, archivedAt: null, updatedBy: input.actorId },
           });
           for (const row of input.stage.affectedRows) {
-            await tx.affiliateOfferCountry.upsert({
-              where: { offerId_countryCode: { offerId: offer.id, countryCode: row.geo } },
-              create: { offerId: offer.id, countryCode: row.geo, mode: "ALLOW" },
-              update: { mode: "ALLOW" },
-            });
-            await tx.affiliateTrackingLinkCountry.upsert({
-              where: { trackingLinkId_countryCode: { trackingLinkId: candidate.id, countryCode: row.geo } },
-              create: {
-                trackingLinkId: candidate.id,
-                countryCode: row.geo,
-                mode: "ALLOW",
-                productionEligible: false,
-                productionEligibilityEvidence: trackingRegistrationEvidence(input.stage.commercialAuthority, input.stage.linkHash),
-                productionEligibilityNotes: `${REGISTRATION_VERSION} verified and promoted; RFC-042 controls eligibility`,
-              },
-              update: {
-                mode: "ALLOW",
-                productionEligibilityEvidence: trackingRegistrationEvidence(input.stage.commercialAuthority, input.stage.linkHash),
-                productionEligibilityNotes: `${REGISTRATION_VERSION} verified and promoted; RFC-042 controls eligibility`,
-              },
-            });
             const countryCode = countryFromGeo(row.geo);
             if (countryCode) {
               const profile = await tx.casinoCountry.upsert({

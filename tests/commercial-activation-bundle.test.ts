@@ -76,7 +76,6 @@ function emptyInspection(): CommercialActivationInspection {
     program: null,
     offer: null,
     trackingLink: null,
-    trackingCountry: null,
     redirect: null,
   };
 }
@@ -107,7 +106,6 @@ class MemoryActivationStore implements CommercialActivationStore {
       program: { id: ids.programId, casinoId: this.state.casino!.id, operator: record.program.operator, current: desired.program, metadata: desired.program.metadata },
       offer: { id: ids.offerId, casinoId: this.state.casino!.id, casinoBonusId: null, current: desired.offer, metadata: desired.offer.metadata, currencies: desired.offer.currencies },
       trackingLink: { id: ids.trackingLinkId, offerId: ids.offerId, current: desired.trackingLink, metadata: desired.trackingLink.metadata },
-      trackingCountry: { id: "88888888-8888-4888-8888-888888888888", current: desired.trackingCountry },
       redirect: { id: ids.redirectId, casinoId: this.state.casino!.id, affiliateOfferId: ids.offerId, casinoBonusId: null, current: { ...desired.redirect, affiliateOfferId: ids.offerId } },
     };
     return [{ key: plan.key, changed: Object.values(plan.actions).some((action) => action !== "UNCHANGED"), ids }];
@@ -139,11 +137,17 @@ test("bundle schema represents exact portal identifiers and rejects unknown secr
 test("preview is read-only and reports CREATE, missing dependency, conflict, and rejection explicitly", async () => {
   const input = bundle();
   const store = new MemoryActivationStore();
-  const service = new CommercialActivationService(store, { isProductionEligible: async () => true }, jurisdiction(true));
+  const service = new CommercialActivationService(store, { isCanonicalRouteActive: async () => true }, jurisdiction(true));
   const preview = await service.preview(input, now);
   assert.equal(store.applyCalls, 0);
   assert.equal(preview.records[0].disposition, "READY");
   assert.ok(Object.values(preview.records[0].actions).every((action) => action === "CREATE"));
+
+  const withoutProfile = planCommercialActivationRecord(input, input.records[0], {
+    ...emptyInspection(),
+    casino: { ...emptyInspection().casino!, marketProfile: null },
+  }, now);
+  assert.equal(withoutProfile.disposition, "READY", "factual market profiles are not route permission");
 
   const missing = planCommercialActivationRecord(input, input.records[0], { ...emptyInspection(), casino: null }, now);
   assert.equal(missing.disposition, "MISSING_DEPENDENCY");
@@ -167,14 +171,15 @@ test("preview is read-only and reports CREATE, missing dependency, conflict, and
   assert.ok(rejected.blockedReasons.includes("EVIDENCE_MUST_NOT_CONTAIN_SECRETS"));
 });
 
-test("wrong GEO is a missing dependency and cannot mutate", async () => {
+test("contradictory factual GEO metadata rejects and cannot mutate", async () => {
   const input = bundle();
   const store = new MemoryActivationStore();
   store.state.casino!.marketProfile!.countryCode = "SE";
-  const service = new CommercialActivationService(store, { isProductionEligible: async () => true }, jurisdiction(true));
+  const service = new CommercialActivationService(store, { isCanonicalRouteActive: async () => true }, jurisdiction(true));
   const preview = await service.preview(input, now);
   assert.equal(preview.ready, false);
-  assert.equal(preview.records[0].disposition, "MISSING_DEPENDENCY");
+  assert.equal(preview.records[0].disposition, "REJECT");
+  assert.ok(preview.records[0].blockedReasons.includes("MARKET_PROFILE_CONTRADICTION"));
   await assert.rejects(() => service.apply(input, "99999999-9999-4999-8999-999999999999", now), /COMMERCIAL_ACTIVATION_BLOCKED/);
   assert.equal(store.applyCalls, 0);
 });
@@ -182,7 +187,7 @@ test("wrong GEO is a missing dependency and cannot mutate", async () => {
 test("apply is exact and idempotent while jurisdiction denial remains fail-closed", async () => {
   const input = bundle();
   const store = new MemoryActivationStore();
-  const allowed = new CommercialActivationService(store, { isProductionEligible: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(true), canonicalActivation);
+  const allowed = new CommercialActivationService(store, { isCanonicalRouteActive: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(true), canonicalActivation);
   const first = await allowed.apply(input, "99999999-9999-4999-8999-999999999999", now);
   assert.equal(first.changedRecords, 1);
   assert.equal(first.verification.verified, true);
@@ -192,7 +197,7 @@ test("apply is exact and idempotent while jurisdiction denial remains fail-close
   assert.equal(second.unchangedRecords, 1);
 
   const deniedStore = new MemoryActivationStore();
-  const denied = new CommercialActivationService(deniedStore, { isProductionEligible: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(false), canonicalActivation);
+  const denied = new CommercialActivationService(deniedStore, { isCanonicalRouteActive: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(false), canonicalActivation);
   const applied = await denied.apply(input, "99999999-9999-4999-8999-999999999999", now);
   assert.equal(applied.verification.verified, true);
   assert.equal(applied.verification.productionReady, false);

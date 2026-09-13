@@ -15,7 +15,6 @@ import {
   CURRENT_PARTNER_RECORDS,
   type CurrentPartnerInventorySeed,
 } from "../lib/current-partner-rollout/inventory";
-import { selectActivationTrackingCandidate } from "../lib/market-activation/repository";
 import {
   PartnerTrackingRegistrationRepository,
   partnerTrackingCoverageMatches,
@@ -666,34 +665,6 @@ test("idempotent canonical re-registration reverifies without duplicating or pro
   assert.equal(calls.promote, 0);
   assert.equal(calls.activate.length, 1);
   assert.equal(calls.finalize, 1);
-});
-
-test("candidate selection deterministically preserves exact-over-regional-over-generic precedence", () => {
-  const generic = { active: true, priority: 500, countries: [
-    { countryCode: "ES", mode: "ALLOW", productionEligibilityEvidence: "evidence" },
-    { countryCode: "DE", mode: "ALLOW", productionEligibilityEvidence: "evidence" },
-  ], id: "generic", metadata: { partnerTrackingRegistration: { stage: "CANONICAL", scope: "GENERIC", geo: null } } };
-  const exact = { active: true, priority: 500, countries: [
-    { countryCode: "ES", mode: "ALLOW", productionEligibilityEvidence: "evidence" },
-  ], id: "exact", metadata: { partnerTrackingRegistration: { stage: "CANONICAL", scope: "EXACT_GEO", geo: "ES" } } };
-  const regional = { active: true, priority: 500, countries: [
-    { countryCode: "ES", mode: "ALLOW", productionEligibilityEvidence: "evidence" },
-    { countryCode: "DE", mode: "ALLOW", productionEligibilityEvidence: "evidence" },
-  ], id: "regional", metadata: { partnerTrackingRegistration: { stage: "CANONICAL", scope: "REGIONAL_REUSE", trackingIdentity: "REGION:EU" } } };
-  assert.equal(selectActivationTrackingCandidate({
-    candidates: [generic, regional, exact],
-    countryCode: "ES",
-    localWebsiteUrl: "https://casino.example/",
-    localDomain: "casino.example",
-    existingTrackingId: "generic",
-  })?.id, "exact");
-  assert.equal(selectActivationTrackingCandidate({
-    candidates: [exact, regional, generic],
-    countryCode: "DE",
-    localWebsiteUrl: "https://casino.example/",
-    localDomain: "casino.example",
-    existingTrackingId: null,
-  })?.id, "regional");
 });
 
 test("regional replacement and audit coverage follow tracking identity across member GEOs", () => {

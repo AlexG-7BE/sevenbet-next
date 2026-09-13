@@ -1,6 +1,7 @@
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
+import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
 import { scopedCasinoReferralAllowed } from "@/lib/jurisdiction/scoped-commercial-authority";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { marketActivationRuntime, type MarketActivationRuntime } from "@/lib/market-activation/runtime";
@@ -45,22 +46,13 @@ function normalizedCountry(value: string | null | undefined) {
   return country && /^[A-Z]{2}$/.test(country) ? country : null;
 }
 
-function normalizedMarket(value: string | null | undefined, countryCode: string | null) {
-  const market = value?.trim().toUpperCase().replace(/_/g, "-") || countryCode;
-  return market
-    && /^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(market)
-    && market.slice(0, 2) === countryCode
-    ? market
-    : null;
-}
-
 /**
  * Canonical public commercial-decision seam.
  *
- * MarketActivation remains PR1's transitional route source and owns low-level
- * lifecycle, health, binding, destination and GEO fallback checks. This
- * resolver adds the public publication, trusted-market, legal and GB evidence
- * boundaries exactly once before projecting the sole nullable public action.
+ * Trusted presentation GEO is normalized once here. MarketActivation then
+ * performs one exact lookup and owns low-level health, binding and destination
+ * checks. This resolver adds publication, legal and GB evidence boundaries
+ * before projecting the sole nullable public action.
  */
 export class PublicCommercialActionResolver implements PublicCommercialActionAuthority {
   constructor(
@@ -75,8 +67,12 @@ export class PublicCommercialActionResolver implements PublicCommercialActionAut
     if (!subjects.length) return decisions;
 
     const countryCode = normalizedCountry(input.countryCode);
-    const marketCode = normalizedMarket(input.marketCode, countryCode);
     const authorityMatches = Boolean(countryCode && input.authority?.countryCode === countryCode);
+    const marketCode = canonicalCommercialMarketKey({
+      countryCode,
+      marketCode: input.marketCode ?? countryCode,
+      trust: authorityMatches ? "TRUSTED" : "UNTRUSTED",
+    });
     const redirectEnabled = this.redirectEnabled();
 
     const candidates = subjects.filter((subject) => {

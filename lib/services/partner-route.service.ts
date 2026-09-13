@@ -10,13 +10,13 @@ export class PartnerRouteService {
 
   async resolve(casinoIds: string[], countryCode: string, options: { now?: Date; commercialAllowed?: boolean; referralAllowed?: boolean; redirectEnabled?: boolean } = {}): Promise<PartnerRouteProjection[]> {
     // Legacy projection retained for migration shadowing and route-health
-    // diagnostics. It is not a public Production authority after RFC-042.
+    // diagnostics. It is not public Production authority after RFC-049.
     const country = countryCode.trim().toUpperCase();
     if (!country) return [];
     return projectPartnerRoutes(await this.store.listCandidates(casinoIds, country), { countryCode: country, ...options });
   }
 
-  async isProductionEligible(input: {
+  async isCanonicalRouteActive(input: {
     casinoId: string;
     countryCode: string;
     redirectId: string;
@@ -33,6 +33,7 @@ export class PartnerRouteService {
       redirectId: input.redirectId,
       offerId: input.offerId,
       trackingLinkId: input.trackingLinkId,
+      now: input.now,
     });
   }
 }

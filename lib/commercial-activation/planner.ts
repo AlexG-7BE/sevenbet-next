@@ -8,7 +8,7 @@ const TRACKING_EVIDENCE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const GB_AGREEMENT_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
 const firstWaveMarkets = new Set(["DE", "ES", "PE", "SE", "DK", "GR"]);
 
-export type ActivationComponent = "network" | "program" | "offer" | "trackingLink" | "trackingCountry" | "redirect";
+export type ActivationComponent = "network" | "program" | "offer" | "trackingLink" | "redirect";
 export type ActivationAction = "CREATE" | "UPDATE" | "UNCHANGED";
 export type ActivationDisposition = "READY" | "CONFLICT" | "REJECT" | "MISSING_DEPENDENCY";
 
@@ -32,7 +32,6 @@ export interface CommercialActivationInspection {
   program: null | { id: string; casinoId: string | null; operator: string; current: unknown; metadata: unknown };
   offer: null | { id: string; casinoId: string; casinoBonusId: string | null; current: unknown; metadata: unknown; currencies: string[] };
   trackingLink: null | { id: string; offerId: string; current: unknown; metadata: unknown };
-  trackingCountry: null | { id: string; current: unknown };
   redirect: null | { id: string; casinoId: string; affiliateOfferId: string | null; casinoBonusId: string | null; current: unknown };
 }
 
@@ -232,7 +231,6 @@ export function desiredActivationState(
       payoutCurrency: record.offer.payoutCurrency ?? null,
       revenueSharePercentage: record.offer.revenueSharePercentage ?? null,
       hybridTerms: record.offer.hybridTerms ?? null,
-      geoMode: "ALLOW" as const,
       languages: [...new Set(record.offer.languages)].sort(),
       devices: [...new Set(record.offer.devices)].sort(),
       landingPageUrl: record.offer.landingPageUrl,
@@ -242,7 +240,6 @@ export function desiredActivationState(
       priority: record.offer.priority,
       archivedAt: null,
       metadata: activationMetadata(currentOfferMetadata, record, bundle),
-      countryAuthority: { countryCode: record.market.countryCode, mode: "ALLOW" as const },
       currencies: offerCurrencies,
     },
     trackingLink: {
@@ -251,7 +248,6 @@ export function desiredActivationState(
       destinationUrl: record.trackingLink.destinationUrl,
       trackingUrl: record.trackingLink.trackingUrl,
       landingPage: record.trackingLink.landingPage ?? null,
-      geoMode: "ALLOW" as const,
       currencyCode: record.market.currencyCode,
       language: record.market.languageCode,
       campaign: record.trackingLink.campaign ?? null,
@@ -266,15 +262,6 @@ export function desiredActivationState(
       archivedAt: null,
       metadata: activationMetadata(currentTrackingMetadata, record, bundle),
     },
-    trackingCountry: {
-      countryCode: record.market.countryCode,
-      mode: "ALLOW" as const,
-      productionEligible: true,
-      productionEligibilityVerifiedAt: record.commercialEvidence.verifiedAt,
-      productionEligibilityExpiresAt: record.commercialEvidence.expiresAt,
-      productionEligibilityEvidence: `${record.commercialEvidence.sourceType}:${record.commercialEvidence.sourceReference}`,
-      productionEligibilityNotes: `${COMMERCIAL_EVIDENCE_NOTE}; bundle=${bundle.bundleId}; reviewer=${record.commercialEvidence.reviewedBy}`,
-    },
     redirect: {
       slug: record.redirect.slug,
       casinoId: inspection.casino?.id ?? "",
@@ -288,14 +275,12 @@ export function desiredActivationState(
   };
 }
 
-const COMMERCIAL_EVIDENCE_NOTE = "commercial-activation-bundle.v1 exact Casino × GEO authority";
-
 function componentAction(current: unknown | null, desired: unknown): ActivationAction {
   if (current === null) return "CREATE";
   return equal(current, desired) ? "UNCHANGED" : "UPDATE";
 }
 
-const dependencyReasons = new Set(["CASINO_NOT_FOUND", "EXACT_MARKET_PROFILE_NOT_FOUND"]);
+const dependencyReasons = new Set(["CASINO_NOT_FOUND"]);
 const conflictReasons = new Set([
   "CASINO_IDENTITY_MISMATCH",
   "PROGRAM_CASINO_CONFLICT",
@@ -321,11 +306,18 @@ export function planCommercialActivationRecord(
   const market = inspection.casino?.marketProfile;
   if (!inspection.casino) reasons.push("CASINO_NOT_FOUND");
   if (inspection.casino && record.casino.expectedName && normalizeIdentity(inspection.casino.title) !== normalizeIdentity(record.casino.expectedName)) reasons.push("CASINO_IDENTITY_MISMATCH");
-  if (!market || market.countryCode.toUpperCase() !== record.market.countryCode || market.casinoId !== inspection.casino?.id) reasons.push("EXACT_MARKET_PROFILE_NOT_FOUND");
-  if (market && market.availability !== "AVAILABLE") reasons.push("MARKET_NOT_AVAILABLE");
-  if (market) {
-    const currencies = [market.primaryCurrency, ...market.supportedCurrencies].filter(Boolean).map((value) => value!.toUpperCase());
-    const languages = [market.primaryLanguage, ...market.supportedLanguages].filter(Boolean).map((value) => value!.toLowerCase());
+  if (market && (market.countryCode.toUpperCase() !== record.market.countryCode || market.casinoId !== inspection.casino?.id)) {
+    reasons.push("MARKET_PROFILE_CONTRADICTION");
+  }
+  const coherentMarket = market
+    && market.countryCode.toUpperCase() === record.market.countryCode
+    && market.casinoId === inspection.casino?.id
+    ? market
+    : null;
+  if (coherentMarket && coherentMarket.availability !== "AVAILABLE") reasons.push("MARKET_NOT_AVAILABLE");
+  if (coherentMarket) {
+    const currencies = [coherentMarket.primaryCurrency, ...coherentMarket.supportedCurrencies].filter(Boolean).map((value) => value!.toUpperCase());
+    const languages = [coherentMarket.primaryLanguage, ...coherentMarket.supportedLanguages].filter(Boolean).map((value) => value!.toLowerCase());
     if (!currencies.includes(record.market.currencyCode)) reasons.push("MARKET_CURRENCY_MISMATCH");
     if (!languages.includes(record.market.languageCode.toLowerCase())) reasons.push("MARKET_LANGUAGE_MISMATCH");
   }
@@ -347,7 +339,6 @@ export function planCommercialActivationRecord(
     program: componentAction(inspection.program?.current ?? null, desired.program),
     offer: componentAction(inspection.offer?.current ?? null, desired.offer),
     trackingLink: componentAction(inspection.trackingLink?.current ?? null, desired.trackingLink),
-    trackingCountry: componentAction(inspection.trackingCountry?.current ?? null, desired.trackingCountry),
     redirect: componentAction(inspection.redirect?.current ?? null, desired.redirect),
   };
   return {
