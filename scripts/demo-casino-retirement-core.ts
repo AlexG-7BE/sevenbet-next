@@ -23,6 +23,11 @@ type ForeignKeyRow = {
   deleteAction: "CASCADE" | "SET_NULL" | "SET_DEFAULT" | "RESTRICT" | "NO_ACTION";
 };
 
+type PrimaryKeyRow = {
+  tableName: string;
+  columns: string[];
+};
+
 type CasinoRow = {
   id: string;
   slug: string;
@@ -48,12 +53,21 @@ export type DemoRetirementConflict = Readonly<{
   detail: string;
 }>;
 
+type DemoRetirementDisposition =
+  | "EXACT_ROOT_DELETE"
+  | "EXACT_AFFILIATE_GRAPH_DELETE"
+  | "CASCADE_DELETE"
+  | "SET_NULL_RETAIN"
+  | "RESTRICT_REVIEW"
+  | "IMMUTABLE_HISTORY_RETAIN";
+
 export type DemoRetirementDependency = Readonly<{
   table: string;
   totalRows: number;
   rowsByCasino: Readonly<Record<string, number>>;
-  disposition: "EXACT_ROOT_DELETE" | "EXACT_AFFILIATE_GRAPH_DELETE" | "CASCADE_DELETE" | "SET_NULL_RETAIN" | "RESTRICT_REVIEW" | "IMMUTABLE_HISTORY_RETAIN";
-  relationPath: readonly string[];
+  disposition: DemoRetirementDisposition;
+  dispositionCounts: Readonly<Partial<Record<DemoRetirementDisposition, number>>>;
+  relationPaths: readonly (readonly string[])[];
 }>;
 
 export type DemoRetirementAffiliateDependency = Readonly<{
@@ -192,6 +206,7 @@ const REAL_DATA_CONFLICT_TABLES = new Set([
 ]);
 
 const EXACT_AFFILIATE_GRAPH_TABLES = new Set([
+  "AffiliateNetwork",
   "AffiliateOffer",
   "AffiliateOfferRevision",
   "AffiliateProgram",
@@ -221,6 +236,10 @@ const EXACT_AFFILIATE_RELATIONS = new Set([
 
 function quoteIdentifier(value: string) {
   return `"${value.replaceAll('"', '""')}"`;
+}
+
+function quoteLiteral(value: string) {
+  return `'${value.replaceAll("'", "''")}'`;
 }
 
 function stableJson(value: unknown): string {
@@ -271,50 +290,307 @@ async function foreignKeys(database: Database) {
   `);
 }
 
-function pathsToCasino(edges: readonly ForeignKeyRow[]) {
-  const paths = new Map<string, ForeignKeyRow[]>([["Casino", []]]);
-  const queue = ["Casino"];
-  while (queue.length) {
-    const parent = queue.shift()!;
-    const parentPath = paths.get(parent)!;
-    for (const edge of edges.filter((candidate) => candidate.parentTable === parent)) {
-      if (paths.has(edge.childTable)) continue;
-      paths.set(edge.childTable, [edge, ...parentPath]);
-      queue.push(edge.childTable);
-    }
-  }
-  return paths;
+async function primaryKeys(database: Database) {
+  return database.$queryRawUnsafe<PrimaryKeyRow[]>(`
+    SELECT
+      relation.relname AS "tableName",
+      array_agg(attribute.attname ORDER BY key_column.ordinality)::text[] AS "columns"
+    FROM pg_constraint constraint_row
+    JOIN pg_class relation ON relation.oid = constraint_row.conrelid
+    JOIN pg_namespace relation_namespace ON relation_namespace.oid = relation.relnamespace
+    JOIN LATERAL unnest(constraint_row.conkey)
+      WITH ORDINALITY AS key_column(attnum, ordinality) ON TRUE
+    JOIN pg_attribute attribute
+      ON attribute.attrelid = relation.oid AND attribute.attnum = key_column.attnum
+    WHERE constraint_row.contype = 'p'
+      AND relation_namespace.nspname = 'public'
+    GROUP BY relation.relname
+    ORDER BY relation.relname
+  `);
 }
 
-function dependencyDisposition(table: string, path: readonly ForeignKeyRow[]): DemoRetirementDependency["disposition"] {
-  if (EXACT_AFFILIATE_GRAPH_TABLES.has(table)) return "EXACT_AFFILIATE_GRAPH_DELETE";
-  if (path.some((edge) => edge.deleteAction === "RESTRICT" || edge.deleteAction === "NO_ACTION" || edge.deleteAction === "SET_DEFAULT")) {
+function jsonObjectExpression(alias: string, columns: readonly string[]) {
+  if (columns.length === 0) return `'{}'::jsonb`;
+  return `jsonb_build_object(${columns.flatMap((column) => [quoteLiteral(column), `to_jsonb((${alias}.${quoteIdentifier(column)})::text)`]).join(", ")})`;
+}
+
+function edgeDescription(edge: ForeignKeyRow) {
+  return `${edge.childTable}.${edge.childColumns.join("+")} -> ${edge.parentTable}.${edge.parentColumns.join("+")} [${edge.constraintName}] (${edge.deleteAction})`;
+}
+
+type ClosurePath = {
+  segments: string[];
+  actions: ForeignKeyRow["deleteAction"][];
+  visitedRows: string[];
+};
+
+type AffectedRow = {
+  locator: string;
+  columnValues: Record<string, unknown>;
+  casinoIds: Set<string>;
+  exactDisposition?: "EXACT_ROOT_DELETE" | "EXACT_AFFILIATE_GRAPH_DELETE";
+  paths: Map<string, ClosurePath>;
+};
+
+type AffectedClosure = {
+  rowsByTable: Map<string, Map<string, AffectedRow>>;
+};
+
+type RootSpec = {
+  table: string;
+  id: string;
+  casinoIds: readonly string[];
+  disposition: "EXACT_ROOT_DELETE" | "EXACT_AFFILIATE_GRAPH_DELETE";
+};
+
+function retirementRootSpecs(): RootSpec[] {
+  return [
+    ...demoCasinoRetirementManifest.map((casino) => ({
+      table: "Casino",
+      id: casino.id,
+      casinoIds: [casino.id],
+      disposition: "EXACT_ROOT_DELETE" as const,
+    })),
+    {
+      table: "AffiliateNetwork",
+      id: demoAffiliateNetworkRetirementManifest.id,
+      casinoIds: [],
+      disposition: "EXACT_AFFILIATE_GRAPH_DELETE" as const,
+    },
+    ...demoAffiliateRetirementManifest.flatMap((entry) => ([
+      ["AffiliateProgram", entry.programId],
+      ["AffiliateOffer", entry.offerId],
+      ["AffiliateTrackingLink", entry.trackingLinkId],
+      ["AffiliateRedirectSlug", entry.redirectId],
+      ["AffiliateOfferRevision", entry.offerRevisionId],
+      ["AffiliateTrackingLinkRevision", entry.trackingRevisionId],
+      ["AffiliateRedirectRevision", entry.redirectRevisionId],
+    ] as const).map(([table, id]) => ({
+      table,
+      id,
+      casinoIds: [entry.casinoId],
+      disposition: "EXACT_AFFILIATE_GRAPH_DELETE" as const,
+    }))),
+  ].sort((left, right) => left.table.localeCompare(right.table) || left.id.localeCompare(right.id));
+}
+
+function rowLocator(table: string, primaryKey: readonly string[], values: Record<string, unknown>) {
+  return `${table}:${stableJson(primaryKey.map((column) => values[column]))}`;
+}
+
+function pathSignature(path: ClosurePath) {
+  return stableJson(path);
+}
+
+function addPath(row: AffectedRow, path: ClosurePath) {
+  const signature = pathSignature(path);
+  if (row.paths.has(signature)) return false;
+  row.paths.set(signature, path);
+  return true;
+}
+
+function pathDeletesRow(path: ClosurePath) {
+  return path.actions.length > 0 && path.actions.every((action) => action === "CASCADE");
+}
+
+function deletingPaths(row: AffectedRow) {
+  if (row.exactDisposition) return [...row.paths.values()];
+  return [...row.paths.values()].filter(pathDeletesRow);
+}
+
+function rowDisposition(row: AffectedRow): DemoRetirementDisposition {
+  if (row.exactDisposition) return row.exactDisposition;
+  const paths = [...row.paths.values()];
+  if (paths.some((path) => path.actions.some((action) => action === "RESTRICT" || action === "NO_ACTION" || action === "SET_DEFAULT"))) {
     return "RESTRICT_REVIEW";
   }
-  if (path.some((edge) => edge.deleteAction === "SET_NULL")) return "SET_NULL_RETAIN";
-  return "CASCADE_DELETE";
+  if (paths.some(pathDeletesRow)) return "CASCADE_DELETE";
+  return "SET_NULL_RETAIN";
 }
 
-async function countDependency(database: Database, table: string, path: readonly ForeignKeyRow[]) {
-  const joins: string[] = [];
-  let currentAlias = "dependency_row";
-  path.forEach((edge, index) => {
-    const parentAlias = edge.parentTable === "Casino" ? "root_casino" : `parent_${index}`;
-    const predicates = edge.childColumns.map((column, columnIndex) =>
-      `${currentAlias}.${quoteIdentifier(column)} = ${parentAlias}.${quoteIdentifier(edge.parentColumns[columnIndex]!)}`,
-    );
-    joins.push(`JOIN ${quoteIdentifier(edge.parentTable)} ${parentAlias} ON ${predicates.join(" AND ")}`);
-    currentAlias = parentAlias;
-  });
-  const rows = await database.$queryRawUnsafe<CountRow[]>(`
-    SELECT root_casino."id"::text AS "casinoId", COUNT(*)::bigint AS "rowCount"
-    FROM ${quoteIdentifier(table)} dependency_row
-    ${joins.join("\n")}
-    WHERE root_casino."id" = ANY($1::uuid[])
-    GROUP BY root_casino."id"
-    ORDER BY root_casino."id"
-  `, demoCasinoRetirementIds);
-  return Object.fromEntries(rows.map((row) => [row.casinoId, Number(row.rowCount)]));
+function aggregateDisposition(counts: Partial<Record<DemoRetirementDisposition, number>>): DemoRetirementDisposition {
+  const priority: DemoRetirementDisposition[] = [
+    "RESTRICT_REVIEW",
+    "EXACT_ROOT_DELETE",
+    "EXACT_AFFILIATE_GRAPH_DELETE",
+    "CASCADE_DELETE",
+    "SET_NULL_RETAIN",
+    "IMMUTABLE_HISTORY_RETAIN",
+  ];
+  return priority.find((disposition) => (counts[disposition] ?? 0) > 0) ?? "SET_NULL_RETAIN";
+}
+
+async function buildAffectedClosure(
+  database: Database,
+  edges: readonly ForeignKeyRow[],
+  keyRows: readonly PrimaryKeyRow[],
+  conflicts: DemoRetirementConflict[],
+): Promise<AffectedClosure> {
+  const primaryKeysByTable = new Map(keyRows.map((row) => [row.tableName, row.columns]));
+  const referenceColumnsByTable = new Map<string, Set<string>>();
+  for (const [table, columns] of primaryKeysByTable) referenceColumnsByTable.set(table, new Set(columns));
+  for (const edge of edges) {
+    const columns = referenceColumnsByTable.get(edge.parentTable) ?? new Set<string>();
+    edge.parentColumns.forEach((column) => columns.add(column));
+    referenceColumnsByTable.set(edge.parentTable, columns);
+  }
+
+  const rowsByTable = new Map<string, Map<string, AffectedRow>>();
+  const rootsByTable = new Map<string, RootSpec[]>();
+  for (const root of retirementRootSpecs()) {
+    const roots = rootsByTable.get(root.table) ?? [];
+    roots.push(root);
+    rootsByTable.set(root.table, roots);
+  }
+
+  const queue: string[] = [];
+  const queued = new Set<string>();
+  const enqueue = (table: string) => {
+    if (queued.has(table)) return;
+    queued.add(table);
+    queue.push(table);
+  };
+
+  for (const [table, roots] of [...rootsByTable].sort(([left], [right]) => left.localeCompare(right))) {
+    const primaryKey = primaryKeysByTable.get(table);
+    if (!primaryKey?.length) {
+      addConflict(conflicts, {
+        code: "DEMO_RETIREMENT_UNEXPECTED_DEPENDENCY",
+        table,
+        detail: "An exact retirement root has no primary key, so affected rows cannot be identified safely.",
+      });
+      continue;
+    }
+    const columns = [...(referenceColumnsByTable.get(table) ?? new Set(primaryKey))].sort();
+    const sourceRows = await database.$queryRawUnsafe<Array<{ columnValues: Record<string, unknown> }>>(`
+      SELECT ${jsonObjectExpression("root_row", columns)} AS "columnValues"
+      FROM ${quoteIdentifier(table)} root_row
+      WHERE root_row."id"::text = ANY($1::text[])
+      ORDER BY root_row."id"::text
+    `, roots.map((root) => root.id));
+    const rootsById = new Map(roots.map((root) => [root.id, root]));
+    const tableRows = rowsByTable.get(table) ?? new Map<string, AffectedRow>();
+    for (const sourceRow of sourceRows) {
+      const id = String(sourceRow.columnValues.id);
+      const root = rootsById.get(id);
+      if (!root) continue;
+      const locator = rowLocator(table, primaryKey, sourceRow.columnValues);
+      const row: AffectedRow = tableRows.get(locator) ?? {
+        locator,
+        columnValues: sourceRow.columnValues,
+        casinoIds: new Set(),
+        exactDisposition: root.disposition,
+        paths: new Map(),
+      };
+      root.casinoIds.forEach((casinoId) => row.casinoIds.add(casinoId));
+      row.exactDisposition = root.disposition;
+      addPath(row, {
+        segments: [`exact immutable ${table}.id allowlist`],
+        actions: [],
+        visitedRows: [locator],
+      });
+      tableRows.set(locator, row);
+    }
+    rowsByTable.set(table, tableRows);
+    if (tableRows.size > 0) enqueue(table);
+  }
+
+  const outgoingEdges = new Map<string, ForeignKeyRow[]>();
+  for (const edge of edges) {
+    const outgoing = outgoingEdges.get(edge.parentTable) ?? [];
+    outgoing.push(edge);
+    outgoingEdges.set(edge.parentTable, outgoing);
+  }
+
+  while (queue.length > 0) {
+    const parentTable = queue.shift()!;
+    queued.delete(parentTable);
+    const parentRows = [...(rowsByTable.get(parentTable)?.values() ?? [])]
+      .filter((row) => deletingPaths(row).length > 0)
+      .sort((left, right) => left.locator.localeCompare(right.locator));
+    if (parentRows.length === 0) continue;
+
+    for (const edge of outgoingEdges.get(parentTable) ?? []) {
+      const parentPayload = parentRows.map((row) => ({
+        locator: row.locator,
+        values: Object.fromEntries(edge.parentColumns.map((column) => [column, row.columnValues[column]])),
+      }));
+      const joinPredicate = edge.childColumns.map((column, index) =>
+        `child_row.${quoteIdentifier(column)} IS NOT NULL AND to_jsonb((child_row.${quoteIdentifier(column)})::text) = affected_parent."values"->${quoteLiteral(edge.parentColumns[index]!)}`,
+      ).join(" AND ");
+      const primaryKey = primaryKeysByTable.get(edge.childTable);
+      if (!primaryKey?.length) {
+        const [{ rowCount }] = await database.$queryRawUnsafe<Array<{ rowCount: bigint | number }>>(`
+          WITH affected_parent AS (
+            SELECT item->>'locator' AS "locator", item->'values' AS "values"
+            FROM jsonb_array_elements($1::jsonb) item
+          )
+          SELECT COUNT(*)::bigint AS "rowCount"
+          FROM ${quoteIdentifier(edge.childTable)} child_row
+          JOIN affected_parent ON ${joinPredicate}
+        `, JSON.stringify(parentPayload));
+        const totalRows = Number(rowCount ?? 0);
+        if (totalRows > 0) addConflict(conflicts, {
+          code: "DEMO_RETIREMENT_UNEXPECTED_DEPENDENCY",
+          table: edge.childTable,
+          detail: `${totalRows} affected row(s) were found through ${edge.constraintName}, but the table has no primary key; closure and deduplication are blocked rather than approximated.`,
+        });
+        continue;
+      }
+
+      const columns = [...(referenceColumnsByTable.get(edge.childTable) ?? new Set(primaryKey))].sort();
+      const matches = await database.$queryRawUnsafe<Array<{ parentLocator: string; columnValues: Record<string, unknown> }>>(`
+        WITH affected_parent AS (
+          SELECT item->>'locator' AS "locator", item->'values' AS "values"
+          FROM jsonb_array_elements($1::jsonb) item
+        )
+        SELECT affected_parent."locator" AS "parentLocator",
+          ${jsonObjectExpression("child_row", columns)} AS "columnValues"
+        FROM ${quoteIdentifier(edge.childTable)} child_row
+        JOIN affected_parent ON ${joinPredicate}
+        ORDER BY affected_parent."locator", ${primaryKey.map((column) => `child_row.${quoteIdentifier(column)}`).join(", ")}
+      `, JSON.stringify(parentPayload));
+      if (matches.length === 0) continue;
+
+      const parentByLocator = new Map(parentRows.map((row) => [row.locator, row]));
+      const childRows = rowsByTable.get(edge.childTable) ?? new Map<string, AffectedRow>();
+      let changed = false;
+      for (const match of matches) {
+        const parent = parentByLocator.get(match.parentLocator);
+        if (!parent) continue;
+        const locator = rowLocator(edge.childTable, primaryKey, match.columnValues);
+        let child = childRows.get(locator);
+        if (!child) {
+          child = {
+            locator,
+            columnValues: match.columnValues,
+            casinoIds: new Set(),
+            paths: new Map(),
+          };
+          childRows.set(locator, child);
+          changed = true;
+        }
+        for (const casinoId of parent.casinoIds) {
+          if (!child.casinoIds.has(casinoId)) {
+            child.casinoIds.add(casinoId);
+            changed = true;
+          }
+        }
+        for (const parentPath of deletingPaths(parent)) {
+          if (parentPath.visitedRows.includes(locator)) continue;
+          changed = addPath(child, {
+            segments: [edgeDescription(edge), ...parentPath.segments],
+            actions: [edge.deleteAction, ...parentPath.actions],
+            visitedRows: [locator, ...parentPath.visitedRows],
+          }) || changed;
+        }
+      }
+      rowsByTable.set(edge.childTable, childRows);
+      if (changed) enqueue(edge.childTable);
+    }
+  }
+
+  return { rowsByTable };
 }
 
 async function polymorphicHistory(database: Database) {
@@ -337,7 +613,8 @@ async function polymorphicHistory(database: Database) {
       totalRows: Object.values(rowsByCasino).reduce((total, count) => total + count, 0),
       rowsByCasino,
       disposition: "IMMUTABLE_HISTORY_RETAIN" as const,
-      relationPath: ["polymorphic entityId snapshot; no Casino foreign key"],
+      dispositionCounts: { IMMUTABLE_HISTORY_RETAIN: Object.values(rowsByCasino).reduce((total, count) => total + count, 0) },
+      relationPaths: [["polymorphic entityId snapshot; no Casino foreign key"]],
     };
   });
 }
@@ -523,35 +800,24 @@ async function inspectAffiliateGraph(database: Database, conflicts: DemoRetireme
   };
 }
 
-async function inspectAffiliateDependencies(
-  database: Database,
+function inspectAffiliateDependencies(
   edges: readonly ForeignKeyRow[],
-  conflicts: DemoRetirementConflict[],
+  closure: AffectedClosure,
 ) {
-  const parentIds: Readonly<Record<string, readonly string[]>> = {
-    AffiliateNetwork: [demoAffiliateNetworkRetirementManifest.id],
-    AffiliateProgram: demoAffiliateRetirementManifest.map((entry) => entry.programId),
-    AffiliateOffer: demoAffiliateRetirementManifest.map((entry) => entry.offerId),
-    AffiliateTrackingLink: demoAffiliateRetirementManifest.map((entry) => entry.trackingLinkId),
-    AffiliateRedirectSlug: demoAffiliateRetirementManifest.map((entry) => entry.redirectId),
-  };
+  const affiliateRootTables = new Set([
+    "AffiliateNetwork",
+    "AffiliateProgram",
+    "AffiliateOffer",
+    "AffiliateTrackingLink",
+    "AffiliateRedirectSlug",
+  ]);
   const dependencies: DemoRetirementAffiliateDependency[] = [];
-  for (const edge of edges.filter((candidate) => parentIds[candidate.parentTable]).sort((left, right) =>
+  for (const edge of edges.filter((candidate) => affiliateRootTables.has(candidate.parentTable)).sort((left, right) =>
     left.childTable.localeCompare(right.childTable) || left.constraintName.localeCompare(right.constraintName))) {
-    if (edge.childColumns.length !== 1 || edge.parentColumns.length !== 1 || edge.parentColumns[0] !== "id") {
-      addConflict(conflicts, {
-        code: "DEMO_RETIREMENT_UNEXPECTED_DEPENDENCY",
-        table: edge.childTable,
-        detail: `Affiliate dependency ${edge.constraintName} is composite or does not reference the canonical id column.`,
-      });
-      continue;
-    }
-    const [{ rowCount }] = await database.$queryRawUnsafe<Array<{ rowCount: bigint | number }>>(`
-      SELECT COUNT(*)::bigint AS "rowCount"
-      FROM ${quoteIdentifier(edge.childTable)}
-      WHERE ${quoteIdentifier(edge.childColumns[0]!)} = ANY($1::uuid[])
-    `, parentIds[edge.parentTable]);
-    const totalRows = Number(rowCount ?? 0);
+    const relationPath = edgeDescription(edge);
+    const totalRows = [...(closure.rowsByTable.get(edge.childTable)?.values() ?? [])]
+      .filter((row) => [...row.paths.values()].some((path) => path.segments[0] === relationPath))
+      .length;
     const relation = `${edge.childTable}->${edge.parentTable}`;
     const disposition: DemoRetirementAffiliateDependency["disposition"] = EXACT_AFFILIATE_RELATIONS.has(relation)
       ? "EXACT_AFFILIATE_GRAPH_DELETE"
@@ -563,94 +829,104 @@ async function inspectAffiliateDependencies(
     dependencies.push({
       constraint: edge.constraintName,
       table: edge.childTable,
-      column: edge.childColumns[0]!,
+      column: edge.childColumns.join("+"),
       parentTable: edge.parentTable,
       totalRows,
       disposition,
     });
-    if (totalRows > 0 && disposition !== "EXACT_AFFILIATE_GRAPH_DELETE" && disposition !== "SET_NULL_RETAIN") {
-      addConflict(conflicts, {
-        code: "DEMO_RETIREMENT_REAL_DATA_CONFLICT",
-        table: edge.childTable,
-        detail: `${totalRows} row(s) reference exact RFC-012 Affiliate IDs outside the immutable internal graph.`,
-      });
-    }
-    if (totalRows > 0 && REAL_DATA_CONFLICT_TABLES.has(edge.childTable)) {
-      addConflict(conflicts, {
-        code: "DEMO_RETIREMENT_REAL_DATA_CONFLICT",
-        table: edge.childTable,
-        detail: `${totalRows} Partner, commercial, activation or media row(s) reference exact RFC-012 Affiliate IDs.`,
-      });
-    }
   }
   return dependencies;
 }
 
 export async function inspectDemoCasinoRetirementPlan(database: Database): Promise<DemoCasinoRetirementPlan> {
   const conflicts: DemoRetirementConflict[] = [];
-  const [edges, casinoRows] = await Promise.all([
+  const [edges, keyRows, casinoRows] = await Promise.all([
     foreignKeys(database),
+    primaryKeys(database),
     inspectCasinoIdentities(database, conflicts),
   ]);
   const existingAffiliateRows = await inspectAffiliateGraph(database, conflicts);
-  const affiliateDependencies = await inspectAffiliateDependencies(database, edges, conflicts);
-  const paths = pathsToCasino(edges);
+  const closure = await buildAffectedClosure(database, edges, keyRows, conflicts);
+  const affiliateDependencies = inspectAffiliateDependencies(edges, closure);
   const dependencies: DemoRetirementDependency[] = [];
-  const rootRowsByCasino = Object.fromEntries(casinoRows.map((casino) => [casino.id, 1]));
-  dependencies.push({
-    table: "Casino",
-    totalRows: casinoRows.length,
-    rowsByCasino: rootRowsByCasino,
-    disposition: "EXACT_ROOT_DELETE",
-    relationPath: ["exact immutable Casino.id allowlist"],
-  });
 
-  for (const [table, path] of [...paths.entries()].filter(([table]) => table !== "Casino").sort(([left], [right]) => left.localeCompare(right))) {
-    if (!EXPECTED_REACHABLE_TABLES.has(table)) {
-      addConflict(conflicts, { code: "DEMO_RETIREMENT_UNEXPECTED_DEPENDENCY", table, detail: "A live table reaches Casino through an unreviewed foreign-key path." });
+  for (const [table, tableRows] of [...closure.rowsByTable].sort(([left], [right]) => left.localeCompare(right))) {
+    if (tableRows.size === 0) continue;
+    const rows = [...tableRows.values()].sort((left, right) => left.locator.localeCompare(right.locator));
+    const rowsByCasino = Object.fromEntries(demoCasinoRetirementIds.flatMap((casinoId) => {
+      const count = rows.filter((row) => row.casinoIds.has(casinoId)).length;
+      return count > 0 ? [[casinoId, count] as const] : [];
+    }));
+    const dispositionCounts: Partial<Record<DemoRetirementDisposition, number>> = {};
+    for (const row of rows) {
+      const disposition = rowDisposition(row);
+      dispositionCounts[disposition] = (dispositionCounts[disposition] ?? 0) + 1;
     }
-    const rowsByCasino = await countDependency(database, table, path);
-    const totalRows = Object.values(rowsByCasino).reduce((total, count) => total + count, 0);
-    const disposition = dependencyDisposition(table, path);
+    const relationPaths = [...new Map(rows.flatMap((row) => [...row.paths.values()])
+      .map((path) => [stableJson(path.segments), path.segments] as const)).values()]
+      .sort((left, right) => stableJson(left).localeCompare(stableJson(right)));
+    const disposition = aggregateDisposition(dispositionCounts);
     dependencies.push({
       table,
-      totalRows,
+      totalRows: rows.length,
       rowsByCasino,
       disposition,
-      relationPath: path.map((edge) => `${edge.childTable}.${edge.childColumns.join("+")} -> ${edge.parentTable}.${edge.parentColumns.join("+")} (${edge.deleteAction})`),
+      dispositionCounts,
+      relationPaths,
     });
-    if (totalRows > 0 && REAL_DATA_CONFLICT_TABLES.has(table)) {
-      for (const [casinoId, count] of Object.entries(rowsByCasino)) if (count > 0) {
-        addConflict(conflicts, { code: "DEMO_RETIREMENT_REAL_DATA_CONFLICT", table, casinoId, detail: `${count} row(s) indicate commercial, Partner, media or retained-history state outside the original synthetic aggregate.` });
-      }
-    }
-    if (totalRows > 0 && UNEXPECTED_AFFILIATE_DEPENDENCY_TABLES.has(table)) {
+
+    if (!EXPECTED_REACHABLE_TABLES.has(table) && !EXACT_AFFILIATE_GRAPH_TABLES.has(table) && table !== "Casino") {
       addConflict(conflicts, {
-        code: "DEMO_RETIREMENT_REAL_DATA_CONFLICT",
+        code: "DEMO_RETIREMENT_UNEXPECTED_DEPENDENCY",
         table,
-        detail: `${totalRows} row(s) extend the RFC-012 affiliate graph beyond its immutable source manifest.`,
+        detail: `${rows.length} affected row(s) were found through an unreviewed foreign-key relation path.`,
       });
     }
+    const restrictedRows = dispositionCounts.RESTRICT_REVIEW ?? 0;
+    if (restrictedRows > 0) addConflict(conflicts, {
+      code: "DEMO_RETIREMENT_UNEXPECTED_DEPENDENCY",
+      table,
+      detail: `${restrictedRows} affected row(s) require RESTRICT, NO ACTION or SET DEFAULT review before deletion.`,
+    });
+    if (REAL_DATA_CONFLICT_TABLES.has(table)) {
+      const attributed = Object.entries(rowsByCasino);
+      if (attributed.length === 0) addConflict(conflicts, {
+        code: "DEMO_RETIREMENT_REAL_DATA_CONFLICT",
+        table,
+        detail: `${rows.length} protected Partner, commercial, activation or media row(s) are in the affected-row closure.`,
+      });
+      for (const [casinoId, count] of attributed) addConflict(conflicts, {
+        code: "DEMO_RETIREMENT_REAL_DATA_CONFLICT",
+        table,
+        casinoId,
+        detail: `${count} protected Partner, commercial, activation or media row(s) are in the affected-row closure.`,
+      });
+    }
+    if (UNEXPECTED_AFFILIATE_DEPENDENCY_TABLES.has(table)) addConflict(conflicts, {
+      code: "DEMO_RETIREMENT_REAL_DATA_CONFLICT",
+      table,
+      detail: `${rows.length} row(s) extend the RFC-012 affiliate graph beyond its immutable source manifest.`,
+    });
   }
 
   dependencies.push(...await polymorphicHistory(database));
   dependencies.sort((left, right) => left.table.localeCompare(right.table));
-  const retainedHistory = dependencies
-    .filter((dependency) => dependency.totalRows > 0 && (dependency.disposition === "SET_NULL_RETAIN" || dependency.disposition === "IMMUTABLE_HISTORY_RETAIN"))
-    .map((dependency) => ({
-      table: dependency.table,
-      totalRows: dependency.totalRows,
-      rationale: dependency.disposition === "SET_NULL_RETAIN"
-        ? "Schema intentionally preserves the historical row and clears its Casino foreign key when the root is retired."
-        : "No Casino foreign key exists; the truthful immutable history record remains unchanged.",
-    }));
-  retainedHistory.push(...affiliateDependencies
-    .filter((dependency) => dependency.totalRows > 0 && dependency.disposition === "SET_NULL_RETAIN")
-    .map((dependency) => ({
-      table: `${dependency.table}.${dependency.column}`,
-      totalRows: dependency.totalRows,
-      rationale: `Schema intentionally retains the historical row and clears its ${dependency.parentTable} reference.`,
-    })));
+  const retainedHistory = dependencies.flatMap((dependency) => {
+    const setNullRows = dependency.dispositionCounts.SET_NULL_RETAIN ?? 0;
+    const immutableRows = dependency.dispositionCounts.IMMUTABLE_HISTORY_RETAIN ?? 0;
+    return [
+      ...(setNullRows > 0 ? [{
+        table: dependency.table,
+        totalRows: setNullRows,
+        rationale: "Schema intentionally preserves the historical row and clears its affected foreign-key reference when the root is retired.",
+      }] : []),
+      ...(immutableRows > 0 ? [{
+        table: dependency.table,
+        totalRows: immutableRows,
+        rationale: "No Casino foreign key exists; the truthful immutable history record remains unchanged.",
+      }] : []),
+    ];
+  });
   const rowById = new Map(casinoRows.map((row) => [row.id, row]));
   const withoutHash: Omit<DemoCasinoRetirementPlan, "planSha256"> = {
     operation: DEMO_CASINO_RETIREMENT_VERSION,
@@ -706,7 +982,13 @@ export function assertDemoRetirementApplyAuthority(input: {
   }
 }
 
-export async function applyDemoCasinoRetirement(database: Database, reviewedPlanSha256: string) {
+export async function applyDemoCasinoRetirement(
+  database: Database,
+  reviewedPlanSha256: string,
+  options: Readonly<{
+    postDeleteVerification?: (verification: DemoCasinoRetirementPlan) => Promise<void> | void;
+  }> = {},
+) {
   const plan = await inspectDemoCasinoRetirementPlan(database);
   if (!plan.readyToApply) throw new Error("DEMO_RETIREMENT_REAL_DATA_CONFLICT");
   if (
@@ -743,5 +1025,6 @@ export async function applyDemoCasinoRetirement(database: Database, reviewedPlan
     verification.existingDemoCasinoCount !== 0
     || Object.values(verification.existingAffiliateRows).some((count) => count !== 0)
   ) throw new Error("DEMO_RETIREMENT_POST_APPLY_VERIFICATION_FAILED");
+  await options.postDeleteVerification?.(verification);
   return { reviewedPlanSha256, alreadyRetired: false, deleted, verification };
 }

@@ -31,7 +31,14 @@ async function readOnlyReport(mode: "plan" | "verify") {
         existingAffiliateRows: plan.existingAffiliateRows,
         nonZeroDependencies: plan.dependencies
           .filter((dependency) => dependency.totalRows > 0)
-          .map(({ table, totalRows, rowsByCasino, disposition }) => ({ table, totalRows, rowsByCasino, disposition })),
+          .map(({ table, totalRows, rowsByCasino, disposition, dispositionCounts, relationPaths }) => ({
+            table,
+            totalRows,
+            rowsByCasino,
+            disposition,
+            dispositionCounts,
+            relationPaths,
+          })),
         nonZeroAffiliateDependencies: plan.affiliateDependencies
           .filter((dependency) => dependency.totalRows > 0),
         retainedHistory: plan.retainedHistory,

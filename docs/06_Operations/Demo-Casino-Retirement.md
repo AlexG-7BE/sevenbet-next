@@ -6,7 +6,33 @@
 
 **Base:** `73c1c2b52d12dd32f1b8ba7d7e3df0b962334766`
 
-**Plan SHA-256:** `97dd77552657709bba4e80cbb86a13e8a69bc684f51293926e1ccd5d59948696`
+**Plan SHA-256:** `97dd77552657709bba4e80cbb86a13e8a69bc684f51293926e1ccd5d59948696` is **OBSOLETE**. It was produced by the superseded single-path planner and is not execution authority. A fresh corrected-plan hash must be reviewed and explicitly authorised.
+
+## Independent review correction
+
+The original review found two release-blocking gaps. They are corrected without
+changing the immutable retirement manifest or broadening deletion authority:
+
+- the planner now starts from the exact 25 Casino rows and every exact affiliate
+  graph row, discovers actual affected child rows through every PostgreSQL
+  foreign-key relation, and continues only from rows that will themselves be
+  deleted;
+- concrete rows are deduplicated by their declared primary key, including
+  composite keys; a table with affected rows but no stable primary key blocks
+  the plan instead of producing an approximation;
+- each dependency reports unique affected-row count, per-Casino attribution,
+  disposition counts and every relevant relation path with constraint name and
+  PostgreSQL delete action;
+- any affected protected Partner, commercial, activation or media row blocks,
+  regardless of whether the schema would cascade-delete it or retain it with
+  `SET NULL`; and
+- `npm run demo-retirement:postgres-test` destructively exercises the real
+  planner, APPLY and verification transaction on a disposable migrated
+  PostgreSQL database. It covers successful deletion and idempotency,
+  multi-path protected-media discovery and deduplication, a persisted Partner
+  conflict, stale-hash refusal, post-delete rollback, immutable `AuditLog`
+  retention, and preservation of a similar but non-manifest Casino. The command
+  is a required step in `Database / Migration Verification` CI.
 
 ## Detected current state
 
@@ -66,11 +92,12 @@ relationship or active commercial route. The safe delete set is these literal
 
 ## Production read-only dependency plan
 
-The plan ran against trusted Production access inside `REPEATABLE READ` with
-`SET TRANSACTION READ ONLY`. It discovers the current `public`-schema foreign
-keys from `pg_catalog`, follows every path to `Casino`, inspects direct
-references to the exact affiliate graph, and reports per-ID counts. Secret
-values and destinations are not printed.
+The corrected plan runs against trusted Production access inside
+`REPEATABLE READ` with `SET TRANSACTION READ ONLY`. It discovers the current
+`public`-schema foreign keys and primary keys from `pg_catalog`, computes the
+complete affected-row closure from exact Casino and affiliate roots, and
+reports unique counts, per-ID attribution, all relation paths and their delete
+semantics. Secret values and destinations are not printed.
 
 | Table | Total | Per-Casino rows | Disposition |
 | --- | ---: | --- | --- |
@@ -136,12 +163,12 @@ The table below completes the per-ID matrix for non-uniform dependencies.
 | `00000124-0000-4000-8000-000000000001` | 2 | 6 | 1 | 1 | 7 |
 | `00000125-0000-4000-8000-000000000001` | 2 | 6 | 1 | 1 | 7 |
 
-Zero-row paths include all discovered alias, publication-preview, offer
-country/currency, media-assignment, evidence, localisation, analytics,
-outbound-click, CRM, `MarketActivation`, Partner relationship/support,
-Partner-hosted creative and media authority tables. The plan will block if a
-future run finds an unknown relation, non-cascade ownership, exact-affiliate
-manifest drift or a protected real-data table.
+The planner does not treat schema reachability as row reachability. It queries
+the actual children of affected rows along every relation and records all paths
+that reach each unique row. It blocks on an unreviewed affected table,
+non-cascade ownership requiring review, exact-affiliate manifest drift, an
+affected protected real-data table, or an affected table without a stable
+primary key.
 
 ## Conflicts
 
@@ -178,35 +205,43 @@ dependencies and no `ContentRevision` rows for these IDs.
 
 ## Eventual Production delete procedure
 
-Do not run these steps under this review task. After merge/deploy readiness,
-fresh independent review and separate Founder execution authority:
+Deletion must occur while the current Production binary still serves the
+archived synthetic rows. Merge and deploy are permitted only after the delete,
+verification and current-version Production smoke checks are healthy. The
+release order is:
 
-1. Pull trusted Production database authority into a private, mode-`0600`
-   temporary environment file; never print values.
-2. Run `npm run demo-retirement:plan -- --summary-only`. Confirm exact identity,
-   per-table/per-ID counts, zero conflicts and a newly reviewed plan SHA-256.
-3. Set the one-time environment acknowledgement to the exact phrase documented
-   by the CLI, then run `npm run demo-retirement:apply --
+1. Take and verify the required Production backup.
+2. From the exact proposed PR head, pull trusted Production database authority
+   into a private mode-`0600` temporary environment file and run a fresh
+   `npm run demo-retirement:plan -- --summary-only`.
+3. Independently review the exact manifest, complete affected-row closure,
+   unique and per-Casino counts, all relation paths and delete semantics,
+   conflicts, and new plan SHA-256. Any protected or unkeyed affected row is a
+   HOLD.
+4. Obtain explicit Founder authorisation for that exact reviewed plan SHA-256.
+5. While the current old Production binary is still serving, set the one-time
+   environment acknowledgement and run `npm run demo-retirement:apply --
    --confirm=RETIRE_EXACT_RFC_012_DEMO_CASINOS --plan-sha256=<reviewed-sha>`.
-4. APPLY acquires a transaction advisory lock, re-runs the complete inspection
-   under `SERIALIZABLE`, and fails before writes on conflicts or SHA drift.
-5. The transaction deletes only the five exact redirect IDs, five exact offer
-   IDs, five exact program IDs, exact synthetic network ID
-   `00000009-0000-4000-8000-000000000001`, and the 25 literal Casino IDs.
-   Existing foreign keys remove the reviewed owned child rows. No slug, prefix,
-   wildcard or broad classifier is used.
-6. APPLY verifies zero exact Casino/affiliate rows before commit. A repeated
-   authorised APPLY after successful retirement is a zero-write success.
-7. Run `npm run demo-retirement:verify` read-only and confirm live demo Casinos
-   = 0 and demo-specific runtime authority = 0. Remove the private environment
-   file.
+   APPLY takes the transaction advisory lock, recomputes the closure under
+   `SERIALIZABLE`, and fails before writes on conflicts or hash drift.
+6. Run `npm run demo-retirement:verify` read-only and confirm zero exact
+   Casino/affiliate roots and zero demo-specific runtime authority.
+7. Run current-version Production smoke checks while the old binary is still
+   serving. If delete verification or smoke checks fail, HOLD; do not merge.
+8. Only if steps 5–7 are healthy, merge the exact reviewed PR head.
+9. Deploy the merged retirement code.
+10. Run post-deploy Production smoke checks.
+11. Record the reviewed hash, Founder authority, APPLY result, verification,
+    both smoke results, merged commit and deployed release; securely remove the
+    private environment file.
 
 Production delete NOT executed.
 
 ## Risks and unknowns
 
-- The evidence is a point-in-time Production snapshot; a later write can
-  invalidate it. SHA binding and an in-transaction reinspection address this.
+- The old `97dd…` hash is invalid. Production evidence is point-in-time; any
+  write can change the corrected closure. Hash binding and in-transaction
+  reinspection address this only for a newly reviewed hash.
 - The branch and one-time execution path are not merged or deployed.
 - Production APPLY remains deliberately unexercised. Its SQL is bounded and
   covered structurally; execution must be observed only under separately
@@ -214,6 +249,5 @@ Production delete NOT executed.
 
 ## Founder authority required
 
-Independent review is the only requested next step. Do not merge, deploy or
-run APPLY from this document. A later explicit Founder instruction must
-authorise the exact reviewed Production delete.
+Do not merge, deploy or run APPLY from this document. A later explicit Founder
+instruction must authorise the exact newly reviewed Production plan hash.

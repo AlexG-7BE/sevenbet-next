@@ -75,11 +75,33 @@ test("plan blocks unexpected dependencies and real Partner or commercial ownersh
   assert.match(core, /DEMO_RETIREMENT_REAL_DATA_CONFLICT/);
   for (const protectedTable of [
     "AffiliateLink",
+    "AffiliateOutboundClickDaily",
     "CommercialOpportunity",
     "MarketActivation",
+    "MediaAsset",
+    "MediaCreativeSet",
+    "MediaPreflightEntry",
+    "MediaRevision",
     "PartnerCasinoMarketSupport",
     "PartnerCasinoRelationship",
+    "PartnerHostedCreative",
   ]) assert.match(core, new RegExp(`"${protectedTable}"`));
+});
+
+test("planner computes primary-key-deduplicated all-path closure and PostgreSQL CI executes it", () => {
+  const core = readFileSync("scripts/demo-casino-retirement-core.ts", "utf8");
+  const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
+  const ci = readFileSync(".github/workflows/ci.yml", "utf8");
+  assert.match(core, /constraint_row\.contype = 'p'/);
+  assert.match(core, /jsonb_array_elements/);
+  assert.match(core, /visitedRows/);
+  assert.match(core, /relationPaths/);
+  assert.match(core, /table has no primary key; closure and deduplication are blocked rather than approximated/);
+  assert.equal(
+    packageJson.scripts["demo-retirement:postgres-test"],
+    "node --import tsx --test --test-concurrency=1 tests/demo-casino-retirement-postgres.test.ts",
+  );
+  assert.match(ci, /npm run demo-retirement:postgres-test/);
 });
 
 test("Production runtime has no RFC-012 classifier or recreation authority", () => {

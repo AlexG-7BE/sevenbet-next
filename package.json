@@ -179,6 +179,7 @@
     "demo-retirement:plan": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/demo-casino-retirement.ts plan",
     "demo-retirement:apply": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/demo-casino-retirement.ts apply",
     "demo-retirement:verify": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/demo-casino-retirement.ts verify",
+    "demo-retirement:postgres-test": "node --import tsx --test --test-concurrency=1 tests/demo-casino-retirement-postgres.test.ts",
     "fe-mig-04:test": "node --import tsx --test tests/public-casino-discovery.test.ts tests/casino-discovery-parity.test.ts tests/casino-discovery-render.test.tsx",
     "fe-mig-05:test": "node --import tsx --test tests/casino-profile.test.ts",
     "fe-mig-06:test": "node --import tsx --test tests/public-casino-discovery.test.ts tests/casino-discovery-parity.test.ts tests/casino-discovery-render.test.tsx",
