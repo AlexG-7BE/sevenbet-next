@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
-import type { PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 
 import {
   isCasinoCommercialActivation01Requested,
@@ -35,6 +35,8 @@ type MigrationRow = {
   rolled_back_at: Date | null;
 };
 
+type ProductionQueryClient = PrismaClient | Prisma.TransactionClient;
+
 function writeEvent(payload: Record<string, unknown>) {
   process.stdout.write(`${JSON.stringify(payload)}\n`);
 }
@@ -47,7 +49,7 @@ function repositoryChecksum(name: string) {
   return createHash("sha256").update(readFileSync(migrationFile(name))).digest("hex");
 }
 
-async function readMigrationRows(prisma: PrismaClient) {
+async function readMigrationRows(prisma: ProductionQueryClient) {
   return prisma.$queryRawUnsafe<MigrationRow[]>(
     'SELECT "migration_name", "checksum", "finished_at", "rolled_back_at" FROM "_prisma_migrations" ORDER BY "started_at" ASC',
   );
@@ -67,7 +69,7 @@ function assertChecksum(row: MigrationRow | undefined, name: string) {
   }
 }
 
-async function assertCustomerDataAnalyticsLifecycleInvariants(prisma: PrismaClient) {
+async function assertCustomerDataAnalyticsLifecycleInvariants(prisma: ProductionQueryClient) {
   const [schema] = await prisma.$queryRawUnsafe<Array<{
     analytics_session: string | null;
     analytics_event: string | null;
@@ -175,7 +177,7 @@ async function assertCustomerDataAnalyticsLifecycleInvariants(prisma: PrismaClie
   });
 }
 
-async function assertCommercialUxAnalyticsInvariants(prisma: PrismaClient) {
+async function assertCommercialUxAnalyticsInvariants(prisma: ProductionQueryClient) {
   const [schema] = await prisma.$queryRawUnsafe<Array<{
     event_types_ready: boolean;
     position_column_ready: boolean;
@@ -224,7 +226,7 @@ async function assertCommercialUxAnalyticsInvariants(prisma: PrismaClient) {
   });
 }
 
-async function assertMcpDcrInvariants(prisma: PrismaClient) {
+async function assertMcpDcrInvariants(prisma: ProductionQueryClient) {
   const [functionState] = await prisma.$queryRawUnsafe<Array<{ definition: string }>>(`
     SELECT pg_get_functiondef('public.prepare_better_auth_oauth_client_compat()'::regprocedure) AS definition
   `);
@@ -258,7 +260,7 @@ async function assertMcpDcrInvariants(prisma: PrismaClient) {
   });
 }
 
-async function assertProgrammeAccessPreMigrationInvariants(prisma: PrismaClient) {
+async function assertProgrammeAccessPreMigrationInvariants(prisma: ProductionQueryClient) {
   const [claimLifecycle] = await prisma.$queryRawUnsafe<Array<{
     consumed_pair_mismatch: bigint;
     erased_consumed_claims: bigint;
@@ -303,7 +305,7 @@ async function assertProgrammeAccessPreMigrationInvariants(prisma: PrismaClient)
   });
 }
 
-async function assertProgrammeAccessPostMigrationInvariants(prisma: PrismaClient) {
+async function assertProgrammeAccessPostMigrationInvariants(prisma: ProductionQueryClient) {
   const [tableState] = await prisma.$queryRawUnsafe<Array<{ table_exists: boolean }>>(`
     SELECT to_regclass('public."ProgrammeAccessAcceptance"') IS NOT NULL AS table_exists
   `);
@@ -398,7 +400,7 @@ async function assertProgrammeAccessPostMigrationInvariants(prisma: PrismaClient
   });
 }
 
-async function assertMediaRetirementInvariants(prisma: PrismaClient) {
+async function assertMediaRetirementInvariants(prisma: ProductionQueryClient) {
   const requiredConstraints = [
     "CasinoMediaAssignment_retired_inactive_check",
     "CasinoBonusMediaAssignment_retired_inactive_check",
@@ -471,7 +473,8 @@ async function assertMediaRetirementInvariants(prisma: PrismaClient) {
   });
 }
 
-async function maybeApplyProgrammeAccessMigration() {
+/** Vercel application builds may verify Production compatibility, never mutate it. */
+async function verifyVercelBuildCompatibility() {
   if (isCasinoCommercialActivation01Requested(process.env)) {
     await runCasinoCommercialActivation01Preflight();
   }
@@ -522,6 +525,15 @@ async function maybeApplyProgrammeAccessMigration() {
   let commercialCorePartnerRelationshipSchemaReady = false;
   let mediaRetirementReady = false;
   try {
+    await prisma.$transaction(async (transaction) => {
+      await transaction.$executeRawUnsafe("SET TRANSACTION READ ONLY");
+      const [transactionSafety] = await transaction.$queryRawUnsafe<Array<{ transaction_read_only: string }>>(
+        "SHOW transaction_read_only",
+      );
+      if (transactionSafety?.transaction_read_only !== "on") {
+        throw new Error("Production migration guard could not enforce a read-only transaction.");
+      }
+      const prisma = transaction;
     const rows = await readMigrationRows(prisma);
     const unresolved = rows.filter((row) => row.finished_at === null && row.rolled_back_at === null);
     if (unresolved.length > 0) {
@@ -813,6 +825,11 @@ async function maybeApplyProgrammeAccessMigration() {
       state: "baseline_verified_read_only",
       migration: TARGET_MIGRATION,
     });
+    }, {
+      isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+      maxWait: 5_000,
+      timeout: 120_000,
+    });
   } finally {
     await prisma.$disconnect().catch(() => undefined);
   }
@@ -852,7 +869,7 @@ async function maybeApplyProgrammeAccessMigration() {
   });
 }
 
-maybeApplyProgrammeAccessMigration().catch((error) => {
+verifyVercelBuildCompatibility().catch((error) => {
   const message = error instanceof Error ? error.message : String(error);
   process.stderr.write(`[vercel-build-preflight] ${message}\n`);
   process.exit(1);

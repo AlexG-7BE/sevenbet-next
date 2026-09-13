@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 
 import { createCasinoMarket0025AdminClient } from "@/lib/db/casino-market-0025-admin-client";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
@@ -18,6 +18,7 @@ const CANDIDATES = [
 ] as const;
 
 type ReleaseEnvironment = Record<string, string | undefined>;
+type ProductionAuditQueryClient = PrismaClient | Prisma.TransactionClient;
 
 function writeEvent(payload: Record<string, unknown>) {
   process.stdout.write(`${JSON.stringify(payload)}\n`);
@@ -93,7 +94,7 @@ function assertProductionAuditAuthority(environment: ReleaseEnvironment) {
   return { sourceCommit, readiness };
 }
 
-async function inventory(prisma: PrismaClient) {
+async function inventory(prisma: ProductionAuditQueryClient) {
   const [
     casinos, markets, operators, brands, licences, marketEvidence, bonuses, images,
     networks, programs, offers, links, routeCountries, redirects, opportunities,
@@ -119,7 +120,7 @@ async function inventory(prisma: PrismaClient) {
   return { casinos, markets, operators, brands, licences, marketEvidence, bonuses, images, networks, programs, offers, links, routeCountries, redirects, opportunities, eligibleRoutes };
 }
 
-async function candidateMatrix(prisma: PrismaClient) {
+async function candidateMatrix(prisma: ProductionAuditQueryClient) {
   const rows = [];
   for (const candidate of CANDIDATES) {
     const casino = await prisma.casino.findUnique({
@@ -225,7 +226,7 @@ async function candidateMatrix(prisma: PrismaClient) {
   return rows;
 }
 
-async function commercialEvidenceSummary(prisma: PrismaClient) {
+async function commercialEvidenceSummary(prisma: ProductionAuditQueryClient) {
   const needles = ["hello", "skol", "diamond7", "g'day", "gday", "21 privé", "21 prive", "slotnite", "dragonbet", "betsson", "superfly", "brothers bet"];
   const opportunities = await prisma.commercialOpportunity.findMany({
     where: { OR: needles.map((needle) => ({ normalizedName: { contains: needle, mode: "insensitive" as const } })) },
@@ -350,20 +351,23 @@ export async function runCasinoCommercialActivation01Preflight(environment: Rele
   const authority = assertProductionAuditAuthority(environment);
   const prisma = createCasinoMarket0025AdminClient();
   try {
-    writeEvent({
-      event: "casino_commercial_activation_01_production_audit_start",
-      sourceCommit: authority.sourceCommit,
-      projectId: CASINO_COMMERCIAL_ACTIVATION_01_VERCEL_PROJECT_ID,
-      databaseReady: authority.readiness.ready,
-    });
-    writeEvent({ event: "casino_commercial_activation_01_inventory", ...(await inventory(prisma)) });
-    writeEvent({ event: "casino_commercial_activation_01_candidate_matrix", candidates: await candidateMatrix(prisma) });
-    const opportunities = await commercialEvidenceSummary(prisma);
-    writeEvent({ event: "casino_commercial_activation_01_commercial_evidence_count", opportunityCount: opportunities.length });
-    for (const opportunity of opportunities) {
-      writeEvent({ event: "casino_commercial_activation_01_commercial_evidence", opportunity });
-    }
-    writeEvent({ event: "casino_commercial_activation_01_production_audit_complete", mutationCount: 0 });
+    await prisma.$transaction(async (transaction) => {
+      await transaction.$executeRawUnsafe("SET TRANSACTION READ ONLY");
+      writeEvent({
+        event: "casino_commercial_activation_01_production_audit_start",
+        sourceCommit: authority.sourceCommit,
+        projectId: CASINO_COMMERCIAL_ACTIVATION_01_VERCEL_PROJECT_ID,
+        databaseReady: authority.readiness.ready,
+      });
+      writeEvent({ event: "casino_commercial_activation_01_inventory", ...(await inventory(transaction)) });
+      writeEvent({ event: "casino_commercial_activation_01_candidate_matrix", candidates: await candidateMatrix(transaction) });
+      const opportunities = await commercialEvidenceSummary(transaction);
+      writeEvent({ event: "casino_commercial_activation_01_commercial_evidence_count", opportunityCount: opportunities.length });
+      for (const opportunity of opportunities) {
+        writeEvent({ event: "casino_commercial_activation_01_commercial_evidence", opportunity });
+      }
+      writeEvent({ event: "casino_commercial_activation_01_production_audit_complete", mutationCount: 0 });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead, maxWait: 5_000, timeout: 65_000 });
   } finally {
     await prisma.$disconnect().catch(() => undefined);
   }

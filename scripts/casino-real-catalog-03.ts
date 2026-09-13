@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { EditorialStatus, OfferStatus, Prisma } from "@prisma/client";
+import { EditorialStatus, OfferStatus, Prisma, type PrismaClient } from "@prisma/client";
 
 import { parseCasinoIngestionBundle } from "@/lib/casino-ingestion/contract";
 import {
@@ -55,6 +55,8 @@ interface CatalogCorpus {
   commercialAuthority: boolean;
   entries: CatalogEntry[];
 }
+
+type CatalogQueryClient = PrismaClient | Prisma.TransactionClient;
 
 function jsonRecord(value: Prisma.JsonValue | null): Prisma.JsonObject {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -115,8 +117,8 @@ async function selectActor() {
   return actor.id;
 }
 
-async function assertProductionSchema() {
-  const [state] = await prisma.$queryRawUnsafe<Array<{
+async function assertProductionSchema(client: CatalogQueryClient) {
+  const [state] = await client.$queryRawUnsafe<Array<{
     unfinished: bigint;
     market_migration: bigint;
     activation_migration: bigint;
@@ -372,84 +374,98 @@ async function syncCasino(entry: CatalogEntry, actorId: string) {
 }
 
 async function verifyState(corpus: CatalogCorpus) {
-  const state = [];
-  for (const entry of corpus.entries) {
-    const casino = await prisma.casino.findUnique({
-      where: { slug: entry.slug },
-      include: {
-        countries: {
-          select: {
-            countryCode: true,
-            availability: true,
-            paymentMethods: { select: { id: true } },
-            gameProviders: { select: { id: true } },
-            gameCategories: { select: { id: true } },
-            bonuses: { select: { id: true } },
+  await prisma.$transaction(async (transaction) => {
+    await transaction.$executeRawUnsafe("SET TRANSACTION READ ONLY");
+    const [transactionSafety] = await transaction.$queryRawUnsafe<Array<{ transaction_read_only: string }>>(
+      "SHOW transaction_read_only",
+    );
+    if (transactionSafety?.transaction_read_only !== "on") {
+      throw new Error(`${RELEASE}: PostgreSQL did not enforce the read-only verification transaction`);
+    }
+    await assertProductionSchema(transaction);
+
+    const state = [];
+    for (const entry of corpus.entries) {
+      const casino = await transaction.casino.findUnique({
+        where: { slug: entry.slug },
+        include: {
+          countries: {
+            select: {
+              countryCode: true,
+              availability: true,
+              paymentMethods: { select: { id: true } },
+              gameProviders: { select: { id: true } },
+              gameCategories: { select: { id: true } },
+              bonuses: { select: { id: true } },
+            },
           },
+          seo: true,
+          editorialReview: { select: { status: true, publishedRevisionId: true } },
+          versions: { where: { status: "PUBLISHED" }, orderBy: { version: "desc" }, take: 1 },
         },
-        seo: true,
-        editorialReview: { select: { status: true, publishedRevisionId: true } },
-        versions: { where: { status: "PUBLISHED" }, orderBy: { version: "desc" }, take: 1 },
-      },
-    });
-    if (!casino) throw new Error(`${RELEASE}: ${entry.slug} missing after release`);
-    if (casino.status !== "PUBLISHED" || casino.domainPublicationStatus !== "PUBLISHED") throw new Error(`${RELEASE}: ${entry.slug} is not published`);
-    if (casino.editorScore !== entry.score) throw new Error(`${RELEASE}: ${entry.slug} score mismatch`);
-    if (casino.editorialReview?.status !== "PUBLISHED" || !casino.editorialReview.publishedRevisionId) throw new Error(`${RELEASE}: ${entry.slug} review is not published`);
-    const actualMarkets = casino.countries.map((market) => market.countryCode).sort();
-    for (const market of entry.markets) if (!actualMarkets.includes(market)) throw new Error(`${RELEASE}: ${entry.slug} missing market ${market}`);
-    if (entry.slug === "rizk" && actualMarkets.includes("NZ")) throw new Error(`${RELEASE}: Rizk NZ unexpectedly entered runtime publication`);
-    const activeRedirects = await prisma.affiliateRedirectSlug.count({ where: { casinoId: casino.id, active: true, archivedAt: null } });
-    const activeMarketActivations = await prisma.marketActivation.count({ where: {
-      casinoId: casino.id,
-      desiredState: "ACTIVE",
-      status: "ACTIVE",
-      routeVerificationStatus: "HEALTHY",
-    } });
-    if (entry.slug === "starcasino") {
-      if (casino.seo?.robots !== "noindex,follow") throw new Error(`${RELEASE}: StarCasino must remain noindex informational-only`);
-      if (activeMarketActivations !== 0) throw new Error(`${RELEASE}: StarCasino must not gain an active MarketActivation`);
+      });
+      if (!casino) throw new Error(`${RELEASE}: ${entry.slug} missing after release`);
+      if (casino.status !== "PUBLISHED" || casino.domainPublicationStatus !== "PUBLISHED") throw new Error(`${RELEASE}: ${entry.slug} is not published`);
+      if (casino.editorScore !== entry.score) throw new Error(`${RELEASE}: ${entry.slug} score mismatch`);
+      if (casino.editorialReview?.status !== "PUBLISHED" || !casino.editorialReview.publishedRevisionId) throw new Error(`${RELEASE}: ${entry.slug} review is not published`);
+      const actualMarkets = casino.countries.map((market) => market.countryCode).sort();
+      for (const market of entry.markets) if (!actualMarkets.includes(market)) throw new Error(`${RELEASE}: ${entry.slug} missing market ${market}`);
+      if (entry.slug === "rizk" && actualMarkets.includes("NZ")) throw new Error(`${RELEASE}: Rizk NZ unexpectedly entered runtime publication`);
+      const activeRedirects = await transaction.affiliateRedirectSlug.count({ where: { casinoId: casino.id, active: true, archivedAt: null } });
+      const activeMarketActivations = await transaction.marketActivation.count({ where: {
+        casinoId: casino.id,
+        desiredState: "ACTIVE",
+        status: "ACTIVE",
+        routeVerificationStatus: "HEALTHY",
+      } });
+      if (entry.slug === "starcasino") {
+        if (casino.seo?.robots !== "noindex,follow") throw new Error(`${RELEASE}: StarCasino must remain noindex informational-only`);
+        if (activeMarketActivations !== 0) throw new Error(`${RELEASE}: StarCasino must not gain an active MarketActivation`);
+      }
+      const snapshot = casino.versions[0]?.snapshot as Prisma.JsonObject | undefined;
+      if (!snapshot || snapshot.editorScore !== entry.score) throw new Error(`${RELEASE}: ${entry.slug} latest published snapshot is stale`);
+      const snapshotCountries = Array.isArray(snapshot.countries) ? snapshot.countries as Prisma.JsonObject[] : [];
+      const snapshotBonuses = snapshotCountries.flatMap((market) => Array.isArray(market.bonuses) ? market.bonuses as Prisma.JsonObject[] : []);
+      if (snapshotBonuses.length !== casino.countries.reduce((sum, market) => sum + market.bonuses.length, 0)) {
+        throw new Error(`${RELEASE}: ${entry.slug} published bonus snapshot count mismatch`);
+      }
+      if (snapshotBonuses.some((bonus) => bonus.status !== "PUBLISHED" || bonus.offerStatus !== "ACTIVE")) {
+        throw new Error(`${RELEASE}: ${entry.slug} contains a non-public bonus in its published snapshot`);
+      }
+      state.push({
+        slug: entry.slug,
+        score: casino.editorScore,
+        markets: actualMarkets,
+        payments: casino.countries.reduce((sum, market) => sum + market.paymentMethods.length, 0),
+        providers: casino.countries.reduce((sum, market) => sum + market.gameProviders.length, 0),
+        categories: casino.countries.reduce((sum, market) => sum + market.gameCategories.length, 0),
+        bonuses: casino.countries.reduce((sum, market) => sum + market.bonuses.length, 0),
+        activeRedirects,
+        activeMarketActivations,
+        robots: casino.seo?.robots ?? null,
+      });
     }
-    const snapshot = casino.versions[0]?.snapshot as Prisma.JsonObject | undefined;
-    if (!snapshot || snapshot.editorScore !== entry.score) throw new Error(`${RELEASE}: ${entry.slug} latest published snapshot is stale`);
-    const snapshotCountries = Array.isArray(snapshot.countries) ? snapshot.countries as Prisma.JsonObject[] : [];
-    const snapshotBonuses = snapshotCountries.flatMap((market) => Array.isArray(market.bonuses) ? market.bonuses as Prisma.JsonObject[] : []);
-    if (snapshotBonuses.length !== casino.countries.reduce((sum, market) => sum + market.bonuses.length, 0)) {
-      throw new Error(`${RELEASE}: ${entry.slug} published bonus snapshot count mismatch`);
-    }
-    if (snapshotBonuses.some((bonus) => bonus.status !== "PUBLISHED" || bonus.offerStatus !== "ACTIVE")) {
-      throw new Error(`${RELEASE}: ${entry.slug} contains a non-public bonus in its published snapshot`);
-    }
-    state.push({
-      slug: entry.slug,
-      score: casino.editorScore,
-      markets: actualMarkets,
-      payments: casino.countries.reduce((sum, market) => sum + market.paymentMethods.length, 0),
-      providers: casino.countries.reduce((sum, market) => sum + market.gameProviders.length, 0),
-      categories: casino.countries.reduce((sum, market) => sum + market.gameCategories.length, 0),
-      bonuses: casino.countries.reduce((sum, market) => sum + market.bonuses.length, 0),
-      activeRedirects,
-      activeMarketActivations,
-      robots: casino.seo?.robots ?? null,
-    });
-  }
-  const safeOfferCorpus = await prisma.$transaction(
-    (tx) => verifySafeOfferCorpusInTransaction(tx),
-    { maxWait: 10_000, timeout: 30_000 },
-  );
-  console.info(JSON.stringify({ release: RELEASE, verified: true, state, safeOfferCorpus }, null, 2));
+    const safeOfferCorpus = await verifySafeOfferCorpusInTransaction(transaction);
+    console.info(JSON.stringify({ release: RELEASE, verified: true, state, safeOfferCorpus }, null, 2));
+  }, {
+    isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+    maxWait: 10_000,
+    timeout: 60_000,
+  });
 }
 
 async function main() {
   const mode = process.argv[2];
-  if (mode !== "build-preflight" && mode !== "verify") throw new Error(`${RELEASE}: use build-preflight or verify`);
+  if (mode !== "build-preflight" && mode !== "production-verify" && mode !== "verify") {
+    throw new Error(`${RELEASE}: use build-preflight, production-verify or verify`);
+  }
   const corpus = await loadCorpus();
-  if (mode === "build-preflight" && process.env.VERCEL_ENV !== "production") {
+  if ((mode === "build-preflight" || mode === "production-verify") && process.env.VERCEL_ENV !== "production") {
     console.info(JSON.stringify({ release: RELEASE, skipped: true, reason: "non-production" }));
     return;
   }
-  await assertProductionSchema();
   if (mode === "build-preflight") {
+    await assertProductionSchema(prisma);
     const bundles = await loadBundles();
     const actorId = await selectActor();
     const ingestion = await ingestFactualBundles(bundles, actorId);

@@ -12,6 +12,30 @@ SevenBet will use one low-complexity production-governance path:
 
 Direct pushes to `main`, automatic merge and deployments from arbitrary local branches are outside the approved path. Vercel Git deployment remains the application deployment engine. Git commits, pull requests and Vercel Git metadata remain the release identifiers; no second release-ID system is introduced.
 
+### Founder amendment — read-only application builds (13 September 2026)
+
+The Vercel Production application build is a read-only compatibility gate. It
+may inspect environment/database identity, migration history and checksums,
+schema shape, data integrity and required application invariants. It may fail
+closed when Production is incompatible. It must not reconcile, ingest,
+publish, repair, activate, create revisions, write audits or otherwise mutate
+Production business data.
+
+Production release authority is separated into three explicit operations:
+
+1. **Schema migration** — a separately authorised DB-first action, completed
+   and verified before a dependent application build.
+2. **Business-data migration or reconciliation** — a separately authorised,
+   scoped operational action with its own preview, guards, audit and postflight.
+3. **Application deployment** — Git/Vercel compiles the application and reads
+   Production only to verify compatibility; it never inherits either write
+   authority above.
+
+Idempotency does not make a writer acceptable in the build. A missing or stale
+business invariant must stop deployment; the corrective write must occur under
+separate authority. PostgreSQL read-only transactions and explicit structural
+tests should enforce the build verifier boundary where practical.
+
 ## Repository evidence at approval
 
 - **Detected:** `main` was unprotected and had no required GitHub checks.
@@ -50,6 +74,9 @@ The existing pixel snapshots remain valuable local Design System evidence but ar
 - Future production schema changes use expand/contract compatibility across deployment boundaries.
 - Application rollback uses a known-good Vercel deployment. Database recovery defaults to forward-fix; reverse SQL is never improvised.
 - Production migration automation is **PROVIDER/SECRET-ARCHITECTURE GATED**. OPS-01 will not duplicate a long-lived production database credential into GitHub merely to automate deployment.
+- `prisma migrate deploy`, migration SQL and business-data reconciliation are
+  prohibited in the Vercel application build command. Completed migration and
+  business state may be verified there without mutation.
 
 ## Repository governance
 

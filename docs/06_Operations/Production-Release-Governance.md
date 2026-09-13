@@ -23,6 +23,52 @@ external technical, legal and evidence constraints still apply.
 
 The Git commit SHA is the release identifier. Record the pull request and Vercel deployment URL in the release/incident record; do not create a parallel ID.
 
+## Read-only Vercel build boundary
+
+The Vercel Production build is an application compatibility gate, not an
+implicit database executor. Its Production database access is read-only and
+may fail the deployment when migration, schema or required business state is
+incompatible. The build must never repair that state.
+
+Keep these release operations separate:
+
+1. apply and verify an authorised schema migration DB-first;
+2. execute and verify any authorised business-data migration/reconciliation;
+3. deploy the compatible application through Git/Vercel with read-only checks.
+
+The canonical build-side-effect classification is:
+
+| Build component | Allowed effect |
+| --- | --- |
+| `prisma generate` during dependency install | Writes generated build files only; no database connection or business mutation |
+| `scripts/vercel-build-preflight.ts` | Reads environment, repository migration files, migration/schema/business invariants; its Production queries and optional historical commercial audit are PostgreSQL-enforced read-only |
+| `scripts/logo-only-media-build-preflight.ts production-verify` | Skips isolated Preview data; in Production, reads published-logo and retired-media authority state in a PostgreSQL read-only transaction |
+| `scripts/casino-real-catalog-03.ts production-verify` | Skips isolated Preview data; in Production, reads six governed catalog publications, scores, market facts, snapshots, safe offers and protected authority state in a PostgreSQL read-only transaction |
+| `next build` | Writes application build artefacts; database-backed application routes remain dynamic and no business-data mutation is authorised |
+
+Do not add reconciliation, repair, seed, ingestion, publication, activation or
+`prisma migrate deploy` commands to `vercel.json`. The explicit
+release-governance structural and disposable-PostgreSQL tests are required
+regression evidence for changes to this chain.
+
+### 13 September 2026 build-mutation incident
+
+Commercial Core PR2 did not introduce the defect. During its otherwise healthy
+Production deployment, the pre-existing
+`casino-real-catalog-03.ts build-preflight` command ingested/reconciled and
+republished the governed catalog, creating 30 `CasinoRevision` rows, six
+`EditorialReviewRevision` rows and 66 `AuditLog` rows. The adjacent
+`gp-meta.ts` step was also write-capable, although its GoldenPlay metadata was
+already current and it performed no write in that deployment. Commercial
+routes and PR2 authority state were unchanged.
+
+The remediation removes both writers from the build, uses explicit catalog and
+logo `production-verify` modes, and retains all historical revision/publication/audit rows
+as truthful evidence. It does not authorise cleanup or rewriting of that
+history. Until the remediation PR is reviewed, merged and deployed, treat the
+current canonical Production build configuration as an open release-control
+defect.
+
 ## Risk classification
 
 | Risk | Examples | Minimum release treatment |
@@ -39,12 +85,15 @@ The Git commit SHA is the release identifier. Record the pull request and Vercel
 4. Inspect Vercel Preview without creating or modifying Production data.
 5. Confirm no CI job received a hosted Production or Preview secret.
 6. For schema work, complete [Database Migrations](Database-Migrations.md) and [Backup and Restore](Backup-and-Restore.md) gates.
-7. Record risk, rollback trigger and post-release owner in the PR.
-8. Confirm current Founder/project execution authority covers the merge. Do not
+7. Confirm the Vercel build command contains only read-only Production
+   compatibility checks and application compilation; exercise Production-mode
+   verifier paths against disposable PostgreSQL where applicable.
+8. Record risk, rollback trigger and post-release owner in the PR.
+9. Confirm current Founder/project execution authority covers the merge. Do not
    require a second Founder decision when an explicit current instruction
    already covers it. The implementing agent does not merge unless that current
    instruction explicitly authorises the agent to do so.
-9. For BRAND-CUTOVER-01, Founder/Operations sets and verifies `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` as `https://b4gamble.com` in Production only before merge, without triggering a deployment or mutating the current Production application.
+10. For BRAND-CUTOVER-01, Founder/Operations sets and verifies `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` as `https://b4gamble.com` in Production only before merge, without triggering a deployment or mutating the current Production application.
 
 ## Post-merge verification
 
