@@ -65,7 +65,7 @@ test("runtime public-route readers perform one exact canonical lookup", async ()
   assert.match(resolver, /canonicalCommercialMarketKey/);
   assert.match(resolver, /this\.routes\.listPublicRoutes/);
   assert.match(resolver, /scopedCasinoReferralAllowed/);
-  assert.match(resolver, /gbOperatorEligibility\.evaluateMany/);
+  assert.match(resolver, /gbCommercialReadiness\.evaluateMany/);
   assert.doesNotMatch(resolver, /partnerRouteService/);
   assert.match(runtime, /record\.desiredState === "ACTIVE"/);
   assert.match(runtime, /record\.status === "ACTIVE"/);
