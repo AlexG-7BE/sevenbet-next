@@ -21,63 +21,74 @@ ALTER TABLE "MarketActivation"
     )
   );
 
--- NOT VALID deliberately permits a structurally safe DB-first migration when
--- legacy Production rows still require the separate business-data operation.
--- PostgreSQL nevertheless enforces the constraint for every new/updated row.
-ALTER TABLE "MarketActivation"
-  ADD CONSTRAINT "MarketActivation_exact_canonical_scope_check" CHECK (
-    "desiredState" <> 'ACTIVE'
-    OR (
-      "marketCode" <> 'ZZ'
-      AND "countryCode" <> 'ZZ'
-      AND (
-        (
-          "countryCode" NOT IN ('AR', 'CA')
-          AND "marketCode" = "countryCode"
-        )
-        OR (
-          "countryCode" = 'AR'
-          AND "marketCode" = ANY (ARRAY[
-            'AR-B', 'AR-K', 'AR-H', 'AR-U', 'AR-C', 'AR-X', 'AR-W', 'AR-E',
-            'AR-P', 'AR-Y', 'AR-L', 'AR-F', 'AR-M', 'AR-N', 'AR-Q', 'AR-R',
-            'AR-A', 'AR-J', 'AR-D', 'AR-Z', 'AR-S', 'AR-G', 'AR-V', 'AR-T'
-          ]::TEXT[])
-        )
-        OR (
-          "countryCode" = 'CA'
-          AND "marketCode" = ANY (ARRAY[
-            'CA-AB', 'CA-BC', 'CA-MB', 'CA-NB', 'CA-NL', 'CA-NS', 'CA-NT',
-            'CA-NU', 'CA-ON', 'CA-PE', 'CA-QC', 'CA-SK', 'CA-YT'
-          ]::TEXT[])
-        )
-      )
-    )
-  ) NOT VALID;
-
-CREATE OR REPLACE FUNCTION "MarketActivation_reject_new_zz"()
+-- A NOT VALID CHECK would still be enforced when the previous binary updates
+-- an existing legacy row's health/status fields. Guard only creation, scope
+-- changes and activation transitions so DB-first rollout remains compatible
+-- without admitting new fallback or non-canonical active authority.
+CREATE OR REPLACE FUNCTION "MarketActivation_guard_new_scope"()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
+DECLARE
+  scope_changed BOOLEAN;
+  activation_started BOOLEAN;
+  scope_is_zz BOOLEAN;
+  scope_is_canonical BOOLEAN;
 BEGIN
-  IF (
-    TG_OP = 'INSERT'
-    AND (NEW."countryCode" = 'ZZ' OR COALESCE(NEW."marketCode", NEW."countryCode") = 'ZZ')
-  ) OR (
-    TG_OP = 'UPDATE'
-    AND (NEW."countryCode" = 'ZZ' OR NEW."marketCode" = 'ZZ')
-    AND (OLD."countryCode" <> 'ZZ' OR OLD."marketCode" <> 'ZZ')
-  ) THEN
+  IF TG_OP = 'INSERT' THEN
+    scope_changed := TRUE;
+    activation_started := NEW."desiredState" = 'ACTIVE';
+  ELSE
+    scope_changed := NEW."countryCode" IS DISTINCT FROM OLD."countryCode"
+      OR NEW."marketCode" IS DISTINCT FROM OLD."marketCode";
+    activation_started := NEW."desiredState" = 'ACTIVE'
+      AND OLD."desiredState" IS DISTINCT FROM 'ACTIVE';
+  END IF;
+
+  scope_is_zz := NEW."countryCode" = 'ZZ' OR NEW."marketCode" = 'ZZ';
+  scope_is_canonical := NOT scope_is_zz AND (
+    (
+      NEW."countryCode" NOT IN ('AR', 'CA')
+      AND NEW."marketCode" = NEW."countryCode"
+    )
+    OR (
+      NEW."countryCode" = 'AR'
+      AND NEW."marketCode" = ANY (ARRAY[
+        'AR-B', 'AR-K', 'AR-H', 'AR-U', 'AR-C', 'AR-X', 'AR-W', 'AR-E',
+        'AR-P', 'AR-Y', 'AR-L', 'AR-F', 'AR-M', 'AR-N', 'AR-Q', 'AR-R',
+        'AR-A', 'AR-J', 'AR-D', 'AR-Z', 'AR-S', 'AR-G', 'AR-V', 'AR-T'
+      ]::TEXT[])
+    )
+    OR (
+      NEW."countryCode" = 'CA'
+      AND NEW."marketCode" = ANY (ARRAY[
+        'CA-AB', 'CA-BC', 'CA-MB', 'CA-NB', 'CA-NL', 'CA-NS', 'CA-NT',
+        'CA-NU', 'CA-ON', 'CA-PE', 'CA-QC', 'CA-SK', 'CA-YT'
+      ]::TEXT[])
+    )
+  );
+
+  IF (TG_OP = 'INSERT' AND scope_is_zz)
+    OR (TG_OP = 'UPDATE' AND scope_is_zz AND (scope_changed OR activation_started)) THEN
     RAISE EXCEPTION 'MARKET_ACTIVATION_GLOBAL_FALLBACK_CREATION_FORBIDDEN'
       USING ERRCODE = '23514';
   END IF;
+
+  IF NEW."desiredState" = 'ACTIVE'
+    AND (scope_changed OR activation_started)
+    AND NOT scope_is_canonical THEN
+    RAISE EXCEPTION 'MARKET_ACTIVATION_CANONICAL_SCOPE_REQUIRED'
+      USING ERRCODE = '23514';
+  END IF;
+
   RETURN NEW;
 END;
 $$;
 
-CREATE TRIGGER "MarketActivation_reject_new_zz_trigger"
-BEFORE INSERT OR UPDATE OF "countryCode", "marketCode" ON "MarketActivation"
+CREATE TRIGGER "MarketActivation_guard_new_scope_trigger"
+BEFORE INSERT OR UPDATE OF "countryCode", "marketCode", "desiredState" ON "MarketActivation"
 FOR EACH ROW
-EXECUTE FUNCTION "MarketActivation_reject_new_zz"();
+EXECUTE FUNCTION "MarketActivation_guard_new_scope"();
 
 COMMENT ON COLUMN "MarketActivation"."marketCode" IS
   'RFC-049 canonical commercial market key. Runtime performs one exact lookup; new ZZ authority is forbidden.';

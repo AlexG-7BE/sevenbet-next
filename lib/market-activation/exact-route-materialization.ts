@@ -4,13 +4,13 @@ import {
   MarketActivationEventType,
   MarketActivationStatus,
   Prisma,
-  type MarketActivation,
   type PrismaClient,
 } from "@prisma/client";
 
 import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
+import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 
-import { MARKET_ACTIVATION_CONTROLLER_VERSION } from "./contract";
+import { MARKET_ACTIVATION_CONTROLLER_VERSION, safeActivationDestination } from "./contract";
 import { inspectExactRouteReadiness } from "./exact-route-readiness";
 
 export const EXACT_ROUTE_MATERIALIZATION_VERSION = "COMMERCIAL-CORE-PR3-EXACT-ROUTES-V1";
@@ -31,11 +31,54 @@ type MaterializationDatabase = Pick<
   "marketActivation" | "casinoCountry"
 >;
 
+const materializationRouteInclude = {
+  casino: { select: { slug: true } },
+  marketProfile: { select: { id: true, casinoId: true, countryCode: true } },
+  affiliateOffer: {
+    select: {
+      id: true,
+      casinoId: true,
+      casinoBonusId: true,
+      program: { select: { casinoId: true } },
+      countries: { select: { countryCode: true, mode: true } },
+    },
+  },
+  casinoBonus: { select: { id: true, casinoId: true } },
+  primaryTrackingLink: {
+    select: {
+      id: true,
+      offerId: true,
+      trackingUrl: true,
+      destinationUrl: true,
+      countries: { select: { countryCode: true, mode: true } },
+    },
+  },
+  redirectSlug: {
+    select: {
+      id: true,
+      slug: true,
+      casinoId: true,
+      affiliateOfferId: true,
+      casinoBonusId: true,
+    },
+  },
+} satisfies Prisma.MarketActivationInclude;
+
 type LegacyRoute = Prisma.MarketActivationGetPayload<{
-  include: { casino: { select: { slug: true } } };
+  include: typeof materializationRouteInclude;
 }>;
 
-type ExactRoute = MarketActivation;
+type ExactRoute = LegacyRoute;
+
+export type PreviousRuntimeCutoverPrerequisite =
+  | "MARKET_PROFILE_BINDING"
+  | "OFFER_BINDING"
+  | "OFFER_MARKET_ALLOW"
+  | "TRACKING_BINDING"
+  | "TRACKING_MARKET_ALLOW"
+  | "REDIRECT_BINDING"
+  | "BONUS_BINDING"
+  | "DESTINATION_SAFETY";
 
 export type ExactRouteMaterializationBlocker = Readonly<{
   code:
@@ -43,10 +86,12 @@ export type ExactRouteMaterializationBlocker = Readonly<{
     | "LEGACY_ZZ_ROUTE_NOT_HEALTHY"
     | "LEGACY_ZZ_ROUTE_BINDING_INCOMPLETE"
     | "BLOCKED_TARGET_IN_MANIFEST"
-    | "EXACT_ROUTE_CONFLICT";
+    | "EXACT_ROUTE_CONFLICT"
+    | "PREVIOUS_RUNTIME_CUTOVER_UNSAFE";
   sourceRouteId: string;
   casinoSlug: string;
   marketCode: string | null;
+  prerequisite?: PreviousRuntimeCutoverPrerequisite;
   detail: string;
 }>;
 
@@ -73,6 +118,7 @@ export type ExactRouteMaterializationPlan = Readonly<{
   mode: "PLAN";
   classification: "DETECTED";
   readyToApply: boolean;
+  cutoverSafe: boolean;
   boundedByExplicitManifest: true;
   unboundedLegacyScopeInferred: false;
   before: { routeCount: number; activeLegacyZzCount: number };
@@ -86,6 +132,7 @@ export type ExactRouteMaterializationPlan = Readonly<{
     marketCode: string;
     legacyRoutableWithinManifest: boolean;
     exactRoutableAfterPlan: boolean;
+    previousRuntimeRoutableAfterPlan: boolean;
   }>;
 }>;
 
@@ -118,6 +165,95 @@ function bindingMatches(route: ExactRoute, operation: ExactRouteCreateOperation)
     && route.casinoBonusId === operation.casinoBonusId;
 }
 
+type PreviousRuntimeCutoverIssue = Readonly<{
+  prerequisite: PreviousRuntimeCutoverPrerequisite;
+  detail: string;
+}>;
+
+/**
+ * Read-only release check for the exact-route predicates used by the deployed
+ * pre-PR3 reader. This is not a runtime resolver and never recreates legacy
+ * compatibility state.
+ */
+function previousRuntimeCutoverIssues(input: {
+  source: LegacyRoute;
+  existing: ExactRoute | null;
+  targetProfile: LegacyRoute["marketProfile"];
+  operation: ExactRouteCreateOperation;
+}): PreviousRuntimeCutoverIssue[] {
+  const route = input.existing ?? input.source;
+  const profile = input.existing ? input.existing.marketProfile : input.targetProfile;
+  const issues: PreviousRuntimeCutoverIssue[] = [];
+  const add = (prerequisite: PreviousRuntimeCutoverPrerequisite, detail: string) => {
+    issues.push({ prerequisite, detail });
+  };
+
+  if (!profile
+    || profile.casinoId !== input.operation.casinoId
+    || profile.countryCode !== input.operation.countryCode) {
+    add(
+      "MARKET_PROFILE_BINDING",
+      "The previous runtime requires the exact route to bind the matching CasinoCountry profile.",
+    );
+  }
+
+  const offer = route.affiliateOffer;
+  if (!offer
+    || offer.id !== input.operation.affiliateOfferId
+    || offer.casinoId !== input.operation.casinoId
+    || offer.program.casinoId !== input.operation.casinoId
+    || offer.casinoBonusId !== input.operation.casinoBonusId) {
+    add("OFFER_BINDING", "The previous runtime would reject the exact Offer/Casino binding.");
+  } else if (!offer.countries.some((entry) => (
+    entry.countryCode === input.operation.marketCode && entry.mode === "ALLOW"
+  ))) {
+    add(
+      "OFFER_MARKET_ALLOW",
+      "The previous runtime requires an existing exact AffiliateOfferCountry ALLOW entry.",
+    );
+  }
+
+  const tracking = route.primaryTrackingLink;
+  if (!tracking
+    || tracking.id !== input.operation.primaryTrackingLinkId
+    || tracking.offerId !== input.operation.affiliateOfferId) {
+    add("TRACKING_BINDING", "The previous runtime would reject the exact TrackingLink/Offer binding.");
+  } else {
+    if (!tracking.countries.some((entry) => (
+      entry.countryCode === input.operation.marketCode && entry.mode === "ALLOW"
+    ))) {
+      add(
+        "TRACKING_MARKET_ALLOW",
+        "The previous runtime requires an existing exact AffiliateTrackingLinkCountry ALLOW entry.",
+      );
+    }
+    if (!safeActivationDestination(tracking.trackingUrl)
+      || !safeActivationDestination(tracking.destinationUrl)) {
+      add("DESTINATION_SAFETY", "The previous runtime would reject the bound destination safety contract.");
+    }
+  }
+
+  const redirect = route.redirectSlug;
+  if (!redirect
+    || redirect.id !== input.operation.redirectSlugId
+    || redirect.casinoId !== input.operation.casinoId
+    || redirect.affiliateOfferId !== input.operation.affiliateOfferId
+    || redirect.casinoBonusId !== input.operation.casinoBonusId
+    || !isSafePublicSlug(redirect.slug)) {
+    add("REDIRECT_BINDING", "The previous runtime would reject the controlled redirect binding.");
+  }
+
+  if (input.operation.casinoBonusId && (
+    !route.casinoBonus
+    || route.casinoBonus.id !== input.operation.casinoBonusId
+    || route.casinoBonus.casinoId !== input.operation.casinoId
+  )) {
+    add("BONUS_BINDING", "The previous runtime would reject the optional Bonus/Casino binding.");
+  }
+
+  return issues;
+}
+
 function canonicalManifestMarkets(casinoSlug: string) {
   const manifest = LEGACY_ZZ_MATERIALIZATION_MANIFEST.find((entry) => entry.casinoSlug === casinoSlug);
   if (!manifest) return null;
@@ -135,7 +271,7 @@ export async function planExactRouteMaterialization(
     database.marketActivation.count(),
     database.marketActivation.findMany({
       where: { marketCode: "ZZ", desiredState: "ACTIVE" },
-      include: { casino: { select: { slug: true } } },
+      include: materializationRouteInclude,
       orderBy: [{ casinoId: "asc" }, { id: "asc" }],
     }),
   ]);
@@ -178,14 +314,25 @@ export async function planExactRouteMaterialization(
       continue;
     }
 
-    const exactRoutes = await database.marketActivation.findMany({
-      where: {
-        casinoId: source.casinoId,
-        product: source.product,
-        marketCode: { in: manifestMarkets as string[] },
-      },
-      orderBy: [{ marketCode: "asc" }, { id: "asc" }],
-    });
+    const [exactRoutes, targetProfiles] = await Promise.all([
+      database.marketActivation.findMany({
+        where: {
+          casinoId: source.casinoId,
+          product: source.product,
+          marketCode: { in: manifestMarkets as string[] },
+        },
+        include: materializationRouteInclude,
+        orderBy: [{ marketCode: "asc" }, { id: "asc" }],
+      }),
+      database.casinoCountry.findMany({
+        where: {
+          casinoId: source.casinoId,
+          countryCode: { in: manifestMarkets.map((market) => String(market).slice(0, 2)) },
+        },
+        select: { id: true, casinoId: true, countryCode: true },
+        orderBy: { countryCode: "asc" },
+      }),
+    ]);
     for (const marketKey of manifestMarkets) {
       if (!marketKey) continue;
       const marketCode = String(marketKey);
@@ -204,8 +351,10 @@ export async function planExactRouteMaterialization(
       const blocked = source.globalFallbackBlockedCountries.includes(operation.countryCode);
       const existing = exactRoutes.filter((route) => route.marketCode === marketCode);
       let exactRoutableAfterPlan = true;
+      let previousRuntimeRoutableAfterPlan = true;
       if (blocked) {
         exactRoutableAfterPlan = false;
+        previousRuntimeRoutableAfterPlan = false;
         blockers.push({
           code: "BLOCKED_TARGET_IN_MANIFEST",
           sourceRouteId: source.id,
@@ -215,6 +364,7 @@ export async function planExactRouteMaterialization(
         });
       } else if (existing.length > 1) {
         exactRoutableAfterPlan = false;
+        previousRuntimeRoutableAfterPlan = false;
         blockers.push({
           code: "EXACT_ROUTE_CONFLICT",
           sourceRouteId: source.id,
@@ -229,6 +379,7 @@ export async function planExactRouteMaterialization(
         || existing[0].routeVerificationStatus !== "HEALTHY"
       )) {
         exactRoutableAfterPlan = false;
+        previousRuntimeRoutableAfterPlan = false;
         blockers.push({
           code: "EXACT_ROUTE_CONFLICT",
           sourceRouteId: source.id,
@@ -236,8 +387,25 @@ export async function planExactRouteMaterialization(
           marketCode,
           detail: "Existing exact target does not match the healthy source binding.",
         });
-      } else if (!existing[0]) {
-        create.push(operation);
+      } else {
+        if (!existing[0]) create.push(operation);
+        const cutoverIssues = previousRuntimeCutoverIssues({
+          source,
+          existing: existing[0] ?? null,
+          targetProfile: targetProfiles.find((profile) => profile.countryCode === operation.countryCode) ?? null,
+          operation,
+        });
+        if (cutoverIssues.length) {
+          previousRuntimeRoutableAfterPlan = false;
+          blockers.push(...cutoverIssues.map((issue) => ({
+            code: "PREVIOUS_RUNTIME_CUTOVER_UNSAFE" as const,
+            sourceRouteId: source.id,
+            casinoSlug,
+            marketCode,
+            prerequisite: issue.prerequisite,
+            detail: issue.detail,
+          })));
+        }
       }
       semanticProjection.push({
         sourceRouteId: source.id,
@@ -245,6 +413,7 @@ export async function planExactRouteMaterialization(
         marketCode,
         legacyRoutableWithinManifest: !blocked,
         exactRoutableAfterPlan,
+        previousRuntimeRoutableAfterPlan,
       });
     }
     disable.push({ sourceRouteId: source.id, casinoSlug });
@@ -257,7 +426,8 @@ export async function planExactRouteMaterialization(
     || left.sourceRouteId.localeCompare(right.sourceRouteId));
   blockers.sort((left, right) => left.casinoSlug.localeCompare(right.casinoSlug)
     || (left.marketCode ?? "").localeCompare(right.marketCode ?? "")
-    || left.code.localeCompare(right.code));
+    || left.code.localeCompare(right.code)
+    || (left.prerequisite ?? "").localeCompare(right.prerequisite ?? ""));
   semanticProjection.sort((left, right) => left.casinoSlug.localeCompare(right.casinoSlug)
     || left.marketCode.localeCompare(right.marketCode));
 
@@ -266,6 +436,7 @@ export async function planExactRouteMaterialization(
     mode: "PLAN",
     classification: "DETECTED",
     readyToApply: blockers.length === 0,
+    cutoverSafe: blockers.length === 0,
     boundedByExplicitManifest: true,
     unboundedLegacyScopeInferred: false,
     before: { routeCount, activeLegacyZzCount: legacyRoutes.length },
@@ -466,7 +637,7 @@ export async function applyExactRouteMaterialization(
         .map((blocker) => blocker.code + "=" + blocker.count)
         .join(","));
     }
-    if (!before.readyToApply) {
+    if (!before.readyToApply || !before.cutoverSafe) {
       throw new Error("UNPROVEN_ROUTE_MATERIALIZATION:" + before.blockers
         .map((blocker) => blocker.casinoSlug + ":" + blocker.code + ":" + (blocker.marketCode ?? "ZZ"))
         .join(","));
@@ -474,7 +645,12 @@ export async function applyExactRouteMaterialization(
     await applyPlan(transaction, before, now);
     const after = await planExactRouteMaterialization(transaction);
     const readinessAfter = await inspectExactRouteReadiness(transaction);
-    if (!after.readyToApply || after.create.length || after.disable.length || after.before.activeLegacyZzCount || !readinessAfter.ready) {
+    if (!after.readyToApply
+      || !after.cutoverSafe
+      || after.create.length
+      || after.disable.length
+      || after.before.activeLegacyZzCount
+      || !readinessAfter.ready) {
       throw new Error("EXACT_ROUTE_MATERIALIZATION_POSTCONDITION_FAILED");
     }
     return {

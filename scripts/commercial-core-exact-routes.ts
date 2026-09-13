@@ -90,6 +90,7 @@ async function main() {
     }
     if (
       !report.plan.readyToApply
+      || !report.plan.cutoverSafe
       || report.plan.create.length > 0
       || report.plan.disable.length > 0
       || !report.readiness.ready

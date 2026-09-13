@@ -42,20 +42,23 @@ test("0035 additively introduces exact subdivision market identity", async () =>
 
 test("0040 separates exact-route structure from business-data materialization", async () => {
   const migration = await readFile(new URL("prisma/migrations/0040_commercial_core_exact_routes_geo_simplification/migration.sql", root), "utf8");
-  assert.match(migration, /MarketActivation_exact_canonical_scope_check/);
-  assert.match(migration, /"desiredState" <> 'ACTIVE'/);
-  assert.match(migration, /MarketActivation_reject_new_zz_trigger/);
+  assert.doesNotMatch(migration, /MarketActivation_exact_canonical_scope_check/);
+  assert.match(migration, /MarketActivation_guard_new_scope_trigger/);
+  assert.match(migration, /scope_changed OR activation_started/);
+  assert.match(migration, /MARKET_ACTIVATION_GLOBAL_FALLBACK_CREATION_FORBIDDEN/);
+  assert.match(migration, /MARKET_ACTIVATION_CANONICAL_SCOPE_REQUIRED/);
   assert.match(migration, /MarketActivation_active_binding_check/);
-  assert.match(migration, /NOT VALID/);
+  assert.doesNotMatch(migration, /\) NOT VALID/);
   assert.doesNotMatch(migration, /INSERT INTO|UPDATE\s+"MarketActivation"|DELETE FROM|TRUNCATE/);
 });
 
 test("runtime public-route readers perform one exact canonical lookup", async () => {
-  const [resolver, runtime, redirect, materialization, legacyScript] = await Promise.all([
+  const [resolver, runtime, redirect, materializationCommand, materializationPlan, legacyScript] = await Promise.all([
     readFile(new URL("lib/commercial/public-commercial-action-resolver.ts", root), "utf8"),
     readFile(new URL("lib/market-activation/runtime.ts", root), "utf8"),
     readFile(new URL("lib/services/affiliate-redirect.service.ts", root), "utf8"),
     readFile(new URL("scripts/commercial-core-exact-routes.ts", root), "utf8"),
+    readFile(new URL("lib/market-activation/exact-route-materialization.ts", root), "utf8"),
     readFile(new URL("scripts/market-activation-v2.ts", root), "utf8"),
   ]);
   assert.match(resolver, /marketActivationRuntime/);
@@ -71,9 +74,11 @@ test("runtime public-route readers perform one exact canonical lookup", async ()
   assert.match(redirect, /canonicalActivations\.resolveRedirect/);
   assert.match(redirect, /canonicalCommercialMarketKey/);
   assert.doesNotMatch(redirect, /partnerRouteService|isProductionEligible/);
-  assert.match(materialization, /SET TRANSACTION READ ONLY/);
-  assert.match(materialization, /"plan", "apply", "verify"/);
-  assert.match(materialization, /EXACT_ROUTE_APPLY_CONFIRMATION_REQUIRED/);
+  assert.match(materializationCommand, /SET TRANSACTION READ ONLY/);
+  assert.match(materializationCommand, /"plan", "apply", "verify"/);
+  assert.match(materializationCommand, /EXACT_ROUTE_APPLY_CONFIRMATION_REQUIRED/);
+  assert.match(materializationPlan, /cutoverSafe/);
+  assert.match(materializationPlan, /PREVIOUS_RUNTIME_CUTOVER_UNSAFE/);
   assert.match(legacyScript, /MARKET_ACTIVATION_V2_COMMAND_RETIRED_BY_RFC_049/);
 });
 
@@ -88,8 +93,8 @@ test("Production build is DB-first and checksum-verifies the canonical activatio
   assert.match(source, /assertChecksum\(completedByName\.get\(COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION\)/);
   assert.match(source, /MarketActivation_market_code_check/);
   assert.match(source, /exact_market_unique/);
-  assert.match(source, /MarketActivation_exact_canonical_scope_check/);
-  assert.match(source, /MarketActivation_reject_new_zz_trigger/);
+  assert.match(source, /legacy_row_wide_scope_constraint_absent/);
+  assert.match(source, /MarketActivation_guard_new_scope_trigger/);
   assert.match(source, /inspectExactRouteReadiness/);
   assert.match(source, /EXACT_ROUTE_READINESS_FAILED/);
   assert.doesNotMatch(source, /pg_get_constraintdef\(con\.oid\) LIKE '%"marketCode"/);

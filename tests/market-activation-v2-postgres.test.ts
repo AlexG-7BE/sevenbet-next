@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 import { inspectCasinoMarket0025Release } from "../lib/db/casino-market-0025-release";
 import {
@@ -9,9 +9,14 @@ import {
   planExactRouteMaterialization,
 } from "../lib/market-activation/exact-route-materialization";
 import { inspectExactRouteReadiness } from "../lib/market-activation/exact-route-readiness";
+import {
+  MARKET_ACTIVATION_GLOBAL_FALLBACK_REQUIRED_BLOCKED_COUNTRIES,
+  safeActivationDestination,
+} from "../lib/market-activation/contract";
 import { MarketActivationController } from "../lib/market-activation/controller";
 import { marketActivationRepository } from "../lib/market-activation/repository";
 import { marketActivationRuntime } from "../lib/market-activation/runtime";
+import { isSafePublicSlug } from "../lib/public-casino/public-casino-validation";
 
 const NOW = new Date("2031-01-15T00:00:00.000Z");
 
@@ -36,6 +41,41 @@ const UNPROVEN = {
   slug: "unproven-pr3-casino",
   redirectSlug: "unproven-pr3-casino-route",
 } as const;
+
+const previousRuntimeRouteInclude = {
+  marketProfile: { select: { casinoId: true, countryCode: true } },
+  affiliateOffer: {
+    select: {
+      id: true,
+      casinoId: true,
+      casinoBonusId: true,
+      program: { select: { casinoId: true } },
+      countries: { select: { countryCode: true, mode: true } },
+    },
+  },
+  casinoBonus: { select: { id: true, casinoId: true } },
+  primaryTrackingLink: {
+    select: {
+      id: true,
+      offerId: true,
+      trackingUrl: true,
+      destinationUrl: true,
+      countries: { select: { countryCode: true, mode: true } },
+    },
+  },
+  redirectSlug: {
+    select: {
+      slug: true,
+      casinoId: true,
+      affiliateOfferId: true,
+      casinoBonusId: true,
+    },
+  },
+} satisfies Prisma.MarketActivationInclude;
+
+type PreviousRuntimeRoute = Prisma.MarketActivationGetPayload<{
+  include: typeof previousRuntimeRouteInclude;
+}>;
 
 const controller = new MarketActivationController(marketActivationRepository, {
   verify: async (_activationId, checkedAt = new Date()) => ({
@@ -167,6 +207,98 @@ async function seedCommercialGraph(prisma: PrismaClient, fixture: typeof PRIMARY
   });
 }
 
+async function seedPreviousRuntimeCompatibility(
+  prisma: PrismaClient,
+  fixture: typeof PRIMARY | typeof UNPROVEN,
+  input: { profileMarkets: string[]; offerMarkets: string[]; trackingMarkets: string[] },
+) {
+  await prisma.casinoCountry.createMany({
+    data: input.profileMarkets.map((countryCode) => ({
+      casinoId: fixture.casinoId,
+      countryCode,
+      availability: "AVAILABLE" as const,
+    })),
+  });
+  await prisma.affiliateOfferCountry.createMany({
+    data: input.offerMarkets.map((countryCode) => ({
+      offerId: fixture.offerId,
+      countryCode,
+      mode: "ALLOW" as const,
+    })),
+  });
+  await prisma.affiliateTrackingLinkCountry.createMany({
+    data: input.trackingMarkets.map((countryCode) => ({
+      trackingLinkId: fixture.trackingId,
+      countryCode,
+      mode: "ALLOW" as const,
+      productionEligible: false,
+      productionEligibilityEvidence: "TEST:PREVIOUS-RUNTIME-COMPATIBILITY",
+    })),
+  });
+}
+
+function previousRuntimeRouteAllowed(record: PreviousRuntimeRoute, requestedMarket: string) {
+  const requestedCountry = requestedMarket.slice(0, 2);
+  const exactMarket = record.marketCode === requestedMarket;
+  const globalFallback = record.marketCode === "ZZ";
+  const offerMarketAllows = globalFallback || Boolean(record.affiliateOffer?.countries.some((entry) => (
+    entry.countryCode === record.marketCode && entry.mode === "ALLOW"
+  )));
+  const trackingMarketAllows = globalFallback || Boolean(record.primaryTrackingLink?.countries.some((entry) => (
+    entry.countryCode === record.marketCode && entry.mode === "ALLOW"
+  )));
+  const scopeAllows = exactMarket
+    ? Boolean(record.marketProfile
+      && record.marketProfile.casinoId === record.casinoId
+      && record.marketProfile.countryCode === record.countryCode
+      && record.countryCode === requestedCountry)
+    : globalFallback
+      && record.marketProfile === null
+      && MARKET_ACTIVATION_GLOBAL_FALLBACK_REQUIRED_BLOCKED_COUNTRIES.every((country) => (
+        record.globalFallbackBlockedCountries.includes(country)
+      ))
+      && !record.globalFallbackBlockedCountries.includes(requestedCountry);
+  return record.desiredState === "ACTIVE"
+    && record.status === "ACTIVE"
+    && record.routeVerificationStatus === "HEALTHY"
+    && record.routeLastCheckedAt !== null
+    && scopeAllows
+    && offerMarketAllows
+    && trackingMarketAllows
+    && Boolean(record.affiliateOffer
+      && record.affiliateOffer.casinoId === record.casinoId
+      && record.affiliateOffer.program.casinoId === record.casinoId
+      && record.affiliateOffer.casinoBonusId === record.casinoBonusId)
+    && Boolean(!record.casinoBonusId || (record.casinoBonus
+      && record.casinoBonus.id === record.casinoBonusId
+      && record.casinoBonus.casinoId === record.casinoId))
+    && Boolean(record.primaryTrackingLink
+      && record.primaryTrackingLink.offerId === record.affiliateOfferId
+      && safeActivationDestination(record.primaryTrackingLink.trackingUrl)
+      && safeActivationDestination(record.primaryTrackingLink.destinationUrl))
+    && Boolean(record.redirectSlug
+      && record.redirectSlug.casinoId === record.casinoId
+      && record.redirectSlug.affiliateOfferId === record.affiliateOfferId
+      && record.redirectSlug.casinoBonusId === record.casinoBonusId
+      && isSafePublicSlug(record.redirectSlug.slug));
+}
+
+async function previousRuntimeCanRoute(prisma: PrismaClient, casinoId: string, marketCode: string) {
+  const routes = await prisma.marketActivation.findMany({
+    where: {
+      casinoId,
+      product: "CASINO",
+      marketCode: { in: [marketCode, "ZZ"] },
+    },
+    include: previousRuntimeRouteInclude,
+    orderBy: [{ marketCode: "asc" }, { id: "asc" }],
+  });
+  const exact = routes.find((route) => route.marketCode === marketCode);
+  if (exact) return previousRuntimeRouteAllowed(exact, marketCode);
+  const fallback = routes.find((route) => route.marketCode === "ZZ");
+  return Boolean(fallback && previousRuntimeRouteAllowed(fallback, marketCode));
+}
+
 function activeIntent(marketCode: string, idempotencyKey: string) {
   return {
     casinoId: PRIMARY.casinoId,
@@ -208,21 +340,21 @@ function legacyRouteData(fixture: typeof PRIMARY | typeof UNPROVEN, id: string) 
     routeLastCheckedAt: NOW,
     routeFinalHost: "operator.invalid",
     routeVerificationDetail: "TEST_ROUTE_VERIFIED",
-    globalFallbackBlockedCountries: ["GB"],
+    globalFallbackBlockedCountries: [...MARKET_ACTIVATION_GLOBAL_FALLBACK_REQUIRED_BLOCKED_COUNTRIES],
     diagnostics: { classification: "DETECTED" },
   };
 }
 
 async function seedPostMigrationLegacyRows(prisma: PrismaClient) {
-  const [constraint] = await prisma.$queryRawUnsafe<Array<{ definition: string }>>(`
-    SELECT pg_get_constraintdef(oid) AS definition
-    FROM pg_constraint
-    WHERE conname = 'MarketActivation_exact_canonical_scope_check'
-      AND conrelid = 'public."MarketActivation"'::regclass
+  const [guard] = await prisma.$queryRawUnsafe<Array<{ enabled: string }>>(`
+    SELECT tgenabled AS enabled
+    FROM pg_trigger
+    WHERE tgname = 'MarketActivation_guard_new_scope_trigger'
+      AND tgrelid = 'public."MarketActivation"'::regclass
+      AND NOT tgisinternal
   `);
-  assert.ok(constraint?.definition, "0040 exact-route constraint must exist");
-  await prisma.$executeRawUnsafe('ALTER TABLE "MarketActivation" DROP CONSTRAINT "MarketActivation_exact_canonical_scope_check"');
-  await prisma.$executeRawUnsafe('ALTER TABLE "MarketActivation" DISABLE TRIGGER "MarketActivation_reject_new_zz_trigger"');
+  assert.equal(guard?.enabled, "O", "0040 scope-change guard must exist and be enabled");
+  await prisma.$executeRawUnsafe('ALTER TABLE "MarketActivation" DISABLE TRIGGER "MarketActivation_guard_new_scope_trigger"');
   try {
     await prisma.marketActivation.create({
       data: legacyRouteData(PRIMARY, "a3100000-0000-4000-8000-000000000021"),
@@ -240,11 +372,7 @@ async function seedPostMigrationLegacyRows(prisma: PrismaClient) {
       },
     });
   } finally {
-    await prisma.$executeRawUnsafe('ALTER TABLE "MarketActivation" ENABLE TRIGGER "MarketActivation_reject_new_zz_trigger"');
-    const definition = constraint.definition.replace(/\s+NOT VALID$/i, "");
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE "MarketActivation" ADD CONSTRAINT "MarketActivation_exact_canonical_scope_check" ${definition} NOT VALID`,
-    );
+    await prisma.$executeRawUnsafe('ALTER TABLE "MarketActivation" ENABLE TRIGGER "MarketActivation_guard_new_scope_trigger"');
   }
 }
 
@@ -340,7 +468,7 @@ test("PostgreSQL exact-route authority ignores legacy GEO permissions and reject
   }
 });
 
-test("PostgreSQL ZZ materialization plan is bounded, conflict-safe, non-mutating, and idempotent", async () => {
+test("PostgreSQL cutover plan blocks unsafe previous-runtime state and preserves old/new route parity", async () => {
   assertDisposableDatabase(process.env.DATABASE_URL);
   assertDisposableDatabase(process.env.DIRECT_URL);
   const prisma = new PrismaClient();
@@ -382,9 +510,10 @@ test("PostgreSQL ZZ materialization plan is bounded, conflict-safe, non-mutating
       return planExactRouteMaterialization(transaction);
     });
     assert.equal(blockedPlan.readyToApply, false);
+    assert.equal(blockedPlan.cutoverSafe, false);
     assert.deepEqual(
       new Set(blockedPlan.blockers.map((blocker) => blocker.code)),
-      new Set(["EXACT_ROUTE_CONFLICT", "UNPROVEN_ROUTE_MATERIALIZATION"]),
+      new Set(["EXACT_ROUTE_CONFLICT", "PREVIOUS_RUNTIME_CUTOVER_UNSAFE", "UNPROVEN_ROUTE_MATERIALIZATION"]),
     );
     assert.deepEqual({
       routes: await prisma.marketActivation.count(),
@@ -402,14 +531,71 @@ test("PostgreSQL ZZ materialization plan is bounded, conflict-safe, non-mutating
 
     await prisma.marketActivation.delete({ where: { id: "a3100000-0000-4000-8000-000000000024" } });
     await prisma.marketActivation.delete({ where: { id: "a3100000-0000-4000-8000-000000000022" } });
+    const compatibilityBeforeUnsafePlan = await unrelatedCounts(prisma);
+    const unsafeCutoverPlan = await planExactRouteMaterialization(prisma);
+    assert.equal(unsafeCutoverPlan.readyToApply, false);
+    assert.equal(unsafeCutoverPlan.cutoverSafe, false);
+    assert.ok(unsafeCutoverPlan.blockers.length > 0);
+    assert.ok(unsafeCutoverPlan.blockers.every((blocker) => blocker.code === "PREVIOUS_RUNTIME_CUTOVER_UNSAFE"));
+    assert.deepEqual(
+      new Set(unsafeCutoverPlan.blockers.map((blocker) => blocker.prerequisite)),
+      new Set(["MARKET_PROFILE_BINDING", "OFFER_MARKET_ALLOW", "TRACKING_MARKET_ALLOW"]),
+    );
+    assert.deepEqual(await unrelatedCounts(prisma), compatibilityBeforeUnsafePlan, "unsafe plan must not repair compatibility state");
+
+    await seedPreviousRuntimeCompatibility(prisma, PRIMARY, {
+      profileMarkets: ["IE", "MT"],
+      offerMarkets: ["IE", "MT"],
+      trackingMarkets: ["IE"],
+    });
+    const partiallyCompatiblePlan = await planExactRouteMaterialization(prisma);
+    assert.equal(partiallyCompatiblePlan.cutoverSafe, false);
+    assert.deepEqual(
+      partiallyCompatiblePlan.blockers.map((blocker) => ({
+        code: blocker.code,
+        marketCode: blocker.marketCode,
+        prerequisite: blocker.prerequisite,
+      })),
+      [{
+        code: "PREVIOUS_RUNTIME_CUTOVER_UNSAFE",
+        marketCode: "MT",
+        prerequisite: "TRACKING_MARKET_ALLOW",
+      }],
+    );
+    await prisma.affiliateTrackingLinkCountry.create({
+      data: {
+        trackingLinkId: PRIMARY.trackingId,
+        countryCode: "MT",
+        mode: "ALLOW",
+        productionEligible: false,
+        productionEligibilityEvidence: "TEST:PREVIOUS-RUNTIME-COMPATIBILITY",
+      },
+    });
+
+    assert.equal(await previousRuntimeCanRoute(prisma, PRIMARY.casinoId, "IE"), true);
+    assert.equal(await previousRuntimeCanRoute(prisma, PRIMARY.casinoId, "MT"), true);
+    assert.equal(await previousRuntimeCanRoute(prisma, PRIMARY.casinoId, "GB"), false);
     const unrelatedBefore = await unrelatedCounts(prisma);
+    const compatibilityRowsBefore = await Promise.all([
+      prisma.affiliateOfferCountry.findMany({
+        where: { offerId: PRIMARY.offerId, countryCode: { in: ["IE", "MT"] } },
+        orderBy: { countryCode: "asc" },
+      }),
+      prisma.affiliateTrackingLinkCountry.findMany({
+        where: { trackingLinkId: PRIMARY.trackingId, countryCode: { in: ["IE", "MT"] } },
+        orderBy: { countryCode: "asc" },
+      }),
+    ]);
     const readyPlan = await planExactRouteMaterialization(prisma);
     assert.equal(readyPlan.readyToApply, true);
+    assert.equal(readyPlan.cutoverSafe, true);
     assert.deepEqual(readyPlan.create.map((operation) => operation.marketCode), ["IE", "MT"]);
     assert.equal(readyPlan.disable.length, 1);
     assert.equal(readyPlan.before.activeLegacyZzCount, 1);
     assert.equal(readyPlan.after.activeLegacyZzCount, 0);
-    assert.ok(readyPlan.semanticProjection.every((entry) => entry.legacyRoutableWithinManifest && entry.exactRoutableAfterPlan));
+    assert.ok(readyPlan.semanticProjection.every((entry) => entry.legacyRoutableWithinManifest
+      && entry.exactRoutableAfterPlan
+      && entry.previousRuntimeRoutableAfterPlan));
 
     const applied = await applyExactRouteMaterialization(prisma, NOW);
     assert.equal(applied.createdRouteCount, 2);
@@ -424,8 +610,22 @@ test("PostgreSQL ZZ materialization plan is bounded, conflict-safe, non-mutating
       && route.redirectSlugId === PRIMARY.redirectId
       && route.status === "ACTIVE"
       && route.routeVerificationStatus === "HEALTHY"));
+    assert.equal(await previousRuntimeCanRoute(prisma, PRIMARY.casinoId, "IE"), true);
+    assert.equal(await previousRuntimeCanRoute(prisma, PRIMARY.casinoId, "MT"), true);
+    assert.equal(await previousRuntimeCanRoute(prisma, PRIMARY.casinoId, "GB"), false);
     assert.equal((await marketActivationRuntime.listActive([PRIMARY.casinoId], "IE"))[0]?.primaryTrackingLinkId, PRIMARY.trackingId);
+    assert.equal((await marketActivationRuntime.listActive([PRIMARY.casinoId], "MT"))[0]?.primaryTrackingLinkId, PRIMARY.trackingId);
     assert.equal((await marketActivationRuntime.listActive([PRIMARY.casinoId], "GB")).length, 0, "blocked legacy market must stay unavailable");
+    assert.deepEqual(await Promise.all([
+      prisma.affiliateOfferCountry.findMany({
+        where: { offerId: PRIMARY.offerId, countryCode: { in: ["IE", "MT"] } },
+        orderBy: { countryCode: "asc" },
+      }),
+      prisma.affiliateTrackingLinkCountry.findMany({
+        where: { trackingLinkId: PRIMARY.trackingId, countryCode: { in: ["IE", "MT"] } },
+        orderBy: { countryCode: "asc" },
+      }),
+    ]), compatibilityRowsBefore, "materialization must not create or alter legacy GEO authority");
     assert.deepEqual(await unrelatedCounts(prisma), unrelatedBefore, "materialization must not mutate unrelated business tables");
     assert.equal((await inspectExactRouteReadiness(prisma)).ready, true);
 

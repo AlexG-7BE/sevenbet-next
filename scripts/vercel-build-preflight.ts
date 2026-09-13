@@ -823,17 +823,17 @@ async function verifyVercelBuildCompatibility() {
     if (applied.has(COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION)) {
       assertChecksum(completedByName.get(COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION), COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION);
       const [exactRouteSchema] = await prisma.$queryRawUnsafe<Array<{
-        exact_scope_constraint: boolean;
+        legacy_row_wide_scope_constraint_absent: boolean;
         active_binding_without_profile: boolean;
-        reject_new_zz_trigger: boolean;
+        new_scope_guard_trigger: boolean;
       }>>(`
         SELECT
-          EXISTS (
+          NOT EXISTS (
             SELECT 1 FROM pg_constraint
             WHERE conname = 'MarketActivation_exact_canonical_scope_check'
               AND conrelid = 'public."MarketActivation"'::regclass
               AND contype = 'c'
-          ) AS exact_scope_constraint,
+          ) AS legacy_row_wide_scope_constraint_absent,
           EXISTS (
             SELECT 1 FROM pg_constraint
             WHERE conname = 'MarketActivation_active_binding_check'
@@ -842,16 +842,20 @@ async function verifyVercelBuildCompatibility() {
               AND pg_get_constraintdef(oid) NOT LIKE '%globalFallbackBlockedCountries%'
           ) AS active_binding_without_profile,
           EXISTS (
-            SELECT 1 FROM pg_trigger
-            WHERE tgname = 'MarketActivation_reject_new_zz_trigger'
-              AND tgrelid = 'public."MarketActivation"'::regclass
-              AND NOT tgisinternal
-          ) AS reject_new_zz_trigger
+            SELECT 1
+            FROM pg_trigger trigger
+            JOIN pg_proc procedure ON procedure.oid = trigger.tgfoid
+            WHERE trigger.tgname = 'MarketActivation_guard_new_scope_trigger'
+              AND trigger.tgrelid = 'public."MarketActivation"'::regclass
+              AND procedure.proname = 'MarketActivation_guard_new_scope'
+              AND trigger.tgenabled <> 'D'
+              AND NOT trigger.tgisinternal
+          ) AS new_scope_guard_trigger
       `);
       commercialCoreExactRoutesSchemaReady = Boolean(
-        exactRouteSchema?.exact_scope_constraint
+        exactRouteSchema?.legacy_row_wide_scope_constraint_absent
         && exactRouteSchema.active_binding_without_profile
-        && exactRouteSchema.reject_new_zz_trigger,
+        && exactRouteSchema.new_scope_guard_trigger,
       );
       if (!commercialCoreExactRoutesSchemaReady) {
         throw new Error("Production migration guard found incomplete exact-route schema.");

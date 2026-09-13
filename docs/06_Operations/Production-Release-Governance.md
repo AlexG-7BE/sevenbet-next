@@ -52,6 +52,13 @@ Do not add reconciliation, repair, seed, ingestion, publication, activation or
 release-governance structural and disposable-PostgreSQL tests are required
 regression evidence for changes to this chain.
 
+RFC-049 materialization has an additional release-time gate outside the generic
+build: its read-only `plan` must report `cutoverSafe=true` before a separately
+authorised apply. After apply and before PR3 merge/deployment, the still-serving
+old binary must be checked immediately for preserved CTA and controlled
+redirect availability. A failure is a mandatory stop; the build must not repair
+or manufacture legacy compatibility state.
+
 ### 13 September 2026 build-mutation incident
 
 Commercial Core PR2 did not introduce the defect. During its otherwise healthy

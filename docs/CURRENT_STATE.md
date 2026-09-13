@@ -26,13 +26,21 @@ blocked routes fail closed without hiding editorial Casino content.
 
 Migration `0040_commercial_core_exact_routes_geo_simplification` is structural
 only. It permits active routes without a fabricated `CasinoCountry` profile,
-enforces canonical scope on new active intent and rejects every new `ZZ` row.
+uses a scope-change trigger rather than a row-wide `NOT VALID` CHECK, and
+rejects every new or change-to-`ZZ` row plus every new/change-to-active invalid
+canonical scope. The narrower guard allows the previous binary to maintain
+health/status/version fields on an unchanged pre-existing legacy row during
+the DB-first cutover window.
+
 Any legacy `ZZ` transformation is a separate deterministic
 `plan`/`apply`/`verify` business-data operation bounded to the six already
-evidenced Superfly IE/MT replacements. Unknown fallback scope is a blocker;
-ISO inventory, CRM and Partner market-support evidence cannot manufacture new
-routes. Generic Production build verification remains read-only and fails
-before rollout when exact-route readiness is false.
+evidenced Superfly IE/MT replacements. The read-only plan now reports
+`cutoverSafe` and blocks with `PREVIOUS_RUNTIME_CUTOVER_UNSAFE` if a proposed
+exact target lacks an existing prerequisite required by the currently deployed
+pre-PR3 runtime. It never repairs or recreates compatibility state. Unknown
+fallback scope is also a blocker; ISO inventory, CRM and Partner market-support
+evidence cannot manufacture routes. Generic Production build verification
+remains read-only and fails before rollout when exact-route readiness is false.
 
 **NOT PRODUCTION EVIDENCE:** PR3 has not been merged or deployed, migration
 0040 has not been applied to Production, and the business-data operation has

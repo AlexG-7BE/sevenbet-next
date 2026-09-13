@@ -1,50 +1,81 @@
 # Commercial Core PR3 — Exact Routes Release Runbook
 
 **Authority:** RFC-049 and RFC-013
+
 **Risk:** High — commercial routing plus additive database constraints
+
 **State:** Review-only procedure; no Production step has been executed
 
 ## Release invariant
 
 Schema, business data and application deployment are three separately
-authorised operations. A generic Vercel build may read schema and exact-route
-state in a PostgreSQL-enforced read-only transaction. It must never create,
-update, disable, repair or materialize a route.
+authorised operations. Migration 0040 must remain compatible with the
+currently deployed pre-PR3 binary. Materialization may proceed only when the
+read-only plan proves that the old binary will still route every preserved
+target during the interval before the PR3 deployment.
 
-Production state is `UNKNOWN` during PR preparation. Do not infer counts from
-repository fixtures or historical documentation.
+A generic Vercel build may read schema and exact-route state in a
+PostgreSQL-enforced read-only transaction. It must never create, update,
+disable, repair or materialize a route. Production state is `UNKNOWN` during
+PR preparation; do not infer counts from fixtures or historical documentation.
 
-## 1. Pre-release review
+## Authoritative bounded order
+
+1. Backup / baseline.
+2. Apply migration 0040.
+3. Verify the old Production application is still healthy.
+4. Run the exact-route `plan`.
+5. Require `plan.cutoverSafe = true`.
+6. Founder authorizes that exact reviewed plan.
+7. Run `apply` if the plan requires materialization.
+8. Immediately verify that the old Production application still serves every
+   preserved CTA and controlled redirect.
+9. Run the new exact-route `verify`.
+10. Merge PR3.
+11. Allow the canonical Production deployment.
+12. Run the post-deploy smoke.
+
+Do not combine or reorder the schema, business-data and application steps.
+
+## 1. Backup / baseline
 
 1. Verify the reviewed PR head and all required GitHub/Vercel contexts.
 2. Confirm a recoverable database backup/restore point under the Backup and
    Restore runbook.
-3. Confirm the exact migration checksum and that migration 0040 is the next
-   ordered migration after 0039.
-4. Confirm no new evidence or route change invalidates the source-controlled
-   six-casino IE/MT materialization manifest.
-5. Obtain separate Founder authority for each Production-changing step below.
+3. Record old-binary representative IE/MT CTA and `/r/...` behavior without
+   exposing raw tracking destinations.
+4. Confirm migration 0040 is next after 0039 and record its reviewed checksum.
+5. Confirm no new evidence broadens or invalidates the source-controlled
+   six-casino IE/MT manifest.
 
-## 2. Structural schema migration
+## 2. Apply structural migration 0040
 
-Apply only migration
+Apply only
 `0040_commercial_core_exact_routes_geo_simplification` through the governed
-DB-first migration procedure. The migration performs no MarketActivation
-insert, update, delete or backfill. Verify:
+DB-first procedure. It performs no `MarketActivation` insert, update, delete,
+materialization or business-data backfill. Verify:
 
-- the migration is complete with the repository checksum;
+- the migration completed with the reviewed repository checksum;
 - `MarketActivation_active_binding_check` no longer requires a market profile
   or fallback deny list;
-- `MarketActivation_exact_canonical_scope_check` exists;
-- `MarketActivation_reject_new_zz_trigger` exists; and
-- the previous application remains schema-compatible.
+- the row-wide `MarketActivation_exact_canonical_scope_check` is absent;
+- `MarketActivation_guard_new_scope_trigger` is enabled;
+- a new `ZZ` row and a non-`ZZ` to `ZZ` scope change are rejected;
+- new/change-to-active non-canonical scope is rejected; and
+- the previous application can still perform its normal health/status update
+  on an unchanged pre-existing legacy `ZZ` row.
 
-Do not deploy the PR3 application yet.
+Do not deploy PR3 yet.
 
-## 3. Read-only materialization plan
+## 3. Verify old Production application health
 
-Run against the explicitly selected Production database only after the schema
-step:
+While the old binary is still canonical, repeat the representative baseline
+checks. Confirm preserved CTA and controlled redirects still resolve and route
+health processing remains operational after 0040. Stop on any regression.
+
+## 4–5. Read-only materialization plan and cutover-safe gate
+
+Run against the explicitly selected Production database:
 
 ```text
 npm run commercial-core:exact-routes -- plan
@@ -53,27 +84,37 @@ npm run commercial-core:exact-routes -- plan
 The command runs in a repeatable-read, read-only transaction and emits no raw
 destination URL or secret. Archive the bounded report. It must show migration
 checksum readiness, before/projected-after route counts, proposed exact routes,
-semantic projection, and every conflict/blocker.
+semantic projection, every blocker and `cutoverSafe`.
 
-Stop when any of these is present:
+Require `cutoverSafe: true`. `PREVIOUS_RUNTIME_CUTOVER_UNSAFE` identifies the
+casino, target market, source route ID and one of these missing/incompatible
+old-runtime prerequisites:
 
-- `UNPROVEN_ROUTE_MATERIALIZATION`;
-- `LEGACY_ZZ_ROUTE_NOT_HEALTHY`;
-- `LEGACY_ZZ_ROUTE_BINDING_INCOMPLETE`;
-- `BLOCKED_TARGET_IN_MANIFEST`;
-- `EXACT_ROUTE_CONFLICT`;
-- `NON_CANONICAL_ROUTE_SCOPE`;
-- `DUPLICATE_CANONICAL_ROUTE`;
-- `EXACT_ROUTE_BINDING_AMBIGUOUS`;
-- an unlisted active `ZZ` casino; or
-- a proposed market outside the approved IE/MT manifest.
+- `MARKET_PROFILE_BINDING`;
+- `OFFER_BINDING`;
+- `OFFER_MARKET_ALLOW`;
+- `TRACKING_BINDING`;
+- `TRACKING_MARKET_ALLOW`;
+- `REDIRECT_BINDING`;
+- `BONUS_BINDING`; or
+- `DESTINATION_SAFETY`.
 
-An already exact Production state is a valid zero-operation plan.
+The plan does not create or repair `CasinoCountry`, `AffiliateOfferCountry`,
+`AffiliateTrackingLinkCountry`, `productionEligible` or lifecycle state.
+Missing compatibility means `PLAN → BLOCK`.
 
-## 4. Explicit business-data apply
+Also stop for any existing materialization/readiness blocker, including
+`UNPROVEN_ROUTE_MATERIALIZATION`, `LEGACY_ZZ_ROUTE_NOT_HEALTHY`,
+`LEGACY_ZZ_ROUTE_BINDING_INCOMPLETE`, `BLOCKED_TARGET_IN_MANIFEST`,
+`EXACT_ROUTE_CONFLICT`, `NON_CANONICAL_ROUTE_SCOPE`,
+`DUPLICATE_CANONICAL_ROUTE`, `EXACT_ROUTE_BINDING_AMBIGUOUS`, an unlisted
+active `ZZ` casino, or a target outside the approved IE/MT manifest. An already
+exact Production state may produce a valid zero-operation plan.
 
-This is not a migration or deployment command. Execute it only with specific
-Founder authority for the reviewed plan:
+## 6–7. Founder authorization and explicit apply
+
+The Founder authorizes the archived exact plan, not an open-ended operation.
+If it contains changes, execute:
 
 ```text
 npm run commercial-core:exact-routes -- apply --confirm=COMMERCIAL-CORE-PR3-EXACT-ROUTES-V1
@@ -82,10 +123,21 @@ npm run commercial-core:exact-routes -- apply --confirm=COMMERCIAL-CORE-PR3-EXAC
 The serializable transaction creates only deterministic manifest exact routes,
 preserves the source Offer/Tracking/Redirect/Bonus binding and health evidence,
 records intents/events, then disables the corresponding legacy `ZZ` source.
-Any conflict aborts the whole transaction. Re-running after success is a
-zero-write idempotent result.
+It does not create or modify legacy GEO compatibility rows. Any conflict aborts
+the transaction; replay after success is a zero-write idempotent result.
 
-## 5. Read-only verification
+## 8. POST-MATERIALIZATION / PRE-DEPLOY OLD-BINARY COMPATIBILITY
+
+Immediately, while the old Production binary is still canonical, verify every
+preserved IE/MT CTA and controlled `/r/...` redirect from the approved plan.
+Compare with the recorded baseline and confirm destination safety and route
+health without recording raw tracking URLs.
+
+If the old Production application loses any preserved CTA or controlled
+redirect: **STOP. Do not merge or deploy while the system is in that state.**
+Open the incident/rollback decision path under the archived before-plan.
+
+## 9. New exact-route verification
 
 Run:
 
@@ -93,49 +145,45 @@ Run:
 npm run commercial-core:exact-routes -- verify
 ```
 
-Verification must show:
+Verification must show the migration checksum matched, `cutoverSafe: true`, no
+pending create/disable operation, zero active legacy `ZZ`, zero non-canonical
+active desired scopes, zero duplicate canonical routes and zero ambiguous
+bindings. Only a clean report permits merge review.
 
-- migration checksum matched;
-- no pending create or disable operation;
-- zero active legacy `ZZ` routes;
-- zero non-canonical active desired scopes;
-- zero duplicate canonical routes; and
-- zero ambiguous route bindings.
+## 10–11. Merge and canonical Production deployment
 
-Only a clean report allows application deployment review to proceed.
+Merge only under explicit authority after the old-binary compatibility gate
+and exact verification pass. The generic Vercel build must fail before rollout
+unless migration 0040 and exact-route readiness pass. Its verifier is read-only
+and cannot repair state. Confirm the Ready deployment source SHA equals the
+reviewed merge SHA.
 
-## 6. Application deployment
-
-Merge and deploy only under separate Founder authority. The Vercel build must
-fail before rollout unless migration 0040 and exact-route readiness both pass.
-Its verifier is read-only and cannot repair a failed gate. Confirm the Ready
-deployment source SHA equals the reviewed merge SHA.
-
-## 7. Post-deploy verification
+## 12. Post-deploy smoke
 
 Using read-only checks, verify representative country routes, US regional
-normalization, AR/CA exact subdivision isolation, GB operator safeguards,
+normalization, AR/CA exact-subdivision isolation, GB operator safeguards,
 missing-route editorial continuity, unhealthy-route suppression and CTA to
 `/r/...` parity. Confirm safe destinations, attribution and analytics continue
 without OfferCountry, TrackingCountry or `productionEligible` authority.
-
-Record exact route/action counts from live evidence only. Do not expose raw
-tracking destinations.
+Record live counts only; do not expose raw tracking destinations.
 
 ## Rollback and recovery
 
 Application rollback and data recovery are separate decisions:
 
-- The retained compatibility schema permits a verified previous application
-  deployment, but rollback must not automatically re-enable disabled `ZZ`
-  authority.
-- Migration 0040 is additive/constraint-oriented and should be forward-fixed,
-  not removed by editing migration history or improvised reverse SQL.
+- Migration 0040 permits unchanged legacy-row maintenance by the previous
+  binary, but forbids new fallback authority. A previous binary can route the
+  materialized exact rows only when the archived plan proved its existing
+  prerequisites and the step-8 live gate passed.
+- Application rollback must not automatically re-enable disabled `ZZ`
+  authority or manufacture compatibility rows.
+- Migration 0040 is forward-fix only after it is applied in Production. Do not
+  edit applied migration history or improvise reverse SQL.
 - Materialized exact routes and disabled legacy rows are audited business-data
-  mutations. Recover only from the archived before-plan and approved database
-  restore/forward operation. Do not silently delete exact rows or revive `ZZ`.
+  mutations. Recover only through the archived before-plan and an authorised
+  restore/forward operation.
 - Unsafe routing, unexplained availability change, failed GB/legal behavior or
-  any unapproved mutation is an immediate rollback/incident trigger.
+  any unapproved mutation is an immediate stop/incident trigger.
 
 This runbook grants no merge, migration, business-data, deployment or rollback
 authority by itself.

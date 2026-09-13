@@ -131,6 +131,16 @@ idempotent no-op. An active `ZZ` without an approved explicit target manifest
 produces `LEGACY_ZZ_ROUTE_REQUIRES_MATERIALIZATION` and
 `UNPROVEN_ROUTE_MATERIALIZATION`.
 
+The read-only plan also proves the bounded deployment interval in which the
+pre-PR3 binary remains live after materialization. For every proposed or
+already-existing exact target it evaluates that binary's actual requirements:
+matching market profile, Offer/Tracking country ALLOW metadata, coherent
+Offer/Tracking/Redirect/Bonus bindings and destination safety. Any missing or
+incompatible prerequisite produces `PREVIOUS_RUNTIME_CUTOVER_UNSAFE` and
+`cutoverSafe=false`. The plan never creates or repairs compatibility data;
+missing compatibility blocks the release. This is a release check, not a
+second resolver or durable compatibility authority.
+
 The governed current-partner rollout already replaced the six known Superfly
 fallbacks with explicit IE and MT routes and disabled their `ZZ` rows. That
 historical operation is evidence about current canonical state, not authority
@@ -161,10 +171,16 @@ media state cannot create, block or select a commercial action.
 
 ## Schema and compatibility
 
-Migration `0040_commercial_core_exact_routes_geo_simplification` adds structural
-guards for canonical new routes, rejects new `ZZ` rows, and removes the old
-active-route requirement for a `CasinoCountry` foreign key. It performs no
-business-data materialization. Existing exact uniqueness constraints remain.
+Migration `0040_commercial_core_exact_routes_geo_simplification` removes the
+old active-route requirement for a `CasinoCountry` foreign key and adds a
+narrow scope-change guard. It rejects every new `ZZ` row, every non-`ZZ` to
+`ZZ` scope change, and creation/change/activation into an invalid canonical
+active scope. It deliberately does not use a row-wide `NOT VALID` CHECK:
+PostgreSQL would enforce that CHECK on later updates to historical rows. An
+unchanged pre-existing `ZZ` or non-canonical legacy row may therefore receive
+ordinary health, status, timestamp, version and diagnostic maintenance from
+the previous binary during cutover. The migration performs no business-data
+materialization or backfill. Existing exact uniqueness constraints remain.
 
 Offer/Tracking country tables, `geoMode`, `productionEligible` and historical
 fallback fields remain in the schema for rollback, provider/import evidence
@@ -177,12 +193,22 @@ tests.
 
 The Production order is strictly:
 
-1. apply schema migration `0040`;
-2. run exact-route materialization `plan`, obtain separate business-data
-   authority, then run `apply` if and only if the plan is proven;
-3. run read-only `verify` and generic deployment readiness;
-4. deploy the application;
-5. perform read-only post-deploy CTA/redirect/health verification.
+1. establish a recoverable backup and live old-binary baseline;
+2. apply schema migration `0040`;
+3. verify the old Production application remains healthy;
+4. run exact-route materialization `plan`;
+5. require `plan.cutoverSafe=true`;
+6. obtain Founder authority for that exact reviewed plan;
+7. run `apply` only if the plan requires it;
+8. immediately verify preserved CTA and controlled redirects through the old
+   Production application;
+9. run read-only exact-route `verify`;
+10. merge PR3;
+11. allow the canonical Production deployment; and
+12. perform the post-deploy smoke.
+
+Loss of any preserved route at step 8 is a mandatory stop. Merge/deployment
+cannot proceed while old-binary compatibility is broken.
 
 Generic Vercel build and Production verification are read-only for business
 data. Readiness fails with machine-readable blockers for active `ZZ`,
