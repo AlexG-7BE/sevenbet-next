@@ -425,15 +425,44 @@ test("affiliate redirects ignore retired creative attribution and use only canon
       events.push("canonical");
       return {
         casinoId: "casino-id",
-        redirectSlug: { id: "redirect-id", slug: "betsson" },
-        affiliateOffer: { id: "offer-id" },
-        primaryTrackingLink: { id: "tracking-id", destinationUrl: "https://www.betsson.com/", trackingUrl: "https://canonical.example/click" },
+        redirectSlug: {
+          id: "redirect-id",
+          slug: "betsson",
+          casinoId: "casino-id",
+          affiliateOfferId: "offer-id",
+          casinoBonusId: null,
+          active: true,
+          archivedAt: null,
+        },
+        affiliateOffer: {
+          id: "offer-id",
+          casinoId: "casino-id",
+          casinoBonusId: null,
+          startAt: null,
+          expiresAt: null,
+          program: {
+            id: "program-id",
+            casinoId: "casino-id",
+            operator: "Betsson",
+            metadata: {},
+          },
+        },
+        primaryTrackingLink: {
+          id: "tracking-id",
+          offerId: "offer-id",
+          destinationUrl: "https://www.betsson.com/",
+          trackingUrl: "https://canonical.example/click",
+          verifiedAt: new Date("2030-01-01T00:00:00Z"),
+          lastCheckedAt: new Date("2030-01-01T00:00:00Z"),
+          validFrom: null,
+          expiresAt: null,
+        },
       };
     },
   } as never;
   const service = new AffiliateRedirectService(
     redirectStore(),
-    { activeCandidates: async () => [activeOffer()] as never },
+    { legacyAdminPreviewCandidates: async () => [activeOffer()] as never },
     { async resolve() { events.push("geo"); return allowJurisdictionResolver.resolve(); } },
     allowGbCommercialReadinessAuthority,
     canonicalActivation,

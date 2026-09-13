@@ -18,8 +18,6 @@ export type GbOperatorEligibilityReasonCode =
   | "GB_LICENCE_EVIDENCE_EXPIRED"
   | "GB_DOMAIN_EVIDENCE_MISSING"
   | "GB_DOMAIN_EVIDENCE_INVALID"
-  | "GB_COMMERCIAL_CONTRACT_MISSING"
-  | "GB_COMMERCIAL_CONTRACT_INVALID"
   | "GB_REDIRECT_CONTRACT_MISSING"
   | "GB_REDIRECT_CONTRACT_INVALID";
 
@@ -29,14 +27,6 @@ export interface GbDomainEvidence {
   status: "VERIFIED" | "UNVERIFIED" | "EXPIRED" | "REJECTED" | "UNKNOWN";
   observedAt: Date | null;
   expiresAt: Date | null;
-}
-
-export interface GbCommercialContractEvidence {
-  programActive: boolean;
-  programPublished: boolean;
-  programConnected: boolean;
-  offerActive: boolean;
-  trackingLinkActive: boolean;
 }
 
 export interface GbRedirectContractEvidence {
@@ -59,7 +49,6 @@ export interface GbOperatorEligibilityInput {
   casino: CasinoDomain;
   now: Date;
   domainEvidence?: GbDomainEvidence | null;
-  commercialContract?: GbCommercialContractEvidence | null;
   redirectContract?: GbRedirectContractEvidence | null;
 }
 
@@ -189,10 +178,7 @@ export function evaluateGbOperatorEligibility(input: GbOperatorEligibilityInput)
     && validEvidence.length > 0
     && domainValid;
 
-  const commercial = input.commercialContract;
-  if (!commercial) reasons.push("GB_COMMERCIAL_CONTRACT_MISSING");
-  else if (!Object.values(commercial).every(Boolean)) reasons.push("GB_COMMERCIAL_CONTRACT_INVALID");
-  const commercialEligible = operatorEvidenceEligible && Boolean(commercial && Object.values(commercial).every(Boolean));
+  const commercialEligible = operatorEvidenceEligible;
 
   const redirect = input.redirectContract;
   if (!redirect) reasons.push("GB_REDIRECT_CONTRACT_MISSING");

@@ -81,17 +81,10 @@ const domainEvidence = {
   observedAt: new Date("2026-08-08T00:00:00.000Z"),
   expiresAt: new Date("2026-08-15T00:00:00.000Z"),
 };
-const commercialContract = {
-  programActive: true,
-  programPublished: true,
-  programConnected: true,
-  offerActive: true,
-  trackingLinkActive: true,
-};
 const redirectContract = { slugActive: true, destinationServerOwned: true, destinationSafe: true };
 
 function evaluate(value = casino(), context: Partial<Parameters<typeof evaluateGbOperatorEligibility>[0]> = {}) {
-  return evaluateGbOperatorEligibility({ casino: value, now, domainEvidence, commercialContract, redirectContract, ...context });
+  return evaluateGbOperatorEligibility({ casino: value, now, domainEvidence, redirectContract, ...context });
 }
 
 test("repository GB policy is editorial-only and expires fail closed", async () => {
@@ -146,7 +139,7 @@ test("GB operator eligibility accepts only the complete official evidence chain"
   assert.deepEqual(result.reasonCodes, ["GB_OPERATOR_ELIGIBLE"]);
 });
 
-test("production operator service composes repository domain evidence with canonical route authority", async () => {
+test("production operator service composes repository domain evidence with the controlled redirect contract", async () => {
   const value = casino();
   const source = {
     findById: async (id: string) => id === value.id ? value : null,
@@ -173,9 +166,8 @@ test("production operator service composes repository domain evidence with canon
   const service = new GbOperatorEligibilityService(source, domains);
   const withoutRoute = await service.evaluate(value.id, now);
   assert.equal(withoutRoute.referralEligible, false);
-  assert.ok(withoutRoute.reasonCodes.includes("GB_COMMERCIAL_CONTRACT_MISSING"));
+  assert.ok(withoutRoute.reasonCodes.includes("GB_REDIRECT_CONTRACT_MISSING"));
   const withRoute = await service.evaluate(value.id, now, canonicalGbOperatorEligibilityContext({
-    commercialContract,
     redirectContract,
   }));
   assert.equal(withRoute.referralEligible, true);
@@ -224,19 +216,13 @@ test("licence evidence must be verified, official, current and unexpired", () =>
   assert.equal(isOfficialGamblingCommissionSource("https://evil.invalid/gamblingcommission.gov.uk"), false);
 });
 
-test("domain, commercial and redirect layers remain distinct and fail closed", () => {
+test("domain and redirect layers remain distinct and fail closed", () => {
   const missingDomain = evaluate(casino(), { domainEvidence: null });
   assert.equal(missingDomain.editorialEligible, true);
   assert.equal(missingDomain.operatorEvidenceEligible, false);
   assert.ok(missingDomain.reasonCodes.includes("GB_DOMAIN_EVIDENCE_MISSING"));
   const wrongDomain = evaluate(casino(), { domainEvidence: { ...domainEvidence, domain: "other.invalid" } });
   assert.ok(wrongDomain.reasonCodes.includes("GB_DOMAIN_EVIDENCE_INVALID"));
-  const missingCommercial = evaluate(casino(), { commercialContract: null });
-  assert.equal(missingCommercial.operatorEvidenceEligible, true);
-  assert.equal(missingCommercial.commercialEligible, false);
-  assert.ok(missingCommercial.reasonCodes.includes("GB_COMMERCIAL_CONTRACT_MISSING"));
-  const invalidCommercial = evaluate(casino(), { commercialContract: { ...commercialContract, programConnected: false } });
-  assert.ok(invalidCommercial.reasonCodes.includes("GB_COMMERCIAL_CONTRACT_INVALID"));
   const missingRedirect = evaluate(casino(), { redirectContract: null });
   assert.equal(missingRedirect.commercialEligible, true);
   assert.equal(missingRedirect.referralEligible, false);
@@ -268,19 +254,33 @@ function redirectOffer(): CandidateOffer {
 const canonicalGbActivation = {
   resolveRedirect: async () => ({
     casinoId: "casino",
-    redirectSlug: { id: "redirect", slug: "casino-visit" },
-    affiliateOffer: { id: "offer" },
+    countryCode: "GB",
+    casinoBonusId: null,
+    redirectSlug: { id: "redirect", slug: "casino-visit", active: true, archivedAt: null },
+    affiliateOffer: {
+      id: "offer",
+      casinoId: "casino",
+      casinoBonusId: null,
+      startAt: null,
+      expiresAt: null,
+      program: { id: "program", casinoId: "casino", operator: "Operator", metadata: {} },
+    },
     primaryTrackingLink: {
       id: "link",
+      offerId: "offer",
       destinationUrl: "https://casino.invalid/welcome",
       trackingUrl: "https://tracking.invalid/click",
+      verifiedAt: now,
+      lastCheckedAt: now,
+      validFrom: null,
+      expiresAt: null,
     },
   }),
 } as never;
 
 test("redirect authority is a strict AND and rechecks before returning a stored destination", async () => {
   let offerReads = 0;
-  const offers = { activeCandidates: async () => { offerReads += 1; return [redirectOffer()] as never; } };
+  const offers = { legacyAdminPreviewCandidates: async () => { offerReads += 1; return [redirectOffer()] as never; } };
   const policyDenied = new AffiliateRedirectService(redirectStore(), offers);
   const denied = await policyDenied.resolve("casino-visit", { requestCountrySignal: { countryCode: "GB", trust: "TRUSTED", observedAt: now }, now });
   assert.equal(denied.ok, false);
@@ -291,6 +291,7 @@ test("redirect authority is a strict AND and rechecks before returning a stored 
     async evaluate() {
       return { jurisdictionAuthority: true, partnerAuthority: true, operatorAuthority: false, domainAuthority: false, programAuthority: true, offerAuthority: true, trackingAuthority: true, bonusAuthority: true, redirectAuthority: true, commercialReady: false, referralReady: false, reasonCodes: ["GB_DOMAIN_EVIDENCE_MISSING"], operatorEligibility: unavailableGbOperatorEligibility("GB_DOMAIN_EVIDENCE_MISSING"), checkedAt: now.toISOString(), evidenceCheckedAt: null, revalidateAt: null };
     },
+    async evaluateMany() { return new Map(); },
   };
   const trustedGbSignal = { countryCode: "GB", marketCode: "GB", trust: "TRUSTED" as const, observedAt: now };
   const incomplete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, operatorDenied, canonicalGbActivation).resolve("casino-visit", { requestCountrySignal: trustedGbSignal, now, currencyCode: "GBP" });
@@ -303,13 +304,14 @@ test("redirect authority is a strict AND and rechecks before returning a stored 
 });
 
 test("only an exact Founder-authorized Superfly casino can pass the stale internal GB deny", async () => {
-  const offers = { activeCandidates: async () => [redirectOffer()] as never };
+  const offers = { legacyAdminPreviewCandidates: async () => [redirectOffer()] as never };
   let founderScopeObserved = false;
   const readiness: GbCommercialReadinessAuthority = {
     async evaluate(input) {
       founderScopeObserved = input.founderWorldwideAuthority === true;
       return allowGbCommercialReadinessAuthority.evaluate(input);
     },
+    async evaluateMany(inputs) { return allowGbCommercialReadinessAuthority.evaluateMany(inputs); },
   };
   const exactSuperfly = await new AffiliateRedirectService(
     redirectStore("21-prive"),

@@ -204,7 +204,7 @@ test("19. a governed action requires the complete canonical authority chain", ()
   const resolver = read("lib/commercial/public-commercial-action-resolver.ts");
   const projection = read("lib/affiliate-routing/partner-route-projection.ts");
   assert.match(resolver, /scopedCasinoReferralAllowed/);
-  assert.match(resolver, /gbOperatorEligibility\.evaluateMany/);
+  assert.match(resolver, /gbCommercialReadiness\.evaluateMany/);
   assert.match(resolver, /listPublicRoutes/);
   assert.match(resolver, /isSafePublicSlug\(route\.slug\)/);
   assert.match(projection, /hasFounderGlobalProductionAuthority/);

@@ -54,7 +54,7 @@ historical/dead code.
 | `AffiliateOffer.geoMode` / `AffiliateTrackingLink.geoMode` | Raw provider scope plus duplicate permission state machine | A/C/E | Retained only as non-authoritative provider/import compatibility metadata pending PR4/PR6. |
 | `AffiliateTrackingLinkCountry.productionEligible` | Legacy route projection and duplicate commercial permission | A/E | Retained only for historical rollback compatibility; no canonical reader or writer depends on it. Cleanup is PR6. |
 | `AffiliateProgram.supportedCountries` | Raw partner/import scope and an old GB market predicate | A/C/E | Retained as non-authoritative provider evidence; exact route scope replaces its public GEO predicate. |
-| Affiliate Program/Offer/Tracking lifecycle fields | Transitional entity lifecycle and GB contract evidence | B/E | Narrowly retained for PR4. They do not replace the exact route decision. |
+| Affiliate Program/Offer/Tracking lifecycle fields | Transitional entity lifecycle and old GB contract approximation | B/E | RFC-050 removes them from runtime authority. They remain provider/Admin/history facts pending PR6. |
 | redirect slug, offer, tracking and bonus foreign-key bindings | Identity and controlled redirect integrity | B | Retained and checked against the exact route. |
 | route verification status/time/final host | Technical route health | B | Retained; only current `HEALTHY` routes are actionable. |
 | jurisdiction resolver and exact AR/CA evidence | Legal and trusted-location constraints | B/C | Retained outside Affiliate lifecycle. |
@@ -156,10 +156,10 @@ authorize a route.
 
 CTA and redirect use the same canonical market key and exact lookup. The
 redirect keeps its safe HTTPS validation, controlled slug, attribution,
-analytics and jurisdiction checks. GB keeps its operator, domain, licence,
-agreement, bonus, lifecycle and tracking-evidence safeguards; the duplicate
-Program/Offer/Tracking country predicates are removed because the exact GB
-route is the GEO decision.
+analytics and jurisdiction checks. Under RFC-050, GB keeps its factual
+operator, domain, licence, agreement, offer-window, bonus and tracking-evidence
+safeguards without generic Affiliate lifecycle state; the exact GB route is the
+GEO and business-routing decision.
 
 ## CRM, MCP and media boundaries
 
@@ -233,8 +233,8 @@ CRM-independent write boundaries.
 
 ## Deferred work
 
-- PR4 — Affiliate Lifecycle Collapse decides the remaining Network, Program,
-  Offer and Tracking lifecycle model.
+- PR4 — Affiliate Lifecycle Collapse is decided by RFC-050: lifecycle fields
+  are non-authoritative provider/Admin/history facts pending PR6.
 - PR5 — MCP Extraction & Retirement removes the Commercial MCP transport.
 - PR6 — Legacy Cleanup removes proven-unused country tables, `geoMode`,
   `productionEligible`, fallback columns, old scripts and compatibility types

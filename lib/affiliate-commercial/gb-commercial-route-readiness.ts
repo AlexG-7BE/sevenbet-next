@@ -1,4 +1,3 @@
-import type { CandidateOffer } from "@/lib/affiliate-routing/candidate-resolver";
 import type { CasinoBonus, CasinoDomain } from "@/lib/casino-domain/types";
 import {
   GB_LICENCE_EVIDENCE_MAX_AGE_MS,
@@ -6,14 +5,53 @@ import {
   unavailableGbOperatorEligibility,
   isOfficialGamblingCommissionSource,
   type GbOperatorEligibilityDecision,
+  type GbRedirectContractEvidence,
 } from "@/lib/jurisdiction/gb-operator-eligibility";
-import type { JurisdictionDecision } from "@/lib/jurisdiction/types";
 
 import type { GbCommercialDomainEvidenceRecord } from "./gb-domain-evidence";
 import { GB_PARTNER_AGREEMENT_REVIEW_MAX_AGE_MS, assessGbPartnerAgreement } from "./gb-partner-agreement";
 
 export const GB_TIME_LIMITED_BONUS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 export const GB_EVERGREEN_BONUS_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Factual evidence carried by an exact canonical route. Deliberately absent:
+ * AffiliateNetwork.active, AffiliateProgram.status/workflowStatus,
+ * AffiliateOffer.status and AffiliateTrackingLink.active/archivedAt.
+ */
+export interface GbCommercialRouteEvidence {
+  program: {
+    id: string;
+    casinoId: string | null;
+    operator: string;
+    metadata: unknown;
+  };
+  offer: {
+    id: string;
+    casinoId: string;
+    casinoBonusId: string | null;
+    startAt: Date | string | null;
+    expiresAt: Date | string | null;
+  };
+  trackingLink: {
+    id: string;
+    offerId: string;
+    destinationUrl: string;
+    trackingUrl: string;
+    verifiedAt: Date | string | null;
+    lastCheckedAt: Date | string | null;
+    validFrom: Date | string | null;
+    expiresAt: Date | string | null;
+  } | null;
+}
+
+export interface GbCommercialJurisdictionDecision {
+  countryCode: string | null;
+  commercialAllowed: boolean;
+  referralAllowed: boolean;
+  reasonCode: string;
+  revalidateAt?: string | null;
+}
 
 export type GbCommercialReadinessReasonCode =
   | "GB_COMMERCIAL_READY"
@@ -22,10 +60,6 @@ export type GbCommercialReadinessReasonCode =
   | "GB_JURISDICTION_REFERRAL_DENIED"
   | "GB_PROGRAM_CASINO_MISSING"
   | "GB_PROGRAM_CASINO_MISMATCH"
-  | "GB_PROGRAM_INACTIVE"
-  | "GB_PROGRAM_UNPUBLISHED"
-  | "GB_PROGRAM_DISCONNECTED"
-  | "GB_PROGRAM_TRUSTED_AUTO_ACTIVATION_FORBIDDEN"
   | "GB_PARTNER_AGREEMENT_MISSING"
   | "GB_PARTNER_AGREEMENT_INVALID"
   | "GB_PARTNER_AGREEMENT_NOT_EFFECTIVE"
@@ -37,7 +71,6 @@ export type GbCommercialReadinessReasonCode =
   | "GB_OPERATOR_PROFILE_MISSING"
   | "GB_OPERATOR_IDENTITY_MISMATCH"
   | "GB_BRAND_OPERATOR_MISMATCH"
-  | "GB_OFFER_INACTIVE"
   | "GB_OFFER_NOT_EFFECTIVE"
   | "GB_OFFER_CASINO_MISMATCH"
   | "GB_DOMAIN_EVIDENCE_MISSING"
@@ -49,7 +82,7 @@ export type GbCommercialReadinessReasonCode =
   | "GB_LICENCE_RELATIONSHIP_MISMATCH"
   | "GB_OPERATOR_AUTHORITY_DENIED"
   | "GB_TRACKING_LINK_MISSING"
-  | "GB_TRACKING_LINK_INACTIVE"
+  | "GB_TRACKING_OFFER_MISMATCH"
   | "GB_TRACKING_LINK_UNSAFE"
   | "GB_TRACKING_EVIDENCE_MISSING"
   | "GB_TRACKING_EVIDENCE_STALE"
@@ -82,11 +115,10 @@ export interface GbCommercialReadinessDecision {
 
 export interface GbCommercialReadinessInput {
   casino: CasinoDomain;
-  offer: CandidateOffer;
-  trackingLinkId: string;
+  route: GbCommercialRouteEvidence;
   domainEvidence: GbCommercialDomainEvidenceRecord | null;
-  jurisdictionDecision: JurisdictionDecision;
-  redirectContract: { slugActive: boolean; destinationServerOwned: boolean; destinationSafe: boolean };
+  jurisdictionDecision: GbCommercialJurisdictionDecision;
+  redirectContract: GbRedirectContractEvidence;
   founderWorldwideAuthority?: boolean;
   now: Date;
 }
@@ -126,9 +158,7 @@ function bonusReasons(bonus: CasinoBonus | null, casinoDomain: string, now: Date
   const reasons: GbCommercialReadinessReasonCode[] = [];
   const dates: Date[] = [];
   if (!bonus) return { reasons: ["GB_BONUS_MISSING" as const], dates };
-  if (bonus.offerStatus !== "ACTIVE" || bonus.publicationStatus !== "PUBLISHED" || ["SUSPENDED", "ARCHIVED"].includes(bonus.lifecycleStatus)) {
-    reasons.push("GB_BONUS_INACTIVE");
-  }
+  if (bonus.offerStatus !== "ACTIVE" || bonus.publicationStatus !== "PUBLISHED" || ["SUSPENDED", "ARCHIVED"].includes(bonus.lifecycleStatus)) reasons.push("GB_BONUS_INACTIVE");
   if ((bonus.startsAt && bonus.startsAt > now) || (bonus.expiresAt && bonus.expiresAt <= now)) reasons.push("GB_BONUS_NOT_EFFECTIVE");
   const headlineValuePresent = Boolean((bonus.percentage && bonus.percentage > 0) || (bonus.terms.maximumBonus && bonus.terms.maximumBonus > 0) || (bonus.freeSpins && bonus.freeSpins > 0));
   const termsComplete = Boolean(
@@ -175,7 +205,8 @@ export function unavailableGbCommercialReadiness(): GbCommercialReadinessDecisio
 }
 
 export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput): GbCommercialReadinessDecision {
-  const { casino, offer, now } = input;
+  const { casino, route, now } = input;
+  const { program, offer, trackingLink } = route;
   const reasons: GbCommercialReadinessReasonCode[] = [];
   const checkedDates: Date[] = [];
   const revalidationDates: Date[] = [];
@@ -186,25 +217,15 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
   if (input.jurisdictionDecision.countryCode !== "GB" || (!input.jurisdictionDecision.commercialAllowed && !founderSupersedesInternalGbDeny)) reasons.push("GB_JURISDICTION_COMMERCIAL_DENIED");
   if (input.jurisdictionDecision.countryCode !== "GB" || (!input.jurisdictionDecision.referralAllowed && !founderSupersedesInternalGbDeny)) reasons.push("GB_JURISDICTION_REFERRAL_DENIED");
 
-  const program = offer.program;
   if (!program.casinoId) reasons.push("GB_PROGRAM_CASINO_MISSING");
   else if (program.casinoId !== casino.id) reasons.push("GB_PROGRAM_CASINO_MISMATCH");
-  if (program.status !== "ACTIVE" || program.archivedAt || ["SUSPENDED", "ARCHIVED"].includes(program.domainLifecycleStatus ?? "") || program.network.active !== true || program.network.archivedAt) reasons.push("GB_PROGRAM_INACTIVE");
-  if (program.workflowStatus !== "PUBLISHED") reasons.push("GB_PROGRAM_UNPUBLISHED");
-  if (program.integrationMode !== "MANUAL" && (program.connectionStatus !== "CONNECTED" || !program.providerAccountId || !program.credentialReference)) reasons.push("GB_PROGRAM_DISCONNECTED");
-  if (program.trustedAutoActivation) reasons.push("GB_PROGRAM_TRUSTED_AUTO_ACTIVATION_FORBIDDEN");
 
   const structuredOperatorIdentity = casino.operator.legalName || casino.operator.name;
   if (!casino.operator.id || !structuredOperatorIdentity) reasons.push("GB_OPERATOR_PROFILE_MISSING");
   if (!program.operator || normalizeLabel(program.operator) !== normalizeLabel(structuredOperatorIdentity)) reasons.push("GB_OPERATOR_IDENTITY_MISMATCH");
   if (casino.brand.id && casino.brand.operatorId !== casino.operator.id) reasons.push("GB_BRAND_OPERATOR_MISMATCH");
 
-  const agreementAssessment = assessGbPartnerAgreement({
-    metadata: program.metadata,
-    expectedIdentity: program.operator,
-    now,
-    requiredChannels: ["DIRECT_LINK"],
-  });
+  const agreementAssessment = assessGbPartnerAgreement({ metadata: program.metadata, expectedIdentity: program.operator, now, requiredChannels: ["DIRECT_LINK"] });
   const agreementReasonMap = {
     MISSING: "GB_PARTNER_AGREEMENT_MISSING",
     INVALID: "GB_PARTNER_AGREEMENT_INVALID",
@@ -224,11 +245,10 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
     if (agreement.expiresAt) revalidationDates.push(agreement.expiresAt);
   }
 
-  if (offer.status !== "ACTIVE" || offer.archivedAt || ["SUSPENDED", "ARCHIVED"].includes(offer.domainLifecycleStatus ?? "")) reasons.push("GB_OFFER_INACTIVE");
   const offerStart = asDate(offer.startAt);
   const offerEnd = asDate(offer.expiresAt);
   if ((offerStart && offerStart > now) || (offerEnd && offerEnd <= now)) reasons.push("GB_OFFER_NOT_EFFECTIVE");
-  if (offer.casinoId !== casino.id || (offer.casinoBonus && offer.casinoBonus.casinoId !== casino.id)) reasons.push("GB_OFFER_CASINO_MISMATCH");
+  if (offer.casinoId !== casino.id) reasons.push("GB_OFFER_CASINO_MISMATCH");
 
   const domainEvidence = input.domainEvidence;
   let validDomainEvidence = false;
@@ -248,26 +268,21 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
     } else if (observedAt > now || now.getTime() - observedAt.getTime() >= GB_LICENCE_EVIDENCE_MAX_AGE_MS || revalidateAt <= now) {
       reasons.push("GB_DOMAIN_EVIDENCE_STALE");
     } else {
-      if (domainEvidence.casinoId !== casino.id || domainEvidence.operatorId !== casino.operator.id || domainEvidence.brandId !== casino.brand.id) {
-        reasons.push("GB_DOMAIN_RELATIONSHIP_MISMATCH");
-      }
-      if (!currentLicence || normalizeLabel(currentLicence.number) !== normalizeLabel(domainEvidence.licenceAccountReference)) {
-        reasons.push("GB_LICENCE_RELATIONSHIP_MISMATCH");
-      }
+      if (domainEvidence.casinoId !== casino.id || domainEvidence.operatorId !== casino.operator.id || domainEvidence.brandId !== casino.brand.id) reasons.push("GB_DOMAIN_RELATIONSHIP_MISMATCH");
+      if (!currentLicence || normalizeLabel(currentLicence.number) !== normalizeLabel(domainEvidence.licenceAccountReference)) reasons.push("GB_LICENCE_RELATIONSHIP_MISMATCH");
       validDomainEvidence = !reasons.includes("GB_DOMAIN_RELATIONSHIP_MISMATCH") && !reasons.includes("GB_LICENCE_RELATIONSHIP_MISMATCH");
       checkedDates.push(observedAt);
       revalidationDates.push(revalidateAt, new Date(observedAt.getTime() + GB_LICENCE_EVIDENCE_MAX_AGE_MS));
     }
   }
 
-  const link = offer.trackingLinks.find((candidate) => candidate.id === input.trackingLinkId);
-  if (!link) {
+  if (!trackingLink) {
     reasons.push("GB_TRACKING_LINK_MISSING");
   } else {
-    if (!link.active || link.archivedAt) reasons.push("GB_TRACKING_LINK_INACTIVE");
-    if (!safeHttps(link.destinationUrl) || !safeHttps(link.trackingUrl)) reasons.push("GB_TRACKING_LINK_UNSAFE");
-    const verifiedAt = asDate(link.verifiedAt);
-    const lastCheckedAt = asDate(link.lastCheckedAt);
+    if (trackingLink.offerId !== offer.id) reasons.push("GB_TRACKING_OFFER_MISMATCH");
+    if (!safeHttps(trackingLink.destinationUrl) || !safeHttps(trackingLink.trackingUrl)) reasons.push("GB_TRACKING_LINK_UNSAFE");
+    const verifiedAt = asDate(trackingLink.verifiedAt);
+    const lastCheckedAt = asDate(trackingLink.lastCheckedAt);
     if (!verifiedAt || !lastCheckedAt) {
       reasons.push("GB_TRACKING_EVIDENCE_MISSING");
     } else if (verifiedAt > now || lastCheckedAt > now || now.getTime() - verifiedAt.getTime() >= GB_LICENCE_EVIDENCE_MAX_AGE_MS || now.getTime() - lastCheckedAt.getTime() >= GB_LICENCE_EVIDENCE_MAX_AGE_MS) {
@@ -276,8 +291,8 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
       checkedDates.push(verifiedAt, lastCheckedAt);
       revalidationDates.push(new Date(verifiedAt.getTime() + GB_LICENCE_EVIDENCE_MAX_AGE_MS), new Date(lastCheckedAt.getTime() + GB_LICENCE_EVIDENCE_MAX_AGE_MS));
     }
-    const linkStart = asDate(link.validFrom);
-    const linkEnd = asDate(link.expiresAt);
+    const linkStart = asDate(trackingLink.validFrom);
+    const linkEnd = asDate(trackingLink.expiresAt);
     if ((linkStart && linkStart > now) || (linkEnd && linkEnd <= now)) reasons.push("GB_TRACKING_LINK_EXPIRED");
     if (linkEnd) revalidationDates.push(linkEnd);
   }
@@ -288,16 +303,8 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
     if (bonus.dates[0]) checkedDates.push(bonus.dates[0]);
     if (bonus.dates[1]) revalidationDates.push(bonus.dates[1]);
   }
-
   if (!Object.values(input.redirectContract).every(Boolean)) reasons.push("GB_REDIRECT_CONTRACT_INVALID");
 
-  const commercialContract = {
-    programActive: program.status === "ACTIVE" && !program.archivedAt && !["SUSPENDED", "ARCHIVED"].includes(program.domainLifecycleStatus ?? "") && program.network.active === true && !program.network.archivedAt,
-    programPublished: program.workflowStatus === "PUBLISHED",
-    programConnected: program.integrationMode === "MANUAL" || (program.connectionStatus === "CONNECTED" && Boolean(program.providerAccountId) && Boolean(program.credentialReference)),
-    offerActive: offer.status === "ACTIVE" && !offer.archivedAt && !["SUSPENDED", "ARCHIVED"].includes(offer.domainLifecycleStatus ?? ""),
-    trackingLinkActive: link?.active === true && !link.archivedAt,
-  };
   const operatorEligibility = evaluateGbOperatorEligibility({
     casino,
     now,
@@ -308,11 +315,9 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
       observedAt: asDate(domainEvidence.observedAt),
       expiresAt: asDate(domainEvidence.revalidateAt),
     } : null,
-    commercialContract,
     redirectContract: input.redirectContract,
   });
   if (!operatorEligibility.referralEligible) reasons.push("GB_OPERATOR_AUTHORITY_DENIED");
-
   if (operatorEligibility.evidenceCheckedAt) checkedDates.push(new Date(operatorEligibility.evidenceCheckedAt));
   if (operatorEligibility.revalidateAt) revalidationDates.push(new Date(operatorEligibility.revalidateAt));
   if (input.jurisdictionDecision.revalidateAt) revalidationDates.push(new Date(input.jurisdictionDecision.revalidateAt));

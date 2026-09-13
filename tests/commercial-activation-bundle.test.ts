@@ -82,16 +82,13 @@ function emptyInspection(): CommercialActivationInspection {
 
 class MemoryActivationStore implements CommercialActivationStore {
   state = emptyInspection();
-  applyCalls = 0;
 
   async inspect() {
     return structuredClone(this.state);
   }
 
-  async apply(input: CommercialActivationBundle) {
-    this.applyCalls += 1;
+  materializeForReadOnlyVerification(input: CommercialActivationBundle) {
     const record = input.records[0];
-    const plan = planCommercialActivationRecord(input, record, this.state, now);
     const desired = desiredActivationState(input, record, this.state);
     const ids = {
       networkId: "33333333-3333-4333-8333-333333333333",
@@ -108,7 +105,6 @@ class MemoryActivationStore implements CommercialActivationStore {
       trackingLink: { id: ids.trackingLinkId, offerId: ids.offerId, current: desired.trackingLink, metadata: desired.trackingLink.metadata },
       redirect: { id: ids.redirectId, casinoId: this.state.casino!.id, affiliateOfferId: ids.offerId, casinoBonusId: null, current: { ...desired.redirect, affiliateOfferId: ids.offerId } },
     };
-    return [{ key: plan.key, changed: Object.values(plan.actions).some((action) => action !== "UNCHANGED"), ids }];
   }
 }
 
@@ -123,10 +119,6 @@ function jurisdiction(commercialAllowed: boolean) {
   };
 }
 
-const canonicalActivation = {
-  activateCasinoInGeo: async () => ({ idempotent: false, activation: { status: "ACTIVE", externalBlockerCode: null } }),
-} as never;
-
 test("bundle schema represents exact portal identifiers and rejects unknown secret fields", () => {
   const parsed = bundle();
   assert.equal(parsed.records[0].trackingLink.campaignId, "campaign-42");
@@ -139,7 +131,6 @@ test("preview is read-only and reports CREATE, missing dependency, conflict, and
   const store = new MemoryActivationStore();
   const service = new CommercialActivationService(store, { isCanonicalRouteActive: async () => true }, jurisdiction(true));
   const preview = await service.preview(input, now);
-  assert.equal(store.applyCalls, 0);
   assert.equal(preview.records[0].disposition, "READY");
   assert.ok(Object.values(preview.records[0].actions).every((action) => action === "CREATE"));
 
@@ -180,26 +171,22 @@ test("contradictory factual GEO metadata rejects and cannot mutate", async () =>
   assert.equal(preview.ready, false);
   assert.equal(preview.records[0].disposition, "REJECT");
   assert.ok(preview.records[0].blockedReasons.includes("MARKET_PROFILE_CONTRADICTION"));
-  await assert.rejects(() => service.apply(input, "99999999-9999-4999-8999-999999999999", now), /COMMERCIAL_ACTIVATION_BLOCKED/);
-  assert.equal(store.applyCalls, 0);
 });
 
-test("apply is exact and idempotent while jurisdiction denial remains fail-closed", async () => {
+test("retired activation bundle stays read-only while verification remains fail-closed", async () => {
   const input = bundle();
   const store = new MemoryActivationStore();
-  const allowed = new CommercialActivationService(store, { isCanonicalRouteActive: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(true), canonicalActivation);
-  const first = await allowed.apply(input, "99999999-9999-4999-8999-999999999999", now);
-  assert.equal(first.changedRecords, 1);
-  assert.equal(first.verification.verified, true);
-  assert.equal(first.verification.productionReady, true);
-  const second = await allowed.apply(input, "99999999-9999-4999-8999-999999999999", now);
-  assert.equal(second.changedRecords, 0);
-  assert.equal(second.unchangedRecords, 1);
+  store.materializeForReadOnlyVerification(input);
+  const allowed = new CommercialActivationService(store, { isCanonicalRouteActive: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(true));
+  const allowedVerification = await allowed.verify(input, now);
+  assert.equal(allowedVerification.verified, true);
+  assert.equal(allowedVerification.productionReady, true);
 
   const deniedStore = new MemoryActivationStore();
-  const denied = new CommercialActivationService(deniedStore, { isCanonicalRouteActive: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(false), canonicalActivation);
-  const applied = await denied.apply(input, "99999999-9999-4999-8999-999999999999", now);
-  assert.equal(applied.verification.verified, true);
-  assert.equal(applied.verification.productionReady, false);
-  assert.equal(applied.verification.records[0].jurisdictionReason, "UNSUPPORTED_MARKET");
+  deniedStore.materializeForReadOnlyVerification(input);
+  const denied = new CommercialActivationService(deniedStore, { isCanonicalRouteActive: async (request) => request.commercialAllowed === true && request.referralAllowed === true }, jurisdiction(false));
+  const deniedVerification = await denied.verify(input, now);
+  assert.equal(deniedVerification.verified, true);
+  assert.equal(deniedVerification.productionReady, false);
+  assert.equal(deniedVerification.records[0].jurisdictionReason, "UNSUPPORTED_MARKET");
 });

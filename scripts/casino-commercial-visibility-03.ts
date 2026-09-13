@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { EditorialStatus, Prisma } from "@prisma/client";
 
-import { readCasinoEditorMetadata, writeCasinoEditorMetadata } from "../lib/casino-builder/editor-metadata";
+import { readCasinoEditorMetadata } from "../lib/casino-builder/editor-metadata";
 import {
   CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT,
   CASINO_COMMERCIAL_VISIBILITY_RELEASE,
@@ -14,14 +14,12 @@ import {
   superflyCommercialCatalog,
   type CommercialCatalogDefinition,
 } from "../lib/casino-commercial-visibility/catalog";
-import { casinoCatalogEditorialDocument, casinoRealCatalog, casinoRealCatalogBySlug } from "../lib/casino-real-catalog/catalog";
+import { casinoCatalogEditorialDocument, casinoRealCatalog } from "../lib/casino-real-catalog/catalog";
 import prisma from "../lib/db/prisma";
 import { deterministicCasinoIngestionId } from "../lib/casino-ingestion/importer";
 import { projectPartnerRoutes } from "../lib/affiliate-routing/partner-route-projection";
 import { extractHashBoundSuperflyCampaignDestination } from "../lib/affiliate-routing/superfly-destination-evidence";
 import { partnerRouteRepository } from "../lib/repositories/partner-route.repository";
-import { casinoService } from "../lib/services/casino.service";
-import { editorialReviewService } from "../lib/services/editorial-review.service";
 
 if (!process.env.DATABASE_URL?.trim() && process.env.PRODDB_DATABASE_URL?.trim()) {
   process.env.DATABASE_URL = process.env.PRODDB_DATABASE_URL;
@@ -153,23 +151,6 @@ async function evidenceAuthority() {
   return routeUrls;
 }
 
-function assertWriteAuthority() {
-  if (process.env.CASINO_COMMERCIAL_VISIBILITY_CONFIRM !== CASINO_COMMERCIAL_VISIBILITY_RELEASE) throw new Error(`Write refused. Set CASINO_COMMERCIAL_VISIBILITY_CONFIRM=${CASINO_COMMERCIAL_VISIBILITY_RELEASE}.`);
-  if (process.env.ALLOW_CASINO_COMMERCIAL_VISIBILITY_WRITE !== "true") throw new Error("Write refused without the bounded write flag.");
-  const target = process.env.CASINO_COMMERCIAL_VISIBILITY_TARGET;
-  if (target !== "production" && target !== "preview") throw new Error("Write refused without an explicit production or preview target.");
-  if (process.env.VERCEL_ENV !== target) throw new Error("Write refused because VERCEL_ENV differs from the explicit target.");
-  const expected = process.env.CASINO_COMMERCIAL_VISIBILITY_DATABASE_FINGERPRINT?.trim();
-  const actual = databaseTargetFingerprint();
-  if (!expected || expected !== actual) throw new Error(`Write refused. Independently verify and set CASINO_COMMERCIAL_VISIBILITY_DATABASE_FINGERPRINT=${actual}.`);
-}
-
-async function actor() {
-  const record = await prisma.adminUser.findFirst({ where: { role: { in: ["SUPER_ADMIN", "ADMIN", "EDITOR"] } }, orderBy: [{ role: "asc" }, { createdAt: "asc" }], select: { id: true } });
-  if (!record) throw new Error("No governed CMS actor is available.");
-  return record.id;
-}
-
 function identities(definition: CommercialCatalogDefinition) {
   return {
     bonus: id(definition.slug, "bonus"),
@@ -178,18 +159,6 @@ function identities(definition: CommercialCatalogDefinition) {
     tracking: id(definition.slug, "tracking"),
     redirect: id(definition.slug, "redirect"),
     media: id(definition.slug, "media"),
-  };
-}
-
-function commercialVisibilityMetadata(definition: CommercialCatalogDefinition) {
-  return {
-    authority: CASINO_COMMERCIAL_VISIBILITY_RELEASE,
-    productionEligibleByDefault: true,
-    blockedCountries: superflyBlockedCountries,
-    evidenceId: definition.evidence.routeId,
-    canonicalUrlSha256: definition.evidence.canonicalUrlSha256,
-    observedAt: CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT,
-    availabilityMeaning: "A real route with no detected block; not a regulator or partner-approval claim.",
   };
 }
 
@@ -297,142 +266,6 @@ async function catalogEditorialIssues() {
   });
 }
 
-async function syncEditorial(definition: { slug: (typeof casinoRealCatalog)[number]["slug"] }, casinoId: string, actorId: string) {
-  const editorialDefinition = casinoRealCatalogBySlug.get(definition.slug);
-  if (!editorialDefinition) throw new Error(`${definition.slug} is absent from the eight-casino editorial catalog.`);
-  let review = await editorialReviewService.getByCasinoId(casinoId);
-  if (review && review.status !== "DRAFT") review = await editorialReviewService.transition(review.id, "DRAFT", actorId);
-  review = await editorialReviewService.saveDraft(casinoId, casinoCatalogEditorialDocument(editorialDefinition), `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}: global catalog and commercial separation`, actorId);
-  review = await editorialReviewService.transition(review.id, "IN_REVIEW", actorId);
-  review = await editorialReviewService.transition(review.id, "APPROVED", actorId);
-  const revision = review.revisions.find((entry) => entry.revisionNumber === review?.draftRevisionNumber);
-  if (!revision) throw new Error(`${definition.slug} editorial revision was not created.`);
-  await editorialReviewService.publish(review.id, revision.id, actorId);
-}
-
-async function syncDefinition(definition: CommercialCatalogDefinition, actorId: string, networkId: string, routeUrl: string) {
-  const before = await definitionIssues(definition);
-  if (!before.length) return { slug: definition.slug, status: "unchanged" as const };
-  const keys = identities(definition);
-  let aggregate = await casinoService.getCasinoById((await prisma.casino.findUniqueOrThrow({ where: { slug: definition.slug }, select: { id: true } })).id);
-  if (aggregate.id.startsWith("demo-")) throw new Error(`${definition.slug} resolved to a synthetic identity.`);
-  if (aggregate.status !== EditorialStatus.DRAFT) aggregate = await casinoService.transitionWorkflow(aggregate.id, EditorialStatus.DRAFT, actorId, aggregate.updatedAt);
-  const editorMetadata = readCasinoEditorMetadata(aggregate.reviewBlocks);
-  editorMetadata.general = { ...editorMetadata.general, supportsMobile: true, internalNotes: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}; global evidence and CTA authority are independent.` };
-  const governedBonusMetadata = editorMetadata.bonuses[keys.bonus] ?? {
-    internalName: definition.bonus.title,
-    shortTerms: definition.bonus.wageringText,
-    amount: String(definition.bonus.maximumBonus),
-    wageringBase: definition.slug === "hello-casino" ? "DEPOSIT_AND_BONUS" : "OTHER",
-    minimumOdds: null,
-    maximumBet: null,
-    eligibleGames: [],
-    excludedGames: [],
-    eligiblePaymentMethods: [],
-    excludedPaymentMethods: [],
-    newPlayersOnly: true,
-    existingPlayersAllowed: false,
-    promoCode: null,
-    evergreen: true,
-    featured: false,
-    exclusive: false,
-    notes: null,
-    geoMode: "GLOBAL" as const,
-    allowedCountries: [],
-    blockedCountries: [],
-  };
-  editorMetadata.bonuses = {
-    ...editorMetadata.bonuses,
-    [keys.bonus]: {
-      ...governedBonusMetadata,
-      amount: String(definition.bonus.maximumBonus),
-      maximumBet: definition.bonus.maximumBet === null ? null : String(definition.bonus.maximumBet),
-      notes: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}; offer evidence ${definition.evidence.offerId}; global researched offer.`,
-    },
-  };
-  await prisma.casino.update({
-    where: { id: aggregate.id },
-    data: {
-      foundedYear: definition.foundedYear,
-      languages: definition.languages,
-      currencies: definition.currencies,
-      responsibleGamblingTools: definition.responsibleGamblingTools,
-      lastReviewedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT),
-      trackingMetadata: { ...object(aggregate.trackingMetadata), commercialVisibilityRelease: CASINO_COMMERCIAL_VISIBILITY_RELEASE, globalCatalogEvidenceId: definition.evidence.catalogId },
-      reviewBlocks: writeCasinoEditorMetadata(object(aggregate.reviewBlocks), editorMetadata),
-      updatedBy: actorId,
-    },
-  });
-  for (const [sortOrder, payment] of definition.payments.entries()) await prisma.casinoPaymentMethod.upsert({
-    where: { id: id(definition.slug, "payment", payment.key) },
-    create: { id: id(definition.slug, "payment", payment.key), casinoId: aggregate.id, casinoCountryId: null, methodKey: payment.key, name: payment.name, supportsDeposits: payment.supportsDeposits, supportsWithdrawals: payment.supportsWithdrawals, currencies: payment.currencies, maximumWithdrawal: payment.maximumWithdrawal, withdrawalTime: payment.withdrawalTime, crypto: false, lastVerifiedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), notes: payment.notes, sortOrder },
-    update: { casinoId: aggregate.id, casinoCountryId: null, methodKey: payment.key, name: payment.name, supportsDeposits: payment.supportsDeposits, supportsWithdrawals: payment.supportsWithdrawals, currencies: payment.currencies, maximumWithdrawal: payment.maximumWithdrawal, withdrawalTime: payment.withdrawalTime, crypto: false, lastVerifiedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), notes: payment.notes, sortOrder },
-  });
-  for (const [sortOrder, provider] of definition.providers.entries()) await prisma.casinoGameProvider.upsert({
-    where: { id: id(definition.slug, "provider", provider.key) },
-    create: { id: id(definition.slug, "provider", provider.key), casinoId: aggregate.id, casinoCountryId: null, providerKey: provider.key, name: provider.name, liveCasino: provider.liveCasino, verifiedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), sortOrder },
-    update: { casinoId: aggregate.id, casinoCountryId: null, providerKey: provider.key, name: provider.name, liveCasino: provider.liveCasino, verifiedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), sortOrder },
-  });
-  for (const [sortOrder, category] of definition.categories.entries()) await prisma.casinoGameCategory.upsert({
-    where: { id: id(definition.slug, "category", category.key) },
-    create: { id: id(definition.slug, "category", category.key), casinoId: aggregate.id, casinoCountryId: null, categoryKey: category.key, name: category.name, gameCount: category.gameCount, featured: sortOrder === 0, sortOrder },
-    update: { casinoId: aggregate.id, casinoCountryId: null, categoryKey: category.key, name: category.name, gameCount: category.gameCount, featured: sortOrder === 0, sortOrder },
-  });
-  await prisma.casinoBonus.upsert({
-    where: { id: keys.bonus },
-    create: { id: keys.bonus, casinoId: aggregate.id, casinoCountryId: null, slug: definition.bonus.slug, title: definition.bonus.title, summary: definition.bonus.summary, type: "WELCOME", percentage: definition.bonus.percentage, minimumDeposit: definition.bonus.minimumDeposit, maximumBonus: definition.bonus.maximumBonus, currency: definition.bonus.currency, freeSpins: definition.bonus.freeSpins, wageringMultiplier: definition.bonus.wageringMultiplier, wageringText: definition.bonus.wageringText, eligibility: definition.bonus.eligibility, importantConditions: definition.bonus.importantConditions, status: "DRAFT", domainLifecycleStatus: "ACTIVE", offerStatus: "ACTIVE", lastVerifiedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), sortOrder: 0, createdBy: actorId, updatedBy: actorId },
-    update: { casinoId: aggregate.id, casinoCountryId: null, slug: definition.bonus.slug, title: definition.bonus.title, summary: definition.bonus.summary, type: "WELCOME", percentage: definition.bonus.percentage, minimumDeposit: definition.bonus.minimumDeposit, maximumBonus: definition.bonus.maximumBonus, currency: definition.bonus.currency, freeSpins: definition.bonus.freeSpins, wageringMultiplier: definition.bonus.wageringMultiplier, wageringText: definition.bonus.wageringText, eligibility: definition.bonus.eligibility, importantConditions: definition.bonus.importantConditions, domainLifecycleStatus: "ACTIVE", offerStatus: "ACTIVE", lastVerifiedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), sortOrder: 0, updatedBy: actorId },
-  });
-  if (definition.media) {
-    const diskPath = path.join(process.cwd(), "public", definition.media.path.replace(/^\//, ""));
-    const bytes = await readFile(diskPath);
-    await prisma.mediaAsset.upsert({
-      where: { storageKey: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE.toLowerCase()}/${definition.slug}/${path.basename(definition.media.path)}` },
-      create: { id: keys.media, type: "HERO", storageProvider: "LOCAL", storageKey: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE.toLowerCase()}/${definition.slug}/${path.basename(definition.media.path)}`, publicUrl: definition.media.path, originalFilename: path.basename(definition.media.path), mimeType: definition.media.mimeType, width: definition.media.width, height: definition.media.height, sizeBytes: bytes.length, altText: `${definition.title} controlled partner creative`, title: `${definition.title} controlled partner media`, caption: "Controlled media shown independently of CTA availability.", credit: "Superfly Partners", sortOrder: -90, featured: true, status: "ACTIVE", checksum: definition.media.checksum, metadata: { release: CASINO_COMMERCIAL_VISIBILITY_RELEASE, evidenceId: definition.media.evidenceId, role: definition.media.role }, createdBy: actorId, casinoId: aggregate.id },
-      update: { publicUrl: definition.media.path, originalFilename: path.basename(definition.media.path), mimeType: definition.media.mimeType, width: definition.media.width, height: definition.media.height, sizeBytes: bytes.length, altText: `${definition.title} controlled partner creative`, title: `${definition.title} controlled partner media`, caption: "Controlled media shown independently of CTA availability.", credit: "Superfly Partners", sortOrder: -90, featured: true, status: "ACTIVE", checksum: definition.media.checksum, metadata: { release: CASINO_COMMERCIAL_VISIBILITY_RELEASE, evidenceId: definition.media.evidenceId, role: definition.media.role }, archivedAt: null, casinoId: aggregate.id, casinoCountryId: null, casinoBonusId: null, affiliateOfferId: null },
-    });
-  }
-  const visibility = commercialVisibilityMetadata(definition);
-  await prisma.affiliateProgram.upsert({
-    where: { id: keys.program },
-    create: { id: keys.program, networkId, casinoId: aggregate.id, externalProgramId: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}:${definition.slug}`, name: `${definition.title} — Superfly Partners`, operator: "White Hat Gaming Limited", status: "ACTIVE", domainLifecycleStatus: "ACTIVE", workflowStatus: "PUBLISHED", providerType: "MANUAL", connectionStatus: "CONNECTED", integrationMode: "MANUAL", supportedCountries: [], supportedCurrencies: definition.currencies, metadata: { commercialVisibility: visibility }, sourceOfTruth: { release: CASINO_COMMERCIAL_VISIBILITY_RELEASE, catalogEvidenceId: definition.evidence.catalogId, routeEvidenceId: definition.evidence.routeId }, trustedAutoActivation: false, notes: "Bounded Founder-authorized global-default route; availability is not an approval claim.", createdBy: actorId, updatedBy: actorId },
-    update: { networkId, casinoId: aggregate.id, externalProgramId: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}:${definition.slug}`, name: `${definition.title} — Superfly Partners`, operator: "White Hat Gaming Limited", status: "ACTIVE", domainLifecycleStatus: "ACTIVE", workflowStatus: "PUBLISHED", connectionStatus: "CONNECTED", integrationMode: "MANUAL", supportedCountries: [], supportedCurrencies: definition.currencies, metadata: { commercialVisibility: visibility }, sourceOfTruth: { release: CASINO_COMMERCIAL_VISIBILITY_RELEASE, catalogEvidenceId: definition.evidence.catalogId, routeEvidenceId: definition.evidence.routeId }, trustedAutoActivation: false, archivedAt: null, notes: "Bounded Founder-authorized global-default route; availability is not an approval claim.", updatedBy: actorId },
-  });
-  await prisma.affiliateOffer.upsert({
-    where: { id: keys.offer },
-    create: { id: keys.offer, programId: keys.program, casinoId: aggregate.id, casinoBonusId: keys.bonus, externalOfferId: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}:${definition.slug}:welcome`, externalName: definition.bonus.title, internalName: `${definition.title} current welcome offer`, publicLabel: definition.bonus.title, offerType: "WELCOME", status: "ACTIVE", domainLifecycleStatus: "ACTIVE", payoutModel: "UNKNOWN", geoMode: "BLOCK", languages: [], devices: [], evergreen: true, featured: false, priority: 0, terms: definition.bonus.importantConditions.join(" "), notes: "Informational offer publication and CTA eligibility are independent.", metadata: { release: CASINO_COMMERCIAL_VISIBILITY_RELEASE, offerEvidenceId: definition.evidence.offerId }, sourceUpdatedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), lastSyncedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), createdBy: actorId, updatedBy: actorId },
-    update: { programId: keys.program, casinoId: aggregate.id, casinoBonusId: keys.bonus, externalOfferId: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}:${definition.slug}:welcome`, externalName: definition.bonus.title, internalName: `${definition.title} current welcome offer`, publicLabel: definition.bonus.title, offerType: "WELCOME", status: "ACTIVE", domainLifecycleStatus: "ACTIVE", geoMode: "BLOCK", languages: [], devices: [], evergreen: true, featured: false, priority: 0, terms: definition.bonus.importantConditions.join(" "), notes: "Informational offer publication and CTA eligibility are independent.", metadata: { release: CASINO_COMMERCIAL_VISIBILITY_RELEASE, offerEvidenceId: definition.evidence.offerId }, sourceUpdatedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), lastSyncedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), archivedAt: null, updatedBy: actorId },
-  });
-  await prisma.affiliateOfferCurrency.upsert({ where: { offerId_currencyCode: { offerId: keys.offer, currencyCode: "EUR" } }, create: { id: id(definition.slug, "offer-currency", "EUR"), offerId: keys.offer, currencyCode: "EUR" }, update: {} });
-  for (const countryCode of superflyBlockedCountries) await prisma.affiliateOfferCountry.upsert({ where: { offerId_countryCode: { offerId: keys.offer, countryCode } }, create: { id: id(definition.slug, "offer-block", countryCode), offerId: keys.offer, countryCode, mode: "BLOCK" }, update: { mode: "BLOCK" } });
-  const previousTracking = await prisma.affiliateTrackingLink.findUnique({ where: { id: keys.tracking }, select: { destinationUrl: true, trackingUrl: true } });
-  await prisma.affiliateTrackingLink.upsert({
-    where: { id: keys.tracking },
-    create: { id: keys.tracking, offerId: keys.offer, externalLinkId: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}:${definition.slug}`, label: `${definition.title} canonical campaign route`, destinationUrl: routeUrl, trackingUrl: routeUrl, geoMode: "BLOCK", active: true, priority: 100, source: "COMMERCIAL_CRM", verifiedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), lastCheckedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), metadata: { commercialVisibility: visibility }, creativeReference: definition.media?.evidenceId ?? null, createdBy: actorId, updatedBy: actorId },
-    update: { offerId: keys.offer, externalLinkId: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}:${definition.slug}`, label: `${definition.title} canonical campaign route`, destinationUrl: routeUrl, trackingUrl: routeUrl, geoMode: "BLOCK", active: true, priority: 100, source: "COMMERCIAL_CRM", verifiedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), lastCheckedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), metadata: { commercialVisibility: visibility }, creativeReference: definition.media?.evidenceId ?? null, archivedAt: null, updatedBy: actorId },
-  });
-  if (!previousTracking || previousTracking.destinationUrl !== routeUrl || previousTracking.trackingUrl !== routeUrl) {
-    const latest = await prisma.affiliateTrackingLinkRevision.findFirst({ where: { trackingLinkId: keys.tracking }, orderBy: { revisionNumber: "desc" }, select: { revisionNumber: true } });
-    await prisma.affiliateTrackingLinkRevision.create({ data: { trackingLinkId: keys.tracking, revisionNumber: (latest?.revisionNumber ?? 0) + 1, destinationUrl: routeUrl, trackingUrl: routeUrl, summary: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}: canonical CRM route reconciled`, createdBy: actorId } });
-  }
-  for (const countryCode of superflyBlockedCountries) await prisma.affiliateTrackingLinkCountry.upsert({
-    where: { trackingLinkId_countryCode: { trackingLinkId: keys.tracking, countryCode } },
-    create: { id: id(definition.slug, "tracking-block", countryCode), trackingLinkId: keys.tracking, countryCode, mode: "BLOCK", productionEligible: false, productionEligibilityVerifiedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), productionEligibilityEvidence: superflyBlockEvidence[countryCode].join(","), productionEligibilityNotes: "Detected legal, regulatory, contractual or account restriction." },
-    update: { mode: "BLOCK", productionEligible: false, productionEligibilityVerifiedAt: new Date(CASINO_COMMERCIAL_VISIBILITY_OBSERVED_AT), productionEligibilityExpiresAt: null, productionEligibilityEvidence: superflyBlockEvidence[countryCode].join(","), productionEligibilityNotes: "Detected legal, regulatory, contractual or account restriction." },
-  });
-  await prisma.affiliateRedirectSlug.upsert({
-    where: { slug: `${definition.slug}-welcome` },
-    create: { id: keys.redirect, slug: `${definition.slug}-welcome`, casinoId: aggregate.id, casinoBonusId: keys.bonus, affiliateOfferId: keys.offer, active: true, createdBy: actorId, updatedBy: actorId },
-    update: { casinoId: aggregate.id, casinoBonusId: keys.bonus, affiliateOfferId: keys.offer, defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, updatedBy: actorId },
-  });
-  await prisma.auditLog.create({ data: { actorId, action: "casino_commercial_visibility_reconciled", entityType: "casino", entityId: aggregate.id, summary: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}: global catalog, offer, media and governed route reconciled`, metadata: { release: CASINO_COMMERCIAL_VISIBILITY_RELEASE, slug: definition.slug, routeEvidenceId: definition.evidence.routeId, blockedCountries: superflyBlockedCountries } } });
-  aggregate = await casinoService.getCasinoById(aggregate.id);
-  aggregate = await casinoService.transitionWorkflow(aggregate.id, EditorialStatus.IN_REVIEW, actorId, aggregate.updatedAt);
-  aggregate = await casinoService.transitionWorkflow(aggregate.id, EditorialStatus.APPROVED, actorId, aggregate.updatedAt);
-  await casinoService.publishCasino(aggregate.id, actorId, aggregate.updatedAt);
-  return { slug: definition.slug, status: "published" as const, reconciledIssues: before.length };
-}
-
 async function preflight(options: { allowReleaseRecovery?: boolean } = {}) {
   assertCommercialVisibilityCatalog();
   const [manifest, migrations, routes, casinos, gentlemanJim, networkCandidates, redirectConflicts] = await Promise.all([
@@ -497,46 +330,12 @@ async function audit() {
   console.info(JSON.stringify({ release: CASINO_COMMERCIAL_VISIBILITY_RELEASE, databaseTargetFingerprint: databaseTargetFingerprint(), projectId: PROJECT_ID, migrations: state.migrations, manifestBrands: state.manifest.brands.length, realCasinoCount: state.casinos.length, gentlemanJim: state.gentlemanJim, currentSuperflyNetworkIdentities: state.networkCandidates.length, pendingIssueCount, pendingDefinitionIssues: Object.fromEntries(definitionIssueGroups), pendingEditorialSlugs, routeEvidenceVerified: state.routes.size, rawTrackingUrlsEmitted: 0, destructiveWrites: 0 }, null, 2));
 }
 
-async function seed() {
-  assertWriteAuthority();
-  const state = await preflight({ allowReleaseRecovery: true });
-  const pendingIssues = (await Promise.all(superflyCommercialCatalog.map(definitionIssues))).flat();
-  const pendingEditorialSlugs = await catalogEditorialIssues();
-  const existingNetwork = state.networkCandidates[0] ?? null;
-  const networkIsCurrent = Boolean(existingNetwork
-    && existingNetwork.slug === "superfly-partners"
-    && existingNetwork.name === "Superfly Partners"
-    && existingNetwork.type === "OTHER"
-    && existingNetwork.active
-    && !existingNetwork.archivedAt);
-  if (!pendingIssues.length && !pendingEditorialSlugs.length && networkIsCurrent) {
-    console.info(JSON.stringify({ release: CASINO_COMMERCIAL_VISIBILITY_RELEASE, databaseTargetFingerprint: databaseTargetFingerprint(), results: superflyCommercialCatalog.map((definition) => ({ slug: definition.slug, status: "unchanged" })), destructiveWrites: 0 }, null, 2));
-    await verify();
-    return;
-  }
-  const actorId = await actor();
-  let network = existingNetwork;
-  if (!network) network = await prisma.affiliateNetwork.create({ data: { id: id("network"), name: "Superfly Partners", slug: "superfly-partners", type: "OTHER", active: true, notes: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}: source-controlled CRM authority`, createdBy: actorId, updatedBy: actorId }, select: { id: true, slug: true, name: true, type: true, active: true, archivedAt: true } });
-  else if (!networkIsCurrent) network = await prisma.affiliateNetwork.update({ where: { id: network.id }, data: { name: "Superfly Partners", slug: "superfly-partners", type: "OTHER", active: true, archivedAt: null, updatedBy: actorId }, select: { id: true, slug: true, name: true, type: true, active: true, archivedAt: true } });
-  const results = [];
-  for (const definition of superflyCommercialCatalog) results.push(await syncDefinition(definition, actorId, network.id, state.routes.get(definition.slug)!));
-  const editorialResults = [];
-  for (const slug of pendingEditorialSlugs) {
-    const casino = state.casinos.find((record) => record.slug === slug);
-    if (!casino) throw new Error(`${slug}: real casino identity missing for editorial reconciliation.`);
-    await syncEditorial({ slug }, casino.id, actorId);
-    editorialResults.push({ slug, status: "published" });
-  }
-  console.info(JSON.stringify({ release: CASINO_COMMERCIAL_VISIBILITY_RELEASE, databaseTargetFingerprint: databaseTargetFingerprint(), results, editorialResults, destructiveWrites: 0 }, null, 2));
-  await verify();
-}
-
 async function main() {
   const mode = process.argv[2] as Mode | undefined;
   if (!mode || !["audit", "seed", "verify"].includes(mode)) throw new Error("Usage: casino-commercial-visibility-03.ts <audit|seed|verify>");
   try {
+    if (mode === "seed") throw new Error("CASINO_COMMERCIAL_VISIBILITY_SEED_RETIRED_BY_PR4");
     if (mode === "audit") await audit();
-    if (mode === "seed") await seed();
     if (mode === "verify") await verify();
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : "Unknown executor failure";

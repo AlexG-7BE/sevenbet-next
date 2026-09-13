@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import type { CandidateOffer } from "../lib/affiliate-routing/candidate-resolver";
-import { evaluateGbCommercialReadiness } from "../lib/affiliate-commercial/gb-commercial-readiness";
+import {
+  evaluateGbCommercialReadiness,
+  type GbCommercialRouteEvidence,
+} from "../lib/affiliate-commercial/gb-commercial-route-readiness";
 import { gbCommercialDomainEvidenceRecords, type GbCommercialDomainEvidenceRecord } from "../lib/affiliate-commercial/gb-domain-evidence";
 import type { CasinoBonus, CasinoDomain } from "../lib/casino-domain/types";
 import { gbJurisdictionPolicy } from "../lib/jurisdiction/policies/gb";
@@ -154,11 +157,40 @@ function domainEvidence(patch: Partial<GbCommercialDomainEvidenceRecord> = {}): 
   };
 }
 
+function routeEvidence(candidate: CandidateOffer): GbCommercialRouteEvidence {
+  const link = candidate.trackingLinks[0] ?? null;
+  return {
+    program: {
+      id: candidate.program.id ?? "program",
+      casinoId: candidate.program.casinoId ?? null,
+      operator: candidate.program.operator ?? "",
+      metadata: candidate.program.metadata,
+    },
+    offer: {
+      id: candidate.id,
+      casinoId: candidate.casinoId,
+      casinoBonusId: candidate.casinoBonusId,
+      startAt: candidate.startAt ?? null,
+      expiresAt: candidate.expiresAt ?? null,
+    },
+    trackingLink: link ? {
+      id: link.id,
+      offerId: candidate.id,
+      destinationUrl: link.destinationUrl,
+      trackingUrl: link.trackingUrl,
+      verifiedAt: link.verifiedAt,
+      lastCheckedAt: link.lastCheckedAt ?? null,
+      validFrom: link.validFrom ?? null,
+      expiresAt: link.expiresAt,
+    } : null,
+  };
+}
+
 function evaluate(input: { casino?: CasinoDomain; offer?: CandidateOffer; domainEvidence?: GbCommercialDomainEvidenceRecord | null; jurisdiction?: JurisdictionDecision; founderWorldwideAuthority?: boolean } = {}) {
+  const candidate = input.offer ?? offer();
   return evaluateGbCommercialReadiness({
     casino: input.casino ?? casino(),
-    offer: input.offer ?? offer(),
-    trackingLinkId: "link",
+    route: routeEvidence(candidate),
     domainEvidence: input.domainEvidence === undefined ? domainEvidence() : input.domainEvidence,
     jurisdictionDecision: input.jurisdiction ?? jurisdiction,
     redirectContract: { slugActive: true, destinationServerOwned: true, destinationSafe: true },
@@ -249,15 +281,9 @@ test("outbound readiness requires DIRECT_LINK agreement authority independently 
   assert.equal(currentRepositoryPolicy.referralReady, false);
 });
 
-test("program, offer and relationship states are necessary but never sufficient", () => {
+test("factual program, offer and operator relationships are necessary but never sufficient", () => {
   const cases: Array<[CandidateOffer | CasinoDomain, string, "offer" | "casino"]> = [
     [offer({ program: { ...offer().program, casinoId: null } }), "GB_PROGRAM_CASINO_MISSING", "offer"],
-    [offer({ program: { ...offer().program, status: "PAUSED" } }), "GB_PROGRAM_INACTIVE", "offer"],
-    [offer({ program: { ...offer().program, network: { ...offer().program.network, active: false } } }), "GB_PROGRAM_INACTIVE", "offer"],
-    [offer({ program: { ...offer().program, workflowStatus: "DRAFT" } }), "GB_PROGRAM_UNPUBLISHED", "offer"],
-    [offer({ program: { ...offer().program, integrationMode: "API", connectionStatus: "DISCONNECTED" } }), "GB_PROGRAM_DISCONNECTED", "offer"],
-    [offer({ program: { ...offer().program, trustedAutoActivation: true } }), "GB_PROGRAM_TRUSTED_AUTO_ACTIVATION_FORBIDDEN", "offer"],
-    [offer({ status: "PAUSED" }), "GB_OFFER_INACTIVE", "offer"],
     [offer({ startAt: "2026-08-09T00:00:00.000Z" }), "GB_OFFER_NOT_EFFECTIVE", "offer"],
     [offer({ casinoId: "other-casino" }), "GB_OFFER_CASINO_MISMATCH", "offer"],
     [casino({ brand: { ...casino().brand, operatorId: "different-operator" } }), "GB_BRAND_OPERATOR_MISMATCH", "casino"],
@@ -266,6 +292,22 @@ test("program, offer and relationship states are necessary but never sufficient"
     const result = kind === "offer" ? evaluate({ offer: value as CandidateOffer }) : evaluate({ casino: value as CasinoDomain });
     assert.equal(result.referralReady, false, reason);
     assert.ok(result.reasonCodes.includes(reason as never), reason);
+  }
+});
+
+test("legacy Affiliate lifecycle cannot weaken or strengthen GB factual readiness", () => {
+  const base = offer();
+  const lifecycleVariants = [
+    offer({ program: { ...base.program, status: "PAUSED" } }),
+    offer({ program: { ...base.program, workflowStatus: "DRAFT" } }),
+    offer({ program: { ...base.program, integrationMode: "API", connectionStatus: "DISCONNECTED", providerAccountId: null, credentialReference: null } }),
+    offer({ program: { ...base.program, trustedAutoActivation: true } }),
+    offer({ program: { ...base.program, archivedAt: now, network: { ...base.program.network, active: false, archivedAt: now } } }),
+    offer({ status: "PAUSED", archivedAt: now }),
+    offer({ trackingLinks: base.trackingLinks.map((link) => ({ ...link, active: false, archivedAt: now })) }),
+  ];
+  for (const candidate of lifecycleVariants) {
+    assert.deepEqual(evaluate({ offer: candidate }).reasonCodes, ["GB_COMMERCIAL_READY"]);
   }
 });
 
@@ -310,7 +352,6 @@ test("legacy Program, Offer and Tracking GEO metadata cannot veto an exact GB ro
 test("tracking authority requires fresh verification plus health checks", () => {
   const withLink = (patch: Partial<CandidateOffer["trackingLinks"][number]>) => offer({ trackingLinks: [{ ...offer().trackingLinks[0], ...patch }] });
   const cases: Array<[CandidateOffer, string]> = [
-    [withLink({ active: false }), "GB_TRACKING_LINK_INACTIVE"],
     [withLink({ lastCheckedAt: null }), "GB_TRACKING_EVIDENCE_MISSING"],
     [withLink({ verifiedAt: "2026-08-01T12:00:00.000Z" }), "GB_TRACKING_EVIDENCE_STALE"],
     [withLink({ trackingUrl: "http://tracking.invalid/click" }), "GB_TRACKING_LINK_UNSAFE"],
@@ -371,7 +412,7 @@ test("payout economics cannot influence readiness and protected-data dependencie
   assert.ok(highWithoutAuthority.reasonCodes.includes("GB_DOMAIN_EVIDENCE_MISSING"));
   assert.ok(highWithoutAuthority.reasonCodes.includes("GB_OPERATOR_AUTHORITY_DENIED"));
   for (const file of [
-    "lib/affiliate-commercial/gb-commercial-readiness.ts",
+    "lib/affiliate-commercial/gb-commercial-route-readiness.ts",
     "lib/affiliate-commercial/gb-domain-evidence.ts",
     "lib/affiliate-commercial/gb-partner-agreement.ts",
     "lib/services/gb-commercial-readiness.service.ts",
@@ -381,7 +422,7 @@ test("payout economics cannot influence readiness and protected-data dependencie
   }
 });
 
-test("program and offer state transitions enforce the GB activation contract", () => {
+test("admin writes retain GB factual-evidence checks without becoming runtime authority", () => {
   const programService = readFileSync("lib/services/affiliate-program.service.ts", "utf8");
   const offerService = readFileSync("lib/services/affiliate-offer.service.ts", "utf8");
   assert.match(programService, /Trusted automatic activation is forbidden for GB-supporting programs/);

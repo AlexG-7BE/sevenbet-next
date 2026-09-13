@@ -402,7 +402,11 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       actorId: ACTOR_ID,
     });
     const promotedGeneric = await repository.promote({ stage: first, finalHost: "betway.example", redirectCount: 1, checkedAt: NOW, actorId: ACTOR_ID });
-    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active, true);
+    assert.equal(
+      (await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active,
+      false,
+      "canonical promotion must not manufacture Affiliate lifecycle authority",
+    );
     assert.equal(
       await client.affiliateTrackingLinkCountry.count({ where: { trackingLinkId: first.trackingLinkId } }),
       0,
@@ -457,7 +461,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     assert.equal(controllerVerifierCalls, 0);
     const restoredNetwork = await client.affiliateNetwork.findUniqueOrThrow({ where: { id: NETWORK_ID } });
     assert.equal(restoredNetwork.active, false, "route registration must not repair legacy lifecycle state");
-    assert.equal(restoredNetwork.archivedAt, null, "the selected compatibility projection may be unarchived without becoming authority");
+    assert.equal(restoredNetwork.archivedAt?.toISOString(), NOW.toISOString(), "route registration must not repair legacy archive state");
     assert.equal(await client.marketActivation.count({
       where: { casinoId: CASINO_ID, marketCode: { in: ["AT", "PT", "US"] }, status: "ACTIVE", routeVerificationStatus: "HEALTHY" },
     }), 3);
@@ -639,8 +643,8 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
     assert.equal(replacement.affectedRows.some((row) => row.geo === "IE"), false);
     assert.equal(replacement.affectedRows.some((row) => row.geo === "AT"), true, "runtime support must survive restart and join later generic replacement scope");
     await repository.recordVerification({ stage: replacement, verification: "BROKEN", reason: "HTTP_404", finalHost: "betway.example", redirectCount: 1, statusCode: 404, checkedAt: new Date(NOW.getTime() + 4_000), actorId: ACTOR_ID });
-    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active, true);
-    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: exact.trackingLinkId } })).active, true);
+    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active, false);
+    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: exact.trackingLinkId } })).active, false);
     assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: replacement.trackingLinkId } })).active, false);
     const redactedCandidate = await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: replacement.trackingLinkId } });
     assert.equal(redactedCandidate.trackingUrl.includes("redaction-fixture"), false);
@@ -691,12 +695,12 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       actorId: ACTOR_ID,
     });
     await repository.promote({ stage: healthyReplacement, finalHost: "betway.example", redirectCount: 1, checkedAt: new Date(NOW.getTime() + 5_800), actorId: ACTOR_ID });
-    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active, true, "prior route remains rollback-capable before convergence finalization");
+    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active, false, "legacy lifecycle state remains neutral before convergence finalization");
     await repository.finalizePromotion({ stage: healthyReplacement, checkedAt: new Date(NOW.getTime() + 5_900), actorId: ACTOR_ID });
     assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: first.trackingLinkId } })).active, false);
-    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: exact.trackingLinkId } })).active, true);
-    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: exactIeUsingGenericValue.trackingLinkId } })).active, true);
-    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: healthyReplacement.trackingLinkId } })).active, true);
+    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: exact.trackingLinkId } })).active, false);
+    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: exactIeUsingGenericValue.trackingLinkId } })).active, false);
+    assert.equal((await client.affiliateTrackingLink.findUniqueOrThrow({ where: { id: healthyReplacement.trackingLinkId } })).active, false);
 
     const results = first.affectedRows.map((entry) => ({
       geo: entry.geo,

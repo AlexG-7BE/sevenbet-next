@@ -1,7 +1,7 @@
 import type { AffiliateRedirectSlugInput } from "@/lib/affiliate/types";
 import { resolveAffiliateCandidates, type CandidateOffer, type CandidateResolverInput } from "@/lib/affiliate-routing/candidate-resolver";
 import { normalizeCurrencyHint, normalizeLanguageHint, normalizeRedirectSlug, validateRedirectTargetUrl } from "@/lib/affiliate-routing/redirect-validation";
-import type { GbCommercialReadinessDecision } from "@/lib/affiliate-commercial/gb-commercial-readiness";
+import type { GbCommercialReadinessDecision } from "@/lib/affiliate-commercial/gb-commercial-route-readiness";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
 import { jurisdictionResolver, type JurisdictionResolver } from "@/lib/jurisdiction/resolver";
@@ -9,7 +9,11 @@ import type { CountrySignal, JurisdictionDecision } from "@/lib/jurisdiction/typ
 import { affiliateRedirectRepository, type AffiliateRedirectStore } from "@/lib/repositories/affiliate-redirect.repository";
 import { affiliateOfferService, type AffiliateOfferService } from "@/lib/services/affiliate-offer.service";
 import { gbCommercialReadinessService, type GbCommercialReadinessAuthority } from "@/lib/services/gb-commercial-readiness.service";
-import { marketActivationRuntime, type MarketActivationRuntime } from "@/lib/market-activation/runtime";
+import {
+  canonicalGbCommercialReadinessContext,
+  marketActivationRuntime,
+  type MarketActivationRuntime,
+} from "@/lib/market-activation/runtime";
 import { worldwideFounderGbAuthorityApplies } from "@/lib/current-partner-worldwide-authority/inventory";
 
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
@@ -50,7 +54,7 @@ function externalIdFragment(value?: string | null) {
 export class AffiliateRedirectService {
   constructor(
     private readonly store: AffiliateRedirectStore = affiliateRedirectRepository,
-    private readonly offers: Pick<AffiliateOfferService, "activeCandidates"> = affiliateOfferService,
+    private readonly offers: Pick<AffiliateOfferService, "legacyAdminPreviewCandidates"> = affiliateOfferService,
     private readonly jurisdiction: Pick<JurisdictionResolver, "resolve"> = jurisdictionResolver,
     private readonly commercialReadiness: GbCommercialReadinessAuthority = gbCommercialReadinessService,
     private readonly canonicalActivations: Pick<MarketActivationRuntime, "resolveRedirect"> = marketActivationRuntime,
@@ -141,7 +145,7 @@ export class AffiliateRedirectService {
     if (!mapping.active || mapping.archivedAt) return { ok: false, reason: "SLUG_INACTIVE", slugId: mapping.id, casinoId: mapping.casinoId, candidates: [] };
     const currencyCode = normalizeCurrencyHint(input.currencyCode ?? mapping.defaultCurrency);
     const language = normalizeLanguageHint(input.language ?? mapping.defaultLanguage);
-    const offers = await this.offers.activeCandidates({ casinoId: mapping.casinoId, casinoBonusId: mapping.casinoBonusId ?? undefined, countryCode: input.countryCode ?? undefined, currencyCode: currencyCode ?? undefined, now: input.now });
+    const offers = await this.offers.legacyAdminPreviewCandidates({ casinoId: mapping.casinoId, casinoBonusId: mapping.casinoBonusId ?? undefined, countryCode: input.countryCode ?? undefined, currencyCode: currencyCode ?? undefined, now: input.now });
     const scopedOffers = mapping.affiliateOfferId ? offers.filter((offer) => offer.id === mapping.affiliateOfferId) : offers;
     const result = resolveAffiliateCandidates(scopedOffers, { casinoId: mapping.casinoId, casinoBonusId: mapping.casinoBonusId, countryCode: input.countryCode, currencyCode, language, now: input.now });
     if (!result.winner) return { ok: false, reason: result.failureReason ?? "NO_ELIGIBLE_TRACKING_LINK", slugId: mapping.id, casinoId: mapping.casinoId, candidates: result.candidates };
@@ -223,24 +227,15 @@ export class AffiliateRedirectService {
       return { ...routing, destination, jurisdictionDecision };
     }
 
-    // GB keeps its lifecycle/operator evidence checks, but the selected Offer
-    // is loaded by the exact MarketActivation binding. The legacy affiliate
-    // candidate resolver (and its Offer/Tracking GEO rules) is not consulted.
-    const selectedOffer = (await this.offers.activeCandidates({
-      casinoId: routing.casinoId,
-      casinoBonusId: activation.casinoBonusId ?? undefined,
-      now,
-    })).find((offer) => offer.id === routing.offerId);
-    if (!selectedOffer) {
-      return { ok: false, reason: "COMMERCIAL_CONTRACT_DENIED", slugId: routing.slugId, casinoId: routing.casinoId, candidates: [], jurisdictionDecision };
-    }
-
+    // GB rechecks the exact canonical route's factual partner, operator,
+    // domain, offer-window and tracking evidence. Legacy affiliate lifecycle
+    // and GEO fields are deliberately absent from this evidence contract.
+    const gbContext = canonicalGbCommercialReadinessContext(activation);
     const commercialReadiness = await this.commercialReadiness.evaluate({
       casinoId: routing.casinoId,
-      offer: selectedOffer,
-      trackingLinkId: routing.trackingLinkId,
+      route: gbContext.route,
       jurisdictionDecision,
-      redirectContract: { slugActive: true, destinationServerOwned: true, destinationSafe: true },
+      redirectContract: gbContext.redirectContract,
       founderWorldwideAuthority: founderGbScope,
       now,
     });

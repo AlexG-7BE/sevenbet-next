@@ -42,7 +42,7 @@ orientation.
 | [RFC-012 — Temporary Synthetic Casino Dataset](RFC-012-Temporary-Production-Synthetic-Casino-Dataset.md) | `HISTORICAL` | Records the temporary fictional dataset and public-offer projection delivery. |
 | [RFC-013 — Production Engineering and Release Governance](RFC-013-Production-Engineering-and-Release-Governance.md) | `ACTIVE` | Branch, CI, migration, release, smoke and rollback architecture. |
 | [RFC-014 — Great Britain Market Eligibility](RFC-014-Great-Britain-Market-Eligibility-and-Evidence-Authority.md) | `ACTIVE` | GB jurisdiction resolution and fail-closed market authority. |
-| [RFC-015 — GB Commercial Partner Authority](RFC-015-GB-Commercial-Partner-Authority.md) | `ACTIVE` | Cumulative GB evidence and referral safeguards; RFC-048 supersedes CRM/static/lifecycle state as commercial write authority. |
+| [RFC-015 — GB Commercial Partner Authority](RFC-015-GB-Commercial-Partner-Authority.md) | `ACTIVE` | Cumulative GB factual evidence and referral safeguards; RFC-050 supersedes generic Affiliate lifecycle as runtime authority. |
 | [RFC-016 — Production Performance and Instant Discovery](RFC-016-Production-Performance-and-Instant-Discovery.md) | `HISTORICAL` | Records the completed UX-PERF-01 delivery. |
 | [RFC-017 — GB Legal, Privacy and Launch Remediation](RFC-017-GB-Legal-Privacy-and-Launch-Remediation.md) | `ACTIVE` | Programme data minimisation, privacy operations, demo truthfulness and commercial firewall. |
 | [RFC-018 — Google Authentication and Email Foundation](RFC-018-Google-Authentication-and-Email-Communications-Foundation.md) | `ACTIVE` | Optional Google identity and closed account/Programme communications purposes. |
@@ -77,16 +77,17 @@ orientation.
 | [RFC-047 — Single Public Commercial Action Authority](RFC-047-Single-Public-Commercial-Action-Authority.md) | `ACTIVE` | One server-side nullable `/r/...` action decision for each published Casino and trusted market; public services, ranking and presentation have no shadow commercial authority. |
 | [RFC-048 — CRM-Independent Commercial Write Core](RFC-048-CRM-Independent-Commercial-Write-Core.md) | `ACTIVE` | Persisted Partner identity and one Partner × Casino relationship outside CRM; explicit commands flow through a transport-independent application service while CRM and MCP have no commercial authority. |
 | [RFC-049 — Exact Canonical Commercial Routes](RFC-049-Exact-Canonical-Commercial-Routes.md) | `ACTIVE` | One trusted-GEO normalization seam, one exact commercial-route lookup, no parent/ZZ fallback or Offer/Tracking country/production-eligibility authority, and a separately governed materialization operation. |
+| [RFC-050 — Affiliate Lifecycle Authority Collapse](RFC-050-Affiliate-Lifecycle-Authority-Collapse.md) | `ACTIVE` | Canonical MarketActivation is the sole business routing decision; Affiliate lifecycle fields are provider/Admin/history facts and GB uses narrow factual evidence. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 25 |
+| `ACTIVE` | 26 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 5 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **49** |
+| **Total RFC artifacts** | **50** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

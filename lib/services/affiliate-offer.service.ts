@@ -2,7 +2,7 @@ import { AffiliateStatus } from "@prisma/client";
 
 import { assessGbPartnerAgreement } from "@/lib/affiliate-commercial/gb-partner-agreement";
 import type { AffiliateOfferInput } from "@/lib/affiliate/types";
-import { assertAffiliateStatusTransition, normalizeAffiliateOffer } from "@/lib/affiliate/validation";
+import { normalizeAffiliateOffer } from "@/lib/affiliate/validation";
 import { GB_LICENCE_EVIDENCE_MAX_AGE_MS } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { affiliateOfferRepository, type AffiliateOfferAggregate, type AffiliateOfferStore } from "@/lib/repositories/affiliate-offer.repository";
 import { affiliateProgramRepository, type AffiliateProgramStore } from "@/lib/repositories/affiliate-program.repository";
@@ -42,9 +42,6 @@ export class AffiliateOfferService {
   private async validate(input: AffiliateOfferInput, excludeId?: string) {
     const program = await this.programStore.findById(input.programId);
     if (!program) throw new NotFoundError("Affiliate program", { id: input.programId });
-    if (input.status === "ACTIVE" && (program.status !== "ACTIVE" || !program.network.active || program.network.archivedAt)) {
-      throw new ValidationError("An archived or inactive network/program cannot have an active offer");
-    }
     if (input.status === "ACTIVE" && program.supportedCountries.includes("GB")) {
       if (program.workflowStatus !== "PUBLISHED") throw new ValidationError("A GB offer requires a published program", { field: "programId" });
       if (!program.casinoId || program.casinoId !== input.casinoId) throw new ValidationError("A GB offer must match the program casino", { field: "casinoId" });
@@ -98,7 +95,6 @@ export class AffiliateOfferService {
     if (normalized.casinoId !== current.casinoId) {
       throw new ValidationError("An affiliate offer cannot be moved between casinos", { id, casinoId: current.casinoId });
     }
-    assertAffiliateStatusTransition(current.status, normalized.status);
     await this.validate(normalized, id);
     try {
       return await this.store.update(id, normalized, actorId, expectedUpdatedAt);
@@ -135,14 +131,14 @@ export class AffiliateOfferService {
     return this.store.create(copy, actorId);
   }
 
-  activeCandidates(input: Parameters<AffiliateOfferStore["findActiveCandidates"]>[0]) {
-    return this.store.findActiveCandidates(input);
+  /** Legacy status/GEO projection retained only for authenticated admin previews. */
+  legacyAdminPreviewCandidates(input: Parameters<AffiliateOfferStore["findLegacyAdminPreviewCandidates"]>[0]) {
+    return this.store.findLegacyAdminPreviewCandidates(input);
   }
 
   async archive(id: string, actorId: string) {
     const current = await this.get(id);
     if (current.status === AffiliateStatus.ARCHIVED) return current;
-    assertAffiliateStatusTransition(current.status, AffiliateStatus.ARCHIVED);
     return this.store.archive(id, actorId);
   }
 

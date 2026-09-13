@@ -177,19 +177,33 @@ function canonicalRoute(input: { offerId: string; trackingLinkId: string; tracki
   return {
     resolveRedirect: async () => input ? {
       casinoId: "casino",
-      redirectSlug: { id: "redirect-id", slug: "casino-offer" },
-      affiliateOffer: { id: input.offerId },
+      countryCode: "GB",
+      casinoBonusId: null,
+      redirectSlug: { id: "redirect-id", slug: "casino-offer", active: true, archivedAt: null },
+      affiliateOffer: {
+        id: input.offerId,
+        casinoId: "casino",
+        casinoBonusId: null,
+        startAt: null,
+        expiresAt: null,
+        program: { id: "program", casinoId: "casino", operator: "Operator", metadata: {} },
+      },
       primaryTrackingLink: {
         id: input.trackingLinkId,
+        offerId: input.offerId,
         trackingUrl: input.trackingUrl,
         destinationUrl: input.destinationUrl ?? "https://casino.example/welcome",
+        verifiedAt: now,
+        lastCheckedAt: now,
+        validFrom: null,
+        expiresAt: null,
       },
     } : null,
   } as never;
 }
 
 test("redirect service returns 404 semantics for unknown slug and never uses query destinations", async () => {
-  const service = new AffiliateRedirectService(redirectStore(null), { activeCandidates: async () => [] }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalRoute(null));
+  const service = new AffiliateRedirectService(redirectStore(null), { legacyAdminPreviewCandidates: async () => [] }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalRoute(null));
   const result = await service.resolve("unknown-slug");
   assert.equal(result.ok, false);
   if (!result.ok) assert.equal(result.reason, "SLUG_NOT_FOUND");
@@ -205,7 +219,7 @@ test("redirect slug remains unique and immutable after creation", async () => {
   const store = redirectStore(mapping);
   store.existsBySlug = async () => true;
   store.resolveTargets = async () => ({ casinoExists: true, bonusCasinoId: null, offer: null });
-  const service = new AffiliateRedirectService(store, { activeCandidates: async () => [] });
+  const service = new AffiliateRedirectService(store, { legacyAdminPreviewCandidates: async () => [] });
   await assert.rejects(() => service.create({ slug: "casino-offer", casinoId: "casino" }, "actor"), /already exists/);
   await assert.rejects(() => service.update("redirect-id", { slug: "different-slug" }, "actor", now), /immutable/);
   const repository = readFileSync("lib/repositories/affiliate-redirect.repository.ts", "utf8");
@@ -220,12 +234,12 @@ test("redirect service selects only stored safe tracking URLs", async () => {
     defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
     createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
-  const safeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [offer("safe")] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalRoute({ offerId: "safe", trackingLinkId: "link-safe", trackingUrl: "https://tracking.example/link-safe" }));
+  const safeService = new AffiliateRedirectService(redirectStore(mapping), { legacyAdminPreviewCandidates: async () => { throw new Error("legacy offer lifecycle must not run for GB"); } }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalRoute({ offerId: "safe", trackingLinkId: "link-safe", trackingUrl: "https://tracking.example/link-safe" }));
   const safe = await safeService.resolve("casino-offer", { now, requestCountrySignal: trustedSignal("GB") });
   assert.equal(safe.ok, true);
   if (safe.ok) assert.equal(safe.destination.toString(), "https://tracking.example/link-safe");
   const unsafeOffer = offer("unsafe", { trackingLinks: [link("unsafe", { trackingUrl: "javascript:alert(1)" })] });
-  const unsafeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [unsafeOffer] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalRoute({ offerId: "unsafe", trackingLinkId: "link-unsafe", trackingUrl: "javascript:alert(1)" }));
+  const unsafeService = new AffiliateRedirectService(redirectStore(mapping), { legacyAdminPreviewCandidates: async () => [unsafeOffer] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalRoute({ offerId: "unsafe", trackingLinkId: "link-unsafe", trackingUrl: "javascript:alert(1)" }));
   const unsafe = await unsafeService.resolve("casino-offer", { now, requestCountrySignal: trustedSignal("GB") });
   assert.equal(unsafe.ok, false);
   if (!unsafe.ok) assert.equal(unsafe.reason, "UNSAFE_REDIRECT_URL");
@@ -239,7 +253,7 @@ test("direct redirect resolution obeys exact canonical authority without a legac
   };
   const service = new AffiliateRedirectService(
     redirectStore(mapping),
-    { activeCandidates: async () => { throw new Error("legacy offer selection must not run for PE"); } },
+    { legacyAdminPreviewCandidates: async () => { throw new Error("legacy offer selection must not run for PE"); } },
     { async resolve() { return { ...allowJurisdictionDecision, countryCode: "PE" }; } },
     allowGbCommercialReadinessAuthority,
     canonicalRoute({ offerId: "safe", trackingLinkId: "link-safe", trackingUrl: "https://tracking.example/link-safe" }),
@@ -259,7 +273,7 @@ test("redirect canonicalizes a trusted country-scoped region before its single r
   let requestedMarket: string | null = null;
   const service = new AffiliateRedirectService(
     redirectStore(mapping),
-    { activeCandidates: async () => { throw new Error("non-GB route must not use legacy offer selection"); } },
+    { legacyAdminPreviewCandidates: async () => { throw new Error("non-GB route must not use legacy offer selection"); } },
     { async resolve() { return { ...allowJurisdictionDecision, countryCode: "US" }; } },
     allowGbCommercialReadinessAuthority,
     {

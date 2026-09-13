@@ -42,7 +42,7 @@ test("analytics has a closed 22-event contract with no identity, narrative, rewa
 
 test("commercial services cannot consume analytics or protected Programme runtime data", () => {
   const commercial = [
-    read("lib/affiliate-commercial/gb-commercial-readiness.ts"),
+    read("lib/affiliate-commercial/gb-commercial-route-readiness.ts"),
     read("lib/services/gb-commercial-readiness.service.ts"),
     read("lib/services/public-offer.service.ts"),
   ].join("\n");

@@ -191,7 +191,7 @@ test("commercial firewall excludes Program AI data in both directions", () => {
   ].join("\n");
   assert.doesNotMatch(protectedSources, /@\/lib\/(?:affiliate|affiliate-commercial|casino|public-casino|public-offer)/);
   const commercialSources = [
-    read("lib/affiliate-commercial/gb-commercial-readiness.ts"),
+    read("lib/affiliate-commercial/gb-commercial-route-readiness.ts"),
     read("lib/services/gb-commercial-readiness.service.ts"),
     read("lib/services/public-offer.service.ts"),
   ].join("\n");
