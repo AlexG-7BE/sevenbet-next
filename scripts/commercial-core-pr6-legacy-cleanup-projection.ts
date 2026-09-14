@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { extname } from "node:path";
+import { readFileSync, writeFileSync } from "node:fs";
+import { extname, isAbsolute, relative } from "node:path";
 
 import { Prisma } from "@prisma/client";
 
@@ -12,28 +12,41 @@ import {
   PR6_EXPECTED_FOREIGN_KEYS,
   PR6_MIGRATION_PATH,
   PR6_PUBLIC_RUNTIME_FILES,
+  PR6_RATE_BUCKET_TARGET,
   PR6_TARGET_FUNCTIONS,
   PR6_TARGET_TABLES,
   PR6_TARGET_TRIGGERS,
   assessPr6Projection,
   canonicalJson,
+  createPr6RateBucketStabilityReference,
   inspectPr6MigrationSql,
+  parsePr6RateBucketStabilityReference,
   sha256,
   type Pr6ForeignKey,
   type Pr6FunctionDependant,
   type Pr6FunctionInventory,
   type Pr6KeepSetEvidence,
   type Pr6RelationDependant,
+  type Pr6RateBucketStabilityReference,
   type Pr6TriggerInventory,
 } from "./commercial-core-pr6-legacy-cleanup-core";
 
 const EXPECTED_DATABASE_FINGERPRINT =
   "ce94f1e2b465c25d62b13a8c3f2db47aa07b96b541603c818ef6219c9c970a5e";
 const runtimeRoots = ["app", "components", "lib"];
-const runtimeExtensions = new Set([".ts", ".tsx", ".js", ".mjs"]);
+const runtimeExtensions = new Set([".ts", ".tsx", ".js", ".mjs", ".css"]);
+const PR5_RUNBOOK_PATH =
+  "docs/06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md";
+const CURRENT_STATE_PATH = "docs/CURRENT_STATE.md";
 const retiredRuntimeReference = new RegExp(
   `\\b(?:${PR6_TARGET_TABLES.flatMap(({ model, table }) => [model, table]).join("|")})\\b`,
 );
+const retiredTransportReference =
+  /@modelcontextprotocol|\/api\/mcp|CommercialMcp|MediaMcp|commercial_mcp|COMMERCIAL_MCP|MEDIA_OPERATIONS_MCP|commercial:(?:read|safe_write)|media:(?:read|safe_write|production_write)|chatgpt-work|CHATGPT_WORK|getOperationalMcpAuth|oauthProvider|mcpAuth|mcpPermission|mcpAuthority|mcpConsent/;
+
+type ProjectionMode =
+  | { kind: "CAPTURE_FIRST_PROJECTION"; referencePath: string }
+  | { kind: "COMPARE_SECOND_PROJECTION"; referencePath: string };
 
 function git(args: string[]) {
   return execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -51,6 +64,86 @@ function activeRuntimeConsumerFiles() {
     .filter(Boolean)
     .filter((path) => runtimeExtensions.has(extname(path)))
     .filter((path) => retiredRuntimeReference.test(readFileSync(path, "utf8")));
+}
+
+function unexpectedMcpOauthRuntimeSurfaceFiles() {
+  const listed = git(["ls-files", "--", ...runtimeRoots, "middleware.ts", "next.config.mjs"])
+    .split("\n")
+    .filter(Boolean)
+    .filter((path) => runtimeExtensions.has(extname(path)));
+  const unexpected = listed.filter((path) => {
+    if (
+      path.startsWith("app/api/mcp/")
+      || path.startsWith("app/.well-known/oauth-authorization-server/")
+      || path.startsWith("app/.well-known/oauth-protected-resource/")
+      || path.startsWith("app/admin/integrations/chatgpt-work/")
+      || path.startsWith("lib/mcp/")
+    ) {
+      return true;
+    }
+    if (path === "lib/media-operations/persisted-history.ts") return false;
+    return retiredTransportReference.test(readFileSync(path, "utf8"));
+  });
+  const packageJson = readFileSync("package.json", "utf8");
+  if (
+    /"@modelcontextprotocol\/sdk"\s*:|"@better-auth\/oauth-provider"\s*:|\/api\/mcp|commercial-mcp-browser|media-ingestion-autoplacement-browser/.test(
+      packageJson,
+    )
+  ) {
+    unexpected.push("package.json");
+  }
+  return [...new Set(unexpected)].sort();
+}
+
+function externalConnectorsRetiredAccordingToPr5() {
+  const runbook = readFileSync(PR5_RUNBOOK_PATH, "utf8");
+  const currentState = readFileSync(CURRENT_STATE_PATH, "utf8");
+  return runbook.includes("**Status:** complete and live")
+    && runbook.includes("`B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3` were external custom")
+    && runbook.includes("removed both registrations. They must not be recreated or reconnected.")
+    && runbook.includes("The two connections remain retired and must\nnot be recreated.")
+    && currentState.includes("**EXTERNAL CONNECTORS COMPLETE:** Founder Office removed both")
+    && currentState.includes("`B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3`. They must not be")
+    && !currentState.includes("EXTERNAL CONNECTIONS DETECTED; PR5 REPOSITORY RETIREMENT READY FOR RE-REVIEW")
+    && !currentState.includes("removal is required immediately before deployment and is not completed");
+}
+
+function validatedReferencePath(value: string) {
+  if (!isAbsolute(value) || value.includes("\0")) {
+    throw new Error("PR6 rate-bucket stability reference path must be absolute.");
+  }
+  const repositoryRelative = relative(process.cwd(), value);
+  if (repositoryRelative === "" || (!repositoryRelative.startsWith("..") && !isAbsolute(repositoryRelative))) {
+    throw new Error("PR6 rate-bucket stability reference must be outside the repository.");
+  }
+  return value;
+}
+
+function projectionMode(): ProjectionMode {
+  const args = process.argv.slice(2);
+  if (args.length !== 1) {
+    throw new Error(
+      "Use exactly one --capture-rate-bucket-reference=<absolute-path> or --compare-rate-bucket-reference=<absolute-path> option.",
+    );
+  }
+  const capturePrefix = "--capture-rate-bucket-reference=";
+  const comparePrefix = "--compare-rate-bucket-reference=";
+  const argument = args[0]!;
+  if (argument.startsWith(capturePrefix)) {
+    return {
+      kind: "CAPTURE_FIRST_PROJECTION",
+      referencePath: validatedReferencePath(argument.slice(capturePrefix.length)),
+    };
+  }
+  if (argument.startsWith(comparePrefix)) {
+    return {
+      kind: "COMPARE_SECOND_PROJECTION",
+      referencePath: validatedReferencePath(argument.slice(comparePrefix.length)),
+    };
+  }
+  throw new Error(
+    "Use --capture-rate-bucket-reference=<absolute-path> or --compare-rate-bucket-reference=<absolute-path>.",
+  );
 }
 
 function databaseFingerprint() {
@@ -564,7 +657,11 @@ async function keepSetEvidence(transaction: Prisma.TransactionClient): Promise<P
   };
 }
 
-async function project(transaction: Prisma.TransactionClient) {
+async function project(
+  transaction: Prisma.TransactionClient,
+  rateBucketStabilityReference: Pr6RateBucketStabilityReference | null,
+  mode: ProjectionMode["kind"],
+) {
   await transaction.$executeRawUnsafe("SET TRANSACTION READ ONLY");
   const [readOnly] = await transaction.$queryRawUnsafe<Array<{ transaction_read_only: string }>>(
     "SHOW transaction_read_only",
@@ -631,6 +728,12 @@ async function project(transaction: Prisma.TransactionClient) {
   const head = git(["rev-parse", "HEAD"]);
   const originMain = git(["rev-parse", "origin/main"]);
   const branch = git(["branch", "--show-current"]);
+  const unexpectedRuntimeSurfaces = unexpectedMcpOauthRuntimeSurfaceFiles();
+  const retirementEvidence = {
+    mcpOauthTransportAbsent: unexpectedRuntimeSurfaces.length === 0,
+    externalConnectorsRetiredAccordingToPr5: externalConnectorsRetiredAccordingToPr5(),
+    unexpectedMcpOauthRuntimeSurfaceFiles: unexpectedRuntimeSurfaces,
+  };
   const evidence = {
     head,
     originMain,
@@ -665,9 +768,56 @@ async function project(transaction: Prisma.TransactionClient) {
     ]),
     publicRuntimeChangedFiles: changedFiles(PR6_PUBLIC_RUNTIME_FILES),
     activeRuntimeConsumerFiles: activeRuntimeConsumerFiles(),
+    retirementEvidence,
+    rateBucketStabilityReference,
   };
   const assessment = assessPr6Projection(evidence);
   const expectedForeignKeyKeys = new Set(PR6_EXPECTED_FOREIGN_KEYS.map((foreignKey) => canonicalJson(foreignKey)));
+  const capturedAt = new Date().toISOString();
+  const rateBucketCount = assessment.reviewedPlan.targetRowCounts[PR6_RATE_BUCKET_TARGET.table];
+  const referenceForNextProjection = mode === "CAPTURE_FIRST_PROJECTION"
+    && assessment.referenceEligibleForSecondProjection
+    && typeof rateBucketCount === "number"
+    ? createPr6RateBucketStabilityReference({
+        head,
+        originMain,
+        capturedAt,
+        rateBucketCount,
+        transactionReadOnly: "on",
+        productionMutationPerformed: false,
+      })
+    : null;
+  const unexpectedDependencies = [
+    ...targetForeignKeys
+      .filter((foreignKey) => !expectedForeignKeyKeys.has(canonicalJson(foreignKey)))
+      .map((foreignKey) => ({
+        type: "FOREIGN_KEY",
+        name: foreignKey.name,
+        target: `${foreignKey.sourceTable}->${foreignKey.targetTable}`,
+      })),
+    ...targetRelationDependants.map((dependant) => ({
+      type: dependant.dependantType,
+      name: dependant.dependantName,
+      target: dependant.targetTable,
+    })),
+    ...unexpectedFunctionReferences.map((reference) => ({
+      type: "ROUTINE_REFERENCE",
+      name: reference.functionName,
+      target: reference.targetTable,
+    })),
+    ...targetFunctionDependants
+      .filter((dependant) => !PR6_TARGET_TRIGGERS.some((trigger) => canonicalJson(dependant) === canonicalJson({
+        functionName: trigger.functionName,
+        dependantType: "TRIGGER",
+        dependantName: trigger.name,
+        parentTable: trigger.parentTable,
+      })))
+      .map((dependant) => ({
+        type: dependant.dependantType,
+        name: dependant.dependantName,
+        target: dependant.functionName,
+      })),
+  ];
 
   return {
     operation: "COMMERCIAL-CORE-PR6-LEGACY-CLEANUP-PROJECTION",
@@ -676,15 +826,23 @@ async function project(transaction: Prisma.TransactionClient) {
       head,
       originMain,
       branch,
-      capturedAt: new Date().toISOString(),
+      capturedAt,
       databaseFingerprint: "MATCHED",
       transactionReadOnly: readOnly.transaction_read_only,
       productionMutationPerformed: false,
+    },
+    projectionSequence: {
+      step: mode === "CAPTURE_FIRST_PROJECTION" ? "FIRST" : "SECOND",
+      referenceSha256: rateBucketStabilityReference?.referenceSha256
+        ?? referenceForNextProjection?.referenceSha256
+        ?? null,
+      referenceWritten: false,
     },
     targetStorage: {
       rowCounts: assessment.reviewedPlan.targetRowCounts,
       totalRowsScheduledForDeletion: assessment.totalRowsScheduledForDeletion,
       rateBucketLifecycle,
+      rateBucketReconciliation: assessment.rateBucketReconciliation,
     },
     databaseObjectInventory: {
       tables: PR6_TARGET_TABLES.map(({ model, table }) => {
@@ -753,12 +911,18 @@ async function project(transaction: Prisma.TransactionClient) {
       }),
       unexpectedRelationDependants: targetRelationDependants,
       unexpectedFunctionTableReferences: unexpectedFunctionReferences,
+      unexpectedDependencies,
     },
     keepSet,
     runtimeRegressionBaseline: {
       ...evidence.routeBaseline,
       changedPublicRuntimeFilesAgainstOriginMain: evidence.publicRuntimeChangedFiles,
       activeRuntimeConsumerFiles: evidence.activeRuntimeConsumerFiles,
+      mcpOauthTransportAbsent: retirementEvidence.mcpOauthTransportAbsent,
+      unexpectedMcpOauthRuntimeSurfaceFiles:
+        retirementEvidence.unexpectedMcpOauthRuntimeSurfaceFiles,
+      externalConnectorsRetiredAccordingToPr5:
+        retirementEvidence.externalConnectorsRetiredAccordingToPr5,
     },
     migrationScope: {
       path: PR6_MIGRATION_PATH,
@@ -772,11 +936,13 @@ async function project(transaction: Prisma.TransactionClient) {
     conflicts: assessment.conflicts,
     reviewedPlanSha256: assessment.reviewedPlanSha256,
     readyToApply: assessment.readyToApply,
+    rateBucketStabilityReferenceForNextProjection: referenceForNextProjection,
     productionMutationPerformed: false,
   };
 }
 
 async function main() {
+  const mode = projectionMode();
   if (databaseFingerprint() !== EXPECTED_DATABASE_FINGERPRINT) {
     throw new Error("PR6 projection refused an unexpected database fingerprint.");
   }
@@ -786,12 +952,33 @@ async function main() {
   if (git(["branch", "--show-current"]) !== PR6_BRANCH) {
     throw new Error("PR6 projection refused an unexpected branch.");
   }
-  const result = await prisma.$transaction(project, {
-    isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
-    timeout: 60_000,
-  });
+  const rateBucketStabilityReference = mode.kind === "COMPARE_SECOND_PROJECTION"
+    ? parsePr6RateBucketStabilityReference(
+        JSON.parse(readFileSync(mode.referencePath, "utf8")) as unknown,
+      )
+    : null;
+  const result = await prisma.$transaction(
+    (transaction) => project(transaction, rateBucketStabilityReference, mode.kind),
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+      timeout: 60_000,
+    },
+  );
+  if (mode.kind === "CAPTURE_FIRST_PROJECTION") {
+    if (result.rateBucketStabilityReferenceForNextProjection) {
+      writeFileSync(
+        mode.referencePath,
+        `${JSON.stringify(result.rateBucketStabilityReferenceForNextProjection, null, 2)}\n`,
+        { flag: "wx", mode: 0o600 },
+      );
+      result.projectionSequence.referenceWritten = true;
+    }
+  }
   console.log(JSON.stringify(result, (_key, value) => typeof value === "bigint" ? Number(value) : value, 2));
-  if (!result.readyToApply) process.exitCode = 2;
+  const firstProjectionCaptured = mode.kind === "CAPTURE_FIRST_PROJECTION"
+    && result.projectionSequence.referenceWritten
+    && result.conflicts.length === 0;
+  if (!result.readyToApply && !firstProjectionCaptured) process.exitCode = 2;
 }
 
 void main()

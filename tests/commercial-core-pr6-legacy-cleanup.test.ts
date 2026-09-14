@@ -9,17 +9,24 @@ import test from "node:test";
 import {
   PR6_BASE_SHA,
   PR6_BRANCH,
+  PR6_EXACT_COUNT_TARGETS,
   PR6_EXPECTED_FOREIGN_KEYS,
   PR6_KEEP_TABLES,
   PR6_MIGRATION_PATH,
   PR6_PUBLIC_RUNTIME_FILES,
+  PR6_RATE_BUCKET_DRIFT_CLASSIFICATION,
+  PR6_RATE_BUCKET_TARGET,
   PR6_ROUTE_BASELINE,
   PR6_TARGET_FUNCTIONS,
   PR6_TARGET_TABLES,
   PR6_TARGET_TRIGGERS,
+  assessPr6ExactApplyState,
   assessPr6Projection,
   canonicalJson,
+  createPr6RateBucketStabilityReference,
+  expectedPr6HistoricalReferenceTotalRows,
   inspectPr6MigrationSql,
+  parsePr6RateBucketStabilityReference,
   sha256,
   type Pr6ProjectionEvidence,
 } from "../scripts/commercial-core-pr6-legacy-cleanup-core";
@@ -62,10 +69,19 @@ function fileSha256(path: string) {
   return createHash("sha256").update(source(path)).digest("hex");
 }
 
-function validEvidence(): Pr6ProjectionEvidence {
+function validEvidence({
+  rateBucketCount = 6,
+  firstProjectionCount = rateBucketCount,
+  includeStabilityReference = true,
+}: {
+  rateBucketCount?: number;
+  firstProjectionCount?: number;
+  includeStabilityReference?: boolean;
+} = {}): Pr6ProjectionEvidence {
   const migrationSql = source(PR6_MIGRATION_PATH);
+  const head = "a".repeat(40);
   return {
-    head: "a".repeat(40),
+    head,
     originMain: PR6_BASE_SHA,
     branch: PR6_BRANCH,
     workingTreeClean: true,
@@ -76,7 +92,13 @@ function validEvidence(): Pr6ProjectionEvidence {
       indexes: [`${table}_representative_index`],
     })),
     targetRowCounts: Object.fromEntries(
-      PR6_TARGET_TABLES.map(({ table, baselineCount }) => [table, baselineCount]),
+      [
+        ...PR6_EXACT_COUNT_TARGETS.map(({ table, expectedCurrentCount }) => [
+          table,
+          expectedCurrentCount,
+        ] as const),
+        [PR6_RATE_BUCKET_TARGET.table, rateBucketCount] as const,
+      ],
     ),
     foreignKeys: [...PR6_EXPECTED_FOREIGN_KEYS],
     triggers: PR6_TARGET_TRIGGERS.map((trigger) => ({ ...trigger, enabled: "ENABLED" })),
@@ -123,6 +145,21 @@ function validEvidence(): Pr6ProjectionEvidence {
     immutableMigrationChangedFiles: [],
     publicRuntimeChangedFiles: [],
     activeRuntimeConsumerFiles: [],
+    retirementEvidence: {
+      mcpOauthTransportAbsent: true,
+      externalConnectorsRetiredAccordingToPr5: true,
+      unexpectedMcpOauthRuntimeSurfaceFiles: [],
+    },
+    rateBucketStabilityReference: includeStabilityReference
+      ? createPr6RateBucketStabilityReference({
+          head,
+          originMain: PR6_BASE_SHA,
+          capturedAt: "2026-09-14T10:00:00.000Z",
+          rateBucketCount: firstProjectionCount,
+          transactionReadOnly: "on",
+          productionMutationPerformed: false,
+        })
+      : null,
   };
 }
 
@@ -230,19 +267,105 @@ test("the Production projector is fail-closed, truly read-only, and aggregate-on
   assert.match(projector, /productionMutationPerformed:\s*false/g);
   assert.doesNotMatch(projector, /\.(?:oauthClient|oauthResource|oauthClientResource|oauthRefreshToken|oauthAccessToken|oauthConsent|oauthClientAssertion|commercialMcpRateLimitBucket)\b/);
   assert.doesNotMatch(projector, /clientSecret|redirectUris?|authorizationCode|\btokenValue\b|rawMetadata/i);
+  assert.match(projector, /--capture-rate-bucket-reference=/);
+  assert.match(projector, /--compare-rate-bucket-reference=/);
+  assert.match(projector, /flag:\s*"wx"/);
 
-  const countsQuery = projector.match(/async function targetCounts[\s\S]*?\n}\n\nasync function foreignKeys/)?.[0];
+  const countsQuery = projector.match(
+    /async function targetCounts[\s\S]*?\n}\n\nasync function rateBucketLifecycleSummary/,
+  )?.[0];
   assert.ok(countsQuery);
   assert.equal((countsQuery.match(/count\(\*\)::int/g) ?? []).length, 8);
   assert.doesNotMatch(countsQuery, /SELECT\s+\*/i);
 });
 
-test("reviewed plan hashing is deterministic, binds the head, and excludes unreviewed secret values", () => {
+test("PR5 retirement evidence is current and contains no stale connector-incomplete state", () => {
+  const pr5Runbook = source("docs/06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md");
+  const currentState = source("docs/CURRENT_STATE.md");
+  assert.match(pr5Runbook, /removed both registrations\. They must not be recreated or reconnected\./);
+  assert.match(currentState, /EXTERNAL CONNECTORS COMPLETE/);
+  assert.doesNotMatch(
+    currentState,
+    /EXTERNAL CONNECTIONS DETECTED; PR5 REPOSITORY RETIREMENT READY FOR RE-REVIEW|removal is required immediately before deployment and is not completed/,
+  );
+});
+
+test("the old rate-bucket count is historical reference only", () => {
+  assert.equal(PR6_EXACT_COUNT_TARGETS.length, 7);
+  assert.equal(
+    PR6_EXACT_COUNT_TARGETS.map(({ table }) => String(table)).includes(PR6_RATE_BUCKET_TARGET.table),
+    false,
+  );
+  assert.deepEqual(PR6_RATE_BUCKET_TARGET, {
+    model: "CommercialMcpRateLimitBucket",
+    table: "CommercialMcpRateLimitBucket",
+    historicalReferenceCount: 8,
+  });
+  assert.equal(expectedPr6HistoricalReferenceTotalRows(), 513);
+  assert.doesNotMatch(canonicalJson(PR6_RATE_BUCKET_TARGET), /expectedCurrentCount|baselineCount/);
+});
+
+test("a stable bounded 8 to 6 decrease is accepted as ephemeral retirement drift", () => {
+  const firstProjection = assessPr6Projection(validEvidence({ includeStabilityReference: false }));
+  assert.deepEqual(firstProjection.conflicts, []);
+  assert.equal(firstProjection.readyToApply, false);
+  assert.equal(firstProjection.requiresSecondProjection, true);
+  assert.equal(firstProjection.referenceEligibleForSecondProjection, true);
+  assert.equal(firstProjection.rateBucketReconciliation.stabilityStatus, "SECOND_PROJECTION_REQUIRED");
+
+  const secondProjection = assessPr6Projection(validEvidence());
+  assert.deepEqual(secondProjection.conflicts, []);
+  assert.equal(secondProjection.readyToApply, true);
+  assert.equal(secondProjection.totalRowsScheduledForDeletion, 511);
+  assert.deepEqual(secondProjection.rateBucketReconciliation, {
+    historicalReferenceCount: 8,
+    firstProjectionCount: 6,
+    secondProjectionCount: 6,
+    reviewedCurrentBaseline: 6,
+    deltaFromHistoricalReference: -2,
+    driftClassification: PR6_RATE_BUCKET_DRIFT_CLASSIFICATION,
+    stabilityStatus: "STABLE",
+  });
+});
+
+test("rate-bucket increase and second-projection mutation fail closed", () => {
+  const increased = assessPr6Projection(validEvidence({
+    rateBucketCount: 9,
+    firstProjectionCount: 9,
+  }));
+  assert.equal(increased.readyToApply, false);
+  assert.match(
+    increased.conflicts.join("\n"),
+    /RATE_BUCKET_COUNT_EXCEEDS_HISTORICAL_REFERENCE:9>8/,
+  );
+
+  const changedAgain = assessPr6Projection(validEvidence({
+    rateBucketCount: 5,
+    firstProjectionCount: 6,
+  }));
+  assert.equal(changedAgain.readyToApply, false);
+  assert.equal(changedAgain.rateBucketReconciliation.stabilityStatus, "CHANGED");
+  assert.match(changedAgain.conflicts.join("\n"), /RATE_BUCKET_STATE_STILL_MUTATING/);
+});
+
+test("rate-bucket stability references are strict, read-only, and checksum-bound", () => {
+  const reference = validEvidence().rateBucketStabilityReference;
+  assert.ok(reference);
+  assert.deepEqual(parsePr6RateBucketStabilityReference(structuredClone(reference)), reference);
+  const corrupted = structuredClone(reference);
+  corrupted.rateBucketCount = 5;
+  assert.throws(
+    () => parsePr6RateBucketStabilityReference(corrupted),
+    /RATE_BUCKET_STABILITY_REFERENCE_CHECKSUM_MISMATCH/,
+  );
+});
+
+test("reviewed plan hashing is deterministic, binds the exact current count, and excludes unreviewed values", () => {
   const evidence = validEvidence();
   const first = assessPr6Projection(evidence);
   assert.equal(first.readyToApply, true);
   assert.deepEqual(first.conflicts, []);
-  assert.equal(first.totalRowsScheduledForDeletion, 513);
+  assert.equal(first.totalRowsScheduledForDeletion, 511);
 
   const reordered = structuredClone(evidence);
   reordered.foreignKeys.reverse();
@@ -255,6 +378,30 @@ test("reviewed plan hashing is deterministic, binds the head, and excludes unrev
   differentHead.head = "b".repeat(40);
   assert.notEqual(assessPr6Projection(differentHead).reviewedPlanSha256, first.reviewedPlanSha256);
 
+  const differentReferenceTimestamp = structuredClone(evidence);
+  differentReferenceTimestamp.rateBucketStabilityReference =
+    createPr6RateBucketStabilityReference({
+      head: evidence.head,
+      originMain: evidence.originMain,
+      capturedAt: "2026-09-14T10:01:00.000Z",
+      rateBucketCount: 6,
+      transactionReadOnly: "on",
+      productionMutationPerformed: false,
+    });
+  assert.equal(
+    assessPr6Projection(differentReferenceTimestamp).reviewedPlanSha256,
+    first.reviewedPlanSha256,
+    "volatile capture time must not enter the reviewed plan",
+  );
+
+  const stableFive = assessPr6Projection(validEvidence({
+    rateBucketCount: 5,
+    firstProjectionCount: 5,
+  }));
+  assert.equal(stableFive.readyToApply, true);
+  assert.notEqual(stableFive.reviewedPlanSha256, first.reviewedPlanSha256);
+  assert.equal(stableFive.reviewedPlan.targetRowCounts.CommercialMcpRateLimitBucket, 5);
+
   const withUnreviewedSecret = evidence as Pr6ProjectionEvidence & {
     rawToken: string;
     clientSecret: string;
@@ -263,6 +410,31 @@ test("reviewed plan hashing is deterministic, binds the head, and excludes unrev
   withUnreviewedSecret.clientSecret = "pr6-client-secret-sentinel-must-not-escape";
   const renderedPlan = canonicalJson(assessPr6Projection(withUnreviewedSecret).reviewedPlan);
   assert.doesNotMatch(renderedPlan, /pr6-(?:token|client-secret)-sentinel/);
+});
+
+test("future APPLY state comparison is exact-hash with zero count tolerance", () => {
+  const reviewedSix = assessPr6Projection(validEvidence());
+  assert.equal(
+    assessPr6ExactApplyState(reviewedSix.reviewedPlanSha256, reviewedSix).exactStateAndHashMatch,
+    true,
+  );
+
+  const changedAfterCapture = assessPr6Projection(validEvidence({
+    rateBucketCount: 5,
+    firstProjectionCount: 6,
+  }));
+  const movingGate = assessPr6ExactApplyState(reviewedSix.reviewedPlanSha256, changedAfterCapture);
+  assert.equal(movingGate.exactStateAndHashMatch, false);
+  assert.deepEqual(movingGate.conflicts, ["FRESH_STATE_NOT_READY", "REVIEWED_PLAN_HASH_MISMATCH"]);
+
+  const newlyStableFive = assessPr6Projection(validEvidence({
+    rateBucketCount: 5,
+    firstProjectionCount: 5,
+  }));
+  assert.equal(newlyStableFive.readyToApply, true);
+  const exactHashGate = assessPr6ExactApplyState(reviewedSix.reviewedPlanSha256, newlyStableFive);
+  assert.equal(exactHashGate.exactStateAndHashMatch, false);
+  assert.deepEqual(exactHashGate.conflicts, ["REVIEWED_PLAN_HASH_MISMATCH"]);
 });
 
 test("count, dependency, KEEP-set, migration, and runtime drift force readyToApply=false", () => {
@@ -286,6 +458,13 @@ test("count, dependency, KEEP-set, migration, and runtime drift force readyToApp
     ["KEEP set", (evidence) => { evidence.keepSet.tables.AuditLog = false; }, /KEEP_TABLE_MISSING:AuditLog/],
     ["migration scope", (evidence) => { evidence.migration.inspection.approvedObjectsOnly = false; }, /MIGRATION_SCOPE_DRIFT/],
     ["runtime consumer", (evidence) => { evidence.activeRuntimeConsumerFiles = ["lib/unexpected.ts"]; }, /ACTIVE_RUNTIME_CONSUMER_FOUND/],
+    ["transport", (evidence) => { evidence.retirementEvidence.mcpOauthTransportAbsent = false; }, /MCP_OAUTH_TRANSPORT_PRESENT/],
+    ["runtime surface", (evidence) => {
+      evidence.retirementEvidence.unexpectedMcpOauthRuntimeSurfaceFiles = ["app/api/mcp/new/route.ts"];
+    }, /UNEXPECTED_MCP_OAUTH_RUNTIME_SURFACE/],
+    ["connector retirement", (evidence) => {
+      evidence.retirementEvidence.externalConnectorsRetiredAccordingToPr5 = false;
+    }, /EXTERNAL_CONNECTOR_RETIREMENT_NOT_VERIFIED/],
   ];
 
   for (const [label, mutate, conflict] of cases) {
