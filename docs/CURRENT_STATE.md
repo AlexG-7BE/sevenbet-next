@@ -32,6 +32,14 @@ target resolution or mutation. PR5 adds no caller and no replacement public
 transport. Direct logo/editorial media and generic Better Auth/Google identity
 behavior remain.
 
+Historical Media ingestion plans/batches remain readable through one exact,
+persisted-only decoder: legacy source values normalize to `AUTOMATION` at plan
+root, nested operation and batch root; current write schemas reject the legacy
+value and unknown values fail closed. No migration or record rewrite is added.
+The neutral CRM idempotency audit found that deliberate cross-namespace replay
+could duplicate child rows, but no neutral application caller/replay path
+exists; compatibility is intentionally not broadened.
+
 **DETECTED — READ-ONLY PRODUCTION EVIDENCE:** a fingerprint-gated,
 repeatable-read transaction enforced `transaction_read_only=on` and performed
 zero writes. The 81 canonical routes, 39 `ACTIVE + HEALTHY` routes, six legacy
@@ -43,12 +51,18 @@ Historical connector storage is populated and old MCP research audit activity
 was recorded through 11 September; rate-bucket activity exists through 13
 September. The named current caller cannot be attributed without request
 telemetry: `MCP_RECENT_USAGE_UNKNOWN`.
+The aggregate-only Media history projection observed 175 plans and 56 batches:
+157 plan roots and 52 batch roots use the legacy source, 0 records use
+`AUTOMATION`, and 0 records contain an unexpected/missing source. No raw JSON
+or destination was returned.
 
 **EXTERNAL / NOT COMPLETED:** the Founder instruction confirms the external
 custom connection `B4GAMBLE Commercial Operations2` still exists. Repository
-code cannot remove it. Whether a Media connector still exists externally is
-`UNKNOWN`. Independent approval must remove external connection(s) immediately
-before merge/deploy, then verify the former endpoints are absent/404.
+code cannot remove it. Founder Office inspection also detected `B4GAMBLE Media
+GEO3` still connected while its current Production endpoint already returns
+`410 MEDIA_OPERATIONS_RETIRED`. Removal of both connections is `NOT COMPLETED`.
+Independent approval must disconnect both immediately before exact-head merge/
+deploy, then verify both are gone and all former endpoints are absent/404.
 
 **REVIEW ONLY:** PR5 is not merged or deployed, performs no Production
 mutation and includes no schema migration. Eight historical OAuth/rate-limit
@@ -293,7 +307,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public legal implementation | **READY** | Current GB public legal copy/consent/disclosure implementation is in Production for the approved scope. |
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
-| Commercial MCP / operational OAuth | **PRODUCTION TRANSPORT STILL EXISTS; PR5 REPOSITORY RETIREMENT READY FOR REVIEW** | PR5 removes the server/provider/routes without a replacement transport. External `B4GAMBLE Commercial Operations2` removal is required immediately before deployment; Media connector state is unknown. |
+| Commercial MCP / operational OAuth | **EXTERNAL CONNECTIONS DETECTED; PR5 REPOSITORY RETIREMENT READY FOR RE-REVIEW** | PR5 removes the server/provider/routes without a replacement transport. External `B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3` removal is required immediately before deployment and is not completed. |
 | Partner tracking registration | **RFC-048 WRITE CORE LIVE; INTERNAL-ONLY AFTER PR5** | CRM/static/lifecycle state is non-authoritative and canonical writes require non-serializable trusted Founder provenance. PR5 removes the old transport caller and adds no new authority boundary. |
 | Production DB reliability | **READY IN PRODUCTION** | The one-connection runtime and narrow secret-safe transient handling remain; transport-specific availability code/tests are retired. |
 | Commercial partner activation | **READY IN PRODUCTION — 39 STORED ACTIVE + HEALTHY ROUTES** | PR2 acceptance verified all 39 stored active/healthy routes unchanged. RFC-042 remains the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |
@@ -303,7 +317,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | GEO-localized creative assignments | **RETIRED — HISTORICAL TARGETING EVIDENCE ONLY** | Exact-country/language assignment rows remain for audit but are inactive and database-constrained. Trusted GEO continues to govern jurisdiction independently of language and media. |
 | Vetted partner-hosted creatives | **RETIRED — 254 HISTORICAL ROWS PRESERVED AND ARCHIVED** | Hosted creatives remain inert evidence. Public frames/previews and active assignments are retired; they cannot supply Product or commercial authority. |
 | Commercial creative formats | **HISTORICAL COMPATIBILITY / TEST VOCABULARY** | Format parsers and pre-retirement tests may remain inert. Active public compositions accept operator logos or explicitly B4GAMBLE-owned editorial art, never promotional creative formats. |
-| Media ingestion / Media Operations | **PROMOTIONAL OPERATIONS RETIRED; LOGO AND B4GAMBLE EDITORIAL ASSETS ONLY** | Active Admin media is limited to canonical logos and authenticated `b4gambleOwned` editorial social imagery. PR5 removes the remaining MCP/DCR 410 stubs; retired database states remain constrained. |
+| Media ingestion / Media Operations | **PROMOTIONAL OPERATIONS RETIRED; LEGACY HISTORY READABLE; LOGO AND B4GAMBLE EDITORIAL ASSETS ONLY** | Active Admin media is limited to canonical logos and authenticated `b4gambleOwned` editorial social imagery. PR5 removes the remaining MCP/DCR 410 stubs and adds only an exact persisted-history source decoder; retired database states remain constrained. |
 | Public language / market presentation | **ELEVEN LOCALES LIVE IN PRODUCTION** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
 | Customer data / analytics / lifecycle | **CORE VERIFIED; RESEND ACTIVE IN PRODUCTION** | PR #269 and migration 0037 remain verified. Founder processing authority, provider configuration, signed webhook controls and all six controlled acceptance checks pass; lifecycle delivery is enabled with zero non-fixture acceptance messages. |
 

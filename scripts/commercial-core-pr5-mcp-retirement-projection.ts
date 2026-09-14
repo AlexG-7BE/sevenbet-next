@@ -14,6 +14,27 @@ const publicRuntimeFiles = [
   "lib/services/public-casino-discovery.service.ts",
 ];
 
+type MediaHistoryCounts = {
+  totalPlans: number;
+  totalBatches: number;
+  planRootAdmin: number;
+  planRootAutomation: number;
+  planRootSystem: number;
+  planRootLegacy: number;
+  planRootUnexpected: number;
+  batchRootAdmin: number;
+  batchRootAutomation: number;
+  batchRootSystem: number;
+  batchRootLegacy: number;
+  batchRootUnexpected: number;
+  plansWithLegacy: number;
+  batchesWithLegacy: number;
+  plansWithAutomation: number;
+  batchesWithAutomation: number;
+  plansWithUnexpected: number;
+  batchesWithUnexpected: number;
+};
+
 function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -69,6 +90,7 @@ async function project(transaction: Prisma.TransactionClient) {
     recentAccessTokens,
     recentRefreshTokens,
     recentRateBuckets,
+    mediaHistoryRows,
   ] = await Promise.all([
     transaction.marketActivation.findMany({
       where: { product: "CASINO" },
@@ -114,7 +136,78 @@ async function project(transaction: Prisma.TransactionClient) {
     transaction.oauthAccessToken.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     transaction.oauthRefreshToken.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     transaction.commercialMcpRateLimitBucket.count({ where: { windowStartedAt: { gte: thirtyDaysAgo } } }),
+    transaction.$queryRaw<MediaHistoryCounts[]>(Prisma.sql`
+      WITH plan_records AS (
+        SELECT "value"
+        FROM "SiteSetting"
+        WHERE "key" LIKE 'media-ingestion-plan:%'
+      ),
+      plan_sources AS (
+        SELECT
+          "value" ->> 'source' AS root_source,
+          EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(
+              CASE WHEN jsonb_typeof("value" -> 'operations') = 'array'
+                THEN "value" -> 'operations'
+                ELSE '[]'::jsonb
+              END
+            ) AS operation
+            WHERE operation ->> 'source' = 'CHATGPT_WORK'
+          ) AS operation_has_legacy,
+          EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(
+              CASE WHEN jsonb_typeof("value" -> 'operations') = 'array'
+                THEN "value" -> 'operations'
+                ELSE '[]'::jsonb
+              END
+            ) AS operation
+            WHERE operation ->> 'source' = 'AUTOMATION'
+          ) AS operation_has_automation,
+          EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(
+              CASE WHEN jsonb_typeof("value" -> 'operations') = 'array'
+                THEN "value" -> 'operations'
+                ELSE '[]'::jsonb
+              END
+            ) AS operation
+            WHERE jsonb_typeof(operation) <> 'object'
+              OR operation ->> 'source' IS NULL
+              OR operation ->> 'source' NOT IN ('ADMIN', 'AUTOMATION', 'SYSTEM', 'CHATGPT_WORK')
+          ) AS operation_has_unexpected
+        FROM plan_records
+      ),
+      batch_sources AS (
+        SELECT "value" ->> 'source' AS root_source
+        FROM "SiteSetting"
+        WHERE "key" LIKE 'media-ingestion-batch:%'
+      )
+      SELECT
+        (SELECT count(*)::int FROM plan_sources) AS "totalPlans",
+        (SELECT count(*)::int FROM batch_sources) AS "totalBatches",
+        (SELECT count(*) FILTER (WHERE root_source = 'ADMIN')::int FROM plan_sources) AS "planRootAdmin",
+        (SELECT count(*) FILTER (WHERE root_source = 'AUTOMATION')::int FROM plan_sources) AS "planRootAutomation",
+        (SELECT count(*) FILTER (WHERE root_source = 'SYSTEM')::int FROM plan_sources) AS "planRootSystem",
+        (SELECT count(*) FILTER (WHERE root_source = 'CHATGPT_WORK')::int FROM plan_sources) AS "planRootLegacy",
+        (SELECT count(*) FILTER (WHERE root_source IS NULL OR root_source NOT IN ('ADMIN', 'AUTOMATION', 'SYSTEM', 'CHATGPT_WORK'))::int FROM plan_sources) AS "planRootUnexpected",
+        (SELECT count(*) FILTER (WHERE root_source = 'ADMIN')::int FROM batch_sources) AS "batchRootAdmin",
+        (SELECT count(*) FILTER (WHERE root_source = 'AUTOMATION')::int FROM batch_sources) AS "batchRootAutomation",
+        (SELECT count(*) FILTER (WHERE root_source = 'SYSTEM')::int FROM batch_sources) AS "batchRootSystem",
+        (SELECT count(*) FILTER (WHERE root_source = 'CHATGPT_WORK')::int FROM batch_sources) AS "batchRootLegacy",
+        (SELECT count(*) FILTER (WHERE root_source IS NULL OR root_source NOT IN ('ADMIN', 'AUTOMATION', 'SYSTEM', 'CHATGPT_WORK'))::int FROM batch_sources) AS "batchRootUnexpected",
+        (SELECT count(*) FILTER (WHERE root_source = 'CHATGPT_WORK' OR operation_has_legacy)::int FROM plan_sources) AS "plansWithLegacy",
+        (SELECT count(*) FILTER (WHERE root_source = 'CHATGPT_WORK')::int FROM batch_sources) AS "batchesWithLegacy",
+        (SELECT count(*) FILTER (WHERE root_source = 'AUTOMATION' OR operation_has_automation)::int FROM plan_sources) AS "plansWithAutomation",
+        (SELECT count(*) FILTER (WHERE root_source = 'AUTOMATION')::int FROM batch_sources) AS "batchesWithAutomation",
+        (SELECT count(*) FILTER (WHERE root_source IS NULL OR root_source NOT IN ('ADMIN', 'AUTOMATION', 'SYSTEM', 'CHATGPT_WORK') OR operation_has_unexpected)::int FROM plan_sources) AS "plansWithUnexpected",
+        (SELECT count(*) FILTER (WHERE root_source IS NULL OR root_source NOT IN ('ADMIN', 'AUTOMATION', 'SYSTEM', 'CHATGPT_WORK'))::int FROM batch_sources) AS "batchesWithUnexpected"
+    `),
   ]);
+
+  const mediaHistory = mediaHistoryRows[0];
+  if (!mediaHistory) throw new Error("PR5 projection did not return Media ingestion history counts.");
 
   const canonicalRoutes = routes.filter((route) => route.marketCode !== "ZZ");
   const healthyActiveRoutes = canonicalRoutes.filter((route) =>
@@ -156,6 +249,43 @@ async function project(transaction: Prisma.TransactionClient) {
         accessTokensCreated: recentAccessTokens,
         refreshTokensCreated: recentRefreshTokens,
         rateBucketsStarted: recentRateBuckets,
+      },
+    },
+    mediaIngestionHistory: {
+      totalPlans: mediaHistory.totalPlans,
+      totalBatches: mediaHistory.totalBatches,
+      rootSourceCounts: {
+        plans: {
+          ADMIN: mediaHistory.planRootAdmin,
+          AUTOMATION: mediaHistory.planRootAutomation,
+          SYSTEM: mediaHistory.planRootSystem,
+          CHATGPT_WORK: mediaHistory.planRootLegacy,
+          UNEXPECTED_OR_MISSING: mediaHistory.planRootUnexpected,
+        },
+        batches: {
+          ADMIN: mediaHistory.batchRootAdmin,
+          AUTOMATION: mediaHistory.batchRootAutomation,
+          SYSTEM: mediaHistory.batchRootSystem,
+          CHATGPT_WORK: mediaHistory.batchRootLegacy,
+          UNEXPECTED_OR_MISSING: mediaHistory.batchRootUnexpected,
+        },
+      },
+      recordsContainingRelevantSource: {
+        CHATGPT_WORK: {
+          plans: mediaHistory.plansWithLegacy,
+          batches: mediaHistory.batchesWithLegacy,
+          total: mediaHistory.plansWithLegacy + mediaHistory.batchesWithLegacy,
+        },
+        AUTOMATION: {
+          plans: mediaHistory.plansWithAutomation,
+          batches: mediaHistory.batchesWithAutomation,
+          total: mediaHistory.plansWithAutomation + mediaHistory.batchesWithAutomation,
+        },
+        UNEXPECTED_OR_MISSING: {
+          plans: mediaHistory.plansWithUnexpected,
+          batches: mediaHistory.batchesWithUnexpected,
+          total: mediaHistory.plansWithUnexpected + mediaHistory.batchesWithUnexpected,
+        },
       },
     },
     connectorUsageAssessment: {

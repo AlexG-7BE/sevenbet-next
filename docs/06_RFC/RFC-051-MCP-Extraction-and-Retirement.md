@@ -26,26 +26,30 @@ provider configuration, MCP servers, tool declarations, rate-limit runtime,
 connector-specific Admin pages, test harnesses and direct root package
 dependencies. It does not replace the transport with another public API.
 
-The external custom connection named `B4GAMBLE Commercial Operations2` is
-outside this repository and remains a release action:
+The external custom connections named `B4GAMBLE Commercial Operations2` and
+`B4GAMBLE Media GEO3` are outside this repository and remain release actions:
 
 `EXTERNAL_CONNECTOR_RETIREMENT_REQUIRED`
 
-No external connector is removed by this review-only PR.
+Founder Office external inspection detected both connections still present.
+The detected Production Media endpoint already returns cache-proof `410
+MEDIA_OPERATIONS_RETIRED`; that retired endpoint response does not remove the
+external registration. No external connector is removed by this review-only
+PR.
 
 ## 2. Before and after
 
 ### Before PR5
 
 ```text
-external custom connection
+external Commercial and Media custom connections
   -> discovery + OAuth/DCR routes
   -> MCP server/tool declarations
   -> Commercial MCP service
        -> CRM repository research operations
        -> tracking-registration application service (no Founder authority)
 
-Media MCP/DCR routes -> cache-proof 410 stubs
+Media MCP/DCR routes -> cache-proof 410 MEDIA_OPERATIONS_RETIRED stubs
 ```
 
 ### After PR5
@@ -98,6 +102,7 @@ media record to public commercial authority.
 | MarketActivation, public action resolver and `/r` | `CANONICAL BUSINESS` | unchanged |
 | AuditLog and CRM run/operation records | `AUDIT` | retained |
 | direct logo/editorial MediaAsset runtime | `CANONICAL MEDIA` | unchanged |
+| historical Media plan/batch persisted-source decoder | `DATA / HISTORY` | retained read-only compatibility seam |
 | OAuth provider tables and rate buckets | `DATA / HISTORY` | retained inertly for PR6 |
 | migrations 0021–0023 and replay fixture | `HISTORY` | immutable and retained |
 | isolated `agents/` package | `CANONICAL INTERNAL AGENT` | unchanged and tool-free |
@@ -137,6 +142,15 @@ New neutral research idempotency keys use a `research:` namespace. Historical
 `mcp:` keys and `commercial_mcp_research_bundle_upserted` audit rows remain
 truthful history and are not rewritten.
 
+The idempotency namespace audit found a bounded residual case: deliberately
+replaying a legacy MCP-created bundle through the neutral service would use a
+different namespace and can create duplicate child rows on the resolved
+opportunity. That replay is intentionally unsupported. PR5 adds no neutral
+caller or replay adapter, and the active repository has no Production or
+internal caller that reuses legacy keys. Historical Production rows and audit
+records do not themselves invoke the neutral service. Compatibility is not
+added without a real, separately authorised caller/replay path.
+
 ## 5. Tracking and media independence
 
 Partner tracking remains in `PartnerTrackingRegistrationService`. It has no
@@ -154,6 +168,14 @@ Media MCP and DCR stubs are removed. Direct active operator logos and
 B4GAMBLE-owned editorial assets remain. Promotional media assignments and
 hosted creatives remain inert under RFC-044. Media cannot create, block or
 select a commercial route.
+
+Historical `SiteSetting` plans and batches remain readable through one bounded
+persisted-data decoder. It maps only exact legacy `CHATGPT_WORK` sources to
+`AUTOMATION` at the plan root, nested plan-operation source and batch root,
+then applies the current strict schema. Unknown sources fail closed. Current
+write schemas accept only `ADMIN`, `AUTOMATION` and `SYSTEM`; no new write can
+emit the legacy value. PR5 performs no history migration, record rewrite or
+Production mutation.
 
 MCP request rate buckets, protocol reliability wrappers and connector-facing
 browser telemetry measured only the retired transport and are removed from
@@ -222,11 +244,19 @@ repeatable-read transaction, enforces `SET TRANSACTION READ ONLY`, verifies
 `transaction_read_only=on`, emits no URLs/credentials/tokens/client IDs, and
 checks that public-runtime and migration files do not differ from main.
 
-Read-only evidence captured 13 September 2026 UTC found 81 canonical
+Read-only evidence refreshed 14 September 2026 UTC found 81 canonical
 non-`ZZ` routes, 39 `ACTIVE + HEALTHY` routes, six legacy `ZZ` rows, 17 active
 logo assets and 62 Commercial opportunities. The canonical route-state digest
 is `4764a59536fef067eed786b82f214ab55f3126d00dd2359b75eba7603f73600c`.
 No Production mutation was performed.
+
+The same aggregate-only query inspected only Media ingestion `SiteSetting`
+keys and returned no JSON, destination or identifier: 175 plans and 56 batches.
+Plan root sources were 2 `ADMIN`, 0 `AUTOMATION`, 16 `SYSTEM`, 157 legacy and
+0 unexpected/missing; batch root sources were 0 `ADMIN`, 0 `AUTOMATION`, 4
+`SYSTEM`, 52 legacy and 0 unexpected/missing. Across root and nested-operation
+positions, 157 plans and 52 batches contain the legacy source, zero records
+contain `AUTOMATION`, and zero contain an unexpected/missing source.
 
 Historical connector storage remains populated. The latest old research audit
 was 11 September 2026; a connector rate bucket began 13 September 2026. This
@@ -238,27 +268,29 @@ Authoritative Vercel request telemetry was unavailable:
 
 ## 9. External cutover
 
-The safest release order is:
+The required release order is:
 
-1. independently approve PR5 and announce a maintenance window;
-2. capture read-only before-state and confirm rollback deployment;
-3. remove `B4GAMBLE Commercial Operations2` from the external custom-connection
-   UI immediately before deployment;
-4. merge PR5 under separate Founder authority;
-5. deploy;
-6. verify former MCP/OAuth/discovery URLs are absent/404 with no tools;
-7. verify auth, CRM, tracking tests, the expected 39 active healthy routes,
-   public CTA, `/r`, GB gates and logo media; and
-8. record external removal and Production acceptance.
+1. capture a fresh read-only projection and confirm rollback deployment;
+2. independently approve the exact PR5 head with all required hosted CI green;
+3. disconnect `B4GAMBLE Commercial Operations2` in the external custom-
+   connections UI;
+4. disconnect `B4GAMBLE Media GEO3` in the same external UI;
+5. verify both external connections are gone;
+6. merge that exact approved head under separate Founder authority;
+7. deploy the merged SHA;
+8. verify every former MCP/OAuth/discovery path is absent/404, never a retained
+   410 route, and exposes no tool or metadata; and
+9. smoke email/password and Google identity auth, public pages and CTA,
+   controlled `/r`, exact MarketActivation, GB gates, direct logo media and
+   retired Media behavior, then record Production acceptance.
 
 Disconnecting immediately before deploy prevents a registered client from
 calling endpoints that disappear during rollout. It intentionally creates a
 short maintenance interval. Application rollback does not recreate the
 external connection; reconnecting it is a separate manual rollback step.
 
-Any Media custom connection still present externally must also be removed.
-Repository and database evidence cannot establish whether one exists; its
-external state is `UNKNOWN`.
+Both external connections are `DETECTED` and their removal is `NOT COMPLETED`.
+This review does not disconnect either one.
 
 ## 10. Acceptance
 

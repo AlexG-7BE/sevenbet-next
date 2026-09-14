@@ -12,12 +12,16 @@ retaining neutral Commercial CRM research, canonical Partner tracking,
 MarketActivation/public action, audit, and direct logo/editorial media
 capabilities. It adds no replacement public transport.
 
-`B4GAMBLE Commercial Operations2` is an external custom connection and is not
-managed by repository code. Its removal is still required:
+`B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3` are external custom
+connections and are not managed by repository code. Their removal is still
+required:
 
 `EXTERNAL_CONNECTOR_RETIREMENT_REQUIRED`
 
 External connector removal is **not complete** in this review candidate.
+Founder Office inspection detected both registrations. The current Production
+Media endpoint already responds `410 MEDIA_OPERATIONS_RETIRED`; the external
+`B4GAMBLE Media GEO3` connection nevertheless remains connected.
 
 ## PR summary
 
@@ -43,6 +47,7 @@ remain independent and unchanged.
 | Partner tracking registration and Founder write capability | canonical commercial core | retained, internal only |
 | MarketActivation, public action resolver, `/r` and GB gates | canonical public runtime | retained unchanged |
 | direct logo/editorial media runtime | canonical media | retained unchanged |
+| legacy Media plan/batch source compatibility | data/history | exact persisted-read decoder; no migration |
 | generic Better Auth and Google identity OAuth | generic authentication | retained unchanged |
 | tracking audit, route health and general DB reliability | security/audit/observability | retained neutrally |
 | OAuth/rate-limit rows, models, migrations and audit history | data/history | retained inertly for PR6 |
@@ -58,17 +63,20 @@ remain independent and unchanged.
 | tracking core is CRM/OAuth independent | `DETECTED` | source graph and authority tests |
 | public runtime files differ from main | `DETECTED: NO` | projector comparison |
 | schema migration exists in PR5 | `DETECTED: NO` | migration diff and test |
-| named Commercial connection remains external | `DETECTED` | Founder instruction |
-| a Media connector still exists externally | `UNKNOWN` | no external UI evidence |
+| named Commercial connection remains external | `DETECTED` | Founder instruction/external inspection |
+| `B4GAMBLE Media GEO3` remains externally connected | `DETECTED` | Founder Office external inspection |
+| Production Media MCP endpoint returns `410 MEDIA_OPERATIONS_RETIRED` | `DETECTED` | read-only external tool result |
+| external connector removal performed | `NOT COMPLETED` | prohibited in review-only scope |
+| legacy Media history exists | `DETECTED` | aggregate-only Production projection |
 | current named-connector request usage | `UNKNOWN` | no attributable request telemetry |
 
 ## Repository scan
 
 The scan confirmed the active Git worktree belongs to
-`AlexG-7BE/sevenbet-next`. The final scan covered 2,325 active files after
-excluding dependencies, generated output, build artifacts, caches, reports and
-`tsconfig.tsbuildinfo`; the Git index separately identified the base, removals
-and eight new PR5 artifacts.
+`AlexG-7BE/sevenbet-next`. The full active repository was scanned with
+dependencies, generated output, build artifacts, caches, reports and
+`tsconfig.tsbuildinfo` excluded; the Git index separately identified the base
+and PR5 changes.
 
 Historical MCP references remain only where truth requires them: immutable
 migrations/fixtures, release records, RFC history, inert schema model names,
@@ -84,7 +92,8 @@ database fingerprint, enters a repeatable-read transaction, sets it read-only
 and verifies the database reports read-only state. It emits only counts,
 bounded timestamps and hashes.
 
-Evidence captured at `2026-09-13T23:31:46.631Z`:
+Evidence refreshed on 14 September 2026 UTC; the exact capture timestamp and
+head are retained in the PR review record:
 
 | Measure | Result |
 | --- | ---: |
@@ -99,6 +108,50 @@ Evidence captured at `2026-09-13T23:31:46.631Z`:
 | public-runtime files changed from main | 0 |
 | migration files changed | 0 |
 | Production writes | 0 |
+
+The same transaction used a database aggregate over Media ingestion
+`SiteSetting` keys only. No raw JSON, destination or identifier was returned.
+It counted 175 plans and 56 batches.
+
+| Media history measure | Result |
+| --- | ---: |
+| total plans | 175 |
+| total batches | 56 |
+| plan root `ADMIN` / `AUTOMATION` / `SYSTEM` / legacy / unexpected | 2 / 0 / 16 / 157 / 0 |
+| batch root `ADMIN` / `AUTOMATION` / `SYSTEM` / legacy / unexpected | 0 / 0 / 4 / 52 / 0 |
+| plans containing legacy source anywhere relevant | 157 |
+| batches containing legacy source anywhere relevant | 52 |
+| records containing `AUTOMATION` anywhere relevant | 0 |
+| records containing unexpected/missing source anywhere relevant | 0 |
+
+## Legacy Media persistence compatibility
+
+Current plan, operation and batch write schemas accept only `ADMIN`,
+`AUTOMATION` and `SYSTEM`; they reject the retired source. A single bounded
+persisted-history decoder maps only exact `CHATGPT_WORK` to `AUTOMATION` at the
+plan root, nested plan operations and batch root, then runs the current strict
+schema. Unknown values fail closed. `getPlan`, `listRecent`, `getBatch`,
+`listRecentBatches`, apply and rollback read through that seam. Regression
+coverage confirms normalisation, strict new writes, unknown rejection and that
+all existing apply/rollback ownership, draft, media-retirement and commercial-
+route constraints remain in force.
+
+There is no data migration or background rewrite. This PR and its Production
+projection perform zero Production writes.
+
+## CRM research idempotency audit
+
+**DETECTED:** old MCP-created rows use `mcp:<clientHash>:<key>` while the
+neutral service uses `research:<sourceHash>:<key>`. If an old bundle were
+deliberately replayed through the neutral service, the changed namespace could
+create duplicate child records for the resolved opportunity.
+
+**DETECTED:** the active repository has no application caller for neutral
+research-bundle upsert; only its service/repository definition and tests exist.
+PR5 removes the old transport and adds no replay adapter. No current
+Production/internal caller reuses the legacy keys. The hypothetical legacy
+replay is therefore intentionally unsupported, and no compatibility behavior
+is added without a real separately authorised caller path.
 
 The zero Partner relationship count is detected Production data, not a PR5
 deletion. PR5 neither writes nor projects relationship rows.
@@ -124,24 +177,22 @@ Do not interpret UNKNOWN as no usage. Assume a current caller may exist.
 
 ## Release sequence
 
-1. Obtain independent PR approval and explicit merge/deploy authority.
-2. Announce a maintenance window because no replacement transport exists.
-3. Re-run the projection; stop on unexplained route-count/digest drift.
-4. Confirm the previous Ready deployment and document the manual external
-   reconnect procedure.
-5. Remove `B4GAMBLE Commercial Operations2` in the external custom-connections
-   UI.
-6. Inspect that UI for a Media connector. Remove it if present. If inspection
-   is unavailable, stop and retain state `UNKNOWN`.
-7. Merge PR5.
-8. Deploy the merged SHA.
-9. Confirm all former machine-facing MCP/OAuth/discovery URLs are absent/404,
+1. Re-run the read-only projection; stop on unexplained route-count/digest or
+   Media-source-count drift, and confirm the rollback deployment.
+2. Obtain independent approval and green hosted CI for the exact PR5 head.
+3. Disconnect `B4GAMBLE Commercial Operations2` in the external custom-
+   connections UI.
+4. Disconnect `B4GAMBLE Media GEO3` in the same UI.
+5. Verify both external registrations are gone.
+6. Merge the exact approved head under explicit merge/deploy authority.
+7. Deploy the merged SHA.
+8. Confirm all former machine-facing MCP/OAuth/discovery URLs are absent/404,
    never 200, 401, 405 or 410, and expose no tools or metadata. Confirm the
    build route manifest contains no connector Admin page.
-10. Verify email/password Admin auth and Google identity-only auth.
-11. Verify CRM research, tracking authority denial, the expected active routes,
-    public CTA, `/r`, GB gates and direct logo media.
-12. Record connector removal, deployment and acceptance evidence.
+9. Smoke email/password Admin auth, Google identity-only auth, public pages and
+   CTA, controlled `/r`, exact MarketActivation, GB gates, direct logo media
+   and retired Media behavior; then record connector removal, deployment and
+   acceptance evidence.
 
 The external disconnect occurs immediately before merge/deploy so clients do
 not remain registered against disappearing endpoints. If deployment fails,
@@ -176,6 +227,7 @@ retired path appeared in the build route manifest.
 - CRM: research remains draft/evidence-only;
 - tracking: an untrusted command mutates nothing;
 - media: direct logos/editorial assets remain; promotional authority is retired;
+- media history: legacy plans/batches decode for reads while unknown sources fail closed;
 - auth: no operational OAuth provider; consumer/Admin/Google behavior remains;
 - logs: no URL, token, code, client ID or credential.
 

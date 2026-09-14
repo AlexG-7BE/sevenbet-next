@@ -24,6 +24,10 @@ import {
   type MediaOperationsSource,
   type MediaPlanRecommendation,
 } from "@/lib/media-operations/contracts";
+import {
+  decodePersistedMediaIngestionBatch,
+  decodePersistedMediaIngestionPlan,
+} from "@/lib/media-operations/persisted-history";
 import { isCasinoMediaPlacement } from "@/lib/media/placement-media";
 
 type PlanAudit = {
@@ -88,7 +92,7 @@ async function writePlan(tx: Prisma.TransactionClient, plan: MediaIngestionPlan)
 }
 
 function planFromValue(value: Prisma.JsonValue) {
-  return mediaIngestionPlanSchema.parse(value);
+  return decodePersistedMediaIngestionPlan(value);
 }
 
 type AssignmentIdentity = {
@@ -387,7 +391,7 @@ export class MediaIngestionRepository {
 
   async getBatch(batchId: string) {
     const record = await prisma.siteSetting.findUnique({ where: { key: mediaIngestionBatchKey(batchId) } });
-    return record ? mediaIngestionBatchSchema.parse(record.value) : null;
+    return record ? decodePersistedMediaIngestionBatch(record.value) : null;
   }
 
   async listRecentBatches(limit = 20) {
@@ -396,7 +400,7 @@ export class MediaIngestionRepository {
       orderBy: { updatedAt: "desc" },
       take: Math.min(Math.max(limit, 1), 50),
     });
-    return records.map((record) => mediaIngestionBatchSchema.parse(record.value));
+    return records.map((record) => decodePersistedMediaIngestionBatch(record.value));
   }
 
   async applyDraftPlan(input: { planId: string; recommendationIds?: string[]; replaceExisting: boolean; actorId: string; source: MediaOperationsSource }) {

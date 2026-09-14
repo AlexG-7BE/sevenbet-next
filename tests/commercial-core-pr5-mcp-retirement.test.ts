@@ -33,17 +33,41 @@ test("PR5 physically removes every MCP and operational OAuth HTTP surface", () =
     );
   }
 
-  const activeRuntime = [
+  const activeRuntimePaths = [
     ...sourceFiles("app"),
     ...sourceFiles("components"),
     ...sourceFiles("lib"),
     "middleware.ts",
     "next.config.mjs",
-  ].map((path) => `// ${path}\n${source(path)}`).join("\n");
+  ];
+  assert.deepEqual(
+    activeRuntimePaths.filter((path) => source(path).includes("CHATGPT_WORK")),
+    ["lib/media-operations/persisted-history.ts"],
+    "the retired source literal may survive only in the bounded persisted-history decoder",
+  );
+  const activeRuntime = activeRuntimePaths
+    .filter((path) => path !== "lib/media-operations/persisted-history.ts")
+    .map((path) => `// ${path}\n${source(path)}`).join("\n");
   assert.doesNotMatch(
     activeRuntime,
     /@modelcontextprotocol|\/api\/mcp|CommercialMcp|MediaMcp|commercial_mcp|COMMERCIAL_MCP|MEDIA_OPERATIONS_MCP|commercial:(?:read|safe_write)|media:(?:read|safe_write|production_write)|chatgpt-work|CHATGPT_WORK|getOperationalMcpAuth|oauthProvider|mcpAuth|mcpPermission|mcpAuthority|mcpConsent/,
   );
+});
+
+test("legacy Media source compatibility is bounded to persisted reads and remains fail-closed", () => {
+  const contracts = source("lib/media-operations/contracts.ts");
+  const decoder = source("lib/media-operations/persisted-history.ts");
+  const repository = source("lib/media-operations/repository.ts");
+  assert.doesNotMatch(contracts, /CHATGPT_WORK/);
+  assert.match(decoder, /value === LEGACY_MEDIA_OPERATIONS_SOURCE \? "AUTOMATION" : value/);
+  assert.match(decoder, /mediaIngestionPlanSchema\.parse\(normalizePersistedPlan\(value\)\)/);
+  assert.match(decoder, /mediaIngestionBatchSchema\.parse/);
+  assert.equal((repository.match(/planFromValue\(/g) ?? []).length, 5);
+  assert.equal((repository.match(/decodePersistedMediaIngestionBatch\(/g) ?? []).length, 2);
+  assert.match(repository, /async applyDraftPlan[\s\S]*?const plan = planFromValue\(setting\.value\)/);
+  assert.match(repository, /async rollbackDraftPlan[\s\S]*?const plan = planFromValue\(setting\.value\)/);
+  assert.match(repository, /const parsed = mediaIngestionPlanSchema\.parse\(plan\)/);
+  assert.match(repository, /const parsed = mediaIngestionBatchSchema\.parse\(batch\)/);
 });
 
 test("transport-only dependencies and commands are absent", () => {
@@ -69,6 +93,13 @@ test("extracted CRM research capability is transport-, client-, and scope-neutra
   assert.match(repository, /commercial_research_bundle_upserted/);
   assert.match(repository, /sourceAuthority: null/);
   assert.match(repository, /research-operation:/);
+  const applicationCallers = [
+    ...sourceFiles("app"),
+    ...sourceFiles("components"),
+    ...sourceFiles("lib"),
+  ].filter((path) => path !== "lib/commercial/commercial-opportunity-research-service.ts"
+    && source(path).includes("commercialOpportunityResearchService"));
+  assert.deepEqual(applicationCallers, [], "PR5 must not add a neutral research service caller or replay adapter");
 });
 
 test("canonical tracking and public runtime remain independent of CRM and retired transport", () => {
@@ -114,12 +145,20 @@ test("historical connector data is retained exactly for PR6 and has no active re
   assert.equal(migrations.at(-1), "0040_commercial_core_exact_routes_geo_simplification");
 });
 
-test("release documentation requires external connector retirement and records usage as unknown", () => {
+test("release documentation records both detected external connectors and exact retirement order", () => {
   const decision = source("docs/06_RFC/RFC-051-MCP-Extraction-and-Retirement.md");
   const runbook = source("docs/06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md");
+  const currentState = source("docs/CURRENT_STATE.md");
   assert.match(decision, /EXTERNAL_CONNECTOR_RETIREMENT_REQUIRED/);
   assert.match(runbook, /MCP_RECENT_USAGE_UNKNOWN/);
   assert.match(runbook, /B4GAMBLE Commercial Operations2/);
-  assert.match(runbook, /Media connector.*UNKNOWN/is);
+  assert.match(runbook, /B4GAMBLE Media GEO3/);
+  assert.match(runbook, /410 MEDIA_OPERATIONS_RETIRED/);
   assert.match(runbook, /External connector removal is \*\*not complete\*\*/i);
+  assert.match(runbook, /Disconnect `B4GAMBLE Commercial Operations2`[\s\S]*Disconnect `B4GAMBLE Media GEO3`[\s\S]*Verify both external registrations are gone[\s\S]*Merge the exact approved head/);
+  assert.match(runbook, /175 plans and 56 batches/);
+  assert.match(runbook, /deliberate cross-namespace replay|deliberately replayed/i);
+  assert.match(runbook, /intentionally unsupported/);
+  assert.doesNotMatch(runbook, /Media connector.*UNKNOWN/is);
+  assert.match(currentState, /B4GAMBLE Media\s+GEO3[\s\S]*410 MEDIA_OPERATIONS_RETIRED/);
 });
