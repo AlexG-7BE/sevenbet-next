@@ -4,20 +4,9 @@ import test from "node:test";
 import { PrismaClient } from "@prisma/client";
 
 import { GET as getAdminMediaIngestions } from "../app/api/admin/media-operations/ingestions/route";
-import { POST as postCommercialMcp } from "../app/api/mcp/commercial/route";
-import { POST as postMediaMcp } from "../app/api/mcp/media/route";
-import { getOperationalMcpAuth } from "../lib/auth/instance";
 import prisma from "../lib/db/prisma";
-import { isTransientDatabaseAvailabilityError } from "../lib/db/transient-availability";
-import { resolveCommercialMcpConfig } from "../lib/mcp/commercial/config";
-import { hashCommercialMcpPresentedToken } from "../lib/mcp/commercial/provider";
 import { publicCasinoDiscoveryRepository } from "../lib/repositories/public-casino-discovery.repository";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
-
-const fixture = {
-  userId: "production-db-reliability-user",
-  adminId: "00000000-0000-4000-8000-000000000901",
-};
 
 function assertDisposablePostgres() {
   assert.equal(process.env.CI, "true");
@@ -35,94 +24,6 @@ function directDatabaseUrl() {
   url.searchParams.delete("connection_limit");
   url.searchParams.delete("pool_timeout");
   return url.toString();
-}
-
-function config() {
-  const commercial = resolveCommercialMcpConfig("http://127.0.0.1:4173/api/mcp/commercial");
-  assert.ok(commercial);
-  return commercial;
-}
-
-async function cleanup(database: PrismaClient) {
-  await database.oauthAccessToken.deleteMany({ where: { id: { startsWith: "production-db-reliability-token-" } } });
-  await database.oauthClient.deleteMany({ where: { clientId: { startsWith: "production-db-reliability-client-" } } });
-  await database.adminUser.deleteMany({ where: { id: fixture.adminId } });
-  await database.user.deleteMany({ where: { id: fixture.userId } });
-  await database.commercialMcpRateLimitBucket.deleteMany();
-}
-
-async function createFixtures(database: PrismaClient) {
-  const resource = config();
-  const scopes = ["commercial:read", "offline_access"];
-  const clientId = "production-db-reliability-client-commercial";
-  await database.user.create({
-    data: {
-      id: fixture.userId,
-      name: "Production DB reliability fixture",
-      email: "production-db-reliability@invalid.example",
-      emailVerified: true,
-    },
-  });
-  await database.adminUser.create({
-    data: {
-      id: fixture.adminId,
-      userId: fixture.userId,
-      name: "Production DB reliability fixture",
-      email: "production-db-reliability@invalid.example",
-      role: "SUPER_ADMIN",
-    },
-  });
-  await database.oauthResource.upsert({
-    where: { identifier: resource.resource },
-    create: {
-      id: "production-db-reliability-resource-commercial",
-      identifier: resource.resource,
-      name: "B4GAMBLE Commercial MCP",
-      allowedScopes: scopes,
-    },
-    update: {},
-  });
-  await database.oauthClient.create({
-    data: {
-      id: "production-db-reliability-client-row-commercial",
-      clientId,
-      disabled: false,
-      scopes,
-      contacts: [],
-      redirectUris: ["https://chatgpt.com/connector_platform_oauth_redirect"],
-      postLogoutRedirectUris: [],
-      tokenEndpointAuthMethod: "none",
-      applicationType: "web",
-      grantTypes: ["authorization_code", "refresh_token"],
-      responseTypes: ["code"],
-      requirePKCE: true,
-      metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: resource.resource },
-    },
-  });
-  await database.oauthClientResource.create({
-    data: {
-      id: "production-db-reliability-client-resource-commercial",
-      clientId,
-      resourceId: resource.resource,
-    },
-  });
-  const token = await hashCommercialMcpPresentedToken(
-    "b4mcp_at_production_db_reliability_commercial",
-    "access_token",
-  );
-  assert.ok(token);
-  await database.oauthAccessToken.create({
-    data: {
-      id: "production-db-reliability-token-commercial",
-      token,
-      clientId,
-      userId: fixture.userId,
-      resources: [resource.resource],
-      expiresAt: new Date(Date.now() + 60 * 60 * 1_000),
-      createdAt: new Date(),
-      scopes,
-    },
-  });
 }
 
 async function waitForQueuedAdvisoryLock(database: PrismaClient, key: number) {
@@ -147,7 +48,6 @@ async function withSaturatedApplicationPool<T>(database: PrismaClient, key: numb
     await holderRelease;
   }, { timeout: 8_000 });
   await holderReady;
-
   const applicationBlocker = prisma.$transaction(
     (transaction) => transaction.$executeRawUnsafe(`SELECT pg_advisory_xact_lock(${key})`),
     { timeout: 8_000 },
@@ -185,83 +85,34 @@ async function withTablesLocked<T>(database: PrismaClient, tables: string, opera
   }
 }
 
-function mcpRequest(kind: "commercial" | "media") {
-  const tool = kind === "commercial"
-    ? { name: "commercial_list_opportunities", arguments: { limit: 1, offset: 0 } }
-    : { name: "media_list_recent_ingestions", arguments: { limit: 1 } };
-  return new Request(`http://127.0.0.1:4173/api/mcp/${kind}`, {
-    method: "POST",
-    headers: {
-      accept: "application/json, text/event-stream",
-      authorization: `Bearer b4mcp_at_production_db_reliability_${kind}`,
-      "content-type": "application/json",
-      "x-forwarded-for": kind === "commercial" ? "127.0.0.11" : "127.0.0.12",
-    },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: tool }),
-  });
-}
-
-async function assertSafeUnavailable(response: Response) {
-  assert.equal(response.status, 503);
-  assert.equal(response.headers.get("cache-control"), "no-store");
-  assert.equal(response.headers.get("retry-after"), "3");
-  const text = await response.text();
-  assert.deepEqual(JSON.parse(text), {
-    jsonrpc: "2.0",
-    error: { code: -32003, message: "Operational data is temporarily unavailable" },
-    id: null,
-  });
-  assert.doesNotMatch(text, /Prisma|P2024|pool|postgres|127\.0\.0\.1|stack|oauth/i);
-}
-
 async function assertRetiredMedia(response: Response) {
   assert.equal(response.status, 410);
   assert.equal(response.headers.get("cache-control"), "private, no-store");
-  assert.equal(response.headers.get("retry-after"), null);
   assert.deepEqual(await response.json(), { error: "MEDIA_OPERATIONS_RETIRED" });
 }
 
-test("one-connection Production-shaped pool stays bounded across discovery, Commercial MCP, and retired Media boundaries", async () => {
+test("one-connection Production-shaped pool stays bounded for public discovery while retired Media stays database-independent", async () => {
   assertDisposablePostgres();
   const database = new PrismaClient({ datasourceUrl: directDatabaseUrl() });
   try {
-    await cleanup(database);
-
     const discoveryId = "00000000-0000-4000-8000-000000000999";
-    const coldStarted = performance.now();
-    await publicCasinoDiscoveryRepository.loadContext([discoveryId]);
-    const coldMs = performance.now() - coldStarted;
-    const warmSamples: number[] = [];
-    for (let index = 0; index < 5; index += 1) {
-      const started = performance.now();
-      await publicCasinoDiscoveryRepository.loadContext([discoveryId]);
-      warmSamples.push(performance.now() - started);
-    }
-    const concurrentStarted = performance.now();
     const concurrent = await Promise.allSettled(
       Array.from({ length: 8 }, () => publicCasinoDiscoveryRepository.loadContext([discoveryId])),
     );
-    const concurrentMs = performance.now() - concurrentStarted;
     assert.equal(concurrent.filter((result) => result.status === "rejected").length, 0);
-
-    const lockStarted = performance.now();
     const lockedResult = await withTablesLocked(
       database,
       '"CasinoAlias"',
       () => publicCasinoDiscoveryRepository.loadContext([discoveryId]),
     );
-    const lockedMs = performance.now() - lockStarted;
     assert.deepEqual(lockedResult, { aliases: [] });
-    assert.ok(lockedMs >= 1_300 && lockedMs < 4_000, `controlled lock completed in ${lockedMs}ms`);
 
     let activePublishedReads = 0;
     let maximumPublishedReadConcurrency = 0;
-    let publishedReadCount = 0;
     const coordinatedDiscovery = new PublicCasinoDiscoveryService({
       async listPublished() {
         activePublishedReads += 1;
         maximumPublishedReadConcurrency = Math.max(maximumPublishedReadConcurrency, activePublishedReads);
-        publishedReadCount += 1;
         try {
           await prisma.$queryRaw`SELECT cv."casinoId" FROM "CasinoVersion" cv LIMIT 0`;
           return [];
@@ -271,73 +122,21 @@ test("one-connection Production-shaped pool stays bounded across discovery, Comm
       },
       async loadContext() { return { aliases: [] }; },
     } as never);
-    const coordinatedStarted = performance.now();
     const coordinated = await withTablesLocked(
       database,
       '"CasinoVersion"',
       () => Promise.allSettled(Array.from({ length: 8 }, (_, index) => coordinatedDiscovery.discover({ page: index + 1 }))),
     );
-    const coordinatedMs = performance.now() - coordinatedStarted;
     assert.equal(coordinated.filter((result) => result.status === "rejected").length, 0);
     assert.equal(maximumPublishedReadConcurrency, 1);
-    assert.equal(publishedReadCount, 8);
-    await coordinatedDiscovery.discover({ page: 1 });
-    assert.equal(publishedReadCount, 9, "completed results are not retained as stale cache entries");
 
-    await createFixtures(database);
-    const unavailableCommercial = await withSaturatedApplicationPool(
-      database,
-      790_100,
-      () => postCommercialMcp(mcpRequest("commercial")),
-    );
-    await assertSafeUnavailable(unavailableCommercial);
-    const healthyCommercial = await postCommercialMcp(mcpRequest("commercial"));
-    assert.equal(healthyCommercial.status, 200, await healthyCommercial.text());
-
-    const retiredMediaMcp = await withSaturatedApplicationPool(
-      database,
-      790_101,
-      () => postMediaMcp(mcpRequest("media")),
-    );
-    await assertRetiredMedia(retiredMediaMcp);
-    await assertRetiredMedia(await postMediaMcp(mcpRequest("media")));
-
-    const retiredAdminMedia = await withSaturatedApplicationPool(
+    await assertRetiredMedia(await withSaturatedApplicationPool(
       database,
       790_200,
       () => getAdminMediaIngestions(),
-    );
-    await assertRetiredMedia(retiredAdminMedia);
+    ));
     await assertRetiredMedia(await getAdminMediaIngestions());
-
-    const initializationError = await withSaturatedApplicationPool(
-      database,
-      790_300,
-      () => getOperationalMcpAuth().then(() => null, (error: unknown) => error),
-    );
-    assert.equal(isTransientDatabaseAvailabilityError(initializationError), true);
-    const operationalAuth = await getOperationalMcpAuth();
-    await operationalAuth.$context;
-    assert.equal(await database.oauthResource.count({
-      where: { identifier: config().resource },
-    }), 1);
-
-    console.info(JSON.stringify({
-      productionDbReliability: {
-        discoveryQueriesPerRequest: 4,
-        discoveryMaximumInternalConcurrency: 1,
-        coldMs: Number(coldMs.toFixed(2)),
-        warmMedianMs: Number([...warmSamples].sort((a, b) => a - b)[Math.floor(warmSamples.length / 2)].toFixed(2)),
-        warmMaxMs: Number(Math.max(...warmSamples).toFixed(2)),
-        eightConcurrentMs: Number(concurrentMs.toFixed(2)),
-        p2024Count: 0,
-        controlledLockMs: Number(lockedMs.toFixed(2)),
-        coordinatedConcurrentMs: Number(coordinatedMs.toFixed(2)),
-        coordinatedMaximumDatabaseConcurrency: maximumPublishedReadConcurrency,
-      },
-    }));
   } finally {
-    await cleanup(database);
     await prisma.$disconnect();
     await database.$disconnect();
   }

@@ -76,7 +76,6 @@ export const PUBLIC_LOCALIZATION_ROUTE_MANIFEST = [
   { root: "editorial-preview", match: "SUBTREE", policy: "INTERNAL" },
   { root: "go", match: "SUBTREE", policy: "INTERNAL" },
   { root: "llms.txt", match: "EXACT", policy: "INTERNAL" },
-  { root: "mcp", match: "SUBTREE", policy: "INTERNAL" },
   { root: "outbound", match: "SUBTREE", policy: "INTERNAL" },
   { root: "r", match: "SUBTREE", policy: "INTERNAL" },
 ] as const satisfies readonly PublicRouteManifestEntry[];

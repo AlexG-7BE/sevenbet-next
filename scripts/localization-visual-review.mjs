@@ -510,7 +510,7 @@ const excludedRouteFamilies = [
   { family: "/responsible-gambling/** except exact /responsible-gambling", reason: "UNPREFIXED_ONLY; only the exact first-wave safety page is localizable" },
   { family: "/launch-polish-error-harness", reason: "UNPREFIXED_ONLY legacy fixture; localized segment errors are exercised through the real public routes" },
   { family: "/bonus-guide, /catalog, /login, /self-check, /tools/**", reason: "UNPREFIXED_ONLY" },
-  { family: "/admin/**, /api/**, /mcp/**, /.well-known/**, /editorial-preview/**, /go/**, /r/**, /outbound/**", reason: "INTERNAL_OR_MUTATION_BOUNDARY" },
+  { family: "/admin/**, /api/**, /.well-known/**, /editorial-preview/**, /go/**, /r/**, /outbound/**", reason: "INTERNAL_OR_MUTATION_BOUNDARY" },
 ];
 
 const genericEnglishPatterns = [

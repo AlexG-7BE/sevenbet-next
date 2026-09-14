@@ -3,7 +3,6 @@ import test from "node:test";
 
 import { PrismaClient } from "@prisma/client";
 
-import { commercialMcpService } from "../lib/commercial/commercial-mcp-service";
 import { establishTrustedCommercialWriteAuthority } from "../lib/commercial/commercial-write-authority";
 import { partnerTrackingLinkHash } from "../lib/commercial/partner-tracking-registration-contract";
 import { PartnerTrackingRegistrationService } from "../lib/commercial/partner-tracking-registration-service";
@@ -32,7 +31,7 @@ const commercialAuthority = establishTrustedCommercialWriteAuthority({
 });
 const registrationContext = {
   actorId: ACTOR_ID,
-  auditSource: "INTERNAL_APPLICATION" as const,
+  auditOrigin: "INTERNAL_APPLICATION" as const,
   correlationId: "partner-tracking-postgres-command",
   commercialAuthority,
 };
@@ -111,7 +110,7 @@ test("trusted Founder provenance gates new and reopened relationships before eve
   const command = { partner: "Super Partners", casino: "Betway", trackingUrl, geo: "PT" };
   const missingAuthorityContext = {
     actorId,
-    auditSource: "COMMERCIAL_MCP" as const,
+    auditOrigin: "INTERNAL_COMMAND" as const,
     correlationId: "generic-affiliate-manager",
     commercialAuthority: null,
   };
@@ -167,10 +166,7 @@ test("trusted Founder provenance gates new and reopened relationships before eve
     } });
 
     await assert.rejects(
-      () => commercialMcpService.registerPartnerTrackingLink(command, {
-        actorId,
-        clientId: "generic-affiliate-manager",
-      }),
+      () => service.register(command, missingAuthorityContext, NOW),
       (error: unknown) => error instanceof ValidationError
         && (error.details as { reason?: string }).reason === "PARTNER_TRACKING_COMMERCIAL_AUTHORITY_REQUIRED",
     );
@@ -183,11 +179,11 @@ test("trusted Founder provenance gates new and reopened relationships before eve
       client.affiliateTrackingLink.count({ where: { offer: { casinoId } } }),
       client.marketActivation.count({ where: { casinoId } }),
       client.auditLog.count({ where: { actorId } }),
-    ]), [0, 0, 0, 0, 0, 0, 0], "CRM ACTIVE, static inventory, and MCP execution access must not replace Founder authority");
+    ]), [0, 0, 0, 0, 0, 0, 0], "CRM ACTIVE, static inventory, and untrusted execution access must not replace Founder authority");
 
     const created = await service.register(command, {
       ...missingAuthorityContext,
-      auditSource: "INTERNAL_APPLICATION",
+      auditOrigin: "INTERNAL_APPLICATION",
       commercialAuthority: createAuthority,
     }, NOW);
     const relationship = await client.partnerCasinoRelationship.findUniqueOrThrow({
@@ -240,7 +236,7 @@ test("trusted Founder provenance gates new and reopened relationships before eve
 
     await service.register(command, {
       ...missingAuthorityContext,
-      auditSource: "INTERNAL_APPLICATION",
+      auditOrigin: "INTERNAL_APPLICATION",
       commercialAuthority: reopenAuthority,
     }, new Date(NOW.getTime() + 3_000));
     const reopened = await client.partnerCasinoRelationship.findUniqueOrThrow({ where: { id: relationship.id } });
@@ -716,7 +712,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       previousTrackingLinkId: promotedGeneric.previousTrackingLinkId,
       results,
       actorId: ACTOR_ID,
-      auditSource: "INTERNAL_APPLICATION",
+      auditOrigin: "INTERNAL_APPLICATION",
       correlationId: "partner-tracking-postgres-command",
       now: new Date(NOW.getTime() + 6_000),
     });

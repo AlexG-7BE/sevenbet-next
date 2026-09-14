@@ -6,6 +6,7 @@ These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-
 | --- | --- |
 | [Production Release Governance](Production-Release-Governance.md) | Pull-request, deployment, verification and rollback path |
 | [Commercial Core PR4 — Affiliate Lifecycle Collapse](Commercial-Core-PR4-Affiliate-Lifecycle-Collapse.md) | Runtime lifecycle de-authorization, factual GB replacement, read-only semantic projection and PR6 cleanup boundary |
+| [Commercial Core PR5 — MCP Extraction and Retirement](Commercial-Core-PR5-MCP-Extraction-and-Retirement.md) | Physical repository transport retirement, read-only Production projection, external connector cutover and deferred schema cleanup |
 | [Commercial Core PR3 — Exact Routes](Commercial-Core-PR3-Exact-Routes.md) | Migration 0040, separately authorised exact-route materialization, read-only readiness, deployment and rollback order |
 | [Environment and Secrets](Environment-and-Secrets.md) | Trust zones, variable inventory, ownership and isolation gates |
 | [Product Analytics](Product-Analytics.md) | Vercel plan boundary, privacy contract, aggregate report, activation and rollback |
@@ -33,7 +34,7 @@ These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-
 | [BGA-MEDIA-E2E-01 — 7 September 2026](BGA-Media-End-to-End-01-Release-Record-2026-09-07.md) | Exact 88-row BGA reconciliation, 52 supported country-scoped creatives, responsive Production presentation, immutable snapshots and fail-closed commercial HOLD evidence |
 | [MEDIA-GEO3 — 8 September 2026](MEDIA-GEO3-Release-Record-2026-09-08.md) | RFC-043 exact-offer media pipeline, additive migration 0033, RFC-042 canonical CTA cutover, responsive review/directory presentation and final Production acceptance |
 | [Global Current-Partner Commercial Rollout — 10 September 2026](Global-Current-Partner-Commercial-Rollout-2026-09-10.md) | Exhaustive 540-row current-partner matrix, canonical RFC-042 reconciliation, bounded route/runtime verification, fail-closed exceptions and final Production acceptance |
-| [Partner Tracking Link Registration](Partner-Tracking-Link-Registration.md) | Permanent Founder workflow for safe default or exact-GEO current-partner tracking registration through the bounded Commercial MCP tool |
+| [Partner Tracking Link Registration](Partner-Tracking-Link-Registration.md) | Internal Founder-authority-gated workflow for safe default or exact-GEO Partner tracking registration |
 | [Global 14-Casino Worldwide Market Authority — 10 September 2026](Global-14-Casino-Worldwide-Market-Authority-2026-09-10.md) | Review-gated worldwide 14-casino authority manifest, canonical registrar integration, exact Canadian/Argentine runtime identity and unresolved evidence/Production gates |
 | [Commercial Platform Operations](Commercial-Platform-Operations.md) | Repeatable activation, aggregate click measurement, centralized SEO publication policy, migration and rollback contract |
 | [Partner Portal Data Handoff](Partner-Portal-Data-Handoff.md) | Exact Casino × GEO campaign, linking-code, tracking URL and creative ingestion procedure |

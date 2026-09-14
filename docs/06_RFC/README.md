@@ -54,7 +54,7 @@ orientation.
 | [RFC-024 — Database Recovery and Isolated Restore](RFC-024-Database-Recovery-and-Isolated-Restore.md) | `ACTIVE` | Restore-to-new-target, identity-guard and Production read-only recovery architecture. |
 | [RFC-025 — PROGRAM-AI Missions 02–10](RFC-025-PROGRAM-AI-Missions-02-10-MVP.md) | `ACTIVE` | Mission, prerequisite, reward, Review and Programme/commercial-separation authority. |
 | [RFC-026 — Analytics and Programme Runtime Hardening](RFC-026-MVP-Analytics-and-Programme-Runtime-Hardening.md) | `HISTORICAL` | Records the delivered analytics and Programme runtime-hardening workstream. |
-| [RFC-027 — Operational Agent Foundation](RFC-027-B4GAMBLE-Operational-Agent-Foundation.md) | `ACTIVE` | Isolated internal-agent capability and authority ceilings. RFC-044 retires its Media Operations MCP amendment; RFC-048 makes Commercial MCP transport-only for route registration. |
+| [RFC-027 — Operational Agent Foundation](RFC-027-B4GAMBLE-Operational-Agent-Foundation.md) | `ACTIVE` | Isolated internal-agent capability and authority ceilings. RFC-051 supersedes its application MCP/OAuth transport amendments; their delivery history remains in the RFC. |
 | [RFC-028 — Public Contact and Transactional Mail](RFC-028-Public-Contact-and-Transactional-Mail-Boundary.md) | `ACTIVE` | Contact purpose, no-database handling and delivery separation from other communications. |
 | [RFC-029 — Runtime Product Polish](RFC-029-Runtime-Product-Polish.md) | `HISTORICAL` | Records the completed microphone, account-linking, login and demo-fallback fixes. |
 | [RFC-030 — Production Canonical Host Enforcement](RFC-030-Production-Canonical-Host-Enforcement.md) | `HISTORICAL` | Records the delivered Production canonical-host fix. |
@@ -78,16 +78,17 @@ orientation.
 | [RFC-048 — CRM-Independent Commercial Write Core](RFC-048-CRM-Independent-Commercial-Write-Core.md) | `ACTIVE` | Persisted Partner identity and one Partner × Casino relationship outside CRM; explicit commands flow through a transport-independent application service while CRM and MCP have no commercial authority. |
 | [RFC-049 — Exact Canonical Commercial Routes](RFC-049-Exact-Canonical-Commercial-Routes.md) | `ACTIVE` | One trusted-GEO normalization seam, one exact commercial-route lookup, no parent/ZZ fallback or Offer/Tracking country/production-eligibility authority, and a separately governed materialization operation. |
 | [RFC-050 — Affiliate Lifecycle Authority Collapse](RFC-050-Affiliate-Lifecycle-Authority-Collapse.md) | `ACTIVE` | Canonical MarketActivation is the sole business routing decision; Affiliate lifecycle fields are provider/Admin/history facts and GB uses narrow factual evidence. |
+| [RFC-051 — MCP Extraction and Retirement](RFC-051-MCP-Extraction-and-Retirement.md) | `ACTIVE` | Physical application MCP/OAuth retirement, neutral CRM research extraction, internal tracking-core boundary, external connector cutover and PR6 schema-cleanup boundary. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 26 |
+| `ACTIVE` | 27 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 5 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **50** |
+| **Total RFC artifacts** | **51** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

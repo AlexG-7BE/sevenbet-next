@@ -1,13 +1,14 @@
 # Media Ingestion Contract
 
-**Status:** ACTIVE Founder-authorised application, security and operations
-contract
+**Status:** `HISTORICAL` — active promotional Media authority was retired by
+RFC-044 and remaining MCP/DCR stubs are physically removed by RFC-051
 **Authority:** `B4GAMBLE — MEDIA-INGESTION-AUTOPLACEMENT-01` and the additive
 `B4GAMBLE — GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01` and
 `VETTED-PARTNER-HOSTED-CREATIVES-01`, as amended by the explicit Founder
 instructions `B4GAMBLE — MEDIA-OPERATIONS-BULK-01` and
 `B4GAMBLE FOUNDER OFFICE — END-TO-END BGA MEDIA COMPLETION`
-**Evidence date:** 7 September 2026
+**Evidence date:** 14 September 2026 lifecycle reconciliation; implementation
+detail below records the 7 September 2026 historical system
 **Architecture dependencies:**
 [RFC-027 — B4GAMBLE Operational Agent Foundation](../06_RFC/RFC-027-B4GAMBLE-Operational-Agent-Foundation.md),
 [RFC-040 — Placement-Based Media Assignments](../06_RFC/RFC-040-Placement-Based-Media-Assignments.md),
@@ -18,6 +19,11 @@ This contract contains no secret value, raw affiliate destination, visitor
 data or Programme data. Claims are classified as **DETECTED**, **INFERRED**,
 **PROPOSED**, **UNKNOWN** or **CONTRADICTION** under the repository technical
 evidence rule.
+
+Current authority is RFC-044 plus RFC-051: only direct active operator logos
+and B4GAMBLE-owned editorial assets remain in Product. The ingestion,
+assignment, hosted-creative, MCP, DCR and Production orchestration procedures
+below are preserved as history and must not be executed.
 
 ## Repository evidence boundary
 
@@ -413,7 +419,11 @@ projection with requested/resolved country-language diagnostics through the
 existing Casino draft preview. Separate links show the unchanged
 current `/casinos`, `/bonuses`, `/best-offers` and Casino-review state.
 
-## B4GAMBLE Media Operations bridge
+## Historical B4GAMBLE Media Operations bridge — retired
+
+> RFC-044 retired this bridge's business/runtime authority. RFC-051 removes
+> the remaining HTTP, discovery, OAuth and server stubs. The following tool
+> and setup description is historical evidence, not an active setup guide.
 
 RFC-043 extends this bridge with a separately authorised Production revision
 boundary. The six operations below retain their existing draft/read semantics.
@@ -489,7 +499,7 @@ result and timestamp. Assignment rollback records retained assets and any
 restored assignment. Secrets, pasted HTML, full image URL, full affiliate href,
 OAuth tokens/codes and raw query values are excluded.
 
-## Release and verification contract
+## Historical release and verification contract
 
 Because this is a remote-fetch boundary and Production mutation bridge, release
 must remain:

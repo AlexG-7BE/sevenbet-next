@@ -10,7 +10,7 @@ import {
   type ParsedPartnerHostedCreative,
 } from "@/lib/media-operations/partner-hosted";
 
-type PartnerHostedActor = { actorId: string; source: "ADMIN" | "CHATGPT_WORK" | "SYSTEM" };
+type PartnerHostedActor = { actorId: string; source: "ADMIN" | "AUTOMATION" | "SYSTEM" };
 
 function json(value: unknown) {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;

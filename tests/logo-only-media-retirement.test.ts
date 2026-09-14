@@ -94,22 +94,17 @@ test("retired media HTTP surfaces return a cache-proof 410", async () => {
   assert.match(response.headers.get("cache-control") ?? "", /no-store/);
   assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow");
   for (const route of [
-    "app/api/mcp/media/route.ts",
-    "app/api/mcp/oauth/register/media/route.ts",
     "app/api/admin/media/assignments/route.ts",
     "app/api/admin/media-operations/ingestions/route.ts",
     "app/partner-creatives/[creativeId]/frame/route.ts",
   ]) {
     const source = readFileSync(route, "utf8");
     assert.match(source, /retiredMediaResponse/);
-    assert.doesNotMatch(source, /mediaOperationsService|mediaAssignmentService|mediaMcpServer/);
+    assert.doesNotMatch(source, /mediaOperationsService|mediaAssignmentService/);
   }
 
   const authConfig = readFileSync("lib/auth/config.ts", "utf8");
-  const consentPage = readFileSync("app/admin/integrations/chatgpt-work/consent/page.tsx", "utf8");
-  assert.match(authConfig, /clientRegistrationAllowedResources: \[commercialMcpResource\]/);
-  assert.doesNotMatch(authConfig, /mediaMcpResource|media:(?:read|safe_write|production_write)/);
-  assert.doesNotMatch(consentPage, /isMediaMcpConfig|media:(?:read|safe_write|production_write)/);
+  assert.doesNotMatch(authConfig, /media:(?:read|safe_write|production_write)|oauthProvider/);
 });
 
 test("redirect destinations cannot be overridden by retired creative query state", () => {

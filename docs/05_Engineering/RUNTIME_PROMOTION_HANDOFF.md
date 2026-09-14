@@ -6,4 +6,10 @@ After the reconciled Release-04 lands, update PR #111 onto current `main` withou
 
 The final #111 diff should add the architecture Prisma schema and runtime only; the migration already present on main should show no content change and no duplicate 0026. Confirm schema/client alignment, same-profile projections, stable first-country unqualified results, exact route authority, and no factual editor setter for `productionEligible`.
 
-Rerun `npm ci`, Prisma validation/generation, clean/staged migration replay, casino-market tests, release guard tests, Programme/Better Auth/MCP migration tests, typecheck, lint, structural checks, build-secret scan, build, required browser CI, Preview, and exact-head hosted checks. Confirm no commercial route becomes active before merge and Production acceptance.
+Rerun `npm ci`, Prisma validation/generation, clean/staged migration replay,
+casino-market tests, release guard tests, Programme/Better Auth and historical
+operational-OAuth migration replay tests, typecheck, lint, structural checks,
+build-secret scan, build, required browser CI, Preview, and exact-head hosted
+checks. RFC-051 removes active MCP runtime tests while retaining immutable
+migration replay. Confirm no commercial route becomes active before merge and
+Production acceptance.

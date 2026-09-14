@@ -82,13 +82,8 @@ test("pipeline performs preflight before a Serializable atomic switch and preser
   assert.match(source, /MAX_SERIALIZABLE_ATTEMPTS = 3/);
 });
 
-test("MCP isolates Production orchestration and rollback behind the explicit Production scope", () => {
-  const server = readFileSync("lib/mcp/media/server.ts", "utf8");
+test("Media Production revisions remain runtime-gated and do not persist raw destinations", () => {
   const revision = readFileSync("lib/media-operations/production-revisions.ts", "utf8");
-  for (const tool of ["media_orchestrate_production", "media_rollback_production_revision", "media_get_production_revision"]) {
-    assert.match(server, new RegExp(tool));
-  }
-  assert.match(server, /media_orchestrate_production[\s\S]*media:production_write/);
   assert.match(readFileSync("lib/media-operations/service.ts", "utf8"), /Production media revision mutations require the Production runtime/);
   assert.doesNotMatch(revision, /destinationUrl:\s|trackingUrl:\s/);
 });

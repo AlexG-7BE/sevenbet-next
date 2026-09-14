@@ -87,9 +87,9 @@ Major relationships are explicit: users own sessions/accounts and progress/rewar
 18. PROGRAM-AI M1 narrow authority and confirmed Starting Point
 19. Programme runtime hardening shared fixed-window rate-limit buckets
 20. Commercial CRM and operations foundation
-21. Partner Operations work bridge
+21. Partner Operations work bridge (historical transport data retained for PR6)
 22. Better Auth 1.7 schema upgrade
-23. MCP dynamic-client-registration runtime compatibility fix
+23. MCP dynamic-client-registration compatibility (historical; no PR5 runtime)
 24. Durable Programme access acceptance
 25. Casino market-profile architecture
 26. Commercial platform completion and aggregate-only outbound click counts
@@ -106,6 +106,12 @@ all 46 pre-existing rows global-neutral and zero targeted rows. `Article`,
 legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and
 `SiteSetting` are schema-present; their active application use is less evident
 than the program/casino/affiliate/media models and must not be assumed.
+
+**DETECTED — PR5:** immutable migrations 0021–0023 and their OAuth/rate-limit
+tables remain in schema history, but the application has no active reader,
+writer, provider plugin or connector route. RFC-051 lists the exact eight
+inert models and database compatibility objects for separately authorised PR6
+cleanup. PR5 adds no migration and deletes no data.
 
 **DETECTED:** placement resolution treats every asset referenced by any
 country- or language-targeted assignment as target-scoped inventory and

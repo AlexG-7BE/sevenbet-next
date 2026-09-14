@@ -952,8 +952,9 @@ model Verification {
   @@index([identifier])
 }
 
-// Additive Better Auth OAuth provider storage used only by the bounded
-// Commercial MCP bridge. Consumer and Programme sessions remain unchanged.
+// Historical operational-connector OAuth storage retained without runtime
+// authority in PR5. Physical table cleanup is explicitly deferred to PR6.
+// Consumer, staff, Google identity, and Programme sessions remain unchanged.
 model OauthClient {
   id                               String    @id
   clientId                         String    @unique
@@ -1132,8 +1133,8 @@ model OauthClientAssertion {
   @@map("oauthClientAssertion")
 }
 
-// Hashed fixed-window counters for the public Commercial MCP boundary. Raw IP,
-// staff and OAuth client identifiers are never stored in this table.
+// Historical hashed fixed-window connector counters retained for PR6 cleanup.
+// PR5 has no runtime reader or writer for this table.
 model CommercialMcpRateLimitBucket {
   bucketKey       String   @id
   scope           String

@@ -1120,7 +1120,7 @@ export class PartnerTrackingRegistrationRepository {
     previousTrackingLinkId: string | null;
     results: PartnerTrackingRegistrationResultRow[];
     actorId: string;
-    auditSource: "COMMERCIAL_MCP" | "INTERNAL_APPLICATION";
+    auditOrigin: "INTERNAL_APPLICATION" | "INTERNAL_COMMAND";
     correlationId?: string;
     now: Date;
   }) {
@@ -1133,7 +1133,7 @@ export class PartnerTrackingRegistrationRepository {
         summary: `${input.stage.target.partner} / ${input.stage.target.casino}: ${input.verification}`,
         metadata: json({
           version: REGISTRATION_VERSION,
-          source: input.auditSource,
+          source: input.auditOrigin,
           ...(input.correlationId ? { correlationIdHash: sha256(input.correlationId) } : {}),
           partnerId: input.stage.target.partnerId,
           casinoId: input.stage.target.casinoId,

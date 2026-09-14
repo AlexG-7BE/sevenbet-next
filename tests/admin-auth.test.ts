@@ -78,18 +78,10 @@ test("middleware allows the admin login page without a session", async () => {
   assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
 });
 
-test("middleware allows only the dedicated MCP login and consent pages to resolve their own staff checks", async () => {
-  for (const path of [
-    "/admin/integrations/chatgpt-work/login",
-    "/admin/integrations/chatgpt-work/consent",
-  ]) {
-    const response = await middleware(new NextRequest(`http://localhost:4173${path}`));
-    assert.equal(response.status, 200);
-    assert.equal(response.headers.get("x-middleware-next"), "1");
-    assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
-  }
-  const ordinaryIntegrationPage = await middleware(new NextRequest("http://localhost:4173/admin/integrations"));
-  assert.equal(ordinaryIntegrationPage.status, 307);
+test("middleware protects integration pages behind the ordinary admin login", async () => {
+  const response = await middleware(new NextRequest("http://localhost:4173/admin/integrations"));
+  assert.equal(response.status, 307);
+  assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
 });
 
 test("middleware allows a correctly gated legacy preview token", async () => {
