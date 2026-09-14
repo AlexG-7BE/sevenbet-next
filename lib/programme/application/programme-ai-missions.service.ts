@@ -297,6 +297,9 @@ export class ProgrammeAiMissionsService {
       await this.assertAccessible(unitOfWork, enrollment.id, missionNumber, progress);
       if (!progress) throw new ProgrammeResourceNotFoundError(`Mission ${missionNumber} progress`);
       if (progress.status === "COMPLETED") {
+        if (missionNumber === 10) {
+          await this.ensureProgrammeCompletion(unitOfWork, enrollment, progress.completedAt);
+        }
         return {
           xpAwarded: 0,
           mission: await this.projectMissionForUser(unitOfWork, userId, source.program.id, definition, progress, source.program.steps[missionNumber - 1].id),
@@ -316,6 +319,9 @@ export class ProgrammeAiMissionsService {
         draft: recordValue(progress.draft),
         completedAt: progress.completedAt ?? now,
       });
+      if (missionNumber === 10) {
+        await this.ensureProgrammeCompletion(unitOfWork, enrollment, saved.completedAt);
+      }
       const awardKey = completionAwardKey(missionNumber);
       const xpEvent = await unitOfWork.rewards.recordProgrammeAiMissionXp({
         userId,
@@ -362,6 +368,46 @@ export class ProgrammeAiMissionsService {
         home: await this.projectHome(unitOfWork, userId),
       };
     });
+  }
+
+  private async ensureProgrammeCompletion(
+    unitOfWork: ProgrammeUnitOfWork,
+    enrollment: {
+      id: string;
+      userId: string;
+      programId: string;
+      completedAt: Date | null;
+    },
+    missionCompletedAt: Date | null,
+  ) {
+    if (!missionCompletedAt) {
+      throw new ProgrammeStateConflictError(
+        "Completed Mission 10 is missing its canonical completion timestamp",
+      );
+    }
+    if (enrollment.completedAt) {
+      if (enrollment.completedAt.getTime() !== missionCompletedAt.getTime()) {
+        throw new ProgrammeStateConflictError(
+          "Enrollment completion timestamp conflicts with Mission 10 completion",
+        );
+      }
+      return;
+    }
+    const result = await unitOfWork.progress.completeEnrollmentIfOpen(
+      enrollment.id,
+      missionCompletedAt,
+    );
+    if (result.count > 0) return;
+
+    const current = await unitOfWork.progress.findEnrollment(
+      enrollment.userId,
+      enrollment.programId,
+    );
+    if (!current?.completedAt || current.completedAt.getTime() !== missionCompletedAt.getTime()) {
+      throw new ProgrammeStateConflictError(
+        "Enrollment completion timestamp conflicts with Mission 10 completion",
+      );
+    }
   }
 
   private async assertAccessible(

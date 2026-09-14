@@ -73,6 +73,13 @@ export class ProgrammeProgressRepository {
     });
   }
 
+  completeEnrollmentIfOpen(enrollmentId: string, completedAt: Date) {
+    return this.database.programEnrollment.updateMany({
+      where: { id: enrollmentId, completedAt: null },
+      data: { completedAt },
+    });
+  }
+
   findMissionProgress(enrollmentId: string, missionNumber: number) {
     return this.database.programmeMissionProgress.findUnique({
       where: { enrollmentId_missionNumber: { enrollmentId, missionNumber } },

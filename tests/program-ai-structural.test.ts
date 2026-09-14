@@ -22,6 +22,9 @@ const missionExperience = read("components/programme/ProgramAiMissionExperience.
 const missionPrimitives = read("components/programme/ProgramAiMissionPrimitives.tsx");
 const reviewScreen = read("components/programme/ProgramAiReviewScreen.tsx");
 const missionsService = read("lib/programme/application/programme-ai-missions.service.ts");
+const progressRepository = read("lib/programme/infrastructure/repositories/programme-progress.repository.ts");
+const completionRoute = read("app/api/program/program-ai/missions/[missionNumber]/complete/route.ts");
+const programmeObserver = read("lib/analytics/programme-observer.server.ts");
 const page = read("app/program/page.tsx");
 const layout = read("app/program/layout.tsx");
 const vercelBuildPreflight = read("scripts/vercel-build-preflight.ts");
@@ -206,6 +209,15 @@ test("exact-once claim storage is backed by unique keys and idempotent ledgers",
   assert.match(service, /claim\.consumedByUserId !== userId/);
   assert.match(service, /recordProgrammeAiXp/);
   assert.match(read("lib/programme/infrastructure/repositories/programme-reward.repository.ts"), /skipDuplicates: true/);
+});
+
+test("Mission 10 enrollment completion commits before contained best-effort analytics", () => {
+  assert.match(missionsService, /this\.unitOfWork\.serializable/);
+  assert.match(missionsService, /missionNumber === 10[\s\S]*ensureProgrammeCompletion/);
+  assert.match(progressRepository, /where: \{ id: enrollmentId, completedAt: null \}/);
+  assert.ok(completionRoute.indexOf("const result = await programmeAiMissionsService.complete")
+    < completionRoute.indexOf("scheduleProgrammeStateObservation(user.id"));
+  assert.match(programmeObserver, /work\(\)\.catch/);
 });
 
 test("Home exposes truthful states and only the approved review entitlements", () => {
