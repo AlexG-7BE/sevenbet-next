@@ -2,40 +2,29 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import type { OutboundClickIdentity, OutboundClickReportQuery, OutboundClickStore } from "../lib/repositories/outbound-click.repository";
-import { OutboundClickService, recordOutboundClickBestEffort } from "../lib/services/outbound-click.service";
+import {
+  outboundClickUtcDay,
+  type OutboundClickIdentity,
+  type OutboundClickReportQuery,
+  type OutboundClickStore,
+} from "../lib/repositories/outbound-click.repository";
+import { OutboundClickService } from "../lib/services/outbound-click.service";
+
+type ReportRow = OutboundClickIdentity & {
+  casinoName: string;
+  redirectSlug: string;
+  clickCount: number;
+};
 
 class MemoryClickStore implements OutboundClickStore {
-  rows = new Map<string, OutboundClickIdentity & { clickCount: number }>();
-
-  async increment(input: OutboundClickIdentity) {
-    const key = [input.day.toISOString(), input.casinoId, input.countryCode, input.redirectSlugId, input.trackingLinkId].join("|");
-    const current = this.rows.get(key);
-    if (current) {
-      current.clickCount += 1;
-      current.clickedAt = input.clickedAt;
-    } else {
-      this.rows.set(key, { ...input, clickCount: 1 });
-    }
-  }
+  constructor(private readonly rows: ReportRow[]) {}
 
   async report(input: OutboundClickReportQuery) {
-    return [...this.rows.values()]
+    return this.rows
       .filter((row) => row.day >= input.from && row.day < input.until)
       .filter((row) => !input.casinoId || row.casinoId === input.casinoId)
       .filter((row) => !input.countryCode || row.countryCode === input.countryCode)
-      .filter((row) => !input.redirectSlugId || row.redirectSlugId === input.redirectSlugId)
-      .map((row) => ({
-        day: row.day,
-        casinoId: row.casinoId,
-        casinoName: "Verified Casino",
-        countryCode: row.countryCode,
-        redirectSlugId: row.redirectSlugId,
-        redirectSlug: "verified-casino-pe",
-        affiliateOfferId: row.affiliateOfferId,
-        trackingLinkId: row.trackingLinkId,
-        clickCount: row.clickCount,
-      }));
+      .filter((row) => !input.redirectSlugId || row.redirectSlugId === input.redirectSlugId);
   }
 }
 
@@ -47,46 +36,96 @@ const identity = {
   trackingLinkId: "44444444-4444-4444-8444-444444444444",
 };
 
-test("successful governed clicks increment one aggregate UTC-day counter", async () => {
-  const store = new MemoryClickStore();
+test("existing aggregate report preserves UTC ranges, filters, totals, daily rows, and privacy", async () => {
+  const store = new MemoryClickStore([
+    {
+      ...identity,
+      day: new Date("2026-09-03T00:00:00.000Z"),
+      clickedAt: new Date("2026-09-03T23:59:59.000Z"),
+      casinoName: "Verified Casino",
+      redirectSlug: "verified-casino-pe",
+      clickCount: 2,
+    },
+    {
+      ...identity,
+      day: new Date("2026-09-04T00:00:00.000Z"),
+      clickedAt: new Date("2026-09-04T00:00:00.000Z"),
+      casinoName: "Verified Casino",
+      redirectSlug: "verified-casino-pe",
+      clickCount: 1,
+    },
+    {
+      ...identity,
+      countryCode: "GB",
+      day: new Date("2026-09-04T00:00:00.000Z"),
+      clickedAt: new Date("2026-09-04T12:00:00.000Z"),
+      casinoName: "Verified Casino",
+      redirectSlug: "verified-casino-gb",
+      clickCount: 4,
+    },
+  ]);
   const service = new OutboundClickService(store);
-  await service.record({ ...identity, clickedAt: new Date("2026-09-03T00:01:00.000Z") });
-  await service.record({ ...identity, clickedAt: new Date("2026-09-03T23:59:59.000Z") });
-  await service.record({ ...identity, clickedAt: new Date("2026-09-04T00:00:00.000Z") });
-  assert.equal(store.rows.size, 2);
-  const report = await service.report({ from: "2026-09-03", to: "2026-09-04", now: new Date("2026-09-04T12:00:00.000Z") });
-  assert.equal(report.totals.clicks, 3);
-  assert.equal(report.totals.routes, 1);
-  assert.deepEqual(report.daily.map((row) => [row.day, row.clickCount]), [["2026-09-03", 2], ["2026-09-04", 1]]);
-});
+  const full = await service.report({ from: "2026-09-03", to: "2026-09-04", now: new Date("2026-09-04T12:00:00.000Z") });
+  assert.deepEqual(full.range, { from: "2026-09-03", to: "2026-09-04", days: 2 });
+  assert.deepEqual(full.totals, { clicks: 7, routes: 2 });
+  assert.deepEqual(full.daily.map((row) => [row.day, row.clickCount]), [["2026-09-03", 2], ["2026-09-04", 1], ["2026-09-04", 4]]);
+  assert.equal(full.privacy, "aggregate-only");
 
-test("counter failure emits a bounded warning and never rejects the redirect accounting boundary", async () => {
-  const warnings: Array<{ message: string; context: unknown }> = [];
-  const recorded = await recordOutboundClickBestEffort(identity, {
-    recorder: { record: async () => { throw new Error("database URL must never escape"); } },
-    warn: (message, context) => warnings.push({ message, context }),
+  const filtered = await service.report({
+    from: "2026-09-03",
+    to: "2026-09-04",
+    countryCode: "pe",
+    casinoId: identity.casinoId,
+    redirectSlugId: identity.redirectSlugId,
   });
-  assert.equal(recorded, false);
-  assert.deepEqual(warnings, [{
-    message: "affiliate_outbound_click_metric_failed",
-    context: { slugId: identity.redirectSlugId, casinoId: identity.casinoId, countryCode: "PE" },
-  }]);
-  assert.doesNotMatch(JSON.stringify(warnings), /database URL/i);
+  assert.deepEqual(filtered.filters, {
+    casinoId: identity.casinoId,
+    countryCode: "PE",
+    redirectSlugId: identity.redirectSlugId,
+  });
+  assert.deepEqual(filtered.totals, { clicks: 3, routes: 1 });
+  await assert.rejects(service.report({ from: "2025-01-01", to: "2026-01-02" }), /cannot exceed 366 days/);
 });
 
-test("redirect integration counts only after governed success and safe 302 validation", () => {
-  const source = readFileSync("app/r/[slug]/route.ts", "utf8");
-  const success = source.indexOf("if (!result.ok)");
-  const safeResponse = source.indexOf("safeAffiliateRedirectResponse(result.destination)");
-  const statusGate = source.indexOf("response.status !== 302");
-  const successfulAccounting = source.indexOf("scheduleObservation(observation,");
+test("UTC projection day is derived from the authoritative attempted timestamp", () => {
+  assert.equal(outboundClickUtcDay(new Date("2026-09-14T23:59:59.999Z")).toISOString(), "2026-09-14T00:00:00.000Z");
+  assert.equal(outboundClickUtcDay(new Date("2026-09-15T00:00:00.000Z")).toISOString(), "2026-09-15T00:00:00.000Z");
+});
+
+test("redirect route schedules one canonical observer only after governed safe-response resolution", () => {
+  const route = readFileSync("app/r/[slug]/route.ts", "utf8");
+  const success = route.indexOf("if (!result.ok)");
+  const safeResponse = route.indexOf("safeAffiliateRedirectResponse(result.destination)");
+  const statusGate = route.indexOf("response.status !== 302");
+  const successfulAccounting = route.indexOf("scheduleObservation(observation);");
   assert.ok(success >= 0 && safeResponse > success && statusGate > safeResponse && successfulAccounting > statusGate);
-  assert.match(source, /\.\.\.\(aggregate \? \[recordOutboundClickBestEffort\(/);
-  assert.equal(source.match(/scheduleObservation\(observation,/g)?.length, 1);
-  assert.doesNotMatch(source, /userId|sessionId|x-forwarded-for|user-agent|Programme|Mission|request\.url/);
+  assert.equal(route.match(/recordOutboundAttributionBestEffort\(input\)/g)?.length, 1);
+  assert.equal(route.match(/scheduleObservation\(observation\);/g)?.length, 1);
+  assert.doesNotMatch(route, /recordOutboundClickBestEffort|OutboundClickService|Promise\.all/);
+  assert.doesNotMatch(route, /userId|sessionId|x-forwarded-for|user-agent|Programme|Mission|request\.url/);
 });
 
-test("storage is aggregate-only and reporting is affiliate-authorized", () => {
+test("canonical observer writes detail, events, then the success-only aggregate in one transaction", () => {
+  const attribution = readFileSync("lib/analytics/outbound-attribution.server.ts", "utf8");
+  const transaction = attribution.indexOf("prisma.$transaction(async (transaction)");
+  const detailed = attribution.indexOf("transaction.outboundClick.create", transaction);
+  const events = attribution.indexOf("transaction.analyticsEvent.createMany", detailed);
+  const aggregate = attribution.indexOf("incrementOutboundClickDailyProjection(transaction, aggregateIdentity)", events);
+  assert.ok(transaction >= 0 && detailed > transaction && events > detailed && aggregate > events);
+  assert.match(attribution, /if \(input\.state !== "SUCCEEDED"\) return null/);
+  assert.match(attribution, /day: outboundClickUtcDay\(input\.attemptedAt\)/);
+  assert.match(attribution, /clickedAt: input\.attemptedAt/);
+  assert.match(attribution, /if \(aggregateIdentity\) \{[\s\S]*incrementOutboundClickDailyProjection/);
+  assert.doesNotMatch(attribution, /MarketActivation|PublicCommercialActionResolver|jurisdictionResolver|resolveRedirect|destinationUrl|trackingUrl/);
+
+  const repository = readFileSync("lib/repositories/outbound-click.repository.ts", "utf8");
+  assert.match(repository, /Pick<Prisma\.TransactionClient, "affiliateOutboundClickDaily">/);
+  assert.match(repository, /database\.affiliateOutboundClickDaily\.upsert/);
+  const service = readFileSync("lib/services/outbound-click.service.ts", "utf8");
+  assert.doesNotMatch(service, /recordOutboundClickBestEffort|\.increment\(/);
+});
+
+test("storage stays aggregate-only and the existing report remains affiliate-authorized", () => {
   const schema = readFileSync("prisma/schema.prisma", "utf8");
   const model = schema.slice(schema.indexOf("model AffiliateOutboundClickDaily"), schema.indexOf("model CasinoSeo"));
   assert.match(model, /day\s+DateTime\s+@db\.Date/);
@@ -95,10 +134,11 @@ test("storage is aggregate-only and reporting is affiliate-authorized", () => {
   assert.doesNotMatch(model, /userId|accountId|sessionId|email|ipAddress|userAgent|referrer|query|programme|mission/i);
   const route = readFileSync("app/api/admin/affiliate/outbound-clicks/route.ts", "utf8");
   assert.match(route, /requireAdminPermission\(request, "affiliate\.manage"\)/);
-  assert.doesNotMatch(route, /trackingUrl|destinationUrl/);
+  assert.match(route, /outboundClickService\.report/);
+  assert.doesNotMatch(route, /OutboundClick|trackingUrl|destinationUrl/);
 });
 
-test("0026 is additive, constrained, and contains no visitor or Programme data", () => {
+test("0026 history remains additive, constrained, and untouched", () => {
   const migration = readFileSync("prisma/migrations/0026_commercial_platform_completion/migration.sql", "utf8");
   assert.match(migration, /CREATE TABLE "AffiliateOutboundClickDaily"/);
   assert.match(migration, /countryCode_check/);

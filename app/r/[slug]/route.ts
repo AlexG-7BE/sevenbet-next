@@ -9,7 +9,6 @@ import { recordOutboundAttributionBestEffort, type OutboundAttributionInput } fr
 import { logJurisdictionDecision } from "@/lib/jurisdiction/decision-log";
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.service";
-import { recordOutboundClickBestEffort } from "@/lib/services/outbound-click.service";
 
 export const dynamic = "force-dynamic";
 
@@ -27,18 +26,9 @@ function recoveryResponse(request: NextRequest) {
   return response;
 }
 
-function scheduleObservation(input: OutboundAttributionInput, aggregate?: {
-  casinoId: string;
-  countryCode: string;
-  redirectSlugId: string;
-  affiliateOfferId: string;
-  trackingLinkId: string;
-}) {
+function scheduleObservation(input: OutboundAttributionInput) {
   const work = async () => {
-    await Promise.all([
-      recordOutboundAttributionBestEffort(input),
-      ...(aggregate ? [recordOutboundClickBestEffort({ clickedAt: input.attemptedAt, ...aggregate })] : []),
-    ]);
+    await recordOutboundAttributionBestEffort(input);
   };
   try { after(work); } catch { void work(); }
 }
@@ -109,13 +99,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       redirectSlugId: result.slugId,
       trackingLinkId: result.trackingLinkId,
     };
-    scheduleObservation(observation, {
-      casinoId: result.casinoId,
-      countryCode: result.jurisdictionDecision.countryCode!,
-      redirectSlugId: result.slugId,
-      affiliateOfferId: result.offerId,
-      trackingLinkId: result.trackingLinkId,
-    });
+    scheduleObservation(observation);
     return response;
   } catch {
     safeDiagnostic("RESOLUTION_ERROR", { countryCode: requestCountrySignal?.countryCode, ...hints });

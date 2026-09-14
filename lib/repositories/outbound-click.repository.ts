@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/db/prisma";
 
 export interface OutboundClickIdentity {
@@ -19,7 +21,6 @@ export interface OutboundClickReportQuery {
 }
 
 export interface OutboundClickStore {
-  increment(input: OutboundClickIdentity): Promise<unknown>;
   report(input: OutboundClickReportQuery): Promise<Array<{
     day: Date;
     casinoId: string;
@@ -33,38 +34,49 @@ export interface OutboundClickStore {
   }>>;
 }
 
-export class OutboundClickRepository implements OutboundClickStore {
-  increment(input: OutboundClickIdentity) {
-    return prisma.affiliateOutboundClickDaily.upsert({
-      where: {
-        day_casinoId_countryCode_redirectSlugId_trackingLinkId: {
-          day: input.day,
-          casinoId: input.casinoId,
-          countryCode: input.countryCode,
-          redirectSlugId: input.redirectSlugId,
-          trackingLinkId: input.trackingLinkId,
-        },
-      },
-      create: {
+type OutboundClickProjectionDatabase = Pick<Prisma.TransactionClient, "affiliateOutboundClickDaily">;
+
+export function outboundClickUtcDay(value: Date) {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+}
+
+export function incrementOutboundClickDailyProjection(
+  database: OutboundClickProjectionDatabase,
+  input: OutboundClickIdentity,
+) {
+  return database.affiliateOutboundClickDaily.upsert({
+    where: {
+      day_casinoId_countryCode_redirectSlugId_trackingLinkId: {
         day: input.day,
         casinoId: input.casinoId,
         countryCode: input.countryCode,
         redirectSlugId: input.redirectSlugId,
-        affiliateOfferId: input.affiliateOfferId,
         trackingLinkId: input.trackingLinkId,
-        clickCount: 1,
-        lastClickedAt: input.clickedAt,
       },
-      update: {
-        clickCount: { increment: 1 },
-        lastClickedAt: input.clickedAt,
-      },
-      select: { id: true },
-    });
-  }
+    },
+    create: {
+      day: input.day,
+      casinoId: input.casinoId,
+      countryCode: input.countryCode,
+      redirectSlugId: input.redirectSlugId,
+      affiliateOfferId: input.affiliateOfferId,
+      trackingLinkId: input.trackingLinkId,
+      clickCount: 1,
+      lastClickedAt: input.clickedAt,
+    },
+    update: {
+      clickCount: { increment: 1 },
+      lastClickedAt: input.clickedAt,
+    },
+    select: { id: true },
+  });
+}
+
+export class OutboundClickRepository implements OutboundClickStore {
+  constructor(private readonly database: OutboundClickProjectionDatabase = prisma) {}
 
   async report(input: OutboundClickReportQuery) {
-    const records = await prisma.affiliateOutboundClickDaily.findMany({
+    const records = await this.database.affiliateOutboundClickDaily.findMany({
       where: {
         day: { gte: input.from, lt: input.until },
         ...(input.casinoId ? { casinoId: input.casinoId } : {}),
