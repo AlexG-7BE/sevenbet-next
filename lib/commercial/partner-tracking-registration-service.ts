@@ -28,7 +28,7 @@ import { ServiceError, ValidationError } from "@/lib/services/service-error";
 
 export type PartnerTrackingRegistrationContext = {
   actorId: string;
-  auditSource: "COMMERCIAL_MCP" | "INTERNAL_APPLICATION";
+  auditOrigin: "INTERNAL_APPLICATION" | "INTERNAL_COMMAND";
   correlationId?: string;
   commercialAuthority: TrustedCommercialWriteAuthority | null;
 };
@@ -297,7 +297,7 @@ export class PartnerTrackingRegistrationService {
         previousTrackingLinkId: stage.previousTrackingLinkIds[0] ?? null,
         results,
         actorId: context.actorId,
-        auditSource: context.auditSource,
+        auditOrigin: context.auditOrigin,
         correlationId: context.correlationId,
         now: checkedAt,
       });
@@ -482,7 +482,7 @@ export class PartnerTrackingRegistrationService {
         previousTrackingLinkId: promotion.previousTrackingLinkId,
         results: rollbackResults,
         actorId: context.actorId,
-        auditSource: context.auditSource,
+        auditOrigin: context.auditOrigin,
         correlationId: context.correlationId,
         now: checkedAt,
       });
@@ -508,7 +508,7 @@ export class PartnerTrackingRegistrationService {
       previousTrackingLinkId: promotion.previousTrackingLinkId,
       results,
       actorId: context.actorId,
-      auditSource: context.auditSource,
+      auditOrigin: context.auditOrigin,
       correlationId: context.correlationId,
       now: checkedAt,
     });

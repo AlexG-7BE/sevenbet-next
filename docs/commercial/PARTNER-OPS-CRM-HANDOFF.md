@@ -76,7 +76,25 @@ This creates `CommercialApplication(state=DRAFT)` and `OUTREACH_DRAFTED`; it nev
 
 Parsing fails because `SET_APPROVED` is not a union member. Extra Prisma fields also fail strict payload parsing.
 
-## ChatGPT Work MCP evidence provider
+## Neutral Commercial research capability
+
+**DETECTED IN PR5:** `CommercialResearchBundleSchema` and
+`commercialOpportunityResearchService` expose the bounded research concepts
+to internal application code without an HTTP transport, OAuth scope, external
+client or connector identity. The repository remains the sole Prisma boundary.
+It hashes the internal source reference, uses a `research:` idempotency
+namespace and records `commercial_research_bundle_upserted`.
+
+All evidence, duplicate, draft, term, stage, activation-packet, transaction,
+idempotency and audit ceilings below remain. PR5 adds no caller. Partner
+tracking is not part of this CRM service and remains in the separately
+Founder-authority-gated canonical tracking service.
+
+## Historical ChatGPT Work MCP evidence provider — superseded
+
+> RFC-051 physically removes this transport and its operational OAuth
+> provider. This section records historical implementation evidence only; it
+> is not a setup or invocation instruction.
 
 **DETECTED:** `PARTNER-OPS-WORK-BRIDGE-01` adds one separately authorised remote MCP adapter at `/api/mcp/commercial`; `PARTNER-OPS-WORK-BRIDGE-02` coordinates its auth foundation on `better-auth`, `@better-auth/core` and `@better-auth/oauth-provider` `1.7.1`. The provider owns OAuth authorization codes, PKCE S256, consent, opaque access-token issuance, protected token storage, rotating refresh-token families, replay response invalidation and revocation. The application owns ChatGPT callback/client policy, exact single-resource binding, `AdminUser`/`affiliate.manage`, the scopes `commercial:read` and `commercial:safe_write`, and the tool boundary. Tokens last 15 minutes; refresh tokens last up to 30 days when `offline_access` is granted. It is disabled unless `COMMERCIAL_MCP_ENABLED=true`; failure is isolated from Admin, consumer auth, Programme and ordinary CRM operation.
 
@@ -101,9 +119,9 @@ The MCP adapter calls `commercialMcpService`, which validates strict Zod input a
 
 **CONTRADICTION RESOLVED:** The earlier future-provider paragraph and original RFC-027 ceiling said Work/OAuth was not yet authorised. The explicit Founder instruction `PARTNER-OPS-WORK-BRIDGE-01` is newer decision authority and authorises only this bounded adapter. It does not authorise a general external tool platform, Gmail integration, autonomous web research inside B4GAMBLE, or any external action.
 
-## Safe execution
+## Current safe execution
 
-1. Authenticate to protected Admin with `affiliate.manage`, or connect through the documented ChatGPT Work OAuth flow.
+1. Authenticate to protected Admin with `affiliate.manage`.
 2. Create or open a real evidence-led prospect; do not use synthetic Production records.
 3. Add the current source evidence.
 4. Run Partner Operations from the detail screen. With no server credential, the route fails safely and CRM remains usable.
@@ -111,4 +129,5 @@ The MCP adapter calls `commercialMcpService`, which validates strict Zod input a
 6. Perform any external or approval action outside the Agent and record its direct evidence through the human CRM path.
 7. Never treat a packet or CRM stage as RFC-015 route authority.
 
-ChatGPT connection and revocation steps are maintained in `docs/commercial/CHATGPT-WORK-MCP-SETUP.md`.
+External connector retirement and release steps are maintained in
+`docs/06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md`.

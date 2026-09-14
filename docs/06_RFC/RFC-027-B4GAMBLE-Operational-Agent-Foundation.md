@@ -1,12 +1,19 @@
 # RFC-027: B4GAMBLE Operational Agent Foundation
 
-- **Status:** Approved for bounded implementation; Partner Operations, ChatGPT Work Commercial, partner tracking registration and separate Media Operations bridge amendments approved
+- **Status:** `ACTIVE` for the isolated internal-agent foundation and authority ceilings; sections 17–21 are historical transport decisions superseded by RFC-051
 - **Decision authority:** Founder Office `AGENT-CORE-01`; amended by `COMMERCIAL-OPS-01`, `PARTNER-OPS-WORK-BRIDGE-01`, `PARTNER-OPS-WORK-BRIDGE-02`, `PARTNER-TRACKING-REGISTRATION-MECHANISM` and `MEDIA-INGESTION-AUTOPLACEMENT-01` instructions
 - **Approved:** 2026-08-13
-- **Scope:** Isolated internal OpenAI Agents SDK foundation, eight specialist definitions, shared policy/result contracts, explicit cost-aware routing, bounded manual runner, no-key structural evaluation, one narrow application-side Partner Operations CRM executor, one Commercial CRM remote MCP resource, and one separate exact-resource Media Operations MCP adapter
+- **Scope:** Isolated internal OpenAI Agents SDK foundation, eight specialist definitions, shared policy/result contracts, explicit cost-aware routing, bounded manual runner, no-key structural evaluation and one narrow application-side Partner Operations CRM executor; former remote transport scope is historical
 - **Implementation:** merged to `main` by PR #69 at `7c36bffb901db62863b02cb8c2cf771cdadaaf89`
 - **Depends on:** Product Vision & Principles v2.0, Project State, Roadmap, RFC-013, RFC-014, RFC-015, RFC-017, RFC-022, RFC-023 and RFC-025
 - **Supersedes:** nothing in the consumer product, Programme, authentication, commercial, data or Production runtime
+
+> **Lifecycle notice, 14 September 2026:** RFC-051 supersedes the active
+> authority of sections 17–21 for application MCP/OAuth transports. Those
+> sections remain unchanged historical evidence of the controls and releases
+> that preceded physical retirement. Neutral CRM research, canonical tracking
+> and internal Agent boundaries survive only through their current
+> transport-independent contracts.
 
 ## 1. Decision and ceiling
 
@@ -252,6 +259,10 @@ One non-personal Partner Operations connectivity smoke was executed under this a
 
 ## 17. `PARTNER-OPS-WORK-BRIDGE-01` ChatGPT Work amendment
 
+> **SUPERSEDED TRANSPORT DECISION:** RFC-051 physically retires this resource,
+> OAuth provider and external application path. This section is history, not
+> current implementation authority.
+
 Founder instruction on 2026-08-20 authorises one remote MCP application inside the existing B4GAMBLE application so an authorised ChatGPT Work Agent can read and perform strictly bounded safe writes to the Commercial CRM.
 
 1. The resource is `/api/mcp/commercial`, using official MCP stateless Streamable HTTP. This amendment originally authorised exactly four purpose-built tools: list, get, possible-duplicate lookup, and one transactional research-bundle upsert. Section 21 separately authorises one fifth bounded tracking-registration tool. The resource is not a generic Admin, HTTP, SQL or Prisma surface.
@@ -366,6 +377,10 @@ branch, PR, CI, Preview, Production acceptance and rollback evidence.
 
 ## 20. `MEDIA-OPERATIONS-BULK-01` amendment
 
+> **SUPERSEDED TRANSPORT DECISION:** RFC-044 retired Media business/runtime
+> authority and RFC-051 removes the remaining MCP/DCR stubs. This section is
+> historical.
+
 The explicit Founder instruction on 6 September 2026 supersedes section 19's
 five-tool and single-plan assumptions only for the existing Media Operations
 resource.
@@ -394,6 +409,11 @@ All section 19 security, OAuth isolation, draft-only assignment, audit,
 publication and no-external-action boundaries remain in force.
 
 ## 21. `PARTNER-TRACKING-REGISTRATION-MECHANISM` amendment
+
+> **PARTIALLY SUPERSEDED:** RFC-051 retires the fifth MCP tool. The
+> transport-independent tracking service and its Founder-authority, legal,
+> safety, idempotency, audit and MarketActivation controls remain current
+> under RFC-048/RFC-049.
 
 The explicit Founder instruction on 10 September 2026 authorises one fifth
 tool on the existing Commercial MCP resource:

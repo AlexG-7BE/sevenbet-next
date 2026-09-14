@@ -35,13 +35,13 @@ commercial paths unavailable.
 | --- | --- | --- | --- | --- | --- |
 | `Casino` / `CasinoVersion` | editorial status and immutable snapshot | Casino Admin/publication services | public Casino repositories | duplicated with commercial visibility | editorial/public projection input only |
 | `CasinoCountry` | availability and sourced local facts | evidence ingestion and Admin | public market projection, old PartnerRoute | factual prohibition could affect route | bound factual input; explicit external facts remain valid |
-| `CommercialOpportunity` | CRM stage | Commercial Ops / bounded MCP | Admin and operational reports | indirect readiness input | CRM input and audit-only for public runtime |
+| `CommercialOpportunity` | CRM stage | Commercial Ops / neutral internal research | Admin and operational reports | indirect readiness input | CRM input and audit-only for public runtime |
 | `CommercialActivationPacket` | packet status/readiness JSON | Commercial Ops / agent operations | Admin and release tooling | indirect readiness input | preserved audit/source input |
 | `AffiliateProgram` / `AffiliateOffer` | status and workflow | affiliate Admin/import and activation bundle | candidate resolver and PartnerRoute | yes, duplicated | controller-maintained compatibility plus offer facts |
 | `AffiliateTrackingLinkCountry` | `productionEligible` and evidence | legacy activation/release writers | PartnerRoute, offer and redirect paths | yes, independently persisted | deprecated one-way compatibility projection |
 | PartnerRoute projection | computed `productionEligible` and selected route | pure projection over affiliate graph | public Casino/offer/redirect and health | primary aggregate authority | bound route dependency; backfill/shadow/diagnostic adapter |
 | `CasinoVersion` public route projection | CTA/media route | publication snapshot builder | public Casino and offer mappers | duplicated visibility | editorial read model populated from canonical active routes |
-| Media Operations assignments | creative/placement eligibility | Media Admin/MCP and publication | public media resolver | media could indirectly suppress actions | media provenance/selection input only |
+| Media Operations assignments | historical creative/placement eligibility | retired writers only | audit/history | media could indirectly suppress actions | inert history under RFC-044 |
 | `MarketActivation` | desired state, canonical status, exact bindings and bounded fallback scope | activation controller only | canonical public runtime and diagnostics | no predecessor row | sole B4GAMBLE Production commercial authority |
 
 **DETECTED:** direct repository searches found no public runtime reader of CRM

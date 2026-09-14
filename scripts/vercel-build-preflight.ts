@@ -228,40 +228,6 @@ async function assertCommercialUxAnalyticsInvariants(prisma: ProductionQueryClie
   });
 }
 
-async function assertMcpDcrInvariants(prisma: ProductionQueryClient) {
-  const [functionState] = await prisma.$queryRawUnsafe<Array<{ definition: string }>>(`
-    SELECT pg_get_functiondef('public.prepare_better_auth_oauth_client_compat()'::regprocedure) AS definition
-  `);
-  if (!functionState?.definition) {
-    throw new Error("Production migration guard could not read OAuth compatibility function.");
-  }
-
-  const definition = functionState.definition;
-  if (
-    !definition.includes('NEW."public" IS DISTINCT FROM true')
-    || !definition.includes("unsupported Better Auth 1.7 Commercial MCP client state")
-    || !definition.includes("client_credentials")
-  ) {
-    throw new Error("Production migration guard found unexpected OAuth compatibility function definition.");
-  }
-
-  const [oauthState] = await prisma.$queryRawUnsafe<Array<{ nonempty_client_credentials: bigint }>>(`
-    SELECT COUNT(*)::bigint AS nonempty_client_credentials
-    FROM "oauthClient"
-    WHERE cardinality("clientCredentialsScopes") > 0
-  `);
-  if (!oauthState || oauthState.nonempty_client_credentials !== 0n) {
-    throw new Error("Production migration guard found unexpected client_credentials scope authority.");
-  }
-
-  writeEvent({
-    event: "production_mcp_dcr_fix_invariants",
-    legacyCompatibilityStillPresent: definition.includes("unsupported Commercial MCP client state"),
-    betterAuth17ProviderInsertPathPresent: true,
-    nonemptyClientCredentialsScopes: Number(oauthState.nonempty_client_credentials),
-  });
-}
-
 async function assertProgrammeAccessPreMigrationInvariants(prisma: ProductionQueryClient) {
   const [claimLifecycle] = await prisma.$queryRawUnsafe<Array<{
     consumed_pair_mismatch: bigint;
@@ -546,8 +512,6 @@ async function verifyVercelBuildCompatibility() {
     const completed = completedRows(rows);
     const completedByName = new Map(completed.map((row) => [row.migration_name, row]));
     assertChecksum(completedByName.get(BASELINE_MIGRATION), BASELINE_MIGRATION);
-    await assertMcpDcrInvariants(prisma);
-
     const applied = new Set(completed.map((row) => row.migration_name));
     if (!applied.has(TARGET_MIGRATION)) {
       throw new Error(`Production migration guard requires completed ${TARGET_MIGRATION}; DB-first 0025 will not apply an older migration.`);

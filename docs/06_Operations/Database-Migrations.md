@@ -244,3 +244,8 @@ Every stateful change must remain compatible with both the old and new applicati
 Before a Production migration, verify the database provider, secret architecture, backup/restore posture, exact pending migration set, execution identity and rollback/forward-fix strategy. Prefer a least-privilege direct migration binding that targets the same database identity as the runtime connection. Never copy a long-lived Production database URL into generic GitHub PR secrets merely to automate the step.
 
 For high-consequence migrations, use a bounded fail-closed execution path and verify the resulting `_prisma_migrations` state before declaring completion. Remove temporary execution machinery after the migration unless the Founder separately approves a permanent migration architecture.
+
+RFC-051 removes the operational OAuth runtime but deliberately retains
+migrations 0021–0023 and all historical rows in PR5. Their tables,
+connector-specific triggers and compatibility functions are exact PR6 cleanup
+candidates; no destructive cleanup is authorised by PR5.

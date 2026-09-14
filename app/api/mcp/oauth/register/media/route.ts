@@ -1,5 +1,0 @@
-import { retiredMediaResponse } from "@/lib/media-retirement/http";
-
-export const dynamic = "force-dynamic";
-
-export const POST = retiredMediaResponse;

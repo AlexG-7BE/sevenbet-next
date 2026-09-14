@@ -479,14 +479,3 @@ test("affiliate redirects ignore retired creative attribution and use only canon
   assert.doesNotMatch(serviceSource, /creativeId|PartnerHostedCreative|mediaOfferAuthority/);
   assert.doesNotMatch(routeSource, /searchParams.*creative|creativeId/);
 });
-
-test("Media MCP is retired with 410 while Commercial MCP remains registered", async () => {
-  const { commercialMcpTools } = await import("../lib/mcp/commercial/server");
-  assert.equal(commercialMcpTools.length, 5);
-  assert.ok(commercialMcpTools.some((tool) => tool.name === "commercial_register_partner_tracking_link"));
-  const { GET } = await import("../app/api/mcp/media/route");
-  const response = await GET();
-  assert.equal(response.status, 410);
-  assert.deepEqual(await response.json(), { error: "MEDIA_OPERATIONS_RETIRED" });
-  assert.doesNotMatch(readFileSync("lib/mcp/operational-routing.ts", "utf8"), /mediaMcp|MEDIA_MCP/);
-});

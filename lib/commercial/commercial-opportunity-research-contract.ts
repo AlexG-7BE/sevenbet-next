@@ -4,7 +4,7 @@ const IdempotencyKey = z.string().min(8).max(160);
 const NullableText = (max: number) => z.string().max(max).nullable().optional();
 const EvidenceKeyReference = z.string().min(8).max(160);
 
-export const CommercialMcpListSchema = z.object({
+export const CommercialOpportunityListSchema = z.object({
   search: z.string().min(1).max(200).optional(),
   stages: z.array(z.enum(["PROSPECT", "QUALIFIED", "APPLICATION_READY", "APPLIED", "DUE_DILIGENCE", "NEGOTIATING", "APPROVED", "ACTIVE", "REJECTED", "ON_HOLD"])).max(10).optional(),
   priorities: z.array(z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"])).max(4).optional(),
@@ -12,11 +12,11 @@ export const CommercialMcpListSchema = z.object({
   offset: z.number().int().min(0).max(500).default(0),
 }).strict();
 
-export const CommercialMcpGetSchema = z.object({
+export const CommercialOpportunityGetSchema = z.object({
   opportunityId: z.string().uuid(),
 }).strict();
 
-export const CommercialMcpDuplicateSchema = z.object({
+export const CommercialOpportunityDuplicateSchema = z.object({
   displayName: z.string().min(1).max(200),
   legalName: z.string().max(200).nullable().optional(),
   limit: z.number().int().min(1).max(20).default(10),
@@ -134,7 +134,7 @@ const ActivationPacketSchema = z.object({
   evidenceIdempotencyKeys: z.array(EvidenceKeyReference).max(20).default([]),
 }).strict();
 
-export const CommercialMcpResearchBundleSchema = z.object({
+export const CommercialResearchBundleSchema = z.object({
   idempotencyKey: IdempotencyKey,
   opportunity: z.object({
     opportunityId: z.string().uuid().optional(),
@@ -187,6 +187,6 @@ export const CommercialMcpResearchBundleSchema = z.object({
   }
 });
 
-export type CommercialMcpListInput = z.infer<typeof CommercialMcpListSchema>;
-export type CommercialMcpDuplicateInput = z.infer<typeof CommercialMcpDuplicateSchema>;
-export type CommercialMcpResearchBundle = z.infer<typeof CommercialMcpResearchBundleSchema>;
+export type CommercialOpportunityListInput = z.infer<typeof CommercialOpportunityListSchema>;
+export type CommercialOpportunityDuplicateInput = z.infer<typeof CommercialOpportunityDuplicateSchema>;
+export type CommercialResearchBundle = z.infer<typeof CommercialResearchBundleSchema>;

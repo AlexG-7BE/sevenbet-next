@@ -148,7 +148,7 @@ async function assertUserIsAvailableForProfile(
 }
 
 async function createBetterAuthUser(input: BootstrapInput) {
-  const bootstrapAuth = createSevenBetAuth({ autoSignIn: false, operationalMcpProvider: false });
+  const bootstrapAuth = createSevenBetAuth({ autoSignIn: false });
 
   try {
     const result = await bootstrapAuth.api.signUpEmail({

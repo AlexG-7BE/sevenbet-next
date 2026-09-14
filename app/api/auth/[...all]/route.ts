@@ -9,7 +9,6 @@ import { programmeAuthAccessDenial } from "@/lib/auth/programme-access-policy";
 import { programmeAccessSigningSecret } from "@/lib/auth/programme-access-proof";
 import { readBoundedRequestText } from "@/lib/programme/http";
 import { ServiceError } from "@/lib/services/service-error";
-import { isCommercialMcpInternalAuthPath } from "@/lib/mcp/commercial/config";
 import { observeSuccessfulAuthentication } from "@/lib/customers/auth-observer.server";
 
 const authJsonPayloadLimit = 32 * 1024;
@@ -40,17 +39,11 @@ function privateAuthResponse(response: Response) {
 }
 
 export async function GET(request: Request) {
-  if (isCommercialMcpInternalAuthPath(new URL(request.url).pathname)) {
-    return privateAuthResponse(Response.json({ code: "NOT_FOUND" }, { status: 404 }));
-  }
   return privateAuthResponse(await dispatchAuth("GET", request));
 }
 
 export async function POST(request: Request) {
   const pathname = new URL(request.url).pathname;
-  if (isCommercialMcpInternalAuthPath(pathname)) {
-    return privateAuthResponse(Response.json({ code: "NOT_FOUND" }, { status: 404 }));
-  }
   const accountCreation = pathname.endsWith("/sign-up/email");
   const accountLogin = pathname.endsWith("/sign-in/email");
   const socialAuthentication = pathname.endsWith("/sign-in/social");

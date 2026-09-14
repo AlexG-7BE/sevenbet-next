@@ -45,9 +45,6 @@ export default defineConfig({
       AFFILIATE_REDIRECT_ENGINE_ENABLED: "false",
       PUBLIC_CASINO_CMS_ENABLED: "false",
       B4GAMBLE_HANDOFF_VISUAL_FIXTURE: "true",
-      COMMERCIAL_MCP_ENABLED:
-        process.env.PLAYWRIGHT_COMMERCIAL_MCP_ENABLED ?? "true",
-      COMMERCIAL_MCP_PUBLIC_ORIGIN: baseUrl,
       LAUNCH_POLISH_ERROR_HARNESS: "true",
     },
   },

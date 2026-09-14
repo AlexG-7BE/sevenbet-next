@@ -12,9 +12,53 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Commercial Core Simplification PR4 — affiliate lifecycle collapse ready for review
+## Commercial Core Simplification PR5 — MCP extraction and retirement ready for review
 
-**DETECTED IN THE PR4 BRANCH, 14 September 2026:** RFC-050 removes generic
+**DETECTED IN THE PR5 BRANCH, 14 September 2026:** branch
+`codex/commercial-core-pr5-mcp-extraction-retirement` starts from live
+`origin/main` `d0d3cccb62f5e3ba15f6fabc049260a03ac1c570`. RFC-051 physically
+removes the Commercial/Media MCP routes, operational OAuth discovery/DCR/token/
+consent/revocation surfaces, MCP server/config/security/rate-limit modules,
+connector Admin pages, obsolete one-shot caller/smoke code, transport tests and
+direct root MCP/OAuth-Provider dependencies.
+
+Commercial opportunity list/get/duplicate/research-bundle behavior survives
+under neutral contracts and service/repository names. Evidence provenance,
+duplicate refusal, advisory-lock transaction replay, child idempotency,
+draft-only external actions, evidenced terms, proposal ceilings and audit
+remain. Partner tracking remains a separate CRM/OAuth-independent internal
+service and still requires process-local trusted Founder authority before
+target resolution or mutation. PR5 adds no caller and no replacement public
+transport. Direct logo/editorial media and generic Better Auth/Google identity
+behavior remain.
+
+**DETECTED — READ-ONLY PRODUCTION EVIDENCE:** a fingerprint-gated,
+repeatable-read transaction enforced `transaction_read_only=on` and performed
+zero writes. The 81 canonical routes, 39 `ACTIVE + HEALTHY` routes, six legacy
+`ZZ` rows, 17 active logos and 62 Commercial opportunities were observed; no
+canonical public-runtime or migration file differs from main. Route-state
+digest:
+`4764a59536fef067eed786b82f214ab55f3126d00dd2359b75eba7603f73600c`.
+Historical connector storage is populated and old MCP research audit activity
+was recorded through 11 September; rate-bucket activity exists through 13
+September. The named current caller cannot be attributed without request
+telemetry: `MCP_RECENT_USAGE_UNKNOWN`.
+
+**EXTERNAL / NOT COMPLETED:** the Founder instruction confirms the external
+custom connection `B4GAMBLE Commercial Operations2` still exists. Repository
+code cannot remove it. Whether a Media connector still exists externally is
+`UNKNOWN`. Independent approval must remove external connection(s) immediately
+before merge/deploy, then verify the former endpoints are absent/404.
+
+**REVIEW ONLY:** PR5 is not merged or deployed, performs no Production
+mutation and includes no schema migration. Eight historical OAuth/rate-limit
+models plus compatibility objects are retained for separately authorised PR6
+cleanup. See [RFC-051](06_RFC/RFC-051-MCP-Extraction-and-Retirement.md) and
+the [PR5 runbook](06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md).
+
+## Commercial Core Simplification PR4 — affiliate lifecycle collapse merged
+
+**DETECTED IN CURRENT MAIN, 14 September 2026:** RFC-050 removes generic
 Affiliate lifecycle/status state from the public commercial authority plane.
 One exact canonical `MarketActivation` remains the business routing decision;
 Casino publication, coherent route bindings, safe/effective destination,
@@ -42,7 +86,9 @@ changes or technical changes. Production mutation was not performed. See
 [RFC-050](06_RFC/RFC-050-Affiliate-Lifecycle-Authority-Collapse.md) and the
 [PR4 runbook](06_Operations/Commercial-Core-PR4-Affiliate-Lifecycle-Collapse.md).
 
-**REVIEW ONLY:** PR4 is not merged or deployed.
+**DETECTED:** PR4 merged to `main` as PR #282 at
+`d0d3cccb62f5e3ba15f6fabc049260a03ac1c570`. This PR5 review did not deploy
+or independently reverify a newer Production application SHA.
 
 ## Legacy demo Casino retirement — merged; Production deletion not executed
 
@@ -247,9 +293,9 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public legal implementation | **READY** | Current GB public legal copy/consent/disclosure implementation is in Production for the approved scope. |
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
-| ChatGPT Work MCP / Better Auth 1.7 | **COMMERCIAL MCP ENABLED; MEDIA MCP RETIRED BY RFC-044** | Commercial retains its governed resource. Migration 0034 prevents Media authority from being recreated; the application cutover makes the Media MCP, its DCR and discovery surfaces return cache-proof 410. |
-| Partner tracking registration | **RFC-048 WRITE CORE LIVE; FAIL-CLOSED MCP** | PR #278 and additive migration 0039 are in Production. CRM/static/lifecycle state is non-authoritative; canonical writes require non-serializable trusted Founder provenance. OAuth scope and staff permission remain execution gates only, and the retained MCP has no trusted authority source, so it fails closed before commercial mutation. |
-| Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
+| Commercial MCP / operational OAuth | **PRODUCTION TRANSPORT STILL EXISTS; PR5 REPOSITORY RETIREMENT READY FOR REVIEW** | PR5 removes the server/provider/routes without a replacement transport. External `B4GAMBLE Commercial Operations2` removal is required immediately before deployment; Media connector state is unknown. |
+| Partner tracking registration | **RFC-048 WRITE CORE LIVE; INTERNAL-ONLY AFTER PR5** | CRM/static/lifecycle state is non-authoritative and canonical writes require non-serializable trusted Founder provenance. PR5 removes the old transport caller and adds no new authority boundary. |
+| Production DB reliability | **READY IN PRODUCTION** | The one-connection runtime and narrow secret-safe transient handling remain; transport-specific availability code/tests are retired. |
 | Commercial partner activation | **READY IN PRODUCTION — 39 STORED ACTIVE + HEALTHY ROUTES** | PR2 acceptance verified all 39 stored active/healthy routes unchanged. RFC-042 remains the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |
 | Casino market data | **FOURTEEN REAL PUBLISHED IDENTITIES — SAFE CROSS-MARKET OFFER PRESENTATION ACTIVE** | Market-projected Casino facts remain isolated. A bounded immutable published-bonus corpus now resolves `EXACT > ROW > OTHER_MARKET > NONE`; StarCasino IT plus genuine Rizk and NordicBet ROW offers are reconciled without creating commercial or media authority. Founder-approved scores remain unchanged. |
 | Placement media | **RETIRED — HISTORICAL ROWS INERT** | Migration 0034 preserves every historical assignment and asset row but forces all six assignment families inactive. Promotional placement state is no longer public, commercial or release authority. |
@@ -257,7 +303,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | GEO-localized creative assignments | **RETIRED — HISTORICAL TARGETING EVIDENCE ONLY** | Exact-country/language assignment rows remain for audit but are inactive and database-constrained. Trusted GEO continues to govern jurisdiction independently of language and media. |
 | Vetted partner-hosted creatives | **RETIRED — 254 HISTORICAL ROWS PRESERVED AND ARCHIVED** | Hosted creatives remain inert evidence. Public frames/previews and active assignments are retired; they cannot supply Product or commercial authority. |
 | Commercial creative formats | **HISTORICAL COMPATIBILITY / TEST VOCABULARY** | Format parsers and pre-retirement tests may remain inert. Active public compositions accept operator logos or explicitly B4GAMBLE-owned editorial art, never promotional creative formats. |
-| Media ingestion / Media Operations | **PROMOTIONAL OPERATIONS RETIRED; LOGO AND B4GAMBLE EDITORIAL ASSETS ONLY** | Active Admin media is limited to canonical logos and authenticated `b4gambleOwned` editorial social imagery. Promotional ingestion/analyse/apply/assignment/MCP surfaces are 410 in the application cutover and retired states are rejected by Production constraints. |
+| Media ingestion / Media Operations | **PROMOTIONAL OPERATIONS RETIRED; LOGO AND B4GAMBLE EDITORIAL ASSETS ONLY** | Active Admin media is limited to canonical logos and authenticated `b4gambleOwned` editorial social imagery. PR5 removes the remaining MCP/DCR 410 stubs; retired database states remain constrained. |
 | Public language / market presentation | **ELEVEN LOCALES LIVE IN PRODUCTION** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
 | Customer data / analytics / lifecycle | **CORE VERIFIED; RESEND ACTIVE IN PRODUCTION** | PR #269 and migration 0037 remain verified. Founder processing authority, provider configuration, signed webhook controls and all six controlled acceptance checks pass; lifecycle delivery is enabled with zero non-fixture acceptance messages. |
 

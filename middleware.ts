@@ -42,8 +42,6 @@ import {
 import { programmeMutationAccessCategory } from "@/lib/programme/mutation-access";
 
 const adminCookieName = "sevenbet_admin_preview";
-const chatGptWorkOrigin = "https://chatgpt.com";
-const commercialMcpConsentPath = "/admin/integrations/chatgpt-work/consent";
 const internalPresentationTokenHeader = "x-b4gamble-internal-presentation-token";
 const internalPresentationTokenMaxAgeMs = 30_000;
 const localPresentationSigningSecret = "b4gamble-local-presentation-rewrite-v1";
@@ -240,7 +238,7 @@ export async function middleware(request: NextRequest) {
   const nonce = createCspNonce();
   const contentSecurityPolicy = buildContentSecurityPolicy(nonce, {
     development: process.env.NODE_ENV === "development",
-    formActionOrigins: pathname === commercialMcpConsentPath ? [chatGptWorkOrigin] : [],
+    formActionOrigins: [],
     upgradeInsecureRequests: request.nextUrl.protocol === "https:",
   });
   const requestHeaders = new Headers(request.headers);
@@ -493,9 +491,7 @@ export async function middleware(request: NextRequest) {
 
   // API authorization is always resolved by the server route, never by cookie presence.
   if (isAdminApi) return privateAdminResponse(secureResponse(nextResponse()));
-  const isCommercialMcpAuthPage = pathname === "/admin/integrations/chatgpt-work/login"
-    || pathname === commercialMcpConsentPath;
-  if (pathname === "/admin/login" || isCommercialMcpAuthPage) {
+  if (pathname === "/admin/login") {
     return privateAdminResponse(secureResponse(nextResponse()));
   }
 

@@ -1,6 +1,10 @@
 # COMMERCIAL-OPS-01
 
-Status: **READY IN PRODUCTION** for the Commercial CRM delivered by PR #81; Production migration `0020_commercial_ops_01` is applied and verified. The additive ChatGPT Work MCP bridge is a separately feature-gated candidate under `PARTNER-OPS-WORK-BRIDGE-01`. Public commercial and GB referral activation remain off.
+Status: **READY IN PRODUCTION** for the Commercial CRM delivered by PR #81;
+Production migration `0020_commercial_ops_01` is applied and verified. RFC-051
+retires the repository MCP/OAuth transport in the PR5 review branch while
+preserving a neutral internal research capability. PR5 is not merged or
+deployed and does not change public commercial authority.
 
 ## Evidence baseline
 
@@ -38,7 +42,23 @@ The safe surface can update descriptive profile data; add evidence, contacts and
 
 There is no operation for approval, activation, term acceptance, email send, application submit, tracking/programme/offer changes, jurisdiction, deployment or Production. CRM/provider failure cannot bypass validation and does not affect normal CRM use.
 
-## ChatGPT Work bridge
+## PR5 neutral research extraction
+
+**DETECTED IN THE REVIEW BRANCH:** the strict opportunity list/get/duplicate
+and research-bundle contracts, transactional repository writes, evidence
+provenance, draft-only ceiling, duplicate protection, idempotency and audit
+remain under transport-neutral names. The application exposes no MCP/OAuth
+route and adds no replacement caller. Partner tracking remains separate and
+requires trusted Founder authority before any work.
+
+See RFC-051 and the PR5 operations runbook for the complete retirement and
+external-connector release boundary.
+
+## Historical ChatGPT Work bridge — superseded
+
+> The following paragraphs preserve the former implementation and release
+> evidence. RFC-051 removes the bridge, provider and endpoints; these are not
+> current setup instructions.
 
 **DETECTED:** The feature-gated `/api/mcp/commercial` route uses the official MCP TypeScript SDK and stateless Streamable HTTP. `PARTNER-OPS-WORK-BRIDGE-02` coordinates its OAuth foundation at `better-auth`, `@better-auth/core` and `@better-auth/oauth-provider` `1.7.1`. The provider owns authorization-code issuance/consumption, PKCE S256, consent, protected opaque-token storage, grant-bound protected resources, refresh rotation/replay handling and revocation. The application owns ChatGPT callback/client policy, a single exact protected resource, staff/`affiliate.manage`, Commercial scopes and tool authorization. Public DCR is restricted to current ChatGPT callbacks and grants no Commercial authority by itself.
 

@@ -32,11 +32,11 @@ const commercialAuthority = establishTrustedCommercialWriteAuthority({
 });
 const context = {
   actorId: "00000000-0000-4000-8000-000000000001",
-  auditSource: "INTERNAL_APPLICATION" as const,
+  auditOrigin: "INTERNAL_APPLICATION" as const,
   correlationId: "fixture-command",
   commercialAuthority,
 };
-const mcpContext = { ...context, auditSource: "COMMERCIAL_MCP" as const, commercialAuthority: null };
+const untrustedContext = { ...context, auditOrigin: "INTERNAL_COMMAND" as const, commercialAuthority: null };
 
 function row(geo: string, legalState: CurrentPartnerInventorySeed["legalState"]): PartnerTrackingMarketRow {
   return {
@@ -235,10 +235,10 @@ test("public input schema keeps three required fields and adds mutually exclusiv
   assert.equal(founderRouteVerificationEvidence({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }), null);
 });
 
-test("normal MCP execution permission cannot manufacture trusted Founder commercial authority", async () => {
+test("an untrusted internal command cannot manufacture trusted Founder commercial authority", async () => {
   const { service, calls } = harness();
   await assert.rejects(
-    () => service.register({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }, mcpContext, now),
+    () => service.register({ partner: "Super Partners", casino: "Betway", trackingUrl: sensitiveUrl }, untrustedContext, now),
     (error: unknown) => error instanceof ValidationError
       && (error.details as { reason?: string }).reason === "PARTNER_TRACKING_COMMERCIAL_AUTHORITY_REQUIRED",
   );

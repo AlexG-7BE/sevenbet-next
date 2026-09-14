@@ -2,10 +2,10 @@ import { createHash } from "node:crypto";
 
 import { Prisma } from "@prisma/client";
 import type {
-  CommercialMcpDuplicateInput,
-  CommercialMcpListInput,
-  CommercialMcpResearchBundle,
-} from "@/lib/commercial/commercial-mcp-contract";
+  CommercialOpportunityDuplicateInput,
+  CommercialOpportunityListInput,
+  CommercialResearchBundle,
+} from "@/lib/commercial/commercial-opportunity-research-contract";
 import prisma from "@/lib/db/prisma";
 import type { PartnerOperationsResult, PartnerSafeCrmOperation } from "@/shared/commercial/partner-operations-contract";
 
@@ -26,7 +26,7 @@ export const commercialOpportunityInclude = {
   affiliateProgram: { select: { id: true, name: true, status: true } },
 } satisfies Prisma.CommercialOpportunityInclude;
 
-const commercialMcpOpportunitySelect = {
+const commercialOpportunityResearchSelect = {
   id: true,
   displayName: true,
   legalName: true,
@@ -134,7 +134,7 @@ export const commercialRepository = {
     return prisma.commercialOpportunity.findUnique({ where: { id }, include: commercialOpportunityInclude });
   },
 
-  mcpList(input: CommercialMcpListInput) {
+  listOpportunities(input: CommercialOpportunityListInput) {
     return prisma.commercialOpportunity.findMany({
       where: {
         ...(input.search ? { OR: [
@@ -156,19 +156,19 @@ export const commercialRepository = {
     });
   },
 
-  mcpGet(id: string) {
-    return prisma.commercialOpportunity.findUnique({ where: { id }, select: commercialMcpOpportunitySelect });
+  getOpportunity(id: string) {
+    return prisma.commercialOpportunity.findUnique({ where: { id }, select: commercialOpportunityResearchSelect });
   },
 
-  mcpFindDuplicates(input: CommercialMcpDuplicateInput) {
-    return findCommercialMcpDuplicates(prisma, input);
+  findPossibleDuplicates(input: CommercialOpportunityDuplicateInput) {
+    return findCommercialOpportunityDuplicates(prisma, input);
   },
 
-  mcpUpsertResearchBundle(
-    input: CommercialMcpResearchBundle,
-    context: { actorId: string; clientId: string },
+  upsertResearchBundle(
+    input: CommercialResearchBundle,
+    context: { actorId: string; sourceReference: string },
   ) {
-    return upsertCommercialMcpResearchBundle(input, context);
+    return upsertCommercialResearchBundle(input, context);
   },
 
   async createProspect(input: { displayName: string; legalName?: string | null; organizationType?: string; priority?: string; possibleDuplicateOfId?: string | null; idempotencyKey: string }, actorId: string) {
@@ -275,9 +275,9 @@ export const commercialRepository = {
   },
 };
 
-async function findCommercialMcpDuplicates(
+async function findCommercialOpportunityDuplicates(
   database: typeof prisma | Prisma.TransactionClient,
-  input: CommercialMcpDuplicateInput,
+  input: CommercialOpportunityDuplicateInput,
 ) {
   const normalizedDisplayName = normalizeName(input.displayName);
   const normalizedLegalName = input.legalName ? normalizeName(input.legalName) : null;
@@ -312,16 +312,16 @@ async function findCommercialMcpDuplicates(
     .slice(0, input.limit);
 }
 
-function scopedMcpEntityKey(clientHash: string, key: string) {
-  return `mcp:${clientHash}:${key}`;
+function scopedResearchEntityKey(sourceHash: string, key: string) {
+  return `research:${sourceHash}:${key}`;
 }
 
-async function upsertCommercialMcpResearchBundle(
-  input: CommercialMcpResearchBundle,
-  context: { actorId: string; clientId: string },
+async function upsertCommercialResearchBundle(
+  input: CommercialResearchBundle,
+  context: { actorId: string; sourceReference: string },
 ) {
-  const clientHash = fingerprint(context.clientId).slice(0, 16);
-  const runIdempotencyKey = scopedMcpEntityKey(clientHash, input.idempotencyKey);
+  const sourceHash = fingerprint(context.sourceReference).slice(0, 16);
+  const runIdempotencyKey = scopedResearchEntityKey(sourceHash, input.idempotencyKey);
 
   return prisma.$transaction(async (tx) => {
     await tx.$queryRaw(Prisma.sql`
@@ -339,7 +339,7 @@ async function upsertCommercialMcpResearchBundle(
       };
     }
 
-    const duplicateCandidates = await findCommercialMcpDuplicates(tx, {
+    const duplicateCandidates = await findCommercialOpportunityDuplicates(tx, {
       displayName: input.opportunity.displayName,
       legalName: input.opportunity.legalName,
       limit: 10,
@@ -407,7 +407,7 @@ async function upsertCommercialMcpResearchBundle(
     const run = await tx.commercialAgentRun.create({
       data: {
         opportunityId: opportunity.id,
-        specialist: "partner-operations-work-mcp",
+        specialist: "partner-operations-research",
         status: "COMPLETED",
         recommendation: "Review the delegated Work research bundle in Commercial CRM",
         summary: `${disposition === "CREATED" ? "Created" : "Updated"} a bounded Commercial research bundle`,
@@ -429,7 +429,7 @@ async function upsertCommercialMcpResearchBundle(
     const evidenceByInputKey = new Map<string, string>();
 
     function operationId(type: string, key: string) {
-      return scopedMcpEntityKey(clientHash, `${type}:${key}`);
+      return scopedResearchEntityKey(sourceHash, `${type}:${key}`);
     }
 
     async function wasApplied(type: string, key: string) {
@@ -465,7 +465,7 @@ async function upsertCommercialMcpResearchBundle(
           operationId: operationId(type, key),
           operationType: type,
           status: applied ? "APPLIED" : "SKIPPED_IDEMPOTENT",
-          idempotencyKey: `mcp-operation:${fingerprint({ runId: run.id, type, key })}`,
+          idempotencyKey: `research-operation:${fingerprint({ runId: run.id, type, key })}`,
           payloadHash: fingerprint(payload),
           entityType,
           entityId,
@@ -497,7 +497,7 @@ async function upsertCommercialMcpResearchBundle(
     }
 
     for (const item of input.evidence) {
-      const entityKey = scopedMcpEntityKey(clientHash, item.idempotencyKey);
+      const entityKey = scopedResearchEntityKey(sourceHash, item.idempotencyKey);
       let record = await tx.commercialEvidence.findUnique({ where: { opportunityId_idempotencyKey: { opportunityId: opportunity.id, idempotencyKey: entityKey } } });
       const applied = !record;
       if (!record) {
@@ -533,7 +533,7 @@ async function upsertCommercialMcpResearchBundle(
     });
 
     for (const item of input.contacts) {
-      const entityKey = scopedMcpEntityKey(clientHash, item.idempotencyKey);
+      const entityKey = scopedResearchEntityKey(sourceHash, item.idempotencyKey);
       let record = await tx.commercialContact.findUnique({ where: { opportunityId_idempotencyKey: { opportunityId: opportunity.id, idempotencyKey: entityKey } } });
       const applied = !record;
       if (!record) {
@@ -551,7 +551,7 @@ async function upsertCommercialMcpResearchBundle(
     }
 
     for (const item of input.researchNotes) {
-      const entityKey = scopedMcpEntityKey(clientHash, item.idempotencyKey);
+      const entityKey = scopedResearchEntityKey(sourceHash, item.idempotencyKey);
       let record = await tx.commercialActivity.findUnique({ where: { opportunityId_idempotencyKey: { opportunityId: opportunity.id, idempotencyKey: entityKey } } });
       const applied = !record;
       if (!record) {
@@ -567,7 +567,7 @@ async function upsertCommercialMcpResearchBundle(
     }
 
     for (const item of input.tasks) {
-      const entityKey = scopedMcpEntityKey(clientHash, item.idempotencyKey);
+      const entityKey = scopedResearchEntityKey(sourceHash, item.idempotencyKey);
       let record = await tx.commercialTask.findUnique({ where: { opportunityId_idempotencyKey: { opportunityId: opportunity.id, idempotencyKey: entityKey } } });
       const applied = !record;
       if (!record) {
@@ -598,7 +598,7 @@ async function upsertCommercialMcpResearchBundle(
     }
 
     for (const item of input.drafts) {
-      const entityKey = scopedMcpEntityKey(clientHash, item.idempotencyKey);
+      const entityKey = scopedResearchEntityKey(sourceHash, item.idempotencyKey);
       let record = await tx.commercialApplication.findUnique({ where: { opportunityId_idempotencyKey: { opportunityId: opportunity.id, idempotencyKey: entityKey } } });
       const applied = !record;
       if (!record) {
@@ -614,7 +614,7 @@ async function upsertCommercialMcpResearchBundle(
           opportunityId: opportunity.id, agentRunId: run.id, actorId: context.actorId,
           actorKind: "PARTNER_OPERATIONS_AGENT",
           type: item.type === "OUTREACH" ? "OUTREACH_DRAFTED" : "APPLICATION_PREPARED",
-          summary: `${item.type === "OUTREACH" ? "Outreach" : "Application"} draft prepared by ChatGPT Work`,
+          summary: `${item.type === "OUTREACH" ? "Outreach" : "Application"} draft prepared by the bounded Commercial research workflow`,
           evidenceId: record.evidenceId,
           idempotencyKey: `${entityKey}:activity`,
         } });
@@ -624,7 +624,7 @@ async function upsertCommercialMcpResearchBundle(
     }
 
     for (const item of input.terms) {
-      const entityKey = scopedMcpEntityKey(clientHash, item.idempotencyKey);
+      const entityKey = scopedResearchEntityKey(sourceHash, item.idempotencyKey);
       let record = await tx.commercialTerm.findUnique({ where: { opportunityId_idempotencyKey: { opportunityId: opportunity.id, idempotencyKey: entityKey } } });
       const applied = !record;
       if (!record) {
@@ -649,7 +649,7 @@ async function upsertCommercialMcpResearchBundle(
 
     if (input.qualificationProposal) {
       const evidenceIds = evidenceIdsFor(input.qualificationProposal.evidenceIdempotencyKeys);
-      const entityKey = scopedMcpEntityKey(clientHash, input.qualificationProposal.idempotencyKey);
+      const entityKey = scopedResearchEntityKey(sourceHash, input.qualificationProposal.idempotencyKey);
       let activity = await tx.commercialActivity.findUnique({ where: { opportunityId_idempotencyKey: { opportunityId: opportunity.id, idempotencyKey: entityKey } } });
       const applied = !activity;
       if (!activity) {
@@ -657,7 +657,7 @@ async function upsertCommercialMcpResearchBundle(
         activity = await tx.commercialActivity.create({ data: {
           opportunityId: opportunity.id, agentRunId: run.id, actorId: context.actorId,
           actorKind: "PARTNER_OPERATIONS_AGENT", type: "STAGE_PROPOSED",
-          summary: "Qualification proposed by ChatGPT Work", details: input.qualificationProposal.rationale,
+          summary: "Qualification proposed by the bounded Commercial research workflow", details: input.qualificationProposal.rationale,
           reason: input.qualificationProposal.reason, newStage: "QUALIFIED", evidenceId: evidenceIds[0],
           idempotencyKey: entityKey,
         } });
@@ -668,7 +668,7 @@ async function upsertCommercialMcpResearchBundle(
 
     if (input.stageProposal) {
       const evidenceIds = evidenceIdsFor(input.stageProposal.evidenceIdempotencyKeys);
-      const entityKey = scopedMcpEntityKey(clientHash, input.stageProposal.idempotencyKey);
+      const entityKey = scopedResearchEntityKey(sourceHash, input.stageProposal.idempotencyKey);
       let activity = await tx.commercialActivity.findUnique({ where: { opportunityId_idempotencyKey: { opportunityId: opportunity.id, idempotencyKey: entityKey } } });
       const applied = !activity;
       if (!activity) {
@@ -686,7 +686,7 @@ async function upsertCommercialMcpResearchBundle(
 
     if (input.activationPacket) {
       const evidenceIds = evidenceIdsFor(input.activationPacket.evidenceIdempotencyKeys);
-      const entityKey = scopedMcpEntityKey(clientHash, input.activationPacket.idempotencyKey);
+      const entityKey = scopedResearchEntityKey(sourceHash, input.activationPacket.idempotencyKey);
       let record = await tx.commercialActivationPacket.findUnique({ where: { opportunityId_idempotencyKey: { opportunityId: opportunity.id, idempotencyKey: entityKey } } });
       const applied = !record;
       if (!record) {
@@ -719,13 +719,12 @@ async function upsertCommercialMcpResearchBundle(
     await audit(
       tx,
       context.actorId,
-      "commercial_mcp_research_bundle_upserted",
+      "commercial_research_bundle_upserted",
       opportunity.id,
-      `${disposition === "CREATED" ? "Created" : "Updated"} delegated ChatGPT Work research bundle`,
+      `${disposition === "CREATED" ? "Created" : "Updated"} bounded Commercial research bundle`,
       {
-        channel: "MCP_WORK",
-        integration: "CHATGPT_WORK",
-        oauthClientId: context.clientId,
+        channel: "COMMERCIAL_RESEARCH",
+        sourceReferenceHash: sourceHash,
         runId: run.id,
         idempotencyKey: input.idempotencyKey,
         evidenceIds: entityIds.evidenceIds,

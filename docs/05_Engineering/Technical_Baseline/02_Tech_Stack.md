@@ -11,7 +11,7 @@
 | TypeScript | Detected `tsconfig.json`, `.ts/.tsx` source, `tsc --noEmit`. | Application, services and tests. |
 | CSS | Detected `app/globals.css` and component class names. | Global/class-based styling and responsive rules where authored. |
 | Prisma 6 + PostgreSQL | Detected package imports, `prisma/schema.prisma`, migrations and `lib/db/prisma.ts`. | ORM/client and persistence. |
-| Better Auth 1.7.1 + OAuth Provider 1.7.1 | Detected exact dependencies, imports/configuration, `/api/auth/[...all]` and the feature-gated Commercial MCP OAuth wrappers. | Email/password session authentication, admin staff resolution, and provider-owned OAuth code/opaque-token/refresh/revocation lifecycle for the bounded Commercial MCP resource. |
+| Better Auth 1.7.1 | Detected exact root dependency, configuration and `/api/auth/[...all]`. The operational OAuth Provider dependency/plugin and custom connector routes are absent in PR5. | Email/password sessions, Admin staff resolution, Programme continuation and optional Google identity-only authentication. |
 | Zod 4.4.3 | Detected exact dependency and strict RFC-046 event/template/campaign input schemas. | Closed, bounded request and domain validation. |
 | sanitize-html 2.17.5 | Detected exact dependency in versioned RFC-046 template administration. | Allowlist sanitization before template persistence/rendering. |
 | Svix 1.99.1 | Detected exact dependency in the RFC-046 Resend webhook receiver. | Exact raw-body signature verification before event normalization. |
@@ -22,10 +22,16 @@
 
 ## Tooling and configuration
 
-**Detected:** `next build`, `next dev -p 4173`, `next start -p 4173`, Prisma generation via `postinstall`, TypeScript strict/no-emit checking, ESLint, explicit deterministic Node-test manifests, isolated browser CI, build-secret scanning, guarded fresh-PostgreSQL migration verification, fixed first-party analytics dashboards, aggregate-only RFC-046 sanity, and bounded cron/readiness CLIs.
+**Detected:** `next build`, `next dev -p 4173`, `next start -p 4173`, Prisma generation via `postinstall`, TypeScript strict/no-emit checking, ESLint, explicit deterministic Node-test manifests, isolated browser CI, build-secret scanning, guarded fresh-PostgreSQL migration verification, fixed first-party analytics dashboards, aggregate-only RFC-046 sanity, bounded cron/readiness CLIs, and the read-only PR5 Commercial projection.
 
 **Not detected:** Vercel Analytics runtime/package, Tailwind, a separate UI-component library, Yup, a test-coverage threshold, repository Docker image or infrastructure-as-code. The repository defines PostgreSQL as a disposable GitHub Actions service for CI; hosted Prisma Postgres authority is documented separately. Neither is an application-container architecture.
 
 ## Dependency caution
 
-All runtime dependencies in `package.json` have corresponding source imports except Prisma, which is used by generation/migrations and imports through `@prisma/client`. No unused-dependency assertion is made beyond that evidence.
+All root runtime dependencies in `package.json` have corresponding source
+imports except Prisma, which is used by generation/migrations and imports
+through `@prisma/client`. The root manifest and lockfile contain no MCP SDK or
+operational OAuth Provider. The isolated `agents/` package retains the official
+`@openai/agents` SDK; its lockfile contains a transitive MCP client, but Agent
+source has no MCP imports/tools and the package is excluded from Next.js. No
+unused-dependency assertion is made beyond that evidence.

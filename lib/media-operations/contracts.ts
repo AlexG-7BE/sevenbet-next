@@ -367,7 +367,7 @@ const planOperationSchema = z.object({
   previous: z.record(z.string(), z.unknown()).nullable(),
   result: z.record(z.string(), z.unknown()),
   actorId: z.string().uuid(),
-  source: z.enum(["ADMIN", "CHATGPT_WORK", "SYSTEM"]),
+  source: z.enum(["ADMIN", "AUTOMATION", "SYSTEM"]),
   timestamp: z.string().datetime(),
 }).strict();
 
@@ -378,7 +378,7 @@ export const mediaIngestionPlanSchema = z.object({
   state: z.enum(["INGESTING", "INGESTED", "PLANNED", "PARTIALLY_APPLIED", "APPLIED", "ROLLED_BACK", "FAILED", "REVIEW_REQUIRED"]),
   dryRun: z.boolean(),
   actorId: z.string().uuid(),
-  source: z.enum(["ADMIN", "CHATGPT_WORK", "SYSTEM"]),
+  source: z.enum(["ADMIN", "AUTOMATION", "SYSTEM"]),
   providerReference: z.string().max(200).nullable(),
   batchId: z.string().uuid().optional(),
   batchItemIndexes: z.array(z.number().int().min(0).max(99)).max(100).optional(),
@@ -413,7 +413,7 @@ export const mediaIngestionBatchSchema = z.object({
   state: z.enum(["INGESTED", "REVIEW_REQUIRED", "ANALYZED", "PARTIALLY_APPLIED", "APPLIED", "ROLLED_BACK", "FAILED"]),
   dryRun: z.boolean(),
   actorId: z.string().uuid(),
-  source: z.enum(["ADMIN", "CHATGPT_WORK", "SYSTEM"]),
+  source: z.enum(["ADMIN", "AUTOMATION", "SYSTEM"]),
   planIds: z.array(z.string().uuid()).max(100),
   items: z.array(mediaBatchItemOutcomeSchema).max(100),
   counts: z.object({
