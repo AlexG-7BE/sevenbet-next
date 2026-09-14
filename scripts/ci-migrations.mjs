@@ -5,6 +5,20 @@ import path from "node:path";
 
 const allowedHosts = new Set(["127.0.0.1", "localhost"]);
 const allowedPorts = new Set(["5432", "54329"]);
+const expectedPr6ForeignKeyGraph = [
+  "oauthAccessToken_clientId_fkey|oauthAccessToken|oauthClient|CASCADE|CASCADE",
+  "oauthAccessToken_refreshId_fkey|oauthAccessToken|oauthRefreshToken|CASCADE|CASCADE",
+  "oauthAccessToken_sessionId_fkey|oauthAccessToken|Session|SET NULL|CASCADE",
+  "oauthAccessToken_userId_fkey|oauthAccessToken|User|CASCADE|CASCADE",
+  "oauthClientResource_clientId_fkey|oauthClientResource|oauthClient|CASCADE|CASCADE",
+  "oauthClientResource_resourceId_fkey|oauthClientResource|oauthResource|CASCADE|CASCADE",
+  "oauthClient_userId_fkey|oauthClient|User|CASCADE|CASCADE",
+  "oauthConsent_clientId_fkey|oauthConsent|oauthClient|CASCADE|CASCADE",
+  "oauthConsent_userId_fkey|oauthConsent|User|CASCADE|CASCADE",
+  "oauthRefreshToken_clientId_fkey|oauthRefreshToken|oauthClient|CASCADE|CASCADE",
+  "oauthRefreshToken_sessionId_fkey|oauthRefreshToken|Session|SET NULL|CASCADE",
+  "oauthRefreshToken_userId_fkey|oauthRefreshToken|User|CASCADE|CASCADE",
+];
 
 function assertDisposableDatabase(variableName) {
   const value = process.env[variableName];
@@ -91,12 +105,16 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
   const migration0020Index = migrationEntries.indexOf("0020_commercial_ops_01");
   const migration0021Index = migrationEntries.indexOf("0021_partner_ops_work_bridge_01");
   const migration0022Index = migrationEntries.indexOf("0022_better_auth_17_schema_upgrade");
+  const migration0040Index = migrationEntries.indexOf("0040_commercial_core_exact_routes_geo_simplification");
+  const migration0041Index = migrationEntries.indexOf("0041_commercial_core_legacy_connector_cleanup");
   if (
     migration0020Index < programmeMigrationIndex
     || migration0021Index !== migration0020Index + 1
     || migration0022Index !== migration0021Index + 1
+    || migration0041Index !== migration0040Index + 1
+    || migration0041Index !== migrationEntries.length - 1
   ) {
-    throw new Error("Expected sequential migrations 0020, 0021 and 0022");
+    throw new Error("Expected sequential migrations 0020-0022 and exact latest cleanup migration 0041");
   }
 
   const schema = "better_auth_17_upgrade_ci";
@@ -176,7 +194,7 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
     await rm(through0021, { recursive: true, force: true });
   }
 
-  run("npx", ["prisma", "migrate", "deploy"], environment);
+  await deployMigrationPrefix(migrationEntries, migration0040Index, environment);
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
@@ -194,7 +212,17 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
       throw new Error("Better Auth 1.7 account issuer backfill verification failed");
     }
 
-    const [users, adminUser, commercialOpportunity, client, resource, clientResource, refreshToken, accessToken, consent] = await Promise.all([
+    const [
+      users,
+      adminUser,
+      commercialOpportunity,
+      clientRows,
+      resourceRows,
+      clientResourceRows,
+      refreshTokenRows,
+      accessTokenRows,
+      consentRows,
+    ] = await Promise.all([
       prisma.user.findMany({
         where: { id: { in: ["ba17-credential-user", "ba17-google-user"] } },
         orderBy: { id: "asc" },
@@ -208,22 +236,44 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
         where: { id: "00000000-0000-4000-8000-000000000223" },
         include: { evidence: true },
       }),
-      prisma.oauthClient.findUniqueOrThrow({ where: { clientId: "ba17-chatgpt-client" } }),
-      prisma.oauthResource.findUniqueOrThrow({
-        where: { identifier: "http://localhost:4173/api/mcp/commercial" },
-      }),
-      prisma.oauthClientResource.findUniqueOrThrow({
-        where: {
-          clientId_resourceId: {
-            clientId: "ba17-chatgpt-client",
-            resourceId: "http://localhost:4173/api/mcp/commercial",
-          },
-        },
-      }),
-      prisma.oauthRefreshToken.findUniqueOrThrow({ where: { id: "ba17-refresh-row" } }),
-      prisma.oauthAccessToken.findUniqueOrThrow({ where: { id: "ba17-access-row" } }),
-      prisma.oauthConsent.findUniqueOrThrow({ where: { id: "ba17-consent-row" } }),
+      prisma.$queryRawUnsafe(`
+        SELECT "applicationType", cardinality("clientCredentialsScopes")::int AS "scopeCount"
+        FROM "${schema}"."oauthClient"
+        WHERE "clientId" = 'ba17-chatgpt-client'
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT "disabled"
+        FROM "${schema}"."oauthResource"
+        WHERE "identifier" = 'http://localhost:4173/api/mcp/commercial'
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT 1 AS "present"
+        FROM "${schema}"."oauthClientResource"
+        WHERE "clientId" = 'ba17-chatgpt-client'
+          AND "resourceId" = 'http://localhost:4173/api/mcp/commercial'
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT "resources"
+        FROM "${schema}"."oauthRefreshToken"
+        WHERE "id" = 'ba17-refresh-row'
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT "resources"
+        FROM "${schema}"."oauthAccessToken"
+        WHERE "id" = 'ba17-access-row'
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT "resources"
+        FROM "${schema}"."oauthConsent"
+        WHERE "id" = 'ba17-consent-row'
+      `),
     ]);
+    const client = clientRows[0];
+    const resource = resourceRows[0];
+    const clientResource = clientResourceRows[0];
+    const refreshToken = refreshTokenRows[0];
+    const accessToken = accessTokenRows[0];
+    const consent = consentRows[0];
     const expectedResources = ["http://localhost:4173/api/mcp/commercial"];
     if (
       users.length !== 2
@@ -232,10 +282,10 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
       || commercialOpportunity.stage !== "PROSPECT"
       || commercialOpportunity.evidence.length !== 1
       || commercialOpportunity.evidence[0].claim !== "This isolated fixture verifies Commercial data preservation only."
-      || client.applicationType !== "web"
-      || client.clientCredentialsScopes.length !== 0
-      || resource.disabled
-      || clientResource.clientId !== client.clientId
+      || client?.applicationType !== "web"
+      || client.scopeCount !== 0
+      || resource?.disabled
+      || clientResource?.present !== 1
       || JSON.stringify(refreshToken.resources) !== JSON.stringify(expectedResources)
       || JSON.stringify(accessToken.resources) !== JSON.stringify(expectedResources)
       || JSON.stringify(consent.resources) !== JSON.stringify(expectedResources)
@@ -340,9 +390,246 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
       commercialOpportunitiesPreserved: 1,
       commercialEvidenceRowsPreserved: commercialOpportunity.evidence.length,
       protectedResources: 1,
-      clientCredentialsScopes: client.clientCredentialsScopes.length,
+      clientCredentialsScopes: client.scopeCount,
       legacyOverlapIssuers: [overlap.issuer, googleOverlap.issuer],
       duplicateIdentityRejected: duplicateRejected,
+    });
+
+    const [preCleanupEvidence] = await prisma.$queryRawUnsafe(`
+      SELECT
+        (SELECT count(*) FROM "${schema}"."oauthClient")
+        + (SELECT count(*) FROM "${schema}"."oauthResource")
+        + (SELECT count(*) FROM "${schema}"."oauthClientResource")
+        + (SELECT count(*) FROM "${schema}"."oauthRefreshToken")
+        + (SELECT count(*) FROM "${schema}"."oauthAccessToken")
+        + (SELECT count(*) FROM "${schema}"."oauthConsent")
+        + (SELECT count(*) FROM "${schema}"."oauthClientAssertion")
+        + (SELECT count(*) FROM "${schema}"."CommercialMcpRateLimitBucket") AS "rowCount",
+        (
+          SELECT count(*)::int
+          FROM pg_class AS relation
+          INNER JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+          WHERE namespace.nspname = '${schema}'
+            AND relation.relkind IN ('r', 'p')
+            AND relation.relname IN (
+              'oauthClient', 'oauthResource', 'oauthClientResource', 'oauthRefreshToken',
+              'oauthAccessToken', 'oauthConsent', 'oauthClientAssertion',
+              'CommercialMcpRateLimitBucket'
+            )
+        ) AS "targetTables",
+        (
+          SELECT count(*)::int
+          FROM pg_trigger AS trigger
+          INNER JOIN pg_class AS relation ON relation.oid = trigger.tgrelid
+          INNER JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+          WHERE namespace.nspname = '${schema}'
+            AND NOT trigger.tgisinternal
+            AND trigger.tgname IN (
+              'oauthClient_prepare_compat', 'oauthClient_resource_compat',
+              'oauthRefreshToken_resource_compat', 'oauthAccessToken_resource_compat',
+              'oauthConsent_resource_compat'
+            )
+        ) AS "targetTriggers",
+        (
+          SELECT count(*)::int
+          FROM pg_proc AS procedure
+          INNER JOIN pg_namespace AS namespace ON namespace.oid = procedure.pronamespace
+          WHERE namespace.nspname = '${schema}'
+            AND procedure.proname IN (
+              'prepare_better_auth_oauth_client_compat',
+              'sync_better_auth_oauth_client_resource_compat',
+              'set_better_auth_oauth_resource_compat'
+            )
+        ) AS "targetFunctions",
+        (
+          SELECT count(*)::int
+          FROM pg_constraint AS fk_constraint
+          INNER JOIN pg_class AS source ON source.oid = fk_constraint.conrelid
+          INNER JOIN pg_namespace AS source_namespace ON source_namespace.oid = source.relnamespace
+          INNER JOIN pg_class AS target ON target.oid = fk_constraint.confrelid
+          INNER JOIN pg_namespace AS target_namespace ON target_namespace.oid = target.relnamespace
+          WHERE fk_constraint.contype = 'f'
+            AND source_namespace.nspname = '${schema}'
+            AND target_namespace.nspname = '${schema}'
+            AND (
+              source.relname IN (
+                'oauthClient', 'oauthResource', 'oauthClientResource', 'oauthRefreshToken',
+                'oauthAccessToken', 'oauthConsent', 'oauthClientAssertion',
+                'CommercialMcpRateLimitBucket'
+              )
+              OR target.relname IN (
+                'oauthClient', 'oauthResource', 'oauthClientResource', 'oauthRefreshToken',
+                'oauthAccessToken', 'oauthConsent', 'oauthClientAssertion',
+                'CommercialMcpRateLimitBucket'
+              )
+            )
+        ) AS "targetForeignKeys"
+    `);
+    const preCleanupForeignKeys = await prisma.$queryRawUnsafe(`
+      SELECT concat_ws(
+        '|',
+        fk_constraint.conname,
+        source.relname,
+        target.relname,
+        CASE fk_constraint.confdeltype
+          WHEN 'a' THEN 'NO ACTION' WHEN 'r' THEN 'RESTRICT' WHEN 'c' THEN 'CASCADE'
+          WHEN 'n' THEN 'SET NULL' WHEN 'd' THEN 'SET DEFAULT'
+        END,
+        CASE fk_constraint.confupdtype
+          WHEN 'a' THEN 'NO ACTION' WHEN 'r' THEN 'RESTRICT' WHEN 'c' THEN 'CASCADE'
+          WHEN 'n' THEN 'SET NULL' WHEN 'd' THEN 'SET DEFAULT'
+        END
+      ) AS "key"
+      FROM pg_constraint AS fk_constraint
+      INNER JOIN pg_class AS source ON source.oid = fk_constraint.conrelid
+      INNER JOIN pg_namespace AS source_namespace ON source_namespace.oid = source.relnamespace
+      INNER JOIN pg_class AS target ON target.oid = fk_constraint.confrelid
+      INNER JOIN pg_namespace AS target_namespace ON target_namespace.oid = target.relnamespace
+      WHERE fk_constraint.contype = 'f'
+        AND source_namespace.nspname = '${schema}'
+        AND target_namespace.nspname = '${schema}'
+        AND (
+          source.relname IN (
+            'oauthClient', 'oauthResource', 'oauthClientResource', 'oauthRefreshToken',
+            'oauthAccessToken', 'oauthConsent', 'oauthClientAssertion',
+            'CommercialMcpRateLimitBucket'
+          )
+          OR target.relname IN (
+            'oauthClient', 'oauthResource', 'oauthClientResource', 'oauthRefreshToken',
+            'oauthAccessToken', 'oauthConsent', 'oauthClientAssertion',
+            'CommercialMcpRateLimitBucket'
+          )
+        )
+      ORDER BY fk_constraint.conname
+    `);
+    if (
+      Number(preCleanupEvidence?.rowCount ?? 0) < 6
+      || preCleanupEvidence.targetTables !== 8
+      || preCleanupEvidence.targetTriggers !== 5
+      || preCleanupEvidence.targetFunctions !== 3
+      || preCleanupEvidence.targetForeignKeys !== 12
+      || JSON.stringify(preCleanupForeignKeys.map((foreignKey) => foreignKey.key))
+        !== JSON.stringify(expectedPr6ForeignKeyGraph)
+    ) {
+      throw new Error("PR6 staged migration fixture did not preserve the reviewed connector graph through 0040");
+    }
+
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+
+    const [cleanupEvidence] = await prisma.$queryRawUnsafe(`
+      SELECT
+        (
+          SELECT count(*)::int
+          FROM pg_class AS relation
+          INNER JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+          WHERE namespace.nspname = '${schema}'
+            AND relation.relkind IN ('r', 'p')
+            AND relation.relname IN (
+              'oauthClient', 'oauthResource', 'oauthClientResource', 'oauthRefreshToken',
+              'oauthAccessToken', 'oauthConsent', 'oauthClientAssertion',
+              'CommercialMcpRateLimitBucket'
+            )
+        ) AS "retiredTables",
+        (
+          SELECT count(*)::int
+          FROM pg_trigger AS trigger
+          INNER JOIN pg_class AS relation ON relation.oid = trigger.tgrelid
+          INNER JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+          WHERE namespace.nspname = '${schema}'
+            AND trigger.tgname IN (
+              'oauthClient_prepare_compat', 'oauthClient_resource_compat',
+              'oauthRefreshToken_resource_compat', 'oauthAccessToken_resource_compat',
+              'oauthConsent_resource_compat'
+            )
+        ) AS "retiredTriggers",
+        (
+          SELECT count(*)::int
+          FROM pg_proc AS procedure
+          INNER JOIN pg_namespace AS namespace ON namespace.oid = procedure.pronamespace
+          WHERE namespace.nspname = '${schema}'
+            AND procedure.proname IN (
+              'prepare_better_auth_oauth_client_compat',
+              'sync_better_auth_oauth_client_resource_compat',
+              'set_better_auth_oauth_resource_compat'
+            )
+        ) AS "retiredFunctions",
+        (
+          SELECT count(*)::int
+          FROM pg_class AS relation
+          INNER JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+          WHERE namespace.nspname = '${schema}'
+            AND relation.relkind IN ('r', 'p')
+            AND relation.relname IN ('User', 'Session', 'Account', 'Verification', 'AuditLog')
+        ) AS "keepTables",
+        (
+          SELECT count(*)::int
+          FROM information_schema.columns
+          WHERE table_schema = '${schema}'
+            AND table_name = 'Account'
+            AND column_name = 'issuer'
+            AND is_nullable = 'NO'
+        ) AS "issuerColumns",
+        (
+          SELECT count(*)::int
+          FROM pg_class AS index_relation
+          INNER JOIN pg_namespace AS namespace ON namespace.oid = index_relation.relnamespace
+          INNER JOIN pg_index AS index ON index.indexrelid = index_relation.oid
+          WHERE namespace.nspname = '${schema}'
+            AND index_relation.relname = 'account_issuer_accountId_uidx'
+            AND index.indisunique
+        ) AS "issuerIndexes",
+        (
+          SELECT count(*)::int
+          FROM pg_trigger AS trigger
+          INNER JOIN pg_class AS relation ON relation.oid = trigger.tgrelid
+          INNER JOIN pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+          INNER JOIN pg_proc AS procedure ON procedure.oid = trigger.tgfoid
+          WHERE namespace.nspname = '${schema}'
+            AND relation.relname = 'Account'
+            AND trigger.tgname = 'Account_better_auth_issuer_compat'
+            AND procedure.proname = 'set_better_auth_account_issuer'
+            AND trigger.tgenabled <> 'D'
+            AND NOT trigger.tgisinternal
+        ) AS "accountCompatibilityTriggers",
+        (
+          SELECT count(*)::int
+          FROM pg_proc AS procedure
+          INNER JOIN pg_namespace AS namespace ON namespace.oid = procedure.pronamespace
+          WHERE namespace.nspname = '${schema}'
+            AND procedure.proname = 'set_better_auth_account_issuer'
+            AND pg_get_function_result(procedure.oid) = 'trigger'
+        ) AS "accountCompatibilityFunctions"
+    `);
+    if (
+      cleanupEvidence?.retiredTables !== 0
+      || cleanupEvidence.retiredTriggers !== 0
+      || cleanupEvidence.retiredFunctions !== 0
+      || cleanupEvidence.keepTables !== 5
+      || cleanupEvidence.issuerColumns !== 1
+      || cleanupEvidence.issuerIndexes !== 1
+      || cleanupEvidence.accountCompatibilityTriggers !== 1
+      || cleanupEvidence.accountCompatibilityFunctions !== 1
+      || await prisma.account.count({
+        where: { id: { in: [
+          "ba17-credential-account",
+          "ba17-google-account",
+          "ba17-legacy-overlap-account",
+          "ba17-legacy-google-overlap-account",
+        ] } },
+      }) !== 4
+    ) {
+      throw new Error("PR6 cleanup did not retire the exact connector objects while preserving auth identity");
+    }
+    console.info("PR6 legacy connector cleanup staged migration passed", {
+      from: "0040_commercial_core_exact_routes_geo_simplification",
+      to: "0041_commercial_core_legacy_connector_cleanup",
+      representativeConnectorRowsDeleted: Number(preCleanupEvidence.rowCount),
+      reviewedForeignKeys: preCleanupEvidence.targetForeignKeys,
+      retiredTables: 8,
+      retiredTriggers: 5,
+      retiredFunctions: 3,
+      keepTables: 5,
+      accountIdentityPreserved: true,
     });
   } finally {
     await prisma.$disconnect();
