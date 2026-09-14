@@ -165,6 +165,38 @@ test("authorized Customer, Analytics, Email, and Templates surfaces render respo
   await expect(page.getByRole("button", { name: /Save as new version/i })).toBeVisible();
 });
 
+test("Commercial dashboard and reporting directory expose distinct truthful contracts", async ({ page }) => {
+  await page.setExtraHTTPHeaders({ "x-sevenbet-admin-token": adminPreviewToken });
+
+  await page.goto(`${baseUrl}/admin/analytics?view=commercial&range=30`, { waitUntil: "domcontentloaded" });
+  for (const label of [
+    "Casino views",
+    "Offer views",
+    "Commercial card views",
+    "View selections",
+    "Casino review clicks",
+    "CTA clicks",
+    "Successful outbound",
+    "CTR",
+  ]) {
+    await expect(page.getByText(label, { exact: true })).toBeVisible();
+  }
+  await expect(page.getByRole("heading", { name: "Detailed runtime attribution" })).toBeVisible();
+  await expect(page.getByText(/must not be added to these figures/)).toBeVisible();
+
+  await page.goto(`${baseUrl}/admin/commercial/analytics`, { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { level: 1, name: "Commercial reporting" })).toBeVisible();
+  await expect(page.getByText("Detailed runtime attribution", { exact: true })).toBeVisible();
+  await expect(page.getByText("Aggregate-only accounting", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No verified registrations, FTDs, revenue or commission source" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open fixed dashboard" })).toHaveAttribute("href", /\/admin\/analytics\?view=commercial/);
+  await expect(page.getByRole("link", { name: "Open 30-day aggregate report" })).toHaveAttribute("href", "/api/admin/affiliate/outbound-clicks");
+  await expect(page.locator("body")).not.toContainText(/no verified clicks/i);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+});
+
 test("unsubscribe confirmation remains clear and mobile-safe without disclosing identity", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const response = await page.goto(`${baseUrl}/unsubscribe?status=invalid`, { waitUntil: "domcontentloaded" });

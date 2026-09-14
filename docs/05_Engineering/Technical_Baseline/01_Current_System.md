@@ -1,24 +1,28 @@
 # Current System
 
-## 12 September RFC-046 Production reconciliation
+## 14 September current reconciliation
 
-**DETECTED in Production:** the
-application adds registered-customer operations, consented first-party
-analytics, server-observed outbound attribution, fixed dashboards, an email
-template/campaign/message ledger, verified Resend webhook ingestion,
-unsubscribe handling and bounded retention. The additive schema change is
-migration `0037_customer_data_analytics_lifecycle_core`. PR #271 deploys the
-bounded lifecycle provider worker only from the protected cron; the exact
-delivery gate is `false`. See
+**DETECTED in current canonical main and Production:** the application provides
+registered-customer operations, consented first-party analytics with a closed
+22-event dictionary, server-observed outbound attribution, fixed dashboards,
+an email template/campaign/message ledger, verified Resend webhook ingestion,
+unsubscribe handling and bounded retention. Migrations
+`0037_customer_data_analytics_lifecycle_core` and
+`0038_commercial_ux_analytics_events` are applied. The bounded lifecycle
+provider worker runs only from the protected cron and the exact Production
+delivery gate is enabled after the accepted six-case verification. See
 [16_Customer_Data_Analytics_Lifecycle_Core.md](16_Customer_Data_Analytics_Lifecycle_Core.md).
 
-**DETECTED:** Production migration/runtime analytics, webhook registration and
-worker deployment are verified. **UNKNOWN / HOLD:** provider delivery and the
-six controlled acceptance cases remain unproved pending a safe fixture plus
-authorised Production database and staff access. The older snapshot below
-remains historical context where it conflicts with this current delta.
+**DETECTED:** Customer / Analytics / Lifecycle acceptance is `6/6 PASS`.
+Mission 10 and enrollment completion timestamps are canonical and equal;
+Programme reporting reads persisted state. The old Vercel Programme taxonomy,
+compatibility module and aggregate report are retired. One runtime outbound
+writer atomically stores detailed attribution, AnalyticsEvent projections and
+the success-only daily aggregate. Historical aggregate and overlapping
+detailed totals are never added. The older snapshot below remains historical
+context where it conflicts with this current delta.
 
-## Snapshot
+## Reconciled implementation snapshot
 
 **Detected, reconciled 2026-08-13 at main `c525954`:** B4GAMBLE (the consumer brand previously named SevenBet) is a Next.js App Router application with a PostgreSQL/Prisma persistence layer, Better Auth integration, public decision-support pages, a protected admin area, CMS-oriented builders, affiliate operations, media management, a legacy Programme through Mission 04 and a separately feature-gated PROGRAM-AI path through Mission 10. The repository, Vercel project and compatibility identifiers remain `sevenbet-next`/`SevenBet` where RFC-019 explicitly preserves them.
 
@@ -36,15 +40,15 @@ remains historical context where it conflicts with this current delta.
 
 | Mechanism | Status | Evidence |
 | --- | --- | --- |
-| Route handlers | Implemented | 90 `route.ts` files under `app/api/`, plus three non-API route handlers (`/go`, `/r` and `/llms.txt`). |
+| Route handlers | Implemented | 116 `route.ts` files under `app/api/`, plus four non-API route handlers (`/go`, `/r`, `/partner-creatives/[creativeId]/frame` and `/llms.txt`). |
 | Service layer | Implemented | `lib/services/` contains program, casino, media, progress, XP, affiliate, and public discovery services. |
 | Repository layer | Implemented | `lib/repositories/` contains Prisma-backed repositories for the same principal domains. |
 | Input validation | Implemented | Domain validation modules in `lib/cms/`, `lib/casino-builder/`, `lib/affiliate/`, `lib/media/`, and `lib/progress/`. No external validation package is detected. |
 | Authorization policies | Implemented | `lib/auth/`, `lib/cms/permissions.ts`, protected layout, and admin handlers. |
 | Server actions | Not detected | No `"use server"` directive was found. |
 | Middleware | Implemented | `middleware.ts` enforces the exact Preview canonical-host contract, rejects non-GET Programme mutations without the bounded age-attestation header, and scopes admin UX routing; route/layout authorization remains server-owned. |
-| Scheduled/background jobs | Partial | No general queue worker is detected. Repository-owned Production smoke and authenticated Vercel Cron routes exist. PR #271 adds a bounded daily lifecycle-queue/retention worker behind the exact disabled delivery gate. |
-| Webhooks | Deployed and registered | RFC-046 provides one raw-body, Svix-verified Resend webhook receiver. The exact five-event provider registration and unsigned-event rejection are verified; valid/replay Production evidence is pending. |
+| Scheduled/background jobs | Bounded | No general queue worker is detected. Repository-owned Production smoke and authenticated Vercel Cron routes exist; the bounded daily lifecycle-queue/retention worker is active behind exact Production configuration. |
+| Webhooks | Deployed and registered | RFC-046 provides one raw-body, Svix-verified Resend webhook receiver. The exact five-event provider registration plus valid, invalid and replay outcomes are verified. |
 | Caching | Partial | `lib/public-casino/cache.ts` exists; no external cache service was detected. |
 
 ## Detected product modules
@@ -57,14 +61,14 @@ remains historical context where it conflicts with this current delta.
 | PROGRAM-AI and voice | Implemented in source, exact gates required | `ProgramAiExperience`, `/api/program/program-ai/**`, Mission 02–10 registry/coordinator, OpenAI transcription and guidance adapters | Additive migration 0018; narrow authority + confirmed Starting Point; closed structural M2–M10 persistence; three Reviews | Current 8 MiB audio contract conflicts with Vercel's complete request ceiling; proposed RFC-031 is not implementation authority. |
 | Program Builder | Implemented | Admin program routes, `ProgramBuilder.tsx`, `program-builder.service.ts` | Version/snapshot/revision persistence and preview routes | Scope is program content, not a general CMS conclusion. |
 | Casino CMS and public casino rendering/discovery | Implemented | Casino admin routes, `CasinoBuilder.tsx`, public routes/services | Prisma-backed casinos, versions, revisions, SEO and related records | Public CMS path is environment-gated by `PUBLIC_CASINO_CMS_ENABLED`. |
-| Affiliate platform, routing and integrations | Implemented | Affiliate admin/API routes, `/r/[slug]`, `lib/affiliate*` | Prisma-backed networks, programs, offers, links, mapping/import records; typed GB agreement metadata | Actual external provider connection and real partner agreement are not detected. |
-| GB jurisdiction, operator and commercial evidence authority | Implemented, non-commercial policy | `lib/jurisdiction/`, `lib/affiliate-commercial/`, public services, `/r/[slug]`, `/go/[slug]` | Repository-controlled GB policy and exact-domain evidence store plus existing Casino/Affiliate records | Current policy denies commercial/referral; real partner/domain evidence and external legal/regulatory/partner release gates are not complete. |
+| Affiliate platform, routing and integrations | Implemented | Affiliate admin/API routes, `/r/[slug]`, canonical tracking registration and `lib/affiliate*` | Prisma-backed networks, programs, offers, links, relationships, exact-market activations and revisions/import records | Affiliate lifecycle state is compatibility/workflow data, not public Commercial authority. |
+| Exact-market commercial authority | Implemented and active | trusted-GEO normalization, exact `MarketActivation`, public services, `/r/[slug]`, `/go/[slug]` | One exact activation binds factual Casino, Partner, route, offer and tracking evidence | Missing, ambiguous, unhealthy, unsafe or legally blocked state fails closed; CRM, media, ranking and analytics are non-authoritative. |
 | Media manager | Implemented | Admin media routes/components and `lib/media/` | Prisma media assets; LOCAL and S3 provider implementations | S3 activation depends on environment configuration. |
 | Authentication and staff administration | Implemented; Google activation is configuration-dependent | Better Auth handler, identity-only Google account hooks, restricted auth paths, consolidated Programme access authority, explicit same-email link recovery, standalone login, session-derived Programme home/header, staff/profile checks and bootstrap scripts | Prisma User/Session/Account/AdminUser; Google rows retain identity association without durable OAuth token/scope material; access/claim continuation is tab-only | Legacy preview-token fallback remains explicitly gated. Project State records live Production Google availability as a contradiction because repository approval does not establish Production authority. |
-| Customer data, first-party analytics and fixed reporting | Implemented and verified in Production | Better Auth customer observer, closed 19-event relational contract, consent/session service, Programme observers, outbound observation and fixed admin dashboards | Migration 0037 adds session/event/click/consent/email state and customer metadata; no arbitrary analytics JSON | Analytics is observational and cannot change identity, Programme, XP, GEO or commercial authority. |
+| Customer data, first-party analytics and fixed reporting | Implemented and verified in Production | Better Auth customer observer, closed 22-event relational contract, consent/session service, persisted-state Programme observers, transactional outbound observation and fixed admin dashboards | Migrations 0037 and 0038 add session/event/click/consent/email state, customer metadata and bounded Commercial UX events; no arbitrary analytics JSON | Analytics is observational and cannot change identity, Programme, XP, GEO or commercial authority. |
 | Public Contact email | Implemented in source | `/contact`, `POST /api/contact`, `lib/contact/*` direct-HTTPS Resend adapter | No application-database message persistence | Runtime delivery is fail-closed and configuration-dependent; account/Programme mail remains separate. |
-| Lifecycle and campaign email | Provider/code ready; delivery disabled | Versioned templates, eligibility, idempotent queue, protected-cron worker, messages, campaign review, unsubscribe and signed webhook | Migration 0037 relational stores and protected Admin surfaces | Provider delivery and six-case acceptance are on HOLD; queued intent is not delivery evidence. |
-| Payments and general notifications | Not detected | No payment processor or active general notification transport found | — | Contact and an unwired lifecycle adapter are not evidence of operational account, reminder or marketing email. |
+| Lifecycle and campaign email | Active under bounded Production controls | Versioned templates, eligibility, idempotent queue, protected-cron worker, messages, campaign review, unsubscribe and signed webhook | Migration 0037 relational stores and protected Admin surfaces | Six-case acceptance passed; queued intent still is not delivery evidence. |
+| Payments and general notifications | No payment or generic notification platform detected | No payment processor or general queue/notification transport found | — | Bounded Contact and active lifecycle email are purpose-specific and are not evidence of a payment or generic notification platform. |
 
 ## Admin and CMS
 

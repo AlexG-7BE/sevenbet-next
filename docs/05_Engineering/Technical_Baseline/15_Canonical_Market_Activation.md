@@ -1,5 +1,27 @@
 # Canonical Market Activation Technical Baseline
 
+## 14 September current reconciliation
+
+**DETECTED in current canonical main:** exact trusted GEO normalizes once to an
+exact commercial market and resolves one exact `MarketActivation`. The public
+action exists only when that row and its factual Casino/route/offer/tracking,
+safe destination, legal and health conditions pass; otherwise the result is
+null. Runtime parent-country fallback, active `ZZ` fallback and post-resolution
+Affiliate lifecycle permission checks are removed by migrations 0040 and the
+current application.
+
+`Casino` remains editorial/product identity. Partner relationships are factual;
+CRM remains research, contact, terms, history and workflow only. CRM stage,
+Affiliate lifecycle status, media, ranking and analytics cannot grant or veto
+a public commercial action. Legal/jurisdiction policy can still block for an
+actual legal reason. The MCP/operational-OAuth transport and its connector
+storage are retired; the internal canonical tracking-registration service has
+no exposed replacement caller.
+
+The 8 September cutover narrative below is historical evidence of the former
+fallback/compatibility architecture and its release. It does not describe the
+current runtime permission chain.
+
 **Evidence date:** 8 September 2026
 **Scope:** active repository rooted at
 `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` and release candidate

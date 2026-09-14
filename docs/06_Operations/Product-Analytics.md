@@ -6,20 +6,21 @@ This path is governed by [RFC-046](../06_RFC/RFC-046-Customer-Data-Analytics-and
 and the complete [Customer Data, Analytics & Lifecycle Core runbook](Customer-Data-Analytics-Lifecycle-Core.md).
 It supersedes the old RFC-026 Vercel custom-event operating procedure.
 
-**DETECTED in the current candidate:** B4GAMBLE uses a first-party,
+**DETECTED in current canonical main and Production:** B4GAMBLE uses a first-party,
 PostgreSQL-backed, closed 22-event dictionary. The three Commercial UX
-observations added by migration 0038 remain bounded to selected view, card
+observations added by applied migration 0038 remain bounded to selected view, card
 impression and casino-review click; they add no arbitrary payload or new
 identity. The runtime does not import or
 mount `@vercel/analytics`, and there is no Vercel Web Analytics plan dependency
 for Product Core events.
 
-**VERIFIED in Production:** migration 0037, the exact analytics flag, consented
-event ingestion, retention and aggregate Core sanity under PR #269.
+**VERIFIED in Production:** migrations 0037 and 0038, the exact analytics flag,
+consented event ingestion, retention and aggregate Core sanity. A legitimate
+zero for a bounded event remains truthful; it is not a release defect.
 
-**NOT YET VERIFIED in Production:** additive migration 0038 and the three new
-Commercial UX observations. Do not treat repository or Preview behavior as
-Production activation evidence.
+The former `vercel-product-analytics.ts`, Vercel Programme event taxonomy and
+`analytics:programme` aggregate report are retired. Programme observation and
+the fixed dashboard use canonical persisted Programme state.
 
 ## Runtime controls
 
@@ -73,6 +74,12 @@ dashboards. Definitions and denominators are locked in
 `lib/analytics/metrics.ts`; the runbook reproduces them. There is no generic
 query builder, arbitrary BI endpoint or Vercel aggregate-report dependency.
 
+The Commercial view uses detailed `OutboundClick` attribution and consented
+funnel events. `GET /api/admin/affiliate/outbound-clicks` is a separate
+success-only, aggregate-only accounting report with unique historical
+coverage. New successful traffic can overlap; never add detailed and aggregate
+totals.
+
 Run the aggregate integrity check from an authorised operator process:
 
 ```bash
@@ -83,12 +90,14 @@ It prints aggregate counts only and exits nonzero for integrity defects.
 
 ## Activation and rollback
 
-1. Confirm migration 0037, then apply additive migration 0038 DB-first.
-2. Deploy with the public flag false.
-3. Verify consent grant/decline/withdrawal, cookie signing, event dedupe,
+Migrations 0037 and 0038 are already applied. Do not re-run or roll them back.
+
+1. Deploy with the public flag false when a collection rollback is required.
+2. Verify consent grant/decline/withdrawal, cookie signing, event dedupe,
    environment tags, dashboard authorization and data sanity.
-4. Set the exact flag true only in the authorised environment and redeploy.
-5. Verify one normal consented flow and confirm Preview/test/bot/internal rows
+3. Set the exact flag true only in the authorised environment and redeploy.
+4. Verify normal real traffic without generating synthetic Production events,
+   and confirm Preview/test/bot/internal rows
    remain excluded.
 
 Rollback sets the flag false and redeploys. Existing observations remain under

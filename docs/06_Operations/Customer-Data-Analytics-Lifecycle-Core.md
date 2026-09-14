@@ -2,22 +2,18 @@
 
 **Authority:** [RFC-046](../06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md)<br>
 **Runbook date:** 12 September 2026<br>
+**Current-state reconciliation:** 14 September 2026<br>
 **Application:** B4GAMBLE / `sevenbet-next`<br>
 **Production origin:** `https://b4gamble.com`<br>
-**Migrations:** `0037_customer_data_analytics_lifecycle_core` (Production);
-`0038_commercial_ux_analytics_events` (candidate)
+**Migrations:** `0037_customer_data_analytics_lifecycle_core` and
+`0038_commercial_ux_analytics_events` (Production)
 
 ## 1. Current release state
 
-**VERIFIED in Production:** PR #269, additive migration 0037, application
+**VERIFIED in Production:** additive migrations 0037 and 0038, application
 deployment, consented analytics collection and aggregate-only Core sanity.
-
-**IMPLEMENTED / PRODUCTION HOLD (Commercial UX v1):** Commercial UX v1 adds the bounded additive
-0038 candidate: three closed commercial event values and an optional
-constraint-bounded card position. Repository and Preview evidence do not prove
-that 0038 exists in Production. Apply it DB-first and satisfy the read-only
-Production preflight before deploying an application revision that emits the
-new events.
+Commercial UX v1 contributes three closed commercial event values and an
+optional constraint-bounded card position; no arbitrary payload is accepted.
 
 **FOUNDER APPROVED / ACTIVATION GO:** the explicit 12 September 2026
 Founder instruction approves Resend for the bounded RFC-046 purposes and
@@ -168,12 +164,28 @@ unsubscribe and therefore are not counted as unsubscribe events.
 7, 30, 90 or a bounded custom range. Zero and failure states are displayed.
 Open rate is intentionally absent.
 
+Programme completion derives from `ProgramEnrollment.completedAt`. Mission 10
+completion stores that exact timestamp on the enrollment; the observer and
+dashboard do not depend on retired Vercel Programme events or reports.
+
+The Commercial dashboard includes casino/offer views, card views, view
+selections, review clicks, CTA clicks, detailed outbound state and CTR. Its
+detailed figures are distinct from the success-only aggregate affiliate report
+and the two totals must not be added.
+
 ## 7. Commercial click attribution
 
 `/r/{slug}` generates one UUID at request entry, executes the existing legal,
 GEO, commercial, route-health and safe-response chain, then schedules the
 observation. `BLOCKED` is recorded for disabled, malformed, unavailable,
 regulatory or unsafe results; only a validated 302 is `SUCCEEDED`.
+
+There is one runtime attribution writer. In one database transaction it
+creates the canonical detailed `OutboundClick`, the attempted plus terminal
+`AnalyticsEvent` projections, and—for `SUCCEEDED` only—the
+`AffiliateOutboundClickDaily` projection. A blocked attempt never increments
+the successful aggregate. Failure to persist this observation does not alter
+the already-authoritative redirect response.
 
 The observer may store safe canonical internal IDs, coarse country, locale,
 page path, acquisition source and placement. Optional identity/source
@@ -185,6 +197,11 @@ Governed CTA links append only the closed source/placement label (for example,
 `CTA_CASINO_OFFER_BLOCK`) to the internal `/r/{slug}` request. The redirect
 service ignores it for routing; the observer validates and records it only
 when analytics consent permits enrichment.
+
+`AffiliateOutboundClickDaily` preserves privacy-minimised historical successful
+clicks that predate complete detailed storage. It is neither backfilled into
+`OutboundClick` nor replaced by it. Because new successful traffic appears in
+both stores, operators must never calculate a combined total.
 
 ## 8. Privacy, PII and Programme purpose boundary
 
@@ -364,7 +381,11 @@ The PostgreSQL suite refuses a non-local/non-CI database name. It uses only
 never make a provider network call or send a real email. CI migration replay
 must run before database/browser tests.
 
-## 16. Migration and deployment
+## 16. Historical migration and deployment sequence
+
+The sequence below records the completed DB-first delivery. Migrations 0037
+and 0038 and all six controlled provider cases are complete; do not re-run a
+migration or recreate acceptance traffic from this historical checklist.
 
 1. Pull a redacted Production environment inventory; never print values.
 2. Run `prisma/preflight/0037_customer_data_analytics_lifecycle_core.sql`
@@ -392,16 +413,14 @@ The Production build preflight refuses to build this application revision
 until migration 0037 is completed and its checksum/tables/indexes/uniqueness
 invariants pass.
 
-### 16.1 Commercial UX analytics extension candidate
+### 16.1 Applied Commercial UX analytics extension
 
-For an application revision that emits the Commercial UX v1 events, first
-confirm the verified 0037 Core, run a disposable full-history migration replay,
-then apply `0038_commercial_ux_analytics_events` DB-first with
-`prisma migrate deploy`. Run the read-only preflight and Core sanity before the
-application deployment. The preflight requires the exact 0038 checksum, all
-three closed enum values, the nullable position column and its 1–1000 check.
-Do not use `db push`, `migrate dev`, `migrate reset`, destructive repair or
-seeded analytics evidence. This runbook does not authorize a Production deploy.
+Migration `0038_commercial_ux_analytics_events` was delivered DB-first after
+the verified 0037 Core and is applied in Production. Its exact checksum, three
+closed enum values, nullable position column and 1–1000 check remain enforced
+by the build preflight. Do not re-run, repair or roll back 0038, and do not use
+`db push`, `migrate dev`, `migrate reset`, destructive repair or seeded
+analytics evidence. Future application releases consume the existing schema.
 
 ## 17. Production smoke and data sanity
 

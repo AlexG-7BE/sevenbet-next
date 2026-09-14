@@ -2,7 +2,10 @@
 
 ## Status and authority
 
-This document describes Commercial UX v1 introduced through PR #276. Production deployment state must be verified from the recorded release evidence. It does not itself claim market activation, partner-state change, migration application, or legal/commercial authority.
+This document describes Commercial UX v1 introduced through PR #276. Current
+Production has applied migration `0038_commercial_ux_analytics_events`; that
+fact does not claim market activation, partner-state change, or
+legal/commercial authority.
 
 The public presentation adapter in `lib/commercial/commercial-presentation.ts` remains the boundary between canonical public DTOs and concise commercial UI. Governed action helpers remain fail-closed. Demonstration fixtures remain non-actionable.
 
@@ -51,4 +54,4 @@ The scan-first product architecture is unchanged. Bounded editorial framing now 
 
 ## Analytics
 
-Existing commercial surface views, selector changes, card impressions/positions, review clicks, and governed outbound actions remain intact. No additional Terms-click event or schema change is introduced in this correction pass. Migration `0038_commercial_ux_analytics_events` remains unapplied by this work.
+Existing commercial surface views, selector changes, card impressions/positions, review clicks, and governed outbound actions remain intact. No additional Terms-click event or schema change is introduced in this correction pass. Migration `0038_commercial_ux_analytics_events` is applied in current Production and its bounded metrics are visible in the fixed Commercial dashboard.

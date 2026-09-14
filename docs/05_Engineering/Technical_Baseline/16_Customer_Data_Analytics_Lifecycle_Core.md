@@ -4,11 +4,11 @@
 
 | Field | Evidence |
 | --- | --- |
-| Audit date | 12 September 2026 |
+| Audit date | 14 September 2026 |
 | Canonical repository | `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` |
-| Current release | PR #274 merged at `22cf696b31b6adc3e456508b1a140044a5061698`; Production delivery is active after 6/6 acceptance |
-| Scan | Entire active repository: 2,422 files after excluding dependencies, generated/build output, caches and `tsconfig.tsbuildinfo` |
-| Inventory | 125 API route handlers, 79 pages, 230 test/spec files, 116 Prisma models, 99 enums and 37 ordered migrations |
+| Current state | Production delivery and Customer / Analytics / Lifecycle acceptance are active at 6/6 PASS |
+| Scan | Entire active repository: 2,356 tracked files after excluding dependencies, generated/build output, caches and `tsconfig.tsbuildinfo` |
+| Inventory | 116 API route handlers, 77 pages, 228 test/spec files, 109 Prisma models, 99 enums and 41 ordered migrations |
 
 **DETECTED** means established from repository or named live authoritative
 evidence. **UNKNOWN** means live Preview/Production or provider evidence has
@@ -24,10 +24,10 @@ The implementation uses additive migration
 Programme persistence and RFC-042 as identity, progress and commercial-routing
 authorities.
 
-**DETECTED:** PR #269 is live at
-`e4268c9031cdf92704c529225ef71edcb16d20a5`, all 37 migrations including 0037
-are applied, consented analytics is enabled and aggregate sanity passed. The
-12 September Founder instruction approves bounded Resend processing.
+**DETECTED:** PR #269 established the Core. All 41 current migrations,
+including 0037 and the additive 0038 Commercial UX events, are applied;
+consented analytics is enabled and aggregate sanity passed. The 12 September
+Founder instruction approves bounded Resend processing.
 
 **DETECTED / GO:** the webhook and complete sender configuration exist. PRs
 #271/#273/#274 deploy the worker and acceptance fixes. All six controlled live
@@ -59,9 +59,9 @@ JSON are absent from analytics and campaign filters.
 | Area | Evidence |
 | --- | --- |
 | Customers | `/admin/customers`, customer detail, canonical Better Auth observer, normalized email constraint and bounded acquisition/last-seen metadata |
-| Core analytics | signed preference endpoint, strict `/api/analytics/events` batch ingestion, 19 enum-backed events, database rate limit, cross-account-safe session rotation/linking and explicit relational dimensions |
-| Programme analytics | server observers attached after canonical persisted starts/completions; consented client views; no client progress calculation |
-| Commercial attribution | consented casino-review and viewport offer observations plus `/r/{slug}` retaining RFC-042 decision authority and recording one minimized final `SUCCEEDED`/`BLOCKED` result without destination/tracking URL |
+| Core analytics | signed preference endpoint, strict `/api/analytics/events` batch ingestion, 22 enum-backed events, database rate limit, cross-account-safe session rotation/linking and explicit relational dimensions |
+| Programme analytics | server observers attached after canonical persisted starts/completions; Mission 10 and enrollment completion timestamps are equal; consented client views; no client progress calculation or Vercel aggregate dependency |
+| Commercial attribution | consented commercial presentation observations plus `/r/{slug}` retaining independent MarketActivation decision authority; one transaction records minimized detailed attribution, AnalyticsEvent projections and a success-only daily aggregate |
 | Email/templates | versioned/sanitized templates, current eligibility, durable message/campaign idempotency, review-before-queue, unsubscribe and provider-event ledger |
 | Consent/dashboards | analytics and email purposes remain separate; fixed Founder/Programme/Commercial/Email views with bounded UTC ranges and explicit metric definitions |
 
@@ -108,6 +108,12 @@ ranges. An outbound attempt is not a success; Programme completion is a start
 cohort outcome; email delivery/bounce/click require unique verified provider
 events. Open rate and free-form query builders are absent.
 
+**DETECTED:** `ProgramEnrollment.completedAt` is the Programme completion
+source for the observer and dashboards. The former
+`vercel-product-analytics.ts`, Vercel Programme event taxonomy and
+`analytics:programme` report are absent from current runtime/tooling and remain
+historical evidence only.
+
 **DETECTED:** email workers select only the current tagged environment and
 perform a second canonical recipient/eligibility read immediately before the
 provider boundary. Campaigns/messages are environment-tagged with composite
@@ -116,6 +122,12 @@ suppressed/unsubscribed counts; queue transitions are conditional and audited.
 Lifecycle selection excludes already-queued reminder identities so a full
 early page cannot starve later candidates. Recipient rows remain idempotent by
 campaign and user.
+
+**DETECTED:** the Commercial dashboard reader already computes casino/offer
+views, card views, view selections, review clicks, CTA clicks, detailed
+outbound attempts/successes/blocks and CTR. All bounded funnel metrics are
+rendered; the fixed view explicitly identifies detailed attribution and warns
+that the separate success-only aggregate can overlap.
 
 ## Detected release and verification surfaces
 
@@ -161,14 +173,14 @@ Production and were not disclosed.
 
 **DETECTED / ACTIVE:** Founder processor authority, provider configuration,
 deployment and six of six controlled Production acceptance exist. Delivery is
-exact `true`. Ready canonical deployment
-`5i5N2H2xWqMySWysU78EdinEwK2v` serves
-`22cf696b31b6adc3e456508b1a140044a5061698`.
+exact `true`. Exact current deployment identity belongs in
+`docs/CURRENT_STATE.md` and live release evidence rather than this architecture
+baseline.
 
 ## Contradictions reconciled
 
 - Older baseline claims that Vercel Analytics is the active candidate are
-  stale for RFC-046; the candidate retires that transport in favor of the
+  stale for RFC-046; the current Core retires that transport in favor of the
   first-party, consented relational contract.
 - Older claims that no receiving webhook or account/Programme email boundary
   exists are historical. A receiver, ledger and provider registration are
@@ -178,3 +190,10 @@ exact `true`. Ready canonical deployment
   live configuration or delivery.
 - PRs #271/#273/#274 and the dated activation record are the authoritative
   release evidence for the current Production SHA and active delivery state.
+- Older candidate claims that the dictionary has 19 events or migration 0038
+  is unapplied are stale. The current closed dictionary has 22 events and all
+  41 migrations are applied.
+- The aggregate affiliate click report is not a second detailed-attribution
+  total. `OutboundClick` is canonical detailed runtime attribution;
+  `AffiliateOutboundClickDaily` is success-only aggregate accounting with
+  unique historical coverage. Overlapping totals must not be added.

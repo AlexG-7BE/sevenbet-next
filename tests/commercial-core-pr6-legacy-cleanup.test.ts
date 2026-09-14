@@ -238,6 +238,19 @@ test("0041 is an exact explicit no-CASCADE cleanup and cannot target the KEEP se
   assert.doesNotMatch(sql, /Account_better_auth_issuer_compat|set_better_auth_account_issuer/);
 });
 
+test("current operations documentation marks PR6 applied, retired, and non-repeatable", () => {
+  const runbook = source("docs/06_Operations/Commercial-Core-PR6-Legacy-Cleanup.md");
+  assert.match(runbook, /Status:\*\* APPLIED — RETIRED — DO NOT RE-RUN/);
+  assert.match(runbook, /all 41 ordered\s+migrations are complete/);
+  assert.match(runbook, /none of the eight retired target tables remains/);
+  assert.match(runbook, /not a current operational instruction/);
+
+  const index = source("docs/06_Operations/README.md");
+  assert.match(index, /Commercial-Core-PR5-MCP-Extraction-Retirement\.md/);
+  assert.match(index, /Applied one-time connector-schema deletion/);
+  assert.doesNotMatch(index, /Review-only exact connector-schema deletion/);
+});
+
 test("active application and bounded public-commercial runtime have no PR6 target consumer or change", () => {
   const activeRuntimePaths = [
     ...sourceFiles("app"),

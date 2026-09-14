@@ -141,6 +141,45 @@ test("roles expose only the intended Customer Core areas", () => {
   assert.equal(canAccessAdminArea(null, "customers"), false);
 });
 
+test("the fixed Commercial dashboard renders every active bounded funnel metric", () => {
+  const page = source("app/admin/(protected)/analytics/page.tsx");
+  for (const metric of ["casinoViews", "offerViews", "cardViews", "viewSelections", "reviewClicks", "ctaClicks", "outboundSuccesses", "ctr"]) {
+    assert.match(page, new RegExp(`data\\.${metric}\\b`), metric);
+  }
+  assert.match(page, /Detailed runtime attribution/);
+  assert.match(page, /success-only daily aggregate/);
+  assert.match(page, /must not be added/);
+});
+
+test("current analytics documentation records the applied 22-event and persisted-state baseline", () => {
+  const productRunbook = source("docs/06_Operations/Product-Analytics.md");
+  assert.match(productRunbook, /closed 22-event dictionary/);
+  assert.match(productRunbook, /Migrations 0037 and 0038 are already applied/);
+  assert.match(productRunbook, /fixed dashboard use canonical persisted Programme state/);
+  assert.match(productRunbook, /never add detailed and aggregate\s+totals/);
+  assert.doesNotMatch(productRunbook, /NOT YET VERIFIED|extension candidate/i);
+
+  const lifecycleRunbook = source("docs/06_Operations/Customer-Data-Analytics-Lifecycle-Core.md");
+  assert.match(lifecycleRunbook, /Applied Commercial UX analytics extension/);
+  assert.match(lifecycleRunbook, /Do not re-run, repair or roll back 0038/);
+
+  const baseline = source("docs/05_Engineering/Technical_Baseline/README.md");
+  assert.match(baseline, /109 Prisma models/);
+  assert.match(baseline, /41 ordered Prisma migration directories/);
+  assert.match(source("docs/CURRENT_STATE.md"), /6\/6 PASS/);
+
+  const externalServices = source("docs/05_Engineering/Technical_Baseline/04_External_Services.md");
+  assert.match(externalServices, /active under bounded Production controls/);
+  assert.match(externalServices, /all six controlled acceptance cases are verified/);
+  assert.doesNotMatch(externalServices, /Production delivery disabled/);
+
+  const assumptions = source("docs/05_Engineering/Technical_Baseline/08_Assumptions_and_Constraints.md");
+  assert.match(assumptions, /one exact `MarketActivation`/);
+  assert.match(assumptions, /Parent-country and active `ZZ` runtime permission fallback are absent/);
+  assert.doesNotMatch(assumptions, /denying commercial\/referral capability/);
+  assert.match(source("docs/05_Engineering/Technical_Baseline/07_Known_Technical_Debt.md"), /Status:\*\* HISTORICAL ONLY/);
+});
+
 test("consent, ingestion, unsubscribe, webhook, and cron public mutations fail closed", () => {
   const analyticsRuntime = source("lib/analytics/product-analytics.ts");
   assert.match(analyticsRuntime, /process\.env\.NEXT_PUBLIC_ANALYTICS_ENABLED/);

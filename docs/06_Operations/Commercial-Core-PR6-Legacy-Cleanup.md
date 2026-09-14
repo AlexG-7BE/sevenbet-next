@@ -1,15 +1,35 @@
 # Commercial Core PR6 — Legacy Connector Storage Cleanup
 
-**Status:** review-only destructive migration candidate
+**Status:** APPLIED — RETIRED — DO NOT RE-RUN
 **Authority:** RFC-051 and the current Founder instruction of 14 September 2026
-**Base:** `313b18bfff5db98d7e66b16088ec3ed8537fc299`
-**Not authorised:** Production APPLY, merge, deploy, repair, recreation, or scope expansion
+**Historical review base:** `313b18bfff5db98d7e66b16088ec3ed8537fc299`
+**Current prohibition:** do not re-run, repair, recreate or expand the retired connector scope
 
-## Outcome boundary
+## Current outcome
 
-PR6 removes the retired connector persistence model from the active Prisma
-schema and prepares one explicit migration. It does not apply that migration to
-Production. PR5 application transport is already retired and the external
+**DETECTED in current canonical main and a database-enforced read-only
+Production transaction:** migration
+`0041_commercial_core_legacy_connector_cleanup` is applied, all 41 ordered
+migrations are complete, and none of the eight retired target tables remains.
+The current Prisma schema has 109 models. Identity, session, generic
+verification, AuditLog and immutable migration history remain.
+
+The MCP/operational-OAuth application transport and both external connector
+registrations were already retired by PR5. PR6 removed only the reviewed
+connector storage and compatibility objects. It did not restore a caller,
+rewrite historical audit evidence or change MarketActivation, `/r`, CRM,
+Programme or analytics authority.
+
+All planning, projection, APPLY-gate and rollback language below is historical
+pre-apply evidence. It explains how the one-time deletion was bounded; it is
+not a current operational instruction.
+
+## Historical outcome boundary
+
+PR6 removed the retired connector persistence model from the active Prisma
+schema and prepared one explicit migration. At this review checkpoint it had
+not yet applied that migration to Production. PR5 application transport was
+already retired and the external
 custom connections `B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3`
 are already disconnected. PR6 must not recreate either connection or any
 transport surface.
@@ -76,7 +96,7 @@ dependency, read-only and canonical-route gate below passes. A changed second
 count stops with `RATE_BUCKET_STATE_STILL_MUTATING`; it is never explained away.
 No exact deletion timestamp or request attribution is claimed.
 
-## PROPOSED
+## Historical retention decision
 
 Treat the following eight tables as operational connector artefacts scheduled
 for deletion, not as durable business or audit records:
@@ -99,8 +119,8 @@ Also delete only these compatibility objects:
   `sync_better_auth_oauth_client_resource_compat`, and
   `set_better_auth_oauth_resource_compat`.
 
-The retention decision remains `PROPOSED` until a separate Founder instruction
-authorises Production APPLY. MCP/OAuth application transport is gone, both
+At the review checkpoint the retention decision remained `PROPOSED` until a
+separate Founder instruction authorised Production APPLY. MCP/OAuth application transport was gone, both
 custom connections are disconnected, and no active repository runtime consumes
 this storage. The rows contain inert access/refresh-token material,
 client/client-secret state, consent state, and transport rate-limit state.
@@ -147,7 +167,7 @@ PR6 protects and verifies:
 The bounded public Commercial runtime files used by PR5 must remain
 byte-for-byte identical to the base. A changed file is a stop condition.
 
-## Read-only Production projection
+## Historical read-only Production projection
 
 Run the projector twice from the final clean candidate head. The first command
 creates one mode-`0600`, create-only, aggregate reference outside the
@@ -240,7 +260,7 @@ post-migration catalogs and current credential/Google compatibility behavior.
 Exact local and hosted results belong in the PR review record for the final
 head; test descriptions here are not a substitute for green evidence.
 
-## ROLLBACK
+## Historical rollback boundary
 
 Before any separately authorised Production APPLY, confirm a fresh recoverable
 Production database recovery point under the current managed recovery runbook.
@@ -252,10 +272,11 @@ Do not manually recreate historical OAuth clients, tokens, consents, resources,
 rate buckets, compatibility triggers, or compatibility functions. Do not make a
 secret-bearing manual export for this cutover.
 
-## APPLY GATE
+## Historical APPLY gate — satisfied once; do not re-run
 
-No Production APPLY is authorised by this PR. Founder Office must separately
-authorise all of the following exact evidence:
+At the review checkpoint no Production APPLY was authorised by the PR alone.
+Founder Office required the following exact evidence before the one-time
+execution:
 
 1. exact PR head;
 2. exact `reviewedPlanSha256` from a clean-head fresh projection;

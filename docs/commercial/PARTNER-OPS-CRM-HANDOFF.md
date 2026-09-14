@@ -43,7 +43,12 @@ Human mutations record the staff `AdminUser` in `AuditLog`; timeline events reta
 
 ## Readiness integration
 
-An activation packet maps preparation status to RFC-015 authorities. It does not call or duplicate the evaluator. No CRM stage changes affiliate state. The existing central evaluator and kill switch remain route-time authority, and no activation endpoint/button exists.
+An activation packet is preparation evidence only. It does not call or
+duplicate public Commercial authority, and no CRM stage changes route state.
+Trusted GEO feeds the exact Casino × country `MarketActivation`, whose factual
+Partner, agreement, AffiliateProgram/Casino identity, offer, tracking,
+destination, legal and health checks fail closed alongside the independent
+kill switch. No CRM activation endpoint/button exists.
 
 ## Valid operation example
 
@@ -78,7 +83,7 @@ Parsing fails because `SET_APPROVED` is not a union member. Extra Prisma fields 
 
 ## Neutral Commercial research capability
 
-**DETECTED IN PR5:** `CommercialResearchBundleSchema` and
+**DETECTED IN CURRENT MAIN:** `CommercialResearchBundleSchema` and
 `commercialOpportunityResearchService` expose the bounded research concepts
 to internal application code without an HTTP transport, OAuth scope, external
 client or connector identity. The repository remains the sole Prisma boundary.
@@ -127,7 +132,7 @@ The MCP adapter calls `commercialMcpService`, which validates strict Zod input a
 4. Run Partner Operations from the detail screen. With no server credential, the route fails safely and CRM remains usable.
 5. Review the validated result, operations, drafts and gaps in the timeline/run record.
 6. Perform any external or approval action outside the Agent and record its direct evidence through the human CRM path.
-7. Never treat a packet or CRM stage as RFC-015 route authority.
+7. Never treat a packet or CRM stage as public Commercial authority.
 
 External connector retirement and release steps are maintained in
 `docs/06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md`.
