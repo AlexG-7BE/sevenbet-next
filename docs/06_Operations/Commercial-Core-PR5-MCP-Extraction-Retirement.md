@@ -46,7 +46,7 @@ remain independent and unchanged.
 | legacy Media plan/batch source compatibility | data/history | exact persisted-read decoder; no migration |
 | generic Better Auth and Google identity OAuth | generic authentication | retained unchanged |
 | tracking audit, route health and general DB reliability | security/audit/observability | retained neutrally |
-| OAuth/rate-limit rows, models, migrations and audit history | data/history | retained inertly for PR6 |
+| OAuth/rate-limit rows and active models | data/history | subsequently removed by applied PR6 migration 0041; immutable migrations and audit history retained |
 | isolated Agent SDK and Refero design-tool MCP guidance | developer tooling | retained outside app runtime |
 
 ## Evidence classification
@@ -78,8 +78,8 @@ At the PR5 head, historical MCP references remained only where truth required
 them: immutable migrations/fixtures, release records, RFC history, inert schema
 model names, the PR5 projector/retirement assertions, migration baseline names,
 transitive Agent SDK lock data, and unrelated Refero developer-tool guidance.
-PR6 removes the inert models and obsolete PR5 projector from active tooling but
-preserves the immutable history. Neither Agent/Refero remnant enters the
+PR6 subsequently removed the inert models and obsolete PR5 projector from
+active tooling while preserving the immutable history. Neither Agent/Refero remnant enters the
 application runtime or exposes a B4GAMBLE connection.
 
 ## Read-only Production projection
@@ -87,7 +87,7 @@ application runtime or exposes a B4GAMBLE connection.
 The PR5 candidate used `npm run commercial-core:pr5:projection`. It refused an
 unexpected database fingerprint, entered a repeatable-read transaction, set it
 read-only and verified the database reported read-only state. It emitted only
-counts, bounded timestamps and hashes. PR6 removes that historical projector
+counts, bounded timestamps and hashes. PR6 removed that historical projector
 from active package tooling because its generated Prisma delegates no longer
 exist; the evidence below remains the immutable PR5 review record.
 
@@ -222,10 +222,10 @@ PR5 has no schema/data change. RFC-051 lists the exact eight inert models plus
 compatibility triggers/functions for PR6. Immutable migrations 0021–0023 and
 the staged fixture remain required for replay and historical truth.
 
-PR6 has a separate read-only plan and proposed retention decision in the
-[PR6 runbook](Commercial-Core-PR6-Legacy-Cleanup.md). It must not drop
-`Account.issuer`, generic `Verification`, identity/session data, AuditLog or
-migration history as incidental cleanup.
+PR6 subsequently applied the exact reviewed migration and is recorded in the
+[PR6 runbook](Commercial-Core-PR6-Legacy-Cleanup.md). The cleanup preserved
+`Account.issuer`, generic `Verification`, identity/session data, AuditLog and
+migration history. It must not be re-run.
 
 Application rollback restores old server code but not an externally removed
 connection. No PR5 database rollback exists because PR5 performs no migration

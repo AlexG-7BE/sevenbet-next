@@ -22,7 +22,7 @@
 
 ## Tooling and configuration
 
-**Detected:** `next build`, `next dev -p 4173`, `next start -p 4173`, Prisma generation via `postinstall`, TypeScript strict/no-emit checking, ESLint, explicit deterministic Node-test manifests, isolated browser CI, build-secret scanning, guarded fresh-PostgreSQL migration verification, fixed first-party analytics dashboards, aggregate-only RFC-046 sanity, bounded cron/readiness CLIs, and the read-only PR5 Commercial projection.
+**Detected:** `next build`, `next dev -p 4173`, `next start -p 4173`, Prisma generation via `postinstall`, TypeScript strict/no-emit checking, ESLint, explicit deterministic Node-test manifests, isolated browser CI, build-secret scanning, guarded fresh-PostgreSQL migration verification, fixed first-party analytics dashboards, aggregate-only RFC-046 sanity and bounded cron/readiness CLIs. The retired PR5 Commercial projection remains historical release evidence and is no longer active package tooling after PR6.
 
 **Not detected:** Vercel Analytics runtime/package, Tailwind, a separate UI-component library, Yup, a test-coverage threshold, repository Docker image or infrastructure-as-code. The repository defines PostgreSQL as a disposable GitHub Actions service for CI; hosted Prisma Postgres authority is documented separately. Neither is an application-container architecture.
 

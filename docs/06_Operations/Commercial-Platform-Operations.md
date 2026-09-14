@@ -6,7 +6,11 @@ described here are deployed and verified. See the
 
 ## Activation and assets
 
-The canonical operator workflow is documented in `Partner-Portal-Data-Handoff.md`. The thin adapter writes the existing AffiliateNetwork, AffiliateProgram, AffiliateOffer, AffiliateTrackingLink, AffiliateTrackingLinkCountry, AffiliateRedirectSlug, revision, and audit structures in one serializable transaction. It does not create another affiliate store or eligibility engine.
+The original operator-bundle workflow is preserved historically in
+`Partner-Portal-Data-Handoff.md`; its legacy APPLY command is retired and fails
+closed. Current canonical writes require the separate process-local Founder
+authority boundary. CRM research, lifecycle flags, media and analytics do not
+grant runtime permission.
 
 Asset ingestion delegates validation, processing, storage, deduplication, ownership, and compensation to the existing MediaService and adds exact CasinoCountry and AffiliateOffer ownership.
 
@@ -16,7 +20,20 @@ Asset ingestion delegates validation, processing, storage, deduplication, owners
 
 It stores no user/account/session ID, name, email, IP or hashed IP, user agent, fingerprint, cookie identity, referrer, arbitrary query string, free text, Programme state/input/Mission, responsible-gambling data, tracking URL, or destination URL.
 
-Counting occurs only after `/r/[slug]` has passed jurisdiction, commercial readiness, exact-market PartnerRoute eligibility, and safe-destination validation and has constructed a valid external 302. Failed, denied, preview, no-CTA, wrong-GEO, expired, and unsafe resolutions do not reach the counter. A counter failure emits only safe route identifiers and never suppresses the valid 302.
+One runtime attribution writer is scheduled only after `/r/[slug]` resolves its
+independent exact trusted-GEO, exact `MarketActivation`, factual binding,
+destination, legal and health authority. In one transaction it writes the
+canonical detailed `OutboundClick`, the attempted and terminal
+`AnalyticsEvent` projections and, for a successful 302 only, the daily
+aggregate projection. Failed, denied, Preview, no-CTA, wrong-GEO, expired and
+unsafe results never increment the successful aggregate. Observation failure
+emits only a safe category and never changes the already-authoritative redirect
+response.
+
+`AffiliateOutboundClickDaily` also contains unique historical successful-click
+coverage from before complete detailed storage. It must not be backfilled into
+`OutboundClick`, and its total must not be added to detailed successes because
+new successful traffic can overlap.
 
 Authorized staff with `affiliate.manage` can query:
 

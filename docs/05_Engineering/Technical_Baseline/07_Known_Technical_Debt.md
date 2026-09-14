@@ -1,8 +1,14 @@
-# Known Technical Debt
+# Known Technical Debt — Historical Snapshot
+
+**Status:** HISTORICAL ONLY. This inventory records the 13 August 2026
+checkpoint named below. It is not the current dashboard/current-document
+cleanup backlog, and its old “current main,” draft-PR and Production claims
+must not override `docs/CURRENT_STATE.md` or newer live evidence. A still-open
+item requires fresh repository and authoritative Production verification.
 
 Repository evidence was reconciled from root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` at current main `c52595405f0800c8c2b51d5951c4a8d45c133034` on 2026-08-13. Dependencies, generated output, build artefacts, caches and `tsconfig.tsbuildinfo` were excluded from source claims. This inventory records remaining engineering debt; product roadmap and release approvals are tracked separately.
 
-## Remaining
+## Remaining at the historical checkpoint
 
 | Category | Evidence | Impact | Severity |
 | --- | --- | --- | --- |

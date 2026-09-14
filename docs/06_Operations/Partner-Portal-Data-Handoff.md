@@ -1,7 +1,9 @@
 # Partner Portal Data Handoff
 
-**DETECTED / PRODUCTION — 3 September 2026:** operational input guide for
-`commercial-activation-bundle.v1` and `commercial-asset-manifest.v1`.
+**CURRENT STATUS:** evidence-collection guide; legacy activation APPLY retired
+by PR4. The historical `commercial-activation-bundle.v1` and
+`commercial-asset-manifest.v1` procedures do not grant current Commercial
+authority.
 
 This is the one morning handoff. No Prisma knowledge is required. Work on one exact Casino × GEO record at a time; never infer one market’s authority from another.
 
@@ -43,9 +45,32 @@ For assets, collect:
 4. Copy `data/commercial-activation/incoming/commercial-asset-manifest.template.json` and use paths relative to the chosen asset root.
 5. The incoming directory ignores everything except its inert templates and `.gitkeep`. Never force-add real tracking URLs or commercially sensitive partner exports unless the repository’s protected-data policy explicitly authorizes it.
 
-## Activation sequence
+## Current handoff boundary
 
-From the repository root, set `<bundle>` to the completed local JSON path.
+Partner and CRM work supplies factual research, relationships, terms and
+history. It does not activate a route. Current canonical writes require an
+explicit trusted Founder authority established inside the process-local
+Commercial Core boundary, followed by exact `MarketActivation` and governed
+`/r` verification. PR5 exposes no MCP, HTTP or CLI replacement caller.
+
+The retained bundle tooling has only these current meanings:
+
+1. `npm run commercial:activation:validate -- <bundle>` validates the closed
+   historical bundle shape without database mutation.
+2. `npm run commercial:activation:preview -- <bundle>` performs read-only
+   compatibility inspection.
+3. `npm run commercial:activation:verify -- <bundle>` performs read-only
+   comparison against current state.
+4. **DO NOT RUN** `npm run commercial:activation:apply`. It is permanently
+   retired and fails with `COMMERCIAL_ACTIVATION_LEGACY_WRITE_RETIRED_BY_PR4`.
+
+There is no operator-facing current APPLY instruction. Do not replace the
+retired path with CRM authority or reconnect MCP.
+
+## Historical activation sequence — DO NOT RE-RUN
+
+Before PR4, the bundle workflow used the following sequence. It is preserved
+only to interpret old evidence and must not be executed as current operations.
 
 1. Validate structure:
 
@@ -57,19 +82,24 @@ From the repository root, set `<bundle>` to the completed local JSON path.
 
    Inspect every `CREATE`, `UPDATE`, `UNCHANGED`, `CONFLICT`, `REJECT`, and `MISSING_DEPENDENCY` result. Do not apply while the preview is blocked.
 
-3. Apply the exact bundle with an authorized admin UUID and explicit bundle confirmation:
+3. The former mutation step is retired; there is no current bundle APPLY.
 
-   `npm run commercial:activation:apply -- <bundle> --actor-id <admin-uuid> --confirm <bundle-id>`
-
-4. Verify committed state and CTA readiness:
+4. Read-only comparison used:
 
    `npm run commercial:activation:verify -- <bundle>`
 
-   `verified: true` means the exact data was committed. `productionReady: true` additionally means the existing jurisdiction, PartnerRoute, commercial, referral, and redirect authorities all permit the CTA. The adapter never changes those authorities.
+   Historical `verified: true` meant the exact legacy graph was present. It is
+   not current activation authority; exact `MarketActivation` and the governed
+   public-action boundary decide current behavior.
 
 5. Repeat steps 2–4 with the same bundle if needed. A repeat produces zero changed records.
 
-## Asset sequence
+## Historical asset sequence
+
+This sequence records the former partner-creative handoff. It does not create
+current public or Commercial authority. Current Product media is limited to
+the separately governed logo/B4GAMBLE-editorial policy; historical promotional
+assignments remain inert.
 
 Set `<manifest>` and `<asset-root>` to the completed manifest and local binary directory.
 
@@ -81,11 +111,13 @@ Preview validates containment, checksum, MIME type, dimensions, exact Casino × 
 
 ## Final checks
 
-1. Confirm activation verification shows the intended exact Casino × GEO only.
-2. Confirm no conflict or rejected record was applied.
-3. Confirm assets are attached to the exact market and offer.
-4. Verify the public CTA only if `productionReady` is true; do not manufacture authority.
-5. Run `npm run affiliate:health -- --casino <casino-slug> --geo <country-code>`.
-6. Use the authorized outbound-click report at `GET /api/admin/affiliate/outbound-clicks?from=YYYY-MM-DD&to=YYYY-MM-DD&countryCode=PE` after real governed traffic exists.
+1. Confirm the factual Partner/Casino evidence and exact GEO are explicit.
+2. Confirm no retired bundle or media assignment is treated as permission.
+3. Verify current exact `MarketActivation` and governed `/r` behavior through
+   the separately authorised Commercial Core boundary.
+4. Run `npm run affiliate:health -- --casino <casino-slug> --geo <country-code>`.
+5. Use the authorized outbound-click report at `GET /api/admin/affiliate/outbound-clicks?from=YYYY-MM-DD&to=YYYY-MM-DD&countryCode=PE` only after real governed traffic exists.
 
-Normal partner campaign, linking-code, tracking, and asset ingestion is now an operational data procedure. A separate authority/legal decision can still keep a CTA fail-closed; that is not something this adapter bypasses.
+Campaign, linking-code and tracking evidence collection remains operational.
+It is not itself a write or activation procedure. A separate authority/legal
+decision can keep a CTA fail-closed; neither CRM nor this handoff bypasses it.

@@ -6,11 +6,11 @@ These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-
 | --- | --- |
 | [Production Release Governance](Production-Release-Governance.md) | Pull-request, deployment, verification and rollback path |
 | [Commercial Core PR4 — Affiliate Lifecycle Collapse](Commercial-Core-PR4-Affiliate-Lifecycle-Collapse.md) | Runtime lifecycle de-authorization, factual GB replacement, read-only semantic projection and PR6 cleanup boundary |
-| [Commercial Core PR5 — MCP Extraction and Retirement](Commercial-Core-PR5-MCP-Extraction-and-Retirement.md) | Physical repository transport retirement, read-only Production projection, external connector cutover and deferred schema cleanup |
-| [Commercial Core PR6 — Legacy Connector Storage Cleanup](Commercial-Core-PR6-Legacy-Cleanup.md) | Review-only exact connector-schema deletion, fail-closed Production projection, KEEP set, recovery boundary and separate APPLY gate |
+| [Commercial Core PR5 — MCP Extraction and Retirement](Commercial-Core-PR5-MCP-Extraction-Retirement.md) | Completed repository transport retirement, historical read-only Production projection and external connector cutover |
+| [Commercial Core PR6 — Legacy Connector Storage Cleanup](Commercial-Core-PR6-Legacy-Cleanup.md) | Applied one-time connector-schema deletion; historical projection, KEEP and recovery evidence; do not re-run |
 | [Commercial Core PR3 — Exact Routes](Commercial-Core-PR3-Exact-Routes.md) | Migration 0040, separately authorised exact-route materialization, read-only readiness, deployment and rollback order |
 | [Environment and Secrets](Environment-and-Secrets.md) | Trust zones, variable inventory, ownership and isolation gates |
-| [Product Analytics](Product-Analytics.md) | Vercel plan boundary, privacy contract, aggregate report, activation and rollback |
+| [Product Analytics](Product-Analytics.md) | First-party 22-event privacy contract, persisted-state Programme reporting, fixed dashboards and collection rollback |
 | [Customer Data, Analytics & Lifecycle Core](Customer-Data-Analytics-Lifecycle-Core.md) | RFC-046 customer registry, consented first-party analytics, click attribution, fixed dashboards, email queues, migration, verification and rollback |
 | [Programme Runtime Hardening](Programme-Runtime-Hardening.md) | Distributed limits, database bindings, migration, purge and cron operations |
 | [Google Authentication and Email Readiness](Google-Authentication-and-Email-Readiness.md) | Exact OAuth callbacks, account-linking controls, sender architecture and deliverability activation gates |
@@ -37,8 +37,8 @@ These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-
 | [Global Current-Partner Commercial Rollout — 10 September 2026](Global-Current-Partner-Commercial-Rollout-2026-09-10.md) | Exhaustive 540-row current-partner matrix, canonical RFC-042 reconciliation, bounded route/runtime verification, fail-closed exceptions and final Production acceptance |
 | [Partner Tracking Link Registration](Partner-Tracking-Link-Registration.md) | Internal Founder-authority-gated workflow for safe default or exact-GEO Partner tracking registration |
 | [Global 14-Casino Worldwide Market Authority — 10 September 2026](Global-14-Casino-Worldwide-Market-Authority-2026-09-10.md) | Review-gated worldwide 14-casino authority manifest, canonical registrar integration, exact Canadian/Argentine runtime identity and unresolved evidence/Production gates |
-| [Commercial Platform Operations](Commercial-Platform-Operations.md) | Repeatable activation, aggregate click measurement, centralized SEO publication policy, migration and rollback contract |
-| [Partner Portal Data Handoff](Partner-Portal-Data-Handoff.md) | Exact Casino × GEO campaign, linking-code, tracking URL and creative ingestion procedure |
+| [Commercial Platform Operations](Commercial-Platform-Operations.md) | Current click-attribution and accounting boundaries, centralized SEO publication policy and rollback contract |
+| [Partner Portal Data Handoff](Partner-Portal-Data-Handoff.md) | Exact Casino × GEO evidence collection, retired legacy APPLY procedure and current authority handoff |
 | [Affiliate Route Health](Affiliate-Route-Health-Runbook.md) | Secret-safe daily route checks, deduplicated alerts, response and rollback |
 | [Backup and Restore](Backup-and-Restore.md) | Required recovery capabilities and evidence gates |
 | [Monitoring and Incident Response](Monitoring-and-Incident-Response.md) | Detection, severity, ownership, containment and recovery |

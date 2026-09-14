@@ -1,24 +1,25 @@
 # COMMERCIAL-OPS-01
 
 Status: **READY IN PRODUCTION** for the Commercial CRM delivered by PR #81;
-Production migration `0020_commercial_ops_01` is applied and verified. RFC-051
-retires the repository MCP/OAuth transport in the PR5 review branch while
-preserving a neutral internal research capability. PR5 is not merged or
-deployed and does not change public commercial authority.
+Production migration `0020_commercial_ops_01` is applied and verified. PR5
+retired the repository MCP/OAuth transport while preserving a neutral internal
+research capability. PR6 migration
+`0041_commercial_core_legacy_connector_cleanup` is applied, the connector
+storage is absent, and neither change grants public commercial authority.
 
 ## Evidence baseline
 
-**DETECTED:** The repository has protected Admin authentication/permissions, Prisma/PostgreSQL, canonical Casino/Operator/Brand and affiliate aggregates, audit records, a fail-closed GB readiness evaluator, and the deployed Commercial CRM. It still has no verified commercial performance event store.
+**DETECTED:** The repository has protected Admin authentication/permissions, Prisma/PostgreSQL, canonical Casino/Operator/Brand, the deployed Commercial CRM, exact `MarketActivation`, detailed `OutboundClick` attempts and success-only `AffiliateOutboundClickDaily` accounting. It has no verified registration, FTD, revenue or commission source.
 
 **INFERRED:** Reusing `affiliate.manage`, the existing Admin shell and existing audit table is the smallest permission and operating boundary. An information-dense list is more appropriate than a drag-and-drop board because all stage changes require server validation.
 
-**PROPOSED:** A later separately authorised activation service may convert a Founder-reviewed packet into an activation attempt by invoking the existing RFC-015 evaluator. A later evidence-backed event source may populate aggregate analytics.
+**PROPOSED:** Any future CRM-to-activation caller or outcome-data integration requires separate Founder authority and must preserve the existing fail-closed `MarketActivation`, consent and commercial-firewall boundaries.
 
-**UNKNOWN:** Repository evidence does not establish a real prospect, application, approval, agreement, terms, tracking destination, active partner, GB outbound route, verified clicks, registrations, FTDs, revenue or commission. `PARTNER-OPS-WORK-BRIDGE-01` does not create synthetic records or mutate Production during implementation.
+**UNKNOWN:** Repository evidence does not prove that CRM records correspond to a completed registration, FTD, revenue or commission outcome. The current reconciliation does not create synthetic records, replay traffic or mutate Production data.
 
 ## Implemented architecture
 
-`/admin/commercial` is the protected Pipeline. `/admin/commercial/partners` is the directory, `/admin/commercial/partners/[opportunityId]` is the full record, and `/admin/commercial/analytics` is the truthful performance view. All pages and `/api/admin/commercial/**` require existing staff authentication and `affiliate.manage`. The existing Admin shell, navigation, cards, typography and error conventions are reused.
+`/admin/commercial` is the protected Pipeline. `/admin/commercial/partners` is the directory, `/admin/commercial/partners/[opportunityId]` is the full record, and `/admin/commercial/analytics` is the reporting directory that distinguishes detailed runtime attribution from aggregate-only accounting. All pages and `/api/admin/commercial/**` require existing staff authentication and `affiliate.manage`. The existing Admin shell, navigation, cards, typography and error conventions are reused.
 
 The Prisma aggregate is `CommercialOpportunity`. It optionally links to canonical `CasinoOperator`, `CasinoBrand`, `Casino`, `AffiliateNetwork` and `AffiliateProgram`; no shadow copy is created. Child records are evidence, bounded B2B contacts, activity, application/outreach, evidenced terms, lightweight tasks, Agent runs/operations and activation packets.
 
@@ -42,13 +43,13 @@ The safe surface can update descriptive profile data; add evidence, contacts and
 
 There is no operation for approval, activation, term acceptance, email send, application submit, tracking/programme/offer changes, jurisdiction, deployment or Production. CRM/provider failure cannot bypass validation and does not affect normal CRM use.
 
-## PR5 neutral research extraction
+## Current neutral research extraction
 
-**DETECTED IN THE REVIEW BRANCH:** the strict opportunity list/get/duplicate
+**DETECTED IN CURRENT MAIN:** the strict opportunity list/get/duplicate
 and research-bundle contracts, transactional repository writes, evidence
 provenance, draft-only ceiling, duplicate protection, idempotency and audit
 remain under transport-neutral names. The application exposes no MCP/OAuth
-route and adds no replacement caller. Partner tracking remains separate and
+route, connector storage or replacement caller. Partner tracking remains separate and
 requires trusted Founder authority before any work.
 
 See RFC-051 and the PR5 operations runbook for the complete retirement and
@@ -72,9 +73,15 @@ Only four purpose-built tools are exposed. Read tools use bounded projections. `
 
 ## Commercial and analytics boundary
 
-The commercial code does not import the private Programme domain or expose Programme/Help/vulnerability fields in its contract. It does not modify public DTOs. Analytics deliberately renders zero verified performance data because the repository contains no qualifying event source; it adds no tracker or user profile.
+The commercial code does not import the private Programme domain or expose Programme/Help/vulnerability fields in its contract. It does not modify public DTOs or add a user profile. The fixed Product Core Commercial view reads current detailed `OutboundClick` attempts and consented commercial events. The separate aggregate report reads success-only `AffiliateOutboundClickDaily` history. Their time coverage and semantics differ, so the two totals must never be added together.
 
-RFC-015 remains the controlling authority. CRM `APPROVED` is neither an active affiliate record nor route readiness. The kill switch, jurisdiction decision, agreement, exact identity/domain/licence, programme, offer, tracking and bonus checks remain independently cumulative and fail-closed.
+Neither source establishes registrations, FTDs, revenue or commission. The Commercial reporting directory makes that outcome-data absence explicit without describing verified click accounting as empty.
+
+CRM `APPROVED` is neither an active Partner route nor public readiness. Trusted
+GEO must resolve one exact `MarketActivation`; its factual Partner, Casino,
+route, offer, tracking, destination, legal and health conditions remain
+cumulative and fail closed alongside the independent kill switch. CRM does not
+enter that permission chain.
 
 ## Failure and rollback
 
@@ -87,15 +94,18 @@ Rollback is a code rollback plus, only before Production adoption and under sepa
 - Admin supports live provider execution only when `OPENAI_API_KEY` already exists server-side; no key is requested or stored.
 - The existing role model has no formal Founder role. CRM approval records the authenticated staff actor and never labels that action a Founder decision. A future Founder decision requires its own explicit evidence/event; Founder identity remains an organisational control.
 - Canonical identity linking is represented in the data model but not exposed as a general picker in this first Admin screen.
-- Analytics remains empty until real aggregate affiliate events exist.
-- No activation executor exists in this workstream by design.
-- ChatGPT supports CIMD and DCR. OpenAI prefers CIMD where supported but continues to support DCR; this bounded upgrade retains DCR to avoid introducing a second client-identification architecture. DCR registers only an allowlisted public web client with no secret, client-credentials scopes or Commercial authority.
-- The bridge does not ingest mailboxes or browse the web itself. ChatGPT Work supplies bounded evidence claims/provenance gathered through separately authorised Work connectors.
-- OAuth client/token revocation is protocol-based; the first bridge does not add a separate Admin client-management screen.
-- Migrations `0021_partner_ops_work_bridge_01` and `0022_better_auth_17_schema_upgrade` are additive and must not be applied to Production without a separate Founder GO. Production remains through 0020.
+- Detailed and aggregate click surfaces have different coverage and cannot be combined into a single total.
+- No CRM activation endpoint or button exists; canonical Partner tracking registration and exact `MarketActivation` remain separate, Founder-authority-gated capabilities.
+- The retired MCP/OAuth bridge, DCR surface and connector storage are historical only and must not be recreated.
+- The active bounded research path does not ingest mailboxes or browse the web; evidence enters through the separately authorised human/provider boundary.
+- The immutable `0021`–`0023` migrations remain replay history; all 41 migrations through applied cleanup migration `0041` are present in Production. Do not re-run PR6 cleanup.
 
-## Verification evidence
+## Historical verification evidence
+
+The results below are dated delivery evidence. Current canonical and
+Production verification is maintained in `docs/CURRENT_STATE.md` and the
+technical baseline; these historical counts are not current release commands.
 
 The no-key Commercial Ops suite passes 20/20 and the complete agents package passes 43/43, including the committed 18-case Partner Operations safety corpus. One authorised non-personal live smoke completed as `partner-operations / COMPLETED / REVIEW` with explicit bulk `gpt-5.6-luna`, one request, 1,461 input tokens, 331 output tokens, 1,792 total tokens and a `$0.003447` conservative upper bound. It kept the empty relationship claim `UNKNOWN`, requested evidence, proposed no external action and had no CRM/database capability.
 
-**DETECTED (PARTNER-OPS-WORK-BRIDGE-FINAL-01 candidate, 2026-08-20):** a clean Node 24 `npm ci` resolves the aligned 1.7.1 stack with zero audit findings. The dedicated MCP contract/auth/protocol/structural suite passes 27/27. The disposable-PostgreSQL MCP suite passes 9/9, covering protected access/refresh storage, grant-bound resources, provider-backed verification, expiry, live session/staff permission, rotation, replay/concurrency, revocation, rate limits and transactional CRM cases. Commercial Ops passes 24/24; auth passes 50/50; auth-comms/Programme-auth passes 41/41; the full Programme regression passes 120/120; Agent Core passes 43/43; and the dedicated Commercial MCP/Admin browser suite passes 5/5. The complete CI browser command passes 131 tests with three existing conditional skips, followed by 11/11 Programme browser tests. The expanded typography browser contract passes 3/3 across Casinos and Bonuses at 360, 375, 390, 412, 430, 768, 1024 and 1440 pixels. Prisma validation, aggregate quality, a clean 22-migration PostgreSQL replay, the exact 0020→0021→0022 staged upgrade with User/Account/Admin/Commercial preservation, unsupported-provider refusal, build-secret scanning of 796 browser-deliverable files, and the Production build pass. These checks do not authorise merge, deployment, Production migration or feature enablement.
+**DETECTED HISTORICAL (PARTNER-OPS-WORK-BRIDGE-FINAL-01 candidate, 2026-08-20):** a clean Node 24 `npm ci` resolves the aligned 1.7.1 stack with zero audit findings. The dedicated MCP contract/auth/protocol/structural suite passes 27/27. The disposable-PostgreSQL MCP suite passes 9/9, covering protected access/refresh storage, grant-bound resources, provider-backed verification, expiry, live session/staff permission, rotation, replay/concurrency, revocation, rate limits and transactional CRM cases. Commercial Ops passes 24/24; auth passes 50/50; auth-comms/Programme-auth passes 41/41; the full Programme regression passes 120/120; Agent Core passes 43/43; and the dedicated Commercial MCP/Admin browser suite passes 5/5. The complete CI browser command passes 131 tests with three existing conditional skips, followed by 11/11 Programme browser tests. The expanded typography browser contract passes 3/3 across Casinos and Bonuses at 360, 375, 390, 412, 430, 768, 1024 and 1440 pixels. Prisma validation, aggregate quality, a clean 22-migration PostgreSQL replay, the exact 0020→0021→0022 staged upgrade with User/Account/Admin/Commercial preservation, unsupported-provider refusal, build-secret scanning of 796 browser-deliverable files, and the Production build pass. These checks did not authorise merge, deployment, Production migration or feature enablement.

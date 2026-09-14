@@ -87,6 +87,10 @@ RFC-051. Historical 10 September 2026 MCP release evidence remains in the
 original release records and RFC-027; it is not a current invocation
 instruction.
 
+Applied migration `0041_commercial_core_legacy_connector_cleanup` removes the
+retired connector storage. It does not change this internal service,
+MarketActivation or `/r`, and must not be re-run.
+
 ## Verification
 
 Run:
@@ -94,8 +98,7 @@ Run:
 - `npm run commercial-core:pr5:test` for authority, URL, legal, idempotency,
   rollback, audit, public action, redirect, GB and media independence;
 - `npm run commercial-research:postgres-test` against disposable CI PostgreSQL
-  for neutral CRM and tracking persistence; and
-- `npm run commercial-core:pr5:projection` for read-only Production state.
+  for neutral CRM and tracking persistence.
 
-Never run a Production registration as a PR5 smoke. PR5 has no Production
-mutation authority.
+Never run a Production registration as a cleanup smoke. PR5/PR6 cleanup has no
+tracking-registration mutation authority.

@@ -10,8 +10,8 @@ sevenbet-next/
 ├── data/             Local JSON data
 ├── docs/             Product, implementation, and baseline documentation
 ├── lib/              Auth, CMS, Programme slices, media, affiliate and public-domain logic
-├── prisma/           Prisma schema and 37 ordered SQL migrations in the candidate
-├── public/           158 public files in the candidate
+├── prisma/           Prisma schema and 41 ordered SQL migrations
+├── public/           89 current public files
 ├── scripts/          Admin bootstrap, integrity, smoke and visual-QA scripts
 ├── tests/            Node tests and Playwright browser tests
 ├── .github/          Required CI, scheduled smoke, CODEOWNERS, PR template and Dependabot
@@ -26,32 +26,32 @@ sevenbet-next/
 | Route category | Detected scope |
 | --- | --- |
 | Public/non-admin page routes | 35 `page.tsx` files, including dynamic casino, learning, responsible-gambling and unsubscribe routes. |
-| Admin page routes | 44 `page.tsx` files under `app/admin/`; 41 are in `(protected)` and `/admin/login` is public. |
-| API route handlers | 125 `route.ts` files under `app/api/`: auth, administrative CMS/affiliate/media/programme/customer/email, consented analytics, Contact, Cron, public resources, legacy progress and active-control handlers. |
-| Non-API route handlers | Nine handlers: OAuth metadata/resource compatibility, `/go/[slug]`, `/r/[slug]`, `/partner-creatives/[creativeId]/frame` and `/llms.txt`. Some compatibility surfaces intentionally return retired status. |
+| Admin page routes | 42 `page.tsx` files under `app/admin/`; 41 are in `(protected)` and `/admin/login` is public. |
+| API route handlers | 116 `route.ts` files under `app/api/`: auth, administrative CMS/affiliate/media/programme/customer/email, consented analytics, Contact, Cron, public resources, legacy progress and active-control handlers. |
+| Non-API route handlers | Four handlers: `/go/[slug]`, `/r/[slug]`, `/partner-creatives/[creativeId]/frame` and `/llms.txt`. MCP and operational OAuth compatibility routes are absent. |
 | Metadata routes | `robots.ts` and `sitemap.ts`. |
 
 Route groups do not affect URLs: `(protected)` is an admin implementation grouping. The generic `/admin/[section]` and generic admin/public API resources are dynamic handlers; they are not evidence that every possible entity/resource is implemented.
 
 ## Repository statistics and counting rules
 
-The counts use the complete 11 September RFC-046 candidate, including its new
-files, and exclude `.git/`, dependencies, generated/build/test output, caches
-and `tsconfig.tsbuildinfo`. Source files include `.ts`, `.tsx`, `.mjs`, `.cjs`,
-`.prisma`, and migration `.sql` across the repository, including the isolated
-`agents/` package and tests. Candidate counts are not deployment evidence.
+The counts use current canonical main and exclude `.git/`, dependencies,
+generated/build/test output, caches and `tsconfig.tsbuildinfo`. Source files
+include `.ts`, `.tsx`, `.mjs`, `.cjs`, `.prisma`, and migration `.sql` across
+the repository, including the isolated `agents/` package and tests. Production
+migration state is verified separately.
 
 | Measure | Count / result |
 | --- | --- |
-| Active repository files under the scan exclusions | 2,388 |
-| Source files (`.ts`, `.tsx`, `.mjs`, `.cjs`, `.prisma`, migration `.sql`) | 1,146 |
-| Test/spec files under `tests/` | 220 |
-| Prisma migrations | 37 |
-| Application page routes | 79 |
-| Admin page routes | 44 |
-| API route handlers | 125 |
-| Public files | 158 |
-| Prisma models | 116 |
+| Tracked repository files under the scan exclusions | 2,356 |
+| Source files (`.ts`, `.tsx`, `.mjs`, `.cjs`, `.prisma`, migration `.sql`) | 1,153 |
+| Test/spec files under `tests/` | 228 |
+| Prisma migrations | 41 |
+| Application page routes | 77 |
+| Admin page routes | 42 |
+| API route handlers | 116 |
+| Public files | 89 |
+| Prisma models | 109 |
 | Prisma enums | 99 |
 | Languages | TypeScript/TSX, JavaScript (MJS/CJS), SQL, Prisma schema language, CSS, JSON, Markdown |
 | Frameworks | Next.js App Router, React |

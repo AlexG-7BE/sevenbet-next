@@ -4,19 +4,43 @@
 **Evidence date:** 14 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (current Founder authority):** `313b18bfff5db98d7e66b16088ec3ed8537fc299`
-**Verified post-release runtime baseline SHA:** `313b18bfff5db98d7e66b16088ec3ed8537fc299`
-**Verified post-release runtime deployment:** Ready; `dpl_Ethqm2TdoiCDvKoEF5rVZUdiR8o7`
+**Canonical Production source at this reconciliation checkpoint:** `2424a5dd9061aa07e09764cd7b6a5dee70c64192`
+**Verified post-release runtime baseline SHA:** `2424a5dd9061aa07e09764cd7b6a5dee70c64192`
+**Verified post-release runtime deployment:** Ready; `dpl_3YX4SgWavLDzbLbMgv4T8ugvVRcH`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Commercial Core Simplification PR5 — complete and live
+## Final technical-cleanup baseline — current
+
+**DETECTED IN CURRENT MAIN AND PRODUCTION, 14 September 2026:** the repository
+declares 109 Prisma models and 41 ordered migrations. Production reports all 41
+migrations applied; `0041_commercial_core_legacy_connector_cleanup` is complete
+and the eight retired connector tables are absent. MCP/operational OAuth
+transport and storage are retired and must not be recreated or reconnected.
+
+Programme completion is canonical persisted state. Completing Mission 10 sets
+`ProgramEnrollment.completedAt` to the exact Mission 10 completion timestamp;
+replay repairs only a missing enrollment timestamp and rejects a conflicting
+one. The fixed Programme dashboard and observer read persisted enrollment and
+Mission state. The former `vercel-product-analytics.ts`, Vercel Programme event
+taxonomy and `analytics:programme` aggregate report are retired historical
+compatibility, not current Product Core inputs.
+
+The current closed Product Core dictionary contains 22 events. `/r` authority
+remains independent of analytics. One runtime attribution writer stores the
+canonical detailed `OutboundClick`, its `AnalyticsEvent` projections and, for
+a successful outcome only, the `AffiliateOutboundClickDaily` projection in one
+transaction. Historical aggregate rows remain intact; detailed and aggregate
+click totals overlap for new successful traffic and must never be added.
+
+Customer / Analytics / Lifecycle acceptance remains `6/6 PASS`.
+
+## Commercial Core Simplification PR5 and PR6 — complete and live
 
 **DETECTED IN CURRENT MAIN / CURRENT FOUNDER AUTHORITY, 14 September 2026:**
-PR5 merged at `313b18bfff5db98d7e66b16088ec3ed8537fc299` and deployment
-`dpl_Ethqm2TdoiCDvKoEF5rVZUdiR8o7` is the live baseline. RFC-051 physically
+PR5 merged at `313b18bfff5db98d7e66b16088ec3ed8537fc299`. RFC-051 physically
 removes the Commercial/Media MCP routes, operational OAuth discovery/DCR/token/
 consent/revocation surfaces, MCP server/config/security/rate-limit modules,
 connector Admin pages, obsolete one-shot caller/smoke code, transport tests and
@@ -47,10 +71,12 @@ zero writes. The 81 canonical routes, 39 `ACTIVE + HEALTHY` routes, six legacy
 canonical public-runtime or migration file differs from main. Route-state
 digest:
 `4764a59536fef067eed786b82f214ab55f3126d00dd2359b75eba7603f73600c`.
-Historical connector storage is populated and old MCP research audit activity
-was recorded through 11 September; rate-bucket activity exists through 13
-September. The named current caller cannot be attributed without request
-telemetry: `MCP_RECENT_USAGE_UNKNOWN`.
+The historical PR5 projection found populated connector storage and old MCP
+research audit activity through 11 September; rate-bucket activity existed
+through 13 September. At that checkpoint the named caller could not be
+attributed without request telemetry: `MCP_RECENT_USAGE_UNKNOWN`. PR6 later
+removed only the reviewed connector storage and compatibility objects; it did
+not rewrite that audit or release evidence.
 The aggregate-only Media history projection observed 175 plans and 56 batches:
 157 plan roots and 52 batch roots use the legacy source, 0 records use
 `AUTOMATION`, and 0 records contain an unexpected/missing source. No raw JSON
@@ -60,10 +86,13 @@ or destination was returned.
 `B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3`. They must not be
 recreated or reconnected.
 
-PR5 performed no Production schema/data mutation. Eight inert historical
-OAuth/rate-limit models plus compatibility objects remained for separately
-authorised PR6 review. See [RFC-051](06_RFC/RFC-051-MCP-Extraction-and-Retirement.md)
-and the [PR5 runbook](06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md).
+PR5 performed no Production schema/data mutation. PR6 subsequently applied
+migration `0041_commercial_core_legacy_connector_cleanup`, removed the exact
+eight inert OAuth/rate-limit tables and reviewed compatibility objects, and
+preserved identity, session, audit and immutable migration history. Do not
+re-run the cleanup. See [RFC-051](06_RFC/RFC-051-MCP-Extraction-and-Retirement.md),
+the [PR5 runbook](06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md)
+and the [PR6 runbook](06_Operations/Commercial-Core-PR6-Legacy-Cleanup.md).
 
 ## Commercial Core Simplification PR4 — affiliate lifecycle collapse merged
 
@@ -97,7 +126,8 @@ changes or technical changes. Production mutation was not performed. See
 
 **DETECTED:** PR4 merged to `main` as PR #282 at
 `d0d3cccb62f5e3ba15f6fabc049260a03ac1c570`. This PR5 review did not deploy
-or independently reverify a newer Production application SHA.
+or independently reverify a newer Production application SHA at that
+checkpoint; the current release identity is recorded at the top of this file.
 
 ## Legacy demo Casino retirement — merged; Production deletion not executed
 
@@ -188,9 +218,10 @@ and its old opportunity reference made optional.
 Migration `0039_commercial_core_partner_relationship` was additive and created
 no rows or backfill. Existing legal, GB, trusted-GEO, URL/network safety,
 route-verification, rollback, duplicate/idempotency and controlled `/r`
-protections remain in the canonical application path. Commercial MCP remains a
-transitional authenticated/rate-limited transport and delegates registration;
-the bounded GoldenPlay verification record lives at the application boundary.
+protections remain in the canonical application path. At that PR2 checkpoint,
+Commercial MCP was a transitional authenticated/rate-limited transport that
+delegated registration; PR5/PR6 later retired its transport and storage. The
+bounded GoldenPlay verification record lives at the application boundary.
 Thirty-nine stored `ACTIVE + HEALTHY` routes, governed actions and controlled
 redirects remained unchanged; CRM remained operational and non-authoritative;
 and MCP tracking mutation continued to fail closed without trusted Founder
@@ -215,11 +246,12 @@ Production and therefore does not claim a live PR #279 deployment.
 **VERIFIED IN PRODUCTION, 12 September 2026:** PR #269 merged normally as
 `e4268c9031cdf92704c529225ef71edcb16d20a5`; Ready deployment
 `dpl_GnfsYABERTGLeQTDzKkNfdfg41xw` owns `b4gamble.com`. Additive migration
-`0037_customer_data_analytics_lifecycle_core` is applied with all 37 ordered
-migrations present. Analytics is enabled and the Core's customer, consent,
-Programme observation, commercial attribution, fixed-dashboard and durable
-email-ledger boundaries passed their release evidence. Aggregate Production
-sanity found three canonical users, zero normalized-email duplicates, five
+`0037_customer_data_analytics_lifecycle_core` was applied with all 37 ordered
+migrations present at that release checkpoint. Analytics is enabled and the
+Core's customer, consent, Programme observation, commercial attribution,
+fixed-dashboard and durable email-ledger boundaries passed their release
+evidence. Aggregate Production sanity found three canonical users, zero
+normalized-email duplicates, five
 active English templates, no campaigns/messages/provider events and no
 integrity defect; no email addresses were emitted.
 
@@ -302,7 +334,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public legal implementation | **READY** | Current GB public legal copy/consent/disclosure implementation is in Production for the approved scope. |
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
-| Commercial MCP / operational OAuth | **RETIRED — EXTERNAL CONNECTIONS REMOVED** | PR5 removed the server/provider/routes without a replacement transport. Founder Office removed `B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3`; neither may be recreated or reconnected. |
+| Commercial MCP / operational OAuth | **RETIRED — TRANSPORT, EXTERNAL CONNECTIONS AND STORAGE REMOVED** | PR5 removed the server/provider/routes without a replacement transport. Founder Office removed `B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3`; PR6 applied migration 0041 and removed the retired connector storage. None may be recreated or reconnected. |
 | Partner tracking registration | **RFC-048 WRITE CORE LIVE; INTERNAL-ONLY AFTER PR5** | CRM/static/lifecycle state is non-authoritative and canonical writes require non-serializable trusted Founder provenance. PR5 removes the old transport caller and adds no new authority boundary. |
 | Production DB reliability | **READY IN PRODUCTION** | The one-connection runtime and narrow secret-safe transient handling remain; transport-specific availability code/tests are retired. |
 | Commercial partner activation | **READY IN PRODUCTION — 39 STORED ACTIVE + HEALTHY ROUTES** | PR2 acceptance verified all 39 stored active/healthy routes unchanged. RFC-042 remains the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |
@@ -314,9 +346,13 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial creative formats | **HISTORICAL COMPATIBILITY / TEST VOCABULARY** | Format parsers and pre-retirement tests may remain inert. Active public compositions accept operator logos or explicitly B4GAMBLE-owned editorial art, never promotional creative formats. |
 | Media ingestion / Media Operations | **PROMOTIONAL OPERATIONS RETIRED; LEGACY HISTORY READABLE; LOGO AND B4GAMBLE EDITORIAL ASSETS ONLY** | Active Admin media is limited to canonical logos and authenticated `b4gambleOwned` editorial social imagery. PR5 removes the remaining MCP/DCR 410 stubs and adds only an exact persisted-history source decoder; retired database states remain constrained. |
 | Public language / market presentation | **ELEVEN LOCALES LIVE IN PRODUCTION** | One language-only registry owns `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` across Home and Programme. A language route or preference changes copy only; trusted request GEO remains the independent market authority. |
-| Customer data / analytics / lifecycle | **CORE VERIFIED; RESEND ACTIVE IN PRODUCTION** | PR #269 and migration 0037 remain verified. Founder processing authority, provider configuration, signed webhook controls and all six controlled acceptance checks pass; lifecycle delivery is enabled with zero non-fixture acceptance messages. |
+| Customer data / analytics / lifecycle | **6/6 PASS; RESEND ACTIVE IN PRODUCTION** | The closed 22-event Product Core, canonical persisted Programme completion, single transactional click-attribution writer, fixed dashboards, provider configuration, signed webhook controls and all six controlled acceptance checks pass; lifecycle delivery is enabled with zero non-fixture acceptance messages. |
 
-### Recent implementation state
+### Historical implementation chronology
+
+The dated entries below preserve what was known at their checkpoints. Their
+candidate, MCP, migration and deployment language is historical evidence and
+does not override the current baseline above.
 
 **PROPOSED — READ-ONLY PRODUCTION BUILD REMEDIATION, 13 September 2026:** the
 bounded review branch removes the catalog reconciliation and GoldenPlay repair
@@ -855,7 +891,11 @@ with `REJECTED` and `ON_HOLD` terminal/side states where appropriate.
 - may prepare research/evidence, drafts, next actions, evidenced responses/terms and activation packets;
 - cannot send external communications, submit applications, accept terms, set `APPROVED`, set `ACTIVE`, activate tracking, deploy, or mutate Production through the Agent surface.
 
-CRM `APPROVED` is not public commercial authority. `ACTIVE` cannot be produced through ordinary CRM/Agent mutation. RFC-015 readiness, kill switch, AffiliateProgram/Offer/TrackingLink state and public routing remain independent server-authoritative controls.
+CRM `APPROVED` is not public commercial authority. `ACTIVE` cannot be produced
+through ordinary CRM/Agent mutation. Trusted GEO must resolve one exact
+`MarketActivation`; its factual Partner, Casino, route, offer, tracking,
+destination, legal and health conditions fail closed alongside the independent
+kill switch. CRM does not enter that permission chain.
 
 ## Production migration 0020
 
