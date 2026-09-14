@@ -317,6 +317,18 @@ test("Customer Core v1 persists one end-to-end relational lifecycle without exte
     });
     assert.deepEqual((await prisma.outboundClick.findMany({ where: { id: { in: clickIds } }, orderBy: { state: "asc" }, select: { state: true, blockedReason: true, sourcePage: true } })).map((row) => row.state).sort(), ["BLOCKED", "SUCCEEDED"]);
     assert.equal(await prisma.analyticsEvent.count({ where: { outboundClickId: { in: clickIds } } }), 4);
+    const aggregateClick = await prisma.affiliateOutboundClickDaily.findFirstOrThrow({
+      where: {
+        casinoId: casino.id,
+        countryCode: "GB",
+        redirectSlugId: redirect.id,
+        affiliateOfferId: offer.id,
+        trackingLinkId: link.id,
+      },
+    });
+    assert.equal(aggregateClick.clickCount, 1);
+    assert.equal(aggregateClick.day.toISOString(), `${now.toISOString().slice(0, 10)}T00:00:00.000Z`);
+    assert.equal(aggregateClick.lastClickedAt.toISOString(), now.toISOString());
     const persistedClickJson = JSON.stringify(await prisma.outboundClick.findMany({ where: { id: { in: clickIds } } }));
     assert.doesNotMatch(persistedClickJson, /never-persist|must-not-persist|partner\.example/i);
 
@@ -469,6 +481,7 @@ test("Customer Core v1 persists one end-to-end relational lifecycle without exte
     await prisma.analyticsSession.deleteMany({ where: { anonymousId } }).catch(() => undefined);
     await prisma.consentEvent.deleteMany({ where: { OR: [{ userId }, { anonymousId }] } }).catch(() => undefined);
     await prisma.user.deleteMany({ where: { id: { in: [userId, duplicateUserId] } } }).catch(() => undefined);
+    if (casinoId) await prisma.affiliateOutboundClickDaily.deleteMany({ where: { casinoId } }).catch(() => undefined);
     if (redirectSlugId) await prisma.affiliateRedirectSlug.deleteMany({ where: { id: redirectSlugId } }).catch(() => undefined);
     if (trackingLinkId) await prisma.affiliateTrackingLink.deleteMany({ where: { id: trackingLinkId } }).catch(() => undefined);
     if (offerId) await prisma.affiliateOffer.deleteMany({ where: { id: offerId } }).catch(() => undefined);

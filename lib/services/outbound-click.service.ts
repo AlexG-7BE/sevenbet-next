@@ -1,15 +1,10 @@
-import { outboundClickRepository, type OutboundClickStore } from "@/lib/repositories/outbound-click.repository";
+import {
+  outboundClickRepository,
+  outboundClickUtcDay,
+  type OutboundClickStore,
+} from "@/lib/repositories/outbound-click.repository";
 
 import { ValidationError } from "./service-error";
-
-export interface RecordOutboundClickInput {
-  clickedAt?: Date;
-  casinoId: string;
-  countryCode: string;
-  redirectSlugId: string;
-  affiliateOfferId: string;
-  trackingLinkId: string;
-}
 
 export interface OutboundClickReportInput {
   from?: string | null;
@@ -20,12 +15,8 @@ export interface OutboundClickReportInput {
   now?: Date;
 }
 
-function utcDay(value: Date) {
-  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
-}
-
 function dateOnly(value: string | null | undefined, field: string, fallback: Date) {
-  if (!value) return utcDay(fallback);
+  if (!value) return outboundClickUtcDay(fallback);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new ValidationError(`${field} must use YYYY-MM-DD`);
   const parsed = new Date(`${value}T00:00:00.000Z`);
   if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) throw new ValidationError(`${field} is not a valid calendar date`);
@@ -41,23 +32,9 @@ function country(value: string) {
 export class OutboundClickService {
   constructor(private readonly store: OutboundClickStore = outboundClickRepository) {}
 
-  record(input: RecordOutboundClickInput) {
-    const clickedAt = input.clickedAt ?? new Date();
-    if (Number.isNaN(clickedAt.getTime())) throw new ValidationError("clickedAt must be valid");
-    return this.store.increment({
-      day: utcDay(clickedAt),
-      clickedAt,
-      casinoId: input.casinoId,
-      countryCode: country(input.countryCode),
-      redirectSlugId: input.redirectSlugId,
-      affiliateOfferId: input.affiliateOfferId,
-      trackingLinkId: input.trackingLinkId,
-    });
-  }
-
   async report(input: OutboundClickReportInput = {}) {
     const now = input.now ?? new Date();
-    const today = utcDay(now);
+    const today = outboundClickUtcDay(now);
     const defaultFrom = new Date(today);
     defaultFrom.setUTCDate(defaultFrom.getUTCDate() - 29);
     const from = dateOnly(input.from, "from", defaultFrom);
@@ -100,23 +77,3 @@ export class OutboundClickService {
 }
 
 export const outboundClickService = new OutboundClickService();
-
-export async function recordOutboundClickBestEffort(
-  input: RecordOutboundClickInput,
-  dependencies: {
-    recorder?: Pick<OutboundClickService, "record">;
-    warn?: (message: string, context: { slugId: string; casinoId: string; countryCode: string }) => void;
-  } = {},
-) {
-  try {
-    await (dependencies.recorder ?? outboundClickService).record(input);
-    return true;
-  } catch {
-    (dependencies.warn ?? console.warn)("affiliate_outbound_click_metric_failed", {
-      slugId: input.redirectSlugId,
-      casinoId: input.casinoId,
-      countryCode: input.countryCode,
-    });
-    return false;
-  }
-}

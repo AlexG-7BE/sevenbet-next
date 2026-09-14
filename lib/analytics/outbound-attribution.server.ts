@@ -17,6 +17,11 @@ import {
   readAnalyticsUuid,
   safeReferrerContext,
 } from "@/lib/analytics/identity.server";
+import {
+  incrementOutboundClickDailyProjection,
+  outboundClickUtcDay,
+  type OutboundClickIdentity,
+} from "@/lib/repositories/outbound-click.repository";
 
 export type OutboundAttributionInput = {
   clickId: string;
@@ -41,6 +46,32 @@ export function safeOutboundSlug(value: string) {
 export function safeOutboundPlacement(value: string | null) {
   const placement = value?.trim().toUpperCase();
   return placement && /^[A-Z0-9_]{1,64}$/.test(placement) ? placement : null;
+}
+
+function successfulAggregateIdentity(input: OutboundAttributionInput): OutboundClickIdentity | null {
+  if (input.state !== "SUCCEEDED") return null;
+  const dimensions = {
+    casinoId: input.casinoId,
+    countryCode: input.countryCode,
+    redirectSlugId: input.redirectSlugId,
+    affiliateOfferId: input.affiliateOfferId,
+    trackingLinkId: input.trackingLinkId,
+  };
+  for (const [name, value] of Object.entries(dimensions)) {
+    if (!value) throw new Error(`[analytics] successful outbound attribution missing ${name}`);
+  }
+  if (!/^[A-Z]{2}$/.test(dimensions.countryCode!)) {
+    throw new Error("[analytics] successful outbound attribution has invalid countryCode");
+  }
+  return {
+    day: outboundClickUtcDay(input.attemptedAt),
+    clickedAt: input.attemptedAt,
+    casinoId: dimensions.casinoId!,
+    countryCode: dimensions.countryCode!,
+    redirectSlugId: dimensions.redirectSlugId!,
+    affiliateOfferId: dimensions.affiliateOfferId!,
+    trackingLinkId: dimensions.trackingLinkId!,
+  };
 }
 
 export async function recordOutboundAttribution(input: OutboundAttributionInput) {
@@ -97,6 +128,7 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
         select: { program: { select: { networkId: true } } },
       }).then((offer) => offer?.program.networkId ?? null)
     : null;
+  const aggregateIdentity = successfulAggregateIdentity(input);
   const common = {
     environment,
     trafficKind,
@@ -115,8 +147,8 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
     placement: consented ? placement : null,
     outboundClickId: input.clickId,
   } as const;
-  await prisma.$transaction([
-    prisma.outboundClick.create({
+  await prisma.$transaction(async (transaction) => {
+    await transaction.outboundClick.create({
       data: {
         id: input.clickId,
         state: input.state,
@@ -140,8 +172,8 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
         redirectSlugId: input.redirectSlugId,
         trackingLinkId: input.trackingLinkId,
       },
-    }),
-    prisma.analyticsEvent.createMany({
+    });
+    await transaction.analyticsEvent.createMany({
       data: [
         {
           id: randomUUID(),
@@ -160,17 +192,26 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
         },
       ],
       skipDuplicates: true,
-    }),
-  ]);
+    });
+    if (aggregateIdentity) {
+      await incrementOutboundClickDailyProjection(transaction, aggregateIdentity);
+    }
+  });
   return input.clickId;
 }
 
-export async function recordOutboundAttributionBestEffort(input: OutboundAttributionInput) {
+export async function recordOutboundAttributionBestEffort(
+  input: OutboundAttributionInput,
+  dependencies: {
+    recorder?: typeof recordOutboundAttribution;
+    warn?: (message: string, context: { analytics_failure_category: "database"; outbound_state: OutboundAttributionInput["state"] }) => void;
+  } = {},
+) {
   try {
-    await recordOutboundAttribution(input);
+    await (dependencies.recorder ?? recordOutboundAttribution)(input);
     return true;
   } catch {
-    console.warn("[analytics] outbound attribution failed", {
+    (dependencies.warn ?? console.warn)("[analytics] outbound attribution failed", {
       analytics_failure_category: "database",
       outbound_state: input.state,
     });

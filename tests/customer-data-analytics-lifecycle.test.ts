@@ -25,7 +25,11 @@ import {
   consumeAnalyticsRateLimit,
   deriveAnalyticsRateLimitKey,
 } from "../lib/analytics/rate-limit.server";
-import { safeOutboundPlacement, safeOutboundSlug } from "../lib/analytics/outbound-attribution.server";
+import {
+  recordOutboundAttributionBestEffort,
+  safeOutboundPlacement,
+  safeOutboundSlug,
+} from "../lib/analytics/outbound-attribution.server";
 import { customerWhere } from "../lib/customers/admin.server";
 import { normalizeCustomerEmail } from "../lib/customers/auth-hooks.server";
 import { campaignAudienceWhere, campaignRecipientIdempotencyKey } from "../lib/email/campaigns.server";
@@ -57,6 +61,31 @@ import {
 import { POST as postEmailUnsubscribe } from "../app/api/email/unsubscribe/route";
 
 const secret = "customer-analytics-unit-test-secret-32";
+
+test("outbound attribution failure remains best-effort and logs no click dimensions", async () => {
+  const warnings: Array<{ message: string; context: unknown }> = [];
+  const result = await recordOutboundAttributionBestEffort({
+    clickId: "11111111-1111-4111-8111-111111111111",
+    request: new Request("https://b4gamble.com/r/verified-casino"),
+    requestedSlug: "verified-casino",
+    attemptedAt: new Date("2026-09-14T12:00:00.000Z"),
+    state: "SUCCEEDED",
+    countryCode: "GB",
+    casinoId: "22222222-2222-4222-8222-222222222222",
+    affiliateOfferId: "33333333-3333-4333-8333-333333333333",
+    redirectSlugId: "44444444-4444-4444-8444-444444444444",
+    trackingLinkId: "55555555-5555-4555-8555-555555555555",
+  }, {
+    recorder: async () => { throw new Error("database URL and click identifiers must never escape"); },
+    warn: (message, context) => warnings.push({ message, context }),
+  });
+  assert.equal(result, false);
+  assert.deepEqual(warnings, [{
+    message: "[analytics] outbound attribution failed",
+    context: { analytics_failure_category: "database", outbound_state: "SUCCEEDED" },
+  }]);
+  assert.doesNotMatch(JSON.stringify(warnings), /database URL|11111111|22222222|verified-casino/i);
+});
 
 test("analytics identifiers are stable, signed, and reject tampering", () => {
   const anonymousId = newAnalyticsUuid();

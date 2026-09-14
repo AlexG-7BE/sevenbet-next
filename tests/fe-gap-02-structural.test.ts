@@ -79,7 +79,7 @@ test("commercial actions use the direct governed route and neutral managed recov
   assert.doesNotMatch(unavailable, /CommercialHandoffConfirmation|You are leaving B4GAMBLE/);
   assert.match(redirect, /recoveryUrl\.pathname = "\/outbound\/unavailable"/);
   assert.match(redirect, /NextResponse\.redirect\(recoveryUrl, 303\)/);
-  for (const invariant of ["isAffiliateRedirectEnabled", "requestCountrySignalFromHeaders", "affiliateRedirectService.resolve", "safeAffiliateRedirectResponse", "recordOutboundClickBestEffort"]) assert.match(redirect, new RegExp(invariant.replace(".", "\\.")));
+  for (const invariant of ["isAffiliateRedirectEnabled", "requestCountrySignalFromHeaders", "affiliateRedirectService.resolve", "safeAffiliateRedirectResponse", "recordOutboundAttributionBestEffort"]) assert.match(redirect, new RegExp(invariant.replace(".", "\\.")));
   assert.doesNotMatch(redirect, /destinationUrl|trackingUrl|\/casinos|\/bonuses|\/best-offers/);
   assert.match(legacy, /\/outbound\/unavailable/);
 });
