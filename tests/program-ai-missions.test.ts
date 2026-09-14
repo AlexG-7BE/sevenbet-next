@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { ProgrammeAiGuidanceService } from "../lib/programme/application/programme-ai-guidance.service";
 import { ProgrammeAiMissionsService } from "../lib/programme/application/programme-ai-missions.service";
-import { MissionLockedError } from "../lib/programme/domain/programme-errors";
+import { MissionLockedError, ProgrammeStateConflictError } from "../lib/programme/domain/programme-errors";
 import {
   actionAwardKey,
   actionTaskState,
@@ -67,6 +67,8 @@ function fakeUnitOfWork({ legacy = false, m1Incomplete = false }: { legacy?: boo
     programVersionId: "00000000-0000-4000-8000-000000000030",
     currentStepId: "00000000-0000-4000-8000-000000000101",
     timezone: "UTC",
+    startedAt: new Date("2026-08-01T10:00:00.000Z"),
+    completedAt: null as Date | null,
   };
   const steps = Array.from({ length: 10 }, (_, index) => ({
     id: `00000000-0000-4000-8000-${String(index + 100).padStart(12, "0")}`,
@@ -123,6 +125,11 @@ function fakeUnitOfWork({ legacy = false, m1Incomplete = false }: { legacy?: boo
         return saved;
       },
       setEnrollmentCurrentStep: async (_id: string, currentStepId: string) => { enrollment.currentStepId = currentStepId; return enrollment; },
+      completeEnrollmentIfOpen: async (_id: string, completedAt: Date) => {
+        if (enrollment.completedAt) return { count: 0 };
+        enrollment.completedAt = completedAt;
+        return { count: 1 };
+      },
     },
     rewards: {
       recordProgrammeAiMissionXp: async (input: { awardKey: string; xp: number }) => {
@@ -157,7 +164,35 @@ function fakeUnitOfWork({ legacy = false, m1Incomplete = false }: { legacy?: boo
       }),
     },
   };
-  return { unit, progress, xpEvents };
+  return { unit, enrollment, progress, xpEvents, progressEvents };
+}
+
+function readyMissionTen(fake: ReturnType<typeof fakeUnitOfWork>) {
+  const now = new Date("2026-08-11T10:00:00.000Z");
+  fake.progress.set(9, {
+    id: "00000000-0000-4000-8000-000000000009",
+    enrollmentId: fake.enrollment.id,
+    missionNumber: 9,
+    status: "COMPLETED",
+    taskStates: [],
+    draft: null,
+    completedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const definition = programAiMissionRegistry.find((mission) => mission.missionNumber === 10)!;
+  fake.progress.set(10, {
+    id: "00000000-0000-4000-8000-000000000010",
+    enrollmentId: fake.enrollment.id,
+    missionNumber: 10,
+    status: "IN_PROGRESS",
+    taskStates: definition.actions.map((action) => actionTaskState(10, action.id)),
+    draft: null,
+    completedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  });
+  return fake.progress.get(10)!;
 }
 
 test("Missions 02–10 expose exact immutable action and reward contracts", () => {
@@ -174,6 +209,108 @@ test("Missions 02–10 expose exact immutable action and reward contracts", () =
   }
   assert.equal(keys.size, 36);
   assert.equal(40 + programAiMissionRegistry.length * 75, 715);
+});
+
+test("Mission 10 completion sets the enrollment to the exact stable Mission timestamp", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fake = fakeUnitOfWork();
+    readyMissionTen(fake);
+    const service = new ProgrammeAiMissionsService(fake.unit as never);
+    const completedAt = new Date("2026-08-20T09:08:07.654Z");
+
+    const first = await service.complete("user-a", 10, completedAt);
+    const missionCompletedAt = fake.progress.get(10)?.completedAt;
+    assert.equal(first.xpAwarded, 25);
+    assert.equal(missionCompletedAt?.toISOString(), completedAt.toISOString());
+    assert.equal(fake.enrollment.completedAt?.toISOString(), missionCompletedAt?.toISOString());
+
+    const xpEventCount = fake.xpEvents.size;
+    const progressEventCount = fake.progressEvents.size;
+    const replay = await service.complete("user-a", 10, new Date("2026-08-21T10:11:12.000Z"));
+    assert.equal(replay.xpAwarded, 0);
+    assert.equal(fake.enrollment.completedAt?.toISOString(), completedAt.toISOString());
+    assert.equal(fake.progress.get(10)?.completedAt?.toISOString(), completedAt.toISOString());
+    assert.equal(fake.xpEvents.size, xpEventCount);
+    assert.equal(fake.progressEvents.size, progressEventCount);
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
+test("Mission 10 replay reconciles an open enrollment without replaying rewards or events", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fake = fakeUnitOfWork();
+    const mission = readyMissionTen(fake);
+    const canonicalCompletedAt = new Date("2026-08-19T08:07:06.543Z");
+    mission.status = "COMPLETED";
+    mission.completedAt = canonicalCompletedAt;
+    fake.xpEvents.set(completionAwardKey(10), 25);
+    fake.progressEvents.add("programme-ai-v1:m10:complete:progress");
+    const xpEventCount = fake.xpEvents.size;
+    const progressEventCount = fake.progressEvents.size;
+
+    const replay = await new ProgrammeAiMissionsService(fake.unit as never)
+      .complete("user-a", 10, new Date("2026-08-30T00:00:00.000Z"));
+
+    assert.equal(replay.xpAwarded, 0);
+    assert.equal(fake.enrollment.completedAt?.toISOString(), canonicalCompletedAt.toISOString());
+    assert.equal(fake.xpEvents.size, xpEventCount);
+    assert.equal(fake.progressEvents.size, progressEventCount);
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
+test("Mission 10 replay reports an inconsistent completion without inventing a timestamp", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fake = fakeUnitOfWork();
+    const mission = readyMissionTen(fake);
+    mission.status = "COMPLETED";
+    mission.completedAt = null;
+
+    await assert.rejects(
+      () => new ProgrammeAiMissionsService(fake.unit as never).complete("user-a", 10),
+      (error: unknown) => error instanceof ProgrammeStateConflictError
+        && /missing its canonical completion timestamp/.test(error.message),
+    );
+    assert.equal(fake.enrollment.completedAt, null);
+    assert.equal(fake.xpEvents.has(completionAwardKey(10)), false);
+    assert.equal(fake.progressEvents.size, 0);
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
+test("Mission 10 replay reports conflicting canonical timestamps without rewriting either", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fake = fakeUnitOfWork();
+    const mission = readyMissionTen(fake);
+    mission.status = "COMPLETED";
+    mission.completedAt = new Date("2026-08-19T08:07:06.543Z");
+    fake.enrollment.completedAt = new Date("2026-08-19T08:07:06.544Z");
+
+    await assert.rejects(
+      () => new ProgrammeAiMissionsService(fake.unit as never).complete("user-a", 10),
+      (error: unknown) => error instanceof ProgrammeStateConflictError
+        && /conflicts with Mission 10/.test(error.message),
+    );
+    assert.equal(fake.enrollment.completedAt.toISOString(), "2026-08-19T08:07:06.544Z");
+    assert.equal(mission.completedAt.toISOString(), "2026-08-19T08:07:06.543Z");
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
 });
 
 test("Programme Home projects exact Mission 01 progress and first Review distance", async () => {
@@ -338,6 +475,7 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
         service.complete("user-a", mission.missionNumber),
       ]);
       assert.deepEqual(duplicateCompletion.map((result) => result.xpAwarded).sort((a, b) => a - b), [0, 25]);
+      if (mission.missionNumber < 10) assert.equal(fake.enrollment.completedAt, null);
     }
     const home = await service.home("user-a");
     assert.equal(home.totalXp, 715);
@@ -348,6 +486,7 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
     assert.deepEqual(home.reviews.map((review) => review.status), ["available", "available", "available"]);
     assert.equal(home.nextReview, null);
     assert.equal(fake.xpEvents.size, 37);
+    assert.equal(fake.enrollment.completedAt?.toISOString(), fake.progress.get(10)?.completedAt?.toISOString());
   } finally {
     if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
     else process.env.PROGRAM_AI_V1_ENABLED = previous;
