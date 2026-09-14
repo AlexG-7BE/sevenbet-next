@@ -340,6 +340,10 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
         "prisma/migrations/0040_commercial_core_exact_routes_geo_simplification/migration.sql",
         "prisma/schema.prisma",
       ],
+      [
+        "prisma/migrations/0041_commercial_core_legacy_connector_cleanup/migration.sql",
+        "prisma/schema.prisma",
+      ],
       ["prisma/schema.prisma"],
     ];
     assert.ok(approvedExactSchemaChangeSets.some(

@@ -1,9 +1,12 @@
 # Commercial Core PR5 — MCP Extraction and Retirement
 
-**Status:** review-only release plan
-**Authority:** RFC-051 and the 14 September 2026 Founder instruction
-**Not authorised here:** merge, deploy, Production mutation, schema cleanup or
-external connector removal
+**Status:** complete and live
+**Authority:** RFC-051 and the current 14 September 2026 Founder instruction
+**Production baseline:** merge/main
+`313b18bfff5db98d7e66b16088ec3ed8537fc299`; deployment
+`dpl_Ethqm2TdoiCDvKoEF5rVZUdiR8o7`
+**Boundary:** PR5 performed no Production schema/data mutation and did not
+authorise PR6 cleanup
 
 ## Outcome
 
@@ -12,16 +15,9 @@ retaining neutral Commercial CRM research, canonical Partner tracking,
 MarketActivation/public action, audit, and direct logo/editorial media
 capabilities. It adds no replacement public transport.
 
-`B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3` are external custom
-connections and are not managed by repository code. Their removal is still
-required:
-
-`EXTERNAL_CONNECTOR_RETIREMENT_REQUIRED`
-
-External connector removal is **not complete** in this review candidate.
-Founder Office inspection detected both registrations. The current Production
-Media endpoint already responds `410 MEDIA_OPERATIONS_RETIRED`; the external
-`B4GAMBLE Media GEO3` connection nevertheless remains connected.
+`B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3` were external custom
+connections not managed by repository code. Founder Office subsequently
+removed both registrations. They must not be recreated or reconnected.
 
 ## PR summary
 
@@ -63,10 +59,10 @@ remain independent and unchanged.
 | tracking core is CRM/OAuth independent | `DETECTED` | source graph and authority tests |
 | public runtime files differ from main | `DETECTED: NO` | projector comparison |
 | schema migration exists in PR5 | `DETECTED: NO` | migration diff and test |
-| named Commercial connection remains external | `DETECTED` | Founder instruction/external inspection |
-| `B4GAMBLE Media GEO3` remains externally connected | `DETECTED` | Founder Office external inspection |
+| named Commercial connection was external during PR5 review | `DETECTED — HISTORICAL` | Founder instruction/external inspection |
+| `B4GAMBLE Media GEO3` was externally connected during PR5 review | `DETECTED — HISTORICAL` | Founder Office external inspection |
 | Production Media MCP endpoint returns `410 MEDIA_OPERATIONS_RETIRED` | `DETECTED` | read-only external tool result |
-| external connector removal performed | `NOT COMPLETED` | prohibited in review-only scope |
+| both external connector registrations removed | `COMPLETED` | current explicit Founder instruction |
 | legacy Media history exists | `DETECTED` | aggregate-only Production projection |
 | current named-connector request usage | `UNKNOWN` | no attributable request telemetry |
 
@@ -78,19 +74,22 @@ dependencies, generated output, build artifacts, caches, reports and
 `tsconfig.tsbuildinfo` excluded; the Git index separately identified the base
 and PR5 changes.
 
-Historical MCP references remain only where truth requires them: immutable
-migrations/fixtures, release records, RFC history, inert schema model names,
-the PR5 projection/retirement and negative-independence assertions, migration
-baseline names, transitive Agent SDK lock data, and an unrelated Refero design
-skill's developer-tool instructions. Neither Agent/Refero remnant enters the
+At the PR5 head, historical MCP references remained only where truth required
+them: immutable migrations/fixtures, release records, RFC history, inert schema
+model names, the PR5 projector/retirement assertions, migration baseline names,
+transitive Agent SDK lock data, and unrelated Refero developer-tool guidance.
+PR6 removes the inert models and obsolete PR5 projector from active tooling but
+preserves the immutable history. Neither Agent/Refero remnant enters the
 application runtime or exposes a B4GAMBLE connection.
 
 ## Read-only Production projection
 
-Run `npm run commercial-core:pr5:projection`. The command refuses an unexpected
-database fingerprint, enters a repeatable-read transaction, sets it read-only
-and verifies the database reports read-only state. It emits only counts,
-bounded timestamps and hashes.
+The PR5 candidate used `npm run commercial-core:pr5:projection`. It refused an
+unexpected database fingerprint, entered a repeatable-read transaction, set it
+read-only and verified the database reported read-only state. It emitted only
+counts, bounded timestamps and hashes. PR6 removes that historical projector
+from active package tooling because its generated Prisma delegates no longer
+exist; the evidence below remains the immutable PR5 review record.
 
 Evidence refreshed on 14 September 2026 UTC; the exact capture timestamp and
 head are retained in the PR review record:
@@ -175,30 +174,16 @@ Therefore the connector-specific conclusion is:
 
 Do not interpret UNKNOWN as no usage. Assume a current caller may exist.
 
-## Release sequence
+## Completed release sequence
 
-1. Re-run the read-only projection; stop on unexplained route-count/digest or
-   Media-source-count drift, and confirm the rollback deployment.
-2. Obtain independent approval and green hosted CI for the exact PR5 head.
-3. Disconnect `B4GAMBLE Commercial Operations2` in the external custom-
-   connections UI.
-4. Disconnect `B4GAMBLE Media GEO3` in the same UI.
-5. Verify both external registrations are gone.
-6. Merge the exact approved head under explicit merge/deploy authority.
-7. Deploy the merged SHA.
-8. Confirm all former machine-facing MCP/OAuth/discovery URLs are absent/404,
-   never 200, 401, 405 or 410, and expose no tools or metadata. Confirm the
-   build route manifest contains no connector Admin page.
-9. Smoke email/password Admin auth, Google identity-only auth, public pages and
-   CTA, controlled `/r`, exact MarketActivation, GB gates, direct logo media
-   and retired Media behavior; then record connector removal, deployment and
-   acceptance evidence.
+Founder Office completed PR5, removed both external registrations, merged the
+approved head as `313b18bfff5db98d7e66b16088ec3ed8537fc299`, and released deployment
+`dpl_Ethqm2TdoiCDvKoEF5rVZUdiR8o7`. The two connections remain retired and must
+not be recreated. PR5 performed no schema or Production data write.
 
-The external disconnect occurs immediately before merge/deploy so clients do
-not remain registered against disappearing endpoints. If deployment fails,
-restore the previous application and reconnect the external connection only
-after reviewing old OAuth material. Application rollback alone does not
-restore external configuration.
+The historical release order disconnected the registrations before the
+disappearing endpoints were adopted. Application rollback alone would not have
+restored external configuration.
 
 ## Endpoint acceptance
 
@@ -237,7 +222,8 @@ PR5 has no schema/data change. RFC-051 lists the exact eight inert models plus
 compatibility triggers/functions for PR6. Immutable migrations 0021–0023 and
 the staged fixture remain required for replay and historical truth.
 
-PR6 needs a separate read-only plan and retention decision. Do not drop
+PR6 has a separate read-only plan and proposed retention decision in the
+[PR6 runbook](Commercial-Core-PR6-Legacy-Cleanup.md). It must not drop
 `Account.issuer`, generic `Verification`, identity/session data, AuditLog or
 migration history as incidental cleanup.
 

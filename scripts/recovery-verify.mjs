@@ -35,13 +35,6 @@ const EXPECTED_AUTH_TABLES = [
   "Session",
   "User",
   "Verification",
-  "oauthAccessToken",
-  "oauthClient",
-  "oauthClientAssertion",
-  "oauthClientResource",
-  "oauthConsent",
-  "oauthRefreshToken",
-  "oauthResource",
 ];
 const EXPECTED_PROGRAMME_TABLES = [
   "AnonymousProgrammeSession",
@@ -111,13 +104,6 @@ async function tableCount(database, tableName) {
     "Session",
     "User",
     "Verification",
-    "oauthAccessToken",
-    "oauthClient",
-    "oauthClientAssertion",
-    "oauthClientResource",
-    "oauthConsent",
-    "oauthRefreshToken",
-    "oauthResource",
     "_prisma_migrations",
   ]);
   if (!allowed.has(tableName)) {

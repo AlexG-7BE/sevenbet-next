@@ -4,19 +4,19 @@
 **Evidence date:** 14 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `7fda5b3be20e69a0dfa41595a19aaffd3818391f`
-**Verified post-release runtime baseline SHA:** `7fda5b3be20e69a0dfa41595a19aaffd3818391f`
-**Verified post-release runtime deployment:** Ready; `dpl_2K5bejH5GdCpnPaLYZaPqShqCwag`
+**Current Production application SHA (current Founder authority):** `313b18bfff5db98d7e66b16088ec3ed8537fc299`
+**Verified post-release runtime baseline SHA:** `313b18bfff5db98d7e66b16088ec3ed8537fc299`
+**Verified post-release runtime deployment:** Ready; `dpl_Ethqm2TdoiCDvKoEF5rVZUdiR8o7`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Commercial Core Simplification PR5 — MCP extraction and retirement ready for review
+## Commercial Core Simplification PR5 — complete and live
 
-**DETECTED IN THE PR5 BRANCH, 14 September 2026:** branch
-`codex/commercial-core-pr5-mcp-extraction-retirement` starts from live
-`origin/main` `d0d3cccb62f5e3ba15f6fabc049260a03ac1c570`. RFC-051 physically
+**DETECTED IN CURRENT MAIN / CURRENT FOUNDER AUTHORITY, 14 September 2026:**
+PR5 merged at `313b18bfff5db98d7e66b16088ec3ed8537fc299` and deployment
+`dpl_Ethqm2TdoiCDvKoEF5rVZUdiR8o7` is the live baseline. RFC-051 physically
 removes the Commercial/Media MCP routes, operational OAuth discovery/DCR/token/
 consent/revocation surfaces, MCP server/config/security/rate-limit modules,
 connector Admin pages, obsolete one-shot caller/smoke code, transport tests and
@@ -56,19 +56,14 @@ The aggregate-only Media history projection observed 175 plans and 56 batches:
 `AUTOMATION`, and 0 records contain an unexpected/missing source. No raw JSON
 or destination was returned.
 
-**EXTERNAL / NOT COMPLETED:** the Founder instruction confirms the external
-custom connection `B4GAMBLE Commercial Operations2` still exists. Repository
-code cannot remove it. Founder Office inspection also detected `B4GAMBLE Media
-GEO3` still connected while its current Production endpoint already returns
-`410 MEDIA_OPERATIONS_RETIRED`. Removal of both connections is `NOT COMPLETED`.
-Independent approval must disconnect both immediately before exact-head merge/
-deploy, then verify both are gone and all former endpoints are absent/404.
+**EXTERNAL CONNECTORS COMPLETE:** Founder Office removed both
+`B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3`. They must not be
+recreated or reconnected.
 
-**REVIEW ONLY:** PR5 is not merged or deployed, performs no Production
-mutation and includes no schema migration. Eight historical OAuth/rate-limit
-models plus compatibility objects are retained for separately authorised PR6
-cleanup. See [RFC-051](06_RFC/RFC-051-MCP-Extraction-and-Retirement.md) and
-the [PR5 runbook](06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md).
+PR5 performed no Production schema/data mutation. Eight inert historical
+OAuth/rate-limit models plus compatibility objects remained for separately
+authorised PR6 review. See [RFC-051](06_RFC/RFC-051-MCP-Extraction-and-Retirement.md)
+and the [PR5 runbook](06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md).
 
 ## Commercial Core Simplification PR4 — affiliate lifecycle collapse merged
 
@@ -307,7 +302,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public legal implementation | **READY** | Current GB public legal copy/consent/disclosure implementation is in Production for the approved scope. |
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
-| Commercial MCP / operational OAuth | **EXTERNAL CONNECTIONS DETECTED; PR5 REPOSITORY RETIREMENT READY FOR RE-REVIEW** | PR5 removes the server/provider/routes without a replacement transport. External `B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3` removal is required immediately before deployment and is not completed. |
+| Commercial MCP / operational OAuth | **RETIRED — EXTERNAL CONNECTIONS REMOVED** | PR5 removed the server/provider/routes without a replacement transport. Founder Office removed `B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3`; neither may be recreated or reconnected. |
 | Partner tracking registration | **RFC-048 WRITE CORE LIVE; INTERNAL-ONLY AFTER PR5** | CRM/static/lifecycle state is non-authoritative and canonical writes require non-serializable trusted Founder provenance. PR5 removes the old transport caller and adds no new authority boundary. |
 | Production DB reliability | **READY IN PRODUCTION** | The one-connection runtime and narrow secret-safe transient handling remain; transport-specific availability code/tests are retired. |
 | Commercial partner activation | **READY IN PRODUCTION — 39 STORED ACTIVE + HEALTHY ROUTES** | PR2 acceptance verified all 39 stored active/healthy routes unchanged. RFC-042 remains the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |

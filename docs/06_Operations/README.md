@@ -7,6 +7,7 @@ These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-
 | [Production Release Governance](Production-Release-Governance.md) | Pull-request, deployment, verification and rollback path |
 | [Commercial Core PR4 — Affiliate Lifecycle Collapse](Commercial-Core-PR4-Affiliate-Lifecycle-Collapse.md) | Runtime lifecycle de-authorization, factual GB replacement, read-only semantic projection and PR6 cleanup boundary |
 | [Commercial Core PR5 — MCP Extraction and Retirement](Commercial-Core-PR5-MCP-Extraction-and-Retirement.md) | Physical repository transport retirement, read-only Production projection, external connector cutover and deferred schema cleanup |
+| [Commercial Core PR6 — Legacy Connector Storage Cleanup](Commercial-Core-PR6-Legacy-Cleanup.md) | Review-only exact connector-schema deletion, fail-closed Production projection, KEEP set, recovery boundary and separate APPLY gate |
 | [Commercial Core PR3 — Exact Routes](Commercial-Core-PR3-Exact-Routes.md) | Migration 0040, separately authorised exact-route materialization, read-only readiness, deployment and rollback order |
 | [Environment and Secrets](Environment-and-Secrets.md) | Trust zones, variable inventory, ownership and isolation gates |
 | [Product Analytics](Product-Analytics.md) | Vercel plan boundary, privacy contract, aggregate report, activation and rollback |

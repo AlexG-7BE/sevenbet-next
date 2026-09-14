@@ -118,20 +118,10 @@ test("canonical tracking and public runtime remain independent of CRM and retire
   assert.doesNotMatch(publicRuntime, /commercialOpportunity|CommercialResearch|oauthAccessToken|oauthClient|\/api\/mcp|CommercialMcp|MediaMcp/i);
 });
 
-test("historical connector data is retained exactly for PR6 and has no active reader or writer", () => {
+test("PR5 connector history remains documented while PR6 removes it from the active data model", () => {
   const schema = source("prisma/schema.prisma");
   const models = [...schema.matchAll(/^model (Oauth\w+|CommercialMcpRateLimitBucket) \{/gm)].map((match) => match[1]);
-  assert.deepEqual(models, [
-    "OauthClient",
-    "OauthResource",
-    "OauthClientResource",
-    "OauthRefreshToken",
-    "OauthAccessToken",
-    "OauthConsent",
-    "OauthClientAssertion",
-    "CommercialMcpRateLimitBucket",
-  ]);
-  assert.match(schema, /retained without runtime\s+\/\/ authority in PR5|retained without runtime/);
+  assert.deepEqual(models, []);
   const activeBusiness = [
     ...sourceFiles("app"),
     ...sourceFiles("components"),
@@ -142,7 +132,12 @@ test("historical connector data is retained exactly for PR6 and has no active re
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
-  assert.equal(migrations.at(-1), "0040_commercial_core_exact_routes_geo_simplification");
+  assert.equal(migrations.at(-1), "0041_commercial_core_legacy_connector_cleanup");
+  assert.match(source("prisma/migrations/0021_partner_ops_work_bridge_01/migration.sql"), /CREATE TABLE "oauthClient"/);
+  assert.match(source("docs/06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md"), /513 connector-storage rows|storage contains 11 historical connector clients/);
+  const scripts = (JSON.parse(source("package.json")) as { scripts: Record<string, string> }).scripts;
+  assert.equal(scripts["commercial-core:pr5:projection"], undefined);
+  assert.equal(existsSync(join(root, "scripts/commercial-core-pr5-mcp-retirement-projection.ts")), false);
 });
 
 test("release documentation records both detected external connectors and exact retirement order", () => {
@@ -154,11 +149,13 @@ test("release documentation records both detected external connectors and exact 
   assert.match(runbook, /B4GAMBLE Commercial Operations2/);
   assert.match(runbook, /B4GAMBLE Media GEO3/);
   assert.match(runbook, /410 MEDIA_OPERATIONS_RETIRED/);
-  assert.match(runbook, /External connector removal is \*\*not complete\*\*/i);
-  assert.match(runbook, /Disconnect `B4GAMBLE Commercial Operations2`[\s\S]*Disconnect `B4GAMBLE Media GEO3`[\s\S]*Verify both external registrations are gone[\s\S]*Merge the exact approved head/);
+  assert.match(runbook, /Founder Office subsequently\s+removed both registrations/);
+  assert.match(runbook, /313b18bfff5db98d7e66b16088ec3ed8537fc299/);
+  assert.match(runbook, /dpl_Ethqm2TdoiCDvKoEF5rVZUdiR8o7/);
   assert.match(runbook, /175 plans and 56 batches/);
   assert.match(runbook, /deliberate cross-namespace replay|deliberately replayed/i);
   assert.match(runbook, /intentionally unsupported/);
   assert.doesNotMatch(runbook, /Media connector.*UNKNOWN/is);
-  assert.match(currentState, /B4GAMBLE Media\s+GEO3[\s\S]*410 MEDIA_OPERATIONS_RETIRED/);
+  assert.match(currentState, /EXTERNAL CONNECTORS COMPLETE/);
+  assert.match(currentState, /B4GAMBLE Commercial Operations2[\s\S]*B4GAMBLE Media GEO3/);
 });
