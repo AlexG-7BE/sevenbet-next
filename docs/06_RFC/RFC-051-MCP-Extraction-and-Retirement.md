@@ -183,15 +183,33 @@ The following exact Prisma models remain inert cleanup candidates:
 - `OauthClientAssertion` (`oauthClientAssertion`); and
 - `CommercialMcpRateLimitBucket`.
 
-PR6 must also inventory connector-specific foreign keys, indexes, the
-`oauthClient_prepare_compat` and `oauthClient_resource_compat` triggers,
-token-resource compatibility triggers, and the
+The exact retained physical inventory for PR6 is:
+
+| Table/model | Columns | Keys, indexes and foreign keys |
+| --- | --- | --- |
+| `oauthClient` / `OauthClient` | `id`, `clientId`, `clientSecret`, `clientDiscoveryId`, `disabled`, `skipConsent`, `enableEndSession`, `subjectType`, `scopes`, `clientCredentialsScopes`, `userId`, `createdAt`, `updatedAt`, `name`, `uri`, `icon`, `contacts`, `tos`, `policy`, `softwareId`, `softwareVersion`, `softwareStatement`, `redirectUris`, `postLogoutRedirectUris`, `backchannelLogoutUri`, `backchannelLogoutSessionRequired`, `tokenEndpointAuthMethod`, `applicationType`, `jwks`, `jwksUri`, `grantTypes`, `responseTypes`, `public`, `type`, `requirePKCE`, `dpopBoundAccessTokens`, `referenceId`, `metadata` | primary key `id`; unique `clientId`; index `userId`; `userId -> User.id` with cascade update/delete |
+| `oauthResource` / `OauthResource` | `id`, `identifier`, `name`, `accessTokenTtl`, `refreshTokenTtl`, `signingAlgorithm`, `signingKeyId`, `allowedScopes`, `customClaims`, `dpopBoundAccessTokensRequired`, `disabled`, `createdAt`, `updatedAt`, `policyVersion`, `metadata` | primary key `id`; unique `identifier` |
+| `oauthClientResource` / `OauthClientResource` | `id`, `clientId`, `resourceId`, `metadata`, `createdAt` | primary key `id`; unique `(clientId, resourceId)` named `oauthClientResource_clientId_resourceId_uidx`; indexes `clientId`, `resourceId`; `clientId -> oauthClient.clientId` and `resourceId -> oauthResource.identifier`, both with cascade update/delete |
+| `oauthRefreshToken` / `OauthRefreshToken` | `id`, `token`, `clientId`, `sessionId`, `userId`, `referenceId`, `authorizationCodeId`, `resources`, `requestedUserInfoClaims`, `expiresAt`, `createdAt`, `revoked`, `rotatedAt`, `rotationReplayResponse`, `rotationReplayExpiresAt`, `authTime`, `confirmation`, `scopes` | primary key `id`; unique `token`; indexes `clientId`, `sessionId`, `userId`, `authorizationCodeId`; `clientId -> oauthClient.clientId` and `userId -> User.id` with cascade update/delete; `sessionId -> Session.id` with cascade update and set-null delete |
+| `oauthAccessToken` / `OauthAccessToken` | `id`, `token`, `clientId`, `sessionId`, `userId`, `referenceId`, `authorizationCodeId`, `resources`, `requestedUserInfoClaims`, `refreshId`, `expiresAt`, `createdAt`, `revoked`, `confirmation`, `scopes` | primary key `id`; unique `token`; indexes `clientId`, `sessionId`, `userId`, `authorizationCodeId`, `refreshId`; `clientId -> oauthClient.clientId`, `userId -> User.id` and `refreshId -> oauthRefreshToken.id` with cascade update/delete; `sessionId -> Session.id` with cascade update and set-null delete |
+| `oauthConsent` / `OauthConsent` | `id`, `clientId`, `userId`, `referenceId`, `resources`, `requestedUserInfoClaims`, `scopes`, `createdAt`, `updatedAt` | primary key `id`; indexes `clientId`, `userId`; `clientId -> oauthClient.clientId` and `userId -> User.id` with cascade update/delete |
+| `oauthClientAssertion` / `OauthClientAssertion` | `id`, `expiresAt` | primary key `id` |
+| `CommercialMcpRateLimitBucket` | `bucketKey`, `scope`, `count`, `windowStartedAt`, `expiresAt` | primary key `bucketKey`; index `expiresAt` |
+
+PR6 cleanup scope also includes the exact connector compatibility triggers
+`oauthClient_prepare_compat`, `oauthClient_resource_compat`,
+`oauthRefreshToken_resource_compat`, `oauthAccessToken_resource_compat` and
+`oauthConsent_resource_compat`, plus functions
 `prepare_better_auth_oauth_client_compat`,
 `sync_better_auth_oauth_client_resource_compat` and
-`set_better_auth_oauth_resource_compat` functions. `Account.issuer`, the
-generic `Verification` table, User/Session identity relations and immutable
-migration history must not be dropped merely because they appeared in the
-same historical upgrade.
+`set_better_auth_oauth_resource_compat`. The column names above identify
+secret-bearing storage but disclose no values; PR5 neither reads nor rewrites
+those values.
+
+`Account.issuer`, the generic `Verification` table, User/Session identity
+relations, the `Account_better_auth_issuer_compat` trigger and immutable
+migration history must not be dropped merely because they appeared in the same
+historical upgrade.
 
 PR6 requires its own read-only data plan, retention/legal decision, backup and
 rollback evidence, migration review and explicit Founder authority. PR5 does
