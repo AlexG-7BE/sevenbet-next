@@ -1,5 +1,4 @@
 import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
-import { productAnalyticsServer } from "@/lib/analytics/vercel-product-analytics";
 import { programmeAiMissionsService } from "@/lib/programme/application/programme-ai-missions.service";
 import { programmeErrorResponse, programmeResponse, readProgrammeJson } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
@@ -20,9 +19,6 @@ export async function POST(
       missionNumber,
       await readProgrammeJson(request),
     );
-    if (result.xpAwarded > 0 && result.actionPosition) {
-      productAnalyticsServer.missionActionCompleted(missionNumber, result.actionPosition);
-    }
     return programmeResponse({ ok: true, ...result });
   } catch (error) {
     return programmeErrorResponse(error);

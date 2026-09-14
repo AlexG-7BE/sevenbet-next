@@ -32,18 +32,15 @@ export const productAnalyticsEventNames = [
 export type ProductAnalyticsEventName = (typeof productAnalyticsEventNames)[number];
 export type ProgrammeMissionNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
-/** Transitional UI-only types for call sites whose legacy aliases are no-ops. */
+export type ProgrammeStartSourceSurface = "ten_steps" | "public_header" | "home" | "other_public";
+export type ProgrammeEngagementDayBucket = "day_0" | "day_1" | "day_2_3" | "day_4_7" | "day_8_plus" | "unknown";
+
+/** Transitional UI-only types for non-Programme compatibility aliases. */
 export type ProductAnalyticsEventMap = {
-  programme_start_clicked: {
-    sourceSurface: "ten_steps" | "public_header" | "home" | "other_public";
-  };
   commercial_surface_viewed: {
     surface: "best_offers" | "casinos" | "bonuses" | "casino_review";
   };
   casino_review_opened: { sourceSurface: string };
-  programme_home_viewed: {
-    engagementDayBucket: "day_0" | "day_1" | "day_2_3" | "day_4_7" | "day_8_plus" | "unknown";
-  };
 };
 
 export const clientProductAnalyticsEventNames = [
