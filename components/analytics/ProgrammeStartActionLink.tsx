@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { ActionLink, type ActionSize, type ActionStyle } from "@/components/design-system/Action";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
-import type { ProductAnalyticsEventMap } from "@/lib/analytics/product-analytics-events";
+import type { ProgrammeStartSourceSurface } from "@/lib/analytics/product-analytics-events";
 
 export function ProgrammeStartActionLink({
   children,
@@ -18,7 +18,7 @@ export function ProgrammeStartActionLink({
   className?: string;
   href: string;
   size?: ActionSize;
-  sourceSurface: ProductAnalyticsEventMap["programme_start_clicked"]["sourceSurface"];
+  sourceSurface: ProgrammeStartSourceSurface;
   variant?: ActionStyle;
 }) {
   return <ActionLink

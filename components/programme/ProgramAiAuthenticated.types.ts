@@ -1,4 +1,4 @@
-import type { ProductAnalyticsEventMap } from "@/lib/analytics/product-analytics-events";
+import type { ProgrammeEngagementDayBucket } from "@/lib/analytics/product-analytics-events";
 import type { ProgrammeStartingPointValue } from "@/lib/programme/program-ai/contracts";
 
 export type ProgramAiHome = {
@@ -13,7 +13,7 @@ export type ProgramAiHome = {
   }>;
   currentMission: number;
   primaryAction: "start-mission-one" | "finish-mission-one" | "start-mission" | "resume-mission" | "review-mission";
-  engagementDayBucket: ProductAnalyticsEventMap["programme_home_viewed"]["engagementDayBucket"];
+  engagementDayBucket: ProgrammeEngagementDayBucket;
   currentAction: string | null;
   startingPoint: ProgrammeStartingPointValue | null;
   missions: Array<{

@@ -1,5 +1,4 @@
 import { requireCurrentUser } from "@/lib/auth/session";
-import { productAnalyticsServer } from "@/lib/analytics/vercel-product-analytics";
 import { programmeAiMissionOneService } from "@/lib/programme/application/programme-ai-mission-one.service";
 import { programmeAiMissionsService } from "@/lib/programme/application/programme-ai-missions.service";
 import {
@@ -24,12 +23,11 @@ export async function POST(request: Request) {
     await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const body = objectInput(await readProgrammeJson(request));
     assertOnlyKeys(body, ["timeZone", "startingPoint"]);
-    const redemption = await programmeAiMissionOneService.redeemPendingClaim(
+    await programmeAiMissionOneService.redeemPendingClaim(
       user.id,
       claimToken,
       { timeZone: body.timeZone, startingPoint: body.startingPoint },
     );
-    if (redemption.claimRedeemed) productAnalyticsServer.claimRedeemed("unknown");
     scheduleProgrammeStateObservation(user.id, request.headers);
     const home = await programmeAiMissionsService.home(user.id);
     const response = programmeResponse({ ok: true, home });

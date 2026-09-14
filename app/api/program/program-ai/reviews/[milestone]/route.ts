@@ -1,10 +1,8 @@
 import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
-import { productAnalyticsServer } from "@/lib/analytics/vercel-product-analytics";
 import { programmeAiGuidanceService } from "@/lib/programme/application/programme-ai-guidance.service";
 import { programmeErrorResponse, programmeResponse, readProgrammeJson } from "@/lib/programme/http";
 import { programmeProviderRateLimitAllowance } from "@/lib/programme/rate-limit";
 import { routeReviewMilestone } from "@/lib/programme/program-ai/mission-http";
-import { reviewGuidanceOperation } from "@/lib/programme/program-ai/mission-guidance";
 import { isProgramAiRealProviderEnabled } from "@/lib/programme/program-ai/runtime-config";
 
 export const dynamic = "force-dynamic";
@@ -53,12 +51,6 @@ export async function POST(
       await readProgrammeJson(request),
       providerAllowed,
     );
-    productAnalyticsServer.aiOutcome({
-      operation: reviewGuidanceOperation[milestone],
-      result: providerConfigured && !providerAllowed
-        ? "rate_limited"
-        : review.providerOutcome,
-    });
     return programmeResponse({
       ok: true,
       review: {

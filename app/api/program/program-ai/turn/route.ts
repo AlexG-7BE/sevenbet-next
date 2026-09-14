@@ -1,5 +1,4 @@
 import { programmeAiMissionOneService } from "@/lib/programme/application/programme-ai-mission-one.service";
-import { productAnalyticsServer } from "@/lib/analytics/vercel-product-analytics";
 import {
   anonymousProgrammeCookie,
   programmeErrorResponse,
@@ -35,15 +34,8 @@ export async function POST(request: Request) {
       providerAllowed,
     );
     if (turn.situationFirstAccepted) {
-      productAnalyticsServer.m1SituationSubmitted(turn.inputMode);
       scheduleAnonymousProgrammeStartedObservation(request);
     }
-    productAnalyticsServer.aiOutcome({
-      operation: "programme_ai",
-      result: providerConfigured && !providerAllowed
-        ? "rate_limited"
-        : turn.providerOutcome,
-    });
     return programmeResponse({
       ok: true,
       result: turn.result,

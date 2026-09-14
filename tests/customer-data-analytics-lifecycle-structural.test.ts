@@ -81,7 +81,12 @@ test("analytics has one closed relational dictionary with no arbitrary JSON or P
   assert.doesNotMatch(model, /\bJson\b/);
   assert.doesNotMatch(model, /^\s+(?:email|password|token|ipAddress|userAgent|freeText|transcript)\s/m);
   const dictionary = source("lib/analytics/product-analytics-events.ts");
-  assert.equal((dictionary.match(/^\s+"[a-z_]+",?$/gm) ?? []).filter((line) => !line.includes("programme_start_clicked")).length >= 19, true);
+  const eventNames = dictionary.slice(
+    dictionary.indexOf("export const productAnalyticsEventNames"),
+    dictionary.indexOf("] as const;"),
+  );
+  assert.equal((eventNames.match(/^\s+"[a-z_]+",?$/gm) ?? []).length, 22);
+  assert.doesNotMatch(dictionary, /programme_start_clicked|programme_home_viewed/);
   assert.match(dictionary, /\.strict\(\)/);
   assert.match(dictionary, /query-free site path/);
   assert.doesNotMatch(dictionary, /email:\s*z\.|password:\s*z\.|token:\s*z\./);

@@ -1,5 +1,4 @@
 import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
-import { productAnalyticsServer } from "@/lib/analytics/vercel-product-analytics";
 import { programmeAiMissionsService } from "@/lib/programme/application/programme-ai-missions.service";
 import { programmeErrorResponse, programmeResponse, readProgrammeJson } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
@@ -20,10 +19,6 @@ export async function POST(
     const body = objectInput(await readProgrammeJson(request));
     assertOnlyKeys(body, []);
     const result = await programmeAiMissionsService.complete(user.id, missionNumber);
-    if (result.xpAwarded > 0) {
-      productAnalyticsServer.missionCompleted(missionNumber);
-      if (missionNumber === 10) productAnalyticsServer.programmeCompleted();
-    }
     scheduleProgrammeStateObservation(user.id, request.headers);
     return programmeResponse({ ok: true, ...result });
   } catch (error) {

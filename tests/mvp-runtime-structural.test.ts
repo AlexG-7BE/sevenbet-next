@@ -1,27 +1,53 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import test from "node:test";
 
 function read(path: string) {
   return readFileSync(path, "utf8");
 }
 
+function filesUnder(path: string): string[] {
+  return readdirSync(path).flatMap((entry) => {
+    const candidate = join(path, entry);
+    return statSync(candidate).isDirectory() ? filesUnder(candidate) : [candidate];
+  });
+}
+
 const schema = read("prisma/schema.prisma");
 const migration = read("prisma/migrations/0019_programme_runtime_hardening/migration.sql");
 const analyticsContract = read("lib/analytics/product-analytics-events.ts");
 const analyticsClient = read("lib/analytics/product-analytics-client.ts");
-const analyticsServer = read("lib/analytics/vercel-product-analytics.ts");
 const rateLimit = read("lib/programme/rate-limit.ts");
 const purge = read("lib/programme/runtime-expiry-purge.ts");
-const packageJson = JSON.parse(read("package.json")) as { dependencies: Record<string, string> };
+const packageJson = JSON.parse(read("package.json")) as {
+  dependencies: Record<string, string>;
+  scripts: Record<string, string>;
+};
 
 test("RFC-046 keeps analytics first-party and affirmative-consent gated", () => {
   assert.equal(packageJson.dependencies["@vercel/analytics"], undefined);
-  assert.doesNotMatch(analyticsClient + analyticsServer, /@vercel\/analytics|\btrack\(/);
+  assert.doesNotMatch(analyticsClient, /@vercel\/analytics|\btrack\(/);
   assert.match(read("lib/analytics/product-analytics.ts"), /AFFIRMATIVE_CONSENT_RFC_046/);
   assert.match(read("lib/analytics/product-analytics.ts"), /NEXT_PUBLIC_ANALYTICS_ENABLED === "true"/);
   assert.doesNotMatch(read("app/layout.tsx") + read(".env.example"), /@vercel\/analytics|NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED/);
   assert.match(read("app/layout.tsx"), /AnalyticsConsentBanner/);
+});
+
+test("legacy Programme analytics compatibility and Vercel report surfaces are absent", () => {
+  assert.equal(existsSync("lib/analytics/vercel-product-analytics.ts"), false);
+  assert.equal(existsSync("scripts/programme-analytics-report.mjs"), false);
+  assert.equal(existsSync("tests/programme-analytics-report.test.mjs"), false);
+  assert.equal(packageJson.scripts["analytics:programme"], undefined);
+  assert.doesNotMatch(packageJson.scripts["mvp-runtime:test"], /programme-analytics-report/);
+
+  const runtime = ["app", "components", "lib"]
+    .flatMap(filesUnder)
+    .filter((path) => /\.(?:ts|tsx|js|jsx|mjs|cjs)$/.test(path))
+    .map(read)
+    .join("\n");
+  assert.doesNotMatch(runtime, /vercel-product-analytics|productAnalyticsServer|createProductAnalyticsServer/);
+  assert.doesNotMatch(runtime, /programme_(?:start_clicked|access_granted|m1_situation_submitted|m1_personalised_value_presented|registration_cta_presented|claim_redeemed|home_viewed|mission_completed|review_opened|discovery_clicked|ai_outcome|voice_outcome)/);
 });
 
 test("analytics has a closed 22-event contract with no identity, narrative, reward, or arbitrary metadata fields", () => {
@@ -36,8 +62,8 @@ test("analytics has a closed 22-event contract with no identity, narrative, rewa
     /\b(?:userId|emailAddress|situationText|transcript|reviewText|startingPoint|desiredChange|continuationCue|xp|metadata)\s*:/,
   );
   assert.match(analyticsContract, /\.strict\(\)/);
-  assert.doesNotMatch(analyticsClient + analyticsServer, /export function track|return \{\s*track\s*:/);
-  assert.doesNotMatch(analyticsClient + analyticsServer, /@\/lib\/(?:affiliate|affiliate-commercial|services\/public-offer|services\/public-casino)/);
+  assert.doesNotMatch(analyticsClient, /export function track|return \{\s*track\s*:/);
+  assert.doesNotMatch(analyticsClient, /@\/lib\/(?:affiliate|affiliate-commercial|services\/public-offer|services\/public-casino)/);
 });
 
 test("commercial services cannot consume analytics or protected Programme runtime data", () => {
