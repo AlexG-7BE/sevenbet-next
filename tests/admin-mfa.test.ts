@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { betterAuth } from "better-auth";
 import { twoFactor } from "better-auth/plugins";
-import { base32 } from "@better-auth/utils/base32";
 
 import {
   ADMIN_MFA_MANAGEMENT_PATHS,
@@ -12,10 +12,62 @@ import {
   isAdminMfaManagementPath,
   isAllowedAdminSessionCreationPath,
 } from "../lib/auth/admin-mfa-policy";
+import { adminMfaVerificationErrorMessage } from "../lib/auth/admin-mfa-client";
 
 const BASE_URL = "http://localhost:3000";
 const EMAIL = "admin-mfa@example.test";
 const PASSWORD = "Admin-Mfa-Test-Password-42!";
+
+function decodeBase32(value: string) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  const normalized = value.replace(/=+$/, "").toUpperCase();
+  const bytes: number[] = [];
+  let buffer = 0;
+  let bitCount = 0;
+
+  for (const character of normalized) {
+    const digit = alphabet.indexOf(character);
+    if (digit < 0) throw new Error("TOTP_URI_SECRET_IS_NOT_BASE32");
+    buffer = (buffer << 5) | digit;
+    bitCount += 5;
+    if (bitCount >= 8) {
+      bitCount -= 8;
+      bytes.push((buffer >>> bitCount) & 0xff);
+    }
+  }
+
+  return Buffer.from(bytes);
+}
+
+function independentRfc6238Code(totpUri: string, timestampMs = Date.now()) {
+  const uri = new URL(totpUri);
+  assert.equal(uri.protocol, "otpauth:");
+  assert.equal(uri.hostname, "totp");
+
+  const encodedSecret = uri.searchParams.get("secret");
+  assert.ok(encodedSecret, "TOTP URI must contain a secret");
+  const digits = Number(uri.searchParams.get("digits") ?? "6");
+  const period = Number(uri.searchParams.get("period") ?? "30");
+  const algorithm = (uri.searchParams.get("algorithm") ?? "SHA1").replaceAll("-", "").toLowerCase();
+  assert.equal(algorithm, "sha1");
+  assert.equal(digits, 6);
+  assert.equal(period, 30);
+
+  const counter = Math.floor(timestampMs / 1_000 / period);
+  const counterBytes = Buffer.alloc(8);
+  counterBytes.writeBigUInt64BE(BigInt(counter));
+  const digest = createHmac(algorithm, decodeBase32(encodedSecret))
+    .update(counterBytes)
+    .digest();
+  const offset = digest[digest.length - 1] & 0x0f;
+  const binary = (
+    ((digest[offset] & 0x7f) << 24)
+    | ((digest[offset + 1] & 0xff) << 16)
+    | ((digest[offset + 2] & 0xff) << 8)
+    | (digest[offset + 3] & 0xff)
+  );
+  return String(binary % (10 ** digits)).padStart(digits, "0");
+}
 
 class CookieJar {
   private readonly values = new Map<string, string>();
@@ -151,6 +203,7 @@ test("Admin session and MFA management policy is exact and fail closed", () => {
 test("Admin MFA config uses official encrypted TOTP without a parallel auth system", () => {
   const config = readFileSync("lib/auth/config.ts", "utf8");
   const hooks = readFileSync("lib/auth/admin-mfa.server.ts", "utf8");
+  const enrollment = readFileSync("components/admin/AdminMfaEnrollmentForm.tsx", "utf8");
   const login = readFileSync("components/admin/AdminLoginForm.tsx", "utf8");
   const schema = readFileSync("prisma/schema.prisma", "utf8");
   const migration = readFileSync("prisma/migrations/0042_admin_mfa/migration.sql", "utf8");
@@ -162,6 +215,9 @@ test("Admin MFA config uses official encrypted TOTP without a parallel auth syst
   assert.match(config, /rateLimit: \{ enabled: false \}/);
   assert.match(config, /"\/two-factor\/disable"/);
   assert.match(hooks, /deleteUserSessions\(user\.id\)/);
+  assert.match(enrollment, /QRCodeSVG/);
+  assert.match(enrollment, /value=\{material\.totpURI\}/);
+  assert.doesNotMatch(enrollment, /api\.qrserver|chart\.googleapis|quickchart/i);
   assert.match(login, /router\.replace\(getAdminMfaEnrollmentUrl\(callbackUrl\)\)/);
   assert.doesNotMatch(`${config}\n${hooks}`, /program(me)?|affiliate|commercial/i);
   assert.match(schema, /model TwoFactor \{/);
@@ -170,7 +226,26 @@ test("Admin MFA config uses official encrypted TOTP without a parallel auth syst
   assert.match(migration, /ON DELETE CASCADE ON UPDATE CASCADE/);
 });
 
-test("official TOTP enrollment, challenge limits, and one-use backup codes work", async () => {
+test("enrollment errors distinguish code, session, and temporary-limit recovery", () => {
+  assert.match(
+    adminMfaVerificationErrorMessage({ code: "INVALID_CODE", status: 401 }),
+    /does not match the current setup/,
+  );
+  assert.match(
+    adminMfaVerificationErrorMessage({ code: "INVALID_TWO_FACTOR_COOKIE", status: 401 }),
+    /session is no longer valid/,
+  );
+  assert.match(
+    adminMfaVerificationErrorMessage({ status: 429 }),
+    /temporarily limited/,
+  );
+  assert.match(
+    adminMfaVerificationErrorMessage({ code: "UNEXPECTED", status: 500 }),
+    /restart setup/,
+  );
+});
+
+test("independent RFC 6238 enrollment, challenge limits, and one-use backup codes work", async () => {
   const auth = createMfaTestAuth();
   const enrollmentJar = new CookieJar();
   const signup = await post(auth, "/sign-up/email", {
@@ -186,7 +261,7 @@ test("official TOTP enrollment, challenge limits, and one-use backup codes work"
     password: PASSWORD,
   }, enrollmentJar);
   assert.equal(enabled.status, 200);
-  const material = await enabled.json() as {
+  let material = await enabled.json() as {
     method: "totp";
     totpURI: string;
     backupCodes: string[];
@@ -194,22 +269,58 @@ test("official TOTP enrollment, challenge limits, and one-use backup codes work"
   assert.equal(material.method, "totp");
   assert.equal(material.backupCodes.length, 10);
 
-  const secret = new URL(material.totpURI).searchParams.get("secret");
-  assert.ok(secret);
-  const rawSecret = new TextDecoder().decode(base32.decode(secret));
-  const generated = await auth.api.generateTOTP({ body: { secret: rawSecret } });
+  const independentCode = independentRfc6238Code(material.totpURI);
+  assert.match(independentCode, /^\d{6}$/);
   const failedEnrollment = await post(auth, "/two-factor/verify-totp", {
-    code: generated.code === "000000" ? "000001" : "000000",
+    code: independentCode === "000000" ? "000001" : "000000",
     trustDevice: false,
   }, enrollmentJar);
   assert.equal(failedEnrollment.status, 401);
   const notYetEnrolled = await session(auth, enrollmentJar) as { user?: { twoFactorEnabled?: boolean } } | null;
   assert.equal(notYetEnrolled?.user?.twoFactorEnabled, false);
 
-  const verified = await post(auth, "/two-factor/verify-totp", {
-    code: generated.code,
-    trustDevice: false,
-  }, enrollmentJar);
+  const firstPendingUri = material.totpURI;
+  const verificationNow = Date.now();
+  const staleCode = independentRfc6238Code(firstPendingUri, verificationNow);
+  let replacementWindow = new Set<string>();
+  for (let replacementAttempt = 0; replacementAttempt < 5; replacementAttempt += 1) {
+    const replacement = await post(auth, "/two-factor/enable", {
+      method: "totp",
+      password: PASSWORD,
+    }, enrollmentJar);
+    assert.equal(replacement.status, 200);
+    material = await replacement.json() as typeof material;
+    replacementWindow = new Set([-30_000, 0, 30_000].map((offset) =>
+      independentRfc6238Code(material.totpURI, verificationNow + offset)));
+    if (!replacementWindow.has(staleCode)) break;
+  }
+  assert.notEqual(
+    new URL(material.totpURI).searchParams.get("secret"),
+    new URL(firstPendingUri).searchParams.get("secret"),
+    "restarting a pending Better Auth enrollment replaces its secret",
+  );
+  assert.equal(replacementWindow.has(staleCode), false, "test fixture requires a non-colliding stale code");
+
+  const verified = await (async () => {
+    const realDateNow = Date.now;
+    Date.now = () => verificationNow;
+    try {
+      const staleEnrollment = await post(auth, "/two-factor/verify-totp", {
+        code: staleCode,
+        trustDevice: false,
+      }, enrollmentJar);
+      assert.equal(staleEnrollment.status, 401);
+      assert.match(JSON.stringify(await staleEnrollment.json()), /INVALID_CODE/);
+
+      const previousWindowCode = independentRfc6238Code(material.totpURI, verificationNow - 30_000);
+      return await post(auth, "/two-factor/verify-totp", {
+        code: previousWindowCode,
+        trustDevice: false,
+      }, enrollmentJar);
+    } finally {
+      Date.now = realDateNow;
+    }
+  })();
   const verifiedPayload = await verified.clone().json().catch(() => null);
   assert.equal(verified.status, 200, JSON.stringify(verifiedPayload));
   assert.doesNotMatch(
@@ -240,9 +351,9 @@ test("official TOTP enrollment, challenge limits, and one-use backup codes work"
   assert.match(JSON.stringify(await overBudget.json()), /TOO_MANY_ATTEMPTS/);
 
   const totpChallenge = await signInChallenge(auth);
-  const currentCode = await auth.api.generateTOTP({ body: { secret: rawSecret } });
+  const currentCode = independentRfc6238Code(material.totpURI);
   const totpSignIn = await post(auth, "/two-factor/verify-totp", {
-    code: currentCode.code,
+    code: currentCode,
     trustDevice: false,
   }, totpChallenge);
   assert.equal(totpSignIn.status, 200);

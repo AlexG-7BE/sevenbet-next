@@ -212,6 +212,7 @@
     "@prisma/client": "^6.19.3",
     "better-auth": "1.7.1",
     "next": "15.5.24",
+    "qrcode.react": "4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sanitize-html": "^2.17.5",

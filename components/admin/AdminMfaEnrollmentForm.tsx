@@ -2,12 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { QRCodeSVG } from "qrcode.react";
 
 import { authClient } from "@/lib/auth/client";
+import { adminMfaVerificationErrorMessage } from "@/lib/auth/admin-mfa-client";
 
 type EnrollmentMaterial = {
   backupCodes: string[];
   secret: string;
+  totpURI: string;
 };
 
 function secretFromTotpUri(totpURI: string) {
@@ -64,7 +67,11 @@ export function AdminMfaEnrollmentForm({ callbackUrl }: { callbackUrl: string })
         return;
       }
 
-      setMaterial({ secret, backupCodes: result.data.backupCodes });
+      setMaterial({
+        secret,
+        backupCodes: result.data.backupCodes,
+        totpURI: result.data.totpURI,
+      });
     } catch {
       setError("Setup could not be started. Check your password and try again.");
     } finally {
@@ -86,13 +93,13 @@ export function AdminMfaEnrollmentForm({ callbackUrl }: { callbackUrl: string })
         trustDevice: false,
       });
       if (result.error) {
-        setError("That authenticator code was not accepted. Wait for a new code and try again.");
+        setError(adminMfaVerificationErrorMessage(result.error));
         return;
       }
 
       setVerified(true);
     } catch {
-      setError("That authenticator code was not accepted. Wait for a new code and try again.");
+      setError(adminMfaVerificationErrorMessage({}));
     } finally {
       setLoading(false);
     }
@@ -137,7 +144,22 @@ export function AdminMfaEnrollmentForm({ callbackUrl }: { callbackUrl: string })
       <section className="adminMfaStep" aria-labelledby="admin-mfa-secret-title">
         <p className="eyebrow">Step 1</p>
         <h2 id="admin-mfa-secret-title">Add the setup key</h2>
-        <p className="muted">In your authenticator app, add an account manually and enter this key.</p>
+        <p className="muted">Scan this QR code in your authenticator app. The setup key below is the manual fallback.</p>
+        <div
+          aria-label="QR code for B4GAMBLE Admin authenticator setup"
+          className="adminMfaQr"
+          role="img"
+        >
+          <QRCodeSVG
+            aria-hidden="true"
+            bgColor="#ffffff"
+            fgColor="#08111d"
+            level="M"
+            marginSize={2}
+            size={208}
+            value={material.totpURI}
+          />
+        </div>
         <code className="adminCode adminMfaSecret">{material.secret}</code>
         <p className="muted">Time based · 6 digits · refreshes every 30 seconds</p>
       </section>
