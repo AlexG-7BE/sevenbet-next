@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash, createHmac, randomUUID } from "node:crypto";
-import type { EmailPurpose, EmailTemplateKey } from "@prisma/client";
+import type { EmailPurpose, EmailTemplateKey, Prisma } from "@prisma/client";
 
 import prisma from "@/lib/db/prisma";
 import { analyticsEnvironment, analyticsSigningSecret } from "@/lib/analytics/identity.server";
@@ -18,6 +18,22 @@ import { activeEmailTemplate, renderEmailTemplate } from "@/lib/email/templates.
 const EMAIL_TOKEN_DOMAIN = "b4gamble:email-unsubscribe:v1";
 const EMAIL_AUTH_KEY_DOMAIN = "b4gamble:email-auth-action:v1";
 const MAX_EMAIL_ATTEMPTS = 5;
+const EMAIL_CLAIM_STALE_MS = 15 * 60_000;
+const PROVIDER_IDEMPOTENCY_HORIZON_MS = 23 * 60 * 60_000;
+const AUTH_EMAIL_PURPOSES = ["EMAIL_VERIFICATION", "PASSWORD_RESET"] as const satisfies readonly EmailPurpose[];
+const WORKER_EMAIL_PURPOSES = ["WELCOME", "PROGRAMME_REMINDER", "MARKETING_BROADCAST", "TEST"] as const satisfies readonly EmailPurpose[];
+const CAMPAIGN_SEND_STATES = ["QUEUED", "SENDING"] as const;
+const RETRYABLE_PROVIDER_CODES = new Set(["NOT_CONFIGURED", "TIMEOUT", "NETWORK", "RATE_LIMITED", "PROVIDER_5XX"]);
+
+function logEmailDeliveryState(
+  state: "claimed" | "stale_claim_reclaimed" | "retry_scheduled" | "terminal_failure" | "campaign_not_authorized",
+  purpose: EmailPurpose,
+) {
+  console.info("[email] delivery state", {
+    email_delivery_state: state,
+    email_purpose: purpose,
+  });
+}
 
 const purposeByTemplate: Record<EmailTemplateKey, EmailPurpose> = {
   EMAIL_VERIFICATION: "EMAIL_VERIFICATION",
@@ -30,6 +46,48 @@ const purposeByTemplate: Record<EmailTemplateKey, EmailPurpose> = {
 
 function isUniqueConflict(error: unknown) {
   return Boolean(error && typeof error === "object" && "code" in error && error.code === "P2002");
+}
+
+function isAuthEmailPurpose(purpose: EmailPurpose) {
+  return AUTH_EMAIL_PURPOSES.includes(purpose as typeof AUTH_EMAIL_PURPOSES[number]);
+}
+
+function validAuthActionUrl(value: string | undefined, siteUrl: string | null) {
+  if (!value || !siteUrl) return null;
+  try {
+    const candidate = new URL(value);
+    return candidate.origin === siteUrl && !candidate.username && !candidate.password
+      ? candidate.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function campaignSendAuthority(environment: ReturnType<typeof analyticsEnvironment>): Prisma.EmailMessageWhereInput {
+  return {
+    OR: [
+      { campaignId: null },
+      { campaign: { is: { environment, status: { in: [...CAMPAIGN_SEND_STATES] } } } },
+    ],
+  };
+}
+
+function claimableState(now: Date): Prisma.EmailMessageWhereInput {
+  const staleBefore = new Date(now.getTime() - EMAIL_CLAIM_STALE_MS);
+  const providerHorizon = new Date(now.getTime() - PROVIDER_IDEMPOTENCY_HORIZON_MS);
+  return {
+    OR: [
+      {
+        status: { in: ["QUEUED", "FAILED"] },
+        OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: now } }],
+      },
+      {
+        status: "SENDING",
+        lastAttemptAt: { lt: staleBefore, gte: providerHorizon },
+      },
+    ],
+  };
 }
 
 function providerForRuntime(): { provider: LifecycleEmailProvider; siteUrl: string | null } {
@@ -186,9 +244,8 @@ async function claimQueuedMessage(messageId: string, now: Date, environment: Ret
     where: {
       id: messageId,
       environment,
-      status: { in: ["QUEUED", "FAILED"] },
       attemptCount: { lt: MAX_EMAIL_ATTEMPTS },
-      OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: now } }],
+      AND: [claimableState(now), campaignSendAuthority(environment)],
     },
     data: {
       status: "SENDING",
@@ -200,9 +257,31 @@ async function claimQueuedMessage(messageId: string, now: Date, environment: Ret
   return claimed.count === 1;
 }
 
+async function settleClaim(
+  messageId: string,
+  claimStartedAt: Date,
+  data: Prisma.EmailMessageUpdateManyMutationInput,
+) {
+  const settled = await prisma.emailMessage.updateMany({
+    where: { id: messageId, status: "SENDING", lastAttemptAt: claimStartedAt },
+    data,
+  });
+  return settled.count === 1;
+}
+
 function retryAt(attemptCount: number, now: Date) {
   const minutes = Math.min(60, 5 * (2 ** Math.max(0, attemptCount - 1)));
   return new Date(now.getTime() + minutes * 60_000);
+}
+
+function providerFailureState(code: string, attemptCount: number, now: Date) {
+  const retryable = RETRYABLE_PROVIDER_CODES.has(code) && attemptCount < MAX_EMAIL_ATTEMPTS;
+  return {
+    status: "FAILED" as const,
+    failedAt: now,
+    nextAttemptAt: retryable ? retryAt(attemptCount, now) : null,
+    deliveryErrorCode: code.slice(0, 64),
+  };
 }
 
 async function ensureCurrentUnsubscribeToken({
@@ -229,40 +308,57 @@ async function ensureCurrentUnsubscribeToken({
 
 export async function processQueuedEmailMessage(
   messageId: string,
-  overrides: { provider?: LifecycleEmailProvider; siteUrl?: string } = {},
+  overrides: { provider?: LifecycleEmailProvider; siteUrl?: string; actionUrl?: string; now?: Date } = {},
 ) {
-  const now = new Date();
+  const now = overrides.now ?? new Date();
   const environment = analyticsEnvironment();
+  const runtime = providerForRuntime();
+  const provider = overrides.provider ?? runtime.provider;
+  const siteUrl = overrides.siteUrl ?? runtime.siteUrl;
+  const candidate = await prisma.emailMessage.findUnique({
+    where: { id: messageId },
+    select: {
+      purpose: true,
+      status: true,
+      campaignId: true,
+      campaign: { select: { environment: true, status: true } },
+    },
+  });
+  if (!candidate) return { status: "not-found" } as const;
+  if (candidate.campaignId && (!candidate.campaign
+    || candidate.campaign.environment !== environment
+    || !CAMPAIGN_SEND_STATES.includes(candidate.campaign.status as typeof CAMPAIGN_SEND_STATES[number]))) {
+    logEmailDeliveryState("campaign_not_authorized", candidate.purpose);
+    return { status: "campaign-not-authorized" } as const;
+  }
+  const actionUrl = isAuthEmailPurpose(candidate.purpose)
+    ? validAuthActionUrl(overrides.actionUrl, siteUrl)
+    : null;
+  if (isAuthEmailPurpose(candidate.purpose) && !actionUrl) {
+    return { status: "auth-action-unavailable" } as const;
+  }
   if (!await claimQueuedMessage(messageId, now, environment)) return { status: "not-claimed" } as const;
+  logEmailDeliveryState(candidate.status === "SENDING" ? "stale_claim_reclaimed" : "claimed", candidate.purpose);
   const message = await prisma.emailMessage.findUnique({
     where: { id: messageId },
-    include: { template: true },
+    include: { template: true, campaign: { select: { environment: true, status: true } } },
   });
   if (!message) return { status: "not-found" } as const;
   const eligibility = await currentEligibility(message.userId, message.purpose);
   if (!eligibility?.decision.allowed) {
-    await prisma.emailMessage.update({
-      where: { id: message.id },
-      data: {
-        status: "SUPPRESSED",
-        deliveryErrorCode: (eligibility?.decision.reason ?? "ACCOUNT_NOT_FOUND").slice(0, 64),
-      },
-    });
+    if (!await settleClaim(message.id, now, {
+      status: "SUPPRESSED",
+      nextAttemptAt: null,
+      deliveryErrorCode: (eligibility?.decision.reason ?? "ACCOUNT_NOT_FOUND").slice(0, 64),
+    })) return { status: "stale-result" } as const;
     return { status: "suppressed" } as const;
   }
-  const runtime = providerForRuntime();
-  const provider = overrides.provider ?? runtime.provider;
-  const siteUrl = overrides.siteUrl ?? runtime.siteUrl;
   if (!siteUrl) {
-    await prisma.emailMessage.update({
-      where: { id: message.id },
-      data: {
-        status: "FAILED",
-        failedAt: now,
-        nextAttemptAt: message.attemptCount < MAX_EMAIL_ATTEMPTS ? retryAt(message.attemptCount, now) : null,
-        deliveryErrorCode: "NOT_CONFIGURED",
-      },
-    });
+    const failure = providerFailureState("NOT_CONFIGURED", message.attemptCount, now);
+    if (!await settleClaim(message.id, now, failure)) {
+      return { status: "stale-result" } as const;
+    }
+    logEmailDeliveryState(failure.nextAttemptAt ? "retry_scheduled" : "terminal_failure", message.purpose);
     return { status: "unavailable", code: "NOT_CONFIGURED" } as const;
   }
   const needsUnsubscribe = marketingEmailPurposes.includes(message.purpose as typeof marketingEmailPurposes[number]);
@@ -271,14 +367,12 @@ export async function processQueuedEmailMessage(
     // Never overwrite the hash behind a link that may already be in a
     // customer's inbox after signing-secret rotation. Stop this ambiguous
     // message; a newly queued message can use the new secret safely.
-    await prisma.emailMessage.update({
-      where: { id: message.id },
-      data: {
-        status: "UNKNOWN",
-        nextAttemptAt: null,
-        deliveryErrorCode: "UNSUBSCRIBE_TOKEN_MISMATCH",
-      },
-    });
+    if (!await settleClaim(message.id, now, {
+      status: "UNKNOWN",
+      nextAttemptAt: null,
+      deliveryErrorCode: "UNSUBSCRIBE_TOKEN_MISMATCH",
+    })) return { status: "stale-result" } as const;
+    logEmailDeliveryState("terminal_failure", message.purpose);
     return { status: "unknown", code: "UNSUBSCRIBE_TOKEN_MISMATCH" } as const;
   }
   // This is intentionally a second, immediate read. Audience selection and
@@ -286,78 +380,90 @@ export async function processQueuedEmailMessage(
   // before the provider call decides whether anything may leave B4GAMBLE.
   const finalEligibility = await currentEligibility(message.userId, message.purpose);
   if (!finalEligibility?.decision.allowed) {
-    await prisma.emailMessage.update({
-      where: { id: message.id },
-      data: {
-        status: "SUPPRESSED",
-        deliveryErrorCode: (finalEligibility?.decision.reason ?? "ACCOUNT_NOT_FOUND").slice(0, 64),
+    if (!await settleClaim(message.id, now, {
+      status: "SUPPRESSED",
+      nextAttemptAt: null,
+      deliveryErrorCode: (finalEligibility?.decision.reason ?? "ACCOUNT_NOT_FOUND").slice(0, 64),
+    })) return { status: "stale-result" } as const;
+    return { status: "suppressed" } as const;
+  }
+  if (message.campaignId) {
+    const campaignAuthorized = await prisma.emailCampaign.count({
+      where: {
+        id: message.campaignId,
+        environment,
+        status: { in: [...CAMPAIGN_SEND_STATES] },
       },
     });
-    return { status: "suppressed" } as const;
+    if (campaignAuthorized !== 1) {
+      if (!await settleClaim(message.id, now, {
+        status: "QUEUED",
+        nextAttemptAt: null,
+        deliveryErrorCode: "CAMPAIGN_NOT_AUTHORIZED",
+      })) return { status: "stale-result" } as const;
+      logEmailDeliveryState("campaign_not_authorized", message.purpose);
+      return { status: "campaign-not-authorized" } as const;
+    }
   }
   const currentRecipientEmail = finalEligibility.user.email.trim().toLowerCase();
   let rendered: ReturnType<typeof renderEmailTemplate>;
   try {
     rendered = renderEmailTemplate(message.template, {
       name: finalEligibility.user.name,
-      action_url: "",
+      action_url: actionUrl ?? "",
       programme_url: `${siteUrl}/program`,
       unsubscribe_url: token ? `${siteUrl}/unsubscribe?token=${encodeURIComponent(token)}` : `${siteUrl}/unsubscribe?test=1`,
     });
   } catch {
-    await prisma.emailMessage.update({
-      where: { id: message.id },
-      data: {
-        status: "CANCELLED",
-        failedAt: now,
-        nextAttemptAt: null,
-        deliveryErrorCode: "TEMPLATE_RENDER_INVALID",
-      },
-    });
+    if (!await settleClaim(message.id, now, {
+      status: "CANCELLED",
+      failedAt: now,
+      nextAttemptAt: null,
+      deliveryErrorCode: "TEMPLATE_RENDER_INVALID",
+    })) return { status: "stale-result" } as const;
+    logEmailDeliveryState("terminal_failure", message.purpose);
     return { status: "failed", code: "TEMPLATE_RENDER_INVALID" } as const;
   }
   const currentSubject = message.isTest ? `[TEST] ${rendered.subject}` : rendered.subject;
   if (currentRecipientEmail !== message.recipientEmail || currentSubject !== message.subject) {
-    await prisma.emailMessage.update({
-      where: { id: message.id },
-      data: { recipientEmail: currentRecipientEmail, subject: currentSubject },
-    });
+    if (!await settleClaim(message.id, now, { recipientEmail: currentRecipientEmail, subject: currentSubject })) {
+      return { status: "stale-result" } as const;
+    }
   }
-  const result = await provider.send({
-    to: currentRecipientEmail,
-    subject: currentSubject,
-    html: rendered.html,
-    text: rendered.text,
-    idempotencyKey: message.idempotencyKey,
-  });
-  if (result.status !== "accepted") {
-    await prisma.emailMessage.update({
-      where: { id: message.id },
-      data: {
-        status: "FAILED",
-        failedAt: now,
-        nextAttemptAt: message.attemptCount < MAX_EMAIL_ATTEMPTS ? retryAt(message.attemptCount, now) : null,
-        deliveryErrorCode: result.code,
-      },
+  let result: Awaited<ReturnType<LifecycleEmailProvider["send"]>>;
+  try {
+    result = await provider.send({
+      to: currentRecipientEmail,
+      subject: currentSubject,
+      html: rendered.html,
+      text: rendered.text,
+      idempotencyKey: message.idempotencyKey,
     });
+  } catch {
+    result = { status: "unavailable", code: "NETWORK" };
+  }
+  const outcomeAt = overrides.now ?? new Date();
+  if (result.status !== "accepted") {
+    const failure = providerFailureState(result.code, message.attemptCount, outcomeAt);
+    if (!await settleClaim(message.id, now, failure)) {
+      return { status: "stale-result" } as const;
+    }
+    logEmailDeliveryState(failure.nextAttemptAt ? "retry_scheduled" : "terminal_failure", message.purpose);
     console.error("[email] provider send failed", {
       email_failure_category: result.code,
       email_purpose: message.purpose,
     });
     return { status: "failed", code: result.code } as const;
   }
-  const sentAt = new Date();
-  await prisma.emailMessage.update({
-    where: { id: message.id },
-    data: {
-      status: "SENT",
-      provider: result.provider,
-      providerMessageId: result.messageId,
-      sentAt,
-      failedAt: null,
-      deliveryErrorCode: null,
-    },
-  });
+  const sentAt = outcomeAt;
+  if (!await settleClaim(message.id, now, {
+    status: "SENT",
+    provider: result.provider,
+    providerMessageId: result.messageId,
+    sentAt,
+    failedAt: null,
+    deliveryErrorCode: null,
+  })) return { status: "stale-result" } as const;
   await recordServerAnalyticsEventBestEffort({
     name: "email_sent",
     dedupeKey: `email:${message.id}:sent`,
@@ -370,22 +476,15 @@ export async function processQueuedEmailMessage(
   return { status: "sent", messageId: message.id } as const;
 }
 
-export async function processQueuedEmailBatch(limit = 50) {
-  // A disabled or incomplete Production runtime is an intentional operational
-  // state, not a delivery attempt. Leave durable intent untouched so a staged
-  // deployment or kill-switch rollback cannot exhaust message retries.
-  if (!resolveLifecycleEmailRuntimeConfig()) {
-    return { selected: 0, sent: 0, suppressed: 0, failed: 0 };
-  }
-  const boundedLimit = Math.max(1, Math.min(100, Math.trunc(limit)));
+export async function recoverStaleEmailClaims(now = new Date()) {
   const environment = analyticsEnvironment();
-  const stale = new Date(Date.now() - 15 * 60_000);
-  const providerIdempotencyHorizon = new Date(Date.now() - 23 * 60 * 60_000);
-  await prisma.emailMessage.updateMany({
+  const staleBefore = new Date(now.getTime() - EMAIL_CLAIM_STALE_MS);
+  const providerHorizon = new Date(now.getTime() - PROVIDER_IDEMPOTENCY_HORIZON_MS);
+  const expiredSending = await prisma.emailMessage.updateMany({
     where: {
       environment,
       status: "SENDING",
-      lastAttemptAt: { lt: providerIdempotencyHorizon },
+      OR: [{ lastAttemptAt: null }, { lastAttemptAt: { lt: providerHorizon } }],
     },
     data: {
       status: "UNKNOWN",
@@ -393,11 +492,24 @@ export async function processQueuedEmailBatch(limit = 50) {
       deliveryErrorCode: "IDEMPOTENCY_HORIZON_EXPIRED",
     },
   });
-  await prisma.emailMessage.updateMany({
+  const exhaustedSending = await prisma.emailMessage.updateMany({
+    where: {
+      environment,
+      status: "SENDING",
+      lastAttemptAt: { lt: staleBefore },
+      attemptCount: { gte: MAX_EMAIL_ATTEMPTS },
+    },
+    data: {
+      status: "UNKNOWN",
+      nextAttemptAt: null,
+      deliveryErrorCode: "AMBIGUOUS_MAX_ATTEMPTS",
+    },
+  });
+  const expiredAmbiguousFailures = await prisma.emailMessage.updateMany({
     where: {
       environment,
       status: "FAILED",
-      lastAttemptAt: { lt: providerIdempotencyHorizon },
+      lastAttemptAt: { lt: providerHorizon },
       deliveryErrorCode: { in: ["TIMEOUT", "NETWORK"] },
     },
     data: {
@@ -406,34 +518,74 @@ export async function processQueuedEmailBatch(limit = 50) {
       deliveryErrorCode: "AMBIGUOUS_PROVIDER_RESULT",
     },
   });
-  await prisma.emailMessage.updateMany({
+  const staleAuth = await prisma.emailMessage.updateMany({
     where: {
       environment,
+      purpose: { in: [...AUTH_EMAIL_PURPOSES] },
       status: "SENDING",
-      lastAttemptAt: { lt: stale, gte: providerIdempotencyHorizon },
+      lastAttemptAt: { lt: staleBefore, gte: providerHorizon },
       attemptCount: { lt: MAX_EMAIL_ATTEMPTS },
     },
-    data: { status: "FAILED", nextAttemptAt: new Date() },
+    data: {
+      status: "FAILED",
+      nextAttemptAt: now,
+      deliveryErrorCode: "STALE_AUTH_CLAIM",
+    },
   });
+  return {
+    staleAuth: staleAuth.count,
+    expiredSending: expiredSending.count,
+    exhaustedSending: exhaustedSending.count,
+    expiredAmbiguousFailures: expiredAmbiguousFailures.count,
+  };
+}
+
+export async function processQueuedEmailBatch(
+  limit = 50,
+  overrides: { provider?: LifecycleEmailProvider; siteUrl?: string; now?: Date } = {},
+) {
+  // A disabled or incomplete Production runtime is an intentional operational
+  // state, not a delivery attempt. Leave durable intent untouched so a staged
+  // deployment or kill-switch rollback cannot exhaust message retries.
+  if (!resolveLifecycleEmailRuntimeConfig() && !overrides.provider) {
+    return {
+      selected: 0,
+      sent: 0,
+      suppressed: 0,
+      failed: 0,
+      recovery: { staleAuth: 0, expiredSending: 0, exhaustedSending: 0, expiredAmbiguousFailures: 0 },
+    };
+  }
+  const boundedLimit = Math.max(1, Math.min(100, Math.trunc(limit)));
+  const environment = analyticsEnvironment();
+  const now = overrides.now ?? new Date();
+  const recovery = await recoverStaleEmailClaims(now);
   const messages = await prisma.emailMessage.findMany({
     where: {
       environment,
-      purpose: { in: ["WELCOME", "PROGRAMME_REMINDER", "MARKETING_BROADCAST", "TEST"] },
-      status: { in: ["QUEUED", "FAILED"] },
+      purpose: { in: [...WORKER_EMAIL_PURPOSES] },
       attemptCount: { lt: MAX_EMAIL_ATTEMPTS },
-      OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: new Date() } }],
+      AND: [claimableState(now), campaignSendAuthority(environment)],
     },
     select: { id: true },
     orderBy: [{ queuedAt: "asc" }, { id: "asc" }],
     take: boundedLimit,
   });
   const outcomes = [];
-  for (const message of messages) outcomes.push(await processQueuedEmailMessage(message.id));
+  for (const message of messages) {
+    outcomes.push(await processQueuedEmailMessage(message.id, {
+      provider: overrides.provider,
+      siteUrl: overrides.siteUrl,
+      now: overrides.now,
+    }));
+  }
   return {
     selected: messages.length,
     sent: outcomes.filter((item) => item.status === "sent").length,
     suppressed: outcomes.filter((item) => item.status === "suppressed").length,
-    failed: outcomes.filter((item) => item.status === "failed" || item.status === "unavailable" || item.status === "unknown").length,
+    failed: outcomes.filter((item) => item.status === "failed" || item.status === "unavailable"
+      || item.status === "unknown" || item.status === "stale-result").length,
+    recovery,
   };
 }
 
@@ -445,7 +597,7 @@ export async function sendAuthEmail({
   user: { id: string; name: string; email: string };
   templateKey: "EMAIL_VERIFICATION" | "PASSWORD_RESET";
   actionUrl: string;
-}) {
+}, overrides: { provider?: LifecycleEmailProvider; siteUrl?: string; now?: Date } = {}) {
   const purpose = purposeByTemplate[templateKey];
   const eligibility = await currentEligibility(user.id, purpose);
   if (!eligibility?.decision.allowed) return { status: "suppressed" } as const;
@@ -453,66 +605,27 @@ export async function sendAuthEmail({
   if (!template) return { status: "template-unavailable" } as const;
   const idempotencyKey = authEmailIdempotencyKey(user.id, actionUrl);
   const runtime = providerForRuntime();
-  if (!runtime.siteUrl) return { status: "provider-unavailable" } as const;
-  let verifiedActionUrl: string;
-  try {
-    const candidate = new URL(actionUrl);
-    if (candidate.origin !== runtime.siteUrl || candidate.username || candidate.password) {
-      return { status: "invalid-action-url" } as const;
-    }
-    verifiedActionUrl = candidate.toString();
-  } catch {
-    return { status: "invalid-action-url" } as const;
-  }
-  const rendered = renderEmailTemplate(template, { name: eligibility.user.name, action_url: verifiedActionUrl, programme_url: "", unsubscribe_url: "" });
-  let message;
-  try {
-    message = await prisma.emailMessage.create({
-      data: {
-        userId: user.id,
-        templateId: template.id,
-        purpose,
-        status: "SENDING",
-        environment: analyticsEnvironment(),
-        locale: template.locale,
-        recipientEmail: eligibility.user.email.trim().toLowerCase(),
-        subject: rendered.subject,
-        templateVersion: template.version,
-        idempotencyKey,
-        attemptCount: 1,
-        lastAttemptAt: new Date(),
-      },
-    });
-  } catch (error) {
-    if (isUniqueConflict(error)) return { status: "duplicate" } as const;
-    throw error;
-  }
-  const result = await runtime.provider.send({
-    to: message.recipientEmail,
-    subject: rendered.subject,
-    html: rendered.html,
-    text: rendered.text,
+  const provider = overrides.provider ?? runtime.provider;
+  const siteUrl = overrides.siteUrl ?? runtime.siteUrl;
+  const verifiedActionUrl = validAuthActionUrl(actionUrl, siteUrl);
+  if (!siteUrl) return { status: "provider-unavailable" } as const;
+  if (!verifiedActionUrl) return { status: "invalid-action-url" } as const;
+  const message = await queueEmailMessage({
+    userId: user.id,
+    templateKey,
+    templateId: template.id,
     idempotencyKey,
   });
-  if (result.status !== "accepted") {
-    await prisma.emailMessage.update({ where: { id: message.id }, data: { status: "FAILED", failedAt: new Date(), deliveryErrorCode: result.code } });
-    return { status: "failed", code: result.code } as const;
-  }
-  const sentAt = new Date();
-  await prisma.emailMessage.update({
-    where: { id: message.id },
-    data: { status: "SENT", provider: result.provider, providerMessageId: result.messageId, sentAt },
+  if (!message || message.status === "SUPPRESSED") return { status: "suppressed" } as const;
+  const result = await processQueuedEmailMessage(message.id, {
+    provider,
+    siteUrl,
+    actionUrl: verifiedActionUrl,
+    now: overrides.now,
   });
-  await recordServerAnalyticsEventBestEffort({
-    name: "email_sent",
-    dedupeKey: `email:${message.id}:sent`,
-    occurredAt: sentAt,
-    userId: user.id,
-    emailMessageId: message.id,
-    locale: message.locale,
-    environment: message.environment,
-  });
-  return { status: "sent" } as const;
+  if (result.status === "sent") return { status: "sent" } as const;
+  if (result.status === "not-claimed") return { status: "duplicate" } as const;
+  return result;
 }
 
 export async function queueProgrammeReminders() {

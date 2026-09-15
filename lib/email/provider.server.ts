@@ -12,7 +12,10 @@ export type EmailProviderEnvelope = {
 
 export type EmailProviderResult =
   | { status: "accepted"; provider: "resend" | "memory"; messageId: string }
-  | { status: "unavailable"; code: "NOT_CONFIGURED" | "TIMEOUT" | "NETWORK" | "REJECTED" };
+  | {
+      status: "unavailable";
+      code: "NOT_CONFIGURED" | "TIMEOUT" | "NETWORK" | "RATE_LIMITED" | "PROVIDER_5XX" | "REJECTED";
+    };
 
 export interface LifecycleEmailProvider {
   send(envelope: EmailProviderEnvelope): Promise<EmailProviderResult>;
@@ -51,6 +54,8 @@ export class ResendLifecycleEmailProvider implements LifecycleEmailProvider {
         cache: "no-store",
         signal: AbortSignal.timeout(this.timeoutMs),
       });
+      if (response.status === 429) return { status: "unavailable", code: "RATE_LIMITED" };
+      if (response.status >= 500) return { status: "unavailable", code: "PROVIDER_5XX" };
       if (!response.ok) return { status: "unavailable", code: "REJECTED" };
       const body = await response.json().catch(() => null) as { id?: unknown } | null;
       return typeof body?.id === "string" && /^[A-Za-z0-9_-]{1,200}$/.test(body.id)

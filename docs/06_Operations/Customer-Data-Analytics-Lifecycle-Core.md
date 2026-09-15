@@ -2,7 +2,7 @@
 
 **Authority:** [RFC-046](../06_RFC/RFC-046-Customer-Data-Analytics-and-Lifecycle-Core.md)<br>
 **Runbook date:** 12 September 2026<br>
-**Current-state reconciliation:** 14 September 2026<br>
+**Current-state reconciliation:** 15 September 2026<br>
 **Application:** B4GAMBLE / `sevenbet-next`<br>
 **Production origin:** `https://b4gamble.com`<br>
 **Migrations:** `0037_customer_data_analytics_lifecycle_core` and
@@ -35,6 +35,14 @@ Production. Resend offers no provider unsubscribe event; B4GAMBLE's signed
 local unsubscribe flow remains the unsubscribe authority. Provider click
 tracking is currently off, so the `email.clicked` subscription establishes
 receipt readiness but does not create a live click event by itself.
+
+**DETECTED IN THE CURRENT REPOSITORY:** the existing `EmailMessage` ledger now
+uses one guarded claim/recovery path for synchronous auth and cron delivery.
+Campaign children have no send authority until their parent is `QUEUED` or
+`SENDING`; stale claims are recoverable only inside the provider idempotency
+horizon; and an expired worker cannot overwrite a newer claim result. This is
+repository evidence, not by itself proof that a particular Production
+deployment has adopted the revision.
 
 ## 2. Architecture and authority
 
@@ -223,14 +231,41 @@ both stores, operators must never calculate a combined total.
 ## 9. Email architecture and eligibility
 
 The provider port has disabled, Resend and memory-test implementations. Resend
-uses direct HTTPS, an eight-second timeout and provider idempotency header; the
-database key remains the durable authority after the provider's 24-hour
-window. Provider idempotency values contain an opaque SHA-256 subject digest,
-not a customer ID. Real delivery is possible only in Vercel Production with the exact
+uses direct HTTPS, an eight-second timeout and provider idempotency header.
+Provider idempotency values contain an opaque SHA-256 subject digest, not a
+customer ID. Real delivery is possible only in Vercel Production with the exact
 flag and valid sender/reply-to/site/webhook configuration. The activation
 worker invokes a maximum of 50 queued messages from the protected daily
 lifecycle cron. It is released and the exact Production switch is enabled
 after six of six controlled acceptance checks passed.
+
+The existing ledger enforces the delivery state machine without a new queue,
+table or service:
+
+- one atomic conditional update claims a due `QUEUED`/retryable `FAILED`
+  message, or a `SENDING` claim stale by 15 minutes but still inside the
+  23-hour application safety boundary for Resend's documented 24-hour
+  idempotency window;
+- the claim checks environment, fewer than five attempts and current campaign
+  authority, and increments `attemptCount` in that same database update;
+- completion is a compare-and-set on message ID, `SENDING` and the exact
+  `lastAttemptAt` claim timestamp, so a late expired worker cannot overwrite a
+  newer result;
+- timeout, network, rate-limit, provider 5xx and missing-configuration results
+  use bounded exponential retry. Explicit provider rejection and locally
+  invalid rendering are terminal. Unresolved sends outside the safe replay
+  window become `UNKNOWN` instead of risking another delivery; and
+- the ordinary protected cron performs stale-state recovery before selection.
+  Its processor remains sequential and bounded to the existing 50-message
+  maximum; no unverified provider-capacity increase is inferred.
+
+Auth verification and password-reset callbacks first create durable `QUEUED`
+intent, then use the same guarded claim synchronously. Auth action URLs and
+tokens are not persisted. The cron can classify a stale auth claim but never
+renders or sends one without the caller-supplied URL. A repeated callback with
+the same still-valid URL can safely reuse its opaque idempotency key inside the
+horizon; a normal future Better Auth request generates a fresh token and key,
+so an ambiguous old row cannot block account recovery.
 
 Final eligibility is read after a worker claims a message and then read again
 immediately before synchronous template rendering/provider invocation. The
@@ -289,6 +324,13 @@ create/review/queue and template
 version/activation/test-queue actions write relational staff audit records;
 template body content and customer addresses are not copied into those audit
 records. Final send rechecks current consent.
+
+Child rows prepared while a campaign is still `REVIEWED` are durable intent
+only and are excluded from direct claims and batch selection. Send authority
+begins only after the parent commits `QUEUED` (and remains while it is
+`SENDING`). Re-running preparation relies on the existing campaign/user and
+environment/idempotency uniqueness constraints, so recovery completes the
+audience without duplicating recipients.
 
 ## 11. Unsubscribe and webhooks
 
@@ -353,6 +395,8 @@ Logs use fixed categories and aggregate counts only:
 
 - analytics validation/timestamp/database/rate-limit failures;
 - outbound attribution database failure and final state;
+- email claim, stale-claim reclaim, retry-scheduled, terminal-failure and
+  campaign-not-authorized state plus purpose, never recipient;
 - email provider failure category and purpose, never recipient;
 - webhook configuration/verification/processing failure;
 - lifecycle queue/delivery/retention and campaign-refresh counts, limit flag and duration.
@@ -373,6 +417,7 @@ npx prisma validate
 npm run customer-data-core:test
 npm run ci:migrations
 npm run customer-data-core:postgres-test
+npm run email-reliability:postgres-test
 npm run ci:browser
 ```
 

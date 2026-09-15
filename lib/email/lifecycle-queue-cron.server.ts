@@ -21,7 +21,18 @@ export function createLifecycleQueueCronHandler({
 }: {
   environment?: { CRON_SECRET?: string };
   queueReminders?: typeof queueProgrammeReminders;
-  processMessages?: typeof processQueuedEmailBatch;
+  processMessages?: (limit?: number) => Promise<{
+    selected: number;
+    sent: number;
+    suppressed: number;
+    failed: number;
+    recovery?: {
+      staleAuth: number;
+      expiredSending: number;
+      exhaustedSending: number;
+      expiredAmbiguousFailures: number;
+    };
+  }>;
   refreshCampaigns?: typeof refreshCampaignStates;
   purgeRetention?: typeof purgeCustomerDataRetention;
 } = {}) {
