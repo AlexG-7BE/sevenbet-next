@@ -14,10 +14,11 @@ and API. TOTP is an additional authentication condition, not a business role or
 second Admin authority.
 
 **DETECTED BY BOUNDED READ-ONLY PRODUCTION AGGREGATE:** one current
-`SUPER_ADMIN` is linked to one Better Auth `User`; the account has both
-credential and Google provider relationships and is not Google-only. No email,
-user identifier, provider token, session token or credential was returned.
-External Google/Workspace MFA enforcement could not be proved.
+`SUPER_ADMIN` is linked to one Better Auth `User`; one provider-owned factor is
+present and verified, the linked User has two-factor enabled, and no factor
+failure or active lock is present. No Google OAuth access token, refresh token,
+ID token, expiry or scope material is persisted. No email, user identifier,
+factor secret, backup code, session token or credential was returned.
 
 ## Official Better Auth 1.7.1 TOTP
 
@@ -114,10 +115,11 @@ rate-limit table exists. No Programme persistence is read or reused.
 
 ## Distributed auth abuse boundary
 
-**LIVE VERCEL CONTROL-PLANE EVIDENCE:** Vercel Firewall active configuration
-version 3 is enabled with three valid IP-keyed fixed-window rules. The existing
-contact rule is unchanged at 5 POST requests per 600 seconds. Two added rules
-bound public auth entry/recovery and second-factor verification to 10 POST
+**LIVE VERCEL CONTROL-PLANE EVIDENCE, 15 September 2026:** Vercel Firewall is
+enabled with four active rules and no inactive or draft rule. The existing
+contact rule remains at 5 POST requests per 600 seconds, and the independent
+outbound `/r/*` rule remains at 60 GET/HEAD requests per 60 seconds. Two auth
+rules bound public auth entry/recovery and second-factor verification to 10 POST
 requests per 600 seconds per source IP:
 
 - `auth-entry-rate-limit`: exact email sign-in, email signup, password-reset
@@ -146,5 +148,8 @@ method and IP key; no email or account identifier is configured.
 5. Do not transmit the setup key, provisioning URI, code or backup codes in
    chat, email, logs, tickets or analytics.
 
-Until the Founder completes step 4, the safe release status is
-`P1 ADMIN/AUTH SECURITY READY FOR FOUNDER MFA ENROLLMENT`, not closed.
+**VERIFIED CLOSED, 15 September 2026:** Founder/Admin MFA is enrolled and the
+bounded Production aggregate proves one linked privileged Admin, one verified
+factor and enabled two-factor state. The anonymous `/admin` boundary redirects
+to login, the retired preview-token bypass remains denied, and the exact source
+commit's auth regression suite and required CI contexts are green.

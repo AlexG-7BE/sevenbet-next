@@ -11,8 +11,8 @@ external technical, legal and evidence constraints still apply.
 `branch → pull request → required GitHub checks → Vercel Preview → Founder review → merge to main → Vercel Production → production smoke`
 
 - **Detected:** Vercel is linked to this Git repository and Production uses Node.js 24.x.
-- **Detected:** the repository supplies three deterministic CI contexts: `Quality`, `Build / Browser`, and `Database / Migration Verification`.
-- **Detected during OPS-01:** `main` branch protection is enabled and currently requires pull-request delivery; strict, up-to-date `Quality`, `Build / Browser`, `Database / Migration Verification`, and `Vercel` contexts; resolved review conversations; administrator enforcement; zero required approvals for the current single-maintainer model; and no force push or branch deletion.
+- **Detected:** the repository supplies four deterministic CI contexts: `Agent Core`, `Quality`, `Database / Migration Verification`, and `Build / Browser`.
+- **Detected on 15 September 2026:** `main` branch protection is enabled and currently requires pull-request delivery; strict, up-to-date `Agent Core`, `Quality`, `Database / Migration Verification`, `Build / Browser`, and `Vercel` contexts; resolved review conversations; administrator enforcement; zero required approvals for the current single-maintainer model; and no force push or branch deletion.
 - **Detected:** [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) is merged at `e140f4d`; required branch protection and successful Production Smoke evidence are active.
 - **Detected:** ENV-ISO-01 [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged under explicit Founder Office authority as `a954243`; exact-merge main CI, Production deployment, Production Smoke and real staff auth E2E passed. The environment-isolation/configuration incident is closed.
 - **Default prohibited:** direct Production mutation, automatic PR merge, force
@@ -90,7 +90,7 @@ closed.
 
 1. Confirm the change is aligned with the current Founder instruction, Current State, Product Vision and the relevant `ACTIVE` RFCs, if any.
 2. Confirm the pull request head SHA is the reviewed SHA.
-3. Confirm all four required contexts are green on that exact SHA.
+3. Confirm all five required contexts are green on that exact SHA.
 4. Inspect Vercel Preview without creating or modifying Production data.
 5. Confirm no CI job received a hosted Production or Preview secret.
 6. For schema work, complete [Database Migrations](Database-Migrations.md) and [Backup and Restore](Backup-and-Restore.md) gates.

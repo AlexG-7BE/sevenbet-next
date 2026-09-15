@@ -36,13 +36,15 @@ local unsubscribe flow remains the unsubscribe authority. Provider click
 tracking is currently off, so the `email.clicked` subscription establishes
 receipt readiness but does not create a live click event by itself.
 
-**DETECTED IN THE CURRENT REPOSITORY:** the existing `EmailMessage` ledger now
-uses one guarded claim/recovery path for synchronous auth and cron delivery.
-Campaign children have no send authority until their parent is `QUEUED` or
-`SENDING`; stale claims are recoverable only inside the provider idempotency
-horizon; and an expired worker cannot overwrite a newer claim result. This is
-repository evidence, not by itself proof that a particular Production
-deployment has adopted the revision.
+**VERIFIED IN THE CURRENT PRODUCTION SOURCE:** the existing `EmailMessage`
+ledger uses one guarded claim/recovery path for synchronous auth and cron
+delivery. Campaign children have no send authority until their parent is
+`QUEUED` or `SENDING`; stale claims are recoverable only inside the provider
+idempotency horizon; and an expired worker cannot overwrite a newer claim
+result. The exact Production source `cf2aa0e66744955b6580d985645931142dad3a07`
+passed the PostgreSQL email-reliability job and all required release contexts.
+A database-enforced read-only aggregate found no queued, sending or failed
+message backlog. No real email was sent by the closure audit.
 
 ## 2. Architecture and authority
 
