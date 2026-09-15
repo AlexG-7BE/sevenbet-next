@@ -10,6 +10,38 @@ const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 const directBusinessMutation = /\b(?:prisma|transaction|tx)\.[A-Za-z][A-Za-z0-9]*\.(?:create|createMany|update|updateMany|upsert|delete|deleteMany)\s*\(/;
 const mutatingSql = /\b(?:INSERT\s+INTO|UPDATE\s+"|DELETE\s+FROM|ALTER\s+TABLE|CREATE\s+TABLE|DROP\s+TABLE)\b/i;
 
+const versionAtLeast = (actual: string, floor: string) => {
+  const parts = (value: string) => value.split(".").map(Number);
+  const [actualMajor, actualMinor, actualPatch] = parts(actual);
+  const [floorMajor, floorMinor, floorPatch] = parts(floor);
+  return actualMajor > floorMajor
+    || (actualMajor === floorMajor && actualMinor > floorMinor)
+    || (actualMajor === floorMajor && actualMinor === floorMinor && actualPatch >= floorPatch);
+};
+
+test("Next and Sharp stay above the patched AVIF vulnerability floors", () => {
+  const packageJson = JSON.parse(read("package.json")) as {
+    dependencies: { next: string };
+    devDependencies: { "eslint-config-next": string };
+    overrides: { next: { sharp: string } };
+  };
+  const packageLock = JSON.parse(read("package-lock.json")) as {
+    packages: Record<string, { version?: string }>;
+  };
+
+  assert.equal(packageJson.devDependencies["eslint-config-next"], packageJson.dependencies.next);
+  assert.equal(versionAtLeast(packageJson.dependencies.next, "15.5.24"), true);
+  assert.equal(versionAtLeast(packageJson.overrides.next.sharp, "0.35.4"), true);
+  assert.equal(packageLock.packages["node_modules/next"]?.version, packageJson.dependencies.next);
+
+  const sharpVersions = Object.entries(packageLock.packages)
+    .filter(([packagePath]) => packagePath === "node_modules/sharp" || packagePath.endsWith("/node_modules/sharp"))
+    .map(([, value]) => value.version)
+    .filter((version): version is string => Boolean(version));
+  assert.deepEqual(sharpVersions, [packageJson.overrides.next.sharp]);
+  assert.equal(sharpVersions.every((version) => versionAtLeast(version, "0.35.4")), true);
+});
+
 test("obsolete one-shot Production mutation routes stay retired", () => {
   for (const route of [
     "app/api/internal/goldenplay-score-publish-20260911",
