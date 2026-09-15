@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
@@ -9,6 +9,15 @@ const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
 const directBusinessMutation = /\b(?:prisma|transaction|tx)\.[A-Za-z][A-Za-z0-9]*\.(?:create|createMany|update|updateMany|upsert|delete|deleteMany)\s*\(/;
 const mutatingSql = /\b(?:INSERT\s+INTO|UPDATE\s+"|DELETE\s+FROM|ALTER\s+TABLE|CREATE\s+TABLE|DROP\s+TABLE)\b/i;
+
+test("obsolete one-shot Production mutation routes stay retired", () => {
+  for (const route of [
+    "app/api/internal/goldenplay-score-publish-20260911",
+    "app/api/internal/gp-linkhash-fix-20260911-c91a7e",
+  ]) {
+    assert.equal(existsSync(path.join(root, route)), false, route);
+  }
+});
 
 test("canonical Vercel build is an explicit read-only compatibility gate", () => {
   const vercel = JSON.parse(read("vercel.json")) as { buildCommand: string };
