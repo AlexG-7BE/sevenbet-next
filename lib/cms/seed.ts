@@ -4,7 +4,6 @@ import type {
   AuditLogEntry,
   CmsAffiliateLink,
   CmsAchievement,
-  CmsArticle,
   CmsBlock,
   CmsBonus,
   CmsCasino,
@@ -173,32 +172,6 @@ export const cmsAchievements: CmsAchievement[] = [
   { id: "achievement_program_complete", slug: "program-complete", internalName: "program_complete", title: "Program Complete", description: "Complete all required program steps.", icon: "10", category: "PROGRAM", tier: "MILESTONE", xpReward: 100, active: true, hidden: false, triggerType: "PROGRAM_COMPLETED", triggerConfig: { programId: "program_10_step_control" } },
 ].map((achievement) => ({ ...achievement, entity: "achievement" as const, status: "PUBLISHED" as const, createdAt: now, updatedAt: now, createdBy: systemUserId, updatedBy: systemUserId })) as unknown as CmsAchievement[];
 
-export const cmsArticles: CmsArticle[] = [
-  {
-    id: "article_sample_bonus_terms",
-    entity: "article",
-    slug: "how-welcome-bonus-terms-work",
-    title: "How Welcome Bonus Terms Work",
-    excerpt: "Understand wagering, expiry, maximum bet rules and withdrawal restrictions before comparing offers.",
-    category: "casino-bonuses",
-    tags: ["Bonuses", "Responsible Gambling"],
-    bodyBlocks: [
-      { id: "article_block_1", type: "TEXT", order: 1000, internalLabel: "Introduction", required: true, data: { text: "Welcome bonuses should be compared by terms, not headline amount alone." } },
-    ],
-    seoTitle: "How Welcome Bonus Terms Work",
-    seoDescription: "A B4GAMBLE guide to welcome bonus terms and responsible comparison.",
-    readingTime: "6 min read",
-    difficulty: "Beginner",
-    status: "PUBLISHED",
-    publishedAt: now,
-    lastReviewedAt: now,
-    createdAt: now,
-    updatedAt: now,
-    createdBy: systemUserId,
-    updatedBy: systemUserId,
-  },
-];
-
 export const cmsCasinos: CmsCasino[] = [
   {
     id: "casino_sample",
@@ -267,7 +240,6 @@ export const cmsRecords: CmsRecord[] = [
   ...cmsLessons,
   ...cmsAchievements,
   ...cmsXpRules,
-  ...cmsArticles,
   ...cmsCasinos,
   ...cmsBonuses,
   ...cmsAffiliateLinks,

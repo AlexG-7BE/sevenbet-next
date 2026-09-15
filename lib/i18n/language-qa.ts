@@ -61,7 +61,7 @@ function snapshot(locale: SupportedLocale) {
     methodology: { metadataTitle: methodology.metadataTitle, metadataDescription: methodology.metadataDescription, text: [...methodology.copy.values()] },
     tenSteps: tenStepsTranslation(locale),
     visualFixture: visualFixtureCopy(locale),
-    learning: { categories: learning.categories, articles: learning.articles, hub: learning.hub, template: learning.template, ui: learning.ui },
+    learning: { categories: learning.categories, hub: learning.hub, ui: learning.ui },
   };
 }
 

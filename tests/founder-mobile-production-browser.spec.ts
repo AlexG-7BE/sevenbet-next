@@ -21,7 +21,6 @@ const routes = [
   "/program",
   "/10-steps",
   "/learn",
-  "/learn/casino-bonuses/welcome-bonus-terms",
   "/bonus-guide",
   "/responsible-gambling",
   "/help",
@@ -326,8 +325,9 @@ test("390px touch journeys preserve commercial, learning and canonical Programme
   await page.goto(`${baseUrl}/learn`, { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: "Bonuses", exact: true }).click();
   await expect(page.getByRole("button", { name: "Bonuses", exact: true })).toBeVisible();
-  await page.goto(`${baseUrl}/learn/casino-bonuses/welcome-bonus-terms`, { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.locator("[data-learn-empty]")).toBeVisible();
+  const missingArticle = await page.goto(`${baseUrl}/learn/casino-bonuses/welcome-bonus-terms`, { waitUntil: "domcontentloaded" });
+  expect(missingArticle?.status()).toBe(404);
 
   await installAnonymousProgramme(page);
   await page.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });

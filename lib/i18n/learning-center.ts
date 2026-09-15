@@ -1,7 +1,5 @@
 import {
-  learningArticles,
   learningCategories,
-  type LearningArticle,
   type LearningCategory,
   type LearningDifficulty,
 } from "@/lib/learning-center";
@@ -50,7 +48,7 @@ const enUi: LearningUi = {
 };
 
 const categoriesEn = learningCategories.map((category) => category.title);
-const articlesEn = learningArticles.map((article) => [article.title, article.summary] as const);
+const articlesEn: ArticleCopy[] = [];
 
 const de: Pack = {
   categories: ["Grundlagen zu Glücksspielanbietern", "Glücksspielboni", "Verantwortungsvolles Spielen", "Anbieterbewertungen", "Anbietersicherheit", "Zahlungen", "Lizenzen", "Spielanleitungen", "Sportwetten-Grundlagen", "Krypto-Glücksspielanbieter", "Länderleitfäden", "Glücksspielglossar", "Branchennachrichten"],
@@ -151,15 +149,30 @@ const nb: Pack = {
 const en: Pack = { categories: categoriesEn, articles: articlesEn, hub: HUB_SOURCE, template: enTemplate, ui: enUi };
 const catalog: Record<EuropeanLocale, Pack> = { "en-GB": en, "de-DE": de, "it-IT": it, "es-ES": es, "pt-PT": pt, "el-GR": el, "nl-NL": nl, "sv-SE": sv, "da-DK": da, "fi-FI": fi, "nb-NO": nb };
 const learnLabels: Record<EuropeanLocale, string> = { "en-GB": "Learn", "de-DE": "Lernen", "it-IT": "Impara", "es-ES": "Aprende", "pt-PT": "Aprende", "el-GR": "Μάθε", "nl-NL": "Leren", "sv-SE": "Lär dig", "da-DK": "Lær", "fi-FI": "Opi", "nb-NO": "Lær" };
+const emptyStateCopy: Record<EuropeanLocale, string> = {
+  "en-GB": "No published guides are available in this language yet.",
+  "de-DE": "In dieser Sprache sind noch keine veröffentlichten Leitfäden verfügbar.",
+  "it-IT": "Non sono ancora disponibili guide pubblicate in questa lingua.",
+  "es-ES": "Todavía no hay guías publicadas disponibles en este idioma.",
+  "pt-PT": "Ainda não há guias publicados disponíveis neste idioma.",
+  "el-GR": "Δεν υπάρχουν ακόμη δημοσιευμένοι οδηγοί σε αυτή τη γλώσσα.",
+  "nl-NL": "Er zijn nog geen gepubliceerde gidsen beschikbaar in deze taal.",
+  "sv-SE": "Det finns ännu inga publicerade guider på det här språket.",
+  "da-DK": "Der er endnu ingen udgivne guider på dette sprog.",
+  "fi-FI": "Tällä kielellä ei ole vielä julkaistuja oppaita.",
+  "nb-NO": "Det finnes ennå ingen publiserte guider på dette språket.",
+};
 
 export function learningMessages(locale: SupportedLocale) {
   const effectiveLocale = locale === "es-PE" ? "es-ES" : locale;
   const pack = catalog[effectiveLocale as EuropeanLocale] ?? en;
-  if (pack.categories.length !== learningCategories.length || pack.articles.length !== learningArticles.length || pack.hub.length !== HUB_SOURCE.length) {
+  if (pack.categories.length !== learningCategories.length || pack.hub.length !== HUB_SOURCE.length) {
     throw new Error(`Learning translation coverage mismatch for ${locale}`);
   }
   return {
-    ...pack,
+    categories: pack.categories,
+    emptyState: emptyStateCopy[effectiveLocale as EuropeanLocale] ?? emptyStateCopy["en-GB"],
+    hub: pack.hub,
     ui: { ...pack.ui, learn: learnLabels[effectiveLocale as EuropeanLocale] ?? enUi.learn },
     hubCopy: new Map(HUB_SOURCE.map((source, index) => [source, pack.hub[index]])),
   };
@@ -170,29 +183,6 @@ export type LearningMessages = ReturnType<typeof learningMessages>;
 export function localizedLearningCategories(locale: SupportedLocale): LearningCategory[] {
   const messages = learningMessages(locale);
   return learningCategories.map((category, index) => ({ ...category, title: messages.categories[index] }));
-}
-
-export function localizedLearningArticles(locale: SupportedLocale): LearningArticle[] {
-  const messages = learningMessages(locale);
-  return learningArticles.map((article, index) => {
-    const [title, summary] = messages.articles[index];
-    const template = messages.template;
-    return {
-      ...article,
-      title,
-      summary,
-      readingTime: new Intl.NumberFormat(locale).format(6) + " min",
-      takeaways: [...template.takeaways],
-      sections: template.sections.map(([sectionTitle, body]) => ({ title: sectionTitle, body: body.replace("{{title}}", title) })),
-      examples: [...template.examples],
-      callout: { title: template.callout[0], text: template.callout[1] },
-      faq: template.faq.map(([question, answer]) => [question, answer] as [string, string]),
-    };
-  });
-}
-
-export function localizedLearningArticle(article: LearningArticle, locale: SupportedLocale) {
-  return localizedLearningArticles(locale).find((candidate) => candidate.slug === article.slug) ?? article;
 }
 
 export function localizedLearningCategory(category: LearningCategory, locale: SupportedLocale) {

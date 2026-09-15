@@ -17,6 +17,7 @@ function apiError(message: string, status = 400) {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ entity: string; id: string }> }) {
   const { entity: entityParam, id } = await params;
   if (!isCmsEntity(entityParam)) return apiError("Unknown CMS entity", 404);
+  if (entityParam === "article") return apiError("Use the canonical PostgreSQL Article API at /api/admin/articles", 410);
   if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ entity: string; id: string }> }) {
   const { entity: entityParam, id } = await params;
   if (!isCmsEntity(entityParam)) return apiError("Unknown CMS entity", 404);
+  if (entityParam === "article") return apiError("Use the canonical PostgreSQL Article API at /api/admin/articles", 410);
   if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {
@@ -52,6 +54,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ entity: string; id: string }> }) {
   const { entity: entityParam, id } = await params;
   if (!isCmsEntity(entityParam)) return apiError("Unknown CMS entity", 404);
+  if (entityParam === "article") return apiError("Use the canonical PostgreSQL Article API at /api/admin/articles", 410);
   if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {

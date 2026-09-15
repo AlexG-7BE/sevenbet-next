@@ -5,12 +5,7 @@ import test from "node:test";
 
 import { serializeJsonLd } from "../components/seo/JsonLd";
 import {
-  getArticleBySlug,
   getLearningCategory,
-  assertValidLearningManifest,
-  learningArticles,
-  publishedLearningArticles,
-  type LearningArticle,
 } from "../lib/learning-center";
 import {
   LEGACY_RESPONSIBLE_GAMBLING_ROUTES,
@@ -73,18 +68,18 @@ test("every former mixed Responsible Gambling article has one explicit canonical
   assert.deepEqual(LEGACY_RESPONSIBLE_GAMBLING_ROUTES, {
     budgeting: {
       classification: "EDUCATION",
-      destination: "/learn/responsible-gambling/responsible-gambling-tools",
-      reason: "Budget planning is educational context, not an immediate Help action or access control.",
+      destination: "/learn?category=responsible-gambling",
+      reason: "Budget planning is educational context, not an immediate Help action or access control; the filtered Learn catalogue is the durable destination.",
     },
     "time-management": {
       classification: "EDUCATION",
-      destination: "/learn/responsible-gambling/responsible-gambling-tools",
-      reason: "Session planning is educational context; the canonical Learn guide covers reminders and time controls.",
+      destination: "/learn?category=responsible-gambling",
+      reason: "Session planning is educational context; the canonical Learn catalogue owns future published guides.",
     },
     "bonus-terms": {
       classification: "EDUCATION",
-      destination: "/learn/casino-bonuses/welcome-bonus-terms",
-      reason: "Bonus mechanics belong to the published Learn bonus guide, not Protected Help.",
+      destination: "/learn?category=casino-bonuses",
+      reason: "Bonus mechanics belong to the canonical Learn catalogue, not Protected Help.",
     },
     "self-exclusion": {
       classification: "HELP",
@@ -108,18 +103,18 @@ test("every former mixed Responsible Gambling article has one explicit canonical
     },
     "casino-licenses": {
       classification: "EDUCATION",
-      destination: "/learn/licensing/casino-licenses-explained",
+      destination: "/learn?category=licensing",
       reason: "Licence interpretation is educational trust context owned by Learn.",
     },
     "payment-safety": {
       classification: "EDUCATION",
-      destination: "/learn/payments/casino-payment-methods",
+      destination: "/learn?category=payments",
       reason: "Payment and withdrawal mechanics are educational comparison context owned by Learn.",
     },
     faq: {
       classification: "EDUCATION",
-      destination: "/learn/responsible-gambling",
-      reason: "The mixed FAQ is redundant with the canonical Responsible Gambling Learn category and its published guide.",
+      destination: "/learn?category=responsible-gambling",
+      reason: "The mixed FAQ is redundant with the canonical Responsible Gambling Learn category.",
     },
   });
 
@@ -130,13 +125,12 @@ test("every former mixed Responsible Gambling article has one explicit canonical
     "reality-checks",
   ]);
   for (const route of Object.values(LEGACY_RESPONSIBLE_GAMBLING_ROUTES)) {
-    assert.match(route.destination, /^\/(?:help|learn)(?:\/|$)/);
+    assert.match(route.destination, /^\/(?:help|learn)(?:[/?]|$)/);
     assert.doesNotMatch(route.destination, /^\/responsible-gambling(?:\/|$)/);
     if (route.classification === "EDUCATION") {
-      const [, area, category, article] = route.destination.split("/");
-      assert.equal(area, "learn");
-      assert.ok(getLearningCategory(category));
-      if (article) assert.ok(getArticleBySlug(article));
+      const destination = new URL(route.destination, "https://b4gamble.com");
+      assert.equal(destination.pathname, "/learn");
+      assert.ok(getLearningCategory(destination.searchParams.get("category") ?? ""));
     } else if (route.classification === "HELP") {
       assert.match(route.destination, /^\/help\//);
     }
@@ -145,6 +139,10 @@ test("every former mixed Responsible Gambling article has one explicit canonical
   assert.equal(
     withPreservedLegacyQuery("/help/cooling-off", { utm_source: "old page", tag: ["one", "two"], empty: undefined }),
     "/help/cooling-off?utm_source=old+page&tag=one&tag=two",
+  );
+  assert.equal(
+    withPreservedLegacyQuery("/learn?category=responsible-gambling", { utm_source: "old page" }),
+    "/learn?category=responsible-gambling&utm_source=old+page",
   );
   assert.throws(() => withPreservedLegacyQuery("https://example.com", {}), /Invalid legacy Responsible Gambling destination/);
   assert.throws(() => withPreservedLegacyQuery("//example.com/help", {}), /Invalid legacy Responsible Gambling destination/);
@@ -169,21 +167,11 @@ test("shared navigation and footer expose only the final handoff destinations", 
   assert.match(category, /Open Responsible Gambling hub/);
 });
 
-test("public Learn pages and API use one explicit published manifest", () => {
-  assert.equal(learningArticles.length, 13);
-  assert.ok(learningArticles.every((article) => article.status === "PUBLISHED"));
-  assert.ok(learningArticles.every((article) => Number.isFinite(Date.parse(article.publishedAt))));
-  const first = learningArticles[0];
-  const draft: LearningArticle = { ...first, slug: "not-public", status: "DRAFT" };
-  assert.deepEqual(publishedLearningArticles([draft, first]), [first]);
-  assert.throws(
-    () => assertValidLearningManifest([first, { ...first, categorySlug: "casino-bonuses" }]),
-    /Duplicate public Learn article slug/,
-  );
-
+test("public Learn pages and API use the canonical PostgreSQL Article projection", () => {
   const publicRoute = read("app/api/public/[resource]/route.ts");
-  assert.match(publicRoute, /import \{ learningArticles \} from "@\/lib\/learning-center"/);
-  assert.match(publicRoute, /if \(resource === "articles"\)[\s\S]*learningArticles\.slice\(0, limit\)/);
+  assert.match(publicRoute, /if \(resource === "articles"\)[\s\S]*articleService\.listPublished\(locale/);
+  assert.match(publicRoute, /source: "postgresql"/);
+  assert.doesNotMatch(publicRoute, /learningArticles|seed/);
   assert.ok(publicRoute.indexOf('if (resource === "articles")') < publicRoute.indexOf("listPublishedContent(resource)"));
   assert.match(read("lib/cms/publishing.ts"), /Exclude<PublicCmsResource, "articles">/);
   assert.match(read("app/(public)/learn/[category]/[slug]/page.tsx"), /datePublished: article\.publishedAt/);

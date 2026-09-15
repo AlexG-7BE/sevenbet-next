@@ -108,15 +108,17 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
   const migration0040Index = migrationEntries.indexOf("0040_commercial_core_exact_routes_geo_simplification");
   const migration0041Index = migrationEntries.indexOf("0041_commercial_core_legacy_connector_cleanup");
   const migration0042Index = migrationEntries.indexOf("0042_admin_mfa");
+  const migration0043Index = migrationEntries.indexOf("0043_article_learning_center");
   if (
     migration0020Index < programmeMigrationIndex
     || migration0021Index !== migration0020Index + 1
     || migration0022Index !== migration0021Index + 1
     || migration0041Index !== migration0040Index + 1
     || migration0042Index !== migration0041Index + 1
-    || migration0042Index !== migrationEntries.length - 1
+    || migration0043Index !== migration0042Index + 1
+    || migration0043Index !== migrationEntries.length - 1
   ) {
-    throw new Error("Expected sequential migrations 0020-0022 and exact latest Admin MFA migration 0042");
+    throw new Error("Expected sequential migrations 0020-0022, Admin MFA 0042, and exact latest Article migration 0043");
   }
 
   const schema = "better_auth_17_upgrade_ci";
@@ -642,8 +644,8 @@ async function verifyAdminMfaUpgrade(migrationEntries, programmeMigrationIndex) 
   const migration = "0042_admin_mfa";
   const migrationIndex = migrationEntries.indexOf(migration);
   const priorIndex = migrationEntries.indexOf("0041_commercial_core_legacy_connector_cleanup");
-  if (migrationIndex !== priorIndex + 1 || migrationIndex !== migrationEntries.length - 1) {
-    throw new Error(`Expected ${migration} directly after 0041 and as the exact latest migration`);
+  if (migrationIndex !== priorIndex + 1) {
+    throw new Error(`Expected ${migration} directly after 0041`);
   }
 
   const schema = "admin_mfa_upgrade_ci";
@@ -793,6 +795,95 @@ async function verifyAdminMfaUpgrade(migrationEntries, programmeMigrationIndex) 
       pluginColumns: columnEvidence.length,
       pluginIndexes: indexEvidence.length,
       cascadeForeignKey: true,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+async function verifyArticleLearningCenterUpgrade(migrationEntries, programmeMigrationIndex) {
+  const migration = "0043_article_learning_center";
+  const migrationIndex = migrationEntries.indexOf(migration);
+  const priorIndex = migrationEntries.indexOf("0042_admin_mfa");
+  if (migrationIndex !== priorIndex + 1 || migrationIndex !== migrationEntries.length - 1) {
+    throw new Error(`Expected ${migration} directly after 0042 and as the exact latest migration`);
+  }
+
+  const schema = "article_learning_center_upgrade_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+  const preProgramme = await stageMigrations(migrationEntries.slice(0, programmeMigrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(preProgramme, "schema.prisma")], environment);
+    run("npx", ["prisma", "db", "execute", "--schema", "prisma/schema.prisma", "--file", "prisma/preflight/0015_active_control_program_flow.sql"], environment);
+  } finally {
+    await rm(preProgramme, { recursive: true, force: true });
+  }
+  await deployMigrationPrefix(migrationEntries, priorIndex, environment);
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  try {
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO "${schema}"."Article" (
+        "id", "slug", "title", "excerpt", "category", "tags", "status",
+        "bodyBlocks", "createdAt", "updatedAt", "createdBy", "updatedBy"
+      ) VALUES (
+        '00000000-0000-4000-8000-000000000043',
+        'pre-0043-article',
+        'Pre-0043 Article',
+        'Preservation fixture for the additive Article migration.',
+        'casino-basics',
+        ARRAY['fixture']::TEXT[],
+        'DRAFT',
+        '[]'::JSONB,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP,
+        'migration-fixture',
+        'migration-fixture'
+      )
+    `);
+    await deployMigrationPrefix(migrationEntries, migrationIndex, environment);
+    const [columns, indexes, preserved] = await Promise.all([
+      prisma.$queryRawUnsafe(`
+        SELECT "column_name" AS "columnName", "is_nullable" AS "isNullable", "column_default" AS "columnDefault"
+        FROM information_schema.columns
+        WHERE table_schema = '${schema}' AND table_name = 'Article'
+          AND column_name IN ('locale', 'heroImageUrl', 'heroImageAlt', 'archivedAt')
+        ORDER BY column_name
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT indexname AS "indexName" FROM pg_indexes
+        WHERE schemaname = '${schema}' AND indexname = 'Article_status_locale_category_updatedAt_idx'
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT "slug", "locale", "heroImageUrl", "heroImageAlt", "archivedAt"
+        FROM "${schema}"."Article" WHERE "id" = '00000000-0000-4000-8000-000000000043'
+      `),
+    ]);
+    const locale = columns.find((column) => column.columnName === "locale");
+    if (
+      columns.length !== 4
+      || locale?.isNullable !== "NO"
+      || !String(locale.columnDefault).includes("en-GB")
+      || indexes.length !== 1
+      || preserved.length !== 1
+      || preserved[0].slug !== "pre-0043-article"
+      || preserved[0].locale !== "en-GB"
+      || preserved[0].heroImageUrl !== null
+      || preserved[0].heroImageAlt !== null
+      || preserved[0].archivedAt !== null
+    ) {
+      throw new Error("Article Learning Center additive migration shape or preservation verification failed");
+    }
+    console.info("Article Learning Center staged migration smoke passed", {
+      from: "0042_admin_mfa",
+      to: migration,
+      preservedArticles: preserved.length,
+      defaultLocale: preserved[0].locale,
+      additiveColumns: columns.length,
+      indexes: indexes.length,
     });
   } finally {
     await prisma.$disconnect();
@@ -1814,6 +1905,7 @@ async function main() {
 
   await verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationIndex);
   await verifyAdminMfaUpgrade(migrationEntries, programmeMigrationIndex);
+  await verifyArticleLearningCenterUpgrade(migrationEntries, programmeMigrationIndex);
   await verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrationIndex);
   await verifyProgrammeAccessUpgrade(migrationEntries);
   await verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex);

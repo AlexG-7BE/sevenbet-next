@@ -23,18 +23,18 @@ export type LegacyResponsibleGamblingRoute = {
 export const LEGACY_RESPONSIBLE_GAMBLING_ROUTES = {
   budgeting: {
     classification: "EDUCATION",
-    destination: "/learn/responsible-gambling/responsible-gambling-tools",
-    reason: "Budget planning is educational context, not an immediate Help action or access control.",
+    destination: "/learn?category=responsible-gambling",
+    reason: "Budget planning is educational context, not an immediate Help action or access control; the filtered Learn catalogue is the durable destination.",
   },
   "time-management": {
     classification: "EDUCATION",
-    destination: "/learn/responsible-gambling/responsible-gambling-tools",
-    reason: "Session planning is educational context; the canonical Learn guide covers reminders and time controls.",
+    destination: "/learn?category=responsible-gambling",
+    reason: "Session planning is educational context; the canonical Learn catalogue owns future published guides.",
   },
   "bonus-terms": {
     classification: "EDUCATION",
-    destination: "/learn/casino-bonuses/welcome-bonus-terms",
-    reason: "Bonus mechanics belong to the published Learn bonus guide, not Protected Help.",
+    destination: "/learn?category=casino-bonuses",
+    reason: "Bonus mechanics belong to the canonical Learn catalogue, not Protected Help.",
   },
   "self-exclusion": {
     classification: "HELP",
@@ -58,18 +58,18 @@ export const LEGACY_RESPONSIBLE_GAMBLING_ROUTES = {
   },
   "casino-licenses": {
     classification: "EDUCATION",
-    destination: "/learn/licensing/casino-licenses-explained",
+    destination: "/learn?category=licensing",
     reason: "Licence interpretation is educational trust context owned by Learn.",
   },
   "payment-safety": {
     classification: "EDUCATION",
-    destination: "/learn/payments/casino-payment-methods",
+    destination: "/learn?category=payments",
     reason: "Payment and withdrawal mechanics are educational comparison context owned by Learn.",
   },
   faq: {
     classification: "EDUCATION",
-    destination: "/learn/responsible-gambling",
-    reason: "The mixed FAQ is redundant with the canonical Responsible Gambling Learn category and its published guide.",
+    destination: "/learn?category=responsible-gambling",
+    reason: "The mixed FAQ is redundant with the canonical Responsible Gambling Learn category.",
   },
 } as const satisfies Record<string, LegacyResponsibleGamblingRoute>;
 
@@ -196,16 +196,21 @@ export function withPreservedLegacyQuery(
   destination: string,
   searchParams: Record<string, string | string[] | undefined>,
 ) {
-  if (!/^\/(?:help|learn)(?:\/|$)/.test(destination)) {
+  const origin = "https://b4gamble.com";
+  const target = new URL(destination, origin);
+  if (
+    !destination.startsWith("/")
+    || destination.startsWith("//")
+    || target.origin !== origin
+    || !/^\/(?:help|learn)(?:\/|$)/.test(target.pathname)
+  ) {
     throw new Error("Invalid legacy Responsible Gambling destination");
   }
-  const query = new URLSearchParams();
   for (const [key, rawValue] of Object.entries(searchParams)) {
     const values = Array.isArray(rawValue) ? rawValue : [rawValue];
     for (const value of values) {
-      if (value !== undefined) query.append(key, value);
+      if (value !== undefined) target.searchParams.append(key, value);
     }
   }
-  const serialized = query.toString();
-  return serialized ? `${destination}?${serialized}` : destination;
+  return `${target.pathname}${target.search}${target.hash}`;
 }

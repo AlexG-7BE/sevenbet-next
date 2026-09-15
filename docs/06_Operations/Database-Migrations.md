@@ -238,6 +238,32 @@ not reverse/destructive SQL. Disposable CI stages exact 0041 state with an
 existing linked Admin and session, applies 0042, and verifies preservation plus
 the exact columns/defaults/indexes/foreign key.
 
+### Canonical Article compatibility expansion — migration 0043
+
+**DETECTED IN THE PR1 SOURCE CANDIDATE:**
+`0043_article_learning_center` expands the existing canonical `Article` table
+with `locale`, `heroImageUrl`, `heroImageAlt` and `archivedAt`, then adds the
+publication-read index over status, locale, category and update time. Existing
+rows receive the deterministic `en-GB` locale default. The migration creates no
+new model, does not infer or seed Article content, and does not change existing
+editorial status or publication timestamps.
+
+**DETECTED COMPATIBILITY:** disposable migration CI stages exact post-0042
+state with an existing Article, applies 0043, and verifies that the identity,
+body, status and publication fields are preserved. The canonical Article
+lifecycle PostgreSQL acceptance uses the existing `ContentRevision` model for
+immutable snapshots; it creates no Article-specific workflow or revision
+authority.
+
+**PROPOSED RELEASE ORDER UNTIL RECORDED AS APPLIED:** pass exact-head CI; confirm
+the Production database identity, recoverable provider point and exact pending
+suffix; apply only 0043 with the canonical migration binding; verify the
+completed migration checksum, four columns, publication index, valid locale
+values and unchanged Article row/status counts; then merge and deploy the
+compatible application. The old application ignores the additive fields.
+Application rollback leaves them in place and uses a forward fix rather than
+reverse SQL.
+
 Every stateful change must remain compatible with both the old and new application deployment across the release window:
 
 1. **Expand:** add nullable columns/tables/indexes or dual-compatible structures. Avoid destructive renames, type narrowing and new immediate constraints on existing data.

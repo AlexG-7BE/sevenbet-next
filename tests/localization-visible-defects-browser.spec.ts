@@ -194,120 +194,6 @@ async function expectAuthoredWordsStayWhole(
   }
 }
 
-async function expectSemanticLongWordContainment(
-  elements: Locator,
-  context: string,
-  requireLongWord = false,
-  expectedOverflowWrap: "normal" | "break-word" = "normal",
-) {
-  await expect(elements.first(), `${context}: representative element`).toBeVisible();
-  const report = await elements.evaluateAll((nodes) => nodes.map((element) => {
-    const style = getComputedStyle(element);
-    const bounds = element.getBoundingClientRect();
-    const shortWordFragments: string[] = [];
-    const longWords: Array<{ rects: Array<{ left: number; right: number }>; word: string }> = [];
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
-    let node = walker.nextNode();
-    while (node) {
-      const text = node.textContent ?? "";
-      for (const match of text.matchAll(/\p{L}[\p{L}\p{M}]*/gu)) {
-        if (match[0].length < 4 || match.index === undefined) continue;
-        const range = document.createRange();
-        range.setStart(node, match.index);
-        range.setEnd(node, match.index + match[0].length);
-        const rects = Array.from(range.getClientRects())
-          .filter((rect) => rect.width > .5 && rect.height > .5)
-          .map((rect) => ({ left: rect.left, right: rect.right }));
-        if (match[0].length < 14 && rects.length > 1) shortWordFragments.push(match[0]);
-        if (match[0].length >= 14) longWords.push({ rects, word: match[0] });
-      }
-      node = walker.nextNode();
-    }
-    const textRange = document.createRange();
-    textRange.selectNodeContents(element);
-    const textRects = Array.from(textRange.getClientRects())
-      .filter((rect) => rect.width > .5 && rect.height > .5)
-      .map((rect) => ({ left: rect.left, right: rect.right }));
-    return {
-      bounds: { left: bounds.left, right: bounds.right },
-      hyphenateLimitChars: style.getPropertyValue("hyphenate-limit-chars"),
-      hyphens: style.hyphens,
-      longWords,
-      overflowWrap: style.overflowWrap,
-      shortWordFragments,
-      textRects,
-      wordBreak: style.wordBreak,
-    };
-  }));
-
-  const viewportWidth = await elements.first().evaluate(() => document.documentElement.clientWidth);
-  expect(report.length, `${context}: element count`).toBeGreaterThan(0);
-  for (const item of report) {
-    expect(item.hyphens, `${context}: language-aware hyphenation`).toBe("auto");
-    expect(item.hyphenateLimitChars, `${context}: short-word guard`).toContain("14");
-    expect(item.overflowWrap, `${context}: emergency fragmentation`).toBe(expectedOverflowWrap);
-    expect(item.wordBreak, `${context}: word-break policy`).toBe("normal");
-    expect(item.shortWordFragments, `${context}: short authored words`).toEqual([]);
-    if (requireLongWord) expect(item.longWords.length, `${context}: long-word exercise`).toBeGreaterThan(0);
-    for (const rect of item.textRects) {
-      expect(rect.left, `${context}: rendered text left`).toBeGreaterThanOrEqual(Math.max(-1, item.bounds.left - 1));
-      expect(rect.right, `${context}: rendered text right`).toBeLessThanOrEqual(Math.min(viewportWidth + 1, item.bounds.right + 1));
-    }
-  }
-}
-
-async function expectNativeArticleHeroSeparation(page: import("@playwright/test").Page, context: string) {
-  const heroGrid = page.locator("[data-learning-article]:not([data-handoff-article]) > header > nav + div");
-  await expect(heroGrid.locator("h1"), `${context}: title`).toBeVisible();
-  await expect(heroGrid.locator(":scope > div:last-child"), `${context}: summary`).toBeVisible();
-  const geometry = await heroGrid.evaluate((grid) => {
-    const title = grid.querySelector("h1")!;
-    const summary = grid.querySelector(":scope > div:last-child")!;
-    const titleBox = title.getBoundingClientRect();
-    const summaryBox = summary.getBoundingClientRect();
-    const textRects = (element: Element) => {
-      const range = document.createRange();
-      range.selectNodeContents(element);
-      return Array.from(range.getClientRects())
-        .filter((rect) => rect.width > .5 && rect.height > .5)
-        .map((rect) => ({ bottom: rect.bottom, left: rect.left, right: rect.right, top: rect.top }));
-    };
-    const rects = textRects(title);
-    const summaryRects = textRects(summary);
-    const titleText = {
-      bottom: Math.max(...rects.map((rect) => rect.bottom)),
-      left: Math.min(...rects.map((rect) => rect.left)),
-      right: Math.max(...rects.map((rect) => rect.right)),
-      top: Math.min(...rects.map((rect) => rect.top)),
-    };
-    const summaryText = {
-      bottom: Math.max(...summaryRects.map((rect) => rect.bottom)),
-      left: Math.min(...summaryRects.map((rect) => rect.left)),
-      right: Math.max(...summaryRects.map((rect) => rect.right)),
-      top: Math.min(...summaryRects.map((rect) => rect.top)),
-    };
-    const rangeIntersections = rects.flatMap((titleRect, titleIndex) => summaryRects.flatMap((summaryRect, summaryIndex) => {
-      const width = Math.max(0, Math.min(titleRect.right, summaryRect.right) - Math.max(titleRect.left, summaryRect.left));
-      const height = Math.max(0, Math.min(titleRect.bottom, summaryRect.bottom) - Math.max(titleRect.top, summaryRect.top));
-      return width > .5 && height > .5 ? [{ area: width * height, summaryIndex, titleIndex }] : [];
-    }));
-    const horizontalGap = summaryText.left - titleText.right;
-    const verticalGap = summaryText.top - titleText.bottom;
-    return {
-      documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      rangeIntersections,
-      separationGap: Math.max(horizontalGap, verticalGap),
-      summary: { bottom: summaryBox.bottom, left: summaryBox.left, right: summaryBox.right, top: summaryBox.top },
-      title: { bottom: titleBox.bottom, left: titleBox.left, right: titleBox.right, top: titleBox.top },
-      titleText,
-    };
-  });
-
-  expect(geometry.documentOverflow, `${context}: document overflow`).toBe(0);
-  expect(geometry.rangeIntersections, `${context}: title/summary Range intersections`).toEqual([]);
-  expect(geometry.separationGap, `${context}: title/summary separation`).toBeGreaterThanOrEqual(1);
-}
-
 test("localized mobile tab rails and focused profile navigation stay bounded", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const messages = productPageMessages("de-DE");
@@ -380,24 +266,6 @@ test("authored display copy wraps between words across long mobile and desktop l
         selector: '[data-runtime-renderer="best-offers"] section[class*="hero"] h1',
         viewport: { width: 390, height: 844 },
       },
-      {
-        context: "IT Welcome Bonus article at 1440x900",
-        path: "/it/learn/casino-bonuses/welcome-bonus-terms",
-        selector: "[data-learning-article] header h1",
-        viewport: { width: 1440, height: 900 },
-      },
-      {
-        context: "DE responsible-gambling article at 390x844",
-        path: "/de/learn/responsible-gambling/responsible-gambling-tools",
-        selector: "[data-learning-article] header h1",
-        viewport: { width: 390, height: 844 },
-      },
-      {
-        context: "DE responsible-gambling article headings at 320x700",
-        path: "/de/learn/responsible-gambling/responsible-gambling-tools",
-        selector: "[data-learning-article] header h1, [data-learning-article] #direct-answer-title",
-        viewport: { width: 320, height: 700 },
-      },
     ] as const;
 
     for (const surface of cases) {
@@ -425,89 +293,36 @@ test("authored display copy wraps between words across long mobile and desktop l
       "NO focused bonus directory at 390x844: document overflow",
     ).toBe(0);
 
-    const semanticCases = [
-      {
-        context: "PT country-guide article at 390x844",
-        expectedOverflowWrap: "normal",
-        path: "/pt/learn/country-guides/country-guide-structure",
-        requireLongWord: false,
-        selector: "[data-learning-article] header h1",
-      },
-    ] as const;
-
-    await page.setViewportSize({ width: 390, height: 844 });
-    for (const surface of semanticCases) {
-      const response = await page.goto(`${baseUrl}${surface.path}`, { waitUntil: "domcontentloaded" });
-      expect(response?.status(), surface.context).toBe(200);
-      await page.evaluate(() => document.fonts.ready);
-      await expectSemanticLongWordContainment(
-        page.locator(surface.selector),
-        surface.context,
-        surface.requireLongWord,
-        surface.expectedOverflowWrap,
-      );
-      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${surface.context}: document overflow`).toBe(0);
-    }
   } finally {
     await context.close();
   }
 });
 
-test("native localized article heroes keep title and summary in separate responsive lanes", async ({ browser }) => {
+test("localized Learning hubs render a truthful empty catalogue without clipping", async ({ browser }) => {
   test.setTimeout(120_000);
   const context = await browser.newContext({ reducedMotion: "reduce" });
   const page = await context.newPage();
 
   try {
     await page.setViewportSize({ width: 390, height: 844 });
-    for (const surface of [
-      {
-        context: "DE Welcome Bonus Terms article at 390x844",
-        path: "/de/learn/casino-bonuses/welcome-bonus-terms",
-      },
-      {
-        context: "DE Casino Reviews article at 390x844",
-        path: "/de/learn/casino-reviews/how-casino-reviews-work",
-      },
-      {
-        context: "SE Casino Reviews article at 390x844",
-        path: "/sv/learn/casino-reviews/how-casino-reviews-work",
-      },
-      {
-        context: "DK Casino Reviews article at 390x844",
-        path: "/da/learn/casino-reviews/how-casino-reviews-work",
-      },
-    ]) {
-      const response = await page.goto(`${baseUrl}${surface.path}`, { waitUntil: "domcontentloaded" });
-      expect(response?.status(), surface.context).toBe(200);
+    for (const path of ["/de/learn", "/sv/learn", "/da/learn"]) {
+      const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
+      expect(response?.status(), path).toBe(200);
       await page.evaluate(() => document.fonts.ready);
+      await expect(page.locator("[data-learn-empty]"), path).toBeVisible();
+      await expect(page.locator("a[data-learn-category]"), path).toHaveCount(0);
       await expectAuthoredWordsStayWhole(
-        page.locator("[data-learning-article]:not([data-handoff-article]) > header h1"),
-        surface.context,
+        page.locator("[data-learn-empty]"),
+        `${path}: empty-state copy`,
       );
-      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${surface.context}: document overflow`).toBe(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${path}: document overflow`).toBe(0);
     }
 
     await page.setViewportSize({ width: 1440, height: 900 });
-    for (const surface of [
-      {
-        context: "DE Responsible Gambling Tools article at 1440x900",
-        path: "/de/learn/responsible-gambling/responsible-gambling-tools",
-      },
-      {
-        context: "DE Casino Reviews article at 1440x900",
-        path: "/de/learn/casino-reviews/how-casino-reviews-work",
-      },
-    ]) {
-      const response = await page.goto(`${baseUrl}${surface.path}`, { waitUntil: "domcontentloaded" });
-      expect(response?.status(), surface.context).toBe(200);
-      await page.evaluate(() => document.fonts.ready);
-      await expectAuthoredWordsStayWhole(
-        page.locator("[data-learning-article]:not([data-handoff-article]) > header h1"),
-        surface.context,
-      );
-      await expectNativeArticleHeroSeparation(page, surface.context);
-    }
+    const response = await page.goto(`${baseUrl}/de/learn`, { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    await expect(page.locator("[data-learn-empty]")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   } finally {
     await context.close();
   }
@@ -708,24 +523,14 @@ test("localized mobile bonus view rails expose five touch-safe intents", async (
   }
 });
 
-test("German Learning card titles use semantic compound-word wrapping at 390px", async ({ page }) => {
+test("German Learning empty state stays truthful and readable at 390px", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const response = await page.goto(`${baseUrl}/de/learn`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await page.evaluate(() => document.fonts.ready);
 
-  await expectSemanticLongWordContainment(
-    page.locator('[data-handoff-page="learn"] a.scp2 > div:nth-child(2)'),
-    "DE Learning featured guide titles at 390x844",
-    true,
-    "break-word",
-  );
-  await expectSemanticLongWordContainment(
-    page.locator('[data-handoff-page="learn"] a.scp3 > div:first-child > div:nth-child(2)').filter({ hasText: "Anbieterbewertungen" }),
-    "DE Learning directory guide titles at 390x844",
-    true,
-    "break-word",
-  );
+  await expect(page.locator("a[data-learn-category]")).toHaveCount(0);
+  await expectAuthoredWordsStayWhole(page.locator("[data-learn-empty]"), "DE Learning empty state");
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
@@ -752,7 +557,7 @@ test("mobile outbound unavailable content clears the fixed public header", async
   }
 });
 
-test("localized related-reading cards preserve ordinary short words at 390px", async ({ page }) => {
+test("localized missing Article routes fail closed at 390px", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of [
     "/el/learn/country-guides/country-guide-structure",
@@ -760,14 +565,7 @@ test("localized related-reading cards preserve ordinary short words at 390px", a
     "/pt/learn/responsible-gambling/responsible-gambling-tools",
   ]) {
     const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
-    expect(response?.status(), route).toBe(200);
-    await page.evaluate(() => document.fonts.ready);
-    await expectSemanticLongWordContainment(
-      page.locator('[data-learning-article]:not([data-handoff-article]) section[class*="related"] a'),
-      `${route}: related-reading cards at 390x844`,
-      false,
-      "break-word",
-    );
+    expect(response?.status(), route).toBe(404);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), route).toBe(0);
   }
 });

@@ -11,7 +11,7 @@ import { aboutMessages } from "../lib/i18n/static-pages/about";
 import { faqMessages } from "../lib/i18n/static-pages/faq";
 import { contactMessages } from "../lib/i18n/static-pages/contact";
 import { METHODOLOGY_SOURCE_COPY, methodologyMessages } from "../lib/i18n/static-pages/methodology";
-import { learningMessages, localizedLearningArticles } from "../lib/i18n/learning-center";
+import { learningMessages } from "../lib/i18n/learning-center";
 import { publicErrorMessages } from "../lib/i18n/public-errors";
 import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "../lib/i18n/static-pages/ten-steps";
 import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-shell-catalog";
@@ -317,7 +317,6 @@ test("Methodology, Contact, Learning and generic-error catalogs cover all eleven
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
     const locale = profile.defaultLocale;
     assert.equal(methodologyMessages(locale).copy.size, METHODOLOGY_SOURCE_COPY.length, locale);
-    assert.equal(localizedLearningArticles(locale).length, 13, locale);
     assert.equal(learningMessages(locale).hubCopy.size, 25, locale);
     if (locale !== "en-GB") assert.notEqual(learningMessages(locale).ui.learn, "Learn", locale);
     assert.ok(Object.values(contactMessages(locale)).every((value) => value.trim().length > 0), locale);
@@ -334,11 +333,11 @@ test("Methodology, Contact, Learning and generic-error catalogs cover all eleven
   }
   assert.match(methodology, /data-methodology-list-copy="" style="min-width: 0; overflow-wrap: anywhere;"/);
   const learn = transformLearnHandoff(transformCommonHandoff(generatedPages.learn.html, "/de/program"), "de-DE", (href) => `/de${href}`);
-  assert.match(learn, /href="\/de\/learn\/casino-basics\/online-casino-basics"/);
+  assert.match(learn, /data-learn-empty=""/);
   assert.match(learn, /href="\/de\/program\?entry=start"/);
   assert.doesNotMatch(learn, /href="\/program(?:\?entry=start)?"/);
   assert.match(learn, /data-learn-topic="all topics"/);
-  assert.match(learn, /<span class="sc-interp">13<\/span> Leitfäden/);
+  assert.match(learn, /<span class="sc-interp">0<\/span> Leitfäden/);
   assert.doesNotMatch(learn, />All guides</);
   assert.doesNotMatch(learn, />Read →</);
 });

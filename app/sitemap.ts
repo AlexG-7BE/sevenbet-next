@@ -1,16 +1,15 @@
 import type { MetadataRoute } from "next";
-import {
-  getArticlePath,
-  learningArticles as centerArticles,
-} from "@/lib/learning-center";
+import { articlePath } from "@/lib/articles/article-types";
 import { absoluteUrl, coreRoutes } from "@/lib/site";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
 import { publicOfferService } from "@/lib/services/public-offer.service";
 import { parsePublicOfferQuery } from "@/lib/public-offer/query";
 import {
   DEFAULT_MARKET_PROFILE,
+  INDEXABLE_LANGUAGE_ROUTE_PROFILES,
   INITIAL_EUROPEAN_MARKET_PROFILES,
   marketIndexingApproved,
+  marketProfileByLocale,
   publicMarketPath,
   type MarketProfile,
 } from "@/lib/market/registry";
@@ -91,21 +90,29 @@ export function localizedIndexableMarketProfiles(markets: readonly MarketProfile
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const { articleService } = await import("@/lib/services/article.service");
   const baseSnapshot = await failClosed(() => loadMarketSitemapSnapshot(DEFAULT_MARKET_PROFILE));
   const localizedSnapshots = await Promise.all(localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
     .map((market) => failClosed(() => loadMarketSitemapSnapshot(market))));
   const baseProducts = baseSnapshot ? indexableMarketProductPaths(baseSnapshot, true) : { routes: [], casinoRoutes: [] };
   const localizedProducts = localizedSnapshots.flatMap((snapshot) => snapshot ? [indexableMarketProductPaths(snapshot, true)] : []);
-  const learningArticleRoutes = centerArticles.map((article) => ({
-    url: absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, getArticlePath(article))),
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-  }));
+  const learningSnapshots = await Promise.all(INDEXABLE_LANGUAGE_ROUTE_PROFILES.map(async (language) => ({
+    language,
+    articles: await failClosed(() => articleService.listPublished(language.defaultLocale, { take: 500 })) ?? [],
+  })));
+  const learningArticleRoutes = learningSnapshots.flatMap(({ articles, language }) => {
+    const market = marketProfileByLocale(language.defaultLocale) ?? DEFAULT_MARKET_PROFILE;
+    return articles.map((article) => ({
+      url: absoluteUrl(publicMarketPath(market, language.defaultLocale, articlePath(article))),
+      lastModified: article.updatedAt,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    }));
+  });
   const completedLocalizedEditorialPaths = [
     "/methodology",
     "/contact",
     "/learn",
-    ...centerArticles.map(getArticlePath),
   ];
   const localizedEditorialRoutes = localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
     .flatMap((market) => completedLocalizedEditorialPaths.map((pathname) => ({

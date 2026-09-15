@@ -29,6 +29,7 @@ const CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION = "0037_customer_data_analytic
 const COMMERCIAL_UX_ANALYTICS_MIGRATION = "0038_commercial_ux_analytics_events";
 const COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION = "0039_commercial_core_partner_relationship";
 const COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION = "0040_commercial_core_exact_routes_geo_simplification";
+const ARTICLE_LEARNING_CENTER_MIGRATION = "0043_article_learning_center";
 
 type MigrationRow = {
   migration_name: string;
@@ -479,7 +480,7 @@ async function verifyVercelBuildCompatibility() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION, COMMERCIAL_UX_ANALYTICS_MIGRATION, COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION, COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION, COMMERCIAL_UX_ANALYTICS_MIGRATION, COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION, COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION, ARTICLE_LEARNING_CENTER_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -492,6 +493,7 @@ async function verifyVercelBuildCompatibility() {
   let commercialUxAnalyticsSchemaReady = false;
   let commercialCorePartnerRelationshipSchemaReady = false;
   let commercialCoreExactRoutesSchemaReady = false;
+  let articleLearningCenterSchemaReady = false;
   let mediaRetirementReady = false;
   try {
     await prisma.$transaction(async (transaction) => {
@@ -539,6 +541,7 @@ async function verifyVercelBuildCompatibility() {
       ...(!applied.has(COMMERCIAL_UX_ANALYTICS_MIGRATION) ? [COMMERCIAL_UX_ANALYTICS_MIGRATION] : []),
       ...(!applied.has(COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION) ? [COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION] : []),
       ...(!applied.has(COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION) ? [COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION] : []),
+      ...(!applied.has(ARTICLE_LEARNING_CENTER_MIGRATION) ? [ARTICLE_LEARNING_CENTER_MIGRATION] : []),
     ];
 
     if (
@@ -836,6 +839,40 @@ async function verifyVercelBuildCompatibility() {
           .join(",")}`);
       }
     }
+    if (applied.has(ARTICLE_LEARNING_CENTER_MIGRATION)) {
+      assertChecksum(completedByName.get(ARTICLE_LEARNING_CENTER_MIGRATION), ARTICLE_LEARNING_CENTER_MIGRATION);
+      const [schema] = await prisma.$queryRawUnsafe<Array<{
+        article_table: string | null;
+        required_columns: bigint;
+        publication_index: string | null;
+        invalid_locale_rows: bigint;
+      }>>(`
+        SELECT
+          to_regclass('public."Article"')::text AS article_table,
+          (SELECT COUNT(*)::bigint FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'Article'
+              AND column_name IN ('locale', 'heroImageUrl', 'heroImageAlt', 'archivedAt')) AS required_columns,
+          to_regclass('public."Article_status_locale_category_updatedAt_idx"')::text AS publication_index,
+          (SELECT COUNT(*)::bigint FROM "Article"
+            WHERE "locale" NOT IN ('en-GB','de-DE','es-ES','el-GR','sv-SE','da-DK','it-IT','pt-PT','nl-NL','fi-FI','nb-NO')) AS invalid_locale_rows
+      `);
+      if (
+        !schema?.article_table
+        || schema.required_columns !== 4n
+        || !schema.publication_index
+        || schema.invalid_locale_rows !== 0n
+      ) {
+        throw new Error("Production migration guard found incomplete canonical Article Learning Center schema.");
+      }
+      articleLearningCenterSchemaReady = true;
+      writeEvent({
+        event: "production_article_learning_center_readiness",
+        migration: ARTICLE_LEARNING_CENTER_MIGRATION,
+        canonicalTable: true,
+        additiveColumns: Number(schema.required_columns),
+        invalidLocaleRows: Number(schema.invalid_locale_rows),
+      });
+    }
     if (applied.has(MEDIA_RETIREMENT_TARGET_MIGRATION)) {
       assertChecksum(completedByName.get(MEDIA_RETIREMENT_TARGET_MIGRATION), MEDIA_RETIREMENT_TARGET_MIGRATION);
       await assertMediaRetirementInvariants(prisma);
@@ -881,6 +918,10 @@ async function verifyVercelBuildCompatibility() {
 
   if (!commercialCoreExactRoutesSchemaReady) {
     throw new Error(`Production DB-first release requires completed ${COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION} before this application build.`);
+  }
+
+  if (!articleLearningCenterSchemaReady) {
+    throw new Error(`Production DB-first release requires completed ${ARTICLE_LEARNING_CENTER_MIGRATION} before this application build.`);
   }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();

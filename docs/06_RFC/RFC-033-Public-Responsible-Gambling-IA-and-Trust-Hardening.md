@@ -25,7 +25,7 @@ The repository root was confirmed as `/Users/alex/Documents/Codex/2026-07-09/ns/
 
 `/responsible-gambling` becomes an indexable public-shell hub whose equal-weight paths are:
 
-1. Responsible Gambling education at `/learn/responsible-gambling`;
+1. Responsible Gambling education at `/learn?category=responsible-gambling`;
 2. private browser-local Self-Check at `/self-check`;
 3. private browser-local Personal Limit Tracker at `/tools/budget-calculator`;
 4. the existing 10-step Programme entry at `/10-steps` and authenticated Programme continuation at `/program`; and
@@ -37,22 +37,28 @@ The hub may explain choices, risks, personal boundaries and where each path lead
 
 The Founder-approved corrective route authority is explicit and exhaustive:
 
+The 15 September 2026 Founder Learning Center instruction replaces the former
+static Article manifest with canonical PostgreSQL Articles and explicitly
+forbids migrating the synthetic Phase-1 guides merely to preserve them. Until
+a matching Article is published, education routes therefore terminate at the
+truthful filtered Learn catalogue rather than at a nonexistent static article.
+
 | Former route | Classification | Canonical destination | Decision |
 | --- | --- | --- | --- |
-| `/responsible-gambling/budgeting` | EDUCATION | `/learn/responsible-gambling/responsible-gambling-tools` | Planning education belongs to Learn. |
-| `/responsible-gambling/time-management` | EDUCATION | `/learn/responsible-gambling/responsible-gambling-tools` | The published Learn guide owns session reminders and time-control education. |
-| `/responsible-gambling/bonus-terms` | EDUCATION | `/learn/casino-bonuses/welcome-bonus-terms` | Bonus mechanics are educational, not Protected Help. |
+| `/responsible-gambling/budgeting` | EDUCATION | `/learn?category=responsible-gambling` | Planning education belongs to Learn. |
+| `/responsible-gambling/time-management` | EDUCATION | `/learn?category=responsible-gambling` | The filtered Learn catalogue owns future published session-planning guides. |
+| `/responsible-gambling/bonus-terms` | EDUCATION | `/learn?category=casino-bonuses` | Bonus mechanics are educational, not Protected Help. |
 | `/responsible-gambling/self-exclusion` | HELP | `/help/self-exclusion` | Direct access-control action. |
 | `/responsible-gambling/deposit-limits` | HELP | `/help/deposit-limits` | Direct account/funds control. |
 | `/responsible-gambling/cooling-off` | HELP | `/help/cooling-off` | Direct temporary-pause control with fail-closed local-term handling. |
 | `/responsible-gambling/reality-checks` | HELP | `/help/reality-checks` | Direct in-session interruption control. |
-| `/responsible-gambling/casino-licenses` | EDUCATION | `/learn/licensing/casino-licenses-explained` | Licence interpretation belongs to Learn. |
-| `/responsible-gambling/payment-safety` | EDUCATION | `/learn/payments/casino-payment-methods` | Payment and withdrawal mechanics belong to Learn. |
-| `/responsible-gambling/faq` | EDUCATION | `/learn/responsible-gambling` | The mixed FAQ is redundant with the canonical Learn category and guide. |
+| `/responsible-gambling/casino-licenses` | EDUCATION | `/learn?category=licensing` | Licence interpretation belongs to Learn. |
+| `/responsible-gambling/payment-safety` | EDUCATION | `/learn?category=payments` | Payment and withdrawal mechanics belong to Learn. |
+| `/responsible-gambling/faq` | EDUCATION | `/learn?category=responsible-gambling` | The mixed FAQ is redundant with the canonical Learn category. |
 
 Each known former URL returns one same-origin permanent `308` directly to the listed destination and preserves encoded query parameters. Unknown slugs return `404`; no request input may select a destination host. No former route is classified RETIRED because every item has a truthful current canonical equivalent.
 
-Learn remains a distinct content library. `/learn/responsible-gambling` owns educational article discovery and links back to the broader hub; it does not duplicate the hub's navigation purpose or Protected Help's urgent-support purpose.
+Learn remains a distinct content library. `/learn?category=responsible-gambling` owns educational article discovery and links back to the broader hub; it does not duplicate the hub's navigation purpose or Protected Help's urgent-support purpose.
 
 ## 3. Navigation, SEO and discovery decision
 

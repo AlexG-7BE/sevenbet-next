@@ -133,7 +133,7 @@ test("PR5 connector history remains documented while PR6 removes it from the act
     .map((entry) => entry.name)
     .sort();
   assert.ok(migrations.includes("0041_commercial_core_legacy_connector_cleanup"));
-  assert.equal(migrations.at(-1), "0042_admin_mfa");
+  assert.equal(migrations.at(-1), "0043_article_learning_center");
   assert.match(source("prisma/migrations/0021_partner_ops_work_bridge_01/migration.sql"), /CREATE TABLE "oauthClient"/);
   assert.match(source("docs/06_Operations/Commercial-Core-PR5-MCP-Extraction-Retirement.md"), /513 connector-storage rows|storage contains 11 historical connector clients/);
   const scripts = (JSON.parse(source("package.json")) as { scripts: Record<string, string> }).scripts;

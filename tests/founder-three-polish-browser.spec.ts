@@ -57,14 +57,14 @@ async function learnAnchors(page: Page) {
     const hero = rect('[data-learn-hero-axis] h1');
     const meta = rect('[data-learn-meta-axis] > span:first-child');
     const updated = rect('[data-learn-meta-axis] > span:last-child');
-    const startHeading = rect('[data-learn-start-axis] h2');
-    const startSection = rect("[data-learn-start-axis]");
+    const catalogueHeading = rect('[data-learn-catalogue-axis] h2');
+    const catalogueSection = rect("[data-learn-catalogue-axis]");
     return {
       heroContentLeft: hero.left,
       heroMetaLeft: meta.left,
       metaRight: updated.right,
-      startHereLeft: startHeading.left,
-      startHereSectionRight: startSection.right,
+      catalogueLeft: catalogueHeading.left,
+      catalogueSectionRight: catalogueSection.right,
     };
   });
 }
@@ -76,21 +76,21 @@ for (const viewport of [
   { width: 768, height: 1024 },
   { width: 430, height: 932 },
 ] as const) {
-  test(`Learn hero shares the rendered START HERE axis at ${viewport.width}px`, async ({ page }) => {
+  test(`Learn hero shares the rendered catalogue axis at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await page.goto(`${baseUrl}/learn`, { waitUntil: "networkidle" });
     const anchors = await learnAnchors(page);
-    expect(Math.abs(anchors.heroContentLeft - anchors.startHereLeft)).toBeLessThanOrEqual(1);
-    expect(Math.abs(anchors.heroMetaLeft - anchors.startHereLeft)).toBeLessThanOrEqual(1);
-    expect(Math.abs(anchors.metaRight - anchors.startHereSectionRight)).toBeLessThanOrEqual(1);
+    expect(Math.abs(anchors.heroContentLeft - anchors.catalogueLeft)).toBeLessThanOrEqual(1);
+    expect(Math.abs(anchors.heroMetaLeft - anchors.catalogueLeft)).toBeLessThanOrEqual(1);
+    expect(Math.abs(anchors.metaRight - anchors.catalogueSectionRight)).toBeLessThanOrEqual(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
     if (captureEvidence && viewport.width === 1440) {
       await instantScroll(page, 0);
       await saveWebp(page, resolve(evidenceRoot, "founder-learn-alignment-review/learn-hero-1440.webp"));
-      await page.locator("[data-learn-start-section]").evaluate((element) => element.scrollIntoView({ block: "start" }));
+      await page.locator("[data-learn-catalogue-section]").evaluate((element) => element.scrollIntoView({ block: "start" }));
       await page.waitForTimeout(200);
-      await saveWebp(page, resolve(evidenceRoot, "founder-learn-alignment-review/learn-hero-start-here-1440.webp"));
+      await saveWebp(page, resolve(evidenceRoot, "founder-learn-alignment-review/learn-hero-catalogue-1440.webp"));
     }
     if (captureEvidence && viewport.width === 1024) {
       await instantScroll(page, 0);
@@ -105,7 +105,7 @@ test("Learn mobile keeps the existing 24px frame", async ({ page }) => {
   const anchors = await learnAnchors(page);
   expect(anchors.heroContentLeft).toBeCloseTo(24, 0);
   expect(anchors.heroMetaLeft).toBeCloseTo(24, 0);
-  expect(anchors.startHereLeft).toBeCloseTo(24, 0);
+  expect(anchors.catalogueLeft).toBeCloseTo(24, 0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   await instantScroll(page, 0);
   await saveWebp(page, resolve(evidenceRoot, "founder-learn-alignment-review/learn-mobile-390.webp"));

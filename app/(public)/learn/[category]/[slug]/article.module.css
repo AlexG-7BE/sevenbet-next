@@ -50,3 +50,30 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.heroContent { position: relative; z-index: 2; width: 100%; }
+.heroWithImage { position: relative; overflow: hidden; }
+.heroWithImage::after { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(16,15,15,.98) 0 48%, rgba(16,15,15,.72) 72%, rgba(16,15,15,.36)); }
+.heroImage { position: absolute; inset: 0 0 0 auto; width: 58%; height: 100%; object-fit: cover; }
+.articleBody > p { margin: 0 0 24px; color: #262525; font-size: 17px; line-height: 1.75; }
+.articleBody > h2,
+.articleBody > h3 { scroll-margin-top: 110px; text-transform: uppercase; }
+.articleBody > h2 { margin: 64px 0 24px; font-size: clamp(28px, 2.2vw, 34px); line-height: 1.08; }
+.articleBody > h3 { margin: 44px 0 18px; font-size: 22px; line-height: 1.2; }
+.articleBody > ul,
+.articleBody > ol { margin: 0 0 32px; padding-left: 24px; color: #262525; font-size: 17px; line-height: 1.7; }
+.articleBody > blockquote { max-width: 26ch; margin: 56px 0; padding-left: 24px; border-left: 3px solid #777500; font-family: var(--font-seven-serif), Georgia, serif; font-size: clamp(28px, 3vw, 42px); font-style: italic; line-height: 1.08; }
+.articleBody > blockquote p { margin: 0; }
+.articleBody > blockquote cite { display: block; margin-top: 16px; font-family: var(--font-seven-sans), Arial, sans-serif; font-size: 13px; font-style: normal; }
+.articleImage { margin: 40px 0; }
+.articleImage img { display: block; width: 100%; height: auto; border-radius: 20px; }
+.articleImage figcaption { margin-top: 10px; color: #64635c; font-size: 13px; }
+.resourceLink { margin: 28px 0; padding: 28px 32px; border: 1px solid rgba(16,15,15,.15); border-radius: 20px; background: #f4f1eb; }
+.resourceLink strong { display: block; text-transform: uppercase; }
+.resourceLink p { color: #64635c; line-height: 1.6; }
+.resourceLink a { color: #100f0f; font-weight: 750; }
+
+@media (max-width: 800px) {
+  .heroWithImage::after { background: rgba(16,15,15,.78); }
+  .heroImage { width: 100%; }
+}

@@ -213,19 +213,19 @@ test("bonus directory keeps five bounded intent views and three decision facts",
   await capture(page, "critical-states", "bonus-directory-mobile");
 });
 
-test("Learn search, facets, no-result recovery and real article navigation work", async ({ page }) => {
+test("Learn search, facets, and truthful empty-catalogue recovery work", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/learn");
   const search = page.getByRole("searchbox", { name: "Search guides" });
   await search.fill("licensing");
-  await expect(page.locator('a[data-learn-category].scp3:visible')).toHaveCount(2);
+  await expect(page.locator('a[data-learn-category].scp3:visible')).toHaveCount(0);
+  await expect(page.locator("[data-learn-results-status]")).toContainText("No guides match");
   await page.getByRole("button", { name: "Bonuses", exact: true }).click();
   await expect(page.locator("[data-learn-results-status]")).toContainText("No guides match");
   await search.fill("");
-  await expect(page.getByRole("link", { name: /How Welcome Bonus Terms Work/ }).last()).toBeVisible();
+  await expect(page.locator("[data-learn-empty]")).toHaveText("No published guides are available in this language yet.");
+  await expect(page.locator('a[data-learn-category]')).toHaveCount(0);
   await capture(page, "critical-states", "learn-filter-mobile");
-  await page.getByRole("link", { name: /How Welcome Bonus Terms Work/ }).last().click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("How Welcome Bonus Terms Work");
 });
 
 test("fresh Mission 01 delivers value before account continuation and preserves Google/email priority contract", async ({ page }) => {
