@@ -2,20 +2,22 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 
 import { EmailTemplateWorkbench } from "@/components/admin/email/EmailTemplateWorkbench";
-import { AdminPageShell, AdminStatCard } from "@/components/admin/AdminShell";
+import { AdminPageShell, AdminStatCard, EmailAdminNavigation } from "@/components/admin/AdminShell";
 import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
 import { getAdminPageAccess } from "@/lib/auth/admin";
 import { listEmailTemplates } from "@/lib/email/template-admin.server";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Templates | B4GAMBLE", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Email Templates | B4GAMBLE", robots: { index: false, follow: false } };
 
 export default async function TemplatesPage() {
-  if (!await getAdminPageAccess(await headers(), "templates")) return <AdminPermissionDenied />;
+  const staff = await getAdminPageAccess(await headers(), "templates");
+  if (!staff) return <AdminPermissionDenied />;
   const templates = await listEmailTemplates();
   const keys = new Set(templates.map((template) => template.key));
   return (
-    <AdminPageShell area="templates" title="Templates" intro="Versioned transactional, lifecycle, and marketing email copy. English is the documented safe fallback until an approved localized version exists.">
+    <AdminPageShell area="templates" title="Email Templates" intro="Versioned transactional, lifecycle, and marketing email copy. English is the documented safe fallback until an approved localized version exists.">
+      <EmailAdminNavigation current="templates" staff={staff} />
       <div className="adminStatsGrid">
         <AdminStatCard label="Template keys" value={keys.size} note="Stable operational purposes" />
         <AdminStatCard label="Versions" value={templates.length} note="Immutable history" />

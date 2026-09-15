@@ -173,7 +173,9 @@ test("public Learn pages and API use the canonical PostgreSQL Article projection
   assert.match(publicRoute, /source: "postgresql"/);
   assert.doesNotMatch(publicRoute, /learningArticles|seed/);
   assert.ok(publicRoute.indexOf('if (resource === "articles")') < publicRoute.indexOf("listPublishedContent(resource)"));
-  assert.match(read("lib/cms/publishing.ts"), /Exclude<PublicCmsResource, "articles">/);
+  const publishing = read("lib/cms/publishing.ts");
+  assert.match(publishing, /type PublicProgrammeResource = "program" \| "program-steps" \| "lessons"/);
+  assert.doesNotMatch(publishing, /listCmsRecords|cms\/repository|cms\/seed/);
   assert.match(read("app/(public)/learn/[category]/[slug]/page.tsx"), /datePublished: article\.publishedAt/);
 });
 

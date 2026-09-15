@@ -39,7 +39,7 @@ test("admin service errors preserve governed failures and hide unknown exception
   });
 });
 
-test("legacy generic and Program admin APIs use the shared error boundary", () => {
+test("retired generic and Program admin APIs use the shared error boundary", () => {
   const routes = [
     "app/api/admin/[entity]/route.ts",
     "app/api/admin/[entity]/[id]/route.ts",

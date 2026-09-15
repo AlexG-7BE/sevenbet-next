@@ -9,10 +9,8 @@ function source(path: string) {
 test("every direct-data admin page checks its area before reading records", () => {
   const guardedPages = [
     "app/admin/(protected)/page.tsx",
-    "app/admin/(protected)/[section]/page.tsx",
     "app/admin/(protected)/achievements/page.tsx",
     "app/admin/(protected)/xp-rules/page.tsx",
-    "app/admin/(protected)/program-settings/page.tsx",
     "app/admin/(protected)/programs/page.tsx",
     "app/admin/(protected)/programs/new/page.tsx",
     "app/admin/(protected)/programs/[programId]/page.tsx",
@@ -25,7 +23,6 @@ test("every direct-data admin page checks its area before reading records", () =
     "app/admin/(protected)/casinos/[casinoId]/builder/page.tsx",
     "app/admin/(protected)/casinos/[casinoId]/preview/page.tsx",
     "app/admin/(protected)/casinos/[casinoId]/revisions/page.tsx",
-    "app/admin/(protected)/media-operations/page.tsx",
     "app/admin/(protected)/customers/page.tsx",
     "app/admin/(protected)/customers/[customerId]/page.tsx",
     "app/admin/(protected)/analytics/page.tsx",
@@ -40,15 +37,16 @@ test("every direct-data admin page checks its area before reading records", () =
   assert.match(source("app/admin/(protected)/commercial/layout.tsx"), /getAdminPageAccess\(await headers\(\), "commercial"\)/);
 });
 
-test("admin navigation is role-filtered and the dashboard filters record and audit reads", () => {
+test("admin navigation is role-filtered and the dashboard reads canonical domains", () => {
   const shell = source("components/admin/AdminShell.tsx");
   const dashboard = source("app/admin/(protected)/page.tsx");
   assert.match(shell, /visibleNavigation = adminNav\.filter/);
   assert.match(shell, /canAccessAdminArea\(staff, item\.area\)/);
-  assert.match(shell, /\/admin\/program-settings/);
-  assert.match(shell, /\/admin\/media-operations/);
-  assert.match(dashboard, /legacyEntities\.filter\(canReadEntity\)/);
-  assert.match(dashboard, /listAuditEntries\(\)\.filter/);
+  assert.match(dashboard, /programService\.listPrograms/);
+  assert.match(dashboard, /articleService\.listAdminArticles/);
+  assert.match(dashboard, /casinoService\.listCasinos/);
+  assert.match(dashboard, /listCustomers/);
+  assert.doesNotMatch(dashboard, /listCmsRecords|lib\/cms\/(?:repository|seed)|Recent CMS Records/);
 });
 
 test("all admin routes inherit a private robots policy", () => {

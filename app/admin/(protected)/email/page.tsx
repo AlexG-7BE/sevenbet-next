@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 
 import { EmailCampaignWorkbench } from "@/components/admin/email/EmailCampaignWorkbench";
-import { AdminPageShell, AdminStatCard } from "@/components/admin/AdminShell";
+import { AdminPageShell, AdminStatCard, EmailAdminNavigation } from "@/components/admin/AdminShell";
 import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
 import { getAdminPageAccess } from "@/lib/auth/admin";
 import { listEmailCampaigns } from "@/lib/email/campaigns.server";
@@ -12,7 +12,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Email | B4GAMBLE", robots: { index: false, follow: false } };
 
 export default async function EmailPage() {
-  if (!await getAdminPageAccess(await headers(), "email")) return <AdminPermissionDenied />;
+  const staff = await getAdminPageAccess(await headers(), "email");
+  if (!staff) return <AdminPermissionDenied />;
   const [campaigns, allTemplates] = await Promise.all([listEmailCampaigns(), listEmailTemplates()]);
   const templates = allTemplates.filter((template) => template.active && template.type === "MARKETING");
   const serializedCampaigns = campaigns.map((campaign) => ({
@@ -25,6 +26,7 @@ export default async function EmailPage() {
   }));
   return (
     <AdminPageShell area="email" title="Email" intro="Deterministic lifecycle and manual broadcast records with fixed audiences, review snapshots, idempotent queueing, and final server-side consent enforcement.">
+      <EmailAdminNavigation current="email" staff={staff} />
       <div className="adminStatsGrid">
         <AdminStatCard label="Campaigns" value={campaigns.length} note="Most recent 100" />
         <AdminStatCard label="Awaiting review" value={campaigns.filter((item) => item.status === "DRAFT").length} note="Cannot be queued" />

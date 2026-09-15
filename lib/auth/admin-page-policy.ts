@@ -9,19 +9,14 @@ export type AdminArea =
   | "program-preview"
   | "achievements"
   | "xp-rules"
-  | "program-settings"
   | "learning"
   | "casinos"
-  | "bonuses"
   | "affiliate"
   | "commercial"
-  | "media-operations"
-  | "users"
   | "customers"
   | "analytics"
   | "email"
-  | "templates"
-  | "settings";
+  | "templates";
 
 export const adminAreaPermissions: Record<AdminArea, readonly CmsPermission[]> = {
   dashboard: [],
@@ -31,19 +26,14 @@ export const adminAreaPermissions: Record<AdminArea, readonly CmsPermission[]> =
   "program-preview": ["program.preview_draft"],
   achievements: ["achievement.manage"],
   "xp-rules": ["xp.manage"],
-  "program-settings": ["settings.manage"],
   learning: ["article.create", "article.edit", "article.review", "article.publish"],
   casinos: ["casino.edit"],
-  bonuses: ["bonus.edit"],
   affiliate: ["affiliate.manage"],
   commercial: ["affiliate.manage"],
-  "media-operations": ["media.manage"],
-  users: ["user.view"],
   customers: ["user.view"],
   analytics: ["analytics.view"],
   email: ["email.manage"],
   templates: ["template.manage"],
-  settings: ["settings.manage"],
 };
 
 export function canAccessAdminArea(

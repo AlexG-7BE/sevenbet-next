@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
-import { Badge, Button, Card, Container } from "@/components/ui";
-import { entityLabels } from "@/lib/cms/entities";
-import type { AuditLogEntry, CmsEntity, CmsRecord } from "@/lib/cms/types";
+import { Badge, Card, Container } from "@/components/ui";
+import type { CmsRecord, CmsUser } from "@/lib/cms/types";
 import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
 import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
 import { getAdminPageAccess } from "@/lib/auth/admin";
@@ -12,20 +11,14 @@ import { canAccessAdminArea, type AdminArea } from "@/lib/auth/admin-page-policy
 export const adminNav: Array<{ href: string; label: string; area: AdminArea }> = [
   { href: "/admin", label: "Dashboard", area: "dashboard" },
   { href: "/admin/programs", label: "Programs", area: "programs" },
-  { href: "/admin/program-settings", label: "Program settings", area: "program-settings" },
-  { href: "/admin/achievements", label: "Achievements", area: "achievements" },
-  { href: "/admin/xp-rules", label: "XP Rules", area: "xp-rules" },
   { href: "/admin/learning", label: "Learning Center", area: "learning" },
   { href: "/admin/casinos", label: "Casinos", area: "casinos" },
-  { href: "/admin/bonuses", label: "Bonuses", area: "bonuses" },
-  { href: "/admin/affiliate", label: "Affiliate", area: "affiliate" },
+  { href: "/admin/affiliate", label: "Affiliate Operations", area: "affiliate" },
   { href: "/admin/commercial", label: "Commercial", area: "commercial" },
-  { href: "/admin/media-operations", label: "Media Operations", area: "media-operations" },
   { href: "/admin/customers", label: "Customers", area: "customers" },
   { href: "/admin/analytics", label: "Analytics", area: "analytics" },
   { href: "/admin/email", label: "Email", area: "email" },
-  { href: "/admin/templates", label: "Templates", area: "templates" },
-  { href: "/admin/settings", label: "Settings", area: "settings" },
+  { href: "/admin/templates", label: "Email Templates", area: "templates" },
 ];
 
 export async function AdminPageShell({
@@ -54,17 +47,17 @@ export async function AdminPageShell({
               <span className="mark">B4</span>
               <span>B4GAMBLE CMS</span>
             </Link>
-            <nav>
+            <nav aria-label="Primary Admin navigation">
               {visibleNavigation.map((item) => (
-                <Link href={item.href} key={item.href}>
+                <Link aria-current={item.area === area ? "page" : undefined} href={item.href} key={item.href}>
                   {item.label}
                 </Link>
               ))}
             </nav>
             <AdminLogoutButton />
             <Card className="adminNotice" tone="soft">
-              <Badge tone="green">Dual auth</Badge>
-              <p className="muted">Better Auth staff sessions are active. The preview token remains a temporary, environment-gated fallback.</p>
+              <Badge tone="green">Admin protected</Badge>
+              <p className="muted">Better Auth + TOTP protects privileged Admin access.</p>
             </Card>
           </aside>
 
@@ -107,7 +100,7 @@ export function AdminRecordTable({ records }: { records: CmsRecord[] }) {
       {records.map((record) => (
         <div className="adminTableRow" role="row" key={`${record.entity}-${record.id}`}>
           <strong role="cell">{record.title}</strong>
-          <span role="cell">{entityLabels[record.entity]}</span>
+          <span role="cell">{record.entity === "xp-rule" ? "XP Rules" : record.entity === "achievement" ? "Achievements" : record.entity.replaceAll("-", " ")}</span>
           <span role="cell"><Badge tone={record.status === "PUBLISHED" || record.status === "ACTIVE" ? "green" : "warning"}>
             {record.status}
           </Badge></span>
@@ -118,36 +111,32 @@ export function AdminRecordTable({ records }: { records: CmsRecord[] }) {
   );
 }
 
-export function AdminAuditList({ entries }: { entries: AuditLogEntry[] }) {
-  if (!entries.length) {
-    return (
-      <Card>
-        <h3>No audit activity yet</h3>
-        <p className="muted">Create or update CMS records through the admin API to populate the audit log.</p>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="adminAudit">
-      {entries.slice(0, 8).map((entry) => (
-        <Card key={entry.id}>
-          <Badge>{entry.action}</Badge>
-          <h3>{entry.summary}</h3>
-          <p className="muted">{new Date(entry.timestamp).toLocaleString("en-US")}</p>
-        </Card>
-      ))}
-    </div>
-  );
+function AdminLocalNavigation({
+  label,
+  current,
+  staff,
+  items,
+}: {
+  label: string;
+  current: string;
+  staff: Pick<CmsUser, "permissions" | "role">;
+  items: Array<{ href: string; label: string; area: AdminArea; id: string }>;
+}) {
+  const visibleItems = items.filter((item) => canAccessAdminArea(staff, item.area));
+  return <nav className="adminLocalNav" aria-label={label}>{visibleItems.map((item) => <Link aria-current={item.id === current ? "page" : undefined} href={item.href} key={item.href}>{item.label}</Link>)}</nav>;
 }
 
-export function AdminApiActions({ entity, showSettings = false }: { entity: CmsEntity; showSettings?: boolean }) {
-  return (
-    <div className="heroActions">
-      <Button href={`/api/admin/${entity}`} variant="primary">
-        Open API
-      </Button>
-      {showSettings ? <Button href="/admin/settings" variant="ghost">Settings</Button> : null}
-    </div>
-  );
+export function ProgrammeAdminNavigation({ staff, current }: { staff: Pick<CmsUser, "permissions" | "role">; current: "programs" | "xp-rules" | "achievements" }) {
+  return <AdminLocalNavigation label="Programme management" current={current} staff={staff} items={[
+    { href: "/admin/programs", label: "Programs", area: "programs", id: "programs" },
+    { href: "/admin/xp-rules", label: "XP Rules", area: "xp-rules", id: "xp-rules" },
+    { href: "/admin/achievements", label: "Achievements", area: "achievements", id: "achievements" },
+  ]} />;
+}
+
+export function EmailAdminNavigation({ staff, current }: { staff: Pick<CmsUser, "permissions" | "role">; current: "email" | "templates" }) {
+  return <AdminLocalNavigation label="Email management" current={current} staff={staff} items={[
+    { href: "/admin/email", label: "Email", area: "email", id: "email" },
+    { href: "/admin/templates", label: "Email Templates", area: "templates", id: "templates" },
+  ]} />;
 }

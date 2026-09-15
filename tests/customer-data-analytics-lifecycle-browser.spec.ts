@@ -172,24 +172,63 @@ test("Customer Core public/admin security boundaries deny unauthenticated and fo
   expect((await request.get(`${baseUrl}/api/internal/cron/customer-lifecycle`)).status()).toBe(401);
 });
 
-test("authorized Customer, Analytics, Email, and Templates surfaces render responsively", async ({ page }) => {
+test("authorized Admin operational domains and simplified navigation render responsively", async ({ page }) => {
   await authenticateAdmin(page, "/admin/customers");
+  await page.goto(`${baseUrl}/admin`, { waitUntil: "domcontentloaded" });
+  const primaryNavigation = page.getByRole("navigation", { name: "Primary Admin navigation" });
+  await expect(primaryNavigation.locator("a")).toHaveText([
+    "Dashboard",
+    "Programs",
+    "Learning Center",
+    "Casinos",
+    "Affiliate Operations",
+    "Commercial",
+    "Customers",
+    "Analytics",
+    "Email",
+    "Email Templates",
+  ]);
+  await expect(page.getByText(/preview token remains/i)).toHaveCount(0);
+
   for (const [path, heading] of [
+    ["/admin", "Operations Dashboard"],
+    ["/admin/programs", "Programs"],
+    ["/admin/learning", "Learning Center"],
+    ["/admin/casinos", "Casinos"],
+    ["/admin/affiliate", "Affiliate Operations"],
+    ["/admin/commercial", "Commercial Pipeline"],
     ["/admin/customers", "Customers"],
     ["/admin/analytics?view=overview&range=7", "Analytics"],
     ["/admin/analytics?view=programme&range=30", "Analytics"],
     ["/admin/analytics?view=commercial&range=30", "Analytics"],
     ["/admin/analytics?view=email&range=30", "Analytics"],
     ["/admin/email", "Email"],
-    ["/admin/templates", "Templates"],
+    ["/admin/templates", "Email Templates"],
   ] as const) {
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), path).toBe(200);
     await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/i);
   }
+
+  for (const [legacyPath, replacement] of [
+    ["/admin/program-settings", "/admin/programs"],
+    ["/admin/bonuses", "/admin/casinos"],
+    ["/admin/media-operations", "/admin/casinos"],
+  ] as const) {
+    await page.goto(`${baseUrl}${legacyPath}`, { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(new RegExp(`${replacement}$`));
+  }
+  const retiredSettings = await page.goto(`${baseUrl}/admin/settings`, { waitUntil: "domcontentloaded" });
+  expect(retiredSettings?.status()).toBe(404);
+  const retiredApi = await page.request.get(`${baseUrl}/api/admin/settings`);
+  expect(retiredApi.status()).toBe(410);
+  expect(await retiredApi.json()).toMatchObject({ code: "LEGACY_CMS_RETIRED" });
+
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${baseUrl}/admin/customers`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/admin`, { waitUntil: "domcontentloaded" });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+  await page.goto(`${baseUrl}/admin/learning`, { waitUntil: "domcontentloaded" });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   await page.goto(`${baseUrl}/admin/templates`, { waitUntil: "domcontentloaded" });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);

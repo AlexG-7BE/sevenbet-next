@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import {
   AdminPageShell,
   AdminStatCard,
+  ProgrammeAdminNavigation,
 } from "@/components/admin/AdminShell";
 import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
 import { ProgramListActions } from "@/components/admin/ProgramBuilder";
@@ -91,6 +92,7 @@ export default async function ProgramsPage({
 
   return (
     <AdminPageShell
+      area="programs"
       title="Programs"
       intro="Create, organize, review, version and publish structured educational programs."
       actions={
@@ -102,6 +104,7 @@ export default async function ProgramsPage({
         </Link> : undefined
       }
     >
+      <ProgrammeAdminNavigation current="programs" staff={staff} />
       <div className="adminStatsGrid">
         <AdminStatCard
           label="Programs"
