@@ -3579,6 +3579,63 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   gap: 8px;
 }
 
+.articleFilters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 160px 140px 160px auto;
+  gap: 10px;
+}
+
+.articleFilters input,
+.articleFilters select {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, .055);
+  font: inherit;
+}
+
+.adminEmptyState { padding: 28px; }
+.adminEmptyState h2 { margin-top: 0; }
+.articleEditor { display: grid; gap: 18px; }
+.articleEditorStatus { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 14px; border: 1px solid var(--border); border-radius: 16px; background: rgba(17, 31, 53, .8); }
+.articleEditorStatus > div { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.articleEditorStatus span { color: var(--muted); font-size: .84rem; }
+.articleEditorGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 18px; align-items: start; }
+.articleEditorDocument { display: grid; gap: 18px; min-width: 0; }
+.articleEditorAside { position: sticky; top: 20px; display: grid; gap: 18px; }
+.articleEditorAside ul { margin: 12px 0 0; padding-left: 20px; color: var(--muted); }
+.articleBlockList { display: grid; gap: 12px; }
+.articleBlockEditor { display: grid; gap: 14px; border-color: rgba(255,255,255,.12); }
+.articleBlockEditor > header { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.articleBlockEditor > header > div { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.articleBlockEditor > header button { min-height: 36px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 9px; color: var(--muted); background: rgba(255,255,255,.04); cursor: pointer; }
+.articleBlockEditor > header button:disabled { opacity: .4; cursor: not-allowed; }
+.articleBlockInsert { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.articleBlockInsert > span { width: 100%; color: var(--muted); font-size: .82rem; font-weight: 850; }
+.articleRevisionList { display: grid; }
+.articleRevisionList article { display: grid; gap: 8px; padding: 14px 0; border-top: 1px solid var(--border); }
+.articleRevisionList article:first-child { border-top: 0; }
+.articleRevisionList article > div { display: flex; justify-content: space-between; gap: 8px; }
+.articleRevisionList span { color: var(--subtle); font-size: .72rem; }
+.articleRevisionList p { margin: 0; color: var(--muted); font-size: .82rem; }
+.articleRevisionList .button { width: fit-content; }
+
+@media (max-width: 1050px) {
+  .articleFilters { grid-template-columns: 1fr 1fr; }
+  .articleEditorGrid { grid-template-columns: 1fr; }
+  .articleEditorAside { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  .articleFilters,
+  .articleEditorAside { grid-template-columns: 1fr; }
+  .articleEditorStatus,
+  .articleBlockEditor > header { align-items: flex-start; flex-direction: column; }
+}
+
 .casinoPreviewHero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);

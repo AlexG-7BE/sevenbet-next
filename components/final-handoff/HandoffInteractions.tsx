@@ -380,7 +380,9 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
     const learnButtons = learnSection ? [...learnSection.querySelectorAll<HTMLButtonElement>("button[data-learn-topic]")] : [];
     const learnI18n = name === "learn" ? root.querySelector<HTMLElement>("[data-learn-i18n]") : null;
     const learnCount = allGuides?.parentElement?.querySelector<HTMLElement>(".sc-interp") ?? null;
-    const learnGrid = learnCards[0]?.parentElement ?? null;
+    const learnGrid = learnCards[0]?.parentElement
+      ?? learnSection?.querySelector<HTMLElement>("[data-learn-grid]")
+      ?? null;
     const learnStatus = name === "learn" ? document.createElement("p") : null;
     const categoryTopic = new Map([
       ["casino-bonuses", "bonuses"],
@@ -433,9 +435,12 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
       }
       if (learnCount) learnCount.textContent = String(visible);
       if (learnStatus) {
-        learnStatus.textContent = visible
-          ? `${visible} ${visible === 1 ? learnI18n?.dataset.learnOne : learnI18n?.dataset.learnMany}`
-          : (learnI18n?.dataset.learnNone ?? "");
+        const idleEmptyCatalogue = learnCards.length === 0 && !learnQuery && learnTopic === "all topics";
+        learnStatus.textContent = idleEmptyCatalogue
+          ? ""
+          : visible
+            ? `${visible} ${visible === 1 ? learnI18n?.dataset.learnOne : learnI18n?.dataset.learnMany}`
+            : (learnI18n?.dataset.learnNone ?? "");
       }
       updateLearnButtonState();
     };

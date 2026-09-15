@@ -185,7 +185,7 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   }
 });
 
-test("sitemap keeps final static and learning routes when casino discovery throws", async () => {
+test("sitemap keeps final static routes and omits unpublished Learning paths when discovery throws", async () => {
   const originalDiscover = publicCasinoDiscoveryService.discover;
   const originalBestOffers = publicOfferService.getBestOffersPageData;
   const originalBonusSearch = publicOfferService.searchOffers;
@@ -210,17 +210,13 @@ test("sitemap keeps final static and learning routes when casino discovery throw
   const urls = entries.map((entry) => entry.url);
   assert.ok(urls.includes("https://b4gamble.com/en/10-steps"));
   assert.ok(urls.includes("https://b4gamble.com/en/learn"));
-  assert.ok(urls.some((url) => url.startsWith("https://b4gamble.com/en/learn/") && url !== "https://b4gamble.com/en/learn/"));
+  assert.ok(!urls.some((url) => url.startsWith("https://b4gamble.com/en/learn/")));
   assert.ok(urls.includes("https://b4gamble.com/en/responsible-gambling"));
   assert.ok(urls.includes("https://b4gamble.com/en/help"));
   assert.ok(!urls.some((url) => url.startsWith("https://b4gamble.com/en/help/")));
   for (const educationalHelpPath of ["budgeting", "time-management", "bonus-terms", "casino-licenses", "payment-safety", "faq"]) {
     assert.ok(!urls.includes(`https://b4gamble.com/help/${educationalHelpPath}`));
   }
-  assert.ok(urls.includes("https://b4gamble.com/en/learn/responsible-gambling/responsible-gambling-tools"));
-  assert.ok(urls.includes("https://b4gamble.com/en/learn/casino-bonuses/welcome-bonus-terms"));
-  assert.ok(urls.includes("https://b4gamble.com/en/learn/licensing/casino-licenses-explained"));
-  assert.ok(urls.includes("https://b4gamble.com/en/learn/payments/casino-payment-methods"));
   assert.ok(urls.includes("https://b4gamble.com/en/best-offers"));
   assert.ok(!urls.includes("https://b4gamble.com/en/compare"));
   assert.ok(urls.every((url) => !url.startsWith("https://b4gamble.com/en/casino/")));
@@ -346,6 +342,10 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
       ],
       [
         "prisma/migrations/0042_admin_mfa/migration.sql",
+        "prisma/schema.prisma",
+      ],
+      [
+        "prisma/migrations/0043_article_learning_center/migration.sql",
         "prisma/schema.prisma",
       ],
       ["prisma/schema.prisma"],

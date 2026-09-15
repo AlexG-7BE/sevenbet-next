@@ -221,7 +221,7 @@ test("0041 is an exact explicit no-CASCADE cleanup and cannot target the KEEP se
     .map((entry) => entry.name)
     .sort();
   assert.ok(migrations.includes("0041_commercial_core_legacy_connector_cleanup"));
-  assert.equal(migrations.at(-1), "0042_admin_mfa");
+  assert.equal(migrations.at(-1), "0043_article_learning_center");
 
   const sql = source(PR6_MIGRATION_PATH);
   const inspection = inspectPr6MigrationSql(sql);

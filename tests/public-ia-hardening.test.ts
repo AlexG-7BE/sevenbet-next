@@ -5,12 +5,7 @@ import test from "node:test";
 
 import { serializeJsonLd } from "../components/seo/JsonLd";
 import {
-  getArticleBySlug,
   getLearningCategory,
-  assertValidLearningManifest,
-  learningArticles,
-  publishedLearningArticles,
-  type LearningArticle,
 } from "../lib/learning-center";
 import {
   LEGACY_RESPONSIBLE_GAMBLING_ROUTES,
@@ -136,7 +131,7 @@ test("every former mixed Responsible Gambling article has one explicit canonical
       const [, area, category, article] = route.destination.split("/");
       assert.equal(area, "learn");
       assert.ok(getLearningCategory(category));
-      if (article) assert.ok(getArticleBySlug(article));
+      if (article) assert.match(article, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
     } else if (route.classification === "HELP") {
       assert.match(route.destination, /^\/help\//);
     }
@@ -169,21 +164,11 @@ test("shared navigation and footer expose only the final handoff destinations", 
   assert.match(category, /Open Responsible Gambling hub/);
 });
 
-test("public Learn pages and API use one explicit published manifest", () => {
-  assert.equal(learningArticles.length, 13);
-  assert.ok(learningArticles.every((article) => article.status === "PUBLISHED"));
-  assert.ok(learningArticles.every((article) => Number.isFinite(Date.parse(article.publishedAt))));
-  const first = learningArticles[0];
-  const draft: LearningArticle = { ...first, slug: "not-public", status: "DRAFT" };
-  assert.deepEqual(publishedLearningArticles([draft, first]), [first]);
-  assert.throws(
-    () => assertValidLearningManifest([first, { ...first, categorySlug: "casino-bonuses" }]),
-    /Duplicate public Learn article slug/,
-  );
-
+test("public Learn pages and API use the canonical PostgreSQL Article projection", () => {
   const publicRoute = read("app/api/public/[resource]/route.ts");
-  assert.match(publicRoute, /import \{ learningArticles \} from "@\/lib\/learning-center"/);
-  assert.match(publicRoute, /if \(resource === "articles"\)[\s\S]*learningArticles\.slice\(0, limit\)/);
+  assert.match(publicRoute, /if \(resource === "articles"\)[\s\S]*articleService\.listPublished\(locale/);
+  assert.match(publicRoute, /source: "postgresql"/);
+  assert.doesNotMatch(publicRoute, /learningArticles|seed/);
   assert.ok(publicRoute.indexOf('if (resource === "articles")') < publicRoute.indexOf("listPublishedContent(resource)"));
   assert.match(read("lib/cms/publishing.ts"), /Exclude<PublicCmsResource, "articles">/);
   assert.match(read("app/(public)/learn/[category]/[slug]/page.tsx"), /datePublished: article\.publishedAt/);

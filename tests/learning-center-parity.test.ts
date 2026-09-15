@@ -2,106 +2,111 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import {
-  getArticlePath,
-  getArticlesByCategory,
-  learningArticles,
-  learningCategories,
-  learningPaths,
-  learningTags,
-} from "../lib/learning-center";
+import type { PublicArticle } from "../lib/articles/article-types";
+import generatedPages from "../lib/final-handoff/generated-pages.json";
+import { transformLearnHandoff } from "../lib/final-handoff/transforms";
+import { learningCategories } from "../lib/learning-center";
 
-const hubRoute = readFileSync("app/(public)/learn/page.tsx", "utf8");
-const handoffPages = JSON.parse(readFileSync("lib/final-handoff/generated-pages.json", "utf8")) as Record<string, { html: string }>;
-const hubView = readFileSync("app/(public)/learn/LearningCenterPage.tsx", "utf8");
-const searchView = readFileSync("components/learning/LearningSearchAndFilter.tsx", "utf8");
-const handoffTransforms = readFileSync("lib/final-handoff/transforms.ts", "utf8");
-const handoffInteractions = readFileSync("components/final-handoff/HandoffInteractions.tsx", "utf8");
-const categoryRoute = readFileSync("app/(public)/learn/[category]/page.tsx", "utf8");
-const categoryView = readFileSync("app/(public)/learn/[category]/LearningCategoryView.tsx", "utf8");
-const articleRoute = readFileSync("app/(public)/learn/[category]/[slug]/page.tsx", "utf8");
-const articleView = readFileSync("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx", "utf8");
-const publicLayout = readFileSync("app/(public)/layout.tsx", "utf8");
-const learningI18n = readFileSync("lib/i18n/learning-center.ts", "utf8");
+const read = (path: string) => readFileSync(path, "utf8");
 
-test("the Learning route family is server owned and uses the unchanged Public Shell", () => {
-  for (const source of [hubRoute, hubView, categoryRoute, categoryView, articleRoute, articleView]) {
-    assert.doesNotMatch(source, /["']use client["']|useEffect|useState|localStorage|sessionStorage/);
-  }
-  assert.match(publicLayout, /<PublicHeader[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<PublicFooter/);
-  assert.doesNotMatch(`${hubView}${categoryView}${articleView}`, /<footer|PublicHeader|PublicFooter/);
-  assert.equal((hubView.match(/<h1\b/g) ?? []).length, 1);
-  assert.equal((categoryView.match(/<h1\b/g) ?? []).length, 1);
-  assert.equal((articleView.match(/<h1\b/g) ?? []).length, 1);
-  assert.match(hubView, /data-figma-authority="835:6356"/);
-  assert.match(categoryView, /data-figma-authority="632:4360"/);
-  assert.match(articleView, /data-figma-authority="633:4341"/);
-});
+const fixture: PublicArticle = {
+  id: "00000000-0000-4000-8000-000000000001",
+  slug: "clear-guide",
+  locale: "en-GB",
+  title: "A clear published guide",
+  excerpt: "A sufficiently complete excerpt for a published Learning Center guide.",
+  category: "casino-basics",
+  tags: ["Security"],
+  status: "PUBLISHED",
+  bodyBlocks: [{ id: "intro", type: "paragraph", text: "Visible body." }],
+  heroImageUrl: null,
+  heroImageAlt: null,
+  seoTitle: null,
+  seoDescription: null,
+  canonicalUrl: null,
+  readingTime: "4 min read",
+  difficulty: "Beginner",
+  publishedAt: "2026-09-15T00:00:00.000Z",
+  lastReviewedAt: "2026-09-15T00:00:00.000Z",
+  archivedAt: null,
+  createdAt: "2026-09-15T00:00:00.000Z",
+  updatedAt: "2026-09-15T00:00:00.000Z",
+  createdBy: "00000000-0000-4000-8000-000000000002",
+  updatedBy: "00000000-0000-4000-8000-000000000002",
+};
 
-test("hub renders the locked handoff catalogue while current taxonomy remains authoritative", () => {
+test("Prisma Article is the only production Article content authority", () => {
+  const schema = read("prisma/schema.prisma");
+  const taxonomy = read("lib/learning-center.ts");
+  const service = read("lib/services/article.service.ts");
+  const legacySeed = read("lib/cms/seed.ts");
+  const genericApi = read("app/api/admin/[entity]/route.ts");
+  assert.match(schema, /model Article \{/);
+  for (const field of ["locale", "bodyBlocks", "heroImageUrl", "heroImageAlt", "publishedAt", "lastReviewedAt", "archivedAt"]) assert.match(schema, new RegExp(`\\b${field}\\b`));
+  assert.match(service, /prisma\.article/);
+  assert.match(service, /status: EditorialStatus\.PUBLISHED/);
+  assert.match(service, /entityType: ARTICLE_ENTITY/);
+  assert.doesNotMatch(taxonomy, /learningArticleManifest|articleTemplate|publishedLearningArticles|learningArticles\s*=/);
+  assert.doesNotMatch(legacySeed, /entity:\s*"article"|cmsArticles/);
+  assert.match(genericApi, /entityParam === "article"[\s\S]*canonical PostgreSQL Article API/);
   assert.equal(learningCategories.length, 13);
-  assert.equal(learningArticles.length, 13);
-  assert.equal(learningPaths.length, 6);
-  assert.match(hubRoute, /transformLearnHandoff\(html, presentation\.locale/);
-  assert.match(hubRoute, /productHref\(presentation, href\)/);
-  for (const title of ["Wagering requirements, explained with real numbers", "How casino payouts really work — and why they stall", "How to judge a casino in ten minutes", "Session limits that actually hold"]) {
-    assert.ok(handoffPages.learn.html.includes(title), title);
-  }
-  assert.match(searchView, /article\.title, article\.summary, categoryTitle, \.\.\.article\.tags/);
-  assert.doesNotMatch(searchView, /plannedTopics|500\+|future article/);
-
-  const currentTags = new Set(learningArticles.flatMap((article) => article.tags));
-  for (const tag of currentTags) assert.ok(learningTags.includes(tag));
-  for (const article of learningArticles) assert.equal(getArticlePath(article), `/learn/${article.categorySlug}/${article.slug}`);
 });
 
-test("category pages publish current article records and fail closed when empty", () => {
-  for (const category of learningCategories) {
-    const articles = getArticlesByCategory(category.slug);
-    assert.ok(articles.length > 0, `${category.slug} should currently resolve a published article`);
-    assert.ok(articles.every((article) => article.categorySlug === category.slug));
-  }
-  assert.match(categoryView, /articles\.length > 0/);
-  assert.match(categoryView, /NO PUBLISHED GUIDES YET/);
-  assert.doesNotMatch(categoryView, /plannedTopics|Browse Casinos|Browse Bonuses|Claim|Play now/iu);
-  assert.match(categoryRoute, /if \(!getLearningCategory\(category\)\) notFound\(\)/);
-  assert.match(categoryRoute, /permanentRedirect\(productHref\(presentation, `\/learn\?category=/);
+test("the hub projects only supplied PostgreSQL records and has a truthful empty state", () => {
+  const empty = transformLearnHandoff(generatedPages.learn.html, "en-GB", (href) => href, []);
+  assert.match(empty, /data-learn-empty=""/);
+  assert.equal((empty.match(/data-learn-category=/g) ?? []).length, 0);
+  const populated = transformLearnHandoff(generatedPages.learn.html, "en-GB", (href) => `/en${href}`, [fixture]);
+  assert.match(populated, /href="\/en\/learn\/casino-basics\/clear-guide"/);
+  assert.match(populated, />A clear published guide</);
+  assert.doesNotMatch(populated, /data-learn-empty=""/);
 });
 
-test("article template is truthful about missing evidence and preserves the protected boundary", () => {
-  assert.match(articleView, /messages\.ui\.sourceUnavailable/);
-  assert.match(articleView, /messages\.ui\.sourceUnavailableCopy/);
-  assert.match(learningI18n, /SOURCE STATUS: UNAVAILABLE/);
-  assert.match(learningI18n, /does not provide source links, a source owner, a review-due date or a compliance-review status/);
-  assert.doesNotMatch(learningI18n, /SOURCE STATUS: VERIFIED|Compliance reviewed|Review due:/i);
-  assert.match(articleView, /article\.categorySlug !== "responsible-gambling"/);
-  assert.match(articleView, /href=\{hrefFor\("\/casinos"\)\}/);
-  assert.doesNotMatch(articleView, /href="\/compare"/);
-  assert.match(articleView, /href=\{hrefFor\("\/responsible-gambling"\)\}/);
-  assert.match(articleView, /href=\{hrefFor\("\/help"\)\}/);
-  assert.doesNotMatch(articleView, /href="\/(?:r|go)\//);
-  assert.match(articleRoute, /if \(!sourceArticle\) notFound\(\)/);
+test("public routes are database, locale and publication-state owned", () => {
+  const hub = read("app/(public)/learn/page.tsx");
+  const category = read("app/(public)/learn/[category]/page.tsx");
+  const article = read("app/(public)/learn/[category]/[slug]/page.tsx");
+  const publicApi = read("app/api/public/[resource]/route.ts");
+  assert.match(hub, /articleService\.listPublished\(articleLocale/);
+  assert.match(category, /articleService\.listPublished\(locale, \{ category, take: 1 \}\)/);
+  assert.match(article, /articleService\s*\.\s*getPublished/);
+  assert.match(article, /languageRouteByLocale\(presentation\.locale\)\.defaultLocale/);
+  assert.match(publicApi, /articleService\.listPublished\(locale/);
+  assert.doesNotMatch(`${hub}${category}${article}${publicApi}`, /learningArticles|localizedLearningArticles/);
 });
 
-test("metadata and structured data remain aligned with visible content", () => {
-  assert.match(hubRoute, /productMetadata\(\{ presentation, pathname: "\/learn"/);
-  assert.match(categoryRoute, /permanentRedirect\(productHref\(presentation, `\/learn\?category=/);
-  assert.doesNotMatch(categoryRoute, /BreadcrumbList|FAQPage/);
-  assert.match(articleRoute, /BreadcrumbList/);
-  assert.match(articleRoute, /"@type": "Article"/);
-  assert.match(articleRoute, /FAQPage/);
-  assert.match(articleView, /article\.faq\.map/);
-  assert.match(articleView, /author\.name/);
-  assert.match(articleView, /editor\.name/);
+test("Article rendering is safe, structured and keeps protected Help non-commercial", () => {
+  const view = read("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx");
+  const validation = read("lib/articles/article-validation.ts");
+  assert.match(view, /block\.type === "paragraph"/);
+  assert.match(view, /block\.type === "image"/);
+  assert.doesNotMatch(view, /dangerouslySetInnerHTML|sanitizeHtml|iframe|<script/);
+  assert.match(validation, /Unsupported block type/);
+  assert.match(validation, /safePublicUrl/);
+  assert.match(view, /article\.category === "responsible-gambling"/);
+  assert.match(view, /hrefFor\("\/help"\)/);
+  assert.doesNotMatch(view, /href="\/(?:r|go)\//);
 });
 
-test("the live handoff has one accessible search beside All guides with dynamic category recovery", () => {
-  assert.match(handoffTransforms, /replace\(\/<input placeholder="Search guides[^\n]+, ""\)/);
-  assert.match(handoffTransforms, /data-learn-discovery-search/);
-  assert.match(handoffTransforms, /type="search" aria-label="\$\{escapeHtml\(messages\.hub\[10\]\)\}"/);
-  assert.match(handoffTransforms, /data-learn-topic/);
-  assert.match(handoffInteractions, /dataset\.learnResultsStatus/);
-  assert.match(handoffInteractions, /aria-live/);
-  assert.match(handoffInteractions, /data-learn-category/);
-  assert.match(handoffInteractions, /requestedCategory/);
+test("Admin exposes explicit draft, review, publish, archive, preview and revision workflows", () => {
+  const editor = read("components/admin/ArticleEditor.tsx");
+  const action = read("app/api/admin/articles/[articleId]/action/route.ts");
+  const revisions = read("app/api/admin/articles/[articleId]/revisions/route.ts");
+  for (const label of ["Request review", "Return to draft", "Approve", "Publish", "Start new draft", "Archive", "Restore to draft"]) assert.ok(editor.includes(label), label);
+  assert.match(editor, /beforeunload/);
+  assert.match(editor, /expectedUpdatedAt/);
+  assert.match(action, /article\.publish/);
+  assert.match(revisions, /restoreRevision/);
+  assert.match(editor, /Raw HTML, scripts, iframes and embedded code are not accepted/);
+});
+
+test("metadata, JSON-LD and sitemap use visible canonical Article fields", () => {
+  const route = read("app/(public)/learn/[category]/[slug]/page.tsx");
+  const sitemap = read("app/sitemap.ts");
+  assert.match(route, /"@type": "Article"/);
+  assert.match(route, /datePublished: article\.publishedAt/);
+  assert.match(route, /dateModified: article\.updatedAt/);
+  assert.doesNotMatch(route, /FAQPage|structuredData/);
+  assert.match(sitemap, /articleService\.listPublished/);
+  assert.match(sitemap, /articlePath\(article\)/);
 });

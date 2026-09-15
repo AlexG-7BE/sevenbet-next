@@ -1,14 +1,13 @@
-import {
-  getArticlePath,
-  learningArticles as centerArticles,
-} from "@/lib/learning-center";
+import { articlePath } from "@/lib/articles/article-types";
+import { articleService } from "@/lib/services";
 import { absoluteUrl } from "@/lib/site";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
-export function GET() {
+export async function GET() {
+  const centerArticles = await articleService.listPublished("en-GB", { take: 100 }).catch(() => []);
   const learningCenterArticles = centerArticles
-    .map((article) => `- [${article.title}](${absoluteUrl(getArticlePath(article))}): ${article.summary}`)
+    .map((article) => `- [${article.title}](${absoluteUrl(articlePath(article))}): ${article.excerpt}`)
     .join("\n");
 
   const body = `# B4GAMBLE
@@ -31,7 +30,7 @@ B4GAMBLE is a responsible gambling platform centered on the B4GAMBLE 10-Step Con
 - [Privacy](${absoluteUrl("/privacy")}) - current handling boundaries for account, Programme, Self-Check, Personal Limit Tracker, Protected Help and affiliate-related data.
 - [Terms](${absoluteUrl("/terms")}) - current service, commercial, operator and user boundaries for B4GAMBLE.
 
-## Learning Center Seed Articles
+## Published Learning Center Articles
 
 ${learningCenterArticles}
 

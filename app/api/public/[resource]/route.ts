@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isPublicCmsResource, listPublishedContent, publicEntityForResource } from "@/lib/cms/publishing";
 import { PUBLIC_RESOURCE_LIMIT_ERROR, resolvePublicResourceLimit } from "@/lib/http/public-resource-limit";
-import { learningArticles } from "@/lib/learning-center";
+import { languageRouteByLocale } from "@/lib/market/registry";
+import { articleService } from "@/lib/services";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
@@ -43,8 +44,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ ok: true, resource, entity: "bonus", count: records.length, records }, { headers: marketResponseHeaders });
   }
   if (resource === "articles") {
-    const records = learningArticles.slice(0, limit);
-    return NextResponse.json({ ok: true, resource, entity: "article", count: records.length, records });
+    const presentation = resolvePresentationContext({
+      trustedCountryCode: requestCountry,
+      acceptLanguage: request.headers.get("accept-language"),
+    });
+    const locale = languageRouteByLocale(presentation.locale).defaultLocale;
+    const records = await articleService.listPublished(locale, { take: limit });
+    return NextResponse.json({ ok: true, resource, entity: "article", count: records.length, records, source: "postgresql" }, { headers: marketResponseHeaders });
   }
   const records = (await listPublishedContent(resource)).slice(0, limit);
 

@@ -10,7 +10,6 @@ import {
   transformLearnHandoff,
   transformTenStepsHandoff,
 } from "@/lib/final-handoff/transforms";
-import { learningArticles } from "@/lib/learning-center";
 import { programmeMissionTitles } from "@/lib/programme/program-ai/mission-registry";
 
 function transformed(name: keyof typeof generatedPages, pageTransform?: (html: string) => string) {
@@ -37,12 +36,11 @@ test("public handoff-derived runtime copy removes unsupported absolute claims", 
   assert.match(runtime, /legal and backup retention may apply/i);
 });
 
-test("Learn runtime is backed by the current manifest with unique real article routes", () => {
+test("Learn runtime fails closed without supplied PostgreSQL Article records", () => {
   const runtime = transformed("learn", transformLearnHandoff);
   const paths = [...runtime.matchAll(/<a href="([^"]+)" data-learn-category="[^"]+" class="scp3"/g)].map((match) => match[1]);
-  assert.equal(paths.length, learningArticles.length);
-  assert.equal(new Set(paths).size, learningArticles.length);
-  assert.ok(paths.every((path) => path.startsWith("/learn/") && !path.includes("#")));
+  assert.equal(paths.length, 0);
+  assert.match(runtime, /data-learn-empty=""/);
   assert.match(runtime, /type="search" aria-label="Search guides"/);
 });
 
