@@ -1,24 +1,46 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 14 September 2026
+**Evidence date:** 15 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Canonical Production source at this reconciliation checkpoint:** `2424a5dd9061aa07e09764cd7b6a5dee70c64192`
-**Verified post-release runtime baseline SHA:** `2424a5dd9061aa07e09764cd7b6a5dee70c64192`
-**Verified post-release runtime deployment:** Ready; `dpl_3YX4SgWavLDzbLbMgv4T8ugvVRcH`
+**Canonical Production source at this reconciliation checkpoint:** `cf2aa0e66744955b6580d985645931142dad3a07`
+**Verified post-release runtime baseline SHA:** `cf2aa0e66744955b6580d985645931142dad3a07`
+**Verified post-release runtime deployment:** Ready and promoted; `dpl_AZksXiaYyh3UKpxfeeZez6Nghggc`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Production hardening cycle — closed 15 September 2026
+
+**DETECTED IN CANONICAL MAIN, PRODUCTION AND CONTROL-PLANE EVIDENCE:** the
+bounded final audit found no material unresolved Production blocker. P0
+anonymous mutation-route retirement, the Next.js/Sharp patched floors, P1 email
+reliability, the five-context Production CI gate, privileged Admin MFA and
+distributed auth controls, and outbound `/r/*` edge abuse protection remain
+closed. The singular Commercial, persisted Programme and transactional click
+authorities remain unchanged.
+
+**P1 RECOVERY PROOF — ACCEPTED EXCEPTION.** Successful managed Production
+backups were present on the normal daily sequence, but the newest point observed
+during the recovery audit predated migration `0042_admin_mfa` and no post-MFA
+isolated restore was performed. Under the explicit Founder decision, this is a
+Founder-accepted operating assumption and residual risk rather than an
+empirically closed restore proof or a blocker to this cycle.
+
+The exact evidence, deferred P2 classifications and concrete reopen conditions
+are recorded in the [Production Hardening Closure Record](06_Operations/Production-Hardening-Closure-2026-09-15.md).
+
 ## Final technical-cleanup baseline — current
 
-**DETECTED IN CURRENT MAIN AND PRODUCTION, 14 September 2026:** the repository
-declares 109 Prisma models and 41 ordered migrations. Production reports all 41
-migrations applied; `0041_commercial_core_legacy_connector_cleanup` is complete
-and the eight retired connector tables are absent. MCP/operational OAuth
-transport and storage are retired and must not be recreated or reconnected.
+**DETECTED IN CURRENT MAIN AND PRODUCTION, 15 September 2026:** the repository
+declares 110 Prisma models and 42 ordered migrations. Production reports all 42
+migrations applied through `0042_admin_mfa`, with zero unresolved or unknown
+migrations and zero applied checksum mismatches;
+`0041_commercial_core_legacy_connector_cleanup` remains complete and the eight
+retired connector tables are absent. MCP/operational OAuth transport and storage
+are retired and must not be recreated or reconnected.
 
 Programme completion is canonical persisted state. Completing Mission 10 sets
 `ProgramEnrollment.completedAt` to the exact Mission 10 completion timestamp;
