@@ -432,17 +432,14 @@ test("reported localized critical surfaces have unclipped, non-overlapping conte
     await expectNoDocumentOverflow(page, "DE Bonuses decision flow 390x844");
 
     await page.setViewportSize({ width: 1440, height: 900 });
-    await gotoOk(page, "/de/learn/responsible-gambling/responsible-gambling-tools");
-    const articleHeading = page.locator('[data-learning-article] header h1');
-    const articleSummary = page.locator('[data-learning-article] header [class*="heroSummary"]');
-    await expect(articleHeading).toBeVisible();
-    await expect(articleSummary).toBeVisible();
-    await expectTextDoesNotOverlap(page, articleHeading, articleSummary, "DE Learning article title/summary");
+    await gotoOk(page, "/de/learn");
+    await expect(page.locator("[data-learn-empty]")).toBeVisible();
+    await expect(page.locator("a[data-learn-category]")).toHaveCount(0);
     await expectCriticalTextFits(page, [
-      '[data-learning-article] header h1',
-      '[data-learning-article] header [class*="heroSummary"]',
-    ], "DE Learning article desktop hero");
-    await expectNoDocumentOverflow(page, "DE Learning article 1440x900");
+      '[data-handoff-page="learn"] h1',
+      "[data-learn-empty]",
+    ], "DE Learning empty catalogue");
+    await expectNoDocumentOverflow(page, "DE Learning empty catalogue 1440x900");
   } finally {
     await context.close();
   }

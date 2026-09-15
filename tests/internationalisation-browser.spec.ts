@@ -352,7 +352,7 @@ test("long localized copy has no horizontal overflow across the required respons
   }
 });
 
-test("reported localized article and 10 Steps compounds fit without clipping", async ({ browser }) => {
+test("localized Learning empty states and 10 Steps compounds fit without clipping", async ({ browser }) => {
   test.setTimeout(120_000);
   const context = await browser.newContext({
     reducedMotion: "reduce",
@@ -409,34 +409,21 @@ test("reported localized article and 10 Steps compounds fit without clipping", a
     });
   };
 
-  const articleCases = [
-    ["/de/learn/casino-bonuses/welcome-bonus-terms", "related"],
-    ["/de/learn/casino-reviews/how-casino-reviews-work", "related"],
-    ["/de/learn/country-guides/country-guide-structure", "related"],
-    ["/sv/learn/responsible-gambling/responsible-gambling-tools", "faq"],
-    ["/sv/learn/casino-bonuses/welcome-bonus-terms", "faq"],
-    ["/sv/learn/casino-reviews/how-casino-reviews-work", "faq"],
-    ["/sv/learn/country-guides/country-guide-structure", "faq"],
-    ["/da/learn/responsible-gambling/responsible-gambling-tools", "faq"],
-    ["/da/learn/casino-bonuses/welcome-bonus-terms", "faq"],
-    ["/da/learn/casino-reviews/how-casino-reviews-work", "faq"],
-    ["/da/learn/country-guides/country-guide-structure", "faq"],
-    ["/nl/learn/responsible-gambling/responsible-gambling-tools", "related"],
-    ["/nl/learn/casino-reviews/how-casino-reviews-work", "related"],
-    ["/nl/learn/country-guides/country-guide-structure", "related"],
+  const learningCases = [
+    "/de/learn",
+    "/sv/learn",
+    "/da/learn",
+    "/nl/learn",
   ] as const;
 
   try {
-    for (const [pathname, region] of articleCases) {
+    for (const pathname of learningCases) {
       const response = await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
       expect(response?.status(), pathname).toBe(200);
       await page.evaluate(() => document.fonts.ready);
-      const selector = region === "faq"
-        ? '[data-learning-article] section[aria-labelledby="article-faq-title"]'
-        : '[data-learning-article] section[aria-labelledby="related-reading-title"]';
-      const report = await measureReadableRegion(selector);
+      const report = await measureReadableRegion("[data-learn-empty]");
       expect(report.documentWidth, `${pathname}: document overflow`).toBeLessThanOrEqual(report.viewportWidth + 1);
-      expect(report.offenders, `${pathname}: clipped ${region} copy`).toEqual([]);
+      expect(report.offenders, `${pathname}: clipped empty-state copy`).toEqual([]);
     }
 
     for (const sample of [

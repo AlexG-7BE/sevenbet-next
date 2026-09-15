@@ -31,6 +31,12 @@ and `/learn/[category]/[slug]` read only valid, due, `PUBLISHED` rows for the
 exact presentation locale. Missing, draft, archived, future or malformed rows
 fail closed.
 
+**DETECTED IN SOURCE:** when no matching Article is published, the localized
+Learning hub shows a truthful locale-aware empty state and no synthetic cards.
+Legacy educational links terminate at a filtered `/learn?category=...`
+catalogue until an editor publishes a matching PostgreSQL Article; they do not
+point at removed Phase-1 article slugs.
+
 **DETECTED IN SOURCE:** body content has one controlled JSON block format:
 paragraph, heading, list, quote, callout, image and link. The shared React
 renderer does not accept raw HTML, scripts, iframes, SVG markup, event handlers

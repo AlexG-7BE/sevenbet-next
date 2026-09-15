@@ -17,7 +17,6 @@ const surfaces = [
   ["bonuses", "/bonuses"],
   ["bonus-guide", "/bonus-guide"],
   ["learn", "/learn"],
-  ["article", "/learn/casino-bonuses/welcome-bonus-terms"],
   ["responsible-gambling", "/responsible-gambling"],
   ["help", "/help"],
   ["methodology", "/methodology"],
@@ -36,7 +35,6 @@ const runtimeIntegritySurfaces = [
   ["casinos", "/casinos", "casinos", "#casino-directory"],
   ["casino-review", "/casino/demo-northstar", "casino-review", "#overview"],
   ["bonuses", "/bonuses", "bonuses", "section"],
-  ["learn-article", "/learn/casino-bonuses/welcome-bonus-terms", "learn-article", "[data-learning-article]"],
 ] as const;
 
 test("visualFixture changes data only and never switches the runtime renderer", async ({ page }) => {

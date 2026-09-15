@@ -377,7 +377,7 @@ export function transformLearnHandoff(
       .replace('<div data-learn-catalogue-axis="" data-reveal=""', '<div data-learn-catalogue-axis=""');
     output = output.replace(
       /(<h2[^>]*>All guides<\/h2>)/,
-      '$1<p data-learn-empty="" role="status" style="margin:28px 0 0;color:rgb(100,99,92);font-size:16px;line-height:1.6;">No published guides are available in this language yet.</p>',
+      `$1<p data-learn-empty="" role="status" style="margin:28px 0 0;color:rgb(100,99,92);font-size:16px;line-height:1.6;">${escapeHtml(messages.emptyState)}</p>`,
     );
   }
   output = output.replace(
@@ -469,9 +469,9 @@ export function transformBonusGuideHandoff(html: string) {
     output = output.slice(0, reviewIndex) + sources + output.slice(reviewIndex);
   }
   const nextArticles = [
-    "/learn/casino-bonuses/welcome-bonus-terms",
-    "/learn/payments/casino-payment-methods",
-    "/learn/responsible-gambling/responsible-gambling-tools",
+    "/learn?category=casino-bonuses",
+    "/learn?category=payments",
+    "/learn?category=responsible-gambling",
   ];
   let searchFrom = 0;
   for (const articlePathname of nextArticles) {
@@ -738,7 +738,7 @@ export function transformTenStepsHandoff(html: string, locale: SupportedLocale =
 export function transformResponsibleGamblingHandoff(html: string) {
   let output = [
     ["Get support", "/help"],
-    ["Read the guides", "/learn/responsible-gambling"],
+    ["Read the guides", "/learn?category=responsible-gambling"],
     ["Open Help", "/help"],
   ].reduce((output, [label, href]) => buttonToLink(output, label, href), html);
   output = output
@@ -757,7 +757,7 @@ export function transformHelpHandoff(html: string) {
   output = [
     ["Pause now", "#independent-support"],
     ["See the steps", "#independent-support"],
-    ["Set up blocks", "/learn/responsible-gambling/responsible-gambling-tools"],
+    ["Set up blocks", "/learn?category=responsible-gambling"],
     ["Write to us", "/contact"],
   ].reduce((result, [label, href]) => buttonToLink(result, label, href), output);
   output = output

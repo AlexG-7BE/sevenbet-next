@@ -12,7 +12,6 @@ const publicRoutes = [
   "/bonuses",
   "/bonus-guide",
   "/learn",
-  "/learn/casino-bonuses/welcome-bonus-terms",
   "/responsible-gambling",
   "/help",
   "/methodology",

@@ -3,16 +3,16 @@ import { expect, test, type Page } from "@playwright/test";
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
 const formerResponsibleGamblingRoutes = {
-  budgeting: "/learn/responsible-gambling/responsible-gambling-tools",
-  "time-management": "/learn/responsible-gambling/responsible-gambling-tools",
-  "bonus-terms": "/learn/casino-bonuses/welcome-bonus-terms",
+  budgeting: "/learn?category=responsible-gambling",
+  "time-management": "/learn?category=responsible-gambling",
+  "bonus-terms": "/learn?category=casino-bonuses",
   "self-exclusion": "/help/self-exclusion",
   "deposit-limits": "/help/deposit-limits",
   "cooling-off": "/help/cooling-off",
   "reality-checks": "/help/reality-checks",
-  "casino-licenses": "/learn/licensing/casino-licenses-explained",
-  "payment-safety": "/learn/payments/casino-payment-methods",
-  faq: "/learn/responsible-gambling",
+  "casino-licenses": "/learn?category=licensing",
+  "payment-safety": "/learn?category=payments",
+  faq: "/learn?category=responsible-gambling",
 } as const;
 
 function collectBrowserErrors(page: Page) {
@@ -80,11 +80,11 @@ test("retired destinations are redirects and absent from canonical discovery", a
   expect(sitemap).toContain("https://b4gamble.com/bonus-guide");
 });
 
-test("SEO identities remain distinct and public article API matches Learn pages", async ({ page, request }) => {
+test("SEO identities remain distinct and the public Article API is truthfully empty", async ({ page, request }) => {
   const identities = [
     ["/responsible-gambling", "/en/responsible-gambling", /Responsible Gambling \| B4GAMBLE/],
     ["/help", "/en/help", /Gambling Help & Support \| B4GAMBLE/],
-    ["/learn/responsible-gambling", "/en/learn?category=responsible-gambling", /Learn/],
+    ["/learn?category=responsible-gambling", "/en/learn?category=responsible-gambling", /Learn/],
   ] as const;
   for (const [route, destination, title] of identities) {
     await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
@@ -95,7 +95,8 @@ test("SEO identities remain distinct and public article API matches Learn pages"
   const response = await request.get(`${baseUrl}/api/public/articles?limit=100`);
   expect(response.status()).toBe(200);
   const body = await response.json() as { count: number; records: Array<{ status: string; categorySlug: string; slug: string }> };
-  expect(body.count).toBeGreaterThan(0);
+  expect(body.count).toBe(0);
+  expect(body.records).toEqual([]);
   expect(body.records.every((record) => record.status === "PUBLISHED")).toBe(true);
   for (const article of body.records) {
     const articleResponse = await request.get(`${baseUrl}/learn/${article.categorySlug}/${article.slug}`);

@@ -149,6 +149,19 @@ const nb: Pack = {
 const en: Pack = { categories: categoriesEn, articles: articlesEn, hub: HUB_SOURCE, template: enTemplate, ui: enUi };
 const catalog: Record<EuropeanLocale, Pack> = { "en-GB": en, "de-DE": de, "it-IT": it, "es-ES": es, "pt-PT": pt, "el-GR": el, "nl-NL": nl, "sv-SE": sv, "da-DK": da, "fi-FI": fi, "nb-NO": nb };
 const learnLabels: Record<EuropeanLocale, string> = { "en-GB": "Learn", "de-DE": "Lernen", "it-IT": "Impara", "es-ES": "Aprende", "pt-PT": "Aprende", "el-GR": "Μάθε", "nl-NL": "Leren", "sv-SE": "Lär dig", "da-DK": "Lær", "fi-FI": "Opi", "nb-NO": "Lær" };
+const emptyStateCopy: Record<EuropeanLocale, string> = {
+  "en-GB": "No published guides are available in this language yet.",
+  "de-DE": "In dieser Sprache sind noch keine veröffentlichten Leitfäden verfügbar.",
+  "it-IT": "Non sono ancora disponibili guide pubblicate in questa lingua.",
+  "es-ES": "Todavía no hay guías publicadas disponibles en este idioma.",
+  "pt-PT": "Ainda não há guias publicados disponíveis neste idioma.",
+  "el-GR": "Δεν υπάρχουν ακόμη δημοσιευμένοι οδηγοί σε αυτή τη γλώσσα.",
+  "nl-NL": "Er zijn nog geen gepubliceerde gidsen beschikbaar in deze taal.",
+  "sv-SE": "Det finns ännu inga publicerade guider på det här språket.",
+  "da-DK": "Der er endnu ingen udgivne guider på dette sprog.",
+  "fi-FI": "Tällä kielellä ei ole vielä julkaistuja oppaita.",
+  "nb-NO": "Det finnes ennå ingen publiserte guider på dette språket.",
+};
 
 export function learningMessages(locale: SupportedLocale) {
   const effectiveLocale = locale === "es-PE" ? "es-ES" : locale;
@@ -158,6 +171,7 @@ export function learningMessages(locale: SupportedLocale) {
   }
   return {
     categories: pack.categories,
+    emptyState: emptyStateCopy[effectiveLocale as EuropeanLocale] ?? emptyStateCopy["en-GB"],
     hub: pack.hub,
     ui: { ...pack.ui, learn: learnLabels[effectiveLocale as EuropeanLocale] ?? enUi.learn },
     hubCopy: new Map(HUB_SOURCE.map((source, index) => [source, pack.hub[index]])),

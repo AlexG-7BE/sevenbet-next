@@ -68,18 +68,18 @@ test("every former mixed Responsible Gambling article has one explicit canonical
   assert.deepEqual(LEGACY_RESPONSIBLE_GAMBLING_ROUTES, {
     budgeting: {
       classification: "EDUCATION",
-      destination: "/learn/responsible-gambling/responsible-gambling-tools",
-      reason: "Budget planning is educational context, not an immediate Help action or access control.",
+      destination: "/learn?category=responsible-gambling",
+      reason: "Budget planning is educational context, not an immediate Help action or access control; the filtered Learn catalogue is the durable destination.",
     },
     "time-management": {
       classification: "EDUCATION",
-      destination: "/learn/responsible-gambling/responsible-gambling-tools",
-      reason: "Session planning is educational context; the canonical Learn guide covers reminders and time controls.",
+      destination: "/learn?category=responsible-gambling",
+      reason: "Session planning is educational context; the canonical Learn catalogue owns future published guides.",
     },
     "bonus-terms": {
       classification: "EDUCATION",
-      destination: "/learn/casino-bonuses/welcome-bonus-terms",
-      reason: "Bonus mechanics belong to the published Learn bonus guide, not Protected Help.",
+      destination: "/learn?category=casino-bonuses",
+      reason: "Bonus mechanics belong to the canonical Learn catalogue, not Protected Help.",
     },
     "self-exclusion": {
       classification: "HELP",
@@ -103,18 +103,18 @@ test("every former mixed Responsible Gambling article has one explicit canonical
     },
     "casino-licenses": {
       classification: "EDUCATION",
-      destination: "/learn/licensing/casino-licenses-explained",
+      destination: "/learn?category=licensing",
       reason: "Licence interpretation is educational trust context owned by Learn.",
     },
     "payment-safety": {
       classification: "EDUCATION",
-      destination: "/learn/payments/casino-payment-methods",
+      destination: "/learn?category=payments",
       reason: "Payment and withdrawal mechanics are educational comparison context owned by Learn.",
     },
     faq: {
       classification: "EDUCATION",
-      destination: "/learn/responsible-gambling",
-      reason: "The mixed FAQ is redundant with the canonical Responsible Gambling Learn category and its published guide.",
+      destination: "/learn?category=responsible-gambling",
+      reason: "The mixed FAQ is redundant with the canonical Responsible Gambling Learn category.",
     },
   });
 
@@ -125,13 +125,12 @@ test("every former mixed Responsible Gambling article has one explicit canonical
     "reality-checks",
   ]);
   for (const route of Object.values(LEGACY_RESPONSIBLE_GAMBLING_ROUTES)) {
-    assert.match(route.destination, /^\/(?:help|learn)(?:\/|$)/);
+    assert.match(route.destination, /^\/(?:help|learn)(?:[/?]|$)/);
     assert.doesNotMatch(route.destination, /^\/responsible-gambling(?:\/|$)/);
     if (route.classification === "EDUCATION") {
-      const [, area, category, article] = route.destination.split("/");
-      assert.equal(area, "learn");
-      assert.ok(getLearningCategory(category));
-      if (article) assert.match(article, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+      const destination = new URL(route.destination, "https://b4gamble.com");
+      assert.equal(destination.pathname, "/learn");
+      assert.ok(getLearningCategory(destination.searchParams.get("category") ?? ""));
     } else if (route.classification === "HELP") {
       assert.match(route.destination, /^\/help\//);
     }
@@ -140,6 +139,10 @@ test("every former mixed Responsible Gambling article has one explicit canonical
   assert.equal(
     withPreservedLegacyQuery("/help/cooling-off", { utm_source: "old page", tag: ["one", "two"], empty: undefined }),
     "/help/cooling-off?utm_source=old+page&tag=one&tag=two",
+  );
+  assert.equal(
+    withPreservedLegacyQuery("/learn?category=responsible-gambling", { utm_source: "old page" }),
+    "/learn?category=responsible-gambling&utm_source=old+page",
   );
   assert.throws(() => withPreservedLegacyQuery("https://example.com", {}), /Invalid legacy Responsible Gambling destination/);
   assert.throws(() => withPreservedLegacyQuery("//example.com/help", {}), /Invalid legacy Responsible Gambling destination/);

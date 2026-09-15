@@ -28,7 +28,7 @@ This record follows the runtime-tested head and therefore receives a later docum
 | User purpose | Canonical route | Shell/authority | Shortest public-shell path |
 | --- | --- | --- | --- |
 | Understand available control and support paths | `/responsible-gambling` | Public Shell hub | Home → footer **Responsible gambling**: one link |
-| Read responsible-gambling education | `/learn/responsible-gambling` | Public Learn category | Hub → **Learn the patterns**: one link |
+| Read responsible-gambling education | `/learn?category=responsible-gambling` | Public Learn category | Hub → **Learn the patterns**: one link |
 | Complete the private Self-Check | `/self-check` | Public Shell, browser-local state | Home → footer **Self-Check**: one link |
 | Use the Personal Limit Tracker | `/tools/budget-calculator` | Public Shell, browser-local state | Home → footer **Personal Limit Tracker**: one link |
 | Seek immediate support or use a direct control | `/help` and the four classified `/help/<slug>` control articles | Protected Help Shell | Home → header or footer **Help**: one link |
@@ -42,16 +42,16 @@ This record follows the runtime-tested head and therefore receives a later docum
 
 | Former URL | Classification | Final destination | HTTP |
 | --- | --- | --- | --- |
-| `/responsible-gambling/budgeting` | EDUCATION | `/learn/responsible-gambling/responsible-gambling-tools` | `308` |
-| `/responsible-gambling/time-management` | EDUCATION | `/learn/responsible-gambling/responsible-gambling-tools` | `308` |
-| `/responsible-gambling/bonus-terms` | EDUCATION | `/learn/casino-bonuses/welcome-bonus-terms` | `308` |
+| `/responsible-gambling/budgeting` | EDUCATION | `/learn?category=responsible-gambling` | `308` |
+| `/responsible-gambling/time-management` | EDUCATION | `/learn?category=responsible-gambling` | `308` |
+| `/responsible-gambling/bonus-terms` | EDUCATION | `/learn?category=casino-bonuses` | `308` |
 | `/responsible-gambling/self-exclusion` | HELP | `/help/self-exclusion` | `308` |
 | `/responsible-gambling/deposit-limits` | HELP | `/help/deposit-limits` | `308` |
 | `/responsible-gambling/cooling-off` | HELP | `/help/cooling-off` | `308` |
 | `/responsible-gambling/reality-checks` | HELP | `/help/reality-checks` | `308` |
-| `/responsible-gambling/casino-licenses` | EDUCATION | `/learn/licensing/casino-licenses-explained` | `308` |
-| `/responsible-gambling/payment-safety` | EDUCATION | `/learn/payments/casino-payment-methods` | `308` |
-| `/responsible-gambling/faq` | EDUCATION | `/learn/responsible-gambling` | `308` |
+| `/responsible-gambling/casino-licenses` | EDUCATION | `/learn?category=licensing` | `308` |
+| `/responsible-gambling/payment-safety` | EDUCATION | `/learn?category=payments` | `308` |
+| `/responsible-gambling/faq` | EDUCATION | `/learn?category=responsible-gambling` | `308` |
 
 No former route is RETIRED because all ten have a truthful current canonical. Educational `/help/budgeting`, `/help/time-management`, `/help/bonus-terms`, `/help/casino-licenses`, `/help/payment-safety` and `/help/faq` resolve `404` and are absent from discovery.
 

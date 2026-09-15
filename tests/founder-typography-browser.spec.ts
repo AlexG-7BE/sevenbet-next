@@ -19,7 +19,7 @@ const publicRoutes = [
   "/casinos?visualFixture=true",
   "/casino/demo-northstar?visualFixture=true",
   "/bonuses?visualFixture=true",
-  "/learn/casino-bonuses/welcome-bonus-terms?visualFixture=true",
+  "/learn",
   "/help",
   "/casinos?casino=demo-northstar&casino=demo-summit&country=GB&visualFixture=true",
 ] as const;
