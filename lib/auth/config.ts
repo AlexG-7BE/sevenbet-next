@@ -36,6 +36,12 @@ export function createSevenBetAuth({
         await sendAuthEmail({ user, actionUrl: url, templateKey: "PASSWORD_RESET" });
       },
     },
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url }) => {
+        const { sendAuthEmail } = await import("@/lib/email/service.server");
+        await sendAuthEmail({ user, actionUrl: url, templateKey: "EMAIL_VERIFICATION" });
+      },
+    },
     account: {
       encryptOAuthTokens: true,
       updateAccountOnSignIn: false,

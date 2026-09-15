@@ -316,6 +316,12 @@ test("lifecycle provider activation is exact, Production-only, and validates sen
     Response.json({ id: "provider id with spaces" }, { status: 200 })
   )) as typeof fetch);
   assert.deepEqual(await invalidResponseProvider.send(envelope), { status: "unavailable", code: "REJECTED" });
+  const rateLimitedProvider = new ResendLifecycleEmailProvider(config, (async () => new Response(null, { status: 429 })) as typeof fetch);
+  assert.deepEqual(await rateLimitedProvider.send(envelope), { status: "unavailable", code: "RATE_LIMITED" });
+  const serverErrorProvider = new ResendLifecycleEmailProvider(config, (async () => new Response(null, { status: 503 })) as typeof fetch);
+  assert.deepEqual(await serverErrorProvider.send(envelope), { status: "unavailable", code: "PROVIDER_5XX" });
+  const clientErrorProvider = new ResendLifecycleEmailProvider(config, (async () => new Response(null, { status: 400 })) as typeof fetch);
+  assert.deepEqual(await clientErrorProvider.send(envelope), { status: "unavailable", code: "REJECTED" });
 });
 
 test("Programme marketing preference retries only an explicit server-unavailable response", async () => {

@@ -158,7 +158,13 @@ test("Customer Core v1 persists one end-to-end relational lifecycle without exte
     await observeSuccessfulAuthentication({ request: signupRequest, responseBody, kind: "login" });
     assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).email, email);
     assert.equal(await prisma.emailMessage.count({ where: { userId, purpose: "WELCOME" } }), 1);
-    assert.deepEqual(await processQueuedEmailBatch(), { selected: 0, sent: 0, suppressed: 0, failed: 0 });
+    assert.deepEqual(await processQueuedEmailBatch(), {
+      selected: 0,
+      sent: 0,
+      suppressed: 0,
+      failed: 0,
+      recovery: { staleAuth: 0, expiredSending: 0, exhaustedSending: 0, expiredAmbiguousFailures: 0 },
+    });
     assert.equal((await prisma.emailMessage.findFirstOrThrow({ where: { userId, purpose: "WELCOME" } })).status, "QUEUED");
     assert.equal(await prisma.analyticsEvent.count({ where: { userId, type: "SIGNUP_COMPLETED" } }), 1);
     assert.equal(await prisma.analyticsEvent.count({ where: { userId, type: "LOGIN_COMPLETED" } }), 1);
