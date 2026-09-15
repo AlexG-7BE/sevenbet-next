@@ -7,6 +7,7 @@ import { authClient } from "@/lib/auth/client";
 import {
   getAdminLoginErrorMessage,
   getAdminMfaChallengeUrl,
+  getAdminMfaEnrollmentUrl,
 } from "@/lib/auth/policy";
 
 export function AdminLoginForm({ callbackUrl }: { callbackUrl: string }) {
@@ -42,7 +43,11 @@ export function AdminLoginForm({ callbackUrl }: { callbackUrl: string }) {
         return;
       }
 
-      router.replace(callbackUrl);
+      // An ordinary credential response means this staff account has not yet
+      // enabled the provider's second factor. Keep the original protected
+      // destination across enrollment instead of letting the protected layout
+      // fall back to /admin.
+      router.replace(getAdminMfaEnrollmentUrl(callbackUrl));
       router.refresh();
     } catch {
       setError(getAdminLoginErrorMessage());

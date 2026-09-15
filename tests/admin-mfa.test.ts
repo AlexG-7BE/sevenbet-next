@@ -151,6 +151,7 @@ test("Admin session and MFA management policy is exact and fail closed", () => {
 test("Admin MFA config uses official encrypted TOTP without a parallel auth system", () => {
   const config = readFileSync("lib/auth/config.ts", "utf8");
   const hooks = readFileSync("lib/auth/admin-mfa.server.ts", "utf8");
+  const login = readFileSync("components/admin/AdminLoginForm.tsx", "utf8");
   const schema = readFileSync("prisma/schema.prisma", "utf8");
   const migration = readFileSync("prisma/migrations/0042_admin_mfa/migration.sql", "utf8");
 
@@ -161,6 +162,7 @@ test("Admin MFA config uses official encrypted TOTP without a parallel auth syst
   assert.match(config, /rateLimit: \{ enabled: false \}/);
   assert.match(config, /"\/two-factor\/disable"/);
   assert.match(hooks, /deleteUserSessions\(user\.id\)/);
+  assert.match(login, /router\.replace\(getAdminMfaEnrollmentUrl\(callbackUrl\)\)/);
   assert.doesNotMatch(`${config}\n${hooks}`, /program(me)?|affiliate|commercial/i);
   assert.match(schema, /model TwoFactor \{/);
   assert.match(schema, /twoFactorEnabled\s+Boolean\?\s+@default\(false\)/);
