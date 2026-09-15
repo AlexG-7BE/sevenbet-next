@@ -219,6 +219,25 @@ is tracked separately in `docs/CURRENT_STATE.md`; it does not make the applied
 
 ## Expand/contract rule
 
+### Admin MFA additive expansion — migration 0042
+
+**DETECTED IN SOURCE:** `0042_admin_mfa` is the exact Better Auth 1.7.1
+provider-owned TOTP expansion. It adds nullable `User.twoFactorEnabled` with a
+false default and the provider `TwoFactor` table with `id`, encrypted `secret`,
+encrypted `backupCodes`, `userId`, nullable/defaulted `verified`, nullable/
+defaulted `failedVerificationCount`, and nullable `lockedUntil`. It adds the
+provider-required secret/user indexes and a `User` cascade relation. It creates
+no identity, Admin, Programme or rate-limit business entity and performs no
+backfill.
+
+The migration is backward-safe for the pre-change application: existing users
+remain unenrolled, existing sessions/Accounts/AdminUsers are preserved, and
+the old binary ignores the additive objects. Rollback leaves this compatible
+credential table in place; recovery is forward-fix or application rollback,
+not reverse/destructive SQL. Disposable CI stages exact 0041 state with an
+existing linked Admin and session, applies 0042, and verifies preservation plus
+the exact columns/defaults/indexes/foreign key.
+
 Every stateful change must remain compatible with both the old and new application deployment across the release window:
 
 1. **Expand:** add nullable columns/tables/indexes or dual-compatible structures. Avoid destructive renames, type narrowing and new immediate constraints on existing data.

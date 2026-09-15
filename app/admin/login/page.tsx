@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
 import { Badge, Button, Card, Container } from "@/components/ui";
 import { getCurrentStaff } from "@/lib/auth/staff";
-import { getSafeAdminCallback } from "@/lib/auth/policy";
+import {
+  getAdminMfaEnrollmentUrl,
+  getSafeAdminCallback,
+} from "@/lib/auth/policy";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +27,8 @@ export default async function AdminLoginPage({
   );
   const staff = await getCurrentStaff(await headers());
 
-  if (staff) redirect(callbackUrl);
+  if (staff?.user.twoFactorEnabled === true) redirect(callbackUrl);
+  if (staff) redirect(getAdminMfaEnrollmentUrl(callbackUrl));
 
   return (
     <main className="pageShell">

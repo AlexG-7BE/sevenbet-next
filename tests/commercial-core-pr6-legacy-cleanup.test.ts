@@ -163,7 +163,7 @@ function validEvidence({
   };
 }
 
-test("PR6 removes exactly the approved eight Prisma models and no ninth model", () => {
+test("PR6 removal remains exact while the later official MFA model is isolated", () => {
   const baselineSchema = gitShow("prisma/schema.prisma");
   const currentSchema = source("prisma/schema.prisma");
   const baselineModels = modelNames(baselineSchema);
@@ -175,15 +175,15 @@ test("PR6 removes exactly the approved eight Prisma models and no ninth model", 
     baselineModels.filter((model) => !currentSet.has(model)),
     expectedModels,
   );
-  assert.deepEqual(currentModels.filter((model) => !baselineSet.has(model)), []);
+  assert.deepEqual(currentModels.filter((model) => !baselineSet.has(model)), ["TwoFactor"]);
   for (const model of expectedModels) {
     assert.doesNotMatch(currentSchema, new RegExp(`^model ${model} \\{`, "m"));
   }
 });
 
-test("PR6 preserves current authentication, identity, generic verification, and AuditLog schema", () => {
+test("PR6 preserves current authentication, MFA, identity, generic verification, and AuditLog schema", () => {
   const schema = source("prisma/schema.prisma");
-  for (const model of ["User", "Session", "Account", "Verification", "AuditLog", "AdminUser"]) {
+  for (const model of ["User", "Session", "Account", "TwoFactor", "Verification", "AuditLog", "AdminUser"]) {
     assert.match(schema, new RegExp(`^model ${model} \\{`, "m"));
   }
 
@@ -220,7 +220,8 @@ test("0041 is an exact explicit no-CASCADE cleanup and cannot target the KEEP se
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
-  assert.equal(migrations.at(-1), "0041_commercial_core_legacy_connector_cleanup");
+  assert.ok(migrations.includes("0041_commercial_core_legacy_connector_cleanup"));
+  assert.equal(migrations.at(-1), "0042_admin_mfa");
 
   const sql = source(PR6_MIGRATION_PATH);
   const inspection = inspectPr6MigrationSql(sql);

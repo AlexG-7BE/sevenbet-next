@@ -6,8 +6,10 @@ import {
   getAdminAccessStatus,
   getAdminLoginErrorMessage,
   getAdminLoginUrl,
+  getAdminMfaChallengeUrl,
+  getAdminMfaEnrollmentUrl,
   getSafeAdminCallback,
-  isLegacyPreviewTokenValid,
+  isAdminMfaComplete,
 } from "../lib/auth/policy";
 import { canAccessAdminArea, type AdminArea } from "../lib/auth/admin-page-policy";
 import { createStaffContext } from "../lib/auth/staff-context";
@@ -16,56 +18,18 @@ import { permissionsForRole } from "../lib/cms/permissions";
 import type { AdminRole, CmsUser } from "../lib/cms/types";
 import { middleware } from "../middleware";
 
-async function withLegacyEnvironment(
-  values: { enabled?: string; token?: string },
-  callback: () => void | Promise<void>,
-) {
-  const previousEnabled = process.env.CMS_PHASE1_ALLOW_DEV_ADMIN;
-  const previousToken = process.env.SEVENBET_ADMIN_PREVIEW_TOKEN;
-
-  if (values.enabled === undefined) {
-    delete process.env.CMS_PHASE1_ALLOW_DEV_ADMIN;
-  } else {
-    process.env.CMS_PHASE1_ALLOW_DEV_ADMIN = values.enabled;
-  }
-
-  if (values.token === undefined) {
-    delete process.env.SEVENBET_ADMIN_PREVIEW_TOKEN;
-  } else {
-    process.env.SEVENBET_ADMIN_PREVIEW_TOKEN = values.token;
-  }
-
-  try {
-    await callback();
-  } finally {
-    if (previousEnabled === undefined) {
-      delete process.env.CMS_PHASE1_ALLOW_DEV_ADMIN;
-    } else {
-      process.env.CMS_PHASE1_ALLOW_DEV_ADMIN = previousEnabled;
-    }
-
-    if (previousToken === undefined) {
-      delete process.env.SEVENBET_ADMIN_PREVIEW_TOKEN;
-    } else {
-      process.env.SEVENBET_ADMIN_PREVIEW_TOKEN = previousToken;
-    }
-  }
-}
-
 test("middleware redirects an anonymous admin page to login", async () => {
-  await withLegacyEnvironment({}, async () => {
-    const response = await middleware(
-      new NextRequest("http://localhost:4173/admin/programs?status=DRAFT"),
-    );
+  const response = await middleware(
+    new NextRequest("http://localhost:4173/admin/programs?status=DRAFT"),
+  );
 
-    assert.equal(response.status, 307);
-    assert.equal(
-      response.headers.get("location"),
-      "http://localhost:4173/admin/login?callbackUrl=%2Fadmin%2Fprograms%3Fstatus%3DDRAFT",
-    );
-    assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
-    assert.equal(response.headers.get("vary"), "Cookie");
-  });
+  assert.equal(response.status, 307);
+  assert.equal(
+    response.headers.get("location"),
+    "http://localhost:4173/admin/login?callbackUrl=%2Fadmin%2Fprograms%3Fstatus%3DDRAFT",
+  );
+  assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
+  assert.equal(response.headers.get("vary"), "Cookie");
 });
 
 test("middleware allows the admin login page without a session", async () => {
@@ -78,29 +42,39 @@ test("middleware allows the admin login page without a session", async () => {
   assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
 });
 
+test("middleware allows the Admin MFA challenge and enrollment pages", async () => {
+  for (const pathname of ["/admin/two-factor", "/admin/security/enroll"]) {
+    const response = await middleware(
+      new NextRequest(`http://localhost:4173${pathname}`),
+    );
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("x-middleware-next"), "1");
+    assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
+  }
+});
+
 test("middleware protects integration pages behind the ordinary admin login", async () => {
   const response = await middleware(new NextRequest("http://localhost:4173/admin/integrations"));
   assert.equal(response.status, 307);
   assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
 });
 
-test("middleware allows a correctly gated legacy preview token", async () => {
-  await withLegacyEnvironment(
-    { enabled: "true", token: "configured-preview-token" },
-    async () => {
-      const response = await middleware(
-        new NextRequest("http://localhost:4173/admin", {
-          headers: {
-            "x-sevenbet-admin-token": "configured-preview-token",
-          },
-        }),
-      );
-
-      assert.equal(response.status, 200);
-      assert.equal(response.headers.get("x-middleware-next"), "1");
-      assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
-    },
+test("retired preview tokens cannot bypass Admin authentication", async () => {
+  const response = await middleware(
+    new NextRequest("http://localhost:4173/admin?token=retired-preview-token", {
+      headers: {
+        cookie: "sevenbet_admin_preview=retired-preview-token",
+        "x-sevenbet-admin-token": "retired-preview-token",
+      },
+    }),
   );
+
+  assert.equal(response.status, 307);
+  assert.equal(
+    response.headers.get("location"),
+    "http://localhost:4173/admin/login?callbackUrl=%2Fadmin",
+  );
+  assert.doesNotMatch(response.headers.get("location") ?? "", /retired-preview-token/);
 });
 
 test("anonymous admin pages redirect to the login callback", () => {
@@ -115,6 +89,14 @@ test("anonymous admin pages redirect to the login callback", () => {
     getAdminLoginUrl("/admin/programs?status=DRAFT"),
     "/admin/login?callbackUrl=%2Fadmin%2Fprograms%3Fstatus%3DDRAFT",
   );
+  assert.equal(
+    getAdminMfaChallengeUrl("/admin/programs"),
+    "/admin/two-factor?callbackUrl=%2Fadmin%2Fprograms",
+  );
+  assert.equal(
+    getAdminMfaEnrollmentUrl("/admin/programs"),
+    "/admin/security/enroll?callbackUrl=%2Fadmin%2Fprograms",
+  );
 });
 
 test("an authenticated user without an AdminUser is forbidden", () => {
@@ -125,6 +107,13 @@ test("an authenticated user without an AdminUser is forbidden", () => {
     }),
     403,
   );
+});
+
+test("privileged MFA is complete only for an explicit verified provider flag", () => {
+  assert.equal(isAdminMfaComplete(true), true);
+  assert.equal(isAdminMfaComplete(false), false);
+  assert.equal(isAdminMfaComplete(null), false);
+  assert.equal(isAdminMfaComplete(undefined), false);
 });
 
 test("a SUPER_ADMIN has admin permissions", () => {
@@ -152,6 +141,8 @@ test("admin callbacks reject external and non-admin destinations", () => {
   assert.equal(getSafeAdminCallback("/catalog"), "/admin");
   assert.equal(getSafeAdminCallback("/administrator"), "/admin");
   assert.equal(getSafeAdminCallback("/admin/login"), "/admin");
+  assert.equal(getSafeAdminCallback("/admin/two-factor"), "/admin");
+  assert.equal(getSafeAdminCallback("/admin/security/enroll"), "/admin");
   assert.equal(
     getSafeAdminCallback("/admin/login?callbackUrl=%2Fadmin"),
     "/admin",
@@ -179,24 +170,6 @@ test("staff without the requested permission resolves to 403", () => {
       permission: "program.publish",
     }),
     403,
-  );
-});
-
-test("legacy preview requires both the env gate and the correct token", () => {
-  const input = {
-    configuredToken: "configured-preview-token",
-    providedTokens: [null, "configured-preview-token"],
-  };
-
-  assert.equal(isLegacyPreviewTokenValid({ ...input, enabled: true }), true);
-  assert.equal(isLegacyPreviewTokenValid({ ...input, enabled: false }), false);
-  assert.equal(
-    isLegacyPreviewTokenValid({
-      ...input,
-      enabled: true,
-      providedTokens: ["wrong-token"],
-    }),
-    false,
   );
 });
 

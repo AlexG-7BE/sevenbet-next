@@ -9,6 +9,8 @@ import {
   AdminAuthError,
   getAdminAccessStatus,
   getAdminLoginUrl,
+  getAdminMfaEnrollmentUrl,
+  isAdminMfaComplete,
 } from "@/lib/auth/policy";
 import {
   createStaffContext,
@@ -19,6 +21,7 @@ type RequireStaffOptions = {
   headers?: Headers;
   onUnauthenticated?: "throw" | "redirect";
   callbackUrl?: string;
+  allowMfaEnrollment?: boolean;
 };
 
 async function resolveStaffFromSession(session: ServerSession | null) {
@@ -66,6 +69,7 @@ export async function requireStaff({
   headers,
   onUnauthenticated = "throw",
   callbackUrl,
+  allowMfaEnrollment = false,
 }: RequireStaffOptions = {}): Promise<StaffContext> {
   const { session, staff } = await resolveStaff(headers);
   const status = getAdminAccessStatus({
@@ -91,6 +95,18 @@ export async function requireStaff({
       "This account is not linked to a B4GAMBLE staff profile",
       403,
       "STAFF_ACCESS_REQUIRED",
+    );
+  }
+
+  if (!allowMfaEnrollment && !isAdminMfaComplete(staff.user.twoFactorEnabled)) {
+    if (onUnauthenticated === "redirect") {
+      redirect(getAdminMfaEnrollmentUrl(callbackUrl));
+    }
+
+    throw new AdminAuthError(
+      "Admin multi-factor enrollment is required",
+      403,
+      "ADMIN_MFA_ENROLLMENT_REQUIRED",
     );
   }
 

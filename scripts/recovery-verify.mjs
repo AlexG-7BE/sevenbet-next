@@ -33,6 +33,7 @@ const SNAPSHOT_VERSION = 1;
 const EXPECTED_AUTH_TABLES = [
   "Account",
   "Session",
+  "TwoFactor",
   "User",
   "Verification",
 ];
@@ -102,6 +103,7 @@ async function tableCount(database, tableName) {
     "ProgramStep",
     "ProgramVersion",
     "Session",
+    "TwoFactor",
     "User",
     "Verification",
     "_prisma_migrations",

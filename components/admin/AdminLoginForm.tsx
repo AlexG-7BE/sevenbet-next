@@ -4,7 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { authClient } from "@/lib/auth/client";
-import { getAdminLoginErrorMessage } from "@/lib/auth/policy";
+import {
+  getAdminLoginErrorMessage,
+  getAdminMfaChallengeUrl,
+  getAdminMfaEnrollmentUrl,
+} from "@/lib/auth/policy";
 
 export function AdminLoginForm({ callbackUrl }: { callbackUrl: string }) {
   const router = useRouter();
@@ -31,7 +35,19 @@ export function AdminLoginForm({ callbackUrl }: { callbackUrl: string }) {
         return;
       }
 
-      router.replace(callbackUrl);
+      if (
+        (result.data as { twoFactorRedirect?: boolean } | null)
+          ?.twoFactorRedirect
+      ) {
+        router.replace(getAdminMfaChallengeUrl(callbackUrl));
+        return;
+      }
+
+      // An ordinary credential response means this staff account has not yet
+      // enabled the provider's second factor. Keep the original protected
+      // destination across enrollment instead of letting the protected layout
+      // fall back to /admin.
+      router.replace(getAdminMfaEnrollmentUrl(callbackUrl));
       router.refresh();
     } catch {
       setError(getAdminLoginErrorMessage());

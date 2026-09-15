@@ -869,11 +869,13 @@ model User {
   signupUtmContent   String?              @db.VarChar(100)
   signupUtmTerm      String?              @db.VarChar(100)
   lastSeenAt         DateTime?
+  twoFactorEnabled   Boolean?             @default(false)
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 
   sessions                           Session[]
   accounts                           Account[]
+  twoFactors                         TwoFactor[]
   adminUser                          AdminUser?
   programEnrollments                 ProgramEnrollment[]
   xpEvents                           UserXpEvent[]
@@ -910,6 +912,21 @@ model Session {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  @@index([userId])
+}
+
+model TwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([secret])
   @@index([userId])
 }
 

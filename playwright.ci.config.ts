@@ -37,8 +37,6 @@ export default defineConfig({
       BETTER_AUTH_SECRET: "ops-ci-auth-secret-not-used-by-production",
       BETTER_AUTH_URL: baseUrl,
       BETTER_AUTH_TRUSTED_ORIGINS: baseUrl,
-      SEVENBET_ADMIN_PREVIEW_TOKEN: "ops-ci-admin-token-not-used-by-production",
-      CMS_PHASE1_ALLOW_DEV_ADMIN: "true",
       ANALYTICS_SIGNING_SECRET: "customer-core-ci-analytics-signing-secret",
       CRON_SECRET: "customer-core-ci-cron-secret",
       RESEND_WEBHOOK_SECRET: "whsec_Y3VzdG9tZXItY29yZS1jaS13ZWJob29rLXNlY3JldA==",

@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import {
   getAdminLoginUrl,
-  isLegacyPreviewTokenValid,
 } from "@/lib/auth/policy";
 import { resolveRuntimeCanonicalHost } from "@/lib/auth/runtime-canonical-host";
 import {
@@ -41,7 +40,6 @@ import {
 } from "@/lib/programme/presentation";
 import { programmeMutationAccessCategory } from "@/lib/programme/mutation-access";
 
-const adminCookieName = "sevenbet_admin_preview";
 const internalPresentationTokenHeader = "x-b4gamble-internal-presentation-token";
 const internalPresentationTokenMaxAgeMs = 30_000;
 const localPresentationSigningSecret = "b4gamble-local-presentation-rewrite-v1";
@@ -171,14 +169,6 @@ async function inheritedPresentation(request: NextRequest, pathname: string) {
   } catch {
     return null;
   }
-}
-
-function getAdminPreviewToken() {
-  return process.env.SEVENBET_ADMIN_PREVIEW_TOKEN?.trim() || null;
-}
-
-function isLegacyPreviewEnabled() {
-  return process.env.CMS_PHASE1_ALLOW_DEV_ADMIN === "true";
 }
 
 function hasPossibleBetterAuthSession(request: NextRequest) {
@@ -491,42 +481,10 @@ export async function middleware(request: NextRequest) {
 
   // API authorization is always resolved by the server route, never by cookie presence.
   if (isAdminApi) return privateAdminResponse(secureResponse(nextResponse()));
-  if (pathname === "/admin/login") {
-    return privateAdminResponse(secureResponse(nextResponse()));
-  }
-
-  const configuredToken = getAdminPreviewToken();
-  const legacyEnabled = isLegacyPreviewEnabled();
-  const queryToken = searchParams.get("token");
-  const cookieToken = request.cookies.get(adminCookieName)?.value;
-  const headerToken = request.headers.get("x-sevenbet-admin-token");
-
   if (
-    isLegacyPreviewTokenValid({
-      enabled: legacyEnabled,
-      configuredToken,
-      providedTokens: [queryToken],
-    }) &&
-    configuredToken
-  ) {
-    const destination = request.nextUrl.clone();
-    destination.searchParams.delete("token");
-    const response = NextResponse.redirect(destination);
-    response.cookies.set(adminCookieName, configuredToken, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-    });
-    return privateAdminResponse(secureResponse(response));
-  }
-
-  if (
-    isLegacyPreviewTokenValid({
-      enabled: legacyEnabled,
-      configuredToken,
-      providedTokens: [cookieToken, headerToken],
-    })
+    pathname === "/admin/login" ||
+    pathname === "/admin/two-factor" ||
+    pathname === "/admin/security/enroll"
   ) {
     return privateAdminResponse(secureResponse(nextResponse()));
   }
@@ -535,6 +493,8 @@ export async function middleware(request: NextRequest) {
   if (hasPossibleBetterAuthSession(request)) return privateAdminResponse(secureResponse(nextResponse()));
 
   const callbackUrl = request.nextUrl.clone();
+  // A retired preview token must never become a credential or be reflected
+  // into the login callback URL.
   callbackUrl.searchParams.delete("token");
   return privateAdminResponse(secureResponse(NextResponse.redirect(
     new URL(

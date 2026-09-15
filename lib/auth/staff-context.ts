@@ -7,6 +7,7 @@ type StaffUser = {
   name: string;
   emailVerified: boolean;
   image?: string | null;
+  twoFactorEnabled?: boolean | null;
 };
 
 type StaffProfile = {
@@ -20,7 +21,7 @@ type StaffProfile = {
 };
 
 export type StaffContext = CmsUser & {
-  authMethod: "better-auth" | "legacy-preview";
+  authMethod: "better-auth";
   user: StaffUser;
   adminUser: StaffProfile;
 };
