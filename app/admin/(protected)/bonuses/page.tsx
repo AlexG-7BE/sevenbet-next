@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function RetiredMediaOperationsPage() {
+export default function RetiredBonusCmsPage() {
   redirect("/admin/casinos");
 }

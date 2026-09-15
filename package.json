@@ -37,7 +37,7 @@
     "visual:qa": "node scripts/visual-qa.mjs",
     "typography:audit": "node scripts/typography-audit.mjs",
     "typography:browser": "playwright test --config=playwright.ci.config.ts tests/founder-typography-browser.spec.ts",
-    "cms:test": "node scripts/cms-smoke-tests.mjs && node scripts/program-builder-smoke-tests.mjs",
+    "cms:test": "node --import tsx --test tests/cms-admin-simplification.test.ts tests/learning-center-parity.test.ts && node scripts/program-builder-smoke-tests.mjs",
     "article-learning:test": "node --import tsx --test tests/article-learning.test.ts tests/learning-center-parity.test.ts",
     "article-learning:postgres-test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test --test-concurrency=1 tests/article-learning-postgres.test.ts",
     "auth:bootstrap-admin": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/bootstrap-first-admin.ts",

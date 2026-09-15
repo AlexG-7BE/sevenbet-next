@@ -25,6 +25,7 @@ export default async function CasinosAdminPage({
 
   return (
     <AdminPageShell
+      area="casinos"
       title="Casinos"
       intro="Create, review, version and publish structured casino profiles through the PostgreSQL Casino CMS."
       actions={<Link className="button gold" href="/admin/casinos/new">Create casino</Link>}

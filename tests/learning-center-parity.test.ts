@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 import type { PublicArticle } from "../lib/articles/article-types";
@@ -39,7 +39,6 @@ test("Prisma Article is the only production Article content authority", () => {
   const schema = read("prisma/schema.prisma");
   const taxonomy = read("lib/learning-center.ts");
   const service = read("lib/services/article.service.ts");
-  const legacySeed = read("lib/cms/seed.ts");
   const genericApi = read("app/api/admin/[entity]/route.ts");
   assert.match(schema, /model Article \{/);
   for (const field of ["locale", "bodyBlocks", "heroImageUrl", "heroImageAlt", "publishedAt", "lastReviewedAt", "archivedAt"]) assert.match(schema, new RegExp(`\\b${field}\\b`));
@@ -47,8 +46,10 @@ test("Prisma Article is the only production Article content authority", () => {
   assert.match(service, /status: EditorialStatus\.PUBLISHED/);
   assert.match(service, /entityType: ARTICLE_ENTITY/);
   assert.doesNotMatch(taxonomy, /learningArticleManifest|articleTemplate|publishedLearningArticles|learningArticles\s*=/);
-  assert.doesNotMatch(legacySeed, /entity:\s*"article"|cmsArticles/);
-  assert.match(genericApi, /entityParam === "article"[\s\S]*canonical PostgreSQL Article API/);
+  assert.equal(existsSync("lib/cms/seed.ts"), false);
+  assert.equal(existsSync("lib/cms/repository.ts"), false);
+  assert.match(genericApi, /legacy generic CMS API is retired/i);
+  assert.doesNotMatch(genericApi, /createCmsRecord|listCmsRecords/);
   assert.equal(learningCategories.length, 13);
 });
 

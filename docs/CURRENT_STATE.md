@@ -4,13 +4,35 @@
 **Evidence date:** 15 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Canonical Production source at this reconciliation checkpoint:** `cf2aa0e66744955b6580d985645931142dad3a07`
-**Verified post-release runtime baseline SHA:** `cf2aa0e66744955b6580d985645931142dad3a07`
-**Verified post-release runtime deployment:** Ready and promoted; `dpl_AZksXiaYyh3UKpxfeeZez6Nghggc`
+**Canonical Production source at this reconciliation checkpoint:** `e210f265e31839c1f8803d766b820cddb9386ddb`
+**Verified post-release runtime baseline SHA:** `e210f265e31839c1f8803d766b820cddb9386ddb`
+**Verified post-release runtime deployment:** Ready and promoted; `dpl_CYiuPvGtiLdjH2u4P9eezEkivS4Y`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
+
+## PostgreSQL Learning Center — complete and live
+
+**DETECTED IN CANONICAL MAIN AND VERIFIED IN PRODUCTION, 15 SEPTEMBER 2026:**
+PR #296 reused the existing Prisma `Article` as the sole Article content
+authority and the existing `ContentRevision` as immutable Article history.
+Admin now supports real PostgreSQL Article creation, editing, authenticated
+preview, review, approval, publication, revision, restore and archive. Public
+Learning routes expose only valid, due, exact-locale `PUBLISHED` Articles and
+show a truthful localized empty state when none exist.
+
+Migration `0043_article_learning_center` is applied in Production with its
+exact checksum, four compatibility columns and one publication index. It
+created no model/table or Article row. Production still contains zero Articles;
+no synthetic content was seeded. See the [Learning Center release record](06_Operations/Learning-Center-PostgreSQL-Release-2026-09-15.md).
+
+**DETECTED IN THE SUBSEQUENT PR2 CANDIDATE, NOT YET A PRODUCTION CLAIM:** the
+Founder-facing CMS navigation and Dashboard are being narrowed to current
+PostgreSQL-backed operational domains. The candidate removes the exclusively
+legacy Phase-1 seed/in-memory store and turns generic entity APIs into
+authenticated retirement tombstones without schema, data or authority change.
+See the [CMS Admin Simplification release record](06_Operations/CMS-Admin-Simplification-Release-2026-09-16.md).
 
 ## Production hardening cycle — closed 15 September 2026
 

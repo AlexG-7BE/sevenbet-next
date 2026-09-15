@@ -79,7 +79,6 @@ test("staff UI and visual QA assets expose only B4GAMBLE branding", () => {
     ...filesBelow("app/admin"),
     ...filesBelow("components/admin"),
     ...filesBelow("public/demo-casinos"),
-    "lib/cms/seed.ts",
     "lib/auth/staff.ts",
     "app/editorial-preview/[token]/page.tsx",
   ].filter((path) => /\.(?:ts|tsx|mjs|svg)$/.test(path));
@@ -87,7 +86,8 @@ test("staff UI and visual QA assets expose only B4GAMBLE branding", () => {
 
   assert.match(renderedSources, /B4GAMBLE/);
   assert.doesNotMatch(renderedSources, OLD_PUBLIC_BRAND);
-  assert.match(source("components/admin/AdminShell.tsx"), /\/admin\/program-settings/);
+  assert.match(source("components/admin/AdminShell.tsx"), /Affiliate Operations/);
+  assert.doesNotMatch(source("components/admin/AdminShell.tsx"), /\/admin\/program-settings/);
   assert.match(source("app/admin/layout.tsx"), /index: false, follow: false/);
   assert.doesNotMatch(source("components/ProgramExperience.tsx"), /The SevenBet 10-Step Control Program/);
 });

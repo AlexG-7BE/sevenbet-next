@@ -13,7 +13,6 @@ import {
 } from "../lib/auth/policy";
 import { canAccessAdminArea, type AdminArea } from "../lib/auth/admin-page-policy";
 import { createStaffContext } from "../lib/auth/staff-context";
-import { permissionForEntity, permissionsForEntity } from "../lib/cms/entities";
 import { permissionsForRole } from "../lib/cms/permissions";
 import type { AdminRole, CmsUser } from "../lib/cms/types";
 import { middleware } from "../middleware";
@@ -197,22 +196,6 @@ test("the audit actor is the AdminUser UUID, not the Better Auth User ID", () =>
   assert.notEqual(context.id, context.user.id);
 });
 
-test("generic CMS entity reads use the entity permission contract", () => {
-  assert.equal(permissionForEntity("article", "read"), "article.edit");
-  assert.equal(permissionForEntity("casino", "read"), "casino.edit");
-  assert.equal(permissionForEntity("bonus", "read"), "bonus.edit");
-  assert.equal(permissionForEntity("affiliate-link", "read"), "affiliate.manage");
-  assert.equal(permissionForEntity("navigation", "read"), "settings.manage");
-  assert.equal(permissionForEntity("settings", "read"), "settings.manage");
-  assert.equal(permissionForEntity("program", "read"), "program.view");
-  assert.deepEqual(permissionsForEntity("article", "read"), [
-    "article.create",
-    "article.edit",
-    "article.review",
-    "article.publish",
-  ]);
-});
-
 function staffForRole(role: AdminRole): CmsUser {
   return {
     id: role,
@@ -228,14 +211,14 @@ function staffForRole(role: AdminRole): CmsUser {
 
 test("admin page areas enforce the role matrix and any-of editorial access", () => {
   const allowed: Record<AdminRole, AdminArea[]> = {
-    SUPER_ADMIN: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "achievements", "xp-rules", "program-settings", "learning", "casinos", "bonuses", "affiliate", "media-operations", "users", "analytics", "settings"],
-    ADMIN: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "achievements", "xp-rules", "learning", "casinos", "bonuses", "affiliate", "media-operations", "users", "analytics"],
-    EDITOR: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "learning", "casinos", "bonuses", "media-operations"],
+    SUPER_ADMIN: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "achievements", "xp-rules", "learning", "casinos", "affiliate", "commercial", "customers", "analytics", "email", "templates"],
+    ADMIN: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "achievements", "xp-rules", "learning", "casinos", "affiliate", "commercial", "customers", "analytics", "email", "templates"],
+    EDITOR: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "learning", "casinos"],
     AUTHOR: ["dashboard", "learning"],
-    REVIEWER: ["dashboard", "programs", "program-preview", "learning", "casinos", "bonuses"],
-    AFFILIATE_MANAGER: ["dashboard", "casinos", "bonuses", "affiliate", "media-operations"],
+    REVIEWER: ["dashboard", "programs", "program-preview", "learning", "casinos"],
+    AFFILIATE_MANAGER: ["dashboard", "casinos", "affiliate", "commercial"],
     ANALYST: ["dashboard", "analytics"],
-    SUPPORT: ["dashboard", "users"],
+    SUPPORT: ["dashboard", "customers"],
   };
   const areas = allowed.SUPER_ADMIN;
 
