@@ -9,9 +9,9 @@ export class AdminAuthError extends Error {
     public readonly statusCode: 401 | 403,
     public readonly code:
       | "ADMIN_AUTH_REQUIRED"
+      | "ADMIN_MFA_ENROLLMENT_REQUIRED"
       | "STAFF_ACCESS_REQUIRED"
-      | "STAFF_PERMISSION_REQUIRED"
-      | "LEGACY_ACTOR_UNAVAILABLE",
+      | "STAFF_PERMISSION_REQUIRED",
   ) {
     super(message);
     this.name = "AdminAuthError";
@@ -33,19 +33,6 @@ export function getAdminAccessStatus({
   if (!hasStaffProfile || !role) return 403;
   if (permission && !permissionsByRole[role].includes(permission)) return 403;
   return 200;
-}
-
-export function isLegacyPreviewTokenValid({
-  enabled,
-  configuredToken,
-  providedTokens,
-}: {
-  enabled: boolean;
-  configuredToken: string | null | undefined;
-  providedTokens: Array<string | null | undefined>;
-}) {
-  if (!enabled || !configuredToken) return false;
-  return providedTokens.some((token) => Boolean(token) && token === configuredToken);
 }
 
 export function getSafeAdminCallback(candidate?: string | null) {
@@ -73,7 +60,9 @@ export function getSafeAdminCallback(candidate?: string | null) {
   if (
     parsed.origin !== "http://sevenbet.local" ||
     !isAdminPath ||
-    parsed.pathname === "/admin/login"
+    parsed.pathname === "/admin/login" ||
+    parsed.pathname === "/admin/two-factor" ||
+    parsed.pathname === "/admin/security/enroll"
   ) {
     return "/admin";
   }
@@ -86,8 +75,22 @@ export function getAdminLoginUrl(callbackUrl?: string | null) {
   return `/admin/login?callbackUrl=${encodeURIComponent(safeCallback)}`;
 }
 
+export function getAdminMfaChallengeUrl(callbackUrl?: string | null) {
+  const safeCallback = getSafeAdminCallback(callbackUrl);
+  return `/admin/two-factor?callbackUrl=${encodeURIComponent(safeCallback)}`;
+}
+
+export function getAdminMfaEnrollmentUrl(callbackUrl?: string | null) {
+  const safeCallback = getSafeAdminCallback(callbackUrl);
+  return `/admin/security/enroll?callbackUrl=${encodeURIComponent(safeCallback)}`;
+}
+
 export function getAdminLoginErrorMessage() {
   return "Email or password is incorrect.";
+}
+
+export function isAdminMfaComplete(value: boolean | null | undefined) {
+  return value === true;
 }
 
 export function isAdminAuthError(error: unknown): error is AdminAuthError {

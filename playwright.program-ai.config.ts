@@ -37,7 +37,6 @@ export default defineConfig({
       BETTER_AUTH_URL: baseUrl,
       BETTER_AUTH_TRUSTED_ORIGINS: baseUrl,
       PROGRAM_AI_V1_ENABLED: "true",
-      CMS_PHASE1_ALLOW_DEV_ADMIN: "false",
       AFFILIATE_REDIRECT_ENGINE_ENABLED: "false",
       PUBLIC_CASINO_CMS_ENABLED: "false",
     },

@@ -4,7 +4,6 @@ export type PartnerPreviewEnvironment = {
   NODE_ENV?: string;
   VERCEL_ENV?: string;
   SEVENBET_PARTNER_PREVIEW_TOKEN?: string;
-  SEVENBET_ADMIN_PREVIEW_TOKEN?: string;
 };
 
 export function partnerPreviewEnabled(environment: PartnerPreviewEnvironment = process.env) {
@@ -13,9 +12,7 @@ export function partnerPreviewEnabled(environment: PartnerPreviewEnvironment = p
 }
 
 export function partnerPreviewConfiguredToken(environment: PartnerPreviewEnvironment = process.env) {
-  const token = environment.SEVENBET_PARTNER_PREVIEW_TOKEN?.trim()
-    || environment.SEVENBET_ADMIN_PREVIEW_TOKEN?.trim()
-    || null;
+  const token = environment.SEVENBET_PARTNER_PREVIEW_TOKEN?.trim() || null;
   return token && token.length >= 24 ? token : null;
 }
 

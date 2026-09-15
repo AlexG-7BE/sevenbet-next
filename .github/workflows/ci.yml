@@ -21,7 +21,6 @@ env:
   BETTER_AUTH_SECRET: ci-only-better-auth-sentinel-do-not-use
   BETTER_AUTH_URL: http://127.0.0.1:4173
   BETTER_AUTH_TRUSTED_ORIGINS: http://127.0.0.1:4173
-  SEVENBET_ADMIN_PREVIEW_TOKEN: ci-only-admin-preview-sentinel-do-not-use
   NEXT_PUBLIC_SITE_URL: http://127.0.0.1:4173
   PUBLIC_CASINO_CMS_ENABLED: "false"
   AFFILIATE_REDIRECT_ENGINE_ENABLED: "false"

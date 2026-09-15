@@ -13,7 +13,7 @@ test("recovery verification derives the exact repository migration set", () => {
   assert.ok(names.length > 0);
   assert.equal(names[0], "0001_cms_foundation");
   assert.ok(names.includes("0019_programme_runtime_hardening"));
-  assert.equal(names.at(-1), "0041_commercial_core_legacy_connector_cleanup");
+  assert.equal(names.at(-1), "0042_admin_mfa");
   assert.equal(new Set(names).size, names.length);
 });
 
@@ -21,6 +21,7 @@ test("recovery verification covers authentication and Programme structure", () =
   assert.deepEqual(EXPECTED_AUTH_TABLES, [
     "Account",
     "Session",
+    "TwoFactor",
     "User",
     "Verification",
   ]);

@@ -12,10 +12,6 @@ export function AdminLogoutButton() {
 
     try {
       await authClient.signOut();
-      await fetch("/api/admin/logout", {
-        method: "POST",
-        credentials: "same-origin",
-      });
     } finally {
       window.location.assign("/admin/login");
     }

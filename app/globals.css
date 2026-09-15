@@ -2491,6 +2491,104 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   opacity: .65;
 }
 
+.adminMfaMode {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .04);
+}
+
+.adminMfaMode button,
+.adminMfaCopy {
+  min-height: 42px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.adminMfaMode button.active {
+  color: var(--text);
+  background: rgba(255, 255, 255, .1);
+}
+
+.adminMfaMode button:focus-visible,
+.adminMfaCopy:focus-visible,
+.adminMfaSecondaryLink:focus-visible {
+  outline: 3px solid rgba(92, 197, 139, .38);
+  outline-offset: 2px;
+}
+
+.adminMfaSecondaryLink {
+  justify-self: center;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.adminMfaStep {
+  display: grid;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.adminMfaStep h2,
+.adminMfaStep p,
+.adminMfaSuccess p {
+  margin: 0;
+}
+
+.adminMfaSecret {
+  user-select: all;
+  font-size: .92rem;
+  letter-spacing: .08em;
+}
+
+.adminMfaCodes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.adminMfaCodes code {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .05);
+  text-align: center;
+}
+
+.adminMfaCopy {
+  justify-self: start;
+  padding-inline: 0;
+  color: var(--green);
+}
+
+.adminMfaConfirm {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+}
+
+.adminMfaConfirm input {
+  width: 20px;
+  min-height: 20px;
+  margin-top: 2px;
+}
+
+.adminMfaSuccess {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(92, 197, 139, .45);
+  border-radius: 14px;
+  background: rgba(92, 197, 139, .08);
+}
+
 .adminCode {
   padding: 14px 16px;
   border: 1px solid var(--border);

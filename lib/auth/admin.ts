@@ -1,10 +1,9 @@
 import "server-only";
 
 import { cache } from "react";
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { redirect } from "next/navigation";
 
-import prisma from "@/lib/db/prisma";
 import type { CmsPermission } from "@/lib/cms/types";
 import { canPerformAction } from "@/lib/cms/permissions";
 import {
@@ -14,120 +13,34 @@ import {
 import {
   AdminAuthError,
   getAdminLoginUrl,
+  getAdminMfaEnrollmentUrl,
   isAdminAuthError,
-  isLegacyPreviewTokenValid,
 } from "@/lib/auth/policy";
-import {
-  createStaffContext,
-  type StaffContext,
-} from "@/lib/auth/staff-context";
+import type { StaffContext } from "@/lib/auth/staff-context";
 import { requireStaff } from "@/lib/auth/staff";
-
-const adminCookieName = "sevenbet_admin_preview";
 
 function requestHeaders(request: Request | NextRequest | Headers) {
   return request instanceof Headers ? request : request.headers;
 }
 
-function getCookie(headers: Headers, name: string) {
-  const value = headers
-    .get("cookie")
-    ?.split(";")
-    .map((item) => item.trim())
-    .find((item) => item.startsWith(`${name}=`))
-    ?.slice(name.length + 1);
-
-  if (!value) return null;
-
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return null;
-  }
-}
-
-export function getAdminPreviewToken() {
-  return process.env.SEVENBET_ADMIN_PREVIEW_TOKEN?.trim() || null;
-}
-
-export function isLegacyPreviewEnabled() {
-  return process.env.CMS_PHASE1_ALLOW_DEV_ADMIN === "true";
-}
-
 async function resolveAdminAccess(
   input: Request | NextRequest | Headers,
 ): Promise<StaffContext> {
-  const headers = requestHeaders(input);
-
-  try {
-    return await requireStaff({ headers });
-  } catch (error) {
-    if (!isAdminAuthError(error)) throw error;
-
-    const legacyStaff = await getLegacyPreviewStaff(headers);
-    if (legacyStaff) return legacyStaff;
-    throw error;
-  }
+  return requireStaff({ headers: requestHeaders(input) });
 }
 
 const resolveServerComponentAdminAccess = cache(async (
   cookieHeader: string | null,
-  previewTokenHeader: string | null,
 ) => {
   const headers = new Headers();
   if (cookieHeader) headers.set("cookie", cookieHeader);
-  if (previewTokenHeader) headers.set("x-sevenbet-admin-token", previewTokenHeader);
   return resolveAdminAccess(headers);
 });
 
 function resolveRequestAdminAccess(input: Request | NextRequest | Headers) {
   return input instanceof Headers
-    ? resolveServerComponentAdminAccess(
-      input.get("cookie"),
-      input.get("x-sevenbet-admin-token"),
-    )
+    ? resolveServerComponentAdminAccess(input.get("cookie"))
     : resolveAdminAccess(input);
-}
-
-async function getLegacyPreviewStaff(
-  input: Request | NextRequest | Headers,
-): Promise<StaffContext | null> {
-  const headers = requestHeaders(input);
-  const validToken = isLegacyPreviewTokenValid({
-    enabled: isLegacyPreviewEnabled(),
-    configuredToken: getAdminPreviewToken(),
-    providedTokens: [
-      headers.get("x-sevenbet-admin-token"),
-      getCookie(headers, adminCookieName),
-    ],
-  });
-
-  if (!validToken) return null;
-
-  const candidates = await prisma.adminUser.findMany({
-    where: {
-      role: "SUPER_ADMIN",
-      userId: { not: null },
-    },
-    include: { user: true },
-    take: 2,
-  });
-
-  const candidate = candidates.length === 1 ? candidates[0] : null;
-
-  if (!candidate?.user) {
-    throw new AdminAuthError(
-      "Legacy preview authentication has no unique linked staff actor",
-      403,
-      "LEGACY_ACTOR_UNAVAILABLE",
-    );
-  }
-
-  return createStaffContext({
-    user: candidate.user,
-    adminUser: candidate,
-    authMethod: "legacy-preview",
-  });
 }
 
 export async function requireAdminAccess(
@@ -147,6 +60,13 @@ export async function requireAdminAccess(
 
     if (error.statusCode === 401 && onUnauthenticated === "redirect") {
       redirect(getAdminLoginUrl(callbackUrl));
+    }
+
+    if (
+      error.code === "ADMIN_MFA_ENROLLMENT_REQUIRED" &&
+      onUnauthenticated === "redirect"
+    ) {
+      redirect(getAdminMfaEnrollmentUrl(callbackUrl));
     }
 
     throw error;
@@ -214,29 +134,3 @@ export async function canAdminPerform(
 }
 
 export { adminAuthErrorResponse } from "@/lib/http/admin-auth-error";
-
-export function createAdminPreviewResponse() {
-  const token = getAdminPreviewToken();
-
-  if (!isLegacyPreviewEnabled() || !token) {
-    throw new Error("Legacy preview authentication is not configured");
-  }
-
-  const response = NextResponse.redirect(
-    new URL(
-      "/admin",
-      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:4173",
-    ),
-  );
-  response.headers.set("Cache-Control", "private, no-store, max-age=0");
-  response.headers.set("Vary", "Cookie");
-  response.cookies.set(adminCookieName, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-  });
-  return response;
-}
-
-export { adminCookieName };

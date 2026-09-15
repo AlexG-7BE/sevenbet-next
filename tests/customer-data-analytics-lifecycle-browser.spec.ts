@@ -1,50 +1,81 @@
 import { randomUUID } from "node:crypto";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
+import { hashPassword } from "better-auth/crypto";
+import { base32 } from "@better-auth/utils/base32";
+import { createOTP } from "@better-auth/utils/otp";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
-const adminPreviewToken = "ops-ci-admin-token-not-used-by-production";
 const prisma = new PrismaClient();
 const fixtureUserId = `customer-core-browser-${randomUUID()}`;
-let createdFixture = false;
+const fixtureEmail = `${fixtureUserId}@example.invalid`;
+const fixturePassword = "Customer-Core-Browser-Mfa-42!";
 let fixtureAdminId: string | null = null;
+let fixtureTotpSecret: string | null = null;
 
 test.beforeAll(async () => {
-  const linkedSuperAdmins = await prisma.adminUser.findMany({
-    where: { role: "SUPER_ADMIN", userId: { not: null } },
-    select: { id: true },
-    take: 2,
+  await prisma.user.create({
+    data: {
+      id: fixtureUserId,
+      name: "Customer Core Browser Admin",
+      email: fixtureEmail,
+      emailVerified: true,
+      accounts: {
+        create: {
+          id: `credential-${fixtureUserId}`,
+          issuer: "local:credential",
+          accountId: fixtureUserId,
+          providerId: "credential",
+          password: await hashPassword(fixturePassword),
+        },
+      },
+    },
   });
-  if (linkedSuperAdmins.length > 1) throw new Error("Browser fixture requires one unambiguous linked Super Admin");
-  if (linkedSuperAdmins.length === 0) {
-    await prisma.user.create({
-      data: {
-        id: fixtureUserId,
-        name: "Customer Core Browser Admin",
-        email: `${fixtureUserId}@example.invalid`,
-        emailVerified: true,
-      },
-    });
-    const admin = await prisma.adminUser.create({
-      data: {
-        userId: fixtureUserId,
-        name: "Customer Core Browser Admin",
-        email: `${fixtureUserId}@example.invalid`,
-        role: "SUPER_ADMIN",
-      },
-    });
-    fixtureAdminId = admin.id;
-    createdFixture = true;
-  }
+  const admin = await prisma.adminUser.create({
+    data: {
+      userId: fixtureUserId,
+      name: "Customer Core Browser Admin",
+      email: fixtureEmail,
+      role: "SUPER_ADMIN",
+    },
+  });
+  fixtureAdminId = admin.id;
 });
 
 test.afterAll(async () => {
-  if (createdFixture) {
-    if (fixtureAdminId) await prisma.adminUser.deleteMany({ where: { id: fixtureAdminId } });
-    await prisma.user.deleteMany({ where: { id: fixtureUserId } });
-  }
+  if (fixtureAdminId) await prisma.adminUser.deleteMany({ where: { id: fixtureAdminId } });
+  await prisma.user.deleteMany({ where: { id: fixtureUserId } });
   await prisma.$disconnect();
 });
+
+async function authenticateAdmin(page: Page, target: string) {
+  await page.goto(`${baseUrl}${target}`, { waitUntil: "domcontentloaded" });
+  if (!page.url().includes("/admin/login")) return;
+
+  await page.getByLabel("Email").fill(fixtureEmail);
+  await page.getByLabel("Password").fill(fixturePassword);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/admin\/(security\/enroll|two-factor)/);
+
+  if (page.url().includes("/admin/security/enroll")) {
+    await page.getByLabel("Confirm your password").fill(fixturePassword);
+    await page.getByRole("button", { name: "Set up authenticator" }).click();
+    const encodedSecret = await page.locator(".adminMfaSecret").innerText();
+    fixtureTotpSecret = new TextDecoder().decode(base32.decode(encodedSecret.trim()));
+    await page.getByLabel("I have stored these backup codes securely.").check();
+    await page.getByLabel("6-digit code").fill(await createOTP(fixtureTotpSecret).totp());
+    await page.getByRole("button", { name: "Verify and activate MFA" }).click();
+    await expect(page.getByText("Multi-factor authentication is active.")).toBeVisible();
+    await page.getByRole("button", { name: "Continue to Admin" }).click();
+  } else {
+    await expect(page.getByRole("heading", { name: "Verify Admin sign-in" })).toBeVisible();
+    if (!fixtureTotpSecret) throw new Error("Admin MFA fixture secret is unavailable");
+    await page.getByLabel("6-digit code").fill(await createOTP(fixtureTotpSecret).totp());
+    await page.getByRole("button", { name: "Verify and continue" }).click();
+  }
+
+  await expect(page).toHaveURL(new RegExp(`${target.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`));
+}
 
 test("affirmative analytics consent persists, emits a minimal event, and deduplicates replay", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -142,7 +173,7 @@ test("Customer Core public/admin security boundaries deny unauthenticated and fo
 });
 
 test("authorized Customer, Analytics, Email, and Templates surfaces render responsively", async ({ page }) => {
-  await page.setExtraHTTPHeaders({ "x-sevenbet-admin-token": adminPreviewToken });
+  await authenticateAdmin(page, "/admin/customers");
   for (const [path, heading] of [
     ["/admin/customers", "Customers"],
     ["/admin/analytics?view=overview&range=7", "Analytics"],
@@ -166,7 +197,7 @@ test("authorized Customer, Analytics, Email, and Templates surfaces render respo
 });
 
 test("Commercial dashboard and reporting directory expose distinct truthful contracts", async ({ page }) => {
-  await page.setExtraHTTPHeaders({ "x-sevenbet-admin-token": adminPreviewToken });
+  await authenticateAdmin(page, "/admin/analytics?view=commercial&range=30");
 
   await page.goto(`${baseUrl}/admin/analytics?view=commercial&range=30`, { waitUntil: "domcontentloaded" });
   for (const label of [

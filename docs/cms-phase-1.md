@@ -19,21 +19,11 @@ This phase introduces the CMS foundation without changing the public SevenBet pr
 
 ## Current Admin Access
 
-Phase 1 uses a temporary preview token because no production identity provider is installed yet.
-
-Set this value in local or deployment environment:
-
-```bash
-SEVENBET_ADMIN_PREVIEW_TOKEN="replace-with-a-long-random-token"
-```
-
-Then open:
-
-```bash
-/admin?token=replace-with-a-long-random-token
-```
-
-This sets the `sevenbet_admin_preview` HTTP-only cookie and redirects to `/admin`.
+> Superseded current-state note (15 September 2026): the Phase 1 preview-token
+> path is retired and cannot authorize an Admin page or API. Current staff
+> access uses Better Auth email/password, official TOTP or a single-use backup
+> code, the linked `AdminUser`, and the existing permission matrix. See
+> [Admin/Auth Security](06_Operations/Admin-Auth-Security.md).
 
 ## Environment Variables
 
@@ -41,9 +31,6 @@ Use `.env.example` as the starting point:
 
 - `DATABASE_URL`
 - `NEXT_PUBLIC_SITE_URL`
-- `SEVENBET_ADMIN_PREVIEW_TOKEN`
-- `CMS_PHASE1_ALLOW_DEV_ADMIN`
-- `CMS_AUTH_PROVIDER`
 - `CMS_WEBHOOK_SECRET`
 
 ## Data Model
@@ -95,12 +82,9 @@ Public Learn records include an explicit `status`, `publishedAt` and `lastUpdate
 
 ## API Examples
 
-Admin list:
-
-```bash
-curl -H "x-sevenbet-admin-token: $SEVENBET_ADMIN_PREVIEW_TOKEN" \
-  http://localhost:4173/api/admin/article
-```
+Admin APIs accept only an authenticated Better Auth session that satisfies the
+central staff/MFA/permission boundary. Preview-token headers and cookies are
+not credentials.
 
 Public list:
 
@@ -144,8 +128,10 @@ The next step is to replace the in-memory repository with a Prisma-backed reposi
 
 ## Security Notes
 
-- Preview token auth is temporary and must be replaced before real editorial access.
-- Admin APIs require the preview cookie or `x-sevenbet-admin-token`.
+- Better Auth plus the linked `AdminUser` and central permission matrix owns
+  Admin authorization; official Better Auth TOTP is an additional condition.
+- Retired preview-token query, cookie and header values cannot authorize an
+  Admin page or API.
 - Affiliate redirects only allow HTTPS destinations from stored CMS records.
 - Public APIs do not expose unpublished content.
 - Audit and revision structures are present for change tracking.

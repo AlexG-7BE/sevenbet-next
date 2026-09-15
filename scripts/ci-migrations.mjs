@@ -107,14 +107,16 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
   const migration0022Index = migrationEntries.indexOf("0022_better_auth_17_schema_upgrade");
   const migration0040Index = migrationEntries.indexOf("0040_commercial_core_exact_routes_geo_simplification");
   const migration0041Index = migrationEntries.indexOf("0041_commercial_core_legacy_connector_cleanup");
+  const migration0042Index = migrationEntries.indexOf("0042_admin_mfa");
   if (
     migration0020Index < programmeMigrationIndex
     || migration0021Index !== migration0020Index + 1
     || migration0022Index !== migration0021Index + 1
     || migration0041Index !== migration0040Index + 1
-    || migration0041Index !== migrationEntries.length - 1
+    || migration0042Index !== migration0041Index + 1
+    || migration0042Index !== migrationEntries.length - 1
   ) {
-    throw new Error("Expected sequential migrations 0020-0022 and exact latest cleanup migration 0041");
+    throw new Error("Expected sequential migrations 0020-0022 and exact latest Admin MFA migration 0042");
   }
 
   const schema = "better_auth_17_upgrade_ci";
@@ -630,6 +632,167 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
       retiredFunctions: 3,
       keepTables: 5,
       accountIdentityPreserved: true,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+async function verifyAdminMfaUpgrade(migrationEntries, programmeMigrationIndex) {
+  const migration = "0042_admin_mfa";
+  const migrationIndex = migrationEntries.indexOf(migration);
+  const priorIndex = migrationEntries.indexOf("0041_commercial_core_legacy_connector_cleanup");
+  if (migrationIndex !== priorIndex + 1 || migrationIndex !== migrationEntries.length - 1) {
+    throw new Error(`Expected ${migration} directly after 0041 and as the exact latest migration`);
+  }
+
+  const schema = "admin_mfa_upgrade_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+
+  const preProgramme = await stageMigrations(
+    migrationEntries.slice(0, programmeMigrationIndex),
+  );
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(preProgramme, "schema.prisma")], environment);
+    run("npx", [
+      "prisma",
+      "db",
+      "execute",
+      "--schema",
+      "prisma/schema.prisma",
+      "--file",
+      "prisma/preflight/0015_active_control_program_flow.sql",
+    ], environment);
+  } finally {
+    await rm(preProgramme, { recursive: true, force: true });
+  }
+
+  await deployMigrationPrefix(migrationEntries, priorIndex, environment);
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  try {
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO "${schema}"."User" (
+        "id", "name", "email", "emailVerified", "createdAt", "updatedAt"
+      ) VALUES (
+        'admin-mfa-existing-user',
+        'Existing Admin MFA fixture',
+        'admin-mfa-existing@invalid.example',
+        true,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+      )
+    `);
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO "${schema}"."AdminUser" (
+        "id", "userId", "email", "name", "role", "createdAt", "updatedAt"
+      ) VALUES (
+        '00000000-0000-4000-8000-000000000242',
+        'admin-mfa-existing-user',
+        'admin-mfa-existing@invalid.example',
+        'Existing Admin MFA fixture',
+        'SUPER_ADMIN',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+      )
+    `);
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO "${schema}"."Session" (
+        "id", "expiresAt", "token", "createdAt", "updatedAt", "userId"
+      ) VALUES (
+        'admin-mfa-existing-session',
+        CURRENT_TIMESTAMP + INTERVAL '1 day',
+        'admin-mfa-existing-session-token',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP,
+        'admin-mfa-existing-user'
+      )
+    `);
+
+    await deployMigrationPrefix(migrationEntries, migrationIndex, environment);
+
+    const [columnEvidence, indexEvidence, foreignKeyEvidence, preservedEvidence] = await Promise.all([
+      prisma.$queryRawUnsafe(`
+        SELECT "column_name" AS "columnName", "is_nullable" AS "isNullable", "column_default" AS "columnDefault"
+        FROM information_schema.columns
+        WHERE table_schema = '${schema}'
+          AND (
+            (table_name = 'User' AND column_name = 'twoFactorEnabled')
+            OR (table_name = 'TwoFactor' AND column_name IN (
+              'id', 'secret', 'backupCodes', 'userId', 'verified',
+              'failedVerificationCount', 'lockedUntil'
+            ))
+          )
+        ORDER BY table_name, column_name
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT indexname AS "indexName"
+        FROM pg_indexes
+        WHERE schemaname = '${schema}'
+          AND indexname IN ('TwoFactor_pkey', 'TwoFactor_secret_idx', 'TwoFactor_userId_idx')
+        ORDER BY indexname
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT
+          fk_constraint.confdeltype AS "deleteAction",
+          fk_constraint.confupdtype AS "updateAction"
+        FROM pg_constraint AS fk_constraint
+        INNER JOIN pg_class AS source ON source.oid = fk_constraint.conrelid
+        INNER JOIN pg_namespace AS namespace ON namespace.oid = source.relnamespace
+        WHERE namespace.nspname = '${schema}'
+          AND fk_constraint.conname = 'TwoFactor_userId_fkey'
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT
+          (SELECT count(*)::int FROM "${schema}"."User" WHERE "id" = 'admin-mfa-existing-user') AS "users",
+          (SELECT count(*)::int FROM "${schema}"."AdminUser" WHERE "userId" = 'admin-mfa-existing-user') AS "admins",
+          (SELECT count(*)::int FROM "${schema}"."Session" WHERE "userId" = 'admin-mfa-existing-user') AS "sessions",
+          (SELECT "twoFactorEnabled" FROM "${schema}"."User" WHERE "id" = 'admin-mfa-existing-user') AS "twoFactorEnabled",
+          (SELECT count(*)::int FROM "${schema}"."TwoFactor") AS "twoFactors"
+      `),
+    ]);
+
+    const defaultByColumn = new Map(columnEvidence.map((column) => [
+      column.columnName,
+      { default: column.columnDefault, nullable: column.isNullable },
+    ]));
+    const preserved = preservedEvidence[0];
+    if (
+      columnEvidence.length !== 8
+      || defaultByColumn.get("twoFactorEnabled")?.nullable !== "YES"
+      || defaultByColumn.get("twoFactorEnabled")?.default !== "false"
+      || defaultByColumn.get("verified")?.default !== "true"
+      || defaultByColumn.get("failedVerificationCount")?.default !== "0"
+      || JSON.stringify(indexEvidence.map((index) => index.indexName)) !== JSON.stringify([
+        "TwoFactor_pkey",
+        "TwoFactor_secret_idx",
+        "TwoFactor_userId_idx",
+      ])
+      || foreignKeyEvidence.length !== 1
+      || foreignKeyEvidence[0].deleteAction !== "c"
+      || foreignKeyEvidence[0].updateAction !== "c"
+      || preserved?.users !== 1
+      || preserved.admins !== 1
+      || preserved.sessions !== 1
+      || preserved.twoFactorEnabled !== false
+      || preserved.twoFactors !== 0
+    ) {
+      throw new Error("Admin MFA additive migration shape or preservation verification failed");
+    }
+
+    console.info("Admin MFA staged migration smoke passed", {
+      from: "0041_commercial_core_legacy_connector_cleanup",
+      to: migration,
+      preservedUsers: preserved.users,
+      preservedAdmins: preserved.admins,
+      preservedSessions: preserved.sessions,
+      existingUsersEnrolled: preserved.twoFactorEnabled,
+      pluginColumns: columnEvidence.length,
+      pluginIndexes: indexEvidence.length,
+      cascadeForeignKey: true,
     });
   } finally {
     await prisma.$disconnect();
@@ -1650,6 +1813,7 @@ async function main() {
   }
 
   await verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationIndex);
+  await verifyAdminMfaUpgrade(migrationEntries, programmeMigrationIndex);
   await verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrationIndex);
   await verifyProgrammeAccessUpgrade(migrationEntries);
   await verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex);

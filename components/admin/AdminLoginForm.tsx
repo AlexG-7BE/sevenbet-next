@@ -4,7 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { authClient } from "@/lib/auth/client";
-import { getAdminLoginErrorMessage } from "@/lib/auth/policy";
+import {
+  getAdminLoginErrorMessage,
+  getAdminMfaChallengeUrl,
+} from "@/lib/auth/policy";
 
 export function AdminLoginForm({ callbackUrl }: { callbackUrl: string }) {
   const router = useRouter();
@@ -28,6 +31,14 @@ export function AdminLoginForm({ callbackUrl }: { callbackUrl: string }) {
 
       if (result.error) {
         setError(getAdminLoginErrorMessage());
+        return;
+      }
+
+      if (
+        (result.data as { twoFactorRedirect?: boolean } | null)
+          ?.twoFactorRedirect
+      ) {
+        router.replace(getAdminMfaChallengeUrl(callbackUrl));
         return;
       }
 
