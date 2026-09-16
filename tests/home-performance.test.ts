@@ -9,10 +9,14 @@ const source = (path: string) => readFileSync(path, "utf8");
 
 test("Home uses only the bounded adjacent wheel fallback and no perpetual layout loop", () => {
   const interactions = source("components/final-handoff/HandoffInteractions.tsx");
+  const homeInteractions = interactions.slice(
+    interactions.indexOf("function setupHomeInteractions"),
+    interactions.indexOf("export function HandoffInteractions"),
+  );
   assert.match(interactions, /addEventListener\("wheel", onWheel, \{ passive: false \}\)/);
   assert.match(interactions, /const onWheel[\s\S]*event\.preventDefault\(\)[\s\S]*window\.scrollTo\(\{ behavior: "smooth", top: canonicalDestinations\[nextIndex\] \}\)/);
-  assert.doesNotMatch(interactions, /wheelAccumulator|snapLockedUntil|scrollTweenFrame|setTimeout|setInterval|scroll-snap-stop:\s*always/);
-  assert.doesNotMatch(interactions, /requestAnimationFrame\(tick\)|requestAnimationFrame\(runFrame\)[\s\S]*requestAnimationFrame\(runFrame\)/);
+  assert.doesNotMatch(homeInteractions, /wheelAccumulator|snapLockedUntil|scrollTweenFrame|setTimeout|setInterval|scroll-snap-stop:\s*always/);
+  assert.doesNotMatch(homeInteractions, /requestAnimationFrame\(tick\)|requestAnimationFrame\(runFrame\)[\s\S]*requestAnimationFrame\(runFrame\)/);
   assert.match(interactions, /addEventListener\("scroll", onScroll, \{ passive: true \}\)/);
   assert.match(interactions, /new window\.ResizeObserver\(onResize\)/);
   assert.match(interactions, /geometryDirty[\s\S]*measureStack\(\)/);

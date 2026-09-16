@@ -175,6 +175,53 @@ export class PublicCasinoService {
     return [...bySlug.values()].sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));
   }
 
+  /**
+   * Resolve the shell's canonical-action availability without projecting the
+   * offer corpus, bonus presentation, or catalogue ordering. The publication
+   * projection and canonical action authority are intentionally identical to
+   * listCasinos; this is a bounded existence query, not a second policy path.
+   */
+  async hasCanonicalAction(
+    authority?: CommercialJurisdictionAuthority | null,
+    countryCode?: string | null,
+    commercialMarketCode?: string | null,
+  ): Promise<boolean> {
+    if (!this.cmsEnabled()) return false;
+
+    let published: Awaited<ReturnType<PublicCasinoStore["listPublished"]>>;
+    try {
+      published = await this.repository.listPublished(countryCode);
+    } catch {
+      return false;
+    }
+
+    const normalizedCountry = countryCode?.trim().toUpperCase() || null;
+    const subjects = published.flatMap((entry) => {
+      const casino = mapPublishedCasino(entry, {
+        now: this.options.now,
+        countryCode: normalizedCountry,
+      });
+      return casino
+        ? [{ casinoId: casino.id, casinoSlug: casino.slug, published: true as const }]
+        : [];
+    });
+    if (!subjects.length) return false;
+
+    try {
+      const decisions = await this.actionAuthority.resolveMany({
+        subjects,
+        authority,
+        countryCode: normalizedCountry,
+        marketCode: commercialMarketCode,
+        product: "CASINO",
+        now: this.options.now,
+      });
+      return subjects.some((subject) => decisions.get(subject.casinoId)?.action != null);
+    } catch {
+      return false;
+    }
+  }
+
   async listBonuses(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null, presentationLanguage?: string | null, commercialMarketCode?: string | null) {
     const casinos = await this.listCasinos(authority, countryCode, presentationLanguage, commercialMarketCode);
     return casinos.flatMap((casino) => {

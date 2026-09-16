@@ -71,7 +71,7 @@ test("public routes are database, locale and publication-state owned", () => {
   assert.match(hub, /articleService\.listPublished\(articleLocale/);
   assert.match(category, /articleService\.listPublished\(locale, \{ category, take: 1 \}\)/);
   assert.match(article, /articleService\s*\.\s*getPublished/);
-  assert.match(article, /languageRouteByLocale\(presentation\.locale\)\.defaultLocale/);
+  assert.match(article, /getPublished\(category, slug, languageRouteByLocale\(locale\)\.defaultLocale\)/);
   assert.match(publicApi, /articleService\.listPublished\(locale/);
   assert.doesNotMatch(`${hub}${category}${article}${publicApi}`, /learningArticles|localizedLearningArticles/);
 });

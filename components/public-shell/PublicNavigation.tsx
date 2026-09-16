@@ -16,6 +16,7 @@ import type { PresentationResolution } from "@/lib/market/presentation-resolver"
 import { localizePublicHref, stripPublicMarketPrefix } from "@/lib/market/routing";
 import { DEFAULT_MARKET_PROFILE, marketProfileByLocale, publicMarketPath, type LanguageRouteProfile } from "@/lib/market/registry";
 import { MarketLanguageSelector } from "./MarketLanguageSelector";
+import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./PublicShell.module.css";
 
@@ -119,9 +120,11 @@ export function PublicNavigation({
               className={"safety" in item && item.safety ? styles.helpLink : undefined}
               href={publicHref(item.href)}
               key={item.href}
+              prefetch={false}
               aria-current={isCurrentPublicRoute(unprefixedPathname, item.href) ? "page" : undefined}
             >
               {navigationLabel(item.href)}
+              <PublicLinkPendingSignal label={navigationLabel(item.href)} />
             </Link>
           ))}
         </nav>
@@ -173,7 +176,7 @@ export function PublicNavigation({
           ref={dialogRef}
         >
           <div className={styles.dialogTopbar}>
-            <Link className={styles.dialogBrand} href={homeHref} onClick={() => closeMenu({ restoreFocus: false })} translate="no">B4GAMBLE</Link>
+            <Link className={styles.dialogBrand} href={homeHref} onClick={() => closeMenu({ restoreFocus: false })} prefetch={false} translate="no">B4GAMBLE<PublicLinkPendingSignal label={messages.homeLabel} /></Link>
             <button aria-label={messages.closeNavigation} className={styles.menuButton} onClick={() => closeMenu()} ref={closeRef} type="button"><CloseIcon /></button>
           </div>
           <nav className={styles.mobileRouteList} aria-label={messages.mobilePrimaryNavigation}>
@@ -182,9 +185,11 @@ export function PublicNavigation({
                 href={publicHref(item.href)}
                 key={item.href}
                 onClick={() => closeMenu({ restoreFocus: false })}
+                prefetch={false}
                 aria-current={isCurrentPublicRoute(unprefixedPathname, item.href) ? "page" : undefined}
               >
                 <span>{navigationLabel(item.href)}</span><small>{messages.view}</small>
+                <PublicLinkPendingSignal label={navigationLabel(item.href)} />
               </Link>
             ))}
           </nav>

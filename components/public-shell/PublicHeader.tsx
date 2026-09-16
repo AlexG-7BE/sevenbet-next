@@ -9,6 +9,7 @@ import { commercialProductsAvailable } from "@/lib/market/commercial-product-sta
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { PublicHeaderThemeController } from "./PublicHeaderThemeController";
 import { PublicNavigation } from "./PublicNavigation";
+import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 import styles from "./PublicShell.module.css";
 
 export function PublicHeader({
@@ -32,8 +33,9 @@ export function PublicHeader({
   return (
     <header className={styles.header} data-public-shell="header" data-shell-theme="dark">
       <div className={styles.headerInner}>
-        <Link className={styles.brand} href={homeHref} aria-label={messages.homeLabel} translate="no">
+        <Link className={styles.brand} href={homeHref} aria-label={messages.homeLabel} prefetch={false} translate="no">
           B4GAMBLE
+          <PublicLinkPendingSignal label={messages.homeLabel} />
         </Link>
         <PublicNavigation account={account} authenticated={authenticated} commercialProductsAvailable={commercialProductsAvailable(commercialProductState)} messages={messages} presentation={presentation} programme={programme} selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES} />
       </div>

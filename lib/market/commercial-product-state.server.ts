@@ -12,13 +12,12 @@ export const resolveServerCommercialProductState = cache(async function resolveS
     resolveServerPresentationContext(),
     resolveServerJurisdiction(),
   ]);
-  const casinos = presentation.marketCountryCode
-    ? await publicCasinoService.listCasinos(
+  const canonicalActionAvailable = presentation.marketCountryCode
+    ? await publicCasinoService.hasCanonicalAction(
         jurisdiction,
         presentation.marketCountryCode,
-        presentation.language,
         presentation.marketCode,
-      ).catch(() => [])
-    : [];
-  return resolveCommercialProductState({ canonicalActionAvailable: casinos.some((casino) => casino.action !== null) });
+      )
+    : false;
+  return resolveCommercialProductState({ canonicalActionAvailable });
 });

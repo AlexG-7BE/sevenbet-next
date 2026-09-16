@@ -22,12 +22,12 @@ import { rankBestOffersForCategory } from "@/lib/public-offer/best-offer-ranking
 
 export const dynamic = "force-dynamic";
 const loadBestOffersPageData = cache(async () => {
-  const [presentation, authority, commercialProductState] = await Promise.all([
+  const commercialProductStatePromise = resolveServerCommercialProductState();
+  const [presentation, authority] = await Promise.all([
     resolveServerPresentationContext(),
     resolveServerJurisdiction(),
-    resolveServerCommercialProductState(),
   ]);
-  const result = await publicOfferService.getBestOffersPageData(
+  const resultPromise = publicOfferService.getBestOffersPageData(
     {
       country: presentation.marketCountryCode ?? undefined,
       commercialMarketCode: presentation.marketCode ?? undefined,
@@ -36,6 +36,10 @@ const loadBestOffersPageData = cache(async () => {
     },
     authority,
   );
+  const [commercialProductState, result] = await Promise.all([
+    commercialProductStatePromise,
+    resultPromise,
+  ]);
   return { commercialProductState, presentation, result };
 });
 

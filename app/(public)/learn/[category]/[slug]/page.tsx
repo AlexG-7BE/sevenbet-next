@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache, Suspense } from "react";
 
 import { JsonLd } from "@/components/seo/JsonLd";
 import { articlePath, type PublicArticle } from "@/lib/articles/article-types";
@@ -13,7 +14,7 @@ import { programmePathForPresentationLocale } from "@/lib/programme/presentation
 import { articleService } from "@/lib/services";
 import { absoluteUrl } from "@/lib/site";
 
-import { LearningArticleView } from "./LearningArticleView";
+import { LearningArticleRelated, LearningArticleView } from "./LearningArticleView";
 
 export const dynamic = "force-dynamic";
 
@@ -24,16 +25,16 @@ function categoryTitle(category: string, locale: PresentationResolution["locale"
     : category.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
 }
 
-async function loadArticle(category: string, slug: string, presentation: PresentationResolution) {
+const loadArticle = cache(async function loadArticle(category: string, slug: string, locale: PresentationResolution["locale"]) {
   return articleService
-    .getPublished(category, slug, languageRouteByLocale(presentation.locale).defaultLocale)
+    .getPublished(category, slug, languageRouteByLocale(locale).defaultLocale)
     .catch(() => null);
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string; slug: string }> }): Promise<Metadata> {
   const { category, slug } = await params;
   const presentation = await resolveServerPresentationContext();
-  const article = await loadArticle(category, slug, presentation);
+  const article = await loadArticle(category, slug, presentation.locale);
   const messages = learningMessages(presentation.locale);
   if (!article) return productMetadata({ presentation, pathname: `/learn/${category}/${slug}`, title: messages.ui.learningGuide, description: messages.ui.metadataDescription, robots: { index: false, follow: false } });
   const metadata = productMetadata({
@@ -84,13 +85,33 @@ function articleSchema(article: PublicArticle, presentation: PresentationResolut
 export default async function LearningArticlePage({ params }: { params: Promise<{ category: string; slug: string }> }) {
   const { category, slug } = await params;
   const presentation = await resolveServerPresentationContext();
-  const article = await loadArticle(category, slug, presentation);
+  const article = await loadArticle(category, slug, presentation.locale);
   if (!article) notFound();
-  const related = await articleService.listPublished(article.locale, { take: 3, excludeId: article.id }).catch(() => []);
   const messages = learningMessages(presentation.locale);
   return <>
     <JsonLd data={breadcrumbSchema(article, presentation)} />
     <JsonLd data={articleSchema(article, presentation)} />
-    <LearningArticleView article={article} categoryTitle={categoryTitle(article.category, presentation.locale)} hrefFor={(href) => productHref(presentation, href)} messages={messages} programmePath={programmePathForPresentationLocale(presentation.locale)} relatedArticles={related} />
+    <LearningArticleView
+      article={article}
+      categoryTitle={categoryTitle(article.category, presentation.locale)}
+      hrefFor={(href) => productHref(presentation, href)}
+      messages={messages}
+      programmePath={programmePathForPresentationLocale(presentation.locale)}
+      relatedArticlesSlot={<Suspense fallback={null}><RelatedLearningArticles article={article} presentation={presentation} /></Suspense>}
+    />
   </>;
+}
+
+async function RelatedLearningArticles({ article, presentation }: {
+  article: PublicArticle;
+  presentation: PresentationResolution;
+}) {
+  const relatedArticles = await articleService
+    .listPublished(article.locale, { take: 3, excludeId: article.id })
+    .catch(() => []);
+  return <LearningArticleRelated
+    hrefFor={(href) => productHref(presentation, href)}
+    messages={learningMessages(presentation.locale)}
+    relatedArticles={relatedArticles}
+  />;
 }

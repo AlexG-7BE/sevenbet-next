@@ -35,10 +35,13 @@ test("generated handoff pages surrender captured global chrome before rendering"
 test("normal public and Programme routes have one production shell owner", () => {
   const publicLayout = read("app/(public)/layout.tsx");
   const programmeLayout = read("app/program/layout.tsx");
-  for (const layout of [publicLayout, programmeLayout]) {
-    assert.equal((layout.match(/<PublicHeader\b/g) ?? []).length, 1);
-    assert.equal((layout.match(/<PublicFooter\b/g) ?? []).length, 1);
-  }
+  assert.equal((programmeLayout.match(/<PublicHeader\b/g) ?? []).length, 1);
+  assert.equal((programmeLayout.match(/<PublicFooter\b/g) ?? []).length, 1);
+  assert.equal((publicLayout.match(/<CommercialHeader\b/g) ?? []).length, 1);
+  assert.equal((publicLayout.match(/fallback=\{<PublicHeader\b/g) ?? []).length, 1);
+  assert.equal((publicLayout.match(/<CommercialFooter\b/g) ?? []).length, 1);
+  assert.equal((publicLayout.match(/fallback=\{<PublicFooter\b/g) ?? []).length, 1);
+  assert.match(publicLayout, /<Suspense[\s\S]*<CommercialHeader[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<Suspense[\s\S]*<CommercialFooter/);
 
   const interactions = read("components/final-handoff/HandoffInteractions.tsx");
   assert.doesNotMatch(interactions, /\[data-nav\]|data\.navtheme|syncNavigation/);
