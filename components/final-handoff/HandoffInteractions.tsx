@@ -64,10 +64,11 @@ function setupHomeInteractions(root: HTMLElement) {
   const panels = Array.from(root.querySelectorAll<HTMLElement>("[data-stackpanel]"));
   const stack = panels[0]?.parentElement ?? null;
   const dots = Array.from(root.querySelectorAll<HTMLElement>("[data-stackdot]"));
-  const publicFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
+  let publicFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
   let animationFrame = 0;
   let observer: IntersectionObserver | null = null;
   let destroyed = false;
+  let footerMutationObserver: MutationObserver | null = null;
   let footerObserver: ResizeObserver | null = null;
   let stackObserver: ResizeObserver | null = null;
   let geometryDirty = Boolean(stack) && !reducedMotion;
@@ -88,15 +89,29 @@ function setupHomeInteractions(root: HTMLElement) {
   };
 
   const syncClosingComposition = () => {
-    if (!publicFooter) return;
-    root.style.setProperty("--home-public-footer-height", `${Math.ceil(publicFooter.getBoundingClientRect().height)}px`);
+    const currentFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
+    if (!currentFooter) return;
+    root.style.setProperty("--home-public-footer-height", `${Math.ceil(currentFooter.getBoundingClientRect().height)}px`);
   };
 
-  syncClosingComposition();
+  const observeCurrentFooter = () => {
+    const currentFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
+    if (currentFooter === publicFooter && footerObserver) return;
+    footerObserver?.disconnect();
+    footerObserver = null;
+    publicFooter = currentFooter;
+    if (publicFooter && typeof window.ResizeObserver === "function") {
+      footerObserver = new window.ResizeObserver(syncClosingComposition);
+      footerObserver.observe(publicFooter);
+    }
+    syncClosingComposition();
+  };
+
+  observeCurrentFooter();
   window.addEventListener("resize", syncClosingComposition, { passive: true });
-  if (publicFooter && typeof window.ResizeObserver === "function") {
-    footerObserver = new window.ResizeObserver(syncClosingComposition);
-    footerObserver.observe(publicFooter);
+  if (typeof window.MutationObserver === "function") {
+    footerMutationObserver = new window.MutationObserver(observeCurrentFooter);
+    footerMutationObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   const reveal = (element: HTMLElement, index = 0) => {
@@ -353,6 +368,7 @@ function setupHomeInteractions(root: HTMLElement) {
   return () => {
     destroyed = true;
     observer?.disconnect();
+    footerMutationObserver?.disconnect();
     footerObserver?.disconnect();
     stackObserver?.disconnect();
     window.removeEventListener("resize", syncClosingComposition);
