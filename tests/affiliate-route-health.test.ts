@@ -24,6 +24,7 @@ function fetchSequence(...responses: Response[]) {
 
 const canonicalClaim = {
   activationId: "activation",
+  activationVersion: 7,
   casinoId: "casino",
   casinoSlug: "casino",
   countryCode: "ZZ",
@@ -32,6 +33,8 @@ const canonicalClaim = {
   trackingLinkId: "tracking",
   redirectId: "redirect",
   redirectSlug: "casino-welcome",
+  persistedVerificationStatus: "HEALTHY",
+  persistedLastCheckedAt: new Date("2026-09-07T12:00:00.000Z"),
 };
 
 test("health checker follows a finite chain and preserves required attribution", async () => {
@@ -294,6 +297,10 @@ test("route-health service audits the exact canonical activation through its exi
   assert.equal(observedCheckedAt, now);
   assert.equal(report.healthy, true);
   assert.equal(report.results[0].finalHost, "www.casino.example");
+  assert.equal(report.results[0].verificationSource, "DIRECT");
+  assert.equal(report.results[0].checkedAt, now.toISOString());
+  assert.equal(report.results[0].lastDirectSuccessAt, now.toISOString());
+  assert.equal(report.results[0].evidenceRevision, "market-activation:activation:v7");
 });
 
 test("canonical relationship gaps and inconclusive verification fail closed without legacy projection", async () => {
@@ -314,6 +321,8 @@ test("canonical relationship gaps and inconclusive verification fail closed with
   const inconclusiveReport = await inconclusive.run();
   assert.equal(inconclusiveReport.results[0].status, "DEGRADED");
   assert.equal(inconclusiveReport.results[0].reason, "ROUTE_VERIFICATION_INCONCLUSIVE");
+  assert.equal(inconclusiveReport.results[0].verificationSource, null);
+  assert.equal(inconclusiveReport.results[0].lastDirectSuccessAt, "2026-09-07T12:00:00.000Z");
 });
 
 test("casino claim filters select either a UUID or a slug without an invalid mixed relation", () => {
@@ -329,10 +338,13 @@ test("claim selection follows canonical active MarketActivation and automation u
   const repository = readFileSync("lib/repositories/affiliate-route-health.repository.ts", "utf8");
   assert.match(repository, /prisma\.marketActivation\.findMany/);
   assert.match(repository, /product:\s*"CASINO"[\s\S]*desiredState:\s*"ACTIVE"[\s\S]*status:\s*"ACTIVE"/);
+  assert.match(repository, /version:\s*true[\s\S]*routeVerificationStatus:\s*true[\s\S]*routeLastCheckedAt:\s*true/);
   assert.doesNotMatch(repository, /productionEligible|workflowStatus|programme|program:/);
   const service = readFileSync("lib/services/affiliate-route-health.service.ts", "utf8");
   assert.match(service, /marketActivationRouteVerifier/);
   assert.match(service, /marketCode/);
+  assert.match(service, /verificationSource:\s*"DIRECT"/);
+  assert.match(service, /affiliate-route-health-report\.v2/);
   assert.doesNotMatch(service, /PartnerRouteService|partnerRouteService|productionEligible|workflowStatus/);
   const verifier = readFileSync("lib/market-activation/verifier.ts", "utf8");
   assert.match(verifier, /allowWwwEquivalentFinalHost:\s*true/);
@@ -344,5 +356,14 @@ test("claim selection follows canonical active MarketActivation and automation u
   assert.match(workflow, /gh issue list --state open/);
   assert.match(workflow, /gh issue edit/);
   assert.match(workflow, /gh issue close/);
+  assert.match(workflow, /affiliate-route-health-alert\.mjs/);
+  assert.match(workflow, /steps\.alert\.outputs\.notify/);
+  assert.doesNotMatch(workflow, /Updated by daily check/);
   assert.doesNotMatch(workflow, /trackingUrl|destinationUrl|portal/i);
+  const alert = readFileSync("scripts/affiliate-route-health-alert.mjs", "utf8");
+  assert.match(alert, /ROUTE_BROKEN/);
+  assert.match(alert, /EXTERNAL_CHALLENGE/);
+  assert.match(alert, /VERIFIER_INCONCLUSIVE/);
+  assert.match(alert, /verificationSource === "DIRECT"/);
+  assert.match(alert, /NO_ACTIVE_ROUTES_CANNOT_PROVE_INCIDENT_RECOVERY/);
 });
