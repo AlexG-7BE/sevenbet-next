@@ -21,13 +21,25 @@ export interface AffiliateRouteHealthResult {
   durationMs: number | null;
   redirectCount: number | null;
   finalHost: string | null;
+  verificationSource: "DIRECT" | null;
+  checkedAt: string;
+  lastDirectSuccessAt: string | null;
+  evidenceRevision: string;
 }
 
 function routeKey(claim: AffiliateRouteHealthClaim) {
   return `${claim.casinoSlug}:${claim.marketCode}:${claim.redirectSlug ?? "missing-redirect"}:${claim.activationId}`;
 }
 
-function unavailableResult(claim: AffiliateRouteHealthClaim, status: AffiliateRouteHealthStatus, reason: string): AffiliateRouteHealthResult {
+function lastPersistedDirectSuccess(claim: AffiliateRouteHealthClaim) {
+  return claim.persistedVerificationStatus === "HEALTHY" ? claim.persistedLastCheckedAt?.toISOString() ?? null : null;
+}
+
+function evidenceRevision(claim: AffiliateRouteHealthClaim) {
+  return `market-activation:${claim.activationId}:v${claim.activationVersion}`;
+}
+
+function unavailableResult(claim: AffiliateRouteHealthClaim, status: AffiliateRouteHealthStatus, reason: string, checkedAt: Date): AffiliateRouteHealthResult {
   return {
     routeKey: routeKey(claim),
     casinoId: claim.casinoId,
@@ -45,6 +57,10 @@ function unavailableResult(claim: AffiliateRouteHealthClaim, status: AffiliateRo
     durationMs: null,
     redirectCount: null,
     finalHost: null,
+    verificationSource: null,
+    checkedAt: checkedAt.toISOString(),
+    lastDirectSuccessAt: lastPersistedDirectSuccess(claim),
+    evidenceRevision: evidenceRevision(claim),
   };
 }
 
@@ -70,7 +86,7 @@ export class AffiliateRouteHealthService {
 
   private async checkClaim(claim: AffiliateRouteHealthClaim, now: Date): Promise<AffiliateRouteHealthResult> {
     if (!claim.offerId || !claim.trackingLinkId || !claim.redirectId || !claim.redirectSlug) {
-      return unavailableResult(claim, "BROKEN", "ACTIVE_ACTIVATION_RELATIONSHIP_MISSING");
+      return unavailableResult(claim, "BROKEN", "ACTIVE_ACTIVATION_RELATIONSHIP_MISSING", now);
     }
     try {
       const checked = await this.verifier.verify(claim.activationId, now);
@@ -91,9 +107,13 @@ export class AffiliateRouteHealthService {
         durationMs: checked.durationMs,
         redirectCount: checked.redirectCount,
         finalHost: checked.finalHost,
+        verificationSource: "DIRECT",
+        checkedAt: checked.checkedAt.toISOString(),
+        lastDirectSuccessAt: checked.status === "HEALTHY" ? checked.checkedAt.toISOString() : lastPersistedDirectSuccess(claim),
+        evidenceRevision: evidenceRevision(claim),
       };
     } catch {
-      return unavailableResult(claim, "DEGRADED", "ROUTE_VERIFICATION_INCONCLUSIVE");
+      return unavailableResult(claim, "DEGRADED", "ROUTE_VERIFICATION_INCONCLUSIVE", now);
     }
   }
 
@@ -110,7 +130,7 @@ export class AffiliateRouteHealthService {
     const summary = Object.fromEntries(statuses.map((status) => [status, results.filter((result) => result.status === status).length])) as Record<AffiliateRouteHealthStatus, number>;
     const healthy = results.every((result) => result.status === "HEALTHY");
     return {
-      authorityVersion: "affiliate-route-health-report.v1",
+      authorityVersion: "affiliate-route-health-report.v2",
       checkedAt: now.toISOString(),
       healthy,
       noActiveRoutes: results.length === 0,

@@ -25,6 +25,9 @@ jobs:
       HEALTH_ENDPOINT: https://b4gamble.com/api/internal/affiliate/route-health
       ALERT_TITLE: "[Production] Affiliate route health alert"
     steps:
+      - name: Check out monitor classifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Run secret-safe Production route check
         id: health
         shell: bash
@@ -36,56 +39,83 @@ jobs:
             "${HEALTH_ENDPOINT}")"
           curl_status="$?"
           set -e
-          if [[ "${curl_status}" -eq 0 && "${http_status}" == "200" ]] && jq -e '.ok == true and .healthy == true' route-health.json >/dev/null 2>&1; then
-            echo "healthy=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "healthy=false" >> "${GITHUB_OUTPUT}"
+          if [[ ! -s route-health.json ]]; then
+            printf '%s\n' '{"ok":false,"code":"MONITOR_RESPONSE_UNAVAILABLE"}' > route-health.json
           fi
+          echo "curl_status=${curl_status}" >> "${GITHUB_OUTPUT}"
           echo "http_status=${http_status}" >> "${GITHUB_OUTPUT}"
 
-      - name: Prepare actionable alert
-        if: steps.health.outputs.healthy != 'true'
+      - name: Read the current deduplicated issue
+        id: issue
         shell: bash
         run: |
-          {
-            echo "The daily first-party affiliate route health check requires attention."
-            echo
-            echo "HTTP status: ${{ steps.health.outputs.http_status }}"
-            echo
-            if jq -e '.results | type == "array"' route-health.json >/dev/null 2>&1; then
-              echo "| Status | Casino × GEO | Route | Reason |"
-              echo "|---|---|---|---|"
-              jq -r '.results[] | select(.status != "HEALTHY") | "| \(.status) | \(.casinoSlug) × \(.countryCode) | /r/\(.redirectSlug // "missing") | \(.reason) |"' route-health.json
-            else
-              echo "The endpoint did not return a valid safe health report. Check deployment configuration and the monitor token."
-            fi
-            echo
-            echo "Runbook: docs/06_Operations/Affiliate-Route-Health-Runbook.md"
-            echo
-            echo "Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          } > route-health.md
-
-      - name: Create or update one deduplicated GitHub issue
-        if: steps.health.outputs.healthy != 'true'
-        shell: bash
-        run: |
-          issue_number="$(gh issue list --state open --search "${ALERT_TITLE} in:title" --json number,title --jq ".[] | select(.title == \"${ALERT_TITLE}\") | .number" | head -n 1)"
+          set -euo pipefail
+          issue_json="$(gh issue list --state open --search "${ALERT_TITLE} in:title" --limit 100 --json number,title,body)"
+          issue_number="$(printf '%s' "${issue_json}" | jq -r --arg title "${ALERT_TITLE}" '[.[] | select(.title == $title)][0].number // empty')"
           if [[ -n "${issue_number}" ]]; then
-            gh issue edit "${issue_number}" --body-file route-health.md
-            gh issue comment "${issue_number}" --body "Updated by daily check ${GITHUB_RUN_ID}."
+            printf '%s' "${issue_json}" | jq -r --argjson number "${issue_number}" '.[] | select(.number == $number) | .body' > existing-issue.md
+            echo "open=true" >> "${GITHUB_OUTPUT}"
           else
-            gh issue create --title "${ALERT_TITLE}" --body-file route-health.md
+            printf '' > existing-issue.md
+            echo "open=false" >> "${GITHUB_OUTPUT}"
           fi
+          echo "number=${issue_number}" >> "${GITHUB_OUTPUT}"
 
-      - name: Close a recovered alert
-        if: steps.health.outputs.healthy == 'true'
+      - name: Classify evidence and prepare reconciliation
+        id: alert
         shell: bash
         run: |
-          issue_number="$(gh issue list --state open --search "${ALERT_TITLE} in:title" --json number,title --jq ".[] | select(.title == \"${ALERT_TITLE}\") | .number" | head -n 1)"
-          if [[ -n "${issue_number}" ]]; then
-            gh issue close "${issue_number}" --comment "Production affiliate routes recovered in daily check ${GITHUB_RUN_ID}."
-          fi
+          set -euo pipefail
+          node scripts/affiliate-route-health-alert.mjs \
+            --report route-health.json \
+            --existing-body existing-issue.md \
+            --issue-open "${{ steps.issue.outputs.open }}" \
+            --curl-status "${{ steps.health.outputs.curl_status }}" \
+            --http-status "${{ steps.health.outputs.http_status }}" \
+            --body route-health.md \
+            --comment route-health-comment.md \
+            --state route-health-state.json
+          echo "action=$(jq -r '.action' route-health-state.json)" >> "${GITHUB_OUTPUT}"
+          echo "notify=$(jq -r '.notify' route-health-state.json)" >> "${GITHUB_OUTPUT}"
+          echo "workflow_healthy=$(jq -r '.workflowHealthy' route-health-state.json)" >> "${GITHUB_OUTPUT}"
+          echo "body_changed=$(jq -r '.bodyChanged' route-health-state.json)" >> "${GITHUB_OUTPUT}"
+
+      - name: Reconcile one stateful GitHub issue
+        if: steps.alert.outputs.action != 'none'
+        shell: bash
+        run: |
+          set -euo pipefail
+          issue_number="${{ steps.issue.outputs.number }}"
+          case "${{ steps.alert.outputs.action }}" in
+            open)
+              gh issue create --title "${ALERT_TITLE}" --body-file route-health.md
+              ;;
+            update)
+              if [[ -z "${issue_number}" ]]; then
+                echo "Expected an open affiliate route alert issue." >&2
+                exit 1
+              fi
+              if [[ "${{ steps.alert.outputs.body_changed }}" == "true" ]]; then
+                gh issue edit "${issue_number}" --body-file route-health.md
+              fi
+              if [[ "${{ steps.alert.outputs.notify }}" == "true" ]]; then
+                gh issue comment "${issue_number}" --body-file route-health-comment.md
+              fi
+              ;;
+            close)
+              if [[ -z "${issue_number}" ]]; then
+                echo "Expected an open affiliate route alert issue." >&2
+                exit 1
+              fi
+              gh issue comment "${issue_number}" --body-file route-health-comment.md
+              gh issue close "${issue_number}"
+              ;;
+            *)
+              echo "Unexpected alert action: ${{ steps.alert.outputs.action }}" >&2
+              exit 1
+              ;;
+          esac
 
       - name: Fail after alerting
-        if: steps.health.outputs.healthy != 'true'
+        if: steps.alert.outputs.workflow_healthy != 'true'
         run: exit 1
