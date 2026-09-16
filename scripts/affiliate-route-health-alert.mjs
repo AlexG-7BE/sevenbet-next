@@ -4,14 +4,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const DIRECT_SUCCESS_FRESHNESS_MS = 7 * 24 * 60 * 60 * 1000;
-export const ALERT_STATE_MARKER = "affiliate-route-health-state";
-
-const routeFailureStates = new Set([
-  "BROKEN",
-  "EXPIRED",
-  "CROSS_GEO",
-  "ATTRIBUTION_FAILURE",
-]);
+export const ALERT_SIGNATURE_MARKER = "affiliate-route-health-action-signature";
 
 function record(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value : null;
@@ -37,66 +30,52 @@ function code(value) {
   return safe(value).replaceAll("`", "'");
 }
 
-export function classifyRouteResult(result) {
-  const item = record(result);
-  if (!item) return "VERIFIER_INCONCLUSIVE";
-  if (item.status === "HEALTHY") {
-    return item.verificationSource === "DIRECT" ? "HEALTHY" : "VERIFIER_INCONCLUSIVE";
-  }
-  if (item.status === "EXTERNAL_CHALLENGE") return "EXTERNAL_CHALLENGE";
-  if (item.status === "DEGRADED") return "VERIFIER_INCONCLUSIVE";
-  if (routeFailureStates.has(item.status)) return "ROUTE_BROKEN";
-  return "VERIFIER_INCONCLUSIVE";
-}
-
-export function directSuccessFreshness(lastDirectSuccessAt, checkedAt) {
+export function describeDirectSuccessFreshness(lastDirectSuccessAt, checkedAt) {
   const success = iso(lastDirectSuccessAt);
   const check = iso(checkedAt);
-  if (!success || !check) return "UNKNOWN";
+  if (!success) return "not recorded";
+  if (!check) return "age unavailable";
   const age = Date.parse(check) - Date.parse(success);
-  if (age < 0) return "UNKNOWN";
-  return age <= DIRECT_SUCCESS_FRESHNESS_MS ? "CURRENT" : "STALE";
+  if (age < 0) return "age unavailable";
+  const totalHours = Math.floor(age / (60 * 60 * 1000));
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+  const ageText = days > 0 ? `${days}d ${hours}h ago` : `${hours}h ago`;
+  return `${ageText} (${age <= DIRECT_SUCCESS_FRESHNESS_MS ? "within" : "older than"} the 7-day threshold)`;
 }
 
 function normalizedResult(result, reportCheckedAt) {
   const item = record(result) ?? {};
-  const alertState = classifyRouteResult(item);
+  const currentEvidence = record(item.currentEvidence) ?? {};
   const checkedAt = iso(item.checkedAt) ?? reportCheckedAt;
-  const lastDirectSuccessAt = alertState === "HEALTHY"
-    ? checkedAt
-    : iso(item.lastDirectSuccessAt);
+  const lastDirectSuccessAt = iso(item.lastDirectSuccessAt);
+  const actionRequired = item.actionRequired === true;
   return {
     routeKey: safe(item.routeKey, `unidentified:${safe(item.casinoSlug)}:${safe(item.marketCode)}`),
     casinoSlug: safe(item.casinoSlug),
     countryCode: safe(item.countryCode),
     marketCode: safe(item.marketCode),
     redirectSlug: typeof item.redirectSlug === "string" && item.redirectSlug ? item.redirectSlug : null,
-    verifierStatus: safe(item.status),
-    reason: safe(item.reason, "VERIFIER_RESPONSE_INCOMPLETE"),
-    alertState,
-    verificationSource: item.verificationSource === "DIRECT" ? "DIRECT" : null,
     checkedAt,
+    actionRequired,
+    actionReason: actionRequired
+      ? safe(item.actionReason, "The Production monitor requires action for this route.")
+      : null,
     lastDirectSuccessAt,
-    freshness: directSuccessFreshness(lastDirectSuccessAt, reportCheckedAt),
+    freshness: describeDirectSuccessFreshness(lastDirectSuccessAt, reportCheckedAt),
+    currentEvidence: {
+      verifierStatus: safe(currentEvidence.verifierStatus, "INCONCLUSIVE"),
+      reason: safe(currentEvidence.reason, "VERIFIER_RESPONSE_INCOMPLETE"),
+      method: currentEvidence.method === "HEAD" || currentEvidence.method === "GET" ? currentEvidence.method : null,
+      statusCode: typeof currentEvidence.statusCode === "number" && Number.isFinite(currentEvidence.statusCode)
+        ? currentEvidence.statusCode
+        : null,
+      finalHost: typeof currentEvidence.finalHost === "string" && currentEvidence.finalHost.trim()
+        ? currentEvidence.finalHost.trim()
+        : null,
+      verificationSource: currentEvidence.verificationSource === "DIRECT" ? "DIRECT" : null,
+    },
     evidenceRevision: safe(item.evidenceRevision),
-  };
-}
-
-function syntheticRow(reason, checkedAt) {
-  return {
-    routeKey: "monitor:production-endpoint",
-    casinoSlug: "MONITOR",
-    countryCode: "GLOBAL",
-    marketCode: "GLOBAL",
-    redirectSlug: null,
-    verifierStatus: "INCONCLUSIVE",
-    reason,
-    alertState: "VERIFIER_INCONCLUSIVE",
-    verificationSource: null,
-    checkedAt,
-    lastDirectSuccessAt: null,
-    freshness: "UNKNOWN",
-    evidenceRevision: "UNKNOWN",
   };
 }
 
@@ -106,31 +85,46 @@ function reportValidation(report, context) {
   if (!payload) return { valid: false, reason: "REPORT_NOT_JSON_OBJECT" };
   if (![200, 503].includes(Number(context.httpStatus))) return { valid: false, reason: "PRODUCTION_ENDPOINT_HTTP_STATUS_UNEXPECTED" };
   if (payload.ok !== true) return { valid: false, reason: "PRODUCTION_ENDPOINT_DID_NOT_RETURN_OK_REPORT" };
+  if (payload.authorityVersion !== "affiliate-route-health-report.v3") return { valid: false, reason: "PRODUCTION_REPORT_CONTRACT_UNEXPECTED" };
   if (!Array.isArray(payload.results)) return { valid: false, reason: "PRODUCTION_REPORT_RESULTS_MISSING" };
   if (!iso(payload.checkedAt)) return { valid: false, reason: "PRODUCTION_REPORT_CHECK_TIME_INVALID" };
+  if (typeof payload.actionRequired !== "boolean") return { valid: false, reason: "PRODUCTION_REPORT_DECISION_MISSING" };
+  if (payload.results.some((item) => {
+    const route = record(item);
+    return !route || typeof route.actionRequired !== "boolean" || !record(route.currentEvidence);
+  })) return { valid: false, reason: "PRODUCTION_REPORT_ROUTE_DECISION_INVALID" };
+
+  const summary = record(payload.summary);
+  const routesRequiringAction = payload.results.filter((item) => record(item)?.actionRequired === true).length;
+  if (!summary
+    || summary.totalRoutes !== payload.results.length
+    || summary.routesRequiringAction !== routesRequiringAction
+    || summary.routesNotRequiringAction !== payload.results.length - routesRequiringAction
+    || payload.actionRequired !== (routesRequiringAction > 0)) {
+    return { valid: false, reason: "PRODUCTION_REPORT_DECISION_CONTRADICTION" };
+  }
+  if (Number(context.httpStatus) !== (payload.actionRequired ? 503 : 200)) {
+    return { valid: false, reason: "PRODUCTION_REPORT_HTTP_DECISION_CONTRADICTION" };
+  }
   return { valid: true, reason: null };
 }
 
-function stateSignature(rows) {
-  const state = rows
-    .map((row) => ({
-      routeKey: row.routeKey,
-      alertState: row.alertState,
-      freshness: row.freshness,
-    }))
+function actionSignature(rows) {
+  const actionable = rows
+    .filter((row) => row.actionRequired)
+    .map((row) => ({ routeKey: row.routeKey, actionReason: row.actionReason }))
     .sort((left, right) => left.routeKey.localeCompare(right.routeKey));
-  return createHash("sha256").update(JSON.stringify(state)).digest("hex");
+  return createHash("sha256").update(JSON.stringify(actionable)).digest("hex");
 }
 
-export function extractStateSignature(body) {
+export function extractActionSignature(body) {
   if (typeof body !== "string") return null;
-  return body.match(/<!-- affiliate-route-health-state: ([0-9a-f]{64}) -->/)?.[1] ?? null;
+  return body.match(/<!-- affiliate-route-health-action-signature: ([0-9a-f]{64}) -->/)?.[1] ?? null;
 }
 
-function stateCounts(rows) {
-  const counts = { ROUTE_BROKEN: 0, EXTERNAL_CHALLENGE: 0, VERIFIER_INCONCLUSIVE: 0, HEALTHY: 0 };
-  for (const row of rows) counts[row.alertState] += 1;
-  return counts;
+export function issueLifecycleAction(issueOpen, actionRequired) {
+  if (actionRequired) return issueOpen ? "update" : "open";
+  return issueOpen ? "close" : "none";
 }
 
 function workflowLink(context) {
@@ -139,60 +133,113 @@ function workflowLink(context) {
     : `[run ${markdown(context.runId)}](${context.workflowUrl})`;
 }
 
+function diagnosticEvidence(row) {
+  const evidence = row.currentEvidence;
+  return [
+    `verifier=${evidence.verifierStatus}`,
+    `reason=${evidence.reason}`,
+    evidence.statusCode === null ? null : `HTTP=${evidence.statusCode}`,
+    evidence.finalHost ? `finalHost=${evidence.finalHost}` : null,
+    evidence.method ? `method=${evidence.method}` : null,
+  ].filter(Boolean).join("; ");
+}
+
+function routeLabel(row) {
+  return row.redirectSlug ? `/r/${markdown(row.redirectSlug)}` : "N/A";
+}
+
+function diagnosticSummary(rows) {
+  const counts = new Map();
+  for (const row of rows) {
+    const key = `${row.currentEvidence.verifierStatus}\u0000${row.currentEvidence.reason}`;
+    const current = counts.get(key) ?? {
+      verifierStatus: row.currentEvidence.verifierStatus,
+      reason: row.currentEvidence.reason,
+      count: 0,
+    };
+    current.count += 1;
+    counts.set(key, current);
+  }
+  return [...counts.values()].sort((left, right) => (
+    left.verifierStatus.localeCompare(right.verifierStatus) || left.reason.localeCompare(right.reason)
+  ));
+}
+
 function renderBody({ report, rows, signature, context, checkedAt, validation }) {
   const payload = record(report) ?? {};
-  const counts = stateCounts(rows);
   const productionSha = /^[0-9a-f]{40}$/.test(String(payload.productionCommitSha ?? ""))
     ? String(payload.productionCommitSha)
     : "UNKNOWN";
   const workflowSha = /^[0-9a-f]{40}$/.test(String(context.workflowSha ?? ""))
     ? String(context.workflowSha)
     : "UNKNOWN";
+  const actionable = rows.filter((row) => row.actionRequired);
+  const nonActionable = rows.filter((row) => !row.actionRequired);
+  const diagnosticOnly = nonActionable.filter((row) => !(
+    row.currentEvidence.verifierStatus === "HEALTHY"
+    && row.currentEvidence.verificationSource === "DIRECT"
+  ));
+  const diagnosticCounts = diagnosticSummary(diagnosticOnly);
   const lines = [
     "# Production affiliate route health",
     "",
-    "The first-party Production check requires attention. This issue is operational evidence only and does not change commercial authority or route data.",
+    "This issue contains only routes for which the Production monitor reports `actionRequired=true`. MarketActivation remains the sole route authority; monitoring does not change route or commercial data.",
     "",
     `- Check time: \`${code(checkedAt)}\``,
     `- Production SHA: \`${productionSha}\``,
     `- Workflow source SHA: \`${workflowSha}\``,
     `- Workflow run ID: \`${code(context.runId)}\` (${workflowLink(context)})`,
     `- Endpoint HTTP status: \`${code(context.httpStatus)}\``,
-    `- Report authority: \`${code(payload.authorityVersion)}\``,
+    `- Report contract: \`${code(payload.authorityVersion)}\``,
     `- Report validity: \`${validation.valid ? "VALID" : validation.reason}\``,
-    `- State counts: \`ROUTE_BROKEN=${counts.ROUTE_BROKEN}\`, \`EXTERNAL_CHALLENGE=${counts.EXTERNAL_CHALLENGE}\`, \`VERIFIER_INCONCLUSIVE=${counts.VERIFIER_INCONCLUSIVE}\`, \`HEALTHY=${counts.HEALTHY}\``,
+    `- Routes: \`total=${rows.length}\`, \`actionRequired=${actionable.length}\`, \`noActionRequired=${nonActionable.length}\``,
     "- Direct-success freshness threshold: `7 days`",
     "",
-    "| Monitor state | Casino × market | Route | Verifier result | Reason | Last direct success | Freshness | Evidence revision |",
-    "|---|---|---|---|---|---|---|---|",
-    ...rows.map((row) => `| ${row.alertState} | ${markdown(row.casinoSlug)} × ${markdown(row.marketCode)} | ${row.redirectSlug ? `/r/${markdown(row.redirectSlug)}` : "N/A"} | ${markdown(row.verifierStatus)} | ${markdown(row.reason)} | ${markdown(row.lastDirectSuccessAt ?? "UNKNOWN")} | ${row.freshness} | ${markdown(row.evidenceRevision)} |`),
+    "## Actionable routes",
     "",
-    "Interpretation:",
-    "",
-    "- `ROUTE_BROKEN`: direct evidence identifies a material route failure.",
-    "- `EXTERNAL_CHALLENGE`: the upstream returned an identified bot/CDN challenge; this does not prove the route is broken.",
-    "- `VERIFIER_INCONCLUSIVE`: the verifier cannot establish route state from current evidence.",
-    "- `HEALTHY`: the current route completed a direct check successfully.",
-    "",
-    "The workflow may close this issue only after every reported material route is `HEALTHY` with `verificationSource=DIRECT`. A stored or Founder override cannot satisfy that recovery gate by itself.",
+  ];
+  if (actionable.length === 0) {
+    lines.push("None.", "");
+  } else {
+    lines.push(
+      "| Casino × GEO | Route | Why action is required | Current diagnostic evidence | Last direct success | Age / freshness | Evidence revision |",
+      "|---|---|---|---|---|---|---|",
+      ...actionable.map((row) => `| ${markdown(row.casinoSlug)} × ${markdown(row.marketCode)} | ${routeLabel(row)} | ${markdown(row.actionReason)} | ${markdown(diagnosticEvidence(row))} | ${markdown(row.lastDirectSuccessAt ?? "not recorded")} | ${markdown(row.freshness)} | ${markdown(row.evidenceRevision)} |`),
+      "",
+    );
+  }
+  if (diagnosticCounts.length > 0) {
+    lines.push(
+      "## Compact non-actionable diagnostic summary",
+      "",
+      "These observations do not keep the issue open because each route reports `actionRequired=false`.",
+      "",
+      "| Verifier fact | Diagnostic reason | Route count |",
+      "|---|---|---|",
+      ...diagnosticCounts.map((item) => `| ${markdown(item.verifierStatus)} | ${markdown(item.reason)} | ${item.count} |`),
+      "",
+    );
+  }
+  lines.push(
+    "Verifier result codes and evidence details are diagnostic facts only. The Issue lifecycle consumes only each route's `actionRequired` boolean.",
     "",
     "Runbook: `docs/06_Operations/Affiliate-Route-Health-Runbook.md`",
     "",
-    `<!-- ${ALERT_STATE_MARKER}: ${signature} -->`,
+    `<!-- ${ALERT_SIGNATURE_MARKER}: ${signature} -->`,
     "",
-  ];
+  );
   return lines.join("\n");
 }
 
-function renderComment(rows, signature, context, checkedAt) {
-  const counts = stateCounts(rows);
+function renderActionChangeComment(rows, signature, context, checkedAt) {
+  const actionable = rows.filter((row) => row.actionRequired);
   return [
-    "Affiliate route monitor state, affected set, or freshness threshold changed.",
+    "The actionable route set or an actionable reason changed.",
     "",
     `- Check time: \`${code(checkedAt)}\``,
     `- Workflow run ID: \`${code(context.runId)}\` (${workflowLink(context)})`,
-    `- States: \`ROUTE_BROKEN=${counts.ROUTE_BROKEN}\`, \`EXTERNAL_CHALLENGE=${counts.EXTERNAL_CHALLENGE}\`, \`VERIFIER_INCONCLUSIVE=${counts.VERIFIER_INCONCLUSIVE}\`, \`HEALTHY=${counts.HEALTHY}\``,
-    `- State signature: \`${signature}\``,
+    `- Routes requiring action: \`${actionable.length}\``,
+    `- Action signature: \`${signature}\``,
     "",
   ].join("\n");
 }
@@ -203,9 +250,9 @@ function renderRecoveryComment(rows, context, reportCheckedAt) {
     ? String(payload.productionCommitSha)
     : "UNKNOWN";
   return [
-    "Every material route in the current Production report completed a direct health check. The monitor is closing this alert.",
+    "The current Production report contains zero routes with `actionRequired=true`. The monitor is closing this issue automatically.",
     "",
-    `- Directly healthy routes: \`${rows.length}\``,
+    `- Routes checked: \`${rows.length}\``,
     `- Check time: \`${code(reportCheckedAt)}\``,
     `- Production SHA: \`${productionSha}\``,
     `- Workflow run ID: \`${code(context.runId)}\` (${workflowLink(context)})`,
@@ -217,43 +264,24 @@ export function evaluateAffiliateRouteAlert({ report, context, issueOpen = false
   const validation = reportValidation(report, context);
   const payload = record(report) ?? {};
   const checkedAt = validation.valid ? iso(payload.checkedAt) : iso(context.checkedAt) ?? new Date().toISOString();
-  let rows = validation.valid
+  const rows = validation.valid
     ? payload.results.map((result) => normalizedResult(result, checkedAt))
-    : [syntheticRow(validation.reason, checkedAt)];
-
-  const emptyHealthy = validation.valid
-    && payload.results.length === 0
-    && payload.healthy === true
-    && payload.noActiveRoutes === true;
-  const reportContradiction = validation.valid && (
-    (payload.results.length === 0) !== (payload.noActiveRoutes === true)
-    || (payload.results.length > 0 && rows.every((row) => row.alertState === "HEALTHY") && payload.healthy !== true)
-    || rows.some((row) => row.alertState !== "HEALTHY") && payload.healthy === true
-  );
-  if (reportContradiction) rows = [...rows, syntheticRow("PRODUCTION_REPORT_CONTRADICTION", checkedAt)];
-  if (issueOpen && emptyHealthy) rows = [syntheticRow("NO_ACTIVE_ROUTES_CANNOT_PROVE_INCIDENT_RECOVERY", checkedAt)];
-
-  const directlyHealthy = validation.valid
-    && !reportContradiction
-    && payload.results.length > 0
-    && rows.every((row) => row.alertState === "HEALTHY" && row.verificationSource === "DIRECT");
-  const workflowHealthy = directlyHealthy || (emptyHealthy && !issueOpen && !reportContradiction);
-  const action = issueOpen
-    ? directlyHealthy ? "close" : "update"
-    : workflowHealthy ? "none" : "open";
-  const signature = stateSignature(rows);
-  const previousSignature = extractStateSignature(existingBody);
+    : [];
+  const actionRequired = validation.valid ? rows.some((row) => row.actionRequired) : null;
+  const action = validation.valid ? issueLifecycleAction(issueOpen, actionRequired) : "none";
+  const signature = actionSignature(rows);
+  const previousSignature = extractActionSignature(existingBody);
   const notify = action === "update" && previousSignature !== signature;
   const body = renderBody({ report, rows, signature, context, checkedAt, validation });
   const comment = action === "close"
     ? renderRecoveryComment(rows, { ...context, report }, checkedAt)
-    : renderComment(rows, signature, context, checkedAt);
+    : renderActionChangeComment(rows, signature, context, checkedAt);
 
   return {
     action,
+    actionRequired,
     notify,
-    workflowHealthy,
-    directlyHealthy,
+    reportValid: validation.valid,
     bodyChanged: existingBody.replaceAll("\r\n", "\n") !== body,
     signature,
     previousSignature,
@@ -301,9 +329,9 @@ function runCli() {
   writeFileSync(commentPath, result.comment);
   writeFileSync(statePath, `${JSON.stringify({
     action: result.action,
+    actionRequired: result.actionRequired,
     notify: result.notify,
-    workflowHealthy: result.workflowHealthy,
-    directlyHealthy: result.directlyHealthy,
+    reportValid: result.reportValid,
     bodyChanged: result.bodyChanged,
     signature: result.signature,
   }, null, 2)}\n`);

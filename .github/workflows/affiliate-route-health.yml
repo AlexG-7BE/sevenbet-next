@@ -61,7 +61,7 @@ jobs:
           fi
           echo "number=${issue_number}" >> "${GITHUB_OUTPUT}"
 
-      - name: Classify evidence and prepare reconciliation
+      - name: Read actionRequired decisions and prepare reconciliation
         id: alert
         shell: bash
         run: |
@@ -77,7 +77,8 @@ jobs:
             --state route-health-state.json
           echo "action=$(jq -r '.action' route-health-state.json)" >> "${GITHUB_OUTPUT}"
           echo "notify=$(jq -r '.notify' route-health-state.json)" >> "${GITHUB_OUTPUT}"
-          echo "workflow_healthy=$(jq -r '.workflowHealthy' route-health-state.json)" >> "${GITHUB_OUTPUT}"
+          echo "action_required=$(jq -r '.actionRequired' route-health-state.json)" >> "${GITHUB_OUTPUT}"
+          echo "report_valid=$(jq -r '.reportValid' route-health-state.json)" >> "${GITHUB_OUTPUT}"
           echo "body_changed=$(jq -r '.bodyChanged' route-health-state.json)" >> "${GITHUB_OUTPUT}"
 
       - name: Reconcile one stateful GitHub issue
@@ -116,6 +117,6 @@ jobs:
               ;;
           esac
 
-      - name: Fail after alerting
-        if: steps.alert.outputs.workflow_healthy != 'true'
+      - name: Fail on invalid report or actionable routes
+        if: steps.alert.outputs.report_valid != 'true' || steps.alert.outputs.action_required == 'true'
         run: exit 1

@@ -1,104 +1,131 @@
 # Affiliate Route Health Runbook
 
-**DETECTED / PRODUCTION — 3 September 2026:** the checker, protected endpoint
-and deduplicated workflow are deployed and final manual dispatch passed. See the
+**DETECTED / PRODUCTION HISTORY — 3 September 2026:** the protected checker,
+endpoint and deduplicated workflow were deployed and verified. See the
 [commercial-platform completion release record](Commercial-Platform-Code-Completion-Release-Record-2026-09-03.md).
 
-**PROPOSED / NOT YET PRODUCTION — 16 September 2026:** the companion monitoring
-change classifies operational evidence into four public monitor states, records
-the checked Production commit, and suppresses unchanged issue comments. It does
-not change a route, activation or commercial decision. These semantics become
-Production facts only after Founder-authorised merge and deployment.
+**DETECTED / PRODUCTION HISTORY — 16 September 2026:** PR #299 deployed the
+stateful evidence and comment-deduplication baseline. The minimal model below
+keeps that evidence quality while replacing its public monitor-state taxonomy
+with one boolean decision. This implementation remains subject to ordinary PR,
+CI, Founder review, merge and deployment.
 
-## Scope
+## Production model
 
-`npm run affiliate:health` checks only canonical Casino `MarketActivation`
-records whose desired and reconciled state are both `ACTIVE`. RFC-042 remains
-the sole route authority: the monitor does not select routes from deprecated
-`AffiliateTrackingLinkCountry.productionEligible` compatibility state and does
-not re-project programme, offer, workflow, link or redirect lifecycle fields.
-It never changes activation, route, evidence, jurisdiction or policy state.
+The operational model has three deliberately separate roles:
+
+```text
+MarketActivation = sole commercial and route authority
+Verifier         = technical observation only
+Monitor          = actionRequired: true | false
+```
+
+Everything other than `actionRequired` is diagnostic evidence. The monitor
+does not activate, deactivate, approve, reject or override a route. It does not
+write `MarketActivation`, Affiliate, Partner, Casino or Production data.
+
+`npm run affiliate:health` selects only canonical Casino `MarketActivation`
+records whose desired and reconciled states are both `ACTIVE`. It does not
+select routes from CRM, Affiliate lifecycle values, country projections,
+`productionEligible` compatibility data or operator-specific rules.
 
 Supported filters:
 
 - all routes: `npm run affiliate:health`;
 - one Casino: `npm run affiliate:health -- --casino <id-or-slug>`;
-- one GEO: `npm run affiliate:health -- --geo <country-code>`;
-- JSON: add `--json`.
+- one GEO: `npm run affiliate:health -- --geo <country-or-subdivision>`; and
+- JSON output: add `--json`.
 
-No active routes is a healthy empty result. A real failed route produces a non-zero exit.
+## One monitoring decision
 
-## Checks and states
+Every selected material route receives exactly one decision:
 
-Each claim is passed to the existing RFC-042 `MarketActivation` route verifier,
-which validates HTTPS/public-network targets, finite manual redirects, HTTP
-status, the exact market/operator host and path expectation, required
-attribution-key presence and bounded terminal content. It uses an ordinary
-visitor-shaped GET. The shared low-level checker also retries a synthetic HEAD
-`404`, `405` or `501` with that GET when invoked by a HEAD-based caller. A real
-GET error or disguised 200 error page still fails closed. Canonical `www` and
-non-`www` forms of the same expected operator host are equivalent.
+| Current evidence | Historical direct success | `actionRequired` |
+| --- | --- | --- |
+| Current direct success | Current check becomes the direct-success timestamp | `false` |
+| Confirmed material defect | Any | `true` |
+| Inconclusive transport, timeout or identified challenge | Within 7 days | `false` |
+| Inconclusive check | Older than 7 days | `true` |
+| Inconclusive check | Never directly verified | `true` |
 
-- `HEALTHY`: safe finite route reached the expected destination;
-- `DEGRADED`: an unusual non-error response or inconclusive verifier transport needs review;
-- `EXTERNAL_CHALLENGE`: an identified CDN/bot challenge, not automatically a broken relationship;
-- `BROKEN`: unsafe URL, missing canonical relationship, loop, 4xx/5xx, or terminal error page;
-- `EXPIRED`: route authority or HTTP 410 expired;
-- `CROSS_GEO`: final host/path differs from the exact market expectation;
-- `ATTRIBUTION_FAILURE`: required attribution key is absent.
+The freshness threshold is one universal, inclusive seven-day window. It has
+no Casino, operator, Partner or GEO exception.
 
-Outputs contain safe route IDs, Casino/GEO, status, reason, and final hostname only. They omit raw tracking URLs, query values, credentials, and visitor data.
+Confirmed material defects include missing canonical relationships, unsafe or
+invalid targets, non-challenge HTTP failures, expiry, wrong destination/GEO,
+missing attribution and terminal error pages. Inconclusive evidence includes
+network/transport failure, timeout, identified CDN/bot challenge and challenge
+responses such as HTTP 401, 403 or 429. The detailed verifier result remains
+visible but does not become a second monitor decision.
 
-The GitHub alert layer deliberately collapses those detailed verifier results
-into four incident states:
+The monitor uses the existing `MarketActivation` direct-success evidence. A
+successful current direct check reports its actual check time as
+`lastDirectSuccessAt`. No Founder or stored override is relabelled as a direct
+success.
 
-- `HEALTHY`: the current material route has `verificationSource=DIRECT` and the
-  direct verifier returned `HEALTHY`;
-- `EXTERNAL_CHALLENGE`: the direct request reached an identified CDN/bot
-  challenge, so the relationship is not labelled broken without evidence;
-- `VERIFIER_INCONCLUSIVE`: transport, endpoint, malformed-report or verifier
-  evidence cannot establish route state; and
-- `ROUTE_BROKEN`: a material route has a direct or canonical failure such as a
-  missing relationship, HTTP failure, expiry, wrong GEO or attribution loss.
+## Report contract
 
-Each v2 report includes the direct check time, last persisted direct success
-when available, and exact `MarketActivation` identity/version as an evidence
-revision. The alert evaluates direct-success freshness against the seven-day
-operational threshold. Crossing that threshold is a state change for notification
-deduplication; it does not rewrite canonical evidence.
+The protected Production report exposes route identity, Casino, country and
+exact market, controlled `/r` slug, check time, `actionRequired`, a plain-text
+action reason when needed, `lastDirectSuccessAt`, current safe verifier
+evidence and the exact `MarketActivation` evidence revision. It omits raw
+tracking URLs, query values, credentials and visitor data.
 
-## Daily workflow and alerts
+The report aggregate contains:
 
-`.github/workflows/affiliate-route-health.yml` runs daily at 05:37 UTC and may be dispatched manually. It calls the bearer-protected Production endpoint `/api/internal/affiliate/route-health` using the same `AFFILIATE_HEALTH_MONITOR_TOKEN` held in GitHub Actions and Vercel Production secret stores.
+- `actionRequired=true` only when at least one material route has
+  `actionRequired=true`;
+- total route count;
+- count requiring action; and
+- count not requiring action.
 
-On failure the workflow opens or updates one issue titled `[Production] Affiliate
-route health alert`, then fails the workflow. The issue body records Production
-SHA, workflow source SHA and run ID, check time, evidence revision, last direct
-success and freshness when available. The body may be refreshed on every run,
-but a comment is added only when the state signature changes because the
-classification, affected route set or freshness band changed. Evidence detail
-and revision updates still refresh the body without producing comment noise.
-Identical reruns therefore do not generate identical comments.
+Verifier status counts may remain as diagnostics. They do not control the
+aggregate or Issue lifecycle.
 
-An open incident is closed automatically only when a non-empty current report
-contains exclusively directly verified `HEALTHY` material routes. A stored state,
-manual/Founder override, malformed result or empty route set cannot independently
-close an existing issue. An empty canonical route set remains a valid quiet
-result only when there is no open incident to erase. The monitor never changes
-commercial records.
+## Daily workflow and one Issue
+
+`.github/workflows/affiliate-route-health.yml` runs daily at 05:37 UTC and may
+be dispatched manually. It calls the bearer-protected Production endpoint
+`/api/internal/affiliate/route-health` with the existing monitor token.
+
+For every valid report, the complete Issue lifecycle is:
+
+```text
+one or more routes with actionRequired=true -> open or update one deduplicated Issue
+zero routes with actionRequired=true        -> close that Issue automatically if open
+```
+
+The Issue is titled `[Production] Affiliate route health alert`. Its body lists
+actionable routes first with Casino × GEO, controlled route, action reason,
+current safe diagnostic evidence, last direct success, age/freshness and
+evidence revision. A compact non-actionable diagnostic section may follow.
+Diagnostic-only noise is never presented as an incident.
+
+A comment is added only when the actionable route set changes, an actionable
+reason changes, or the Issue closes on recovery. Check time, run ID, evidence
+revision, response time, final-host formatting and other diagnostic-only
+changes may refresh the body without creating comment noise. When every route
+has `actionRequired=false`, the Issue closes even if a current check is
+inconclusive but a direct success remains inside the seven-day window.
+
+An unreachable or malformed Production report cannot prove either boolean
+outcome. The workflow therefore fails without reconciling the Issue and waits
+for the next valid report; it does not invent a Casino-route decision.
 
 ## Response
 
-1. Open the workflow run and deduplicated issue.
-2. Identify Casino × GEO × route and failure class.
-3. Re-run the scoped CLI command.
-4. Inspect current partner portal status and evidence without copying secrets into GitHub.
-5. Correct or expire the governed route through the normal `MarketActivation`
-   controller workflow; do not weaken jurisdiction, safe-URL, relational,
-   attribution or trusted-GEO controls.
-6. Re-run health. A workflow run closes the alert only after all current material
-   routes pass the direct recovery gate.
+1. Open the workflow run and the single deduplicated Issue.
+2. Review routes with `actionRequired=true` first.
+3. Re-run the scoped CLI command when useful.
+4. Inspect current Partner evidence without copying secrets into GitHub.
+5. Correct or expire the governed route only through the separately authorised
+   `MarketActivation` control path; never through monitoring.
+6. Re-run health. A valid report with zero actionable routes closes the Issue
+   automatically.
 
 ## Rollback
 
-Disable the scheduled workflow only if it is itself causing harm; leave the protected endpoint secret in place. A code rollback removes checker/endpoint/workflow changes but does not alter affiliate records. Rotate the monitoring token in both stores if exposure is suspected.
+An application revert restores the previous monitor interpretation without
+changing any route or commercial record. Disable the scheduled workflow only
+if it is itself causing harm. Rotate the monitor token in both secret stores if
+exposure is suspected; never print or copy its value into an Issue or log.

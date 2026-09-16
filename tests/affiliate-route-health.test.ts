@@ -5,7 +5,7 @@ import test from "node:test";
 import { checkAffiliateRouteHttp } from "../lib/affiliate-health/checker";
 import { isPublicAddress } from "../lib/affiliate-health/public-network-url";
 import { affiliateRouteHealthCasinoFilter } from "../lib/repositories/affiliate-route-health.repository";
-import { AffiliateRouteHealthService } from "../lib/services/affiliate-route-health.service";
+import { affiliateRouteActionDecision, AffiliateRouteHealthService } from "../lib/services/affiliate-route-health.service";
 
 const noNetworkValidation = async () => undefined;
 const expectation = {
@@ -36,6 +36,106 @@ const canonicalClaim = {
   persistedVerificationStatus: "HEALTHY",
   persistedLastCheckedAt: new Date("2026-09-07T12:00:00.000Z"),
 };
+
+function actionDecision(overrides: Partial<Parameters<typeof affiliateRouteActionDecision>[0]> = {}) {
+  return affiliateRouteActionDecision({
+    verifierStatus: "HEALTHY",
+    reason: "GET_FALLBACK_OK",
+    verificationSource: "DIRECT",
+    checkedAt: "2026-09-16T12:00:00.000Z",
+    lastDirectSuccessAt: "2026-09-16T12:00:00.000Z",
+    ...overrides,
+  });
+}
+
+test("current direct success requires no action", () => {
+  assert.deepEqual(actionDecision(), { actionRequired: false, actionReason: null });
+});
+
+test("confirmed non-challenge HTTP failure requires action", () => {
+  const decision = actionDecision({ verifierStatus: "BROKEN", reason: "HTTP_500" });
+  assert.equal(decision.actionRequired, true);
+  assert.match(decision.actionReason ?? "", /Confirmed material route defect: HTTP_500/);
+});
+
+test("NETWORK_ERROR with a direct success one day ago requires no action", () => {
+  const decision = actionDecision({
+    verifierStatus: "BROKEN",
+    reason: "NETWORK_ERROR",
+    verificationSource: null,
+    lastDirectSuccessAt: "2026-09-15T12:00:00.000Z",
+  });
+  assert.deepEqual(decision, { actionRequired: false, actionReason: null });
+});
+
+test("TIMEOUT with a direct success six days ago requires no action", () => {
+  const decision = actionDecision({
+    verifierStatus: "BROKEN",
+    reason: "TIMEOUT",
+    verificationSource: null,
+    lastDirectSuccessAt: "2026-09-10T12:00:00.000Z",
+  });
+  assert.deepEqual(decision, { actionRequired: false, actionReason: null });
+});
+
+test("identified HTTP 403 challenge with a direct success five days ago requires no action", () => {
+  const decision = actionDecision({
+    verifierStatus: "EXTERNAL_CHALLENGE",
+    reason: "HTTP_403",
+    lastDirectSuccessAt: "2026-09-11T12:00:00.000Z",
+  });
+  assert.deepEqual(decision, { actionRequired: false, actionReason: null });
+});
+
+test("an inconclusive check requires action only after the universal seven-day window", () => {
+  const atThreshold = actionDecision({
+    verifierStatus: "DEGRADED",
+    reason: "ROUTE_VERIFICATION_INCONCLUSIVE",
+    verificationSource: null,
+    lastDirectSuccessAt: "2026-09-09T12:00:00.000Z",
+  });
+  const older = actionDecision({
+    verifierStatus: "DEGRADED",
+    reason: "ROUTE_VERIFICATION_INCONCLUSIVE",
+    verificationSource: null,
+    lastDirectSuccessAt: "2026-09-09T11:59:59.999Z",
+  });
+  assert.equal(atThreshold.actionRequired, false);
+  assert.equal(older.actionRequired, true);
+  assert.match(older.actionReason ?? "", /7-day freshness threshold/);
+});
+
+test("an inconclusive check with no historical direct success requires action", () => {
+  const decision = actionDecision({
+    verifierStatus: "DEGRADED",
+    reason: "ROUTE_VERIFICATION_INCONCLUSIVE",
+    verificationSource: null,
+    lastDirectSuccessAt: null,
+  });
+  assert.equal(decision.actionRequired, true);
+  assert.match(decision.actionReason ?? "", /No direct successful verification is recorded/);
+});
+
+test("wrong destination, attribution failure, and expiry always require action", () => {
+  for (const [verifierStatus, reason] of [
+    ["CROSS_GEO", "UNEXPECTED_FINAL_DESTINATION"],
+    ["ATTRIBUTION_FAILURE", "REQUIRED_ATTRIBUTION_PARAMETER_MISSING"],
+    ["EXPIRED", "HTTP_410"],
+  ] as const) {
+    const decision = actionDecision({ verifierStatus, reason });
+    assert.equal(decision.actionRequired, true, verifierStatus);
+  }
+});
+
+test("a new direct success is recovery and returns actionRequired=false", () => {
+  const decision = actionDecision({
+    verifierStatus: "HEALTHY",
+    reason: "GET_FALLBACK_OK",
+    verificationSource: "DIRECT",
+    lastDirectSuccessAt: "2026-09-01T12:00:00.000Z",
+  });
+  assert.deepEqual(decision, { actionRequired: false, actionReason: null });
+});
 
 test("health checker follows a finite chain and preserves required attribution", async () => {
   const result = await checkAffiliateRouteHttp({
@@ -260,15 +360,16 @@ test("private, local, documentation, multicast, and IPv4-mapped private addresse
   assert.equal(isPublicAddress("2606:4700:4700::1111"), true);
 });
 
-test("an empty active-route set is a valid healthy report", async () => {
+test("an empty active-route set is a valid no-action report", async () => {
   const service = new AffiliateRouteHealthService(
     { listClaims: async () => [] },
     { verify: async () => { throw new Error("must not verify"); } },
   );
   const report = await service.run({ now: new Date("2026-09-03T12:00:00.000Z") });
-  assert.equal(report.healthy, true);
-  assert.equal(report.noActiveRoutes, true);
-  assert.equal(report.summary.routes, 0);
+  assert.equal(report.actionRequired, false);
+  assert.equal(report.summary.totalRoutes, 0);
+  assert.equal(report.summary.routesRequiringAction, 0);
+  assert.equal(report.summary.routesNotRequiringAction, 0);
 });
 
 test("route-health service audits the exact canonical activation through its existing verifier", async () => {
@@ -295,9 +396,10 @@ test("route-health service audits the exact canonical activation through its exi
   const report = await service.run({ now });
   assert.equal(observedActivationId, "activation");
   assert.equal(observedCheckedAt, now);
-  assert.equal(report.healthy, true);
-  assert.equal(report.results[0].finalHost, "www.casino.example");
-  assert.equal(report.results[0].verificationSource, "DIRECT");
+  assert.equal(report.actionRequired, false);
+  assert.equal(report.results[0].actionRequired, false);
+  assert.equal(report.results[0].currentEvidence.finalHost, "www.casino.example");
+  assert.equal(report.results[0].currentEvidence.verificationSource, "DIRECT");
   assert.equal(report.results[0].checkedAt, now.toISOString());
   assert.equal(report.results[0].lastDirectSuccessAt, now.toISOString());
   assert.equal(report.results[0].evidenceRevision, "market-activation:activation:v7");
@@ -311,17 +413,19 @@ test("canonical relationship gaps and inconclusive verification fail closed with
   );
   const missingReport = await missing.run();
   assert.equal(calls, 0);
-  assert.equal(missingReport.results[0].status, "BROKEN");
-  assert.equal(missingReport.results[0].reason, "ACTIVE_ACTIVATION_RELATIONSHIP_MISSING");
+  assert.equal(missingReport.results[0].actionRequired, true);
+  assert.equal(missingReport.results[0].currentEvidence.verifierStatus, "BROKEN");
+  assert.equal(missingReport.results[0].currentEvidence.reason, "ACTIVE_ACTIVATION_RELATIONSHIP_MISSING");
 
   const inconclusive = new AffiliateRouteHealthService(
     { listClaims: async () => [canonicalClaim] },
     { verify: async () => { throw new Error("MARKET_ACTIVATION_ROUTE_VERIFICATION_INCONCLUSIVE"); } },
   );
-  const inconclusiveReport = await inconclusive.run();
-  assert.equal(inconclusiveReport.results[0].status, "DEGRADED");
-  assert.equal(inconclusiveReport.results[0].reason, "ROUTE_VERIFICATION_INCONCLUSIVE");
-  assert.equal(inconclusiveReport.results[0].verificationSource, null);
+  const inconclusiveReport = await inconclusive.run({ now: new Date("2026-09-08T12:00:00.000Z") });
+  assert.equal(inconclusiveReport.results[0].actionRequired, false);
+  assert.equal(inconclusiveReport.results[0].currentEvidence.verifierStatus, "DEGRADED");
+  assert.equal(inconclusiveReport.results[0].currentEvidence.reason, "ROUTE_VERIFICATION_INCONCLUSIVE");
+  assert.equal(inconclusiveReport.results[0].currentEvidence.verificationSource, null);
   assert.equal(inconclusiveReport.results[0].lastDirectSuccessAt, "2026-09-07T12:00:00.000Z");
 });
 
@@ -343,9 +447,10 @@ test("claim selection follows canonical active MarketActivation and automation u
   const service = readFileSync("lib/services/affiliate-route-health.service.ts", "utf8");
   assert.match(service, /marketActivationRouteVerifier/);
   assert.match(service, /marketCode/);
+  assert.match(service, /actionRequired/);
   assert.match(service, /verificationSource:\s*"DIRECT"/);
-  assert.match(service, /affiliate-route-health-report\.v2/);
-  assert.doesNotMatch(service, /PartnerRouteService|partnerRouteService|productionEligible|workflowStatus/);
+  assert.match(service, /affiliate-route-health-report\.v3/);
+  assert.doesNotMatch(service, /PartnerRouteService|partnerRouteService|productionEligible|workflowStatus|marketActivationController|recordRouteVerification/);
   const verifier = readFileSync("lib/market-activation/verifier.ts", "utf8");
   assert.match(verifier, /allowWwwEquivalentFinalHost:\s*true/);
   assert.match(verifier, /inspectTerminalContent:\s*true/);
@@ -358,12 +463,17 @@ test("claim selection follows canonical active MarketActivation and automation u
   assert.match(workflow, /gh issue close/);
   assert.match(workflow, /affiliate-route-health-alert\.mjs/);
   assert.match(workflow, /steps\.alert\.outputs\.notify/);
+  assert.match(workflow, /steps\.alert\.outputs\.action_required/);
   assert.doesNotMatch(workflow, /Updated by daily check/);
+  assert.doesNotMatch(workflow, /workflow_healthy/);
   assert.doesNotMatch(workflow, /trackingUrl|destinationUrl|portal/i);
   const alert = readFileSync("scripts/affiliate-route-health-alert.mjs", "utf8");
-  assert.match(alert, /ROUTE_BROKEN/);
-  assert.match(alert, /EXTERNAL_CHALLENGE/);
-  assert.match(alert, /VERIFIER_INCONCLUSIVE/);
-  assert.match(alert, /verificationSource === "DIRECT"/);
-  assert.match(alert, /NO_ACTIVE_ROUTES_CANNOT_PROVE_INCIDENT_RECOVERY/);
+  assert.match(alert, /item\.actionRequired/);
+  assert.match(alert, /issueLifecycleAction/);
+  assert.doesNotMatch(alert, /alertState|classifyRouteResult|routeFailureStates|ROUTE_BROKEN|VERIFIER_INCONCLUSIVE/);
+
+  const monitoringSources = `${service}\n${alert}\n${workflow}`;
+  assert.doesNotMatch(monitoringSources, /goldenplay|rizk/i, "monitoring has no Casino-specific condition");
+  assert.doesNotMatch(service, /(?:casinoSlug|casinoId|marketCode|countryCode)\s*(?:===|!==)\s*["']/, "monitoring has no operator/GEO-specific branch");
+  assert.doesNotMatch(monitoringSources, /\benum\s+[A-Za-z]/, "monitoring introduces no operational state enum");
 });

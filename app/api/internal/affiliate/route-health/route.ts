@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const report = await affiliateRouteHealthService.run();
     return NextResponse.json(
       { ok: true, productionCommitSha: productionCommitSha(), ...report },
-      { status: report.healthy ? 200 : 503, headers: { "Cache-Control": "no-store" } },
+      { status: report.actionRequired ? 503 : 200, headers: { "Cache-Control": "no-store" } },
     );
   } catch {
     return NextResponse.json({ ok: false, code: "HEALTH_CHECK_FAILED" }, { status: 503, headers: { "Cache-Control": "no-store" } });
