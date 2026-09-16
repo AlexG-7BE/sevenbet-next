@@ -15,13 +15,14 @@ async function main() {
   });
   if (process.argv.includes("--json")) console.info(JSON.stringify(report, null, 2));
   else {
-    console.info(`Affiliate route health: ${report.noActiveRoutes ? "no active routes" : report.healthy ? "healthy" : "attention required"}`);
-    console.info(`Checked ${report.summary.routes} route(s) at ${report.checkedAt}`);
+    console.info(`Affiliate route health: ${report.summary.totalRoutes === 0 ? "no active routes" : report.actionRequired ? "action required" : "no action required"}`);
+    console.info(`Checked ${report.summary.totalRoutes} route(s) at ${report.checkedAt}; ${report.summary.routesRequiringAction} require action`);
     for (const result of report.results) {
-      console.info(`${result.status.padEnd(20)} ${result.casinoSlug} × ${result.marketCode} (${result.countryCode}) /r/${result.redirectSlug ?? "missing"} — ${result.reason}`);
+      const decision = result.actionRequired ? "ACTION" : "NO_ACTION";
+      console.info(`${decision.padEnd(10)} ${result.currentEvidence.verifierStatus.padEnd(20)} ${result.casinoSlug} × ${result.marketCode} (${result.countryCode}) /r/${result.redirectSlug ?? "missing"} — ${result.currentEvidence.reason}`);
     }
   }
-  if (!report.healthy) process.exitCode = 1;
+  if (report.actionRequired) process.exitCode = 1;
 }
 
 main().catch(() => {
