@@ -11,6 +11,7 @@ export function affiliateRouteHealthCasinoFilter(casino?: string): Prisma.Market
 
 export interface AffiliateRouteHealthClaim {
   activationId: string;
+  activationVersion: number;
   casinoId: string;
   casinoSlug: string;
   countryCode: string;
@@ -19,6 +20,8 @@ export interface AffiliateRouteHealthClaim {
   trackingLinkId: string | null;
   redirectId: string | null;
   redirectSlug: string | null;
+  persistedVerificationStatus: string;
+  persistedLastCheckedAt: Date | null;
 }
 
 export interface AffiliateRouteHealthClaimStore {
@@ -38,11 +41,14 @@ export class AffiliateRouteHealthRepository implements AffiliateRouteHealthClaim
       },
       select: {
         id: true,
+        version: true,
         casinoId: true,
         countryCode: true,
         marketCode: true,
         affiliateOfferId: true,
         primaryTrackingLinkId: true,
+        routeVerificationStatus: true,
+        routeLastCheckedAt: true,
         casino: { select: { slug: true } },
         redirectSlug: { select: { id: true, slug: true } },
       },
@@ -50,6 +56,7 @@ export class AffiliateRouteHealthRepository implements AffiliateRouteHealthClaim
     });
     return records.map((record): AffiliateRouteHealthClaim => ({
       activationId: record.id,
+      activationVersion: record.version,
       casinoId: record.casinoId,
       casinoSlug: record.casino.slug,
       countryCode: record.countryCode,
@@ -58,6 +65,8 @@ export class AffiliateRouteHealthRepository implements AffiliateRouteHealthClaim
       trackingLinkId: record.primaryTrackingLinkId,
       redirectId: record.redirectSlug?.id ?? null,
       redirectSlug: record.redirectSlug?.slug ?? null,
+      persistedVerificationStatus: record.routeVerificationStatus,
+      persistedLastCheckedAt: record.routeLastCheckedAt,
     }));
   }
 }

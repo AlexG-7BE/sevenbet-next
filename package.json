@@ -172,7 +172,7 @@
     "commercial:assets:validate": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/commercial-assets.ts validate --manifest",
     "commercial:assets:preview": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/commercial-assets.ts preview --manifest",
     "commercial:assets:apply": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/commercial-assets.ts apply --manifest",
-    "commercial-platform:test": "node --import tsx --test tests/commercial-activation-bundle.test.ts tests/commercial-asset-manifest.test.ts tests/outbound-click-analytics.test.ts tests/affiliate-route-health.test.ts tests/seo-market-indexability.test.ts tests/commercial-platform-0026-release.test.ts",
+    "commercial-platform:test": "node --import tsx --test tests/commercial-activation-bundle.test.ts tests/commercial-asset-manifest.test.ts tests/outbound-click-analytics.test.ts tests/affiliate-route-health.test.ts tests/affiliate-route-health-alert.test.mjs tests/seo-market-indexability.test.ts tests/commercial-platform-0026-release.test.ts",
     "commercial-ux-v1:test": "node --import tsx --test tests/commercial-ux-v1.test.ts",
     "media:test": "node --import tsx --test tests/media-manager.test.ts",
     "commercial-creative-formats:test": "node --import tsx --test tests/commercial-creative-formats.test.ts tests/commercial-availability-presentation.test.tsx tests/media-manager.test.ts tests/media-presentation.test.ts tests/product-analytics.test.ts tests/curated-selector-integrity.test.ts tests/placement-media-assignments.test.ts",
@@ -217,7 +217,7 @@
     "qrcode.react": "4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sanitize-html": "^2.17.5",
+    "sanitize-html": "^2.17.7",
     "svix": "^1.99.1",
     "zod": "^4.4.3"
   },

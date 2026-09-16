@@ -4,6 +4,12 @@
 and deduplicated workflow are deployed and final manual dispatch passed. See the
 [commercial-platform completion release record](Commercial-Platform-Code-Completion-Release-Record-2026-09-03.md).
 
+**PROPOSED / NOT YET PRODUCTION — 16 September 2026:** the companion monitoring
+change classifies operational evidence into four public monitor states, records
+the checked Production commit, and suppresses unchanged issue comments. It does
+not change a route, activation or commercial decision. These semantics become
+Production facts only after Founder-authorised merge and deployment.
+
 ## Scope
 
 `npm run affiliate:health` checks only canonical Casino `MarketActivation`
@@ -43,11 +49,43 @@ non-`www` forms of the same expected operator host are equivalent.
 
 Outputs contain safe route IDs, Casino/GEO, status, reason, and final hostname only. They omit raw tracking URLs, query values, credentials, and visitor data.
 
+The GitHub alert layer deliberately collapses those detailed verifier results
+into four incident states:
+
+- `HEALTHY`: the current material route has `verificationSource=DIRECT` and the
+  direct verifier returned `HEALTHY`;
+- `EXTERNAL_CHALLENGE`: the direct request reached an identified CDN/bot
+  challenge, so the relationship is not labelled broken without evidence;
+- `VERIFIER_INCONCLUSIVE`: transport, endpoint, malformed-report or verifier
+  evidence cannot establish route state; and
+- `ROUTE_BROKEN`: a material route has a direct or canonical failure such as a
+  missing relationship, HTTP failure, expiry, wrong GEO or attribution loss.
+
+Each v2 report includes the direct check time, last persisted direct success
+when available, and exact `MarketActivation` identity/version as an evidence
+revision. The alert evaluates direct-success freshness against the seven-day
+operational threshold. Crossing that threshold is a state change for notification
+deduplication; it does not rewrite canonical evidence.
+
 ## Daily workflow and alerts
 
 `.github/workflows/affiliate-route-health.yml` runs daily at 05:37 UTC and may be dispatched manually. It calls the bearer-protected Production endpoint `/api/internal/affiliate/route-health` using the same `AFFILIATE_HEALTH_MONITOR_TOKEN` held in GitHub Actions and Vercel Production secret stores.
 
-On failure the workflow opens or updates one issue titled `[Production] Affiliate route health alert`, then fails the workflow. On recovery it closes that issue. It never creates one issue per day.
+On failure the workflow opens or updates one issue titled `[Production] Affiliate
+route health alert`, then fails the workflow. The issue body records Production
+SHA, workflow source SHA and run ID, check time, evidence revision, last direct
+success and freshness when available. The body may be refreshed on every run,
+but a comment is added only when the state signature changes because the
+classification, affected route set or freshness band changed. Evidence detail
+and revision updates still refresh the body without producing comment noise.
+Identical reruns therefore do not generate identical comments.
+
+An open incident is closed automatically only when a non-empty current report
+contains exclusively directly verified `HEALTHY` material routes. A stored state,
+manual/Founder override, malformed result or empty route set cannot independently
+close an existing issue. An empty canonical route set remains a valid quiet
+result only when there is no open incident to erase. The monitor never changes
+commercial records.
 
 ## Response
 
@@ -58,7 +96,8 @@ On failure the workflow opens or updates one issue titled `[Production] Affiliat
 5. Correct or expire the governed route through the normal `MarketActivation`
    controller workflow; do not weaken jurisdiction, safe-URL, relational,
    attribution or trusted-GEO controls.
-6. Re-run health. The next successful workflow closes the alert automatically.
+6. Re-run health. A workflow run closes the alert only after all current material
+   routes pass the direct recovery gate.
 
 ## Rollback
 
