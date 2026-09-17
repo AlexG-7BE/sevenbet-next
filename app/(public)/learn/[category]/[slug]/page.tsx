@@ -4,6 +4,7 @@ import { cache, Suspense } from "react";
 
 import { JsonLd } from "@/components/seo/JsonLd";
 import { articlePath, type PublicArticle } from "@/lib/articles/article-types";
+import { relatedReadingListInput, relatedReadingSelection } from "@/lib/articles/related-reading";
 import { learningMessages, localizedLearningCategory } from "@/lib/i18n/learning-center";
 import { getLearningCategory } from "@/lib/learning-center";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
@@ -106,9 +107,10 @@ async function RelatedLearningArticles({ article, presentation }: {
   article: PublicArticle;
   presentation: PresentationResolution;
 }) {
-  const relatedArticles = await articleService
-    .listPublished(article.locale, { take: 3, excludeId: article.id })
+  const candidates = await articleService
+    .listPublished(article.locale, relatedReadingListInput(article))
     .catch(() => []);
+  const relatedArticles = relatedReadingSelection(article, candidates);
   return <LearningArticleRelated
     hrefFor={(href) => productHref(presentation, href)}
     messages={learningMessages(presentation.locale)}
