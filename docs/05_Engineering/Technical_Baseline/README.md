@@ -9,14 +9,21 @@
 | Audit method | Recursive repository inspection, excluding `.git/`, `node_modules/`, `.next/`, `test-results/`, `coverage/`, caches, and `tsconfig.tsbuildinfo` from source analysis. |
 | Change scope | Entire active repository rescanned at canonical main `2424a5dd9061aa07e09764cd7b6a5dee70c64192`. Dependencies, generated directories, build artefacts, caches, research staging and `tsconfig.tsbuildinfo` were excluded from source claims. Live Production state is classified separately. |
 
-## Current counted inventory
+## 14 September counted inventory
 
-**DETECTED on current canonical main:** 116 `app/api/**/route.ts` files, 77
+**DETECTED on canonical main `2424a5dd…` at that audit:** 116
+`app/api/**/route.ts` files, 77
 `app/**/page.tsx` files, 41 ordered Prisma migration directories, 228
 `.test`/`.spec` files under `tests/`, 109 Prisma models and 99 enums. The Git
 index contains 2,356 tracked files and 1,153 source files under the stated
-counting rules. **DETECTED in Production:** all 41 migrations through
-`0041_commercial_core_legacy_connector_cleanup` are applied.
+counting rules. At that checkpoint, Production had all 41 migrations through
+`0041_commercial_core_legacy_connector_cleanup` applied.
+
+**DETECTED on released main `c515ddb0…`, 17 September 2026:** the repository
+contains 43 ordered migrations through `0043_article_learning_center`; a fresh
+read-only Production status check enumerated all 43 and reported the database
+up to date. The other inventory counts above remain the historical 14 September
+audit and are not silently recast as a fresh full count.
 
 ## Evidence vocabulary
 
@@ -46,4 +53,4 @@ This baseline describes the observed implementation, not a target architecture o
 - [14_Geo_Language_Global_Catalog.md](14_Geo_Language_Global_Catalog.md) — language-only public routing, trusted request market, global published Casino projection and three-state presentation.
 - [15_Canonical_Market_Activation.md](15_Canonical_Market_Activation.md) — single exact-market commercial authority, desired-state controller, route verification, canonical runtime cutover and legacy compatibility baseline.
 - [16_Customer_Data_Analytics_Lifecycle_Core.md](16_Customer_Data_Analytics_Lifecycle_Core.md) — current customer, first-party analytics, outbound attribution, email lifecycle, consent and fixed-dashboard implementation evidence.
-- [17_Navigation_Performance_Stage_2.md](17_Navigation_Performance_Stage_2.md) — exact Stage 1/candidate navigation timings, implemented responsiveness boundaries, regression evidence, limitations and rollback.
+- [17_Navigation_Performance_Stage_2.md](17_Navigation_Performance_Stage_2.md) — candidate/local, exact-head Preview and Production navigation evidence, implemented cache/responsiveness boundaries, regression evidence, limitations and rollback.

@@ -1,16 +1,89 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 15 September 2026
+**Evidence date:** 17 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Canonical Production source at this reconciliation checkpoint:** `e210f265e31839c1f8803d766b820cddb9386ddb`
-**Verified post-release runtime baseline SHA:** `e210f265e31839c1f8803d766b820cddb9386ddb`
-**Verified post-release runtime deployment:** Ready and promoted; `dpl_CYiuPvGtiLdjH2u4P9eezEkivS4Y`
+**Canonical Production source at this reconciliation checkpoint:** `c515ddb0e9442063d8fb51c4f69f37d55035adc4`
+**Verified post-release runtime baseline SHA:** `c515ddb0e9442063d8fb51c4f69f37d55035adc4`
+**Verified post-release runtime deployment:** Ready and promoted; `dpl_6LFpCzv2tib5GuC6WVa4JdUD7Q9G`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
+
+## Navigation Performance Stage 2 — released and verified
+
+**DETECTED IN PR, MAIN, CI, VERCEL AND PRODUCTION EVIDENCE, 17 SEPTEMBER
+2026:** [PR #302](https://github.com/AlexG-7BE/sevenbet-next/pull/302)
+merged reviewed head `c0e1ffbb7b310069a83bcdfb38ea0fb6a83d2518` as merge/main
+`c515ddb0e9442063d8fb51c4f69f37d55035adc4`. Required PR CI run
+[`35233234884`](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/35233234884)
+and post-main CI run
+[`35238394196`](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/35238394196)
+both passed. Ready Production deployment
+`dpl_6LFpCzv2tib5GuC6WVa4JdUD7Q9G` serves that exact merge; Ready rollback
+deployment `dpl_GJPuS34GHk61m6XQHzXa3CxQYf2D` retains prior main
+`2bd71c8af2f5d96d9a97d990f8bc5442ef4f6a5b`.
+
+**DETECTED:** The release made the stable server-rendered Header and native
+mobile disclosure usable before commercial data or application JavaScript
+settles, while preserving the same node, open state, focus, meaningful scroll
+position and selected language through hydration and commercial-data arrival.
+Ordinary navigation receives immediate link-local feedback while destination
+work continues. JavaScript-disabled, hydration-order, database-lock,
+pointer/keyboard, focus-containment, Escape, resize and history coverage all
+passed without injecting a lock or fixture into shared Preview or Production.
+
+The released architecture:
+
+- caches only reusable published editorial projections, keyed by exact safe
+  country, locale, language, slug and presentation dimensions as applicable;
+- invalidates Casino and Article publication tags on the governing mutations,
+  with a bounded 60-second fallback TTL;
+- keeps trusted GEO, commercial action, identity/session, Programme state and
+  outbound behavior request-specific and outside the reusable cache;
+- serializes only implicated leaf reads through a process-local FIFO when the
+  runtime pool has one connection, while normal pools remain parallel; and
+- consolidates `MarketActivation` to one joined read that still requires a
+  currently published, unarchived Casino and fails closed.
+
+GEO, publication, ranking, Partner/action, commercial, Programme,
+authentication, consent and protected-Help authority did not change. The
+release introduced no schema or migration, Production/shared data mutation,
+environment/configuration or secret change, provider or billing change, DNS or
+alias-policy change, commercial activation, ranking change or GEO-policy
+change. Repository `delete_branch_on_merge=true` removed the merged feature
+branch automatically; no recreation is required.
+
+**CONTROLLED LOCAL PRODUCTION-BUILD EVIDENCE — NOT PRODUCTION FIELD DATA OR
+INP:** Chromium 149, 390×844 mobile, actual pointer input, no prefetch or
+artificial throttle, isolated PostgreSQL fixtures and 20 fresh-context samples
+per primary route produced useful-content C medians of 144.5 ms Best Offers,
+151.7 ms Casinos, 154.0 ms Bonuses and 117.8 ms Learn. Warm primary medians
+were 44–45 ms; Casino detail was approximately 112 ms and Learn Article detail
+112.7 ms (113 ms rounded). The separately controlled constrained profile
+exceeded 300 ms and remains an explicit limit.
+
+**DETECTED ACTUAL PRODUCTION OBSERVATION — KZ, 390×844 MOBILE, FIVE SAMPLES,
+ACTUAL POINTER, NO ARTIFICIAL THROTTLE:** Casinos useful-content C median
+improved from 954 ms to 541 ms (`-413 ms`, `-43.3%`); Learn improved from
+522 ms to 436 ms (`-86 ms`, `-16.5%`). Best Offers and Bonuses were truthfully
+absent for KZ, so no synthetic click measurement was manufactured. The
+architecture and Stage 2 behavior are **RELEASED + VERIFIED**; absolute actual
+Production C ≤300 ms remains **OPEN** as a bounded follow-up, not a release
+blocker and not a reopening of the completed architecture work.
+
+**MIGRATION-EVIDENCE RECONCILIATION:** release verification observed that
+Production remained up to date at 21/21 applied migrations in its then-active,
+older checkout. That is preserved as an observed historical result, not as the
+current repository-wide inventory. A fresh read-only check from released
+source on 17 September enumerated all 43 repository migrations through
+`0043_article_learning_center` and reported Production up to date. Neither
+check applied a migration or mutated data.
+
+Detailed candidate, controlled-lab, Preview and Production evidence is in the
+[Navigation Performance Stage 2 technical record](05_Engineering/Technical_Baseline/17_Navigation_Performance_Stage_2.md).
 
 ## PostgreSQL Learning Center — complete and live
 
@@ -56,9 +129,10 @@ are recorded in the [Production Hardening Closure Record](06_Operations/Producti
 
 ## Final technical-cleanup baseline — current
 
-**DETECTED IN CURRENT MAIN AND PRODUCTION, 15 September 2026:** the repository
-declares 110 Prisma models and 42 ordered migrations. Production reports all 42
-migrations applied through `0042_admin_mfa`, with zero unresolved or unknown
+**DETECTED IN CURRENT MAIN AND PRODUCTION, RECONCILED 17 September 2026:** the
+repository declares 110 Prisma models and 43 ordered migrations. Production
+reports all 43 migrations applied through `0043_article_learning_center`, with
+zero unresolved or unknown
 migrations and zero applied checksum mismatches;
 `0041_commercial_core_legacy_connector_cleanup` remains complete and the eight
 retired connector tables are absent. MCP/operational OAuth transport and storage
