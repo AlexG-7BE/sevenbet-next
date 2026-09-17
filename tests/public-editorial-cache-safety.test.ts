@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { isPublishedArticleLocale, isSafeArticleRoutePart } from "../lib/articles/article-validation";
-import { publicEditorialCache } from "../lib/public-editorial-cache";
+import { runPublicDatabaseRead } from "../lib/db/public-database-read-coordinator";
 
 function source(path: string) {
   return readFileSync(path, "utf8");
@@ -11,10 +11,11 @@ function source(path: string) {
 
 test("public editorial caches are short-lived, tagged and identity-free", () => {
   const policy = source("lib/public-editorial-cache.ts");
+  const coordinator = source("lib/db/public-database-read-coordinator.ts");
   assert.match(policy, /PUBLIC_EDITORIAL_CACHE_REVALIDATE_SECONDS = 60/);
   assert.match(policy, /tags,/);
-  assert.match(policy, /const inFlight = new Map/);
-  assert.match(policy, /if \(existing\) return existing/);
+  assert.match(coordinator, /connection_limit/);
+  assert.doesNotMatch(policy, /inFlight|invocationKey|runPublicDatabaseRead/);
   assert.doesNotMatch(policy, /from ["'](?:next\/headers|@\/lib\/(?:auth|programme))|cookies\(|headers\(/i);
 
   const casino = source("lib/repositories/public-casino.repository.ts");
@@ -29,44 +30,58 @@ test("public editorial caches are short-lived, tagged and identity-free", () => 
   assert.match(articles, /cachedPublishedArticle\(category, slug, locale\)/);
 });
 
-test("public editorial cache coalesces identical fills and cleans up rejected fills", async () => {
+test("one-connection leaf database reads serialize and release after rejection", async () => {
+  const previousDatabaseUrl = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = "postgresql://release-user:redacted@127.0.0.1:54329/sevenbet_ci?connection_limit=1";
   type PendingFill = {
     key: string;
     reject: (error: Error) => void;
     resolve: (value: string) => void;
   };
   const fills: PendingFill[] = [];
-  const cached = publicEditorialCache(
-    (key: string) => new Promise<string>((resolve, reject) => fills.push({ key, reject, resolve })),
-    ["public-editorial-cache-behavior-test"],
-    ["public-editorial-cache-behavior-test"],
-  );
+  let activeFills = 0;
+  let maximumActiveFills = 0;
+  const read = (key: string) => runPublicDatabaseRead(() => new Promise<string>((resolve, reject) => {
+      activeFills += 1;
+      maximumActiveFills = Math.max(maximumActiveFills, activeFills);
+      fills.push({
+        key,
+        reject: (error) => { activeFills -= 1; reject(error); },
+        resolve: (value) => { activeFills -= 1; resolve(value); },
+      });
+    }));
 
-  const kzFirst = cached("KZ");
-  const kzSecond = cached("KZ");
-  const gb = cached("GB");
-  await new Promise<void>((resolve) => setImmediate(resolve));
-  assert.deepEqual(fills.map(({ key }) => key), ["KZ", "GB"]);
-  fills[0].resolve("KZ ready");
-  fills[1].resolve("GB ready");
-  assert.deepEqual(await Promise.all([kzFirst, kzSecond, gb]), ["KZ ready", "KZ ready", "GB ready"]);
+  try {
+    const kzFirst = read("KZ");
+    const kzSecond = read("KZ");
+    const gb = read("GB");
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(fills.map(({ key }) => key), ["KZ"]);
+    fills[0].resolve("KZ first ready");
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(fills.map(({ key }) => key), ["KZ", "KZ"]);
+    fills[1].resolve("KZ second ready");
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(fills.map(({ key }) => key), ["KZ", "KZ", "GB"]);
+    fills[2].resolve("GB ready");
+    assert.deepEqual(await Promise.all([kzFirst, kzSecond, gb]), ["KZ first ready", "KZ second ready", "GB ready"]);
+    assert.equal(maximumActiveFills, 1);
 
-  const deFirst = cached("DE");
-  const deSecond = cached("DE");
-  await new Promise<void>((resolve) => setImmediate(resolve));
-  assert.deepEqual(fills.map(({ key }) => key), ["KZ", "GB", "DE"]);
-  const rejectionChecks = [
-    assert.rejects(deFirst, /simulated fill rejection/),
-    assert.rejects(deSecond, /simulated fill rejection/),
-  ];
-  fills[2].reject(new Error("simulated fill rejection"));
-  await Promise.all(rejectionChecks);
+    const rejected = read("DE");
+    const rejectionCheck = assert.rejects(rejected, /simulated fill rejection/);
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    fills[3].reject(new Error("simulated fill rejection"));
+    await rejectionCheck;
 
-  const deRetry = cached("DE");
-  await new Promise<void>((resolve) => setImmediate(resolve));
-  assert.deepEqual(fills.map(({ key }) => key), ["KZ", "GB", "DE", "DE"]);
-  fills[3].resolve("DE retry ready");
-  assert.equal(await deRetry, "DE retry ready");
+    const deRetry = read("DE");
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.deepEqual(fills.map(({ key }) => key), ["KZ", "KZ", "GB", "DE", "DE"]);
+    fills[4].resolve("DE retry ready");
+    assert.equal(await deRetry, "DE retry ready");
+  } finally {
+    if (previousDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previousDatabaseUrl;
+  }
 });
 
 test("public Article cache keys accept only bounded published route identities", () => {
@@ -125,4 +140,6 @@ test("the exact commercial route stays dynamic and uses one joined runtime proje
   assert.match(runtime, /LEFT JOIN "AffiliateRedirectSlug" ars/);
   assert.match(runtime, /safeActivationDestination\(record\.primaryTrackingLink\.trackingUrl\)/);
   assert.match(runtime, /safeActivationDestination\(record\.primaryTrackingLink\.destinationUrl\)/);
+  assert.match(runtime, /c\.status = 'PUBLISHED'::"EditorialStatus"/);
+  assert.match(runtime, /c\."archivedAt" IS NULL/);
 });

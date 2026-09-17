@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 import type { GbCommercialRouteEvidence } from "@/lib/affiliate-commercial/gb-commercial-route-readiness";
+import { runPublicDatabaseRead } from "@/lib/db/public-database-read-coordinator";
 import { prisma } from "@/lib/db/prisma";
 import {
   canonicalCommercialCountryCode,
@@ -193,20 +194,22 @@ const joinedRuntimeRelations = Prisma.sql`
 `;
 
 async function listJoinedRuntimeRoutes(casinoIds: string[], marketKey: CanonicalCommercialMarketKey) {
-  const rows = await prisma.$queryRaw<JoinedRuntimeRow[]>(Prisma.sql`
+  const rows = await runPublicDatabaseRead(() => prisma.$queryRaw<JoinedRuntimeRow[]>(Prisma.sql`
     SELECT to_jsonb(ma) AS activation, ${joinedRuntimeProjection}
     FROM "MarketActivation" ma
     ${joinedRuntimeRelations}
     WHERE ma."casinoId" IN (${Prisma.join(casinoIds.map((casinoId) => Prisma.sql`${casinoId}::uuid`))})
       AND ma."marketCode" = ${marketKey}
       AND ma.product = 'CASINO'::"MarketActivationProduct"
+      AND c.status = 'PUBLISHED'::"EditorialStatus"
+      AND c."archivedAt" IS NULL
     ORDER BY ma."casinoId" ASC, ma.id ASC
-  `);
+  `));
   return rows.map(joinedRuntimeRoute);
 }
 
 async function resolveJoinedRuntimeRoute(redirectSlug: string, marketKey: CanonicalCommercialMarketKey) {
-  const rows = await prisma.$queryRaw<JoinedRuntimeRow[]>(Prisma.sql`
+  const rows = await runPublicDatabaseRead(() => prisma.$queryRaw<JoinedRuntimeRow[]>(Prisma.sql`
     SELECT to_jsonb(ma) AS activation, ${joinedRuntimeProjection}
     FROM "MarketActivation" ma
     ${joinedRuntimeRelations}
@@ -214,8 +217,10 @@ async function resolveJoinedRuntimeRoute(redirectSlug: string, marketKey: Canoni
       ON requested_slug.id = ma."redirectSlugId" AND requested_slug.slug = ${redirectSlug}
     WHERE ma."marketCode" = ${marketKey}
       AND ma.product = 'CASINO'::"MarketActivationProduct"
+      AND c.status = 'PUBLISHED'::"EditorialStatus"
+      AND c."archivedAt" IS NULL
     ORDER BY ma.id ASC
-  `);
+  `));
   return rows.map(joinedRuntimeRoute);
 }
 

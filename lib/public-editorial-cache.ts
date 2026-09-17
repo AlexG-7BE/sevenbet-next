@@ -19,20 +19,7 @@ type AsyncCallback = Parameters<typeof unstable_cache>[0];
 
 /** Next's persistent cache is unavailable in direct Node service tests. */
 export function publicEditorialCache<T extends AsyncCallback>(callback: T, keyParts: string[], tags: string[]): T {
-  const inFlight = new Map<string, Promise<unknown>>();
-  const fill = async (...args: Parameters<T>) => {
-    const invocationKey = JSON.stringify(args);
-    const existing = inFlight.get(invocationKey);
-    if (existing) return existing;
-    const pending = Promise.resolve(callback(...args));
-    inFlight.set(invocationKey, pending);
-    try {
-      return await pending;
-    } finally {
-      if (inFlight.get(invocationKey) === pending) inFlight.delete(invocationKey);
-    }
-  };
-  const cached = unstable_cache(fill, keyParts, {
+  const cached = unstable_cache(callback, keyParts, {
     tags,
     revalidate: PUBLIC_EDITORIAL_CACHE_REVALIDATE_SECONDS,
   });
@@ -44,7 +31,7 @@ export function publicEditorialCache<T extends AsyncCallback>(callback: T, keyPa
       return await cached(...args);
     } catch (error) {
       if (error instanceof Error && error.message.includes("incrementalCache missing in unstable_cache")) {
-        return fill(...args);
+        return callback(...args);
       }
       throw error;
     }

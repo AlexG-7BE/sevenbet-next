@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { EditorialReviewStatus, Prisma } from "@prisma/client";
 
+import { runPublicDatabaseRead } from "@/lib/db/public-database-read-coordinator";
 import { prisma } from "@/lib/db/prisma";
 import { PUBLIC_CASINO_EDITORIAL_CACHE_TAG, publicEditorialCache } from "@/lib/public-editorial-cache";
 import type { CasinoEditorialDocument, EditorialReview, EditorialRevision } from "@/lib/editorial-review/types";
@@ -24,10 +25,10 @@ function review(value: { id: string; casinoId: string; status: EditorialReviewSt
 
 const include = { revisions: { orderBy: { revisionNumber: "desc" } } } satisfies Prisma.EditorialReviewInclude;
 const cachedPublishedEditorialReview = publicEditorialCache(
-  async (slug: string) => prisma.editorialReview.findFirst({
+  async (slug: string) => runPublicDatabaseRead(() => prisma.editorialReview.findFirst({
     where: { status: "PUBLISHED", archivedAt: null, casino: { slug } },
     include: { ...include, casino: { select: { id: true, slug: true, title: true } } },
-  }),
+  })),
   ["public-casino-editorial-review-v1"],
   [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
 );

@@ -1,5 +1,6 @@
 import { EditorialStatus } from "@prisma/client";
 
+import { runPublicDatabaseRead } from "@/lib/db/public-database-read-coordinator";
 import { prisma } from "@/lib/db/prisma";
 import { PUBLIC_CASINO_EDITORIAL_CACHE_TAG, publicEditorialCache } from "@/lib/public-editorial-cache";
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "@/lib/public-casino-discovery/public-casino-discovery.types";
@@ -11,10 +12,10 @@ const cachedPublishedAliases = publicEditorialCache(
   async (casinoIdsKey: string) => {
     const casinoIds = casinoIdsKey ? casinoIdsKey.split(",") : [];
     if (!casinoIds.length) return [];
-    return prisma.casinoAlias.findMany({
+    return runPublicDatabaseRead(() => prisma.casinoAlias.findMany({
       where: { casinoId: { in: casinoIds }, casino: { status: EditorialStatus.PUBLISHED, archivedAt: null } },
       select: { casinoId: true, value: true },
-    });
+    }));
   },
   ["public-casino-published-aliases-v1"],
   [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
