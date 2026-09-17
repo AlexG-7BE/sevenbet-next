@@ -97,8 +97,17 @@ show a truthful localized empty state when none exist.
 
 Migration `0043_article_learning_center` is applied in Production with its
 exact checksum, four compatibility columns and one publication index. It
-created no model/table or Article row. Production still contains zero Articles;
-no synthetic content was seeded. See the [Learning Center release record](06_Operations/Learning-Center-PostgreSQL-Release-2026-09-15.md).
+created no model/table or Article row and seeded no synthetic content.
+
+**DETECTED IN PRODUCTION, 17 SEPTEMBER 2026:** the Founder-authorized English
+Learn release created and published 24 governed `Article` records through the
+existing Article service lifecycle: 12 Responsible Gambling guides and 12
+supporting guides. Production Admin reports 24 Articles, 24 published, zero in
+review and zero drafts. All 24 canonical public routes, catalogue entries and
+sitemap rows were verified. Responsible Gambling `READ NEXT` is constrained to
+the same protected category and has no commercial fallback. See the
+[publication release record](06_Operations/B4GAMBLE-Learn-Publication-2026-09-17.md)
+and the original [Learning Center architecture release record](06_Operations/Learning-Center-PostgreSQL-Release-2026-09-15.md).
 
 **DETECTED IN THE SUBSEQUENT PR2 CANDIDATE, NOT YET A PRODUCTION CLAIM:** the
 Founder-facing CMS navigation and Dashboard are being narrowed to current

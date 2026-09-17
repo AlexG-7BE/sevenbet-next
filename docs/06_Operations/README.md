@@ -4,6 +4,7 @@ These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-
 
 | Runbook | Purpose |
 | --- | --- |
+| [B4GAMBLE Learn Publication — 17 September 2026](B4GAMBLE-Learn-Publication-2026-09-17.md) | Exact 24-Article Production publication, protected related-reading correction, verification and bounded rollback evidence |
 | [Production Hardening Closure — 15 September 2026](Production-Hardening-Closure-2026-09-15.md) | Final P0/P1 Production verification, Founder-accepted recovery exception, residual P2 classification and hardening-cycle reopen conditions |
 | [Production Release Governance](Production-Release-Governance.md) | Pull-request, deployment, verification and rollback path |
 | [Commercial Core PR4 — Affiliate Lifecycle Collapse](Commercial-Core-PR4-Affiliate-Lifecycle-Collapse.md) | Runtime lifecycle de-authorization, factual GB replacement, read-only semantic projection and PR6 cleanup boundary |
