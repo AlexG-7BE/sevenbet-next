@@ -69,6 +69,10 @@ async function waitForDocumentFonts(page: Page) {
 }
 
 async function waitForHomeLayout(page: Page) {
+  const hero = page.locator('[data-screen-label="Hero"]');
+  await expect(hero).toBeVisible();
+  await expect(hero.locator("[data-home-hero-kicker]")).toBeVisible();
+  await expect(hero.locator("h1")).toBeVisible();
   await page.evaluate(() => new Promise<void>((resolve) => {
     let frames = 0;
     let previous = "";
