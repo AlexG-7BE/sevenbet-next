@@ -10,7 +10,7 @@
 | Candidate branch | `codex/navigation-performance-stage2` |
 | Approved pre-hardening head | `85391bfc4bdc5ac80eb629caca4ffe454848e531` |
 | Core implementation commit | `dc235990106ecaeb908a97a416679d5c796b2a00` |
-| Final code head before this evidence-only commit | `88ab63d825d5bb8a54b6c4b5a628bb3aa3a87e82` |
+| Final code head before this evidence-only commit | `ceb6b4019495e88b14d7f89f6fa0f556f20eabd5` |
 | Pull request | `#302` |
 | Release state | Candidate only; not merged or deployed to Production |
 
@@ -27,6 +27,8 @@ The governing documents, relevant active RFCs, changed source and tests, and the
 **DETECTED:** Primary navigation remains deliberately unprefetched. `TrackedReviewLink` and Casino-card detail links also disable automatic prefetch, preventing request-specific GEO/action RSC reuse across a later activation. Each measured activation issues one destination RSC request. The small transition feedback is link-local, appears on eligible ordinary activation, and ignores modified clicks, new-tab/download links, same-page hashes, and cancelled transitions.
 
 **DETECTED:** Compact route error boundaries no longer import the 155 KB product catalog. Primary commercial transitions load about 25 KB of encoded post-activation JavaScript rather than about 85 KB at the approved baseline. Learn remains about 0.2 KB. Initial Home resources are effectively unchanged.
+
+**DETECTED:** The prior remote `8ac506d…` CI run exposed one unrelated required-check failure after the navigation suites completed: dynamically inserted Learn guide category labels were functional text rendered at 11 px. The final candidate raises only those labels to the enforced 12 px minimum. The exact typography browser suite then passed all three checks across the eight Founder viewports.
 
 ## Cache, safety, and invalidation boundaries
 
@@ -142,7 +144,7 @@ Initial Home encoded resources changed from a 403,892-byte median at `85391bfc�
 
 ## Verification and independent review
 
-**DETECTED:** Local verification completed before documentation finalization: production build; lint and typecheck; representative PostgreSQL discovery 2/2; market activation PostgreSQL 2/2; cache-on production browser 1/1; Chromium navigation hardening 13/13 applicable with one intentional rejection-only skip; WebKit 7/7; isolated rejection 1/1; the broader public browser suite 278 passed with five intentional skips; Programme browser 19/19; Programme unit 154/154; and the final focused discovery/cache/action suite 61/61. A clean disposable database accepted the full migration chain and Programme seed, and the full local quality and migration gates completed successfully.
+**DETECTED:** Local verification completed before documentation finalization: production build; lint and typecheck; representative PostgreSQL discovery 2/2; market activation PostgreSQL 2/2; cache-on production browser 1/1; Chromium navigation hardening 13/13 applicable with one intentional rejection-only skip; WebKit 7/7; isolated rejection 1/1; exact typography browser 3/3 across eight Founder viewports; the broader public browser suite 278 passed with five intentional skips; Programme browser 19/19; Programme unit 154/154; and the final focused discovery/cache/action suite 61/61. A clean disposable database accepted the full migration chain and Programme seed, and the full local quality and migration gates completed successfully.
 
 **DETECTED:** The independent architecture review approved the core implementation after the request-changes invalidation gap and unsafe primary intent-prefetch proposal were corrected. Its focused closure review rejected two intermediate designs before push—result sharing because of an invalidation race, then composite-callback queueing because of recursive deadlock. It approved the final leaf-only FIFO: no result or identity/GEO state is shared, failures release the queue, normal pools retain parallelism, and current Casino publication is independently required for governed actions. Residual non-blocking risks are process-local coordination, head-of-line latency on one-connection pools, and queued work waiting for a hung database read to settle.
 
