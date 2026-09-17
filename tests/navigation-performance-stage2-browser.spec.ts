@@ -292,12 +292,7 @@ test("open native navigation preserves identity, focus and scroll while commerci
 
     await disclosure.locator(":scope > summary").click();
     const stableCasinoLink = menu.locator('a[data-navigation-href="/casinos"]');
-    if (browserName === "webkit") {
-      await stableCasinoLink.focus();
-    } else {
-      await page.keyboard.press("Tab");
-      await page.keyboard.press("Tab");
-    }
+    await stableCasinoLink.focus();
     await expect(stableCasinoLink).toBeFocused();
     await menu.evaluate((element) => { element.scrollTop = 120; });
     const scrollBefore = await menu.evaluate((element) => element.scrollTop);
@@ -479,6 +474,27 @@ async function expectNeutralNavigationFeedback(page: Page, destination: string) 
   await expect(feedback.locator("[data-commercial-best-offer-card], [data-commercial-bonus-card], [data-commercial-casino-card]")).toHaveCount(0);
 }
 
+test("keyboard focus does not prefetch request-specific primary routes", async ({ browser }) => {
+  const context = await marketContext(browser, "PE", { viewport: { width: 1365, height: 900 } });
+  const page = await context.newPage();
+  const primaryPaths = ["/en/best-offers", "/en/casinos", "/en/bonuses", "/en/learn"];
+  const prefetched: string[] = [];
+  page.on("request", (request) => {
+    const pathname = new URL(request.url()).pathname;
+    if (request.headers().rsc === "1" && primaryPaths.includes(pathname)) prefetched.push(pathname);
+  });
+
+  await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-handoff-page="home"]')).toBeVisible();
+  await page.waitForTimeout(500);
+  expect(prefetched, "there must be no viewport prefetch fan-out").toEqual([]);
+
+  for (const path of primaryPaths) await desktopPrimary(page).locator(`a[href="${path}"]`).focus();
+  await page.waitForTimeout(500);
+  expect(prefetched, "keyboard focus must not cache request-specific GEO/action payloads").toEqual([]);
+  await context.close();
+});
+
 test("supported PE fixture covers all primary, detail, article, history and prefetch journeys without document reloads", async ({ browser }) => {
   test.setTimeout(120_000);
   const context = await marketContext(browser, "PE", { viewport: { width: 1365, height: 900 } });
@@ -486,11 +502,13 @@ test("supported PE fixture covers all primary, detail, article, history and pref
   const errors = observeRuntimeErrors(page);
   const documentNavigations: string[] = [];
   const analyticsRequests: string[] = [];
-  const speculativeBestOfferRequests: string[] = [];
+  const primaryPrefetchRequests: string[] = [];
   page.on("request", (request) => {
     if (request.resourceType() === "document") documentNavigations.push(request.url());
     if (new URL(request.url()).pathname === "/api/analytics/events") analyticsRequests.push(request.url());
-    if (new URL(request.url()).pathname.endsWith("/en/best-offers") && request.headers().rsc === "1") speculativeBestOfferRequests.push(request.url());
+    const pathname = new URL(request.url()).pathname;
+    if (["/en/best-offers", "/en/casinos", "/en/bonuses", "/en/learn"].includes(pathname)
+      && request.headers().rsc === "1") primaryPrefetchRequests.push(pathname);
   });
 
   const response = await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
@@ -500,12 +518,14 @@ test("supported PE fixture covers all primary, detail, article, history and pref
   await expectCanonicalNavigationDomOrder(page);
   documentNavigations.length = 0;
   analyticsRequests.length = 0;
-  speculativeBestOfferRequests.length = 0;
+  primaryPrefetchRequests.length = 0;
 
-  await desktopPrimary(page).getByRole("link", { name: "Best Offers", exact: true }).hover();
   await page.waitForTimeout(700);
-  expect(analyticsRequests, "automatic prefetch must not emit product analytics").toEqual([]);
-  expect(speculativeBestOfferRequests, "measured-unhelpful primary route prefetch stays disabled").toEqual([]);
+  expect(primaryPrefetchRequests, "primary navigation must not fan out before explicit intent").toEqual([]);
+  await desktopPrimary(page).getByRole("link", { name: "Best Offers", exact: true }).hover();
+  await page.waitForTimeout(500);
+  expect(primaryPrefetchRequests, "hover must not cache request-specific GEO/action payloads").toEqual([]);
+  expect(analyticsRequests, "hover must not emit product analytics").toEqual([]);
   await desktopPrimary(page).getByRole("link", { name: "Best Offers", exact: true }).click();
   await expect(page.locator("[data-commercial-best-offer-card]").first()).toBeVisible();
   await expect(page).toHaveURL(`${baseUrl}/en/best-offers`);

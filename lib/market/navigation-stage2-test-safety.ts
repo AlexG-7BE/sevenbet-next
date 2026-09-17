@@ -57,3 +57,11 @@ export function navigationStage2LocalTrustedGeoEnabled(
   assertNavigationStage2TestSafety(environment);
   return true;
 }
+
+export function navigationStage2EditorialCacheBypassEnabled(
+  environment: NavigationStage2TestEnvironment = process.env,
+) {
+  if (environment.NAVIGATION_STAGE2_STREAMED_HEADER_DATABASE_LOCK !== "true") return false;
+  assertNavigationStage2TestSafety(environment);
+  return true;
+}

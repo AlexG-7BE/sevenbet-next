@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { revalidatePublicArticles } from "@/lib/articles/cache";
 import { requireAdminPermission } from "@/lib/auth/admin";
 import type { CmsPermission } from "@/lib/cms/types";
 import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const actor = await requireAdminPermission(request, permission);
     const { articleId } = await params;
     const article = await articleService.transition(articleId, body.action, actor, body.expectedUpdatedAt);
+    if (["publish", "revise", "archive"].includes(body.action)) {
+      revalidatePublicArticles(article.category, article.slug);
+    }
     return NextResponse.json({ ok: true, article, source: "postgresql" });
   } catch (error) {
     return adminServiceErrorResponse(error, "Article workflow action failed");

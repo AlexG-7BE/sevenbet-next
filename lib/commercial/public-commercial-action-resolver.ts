@@ -1,4 +1,5 @@
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
+import { cache } from "react";
 import type { GbCommercialReadinessDecision } from "@/lib/affiliate-commercial/gb-commercial-route-readiness";
 import { worldwideFounderGbAuthorityApplies } from "@/lib/current-partner-worldwide-authority/inventory";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
@@ -59,7 +60,28 @@ export class PublicCommercialActionResolver implements PublicCommercialActionAut
     private readonly redirectEnabled: () => boolean = isAffiliateRedirectEnabled,
   ) {}
 
+  private readonly resolveRequestScoped = cache(async (serialized: string) => {
+    const parsed = JSON.parse(serialized) as Omit<ResolvePublicCommercialActionsInput, "now"> & { now?: string };
+    const { now, ...input } = parsed;
+    return this.resolveUncached({
+      ...input,
+      ...(now ? { now: new Date(now) } : {}),
+    });
+  });
+
   async resolveMany(input: ResolvePublicCommercialActionsInput) {
+    const serialized = JSON.stringify({
+      ...input,
+      subjects: [...input.subjects].sort((left, right) => left.casinoId.localeCompare(right.casinoId)),
+      authority: input.authority ?? null,
+      countryCode: input.countryCode ?? null,
+      marketCode: input.marketCode ?? null,
+      ...(input.now ? { now: input.now.toISOString() } : {}),
+    });
+    return this.resolveRequestScoped(serialized);
+  }
+
+  private async resolveUncached(input: ResolvePublicCommercialActionsInput) {
     const subjects = [...new Map(input.subjects.map((subject) => [subject.casinoId, subject])).values()];
     const decisions = new Map<string, CommercialActionDecision>();
     if (!subjects.length) return decisions;

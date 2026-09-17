@@ -76,7 +76,7 @@ async function waitForHomeLayout(page: Page) {
     const sample = () => {
       frames += 1;
       const hero = document.querySelector('[data-screen-label="Hero"]');
-      const elements = hero ? [hero, ...hero.querySelectorAll("[data-tphoto], h1, h1 + p, a[href*='/program']")] : [];
+      const elements = hero ? [hero, ...hero.querySelectorAll("[data-tphoto], [data-home-hero-kicker], h1, h1 + p, a[href*='/program']")] : [];
       const signature = JSON.stringify(elements.map((element) => {
         const rect = element.getBoundingClientRect();
         return [rect.left, rect.top, rect.right, rect.bottom].map((value) => Math.round(value * 10) / 10);

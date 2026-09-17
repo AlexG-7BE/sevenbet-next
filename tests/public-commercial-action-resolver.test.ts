@@ -154,6 +154,19 @@ test("one market's missing route cannot suppress another market's valid action",
   assert.equal(chile.action, null);
 });
 
+test("concurrent market decisions cannot share request-scoped action authority", async () => {
+  const resolver = new PublicCommercialActionResolver(routeSource((marketCode) => (
+    marketCode === "PE" ? [{ casinoId: subject.casinoId, slug: "published-casino-pe" }] : []
+  )), allowGbCommercialReadinessAuthority, () => true);
+  const [peru, kazakhstan] = await Promise.all([
+    decision(resolver, { countryCode: "PE", marketCode: "PE", jurisdiction: authority("PE") }),
+    decision(resolver, { countryCode: "KZ", marketCode: "KZ", jurisdiction: authority("KZ", false) }),
+  ]);
+  assert.deepEqual(peru.action, { href: "/r/published-casino-pe" });
+  assert.equal(kazakhstan.action, null);
+  assert.equal(kazakhstan.reasonCode, "MARKET_RESTRICTED");
+});
+
 test("the canonical resolver has no CRM, MCP, media or raw destination dependency", () => {
   const source = readFileSync("lib/commercial/public-commercial-action-resolver.ts", "utf8");
   assert.doesNotMatch(source, /CommercialOpportunity|opportunityStage|MCP|MediaAsset|creative|trackingUrl|destinationUrl/);

@@ -272,7 +272,7 @@ test("mobile navigation and commercial category rails remain bounded", async ({ 
     const menuButton = page.getByRole("button", { name: "Open navigation" });
     await menuButton.click();
     const menu = await expectBoundedDialog(page, "#public-mobile-navigation");
-    await expect(menu.getByRole("button", { name: "Close navigation" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Close navigation" })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(menu).toBeHidden();
     await expect(menuButton).toBeFocused();

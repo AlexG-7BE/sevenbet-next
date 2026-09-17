@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   assertNavigationStage2TestSafety,
   navigationStage2CommercialStateRejectionEnabled,
+  navigationStage2EditorialCacheBypassEnabled,
   navigationStage2LocalTrustedGeoEnabled,
 } from "../lib/market/navigation-stage2-test-safety";
 import { createCommercialNavigationRetryRegistry } from "../lib/market/navigation-stage2-retry";
@@ -24,6 +25,10 @@ test("Navigation Stage 2 test seams accept only explicit disposable local databa
   assert.equal(navigationStage2LocalTrustedGeoEnabled({
     ...disposable,
     NAVIGATION_STAGE2_LOCAL_TRUSTED_GEO: "true",
+  }), true);
+  assert.equal(navigationStage2EditorialCacheBypassEnabled({
+    ...disposable,
+    NAVIGATION_STAGE2_STREAMED_HEADER_DATABASE_LOCK: "true",
   }), true);
 });
 
@@ -51,6 +56,11 @@ test("Navigation Stage 2 test seams reject missing opt-in, remote, mismatched an
     NAVIGATION_STAGE2_REJECT_COMMERCIAL_STATE: "true",
     VERCEL_ENV: "production",
   }), /Production/);
+  assert.throws(() => navigationStage2EditorialCacheBypassEnabled({
+    ...disposable,
+    DATABASE_URL: "postgresql://fixture@database.example:5432/navigation_stage2_ci",
+    NAVIGATION_STAGE2_STREAMED_HEADER_DATABASE_LOCK: "true",
+  }), /localhost/);
 });
 
 test("commercial navigation recovery is single-attempt per unresolved episode and resets after settlement", () => {

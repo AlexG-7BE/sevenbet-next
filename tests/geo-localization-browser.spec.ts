@@ -16,7 +16,7 @@ test("published language homes own canonical identity without a country selector
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), path).toBe(200);
     await expect(page.locator("html")).toHaveAttribute("lang", locale);
-    const selector = page.locator('[data-public-shell="header"] button[aria-haspopup="menu"]').first();
+    const selector = page.locator('[data-public-shell="header"] summary[aria-haspopup="menu"]').first();
     await expect(selector).toContainText(code);
     expect((await selector.innerText()).trim()).toBe(code);
     expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe(path);
@@ -31,9 +31,9 @@ test("language switch preserves path and safe query while persisting language on
     await page.goto(`${baseUrl}/sv/casinos?q=slot&country=PE`, { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(/\/sv\/casinos\?q=slot$/);
     if (viewport.width < 600) {
-      await page.locator('[data-public-shell="header"] button[aria-controls="public-mobile-navigation"]').click();
+      await page.locator('[data-public-shell="header"] summary[aria-controls="public-mobile-navigation"]').click();
     }
-    const trigger = page.locator('button[aria-haspopup="menu"]:visible').filter({ hasText: "SV" }).first();
+    const trigger = page.locator('summary[aria-haspopup="menu"]:visible').filter({ hasText: "SV" }).first();
     await trigger.click();
     const menu = page.locator('[role="menu"]:visible').first();
     await expect(menu.locator('button[value="sv"]')).toHaveAttribute("aria-checked", "true");

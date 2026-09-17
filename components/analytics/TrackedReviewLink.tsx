@@ -20,5 +20,5 @@ export function TrackedReviewLink({ casinoId, children, href, pendingLabel, plac
   return <Link href={href} onClick={() => {
     if (casinoId && placement) productAnalyticsClient.casinoReviewClicked(casinoId, placement, position);
     else productAnalyticsClient.casinoReviewOpened(sourceSurface);
-  }}>{children}<PublicLinkPendingSignal label={pendingLabel ?? (typeof children === "string" ? children : "Review")} /></Link>;
+  }} prefetch={false}>{children}<PublicLinkPendingSignal label={pendingLabel ?? (typeof children === "string" ? children : "Review")} /></Link>;
 }

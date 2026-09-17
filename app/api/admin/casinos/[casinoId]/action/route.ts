@@ -34,6 +34,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     }
     if (body.action === "request-changes") {
       const casino = await casinoService.transitionWorkflow(casinoId, EditorialStatus.DRAFT, actor.id, expectedUpdatedAt);
+      revalidatePublicCasino(casino.slug);
       return NextResponse.json({ ok: true, casino: casinoService.toBuilderCasino(casino), source: "postgresql" });
     }
     if (body.action === "approve") {

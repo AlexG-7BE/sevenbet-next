@@ -13,6 +13,14 @@ const blockIdPattern = /^[a-zA-Z0-9_-]{1,80}$/;
 const allowedLocales = new Set(PUBLISHED_LANGUAGE_ROUTE_PROFILES.map((profile) => profile.defaultLocale));
 const allowedDifficulties = new Set(["Beginner", "Intermediate", "Advanced"]);
 
+export function isSafeArticleRoutePart(value: unknown): value is string {
+  return typeof value === "string" && value.length <= 120 && slugPattern.test(value);
+}
+
+export function isPublishedArticleLocale(value: unknown): value is string {
+  return typeof value === "string" && value.length <= 20 && allowedLocales.has(value as never);
+}
+
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>

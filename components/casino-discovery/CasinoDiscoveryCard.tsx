@@ -67,7 +67,7 @@ function ReviewCardContents({ casino, position, classNames, messages, presentati
     {position !== undefined && <span aria-label={`${messages.common.result} ${position}`} className={classNames.position}>{String(position).padStart(2, "0")}</span>}
     <div className={classNames.cardHeader}>
       <div className={classNames.logo}>{casino.logo ? <ResponsivePlacementImage alt="" height={casino.logo.height ?? 72} loading="lazy" media={casino.logo} width={casino.logo.width ?? 144} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}</div>
-      <div className={classNames.identity}><h2>{reviewHref ? <Link href={productHref(presentation, reviewHref)}>{casino.name}<PublicLinkPendingSignal label={casino.name} /></Link> : casino.name}</h2>{demo ? <small>{messages.common.demoData}</small> : casino.highlights.length ? <small>{casino.highlights.slice(0, 2).join(" · ")}</small> : freshness && <small>{messages.common.current} {freshness}</small>}</div>
+      <div className={classNames.identity}><h2>{reviewHref ? <Link href={productHref(presentation, reviewHref)} prefetch={false}>{casino.name}<PublicLinkPendingSignal label={casino.name} /></Link> : casino.name}</h2>{demo ? <small>{messages.common.demoData}</small> : casino.highlights.length ? <small>{casino.highlights.slice(0, 2).join(" · ")}</small> : freshness && <small>{messages.common.current} {freshness}</small>}</div>
       {formattedRating !== null && <div aria-label={`${messages.common.editorScore} ${formattedRating} / 10`} className={classNames.score}><strong>{formattedRating}</strong><span>/10</span></div>}
     </div>
     {casino.shortDescription && <p className={classNames.description}>{casino.shortDescription}</p>}

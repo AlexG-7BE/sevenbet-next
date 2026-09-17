@@ -27,6 +27,8 @@ export function publicCasinoInventoryMode(casinos: PublicCasinoCardDto[]) {
   return demoCount === casinos.length ? "DEMO_ONLY" as const : "MIXED" as const;
 }
 
+const systemNow = () => new Date();
+
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
@@ -148,7 +150,7 @@ export class PublicCasinoDiscoveryService {
 
   constructor(
     private readonly store: PublicCasinoDiscoveryStore = publicCasinoDiscoveryRepository,
-    private readonly now = () => new Date(),
+    private readonly now = systemNow,
     private readonly actionAuthority: PublicCommercialActionAuthority = publicCommercialActionResolver,
   ) {}
 
@@ -172,17 +174,16 @@ export class PublicCasinoDiscoveryService {
     const requestCountryContext = options.defaultEditorialCountry?.trim().toUpperCase() || null;
     const commercialMarketContext = options.commercialMarketCode?.trim().toUpperCase() || requestCountryContext;
     const published = await this.store.listPublished(requestCountryContext);
-    const candidates = !published.length
-      ? []
-      : this.store.listPublishedOfferCandidates
-      ? await this.store.listPublishedOfferCandidates(
-          published.map((record) => record.casinoId),
-          now,
-        ).catch(() => extractOfferCandidatesFromPublishedRecords(published, now))
-      : extractOfferCandidatesFromPublishedRecords(published, now);
-    const context = await this.store.loadContext(published.map((record) => record.casinoId), {
-      includeAliases: true,
-    });
+    const casinoIds = published.map((record) => record.casinoId);
+    const [candidates, context] = await Promise.all([
+      !published.length
+        ? Promise.resolve([])
+        : this.store.listPublishedOfferCandidates
+        ? this.store.listPublishedOfferCandidates(casinoIds, now)
+            .catch(() => extractOfferCandidatesFromPublishedRecords(published, now))
+        : Promise.resolve(extractOfferCandidatesFromPublishedRecords(published, now)),
+      this.store.loadContext(casinoIds, { includeAliases: true }),
+    ]);
     const aliasesByCasino = new Map<string, string[]>();
     for (const alias of context.aliases) aliasesByCasino.set(alias.casinoId, [...(aliasesByCasino.get(alias.casinoId) ?? []), alias.value]);
     const mappedRecords = published.flatMap((record) => {
@@ -198,7 +199,7 @@ export class PublicCasinoDiscoveryService {
       countryCode: requestCountryContext,
       marketCode: commercialMarketContext,
       product: "CASINO",
-      now,
+      ...(this.now === systemNow ? {} : { now }),
     });
     const working = mappedRecords.flatMap(({ record, casino }): WorkingCard[] => {
       const snapshot = object(record.snapshot);

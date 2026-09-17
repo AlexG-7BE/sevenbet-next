@@ -95,6 +95,130 @@ type BoundCanonicalMarketActivationRoute = CanonicalMarketActivationRoute & {
   redirectSlug: NonNullable<CanonicalMarketActivationRoute["redirectSlug"]>;
 };
 
+type JoinedRuntimeRow = {
+  activation: Prisma.JsonValue;
+  casino: Prisma.JsonValue;
+  marketProfile: Prisma.JsonValue | null;
+  affiliateOffer: Prisma.JsonValue | null;
+  affiliateProgram: Prisma.JsonValue | null;
+  casinoBonus: Prisma.JsonValue | null;
+  primaryTrackingLink: Prisma.JsonValue | null;
+  redirectSlug: Prisma.JsonValue | null;
+};
+
+function nullableDate(value: unknown) {
+  if (typeof value !== "string" && !(value instanceof Date)) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function joinedRuntimeRoute(row: JoinedRuntimeRow): CanonicalMarketActivationRoute {
+  const activation = object(row.activation);
+  const casino = object(row.casino);
+  const marketProfile = row.marketProfile ? object(row.marketProfile) : null;
+  const affiliateOffer = row.affiliateOffer ? object(row.affiliateOffer) : null;
+  const affiliateProgram = row.affiliateProgram ? object(row.affiliateProgram) : null;
+  const casinoBonus = row.casinoBonus ? object(row.casinoBonus) : null;
+  const primaryTrackingLink = row.primaryTrackingLink ? object(row.primaryTrackingLink) : null;
+  const redirectSlug = row.redirectSlug ? object(row.redirectSlug) : null;
+  return {
+    ...activation,
+    requestedAt: nullableDate(activation.requestedAt)!,
+    activatedAt: nullableDate(activation.activatedAt),
+    disabledAt: nullableDate(activation.disabledAt),
+    blockedAt: nullableDate(activation.blockedAt),
+    lastReconciledAt: nullableDate(activation.lastReconciledAt),
+    routeLastCheckedAt: nullableDate(activation.routeLastCheckedAt),
+    createdAt: nullableDate(activation.createdAt)!,
+    updatedAt: nullableDate(activation.updatedAt)!,
+    casino: casino as CanonicalMarketActivationRoute["casino"],
+    marketProfile: marketProfile as CanonicalMarketActivationRoute["marketProfile"],
+    affiliateOffer: affiliateOffer ? {
+      ...affiliateOffer,
+      startAt: nullableDate(affiliateOffer.startAt),
+      expiresAt: nullableDate(affiliateOffer.expiresAt),
+      program: affiliateProgram,
+    } as CanonicalMarketActivationRoute["affiliateOffer"] : null,
+    casinoBonus: casinoBonus as CanonicalMarketActivationRoute["casinoBonus"],
+    primaryTrackingLink: primaryTrackingLink ? {
+      ...primaryTrackingLink,
+      verifiedAt: nullableDate(primaryTrackingLink.verifiedAt),
+      lastCheckedAt: nullableDate(primaryTrackingLink.lastCheckedAt),
+      validFrom: nullableDate(primaryTrackingLink.validFrom),
+      expiresAt: nullableDate(primaryTrackingLink.expiresAt),
+    } as CanonicalMarketActivationRoute["primaryTrackingLink"] : null,
+    redirectSlug: redirectSlug ? {
+      ...redirectSlug,
+      archivedAt: nullableDate(redirectSlug.archivedAt),
+    } as CanonicalMarketActivationRoute["redirectSlug"] : null,
+  } as CanonicalMarketActivationRoute;
+}
+
+const joinedRuntimeProjection = Prisma.sql`
+  jsonb_build_object('id', c.id, 'slug', c.slug, 'title', c.title) AS casino,
+  CASE WHEN mp.id IS NULL THEN NULL ELSE jsonb_build_object(
+    'id', mp.id, 'casinoId', mp."casinoId", 'countryCode', mp."countryCode"
+  ) END AS "marketProfile",
+  CASE WHEN ao.id IS NULL THEN NULL ELSE jsonb_build_object(
+    'id', ao.id, 'casinoId', ao."casinoId", 'casinoBonusId', ao."casinoBonusId",
+    'programId', ao."programId", 'startAt', ao."startAt", 'expiresAt', ao."expiresAt"
+  ) END AS "affiliateOffer",
+  CASE WHEN ap.id IS NULL THEN NULL ELSE jsonb_build_object(
+    'id', ap.id, 'casinoId', ap."casinoId", 'operator', ap.operator, 'metadata', ap.metadata
+  ) END AS "affiliateProgram",
+  CASE WHEN cb.id IS NULL THEN NULL ELSE jsonb_build_object(
+    'id', cb.id, 'casinoId', cb."casinoId"
+  ) END AS "casinoBonus",
+  CASE WHEN atl.id IS NULL THEN NULL ELSE jsonb_build_object(
+    'id', atl.id, 'offerId', atl."offerId", 'trackingUrl', atl."trackingUrl",
+    'destinationUrl', atl."destinationUrl", 'label', atl.label,
+    'verifiedAt', atl."verifiedAt", 'lastCheckedAt', atl."lastCheckedAt",
+    'validFrom', atl."validFrom", 'expiresAt', atl."expiresAt"
+  ) END AS "primaryTrackingLink",
+  CASE WHEN ars.id IS NULL THEN NULL ELSE jsonb_build_object(
+    'id', ars.id, 'slug', ars.slug, 'casinoId', ars."casinoId",
+    'casinoBonusId', ars."casinoBonusId", 'affiliateOfferId', ars."affiliateOfferId",
+    'active', ars.active, 'archivedAt', ars."archivedAt"
+  ) END AS "redirectSlug"
+`;
+
+const joinedRuntimeRelations = Prisma.sql`
+  INNER JOIN "Casino" c ON c.id = ma."casinoId"
+  LEFT JOIN "CasinoCountry" mp ON mp.id = ma."marketProfileId"
+  LEFT JOIN "AffiliateOffer" ao ON ao.id = ma."affiliateOfferId"
+  LEFT JOIN "AffiliateProgram" ap ON ap.id = ao."programId"
+  LEFT JOIN "CasinoBonus" cb ON cb.id = ma."casinoBonusId"
+  LEFT JOIN "AffiliateTrackingLink" atl ON atl.id = ma."primaryTrackingLinkId"
+  LEFT JOIN "AffiliateRedirectSlug" ars ON ars.id = ma."redirectSlugId"
+`;
+
+async function listJoinedRuntimeRoutes(casinoIds: string[], marketKey: CanonicalCommercialMarketKey) {
+  const rows = await prisma.$queryRaw<JoinedRuntimeRow[]>(Prisma.sql`
+    SELECT to_jsonb(ma) AS activation, ${joinedRuntimeProjection}
+    FROM "MarketActivation" ma
+    ${joinedRuntimeRelations}
+    WHERE ma."casinoId" IN (${Prisma.join(casinoIds.map((casinoId) => Prisma.sql`${casinoId}::uuid`))})
+      AND ma."marketCode" = ${marketKey}
+      AND ma.product = 'CASINO'::"MarketActivationProduct"
+    ORDER BY ma."casinoId" ASC, ma.id ASC
+  `);
+  return rows.map(joinedRuntimeRoute);
+}
+
+async function resolveJoinedRuntimeRoute(redirectSlug: string, marketKey: CanonicalCommercialMarketKey) {
+  const rows = await prisma.$queryRaw<JoinedRuntimeRow[]>(Prisma.sql`
+    SELECT to_jsonb(ma) AS activation, ${joinedRuntimeProjection}
+    FROM "MarketActivation" ma
+    ${joinedRuntimeRelations}
+    INNER JOIN "AffiliateRedirectSlug" requested_slug
+      ON requested_slug.id = ma."redirectSlugId" AND requested_slug.slug = ${redirectSlug}
+    WHERE ma."marketCode" = ${marketKey}
+      AND ma.product = 'CASINO'::"MarketActivationProduct"
+    ORDER BY ma.id ASC
+  `);
+  return rows.map(joinedRuntimeRoute);
+}
+
 function activeExactRoute(
   record: CanonicalMarketActivationRoute,
   marketKey: CanonicalCommercialMarketKey,
@@ -203,15 +327,17 @@ export class MarketActivationRuntime {
     if (!casinoIds.length) return [];
     const marketKey = storedCanonicalMarketKey(requestedMarketKey);
     if (!marketKey) return [];
-    const records = await this.database.marketActivation.findMany({
-      where: {
-        casinoId: { in: casinoIds },
-        marketCode: marketKey,
-        product: "CASINO",
-      },
-      include: runtimeInclude,
-      orderBy: [{ casinoId: "asc" }, { id: "asc" }],
-    });
+    const records = this.database === prisma
+      ? await listJoinedRuntimeRoutes(casinoIds, marketKey)
+      : await this.database.marketActivation.findMany({
+          where: {
+            casinoId: { in: casinoIds },
+            marketCode: marketKey,
+            product: "CASINO",
+          },
+          include: runtimeInclude,
+          orderBy: [{ casinoId: "asc" }, { id: "asc" }],
+        });
     return selectUnambiguousExactRoutes(records, marketKey, now);
   }
 
@@ -237,15 +363,17 @@ export class MarketActivationRuntime {
     if (!isSafePublicSlug(redirectSlug)) return null;
     const marketKey = storedCanonicalMarketKey(requestedMarketKey);
     if (!marketKey) return null;
-    const records = await this.database.marketActivation.findMany({
-      where: {
-        product: "CASINO",
-        marketCode: marketKey,
-        redirectSlug: { slug: redirectSlug },
-      },
-      include: runtimeInclude,
-      orderBy: [{ id: "asc" }],
-    });
+    const records = this.database === prisma
+      ? await resolveJoinedRuntimeRoute(redirectSlug, marketKey)
+      : await this.database.marketActivation.findMany({
+          where: {
+            product: "CASINO",
+            marketCode: marketKey,
+            redirectSlug: { slug: redirectSlug },
+          },
+          include: runtimeInclude,
+          orderBy: [{ id: "asc" }],
+        });
     return records.length === 1 && activeExactRoute(records[0]!, marketKey, now) ? records[0]! : null;
   }
 

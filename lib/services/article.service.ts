@@ -4,6 +4,7 @@ import { EditorialStatus, Prisma, type Article } from "@prisma/client";
 
 import type { CmsUser } from "@/lib/cms/types";
 import { prisma } from "@/lib/db/prisma";
+import { PUBLIC_ARTICLE_EDITORIAL_CACHE_TAG, publicEditorialCache } from "@/lib/public-editorial-cache";
 import type {
   AdminArticle,
   ArticleDocumentInput,
@@ -11,6 +12,8 @@ import type {
   PublicArticle,
 } from "@/lib/articles/article-types";
 import {
+  isPublishedArticleLocale,
+  isSafeArticleRoutePart,
   publicationIssues,
   validateArticleDocument,
 } from "@/lib/articles/article-validation";
@@ -88,6 +91,39 @@ function assertPublicationReady(article: Article) {
   const issues = [...parsed.issues, ...publicationIssues(parsed.document)];
   if (issues.length) throw new ValidationError("Article is not ready for editorial review or publication.", { issues });
 }
+
+const cachedPublishedArticles = publicEditorialCache(
+  async (locale: string, category: string | null, take: number, excludeId: string | null) => (
+    await prisma.article.findMany({
+      where: {
+        status: EditorialStatus.PUBLISHED,
+        archivedAt: null,
+        locale,
+        publishedAt: { lte: new Date() },
+        ...(category ? { category } : {}),
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+      orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
+      take,
+    })
+  ).flatMap((record) => {
+    const article = mapPublishedArticle(record);
+    return article ? [article] : [];
+  }),
+  ["public-article-list-v1"],
+  [PUBLIC_ARTICLE_EDITORIAL_CACHE_TAG],
+);
+
+const cachedPublishedArticle = publicEditorialCache(
+  async (category: string, slug: string, locale: string) => {
+    const record = await prisma.article.findFirst({
+      where: { category, slug, locale, status: EditorialStatus.PUBLISHED, archivedAt: null, publishedAt: { lte: new Date() } },
+    });
+    return record ? mapPublishedArticle(record) : null;
+  },
+  ["public-article-detail-v1"],
+  [PUBLIC_ARTICLE_EDITORIAL_CACHE_TAG],
+);
 
 export class ArticleService {
   async listAdminArticles(input: { search?: string; status?: string; locale?: string; category?: string; take?: number } = {}) {
@@ -244,30 +280,23 @@ export class ArticleService {
   }
 
   async listPublished(locale: string, input: { category?: string; take?: number; excludeId?: string } = {}): Promise<PublicArticle[]> {
-    const records = await prisma.article.findMany({
-      where: {
-        status: EditorialStatus.PUBLISHED,
-        archivedAt: null,
-        locale,
-        publishedAt: { lte: new Date() },
-        ...(input.category ? { category: input.category } : {}),
-        ...(input.excludeId ? { id: { not: input.excludeId } } : {}),
-      },
-      orderBy: [{ publishedAt: "desc" }, { updatedAt: "desc" }],
-      take: Math.min(500, Math.max(1, input.take ?? 100)),
-    });
-    return records.flatMap((record) => {
-      const article = mapPublishedArticle(record);
-      return article ? [article] : [];
-    });
+    if (!isPublishedArticleLocale(locale)) return [];
+    const category = input.category?.trim() || null;
+    if (category && !isSafeArticleRoutePart(category)) return [];
+    const records = await cachedPublishedArticles(
+      locale,
+      category,
+      Math.min(500, Math.max(1, input.take ?? 100)),
+      input.excludeId ?? null,
+    );
+    return records;
   }
 
   async getPublished(category: string, slug: string, locale: string) {
-    const record = await prisma.article.findFirst({
-      where: { category, slug, locale, status: EditorialStatus.PUBLISHED, archivedAt: null, publishedAt: { lte: new Date() } },
-    });
+    if (!isSafeArticleRoutePart(category) || !isSafeArticleRoutePart(slug) || !isPublishedArticleLocale(locale)) return null;
+    const record = await cachedPublishedArticle(category, slug, locale);
     if (!record) return null;
-    return mapPublishedArticle(record);
+    return record;
   }
 }
 

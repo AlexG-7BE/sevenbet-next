@@ -19,6 +19,8 @@ export async function POST(request: NextRequest, { params }: Context) {
     if (body.action === "publish") { const published = await editorialReviewService.publish(review.id, body.revisionId, actor.id); revalidatePublicCasino(); return NextResponse.json({ ok: true, review: published }); }
     if (!body.action || !states.has(body.action as EditorialReviewStatus)) throw new ValidationError("Unknown editorial workflow action.");
     const scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : null; if (scheduledAt && Number.isNaN(scheduledAt.getTime())) throw new ValidationError("scheduledAt must be an ISO date.");
-    return NextResponse.json({ ok: true, review: await editorialReviewService.transition(review.id, body.action as EditorialReviewStatus, actor.id, scheduledAt) });
+    const transitioned = await editorialReviewService.transition(review.id, body.action as EditorialReviewStatus, actor.id, scheduledAt);
+    revalidatePublicCasino();
+    return NextResponse.json({ ok: true, review: transitioned });
   } catch (error) { return adminServiceErrorResponse(error, "Editorial action failed"); }
 }

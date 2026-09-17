@@ -50,13 +50,73 @@ export function PublicLinkPendingSignal({ label }: { label: string }) {
   const { pending } = useLinkStatus();
   const report = useContext(PendingLinkContext);
   const id = useId();
+  const markerRef = useRef<HTMLSpanElement>(null);
+  const optimisticRef = useRef(false);
+  const nativePendingSeenRef = useRef(false);
+  const fallbackTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const marker = markerRef.current;
+    const anchor = marker?.closest("a[href]");
+    if (!report || !(anchor instanceof HTMLAnchorElement)) return;
+    const pendingLink = { id, label };
+    const clearFallback = () => {
+      if (fallbackTimerRef.current !== null) window.clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+    };
+    const clearOptimistic = () => {
+      optimisticRef.current = false;
+      nativePendingSeenRef.current = false;
+      clearFallback();
+      report(pendingLink, false);
+    };
+    const onClick = (event: MouseEvent) => {
+      if (
+        event.button !== 0
+        || event.metaKey
+        || event.ctrlKey
+        || event.shiftKey
+        || event.altKey
+        || anchor.target === "_blank"
+        || anchor.hasAttribute("download")
+      ) return;
+      const destination = new URL(anchor.href, window.location.href);
+      if (
+        destination.origin !== window.location.origin
+        || (destination.pathname === window.location.pathname
+          && destination.search === window.location.search
+          && destination.hash)
+      ) return;
+      optimisticRef.current = true;
+      nativePendingSeenRef.current = false;
+      report(pendingLink, true);
+      clearFallback();
+      fallbackTimerRef.current = window.setTimeout(clearOptimistic, 10_000);
+      window.setTimeout(() => {
+        if (event.defaultPrevented && !nativePendingSeenRef.current) clearOptimistic();
+      }, 0);
+    };
+    anchor.addEventListener("click", onClick);
+    return () => {
+      anchor.removeEventListener("click", onClick);
+      clearOptimistic();
+    };
+  }, [id, label, report]);
 
   useEffect(() => {
     if (!report) return;
     const pendingLink = { id, label };
-    report(pendingLink, pending);
-    return () => report(pendingLink, false);
+    if (pending) {
+      nativePendingSeenRef.current = true;
+      report(pendingLink, true);
+    } else if (nativePendingSeenRef.current || !optimisticRef.current) {
+      optimisticRef.current = false;
+      nativePendingSeenRef.current = false;
+      if (fallbackTimerRef.current !== null) window.clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
+      report(pendingLink, false);
+    }
   }, [id, label, pending, report]);
 
-  return null;
+  return <span data-public-link-pending-signal hidden ref={markerRef} />;
 }
