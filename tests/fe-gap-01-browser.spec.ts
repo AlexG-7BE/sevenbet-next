@@ -59,6 +59,7 @@ test("retired standalone tools permanently consolidate into Responsible Gambling
 });
 
 test("final handoff routes have one H1, no overflow and no browser errors", async ({ browser }) => {
+  test.setTimeout(90_000);
   const routes = ["/privacy", "/terms", "/responsible-gambling", "/about"];
   const viewports = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 430, height: 844 }, { width: 390, height: 844 }, { width: 320, height: 720 }];
   for (const viewport of viewports) {

@@ -199,8 +199,10 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
     const publicLayout = read("app/(public)/layout.tsx");
     assert.match(publicLayout, /resolveServerPresentationContext/);
     assert.match(publicLayout, /publicShellMessages\(presentation\.locale\)/);
-    assert.match(publicLayout, /<PublicHeader[^>]+presentation=\{presentation\}/s);
-    assert.match(publicLayout, /<PublicFooter[^>]+presentation=\{presentation\}/s);
+    const headerProps = publicLayout.slice(publicLayout.indexOf("<PublicHeader"), publicLayout.indexOf("<main"));
+    const footerProps = publicLayout.slice(publicLayout.indexOf("<PublicFooter"));
+    assert.match(headerProps, /presentation=\{presentation\}/);
+    assert.match(footerProps, /presentation=\{presentation\}/);
     assert.match(publicLayout, /resolveServerCommercialProductState/);
     assert.doesNotMatch(publicLayout, /@prisma|commercialAllowed|referralAllowed|affiliate/i);
   }

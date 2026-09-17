@@ -2,6 +2,7 @@ import { expect, test, type Locator } from "@playwright/test";
 
 import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { publicErrorMessages } from "../lib/i18n/public-errors";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
@@ -441,26 +442,26 @@ test("language-only protected safety headings wrap within their responsive grids
 
 test("localized commercial route errors resolve accepted and draft locale context safely", async ({ page }) => {
   test.setTimeout(120_000);
-  const de = productPageMessages("de-DE");
-  const es = productPageMessages("es-ES");
-  const fi = productPageMessages("fi-FI");
-  const nb = productPageMessages("nb-NO");
+  const deError = publicErrorMessages("de-DE");
+  const esError = publicErrorMessages("es-ES");
+  const fiError = publicErrorMessages("fi-FI");
+  const nbError = publicErrorMessages("nb-NO");
   const cases = [
     {
-      key: "casinos", path: "/de/casinos", locale: "de-DE", heading: de.common.commercialUnavailable,
-      links: [[de.common.reviewMethodology, "/de/methodology"], [de.common.protectedHelp, "/de/help"]],
+      key: "casinos", path: "/de/casinos", locale: "de-DE", heading: deError.title,
+      links: [[deError.home, "/de"], [deError.protectedHelp, "/de/help"]],
     },
     {
-      key: "best-offers", path: "/es/best-offers", locale: "es-ES", heading: es.bestOffers.unavailableTitleBody,
-      links: [[es.common.browseReviews, "/es/casinos"]],
+      key: "best-offers", path: "/es/best-offers", locale: "es-ES", heading: esError.title,
+      links: [[esError.browse, "/es/casinos"]],
     },
     {
-      key: "bonuses", path: "/fi/bonuses", locale: "fi-FI", heading: fi.bonuses.unavailableTitleBody,
-      links: [[fi.common.bonusGuide, "/bonus-guide"]],
+      key: "bonuses", path: "/fi/bonuses", locale: "fi-FI", heading: fiError.title,
+      links: [[fiError.browse, "/fi/casinos"]],
     },
     {
-      key: "casino-profile", path: "/nb/casino/demo-plume", locale: "nb-NO", heading: nb.profile.unavailableTitle.replace(/\s*\|\s*B4GAMBLE$/, ""),
-      links: [[nb.common.browseReviews, "/nb/casinos"], [nb.common.protectedHelp, "/help"]],
+      key: "casino-profile", path: "/nb/casino/demo-plume", locale: "nb-NO", heading: nbError.title,
+      links: [[nbError.browse, "/nb/casinos"], [nbError.protectedHelp, "/help"]],
     },
   ] as const;
 

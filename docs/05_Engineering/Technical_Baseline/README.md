@@ -46,3 +46,4 @@ This baseline describes the observed implementation, not a target architecture o
 - [14_Geo_Language_Global_Catalog.md](14_Geo_Language_Global_Catalog.md) — language-only public routing, trusted request market, global published Casino projection and three-state presentation.
 - [15_Canonical_Market_Activation.md](15_Canonical_Market_Activation.md) — single exact-market commercial authority, desired-state controller, route verification, canonical runtime cutover and legacy compatibility baseline.
 - [16_Customer_Data_Analytics_Lifecycle_Core.md](16_Customer_Data_Analytics_Lifecycle_Core.md) — current customer, first-party analytics, outbound attribution, email lifecycle, consent and fixed-dashboard implementation evidence.
+- [17_Navigation_Performance_Stage_2.md](17_Navigation_Performance_Stage_2.md) — exact Stage 1/candidate navigation timings, implemented responsiveness boundaries, regression evidence, limitations and rollback.

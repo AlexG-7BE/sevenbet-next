@@ -28,9 +28,10 @@ export const dynamic = "force-dynamic";
 type PageProps = { searchParams: Promise<PublicOfferSearchParams> };
 
 const loadBonusDirectory = cache(async () => {
-  const [presentation, authority, commercialProductState] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction(), resolveServerCommercialProductState()]);
+  const commercialProductStatePromise = resolveServerCommercialProductState();
+  const [presentation, authority] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction()]);
   const query = parsePublicOfferQuery({}, 100);
-  const result = await publicOfferService.searchOffers(
+  const resultPromise = publicOfferService.searchOffers(
     { ...query, country: presentation.marketCountryCode ?? undefined },
     authority,
     {
@@ -39,6 +40,7 @@ const loadBonusDirectory = cache(async () => {
       presentationLanguage: presentation.language,
     },
   );
+  const [commercialProductState, result] = await Promise.all([commercialProductStatePromise, resultPromise]);
   return { commercialProductState, presentation, result };
 });
 

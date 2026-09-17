@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
 import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
+import { PublicLinkPendingSignal } from "@/components/public-shell/PublicNavigationFeedback";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
@@ -66,7 +67,7 @@ function ReviewCardContents({ casino, position, classNames, messages, presentati
     {position !== undefined && <span aria-label={`${messages.common.result} ${position}`} className={classNames.position}>{String(position).padStart(2, "0")}</span>}
     <div className={classNames.cardHeader}>
       <div className={classNames.logo}>{casino.logo ? <ResponsivePlacementImage alt="" height={casino.logo.height ?? 72} loading="lazy" media={casino.logo} width={casino.logo.width ?? 144} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}</div>
-      <div className={classNames.identity}><h2>{reviewHref ? <Link href={productHref(presentation, reviewHref)}>{casino.name}</Link> : casino.name}</h2>{demo ? <small>{messages.common.demoData}</small> : casino.highlights.length ? <small>{casino.highlights.slice(0, 2).join(" · ")}</small> : freshness && <small>{messages.common.current} {freshness}</small>}</div>
+      <div className={classNames.identity}><h2>{reviewHref ? <Link href={productHref(presentation, reviewHref)} prefetch={false}>{casino.name}<PublicLinkPendingSignal label={casino.name} /></Link> : casino.name}</h2>{demo ? <small>{messages.common.demoData}</small> : casino.highlights.length ? <small>{casino.highlights.slice(0, 2).join(" · ")}</small> : freshness && <small>{messages.common.current} {freshness}</small>}</div>
       {formattedRating !== null && <div aria-label={`${messages.common.editorScore} ${formattedRating} / 10`} className={classNames.score}><strong>{formattedRating}</strong><span>/10</span></div>}
     </div>
     {casino.shortDescription && <p className={classNames.description}>{casino.shortDescription}</p>}
@@ -76,7 +77,7 @@ function ReviewCardContents({ casino, position, classNames, messages, presentati
     </div>
     <p className={classNames.commission}>{disclosure}</p>
     {!canVisit && <p className={classNames.unavailable} role="note">{messages.common.reviewAvailableNoAction}</p>}
-    <div className={classNames.cardActions}>{canVisit && casino.action ? <CasinoOutboundAction action={{ href: casino.action.href, label: messages.common.actionAvailable }} context={{ source: "CTA", placement: "CASINO_DIRECTORY_CARD" }} messages={messages.outbound} /> : null}{reviewHref ? <TrackedReviewLink href={productHref(presentation, reviewHref)} sourceSurface="casinos">{demo ? messages.common.viewDemonstration : messages.common.readReview}</TrackedReviewLink> : null}<ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /></div>
+    <div className={classNames.cardActions}>{canVisit && casino.action ? <CasinoOutboundAction action={{ href: casino.action.href, label: messages.common.actionAvailable }} context={{ source: "CTA", placement: "CASINO_DIRECTORY_CARD" }} messages={messages.outbound} /> : null}{reviewHref ? <TrackedReviewLink href={productHref(presentation, reviewHref)} pendingLabel={casino.name} sourceSurface="casinos">{demo ? messages.common.viewDemonstration : messages.common.readReview}</TrackedReviewLink> : null}<ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} messages={messages.comparison} /></div>
   </>;
 }
 

@@ -7,6 +7,8 @@ function source(path: string) {
 }
 
 test("commercial error boundaries use the locale-aware retry message", () => {
+  const errorContext = source("lib/i18n/use-public-error-context.ts");
+  assert.match(errorContext, /messages: publicErrorMessages\(presentation\?\.locale \?\? "en-GB"\)/);
   for (const path of [
     "app/(public)/best-offers/error.tsx",
     "app/(public)/bonuses/error.tsx",
@@ -15,7 +17,7 @@ test("commercial error boundaries use the locale-aware retry message", () => {
   ]) {
     const errorBoundary = source(path);
     assert.match(errorBoundary, /usePublicErrorContext/);
-    assert.match(errorBoundary, /errorMessages\.retry/);
+    assert.match(errorBoundary, /messages\.retry/);
     assert.doesNotMatch(errorBoundary, /<button[^>]*>\{messages\.common\.current\}<\/button>/);
   }
 });

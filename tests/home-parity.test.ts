@@ -142,7 +142,7 @@ test("Public Shell keeps its approved architecture while exposing the current br
   const shellStyles = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
   assert.match(header, /aria-label=\{messages\.homeLabel\}/);
   assert.match(header, />\s*B4GAMBLE\s*</);
-  assert.match(navigation, />B4GAMBLE<\/Link>/);
+  assert.match(navigation, />B4GAMBLE[\s\S]*?<PublicLinkPendingSignal[^>]*\/>[\s\S]*?<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
   assert.match(footer, /\{footer\.description\}/);
   assert.match(footer, /\{footer\.operatorDisclaimer\}/);

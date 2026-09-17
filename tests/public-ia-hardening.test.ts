@@ -161,8 +161,8 @@ test("shared navigation and footer expose only the final handoff destinations", 
   for (const destination of ["/responsible-gambling", "/learn", "/privacy", "/terms"]) {
     assert.ok(footer.includes(destination), destination);
   }
-  assert.match(footer, /<Link href="\/privacy">\{footer\.privacy\}<\/Link>/);
-  assert.match(footer, /<Link href="\/terms">\{footer\.terms\}<\/Link>/);
+  assert.match(footer, /<Link href="\/privacy" prefetch=\{false\}>\{footer\.privacy\}<\/Link>/);
+  assert.match(footer, /<Link href="\/terms" prefetch=\{false\}>\{footer\.terms\}<\/Link>/);
   assert.doesNotMatch(footer, /\/self-check|\/tools\/budget-calculator|\/compare/);
   assert.match(category, /Open Responsible Gambling hub/);
 });

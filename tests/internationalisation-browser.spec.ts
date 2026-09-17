@@ -121,8 +121,10 @@ test("desktop selector persists presentation and preserves a supported equivalen
   await page.goto(`${baseUrl}/de/casinos`, { waitUntil: "domcontentloaded" });
   const messages = publicShellMessages("de-DE");
   const trigger = page.getByRole("button", { name: messages.changeMarketAndLanguage }).first();
-  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  const disclosure = trigger.locator("..");
+  await expect(disclosure).not.toHaveAttribute("open", "");
   await trigger.click();
+  await expect(disclosure).toHaveAttribute("open", "");
   const menu = page.getByRole("menu", { name: messages.changeMarketAndLanguage }).first();
   await expect(menu).toBeVisible();
   await expect(menu.locator('button[value="de"]')).toHaveAttribute("aria-checked", "true");

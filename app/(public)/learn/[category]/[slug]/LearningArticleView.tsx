@@ -1,7 +1,9 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { articlePath, type AdminArticle, type ArticleBlock, type PublicArticle } from "@/lib/articles/article-types";
 import type { LearningMessages } from "@/lib/i18n/learning-center";
+import { PublicLinkPendingSignal } from "@/components/public-shell/PublicNavigationFeedback";
 
 import styles from "./article.module.css";
 import handoffStyles from "./article-handoff.module.css";
@@ -30,10 +32,20 @@ function ArticleBlockView({ block }: { block: ArticleBlock }) {
   return <aside className={styles.resourceLink}><strong>{block.label}</strong>{block.description && <p>{block.description}</p>}<a href={block.url} {...(isExternal(block.url) ? { rel: "noopener noreferrer", target: "_blank" } : {})}>{block.label} <span aria-hidden="true">↗</span></a></aside>;
 }
 
-export function LearningArticleView({ article, categoryTitle, relatedArticles, messages, hrefFor, programmePath, preview = false }: {
+export function LearningArticleRelated({ relatedArticles, messages, hrefFor }: {
+  relatedArticles: PublicArticle[];
+  messages: LearningMessages;
+  hrefFor: (href: string) => string;
+}) {
+  if (!relatedArticles.length) return null;
+  return <section className={`${styles.related} ${handoffStyles.related}`} aria-labelledby="related-reading-title" data-nav-theme="cream"><header><p className={styles.kicker}>{messages.ui.relatedReading}</p><h2 id="related-reading-title">READ NEXT</h2></header><ol>{relatedArticles.map((related, index) => <li key={related.id}><Link href={hrefFor(articlePath(related))}><span>{String(index + 1).padStart(2, "0")}</span><span>{related.category.replaceAll("-", " ")}</span><strong>{related.title}</strong><span>{related.excerpt}</span><i aria-hidden="true">↗</i><PublicLinkPendingSignal label={related.title} /></Link></li>)}</ol></section>;
+}
+
+export function LearningArticleView({ article, categoryTitle, relatedArticles = [], relatedArticlesSlot, messages, hrefFor, programmePath, preview = false }: {
   article: AdminArticle;
   categoryTitle: string;
-  relatedArticles: PublicArticle[];
+  relatedArticles?: PublicArticle[];
+  relatedArticlesSlot?: ReactNode;
   messages: LearningMessages;
   hrefFor: (href: string) => string;
   programmePath: string;
@@ -56,7 +68,7 @@ export function LearningArticleView({ article, categoryTitle, relatedArticles, m
       <aside className={`${styles.toc} ${handoffStyles.toc}`} aria-label={messages.ui.onThisPage}><p className={styles.kicker}>{messages.ui.onThisPage}</p>{headings.length ? <ol>{headings.map((heading, index) => <li key={heading.id}><a href={`#${headingId(heading)}`}>{String(index + 1).padStart(2, "0")} {heading.text}</a></li>)}</ol> : <p>Structured guide</p>}{protectedCategory && <div className={handoffStyles.supportCard}><strong>Control & support</strong><p>Need a neutral next step away from gambling content?</p><Link href={hrefFor("/help")}>Open protected Help →</Link></div>}</aside>
       <div className={`${styles.articleBody} ${handoffStyles.articleBody}`}>{article.bodyBlocks.map((block) => <ArticleBlockView block={block} key={block.id} />)}<div className={handoffStyles.articleReview}><span>Published {published}{reviewed ? ` · reviewed ${reviewed}` : ""}</span><Link href={hrefFor("/methodology")}>Editorial methodology →</Link></div></div>
     </div>
-    {relatedArticles.length > 0 && <section className={`${styles.related} ${handoffStyles.related}`} aria-labelledby="related-reading-title" data-nav-theme="cream"><header><p className={styles.kicker}>{messages.ui.relatedReading}</p><h2 id="related-reading-title">READ NEXT</h2></header><ol>{relatedArticles.map((related, index) => <li key={related.id}><Link href={hrefFor(articlePath(related))}><span>{String(index + 1).padStart(2, "0")}</span><span>{related.category.replaceAll("-", " ")}</span><strong>{related.title}</strong><span>{related.excerpt}</span><i aria-hidden="true">↗</i></Link></li>)}</ol></section>}
+    {relatedArticlesSlot ?? <LearningArticleRelated hrefFor={hrefFor} messages={messages} relatedArticles={relatedArticles} />}
     {protectedCategory ? <aside className={styles.protectedBridge} aria-label={messages.ui.controlSupport} data-nav-theme="dark"><div><p className={styles.kicker}>{messages.ui.controlSupport}</p><h2>{messages.ui.neutralNextStep}</h2></div><div><p>{messages.ui.responsibleNoTransition}</p><div className={styles.protectedActions}><Link href={hrefFor("/responsible-gambling")}>{messages.ui.exploreResponsible} <span aria-hidden="true">↗</span></Link><Link href={hrefFor("/help")}>{messages.ui.openHelp} <span aria-hidden="true">↗</span></Link></div></div></aside> : <aside className={`${styles.commercial} ${handoffStyles.commercial}`} aria-label={messages.ui.optionalTransition} data-nav-theme="dark"><div><p className={styles.kicker}>{messages.ui.afterAnswer}</p><h2>KNOWLEDGE IS HALF OF IT.<em>The plan is the other half.</em></h2></div><div><p>Turn what you have read into boundaries you can use.</p><Link href={programmePath}>Start Programme</Link></div></aside>}
   </article>;
 }

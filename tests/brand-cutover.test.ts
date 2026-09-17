@@ -60,7 +60,7 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   assert.match(header, /aria-label=\{messages\.homeLabel\}/);
   assert.match(shellCatalog, /homeLabel: "B4GAMBLE home"/);
   assert.match(header, />\s*B4GAMBLE\s*</);
-  assert.match(navigation, />B4GAMBLE<\/Link>/);
+  assert.match(navigation, />B4GAMBLE[\s\S]*?<PublicLinkPendingSignal[^>]*\/>[\s\S]*?<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
   assert.match(footer, /\{footer\.description\}[\s\S]*\{footer\.operatorDisclaimer\}/);
   assert.match(footer, /\{footer\.financialRisk\}/);

@@ -420,7 +420,7 @@ test("ordinary pages retain deny-all capabilities while localized public Program
       const response = await request.get(`${baseUrl}${pathname}`);
       expect(response.status(), pathname).toBe(200);
       const html = await response.text();
-      const hrefs = [...html.matchAll(/href="([^"]*\/program(?:\?entry=start)?)"/g)].map((match) => match[1]);
+      const hrefs = [...html.matchAll(/<a\b[^>]*\shref="([^"]*\/program(?:\?entry=start)?)"/g)].map((match) => match[1]);
       expect(hrefs.length, `${pathname} should render at least one Programme entry`).toBeGreaterThan(0);
       expect(hrefs.every((href) => href === route.path || href === `${route.path}?entry=start`), `${pathname}: ${hrefs.join(", ")}`).toBe(true);
     }

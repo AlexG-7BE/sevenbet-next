@@ -9,6 +9,7 @@ import {
   type PublicCommercialActionAuthority,
 } from "@/lib/commercial/public-commercial-action-resolver";
 import { extractOfferCandidatesFromPublishedRecords, withOfferPresentation } from "@/lib/public-offer/offer-presentation";
+import { PUBLIC_CASINO_EDITORIAL_CACHE_TAG, publicEditorialCache } from "@/lib/public-editorial-cache";
 
 function projectRequestedMarket(casino: PublicCasinoDTO, countryCode: string | null | undefined) {
   if (countryCode !== undefined) return projectPublicCasinoMarket(casino, countryCode ?? "");
@@ -29,6 +30,36 @@ export function isPublicCasinoCmsEnabled(environment: PublicCasinoCmsEnvironment
   if (environment.VERCEL_ENV === "production" || environment.VERCEL_ENV === "preview") return true;
   return environment.PUBLIC_CASINO_CMS_ENABLED === "true";
 }
+
+async function loadPublishedCasinoEditorial(
+  repository: PublicCasinoStore,
+  slug: string,
+  countryCode: string | null,
+  now?: Date,
+) {
+  const published = await repository.findPublishedBySlug(slug, countryCode);
+  if (!published) return null;
+  const candidates = repository.listPublishedOfferCandidates
+    ? await repository.listPublishedOfferCandidates([published.casinoId], now)
+        .catch(() => extractOfferCandidatesFromPublishedRecords([published], now))
+    : extractOfferCandidatesFromPublishedRecords([published], now);
+  const casino = mapPublishedCasino(published, { now, countryCode });
+  if (!casino) return null;
+  const projected = withOfferPresentation(
+    projectRequestedMarket(casino, countryCode),
+    candidates,
+    countryCode,
+  );
+  return { ...projected, action: null };
+}
+
+const cachedPublishedCasinoEditorial = publicEditorialCache(
+  async (slug: string, countryCode: string | null, _presentationLanguage: string | null) => (
+    loadPublishedCasinoEditorial(publicCasinoRepository, slug, countryCode)
+  ),
+  ["public-casino-detail-editorial-projection-v1"],
+  [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
+);
 
 export class PublicCasinoService {
   constructor(
@@ -84,45 +115,28 @@ export class PublicCasinoService {
     if (!isSafePublicSlug(slug)) return null;
     if (!this.cmsEnabled()) return this.localFixturesAllowed() ? this.legacy(slug) : null;
 
-    let published = null;
+    let projected: PublicCasinoDTO | null = null;
     try {
-      published = await this.repository.findPublishedBySlug(slug, countryCode);
-    } catch {
-      return null;
-    }
-
-    if (published) {
-      const candidates = await this.publishedOfferCandidates([published]);
       const normalizedCountry = countryCode?.trim().toUpperCase() || null;
-      const casino = mapPublishedCasino(published, {
-        now: this.options.now,
-        countryCode: normalizedCountry,
-      });
-      if (casino) {
-        const decisions = await this.actionAuthority.resolveMany({
-          subjects: [{ casinoId: casino.id, casinoSlug: casino.slug, published: true }],
-          authority,
-          countryCode: normalizedCountry,
-          marketCode: commercialMarketCode,
-          product: "CASINO",
-          now: this.options.now,
-        });
-        const projected = withOfferPresentation(
-          projectRequestedMarket(casino, countryCode ?? null),
-          candidates,
-          normalizedCountry,
-        );
-        return { ...projected, action: decisions.get(casino.id)?.action ?? null };
-      }
-      return null;
-    }
-
-    try {
-      if (await this.repository.hasManagedSlug(slug)) return null;
+      projected = this.repository === publicCasinoRepository && this.options.now === undefined
+        ? await cachedPublishedCasinoEditorial(slug, normalizedCountry, presentationLanguage?.trim() || null)
+        : await loadPublishedCasinoEditorial(this.repository, slug, normalizedCountry, this.options.now);
     } catch {
       return null;
     }
 
+    if (projected) {
+      const normalizedCountry = countryCode?.trim().toUpperCase() || null;
+      const decisions = await this.actionAuthority.resolveMany({
+        subjects: [{ casinoId: projected.id, casinoSlug: projected.slug, published: true }],
+        authority,
+        countryCode: normalizedCountry,
+        marketCode: commercialMarketCode,
+        product: "CASINO",
+        now: this.options.now,
+      });
+      return { ...projected, action: decisions.get(projected.id)?.action ?? null };
+    }
     return null;
   }
 
@@ -173,6 +187,53 @@ export class PublicCasinoService {
       if (!bySlug.has(casino.slug)) bySlug.set(casino.slug, casino);
     }
     return [...bySlug.values()].sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));
+  }
+
+  /**
+   * Resolve the shell's canonical-action availability without projecting the
+   * offer corpus, bonus presentation, or catalogue ordering. The publication
+   * projection and canonical action authority are intentionally identical to
+   * listCasinos; this is a bounded existence query, not a second policy path.
+   */
+  async hasCanonicalAction(
+    authority?: CommercialJurisdictionAuthority | null,
+    countryCode?: string | null,
+    commercialMarketCode?: string | null,
+  ): Promise<boolean> {
+    if (!this.cmsEnabled()) return false;
+
+    let published: Awaited<ReturnType<PublicCasinoStore["listPublished"]>>;
+    try {
+      published = await this.repository.listPublished(countryCode);
+    } catch {
+      return false;
+    }
+
+    const normalizedCountry = countryCode?.trim().toUpperCase() || null;
+    const subjects = published.flatMap((entry) => {
+      const casino = mapPublishedCasino(entry, {
+        now: this.options.now,
+        countryCode: normalizedCountry,
+      });
+      return casino
+        ? [{ casinoId: casino.id, casinoSlug: casino.slug, published: true as const }]
+        : [];
+    });
+    if (!subjects.length) return false;
+
+    try {
+      const decisions = await this.actionAuthority.resolveMany({
+        subjects,
+        authority,
+        countryCode: normalizedCountry,
+        marketCode: commercialMarketCode,
+        product: "CASINO",
+        now: this.options.now,
+      });
+      return subjects.some((subject) => decisions.get(subject.casinoId)?.action != null);
+    } catch {
+      return false;
+    }
   }
 
   async listBonuses(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null, presentationLanguage?: string | null, commercialMarketCode?: string | null) {

@@ -35,10 +35,38 @@ test("generated handoff pages surrender captured global chrome before rendering"
 test("normal public and Programme routes have one production shell owner", () => {
   const publicLayout = read("app/(public)/layout.tsx");
   const programmeLayout = read("app/program/layout.tsx");
-  for (const layout of [publicLayout, programmeLayout]) {
-    assert.equal((layout.match(/<PublicHeader\b/g) ?? []).length, 1);
-    assert.equal((layout.match(/<PublicFooter\b/g) ?? []).length, 1);
-  }
+  assert.equal((programmeLayout.match(/<PublicHeader\b/g) ?? []).length, 1);
+  assert.equal((programmeLayout.match(/<PublicFooter\b/g) ?? []).length, 1);
+  assert.equal((publicLayout.match(/<PublicHeader\b/g) ?? []).length, 1);
+  assert.equal((publicLayout.match(/<PublicFooter\b/g) ?? []).length, 1);
+  assert.doesNotMatch(publicLayout, /fallback=\{<Public(?:Header|Footer)\b/);
+  assert.match(publicLayout, /const COMMERCIAL_NAVIGATION_WAIT_MS = 1_500/);
+  assert.match(publicLayout, /boundedCommercialProductState\(resolveServerCommercialProductState\(\)\)/);
+  assert.match(publicLayout, /resolution\.kind === "timed-out"[\s\S]*variant === "mobile" && destination === "\/best-offers" \? <PublicCommercialNavigationRetry \/> : null/);
+  assert.match(publicLayout, /commercialDesktopBestOffersNavigation=\{\([\s\S]*data-commercial-navigation-pending="desktop"[\s\S]*destination="\/best-offers"/);
+  assert.match(publicLayout, /commercialDesktopBonusesNavigation=\{\([\s\S]*data-commercial-navigation-pending="desktop-bonuses"[\s\S]*destination="\/bonuses"/);
+  assert.match(publicLayout, /commercialMobileBestOffersNavigation=\{\([\s\S]*data-commercial-navigation-pending="mobile"[\s\S]*destination="\/best-offers"/);
+  assert.match(publicLayout, /commercialMobileBonusesNavigation=\{\([\s\S]*data-commercial-navigation-pending="mobile-bonuses"[\s\S]*destination="\/bonuses"/);
+  assert.match(publicLayout, /<main id="main-content">\{children\}<\/main>[\s\S]*commercialBestOffersNavigation=\{\([\s\S]*data-commercial-navigation-pending="footer"/);
+
+  const navigation = read("components/public-shell/PublicNavigation.tsx");
+  const enhancement = read("components/public-shell/PublicNavigationClient.tsx");
+  assert.doesNotMatch(navigation, /^"use client";/);
+  assert.match(navigation, /<details[^>]+data-public-mobile-disclosure/);
+  assert.match(navigation, /<PublicMobileNavigationEnhancement/);
+  assert.match(enhancement, /disclosure\.dataset\.navigationEnhanced = "true"/);
+  assert.match(enhancement, /createCommercialNavigationRetryRegistry\(\)/);
+  assert.match(enhancement, /commercialNavigationRefreshes\.claim\(pathname\)/);
+  assert.match(enhancement, /commercialNavigationRefreshes\.clear\(pathname\)/);
+  assert.equal((enhancement.match(/router\.refresh\(\)/g) ?? []).length, 1);
+  assert.match(enhancement, /disclosure\.setAttribute\("role", "dialog"\)/);
+  assert.match(enhancement, /disclosure\.setAttribute\("aria-modal", "true"\)/);
+  assert.match(enhancement, /sibling\.inert = true/);
+  assert.match(enhancement, /event\.key !== "Tab"/);
+
+  const shell = read("components/public-shell/PublicShell.module.css");
+  assert.doesNotMatch(shell, /\[data-navigation-href=[^\]]+\]\s*\{\s*order:/);
+  assert.doesNotMatch(shell, /\[data-footer-navigation-href=[^\]]+\]\s*\{\s*order:/);
 
   const interactions = read("components/final-handoff/HandoffInteractions.tsx");
   assert.doesNotMatch(interactions, /\[data-nav\]|data\.navtheme|syncNavigation/);

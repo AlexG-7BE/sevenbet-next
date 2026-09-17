@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
@@ -60,37 +60,46 @@ export function MarketLanguageSelector({
   const returnTo = `${pathname}${searchParams.size ? `?${searchParams}` : ""}`;
   const menuId = `${surface}-language-menu-${variant}`;
   const activeChoice = presentation.language;
-  const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const disclosureRef = useRef<HTMLDetailsElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-    const frame = requestAnimationFrame(() => {
-      menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitemradio"][aria-checked="true"]')?.focus();
-    });
-    function closeOnOutsidePointer(event: PointerEvent) {
-      if (event.target instanceof Node && !formRef.current?.contains(event.target)) setOpen(false);
-    }
-    function closeOnEscape(event: globalThis.KeyboardEvent) {
-      if (event.key !== "Escape") return;
+    const disclosure = disclosureRef.current;
+    if (!disclosure) return;
+    let frame = 0;
+    const focusCurrentChoice = () => {
+      if (!disclosure.open) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitemradio"][aria-checked="true"]')?.focus();
+      });
+    };
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (event.target instanceof Node && !formRef.current?.contains(event.target)) disclosure.open = false;
+    };
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape" || !disclosure.open) return;
       event.preventDefault();
       event.stopPropagation();
       closeMenu({ restoreFocus: true });
-    }
+    };
     const form = formRef.current;
+    disclosure.addEventListener("toggle", focusCurrentChoice);
     form?.addEventListener("keydown", closeOnEscape);
     document.addEventListener("pointerdown", closeOnOutsidePointer);
+    if (disclosure.open) focusCurrentChoice();
     return () => {
       cancelAnimationFrame(frame);
+      disclosure.removeEventListener("toggle", focusCurrentChoice);
       form?.removeEventListener("keydown", closeOnEscape);
       document.removeEventListener("pointerdown", closeOnOutsidePointer);
     };
-  }, [open]);
+  }, []);
 
   function closeMenu({ restoreFocus = false } = {}) {
-    setOpen(false);
+    if (disclosureRef.current) disclosureRef.current.open = false;
     if (restoreFocus) requestAnimationFrame(() => triggerRef.current?.focus());
   }
 
@@ -118,23 +127,21 @@ export function MarketLanguageSelector({
       <span className={variant === "desktop" ? "srOnly" : styles.presentationSelectorLabel}>
         {messages.marketAndLanguage}
       </span>
-      <button
-        aria-controls={menuId}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={`${messages.changeMarketAndLanguage}: ${languageName(presentation.locale, presentation.locale)}`}
-        className={styles.selectorTrigger}
-        onClick={() => setOpen((current) => !current)}
-        ref={triggerRef}
-        type="button"
-      >
-        <GlobeIcon />
-        <span className={styles.selectorTriggerCode}>{languageCode(presentation.locale)}</span>
-        <ChevronIcon />
-      </button>
-      <input name="returnTo" type="hidden" value={returnTo} />
-      <input name="surface" type="hidden" value={surface} />
-      {open ? (
+      <details className={styles.presentationDisclosure} ref={disclosureRef}>
+        <summary
+          aria-controls={menuId}
+          aria-haspopup="menu"
+          aria-label={`${messages.changeMarketAndLanguage}: ${languageName(presentation.locale, presentation.locale)}`}
+          className={styles.selectorTrigger}
+          ref={triggerRef}
+          role="button"
+        >
+          <GlobeIcon />
+          <span className={styles.selectorTriggerCode}>{languageCode(presentation.locale)}</span>
+          <ChevronIcon />
+        </summary>
+        <input name="returnTo" type="hidden" value={returnTo} />
+        <input name="surface" type="hidden" value={surface} />
         <div
           aria-label={messages.changeMarketAndLanguage}
           className={styles.selectorMenu}
@@ -178,7 +185,7 @@ export function MarketLanguageSelector({
           })}
           <p className={styles.selectorStatus}>{messages.presentationOnlyNotice} <strong>{presentation.marketDisplayName}</strong></p>
         </div>
-      ) : null}
+      </details>
     </form>
   );
 }

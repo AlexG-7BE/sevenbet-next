@@ -91,8 +91,9 @@ test("pending and error states fail without invented offer truth", () => {
   assert.match(pending, /aria-busy=\{pending\}/);
   assert.match(pending, /pendingLabel/);
   assert.doesNotMatch(pending, /maximum bonus|minimum deposit|wagering multiplier/i);
-  assert.match(error, /messages\.bonuses\.unavailableTitleBody/);
-  assert.match(error, /messages\.bonuses\.unavailableCopy/);
+  assert.match(error, /usePublicErrorContext/);
+  assert.match(error, /messages\.title/);
+  assert.match(error, /messages\.copy/);
   assert.match(error, /reset/);
 });
 

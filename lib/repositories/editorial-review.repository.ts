@@ -1,19 +1,37 @@
 import { createHash } from "node:crypto";
 import { EditorialReviewStatus, Prisma } from "@prisma/client";
 
+import { runPublicDatabaseRead } from "@/lib/db/public-database-read-coordinator";
 import { prisma } from "@/lib/db/prisma";
+import { PUBLIC_CASINO_EDITORIAL_CACHE_TAG, publicEditorialCache } from "@/lib/public-editorial-cache";
 import type { CasinoEditorialDocument, EditorialReview, EditorialRevision } from "@/lib/editorial-review/types";
 
 function json(value: unknown) { return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue; }
 function document(value: Prisma.JsonValue): CasinoEditorialDocument { return value as unknown as CasinoEditorialDocument; }
-function revision(value: { id: string; reviewId: string; revisionNumber: number; content: Prisma.JsonValue; summary: string; createdBy: string; createdAt: Date; promotedAt: Date | null }): EditorialRevision {
-  return { ...value, content: document(value.content) };
+function date(value: Date | string | null) { return value ? new Date(value) : null; }
+function revision(value: { id: string; reviewId: string; revisionNumber: number; content: Prisma.JsonValue; summary: string; createdBy: string; createdAt: Date | string; promotedAt: Date | string | null }): EditorialRevision {
+  return { ...value, content: document(value.content), createdAt: new Date(value.createdAt), promotedAt: date(value.promotedAt) };
 }
-function review(value: { id: string; casinoId: string; status: EditorialReviewStatus; draftRevisionNumber: number; publishedRevisionId: string | null; scheduledPublishAt: Date | null; publishedAt: Date | null; archivedAt: Date | null; revisions: Array<{ id: string; reviewId: string; revisionNumber: number; content: Prisma.JsonValue; summary: string; createdBy: string; createdAt: Date; promotedAt: Date | null }> }): EditorialReview {
-  return { ...value, status: value.status, revisions: value.revisions.map(revision) };
+function review(value: { id: string; casinoId: string; status: EditorialReviewStatus; draftRevisionNumber: number; publishedRevisionId: string | null; scheduledPublishAt: Date | string | null; publishedAt: Date | string | null; archivedAt: Date | string | null; revisions: Array<{ id: string; reviewId: string; revisionNumber: number; content: Prisma.JsonValue; summary: string; createdBy: string; createdAt: Date | string; promotedAt: Date | string | null }> }): EditorialReview {
+  return {
+    ...value,
+    status: value.status,
+    scheduledPublishAt: date(value.scheduledPublishAt),
+    publishedAt: date(value.publishedAt),
+    archivedAt: date(value.archivedAt),
+    revisions: value.revisions.map(revision),
+  };
 }
 
 const include = { revisions: { orderBy: { revisionNumber: "desc" } } } satisfies Prisma.EditorialReviewInclude;
+const cachedPublishedEditorialReview = publicEditorialCache(
+  async (slug: string) => runPublicDatabaseRead(() => prisma.editorialReview.findFirst({
+    where: { status: "PUBLISHED", archivedAt: null, casino: { slug } },
+    include: { ...include, casino: { select: { id: true, slug: true, title: true } } },
+  })),
+  ["public-casino-editorial-review-v1"],
+  [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
+);
 export interface EditorialReviewStore {
   findById(id: string): Promise<EditorialReview | null>;
   findByCasinoId(casinoId: string): Promise<EditorialReview | null>;
@@ -35,7 +53,7 @@ export class EditorialReviewRepository implements EditorialReviewStore {
     return value ? review(value) : null;
   }
   async findPublishedBySlug(slug: string) {
-    const value = await prisma.editorialReview.findFirst({ where: { status: "PUBLISHED", archivedAt: null, casino: { slug } }, include: { ...include, casino: { select: { id: true, slug: true, title: true } } } });
+    const value = await cachedPublishedEditorialReview(slug);
     return value ? { review: review(value), casino: value.casino } : null;
   }
   async saveRevision(casinoId: string, content: CasinoEditorialDocument, summary: string, actorId: string) {

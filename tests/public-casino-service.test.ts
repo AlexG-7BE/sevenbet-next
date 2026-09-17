@@ -296,3 +296,60 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     assert.equal((await service(repository).listBonuses()).some(({ casino }) => casino.slug === managedSlug), false);
   });
 });
+
+test("canonical-action existence uses the same governed decisions without loading offer presentation", async (t) => {
+  await t.test("matches the full catalogue for available and unavailable decisions", async () => {
+    const record = publishedRecord();
+    for (const authorized of [false, true]) {
+      const repository = store([record], [managedSlug]);
+      const subjectService = authorized ? authorizedService(repository) : service(repository);
+      const expected = (await subjectService.listCasinos(allowJurisdictionAuthority, "GB", "en", "GB"))
+        .some((casino) => casino.action !== null);
+      assert.equal(
+        await subjectService.hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"),
+        expected,
+      );
+    }
+  });
+
+  await t.test("skips the additive offer-corpus read", async () => {
+    let offerReads = 0;
+    const repository = store([publishedRecord()], [managedSlug], {
+      listPublishedOfferCandidates: async () => {
+        offerReads += 1;
+        return [];
+      },
+    });
+    assert.equal(
+      await authorizedService(repository).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"),
+      true,
+    );
+    assert.equal(offerReads, 0);
+  });
+
+  await t.test("fails closed for repository, authority, empty, and CMS-disabled states", async () => {
+    const repositoryFailure = store([], [], {
+      listPublished: async () => { throw new Error("published list unavailable"); },
+    });
+    assert.equal(await authorizedService(repositoryFailure).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), false);
+    assert.equal(await authorizedService(store()).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), false);
+
+    const authorityFailure = new PublicCasinoService(
+      store([publishedRecord()], [managedSlug]),
+      legacy,
+      { cmsEnabled: true, now },
+      { resolveMany: async () => { throw new Error("authority unavailable"); } },
+    );
+    assert.equal(await authorityFailure.hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), false);
+
+    let disabledReads = 0;
+    const cmsDisabled = new PublicCasinoService(
+      store([], [], { listPublished: async () => { disabledReads += 1; return []; } }),
+      legacy,
+      { cmsEnabled: false, now },
+      noCommercialActions,
+    );
+    assert.equal(await cmsDisabled.hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), false);
+    assert.equal(disabledReads, 0);
+  });
+});

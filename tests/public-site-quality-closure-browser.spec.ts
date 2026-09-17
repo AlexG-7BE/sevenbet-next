@@ -69,6 +69,10 @@ async function waitForDocumentFonts(page: Page) {
 }
 
 async function waitForHomeLayout(page: Page) {
+  const hero = page.locator('[data-screen-label="Hero"]');
+  await expect(hero).toBeVisible();
+  await expect(hero.locator("[data-home-hero-kicker]")).toBeVisible();
+  await expect(hero.locator("h1")).toBeVisible();
   await page.evaluate(() => new Promise<void>((resolve) => {
     let frames = 0;
     let previous = "";
@@ -76,7 +80,7 @@ async function waitForHomeLayout(page: Page) {
     const sample = () => {
       frames += 1;
       const hero = document.querySelector('[data-screen-label="Hero"]');
-      const elements = hero ? [hero, ...hero.querySelectorAll("[data-tphoto], h1, h1 + p, a[href*='/program']")] : [];
+      const elements = hero ? [hero, ...hero.querySelectorAll("[data-tphoto], [data-home-hero-kicker], h1, h1 + p, a[href*='/program']")] : [];
       const signature = JSON.stringify(elements.map((element) => {
         const rect = element.getBoundingClientRect();
         return [rect.left, rect.top, rect.right, rect.bottom].map((value) => Math.round(value * 10) / 10);

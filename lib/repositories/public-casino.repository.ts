@@ -1,6 +1,8 @@
 import { EditorialStatus, Prisma } from "@prisma/client";
 
+import { runPublicDatabaseRead } from "@/lib/db/public-database-read-coordinator";
 import { prisma } from "@/lib/db/prisma";
+import { PUBLIC_CASINO_EDITORIAL_CACHE_TAG, publicEditorialCache } from "@/lib/public-editorial-cache";
 import { extractPublishedOfferCandidateRows, type PublishedOfferCandidateRow } from "@/lib/public-offer/offer-presentation";
 import type { PublishedCasinoSnapshotRecord, PublishedOfferCandidate } from "@/lib/public-casino/public-casino.types";
 
@@ -87,33 +89,78 @@ function projectedPublishedSnapshot(countryCode?: string | null) {
 
 type PublishedSnapshotRow = Omit<PublishedCasinoSnapshotRecord, "status"> & { status: EditorialStatus };
 
+function hydratedPublishedSnapshot(row: PublishedCasinoSnapshotRecord): PublishedCasinoSnapshotRecord {
+  return {
+    ...row,
+    publishedAt: row.publishedAt ? new Date(row.publishedAt) : null,
+    archivedAt: row.archivedAt ? new Date(row.archivedAt) : null,
+  };
+}
+
+async function queryPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]> {
+  const snapshot = projectedPublishedSnapshot(countryCode);
+  return runPublicDatabaseRead(() => prisma.$queryRaw<PublishedSnapshotRow[]>(Prisma.sql`
+    SELECT DISTINCT ON (cv."casinoId")
+      cv."casinoId",
+      cv.version,
+      cv.status,
+      ${snapshot} AS snapshot,
+      cv."publishedAt",
+      c."archivedAt"
+    FROM "CasinoVersion" cv
+    INNER JOIN "Casino" c ON c.id = cv."casinoId"
+    WHERE cv.status = 'PUBLISHED'::"EditorialStatus"
+      AND c.status = 'PUBLISHED'::"EditorialStatus"
+      AND c."archivedAt" IS NULL
+    ORDER BY cv."casinoId" ASC, cv.version DESC
+  `));
+}
+
+const cachedPublished = publicEditorialCache(
+  async (countryCode: string | null) => queryPublished(countryCode),
+  ["public-casino-published-projection-v1"],
+  [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
+);
+
+async function queryPublishedBySlug(slug: string, countryCode?: string | null) {
+  const snapshot = projectedPublishedSnapshot(countryCode);
+  const [version] = await runPublicDatabaseRead(() => prisma.$queryRaw<PublishedSnapshotRow[]>(Prisma.sql`
+    SELECT
+      cv."casinoId",
+      cv.version,
+      cv.status,
+      ${snapshot} AS snapshot,
+      cv."publishedAt",
+      c."archivedAt"
+    FROM "CasinoVersion" cv
+    INNER JOIN "Casino" c ON c.id = cv."casinoId"
+    WHERE cv.status = 'PUBLISHED'::"EditorialStatus"
+      AND c.status = 'PUBLISHED'::"EditorialStatus"
+      AND c."archivedAt" IS NULL
+      AND cv.snapshot::jsonb ->> 'slug' = ${slug}
+    ORDER BY cv.version DESC
+    LIMIT 1
+  `));
+  return version ?? null;
+}
+
+const cachedPublishedBySlug = publicEditorialCache(
+  async (slug: string, countryCode: string | null) => queryPublishedBySlug(slug, countryCode),
+  ["public-casino-published-detail-v1"],
+  [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
+);
+
 export class PublicCasinoRepository implements PublicCasinoStore {
   async hasManagedSlug(slug: string) {
-    return (await prisma.casino.count({ where: { slug } })) > 0;
+    return (await runPublicDatabaseRead(() => prisma.casino.count({ where: { slug } }))) > 0;
   }
 
   async listManagedSlugs() {
-    return (await prisma.casino.findMany({ select: { slug: true } })).map((casino) => casino.slug);
+    return (await runPublicDatabaseRead(() => prisma.casino.findMany({ select: { slug: true } }))).map((casino) => casino.slug);
   }
 
   async listPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]> {
-    const snapshot = projectedPublishedSnapshot(countryCode);
-    const rows = await prisma.$queryRaw<PublishedSnapshotRow[]>(Prisma.sql`
-      SELECT DISTINCT ON (cv."casinoId")
-        cv."casinoId",
-        cv.version,
-        cv.status,
-        ${snapshot} AS snapshot,
-        cv."publishedAt",
-        c."archivedAt"
-      FROM "CasinoVersion" cv
-      INNER JOIN "Casino" c ON c.id = cv."casinoId"
-      WHERE cv.status = 'PUBLISHED'::"EditorialStatus"
-        AND c.status = 'PUBLISHED'::"EditorialStatus"
-        AND c."archivedAt" IS NULL
-      ORDER BY cv."casinoId" ASC, cv.version DESC
-    `);
-    return rows;
+    return (await cachedPublished(countryCode?.trim().toUpperCase() || null)).map(hydratedPublishedSnapshot);
   }
 
   async listPublishedOfferCandidates(casinoIds: string[], now = new Date()) {
@@ -124,7 +171,7 @@ export class PublicCasinoRepository implements PublicCasinoStore {
     const casinoFilter = Prisma.sql`AND published_version."casinoId" IN (${Prisma.join(
       boundedIds.map((casinoId) => Prisma.sql`${casinoId}::uuid`),
     )})`;
-    const rows = await prisma.$queryRaw<PublishedOfferCandidateRow[]>(Prisma.sql`
+    const rows = await runPublicDatabaseRead(() => prisma.$queryRaw<PublishedOfferCandidateRow[]>(Prisma.sql`
       WITH latest_published AS (
         SELECT DISTINCT ON (published_version."casinoId")
           published_version."casinoId",
@@ -221,30 +268,13 @@ export class PublicCasinoRepository implements PublicCasinoStore {
         candidate_rows."casinoId" ASC,
         candidate_rows."sourceCountryCode" ASC NULLS FIRST,
         candidate_rows.bonus ->> 'slug' ASC
-    `);
+    `));
     return extractPublishedOfferCandidateRows(rows, now);
   }
 
   async findPublishedBySlug(slug: string, countryCode?: string | null) {
-    const snapshot = projectedPublishedSnapshot(countryCode);
-    const [version] = await prisma.$queryRaw<PublishedSnapshotRow[]>(Prisma.sql`
-      SELECT
-        cv."casinoId",
-        cv.version,
-        cv.status,
-        ${snapshot} AS snapshot,
-        cv."publishedAt",
-        c."archivedAt"
-      FROM "CasinoVersion" cv
-      INNER JOIN "Casino" c ON c.id = cv."casinoId"
-      WHERE cv.status = 'PUBLISHED'::"EditorialStatus"
-        AND c.status = 'PUBLISHED'::"EditorialStatus"
-        AND c."archivedAt" IS NULL
-        AND cv.snapshot::jsonb ->> 'slug' = ${slug}
-      ORDER BY cv.version DESC
-      LIMIT 1
-    `);
-    return version ?? null;
+    const row = await cachedPublishedBySlug(slug, countryCode?.trim().toUpperCase() || null);
+    return row ? hydratedPublishedSnapshot(row) : null;
   }
 
 }

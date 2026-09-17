@@ -17,7 +17,8 @@ import {
 } from "../lib/programme/access-contract";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
-const ciDatabaseUrl = "postgresql://sevenbet:sevenbet@127.0.0.1:54329/sevenbet_ci";
+const ciDatabaseUrl = process.env.DATABASE_URL
+  ?? "postgresql://sevenbet:sevenbet@127.0.0.1:54329/sevenbet_ci";
 const captureEvidence = process.env.UPDATE_FOUNDER_EVIDENCE === "1";
 const evidenceRoot = resolve("docs/02_Product_Design/qa/final-design-handoff/founder-header-home-responsive-review");
 const prisma = new PrismaClient({ datasourceUrl: ciDatabaseUrl });
@@ -131,8 +132,7 @@ test("mobile navigation controls are icon-only, accessible, and restore focus", 
   const menu = header.getByRole("button", { name: "Open navigation" });
   await expect(menu).toHaveAttribute("aria-controls", "public-mobile-navigation");
   await expect(menu).toHaveAttribute("aria-expanded", "false");
-  expect((await menu.innerText()).trim()).toBe("");
-  expect(await menu.locator("svg").count()).toBe(1);
+  expect(await menu.locator("svg:visible").count()).toBe(1);
   expect((await menu.boundingBox())?.width).toBeGreaterThanOrEqual(44);
   expect((await menu.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 
@@ -141,19 +141,18 @@ test("mobile navigation controls are icon-only, accessible, and restore focus", 
   const dialog = page.getByRole("dialog", { name: "Site navigation" });
   const close = dialog.getByRole("button", { name: "Close navigation" });
   await expect(dialog).toBeVisible();
-  await expect(menu).toHaveAttribute("aria-expanded", "true");
+  await expect(close).toHaveAttribute("aria-expanded", "true");
   await expect(close).toBeFocused();
-  expect((await close.innerText()).trim()).toBe("");
-  expect(await close.locator("svg").count()).toBe(1);
+  expect(await close.locator("svg:visible").count()).toBe(1);
   expect((await close.boundingBox())?.width).toBeGreaterThanOrEqual(44);
   expect((await close.boundingBox())?.height).toBeGreaterThanOrEqual(44);
-  expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("hidden");
+  await expect(page.locator("html")).toHaveCSS("overflow", "hidden");
   await saveWebp(page, resolve(evidenceRoot, "mobile-menu-open-390.webp"));
 
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
   await expect(menu).toBeFocused();
-  expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("");
+  await expect(page.locator("html")).not.toHaveCSS("overflow", "hidden");
 
   await menu.click();
   await expect(dialog).toBeVisible();

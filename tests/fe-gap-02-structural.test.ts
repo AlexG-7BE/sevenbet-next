@@ -97,8 +97,8 @@ test("runtime text and sitemap policy match current product truth", () => {
   assert.doesNotMatch(llms, /session limit and stop-loss calculator|Recommended stop-loss|safe gambling budget/i);
   assert.match(site, /["']\/privacy["']/);
   assert.match(site, /["']\/terms["']/);
-  assert.match(footer, /<Link href="\/privacy">\{footer\.privacy\}<\/Link>/);
-  assert.match(footer, /<Link href="\/terms">\{footer\.terms\}<\/Link>/);
+  assert.match(footer, /<Link href="\/privacy" prefetch=\{false\}>\{footer\.privacy\}<\/Link>/);
+  assert.match(footer, /<Link href="\/terms" prefetch=\{false\}>\{footer\.terms\}<\/Link>/);
   assert.match(shellCatalog, /privacy: "Privacy"/);
   assert.match(shellCatalog, /terms: "Terms"/);
   assert.match(sitemap, /snapshot\.bestOffers && snapshot\.bestOffers\.status !== "unavailable" && snapshot\.bestOffers\.inventoryMode === "PUBLISHED_ONLY"/);

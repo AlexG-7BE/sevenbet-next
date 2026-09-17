@@ -27,7 +27,7 @@ for (const acceptance of cases) {
     const faq = faqMessages(acceptance.locale);
 
     await page.goto(`${baseUrl}${acceptance.prefix}/faq`, { waitUntil: "domcontentloaded" });
-    const firstDisclosure = page.locator("details").first();
+    const firstDisclosure = page.locator("main details").first();
     const firstSummary = firstDisclosure.locator("summary");
     await expect(firstSummary).toContainText(faq.groups[0].items[0][0]);
     await firstSummary.focus();
@@ -40,7 +40,7 @@ for (const acceptance of cases) {
     await menuButton.click();
     const navigation = page.getByRole("dialog", { name: shell.siteNavigation });
     await expect(navigation).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("hidden");
+    await expect(page.locator("html")).toHaveCSS("overflow", "hidden");
 
     await expect(navigation.getByRole("link", { name: shell.openHelp })).toHaveAttribute("href", acceptance.helpHref);
     await expect(navigation.getByRole("link", { name: shell.startProgramme, exact: true })).toHaveAttribute("href", acceptance.programmeHref);
@@ -62,7 +62,7 @@ for (const acceptance of cases) {
     await casinos.click();
     await expect(page).toHaveURL(`${baseUrl}${acceptance.prefix}/casinos`);
     await expect(navigation).toBeHidden();
-    expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("");
+    await expect(page.locator("html")).not.toHaveCSS("overflow", "hidden");
 
     await page.goBack({ waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(`${baseUrl}${acceptance.prefix}/faq`);

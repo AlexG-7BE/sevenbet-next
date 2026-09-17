@@ -107,7 +107,9 @@ test("every Home-ready European locale keeps its hero inside all required viewpo
     await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
     for (const width of viewportWidths) {
       await page.setViewportSize({ width, height: width <= 430 ? 844 : 1000 });
-      const geometry = await page.locator("main h1").first().evaluate((heading) => {
+      const heading = page.locator("main h1").first();
+      await expect(heading).toBeVisible();
+      const geometry = await heading.evaluate((heading) => {
         const rect = heading.getBoundingClientRect();
         return { left: rect.left, right: rect.right, width: rect.width, viewport: window.innerWidth };
       });

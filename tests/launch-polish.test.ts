@@ -114,7 +114,7 @@ test("Contact page has exact public contract and footer navigation", () => {
   assert.match(contactCatalog, /Please do not include passwords, payment details or private Programme answers/);
   assert.match(form, /inFlight\.current/);
   assert.doesNotMatch(form, /localStorage|sessionStorage|productAnalytics|track\(/);
-  assert.match(footer, /<Link href=\{localizedHref\("\/contact"\)\}>\{footer\.contact\}<\/Link>/);
+  assert.match(footer, /<Link href=\{localizedHref\("\/contact"\)\} prefetch=\{false\}>\{footer\.contact\}<\/Link>/);
   assert.match(shellCatalog, /contact: "Contact"/);
   assert.match(site, /"\/contact"/);
   assert.doesNotMatch(source("app/sitemap.ts"), /api\/contact/);

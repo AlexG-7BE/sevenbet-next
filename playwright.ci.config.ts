@@ -1,8 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
 const baseUrl = "http://127.0.0.1:4173";
-const ciDatabaseUrl =
-  "postgresql://sevenbet:sevenbet@127.0.0.1:54329/sevenbet_ci";
+const ciDatabaseUrl = process.env.DATABASE_URL
+  ?? "postgresql://sevenbet:sevenbet@127.0.0.1:54329/sevenbet_ci";
 
 process.env.PLAYWRIGHT_BASE_URL = baseUrl;
 

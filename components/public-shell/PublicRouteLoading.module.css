@@ -1,0 +1,90 @@
+.page {
+  min-height: 100vh;
+  padding-top: calc(81px + env(safe-area-inset-top));
+  overflow-x: clip;
+  background: var(--sb-paper);
+  color: var(--sb-night);
+  font-family: var(--font-seven-sans), Arial, sans-serif;
+}
+
+.hero {
+  min-height: clamp(300px, 46vh, 470px);
+  padding: clamp(58px, 9vw, 112px) 0;
+  background: var(--sb-night);
+  color: var(--sb-white);
+  display: grid;
+  align-items: end;
+}
+
+.heroInner,
+.contentInner {
+  width: calc(100% - clamp(48px, 10vw, 144px));
+  max-width: var(--public-wide-max);
+  margin: 0 auto;
+}
+
+.heroInner { display: grid; gap: 18px; }
+
+.kicker {
+  margin: 0;
+  color: var(--sb-acid);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 750;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  max-width: 12ch;
+  margin: 0;
+  font-size: clamp(46px, 7.5vw, 112px);
+  line-height: .92;
+  font-weight: 900;
+  letter-spacing: -.035em;
+  text-transform: uppercase;
+}
+
+.progress {
+  position: relative;
+  width: min(280px, 72vw);
+  height: 3px;
+  overflow: hidden;
+  background: rgba(250, 250, 247, .2);
+}
+.progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--sb-acid);
+  transform: translateX(-72%);
+  animation: routeLoadingProgress 1.1s var(--sb-ease-standard) infinite alternate;
+}
+
+.content { min-height: 340px; padding: clamp(44px, 7vw, 82px) 0; background: var(--sb-paper); }
+.contentInner { display: grid; gap: 32px; }
+.rule { width: 100%; height: 1px; background: rgba(16, 15, 15, .3); }
+.columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(22px, 4vw, 56px); }
+.columns > div { padding-top: 18px; border-top: 4px solid var(--sb-night); display: grid; gap: 13px; }
+.columns i { height: 11px; background: rgba(16, 15, 15, .12); }
+.columns i:nth-child(1) { width: 42%; }
+.columns i:nth-child(2) { width: 88%; }
+.columns i:nth-child(3) { width: 64%; }
+
+@keyframes routeLoadingProgress {
+  from { transform: translateX(-76%); }
+  to { transform: translateX(76%); }
+}
+
+@media (max-width: 700px) {
+  .page { padding-top: calc(81px + env(safe-area-inset-top)); }
+  .hero { min-height: 330px; padding-block: 54px; }
+  .hero h1 { font-size: clamp(40px, 14vw, 62px); }
+  .content { min-height: 300px; padding-block: 38px; }
+  .columns { grid-template-columns: 1fr; gap: 26px; }
+  .columns > div:nth-child(3) { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress::after { animation: none; transform: none; }
+}

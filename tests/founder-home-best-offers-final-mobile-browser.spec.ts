@@ -139,6 +139,7 @@ for (const viewport of mobileViewports) {
     const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport });
     const page = await context.newPage();
     await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-handoff-page="home"]')).toHaveAttribute("data-home-interactions", "ready");
     await page.locator('[data-screen-label="Final CTA"]').evaluate((element) => element.scrollIntoView({ block: "start" }));
     await page.waitForTimeout(250);
     const footer = page.locator('[data-public-shell="footer"]');

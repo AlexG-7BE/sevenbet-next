@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { resolvePresentationContext, type PresentationResolution } from "@/lib/market/presentation-resolver";
@@ -9,6 +10,7 @@ import { commercialProductsAvailable } from "@/lib/market/commercial-product-sta
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { PublicHeaderThemeController } from "./PublicHeaderThemeController";
 import { PublicNavigation } from "./PublicNavigation";
+import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 import styles from "./PublicShell.module.css";
 
 export function PublicHeader({
@@ -17,12 +19,22 @@ export function PublicHeader({
   presentation = resolvePresentationContext({}),
   programme,
   commercialProductState = "SUPPORTED_COMMERCIAL",
+  commercialDesktopBestOffersNavigation,
+  commercialDesktopBonusesNavigation,
+  commercialMobileBestOffersNavigation,
+  commercialMobileBonusesNavigation,
+  deferCommercialNavigation = false,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
   presentation?: PresentationResolution;
   programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
   commercialProductState?: CommercialProductState;
+  commercialDesktopBestOffersNavigation?: ReactNode;
+  commercialDesktopBonusesNavigation?: ReactNode;
+  commercialMobileBestOffersNavigation?: ReactNode;
+  commercialMobileBonusesNavigation?: ReactNode;
+  deferCommercialNavigation?: boolean;
 }) {
   const messages = publicShellMessages(presentation.locale);
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
@@ -32,10 +44,24 @@ export function PublicHeader({
   return (
     <header className={styles.header} data-public-shell="header" data-shell-theme="dark">
       <div className={styles.headerInner}>
-        <Link className={styles.brand} href={homeHref} aria-label={messages.homeLabel} translate="no">
+        <Link className={styles.brand} href={homeHref} aria-label={messages.homeLabel} prefetch={false} translate="no">
           B4GAMBLE
+          <PublicLinkPendingSignal label={messages.homeLabel} />
         </Link>
-        <PublicNavigation account={account} authenticated={authenticated} commercialProductsAvailable={commercialProductsAvailable(commercialProductState)} messages={messages} presentation={presentation} programme={programme} selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES} />
+        <PublicNavigation
+          account={account}
+          authenticated={authenticated}
+          commercialDesktopBestOffersNavigation={commercialDesktopBestOffersNavigation}
+          commercialDesktopBonusesNavigation={commercialDesktopBonusesNavigation}
+          commercialMobileBestOffersNavigation={commercialMobileBestOffersNavigation}
+          commercialMobileBonusesNavigation={commercialMobileBonusesNavigation}
+          commercialProductsAvailable={commercialProductsAvailable(commercialProductState)}
+          deferCommercialNavigation={deferCommercialNavigation}
+          messages={messages}
+          presentation={presentation}
+          programme={programme}
+          selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES}
+        />
       </div>
       <PublicHeaderThemeController />
     </header>

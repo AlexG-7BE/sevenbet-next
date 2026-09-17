@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useId } from "react";
+
+import { usePublicNavigationFeedback } from "@/components/public-shell/PublicNavigationFeedback";
 
 function normalized(value: string | null | undefined) {
   return (value || "").trim().toLowerCase();
@@ -61,10 +64,11 @@ function setupHomeInteractions(root: HTMLElement) {
   const panels = Array.from(root.querySelectorAll<HTMLElement>("[data-stackpanel]"));
   const stack = panels[0]?.parentElement ?? null;
   const dots = Array.from(root.querySelectorAll<HTMLElement>("[data-stackdot]"));
-  const publicFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
+  let publicFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
   let animationFrame = 0;
   let observer: IntersectionObserver | null = null;
   let destroyed = false;
+  let footerMutationObserver: MutationObserver | null = null;
   let footerObserver: ResizeObserver | null = null;
   let stackObserver: ResizeObserver | null = null;
   let geometryDirty = Boolean(stack) && !reducedMotion;
@@ -85,15 +89,29 @@ function setupHomeInteractions(root: HTMLElement) {
   };
 
   const syncClosingComposition = () => {
-    if (!publicFooter) return;
-    root.style.setProperty("--home-public-footer-height", `${Math.ceil(publicFooter.getBoundingClientRect().height)}px`);
+    const currentFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
+    if (!currentFooter) return;
+    root.style.setProperty("--home-public-footer-height", `${Math.ceil(currentFooter.getBoundingClientRect().height)}px`);
   };
 
-  syncClosingComposition();
+  const observeCurrentFooter = () => {
+    const currentFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
+    if (currentFooter === publicFooter && footerObserver) return;
+    footerObserver?.disconnect();
+    footerObserver = null;
+    publicFooter = currentFooter;
+    if (publicFooter && typeof window.ResizeObserver === "function") {
+      footerObserver = new window.ResizeObserver(syncClosingComposition);
+      footerObserver.observe(publicFooter);
+    }
+    syncClosingComposition();
+  };
+
+  observeCurrentFooter();
   window.addEventListener("resize", syncClosingComposition, { passive: true });
-  if (publicFooter && typeof window.ResizeObserver === "function") {
-    footerObserver = new window.ResizeObserver(syncClosingComposition);
-    footerObserver.observe(publicFooter);
+  if (typeof window.MutationObserver === "function") {
+    footerMutationObserver = new window.MutationObserver(observeCurrentFooter);
+    footerMutationObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   const reveal = (element: HTMLElement, index = 0) => {
@@ -350,6 +368,7 @@ function setupHomeInteractions(root: HTMLElement) {
   return () => {
     destroyed = true;
     observer?.disconnect();
+    footerMutationObserver?.disconnect();
     footerObserver?.disconnect();
     stackObserver?.disconnect();
     window.removeEventListener("resize", syncClosingComposition);
@@ -366,6 +385,10 @@ function setupHomeInteractions(root: HTMLElement) {
 }
 
 export function HandoffInteractions({ name, programmePath = "/program" }: { name: string; programmePath?: string }) {
+  const navigationFeedback = usePublicNavigationFeedback();
+  const navigationFeedbackId = useId();
+  const router = useRouter();
+
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(`[data-handoff-page="${name}"]`);
     if (!root) return;
@@ -396,6 +419,8 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
     const requestedCategory = name === "learn" ? new URLSearchParams(window.location.search).get("category") : null;
     let learnTopic = requestedCategory ? categoryTopic.get(requestedCategory) || "casinos" : "all topics";
     let learnQuery = "";
+    let pendingNavigationLabel = "";
+    let pendingNavigationTimeout = 0;
 
     if (learnInput) {
       learnInput.type = "search";
@@ -448,6 +473,23 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
     if (name === "learn") applyLearnFilters();
 
     const onClick = (event: MouseEvent) => {
+      const anchor = (event.target as Element | null)?.closest<HTMLAnchorElement>("a[href]");
+      if (anchor && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && !anchor.download && (!anchor.target || anchor.target === "_self")) {
+        const destination = new URL(anchor.href, window.location.href);
+        const sameDocument = destination.pathname === window.location.pathname && destination.search === window.location.search;
+        if (destination.origin === window.location.origin && !sameDocument) {
+          event.preventDefault();
+          pendingNavigationLabel = anchor.textContent?.trim().replace(/\s+/g, " ") || destination.pathname;
+          navigationFeedback?.({ id: navigationFeedbackId, label: pendingNavigationLabel }, true);
+          window.clearTimeout(pendingNavigationTimeout);
+          pendingNavigationTimeout = window.setTimeout(() => {
+            navigationFeedback?.({ id: navigationFeedbackId, label: pendingNavigationLabel }, false);
+            pendingNavigationLabel = "";
+          }, 8_000);
+          router.push(`${destination.pathname}${destination.search}${destination.hash}`);
+          return;
+        }
+      }
       const button = (event.target as Element | null)?.closest<HTMLButtonElement>("button");
       if (!button) return;
       const label = button.dataset.learnTopic ?? normalized(button.textContent);
@@ -473,9 +515,13 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
       root.removeEventListener("click", onClick);
       root.removeEventListener("input", onInput);
       learnStatus?.remove();
+      window.clearTimeout(pendingNavigationTimeout);
+      if (pendingNavigationLabel) {
+        navigationFeedback?.({ id: navigationFeedbackId, label: pendingNavigationLabel }, false);
+      }
       cleanUpHome?.();
       cleanUpShared?.();
     };
-  }, [name, programmePath]);
+  }, [name, navigationFeedback, navigationFeedbackId, programmePath, router]);
   return null;
 }

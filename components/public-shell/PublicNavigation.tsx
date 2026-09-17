@@ -1,23 +1,39 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, type ReactNode } from "react";
 
 import {
-  isCurrentPublicRoute,
+  PUBLIC_NAVIGATION,
   publicNavigationForCommercialState,
   type PublicAccountNavigation,
 } from "@/lib/public-shell";
-import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { ProgrammeLanguageSelector } from "@/components/programme/ProgrammeLanguageSelector";
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
-import { localizePublicHref, stripPublicMarketPrefix } from "@/lib/market/routing";
 import { DEFAULT_MARKET_PROFILE, marketProfileByLocale, publicMarketPath, type LanguageRouteProfile } from "@/lib/market/registry";
 import { MarketLanguageSelector } from "./MarketLanguageSelector";
+import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
+import {
+  PublicMobileNavigationEnhancement,
+  PublicNavigationRouteLink,
+  PublicProgrammeActionLink,
+} from "./PublicNavigationClient";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./PublicShell.module.css";
+
+const editorialNavigationHrefs = new Set(
+  publicNavigationForCommercialState(false).map((item) => item.href),
+);
+const deferredCommercialNavigation = PUBLIC_NAVIGATION.filter(
+  (item) => !editorialNavigationHrefs.has(item.href),
+);
+
+function navigationLabel(messages: PublicShellMessages, href: string) {
+  if (href === "/best-offers") return messages.bestOffers;
+  if (href === "/casinos") return messages.casinos;
+  if (href === "/bonuses") return messages.bonuses;
+  if (href === "/learn") return messages.learn;
+  return href;
+}
 
 function MenuIcon() {
   return (
@@ -43,6 +59,11 @@ export function PublicNavigation({
   programme,
   selectableLanguages,
   commercialProductsAvailable,
+  commercialDesktopBestOffersNavigation,
+  commercialDesktopBonusesNavigation,
+  commercialMobileBestOffersNavigation,
+  commercialMobileBonusesNavigation,
+  deferCommercialNavigation = false,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
@@ -51,79 +72,53 @@ export function PublicNavigation({
   programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
   selectableLanguages: readonly LanguageRouteProfile[];
   commercialProductsAvailable: boolean;
+  commercialDesktopBestOffersNavigation?: ReactNode;
+  commercialDesktopBonusesNavigation?: ReactNode;
+  commercialMobileBestOffersNavigation?: ReactNode;
+  commercialMobileBonusesNavigation?: ReactNode;
+  deferCommercialNavigation?: boolean;
 }) {
-  const pathname = usePathname();
-  const unprefixedPathname = stripPublicMarketPrefix(pathname);
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
     ? publicMarketPath(editorialProfile, presentation.locale)
     : "/";
-  const publicHref = (href: string) => programme && !programme.localizePublicLinks
-    ? href
-    : localizePublicHref(href, pathname, editorialProfile, presentation.locale);
-  const isProgrammeHref = (href: string) => href === "/program" || /^\/[a-z]{2}\/program(?:[/?#]|$)/.test(href);
-  const navigationLabels: Record<string, string> = {
-    "/best-offers": messages.bestOffers,
-    "/casinos": messages.casinos,
-    "/bonuses": messages.bonuses,
-    "/learn": messages.learn,
-  };
-  const navigationLabel = (href: string) => navigationLabels[href] ?? href;
   const accountLabel = authenticated ? messages.myProgramme : messages.logIn;
   const primaryLabel = authenticated ? messages.myProgramme : messages.startProgramme;
-  const publicNavigation = publicNavigationForCommercialState(commercialProductsAvailable);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
-
-  function closeMenu({ restoreFocus = true } = {}) {
-    const dialog = dialogRef.current;
-    if (dialog?.open) dialog.close();
-    setMenuOpen(false);
-    if (restoreFocus) requestAnimationFrame(() => triggerRef.current?.focus());
-  }
-
-  function openMenu() {
-    const dialog = dialogRef.current;
-    if (!dialog || dialog.open) return;
-    dialog.showModal();
-    setMenuOpen(true);
-    requestAnimationFrame(() => closeRef.current?.focus());
-  }
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && dialogRef.current?.open) {
-        event.preventDefault();
-        closeMenu();
-      }
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const previousOverflow = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = "hidden";
-    return () => { document.documentElement.style.overflow = previousOverflow; };
-  }, [menuOpen]);
-
+  const publicNavigation = publicNavigationForCommercialState(
+    deferCommercialNavigation ? false : commercialProductsAvailable,
+  );
+  const visibleNavigationHrefs = new Set(publicNavigation.map((item) => item.href));
+  const deferredDesktopNavigation = {
+    "/best-offers": commercialDesktopBestOffersNavigation,
+    "/bonuses": commercialDesktopBonusesNavigation,
+  } as const;
+  const deferredMobileNavigation = {
+    "/best-offers": commercialMobileBestOffersNavigation,
+    "/bonuses": commercialMobileBonusesNavigation,
+  } as const;
   return (
     <>
       <div className={styles.desktopNavigation}>
         <nav className={styles.primaryNavigation} aria-label={messages.primaryNavigation}>
-          {publicNavigation.map((item) => (
-            <Link
-              className={"safety" in item && item.safety ? styles.helpLink : undefined}
-              href={publicHref(item.href)}
-              key={item.href}
-              aria-current={isCurrentPublicRoute(unprefixedPathname, item.href) ? "page" : undefined}
-            >
-              {navigationLabel(item.href)}
-            </Link>
-          ))}
+          {PUBLIC_NAVIGATION.map((item) => {
+            const commercialNavigation = deferredDesktopNavigation[item.href as keyof typeof deferredDesktopNavigation];
+            if (deferCommercialNavigation && commercialNavigation !== undefined) {
+              return <Fragment key={item.href}>{commercialNavigation}</Fragment>;
+            }
+            if (!visibleNavigationHrefs.has(item.href)) return null;
+            return (
+              <PublicNavigationRouteLink
+                baseHref={item.href}
+                className={"safety" in item && item.safety ? styles.helpLink : undefined}
+                key={item.href}
+                label={navigationLabel(messages, item.href)}
+                presentation={presentation}
+                programme={programme}
+              >
+                {navigationLabel(messages, item.href)}
+              </PublicNavigationRouteLink>
+            );
+          })}
         </nav>
         <div className={styles.accountNavigation}>
           {programme ? (
@@ -139,82 +134,109 @@ export function PublicNavigation({
           )}
           {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
           {!authenticated ? <Link className={styles.accountLink} href={account.accountHref}>{accountLabel}</Link> : null}
-          <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
-            if (!authenticated && isProgrammeHref(account.primaryHref)) productAnalyticsClient.startClicked("public_header");
-          }}>{primaryLabel}</Link>
+          <PublicProgrammeActionLink authenticated={authenticated} className={styles.primaryAction} href={account.primaryHref}>{primaryLabel}</PublicProgrammeActionLink>
         </div>
       </div>
 
       <div className={styles.mobileNavigation}>
         {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
-        <Link className={styles.mobilePrimaryAction} href={account.primaryHref} onClick={() => {
-          if (!authenticated && isProgrammeHref(account.primaryHref)) productAnalyticsClient.startClicked("public_header");
-        }}>{primaryLabel}</Link>
-        <button
-          aria-controls="public-mobile-navigation"
-          aria-expanded={menuOpen}
-          aria-label={messages.openNavigation}
-          className={styles.menuButton}
-          onClick={openMenu}
-          ref={triggerRef}
-          type="button"
-        >
-          <MenuIcon />
-        </button>
-        <dialog
-          aria-label={messages.siteNavigation}
-          className={styles.mobileDialog}
-          id="public-mobile-navigation"
-          onCancel={(event) => {
-            event.preventDefault();
-            closeMenu();
-          }}
-          onClose={() => setMenuOpen(false)}
-          ref={dialogRef}
-        >
-          <div className={styles.dialogTopbar}>
-            <Link className={styles.dialogBrand} href={homeHref} onClick={() => closeMenu({ restoreFocus: false })} translate="no">B4GAMBLE</Link>
-            <button aria-label={messages.closeNavigation} className={styles.menuButton} onClick={() => closeMenu()} ref={closeRef} type="button"><CloseIcon /></button>
+        <PublicProgrammeActionLink authenticated={authenticated} className={styles.mobilePrimaryAction} href={account.primaryHref}>{primaryLabel}</PublicProgrammeActionLink>
+        <details aria-label={messages.siteNavigation} className={styles.mobileDisclosure} data-public-mobile-disclosure>
+          <summary
+            aria-controls="public-mobile-navigation"
+            className={`${styles.menuButton} ${styles.menuSummary}`}
+            role="button"
+          >
+            <span className={`${styles.menuClosedLabel} srOnly`}>{messages.openNavigation}</span>
+            <span className={`${styles.menuOpenLabel} srOnly`}>{messages.closeNavigation}</span>
+            <span className={styles.menuClosedIcon}><MenuIcon /></span>
+            <span className={styles.menuOpenIcon}><CloseIcon /></span>
+          </summary>
+          <div
+            aria-label={messages.siteNavigation}
+            className={styles.mobileMenuPanel}
+            data-public-mobile-navigation
+            id="public-mobile-navigation"
+          >
+            <PublicMobileNavigationEnhancement />
+            <div className={styles.dialogTopbar}>
+              <Link className={styles.dialogBrand} href={homeHref} prefetch={false} translate="no">B4GAMBLE<PublicLinkPendingSignal label={messages.homeLabel} /></Link>
+              <span aria-hidden="true" className={styles.dialogCloseSpace} />
+            </div>
+            <nav className={styles.mobileRouteList} aria-label={messages.mobilePrimaryNavigation}>
+              {PUBLIC_NAVIGATION.map((item) => {
+                const commercialNavigation = deferredMobileNavigation[item.href as keyof typeof deferredMobileNavigation];
+                if (deferCommercialNavigation && commercialNavigation !== undefined) {
+                  return <Fragment key={item.href}>{commercialNavigation}</Fragment>;
+                }
+                if (!visibleNavigationHrefs.has(item.href) || ("safety" in item && item.safety)) return null;
+                return (
+                  <PublicNavigationRouteLink
+                    baseHref={item.href}
+                    key={item.href}
+                    label={navigationLabel(messages, item.href)}
+                    presentation={presentation}
+                    programme={programme}
+                  >
+                    <span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small>
+                  </PublicNavigationRouteLink>
+                );
+              })}
+            </nav>
+            {programme ? (
+              <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="mobile" />
+            ) : (
+              <MarketLanguageSelector
+                messages={messages}
+                presentation={presentation}
+                selectableLanguages={selectableLanguages}
+                surface="public"
+                variant="mobile"
+              />
+            )}
+            <div className={styles.mobileHelp}>
+              <span>{messages.controlAndSupport}</span>
+              <PublicNavigationRouteLink baseHref="/help" label={messages.openHelp} presentation={presentation} programme={programme}>{messages.openHelp}</PublicNavigationRouteLink>
+            </div>
+            <div className={styles.mobileAccount}>
+              {!authenticated ? <Link href={account.accountHref}>{accountLabel}</Link> : null}
+              <PublicProgrammeActionLink authenticated={authenticated} className={styles.primaryAction} href={account.primaryHref}>
+                {authenticated ? messages.openProgramme : primaryLabel}
+              </PublicProgrammeActionLink>
+            </div>
+            <p className={styles.dialogLegal}>{messages.adultServiceNotice}</p>
           </div>
-          <nav className={styles.mobileRouteList} aria-label={messages.mobilePrimaryNavigation}>
-            {publicNavigation.filter((item) => !("safety" in item && item.safety)).map((item) => (
-              <Link
-                href={publicHref(item.href)}
-                key={item.href}
-                onClick={() => closeMenu({ restoreFocus: false })}
-                aria-current={isCurrentPublicRoute(unprefixedPathname, item.href) ? "page" : undefined}
-              >
-                <span>{navigationLabel(item.href)}</span><small>{messages.view}</small>
-              </Link>
-            ))}
-          </nav>
-          {programme ? (
-            <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="mobile" />
-          ) : (
-            <MarketLanguageSelector
-              messages={messages}
-              presentation={presentation}
-              selectableLanguages={selectableLanguages}
-              surface="public"
-              variant="mobile"
-            />
-          )}
-          <div className={styles.mobileHelp}>
-            <span>{messages.controlAndSupport}</span>
-            <Link href={publicHref("/help")} onClick={() => closeMenu({ restoreFocus: false })}>{messages.openHelp}</Link>
-          </div>
-          <div className={styles.mobileAccount}>
-            {!authenticated ? <Link href={account.accountHref} onClick={() => closeMenu({ restoreFocus: false })}>{accountLabel}</Link> : null}
-            <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
-              if (!authenticated && isProgrammeHref(account.primaryHref)) productAnalyticsClient.startClicked("public_header");
-              closeMenu({ restoreFocus: false });
-            }}>
-              {authenticated ? messages.openProgramme : primaryLabel}
-            </Link>
-          </div>
-          <p className={styles.dialogLegal}>{messages.adultServiceNotice}</p>
-        </dialog>
+        </details>
       </div>
     </>
+  );
+}
+
+export function PublicCommercialNavigationItem({
+  destination,
+  messages,
+  presentation,
+  programme,
+  variant,
+}: {
+  destination: "/best-offers" | "/bonuses";
+  messages: PublicShellMessages;
+  presentation: PresentationResolution;
+  programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
+  variant: "desktop" | "mobile";
+}) {
+  const item = deferredCommercialNavigation.find(({ href }) => href === destination);
+  if (!item) return null;
+  return (
+    <PublicNavigationRouteLink
+      baseHref={item.href}
+      label={navigationLabel(messages, item.href)}
+      presentation={presentation}
+      programme={programme}
+    >
+      {variant === "mobile" ? (
+        <><span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small></>
+      ) : navigationLabel(messages, item.href)}
+    </PublicNavigationRouteLink>
   );
 }
