@@ -40,15 +40,20 @@ function desktopPrimary(page: Page) {
   return page.locator('nav[aria-label="Primary navigation"]');
 }
 
-async function hasHydratedClickHandler(page: Page) {
-  // React annotates a claimed DOM node with its current props. Pair this probe
-  // with a real click so the test records hydration rather than mere visibility.
-  return page.getByRole("button", { name: "Open navigation", exact: true }).evaluate((element) =>
-    Object.keys(element).some((key) =>
-      key.startsWith("__reactProps$")
-      && typeof (element as unknown as Record<string, { onClick?: unknown }>)[key]?.onClick === "function",
-    ),
+async function expectCanonicalNavigationDomOrder(page: Page) {
+  const hrefs = async (selector: string, attribute: string) => page.locator(selector).evaluateAll(
+    (elements, name) => elements.map((element) => element.getAttribute(name)),
+    attribute,
   );
+  await expect.poll(() => hrefs('nav[aria-label="Primary navigation"] [data-navigation-href]', "data-navigation-href")).toEqual([
+    "/best-offers", "/casinos", "/bonuses", "/learn",
+  ]);
+  await expect.poll(() => hrefs('#public-mobile-navigation nav [data-navigation-href]', "data-navigation-href")).toEqual([
+    "/best-offers", "/casinos", "/bonuses", "/learn",
+  ]);
+  await expect.poll(async () => (await hrefs('footer [data-footer-navigation-href]', "data-footer-navigation-href")).slice(0, 4)).toEqual([
+    "/best-offers", "/casinos", "/bonuses", "/learn",
+  ]);
 }
 
 async function holdPublishedCasinoReads() {
@@ -77,6 +82,11 @@ async function holdPublishedCasinoReads() {
     acknowledgeLock();
     await lockRelease;
   }, { maxWait: 5_000, timeout: 60_000 });
+  let transactionSettled = false;
+  void transaction.then(
+    () => { transactionSettled = true; },
+    () => { transactionSettled = true; },
+  );
   try {
     await Promise.race([
       lockAcquired,
@@ -87,20 +97,26 @@ async function holdPublishedCasinoReads() {
     throw error;
   }
 
-  return async () => {
-    if (released) return;
-    released = true;
-    releaseLock();
-    try {
-      await transaction;
-    } finally {
-      await prisma.$disconnect();
-    }
+  return {
+    assertHeld() {
+      expect(released, "the commercial hold must not be released before early interaction").toBe(false);
+      expect(transactionSettled, "the lock transaction must still be unresolved").toBe(false);
+    },
+    async release() {
+      if (released) return;
+      released = true;
+      releaseLock();
+      try {
+        await transaction;
+      } finally {
+        await prisma.$disconnect();
+      }
+    },
   };
 }
 
-async function exerciseHeldMobileHeader(browser: Browser, country: "KZ" | "PE") {
-  const releaseCommercialState = await holdPublishedCasinoReads();
+async function exerciseHeldMobileHeader(browser: Browser, browserName: string, country: "KZ" | "PE") {
+  const commercialHold = await holdPublishedCasinoReads();
 
   const context = await marketContext(browser, country, {
     isMobile: true,
@@ -110,8 +126,17 @@ async function exerciseHeldMobileHeader(browser: Browser, country: "KZ" | "PE") 
   const errors = observeRuntimeErrors(page);
   let delayDestination = false;
   let delayedDestination = false;
-  const destination = country === "PE" ? "Best Offers" : "Casinos";
-  const destinationPath = country === "PE" ? "/en/best-offers" : "/en/casinos";
+  let destinationRequested = false;
+  const destination = "Casinos";
+  const destinationPath = "/en/casinos";
+  page.on("request", (request) => {
+    if (
+      new URL(request.url()).pathname === destinationPath
+      && (request.isNavigationRequest() || request.headers().rsc === "1")
+    ) {
+      destinationRequested = true;
+    }
+  });
   await page.route("**/*", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -127,29 +152,56 @@ async function exerciseHeldMobileHeader(browser: Browser, country: "KZ" | "PE") 
     expect(response?.status()).toBe(200);
     const header = page.locator('[data-public-shell="header"]');
     const trigger = page.getByRole("button", { name: "Open navigation", exact: true });
-    const dialog = page.getByRole("dialog", { name: "Site navigation", exact: true });
+    const disclosure = page.locator("details[data-public-mobile-disclosure]");
+    const mobileNavigation = page.locator("#public-mobile-navigation");
     await expect(header).toHaveCount(1);
     await expect(trigger).toHaveCount(1);
-    await expect(page.locator("dialog#public-mobile-navigation")).toHaveCount(1);
+    await expect(disclosure).toHaveCount(1);
     await expect(trigger).toBeVisible();
-    await expect(trigger).toHaveAttribute("aria-expanded", "false");
     await expect(page.getByRole("link", { name: /Best Offers/ })).toHaveCount(0);
     await expect(page.getByRole("link", { name: /Bonuses/ })).toHaveCount(0);
     await expect(page.locator('[href^="/r/"]')).toHaveCount(0);
+    await expect(page.locator('[data-commercial-navigation-pending="mobile"]')).toHaveCount(1);
     await expect(page.getByRole("link", { name: "B4GAMBLE home", exact: true }).first()).toHaveAttribute("href", "/en");
     await header.evaluate((element) => { element.setAttribute("data-held-header-node", "open"); });
-    expect(await hasHydratedClickHandler(page)).toBe(false);
-    await trigger.evaluate((element) => (element as HTMLButtonElement).click());
-    await page.waitForTimeout(100);
-    await expect(trigger).toHaveAttribute("aria-expanded", "false");
-    await expect(page.locator("dialog#public-mobile-navigation")).not.toHaveAttribute("open", "");
+    await disclosure.evaluate((element) => { element.setAttribute("data-held-menu-node", "open"); });
+    commercialHold.assertHeld();
+    await trigger.click();
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(mobileNavigation).toBeVisible();
+    await expect(mobileNavigation.locator('a[data-navigation-href="/casinos"]')).toBeVisible();
+    await expect(mobileNavigation.locator('a[data-navigation-href="/learn"]')).toBeVisible();
+    commercialHold.assertHeld();
 
-    await releaseCommercialState();
-    await page.waitForLoadState("domcontentloaded");
+    delayDestination = true;
+    const enhancedBeforeNavigation = await disclosure.getAttribute("data-navigation-enhanced") === "true";
+    const casinoLink = mobileNavigation.locator('a[data-navigation-href="/casinos"]');
+    const casinoLinkBox = await casinoLink.boundingBox();
+    expect(casinoLinkBox).not.toBeNull();
+    await page.mouse.click(
+      casinoLinkBox!.x + casinoLinkBox!.width / 2,
+      casinoLinkBox!.y + casinoLinkBox!.height / 2,
+    );
+    await expect.poll(() => destinationRequested, "the ordinary destination request must start while commercial state is held").toBe(true);
+    if (enhancedBeforeNavigation) {
+      await expect(disclosure).not.toHaveAttribute("open", "");
+      await expectNeutralNavigationFeedback(page, destination);
+    }
+    commercialHold.assertHeld();
+
+    await commercialHold.release();
+    await expect(page).toHaveURL(`${baseUrl}${destinationPath}`);
+    await expect(page.locator("[data-commercial-casino-card]").first()).toBeVisible();
     await expect(header).toHaveCount(1);
-    await expect(header).not.toHaveAttribute("data-held-header-node", "open");
-    await expect(page.locator("dialog#public-mobile-navigation")).toHaveCount(1);
-    await expect.poll(() => hasHydratedClickHandler(page)).toBe(true);
+    if (enhancedBeforeNavigation) {
+      await expect(header).toHaveAttribute("data-held-header-node", "open");
+      await expect(disclosure).toHaveAttribute("data-held-menu-node", "open");
+    } else {
+      await expect(header).not.toHaveAttribute("data-held-header-node", "open");
+      await expect(disclosure).not.toHaveAttribute("data-held-menu-node", "open");
+    }
+    await expect(disclosure).toHaveAttribute("data-navigation-enhanced", "true");
+    await expect(page.locator('[data-commercial-navigation-pending="mobile"]')).toHaveCount(0);
 
     if (country === "PE") {
       await expect(header.locator('a[href="/en/best-offers"]')).toHaveCount(2);
@@ -161,50 +213,260 @@ async function exerciseHeldMobileHeader(browser: Browser, country: "KZ" | "PE") 
     }
 
     await trigger.click();
-    await expect(dialog).toBeVisible();
-    await expect(trigger).toHaveAttribute("aria-expanded", "true");
-    await expect(dialog.getByRole("button", { name: "Close navigation", exact: true })).toBeFocused();
-    await expect(dialog.getByRole("button", { name: /Change language: English/ })).toBeVisible();
-    await expect(page.locator("html")).toHaveAttribute("style", /overflow: hidden/);
+    await expect(mobileNavigation).toBeVisible();
+    await expect(page.getByRole("button", { name: "Close navigation", exact: true })).toBeFocused();
+    await expect(mobileNavigation.getByRole("button", { name: /Change language: English/ })).toBeVisible();
+    await expect(page.locator("html")).toHaveCSS("overflow", "hidden");
     if (country === "PE") {
-      await expect(dialog.getByRole("link", { name: /Best Offers/ })).toHaveAttribute("href", "/en/best-offers");
-      await expect(dialog.getByRole("link", { name: /Bonuses/ })).toHaveAttribute("href", "/en/bonuses");
+      await expect(mobileNavigation.getByRole("link", { name: /Best Offers/ })).toHaveAttribute("href", "/en/best-offers");
+      await expect(mobileNavigation.getByRole("link", { name: /Bonuses/ })).toHaveAttribute("href", "/en/bonuses");
     }
 
     await page.keyboard.press("Escape");
-    await expect(dialog).not.toBeVisible();
-    await expect(trigger).toHaveAttribute("aria-expanded", "false");
-    await expect(trigger).toBeFocused();
-    await expect(page.locator("html")).not.toHaveAttribute("style", /overflow: hidden/);
-    await trigger.click();
-    await expect(dialog).toBeVisible();
-    await dialog.getByRole("button", { name: "Close navigation", exact: true }).click();
-    await expect(dialog).not.toBeVisible();
-    await expect(trigger).toBeFocused();
-    await trigger.click();
-    await expect(dialog).toBeVisible();
-
-    delayDestination = true;
-    await dialog.getByRole("link", { name: new RegExp(destination) }).click();
-    await expect(dialog).not.toBeVisible();
-    await expectNeutralNavigationFeedback(page, destination);
-    await expect(page).toHaveURL(`${baseUrl}${destinationPath}`);
-    expect(delayedDestination).toBe(true);
+    await expect(mobileNavigation).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "Open navigation", exact: true })).toBeFocused();
+    await expect(page.locator("html")).not.toHaveCSS("overflow", "hidden");
+    const openTrigger = page.getByRole("button", { name: "Open navigation", exact: true });
+    await openTrigger.click();
+    await expect(mobileNavigation).toBeVisible();
+    await page.getByRole("button", { name: "Close navigation", exact: true }).click();
+    await expect(mobileNavigation).not.toBeVisible();
+    await expect(openTrigger).toBeFocused();
+    await openTrigger.click();
+    await expect(mobileNavigation).toBeVisible();
+    await expect(disclosure).toHaveAttribute("role", "dialog");
+    await expect(disclosure).toHaveAttribute("aria-modal", "true");
+    await expect(page.locator("main#main-content")).toHaveAttribute("inert", "");
+    await expect(page.locator("footer")).toHaveAttribute("inert", "");
+    const containedFocus = disclosure.locator('summary:visible, a[href]:visible, button:not([disabled]):visible, input:not([disabled]):visible, select:not([disabled]):visible, textarea:not([disabled]):visible, [tabindex]:not([tabindex="-1"]):visible');
+    const lastContainedFocus = containedFocus.last();
+    await lastContainedFocus.focus();
+    await page.keyboard.press("Tab");
+    await expect(page.getByRole("button", { name: "Close navigation", exact: true })).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(lastContainedFocus).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(disclosure).not.toHaveAttribute("open", "");
+    await expect(page.locator("main#main-content")).not.toHaveAttribute("inert", "");
+    await expect(page.locator("footer")).not.toHaveAttribute("inert", "");
+    if (browserName === "chromium") expect(delayedDestination).toBe(true);
+    expect(enhancedBeforeNavigation || browserName === "webkit").toBe(true);
     expect(errors.filter((error) => !preExistingCapturedHandoffStyleViolation.test(error))).toEqual([]);
   } finally {
-    await releaseCommercialState();
+    await commercialHold.release();
     await context.close();
   }
 }
 
-test("held commercial resolution proves the restricted KZ fallback is replaced before hydration", async ({ browser }) => {
+test("held commercial resolution leaves restricted KZ navigation usable before hydration", async ({ browser, browserName }) => {
   test.setTimeout(60_000);
-  await exerciseHeldMobileHeader(browser, "KZ");
+  await exerciseHeldMobileHeader(browser, browserName, "KZ");
 });
 
-test("held commercial resolution proves the supported PE fallback is replaced before hydration", async ({ browser }) => {
+test("held commercial resolution leaves supported PE navigation usable before hydration", async ({ browser, browserName }) => {
   test.setTimeout(60_000);
-  await exerciseHeldMobileHeader(browser, "PE");
+  await exerciseHeldMobileHeader(browser, browserName, "PE");
+});
+
+test("open native navigation preserves identity, focus and scroll while commercial state streams", async ({ browser, browserName }) => {
+  test.setTimeout(60_000);
+  const commercialHold = await holdPublishedCasinoReads();
+  const context = await marketContext(browser, "PE", {
+    isMobile: true,
+    viewport: { width: 390, height: 600 },
+  });
+  const page = await context.newPage();
+  try {
+    const response = await page.goto(`${baseUrl}/de`, { waitUntil: "commit" });
+    expect(response?.status()).toBe(200);
+    const header = page.locator('[data-public-shell="header"]');
+    const disclosure = page.locator("details[data-public-mobile-disclosure]");
+    const menu = page.locator("#public-mobile-navigation");
+    await header.evaluate((element) => { element.setAttribute("data-stable-header", "true"); });
+    await disclosure.evaluate((element) => { element.setAttribute("data-stable-disclosure", "true"); });
+    if (browserName === "chromium") {
+      await expect(disclosure).toHaveAttribute("data-navigation-enhanced", "true");
+    }
+    await expect(page.locator('[data-commercial-navigation-pending="mobile"]')).toHaveCount(1);
+    commercialHold.assertHeld();
+
+    await disclosure.locator(":scope > summary").click();
+    const stableCasinoLink = menu.locator('a[data-navigation-href="/casinos"]');
+    if (browserName === "webkit") {
+      await stableCasinoLink.focus();
+    } else {
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Tab");
+    }
+    await expect(stableCasinoLink).toBeFocused();
+    await menu.evaluate((element) => { element.scrollTop = 120; });
+    const scrollBefore = await menu.evaluate((element) => element.scrollTop);
+    expect(scrollBefore).toBeGreaterThan(0);
+
+    await commercialHold.release();
+    await expect(page.locator('[data-commercial-navigation-pending="mobile"]')).toHaveCount(0);
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(header).toHaveAttribute("data-stable-header", "true");
+    await expect(disclosure).toHaveAttribute("data-stable-disclosure", "true");
+    await expect(stableCasinoLink).toBeFocused();
+    await expect(menu.locator('a[data-navigation-href="/best-offers"]')).toHaveAttribute("href", "/de/best-offers");
+    await expect(menu.locator('a[data-navigation-href="/bonuses"]')).toHaveAttribute("href", "/de/bonuses");
+    await expect(menu.getByRole("button", { name: /Sprache ändern: Deutsch/ })).toBeVisible();
+    await expect(disclosure).toHaveAttribute("data-navigation-enhanced", "true");
+    const scrollAfter = await menu.evaluate((element) => element.scrollTop);
+    expect(Math.abs(scrollAfter - scrollBefore)).toBeLessThanOrEqual(2);
+    await page.keyboard.press("Escape");
+    await expect(disclosure).not.toHaveAttribute("open", "");
+  } finally {
+    await commercialHold.release();
+    await context.close();
+  }
+});
+
+test("held commercial resolution times out once and recovers without replacing open navigation", async ({ browser }) => {
+  test.setTimeout(60_000);
+  const commercialHold = await holdPublishedCasinoReads();
+  const context = await marketContext(browser, "PE", {
+    isMobile: true,
+    viewport: { width: 390, height: 600 },
+  });
+  const page = await context.newPage();
+  let homeRefreshes = 0;
+  page.on("request", (request) => {
+    if (
+      new URL(request.url()).pathname === "/en"
+      && request.headers().rsc === "1"
+      && request.headers()["next-router-prefetch"] !== "1"
+    ) {
+      homeRefreshes += 1;
+    }
+  });
+
+  try {
+    const response = await page.goto(`${baseUrl}/en`, { waitUntil: "commit" });
+    expect(response?.status()).toBe(200);
+    const header = page.locator('[data-public-shell="header"]');
+    const disclosure = page.locator("details[data-public-mobile-disclosure]");
+    const menu = page.locator("#public-mobile-navigation");
+    await header.evaluate((element) => { element.setAttribute("data-timeout-header", "stable"); });
+    await disclosure.evaluate((element) => { element.setAttribute("data-timeout-menu", "stable"); });
+    await disclosure.locator(":scope > summary").click();
+    const stableCasinoLink = menu.locator('a[data-navigation-href="/casinos"]');
+    await stableCasinoLink.focus();
+    await menu.evaluate((element) => { element.scrollTop = 120; });
+    const scrollBefore = await menu.evaluate((element) => element.scrollTop);
+    expect(scrollBefore).toBeGreaterThan(0);
+    commercialHold.assertHeld();
+
+    await expect(page.locator('[data-commercial-navigation-timed-out]')).toHaveCount(1);
+    await expect(page.locator('[data-commercial-navigation-pending="mobile"]')).toHaveCount(0);
+    await expect(menu.locator('a[data-navigation-href="/best-offers"]')).toHaveCount(0);
+    commercialHold.assertHeld();
+
+    await commercialHold.release();
+    await expect(menu.locator('a[data-navigation-href="/best-offers"]')).toHaveAttribute("href", "/en/best-offers");
+    await expect(menu.locator('a[data-navigation-href="/bonuses"]')).toHaveAttribute("href", "/en/bonuses");
+    await expect(page.locator('[data-commercial-navigation-timed-out]')).toHaveCount(0);
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(header).toHaveAttribute("data-timeout-header", "stable");
+    await expect(disclosure).toHaveAttribute("data-timeout-menu", "stable");
+    await expect(stableCasinoLink).toBeFocused();
+    const scrollAfter = await menu.evaluate((element) => element.scrollTop);
+    expect(Math.abs(scrollAfter - scrollBefore)).toBeLessThanOrEqual(2);
+    await expect.poll(() => homeRefreshes).toBe(1);
+    await page.waitForTimeout(1_800);
+    expect(homeRefreshes, "the bounded commercial recovery must not become a refresh loop").toBe(1);
+
+  } finally {
+    await commercialHold.release();
+    await context.close();
+  }
+});
+
+test("commercial completion before application JavaScript preserves the native open state through hydration", async ({ browser, browserName }) => {
+  test.setTimeout(60_000);
+  const commercialHold = await holdPublishedCasinoReads();
+  const context = await marketContext(browser, "PE", {
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  let releaseScripts!: () => void;
+  const scriptsReleased = new Promise<void>((resolve) => { releaseScripts = resolve; });
+  let heldScriptRequests = 0;
+  await page.route("**/*", async (route) => {
+    if (route.request().resourceType() === "script") {
+      heldScriptRequests += 1;
+      await scriptsReleased;
+    }
+    await route.continue();
+  });
+  try {
+    const response = await page.goto(`${baseUrl}/en`, { waitUntil: "commit" });
+    expect(response?.status()).toBe(200);
+    const disclosure = page.locator("details[data-public-mobile-disclosure]");
+    const menu = page.locator("#public-mobile-navigation");
+    await expect.poll(() => heldScriptRequests).toBeGreaterThan(0);
+    await expect(disclosure).not.toHaveAttribute("data-navigation-enhanced", "true");
+    await expect(page.locator('[data-commercial-navigation-pending="mobile"]')).toHaveCount(1);
+    await disclosure.locator(":scope > summary").click();
+    const stableCasinoLink = menu.locator('a[data-navigation-href="/casinos"]');
+    if (browserName === "webkit") {
+      await stableCasinoLink.focus();
+    } else {
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Tab");
+    }
+    await expect(stableCasinoLink).toBeFocused();
+    commercialHold.assertHeld();
+
+    await commercialHold.release();
+    await expect(page.locator('[data-commercial-navigation-pending="mobile"]')).toHaveCount(0);
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(stableCasinoLink).toBeFocused();
+    await expect(menu.locator('a[data-navigation-href="/best-offers"]')).toBeVisible();
+
+    releaseScripts();
+    await expect(disclosure).toHaveAttribute("data-navigation-enhanced", "true");
+    await expect(disclosure).toHaveAttribute("open", "");
+    await expect(stableCasinoLink).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(disclosure).not.toHaveAttribute("open", "");
+  } finally {
+    releaseScripts();
+    await commercialHold.release();
+    await context.close();
+  }
+});
+
+test("rejected commercial resolution keeps truthful basic navigation usable", async ({ browser }) => {
+  test.skip(
+    process.env.NAVIGATION_STAGE2_REJECT_COMMERCIAL_STATE !== "true",
+    "isolated commercial-state rejection seam is not configured",
+  );
+  const context = await marketContext(browser, "PE", {
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  const errors = observeRuntimeErrors(page);
+  const response = await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await expect(page.locator('[data-public-shell="header"]')).toHaveCount(1);
+  await expect(page.locator('a[data-navigation-href="/best-offers"]')).toHaveCount(0);
+  await expect(page.locator('a[data-navigation-href="/bonuses"]')).toHaveCount(0);
+  await expect(page.locator('[href^="/r/"]')).toHaveCount(0);
+  const disclosure = page.locator("details[data-public-mobile-disclosure]");
+  await page.getByRole("button", { name: "Open navigation", exact: true }).click();
+  await expect(disclosure).toHaveAttribute("open", "");
+  const menu = page.locator("#public-mobile-navigation");
+  await expect(menu.locator('a[data-navigation-href="/casinos"]')).toBeVisible();
+  await expect(menu.locator('a[data-navigation-href="/learn"]')).toBeVisible();
+  await menu.locator('a[data-navigation-href="/learn"]').click();
+  await expect(page).toHaveURL(`${baseUrl}/en/learn`);
+  await expect(page.locator('[data-handoff-page="learn"]')).toBeVisible();
+  expect(errors.filter((error) => !preExistingCapturedHandoffStyleViolation.test(error))).toEqual([]);
+  await context.close();
 });
 
 async function expectNeutralNavigationFeedback(page: Page, destination: string) {
@@ -235,6 +497,7 @@ test("supported PE fixture covers all primary, detail, article, history and pref
   expect(response?.status()).toBe(200);
   await expect(page.locator('[data-handoff-page="home"]')).toBeVisible();
   await expect(desktopPrimary(page).getByRole("link", { name: "Best Offers", exact: true })).toBeVisible();
+  await expectCanonicalNavigationDomOrder(page);
   documentNavigations.length = 0;
   analyticsRequests.length = 0;
   speculativeBestOfferRequests.length = 0;
@@ -244,7 +507,7 @@ test("supported PE fixture covers all primary, detail, article, history and pref
   expect(analyticsRequests, "automatic prefetch must not emit product analytics").toEqual([]);
   expect(speculativeBestOfferRequests, "measured-unhelpful primary route prefetch stays disabled").toEqual([]);
   await desktopPrimary(page).getByRole("link", { name: "Best Offers", exact: true }).click();
-  await expect(page.locator("[data-commercial-best-offer-card]")).toBeVisible();
+  await expect(page.locator("[data-commercial-best-offer-card]").first()).toBeVisible();
   await expect(page).toHaveURL(`${baseUrl}/en/best-offers`);
 
   const bestDetail = page.locator('[data-commercial-best-offer-card] a[href*="/casino/"]').first();
@@ -252,20 +515,20 @@ test("supported PE fixture covers all primary, detail, article, history and pref
   await expect(page.locator('[data-runtime-renderer="casino-review"]')).toBeVisible();
   await expect(page).toHaveURL(`${baseUrl}/en/casino/navigation-stage2-casino`);
   await page.goBack();
-  await expect(page.locator("[data-commercial-best-offer-card]")).toBeVisible();
+  await expect(page.locator("[data-commercial-best-offer-card]").first()).toBeVisible();
   await page.goForward();
   await expect(page.locator('[data-runtime-renderer="casino-review"]')).toBeVisible();
   await page.goBack();
 
   await desktopPrimary(page).getByRole("link", { name: "Casinos", exact: true }).click();
-  await expect(page.locator("[data-commercial-casino-card]")).toBeVisible();
+  await expect(page.locator("[data-commercial-casino-card]").first()).toBeVisible();
   const casinoDetail = page.locator('[data-commercial-casino-card] a[href*="/casino/"]').first();
   await casinoDetail.click();
   await expect(page.locator('[data-runtime-renderer="casino-review"]')).toBeVisible();
   await page.goBack();
 
   await desktopPrimary(page).getByRole("link", { name: "Bonuses", exact: true }).click();
-  await expect(page.locator("[data-commercial-bonus-card]")).toBeVisible();
+  await expect(page.locator("[data-commercial-bonus-card]").first()).toBeVisible();
   await desktopPrimary(page).getByRole("link", { name: "Learn", exact: true }).click();
   await expect(page.locator('[data-handoff-page="learn"]')).toBeVisible();
   await page.locator('button[data-learn-topic="casinos"]').click();
@@ -301,7 +564,7 @@ test("restricted KZ and supported PE remain isolated across direct localized rou
   const supported = await marketContext(browser, "PE");
   const supportedPage = await supported.newPage();
   await supportedPage.goto(`${baseUrl}/en/best-offers`, { waitUntil: "domcontentloaded" });
-  await expect(supportedPage.locator("[data-commercial-best-offer-card]")).toBeVisible();
+  await expect(supportedPage.locator("[data-commercial-best-offer-card]").first()).toBeVisible();
   await expect(supportedPage.locator('[href^="/r/"]').first()).toBeVisible();
 
   const restricted = await marketContext(browser, "KZ");
@@ -317,7 +580,7 @@ test("restricted KZ and supported PE remain isolated across direct localized rou
   await expect(restrictedPage.locator('[data-commercial-market-state="editorial-only"]')).toBeVisible();
   await expect(restrictedPage.locator('[href^="/r/"]')).toHaveCount(0);
   await supportedPage.goto(`${baseUrl}/en/casinos`, { waitUntil: "domcontentloaded" });
-  await expect(supportedPage.locator("[data-commercial-casino-card]")).toBeVisible();
+  await expect(supportedPage.locator("[data-commercial-casino-card]").first()).toBeVisible();
   await supported.close();
   await restricted.close();
 });
@@ -347,8 +610,8 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
 
   const menuButton = page.getByRole("button", { name: "Open navigation", exact: true });
   await menuButton.click();
-  const dialog = page.getByRole("dialog", { name: "Site navigation", exact: true });
-  await expect(dialog).toBeVisible();
+  const mobileNavigation = page.locator("#public-mobile-navigation");
+  await expect(mobileNavigation).toBeVisible();
   delayBonuses = true;
   await page.evaluate(() => {
     const startedAt = performance.now();
@@ -361,8 +624,8 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
       observer.observe(document.body, { childList: true, subtree: true });
     });
   });
-  await dialog.getByRole("link", { name: /Bonuses/ }).click();
-  await expect(dialog).not.toBeVisible();
+  await mobileNavigation.getByRole("link", { name: /Bonuses/ }).click();
+  await expect(mobileNavigation).not.toBeVisible();
   await expectNeutralNavigationFeedback(page, "Bonuses");
   const mobileFeedbackPaintMs = await page.evaluate(
     () => (window as NavigationTimingWindow).__stage2MobileFeedbackPaint!,
@@ -370,15 +633,73 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
   expect(mobileFeedbackPaintMs).toBeLessThan(200);
   const loadingAnimation = await page.locator('[data-navigation-pending-destination="Bonuses"] span').evaluate((element) => getComputedStyle(element).animationName);
   expect(loadingAnimation).toBe("none");
-  await expect(page.locator("[data-commercial-bonus-card]")).toBeVisible();
+  await expect(page.locator("[data-commercial-bonus-card]").first()).toBeVisible();
   expect(delayed).toBe(true);
 
   await menuButton.click();
-  await expect(dialog).toBeVisible();
+  await expect(mobileNavigation).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(dialog).not.toBeVisible();
+  await expect(mobileNavigation).not.toBeVisible();
   await expect(menuButton).toBeFocused();
   expect(errors.filter((error) => !preExistingCapturedHandoffStyleViolation.test(error))).toEqual([]);
+  await context.close();
+});
+
+test("enhanced disclosure respects modifiers, new tabs, hashes and desktop resize", async ({ browser }) => {
+  const context = await marketContext(browser, "PE", {
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
+  const disclosure = page.locator("details[data-public-mobile-disclosure]");
+  const trigger = page.getByRole("button", { name: "Open navigation", exact: true });
+  const learn = page.locator('#public-mobile-navigation a[data-navigation-href="/learn"]');
+  const newTabModifier = process.platform === "darwin" ? "Meta" : "Control";
+
+  await trigger.click();
+  const [modifiedPage] = await Promise.all([
+    context.waitForEvent("page"),
+    learn.click({ modifiers: [newTabModifier] }),
+  ]);
+  await modifiedPage.waitForLoadState("domcontentloaded");
+  await expect(disclosure).toHaveAttribute("open", "");
+  await modifiedPage.close();
+
+  await learn.evaluate((element) => {
+    const anchor = element as HTMLAnchorElement;
+    anchor.target = "_blank";
+  });
+  const [newTab] = await Promise.all([
+    context.waitForEvent("page"),
+    learn.click(),
+  ]);
+  await newTab.waitForLoadState("domcontentloaded");
+  await expect(disclosure).toHaveAttribute("open", "");
+  await newTab.close();
+
+  const hashLink = page.locator("#navigation-stage2-hash-link");
+  await page.locator("#public-mobile-navigation").evaluate((menu) => {
+    const anchor = document.createElement("a");
+    anchor.id = "navigation-stage2-hash-link";
+    anchor.href = "#main-content";
+    anchor.textContent = "Skip to content in this page";
+    menu.append(anchor);
+  });
+  await hashLink.click();
+  await expect(page).toHaveURL(`${baseUrl}/en#main-content`);
+  await expect(disclosure).not.toHaveAttribute("open", "");
+  await expect(page.locator("html")).not.toHaveCSS("overflow", "hidden");
+
+  await trigger.click();
+  await page.setViewportSize({ width: 1000, height: 700 });
+  await expect(disclosure).not.toHaveAttribute("open", "");
+  await expect(page.locator("html")).not.toHaveCSS("overflow", "hidden");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await trigger.click();
+  await expect(disclosure).toHaveAttribute("open", "");
+  await page.getByRole("button", { name: "Close navigation", exact: true }).click();
+  await expect(trigger).toBeFocused();
   await context.close();
 });
 
@@ -395,7 +716,7 @@ test("rapid transitions resolve to the last destination and failed raw Learn nav
     links.find((link) => link.textContent?.trim() === "Casinos")?.click();
   });
   await expect(page).toHaveURL(`${baseUrl}/en/casinos`);
-  await expect(page.locator("[data-commercial-casino-card]")).toBeVisible();
+  await expect(page.locator("[data-commercial-casino-card]").first()).toBeVisible();
   await expect(page.locator('[data-navigation-pending-destination="Best Offers"]')).toHaveCount(0);
 
   await desktopPrimary(page).getByRole("link", { name: "Learn", exact: true }).click();
@@ -419,7 +740,7 @@ test("rapid transitions resolve to the last destination and failed raw Learn nav
   await context.close();
 });
 
-test("language switching preserves query state, non-English empty state is truthful, and Learn links work without JavaScript", async ({ browser }) => {
+test("language switching preserves query state, and native mobile navigation works without JavaScript", async ({ browser }) => {
   test.setTimeout(60_000);
   const context = await marketContext(browser, "PE");
   const page = await context.newPage();
@@ -436,15 +757,50 @@ test("language switching preserves query state, non-English empty state is truth
   await expect(page.locator("[data-learn-empty]")).toBeVisible();
   await context.close();
 
-  const noJavaScript = await marketContext(browser, "PE", { javaScriptEnabled: false });
-  const publicOrigin = new URL(baseUrl);
-  const directOrigin = `${publicOrigin.protocol}//127.0.0.1:${publicOrigin.port}`;
-  const directHeaders = { Host: publicOrigin.host };
-  const learnResponse = await noJavaScript.request.get(`${directOrigin}/en/learn`, { headers: directHeaders });
-  expect(learnResponse.status()).toBe(200);
-  expect(await learnResponse.text()).toContain(`href="${fixtureArticlePath}"`);
-  const articleResponse = await noJavaScript.request.get(`${directOrigin}${fixtureArticlePath}`, { headers: directHeaders });
-  expect(articleResponse.status()).toBe(200);
-  expect(await articleResponse.text()).toContain("Navigation Stage 2 Published Guide");
+  const noJavaScript = await marketContext(browser, "PE", {
+    isMobile: true,
+    javaScriptEnabled: false,
+    viewport: { width: 390, height: 844 },
+  });
+  const noJavaScriptPage = await noJavaScript.newPage();
+  const noJavaScriptResponse = await noJavaScriptPage.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
+  expect(noJavaScriptResponse?.status()).toBe(200);
+  const nativeDisclosure = noJavaScriptPage.locator("details[data-public-mobile-disclosure]");
+  await expect(nativeDisclosure).not.toHaveAttribute("data-navigation-enhanced", "true");
+  await noJavaScriptPage.getByRole("button", { name: "Open navigation", exact: true }).click();
+  await expect(nativeDisclosure).toHaveAttribute("open", "");
+  const nativeMenu = noJavaScriptPage.locator("#public-mobile-navigation");
+  await expect(nativeMenu.locator('a[data-navigation-href="/learn"]')).toHaveAttribute("href", "/en/learn");
+  await nativeMenu.getByRole("button", { name: /Change language: English/ }).click();
+  const germanChoice = nativeMenu.locator('button[name="choice"][value="de"]');
+  await expect(germanChoice).toBeVisible();
+  await germanChoice.focus();
+  await noJavaScriptPage.keyboard.press("Enter");
+  await expect(noJavaScriptPage).toHaveURL(`${baseUrl}/de`);
+  await noJavaScriptPage.locator("details[data-public-mobile-disclosure] > summary").click();
+  await noJavaScriptPage.locator('#public-mobile-navigation a[data-navigation-href="/learn"]').click();
+  await expect(noJavaScriptPage).toHaveURL(`${baseUrl}/de/learn`);
+  await expect(noJavaScriptPage.locator("[data-learn-empty]")).toBeVisible();
   await noJavaScript.close();
+});
+
+test("nested Programme language Escape closes only the topmost disclosure", async ({ browser }) => {
+  const context = await marketContext(browser, "PE", {
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  await page.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
+  const navigation = page.locator("details[data-public-mobile-disclosure]");
+  await page.getByRole("button", { name: "Open navigation", exact: true }).click();
+  const language = page.locator("#public-mobile-navigation [data-programme-language-selector] details");
+  await language.locator(":scope > summary").click();
+  await expect(language).toHaveAttribute("open", "");
+  await page.keyboard.press("Escape");
+  await expect(language).not.toHaveAttribute("open", "");
+  await expect(navigation).toHaveAttribute("open", "");
+  await expect(language.locator(":scope > summary")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(navigation).not.toHaveAttribute("open", "");
+  await context.close();
 });

@@ -1,6 +1,6 @@
 .header,
 .footer,
-.mobileDialog,
+.mobileMenuPanel,
 .availabilityNotice,
 .navigationFeedback {
   --shell-night: var(--sb-night);
@@ -104,6 +104,8 @@
   display: block;
 }
 
+.presentationDisclosure { position: relative; }
+
 .selectorTrigger {
   min-height: 40px;
   padding: 0 11px;
@@ -123,6 +125,9 @@
     border-color var(--sb-motion-fast) var(--sb-ease-standard),
     color var(--sb-motion-fast) var(--sb-ease-standard);
 }
+.selectorTrigger { list-style: none; }
+.selectorTrigger::-webkit-details-marker { display: none; }
+.selectorTrigger::marker { content: ""; }
 
 .header[data-shell-theme="light"] .selectorTrigger,
 .header[data-shell-theme="cream"] .selectorTrigger {
@@ -130,7 +135,7 @@
 }
 
 .selectorTrigger:hover,
-.selectorTrigger[aria-expanded="true"] {
+.presentationDisclosure[open] > .selectorTrigger {
   border-color: var(--shell-acid);
   background: rgba(228, 226, 78, .1);
 }
@@ -158,7 +163,7 @@
   stroke-width: 1.8;
   transition: transform var(--sb-motion-fast) var(--sb-ease-standard);
 }
-.selectorTrigger[aria-expanded="true"] .selectorChevron { transform: rotate(180deg); }
+.presentationDisclosure[open] > .selectorTrigger .selectorChevron { transform: rotate(180deg); }
 .selectorCheck { width: 18px; height: 18px; color: var(--shell-acid); stroke-width: 2.2; }
 
 .selectorMenu {
@@ -300,6 +305,7 @@
   border-color: rgba(250, 250, 247, .28);
   background: rgba(250, 250, 247, .04);
 }
+.mobilePresentationSelector .presentationDisclosure { width: 100%; }
 .mobilePresentationSelector .selectorTriggerCode { font-size: 14px; }
 .mobilePresentationSelector .selectorChevron { margin-left: auto; }
 .mobilePresentationSelector .selectorMenu {
@@ -455,6 +461,36 @@
   cursor: pointer;
   touch-action: manipulation;
 }
+.mobileDisclosure {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+}
+.menuSummary {
+  list-style: none;
+}
+.menuSummary::-webkit-details-marker { display: none; }
+.menuSummary::marker { content: ""; }
+.menuClosedIcon,
+.menuOpenIcon {
+  display: grid;
+  place-items: center;
+}
+.menuOpenIcon,
+.menuOpenLabel { display: none; }
+.mobileDisclosure[open] > .menuSummary {
+  position: fixed;
+  z-index: 43;
+  top: calc(14px + env(safe-area-inset-top));
+  right: calc((100vw - var(--public-frame-width)) / 2);
+  border-color: rgba(250, 250, 247, .72);
+  color: var(--shell-white);
+}
+.mobileDisclosure[open] > .menuSummary .menuClosedIcon,
+.mobileDisclosure[open] > .menuSummary .menuClosedLabel { display: none; }
+.mobileDisclosure[open] > .menuSummary .menuOpenIcon { display: grid; }
+.mobileDisclosure[open] > .menuSummary .menuOpenLabel { display: inline; }
 .navigationIcon {
   width: 24px;
   height: 24px;
@@ -466,21 +502,20 @@
   stroke-linejoin: miter;
 }
 
-.mobileDialog {
+.mobileMenuPanel {
+  position: fixed;
+  z-index: 42;
+  inset: 0;
   width: 100vw;
-  max-width: none;
   height: 100dvh;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
   background: var(--shell-night);
   color: var(--shell-white);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
   overscroll-behavior: contain;
 }
-
-.mobileDialog[open] { display: flex; flex-direction: column; }
-.mobileDialog::backdrop { background: rgba(16, 15, 15, .72); }
+.mobileDisclosure:not([open]) > .mobileMenuPanel { display: none; }
 
 .dialogTopbar {
   min-height: 72px;
@@ -491,6 +526,7 @@
   padding: 0 calc(16px + env(safe-area-inset-right)) 0 calc(16px + env(safe-area-inset-left));
   border-bottom: 1px solid rgba(250, 250, 247, .18);
 }
+.dialogCloseSpace { width: 44px; height: 44px; flex: 0 0 44px; }
 
 .mobileRouteList { display: grid; padding: 12px 16px 0; }
 .mobileRouteList a {
@@ -588,6 +624,7 @@
 .footerGroup { display: grid; align-content: start; gap: 12px; }
 .footerGroup h2 { margin: 0 0 6px; color: rgba(250, 250, 247, .4); font-size: 12px; line-height: 18px; font-weight: 400; letter-spacing: .2em; text-transform: uppercase; }
 .footerGroup a { width: fit-content; color: rgba(250, 250, 247, .75); font-size: 14px; line-height: 20px; }
+.footerNavigationSlot { display: contents; }
 
 .footerHelp {
   grid-column: 1 / -1;
@@ -669,7 +706,7 @@
 
 .header :focus-visible,
 .footer :focus-visible,
-.mobileDialog :focus-visible,
+.mobileMenuPanel :focus-visible,
 .availabilityNotice :focus-visible {
   outline: 3px solid var(--shell-acid);
   outline-offset: 3px;
@@ -681,12 +718,13 @@
   .brand { font-size: 22px; }
   .desktopNavigation { display: none; }
   .mobileNavigation { display: flex; gap: 6px; }
-  .mobileNavigation > .menuButton { display: inline-flex; }
+  .mobileNavigation .menuButton { display: inline-flex; }
   .mobileNavigation > .mobilePrimaryAction { order: 1; }
-  .mobileNavigation > .menuButton { order: 2; }
+  .mobileNavigation > .mobileDisclosure { order: 2; }
   .mobilePrimaryAction,.menuButton { min-height:44px; }
-  .mobileDialog { overflow-y:auto; }
   .dialogTopbar { position:sticky; top:0; z-index:2; min-height:calc(72px + env(safe-area-inset-top)); padding-top:env(safe-area-inset-top); background:var(--shell-night); }
+
+  :global(html):has(.mobileDisclosure[open]) { overflow:hidden; }
 
   .footerInner { width: var(--public-wide-width); }
   .footer { padding-top:64px; }

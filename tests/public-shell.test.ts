@@ -104,8 +104,10 @@ test("desktop and mobile header actions render the shared account label with ico
   assert.equal(navigation.match(/\{primaryLabel\}/g)?.length, 2);
   assert.doesNotMatch(navigation, />\s*Menu\s*</);
   assert.doesNotMatch(navigation, />\s*Close\s*</);
-  assert.match(navigation, /aria-label=\{messages\.openNavigation\}/);
-  assert.match(navigation, /aria-label=\{messages\.closeNavigation\}/);
+  assert.match(navigation, /\{messages\.openNavigation\}<\/span>/);
+  assert.match(navigation, /\{messages\.closeNavigation\}<\/span>/);
+  assert.match(navigation, /<details[^>]+data-public-mobile-disclosure/);
+  assert.match(navigation, /<summary/);
   assert.match(navigation, /<MenuIcon \/>/);
   assert.match(navigation, /<CloseIcon \/>/);
   assert.match(navigation, /<MarketLanguageSelector/);
@@ -114,7 +116,8 @@ test("desktop and mobile header actions render the shared account label with ico
 test("the presentation selector applies one-tap choices with an accessible selected state", () => {
   const selector = readFileSync("components/public-shell/MarketLanguageSelector.tsx", "utf8");
 
-  assert.match(selector, /aria-expanded=\{open\}/);
+  assert.match(selector, /<details[^>]+presentationDisclosure/);
+  assert.match(selector, /<summary/);
   assert.match(selector, /aria-haspopup="menu"/);
   assert.match(selector, /role="menuitemradio"/);
   assert.match(selector, /aria-checked=\{selected\}/);
@@ -128,14 +131,24 @@ test("the public layout owns one landmark and reads only session-cookie presence
   const rootLayout = readFileSync("app/layout.tsx", "utf8");
   const publicLayout = readFileSync("app/(public)/layout.tsx", "utf8");
   const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
+  const navigationClient = readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8");
 
   assert.doesNotMatch(rootLayout, /<Header|<Footer|<main id="main-content"/);
   assert.match(publicLayout, /hasBetterAuthSessionCookie\(requestHeaders\)/);
   assert.doesNotMatch(publicLayout, /getServerSession/);
   assert.match(publicLayout, /<main id="main-content"/);
-  assert.match(navigation, /showModal\(\)/);
-  assert.match(navigation, /event\.key === "Escape"/);
-  assert.doesNotMatch(navigation, /location\.href|window\.open/);
+  assert.match(publicLayout, /kind: "rejected"/);
+  assert.match(publicLayout, /kind: "timed-out"/);
+  assert.match(navigationClient, /data-commercial-navigation-timed-out/);
+  assert.doesNotMatch(navigationClient, /setInterval/);
+  assert.doesNotMatch(navigation, /showModal\(\)/);
+  assert.match(navigationClient, /event\.key === "Escape"/);
+  assert.doesNotMatch(navigation + navigationClient, /location\.href|window\.open/);
+});
+
+test("the stable Footer does not reintroduce automatic speculative navigation", () => {
+  const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
+  assert.equal((footer.match(/<Link\b/g) ?? []).length, (footer.match(/prefetch=\{false\}/g) ?? []).length);
 });
 
 test("availability states are generic presentation and do not claim live GEO authority", () => {

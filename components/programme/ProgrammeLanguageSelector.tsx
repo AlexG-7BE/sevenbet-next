@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import {
@@ -52,34 +52,44 @@ export function ProgrammeLanguageSelector({
 }) {
   const searchParams = useSearchParams();
   const menuId = `programme-language-menu-${variant}`;
-  const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const disclosureRef = useRef<HTMLDetailsElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-    const frame = requestAnimationFrame(() => {
-      menuRef.current?.querySelector<HTMLElement>('[role="menuitemradio"][aria-checked="true"]')?.focus();
-    });
-    function closeOnOutsidePointer(event: PointerEvent) {
-      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
-    }
-    function closeOnEscape(event: globalThis.KeyboardEvent) {
-      if (event.key !== "Escape") return;
+    const disclosure = disclosureRef.current;
+    if (!disclosure) return;
+    let frame = 0;
+    const focusCurrentChoice = () => {
+      if (!disclosure.open) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        menuRef.current?.querySelector<HTMLElement>('[role="menuitemradio"][aria-checked="true"]')?.focus();
+      });
+    };
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) disclosure.open = false;
+    };
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape" || !disclosure.open) return;
       event.preventDefault();
-      setOpen(false);
+      event.stopPropagation();
+      disclosure.open = false;
       requestAnimationFrame(() => triggerRef.current?.focus());
-    }
+    };
     const root = rootRef.current;
+    disclosure.addEventListener("toggle", focusCurrentChoice);
     root?.addEventListener("keydown", closeOnEscape);
     document.addEventListener("pointerdown", closeOnOutsidePointer);
+    if (disclosure.open) focusCurrentChoice();
     return () => {
       cancelAnimationFrame(frame);
+      disclosure.removeEventListener("toggle", focusCurrentChoice);
       root?.removeEventListener("keydown", closeOnEscape);
       document.removeEventListener("pointerdown", closeOnOutsidePointer);
     };
-  }, [open]);
+  }, []);
 
   function onMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
     const options = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitemradio"]') ?? []);
@@ -102,21 +112,19 @@ export function ProgrammeLanguageSelector({
       ref={rootRef}
     >
       <span className={variant === "desktop" ? "srOnly" : styles.presentationSelectorLabel}>{messages.marketAndLanguage}</span>
-      <button
-        aria-controls={menuId}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={messages.changeMarketAndLanguage}
-        className={styles.selectorTrigger}
-        onClick={() => setOpen((current) => !current)}
-        ref={triggerRef}
-        type="button"
-      >
-        <GlobeIcon />
-        <span className={styles.selectorTriggerCode}>{languageCode(locale)}</span>
-        <ChevronIcon />
-      </button>
-      {open ? (
+      <details className={styles.presentationDisclosure} ref={disclosureRef}>
+        <summary
+          aria-controls={menuId}
+          aria-haspopup="menu"
+          aria-label={messages.changeMarketAndLanguage}
+          className={styles.selectorTrigger}
+          ref={triggerRef}
+          role="button"
+        >
+          <GlobeIcon />
+          <span className={styles.selectorTriggerCode}>{languageCode(locale)}</span>
+          <ChevronIcon />
+        </summary>
         <div
           aria-label={messages.changeMarketAndLanguage}
           className={styles.selectorMenu}
@@ -133,7 +141,9 @@ export function ProgrammeLanguageSelector({
                 className={styles.selectorOption}
                 href={programmeLocaleHref(route.locale, searchParams)}
                 key={route.locale}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  if (disclosureRef.current) disclosureRef.current.open = false;
+                }}
                 role="menuitemradio"
               >
                 <span aria-hidden="true" className={styles.languageBadge}>{languageCode(route.locale)}</span>
@@ -146,7 +156,7 @@ export function ProgrammeLanguageSelector({
             );
           })}
         </div>
-      ) : null}
+      </details>
       {variant === "mobile" ? <p>{messages.presentationOnlyNotice}</p> : null}
     </div>
   );

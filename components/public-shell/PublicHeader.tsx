@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { resolvePresentationContext, type PresentationResolution } from "@/lib/market/presentation-resolver";
@@ -18,12 +19,22 @@ export function PublicHeader({
   presentation = resolvePresentationContext({}),
   programme,
   commercialProductState = "SUPPORTED_COMMERCIAL",
+  commercialDesktopBestOffersNavigation,
+  commercialDesktopBonusesNavigation,
+  commercialMobileBestOffersNavigation,
+  commercialMobileBonusesNavigation,
+  deferCommercialNavigation = false,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
   presentation?: PresentationResolution;
   programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
   commercialProductState?: CommercialProductState;
+  commercialDesktopBestOffersNavigation?: ReactNode;
+  commercialDesktopBonusesNavigation?: ReactNode;
+  commercialMobileBestOffersNavigation?: ReactNode;
+  commercialMobileBonusesNavigation?: ReactNode;
+  deferCommercialNavigation?: boolean;
 }) {
   const messages = publicShellMessages(presentation.locale);
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
@@ -37,7 +48,20 @@ export function PublicHeader({
           B4GAMBLE
           <PublicLinkPendingSignal label={messages.homeLabel} />
         </Link>
-        <PublicNavigation account={account} authenticated={authenticated} commercialProductsAvailable={commercialProductsAvailable(commercialProductState)} messages={messages} presentation={presentation} programme={programme} selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES} />
+        <PublicNavigation
+          account={account}
+          authenticated={authenticated}
+          commercialDesktopBestOffersNavigation={commercialDesktopBestOffersNavigation}
+          commercialDesktopBonusesNavigation={commercialDesktopBonusesNavigation}
+          commercialMobileBestOffersNavigation={commercialMobileBestOffersNavigation}
+          commercialMobileBonusesNavigation={commercialMobileBonusesNavigation}
+          commercialProductsAvailable={commercialProductsAvailable(commercialProductState)}
+          deferCommercialNavigation={deferCommercialNavigation}
+          messages={messages}
+          presentation={presentation}
+          programme={programme}
+          selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES}
+        />
       </div>
       <PublicHeaderThemeController />
     </header>
