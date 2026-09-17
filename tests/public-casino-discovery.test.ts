@@ -403,6 +403,36 @@ test("discovery repository loads editorial aliases only while canonical denial r
   assert.equal(result.items[0].action, null);
 });
 
+test("single-connection discovery serializes offer and alias reads", async () => {
+  const previousDatabaseUrl = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = "postgresql://release-user:redacted@127.0.0.1:54329/sevenbet_ci?connection_limit=1";
+  let activeReads = 0;
+  let maximumActiveReads = 0;
+  const stages: string[] = [];
+  const read = async <T>(stage: string, result: T) => {
+    activeReads += 1;
+    maximumActiveReads = Math.max(maximumActiveReads, activeReads);
+    stages.push(`${stage}:start`);
+    await new Promise<void>((resolve) => setTimeout(resolve, 5));
+    stages.push(`${stage}:end`);
+    activeReads -= 1;
+    return result;
+  };
+  try {
+    const service = new PublicCasinoDiscoveryService({
+      listPublished: async () => [record("alpha-id", "alpha", "Alpha")],
+      listPublishedOfferCandidates: async () => read("offers", []),
+      loadContext: async () => read("aliases", { aliases: [] }),
+    }, () => now, noCommercialActions);
+    assert.equal((await service.discover()).total, 1);
+    assert.equal(maximumActiveReads, 1);
+    assert.deepEqual(stages, ["offers:start", "offers:end", "aliases:start", "aliases:end"]);
+  } finally {
+    if (previousDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previousDatabaseUrl;
+  }
+});
+
 test("sorting and pagination are stable and bounded", async () => {
   const records = Array.from({ length: 30 }, (_, index) => record(`id-${index.toString().padStart(2, "0")}`, `casino-${index.toString().padStart(2, "0")}`, `Casino ${index.toString().padStart(2, "0")}`));
   const service = new PublicCasinoDiscoveryService(store(records), () => now);

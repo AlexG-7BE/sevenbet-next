@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { isPublishedArticleLocale, isSafeArticleRoutePart } from "../lib/articles/article-validation";
+import { publicEditorialCache } from "../lib/public-editorial-cache";
 
 function source(path: string) {
   return readFileSync(path, "utf8");
@@ -12,6 +13,8 @@ test("public editorial caches are short-lived, tagged and identity-free", () => 
   const policy = source("lib/public-editorial-cache.ts");
   assert.match(policy, /PUBLIC_EDITORIAL_CACHE_REVALIDATE_SECONDS = 60/);
   assert.match(policy, /tags,/);
+  assert.match(policy, /const inFlight = new Map/);
+  assert.match(policy, /if \(existing\) return existing/);
   assert.doesNotMatch(policy, /from ["'](?:next\/headers|@\/lib\/(?:auth|programme))|cookies\(|headers\(/i);
 
   const casino = source("lib/repositories/public-casino.repository.ts");
@@ -24,6 +27,46 @@ test("public editorial caches are short-lived, tagged and identity-free", () => 
   assert.match(articles, /if \(category && !isSafeArticleRoutePart\(category\)\) return \[\]/);
   assert.match(articles, /cachedPublishedArticles\(\s*locale,\s*category,/);
   assert.match(articles, /cachedPublishedArticle\(category, slug, locale\)/);
+});
+
+test("public editorial cache coalesces identical fills and cleans up rejected fills", async () => {
+  type PendingFill = {
+    key: string;
+    reject: (error: Error) => void;
+    resolve: (value: string) => void;
+  };
+  const fills: PendingFill[] = [];
+  const cached = publicEditorialCache(
+    (key: string) => new Promise<string>((resolve, reject) => fills.push({ key, reject, resolve })),
+    ["public-editorial-cache-behavior-test"],
+    ["public-editorial-cache-behavior-test"],
+  );
+
+  const kzFirst = cached("KZ");
+  const kzSecond = cached("KZ");
+  const gb = cached("GB");
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.deepEqual(fills.map(({ key }) => key), ["KZ", "GB"]);
+  fills[0].resolve("KZ ready");
+  fills[1].resolve("GB ready");
+  assert.deepEqual(await Promise.all([kzFirst, kzSecond, gb]), ["KZ ready", "KZ ready", "GB ready"]);
+
+  const deFirst = cached("DE");
+  const deSecond = cached("DE");
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.deepEqual(fills.map(({ key }) => key), ["KZ", "GB", "DE"]);
+  const rejectionChecks = [
+    assert.rejects(deFirst, /simulated fill rejection/),
+    assert.rejects(deSecond, /simulated fill rejection/),
+  ];
+  fills[2].reject(new Error("simulated fill rejection"));
+  await Promise.all(rejectionChecks);
+
+  const deRetry = cached("DE");
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.deepEqual(fills.map(({ key }) => key), ["KZ", "GB", "DE", "DE"]);
+  fills[3].resolve("DE retry ready");
+  assert.equal(await deRetry, "DE retry ready");
 });
 
 test("public Article cache keys accept only bounded published route identities", () => {

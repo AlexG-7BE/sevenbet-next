@@ -175,15 +175,18 @@ export class PublicCasinoDiscoveryService {
     const commercialMarketContext = options.commercialMarketCode?.trim().toUpperCase() || requestCountryContext;
     const published = await this.store.listPublished(requestCountryContext);
     const casinoIds = published.map((record) => record.casinoId);
-    const [candidates, context] = await Promise.all([
-      !published.length
-        ? Promise.resolve([])
-        : this.store.listPublishedOfferCandidates
-        ? this.store.listPublishedOfferCandidates(casinoIds, now)
-            .catch(() => extractOfferCandidatesFromPublishedRecords(published, now))
-        : Promise.resolve(extractOfferCandidatesFromPublishedRecords(published, now)),
-      this.store.loadContext(casinoIds, { includeAliases: true }),
-    ]);
+    const loadCandidates = () => !published.length
+      ? Promise.resolve([])
+      : this.store.listPublishedOfferCandidates
+      ? this.store.listPublishedOfferCandidates(casinoIds, now)
+          .catch(() => extractOfferCandidatesFromPublishedRecords(published, now))
+      : Promise.resolve(extractOfferCandidatesFromPublishedRecords(published, now));
+    const [candidates, context] = usesSingleConnectionPool()
+      ? [await loadCandidates(), await this.store.loadContext(casinoIds, { includeAliases: true })]
+      : await Promise.all([
+          loadCandidates(),
+          this.store.loadContext(casinoIds, { includeAliases: true }),
+        ]);
     const aliasesByCasino = new Map<string, string[]>();
     for (const alias of context.aliases) aliasesByCasino.set(alias.casinoId, [...(aliasesByCasino.get(alias.casinoId) ?? []), alias.value]);
     const mappedRecords = published.flatMap((record) => {
