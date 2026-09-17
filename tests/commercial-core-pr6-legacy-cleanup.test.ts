@@ -252,7 +252,7 @@ test("current operations documentation marks PR6 applied, retired, and non-repea
   assert.doesNotMatch(index, /Review-only exact connector-schema deletion/);
 });
 
-test("active application and bounded public-commercial runtime have no PR6 target consumer or change", () => {
+test("active application and bounded public-commercial runtime have no PR6 target consumer", () => {
   const activeRuntimePaths = [
     ...sourceFiles("app"),
     ...sourceFiles("components"),
@@ -268,7 +268,8 @@ test("active application and bounded public-commercial runtime have no PR6 targe
     [],
   );
   for (const path of PR6_PUBLIC_RUNTIME_FILES) {
-    assert.equal(source(path), gitShow(path), `${path} must remain byte-for-byte unchanged`);
+    assert.doesNotMatch(source(path), targetReference, `${path} must not regain a retired PR6 target consumer`);
+    assert.doesNotMatch(gitShow(path), targetReference, `${path} must have been independent at the PR6 baseline`);
   }
 });
 

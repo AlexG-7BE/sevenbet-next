@@ -20,7 +20,9 @@ test("public editorial caches are short-lived, tagged and identity-free", () => 
   assert.match(casino, /cachedPublished\(countryCode\?\.trim\(\)\.toUpperCase\(\) \|\| null\)/);
   assert.match(casino, /cachedPublishedBySlug\(slug, countryCode\?\.trim\(\)\.toUpperCase\(\) \|\| null\)/);
   assert.match(offers, /cachedEditorialOffers\([\s\S]*options\.countryCode[\s\S]*options\.presentationLanguage/);
-  assert.match(articles, /cachedPublishedArticles\([\s\S]*locale,[\s\S]*input\.category/);
+  assert.match(articles, /const category = input\.category\?\.trim\(\) \|\| null/);
+  assert.match(articles, /if \(category && !isSafeArticleRoutePart\(category\)\) return \[\]/);
+  assert.match(articles, /cachedPublishedArticles\(\s*locale,\s*category,/);
   assert.match(articles, /cachedPublishedArticle\(category, slug, locale\)/);
 });
 
