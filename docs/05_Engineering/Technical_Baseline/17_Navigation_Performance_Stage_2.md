@@ -11,10 +11,53 @@
 | Approved pre-hardening head | `85391bfc4bdc5ac80eb629caca4ffe454848e531` |
 | Core implementation commit | `dc235990106ecaeb908a97a416679d5c796b2a00` |
 | Final code head before this evidence-only commit | `ceb6b4019495e88b14d7f89f6fa0f556f20eabd5` |
-| Pull request | `#302` |
-| Release state | Candidate only; not merged or deployed to Production |
+| Reviewed pull-request head | `c0e1ffbb7b310069a83bcdfb38ea0fb6a83d2518` |
+| Pull request | [#302](https://github.com/AlexG-7BE/sevenbet-next/pull/302) |
+| Merge/main source | `c515ddb0e9442063d8fb51c4f69f37d55035adc4` |
+| Final Preview | `dpl_6kYBdAatuARKHqRga7D89eJQNwk8` — Ready, exact reviewed head |
+| Production | `dpl_6LFpCzv2tib5GuC6WVa4JdUD7Q9G` — Ready/promoted, exact merge |
+| Application rollback | `dpl_GJPuS34GHk61m6XQHzXa3CxQYf2D` — Ready, prior main `2bd71c8…` |
+| Release state | **RELEASED + VERIFIED** |
 
-The governing documents, relevant active RFCs, changed source and tests, and the exact `85391bfc…` comparison worktree were inspected. Generated directories, dependencies, caches, build artefacts, raw browser traces, and database files are excluded from implementation claims and from the outgoing diff. GitHub CI, Preview identity, and live Preview verification are **UNKNOWN** until the final candidate is pushed and those systems report results for its exact head.
+The governing documents, relevant active RFCs, changed source and tests, and
+the exact `85391bfc…` comparison worktree were inspected during candidate
+development. Generated directories, dependencies, caches, build artefacts,
+raw browser traces and database files were excluded from implementation claims
+and from the outgoing diff. This record preserves that candidate/local
+evidence and distinguishes it from the later exact-head Preview and Production
+verification below.
+
+## Release closure
+
+**DETECTED:** Required PR CI run
+[`35233234884`](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/35233234884)
+passed Agent Core, Quality, Database / Migration Verification, Build / Browser
+and Vercel on reviewed head `c0e1ffbb…`. Ready Preview
+`dpl_6kYBdAatuARKHqRga7D89eJQNwk8` at
+`https://sevenbet-next-ofl7tddyo-alexg-7bes-projects.vercel.app/` identifies
+that exact source SHA. Read-only Preview verification found one Header, a
+usable mobile menu, ordinary Casinos/Learn navigation, truthful unavailable
+Best Offers/Bonuses for KZ, localized navigation, review-only Casino detail,
+no outbound action and no observed browser/runtime error.
+
+**DETECTED:** PR #302 merged normally as `c515ddb0…`. Post-main CI run
+[`35238394196`](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/35238394196)
+passed all four GitHub CI jobs on that exact merge. Vercel deployment
+`dpl_6LFpCzv2tib5GuC6WVa4JdUD7Q9G` is Ready, promoted and source-bound to the
+same merge; its immutable URL is
+`https://sevenbet-next-jk2g4ckyw-alexg-7bes-projects.vercel.app/`. The Ready
+application rollback deployment is `dpl_GJPuS34GHk61m6XQHzXa3CxQYf2D`,
+source-bound to prior main `2bd71c8…` at
+`https://sevenbet-next-a7snjaopt-alexg-7bes-projects.vercel.app/`.
+
+**DETECTED:** Production route smoke and KZ mobile acceptance passed with no
+observed 5xx/runtime error or outbound action. Trusted KZ remained KZ;
+commercial and editorial unavailability remained fail closed. No schema,
+migration, data, environment, secret, provider, billing, DNS, GEO, ranking,
+publication or commercial-policy mutation accompanied the application
+release. The repository's `delete_branch_on_merge=true` setting automatically
+removed the feature branch; live GitHub branch lookup returns absent, and no
+recreation is required.
 
 ## Corrected behavior and root cause
 
@@ -47,6 +90,12 @@ Measurements used Chromium 149 headless, a production Next build, a disposable l
 
 Normal mobile is 390×844 with no artificial CPU or network throttling. Normal desktop is 1365×900. Constrained mobile uses 4× CPU slowdown, 100 ms RTT, approximately 1.6 Mbps download, and 0.75 Mbps upload. Warm/repeat measurements reuse a visited route and its already-loaded chunks. Cache-bypass runs use the guarded local seam and approximate an editorial cache miss without altering application behavior.
 
+The controlled final release summary is 144.5 ms Best Offers, 151.7 ms
+Casinos, 154.0 ms Bonuses and 117.8 ms Learn useful-content C median; warm
+primary routes are 44–45 ms, Casino detail approximately 112 ms and Learn
+Article detail 112.7 ms (113 ms rounded). These figures are local controlled
+production-build measurements, not Production field measurements and not INP.
+
 ## Primary navigation: exact baseline versus final
 
 ### Normal mobile, cold context
@@ -59,6 +108,24 @@ Normal mobile is 390×844 with no artificial CPU or network throttling. Normal d
 | Learn | 105.2 / 110.8 | **66.7 / 70.2** | 111.8 / 115.2 | **117.8 / 125.8; 117.8 / 125.8** | 113.8–125.9 | 1 / 196 B |
 
 All final normal-mobile A, B, and C medians are inside the Founder's 100–300 ms route-opening target where applicable; feedback A is below 100 ms. Every sample produced useful content, one destination RSC request, and zero long tasks.
+
+## Production navigation observation
+
+The Production comparison used KZ, 390×844 mobile, five samples, actual
+pointer activation and no artificial network or CPU throttle. It is a bounded
+observational comparison, not RUM or a claim about population-wide latency.
+
+| Destination | Baseline C median | Released C median | Change |
+| --- | ---: | ---: | ---: |
+| Casinos | 954 ms | 541 ms | `-413 ms` / `-43.3%` |
+| Learn | 522 ms | 436 ms | `-86 ms` / `-16.5%` |
+
+**DETECTED:** Both measured Production routes improved, but absolute C remained
+above 300 ms. Best Offers and Bonuses were truthfully absent for the KZ
+request, so no synthetic route, fixture or click measurement was manufactured.
+Architecture and functional release closure are complete; actual Production
+C ≤300 ms remains an **OPEN** bounded follow-up, not a blocker to the released
+Stage 2 architecture and not a reason to reopen it.
 
 ### Normal desktop, cold context
 
@@ -148,14 +215,35 @@ Initial Home encoded resources changed from a 403,892-byte median at `85391bfc�
 
 **DETECTED:** The independent architecture review approved the core implementation after the request-changes invalidation gap and unsafe primary intent-prefetch proposal were corrected. Its focused closure review rejected two intermediate designs before push—result sharing because of an invalidation race, then composite-callback queueing because of recursive deadlock. It approved the final leaf-only FIFO: no result or identity/GEO state is shared, failures release the queue, normal pools retain parallelism, and current Casino publication is independently required for governed actions. Residual non-blocking risks are process-local coordination, head-of-line latency on one-connection pools, and queued work waiting for a hung database read to settle.
 
-**UNKNOWN:** GitHub required checks, exact-head Vercel Preview deployment identity, and read-only live Preview inspection remain pending at this document revision. A candidate must not be called ready if any of them fails or remains incomplete.
+**DETECTED:** Exact-head GitHub checks, final Preview identity and safe read-only
+Preview inspection all completed successfully before merge. Post-main CI,
+exact-source Production deployment identity, Production smoke and bounded KZ
+mobile observation then completed successfully. The independent architecture
+review remains approved with the residual risks described above.
+
+**CONTRADICTION RESOLVED:** Release verification observed that Production
+remained up to date at 21/21 applied migrations in its then-active, older
+checkout. That output is preserved as a historical observation, not the
+current repository inventory. On 17 September, a fresh read-only status check
+using released source enumerated 43 migrations through
+`0043_article_learning_center` and reported Production up to date. Neither
+command applied a migration or wrote application data.
 
 ## Limitations and rollback
 
-- **UNKNOWN:** Production field INP, real-user network/provider latency, database tail latency, and Production cache hit ratios cannot be established by this local lab.
+- **UNKNOWN:** Production RUM/field INP, population-wide network/provider and
+  database-tail distributions, cache-hit distribution, and compute/cost impact
+  are not established by this release evidence.
 - **INFERRED:** Fifteen Casinos and five Articles exercise substantially broader states than continuity fixtures, but do not prove Production-scale tail behavior.
 - **DETECTED:** Cache freshness has a 60-second fallback window when administrative invalidation is unavailable.
 - **DETECTED:** A timed-out Prisma query cannot be cancelled and may overlap one bounded refresh.
 - **DETECTED:** Some shell/page action reads remain separate when their subject sets differ; they are bounded and preserve exact authority.
-- **DETECTED:** Rollback is code-only: revert the Navigation Performance Stage 2 candidate commit set or redeploy the previously approved head. There is no migration, schema change, data rewrite, provider change, or Production configuration to reverse.
-- **DETECTED:** Merge, auto-merge, Production deployment/promotion, alias changes, and shared/Production database mutations remain outside this workstream.
+- **DETECTED:** The one-connection FIFO is process-local. It can add
+  head-of-line latency, and a hung database read retains its connection while
+  queued work waits for the operation to settle.
+- **DETECTED:** Rollback is code-only: redeploy the verified rollback deployment
+  or deliver a reviewed revert. There is no Stage 2 migration, schema change,
+  data rewrite, provider change or Production configuration to reverse.
+- **OPEN:** Absolute actual Production useful-content C ≤300 ms was not reached
+  in the bounded KZ observation and remains a separate measurement/optimization
+  follow-up.
