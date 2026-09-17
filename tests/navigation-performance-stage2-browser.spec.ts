@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const fixtureArticlePath = "/en/learn/casino-basics/navigation-stage2-guide";
@@ -38,6 +39,173 @@ function observeRuntimeErrors(page: Page) {
 function desktopPrimary(page: Page) {
   return page.locator('nav[aria-label="Primary navigation"]');
 }
+
+async function hasHydratedClickHandler(page: Page) {
+  // React annotates a claimed DOM node with its current props. Pair this probe
+  // with a real click so the test records hydration rather than mere visibility.
+  return page.getByRole("button", { name: "Open navigation", exact: true }).evaluate((element) =>
+    Object.keys(element).some((key) =>
+      key.startsWith("__reactProps$")
+      && typeof (element as unknown as Record<string, { onClick?: unknown }>)[key]?.onClick === "function",
+    ),
+  );
+}
+
+async function holdPublishedCasinoReads() {
+  if (process.env.CI !== "true" || process.env.NAVIGATION_STAGE2_STREAMED_HEADER_DATABASE_LOCK !== "true") {
+    test.skip(true, "explicit disposable-database hold fixture is not configured");
+  }
+  const databaseUrl = new URL(process.env.DATABASE_URL ?? "invalid:");
+  const databaseName = databaseUrl.pathname.replace(/^\//, "");
+  if (
+    !["postgres:", "postgresql:"].includes(databaseUrl.protocol)
+    || !["127.0.0.1", "localhost"].includes(databaseUrl.hostname)
+    || !["5432", "54329"].includes(databaseUrl.port)
+    || !databaseName.endsWith("_ci")
+  ) {
+    throw new Error("Streamed Header database hold requires a disposable localhost _ci database");
+  }
+
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl.toString() });
+  let acknowledgeLock!: () => void;
+  let releaseLock!: () => void;
+  let released = false;
+  const lockAcquired = new Promise<void>((resolve) => { acknowledgeLock = resolve; });
+  const lockRelease = new Promise<void>((resolve) => { releaseLock = resolve; });
+  const transaction = prisma.$transaction(async (client) => {
+    await client.$executeRawUnsafe('LOCK TABLE "CasinoVersion" IN ACCESS EXCLUSIVE MODE');
+    acknowledgeLock();
+    await lockRelease;
+  }, { maxWait: 5_000, timeout: 60_000 });
+  try {
+    await Promise.race([
+      lockAcquired,
+      transaction.then(() => { throw new Error("Published-Casino hold transaction ended before the lock was acquired"); }),
+    ]);
+  } catch (error) {
+    await prisma.$disconnect();
+    throw error;
+  }
+
+  return async () => {
+    if (released) return;
+    released = true;
+    releaseLock();
+    try {
+      await transaction;
+    } finally {
+      await prisma.$disconnect();
+    }
+  };
+}
+
+async function exerciseHeldMobileHeader(browser: Browser, country: "KZ" | "PE") {
+  const releaseCommercialState = await holdPublishedCasinoReads();
+
+  const context = await marketContext(browser, country, {
+    isMobile: true,
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+  const errors = observeRuntimeErrors(page);
+  let delayDestination = false;
+  let delayedDestination = false;
+  const destination = country === "PE" ? "Best Offers" : "Casinos";
+  const destinationPath = country === "PE" ? "/en/best-offers" : "/en/casinos";
+  await page.route("**/*", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (delayDestination && !delayedDestination && url.pathname === destinationPath && request.headers().rsc === "1") {
+      delayedDestination = true;
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    }
+    await route.continue();
+  });
+
+  try {
+    const response = await page.goto(`${baseUrl}/en`, { waitUntil: "commit" });
+    expect(response?.status()).toBe(200);
+    const header = page.locator('[data-public-shell="header"]');
+    const trigger = page.getByRole("button", { name: "Open navigation", exact: true });
+    const dialog = page.getByRole("dialog", { name: "Site navigation", exact: true });
+    await expect(header).toHaveCount(1);
+    await expect(trigger).toHaveCount(1);
+    await expect(page.locator("dialog#public-mobile-navigation")).toHaveCount(1);
+    await expect(trigger).toBeVisible();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByRole("link", { name: /Best Offers/ })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Bonuses/ })).toHaveCount(0);
+    await expect(page.locator('[href^="/r/"]')).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "B4GAMBLE home", exact: true }).first()).toHaveAttribute("href", "/en");
+    await header.evaluate((element) => { element.setAttribute("data-held-header-node", "open"); });
+    expect(await hasHydratedClickHandler(page)).toBe(false);
+    await trigger.evaluate((element) => (element as HTMLButtonElement).click());
+    await page.waitForTimeout(100);
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(page.locator("dialog#public-mobile-navigation")).not.toHaveAttribute("open", "");
+
+    await releaseCommercialState();
+    await page.waitForLoadState("domcontentloaded");
+    await expect(header).toHaveCount(1);
+    await expect(header).not.toHaveAttribute("data-held-header-node", "open");
+    await expect(page.locator("dialog#public-mobile-navigation")).toHaveCount(1);
+    await expect.poll(() => hasHydratedClickHandler(page)).toBe(true);
+
+    if (country === "PE") {
+      await expect(header.locator('a[href="/en/best-offers"]')).toHaveCount(2);
+      await expect(header.locator('a[href="/en/bonuses"]')).toHaveCount(2);
+    } else {
+      await expect(page.getByRole("link", { name: /Best Offers/ })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: /Bonuses/ })).toHaveCount(0);
+      await expect(page.locator('[href^="/r/"]')).toHaveCount(0);
+    }
+
+    await trigger.click();
+    await expect(dialog).toBeVisible();
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(dialog.getByRole("button", { name: "Close navigation", exact: true })).toBeFocused();
+    await expect(dialog.getByRole("button", { name: /Change language: English/ })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("style", /overflow: hidden/);
+    if (country === "PE") {
+      await expect(dialog.getByRole("link", { name: /Best Offers/ })).toHaveAttribute("href", "/en/best-offers");
+      await expect(dialog.getByRole("link", { name: /Bonuses/ })).toHaveAttribute("href", "/en/bonuses");
+    }
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(trigger).toBeFocused();
+    await expect(page.locator("html")).not.toHaveAttribute("style", /overflow: hidden/);
+    await trigger.click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Close navigation", exact: true }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await expect(dialog).toBeVisible();
+
+    delayDestination = true;
+    await dialog.getByRole("link", { name: new RegExp(destination) }).click();
+    await expect(dialog).not.toBeVisible();
+    await expectNeutralNavigationFeedback(page, destination);
+    await expect(page).toHaveURL(`${baseUrl}${destinationPath}`);
+    expect(delayedDestination).toBe(true);
+    expect(errors.filter((error) => !preExistingCapturedHandoffStyleViolation.test(error))).toEqual([]);
+  } finally {
+    await releaseCommercialState();
+    await context.close();
+  }
+}
+
+test("held commercial resolution proves the restricted KZ fallback is replaced before hydration", async ({ browser }) => {
+  test.setTimeout(60_000);
+  await exerciseHeldMobileHeader(browser, "KZ");
+});
+
+test("held commercial resolution proves the supported PE fallback is replaced before hydration", async ({ browser }) => {
+  test.setTimeout(60_000);
+  await exerciseHeldMobileHeader(browser, "PE");
+});
 
 async function expectNeutralNavigationFeedback(page: Page, destination: string) {
   const feedback = page.locator(`[data-navigation-pending-destination="${destination}"]`);
