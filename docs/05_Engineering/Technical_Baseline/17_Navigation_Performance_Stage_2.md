@@ -1,101 +1,148 @@
 # Navigation Performance Stage 2 Evidence
 
-## Evidence scope
+## Evidence identity and release boundary
 
 | Field | Value |
 | --- | --- |
 | Evidence date | 2026-09-17 |
-| Verified repository root | `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` |
-| Stage 1 baseline revision | `2bd71c8af2f5d96d9a97d990f8bc5442ef4f6a5b` |
-| Stage 1 Production deployment | `dpl_GJPuS34GHk61m6XQHzXa3CxQYf2D` |
-| Prior Stage 2 candidate | `44114cf4ef0ad06be5566e3a5579a8526ee88f3e` |
-| Final implementation revision | `b493fbf4714002f4f5883fd3ca46f0ef77eb6492` |
+| Repository | `AlexG-7BE/sevenbet-next` |
+| Active evidence checkout | `/private/tmp/sevenbet-nav-stage2` |
 | Candidate branch | `codex/navigation-performance-stage2` |
-| Release state | Candidate only; not merged, promoted, or deployed to Production |
+| Approved pre-hardening head | `85391bfc4bdc5ac80eb629caca4ffe454848e531` |
+| Final implementation commit | `dc235990106ecaeb908a97a416679d5c796b2a00` |
+| Pull request | `#302` |
+| Release state | Candidate only; not merged or deployed to Production |
 
-The Founder-supplied Stage 1 repository-wide source scan and live Production evidence were reused as instructed. Stage 2 re-verified the governing documents, every changed source/test surface, the exact archived Stage 1 source, and the matched candidate build. Dependencies, generated output, build artefacts, caches, test output, and `tsconfig.tsbuildinfo` are excluded from implementation claims.
+The governing documents, relevant active RFCs, changed source and tests, and the exact `85391bfc…` comparison worktree were inspected. Generated directories, dependencies, caches, build artefacts, raw browser traces, and database files are excluded from implementation claims and from the outgoing diff. GitHub CI, Preview identity, and live Preview verification are **UNKNOWN** until the final candidate is pushed and those systems report results for its exact head.
 
-## Implemented baseline
+## Corrected behavior and root cause
 
-**DETECTED:** The public Header, mobile disclosure, ordinary Casinos/Learn links, account chrome, language control, and Footer now have stable server-rendered identity outside the commercial suspension boundary. Only Best Offers/Bonuses visibility and the corresponding Footer links stream from the existing canonical `resolveServerCommercialProductState` result. The whole Header/menu is no longer replaced when that result settles.
+**DETECTED:** The `85391bfc…` candidate made the Header and mobile disclosure usable before commercial state settled. The remaining route-opening delay came from repeated public editorial/activation database work on every navigation, serial discovery reads, relation-shaped market-activation queries, and product-catalog imports in compact route error boundaries. Casino detail also produced two RSC requests because an eligible primary detail link could be prefetched and then activated.
 
-**DETECTED:** Mobile navigation is one styled native `<details>`/`<summary>` disclosure. It opens with pointer or keyboard input before hydration and with JavaScript disabled. The hydrated enhancement preserves that node, then adds Escape, focus restoration, ordinary-link close, desktop-resize cleanup, truthful `dialog`/`aria-modal` semantics, outside-content inerting, and bidirectional Tab containment. It does not create another menu, router, React root, or parallel state source. Native open state survives hydration because the same disclosure is enhanced rather than replaced.
+**DETECTED:** Final implementation moves reusable published editorial projections behind country-, locale-, language-, slug-, and presentation-aware Next Data Cache keys with a 60-second fallback TTL. Casino and Article publication workflows invalidate their corresponding tags, including the PUBLISHED-to-DRAFT request-changes path. Request-specific commercial authorization, trusted GEO resolution, identity/session data, Programme state, and outbound actions are never stored in that cache.
 
-**DETECTED:** Public and Programme language selectors have native disclosure baselines. Public choices are real server POST buttons and Programme choices are real localized anchors; JavaScript adds keyboard/outside-click conveniences but is not the only usable path.
+**DETECTED:** Public discovery now resolves offers and slug aliases in parallel. Market activation uses one parameterized joined query instead of approximately six relation round trips. Casino detail caches only the published editorial DTO and resolves the exact request-specific action afterward. Best Offers, Casinos, Bonuses, Learn, Casino detail, and Article detail retain the same canonical eligibility, ranking, localization, fail-closed destination, and commercial-state rules.
 
-**DETECTED:** Commercial resolution remains request-scoped and server-authoritative. Pending, rejected, and timed-out states expose no unverified commercial link or outbound action. A shared 1.5-second bound prevents an indefinitely held commercial read from keeping the initial streamed document open; the mobile commercial slot makes at most one path-scoped `router.refresh()` recovery attempt per unresolved episode, then resets after settlement or path departure. The isolated rejection and local trusted-GEO seams require explicit CI opt-in plus matching disposable loopback PostgreSQL `_ci` URLs and reject deployed Vercel metadata.
+**DETECTED:** Primary navigation remains deliberately unprefetched. `TrackedReviewLink` and Casino-card detail links also disable automatic prefetch, preventing request-specific GEO/action RSC reuse across a later activation. Each measured activation issues one destination RSC request. The small transition feedback is link-local, appears on eligible ordinary activation, and ignores modified clicks, new-tab/download links, same-page hashes, and cancelled transitions.
 
-**DETECTED:** Best Offers, Casinos, Bonuses, and Learn now have the same canonical source/DOM, keyboard, assistive-technology, and visual order in desktop navigation, mobile navigation, and the Explore Footer group. The former CSS-only `order` correction was removed.
+**DETECTED:** Compact route error boundaries no longer import the 155 KB product catalog. Primary commercial transitions load about 25 KB of encoded post-activation JavaScript rather than about 85 KB at the approved baseline. Learn remains about 0.2 KB. Initial Home resources are effectively unchanged.
 
-**DETECTED:** The stable Footer initially made its ordinary Next links eligible for automatic speculative requests. Matched measurement exposed the changed boundary (13 versus 1 RSC attempts). `prefetch={false}` is now explicit on every Footer link, restoring 1 versus 1 while preserving normal native/App Router navigation.
+## Cache, safety, and invalidation boundaries
 
-**DETECTED:** Best Offers/Bonuses parallel reads, request-scoped Article reuse, scoped content streaming, neutral navigation feedback, and disabled automatic primary-route prefetch remain unchanged. There is no schema, migration, dependency, commercial-policy, trusted-GEO policy, ranking, action-authority, authentication, consent, Programme-logic, analytics-event, provider, or Production configuration change.
+- Published Casino snapshots are partitioned by exact country; projected offers and editorial DTOs also include the presentation language or slug required by their output.
+- Published Article lists and detail records are partitioned by validated locale, category, slug, limit, and exclusion inputs. Dynamic cache-key inputs are length- and character-bounded before use.
+- Request-scoped React cache keys contain the full serialized action-authority inputs. Concurrent PE and KZ requests cannot share an action result.
+- Administrative publish, revise, archive, and request-changes mutations invalidate the relevant Casino or Article tags. The TTL is a bounded fallback, not the primary freshness mechanism.
+- The guarded cache-bypass seam used by database-lock tests requires CI mode, an explicit opt-in, a loopback PostgreSQL database ending in `_ci`, and absence of Vercel/Production metadata.
+- A timed-out Prisma query is not cancelled by the driver and can overlap one later refresh. The existing same-episode refresh bound remains fail closed and prevents a retry loop.
 
-## Matched performance evidence
+## Controlled measurement method
 
-The original Stage 1 comparison remains valid historical evidence for the overall improvement: against `2bd71c8a…`, the earlier Stage 2 candidate added painted feedback and lowered B/C medians for all four primary destinations under its documented one-Casino/one-Article desktop condition. The final-hardening comparison below does not mix that baseline with the new experiment.
+Measurements used Chromium 149 headless, a production Next build, a disposable local PostgreSQL cluster, 15 published Casino fixtures, five published Articles, and one exact governed PE action. Each result below is 20 valid samples with a fresh browser context and one actual pointer activation per sample. A is input to first painted feedback; B is painted meaningful destination identity; C is painted useful destination content after two animation frames. Values are median / p95 milliseconds unless a range is shown. RSC counts come from Resource Timing entries containing `_rsc`; post-activation JavaScript is encoded bytes. No primary-route prefetch was allowed.
 
-### Final hardening: 44114cf → final candidate
+Normal mobile is 390×844 with no artificial CPU or network throttling. Normal desktop is 1440×900. Constrained mobile uses 4× CPU slowdown, 100 ms RTT, approximately 1.6 Mbps download, and 0.75 Mbps upload. Warm/repeat measurements reuse a visited route and its already-loaded chunks. Cache-bypass runs use the guarded local seam and approximate an editorial cache miss without altering application behavior.
 
-Conditions: Chromium 149 headless; 390×844 mobile; trusted PE in two localhost production runtimes; identical isolated PostgreSQL data with 15 synthetic published Casinos, varied active/draft/paused/expired/future/no-offer states, five synthetic published Articles, and one exact governed PE action route; guaranteed-unprefetched primary links; seven alternating samples per version/condition. Normal has no CPU/network throttle. Constrained uses 4× CPU slowdown, 100 ms RTT, 1.6 Mbps download, and 0.75 Mbps upload. A is input to first painted navigation feedback, B is meaningful destination identity, and C is actual useful cards/article content. Values are median milliseconds with observed range, not field percentiles. Because 44114cf predates the committed local trusted-GEO seam, its build received the same guarded CI + loopback `_ci` harness adapter as the final build; that build-only adapter was removed from the archived source worktree immediately after compilation and made no Header/client behavior change.
+## Primary navigation: exact baseline versus final
 
-| Normal mobile | A: 44114cf → final | B: 44114cf → final | C: 44114cf → final |
-| --- | ---: | ---: | ---: |
-| Best Offers | 26.8 [25.3–28.6] → **42.4** [39.4–47.2] | 93.5 [87.7–99.5] → **90.3** [89.7–107.1] | 93.8 [88.4–99.8] → **90.5** [89.9–107.3] |
-| Casinos | 27.4 [25.2–28.8] → **43.7** [41.9–46.4] | 97.2 [94.7–103.5] → **100.4** [94.2–108.2] | 97.4 [94.8–103.7] → **100.5** [94.3–108.3] |
-| Bonuses | 26.7 [19.7–27.6] → **42.0** [39.6–53.2] | 125.0 [119.5–128.9] → **125.4** [119.1–131.9] | 125.1 [119.6–129.9] → **125.6** [119.2–132.0] |
-| Learn | 28.3 [27.1–30.1] → **54.0** [43.2–56.3] | 61.2 [60.1–69.6] → **62.4** [60.4–76.0] | 61.6 [60.3–70.0] → **62.6** [60.5–76.1] |
+### Normal mobile, cold context
 
-| Constrained mobile | A: 44114cf → final | B: 44114cf → final | C: 44114cf → final |
-| --- | ---: | ---: | ---: |
-| Best Offers | 50.4 [48.8–56.5] → **64.5** [60.3–83.7] | 1,086.9 [1,066.1–1,109.0] → **1,102.0** [1,088.9–1,107.4] | 1,087.0 [1,066.3–1,109.2] → **1,102.8** [1,089.4–1,107.9] |
-| Casinos | 50.1 [47.8–56.3] → **63.6** [60.9–70.4] | 1,168.8 [1,150.8–1,174.7] → **1,145.2** [1,117.6–1,152.0] | 1,169.3 [1,151.1–1,174.9] → **1,145.4** [1,117.8–1,152.1] |
-| Bonuses | 49.2 [48.4–57.4] → **64.8** [62.0–79.0] | 1,252.9 [1,233.7–1,276.1] → **1,226.2** [1,215.7–1,232.4] | 1,253.2 [1,233.8–1,276.2] → **1,226.7** [1,215.8–1,232.6] |
-| Learn | 45.9 [44.2–48.1] → **65.3** [62.6–69.4] | 382.5 [367.0–401.2] → **376.8** [370.1–399.9] | 382.9 [367.9–401.7] → **377.2** [370.6–400.6] |
+| Destination | `85391bfc…` A | Final A | `85391bfc…` C | Final B / C | Final C observed range | Final RSC / JS |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Best Offers | 96.4 / 101.5 | **58.5 / 59.8** | 144.9 / 158.1 | **124.6 / 126.6** | 123.5–141.2 | 1 / 24,819 B |
+| Casinos | 95.8 / 98.7 | **58.1 / 61.3** | 148.2 / 152.3 | **128.2 / 142.6** | 125.8–144.9 | 1 / 25,320 B |
+| Bonuses | 98.3 / 103.4 | **57.4 / 63.1** | 151.8 / 165.2 | **129.8 / 141.6** | 127.1–142.4 | 1 / 25,682 B |
+| Learn | 105.2 / 110.8 | **61.3 / 66.2** | 111.8 / 115.2 | **108.2 / 109.5** | 96.2–110.7 | 1 / 196 B |
 
-**DETECTED:** Every final A sample is below the declared 200 ms target; the slowest observed final A was 83.7 ms. Final B/C medians differ from 44114cf by −3.3 to +3.2 ms normally and −26.7 to +15.8 ms constrained. No repeatable material B/C regression remains.
+All final normal-mobile A, B, and C medians are inside the Founder's 100–300 ms route-opening target where applicable; feedback A is below 100 ms. Every sample produced useful content, one destination RSC request, and zero long tasks.
 
-### M: first usable menu while commercial data is held
+### Normal desktop, cold context
 
-The real canonical commercial read was kept unresolved by an `ACCESS EXCLUSIVE` `CasinoVersion` lock acquired before the request. Navigation began with `waitUntil: "commit"`; the browser did not wait for document completion or `networkidle`, used a real pointer click, and verified the lock transaction was still unresolved after the result.
-
-| Condition | 44114cf | Final candidate |
+| Destination | Final A | Final C |
 | --- | ---: | ---: |
-| Normal mobile | **0/7 succeeded within 1 s**; visible control remained unusable | **7/7 succeeded**; painted-open median **129.1 ms** [105.3–140.4] |
-| Constrained mobile | **0/7 succeeded within 1 s**; visible control remained unusable | **7/7 succeeded**; painted-open median **154.1 ms** [146.5–163.9] |
+| Best Offers | 67.0 / 69.1 | **124.7 / 126.9** |
+| Casinos | 67.2 / 68.5 | **124.6 / 141.3** |
+| Bonuses | 66.7 / 67.8 | **129.1 / 141.8** |
+| Learn | 64.9 / 68.0 | **97.2 / 109.7** |
 
-Every final sample had exactly one Header and one mobile menu at input time, opened while the dependency remained held, and exposed both ordinary Casinos and Learn links.
+### Warm/repeat
 
-### Initial Home resources
+| Destination | Mobile A | Mobile C | Desktop A | Desktop C |
+| --- | ---: | ---: | ---: | ---: |
+| Best Offers | 31.9 / 33.1 | 44.2 / 46.2 | 30.4 / 32.3 | 45.4 / 46.7 |
+| Casinos | 41.4 / 45.4 | 49.4 / 61.8 | 37.4 / 42.6 | 45.5 / 61.6 |
+| Bonuses | 37.0 / 41.6 | 45.6 / 61.4 | 34.4 / 40.1 | 45.0 / 47.0 |
+| Learn | 36.8 / 40.4 | 45.2 / 61.4 | 31.6 / 37.9 | 46.4 / 47.9 |
 
-| Metric | 44114cf median | Final median | Delta |
+Warm activations still issue one RSC request, load zero additional JavaScript bytes after resource-timing reset, and preserve actual route execution rather than substituting a local view switch.
+
+### Constrained mobile
+
+| Destination | Final A | Final C |
+| --- | ---: | ---: |
+| Best Offers | 96.1 / 115.8 | 727.6 / 743.5 |
+| Casinos | 96.6 / 114.8 | 766.1 / 784.1 |
+| Bonuses | 97.5 / 115.1 | 808.9 / 883.5 |
+| Learn | 97.7 / 114.5 | 405.3 / 428.0 |
+
+**DETECTED:** Immediate feedback remains below 200 ms at p95 under the declared throttle. Useful content honestly exceeds 300 ms because the artificial RTT/bandwidth/CPU dominates the RSC transfer and render; these results are not represented as meeting the normal-condition target.
+
+## Secondary routes and cache-miss resilience
+
+| Route, normal mobile | Final A | Final B / C | RSC / JS |
 | --- | ---: | ---: | ---: |
-| Encoded resource bytes | 403,544 | 404,314 | +770 (+0.19%) |
-| Transfer bytes | 412,544 | 413,314 | +770 (+0.19%) |
-| JavaScript encoded bytes | 150,364 | 150,883 | +519 (+0.35%) |
-| Resource count | 31 | 31 | 0 |
-| RSC request count | 1 | 1 | 0 |
-| Long tasks / duration | 0 / 0 ms | 0 / 0 ms | 0 |
+| Casino detail | 59.5 / 60.3 | 106.2 / 108.6 | 1 / 8,065 B |
+| Article detail | 67.1 / 68.7 | 108.2 / 114.3 | 1 / 1,754 B |
 
-## Correctness and regression evidence
+The approved baseline Casino-detail activation was 92.3 / 118.7 ms A and 133.1 / 136.3 ms C with two RSC requests. The final route is faster and produces one RSC request. Under constrained mobile, final Casino detail C is 537.1 / 545.9 ms and Article C is 515.7 / 535.2 ms.
 
-**DETECTED:** The old held-read regression now requires desired behavior. In restricted KZ and supported PE, a real click opens the native menu and a pointer click on Casinos initiates either the native document request or hydrated RSC request while the lock remains held. The test releases the database only after that proof. Three repeated targeted WebKit runs passed before the broader engine matrix.
+| Cache-bypass route, normal mobile | A | C |
+| --- | ---: | ---: |
+| Best Offers | 64.9 / 76.0 | 136.8 / 149.5 |
+| Casinos | 65.9 / 72.2 | 144.5 / 170.2 |
+| Bonuses | 63.7 / 67.7 | 146.8 / 154.8 |
+| Learn | 64.9 / 68.1 | 110.9 / 118.5 |
+| Casino detail | 64.4 / 67.2 | 116.4 / 127.3 |
+| Article detail | 68.1 / 71.9 | 108.7 / 113.6 |
 
-**DETECTED:** Separate release-order tests cover JavaScript/hydration before commercial completion and commercial completion before JavaScript/hydration. An open German menu retains the same marked Header/disclosure nodes, focus on Casinos, meaningful menu scroll, selected language, and open state while commercial links stream. A timeout-specific test keeps the menu open past 1.5 seconds, proves one non-prefetch recovery refresh rather than a loop, releases the real read, and verifies commercial links insert without node/focus/scroll replacement.
+All normal cache-bypass medians remain inside 100–300 ms for useful content, so the result does not depend solely on a persistent cache hit.
 
-**DETECTED:** JavaScript-disabled browser input opens the actual native mobile menu and activates the real language POST control. The suite also covers pointer/keyboard open-close-reopen, nested-disclosure Escape order, outer dialog semantics, background inerting, forward/backward Tab containment, focus restoration, scroll-lock cleanup, desktop resize, modifier/new-tab/hash behavior, rapid transitions, cancellation/failure, Back/Forward, neutral feedback cleanup, no commercial-link/action flash, canonical DOM order, localized German navigation, KZ/PE isolation, Home and all four primary routes, casino detail, populated Learn category/article, truthful missing/empty states, and no forced full-document reload after hydration.
+## Database and resource evidence
 
-**DETECTED:** The representative repository/service test returns 15 unique Casinos and five Articles, exercises mixed offer states, exactly one governed action, deterministic repeated selection/ranking/localization, and verifies concurrent identical discovery work collapses to one published read, one offer read, and one context read on a single-connection path. Browser projections for one Best Offer, all 15 Casino cards, eight eligible Bonus cards, and the representative Article are byte-for-byte equivalent between 44114cf and final after both streamed article sections settle.
+| Route | Baseline queries / SQL / TTFB | Final cache miss queries / SQL / TTFB | Final cache hit queries / SQL / TTFB |
+| --- | ---: | ---: | ---: |
+| Best Offers | 15 / 3.864 / 36.684 ms | 6 / 4.840 / 274.168 ms¹ | 2 / 0.322 / 27.060 ms |
+| Casinos | 16 / 3.856 / 44.991 ms | 6 / 4.188 / 71.482 ms | 3 / 1.573 / 32.609 ms |
+| Bonuses | 15 / 3.915 / 45.049 ms | 5 / 4.061 / 56.494 ms | 2 / 0.322 / 37.319 ms |
+| Learn | 8 / 1.351 / 36.658 ms | 3 / 1.387 / 44.474 ms | 1 / 0.153 / 29.744 ms |
+| Casino detail | 16 / 1.862 / 32.777 ms | 6 / 2.152 / 49.446 ms | 2 / 0.284 / 29.577 ms |
+| Article detail | 9 / 1.548 / 22.936 ms | 4 / 1.690 / 31.744 ms | 1 / 0.144 / 24.141 ms |
 
-**DETECTED:** Final-tree local verification completed: production build, lint, typecheck, `git diff --check`, public-IA structural 36/36, Stage 2 structural/safety 7/7, representative PostgreSQL 2/2, Programme 154/154, auth/communications 56/56, internationalisation 65/65, commercial UX 15/15, public-integrity 65/65, shared Header/auth/geometry browser 8/8, Chromium Stage 2 12/12 applicable plus one intentional rejection-only skip, targeted WebKit 7/7, and isolated rejected-state Chromium 1/1 passed. Protected-Help/public-IA browser coverage passed 22 applicable checks; its one clean-empty-Article assertion was not applicable to the intentionally populated five-Article representative database and is exercised by clean-database CI. The focused independent reviewer found four material issues—DOM order, modal focus containment, nested Programme Escape propagation, and retry lifetime/CI coverage—which were corrected and re-reviewed; final disposition is no remaining blocking/material implementation finding. Required GitHub CI and exact Preview identity are recorded in the PR description after the final push.
+¹The first Best Offers cache-miss request also paid cold-process initialization. Its browser C median remained 136.8 ms across 20 fresh-context samples.
 
-## Limitations, rollback, and release boundary
+Initial Home encoded resources changed from a 403,892-byte median at `85391bfc…` to 404,969 bytes final; transfer bytes changed from 412,892 to 413,969; JavaScript from 150,472 to 151,538; resource count stayed 31; RSC count stayed one. Baseline had zero initial long tasks; final median was zero and p95 was one 74 ms task.
 
-- **UNKNOWN:** Production field INP, user-network latency, provider latency, database tail latency, and high-percentile behavior cannot be established by this localhost lab.
-- **INFERRED:** Fifteen Casinos and five Articles are comparable to the Stage 1 observed card count and materially stronger than the continuity fixture, but still do not establish Production-scale or tail-latency behavior.
-- **DETECTED:** Programme routes retain their pre-existing layout-level commercial-state await; the stable streamed public-layout result must not be generalized to Programme routes.
-- **DETECTED:** The timeout does not cancel the underlying Prisma read, so it can briefly overlap the single recovery refresh. The registry prevents a same-episode refresh loop and resets after settlement or path departure.
-- **DETECTED:** With JavaScript disabled, the native disclosure and language controls remain usable, but hydrated dialog semantics, inerting, and focus containment are necessarily absent.
-- **DETECTED:** The 1.5-second bound is fail closed. If the canonical state stays unavailable, basic editorial navigation remains usable, commercial links remain absent, and the client makes at most one same-path recovery refresh; it does not poll or cache commercial permission across users.
-- **DETECTED:** Rollback is code-only: revert the final hardening commit(s) or redeploy the previously approved candidate. There is no migration, data rewrite, provider change, or feature-flag dependency to reverse.
-- **DETECTED:** The candidate is not released to Production. Founder review and explicit approval remain required before merge or promotion.
+## Usability before data and hydration continuity
+
+**DETECTED:** The server-rendered native mobile disclosure remains usable while the real commercial read is held by an `ACCESS EXCLUSIVE` database lock. Pointer input opens it and ordinary Casinos/Learn links activate before commercial data resolves. The test releases the lock only after observing activation, and it never writes a lock or fixture to Preview or Production.
+
+**DETECTED:** JavaScript-disabled browser coverage opens the same menu and exercises the real server language control. Separate release-order tests cover hydration-before-commercial-data and commercial-data-before-hydration. An open localized menu keeps the same Header and disclosure nodes, open state, focused link, meaningful scroll position, and selected language as commercial links arrive. Pointer/keyboard open-close, nested Escape, focus restoration, forward/backward focus containment, inert background, scroll-lock cleanup, desktop resize, Back/Forward, rapid/cancelled transitions, modifier/new-tab/hash behavior, and feedback cleanup are covered.
+
+**DETECTED:** Restricted KZ never gains PE commercial links/actions; supported PE retains canonical offer eligibility, ranking, localized presentation, and the exact governed outbound action. Cache-on browser coverage mutates only the disposable local database to prove PE/KZ and EN/PT partitions, actual cache reuse, request-specific action isolation, and PUBLISHED-to-DRAFT invalidation. Fixtures and original statuses are restored by the suite.
+
+## Verification and independent review
+
+**DETECTED:** Local verification completed before documentation finalization: production build, lint/typecheck through the build, representative PostgreSQL discovery 2/2, market activation PostgreSQL 2/2, cache-on production browser 1/1, Chromium navigation hardening 12/12 applicable with one rejection-only skip, WebKit 7/7, isolated rejection 1/1, and focused safety/action/cache tests 15/15. A clean disposable database accepted the full migration chain and Programme seed.
+
+**DETECTED:** The independent architecture review approved the implementation after the request-changes invalidation gap and unsafe primary intent-prefetch proposal were corrected. It found no blocking implementation issue: commercial/action resolution stays request scoped, country/language cache partitioning is explicit, the joined activation query is parameterized and fail closed, the public layout root does not await commercial data, and no unbounded N+1 query path was introduced.
+
+**UNKNOWN:** The final full local clean-database quality/browser gates, GitHub required checks, exact-head Vercel Preview deployment identity, and read-only live Preview inspection remain pending at this document revision. A candidate must not be called ready if any of them fails or remains incomplete.
+
+## Limitations and rollback
+
+- **UNKNOWN:** Production field INP, real-user network/provider latency, database tail latency, and Production cache hit ratios cannot be established by this local lab.
+- **INFERRED:** Fifteen Casinos and five Articles exercise substantially broader states than continuity fixtures, but do not prove Production-scale tail behavior.
+- **DETECTED:** Cache freshness has a 60-second fallback window when administrative invalidation is unavailable.
+- **DETECTED:** A timed-out Prisma query cannot be cancelled and may overlap one bounded refresh.
+- **DETECTED:** Some shell/page action reads remain separate when their subject sets differ; they are bounded and preserve exact authority.
+- **DETECTED:** Rollback is code-only: revert the two final candidate commits or redeploy the previously approved head. There is no migration, schema change, data rewrite, provider change, or Production configuration to reverse.
+- **DETECTED:** Merge, auto-merge, Production deployment/promotion, alias changes, and shared/Production database mutations remain outside this workstream.
