@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getCasinos } from "../lib/data";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { isPublicCasinoCmsEnabled, PublicCasinoService } from "../lib/services/public-casino.service";
@@ -9,9 +8,8 @@ import { allowJurisdictionAuthority } from "./market-authority.fixtures";
 import { commercialActionAuthority, noCommercialActions } from "./commercial-action.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
-const legacy = getCasinos().slice(0, 3);
-const managedSlug = legacy[0].slug;
-const unmanagedSlug = legacy[1].slug;
+const managedSlug = "10bet";
+const unmanagedSlug = "888";
 
 function publishedRecord(slug = managedSlug): PublishedCasinoSnapshotRecord {
   const casinoId = `cms-${slug}`;
@@ -67,13 +65,12 @@ function store(
 }
 
 function service(repository: PublicCasinoStore, cmsEnabled = true) {
-  return new PublicCasinoService(repository, legacy, { cmsEnabled, now }, noCommercialActions);
+  return new PublicCasinoService(repository, { cmsEnabled, now }, noCommercialActions);
 }
 
 function authorizedService(repository: PublicCasinoStore) {
   return new PublicCasinoService(
     repository,
-    legacy,
     { cmsEnabled: true, now },
     commercialActionAuthority((subject) => ({ href: `/r/${subject.casinoSlug}` })),
   );
@@ -88,10 +85,9 @@ test("deployed runtimes force the governed CMS publication authority", () => {
 });
 
 test("getCasino fails closed outside immutable published CMS records", async (t) => {
-  await t.test("1. CMS disabled returns the established legacy profile", async () => {
-    const casino = await service(store(), false).getCasino(managedSlug);
-    assert.equal(casino?.source, "legacy");
-    assert.equal(casino?.slug, managedSlug);
+  await t.test("1. CMS disabled returns no profile and no placeholder fallback", async () => {
+    assert.equal(await service(store([publishedRecord()], [managedSlug]), false).getCasino(managedSlug), null);
+    assert.deepEqual(await service(store([publishedRecord()], [managedSlug]), false).listCasinos(), []);
   });
 
   await t.test("2. a published CMS record wins and consumes the canonical governed action", async () => {
@@ -108,7 +104,6 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
     let receivedCasinoId: string | undefined;
     const casino = await new PublicCasinoService(
       store([record], [managedSlug]),
-      legacy,
       { cmsEnabled: true, now },
       commercialActionAuthority((subject, input) => {
         receivedMarket = input.marketCode;
@@ -337,7 +332,6 @@ test("canonical-action existence uses the same governed decisions without loadin
 
     const authorityFailure = new PublicCasinoService(
       store([publishedRecord()], [managedSlug]),
-      legacy,
       { cmsEnabled: true, now },
       { resolveMany: async () => { throw new Error("authority unavailable"); } },
     );
@@ -346,7 +340,6 @@ test("canonical-action existence uses the same governed decisions without loadin
     let disabledReads = 0;
     const cmsDisabled = new PublicCasinoService(
       store([], [], { listPublished: async () => { disabledReads += 1; return []; } }),
-      legacy,
       { cmsEnabled: false, now },
       noCommercialActions,
     );

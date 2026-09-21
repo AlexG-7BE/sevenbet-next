@@ -153,7 +153,7 @@ function authority(countryCode: string): CommercialJurisdictionAuthority {
 }
 
 function publicService() {
-  return new PublicCasinoService(publicStore(), [], { cmsEnabled: true, now }, commercialFixtureAuthority);
+  return new PublicCasinoService(publicStore(), { cmsEnabled: true, now }, commercialFixtureAuthority);
 }
 
 const commercialFixtureAuthority = commercialActionAuthority((subject, input) => {

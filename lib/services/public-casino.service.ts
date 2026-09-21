@@ -1,5 +1,4 @@
-import { getCasinos, type Casino } from "@/lib/data";
-import { mapLegacyCasino, mapPublishedCasino, projectPublicCasinoMarket } from "@/lib/public-casino/public-casino.mapper";
+import { mapPublishedCasino, projectPublicCasinoMarket } from "@/lib/public-casino/public-casino.mapper";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import { publicCasinoRepository, type PublicCasinoStore } from "@/lib/repositories/public-casino.repository";
@@ -66,18 +65,12 @@ const cachedPublishedCasinoEditorial = publicEditorialCache(
 export class PublicCasinoService {
   constructor(
     private readonly repository: PublicCasinoStore = publicCasinoRepository,
-    private readonly legacyCasinos: Casino[] = getCasinos(),
-    private readonly options: { cmsEnabled?: boolean; now?: Date; allowLocalFixtures?: boolean } = {},
+    private readonly options: { cmsEnabled?: boolean; now?: Date } = {},
     private readonly actionAuthority: PublicCommercialActionAuthority = publicCommercialActionResolver,
   ) {}
 
   private cmsEnabled() {
     return this.options.cmsEnabled ?? isPublicCasinoCmsEnabled();
-  }
-
-  private localFixturesAllowed() {
-    return this.options.allowLocalFixtures
-      ?? (process.env.VERCEL_ENV !== "preview" && process.env.VERCEL_ENV !== "production");
   }
 
   private async publishedOfferCandidates(
@@ -98,15 +91,6 @@ export class PublicCasinoService {
     }
   }
 
-  private legacy(slug: string) {
-    const casino = this.legacyCasinos.find((entry) => entry.slug === slug);
-    return casino ? this.legacyForMode(casino) : null;
-  }
-
-  private legacyForMode(casino: Casino) {
-    return mapLegacyCasino(casino);
-  }
-
   async getCasino(
     slug: string,
     authority?: CommercialJurisdictionAuthority | null,
@@ -115,7 +99,7 @@ export class PublicCasinoService {
     commercialMarketCode?: string | null,
   ): Promise<PublicCasinoDTO | null> {
     if (!isSafePublicSlug(slug)) return null;
-    if (!this.cmsEnabled()) return this.localFixturesAllowed() ? this.legacy(slug) : null;
+    if (!this.cmsEnabled()) return null;
 
     let projected: PublicCasinoDTO | null = null;
     try {
@@ -148,9 +132,7 @@ export class PublicCasinoService {
     presentationLanguage?: string | null,
     commercialMarketCode?: string | null,
   ): Promise<PublicCasinoDTO[]> {
-    if (!this.cmsEnabled()) return this.localFixturesAllowed()
-      ? this.legacyCasinos.map((casino) => this.legacyForMode(casino))
-      : [];
+    if (!this.cmsEnabled()) return [];
 
     let published: Awaited<ReturnType<PublicCasinoStore["listPublished"]>> = [];
     try {

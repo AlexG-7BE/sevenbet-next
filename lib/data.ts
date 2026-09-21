@@ -1,5 +1,4 @@
-import casinoData from "@/data/casinos.json";
-
+// Props shape for the older review components in components/ui.tsx. Casino content itself comes from the database.
 export type Casino = {
   id: string;
   slug: string;
@@ -43,31 +42,6 @@ export type Casino = {
   importantConditions?: string[];
   bonusExpiresAt?: string | null;
 };
-
-const casinos = (casinoData as { casinos: Casino[] }).casinos;
-
-export function getCasinos() {
-  return casinos;
-}
-
-export function getTopCasinos(limit = 8) {
-  return [...casinos]
-    .sort((a, b) => b.rating - a.rating || b.bonusAmountUsd - a.bonusAmountUsd)
-    .slice(0, limit);
-}
-
-export function getCasino(slug: string) {
-  return casinos.find((casino) => casino.slug === slug);
-}
-
-export function getStats() {
-  return {
-    total: casinos.length,
-    verified: casinos.filter((casino) => casino.isVerified).length,
-    payments: new Set(casinos.flatMap((casino) => casino.payments)).size,
-    licenses: new Set(casinos.map((casino) => casino.license)).size,
-  };
-}
 
 export function formatMoney(value: number) {
   return `$${Number(value || 0).toLocaleString("en-US")}`;

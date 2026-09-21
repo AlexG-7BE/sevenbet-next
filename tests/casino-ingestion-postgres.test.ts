@@ -199,7 +199,7 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
       listPublished: async () => [published],
       loadContext: async () => EMPTY_CONTEXT,
     };
-    const publicService = new PublicCasinoService(publicStore, [], { cmsEnabled: true, now: new Date("2026-09-01T00:00:00.000Z") }, noCommercialActions);
+    const publicService = new PublicCasinoService(publicStore, { cmsEnabled: true, now: new Date("2026-09-01T00:00:00.000Z") }, noCommercialActions);
     const discovery = new PublicCasinoDiscoveryService(discoveryStore, () => new Date("2026-09-01T00:00:00.000Z"), noCommercialActions);
     const peProfile = await publicService.getCasino("betsson", undefined, "PE");
     const seProfile = await publicService.getCasino("betsson", undefined, "SE");

@@ -28,9 +28,9 @@ of those casinos and their import bundles; every published casino's bundle
 lives in `data/casino-ingestion/`. `data/casino-real-catalog-02/` and `-03/`
 are release records, not separate inventories. See
 [`data/README.md`](../data/README.md). Local development now reads the
-database by default (`PUBLIC_CASINO_CMS_ENABLED` only opts out with `false`);
-`data/casinos.json` holds 220 legacy placeholder records used only by
-database-less test runs and is scheduled for removal.
+database by default (`PUBLIC_CASINO_CMS_ENABLED` only opts out with `false`,
+which then yields no casinos). The 220-record `data/casinos.json` placeholder
+catalogue and its service fallback were removed on 21 September 2026.
 
 ## Navigation Performance Stage 2 — released and verified
 

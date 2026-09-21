@@ -1,4 +1,3 @@
-import type { Casino } from "@/lib/data";
 import type {
   PublicCasinoDTO,
   PublicCasinoLicense,
@@ -487,51 +486,4 @@ export function mapPublishedCasino(
     action: null,
   };
   return options.countryCode ? projectPublicCasinoMarket(mapped, options.countryCode) : mapped;
-}
-
-export function mapLegacyCasino(casino: Casino): PublicCasinoDTO {
-  return {
-    source: "legacy",
-    id: casino.id,
-    slug: casino.slug,
-    name: casino.name,
-    title: casino.name,
-    domain: casino.domain,
-    summary: casino.tagline || casino.description,
-    reviewContent: casino.description,
-    operator: casino.operator || null,
-    foundedYear: null,
-    editorScore: casino.rating,
-    trustScore: null,
-    featured: false,
-    recommended: false,
-    publishedAt: null,
-    lastReviewedAt: null,
-    version: 0,
-    languages: casino.languages,
-    currencies: casino.currencies,
-    supportsMobile: casino.mobileApp,
-    pros: casino.pros,
-    cons: casino.cons,
-    responsibleGamblingTools: [],
-    seo: {
-      title: `${casino.name} Review | B4GAMBLE`,
-      description: `${casino.name} review with license, bonus terms, payments and responsible gambling information.`,
-      canonical: safeCanonical(null, casino.slug),
-      robots: "index,follow",
-      socialTitle: `${casino.name} Review | B4GAMBLE`,
-      socialDescription: casino.tagline || casino.description,
-      socialImage: null,
-      structuredData: null,
-    },
-    licenses: [{ authority: casino.license, licenseNumber: null, jurisdiction: casino.country, status: casino.licenseStatus, verificationUrl: null, expiresAt: null, lastVerifiedAt: null }],
-    countries: casino.countries.map((countryCode) => ({ countryCode, availability: "AVAILABLE", minimumAge: null, currency: null, language: null })),
-    payments: casino.payments.map((name) => ({ key: name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"), name, supportsDeposits: true, supportsWithdrawals: true, currencies: [], minimumDeposit: casino.minDeposit, minimumWithdrawal: null, maximumWithdrawal: null, depositProcessingTime: null, withdrawalTime: casino.payoutHours ? `${casino.payoutHours} hours` : null, fees: null, crypto: /bitcoin|ethereum|crypto|usdt/i.test(name) })),
-    providers: casino.providers.map((name) => ({ key: name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"), name, gameCount: null, liveCasino: false })),
-    categories: casino.gameTypes.map((name) => ({ key: name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"), name, gameCount: null, featured: false })),
-    bonuses: [{ id: `legacy-${casino.id}`, slug: `${casino.slug}-welcome`, title: casino.bonusHeadline, summary: casino.bonusHeadline, type: "WELCOME", percentage: null, minimumDeposit: casino.minDeposit, maximumBonus: casino.bonusAmountUsd, maximumBet: null, currency: "USD", freeSpins: casino.freeSpins, wageringMultiplier: casino.wagering, wageringText: null, eligibility: null, importantConditions: [], termsUrl: null, startsAt: null, expiresAt: null }],
-    marketProfiles: [],
-    media: { logo: null, hero: null, screenshots: [], gallery: [], socialImage: null },
-    action: null,
-  };
 }

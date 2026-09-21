@@ -232,7 +232,7 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
       listPublished: async () => [published],
       loadContext: async () => EMPTY_CONTEXT,
     };
-    const publicService = new PublicCasinoService(publicStore, [], {
+    const publicService = new PublicCasinoService(publicStore, {
       cmsEnabled: true,
       now: NOW,
     }, noCommercialActions);

@@ -18,7 +18,6 @@
 | `casino-commercial-activation/`, `casino-commercial-visibility-03/`, `commercial-activation/` | Commercial activation evidence and templates. | build preflight and release scripts |
 | `current-partner-global-rollout/` | Partner rollout matrix (no casino content). | `scripts/current-partner-global-rollout.ts` |
 | `placement-media-assignments-01-backfill.json` | Historical media backfill record (retired operation). | `npm run placement-media:audit` / `:verify` |
-| `casinos.json` | **Legacy, not real casinos.** 220 placeholder records from July 2026. It is only read when `PUBLIC_CASINO_CMS_ENABLED=false` (database-less test runs), never by the live site. Scheduled for removal. | `lib/data.ts` |
 
 The catalog folders are release history, not separate casino lists. The same casino can appear in more than one of them (Betsson is in both 02 and 03).
 

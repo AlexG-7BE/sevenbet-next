@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { getCasinos } from "../lib/data";
 import { parsePublicResourceLimit, PUBLIC_RESOURCE_LIMIT_ERROR, resolvePublicResourceLimit } from "../lib/http/public-resource-limit";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import { parseRobotsMetadata } from "../lib/public-casino/public-casino-validation";
@@ -74,16 +73,15 @@ function store(records: PublishedCasinoSnapshotRecord[], managedSlugs = records.
   };
 }
 
-test("published CMS wins over a duplicate legacy slug without expanding to legacy fallback", async () => {
-  const legacy = getCasinos().slice(0, 2);
-  const service = new PublicCasinoService(store([publishedRecord()]), legacy, { cmsEnabled: true, now });
+test("only published CMS records become public casinos", async () => {
+  const service = new PublicCasinoService(store([publishedRecord()]), { cmsEnabled: true, now });
   assert.equal((await service.getCasino("10bet"))?.name, "CMS 10Bet");
-  assert.equal(await service.getCasino(legacy[1].slug), null);
+  assert.equal(await service.getCasino("888"), null);
   assert.equal(await service.getCasino("unknown-casino"), null);
   const list = await service.listCasinos();
   assert.equal(list.filter((casino) => casino.slug === "10bet").length, 1);
   assert.equal(list.find((casino) => casino.slug === "10bet")?.source, "cms");
-  assert.equal(list.some((casino) => casino.slug === legacy[1].slug), false);
+  assert.equal(list.some((casino) => casino.slug === "888"), false);
   assert.deepEqual(list.map((casino) => casino.slug), [...list].sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug)).map((casino) => casino.slug));
 });
 
@@ -94,10 +92,9 @@ test("draft and archived snapshots never become public", async () => {
   assert.equal(mapPublishedCasino(publishedRecord({ snapshot }), { now }), null);
 });
 
-test("draft and archived CMS slugs cannot reappear through legacy fallback or sitemap data", async () => {
-  const legacy = getCasinos();
-  const managedSlug = legacy[0].slug;
-  const service = new PublicCasinoService(store([], [managedSlug]), legacy, { cmsEnabled: true, now });
+test("draft and archived CMS slugs cannot reappear in listings or sitemap data", async () => {
+  const managedSlug = "10bet";
+  const service = new PublicCasinoService(store([], [managedSlug]), { cmsEnabled: true, now });
 
   assert.equal(await service.getCasino(managedSlug), null);
   assert.equal((await service.listCasinos()).some((casino) => casino.slug === managedSlug), false);
@@ -131,7 +128,6 @@ test("only the service resolver can add an action to the editorial projection", 
   assert.equal(mapped?.action, null);
   const service = new PublicCasinoService(
     store([publishedRecord()]),
-    [],
     { cmsEnabled: true, now },
     commercialActionsByCasino({ "11111111-1111-4111-8111-111111111111": "/r/cms-10bet" }),
   );

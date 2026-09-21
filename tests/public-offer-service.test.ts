@@ -288,7 +288,6 @@ test("Best Offers returns a genuine no-eligible state when the published shortli
 test("Best Offers has no source-controlled fallback when CMS is disabled", async () => {
   const result = await new PublicOfferService(store([], true), {
     cmsEnabled: false,
-    legacyCasinos: [],
   }).getBestOffersPageData({ country: "GB" }, allowJurisdictionAuthority);
 
   assert.deepEqual(result, { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" });

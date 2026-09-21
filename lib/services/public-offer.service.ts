@@ -1,4 +1,3 @@
-import type { Casino } from "@/lib/data";
 import { selectCommercialBestOfferPool, selectOverallShortlist } from "@/lib/public-offer/best-offer-ranking";
 import type {
   PublicOfferDTO,
@@ -103,7 +102,7 @@ export function buildOfferFacets(offers: PublicOfferDTO[]): PublicOfferFacets {
 export class PublicOfferService {
   constructor(
     private readonly repository: PublicOfferStore = publicOfferRepository,
-    private readonly options: { cmsEnabled?: boolean; legacyCasinos?: Casino[] } = {},
+    private readonly options: { cmsEnabled?: boolean } = {},
     private readonly actionAuthority: PublicCommercialActionAuthority = publicCommercialActionResolver,
   ) {}
 
