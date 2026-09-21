@@ -22,6 +22,38 @@ import {
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 
 const ARTICLE_ENTITY = "article";
+export const LEARN_APPLY_AUDIT_ACTION = "learn_apply";
+
+export type LearnApplyAuditRecord = {
+  entityId: string;
+  metadata: Prisma.JsonValue | null;
+  timestamp: string;
+};
+
+export type PublishedApplyInspection = {
+  article: AdminArticle | null;
+  requestAudit: LearnApplyAuditRecord | null;
+  reusableAudit: LearnApplyAuditRecord | null;
+};
+
+export type ApplyPublishedDocumentInput = {
+  articleId: string | null;
+  document: ArticleDocumentInput;
+  actorId: string;
+  requestIdHash: string;
+  intentFingerprint: string;
+  documentFingerprint: string;
+  expectedUpdatedAt: string | null;
+  observedArticleId: string | null;
+  observedUpdatedAt: string | null;
+  auditMetadata: Prisma.InputJsonObject;
+};
+
+export type ApplyPublishedDocumentResult = {
+  operation: "CREATED" | "UPDATED" | "NO_CHANGE";
+  article: AdminArticle;
+  previousPath: { category: string; slug: string } | null;
+};
 
 function iso(value: Date | null) {
   return value?.toISOString() ?? null;
@@ -44,6 +76,64 @@ function mapArticle(article: Article): AdminArticle {
     createdBy: article.createdBy,
     updatedBy: article.updatedBy,
   };
+}
+
+function articleDocument(article: Article) {
+  return validateArticleDocument({ ...article, bodyBlocks: article.bodyBlocks }).document;
+}
+
+function documentsEqual(left: ArticleDocumentInput, right: ArticleDocumentInput) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function auditRecord(value: { entityId: string; metadata: Prisma.JsonValue | null; timestamp: Date } | null): LearnApplyAuditRecord | null {
+  return value ? { ...value, timestamp: value.timestamp.toISOString() } : null;
+}
+
+function auditMetadataRecord(value: Prisma.JsonValue | null): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function learnImageKeys(value: Prisma.InputJsonObject) {
+  const images = value.images;
+  if (!Array.isArray(images)) return [];
+  return images.flatMap((image) => {
+    if (!image || typeof image !== "object" || Array.isArray(image)) return [];
+    const key = (image as Record<string, unknown>).key;
+    return typeof key === "string" && /^content\/learn\/[a-f0-9]{64}\.(?:jpg|png|webp|avif|gif)$/.test(key)
+      ? [key]
+      : [];
+  });
+}
+
+function imageReferenceMatches(value: unknown, url: string, key?: string) {
+  if (value === url) return true;
+  if (typeof value !== "string" || !key) return false;
+  try {
+    return decodeURIComponent(new URL(value).pathname).endsWith(`/${key}`);
+  } catch {
+    return value.endsWith(`/${key}`);
+  }
+}
+
+function bodyReferencesImage(value: unknown, url: string, key?: string) {
+  if (!Array.isArray(value)) return false;
+  return value.some((block) => {
+    if (!block || typeof block !== "object" || Array.isArray(block)) return false;
+    const candidate = block as Record<string, unknown>;
+    return candidate.type === "image" && imageReferenceMatches(candidate.url, url, key);
+  });
+}
+
+function revisionReferencesImage(value: Prisma.JsonValue, url: string, key?: string) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const article = (value as Record<string, unknown>).article;
+  if (!article || typeof article !== "object" || Array.isArray(article)) return false;
+  const record = article as Record<string, unknown>;
+  return imageReferenceMatches(record.heroImageUrl, url, key)
+    || bodyReferencesImage(record.bodyBlocks, url, key);
 }
 
 function mapPublishedArticle(article: Article): PublicArticle | null {
@@ -76,6 +166,10 @@ function snapshot(article: Article) {
 
 function isUniqueConstraint(error: unknown) {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+}
+
+function isSerializableConflict(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034";
 }
 
 function assertExpected(article: Article, expectedUpdatedAt?: string) {
@@ -127,6 +221,248 @@ const cachedPublishedArticle = publicEditorialCache(
 );
 
 export class ArticleService {
+  async inspectPublishedApply(input: {
+    articleId: string | null;
+    slug: string;
+    requestIdHash: string;
+    intentFingerprint: string;
+    expectedUpdatedAt?: string | null;
+  }): Promise<PublishedApplyInspection> {
+    const current = input.articleId
+      ? await prisma.article.findUnique({ where: { id: input.articleId } })
+      : await prisma.article.findUnique({ where: { slug: input.slug } });
+    if (input.articleId && !current) throw new NotFoundError("Article", { id: input.articleId });
+    const [requestAuditValue, reusableAuditValue] = await Promise.all([
+      prisma.auditLog.findFirst({
+        where: {
+          action: LEARN_APPLY_AUDIT_ACTION,
+          entityType: ARTICLE_ENTITY,
+          metadata: { path: ["requestIdHash"], equals: input.requestIdHash },
+        },
+        orderBy: { timestamp: "desc" },
+        select: { entityId: true, metadata: true, timestamp: true },
+      }),
+      current ? prisma.auditLog.findFirst({
+        where: {
+          action: LEARN_APPLY_AUDIT_ACTION,
+          entityType: ARTICLE_ENTITY,
+          entityId: current.id,
+          metadata: { path: ["intentFingerprint"], equals: input.intentFingerprint },
+        },
+        orderBy: { timestamp: "desc" },
+        select: { entityId: true, metadata: true, timestamp: true },
+      }) : Promise.resolve(null),
+    ]);
+    if (input.expectedUpdatedAt && current?.updatedAt.toISOString() !== input.expectedUpdatedAt && !requestAuditValue) {
+      throw new ConflictError("Article changed before autonomous publication began.", {
+        currentUpdatedAt: current?.updatedAt.toISOString() ?? null,
+        expectedUpdatedAt: input.expectedUpdatedAt,
+      });
+    }
+    return {
+      article: current ? mapArticle(current) : null,
+      requestAudit: auditRecord(requestAuditValue),
+      reusableAudit: auditRecord(reusableAuditValue),
+    };
+  }
+
+  async applyPublishedDocument(input: ApplyPublishedDocumentInput): Promise<ApplyPublishedDocumentResult> {
+    const parsed = validateArticleDocument(input.document);
+    const issues = [...parsed.issues, ...publicationIssues(parsed.document)];
+    if (issues.length) throw new ValidationError("Article is not ready for autonomous publication.", { issues });
+
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const lockKeys = [...new Set([
+          `learn-request:${input.requestIdHash}`,
+          `learn-slug:${parsed.document.slug}`,
+          `learn-article:${input.articleId ?? input.observedArticleId ?? parsed.document.slug}`,
+          ...learnImageKeys(input.auditMetadata).map((key) => `learn-image:${key}`),
+        ])].sort();
+        for (const key of lockKeys) {
+          await tx.$queryRaw`SELECT 1::integer AS "locked" FROM pg_advisory_xact_lock(hashtextextended(${key}, 0))`;
+        }
+
+        const existingRequest = await tx.auditLog.findFirst({
+          where: {
+            action: LEARN_APPLY_AUDIT_ACTION,
+            entityType: ARTICLE_ENTITY,
+            metadata: { path: ["requestIdHash"], equals: input.requestIdHash },
+          },
+          orderBy: { timestamp: "desc" },
+          select: { entityId: true, metadata: true },
+        });
+        const current = input.articleId
+          ? await tx.article.findUnique({ where: { id: input.articleId } })
+          : await tx.article.findUnique({ where: { slug: parsed.document.slug } });
+        if (input.articleId && !current) throw new NotFoundError("Article", { id: input.articleId });
+
+        if (existingRequest) {
+          const metadata = auditMetadataRecord(existingRequest.metadata);
+          if (metadata?.intentFingerprint !== input.intentFingerprint) {
+            throw new ConflictError("requestId was already used for a different Learn apply intent.", {
+              articleId: existingRequest.entityId,
+            });
+          }
+          if (
+            current
+            && current.id === existingRequest.entityId
+            && current.status === EditorialStatus.PUBLISHED
+            && documentsEqual(articleDocument(current), parsed.document)
+          ) {
+            return { operation: "NO_CHANGE", article: mapArticle(current), previousPath: null };
+          }
+          throw new ConflictError("This requestId was already applied, but the Article has since changed.", {
+            articleId: existingRequest.entityId,
+          });
+        }
+
+        if (!input.observedArticleId && current) {
+          if (current.status === EditorialStatus.PUBLISHED && documentsEqual(articleDocument(current), parsed.document)) {
+            return { operation: "NO_CHANGE", article: mapArticle(current), previousPath: null };
+          }
+          throw new ConflictError("Article identity appeared while publication dependencies were being prepared.", {
+            articleId: current.id,
+            currentUpdatedAt: current.updatedAt.toISOString(),
+          });
+        }
+        if (input.observedArticleId && (!current || current.id !== input.observedArticleId)) {
+          throw new ConflictError("Article identity changed while publication dependencies were being prepared.", {
+            observedArticleId: input.observedArticleId,
+            currentArticleId: current?.id ?? null,
+          });
+        }
+        if (current && input.observedUpdatedAt && current.updatedAt.toISOString() !== input.observedUpdatedAt) {
+          if (current.status === EditorialStatus.PUBLISHED && documentsEqual(articleDocument(current), parsed.document)) {
+            return { operation: "NO_CHANGE", article: mapArticle(current), previousPath: null };
+          }
+          throw new ConflictError("Article changed during autonomous publication.", {
+            currentUpdatedAt: current.updatedAt.toISOString(),
+            observedUpdatedAt: input.observedUpdatedAt,
+          });
+        }
+        if (current && input.expectedUpdatedAt && current.updatedAt.toISOString() !== input.expectedUpdatedAt) {
+          if (current.status === EditorialStatus.PUBLISHED && documentsEqual(articleDocument(current), parsed.document)) {
+            return { operation: "NO_CHANGE", article: mapArticle(current), previousPath: null };
+          }
+          throw new ConflictError("Article no longer matches expectedUpdatedAt.", {
+            currentUpdatedAt: current.updatedAt.toISOString(),
+            expectedUpdatedAt: input.expectedUpdatedAt,
+          });
+        }
+        if (current?.status === EditorialStatus.ARCHIVED) {
+          throw new ConflictError("Archived Articles must be restored through the human editorial workflow before autonomous apply.", {
+            articleId: current.id,
+          });
+        }
+        if (current?.status === EditorialStatus.PUBLISHED && documentsEqual(articleDocument(current), parsed.document)) {
+          return { operation: "NO_CHANGE", article: mapArticle(current), previousPath: null };
+        }
+
+        const now = new Date();
+        let saved: Article;
+        let operation: "CREATED" | "UPDATED";
+        let previousPath: { category: string; slug: string } | null = null;
+        if (!current) {
+          saved = await tx.article.create({
+            data: {
+              ...inputData(parsed.document),
+              status: EditorialStatus.PUBLISHED,
+              publishedAt: now,
+              lastReviewedAt: now,
+              archivedAt: null,
+              createdBy: input.actorId,
+              updatedBy: input.actorId,
+            },
+          });
+          operation = "CREATED";
+        } else {
+          previousPath = { category: current.category, slug: current.slug };
+          const latest = await tx.contentRevision.aggregate({
+            where: { entityType: ARTICLE_ENTITY, entityId: current.id },
+            _max: { revisionNumber: true },
+          });
+          await tx.contentRevision.create({
+            data: {
+              entityType: ARTICLE_ENTITY,
+              entityId: current.id,
+              revisionNumber: (latest._max.revisionNumber ?? 0) + 1,
+              snapshot: snapshot(current),
+              summary: "Before autonomous Learn publication replacement",
+              createdBy: input.actorId,
+            },
+          });
+          saved = await tx.article.update({
+            where: { id: current.id },
+            data: {
+              ...inputData(parsed.document),
+              status: EditorialStatus.PUBLISHED,
+              publishedAt: current.publishedAt ?? now,
+              lastReviewedAt: now,
+              archivedAt: null,
+              updatedBy: input.actorId,
+            },
+          });
+          operation = "UPDATED";
+        }
+        await tx.auditLog.create({
+          data: {
+            actorId: input.actorId,
+            action: LEARN_APPLY_AUDIT_ACTION,
+            entityType: ARTICLE_ENTITY,
+            entityId: saved.id,
+            summary: operation === "CREATED"
+              ? "Autonomous Learn Article created and published"
+              : "Autonomous Learn Article atomically replaced while published",
+            metadata: {
+              ...input.auditMetadata,
+              operation,
+              requestIdHash: input.requestIdHash,
+              intentFingerprint: input.intentFingerprint,
+              documentFingerprint: input.documentFingerprint,
+            },
+          },
+        });
+        return { operation, article: mapArticle(saved), previousPath };
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    } catch (error) {
+      if (isUniqueConstraint(error)) throw new ConflictError("Article slug already exists.", { slug: parsed.document.slug });
+      if (isSerializableConflict(error)) throw new ConflictError("A concurrent Learn publication changed the same Article. Retry with a new requestId.");
+      throw error;
+    }
+  }
+
+  async isImageUrlReferenced(url: string) {
+    return this.isImageUrlReferencedWith(prisma, url);
+  }
+
+  private async isImageUrlReferencedWith(
+    client: Prisma.TransactionClient | typeof prisma,
+    url: string,
+    key?: string,
+  ) {
+    const records = await client.article.findMany({ select: { heroImageUrl: true, bodyBlocks: true } });
+    if (records.some((record) => imageReferenceMatches(record.heroImageUrl, url, key)
+      || bodyReferencesImage(record.bodyBlocks, url, key))) return true;
+    const revisions = await client.contentRevision.findMany({
+      where: { entityType: ARTICLE_ENTITY },
+      select: { snapshot: true },
+    });
+    return revisions.some((revision) => revisionReferencesImage(revision.snapshot, url, key));
+  }
+
+  async cleanupUnreferencedImage(key: string, url: string, cleanup: () => Promise<void>) {
+    if (!/^content\/learn\/[a-f0-9]{64}\.(?:jpg|png|webp|avif|gif)$/.test(key)) {
+      throw new ValidationError("Learn image cleanup key is invalid.");
+    }
+    return prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT 1::integer AS "locked" FROM pg_advisory_xact_lock(hashtextextended(${`learn-image:${key}`}, 0))`;
+      if (await this.isImageUrlReferencedWith(tx, url, key)) return false;
+      await cleanup();
+      return true;
+    });
+  }
+
   async listAdminArticles(input: { search?: string; status?: string; locale?: string; category?: string; take?: number } = {}) {
     const where: Prisma.ArticleWhereInput = {
       ...(input.search?.trim() ? {

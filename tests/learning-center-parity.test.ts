@@ -107,6 +107,7 @@ test("metadata, JSON-LD and sitemap use visible canonical Article fields", () =>
   assert.match(route, /"@type": "Article"/);
   assert.match(route, /datePublished: article\.publishedAt/);
   assert.match(route, /dateModified: article\.updatedAt/);
+  assert.match(route, /new URL\(article\.canonicalUrl, siteUrl\)\.href/);
   assert.doesNotMatch(route, /FAQPage|structuredData/);
   assert.match(sitemap, /articleService\.listPublished/);
   assert.match(sitemap, /articlePath\(article\)/);
