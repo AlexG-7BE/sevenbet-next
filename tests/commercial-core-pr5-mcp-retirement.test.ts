@@ -18,10 +18,8 @@ function sourceFiles(path: string): string[] {
   });
 }
 
-test("PR5 physically removes every MCP and operational OAuth HTTP surface", () => {
+test("PR5 keeps Commercial, Media, and operational OAuth transport retired", () => {
   for (const path of [
-    "app/api/mcp",
-    "lib/mcp",
     "app/.well-known/oauth-authorization-server",
     "app/.well-known/oauth-protected-resource",
     "app/admin/integrations/chatgpt-work",
@@ -32,6 +30,18 @@ test("PR5 physically removes every MCP and operational OAuth HTTP surface", () =
       `${path} must not contain a surviving stub`,
     );
   }
+  const allowedLearnMcpFiles = [
+    "app/api/mcp/learn/route.ts",
+    "lib/mcp/learn/config.ts",
+    "lib/mcp/learn/post-handler.ts",
+    "lib/mcp/learn/rate-limit.ts",
+    "lib/mcp/learn/server.ts",
+  ];
+  const mcpFiles = [
+    ...(existsSync(join(root, "app/api/mcp")) ? sourceFiles("app/api/mcp") : []),
+    ...(existsSync(join(root, "lib/mcp")) ? sourceFiles("lib/mcp") : []),
+  ].sort();
+  assert.deepEqual(mcpFiles, allowedLearnMcpFiles, "only the Founder-authorized Learn MCP surface may exist");
 
   const activeRuntimePaths = [
     ...sourceFiles("app"),
@@ -46,7 +56,7 @@ test("PR5 physically removes every MCP and operational OAuth HTTP surface", () =
     "the retired source literal may survive only in the bounded persisted-history decoder",
   );
   const activeRuntime = activeRuntimePaths
-    .filter((path) => path !== "lib/media-operations/persisted-history.ts")
+    .filter((path) => path !== "lib/media-operations/persisted-history.ts" && !allowedLearnMcpFiles.includes(path))
     .map((path) => `// ${path}\n${source(path)}`).join("\n");
   assert.doesNotMatch(
     activeRuntime,
@@ -70,16 +80,16 @@ test("legacy Media source compatibility is bounded to persisted reads and remain
   assert.match(repository, /const parsed = mediaIngestionBatchSchema\.parse\(batch\)/);
 });
 
-test("transport-only dependencies and commands are absent", () => {
+test("retired transport dependencies and commands stay absent", () => {
   const pkg = JSON.parse(source("package.json")) as {
     dependencies: Record<string, string>;
     scripts: Record<string, string>;
   };
-  assert.equal(pkg.dependencies["@modelcontextprotocol/sdk"], undefined);
+  assert.equal(pkg.dependencies["@modelcontextprotocol/sdk"], "1.30.0");
   assert.equal(pkg.dependencies["@better-auth/oauth-provider"], undefined);
   assert.equal(pkg.dependencies["@better-auth/utils"], undefined);
   assert.equal(Object.keys(pkg.scripts).some((name) => /mcp-bridge|partner-tracking:production-smoke/i.test(name)), false);
-  assert.equal(Object.values(pkg.scripts).some((command) => /\/api\/mcp|commercial-mcp-browser|media-ingestion-autoplacement-browser/.test(command)), false);
+  assert.equal(Object.values(pkg.scripts).some((command) => /\/api\/mcp\/(?:commercial|media|oauth)|commercial-mcp-browser|media-ingestion-autoplacement-browser/.test(command)), false);
 });
 
 test("extracted CRM research capability is transport-, client-, and scope-neutral", () => {

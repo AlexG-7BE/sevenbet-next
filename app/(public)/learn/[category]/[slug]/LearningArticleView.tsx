@@ -56,7 +56,7 @@ export function LearningArticleView({ article, categoryTitle, relatedArticles = 
   const reviewed = article.lastReviewedAt ? new Intl.DateTimeFormat(article.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(article.lastReviewedAt)) : null;
   const protectedCategory = article.category === "responsible-gambling";
 
-  return <article className={`${styles.page} ${handoffStyles.page}`} data-learning-article data-figma-authority="633:4341" data-runtime-renderer="postgresql-learn-article">
+  return <article className={`${styles.page} ${handoffStyles.page}`} data-article-id={article.id} data-article-updated-at={article.updatedAt} data-learning-article data-figma-authority="633:4341" data-runtime-renderer="postgresql-learn-article">
     <header className={`${styles.hero} ${handoffStyles.hero} ${article.heroImageUrl ? styles.heroWithImage : ""}`} data-nav-theme="dark">
       {article.heroImageUrl && <img alt={article.heroImageAlt || ""} className={styles.heroImage} height={900} src={article.heroImageUrl} width={1600} />}
       <div className={styles.heroContent}>

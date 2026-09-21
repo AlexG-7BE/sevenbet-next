@@ -13,7 +13,7 @@ import type { PresentationResolution } from "@/lib/market/presentation-resolver"
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { articleService } from "@/lib/services";
-import { absoluteUrl } from "@/lib/site";
+import { absoluteUrl, siteUrl } from "@/lib/site";
 
 import { LearningArticleRelated, LearningArticleView } from "./LearningArticleView";
 
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
     ...(article.heroImageUrl ? { images: [{ url: article.heroImageUrl, alt: article.heroImageAlt || article.title }] } : {}),
   });
   if (!article.canonicalUrl) return metadata;
-  const canonical = absoluteUrl(article.canonicalUrl);
+  const canonical = new URL(article.canonicalUrl, siteUrl).href;
   return { ...metadata, alternates: { ...metadata.alternates, canonical }, openGraph: metadata.openGraph ? { ...metadata.openGraph, url: canonical } : metadata.openGraph };
 }
 

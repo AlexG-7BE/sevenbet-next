@@ -1,4 +1,5 @@
 import { PUBLISHED_LANGUAGE_ROUTE_PROFILES } from "@/lib/market/registry";
+import { getLearningCategory } from "@/lib/learning-center";
 import { safePublicUrl } from "@/lib/public-casino/public-casino-validation";
 import { siteUrl } from "@/lib/site";
 
@@ -176,6 +177,9 @@ export function validateArticleDocument(value: unknown) {
 
 export function publicationIssues(document: ArticleDocumentInput): ArticleValidationIssue[] {
   const issues: ArticleValidationIssue[] = [];
+  if (!getLearningCategory(document.category)) {
+    issues.push({ path: "category", message: "Published Articles must use a registered Learn category." });
+  }
   if (document.title.length < 4) issues.push({ path: "title", message: "Published title must contain at least 4 characters." });
   if (document.excerpt.length < 20) issues.push({ path: "excerpt", message: "Published excerpt must contain at least 20 characters." });
   if (!document.bodyBlocks.length) issues.push({ path: "bodyBlocks", message: "Add at least one body block before review." });

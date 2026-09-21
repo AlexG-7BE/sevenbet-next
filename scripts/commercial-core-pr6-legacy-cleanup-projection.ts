@@ -43,6 +43,13 @@ const retiredRuntimeReference = new RegExp(
 );
 const retiredTransportReference =
   /@modelcontextprotocol|\/api\/mcp|CommercialMcp|MediaMcp|commercial_mcp|COMMERCIAL_MCP|MEDIA_OPERATIONS_MCP|commercial:(?:read|safe_write)|media:(?:read|safe_write|production_write)|chatgpt-work|CHATGPT_WORK|getOperationalMcpAuth|oauthProvider|mcpAuth|mcpPermission|mcpAuthority|mcpConsent/;
+const authorizedLearnMcpRuntimeFiles = new Set([
+  "app/api/mcp/learn/route.ts",
+  "lib/mcp/learn/config.ts",
+  "lib/mcp/learn/post-handler.ts",
+  "lib/mcp/learn/rate-limit.ts",
+  "lib/mcp/learn/server.ts",
+]);
 
 type ProjectionMode =
   | { kind: "CAPTURE_FIRST_PROJECTION"; referencePath: string }
@@ -72,6 +79,7 @@ function unexpectedMcpOauthRuntimeSurfaceFiles() {
     .filter(Boolean)
     .filter((path) => runtimeExtensions.has(extname(path)));
   const unexpected = listed.filter((path) => {
+    if (authorizedLearnMcpRuntimeFiles.has(path)) return false;
     if (
       path.startsWith("app/api/mcp/")
       || path.startsWith("app/.well-known/oauth-authorization-server/")
@@ -86,7 +94,7 @@ function unexpectedMcpOauthRuntimeSurfaceFiles() {
   });
   const packageJson = readFileSync("package.json", "utf8");
   if (
-    /"@modelcontextprotocol\/sdk"\s*:|"@better-auth\/oauth-provider"\s*:|\/api\/mcp|commercial-mcp-browser|media-ingestion-autoplacement-browser/.test(
+    /"@better-auth\/oauth-provider"\s*:|\/api\/mcp\/(?:commercial|media|oauth)|commercial-mcp-browser|media-ingestion-autoplacement-browser/.test(
       packageJson,
     )
   ) {

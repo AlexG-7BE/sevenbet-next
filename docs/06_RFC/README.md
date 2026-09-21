@@ -79,16 +79,17 @@ orientation.
 | [RFC-049 — Exact Canonical Commercial Routes](RFC-049-Exact-Canonical-Commercial-Routes.md) | `ACTIVE` | One trusted-GEO normalization seam, one exact commercial-route lookup, no parent/ZZ fallback or Offer/Tracking country/production-eligibility authority, and a separately governed materialization operation. |
 | [RFC-050 — Affiliate Lifecycle Authority Collapse](RFC-050-Affiliate-Lifecycle-Authority-Collapse.md) | `ACTIVE` | Canonical MarketActivation is the sole business routing decision; Affiliate lifecycle fields are provider/Admin/history facts and GB uses narrow factual evidence. |
 | [RFC-051 — MCP Extraction and Retirement](RFC-051-MCP-Extraction-and-Retirement.md) | `ACTIVE` | Physical application MCP/OAuth retirement, neutral CRM research extraction, internal tracking-core boundary, external connector cutover and PR6 schema-cleanup boundary. |
+| [RFC-052 — Autonomous Learn Publication](RFC-052-Autonomous-Learn-Publication.md) | `ACTIVE` | One service-authenticated `learn_apply` mutation over canonical Article authority; atomic publication, first-party images, replay safety and public verification without reviving retired Commercial/Media OAuth. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 27 |
+| `ACTIVE` | 28 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 5 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **51** |
+| **Total RFC artifacts** | **52** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

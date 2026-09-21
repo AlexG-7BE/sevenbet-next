@@ -109,6 +109,26 @@ the same protected category and has no commercial fallback. See the
 [publication release record](06_Operations/B4GAMBLE-Learn-Publication-2026-09-17.md)
 and the original [Learning Center architecture release record](06_Operations/Learning-Center-PostgreSQL-Release-2026-09-15.md).
 
+## Autonomous Learn publication — RFC-052 implementation candidate
+
+**DETECTED IN THE CURRENT RFC-052 CANDIDATE, NOT YET A PRODUCTION ACTIVATION
+CLAIM, 21 SEPTEMBER 2026:** one service-authenticated `learn_apply` MCP mutation
+maps the complete desired Learn state into the existing canonical `Article`.
+It prepares first-party URL/base64/generated images, performs one atomic
+published replacement through `ArticleService.applyPublishedDocument`, records
+existing `ContentRevision`/`AuditLog` history, invalidates existing Article
+surfaces and returns `LIVE` only after bounded public verification.
+
+The candidate creates zero models, tables, migrations, content/media/job
+entities, queues or CMS authorities. Human Admin lifecycle and Responsible
+Gambling protections remain unchanged. RFC-051 still prohibits the retired
+Commercial/Media MCP and operational OAuth surfaces; RFC-052 supersedes it
+only for this isolated Learn endpoint and MCP SDK dependency. Production actor,
+credential, provider/storage configuration, merged SHA, deployment and real
+authenticated acceptance remain **UNKNOWN / NOT YET CLAIMED**. See
+[RFC-052](06_RFC/RFC-052-Autonomous-Learn-Publication.md) and the
+[operations runbook](06_Operations/Autonomous-Learn-Publication.md).
+
 **DETECTED IN THE SUBSEQUENT PR2 CANDIDATE, NOT YET A PRODUCTION CLAIM:** the
 Founder-facing CMS navigation and Dashboard are being narrowed to current
 PostgreSQL-backed operational domains. The candidate removes the exclusively
@@ -144,8 +164,10 @@ reports all 43 migrations applied through `0043_article_learning_center`, with
 zero unresolved or unknown
 migrations and zero applied checksum mismatches;
 `0041_commercial_core_legacy_connector_cleanup` remains complete and the eight
-retired connector tables are absent. MCP/operational OAuth transport and storage
-are retired and must not be recreated or reconnected.
+retired connector tables are absent. Commercial/Media MCP and operational OAuth
+transport/storage are retired and must not be recreated or reconnected. The
+isolated Learn-only RFC-052 candidate is not Commercial/Media authority and
+does not restore those retired surfaces.
 
 Programme completion is canonical persisted state. Completing Mission 10 sets
 `ProgramEnrollment.completedAt` to the exact Mission 10 completion timestamp;
