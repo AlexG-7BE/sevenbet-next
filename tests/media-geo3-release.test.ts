@@ -92,7 +92,7 @@ test("public consumers retire GEO3 presentation while governed CTA action stays 
   const mapper = readFileSync("lib/public-casino/public-casino.mapper.ts", "utf8");
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
   const directory = readFileSync("lib/services/public-casino-discovery.service.ts", "utf8");
-  const activeProjection = mapper.slice(mapper.indexOf("export function mapPublishedCasino"), mapper.indexOf("export function mapLegacyCasino"));
+  const activeProjection = mapper.slice(mapper.indexOf("export function mapPublishedCasino"));
   assert.doesNotMatch(mapper, /resolveCasinoMedia|resolvedPlacementMap|MediaCreative|MediaRevision/);
   assert.doesNotMatch(activeProjection, /resolveCasinoMedia|resolvedPlacementMap/);
   assert.match(activeProjection, /logo: allMedia\.find/);

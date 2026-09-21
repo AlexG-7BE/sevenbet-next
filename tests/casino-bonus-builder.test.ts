@@ -238,5 +238,7 @@ test("legacy Bonus model and public server projections remain intact", () => {
   assert.match(schema, /model Bonus \{/);
   assert.match(bonusesPage, /publicOfferService\.searchOffers/);
   assert.match(casinoPage, /publicCasinoService/);
-  assert.match(readFileSync("lib/services/public-casino.service.ts", "utf8"), /getCasinos\(\)/);
+  const casinoService = readFileSync("lib/services/public-casino.service.ts", "utf8");
+  assert.match(casinoService, /mapPublishedCasino/);
+  assert.doesNotMatch(casinoService, /getCasinos|legacyCasinos/);
 });

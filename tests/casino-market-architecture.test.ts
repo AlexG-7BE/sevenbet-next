@@ -110,7 +110,7 @@ test("an unqualified direct service result exposes global identity without selec
     listPublished: async () => [record],
     listManagedSlugs: async () => ["reference-casino"],
   };
-  const service = new PublicCasinoService(repository, [], { cmsEnabled: true, now }, noCommercialActions);
+  const service = new PublicCasinoService(repository, { cmsEnabled: true, now }, noCommercialActions);
 
   for (const casino of [await service.getCasino("reference-casino"), ...(await service.listCasinos())]) {
     assert.ok(casino);

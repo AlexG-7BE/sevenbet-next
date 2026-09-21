@@ -12,11 +12,11 @@
 
 ## Rollback
 
-Set `PUBLIC_CASINO_CMS_ENABLED=false` and redeploy. This restores review-only legacy rendering without deleting CMS records, versions, media, affiliate mappings or the non-commercial `/go` route. No database rollback is required, and rollback must not restore an external `/go` handoff.
+Historical. Vercel Preview and Production now always read casinos from the database; `PUBLIC_CASINO_CMS_ENABLED=false` only affects local and database-less test runtimes, where it now yields no casinos. Roll back a bad casino publication in the CMS, not with this flag.
 
-## Legacy removal criteria
+## Legacy removal
 
-Legacy data can be retired only after every indexed legacy slug has a validated published CMS version, redirects have been verified by GEO, sitemap parity has been measured, and a production rollback window has passed. Removing legacy files or `/go/[slug]` is explicitly outside Phase 3.9.
+**Done, 21 September 2026 (Founder instruction).** The `data/casinos.json` placeholder catalogue (220 records) and the service fallback that mapped it were removed. Production had not rendered it since the CMS path was forced for deployed runtimes, and `/casino/[slug]` already rendered only CMS-sourced profiles. `/go/[slug]` is unaffected. The casino inventory is listed in `data/casino-registry.json`.
 
 ## Known temporary policy
 
