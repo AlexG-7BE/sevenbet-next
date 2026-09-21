@@ -12,6 +12,26 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Casino inventory and data sources
+
+**DETECTED, 21 SEPTEMBER 2026 (copy of the Production database):** the
+database holds 16 casinos: 15 `PUBLISHED` (21 Privé, Betsafe, Betsson,
+Diamond7, DragonBet, G'day Casino, GoldenPlay, Hello Casino, Inkabet,
+NordicBet, Rizk, Skol Casino, Slotnite, StarCasino, SuperCasino) and one
+`ARCHIVED` (Boostwin, admin-created, never published). This matches the public
+`/casinos` directory. Older checkpoints below that cite 14 real operators
+predate the GoldenPlay publication.
+
+The database is the only runtime source of casino content.
+[`data/casino-registry.json`](../data/casino-registry.json) is the single list
+of those casinos and their import bundles; every published casino's bundle
+lives in `data/casino-ingestion/`. `data/casino-real-catalog-02/` and `-03/`
+are release records, not separate inventories. See
+[`data/README.md`](../data/README.md). Local development now reads the
+database by default (`PUBLIC_CASINO_CMS_ENABLED` only opts out with `false`);
+`data/casinos.json` holds 220 legacy placeholder records used only by
+database-less test runs and is scheduled for removal.
+
 ## Navigation Performance Stage 2 — released and verified
 
 **DETECTED IN PR, MAIN, CI, VERCEL AND PRODUCTION EVIDENCE, 17 SEPTEMBER
