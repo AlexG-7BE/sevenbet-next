@@ -1,7 +1,6 @@
 # Autonomous Learn Publication
 
-**Status:** IMPLEMENTED IN RFC-052 CANDIDATE — PRODUCTION ACTIVATION AND LIVE
-EVIDENCE PENDING
+**Status:** PRODUCTION ACTIVE — LIVE AND VERIFIED, 21 SEPTEMBER 2026
 
 **Authority:** explicit Founder instruction of 21 September 2026
 
@@ -17,12 +16,15 @@ owner. RFC-052 therefore reuses only its lower-level validation, processing,
 remote-fetch and `StorageProvider` primitives. Article image URLs remain fields
 of the canonical Article document.
 
-**DETECTED IN THIS CANDIDATE:** `learn_apply` is the only agent-facing Learn
-mutation. There is no new Prisma model, table, migration, domain entity, media
-entity, queue, job or CMS. Human Admin workflow is unchanged.
+**DETECTED IN CANONICAL MAIN AND PRODUCTION:** `learn_apply` is the only
+agent-facing Learn mutation. There is no new Prisma model, table, migration,
+domain entity, media entity, queue, job or CMS. Human Admin workflow is
+unchanged.
 
-**UNKNOWN UNTIL RECORDED BELOW:** Production actor/configuration, merged SHA,
-deployment identity and real authenticated MCP acceptance.
+**DETECTED IN LIVE AUTHORITATIVE EVIDENCE:** PR #307, its required checks, the
+merged-main Production deployment, dedicated service actor, authenticated MCP
+discovery/apply/retry, public projection, archive lifecycle and pre-existing
+Article parity are recorded below. No credential or service email is recorded.
 
 ## Exact tool contract
 
@@ -215,13 +217,52 @@ in Quality and its PostgreSQL acceptance in both database-capable jobs.
 
 ## Production acceptance record
 
-Fill this section only from live authoritative evidence after merge.
+**DETECTED, 21 SEPTEMBER 2026:** [PR #307](https://github.com/AlexG-7BE/sevenbet-next/pull/307)
+merged normally after every required check passed.
 
-- **Merge SHA:** `UNKNOWN`
-- **Ready Production deployment:** `UNKNOWN`
-- **Service actor:** `UNKNOWN` (record UUID, name and role only; never email or
-  credential)
-- **MCP discovery:** `UNKNOWN`
-- **Real bounded apply:** `UNKNOWN`
-- **Public Article/SEO/JSON-LD/Learn/sitemap/image verification:** `UNKNOWN`
-- **Acceptance Article archive and pre-existing Article parity:** `UNKNOWN`
+- **Merge SHA:** `d162974e4848a429b7ea7ad1ba5075ff11dd5261`.
+- **Required checks:** GitHub Actions run `35605143698` passed Agent Core,
+  Quality, Database / Migration Verification and Build / Browser. The two
+  database-capable jobs both passed `learn-apply:postgres-test`; the browser
+  job passed the production build and full browser regression including the
+  Learn desktop/mobile fixture. Vercel Preview was Ready.
+- **Ready Production deployment:** `dpl_H42JWUgsKD6T1HRKBj4nYypxAjCM`, source
+  `main` at the exact merge SHA above, was `READY` and owned the `b4gamble.com`
+  aliases. It was a redeploy of the automatic merged-main deployment after the
+  new server-only Production variables were stored as Sensitive.
+- **Service actor:** `c1b54223-33ec-4e68-9c7e-f16a146d79ca`, exact name
+  `B4GAMBLE Content Agent`, role `AUTHOR`, no linked human user. Creation,
+  update, audit and archive history all name this actor.
+- **MCP discovery/auth:** malformed unauthenticated POST failed with HTTP 401
+  before parsing. An official MCP SDK client authenticated by header and
+  discovered exactly `["learn_apply"]`.
+- **Real bounded apply:** one complete call created Article
+  `963e0b4b-20f7-41fe-95a8-1986b7bc009e` as `PUBLISHED` and returned
+  `CREATED`, `COMMITTED`, `LIVE`, `verified: true`. Generated hero and inline
+  placements deduplicated to one 1536x1024 WebP at checksum
+  `bbf6ebb4ba6ebcdc4fb4a2b34300a6a8953773b5180f733a0b210ba3b222178f`.
+  The audit stored no raw request identifier.
+- **Retry:** the identical authenticated request returned `NO_CHANGE`,
+  `COMMITTED`, `LIVE` with the same Article ID, timestamps, URLs and checksum;
+  it added no revision or second `learn_apply` audit.
+- **Public verification:** the tool passed exact identity/version, SEO,
+  indexable robots, Article/Breadcrumb JSON-LD, OpenGraph, Learn collection,
+  sitemap and public-image checks on its first attempt. Independent Chromium
+  checks at 1440x900, 390x844 and 320x800 returned HTTP 200, exact title,
+  description, canonical and OpenGraph image, two loaded placements and no
+  horizontal overflow.
+- **Archive/recovery:** the first guarded archive call exceeded the existing
+  five-second remote interactive-transaction timeout and was confirmed fully
+  rolled back: still `PUBLISHED`, zero archive revisions and zero archive
+  audits. The safe retry used `ArticleService.transition("archive")` with the
+  exact observed timestamp and committed `ARCHIVED` at
+  `2026-09-21T14:04:40.954Z`. After the bounded cache fallback the route was
+  HTTP 404 and absent from the Learn collection and sitemap. The fixture was
+  not deleted; its one pre-archive revision and both `learn_apply`/`archive`
+  audit events remain as governed history.
+- **Pre-existing Article parity:** before acceptance there were exactly 24
+  published Articles and no fixture. SHA-256 over the complete, ID-ordered 24
+  rows excluding the fixture was
+  `c985981a021efafe012345538d95c01cf76f0bbe4bc0ad8263b114b612c041dc`
+  before and after. Final state remains 24 published Articles plus the one
+  archived acceptance history row.
