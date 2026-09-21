@@ -109,23 +109,31 @@ the same protected category and has no commercial fallback. See the
 [publication release record](06_Operations/B4GAMBLE-Learn-Publication-2026-09-17.md)
 and the original [Learning Center architecture release record](06_Operations/Learning-Center-PostgreSQL-Release-2026-09-15.md).
 
-## Autonomous Learn publication — RFC-052 implementation candidate
+## Autonomous Learn publication — RFC-052 Production active
 
-**DETECTED IN THE CURRENT RFC-052 CANDIDATE, NOT YET A PRODUCTION ACTIVATION
-CLAIM, 21 SEPTEMBER 2026:** one service-authenticated `learn_apply` MCP mutation
-maps the complete desired Learn state into the existing canonical `Article`.
-It prepares first-party URL/base64/generated images, performs one atomic
-published replacement through `ArticleService.applyPublishedDocument`, records
-existing `ContentRevision`/`AuditLog` history, invalidates existing Article
-surfaces and returns `LIVE` only after bounded public verification.
+**DETECTED IN CANONICAL MAIN AND PRODUCTION, 21 SEPTEMBER 2026:** one
+service-authenticated `learn_apply` MCP mutation maps the complete desired
+Learn state into the existing canonical `Article`. It prepares first-party
+URL/base64/generated images, performs one atomic published replacement through
+`ArticleService.applyPublishedDocument`, records existing
+`ContentRevision`/`AuditLog` history, invalidates existing Article surfaces and
+returns `LIVE` only after bounded public verification.
 
-The candidate creates zero models, tables, migrations, content/media/job
+PR #307 merged at `d162974e4848a429b7ea7ad1ba5075ff11dd5261` after all
+required checks passed. Production deployment
+`dpl_H42JWUgsKD6T1HRKBj4nYypxAjCM` was `READY` at that exact `main` SHA.
+Official MCP discovery exposed exactly `learn_apply`; a real generated-image
+apply returned `CREATED/LIVE`, its identical retry returned `NO_CHANGE/LIVE`,
+and the disposable acceptance Article was then archived through the existing
+Article lifecycle and disappeared from the public route, Learn collection and
+sitemap. A complete-row aggregate hash confirmed that all 24 pre-existing
+Production Articles were field-for-field unchanged.
+
+The capability creates zero models, tables, migrations, content/media/job
 entities, queues or CMS authorities. Human Admin lifecycle and Responsible
 Gambling protections remain unchanged. RFC-051 still prohibits the retired
 Commercial/Media MCP and operational OAuth surfaces; RFC-052 supersedes it
-only for this isolated Learn endpoint and MCP SDK dependency. Production actor,
-credential, provider/storage configuration, merged SHA, deployment and real
-authenticated acceptance remain **UNKNOWN / NOT YET CLAIMED**. See
+only for this isolated Learn endpoint and MCP SDK dependency. See
 [RFC-052](06_RFC/RFC-052-Autonomous-Learn-Publication.md) and the
 [operations runbook](06_Operations/Autonomous-Learn-Publication.md).
 
