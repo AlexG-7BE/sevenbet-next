@@ -28,7 +28,9 @@ type PublicCasinoCmsEnvironment = {
 
 export function isPublicCasinoCmsEnabled(environment: PublicCasinoCmsEnvironment = process.env) {
   if (environment.VERCEL_ENV === "production" || environment.VERCEL_ENV === "preview") return true;
-  return environment.PUBLIC_CASINO_CMS_ENABLED === "true";
+  // The database is the only casino source; local dev reads it like Production.
+  // Database-less test runs (CI, some Playwright configs) opt out explicitly with "false".
+  return environment.PUBLIC_CASINO_CMS_ENABLED !== "false";
 }
 
 async function loadPublishedCasinoEditorial(

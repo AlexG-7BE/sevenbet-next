@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "casino-registry.v1",
+  "description": "Single list of every casino B4GAMBLE has in its database. The database (CMS) is the source of truth for casino content; this file records which casinos exist, where their import bundle lives and which release introduced them. Keep it in sync with the database: `npm run casino-registry:verify` compares it with the connected database (read-only).",
+  "verifiedAgainstProductionCopyAt": "2026-09-21",
+  "casinos": [
+    { "slug": "21-prive", "name": "21 Privé", "status": "PUBLISHED", "markets": ["GB"], "release": "CASINO-REAL-CATALOG-02", "bundles": ["data/casino-ingestion/casino-data-population-01/21-prive-gb.v1.json"] },
+    { "slug": "betsafe", "name": "Betsafe", "status": "PUBLISHED", "markets": ["EE", "LV"], "release": "CASINO-REAL-CATALOG-03", "bundles": ["data/casino-ingestion/betsafe-ee-lv.v1.json"] },
+    { "slug": "betsson", "name": "Betsson", "status": "PUBLISHED", "markets": ["PE", "SE"], "release": "CASINO-REAL-CATALOG-02", "bundles": ["data/casino-ingestion/betsson-pe-se.v1.json"] },
+    { "slug": "boostwin", "name": "Boostwin", "status": "ARCHIVED", "markets": [], "release": null, "bundles": [], "note": "Created in the admin on 2026-07-22 before the import releases; archived, never published. No repository bundle." },
+    { "slug": "diamond7", "name": "Diamond7", "status": "PUBLISHED", "markets": ["GB"], "release": "CASINO-REAL-CATALOG-02", "bundles": ["data/casino-ingestion/casino-data-population-01/diamond7-gb.v1.json"] },
+    { "slug": "dragonbet", "name": "DragonBet", "status": "PUBLISHED", "markets": ["GB"], "release": "CASINO-REAL-CATALOG-02", "bundles": ["data/casino-ingestion/casino-data-population-01/dragonbet-gb.v1.json"] },
+    { "slug": "gday-casino", "name": "G'day Casino", "status": "PUBLISHED", "markets": ["GB"], "release": "CASINO-REAL-CATALOG-02", "bundles": ["data/casino-ingestion/casino-data-population-01/gday-casino-gb.v1.json"] },
+    { "slug": "goldenplay", "name": "GoldenPlay", "status": "PUBLISHED", "markets": ["IE"], "release": "GOLDENPLAY-IE-INGEST", "bundles": ["data/casino-ingestion/goldenplay-ie.v1.json"] },
+    { "slug": "hello-casino", "name": "Hello Casino", "status": "PUBLISHED", "markets": ["GB"], "release": "CASINO-REAL-CATALOG-02", "bundles": ["data/casino-ingestion/casino-data-population-01/hello-casino-gb.v1.json"] },
+    { "slug": "inkabet", "name": "Inkabet", "status": "PUBLISHED", "markets": ["PE"], "release": "CASINO-REAL-CATALOG-03", "bundles": ["data/casino-ingestion/inkabet-pe.v1.json"] },
+    { "slug": "nordicbet", "name": "NordicBet", "status": "PUBLISHED", "markets": ["SE"], "release": "CASINO-REAL-CATALOG-03", "bundles": ["data/casino-ingestion/nordicbet-se.v1.json"] },
+    { "slug": "rizk", "name": "Rizk", "status": "PUBLISHED", "markets": ["CA", "RS"], "release": "CASINO-REAL-CATALOG-03", "bundles": ["data/casino-ingestion/rizk-ca.v1.json", "data/casino-ingestion/rizk-rs.v1.json"] },
+    { "slug": "skol-casino", "name": "Skol Casino", "status": "PUBLISHED", "markets": ["GB"], "release": "CASINO-REAL-CATALOG-02", "bundles": ["data/casino-ingestion/casino-data-population-01/skol-casino-gb.v1.json"] },
+    { "slug": "slotnite", "name": "Slotnite", "status": "PUBLISHED", "markets": ["GB"], "release": "CASINO-REAL-CATALOG-02", "bundles": ["data/casino-ingestion/casino-data-population-01/slotnite-gb.v1.json"] },
+    { "slug": "starcasino", "name": "StarCasino", "status": "PUBLISHED", "markets": ["IT"], "release": "CASINO-REAL-CATALOG-03", "bundles": ["data/casino-ingestion/starcasino-it.v1.json"] },
+    { "slug": "supercasino", "name": "SuperCasino", "status": "PUBLISHED", "markets": ["NZ"], "release": "CASINO-REAL-CATALOG-03", "bundles": ["data/casino-ingestion/supercasino-nz.v1.json"] }
+  ]
+}

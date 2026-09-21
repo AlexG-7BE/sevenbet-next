@@ -83,6 +83,7 @@ test("deployed runtimes force the governed CMS publication authority", () => {
   assert.equal(isPublicCasinoCmsEnabled({ VERCEL_ENV: "production", PUBLIC_CASINO_CMS_ENABLED: "false" }), true);
   assert.equal(isPublicCasinoCmsEnabled({ VERCEL_ENV: "preview" }), true);
   assert.equal(isPublicCasinoCmsEnabled({ PUBLIC_CASINO_CMS_ENABLED: "true" }), true);
+  assert.equal(isPublicCasinoCmsEnabled({}), true, "local runtimes read the database by default");
   assert.equal(isPublicCasinoCmsEnabled({ PUBLIC_CASINO_CMS_ENABLED: "false" }), false);
 });
 
