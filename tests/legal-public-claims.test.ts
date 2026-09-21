@@ -54,7 +54,7 @@ test("commercial surfaces state the enforced compensation boundary without aspir
 
   const boundSurfaces = [
     ["app/(public)/methodology/page.tsx", /methodologyMessages\(presentation\.locale\)/],
-    ["app/(public)/casinos/page.tsx", /messages\.bestOffers\.commissionNote/],
+    ["components/casino-discovery/CasinoDiscoveryCard.tsx", /messages\.bestOffers\.commissionNote/],
     ["components/best-offers/BestOffersExperience.tsx", /messages\.bestOffers\.commissionNote/],
     ["app/(public)/bonuses/page.tsx", /messages\.bonuses\.disclosureCopy/],
   ] as const;
