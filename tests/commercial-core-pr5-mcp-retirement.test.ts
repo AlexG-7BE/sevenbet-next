@@ -37,6 +37,9 @@ test("PR5 keeps Commercial, Media, and operational OAuth transport retired", () 
     "lib/mcp/learn/rate-limit.ts",
     "lib/mcp/learn/server.ts",
   ];
+  const allowedLearnMcpCallers = [
+    "lib/learn-content-orchestrator/mcp-publisher.server.ts",
+  ];
   const mcpFiles = [
     ...(existsSync(join(root, "app/api/mcp")) ? sourceFiles("app/api/mcp") : []),
     ...(existsSync(join(root, "lib/mcp")) ? sourceFiles("lib/mcp") : []),
@@ -56,7 +59,9 @@ test("PR5 keeps Commercial, Media, and operational OAuth transport retired", () 
     "the retired source literal may survive only in the bounded persisted-history decoder",
   );
   const activeRuntime = activeRuntimePaths
-    .filter((path) => path !== "lib/media-operations/persisted-history.ts" && !allowedLearnMcpFiles.includes(path))
+    .filter((path) => path !== "lib/media-operations/persisted-history.ts"
+      && !allowedLearnMcpFiles.includes(path)
+      && !allowedLearnMcpCallers.includes(path))
     .map((path) => `// ${path}\n${source(path)}`).join("\n");
   assert.doesNotMatch(
     activeRuntime,

@@ -80,16 +80,17 @@ orientation.
 | [RFC-050 — Affiliate Lifecycle Authority Collapse](RFC-050-Affiliate-Lifecycle-Authority-Collapse.md) | `ACTIVE` | Canonical MarketActivation is the sole business routing decision; Affiliate lifecycle fields are provider/Admin/history facts and GB uses narrow factual evidence. |
 | [RFC-051 — MCP Extraction and Retirement](RFC-051-MCP-Extraction-and-Retirement.md) | `ACTIVE` | Physical application MCP/OAuth retirement, neutral CRM research extraction, internal tracking-core boundary, external connector cutover and PR6 schema-cleanup boundary. |
 | [RFC-052 — Autonomous Learn Publication](RFC-052-Autonomous-Learn-Publication.md) | `ACTIVE` | One service-authenticated `learn_apply` mutation over canonical Article authority; atomic publication, first-party images, replay safety and public verification without reviving retired Commercial/Media OAuth. |
+| [RFC-053 — Autonomous Learn Content Orchestration](RFC-053-Autonomous-Learn-Content-Orchestration.md) | `ACTIVE` | One bounded scheduled three-role Learn editorial pipeline; models have no write authority and deterministic publication remains exclusively RFC-052 `learn_apply`. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 28 |
+| `ACTIVE` | 29 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 5 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **52** |
+| **Total RFC artifacts** | **53** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or
