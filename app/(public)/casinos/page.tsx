@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { cache } from "react";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { CasinoCollection } from "@/components/casino-discovery/CasinoCollection";
-import { CompactProtection } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
@@ -126,7 +124,6 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       <div className={styles.directoryHeading}><div><p>{copy.casinosShown}</p><h2>{messages.casinos.directoryTitle}</h2></div><span>{result.total} {messages.common.records}</span></div>
       {result.inventoryMode !== "PUBLISHED_ONLY" ? <aside className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{disclosure}</p></aside> : null}
       {result.items.length ? <CasinoCollection casinos={result.items} initialSearch={query.search} messages={messages} presentation={presentation} /> : <section className={styles.empty} role="status"><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market })}</h2><p>{messages.casinos.reviewOnlyNotice}</p></section>}
-      <div className={styles.commercialFooterNote}><p>{copy.compactDisclosure} · {messages.bestOffers.commissionNote}</p><Link href={productHref(presentation, "/affiliate-disclosure")}>{messages.common.affiliateDisclosure}</Link><CompactProtection copy={copy} presentation={presentation} /></div>
     </div></section>
     <section className={styles.faq} data-premium-section="casinos-before-you-choose"><div className={styles.shell}><div className={styles.sectionIntro}><h2>{messages.casinos.faqTitle}</h2></div>
       <details><summary>{messages.casinos.faqDifferenceQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqDifferenceAnswer}</p></details>
