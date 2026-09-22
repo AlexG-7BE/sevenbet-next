@@ -13,11 +13,18 @@ function classes(...names: readonly (string | undefined)[]) {
 }
 
 /** Renders the last word of a translated heading in the editorial serif without changing the copy. */
-export function EmphasisTail({ text }: { text: string }) {
+export function EmphasisTail({ single = "em", text }: { single?: "em" | "plain"; text: string }) {
   const trimmed = text.trim();
   const split = trimmed.lastIndexOf(" ");
-  if (split < 0) return <em>{trimmed}</em>;
+  if (split < 0) return single === "em" ? <em>{trimmed}</em> : <>{trimmed}</>;
   return <>{trimmed.slice(0, split)} <em>{trimmed.slice(split + 1)}</em></>;
+}
+
+/** Splits a structured offer headline at its first " + " so the add-on can render in the editorial serif. */
+export function OfferHeadline({ text }: { text: string }) {
+  const split = text.indexOf(" + ");
+  if (split < 0) return <>{text}</>;
+  return <>{text.slice(0, split)} <em>{text.slice(split + 1)}</em></>;
 }
 
 export function CommercialScore({ className, score, label, locale }: { className?: string; score: number | null; label: string; locale: string }) {
