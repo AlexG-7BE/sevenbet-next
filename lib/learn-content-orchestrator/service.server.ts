@@ -18,6 +18,7 @@ import {
   type LearnContentPublisher,
 } from "./mcp-publisher.server";
 import {
+  describeLearnContentProviderError,
   OpenAiLearnContentManagedSessionProvider,
   type LearnContentManagedSessionProvider,
 } from "./openai-managed-session.server";
@@ -157,10 +158,14 @@ export function createLearnContentCronHandler(dependencies: LearnContentCronDepe
         }
         log({ event: "session_started", code: "SESSION_STARTED", runId: run.runId });
         return response("STARTED", started.status === "idle" ? "SESSION_READY" : "SESSION_IN_PROGRESS", 200, { runId: run.runId });
-      } catch {
-        await state.finish({ runId: run.runId, now: current, result: "FAILED", code: "SESSION_START_FAILED" });
-        log({ event: "run_failed", code: "SESSION_START_FAILED", runId: run.runId });
-        return response("BLOCKED", "SESSION_START_FAILED", 503);
+      } catch (error) {
+        log({
+          event: "run_retry_pending",
+          code: "SESSION_START_FAILED",
+          runId: run.runId,
+          ...describeLearnContentProviderError(error),
+        });
+        return response("RETRY_PENDING", "SESSION_START_FAILED", 503, { runId: run.runId });
       }
     }
 

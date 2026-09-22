@@ -168,12 +168,22 @@ export class PrismaLearnContentStateRepository implements LearnContentStateRepos
         await this.save(transaction, state);
       }
 
-      if (state.nextEligibleAt && new Date(state.nextEligibleAt) > input.now) {
+      const retryingFailedSessionStart = Boolean(
+        state.nextEligibleAt
+        && new Date(state.nextEligibleAt) > input.now
+        && state.last?.result === "FAILED"
+        && state.last.code === "SESSION_START_FAILED"
+        && state.consecutiveFailures === 1,
+      );
+      if (state.nextEligibleAt && new Date(state.nextEligibleAt) > input.now && !retryingFailedSessionStart) {
         return { action: "NOT_DUE", code: "MINIMUM_INTERVAL_ACTIVE" };
       }
       if (!input.locales.length) return { action: "HALTED", code: "NO_ALLOWED_LOCALES" };
 
-      const selected = input.locales[state.localeCursor % input.locales.length];
+      const selectedIndex = retryingFailedSessionStart
+        ? (state.localeCursor - 1 + input.locales.length) % input.locales.length
+        : state.localeCursor % input.locales.length;
+      const selected = input.locales[selectedIndex];
       const runId = randomUUID();
       const run: LearnContentActiveRun = {
         runId,
@@ -187,8 +197,10 @@ export class PrismaLearnContentStateRepository implements LearnContentStateRepos
         publicationAttempts: 0,
       };
       state.active = run;
-      state.localeCursor = (state.localeCursor + 1) % input.locales.length;
-      state.nextEligibleAt = addHours(input.now, input.minIntervalHours).toISOString();
+      if (!retryingFailedSessionStart) {
+        state.localeCursor = (state.localeCursor + 1) % input.locales.length;
+        state.nextEligibleAt = addHours(input.now, input.minIntervalHours).toISOString();
+      }
       await this.save(transaction, state);
       return { action: "LAUNCH", run };
     });

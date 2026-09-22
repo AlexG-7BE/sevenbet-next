@@ -55,7 +55,24 @@ test("PostgreSQL state claim serializes overlapping cron invocations and enforce
     if ("run" in next) {
       assert.notEqual(next.run.runId, claimedRuns[0]!.runId);
       assert.equal(next.run.locale, "de-DE");
+      assert.equal(await first.finish({
+        runId: next.run.runId,
+        now: new Date("2026-09-23T00:00:00.000Z"),
+        result: "FAILED",
+        code: "SESSION_START_FAILED",
+      }), true);
     }
+
+    const startRetry = await first.claim({ ...input, now: new Date("2026-09-23T00:01:00.000Z") });
+    assert.equal(startRetry.action, "LAUNCH");
+    assert.ok("run" in startRetry);
+    if ("run" in startRetry) {
+      assert.equal(startRetry.run.locale, "de-DE");
+      assert.notEqual(startRetry.run.runId, "run" in next ? next.run.runId : "");
+    }
+    const retryState = await first.read();
+    assert.equal(retryState.nextEligibleAt, "2026-09-24T00:00:00.000Z");
+    assert.equal(retryState.localeCursor, 0);
 
     assert.deepEqual(await first.claim({ ...input, now: new Date("2026-09-23T13:00:00.000Z") }), {
       action: "NOT_DUE",
@@ -64,7 +81,7 @@ test("PostgreSQL state claim serializes overlapping cron invocations and enforce
     const expired = await first.read();
     assert.equal(expired.active, null);
     assert.equal(expired.last?.code, "ACTIVE_LEASE_EXPIRED");
-    assert.equal(expired.consecutiveFailures, 1);
+    assert.equal(expired.consecutiveFailures, 2);
   } finally {
     await prisma.siteSetting.deleteMany({ where: { key: LEARN_CONTENT_STATE_KEY } });
     await prisma.$disconnect();
