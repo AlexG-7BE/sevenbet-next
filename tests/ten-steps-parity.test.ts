@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import test from "node:test";
+import { createRequire } from "node:module";
+import test, { before } from "node:test";
 
-import generatedPages from "../lib/final-handoff/generated-pages.json";
-import { transformCommonHandoff, transformTenStepsHandoff } from "../lib/final-handoff/transforms";
+import { renderToStaticMarkup } from "react-dom/server";
+import React from "react";
+
 import { tenStepsTranslation } from "../lib/i18n/static-pages/ten-steps";
 import { programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
 import { resolveTenStepsLandingState } from "../lib/ten-steps-landing";
@@ -11,9 +13,18 @@ import { resolveTenStepsLandingState } from "../lib/ten-steps-landing";
 const read = (path: string) => readFileSync(path, "utf8");
 const page = read("app/(public)/10-steps/page.tsx");
 const layout = read("app/(public)/layout.tsx");
-const handoffPage = read("components/final-handoff/HandoffPage.tsx");
-const runtime = transformTenStepsHandoff(transformCommonHandoff(generatedPages.tenSteps.html), "en-GB");
-const runtimeCss = generatedPages.tenSteps.css;
+const component = read("app/(public)/10-steps/TenStepsPage.tsx");
+const componentCss = read("app/(public)/10-steps/TenStepsPage.module.css");
+const require = createRequire(import.meta.url);
+require.extensions[".css"] = (module) => { module.exports = {}; };
+let runtime = "";
+let runtimeText = "";
+before(async () => {
+  (globalThis as typeof globalThis & { React: typeof React }).React = React;
+  const { TenStepsPage } = await import("../app/(public)/10-steps/TenStepsPage");
+  runtime = renderToStaticMarkup(React.createElement(TenStepsPage, { aboutHref: "/about", locale: "en-GB", programmePath: "/program" }));
+  runtimeText = textContent(runtime);
+});
 const messages = tenStepsTranslation("en-GB");
 
 // TenStepsLanding is no longer mounted by the public route. Keep these sources
@@ -28,31 +39,30 @@ function textContent(html: string) {
     .replace(/<[^>]+>/g, " ")
     .replaceAll("&amp;", "&")
     .replaceAll("&apos;", "'")
+    .replaceAll("&#x27;", "'")
     .replaceAll("&#39;", "'")
     .replaceAll("&quot;", '"')
     .replace(/\s+/g, " ")
     .trim();
 }
 
-const runtimeText = textContent(runtime);
 
-test("mounted 10 Steps handoff keeps the approved hierarchy inside the Public Shell", () => {
-  assert.match(page, /import \{ HandoffPage \}/);
-  assert.match(page, /<HandoffPage name="tenSteps" programmePath=\{programmePath\} transform=\{\(html\) => transformTenStepsHandoff\(html, presentation\.locale, programmePath\)\} \/>/);
-  assert.doesNotMatch(page, /TenStepsLanding|resolveTenStepsLandingState/);
-  assert.match(handoffPage, /const commonHtml = transformCommonHandoff\(page\.html, programmePath\)/);
-  assert.match(handoffPage, /const html = transform \? transform\(commonHtml\) : commonHtml/);
+test("mounted 10 Steps component keeps the approved hierarchy inside the Public Shell", () => {
+  assert.match(page, /import \{ TenStepsPage as TenStepsPresentation \} from "\.\/TenStepsPage"/);
+  assert.match(page, /<TenStepsPresentation aboutHref=\{productHref\(presentation, "\/about"\)\} locale=\{presentation\.locale\} programmePath=\{programmePath\} \/>/);
+  assert.doesNotMatch(page, /HandoffPage|transformTenStepsHandoff|TenStepsLanding|resolveTenStepsLandingState/);
 
   assert.deepEqual(
     [...runtime.matchAll(/data-ten-steps-section="([^"]+)"/g)].map((match) => match[1]),
     ["hero", "programme-builds", "mission-map", "account-boundary", "final-action"],
   );
   assert.match(layout, /<PublicHeader[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<PublicFooter/);
-  assert.doesNotMatch(runtime, /<header\b|<footer\b|Need support now|standalone help/iu);
+  assert.doesNotMatch(runtime, /<header\b[^>]*data-public-shell|<footer\b|Need support now|standalone help/iu);
   assert.equal((runtime.match(/<h1\b/g) ?? []).length, 1);
-  assert.match(runtime, /<section[^>]*data-ten-steps-section="hero"[^>]*aria-labelledby="ten-steps-title"/);
+  assert.match(runtime, /<section[^>]*aria-labelledby="ten-steps-title"[^>]*data-ten-steps-section="hero"/);
   assert.match(runtime, /<h1 id="ten-steps-title"/);
-  assert.match(runtime, /role="list" aria-labelledby="ten-steps-path-title" data-ten-steps-mission-list/);
+  assert.match(runtime, /aria-labelledby="ten-steps-path-title"[^>]*data-ten-steps-mission-list="[^"]*" role="list"/);
+  assert.match(runtime, /data-runtime-renderer="ten-steps"/);
 });
 
 test("mounted Mission path is registry-owned and renders all ten current titles and purposes", () => {
@@ -72,7 +82,7 @@ test("mounted Mission path is registry-owned and renders all ten current titles 
   const localizedTitles = Array.from({ length: 10 }, (_, index) => messages.text[20 + index * 2]);
   const localizedPurposes = Array.from({ length: 10 }, (_, index) => messages.text[21 + index * 2]);
   assert.deepEqual(localizedTitles, programmeMissionTitles);
-  assert.equal((runtime.match(/role="listitem" data-ten-steps-mission/g) ?? []).length, 10);
+  assert.equal((runtime.match(/data-ten-steps-mission="[^"]*" role="listitem"/g) ?? []).length, 10);
 
   const missionMap = runtime.slice(
     runtime.indexOf('data-ten-steps-section="mission-map"'),
@@ -83,7 +93,7 @@ test("mounted Mission path is registry-owned and renders all ten current titles 
   for (const [index, title] of localizedTitles.entries()) {
     const titleIndex = missionMapText.indexOf(title, cursor + 1);
     assert.ok(titleIndex > cursor, `Mission ${String(index + 1).padStart(2, "0")} title must render in order`);
-    assert.ok(missionMapText.includes(localizedPurposes[index]), `${title} must render its current purpose`);
+    assert.ok(missionMapText.includes(localizedPurposes[index].replaceAll("'", "'")), `${title} must render its current purpose`);
     cursor = titleIndex;
   }
 
@@ -91,11 +101,11 @@ test("mounted Mission path is registry-owned and renders all ten current titles 
   assert.doesNotMatch(runtimeText, /PLANNED · NOT YET AVAILABLE|future mission about|environmental friction|support option ready/i);
 });
 
-test("mounted 10 Steps handoff uses only the canonical Programme entry destination", () => {
+test("mounted 10 Steps component uses the canonical Programme entry and one trust destination", () => {
   const bodyHrefs = [...runtime.matchAll(/<a\b[^>]*href="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(bodyHrefs, ["/program?entry=start", "/program?entry=start"]);
+  assert.deepEqual(bodyHrefs, ["/program?entry=start", "/about", "/program?entry=start", "/program?entry=start"]);
   assert.doesNotMatch(runtime, /href="\/(?:casinos|bonuses|best-offers|catalog|compare|r\/|go\/)/);
-  assert.doesNotMatch(runtime, /\?mission=|missionIndex|localStorage|sessionStorage/);
+  assert.doesNotMatch(component, /\?mission=|missionIndex|localStorage|sessionStorage/);
 });
 
 test("mounted Mission 01 copy reflects the Starting Point, timing and reward boundary", () => {
@@ -114,7 +124,7 @@ test("mounted account boundary remains non-commercial and avoids unsupported out
   assert.match(runtimeText, /Your situation and plan are never used for offers, rankings or ads\./);
   assert.match(runtimeText, /Request export or deletion through account support; legal and backup retention may apply\./);
   assert.match(runtimeText, /No mission ever asks you to deposit, claim or play\./);
-  assert.doesNotMatch(runtime, /href="\/r\/|https?:\/\/(?!images\.pexels\.com)/i);
+  assert.doesNotMatch(runtime, /href="\/r\/|https?:\/\//i);
   assert.doesNotMatch(runtimeText, /guaranteed control|improve your odds|(?:diagnoses|treats) gambling addiction|clinical(?:ly)? effective|treatment programme/i);
 });
 
@@ -129,11 +139,12 @@ test("mounted route metadata is canonical, indexable and uses only truthful WebP
   assert.doesNotMatch(page, /"@type": "(?:Product|Offer|Course|MedicalWebPage|FAQPage)"/);
 });
 
-test("mounted handoff remains server-first and carries its generated responsive rules", () => {
-  assert.doesNotMatch(page + handoffPage, /["']use client["']|useEffect|useState/);
-  assert.match(handoffPage, /dangerouslySetInnerHTML=\{\{ __html: html \}\}/);
-  assert.match(runtimeCss, /@media \(max-width: 760px\)/);
-  assert.match(runtimeCss, /@media \(max-width: 900px\)/);
+test("mounted component remains server-first and carries its responsive rules", () => {
+  assert.doesNotMatch(page + component, /["']use client["']|useEffect|useState/);
+  assert.match(runtime, /<img alt="Ten lanterns along a dark path, first ones lit — sequence and destination"[^>]*src="\/home\/hero-plan\.jpg"/);
+  assert.match(componentCss, /@media \(max-width: 900px\)/);
+  assert.match(componentCss, /@media \(max-width: 640px\)/);
+  assert.match(componentCss, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
 test("unmounted legacy resolver fails closed for anonymous and unavailable sessions", async () => {

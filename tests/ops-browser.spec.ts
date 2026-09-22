@@ -161,7 +161,7 @@ test("10 Steps renders representative signed-out content without invented progre
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/10-steps");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.locator('[data-handoff-page="tenSteps"]')).toHaveCount(1);
+  await expect(page.locator('[data-runtime-renderer="ten-steps"]')).toHaveCount(1);
   await expect(page.getByText("01", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("10", { exact: true }).last()).toBeVisible();
   await expect(page.getByRole("link", { name: "Start Mission 01" }).first()).toHaveAttribute("href", "/program?entry=start");

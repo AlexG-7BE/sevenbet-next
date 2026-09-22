@@ -13,11 +13,11 @@ function classes(...names: readonly (string | undefined)[]) {
 }
 
 /** Renders the last word of a translated heading in the editorial serif without changing the copy. */
-export function EmphasisTail({ single = "em", text }: { single?: "em" | "plain"; text: string }) {
-  const trimmed = text.trim();
-  const split = trimmed.lastIndexOf(" ");
-  if (split < 0) return single === "em" ? <em>{trimmed}</em> : <>{trimmed}</>;
-  return <>{trimmed.slice(0, split)} <em>{trimmed.slice(split + 1)}</em></>;
+export function EmphasisTail({ single = "em", text, words = 1 }: { single?: "em" | "plain"; text: string; words?: number }) {
+  const parts = text.trim().split(/\s+/);
+  if (parts.length < 2) return single === "em" ? <em>{parts[0]}</em> : <>{parts[0]}</>;
+  const lead = parts.slice(0, Math.max(1, parts.length - words));
+  return <>{lead.join(" ")} <em>{parts.slice(lead.length).join(" ")}</em></>;
 }
 
 /** Splits a structured offer headline at its first " + " so the add-on can render in the editorial serif. */
