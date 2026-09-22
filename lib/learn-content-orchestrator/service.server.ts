@@ -83,15 +83,11 @@ function absoluteHours(from: string, to: Date) {
 
 function liveResultIsVerified(input: {
   result: Awaited<ReturnType<LearnContentPublisher["publish"]>>;
-  expectedArticleId: string | null;
-  expectedOperation: "CREATE" | "UPDATE";
   article: { locale: string; category: string; slug: string };
 }) {
   const { result } = input;
   if (result.result !== "LIVE" || !result.verified || result.persistence !== "COMMITTED" || result.status !== "PUBLISHED") return false;
-  if (input.expectedArticleId && result.articleId !== input.expectedArticleId) return false;
-  const allowedOperations = input.expectedOperation === "CREATE" ? ["CREATED", "NO_CHANGE"] : ["UPDATED", "NO_CHANGE"];
-  if (!allowedOperations.includes(result.operation)) return false;
+  if (result.operation !== "CREATED" && result.operation !== "NO_CHANGE") return false;
   try {
     const expectedUrl = `${PUBLIC_CANONICAL_ORIGIN}${publicLearnArticlePath(input.article.locale, input.article.category, input.article.slug)}`;
     return new URL(result.url).href === expectedUrl;
@@ -290,6 +286,11 @@ export function createLearnContentCronHandler(dependencies: LearnContentCronDepe
     }
 
     if (published.result === "ERROR") {
+      if (!published.error.retryable) {
+        const code = `MCP_${published.error.code}`;
+        await state.finish({ runId: run.runId, now: current, result: "BLOCKED", code });
+        return response("BLOCKED", code);
+      }
       const exhausted = attempt >= LEARN_CONTENT_MAX_PUBLICATION_ATTEMPTS;
       const persistence = published.error.persistence === "COMMITTED" ? "COMMITTED" : published.error.persistence === "NOT_COMMITTED" ? "NOT_COMMITTED" : "UNKNOWN";
       const code = exhausted ? `MCP_${persistence}_RETRY_LIMIT` : `MCP_${persistence}_RETRY_PENDING`;
@@ -298,8 +299,6 @@ export function createLearnContentCronHandler(dependencies: LearnContentCronDepe
     }
     if (!liveResultIsVerified({
       result: published,
-      expectedArticleId: output.learnApply.article.articleId,
-      expectedOperation: output.seoHandoff.decision,
       article: output.learnApply.article,
     })) {
       const exhausted = attempt >= LEARN_CONTENT_MAX_PUBLICATION_ATTEMPTS;

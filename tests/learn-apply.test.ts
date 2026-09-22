@@ -10,6 +10,7 @@ import type { AdminArticle, ArticleDocumentInput } from "../lib/articles/article
 import { publicationIssues, validateArticleDocument } from "../lib/articles/article-validation";
 import { learnApplyInputSchema, type LearnApplyInput } from "../lib/learn-apply/contract";
 import { LearnApplyError } from "../lib/learn-apply/errors";
+import { learnApplyIntentFingerprint } from "../lib/learn-apply/fingerprint";
 import { LearnImageService } from "../lib/learn-apply/image-service";
 import { LearnPublicVerifier, publicLearnArticlePath } from "../lib/learn-apply/public-verification";
 import { LearnApplyService } from "../lib/learn-apply/service";
@@ -125,10 +126,23 @@ test("learn_apply schema covers the complete canonical block set and bounded ima
   assert.equal(learnApplyTool.name, "learn_apply");
   assert.deepEqual(learnApplyTool.annotations, {
     readOnlyHint: false,
-    destructiveHint: true,
+    destructiveHint: false,
     idempotentHint: true,
     openWorldHint: true,
   });
+  assert.match(learnApplyTool.description, /create and publish one new/i);
+  assert.match(learnApplyTool.description, /updates are not supported/i);
+  assert.doesNotMatch(learnApplyTool.description, /return CREATED, UPDATED|replace the complete desired state/i);
+});
+
+test("learn_apply contract is create-only and exposes publication-ready fields", () => {
+  const valid = input();
+  assert.equal(learnApplyInputSchema.safeParse({ ...valid, article: { ...valid.article, articleId: "11111111-1111-4111-8111-111111111111" } }).success, false);
+  assert.equal(learnApplyInputSchema.safeParse({ ...valid, article: { ...valid.article, expectedUpdatedAt: "2026-09-21T10:00:00Z" } }).success, false);
+  assert.equal(learnApplyInputSchema.safeParse(input({ title: "Bad" })).success, false);
+  assert.equal(learnApplyInputSchema.safeParse(input({ excerpt: "Too short" })).success, false);
+  assert.equal(learnApplyInputSchema.safeParse(input({ readingTime: "sometime later" as never })).success, false);
+  assert.equal(learnApplyInputSchema.safeParse(input({ bodyBlocks: [{ id: "heading", type: "heading", level: 2, text: "Only a heading" }] })).success, false);
 });
 
 test("contract and publication validation fail closed for malformed base64, locale, category, and canonical URL", () => {
@@ -171,13 +185,19 @@ test("orchestration creates LIVE without images and invalidates the canonical su
 });
 
 test("NO_CHANGE writes nothing but revalidates and verifies for post-commit recovery", async () => {
-  const desired = canonicalInputDocument();
+  const replayInput = input();
+  const desired = canonicalInputDocument(replayInput);
   const current = article(desired);
+  const intentFingerprint = learnApplyIntentFingerprint(replayInput);
   const invalidated: string[] = [];
   let applied = 0;
   const service = new LearnApplyService({
     articles: {
-      inspectPublishedApply: async () => ({ article: current, requestAudit: null, reusableAudit: null }),
+      inspectPublishedApply: async () => ({
+          article: current,
+          requestAudit: { entityId: current.id, metadata: { intentFingerprint }, timestamp: current.updatedAt },
+          reusableAudit: null,
+      }),
       applyPublishedDocument: async () => {
         applied += 1;
         return { operation: "NO_CHANGE", article: current, previousPath: null };
@@ -190,7 +210,7 @@ test("NO_CHANGE writes nothing but revalidates and verifies for post-commit reco
     verifier: { verify: async () => ({ verified: true, checks: ["article_http_and_identity"], attempts: 1, failureCode: null, publicUrl: "https://b4gamble.com/en/learn/casino-basics/autonomous-learn-guide" }) },
     logger: () => undefined,
   });
-  const result = await service.apply(input({ articleId: current.id, expectedUpdatedAt: current.updatedAt }));
+  const result = await service.apply(replayInput);
   assert.equal(applied, 1);
   assert.equal(result.operation, "NO_CHANGE");
   assert.equal(result.updatedAt, current.updatedAt);
@@ -274,25 +294,33 @@ test("post-commit verification failure is truthful and never rolls back the publ
   assert.equal(ensured, 1);
 });
 
-test("slug and category replacement invalidates both the old and new public paths", async () => {
-  const desired = canonicalInputDocument(input({ category: "casino-safety", slug: "moved-guide" }));
-  const current = article({ ...desired, category: "casino-basics", slug: "old-guide" });
-  const invalidated: string[] = [];
+test("an existing slug from another request is rejected before images or persistence", async () => {
+  const current = article(canonicalInputDocument());
+  let prepared = 0;
+  let persisted = 0;
   const service = new LearnApplyService({
     articles: {
       inspectPublishedApply: async () => ({ article: current, requestAudit: null, reusableAudit: null }),
-      applyPublishedDocument: async (value) => ({ operation: "UPDATED", article: article(value.document, { id: current.id }), previousPath: { category: current.category, slug: current.slug } }),
+      applyPublishedDocument: async () => {
+        persisted += 1;
+        return { operation: "NO_CHANGE", article: current, previousPath: null };
+      },
       isImageUrlReferenced: async () => false,
     },
-    images: { prepare: async () => ({ images: [], createdObjects: [], recoveryObjects: [] }), cleanupCreated: async () => undefined },
+    images: {
+      prepare: async () => {
+        prepared += 1;
+        return { images: [], createdObjects: [], recoveryObjects: [] };
+      },
+      cleanupCreated: async () => undefined,
+    },
     actorResolver: async () => ({ id: "22222222-2222-4222-8222-222222222222", name: "B4GAMBLE Content Agent", role: "AUTHOR", userId: null }),
-    revalidate: (category, slug) => { invalidated.push(`${category}/${slug}`); },
-    verifier: { verify: async () => ({ verified: true, checks: ["article_http_and_identity"], attempts: 1, failureCode: null, publicUrl: "https://b4gamble.com/en/learn/casino-safety/moved-guide" }) },
+    verifier: { verify: async () => assert.fail("verification must not run") },
     logger: () => undefined,
   });
-  const result = await service.apply(input({ articleId: current.id, expectedUpdatedAt: current.updatedAt, category: "casino-safety", slug: "moved-guide" }));
-  assert.equal(result.operation, "UPDATED");
-  assert.deepEqual(invalidated, ["casino-basics/old-guide", "casino-safety/moved-guide"]);
+  await assert.rejects(() => service.apply(input()), (error: unknown) => error instanceof LearnApplyError && error.code === "CREATE_SLUG_EXISTS");
+  assert.equal(prepared, 0);
+  assert.equal(persisted, 0);
 });
 
 class MemoryStorage implements StorageProvider {
@@ -597,12 +625,44 @@ test("MCP failures are schema-declared, structured, and disclose no stack", asyn
         code: "CONFLICT",
         message: "Article changed during autonomous publication.",
         persistence: "NOT_COMMITTED",
+        retryable: false,
         details: { articleId: "11111111-1111-4111-8111-111111111111" },
       },
     });
     assert.doesNotMatch(JSON.stringify(result), /stack|learn-apply\.test\.ts/);
     assert.equal((learnApplyTool.outputSchema as { type?: string }).type, "object");
     assert.equal((learnApplyTool.outputSchema as { oneOf?: unknown[] }).oneOf?.length, 2);
+  } finally {
+    await client.close();
+    await server.close();
+  }
+});
+
+test("MCP marks a transient serializable conflict for safe same-request retry", async () => {
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const server = createLearnMcpServer({
+    apply: async () => {
+      throw new LearnApplyError(
+        "A concurrent Learn create changed the same target. Retry the same requestId.",
+        "SERIALIZABLE_CONFLICT",
+        503,
+      );
+    },
+  });
+  const client = new Client({ name: "learn-apply-retryable-error-test", version: "1.0.0" });
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+  try {
+    const result = await client.callTool({ name: "learn_apply", arguments: input() });
+    assert.deepEqual(result.structuredContent, {
+      result: "ERROR",
+      error: {
+        code: "SERIALIZABLE_CONFLICT",
+        message: "A concurrent Learn create changed the same target. Retry the same requestId.",
+        persistence: "NOT_COMMITTED",
+        retryable: true,
+      },
+    });
   } finally {
     await client.close();
     await server.close();

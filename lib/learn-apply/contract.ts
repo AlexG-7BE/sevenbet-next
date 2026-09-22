@@ -7,10 +7,31 @@ export const LEARN_APPLY_MAX_GENERATED_IMAGES = 8;
 
 const nullableText = (maximum: number) => z.string().trim().min(1).max(maximum).nullable();
 const blockId = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/);
-const isoTimestamp = z.string().refine((value) => {
+const routePart = z.string().trim().min(1).max(120).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+export const RFC3339_UTC_TIMESTAMP_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?Z$/;
+export const rfc3339UtcTimestampSchema = z.string().regex(
+  RFC3339_UTC_TIMESTAMP_PATTERN,
+  "Expected an RFC 3339 UTC timestamp.",
+).refine((value) => {
+  const match = RFC3339_UTC_TIMESTAMP_PATTERN.exec(value);
+  if (!match) return false;
   const parsed = new Date(value);
-  return !Number.isNaN(parsed.valueOf()) && parsed.toISOString() === value;
-}, "Expected an exact ISO-8601 UTC timestamp.");
+  return !Number.isNaN(parsed.valueOf())
+    && parsed.getUTCFullYear() === Number(match[1])
+    && parsed.getUTCMonth() + 1 === Number(match[2])
+    && parsed.getUTCDate() === Number(match[3])
+    && parsed.getUTCHours() === Number(match[4])
+    && parsed.getUTCMinutes() === Number(match[5])
+    && parsed.getUTCSeconds() === Number(match[6]);
+}, "Expected a valid RFC 3339 UTC timestamp.");
+
+const readingTimeSchema = z.string().trim().regex(
+  /^(\d{1,3})\s*(?:min|mins|minute|minutes)(?:\s+read)?$/i,
+  "Reading time must be expressed in minutes.",
+).refine((value) => {
+  const minutes = Number(value.match(/^(\d{1,3})/)?.[1]);
+  return minutes >= 1 && minutes <= 180;
+}, "Reading time must be between 1 and 180 minutes.");
 
 const urlImageSourceSchema = z.object({
   type: z.literal("url"),
@@ -107,13 +128,13 @@ const linkBlockSchema = z.object({
 export const learnApplyInputSchema = z.object({
   requestId: z.string().min(8).max(128).regex(/^[A-Za-z0-9][A-Za-z0-9._:-]*$/),
   article: z.object({
-    articleId: z.string().uuid().nullable(),
-    expectedUpdatedAt: isoTimestamp.nullable().optional().default(null),
-    locale: z.string().min(2).max(20),
-    category: z.string().min(1).max(120),
-    slug: z.string().min(1).max(120),
-    title: z.string().trim().min(1).max(240),
-    excerpt: z.string().trim().min(1).max(1_000),
+    articleId: z.null(),
+    expectedUpdatedAt: z.null(),
+    locale: z.string().trim().min(2).max(20),
+    category: routePart,
+    slug: routePart,
+    title: z.string().trim().min(4).max(240),
+    excerpt: z.string().trim().min(20).max(1_000),
     tags: z.array(z.string().trim().min(1).max(80)).max(12),
     bodyBlocks: z.array(z.discriminatedUnion("type", [
       paragraphBlockSchema,
@@ -133,7 +154,7 @@ export const learnApplyInputSchema = z.object({
       description: nullableText(180),
       canonicalUrl: nullableText(2_000),
     }).strict(),
-    readingTime: nullableText(80),
+    readingTime: readingTimeSchema,
     difficulty: z.enum(["Beginner", "Intermediate", "Advanced"]).nullable(),
   }).strict(),
 }).strict().superRefine((value, context) => {
@@ -150,6 +171,9 @@ export const learnApplyInputSchema = z.object({
   }
   if (images > LEARN_APPLY_MAX_IMAGES) context.addIssue({ code: "custom", path: ["article", "bodyBlocks"], message: `An apply can contain at most ${LEARN_APPLY_MAX_IMAGES} images.` });
   if (generated > LEARN_APPLY_MAX_GENERATED_IMAGES) context.addIssue({ code: "custom", path: ["article", "bodyBlocks"], message: `An apply can generate at most ${LEARN_APPLY_MAX_GENERATED_IMAGES} images.` });
+  if (!value.article.bodyBlocks.some((block) => block.type === "paragraph" || block.type === "list" || block.type === "callout")) {
+    context.addIssue({ code: "custom", path: ["article", "bodyBlocks"], message: "An Article needs readable explanatory content." });
+  }
   if (new Set(value.article.tags).size !== value.article.tags.length) context.addIssue({ code: "custom", path: ["article", "tags"], message: "Tags must be unique." });
 });
 
@@ -159,13 +183,13 @@ export type LearnApplyImageBlock = Extract<LearnApplyInput["article"]["bodyBlock
 
 export const learnApplyResultSchema = z.object({
   result: z.enum(["LIVE", "PERSISTED_NOT_VERIFIED"]),
-  operation: z.enum(["CREATED", "UPDATED", "NO_CHANGE"]),
+  operation: z.enum(["CREATED", "NO_CHANGE"]),
   persistence: z.literal("COMMITTED"),
   articleId: z.string().uuid(),
   status: z.literal("PUBLISHED"),
   url: z.string().url(),
-  publishedAt: isoTimestamp,
-  updatedAt: isoTimestamp,
+  publishedAt: rfc3339UtcTimestampSchema,
+  updatedAt: rfc3339UtcTimestampSchema,
   verified: z.boolean(),
   images: z.array(z.object({
     slot: z.string(),
@@ -188,9 +212,10 @@ export type LearnApplyResult = z.infer<typeof learnApplyResultSchema>;
 export const learnApplyErrorResultSchema = z.object({
   result: z.literal("ERROR"),
   error: z.object({
-    code: z.string().min(1).max(120),
+    code: z.string().regex(/^[A-Z0-9_]{1,64}$/),
     message: z.string().min(1).max(1_000),
     persistence: z.enum(["NOT_COMMITTED", "COMMITTED", "UNKNOWN"]),
+    retryable: z.boolean(),
     details: z.record(z.string(), z.unknown()).optional(),
   }).strict(),
 }).strict();

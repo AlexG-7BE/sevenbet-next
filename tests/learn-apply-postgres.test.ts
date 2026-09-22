@@ -40,29 +40,18 @@ function document(overrides: Partial<ArticleDocumentInput> = {}): ArticleDocumen
 async function apply({
   desired,
   requestId,
-  articleId = null,
-  observedArticleId = null,
-  observedUpdatedAt = null,
-  expectedUpdatedAt = null,
 }: {
   desired: ArticleDocumentInput;
   requestId: string;
-  articleId?: string | null;
-  observedArticleId?: string | null;
-  observedUpdatedAt?: string | null;
-  expectedUpdatedAt?: string | null;
 }) {
-  const intentFingerprint = sha256(`intent:${requestId}`);
+  const documentFingerprint = articleDocumentFingerprint(desired);
+  const intentFingerprint = sha256(`intent:${documentFingerprint}`);
   return articleService.applyPublishedDocument({
-    articleId,
     document: desired,
     actorId,
     requestIdHash: sha256(requestId),
     intentFingerprint,
-    documentFingerprint: articleDocumentFingerprint(desired),
-    expectedUpdatedAt,
-    observedArticleId,
-    observedUpdatedAt,
+    documentFingerprint,
     auditMetadata: {
       schemaVersion: 1,
       images: desired.heroImageUrl ? [{ key: `content/learn/${"a".repeat(64)}.webp` }] : [],
@@ -70,7 +59,7 @@ async function apply({
   });
 }
 
-test("learn_apply ArticleService create, retry, update, move, audit, revision, and concurrency are atomic", async () => {
+test("learn_apply ArticleService is create-only, idempotent, audited, and concurrency-safe", async () => {
   assertDisposableDatabase(process.env.DATABASE_URL);
   await prisma.auditLog.deleteMany({ where: { actorId } });
   const staleArticles = await prisma.article.findMany({ where: { createdBy: actorId }, select: { id: true } });
@@ -93,18 +82,15 @@ test("learn_apply ArticleService create, retry, update, move, audit, revision, a
     assert.equal((await articleService.getPublished(initial.category, initial.slug, initial.locale))?.id, created.article.id);
 
     const createInspection = await articleService.inspectPublishedApply({
-      articleId: null,
       slug: initial.slug,
       requestIdHash: sha256("postgres-create-0001"),
-      intentFingerprint: sha256("intent:postgres-create-0001"),
+      intentFingerprint: sha256(`intent:${articleDocumentFingerprint(initial)}`),
     });
     assert.equal(createInspection.article?.id, created.article.id);
     assert.equal(createInspection.requestAudit?.entityId, created.article.id);
     const retry = await apply({
       desired: initial,
       requestId: "postgres-create-0001",
-      observedArticleId: created.article.id,
-      observedUpdatedAt: created.article.updatedAt,
     });
     assert.equal(retry.operation, "NO_CHANGE");
     assert.equal(retry.article.updatedAt, created.article.updatedAt);
@@ -112,27 +98,31 @@ test("learn_apply ArticleService create, retry, update, move, audit, revision, a
     assert.equal(await prisma.auditLog.count({ where: { actorId, action: "learn_apply", entityId: created.article.id } }), 1);
     assert.equal(await prisma.contentRevision.count({ where: { entityType: "article", entityId: created.article.id } }), 0);
 
-    const replacement = document({
-      title: "Learn Apply PostgreSQL Guide Updated",
-      bodyBlocks: [
-        { id: "intro", type: "paragraph", text: "The previous public version remains available until this replacement commits." },
-        { id: "source", type: "link", label: "Methodology", url: "/methodology", description: "Canonical editorial method." },
-      ],
+    await assert.rejects(() => apply({
+      desired: initial,
+      requestId: "postgres-duplicate-same-document-0002",
+    }), /identity appeared|already exists/i);
+    await assert.rejects(() => apply({
+      desired: { ...initial, title: "Forbidden autonomous replacement" },
+      requestId: "postgres-update-forbidden-0003",
+    }), /identity appeared|already exists/i);
+    assert.equal((await articleService.getAdminArticle(created.article.id)).title, initial.title);
+    assert.equal(await prisma.auditLog.count({ where: { actorId, action: "learn_apply", entityId: created.article.id } }), 1);
+    assert.equal(await prisma.contentRevision.count({ where: { entityType: "article", entityId: created.article.id } }), 0);
+
+    await assert.rejects(() => apply({
+      desired: document({ slug: "learn-apply-postgres-reused-request" }),
+      requestId: "postgres-create-0001",
+    }), /different Learn apply intent/i);
+
+    const imageDocument = document({
+      slug: "learn-apply-postgres-image",
+      title: "Learn Apply PostgreSQL Image Guide",
       heroImageUrl: `https://old-media.example.com/content/learn/${"a".repeat(64)}.webp`,
       heroImageAlt: "An editorial learning illustration",
     });
-    const updated = await apply({
-      desired: replacement,
-      requestId: "postgres-update-0002",
-      articleId: created.article.id,
-      observedArticleId: created.article.id,
-      observedUpdatedAt: created.article.updatedAt,
-      expectedUpdatedAt: created.article.updatedAt,
-    });
-    assert.equal(updated.operation, "UPDATED");
-    assert.equal(updated.article.status, "PUBLISHED");
-    assert.equal(updated.article.publishedAt, created.article.publishedAt);
-    assert.equal((await articleService.getPublished(replacement.category, replacement.slug, replacement.locale))?.title, replacement.title);
+    const imageCreated = await apply({ desired: imageDocument, requestId: "postgres-image-create-0004" });
+    assert.equal(imageCreated.operation, "CREATED");
     let cleanupCalls = 0;
     const referencedImageKey = `content/learn/${"a".repeat(64)}.webp`;
     assert.equal(await articleService.cleanupUnreferencedImage(
@@ -147,76 +137,25 @@ test("learn_apply ArticleService create, retry, update, move, audit, revision, a
       async () => { cleanupCalls += 1; },
     ), true);
     assert.equal(cleanupCalls, 1);
-    const revisions = await prisma.contentRevision.findMany({
-      where: { entityType: "article", entityId: created.article.id },
-      orderBy: { revisionNumber: "asc" },
-    });
-    assert.equal(revisions.length, 1);
-    assert.equal(revisions[0].createdBy, actorId);
-    assert.equal((revisions[0].snapshot as { article: { title: string } }).article.title, initial.title);
-    const updateRetryInspection = await articleService.inspectPublishedApply({
-      articleId: created.article.id,
-      slug: replacement.slug,
-      requestIdHash: sha256("postgres-update-0002"),
-      intentFingerprint: sha256("intent:postgres-update-0002"),
-      expectedUpdatedAt: created.article.updatedAt,
-    });
-    assert.equal(updateRetryInspection.requestAudit?.entityId, created.article.id);
-    const updateRetry = await apply({
-      desired: replacement,
-      requestId: "postgres-update-0002",
-      articleId: created.article.id,
-      observedArticleId: created.article.id,
-      observedUpdatedAt: updated.article.updatedAt,
-      expectedUpdatedAt: created.article.updatedAt,
-    });
-    assert.equal(updateRetry.operation, "NO_CHANGE");
-    assert.equal(updateRetry.article.updatedAt, updated.article.updatedAt);
-    assert.equal(await prisma.contentRevision.count({ where: { entityType: "article", entityId: created.article.id } }), 1);
 
-    const movedDocument = { ...replacement, slug: "learn-apply-postgres-moved", category: "casino-safety" };
-    const moved = await apply({
-      desired: movedDocument,
-      requestId: "postgres-move-0003",
-      articleId: created.article.id,
-      observedArticleId: created.article.id,
-      observedUpdatedAt: updated.article.updatedAt,
-      expectedUpdatedAt: updated.article.updatedAt,
-    });
-    assert.equal(moved.operation, "UPDATED");
-    assert.deepEqual(moved.previousPath, { category: initial.category, slug: initial.slug });
-    assert.equal(await articleService.getPublished(initial.category, initial.slug, initial.locale), null);
-    assert.equal((await articleService.getPublished(movedDocument.category, movedDocument.slug, movedDocument.locale))?.id, created.article.id);
-
-    const duplicate = await apply({
-      desired: document({ slug: "learn-apply-postgres-duplicate", title: "A separate duplicate target" }),
-      requestId: "postgres-duplicate-create-0004",
-    });
-    await assert.rejects(() => apply({
-      desired: { ...movedDocument, slug: duplicate.article.slug },
-      requestId: "postgres-duplicate-conflict-0005",
-      articleId: created.article.id,
-      observedArticleId: created.article.id,
-      observedUpdatedAt: moved.article.updatedAt,
-      expectedUpdatedAt: moved.article.updatedAt,
-    }), /already exists/i);
-    assert.equal((await articleService.getAdminArticle(created.article.id)).slug, movedDocument.slug);
-
-    const concurrentA = { ...movedDocument, title: "Concurrent replacement A" };
-    const concurrentB = { ...movedDocument, title: "Concurrent replacement B" };
+    const concurrentA = document({ slug: "learn-apply-postgres-concurrent", title: "Concurrent new Article A" });
+    const concurrentB = document({ slug: "learn-apply-postgres-concurrent", title: "Concurrent new Article B" });
     const concurrent = await Promise.allSettled([
-      apply({ desired: concurrentA, requestId: "postgres-concurrent-a-0006", articleId: created.article.id, observedArticleId: created.article.id, observedUpdatedAt: moved.article.updatedAt, expectedUpdatedAt: moved.article.updatedAt }),
-      apply({ desired: concurrentB, requestId: "postgres-concurrent-b-0007", articleId: created.article.id, observedArticleId: created.article.id, observedUpdatedAt: moved.article.updatedAt, expectedUpdatedAt: moved.article.updatedAt }),
+      apply({ desired: concurrentA, requestId: "postgres-concurrent-a-0005" }),
+      apply({ desired: concurrentB, requestId: "postgres-concurrent-b-0006" }),
     ]);
     assert.equal(concurrent.filter((result) => result.status === "fulfilled").length, 1);
     assert.equal(concurrent.filter((result) => result.status === "rejected").length, 1);
-    const final = await articleService.getAdminArticle(created.article.id);
-    assert.equal(final.status, "PUBLISHED");
+    const final = await articleService.getPublished("casino-basics", "learn-apply-postgres-concurrent", "en-GB");
+    assert.ok(final);
     assert.ok([concurrentA.title, concurrentB.title].includes(final.title));
 
     const audits = await prisma.auditLog.findMany({ where: { actorId, action: "learn_apply" } });
-    assert.ok(audits.length >= 4);
+    assert.equal(audits.length, 3);
     assert.ok(audits.every((audit) => audit.actorId === actorId));
+    assert.ok(audits.every((audit) => (audit.metadata as { operation?: string } | null)?.operation === "CREATED"));
+    const autonomousArticleIds = (await prisma.article.findMany({ where: { createdBy: actorId }, select: { id: true } })).map((item) => item.id);
+    assert.equal(await prisma.contentRevision.count({ where: { entityType: "article", entityId: { in: autonomousArticleIds } } }), 0);
   } finally {
     await prisma.auditLog.deleteMany({ where: { actorId } });
     const articles = await prisma.article.findMany({ where: { createdBy: actorId }, select: { id: true } });

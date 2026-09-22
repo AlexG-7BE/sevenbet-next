@@ -1,8 +1,9 @@
 # Autonomous Learn Publication
 
-**Status:** PRODUCTION ACTIVE — LIVE AND VERIFIED, 21 SEPTEMBER 2026
+**Status:** PRODUCTION BASELINE VERIFIED, 21 SEPTEMBER 2026 — CREATE-ONLY
+REVISION PENDING PRODUCTION VERIFICATION
 
-**Authority:** explicit Founder instruction of 21 September 2026
+**Authority:** explicit Founder instructions of 21–22 September 2026
 
 ## Evidence boundary
 
@@ -21,6 +22,12 @@ agent-facing Learn mutation. There is no new Prisma model, table, migration,
 domain entity, media entity, queue, job or CMS. Human Admin workflow is
 unchanged.
 
+**DETECTED IN THE CURRENT RELEASE CANDIDATE, NOT YET A PRODUCTION CLAIM:** the
+autonomous mutation is create-only. The public contract requires null Article
+identity/version fields, rejects every existing slug and update shape, and
+permits `NO_CHANGE` only for an exact replay of the same CREATE request and
+intent. Human Admin editing remains unchanged.
+
 **DETECTED IN LIVE AUTHORITATIVE EVIDENCE:** PR #307, its required checks, the
 merged-main Production deployment, dedicated service actor, authenticated MCP
 discovery/apply/retry, public projection, archive lifecycle and pre-existing
@@ -36,8 +43,8 @@ requires `Authorization: Bearer <service token>`. `tools/list` exposes exactly
 learn_apply {
   requestId: string[8..128],
   article: {
-    articleId: UUID | null,
-    expectedUpdatedAt?: ISO-8601 UTC | null,
+    articleId: null,
+    expectedUpdatedAt: null,
     locale: current published language-route default locale,
     category: current registered Learn category slug,
     slug: URL-safe globally unique Article slug,
@@ -59,7 +66,7 @@ learn_apply {
       description: string | null,
       canonicalUrl: internal B4GAMBLE URL/path | null
     },
-    readingTime: string | null,
+    readingTime: 1..180 minute string,
     difficulty: "Beginner" | "Intermediate" | "Advanced" | null
   }
 }
@@ -85,7 +92,7 @@ Success is:
 ```text
 {
   result: "LIVE" | "PERSISTED_NOT_VERIFIED",
-  operation: "CREATED" | "UPDATED" | "NO_CHANGE",
+  operation: "CREATED" | "NO_CHANGE",
   persistence: "COMMITTED",
   articleId,
   status: "PUBLISHED",
@@ -99,7 +106,10 @@ Success is:
 ```
 
 Pre-commit failures are MCP error results with stable `code`, safe `message`,
-`persistence: NOT_COMMITTED` and bounded details. Stack traces, credentials,
+`persistence: NOT_COMMITTED`, explicit `retryable` and bounded details.
+Deterministic contract, identity, existing-slug and configuration failures are
+not retried as if they were transient. A PostgreSQL serialization conflict is
+explicitly retryable with the same request ID. Stack traces, credentials,
 binary data, Article prose and raw provider output are never returned.
 
 ## Runtime configuration
@@ -148,21 +158,22 @@ record whose name, role, user link or requested UUID differs fails closed.
 4. Build and validate the final `ArticleDocumentInput`.
 5. Run `ArticleService.applyPublishedDocument` in one serializable,
    advisory-locked transaction.
-6. On update, preserve the old current document as `ContentRevision`, replace
-   the canonical row and keep it `PUBLISHED`.
-7. Invalidate old/new Article paths, Article cache, `/learn` and
+6. Create one final `PUBLISHED` Article plus its `learn_apply` audit. An
+   existing slug conflicts; the autonomous transaction has no Article update
+   or `ContentRevision` branch.
+7. Invalidate the new Article path, Article cache, `/learn` and
    `/sitemap.xml`.
 8. Perform bounded public verification. Return `LIVE` only when every
    policy-applicable check passes.
 
-Natural identity is the global slug. A slug move requires `articleId`.
-`expectedUpdatedAt` is recommended when the agent has a previously read
-version. Independently overlapping writes from the same observation cannot
-both commit. A committed retry with the same request and intent is a
-`NO_CHANGE`, including when its expected timestamp is now stale because that
-exact request produced the current version. `NO_CHANGE` still runs canonical
-cache invalidation and public verification, but writes no revision, audit or
-timestamp.
+Natural create identity is the global slug. `articleId` and
+`expectedUpdatedAt` are literal null; slug/category moves and Article
+replacement are unsupported. Independently overlapping creates for the same
+slug cannot both commit. A committed retry with the same request and intent is
+`NO_CHANGE` only when the Article created by that audit still exactly matches.
+`NO_CHANGE` still runs canonical cache invalidation and public verification,
+but writes no revision, audit or timestamp. A different request conflicts even
+when its desired document happens to be identical.
 
 ## Image behavior and recovery
 
@@ -186,9 +197,9 @@ emitted.
 If persistence succeeds but cache invalidation or public verification fails,
 do not archive or revert automatically. Inspect `failureCode`, verify the
 published Article through Admin/read-only database evidence, restore cache/
-public reachability and call the same desired state with a new request only
-when a new verification run is required. The committed Article remains the
-truth.
+public reachability and call the same desired state with the same request ID so
+the existing committed CREATE is verified through the idempotent `NO_CHANGE`
+path. The committed Article remains the truth.
 
 To disable new autonomous writes, set `LEARN_MCP_ENABLED=false`. To stop only
 generation, set `LEARN_IMAGE_GENERATION_ENABLED=false`. Existing Articles and
@@ -215,7 +226,7 @@ npm run build
 The required GitHub workflow additionally runs the Learn unit/structural suite
 in Quality and its PostgreSQL acceptance in both database-capable jobs.
 
-## Production acceptance record
+## Historical Production acceptance record
 
 **DETECTED, 21 SEPTEMBER 2026:** [PR #307](https://github.com/AlexG-7BE/sevenbet-next/pull/307)
 merged normally after every required check passed.
@@ -266,3 +277,10 @@ merged normally after every required check passed.
   `c985981a021efafe012345538d95c01cf76f0bbe4bc0ad8263b114b612c041dc`
   before and after. Final state remains 24 published Articles plus the one
   archived acceptance history row.
+
+## Create-only revision acceptance record
+
+**UNKNOWN — PENDING RELEASE.** Replace this paragraph only with the exact PR,
+merged `main` SHA, Ready Production deployment, create-only schema discovery,
+bounded autonomous-cycle result and verified Article/state evidence. Do not
+rewrite the historical 21 September acceptance record.

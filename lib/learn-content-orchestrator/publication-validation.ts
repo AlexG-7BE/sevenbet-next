@@ -112,14 +112,8 @@ export function validateLearnContentPublication(input: {
   const generatedAt = new Date(result.runMetadata.generatedAt);
   if (generatedAt < new Date(run.startedAt) || generatedAt > new Date(input.now.valueOf() + 5 * 60 * 1_000)) return fail("RUN_TIMESTAMP_INVALID");
 
-  if (result.seoHandoff.decision === "CREATE") {
-    if (article.articleId !== null || article.expectedUpdatedAt !== null || result.seoHandoff.targetArticleId !== null) return fail("CREATE_TARGET_INVALID");
-    if (context.articles.some((candidate) => candidate.slug === article.slug)) return fail("CREATE_SLUG_ALREADY_EXISTS");
-  } else {
-    const target = context.articles.find((candidate) => candidate.id === article.articleId);
-    if (!target || result.seoHandoff.targetArticleId !== article.articleId) return fail("UPDATE_TARGET_NOT_FOUND");
-    if (article.expectedUpdatedAt !== target.updatedAt) return fail("UPDATE_VERSION_STALE");
-  }
+  if (article.articleId !== null || article.expectedUpdatedAt !== null || result.seoHandoff.targetArticleId !== null) return fail("CREATE_TARGET_INVALID");
+  if (context.articles.some((candidate) => candidate.slug === article.slug)) return fail("CREATE_SLUG_ALREADY_EXISTS");
 
   const evidenceById = new Map(result.evidence.map((item) => [item.id, item]));
   if (evidenceById.size !== result.evidence.length) return fail("DUPLICATE_EVIDENCE_ID");

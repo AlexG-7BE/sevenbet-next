@@ -24,6 +24,10 @@ import {
   type LearnContentSessionState,
 } from "@/lib/learn-content-orchestrator/openai-managed-session.server";
 import {
+  LEARN_CONTENT_ROOT_INSTRUCTIONS,
+  buildLearnContentSessionInput,
+} from "@/lib/learn-content-orchestrator/prompts";
+import {
   validateLearnContentPublication,
   validateLearnContentRoleTrace,
 } from "@/lib/learn-content-orchestrator/publication-validation";
@@ -137,20 +141,18 @@ function noOpEnvelope(decision: "MERGE" | "HOLD" | "DROP" = "HOLD") {
   };
 }
 
-function publishEnvelope(options: { update?: boolean; expectedUpdatedAt?: string; crisis?: boolean } = {}) {
-  const update = options.update ?? false;
-  const expectedUpdatedAt = options.expectedUpdatedAt ?? "2026-09-22T10:00:00.000Z";
+function publishEnvelope(options: { crisis?: boolean } = {}) {
   const claimText = "A public regulator register can help verify an operator licence claim.";
   return {
     resultClass: "PUBLISH",
     seoHandoff: {
-      decision: update ? "UPDATE" : "CREATE",
+      decision: "CREATE",
       searchIntent: "Learn how to verify licensing claims",
       primaryKeyword: "verify gambling licence",
       secondaryKeywords: ["regulator register"],
       audienceNeed: "Check a claim against an authoritative source.",
       rationale: "The topic provides a concrete public-safety skill.",
-      targetArticleId: update ? ARTICLE_ID : null,
+      targetArticleId: null,
       targetSlug: "verify-a-gambling-licence",
     },
     contentPackage: {
@@ -175,8 +177,8 @@ function publishEnvelope(options: { update?: boolean; expectedUpdatedAt?: string
     learnApply: {
       requestId: REQUEST_ID,
       article: {
-        articleId: update ? ARTICLE_ID : null,
-        expectedUpdatedAt: update ? expectedUpdatedAt : null,
+        articleId: null,
+        expectedUpdatedAt: null,
         locale: "en-GB",
         category: "casino-safety",
         slug: "verify-a-gambling-licence",
@@ -449,10 +451,41 @@ test("model envelope parses a healthy SEO HOLD as NO_OP", () => {
   assert.equal(parsed.seoHandoff.decision, "HOLD");
 });
 
+test("model envelope accepts valid RFC 3339 UTC timestamps without fractional seconds", () => {
+  const output = noOpEnvelope();
+  output.runMetadata.generatedAt = "2026-09-22T12:00:00Z";
+  const parsed = parseLearnContentModelOutput(output);
+  assert.equal(parsed.runMetadata.generatedAt, "2026-09-22T12:00:00Z");
+
+  const publish = publishEnvelope();
+  publish.evidence[0].accessedAt = "2026-09-22T12:00:00Z";
+  const parsedPublish = parseLearnContentModelOutput(publish);
+  assert.ok(parsedPublish.resultClass === "PUBLISH");
+  assert.equal(parsedPublish.learnApply.article.expectedUpdatedAt, null);
+  assert.equal(parsedPublish.evidence[0].accessedAt, "2026-09-22T12:00:00Z");
+});
+
+test("model envelope rejects normalized invalid dates and non-UTC timestamps", () => {
+  const invalidDate = noOpEnvelope();
+  invalidDate.runMetadata.generatedAt = "2026-02-30T12:00:00Z";
+  assert.throws(() => parseLearnContentModelOutput(invalidDate), /valid RFC 3339 UTC timestamp/);
+
+  const offsetTimestamp = noOpEnvelope();
+  offsetTimestamp.runMetadata.generatedAt = "2026-09-22T17:00:00+05:00";
+  assert.throws(() => parseLearnContentModelOutput(offsetTimestamp), /RFC 3339 UTC timestamp/);
+});
+
 test("model envelope rejects branch field omission", () => {
   const malformed = { ...noOpEnvelope() } as Record<string, unknown>;
   delete malformed.editorReview;
   assert.throws(() => parseLearnContentModelOutput(malformed), z.ZodError);
+});
+
+test("model role-name order cannot create a false contract failure", () => {
+  const output = noOpEnvelope();
+  output.runMetadata.agentNames.reverse();
+  const parsed = parseLearnContentModelOutput(output);
+  assert.deepEqual(parsed.runMetadata.agentNames, LEARN_CONTENT_ROLE_NAMES);
 });
 
 test("NO_OP cannot smuggle a learn_apply payload", () => {
@@ -495,10 +528,40 @@ test("Managed Agents JSON schema is strict-compatible and requires every envelop
   assert.doesNotMatch(serialized, /"format":/);
   assert.doesNotMatch(serialized, /"prefixItems":/);
   assert.match(serialized, /"anyOf":/);
-  const agentNames = ((LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA.properties as Record<string, unknown>).runMetadata as { properties: Record<string, unknown> }).properties.agentNames as { items: { anyOf: unknown[] }; minItems: number; maxItems: number };
-  assert.equal(agentNames.items.anyOf.length, 3);
+  const properties = LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA.properties as Record<string, unknown>;
+  const agentNames = (properties.runMetadata as { properties: Record<string, unknown> }).properties.agentNames as { items: { enum: unknown[] }; minItems: number; maxItems: number };
+  assert.equal(agentNames.items.enum.length, 3);
   assert.equal(agentNames.minItems, 3);
   assert.equal(agentNames.maxItems, 3);
+
+  const learnApply = (properties.learnApply as { anyOf: Array<Record<string, unknown>> }).anyOf.find((candidate) => candidate.type === "object") as { properties: { article: { properties: Record<string, unknown> } } };
+  const article = learnApply.properties.article.properties;
+  assert.equal((article.articleId as { type: string }).type, "null");
+  assert.equal((article.expectedUpdatedAt as { type: string }).type, "null");
+  assert.equal((article.title as { minLength: number }).minLength, 4);
+  assert.equal((article.excerpt as { minLength: number }).minLength, 20);
+  assert.match(String((article.readingTime as { pattern: string }).pattern), /minute/);
+});
+
+test("managed session input exposes every deterministic publication precondition before inference", () => {
+  const sessionInput = JSON.parse(buildLearnContentSessionInput({
+    runId: RUN_ID,
+    requestId: REQUEST_ID,
+    model: "gpt-6-astra",
+    locale: "en-GB",
+    context: safeContext(),
+  })) as { run: { startedAt: string } };
+  assert.equal(sessionInput.run.startedAt, NOW.toISOString());
+  for (const requiredInstruction of [
+    "fractional seconds are optional",
+    "unique claim IDs",
+    "Autonomous publication is create-only",
+    "must not match an existing Article slug",
+    "excerpt at least 20",
+    "1 through 180 minutes",
+    "exactly equal an evidence URL",
+    "/responsible-gambling",
+  ]) assert.match(LEARN_CONTENT_ROOT_INSTRUCTIONS, new RegExp(requiredInstruction.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
 
 test("subagent role evidence accepts an exact nickname or one unambiguous exact role assignment", () => {
@@ -545,12 +608,16 @@ test("CREATE payload passes deterministic publication validation", () => {
   assert.deepEqual(validateLearnContentPublication({ result: result as Extract<typeof result, { resultClass: "PUBLISH" }>, run: run(), context: safeContext(), allowedLocales: new Set(["en-GB"]), now: NOW }), { ok: true });
 });
 
-test("UPDATE requires the exact Article id and expectedUpdatedAt from the current snapshot", () => {
-  const result = parseLearnContentModelOutput(publishEnvelope({ update: true }));
-  const context = safeContext([{ id: ARTICLE_ID, slug: "old-slug", title: "Old", category: "casino-safety", locale: "en-GB", publishedAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-22T10:00:00.000Z", url: "https://b4gamble.com/en/learn/casino-safety/old-slug" }]);
-  assert.deepEqual(validateLearnContentPublication({ result: result as Extract<typeof result, { resultClass: "PUBLISH" }>, run: run(), context, allowedLocales: new Set(["en-GB"]), now: NOW }), { ok: true });
-  const stale = parseLearnContentModelOutput(publishEnvelope({ update: true, expectedUpdatedAt: "2026-09-22T09:00:00.000Z" }));
-  assert.deepEqual(validateLearnContentPublication({ result: stale as Extract<typeof stale, { resultClass: "PUBLISH" }>, run: run(), context, allowedLocales: new Set(["en-GB"]), now: NOW }), { ok: false, code: "UPDATE_VERSION_STALE" });
+test("UPDATE and existing Article identity are rejected by the create-only model contract", () => {
+  const update = structuredClone(publishEnvelope()) as unknown as {
+    seoHandoff: { decision: string; targetArticleId: string | null };
+    learnApply: { article: { articleId: string | null; expectedUpdatedAt: string | null } };
+  };
+  update.seoHandoff.decision = "UPDATE";
+  update.seoHandoff.targetArticleId = ARTICLE_ID;
+  update.learnApply.article.articleId = ARTICLE_ID;
+  update.learnApply.article.expectedUpdatedAt = "2026-09-22T10:00:00.000Z";
+  assert.throws(() => parseLearnContentModelOutput(update), z.ZodError);
 });
 
 test("CREATE refuses a slug that appeared before publication", () => {
@@ -766,18 +833,20 @@ test("valid CREATE publishes once and completes only after verified LIVE", async
   assert.deepEqual(publisher.lastPayload, publishEnvelope().learnApply);
 });
 
-test("valid UPDATE preserves exact id and expectedUpdatedAt through MCP", async () => {
-  const article = { id: ARTICLE_ID, slug: "old", title: "Old", category: "casino-safety", locale: "en-GB", publishedAt: NOW.toISOString(), updatedAt: "2026-09-22T10:00:00.000Z", url: "https://b4gamble.com/en/learn/casino-safety/old" };
-  const live = new FakePublisher({
-    result: "LIVE", operation: "UPDATED", persistence: "COMMITTED", articleId: ARTICLE_ID, status: "PUBLISHED",
-    url: "https://b4gamble.com/en/learn/casino-safety/verify-a-gambling-licence", publishedAt: NOW.toISOString(), updatedAt: NOW.toISOString(), verified: true,
-    images: [], verification: { checks: ["route"], attempts: 1, failureCode: null },
-  });
+test("runtime rejects an UPDATE model payload before MCP publication", async () => {
+  const update = structuredClone(publishEnvelope()) as unknown as {
+    seoHandoff: { decision: string; targetArticleId: string | null };
+    learnApply: { article: { articleId: string | null; expectedUpdatedAt: string | null } };
+  };
+  update.seoHandoff.decision = "UPDATE";
+  update.seoHandoff.targetArticleId = ARTICLE_ID;
+  update.learnApply.article.articleId = ARTICLE_ID;
+  update.learnApply.article.expectedUpdatedAt = "2026-09-22T10:00:00.000Z";
+  const publisher = new FakePublisher();
   const state = new MemoryState({ action: "RECONCILE", run: run() });
-  const result = await runHandler({ state, sessions: new FakeSessions(undefined, { status: "idle", output: publishEnvelope({ update: true }), trace: allRoleTrace }), publisher: live, context: safeContext([article]) });
-  assert.equal(result.body.code, "UPDATED");
-  assert.equal((live.lastPayload as ReturnType<typeof publishEnvelope>["learnApply"]).article.articleId, ARTICLE_ID);
-  assert.equal((live.lastPayload as ReturnType<typeof publishEnvelope>["learnApply"]).article.expectedUpdatedAt, article.updatedAt);
+  const result = await runHandler({ state, sessions: new FakeSessions(undefined, { status: "idle", output: update, trace: allRoleTrace }), publisher });
+  assert.equal(result.body.code, "OUTPUT_CONTRACT_FAILURE");
+  assert.equal(publisher.calls, 0);
 });
 
 test("MCP transport failure remains retryable with the same session payload", async () => {
@@ -799,10 +868,28 @@ test("MCP authentication failure halts without exposing credential detail", asyn
 
 test("MCP NOT_COMMITTED application failure retries and is not success", async () => {
   const state = new MemoryState({ action: "RECONCILE", run: run() });
-  const publisher = new FakePublisher({ result: "ERROR", error: { code: "APPLY_FAILED", message: "Safe failure", persistence: "NOT_COMMITTED" } });
+  const publisher = new FakePublisher({ result: "ERROR", error: { code: "APPLY_FAILED", message: "Safe failure", persistence: "NOT_COMMITTED", retryable: true } });
   const result = await runHandler({ state, sessions: new FakeSessions(undefined, { status: "idle", output: publishEnvelope(), trace: allRoleTrace }), publisher });
   assert.equal(result.body.result, "RETRY_PENDING");
   assert.equal(result.body.code, "MCP_NOT_COMMITTED_RETRY_PENDING");
+});
+
+test("deterministic MCP application failures block once without pointless retries", async () => {
+  const state = new MemoryState({ action: "RECONCILE", run: run() });
+  const publisher = new FakePublisher({
+    result: "ERROR",
+    error: {
+      code: "CREATE_SLUG_EXISTS",
+      message: "A Learn Article already uses this slug.",
+      persistence: "NOT_COMMITTED",
+      retryable: false,
+    },
+  });
+  const result = await runHandler({ state, sessions: new FakeSessions(undefined, { status: "idle", output: publishEnvelope(), trace: allRoleTrace }), publisher });
+  assert.equal(result.body.result, "BLOCKED");
+  assert.equal(result.body.code, "MCP_CREATE_SLUG_EXISTS");
+  assert.equal(state.finishCalls.at(-1)?.result, "BLOCKED");
+  assert.equal(state.finishCalls.at(-1)?.halt, undefined);
 });
 
 test("PERSISTED_NOT_VERIFIED is not success and retries", async () => {
@@ -845,7 +932,7 @@ test("LIVE with an unverified projection is never reported as success", async ()
 test("LIVE with the wrong public route or operation is never reported as success", async () => {
   for (const override of [
     { url: "https://b4gamble.com/en/learn/casino-safety/a-different-article" },
-    { operation: "UPDATED" as const },
+    { operation: "UPDATED" as never },
   ]) {
     const state = new MemoryState({ action: "RECONCILE", run: run() });
     const publisher = new FakePublisher({
