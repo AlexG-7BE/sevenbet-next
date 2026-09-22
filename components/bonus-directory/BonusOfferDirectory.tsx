@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CommercialFacts, CommercialScore } from "@/components/commercial/CommercialPrimitives";
+import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { availableBonusViews, offerCardPresentation, offersForBonusView, type BonusDirectoryView } from "@/lib/commercial/commercial-presentation";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
@@ -30,6 +31,12 @@ export function BonusOfferDirectory({ messages, offers, presentation }: {
     free_spins: copy.freeSpins,
     cashback: copy.cashback,
     no_deposit: copy.noDeposit,
+  };
+  const typeLabels: Partial<Record<string, string>> = {
+    WELCOME: copy.welcome,
+    FREE_SPINS: copy.freeSpins,
+    CASHBACK: copy.cashback,
+    NO_DEPOSIT: copy.noDeposit,
   };
   const [view, setView] = useState<BonusDirectoryView>("all");
   const results = useMemo(() => offersForBonusView(offers, view), [offers, view]);
@@ -58,20 +65,28 @@ export function BonusOfferDirectory({ messages, offers, presentation }: {
           data-commercial-bonus-card
           key={card.offerKey}
         >
-          <div className={styles.offerHead}><h2>{card.headline}</h2></div>
-          <div className={styles.casinoLine}><strong>{card.casinoName}</strong><CommercialScore label={messages.common.editorScore} locale={presentation.locale} score={card.score} /></div>
-          <CommercialFacts facts={card.facts} />
+          <div className={styles.offerHead}>
+            <h2>{card.headline}</h2>
+            <div className={styles.casinoLine}>
+              <div className={styles.logo} data-brand-tile>{card.logo ? <ResponsivePlacementImage alt="" height={card.logo.height ?? 44} loading="lazy" media={card.logo} width={card.logo.width ?? 88} /> : <span aria-hidden="true">{card.casinoName.slice(0, 1)}</span>}</div>
+              <strong>{card.casinoName}</strong>
+              <CommercialScore className={styles.score} label={messages.common.editorScore} locale={presentation.locale} score={card.score} />
+              {typeLabels[offer.bonus.type] ? <span className={styles.type}>{typeLabels[offer.bonus.type]}</span> : null}
+            </div>
+          </div>
+          <CommercialFacts facts={card.facts} className={styles.facts} />
           <div className={styles.actions}>
-            {card.action ? <CasinoOutboundAction action={card.action} context={{ source: "CTA", placement: "BONUS_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
+            {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "BONUS_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
             <div className={styles.researchLinks}>
               {card.termsUrl ? <a href={card.termsUrl} rel="noopener noreferrer" target="_blank">{copy.terms}</a> : null}
               {card.reviewHref ? <TrackedReviewLink
                 casinoId={published ? card.casinoId : undefined}
                 href={productHref(presentation, card.reviewHref)}
+                pendingLabel={published ? copy.casinoReview : messages.common.viewDemonstration}
                 placement="BONUS_CARD"
                 position={index + 1}
                 sourceSurface="bonuses"
-              >{published ? copy.casinoReview : messages.common.viewDemonstration}</TrackedReviewLink> : null}
+              >{published ? copy.casinoReview : messages.common.viewDemonstration} <span aria-hidden="true">→</span></TrackedReviewLink> : null}
             </div>
           </div>
         </article>;
