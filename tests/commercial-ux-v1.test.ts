@@ -286,7 +286,7 @@ test("commercial routes keep the approved task first and restore only bounded pr
 
   assert.ok(best.indexOf("<BestOffersExperience") < best.indexOf('data-premium-section="best-offers-method"'));
   assert.ok(best.indexOf('data-premium-section="best-offers-method"') < best.indexOf('data-premium-section="best-offers-faq"'));
-  assert.equal((best.match(/<details>/g) ?? []).length, 3);
+  assert.equal((best.match(/<details[\s>]/g) ?? []).length, 3);
   assert.doesNotMatch(best, /finalOffer|Worth a look/);
 
   assert.ok(casinos.indexOf("<CasinoCollection") < casinos.indexOf('data-premium-section="casinos-before-you-choose"'));

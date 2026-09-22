@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { BestOffersExperience } from "@/components/best-offers/BestOffersExperience";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
+import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/best-offers/BestOffers.module.css";
 import { publicOfferService } from "@/lib/services/public-offer.service";
@@ -97,6 +98,7 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
     </div></div></section>
   </div>;
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
+  const partnerLinkCount = result.records.filter((offer) => offer.action !== null).length;
   const demoOnly = result.inventoryMode === "DEMO_ONLY";
   const hero = demoOnly
     ? { copy: messages.bestOffers.demoCopy, kicker: messages.bestOffers.demoKicker }
@@ -122,27 +124,37 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
     <p className="srOnly">{messages.bestOffers.commissionNote}</p>
     <CommercialSurfaceView surface="best_offers" />
     {schema ? <JsonLd data={schema} /> : null}
-    <section className={styles.hero} data-nav-theme="dark"><div className={`${styles.shell} ${styles.heroInner}`}>
+    <section className={styles.hero} data-nav-theme="dark"><div aria-hidden="true" className={styles.glow} /><div className={`${styles.shell} ${styles.heroInner}`}>
       <p className={styles.kicker}>✓ &nbsp; {hero.kicker}</p>
       <h1><span>{messages.bestOffers.heroLead}</span><em>{messages.bestOffers.heroEmphasis}</em></h1>
-      <p className={styles.heroCopy}>{hero.copy}</p>
-      <div className={styles.heroTicker}><Link href={productHref(presentation, "/methodology")}>{messages.bestOffers.rankingLink}</Link></div>
+      <div className={styles.heroMeta}>
+        <p className={styles.heroCopy}>{hero.copy}</p>
+        <div className={styles.heroTicker}>
+          {result.records.length ? <>
+            <span><strong>{result.records.length}</strong><small>{copy.eligibleRecords}</small></span>
+            <span data-tone="paper"><strong>{partnerLinkCount}</strong><small>{copy.partnerLinks}</small></span>
+          </> : null}
+          <Link href={productHref(presentation, "/methodology")}>{messages.bestOffers.rankingLink}</Link>
+        </div>
+      </div>
     </div></section>
     {containsDemo ? <section className={styles.demoDisclosure} data-nav-theme="dark" role="note"><div className={styles.shell}><p><strong>{messages.common.demoData}.</strong> {messages.bestOffers.demoCopy}</p></div></section> : null}
     {result.status === "available" ? <><BestOffersExperience inventoryMode={result.inventoryMode} messages={messages} presentation={presentation} shortlist={result.records} />
-      <section className={styles.whyPicked} data-premium-section="best-offers-method" data-nav-theme="cream"><div className={styles.shell}>
-        <div><p className={styles.lightKicker}>{presentation.language === "en" ? "How we choose" : messages.bestOffers.whyTitle}</p><h2>{messages.common.materialTerms} · {messages.common.sourceStatus}</h2><p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></p></div>
+      <section className={styles.whyPicked} data-premium-section="best-offers-method" data-nav-theme="cream"><div className={`${styles.shell} ${styles.reveal}`}>
+        <div><p className={styles.lightKicker}>{presentation.language === "en" ? "How we choose" : messages.bestOffers.whyTitle}</p><h2>{messages.common.materialTerms} · <em>{messages.common.sourceStatus}</em></h2><p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} <span aria-hidden="true">→</span></Link></p></div>
         <ol>
           <li><span>01</span><div><strong>{messages.common.availability}</strong><p>{messages.bestOffers.whyCopy}</p></div></li>
           <li><span>02</span><div><strong>{messages.common.materialTerms}</strong><p>{messages.bonuses.methodCopy}</p></div></li>
           <li><span>03</span><div><strong>{messages.common.sourceStatus}</strong><p>{messages.bonuses.proofSources}</p></div></li>
         </ol>
       </div></section>
-      <section className={styles.faq} data-premium-section="best-offers-faq"><div className={styles.faqGrid}><h2>{messages.bestOffers.beforeClick}</h2>
-        <details><summary>{messages.bestOffers.faqWageringQuestion}</summary><p>{messages.bestOffers.faqWageringAnswer}</p></details>
-        <details><summary>{messages.bestOffers.faqCommissionQuestion}</summary><p>{messages.bestOffers.faqCommissionAnswer}</p></details>
-        <details><summary>{messages.bestOffers.faqWhyThreeQuestion}</summary><p>{messages.bestOffers.faqWhyThreeAnswer}</p></details>
+      <section className={styles.faq} data-nav-theme="dark" data-premium-section="best-offers-faq"><div className={`${styles.faqGrid} ${styles.reveal}`}><h2><EmphasisTail text={messages.bestOffers.beforeClick} /></h2>
+        <div className={styles.faqList}>
+          <details name="best-offers-faq" open><summary>{messages.bestOffers.faqWageringQuestion}<span aria-hidden="true">+</span></summary><p>{messages.bestOffers.faqWageringAnswer}</p></details>
+          <details name="best-offers-faq"><summary>{messages.bestOffers.faqCommissionQuestion}<span aria-hidden="true">+</span></summary><p>{messages.bestOffers.faqCommissionAnswer}</p></details>
+          <details name="best-offers-faq"><summary>{messages.bestOffers.faqWhyThreeQuestion}<span aria-hidden="true">+</span></summary><p>{messages.bestOffers.faqWhyThreeAnswer}</p></details>
+        </div>
       </div></section>
-    </> : <section className={styles.statePage} data-nav-theme="light" id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{messages.common.commercialUnavailable}</p><h2>{result.status === "unavailable" ? messages.bestOffers.unavailableTitleBody : formatProductMessage(messages.bestOffers.emptyTitle, { market })}</h2><p>{result.status === "unavailable" ? messages.bestOffers.unavailableCopy : messages.bestOffers.emptyCopy}</p><div className={styles.stateActions}><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link></div></div></div></section>}
+    </> : <section className={styles.statePage} data-nav-theme="dark" id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{messages.common.commercialUnavailable}</p><h2>{result.status === "unavailable" ? messages.bestOffers.unavailableTitleBody : formatProductMessage(messages.bestOffers.emptyTitle, { market })}</h2><p>{result.status === "unavailable" ? messages.bestOffers.unavailableCopy : messages.bestOffers.emptyCopy}</p><div className={styles.stateActions}><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link></div></div></div></section>}
   </div>;
 }
