@@ -203,7 +203,9 @@ test("localized mobile tab rails and focused profile navigation stay bounded", a
 
   await expectScrollableControlRail(page.getByRole("tablist", { name: messages.bonuses.directoryTitle }), "button", 5);
   await expect(page.locator("[data-commercial-bonus-card]")).toHaveCount(8);
-  await expect(page.locator("[data-commercial-bonus-card] figure, [data-commercial-bonus-card] img")).toHaveCount(0);
+  await expect(page.locator("[data-commercial-bonus-card] figure")).toHaveCount(0);
+  const bonusImages = await page.locator("[data-commercial-bonus-card] img").count();
+  await expect(page.locator("[data-commercial-bonus-card] [data-brand-tile] img")).toHaveCount(bonusImages);
 
   await page.goto(`${baseUrl}/de/casinos?visualFixture=true`, { waitUntil: "networkidle" });
   await expectScrollableControlRail(page.getByRole("tablist", { name: messages.casinos.directoryTitle }), "button", 3);

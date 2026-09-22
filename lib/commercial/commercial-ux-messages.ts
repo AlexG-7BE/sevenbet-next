@@ -63,6 +63,8 @@ export type CommercialUxMessages = Readonly<{
   rankPrefix: string;
   eligibleRecords: string;
   partnerLinks: string;
+  publishedOffers: string;
+  filteredFor: string;
 }>;
 
 const en: CommercialUxMessages = {
@@ -128,6 +130,8 @@ const en: CommercialUxMessages = {
   rankPrefix: "No.",
   eligibleRecords: "eligible records",
   partnerLinks: "partner links",
+  publishedOffers: "published offers",
+  filteredFor: "Filtered for {market}",
 };
 
 const marketStateTranslations: Partial<Record<SupportedLocale, Pick<CommercialUxMessages,
@@ -194,19 +198,19 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "nb-NO": { minimumWithdrawal: "Minste uttak", fees: "Gebyrer" },
     "fr-CA": { minimumWithdrawal: "Retrait minimum", fees: "Frais" },
   };
-  const heroMetricLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "publishedReviews" | "rankPrefix" | "eligibleRecords" | "partnerLinks">>> = {
-    "de-DE": { publishedReviews: "veröffentlichte Bewertungen", rankPrefix: "Nr.", eligibleRecords: "berechtigte Einträge", partnerLinks: "Partnerlinks" },
-    "it-IT": { publishedReviews: "recensioni pubblicate", rankPrefix: "N.", eligibleRecords: "record idonei", partnerLinks: "link partner" },
-    "es-ES": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º", eligibleRecords: "registros elegibles", partnerLinks: "enlaces de socios" },
-    "es-PE": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º", eligibleRecords: "registros elegibles", partnerLinks: "enlaces de socios" },
-    "pt-PT": { publishedReviews: "análises publicadas", rankPrefix: "N.º", eligibleRecords: "registos elegíveis", partnerLinks: "links de parceiros" },
-    "el-GR": { publishedReviews: "δημοσιευμένες αξιολογήσεις", rankPrefix: "Αρ.", eligibleRecords: "επιλέξιμες εγγραφές", partnerLinks: "σύνδεσμοι συνεργατών" },
-    "nl-NL": { publishedReviews: "gepubliceerde reviews", rankPrefix: "Nr.", eligibleRecords: "geschikte records", partnerLinks: "partnerlinks" },
-    "sv-SE": { publishedReviews: "publicerade recensioner", rankPrefix: "Nr", eligibleRecords: "behöriga poster", partnerLinks: "partnerlänkar" },
-    "da-DK": { publishedReviews: "offentliggjorte anmeldelser", rankPrefix: "Nr.", eligibleRecords: "kvalificerede poster", partnerLinks: "partnerlinks" },
-    "fi-FI": { publishedReviews: "julkaistua arviota", rankPrefix: "Nro", eligibleRecords: "kelpoista tietuetta", partnerLinks: "kumppanilinkkiä" },
-    "nb-NO": { publishedReviews: "publiserte anmeldelser", rankPrefix: "Nr.", eligibleRecords: "kvalifiserte oppføringer", partnerLinks: "partnerlenker" },
-    "fr-CA": { publishedReviews: "avis publiés", rankPrefix: "No", eligibleRecords: "fiches admissibles", partnerLinks: "liens partenaires" },
+  const heroMetricLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "publishedReviews" | "rankPrefix" | "eligibleRecords" | "partnerLinks" | "publishedOffers" | "filteredFor">>> = {
+    "de-DE": { publishedReviews: "veröffentlichte Bewertungen", rankPrefix: "Nr.", eligibleRecords: "berechtigte Einträge", partnerLinks: "Partnerlinks", publishedOffers: "veröffentlichte Angebote", filteredFor: "Gefiltert für {market}" },
+    "it-IT": { publishedReviews: "recensioni pubblicate", rankPrefix: "N.", eligibleRecords: "record idonei", partnerLinks: "link partner", publishedOffers: "offerte pubblicate", filteredFor: "Filtrato per {market}" },
+    "es-ES": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º", eligibleRecords: "registros elegibles", partnerLinks: "enlaces de socios", publishedOffers: "ofertas publicadas", filteredFor: "Filtrado para {market}" },
+    "es-PE": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º", eligibleRecords: "registros elegibles", partnerLinks: "enlaces de socios", publishedOffers: "ofertas publicadas", filteredFor: "Filtrado para {market}" },
+    "pt-PT": { publishedReviews: "análises publicadas", rankPrefix: "N.º", eligibleRecords: "registos elegíveis", partnerLinks: "links de parceiros", publishedOffers: "ofertas publicadas", filteredFor: "Filtrado para {market}" },
+    "el-GR": { publishedReviews: "δημοσιευμένες αξιολογήσεις", rankPrefix: "Αρ.", eligibleRecords: "επιλέξιμες εγγραφές", partnerLinks: "σύνδεσμοι συνεργατών", publishedOffers: "δημοσιευμένες προσφορές", filteredFor: "Φιλτραρισμένο για {market}" },
+    "nl-NL": { publishedReviews: "gepubliceerde reviews", rankPrefix: "Nr.", eligibleRecords: "geschikte records", partnerLinks: "partnerlinks", publishedOffers: "gepubliceerde aanbiedingen", filteredFor: "Gefilterd voor {market}" },
+    "sv-SE": { publishedReviews: "publicerade recensioner", rankPrefix: "Nr", eligibleRecords: "behöriga poster", partnerLinks: "partnerlänkar", publishedOffers: "publicerade erbjudanden", filteredFor: "Filtrerat för {market}" },
+    "da-DK": { publishedReviews: "offentliggjorte anmeldelser", rankPrefix: "Nr.", eligibleRecords: "kvalificerede poster", partnerLinks: "partnerlinks", publishedOffers: "offentliggjorte tilbud", filteredFor: "Filtreret for {market}" },
+    "fi-FI": { publishedReviews: "julkaistua arviota", rankPrefix: "Nro", eligibleRecords: "kelpoista tietuetta", partnerLinks: "kumppanilinkkiä", publishedOffers: "julkaistua tarjousta", filteredFor: "Suodatettu: {market}" },
+    "nb-NO": { publishedReviews: "publiserte anmeldelser", rankPrefix: "Nr.", eligibleRecords: "kvalifiserte oppføringer", partnerLinks: "partnerlenker", publishedOffers: "publiserte tilbud", filteredFor: "Filtrert for {market}" },
+    "fr-CA": { publishedReviews: "avis publiés", rankPrefix: "No", eligibleRecords: "fiches admissibles", partnerLinks: "liens partenaires", publishedOffers: "offres publiées", filteredFor: "Filtré pour {market}" },
   };
   return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}) };
 }

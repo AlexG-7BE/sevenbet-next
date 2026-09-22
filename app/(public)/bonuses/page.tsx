@@ -5,9 +5,9 @@ import { cache } from "react";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { BonusOfferDirectory } from "@/components/bonus-directory/BonusOfferDirectory";
+import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
-import styles from "@/components/bonus-directory/BonusDirectory.module.css";
-import finalStyles from "./BonusesFinal.module.css";
+import styles from "./BonusesPage.module.css";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffBonusDirectoryData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
@@ -87,7 +87,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   const marketUnavailable = !visualFixture && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState);
   if (marketUnavailable) return <div className={`${styles.page} ${instrumentSerif.variable}`} data-commercial-market-state="editorial-only" data-runtime-renderer="bonuses">
     <CommercialSurfaceView surface="bonuses" />
-    <section className={finalStyles.unavailable} data-nav-theme="dark"><div>
+    <section className={styles.unavailable} data-nav-theme="dark"><div aria-hidden="true" className={styles.glow} /><div className={styles.unavailablePanel}>
       <small>{shell.bonuses}</small>
       <h1>{formatProductMessage(copy.bonusesMarketUnavailableTitle, { market })}</h1>
       <p>{copy.bonusesMarketUnavailableCopy}</p>
@@ -110,22 +110,29 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="bonuses">
     <CommercialSurfaceView surface="bonuses" />
     {schema ? <JsonLd data={schema} /> : null}
-    <section className={finalStyles.hero} data-nav-theme="dark">
-      <div className={finalStyles.heroCopy}>
-        <small>{messages.bonuses.heroKicker}</small>
-        <h1>{messages.bonuses.heroLead}<em>{messages.bonuses.heroEmphasis}</em></h1>
-        <p>{formatProductMessage(messages.bonuses.heroCopy, { market })}</p>
+    <section className={styles.hero} data-nav-theme="dark">
+      <div aria-hidden="true" className={styles.glow} />
+      <div className={styles.shell}>
+        <p className={styles.eyebrow}>{messages.bonuses.heroKicker}</p>
+        <h1><span>{messages.bonuses.heroLead}</span><em>{messages.bonuses.heroEmphasis}</em></h1>
+        <div className={styles.heroMeta}>
+          <p>{formatProductMessage(messages.bonuses.heroCopy, { market })}</p>
+          <div className={styles.heroStats}>
+            {result.total ? <span><strong>{result.total}</strong><small>{copy.publishedOffers}</small></span> : null}
+            <span>{formatProductMessage(copy.filteredFor, { market })}</span>
+          </div>
+        </div>
       </div>
     </section>
-    <section className={styles.directorySection} data-nav-theme="cream" id="bonus-directory">
+    <section className={styles.directorySection} data-nav-theme="dark" id="bonus-directory">
       <div className={styles.shell}>
-        <header className={styles.sectionHeading}><h2 className={styles.display}>{messages.bonuses.directoryTitle}</h2><p>{result.total} {messages.common.records}</p></header>
+        <header className={`${styles.sectionHeading} ${styles.reveal}`}><h2><EmphasisTail text={messages.bonuses.directoryTitle} /></h2><p>{result.total} {messages.common.records}</p></header>
         {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.demoDirectoryDisclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure}</p></aside> : null}
         {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><h2>{messages.bonuses.unavailableTitleBody}</h2><p>{messages.bonuses.unavailableCopy}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></section> : <BonusOfferDirectory messages={messages} offers={result.records} presentation={presentation} />}
       </div>
     </section>
-    <section className={finalStyles.method} data-premium-section="bonus-terms-method" data-nav-theme="cream"><div>
-      <div><small>{messages.bonuses.methodKicker}</small><h2>{messages.bonuses.methodLead}<br /><em>{messages.bonuses.methodEmphasis}</em></h2><p>{messages.bonuses.methodCopy}</p><Link href="/bonus-guide">{messages.bonuses.guideAction}</Link></div>
+    <section className={styles.method} data-premium-section="bonus-terms-method" data-nav-theme="cream"><div className={`${styles.shell} ${styles.reveal}`}>
+      <div><p className={styles.lightKicker}>{messages.bonuses.methodKicker}</p><h2>{messages.bonuses.methodLead}<br /><em>{messages.bonuses.methodEmphasis}</em></h2><p>{messages.bonuses.methodCopy}</p><Link href="/bonus-guide">{messages.bonuses.guideAction}</Link></div>
       <ol>
         <li><span>01</span><div><strong>{messages.common.wagering}</strong><p>{messages.bonuses.methodCopy}</p></div></li>
         <li><span>02</span><div><strong>{messages.common.materialTerms}</strong><p>{copy.importantRestrictions}</p></div></li>
