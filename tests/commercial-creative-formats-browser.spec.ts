@@ -236,8 +236,9 @@ test("review logo stays fully boxed and contained on mobile", async ({ page }) =
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
     };
   });
-  expect(geometry.logo.height).toBe(72);
-  expect(geometry.logo.width).toBe(132);
+  // The premium review hero uses a square brand tile: 104px, 84px below 640px.
+  expect(geometry.logo.height).toBe(84);
+  expect(geometry.logo.width).toBe(84);
   expect(geometry.image.height).toBeLessThanOrEqual(geometry.logo.height);
   expect(geometry.image.width).toBeLessThanOrEqual(geometry.logo.width);
   expect(geometry.image.top).toBeGreaterThanOrEqual(geometry.logo.top);

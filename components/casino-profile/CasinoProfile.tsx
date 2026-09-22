@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CasinoProfileInteractions } from "@/components/casino-profile/CasinoProfileInteractions";
-import { CommercialBadges, CommercialFacts, CommercialScore } from "@/components/commercial/CommercialPrimitives";
+import { CommercialBadges, CommercialFacts, CommercialScore, EmphasisTail, OfferHeadline } from "@/components/commercial/CommercialPrimitives";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { casinoProfileDecisionPresentation, formatCommercialMoney, safeCommercialTermsUrl, structuredOfferHeadline, type CommercialFact } from "@/lib/commercial/commercial-presentation";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
@@ -72,25 +72,30 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const bestFor = decision.reasons.find((reason) => reason.tone === "strength")?.text ?? null;
   const watch = decision.reasons.find((reason) => reason.tone === "caveat")?.text ?? decision.restriction;
 
+  const formattedScore = score === null ? null : new Intl.NumberFormat(presentation.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(score);
+
   return <article className={styles.page} data-runtime-renderer="casino-review">
     <CasinoProfileInteractions />
     <div className={styles.shell}>
       <section aria-labelledby="casino-profile-title" className={styles.hero} data-nav-theme="dark" id="overview">
+        <div aria-hidden="true" className={styles.heroGlow} />
         <nav aria-label={messages.common.breadcrumb} className={styles.breadcrumb}><Link href={productHref(presentation, "/casinos")}>{messages.casinos.directoryTitle}</Link><span aria-hidden="true">/</span><span aria-current="page">{casino.name}</span></nav>
         {demo ? <p className={styles.stateNote}><strong>{messages.common.demoData}</strong> · {action ? messages.common.marketPresentationNotice : messages.profile.demoDisclosure}</p> : null}
         {!availableForPresentation && !demo && !action ? <p className={styles.stateNote}>{formatProductMessage(messages.profile.marketUnavailable, { market: presentation.marketDisplayName })}</p> : null}
         <div className={styles.heroGrid}>
           <div className={styles.heroIdentity}>
-            <div className={styles.logo}>{casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 100} media={casino.media.logo} width={casino.media.logo.width ?? 200} /> : <span aria-hidden="true">{casino.name.slice(0, 1)}</span>}</div>
-            <div className={styles.titleLine}><div><p>{messages.profile.operatorReview}</p><h1 id="casino-profile-title">{casino.name}</h1></div><CommercialScore label={messages.common.editorScore} locale={presentation.locale} score={score} /></div>
+            <div className={styles.identityRow}>
+              <div className={styles.logo}>{casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 100} media={casino.media.logo} width={casino.media.logo.width ?? 200} /> : <span aria-hidden="true">{casino.name.slice(0, 1)}</span>}</div>
+              <div className={styles.identityMeta}><p>{messages.profile.operatorReview}</p><CommercialBadges badges={heroBadges} className={styles.heroBadges} /></div>
+            </div>
+            <div className={styles.titleLine}><h1 id="casino-profile-title"><EmphasisTail single="plain" text={casino.name} /></h1><CommercialScore label={messages.common.editorScore} locale={presentation.locale} score={score} className={styles.heroScore} /></div>
             <p className={styles.verdict} data-intentional-line-clamp="2">{decision.verdict}</p>
-            <CommercialBadges badges={heroBadges} />
           </div>
           <div className={styles.heroOffer}>
             <span>{copy.currentOffer}</span>
-            <h2>{offerHeadline}</h2>
-            <CommercialFacts facts={decision.heroFacts} />
-            <div className={styles.heroAction}>{action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_HERO" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}</div>
+            <h2><OfferHeadline text={offerHeadline} /></h2>
+            <CommercialFacts facts={decision.heroFacts} className={styles.heroFacts} />
+            <div className={styles.heroAction}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_HERO" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}</div>
             <small>{action ? demo ? messages.common.marketPresentationNotice : copy.compactDisclosure : messages.common.reviewAvailableNoAction}</small>
           </div>
         </div>
@@ -104,7 +109,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
       </nav>
 
       {action ? <aside className={styles.stickyAction} data-casino-decision-bar data-mobile-visible="false">
-        <span>{casino.name}{score === null ? "" : ` · ${new Intl.NumberFormat(presentation.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(score)}`}</span>
+        <span><strong>{casino.name}</strong>{formattedScore === null ? null : <em>{formattedScore}</em>}</span>
         <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_MOBILE_STICKY" }} messages={messages.outbound} showDisclosure={false} />
       </aside> : null}
 
@@ -115,22 +120,22 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
 
       <section aria-labelledby="payments-heading" className={`${styles.section} ${styles.altSection}`} id="payments">
         <header><p>02</p><h2 id="payments-heading">{copy.paymentsAndPayouts}</h2></header>
-        <div><SectionFacts facts={paymentFacts} />{profilePayments.length ? <div className={styles.methodLabels}>{profilePayments.slice(0, 6).map((payment) => <span key={payment.key}>{payment.name}</span>)}</div> : null}</div>
+        <div className={styles.sectionBody}><SectionFacts facts={paymentFacts} />{profilePayments.length ? <div className={styles.methodLabels}>{profilePayments.slice(0, 6).map((payment) => <span key={payment.key}>{payment.name}</span>)}</div> : null}</div>
       </section>
 
       <section aria-labelledby="offer-heading" className={`${styles.section} ${styles.offerSection}`} id="current-offer">
         <header><p>03</p><h2 id="offer-heading">{copy.currentOffer}</h2></header>
         <div className={styles.offerPanel} data-analytics-casino-id={!demo && bonus ? casino.id : undefined} data-analytics-offer-key={!demo && bonus ? bonus.id : undefined}>
-          <h3>{offerHeadline}</h3>
+          <h3><OfferHeadline text={offerHeadline} /></h3>
           {bonus ? <SectionFacts facts={offerFacts} /> : <p>{messages.common.reviewAvailableNoAction}</p>}
           {bonus ? <p className={styles.materialWarning}>{decision.restriction}</p> : null}
-          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}{safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms}</a> : null}</div>
+          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}{safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}</div>
         </div>
       </section>
 
       <section aria-labelledby="games-heading" className={`${styles.section} ${styles.altSection}`} id="games">
         <header><p>04</p><h2 id="games-heading">{messages.profile.games}</h2></header>
-        <div>{gameFacts.length ? <SectionFacts facts={gameFacts} /> : <p className={styles.notVerified}>{copy.notVerified}</p>}{providers.length ? <p className={styles.providerLine}><strong>{messages.profile.providers}</strong>{providers.join(" · ")}</p> : null}</div>
+        <div className={styles.sectionBody}>{gameFacts.length ? <SectionFacts facts={gameFacts} /> : <p className={styles.notVerified}>{copy.notVerified}</p>}{providers.length ? <p className={styles.providerLine}><strong>{messages.profile.providers}</strong><span>{providers.join(" · ")}</span></p> : null}</div>
       </section>
 
       <section aria-labelledby="support-heading" className={styles.section} id="support">
@@ -143,16 +148,19 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <SectionFacts facts={regulationFacts} />
       </section>
 
-      <section aria-labelledby="faq-heading" className={styles.profileFaq} data-premium-section="casino-faq" id="casino-faq">
-        <h2 id="faq-heading">{messages.profile.questions}</h2>
-        {faqItems.map((item) => <details key={item.question}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}
+      <section aria-labelledby="faq-heading" className={styles.profileFaq} data-nav-theme="cream" data-premium-section="casino-faq" id="casino-faq">
+        <div className={styles.profileFaqInner}>
+          <h2 id="faq-heading"><EmphasisTail single="plain" text={messages.profile.questions} /></h2>
+          {faqItems.map((item) => <details key={item.question} name="casino-faq"><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}
+        </div>
       </section>
 
       <section aria-labelledby="verdict-heading" className={styles.finalVerdictSection} data-nav-theme="dark" data-premium-section="casino-verdict" id="our-verdict">
+        <div aria-hidden="true" className={styles.verdictGlow} />
         <div className={styles.finalVerdictInner}>
           <p className={styles.finalVerdictKicker}>{messages.profile.verdict}</p>
           <h2 className={styles.finalVerdictHeading} id="verdict-heading">
-            <span>{casino.name}</span><span aria-hidden="true">—</span><em>{score === null ? copy.notVerified : new Intl.NumberFormat(presentation.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(score)}</em>
+            <span>{casino.name}</span><span aria-hidden="true">—</span><em>{formattedScore ?? copy.notVerified}</em>
           </h2>
           <p className={styles.finalVerdictSummary}>{finalVerdict}</p>
           {bestFor || watch ? <dl className={styles.finalVerdictFacts}>{bestFor ? <div><dt>{messages.profile.bestFor}</dt><dd>{bestFor}</dd></div> : null}{watch ? <div><dt>{messages.profile.keepInView}</dt><dd>{watch}</dd></div> : null}</dl> : null}

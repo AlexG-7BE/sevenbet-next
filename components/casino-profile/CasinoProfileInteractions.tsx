@@ -8,6 +8,7 @@ export function shouldShowCasinoDecisionBar({
   headerHeight,
   heroBottom,
   mobile,
+  verdictTop = null,
   viewportHeight,
 }: {
   barHeight: number;
@@ -15,11 +16,13 @@ export function shouldShowCasinoDecisionBar({
   headerHeight: number;
   heroBottom: number;
   mobile: boolean;
+  verdictTop?: number | null;
   viewportHeight: number;
 }) {
   const heroHasPassed = heroBottom <= headerHeight + 4;
+  const verdictIsVisible = verdictTop !== null && verdictTop <= viewportHeight;
   const footerIsNear = footerTop !== null && footerTop <= viewportHeight + barHeight;
-  return mobile && heroHasPassed && !footerIsNear;
+  return mobile && heroHasPassed && !verdictIsVisible && !footerIsNear;
 }
 
 export function CasinoProfileInteractions() {
@@ -28,11 +31,12 @@ export function CasinoProfileInteractions() {
     const sticky = root?.querySelector<HTMLElement>("[data-casino-decision-bar]");
     const hero = root?.querySelector<HTMLElement>("[aria-labelledby='casino-profile-title']");
     const footer = document.querySelector<HTMLElement>("[data-public-shell='footer']");
+    const verdict = root?.querySelector<HTMLElement>("#our-verdict");
     if (!sticky || !hero) return;
     let frame = 0;
     const sync = () => {
       frame = 0;
-      const mobile = window.matchMedia("(max-width: 600px)").matches;
+      const mobile = window.matchMedia("(max-width: 1000px)").matches;
       const headerHeight = document.querySelector<HTMLElement>("[data-public-shell='header']")?.getBoundingClientRect().height ?? 0;
       sticky.dataset.mobileVisible = String(shouldShowCasinoDecisionBar({
         barHeight: sticky.getBoundingClientRect().height,
@@ -40,6 +44,7 @@ export function CasinoProfileInteractions() {
         headerHeight,
         heroBottom: hero.getBoundingClientRect().bottom,
         mobile,
+        verdictTop: verdict?.getBoundingClientRect().top ?? null,
         viewportHeight: window.innerHeight,
       }));
     };
