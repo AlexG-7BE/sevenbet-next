@@ -13,6 +13,7 @@ type RuntimeCanonicalHostEnvironment = {
 export const PRODUCTION_CANONICAL_ORIGIN = "https://b4gamble.com";
 export const PRODUCTION_CRON_PATH = "/api/internal/cron/programme-expiry-purge";
 export const PRODUCTION_LIFECYCLE_CRON_PATH = "/api/internal/cron/customer-lifecycle";
+export const PRODUCTION_LEARN_CONTENT_CRON_PATH = "/api/internal/cron/learn-content";
 
 export type RuntimeCanonicalHostDecision =
   | { kind: "next" }
@@ -43,6 +44,7 @@ function resolveProductionCanonicalHost(
   if (
     requested.pathname === PRODUCTION_CRON_PATH
     || requested.pathname === PRODUCTION_LIFECYCLE_CRON_PATH
+    || requested.pathname === PRODUCTION_LEARN_CONTENT_CRON_PATH
   ) return { kind: "next" };
 
   const canonical = new URL(PRODUCTION_CANONICAL_ORIGIN);
