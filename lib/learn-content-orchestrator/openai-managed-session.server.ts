@@ -8,6 +8,35 @@ import { LEARN_CONTENT_ROOT_INSTRUCTIONS, buildLearnContentSessionInput } from "
 import type { LearnContentSafeContext } from "./safe-context.server";
 
 const MAX_MODEL_OUTPUT_BYTES = 5_000_000;
+const MAX_PROVIDER_ERROR_FIELD_BYTES = 240;
+
+function boundedProviderErrorField(value: unknown, fallback: string) {
+  if (typeof value !== "string" || !value.trim()) return fallback;
+  return value
+    .replace(/\bsk-[A-Za-z0-9_-]+\b/g, "[REDACTED]")
+    .replace(/\bBearer\s+\S+/gi, "Bearer [REDACTED]")
+    .replace(/\b[A-Za-z0-9_-]{32,}\b/g, "[REDACTED]")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_PROVIDER_ERROR_FIELD_BYTES);
+}
+
+export function describeLearnContentProviderError(error: unknown) {
+  const candidate = error && typeof error === "object" ? error as {
+    status?: unknown;
+    code?: unknown;
+    type?: unknown;
+    param?: unknown;
+    message?: unknown;
+  } : {};
+  return {
+    providerStatus: typeof candidate.status === "number" && Number.isSafeInteger(candidate.status) ? candidate.status : null,
+    providerCode: boundedProviderErrorField(candidate.code, "UNKNOWN"),
+    providerType: boundedProviderErrorField(candidate.type, error instanceof Error ? error.name : "UNKNOWN"),
+    providerParam: candidate.param === null ? "NONE" : boundedProviderErrorField(candidate.param, "UNKNOWN"),
+    providerMessage: boundedProviderErrorField(candidate.message, "Provider request failed without a message"),
+  };
+}
 
 export type LearnContentSessionTrace = {
   roles: Array<{ name: string; webSearchCalls: number }>;

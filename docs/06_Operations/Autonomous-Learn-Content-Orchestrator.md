@@ -82,6 +82,7 @@ Normal response classes:
 | --- | --- | --- |
 | `STARTED / SESSION_IN_PROGRESS` | A new managed session was attached | None; next hourly run reconciles |
 | `NO_OP / SESSION_IN_PROGRESS` | Existing run is still working | None |
+| `RETRY_PENDING / SESSION_START_FAILED` | The provider did not create a managed session; the bounded daily cycle remains retryable and logs only sanitized provider status/code/type/parameter/message fields | Correct the provider/configuration failure and retry the same cycle; never expose credentials or prompts |
 | `NO_OP / MINIMUM_INTERVAL_ACTIVE` | Daily launch interval has not elapsed | None |
 | `NO_OP / HOLD|MERGE|DROP` | SEO correctly declined new publication | Healthy; no action |
 | `BLOCKED / <safe code>` | Contract, safety, provider or state gate failed | Investigate code; do not bypass |

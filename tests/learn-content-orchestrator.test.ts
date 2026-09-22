@@ -17,6 +17,7 @@ import {
 } from "@/lib/learn-content-orchestrator/contracts";
 import { LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA } from "@/lib/learn-content-orchestrator/model-output-schema";
 import {
+  describeLearnContentProviderError,
   resolveLearnContentSubagentRoleName,
   type LearnContentManagedSessionProvider,
   type LearnContentSessionStart,
@@ -314,6 +315,7 @@ async function runHandler(options: {
   publisher?: LearnContentPublisher;
   environment?: Record<string, string | undefined>;
   context?: LearnContentSafeContext;
+  log?: (entry: Record<string, string | number | boolean | null>) => void;
 }) {
   const handler = createLearnContentCronHandler({
     environment: options.environment ?? validEnvironment,
@@ -322,7 +324,7 @@ async function runHandler(options: {
     sessions: options.sessions ?? new FakeSessions(),
     publisher: options.publisher ?? new FakePublisher(),
     collectContext: async () => options.context ?? safeContext(),
-    log: () => undefined,
+    log: options.log ?? (() => undefined),
   });
   const result = await handler(cronRequest());
   return { status: result.status, body: await result.json() as Record<string, unknown> };
@@ -419,6 +421,26 @@ test("state repository bounds repeated PostgreSQL Serializable retries", async (
 
   await assert.rejects(repository.claim(stateClaimInput()), /persistent Serializable conflict/);
   assert.equal(attempts, 3);
+});
+
+test("provider diagnostics are bounded and redact credential-like values", () => {
+  const details = describeLearnContentProviderError(Object.assign(
+    new Error("Provider rejected sk-do-not-log-this-secret-token for Bearer another-secret-token-value"),
+    { status: 400, code: "invalid_request_error", type: "invalid_request_error", param: "agent.model" },
+  ));
+  assert.deepEqual({
+    providerStatus: details.providerStatus,
+    providerCode: details.providerCode,
+    providerType: details.providerType,
+    providerParam: details.providerParam,
+  }, {
+    providerStatus: 400,
+    providerCode: "invalid_request_error",
+    providerType: "invalid_request_error",
+    providerParam: "agent.model",
+  });
+  assert.doesNotMatch(details.providerMessage, /do-not-log|another-secret/);
+  assert.match(details.providerMessage, /\[REDACTED\]/);
 });
 
 test("model envelope parses a healthy SEO HOLD as NO_OP", () => {
@@ -638,11 +660,20 @@ test("launch creates one managed session and records its id", async () => {
   assert.equal(state.attachCalls, 1);
 });
 
-test("managed session start failure closes the run without publishing", async () => {
+test("managed session start failure remains retryable without closing the daily cycle", async () => {
   const state = new MemoryState({ action: "LAUNCH", run: run({ sessionId: null }) });
-  const result = await runHandler({ state, sessions: new FakeSessions(undefined, undefined, "start") });
+  const entries: Array<Record<string, string | number | boolean | null>> = [];
+  const result = await runHandler({
+    state,
+    sessions: new FakeSessions(undefined, undefined, "start"),
+    log: (entry) => entries.push(entry),
+  });
+  assert.equal(result.status, 503);
+  assert.equal(result.body.result, "RETRY_PENDING");
   assert.equal(result.body.code, "SESSION_START_FAILED");
-  assert.equal(state.finishCalls.at(-1)?.code, "SESSION_START_FAILED");
+  assert.equal(state.finishCalls.length, 0);
+  assert.equal(entries.at(-1)?.event, "run_retry_pending");
+  assert.equal(entries.at(-1)?.providerType, "Error");
 });
 
 test("in-progress reconciliation touches the lease and does not publish", async () => {
