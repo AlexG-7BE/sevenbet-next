@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
 import {
@@ -29,6 +30,7 @@ import type { LearnContentSafeContext } from "@/lib/learn-content-orchestrator/s
 import { createLearnContentCronHandler } from "@/lib/learn-content-orchestrator/service.server";
 import {
   assertBoundedLearnContentState,
+  PrismaLearnContentStateRepository,
   type LearnContentActiveRun,
   type LearnContentClaim,
   type LearnContentOperationalState,
@@ -44,6 +46,15 @@ const RUN_ID = "00000000-0000-4000-8000-000000000001";
 const ARTICLE_ID = "00000000-0000-4000-8000-000000000002";
 const REQUEST_ID = `learn-content:${RUN_ID}`;
 const SECRET = "c".repeat(40);
+
+function stateClaimInput() {
+  return {
+    now: NOW,
+    minIntervalHours: 24,
+    locales: [{ language: "en", locale: "en-GB" }],
+    model: "gpt-6-astra",
+  };
+}
 
 const validEnvironment = {
   CRON_SECRET: SECRET,
@@ -376,6 +387,38 @@ test("bounded operational state rejects prose-sized or unknown fields", () => {
     version: 1, nextEligibleAt: null, localeCursor: 0, consecutiveFailures: 0, haltedCode: null, active: run(), last: null,
     rawReasoning: "x".repeat(5_000),
   } as never));
+});
+
+test("state repository retries a transient PostgreSQL Serializable conflict", async () => {
+  let attempts = 0;
+  const database = {
+    $transaction: async (work: (transaction: { $queryRaw: () => Promise<Array<{ locked: boolean }>> }) => Promise<unknown>) => {
+      attempts += 1;
+      if (attempts === 1) throw Object.assign(new Error("transient Serializable conflict"), { code: "P2034" });
+      return work({ $queryRaw: async () => [{ locked: false }] });
+    },
+  } as unknown as PrismaClient;
+  const repository = new PrismaLearnContentStateRepository(database);
+
+  assert.deepEqual(await repository.claim(stateClaimInput()), {
+    action: "BUSY",
+    code: "ORCHESTRATOR_LOCK_BUSY",
+  });
+  assert.equal(attempts, 2);
+});
+
+test("state repository bounds repeated PostgreSQL Serializable retries", async () => {
+  let attempts = 0;
+  const database = {
+    $transaction: async () => {
+      attempts += 1;
+      throw Object.assign(new Error("persistent Serializable conflict"), { code: "P2034" });
+    },
+  } as unknown as PrismaClient;
+  const repository = new PrismaLearnContentStateRepository(database);
+
+  await assert.rejects(repository.claim(stateClaimInput()), /persistent Serializable conflict/);
+  assert.equal(attempts, 3);
 });
 
 test("model envelope parses a healthy SEO HOLD as NO_OP", () => {

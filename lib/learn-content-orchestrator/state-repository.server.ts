@@ -98,18 +98,40 @@ export function assertBoundedLearnContentState(state: LearnContentOperationalSta
 }
 
 type TransactionClient = Prisma.TransactionClient;
+const STATE_SERIALIZABLE_RETRY_LIMIT = 3;
+
+function isSerializableConflict(error: unknown) {
+  return typeof error === "object"
+    && error !== null
+    && "code" in error
+    && (error as { code?: unknown }).code === "P2034";
+}
+
+function waitForSerializableRetry(attempt: number) {
+  return new Promise((resolve) => setTimeout(resolve, attempt * 25));
+}
 
 export class PrismaLearnContentStateRepository implements LearnContentStateRepository {
   constructor(private readonly database: PrismaClient = prisma) {}
 
   private async locked<T>(work: (transaction: TransactionClient) => Promise<T>): Promise<T | null> {
-    return this.database.$transaction(async (transaction) => {
-      const rows = await transaction.$queryRaw<Array<{ locked: boolean }>>`
-        SELECT pg_try_advisory_xact_lock(hashtextextended(${LEARN_CONTENT_STATE_KEY}, 0)) AS locked
-      `;
-      if (!rows[0]?.locked) return null;
-      return work(transaction);
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= STATE_SERIALIZABLE_RETRY_LIMIT; attempt += 1) {
+      try {
+        return await this.database.$transaction(async (transaction) => {
+          const rows = await transaction.$queryRaw<Array<{ locked: boolean }>>`
+            SELECT pg_try_advisory_xact_lock(hashtextextended(${LEARN_CONTENT_STATE_KEY}, 0)) AS locked
+          `;
+          if (!rows[0]?.locked) return null;
+          return work(transaction);
+        }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      } catch (error) {
+        lastError = error;
+        if (!isSerializableConflict(error) || attempt === STATE_SERIALIZABLE_RETRY_LIMIT) throw error;
+        await waitForSerializableRetry(attempt);
+      }
+    }
+    throw lastError;
   }
 
   private async current(transaction: TransactionClient) {
