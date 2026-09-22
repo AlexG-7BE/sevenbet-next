@@ -8,7 +8,7 @@ function structuredOutputSchema(value: unknown): unknown {
   const input = value as Record<string, unknown>;
   const output = Object.fromEntries(
     Object.entries(input)
-      .filter(([key]) => key !== "$schema" && key !== "default")
+      .filter(([key]) => key !== "$schema" && key !== "default" && key !== "format")
       .map(([key, child]) => [key === "oneOf" ? "anyOf" : key, structuredOutputSchema(child)]),
   ) as Record<string, unknown>;
   if (output.type === "object" && output.properties && typeof output.properties === "object" && !Array.isArray(output.properties)) {
