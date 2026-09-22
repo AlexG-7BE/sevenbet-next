@@ -1,0 +1,396 @@
+{
+  "schemaVersion": "ego-skillonnet-editorial.v1",
+  "decisionRef": "FOUNDER-EGO-2026-09-22",
+  "scoreMethod": "PR #256 six-component mean from bundle facts; see docs/06_Operations/EGO-SkillOnNet-Import-01-Runbook.md",
+  "casinos": [
+    {
+      "slug": "ahti-games",
+      "title": "AHTI Games",
+      "score": 7.8,
+      "scoreComponents": {
+        "trust": 7.2,
+        "userExperience": 8.6,
+        "payments": 8.0,
+        "games": 8.2,
+        "support": 7.8,
+        "responsibleGambling": 7.0
+      },
+      "summary": "AHTI Games (2019) is SkillOnNet's Nordic-styled casino (dark sea theme) with 3,000+ games, tournaments and a VIP programme; strong in Finland and Sweden, Trustly withdrawals. www.ahtigames.com is UKGC-active; Nordic variants under the MGA/Swedish licences.",
+      "description": "B4GAMBLE profiles AHTI Games for Great Britain, Sweden, Denmark and Austria. Licences on record: Gambling Commission licence 039326-R-319358-059 and Spelinspektionen licence 18Li7539. Payment methods listed: Visa Debit, Mastercard Debit, PayPal, Apple Pay and Instant bank transfer. Games come from 10 providers including Playtech, Pragmatic Play, Evolution, NetEnt and Play'n GO, with a live casino. Support: AHTI Games customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Gambling Commission licence 039326-R-319358-059 and Spelinspektionen licence 18Li7539.",
+        "Game variety: 10 providers including Playtech, Pragmatic Play, Evolution and NetEnt.",
+        "Live casino tables.",
+        "Payment choice: 5 methods including Visa Debit, Mastercard Debit, PayPal and Apple Pay."
+      ],
+      "thingsToKnow": [
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Great Britain, Sweden, Denmark and Austria; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "AHTI Games Review & Editor Score | B4GAMBLE",
+        "description": "AHTI Games review, exact-market facts and B4GAMBLE Editor Score 7.8/10."
+      }
+    },
+    {
+      "slug": "bacanaplay",
+      "title": "BacanaPlay",
+      "score": 8.0,
+      "scoreComponents": {
+        "trust": 7.2,
+        "userExperience": 8.6,
+        "payments": 9.0,
+        "games": 8.1,
+        "support": 8.1,
+        "responsibleGambling": 7.0
+      },
+      "summary": "BacanaPlay (2019/20) is SkillOnNet's Portuguese-first casino — 2,200+ games, MB Way/Multibanco, VIB club — licensed by SRIJ in Portugal and live in Brazil (.bet.br); www.bacanaplay.com is UKGC-active and MGA/Danish variants exist.",
+      "description": "B4GAMBLE profiles BacanaPlay for Portugal, Brazil, Great Britain, Denmark, Austria and Sweden. Licences on record: Serviço de Regulação e Inspeção de Jogos licence 025 and Gambling Commission licence 039326-R-319358-059. Payment methods listed: MB WAY, Multibanco, Visa, Mastercard, PayPal and Visa Debit. Games come from 9 providers including Playtech, Pragmatic Play, Evolution, NetEnt and Play'n GO, with a live casino. Support: BacanaPlay customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Serviço de Regulação e Inspeção de Jogos licence 025 and Gambling Commission licence 039326-R-319358-059.",
+        "Game variety: 9 providers including Playtech, Pragmatic Play, Evolution and NetEnt.",
+        "Live casino tables.",
+        "Payment choice: 9 methods including MB WAY, Multibanco, Visa and Mastercard."
+      ],
+      "thingsToKnow": [
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Brazil, Great Britain, Denmark, Austria and Sweden; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "BacanaPlay Review & Editor Score | B4GAMBLE",
+        "description": "BacanaPlay review, exact-market facts and B4GAMBLE Editor Score 8.0/10."
+      }
+    },
+    {
+      "slug": "casino-redkings",
+      "title": "Casino RedKings",
+      "score": 7.7,
+      "scoreComponents": {
+        "trust": 6.7,
+        "userExperience": 8.6,
+        "payments": 8.0,
+        "games": 8.2,
+        "support": 7.8,
+        "responsibleGambling": 6.6
+      },
+      "summary": "Casino RedKings (RedKings brand, 2011) is a SkillOnNet multi-market casino with a jackpot-slots and live-casino focus and 15 language versions. www.redkings.com is UKGC-active; other language variants run under the MGA licence.",
+      "description": "B4GAMBLE profiles Casino RedKings for Great Britain, Denmark, Austria and Sweden. Licences on record: Gambling Commission licence 039326-R-319358-059. Payment methods listed: Visa Debit, Mastercard Debit, PayPal, Apple Pay and Instant bank transfer. Games come from 10 providers including Playtech, Pragmatic Play, Evolution, NetEnt and Play'n GO, with a live casino. Support: Casino RedKings customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Gambling Commission licence 039326-R-319358-059.",
+        "Game variety: 10 providers including Playtech, Pragmatic Play, Evolution and NetEnt.",
+        "Live casino tables.",
+        "Payment choice: 5 methods including Visa Debit, Mastercard Debit, PayPal and Apple Pay."
+      ],
+      "thingsToKnow": [
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Great Britain, Denmark, Austria and Sweden; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "Casino RedKings Review & Editor Score | B4GAMBLE",
+        "description": "Casino RedKings review, exact-market facts and B4GAMBLE Editor Score 7.7/10."
+      }
+    },
+    {
+      "slug": "drueckglueck",
+      "title": "DrückGlück",
+      "score": 8.0,
+      "scoreComponents": {
+        "trust": 7.2,
+        "userExperience": 8.6,
+        "payments": 9.0,
+        "games": 8.5,
+        "support": 7.8,
+        "responsibleGambling": 7.0
+      },
+      "summary": "DrückGlück (2015) is SkillOnNet's German-facing online Spielothek, TV-advertised, with a GGL virtual-slots permit since 29 Dec 2022 (drueckglueck.de). The .com/.co.uk domains are UKGC-active; Nordic-language variants exist under the MGA licence.",
+      "description": "B4GAMBLE profiles DrückGlück for Germany, Great Britain, Denmark and Sweden. Licences on record: Gemeinsame Glücksspielbehörde der Länder and Gambling Commission licence 039326-R-319358-059. Payment methods listed: Visa, Mastercard, PayPal, paysafecard, Sofort / Klarna and Banküberweisung. Games come from 12 providers including Merkur, Play'n GO, Pragmatic Play, Games Global and Playtech, with a live casino. Support: DrückGlück customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Gemeinsame Glücksspielbehörde der Länder and Gambling Commission licence 039326-R-319358-059.",
+        "Game variety: 12 providers including Merkur, Play'n GO, Pragmatic Play and Games Global.",
+        "Live casino tables.",
+        "Payment choice: 10 methods including Visa, Mastercard, PayPal and paysafecard."
+      ],
+      "thingsToKnow": [
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Great Britain, Denmark and Sweden; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "DrückGlück Review & Editor Score | B4GAMBLE",
+        "description": "DrückGlück review, exact-market facts and B4GAMBLE Editor Score 8.0/10."
+      }
+    },
+    {
+      "slug": "eucasino",
+      "title": "EUcasino",
+      "score": 7.8,
+      "scoreComponents": {
+        "trust": 7.2,
+        "userExperience": 8.6,
+        "payments": 8.0,
+        "games": 8.2,
+        "support": 7.8,
+        "responsibleGambling": 7.0
+      },
+      "summary": "EUcasino (2009) is one of SkillOnNet's oldest brands: 20+ language versions, multi-currency, VIP club, slots/live/table games. UKGC-active (.com/.co.uk), a dedicated Danish-licensed site eucasino.dk, and MGA-licensed international variants. Not available in every EU country despite the name.",
+      "description": "B4GAMBLE profiles EUcasino for Great Britain, Denmark, Austria, Sweden and Canada. Licences on record: Gambling Commission licence 039326-R-319358-059 and Spillemyndigheden. Payment methods listed: Visa Debit, Mastercard Debit, PayPal, Apple Pay and Instant bank transfer. Games come from 10 providers including Playtech, Pragmatic Play, Evolution, NetEnt and Play'n GO, with a live casino. Support: EUcasino customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Gambling Commission licence 039326-R-319358-059 and Spillemyndigheden.",
+        "Game variety: 10 providers including Playtech, Pragmatic Play, Evolution and NetEnt.",
+        "Live casino tables.",
+        "Payment choice: 5 methods including Visa Debit, Mastercard Debit, PayPal and Apple Pay."
+      ],
+      "thingsToKnow": [
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Great Britain, Denmark, Austria, Sweden and Canada; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "EUcasino Review & Editor Score | B4GAMBLE",
+        "description": "EUcasino review, exact-market facts and B4GAMBLE Editor Score 7.8/10."
+      }
+    },
+    {
+      "slug": "jackpotstar",
+      "title": "JackpotStar",
+      "score": 7.7,
+      "scoreComponents": {
+        "trust": 7.2,
+        "userExperience": 7.8,
+        "payments": 8.0,
+        "games": 8.2,
+        "support": 8.1,
+        "responsibleGambling": 7.0
+      },
+      "summary": "JackpotStar (2020) is SkillOnNet's jackpot-focused casino with daily personalised picks; marketed by EGO for the UK, Sweden and MGA markets. jackpotstar.com is UKGC-active; 9 language variants exist.",
+      "description": "B4GAMBLE profiles JackpotStar for Great Britain, Sweden, Denmark, Austria and Canada. Licences on record: Gambling Commission licence 039326-R-319358-059 and Spelinspektionen licence 18Li7539. Payment methods listed: Visa Debit, Mastercard Debit, PayPal, Apple Pay and Instant bank transfer. Games come from 10 providers including Playtech, Pragmatic Play, Evolution, NetEnt and Play'n GO, with a live casino. Support: JackpotStar customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Gambling Commission licence 039326-R-319358-059 and Spelinspektionen licence 18Li7539.",
+        "Game variety: 10 providers including Playtech, Pragmatic Play, Evolution and NetEnt.",
+        "Live casino tables.",
+        "Payment choice: 5 methods including Visa Debit, Mastercard Debit, PayPal and Apple Pay."
+      ],
+      "thingsToKnow": [
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Sweden, Denmark, Austria and Canada; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "JackpotStar Review & Editor Score | B4GAMBLE",
+        "description": "JackpotStar review, exact-market facts and B4GAMBLE Editor Score 7.7/10."
+      }
+    },
+    {
+      "slug": "megawayscasino",
+      "title": "MegawaysCasino",
+      "score": 7.3,
+      "scoreComponents": {
+        "trust": 6.5,
+        "userExperience": 7.8,
+        "payments": 8.0,
+        "games": 7.6,
+        "support": 7.2,
+        "responsibleGambling": 6.6
+      },
+      "summary": "MegawaysCasino is the official Megaways™-branded casino operated by SkillOnNet (UK launch, then international under the MGA licence from May 2026): Megaways slots first, plus live casino and jackpots. www.megawayscasino.com is UKGC-active.",
+      "description": "B4GAMBLE profiles MegawaysCasino for Great Britain. Licences on record: Gambling Commission licence 039326-R-319358-059. Payment methods listed: Visa Debit, Mastercard Debit, PayPal, Apple Pay and Instant bank transfer. Games come from 6 providers including Big Time Gaming, Blueprint Gaming, Pragmatic Play, Red Tiger and Playtech, with a live casino. Support: MegawaysCasino customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Gambling Commission licence 039326-R-319358-059.",
+        "Live casino tables.",
+        "Payment choice: 5 methods including Visa Debit, Mastercard Debit, PayPal and Apple Pay."
+      ],
+      "thingsToKnow": [
+        "No welcome offer is recorded for Great Britain; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "MegawaysCasino Review & Editor Score | B4GAMBLE",
+        "description": "MegawaysCasino review, exact-market facts and B4GAMBLE Editor Score 7.3/10."
+      }
+    },
+    {
+      "slug": "playojo",
+      "title": "PlayOJO",
+      "score": 8.2,
+      "scoreComponents": {
+        "trust": 8.2,
+        "userExperience": 8.8,
+        "payments": 8.0,
+        "games": 8.5,
+        "support": 8.1,
+        "responsibleGambling": 7.8
+      },
+      "summary": "PlayOJO is SkillOnNet's flagship casino (launched March 2017): no wagering requirements on any promotion, OJOplus money-back on every bet, casino, live casino, bingo and jackpot games. Live in the UK, Sweden, Ontario, Spain, Mexico and Denmark under local licences.",
+      "description": "B4GAMBLE profiles PlayOJO for Great Britain, Sweden, Canada, Spain, Denmark, Mexico and Austria. Licences on record: Gambling Commission licence 039326-R-319358-059, Spelinspektionen licence 18Li7539, Dirección General de Ordenación del Juego licence LGEN/00083 and Spillemyndigheden. Payment methods listed: Visa Debit, Mastercard Debit, PayPal, Apple Pay and Instant bank transfer. Games come from 12 providers including Playtech, Pragmatic Play, Evolution, NetEnt and Play'n GO, with a live casino. Support: PlayOJO customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Gambling Commission licence 039326-R-319358-059, Spelinspektionen licence 18Li7539, Dirección General de Ordenación del Juego licence LGEN/00083 and Spillemyndigheden.",
+        "Game variety: 12 providers including Playtech, Pragmatic Play, Evolution and NetEnt.",
+        "Live casino tables.",
+        "Payment choice: 5 methods including Visa Debit, Mastercard Debit, PayPal and Apple Pay."
+      ],
+      "thingsToKnow": [
+        "Minimum age in Canada is 19.",
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Sweden, Canada, Spain, Denmark, Mexico and Austria; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "PlayOJO Review & Editor Score | B4GAMBLE",
+        "description": "PlayOJO review, exact-market facts and B4GAMBLE Editor Score 8.2/10."
+      }
+    },
+    {
+      "slug": "playojo-bingo",
+      "title": "PlayOJO Bingo",
+      "score": 7.2,
+      "scoreComponents": {
+        "trust": 6.5,
+        "userExperience": 7.5,
+        "payments": 8.0,
+        "games": 7.2,
+        "support": 7.2,
+        "responsibleGambling": 6.6
+      },
+      "summary": "PlayOJO Bingo is the bingo room of PlayOJO (Skill On Net Limited, UKGC Bingo Remote since Feb 2020): 90/75-ball rooms, Slingo and side games, with PlayOJO's no-wagering rules. UK-facing; EGO supplies a separate tracking link (site.playojobingo.com).",
+      "description": "B4GAMBLE profiles PlayOJO Bingo for Great Britain. Licences on record: Gambling Commission licence 039326-R-319358-059. Payment methods listed: Visa Debit, Mastercard Debit, PayPal, Apple Pay and Instant bank transfer. Games come from 3 providers including Pragmatic Play, Playtech and Slingo, with a live casino. Support: PlayOJO Bingo customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Gambling Commission licence 039326-R-319358-059.",
+        "Live casino tables.",
+        "Payment choice: 5 methods including Visa Debit, Mastercard Debit, PayPal and Apple Pay.",
+        "Current offer on record: 500 free bingo tickets + 50 free spins, no wagering."
+      ],
+      "thingsToKnow": [
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "PlayOJO Bingo Review & Editor Score | B4GAMBLE",
+        "description": "PlayOJO Bingo review, exact-market facts and B4GAMBLE Editor Score 7.2/10."
+      }
+    },
+    {
+      "slug": "playuzu",
+      "title": "PlayUZU",
+      "score": 7.7,
+      "scoreComponents": {
+        "trust": 6.7,
+        "userExperience": 8.6,
+        "payments": 8.0,
+        "games": 8.2,
+        "support": 7.8,
+        "responsibleGambling": 6.6
+      },
+      "summary": "PlayUZU is SkillOnNet's Spanish-language 'transparent casino' (Spain since 2020): no-wagering bonuses, UZUplus money-back on every bet, 2,500–4,300+ games incl. live casino. Locally licensed in Spain (DGOJ), Mexico, Peru, Buenos Aires City and Brazil (.bet.br).",
+      "description": "B4GAMBLE profiles PlayUZU for Spain, Mexico, Peru, Brazil, Denmark and Austria. Licences on record: Dirección General de Ordenación del Juego licence LGEN/00083. Payment methods listed: Bizum, Visa, Mastercard, PayPal and Apple Pay. Games come from 10 providers including Playtech, Pragmatic Play, Evolution, NetEnt and Play'n GO, with a live casino. Support: Soporte en español.",
+      "bestFor": [
+        "Players who want a licensed site: Dirección General de Ordenación del Juego licence LGEN/00083.",
+        "Game variety: 10 providers including Playtech, Pragmatic Play, Evolution and NetEnt.",
+        "Live casino tables.",
+        "Payment choice: 5 methods including Bizum, Visa, Mastercard and PayPal."
+      ],
+      "thingsToKnow": [
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Mexico, Peru, Brazil, Denmark and Austria; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "PlayUZU Review & Editor Score | B4GAMBLE",
+        "description": "PlayUZU review, exact-market facts and B4GAMBLE Editor Score 7.7/10."
+      }
+    },
+    {
+      "slug": "regencycasino",
+      "title": "Regency Casino Online",
+      "score": 7.9,
+      "scoreComponents": {
+        "trust": 7.2,
+        "userExperience": 8.6,
+        "payments": 9.0,
+        "games": 7.9,
+        "support": 7.5,
+        "responsibleGambling": 7.0
+      },
+      "summary": "Regency Casino Online is the digital brand of Regency Entertainment S.A. (Mont Parnes, Thessaloniki — 30 years of land-based casinos), launched with SkillOnNet under a Greek HGC Type 2 licence: 3,000+ games and live casino with Greek-speaking dealers. www.regencycasino.com is a UKGC white-label; further roll-outs (DK, ES, SE, DE) announced.",
+      "description": "B4GAMBLE profiles Regency Casino Online for Greece, Great Britain and Denmark. Licences on record: Hellenic Gaming Commission (ΕΕΕΠ) and Gambling Commission licence 039326-R-319358-059. Payment methods listed: Visa, Mastercard, Bank transfer, Visa Debit, Mastercard Debit and PayPal. Games come from 8 providers including Evolution, NetEnt, Play'n GO, Playtech and Pragmatic Play, with a live casino. Support: Regency Casino customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Hellenic Gaming Commission (ΕΕΕΠ) and Gambling Commission licence 039326-R-319358-059.",
+        "Game variety: 8 providers including Evolution, NetEnt, Play'n GO and Playtech.",
+        "Live casino tables.",
+        "Payment choice: 8 methods including Visa, Mastercard, Bank transfer and Visa Debit."
+      ],
+      "thingsToKnow": [
+        "Minimum age in Greece is 21.",
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Greece, Great Britain and Denmark; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "Regency Casino Online Review & Editor Score | B4GAMBLE",
+        "description": "Regency Casino Online review, exact-market facts and B4GAMBLE Editor Score 7.9/10."
+      }
+    },
+    {
+      "slug": "slotsmagic",
+      "title": "SlotsMagic",
+      "score": 7.8,
+      "scoreComponents": {
+        "trust": 6.7,
+        "userExperience": 8.6,
+        "payments": 8.0,
+        "games": 9.0,
+        "support": 7.8,
+        "responsibleGambling": 6.6
+      },
+      "summary": "SlotsMagic (2014) is a large multi-language SkillOnNet casino — slots, Megaways, jackpots, live casino from Playtech, Pragmatic, Evolution, Games Global and 20+ studios; 24/7 support, iOS/Android apps. UKGC-active (.com/.co.uk), live in Ontario, plus 20 language variants under the MGA licence.",
+      "description": "B4GAMBLE profiles SlotsMagic for Great Britain, Canada, Denmark, Austria and Sweden. Licences on record: Gambling Commission licence 039326-R-319358-059. Payment methods listed: Visa Debit, Mastercard Debit, PayPal, Apple Pay and Instant bank transfer. Games come from 25 providers including Playtech, Pragmatic Play, Evolution, NetEnt and Play'n GO, with a live casino. Support: SlotsMagic customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Gambling Commission licence 039326-R-319358-059.",
+        "Game variety: 25 providers including Playtech, Pragmatic Play, Evolution and NetEnt.",
+        "Live casino tables.",
+        "Payment choice: 5 methods including Visa Debit, Mastercard Debit, PayPal and Apple Pay."
+      ],
+      "thingsToKnow": [
+        "Minimum age in Canada is 19.",
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Great Britain, Canada, Denmark, Austria and Sweden; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "SlotsMagic Review & Editor Score | B4GAMBLE",
+        "description": "SlotsMagic review, exact-market facts and B4GAMBLE Editor Score 7.8/10."
+      }
+    },
+    {
+      "slug": "turbonino",
+      "title": "TurboNino",
+      "score": 8.0,
+      "scoreComponents": {
+        "trust": 7.7,
+        "userExperience": 8.6,
+        "payments": 8.7,
+        "games": 7.9,
+        "support": 7.8,
+        "responsibleGambling": 7.4
+      },
+      "summary": "TurboNino (2021) is SkillOnNet's Pay N Play casino: registration-free deposits via Trustly/Zimpler bank ID, marketed by EGO for Sweden, Germany and Finland. www.turbonino.com is also UKGC-active.",
+      "description": "B4GAMBLE profiles TurboNino for Great Britain, Sweden, Germany and Denmark. Licences on record: Gambling Commission licence 039326-R-319358-059, Spelinspektionen licence 18Li7539 and Gemeinsame Glücksspielbehörde der Länder. Payment methods listed: Visa Debit, Mastercard Debit, PayPal, Apple Pay, Instant bank transfer and Trustly (Pay N Play). Games come from 8 providers including Playtech, Pragmatic Play, Evolution, NetEnt and Play'n GO, with a live casino. Support: TurboNino customer support is provided in English (live chat/email); hours not primary-verified.",
+      "bestFor": [
+        "Players who want a licensed site: Gambling Commission licence 039326-R-319358-059, Spelinspektionen licence 18Li7539 and Gemeinsame Glücksspielbehörde der Länder.",
+        "Game variety: 8 providers including Playtech, Pragmatic Play, Evolution and NetEnt.",
+        "Live casino tables.",
+        "Payment choice: 7 methods including Visa Debit, Mastercard Debit, PayPal and Apple Pay."
+      ],
+      "thingsToKnow": [
+        "The Malta Gaming Authority licence number was not verified against the regulator register.",
+        "No welcome offer is recorded for Great Britain, Sweden, Germany and Denmark; check the operator's current terms.",
+        "Commercial availability is decided per market; a review does not mean the casino is offered in your country."
+      ],
+      "seo": {
+        "title": "TurboNino Review & Editor Score | B4GAMBLE",
+        "description": "TurboNino review, exact-market facts and B4GAMBLE Editor Score 8.0/10."
+      }
+    }
+  ]
+}

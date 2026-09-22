@@ -59,15 +59,14 @@ Re-running `apply` is safe. Already-registered links report `NO_CHANGE`.
 
 - `npm run casino-registry:verify` should report 29 casinos (15 published, 13 draft, 1 archived).
 - The casinos stay `DRAFT` until published. A CTA needs a published casino, an `ACTIVE` route and a `HEALTHY` check (`lib/market-activation/runtime.ts`).
-- To publish in `/admin`, each casino needs:
-  - the approved Editor Score;
-  - summary, description, SEO title and description;
-  - an ACTIVE licence and an AVAILABLE country.
-
-  Then run review → approve → publish.
+- Publish them with the approved Editor Scores and the fact-based content in `editorial.json`:
+  ```bash
+  npm run ego-skillonnet:import -- publish --confirm=EGO-SKILLONNET-IMPORT-01 --decision-ref=FOUNDER-EGO-2026-09-22 --actor-email=<admin email> --expected-database=<fingerprint>
+  ```
+  For each casino this writes the summary, description, "Best for" and "Things to know" lists, the Editor Score and SEO. It publishes the editorial review, then runs DRAFT → IN_REVIEW → APPROVED → PUBLISHED through `casinoService` with the normal publication validation, following `scripts/casino-real-catalog-03.ts`. Re-running it republishes the same content.
 - The scheduled route-health workflow checks `ACTIVE` routes only.
 
-## Editor Score proposal (not approved)
+## Editor Scores (approved by the Founder, 22 Sep 2026)
 
 Six components, as in PR #256 (GoldenPlay 7.9), each derived only from bundle facts across the casino's AVAILABLE markets:
 
@@ -78,7 +77,7 @@ Six components, as in PR #256 (GoldenPlay 7.9), each derived only from bundle fa
 - **Support:** 6.6 + 0.3 per support language, + 0.3 when every market has a support summary.
 - **Responsible gambling:** 6.2 + 0.4 per verified regulator.
 
-Each component is clamped to 6.0–9.0 (support ≤ 8.6, responsible gambling ≤ 8.2), and the score is the mean. No bundle carries a responsible-gambling page URL, which keeps that component low.
+Each component is clamped to 6.0–9.0 (support ≤ 8.6, responsible gambling ≤ 8.2), and the score is the mean, rounded half-up to one decimal. No bundle carries a responsible-gambling page URL, which keeps that component low.
 
 | Casino | Score | Trust | UX | Payments | Games | Support | RG | Verified regulators |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -91,8 +90,8 @@ Each component is clamped to 6.0–9.0 (support ≤ 8.6, responsible gambling �
 | EUcasino | **7.8** | 7.2 | 8.6 | 8.0 | 8.2 | 7.8 | 7.0 | Gambling Commission, Spillemyndigheden |
 | SlotsMagic | **7.8** | 6.7 | 8.6 | 8.0 | 9.0 | 7.8 | 6.6 | Gambling Commission |
 | JackpotStar | **7.7** | 7.2 | 7.8 | 8.0 | 8.2 | 8.1 | 7.0 | Gambling Commission, Spelinspektionen |
-| Casino RedKings | **7.6** | 6.7 | 8.6 | 8.0 | 8.2 | 7.8 | 6.6 | Gambling Commission |
-| PlayUZU | **7.6** | 6.7 | 8.6 | 8.0 | 8.2 | 7.8 | 6.6 | DGOJ |
+| Casino RedKings | **7.7** | 6.7 | 8.6 | 8.0 | 8.2 | 7.8 | 6.6 | Gambling Commission |
+| PlayUZU | **7.7** | 6.7 | 8.6 | 8.0 | 8.2 | 7.8 | 6.6 | DGOJ |
 | MegawaysCasino | **7.3** | 6.5 | 7.8 | 8.0 | 7.6 | 7.2 | 6.6 | Gambling Commission |
 | PlayOJO Bingo | **7.2** | 6.5 | 7.5 | 8.0 | 7.2 | 7.2 | 6.6 | Gambling Commission |
 

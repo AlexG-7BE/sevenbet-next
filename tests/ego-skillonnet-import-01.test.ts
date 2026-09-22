@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  EGO_CASINO_SLUGS,
   EGO_DECISION_REF,
   EGO_IMPORT_RELEASE,
   assertEgoApplyAuthority,
@@ -101,4 +102,22 @@ test("raw tracking links stay out of the repository", () => {
   assert.match(readFileSync(".gitignore", "utf8"), /^\*tracking-links\*\.csv$/m);
   const manifest = readFileSync("data/casino-ingestion/ego-skillonnet-2026-09-22/manifest.v1.json", "utf8");
   assert.doesNotMatch(manifest, /aname=|tracking-links/);
+});
+
+test("editorial content covers every EGO casino with a score equal to the mean of its six components", () => {
+  const editorial = JSON.parse(readFileSync("data/casino-ingestion/ego-skillonnet-2026-09-22/editorial.json", "utf8")) as {
+    decisionRef: string;
+    casinos: Array<{ slug: string; score: number; scoreComponents: Record<string, number>; summary: string; description: string; bestFor: string[]; thingsToKnow: string[]; seo: { title: string; description: string } }>;
+  };
+  assert.equal(editorial.decisionRef, EGO_DECISION_REF);
+  assert.deepEqual(editorial.casinos.map((entry) => entry.slug).sort(), [...EGO_CASINO_SLUGS].sort());
+  for (const entry of editorial.casinos) {
+    const components = Object.values(entry.scoreComponents);
+    assert.equal(components.length, 6, entry.slug);
+    assert.equal(entry.score, Math.round((components.reduce((sum, value) => sum + value, 0) / 6) * 10) / 10, entry.slug);
+    assert.ok(entry.score >= 1 && entry.score <= 10, entry.slug);
+    for (const text of [entry.summary, entry.description, entry.seo.title, entry.seo.description]) assert.ok(text.trim().length > 20, entry.slug);
+    assert.ok(entry.bestFor.length > 0 && entry.thingsToKnow.length > 0, entry.slug);
+    assert.doesNotMatch(JSON.stringify(entry), /aname=|prod_id=/, entry.slug);
+  }
 });
