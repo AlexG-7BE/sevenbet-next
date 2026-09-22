@@ -1,0 +1,1162 @@
+{
+  "schemaVersion": "casino-market-ingestion.v1",
+  "actor": "founder-office-ego-skillonnet-2026-09-22",
+  "sourceFiles": [
+    {
+      "path": "data/casino-ingestion/ego-skillonnet-source-20260922.md",
+      "sha256": "1602847c230cc83dcb3a84ff73a83e4bc46ffce4a18cb57f9c91c0cb4cc8f7f2"
+    }
+  ],
+  "casino": {
+    "key": "playuzu",
+    "slug": "playuzu",
+    "internalName": "PlayUZU",
+    "title": "PlayUZU",
+    "domain": "playuzu.com",
+    "websiteUrl": "https://www.playuzu.es/",
+    "summary": "PlayUZU is SkillOnNet's Spanish-language 'transparent casino' (Spain since 2020): no-wagering bonuses, UZUplus money-back on every bet, 2,500–4,300+ games incl. live casino. Locally licensed in Spain (DGOJ), Mexico, Peru, Buenos Aires City and Brazil (.bet.br).",
+    "brand": {
+      "key": "playuzu",
+      "name": "PlayUZU",
+      "domain": "playuzu.com"
+    }
+  },
+  "markets": [
+    {
+      "countryCode": "ES",
+      "availability": "AVAILABLE",
+      "localDomain": "playuzu.es",
+      "localWebsiteUrl": "https://www.playuzu.es/",
+      "operator": {
+        "key": "skill-on-net-sa",
+        "name": "Skill On Net S.A.",
+        "legalName": "Skill On Net S.A. (Melilla, Spain)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net S.A., Calle Carlos de Arellano 27, 52003 Melilla",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "es",
+      "supportedLanguages": [
+        "es"
+      ],
+      "supportLanguages": [
+        "es"
+      ],
+      "primaryCurrency": "EUR",
+      "supportedCurrencies": [
+        "EUR"
+      ],
+      "minimumAge": 18,
+      "kycSummary": "Verificación de identidad DGOJ (2–24 h reportadas) antes del primer retiro o al superar límites.",
+      "withdrawalSummary": "Retiros sin mínimo reportados; Bizum, tarjeta, PayPal (secundario).",
+      "supportSummary": "Soporte en español.",
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Spain factual profile from playuzu.es footer + secondary reviews.",
+      "evidence": [
+        {
+          "key": "official-es-footer",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.playuzu.es/sorpresas/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#official-es-footer",
+          "fieldKeys": [
+            "operatorProfile",
+            "operatingLegalEntity",
+            "licenses",
+            "bonuses.playuzu-es-welcome",
+            "minimumAge"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Footer: Skill On Net S.A., DGOJ LGEN/00083, PROLI/00283/00282/00237; welcome 50 free spins, min 10 €, 0,10 €/spin."
+        },
+        {
+          "key": "secondary-es-reviews",
+          "classification": "INFERRED",
+          "sourceType": "OTHER",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.casino.org/es-es/resenas/playuzu/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#secondary-es-reviews",
+          "fieldKeys": [
+            "kycSummary",
+            "withdrawalSummary",
+            "payments"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "casino.org ES review (Aug 2026): no minimum withdrawal, Bizum/PayPal/card."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "dgoj-lgen-00083",
+          "authority": "Dirección General de Ordenación del Juego",
+          "licenseNumber": "LGEN/00083",
+          "jurisdiction": "ES",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.ordenacionjuego.es/",
+          "issuedAt": "2020-01-01T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net S.A. (Calle Carlos de Arellano 27, 52003 Melilla). General licence OTROS JUEGOS LGEN/00083; singular licences RULETA PROLI/00283, BLACKJACK PROLI/00282, MÁQUINAS DE AZAR PROLI/00237 (from playuzu.es footer).",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.ordenacionjuego.es/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "VERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net S.A. (Calle Carlos de Arellano 27, 52003 Melilla). General licence OTROS JUEGOS LGEN/00083; singular licences RULETA PROLI/00283, BLACKJACK PROLI/00282, MÁQUINAS DE AZAR PROLI/00237 (from playuzu.es footer)."
+            }
+          ]
+        }
+      ],
+      "payments": [
+        {
+          "key": "bizum",
+          "name": "Bizum",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "EUR"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 0
+        },
+        {
+          "key": "visa",
+          "name": "Visa",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "EUR"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 1
+        },
+        {
+          "key": "mastercard",
+          "name": "Mastercard",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "EUR"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 2
+        },
+        {
+          "key": "paypal",
+          "name": "PayPal",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "EUR"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 3
+        },
+        {
+          "key": "apple-pay",
+          "name": "Apple Pay",
+          "supportsDeposits": true,
+          "supportsWithdrawals": false,
+          "currencies": [
+            "EUR"
+          ],
+          "minimumDeposit": 5,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "5 € minimum via Apple Pay reported by secondary source.",
+          "sortOrder": 4
+        }
+      ],
+      "bonuses": [
+        {
+          "key": "playuzu-es-welcome",
+          "slug": "playuzu-es-welcome",
+          "title": "50 tiradas gratis sin requisitos de apuesta",
+          "summary": "Primer depósito de 10 € → 50 tiradas gratis (0,10 € cada una) en Queen of the Pyramids Mega Cash Collect; las ganancias son dinero real sin rollover.",
+          "type": "FREE_SPINS",
+          "percentage": null,
+          "minimumDeposit": 10,
+          "maximumBonus": null,
+          "currency": "EUR",
+          "freeSpins": 50,
+          "wageringMultiplier": 0,
+          "wageringText": "Sin requisitos de apuesta",
+          "eligibility": "Nuevos jugadores en España con cuenta verificada (DGOJ); sólo primer depósito.",
+          "importantConditions": [
+            "Depósito mínimo 10 €",
+            "50 tiradas gratis a 0,10 €",
+            "Sin rollover",
+            "Juego irregular puede anular recompensas",
+            "Verificación DGOJ obligatoria antes de jugar"
+          ],
+          "termsUrl": "https://www.playuzu.es/sorpresas/",
+          "startsAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 0
+        }
+      ],
+      "providers": [
+        {
+          "key": "playtech",
+          "name": "Playtech",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 0
+        },
+        {
+          "key": "pragmatic-play",
+          "name": "Pragmatic Play",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 1
+        },
+        {
+          "key": "evolution",
+          "name": "Evolution",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 2
+        },
+        {
+          "key": "netent",
+          "name": "NetEnt",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 3
+        },
+        {
+          "key": "playn-go",
+          "name": "Play'n GO",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 4
+        },
+        {
+          "key": "games-global",
+          "name": "Games Global",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 5
+        },
+        {
+          "key": "blueprint-gaming",
+          "name": "Blueprint Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 6
+        },
+        {
+          "key": "relax-gaming",
+          "name": "Relax Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 7
+        },
+        {
+          "key": "push-gaming",
+          "name": "Push Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 8
+        },
+        {
+          "key": "red-tiger",
+          "name": "Red Tiger",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 9
+        }
+      ],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "jackpots",
+          "name": "Jackpots",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "megaways",
+          "name": "Megaways™",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 3
+        },
+        {
+          "key": "table-games",
+          "name": "Table Games",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 4
+        },
+        {
+          "key": "roulette",
+          "name": "Roulette",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 5
+        },
+        {
+          "key": "blackjack",
+          "name": "Blackjack",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 6
+        }
+      ]
+    },
+    {
+      "countryCode": "MX",
+      "availability": "AVAILABLE",
+      "localDomain": "playuzu.mx",
+      "localWebsiteUrl": "https://www.playuzu.mx/",
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Mexican permit holder not verified",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "es",
+      "supportedLanguages": [
+        "es"
+      ],
+      "supportLanguages": [
+        "es"
+      ],
+      "primaryCurrency": "MXN",
+      "supportedCurrencies": [
+        "MXN"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": "Soporte en español.",
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Mexico: EGO lists PlayUZU.mx as live; regulated per iGB. Permit holder not primary-verified.",
+      "evidence": [
+        {
+          "key": "ego-mx",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-mx",
+          "fieldKeys": [
+            "availability",
+            "localDomain"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO: PlayUZU.mx – Mexico."
+        },
+        {
+          "key": "igb-latam",
+          "classification": "INFERRED",
+          "sourceType": "OTHER",
+          "rawSourceType": null,
+          "sourceUrl": "https://igamingbusiness.com/company-news/skillonnet-awarded-provisional-licence-in-brazil-and-goes-live-with-two-licensed-brands/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#igb-latam",
+          "fieldKeys": [
+            "availability"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "iGB Jan 2025: PlayUZU regulated in Mexico, Peru and Buenos Aires City."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        }
+      ],
+      "licenses": [],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "PE",
+      "availability": "AVAILABLE",
+      "localDomain": "playuzu.pe",
+      "localWebsiteUrl": "https://www.playuzu.pe/",
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Peruvian licensed entity not verified",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "es",
+      "supportedLanguages": [
+        "es"
+      ],
+      "supportLanguages": [
+        "es"
+      ],
+      "primaryCurrency": "PEN",
+      "supportedCurrencies": [
+        "PEN"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": "Soporte en español.",
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Peru: EGO and skillonnet.com (Peru regulator mark) report PlayUZU.pe live in the regulated market.",
+      "evidence": [
+        {
+          "key": "ego-pe",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-pe",
+          "fieldKeys": [
+            "availability",
+            "localDomain"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO: 'PlayUZU.pe Now Live in Peru'."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        }
+      ],
+      "licenses": [],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "AR",
+      "availability": "RESTRICTED",
+      "localDomain": "playuzu.bet.ar",
+      "localWebsiteUrl": "https://www.playuzu.bet.ar/",
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "CABA licensed entity not verified",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "es",
+      "supportedLanguages": [
+        "es"
+      ],
+      "supportLanguages": [
+        "es"
+      ],
+      "primaryCurrency": "ARS",
+      "supportedCurrencies": [
+        "ARS"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": "Soporte en español.",
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "ARGENTINA — BUENOS AIRES CITY ONLY (marketCode AR-C). Province-level licence; do not treat as national AR availability.",
+      "evidence": [
+        {
+          "key": "ego-ar",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-ar",
+          "fieldKeys": [
+            "availability",
+            "localDomain"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO: PlayUZU.bet.ar – Buenos Aires City."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        }
+      ],
+      "licenses": [],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "BR",
+      "availability": "AVAILABLE",
+      "localDomain": "playuzu.bet.br",
+      "localWebsiteUrl": "https://www.playuzu.bet.br/",
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Brazilian authorised entity not verified",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "pt",
+      "supportedLanguages": [
+        "pt"
+      ],
+      "supportLanguages": [
+        "pt"
+      ],
+      "primaryCurrency": "BRL",
+      "supportedCurrencies": [
+        "BRL"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": "Suporte em português.",
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Brazil: PlayUZU.bet.br launched under provisional federal authorisation (Jan 2025). Definitive licence status not re-verified.",
+      "evidence": [
+        {
+          "key": "igb-br",
+          "classification": "INFERRED",
+          "sourceType": "OTHER",
+          "rawSourceType": null,
+          "sourceUrl": "https://igamingbusiness.com/company-news/skillonnet-awarded-provisional-licence-in-brazil-and-goes-live-with-two-licensed-brands/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#igb-br",
+          "fieldKeys": [
+            "availability",
+            "localDomain"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "iGB: PlayUZU.bet.br live in Brazil."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        }
+      ],
+      "licenses": [],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "DK",
+      "availability": "AVAILABLE",
+      "localDomain": null,
+      "localWebsiteUrl": null,
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Ltd (assumed for .com brand — confirm from site footer)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "da",
+      "supportedLanguages": [
+        "da"
+      ],
+      "supportLanguages": [
+        "da"
+      ],
+      "primaryCurrency": "DKK",
+      "supportedCurrencies": [
+        "DKK"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Row exists because EGO provides a DA-language tracking link for PlayUZU on site.gotoplayuzu.com. Local legal eligibility for DK and operator market support were NOT verified; keep availability UNKNOWN until an exact market check is done. Do not activate a route on this row alone. FOUNDER DECISION 2026-09-22: licence/domain-level confirmation waived, risk accepted by the Founder. Operator holds the national licence; activate after route verification (final host must be the operator's licensed local site).",
+      "evidence": [
+        {
+          "key": "ego-language-link-dk",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-language-link-dk",
+          "fieldKeys": [
+            "countryCode",
+            "primaryLanguage",
+            "supportedLanguages",
+            "primaryCurrency"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO tracking link variant cg=da for PlayUZU. Language ≠ market; currency assumed from language region."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        },
+        {
+          "key": "founder-decision-licence-waiver",
+          "classification": "PROPOSED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#founder-decision-2026-09-22-b",
+          "fieldKeys": [
+            "availability",
+            "notes"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Founder instruction in chat 2026-09-22: activate DK/SE/DE/GB-Regency links without separate licence/domain check; risk accepted."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "mga-skill-on-net-b2c",
+          "authority": "Malta Gaming Authority",
+          "licenseNumber": null,
+          "jurisdiction": "MT",
+          "status": "Active (number not primary-verified)",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.mga.org.mt/",
+          "issuedAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.mga.org.mt/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "UNVERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "AT",
+      "availability": "AVAILABLE",
+      "localDomain": null,
+      "localWebsiteUrl": null,
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Ltd (assumed for .com brand — confirm from site footer)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "de",
+      "supportedLanguages": [
+        "de"
+      ],
+      "supportLanguages": [
+        "de"
+      ],
+      "primaryCurrency": "EUR",
+      "supportedCurrencies": [
+        "EUR"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Austria: state monopoly (Casinos Austria / win2day) but no enforced prohibition on EU-licensed operators or on affiliates identified; player-refund litigation risk sits with the operator. FOUNDER DECISION 2026-09-22: 'what is not prohibited is permitted'. No explicit legal prohibition identified for offering/advertising an EU(MGA)-licensed casino here; risk accepted by the Founder. Route still requires route verification. Activate marketCode AT only.",
+      "evidence": [
+        {
+          "key": "ego-language-link-at",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-language-link-at",
+          "fieldKeys": [
+            "countryCode",
+            "primaryLanguage",
+            "supportedLanguages",
+            "primaryCurrency"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO tracking link variant cg=de for PlayUZU. Language ≠ market; currency assumed from language region."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        },
+        {
+          "key": "founder-decision-at",
+          "classification": "PROPOSED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#founder-decision-2026-09-22",
+          "fieldKeys": [
+            "availability",
+            "notes"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Founder instruction in chat 2026-09-22: activate markets without an explicit legal prohibition."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "mga-skill-on-net-b2c",
+          "authority": "Malta Gaming Authority",
+          "licenseNumber": null,
+          "jurisdiction": "MT",
+          "status": "Active (number not primary-verified)",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.mga.org.mt/",
+          "issuedAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.mga.org.mt/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "UNVERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "GB",
+      "availability": "NOT_AVAILABLE",
+      "localDomain": null,
+      "localWebsiteUrl": null,
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Ltd (assumed for .com brand — confirm from site footer)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "en",
+      "supportedLanguages": [
+        "en"
+      ],
+      "supportLanguages": [
+        "en"
+      ],
+      "primaryCurrency": "GBP",
+      "supportedCurrencies": [
+        "GBP"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "PlayUZU domains are NOT on the UKGC public register for Skill On Net Limited (2026-09-22). Treat the EGO english link as non-GB. Do not activate GB.",
+      "evidence": [
+        {
+          "key": "ego-language-link-gb",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-language-link-gb",
+          "fieldKeys": [
+            "countryCode",
+            "primaryLanguage",
+            "supportedLanguages",
+            "primaryCurrency"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO tracking link variant cg=en for PlayUZU. Language ≠ market; currency assumed from language region."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "mga-skill-on-net-b2c",
+          "authority": "Malta Gaming Authority",
+          "licenseNumber": null,
+          "jurisdiction": "MT",
+          "status": "Active (number not primary-verified)",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.mga.org.mt/",
+          "issuedAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.mga.org.mt/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "UNVERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    }
+  ],
+  "commercialMappings": []
+}

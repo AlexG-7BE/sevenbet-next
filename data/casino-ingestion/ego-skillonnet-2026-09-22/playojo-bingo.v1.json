@@ -1,0 +1,320 @@
+{
+  "schemaVersion": "casino-market-ingestion.v1",
+  "actor": "founder-office-ego-skillonnet-2026-09-22",
+  "sourceFiles": [
+    {
+      "path": "data/casino-ingestion/ego-skillonnet-source-20260922.md",
+      "sha256": "1602847c230cc83dcb3a84ff73a83e4bc46ffce4a18cb57f9c91c0cb4cc8f7f2"
+    }
+  ],
+  "casino": {
+    "key": "playojo-bingo",
+    "slug": "playojo-bingo",
+    "internalName": "PlayOJO Bingo",
+    "title": "PlayOJO Bingo",
+    "domain": "playojobingo.com",
+    "websiteUrl": "https://www.playojo.com/bingo/",
+    "summary": "PlayOJO Bingo is the bingo room of PlayOJO (Skill On Net Limited, UKGC Bingo Remote since Feb 2020): 90/75-ball rooms, Slingo and side games, with PlayOJO's no-wagering rules. UK-facing; EGO supplies a separate tracking link (site.playojobingo.com).",
+    "brand": {
+      "key": "playojo-bingo",
+      "name": "PlayOJO Bingo",
+      "domain": "playojobingo.com"
+    }
+  },
+  "markets": [
+    {
+      "countryCode": "GB",
+      "availability": "AVAILABLE",
+      "localDomain": "www.playojo.com",
+      "localWebsiteUrl": "https://www.playojo.com/bingo/",
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Limited (UKGC account 39326; head office Limassol, Cyprus)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "en",
+      "supportedLanguages": [
+        "en"
+      ],
+      "supportLanguages": [
+        "en"
+      ],
+      "primaryCurrency": "GBP",
+      "supportedCurrencies": [
+        "GBP"
+      ],
+      "minimumAge": 18,
+      "kycSummary": "UKGC-regulated: age and identity verification on registration; further ID/address/payment evidence may be requested before withdrawal.",
+      "withdrawalSummary": "Withdrawals subject to UKGC review; typical turnaround 1–3 working days after approval depending on method (secondary sources). Check the brand's own cashier page for limits.",
+      "supportSummary": "PlayOJO Bingo customer support is provided in English (live chat/email); hours not primary-verified.",
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Bingo product runs on playojo.com under the same UKGC licence (Bingo Remote 14 Feb 2020). If the catalog treats it as a separate Casino row, keep domain playojobingo.com as EGO's tracking host alias, not as the operator site.",
+      "evidence": [
+        {
+          "key": "ukgc-domain-register",
+          "classification": "DETECTED",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/39326",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ukgc-domain-register",
+          "fieldKeys": [
+            "casino.domain",
+            "localDomain",
+            "localWebsiteUrl",
+            "availability",
+            "operatorProfile",
+            "operatingLegalEntity",
+            "licenses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "www.playojo.com listed as Active under Skill On Net Limited (account 39326) on 2026-09-22."
+        },
+        {
+          "key": "official-bingo-offer",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.playojo.com/bingo/promos/welcome-bonus/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#official-bingo-offer",
+          "fieldKeys": [
+            "bonuses.playojo-bingo-gb-welcome"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Official bingo welcome page."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "ukgc-039326-r-319358-059",
+          "authority": "Gambling Commission",
+          "licenseNumber": "039326-R-319358-059",
+          "jurisdiction": "GB",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/39326",
+          "issuedAt": "2014-11-01T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Limited, UKGC account 39326. Casino Remote active since 1 Nov 2014, Bingo Remote since 14 Feb 2020. Regulatory settlement 23 May 2023 (£305,150 AML/SR). Domain-level status read from the public register on 2026-09-22.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/39326",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "VERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Limited, UKGC account 39326. Casino Remote active since 1 Nov 2014, Bingo Remote since 14 Feb 2020. Regulatory settlement 23 May 2023 (£305,150 AML/SR). Domain-level status read from the public register on 2026-09-22."
+            }
+          ]
+        }
+      ],
+      "payments": [
+        {
+          "key": "visa-debit",
+          "name": "Visa Debit",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 0
+        },
+        {
+          "key": "mastercard-debit",
+          "name": "Mastercard Debit",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 1
+        },
+        {
+          "key": "paypal",
+          "name": "PayPal",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Availability per brand/account; secondary sources.",
+          "sortOrder": 2
+        },
+        {
+          "key": "apple-pay",
+          "name": "Apple Pay",
+          "supportsDeposits": true,
+          "supportsWithdrawals": false,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 3
+        },
+        {
+          "key": "pay-by-bank",
+          "name": "Instant bank transfer",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 4
+        }
+      ],
+      "bonuses": [
+        {
+          "key": "playojo-bingo-gb-welcome",
+          "slug": "playojo-bingo-gb-welcome",
+          "title": "500 free bingo tickets + 50 free spins, no wagering",
+          "summary": "Bingo welcome package on first deposit: 500 free bingo tickets plus 50 free spins; winnings paid as cash with no wagering.",
+          "type": "WELCOME",
+          "percentage": null,
+          "minimumDeposit": 10,
+          "maximumBonus": null,
+          "currency": "GBP",
+          "freeSpins": 50,
+          "wageringMultiplier": 0,
+          "wageringText": "No wagering",
+          "eligibility": "New depositors in Great Britain; one welcome package per player — cannot claim both casino and bingo offers.",
+          "importantConditions": [
+            "Minimum first deposit £10 (secondary)",
+            "500 free bingo tickets",
+            "50 free spins",
+            "No wagering",
+            "Cannot be combined with the casino welcome offer"
+          ],
+          "termsUrl": "https://www.playojo.com/bingo/promos/welcome-bonus/",
+          "startsAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 0
+        }
+      ],
+      "providers": [
+        {
+          "key": "pragmatic-play",
+          "name": "Pragmatic Play",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 0
+        },
+        {
+          "key": "playtech",
+          "name": "Playtech",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 1
+        },
+        {
+          "key": "slingo",
+          "name": "Slingo",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 2
+        }
+      ],
+      "categories": [
+        {
+          "key": "bingo",
+          "name": "Bingo",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "slingo",
+          "name": "Slingo",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 2
+        }
+      ]
+    }
+  ],
+  "commercialMappings": []
+}

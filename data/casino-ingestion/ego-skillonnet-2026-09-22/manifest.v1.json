@@ -1,0 +1,218 @@
+{
+  "schemaVersion": "ego-skillonnet-import-01.v1",
+  "actor": "founder-office-ego-skillonnet-2026-09-22",
+  "partner": "EGO (eGamingOnline / SkillOnNet)",
+  "sourceNote": {
+    "path": "data/casino-ingestion/ego-skillonnet-source-20260922.md",
+    "sha256": "1602847c230cc83dcb3a84ff73a83e4bc46ffce4a18cb57f9c91c0cb4cc8f7f2"
+  },
+  "bundles": [
+    {
+      "casinoKey": "playojo",
+      "casino": "PlayOJO",
+      "markets": [
+        "GB:AVAILABLE",
+        "SE:AVAILABLE",
+        "CA:AVAILABLE",
+        "ES:AVAILABLE",
+        "DK:AVAILABLE",
+        "MX:AVAILABLE",
+        "FI:NOT_AVAILABLE",
+        "NO:NOT_AVAILABLE",
+        "IN:NOT_AVAILABLE",
+        "JP:NOT_AVAILABLE",
+        "AT:AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/playojo.v1.json",
+      "sha256": "d0ed1c308871e150eabce23ba67690208606b2963ef57b56b17d8e4d5004965d"
+    },
+    {
+      "casinoKey": "playojo-bingo",
+      "casino": "PlayOJO Bingo",
+      "markets": [
+        "GB:AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/playojo-bingo.v1.json",
+      "sha256": "298683fb83adc073954fb7afe9fd3cc6a11dad21050825a84289ae4cc4fc2efd"
+    },
+    {
+      "casinoKey": "playuzu",
+      "casino": "PlayUZU",
+      "markets": [
+        "ES:AVAILABLE",
+        "MX:AVAILABLE",
+        "PE:AVAILABLE",
+        "AR:RESTRICTED",
+        "BR:AVAILABLE",
+        "DK:AVAILABLE",
+        "AT:AVAILABLE",
+        "GB:NOT_AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/playuzu.v1.json",
+      "sha256": "05efd56cf15acc46c2324d406f9dd6048ecce03b9ffffc7007567e1f4264774a"
+    },
+    {
+      "casinoKey": "bacanaplay",
+      "casino": "BacanaPlay",
+      "markets": [
+        "PT:AVAILABLE",
+        "BR:AVAILABLE",
+        "GB:AVAILABLE",
+        "DK:AVAILABLE",
+        "AT:AVAILABLE",
+        "FI:NOT_AVAILABLE",
+        "NO:NOT_AVAILABLE",
+        "SE:AVAILABLE",
+        "IN:NOT_AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/bacanaplay.v1.json",
+      "sha256": "0ad8a5286126efb00befc8b38d88a2ab186b0ae56698874bd95de82f1971ce58"
+    },
+    {
+      "casinoKey": "drueckglueck",
+      "casino": "DrückGlück",
+      "markets": [
+        "DE:AVAILABLE",
+        "GB:AVAILABLE",
+        "DK:AVAILABLE",
+        "FI:NOT_AVAILABLE",
+        "NO:NOT_AVAILABLE",
+        "SE:AVAILABLE",
+        "IN:NOT_AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/drueckglueck.v1.json",
+      "sha256": "71bf959dfcf6c2f057d25cd6ef288d3a8772628b881afb0239079c1dac3991be"
+    },
+    {
+      "casinoKey": "slotsmagic",
+      "casino": "SlotsMagic",
+      "markets": [
+        "GB:AVAILABLE",
+        "CA:AVAILABLE",
+        "DK:AVAILABLE",
+        "AT:AVAILABLE",
+        "FI:NOT_AVAILABLE",
+        "NO:NOT_AVAILABLE",
+        "SE:AVAILABLE",
+        "IN:NOT_AVAILABLE",
+        "GR:NOT_AVAILABLE",
+        "BG:NOT_AVAILABLE",
+        "HR:NOT_AVAILABLE",
+        "CZ:NOT_AVAILABLE",
+        "HU:NOT_AVAILABLE",
+        "SK:NOT_AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/slotsmagic.v1.json",
+      "sha256": "2560334b69914b765279ae3a7119e2751f87a3bc522037645cd315b1e64aa9a3"
+    },
+    {
+      "casinoKey": "eucasino",
+      "casino": "EUcasino",
+      "markets": [
+        "GB:AVAILABLE",
+        "DK:AVAILABLE",
+        "AT:AVAILABLE",
+        "FI:NOT_AVAILABLE",
+        "NO:NOT_AVAILABLE",
+        "SE:AVAILABLE",
+        "IN:NOT_AVAILABLE",
+        "GR:NOT_AVAILABLE",
+        "BG:NOT_AVAILABLE",
+        "HR:NOT_AVAILABLE",
+        "CZ:NOT_AVAILABLE",
+        "HU:NOT_AVAILABLE",
+        "SK:NOT_AVAILABLE",
+        "CA:AVAILABLE",
+        "ZA:NOT_AVAILABLE",
+        "NZ:NOT_AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/eucasino.v1.json",
+      "sha256": "f264c4adae4fba4fcc3e10f698bf75c8580ac65f657ddc9fbf26f229a724cf71"
+    },
+    {
+      "casinoKey": "casino-redkings",
+      "casino": "Casino RedKings",
+      "markets": [
+        "GB:AVAILABLE",
+        "DK:AVAILABLE",
+        "AT:AVAILABLE",
+        "FI:NOT_AVAILABLE",
+        "NO:NOT_AVAILABLE",
+        "SE:AVAILABLE",
+        "IN:NOT_AVAILABLE",
+        "GR:NOT_AVAILABLE",
+        "BG:NOT_AVAILABLE",
+        "HU:NOT_AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/casino-redkings.v1.json",
+      "sha256": "00a8329fd68bbda1f5d05343dc4895fc32a5dad12d80b492e6f279480830ef10"
+    },
+    {
+      "casinoKey": "ahti-games",
+      "casino": "AHTI Games",
+      "markets": [
+        "GB:AVAILABLE",
+        "SE:AVAILABLE",
+        "FI:NOT_AVAILABLE",
+        "NO:NOT_AVAILABLE",
+        "DK:AVAILABLE",
+        "AT:AVAILABLE",
+        "IN:NOT_AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/ahti-games.v1.json",
+      "sha256": "ca5caa9da3267cbdd88617041ee82b57e10e20bd7b3e39724b886728d4c22e1a"
+    },
+    {
+      "casinoKey": "turbonino",
+      "casino": "TurboNino",
+      "markets": [
+        "GB:AVAILABLE",
+        "SE:AVAILABLE",
+        "FI:NOT_AVAILABLE",
+        "DE:AVAILABLE",
+        "DK:AVAILABLE",
+        "NO:NOT_AVAILABLE",
+        "IN:NOT_AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/turbonino.v1.json",
+      "sha256": "cdfdd3b84a4dc1decd58249f6553d8815607c3399f16eb517be20f6cfee7a4a7"
+    },
+    {
+      "casinoKey": "jackpotstar",
+      "casino": "JackpotStar",
+      "markets": [
+        "GB:AVAILABLE",
+        "SE:AVAILABLE",
+        "DK:AVAILABLE",
+        "AT:AVAILABLE",
+        "FI:NOT_AVAILABLE",
+        "NO:NOT_AVAILABLE",
+        "IN:NOT_AVAILABLE",
+        "CA:AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/jackpotstar.v1.json",
+      "sha256": "729229917e875ae8702b581b82914ccd1a590564f029c7b14feb5ea51b0c9430"
+    },
+    {
+      "casinoKey": "megawayscasino",
+      "casino": "MegawaysCasino",
+      "markets": [
+        "GB:AVAILABLE",
+        "MT:UNKNOWN"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/megawayscasino.v1.json",
+      "sha256": "d20641fe06b271c2d1c6a4ada3ab74742ccb18e5e6dd04d83f6d25ce038d22dc"
+    },
+    {
+      "casinoKey": "regencycasino",
+      "casino": "Regency Casino Online",
+      "markets": [
+        "GR:AVAILABLE",
+        "GB:AVAILABLE",
+        "DK:AVAILABLE"
+      ],
+      "path": "data/casino-ingestion/ego-skillonnet-2026-09-22/regencycasino.v1.json",
+      "sha256": "0782d6244fae55ea53b73b54543fde7d2e25ecbf0f9ed2b7f55cadc32bcd43df"
+    }
+  ]
+}

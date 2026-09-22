@@ -32,6 +32,14 @@ database by default (`PUBLIC_CASINO_CMS_ENABLED` only opts out with `false`,
 which then yields no casinos). The 220-record `data/casinos.json` placeholder
 catalogue and its service fallback were removed on 21 September 2026.
 
+**EGO (SkillOnNet), 22 September 2026:** 13 casinos and a Founder-run
+executor were added under
+[FOUNDER-EGO-2026-09-22](07_Decisions/FOUNDER-EGO-SKILLONNET-2026-09-22.md).
+They are registered as `DRAFT` in `data/casino-registry.json` and are not in the
+database until the [runbook](06_Operations/EGO-SkillOnNet-Import-01-Runbook.md)
+runs. Step 1 can activate AT, DK, SE and ES (29 markets); CA provinces, GB, DE
+and GR need the step 2 legal-authority change.
+
 ## Navigation Performance Stage 2 — released and verified
 
 **DETECTED IN PR, MAIN, CI, VERCEL AND PRODUCTION EVIDENCE, 17 SEPTEMBER

@@ -7,6 +7,7 @@ const requiredTests = [
   "tests/affiliate-redirect-engine.test.ts",
   "tests/casino-real-catalog-03.test.ts",
   "tests/casino-registry.test.ts",
+  "tests/ego-skillonnet-import-01.test.ts",
   "tests/cms-admin-simplification.test.ts",
   "tests/demo-casino-retirement.test.ts",
   "tests/design-system-contract.test.ts",

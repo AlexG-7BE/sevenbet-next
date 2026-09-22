@@ -26,3 +26,6 @@ data/commercial-activation/incoming/*
 !data/commercial-activation/incoming/assets/
 data/commercial-activation/incoming/assets/*
 !data/commercial-activation/incoming/assets/.gitkeep
+
+# Partner tracking-link sheets hold raw affiliate URLs; they live outside git (see docs/06_Operations/EGO-SkillOnNet-Import-01-Runbook.md)
+*tracking-links*.csv
