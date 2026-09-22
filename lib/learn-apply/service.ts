@@ -38,11 +38,9 @@ import { PUBLIC_CANONICAL_ORIGIN } from "@/lib/site";
 
 type ArticleApplyPort = {
   inspectPublishedApply(input: {
-    articleId: string | null;
     slug: string;
     requestIdHash: string;
     intentFingerprint: string;
-    expectedUpdatedAt?: string | null;
   }): Promise<PublishedApplyInspection>;
   applyPublishedDocument(input: ApplyPublishedDocumentInput): Promise<ApplyPublishedDocumentResult>;
   isImageUrlReferenced(url: string): Promise<boolean>;
@@ -194,7 +192,7 @@ export class LearnApplyService {
     const startedAt = performance.now();
     let preparedImages: Awaited<ReturnType<LearnImageService["prepare"]>> | null = null;
     let persisted = false;
-    let articleId: string | null = input.article.articleId;
+    let articleId: string | null = null;
     this.logger({
       event: "learn_apply_started",
       requestIdHash,
@@ -206,22 +204,25 @@ export class LearnApplyService {
       canonicalDocument(desiredDocument(input, null));
       const actor = await this.actorResolver();
       const inspection = await this.articles.inspectPublishedApply({
-        articleId: input.article.articleId,
         slug: input.article.slug,
         requestIdHash,
         intentFingerprint,
-        expectedUpdatedAt: input.article.expectedUpdatedAt,
       });
       articleId = inspection.article?.id ?? articleId;
       const requestMetadata = metadataRecord(inspection.requestAudit?.metadata);
-      if (requestMetadata && requestMetadata.intentFingerprint !== intentFingerprint) {
+      if (inspection.requestAudit && requestMetadata?.intentFingerprint !== intentFingerprint) {
         throw new LearnApplyError("requestId was already used for a different Learn apply intent.", "REQUEST_ID_CONFLICT", 409, {
           articleId: inspection.requestAudit?.entityId,
         });
       }
-      if (inspection.requestAudit && inspection.article && inspection.requestAudit.entityId !== inspection.article.id) {
+      if (inspection.requestAudit && (!inspection.article || inspection.requestAudit.entityId !== inspection.article.id)) {
         throw new LearnApplyError("requestId belongs to a different Article.", "REQUEST_ID_CONFLICT", 409, {
           articleId: inspection.requestAudit.entityId,
+        });
+      }
+      if (inspection.article && !inspection.requestAudit) {
+        throw new LearnApplyError("A Learn Article already uses this slug.", "CREATE_SLUG_EXISTS", 409, {
+          articleId: inspection.article.id,
         });
       }
       const reuseMetadata = inspection.requestAudit?.metadata ?? inspection.reusableAudit?.metadata;
@@ -234,15 +235,11 @@ export class LearnApplyService {
       const document = canonicalDocument(desiredDocument(input, preparedImages.images));
       const documentFingerprint = articleDocumentFingerprint(document);
       const applied = await this.articles.applyPublishedDocument({
-        articleId: input.article.articleId,
         document,
         actorId: actor.id,
         requestIdHash,
         intentFingerprint,
         documentFingerprint,
-        expectedUpdatedAt: input.article.expectedUpdatedAt,
-        observedArticleId: inspection.article?.id ?? null,
-        observedUpdatedAt: inspection.article?.updatedAt ?? null,
         auditMetadata: {
           schemaVersion: 1,
           images: preparedImages.images,
@@ -259,7 +256,6 @@ export class LearnApplyService {
 
       let cacheFailure = false;
       try {
-        if (applied.previousPath) this.revalidate(applied.previousPath.category, applied.previousPath.slug);
         this.revalidate(applied.article.category, applied.article.slug);
       } catch (error) {
         cacheFailure = true;

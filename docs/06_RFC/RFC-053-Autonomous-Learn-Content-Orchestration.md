@@ -34,15 +34,19 @@ operational agent gains authority through this RFC.
 
 Canonical instructions live in
 `lib/learn-content-orchestrator/prompts.ts`. The managed root session must
-create subagents with these exact names and authorities:
+start with SEO and create later roles only after a `CREATE` handoff. Every
+created subagent uses these exact names and authorities:
 
-1. **B4GAMBLE SEO Growth Lead** chooses what to create or update and returns
-   `SEO_HANDOFF`. `MERGE`, `HOLD` or `DROP` ends the cycle as healthy `NO_OP`.
-   SEO cannot draft, approve or publish.
-2. **B4GAMBLE Research + Content** runs only after `CREATE` or `UPDATE`, uses
-   current public-web evidence, maps material claims to sources and returns
-   `CONTENT_PACKAGE` plus a complete candidate `LearnApplyInput`. Research
-   cannot approve or publish.
+1. **B4GAMBLE SEO Growth Lead** chooses whether a genuinely new Article should
+   be created and returns `SEO_HANDOFF`. `MERGE`, `HOLD` or `DROP` ends the
+   cycle as healthy `NO_OP`. Existing coverage is never an update target: it
+   requires one of those no-publication decisions when a new Article would
+   duplicate or cannibalize it. SEO cannot draft, approve or publish.
+2. **B4GAMBLE Research + Content** runs only after `CREATE`, uses current
+   public-web evidence, maps material claims to sources and returns
+   `CONTENT_PACKAGE` plus a complete create-only candidate `LearnApplyInput`
+   with null Article identity/version fields. Research cannot approve, update
+   or publish.
 3. **B4GAMBLE Editor + Publisher** independently searches and verifies the
    handoff, material claims, sources, safety, duplication, identity and exact
    payload. It returns `QA_PASS` or precise `REWRITE_REQUIRED`; despite the
@@ -53,6 +57,9 @@ review. Failure to obtain `QA_PASS` becomes `BLOCKED / EDITOR_REWRITE_LIMIT`.
 The standard is never lowered to manufacture throughput. Every subagent must
 inherit the configured session model and at least high reasoning effort;
 provider trace rejects a weaker model or lower-reasoning override.
+A healthy `MERGE`, `HOLD` or `DROP` trace contains only SEO. A publication or
+post-handoff editorial blocker contains exactly one SEO, one Research and one
+Editor trace; extra or missing role traces fail closed.
 
 ## 3. Execution and output boundary
 
@@ -110,8 +117,9 @@ Before any side effect the application requires:
 
 - exact run ID, request ID, model, locale and bounded timestamps;
 - an allowed published locale and registered category;
-- `CREATE` with `articleId = null` and `expectedUpdatedAt = null`, or `UPDATE`
-  with the exact current Article ID and `updatedAt`;
+- `CREATE` only, with `targetArticleId = null`, `articleId = null` and
+  `expectedUpdatedAt = null`;
+- a target slug absent from the current published Article inventory;
 - all material claims mapped to evidence and independently checked by Editor;
 - safe URLs with no affiliate/tracking parameters or commercial route;
 - internal-only canonical URL;
@@ -125,13 +133,20 @@ session metadata, prompt, SiteSetting or log.
 
 RFC-052 remains the sole Article mutation authority. `Article`,
 `ContentRevision` and `AuditLog` remain canonical. Existing identity,
-concurrency, revision, first-party-image, cache invalidation, audit and public
-verification behavior remains unchanged. No GitHub, Vercel or direct database
-write is an alternate publication path.
+concurrency, first-party-image, cache invalidation, audit and public
+verification behavior remains unchanged. The autonomous path cannot replace
+an Article or create a revision; existing-Article changes remain in the human
+editorial lifecycle. No GitHub, Vercel or direct database write is an alternate
+publication path.
 
 `PERSISTED_NOT_VERIFIED` and committed-but-unverified states are not success.
-The same session output and request ID are retried at most three times. A third
-ambiguous/verification failure halts new cycles with a safe operator code.
+The same CREATE session output and request ID are retried at most three times;
+only that exact replay may complete as `NO_CHANGE`. A third ambiguous/
+verification failure halts new cycles with a safe operator code.
+Deterministic application/configuration conflicts do not consume three
+pointless retries. A transient PostgreSQL serialization conflict remains
+retryable with the same request ID so an ambiguous concurrent commit can
+converge safely on `NO_CHANGE`.
 
 ## 6. Schedule, state and concurrency
 

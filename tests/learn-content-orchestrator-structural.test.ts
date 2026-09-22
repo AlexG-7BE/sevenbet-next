@@ -55,6 +55,8 @@ test("the separated role prompt names exactly the three authorized roles and cap
   assert.match(prompts, /application, not any model, is the only publication authority/i);
   assert.match(prompts, /protected \/help or \/responsible-gambling/);
   assert.match(prompts, /inherit this session's configured model and high reasoning effort/i);
+  assert.match(prompts, /Wait for SEO_HANDOFF before creating any other role/);
+  assert.match(prompts, /NO_OP must have exactly the single SEO trace/);
   assert.match(read("lib/learn-content-orchestrator/openai-managed-session.server.ts"), /item\.model === session\.agent\.model/);
 });
 
@@ -68,8 +70,23 @@ test("only the deterministic MCP publisher can call the sole learn_apply tool", 
 
 test("publication input is validated through the actual RFC-052 LearnApply schema", () => {
   const contracts = read("lib/learn-content-orchestrator/contracts.ts");
-  assert.match(contracts, /import \{ learnApplyInputSchema \} from "@\/lib\/learn-apply\/contract"/);
+  const learnApplyContract = read("lib/learn-apply/contract.ts");
+  const articleService = read("lib/services/article.service.ts");
+  const autonomousApply = articleService.slice(
+    articleService.indexOf("async applyPublishedDocument"),
+    articleService.indexOf("async isImageUrlReferenced"),
+  );
+  assert.match(contracts, /import\s*\{[^}]*learnApplyInputSchema[^}]*\}\s*from "@\/lib\/learn-apply\/contract"/);
   assert.match(contracts, /learnApply: learnApplyInputSchema/);
+  assert.match(learnApplyContract, /articleId: z\.null\(\)/);
+  assert.match(learnApplyContract, /expectedUpdatedAt: z\.null\(\)/);
+  assert.doesNotMatch(learnApplyContract, /operation: z\.enum\(\["CREATED", "UPDATED"/);
+  assert.match(autonomousApply, /tx\.article\.create/);
+  assert.doesNotMatch(autonomousApply, /tx\.article\.update|contentRevision\.create|UPDATED/);
+  assert.match(prompts, /Existing Articles are never autonomous update targets/);
+  assert.match(read("lib/mcp/learn/server.ts"), /updates are not supported/);
+  assert.match(read("lib/mcp/learn/server.ts"), /destructiveHint: false/);
+  assert.match(read("lib/learn-content-orchestrator/service.server.ts"), /!published\.error\.retryable/);
   assert.match(read("lib/learn-content-orchestrator/service.server.ts"), /result !== "LIVE"|result\.result !== "LIVE"/);
   assert.match(read("lib/learn-content-orchestrator/service.server.ts"), /persistence !== "COMMITTED"/);
   assert.match(read("lib/learn-content-orchestrator/service.server.ts"), /status !== "PUBLISHED"/);

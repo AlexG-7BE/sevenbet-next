@@ -23,11 +23,11 @@ record below is replaced with observed evidence.
 hourly CRON_SECRET request
   → serializable SiteSetting/advisory-lock claim
   → start or inspect managed Agents API session
-  → SEO_HANDOFF
+  → SEO subagent → SEO_HANDOFF
      ├─ MERGE/HOLD/DROP → healthy NO_OP
-     └─ CREATE/UPDATE
-          → public-web Research CONTENT_PACKAGE
-          → independent public-web Editor review
+     └─ CREATE only
+          → one public-web Research subagent → CONTENT_PACKAGE
+          → one independent public-web Editor subagent → review
           → up to two Research↔Editor rewrites
           → strict PUBLISH or BLOCKED result
   → deterministic validation
@@ -87,7 +87,18 @@ Normal response classes:
 | `NO_OP / HOLD|MERGE|DROP` | SEO correctly declined new publication | Healthy; no action |
 | `BLOCKED / <safe code>` | Contract, safety, provider or state gate failed | Investigate code; do not bypass |
 | `RETRY_PENDING / <safe code>` | Bounded same-run/session/payload retry remains | Next hourly run retries |
-| `PUBLISHED / CREATED|UPDATED|NO_CHANGE` | RFC-052 returned verified LIVE | Verify recorded public projection |
+| `PUBLISHED / CREATED|NO_CHANGE` | RFC-052 returned verified LIVE | Verify recorded public projection |
+| `BLOCKED / MCP_<deterministic code>` | RFC-052 rejected a non-retryable payload/configuration conflict before commit | Correct the cause; the same failed payload is not retried |
+
+The provider trace must contain only one SEO role for a healthy SEO `NO_OP`.
+`PUBLISH` or a post-handoff editorial `BLOCKED` result must contain exactly one
+SEO, one Research and one Editor role, with Research and Editor each proving at
+least one completed live-web search. Extra/missing roles or a downgraded model/
+reasoning configuration fail closed.
+
+RFC-052 marks a PostgreSQL serialization conflict as transient and retryable
+with the same request ID. Contract, existing-slug, identity and configuration
+conflicts are non-retryable and close the run after one MCP call.
 
 An unexpected `requires_action` halts because the configured session has no
 application function tool. `PERSISTED_NOT_VERIFIED`, MCP transport/application
@@ -128,15 +139,20 @@ orchestrator PostgreSQL suite runs in both database-capable CI jobs.
 3. Verify the automatic Production deployment is Ready at that SHA.
 4. Add/verify the Production variables above without printing values and
    redeploy so the runtime receives them.
-5. Invoke `GET /api/internal/cron/learn-content` once using the existing bearer
+5. Read the bounded SiteSetting state. If and only if a previous acceptance
+   failure has `active=null`, `haltedCode=null` and a verified future
+   `nextEligibleAt`, reconcile only `nextEligibleAt` to the current instant so
+   the new release may run once. Preserve `last` and failure evidence; never
+   edit state to fabricate success or replace an active run.
+6. Invoke `GET /api/internal/cron/learn-content` once using the existing bearer
    secret. Record only HTTP/result/code/run ID.
-6. If `STARTED`, wait for later reconciliation or explicitly invoke the same
+7. If `STARTED`, wait for later reconciliation or explicitly invoke the same
    authenticated route after the managed session becomes idle. Never create a
    second cycle.
-7. A legitimate `HOLD`, `MERGE`, `DROP` or evidence `BLOCKED` is a valid
+8. A legitimate `HOLD`, `MERGE`, `DROP` or evidence `BLOCKED` is a valid
    autonomous editorial result if the real session/role/reconciliation path is
    proven. Do not manufacture an Article.
-8. If published, require `CREATED|UPDATED|NO_CHANGE`, `LIVE`, `COMMITTED`,
+9. If published, require `CREATED|NO_CHANGE`, `LIVE`, `COMMITTED`,
    `PUBLISHED`, `verified: true`; verify exact public route/metadata, Learn
    collection, sitemap, image/alt text when present, no commercial CTA and the
    RFC-052 service audit actor.

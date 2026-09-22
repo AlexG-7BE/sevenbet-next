@@ -19,7 +19,7 @@ import {
   validateArticleDocument,
 } from "@/lib/articles/article-validation";
 
-import { ConflictError, NotFoundError, ValidationError } from "./service-error";
+import { ConflictError, NotFoundError, ServiceError, ValidationError } from "./service-error";
 
 const ARTICLE_ENTITY = "article";
 export const LEARN_APPLY_AUDIT_ACTION = "learn_apply";
@@ -37,22 +37,18 @@ export type PublishedApplyInspection = {
 };
 
 export type ApplyPublishedDocumentInput = {
-  articleId: string | null;
   document: ArticleDocumentInput;
   actorId: string;
   requestIdHash: string;
   intentFingerprint: string;
   documentFingerprint: string;
-  expectedUpdatedAt: string | null;
-  observedArticleId: string | null;
-  observedUpdatedAt: string | null;
   auditMetadata: Prisma.InputJsonObject;
 };
 
 export type ApplyPublishedDocumentResult = {
-  operation: "CREATED" | "UPDATED" | "NO_CHANGE";
+  operation: "CREATED" | "NO_CHANGE";
   article: AdminArticle;
-  previousPath: { category: string; slug: string } | null;
+  previousPath: null;
 };
 
 function iso(value: Date | null) {
@@ -222,16 +218,11 @@ const cachedPublishedArticle = publicEditorialCache(
 
 export class ArticleService {
   async inspectPublishedApply(input: {
-    articleId: string | null;
     slug: string;
     requestIdHash: string;
     intentFingerprint: string;
-    expectedUpdatedAt?: string | null;
   }): Promise<PublishedApplyInspection> {
-    const current = input.articleId
-      ? await prisma.article.findUnique({ where: { id: input.articleId } })
-      : await prisma.article.findUnique({ where: { slug: input.slug } });
-    if (input.articleId && !current) throw new NotFoundError("Article", { id: input.articleId });
+    const current = await prisma.article.findUnique({ where: { slug: input.slug } });
     const [requestAuditValue, reusableAuditValue] = await Promise.all([
       prisma.auditLog.findFirst({
         where: {
@@ -253,12 +244,6 @@ export class ArticleService {
         select: { entityId: true, metadata: true, timestamp: true },
       }) : Promise.resolve(null),
     ]);
-    if (input.expectedUpdatedAt && current?.updatedAt.toISOString() !== input.expectedUpdatedAt && !requestAuditValue) {
-      throw new ConflictError("Article changed before autonomous publication began.", {
-        currentUpdatedAt: current?.updatedAt.toISOString() ?? null,
-        expectedUpdatedAt: input.expectedUpdatedAt,
-      });
-    }
     return {
       article: current ? mapArticle(current) : null,
       requestAudit: auditRecord(requestAuditValue),
@@ -276,7 +261,6 @@ export class ArticleService {
         const lockKeys = [...new Set([
           `learn-request:${input.requestIdHash}`,
           `learn-slug:${parsed.document.slug}`,
-          `learn-article:${input.articleId ?? input.observedArticleId ?? parsed.document.slug}`,
           ...learnImageKeys(input.auditMetadata).map((key) => `learn-image:${key}`),
         ])].sort();
         for (const key of lockKeys) {
@@ -292,10 +276,7 @@ export class ArticleService {
           orderBy: { timestamp: "desc" },
           select: { entityId: true, metadata: true },
         });
-        const current = input.articleId
-          ? await tx.article.findUnique({ where: { id: input.articleId } })
-          : await tx.article.findUnique({ where: { slug: parsed.document.slug } });
-        if (input.articleId && !current) throw new NotFoundError("Article", { id: input.articleId });
+        const current = await tx.article.findUnique({ where: { slug: parsed.document.slug } });
 
         if (existingRequest) {
           const metadata = auditMetadataRecord(existingRequest.metadata);
@@ -317,103 +298,33 @@ export class ArticleService {
           });
         }
 
-        if (!input.observedArticleId && current) {
-          if (current.status === EditorialStatus.PUBLISHED && documentsEqual(articleDocument(current), parsed.document)) {
-            return { operation: "NO_CHANGE", article: mapArticle(current), previousPath: null };
-          }
+        if (current) {
           throw new ConflictError("Article identity appeared while publication dependencies were being prepared.", {
             articleId: current.id,
             currentUpdatedAt: current.updatedAt.toISOString(),
           });
         }
-        if (input.observedArticleId && (!current || current.id !== input.observedArticleId)) {
-          throw new ConflictError("Article identity changed while publication dependencies were being prepared.", {
-            observedArticleId: input.observedArticleId,
-            currentArticleId: current?.id ?? null,
-          });
-        }
-        if (current && input.observedUpdatedAt && current.updatedAt.toISOString() !== input.observedUpdatedAt) {
-          if (current.status === EditorialStatus.PUBLISHED && documentsEqual(articleDocument(current), parsed.document)) {
-            return { operation: "NO_CHANGE", article: mapArticle(current), previousPath: null };
-          }
-          throw new ConflictError("Article changed during autonomous publication.", {
-            currentUpdatedAt: current.updatedAt.toISOString(),
-            observedUpdatedAt: input.observedUpdatedAt,
-          });
-        }
-        if (current && input.expectedUpdatedAt && current.updatedAt.toISOString() !== input.expectedUpdatedAt) {
-          if (current.status === EditorialStatus.PUBLISHED && documentsEqual(articleDocument(current), parsed.document)) {
-            return { operation: "NO_CHANGE", article: mapArticle(current), previousPath: null };
-          }
-          throw new ConflictError("Article no longer matches expectedUpdatedAt.", {
-            currentUpdatedAt: current.updatedAt.toISOString(),
-            expectedUpdatedAt: input.expectedUpdatedAt,
-          });
-        }
-        if (current?.status === EditorialStatus.ARCHIVED) {
-          throw new ConflictError("Archived Articles must be restored through the human editorial workflow before autonomous apply.", {
-            articleId: current.id,
-          });
-        }
-        if (current?.status === EditorialStatus.PUBLISHED && documentsEqual(articleDocument(current), parsed.document)) {
-          return { operation: "NO_CHANGE", article: mapArticle(current), previousPath: null };
-        }
 
         const now = new Date();
-        let saved: Article;
-        let operation: "CREATED" | "UPDATED";
-        let previousPath: { category: string; slug: string } | null = null;
-        if (!current) {
-          saved = await tx.article.create({
-            data: {
-              ...inputData(parsed.document),
-              status: EditorialStatus.PUBLISHED,
-              publishedAt: now,
-              lastReviewedAt: now,
-              archivedAt: null,
-              createdBy: input.actorId,
-              updatedBy: input.actorId,
-            },
-          });
-          operation = "CREATED";
-        } else {
-          previousPath = { category: current.category, slug: current.slug };
-          const latest = await tx.contentRevision.aggregate({
-            where: { entityType: ARTICLE_ENTITY, entityId: current.id },
-            _max: { revisionNumber: true },
-          });
-          await tx.contentRevision.create({
-            data: {
-              entityType: ARTICLE_ENTITY,
-              entityId: current.id,
-              revisionNumber: (latest._max.revisionNumber ?? 0) + 1,
-              snapshot: snapshot(current),
-              summary: "Before autonomous Learn publication replacement",
-              createdBy: input.actorId,
-            },
-          });
-          saved = await tx.article.update({
-            where: { id: current.id },
-            data: {
-              ...inputData(parsed.document),
-              status: EditorialStatus.PUBLISHED,
-              publishedAt: current.publishedAt ?? now,
-              lastReviewedAt: now,
-              archivedAt: null,
-              updatedBy: input.actorId,
-            },
-          });
-          operation = "UPDATED";
-        }
+        const saved = await tx.article.create({
+          data: {
+            ...inputData(parsed.document),
+            status: EditorialStatus.PUBLISHED,
+            publishedAt: now,
+            lastReviewedAt: now,
+            archivedAt: null,
+            createdBy: input.actorId,
+            updatedBy: input.actorId,
+          },
+        });
+        const operation = "CREATED" as const;
         await tx.auditLog.create({
           data: {
             actorId: input.actorId,
             action: LEARN_APPLY_AUDIT_ACTION,
             entityType: ARTICLE_ENTITY,
             entityId: saved.id,
-            summary: operation === "CREATED"
-              ? "Autonomous Learn Article created and published"
-              : "Autonomous Learn Article atomically replaced while published",
+            summary: "Autonomous Learn Article created and published",
             metadata: {
               ...input.auditMetadata,
               operation,
@@ -423,11 +334,17 @@ export class ArticleService {
             },
           },
         });
-        return { operation, article: mapArticle(saved), previousPath };
+        return { operation, article: mapArticle(saved), previousPath: null };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     } catch (error) {
       if (isUniqueConstraint(error)) throw new ConflictError("Article slug already exists.", { slug: parsed.document.slug });
-      if (isSerializableConflict(error)) throw new ConflictError("A concurrent Learn publication changed the same Article. Retry with a new requestId.");
+      if (isSerializableConflict(error)) {
+        throw new ServiceError(
+          "A concurrent Learn create changed the same target. Retry the same requestId.",
+          "SERIALIZABLE_CONFLICT",
+          503,
+        );
+      }
       throw error;
     }
   }
