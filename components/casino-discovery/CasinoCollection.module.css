@@ -37,8 +37,9 @@
 .card .score { flex: none; gap: 4px; }
 .card .score strong { color: var(--acid); font-family: var(--font-seven-serif), Georgia, serif; font-size: clamp(60px, 5.2vw, 84px); font-style: italic; font-weight: 400; letter-spacing: -.04em; line-height: .78; }
 .card .score small { color: rgba(250, 250, 247, .45); font-size: 12px; font-weight: 400; letter-spacing: .1em; opacity: 1; }
-.card dl.facts { margin: 0; flex: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; gap: 0 20px; border-top: 1px solid rgba(250, 250, 247, .12); }
-.card dl.facts > div { min-width: 0; padding: 18px 0 0; border: 0; }
+/* Facts recompose onto a new line instead of fragmenting long localized labels. */
+.card dl.facts { margin: 0; flex: 1; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 0 20px; border-top: 1px solid rgba(250, 250, 247, .12); }
+.card dl.facts > div { min-width: min-content; padding: 18px 0 0; flex: 1 1 0; border: 0; }
 .card dl.facts dt { color: rgba(250, 250, 247, .45); font-size: 12px; font-weight: 400; letter-spacing: .18em; line-height: 1.35; opacity: 1; }
 .card dl.facts dd { margin: 8px 0 0; font-size: 14px; font-variant-numeric: tabular-nums; font-weight: 600; line-height: 1.4; }
 
@@ -69,7 +70,7 @@
   .card header { padding-right: 40px; gap: 16px; }
   .rank { top: 18px; right: 20px; }
   .cardLine { align-items: flex-end; gap: 16px; }
-  .card dl.facts { grid-template-columns: 1fr; border-top: 0; }
+  .card dl.facts { display: grid; grid-template-columns: 1fr; border-top: 0; }
   .card dl.facts > div { padding: 12px 0; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-top: 1px solid var(--sb-line-dark); }
   .card dl.facts dd { margin: 0; text-align: right; }
   .actions { flex-direction: column; align-items: stretch; gap: 12px; }

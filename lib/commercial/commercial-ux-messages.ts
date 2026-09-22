@@ -61,6 +61,8 @@ export type CommercialUxMessages = Readonly<{
   bonusesMarketUnavailableCopy: string;
   publishedReviews: string;
   rankPrefix: string;
+  eligibleRecords: string;
+  partnerLinks: string;
 }>;
 
 const en: CommercialUxMessages = {
@@ -124,6 +126,8 @@ const en: CommercialUxMessages = {
   bonusesMarketUnavailableCopy: "You can still browse our independent casino reviews.",
   publishedReviews: "published reviews",
   rankPrefix: "No.",
+  eligibleRecords: "eligible records",
+  partnerLinks: "partner links",
 };
 
 const marketStateTranslations: Partial<Record<SupportedLocale, Pick<CommercialUxMessages,
@@ -190,19 +194,19 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "nb-NO": { minimumWithdrawal: "Minste uttak", fees: "Gebyrer" },
     "fr-CA": { minimumWithdrawal: "Retrait minimum", fees: "Frais" },
   };
-  const heroMetricLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "publishedReviews" | "rankPrefix">>> = {
-    "de-DE": { publishedReviews: "veröffentlichte Bewertungen", rankPrefix: "Nr." },
-    "it-IT": { publishedReviews: "recensioni pubblicate", rankPrefix: "N." },
-    "es-ES": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º" },
-    "es-PE": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º" },
-    "pt-PT": { publishedReviews: "análises publicadas", rankPrefix: "N.º" },
-    "el-GR": { publishedReviews: "δημοσιευμένες αξιολογήσεις", rankPrefix: "Αρ." },
-    "nl-NL": { publishedReviews: "gepubliceerde reviews", rankPrefix: "Nr." },
-    "sv-SE": { publishedReviews: "publicerade recensioner", rankPrefix: "Nr" },
-    "da-DK": { publishedReviews: "offentliggjorte anmeldelser", rankPrefix: "Nr." },
-    "fi-FI": { publishedReviews: "julkaistua arviota", rankPrefix: "Nro" },
-    "nb-NO": { publishedReviews: "publiserte anmeldelser", rankPrefix: "Nr." },
-    "fr-CA": { publishedReviews: "avis publiés", rankPrefix: "No" },
+  const heroMetricLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "publishedReviews" | "rankPrefix" | "eligibleRecords" | "partnerLinks">>> = {
+    "de-DE": { publishedReviews: "veröffentlichte Bewertungen", rankPrefix: "Nr.", eligibleRecords: "berechtigte Einträge", partnerLinks: "Partnerlinks" },
+    "it-IT": { publishedReviews: "recensioni pubblicate", rankPrefix: "N.", eligibleRecords: "record idonei", partnerLinks: "link partner" },
+    "es-ES": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º", eligibleRecords: "registros elegibles", partnerLinks: "enlaces de socios" },
+    "es-PE": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º", eligibleRecords: "registros elegibles", partnerLinks: "enlaces de socios" },
+    "pt-PT": { publishedReviews: "análises publicadas", rankPrefix: "N.º", eligibleRecords: "registos elegíveis", partnerLinks: "links de parceiros" },
+    "el-GR": { publishedReviews: "δημοσιευμένες αξιολογήσεις", rankPrefix: "Αρ.", eligibleRecords: "επιλέξιμες εγγραφές", partnerLinks: "σύνδεσμοι συνεργατών" },
+    "nl-NL": { publishedReviews: "gepubliceerde reviews", rankPrefix: "Nr.", eligibleRecords: "geschikte records", partnerLinks: "partnerlinks" },
+    "sv-SE": { publishedReviews: "publicerade recensioner", rankPrefix: "Nr", eligibleRecords: "behöriga poster", partnerLinks: "partnerlänkar" },
+    "da-DK": { publishedReviews: "offentliggjorte anmeldelser", rankPrefix: "Nr.", eligibleRecords: "kvalificerede poster", partnerLinks: "partnerlinks" },
+    "fi-FI": { publishedReviews: "julkaistua arviota", rankPrefix: "Nro", eligibleRecords: "kelpoista tietuetta", partnerLinks: "kumppanilinkkiä" },
+    "nb-NO": { publishedReviews: "publiserte anmeldelser", rankPrefix: "Nr.", eligibleRecords: "kvalifiserte oppføringer", partnerLinks: "partnerlenker" },
+    "fr-CA": { publishedReviews: "avis publiés", rankPrefix: "No", eligibleRecords: "fiches admissibles", partnerLinks: "liens partenaires" },
   };
   return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}) };
 }

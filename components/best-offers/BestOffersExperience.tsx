@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
-import { CommercialBadges, CommercialFacts, CommercialScore } from "@/components/commercial/CommercialPrimitives";
+import { CommercialBadges, CommercialFacts, CommercialScore, EmphasisTail } from "@/components/commercial/CommercialPrimitives";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { offerCardPresentation } from "@/lib/commercial/commercial-presentation";
@@ -43,11 +43,11 @@ export function BestOffersExperience({ inventoryMode, messages, presentation, sh
     productAnalyticsClient.commercialViewSelected(`BEST_OFFERS_${next.toUpperCase()}`);
   };
 
-  return <section aria-labelledby="best-offers-heading" className={styles.commercialShortlist} data-nav-theme="light" id="shortlist">
+  return <section aria-labelledby="best-offers-heading" className={styles.commercialShortlist} data-nav-theme="dark" id="shortlist">
     <div className={styles.shell}>
       <header className={styles.commercialHeading}>
         <p>{messages.bestOffers.sectionTitle}</p>
-        <h2 id="best-offers-heading">{labels[category]}</h2>
+        <h2 id="best-offers-heading"><EmphasisTail text={labels[category]} /></h2>
       </header>
       <div aria-label={messages.bestOffers.sectionTitle} className={styles.categoryRail} role="tablist">
         {BEST_OFFER_CATEGORIES.map((key) => <button
@@ -65,6 +65,8 @@ export function BestOffersExperience({ inventoryMode, messages, presentation, sh
           const card = offerCardPresentation(offer, presentation.locale, messages, copy, category);
           const published = offer.dataClassification === "PUBLISHED_RECORD";
           const placement = `BEST_OFFERS_${category.toUpperCase()}`;
+          const primary = index === 0;
+          const rankNumber = <span aria-label={`${messages.common.result} ${index + 1}`} className={styles.rankNumber}>#{index + 1}</span>;
           return <article
             className={index === 0 ? styles.rankPrimary : styles.rankSecondary}
             data-analytics-card-key={published ? `${category}:${card.offerKey}` : undefined}
@@ -75,23 +77,34 @@ export function BestOffersExperience({ inventoryMode, messages, presentation, sh
             data-commercial-best-offer-card
             key={card.offerKey}
           >
-            <span aria-label={`${messages.common.result} ${index + 1}`} className={styles.rankNumber}>#{index + 1}</span>
+            {primary ? <span aria-hidden="true" className={styles.rankGlow} /> : null}
+            {primary ? rankNumber : null}
             <div className={styles.rankIdentity}>
+              {primary ? null : rankNumber}
               <div className={styles.rankLogo}>{card.logo ? <ResponsivePlacementImage alt="" height={card.logo.height ?? 80} media={card.logo} width={card.logo.width ?? 160} /> : <span aria-hidden="true">{card.casinoName.slice(0, 1)}</span>}</div>
-              <div><h3>{card.casinoName}</h3><CommercialBadges badges={card.badges} /></div>
-              <CommercialScore label={messages.common.editorScore} locale={presentation.locale} score={card.score} />
+              <div className={styles.rankName}>
+                <h3>{card.casinoName}</h3>
+                <div className={styles.rankMeta}>
+                  <CommercialScore className={styles.rankScore} label={messages.common.editorScore} locale={presentation.locale} score={card.score} />
+                  {primary && card.score !== null ? <span aria-hidden="true" className={styles.rankScoreLabel}>{messages.common.editorScore}</span> : null}
+                  <CommercialBadges badges={card.badges} className={styles.rankBadges} />
+                </div>
+              </div>
             </div>
             <div className={styles.rankOffer}><h4>{card.headline}</h4>{card.reason ? <p>{card.reason}</p> : null}</div>
-            <CommercialFacts facts={card.facts} />
-            <div className={styles.rankActions}>
-              {card.action ? <CasinoOutboundAction action={card.action} context={{ source: "CTA", placement: "BEST_OFFERS_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
-              {card.reviewHref ? <TrackedReviewLink
-                casinoId={published ? card.casinoId : undefined}
-                href={productHref(presentation, card.reviewHref)}
-                placement="BEST_OFFERS_CARD"
-                position={index + 1}
-                sourceSurface="best-offers"
-              >{published ? messages.common.readReview : messages.common.viewDemonstration}</TrackedReviewLink> : null}
+            <div className={styles.rankTerms}>
+              <CommercialFacts facts={card.facts} className={styles.rankFacts} />
+              <div className={styles.rankActions}>
+                {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "BEST_OFFERS_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
+                {card.reviewHref ? <TrackedReviewLink
+                  casinoId={published ? card.casinoId : undefined}
+                  href={productHref(presentation, card.reviewHref)}
+                  pendingLabel={published ? messages.common.readReview : messages.common.viewDemonstration}
+                  placement="BEST_OFFERS_CARD"
+                  position={index + 1}
+                  sourceSurface="best-offers"
+                >{published ? messages.common.readReview : messages.common.viewDemonstration} <span aria-hidden="true">→</span></TrackedReviewLink> : null}
+              </div>
             </div>
           </article>;
         }) : <div className={styles.categoryEmpty} role="status">
