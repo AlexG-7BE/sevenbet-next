@@ -15,7 +15,7 @@
    - DE for DrückGlück and TurboNino only;
    - GR for Regency only.
 5. **Closed by law, never activated:** FI, NO, IN, JP, BG, HR, CZ, HU, SK, IT, PL, RO, RU, TR, AU, ZA, NZ, CA-ON; GR except Regency; DE except DrückGlück and TurboNino; ES except PlayUZU; GB for PlayUZU.
-6. Editor Scores are not invented. They are proposed from bundle facts using the six-component method of PR #256, and the Founder approves them before publication.
+6. Editor Scores are not invented. They come from bundle facts using the six-component method of PR #256 (runbook table, 7.2–8.2). The Founder approved them for publication on 22 Sep 2026, and they are stored in `editorial.json`.
 
 ## Implementation scope
 
