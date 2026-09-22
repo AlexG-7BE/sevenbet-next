@@ -23,6 +23,7 @@ export const learnContentActiveRunSchema = z.object({
   runId: z.string().uuid(),
   requestId: z.string().regex(/^learn-content:[0-9a-f-]{36}$/),
   sessionId: z.string().min(1).max(200).nullable(),
+  outputContractRecovery: z.literal(true).optional(),
   language: z.string().min(2).max(20),
   locale: z.string().min(2).max(20),
   model: z.string().min(1).max(120),
@@ -175,12 +176,20 @@ export class PrismaLearnContentStateRepository implements LearnContentStateRepos
         && state.last.code === "SESSION_START_FAILED"
         && state.consecutiveFailures === 1,
       );
-      if (state.nextEligibleAt && new Date(state.nextEligibleAt) > input.now && !retryingFailedSessionStart) {
+      const retryingOutputContract = Boolean(
+        state.nextEligibleAt
+        && new Date(state.nextEligibleAt) > input.now
+        && state.last?.result === "BLOCKED"
+        && state.last.code === "OUTPUT_CONTRACT_FAILURE"
+        && state.consecutiveFailures === 0,
+      );
+      const retryingCurrentCycle = retryingFailedSessionStart || retryingOutputContract;
+      if (state.nextEligibleAt && new Date(state.nextEligibleAt) > input.now && !retryingCurrentCycle) {
         return { action: "NOT_DUE", code: "MINIMUM_INTERVAL_ACTIVE" };
       }
       if (!input.locales.length) return { action: "HALTED", code: "NO_ALLOWED_LOCALES" };
 
-      const selectedIndex = retryingFailedSessionStart
+      const selectedIndex = retryingCurrentCycle
         ? (state.localeCursor - 1 + input.locales.length) % input.locales.length
         : state.localeCursor % input.locales.length;
       const selected = input.locales[selectedIndex];
@@ -189,6 +198,7 @@ export class PrismaLearnContentStateRepository implements LearnContentStateRepos
         runId,
         requestId: `learn-content:${runId}`,
         sessionId: null,
+        ...(retryingOutputContract ? { outputContractRecovery: true as const } : {}),
         language: selected.language,
         locale: selected.locale,
         model: input.model,
@@ -197,9 +207,12 @@ export class PrismaLearnContentStateRepository implements LearnContentStateRepos
         publicationAttempts: 0,
       };
       state.active = run;
-      if (!retryingFailedSessionStart) {
+      if (!retryingCurrentCycle) {
         state.localeCursor = (state.localeCursor + 1) % input.locales.length;
         state.nextEligibleAt = addHours(input.now, input.minIntervalHours).toISOString();
+        if (state.last?.code === "OUTPUT_CONTRACT_FAILURE" && state.consecutiveFailures === 1) {
+          state.consecutiveFailures = 0;
+        }
       }
       await this.save(transaction, state);
       return { action: "LAUNCH", run };
@@ -259,8 +272,13 @@ export class PrismaLearnContentStateRepository implements LearnContentStateRepos
         result: input.result,
         code: input.code,
       };
+      const completedOutputContractRecovery = state.active.outputContractRecovery === true;
       state.active = null;
-      state.consecutiveFailures = input.result === "FAILED" ? Math.min(100, state.consecutiveFailures + 1) : 0;
+      if (input.result === "BLOCKED" && input.code === "OUTPUT_CONTRACT_FAILURE") {
+        state.consecutiveFailures = completedOutputContractRecovery ? 1 : 0;
+      } else {
+        state.consecutiveFailures = input.result === "FAILED" ? Math.min(100, state.consecutiveFailures + 1) : 0;
+      }
       if (input.halt) state.haltedCode = input.code;
       await this.save(transaction, state);
       return true;

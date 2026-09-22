@@ -56,6 +56,21 @@ function codeForError(error: unknown, fallback: string) {
   return fallback;
 }
 
+function describeOutputContractError(error: unknown) {
+  if (!(error instanceof ZodError)) {
+    return { issueCount: 0, issueCodes: "", issuePaths: "" };
+  }
+  const boundedIssues = error.issues.slice(0, 12);
+  return {
+    issueCount: error.issues.length,
+    issueCodes: [...new Set(boundedIssues.map((issue) => issue.code))].join(",").slice(0, 240),
+    issuePaths: boundedIssues
+      .map((issue) => issue.path.map(String).join(".") || "<root>")
+      .join(",")
+      .slice(0, 800),
+  };
+}
+
 function metadataMatches(run: LearnContentActiveRun, output: ReturnType<typeof parseLearnContentModelOutput>, now: Date) {
   if (output.runMetadata.runId !== run.runId || output.runMetadata.model !== run.model || output.runMetadata.locale !== run.locale) return false;
   const generatedAt = new Date(output.runMetadata.generatedAt);
@@ -214,6 +229,7 @@ export function createLearnContentCronHandler(dependencies: LearnContentCronDepe
     } catch (error) {
       const code = codeForError(error, "OUTPUT_PARSE_FAILURE");
       await state.finish({ runId: run.runId, now: current, result: "BLOCKED", code });
+      log({ event: "run_blocked", code, runId: run.runId, ...describeOutputContractError(error) });
       return response("BLOCKED", code);
     }
     if (!metadataMatches(run, output, current)) {
