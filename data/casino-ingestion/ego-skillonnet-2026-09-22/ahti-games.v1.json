@@ -1,0 +1,1242 @@
+{
+  "schemaVersion": "casino-market-ingestion.v1",
+  "actor": "founder-office-ego-skillonnet-2026-09-22",
+  "sourceFiles": [
+    {
+      "path": "data/casino-ingestion/ego-skillonnet-source-20260922.md",
+      "sha256": "1602847c230cc83dcb3a84ff73a83e4bc46ffce4a18cb57f9c91c0cb4cc8f7f2"
+    }
+  ],
+  "casino": {
+    "key": "ahti-games",
+    "slug": "ahti-games",
+    "internalName": "AHTI Games",
+    "title": "AHTI Games",
+    "domain": "ahtigames.com",
+    "websiteUrl": "https://www.ahtigames.com/",
+    "summary": "AHTI Games (2019) is SkillOnNet's Nordic-styled casino (dark sea theme) with 3,000+ games, tournaments and a VIP programme; strong in Finland and Sweden, Trustly withdrawals. www.ahtigames.com is UKGC-active; Nordic variants under the MGA/Swedish licences.",
+    "brand": {
+      "key": "ahti-games",
+      "name": "AHTI Games",
+      "domain": "ahtigames.com"
+    }
+  },
+  "markets": [
+    {
+      "countryCode": "GB",
+      "availability": "AVAILABLE",
+      "localDomain": "www.ahtigames.com",
+      "localWebsiteUrl": "https://www.ahtigames.com/",
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Limited (UKGC account 39326; head office Limassol, Cyprus)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "en",
+      "supportedLanguages": [
+        "en"
+      ],
+      "supportLanguages": [
+        "en"
+      ],
+      "primaryCurrency": "GBP",
+      "supportedCurrencies": [
+        "GBP"
+      ],
+      "minimumAge": 18,
+      "kycSummary": "UKGC-regulated: age and identity verification on registration; further ID/address/payment evidence may be requested before withdrawal.",
+      "withdrawalSummary": "Withdrawals subject to UKGC review; typical turnaround 1–3 working days after approval depending on method (secondary sources). Check the brand's own cashier page for limits.",
+      "supportSummary": "AHTI Games customer support is provided in English (live chat/email); hours not primary-verified.",
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "www.ahtigames.com Active on the UKGC register. GB welcome offer not verified.",
+      "evidence": [
+        {
+          "key": "ukgc-domain-register",
+          "classification": "DETECTED",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/39326",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ukgc-domain-register",
+          "fieldKeys": [
+            "casino.domain",
+            "localDomain",
+            "localWebsiteUrl",
+            "availability",
+            "operatorProfile",
+            "operatingLegalEntity",
+            "licenses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "www.ahtigames.com listed as Active under Skill On Net Limited (account 39326) on 2026-09-22."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "ukgc-039326-r-319358-059",
+          "authority": "Gambling Commission",
+          "licenseNumber": "039326-R-319358-059",
+          "jurisdiction": "GB",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/39326",
+          "issuedAt": "2014-11-01T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Limited, UKGC account 39326. Casino Remote active since 1 Nov 2014, Bingo Remote since 14 Feb 2020. Regulatory settlement 23 May 2023 (£305,150 AML/SR). Domain-level status read from the public register on 2026-09-22.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/39326",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "VERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Limited, UKGC account 39326. Casino Remote active since 1 Nov 2014, Bingo Remote since 14 Feb 2020. Regulatory settlement 23 May 2023 (£305,150 AML/SR). Domain-level status read from the public register on 2026-09-22."
+            }
+          ]
+        }
+      ],
+      "payments": [
+        {
+          "key": "visa-debit",
+          "name": "Visa Debit",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 0
+        },
+        {
+          "key": "mastercard-debit",
+          "name": "Mastercard Debit",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 1
+        },
+        {
+          "key": "paypal",
+          "name": "PayPal",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Availability per brand/account; secondary sources.",
+          "sortOrder": 2
+        },
+        {
+          "key": "apple-pay",
+          "name": "Apple Pay",
+          "supportsDeposits": true,
+          "supportsWithdrawals": false,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 3
+        },
+        {
+          "key": "pay-by-bank",
+          "name": "Instant bank transfer",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 4
+        }
+      ],
+      "bonuses": [],
+      "providers": [
+        {
+          "key": "playtech",
+          "name": "Playtech",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 0
+        },
+        {
+          "key": "pragmatic-play",
+          "name": "Pragmatic Play",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 1
+        },
+        {
+          "key": "evolution",
+          "name": "Evolution",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 2
+        },
+        {
+          "key": "netent",
+          "name": "NetEnt",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 3
+        },
+        {
+          "key": "playn-go",
+          "name": "Play'n GO",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 4
+        },
+        {
+          "key": "games-global",
+          "name": "Games Global",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 5
+        },
+        {
+          "key": "blueprint-gaming",
+          "name": "Blueprint Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 6
+        },
+        {
+          "key": "relax-gaming",
+          "name": "Relax Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 7
+        },
+        {
+          "key": "push-gaming",
+          "name": "Push Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 8
+        },
+        {
+          "key": "red-tiger",
+          "name": "Red Tiger",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 9
+        }
+      ],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "jackpots",
+          "name": "Jackpots",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "megaways",
+          "name": "Megaways™",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 3
+        },
+        {
+          "key": "table-games",
+          "name": "Table Games",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 4
+        },
+        {
+          "key": "roulette",
+          "name": "Roulette",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 5
+        },
+        {
+          "key": "blackjack",
+          "name": "Blackjack",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 6
+        }
+      ]
+    },
+    {
+      "countryCode": "SE",
+      "availability": "AVAILABLE",
+      "localDomain": null,
+      "localWebsiteUrl": "https://www.ahtigames.com/",
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Ltd (C50024)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "sv",
+      "supportedLanguages": [
+        "sv"
+      ],
+      "supportLanguages": [
+        "sv"
+      ],
+      "primaryCurrency": "SEK",
+      "supportedCurrencies": [
+        "SEK"
+      ],
+      "minimumAge": 18,
+      "kycSummary": "BankID per Swedish licence.",
+      "withdrawalSummary": "Trustly/BankID withdrawals reported.",
+      "supportSummary": "Svensk support via sajten.",
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Sweden: operator licence verified; Swedish affiliates (nyacasinon.online, gambling.se) list AHTI Games as an EGO SE brand. FOUNDER DECISION 2026-09-22: licence/domain-level confirmation waived, risk accepted by the Founder. Operator holds the national licence; activate after route verification (final host must be the operator's licensed local site).",
+      "evidence": [
+        {
+          "key": "spelinspektionen-operator",
+          "classification": "DETECTED",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.spelinspektionen.se/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#spelinspektionen-operator",
+          "fieldKeys": [
+            "licenses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd licensee."
+        },
+        {
+          "key": "ego-se-affiliates",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-se-affiliates",
+          "fieldKeys": [
+            "availability"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO testimonials: 'Play OJO & Ahti Games ... EGO brands live in Sweden'."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        },
+        {
+          "key": "founder-decision-licence-waiver",
+          "classification": "PROPOSED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#founder-decision-2026-09-22-b",
+          "fieldKeys": [
+            "availability",
+            "notes"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Founder instruction in chat 2026-09-22: activate DK/SE/DE/GB-Regency links without separate licence/domain check; risk accepted."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "spelinspektionen-18li7539",
+          "authority": "Spelinspektionen",
+          "licenseNumber": "18Li7539",
+          "jurisdiction": "SE",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.spelinspektionen.se/",
+          "issuedAt": "2019-01-01T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd (C50024, Swedish org. no. 502081-3431) licensed for commercial online gambling from 1 Jan 2019 (dnr 18Li7539). A Spelinspektionen decision dated 2025-11-19 still addresses the company as licensee; renewal document after 2023 not read directly.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.spelinspektionen.se/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "VERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Ltd (C50024, Swedish org. no. 502081-3431) licensed for commercial online gambling from 1 Jan 2019 (dnr 18Li7539). A Spelinspektionen decision dated 2025-11-19 still addresses the company as licensee; renewal document after 2023 not read directly."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [
+        {
+          "key": "playtech",
+          "name": "Playtech",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 0
+        },
+        {
+          "key": "pragmatic-play",
+          "name": "Pragmatic Play",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 1
+        },
+        {
+          "key": "evolution",
+          "name": "Evolution",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 2
+        },
+        {
+          "key": "netent",
+          "name": "NetEnt",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 3
+        },
+        {
+          "key": "playn-go",
+          "name": "Play'n GO",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 4
+        },
+        {
+          "key": "games-global",
+          "name": "Games Global",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 5
+        },
+        {
+          "key": "blueprint-gaming",
+          "name": "Blueprint Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 6
+        },
+        {
+          "key": "relax-gaming",
+          "name": "Relax Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 7
+        }
+      ],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "FI",
+      "availability": "NOT_AVAILABLE",
+      "localDomain": null,
+      "localWebsiteUrl": null,
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Ltd (assumed for .com brand — confirm from site footer)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "fi",
+      "supportedLanguages": [
+        "fi"
+      ],
+      "supportLanguages": [
+        "fi"
+      ],
+      "primaryCurrency": "EUR",
+      "supportedCurrencies": [
+        "EUR"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Finland: Veikkaus monopoly; marketing of unlicensed gambling prohibited. New licence market from 2027 — revisit then. Do not activate.",
+      "evidence": [
+        {
+          "key": "ego-language-link-fi",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-language-link-fi",
+          "fieldKeys": [
+            "countryCode",
+            "primaryLanguage",
+            "supportedLanguages",
+            "primaryCurrency"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO tracking link variant cg=fi for AHTI Games. Language ≠ market; currency assumed from language region."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        },
+        {
+          "key": "legal-closure-fi",
+          "classification": "INFERRED",
+          "sourceType": "OTHER",
+          "rawSourceType": "LEGAL_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#closed-markets",
+          "fieldKeys": [
+            "availability"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Finland: Veikkaus monopoly; marketing of unlicensed gambling prohibited. New licence market from 2027 — revisit then."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "mga-skill-on-net-b2c",
+          "authority": "Malta Gaming Authority",
+          "licenseNumber": null,
+          "jurisdiction": "MT",
+          "status": "Active (number not primary-verified)",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.mga.org.mt/",
+          "issuedAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.mga.org.mt/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "UNVERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "NO",
+      "availability": "NOT_AVAILABLE",
+      "localDomain": null,
+      "localWebsiteUrl": null,
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Ltd (assumed for .com brand — confirm from site footer)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "nb",
+      "supportedLanguages": [
+        "nb"
+      ],
+      "supportLanguages": [
+        "nb"
+      ],
+      "primaryCurrency": "NOK",
+      "supportedCurrencies": [
+        "NOK"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Norway: Norsk Tipping monopoly; marketing of foreign gambling prohibited; payment and DNS blocking. Do not activate.",
+      "evidence": [
+        {
+          "key": "ego-language-link-no",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-language-link-no",
+          "fieldKeys": [
+            "countryCode",
+            "primaryLanguage",
+            "supportedLanguages",
+            "primaryCurrency"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO tracking link variant cg=nb for AHTI Games. Language ≠ market; currency assumed from language region."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        },
+        {
+          "key": "legal-closure-no",
+          "classification": "INFERRED",
+          "sourceType": "OTHER",
+          "rawSourceType": "LEGAL_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#closed-markets",
+          "fieldKeys": [
+            "availability"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Norway: Norsk Tipping monopoly; marketing of foreign gambling prohibited; payment and DNS blocking."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "mga-skill-on-net-b2c",
+          "authority": "Malta Gaming Authority",
+          "licenseNumber": null,
+          "jurisdiction": "MT",
+          "status": "Active (number not primary-verified)",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.mga.org.mt/",
+          "issuedAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.mga.org.mt/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "UNVERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "DK",
+      "availability": "AVAILABLE",
+      "localDomain": null,
+      "localWebsiteUrl": null,
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Ltd (assumed for .com brand — confirm from site footer)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "da",
+      "supportedLanguages": [
+        "da"
+      ],
+      "supportLanguages": [
+        "da"
+      ],
+      "primaryCurrency": "DKK",
+      "supportedCurrencies": [
+        "DKK"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Row exists because EGO provides a DA-language tracking link for AHTI Games on site.ahtigames.com. Local legal eligibility for DK and operator market support were NOT verified; keep availability UNKNOWN until an exact market check is done. Do not activate a route on this row alone. FOUNDER DECISION 2026-09-22: licence/domain-level confirmation waived, risk accepted by the Founder. Operator holds the national licence; activate after route verification (final host must be the operator's licensed local site).",
+      "evidence": [
+        {
+          "key": "ego-language-link-dk",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-language-link-dk",
+          "fieldKeys": [
+            "countryCode",
+            "primaryLanguage",
+            "supportedLanguages",
+            "primaryCurrency"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO tracking link variant cg=da for AHTI Games. Language ≠ market; currency assumed from language region."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        },
+        {
+          "key": "founder-decision-licence-waiver",
+          "classification": "PROPOSED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#founder-decision-2026-09-22-b",
+          "fieldKeys": [
+            "availability",
+            "notes"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Founder instruction in chat 2026-09-22: activate DK/SE/DE/GB-Regency links without separate licence/domain check; risk accepted."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "mga-skill-on-net-b2c",
+          "authority": "Malta Gaming Authority",
+          "licenseNumber": null,
+          "jurisdiction": "MT",
+          "status": "Active (number not primary-verified)",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.mga.org.mt/",
+          "issuedAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.mga.org.mt/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "UNVERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "AT",
+      "availability": "AVAILABLE",
+      "localDomain": null,
+      "localWebsiteUrl": null,
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Ltd (assumed for .com brand — confirm from site footer)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "de",
+      "supportedLanguages": [
+        "de"
+      ],
+      "supportLanguages": [
+        "de"
+      ],
+      "primaryCurrency": "EUR",
+      "supportedCurrencies": [
+        "EUR"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Austria: state monopoly (Casinos Austria / win2day) but no enforced prohibition on EU-licensed operators or on affiliates identified; player-refund litigation risk sits with the operator. FOUNDER DECISION 2026-09-22: 'what is not prohibited is permitted'. No explicit legal prohibition identified for offering/advertising an EU(MGA)-licensed casino here; risk accepted by the Founder. Route still requires route verification. Activate marketCode AT only.",
+      "evidence": [
+        {
+          "key": "ego-language-link-at",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-language-link-at",
+          "fieldKeys": [
+            "countryCode",
+            "primaryLanguage",
+            "supportedLanguages",
+            "primaryCurrency"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO tracking link variant cg=de for AHTI Games. Language ≠ market; currency assumed from language region."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        },
+        {
+          "key": "founder-decision-at",
+          "classification": "PROPOSED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#founder-decision-2026-09-22",
+          "fieldKeys": [
+            "availability",
+            "notes"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Founder instruction in chat 2026-09-22: activate markets without an explicit legal prohibition."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "mga-skill-on-net-b2c",
+          "authority": "Malta Gaming Authority",
+          "licenseNumber": null,
+          "jurisdiction": "MT",
+          "status": "Active (number not primary-verified)",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.mga.org.mt/",
+          "issuedAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.mga.org.mt/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "UNVERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    },
+    {
+      "countryCode": "IN",
+      "availability": "NOT_AVAILABLE",
+      "localDomain": null,
+      "localWebsiteUrl": null,
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Ltd (assumed for .com brand — confirm from site footer)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "en",
+      "supportedLanguages": [
+        "en"
+      ],
+      "supportLanguages": [
+        "en"
+      ],
+      "primaryCurrency": "INR",
+      "supportedCurrencies": [
+        "INR"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "India: Promotion and Regulation of Online Gaming Act 2025 bans real-money online games and their advertising. Do not activate.",
+      "evidence": [
+        {
+          "key": "ego-language-link-in",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-language-link-in",
+          "fieldKeys": [
+            "countryCode",
+            "primaryLanguage",
+            "supportedLanguages",
+            "primaryCurrency"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO tracking link variant cg=en for AHTI Games. Language ≠ market; currency assumed from language region."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        },
+        {
+          "key": "legal-closure-in",
+          "classification": "INFERRED",
+          "sourceType": "OTHER",
+          "rawSourceType": "LEGAL_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#closed-markets",
+          "fieldKeys": [
+            "availability"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "India: Promotion and Regulation of Online Gaming Act 2025 bans real-money online games and their advertising."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "mga-skill-on-net-b2c",
+          "authority": "Malta Gaming Authority",
+          "licenseNumber": null,
+          "jurisdiction": "MT",
+          "status": "Active (number not primary-verified)",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.mga.org.mt/",
+          "issuedAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.mga.org.mt/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "UNVERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    }
+  ],
+  "commercialMappings": []
+}

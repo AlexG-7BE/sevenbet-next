@@ -1,0 +1,781 @@
+{
+  "schemaVersion": "casino-market-ingestion.v1",
+  "actor": "founder-office-ego-skillonnet-2026-09-22",
+  "sourceFiles": [
+    {
+      "path": "data/casino-ingestion/ego-skillonnet-source-20260922.md",
+      "sha256": "1602847c230cc83dcb3a84ff73a83e4bc46ffce4a18cb57f9c91c0cb4cc8f7f2"
+    }
+  ],
+  "casino": {
+    "key": "regencycasino",
+    "slug": "regencycasino",
+    "internalName": "Regency Casino Online",
+    "title": "Regency Casino Online",
+    "domain": "regencycasino.gr",
+    "websiteUrl": "https://www.regencycasino.gr/",
+    "summary": "Regency Casino Online is the digital brand of Regency Entertainment S.A. (Mont Parnes, Thessaloniki — 30 years of land-based casinos), launched with SkillOnNet under a Greek HGC Type 2 licence: 3,000+ games and live casino with Greek-speaking dealers. www.regencycasino.com is a UKGC white-label; further roll-outs (DK, ES, SE, DE) announced.",
+    "brand": {
+      "key": "regencycasino",
+      "name": "Regency Casino Online",
+      "domain": "regencycasino.gr"
+    }
+  },
+  "markets": [
+    {
+      "countryCode": "GR",
+      "availability": "AVAILABLE",
+      "localDomain": "regencycasino.gr",
+      "localWebsiteUrl": "https://www.regencycasino.gr/",
+      "operator": {
+        "key": "skillonnet-regency-jv",
+        "name": "SkillOnNet × Regency Entertainment",
+        "legalName": "Joint venture of Skill On Net Ltd and Regency Entertainment S.A. (exact licensed entity to confirm)",
+        "websiteUrl": "https://www.regencycasino.gr/"
+      },
+      "operatingLegalEntity": "SkillOnNet–Regency Entertainment joint venture (HGC Type 2 licensee; exact company name to confirm)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "el",
+      "supportedLanguages": [
+        "el",
+        "en"
+      ],
+      "supportLanguages": [
+        "el"
+      ],
+      "primaryCurrency": "EUR",
+      "supportedCurrencies": [
+        "EUR"
+      ],
+      "minimumAge": 21,
+      "kycSummary": "Ταυτοποίηση ΕΕΕΠ: ταυτότητα, αποδεικτικό κατοικίας και μέσου πληρωμής πριν την ανάληψη.",
+      "withdrawalSummary": "Ανάληψη μετά την ολοκλήρωση ταυτοποίησης· e-wallets (Skrill/Neteller) και Revolut δεν υποστηρίζονται ακόμη (gambling.com/gr, Sep 2026).",
+      "supportSummary": "Υποστήριξη στα ελληνικά.",
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Greece: minimum age 21 under Greek law. Type 2 licence (casino/other games).",
+      "evidence": [
+        {
+          "key": "press-launch",
+          "classification": "DETECTED",
+          "sourceType": "OTHER",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.naftemporiki.gr/english/2108069/regency-casino-enters-the-online-gaming-market/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#press-launch",
+          "fieldKeys": [
+            "availability",
+            "localDomain",
+            "licenses",
+            "operatorProfile",
+            "casino.summary"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Naftemporiki/iGB/newmoney.gr: regencycasino.gr live under HGC Type 2 licence; SkillOnNet platform; providers Evolution, NetEnt, Play'n GO, Playtech, Pragmatic, Relax."
+        },
+        {
+          "key": "gr-payments",
+          "classification": "INFERRED",
+          "sourceType": "OTHER",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.gambling.com/gr/online-casinos/strategy/regency-katathesi-analipsi",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#gr-payments",
+          "fieldKeys": [
+            "payments",
+            "kycSummary",
+            "withdrawalSummary"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "gambling.com/gr (Sep 2026): cards/bank; paysafecard & Apple Pay 'coming soon'; no Skrill/Neteller/Revolut yet."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "hgc-type2-regency",
+          "authority": "Hellenic Gaming Commission (ΕΕΕΠ)",
+          "licenseNumber": null,
+          "jurisdiction": "GR",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.gamingcommission.gov.gr/",
+          "issuedAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Type 2 online licence issued to the SkillOnNet × Regency Entertainment joint venture; regencycasino.gr launched under it (press, 2025/26). Licence number not read from the HGC register.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.gamingcommission.gov.gr/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "UNVERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Type 2 online licence issued to the SkillOnNet × Regency Entertainment joint venture; regencycasino.gr launched under it (press, 2025/26). Licence number not read from the HGC register."
+            }
+          ]
+        }
+      ],
+      "payments": [
+        {
+          "key": "visa",
+          "name": "Visa",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "EUR"
+          ],
+          "minimumDeposit": null,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 0
+        },
+        {
+          "key": "mastercard",
+          "name": "Mastercard",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "EUR"
+          ],
+          "minimumDeposit": null,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 1
+        },
+        {
+          "key": "bank-transfer",
+          "name": "Bank transfer",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "EUR"
+          ],
+          "minimumDeposit": null,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 2
+        }
+      ],
+      "bonuses": [],
+      "providers": [
+        {
+          "key": "evolution",
+          "name": "Evolution",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 0
+        },
+        {
+          "key": "netent",
+          "name": "NetEnt",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 1
+        },
+        {
+          "key": "playn-go",
+          "name": "Play'n GO",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 2
+        },
+        {
+          "key": "playtech",
+          "name": "Playtech",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 3
+        },
+        {
+          "key": "pragmatic-play",
+          "name": "Pragmatic Play",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 4
+        },
+        {
+          "key": "relax-gaming",
+          "name": "Relax Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 5
+        }
+      ],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "jackpots",
+          "name": "Jackpots",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "megaways",
+          "name": "Megaways™",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 3
+        },
+        {
+          "key": "table-games",
+          "name": "Table Games",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 4
+        },
+        {
+          "key": "roulette",
+          "name": "Roulette",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 5
+        },
+        {
+          "key": "blackjack",
+          "name": "Blackjack",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 6
+        }
+      ]
+    },
+    {
+      "countryCode": "GB",
+      "availability": "AVAILABLE",
+      "localDomain": "www.regencycasino.com",
+      "localWebsiteUrl": "https://www.regencycasino.com/",
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Limited — WHITE LABEL entry on UKGC register (brand owner Regency Entertainment S.A.)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "en",
+      "supportedLanguages": [
+        "en"
+      ],
+      "supportLanguages": [
+        "en"
+      ],
+      "primaryCurrency": "GBP",
+      "supportedCurrencies": [
+        "GBP"
+      ],
+      "minimumAge": 18,
+      "kycSummary": "UKGC-regulated: age and identity verification on registration; further ID/address/payment evidence may be requested before withdrawal.",
+      "withdrawalSummary": "Withdrawals subject to UKGC review; typical turnaround 1–3 working days after approval depending on method (secondary sources). Check the brand's own cashier page for limits.",
+      "supportSummary": "Regency Casino customer support is provided in English (live chat/email); hours not primary-verified.",
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "www.regencycasino.com is listed as 'White Label' (not 'Active') under Skill On Net Limited. Check that the site is live for GB before any GB route; EGO english link exists. FOUNDER DECISION 2026-09-22: licence/domain-level confirmation waived, risk accepted by the Founder. Operator holds the national licence; activate after route verification (final host must be the operator's licensed local site).",
+      "evidence": [
+        {
+          "key": "ukgc-domain-register",
+          "classification": "DETECTED",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/39326",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ukgc-domain-register",
+          "fieldKeys": [
+            "casino.domain",
+            "localDomain",
+            "localWebsiteUrl",
+            "availability",
+            "operatorProfile",
+            "operatingLegalEntity",
+            "licenses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "www.regencycasino.com listed as Active under Skill On Net Limited (account 39326) on 2026-09-22."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        },
+        {
+          "key": "founder-decision-licence-waiver",
+          "classification": "PROPOSED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#founder-decision-2026-09-22-b",
+          "fieldKeys": [
+            "availability",
+            "notes"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Founder instruction in chat 2026-09-22: activate DK/SE/DE/GB-Regency links without separate licence/domain check; risk accepted."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "ukgc-039326-r-319358-059",
+          "authority": "Gambling Commission",
+          "licenseNumber": "039326-R-319358-059",
+          "jurisdiction": "GB",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/39326",
+          "issuedAt": "2014-11-01T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Limited, UKGC account 39326. Casino Remote active since 1 Nov 2014, Bingo Remote since 14 Feb 2020. Regulatory settlement 23 May 2023 (£305,150 AML/SR). Domain-level status read from the public register on 2026-09-22.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/39326",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "VERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Limited, UKGC account 39326. Casino Remote active since 1 Nov 2014, Bingo Remote since 14 Feb 2020. Regulatory settlement 23 May 2023 (£305,150 AML/SR). Domain-level status read from the public register on 2026-09-22."
+            }
+          ]
+        }
+      ],
+      "payments": [
+        {
+          "key": "visa-debit",
+          "name": "Visa Debit",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 0
+        },
+        {
+          "key": "mastercard-debit",
+          "name": "Mastercard Debit",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 1
+        },
+        {
+          "key": "paypal",
+          "name": "PayPal",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Availability per brand/account; secondary sources.",
+          "sortOrder": 2
+        },
+        {
+          "key": "apple-pay",
+          "name": "Apple Pay",
+          "supportsDeposits": true,
+          "supportsWithdrawals": false,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 3
+        },
+        {
+          "key": "pay-by-bank",
+          "name": "Instant bank transfer",
+          "supportsDeposits": true,
+          "supportsWithdrawals": true,
+          "currencies": [
+            "GBP"
+          ],
+          "minimumDeposit": 10,
+          "minimumWithdrawal": null,
+          "maximumWithdrawal": null,
+          "depositProcessingTime": "Instant / method-dependent",
+          "withdrawalTime": null,
+          "fees": null,
+          "crypto": false,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": null,
+          "sortOrder": 4
+        }
+      ],
+      "bonuses": [],
+      "providers": [
+        {
+          "key": "playtech",
+          "name": "Playtech",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 0
+        },
+        {
+          "key": "pragmatic-play",
+          "name": "Pragmatic Play",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 1
+        },
+        {
+          "key": "evolution",
+          "name": "Evolution",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": true,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 2
+        },
+        {
+          "key": "netent",
+          "name": "NetEnt",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 3
+        },
+        {
+          "key": "playn-go",
+          "name": "Play'n GO",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 4
+        },
+        {
+          "key": "games-global",
+          "name": "Games Global",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 5
+        },
+        {
+          "key": "blueprint-gaming",
+          "name": "Blueprint Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 6
+        },
+        {
+          "key": "relax-gaming",
+          "name": "Relax Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-09-22T00:00:00.000Z",
+          "sortOrder": 7
+        }
+      ],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        },
+        {
+          "key": "jackpots",
+          "name": "Jackpots",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "megaways",
+          "name": "Megaways™",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 3
+        },
+        {
+          "key": "table-games",
+          "name": "Table Games",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 4
+        },
+        {
+          "key": "roulette",
+          "name": "Roulette",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 5
+        },
+        {
+          "key": "blackjack",
+          "name": "Blackjack",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 6
+        }
+      ]
+    },
+    {
+      "countryCode": "DK",
+      "availability": "AVAILABLE",
+      "localDomain": null,
+      "localWebsiteUrl": null,
+      "operator": {
+        "key": "skill-on-net-ltd",
+        "name": "Skill On Net Ltd",
+        "legalName": "Skill On Net Limited (Malta C50024)",
+        "websiteUrl": "https://www.skillonnet.com/"
+      },
+      "operatingLegalEntity": "Skill On Net Ltd (assumed for .com brand — confirm from site footer)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": "da",
+      "supportedLanguages": [
+        "da"
+      ],
+      "supportLanguages": [
+        "da"
+      ],
+      "primaryCurrency": "DKK",
+      "supportedCurrencies": [
+        "DKK"
+      ],
+      "minimumAge": 18,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+      "notes": "Row exists because EGO provides a DA-language tracking link for Regency Casino on site.regencycasino.com. Local legal eligibility for DK and operator market support were NOT verified; keep availability UNKNOWN until an exact market check is done. Do not activate a route on this row alone. Danish roll-out was only 'announced in coming months' (press, 2025/26). FOUNDER DECISION 2026-09-22: licence/domain-level confirmation waived, risk accepted by the Founder. Operator holds the national licence; activate after route verification (final host must be the operator's licensed local site).",
+      "evidence": [
+        {
+          "key": "ego-language-link-dk",
+          "classification": "INFERRED",
+          "sourceType": "AFFILIATE_PORTAL",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.egamingonline.com/",
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#ego-language-link-dk",
+          "fieldKeys": [
+            "countryCode",
+            "primaryLanguage",
+            "supportedLanguages",
+            "primaryCurrency"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "EGO tracking link variant cg=da for Regency Casino. Language ≠ market; currency assumed from language region."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FOUNDER_OFFICE_RESEARCH",
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#explicit-unknowns",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "payments",
+            "providers",
+            "bonuses"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Fields not established on 2026-09-22 are intentionally null/empty. Do not backfill from another market, from operator-wide assumptions, from the EGO tracking-link language list, or from portal state."
+        },
+        {
+          "key": "founder-decision-licence-waiver",
+          "classification": "PROPOSED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#founder-decision-2026-09-22-b",
+          "fieldKeys": [
+            "availability",
+            "notes"
+          ],
+          "observedAt": "2026-09-22T00:00:00.000Z",
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Founder instruction in chat 2026-09-22: activate DK/SE/DE/GB-Regency links without separate licence/domain check; risk accepted."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "mga-skill-on-net-b2c",
+          "authority": "Malta Gaming Authority",
+          "licenseNumber": null,
+          "jurisdiction": "MT",
+          "status": "Active (number not primary-verified)",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.mga.org.mt/",
+          "issuedAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-09-22T00:00:00.000Z",
+          "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number.",
+          "evidence": [
+            {
+              "key": "regulator-or-official",
+              "sourceUrl": "https://www.mga.org.mt/",
+              "sourceReference": "data/casino-ingestion/ego-skillonnet-source-20260922.md#licences",
+              "status": "UNVERIFIED",
+              "observedAt": "2026-09-22T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-09-22T00:00:00.000Z",
+              "notes": "Skill On Net Ltd (Malta C50024) operates its .com brands under an MGA B2C licence (operator site and press). Exact licence reference was not exposed in the sources fetched on 2026-09-22 — read it from the brand footer before publishing a licence number."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 1
+        }
+      ]
+    }
+  ],
+  "commercialMappings": []
+}
