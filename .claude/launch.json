@@ -9,15 +9,6 @@
         "dev"
       ],
       "port": 4173
-    },
-    {
-      "name": "b4gamble-test-worktree",
-      "runtimeExecutable": "bash",
-      "runtimeArgs": [
-        "/private/tmp/claude-501/-Users-alex-Code-sevenbet-next/2fe4f3e5-af5a-46c9-a710-f3a7f9e39162/scratchpad/wt-dev.sh"
-      ],
-      "port": 4174,
-      "autoPort": false
     }
   ]
 }
