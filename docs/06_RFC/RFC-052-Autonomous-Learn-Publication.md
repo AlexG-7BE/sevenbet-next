@@ -1,9 +1,9 @@
 # RFC-052: Autonomous Learn Publication
 
 - **Status:** `ACTIVE`
-- **Decision authority:** explicit Founder instruction, 21 September 2026
-- **Scope:** one service-authenticated `learn_apply` MCP mutation for canonical
-  Learn Articles
+- **Decision authority:** explicit Founder instructions, 21–22 September 2026
+- **Scope:** one service-authenticated, create-only `learn_apply` MCP mutation
+  for canonical Learn Articles
 - **Depends on:** Product Vision & Principles, RFC-013, RFC-023, RFC-027,
   RFC-037, RFC-039, RFC-044 and RFC-051
 - **Supersedes:** RFC-051 only for the exact Learn-only MCP endpoint and direct
@@ -15,10 +15,12 @@
 ## 1. Decision
 
 B4GAMBLE exposes exactly one autonomous Learn mutation, `learn_apply`. One
-call supplies the complete desired Article, SEO and image state. The operation
-resolves `CREATE`, `UPDATE` or `NO_CHANGE`, prepares every dependency before
-database mutation, atomically leaves the canonical `Article` in `PUBLISHED`,
-invalidates existing Article surfaces and performs bounded public verification.
+call supplies one complete new Article, SEO and image state. The operation
+resolves `CREATE` or a same-request idempotent `NO_CHANGE`, prepares every
+dependency before database mutation, atomically creates the canonical Article
+as `PUBLISHED`, invalidates public Article surfaces and performs bounded public
+verification. Autonomous update or replacement of an existing Article is not
+authorized.
 
 This is a transport and application operation over the existing Article
 domain. `Article` remains the only Learn content authority. `ContentRevision`
@@ -27,9 +29,9 @@ remains immutable prior-version history; `AuditLog` remains audit authority;
 entity, queue, CMS, migration or publication state machine is introduced.
 
 The existing human `DRAFT → IN_REVIEW → APPROVED → PUBLISHED` Admin lifecycle
-remains unchanged. Autonomous replacement does not execute those transitions:
-the old published row stays live until a serializable transaction replaces it
-and keeps it published.
+remains unchanged and is the only route for editing an existing Article. The
+autonomous create does not execute those transitions and never writes a
+`ContentRevision` for replacement.
 
 ## 2. Boundary relative to RFC-051
 
@@ -48,7 +50,8 @@ It has no browser session, interactive MFA or query-secret path. The direct
 The closed input contains:
 
 - `requestId`;
-- nullable `articleId` and optional nullable `expectedUpdatedAt`;
+- required literal-null `articleId` and required literal-null
+  `expectedUpdatedAt`;
 - every current `ArticleDocumentInput` field;
 - the complete current block union: paragraph, heading, list, quote, callout,
   image and link;
@@ -57,11 +60,14 @@ The closed input contains:
 - reading time and difficulty; and
 - image source union `url | base64 | generate`.
 
-The database's global unique `Article.slug` is the natural identity when
-`articleId` is absent. A slug move requires `articleId`; a category move does
-not. A supplied unknown `articleId`, a duplicate target slug, a reused
-`requestId` with different intent, a stale explicit version, or an Article
-that changes while dependencies are prepared fails closed.
+The database's global unique `Article.slug` is the create identity. A non-null
+Article ID or version is rejected by the public tool contract. Any Article
+already using the target slug fails closed before image preparation or
+mutation. The only exception is an exact replay of the same `requestId` and
+same normalized CREATE intent against the Article created by that request;
+that replay may return `NO_CHANGE`. A reused request ID with different intent,
+missing/mismatched audit identity, or an Article that appears while
+dependencies are prepared also fails closed.
 
 Only locales accepted by the current published language registry and
 categories present in the current Learn category registry can publish.
@@ -70,17 +76,18 @@ constraints remain unchanged.
 
 ## 4. Atomicity, revisions and replay
 
-The service operation is `ArticleService.applyPublishedDocument`. It validates
-again inside the Article boundary and runs one serializable transaction with
-sorted PostgreSQL advisory locks for request, Article and target slug.
+The application layer validates the create-only contract before calling
+`ArticleService.applyPublishedDocument`. The Article boundary validates again
+and runs one serializable transaction with sorted PostgreSQL advisory locks
+for request, target slug and referenced content-addressed image keys.
 
 - Create writes one final `PUBLISHED` Article and one `learn_apply` audit.
-- Update first writes a `ContentRevision` snapshot of the current Article,
-  atomically replaces the document, preserves an existing `publishedAt`, sets
-  current review time and remains `PUBLISHED` throughout.
-- No-change writes no revision, audit or timestamp. It still revalidates and
-  verifies the current public projection so a retry can recover a prior
-  post-commit cache/verification failure.
+- Same-request no-change writes no revision, audit or timestamp. It still
+  revalidates and verifies the Article created by that request so a retry can
+  recover a prior post-commit cache/verification failure.
+- A different request that sees the same slug, including a concurrent Article
+  created after dependency inspection, conflicts even when its document bytes
+  happen to match. It cannot be treated as an idempotent replay.
 
 Raw `requestId` is never persisted or logged. Audit metadata stores its
 SHA-256, the normalized intent/document fingerprints and bounded resolved-image
@@ -138,7 +145,7 @@ attributed to the Founder or a browser user.
 ## 7. Public projection and truthful result
 
 After commit, the operation invokes the existing Article tag/path invalidator
-for the old path when moved, the new path, `/learn` and `/sitemap.xml`. It then
+for the new path, `/learn` and `/sitemap.xml`. It then
 checks, with bounded retries:
 
 - public HTTP success plus exact `data-article-id` and `data-article-updated-at`
@@ -167,16 +174,17 @@ not deleted.
 
 Immediate transport rollback is `LEARN_MCP_ENABLED=false` followed by normal
 redeploy/config propagation. Image generation can be disabled independently.
-Neither rollback changes Article content. A bad Article version is recovered
-through the existing revision/human lifecycle; storage cleanup must never
-delete a referenced immutable object.
+Neither rollback changes Article content. A bad autonomous Article is handled
+through the existing human Article lifecycle; storage cleanup must never delete
+a referenced immutable object.
 
 ## 9. Required regression boundary
 
-Acceptance covers create/update/no-change, generated/supplied/remote hero and
-inline images, continuous publication, retry after ambiguous response,
-concurrency and duplicate identity, all fail-before-mutation paths, storage
-compensation, service actor/audit/revision ownership, exact SEO/JSON-LD/
-sitemap/collection projection, protected Responsible Gambling behavior,
-responsive image layout, existing Article/Admin lifecycle and a structural
-guard against prohibited persistence authorities.
+Acceptance covers create and same-request no-change, rejection of every update
+shape and pre-existing slug, concurrent slug appearance, generated/supplied/
+remote hero and inline images, continuous publication, retry after ambiguous
+response, all fail-before-mutation paths, storage compensation, service actor
+and audit ownership, exact SEO/JSON-LD/sitemap/collection projection, protected
+Responsible Gambling behavior, responsive image layout, the unchanged human
+Article/Admin lifecycle and a structural guard against prohibited persistence
+authorities.

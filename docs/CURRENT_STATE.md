@@ -137,9 +137,9 @@ the same protected category and has no commercial fallback. See the
 [publication release record](06_Operations/B4GAMBLE-Learn-Publication-2026-09-17.md)
 and the original [Learning Center architecture release record](06_Operations/Learning-Center-PostgreSQL-Release-2026-09-15.md).
 
-## Autonomous Learn publication — RFC-052 Production active
+## Autonomous Learn publication — RFC-052 Production baseline and create-only candidate
 
-**DETECTED IN CANONICAL MAIN AND PRODUCTION, 21 SEPTEMBER 2026:** one
+**DETECTED IN THE PRODUCTION BASELINE, 21 SEPTEMBER 2026:** one
 service-authenticated `learn_apply` MCP mutation maps the complete desired
 Learn state into the existing canonical `Article`. It prepares first-party
 URL/base64/generated images, performs one atomic published replacement through
@@ -157,6 +157,16 @@ Article lifecycle and disappeared from the public route, Learn collection and
 sitemap. A complete-row aggregate hash confirmed that all 24 pre-existing
 Production Articles were field-for-field unchanged.
 
+**DETECTED IN THE CURRENT RELEASE CANDIDATE, NOT YET A PRODUCTION CLAIM:** the
+22 September Founder decision removes autonomous Article replacement. The
+model schema, role prompt, deterministic publication gate, MCP contract and
+serializable Article transaction are create-only: `articleId` and
+`expectedUpdatedAt` must be null, an existing global slug conflicts before
+image preparation, and only an exact same-request replay may return
+`NO_CHANGE`. The autonomous transaction has no Article update or
+`ContentRevision` write branch. Human Admin editing and the governed Article
+lifecycle remain unchanged.
+
 The capability creates zero models, tables, migrations, content/media/job
 entities, queues or CMS authorities. Human Admin lifecycle and Responsible
 Gambling protections remain unchanged. RFC-051 still prohibits the retired
@@ -164,6 +174,23 @@ Commercial/Media MCP and operational OAuth surfaces; RFC-052 supersedes it
 only for this isolated Learn endpoint and MCP SDK dependency. See
 [RFC-052](06_RFC/RFC-052-Autonomous-Learn-Publication.md) and the
 [operations runbook](06_Operations/Autonomous-Learn-Publication.md).
+
+## Autonomous Learn content orchestration — RFC-053 release candidate
+
+**DETECTED IN THE CURRENT RELEASE CANDIDATE, NOT YET A PRODUCTION CLAIM:** one
+native cron owns a durable managed run and separates SEO Strategist, Researcher
+and Editor responsibilities. The model receives only bounded public Article
+context, no mutation tool and no Production secret. The deterministic
+application layer may create one genuinely new Article, make no change, or
+block; it cannot update an existing Article. Deterministic non-retryable MCP
+failures block after one call, while transient and commit-ambiguous failures
+retain bounded same-request retries.
+
+The exact merged `main` SHA, Ready Production deployment, Production
+configuration and autonomous end-to-end acceptance remain **UNKNOWN** until
+verified against live authoritative evidence. See
+[RFC-053](06_RFC/RFC-053-Autonomous-Learn-Content-Orchestration.md) and the
+[orchestrator operations runbook](06_Operations/Autonomous-Learn-Content-Orchestrator.md).
 
 **DETECTED IN THE SUBSEQUENT PR2 CANDIDATE, NOT YET A PRODUCTION CLAIM:** the
 Founder-facing CMS navigation and Dashboard are being narrowed to current
