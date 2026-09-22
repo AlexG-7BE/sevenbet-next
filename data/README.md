@@ -4,7 +4,7 @@
 
 ## Start here
 
-- **[`casino-registry.json`](casino-registry.json)** — the one list of every casino in the database: slug, status, markets, the release that introduced it and its import bundle(s). Currently 16 casinos: 15 published and 1 archived (Boostwin).
+- **[`casino-registry.json`](casino-registry.json)** — the one list of every casino in the database: slug, status, markets, the release that introduced it and its import bundle(s). It lists the 16 casinos in the database (15 published, 1 archived: Boostwin) plus 13 EGO casinos marked `DRAFT` that are imported by the EGO runbook.
   - `tests/casino-registry.test.ts` checks that the registry matches the bundles in this folder (runs in CI).
   - `npm run casino-registry:verify` compares the registry with the connected database (read-only).
 
@@ -13,6 +13,7 @@
 | Path | What it is | Used by |
 | --- | --- | --- |
 | `casino-ingestion/` | **Import bundles, one file per casino and market group.** All 15 published casinos have their bundle here (seven GB bundles sit in the `casino-data-population-01/` subfolder). | `npm run casino-market:ingest` |
+| `casino-ingestion/ego-skillonnet-2026-09-22/` | 13 EGO (SkillOnNet) bundles + `manifest.v1.json` with checksums. The partner's tracking-link sheet holds raw URLs and stays outside git. | [EGO runbook](../docs/06_Operations/EGO-SkillOnNet-Import-01-Runbook.md) |
 | `casino-real-catalog-02/` | Release record for the first 8 casinos (3 Sep 2026). | `scripts/casino-real-catalog-02.ts` |
 | `casino-real-catalog-03/` | Release record for the next 6 casinos (plus a Betsson logo upgrade), 8 Sep 2026. | `scripts/casino-real-catalog-03.ts` |
 | `casino-commercial-activation/`, `casino-commercial-visibility-03/`, `commercial-activation/` | Commercial activation evidence and templates. | build preflight and release scripts |
@@ -24,7 +25,7 @@ The catalog folders are release history, not separate casino lists. The same cas
 ## Adding or changing a casino
 
 1. Add or edit the bundle in `casino-ingestion/`.
-2. Import it into the database with `npm run casino-market:ingest -- --bundle <path>` (a dry-run plan by default; writing needs `--write --source-root <dir>`), or edit the casino in `/admin`.
+2. Check it with `npm run casino-market:ingest -- --bundle <path>` (dry run). The ingest write guard only allows disposable CI databases; Production imports go through a Founder-run executor such as the [EGO runbook](../docs/06_Operations/EGO-SkillOnNet-Import-01-Runbook.md). Existing casinos are edited in `/admin`.
 3. Add or update the entry in `casino-registry.json`, then run `npm run casino-registry:verify`.
 
 Edits made in `/admin` are not written back to the bundles. Treat the bundles as the import input, and the database as the current state.
