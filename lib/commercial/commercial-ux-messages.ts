@@ -59,6 +59,8 @@ export type CommercialUxMessages = Readonly<{
   bestOffersMarketUnavailableCopy: string;
   bonusesMarketUnavailableTitle: string;
   bonusesMarketUnavailableCopy: string;
+  publishedReviews: string;
+  rankPrefix: string;
 }>;
 
 const en: CommercialUxMessages = {
@@ -120,6 +122,8 @@ const en: CommercialUxMessages = {
   bestOffersMarketUnavailableCopy: "We currently don’t publish verified partner offers for this market.",
   bonusesMarketUnavailableTitle: "Partner bonus offers aren’t available in {market} yet.",
   bonusesMarketUnavailableCopy: "You can still browse our independent casino reviews.",
+  publishedReviews: "published reviews",
+  rankPrefix: "No.",
 };
 
 const marketStateTranslations: Partial<Record<SupportedLocale, Pick<CommercialUxMessages,
@@ -186,5 +190,19 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "nb-NO": { minimumWithdrawal: "Minste uttak", fees: "Gebyrer" },
     "fr-CA": { minimumWithdrawal: "Retrait minimum", fees: "Frais" },
   };
-  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}) };
+  const heroMetricLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "publishedReviews" | "rankPrefix">>> = {
+    "de-DE": { publishedReviews: "veröffentlichte Bewertungen", rankPrefix: "Nr." },
+    "it-IT": { publishedReviews: "recensioni pubblicate", rankPrefix: "N." },
+    "es-ES": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º" },
+    "es-PE": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º" },
+    "pt-PT": { publishedReviews: "análises publicadas", rankPrefix: "N.º" },
+    "el-GR": { publishedReviews: "δημοσιευμένες αξιολογήσεις", rankPrefix: "Αρ." },
+    "nl-NL": { publishedReviews: "gepubliceerde reviews", rankPrefix: "Nr." },
+    "sv-SE": { publishedReviews: "publicerade recensioner", rankPrefix: "Nr" },
+    "da-DK": { publishedReviews: "offentliggjorte anmeldelser", rankPrefix: "Nr." },
+    "fi-FI": { publishedReviews: "julkaistua arviota", rankPrefix: "Nro" },
+    "nb-NO": { publishedReviews: "publiserte anmeldelser", rankPrefix: "Nr." },
+    "fr-CA": { publishedReviews: "avis publiés", rankPrefix: "No" },
+  };
+  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}) };
 }

@@ -3,8 +3,9 @@ import { cache } from "react";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { CasinoCollection } from "@/components/casino-discovery/CasinoCollection";
+import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
-import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
+import styles from "@/components/casino-discovery/CasinosPage.module.css";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffCasinoDiscoveryData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
@@ -112,23 +113,27 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     <CommercialSurfaceView surface="casinos" />
     {schema ? <JsonLd data={schema} /> : null}
     <section className={styles.hero} data-nav-theme="dark">
+      <div aria-hidden="true" className={styles.glow} />
       <div className={styles.shell}>
-        <div className={styles.heroIntro}><header>
-          <p>{formatProductMessage(messages.casinos.heroKicker, { market })}</p>
-          <h1>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h1>
-          <span>{formatProductMessage(messages.casinos.heroCopy, { market })}</span>
-        </header></div>
+        <p className={styles.eyebrow}>{formatProductMessage(messages.casinos.heroKicker, { market })}</p>
+        <h1>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h1>
+        <div className={styles.heroMeta}>
+          <p>{formatProductMessage(messages.casinos.heroCopy, { market })}</p>
+          {result.total ? <div className={styles.heroStats}><span><strong>{result.total}</strong><small>{copy.publishedReviews}</small></span></div> : null}
+        </div>
       </div>
     </section>
-    <section className={styles.directory} data-nav-theme="cream" id="casino-directory"><div className={styles.shell}>
-      <div className={styles.directoryHeading}><div><p>{copy.casinosShown}</p><h2>{messages.casinos.directoryTitle}</h2></div><span>{result.total} {messages.common.records}</span></div>
+    <section className={styles.directory} data-nav-theme="dark" id="casino-directory"><div className={styles.shell}>
+      <div className={`${styles.directoryHeading} ${styles.reveal}`}><div><p>{copy.casinosShown}</p><h2><EmphasisTail text={messages.casinos.directoryTitle} /></h2></div><span>{result.total} {messages.common.records}</span></div>
       {result.inventoryMode !== "PUBLISHED_ONLY" ? <aside className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{disclosure}</p></aside> : null}
       {result.items.length ? <CasinoCollection casinos={result.items} initialSearch={query.search} messages={messages} presentation={presentation} /> : <section className={styles.empty} role="status"><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market })}</h2><p>{messages.casinos.reviewOnlyNotice}</p></section>}
     </div></section>
-    <section className={styles.faq} data-premium-section="casinos-before-you-choose"><div className={styles.shell}><div className={styles.sectionIntro}><h2>{messages.casinos.faqTitle}</h2></div>
-      <details><summary>{messages.casinos.faqDifferenceQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqDifferenceAnswer}</p></details>
-      <details><summary>{messages.casinos.faqReviewOnlyQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqReviewOnlyAnswer}</p></details>
-      <details><summary>{messages.casinos.faqCommissionQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqCommissionAnswer}</p></details>
+    <section className={styles.faq} data-nav-theme="cream" data-premium-section="casinos-before-you-choose"><div className={`${styles.shell} ${styles.reveal}`}><h2><EmphasisTail text={messages.casinos.faqTitle} /></h2>
+      <div className={styles.faqList}>
+        <details name="casinos-faq" open><summary>{messages.casinos.faqDifferenceQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqDifferenceAnswer}</p></details>
+        <details name="casinos-faq"><summary>{messages.casinos.faqReviewOnlyQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqReviewOnlyAnswer}</p></details>
+        <details name="casinos-faq"><summary>{messages.casinos.faqCommissionQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqCommissionAnswer}</p></details>
+      </div>
     </div></section>
   </div>;
 }

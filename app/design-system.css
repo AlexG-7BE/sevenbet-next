@@ -27,6 +27,11 @@
   --sb-danger-strong: #b73a34;
   --sb-danger-text: #a72e2a;
   --sb-acid-contrast: #777500;
+  --sb-card: #171616;
+  --sb-card-raised: #1d1c1c;
+  --sb-muted-dark: #6b6961;
+  --sb-mint: #7bc7ad;
+  --sb-blush: #e7c9bd;
 
   /* Semantic colour roles */
   --sb-surface-night: var(--sb-night);
@@ -52,6 +57,22 @@
   --sb-status-danger: var(--sb-danger);
   --sb-status-danger-text: var(--sb-danger-text);
   --sb-focus-acid-contrast: var(--sb-acid-contrast);
+
+  /* Premium commercial and Programme surfaces */
+  --sb-surface-card: var(--sb-card);
+  --sb-surface-card-raised: var(--sb-card-raised);
+  --sb-surface-cream: var(--sb-field);
+  --sb-acid-ink: var(--sb-acid-contrast);
+  --sb-teal-ink: var(--sb-teal);
+  --sb-line-dark: rgba(250, 250, 247, .10);
+  --sb-line-dark-2: rgba(250, 250, 247, .14);
+  --sb-line-light: rgba(16, 15, 15, .18);
+  --sb-text-2: rgba(250, 250, 247, .66);
+  --sb-text-3: rgba(250, 250, 247, .48);
+  --sb-radius-card: 6px;
+  --sb-radius-button: 3px;
+  --sb-radius-tile: 4px;
+  --sb-header-offset: calc(81px + env(safe-area-inset-top, 0px));
 
   /* Typography */
   --sb-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
