@@ -8,6 +8,10 @@
     {
       "path": "/api/internal/cron/customer-lifecycle",
       "schedule": "47 3 * * *"
+    },
+    {
+      "path": "/api/internal/cron/learn-content",
+      "schedule": "13 * * * *"
     }
   ]
 }

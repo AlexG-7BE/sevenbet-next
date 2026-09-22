@@ -5,6 +5,7 @@ import { NextRequest } from "next/server";
 import {
   PRODUCTION_CANONICAL_ORIGIN,
   PRODUCTION_CRON_PATH,
+  PRODUCTION_LEARN_CONTENT_CRON_PATH,
   PRODUCTION_LIFECYCLE_CRON_PATH,
   resolveRuntimeCanonicalHost,
 } from "../lib/auth/runtime-canonical-host";
@@ -106,7 +107,11 @@ test("the exact authenticated Vercel Cron paths bypass public-host canonicalisat
     "https://sevenbet-next.vercel.app",
     "https://sevenbet-next-hvvjqn3nd-alexg-7bes-projects.vercel.app",
   ]) {
-    for (const path of [PRODUCTION_CRON_PATH, PRODUCTION_LIFECYCLE_CRON_PATH]) {
+    for (const path of [
+      PRODUCTION_CRON_PATH,
+      PRODUCTION_LIFECYCLE_CRON_PATH,
+      PRODUCTION_LEARN_CONTENT_CRON_PATH,
+    ]) {
       assert.deepEqual(
         resolveRuntimeCanonicalHost(`${origin}${path}`, productionEnvironment),
         { kind: "next" },
