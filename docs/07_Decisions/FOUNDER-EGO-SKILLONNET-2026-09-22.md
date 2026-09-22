@@ -25,3 +25,14 @@ The decision is delivered in two steps (Founder choice, 22 Sep 2026):
 - **Step 2 (separate PR):** extend the legal authority tables for the other markets in point 4: 48 Canadian provincial markets outside Ontario, GB (12), DE (2) and GR (1). This changes commercial and legal authority, so it gets its own review. Re-running the step-1 executor afterwards is idempotent and activates those markets.
 
 The code verifies each route before activation (`register()` activates only a `HEALTHY` route). This replaces the package note's "activate before verification"; route verification happens in the same command.
+
+## Step 2 outcome (22 Sep 2026)
+
+The Founder reviewed the regulatory prerequisites behind each remaining market:
+
+- **GB — opened** for 12 brands: Skill On Net Limited holds UKGC licence 039326-R-319358-059, and each brand domain is Active on the public register. Regency's GB site is a white label, a risk the Founder accepted. PlayUZU is not on the register and stays closed. This extends the existing Founder GB authority (`worldwideFounderGbAuthorityApplies`).
+- **DE — opened** for DrückGlück and TurboNino only: `drueckglueck.de` and `turbonino.de` are on the GGL whitelist under Skill On Net Limited (virtual slot games, GGL, since 29.12.2022). This is recorded as exact casino × market evidence that satisfies the GGL-whitelist action.
+- **GR — not activated:** B4GAMBLE is not registered in the Hellenic Gaming Commission affiliate register.
+- **Canada outside Ontario — not activated:** the Criminal Code s.207 provincial-conduct prerequisite is unmet, pending legal advice.
+
+Implementation: `lib/current-partner-worldwide-authority/ego-market-authority.ts`. It never lifts a `BLOCKED_BY_LAW` market. Re-running `npm run ego-skillonnet:import -- apply` registers and activates the newly allowed GB and DE markets idempotently.
