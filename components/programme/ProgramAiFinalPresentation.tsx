@@ -39,6 +39,13 @@ function StatusMessage({ error, message }: { error?: string; message?: string })
   return message ? <p className={styles.status} role="status">{message}</p> : null;
 }
 
+/** Sets the closing words of a catalogued heading in the editorial serif without changing the copy. */
+function SerifTail({ text, words = 2 }: { text: string; words?: number }) {
+  const parts = text.trim().split(/\s+/);
+  if (parts.length <= words) return <>{text}</>;
+  return <>{parts.slice(0, -words).join(" ")} <em>{parts.slice(-words).join(" ")}</em></>;
+}
+
 function translated(locale: ProgrammeLocale) {
   return (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
 }
@@ -87,7 +94,7 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.accessState}>
           <p className={styles.eyebrow}>{t("Programme access")}</p>
-          <h1 id="programme-access-title">{t("Two checks before you begin.")}</h1>
+          <h1 id="programme-access-title"><SerifTail text={t("Two checks before you begin.")} /></h1>
           <section className={styles.accessBoundary} aria-labelledby="programme-access-title">
             <label className={styles.checkRow}>
               <input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" />
@@ -408,7 +415,7 @@ export function Mission01IntakeScreen({
           <p className={styles.eyebrow}>{t("Mission 01")}</p>
           <span className={styles.srOnly}>{t("Before you share.")}</span>
           <span className={styles.srOnly}>{t("What feels hardest to control right now?")}</span>
-          <h1>{t("Tell us what is happening right now.")}</h1>
+          <h1><SerifTail text={t("Tell us what is happening right now.")} /></h1>
           <p>{t("In your own words. A minute is plenty — we'll build your Starting Point from it.")}</p>
         </section> : null}
         <Mission01VoiceControl disabled={busy || !authority} locale={locale} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} state={recorderState} />
@@ -488,7 +495,7 @@ export function StartingPointReadyScreen({
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.readyState}>
           <p className={styles.readyEyebrow}>{t("✓ Your Starting Point is ready")}</p>
-        <h1>{t("Your Starting Point, in your words.")}</h1>
+        <h1><SerifTail text={t("Your Starting Point, in your words.")} words={3} /></h1>
         <section className={styles.startingPointCard}>
           <p>{candidate.startingPoint}</p>
           <span className={styles.srOnly}>{t("What changes next: {change}. Mission 02 continues here: {cue}.", { change: candidate.desiredChange.replace(/[.!?]+$/, ""), cue: candidate.continuationCue.replace(/[.!?]+$/, "") })}</span>
