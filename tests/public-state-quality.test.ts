@@ -64,7 +64,7 @@ test("bonus directory ignores retired filter recovery and keeps localized resear
   const page = source("app/(public)/bonuses/page.tsx");
 
   assert.match(page, /<Link href=\{productHref\(presentation, "\/methodology"\)\}>\{messages\.common\.reviewMethodology\}<\/Link>/);
-  assert.match(page, /productHref\(presentation, "\/affiliate-disclosure"\)/);
+  assert.match(source("components/public-shell/PublicFooter.tsx"), /"\/affiliate-disclosure"/);
   assert.doesNotMatch(page, /activeCount|data-empty-reset|clearAll|BonusFilters/);
 });
 

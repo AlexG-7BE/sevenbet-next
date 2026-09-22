@@ -5,7 +5,6 @@ import { cache } from "react";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { BonusOfferDirectory } from "@/components/bonus-directory/BonusOfferDirectory";
-import { CompactProtection } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import finalStyles from "./BonusesFinal.module.css";
@@ -123,7 +122,6 @@ export default async function BonusesPage({ searchParams }: PageProps) {
         <header className={styles.sectionHeading}><h2 className={styles.display}>{messages.bonuses.directoryTitle}</h2><p>{result.total} {messages.common.records}</p></header>
         {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.demoDirectoryDisclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure}</p></aside> : null}
         {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><h2>{messages.bonuses.unavailableTitleBody}</h2><p>{messages.bonuses.unavailableCopy}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></section> : <BonusOfferDirectory messages={messages} offers={result.records} presentation={presentation} />}
-        <div className={styles.commercialFooterNote}><p>{copy.compactDisclosure} · {messages.bonuses.disclosureCopy}</p><Link href={productHref(presentation, "/affiliate-disclosure")}>{messages.common.affiliateDisclosure}</Link><CompactProtection copy={copy} presentation={presentation} /></div>
       </div>
     </section>
     <section className={finalStyles.method} data-premium-section="bonus-terms-method" data-nav-theme="cream"><div>
