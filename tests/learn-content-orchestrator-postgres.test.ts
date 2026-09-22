@@ -87,3 +87,65 @@ test("PostgreSQL state claim serializes overlapping cron invocations and enforce
     await prisma.$disconnect();
   }
 });
+
+test("PostgreSQL state permits exactly one same-locale output-contract recovery inside the daily interval", async () => {
+  assertDisposableDatabase(process.env.DATABASE_URL);
+  await prisma.siteSetting.deleteMany({ where: { key: LEARN_CONTENT_STATE_KEY } });
+  const repository = new PrismaLearnContentStateRepository(prisma);
+  const startedAt = new Date("2026-09-22T00:00:00.000Z");
+  const input = {
+    now: startedAt,
+    minIntervalHours: 24,
+    locales: [{ language: "en", locale: "en-GB" }, { language: "de", locale: "de-DE" }],
+    model: "gpt-6-astra",
+  };
+
+  try {
+    const first = await repository.claim(input);
+    assert.equal(first.action, "LAUNCH");
+    assert.ok("run" in first);
+    if (!("run" in first)) return;
+    assert.equal(first.run.locale, "en-GB");
+    assert.equal(await repository.finish({
+      runId: first.run.runId,
+      now: startedAt,
+      result: "BLOCKED",
+      code: "OUTPUT_CONTRACT_FAILURE",
+    }), true);
+
+    const retry = await repository.claim({ ...input, now: new Date("2026-09-22T00:01:00.000Z") });
+    assert.equal(retry.action, "LAUNCH");
+    assert.ok("run" in retry);
+    if (!("run" in retry)) return;
+    assert.equal(retry.run.locale, "en-GB");
+    assert.equal(retry.run.outputContractRecovery, true);
+    assert.notEqual(retry.run.runId, first.run.runId);
+
+    const duringRetry = await repository.read();
+    assert.equal(duringRetry.localeCursor, 1);
+    assert.equal(duringRetry.nextEligibleAt, "2026-09-23T00:00:00.000Z");
+    assert.equal(await repository.finish({
+      runId: retry.run.runId,
+      now: new Date("2026-09-22T00:02:00.000Z"),
+      result: "BLOCKED",
+      code: "OUTPUT_CONTRACT_FAILURE",
+    }), true);
+
+    const blockedLoop = await repository.claim({ ...input, now: new Date("2026-09-22T00:03:00.000Z") });
+    assert.deepEqual(blockedLoop, { action: "NOT_DUE", code: "MINIMUM_INTERVAL_ACTIVE" });
+    const repeatedFailure = await repository.read();
+    assert.equal(repeatedFailure.consecutiveFailures, 1);
+
+    const nextCycle = await repository.claim({ ...input, now: new Date("2026-09-23T00:00:00.000Z") });
+    assert.equal(nextCycle.action, "LAUNCH");
+    assert.ok("run" in nextCycle);
+    if ("run" in nextCycle) {
+      assert.equal(nextCycle.run.locale, "de-DE");
+      assert.equal(nextCycle.run.outputContractRecovery, undefined);
+    }
+    assert.equal((await repository.read()).consecutiveFailures, 0);
+  } finally {
+    await prisma.siteSetting.deleteMany({ where: { key: LEARN_CONTENT_STATE_KEY } });
+    await prisma.$disconnect();
+  }
+});
