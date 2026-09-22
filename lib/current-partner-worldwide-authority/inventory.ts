@@ -1,3 +1,5 @@
+import { egoExactRegulatoryEvidence, egoFounderGbAuthorityApplies } from "./ego-market-authority";
+
 export const WORLDWIDE_AUTHORITY_RELEASE = "FOUNDER-GLOBAL-MARKET-AUTHORITY-2026-09-10";
 export const WORLDWIDE_AUTHORITY_EFFECTIVE_DATE = "2026-09-10";
 export const WORLDWIDE_AUTHORITY_SOURCE = "FOUNDER_DIRECT_GLOBAL_MARKET_ORDER";
@@ -263,12 +265,17 @@ function legalDecision(geo: string, specialAction: string | null = null, special
  * bounded authority so a newly asserted supported market still preserves
  * known prohibitions and mandatory regulatory actions.
  */
-export function worldwideLegalDecisionForGeo(value: string) {
+export function worldwideLegalDecisionForGeo(value: string, casinoSlug?: string | null) {
   const geo = value.trim().toUpperCase().replace(/_/g, "-");
   if (!/^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(geo) || geo === "ZZ") {
     throw new Error("WORLDWIDE_AUTHORITY_GEO_INVALID");
   }
-  return legalDecision(geo);
+  const legal = legalDecision(geo);
+  // A recorded exact casino × market prerequisite satisfies the regulatory action; it never lifts a legal block.
+  const exactEvidence = legal.legalState === "ACTION_REQUIRED_REGULATORY" ? egoExactRegulatoryEvidence(casinoSlug, geo) : null;
+  return exactEvidence
+    ? { legalState: "ALLOWED" as const, regulatoryAction: null, evidence: exactEvidence, evidenceClassification: "DETECTED" as const }
+    : legal;
 }
 
 function tracking(
@@ -588,6 +595,7 @@ export function buildWorldwideAuthorityMatrix() {
 export const WORLDWIDE_AUTHORITY_CASINOS = casinoDefinitions.map(({ partner, casino, casinoSlug }) => ({ partner, casino, casinoSlug }));
 
 export function worldwideFounderGbAuthorityApplies(casinoSlug: string) {
+  if (egoFounderGbAuthorityApplies(casinoSlug)) return true;
   const definition = casinoDefinitions.find((casino) => casino.casinoSlug === casinoSlug.trim().toLowerCase());
   const gb = definition?.supported.find((market) => market.geo === "GB") ?? null;
   return Boolean(

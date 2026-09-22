@@ -132,7 +132,7 @@ function runtimeMarketRow(input: {
   evidenceReference: string;
   marketSupport?: PartnerTrackingMarketRow["marketSupport"];
 }): PartnerTrackingMarketRow {
-  const legal = worldwideLegalDecisionForGeo(input.geo);
+  const legal = worldwideLegalDecisionForGeo(input.geo, input.casinoSlug);
   const finalState = legal.legalState === "BLOCKED_BY_LAW"
     ? "BLOCKED_BY_LAW"
     : legal.legalState === "ACTION_REQUIRED_REGULATORY"
