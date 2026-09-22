@@ -96,3 +96,28 @@ Each component is clamped to 6.0–9.0 (support ≤ 8.6, responsible gambling �
 | PlayOJO Bingo | **7.2** | 6.5 | 7.5 | 8.0 | 7.2 | 7.2 | 6.6 | Gambling Commission |
 
 Open items from the package: the MGA licence number, GB welcome offers for 9 brands, DK per-brand domains, the GGL check for TurboNino, the AGCO check for PlayOJO and SlotsMagic, and canonical logos.
+
+## Production run record and lessons (22 Sep 2026)
+
+What actually ran, in the order that works:
+
+1. `apply` imported the 13 casinos and created the `ego` partner.
+2. `publish` published all 13 with the approved Editor Scores. SlotsMagic needed `--only=slotsmagic` and a 30-minute transaction timeout.
+3. `apply` again registered GB after PR #322. GB became ACTIVE right away because the casinos were already published.
+4. `reconcile` re-applied the AT, DK and SE activations that had been registered before publication. They had stayed `PREPARING` (`PUBLIC_PROJECTION_PENDING`) because the controller replays a stored result for a repeated idempotency key.
+
+Result: 38 exact markets ACTIVE + HEALTHY (GB 12, DK 9, SE 9, AT 8).
+
+Five routes stayed closed. Verified from a Swedish exit, the operator redirected to its `.com` site instead of the expected local domain:
+- DrückGlück DE and TurboNino DE;
+- EUcasino DK and Regency DK;
+- PlayUZU ES.
+
+Re-verify them from an exit in the market itself. GR and Canada stay closed by decision.
+
+Next time:
+
+- **Publish before registering.** Registering a link for an unpublished casino leaves the activation `PREPARING`. `reconcile` recovers it.
+- **Run route verification from an allowed market.** Operator sites time out from blocked countries (for example KZ) and redirect by exit country, so use a VPN exit in the target market.
+- **Use the entry point's options.** `npm run ego-skillonnet:import` (`scripts/ego-skillonnet-run.ts`) loads the database URL from an env file (`--db-env-file <path> --db-env-key PRODDB_POSTGRES_URL`) and defaults the Prisma interactive transaction timeout to 30 minutes, because the remote database costs ~0.2 s per query.
+- **Skip what is already done.** `apply --skip-import` skips the import on re-runs, `publish --only=<slug,...>` limits publication, and progress goes to stderr.

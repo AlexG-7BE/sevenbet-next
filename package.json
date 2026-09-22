@@ -110,7 +110,7 @@
     "casino-real-catalog:preview-seed": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/casino-real-catalog-02.ts preview-seed",
     "casino-real-catalog:seed": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/casino-real-catalog-02.ts seed",
     "casino-real-catalog:verify": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/casino-real-catalog-02.ts verify",
-    "ego-skillonnet:import": "tsx scripts/ego-skillonnet-import-01.ts",
+    "ego-skillonnet:import": "tsx scripts/ego-skillonnet-run.ts",
     "casino-registry:verify": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/casino-registry-verify.ts",
     "casino-real-catalog:test": "node --import tsx --test tests/casino-real-catalog-02.test.ts tests/casino-real-catalog-03.test.ts tests/safe-offer-corpus.test.ts",
     "casino-commercial-visibility:audit": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local --env-file-if-exists=.env.production.local scripts/casino-commercial-visibility-03.ts audit",

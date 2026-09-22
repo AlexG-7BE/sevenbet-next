@@ -36,6 +36,7 @@ import {
 import { affiliateRouteHealthService } from "../lib/services/affiliate-route-health.service";
 import { casinoService } from "../lib/services/casino.service";
 import { editorialReviewService } from "../lib/services/editorial-review.service";
+import { marketActivationController } from "../lib/market-activation/controller";
 
 function option(name: string) {
   const index = process.argv.indexOf(name);
@@ -60,9 +61,10 @@ function loadBundles() {
 
 // One transaction per casino: a large bundle takes up to ~70 s against the remote database,
 // beyond the importer's single 65 s batch transaction. Each bundle is idempotent, so a partial run can be repeated.
-async function importBundles(bundles: ReturnType<typeof loadBundles>) {
+async function importBundles(bundles: ReturnType<typeof loadBundles>, progress: (message: string) => void) {
   const results = [];
-  for (const bundle of bundles) {
+  for (const [index, bundle] of bundles.entries()) {
+    progress(`import ${index + 1}/${bundles.length} ${bundle.casino.slug}`);
     const [result] = await prisma.$transaction((tx) => ingestCasinoBundlesInTransaction(tx, [bundle]), {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       maxWait: 20_000,
@@ -198,7 +200,7 @@ async function publishEntry(entry: EditorialEntry, actorId: string) {
 }
 
 async function main() {
-  const mode = process.argv[2] === "apply" || process.argv[2] === "publish" ? process.argv[2] : "plan";
+  const mode = ["apply", "publish", "reconcile"].includes(process.argv[2]) ? process.argv[2] : "plan";
   const bundles = loadBundles();
 
   if (mode === "publish") {
@@ -214,8 +216,10 @@ async function main() {
     if (!actor) throw new Error("EGO_IMPORT_ACTOR_NOT_FOUND");
     const editorial = JSON.parse(readFileSync(`${EGO_BUNDLE_DIR}/editorial.json`, "utf8")) as { casinos: EditorialEntry[] };
     const published = [];
-    for (const entry of editorial.casinos) {
+    const only = option("--only")?.split(",").map((slug) => slug.trim()).filter(Boolean) ?? null;
+    for (const entry of editorial.casinos.filter((candidate) => !only || only.includes(candidate.slug))) {
       try {
+        console.error(`[${new Date().toISOString().slice(11, 19)}] publish ${entry.slug}`);
         await publishEntry(entry, actor.id);
         published.push({ casinoSlug: entry.slug, editorScore: entry.score, status: "PUBLISHED" });
       } catch (error) {
@@ -224,6 +228,39 @@ async function main() {
     }
     console.info(JSON.stringify({ release: EGO_IMPORT_RELEASE, mode, decisionRef: EGO_DECISION_REF, published }, null, 2));
     if (published.some((entry) => entry.status === "ERROR")) process.exitCode = 1;
+    return;
+  }
+
+  if (mode === "reconcile") {
+    assertEgoApplyAuthority({ confirm: option("--confirm"), decisionRef: option("--decision-ref"), actorEmail: option("--actor-email"), expectedDatabase: option("--expected-database"), databaseUrl: process.env.DATABASE_URL, env: process.env });
+    const actor = await prisma.adminUser.findUnique({ where: { email: option("--actor-email")!.trim().toLowerCase() }, select: { id: true } });
+    if (!actor) throw new Error("EGO_IMPORT_ACTOR_NOT_FOUND");
+    const attempt = option("--attempt") ?? "1";
+    const pending = await prisma.marketActivation.findMany({
+      where: { casino: { slug: { in: [...EGO_CASINO_SLUGS] } }, desiredState: "ACTIVE", status: { not: "ACTIVE" } },
+      select: { id: true, casinoId: true, marketCode: true, affiliateOfferId: true, primaryTrackingLinkId: true, redirectSlugId: true, casino: { select: { slug: true } } },
+      orderBy: [{ marketCode: "asc" }, { id: "asc" }],
+    });
+    const reconciled = [];
+    for (const [index, activation] of pending.entries()) {
+      console.error(`reconcile ${index + 1}/${pending.length} ${activation.casino.slug} ${activation.marketCode}`);
+      try {
+        const result = await marketActivationController.activateCasinoInGeo({
+          casinoId: activation.casinoId, countryCode: activation.marketCode, product: "CASINO",
+          ...(activation.redirectSlugId ? { redirectSlugId: activation.redirectSlugId } : {}),
+          ...(activation.affiliateOfferId ? { affiliateOfferId: activation.affiliateOfferId } : {}),
+          ...(activation.primaryTrackingLinkId ? { primaryTrackingLinkId: activation.primaryTrackingLinkId } : {}),
+          actorId: actor.id, origin: "ADMIN",
+          reason: `${EGO_IMPORT_RELEASE}: reconcile after publication (${EGO_DECISION_REF}).`,
+          sourceReferences: [`DECISION_REF:${EGO_DECISION_REF}`, `MARKET_ACTIVATION:${activation.id}`],
+          idempotencyKey: `${EGO_IMPORT_RELEASE}:RECONCILE-${attempt}:${activation.id}`,
+        });
+        reconciled.push({ casinoSlug: activation.casino.slug, marketCode: activation.marketCode, status: result.activation.status, route: result.activation.routeVerificationStatus, detail: result.activation.routeVerificationDetail });
+      } catch (error) {
+        reconciled.push({ casinoSlug: activation.casino.slug, marketCode: activation.marketCode, status: "ERROR", route: null, detail: error instanceof Error ? error.message.slice(0, 200) : "UNKNOWN" });
+      }
+    }
+    console.info(JSON.stringify({ release: EGO_IMPORT_RELEASE, mode, active: reconciled.filter((entry) => entry.status === "ACTIVE").length, reconciled }, null, 2));
     return;
   }
 
@@ -255,7 +292,8 @@ async function main() {
   const actor = await prisma.adminUser.findUnique({ where: { email: option("--actor-email")!.trim().toLowerCase() }, select: { id: true } });
   if (!actor) throw new Error("EGO_IMPORT_ACTOR_NOT_FOUND");
 
-  const imported = await importBundles(bundles);
+  const progress = (message: string) => console.error(`[${new Date().toISOString().slice(11, 19)}] ${message}`);
+  const imported = process.argv.includes("--skip-import") ? [] : await importBundles(bundles, progress);
   const partner = await ensurePartner(actor.id);
   const authority = establishTrustedCommercialWriteAuthority({ kind: "FOUNDER_DIRECT", decisionRef: EGO_DECISION_REF });
 
@@ -271,7 +309,9 @@ async function main() {
     linkHash: string;
   };
   const registrations: RegistrationReport[] = [];
-  for (const command of process.argv.includes("--no-registration") ? [] : commands) {
+  const toRegister = process.argv.includes("--no-registration") ? [] : commands;
+  for (const [index, command] of toRegister.entries()) {
+    progress(`register ${index + 1}/${toRegister.length} ${command.casinoSlug} ${command.geo}`);
     try {
       const result = await partnerTrackingRegistrationService.register(
         { partner: EGO_PARTNER.slug, casino: command.casinoSlug, trackingUrl: command.trackingUrl, geo: command.geo },
