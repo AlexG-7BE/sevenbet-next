@@ -486,10 +486,13 @@ test("Editor REWRITE_REQUIRED can be revised once and end in QA_PASS", () => {
   assert.equal(parsed.editorReview.rewriteRounds, 1);
 });
 
-test("Managed Agents JSON schema requires every envelope property", () => {
+test("Managed Agents JSON schema is strict-compatible and requires every envelope property", () => {
   const required = LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA.required as string[];
   assert.deepEqual(required.sort(), ["blocker", "contentPackage", "editorReview", "evidence", "learnApply", "resultClass", "runMetadata", "seoHandoff"].sort());
   assert.equal(LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA.additionalProperties, false);
+  const serialized = JSON.stringify(LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA);
+  assert.doesNotMatch(serialized, /"oneOf":/);
+  assert.match(serialized, /"anyOf":/);
 });
 
 test("subagent role evidence accepts an exact nickname or one unambiguous exact role assignment", () => {
