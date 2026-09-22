@@ -712,9 +712,20 @@ test("failed managed session never calls the publisher", async () => {
 test("malformed model output is blocked before publication", async () => {
   const state = new MemoryState({ action: "RECONCILE", run: run() });
   const publisher = new FakePublisher();
-  const result = await runHandler({ state, sessions: new FakeSessions(undefined, { status: "idle", output: { resultClass: "PUBLISH" }, trace: allRoleTrace }), publisher });
+  const entries: Array<Record<string, string | number | boolean | null>> = [];
+  const result = await runHandler({
+    state,
+    sessions: new FakeSessions(undefined, { status: "idle", output: { resultClass: "PUBLISH", generatedProse: "must never be logged" }, trace: allRoleTrace }),
+    publisher,
+    log: (entry) => entries.push(entry),
+  });
   assert.equal(result.body.code, "OUTPUT_CONTRACT_FAILURE");
   assert.equal(publisher.calls, 0);
+  assert.equal(entries.at(-1)?.event, "run_blocked");
+  assert.equal(entries.at(-1)?.code, "OUTPUT_CONTRACT_FAILURE");
+  assert.ok(Number(entries.at(-1)?.issueCount) > 0);
+  assert.match(String(entries.at(-1)?.issuePaths), /seoHandoff|contentPackage|editorReview|learnApply|runMetadata/);
+  assert.doesNotMatch(JSON.stringify(entries), /must never be logged/);
 });
 
 test("SEO HOLD completes as healthy NO_OP and skips Research, Editor, and MCP", async () => {
