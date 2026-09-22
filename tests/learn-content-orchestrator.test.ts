@@ -492,6 +492,7 @@ test("Managed Agents JSON schema is strict-compatible and requires every envelop
   assert.equal(LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA.additionalProperties, false);
   const serialized = JSON.stringify(LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA);
   assert.doesNotMatch(serialized, /"oneOf":/);
+  assert.doesNotMatch(serialized, /"format":/);
   assert.match(serialized, /"anyOf":/);
 });
 
