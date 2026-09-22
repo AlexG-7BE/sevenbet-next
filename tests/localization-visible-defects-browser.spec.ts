@@ -259,7 +259,7 @@ test("authored display copy wraps between words across long mobile and desktop l
       {
         context: "DE 10 Steps eyebrow at 390x844",
         path: "/de/10-steps",
-        selector: '[data-handoff-page="tenSteps"] [data-mob="copy"] > div:first-child > div:last-child',
+        selector: '[data-runtime-renderer="ten-steps"] [data-ten-steps-eyebrow]',
         viewport: { width: 390, height: 844 },
       },
       {

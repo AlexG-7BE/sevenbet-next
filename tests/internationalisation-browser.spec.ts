@@ -429,9 +429,9 @@ test("localized Learning empty states and 10 Steps compounds fit without clippin
     }
 
     for (const sample of [
-      { height: 844, pathname: "/es/10-steps", selector: '[data-handoff-page="tenSteps"] h2', useLast: true, width: 390 },
-      { height: 932, pathname: "/es/10-steps", selector: '[data-handoff-page="tenSteps"] h2', useLast: true, width: 430 },
-      { height: 900, pathname: "/fi/10-steps", selector: '[data-handoff-page="tenSteps"] [data-mob="copy"] > h1', useLast: false, width: 1440 },
+      { height: 844, pathname: "/es/10-steps", selector: '[data-runtime-renderer="ten-steps"] h2', useLast: true, width: 390 },
+      { height: 932, pathname: "/es/10-steps", selector: '[data-runtime-renderer="ten-steps"] h2', useLast: true, width: 430 },
+      { height: 900, pathname: "/fi/10-steps", selector: '[data-runtime-renderer="ten-steps"] h1', useLast: false, width: 1440 },
     ] as const) {
       await page.setViewportSize({ width: sample.width, height: sample.height });
       const response = await page.goto(`${baseUrl}${sample.pathname}`, { waitUntil: "domcontentloaded" });
