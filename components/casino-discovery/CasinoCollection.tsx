@@ -72,22 +72,26 @@ export function CasinoCollection({ casinos, initialSearch = "", messages, presen
           data-commercial-casino-card
           key={card.casinoId}
         >
+          <span aria-hidden="true" className={styles.rank}>{copy.rankPrefix} {String(index + 1).padStart(2, "0")}</span>
           <header>
             <div className={styles.logo}>{card.logo ? <ResponsivePlacementImage alt="" height={card.logo.height ?? 76} loading="lazy" media={card.logo} width={card.logo.width ?? 152} /> : <span aria-hidden="true">{card.name.slice(0, 1)}</span>}</div>
-            <div className={styles.identity}><h2>{card.name}</h2><CommercialBadges badges={card.badges} /></div>
-            <CommercialScore label={messages.common.editorScore} locale={presentation.locale} score={card.score} />
+            <div className={styles.identity}><h2>{card.name}</h2><CommercialBadges badges={card.badges} className={styles.badges} /></div>
           </header>
-          {card.headline ? <h3>{card.headline}</h3> : null}
-          <CommercialFacts facts={card.facts} />
+          <div className={styles.cardLine}>
+            {card.headline ? <h3>{card.headline}</h3> : <span />}
+            <CommercialScore className={styles.score} label={messages.common.editorScore} locale={presentation.locale} score={card.score} />
+          </div>
+          <CommercialFacts facts={card.facts} className={styles.facts} />
           <div className={styles.actions}>
-            {card.action ? <CasinoOutboundAction action={card.action} context={{ source: "CTA", placement: "CASINO_COLLECTION_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
+            {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_COLLECTION_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
             {card.reviewHref ? <TrackedReviewLink
               casinoId={published ? card.casinoId : undefined}
               href={productHref(presentation, card.reviewHref)}
+              pendingLabel={published ? messages.common.readReview : messages.common.viewDemonstration}
               placement="CASINO_COLLECTION_CARD"
               position={index + 1}
               sourceSurface="casinos"
-            >{published ? messages.common.readReview : messages.common.viewDemonstration}</TrackedReviewLink> : null}
+            >{published ? messages.common.readReview : messages.common.viewDemonstration} <span aria-hidden="true">→</span></TrackedReviewLink> : null}
           </div>
         </article>;
       })}
