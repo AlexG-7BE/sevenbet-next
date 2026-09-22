@@ -15,6 +15,12 @@ function structuredOutputSchema(value: unknown): unknown {
     output.additionalProperties = false;
     output.required = Object.keys(output.properties as Record<string, unknown>);
   }
+  if (output.type === "array" && Array.isArray(output.prefixItems)) {
+    output.items = { anyOf: output.prefixItems };
+    output.minItems = output.prefixItems.length;
+    output.maxItems = output.prefixItems.length;
+    delete output.prefixItems;
+  }
   return output;
 }
 
