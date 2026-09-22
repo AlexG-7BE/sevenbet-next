@@ -493,7 +493,12 @@ test("Managed Agents JSON schema is strict-compatible and requires every envelop
   const serialized = JSON.stringify(LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA);
   assert.doesNotMatch(serialized, /"oneOf":/);
   assert.doesNotMatch(serialized, /"format":/);
+  assert.doesNotMatch(serialized, /"prefixItems":/);
   assert.match(serialized, /"anyOf":/);
+  const agentNames = ((LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA.properties as Record<string, unknown>).runMetadata as { properties: Record<string, unknown> }).properties.agentNames as { items: { anyOf: unknown[] }; minItems: number; maxItems: number };
+  assert.equal(agentNames.items.anyOf.length, 3);
+  assert.equal(agentNames.minItems, 3);
+  assert.equal(agentNames.maxItems, 3);
 });
 
 test("subagent role evidence accepts an exact nickname or one unambiguous exact role assignment", () => {
