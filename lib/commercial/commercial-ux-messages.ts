@@ -32,6 +32,8 @@ export type CommercialUxMessages = Readonly<{
   offersShown: string;
   casinosShown: string;
   licenceStatus: string;
+  /** Brand-level regulatory footprint, shown where no exact market profile applies. */
+  licensedIn: string;
   market: string;
   operator: string;
   supportLanguages: string;
@@ -99,6 +101,7 @@ const en: CommercialUxMessages = {
   offersShown: "offers shown",
   casinosShown: "casinos shown",
   licenceStatus: "Licence status",
+  licensedIn: "Licensed in",
   market: "Market",
   operator: "Operator",
   supportLanguages: "Support languages",
@@ -198,6 +201,20 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "nb-NO": { minimumWithdrawal: "Minste uttak", fees: "Gebyrer" },
     "fr-CA": { minimumWithdrawal: "Retrait minimum", fees: "Frais" },
   };
+  const globalRecordLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "licensedIn">>> = {
+    "de-DE": { licensedIn: "Lizenziert in" },
+    "it-IT": { licensedIn: "Con licenza in" },
+    "es-ES": { licensedIn: "Con licencia en" },
+    "es-PE": { licensedIn: "Con licencia en" },
+    "pt-PT": { licensedIn: "Licenciado em" },
+    "el-GR": { licensedIn: "Αδειοδοτημένο σε" },
+    "nl-NL": { licensedIn: "Vergunning in" },
+    "sv-SE": { licensedIn: "Licensierat i" },
+    "da-DK": { licensedIn: "Licenseret i" },
+    "fi-FI": { licensedIn: "Lisensoitu maissa" },
+    "nb-NO": { licensedIn: "Lisensiert i" },
+    "fr-CA": { licensedIn: "Sous licence en" },
+  };
   const heroMetricLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "publishedReviews" | "rankPrefix" | "eligibleRecords" | "partnerLinks" | "publishedOffers" | "filteredFor">>> = {
     "de-DE": { publishedReviews: "veröffentlichte Bewertungen", rankPrefix: "Nr.", eligibleRecords: "berechtigte Einträge", partnerLinks: "Partnerlinks", publishedOffers: "veröffentlichte Angebote", filteredFor: "Gefiltert für {market}" },
     "it-IT": { publishedReviews: "recensioni pubblicate", rankPrefix: "N.", eligibleRecords: "record idonei", partnerLinks: "link partner", publishedOffers: "offerte pubblicate", filteredFor: "Filtrato per {market}" },
@@ -212,5 +229,5 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "nb-NO": { publishedReviews: "publiserte anmeldelser", rankPrefix: "Nr.", eligibleRecords: "kvalifiserte oppføringer", partnerLinks: "partnerlenker", publishedOffers: "publiserte tilbud", filteredFor: "Filtrert for {market}" },
     "fr-CA": { publishedReviews: "avis publiés", rankPrefix: "No", eligibleRecords: "fiches admissibles", partnerLinks: "liens partenaires", publishedOffers: "offres publiées", filteredFor: "Filtré pour {market}" },
   };
-  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}) };
+  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}) };
 }

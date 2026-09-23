@@ -10,6 +10,7 @@ import {
   type WithdrawalTimeBucket,
 } from "@/lib/public-offer/best-offer-ranking";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
+import { casinoEvidenceDepth, casinoOfferTermCompleteness, rankCasinosByEditorialAuthority } from "@/lib/public-casino-discovery/casino-ranking";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublicCasinoDTO, PublicCasinoMarketProfile } from "@/lib/public-casino/public-casino.types";
 import type { CommercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
@@ -243,6 +244,7 @@ export function casinoCardPresentation(casino: PublicCasinoCardDto, locale: Supp
     score: casino.rating,
     badges,
     headline: casino.highlights.find((highlight) => Boolean(highlight.trim())) ? singleLine(casino.highlights.find((highlight) => Boolean(highlight.trim())) as string, 112) : null,
+    reason: casinoRankingReason(casino, locale, messages, copy),
     facts: [
       { label: messages.common.payout, value: payout.primary },
       { label: messages.common.minimumDeposit, value: deposit },
@@ -256,7 +258,33 @@ export function casinoCardPresentation(casino: PublicCasinoCardDto, locale: Supp
   };
 }
 
+/**
+ * Why this casino sits where it does, in the reader's own terms. The line uses
+ * the same signals the ordering uses, so the list is explainable rather than an
+ * unexplained sequence of scores.
+ */
+export function casinoRankingReason(
+  casino: PublicCasinoCardDto,
+  locale: SupportedLocale,
+  messages: ProductPageMessages,
+  copy: CommercialUxMessages,
+) {
+  const payout = casinoPayout(casino, copy);
+  const parts = [
+    casino.rating === null
+      ? null
+      : `${messages.common.editorScore}: ${new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(casino.rating)}`,
+    payout.bucket === "unknown" ? null : `${messages.common.payout}: ${payout.primary}`,
+    casinoOfferTermCompleteness(casino) >= 2 ? copy.verifiedOfferTerms : null,
+    casinoEvidenceDepth(casino) === 4 ? copy.currentLicenceRecord : null,
+  ].filter((value): value is string => Boolean(value));
+  return parts.slice(0, 3).join(" · ") || null;
+}
+
 export function casinosForCollectionView(casinos: readonly PublicCasinoCardDto[], view: CasinoCollectionView) {
+  // Top Rated is the directory's default order and uses the shared editorial
+  // ranking; the other two views are explicit single-criterion sorts.
+  if (view === "top_rated") return rankCasinosByEditorialAuthority(casinos);
   return [...casinos].sort((a, b) => {
     if (view === "fast_payouts") {
       const left = withdrawalBucket(a.withdrawalTimes ?? []);
@@ -277,6 +305,7 @@ export function casinosForCollectionView(casinos: readonly PublicCasinoCardDto[]
       || a.id.localeCompare(b.id);
   });
 }
+
 
 export function filterCasinosByName(casinos: readonly PublicCasinoCardDto[], search: string, locale: SupportedLocale) {
   const query = search.normalize("NFKC").trim().toLocaleLowerCase(locale);

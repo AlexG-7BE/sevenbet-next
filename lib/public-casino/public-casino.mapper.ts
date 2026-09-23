@@ -8,6 +8,19 @@ import type {
 } from "@/lib/public-casino/public-casino.types";
 import { isSafePublicSlug, safeCanonical, safePublicUrl, validatedStructuredData } from "@/lib/public-casino/public-casino-validation";
 
+/**
+ * Licence records carry a free-text `status` from the source register and a
+ * normalized `canonicalStatus`. The qualified strings the registers produce —
+ * "Active (number not primary-verified)" — are still active licences, so the
+ * canonical value decides currency and the free text is kept for display.
+ */
+function licenceIsCurrent(record: Record<string, unknown>, expiresAt: string | null, now: Date) {
+  const canonical = typeof record.canonicalStatus === "string" ? record.canonicalStatus.trim().toUpperCase() : "";
+  const declared = typeof record.status === "string" ? record.status.trim().toUpperCase() : "";
+  const active = canonical ? canonical === "ACTIVE" : declared.startsWith("ACTIVE");
+  return active && !(expiresAt && new Date(expiresAt) < now);
+}
+
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
@@ -102,7 +115,7 @@ function mapScopedLicenses(entries: unknown[], now: Date): PublicCasinoLicense[]
     const relation = object(entry);
     const record = object(relation.license ?? entry);
     const expiresAt = date(record.expiresAt);
-    if (text(record.status).toUpperCase() !== "ACTIVE" || (expiresAt && new Date(expiresAt) < now)) return [];
+    if (!licenceIsCurrent(record, expiresAt, now)) return [];
     const authority = text(record.authority);
     if (!authority) return [];
     return [{
@@ -205,10 +218,20 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
     entry.licenseNumber ?? "",
     entry.jurisdiction ?? "",
   ]);
-  const scopedLicenseIdentities = new Set(casino.marketProfiles.flatMap((entry) => (
-    entry.licenses.map(licenseIdentity)
-  )));
-  const globalLicenses = casino.licenses.filter((entry) => !scopedLicenseIdentities.has(licenseIdentity(entry)));
+  // A licence evidenced in exactly one market profile is a market fact and
+  // stays there. One evidenced across several markets is the brand's corporate
+  // or B2C licence, so it belongs to the global record as well; naming its
+  // jurisdiction keeps it from reading as local authority. Exact-market views
+  // are unaffected either way because the merge below dedupes by identity.
+  const scopedLicenseMarkets = new Map<string, number>();
+  for (const entry of casino.marketProfiles) {
+    for (const identity of new Set(entry.licenses.map(licenseIdentity))) {
+      scopedLicenseMarkets.set(identity, (scopedLicenseMarkets.get(identity) ?? 0) + 1);
+    }
+  }
+  const globalLicenses = [...new Map(casino.licenses
+    .filter((entry) => scopedLicenseMarkets.get(licenseIdentity(entry)) !== 1)
+    .map((entry) => [licenseIdentity(entry), entry])).values()];
   if (!profile) return {
     ...casino,
     countries: [],
@@ -278,14 +301,16 @@ export function mapPublishedCasino(
     const record = object(entry);
     const state = object(licenseMetadata[text(record.id)]);
     const expiresAt = date(record.expiresAt);
-    if (bool(state.archived) || text(record.status).toUpperCase() !== "ACTIVE" || (expiresAt && new Date(expiresAt) < now)) return [];
+    if (bool(state.archived) || !licenceIsCurrent(record, expiresAt, now)) return [];
     const authority = text(record.authority);
     if (!authority) return [];
     return [{
       authority,
       licenseNumber: nullableText(record.licenseNumber),
       jurisdiction: nullableText(record.jurisdiction),
-      status: text(record.status, "UNKNOWN"),
+      // Matches mapScopedLicenses: the normalized status is what consumers
+      // compare against, while the register's own wording stays in the record.
+      status: text(record.canonicalStatus, text(record.status, "UNKNOWN")),
       verificationUrl: safePublicUrl(record.verificationUrl),
       expiresAt,
       lastVerifiedAt: date(record.lastVerifiedAt),
@@ -470,6 +495,10 @@ export function mapPublishedCasino(
       structuredData: validatedStructuredData(seo.structuredData),
     },
     licenses,
+    regulatoryFootprint: [...new Map(licenses.map((licence) => [
+      `${licence.authority}\u0000${licence.jurisdiction ?? ""}`,
+      { authority: licence.authority, jurisdiction: licence.jurisdiction },
+    ])).values()],
     countries,
     payments,
     providers,

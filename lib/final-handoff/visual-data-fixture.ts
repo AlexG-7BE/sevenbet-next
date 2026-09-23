@@ -424,6 +424,7 @@ function baseVisualCasinoProfile(slug: string): PublicCasinoDTO {
       structuredData: null,
     },
     licenses: [],
+    regulatoryFootprint: [],
     countries: [],
     payments: [],
     providers: [],

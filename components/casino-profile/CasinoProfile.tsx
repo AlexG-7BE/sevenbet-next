@@ -52,10 +52,21 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   ] : [];
   const marketProfile = decision.marketProfile;
   const licence = decision.licence;
+  // Without an exact market profile there is no local licence or market to
+  // report, and projection has already emptied the country list so that no
+  // market fact can leak. The brand's own record still says who operates it
+  // and which regulators licence it, each named with its jurisdiction so it
+  // cannot read as authority in the reader's market. The market row is dropped
+  // rather than filled with "Not verified" three times over.
+  const licensedIn = casino.regulatoryFootprint
+    .map((entry) => entry.jurisdiction ? `${entry.authority} (${entry.jurisdiction})` : entry.authority)
+    .join(" · ");
   const regulationFacts: CommercialFact[] = [
     { label: copy.operator, value: casino.operator ?? copy.notVerified },
-    { label: copy.market, value: marketProfile?.countryCode ?? presentation.marketCountryCode ?? copy.notVerified },
-    { label: copy.licenceStatus, value: licence ? `${licence.authority} · ${licence.status === "ACTIVE" ? messages.common.current : copy.notVerified}` : copy.notVerified },
+    ...(marketProfile ? [{ label: copy.market, value: marketProfile.countryCode }] : []),
+    licence
+      ? { label: copy.licenceStatus, value: `${licence.authority} · ${licence.status === "ACTIVE" ? messages.common.current : copy.notVerified}` }
+      : { label: copy.licensedIn, value: licensedIn || copy.notVerified },
   ];
   const supportFacts: CommercialFact[] = [
     { label: copy.supportLanguages, value: marketProfile?.supportLanguages.join(" · ") || casino.languages.join(" · ") || copy.notVerified },

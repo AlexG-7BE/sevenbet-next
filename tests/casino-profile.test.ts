@@ -36,6 +36,7 @@ function casino(patch: Partial<PublicCasinoDTO> = {}): PublicCasinoDTO {
       robots: "index,follow", socialTitle: "Published social title", socialDescription: "Published social description", socialImage: "https://media.example/social.png", structuredData: null,
     },
     licenses: [{ authority: "Published Authority", licenseNumber: null, jurisdiction: "GB", status: "ACTIVE", verificationUrl: null, expiresAt: null, lastVerifiedAt: "2030-01-15T00:00:00.000Z" }],
+    regulatoryFootprint: [{ authority: "Published Authority", jurisdiction: "GB" }],
     countries: [{ countryCode: "GB", availability: "AVAILABLE", minimumAge: 18, currency: "GBP", language: "en" }],
     payments: [{ key: "visa", name: "Visa", supportsDeposits: true, supportsWithdrawals: true, currencies: ["GBP"], minimumDeposit: 10, minimumWithdrawal: 20, maximumWithdrawal: 2000, depositProcessingTime: "Instant", withdrawalTime: "1–3 days", fees: null, crypto: false }],
     providers: [{ key: "provider", name: "Published Provider", gameCount: 200, liveCasino: false }],
