@@ -111,3 +111,66 @@ export function countRegulators(
     unverifiedRegulators: values.filter((value) => !value).length,
   };
 }
+
+/** Stable identity for a licence record, so duplicate rows collapse to one regulator. */
+export function licenceIdentityKey(licence: {
+  authority: string;
+  licenseNumber?: string | null;
+  jurisdiction?: string | null;
+}) {
+  return JSON.stringify([licence.authority, licence.licenseNumber ?? "", licence.jurisdiction ?? ""]);
+}
+
+export interface ScoreCountingMarket {
+  availability: string;
+  supportLanguages: string[];
+  supportSummary: string | null;
+  paymentKeys: string[];
+  providerKeys: string[];
+  categoryKeys: string[];
+  liveCasino: boolean;
+  /** Licence identities this market profile evidences. */
+  licenceKeys: string[];
+}
+
+export interface ScoreCountingInput {
+  markets: ScoreCountingMarket[];
+  /** Global catalog rows, which belong to the brand rather than a market. */
+  globalPaymentKeys: string[];
+  globalProviderKeys: string[];
+  globalCategoryKeys: string[];
+  globalLiveCasino: boolean;
+  licences: Array<{ key: string; authority: string; status: string | null }>;
+}
+
+/**
+ * Counts are taken over the casino's AVAILABLE markets together with its
+ * global catalog layer. A market recorded as unavailable describes somewhere
+ * the casino is not offered, so it must not lift the score, and the global
+ * layer is what the brand offers everywhere.
+ *
+ * A regulator counts only when an AVAILABLE market evidences its licence, so a
+ * licence held solely for a market we do not publish cannot raise trust.
+ */
+export function editorScoreInputFromRecord(input: ScoreCountingInput): EditorScoreInput {
+  const available = input.markets.filter((market) => market.availability === "AVAILABLE");
+  const union = (selector: (market: ScoreCountingMarket) => readonly string[], global: readonly string[]) =>
+    new Set([...available.flatMap(selector), ...global]).size;
+
+  const reachableLicenceKeys = new Set(available.flatMap((market) => market.licenceKeys));
+  const { verifiedRegulators, unverifiedRegulators } = countRegulators(
+    input.licences.filter((licence) => reachableLicenceKeys.has(licence.key)),
+  );
+
+  return {
+    verifiedRegulators,
+    unverifiedRegulators,
+    gameCategories: union((market) => market.categoryKeys, input.globalCategoryKeys),
+    paymentMethods: union((market) => market.paymentKeys, input.globalPaymentKeys),
+    gameProviders: union((market) => market.providerKeys, input.globalProviderKeys),
+    liveCasino: input.globalLiveCasino || available.some((market) => market.liveCasino),
+    supportLanguages: union((market) => market.supportLanguages, []),
+    everyMarketDocumentsSupport: available.length > 0
+      && available.every((market) => Boolean(market.supportSummary?.trim())),
+  };
+}

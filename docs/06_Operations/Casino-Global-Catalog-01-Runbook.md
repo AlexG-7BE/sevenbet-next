@@ -23,6 +23,17 @@ npm run casino-global-catalog -- apply --confirm=CASINO-GLOBAL-CATALOG-01 --deci
 npm run casino-global-catalog -- editorial --confirm=CASINO-GLOBAL-CATALOG-01 --actor-email=<admin email> --expected-database=<fingerprint>
 ```
 
+`score-plan` previews Editor Scores and writes nothing. `scores` fills a
+**missing** score and will not overwrite an existing one, because the fourteen
+CASINO-REAL-CATALOG-02/03 scores are Founder editorial judgements rather than
+outputs of this method — see the decision record for the movement a blanket
+recompute would cause. To replace one deliberately, name it with `--only <slug>`.
+
+```bash
+npm run casino-global-catalog -- score-plan
+npm run casino-global-catalog -- scores --confirm=CASINO-GLOBAL-CATALOG-01 --actor-email=<admin email> --expected-database=<fingerprint>
+```
+
 Point the shell at the target database first. For Production only
 `PRODDB_POSTGRES_URL` carries a usable connection string:
 

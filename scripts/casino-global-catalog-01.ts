@@ -21,6 +21,12 @@ import {
   type DerivationInput,
   type GlobalCatalogDerivation,
 } from "@/lib/casino-global-catalog/derivation";
+import {
+  editorScoreBreakdown,
+  editorScoreInputFromRecord,
+  licenceIdentityKey,
+} from "@/lib/casino-global-catalog/editor-score";
+import { readCasinoEditorMetadata, writeCasinoEditorMetadata } from "@/lib/casino-builder/editor-metadata";
 import prisma from "@/lib/db/prisma";
 import { casinoService } from "@/lib/services/casino.service";
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
@@ -460,12 +466,160 @@ async function editorial() {
   console.log(`${RELEASE}: rewrote editorial copy for ${entries.length} casinos`);
 }
 
+async function computeScore(slug: string) {
+  const record = await prisma.casino.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      editorScore: true,
+      licenses: {
+        select: {
+          authority: true,
+          licenseNumber: true,
+          jurisdiction: true,
+          status: true,
+          marketProfiles: { select: { marketProfile: { select: { countryCode: true } } } },
+        },
+      },
+      paymentMethods: { where: { casinoCountryId: null }, select: { methodKey: true } },
+      gameProviders: { where: { casinoCountryId: null }, select: { providerKey: true, liveCasino: true } },
+      gameCategories: { where: { casinoCountryId: null }, select: { categoryKey: true } },
+      countries: {
+        select: {
+          countryCode: true,
+          availability: true,
+          supportLanguages: true,
+          supportSummary: true,
+          paymentMethods: { select: { methodKey: true } },
+          gameProviders: { select: { providerKey: true, liveCasino: true } },
+          gameCategories: { select: { categoryKey: true } },
+          licenses: { select: { license: { select: { authority: true, licenseNumber: true, jurisdiction: true } } } },
+        },
+      },
+    },
+  });
+  if (!record) throw new Error(`${RELEASE}: ${slug} is not in the database`);
+
+  const { score, components } = editorScoreBreakdown(editorScoreInputFromRecord({
+    markets: record.countries.map((market) => ({
+      availability: market.availability,
+      supportLanguages: market.supportLanguages,
+      supportSummary: market.supportSummary,
+      paymentKeys: market.paymentMethods.map((payment) => payment.methodKey),
+      providerKeys: market.gameProviders.map((provider) => provider.providerKey),
+      categoryKeys: market.gameCategories.map((category) => category.categoryKey),
+      liveCasino: market.gameProviders.some((provider) => provider.liveCasino === true),
+      licenceKeys: market.licenses.map((link) => licenceIdentityKey(link.license)),
+    })),
+    globalPaymentKeys: record.paymentMethods.map((payment) => payment.methodKey),
+    globalProviderKeys: record.gameProviders.map((provider) => provider.providerKey),
+    globalCategoryKeys: record.gameCategories.map((category) => category.categoryKey),
+    globalLiveCasino: record.gameProviders.some((provider) => provider.liveCasino === true),
+    licences: record.licenses.map((licence) => ({
+      key: licenceIdentityKey(licence),
+      authority: licence.authority,
+      status: licence.status,
+    })),
+  }));
+
+  return { casinoId: record.id, previous: record.editorScore, score, components };
+}
+
+async function recomputeScore(slug: string, actorId: string) {
+  const { casinoId, previous, score, components } = await computeScore(slug);
+  let casino = await casinoService.getCasinoById(casinoId);
+  if (casino.status !== EditorialStatus.DRAFT) {
+    casino = await casinoService.transitionWorkflow(casinoId, EditorialStatus.DRAFT, actorId, casino.updatedAt);
+  }
+  // The six component fields already exist on the builder metadata and are
+  // what the admin score breakdown reads. CASINO-REAL-CATALOG-03 wrote the
+  // overall score into trustScore, which is the trust component's field; each
+  // component now goes to its own.
+  const metadata = readCasinoEditorMetadata(casino.reviewBlocks);
+  metadata.general = {
+    ...metadata.general,
+    trustScore: components.trust,
+    userExperienceScore: components.userExperience,
+    paymentsScore: components.payments,
+    gamesScore: components.games,
+    supportScore: components.support,
+    responsibleGamblingScore: components.responsibleGambling,
+    internalNotes: `${RELEASE}: Editor Score recomputed from the completed record; editorial only, no commercial authority.`,
+  };
+  casino = await casinoService.updateCasino(casino.id, {
+    editorScore: score,
+    reviewBlocks: writeCasinoEditorMetadata(casino.reviewBlocks, metadata),
+    lastReviewedAt: new Date(),
+    updatedBy: actorId,
+    expectedUpdatedAt: casino.updatedAt,
+  });
+  await republish(casino.id, actorId);
+  await prisma.auditLog.create({
+    data: {
+      actorId,
+      action: "casino-global-catalog-01-score",
+      entityType: "casino",
+      entityId: casino.id,
+      summary: `${RELEASE}: Editor Score recomputed for ${slug} (${previous ?? "none"} to ${score})`,
+      metadata: { release: RELEASE, slug, previousScore: previous, score, components, commercialAuthorityGranted: false },
+    },
+  });
+  return { slug, previous, score, components };
+}
+
+async function scores() {
+  const dryRun = process.argv[2] === "score-plan";
+  if (!dryRun && option("confirm") !== RELEASE) throw new Error(`${RELEASE}: scores requires --confirm=${RELEASE}`);
+  if (!dryRun) {
+    const expected = option("expected-database");
+    const fingerprint = await databaseFingerprint();
+    if (expected !== fingerprint) throw new Error(`${RELEASE}: --expected-database must be ${fingerprint}`);
+  }
+  const actor = dryRun ? { id: "", email: "" } : await selectActor(option("actor-email"));
+  const slugs = (await prisma.casino.findMany({
+    where: { status: EditorialStatus.PUBLISHED },
+    orderBy: { slug: "asc" },
+    select: { slug: true },
+  })).map((casino) => casino.slug);
+  const only = option("only");
+  // The published Editor Scores for the fourteen CASINO-REAL-CATALOG-02/03
+  // casinos are Founder editorial judgements, not outputs of this method.
+  // Recomputing them replaces a human call with a count of how much evidence
+  // we happen to hold: Inkabet, a strong single-market Peruvian brand, drops
+  // from 9.0 to 7.6 purely for having one market. The method therefore fills a
+  // missing score and never overwrites one, unless a caller asks for a named
+  // casino explicitly. See FOUNDER-CASINO-GLOBAL-CATALOG-2026-09-23.
+  const candidates = only ? slugs.filter((slug) => slug === only) : slugs;
+  const scored = new Set((await prisma.casino.findMany({
+    where: { slug: { in: candidates }, editorScore: { not: null } },
+    select: { slug: true },
+  })).map((casino) => casino.slug));
+  const overwrite = process.argv.includes("--overwrite-editorial-scores");
+  const targets = only || overwrite ? candidates : candidates.filter((slug) => !scored.has(slug));
+  const skipped = candidates.length - targets.length;
+  if (skipped) console.log(`${RELEASE}: keeping ${skipped} existing editorial Editor Scores; pass --only <slug> or --overwrite-editorial-scores to replace one`);
+
+  for (const slug of targets) {
+    if (dryRun) {
+      // Recompute without writing, so the movement can be reviewed first.
+      const preview = await computeScore(slug);
+      const delta = preview.previous === null ? "new" : (preview.score - preview.previous).toFixed(1);
+      console.log(`  ${slug.padEnd(16)} ${String(preview.previous ?? "—").padStart(4)} -> ${preview.score.toFixed(1)}  (${delta})  ${Object.entries(preview.components).map(([key, value]) => `${key.slice(0, 4)}=${value}`).join(" ")}`);
+      continue;
+    }
+    const result = await recomputeScore(slug, actor.id);
+    console.log(`  ${result.slug.padEnd(16)} ${String(result.previous ?? "—").padStart(4)} -> ${result.score.toFixed(1)}`);
+  }
+  console.log(`${RELEASE}: ${dryRun ? "previewed" : "recomputed"} ${targets.length} Editor Scores`);
+}
+
 async function main() {
   const command = process.argv[2];
   if (command === "plan") await plan();
   else if (command === "apply") await apply();
   else if (command === "editorial") await editorial();
-  else throw new Error(`${RELEASE}: usage — plan | apply | editorial`);
+  else if (command === "score-plan" || command === "scores") await scores();
+  else throw new Error(`${RELEASE}: usage — plan | apply | editorial | score-plan | scores`);
 }
 
 main()

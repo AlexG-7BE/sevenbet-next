@@ -7,6 +7,7 @@ import {
   classifyLicenceStatus,
   countRegulators,
   editorScoreBreakdown,
+  editorScoreInputFromRecord,
   type EditorScoreInput,
 } from "../lib/casino-global-catalog/editor-score";
 
@@ -147,4 +148,85 @@ test("repeated licence rows for one regulator count once, and verified wins", ()
     { authority: "AGCO / iGaming Ontario", status: "Reported" },
   ]);
   assert.deepEqual(counted, { verifiedRegulators: 1, unverifiedRegulators: 1 });
+});
+
+function scoreMarket(overrides: Partial<import("../lib/casino-global-catalog/editor-score").ScoreCountingMarket> = {}) {
+  return {
+    availability: "AVAILABLE",
+    supportLanguages: [] as string[],
+    supportSummary: null,
+    paymentKeys: [] as string[],
+    providerKeys: [] as string[],
+    categoryKeys: [] as string[],
+    liveCasino: false,
+    licenceKeys: [] as string[],
+    ...overrides,
+  };
+}
+
+test("a market the casino is not available in cannot lift the score", () => {
+  const counted = editorScoreInputFromRecord({
+    markets: [
+      scoreMarket({ availability: "AVAILABLE", providerKeys: ["evolution"] }),
+      scoreMarket({ availability: "NOT_AVAILABLE", providerKeys: ["netent", "playtech", "pragmatic"] }),
+    ],
+    globalPaymentKeys: [],
+    globalProviderKeys: [],
+    globalCategoryKeys: [],
+    globalLiveCasino: false,
+    licences: [],
+  });
+  assert.equal(counted.gameProviders, 1);
+});
+
+test("counts union the available markets with the global catalog layer", () => {
+  const counted = editorScoreInputFromRecord({
+    markets: [
+      scoreMarket({ paymentKeys: ["visa", "paypal"] }),
+      scoreMarket({ paymentKeys: ["visa", "trustly"] }),
+    ],
+    globalPaymentKeys: ["visa"],
+    globalProviderKeys: [],
+    globalCategoryKeys: [],
+    globalLiveCasino: false,
+    licences: [],
+  });
+  assert.equal(counted.paymentMethods, 3, "visa is counted once across both markets and the global layer");
+});
+
+test("a licence no available market evidences does not raise trust", () => {
+  const counted = editorScoreInputFromRecord({
+    markets: [
+      scoreMarket({ availability: "AVAILABLE", licenceKeys: ["ukgc"] }),
+      scoreMarket({ availability: "NOT_AVAILABLE", licenceKeys: ["srij"] }),
+    ],
+    globalPaymentKeys: [],
+    globalProviderKeys: [],
+    globalCategoryKeys: [],
+    globalLiveCasino: false,
+    licences: [
+      { key: "ukgc", authority: "Gambling Commission", status: "Active" },
+      { key: "srij", authority: "SRIJ", status: "Active" },
+    ],
+  });
+  assert.equal(counted.verifiedRegulators, 1);
+});
+
+test("the support bonus needs every available market to document support", () => {
+  const withGap = editorScoreInputFromRecord({
+    markets: [scoreMarket({ supportSummary: "Live chat" }), scoreMarket({ supportSummary: null })],
+    globalPaymentKeys: [], globalProviderKeys: [], globalCategoryKeys: [], globalLiveCasino: false, licences: [],
+  });
+  assert.equal(withGap.everyMarketDocumentsSupport, false);
+
+  const complete = editorScoreInputFromRecord({
+    markets: [scoreMarket({ supportSummary: "Live chat" }), scoreMarket({ supportSummary: "Email" })],
+    globalPaymentKeys: [], globalProviderKeys: [], globalCategoryKeys: [], globalLiveCasino: false, licences: [],
+  });
+  assert.equal(complete.everyMarketDocumentsSupport, true);
+
+  const noMarkets = editorScoreInputFromRecord({
+    markets: [], globalPaymentKeys: [], globalProviderKeys: [], globalCategoryKeys: [], globalLiveCasino: false, licences: [],
+  });
+  assert.equal(noMarkets.everyMarketDocumentsSupport, false, "vacuous truth must not award the bonus");
 });
