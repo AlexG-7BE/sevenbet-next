@@ -96,6 +96,13 @@ SEO, one Research and one Editor role, with Research and Editor each proving at
 least one completed live-web search. Extra/missing roles or a downgraded model/
 reasoning configuration fail closed.
 
+SEO treats a duplicate or weak idea as a rejected candidate, not as the end of
+the cycle. Before `MERGE`, `HOLD` or `DROP`, it performs a bounded scan across
+all supplied registered categories and the published Article inventory,
+considers multiple materially distinct intents and selects the strongest useful
+uncovered opportunity when one exists. The output records only the final
+handoff and concise rationale, never candidate deliberation or chain-of-thought.
+
 RFC-052 marks a PostgreSQL serialization conflict as transient and retryable
 with the same request ID. Contract, existing-slug, identity and configuration
 conflicts are non-retryable and close the run after one MCP call.
