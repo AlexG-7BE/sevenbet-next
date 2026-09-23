@@ -1,21 +1,22 @@
 # Autonomous Learn Content Orchestrator
 
-**Status:** IMPLEMENTED CANDIDATE — PRODUCTION RELEASE EVIDENCE PENDING
+**Status:** LIVE — PRODUCTION RELEASE AND AUTONOMOUS PUBLICATION VERIFIED
 
 **Authority:** explicit Founder instruction of 22 September 2026 and RFC-053
 
 ## Evidence classification
 
-**DETECTED IN REPOSITORY CANDIDATE:** the implementation uses the existing
+**DETECTED IN REPOSITORY AND PRODUCTION:** the implementation uses the existing
 canonical Article domain, RFC-052 `learn_apply`, one bounded SiteSetting key,
 one authenticated hourly cron and an official managed OpenAI Agents API
 session. It introduces no Prisma model, migration, content/job/queue entity or
 generic operational-agent authority.
 
-**UNKNOWN UNTIL RELEASE:** PR/check/merge/deployment identifiers, hosted
-environment configuration and the first autonomous Production-cycle result.
-Do not treat this section as a Production activation claim until the acceptance
-record below is replaced with observed evidence.
+**DETECTED, 23 SEPTEMBER 2026:** exact PR/check/merge/deployment identifiers,
+hosted configuration, managed-session reconciliation, create-only MCP result,
+database evidence and public runtime evidence are recorded below. Protected
+values were verified only by presence/scope and were not printed or stored in
+documentation.
 
 ## Runtime flow
 
@@ -169,9 +170,11 @@ orchestrator PostgreSQL suite runs in both database-capable CI jobs.
 7. If `STARTED`, wait for later reconciliation or explicitly invoke the same
    authenticated route after the managed session becomes idle. Never create a
    second cycle.
-8. A legitimate `HOLD`, `MERGE`, `DROP` or evidence `BLOCKED` is a valid
-   autonomous editorial result if the real session/role/reconciliation path is
-   proven. Do not manufacture an Article.
+8. During routine operation, a legitimate `HOLD`, `MERGE`, `DROP` or evidence
+   `BLOCKED` remains a healthy truthful editorial result when the real
+   session/role/reconciliation path is proven. For the Founder-authorized
+   initial Production activation, `LIVE` additionally required a genuinely new
+   public Article. Never manufacture an Article.
 9. If published, require `CREATED|NO_CHANGE`, `LIVE`, `COMMITTED`,
    `PUBLISHED`, `verified: true`; verify exact public route/metadata, Learn
    collection, sitemap, image/alt text when present, no commercial CTA and the
@@ -191,7 +194,61 @@ Article.
 
 ## Production acceptance record
 
-**UNKNOWN — PENDING RELEASE.** Replace this paragraph only with exact observed
-PR, check run, merge SHA, Ready deployment, redacted environment-presence and
-autonomous-cycle evidence. If publication occurs, include the public Article
-URL and RFC-052 result; otherwise record the legitimate no-publication result.
+**LIVE — VERIFIED 23 SEPTEMBER 2026.**
+
+- Final remediation [PR #335](https://github.com/AlexG-7BE/sevenbet-next/pull/335)
+  passed required CI run
+  [`35837795734`](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/35837795734),
+  including `Quality`, `Database / Migration Verification`, `Agent Core` and
+  the 19m55s `Build / Browser` job. It merged normally as exact `main`
+  `2378292085720f7e779085825b01265dcbfd12ce`.
+- Original orchestrator [PR #312](https://github.com/AlexG-7BE/sevenbet-next/pull/312)
+  merged as `067d27058babcabf57505866889ff056601e9efa`. The bounded remediation
+  chain then merged taxonomy-wide opportunity scanning in PR #333
+  (`5711b9983b31d951b552d42f170e98646b0ca24c`), safe provider trace evidence
+  in PR #334 (`c1de0f00b2d52541edde79b0cfa7d489b132a232`) and the final
+  fail-closed provider-order role resolution in PR #335.
+- Vercel Production deployment `dpl_2Y7oPFwg2XpanCp4qmKUacBBQg5Q` is `Ready`,
+  owns `https://b4gamble.com` and was built from branch `main`, commit
+  `2378292`. The blocked acceptance runs before the final repair produced no
+  Article or MCP mutation.
+- Vercel Production contains the required cron, OpenAI, Learn MCP and Learn
+  orchestrator variables. Runtime-safe comparisons verified exact
+  `LEARN_CONTENT_AUTONOMY_ENABLED=true`, `LEARN_CONTENT_LOCALES=en`,
+  `LEARN_CONTENT_MIN_INTERVAL_HOURS=24` and
+  `LEARN_CONTENT_OPENAI_MODEL=gpt-6-astra`. The enabled native cron is
+  `/api/internal/cron/learn-content` at `13 * * * *`.
+- The bounded pre-run state had `active=null`, `haltedCode=null`, 25 Articles,
+  one historical `learn_apply` audit and pre-existing lifecycle-projection
+  digest
+  `f5cd35f13963327f25d87f1517c30aa962759dd908ed0b6f2bd12e7250c6ed35`.
+  A one-time interval reconciliation preserved the prior failure evidence and
+  opened exactly one cycle.
+- Run `e7fd4249-f2c1-49e5-be86-1f04c35d4b72` attached managed session
+  `sess_0cf0a00510ddcec4006ab3945d48e08197a9ffba29dcffc173`. The provider
+  completed as `SESSION_IDLE`; safe usage evidence recorded 2,075,180 input,
+  27,434 output and 2,102,614 total tokens. One transient fail-closed
+  `STATE_CLAIM_FAILED`/Prisma transaction timeout changed no state; the normal
+  same-run retry succeeded without launching another cycle.
+- The deterministic gate accepted the managed SEO → Research → Editor trace
+  and invoked only the discovered `learn_apply`. The MCP request started with
+  `articleId=null` and slug `gambling-complaints-and-adr`; it finished
+  `operation=CREATED`, `result=LIVE`, `verified=true`. The orchestrator recorded
+  `PUBLISHED/CREATED`, cleared `active`, left `haltedCode=null` and set the next
+  eligible time to `2026-09-24T08:56:58.238Z`.
+- Article `b0c88152-8057-4dcc-83be-fdd0d22ce997`, **“Gambling Complaints in
+  Great Britain: How to Use ADR”**, category `licensing`, locale `en-GB`, is
+  `PUBLISHED` and unarchived at
+  `https://b4gamble.com/en/learn/licensing/gambling-complaints-and-adr`.
+  `createdAt` equals `updatedAt`; the service actor owns both fields; its
+  `learn_apply` audit says “Autonomous Learn Article created and published”;
+  and the Article has zero `ContentRevision` rows. The pre-existing 25-Article
+  projection retained the exact pre-run digest, proving the autonomous cycle
+  did not update or archive an older Article.
+- The Article route returned `200` with an exact self-canonical and `Article`
+  JSON-LD. The Learn hub and `licensing` category both returned `200` and
+  linked the exact Article; `/sitemap.xml` returned `200` and contained the
+  exact URL. The Article has no hero image, so image/alt verification is not
+  applicable. Its body links only to B4GAMBLE Help and official Gambling
+  Commission evidence, with no internal commercial route, affiliate language
+  or tracking parameter. The successful Article remains live.
