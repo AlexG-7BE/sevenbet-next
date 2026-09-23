@@ -43,7 +43,7 @@ The canonical build-side-effect classification is:
 | `prisma generate` during dependency install | Writes generated build files only; no database connection or business mutation |
 | `scripts/vercel-build-preflight.ts` | Reads environment, repository migration files, migration/schema/business invariants; its Production queries and optional historical commercial audit are PostgreSQL-enforced read-only |
 | RFC-049 exact-route readiness inside `scripts/vercel-build-preflight.ts` | Reads canonical route, binding and legacy-scope state in the same read-only transaction; emits blockers and never materializes or repairs routes |
-| `scripts/logo-only-media-build-preflight.ts production-verify` | Skips isolated Preview data; in Production, reads published-logo and retired-media authority state in a PostgreSQL read-only transaction |
+| `scripts/logo-only-media-build-preflight.ts production-verify` | Skips isolated Preview data; in Production, reads published-logo and retired-media authority state in a PostgreSQL read-only transaction. Active retired-media authority fails the release; published Casinos without a direct LOGO asset are reported in the build record and do not fail it, because public compositions fall back to the operator initial |
 | `scripts/casino-real-catalog-03.ts production-verify` | Skips isolated Preview data; in Production, reads six governed catalog publications, scores, market facts, snapshots, safe offers and protected authority state in a PostgreSQL read-only transaction |
 | `next build` | Writes application build artefacts; database-backed application routes remain dynamic and no business-data mutation is authorised |
 

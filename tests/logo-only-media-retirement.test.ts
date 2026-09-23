@@ -80,11 +80,28 @@ test("public compositions use direct logos and cannot render promotional card or
   assert.doesNotMatch(`${bestOffers}\n${bonuses}`, /CommercialOfferMedia|OperatorIdentityPanel/);
 });
 
-test("Production logo preflight requires a direct logo for every published Casino", () => {
+test("Production logo preflight reports missing logos without blocking a release", () => {
   const preflight = readFileSync("scripts/logo-only-media-build-preflight.ts", "utf8");
   assert.doesNotMatch(preflight, /isTemporaryDemoCasinoId|publishedDemonstrations/);
   assert.match(preflight, /missingOperatorLogos = publishedCasinos/);
-  assert.match(preflight, /published operator Casinos missing a direct active LOGO asset/);
+  // A direct logo stays supported and observable, but never fails the build.
+  assert.match(preflight, /operatorsWithoutLogoSlugs: missingOperatorLogos/);
+  assert.doesNotMatch(preflight, /throw new Error\(`\$\{RELEASE\}: published operator Casinos missing/);
+  // Retired promotional-media authority remains a hard release condition.
+  assert.match(preflight, /throw new Error\(`\$\{RELEASE\}: active MEDIA-GEO3 or placement authority remains/);
+});
+
+test("public compositions fall back to the operator initial when no logo exists", () => {
+  for (const path of [
+    "components/casino-discovery/CasinoCollection.tsx",
+    "components/casino-discovery/CuratedCasinoShortlist.tsx",
+    "components/best-offers/BestOffersExperience.tsx",
+    "components/bonus-directory/BonusOfferDirectory.tsx",
+    "components/casino-profile/CasinoProfile.tsx",
+  ]) {
+    const source = readFileSync(path, "utf8");
+    assert.match(source, /\? <ResponsivePlacementImage[\s\S]*?: <span aria-hidden="true">\{[^}]*\.slice\(0, 1\)/, path);
+  }
 });
 
 test("retired media HTTP surfaces return a cache-proof 410", async () => {
