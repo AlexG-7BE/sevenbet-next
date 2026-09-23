@@ -291,3 +291,33 @@ test("route and decision composition keep authority, raw destinations and Prisma
   assert.doesNotMatch(source, /@prisma\/client|\bprisma\.|fetch\(|axios|startsWith\(["']demo-|destinationUrl|trackingUrl|casinoOfficialUrl/);
   assert.equal((component.match(/<h1/g) ?? []).length, 1);
 });
+
+test("a projection cached before regulatoryFootprint existed does not crash the profile", async () => {
+  // unstable_cache replays a serialized DTO. During a rollout an entry written
+  // by the previous mapper carries no regulatoryFootprint, and reading .map on
+  // it threw a server-side TypeError on every casino profile.
+  (globalThis as typeof globalThis & { React: typeof React }).React = React;
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const presentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
+  // No market profile and no global licence, so the profile falls back to the
+  // brand's regulatory footprint — the exact path that threw.
+  const stale = casino({ marketProfiles: [], licenses: [] });
+  delete (stale as { regulatoryFootprint?: unknown }).regulatoryFootprint;
+
+  const markup = renderToStaticMarkup(React.createElement(CasinoProfile, {
+    availableForPresentation: false,
+    casino: stale,
+    editorial: null,
+    messages: productPageMessages(presentation.locale),
+    presentation,
+  }));
+  assert.match(markup, /Licensed in/);
+  assert.match(markup, /Licensed in<\/dt><dd>Not verified/);
+});
+
+test("the detail projection cache key changes when the projected shape changes", () => {
+  // A cache key that outlives a shape change serves the old shape to new code.
+  const service = readFileSync(new URL("../lib/services/public-casino.service.ts", import.meta.url), "utf8");
+  assert.match(service, /public-casino-detail-editorial-projection-v2/);
+  assert.doesNotMatch(service, /public-casino-detail-editorial-projection-v1/);
+});

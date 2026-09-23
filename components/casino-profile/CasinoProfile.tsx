@@ -58,7 +58,10 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   // and which regulators licence it, each named with its jurisdiction so it
   // cannot read as authority in the reader's market. The market row is dropped
   // rather than filled with "Not verified" three times over.
-  const licensedIn = casino.regulatoryFootprint
+  // Tolerate a projection cached before this field existed: the shape is
+  // versioned in the cache key, but a stale entry must degrade to "not
+  // verified" rather than throw on the server during a rollout.
+  const licensedIn = (casino.regulatoryFootprint ?? [])
     .map((entry) => entry.jurisdiction ? `${entry.authority} (${entry.jurisdiction})` : entry.authority)
     .join(" · ");
   const regulationFacts: CommercialFact[] = [
