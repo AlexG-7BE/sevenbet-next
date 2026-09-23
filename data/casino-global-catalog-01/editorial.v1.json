@@ -1,0 +1,192 @@
+{
+  "schemaVersion": "casino-global-catalog-editorial.v1",
+  "release": "CASINO-GLOBAL-CATALOG-01",
+  "decisionRef": "FOUNDER-CASINO-GLOBAL-CATALOG-2026-09-23",
+  "classification": "EDITORIAL_ONLY",
+  "commercialAuthority": false,
+  "note": "Replaces the generated 'Best for' and 'Things to know' lists written by the EGO/SkillOnNet import on 22 September 2026. Those lists restated licence numbers and provider counts the page already shows elsewhere, so they told a reader nothing about whether the casino suited them. Every statement below is traceable to the checksum-verified bundles in data/casino-ingestion/ego-skillonnet-2026-09-22 and the source note beside them. Nothing here grants commercial or referral authority.",
+  "entries": [
+    {
+      "slug": "ahti-games",
+      "bestFor": [
+        "Nordic players who want a casino built around Trustly and BankID rather than cards.",
+        "Players who use tournaments and a VIP ladder rather than one-off bonuses.",
+        "Readers comparing a large catalogue — around 3,000 games from ten studios including Evolution, NetEnt and Play'n GO."
+      ],
+      "thingsToKnow": [
+        "The sea theme and tournament ladder are the brand's own framing; we have not tested how much either changes the day-to-day experience.",
+        "Withdrawal speed is the reason many players pick this brand, but the only timing we could verify is the UK record of 1–3 working days after approval. Swedish Trustly timing is reported, not verified.",
+        "No welcome offer is on record for any of its four published markets, so treat any headline you see on the site as unchecked by us."
+      ],
+      "description": "AHTI Games is SkillOnNet's Nordic brand, launched in 2019 and built around fast bank-ID banking rather than card deposits. In Sweden that means Trustly and BankID; in Great Britain the cashier is conventional cards, PayPal, Apple Pay and instant bank transfer. The catalogue is the standard SkillOnNet shelf — Evolution for live tables, NetEnt, Play'n GO, Pragmatic Play, Playtech, Red Tiger, Push Gaming, Relax Gaming, Blueprint and Games Global for slots — spread across slots, jackpots, Megaways, live casino, blackjack, roulette and table games. What separates it from its sister brands is the ongoing tournament and VIP structure rather than the game list. Profiles are published for Austria, Denmark, Great Britain and Sweden; the licence record runs through the UK Gambling Commission and Spelinspektionen, with the Malta B2C licence covering the .com brand."
+    },
+    {
+      "slug": "bacanaplay",
+      "bestFor": [
+        "Players in Portugal who need MB WAY and Multibanco rather than international card rails.",
+        "Portuguese speakers who want a locally licensed site: this is an SRIJ licensee, not an offshore brand serving Portugal.",
+        "Readers comparing the same operator across Portugal and Brazil, where it runs on a .bet.br domain."
+      ],
+      "thingsToKnow": [
+        "Portuguese withdrawals are reported as fast or instant after verification, but that comes from the operator's own material rather than a source we could check.",
+        "The Brazilian entity behind the .bet.br site is not named in any record we hold, so the Brazil profile is thinner than the Portuguese one.",
+        "The welcome offer on record — 100% to €150 plus 50 spins at 30× — is a Portuguese offer and is not published as active."
+      ],
+      "description": "BacanaPlay is SkillOnNet's Portuguese-first casino, live since 2019/20 and licensed by SRIJ in Portugal, which puts it in a different category from the operator's international brands: the cashier is built on MB WAY and Multibanco, the site is Portuguese-language first, and the VIB loyalty club is aimed at that market. It also runs in Brazil on a .bet.br domain. Around 2,200 games come from nine studios, including MGA Games — a Spanish and Portuguese specialist that does not appear on the operator's Nordic brands — alongside Evolution, Playtech, Pragmatic Play, NetEnt and Play'n GO. Profiles are published for Portugal, Brazil, Austria, Denmark, Great Britain and Sweden. Outside Portugal the picture thins considerably: the UK site is a conventional card-and-PayPal cashier under the Gambling Commission licence, and the other markets run under the Malta licence."
+    },
+    {
+      "slug": "casino-redkings",
+      "bestFor": [
+        "Jackpot players — progressives and jackpot slots are the brand's stated focus rather than a side category.",
+        "Players who want a long-running brand: RedKings has been operating since 2011.",
+        "Readers who need a site in their own language; 15 language versions are published."
+      ],
+      "thingsToKnow": [
+        "The game catalogue is the standard SkillOnNet shelf shared with AHTI Games, EUcasino and SlotsMagic, so the jackpot focus is one of emphasis rather than exclusive content.",
+        "Only the UK licence is primary-verified. The other language versions run under the Malta B2C licence, whose number we could not confirm against the regulator's register.",
+        "No welcome offer is on record in any of its five published markets, so the jackpot focus is the reason to visit rather than a signup package."
+      ],
+      "description": "Casino RedKings is one of SkillOnNet's older brands, running since 2011, and leads on jackpot slots and live casino across 15 language versions. The catalogue is the operator's standard shelf: Playtech, Pragmatic Play, Evolution, NetEnt, Play'n GO, Red Tiger, Push Gaming, Relax Gaming, Blueprint Gaming and Games Global, covering slots, jackpots, Megaways, live casino, blackjack, roulette and table games. Profiles are published for Austria, Canada, Denmark, Great Britain and Sweden. The UK site (redkings.com) is active on the Gambling Commission register under Skill On Net Limited; the other language variants run under the operator's Malta licence. The cashier we have on record is the UK one — Visa and Mastercard debit, PayPal, Apple Pay and instant bank transfer."
+    },
+    {
+      "slug": "drueckglueck",
+      "bestFor": [
+        "German players who want a site holding an actual GGL permit rather than one accepting German players from offshore.",
+        "Players who want German slot studios — Merkur, Novomatic and Gamomat sit alongside the international suppliers here and on no other brand in this group.",
+        "Players who bank with paysafecard, Sofort/Klarna or direct bank transfer rather than cards."
+      ],
+      "thingsToKnow": [
+        "Germany's rules shape the whole experience: identity checks against LUGAS and OASIS before you can play, and a €1,000 monthly deposit limit that applies across every German-licensed operator, not just this one.",
+        "German withdrawals only start after verification is complete, and we could not verify how long any individual method takes.",
+        "The brand is heavily TV-advertised in Germany. Advertising spend is not evidence about the product, and we have scored it on neither."
+      ],
+      "description": "DrückGlück is SkillOnNet's German-facing online Spielothek, running since 2015 and holding a GGL virtual-slots permit for drueckglueck.de since 29 December 2022 — which makes it one of the few brands in this group with a live German permit rather than an offshore licence. That permit also brings Germany's player-protection regime with it: LUGAS and OASIS checks at registration and a €1,000 monthly deposit limit shared across all German-licensed operators. The German slot studios reflect the market — Merkur, Novomatic and Gamomat alongside Playtech, Pragmatic Play, Evolution, NetEnt and Play'n GO — and the cashier carries German rails including paysafecard, Sofort/Klarna and Banküberweisung. Profiles are published for Germany, Denmark, Great Britain and Sweden; the .com and .co.uk domains are active on the UK register, and the Nordic-language variants run under the Malta licence."
+    },
+    {
+      "slug": "eucasino",
+      "bestFor": [
+        "Players who want an established brand: EUcasino has been running since 2009, the oldest in this group.",
+        "Danish players, who get a dedicated locally licensed site at eucasino.dk rather than a translated international one.",
+        "Multilingual and multi-currency players — 20+ language versions and the widest currency list of any brand here."
+      ],
+      "thingsToKnow": [
+        "Despite the name, EUcasino is not available across the EU. Profiles are published for five markets, and the rest of the language versions are not the same as market availability.",
+        "Of its 16 market profiles, only five are recorded as available; the remainder are documented as unavailable or unverified.",
+        "No welcome offer is on record, in any of the sixteen market profiles we hold for this brand."
+      ],
+      "description": "EUcasino is the longest-running brand in SkillOnNet's stable, live since 2009, and the widest by language and currency: 20-plus language versions, a VIP club, and slots, live casino and table games from the operator's usual ten studios. Denmark is the one market with a dedicated local site — eucasino.dk holds its own Danish licence and uses MitID for identification — while the .com and .co.uk domains are active on the UK register and the rest run under the Malta licence. The name does more work than the footprint justifies: we publish profiles for Austria, Canada, Denmark, Great Britain and Sweden, and of the sixteen market profiles on record only those five are available. A language version is not a licence, and this brand is a clear case of the difference."
+    },
+    {
+      "slug": "jackpotstar",
+      "bestFor": [
+        "Players who come for progressive jackpots specifically — the catalogue is deliberately narrow and built around them.",
+        "Players who want the site to pick for them; JackpotStar's daily personalised selections are its main feature.",
+        "Readers who prefer a focused shelf to an exhaustive one."
+      ],
+      "thingsToKnow": [
+        "The narrow catalogue cuts both ways: four categories are on record — jackpots, live casino, Megaways and slots — with no table games, blackjack or roulette.",
+        "The personalised daily picks are a recommendation feature, not a better price or better odds.",
+        "The only offer on record is a UK free-spins offer at 10× wagering, and it is not published as active."
+      ],
+      "description": "JackpotStar launched in 2020 as SkillOnNet's jackpot brand, and unlike its sister sites it does not try to carry everything. Four categories are on record — jackpots, live casino, Megaways and slots — and the daily personalised picks are the brand's distinguishing feature. The supplier list is the operator's standard ten: Playtech, Pragmatic Play, Evolution, NetEnt, Play'n GO, Red Tiger, Push Gaming, Relax Gaming, Blueprint Gaming and Games Global. Profiles are published for Austria, Canada, Denmark, Great Britain and Sweden, with nine language variants in total. jackpotstar.com is active on the UK register under Skill On Net Limited; other variants run under the Malta licence. If you want blackjack or roulette, this is the wrong brand in the group — several of its siblings carry both."
+    },
+    {
+      "slug": "megawayscasino",
+      "bestFor": [
+        "Megaways players specifically — this is the officially licensed Megaways-branded casino, with Big Time Gaming, who created the mechanic, supplying directly.",
+        "UK players: Great Britain is the only market with a published profile.",
+        "Players who want a small, deliberate shelf rather than thousands of titles."
+      ],
+      "thingsToKnow": [
+        "This is the narrowest brand in the group — six suppliers and four categories — and it scores lowest here largely for that reason.",
+        "Great Britain is the only published market. The international rollout under the Malta licence is recorded as beginning in May 2026 and we have not verified it.",
+        "No welcome offer is on record for the UK site, the only market we publish."
+      ],
+      "description": "MegawaysCasino is the officially Megaways-branded casino, operated by SkillOnNet and launched in the UK before an international rollout under the Malta licence. Big Time Gaming — who invented the Megaways mechanic — supplies directly, alongside Blueprint Gaming, Pragmatic Play, Playtech, Red Tiger and Evolution for live tables. Four categories are on record: Megaways, slots, jackpots and live casino. This is the smallest catalogue of any brand in this group, which is the point of the brand but also the main reason its Editor Score sits at the bottom of the set: our score rewards breadth of verified record, and a deliberately narrow shelf scores as a narrow shelf. Great Britain is the only market with a published profile, served by the usual UK cashier of debit cards, PayPal, Apple Pay and instant bank transfer."
+    },
+    {
+      "slug": "playojo",
+      "bestFor": [
+        "Anyone who has been burned by wagering requirements — PlayOJO applies none to any promotion, which is the brand's whole proposition.",
+        "Players who want money back on losing bets as a standing rule rather than an occasional promotion: OJOplus pays on every bet.",
+        "Players in a regulated market — it holds local licences in Great Britain, Sweden, Spain, Denmark and Ontario rather than serving them from offshore."
+      ],
+      "thingsToKnow": [
+        "No wagering does not mean no terms. Game weighting, maximum bets and eligibility still apply, and you should read the current terms in your own market.",
+        "The Ontario registration is recorded as reported only; we have not read it against the AGCO register, and it does not count toward the trust component of the score.",
+        "The only offer on record is a UK free-spins offer, and it is not published as active."
+      ],
+      "description": "PlayOJO is SkillOnNet's flagship, live since March 2017, and the one brand in this group with a genuine structural difference rather than a thematic one: it applies no wagering requirements to any promotion, and OJOplus returns money on every bet placed, win or lose. That is unusual enough to be the reason to consider it. It is also the most widely licensed brand here, with local licences in Great Britain, Sweden, Spain, Denmark and Ontario, which is why it carries the highest trust component in this set. The catalogue is the broadest of the SkillOnNet brands — twelve studios including Big Time Gaming and Yggdrasil alongside the usual ten — across slots, live casino, bingo, jackpots, Megaways, blackjack, roulette and table games. Profiles are published for Austria, Canada, Denmark, Spain, Great Britain, Mexico and Sweden. Withdrawal timing is the weak spot in the record: outside the UK's 1–3 working days, method-specific timing is not verified in any market."
+    },
+    {
+      "slug": "playojo-bingo",
+      "bestFor": [
+        "UK bingo players who want PlayOJO's no-wagering rules applied to bingo rather than to slots.",
+        "Players who want 90-ball and 75-ball rooms with Slingo and side games in the same place.",
+        "Existing PlayOJO players — this is the same operator and the same rulebook."
+      ],
+      "thingsToKnow": [
+        "This is a bingo room, not a full casino. Three suppliers and three categories are on record, and the score reflects that narrowness.",
+        "Great Britain is the only published market.",
+        "The welcome offer on record is a UK offer at zero wagering, and it is not published as active."
+      ],
+      "description": "PlayOJO Bingo is the bingo side of PlayOJO, operated by Skill On Net Limited under a UK Gambling Commission Bingo Remote licence held since February 2020. It runs 90-ball and 75-ball rooms with Slingo and side games, under the same no-wagering rules as the main PlayOJO site — which is the reason to choose it over a general casino's bingo tab. The record is correspondingly small: Playtech, Pragmatic Play and Slingo supply it, and bingo, Slingo and slots are the three categories on file. Great Britain is the only market with a published profile, served by debit cards, PayPal, Apple Pay and instant bank transfer. Its Editor Score is the lowest in this group, which reflects the breadth of the verified record rather than a judgement on the bingo itself."
+    },
+    {
+      "slug": "playuzu",
+      "bestFor": [
+        "Spanish-speaking players in Spain, Mexico, Peru or Argentina who want a locally licensed site rather than an offshore one.",
+        "Players who dislike wagering requirements — PlayUZU applies none, and UZUplus returns money on every bet.",
+        "Spanish players who bank with Bizum, which is on the cashier here and on few competitors."
+      ],
+      "thingsToKnow": [
+        "Only the Spanish DGOJ licence is primary-verified. The Mexican, Peruvian, Argentine and Brazilian entities are all recorded as unverified in our own record.",
+        "Great Britain is not a market for this brand; if you are reading from the UK, this profile is informational only.",
+        "Spanish withdrawals are reported as having no minimum, but that comes from secondary sources rather than the operator's published terms."
+      ],
+      "description": "PlayUZU is SkillOnNet's Spanish-language casino and the sister brand to PlayOJO, sharing its central idea: no wagering requirements, and UZUplus money-back on every bet. It has been licensed in Spain by DGOJ since 2020 and also runs in Mexico, Peru, Buenos Aires City and Brazil. The catalogue runs from roughly 2,500 to 4,300 titles depending on market, from the operator's usual ten studios, and includes live casino, blackjack, roulette, jackpots and Megaways. The Spanish cashier carries Bizum alongside cards and PayPal. The licensing record is uneven and worth reading carefully: Spain is verified against the DGOJ register, while the entities behind the Mexican, Peruvian, Argentine and Brazilian sites are named in our record only as unverified. Profiles are published for Austria, Brazil, Denmark, Spain, Mexico and Peru."
+    },
+    {
+      "slug": "regencycasino",
+      "bestFor": [
+        "Greek players who want a Greek-licensed site from an operator with a physical presence — Regency Entertainment has run the Mont Parnes and Thessaloniki casinos for around 30 years.",
+        "Live casino players in Greece: the tables are dealt in Greek.",
+        "Players who prefer a land-based operator's online arm to a purely online brand."
+      ],
+      "thingsToKnow": [
+        "Greek e-wallets are a real gap — Skrill, Neteller and Revolut are not supported, and that comes from a secondary source rather than the operator.",
+        "The UK site is a SkillOnNet white label. The brand you see and the company on the UK register are not the same entity.",
+        "Rollouts to Denmark, Spain, Sweden and Germany have been announced but not verified; only Denmark, Great Britain and Greece have published profiles."
+      ],
+      "description": "Regency Casino Online is the digital arm of Regency Entertainment S.A., which has operated the Mont Parnes and Thessaloniki casinos for around three decades — so unlike every other brand in this group it comes from a land-based operator rather than a purely online one. It launched with SkillOnNet under a Greek HGC Type 2 licence, carrying 3,000+ games and live casino with Greek-speaking dealers, which is the practical reason for a Greek player to choose it. Eight studios supply it, including Evolution, Playtech, Pragmatic Play, NetEnt and Play'n GO. The payments picture in Greece has a real gap: Skrill, Neteller and Revolut are not supported, leaving cards and bank transfer. Profiles are published for Denmark, Great Britain and Greece. The UK presence is a white-label entry on the Gambling Commission register under Skill On Net Limited, with Regency Entertainment as brand owner — worth knowing if you are checking the register yourself."
+    },
+    {
+      "slug": "slotsmagic",
+      "bestFor": [
+        "Players who want breadth above everything — 25 studios on record, by far the largest catalogue in this group.",
+        "Players who want studios the mainstream brands skip: Hacksaw Gaming, Peter & Sons, Octoplay, Amusnet and Lightning Box all appear here.",
+        "Mobile players — native iOS and Android apps are on record, which most brands here do not have."
+      ],
+      "thingsToKnow": [
+        "Only the UK licence is primary-verified. The Ontario registration is recorded as reported, and the 20 language variants run under the Malta licence.",
+        "The Ontario entity is named in our record only as 'to confirm'.",
+        "No welcome offer is on record, which is a notable gap for a brand whose pitch is the size of its library."
+      ],
+      "description": "SlotsMagic has been running since 2014 and is the broadest catalogue in this group by a wide margin: 25 studios on record against the eight to twelve its sister brands carry. The list goes well past the usual names — Hacksaw Gaming, Peter & Sons, Octoplay, Amusnet, Lightning Box, Eyecon, Bragg, Playson, Inspired, Light & Wonder, iSoftBet and Slingo alongside Playtech, Pragmatic Play, Evolution, NetEnt and Games Global — across slots, Megaways, jackpots, live casino and table games. Native iOS and Android apps and 24/7 support are on record, both unusual in this set. Profiles are published for Austria, Canada, Denmark, Great Britain and Sweden. The .com and .co.uk domains are active on the UK register; Ontario is recorded as live but the registration has not been read against the AGCO register, and the 20 language variants run under the Malta licence."
+    },
+    {
+      "slug": "turbonino",
+      "bestFor": [
+        "Swedish players who want to deposit and play without creating an account — this is a Pay N Play casino, so BankID through Trustly or Zimpler is the whole registration.",
+        "Players who want withdrawals back to the same bank account they deposited from, without a separate verification step.",
+        "Players who value getting started quickly over collecting a welcome package."
+      ],
+      "thingsToKnow": [
+        "Pay N Play is a Swedish and Finnish mechanism. In Great Britain the cashier is conventional — debit cards, PayPal, Apple Pay and instant bank transfer — so the brand's main selling point does not apply there.",
+        "No welcome offer is recorded in any of its four published markets. For a Pay N Play brand that is normal, but do not expect one.",
+        "Swedish Trustly withdrawals are reported as fast; the only timing we could verify is the UK record of 1–3 working days after approval."
+      ],
+      "description": "TurboNino is SkillOnNet's Pay N Play casino, live since 2021 and built around a single idea: you deposit through Trustly or Zimpler using bank ID, and that deposit is your registration. There is no sign-up form and no separate verification step, and withdrawals return to the account you paid from. That works in Sweden, where Trustly and Zimpler are both on the cashier under the Spelinspektionen licence. It does not work everywhere: in Great Britain the site runs a conventional cashier under the Gambling Commission licence, and the brand's defining feature is simply absent. Germany has its own GGL virtual-slots permit for turbonino.de. Eight studios supply the games — Playtech, Pragmatic Play, Evolution, NetEnt, Play'n GO, Red Tiger, Blueprint Gaming and Games Global — across slots, jackpots, Megaways, live casino, blackjack, roulette and table games. Profiles are published for Germany, Denmark, Great Britain and Sweden. No welcome offer is on record in any of them."
+    }
+  ]
+}

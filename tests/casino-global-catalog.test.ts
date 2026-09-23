@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
 
 import {
@@ -190,4 +192,57 @@ test("a casino with no market evidence reports every field as unresolved", () =>
     "categories",
     "corporateLicences",
   ]);
+});
+
+test("the editorial corpus replaces the generated lists rather than restating them", async () => {
+  const [corpus, generated] = await Promise.all([
+    readFile(path.join(process.cwd(), "data/casino-global-catalog-01/editorial.v1.json"), "utf8"),
+    readFile(path.join(process.cwd(), "data/casino-ingestion/ego-skillonnet-2026-09-22/editorial.json"), "utf8"),
+  ]);
+  const replacement = JSON.parse(corpus) as {
+    commercialAuthority: boolean;
+    entries: Array<{ slug: string; bestFor: string[]; thingsToKnow: string[]; description: string }>;
+  };
+  const original = JSON.parse(generated) as { casinos: Array<{ slug: string; bestFor: string[]; thingsToKnow: string[] }> };
+
+  assert.equal(replacement.commercialAuthority, false, "editorial copy never carries commercial authority");
+  assert.deepEqual(
+    replacement.entries.map((entry) => entry.slug).sort(),
+    original.casinos.map((casino) => casino.slug).sort(),
+    "every generated entry is replaced",
+  );
+
+  const originalBySlug = new Map(original.casinos.map((casino) => [casino.slug, casino]));
+  for (const entry of replacement.entries) {
+    const before = originalBySlug.get(entry.slug);
+    assert.ok(before);
+    // The generated lists all opened by reciting licence numbers the page
+    // already shows in its regulation section.
+    assert.match(before.bestFor[0] as string, /^Players who want a licensed site:/);
+    for (const line of [...entry.bestFor, ...entry.thingsToKnow]) {
+      assert.doesNotMatch(line, /^Players who want a licensed site:/, `${entry.slug} still recites licences`);
+      assert.doesNotMatch(line, /licence \d/i, `${entry.slug} still quotes a licence number`);
+    }
+    assert.notDeepEqual(entry.bestFor, before.bestFor, `${entry.slug} "Best for" is unchanged`);
+    assert.notDeepEqual(entry.thingsToKnow, before.thingsToKnow, `${entry.slug} "Things to know" is unchanged`);
+  }
+});
+
+test("no two casinos share a Best for or Things to know line", async () => {
+  // The generated lists repeated the same three caveats across all thirteen
+  // casinos, which made the section worthless for comparing them.
+  const corpus = JSON.parse(await readFile(
+    path.join(process.cwd(), "data/casino-global-catalog-01/editorial.v1.json"),
+    "utf8",
+  )) as { entries: Array<{ slug: string; bestFor: string[]; thingsToKnow: string[] }> };
+
+  const seen = new Map<string, string>();
+  for (const entry of corpus.entries) {
+    for (const line of [...entry.bestFor, ...entry.thingsToKnow]) {
+      const normalized = line.trim().toLowerCase();
+      const owner = seen.get(normalized);
+      assert.equal(owner, undefined, `${entry.slug} repeats a line from ${owner}`);
+      seen.set(normalized, entry.slug);
+    }
+  }
 });

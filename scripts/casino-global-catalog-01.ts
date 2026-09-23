@@ -11,6 +11,8 @@
  * `plan`.
  */
 import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 import { EditorialStatus, Prisma } from "@prisma/client";
 
@@ -21,8 +23,10 @@ import {
 } from "@/lib/casino-global-catalog/derivation";
 import prisma from "@/lib/db/prisma";
 import { casinoService } from "@/lib/services/casino.service";
+import { editorialReviewService } from "@/lib/services/editorial-review.service";
 
 const RELEASE = "CASINO-GLOBAL-CATALOG-01";
+const EDITORIAL_CORPUS = "data/casino-global-catalog-01/editorial.v1.json";
 
 function option(name: string) {
   const index = process.argv.indexOf(`--${name}`);
@@ -350,11 +354,118 @@ async function apply() {
   console.log(`${RELEASE}: applied to ${results.length} casinos and republished each snapshot`);
 }
 
+interface EditorialEntry {
+  slug: string;
+  bestFor: string[];
+  thingsToKnow: string[];
+  description: string;
+}
+
+/**
+ * The generated lists this corpus replaces all opened with the same licence
+ * recital, so the guard refuses a corpus that has drifted back toward one.
+ */
+const GENERATED_OPENING = /^Players who want a licensed site:/i;
+
+async function loadEditorialCorpus() {
+  const corpus = JSON.parse(await readFile(path.join(process.cwd(), EDITORIAL_CORPUS), "utf8")) as {
+    schemaVersion: string;
+    release: string;
+    commercialAuthority: boolean;
+    entries: EditorialEntry[];
+  };
+  if (corpus.schemaVersion !== "casino-global-catalog-editorial.v1" || corpus.release !== RELEASE) {
+    throw new Error(`${RELEASE}: editorial corpus identity mismatch`);
+  }
+  if (corpus.commercialAuthority !== false) throw new Error(`${RELEASE}: an editorial corpus must not grant commercial authority`);
+  for (const entry of corpus.entries) {
+    if (!entry.bestFor.length || !entry.thingsToKnow.length || !entry.description.trim()) {
+      throw new Error(`${RELEASE}: ${entry.slug} editorial entry is incomplete`);
+    }
+    for (const line of [...entry.bestFor, ...entry.thingsToKnow]) {
+      if (GENERATED_OPENING.test(line.trim())) throw new Error(`${RELEASE}: ${entry.slug} still carries a generated licence recital`);
+    }
+  }
+  return corpus;
+}
+
+async function applyEditorial(entry: EditorialEntry, actorId: string) {
+  const record = await prisma.casino.findUnique({ where: { slug: entry.slug }, select: { id: true } });
+  if (!record) throw new Error(`${RELEASE}: ${entry.slug} is not in the database`);
+
+  let casino = await casinoService.getCasinoById(record.id);
+  if (casino.status !== EditorialStatus.DRAFT) {
+    casino = await casinoService.transitionWorkflow(record.id, EditorialStatus.DRAFT, actorId, casino.updatedAt);
+  }
+  casino = await casinoService.updateCasino(casino.id, {
+    description: entry.description,
+    pros: entry.bestFor,
+    cons: entry.thingsToKnow,
+    updatedBy: actorId,
+    expectedUpdatedAt: casino.updatedAt,
+  });
+
+  // Keep the published editorial review in step with the profile copy.
+  let review = await editorialReviewService.getByCasinoId(casino.id);
+  if (review) {
+    const published = review.revisions.find((revision) => revision.id === review?.publishedRevisionId);
+    const document = published?.content;
+    if (document) {
+      const next = {
+        ...document,
+        sections: document.sections.map((section) => {
+          if (section.kind === "pros") return { ...section, blocks: section.blocks.map((block) => block.type === "pros" ? { ...block, items: entry.bestFor } : block) };
+          if (section.kind === "cons") return { ...section, blocks: section.blocks.map((block) => block.type === "cons" ? { ...block, items: entry.thingsToKnow } : block) };
+          if (section.kind === "overview") return { ...section, blocks: section.blocks.map((block) => block.type === "paragraph" ? { ...block, text: entry.description } : block) };
+          return section;
+        }),
+      };
+      if (review.status !== "DRAFT") review = await editorialReviewService.transition(review.id, "DRAFT", actorId);
+      review = await editorialReviewService.saveDraft(casino.id, next, `${RELEASE}: reader-facing editorial rewrite`, actorId);
+      review = await editorialReviewService.transition(review.id, "IN_REVIEW", actorId);
+      review = await editorialReviewService.transition(review.id, "APPROVED", actorId);
+      const revision = review.revisions.find((candidate) => candidate.revisionNumber === review?.draftRevisionNumber);
+      if (!revision) throw new Error(`${RELEASE}: ${entry.slug} editorial revision is missing`);
+      await editorialReviewService.publish(review.id, revision.id, actorId);
+    }
+  }
+
+  await republish(casino.id, actorId);
+  await prisma.auditLog.create({
+    data: {
+      actorId,
+      action: "casino-global-catalog-01-editorial",
+      entityType: "casino",
+      entityId: casino.id,
+      summary: `${RELEASE}: replaced generated Best for / Things to know for ${entry.slug}`,
+      metadata: { release: RELEASE, slug: entry.slug, bestFor: entry.bestFor.length, thingsToKnow: entry.thingsToKnow.length, commercialAuthorityGranted: false },
+    },
+  });
+}
+
+async function editorial() {
+  if (option("confirm") !== RELEASE) throw new Error(`${RELEASE}: editorial requires --confirm=${RELEASE}`);
+  const expected = option("expected-database");
+  const fingerprint = await databaseFingerprint();
+  if (expected !== fingerprint) throw new Error(`${RELEASE}: --expected-database must be ${fingerprint}`);
+  const actor = await selectActor(option("actor-email"));
+  const corpus = await loadEditorialCorpus();
+  const only = option("only");
+  const entries = only ? corpus.entries.filter((entry) => entry.slug === only) : corpus.entries;
+  if (!entries.length) throw new Error(`${RELEASE}: no editorial entry matched`);
+  for (const entry of entries) {
+    await applyEditorial(entry, actor.id);
+    console.log(`  ${entry.slug.padEnd(16)} rewritten`);
+  }
+  console.log(`${RELEASE}: rewrote editorial copy for ${entries.length} casinos`);
+}
+
 async function main() {
   const command = process.argv[2];
   if (command === "plan") await plan();
   else if (command === "apply") await apply();
-  else throw new Error(`${RELEASE}: usage — plan | apply`);
+  else if (command === "editorial") await editorial();
+  else throw new Error(`${RELEASE}: usage — plan | apply | editorial`);
 }
 
 main()
