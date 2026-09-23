@@ -1,7 +1,7 @@
 # RFC-053: Autonomous Learn Content Orchestration
 
 - **Status:** `ACTIVE`
-- **Decision authority:** explicit Founder instruction, 22 September 2026
+- **Decision authority:** explicit Founder instructions, 22–23 September 2026
 - **Scope:** one bounded server-side Learn editorial orchestration pipeline
 - **Depends on:** Product Vision & Principles, RFC-013, RFC-017, RFC-027,
   RFC-037, RFC-039, RFC-044, RFC-051 and RFC-052
@@ -39,9 +39,13 @@ created subagent uses these exact names and authorities:
 
 1. **B4GAMBLE SEO Growth Lead** chooses whether a genuinely new Article should
    be created and returns `SEO_HANDOFF`. `MERGE`, `HOLD` or `DROP` ends the
-   cycle as healthy `NO_OP`. Existing coverage is never an update target: it
-   requires one of those no-publication decisions when a new Article would
-   duplicate or cannibalize it. SEO cannot draft, approve or publish.
+   cycle as healthy `NO_OP`, but only after a bounded scan across the supplied
+   registered taxonomy and published inventory considers multiple materially
+   distinct candidate intents and finds no defensible useful uncovered topic.
+   Overlap rejects that candidate; it does not end discovery while another
+   genuine gap exists. Existing coverage is never an update target. The final
+   handoff contains a concise decision rationale, not candidate deliberation or
+   chain-of-thought. SEO cannot draft, approve or publish.
 2. **B4GAMBLE Research + Content** runs only after `CREATE`, uses current
    public-web evidence, maps material claims to sources and returns
    `CONTENT_PACKAGE` plus a complete create-only candidate `LearnApplyInput`

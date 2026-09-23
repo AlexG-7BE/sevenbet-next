@@ -57,6 +57,9 @@ test("the separated role prompt names exactly the three authorized roles and cap
   assert.match(prompts, /inherit this session's configured model and high reasoning effort/i);
   assert.match(prompts, /Wait for SEO_HANDOFF before creating any other role/);
   assert.match(prompts, /NO_OP must have exactly the single SEO trace/);
+  assert.match(prompts, /bounded taxonomy-wide opportunity scan/i);
+  assert.match(prompts, /single overlapping or weak candidate must never end the scan/i);
+  assert.match(prompts, /Do not expose candidate deliberation or chain-of-thought/i);
   assert.match(read("lib/learn-content-orchestrator/openai-managed-session.server.ts"), /item\.model === session\.agent\.model/);
 });
 
