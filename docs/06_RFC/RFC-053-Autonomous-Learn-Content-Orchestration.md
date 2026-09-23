@@ -73,8 +73,13 @@ Editor trace; extra or missing role traces fail closed.
 Provider evidence may expose a nullable runner-assigned nickname and nullable
 initial task content. Trace classification therefore accepts only the exact
 normalized machine task path, exact immutable marker, or exact canonical human
-role assignment. Conflicting signals are ambiguous and fail closed. No loose
-role substring or inferred role is publication evidence.
+role assignment when those signals exist. When the provider returns none of
+those optional signals, the fallback is the provider's ascending creation
+order, but only when every subagent is a direct child of the root, every root
+create call completed, the call/subagent counts match, the count is bounded to
+three and any exact signal agrees with canonical SEO → Research → Editor order.
+Nested, extra, missing, conflicting or ambiguous structure fails closed. No
+loose role substring is publication evidence.
 
 ## 3. Execution and output boundary
 

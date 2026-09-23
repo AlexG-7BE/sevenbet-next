@@ -100,9 +100,14 @@ The root creates direct children with exact machine task names
 `seo_strategist`, `researcher` and `editor`, and exact immutable role markers
 defined in `prompts.ts`; role subagents cannot delegate. Runtime trace
 classification accepts only an exact normalized task-path leaf, exact marker,
-or exact canonical human-role assignment. Runner nicknames and initial task
-content are provider-nullable, so conflicting or unidentifiable evidence fails
-closed and logs only bounded per-role counters, never task text.
+or exact canonical human-role assignment when present. Runner nicknames and
+initial task content are provider-nullable. If all optional role signals are
+absent, the runtime maps the provider's ascending subagent order to the
+canonical SEO → Research → Editor sequence only after proving every subagent
+is a direct root child, every root create call completed, call/subagent counts
+match and no exact signal conflicts with its position. Nested, extra, missing,
+conflicting or ambiguous structure fails closed and logs only bounded per-role
+counters, never task text.
 
 SEO treats a duplicate or weak idea as a rejected candidate, not as the end of
 the cycle. Before `MERGE`, `HOLD` or `DROP`, it performs a bounded scan across
