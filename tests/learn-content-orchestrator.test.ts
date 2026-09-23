@@ -18,6 +18,7 @@ import {
 import { LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA } from "@/lib/learn-content-orchestrator/model-output-schema";
 import {
   describeLearnContentProviderError,
+  resolveLearnContentOrderedRoleTrace,
   resolveLearnContentSubagentRoleName,
   type LearnContentManagedSessionProvider,
   type LearnContentSessionStart,
@@ -575,6 +576,39 @@ test("subagent role evidence accepts canonical runner paths, immutable markers, 
   assert.equal(resolveLearnContentSubagentRoleName({ name: "seo", instructions: null }), "");
   assert.equal(resolveLearnContentSubagentRoleName({ name: LEARN_CONTENT_ROLE_TASK_NAMES.seo, instructions: [{ type: "output_text", text: LEARN_CONTENT_ROLE_MARKERS.research }] }), "");
   assert.equal(resolveLearnContentSubagentRoleName({ name: null, instructions: [{ type: "output_text", text: LEARN_CONTENT_ROLE_NAMES.join(" and ") }] }), "");
+});
+
+test("provider-nullable role metadata falls back only to a complete direct-child canonical creation order", () => {
+  const rootAgentId = "root-agent";
+  const createCalls = LEARN_CONTENT_ROLE_NAMES.map(() => ({ status: "completed" }));
+  const providerNullable = LEARN_CONTENT_ROLE_NAMES.map((_, index) => ({
+    name: index === 0 ? "runner-nickname" : null,
+    instructions: null,
+    parentAgentId: rootAgentId,
+  }));
+  assert.deepEqual(resolveLearnContentOrderedRoleTrace({ rootAgentId, createCalls, subagents: providerNullable }), {
+    configurationValid: true,
+    roleNames: [...LEARN_CONTENT_ROLE_NAMES],
+  });
+
+  const nested = structuredClone(providerNullable);
+  nested[1].parentAgentId = "nested-agent";
+  assert.deepEqual(resolveLearnContentOrderedRoleTrace({ rootAgentId, createCalls, subagents: nested }), {
+    configurationValid: false,
+    roleNames: ["", "", ""],
+  });
+
+  const conflicting = structuredClone(providerNullable);
+  conflicting[0].name = LEARN_CONTENT_ROLE_TASK_NAMES.research;
+  assert.deepEqual(resolveLearnContentOrderedRoleTrace({ rootAgentId, createCalls, subagents: conflicting }), {
+    configurationValid: false,
+    roleNames: ["", "", ""],
+  });
+
+  assert.deepEqual(resolveLearnContentOrderedRoleTrace({ rootAgentId, createCalls: createCalls.slice(0, 2), subagents: providerNullable }), {
+    configurationValid: false,
+    roleNames: ["", "", ""],
+  });
 });
 
 test("NO_OP requires the separated SEO role", () => {

@@ -36,7 +36,7 @@ test("the Managed Agents session has only no-environment, programmatic, and live
   assert.match(provider, /type: "programmatic_tool_calling"/);
   assert.match(provider, /type: "web_search", mode: "live"/);
   assert.match(provider, /multi_agent: \{ enabled: true, max_concurrent_subagents: 3 \}/);
-  assert.doesNotMatch(provider, /type: "mcp"|agent_id|LEARN_MCP|learn_apply|serviceToken/);
+  assert.doesNotMatch(provider, /type: "mcp"|\bagent_id\b|LEARN_MCP|learn_apply|serviceToken/);
 });
 
 test("the model never receives private, Programme-runtime, analytics, or commercial imports", () => {
@@ -63,7 +63,10 @@ test("the separated role prompt names exactly the three authorized roles and cap
   assert.match(prompts, /seo_strategist/);
   assert.match(prompts, /\[B4GAMBLE_ROLE:SEO_STRATEGIST_V1\]/);
   assert.match(prompts, /Only the root orchestrator creates subagents/);
-  assert.match(read("lib/learn-content-orchestrator/openai-managed-session.server.ts"), /item\.model === session\.agent\.model/);
+  const managedSession = read("lib/learn-content-orchestrator/openai-managed-session.server.ts");
+  assert.match(managedSession, /item\.model === session\.agent\.model/);
+  assert.match(managedSession, /subagent\.parentAgentId === input\.rootAgentId/);
+  assert.match(managedSession, /call\.status === "completed"/);
 });
 
 test("only the deterministic MCP publisher can call the sole learn_apply tool", () => {

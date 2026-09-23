@@ -100,6 +100,57 @@ function normalizedRunnerTaskName(value: string | null) {
   return leaf.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 }
 
+function resolveLearnContentSubagentRoleEvidence(subagent: {
+  name: string | null;
+  instructions: Array<{ type: string; text?: string }> | null;
+}) {
+  const task = (subagent.instructions ?? [])
+    .filter((part) => part.type === "output_text" && typeof part.text === "string")
+    .map((part) => part.text)
+    .join("\n");
+  const normalizedName = normalizedRunnerTaskName(subagent.name);
+  const assigned = ROLE_TRACE_DEFINITIONS.filter((definition) => (
+    definition.taskNames.has(normalizedName)
+    || normalizedName === normalizedRunnerTaskName(definition.roleName)
+    || task.includes(definition.marker)
+    || task.includes(`You are ${definition.roleName}.`)
+  ));
+  if (!assigned.length) return { status: "ABSENT" as const, roleName: "" };
+  if (assigned.length === 1) return { status: "EXACT" as const, roleName: assigned[0].roleName };
+  return { status: "AMBIGUOUS" as const, roleName: "" };
+}
+
+export function resolveLearnContentOrderedRoleTrace(input: {
+  rootAgentId: string;
+  createCalls: Array<{ status: string }>;
+  subagents: Array<{
+    name: string | null;
+    instructions: Array<{ type: string; text?: string }> | null;
+    parentAgentId: string;
+  }>;
+}) {
+  const evidence = input.subagents.map(resolveLearnContentSubagentRoleEvidence);
+  const directChildren = input.subagents.every((subagent) => subagent.parentAgentId === input.rootAgentId);
+  const createCallsMatch = input.createCalls.length === input.subagents.length
+    && input.createCalls.every((call) => call.status === "completed");
+  const boundedCount = input.subagents.length <= LEARN_CONTENT_ROLE_NAMES.length;
+  const unambiguous = evidence.every((item) => item.status !== "AMBIGUOUS");
+  const exactSignalsFollowCanonicalOrder = evidence.every((item, index) => (
+    item.status !== "EXACT" || item.roleName === LEARN_CONTENT_ROLE_NAMES[index]
+  ));
+  const configurationValid = directChildren
+    && createCallsMatch
+    && boundedCount
+    && unambiguous
+    && exactSignalsFollowCanonicalOrder;
+  return {
+    configurationValid,
+    roleNames: evidence.map((item, index) => (
+      configurationValid ? (item.roleName || LEARN_CONTENT_ROLE_NAMES[index] || "") : ""
+    )),
+  };
+}
+
 function outputText(item: unknown) {
   if (!item || typeof item !== "object") return null;
   const message = item as {
@@ -127,18 +178,7 @@ export function resolveLearnContentSubagentRoleName(subagent: {
   name: string | null;
   instructions: Array<{ type: string; text?: string }> | null;
 }) {
-  const task = (subagent.instructions ?? [])
-    .filter((part) => part.type === "output_text" && typeof part.text === "string")
-    .map((part) => part.text)
-    .join("\n");
-  const normalizedName = normalizedRunnerTaskName(subagent.name);
-  const assigned = ROLE_TRACE_DEFINITIONS.filter((definition) => (
-    definition.taskNames.has(normalizedName)
-    || normalizedName === normalizedRunnerTaskName(definition.roleName)
-    || task.includes(definition.marker)
-    || task.includes(`You are ${definition.roleName}.`)
-  ));
-  return assigned.length === 1 ? assigned[0].roleName : "";
+  return resolveLearnContentSubagentRoleEvidence(subagent).roleName;
 }
 
 export class OpenAiLearnContentManagedSessionProvider implements LearnContentManagedSessionProvider {
@@ -193,21 +233,32 @@ export class OpenAiLearnContentManagedSessionProvider implements LearnContentMan
     const finalText = rootItems.data.map(outputText).find((value): value is string => Boolean(value));
     if (!finalText) throw new Error("Managed session completed without a final structured output");
     const allowedReasoningEfforts = new Set(["high", "xhigh", "max", "ultra"]);
-    const subagentConfigurationValid = rootItems.data.every((item) => item.type !== "create_subagent_call" || (
+    const requestedSubagentConfigurationValid = rootItems.data.every((item) => item.type !== "create_subagent_call" || (
       item.status === "completed"
       && (item.model === null || item.model === session.agent.model)
       && (item.reasoning_effort === null || allowedReasoningEfforts.has(item.reasoning_effort))
     ));
 
     const subagents = await client.beta.agents.sessions.subagents.list(input.sessionId, { order: "asc", limit: 100 });
-    const roles = await Promise.all(subagents.data.map(async (subagent) => {
+    const orderedRoleTrace = resolveLearnContentOrderedRoleTrace({
+      rootAgentId: session.agent.id,
+      createCalls: rootItems.data.flatMap((item) => item.type === "create_subagent_call"
+        ? [{ status: item.status }]
+        : []),
+      subagents: subagents.data.map((subagent) => ({
+        name: subagent.name,
+        instructions: subagent.instructions,
+        parentAgentId: subagent.parent_agent_id,
+      })),
+    });
+    const roles = await Promise.all(subagents.data.map(async (subagent, index) => {
       const items = await client.beta.agents.sessions.subagents.items.list(subagent.id, {
         session_id: input.sessionId,
         order: "asc",
         limit: 100,
       });
       return {
-        name: resolveLearnContentSubagentRoleName(subagent),
+        name: orderedRoleTrace.roleNames[index],
         webSearchCalls: items.data.filter((item) => item.type === "web_search_call" && item.status === "completed").length,
       };
     }));
@@ -216,7 +267,7 @@ export class OpenAiLearnContentManagedSessionProvider implements LearnContentMan
       output: parseBoundedJson(finalText),
       trace: {
         roles,
-        subagentConfigurationValid,
+        subagentConfigurationValid: requestedSubagentConfigurationValid && orderedRoleTrace.configurationValid,
         usage: session.usage ? {
           inputTokens: session.usage.input_tokens,
           outputTokens: session.usage.output_tokens,
