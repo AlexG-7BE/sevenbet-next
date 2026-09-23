@@ -74,18 +74,21 @@ async function verifyLogoOnlyMediaState() {
       throw new Error(`${RELEASE}: active MEDIA-GEO3 or placement authority remains (${activeLegacyAuthority} rows)`);
     }
 
+    // A direct operator logo stays supported and preferred, but it is not a
+    // release condition: public compositions fall back to the operator initial
+    // when no active LOGO asset exists. Missing logos are reported so they stay
+    // visible in the build record without blocking a Production release.
     const missingOperatorLogos = publishedCasinos
       .filter((casino) => casino.mediaAssets.length === 0)
       .map((casino) => casino.slug);
-    if (missingOperatorLogos.length > 0) {
-      throw new Error(`${RELEASE}: published operator Casinos missing a direct active LOGO asset: ${missingOperatorLogos.join(", ")}`);
-    }
 
     console.info(JSON.stringify({
       release: RELEASE,
       verified: true,
       publishedCasinos: publishedCasinos.length,
       preservedDirectOperatorLogos: publishedCasinos.length - missingOperatorLogos.length,
+      operatorsWithoutLogo: missingOperatorLogos.length,
+      operatorsWithoutLogoSlugs: missingOperatorLogos,
       activeLegacyAuthority,
     }));
   }, { isolationLevel: "RepeatableRead", maxWait: 10_000, timeout: 30_000 });

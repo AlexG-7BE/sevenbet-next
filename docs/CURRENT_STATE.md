@@ -516,6 +516,16 @@ inert while leaving `MediaAsset` rows untouched. The canonical repository
 language registry contains `en-GB`, `de-DE`, `es-ES`, `el-GR`, `sv-SE`,
 `da-DK`, `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO`.
 
+**CURRENT FOUNDER DECISION (2026-09-23) — a direct operator logo is optional, not a release condition:**
+`scripts/logo-only-media-build-preflight.ts production-verify` no longer fails a
+Production release when a published Casino has no active `LOGO` asset. It
+reports `operatorsWithoutLogo` and the affected slugs in the build record
+instead. Adding logos stays fully supported and preferred; public compositions
+(Casinos, Best Offers, Bonuses, casino review, curated shortlist and comparison)
+render the operator initial on the brand tile when no logo exists. Active
+retired MEDIA-GEO3 or placement authority remains a hard release blocker, so the
+logo-only Product decision in RFC-044 is unchanged.
+
 **VERIFIED — DB-first release gate and application cutover complete:** Migration 0034 is applied in
 Production. Before/after evidence preserves all 254 hosted creatives, 148
 assignment rows and every `MediaAsset`, including 16 active logos, while active
