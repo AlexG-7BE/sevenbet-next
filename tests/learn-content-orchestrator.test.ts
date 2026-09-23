@@ -24,6 +24,8 @@ import {
   type LearnContentSessionState,
 } from "@/lib/learn-content-orchestrator/openai-managed-session.server";
 import {
+  LEARN_CONTENT_ROLE_MARKERS,
+  LEARN_CONTENT_ROLE_TASK_NAMES,
   LEARN_CONTENT_ROOT_INSTRUCTIONS,
   buildLearnContentSessionInput,
 } from "@/lib/learn-content-orchestrator/prompts";
@@ -564,9 +566,14 @@ test("managed session input exposes every deterministic publication precondition
   ]) assert.match(LEARN_CONTENT_ROOT_INSTRUCTIONS, new RegExp(requiredInstruction.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
 
-test("subagent role evidence accepts an exact nickname or one unambiguous exact role assignment", () => {
+test("subagent role evidence accepts canonical runner paths, immutable markers, or one unambiguous exact role assignment", () => {
   assert.equal(resolveLearnContentSubagentRoleName({ name: LEARN_CONTENT_ROLE_NAMES[0], instructions: null }), LEARN_CONTENT_ROLE_NAMES[0]);
+  assert.equal(resolveLearnContentSubagentRoleName({ name: `/root/${LEARN_CONTENT_ROLE_TASK_NAMES.seo}`, instructions: null }), LEARN_CONTENT_ROLE_NAMES[0]);
+  assert.equal(resolveLearnContentSubagentRoleName({ name: LEARN_CONTENT_ROLE_TASK_NAMES.research, instructions: null }), LEARN_CONTENT_ROLE_NAMES[1]);
+  assert.equal(resolveLearnContentSubagentRoleName({ name: null, instructions: [{ type: "output_text", text: `${LEARN_CONTENT_ROLE_MARKERS.editor} Verify independently.` }] }), LEARN_CONTENT_ROLE_NAMES[2]);
   assert.equal(resolveLearnContentSubagentRoleName({ name: null, instructions: [{ type: "output_text", text: `You are ${LEARN_CONTENT_ROLE_NAMES[1]}. Research the handoff.` }] }), LEARN_CONTENT_ROLE_NAMES[1]);
+  assert.equal(resolveLearnContentSubagentRoleName({ name: "seo", instructions: null }), "");
+  assert.equal(resolveLearnContentSubagentRoleName({ name: LEARN_CONTENT_ROLE_TASK_NAMES.seo, instructions: [{ type: "output_text", text: LEARN_CONTENT_ROLE_MARKERS.research }] }), "");
   assert.equal(resolveLearnContentSubagentRoleName({ name: null, instructions: [{ type: "output_text", text: LEARN_CONTENT_ROLE_NAMES.join(" and ") }] }), "");
 });
 
@@ -793,6 +800,34 @@ test("malformed model output is blocked before publication", async () => {
   assert.ok(Number(entries.at(-1)?.issueCount) > 0);
   assert.match(String(entries.at(-1)?.issuePaths), /seoHandoff|contentPackage|editorReview|learnApply|runMetadata/);
   assert.doesNotMatch(JSON.stringify(entries), /must never be logged/);
+});
+
+test("role trace failures log only safe role counters and never publish", async () => {
+  const state = new MemoryState({ action: "RECONCILE", run: run() });
+  const publisher = new FakePublisher();
+  const entries: Array<Record<string, string | number | boolean | null>> = [];
+  const result = await runHandler({
+    state,
+    sessions: new FakeSessions(undefined, {
+      status: "idle",
+      output: noOpEnvelope("HOLD"),
+      trace: { roles: [{ name: "", webSearchCalls: 0 }], subagentConfigurationValid: true, usage: null },
+    }),
+    publisher,
+    log: (entry) => entries.push(entry),
+  });
+  assert.equal(result.body.code, "SEO_ROLE_MISSING");
+  assert.equal(publisher.calls, 0);
+  assert.deepEqual(entries.at(-1), {
+    event: "role_trace_blocked",
+    code: "SEO_ROLE_MISSING",
+    runId: RUN_ID,
+    roleCount: 1,
+    unresolvedRoleCount: 1,
+    seoRoleCount: 0,
+    researchRoleCount: 0,
+    editorRoleCount: 0,
+  });
 });
 
 test("SEO HOLD completes as healthy NO_OP and skips Research, Editor, and MCP", async () => {

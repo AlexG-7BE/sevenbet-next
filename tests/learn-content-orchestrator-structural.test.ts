@@ -60,6 +60,9 @@ test("the separated role prompt names exactly the three authorized roles and cap
   assert.match(prompts, /bounded taxonomy-wide opportunity scan/i);
   assert.match(prompts, /single overlapping or weak candidate must never end the scan/i);
   assert.match(prompts, /Do not expose candidate deliberation or chain-of-thought/i);
+  assert.match(prompts, /seo_strategist/);
+  assert.match(prompts, /\[B4GAMBLE_ROLE:SEO_STRATEGIST_V1\]/);
+  assert.match(prompts, /Only the root orchestrator creates subagents/);
   assert.match(read("lib/learn-content-orchestrator/openai-managed-session.server.ts"), /item\.model === session\.agent\.model/);
 });
 
