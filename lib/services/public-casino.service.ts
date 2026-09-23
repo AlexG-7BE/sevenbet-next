@@ -58,7 +58,9 @@ const cachedPublishedCasinoEditorial = publicEditorialCache(
   async (slug: string, countryCode: string | null, _presentationLanguage: string | null) => (
     loadPublishedCasinoEditorial(publicCasinoRepository, slug, countryCode)
   ),
-  ["public-casino-detail-editorial-projection-v1"],
+  // v2: the projection gained regulatoryFootprint. A cached v1 entry replayed
+  // into the current mapper would hand the profile an undefined list.
+  ["public-casino-detail-editorial-projection-v2"],
   [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
 );
 

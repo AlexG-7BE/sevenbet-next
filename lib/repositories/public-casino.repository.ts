@@ -54,27 +54,34 @@ function projectedPublishedSnapshot(countryCode?: string | null) {
         ) = top_license.entry ->> 'id'
     )
   ` : Prisma.sql``;
+  // How many distinct market profiles evidence this licence. One means a
+  // national licence, which is a market fact and never leaves its market.
+  // None means it was recorded globally. Several means the brand's corporate
+  // or B2C licence, recorded once per market, which is a global identity fact
+  // and is published with its own jurisdiction so it cannot read as local
+  // authority. The same rule is stated in lib/casino-global-catalog/derivation.
+  const scopedMarketCount = Prisma.sql`(
+    SELECT count(DISTINCT upper(profile.entry ->> 'countryCode'))
+    FROM jsonb_array_elements(${sourceCountries}) AS profile(entry)
+    CROSS JOIN LATERAL jsonb_array_elements(
+      CASE
+        WHEN jsonb_typeof(profile.entry -> 'licenses') = 'array' THEN profile.entry -> 'licenses'
+        ELSE '[]'::jsonb
+      END
+    ) AS scoped_license(entry)
+    WHERE COALESCE(
+      NULLIF(scoped_license.entry ->> 'casinoLicenseId', ''),
+      NULLIF(scoped_license.entry -> 'license' ->> 'id', ''),
+      NULLIF(scoped_license.entry ->> 'id', '')
+    ) = top_license.entry ->> 'id'
+  )`;
   const projectedLicenses = Prisma.sql`
     COALESCE((
       SELECT jsonb_agg(top_license.entry ORDER BY top_license.position)
       FROM jsonb_array_elements(${sourceLicenses}) WITH ORDINALITY AS top_license(entry, position)
       WHERE NULLIF(top_license.entry ->> 'id', '') IS NOT NULL
         AND (
-          NOT EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements(${sourceCountries}) AS profile(entry)
-            CROSS JOIN LATERAL jsonb_array_elements(
-              CASE
-                WHEN jsonb_typeof(profile.entry -> 'licenses') = 'array' THEN profile.entry -> 'licenses'
-                ELSE '[]'::jsonb
-              END
-            ) AS scoped_license(entry)
-            WHERE COALESCE(
-              NULLIF(scoped_license.entry ->> 'casinoLicenseId', ''),
-              NULLIF(scoped_license.entry -> 'license' ->> 'id', ''),
-              NULLIF(scoped_license.entry ->> 'id', '')
-            ) = top_license.entry ->> 'id'
-          )
+          ${scopedMarketCount} <> 1
           ${exactMarketLicense}
         )
     ), '[]'::jsonb)

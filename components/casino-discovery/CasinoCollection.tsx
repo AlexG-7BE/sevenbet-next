@@ -82,6 +82,7 @@ export function CasinoCollection({ casinos, initialSearch = "", messages, presen
             <CommercialScore className={styles.score} label={messages.common.editorScore} locale={presentation.locale} score={card.score} />
           </div>
           <CommercialFacts facts={card.facts} className={styles.facts} />
+          {view === "top_rated" && card.reason ? <p className={styles.reason}>{card.reason}</p> : null}
           <div className={styles.actions}>
             {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_COLLECTION_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
             {card.reviewHref ? <TrackedReviewLink

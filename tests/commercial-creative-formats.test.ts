@@ -338,6 +338,7 @@ function profileCasino(renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAI
     languages: ["en"], currencies: ["GBP"], pros: ["Published strength"], cons: ["Published limitation"], responsibleGamblingTools: ["Deposit limits"],
     seo: { title: "Skol review", description: "Published metadata.", canonical: "https://b4gamble.com/casino/skol-casino", robots: "index,follow", socialTitle: "Skol review", socialDescription: "Published metadata.", socialImage: null, structuredData: null },
     licenses: [{ authority: "Published Authority", licenseNumber: null, jurisdiction: "GB", status: "ACTIVE", verificationUrl: null, expiresAt: null, lastVerifiedAt: "2030-01-15T00:00:00.000Z" }],
+    regulatoryFootprint: [{ authority: "Published Authority", jurisdiction: "GB" }],
     countries: [{ countryCode: "GB", availability: "AVAILABLE", minimumAge: 18, currency: "GBP", language: "en" }],
     payments: [], providers: [], categories: [], marketProfiles: [],
     bonuses: [{

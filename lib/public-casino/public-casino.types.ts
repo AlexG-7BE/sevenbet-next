@@ -204,6 +204,13 @@ export interface PublicCasinoDTO {
     structuredData: Record<string, unknown> | Array<Record<string, unknown>> | null;
   };
   licenses: PublicCasinoLicense[];
+  /**
+   * Every regulator the brand holds a current licence from, with the
+   * jurisdiction that licence covers. This is a global identity fact and
+   * survives market projection unchanged: naming the jurisdiction keeps it
+   * from reading as authority in the reader's own market.
+   */
+  regulatoryFootprint: Array<{ authority: string; jurisdiction: string | null }>;
   countries: Array<{
     countryCode: string;
     availability: string;
