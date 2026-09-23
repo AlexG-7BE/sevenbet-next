@@ -246,3 +246,37 @@ test("no two casinos share a Best for or Things to know line", async () => {
     }
   }
 });
+
+test("the offer activation batch is a literal list that cannot widen", async () => {
+  // CASINO-REAL-CATALOG-03 activated exactly its own seven offers. This batch
+  // is the equivalent for the six EGO offers whose terms were researched on
+  // 22 September but never moved to offerStatus ACTIVE. A wildcard here would
+  // publish incomplete offers such as Betsson's observation rows.
+  const executor = await readFile(path.join(process.cwd(), "scripts/casino-global-catalog-01.ts"), "utf8");
+  const batch = executor.match(/const ACTIVATABLE_OFFERS = \[([\s\S]*?)\] as const;/)?.[1];
+  assert.ok(batch, "the activation batch must stay a named list");
+
+  const slugs = [...batch.matchAll(/"([a-z0-9-]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(slugs, [
+    "bacanaplay-pt-welcome",
+    "drueckglueck-de-welcome",
+    "jackpotstar-gb-welcome",
+    "playojo-gb-welcome",
+    "playojo-bingo-gb-welcome",
+    "playuzu-es-welcome",
+  ]);
+  for (const slug of slugs) {
+    assert.doesNotMatch(slug as string, /observation/, "an observation row is not a publishable offer");
+    assert.doesNotMatch(slug as string, /^goldenplay-/, "GoldenPlay's CMS offers are not part of this batch");
+  }
+  // The run must fail rather than proceed if the database does not hold
+  // exactly this set, so a renamed or missing offer is caught before a write.
+  assert.match(executor, /targets\.length !== ACTIVATABLE_OFFERS\.length/);
+});
+
+test("activating an offer never claims commercial authority", async () => {
+  const executor = await readFile(path.join(process.cwd(), "scripts/casino-global-catalog-01.ts"), "utf8");
+  const auditBlock = executor.slice(executor.indexOf("casino-global-catalog-01-offer"));
+  assert.match(auditBlock, /commercialAuthorityGranted: false/);
+  assert.match(auditBlock, /routeCreated: false/);
+});

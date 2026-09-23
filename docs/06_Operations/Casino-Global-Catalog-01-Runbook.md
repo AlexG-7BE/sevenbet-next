@@ -78,6 +78,55 @@ window is short.
 5. Records an `AuditLog` row naming the release, the decision reference and the
    fields left unresolved.
 
+## If a run fails part way
+
+A remote pool can refuse to start a transaction under contention. Each casino
+is retried up to four times on a transient transaction or write-conflict
+failure, and a casino that still fails is reported and skipped so the rest of
+the run continues; the command then exits non-zero naming every casino to
+redo. Re-running resumes — every command is idempotent.
+
+**A casino that fails mid-workflow is left in `DRAFT` or `IN_REVIEW`, which
+means it stays off the public site until the run is repeated for it.** Check
+for stragglers before walking away:
+
+```sql
+SELECT slug, status FROM "Casino" WHERE status NOT IN ('PUBLISHED', 'ARCHIVED');
+```
+
+Repeat just those with `--only <slug>`.
+
+## Offers
+
+`offer-plan` lists every published-but-inactive offer with the material terms
+it is missing, and writes nothing. `offers` activates the six EGO offers named
+in the executor and no others.
+
+```bash
+npm run casino-global-catalog -- offer-plan
+npm run casino-global-catalog -- offers --confirm=CASINO-GLOBAL-CATALOG-01 --actor-email=<admin email> --expected-database=<fingerprint>
+```
+
+Those six were researched and recorded with complete material terms on
+22 September, but the EGO import's publish step never moved them to
+`offerStatus = ACTIVE`, so the public mapper has been discarding them. This is
+the same bounded activation CASINO-REAL-CATALOG-03 performed for its own seven
+offers. Activation publishes terms that already existed; it creates no route,
+tracking authority or commercial eligibility, and the batch is a literal list
+so it cannot widen by accident.
+
+Deliberately **not** activated:
+
+- Betsson's two `…-observation` rows, which the
+  [SAFE-OFFER-PRESENTATION decision](../07_Decisions/SAFE-OFFER-PRESENTATION-2026-09-08.md)
+  excluded and which lack minimum deposit, wagering and eligibility.
+- Eight of GoldenPlay's eleven CMS-authored offers, each missing minimum
+  deposit, important conditions, terms URL and any verification date.
+- `goldenplay-ie-welcome` (missing only a terms URL) and the two global
+  GoldenPlay welcome rows (missing terms URL and verification date). These are
+  the only realistic candidates for a second pass and need a verification date
+  before publication.
+
 ## What `editorial` does
 
 Replaces `pros` ("Best for"), `cons` ("Things to know") and `description` for
@@ -111,9 +160,11 @@ not a rendering fault.
   payment method. `CasinoCountry.withdrawalSummary` holds prose for most
   markets but nothing reads it, so payout shows "Not verified" and the
   fast-payout ranking and badge stay inert for those casinos.
-- **Offers.** Eight casinos have no bonus at all, and many recorded bonuses
-  lack wagering, minimum deposit or a terms URL — the exact fields the offer
-  ranking scores on.
+- **Offers.** Eight casinos have no bonus at all: AHTI Games, Casino RedKings,
+  DragonBet, EUcasino, MegawaysCasino, Regency Casino Online, SlotsMagic and
+  TurboNino. Recording one needs research, not derivation. Twelve further
+  published offers stay inactive because their material terms are incomplete —
+  run `offer-plan` for the current list and the exact missing fields.
 - **Founded year** is missing for 15 casinos and **responsible-gambling tools**
   for 19. Neither is derivable from market profiles.
 - **Descriptions on the 15 non-EGO casinos** are written in internal release

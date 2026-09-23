@@ -14,7 +14,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { EditorialStatus, Prisma } from "@prisma/client";
+import { EditorialStatus, OfferStatus, Prisma } from "@prisma/client";
 
 import {
   deriveGlobalCatalog,
@@ -38,6 +38,31 @@ function option(name: string) {
   const index = process.argv.indexOf(`--${name}`);
   if (index >= 0) return process.argv[index + 1];
   return process.argv.find((value) => value.startsWith(`--${name}=`))?.slice(name.length + 3);
+}
+
+/**
+ * A remote pool can refuse to start a transaction under contention, and the
+ * governed republish is a long interactive transaction, so one casino hitting
+ * that must not abort a run covering the whole catalogue. Only transient
+ * transaction-acquisition and write-conflict failures are retried; anything
+ * else is a real error and propagates.
+ */
+const TRANSIENT_TRANSACTION = /Unable to start a transaction|Transaction already closed|deadlock|could not serialize/i;
+
+async function withTransientRetry<T>(label: string, work: () => Promise<T>, attempts = 4): Promise<T> {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await work();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const retryable = TRANSIENT_TRANSACTION.test(message)
+        || (typeof error === "object" && error !== null && "code" in error && (error as { code?: unknown }).code === "P2034");
+      if (!retryable || attempt >= attempts) throw error;
+      const delayMs = 2_000 * attempt;
+      console.warn(`  ${label}: transient database contention (attempt ${attempt}/${attempts}); retrying in ${delayMs}ms`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
 }
 
 function decimal(value: Prisma.Decimal | null) {
@@ -330,9 +355,20 @@ async function apply() {
   const derivations = (await loadDerivationInputs()).map(deriveGlobalCatalog);
 
   const results = [];
+  const failedApply: string[] = [];
   for (const derivation of derivations) {
-    const written = await applyDerivation(derivation, actor.id);
-    await republish(written.casinoId, actor.id);
+    let written;
+    try {
+      written = await withTransientRetry(derivation.slug, async () => {
+        const result = await applyDerivation(derivation, actor.id);
+        await republish(result.casinoId, actor.id);
+        return result;
+      });
+    } catch (error) {
+      failedApply.push(derivation.slug);
+      console.error(`  ${derivation.slug.padEnd(16)} FAILED: ${error instanceof Error ? error.message : error}`);
+      continue;
+    }
     await prisma.auditLog.create({
       data: {
         actorId: actor.id,
@@ -358,6 +394,7 @@ async function apply() {
     console.log(`  ${derivation.slug.padEnd(16)} pay=${written.payments} prov=${written.providers} cat=${written.categories} licencesCollapsed=${written.collapsed} identity=${written.identity.join(",") || "—"}`);
   }
   console.log(`${RELEASE}: applied to ${results.length} casinos and republished each snapshot`);
+  if (failedApply.length) throw new Error(`${RELEASE}: apply failed for ${failedApply.join(", ")}; re-run to resume`);
 }
 
 interface EditorialEntry {
@@ -459,10 +496,18 @@ async function editorial() {
   const only = option("only");
   const entries = only ? corpus.entries.filter((entry) => entry.slug === only) : corpus.entries;
   if (!entries.length) throw new Error(`${RELEASE}: no editorial entry matched`);
+  const failed: string[] = [];
   for (const entry of entries) {
-    await applyEditorial(entry, actor.id);
-    console.log(`  ${entry.slug.padEnd(16)} rewritten`);
+    try {
+      await withTransientRetry(entry.slug, () => applyEditorial(entry, actor.id));
+      console.log(`  ${entry.slug.padEnd(16)} rewritten`);
+    } catch (error) {
+      // Report every casino rather than abandoning the run on the first one.
+      failed.push(entry.slug);
+      console.error(`  ${entry.slug.padEnd(16)} FAILED: ${error instanceof Error ? error.message : error}`);
+    }
   }
+  if (failed.length) throw new Error(`${RELEASE}: editorial rewrite failed for ${failed.join(", ")}; re-run to resume`);
   console.log(`${RELEASE}: rewrote editorial copy for ${entries.length} casinos`);
 }
 
@@ -613,13 +658,115 @@ async function scores() {
   console.log(`${RELEASE}: ${dryRun ? "previewed" : "recomputed"} ${targets.length} Editor Scores`);
 }
 
+/**
+ * The EGO import researched and recorded six market offers with complete
+ * material terms on 22 September, but its publish step never moved them to
+ * `offerStatus = ACTIVE`, so the public mapper has been discarding them ever
+ * since. CASINO-REAL-CATALOG-03 performed exactly that activation for its own
+ * seven offers as a deliberate, bounded step; this is the equivalent for the
+ * EGO set, named one by one so the batch cannot widen by accident.
+ */
+const ACTIVATABLE_OFFERS = [
+  "bacanaplay-pt-welcome",
+  "drueckglueck-de-welcome",
+  "jackpotstar-gb-welcome",
+  "playojo-gb-welcome",
+  "playojo-bingo-gb-welcome",
+  "playuzu-es-welcome",
+] as const;
+
+/** Material terms a reader needs before an offer is worth publishing. */
+function offerTermGaps(bonus: {
+  minimumDeposit: Prisma.Decimal | null;
+  wageringMultiplier: Prisma.Decimal | null;
+  wageringText: string | null;
+  eligibility: string | null;
+  importantConditions: string[];
+  termsUrl: string | null;
+  lastVerifiedAt: Date | null;
+}) {
+  return [
+    bonus.minimumDeposit === null ? "minimumDeposit" : null,
+    bonus.wageringMultiplier === null && !bonus.wageringText?.trim() ? "wagering" : null,
+    !bonus.eligibility?.trim() ? "eligibility" : null,
+    !bonus.importantConditions.length ? "importantConditions" : null,
+    !bonus.termsUrl?.trim() ? "termsUrl" : null,
+    bonus.lastVerifiedAt === null ? "lastVerifiedAt" : null,
+  ].filter((gap): gap is string => Boolean(gap));
+}
+
+async function offers() {
+  const dryRun = process.argv[2] === "offer-plan";
+  if (!dryRun && option("confirm") !== RELEASE) throw new Error(`${RELEASE}: offers requires --confirm=${RELEASE}`);
+  if (!dryRun) {
+    const expected = option("expected-database");
+    const fingerprint = await databaseFingerprint();
+    if (expected !== fingerprint) throw new Error(`${RELEASE}: --expected-database must be ${fingerprint}`);
+  }
+
+  const inactive = await prisma.casinoBonus.findMany({
+    where: { status: EditorialStatus.PUBLISHED, offerStatus: { not: OfferStatus.ACTIVE } },
+    orderBy: [{ casino: { slug: "asc" } }, { slug: "asc" }],
+    select: {
+      id: true, slug: true, title: true, minimumDeposit: true, wageringMultiplier: true,
+      wageringText: true, eligibility: true, importantConditions: true, termsUrl: true,
+      lastVerifiedAt: true, createdBy: true,
+      casino: { select: { id: true, slug: true } },
+      marketProfile: { select: { countryCode: true } },
+    },
+  });
+
+  console.log(`${RELEASE}: ${inactive.length} published offers are not active`);
+  for (const bonus of inactive) {
+    const gaps = offerTermGaps(bonus);
+    const named = (ACTIVATABLE_OFFERS as readonly string[]).includes(bonus.slug);
+    const verdict = named ? "ACTIVATE" : gaps.length >= 3 ? "HOLD (terms incomplete)" : "HOLD (not in this batch)";
+    console.log(`  ${bonus.casino.slug.padEnd(15)} ${(bonus.marketProfile?.countryCode ?? "global").padEnd(6)} ${bonus.slug.padEnd(38)} ${verdict.padEnd(24)} ${gaps.length ? `missing=${gaps.join(",")}` : "complete"}`);
+  }
+  if (dryRun) return;
+
+  const actor = await selectActor(option("actor-email"));
+  const targets = inactive.filter((bonus) => (ACTIVATABLE_OFFERS as readonly string[]).includes(bonus.slug));
+  if (targets.length !== ACTIVATABLE_OFFERS.length) {
+    throw new Error(`${RELEASE}: expected ${ACTIVATABLE_OFFERS.length} activatable offers, found ${targets.length}`);
+  }
+  for (const bonus of targets) {
+    // Activation publishes terms that were already researched; it creates no
+    // route, tracking authority or commercial eligibility.
+    await withTransientRetry(bonus.slug, async () => {
+      await prisma.casinoBonus.update({ where: { id: bonus.id }, data: { offerStatus: OfferStatus.ACTIVE, updatedBy: actor.id } });
+      await republish(bonus.casino.id, actor.id);
+    });
+    await prisma.auditLog.create({
+      data: {
+        actorId: actor.id,
+        action: "casino-global-catalog-01-offer",
+        entityType: "casino_bonus",
+        entityId: bonus.id,
+        summary: `${RELEASE}: activated already-published offer ${bonus.slug}`,
+        metadata: {
+          release: RELEASE,
+          casinoSlug: bonus.casino.slug,
+          countryCode: bonus.marketProfile?.countryCode ?? null,
+          termGaps: offerTermGaps(bonus),
+          commercialAuthorityGranted: false,
+          routeCreated: false,
+        },
+      },
+    });
+    console.log(`  ${bonus.casino.slug.padEnd(15)} activated ${bonus.slug}`);
+  }
+  console.log(`${RELEASE}: activated ${targets.length} offers`);
+}
+
 async function main() {
   const command = process.argv[2];
   if (command === "plan") await plan();
   else if (command === "apply") await apply();
   else if (command === "editorial") await editorial();
   else if (command === "score-plan" || command === "scores") await scores();
-  else throw new Error(`${RELEASE}: usage — plan | apply | editorial | score-plan | scores`);
+  else if (command === "offer-plan" || command === "offers") await offers();
+  else throw new Error(`${RELEASE}: usage — plan | apply | editorial | score-plan | scores | offer-plan | offers`);
 }
 
 main()
