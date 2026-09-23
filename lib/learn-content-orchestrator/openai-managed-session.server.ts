@@ -4,7 +4,12 @@ import OpenAI from "openai";
 
 import { LEARN_CONTENT_ROLE_NAMES } from "./contracts";
 import { LEARN_CONTENT_MODEL_OUTPUT_JSON_SCHEMA } from "./model-output-schema";
-import { LEARN_CONTENT_ROOT_INSTRUCTIONS, buildLearnContentSessionInput } from "./prompts";
+import {
+  LEARN_CONTENT_ROLE_MARKERS,
+  LEARN_CONTENT_ROLE_TASK_NAMES,
+  LEARN_CONTENT_ROOT_INSTRUCTIONS,
+  buildLearnContentSessionInput,
+} from "./prompts";
 import type { LearnContentSafeContext } from "./safe-context.server";
 
 const MAX_MODEL_OUTPUT_BYTES = 5_000_000;
@@ -67,6 +72,34 @@ export interface LearnContentManagedSessionProvider {
   inspect(input: { apiKey: string; sessionId: string }): Promise<LearnContentSessionState>;
 }
 
+const ROLE_TRACE_DEFINITIONS: ReadonlyArray<{
+  roleName: string;
+  marker: string;
+  taskNames: ReadonlySet<string>;
+}> = [
+  {
+    roleName: LEARN_CONTENT_ROLE_NAMES[0],
+    marker: LEARN_CONTENT_ROLE_MARKERS.seo,
+    taskNames: new Set([LEARN_CONTENT_ROLE_TASK_NAMES.seo]),
+  },
+  {
+    roleName: LEARN_CONTENT_ROLE_NAMES[1],
+    marker: LEARN_CONTENT_ROLE_MARKERS.research,
+    taskNames: new Set([LEARN_CONTENT_ROLE_TASK_NAMES.research]),
+  },
+  {
+    roleName: LEARN_CONTENT_ROLE_NAMES[2],
+    marker: LEARN_CONTENT_ROLE_MARKERS.editor,
+    taskNames: new Set([LEARN_CONTENT_ROLE_TASK_NAMES.editor]),
+  },
+];
+
+function normalizedRunnerTaskName(value: string | null) {
+  if (!value) return "";
+  const leaf = value.split("/").filter(Boolean).at(-1) ?? value;
+  return leaf.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
 function outputText(item: unknown) {
   if (!item || typeof item !== "object") return null;
   const message = item as {
@@ -94,14 +127,18 @@ export function resolveLearnContentSubagentRoleName(subagent: {
   name: string | null;
   instructions: Array<{ type: string; text?: string }> | null;
 }) {
-  const named = LEARN_CONTENT_ROLE_NAMES.find((roleName) => subagent.name === roleName);
-  if (named) return named;
   const task = (subagent.instructions ?? [])
     .filter((part) => part.type === "output_text" && typeof part.text === "string")
     .map((part) => part.text)
     .join("\n");
-  const assigned = LEARN_CONTENT_ROLE_NAMES.filter((roleName) => task.includes(`You are ${roleName}.`));
-  return assigned.length === 1 ? assigned[0] : "";
+  const normalizedName = normalizedRunnerTaskName(subagent.name);
+  const assigned = ROLE_TRACE_DEFINITIONS.filter((definition) => (
+    definition.taskNames.has(normalizedName)
+    || normalizedName === normalizedRunnerTaskName(definition.roleName)
+    || task.includes(definition.marker)
+    || task.includes(`You are ${definition.roleName}.`)
+  ));
+  return assigned.length === 1 ? assigned[0].roleName : "";
 }
 
 export class OpenAiLearnContentManagedSessionProvider implements LearnContentManagedSessionProvider {

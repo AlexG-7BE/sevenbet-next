@@ -11,7 +11,7 @@ import {
   authenticateLearnContentCron,
   resolveLearnContentConfig,
 } from "./config";
-import { parseLearnContentModelOutput } from "./contracts";
+import { LEARN_CONTENT_ROLE_NAMES, parseLearnContentModelOutput } from "./contracts";
 import {
   LearnContentPublisherError,
   McpLearnContentPublisher,
@@ -235,6 +235,17 @@ export function createLearnContentCronHandler(dependencies: LearnContentCronDepe
     const roleValidation = validateLearnContentRoleTrace(output, inspected.trace);
     if (!roleValidation.ok) {
       await state.finish({ runId: run.runId, now: current, result: "BLOCKED", code: roleValidation.code });
+      const roleCounts = LEARN_CONTENT_ROLE_NAMES.map((name) => inspected.trace.roles.filter((candidate) => candidate.name === name).length);
+      log({
+        event: "role_trace_blocked",
+        code: roleValidation.code,
+        runId: run.runId,
+        roleCount: inspected.trace.roles.length,
+        unresolvedRoleCount: inspected.trace.roles.filter((candidate) => !candidate.name).length,
+        seoRoleCount: roleCounts[0],
+        researchRoleCount: roleCounts[1],
+        editorRoleCount: roleCounts[2],
+      });
       return response("BLOCKED", roleValidation.code);
     }
     if (output.resultClass === "NO_OP") {

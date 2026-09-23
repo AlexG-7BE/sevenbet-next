@@ -96,6 +96,14 @@ SEO, one Research and one Editor role, with Research and Editor each proving at
 least one completed live-web search. Extra/missing roles or a downgraded model/
 reasoning configuration fail closed.
 
+The root creates direct children with exact machine task names
+`seo_strategist`, `researcher` and `editor`, and exact immutable role markers
+defined in `prompts.ts`; role subagents cannot delegate. Runtime trace
+classification accepts only an exact normalized task-path leaf, exact marker,
+or exact canonical human-role assignment. Runner nicknames and initial task
+content are provider-nullable, so conflicting or unidentifiable evidence fails
+closed and logs only bounded per-role counters, never task text.
+
 SEO treats a duplicate or weak idea as a rejected candidate, not as the end of
 the cycle. Before `MERGE`, `HOLD` or `DROP`, it performs a bounded scan across
 all supplied registered categories and the published Article inventory,
