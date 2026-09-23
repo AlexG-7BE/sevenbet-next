@@ -1,12 +1,12 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 17 September 2026
+**Evidence date:** 23 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Canonical Production source at this reconciliation checkpoint:** `c515ddb0e9442063d8fb51c4f69f37d55035adc4`
-**Verified post-release runtime baseline SHA:** `c515ddb0e9442063d8fb51c4f69f37d55035adc4`
-**Verified post-release runtime deployment:** Ready and promoted; `dpl_6LFpCzv2tib5GuC6WVa4JdUD7Q9G`
+**Canonical Production source at this reconciliation checkpoint:** `2378292085720f7e779085825b01265dcbfd12ce`
+**Verified post-release runtime baseline SHA:** `2378292085720f7e779085825b01265dcbfd12ce`
+**Verified post-release runtime deployment:** Ready and promoted; `dpl_2Y7oPFwg2XpanCp4qmKUacBBQg5Q`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -137,7 +137,7 @@ the same protected category and has no commercial fallback. See the
 [publication release record](06_Operations/B4GAMBLE-Learn-Publication-2026-09-17.md)
 and the original [Learning Center architecture release record](06_Operations/Learning-Center-PostgreSQL-Release-2026-09-15.md).
 
-## Autonomous Learn publication — RFC-052 Production baseline and create-only candidate
+## Autonomous Learn publication — RFC-052 create-only live
 
 **DETECTED IN THE PRODUCTION BASELINE, 21 SEPTEMBER 2026:** one
 service-authenticated `learn_apply` MCP mutation maps the complete desired
@@ -157,15 +157,18 @@ Article lifecycle and disappeared from the public route, Learn collection and
 sitemap. A complete-row aggregate hash confirmed that all 24 pre-existing
 Production Articles were field-for-field unchanged.
 
-**DETECTED IN THE CURRENT RELEASE CANDIDATE, NOT YET A PRODUCTION CLAIM:** the
-22 September Founder decision removes autonomous Article replacement. The
-model schema, role prompt, deterministic publication gate, MCP contract and
-serializable Article transaction are create-only: `articleId` and
-`expectedUpdatedAt` must be null, an existing global slug conflicts before
-image preparation, and only an exact same-request replay may return
-`NO_CHANGE`. The autonomous transaction has no Article update or
-`ContentRevision` write branch. Human Admin editing and the governed Article
-lifecycle remain unchanged.
+**DETECTED IN PRODUCTION, 23 SEPTEMBER 2026:** the 22 September Founder
+decision removing autonomous Article replacement is live. The model schema,
+role prompt, deterministic publication gate, MCP contract and serializable
+Article transaction are create-only: `articleId` and `expectedUpdatedAt` must
+be null, an existing global slug conflicts before image preparation, and only
+an exact same-request replay may return `NO_CHANGE`. The autonomous
+transaction has no Article update or `ContentRevision` write branch. The live
+acceptance entered `learn_apply` with `articleId=null`, returned
+`CREATED/LIVE/verified=true`, created no revision for the new Article and left
+the pre-existing 25-Article lifecycle projection at its exact pre-run digest
+`f5cd35f13963327f25d87f1517c30aa962759dd908ed0b6f2bd12e7250c6ed35`.
+Human Admin editing and the governed Article lifecycle remain unchanged.
 
 The capability creates zero models, tables, migrations, content/media/job
 entities, queues or CMS authorities. Human Admin lifecycle and Responsible
@@ -175,20 +178,39 @@ only for this isolated Learn endpoint and MCP SDK dependency. See
 [RFC-052](06_RFC/RFC-052-Autonomous-Learn-Publication.md) and the
 [operations runbook](06_Operations/Autonomous-Learn-Publication.md).
 
-## Autonomous Learn content orchestration — RFC-053 release candidate
+## Autonomous Learn content orchestration — RFC-053 live
 
-**DETECTED IN THE CURRENT RELEASE CANDIDATE, NOT YET A PRODUCTION CLAIM:** one
-native cron owns a durable managed run and separates SEO Strategist, Researcher
-and Editor responsibilities. The model receives only bounded public Article
-context, no mutation tool and no Production secret. The deterministic
-application layer may create one genuinely new Article, make no change, or
-block; it cannot update an existing Article. Deterministic non-retryable MCP
-failures block after one call, while transient and commit-ambiguous failures
-retain bounded same-request retries.
+**DETECTED IN MAIN, VERCEL, PRODUCTION STATE, DATABASE AND PUBLIC RUNTIME, 23
+SEPTEMBER 2026:** one native hourly cron owns a durable managed run and
+separates SEO Strategist, Researcher and Editor responsibilities. The model
+receives only bounded public Article context, no mutation tool and no
+Production secret. The deterministic application layer may create one
+genuinely new Article, make no change, or block; it cannot update an existing
+Article. Deterministic non-retryable MCP failures block after one call, while
+transient and commit-ambiguous failures retain bounded same-request retries.
 
-The exact merged `main` SHA, Ready Production deployment, Production
-configuration and autonomous end-to-end acceptance remain **UNKNOWN** until
-verified against live authoritative evidence. See
+[PR #335](https://github.com/AlexG-7BE/sevenbet-next/pull/335) passed required
+CI run
+[`35837795734`](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/35837795734)
+and merged as exact `main`
+`2378292085720f7e779085825b01265dcbfd12ce`. Ready Production deployment
+`dpl_2Y7oPFwg2XpanCp4qmKUacBBQg5Q` was built from that SHA and owns the
+canonical aliases. Production configuration is enabled for locale `en`, model
+`gpt-6-astra` and a 24-hour minimum launch interval; the enabled cron schedule
+is `13 * * * *`.
+
+Autonomous run `e7fd4249-f2c1-49e5-be86-1f04c35d4b72` used managed session
+`sess_0cf0a00510ddcec4006ab3945d48e08197a9ffba29dcffc173`, completed provider
+status `SESSION_IDLE` and published Article
+`b0c88152-8057-4dcc-83be-fdd0d22ce997`, **“Gambling Complaints in Great
+Britain: How to Use ADR”**, at
+`/en/learn/licensing/gambling-complaints-and-adr`. The Article is `PUBLISHED`,
+unarchived, service-actor owned and audited by `learn_apply`; its public route,
+canonical, Article JSON-LD, Learn hub, category collection and sitemap all
+returned `200`/contained the exact Article. It contains Help and official
+Gambling Commission sources, no image, no commercial route, no affiliate
+language and no tracking parameter. The next eligible timestamp remains 24
+hours after the cycle start. See
 [RFC-053](06_RFC/RFC-053-Autonomous-Learn-Content-Orchestration.md) and the
 [orchestrator operations runbook](06_Operations/Autonomous-Learn-Content-Orchestrator.md).
 
