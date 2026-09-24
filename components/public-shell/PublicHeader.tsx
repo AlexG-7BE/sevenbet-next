@@ -8,6 +8,7 @@ import { commercialDestinationsNavigable, type PublicAccountNavigation } from "@
 import type { CommercialProductState } from "@/lib/market/commercial-product-state";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
+import { PublicHeaderAutoHide } from "./PublicHeaderAutoHide";
 import { PublicHeaderThemeController } from "./PublicHeaderThemeController";
 import { PublicNavigation } from "./PublicNavigation";
 import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
@@ -64,6 +65,7 @@ export function PublicHeader({
         />
       </div>
       <PublicHeaderThemeController />
+      <PublicHeaderAutoHide />
     </header>
   );
 }

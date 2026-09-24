@@ -34,7 +34,14 @@
     background 400ms cubic-bezier(.2,.8,.2,1),
     border-color 250ms cubic-bezier(.2,.8,.2,1),
     color 250ms cubic-bezier(.2,.8,.2,1),
-    backdrop-filter 400ms cubic-bezier(.2,.8,.2,1);
+    backdrop-filter 400ms cubic-bezier(.2,.8,.2,1),
+    transform 220ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* Long mobile decision pages opt in with data-header-autohide: the header gives its
+   81px back while the reader scrolls down and returns on the first scroll up. */
+@media (max-width: 760px) {
+  :global(html[data-header-hidden="true"]) .header { transform: translateY(-100%); }
 }
 .header[data-shell-theme="light"], .header[data-shell-theme="cream"] { border-bottom-color:rgba(16,15,15,.14); background:rgba(250,250,247,.96); color:var(--shell-ink); }
 .header[data-shell-theme="cream"] { background:rgba(244,241,235,.96); }
@@ -778,6 +785,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .header { transition: none; }
   .primaryNavigation a::after,
   .primaryAction { transition: none; }
   .primaryAction:hover { transform: none; }

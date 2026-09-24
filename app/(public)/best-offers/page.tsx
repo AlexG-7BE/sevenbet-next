@@ -130,7 +130,7 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
     })),
   } : null;
 
-  return <div className={styles.page} data-runtime-renderer="best-offers">
+  return <div className={styles.page} data-header-autohide="" data-runtime-renderer="best-offers">
     <p className="srOnly">{messages.bestOffers.commissionNote}</p>
     <CommercialSurfaceView surface="best_offers" />
     {schema ? <JsonLd data={schema} /> : null}
