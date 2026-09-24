@@ -135,6 +135,10 @@
 .inlineButton { border-bottom-color: rgba(228, 226, 78, .4); color: var(--programme-acid); font-size: 14px; }
 .withdrawAction { margin-top: 20px; border-bottom-color: rgba(250, 250, 247, .16); color: rgba(250, 250, 247, .45); font-size: 14px; line-height: 20px; }
 /* The optional consent sits with the two required checks; its note reads as prose, not a label. */
+/* A quiet door, not a second call to action: Mission 01 stays the main path. */
+.accountFirstAction { justify-self: center; min-height: 44px; margin-top: 4px; padding: 2px 0; border: 0; background: transparent; color: rgba(250, 250, 247, .55); cursor: pointer; font-size: 14px; line-height: 20px; text-decoration: underline; text-decoration-color: rgba(250, 250, 247, .2); text-underline-offset: 4px; }
+.accountFirstAction:hover { color: rgba(250, 250, 247, .85); }
+.accountFirstLead { max-width: 36ch; margin: 12px auto 8px; color: rgba(250, 250, 247, .72); font-size: 16px; line-height: 1.5; text-align: center; }
 .consentRow span { font-size: 14px; line-height: 1.4; }
 .consentRow em { margin-top: 2px; color: rgba(250, 250, 247, .55); font-size: 12px; font-style: normal; line-height: 1.45; }
 /* Three rows must leave the entry action on a phone's first screen. */
