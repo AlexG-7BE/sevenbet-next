@@ -8,7 +8,7 @@ import { isLocalizedPublicDestination, localizePublicPath } from "@/lib/market/r
 import { DEFAULT_MARKET_PROFILE, marketProfileByLocale } from "@/lib/market/registry";
 import type { CommercialProductState } from "@/lib/market/commercial-product-state";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
-import { publicCommercialDestinationVisible } from "@/lib/public-shell";
+import { commercialDestinationsNavigable, publicCommercialDestinationVisible } from "@/lib/public-shell";
 import styles from "./PublicShell.module.css";
 
 export function PublicFooter({
@@ -31,7 +31,7 @@ export function PublicFooter({
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const showCommercialProducts = deferCommercialNavigation
     ? false
-    : commercialProductsAvailable(commercialProductState);
+    : commercialDestinationsNavigable(commercialProductsAvailable(commercialProductState), presentation.marketCountryCode);
   const groups = [
     { title: footer.explore, links: [[shell.bestOffers, "/best-offers"], [shell.casinos, "/casinos"], [shell.bonuses, "/bonuses"], [shell.learn, "/learn"]] },
     { title: footer.programmeAndSupport, links: [[shell.startProgramme, "/program"], [footer.tenSteps, "/10-steps"], [footer.responsibleGambling, "/responsible-gambling"], [footer.protectedHelp, "/help"]] },

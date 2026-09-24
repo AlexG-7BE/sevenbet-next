@@ -173,8 +173,15 @@ test("editorial-only market state is deliberate across navigation and direct com
   await expect(page.getByText(/Three picks/i)).toHaveCount(0);
   await expect(page.getByRole("tab")).toHaveCount(0);
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
-  await expect(page.locator('header a[href$="/best-offers"], header a[href$="/bonuses"]')).toHaveCount(0);
-  await expect(page.locator('footer a[href$="/best-offers"], footer a[href$="/bonuses"]')).toHaveCount(0);
+  // Navigation follows the presentation policy rather than the inventory. This
+  // market is permitted, so the destinations stay linked and say for
+  // themselves that nothing is published yet; hiding them was how a reader in
+  // an unactivated country lost the pages entirely. A prohibited market still
+  // has them withheld, which the Stage 2 isolation test covers.
+  await expect(page.locator('nav[aria-label="Primary navigation"] a[href$="/best-offers"]')).toHaveCount(1);
+  await expect(page.locator('nav[aria-label="Primary navigation"] a[href$="/bonuses"]')).toHaveCount(1);
+  await expect(page.locator('footer a[href$="/best-offers"]')).toHaveCount(1);
+  await expect(page.locator('footer a[href$="/bonuses"]')).toHaveCount(1);
   await expect(page.locator('header a[href$="/casinos"], header a[href$="/learn"]')).toHaveCount(4);
 
   const bonuses = await page.goto(`${baseUrl}/en/bonuses`, { waitUntil: "networkidle" });

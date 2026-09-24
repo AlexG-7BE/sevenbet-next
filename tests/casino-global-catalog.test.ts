@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -206,23 +207,22 @@ test("the editorial corpus replaces the generated lists rather than restating th
   const original = JSON.parse(generated) as { casinos: Array<{ slug: string; bestFor: string[]; thingsToKnow: string[] }> };
 
   assert.equal(replacement.commercialAuthority, false, "editorial copy never carries commercial authority");
-  assert.deepEqual(
-    replacement.entries.map((entry) => entry.slug).sort(),
-    original.casinos.map((casino) => casino.slug).sort(),
-    "every generated entry is replaced",
-  );
+  const covered = new Set(replacement.entries.map((entry) => entry.slug));
+  for (const casino of original.casinos) {
+    assert.ok(covered.has(casino.slug), `${casino.slug} still carries generated copy`);
+  }
 
   const originalBySlug = new Map(original.casinos.map((casino) => [casino.slug, casino]));
   for (const entry of replacement.entries) {
-    const before = originalBySlug.get(entry.slug);
-    assert.ok(before);
-    // The generated lists all opened by reciting licence numbers the page
-    // already shows in its regulation section.
-    assert.match(before.bestFor[0] as string, /^Players who want a licensed site:/);
     for (const line of [...entry.bestFor, ...entry.thingsToKnow]) {
       assert.doesNotMatch(line, /^Players who want a licensed site:/, `${entry.slug} still recites licences`);
       assert.doesNotMatch(line, /licence \d/i, `${entry.slug} still quotes a licence number`);
     }
+    const before = originalBySlug.get(entry.slug);
+    if (!before) continue;
+    // The generated lists all opened by reciting licence numbers the page
+    // already shows in its regulation section.
+    assert.match(before.bestFor[0] as string, /^Players who want a licensed site:/);
     assert.notDeepEqual(entry.bestFor, before.bestFor, `${entry.slug} "Best for" is unchanged`);
     assert.notDeepEqual(entry.thingsToKnow, before.thingsToKnow, `${entry.slug} "Things to know" is unchanged`);
   }
@@ -247,31 +247,14 @@ test("no two casinos share a Best for or Things to know line", async () => {
   }
 });
 
-test("the offer activation batch is a literal list that cannot widen", async () => {
-  // CASINO-REAL-CATALOG-03 activated exactly its own seven offers. This batch
-  // is the equivalent for the six EGO offers whose terms were researched on
-  // 22 September but never moved to offerStatus ACTIVE. A wildcard here would
-  // publish incomplete offers such as Betsson's observation rows.
-  const executor = await readFile(path.join(process.cwd(), "scripts/casino-global-catalog-01.ts"), "utf8");
-  const batch = executor.match(/const ACTIVATABLE_OFFERS = \[([\s\S]*?)\] as const;/)?.[1];
-  assert.ok(batch, "the activation batch must stay a named list");
-
-  const slugs = [...batch.matchAll(/"([a-z0-9-]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(slugs, [
-    "bacanaplay-pt-welcome",
-    "drueckglueck-de-welcome",
-    "jackpotstar-gb-welcome",
-    "playojo-gb-welcome",
-    "playojo-bingo-gb-welcome",
-    "playuzu-es-welcome",
-  ]);
-  for (const slug of slugs) {
-    assert.doesNotMatch(slug as string, /observation/, "an observation row is not a publishable offer");
-    assert.doesNotMatch(slug as string, /^goldenplay-/, "GoldenPlay's CMS offers are not part of this batch");
-  }
-  // The run must fail rather than proceed if the database does not hold
-  // exactly this set, so a renamed or missing offer is caught before a write.
-  assert.match(executor, /targets\.length !== ACTIVATABLE_OFFERS\.length/);
+test("a published offer is withheld only when the casino has no working route", () => {
+  // The previous rule was a hardcoded list of six, which left GoldenPlay on
+  // fifteen live routes with eleven offers stranded in DRAFT. A working route
+  // means the offer page is reachable, so the offer exists and is published.
+  const executor = readFileSync(new URL("../scripts/casino-global-catalog-01.ts", import.meta.url), "utf8");
+  assert.match(executor, /status: "ACTIVE", routeVerificationStatus: "HEALTHY"/, "the route is what gates publication");
+  assert.match(executor, /routedCasinoIds\.has\(bonus\.casino\.id\)/, "an unrouted casino's offer stays withheld");
+  assert.doesNotMatch(executor, /ACTIVATABLE_OFFERS/, "no hardcoded batch remains");
 });
 
 test("activating an offer never claims commercial authority", async () => {
@@ -279,4 +262,60 @@ test("activating an offer never claims commercial authority", async () => {
   const auditBlock = executor.slice(executor.indexOf("casino-global-catalog-01-offer"));
   assert.match(auditBlock, /commercialAuthorityGranted: false/);
   assert.match(auditBlock, /routeCreated: false/);
+});
+
+test("release vocabulary never reaches a reader", async () => {
+  // The fifteen CASINO-REAL-CATALOG entries were written for a release record:
+  // "the Superfly set", "a disabled Preview card", "creative geography", "the
+  // governed corpus". Accurate internally, meaningless to a player.
+  const corpus = JSON.parse(await readFile(
+    path.join(process.cwd(), "data/casino-global-catalog-01/editorial.v1.json"),
+    "utf8",
+  )) as { entries: Array<{ slug: string; bestFor: string[]; thingsToKnow: string[]; description: string }> };
+
+  const internalVocabulary = [
+    /\bSuperfly\b/i,
+    /\bPreview card\b/i,
+    /creative geography/i,
+    /governed (?:corpus|profile)/i,
+    /\bthis release\b/i,
+    /exact-domain/i,
+    /commercial routing remains/i,
+    /editorial score does not/i,
+    /partner (?:matrix|corpus|portal)/i,
+  ];
+  for (const entry of corpus.entries) {
+    for (const text of [...entry.bestFor, ...entry.thingsToKnow, entry.description]) {
+      for (const pattern of internalVocabulary) {
+        assert.doesNotMatch(text, pattern, `${entry.slug} still speaks in release vocabulary`);
+      }
+    }
+  }
+});
+
+test("facts a player needs survive the rewrite", async () => {
+  // The rewrite must not sand off the uncomfortable parts. These three were
+  // buried in internal prose and are the most consequential things we hold.
+  const corpus = JSON.parse(await readFile(
+    path.join(process.cwd(), "data/casino-global-catalog-01/editorial.v1.json"),
+    "utf8",
+  )) as { entries: Array<{ slug: string; bestFor: string[]; thingsToKnow: string[]; description: string }> };
+  const bySlug = new Map(corpus.entries.map((entry) => [entry.slug, entry]));
+
+  const required: Array<[string, RegExp]> = [
+    ["21-prive", /delayed withdrawals/i],
+    ["slotnite", /delayed payouts/i],
+    ["betsson", /anti-money-laundering/i],
+    ["betsson", /6\.5 million/],
+    ["goldenplay", /offshore/i],
+    ["rizk", /no Canadian licence/i],
+    ["supercasino", /not a New Zealand licence/i],
+    ["starcasino", /information only/i],
+  ];
+  for (const [slug, pattern] of required) {
+    const entry = bySlug.get(slug);
+    assert.ok(entry, `${slug} is missing from the corpus`);
+    const joined = [...entry.bestFor, ...entry.thingsToKnow, entry.description].join("\n");
+    assert.match(joined, pattern, `${slug} lost a fact a player needs`);
+  }
 });

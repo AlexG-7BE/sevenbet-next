@@ -48,7 +48,11 @@ test("German local visual profile fact labels and values never intersect", async
       });
     });
 
-    expect(factRows.map(({ label }) => label), `${viewport.width}px fact labels`).toContain("Mindestabhebung");
+    // The fixture deliberately carries no minimum-withdrawal or fee amount, and
+    // a fact the profile cannot state is no longer rendered, so payout is the
+    // row this overlap check measures.
+    expect(factRows.map(({ label }) => label), `${viewport.width}px fact labels`).toContain("Auszahlung");
+    expect(factRows.length, `${viewport.width}px fact rows`).toBeGreaterThan(0);
     for (const row of factRows) {
       const description = `${viewport.width}px ${row.label} / ${row.value}`;
       expect(row.elementIntersection, `${description} element boxes`).toBe(0);

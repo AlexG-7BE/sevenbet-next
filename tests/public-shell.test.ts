@@ -6,6 +6,7 @@ import {
   PUBLIC_NAVIGATION,
   accountNavigationFor,
   classifyShellRoute,
+  commercialDestinationsNavigable,
   publicCommercialDestinationVisible,
   publicNavigationForCommercialState,
 } from "../lib/public-shell";
@@ -32,6 +33,20 @@ test("public navigation and footer destinations follow the canonical commercial 
   assert.equal(publicCommercialDestinationVisible("/bonuses", false), false);
   for (const href of ["/casinos", "/learn", "/methodology", "/help", "/responsible-gambling", "/affiliate-disclosure"]) {
     assert.equal(publicCommercialDestinationVisible(href, false), true, href);
+  }
+});
+
+test("commercial destinations are navigable wherever their offers may be presented", () => {
+  // A partner route is not the test. Gating the links on one hid Best Offers
+  // and Bonuses in every country we had not activated, while the pages
+  // themselves had started presenting published offers there.
+  assert.equal(commercialDestinationsNavigable(true, "NO"), true, "a route is always enough");
+  assert.equal(commercialDestinationsNavigable(false, "KZ"), true, "permitted without a route still links");
+  assert.equal(commercialDestinationsNavigable(false, "GB"), true);
+  assert.equal(commercialDestinationsNavigable(false, null), true, "an unresolved country is not a prohibition");
+  assert.equal(commercialDestinationsNavigable(false, undefined), true);
+  for (const prohibited of ["NO", "IT", "NL", "TR", "GR"]) {
+    assert.equal(commercialDestinationsNavigable(false, prohibited), false, `${prohibited} stays withheld`);
   }
 });
 
