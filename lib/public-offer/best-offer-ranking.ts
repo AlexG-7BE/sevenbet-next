@@ -164,11 +164,14 @@ function uniqueCasinos(offers: PublicOfferDTO[], limit: number) {
 export function rankBestOffersForCategory(
   offers: readonly PublicOfferDTO[],
   category: BestOfferCategory,
-  options: { country?: string; includeDemonstration?: boolean; limit?: number } = {},
+  options: { country?: string; includeDemonstration?: boolean; includeWithoutRoute?: boolean; limit?: number } = {},
 ) {
   const eligible = offers.filter((offer) => options.includeDemonstration
     ? offer.dataClassification === "DEMO_FIXTURE"
-    : isGovernedBestOfferCandidate(offer, options.country));
+    // A published offer is ranked on its own terms. Requiring a governed route
+    // emptied every category wherever no partner link existed, which is the
+    // same mistake the Bonuses page made: publication is not route eligibility.
+    : options.includeWithoutRoute || isGovernedBestOfferCandidate(offer, options.country));
   const categoryEligible = eligible.filter((offer) => {
     if (category === "best_overall") return Number.isFinite(offer.casino.editorScore) && materialTermCompleteness(offer) >= 2;
     if (category === "fast_payouts") return hasPayoutEvidence(offer) && offerWithdrawalBucket(offer) !== "unknown";
@@ -214,9 +217,15 @@ export function rankBestOffersForCategory(
   return uniqueCasinos(ranked, Math.min(Math.max(options.limit ?? 3, 1), 3));
 }
 
-export function selectCommercialBestOfferPool(offers: PublicOfferDTO[], options: { country?: string; limit?: number } = {}) {
+export function selectCommercialBestOfferPool(
+  offers: PublicOfferDTO[],
+  options: { country?: string; limit?: number; includeWithoutRoute?: boolean } = {},
+) {
   const limit = Math.min(Math.max(options.limit ?? 48, 1), 100);
-  return rankOffersByEditorialAuthority(offers.filter((offer) => isGovernedBestOfferCandidate(offer, options.country))).slice(0, limit);
+  const eligible = options.includeWithoutRoute
+    ? offers
+    : offers.filter((offer) => isGovernedBestOfferCandidate(offer, options.country));
+  return rankOffersByEditorialAuthority(eligible).slice(0, limit);
 }
 
 export function rankBestBonusCasinoIds(

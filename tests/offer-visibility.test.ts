@@ -55,3 +55,32 @@ test("both offer surfaces gate on the policy rather than on having a route", () 
     );
   }
 });
+
+test("the Best Offers shortlist ranks a published offer without a partner route", async () => {
+  // Requiring a governed action emptied every category wherever no partner
+  // link existed, so the page showed "no partner link available" instead of a
+  // ranking. Publication is not route eligibility.
+  const { rankBestOffersForCategory, selectCommercialBestOfferPool } = await import("../lib/public-offer/best-offer-ranking");
+  const offer = {
+    dataClassification: "PUBLISHED_RECORD" as const,
+    action: null,
+    bonus: {
+      slug: "unrouted-welcome", type: "WELCOME", percentage: 100, minimumDeposit: 10, maximumBonus: 200,
+      maximumBet: 5, currency: "EUR", freeSpins: 50, wageringMultiplier: 30, wageringText: null,
+      eligibility: "New players", importantConditions: ["Max bet 5"], termsUrl: null, expiresAt: null,
+    },
+    casino: { id: "c1", slug: "unrouted", name: "Unrouted", editorScore: 8.4, featured: false, recommended: false, payments: [], lastReviewedAt: null, publishedAt: null },
+  } as unknown as Parameters<typeof rankBestOffersForCategory>[0][number];
+
+  assert.equal(selectCommercialBestOfferPool([offer], {}).length, 0, "the route-gated pool still excludes it");
+  assert.equal(selectCommercialBestOfferPool([offer], { includeWithoutRoute: true }).length, 1);
+  assert.equal(rankBestOffersForCategory([offer], "best_overall", {}).length, 0);
+  assert.equal(rankBestOffersForCategory([offer], "best_overall", { includeWithoutRoute: true }).length, 1);
+});
+
+test("the Best Offers page and component both stop gating on a route", () => {
+  const service = readFileSync(new URL("../lib/services/public-offer.service.ts", import.meta.url), "utf8");
+  assert.match(service, /offersMayBePresented\(country\)/, "the shortlist consults the visibility policy");
+  const experience = readFileSync(new URL("../components/best-offers/BestOffersExperience.tsx", import.meta.url), "utf8");
+  assert.match(experience, /includeWithoutRoute: true/, "categories must not re-filter on a route");
+});
