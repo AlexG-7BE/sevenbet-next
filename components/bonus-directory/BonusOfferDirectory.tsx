@@ -55,6 +55,16 @@ export function BonusOfferDirectory({ messages, offers, presentation }: {
         const card = offerCardPresentation(offer, presentation.locale, messages, copy, "bonus_directory");
         const published = offer.dataClassification === "PUBLISHED_RECORD";
         const placement = `BONUSES_${view.toUpperCase()}`;
+        const reviewLink = (primary: boolean) => card.reviewHref ? <TrackedReviewLink
+          casinoId={published ? card.casinoId : undefined}
+          className={primary ? styles.reviewPrimary : undefined}
+          href={productHref(presentation, card.reviewHref)}
+          pendingLabel={published ? copy.casinoReview : messages.common.viewDemonstration}
+          placement="BONUS_CARD"
+          position={index + 1}
+          primary={primary}
+          sourceSurface="bonuses"
+        >{published ? copy.casinoReview : messages.common.viewDemonstration} <span aria-hidden="true">→</span></TrackedReviewLink> : null;
         return <article
           className={styles.card}
           data-analytics-card-key={published ? `${view}:${card.offerKey}` : undefined}
@@ -76,17 +86,11 @@ export function BonusOfferDirectory({ messages, offers, presentation }: {
           </div>
           <CommercialFacts facts={card.facts} className={styles.facts} />
           <div className={styles.actions}>
-            {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "BONUS_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
+            {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "BONUS_CARD" }} messages={messages.outbound} showDisclosure={false} /> : card.reviewHref ? null : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
+            {!card.action && card.reviewHref ? reviewLink(true) : null}
             <div className={styles.researchLinks}>
               {card.termsUrl ? <a href={card.termsUrl} rel="noopener noreferrer" target="_blank">{copy.terms}</a> : null}
-              {card.reviewHref ? <TrackedReviewLink
-                casinoId={published ? card.casinoId : undefined}
-                href={productHref(presentation, card.reviewHref)}
-                pendingLabel={published ? copy.casinoReview : messages.common.viewDemonstration}
-                placement="BONUS_CARD"
-                position={index + 1}
-                sourceSurface="bonuses"
-              >{published ? copy.casinoReview : messages.common.viewDemonstration} <span aria-hidden="true">→</span></TrackedReviewLink> : null}
+              {card.action && card.reviewHref ? reviewLink(false) : null}
             </div>
           </div>
         </article>;

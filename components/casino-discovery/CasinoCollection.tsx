@@ -84,13 +84,15 @@ export function CasinoCollection({ casinos, initialSearch = "", messages, presen
           <CommercialFacts facts={card.facts} className={styles.facts} />
           {view === "top_rated" && card.reason ? <p className={styles.reason}>{card.reason}</p> : null}
           <div className={styles.actions}>
-            {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_COLLECTION_CARD" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
+            {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_COLLECTION_CARD" }} messages={messages.outbound} showDisclosure={false} /> : card.reviewHref ? null : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
             {card.reviewHref ? <TrackedReviewLink
               casinoId={published ? card.casinoId : undefined}
+              className={card.action ? undefined : styles.reviewPrimary}
               href={productHref(presentation, card.reviewHref)}
               pendingLabel={published ? messages.common.readReview : messages.common.viewDemonstration}
               placement="CASINO_COLLECTION_CARD"
               position={index + 1}
+              primary={!card.action}
               sourceSurface="casinos"
             >{published ? messages.common.readReview : messages.common.viewDemonstration} <span aria-hidden="true">→</span></TrackedReviewLink> : null}
           </div>

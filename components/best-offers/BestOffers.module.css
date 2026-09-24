@@ -88,13 +88,16 @@
 .rankSecondary dl.rankFacts { gap:0 14px; }
 .rankActions { display:flex; align-items:center; flex-wrap:wrap; gap:16px 24px; }
 .rankSecondary .rankActions { justify-self:end; gap:12px 20px; }
-.rankActions .offerAction { min-height:48px; padding:19px 30px; flex:1; min-width:180px; border:0; border-radius:var(--sb-radius-button); background:var(--acid); color:var(--night); font-size:12px; font-weight:600; letter-spacing:.2em; line-height:1.2; text-transform:uppercase; white-space:nowrap; transition:background 200ms var(--ease); }
+.rankActions .offerAction { min-height:48px; padding:14px 24px; flex:1; min-width:180px; border:0; border-radius:var(--sb-radius-button); background:var(--acid); color:var(--night); font-size:16px; font-weight:700; letter-spacing:.01em; line-height:1.25; text-align:center; text-transform:none; text-wrap:balance; white-space:normal; transition:background 200ms var(--ease); }
 .rankActions .offerAction:hover { transform:none; background:var(--paper); }
-.rankActions .offerAction > span > span { display:none; }
 .rankSecondary .rankActions .offerAction { min-width:0; padding:16px 24px; flex:none; background:var(--paper); }
 .rankSecondary .rankActions .offerAction:hover { background:var(--acid); }
 .reviewOnly { min-height:48px; padding:16px 20px; flex:1; display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(250,250,247,.2); border-radius:var(--sb-radius-button); color:rgba(250,250,247,.6); font-size:12px; letter-spacing:.2em; line-height:1.2; text-transform:uppercase; white-space:nowrap; }
 .rankSecondary .reviewOnly { flex:none; padding:15px 18px; }
+/* No governed action: the review is the card's live action, sized like the partner button. */
+.rankActions .reviewPrimary { min-height:48px; padding:14px 24px; flex:1; min-width:180px; display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(250,250,247,.5); border-radius:var(--sb-radius-button); color:var(--paper); font-size:16px; font-weight:700; letter-spacing:.01em; line-height:1.25; text-align:center; text-decoration:none; transition:background 200ms var(--ease),color 200ms var(--ease); }
+.rankActions .reviewPrimary:hover { background:var(--paper); color:var(--night); }
+.rankSecondary .rankActions .reviewPrimary { min-width:0; flex:none; padding:14px 22px; }
 .rankActions > a:not(:first-child) { min-height:44px; display:inline-flex; align-items:center; gap:6px; color:rgba(250,250,247,.8); font-size:13px; letter-spacing:.04em; text-decoration:underline; text-decoration-color:rgba(250,250,247,.3); text-decoration-thickness:1px; text-underline-offset:6px; white-space:nowrap; transition:color 200ms var(--ease),text-decoration-color 200ms var(--ease); }
 .rankActions > a:not(:first-child):hover { color:var(--paper); text-decoration-color:var(--paper); }
 .categoryEmpty { padding:clamp(28px,4vw,48px); border:1px solid var(--line); border-radius:var(--sb-radius-card); background:var(--card); }
@@ -176,7 +179,7 @@
   .page dl.rankFacts > div,.rankPrimary dl.rankFacts > div { padding:12px 0; display:flex; align-items:baseline; justify-content:space-between; gap:16px; border-top:1px solid rgba(250,250,247,.12); }
   .page dl.rankFacts dd { margin:0; text-align:right; }
   .rankActions,.rankSecondary .rankActions { flex-direction:column; align-items:stretch; justify-self:stretch; gap:12px; }
-  .rankActions .offerAction,.rankSecondary .rankActions .offerAction,.reviewOnly { width:100%; min-width:0; }
+  .rankActions .offerAction,.rankSecondary .rankActions .offerAction,.reviewOnly,.rankActions .reviewPrimary,.rankSecondary .rankActions .reviewPrimary { width:100%; min-width:0; }
   .rankActions > a:not(:first-child) { justify-content:center; }
   .whyPicked,.faq { padding:72px 0; }
   .whyPicked .shell,.faqGrid { gap:40px; }
@@ -189,6 +192,6 @@
 }
 @media (prefers-reduced-motion:reduce) {
   .reveal { animation:none; }
-  .rankPrimary,.rankSecondary,.categoryRail button,.rankActions .offerAction,.faqList summary span { transition:none; }
+  .rankPrimary,.rankSecondary,.categoryRail button,.rankActions .offerAction,.rankActions .reviewPrimary,.faqList summary span { transition:none; }
   .rankPrimary:hover,.rankSecondary:hover { transform:none; }
 }

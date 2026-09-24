@@ -268,7 +268,8 @@ test("shared casino profile keeps the concise decision sequence and Review Only 
     ]);
     await expect(profile.locator("[data-casino-decision-bar]"), `${viewport.width}px non-governed sticky action`).toHaveCount(0);
     await expect(profile.locator('a[href^="/r/"]'), `${viewport.width}px non-governed referral`).toHaveCount(0);
-    await expect(profile.getByText("Review only", { exact: true }), `${viewport.width}px Review Only labels`).toHaveCount(2);
+    await expect(profile.getByText("Review only", { exact: true }), `${viewport.width}px no dead Review Only boxes`).toHaveCount(0);
+    await expect(profile.locator("[data-review-no-action]"), `${viewport.width}px plain no-action statement`).toHaveCount(1);
     const geometry = await profile.evaluate((element) => {
       const faq = element.querySelector<HTMLElement>("#casino-faq")!;
       const verdict = element.querySelector<HTMLElement>("#our-verdict")!;
@@ -310,7 +311,8 @@ test("informational-only state keeps the review and removes visit actions", asyn
   const response = await page.goto(`${baseUrl}/casino/demo-meadow?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Solvane Casino" })).toBeVisible();
-  await expect(page.getByText("Review only", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Review only", { exact: true })).toHaveCount(0);
+  await expect(page.locator("[data-review-no-action]")).toHaveCount(1);
   expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
   await expect(page.getByRole("contentinfo").getByRole("link", { name: /Help — protected support/ })).toBeVisible();
 });
@@ -342,7 +344,8 @@ test("outbound confirmation is absent while market authority denies referral", a
   await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
   const hero = page.getByRole("region", { exact: true, name: "Solvane Casino" });
   await expect(hero.getByRole("link", { name: "Visit Solvane Casino" })).toHaveCount(0);
-  await expect(hero.getByText("Review only", { exact: true })).toBeVisible();
+  await expect(hero.getByText(/The review remains available/)).toBeVisible();
+  await expect(hero.getByText("Review only", { exact: true })).toHaveCount(0);
   await expect(page.getByText("DEMONSTRATION DATA", { exact: true })).toBeVisible();
   await page.close();
 });
@@ -377,7 +380,8 @@ test("server HTML remains useful with JavaScript disabled", async ({ browser }) 
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Solvane Casino" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Visit Solvane Casino" })).toHaveCount(0);
-  await expect(page.getByText("Review only", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Review only", { exact: true })).toHaveCount(0);
+  await expect(page.locator("[data-review-no-action]")).toHaveCount(1);
   await context.close();
 });
 

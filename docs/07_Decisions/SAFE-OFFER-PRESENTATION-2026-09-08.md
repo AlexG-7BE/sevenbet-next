@@ -149,6 +149,14 @@ titles. `Published` alone is insufficient where it could imply local
 availability. `Review only` describes commercial action state, not offer
 absence. `Not listed` is reserved for `NONE`.
 
+**2026-09-24 (Founder, mobile UX audit package 1):** a state without a
+governed action is never drawn as a box that looks like a button. On Best
+Offers, Casinos and Bonuses cards the record's review link takes the action
+slot at the partner button's size. `Review only` remains only where the record
+has no review page. The casino profile states the no-action state in plain text
+(`reviewAvailableNoAction`) instead of a `Review only` box. Referral links still
+appear only through the governed `/r/...` action.
+
 ## Phase A production acceptance finding
 
 **DETECTED:** the first Phase A production acceptance run reached the trusted

@@ -153,7 +153,8 @@ for (const viewport of [
     expect(await profile.locator("section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
       "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "casino-faq", "our-verdict",
     ]);
-    await expect(profile.getByText("Review only", { exact: true })).toHaveCount(2);
+    await expect(profile.getByText("Review only", { exact: true })).toHaveCount(0);
+    await expect(profile.locator("[data-review-no-action]")).toHaveCount(1);
     await expect(profile.locator("[data-casino-decision-bar]")).toHaveCount(0);
     await expect(profile.locator('a[href^="/r/"]')).toHaveCount(0);
 
