@@ -52,21 +52,17 @@ test("active 10 Steps Handoff runtime exposes one ordered, labelled Mission sequ
   }
 });
 
-test("active 10 Steps copy states current timing and the Mission 01 reward boundary", () => {
+test("active 10 Steps copy states current timing and the closing benefit", () => {
   const { html, messages } = renderActiveTenSteps();
   const closing = `${messages.text[46]} ${messages.text[47]}`;
-  const actionIndex = messages.text[48].indexOf("two actions");
-  const rewardIndex = messages.text[48].indexOf("40 XP");
-  const registrationIndex = messages.text[48].indexOf("Registration awards no XP");
 
   assert.equal(messages.text.length, 50);
   assert.match(messages.text[4], /5–8 minutes/);
   assert.doesNotMatch(messages.text[4], /5–15/);
   assert.equal(closing, "Mission 01 starts with your Starting Point.");
   assert.doesNotMatch(closing, /minute/i);
-  assert.ok(actionIndex >= 0 && actionIndex < rewardIndex);
-  assert.ok(rewardIndex < registrationIndex);
-  assert.match(messages.text[48], /only follows when it is ready/);
+  assert.equal(messages.text[48], "Free and private. No account needed to begin.");
+  assert.doesNotMatch(messages.text[48], /XP|Registration/);
 
   assert.ok(html.includes(`>${escapeHtml(messages.text[4])}<`));
   assert.ok(html.includes(`>${escapeHtml(messages.text[46])}<br>`));

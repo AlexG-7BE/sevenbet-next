@@ -121,7 +121,7 @@ const enCurrent: CurrentProgrammeCopy = {
   ],
   closingLead: "Mission 01 starts with",
   closingEmphasis: "your Starting Point.",
-  closingBody: "Complete the Starting Point's two actions for 40 XP. Registration awards no XP and only follows when it is ready.",
+  closingBody: "Free and private. No account needed to begin.",
 };
 
 const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, CurrentProgrammeCopy> = {
@@ -142,7 +142,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Mission 01 beginnt mit",
     closingEmphasis: "deinem Ausgangspunkt.",
-    closingBody: "Schließe die beiden Aktionen zum Ausgangspunkt ab und erhalte 40 XP. Die Registrierung bringt keine XP und folgt erst, wenn der Ausgangspunkt bereit ist.",
+    closingBody: "Kostenlos und privat. Du brauchst kein Konto, um zu beginnen.",
   },
   "it-IT": {
     overview: "La maggior parte delle Missioni dura circa 5–8 minuti e termina con qualcosa che conservi. La Missione 01 inizia con un breve Punto di partenza. Ecco cosa accade, senza sorprese né clausole nascoste.",
@@ -160,7 +160,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "La Missione 01 inizia con",
     closingEmphasis: "il tuo Punto di partenza.",
-    closingBody: "Completa le due azioni del Punto di partenza per ottenere 40 XP. La registrazione non assegna XP e avviene solo quando il Punto di partenza è pronto.",
+    closingBody: "Gratuito e privato. Non serve un account per iniziare.",
   },
   "es-ES": {
     overview: "La mayoría de las Misiones dura entre 5 y 8 minutos y termina con algo que conservas. La Misión 01 comienza con un breve Punto de partida. Esto es exactamente lo que ocurre, sin sorpresas ni letra pequeña.",
@@ -178,7 +178,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "La Misión 01 comienza con",
     closingEmphasis: "tu Punto de partida.",
-    closingBody: "Completa las dos acciones del Punto de partida para obtener 40 XP. El registro no otorga XP y solo aparece cuando el Punto de partida está listo.",
+    closingBody: "Gratis y privado. No necesitas una cuenta para empezar.",
   },
   "pt-PT": {
     overview: "A maioria das Missões demora entre 5 e 8 minutos e termina com algo que guardas. A Missão 01 começa com um breve Ponto de partida. Eis exatamente o que acontece — sem surpresas nem letras pequenas.",
@@ -196,7 +196,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "A Missão 01 começa com",
     closingEmphasis: "o teu Ponto de partida.",
-    closingBody: "Conclui as duas ações do Ponto de partida para receberes 40 XP. O registo não atribui XP e só acontece quando o Ponto de partida estiver pronto.",
+    closingBody: "Gratuito e privado. Não precisas de conta para começar.",
   },
   "el-GR": {
     overview: "Οι περισσότερες Αποστολές διαρκούν περίπου 5–8 λεπτά και τελειώνουν με κάτι που κρατάς. Η Αποστολή 01 ξεκινά με ένα σύντομο Σημείο Εκκίνησης. Δες ακριβώς τι συμβαίνει — χωρίς εκπλήξεις ή ψιλά γράμματα.",
@@ -214,7 +214,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Η Αποστολή 01 ξεκινά με",
     closingEmphasis: "το Σημείο Εκκίνησής σου.",
-    closingBody: "Ολοκλήρωσε τις δύο ενέργειες του Σημείου Εκκίνησης για 40 XP. Η εγγραφή δεν δίνει XP και ακολουθεί μόνο όταν το Σημείο Εκκίνησης είναι έτοιμο.",
+    closingBody: "Δωρεάν και ιδιωτικό. Δεν χρειάζεσαι λογαριασμό για να ξεκινήσεις.",
   },
   "nl-NL": {
     overview: "De meeste Missies duren ongeveer 5–8 minuten en eindigen met iets dat je bewaart. Missie 01 begint met een kort Startpunt.",
@@ -232,7 +232,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Missie 01 begint met",
     closingEmphasis: "je Startpunt.",
-    closingBody: "Voltooi de twee acties van je Startpunt om 40 XP te verdienen. Je registreert je pas als je Startpunt klaar is; registratie levert geen XP op.",
+    closingBody: "Gratis en privé. Je hebt geen account nodig om te beginnen.",
   },
   "sv-SE": {
     overview: "De flesta Uppdrag tar ungefär 5–8 minuter och slutar med något du behåller. Uppdrag 01 börjar med en kort Startpunkt.",
@@ -250,7 +250,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Uppdrag 01 börjar med",
     closingEmphasis: "din Startpunkt.",
-    closingBody: "Slutför Startpunktens två moment för att få 40 XP. Du registrerar dig först när Startpunkten är klar; registreringen ger inga XP.",
+    closingBody: "Gratis och privat. Du behöver inget konto för att börja.",
   },
   "da-DK": {
     overview: "De fleste Missioner tager cirka 5–8 minutter og slutter med noget, du beholder. Mission 01 begynder med et kort Udgangspunkt.",
@@ -268,7 +268,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Mission 01 begynder med",
     closingEmphasis: "dit Udgangspunkt.",
-    closingBody: "Gennemfør Udgangspunktets to handlinger for at få 40 XP. Du registrerer dig først, når Udgangspunktet er klart; registreringen giver ingen XP.",
+    closingBody: "Gratis og privat. Du behøver ingen konto for at begynde.",
   },
   "fi-FI": {
     overview: "Useimmat Tehtävät kestävät noin 5–8 minuuttia ja päättyvät johonkin, jonka säilytät. Tehtävä 01 alkaa lyhyen Lähtökohdan laatimisella.",
@@ -286,7 +286,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Tehtävä 01 alkaa",
     closingEmphasis: "Lähtökohdastasi.",
-    closingBody: "Suorita Lähtökohdan kaksi toimintoa ansaitaksesi 40 XP:tä. Rekisteröityminen seuraa vasta, kun Lähtökohta on valmis; rekisteröitymisestä ei saa XP:tä.",
+    closingBody: "Maksuton ja yksityinen. Aloittamiseen ei tarvita tiliä.",
   },
   "nb-NO": {
     overview: "De fleste Oppdrag tar omtrent 5–8 minutter og avsluttes med noe du beholder. Oppdrag 01 begynner med et kort Utgangspunkt.",
@@ -304,7 +304,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Oppdrag 01 begynner med",
     closingEmphasis: "Utgangspunktet ditt.",
-    closingBody: "Fullfør Utgangspunktets to handlinger for å få 40 XP. Du registrerer deg først når Utgangspunktet er klart; registreringen gir ingen XP.",
+    closingBody: "Gratis og privat. Du trenger ingen konto for å begynne.",
   },
   "en-CA": enCurrent,
   "fr-CA": enCurrent,
