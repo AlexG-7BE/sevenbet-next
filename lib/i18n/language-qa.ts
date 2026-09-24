@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { analyticsConsentMessages } from "./analytics-consent-catalog";
 import { HOME_SOURCE_COPY, homeTranslation } from "./home-catalog";
 import { demoProfileCopy } from "./demo-profile-catalog";
 import { learningMessages } from "./learning-center";
@@ -54,7 +55,7 @@ function snapshot(locale: SupportedLocale) {
   const learning = learningMessages(locale);
   const methodology = methodologyMessages(locale);
   return {
-    shell: publicShellMessages(locale), footer: publicFooterMessages(locale),
+    shell: publicShellMessages(locale), footer: publicFooterMessages(locale), analyticsConsent: analyticsConsentMessages(locale),
     home: locale === "en-GB" ? HOME_SOURCE_COPY : homeTranslation(locale), product: productPageMessages(locale),
     demoProfile: demoProfileCopy(locale),
     errors: publicErrorMessages(locale), about: aboutMessages(locale), contact: contactMessages(locale), faq: faqMessages(locale),
