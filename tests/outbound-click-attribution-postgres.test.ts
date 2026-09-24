@@ -194,6 +194,24 @@ test("canonical outbound attribution transaction is atomic, success-only, and cl
       redirectSlugId: fixture.redirectSlug.id,
       trackingLinkId: fixture.trackingLink.id,
     });
+    // This click carries no consent cookie. Where it came from is recorded for
+    // every click; who made it is not. The referrer's query, with its token, is
+    // dropped and only the path is kept.
+    assert.deepEqual({
+      sourcePage: successfulClick.sourcePage,
+      placement: successfulClick.placement,
+      anonymousId: successfulClick.anonymousId,
+      analyticsSessionId: successfulClick.analyticsSessionId,
+      userId: successfulClick.userId,
+      locale: successfulClick.locale,
+    }, {
+      sourcePage: "/casinos/outbound-attribution",
+      placement: "CASINO_DETAIL_HERO",
+      anonymousId: null,
+      analyticsSessionId: null,
+      userId: null,
+      locale: null,
+    });
     assert.equal(await prisma.analyticsEvent.count({ where: { outboundClickId: clickIds.success } }), 2);
     const successfulAggregate = await prisma.affiliateOutboundClickDaily.findFirstOrThrow({
       where: { casinoId: fixture.casino.id, countryCode: "PE" },
