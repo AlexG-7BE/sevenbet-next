@@ -186,6 +186,57 @@ US-exit proxies (the US is on its list) and are withdrawn.
   operators with an MGA licence currently serve Ireland without an Irish casino
   licence, and that will change when GRAI's gaming phase opens.
 
+## Casinos allowed per country
+
+"Allowed" means all three: the casino accepts players from that country, it
+holds the licence that country requires (or the country has no casino
+licensing yet), and promotion there is lawful. Betsson Group rows come from the
+rollout matrix of 10 September plus today's Swedish and Danish registers.
+
+### With a local licence
+
+| Country | Count | Casinos |
+| --- | ---: | --- |
+| GB | 19 | AHTI Games, BacanaPlay, Casino RedKings, DrückGlück, EUcasino, JackpotStar, MegawaysCasino, PlayOJO, PlayOJO Bingo, Regency Casino Online, SlotsMagic, TurboNino, Hello Casino, Slotnite, Skol Casino, G'day Casino, Diamond7, 21 Privé, DragonBet |
+| MT | 16 | AHTI Games, BacanaPlay, Casino RedKings, DrückGlück, EUcasino, JackpotStar, MegawaysCasino, PlayOJO, SlotsMagic, TurboNino, and the six White Hat brands |
+| SE | 15 | AHTI Games, BacanaPlay, Casino RedKings, DrückGlück, EUcasino, JackpotStar, MegawaysCasino, PlayOJO, SlotsMagic, TurboNino, Regency Casino Online\*, PlayUZU\*, Betsson, NordicBet, Betsafe\* |
+| DK | 10 | AHTI Games, BacanaPlay, DrückGlück, EUcasino, MegawaysCasino, PlayOJO, SlotsMagic, TurboNino, Betsson, NordicBet |
+| ES | 3 | PlayUZU, BacanaPlay, Betsson |
+| BR | 3 | PlayUZU, BacanaPlay, Betsson |
+| PE | 3 | PlayUZU, Betsson, Inkabet (route currently broken) |
+| DE | 2 | DrückGlück, TurboNino |
+| MX | 2 | PlayUZU, Betsson |
+| CA-ON | 2 | PlayOJO, SlotsMagic |
+| PT | 1 | BacanaPlay |
+| GR | 1 | Regency Casino Online |
+| AR (City of Buenos Aires only) | 1 | PlayUZU |
+| CO | 1 | Betsson |
+| EE | 1 | Betsafe |
+| LV | 1 | Betsafe |
+| LT | 1 | Betsafe (no route yet) |
+| RS | 1 | Rizk |
+
+\* On the Swedish register, but not held for SE in our records and not opened
+from a Swedish exit.
+
+### MGA licence only — grey zone
+
+| Country | Count | Casinos | Why grey |
+| --- | ---: | --- | --- |
+| IE | 18 | the ten SkillOnNet .com brands above, the six White Hat brands, GoldenPlay, DragonBet | GRAI has issued no casino licence yet; this closes when its gaming phase opens |
+| CA outside Ontario | 11 | EUcasino, JackpotStar, PlayOJO, SlotsMagic, MegawaysCasino, the six White Hat brands | No provincial licence. Risk accepted for EGO brands on 22 September; White Hat, Betsafe and Rizk are "regulatory action required" in the matrix |
+
+### Closed — zero casinos
+
+Austria (every SkillOnNet brand blocks it; White Hat restricts it); Finland,
+Norway and New Zealand (promotion unlawful, although the sites load); Italy
+(StarCasino is licensed but gambling advertising is banned); Chile (blocked by
+law in the matrix); the Netherlands, Poland and France (GoldenPlay serves them
+without a local licence).
+
+Betsson, Betsafe and NordicBet also accept IE and MT per Global-14; not checked
+today and not counted.
+
 ## Where our records disagree (CONTRADICTION)
 
 1. **Austria is closed by every SkillOnNet brand tested.** Real Vienna probes
