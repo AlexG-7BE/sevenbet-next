@@ -133,7 +133,21 @@
 .typingAction, .inlineButton, .withdrawAction { padding: 2px 0; border: 0; border-bottom: 1px solid rgba(250, 250, 247, .3); background: transparent; color: rgba(250, 250, 247, .8); cursor: pointer; }
 .typingAction { min-height: 28px; font-size: 14px; }
 .inlineButton { border-bottom-color: rgba(228, 226, 78, .4); color: var(--programme-acid); font-size: 14px; }
-.withdrawAction { border-bottom-color: rgba(250, 250, 247, .25); color: rgba(250, 250, 247, .6); font-size: 14px; line-height: 20px; }
+.withdrawAction { margin-top: 20px; border-bottom-color: rgba(250, 250, 247, .16); color: rgba(250, 250, 247, .45); font-size: 14px; line-height: 20px; }
+/* The optional consent sits with the two required checks; its note reads as prose, not a label. */
+.consentRow span { font-size: 14px; line-height: 1.4; }
+.consentRow em { margin-top: 2px; color: rgba(250, 250, 247, .55); font-size: 12px; font-style: normal; line-height: 1.45; }
+/* Three rows must leave the entry action on a phone's first screen. */
+@media (max-width: 760px) {
+  .accessBoundary .checkRow { min-height: 0; padding: 12px 0; }
+  .accessBoundary .checkRow > span { display: block; }
+  .accessBoundary .checkRow > span > small { display: inline-block; margin-left: 8px; letter-spacing: .12em; }
+  .accessBoundary .checkRow > span > label + small { margin-left: 0; }
+  .accessBoundary .consentRow em { display: block; margin-top: 6px; }
+  .accessBoundary .primaryAction { margin-top: 16px; }
+  .accessBoundary .legalLinks { margin: 12px 0 8px; }
+}
+.consentRow em a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .voiceWave { height: 64px; display: flex; align-items: center; gap: 5px; }
 .voiceWave i { width: 4px; height: var(--bar-height); border-radius: 2px; display: block; background: var(--programme-acid); animation: voice-pulse 800ms ease-in-out var(--bar-delay) infinite alternate; }
 .recordingTime { margin: 0; color: var(--programme-muted); font-size: 15px; font-variant-numeric: tabular-nums; }
