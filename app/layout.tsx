@@ -54,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <JsonLd data={{ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }} />
         {children}
         {analyticsEnabled ? <AnalyticsPageView /> : null}
-        {analyticsEnabled ? <AnalyticsConsentBanner /> : null}
+        {analyticsEnabled ? <AnalyticsConsentBanner locale={presentation.locale} /> : null}
         <ProgrammeDocumentPolicyBoundary />
         <SiteMotionController />
       </body>

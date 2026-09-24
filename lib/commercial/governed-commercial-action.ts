@@ -1,6 +1,7 @@
 import type { JurisdictionReasonCode } from "@/lib/jurisdiction/types";
 import type { GbOperatorEligibilityReasonCode } from "@/lib/jurisdiction/gb-operator-eligibility";
 import type { GbCommercialReadinessReasonCode } from "@/lib/affiliate-commercial/gb-commercial-route-readiness";
+import type { MarketClosure } from "@/lib/market-access/access";
 
 /** The only public capability that authorises rendering an outbound CTA. */
 export type GovernedCommercialAction = Readonly<{
@@ -15,6 +16,7 @@ export type CommercialActionDecisionReason =
   | "NO_GOVERNED_ROUTE"
   | "AMBIGUOUS_GOVERNED_ROUTE"
   | "UNSAFE_GOVERNED_ROUTE"
+  | MarketClosure
   | JurisdictionReasonCode
   | GbOperatorEligibilityReasonCode
   | GbCommercialReadinessReasonCode;

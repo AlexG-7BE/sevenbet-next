@@ -87,9 +87,22 @@ test("affirmative analytics consent persists, emits a minimal event, and dedupli
   });
   const response = await page.goto(`${baseUrl}/privacy`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
+  // Founder decision 25 Sep 2026: the choice lives in the footer, not a floating tab, and opens a compact site-style banner.
+  await expect(page.locator("footer[data-public-shell='footer'] [data-privacy-choices-trigger]")).toHaveCount(1);
+  await expect(page.locator("[data-privacy-choices-trigger]")).toHaveCount(1);
   await page.getByRole("button", { name: "Privacy choices" }).click();
   const choices = page.getByRole("dialog", { name: "Analytics privacy choices" });
   await expect(choices).toBeVisible();
+  await expect(choices.getByRole("button", { name: "Not now" })).toBeFocused();
+  const [decline, allow, banner] = await Promise.all([choices.getByRole("button", { name: "Decline analytics" }).boundingBox(), choices.getByRole("button", { name: "Allow analytics" }).boundingBox(), choices.boundingBox()]);
+  expect(Math.round(decline!.width)).toBe(Math.round(allow!.width));
+  expect(Math.round(decline!.height)).toBe(Math.round(allow!.height));
+  // The open banner was 364px (55% of a phone screen) before the redesign.
+  expect(banner!.height).toBeLessThanOrEqual(220);
+  await page.keyboard.press("Escape");
+  await expect(choices).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Privacy choices" })).toBeFocused();
+  await page.getByRole("button", { name: "Privacy choices" }).click();
   await choices.getByRole("button", { name: "Decline analytics" }).click();
   await expect(page.getByRole("button", { name: "Privacy choices" })).toBeVisible();
   expect(observedPayloads).toHaveLength(0);

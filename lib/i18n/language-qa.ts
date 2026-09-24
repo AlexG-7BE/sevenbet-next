@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { analyticsConsentMessages } from "./analytics-consent-catalog";
 import { HOME_SOURCE_COPY, homeTranslation } from "./home-catalog";
 import { learnBridgeMessages } from "./learn-bridges-catalog";
 import { demoProfileCopy } from "./demo-profile-catalog";
@@ -9,6 +10,7 @@ import { publicErrorMessages } from "./public-errors";
 import { publicFooterMessages, publicShellMessages } from "./public-shell-catalog";
 import { aboutMessages } from "./static-pages/about";
 import { contactMessages } from "./static-pages/contact";
+import { germanProhibitedTerms } from "./german-terminology";
 import { faqMessages } from "./static-pages/faq";
 import { methodologyMessages } from "./static-pages/methodology";
 import { tenStepsTranslation } from "./static-pages/ten-steps";
@@ -55,7 +57,7 @@ function snapshot(locale: SupportedLocale) {
   const learning = learningMessages(locale);
   const methodology = methodologyMessages(locale);
   return {
-    shell: publicShellMessages(locale), footer: publicFooterMessages(locale),
+    shell: publicShellMessages(locale), footer: publicFooterMessages(locale), analyticsConsent: analyticsConsentMessages(locale),
     home: locale === "en-GB" ? HOME_SOURCE_COPY : homeTranslation(locale), product: productPageMessages(locale),
     demoProfile: demoProfileCopy(locale),
     errors: publicErrorMessages(locale), about: aboutMessages(locale), contact: contactMessages(locale), faq: faqMessages(locale),
@@ -168,11 +170,10 @@ function evaluateLocale(locale: EuropeanMachineTranslatedLocale, source: Record<
     }
   }
   if (locale === "de-DE") {
-    const genericCasinoPaths = Object.entries(target)
-      .filter(([path, value]) => /\b(?:Online-Casino|Casinos?)\b/i.test(value)
-        && !(path.startsWith("demoProfile.") && value.includes("Solvane Casino")))
+    const prohibitedPaths = Object.entries(target)
+      .filter(([, value]) => germanProhibitedTerms(value).length > 0)
       .map(([path]) => path);
-    if (genericCasinoPaths.length) fail("TERMINOLOGY_CONSISTENCY", `generic Casino/Online-Casino terminology remains at ${genericCasinoPaths.join(",")}`);
+    if (prohibitedPaths.length) fail("TERMINOLOGY_CONSISTENCY", `generic Casino, jackpot or table-game terminology remains at ${prohibitedPaths.join(",")}`);
   }
   const terms = semanticTerms[locale];
   if (!terms.programme.test(corpus) || !terms.commercial.test(corpus)) fail("PROGRAMME_COMMERCIAL_SEPARATION", "required Programme/commercial separation vocabulary is absent");
