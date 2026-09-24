@@ -97,7 +97,7 @@ test("reusable editorial projections cannot authorize commercial actions", () =>
   const offerRepository = source("lib/repositories/public-offer.repository.ts");
   const actionResolver = source("lib/commercial/public-commercial-action-resolver.ts");
 
-  assert.match(casinoService, /return \{ \.\.\.projected, action: decisions\.get\(projected\.id\)\?\.action \?\? null \}/);
+  assert.match(casinoService, /return \{ \.\.\.presented, action: decisions\.get\(projected\.id\)\?\.action \?\? null \}/);
   assert.match(casinoService, /return \{ \.\.\.projected, action: null \}/);
   assert.doesNotMatch(offerRepository, /actionAuthority|resolveMany|trackingUrl|destinationUrl/);
   assert.doesNotMatch(actionResolver, /unstable_cache|publicEditorialCache|revalidateTag/);

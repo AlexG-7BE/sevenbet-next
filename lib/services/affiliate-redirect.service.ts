@@ -15,10 +15,11 @@ import {
   type MarketActivationRuntime,
 } from "@/lib/market-activation/runtime";
 import { worldwideFounderGbAuthorityApplies } from "@/lib/current-partner-worldwide-authority/inventory";
+import { marketAccess, type MarketClosure } from "@/lib/market-access/access";
 
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 
-export type RedirectFailureReason = "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED" | "NO_GOVERNED_ROUTE" | "SLUG_NOT_FOUND" | "SLUG_INACTIVE" | "NO_ACTIVE_OFFER" | "NO_ELIGIBLE_TRACKING_LINK" | "UNSAFE_REDIRECT_URL";
+export type RedirectFailureReason = MarketClosure | "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED" | "NO_GOVERNED_ROUTE" | "SLUG_NOT_FOUND" | "SLUG_INACTIVE" | "NO_ACTIVE_OFFER" | "NO_ELIGIBLE_TRACKING_LINK" | "UNSAFE_REDIRECT_URL";
 
 export type AffiliateRedirectResolution =
   | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision: JurisdictionDecision; operatorEligibility?: GbOperatorEligibilityDecision; commercialReadiness?: GbCommercialReadinessDecision }
@@ -26,7 +27,7 @@ export type AffiliateRedirectResolution =
 
 export type AffiliateRedirectPreviewResolution =
   | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"] }
-  | { ok: false; reason: Exclude<RedirectFailureReason, "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED">; slugId?: string; casinoId?: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"] };
+  | { ok: false; reason: Exclude<RedirectFailureReason, MarketClosure | "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED">; slugId?: string; casinoId?: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"] };
 
 type RoutingResolution =
   | (Extract<AffiliateRedirectPreviewResolution, { ok: true }> & { selectedOffer: CandidateOffer })
@@ -203,6 +204,10 @@ export class AffiliateRedirectService {
         candidates: [],
         jurisdictionDecision,
       };
+    }
+    const access = marketAccess(scopedMapping?.casino.slug ?? "", marketCode, now);
+    if (!access.open) {
+      return { ok: false, reason: access.closure, slugId: activation.redirectSlug.id, casinoId: activation.casinoId, candidates: [], jurisdictionDecision };
     }
     const trackingUrl = validateRedirectTargetUrl(activation.primaryTrackingLink.trackingUrl);
     const destinationUrl = validateRedirectTargetUrl(activation.primaryTrackingLink.destinationUrl);

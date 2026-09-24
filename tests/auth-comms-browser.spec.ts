@@ -392,7 +392,9 @@ test("expired access continuation returns to the canonical access screen", async
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await open(page, "/program");
   await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(2);
+  // Two required checks plus the optional explicit consent (Founder decision, 25 Sep 2026).
+  await expect(page.getByRole("checkbox")).toHaveCount(3);
+  await expect(page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing/ })).not.toBeChecked();
 });
 
 test("authenticated canonical dashboard logs out into a fresh anonymous access boundary", async ({ page }) => {

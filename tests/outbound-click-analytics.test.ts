@@ -95,10 +95,12 @@ test("UTC projection day is derived from the authoritative attempted timestamp",
 test("redirect route schedules one canonical observer only after governed safe-response resolution", () => {
   const route = readFileSync("app/r/[slug]/route.ts", "utf8");
   const success = route.indexOf("if (!result.ok)");
-  const safeResponse = route.indexOf("safeAffiliateRedirectResponse(result.destination)");
+  // The campaign sub-ID is added to the governed destination before the safe response re-validates it.
+  const subId = route.indexOf("withCampaignSubId(result.destination");
+  const safeResponse = route.indexOf("safeAffiliateRedirectResponse(destination)");
   const statusGate = route.indexOf("response.status !== 302");
   const successfulAccounting = route.indexOf("scheduleObservation(observation);");
-  assert.ok(success >= 0 && safeResponse > success && statusGate > safeResponse && successfulAccounting > statusGate);
+  assert.ok(success >= 0 && subId > success && safeResponse > subId && statusGate > safeResponse && successfulAccounting > statusGate);
   assert.equal(route.match(/recordOutboundAttributionBestEffort\(input\)/g)?.length, 1);
   assert.equal(route.match(/scheduleObservation\(observation\);/g)?.length, 1);
   assert.doesNotMatch(route, /recordOutboundClickBestEffort|OutboundClickService|Promise\.all/);

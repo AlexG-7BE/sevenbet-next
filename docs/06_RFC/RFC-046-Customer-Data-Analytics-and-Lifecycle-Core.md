@@ -240,6 +240,17 @@ session, user, source-page and placement enrichment is accepted only with the
 analytics grant. The internal click ID never replaces or alters the affiliate
 destination and is not forwarded as a partner token.
 
+**Campaign sub-ID amendment (Founder instruction, 24 September 2026).** For
+campaign attribution in partner reports, `/r/{slug}` may append exactly one
+partner-recognised sub-ID parameter to the stored tracking URL — today `dyn_id`
+on EGO/SkillOnNet links (`lib/affiliate-routing/sub-id.ts`); other networks'
+links stay unchanged until their parameter is confirmed. Its value is an
+aggregate label, `market_campaign_placement`: the trusted market, the campaign
+of the visitor's analytics session only under the analytics grant (otherwise
+`direct`), and the bounded placement label. It never carries the click ID or any
+visitor, session or user identifier, and a parameter already on the link is
+never overwritten. The stored URL itself is unchanged.
+
 The governed client may add only a closed source/placement label to its
 internal `/r/{slug}` URL. That label is observational input, never routing or
 eligibility authority, and is discarded unless it passes the bounded grammar.

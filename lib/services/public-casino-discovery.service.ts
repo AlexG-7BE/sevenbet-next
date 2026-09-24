@@ -11,6 +11,7 @@ import {
   publicCommercialActionResolver,
   type PublicCommercialActionAuthority,
 } from "@/lib/commercial/public-commercial-action-resolver";
+import { marketAccess, withoutOffers } from "@/lib/market-access/access";
 import { rankBestBonusCasinoIds } from "@/lib/public-offer/best-offer-ranking";
 import { publicCasinoToOffers } from "@/lib/public-offer/public-offer.mapper";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
@@ -211,13 +212,15 @@ export class PublicCasinoDiscoveryService {
       const exactProfile = requestCountryContext
         ? casino.marketProfiles.find((profile) => profile.countryCode === requestCountryContext) ?? null
         : null;
-      const scoped = projectPublicCasinoMarket(casino, requestCountryContext ?? "");
+      const offersOpen = marketAccess(casino.slug, commercialMarketContext, now).open;
+      const marketProjection = projectPublicCasinoMarket(casino, requestCountryContext ?? "");
+      const scoped = offersOpen ? marketProjection : withoutOffers(marketProjection);
       const presented = withOfferPresentation(
         { ...scoped, action: actionDecisions.get(scoped.id)?.action ?? null },
-        candidates,
+        offersOpen ? candidates : [],
         requestCountryContext,
       );
-      const offerInventory = resolvePublishedOfferInventory(
+      const offerInventory = !offersOpen ? [] : resolvePublishedOfferInventory(
         candidates.filter((candidate) => candidate.casinoId === scoped.id),
         requestCountryContext,
       ).map((resolved) => {
