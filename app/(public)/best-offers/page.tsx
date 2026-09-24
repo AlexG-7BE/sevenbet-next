@@ -108,7 +108,6 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
     </div></div></section>
   </div>;
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
-  const partnerLinkCount = result.records.filter((offer) => offer.action !== null).length;
   const demoOnly = result.inventoryMode === "DEMO_ONLY";
   const hero = demoOnly
     ? { copy: messages.bestOffers.demoCopy, kicker: messages.bestOffers.demoKicker }
@@ -140,10 +139,7 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
       <div className={styles.heroMeta}>
         <p className={styles.heroCopy}>{hero.copy}</p>
         <div className={styles.heroTicker}>
-          {result.records.length ? <>
-            <span><strong>{result.records.length}</strong><small>{copy.eligibleRecords}</small></span>
-            <span data-tone="paper"><strong>{partnerLinkCount}</strong><small>{copy.partnerLinks}</small></span>
-          </> : null}
+          {result.records.length ? <span><strong>{result.records.length}</strong><small>{copy.eligibleRecords}</small></span> : null}
           <Link href={productHref(presentation, "/methodology")}>{messages.bestOffers.rankingLink}</Link>
         </div>
       </div>
