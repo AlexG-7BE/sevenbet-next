@@ -42,6 +42,8 @@ RFC-035 supersedes the original Home wheel-tween and Home rise-timing rows only.
 | Programme | Microphone action | Hover/press and recording state | Idle control | Brightness/pressed or existing recording pulse state | 150–240ms | Standard | Both | State remains visible without pulse | Existing `ProgramAiFinalPresentation` CSS |
 | Programme | Waveform/transcript/Starting Point state | Existing Programme state transition | Prior canonical Programme state | Current server-owned/runtime state | Existing bounded presentation timing only | Existing Programme easing | Both | Static readable state | Existing Programme components; architecture unchanged |
 
+**Retired (2026-09-24).** The two *Casinos comparison* rows above describe the selection tray and modal of `ContextualComparison`, which was imported by no route and has been deleted; `/compare` permanently redirects to `/casinos`. They are kept as the handoff record and bind no current surface.
+
 ## Fail-visible rule
 
 `data-motion-reveal` never means hidden in server HTML. `SiteMotionController` may assign `data-motion-state="pending"` only after confirming `IntersectionObserver` exists, reduced motion is not requested and the element is outside the first viewport. A thrown/missing observer, reduced motion, navigation cleanup or safety timeout sets every enrolled element to `visible`.
