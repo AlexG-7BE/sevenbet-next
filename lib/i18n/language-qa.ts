@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { HOME_SOURCE_COPY, homeTranslation } from "./home-catalog";
+import { nextStepMessages } from "./next-step-catalog";
 import { demoProfileCopy } from "./demo-profile-catalog";
 import { learningMessages } from "./learning-center";
 import { productPageMessages } from "./product-pages-catalog";
@@ -60,6 +61,7 @@ function snapshot(locale: SupportedLocale) {
     errors: publicErrorMessages(locale), about: aboutMessages(locale), contact: contactMessages(locale), faq: faqMessages(locale),
     methodology: { metadataTitle: methodology.metadataTitle, metadataDescription: methodology.metadataDescription, text: [...methodology.copy.values()] },
     tenSteps: tenStepsTranslation(locale),
+    nextStep: nextStepMessages(locale),
     visualFixture: visualFixtureCopy(locale),
     learning: { categories: learning.categories, hub: learning.hub, ui: learning.ui },
   };
