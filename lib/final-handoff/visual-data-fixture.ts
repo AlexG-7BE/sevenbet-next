@@ -426,7 +426,25 @@ function baseVisualCasinoProfile(slug: string): PublicCasinoDTO {
     licenses: [],
     regulatoryFootprint: [],
     countries: [],
-    payments: [],
+    // The visual fixture exercises a populated layout. It previously left
+    // payments empty and relied on the profile printing "Not verified" into
+    // every row to fill the section; now that an unknown row is dropped, the
+    // fixture has to carry real-shaped values or the payments section
+    // disappears and the German label-overlap check has nothing to measure.
+    payments: [{
+      key: "visual-fixture-card",
+      name: "Fictional card",
+      supportsDeposits: true,
+      supportsWithdrawals: true,
+      currencies: ["EUR"],
+      minimumDeposit: 10,
+      minimumWithdrawal: 20,
+      maximumWithdrawal: null,
+      depositProcessingTime: null,
+      withdrawalTime: "1-2 days",
+      fees: "Fictional fee field",
+      crypto: false,
+    }],
     providers: [],
     categories: [],
     bonuses: [bonus],

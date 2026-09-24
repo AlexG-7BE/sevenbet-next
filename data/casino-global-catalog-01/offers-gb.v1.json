@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "casino-global-catalog-offers.v1",
+  "release": "CASINO-GLOBAL-CATALOG-01",
+  "decisionRef": "FOUNDER-CASINO-GLOBAL-CATALOG-2026-09-23",
+  "countryCode": "GB",
+  "commercialAuthority": false,
+  "observedAt": "2026-09-24T00:00:00.000Z",
+  "note": "Great Britain welcome offers read from each operator's own promotions page on 24 September 2026 through a United Kingdom exit node, so the terms are the GB variant rather than the .com one. Every casino here already holds an ACTIVE and HEALTHY GB route. Where the operator does not state a minimum deposit on the offer page it is recorded as null rather than assumed from a sibling brand.",
+  "offers": [
+    {
+      "casinoSlug": "megawayscasino",
+      "slug": "megawayscasino-gb-welcome",
+      "title": "100 free spins on Fishin' Frenzy Big Catch Megaways",
+      "summary": "First deposit only. 100 free spins at 10x wagering on free-spin winnings.",
+      "type": "FREE_SPINS",
+      "freeSpins": 100,
+      "minimumDeposit": 10,
+      "wageringMultiplier": 10,
+      "wageringText": "10x free-spin winnings, slots only",
+      "eligibility": "New players, first deposit only. Credited automatically on deposit.",
+      "importantConditions": [
+        "Free spins are on Fishin' Frenzy Big Catch Megaways at £0.10 per spin.",
+        "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings, or £5 — whichever is lower.",
+        "Spins must be used before deposited funds.",
+        "Only slots count toward the wagering requirement."
+      ],
+      "termsUrl": "https://www.megawayscasino.com/promotions/"
+    },
+    {
+      "casinoSlug": "casino-redkings",
+      "slug": "casino-redkings-gb-welcome",
+      "title": "100 free spins on Sahara Riches Cash Collect",
+      "summary": "First deposit only. 100 free spins at 10x wagering on free-spin winnings.",
+      "type": "FREE_SPINS",
+      "freeSpins": 100,
+      "minimumDeposit": null,
+      "wageringMultiplier": 10,
+      "wageringText": "10x free-spin winnings, slots only",
+      "eligibility": "New players, first deposit only.",
+      "importantConditions": [
+        "Free spins are on Sahara Riches Cash Collect at £0.10 per spin.",
+        "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings, or £5 — whichever is lower.",
+        "The operator does not state a minimum deposit on this offer page.",
+        "A bonus does not block withdrawing your own deposit balance."
+      ],
+      "termsUrl": "https://www.redkings.com/promotions/welcome-offer/"
+    },
+    {
+      "casinoSlug": "eucasino",
+      "slug": "eucasino-gb-welcome",
+      "title": "100% up to £25 plus 50 free spins",
+      "summary": "First deposit only. 100% match to £25 and 50 free spins, both at 10x wagering.",
+      "type": "WELCOME",
+      "percentage": 100,
+      "maximumBonus": 25,
+      "freeSpins": 50,
+      "minimumDeposit": 10,
+      "wageringMultiplier": 10,
+      "wageringText": "10x bonus and 10x free-spin winnings, slots only",
+      "eligibility": "New players, first deposit only.",
+      "importantConditions": [
+        "Free spins are on Big Bass Bonanza at £0.10 per spin.",
+        "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings and bonus, or £5 — whichever is lower.",
+        "Spins must be used before deposited funds.",
+        "A bonus does not block withdrawing your own deposit balance."
+      ],
+      "termsUrl": "https://www.eucasino.com/promotions/welcome-offer/"
+    },
+    {
+      "casinoSlug": "regencycasino",
+      "slug": "regencycasino-gb-welcome",
+      "title": "100% up to £25 plus 50 free spins",
+      "summary": "First deposit only. 100% match to £25 and 50 free spins, both at 10x wagering.",
+      "type": "WELCOME",
+      "percentage": 100,
+      "maximumBonus": 25,
+      "freeSpins": 50,
+      "minimumDeposit": 10,
+      "wageringMultiplier": 10,
+      "wageringText": "10x bonus and free-spin winnings, slots only",
+      "eligibility": "New players, first deposit only. Credited automatically; cancellation can be requested.",
+      "importantConditions": [
+        "Free spins are on Big Bass Splash at £0.10 per spin.",
+        "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings and bonus, or £5 — whichever is lower.",
+        "The offer can be cancelled on request after it is credited.",
+        "Spins must be used before deposited funds."
+      ],
+      "termsUrl": "https://www.regencycasino.com/"
+    },
+    {
+      "casinoSlug": "slotsmagic",
+      "slug": "slotsmagic-gb-welcome",
+      "title": "100% up to £25 plus 50 free spins",
+      "summary": "First deposit only. 100% match to £25 and 50 free spins, both at 10x wagering.",
+      "type": "WELCOME",
+      "percentage": 100,
+      "maximumBonus": 25,
+      "freeSpins": 50,
+      "minimumDeposit": null,
+      "wageringMultiplier": 10,
+      "wageringText": "10x bonus and 10x free-spin winnings, slots only",
+      "eligibility": "New players, first deposit only. Credited automatically; cancellation can be requested.",
+      "importantConditions": [
+        "Free spins are on Big Bass Bonanza at £0.10 per spin.",
+        "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings and bonus, or £5 — whichever is lower.",
+        "The operator does not state a minimum deposit on the GB offer page; the .com site states €10.",
+        "Spins must be used before deposited funds."
+      ],
+      "termsUrl": "https://www.slotsmagic.com/promotions/welcome-offer/"
+    },
+    {
+      "casinoSlug": "ahti-games",
+      "slug": "ahti-games-gb-welcome",
+      "title": "50 Super Spins on Book of Dead",
+      "summary": "First deposit only. 50 Super Spins at £0.50 each, 10x wagering on winnings.",
+      "type": "FREE_SPINS",
+      "freeSpins": 50,
+      "minimumDeposit": null,
+      "wageringMultiplier": 10,
+      "wageringText": "10x free-spin winnings, slots only",
+      "eligibility": "New players, first deposit only.",
+      "importantConditions": [
+        "Super Spins are on Book of Dead at £0.50 per spin — a higher spin value than the usual £0.10.",
+        "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings, or £5 — whichever is lower.",
+        "The page headline says 100 Super Spins while its own terms state a maximum of 50. The terms are recorded here.",
+        "The operator does not state a minimum deposit on this offer page."
+      ],
+      "termsUrl": "https://www.ahtigames.com/promotions/welcome/"
+    },
+    {
+      "casinoSlug": "turbonino",
+      "slug": "turbonino-gb-welcome",
+      "title": "100 free spins on Thor the Trials of Asgard",
+      "summary": "First deposit only. 100 free spins, but at 60x wagering on the winnings.",
+      "type": "FREE_SPINS",
+      "freeSpins": 100,
+      "minimumDeposit": null,
+      "wageringMultiplier": 60,
+      "wageringText": "60x free-spin winnings, slots only",
+      "eligibility": "New players, first deposit only.",
+      "importantConditions": [
+        "Wagering is 60x the free-spin winnings — six times the 10x its sister brands ask, and the single most important term here.",
+        "Free spins are on Thor the Trials of Asgard at £0.10 per spin.",
+        "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings, or £5 — whichever is lower.",
+        "The home page banner states 10x while the offer page states 60x. The offer page is recorded here."
+      ],
+      "termsUrl": "https://www.turbonino.com/promotions/welcome-offer/"
+    }
+  ]
+}

@@ -33,6 +33,7 @@ import { editorialReviewService } from "@/lib/services/editorial-review.service"
 
 const RELEASE = "CASINO-GLOBAL-CATALOG-01";
 const EDITORIAL_CORPUS = "data/casino-global-catalog-01/editorial.v1.json";
+const OFFER_CORPUS = "data/casino-global-catalog-01/offers-gb.v1.json";
 
 function option(name: string) {
   const index = process.argv.indexOf(`--${name}`);
@@ -47,7 +48,7 @@ function option(name: string) {
  * transaction-acquisition and write-conflict failures are retried; anything
  * else is a real error and propagates.
  */
-const TRANSIENT_TRANSACTION = /Unable to start a transaction|Transaction already closed|deadlock|could not serialize/i;
+const TRANSIENT_TRANSACTION = /Unable to start a transaction|Transaction already closed|deadlock|could not serialize|Error in PostgreSQL connection|Connection closed|connection.*(?:closed|reset|terminated)|ECONNRESET|Timed out fetching a new connection/i;
 
 async function withTransientRetry<T>(label: string, work: () => Promise<T>, attempts = 4): Promise<T> {
   for (let attempt = 1; ; attempt += 1) {
@@ -762,6 +763,110 @@ async function offers() {
   console.log(`${RELEASE}: activated ${targets.length} offers across ${republished.size} casinos`);
 }
 
+interface ResearchedOffer {
+  casinoSlug: string;
+  slug: string;
+  title: string;
+  summary: string;
+  type: string;
+  percentage?: number | null;
+  maximumBonus?: number | null;
+  freeSpins?: number | null;
+  minimumDeposit: number | null;
+  wageringMultiplier: number | null;
+  wageringText: string | null;
+  eligibility: string | null;
+  importantConditions: string[];
+  termsUrl: string | null;
+}
+
+/**
+ * Imports offers read from each operator's own promotions page through an exit
+ * node in the offer's own market, so the terms are that market's variant. Each
+ * offer is attached to the casino's exact market profile — never to a market
+ * it was not read from, and never converted to a global offer.
+ */
+async function importOffers() {
+  const dryRun = process.argv[2] === "import-offers-plan";
+  if (!dryRun && option("confirm") !== RELEASE) throw new Error(`${RELEASE}: import-offers requires --confirm=${RELEASE}`);
+  if (!dryRun) {
+    const expected = option("expected-database");
+    const fingerprint = await databaseFingerprint();
+    if (expected !== fingerprint) throw new Error(`${RELEASE}: --expected-database must be ${fingerprint}`);
+  }
+
+  const corpus = JSON.parse(await readFile(path.join(process.cwd(), OFFER_CORPUS), "utf8")) as {
+    schemaVersion: string; release: string; countryCode: string; commercialAuthority: boolean;
+    observedAt: string; offers: ResearchedOffer[];
+  };
+  if (corpus.schemaVersion !== "casino-global-catalog-offers.v1" || corpus.release !== RELEASE) {
+    throw new Error(`${RELEASE}: offer corpus identity mismatch`);
+  }
+  if (corpus.commercialAuthority !== false) throw new Error(`${RELEASE}: an offer corpus must not grant commercial authority`);
+  if (!/^[A-Z]{2}$/.test(corpus.countryCode)) throw new Error(`${RELEASE}: offer corpus needs an exact two-letter market`);
+
+  const actor = dryRun ? { id: "", email: "" } : await selectActor(option("actor-email"));
+  const observedAt = new Date(corpus.observedAt);
+
+  for (const offer of corpus.offers) {
+    const market = await prisma.casinoCountry.findFirst({
+      where: { countryCode: corpus.countryCode, casino: { slug: offer.casinoSlug } },
+      select: { id: true, casinoId: true, primaryCurrency: true, availability: true },
+    });
+    if (!market) throw new Error(`${RELEASE}: ${offer.casinoSlug} has no ${corpus.countryCode} market profile`);
+    if (market.availability !== "AVAILABLE") throw new Error(`${RELEASE}: ${offer.casinoSlug} ${corpus.countryCode} is not available`);
+
+    if (dryRun) {
+      console.log(`  ${offer.casinoSlug.padEnd(16)} ${corpus.countryCode} ${offer.title.slice(0, 46).padEnd(48)} wagering=${offer.wageringMultiplier ?? "—"} minDep=${offer.minimumDeposit ?? "—"}`);
+      continue;
+    }
+
+    const data = {
+      title: offer.title,
+      summary: offer.summary,
+      type: offer.type as never,
+      percentage: offer.percentage ?? null,
+      maximumBonus: offer.maximumBonus ?? null,
+      freeSpins: offer.freeSpins ?? null,
+      currency: market.primaryCurrency,
+      minimumDeposit: offer.minimumDeposit,
+      wageringMultiplier: offer.wageringMultiplier,
+      wageringText: offer.wageringText,
+      eligibility: offer.eligibility,
+      importantConditions: offer.importantConditions,
+      termsUrl: offer.termsUrl,
+      lastVerifiedAt: observedAt,
+      status: EditorialStatus.PUBLISHED,
+      offerStatus: OfferStatus.ACTIVE,
+      updatedBy: actor.id,
+    };
+    await withTransientRetry(offer.slug, async () => {
+      await prisma.casinoBonus.upsert({
+        where: { slug: offer.slug },
+        create: { ...data, slug: offer.slug, casinoId: market.casinoId, casinoCountryId: market.id, createdBy: actor.id },
+        update: data,
+      });
+      await republish(market.casinoId, actor.id);
+    });
+    await prisma.auditLog.create({
+      data: {
+        actorId: actor.id,
+        action: "casino-global-catalog-01-offer-import",
+        entityType: "casino_bonus",
+        entityId: market.casinoId,
+        summary: `${RELEASE}: imported ${corpus.countryCode} offer ${offer.slug} from the operator's own terms`,
+        metadata: {
+          release: RELEASE, casinoSlug: offer.casinoSlug, countryCode: corpus.countryCode,
+          termsUrl: offer.termsUrl, observedAt: corpus.observedAt,
+          commercialAuthorityGranted: false, routeCreated: false,
+        },
+      },
+    });
+    console.log(`  ${offer.casinoSlug.padEnd(16)} imported ${offer.slug}`);
+  }
+  console.log(`${RELEASE}: ${dryRun ? "previewed" : "imported"} ${corpus.offers.length} ${corpus.countryCode} offers`);
+}
+
 async function main() {
   const command = process.argv[2];
   if (command === "plan") await plan();
@@ -769,7 +874,8 @@ async function main() {
   else if (command === "editorial") await editorial();
   else if (command === "score-plan" || command === "scores") await scores();
   else if (command === "offer-plan" || command === "offers") await offers();
-  else throw new Error(`${RELEASE}: usage — plan | apply | editorial | score-plan | scores | offer-plan | offers`);
+  else if (command === "import-offers-plan" || command === "import-offers") await importOffers();
+  else throw new Error(`${RELEASE}: usage — plan | apply | editorial | score-plan | scores | offer-plan | offers | import-offers-plan | import-offers`);
 }
 
 main()
