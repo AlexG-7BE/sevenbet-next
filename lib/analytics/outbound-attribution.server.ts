@@ -129,6 +129,11 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
       }).then((offer) => offer?.program.networkId ?? null)
     : null;
   const aggregateIdentity = successfulAggregateIdentity(input);
+  // Where a click came from — the path on this site and the button position — is
+  // a fact about the site, not about the reader, so it is kept for every click;
+  // without it the pages and positions that earn cannot be told apart. Who
+  // clicked (browser, session, account, device, language) stays behind analytics
+  // consent. The referrer keeps its path only, so no query or token is stored.
   const common = {
     environment,
     trafficKind,
@@ -136,7 +141,7 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
     anonymousId,
     analyticsSessionId,
     userId,
-    pagePath: consented ? referrer.sourcePage : null,
+    pagePath: referrer.sourcePage,
     locale: consented ? input.locale : null,
     countryCode: input.countryCode,
     acquisitionSource,
@@ -144,7 +149,7 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
     casinoId: input.casinoId,
     affiliateOfferId: input.affiliateOfferId,
     affiliateNetworkId,
-    placement: consented ? placement : null,
+    placement,
     outboundClickId: input.clickId,
   } as const;
   await prisma.$transaction(async (transaction) => {
@@ -160,11 +165,11 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
         anonymousId,
         analyticsSessionId,
         userId,
-        sourcePage: consented ? referrer.sourcePage : null,
+        sourcePage: referrer.sourcePage,
         locale: consented ? input.locale : null,
         countryCode: input.countryCode,
         acquisitionSource,
-        placement: consented ? placement : null,
+        placement,
         requestedSlug: safeOutboundSlug(input.requestedSlug),
         casinoId: input.casinoId,
         affiliateOfferId: input.affiliateOfferId,
