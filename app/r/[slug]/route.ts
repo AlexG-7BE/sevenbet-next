@@ -5,7 +5,8 @@ import { NextResponse } from "next/server";
 
 import { affiliateRedirectHeaders, safeAffiliateRedirectResponse } from "@/lib/affiliate-routing/redirect-response";
 import { isAffiliateRedirectEnabled, preferenceHintsFromRequest } from "@/lib/affiliate-routing/redirect-validation";
-import { recordOutboundAttributionBestEffort, type OutboundAttributionInput } from "@/lib/analytics/outbound-attribution.server";
+import { subIdParameter, withCampaignSubId } from "@/lib/affiliate-routing/sub-id";
+import { consentedCampaign, recordOutboundAttributionBestEffort, safeOutboundPlacement, type OutboundAttributionInput } from "@/lib/analytics/outbound-attribution.server";
 import { logJurisdictionDecision } from "@/lib/jurisdiction/decision-log";
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.service";
@@ -74,7 +75,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         locale: hints.language,
       });
     }
-    const response = safeAffiliateRedirectResponse(result.destination);
+    const destination = withCampaignSubId(result.destination, {
+      market: result.jurisdictionDecision.countryCode,
+      campaign: subIdParameter(result.destination) ? await consentedCampaign(request, attemptedAt) : null,
+      placement: safeOutboundPlacement(request.nextUrl.searchParams.get("placement")),
+    });
+    const response = safeAffiliateRedirectResponse(destination);
     if (response.status !== 302) {
       return blocked("UNSAFE_REDIRECT_RESPONSE", {
         casinoId: result.casinoId,
