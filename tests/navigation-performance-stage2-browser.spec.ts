@@ -12,7 +12,7 @@ type NavigationTimingWindow = Window & {
 
 async function marketContext(
   browser: Browser,
-  country: "KZ" | "PE",
+  country: "KZ" | "IE",
   options: Parameters<Browser["newContext"]>[0] = {},
 ) {
   return browser.newContext({
@@ -115,7 +115,7 @@ async function holdPublishedCasinoReads() {
   };
 }
 
-async function exerciseHeldMobileHeader(browser: Browser, browserName: string, country: "KZ" | "PE") {
+async function exerciseHeldMobileHeader(browser: Browser, browserName: string, country: "KZ" | "IE") {
   const commercialHold = await holdPublishedCasinoReads();
 
   const context = await marketContext(browser, country, {
@@ -260,15 +260,15 @@ test("held commercial resolution leaves restricted KZ navigation usable before h
   await exerciseHeldMobileHeader(browser, browserName, "KZ");
 });
 
-test("held commercial resolution leaves supported PE navigation usable before hydration", async ({ browser, browserName }) => {
+test("held commercial resolution leaves supported IE navigation usable before hydration", async ({ browser, browserName }) => {
   test.setTimeout(60_000);
-  await exerciseHeldMobileHeader(browser, browserName, "PE");
+  await exerciseHeldMobileHeader(browser, browserName, "IE");
 });
 
 test("open native navigation preserves identity, focus and scroll while commercial state streams", async ({ browser, browserName }) => {
   test.setTimeout(60_000);
   const commercialHold = await holdPublishedCasinoReads();
-  const context = await marketContext(browser, "PE", {
+  const context = await marketContext(browser, "IE", {
     isMobile: true,
     viewport: { width: 390, height: 600 },
   });
@@ -318,7 +318,7 @@ test("open native navigation preserves identity, focus and scroll while commerci
 test("held commercial resolution times out once and recovers without replacing open navigation", async ({ browser }) => {
   test.setTimeout(60_000);
   const commercialHold = await holdPublishedCasinoReads();
-  const context = await marketContext(browser, "PE", {
+  const context = await marketContext(browser, "IE", {
     isMobile: true,
     viewport: { width: 390, height: 600 },
   });
@@ -378,7 +378,7 @@ test("held commercial resolution times out once and recovers without replacing o
 test("commercial completion before application JavaScript preserves the native open state through hydration", async ({ browser, browserName }) => {
   test.setTimeout(60_000);
   const commercialHold = await holdPublishedCasinoReads();
-  const context = await marketContext(browser, "PE", {
+  const context = await marketContext(browser, "IE", {
     isMobile: true,
     viewport: { width: 390, height: 844 },
   });
@@ -436,7 +436,7 @@ test("rejected commercial resolution keeps truthful basic navigation usable", as
     process.env.NAVIGATION_STAGE2_REJECT_COMMERCIAL_STATE !== "true",
     "isolated commercial-state rejection seam is not configured",
   );
-  const context = await marketContext(browser, "PE", {
+  const context = await marketContext(browser, "IE", {
     isMobile: true,
     viewport: { width: 390, height: 844 },
   });
@@ -472,7 +472,7 @@ async function expectNeutralNavigationFeedback(page: Page, destination: string) 
 }
 
 test("keyboard focus does not prefetch request-specific primary routes", async ({ browser }) => {
-  const context = await marketContext(browser, "PE", { viewport: { width: 1365, height: 900 } });
+  const context = await marketContext(browser, "IE", { viewport: { width: 1365, height: 900 } });
   const page = await context.newPage();
   const primaryPaths = ["/en/best-offers", "/en/casinos", "/en/bonuses", "/en/learn"];
   const prefetched: string[] = [];
@@ -492,9 +492,9 @@ test("keyboard focus does not prefetch request-specific primary routes", async (
   await context.close();
 });
 
-test("supported PE fixture covers all primary, detail, article, history and prefetch journeys without document reloads", async ({ browser }) => {
+test("supported IE fixture covers all primary, detail, article, history and prefetch journeys without document reloads", async ({ browser }) => {
   test.setTimeout(120_000);
-  const context = await marketContext(browser, "PE", { viewport: { width: 1365, height: 900 } });
+  const context = await marketContext(browser, "IE", { viewport: { width: 1365, height: 900 } });
   const page = await context.newPage();
   const errors = observeRuntimeErrors(page);
   const documentNavigations: string[] = [];
@@ -577,8 +577,8 @@ test("supported PE fixture covers all primary, detail, article, history and pref
   await context.close();
 });
 
-test("restricted KZ and supported PE remain isolated across direct localized routes", async ({ browser }) => {
-  const supported = await marketContext(browser, "PE");
+test("restricted KZ and supported IE remain isolated across direct localized routes", async ({ browser }) => {
+  const supported = await marketContext(browser, "IE");
   const supportedPage = await supported.newPage();
   await supportedPage.goto(`${baseUrl}/en/best-offers`, { waitUntil: "domcontentloaded" });
   await expect(supportedPage.locator("[data-commercial-best-offer-card]").first()).toBeVisible();
@@ -608,7 +608,7 @@ test("restricted KZ and supported PE remain isolated across direct localized rou
 
 test("mobile feedback survives menu close, stays neutral while slow, and honors reduced motion", async ({ browser }) => {
   test.setTimeout(60_000);
-  const context = await marketContext(browser, "PE", {
+  const context = await marketContext(browser, "IE", {
     isMobile: true,
     reducedMotion: "reduce",
     viewport: { width: 390, height: 844 },
@@ -667,7 +667,7 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
 });
 
 test("enhanced disclosure respects modifiers, new tabs, hashes and desktop resize", async ({ browser }) => {
-  const context = await marketContext(browser, "PE", {
+  const context = await marketContext(browser, "IE", {
     isMobile: true,
     viewport: { width: 390, height: 844 },
   });
@@ -726,7 +726,7 @@ test("enhanced disclosure respects modifiers, new tabs, hashes and desktop resiz
 
 test("rapid transitions resolve to the last destination and failed raw Learn navigation cannot leave pending UI stuck", async ({ browser }) => {
   test.setTimeout(45_000);
-  const context = await marketContext(browser, "PE", { viewport: { width: 1365, height: 900 } });
+  const context = await marketContext(browser, "IE", { viewport: { width: 1365, height: 900 } });
   const page = await context.newPage();
   await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-handoff-page="home"]')).toBeVisible();
@@ -763,7 +763,7 @@ test("rapid transitions resolve to the last destination and failed raw Learn nav
 
 test("language switching preserves query state, and native mobile navigation works without JavaScript", async ({ browser }) => {
   test.setTimeout(60_000);
-  const context = await marketContext(browser, "PE");
+  const context = await marketContext(browser, "IE");
   const page = await context.newPage();
   await page.goto(`${baseUrl}/en/casinos?q=stage2`, { waitUntil: "domcontentloaded" });
   const language = page.getByRole("button", { name: /Change language: English/ }).first();
@@ -778,7 +778,7 @@ test("language switching preserves query state, and native mobile navigation wor
   await expect(page.locator("[data-learn-empty]")).toBeVisible();
   await context.close();
 
-  const noJavaScript = await marketContext(browser, "PE", {
+  const noJavaScript = await marketContext(browser, "IE", {
     isMobile: true,
     javaScriptEnabled: false,
     viewport: { width: 390, height: 844 },
@@ -806,7 +806,7 @@ test("language switching preserves query state, and native mobile navigation wor
 });
 
 test("nested Programme language Escape closes only the topmost disclosure", async ({ browser }) => {
-  const context = await marketContext(browser, "PE", {
+  const context = await marketContext(browser, "IE", {
     isMobile: true,
     viewport: { width: 390, height: 844 },
   });
