@@ -215,7 +215,7 @@ test("redirect slug remains unique and immutable after creation", async () => {
   const mapping = {
     id: "redirect-id", slug: "casino-offer", casinoId: "casino", casinoBonusId: null, affiliateOfferId: null,
     defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
-    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
+    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "turbonino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
   const store = redirectStore(mapping);
   store.existsBySlug = async () => true;
@@ -233,7 +233,7 @@ test("redirect service selects only stored safe tracking URLs", async () => {
   const mapping = {
     id: "redirect-id", slug: "casino-offer", casinoId: "casino", casinoBonusId: null, affiliateOfferId: null,
     defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
-    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
+    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "turbonino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
   const safeService = new AffiliateRedirectService(redirectStore(mapping), { legacyAdminPreviewCandidates: async () => { throw new Error("legacy offer lifecycle must not run for GB"); } }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalRoute({ offerId: "safe", trackingLinkId: "link-safe", trackingUrl: "https://tracking.example/link-safe" }));
   const safe = await safeService.resolve("casino-offer", { now, requestCountrySignal: trustedSignal("GB") });
@@ -250,7 +250,7 @@ test("direct redirect resolution obeys exact canonical authority without a legac
   const mapping = {
     id: "redirect-id", slug: "casino-offer", casinoId: "casino", casinoBonusId: null, affiliateOfferId: "safe",
     defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
-    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
+    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "betsson" }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
   const service = new AffiliateRedirectService(
     redirectStore(mapping),
@@ -273,7 +273,7 @@ test("a healthy route never redirects a reader whose market prohibits presenting
   const mapping = {
     id: "redirect-id", slug: "casino-offer", casinoId: "casino", casinoBonusId: null, affiliateOfferId: "safe",
     defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
-    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
+    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "turbonino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
   const service = (countryCode: string) => new AffiliateRedirectService(
     redirectStore(mapping),
@@ -290,11 +290,32 @@ test("a healthy route never redirects a reader whose market prohibits presenting
   assert.equal((await service("SE")).ok, true);
 });
 
+test("a healthy route never redirects to a casino without the reader's local licence", async () => {
+  const mapping = (slug: string) => ({
+    id: "redirect-id", slug: "casino-offer", casinoId: "casino", casinoBonusId: null, affiliateOfferId: "safe",
+    defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
+    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug }, casinoBonus: null, affiliateOffer: null, revisions: [],
+  });
+  const resolve = (slug: string, countryCode: string, at = now) => new AffiliateRedirectService(
+    redirectStore(mapping(slug)),
+    { legacyAdminPreviewCandidates: async () => [] },
+    new JurisdictionResolver({ findByCountry: async () => null }),
+    allowGbCommercialReadinessAuthority,
+    canonicalRoute({ offerId: "safe", trackingLinkId: "link-safe", trackingUrl: "https://tracking.example/link-safe" }),
+  ).resolve("casino-offer", { now: at, requestCountrySignal: { ...trustedSignal(countryCode), observedAt: at } });
+
+  const reason = (result: Awaited<ReturnType<typeof resolve>>) => (result.ok ? "OK" : result.reason);
+  assert.equal(reason(await resolve("casino-redkings", "DK")), "OPERATOR_BLOCKS");
+  assert.equal(reason(await resolve("goldenplay", "SE")), "NO_LOCAL_LICENCE");
+  assert.equal(reason(await resolve("turbonino", "DE", new Date("2026-09-28T12:00:00Z"))), "OUTSIDE_ADVERTISING_WINDOW");
+  assert.equal(reason(await resolve("turbonino", "DE", new Date("2026-09-28T20:00:00Z"))), "OK");
+});
+
 test("redirect canonicalizes a trusted country-scoped region before its single route lookup", async () => {
   const mapping = {
     id: "redirect-id", slug: "casino-offer", casinoId: "casino", casinoBonusId: null, affiliateOfferId: "safe",
     defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
-    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
+    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "turbonino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
   let requestedMarket: string | null = null;
   const service = new AffiliateRedirectService(
