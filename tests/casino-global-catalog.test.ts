@@ -206,23 +206,22 @@ test("the editorial corpus replaces the generated lists rather than restating th
   const original = JSON.parse(generated) as { casinos: Array<{ slug: string; bestFor: string[]; thingsToKnow: string[] }> };
 
   assert.equal(replacement.commercialAuthority, false, "editorial copy never carries commercial authority");
-  assert.deepEqual(
-    replacement.entries.map((entry) => entry.slug).sort(),
-    original.casinos.map((casino) => casino.slug).sort(),
-    "every generated entry is replaced",
-  );
+  const covered = new Set(replacement.entries.map((entry) => entry.slug));
+  for (const casino of original.casinos) {
+    assert.ok(covered.has(casino.slug), `${casino.slug} still carries generated copy`);
+  }
 
   const originalBySlug = new Map(original.casinos.map((casino) => [casino.slug, casino]));
   for (const entry of replacement.entries) {
-    const before = originalBySlug.get(entry.slug);
-    assert.ok(before);
-    // The generated lists all opened by reciting licence numbers the page
-    // already shows in its regulation section.
-    assert.match(before.bestFor[0] as string, /^Players who want a licensed site:/);
     for (const line of [...entry.bestFor, ...entry.thingsToKnow]) {
       assert.doesNotMatch(line, /^Players who want a licensed site:/, `${entry.slug} still recites licences`);
       assert.doesNotMatch(line, /licence \d/i, `${entry.slug} still quotes a licence number`);
     }
+    const before = originalBySlug.get(entry.slug);
+    if (!before) continue;
+    // The generated lists all opened by reciting licence numbers the page
+    // already shows in its regulation section.
+    assert.match(before.bestFor[0] as string, /^Players who want a licensed site:/);
     assert.notDeepEqual(entry.bestFor, before.bestFor, `${entry.slug} "Best for" is unchanged`);
     assert.notDeepEqual(entry.thingsToKnow, before.thingsToKnow, `${entry.slug} "Things to know" is unchanged`);
   }
@@ -279,4 +278,60 @@ test("activating an offer never claims commercial authority", async () => {
   const auditBlock = executor.slice(executor.indexOf("casino-global-catalog-01-offer"));
   assert.match(auditBlock, /commercialAuthorityGranted: false/);
   assert.match(auditBlock, /routeCreated: false/);
+});
+
+test("release vocabulary never reaches a reader", async () => {
+  // The fifteen CASINO-REAL-CATALOG entries were written for a release record:
+  // "the Superfly set", "a disabled Preview card", "creative geography", "the
+  // governed corpus". Accurate internally, meaningless to a player.
+  const corpus = JSON.parse(await readFile(
+    path.join(process.cwd(), "data/casino-global-catalog-01/editorial.v1.json"),
+    "utf8",
+  )) as { entries: Array<{ slug: string; bestFor: string[]; thingsToKnow: string[]; description: string }> };
+
+  const internalVocabulary = [
+    /\bSuperfly\b/i,
+    /\bPreview card\b/i,
+    /creative geography/i,
+    /governed (?:corpus|profile)/i,
+    /\bthis release\b/i,
+    /exact-domain/i,
+    /commercial routing remains/i,
+    /editorial score does not/i,
+    /partner (?:matrix|corpus|portal)/i,
+  ];
+  for (const entry of corpus.entries) {
+    for (const text of [...entry.bestFor, ...entry.thingsToKnow, entry.description]) {
+      for (const pattern of internalVocabulary) {
+        assert.doesNotMatch(text, pattern, `${entry.slug} still speaks in release vocabulary`);
+      }
+    }
+  }
+});
+
+test("facts a player needs survive the rewrite", async () => {
+  // The rewrite must not sand off the uncomfortable parts. These three were
+  // buried in internal prose and are the most consequential things we hold.
+  const corpus = JSON.parse(await readFile(
+    path.join(process.cwd(), "data/casino-global-catalog-01/editorial.v1.json"),
+    "utf8",
+  )) as { entries: Array<{ slug: string; bestFor: string[]; thingsToKnow: string[]; description: string }> };
+  const bySlug = new Map(corpus.entries.map((entry) => [entry.slug, entry]));
+
+  const required: Array<[string, RegExp]> = [
+    ["21-prive", /delayed withdrawals/i],
+    ["slotnite", /delayed payouts/i],
+    ["betsson", /anti-money-laundering/i],
+    ["betsson", /6\.5 million/],
+    ["goldenplay", /offshore/i],
+    ["rizk", /no Canadian licence/i],
+    ["supercasino", /not a New Zealand licence/i],
+    ["starcasino", /information only/i],
+  ];
+  for (const [slug, pattern] of required) {
+    const entry = bySlug.get(slug);
+    assert.ok(entry, `${slug} is missing from the corpus`);
+    const joined = [...entry.bestFor, ...entry.thingsToKnow, entry.description].join("\n");
+    assert.match(joined, pattern, `${slug} lost a fact a player needs`);
+  }
 });

@@ -130,7 +130,7 @@ Deliberately **not** activated:
 ## What `editorial` does
 
 Replaces `pros` ("Best for"), `cons` ("Things to know") and `description` for
-the thirteen EGO casinos from
+all twenty-eight casinos from
 `data/casino-global-catalog-01/editorial.v1.json`, keeps the published
 editorial review in step, and republishes. The corpus loader refuses a file
 whose schema, release or `commercialAuthority: false` do not match, and rejects
@@ -165,8 +165,10 @@ not a rendering fault.
   TurboNino. Recording one needs research, not derivation. Twelve further
   published offers stay inactive because their material terms are incomplete —
   run `offer-plan` for the current list and the exact missing fields.
-- **Founded year** is missing for 15 casinos and **responsible-gambling tools**
-  for 19. Neither is derivable from market profiles.
-- **Descriptions on the 15 non-EGO casinos** are written in internal release
-  language ("The release preserves the Estonia cashier gap…") rather than for a
-  reader. They are accurate but were not part of this rewrite.
+- **Founded year** is missing for 16 casinos and **responsible-gambling tools**
+  for 19. Both now display on the profile when present, so collecting them has
+  a visible destination; neither is derivable from market profiles.
+- **Payout timing for the global view.** The market sentence now shows on an
+  exact-market profile, but a reader with no exact profile still sees nothing,
+  because the sentence belongs to a market and cannot be borrowed. Only
+  brand-level per-method timings would close that, and those need research.

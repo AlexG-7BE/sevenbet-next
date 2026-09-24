@@ -4,7 +4,7 @@
   "decisionRef": "FOUNDER-CASINO-GLOBAL-CATALOG-2026-09-23",
   "classification": "EDITORIAL_ONLY",
   "commercialAuthority": false,
-  "note": "Replaces the generated 'Best for' and 'Things to know' lists written by the EGO/SkillOnNet import on 22 September 2026. Those lists restated licence numbers and provider counts the page already shows elsewhere, so they told a reader nothing about whether the casino suited them. Every statement below is traceable to the checksum-verified bundles in data/casino-ingestion/ego-skillonnet-2026-09-22 and the source note beside them. Nothing here grants commercial or referral authority.",
+  "note": "Replaces editorial copy that was written for a release record rather than for a reader. The thirteen EGO entries replace generated lists that recited licence numbers the page already shows. The fifteen CASINO-REAL-CATALOG-02/03 entries replace internal release vocabulary — 'the Superfly set', 'a disabled Preview card', 'creative geography', 'the governed corpus' — which buried facts a player actually needs, notably 21 Prive's withdrawal-complaint history, Slotnite's payout-delay complaints and Betsson's Swedish anti-money-laundering sanction. Every statement is traceable to the checksum-verified bundles and release records already in data/. Nothing here grants commercial or referral authority.",
   "entries": [
     {
       "slug": "ahti-games",
@@ -187,6 +187,216 @@
         "Swedish Trustly withdrawals are reported as fast; the only timing we could verify is the UK record of 1–3 working days after approval."
       ],
       "description": "TurboNino is SkillOnNet's Pay N Play casino, live since 2021 and built around a single idea: you deposit through Trustly or Zimpler using bank ID, and that deposit is your registration. There is no sign-up form and no separate verification step, and withdrawals return to the account you paid from. That works in Sweden, where Trustly and Zimpler are both on the cashier under the Spelinspektionen licence. It does not work everywhere: in Great Britain the site runs a conventional cashier under the Gambling Commission licence, and the brand's defining feature is simply absent. Germany has its own GGL virtual-slots permit for turbonino.de. Eight studios supply the games — Playtech, Pragmatic Play, Evolution, NetEnt, Play'n GO, Red Tiger, Blueprint Gaming and Games Global — across slots, jackpots, Megaways, live casino, blackjack, roulette and table games. Profiles are published for Germany, Denmark, Great Britain and Sweden. No welcome offer is on record in any of them."
+    },
+    {
+      "slug": "21-prive",
+      "bestFor": [
+        "Players who read withdrawal terms carefully before depositing — this brand needs that more than most here.",
+        "Readers comparing the largest bonus headline among the White Hat Gaming brands we cover.",
+        "Players who want a UK-licensed site with a long operating history behind it."
+      ],
+      "thingsToKnow": [
+        "There is a history of complaints about delayed withdrawals. We treat that as a reason to check how the casino handles payouts today, not as proof it will delay yours — but check it.",
+        "A big headline number is not a good offer by itself. The wagering requirement and maximum cash-out decide what it is worth, and those are what to compare.",
+        "Exact payment and withdrawal facts are still partial in our record, so the cashier detail here is thinner than on its sister brands."
+      ],
+      "description": "21 Prive is a White Hat Gaming brand running since 2014, licensed by the UK Gambling Commission and published for Great Britain, Ireland and Malta. On paper it is the strongest of the White Hat brands we cover for cashier breadth — 14 payment methods and 16 game providers — and it carries the largest bonus headline of the group. The reason to slow down is its record on withdrawals: complaints about delayed payouts appear in its history, which is why its Editor Score sits below siblings with thinner catalogues. That history is a signal to investigate rather than a verdict, and it may well have been fixed, but it is the thing to verify before you deposit rather than after you try to withdraw."
+    },
+    {
+      "slug": "betsafe",
+      "bestFor": [
+        "Players in Estonia or Latvia who want a site licensed by their own national regulator rather than an offshore one.",
+        "Players comparing a genuinely deep catalogue — 13 providers across slots and live casino.",
+        "Multilingual Baltic players who want the site and support in a local language."
+      ],
+      "thingsToKnow": [
+        "The Estonian cashier is the gap in our record: we know the market is licensed and live, but not which payment methods it actually offers.",
+        "The Latvian welcome offer's mechanics are incomplete on our side — read the current terms on the site before opting in.",
+        "Only Estonia and Latvia are profiled. Betsafe operates in more markets, and nothing here describes those."
+      ],
+      "description": "Betsafe has been running since 2006 and is one of the older names in this catalogue. We profile it for Estonia and Latvia, where it holds licences from the Estonian Tax and Customs Board and the Latvian Lotteries and Gambling Supervision Inspection — national regulators, not an offshore licence covering the region from a distance. The catalogue is broad, with 13 providers and 7 payment methods on record across slots, live casino and table games. Two gaps are worth naming: we have not established which payment methods the Estonian site offers, and the Latvian welcome offer's mechanics are only partly recorded. The operating company differs by market — Triogames OU in Estonia, SIA Latsson Licensing in Latvia — which is normal for locally licensed brands and is why no single corporate operator is listed."
+    },
+    {
+      "slug": "betsson",
+      "bestFor": [
+        "Players who want one of the oldest operators in the industry — Betsson dates to 1963.",
+        "Players in Peru or Sweden, the two markets where our local evidence is strongest.",
+        "Players who want local payment rails rather than international cards: 22 methods are on record."
+      ],
+      "thingsToKnow": [
+        "Sweden's regulator warned Betsson Nordic Ltd and fined it SEK 6.5 million for serious anti-money-laundering failings. A licence is not a clean bill of health, and this is the clearest example in our catalogue.",
+        "The current welcome offer's mechanics are incomplete in our record for both Peru and Sweden, so the headline you see on the site is not one we have checked.",
+        "No game provider list is recorded for this brand, which is unusual here and means the catalogue depth is unverified on our side."
+      ],
+      "description": "Betsson traces back to 1963, which makes it by some distance the oldest operator in this catalogue, and it runs across seven markets we profile including Brazil, Colombia, Denmark, Spain, Mexico, Peru and Sweden. Its strength is local depth: 22 payment methods on record and national licences from MINCETUR in Peru and Spelinspektionen in Sweden. Its published record also contains the most serious regulatory finding we hold on any brand here. Spelinspektionen warned Betsson Nordic Ltd and imposed a SEK 6.5 million sanction for serious anti-money-laundering failings. We publish that alongside the licence rather than behind it, because a current licence and a clean compliance record are not the same thing, and a player deciding where to put money deserves both facts. Operating entities differ by market, so no single corporate operator is listed."
+    },
+    {
+      "slug": "diamond7",
+      "bestFor": [
+        "Slot players who want a familiar, uncomplicated format rather than a sprawling catalogue.",
+        "Players who want a UK-licensed White Hat Gaming brand with a decade of operating history.",
+        "Players comparing a mid-sized welcome package rather than a headline-chasing one."
+      ],
+      "thingsToKnow": [
+        "Its catalogue is the smallest of the White Hat brands we cover — 10 providers against 17 at Hello Casino — so if breadth matters, look at its siblings first.",
+        "Exact product facts per market are only partly recorded, so the profile is thinner than the licence record suggests.",
+        "Which countries it actually serves beyond the stored Great Britain profile is unresolved on our side."
+      ],
+      "description": "Diamond7 is a White Hat Gaming brand live since 2015, holding a UK Gambling Commission licence and published for Great Britain, Ireland and Malta. It is the plainest of the White Hat brands we cover, and that is its character rather than a flaw: a slots-led casino with 10 providers and 10 payment methods, without the bingo rooms, jackpot rails or live-dealer depth some of its siblings carry. If you want a straightforward slot site from a licensed operator with ten years behind it, that is what this is. If you are comparing catalogue size, Hello Casino and 21 Prive sit on the same platform with noticeably more on the shelf."
+    },
+    {
+      "slug": "dragonbet",
+      "bestFor": [
+        "UK players who want sports betting and casino from the same operator and the same account.",
+        "Players who want a genuinely British operator: DragonBet Ltd is a UK-registered company, not an offshore entity serving the UK.",
+        "Players comparing game categories rather than cashier detail — that is where this record is strongest."
+      ],
+      "thingsToKnow": [
+        "Payment and withdrawal facts are the thinnest of any casino we publish. We hold no payment method at all for this brand, so you will be reading the cashier cold.",
+        "Great Britain is the only market profiled. Nothing here describes it anywhere else.",
+        "No welcome offer is on record, so whatever the site shows you is unchecked by us."
+      ],
+      "description": "DragonBet is a UK-focused operator run by DragonBet Ltd, a company registered in the United Kingdom (number 15718764), with an active Gambling Commission record — which makes it one of the few genuinely British operators in this catalogue rather than an international brand holding a UK licence. Its strength in our record is the game side: eight categories on file including slots, live casino, table games, jackpots and virtual sports, alongside named providers. Its weakness is everything to do with money. We hold no payment method, no withdrawal timing and no offer for it, which is why it sits low on the score despite a clean licence record. Great Britain is the only market we profile."
+    },
+    {
+      "slug": "gday-casino",
+      "bestFor": [
+        "Players who want a casino with a distinct personality rather than a generic platform skin.",
+        "Players who value cashier choice: 12 payment methods are on record, above average for this group.",
+        "Players who want a UK-licensed brand with a long run behind it — live since 2013."
+      ],
+      "thingsToKnow": [
+        "The Australian theme is presentation only. The brand is UK-licensed and published for Great Britain, Ireland and Malta; it is not an Australian operator and Australia is not a market here.",
+        "Exact payment and withdrawal facts per market remain incomplete, so cashier timing is unverified.",
+        "It runs on the same White Hat Gaming platform as five other brands we cover, so the games are largely the same shelf under different dressing."
+      ],
+      "description": "G'day Casino is a White Hat Gaming brand running since 2013, licensed by the UK Gambling Commission and published for Great Britain, Ireland and Malta. The Australian styling is the brand's distinguishing feature and is worth being clear about: it is theming, not geography, and this is not an Australian-licensed operator. Underneath, it is the same White Hat platform as Hello Casino, Diamond7, Skol, Slotnite and 21 Prive, with 11 providers and 12 payment methods on record — a middling catalogue with above-average cashier choice for this group. Exact withdrawal timing per market is not established on our side."
+    },
+    {
+      "slug": "goldenplay",
+      "bestFor": [
+        "Players who want casino and sportsbook under one account rather than two.",
+        "Players who want to deposit in crypto — BTC, ETH, USDT and USDC are on record alongside cards and e-wallets.",
+        "Players in one of the many markets this brand serves: 22 are profiled, far more than anything else here."
+      ],
+      "thingsToKnow": [
+        "It holds a Tobique licence, which is an offshore B2C licence and is not equivalent to a national licence in any of the 22 markets listed. In most of them nobody local is supervising this operator.",
+        "It launched in 2025, so there is almost no operating history to judge it on — no track record on payouts, disputes or how it behaves when something goes wrong.",
+        "Eleven promotions are recorded for this brand and none of them carries a verification date or a link to its terms, which is why none is published."
+      ],
+      "description": "GoldenPlay is a 2025 launch in the NetoPartners / Anakatech portfolio, combining casino and sportsbook under one brand across 22 markets — by far the widest footprint in this catalogue. Partner material lists 950+ games, seven product languages, and suppliers including Pragmatic Play, NetEnt, Evolution, Play'n GO and Spinoro, across slots, live casino, table games, instant-win, scratchcard and crash titles. Crypto is supported alongside cards, e-wallets and vouchers. Two things should temper the breadth. Its licence is from the Tobique Gaming Commission, an offshore B2C licence, and it is not a national licence in the markets it serves — so in most of those 22 countries no local regulator supervises this operator or can help you in a dispute. And launched in 2025, it has no operating history to speak of: everything you can judge it on is what the operator says about itself."
+    },
+    {
+      "slug": "hello-casino",
+      "bestFor": [
+        "Players who want the widest game choice on the White Hat Gaming platform — 17 providers, the most of the six brands we cover.",
+        "Players who want offer terms stated plainly: wagering, minimum deposit and maximum bet are all on record here.",
+        "Players who want a long-running UK-licensed brand, live since 2014."
+      ],
+      "thingsToKnow": [
+        "The recorded withdrawal timing is three days or more, which is the slowest we hold for this platform. If payout speed matters, its siblings do better.",
+        "Exact country availability beyond the stored Great Britain profile is not established on our side.",
+        "The offer we hold is a rest-of-world offer; what you see in your own market may differ."
+      ],
+      "description": "Hello Casino has run since 2014 on the White Hat Gaming platform, licensed by the UK Gambling Commission and published for Great Britain, Ireland and Malta. Of the six White Hat brands in this catalogue it carries the deepest shelf — 17 providers including Games Global, NetEnt, Evolution, Betsoft, Big Time Gaming and Blueprint — with 12 payment methods and a welcome offer whose mechanics are unusually completely recorded: 100% to EUR 300 plus 100 spins, 35x wagering, EUR 20 minimum deposit, EUR 5 maximum bet. That completeness is the reason to consider it. The reason to hesitate is payout speed: three days or more is the timing on record, the slowest on this platform, and several of its siblings settle in one to two."
+    },
+    {
+      "slug": "inkabet",
+      "bestFor": [
+        "Players in Peru who want a MINCETUR-authorised site — this is a locally licensed operator, not an offshore brand accepting Peruvian players.",
+        "Players who want to deposit and withdraw in soles through local rails: 11 payment methods are on record.",
+        "Players who want the offer terms spelled out before depositing — wagering, minimum deposit and conditions are all recorded here."
+      ],
+      "thingsToKnow": [
+        "Peru is the only market. If you are reading from anywhere else, this profile is information only and the site may not accept you.",
+        "Which cashier methods you actually see can vary by account and verification status, even though 11 are on record.",
+        "Some payment limits in our record come from partner material rather than the operator's own published terms."
+      ],
+      "description": "Inkabet is a Peruvian casino operated by Lucky Torito SAC under MINCETUR authorisation, running since 2012 — locally licensed rather than an international brand taking Peruvian players from offshore, which is the distinction that matters most in this market. It holds the strongest single-market record in this catalogue: current authorisations on file, 11 payment methods in soles, 12 providers including Evolution, Playtech, Pragmatic Play, Play'n GO, Microgaming and Greentube, and a welcome offer with complete mechanics — 100% to PEN 500 plus 100 spins at 30x with a PEN 20 minimum. Responsible-gambling controls are recorded locally rather than assumed from a group policy. Peru is the only market profiled, and nothing here describes the brand elsewhere."
+    },
+    {
+      "slug": "nordicbet",
+      "bestFor": [
+        "Swedish players who want Swish and Trustly rather than cards — the cashier is built for the local market, with 10 methods on record.",
+        "Players who want casino and poker from one operator, which is unusual in this catalogue.",
+        "Players who want a Spelinspektionen-licensed site: this is a Swedish licence, not an offshore one."
+      ],
+      "thingsToKnow": [
+        "The welcome offer's mechanics are incomplete in our record — we know the headline but not the wagering or the deposit minimum.",
+        "There is generic Malta licence material circulating for this brand that conflicts with the Swedish profile. We exclude it rather than reconcile it, so treat any MGA claim you see elsewhere with caution.",
+        "Only Denmark and Sweden are profiled. NordicBet operates more widely and nothing here covers that."
+      ],
+      "description": "NordicBet has run since 2002 and is a Nordic specialist rather than an international brand with a Nordic skin: the Swedish site holds a Spelinspektionen licence through NGG Nordic Ltd, and the cashier is built around local rails including Swish and Trustly across 10 recorded methods. It carries poker alongside casino, which almost nothing else in this catalogue does. Providers on record are Evolution, NetEnt, Play'n GO, Red Tiger and Quickfire. Two caveats. The welcome offer's mechanics are only partly recorded, so the headline is known but the wagering is not. And generic Malta licence material exists for this brand that contradicts the Swedish record; we do not use it as Swedish regulatory evidence, and neither should you."
+    },
+    {
+      "slug": "rizk",
+      "bestFor": [
+        "Players who want catalogue depth above all: 18 providers, the largest of any casino we publish.",
+        "Players in Serbia, where the local payment evidence is the most detailed we hold for this brand.",
+        "Players in Canada comparing cashier breadth rather than local licensing."
+      ],
+      "thingsToKnow": [
+        "There is no Canadian licence here. Gambling is regulated provincially in Canada, and our record establishes no provincial authorisation, so in Canada this is an offshore operator.",
+        "We researched a New Zealand profile and deliberately did not publish it: the site's own legal statements there contradict each other, and we would rather show nothing than something unresolved.",
+        "The operating company differs by market — Zecure Gaming Ltd in one, Top Slots d.o.o. Beograd in another — so there is no single corporate entity standing behind the brand everywhere."
+      ],
+      "description": "Rizk carries the deepest game catalogue in this collection: 18 providers including Evolution, NetEnt, Play'n GO, Hacksaw Gaming, Nolimit City, Microgaming, IGT and Greentube, across slots, live casino and table games. We publish it for Canada and Serbia, where the Serbian record is the stronger of the two — licensed by the Serbian Ministry of Finance with detailed local payment evidence. Canada is where to be careful: gambling there is regulated province by province, we establish no provincial authorisation, and a Malta licence is not a substitute for one. We also researched a New Zealand profile and held it back, because the site's own legal presentation there contradicts itself and an unresolved contradiction is not something to publish as fact."
+    },
+    {
+      "slug": "skol-casino",
+      "bestFor": [
+        "Players who want a modern slot catalogue — around 2,500 games from suppliers including Play'n GO, NetEnt, Games Global, Red Tiger, Blueprint and Push.",
+        "Players who want a low entry point: EUR 10 minimum deposit, against EUR 20 at several of its siblings.",
+        "Players who mostly play on a phone browser."
+      ],
+      "thingsToKnow": [
+        "It is the newest of the White Hat Gaming brands we cover, live since 2021, so there is less operating history than its siblings offer.",
+        "Which countries it serves beyond the stored Great Britain profile is unresolved on our side.",
+        "Exact withdrawal and support details remain incomplete in our record, even though payout timing of one to two days is on file."
+      ],
+      "description": "Skol Casino is the newest White Hat Gaming brand in this catalogue, live since 2021, licensed by the UK Gambling Commission and published for Great Britain, Ireland and Malta. Its pitch is a modern shelf — around 2,500 games from Play'n GO, NetEnt, Games Global, Red Tiger, Blueprint, Push, Evolution and Pragmatic Play — with a lower entry point than its siblings: EUR 10 minimum deposit against EUR 20 at Hello Casino and 21 Prive, on a 100% to EUR 300 plus 100 spins welcome offer. Withdrawal timing on record is one to two days, among the better figures on this platform. Being newest cuts both ways: a current catalogue, but a shorter record to judge it by."
+    },
+    {
+      "slug": "slotnite",
+      "bestFor": [
+        "Slot players who want a mid-sized welcome package with the terms stated rather than a headline number.",
+        "Players who want cashier choice: 14 payment methods on record, joint-highest of the White Hat brands here.",
+        "Players prepared to verify how withdrawals are being handled before they deposit — which this brand specifically requires."
+      ],
+      "thingsToKnow": [
+        "There are recent complaints about delayed payouts. That is the single reason this brand scores lowest in the group, and it is the thing to check on current player forums before you deposit rather than after you win.",
+        "Exact payment and withdrawal facts remain incomplete in our record, so we cannot tell you what timing to expect.",
+        "Regional variants of the offer differ, so the terms you see may not be the ones recorded here."
+      ],
+      "description": "Slotnite is a White Hat Gaming brand running since 2019, licensed by the UK Gambling Commission and published for Great Britain, Ireland and Malta. On the catalogue it holds its own — 13 providers including Evolution, NetEnt, Play'n GO, Hacksaw, Nolimit City, Light & Wonder and Quickspin, with 14 payment methods, the joint-widest cashier of the six White Hat brands here — and the welcome offer is recorded with its terms rather than just its headline: 100% to EUR 250 plus 100 spins, EUR 10 minimum. It scores lowest in this group for one reason, and it is not the games. Recent complaints about delayed payouts sit against it. We treat that as a signal rather than proof, because a complaint is one player's account and not a pattern we have verified, but it lowers confidence materially and it is worth an hour of your own reading before you deposit."
+    },
+    {
+      "slug": "starcasino",
+      "bestFor": [
+        "Players in Italy who want an ADM-licensed site — concession 16026, the Italian state licence, not an offshore one.",
+        "Players who want cashier breadth: 15 payment methods on record, the widest of any casino we publish.",
+        "Players who want a large catalogue with live casino from Evolution."
+      ],
+      "thingsToKnow": [
+        "Italy restricts gambling advertising tightly, so this review is published as information only. You will find no promotional link here, and that is deliberate rather than an oversight.",
+        "An Italian welcome offer exists, but its actual mechanics — wagering, minimum deposit, maximum bet — are not established in our record.",
+        "Older evidence tied to concession 15230 exists and is stale; the current concession is 16026, and that is the number to check against the ADM register."
+      ],
+      "description": "StarCasino is an Italian casino operated by Azzurri Limited under ADM concession 16026, running since 2012 — a licence from the Italian state regulator rather than an offshore permission, which in Italy is the only kind that counts. It has the widest cashier in this catalogue at 15 recorded payment methods, across a large game shelf with live casino from Evolution alongside Pragmatic Play and Red Tiger. Italy is also the reason this page looks different from the others: Italian law restricts gambling advertising tightly, so we publish this as neutral information with no promotional link and no referral route. An Italian welcome offer is known to exist, but we have not established its terms, so we do not describe it. If you check the ADM register yourself, 16026 is the current concession; older material citing 15230 is out of date."
+    },
+    {
+      "slug": "supercasino",
+      "bestFor": [
+        "Players who want to know exactly what a bonus costs before taking it — this record has the clearest welcome mechanics in the catalogue.",
+        "New Zealand players comparing a documented profile rather than a marketing page.",
+        "Live casino players: the recorded catalogue covers live tables alongside slots."
+      ],
+      "thingsToKnow": [
+        "The Malta licence is not a New Zealand licence. No New Zealand regulator supervises this operator, and none can help you in a dispute.",
+        "New Zealand's Online Casino Gambling Act has been in force since May 2026, and only operators licensed by the DIA from December 2026 may advertise there. Check the current position before acting on anything here.",
+        "Method-level cashier limits are incomplete in our record, so deposit and withdrawal ceilings per payment method are unverified."
+      ],
+      "description": "SuperCasino is operated by BML Group Limited under a Malta Gaming Authority licence and profiled here for New Zealand. Its strength is documentation: the welcome offer is recorded more completely than almost anything else in this catalogue — 100% to NZD 1,200 plus 200 free spins at 35x with an NZD 10 minimum deposit, conditions listed and terms linked — which means you can work out what it is worth before you take it rather than after. Five providers are on record including Games Global, Pragmatic Play, Light & Wonder, Kalamba and iSoftBet, across five categories with live casino. The caution is regulatory. A Malta licence is a licence in Malta; it gives a New Zealand player no local regulator to appeal to. New Zealand also brought its Online Casino Gambling Act into force in May 2026, with DIA licensing from December 2026, so the legal position there is actively changing."
     }
   ]
 }
