@@ -48,6 +48,29 @@ export function safeOutboundPlacement(value: string | null) {
   return placement && /^[A-Z0-9_]{1,64}$/.test(placement) ? placement : null;
 }
 
+/**
+ * The consented campaign of the visitor's analytics session, for the partner
+ * sub-ID: its utm_campaign, else its acquisition source. Without the analytics
+ * grant, or without a valid session cookie, it is null and no query runs.
+ */
+export async function consentedCampaign(request: Request, at: Date) {
+  try {
+    const secret = analyticsSigningSecret();
+    if (readAnalyticsConsent(request.headers, secret) !== "granted") return null;
+    const sessionId = readAnalyticsUuid(request.headers, ANALYTICS_SESSION_COOKIE, secret);
+    const anonymousId = readAnalyticsUuid(request.headers, ANALYTICS_ANONYMOUS_COOKIE, secret);
+    if (!sessionId || !anonymousId) return null;
+    const session = await prisma.analyticsSession.findUnique({
+      where: { id: sessionId },
+      select: { anonymousId: true, environment: true, expiresAt: true, utmCampaign: true, acquisitionSource: true },
+    });
+    if (!session || session.anonymousId !== anonymousId || session.environment !== analyticsEnvironment() || session.expiresAt <= at) return null;
+    return session.utmCampaign ?? session.acquisitionSource ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function successfulAggregateIdentity(input: OutboundAttributionInput): OutboundClickIdentity | null {
   if (input.state !== "SUCCEEDED") return null;
   const dimensions = {

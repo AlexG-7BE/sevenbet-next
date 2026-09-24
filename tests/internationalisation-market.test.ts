@@ -81,83 +81,57 @@ function escapeTenStepsText(value: string) {
 
 const englishTenStepsSignals = {
   startingPoint: /Starting Point/u,
-  twoActions: /two actions/u,
-  registrationZero: /Registration awards no XP/u,
-  registrationAfterReady: /only follows when it is ready/u,
+  noAccountToBegin: /No account needed to begin/u,
 };
 
 const tenStepsContractSignals: Record<SupportedLocale, {
   startingPoint: RegExp;
-  twoActions: RegExp;
-  registrationZero: RegExp;
-  registrationAfterReady: RegExp;
+  noAccountToBegin: RegExp;
 }> = {
   "en-GB": englishTenStepsSignals,
   "de-DE": {
     startingPoint: /Ausgangspunkt/u,
-    twoActions: /beiden Aktionen/u,
-    registrationZero: /Registrierung bringt keine XP/u,
-    registrationAfterReady: /folgt erst, wenn der Ausgangspunkt bereit ist/iu,
+    noAccountToBegin: /kein Konto, um zu beginnen/u,
   },
   "it-IT": {
     startingPoint: /Punto di partenza/u,
-    twoActions: /due azioni/u,
-    registrationZero: /registrazione non assegna XP/iu,
-    registrationAfterReady: /avviene solo quando il Punto di partenza è pronto/iu,
+    noAccountToBegin: /Non serve un account per iniziare/u,
   },
   "es-ES": {
     startingPoint: /Punto de partida/u,
-    twoActions: /dos acciones/u,
-    registrationZero: /registro no otorga XP/iu,
-    registrationAfterReady: /solo aparece cuando el Punto de partida está listo/iu,
+    noAccountToBegin: /No necesitas una cuenta para empezar/u,
   },
   "es-PE": {
     startingPoint: /Punto de partida/u,
-    twoActions: /dos acciones/u,
-    registrationZero: /registro no otorga XP/iu,
-    registrationAfterReady: /solo aparece cuando el Punto de partida está listo/iu,
+    noAccountToBegin: /No necesitas una cuenta para empezar/u,
   },
   "pt-PT": {
     startingPoint: /Ponto de partida/u,
-    twoActions: /duas ações/u,
-    registrationZero: /registo não atribui XP/iu,
-    registrationAfterReady: /só acontece quando o Ponto de partida estiver pronto/iu,
+    noAccountToBegin: /Não precisas de conta para começar/u,
   },
   "el-GR": {
     startingPoint: /Σημεί(?:ο|ου) Εκκίνησ/u,
-    twoActions: /δύο ενέργειες/u,
-    registrationZero: /εγγραφή δεν δίνει XP/iu,
-    registrationAfterReady: /ακολουθεί μόνο όταν το Σημείο Εκκίνησης είναι έτοιμο/iu,
+    noAccountToBegin: /Δεν χρειάζεσαι λογαριασμό/u,
   },
   "nl-NL": {
     startingPoint: /Startpunt/u,
-    twoActions: /twee acties/u,
-    registrationZero: /registratie levert geen XP op/iu,
-    registrationAfterReady: /registreert je pas als je Startpunt klaar is/iu,
+    noAccountToBegin: /geen account nodig om te beginnen/u,
   },
   "sv-SE": {
     startingPoint: /Startpunkt/u,
-    twoActions: /två moment/u,
-    registrationZero: /registreringen ger inga XP/iu,
-    registrationAfterReady: /registrerar dig först när Startpunkten är klar/iu,
+    noAccountToBegin: /inget konto för att börja/u,
   },
   "da-DK": {
     startingPoint: /Udgangspunkt/u,
-    twoActions: /to handlinger/u,
-    registrationZero: /registreringen giver ingen XP/iu,
-    registrationAfterReady: /registrerer dig først, når Udgangspunktet er klart/iu,
+    noAccountToBegin: /ingen konto for at begynde/u,
   },
   "fi-FI": {
     startingPoint: /Lähtökoh/u,
-    twoActions: /kaksi toimintoa/u,
-    registrationZero: /rekisteröitymisestä ei saa XP/iu,
-    registrationAfterReady: /Rekisteröityminen seuraa vasta, kun Lähtökohta on valmis/u,
+    noAccountToBegin: /Aloittamiseen ei tarvita tiliä/u,
   },
   "nb-NO": {
     startingPoint: /Utgangspunkt/u,
-    twoActions: /to handlinger/u,
-    registrationZero: /registreringen gir ingen XP/iu,
-    registrationAfterReady: /registrerer deg først når Utgangspunktet er klart/iu,
+    noAccountToBegin: /ingen konto for å begynne/u,
   },
   "en-CA": englishTenStepsSignals,
   "fr-CA": englishTenStepsSignals,
@@ -637,12 +611,9 @@ test("10 Steps localizes the active RFC-025 path and Mission 01 reward boundary 
     assert.doesNotMatch(messages.text[4], /15/u, `${locale} stale 5–15-minute timing`);
     assert.match(`${messages.text[46]} ${messages.text[47]}`, signals.startingPoint, `${locale} closing Starting Point`);
     assert.doesNotMatch(`${messages.text[46]} ${messages.text[47]}`, /minut|λεπτ/iu, `${locale} stale one-minute claim`);
-    assert.match(messages.text[48], signals.twoActions, `${locale} two Mission 01 actions`);
-    assert.match(messages.text[48], /40 XP/u, `${locale} Mission 01 reward`);
-    assert.match(messages.text[48], signals.registrationZero, `${locale} registration-zero boundary`);
-    assert.match(messages.text[48], signals.registrationAfterReady, `${locale} post-result registration boundary`);
-    assert.ok(messages.text[48].search(signals.twoActions) < messages.text[48].indexOf("40 XP"), `${locale} actions precede reward`);
-    assert.ok(messages.text[48].indexOf("40 XP") < messages.text[48].search(signals.registrationZero), `${locale} registration follows reward`);
+    // Founder decision 25 Sep 2026: the closing line states the benefit, not XP or registration mechanics.
+    assert.match(messages.text[48], signals.noAccountToBegin, `${locale} closing benefit`);
+    assert.doesNotMatch(messages.text[48], /XP/u, `${locale} closing line carries no XP mechanics`);
 
     const localized = transformTenStepsHandoff(sourceRuntime, locale, programmePath);
     assert.deepEqual(
