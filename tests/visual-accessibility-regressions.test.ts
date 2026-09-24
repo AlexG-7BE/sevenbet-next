@@ -43,36 +43,42 @@ test("Best Offers keeps native cards, material terms, and reachable controls", (
   assert.match(styles, /@media \(prefers-reduced-motion:reduce\)[\s\S]*?animation:none;/);
 });
 
-test("bonus comparison uses native article semantics and readable state labels", () => {
-  const styles = read("components/bonus-directory/BonusDirectory.module.css");
-  const directory = read("components/bonus-directory/BonusDirectory.tsx");
+test("bonus directory uses native article semantics, announced results and full-size touch targets", () => {
+  // /bonuses renders BonusOfferDirectory. The faceted BonusDirectory these checks
+  // used to read was imported by no route and has been deleted, together with
+  // its availability badges and review-separation note, which no reader could see.
+  const styles = read("components/bonus-directory/BonusOfferDirectory.module.css");
+  const directory = read("components/bonus-directory/BonusOfferDirectory.tsx");
 
   assert.doesNotMatch(directory, /role="listitem"/);
   assert.doesNotMatch(directory, /role="list"/);
-  assert.match(directory, /offers\.map\(\(offer, index\) => <article className=\{styles\.comparisonRow\}/);
-  assert.match(styles, /\.unavailableBadge\s*\{\s*background: #dedcd2; color: #4f4e49;\s*\}/);
-  assert.match(styles, /\.reviewSeparationNote strong\s*\{\s*color: var\(--acid\); font-size: 13px; line-height: 18px;/);
+  assert.match(directory, /return <article\s+className=\{styles\.card\}/);
+  // Switching views changes the results without a navigation, so the count announces itself.
+  assert.match(directory, /aria-atomic="true" aria-live="polite"[^>]*role="status"/);
+  assert.match(directory, /role="tablist"/);
+  assert.match(directory, /aria-controls="bonus-directory-results" aria-selected=\{view === key\}/);
+  assert.match(directory, /card\.logo \? <ResponsivePlacementImage alt=""/);
+  assert.match(cssRule(styles, ".viewRail button"), /min-height: 44px/);
+  assert.match(cssRule(styles, ".card .offerAction"), /min-height: 48px/);
+  assert.match(cssRule(styles, ".reviewOnly"), /min-height: 48px/);
+  assert.match(cssRule(styles, ".researchLinks a"), /min-height: 44px/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition: none;/);
 });
 
 test("casino discovery and profile preserve touch, scroll, and document semantics", () => {
   const collection = read("components/casino-discovery/CasinoCollection.tsx");
   const collectionStyles = read("components/casino-discovery/CasinoCollection.module.css");
-  const mobileFilters = read("components/directory-filters/MobileDirectoryFilters.module.css");
-  const bonusDirectory = read("components/bonus-directory/BonusDirectory.tsx");
-  const curated = read("components/casino-discovery/CuratedCasinoShortlist.tsx");
   const offerMedia = read("components/commercial-media/CommercialOfferMedia.tsx");
   const profile = read("components/casino-profile/CasinoProfile.tsx");
   const profileStyles = read("components/casino-profile/CasinoProfile.module.css");
   const primitives = read("components/commercial/CommercialPrimitives.tsx");
 
-  // Touch targets and scroll containment moved from the retired CasinoDiscovery surface to the
-  // live collection controls and the shared mobile filter drawer.
+  // Touch targets moved from the retired CasinoDiscovery surface to the live
+  // collection controls. The faceted filter drawer went with the components that
+  // opened it: /casinos filters by name in place, so there is no drawer to contain.
   assert.match(cssRule(collectionStyles, ".viewRail button"), /min-height: 44px/);
   assert.match(cssRule(collectionStyles, ".card .offerAction"), /min-height: 48px/);
   assert.match(cssRule(collectionStyles, ".reviewOnly"), /min-height: 48px/);
-  const filterDrawer = cssRule(mobileFilters, ".drawer");
-  assert.match(filterDrawer, /overflow: auto/);
-  assert.match(filterDrawer, /overscroll-behavior: contain/);
   assert.match(collectionStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition: none;/);
   // The result count has to announce itself, because filtering happens without a navigation.
   assert.match(collection, /aria-atomic="true" aria-live="polite"[^>]*role="status"/);
@@ -82,8 +88,6 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   assert.match(profile, /<article className=\{styles\.page\} data-runtime-renderer="casino-review">/);
   assert.match(offerMedia, /export function OperatorLogo[\s\S]*?offer\.casino\.logo \? <ResponsivePlacementImage\s+alt=""/);
   assert.match(collection, /card\.logo \? <ResponsivePlacementImage alt=""/);
-  assert.match(bonusDirectory, /return offer\.casino\.logo \? <img\s+alt=""/);
-  assert.match(curated, /casino\.logo \? <ResponsivePlacementImage alt=""/);
   assert.match(profile, /casino\.media\.logo \? <ResponsivePlacementImage alt=""/);
   assert.match(profile, /<nav aria-label=\{messages\.common\.breadcrumb\}/);
   assert.match(profile, /<CommercialScore label=\{messages\.common\.editorScore\} locale=\{presentation\.locale\} score=\{score\}/);

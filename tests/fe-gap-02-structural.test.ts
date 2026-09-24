@@ -65,7 +65,9 @@ test("commercial actions use the direct governed route and neutral managed recov
   const outboundLegacy = read("app/(public)/outbound/[slug]/page.tsx");
   const redirect = read("app/r/[slug]/route.ts");
   const legacy = read("app/go/[slug]/route.ts");
-  for (const surface of ["components/casino-discovery/CasinoCollection.tsx", "components/bonus-directory/BonusDirectory.tsx", "components/comparison/ComparisonExperience.tsx", "components/casino-profile/CasinoProfile.tsx"]) assert.match(read(surface), /CasinoOutboundAction/);
+  // The four commercial surfaces a route actually renders. BonusDirectory and
+  // ComparisonExperience were imported by no route and have been deleted.
+  for (const surface of ["components/casino-discovery/CasinoCollection.tsx", "components/bonus-directory/BonusOfferDirectory.tsx", "components/best-offers/BestOffersExperience.tsx", "components/casino-profile/CasinoProfile.tsx"]) assert.match(read(surface), /CasinoOutboundAction/);
   assert.match(handoff, /href=\{attributedCommercialHref\(action\.href, context\)\}/);
   assert.match(handoff, /if \(!\/\^\\\/r\\\//);
   assert.match(handoff, /outboundIntent\("direct", context\)/);

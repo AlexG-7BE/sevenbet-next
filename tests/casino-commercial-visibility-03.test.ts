@@ -15,7 +15,6 @@ import {
 import type { CommercialJurisdictionAuthority } from "../lib/jurisdiction/commercial-authority";
 import { mapPublishedCasino, projectPublicCasinoMarket } from "../lib/public-casino/public-casino.mapper";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
-import { selectCuratedCasinos } from "../lib/public-casino-discovery/curated-selector";
 import type { PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import { selectOverallShortlist } from "../lib/public-offer/best-offer-ranking";
 import { publicCasinoToOffers } from "../lib/public-offer/public-offer.mapper";
@@ -315,14 +314,15 @@ test("14. discovery filters contain meaningful global catalog values", async () 
   assert.equal(result.items.filter((casino) => casino.action).length, 6);
   assert.equal(result.curated?.bestBonusCasinoIds.length, 3);
   assert.equal(new Set(result.curated?.bestBonusCasinoIds).size, 3);
-  assert.equal(selectCuratedCasinos(result.items, "Best Bonuses", result.curated).length, 3);
-  assert.equal(selectCuratedCasinos(result.items, "Best Overall", result.curated).length, 3);
   assert.equal((await discovery.discover({ supportsMobile: true }, null, { defaultEditorialCountry: "KZ" })).total, 8);
   assert.equal((await discovery.discover({ hasResponsibleGambling: true }, null, { defaultEditorialCountry: "KZ" })).total, 8);
 
   const additionalGeo = await discovery.discover({ pageSize: 12 }, authority("SE"), { defaultEditorialCountry: "SE" });
   assert.equal(additionalGeo.total, 8);
-  assert.equal(selectCuratedCasinos(additionalGeo.items, "Best Bonuses", additionalGeo.curated).length, 0);
+  // The curated shortlist that consumed this ranking was imported by no route and
+  // has been deleted; the ranking itself must still pick nothing where no market
+  // has a governed route.
+  assert.deepEqual(additionalGeo.curated?.bestBonusCasinoIds, []);
   assert.ok(additionalGeo.items.every((casino) => casino.action === null));
 });
 

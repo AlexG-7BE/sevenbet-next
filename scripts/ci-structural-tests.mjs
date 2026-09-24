@@ -28,7 +28,6 @@ const requiredTests = [
   "tests/public-casino-discovery.test.ts",
   "tests/public-casino-rendering.test.ts",
   "tests/public-casino-service.test.ts",
-  "tests/public-comparison-render.test.tsx",
   "tests/public-comparison.test.ts",
   "tests/public-offer-service.test.ts",
   "tests/public-shell.test.ts",

@@ -2,55 +2,33 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const form = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
+// /casinos and /bonuses render server-fetched records and filter them in the
+// browser. The GET-form enhancer, the faceted bonus directory, its mobile filter
+// drawer and the comparison experience were imported by no route and have been
+// deleted, along with the checks that could only read them.
 const casinosPage = readFileSync("app/(public)/casinos/page.tsx", "utf8");
 const collection = readFileSync("components/casino-discovery/CasinoCollection.tsx", "utf8");
-const bonuses = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-const mobileBonuses = readFileSync("components/bonus-directory/MobileBonusFilters.tsx", "utf8");
-const mobileDirectoryFilters = readFileSync("components/directory-filters/MobileDirectoryFilters.tsx", "utf8");
-const compare = readFileSync("components/comparison/ComparisonExperience.tsx", "utf8");
+const bonusesPage = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
+const bonuses = readFileSync("components/bonus-directory/BonusOfferDirectory.tsx", "utf8");
+const bonusesStyles = readFileSync("app/(public)/bonuses/BonusesPage.module.css", "utf8");
 
-test("instant discovery progressively enhances real GET forms with URL-owned RSC navigation", () => {
-  assert.match(form, /method="get"/);
-  assert.match(form, /new FormData\(form\)/);
-  assert.match(form, /params\.delete\("page"\)/);
-  assert.match(form, /router\[mode\]\(target, \{ scroll: false \}\)/);
-  assert.match(form, /navigate\(event\.currentTarget, "push"\)/);
-  assert.match(form, /navigate\(form, "replace"\)/);
-  assert.match(form, /debounceMs = 300/);
-  assert.match(form, /aria-live="polite"/);
-  assert.doesNotMatch(form, /fetch\(|localStorage|sessionStorage|@prisma\/client|prisma\./);
-});
-
-test("governed discovery routes use one narrow enhancer and keep server authority", () => {
-  for (const source of [bonuses, compare]) assert.match(source, /InstantDiscoveryForm/);
-  assert.match(bonuses, /DirectoryFilterSurface/);
-  assert.match(bonuses, /debouncedFields=\{\["maxDeposit", "maxWagering"\]\}/);
-  assert.match(compare, /name="casino"/);
-  for (const source of [bonuses, compare]) {
-    assert.doesNotMatch(source, /useState|useEffect|fetch\(|@prisma\/client|prisma\./);
-  }
-  // The casino directory filters the server-rendered page in the browser instead of re-querying, so
-  // it keeps local state but must still hold no data authority of its own.
+test("discovery directories filter server-rendered records and hold no data authority", () => {
+  // Both directories filter the server-rendered page in the browser instead of
+  // re-querying, so each keeps local view state but no data authority of its own.
   assert.match(casinosPage, /publicCasinoDiscoveryService\.discover/);
   assert.match(collection, /useMemo\(\(\) => \{/);
-  assert.doesNotMatch(collection, /fetch\(|useEffect|@prisma\/client|prisma\.|\/api\//);
+  assert.match(bonusesPage, /publicOfferService\.searchOffers/);
+  assert.match(bonuses, /useMemo\(\(\) => offersForBonusView\(offers, view\)/);
+  for (const source of [collection, bonuses]) {
+    assert.doesNotMatch(source, /fetch\(|useEffect|@prisma\/client|prisma\.|\/api\//);
+  }
 });
 
-test("bonus mobile filters use the shared shell and interaction contract", () => {
-  assert.match(mobileBonuses, /MobileDirectoryFilters/);
-  assert.match(mobileBonuses, /dialogId="bonus-filter-dialog"/);
-  assert.match(mobileDirectoryFilters, /labels\?\.filters \?\? "Filters"/);
-  assert.match(mobileDirectoryFilters, /labels\?\.refine \?\? "Refine results"/);
-  assert.match(mobileDirectoryFilters, /dialog\.showModal\(\)/);
-  assert.match(mobileDirectoryFilters, /document\.body\.style\.overflow = "hidden"/);
-  assert.match(mobileDirectoryFilters, /triggerRef\.current\?\.focus\(\)/);
-});
-
-test("bonus mobile demo disclosure spans the result card instead of collapsing into a narrow grid cell", () => {
-  assert.match(bonuses, /gridColumn: "1 \/ -1"/);
-  assert.match(bonuses, /overflowWrap: "break-word"/);
-  assert.match(bonuses, /wordBreak: "normal"/);
+test("the bonus demonstration disclosure never collapses into a narrow grid cell", () => {
+  // The disclosure sits above the directory on the live page. Its text column may
+  // shrink without overflowing, and on a phone it stacks to the full width.
+  assert.match(bonusesStyles, /\.demoDirectoryDisclosure \{[^}]*grid-template-columns: auto minmax\(0, 1fr\)/);
+  assert.match(bonusesStyles, /@media \(max-width: 640px\) \{[\s\S]*?\.demoDirectoryDisclosure \{ grid-template-columns: 1fr; \}/);
 });
 
 test("casino directory imagery stays deferred and dimensioned so the list does not shift", () => {

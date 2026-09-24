@@ -177,7 +177,9 @@ test("public safety, affiliate and demonstration disclosures remain at their gov
   const affiliate = source("app/(public)/affiliate-disclosure/AffiliateDisclosureDocument.tsx");
   const footer = source("components/public-shell/PublicFooter.tsx");
   const shellCatalog = source("lib/i18n/public-shell-catalog.ts");
-  const demo = source("components/bonus-directory/BonusDirectory.tsx");
+  // BonusDirectory was imported by no route. The live /bonuses page carries the
+  // demonstration disclosure itself, above the directory, whenever it lists one.
+  const bonusesPage = source("app/(public)/bonuses/page.tsx");
   const outbound = source("components/casino-profile/CasinoOutboundAction.tsx");
   const productCatalog = source("lib/i18n/product-pages-catalog.ts");
   assert.match(transforms, /No casino, bonus or affiliate actions appear here/);
@@ -193,7 +195,7 @@ test("public safety, affiliate and demonstration disclosures remain at their gov
   assert.equal(footer.match(/"\/terms"/g)?.length, 1);
   assert.equal(footer.match(/"\/privacy"/g)?.length, 1);
   assert.equal(footer.match(/"\/contact"/g)?.length, 1);
-  assert.match(demo, /messages\.common\.demoData/);
+  assert.match(bonusesPage, /inventoryMode === "DEMO_ONLY" \|\| result\.inventoryMode === "MIXED" \? <aside[^>]+role="note"><strong>\{messages\.common\.demoData\}<\/strong><p>\{messages\.common\.demoDisclosure\}<\/p><\/aside>/);
   assert.match(outbound, /messages\?\.affiliateNote/);
   assert.doesNotMatch(outbound, /messages\?\.description|You are leaving B4GAMBLE|<dialog/);
   assert.match(productCatalog, /demoData: "DEMONSTRATION DATA"/);

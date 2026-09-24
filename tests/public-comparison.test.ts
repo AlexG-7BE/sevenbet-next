@@ -332,25 +332,17 @@ test("comparison architecture remains database-driven, server-owned and raw-dest
   const page = readFileSync("app/(public)/compare/page.tsx", "utf8");
   const api = readFileSync("app/api/public/comparison/route.ts", "utf8");
   const service = readFileSync("lib/services/public-comparison.service.ts", "utf8");
-  const component = readFileSync("components/comparison-context/ContextualComparison.tsx", "utf8");
   assert.match(page, /permanentRedirect\(productHref\(presentation, `\/casinos/);
   assert.match(
     api,
     /publicComparisonService\.compare\(query, authority, languageForLocale\(locale\), requestSignal\?\.marketCode\)/,
   );
-  assert.match(component, /sessionStorage/);
-  assert.match(component, /showModal\(\)/);
-  assert.match(component, /slice\(0, 3\)/);
-  for (const source of [page, api, service, component]) {
+  // The in-page comparison tray (ContextualComparison) was imported by no route
+  // and has been deleted; /compare redirects to /casinos. What remains of the
+  // feature is the server path, and these rules still hold for all of it.
+  for (const source of [page, api, service]) {
     assert.doesNotMatch(source, /@prisma\/client|prisma\.|destinationUrl|trackingUrl|localStorage/);
     assert.doesNotMatch(source, /demo-(?:northstar|harbour|atlas)/);
   }
 });
 
-test("comparison pending feedback is local, accessible and value-free", () => {
-  const pending = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
-  assert.match(pending, /aria-busy=\{pending\}/);
-  assert.match(pending, /aria-live="polite"/);
-  assert.match(pending, /pendingLabel/);
-  assert.doesNotMatch(pending, /Demo\s+\w+\s+Casino|demo-(?:northstar|harbour|atlas)|\/r\//i);
-});

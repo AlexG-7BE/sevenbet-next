@@ -5,9 +5,10 @@ import test from "node:test";
 const page = readFileSync("app/(public)/casinos/page.tsx", "utf8");
 const collection = readFileSync("components/casino-discovery/CasinoCollection.tsx", "utf8");
 const errorBoundary = readFileSync("app/(public)/casinos/error.tsx", "utf8");
-const bonuses = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-const sharedMobile = readFileSync("components/directory-filters/MobileDirectoryFilters.tsx", "utf8");
-const instantForm = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
+const bonuses = readFileSync("components/bonus-directory/BonusOfferDirectory.tsx", "utf8");
+// The faceted BonusDirectory, the shared mobile filter drawer and the GET-form
+// enhancer were imported by no route and have been deleted. Their responsive and
+// pagination checks went with them; what the live directories owe is below.
 
 test("FE-MIG-06 keeps SSR discovery and published DTO boundaries", () => {
   assert.match(page, /publicCasinoDiscoveryService\.discover/);
@@ -28,15 +29,7 @@ test("public copy has no unsupported verification, featured, ranking-independenc
   assert.match(page, /messages\.casinos\.faqCommissionAnswer/);
 });
 
-test("FE-MIG-06 exposes the approved responsive and state contract", () => {
-  assert.match(sharedMobile, /showModal\(\)/);
-  assert.match(sharedMobile, /onCancel/);
-  assert.match(sharedMobile, /triggerRef\.current\?\.focus/);
-  assert.match(bonuses, /<noscript>/);
-  assert.match(bonuses, /messages\.common\.marketPresentationNotice/);
-  assert.match(instantForm, /aria-busy=\{pending\}/);
-  assert.match(instantForm, /aria-live="polite"/);
-  assert.match(instantForm, /method="get"/);
+test("the casino error boundary announces itself and offers recovery without inventing inventory", () => {
   // The boundary moved to the shared localized error catalog; it must still announce itself and
   // offer recovery rather than falling back to stale or invented inventory.
   assert.match(errorBoundary, /usePublicErrorContext\(\)/);
@@ -57,12 +50,11 @@ test("the casino directory states each empty outcome without substituting invent
   assert.doesNotMatch(collection, /fallbackCasinos|substitute|borrowed/i);
 });
 
-test("forms preserve sort without carrying stale page numbers", () => {
-  assert.match(bonuses, /name="sort"/);
-  assert.match(bonuses, /if \(key === omitted \|\| key === "page"\) continue;/);
-  assert.match(bonuses, /if \(key !== "page"\) params\.append\(key, item\)/);
-  assert.match(instantForm, /params\.delete\("page"\)/);
-  // The casino directory holds one fixed server query, so it must not grow a page control of its own.
+test("the directories hold one server query and grow no page or sort controls", () => {
+  // Each directory renders one fixed server query and orders it in place, so a
+  // page or sort control would describe results the reader cannot reach.
   assert.doesNotMatch(page, /name="page"|name="pageSize"|name="sort"/);
-  assert.doesNotMatch(collection, /DirectoryPagination|name="page"/);
+  for (const directory of [collection, bonuses]) {
+    assert.doesNotMatch(directory, /DirectoryPagination|name="page"|name="sort"|<form/);
+  }
 });

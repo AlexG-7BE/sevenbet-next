@@ -64,7 +64,10 @@ test("public compositions use direct logos and cannot render promotional card or
   const discovery = readFileSync("lib/services/public-casino-discovery.service.ts", "utf8");
   const comparison = readFileSync("lib/services/public-comparison.service.ts", "utf8");
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
-  const shortlist = readFileSync("components/casino-discovery/CuratedCasinoShortlist.tsx", "utf8");
+  // CuratedCasinoShortlist, the one card that could still show a first-party
+  // editorial hero, was imported by no route and has been deleted. The live
+  // directory has no hero path at all, which is the stricter form of this rule.
+  const directory = readFileSync("components/casino-discovery/CasinoCollection.tsx", "utf8");
   const bestOffers = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
   const bonuses = readFileSync("components/bonus-directory/BonusOfferDirectory.tsx", "utf8");
   assert.match(discovery, /hero:\s*null/);
@@ -72,9 +75,8 @@ test("public compositions use direct logos and cannot render promotional card or
   assert.match(comparison, /casino\.media\.logo/);
   assert.doesNotMatch(profile, /CasinoProfileMediaStrip|offerPlacement/);
   assert.deepEqual([...new Set([...profile.matchAll(/casino\.media\.(\w+)/g)].map((match) => match[1]))], ["logo"]);
-  assert.match(shortlist, /casino\.hero\?\.ownership === "B4GAMBLE_EDITORIAL"/);
-  assert.doesNotMatch(shortlist, /creativePresentationFamily|mayPresentPromotionalMedia|source === "EXPLICIT"/);
-  assert.match(shortlist, /data-presentation-family="LOGO_ONLY"/);
+  assert.doesNotMatch(directory, /\.hero\b|creativePresentationFamily|mayPresentPromotionalMedia|source === "EXPLICIT"|CommercialOfferMedia|OperatorIdentityPanel/);
+  assert.match(directory, /card\.logo \? <ResponsivePlacementImage alt=""/);
   assert.match(bestOffers, /ResponsivePlacementImage/);
   assert.match(bonuses, /offerCardPresentation/);
   assert.doesNotMatch(`${bestOffers}\n${bonuses}`, /CommercialOfferMedia|OperatorIdentityPanel/);
@@ -94,7 +96,6 @@ test("Production logo preflight reports missing logos without blocking a release
 test("public compositions fall back to the operator initial when no logo exists", () => {
   for (const path of [
     "components/casino-discovery/CasinoCollection.tsx",
-    "components/casino-discovery/CuratedCasinoShortlist.tsx",
     "components/best-offers/BestOffersExperience.tsx",
     "components/bonus-directory/BonusOfferDirectory.tsx",
     "components/casino-profile/CasinoProfile.tsx",

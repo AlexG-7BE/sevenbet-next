@@ -301,15 +301,22 @@ test("commercial attribution observes governed outcomes and never stores partner
   assert.match(surfaceObserver, /IntersectionObserver/);
   assert.match(surfaceObserver, /browserAnalyticsConsentState\(\) !== "granted"/);
   assert.match(surfaceObserver, /productAnalyticsClient\.offerViewed/);
+  // Every offer surface a route renders. BonusDirectory and CuratedBonusShortlist
+  // were imported by no route and have been deleted; /bonuses renders BonusOfferDirectory.
   for (const file of [
     "components/best-offers/BestOffersExperience.tsx",
-    "components/bonus-directory/BonusDirectory.tsx",
-    "components/bonus-directory/CuratedBonusShortlist.tsx",
+    "components/bonus-directory/BonusOfferDirectory.tsx",
     "components/casino-profile/CasinoProfile.tsx",
   ]) {
     assert.match(source(file), /data-analytics-offer-key/, file);
     assert.match(source(file), /data-analytics-casino-id/, file);
   }
+  // The observer only counts a card carrying a casino id beside its card key, so
+  // the casino directory has to emit the pair or its impressions go unrecorded.
+  assert.match(surfaceObserver, /\[data-analytics-card-key\]\[data-analytics-casino-id\]/);
+  const casinoDirectory = source("components/casino-discovery/CasinoCollection.tsx");
+  assert.match(casinoDirectory, /data-analytics-card-key=/);
+  assert.match(casinoDirectory, /data-analytics-casino-id=/);
 });
 
 test("Programme state remains canonical and is not used for commercial targeting", () => {

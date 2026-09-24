@@ -57,6 +57,8 @@ The Founder correction prohibits presentation-level visual fixtures. Determinist
 | contextual comparison on `/casinos` | `ContextualComparison` dialog/bottom sheet |
 | Programme intake, Starting Point ready/registration and dashboard | `ProgramAiExperience` orchestration with `ProgramAiFinalPresentation` visible states, plus the real `ProgramAiHomeScreen` Dashboard |
 
+**Superseded route map (2026-09-24).** The table above records the handoff baseline at `0c956d0d` and is kept as that record. Several of its components were later found to be imported by no route and have been deleted, so the current runtime presentation is: `/best-offers` → `BestOffersExperience`, `/casinos` → `CasinoCollection`, `/casino/[slug]` → `CasinoProfile`, `/bonuses` → `BonusOfferDirectory`. Contextual comparison is retired: `/compare` permanently redirects to `/casinos`, and `ContextualComparison`, `CuratedCasinoShortlist`, `CuratedBonusShortlist` and `BonusDirectory` no longer exist. `tests/design-system-contract.test.ts` asserts that each live component is imported by the route that renders it, rather than merely that its file exists.
+
 **Detected:** the former route-level `visualFixture → HandoffPage` branches were removed from every dynamic route above. The data-only fixture contains no generated markup or presentation import, is disabled on Vercel, and is exercised by a regression test that compares the runtime root/direct composition with and without fixture data. The visual harness additionally rejects `[data-handoff-page]` on dynamic surfaces and requires the matching real-runtime marker.
 
 ## Contextual comparison contract

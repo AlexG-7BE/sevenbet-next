@@ -26,14 +26,10 @@ test("final public navigation and route consolidation match the locked handoff",
   assert.doesNotMatch(read("app/sitemap.ts"), /"\/compare"|protectedHelpArticles|getCategoryPath/);
 });
 
-test("casino comparison is contextual, capped and backed by the existing public projection", () => {
-  const controller = read("components/comparison-context/ContextualComparison.tsx");
-  assert.match(controller, /slice\(0, 3\)/);
-  assert.match(controller, /sessionStorage\.setItem\(STORAGE_KEY/);
-  assert.match(controller, /next\.length === 2 && previousCount\.current < 2/);
-  assert.match(controller, /fetch\(`\/api\/public\/comparison\?/);
-  assert.match(controller, /dialog\.showModal\(\)/);
-  assert.doesNotMatch(controller, /localStorage|programme|email|userId/i);
+test("the comparison API stays private, unindexed and backed by the existing public projection", () => {
+  // The in-page comparison tray that called this route was imported by no route
+  // and has been deleted, and /compare redirects to /casinos. The API remains, so
+  // its own contract is still asserted.
   const route = read("app/api/public/comparison/route.ts");
   assert.match(
     route,
@@ -67,7 +63,6 @@ test("handoff visual fixtures are data-only and dynamic routes cannot switch pre
   }
   assert.match(guard, /value !== "true" \|\| process\.env\.VERCEL_ENV === "production"/);
   assert.match(guard, /COMMERCIAL_UX_FIXTURE_MARKETS = \["DK", "EE", "LV"\]/);
-  assert.doesNotMatch(read("components/comparison-context/ContextualComparison.tsx"), /HandoffPage|dangerouslySetInnerHTML/);
   assert.match(read("components/programme/ProgramAiExperience.tsx"), /data-runtime-renderer="programme"/);
 });
 

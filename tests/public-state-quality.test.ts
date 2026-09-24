@@ -22,24 +22,6 @@ test("commercial error boundaries use the locale-aware retry message", () => {
   }
 });
 
-test("curated shortlists expose only result-backed selectors and collapse when none are available", () => {
-  const bonuses = source("components/bonus-directory/CuratedBonusShortlist.tsx");
-  const casinos = source("components/casino-discovery/CuratedCasinoShortlist.tsx");
-
-  assert.match(bonuses, /selectAvailableCuratedBonusResults\(offers\)/);
-  assert.match(bonuses, /if \(!activeSelector\) return null/);
-  assert.match(casinos, /const editorialCasinos = useMemo\(\(\) => casinos, \[casinos\]\)/);
-  assert.match(casinos, /isGovernedCommercialAction\(casino\.action\)/);
-  assert.doesNotMatch(casinos, /disposition/);
-  assert.match(casinos, /selectAvailableCuratedCasinoResults\(editorialCasinos, \{ bestBonusCasinoIds \}\)/);
-  assert.match(casinos, /if \(!activeSelector\) return null/);
-  for (const shortlist of [bonuses, casinos]) {
-    assert.match(shortlist, /aria-pressed=\{activeSelector === label\}/);
-    assert.doesNotMatch(shortlist, /role="tab"|aria-selected/);
-    assert.doesNotMatch(shortlist, /className=\{styles\.empty\} role="status"/);
-  }
-});
-
 test("zero-inventory commercial directories use bounded states without retired filters", () => {
   const bonuses = source("app/(public)/bonuses/page.tsx");
   const casinos = source("app/(public)/casinos/page.tsx");
@@ -50,16 +32,6 @@ test("zero-inventory commercial directories use bounded states without retired f
   assert.doesNotMatch(`${bonuses}\n${casinos}`, /BonusFilters|DiscoveryControls|More Filters/);
 });
 
-test("comparison controls disable unselected choices at capacity and restore dialog focus", () => {
-  const comparison = source("components/comparison-context/ContextualComparison.tsx");
-  const toggle = source("components/comparison-context/ContextualCompareToggle.tsx");
-
-  assert.match(toggle, /setAtCapacity\(values\.length >= 3\)/);
-  assert.match(toggle, /disabled=\{atCapacity && !selected\}/);
-  assert.match(comparison, /dialogInvokerRef/);
-  assert.match(comparison, /restoreDialogFocus/);
-});
-
 test("bonus directory ignores retired filter recovery and keeps localized research routes", () => {
   const page = source("app/(public)/bonuses/page.tsx");
 
@@ -68,8 +40,3 @@ test("bonus directory ignores retired filter recovery and keeps localized resear
   assert.doesNotMatch(page, /activeCount|data-empty-reset|clearAll|BonusFilters/);
 });
 
-test("directory filter landmarks use the supplied localized controls label", () => {
-  const surface = source("components/directory-filters/DirectoryFilterSurface.tsx");
-  assert.match(surface, /aria-label=\{labels\?\.directoryControls \?\? title\}/);
-  assert.doesNotMatch(surface, /aria-label=\{`\$\{title\} controls`\}/);
-});

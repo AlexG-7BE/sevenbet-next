@@ -123,158 +123,110 @@ test("an unrelated page-level commercial state cannot suppress a canonical card 
   assert.doesNotMatch(readFileSync("components/casino-discovery/CasinoCollection.tsx", "utf8"), /commercialProductsAvailable/);
 });
 
-test("curated casino cards preserve visit actions when bonus data is absent and never mark demos Current", async () => {
-  const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
-  const publishedHtml = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino()]} messages={messages} presentation={presentation} />);
-  assert.match(publishedHtml, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/);
-  assert.ok(publishedHtml.includes(messages.common.notListed));
-  assert.ok(!publishedHtml.includes(messages.common.reviewAvailableNoAction));
-  assert.ok(!publishedHtml.includes(messages.common.commercialUnavailable));
+// The curated shortlists and the faceted bonus directory these checks used to
+// render are imported by no route. Each rule below is asserted on the component
+// a reader actually reaches: CasinoCollection on /casinos and
+// BonusOfferDirectory on /bonuses.
 
-  const previewHtml = renderToStaticMarkup(<CuratedCasinoShortlist
-    casinos={[casino({ dataClassification: "LOCAL_PREVIEW_FIXTURE", action: null })]}
-    messages={messages}
-    presentation={presentation}
-  />);
-  assert.doesNotMatch(previewHtml, /href="\/r\//);
-  assert.ok(previewHtml.includes(messages.common.marketPresentationNotice));
-  assert.ok(!previewHtml.includes(messages.common.demoDisclosure));
-
-  const demoHtml = renderToStaticMarkup(<CuratedCasinoShortlist
-    casinos={[casino({
-      dataClassification: "DEMO_FIXTURE",
-      featuredBonus: { title: "Fictional terms", summary: "Demonstration only", type: "WELCOME", keyTerms: [], wageringRequirement: null, minimumDeposit: null, currency: null, validUntil: null, termsApply: true },
-      action: null,
-    })]}
-    messages={messages}
-    presentation={presentation}
-  />);
-  assert.ok(demoHtml.includes(messages.common.demoData));
-  assert.doesNotMatch(demoHtml, />Current</);
-});
-
-test("curated casino cards rank informational records editorially while commercial actions stay fail-closed", async () => {
-  const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
-  const informational = casino({
-    reviewHref: "/casino/truth-casino",
-    supportsMobile: true,
-    action: null,
-  });
-  const html = renderToStaticMarkup(<CuratedCasinoShortlist
-    bestBonusCasinoIds={[informational.id]}
-    casinos={[informational]}
-    messages={messages}
-    presentation={presentation}
-  />);
-
-  assert.ok(html.includes("Truth Casino"));
-  assert.ok(html.includes(messages.common.reviewOnly));
-  assert.ok(html.includes(messages.common.readReview));
-  assert.match(html, /href="\/casino\/truth-casino"/);
-  assert.doesNotMatch(html, /href="\/r\//);
-  assert.doesNotMatch(html, /data-commercial-action-source="(?:CTA|CREATIVE)"/);
-});
-
-test("mixed curated casino cards keep editorial inclusion independent from commercial action", async () => {
-  const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
-  const informational = casino({
-    id: "information-only",
-    slug: "information-only",
-    name: "Information Only",
-    action: null,
-  });
+test("casino directory keeps editorial inventory fail-closed where a record has no canonical action", async () => {
+  const { CasinoCollection } = await import("../components/casino-discovery/CasinoCollection");
+  const informational = casino({ id: "information-only", slug: "information-only", name: "Information Only", action: null });
   const promotable = casino({ id: "promotable", slug: "promotable", name: "Promotable" });
-  const html = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[informational, promotable]} messages={messages} presentation={presentation} />);
+  const html = renderToStaticMarkup(<CasinoCollection
+    casinos={[informational, promotable]}
+    initialSearch=""
+    messages={messages}
+    presentation={presentation}
+  />);
 
+  // Editorial inclusion does not depend on a route: both records are listed.
   assert.ok(html.includes("Information Only"));
   assert.ok(html.includes("Promotable"));
-  assert.equal((html.match(/href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/g) ?? []).length, 1);
+  // Only the record with a canonical action receives one, through the governed redirect.
+  assert.equal((html.match(/href="\/r\/[^"]+"/g) ?? []).length, 1);
+  assert.match(html, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_COLLECTION_CARD"/);
+  // The other says so plainly and still offers the review.
+  assert.ok(html.includes(messages.common.reviewOnly));
+  assert.match(html, /href="\/casino\/information-only"/);
+  assert.doesNotMatch(html, /data-commercial-action-source="CREATIVE"/);
 });
 
-test("curated casino shortlist keeps editorial inventory when its canonical action is absent", async () => {
-  const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
-  const html = renderToStaticMarkup(<CuratedCasinoShortlist
-    casinos={[casino({ action: null })]}
-    messages={messages}
-    presentation={presentation}
-  />);
-  assert.match(html, /Truth Casino/);
-  assert.doesNotMatch(html, /href="\/r\//);
+test("casino directory never presents a demonstration or preview record as current or actionable", async () => {
+  const { CasinoCollection } = await import("../components/casino-discovery/CasinoCollection");
+  for (const dataClassification of ["DEMO_FIXTURE", "LOCAL_PREVIEW_FIXTURE"] as const) {
+    const html = renderToStaticMarkup(<CasinoCollection
+      casinos={[casino({ dataClassification, action: null, reviewHref: "/casino/truth-casino" })]}
+      initialSearch=""
+      messages={messages}
+      presentation={presentation}
+    />);
+    assert.doesNotMatch(html, /href="\/r\//, dataClassification);
+    assert.doesNotMatch(html, />Current</, dataClassification);
+    assert.ok(html.includes(messages.common.viewDemonstration), dataClassification);
+    assert.ok(!html.includes(messages.common.readReview), `${dataClassification} must not read as a published review`);
+    // Only published records are measured.
+    assert.doesNotMatch(html, /data-analytics-casino-id=/, dataClassification);
+  }
 });
 
-test("casino directory retires promotional artwork while CTA authority and first-party editorial art stay independent", async () => {
-  const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
+test("casino directory renders no operator artwork, whatever the record carries", async () => {
+  const { CasinoCollection } = await import("../components/casino-discovery/CasinoCollection");
   const promotional = casino({
     featuredBonus: { title: "Verified welcome offer", summary: "Current published terms", type: "WELCOME", keyTerms: ["Terms apply"], wageringRequirement: 30, minimumDeposit: 10, currency: "GBP", validUntil: null, termsApply: true },
     hero: { url: "/controlled/truth-casino-300x250.jpg", alt: "Truth Casino verified offer creative", width: 300, height: 250, renderingMode: "CONTAIN", source: "EXPLICIT", focalPoint: null },
   });
-  const authorized = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[promotional]} messages={messages} presentation={presentation} />);
-  assert.match(authorized, /data-commercial-action-placement="CASINO_DIRECTORY_CARD"[^>]+data-commercial-action-source="CTA"/);
-  assert.equal((authorized.match(/href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/g) ?? []).length, 1);
+  const render = (record: PublicCasinoCardDto) => renderToStaticMarkup(<CasinoCollection
+    casinos={[record]}
+    initialSearch=""
+    messages={messages}
+    presentation={presentation}
+  />);
+
+  // The directory is logo-only: a record's promotional creative never reaches
+  // the card, so the only commercial entry point is the governed CTA.
+  const authorized = render(promotional);
+  assert.equal((authorized.match(/href="\/r\/truth-casino-visit\?placement=CTA_CASINO_COLLECTION_CARD"/g) ?? []).length, 1);
+  assert.match(authorized, /data-commercial-action-source="CTA"/);
   assert.doesNotMatch(authorized, /truth-casino-300x250|data-commercial-action-source="CREATIVE"/);
   assert.doesNotMatch(authorized, /href="\/outbound\/|aria-haspopup="dialog"|You are leaving B4GAMBLE|<dialog/);
   assert.doesNotMatch(authorized, /href="https?:\/\//);
 
-  const blocked = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
-    ...promotional,
-    action: null,
-  })]} messages={messages} presentation={presentation} />);
-  assert.doesNotMatch(blocked, /truth-casino-300x250/);
-  assert.doesNotMatch(blocked, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
-
-  const fallback = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({ hero: null })]} messages={messages} presentation={presentation} />);
-  assert.match(fallback, /role="img"/);
-  assert.doesNotMatch(fallback, /data-commercial-action-source="CREATIVE"/);
-
-  const composedCreative = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
-    hero: { ...promotional.hero!, renderingMode: "COMPOSED" },
-  })]} messages={messages} presentation={presentation} />);
-  assert.match(composedCreative, /data-presentation-family="LOGO_ONLY"/);
-  assert.doesNotMatch(composedCreative, /data-commercial-action-source="CREATIVE"|truth-casino-300x250/);
-
-  const editorial = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
-    hero: { url: "/casino-directory/editorial-review.jpg", alt: "B4GAMBLE editorial review", width: 1600, height: 900, renderingMode: "CONTAIN", focalPoint: null, ownership: "B4GAMBLE_EDITORIAL" },
-  })]} messages={messages} presentation={presentation} />);
-  assert.match(editorial, /src="\/casino-directory\/editorial-review\.jpg"/);
-  assert.doesNotMatch(editorial, /data-commercial-action-source="CREATIVE"/);
+  const blocked = render(casino({ ...promotional, action: null }));
+  assert.doesNotMatch(blocked, /truth-casino-300x250|data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
 });
 
-test("bonus result summaries stay neutral while record labels reflect their classification", async () => {
-  const { BonusComparisonList, FeaturedBonusCard } = await import("../components/bonus-directory/BonusDirectory");
-  const published = offer();
-  const publishedHtml = renderToStaticMarkup(<BonusComparisonList messages={messages} offers={[published]} presentation={presentation} startPosition={1} />);
-  assert.ok(publishedHtml.includes(`<strong>1 ${messages.common.result}</strong>`));
-  assert.ok(!publishedHtml.includes(`<strong>${messages.common.reviewOnly}`));
-  assert.ok(publishedHtml.includes(messages.common.actionAvailable));
-  assert.match(publishedHtml, />Published</);
-  assert.doesNotMatch(publishedHtml, />Current</);
+test("bonus directory routes an available offer only through the governed action", async () => {
+  const { BonusOfferDirectory } = await import("../components/bonus-directory/BonusOfferDirectory");
+  const html = renderToStaticMarkup(<BonusOfferDirectory messages={messages} offers={[offer()]} presentation={presentation} />);
 
-  const demo = offer(false);
-  const demoHtml = renderToStaticMarkup(<FeaturedBonusCard offer={demo} position={1} />)
-    + renderToStaticMarkup(<BonusComparisonList messages={messages} offers={[demo]} presentation={presentation} startPosition={1} />);
-  assert.ok(demoHtml.includes(messages.common.demoData));
-  assert.doesNotMatch(demoHtml, /Demo fixture|>Current</);
+  assert.equal((html.match(/href="\/r\/[^"]+"/g) ?? []).length, 1);
+  assert.match(html, /href="\/r\/truth-test\?placement=CTA_BONUS_CARD"/);
+  assert.match(html, /data-commercial-action-source="CTA"/);
+  assert.ok(html.includes(`1 ${copy.offersShown}`));
+  assert.ok(!html.includes(messages.common.reviewOnly));
+  assert.ok(!html.includes(messages.common.commercialUnavailable));
+  assert.doesNotMatch(html, />Current</);
+  // No raw operator destination; a terms link, when present, is https only.
+  assert.doesNotMatch(html, /destinationUrl|trackingUrl|https:\/\/tracking/);
+  for (const [, href] of html.matchAll(/<a[^>]+href="(https?:[^"]+)"/g)) assert.match(href, /^https:\/\//);
+  assert.match(html, /data-analytics-casino-id=/);
 });
 
-test("curated bonus cards never label demonstration records as current", async () => {
-  const { CuratedBonusShortlist } = await import("../components/bonus-directory/CuratedBonusShortlist");
-  const demoHtml = renderToStaticMarkup(<CuratedBonusShortlist offers={[offer(false)]} messages={messages} presentation={presentation} />);
-  assert.ok(demoHtml.includes(`<small>${messages.common.demoData}</small>`));
-  assert.ok(!demoHtml.includes(`<small>${messages.common.current}</small>`));
-});
+test("bonus directory never presents a demonstration offer as current or actionable", async () => {
+  const { BonusOfferDirectory } = await import("../components/bonus-directory/BonusOfferDirectory");
+  const bare = renderToStaticMarkup(<BonusOfferDirectory messages={messages} offers={[offer(false)]} presentation={presentation} />);
+  assert.ok(bare.includes(messages.common.reviewOnly));
+  assert.doesNotMatch(bare, /href="\/r\//);
+  assert.doesNotMatch(bare, />Current</);
+  assert.doesNotMatch(bare, /data-analytics-casino-id=/);
+  // A demonstration record with no review page links to none rather than to a
+  // published review it does not have.
+  assert.ok(!bare.includes(copy.casinoReview));
 
-test("curated bonus shortlist hides known-empty selectors and collapses with zero offers", async () => {
-  const { CuratedBonusShortlist } = await import("../components/bonus-directory/CuratedBonusShortlist");
-  const sparse = offer();
-  sparse.casino.payments = sparse.casino.payments.map((payment) => ({ ...payment, crypto: false }));
-  sparse.bonus.wageringMultiplier = null;
-  sparse.bonus.minimumDeposit = null;
-  const html = renderToStaticMarkup(<CuratedBonusShortlist offers={[sparse]} messages={messages} presentation={presentation} />);
-
-  assert.ok(html.includes(messages.bonuses.selectorBestOverall));
-  assert.ok(html.includes(messages.bonuses.selectorNewest));
-  assert.ok(!html.includes(messages.bonuses.selectorCrypto));
-  assert.ok(!html.includes(messages.bonuses.selectorLowWagering));
-  assert.ok(!html.includes(messages.bonuses.selectorLowDeposit));
-  assert.equal(renderToStaticMarkup(<CuratedBonusShortlist offers={[]} messages={messages} presentation={presentation} />), "");
+  const linked = offer(false);
+  linked.casino = { ...linked.casino, reviewHref: "/casino/demo-plume?visualFixture=true" };
+  const withReview = renderToStaticMarkup(<BonusOfferDirectory messages={messages} offers={[linked]} presentation={presentation} />);
+  assert.ok(withReview.includes(messages.common.viewDemonstration));
+  assert.ok(!withReview.includes(copy.casinoReview), "a demonstration must not read as a published review");
+  assert.doesNotMatch(withReview, /href="\/r\//);
 });
