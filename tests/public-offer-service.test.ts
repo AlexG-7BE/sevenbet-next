@@ -6,6 +6,7 @@ import { hasPublicOfferFilters, parsePublicOfferQuery } from "../lib/public-offe
 import {
   bestFitWinners,
   normalizeWithdrawalTime,
+  rankBestBonusCasinoIds,
   selectFasterPayout,
   selectLowerWagering,
   selectOverallShortlist,
@@ -159,6 +160,17 @@ test("every supported public bonus filter is real and combined filters can retur
   const empty = await service.searchOffers(parsePublicOfferQuery({ country: "IE", type: "WELCOME", payment: "Apple Pay" }), allowJurisdictionAuthority, { defaultEditorialCountry: "GB" });
   assert.equal(empty.total, 0);
   assert.deepEqual(empty.records, []);
+});
+
+test("canonical Best Bonuses ranking deduplicates casinos and continues to three unique published records", () => {
+  // Moved from the deleted curated-selector suite: rankBestBonusCasinoIds is still
+  // called by the casino discovery service, so its contract keeps its test.
+  const alphaBest = offer("alpha", { deposit: 5 });
+  const alphaSecond = { ...alphaBest, bonus: { ...alphaBest.bonus, id: "alpha-second", slug: "alpha-second", minimumDeposit: 25 } };
+  const beta = offer("beta", { deposit: 10 });
+  const gamma = offer("gamma", { deposit: 15 });
+  assert.deepEqual(rankBestBonusCasinoIds([alphaSecond, gamma, alphaBest, beta]), ["alpha-casino", "beta-casino", "gamma-casino"]);
+  assert.deepEqual(rankBestBonusCasinoIds([alphaBest, beta, gamma], { candidateCasinoIds: ["beta-casino", "gamma-casino"] }), ["beta-casino", "gamma-casino"]);
 });
 
 test("sorting uses stable editorial tie breakers and keeps missing values last", async () => {
@@ -397,17 +409,17 @@ test("public offer mapper projects only the required existing payout fields", ()
   assert.doesNotMatch(types, /depositFee|withdrawalFee|destinationUrl|trackingUrl/);
 });
 
-test("offer components encode server form and material-term output without raw destinations", () => {
-  // The retired PublicOffers wrapper handed this contract to the bonus directory, which submits
-  // through the one shared GET enhancer instead of carrying a form element of its own.
-  const directory = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  const form = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
-  assert.match(form, /method="get"/);
-  assert.match(directory, /<InstantDiscoveryForm/);
+test("the bonus directory shows material terms and a review route without raw destinations", () => {
+  // /bonuses renders BonusOfferDirectory, a tabbed directory with no filter form:
+  // BonusDirectory and the InstantDiscoveryForm it submitted through were
+  // imported by no route and have been deleted. Legacy filter parameters are
+  // still parsed on the server, which is pinned by the query tests above.
+  const directory = readFileSync("components/bonus-directory/BonusOfferDirectory.tsx", "utf8");
   // The editorial market comes from the server, so it is never a user-facing filter.
   assert.doesNotMatch(directory, /name="country"/);
-  assert.match(directory, /name="maxWagering"/);
-  assert.match(directory, /function materialTerms\(offer: PublicOfferDTO\)/);
-  assert.match(directory, /messages\.common\.readReview/);
+  // Material terms come from the shared presentation, rendered as facts on every card.
+  assert.match(directory, /offerCardPresentation\(offer, presentation\.locale, messages, copy, "bonus_directory"\)/);
+  assert.match(directory, /<CommercialFacts facts=\{card\.facts\}/);
+  assert.match(directory, /copy\.casinoReview/);
   assert.doesNotMatch(directory, /destinationUrl|trackingUrl|https:\/\/tracking/);
 });

@@ -1,139 +1,60 @@
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
-test("bonus presentation renders neutral absence and never links an unavailable action", () => {
-  const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  for (const label of ["minimumDeposit", "wagering", "payout", "paymentMethods", "editorScore"]) assert.match(component, new RegExp("messages\\.common\\." + label));
-  assert.match(component, /offer\.casino\.licenses\[0\]\?\.authority/);
-  assert.match(component, /return messages\.common\.notListed/);
-  assert.match(component, /aria-disabled="true"/);
-  assert.match(component, /messages\.common\.noGovernedVisit/);
-  assert.match(component, /if \(!href\) return/);
-  assert.match(component, /const reviewHref = publicCasinoReviewHref\(offer\.casino\)/);
-  assert.match(component, /productHref\(presentation, publicCasinoReviewHref\(offer\.casino\)!\)/);
-});
+// /bonuses renders BonusOfferDirectory: a tabbed, offer-first directory over one
+// server query. The faceted BonusDirectory this suite used to read was imported
+// by no route and has been deleted, and with it the checks for its GET filter
+// form, tri-state featured/recommended controls, no-JS filter links and shared
+// pagination — none of which a reader can reach. Governed actions and
+// demonstration labelling are rendered for real in
+// commercial-availability-presentation; this suite holds the page contract.
 
-test("available actions remain governed internal redirects after material terms", () => {
-  const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  const handoff = readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8");
-  assert.ok(component.includes('/^\\/r\\/[a-z0-9][a-z0-9-]*$/i'));
-  assert.match(component, /<CasinoOutboundAction action=\{\{ href, label: messages\.common\.actionAvailable \}\}/);
-  assert.match(handoff, /href=\{action\.href\}/);
-  assert.match(handoff, /outboundIntent\("direct", context\)/);
-  assert.match(handoff, /rel="nofollow sponsored noopener"/);
-  assert.doesNotMatch(handoff, /confirmationHref|showModal|aria-haspopup="dialog"/);
-  const styles = readFileSync("components/bonus-directory/BonusDirectory.module.css", "utf8");
-  assert.match(styles, /\.page \.offerActionCompact \{ color: var\(--white\); \}/);
-  assert.match(component, /String\(startPosition \+ index\)\.padStart/);
-  assert.ok(component.indexOf("function safeActionHref") < component.indexOf("function OfferAction"));
-  assert.doesNotMatch(component, /destinationUrl|trackingUrl|https:\/\/tracking/);
-});
+const page = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
+const directory = readFileSync("components/bonus-directory/BonusOfferDirectory.tsx", "utf8");
 
 test("FE-MIG-07 isolates Bonuses from the shared Best Offers presentation", () => {
-  const bonuses = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
   const bestOffers = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
-  assert.match(bonuses, /components\/bonus-directory\/BonusDirectory/);
-  assert.doesNotMatch(bonuses, /components\/best-offers\/BestOffersExperience/);
+  assert.match(page, /components\/bonus-directory\/BonusOfferDirectory/);
+  assert.doesNotMatch(page, /components\/best-offers\/BestOffersExperience/);
   assert.match(bestOffers, /components\/best-offers\/BestOffersExperience/);
   assert.doesNotMatch(bestOffers, /components\/bonus-directory/);
 });
 
 test("page source preserves SSR, metadata, canonical, noindex and ItemList positions", () => {
-  const page = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
   assert.match(page, /dynamic = "force-dynamic"/);
-  assert.match(page, /const loadBonusDirectoryResult = cache/);
+  assert.match(page, /const loadBonusDirectory = cache/);
   assert.equal((page.match(/publicOfferService\.searchOffers\(/g) || []).length, 1);
-  assert.match(page, /parsePublicOfferQuery\(raw, 24\)/);
-  assert.match(page, /productMetadata\(\{ presentation, pathname: "\/bonuses"/);
-  assert.match(page, /index: false, follow: true/);
-  assert.match(page, /const empty = result\.total === 0/);
-  assert.match(page, /unavailable \|\| filtered \|\| containsDemo \|\| empty/);
+  assert.match(page, /productMetadata\(\{\s*presentation,\s*pathname: "\/bonuses"/);
+  // Nothing thin, filtered, demonstrative or unavailable is offered to search.
+  assert.match(page, /robots: marketUnavailable \|\| unavailable \|\| containsDemo \|\| result\.total === 0 \|\| hasPublicOfferFilters\(legacyQuery\) \? \{ index: false, follow: true \}/);
+  // Structured data describes published records only, positioned from one.
+  assert.match(page, /const schema = result\.inventoryMode === "PUBLISHED_ONLY" && result\.total > 0 \? \{/);
   assert.match(page, /"@type": "ItemList"/);
-  assert.match(page, /result\.inventoryMode === "PUBLISHED_ONLY" && result\.total > 0 \?/);
-  assert.match(page, /result\.inventoryMode === "UNAVAILABLE"/);
+  assert.match(page, /"@type": "ListItem",\s*position: index \+ 1/);
   assert.match(page, /messages\.bonuses\.unavailableTitleBody/);
   assert.match(page, /messages\.bonuses\.unavailableCopy/);
-  assert.match(page, /position: startPosition \+ index/);
   assert.doesNotMatch(page, /@prisma\/client|staticOffers|demo-/);
 });
 
-test("all supported controls are GET parameters and no-JS filters and pagination remain links", () => {
-  const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  for (const name of ["type", "payment", "crypto", "maxDeposit", "maxWagering", "availability", "featured", "recommended", "sort"]) assert.match(component, new RegExp(`name=\\"${name}\\"`));
-  assert.doesNotMatch(component, /name="country"/);
-  assert.match(component, /InstantDiscoveryForm/);
-  assert.match(component, /<noscript>/);
-  assert.match(component, /ariaLabel=\{messages\.bonuses\.directoryTitle\}/);
-  assert.match(component, /\/bonuses\$\{params\.size/);
-  assert.doesNotMatch(component, /destinationUrl|trackingUrl|https:\/\/tracking/);
-});
-
-test("featured and recommended controls preserve every tri-state URL value", () => {
-  const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  const page = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
-
-  assert.equal((component.match(/name="featured"/g) || []).length, 3);
-  assert.equal((component.match(/name="recommended"/g) || []).length, 3);
-  assert.match(component, /query\.featured !== undefined[^\n]+name="featured"[^\n]+String\(query\.featured\)/);
-  assert.match(component, /query\.recommended !== undefined[^\n]+name="recommended"[^\n]+String\(query\.recommended\)/);
-  assert.match(component, /except=\{\["crypto", "maxDeposit", "availability", "featured", "recommended", "sort"\]\}/);
-  assert.match(component, /query\.featured === undefined \? "" : String\(query\.featured\)/);
-  assert.match(component, /query\.recommended === undefined \? "" : String\(query\.recommended\)/);
-  assert.match(component, /query\.featured \? messages\.bonuses\.featuredTrue : messages\.bonuses\.featuredFalse/);
-  assert.match(component, /query\.recommended \? messages\.bonuses\.recommendedTrue : messages\.bonuses\.recommendedFalse/);
-  assert.match(page, /query\.availability, query\.featured, query\.recommended\]\.filter\(\(value\) => value !== undefined\)/);
+test("bonus cards state their material terms before the action and keep type at or above 12px", () => {
+  const styles = readFileSync("components/bonus-directory/BonusOfferDirectory.module.css", "utf8");
+  const pageStyles = readFileSync("app/(public)/bonuses/BonusesPage.module.css", "utf8");
+  // A reader sees wagering, deposit and bet limits before being offered the visit.
+  assert.ok(directory.indexOf("<CommercialFacts") > 0, "material terms render on every card");
+  assert.ok(directory.indexOf("<CommercialFacts") < directory.indexOf("className={styles.actions}"), "terms precede the action");
+  assert.match(directory, /card\.logo \? <ResponsivePlacementImage[\s\S]*?: <span aria-hidden="true">\{card\.casinoName\.slice\(0, 1\)\}/);
+  // The founder typography floor: design sizes below 12px map to 12px.
+  for (const [name, css] of [["BonusOfferDirectory.module.css", styles], ["BonusesPage.module.css", pageStyles]] as const) {
+    assert.doesNotMatch(css, /font-size:\s*(?:9|10|11)px/, name);
+  }
 });
 
 test("pending and error states fail without invented offer truth", () => {
-  const pending = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
   const error = readFileSync("app/(public)/bonuses/error.tsx", "utf8");
-  assert.match(pending, /aria-busy=\{pending\}/);
-  assert.match(pending, /pendingLabel/);
-  assert.doesNotMatch(pending, /maximum bonus|minimum deposit|wagering multiplier/i);
   assert.match(error, /usePublicErrorContext/);
   assert.match(error, /messages\.title/);
   assert.match(error, /messages\.copy/);
   assert.match(error, /reset/);
-});
-
-test("directory cards use normalized logo stages and preserve a readable responsive terms hierarchy", () => {
-  const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  const styles = readFileSync("components/bonus-directory/BonusDirectory.module.css", "utf8");
-  const marketplaceStyles = styles.slice(styles.indexOf("Shared directory grammar"));
-  assert.match(component, /data-bonus-directory-card/);
-  assert.match(component, /data-logo-state=\{offer\.casino\.logo \? "image" : "fallback"\}/);
-  assert.match(component, /offer\.casino\.name\.slice\(0, 1\)/);
-  assert.match(component, /data-material-terms/);
-  assert.match(component, /data-governed-actions/);
-  assert.match(component, /messages\.common\.demoData/);
-  assert.match(component, /offer\.bonus\.title/);
-  assert.ok(component.indexOf("data-material-terms") < component.indexOf("data-governed-actions"));
-  assert.match(styles, /\.compactLogo img \{[^}]*max-width:100px;[^}]*max-height:80px;[^}]*object-fit:contain;/s);
-  assert.match(styles, /\.compactHeadline \{ font-size:22px; font-weight:900;/);
-  assert.match(styles, /@media \(max-width:600px\) \{[\s\S]*\.compactTerms \{ grid-template-columns:minmax\(0,1fr\); \}/);
-  assert.match(styles, /grid-template-columns:96px minmax\(180px,\.72fr\) minmax\(290px,1\.2fr\) minmax\(360px,1\.15fr\)/);
-  assert.match(styles, /\.compactTerms dt \{ min-width:0; hyphens:none; overflow-wrap:normal; word-break:normal; \}/);
-  assert.match(styles, /\.compactActions \.offerActionCompact,[^}]*min-height:44px;/s);
-  assert.doesNotMatch(marketplaceStyles, /font-size:(?:\s*)1[01]px/);
-});
-
-test("the bonus directory keeps one presentation-only pagination contract", () => {
-  const pagination = readFileSync("components/directory-pagination/DirectoryPagination.tsx", "utf8");
-  const paginationStyles = readFileSync("components/directory-pagination/DirectoryPagination.module.css", "utf8");
-  const bonuses = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-
-  assert.match(pagination, /labels\?\.pageOf \?\? "Page \{page\} of \{pages\}"/);
-  assert.equal((pagination.match(/aria-disabled="true"/g) || []).length, 2);
-  assert.doesNotMatch(pagination, /←|→/);
-  assert.match(paginationStyles, /grid-template-columns: minmax\(104px, auto\) auto minmax\(104px, auto\)/);
-  assert.match(paginationStyles, /min-height: 44px/);
-  assert.match(paginationStyles, /border-radius: var\(--sb-radius-full\)/);
-  assert.match(paginationStyles, /a\.control:focus-visible/);
-  assert.match(bonuses, /<DirectoryPagination/);
-  assert.match(bonuses, /if \(key !== "page"\) params\.append\(key, item\)/);
-  // The casino directory serves one fixed page, so the shared control must have exactly one caller.
-  assert.equal(readdirSync("components", { recursive: true }).filter((entry) =>
-    typeof entry === "string" && entry.endsWith(".tsx")
-    && readFileSync(`components/${entry}`, "utf8").includes("<DirectoryPagination")).length, 1);
+  assert.doesNotMatch(error, /publicOfferService|maximum bonus|minimum deposit|wagering multiplier/i);
 });

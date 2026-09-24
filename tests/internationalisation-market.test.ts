@@ -510,7 +510,8 @@ test("curated bonus selectors keep stable semantics and exact localized labels",
     );
     assert.equal(new Set(labels).size, 5, locale);
   }
-  const renderer = readFileSync("components/bonus-directory/CuratedBonusShortlist.tsx", "utf8");
+  // CuratedBonusShortlist was imported by no route; /bonuses renders BonusOfferDirectory.
+  const renderer = readFileSync("components/bonus-directory/BonusOfferDirectory.tsx", "utf8");
   assert.doesNotMatch(renderer, /messages\.common\.filters[^\n]+selectors\.indexOf/);
   assert.doesNotMatch(renderer, /(?:Filter|Filtre|Filtro|Suodatin)\s*\{?\w*\}?\s*[+]?\s*1/i);
 });

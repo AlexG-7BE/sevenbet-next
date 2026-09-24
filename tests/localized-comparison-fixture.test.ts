@@ -107,11 +107,11 @@ for (const { locale, country } of [
 }
 
 test("comparison locale transport is explicit and local visual actions remain unavailable", () => {
-  const client = readFileSync("components/comparison-context/ContextualComparison.tsx", "utf8");
+  // The comparison client that sent presentationLocale was imported by no route
+  // and has been deleted. The route still has to read the locale explicitly.
   const route = readFileSync("app/api/public/comparison/route.ts", "utf8");
   const casinosPage = readFileSync("app/(public)/casinos/page.tsx", "utf8");
   const visualFixture = readFileSync("lib/final-handoff/visual-data-fixture.ts", "utf8");
-  assert.match(client, /params\.set\("presentationLocale", presentation\.locale\)/);
   assert.match(route, /comparisonFixtureLocale\(request\.nextUrl\.searchParams\.get\("presentationLocale"\)\)/);
   assert.match(route, /MARKET_PROFILES\.some/);
   assert.match(casinosPage, /withHandoffCasinoDiscoveryData\(loaded\.result, visualFixture, presentation\.locale, collectionQuery\(\), fixtureMarket\)/);

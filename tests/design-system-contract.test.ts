@@ -84,16 +84,37 @@ test("retired unreachable presentation wrappers stay deleted while the reachable
     "components/casino-discovery/CasinoDiscovery.tsx",
     "components/casino-discovery/CasinoDiscoveryCard.tsx",
     "components/casino-discovery/MobileCasinoFilters.tsx",
-  ]) assert.equal(existsSync(path), false, path);
-  // The reachable replacements for the retired casino and offer surfaces.
-  for (const path of [
-    "components/casino-discovery/CasinoCollection.tsx",
-    "components/casino-profile/CasinoProfile.tsx",
     "components/bonus-directory/BonusDirectory.tsx",
-  ]) assert.equal(existsSync(path), true, path);
-  // The error boundary still owns the discovery stylesheet, so it must not follow the components out.
-  assert.equal(existsSync("components/casino-discovery/CasinoDiscovery.module.css"), true);
-  assert.match(read("app/(public)/casinos/error.tsx"), /CasinoDiscovery\.module\.css/);
+    "components/bonus-directory/MobileBonusFilters.tsx",
+    "components/bonus-directory/CuratedBonusShortlist.tsx",
+    "components/casino-discovery/CuratedCasinoShortlist.tsx",
+    "components/directory-filters/DirectoryFilterSurface.tsx",
+    "components/directory-filters/MobileDirectoryFilters.tsx",
+    "components/directory-pagination/DirectoryPagination.tsx",
+    "components/comparison-context/ContextualCompareToggle.tsx",
+    "components/comparison-context/ContextualComparison.tsx",
+    "components/comparison/ComparisonExperience.tsx",
+    "components/comparison/ComparisonSelectedCard.tsx",
+    "components/discovery/InstantDiscoveryForm.tsx",
+  ]) assert.equal(existsSync(path), false, path);
+  // The surfaces a reader actually reaches. Existence proves nothing — a file
+  // can exist with no importer, which is how invariants ended up pinned to dead
+  // components — so each is asserted to be imported by the route that renders it.
+  for (const [route, component] of [
+    ["app/(public)/casinos/page.tsx", "CasinoCollection"],
+    ["app/(public)/casino/[slug]/page.tsx", "CasinoProfile"],
+    ["app/(public)/bonuses/page.tsx", "BonusOfferDirectory"],
+    ["app/(public)/best-offers/page.tsx", "BestOffersExperience"],
+  ] as const) assert.match(read(route), new RegExp(`import \\{[^}]*\\b${component}\\b[^}]*\\} from`), `${route} must render ${component}`);
+  // Error boundaries still own these stylesheets, so they must not follow their components out.
+  for (const [boundary, stylesheet] of [
+    ["app/(public)/casinos/error.tsx", "components/casino-discovery/CasinoDiscovery.module.css"],
+    ["app/(public)/bonuses/error.tsx", "components/bonus-directory/BonusDirectory.module.css"],
+    ["app/(public)/compare/error.tsx", "components/comparison/Comparison.module.css"],
+  ] as const) {
+    assert.equal(existsSync(stylesheet), true, stylesheet);
+    assert.ok(read(boundary).includes(stylesheet.split("/").pop()!), `${boundary} imports ${stylesheet}`);
+  }
 });
 
 test("public and protected shells retain separate landmark ownership", () => {
