@@ -9,7 +9,7 @@
 - "Start Mission 01" actions on 10 Steps use sentence case at 16px on every viewport.
 - On a phone (≤900px), a "Start Mission 01" bar appears at the bottom once the hero action has scrolled away. It leaves before the final action and the footer. It is the same canonical entry, `/program?entry=start`.
 - On a phone (≤640px), the ten Missions read as a compact numbered list. Each item shows the number, stage, title and one-line purpose. The page drops from 9.5 to 8.2 iPhone screens, and the Mission list takes 1.8 screens.
-- The closing line states the benefit ("Free and private. No account needed to begin.") in all eleven languages. It replaces the Mission 01 XP and registration mechanics ("…for 40 XP. Registration awards no XP…").
+- The closing line states the benefit ("Free to use. No account needed to begin.") in all eleven languages. It replaces the Mission 01 XP and registration mechanics ("…for 40 XP. Registration awards no XP…").
 
 ## Unchanged
 

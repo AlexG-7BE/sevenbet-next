@@ -121,7 +121,7 @@ const enCurrent: CurrentProgrammeCopy = {
   ],
   closingLead: "Mission 01 starts with",
   closingEmphasis: "your Starting Point.",
-  closingBody: "Free and private. No account needed to begin.",
+  closingBody: "Free to use. No account needed to begin.",
 };
 
 const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, CurrentProgrammeCopy> = {
@@ -142,7 +142,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Mission 01 beginnt mit",
     closingEmphasis: "deinem Ausgangspunkt.",
-    closingBody: "Kostenlos und privat. Du brauchst kein Konto, um zu beginnen.",
+    closingBody: "Kostenlos nutzbar. Du brauchst kein Konto, um zu beginnen.",
   },
   "it-IT": {
     overview: "La maggior parte delle Missioni dura circa 5–8 minuti e termina con qualcosa che conservi. La Missione 01 inizia con un breve Punto di partenza. Ecco cosa accade, senza sorprese né clausole nascoste.",
@@ -160,7 +160,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "La Missione 01 inizia con",
     closingEmphasis: "il tuo Punto di partenza.",
-    closingBody: "Gratuito e privato. Non serve un account per iniziare.",
+    closingBody: "Uso gratuito. Non serve un account per iniziare.",
   },
   "es-ES": {
     overview: "La mayoría de las Misiones dura entre 5 y 8 minutos y termina con algo que conservas. La Misión 01 comienza con un breve Punto de partida. Esto es exactamente lo que ocurre, sin sorpresas ni letra pequeña.",
@@ -178,7 +178,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "La Misión 01 comienza con",
     closingEmphasis: "tu Punto de partida.",
-    closingBody: "Gratis y privado. No necesitas una cuenta para empezar.",
+    closingBody: "Uso gratuito. No necesitas una cuenta para empezar.",
   },
   "pt-PT": {
     overview: "A maioria das Missões demora entre 5 e 8 minutos e termina com algo que guardas. A Missão 01 começa com um breve Ponto de partida. Eis exatamente o que acontece — sem surpresas nem letras pequenas.",
@@ -196,7 +196,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "A Missão 01 começa com",
     closingEmphasis: "o teu Ponto de partida.",
-    closingBody: "Gratuito e privado. Não precisas de conta para começar.",
+    closingBody: "Utilização gratuita. Não precisas de conta para começar.",
   },
   "el-GR": {
     overview: "Οι περισσότερες Αποστολές διαρκούν περίπου 5–8 λεπτά και τελειώνουν με κάτι που κρατάς. Η Αποστολή 01 ξεκινά με ένα σύντομο Σημείο Εκκίνησης. Δες ακριβώς τι συμβαίνει — χωρίς εκπλήξεις ή ψιλά γράμματα.",
@@ -214,7 +214,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Η Αποστολή 01 ξεκινά με",
     closingEmphasis: "το Σημείο Εκκίνησής σου.",
-    closingBody: "Δωρεάν και ιδιωτικό. Δεν χρειάζεσαι λογαριασμό για να ξεκινήσεις.",
+    closingBody: "Δωρεάν χρήση. Δεν χρειάζεσαι λογαριασμό για να ξεκινήσεις.",
   },
   "nl-NL": {
     overview: "De meeste Missies duren ongeveer 5–8 minuten en eindigen met iets dat je bewaart. Missie 01 begint met een kort Startpunt.",
@@ -232,7 +232,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Missie 01 begint met",
     closingEmphasis: "je Startpunt.",
-    closingBody: "Gratis en privé. Je hebt geen account nodig om te beginnen.",
+    closingBody: "Gratis te gebruiken. Je hebt geen account nodig om te beginnen.",
   },
   "sv-SE": {
     overview: "De flesta Uppdrag tar ungefär 5–8 minuter och slutar med något du behåller. Uppdrag 01 börjar med en kort Startpunkt.",
@@ -250,7 +250,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Uppdrag 01 börjar med",
     closingEmphasis: "din Startpunkt.",
-    closingBody: "Gratis och privat. Du behöver inget konto för att börja.",
+    closingBody: "Gratis att använda. Du behöver inget konto för att börja.",
   },
   "da-DK": {
     overview: "De fleste Missioner tager cirka 5–8 minutter og slutter med noget, du beholder. Mission 01 begynder med et kort Udgangspunkt.",
@@ -268,7 +268,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Mission 01 begynder med",
     closingEmphasis: "dit Udgangspunkt.",
-    closingBody: "Gratis og privat. Du behøver ingen konto for at begynde.",
+    closingBody: "Gratis at bruge. Du behøver ingen konto for at begynde.",
   },
   "fi-FI": {
     overview: "Useimmat Tehtävät kestävät noin 5–8 minuuttia ja päättyvät johonkin, jonka säilytät. Tehtävä 01 alkaa lyhyen Lähtökohdan laatimisella.",
@@ -286,7 +286,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Tehtävä 01 alkaa",
     closingEmphasis: "Lähtökohdastasi.",
-    closingBody: "Maksuton ja yksityinen. Aloittamiseen ei tarvita tiliä.",
+    closingBody: "Käyttö on maksutonta. Aloittamiseen ei tarvita tiliä.",
   },
   "nb-NO": {
     overview: "De fleste Oppdrag tar omtrent 5–8 minutter og avsluttes med noe du beholder. Oppdrag 01 begynner med et kort Utgangspunkt.",
@@ -304,7 +304,7 @@ const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, Cur
     ],
     closingLead: "Oppdrag 01 begynner med",
     closingEmphasis: "Utgangspunktet ditt.",
-    closingBody: "Gratis og privat. Du trenger ingen konto for å begynne.",
+    closingBody: "Gratis å bruke. Du trenger ingen konto for å begynne.",
   },
   "en-CA": enCurrent,
   "fr-CA": enCurrent,

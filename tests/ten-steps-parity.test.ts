@@ -130,7 +130,7 @@ test("mounted Mission 01 copy reflects the Starting Point, timing and reward bou
   assert.match(runtimeText, /Most Missions take (?:about )?5–8 minutes/i);
   assert.match(runtimeText, /Mission 01 starts with your Starting Point\./i);
   // Founder decision 25 Sep 2026: the closing line states the benefit, not XP or registration mechanics.
-  assert.match(runtimeText, /Free and private\. No account needed to begin\./);
+  assert.match(runtimeText, /Free to use\. No account needed to begin\./);
   assert.doesNotMatch(messages.text[48], /XP|Registration/);
   assert.doesNotMatch(runtimeText, /Mission 01 takes about one minute|5–15 minutes|\+60 XP/i);
   assert.doesNotMatch(runtimeText, /cash value|money value|bonus eligibility|winnings|deposit reward/i);

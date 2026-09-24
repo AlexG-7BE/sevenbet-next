@@ -61,7 +61,7 @@ test("active 10 Steps copy states current timing and the closing benefit", () =>
   assert.doesNotMatch(messages.text[4], /5–15/);
   assert.equal(closing, "Mission 01 starts with your Starting Point.");
   assert.doesNotMatch(closing, /minute/i);
-  assert.equal(messages.text[48], "Free and private. No account needed to begin.");
+  assert.equal(messages.text[48], "Free to use. No account needed to begin.");
   assert.doesNotMatch(messages.text[48], /XP|Registration/);
 
   assert.ok(html.includes(`>${escapeHtml(messages.text[4])}<`));
