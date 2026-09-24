@@ -23,6 +23,8 @@ function offerState(index: number) {
   return { status: "PUBLISHED", offerStatus: "ACTIVE", expiresAt: FUTURE };
 }
 
+// The supported market is Ireland: a grey-zone market open to every casino under the licence
+// register (RFC-054), so this fictional casino's route is judged on navigation alone.
 function bonus(index: number) {
   const state = offerState(index);
   return {
@@ -32,13 +34,13 @@ function bonus(index: number) {
     title: `Synthetic fixture offer ${String(index).padStart(2, "0")}`,
     status: state.status,
     summary: "Synthetic published terms used only in the disposable Navigation Stage 2 catalogue.",
-    currency: "PEN",
+    currency: "EUR",
     ...(state.startsAt ? { startsAt: state.startsAt } : {}),
     ...(state.expiresAt ? { expiresAt: state.expiresAt } : {}),
     freeSpins: index % 3 === 0 ? 25 + index : null,
     maximumBet: 5,
     percentage: index % 3 === 0 ? null : 50 + index * 5,
-    eligibility: "Adult users in the isolated PE test context.",
+    eligibility: "Adult users in the isolated IE test context.",
     offerStatus: state.offerStatus,
     maximumBonus: 100 + index * 10,
     wageringText: `${20 + index}× bonus wagering`,
@@ -67,12 +69,12 @@ function publishedSnapshot(index: number) {
     summary: `Synthetic casino ${String(index).padStart(2, "0")} in the disposable representative catalogue.`,
     licenses: [],
     countries: [{
-      id: `navigation-stage2-pe-${String(index).padStart(2, "0")}`,
+      id: `navigation-stage2-ie-${String(index).padStart(2, "0")}`,
       bonuses: countryBonuses,
       evidence: [],
       licenses: [],
       minimumAge: 18,
-      countryCode: "PE",
+      countryCode: "IE",
       mediaAssets: [],
       availability: index === 14 ? "UNKNOWN" : "AVAILABLE",
       gameProviders: [],
@@ -82,19 +84,19 @@ function publishedSnapshot(index: number) {
         name: index % 2 ? "Fixture Bank" : "Fixture Wallet",
         crypto: index === 13,
         methodKey: index % 2 ? "fixture-bank" : "fixture-wallet",
-        currencies: ["PEN"],
+        currencies: ["EUR"],
         minimumDeposit: 10 + index,
         withdrawalTime: "within 24 hours",
         supportsDeposits: true,
         supportsWithdrawals: index !== 12,
       }],
-      primaryCurrency: "PEN",
-      primaryLanguage: "es-PE",
-      supportedLanguages: ["es-PE", "en-GB"],
-      supportedCurrencies: ["PEN"],
+      primaryCurrency: "EUR",
+      primaryLanguage: "en-GB",
+      supportedLanguages: ["en-GB"],
+      supportedCurrencies: ["EUR"],
     }],
-    languages: ["en-GB", "es-PE"],
-    currencies: ["PEN"],
+    languages: ["en-GB"],
+    currencies: ["EUR"],
     description: "Synthetic content exercising the real public casino repository, mapping and renderer paths.",
     editorScore: Number((10 - index * 0.2).toFixed(1)),
     mediaAssets: [],
@@ -249,12 +251,12 @@ async function seedGovernedPeAction() {
     update: { casinoId: firstCasinoId, affiliateOfferId: offerId, active: true, archivedAt: null, updatedBy: FIXTURE_ACTOR },
   });
   await prisma.marketActivation.upsert({
-    where: { casinoId_marketCode_product: { casinoId: firstCasinoId, marketCode: "PE", product: "CASINO" } },
+    where: { casinoId_marketCode_product: { casinoId: firstCasinoId, marketCode: "IE", product: "CASINO" } },
     create: {
       id: activationId,
       casinoId: firstCasinoId,
-      countryCode: "PE",
-      marketCode: "PE",
+      countryCode: "IE",
+      marketCode: "IE",
       product: "CASINO",
       desiredState: "ACTIVE",
       status: "ACTIVE",
@@ -277,7 +279,7 @@ async function seedGovernedPeAction() {
       diagnostics: { environment: "isolated-test", classification: "DETECTED" },
     },
     update: {
-      countryCode: "PE",
+      countryCode: "IE",
       desiredState: "ACTIVE",
       status: "ACTIVE",
       affiliateOfferId: offerId,
@@ -304,7 +306,7 @@ async function main() {
   const [casinos, articles, actions] = await Promise.all([
     prisma.casino.count({ where: { createdBy: FIXTURE_ACTOR, status: "PUBLISHED", archivedAt: null } }),
     prisma.article.count({ where: { createdBy: FIXTURE_ACTOR, status: "PUBLISHED", archivedAt: null } }),
-    prisma.marketActivation.count({ where: { requestedBy: FIXTURE_ACTOR, marketCode: "PE", status: "ACTIVE" } }),
+    prisma.marketActivation.count({ where: { requestedBy: FIXTURE_ACTOR, marketCode: "IE", status: "ACTIVE" } }),
   ]);
   if (casinos !== 15 || articles !== 5 || actions !== 1) {
     throw new Error(`Unexpected Navigation Stage 2 fixture counts: ${JSON.stringify({ casinos, articles, actions })}`);
