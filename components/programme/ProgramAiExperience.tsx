@@ -292,7 +292,7 @@ export function ProgramAiExperience({
     }
   }, [googleLinkRecovery, locale, redeem, session?.user.id, sessionPending]);
 
-  async function grantAccess() {
+  async function grantAccess(processingConsent = false) {
     if (!subject) return;
     const entryMode = subject.kind === "journey" && hasProgrammeAccessAuthority(window.sessionStorage, subject) ? "resume" : "start";
     productAnalyticsClient.startClicked("other_public");
@@ -345,6 +345,23 @@ export function ProgramAiExperience({
       accumulatedAiLatencyMs.current = 0;
       voiceTiming.current = null;
       setSubject(journey);
+      if (processingConsent) {
+        // The consent ticked on the access screen is the explicit affirmative action; it is
+        // recorded as soon as the anonymous session exists. If it fails, intake still asks.
+        try {
+          await programAiRequest("/api/program/program-ai/authority", journey, {
+            method: "POST",
+            body: JSON.stringify({
+              confirmed: true,
+              purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
+              statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
+            }),
+          });
+          setSensitiveAuthorityActive(true);
+        } catch {
+          setSensitiveAuthorityActive(false);
+        }
+      }
       persist({ ...emptyLocalState, phase: "intake" }, journey);
     } catch (cause) {
       const requestError = cause as Error & { code?: string };
