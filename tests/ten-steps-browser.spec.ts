@@ -99,7 +99,8 @@ test("10 Steps uses the Public Shell mobile menu without duplicate chrome", asyn
 test("all signed-out Programme CTAs use the canonical entry", async ({ page }) => {
   await page.goto(`${baseUrl}/10-steps`, { waitUntil: "domcontentloaded" });
   const programmeLinks = page.locator("main a[href='/program?entry=start']");
-  await expect(programmeLinks).toHaveCount(2);
+  // Hero, first Mission, final section and the phone-only sticky start bar.
+  await expect(programmeLinks).toHaveCount(4);
   await expect(programmeLinks.first()).toContainText(messages.text[5]);
   const response = await page.request.get(`${baseUrl}/10-steps`);
   expect(response.headers()["link"] ?? "").not.toContain("mission=");

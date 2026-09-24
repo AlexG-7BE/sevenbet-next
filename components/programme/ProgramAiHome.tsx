@@ -21,6 +21,10 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
   const current = home.missions.find((mission) => mission.missionNumber === home.currentMission);
   const currentTitle = programmeMissionCopy(locale, home.currentMission).title;
   const t = (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
+  // Founder decision, 25 Sep 2026: once Mission 08 "Research responsibly" is complete, the generic
+  // research links sit right under the current mission. They stay generic: no Programme data picks them.
+  const researchFeatured = home.discoveryLinks.length > 0 && home.missions.some((mission) => mission.missionNumber === 8 && mission.status === "completed");
+  const research = <section className={`${styles.compactResearch} ${researchFeatured ? styles.researchFeatured : ""}`.trim()} data-programme-research={researchFeatured ? "featured" : "standard"}><span>{t("Research")}</span>{home.discoveryLinks.length ? <nav>{home.discoveryLinks.map((item) => <a href={item.href} key={item.href} onClick={() => { const destinationRoute = discoveryDestination(item.href); if (destinationRoute) productAnalyticsClient.discoveryClicked({ sourceSurface: "programme_home", destinationRoute }); }}>{discoveryLabel(item.href, locale)}</a>)}</nav> : <p>{t("Use the main navigation for public casino information.")}</p>}</section>;
   return (
     <div className={`${styles.shell} ${styles.dashboardShell}`} data-programme-presentation="dashboard">
       <ProgramAiAuthenticatedHeader dashboard locale={locale} programmePath={programmePath} totalXp={home.totalXp} userId={userId} />
@@ -33,6 +37,7 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
               <div><span>{t(home.primaryAction === "review-mission" ? "Mission complete" : "Current mission")}</span><h1 aria-label={t("Mission {number} — {title}", { number: String(home.currentMission).padStart(2, "0"), title: currentTitle || t("Continue your Programme") })}><span className={styles.currentMissionNumber}>{t("Mission {number} — {title}", { number: String(home.currentMission).padStart(2, "0"), title: "" })}</span>{currentTitle || t("Continue your Programme")}</h1><p>{programmeCurrentCue(home, locale)}</p><div className={styles.currentActions}><button onClick={() => home.primaryAction === "start-mission-one" || home.primaryAction === "finish-mission-one" ? onMissionOneEntry() : onMission(home.currentMission)} type="button">{programmePrimaryActionLabel(home.primaryAction, locale)}</button>{current ? <small>{programmeMissionProgressCopy(current, locale)}</small> : null}</div></div>
               <strong><span>{String(home.currentMission).padStart(2, "0")}/10</span><small>{t("Missions")}</small></strong>
             </section>
+            {researchFeatured ? research : null}
             <section className={styles.journeyCard} aria-labelledby="programme-path-title"><span id="programme-path-title">{t("Your 10-mission journey")}</span><ol>{home.missions.map((mission) => <li aria-current={mission.status === "current" ? "step" : undefined} data-state={mission.status} key={mission.missionNumber}><b>{String(mission.missionNumber).padStart(2, "0")}</b><strong>{programmeMissionCopy(locale, mission.missionNumber).title}</strong><small>{t(mission.status === "completed" ? "Complete" : mission.status === "current" ? "In progress" : "Locked")}</small></li>)}</ol></section>
           </div>
           <div className={styles.dashboardRight}>
@@ -40,7 +45,7 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
             {home.startingPoint ? <section className={styles.compactStartingPoint}><span>{t("Your starting point")}</span><p>{home.startingPoint.startingPoint}</p><small>{t("Saved Starting Point")}</small></section> : null}
             <section className={styles.compactAchievements}><span>{t("Achievements")}</span><div>{home.achievements.length ? home.achievements.map((achievement) => <b data-state={achievement.state} key={achievement.slug}>{achievementTitle(achievement.slug, locale)}</b>) : <b data-state="locked">{t("First achievement waits ahead")}</b>}</div></section>
             <section className={styles.compactReviews}><span>{t("Personal reviews")}</span><p>{programmeReviewStatusCopy(home, locale)}</p>{home.reviews.filter((review) => review.status === "available").map((review) => <button key={review.milestone} onClick={() => onReview(review.milestone)} type="button"><strong>{reviewTitle(review.milestone, locale)}</strong><small>{t("Open review")}</small></button>)}</section>
-            <section className={styles.compactResearch}><span>{t("Research")}</span>{home.discoveryLinks.length ? <nav>{home.discoveryLinks.map((item) => <a href={item.href} key={item.href} onClick={() => { const destinationRoute = discoveryDestination(item.href); if (destinationRoute) productAnalyticsClient.discoveryClicked({ sourceSurface: "programme_home", destinationRoute }); }}>{discoveryLabel(item.href, locale)}</a>)}</nav> : <p>{t("Use the main navigation for public casino information.")}</p>}</section>
+            {researchFeatured ? null : research}
           </div>
         </div>
         <footer className={styles.dashboardFooter}><span>{t("Your data is private. We never use it for offers or rankings.")}</span><span>{t("18+ · Protected Help remains available.")}</span></footer>

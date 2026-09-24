@@ -83,12 +83,16 @@ export function ProgrammeUnavailableScreen({ error, locale }: { error: string; l
 export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
   busy: boolean;
   error: string;
-  onConfirm: () => void;
+  onConfirm: (processingConsent: boolean) => void;
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
   const [adult, setAdult] = useState(false);
   const [legal, setLegal] = useState(false);
+  // Founder decision, 25 Sep 2026: the explicit consent can be given here, next to the two
+  // required checks, so Mission 01 opens with a working microphone. It stays optional and
+  // unticked; without it the intake screen asks just in time, as before.
+  const [processing, setProcessing] = useState(false);
   return (
     <div className={styles.canvas} data-programme-presentation="access">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
@@ -104,10 +108,14 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
               <input checked={legal} id="programme-legal-acknowledgement" onChange={(event) => setLegal(event.target.checked)} type="checkbox" />
               <span><label htmlFor="programme-legal-acknowledgement">{t("I agree to the Terms and confirm I have read the Privacy Notice")}</label><small>{t("Required")}</small></span>
             </div>
-            <p className={styles.legalLinks}><Link href="/terms">{t("Read Terms")}</Link><Link href="/privacy">{t("Read Privacy Notice")}</Link></p>
-            <button className={styles.primaryAction} disabled={busy || !adult || !legal} onClick={onConfirm} type="button">
+            <label className={`${styles.checkRow} ${styles.consentRow}`} data-programme-access-consent="">
+              <input checked={processing} onChange={(event) => setProcessing(event.target.checked)} type="checkbox" />
+              <span>{t("I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.")} <em>{t("Optional. You can withdraw before saving. Withdrawal stops future processing and clears this draft, but cannot undo processing already completed.")} <Link href="/privacy#ai">{t("Privacy details")}</Link></em></span>
+            </label>
+            <button className={styles.primaryAction} disabled={busy || !adult || !legal} onClick={() => onConfirm(processing)} type="button">
               {busy ? t("Verifying access…") : t("Enter Mission 01")}
             </button>
+            <p className={styles.legalLinks}><Link href="/terms">{t("Read Terms")}</Link><Link href="/privacy">{t("Read Privacy Notice")}</Link></p>
             <StatusMessage error={error} />
             <Link className={styles.helpLink} href={programmeHelpPath(locale)}>{t("Protected Help / pause options →")}</Link>
           </section>
@@ -381,6 +389,7 @@ export function Mission01IntakeScreen({
   busy,
   error,
   situation,
+  onAccountFirst,
   onSituation,
   onSubmit,
   onTranscript,
@@ -393,6 +402,7 @@ export function Mission01IntakeScreen({
   busy: boolean;
   error: string;
   situation: string;
+  onAccountFirst?: () => void;
   onSituation: (value: string) => void;
   onSubmit: () => void;
   onTranscript: (transcript: string, timing: { recordingDurationMs: number; transcriptionRequestMs: number }) => void;
@@ -419,6 +429,7 @@ export function Mission01IntakeScreen({
           <p>{t("In your own words. A minute is plenty — we'll build your Starting Point from it.")}</p>
         </section> : null}
         <Mission01VoiceControl disabled={busy || !authority} locale={locale} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} state={recorderState} />
+        {onAccountFirst && !recording && !textVisible ? <button className={styles.accountFirstAction} data-programme-account-first="" disabled={busy} onClick={onAccountFirst} type="button">{t("Create an account first →")}</button> : null}
         {textVisible ? <section className={styles.transcriptState} data-transcript-mode={inputMode === "voice" ? "transcript" : "text-fallback"}>
           <label>
             <span>{t(inputMode === "voice" ? "Editable transcript" : "Your situation")}</span>
@@ -460,6 +471,7 @@ export function ProgrammeSupportScreen({ busy, error, onContinue, xpPreview, loc
 export function StartingPointReadyScreen({
   authenticated,
   candidate,
+  onBack,
   googleLinkRecovery,
   googleAvailable,
   busy,
@@ -472,7 +484,9 @@ export function StartingPointReadyScreen({
   locale,
 }: {
   authenticated: boolean;
-  candidate: ProgrammeStartingPointValue;
+  /** Null on the account-first route: the person registers before telling their story. */
+  candidate: ProgrammeStartingPointValue | null;
+  onBack?: () => void;
   googleLinkRecovery: boolean;
   googleAvailable: boolean;
   busy: boolean;
@@ -494,15 +508,20 @@ export function StartingPointReadyScreen({
     <div className={styles.canvas} data-programme-presentation="starting-point-ready">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.readyState}>
+          {candidate ? <>
           <p className={styles.readyEyebrow}>{t("✓ Your Starting Point is ready")}</p>
         <h1><SerifTail text={t("Your Starting Point, in your words.")} words={3} /></h1>
         <section className={styles.startingPointCard}>
           <p>{candidate.startingPoint}</p>
           <span className={styles.srOnly}>{t("What changes next: {change}. Mission 02 continues here: {cue}.", { change: candidate.desiredChange.replace(/[.!?]+$/, ""), cue: candidate.continuationCue.replace(/[.!?]+$/, "") })}</span>
         </section>
+          </> : <>
+        <h1><SerifTail text={t("Save your place first.")} words={2} /></h1>
+        <p className={styles.accountFirstLead}>{t("Create your account now. Mission 01 waits in your plan whenever you are ready.")}</p>
+          </>}
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
           {googleLinkRecovery ? <p>{t("Your confirmed Starting Point stays in this browser while you sign in and link Google securely.")}</p> : null}
-          {authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{t(busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account")}</button> : <>
+          {authenticated && !candidate ? null : authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{t(busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account")}</button> : <>
             {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={onGoogle} type="button"><GoogleIcon />{t("Continue with Google — save my Starting Point")}</button> : null}
             {!googleLinkRecovery ? <button className={styles.typingAction} onClick={() => setEmailOpen((value) => !value)} type="button">{t(emailOpen ? "Hide email option" : "Use email instead")}</button> : null}
             {emailOpen ? <form className={styles.emailForm} onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode, marketingAllowed: mode === "sign-up" && marketingAllowed }); }}>
@@ -514,7 +533,8 @@ export function StartingPointReadyScreen({
             </form> : null}
           </>}
           <StatusMessage error={error} />
-          <small>{t("Google provides identity only; it does not verify age or receive your Programme words from B4GAMBLE. Registration adds 0 XP. Programme and Help data never feeds offers or rankings.")}</small>
+          <small>{t("Google provides identity only; it does not verify age or receive your Programme words from B4GAMBLE. Programme and Help data never feeds offers or rankings.")}</small>
+          {!candidate && onBack && !googleLinkRecovery ? <button className={styles.typingAction} disabled={busy} onClick={onBack} type="button">{t("← Tell my story first")}</button> : null}
           {!authenticated && !googleLinkRecovery ? <button className={styles.withdrawAction} disabled={busy} onClick={onWithdraw} type="button">{t("Withdraw consent and clear this draft")}</button> : null}
           </section>
         </div>
