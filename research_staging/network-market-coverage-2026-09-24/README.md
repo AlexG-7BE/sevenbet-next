@@ -127,17 +127,43 @@ Denmark, and forbid Swedish and Finnish-language promotion, even though Hello
 Casino loads in both. The Rest-of-World welcome terms exclude Norway although
 the Norwegian visitor is shown that offer.
 
+**Brand restricted list (DETECTED).** All six brands share one list, clause 7.1
+of the MGA terms (v6.3, 2 July 2026), 111 countries; the GB terms carry none.
+Among markets relevant here it restricts Austria, Denmark, Germany, Greece,
+Italy, Spain, Portugal, the Netherlands, Estonia, Latvia, Lithuania, Poland,
+Czech Republic, Slovakia, Hungary, Switzerland, France, the USA, Australia,
+Argentina, Brazil, Peru, India and Serbia. It does **not** list Ireland, Malta,
+Canada, Finland, Norway, Sweden, New Zealand, Chile or Mexico. The full list is
+in `geo-checks.v1.json` → `restrictedLists`. Restriction is enforced at
+registration, not on the homepage: the Danish visitor is served normally.
+
+India is on the brand list, yet Superfly publishes India offer terms.
+
 ### Brothers Bet
 
 | Casino | LOCAL licence | Blocked |
 | --- | --- | --- |
 | DragonBet | GB (UKGC account 64908) | Site admits "UK or Ireland" only; IE could not be verified (proxy). |
 
+DragonBet's site also shows an Irish **betting** licence, GRAI-1185-RB-26-0001,
+issued 4 September 2026. It covers betting, not casino.
+
 ### NetoPartners
 
-| Casino | Served (Tobique, international) | Blocked (HTTP 403 "Access Denied") |
+| Casino | Served (international) | Blocked (HTTP 403 "Access Denied") |
 | --- | --- | --- |
-| GoldenPlay (goldenplaywin.com) | CA ($555 offer), DE (€7 no-deposit + welcome), IT, FR, PL (zł offer), NL | **GB** (goldenplaywin.com and goldenplay.com, basic and stealth), PT, NZ; IE also 403 but the IE proxy is unreliable |
+| GoldenPlay (goldenplaywin.com = goldenplay.com) | CA ($555 offer), DE (€7 no-deposit + welcome, Germany-specific creative), IT, FR, PL (zł offer), NL | **GB**, PT, NZ; IE also 403 but the IE proxy is unreliable |
+
+**GoldenPlay's own User Agreement restricts the UK and Malta** (DETECTED,
+goldenplay.com/user-agreement), along with Belgium, the Netherlands, Cyprus,
+Lithuania, Bulgaria, New Brunswick, the USA, Australia and others — 30 in all.
+Ireland is not on it. The page settings carry `"isRegulated": false`, the
+agreement is governed by Costa Rican law, and no licence line renders on the
+site; the Tobique licence is stated only by NetoPartners. The site does not
+follow its own list consistently: it serves the Netherlands, and blocks
+Ireland, Portugal and New Zealand, none of which it lists. After about 20
+requests it also began refusing Canada and Germany, so part of the blocking may
+be rate-based.
 
 ## Where our records disagree (CONTRADICTION)
 
@@ -163,9 +189,11 @@ the Norwegian visitor is shown that offer.
    market has a local licence behind it. That is consistent with how those
    routes were authorised (INFERRED, Global-14), and it is now observed —
    subject to the IE proxy caveat.
-6. **GoldenPlay refuses Great Britain.** GB is the market the rollout matrix
-   lists for GoldenPlay (`MISSING_TRACKING_ROUTE`); the site returns 403 to a
-   UK visitor. The published IE profile could not be verified.
+6. **GoldenPlay excludes Great Britain, twice over.** GB is the market the
+   rollout matrix and the Global-14 authority list for GoldenPlay; the site
+   returns 403 to a UK visitor and its own User Agreement restricts the UK and
+   Malta. The published IE profile could not be verified from a genuine Irish
+   exit; IE is not on GoldenPlay's restricted list.
 7. **Markets we under-record.** MegawaysCasino serves SE and DK under local
    licences (we hold GB only); BacanaPlay serves ES under DGOJ (not held);
    PlayUZU AR is live but limited to the City of Buenos Aires (we hold it as
