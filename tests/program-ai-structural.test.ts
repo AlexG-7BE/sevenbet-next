@@ -236,6 +236,9 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.doesNotMatch(authenticatedHome, /once your plan is built, not before/);
   assert.doesNotMatch(authenticatedHome, /Research links are temporarily unavailable/);
   assert.match(authenticatedHome, /Use the main navigation for public casino information/);
+  // Founder decision 25 Sep 2026: the same generic research links lead the dashboard once Mission 08 is complete.
+  assert.match(authenticatedHome, /home\.discoveryLinks\.length > 0 && home\.missions\.some\(\(mission\) => mission\.missionNumber === 8 && mission\.status === "completed"\)/);
+  assert.match(authenticatedHome, /data-programme-research=\{researchFeatured \? "featured" : "standard"\}/);
   assert.doesNotMatch(authenticatedHome, /Review or update/);
   assert.match(authenticatedHome, /Saved Starting Point/);
   assert.match(authenticatedHome, /home\.primaryAction === "review-mission" \? "Mission complete" : "Current mission"/);

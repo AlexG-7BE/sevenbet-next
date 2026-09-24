@@ -681,6 +681,8 @@
 .footerCommission { margin: 0 0 0 auto; }
 .footerBaseline a { display: inline-flex; align-items: center; }
 .footerBaseline a:hover { color: var(--shell-white); }
+.footerChoice { padding: 0; border: 0; display: inline-flex; align-items: center; background: none; color: inherit; font: inherit; cursor: pointer; }
+.footerChoice:hover { color: var(--shell-white); }
 .age { padding:3px 10px; border:1px solid rgba(255,255,255,.35); border-radius:999px; color:var(--shell-white); font-weight:600; }
 .footerEnd { display:block; width:100%; height:1px; }
 
@@ -748,7 +750,7 @@
   .footerGroup:last-child { grid-column:1/-1; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:20px; }
   .footerBaseline { padding:20px 0 calc(20px + env(safe-area-inset-bottom)); align-items:flex-start; flex-direction:column; gap:12px; }
   .footerBaseline > div { width:100%; gap:4px 18px; }
-  .footerBaseline a { min-height:44px; }
+  .footerBaseline a, .footerChoice { min-height:44px; }
   .footerBaseline a { min-width:44px; }
   .footerCommission { margin-left:0; }
   .desktopDisclosure { display: none; }
