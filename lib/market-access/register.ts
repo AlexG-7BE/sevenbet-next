@@ -24,7 +24,13 @@ export type AdvertisingWindow = Readonly<{
 }>;
 
 export type MarketRule =
-  | Readonly<{ regime: "LICENCE_REQUIRED"; regulator: string; advertisingWindow?: AdvertisingWindow }>
+  | Readonly<{
+      regime: "LICENCE_REQUIRED";
+      regulator: string;
+      advertisingWindow?: AdvertisingWindow;
+      /** Game-category keys that may not be shown to visitors from this market. */
+      hiddenGameCategories?: readonly string[];
+    }>
   /** No casino licensing exists yet; operators serve the market under an MGA or offshore licence. */
   | Readonly<{ regime: "GREY_ZONE"; open: boolean; reason: string }>;
 
@@ -41,6 +47,11 @@ export const MARKET_RULES: Readonly<Record<string, MarketRule>> = Object.freeze(
       closesAt: 6,
       source: "§ 5 Abs. 3 GlüStV 2021: no online advertising for virtual slot machines, online poker or online casino games between 06:00 and 21:00.",
     },
+    // Only virtual slot games are licensed in Germany; EGO's German rules forbid jackpots and table games.
+    hiddenGameCategories: [
+      "baccarat", "blackjack", "casino", "game-shows", "jackpot-slots", "jackpots",
+      "live-casino", "live-games", "poker", "roulette", "table-games", "video-poker",
+    ],
   },
   MT: { regime: "LICENCE_REQUIRED", regulator: "Malta Gaming Authority" },
   AT: { regime: "LICENCE_REQUIRED", regulator: "Bundesministerium für Finanzen (state monopoly, win2day only)" },

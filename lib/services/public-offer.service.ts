@@ -9,7 +9,7 @@ import type {
 import { publicOfferRepository, type PublicOfferStore } from "@/lib/repositories/public-offer.repository";
 import { isPublicCasinoCmsEnabled } from "@/lib/services/public-casino.service";
 import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
-import { marketAccess } from "@/lib/market-access/access";
+import { marketAccess, offerFitsMarket } from "@/lib/market-access/access";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import {
   publicCommercialActionResolver,
@@ -122,7 +122,8 @@ export class PublicOfferService {
       const records = (await this.repository.listOffers({
         countryCode: options.countryCode,
         presentationLanguage: options.presentationLanguage,
-      })).filter((record) => marketAccess(record.casino.slug, market, now).open);
+      })).filter((record) => marketAccess(record.casino.slug, market, now).open
+        && offerFitsMarket(record.offerPresentation?.relation, market));
       const decisions = await this.actionAuthority.resolveMany({
         subjects: records.map((record) => ({ casinoId: record.casino.id, casinoSlug: record.casino.slug, published: true })),
         authority,

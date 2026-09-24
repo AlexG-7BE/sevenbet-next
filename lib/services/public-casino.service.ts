@@ -8,7 +8,7 @@ import {
   type PublicCommercialActionAuthority,
 } from "@/lib/commercial/public-commercial-action-resolver";
 import { extractOfferCandidatesFromPublishedRecords, withOfferPresentation } from "@/lib/public-offer/offer-presentation";
-import { withholdClosedMarketOffers } from "@/lib/market-access/access";
+import { presentInMarket } from "@/lib/market-access/access";
 import { PUBLIC_CASINO_EDITORIAL_CACHE_TAG, publicEditorialCache } from "@/lib/public-editorial-cache";
 
 function projectRequestedMarket(casino: PublicCasinoDTO, countryCode: string | null | undefined) {
@@ -125,7 +125,7 @@ export class PublicCasinoService {
         product: "CASINO",
         now: this.options.now,
       });
-      const presented = withholdClosedMarketOffers(projected, commercialMarketCode || normalizedCountry, this.options.now ?? new Date());
+      const presented = presentInMarket(projected, commercialMarketCode || normalizedCountry, this.options.now ?? new Date());
       return { ...presented, action: decisions.get(projected.id)?.action ?? null };
     }
     return null;
@@ -172,7 +172,7 @@ export class PublicCasinoService {
     });
     const now = this.options.now ?? new Date();
     const cms = mapped.map((casino) => ({
-      ...withholdClosedMarketOffers(casino, commercialMarketCode || normalizedCountry, now),
+      ...presentInMarket(casino, commercialMarketCode || normalizedCountry, now),
       action: decisions.get(casino.id)?.action ?? null,
     }));
     const bySlug = new Map<string, PublicCasinoDTO>();
