@@ -687,13 +687,13 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
     currencies: [currency],
     withdrawalTime: formatFixturePayout(sample.payout, locale),
     minimumDeposit: sample.deposit,
-    // Illustrative values, not a claim. The profile drops a fact it cannot
-    // state, so leaving these null empties the payments section and the
-    // German label-overlap check loses the rows it exists to measure.
-    minimumWithdrawal: sample.deposit * 2,
+    // Deliberately null: the fixture must not invent payment amounts, and
+    // tests/localized-demo-profile.test.ts pins that. The profile drops a fact
+    // it cannot state, so these rows are simply absent.
+    minimumWithdrawal: null,
     maximumWithdrawal: null,
     depositProcessingTime: copy.instant,
-    fees: "0%",
+    fees: null,
     crypto: false,
   }));
   const fixtureProviders = [{ key: "visual-slots", name: "Orbit Studios", gameCount: 2400, liveCasino: false }];
@@ -717,7 +717,9 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
     importantConditions: [...copy.bonus.conditions],
     termsUrl: null,
     startsAt: null,
-    expiresAt: null,
+    // Dated so the offer section keeps its fourth fact: an unknown value is
+    // now dropped, and the visual QA layout exists to be measured full.
+    expiresAt: "2030-12-31T00:00:00.000Z",
     media: { CASINO_OFFER_BLOCK: adaptiveCreativePlacement("CASINO_OFFER_BLOCK", 1) },
   }] : [];
   return {
