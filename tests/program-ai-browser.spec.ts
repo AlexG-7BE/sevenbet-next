@@ -1396,3 +1396,74 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
     await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(cookie.value) } });
   }
 });
+
+test("phone Mission screens open at the top with the first choice above a sticky confirm, and research leads after Mission 08", async ({ browser }) => {
+  const now = new Date().toISOString();
+  const userId = "mobile-mission-review-user";
+  const titles = Array.from({ length: 10 }, (_, index) => programmeMissionCopy("en-GB", index + 1).title);
+  const home = (current: number) => ({
+    totalXp: current * 55, activeDays: 3, currentStreak: 2,
+    achievements: [{ slug: "first-plan", title: "First Plan", state: "earned", awardedAt: now }],
+    currentMission: current, primaryAction: "start-mission", engagementDayBucket: "day_2_3", currentAction: null,
+    startingPoint: { startingPoint: "I open betting apps after difficult work days.", desiredChange: "Pause before opening an app", broadContext: "WORK", continuationCue: "Continue from the after-work pause", chosenBoundaryAction: "Put the phone in another room" },
+    missions: titles.map((title, index) => ({ missionNumber: index + 1, title, status: index + 1 < current ? "completed" : index + 1 === current ? "current" : "locked", actionsCompleted: index + 1 < current ? 3 : 0, actionsTotal: 3, xpEarnedHere: index + 1 < current ? 55 : 0, completionBonus: 25 })),
+    reviews: [{ milestone: "first", unlockMission: 3, title: "First review", maxWords: 60, status: "locked" }],
+    nextReview: null,
+    discoveryLinks: [{ href: "/casinos", label: "Compare casinos" }, { href: "/bonuses", label: "Bonuses" }, { href: "/best-offers", label: "Best offers" }],
+  });
+  const missionTwo = {
+    missionNumber: 2, stepId: "goal", title: titles[1], purpose: "", status: "current",
+    actions: [
+      { id: "choose_direction", label: "Choose a direction", xp: 20, completed: false },
+      { id: "build_7_day_goal", label: "Build the 7-day goal", xp: 20, completed: false },
+      { id: "reality_check", label: "Run a reality check", xp: 15, completed: false },
+    ],
+    currentAction: "choose_direction", currentActionPosition: 1, actionsCompleted: 0, actionsTotal: 3,
+    artifact: {}, artifactVersion: "1", xpEarnedHere: 0, completionBonus: 25, completedAt: null, legacyCompletion: false, programmeFacts: null,
+  };
+  for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 640 }]) {
+    for (const current of [2, 9]) {
+      const context = await browser.newContext({ baseURL, viewport, isMobile: true, hasTouch: true });
+      const page = await context.newPage();
+      await page.route("**/api/auth/get-session**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ session: { id: "mobile-mission-session", token: "visual", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: now, updatedAt: now }, user: { id: userId, name: "Mobile mission", email: "mobile-mission@example.invalid", emailVerified: true, createdAt: now, updatedAt: now } }) }));
+      await page.route("**/api/programme-access/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, accepted: true }) }));
+      await page.route("**/api/program/program-ai/home", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: home(current) }) }));
+      await page.route("**/api/program/program-ai/missions/2", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, mission: missionTwo }) }));
+      await page.goto("/program");
+      await expect(page.locator('[data-programme-phase="home"]')).toBeVisible();
+      const research = page.locator("[data-programme-research]");
+      if (current === 9) {
+        await expect(research).toHaveAttribute("data-programme-research", "featured");
+        const [card, researchBox, journey] = await Promise.all([page.locator('[data-programme-presentation="dashboard"] section').first().boundingBox(), research.boundingBox(), page.locator('[aria-labelledby="programme-path-title"]').boundingBox()]);
+        expect(researchBox!.y, `research follows the current mission at ${viewport.width}px`).toBeGreaterThan(card!.y);
+        expect(researchBox!.y, `research leads the journey at ${viewport.width}px`).toBeLessThan(journey!.y);
+        for (const link of await research.getByRole("link").all()) {
+          const box = await link.boundingBox();
+          expect(box!.height).toBeGreaterThanOrEqual(44);
+          expect(await link.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
+        }
+        await context.close();
+        continue;
+      }
+      await expect(research).toHaveAttribute("data-programme-research", "standard");
+      const start = page.getByRole("button", { name: "Start mission", exact: true });
+      await start.scrollIntoViewIfNeeded();
+      await page.evaluate(() => window.scrollBy(0, 200));
+      await start.click();
+      await expect(page.locator('[data-programme-phase="mission"]')).toBeVisible();
+      await expect.poll(() => page.evaluate(() => window.scrollY), { message: `Mission opens at its top at ${viewport.width}px` }).toBe(0);
+      await expect(page.locator("[data-programme-context-header]")).toBeHidden();
+      await expect(page.getByRole("button", { name: "← Programme Home" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Protected Help / pause" })).toBeVisible();
+      const confirm = page.getByRole("button", { name: /Confirm action/ });
+      const firstChoice = page.locator("[data-programme-action] label").first();
+      const [choiceBox, confirmBox] = await Promise.all([firstChoice.boundingBox(), confirm.boundingBox()]);
+      expect(confirmBox!.y + confirmBox!.height, `confirm sits on the first screen at ${viewport.width}px`).toBeLessThanOrEqual(viewport.height);
+      if (viewport.height >= 800) expect(choiceBox!.y + choiceBox!.height, `first choice sits above the confirm at ${viewport.width}px`).toBeLessThanOrEqual(confirmBox!.y);
+      await page.evaluate(() => window.scrollBy(0, 240));
+      await expect.poll(async () => { const box = await confirm.boundingBox(); return box!.y + box!.height <= viewport.height; }, { message: `confirm stays reachable while choosing at ${viewport.width}px` }).toBe(true);
+      await noHorizontalOverflow(page);
+      await context.close();
+    }
+  }
+});

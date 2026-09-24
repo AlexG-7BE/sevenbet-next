@@ -81,16 +81,17 @@ orientation.
 | [RFC-051 — MCP Extraction and Retirement](RFC-051-MCP-Extraction-and-Retirement.md) | `ACTIVE` | Physical application MCP/OAuth retirement, neutral CRM research extraction, internal tracking-core boundary, external connector cutover and PR6 schema-cleanup boundary. |
 | [RFC-052 — Autonomous Learn Publication](RFC-052-Autonomous-Learn-Publication.md) | `ACTIVE` | One service-authenticated `learn_apply` mutation over canonical Article authority; atomic publication, first-party images, replay safety and public verification without reviving retired Commercial/Media OAuth. |
 | [RFC-053 — Autonomous Learn Content Orchestration](RFC-053-Autonomous-Learn-Content-Orchestration.md) | `ACTIVE` | One bounded scheduled three-role Learn editorial pipeline; models have no write authority and deterministic publication remains exclusively RFC-052 `learn_apply`. |
+| [RFC-054 — Licence-Based Market Access](RFC-054-Licence-Market-Access.md) | `ACTIVE` | One casino × market licence register gates offers, the partner button and `/r/` by the operator's own licence; closures are operator block, prohibition by law, no local licence, closed grey zone and the German advertising window. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 29 |
+| `ACTIVE` | 30 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 5 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **53** |
+| **Total RFC artifacts** | **54** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

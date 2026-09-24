@@ -15,7 +15,7 @@ test("Bonus Guide is a standalone server-rendered document inside the Public She
   assert.doesNotMatch(route + document, /["']use client["']|useEffect|useState|localStorage|sessionStorage/);
   assert.match(publicLayout, /<PublicHeader[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<PublicFooter/);
   assert.equal((document.match(/<h1\b/g) ?? []).length, 1);
-  assert.match(route, /<HandoffPage name="article" transform=\{transformBonusGuideHandoff\}/);
+  assert.match(route, /<HandoffPage name="article" transform=\{\(html\) => transformBonusGuideHandoff\(html, \{ offerBridge: bridge \}\)\} \/>/);
   assert.doesNotMatch(document, /PublicHeader|PublicFooter/);
 });
 
@@ -73,4 +73,18 @@ test("responsive reading layout gives the wide table a keyboard-scroll region", 
   assert.match(css, /@media \(max-width: 1000px\)/);
   assert.match(document, /grid-template-columns: 2fr 1fr 1fr 1fr/);
   assert.doesNotMatch(css, /transition:\s*all|outline:\s*none/);
+});
+
+test("the checklist leads to current offers only where offers may be presented, with the disclosure beside the links", () => {
+  const route = read("app/(public)/bonus-guide/page.tsx");
+  assert.match(route, /offersMayBePresented\(presentation\.marketCountryCode\) \? offerBridge\(\) : null/);
+  assert.doesNotMatch(document, /data-learn-offer-bridge/);
+  const bridged = transformBonusGuideHandoff(transformCommonHandoff(generatedPages.article.html), { offerBridge: { title: "READY TO APPLY THE CHECKLIST?", body: "Check what you just learned against current offers and their terms.", bonusesLabel: "Bonuses", bestOffersLabel: "Best Offers", disclosure: "Commercial disclosure: B4GAMBLE may receive compensation from some outbound links reached later. Rankings remain editorial.", bonusesHref: "/bonuses", bestOffersHref: "/best-offers" } });
+  assert.equal((bridged.match(/data-learn-offer-bridge=""/g) ?? []).length, 1);
+  assert.ok(bridged.indexOf("data-learn-offer-bridge") > bridged.indexOf("Before you accept any bonus"));
+  assert.ok(bridged.indexOf("data-learn-offer-bridge") < bridged.indexOf("data-bonus-guide-sources"));
+  assert.match(bridged, /href="\/bonuses" data-learn-offer-bridge-link="bonuses"/);
+  assert.match(bridged, /href="\/best-offers" data-learn-offer-bridge-link="best-offers"/);
+  assert.match(bridged, /Commercial disclosure: B4GAMBLE may receive compensation/);
+  assert.doesNotMatch(bridged, /href="\/(?:r|go)\//);
 });

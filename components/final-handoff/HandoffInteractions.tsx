@@ -423,6 +423,7 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
     const allGuides = name === "learn" ? root.querySelector<HTMLElement>("[data-learn-all-guides]") : null;
     const learnSection = allGuides?.parentElement?.parentElement ?? null;
     const learnCards = learnSection ? [...learnSection.querySelectorAll<HTMLAnchorElement>("a[data-learn-category]")] : [];
+    const learnProgrammeBridge = learnSection?.querySelector<HTMLElement>("[data-learn-programme-bridge]") ?? null;
     const learnButtons = learnSection ? [...learnSection.querySelectorAll<HTMLButtonElement>("button[data-learn-topic]")] : [];
     const learnI18n = name === "learn" ? root.querySelector<HTMLElement>("[data-learn-i18n]") : null;
     const learnCount = allGuides?.parentElement?.querySelector<HTMLElement>(".sc-interp") ?? null;
@@ -482,6 +483,12 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
         if (!card.hidden) visible += 1;
       }
       if (learnCount) learnCount.textContent = String(visible);
+      if (learnProgrammeBridge) {
+        // The inline Programme card belongs to the full list; a topic or search result shows guides only.
+        const filtered = learnTopic !== "all topics" || Boolean(learnQuery);
+        learnProgrammeBridge.hidden = filtered;
+        learnProgrammeBridge.style.display = filtered ? "none" : "flex";
+      }
       if (learnStatus) {
         const idleEmptyCatalogue = learnCards.length === 0 && !learnQuery && learnTopic === "all topics";
         learnStatus.textContent = idleEmptyCatalogue

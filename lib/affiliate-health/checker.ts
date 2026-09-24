@@ -120,6 +120,9 @@ async function terminalResponseFailure(response: Response) {
     return null;
   }
   const prefix = await boundedResponsePrefix(response);
+  // SkillOnNet serves a refused country with HTTP 200 on the brand's own host;
+  // its SON_CONFIG names the component served (block, danish-block, ontario-block).
+  if (/SON_CONFIG/.test(prefix) && /"page"\s*:\s*"[a-z-]*block"/.test(prefix)) return "OPERATOR_BLOCK_PAGE";
   const headings = [...prefix.matchAll(/<(?:title|h1)\b[^>]*>([\s\S]{0,500}?)<\/(?:title|h1)>/gi)]
     .map((match) => match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim())
     .join(" ");

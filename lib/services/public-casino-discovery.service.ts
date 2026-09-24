@@ -11,6 +11,7 @@ import {
   publicCommercialActionResolver,
   type PublicCommercialActionAuthority,
 } from "@/lib/commercial/public-commercial-action-resolver";
+import { marketAccess, offerFitsMarket, presentInMarket } from "@/lib/market-access/access";
 import { rankBestBonusCasinoIds } from "@/lib/public-offer/best-offer-ranking";
 import { publicCasinoToOffers } from "@/lib/public-offer/public-offer.mapper";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
@@ -211,16 +212,17 @@ export class PublicCasinoDiscoveryService {
       const exactProfile = requestCountryContext
         ? casino.marketProfiles.find((profile) => profile.countryCode === requestCountryContext) ?? null
         : null;
-      const scoped = projectPublicCasinoMarket(casino, requestCountryContext ?? "");
-      const presented = withOfferPresentation(
+      // The casino as the market may see it, then with the offer selected for that market.
+      const scoped = presentInMarket(projectPublicCasinoMarket(casino, requestCountryContext ?? ""), commercialMarketContext, now);
+      const presented = presentInMarket(withOfferPresentation(
         { ...scoped, action: actionDecisions.get(scoped.id)?.action ?? null },
         candidates,
         requestCountryContext,
-      );
-      const offerInventory = resolvePublishedOfferInventory(
+      ), commercialMarketContext, now);
+      const offerInventory = !marketAccess(casino.slug, commercialMarketContext, now).open ? [] : resolvePublishedOfferInventory(
         candidates.filter((candidate) => candidate.casinoId === scoped.id),
         requestCountryContext,
-      ).map((resolved) => {
+      ).filter((resolved) => offerFitsMarket(resolved.relation, commercialMarketContext)).map((resolved) => {
         const existing = resolved.relation !== "OTHER_MARKET"
           ? scoped.bonuses.find((candidate) => candidate.id === resolved.candidate.bonus.id) ?? null
           : null;

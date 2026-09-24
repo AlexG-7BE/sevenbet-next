@@ -8,7 +8,8 @@ import { allowJurisdictionAuthority } from "./market-authority.fixtures";
 import { commercialActionAuthority, noCommercialActions } from "./commercial-action.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
-const managedSlug = "10bet";
+// TurboNino holds local licences in GB, SE, DK and DE, so the market-access register admits it there.
+const managedSlug = "turbonino";
 const unmanagedSlug = "888";
 
 function publishedRecord(slug = managedSlug): PublishedCasinoSnapshotRecord {
@@ -196,10 +197,10 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
   });
 
   await t.test("every valid published Casino uses the same generic authority path", async () => {
-    const record = publishedRecord("generic-published");
-    const result = await authorizedService(store([record], ["generic-published"])).getCasino("generic-published", allowJurisdictionAuthority, "GB");
+    const record = publishedRecord("hello-casino");
+    const result = await authorizedService(store([record], ["hello-casino"])).getCasino("hello-casino", allowJurisdictionAuthority, "GB");
     assert.equal(result?.source, "cms");
-    assert.deepEqual(result?.action, { href: "/r/generic-published" });
+    assert.deepEqual(result?.action, { href: "/r/hello-casino" });
   });
 });
 
@@ -240,8 +241,9 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     const record = publishedRecord();
     const casino = (await service(store([record], [managedSlug])).listCasinos(allowJurisdictionAuthority, "DE"))[0];
     assert.equal(casino?.action, null);
-    assert.equal(casino?.bonuses.length, 1);
-    assert.doesNotMatch(JSON.stringify(casino?.bonuses[0]), /affiliate|action/);
+    // The fixture's only offer is its British one; Germany requires a local licence, so it is not shown there.
+    assert.equal(casino?.bonuses.length, 0);
+    assert.equal(casino?.offerPresentation?.relation, "NONE");
   });
 
   await t.test("16. a managed legacy slug never appears during published retrieval failure", async () => {
@@ -277,12 +279,14 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     }];
 
     assert.equal((await service(store([record])).listCasinos(null, "GB")).length, 1);
-    for (const country of ["PE", "SE"]) {
+    for (const country of ["IE", "SE"]) {
       const [casino] = await service(store([record])).listCasinos(null, country);
       assert.equal(casino?.slug, managedSlug);
       assert.equal(casino?.action, null);
-      assert.equal(casino?.bonuses.length, 1);
     }
+    // Ireland (grey zone) may show the international offer; Sweden requires the casino's Swedish offer.
+    assert.equal((await service(store([record])).listCasinos(null, "IE"))[0]?.offerPresentation?.relation, "ROW");
+    assert.equal((await service(store([record])).listCasinos(null, "SE"))[0]?.offerPresentation?.relation, "NONE");
   });
 
   await t.test("listBonuses does not reintroduce offers from a managed legacy profile", async () => {

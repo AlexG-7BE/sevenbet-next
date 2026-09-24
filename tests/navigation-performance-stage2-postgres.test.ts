@@ -13,7 +13,7 @@ const peAuthority: CommercialJurisdictionAuthority = {
   commercialAllowed: true,
   referralAllowed: true,
   reasonCode: "POLICY_APPROVED",
-  countryCode: "PE",
+  countryCode: "IE",
   policyVersion: "navigation-stage2-isolated-fixture",
 };
 
@@ -38,8 +38,8 @@ test("representative catalogue stays batched, deterministic and commercially iso
   const service = new PublicCasinoDiscoveryService(store, () => new Date("2026-09-17T00:00:00.000Z"));
   const input = { pageSize: 25 as const };
   const options = {
-    defaultEditorialCountry: "PE",
-    commercialMarketCode: "PE",
+    defaultEditorialCountry: "IE",
+    commercialMarketCode: "IE",
     presentationLanguage: "en-GB",
   };
 

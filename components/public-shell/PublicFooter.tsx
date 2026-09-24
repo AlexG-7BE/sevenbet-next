@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { PrivacyChoicesButton } from "@/components/analytics/AnalyticsConsentBanner";
+import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
+import { analyticsConsentMessages } from "@/lib/i18n/analytics-consent-catalog";
 import { publicFooterMessages, publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
@@ -72,7 +75,7 @@ export function PublicFooter({
           ))}
         </div>
         <div className={styles.footerBaseline}>
-          <div><span className={styles.age}>18+</span><span>{footer.financialRisk}</span><Link href="/terms" prefetch={false}>{footer.terms}</Link><Link href="/privacy" prefetch={false}>{footer.privacy}</Link><Link href={localizedHref("/contact")} prefetch={false}>{footer.contact}</Link></div>
+          <div><span className={styles.age}>18+</span><span>{footer.financialRisk}</span><Link href="/terms" prefetch={false}>{footer.terms}</Link><Link href="/privacy" prefetch={false}>{footer.privacy}</Link>{isProductAnalyticsEnabled() ? <PrivacyChoicesButton className={styles.footerChoice} label={analyticsConsentMessages(presentation.locale).trigger} /> : null}<Link href={localizedHref("/contact")} prefetch={false}>{footer.contact}</Link></div>
           <p className={styles.footerCommission}>{footer.commissionDisclosure}</p>
         </div>
         <span aria-hidden="true" className={styles.footerEnd} data-public-footer-bottom />
