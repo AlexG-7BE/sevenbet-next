@@ -74,6 +74,22 @@ counts: GB 19, SE 15, DK 10, DE 2.
 Every catalogue casino must have an entry. A casino missing from the register
 is closed wherever a local licence is required.
 
+## 3a. Great Britain (proposed with PR, Founder decision pending)
+
+Until now a GB button or redirect also needed the RFC-014/015 per-casino
+evidence chain: an operator profile, a partner-agreement record in the
+programme metadata, and a UKGC domain-evidence record refreshed every seven
+days. The domain-evidence store has been empty by design since it was built,
+so no GB referral has ever been possible — including the twelve EGO routes
+recorded ACTIVE + HEALTHY on 22 September 2026.
+
+Under this RFC the register is that evidence: each GB entry names the brand
+domain, verified by test against the UKGC domain register. A casino the
+register admits in GB is referral-ready once the jurisdiction admits referral
+(the Founder's GB scope supersedes the stale internal GB policy) and the
+redirect contract is safe; MarketActivation still owns route health, bindings,
+date windows and the safe destination.
+
 ## 4. Grey zone
 
 Ireland is open: GRAI has licensed betting only, and MGA operators serve Irish
