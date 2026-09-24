@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CommercialBadges, CommercialFacts, CommercialScore } from "@/components/commercial/CommercialPrimitives";
+import { useRevealResults } from "@/components/commercial/useRevealResults";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { CASINO_COLLECTION_VIEWS, casinoCardPresentation, casinosForCollectionView, filterCasinosByName, type CasinoCollectionView } from "@/lib/commercial/commercial-presentation";
@@ -35,13 +36,17 @@ export function CasinoCollection({ casinos, initialSearch = "", messages, presen
     return filterCasinosByName(ordered, search, presentation.locale);
   }, [casinos, presentation.locale, search, view]);
 
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const resultsStartRef = useRef<HTMLParagraphElement>(null);
+  useRevealResults(controlsRef, resultsStartRef, `${view}|${search}`);
+
   const selectView = (next: CasinoCollectionView) => {
     setView(next);
     productAnalyticsClient.commercialViewSelected(`CASINOS_${next.toUpperCase()}`);
   };
 
-  return <div className={styles.collection} data-collection-size={casinos.length}>
-    <div className={styles.controls}>
+  return <div className={styles.collection} data-collection-size={casinos.length} data-header-autohide="">
+    <div className={styles.controls} ref={controlsRef}>
       <label>
         <span>{copy.searchCasinos}</span>
         <input
@@ -57,7 +62,7 @@ export function CasinoCollection({ casinos, initialSearch = "", messages, presen
         {CASINO_COLLECTION_VIEWS.map((key) => <button aria-controls="casino-collection-results" aria-selected={view === key} id={`casino-view-${key}`} key={key} onClick={() => selectView(key)} role="tab" type="button">{labels[key]}</button>)}
       </div>
     </div>
-    <p aria-atomic="true" aria-live="polite" className={styles.count} role="status">{results.length} {copy.casinosShown}</p>
+    <p aria-atomic="true" aria-live="polite" className={styles.count} ref={resultsStartRef} role="status">{results.length} {copy.casinosShown}</p>
     {results.length ? <div aria-labelledby={`casino-view-${view}`} className={styles.cards} id="casino-collection-results" role="tabpanel">
       {results.map((casino, index) => {
         const card = casinoCardPresentation(casino, presentation.locale, messages, copy);

@@ -312,6 +312,12 @@ export function filterCasinosByName(casinos: readonly PublicCasinoCardDto[], sea
   return query ? casinos.filter((casino) => casino.name.toLocaleLowerCase(locale).includes(query)) : [...casinos];
 }
 
+/** The bonus directory searches by operator name, the same way the casino directory does. */
+export function filterOffersByCasinoName(offers: readonly PublicOfferDTO[], search: string, locale: SupportedLocale) {
+  const query = search.normalize("NFKC").trim().toLocaleLowerCase(locale);
+  return query ? offers.filter((offer) => offer.casino.name.toLocaleLowerCase(locale).includes(query)) : [...offers];
+}
+
 export function selectCasinoMarketProfile(casino: PublicCasinoDTO, countryCode: string | null | undefined): PublicCasinoMarketProfile | null {
   const normalized = countryCode?.trim().toUpperCase();
   if (!normalized) return null;

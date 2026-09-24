@@ -157,3 +157,9 @@
     --sb-motion-standard: 0ms;
   }
 }
+
+/* On autohide pages the mobile header slides away while the reader scrolls down;
+   sticky rails that sit under it follow it to the top of the viewport. */
+@media (max-width: 760px) {
+  html[data-header-hidden="true"] { --sb-header-offset: env(safe-area-inset-top, 0px); }
+}

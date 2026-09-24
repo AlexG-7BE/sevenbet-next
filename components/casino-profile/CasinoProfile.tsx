@@ -144,7 +144,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         </div>
       </section>
 
-      <nav aria-label={messages.profile.overview} className={styles.sectionNav} data-casino-section-nav>
+      <nav aria-label={messages.profile.overview} className={styles.sectionNav} data-casino-section-nav data-header-autohide="">
         <a href="#overview">{messages.profile.overview}</a>
         <a href="#current-offer">{messages.profile.offerTerms}</a>
         <a href="#casino-faq">{messages.profile.questions}</a>

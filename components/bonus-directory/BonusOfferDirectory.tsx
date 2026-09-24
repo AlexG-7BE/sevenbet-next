@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CommercialFacts, CommercialScore } from "@/components/commercial/CommercialPrimitives";
+import { useRevealResults } from "@/components/commercial/useRevealResults";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
-import { availableBonusViews, offerCardPresentation, offersForBonusView, type BonusDirectoryView } from "@/lib/commercial/commercial-presentation";
+import { availableBonusViews, filterOffersByCasinoName, offerCardPresentation, offersForBonusView, type BonusDirectoryView } from "@/lib/commercial/commercial-presentation";
 import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
@@ -39,17 +40,37 @@ export function BonusOfferDirectory({ messages, offers, presentation }: {
     NO_DEPOSIT: copy.noDeposit,
   };
   const [view, setView] = useState<BonusDirectoryView>("all");
-  const results = useMemo(() => offersForBonusView(offers, view), [offers, view]);
+  const [search, setSearch] = useState("");
+  const results = useMemo(
+    () => filterOffersByCasinoName(offersForBonusView(offers, view), search, presentation.locale),
+    [offers, presentation.locale, search, view],
+  );
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const resultsStartRef = useRef<HTMLParagraphElement>(null);
+  useRevealResults(controlsRef, resultsStartRef, `${view}|${search}`);
   const selectView = (next: BonusDirectoryView) => {
     setView(next);
     productAnalyticsClient.commercialViewSelected(`BONUSES_${next.toUpperCase()}`);
   };
 
-  return <div className={styles.directory}>
-    <div aria-label={messages.bonuses.directoryTitle} className={styles.viewRail} role="tablist">
-      {views.map((key) => <button aria-controls="bonus-directory-results" aria-selected={view === key} id={`bonus-view-${key}`} key={key} onClick={() => selectView(key)} role="tab" type="button">{labels[key]}</button>)}
+  return <div className={styles.directory} data-header-autohide="">
+    <div className={styles.controls} ref={controlsRef}>
+      <label className={styles.search}>
+        <span>{copy.searchCasinos}</span>
+        <input
+          autoComplete="off"
+          name="bonus-casino-search"
+          onChange={(event) => setSearch(event.currentTarget.value)}
+          placeholder={copy.searchPlaceholder}
+          type="search"
+          value={search}
+        />
+      </label>
+      <div aria-label={messages.bonuses.directoryTitle} className={styles.viewRail} role="tablist">
+        {views.map((key) => <button aria-controls="bonus-directory-results" aria-selected={view === key} id={`bonus-view-${key}`} key={key} onClick={() => selectView(key)} role="tab" type="button">{labels[key]}</button>)}
+      </div>
     </div>
-    <p aria-atomic="true" aria-live="polite" className={styles.count} role="status">{results.length} {copy.offersShown}</p>
+    <p aria-atomic="true" aria-live="polite" className={styles.count} ref={resultsStartRef} role="status">{results.length} {copy.offersShown}</p>
     {results.length ? <div aria-labelledby={`bonus-view-${view}`} className={styles.cards} id="bonus-directory-results" role="tabpanel">
       {results.map((offer, index) => {
         const card = offerCardPresentation(offer, presentation.locale, messages, copy, "bonus_directory");

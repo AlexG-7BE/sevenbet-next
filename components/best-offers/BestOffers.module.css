@@ -154,7 +154,7 @@
   .heroTicker { flex-wrap:wrap; gap:4px 28px; white-space:normal; }
   .commercialHeading { display:block; }
   .commercialHeading h2 { margin-top:20px; text-align:left; }
-  .categoryRail { position:sticky; top:var(--sb-header-offset); z-index:30; margin:0 calc(var(--public-outer-gutter) * -1) 20px; padding:14px var(--public-outer-gutter); border-top:0; border-bottom:1px solid var(--line); background:var(--night); scroll-padding-inline:var(--public-outer-gutter); }
+  .categoryRail { position:sticky; top:var(--sb-header-offset); z-index:30; margin:0 calc(var(--public-outer-gutter) * -1) 20px; padding:14px var(--public-outer-gutter); border-top:0; border-bottom:1px solid var(--line); background:var(--night); scroll-padding-inline:var(--public-outer-gutter); transition:top 220ms var(--ease); }
   .rankSecondary { grid-template-columns:minmax(0,1fr); }
   .rankSecondary > *,.rankSecondary .rankTerms > * { grid-column:1; }
   .rankSecondary .rankActions { justify-self:start; }
@@ -192,6 +192,6 @@
 }
 @media (prefers-reduced-motion:reduce) {
   .reveal { animation:none; }
-  .rankPrimary,.rankSecondary,.categoryRail button,.rankActions .offerAction,.rankActions .reviewPrimary,.faqList summary span { transition:none; }
+  .rankPrimary,.rankSecondary,.categoryRail,.categoryRail button,.rankActions .offerAction,.rankActions .reviewPrimary,.faqList summary span { transition:none; }
   .rankPrimary:hover,.rankSecondary:hover { transform:none; }
 }
