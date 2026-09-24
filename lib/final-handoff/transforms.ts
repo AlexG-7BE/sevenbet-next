@@ -294,11 +294,51 @@ export function transformCommonHandoff(html: string, programmePath = "/program")
  * the first real content section. The data hooks let application CSS own that
  * relationship without rewriting any captured copy or visual treatment.
  */
+const LEARN_PROGRAMME_BRIDGE_AFTER = 6;
+
+/** Inline Programme card inside the Learn guide list; the hub's own translated bridge copy (hub[20..24]). */
+function learnProgrammeBridgeHtml(hub: readonly string[], programmeHref: string) {
+  const [eyebrow, lead, emphasis, body, action] = [hub[20], hub[21], hub[22], hub[23], hub[24]].map((value) => escapeHtml(value ?? ""));
+  return `<aside data-learn-programme-bridge="inline" aria-label="${eyebrow}" style="background: rgb(23, 22, 22); color: rgb(250, 250, 247); border-radius: 14px; padding: 28px 30px; display: flex; align-items: center; gap: 20px 32px; flex-wrap: wrap;">
+            <div style="flex: 1 1 320px; min-width: 0;">
+              <div style="font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: rgb(228, 226, 78); margin-bottom: 10px;">${eyebrow}</div>
+              <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 22px; line-height: 1.15;">${lead} <em style="font-family: &quot;Instrument Serif&quot;, serif; font-weight: 400; text-transform: none; color: rgb(228, 226, 78);">${emphasis}</em></div>
+              <p style="font-size: 15px; line-height: 1.55; color: rgba(250, 250, 247, 0.7); margin: 10px 0px 0px;">${body}</p>
+            </div>
+            <a href="${programmeHref}" data-learn-programme-bridge-action="" style="min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 12px 28px; border-radius: 3px; background: rgb(228, 226, 78); color: rgb(16, 15, 15); font: 700 16px Archivo, sans-serif; text-decoration: none; white-space: nowrap;">${action}</a>
+          </aside>`;
+}
+
+export type LearnOfferBridgeCopy = Readonly<{
+  title: string;
+  body: string;
+  bonusesLabel: string;
+  bestOffersLabel: string;
+  disclosure: string;
+  bonusesHref: string;
+  bestOffersHref: string;
+}>;
+
+/** Bridge from bonus education to the public offer pages, with the commercial disclosure beside the links. */
+export function learnOfferBridgeHtml(copy: LearnOfferBridgeCopy) {
+  const text = (value: string) => escapeHtml(value);
+  return `<aside data-learn-offer-bridge="" aria-label="${text(copy.title)}" style="margin: 56px 0px 0px; padding: 28px 30px; border-radius: 20px; background: rgb(16, 15, 15); color: rgb(250, 250, 247);">
+          <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: rgb(228, 226, 78); font-weight: 600; margin-bottom: 12px;">${text(copy.title)}</div>
+          <p style="margin: 0px 0px 20px; font-size: 17px; line-height: 1.55; color: rgba(250, 250, 247, 0.85);">${text(copy.body)}</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+            <a href="${text(copy.bonusesHref)}" data-learn-offer-bridge-link="bonuses" style="min-height: 48px; display: inline-flex; align-items: center; padding: 12px 22px; border-radius: 3px; background: rgb(228, 226, 78); color: rgb(16, 15, 15); font: 700 16px Archivo, sans-serif; text-decoration: none;">${text(copy.bonusesLabel)} →</a>
+            <a href="${text(copy.bestOffersHref)}" data-learn-offer-bridge-link="best-offers" style="min-height: 48px; display: inline-flex; align-items: center; padding: 12px 22px; border: 1px solid rgba(250, 250, 247, 0.5); border-radius: 3px; color: rgb(250, 250, 247); font: 700 16px Archivo, sans-serif; text-decoration: none;">${text(copy.bestOffersLabel)} →</a>
+          </div>
+          <p style="margin: 16px 0px 0px; font-size: 13px; line-height: 1.5; color: rgba(250, 250, 247, 0.6);">${text(copy.disclosure)}</p>
+        </aside>`;
+}
+
 export function transformLearnHandoff(
   html: string,
   locale: SupportedLocale = "en-GB",
   hrefFor: (href: string) => string = (href) => href,
   articles: readonly PublicArticle[] = [],
+  programmePath = "/program",
 ) {
   const messages = learningMessages(locale);
   const categories = localizedLearningCategories(locale);
@@ -364,7 +404,12 @@ export function transformLearnHandoff(
     const article = featured[featuredIndex++];
     return article ? startCard(article) : "";
   });
-  const guides = articles.map(guideCard).join("\n        ");
+  const guideCards = articles.map(guideCard);
+  // Founder decision 25 Sep 2026: the Programme is offered after the first six guides as well as at the end.
+  if (guideCards.length > LEARN_PROGRAMME_BRIDGE_AFTER) {
+    guideCards.splice(LEARN_PROGRAMME_BRIDGE_AFTER, 0, learnProgrammeBridgeHtml(messages.hub, escapeHtml(`${programmePath}?entry=start`)));
+  }
+  const guides = guideCards.join("\n        ");
   let replacedGuideList = false;
   output = output.replace(/<a href="[^"]+" class="scp3"[\s\S]*?<\/a>/g, () => {
     if (replacedGuideList) return "";
@@ -413,7 +458,7 @@ export function transformMethodologyHandoff(
     .replaceAll('href="/methodology"', `href="${escapeHtml(hrefFor("/methodology"))}"`);
 }
 
-export function transformBonusGuideHandoff(html: string) {
+export function transformBonusGuideHandoff(html: string, options: Readonly<{ offerBridge?: LearnOfferBridgeCopy | null }> = {}) {
   const replacements: Array<[string, string]> = [
     ["What 35x actually costs you, when a smaller bonus is the better deal, and the three terms that quietly decide everything.", "How wagering changes required turnover, why a smaller bonus can require less play, and which material terms to check first."],
     ["By the B4GAMBLE test team", "By the B4GAMBLE editorial team"],
@@ -466,7 +511,9 @@ export function transformBonusGuideHandoff(html: string) {
   const reviewIndex = output.indexOf(reviewMarker);
   if (reviewIndex >= 0) {
     const sources = `<div data-bonus-guide-sources="" style="margin:64px 0 28px;padding:28px;border:1px solid rgba(16,15,15,.12);border-radius:20px;background:rgb(244,241,235);"><strong style="display:block;margin-bottom:12px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;">Current primary sources</strong><p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:rgb(38,37,37);">Current GB regulatory and advertising sources govern the statements above. The examples remain explicitly fictional and educational.</p><a aria-label="UK Gambling Commission LCCP 5.1.1 (opens in a new tab)" href="https://www.gamblingcommission.gov.uk/licensees-and-businesses/lccp/condition/5-1-1-sr-code" rel="noopener noreferrer" target="_blank" style="min-height:44px;display:flex;align-items:center;color:rgb(16,15,15);font-size:14px;">UK Gambling Commission · LCCP 5.1.1 ↗</a><a aria-label="ASA and CAP free bets and bonuses guidance (opens in a new tab)" href="https://www.asa.org.uk/advice-online/gambling-betting-and-gaming-free-bets-and-bonuses.html" rel="noopener noreferrer" target="_blank" style="min-height:44px;display:flex;align-items:center;color:rgb(16,15,15);font-size:14px;">ASA / CAP · Free bets and bonuses guidance ↗</a><small style="display:block;margin-top:10px;color:rgb(100,99,92);font-size:13px;">Checked 18 August 2026</small></div>\n        `;
-    output = output.slice(0, reviewIndex) + sources + output.slice(reviewIndex);
+    // Founder decision 25 Sep 2026: after the checklist, a bridge to current offers where they may be presented.
+    const bridge = options.offerBridge ? learnOfferBridgeHtml(options.offerBridge) : "";
+    output = output.slice(0, reviewIndex) + bridge + sources + output.slice(reviewIndex);
   }
   const nextArticles = [
     "/learn?category=casino-bonuses",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { TrustNextStep } from "@/components/next-step/TrustNextStep";
 import { aboutMessages } from "@/lib/i18n/static-pages/about";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { productCanonicalPath, productMetadata } from "@/lib/market/product-context";
@@ -21,5 +22,6 @@ export default async function AboutPage() {
   return <>
     <JsonLd data={[{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: shell.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.eyebrow, item: absoluteUrl(canonicalPath) }] }, { "@context": "https://schema.org", "@type": "WebPage", name: messages.metadataTitle, description: messages.metadataDescription, url: absoluteUrl(canonicalPath) }]} />
     <AboutDocument messages={messages} />
+    <TrustNextStep page="about" presentation={presentation} />
   </>;
 }
