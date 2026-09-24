@@ -72,16 +72,28 @@ test("production consumers reuse Action directly or through the analytics-only P
   assert.doesNotMatch(action, /affiliate|outbound|casino|bonus|responsible-gambling|programmeDashboardService/iu);
 });
 
-test("retired unreachable presentation wrappers stay deleted while active safety fixtures remain", () => {
+test("retired unreachable presentation wrappers stay deleted while the reachable surfaces remain", () => {
   for (const path of [
     "components/CasinoCards.tsx",
     "components/KnowledgeCenter.tsx",
     "components/PageTemplates.tsx",
     "components/ResponsibleGamblingHub.tsx",
     "components/Section.tsx",
+    "components/CasinoReviewSections.tsx",
+    "components/public-offers/PublicOffers.tsx",
+    "components/casino-discovery/CasinoDiscovery.tsx",
+    "components/casino-discovery/CasinoDiscoveryCard.tsx",
+    "components/casino-discovery/MobileCasinoFilters.tsx",
   ]) assert.equal(existsSync(path), false, path);
-  assert.equal(existsSync("components/public-offers/PublicOffers.tsx"), true);
-  assert.equal(existsSync("components/CasinoReviewSections.tsx"), true);
+  // The reachable replacements for the retired casino and offer surfaces.
+  for (const path of [
+    "components/casino-discovery/CasinoCollection.tsx",
+    "components/casino-profile/CasinoProfile.tsx",
+    "components/bonus-directory/BonusDirectory.tsx",
+  ]) assert.equal(existsSync(path), true, path);
+  // The error boundary still owns the discovery stylesheet, so it must not follow the components out.
+  assert.equal(existsSync("components/casino-discovery/CasinoDiscovery.module.css"), true);
+  assert.match(read("app/(public)/casinos/error.tsx"), /CasinoDiscovery\.module\.css/);
 });
 
 test("public and protected shells retain separate landmark ownership", () => {

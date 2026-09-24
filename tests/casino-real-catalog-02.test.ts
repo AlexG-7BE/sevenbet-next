@@ -119,14 +119,18 @@ test("8. exact-market facts are projected from one exact market profile", () => 
 
 test("9. discovery filters operate on the single projected exact market", () => {
   const discovery = read("lib/services/public-casino-discovery.service.ts");
-  const controls = read("components/casino-discovery/CasinoDiscovery.tsx");
+  const query = read("lib/public-casino-discovery/query.ts");
   const projection = discovery.indexOf("const scoped = projectPublicCasinoMarket");
   const filters = discovery.indexOf("const matchingProfiles");
   assert.ok(projection > -1 && filters > projection);
   assert.match(discovery.slice(projection, filters), /scoped\.(payments|providers|categories|currencies)/);
+  // The facet vocabulary now enters only through the URL, which /catalog still redirects into
+  // /casinos, so the parser is where the accepted facets are pinned.
   for (const facet of ["currency", "license", "payment", "gameProvider", "category", "bonusType"]) {
-    assert.match(controls, new RegExp(`name=["']${facet}["']`));
+    assert.match(query, new RegExp(`${facet}: tokens\\(input, "${facet}"`));
   }
+  // The market stays request authority and must never be readable from the query string.
+  assert.match(query, /\/\/ The market is request authority, never query state\.\s*\n\s*country: \[\],/);
 });
 
 test("10. unknown evidence stays explicitly unknown without making the overall review incomplete", () => {
@@ -265,11 +269,11 @@ test("27. Partner Preview cannot create a route for any GEO", () => {
 
 test("28. casino cards and Partner Preview have explicit mobile layout guards", () => {
   const css = read("app/partner-preview/partner-preview.module.css");
-  const card = read("components/casino-discovery/CasinoDiscoveryCard.tsx");
+  const card = read("components/casino-discovery/CasinoCollection.tsx");
   assert.match(css, /@media \(max-width:800px\)/);
   assert.match(css, /grid-template-columns:1fr/);
-  assert.match(card, /width=\{casino\.logo\.width \?\? 144\}/);
-  assert.match(card, /height=\{casino\.logo\.height \?\? 72\}/);
+  assert.match(card, /width=\{card\.logo\.width \?\? 152\}/);
+  assert.match(card, /height=\{card\.logo\.height \?\? 76\}/);
 });
 
 test("29. every current real identity is comparison-safe", () => {

@@ -55,8 +55,9 @@ test("bonus comparison uses native article semantics and readable state labels",
 });
 
 test("casino discovery and profile preserve touch, scroll, and document semantics", () => {
-  const discovery = read("components/casino-discovery/CasinoDiscovery.module.css");
-  const discoveryCard = read("components/casino-discovery/CasinoDiscoveryCard.tsx");
+  const collection = read("components/casino-discovery/CasinoCollection.tsx");
+  const collectionStyles = read("components/casino-discovery/CasinoCollection.module.css");
+  const mobileFilters = read("components/directory-filters/MobileDirectoryFilters.module.css");
   const bonusDirectory = read("components/bonus-directory/BonusDirectory.tsx");
   const curated = read("components/casino-discovery/CuratedCasinoShortlist.tsx");
   const offerMedia = read("components/commercial-media/CommercialOfferMedia.tsx");
@@ -64,17 +65,23 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   const profileStyles = read("components/casino-profile/CasinoProfile.module.css");
   const primitives = read("components/commercial/CommercialPrimitives.tsx");
 
-  const searchButton = cssRule(discovery, ".heroSearch button");
-  assert.match(searchButton, /width: 48px/);
-  assert.match(searchButton, /height: 48px/);
-  const filterDialog = cssRule(discovery, ".filterDialog");
-  assert.match(filterDialog, /overflow-y: auto/);
-  assert.match(filterDialog, /overscroll-behavior: contain/);
-  assert.match(discovery, /\.readingGuide \.sectionIntro > p, \.compare p\s*\{\s*color: #4f4e48;\s*\}/);
+  // Touch targets and scroll containment moved from the retired CasinoDiscovery surface to the
+  // live collection controls and the shared mobile filter drawer.
+  assert.match(cssRule(collectionStyles, ".viewRail button"), /min-height: 44px/);
+  assert.match(cssRule(collectionStyles, ".card .offerAction"), /min-height: 48px/);
+  assert.match(cssRule(collectionStyles, ".reviewOnly"), /min-height: 48px/);
+  const filterDrawer = cssRule(mobileFilters, ".drawer");
+  assert.match(filterDrawer, /overflow: auto/);
+  assert.match(filterDrawer, /overscroll-behavior: contain/);
+  assert.match(collectionStyles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition: none;/);
+  // The result count has to announce itself, because filtering happens without a navigation.
+  assert.match(collection, /aria-atomic="true" aria-live="polite"[^>]*role="status"/);
+  assert.match(collection, /role="tablist"/);
+  assert.match(collection, /aria-controls="casino-collection-results" aria-selected=\{view === key\}/);
 
   assert.match(profile, /<article className=\{styles\.page\} data-runtime-renderer="casino-review">/);
   assert.match(offerMedia, /export function OperatorLogo[\s\S]*?offer\.casino\.logo \? <ResponsivePlacementImage\s+alt=""/);
-  assert.match(discoveryCard, /casino\.logo \? <ResponsivePlacementImage alt=""/);
+  assert.match(collection, /card\.logo \? <ResponsivePlacementImage alt=""/);
   assert.match(bonusDirectory, /return offer\.casino\.logo \? <img\s+alt=""/);
   assert.match(curated, /casino\.logo \? <ResponsivePlacementImage alt=""/);
   assert.match(profile, /casino\.media\.logo \? <ResponsivePlacementImage alt=""/);

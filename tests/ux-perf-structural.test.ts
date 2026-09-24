@@ -3,13 +3,12 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const form = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
-const casinos = readFileSync("components/casino-discovery/CasinoDiscovery.tsx", "utf8");
+const casinosPage = readFileSync("app/(public)/casinos/page.tsx", "utf8");
+const collection = readFileSync("components/casino-discovery/CasinoCollection.tsx", "utf8");
 const bonuses = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-const mobileCasinos = readFileSync("components/casino-discovery/MobileCasinoFilters.tsx", "utf8");
 const mobileBonuses = readFileSync("components/bonus-directory/MobileBonusFilters.tsx", "utf8");
 const mobileDirectoryFilters = readFileSync("components/directory-filters/MobileDirectoryFilters.tsx", "utf8");
 const compare = readFileSync("components/comparison/ComparisonExperience.tsx", "utf8");
-const casinoCard = readFileSync("components/casino-discovery/CasinoDiscoveryCard.tsx", "utf8");
 
 test("instant discovery progressively enhances real GET forms with URL-owned RSC navigation", () => {
   assert.match(form, /method="get"/);
@@ -24,21 +23,22 @@ test("instant discovery progressively enhances real GET forms with URL-owned RSC
 });
 
 test("governed discovery routes use one narrow enhancer and keep server authority", () => {
-  for (const source of [casinos, bonuses, compare]) assert.match(source, /InstantDiscoveryForm/);
-  assert.doesNotMatch(casinos, /debouncedFields=\{\["q"\]\}/);
-  assert.doesNotMatch(casinos, /type="search"|SearchForm/);
-  assert.match(casinos, /DirectoryFilterSurface/);
+  for (const source of [bonuses, compare]) assert.match(source, /InstantDiscoveryForm/);
   assert.match(bonuses, /DirectoryFilterSurface/);
   assert.match(bonuses, /debouncedFields=\{\["maxDeposit", "maxWagering"\]\}/);
   assert.match(compare, /name="casino"/);
-  for (const source of [casinos, bonuses, compare]) {
+  for (const source of [bonuses, compare]) {
     assert.doesNotMatch(source, /useState|useEffect|fetch\(|@prisma\/client|prisma\./);
   }
+  // The casino directory filters the server-rendered page in the browser instead of re-querying, so
+  // it keeps local state but must still hold no data authority of its own.
+  assert.match(casinosPage, /publicCasinoDiscoveryService\.discover/);
+  assert.match(collection, /useMemo\(\(\) => \{/);
+  assert.doesNotMatch(collection, /fetch\(|useEffect|@prisma\/client|prisma\.|\/api\//);
 });
 
-test("casino and bonus mobile filters share one shell and interaction contract", () => {
-  for (const source of [mobileCasinos, mobileBonuses]) assert.match(source, /MobileDirectoryFilters/);
-  assert.match(mobileCasinos, /dialogId="casino-filter-dialog"/);
+test("bonus mobile filters use the shared shell and interaction contract", () => {
+  assert.match(mobileBonuses, /MobileDirectoryFilters/);
   assert.match(mobileBonuses, /dialogId="bonus-filter-dialog"/);
   assert.match(mobileDirectoryFilters, /labels\?\.filters \?\? "Filters"/);
   assert.match(mobileDirectoryFilters, /labels\?\.refine \?\? "Refine results"/);
@@ -53,10 +53,11 @@ test("bonus mobile demo disclosure spans the result card instead of collapsing i
   assert.match(bonuses, /wordBreak: "normal"/);
 });
 
-test("measured casino theatre image uses the Next image pipeline and bounded responsive candidates", () => {
-  assert.match(casinoCard, /import Image from "next\/image"/);
-  assert.match(casinoCard, /sizes="\(max-width: 760px\) 1px, \(max-width: 1280px\) 100vw, 1280px"/);
-  assert.doesNotMatch(casinoCard, /<img alt="" aria-hidden="true" className=\{classNames\.featureMedia\}/);
+test("casino directory imagery stays deferred and dimensioned so the list does not shift", () => {
+  assert.match(collection, /<ResponsivePlacementImage alt="" height=\{card\.logo\.height \?\? 76\} loading="lazy"/);
+  assert.match(collection, /width=\{card\.logo\.width \?\? 152\}/);
+  // A missing logo falls back to a decorative initial rather than an unsized placeholder request.
+  assert.match(collection, /<span aria-hidden="true">\{card\.name\.slice\(0, 1\)\}<\/span>/);
 });
 
 test("editorial query projections never load commercial relations", () => {

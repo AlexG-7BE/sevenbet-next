@@ -1,17 +1,21 @@
 import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { CasinoDiscoveryCardMarkup, DirectoryFeaturedTheatreMarkup, type CasinoCardClassNames } from "../components/casino-discovery/CasinoDiscoveryCard";
+import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
 
-const classNames = Object.fromEntries([
-  "casinoCard", "cardHeader", "position", "logo", "identity", "score", "description", "signals", "signal", "offerBlock", "commission", "unavailable", "cardActions", "featurePlaceholder", "featureTheatre", "featureMedia", "featureOverlay", "featureCopy", "featureMetrics", "featureCard", "featureEyebrow",
-].map((name) => [name, name])) as CasinoCardClassNames;
+const require = createRequire(import.meta.url);
+require.extensions[".css"] = (module) => { module.exports = {}; };
+(globalThis as typeof globalThis & { React: typeof React }).React = React;
+
 const defaultMessages = productPageMessages("en-GB");
+const defaultCopy = commercialUxMessages("en-GB");
+const defaultPresentation = resolvePresentationContext({});
 
 function card(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
   return {
@@ -38,109 +42,99 @@ function card(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
   };
 }
 
-test("full canonical card renders published evidence and only the governed internal visit route", () => {
-  const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={card()} classNames={classNames} position={7} />);
+// The stylesheet stub above only applies to requires made after it, so the live collection is
+// imported lazily rather than hoisted to the top of the module.
+async function render(casinos: PublicCasinoCardDto[], locale: "en-GB" | "de-DE" = "en-GB") {
+  const { CasinoCollection } = await import("../components/casino-discovery/CasinoCollection");
+  const presentation = locale === "de-DE"
+    ? resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "DE" })
+    : defaultPresentation;
+  return renderToStaticMarkup(<CasinoCollection
+    casinos={casinos}
+    initialSearch=""
+    messages={productPageMessages(locale)}
+    presentation={presentation}
+  />);
+}
+
+test("full canonical card renders published evidence and only the governed internal visit route", async () => {
+  const html = await render([card()]);
   assert.match(html, /href="\/casino\/full-casino"/);
   assert.match(html, /aria-label="Editor Score 8\.4 \/ 10"/);
   assert.match(html, /<img alt=""/);
-  assert.match(html, /aria-label="result 7"/);
-  assert.match(html, /href="\/r\/full-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/);
+  assert.match(html, /href="\/r\/full-casino-visit\?placement=CTA_CASINO_COLLECTION_CARD"/);
   assert.match(html, /rel="nofollow sponsored noopener"/);
   assert.match(html, /target="_blank"/);
+  assert.match(html, /data-commercial-action-source="CTA"/);
   assert.doesNotMatch(html, /aria-haspopup="dialog"|\/outbound\/full-casino-visit|You are leaving B4GAMBLE|<dialog/);
-  assert.ok(html.includes(defaultMessages.bestOffers.commissionNote));
   assert.doesNotMatch(html, /destinationUrl|trackingUrl|operator\.example/);
   assert.doesNotMatch(html, /featured published review|recommended|best placement|available where you are|eligible in your location/i);
 });
 
-test("casino card formats its visible and accessible score for the presentation locale", () => {
-  const presentation = resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "DE" });
-  const messages = productPageMessages("de-DE");
-  const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={card()} classNames={classNames} messages={messages} position={1} presentation={presentation} />);
+test("casino card formats its visible and accessible score for the presentation locale", async () => {
+  const html = await render([card()], "de-DE");
   assert.match(html, /aria-label="Editor Score 8,4 \/ 10"/);
-  assert.match(html, /<strong>8,4<\/strong><span>\/10<\/span>/);
+  assert.match(html, /<strong>8,4<\/strong><small>\/10<\/small>/);
 });
 
-test("sparse review-only card omits unexplained fact rows and invented values", () => {
+test("sparse review-only card omits unexplained fact rows and invented values", async () => {
   const sparse = card({
     id: "casino-sparse", slug: "sparse-casino", name: "Sparse Casino", logo: null, shortDescription: null, rating: null,
     licenses: [], countries: [], paymentMethods: [], gameProviders: [], categories: [], highlights: [], featuredBonus: null,
     action: null,
     publishedAt: null, editorialUpdatedAt: null,
   });
-  const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={sparse} classNames={classNames} position={2} />);
+  const html = await render([sparse]);
   assert.match(html, /href="\/casino\/sparse-casino"/);
-  assert.ok(html.includes(defaultMessages.common.reviewAvailableNoAction));
-  assert.ok(html.includes(defaultMessages.common.bonusAvailability));
-  assert.ok(html.includes(defaultMessages.common.notListed));
-  assert.ok(!html.includes(defaultMessages.common.commercialUnavailable));
-  assert.doesNotMatch(html, /Review only/);
+  // No governed action means the card says so rather than rendering a dead or invented CTA.
+  assert.ok(html.includes(defaultMessages.common.reviewOnly));
   assert.doesNotMatch(html, /href="\/r\//);
   assert.doesNotMatch(html, /<img|Editorial score|Reviewed/);
   assert.doesNotMatch(html, /No licence|Unlicensed|Unsupported|destinationUrl|trackingUrl/i);
+  // Unknown facts stay labelled as unverified instead of being filled in.
+  assert.ok(html.includes(defaultCopy.notVerified));
+  assert.doesNotMatch(html, /aria-label="Editor Score/);
 });
 
-test("first-result theatre stays neutral for default, search, sort and later-page contexts", () => {
-  for (const context of ["default", "search", "NAME_ASC", "page-2"]) {
-    const html = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={card({ name: `Preview ${context}` })} classNames={classNames} />);
-    assert.match(html, /Published · 18\+/);
-    assert.match(html, /<b>8\.4 \/ 10<\/b> Editor Score/);
-    assert.doesNotMatch(html, /<b>10<\/b> Editor Score/);
-    assert.match(html, /casino-directory(?:%2F|\/)editorial-media\.jpg/);
-    assert.match(html, /alt="" aria-hidden="true"/);
-    assert.doesNotMatch(html, /Featured published review|recommended review|best review|top review/i);
-  }
-  const empty = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={undefined} classNames={classNames} />);
-  assert.match(empty, /No published reviews for the global catalog yet\./);
-  const trustedGb = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup
-    casino={undefined}
-    classNames={classNames}
-    presentation={resolvePresentationContext({ trustedCountryCode: "GB" })}
-  />);
-  assert.match(trustedGb, /No published reviews for United Kingdom yet\./);
-  assert.doesNotMatch(empty, /Featured published review|recommended review|best review|top review/i);
-});
-
-test("local preview theatre is disclosed as demonstration data rather than published inventory", () => {
-  const html = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={card({
-    dataClassification: "LOCAL_PREVIEW_FIXTURE",
+test("demo cards disclose fictional status and never render a commercial action", async () => {
+  const html = await render([card({
+    dataClassification: "DEMO_FIXTURE",
     reviewHref: "/casino/demo-plume?visualFixture=true",
     action: null,
-  })} classNames={classNames} />);
-  assert.match(html, /DEMONSTRATION DATA · 18\+/);
-  assert.ok(html.includes(defaultMessages.common.marketPresentationNotice));
-  assert.ok(!html.includes(defaultMessages.common.demoDisclosure));
-  assert.doesNotMatch(html, /Published · 18\+/);
-});
-
-test("demo cards disclose fictional status and never render a commercial action", () => {
-  const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={card({
-    dataClassification: "DEMO_FIXTURE",
-    action: null,
-  })} classNames={classNames} position={1} />);
-  assert.match(html, /DEMONSTRATION DATA/);
-  assert.match(html, /not current operators, partner offers or live promotions/i);
-  assert.match(html, /View demonstration/);
+  })]);
+  assert.ok(html.includes(defaultMessages.common.viewDemonstration));
   assert.doesNotMatch(html, /href="\/r\//);
+  assert.ok(!html.includes(defaultMessages.common.readReview));
+  // Demonstration rows stay out of the published analytics stream.
+  assert.doesNotMatch(html, /data-analytics-casino-id|data-analytics-placement/);
 });
 
-test("explicit fixture review targets suppress dead links and preserve the one matching profile", () => {
-  const layoutOnly = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={card({
+test("explicit fixture review targets suppress dead links and preserve the one matching profile", async () => {
+  const layoutOnly = await render([card({
     dataClassification: "DEMO_FIXTURE",
     reviewHref: null,
     action: null,
-  })} classNames={classNames} position={1} />);
+  })]);
   assert.match(layoutOnly, /<h2>Full Casino<\/h2>/);
   assert.doesNotMatch(layoutOnly, /href="\/casino\/full-casino"|View demonstration/);
 
-  const matching = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={card({
+  const matching = await render([card({
     dataClassification: "DEMO_FIXTURE",
     name: "Solvane Casino",
     reviewHref: "/casino/demo-plume?visualFixture=true",
     slug: "solvane-casino",
     action: null,
-  })} classNames={classNames} position={1} />);
-  assert.equal((matching.match(/href="\/casino\/demo-plume\?visualFixture=true"/g) ?? []).length, 2);
+  })]);
+  assert.match(matching, /href="\/casino\/demo-plume\?visualFixture=true"/);
   assert.match(matching, /View demonstration/);
   assert.doesNotMatch(matching, /href="\/casino\/solvane-casino"/);
+});
+
+test("the directory announces its own result count and keeps view selection in one tablist", async () => {
+  const html = await render([card(), card({ id: "second", slug: "second-casino", name: "Second Casino" })]);
+  assert.match(html, /role="status"/);
+  assert.match(html, new RegExp(`2 ${defaultCopy.casinosShown}`));
+  assert.match(html, /role="tablist"/);
+  assert.equal((html.match(/role="tab"/g) ?? []).length, 3);
+  assert.match(html, /role="tabpanel"/);
 });

@@ -384,11 +384,16 @@ test("public offer mapper projects only the required existing payout fields", ()
 });
 
 test("offer components encode server form and material-term output without raw destinations", () => {
-  const source = readFileSync("components/public-offers/PublicOffers.tsx", "utf8");
-  assert.match(source, /method="get"/);
-  assert.doesNotMatch(source, /name="country"/);
-  assert.match(source, /name="maxWagering"/);
-  assert.match(source, /Material term/);
-  assert.match(source, /Read full review/);
-  assert.doesNotMatch(source, /destinationUrl|trackingUrl|https:\/\/tracking/);
+  // The retired PublicOffers wrapper handed this contract to the bonus directory, which submits
+  // through the one shared GET enhancer instead of carrying a form element of its own.
+  const directory = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
+  const form = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
+  assert.match(form, /method="get"/);
+  assert.match(directory, /<InstantDiscoveryForm/);
+  // The editorial market comes from the server, so it is never a user-facing filter.
+  assert.doesNotMatch(directory, /name="country"/);
+  assert.match(directory, /name="maxWagering"/);
+  assert.match(directory, /function materialTerms\(offer: PublicOfferDTO\)/);
+  assert.match(directory, /messages\.common\.readReview/);
+  assert.doesNotMatch(directory, /destinationUrl|trackingUrl|https:\/\/tracking/);
 });

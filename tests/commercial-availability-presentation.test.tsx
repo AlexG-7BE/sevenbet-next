@@ -5,26 +5,19 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import {
-  CasinoDiscoveryCardMarkup,
-  DirectoryFeaturedTheatreMarkup,
-  type CasinoCardClassNames,
-} from "../components/casino-discovery/CasinoDiscoveryCard";
 import { publicOffersFixture } from "./fixtures/public-presentation-fixtures";
+import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
 
 const messages = productPageMessages("en-GB");
+const copy = commercialUxMessages("en-GB");
 const presentation = resolvePresentationContext({});
 const require = createRequire(import.meta.url);
 require.extensions[".css"] = (module) => { module.exports = {}; };
 (globalThis as typeof globalThis & { React: typeof React }).React = React;
-const classNames = Object.fromEntries([
-  "casinoCard", "cardHeader", "position", "logo", "identity", "score", "description", "signals", "signal", "offerBlock", "commission", "unavailable", "cardActions", "featurePlaceholder", "featureTheatre", "featureMedia", "featureOverlay", "featureCopy", "featureMetrics", "featureCard", "featureEyebrow",
-].map((name) => [name, name])) as CasinoCardClassNames;
-
 function offer(published = true): PublicOfferDTO {
   const seed = publicOffersFixture()[0];
   assert.ok(seed);
@@ -99,18 +92,20 @@ test("Best Offers labels published and demonstration records without contradicti
   assert.doesNotMatch(demoHtml, />Current</);
 });
 
-test("casino cards keep missing bonus data separate from governed visit availability", () => {
-  const record = casino();
-  const cardHtml = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={record} classNames={classNames} position={1} />);
-  assert.ok(cardHtml.includes(messages.common.bonusAvailability));
-  assert.ok(cardHtml.includes(messages.common.notListed));
-  assert.match(cardHtml, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_DIRECTORY_CARD"/);
-  assert.ok(!cardHtml.includes(messages.common.reviewAvailableNoAction));
+test("casino cards keep missing bonus data separate from governed visit availability", async () => {
+  const { CasinoCollection } = await import("../components/casino-discovery/CasinoCollection");
+  // This record has a governed visit action but no published bonus, so the two states must not merge.
+  const cardHtml = renderToStaticMarkup(<CasinoCollection
+    casinos={[casino()]}
+    initialSearch=""
+    messages={messages}
+    presentation={presentation}
+  />);
+  assert.ok(cardHtml.includes(copy.currentOffer));
+  assert.ok(cardHtml.includes(copy.notVerified));
+  assert.match(cardHtml, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_COLLECTION_CARD"/);
+  assert.ok(!cardHtml.includes(messages.common.reviewOnly));
   assert.ok(!cardHtml.includes(messages.common.commercialUnavailable));
-
-  const theatreHtml = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={record} classNames={classNames} />);
-  assert.ok(theatreHtml.includes(`<b>${messages.common.actionAvailable}</b>`));
-  assert.ok(!theatreHtml.includes(`<b>${messages.common.reviewOnly}</b>`));
 });
 
 test("an unrelated page-level commercial state cannot suppress a canonical card action", async () => {
