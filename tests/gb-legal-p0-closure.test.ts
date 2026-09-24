@@ -127,16 +127,23 @@ test("Article 27 particulars publish the confirmed EU and UK representation", ()
   assert.match(csp, /img-src 'self' data: blob: https:/);
 });
 
-test("Programme disclosure remains two-step access plus just-in-time explicit consent and withdrawal", () => {
+test("Programme disclosure keeps two required checks, an optional explicit consent, just-in-time fallback and withdrawal", () => {
+  // Founder decision, 25 Sep 2026: the explicit consent may also be given on the access screen,
+  // beside the two required checks. It is optional and unticked, and intake still asks just in
+  // time for anyone who did not give it there.
   const component = source("components/programme/ProgramAiFinalPresentation.tsx");
   const adult = component.indexOf("I confirm I am 18 or over");
   const legal = component.indexOf("I agree to the Terms and confirm I have read the Privacy Notice");
+  const accessConsent = component.indexOf("I explicitly consent to B4GAMBLE processing what I type or say");
   const disclosure = component.indexOf("Before you share.");
-  const consent = component.indexOf("I explicitly consent to B4GAMBLE processing what I type or say");
+  const intakeConsent = component.lastIndexOf("I explicitly consent to B4GAMBLE processing what I type or say");
   const withdrawal = component.indexOf("Withdraw consent and clear this draft");
-  assert.ok(adult >= 0 && legal > adult && disclosure > legal && consent > disclosure && withdrawal > consent);
+  assert.ok(adult >= 0 && legal > adult && accessConsent > legal && disclosure > accessConsent && intakeConsent > disclosure && withdrawal > intakeConsent);
   assert.equal(component.match(/I confirm I am 18 or over/g)?.length, 1);
   assert.equal(component.match(/I agree to the Terms and confirm I have read the Privacy Notice/g)?.length, 1);
+  // The access-screen consent starts unticked and never gates entry.
+  assert.match(component, /const \[processing, setProcessing\] = useState\(false\);/);
+  assert.match(component, /disabled=\{busy \|\| !adult \|\| !legal\}/);
   assert.match(component, /Google provides identity only; it does not verify age or receive your Programme words/);
 });
 
