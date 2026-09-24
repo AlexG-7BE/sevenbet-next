@@ -216,13 +216,22 @@ for (const viewport of [{ height: 900, width: 1440 }, { height: 768, width: 1024
   });
 }
 
-test("coarse pointer keeps proximity and Home snap state does not leak to other routes", async ({ browser, browserName }) => {
+test("phones scroll Home freely through compact chapters and snap state does not leak to other routes", async ({ browser, browserName }) => {
   const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { height: 844, width: 390 } });
   const page = await context.newPage();
   await bridgeLocalWebKitUpgrade(page, browserName);
   await page.goto("/", { waitUntil: "networkidle" });
-  // CSSOM serializes proximity as `y` in Chromium and WebKit.
-  expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("y");
+  // Founder, 24 Sep 2026: below 760px the three chapters are compact cards in normal flow,
+  // so the page neither snaps nor pins them, and one primary action follows them.
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("none");
+  const chapters = page.locator('[data-handoff-page="home"] [data-stackpanel]');
+  await expect(chapters).toHaveCount(3);
+  expect(await chapters.evaluateAll((panels) => panels.map((panel) => {
+    const style = getComputedStyle(panel);
+    return { opacity: style.opacity, position: style.position, shorterThanScreen: panel.getBoundingClientRect().height < innerHeight };
+  }))).toEqual(Array.from({ length: 3 }, () => ({ opacity: "1", position: "relative", shorterThanScreen: true })));
+  await expect(page.locator("[data-home-chapters-cta] a")).toBeVisible();
+  await expect(page.locator('[data-stackpanel] [data-mob="chapter"] > a').first()).toBeHidden();
   await page.goto("/casinos", { waitUntil: "networkidle" });
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("none");
   await context.close();
