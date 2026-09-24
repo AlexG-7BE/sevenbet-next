@@ -70,7 +70,8 @@
 }
 
 @media (max-width: 640px) {
-  .hero { padding: 100px 0 0; }
+  /* Bottom room keeps the italic headline's descenders inside the clipped hero. */
+  .hero { padding: 100px 0 28px; }
   .eyebrow { margin-bottom: 14px; gap: 12px; letter-spacing: .14em; }
   .eyebrow::before { width: 24px; }
   .hero h1 { font-size: 42px; }

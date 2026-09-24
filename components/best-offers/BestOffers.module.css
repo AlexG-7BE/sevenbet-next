@@ -174,8 +174,9 @@
   .heroMeta { margin-top:16px; padding:4px 0 8px; gap:0; }
   .heroCopy,.heroTicker span { display:none; }
   .commercialShortlist { padding:8px 0 72px; }
-  /* The selected tab already names the category; the heading stays for assistive technology. */
-  .commercialHeading { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  /* The selected tab already names the category and the tab list carries the section title;
+     the section keeps its accessible name through aria-labelledby. */
+  .commercialHeading { display:none; }
   .commercialHeading h2,.whyPicked h2,.faq h2 { font-size:36px; }
   .rankPrimary,.rankSecondary { padding:24px 20px; gap:18px; }
   .rankPrimary > .rankNumber { font-size:44px; }
