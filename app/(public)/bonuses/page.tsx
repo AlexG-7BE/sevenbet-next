@@ -12,6 +12,7 @@ import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffBonusDirectoryData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
+import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
@@ -56,7 +57,14 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const copy = commercialUxMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const hasCanonicalAction = result.records.some((offer) => offer.action !== null);
-  const marketUnavailable = !visualFixture && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState);
+  // RFC-039 separates publication from route eligibility: a published offer
+  // stays visible even where no partner route exists, and the missing route
+  // simply means no visit action. Hiding every offer whenever the reader's
+  // country had no route emptied these pages for most of the world. Offers are
+  // now withheld only where that country prohibits gambling advertising.
+  const offersPermitted = offersMayBePresented(presentation.marketCountryCode);
+  const marketUnavailable = !visualFixture
+    && (!offersPermitted || (!result.records.length && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState)));
   const unavailable = result.inventoryMode === "UNAVAILABLE";
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const title = marketUnavailable ? `${shell.bonuses} — ${market} | B4GAMBLE` : formatProductMessage(unavailable ? `${messages.bonuses.unavailableTitleBody} | B4GAMBLE` : containsDemo ? messages.bonuses.demoTitle : messages.bonuses.title, { market });
@@ -84,7 +92,9 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   const query = parsePublicOfferQuery({}, 100);
   const result = withHandoffBonusDirectoryData(loaded.result, visualFixture, presentation.locale, query, fixtureMarket);
   const hasCanonicalAction = result.records.some((offer) => offer.action !== null);
-  const marketUnavailable = !visualFixture && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState);
+  const offersPermitted = offersMayBePresented(presentation.marketCountryCode);
+  const marketUnavailable = !visualFixture
+    && (!offersPermitted || (!result.records.length && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState)));
   if (marketUnavailable) return <div className={`${styles.page} ${instrumentSerif.variable}`} data-commercial-market-state="editorial-only" data-runtime-renderer="bonuses">
     <CommercialSurfaceView surface="bonuses" />
     <section className={styles.unavailable} data-nav-theme="dark"><div aria-hidden="true" className={styles.glow} /><div className={styles.unavailablePanel}>
