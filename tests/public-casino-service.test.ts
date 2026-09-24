@@ -8,7 +8,8 @@ import { allowJurisdictionAuthority } from "./market-authority.fixtures";
 import { commercialActionAuthority, noCommercialActions } from "./commercial-action.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
-const managedSlug = "10bet";
+// TurboNino holds local licences in GB, SE, DK and DE, so the market-access register admits it there.
+const managedSlug = "turbonino";
 const unmanagedSlug = "888";
 
 function publishedRecord(slug = managedSlug): PublishedCasinoSnapshotRecord {
@@ -196,10 +197,10 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
   });
 
   await t.test("every valid published Casino uses the same generic authority path", async () => {
-    const record = publishedRecord("generic-published");
-    const result = await authorizedService(store([record], ["generic-published"])).getCasino("generic-published", allowJurisdictionAuthority, "GB");
+    const record = publishedRecord("hello-casino");
+    const result = await authorizedService(store([record], ["hello-casino"])).getCasino("hello-casino", allowJurisdictionAuthority, "GB");
     assert.equal(result?.source, "cms");
-    assert.deepEqual(result?.action, { href: "/r/generic-published" });
+    assert.deepEqual(result?.action, { href: "/r/hello-casino" });
   });
 });
 
@@ -277,7 +278,7 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     }];
 
     assert.equal((await service(store([record])).listCasinos(null, "GB")).length, 1);
-    for (const country of ["PE", "SE"]) {
+    for (const country of ["IE", "SE"]) {
       const [casino] = await service(store([record])).listCasinos(null, country);
       assert.equal(casino?.slug, managedSlug);
       assert.equal(casino?.action, null);

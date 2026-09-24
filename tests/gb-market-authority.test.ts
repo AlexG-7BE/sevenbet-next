@@ -294,11 +294,11 @@ test("redirect authority is a strict AND and rechecks before returning a stored 
     async evaluateMany() { return new Map(); },
   };
   const trustedGbSignal = { countryCode: "GB", marketCode: "GB", trust: "TRUSTED" as const, observedAt: now };
-  const incomplete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, operatorDenied, canonicalGbActivation).resolve("casino-visit", { requestCountrySignal: trustedGbSignal, now, currencyCode: "GBP" });
+  const incomplete = await new AffiliateRedirectService(redirectStore("hello-casino"), offers, allowJurisdictionResolver, operatorDenied, canonicalGbActivation).resolve("casino-visit", { requestCountrySignal: trustedGbSignal, now, currencyCode: "GBP" });
   assert.equal(incomplete.ok, false);
   if (!incomplete.ok) assert.equal(incomplete.reason, "OPERATOR_EVIDENCE_DENIED");
 
-  const complete = await new AffiliateRedirectService(redirectStore(), offers, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalGbActivation).resolve("casino-visit", { requestCountrySignal: trustedGbSignal, now, currencyCode: "GBP" });
+  const complete = await new AffiliateRedirectService(redirectStore("hello-casino"), offers, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, canonicalGbActivation).resolve("casino-visit", { requestCountrySignal: trustedGbSignal, now, currencyCode: "GBP" });
   assert.equal(complete.ok, true);
   if (complete.ok) assert.equal(complete.destination.toString(), "https://tracking.invalid/click");
 });
