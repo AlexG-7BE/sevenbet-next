@@ -293,6 +293,13 @@ test("commercial attribution observes governed outcomes and never stores partner
   assert.doesNotMatch(model, /destination|trackingUrl|affiliateUrl|token/i);
   const attribution = source("lib/analytics/outbound-attribution.server.ts");
   assert.doesNotMatch(attribution, /result\.destination|trackingUrl|affiliateUrl/);
+  // Click source is kept for every click; reader identity only with consent.
+  assert.match(attribution, /sourcePage: referrer\.sourcePage,/);
+  assert.match(attribution, /pagePath: referrer\.sourcePage,/);
+  assert.doesNotMatch(attribution, /placement: consented \?|sourcePage: consented \?|pagePath: consented \?/);
+  assert.match(attribution, /if \(consented\) \{\s*anonymousId = readAnalyticsUuid/);
+  assert.match(attribution, /locale: consented \? input\.locale : null/);
+  assert.match(attribution, /deviceCategory: consented \? analyticsDeviceCategory/);
   const outboundAction = source("components/casino-profile/CasinoOutboundAction.tsx");
   assert.match(outboundAction, /\?placement=\$\{context\.source\}_\$\{context\.placement\}/);
   assert.match(outboundAction, /\^\\\/r\\\//);
