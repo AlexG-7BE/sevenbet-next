@@ -99,6 +99,33 @@ gambling, so licensees do not run visible welcome-bonus marketing. The five
 Swedish routes therefore have no offer to attach, and that is the correct
 outcome rather than a gap to fill.
 
+## Denmark — three offers, and one route that earns nothing
+
+From a Copenhagen exit node, TurboNino, AHTI Games and SlotsMagic all publish
+the same Danish welcome: 100% up to 200 kr, minimum 100 kr, wagering 10x
+deposit plus bonus, maximum bet 50 kr, slots only. Terms are in
+`offers-dk.v1.json`. TurboNino serves the Danish terms in its home banner while
+`/promotions/welcome-offer/` still shows the euro variant; the banner is the
+Danish offer and is what was recorded.
+
+**Casino RedKings is not available in Denmark.** Its own site tells Danish
+visitors "Desværre er RedKings ikke tilgængeligt i Danmark" and redirects them
+to SlotsMagic. Our record has it as `AVAILABLE` with an `ACTIVE`, `HEALTHY` DK
+route, so Danish traffic is being sent into a rejection.
+
+### Route health cannot see this
+
+`lib/affiliate-health/checker.ts` fetches the route from our own
+infrastructure and compares the final host to the expected one. It has no
+notion of the market the route is for, so a destination that refuses the target
+country passes as `HEALTHY`. Every one of the 77 active routes could be in this
+state undetected.
+
+Of sixteen routes opened from inside their own market — seven GB, five SE, four
+DK — one was dead. At that rate roughly four or five of the 77 are earning
+nothing while consuming paid traffic. Closing that is worth more than any
+individual offer.
+
 ## Remaining, for a session with per-market exit nodes
 
 Offers for AHTI Games, Casino RedKings, DragonBet, EUcasino, MegawaysCasino,

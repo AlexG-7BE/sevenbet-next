@@ -33,7 +33,7 @@ import { editorialReviewService } from "@/lib/services/editorial-review.service"
 
 const RELEASE = "CASINO-GLOBAL-CATALOG-01";
 const EDITORIAL_CORPUS = "data/casino-global-catalog-01/editorial.v1.json";
-const OFFER_CORPUS = "data/casino-global-catalog-01/offers-gb.v1.json";
+const OFFER_CORPORA = ["data/casino-global-catalog-01/offers-gb.v1.json", "data/casino-global-catalog-01/offers-dk.v1.json"];
 
 function option(name: string) {
   const index = process.argv.indexOf(`--${name}`);
@@ -795,10 +795,23 @@ async function importOffers() {
     if (expected !== fingerprint) throw new Error(`${RELEASE}: --expected-database must be ${fingerprint}`);
   }
 
-  const corpus = JSON.parse(await readFile(path.join(process.cwd(), OFFER_CORPUS), "utf8")) as {
-    schemaVersion: string; release: string; countryCode: string; commercialAuthority: boolean;
-    observedAt: string; offers: ResearchedOffer[];
-  };
+  const market = option("market")?.toUpperCase();
+  const corpora = [];
+  for (const file of OFFER_CORPORA) {
+    corpora.push(JSON.parse(await readFile(path.join(process.cwd(), file), "utf8")) as {
+      schemaVersion: string; release: string; countryCode: string; commercialAuthority: boolean;
+      observedAt: string; offers: ResearchedOffer[];
+    });
+  }
+  for (const corpus of corpora.filter((entry) => !market || entry.countryCode === market)) {
+  await importOfferCorpus(corpus, dryRun);
+  }
+}
+
+async function importOfferCorpus(
+  corpus: { schemaVersion: string; release: string; countryCode: string; commercialAuthority: boolean; observedAt: string; offers: ResearchedOffer[] },
+  dryRun: boolean,
+) {
   if (corpus.schemaVersion !== "casino-global-catalog-offers.v1" || corpus.release !== RELEASE) {
     throw new Error(`${RELEASE}: offer corpus identity mismatch`);
   }
