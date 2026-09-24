@@ -56,7 +56,13 @@ export function normalizeWithdrawalTime(value: string | null | undefined): Withd
   const text = value.toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ").trim();
   const hourUnit = "(?:h|hr|hrs|hour|hours|std\\.?|stunde|stunden|hora|horas|ore|uur|timmar|timer|tunti|tuntia|ώρες|ωρες|heure|heures)";
   const dayUnit = "(?:d|day|days|tag|tage|día|días|dia|dias|giorno|giorni|dag|dagen|dage|päivä|päivää|paiva|paivaa|ημέρα|ημέρες|ημερα|ημερες|jour|jours)";
-  const hourRange = text.match(new RegExp(`\\b(\\d{1,3})\\s*(?:-|to|a|à)\\s*(\\d{1,3})\\s*${hourUnit}\\b`));
+  // `\b` is ASCII-only, so it can never close a unit that ends in a letter
+  // outside that range: "0-24 ώρες" ends on ς and read as unknown, which cost
+  // the Greek profile its payout fact and its place in the fast-payout
+  // ranking. The unit is closed on "no letter follows" instead, which holds
+  // for every alphabet listed above.
+  const unitEnd = "(?![\\p{L}\\p{M}])";
+  const hourRange = text.match(new RegExp(`\\b(\\d{1,3})\\s*(?:-|to|a|à)\\s*(\\d{1,3})\\s*${hourUnit}${unitEnd}`, "u"));
   if (hourRange) {
     const maximum = Number(hourRange[2]);
     if (maximum <= 2) return "under-2-hours";
@@ -64,7 +70,7 @@ export function normalizeWithdrawalTime(value: string | null | undefined): Withd
     if (maximum <= 48) return "one-to-two-days";
     return "three-or-more-days";
   }
-  const dayRange = text.match(new RegExp(`\\b(\\d{1,2})\\s*(?:-|to|a|à)\\s*(\\d{1,2})\\s*${dayUnit}\\b`));
+  const dayRange = text.match(new RegExp(`\\b(\\d{1,2})\\s*(?:-|to|a|à)\\s*(\\d{1,2})\\s*${dayUnit}${unitEnd}`, "u"));
   if (dayRange) {
     const maximum = Number(dayRange[2]);
     if (maximum <= 1) return "one-day";
@@ -93,7 +99,11 @@ export function payoutEvidenceStrength(offer: PublicOfferDTO) {
   return offer.casino.payments.reduce((strongest, payment) => {
     if (!payment.supportsWithdrawals || normalizeWithdrawalTime(payment.withdrawalTime) === "unknown") return strongest;
     const text = payment.withdrawalTime?.toLowerCase().replace(/[–—]/g, "-").trim() ?? "";
-    const explicitRangeOrDuration = /\b\d{1,3}\s*(?:-|to|a|à)?\s*\d{0,3}\s*(?:h|hr|hrs|hour|hours|d|day|days|std\.?|stunden?|horas?|ore|uur|timer|tunti|tuntia|heures?|jours?)\b/.test(text);
+    // Same ASCII-boundary trap as above, and the Greek units were missing
+    // outright: a record reading "0-24 ώρες" now normalizes, so it must also
+    // be able to count as an explicit duration rather than sort as the
+    // weakest possible evidence.
+    const explicitRangeOrDuration = /\b\d{1,3}\s*(?:-|to|a|à)?\s*\d{0,3}\s*(?:h|hr|hrs|hour|hours|d|day|days|std\.?|stunden?|horas?|ore|uur|timer|tunti|tuntia|ώρες|ωρες|ημέρα|ημέρες|ημερα|ημερες|heures?|jours?)(?![\p{L}\p{M}])/u.test(text);
     const explicitNamedTiming = /\b(?:instant(?:ly)?|immediate|same[- ]day|next[- ]day)\b/.test(text);
     return Math.max(strongest, explicitRangeOrDuration ? 3 : explicitNamedTiming ? 2 : 1);
   }, 0);
@@ -164,11 +174,14 @@ function uniqueCasinos(offers: PublicOfferDTO[], limit: number) {
 export function rankBestOffersForCategory(
   offers: readonly PublicOfferDTO[],
   category: BestOfferCategory,
-  options: { country?: string; includeDemonstration?: boolean; limit?: number } = {},
+  options: { country?: string; includeDemonstration?: boolean; includeWithoutRoute?: boolean; limit?: number } = {},
 ) {
   const eligible = offers.filter((offer) => options.includeDemonstration
     ? offer.dataClassification === "DEMO_FIXTURE"
-    : isGovernedBestOfferCandidate(offer, options.country));
+    // A published offer is ranked on its own terms. Requiring a governed route
+    // emptied every category wherever no partner link existed, which is the
+    // same mistake the Bonuses page made: publication is not route eligibility.
+    : options.includeWithoutRoute || isGovernedBestOfferCandidate(offer, options.country));
   const categoryEligible = eligible.filter((offer) => {
     if (category === "best_overall") return Number.isFinite(offer.casino.editorScore) && materialTermCompleteness(offer) >= 2;
     if (category === "fast_payouts") return hasPayoutEvidence(offer) && offerWithdrawalBucket(offer) !== "unknown";
@@ -214,9 +227,15 @@ export function rankBestOffersForCategory(
   return uniqueCasinos(ranked, Math.min(Math.max(options.limit ?? 3, 1), 3));
 }
 
-export function selectCommercialBestOfferPool(offers: PublicOfferDTO[], options: { country?: string; limit?: number } = {}) {
+export function selectCommercialBestOfferPool(
+  offers: PublicOfferDTO[],
+  options: { country?: string; limit?: number; includeWithoutRoute?: boolean } = {},
+) {
   const limit = Math.min(Math.max(options.limit ?? 48, 1), 100);
-  return rankOffersByEditorialAuthority(offers.filter((offer) => isGovernedBestOfferCandidate(offer, options.country))).slice(0, limit);
+  const eligible = options.includeWithoutRoute
+    ? offers
+    : offers.filter((offer) => isGovernedBestOfferCandidate(offer, options.country));
+  return rankOffersByEditorialAuthority(eligible).slice(0, limit);
 }
 
 export function rankBestBonusCasinoIds(

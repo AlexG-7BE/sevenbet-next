@@ -12,7 +12,7 @@ import { resolveServerPresentationContext } from "@/lib/market/server";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
-import { accountNavigationFor } from "@/lib/public-shell";
+import { accountNavigationFor, commercialDestinationsNavigable } from "@/lib/public-shell";
 import styles from "@/components/public-shell/PublicShell.module.css";
 
 type Presentation = Awaited<ReturnType<typeof resolveServerPresentationContext>>;
@@ -63,7 +63,8 @@ async function CommercialHeaderNavigation({
   const settled = variant === "mobile" && destination === "/best-offers"
     ? <PublicCommercialNavigationSettled />
     : null;
-  if (resolution.kind !== "resolved" || !commercialProductsAvailable(resolution.state)) return settled;
+  if (resolution.kind !== "resolved"
+    || !commercialDestinationsNavigable(commercialProductsAvailable(resolution.state), presentation.marketCountryCode)) return settled;
   return <>{settled}<PublicCommercialNavigationItem destination={destination} messages={messages} presentation={presentation} variant={variant} /></>;
 }
 
@@ -79,7 +80,8 @@ async function CommercialFooterNavigation({
   state: CommercialStatePromise;
 }) {
   const resolution = await state;
-  if (resolution.kind !== "resolved" || !commercialProductsAvailable(resolution.state)) return null;
+  if (resolution.kind !== "resolved"
+    || !commercialDestinationsNavigable(commercialProductsAvailable(resolution.state), presentation.marketCountryCode)) return null;
   return <PublicCommercialFooterLink destination={destination} presentation={presentation} programme={{ path: programmePath, localizePublicLinks: true }} />;
 }
 

@@ -12,6 +12,7 @@ import { absoluteUrl } from "@/lib/site";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffOfferData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
+import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
@@ -56,7 +57,14 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const copy = commercialUxMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const hasCanonicalAction = result.records.some((offer) => offer.action !== null);
-  const marketUnavailable = !fixtureEnabled && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState);
+  // RFC-039 separates publication from route eligibility: a published offer
+  // stays visible even where no partner route exists, and the missing route
+  // simply means no visit action. Hiding every offer whenever the reader's
+  // country had no route emptied these pages for most of the world. Offers are
+  // now withheld only where that country prohibits gambling advertising.
+  const offersPermitted = offersMayBePresented(presentation.marketCountryCode);
+  const marketUnavailable = !fixtureEnabled
+    && (!offersPermitted || (!result.records.length && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState)));
   const unavailable = result.status === "unavailable";
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const title = marketUnavailable
@@ -87,7 +95,9 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   const market = presentation.marketDisplayName;
   const result = withHandoffOfferData(loaded.result, fixtureEnabled, presentation.locale, fixtureMarket);
   const hasCanonicalAction = result.records.some((offer) => offer.action !== null);
-  const marketUnavailable = !fixtureEnabled && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState);
+  const offersPermitted = offersMayBePresented(presentation.marketCountryCode);
+  const marketUnavailable = !fixtureEnabled
+    && (!offersPermitted || (!result.records.length && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState)));
   if (marketUnavailable) return <div className={styles.page} data-commercial-market-state="editorial-only" data-runtime-renderer="best-offers">
     <CommercialSurfaceView surface="best_offers" />
     <section className={styles.statePage} data-nav-theme="dark"><div className={styles.shell}><div className={styles.statePanel} role="status">

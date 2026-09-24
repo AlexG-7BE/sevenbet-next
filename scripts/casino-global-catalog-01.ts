@@ -33,6 +33,7 @@ import { editorialReviewService } from "@/lib/services/editorial-review.service"
 
 const RELEASE = "CASINO-GLOBAL-CATALOG-01";
 const EDITORIAL_CORPUS = "data/casino-global-catalog-01/editorial.v1.json";
+const OFFER_CORPORA = ["data/casino-global-catalog-01/offers-gb.v1.json", "data/casino-global-catalog-01/offers-dk.v1.json"];
 
 function option(name: string) {
   const index = process.argv.indexOf(`--${name}`);
@@ -47,7 +48,7 @@ function option(name: string) {
  * transaction-acquisition and write-conflict failures are retried; anything
  * else is a real error and propagates.
  */
-const TRANSIENT_TRANSACTION = /Unable to start a transaction|Transaction already closed|deadlock|could not serialize/i;
+const TRANSIENT_TRANSACTION = /Unable to start a transaction|Transaction already closed|deadlock|could not serialize|Error in PostgreSQL connection|Connection closed|connection.*(?:closed|reset|terminated)|ECONNRESET|Timed out fetching a new connection/i;
 
 async function withTransientRetry<T>(label: string, work: () => Promise<T>, attempts = 4): Promise<T> {
   for (let attempt = 1; ; attempt += 1) {
@@ -63,6 +64,30 @@ async function withTransientRetry<T>(label: string, work: () => Promise<T>, atte
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
+}
+
+/**
+ * Runs work over a bounded number of lanes. Republishing a casino is a long
+ * interactive transaction against a remote pool, so the lane count is the
+ * tension: more lanes finish sooner, but more casinos sit in DRAFT — and so
+ * off the public site — at the same moment, and a dropped connection strands
+ * that many rather than one.
+ */
+async function inLanes<T>(items: readonly T[], lanes: number, work: (item: T) => Promise<void>) {
+  const queue = [...items];
+  const runners = Array.from({ length: Math.max(1, Math.min(lanes, queue.length)) }, async () => {
+    for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
+      await work(next);
+    }
+  });
+  await Promise.all(runners);
+}
+
+function requestedLanes() {
+  const raw = Number.parseInt(option("concurrency") ?? "1", 10);
+  if (!Number.isSafeInteger(raw) || raw < 1) throw new Error(`${RELEASE}: --concurrency must be a positive integer`);
+  if (raw > 6) throw new Error(`${RELEASE}: --concurrency above 6 risks the connection pool and takes too much of the catalogue offline at once`);
+  return raw;
 }
 
 function decimal(value: Prisma.Decimal | null) {
@@ -356,7 +381,9 @@ async function apply() {
 
   const results = [];
   const failedApply: string[] = [];
-  for (const derivation of derivations) {
+  const lanes = requestedLanes();
+  console.log(`${RELEASE}: applying across ${lanes} lane(s); at most ${lanes} casino(s) leave the site at once`);
+  await inLanes(derivations, lanes, async (derivation) => {
     let written;
     try {
       written = await withTransientRetry(derivation.slug, async () => {
@@ -367,7 +394,7 @@ async function apply() {
     } catch (error) {
       failedApply.push(derivation.slug);
       console.error(`  ${derivation.slug.padEnd(16)} FAILED: ${error instanceof Error ? error.message : error}`);
-      continue;
+      return;
     }
     await prisma.auditLog.create({
       data: {
@@ -392,7 +419,7 @@ async function apply() {
     });
     results.push({ slug: derivation.slug, ...written });
     console.log(`  ${derivation.slug.padEnd(16)} pay=${written.payments} prov=${written.providers} cat=${written.categories} licencesCollapsed=${written.collapsed} identity=${written.identity.join(",") || "—"}`);
-  }
+  });
   console.log(`${RELEASE}: applied to ${results.length} casinos and republished each snapshot`);
   if (failedApply.length) throw new Error(`${RELEASE}: apply failed for ${failedApply.join(", ")}; re-run to resume`);
 }
@@ -497,7 +524,9 @@ async function editorial() {
   const entries = only ? corpus.entries.filter((entry) => entry.slug === only) : corpus.entries;
   if (!entries.length) throw new Error(`${RELEASE}: no editorial entry matched`);
   const failed: string[] = [];
-  for (const entry of entries) {
+  const lanes = requestedLanes();
+  console.log(`${RELEASE}: rewriting across ${lanes} lane(s)`);
+  await inLanes(entries, lanes, async (entry) => {
     try {
       await withTransientRetry(entry.slug, () => applyEditorial(entry, actor.id));
       console.log(`  ${entry.slug.padEnd(16)} rewritten`);
@@ -506,7 +535,7 @@ async function editorial() {
       failed.push(entry.slug);
       console.error(`  ${entry.slug.padEnd(16)} FAILED: ${error instanceof Error ? error.message : error}`);
     }
-  }
+  });
   if (failed.length) throw new Error(`${RELEASE}: editorial rewrite failed for ${failed.join(", ")}; re-run to resume`);
   console.log(`${RELEASE}: rewrote editorial copy for ${entries.length} casinos`);
 }
@@ -659,21 +688,23 @@ async function scores() {
 }
 
 /**
- * The EGO import researched and recorded six market offers with complete
- * material terms on 22 September, but its publish step never moved them to
- * `offerStatus = ACTIVE`, so the public mapper has been discarding them ever
- * since. CASINO-REAL-CATALOG-03 performed exactly that activation for its own
- * seven offers as a deliberate, bounded step; this is the equivalent for the
- * EGO set, named one by one so the batch cannot widen by accident.
+ * A published offer is withheld only when the casino has no working partner
+ * route. Where a route is ACTIVE and HEALTHY the offer page is reachable, so
+ * the offer exists and is published everywhere that casino operates — the
+ * Founder rule of 24 September 2026, and the reason GoldenPlay sat on fifteen
+ * live routes with eleven offers stranded in DRAFT.
+ *
+ * Offers already scoped to a country keep that scope and resolve as EXACT
+ * there and OTHER_MARKET elsewhere; offers recorded globally serve as ROW.
  */
-const ACTIVATABLE_OFFERS = [
-  "bacanaplay-pt-welcome",
-  "drueckglueck-de-welcome",
-  "jackpotstar-gb-welcome",
-  "playojo-gb-welcome",
-  "playojo-bingo-gb-welcome",
-  "playuzu-es-welcome",
-] as const;
+async function activatableOfferIds() {
+  const routed = await prisma.marketActivation.findMany({
+    where: { status: "ACTIVE", routeVerificationStatus: "HEALTHY" },
+    select: { casinoId: true },
+    distinct: ["casinoId"],
+  });
+  return new Set(routed.map((route) => route.casinoId));
+}
 
 /** Material terms a reader needs before an offer is worth publishing. */
 function offerTermGaps(bonus: {
@@ -704,6 +735,7 @@ async function offers() {
     if (expected !== fingerprint) throw new Error(`${RELEASE}: --expected-database must be ${fingerprint}`);
   }
 
+  const routedCasinoIds = await activatableOfferIds();
   const inactive = await prisma.casinoBonus.findMany({
     where: { status: EditorialStatus.PUBLISHED, offerStatus: { not: OfferStatus.ACTIVE } },
     orderBy: [{ casino: { slug: "asc" } }, { slug: "asc" }],
@@ -716,26 +748,26 @@ async function offers() {
     },
   });
 
-  console.log(`${RELEASE}: ${inactive.length} published offers are not active`);
+  const targets = inactive.filter((bonus) => routedCasinoIds.has(bonus.casino.id));
+  console.log(`${RELEASE}: ${inactive.length} published offers are not active; ${targets.length} belong to a casino with a working route`);
   for (const bonus of inactive) {
+    const routed = routedCasinoIds.has(bonus.casino.id);
     const gaps = offerTermGaps(bonus);
-    const named = (ACTIVATABLE_OFFERS as readonly string[]).includes(bonus.slug);
-    const verdict = named ? "ACTIVATE" : gaps.length >= 3 ? "HOLD (terms incomplete)" : "HOLD (not in this batch)";
-    console.log(`  ${bonus.casino.slug.padEnd(15)} ${(bonus.marketProfile?.countryCode ?? "global").padEnd(6)} ${bonus.slug.padEnd(38)} ${verdict.padEnd(24)} ${gaps.length ? `missing=${gaps.join(",")}` : "complete"}`);
+    console.log(`  ${bonus.casino.slug.padEnd(15)} ${(bonus.marketProfile?.countryCode ?? "ROW").padEnd(4)} ${bonus.slug.padEnd(38)} ${(routed ? "ACTIVATE" : "HOLD (no route)").padEnd(16)} ${gaps.length ? `missing=${gaps.join(",")}` : "complete"}`);
   }
   if (dryRun) return;
+  if (!targets.length) throw new Error(`${RELEASE}: no inactive offer belongs to a casino with a working route`);
 
   const actor = await selectActor(option("actor-email"));
-  const targets = inactive.filter((bonus) => (ACTIVATABLE_OFFERS as readonly string[]).includes(bonus.slug));
-  if (targets.length !== ACTIVATABLE_OFFERS.length) {
-    throw new Error(`${RELEASE}: expected ${ACTIVATABLE_OFFERS.length} activatable offers, found ${targets.length}`);
-  }
+  const republished = new Set<string>();
   for (const bonus of targets) {
-    // Activation publishes terms that were already researched; it creates no
-    // route, tracking authority or commercial eligibility.
     await withTransientRetry(bonus.slug, async () => {
       await prisma.casinoBonus.update({ where: { id: bonus.id }, data: { offerStatus: OfferStatus.ACTIVE, updatedBy: actor.id } });
-      await republish(bonus.casino.id, actor.id);
+      // One republish per casino, however many of its offers were activated.
+      if (!republished.has(bonus.casino.id)) {
+        await republish(bonus.casino.id, actor.id);
+        republished.add(bonus.casino.id);
+      }
     });
     await prisma.auditLog.create({
       data: {
@@ -743,7 +775,7 @@ async function offers() {
         action: "casino-global-catalog-01-offer",
         entityType: "casino_bonus",
         entityId: bonus.id,
-        summary: `${RELEASE}: activated already-published offer ${bonus.slug}`,
+        summary: `${RELEASE}: activated published offer ${bonus.slug} on a routed casino`,
         metadata: {
           release: RELEASE,
           casinoSlug: bonus.casino.slug,
@@ -756,7 +788,124 @@ async function offers() {
     });
     console.log(`  ${bonus.casino.slug.padEnd(15)} activated ${bonus.slug}`);
   }
-  console.log(`${RELEASE}: activated ${targets.length} offers`);
+  console.log(`${RELEASE}: activated ${targets.length} offers across ${republished.size} casinos`);
+}
+
+interface ResearchedOffer {
+  casinoSlug: string;
+  slug: string;
+  title: string;
+  summary: string;
+  type: string;
+  percentage?: number | null;
+  maximumBonus?: number | null;
+  freeSpins?: number | null;
+  minimumDeposit: number | null;
+  wageringMultiplier: number | null;
+  wageringText: string | null;
+  eligibility: string | null;
+  importantConditions: string[];
+  termsUrl: string | null;
+}
+
+/**
+ * Imports offers read from each operator's own promotions page through an exit
+ * node in the offer's own market, so the terms are that market's variant. Each
+ * offer is attached to the casino's exact market profile — never to a market
+ * it was not read from, and never converted to a global offer.
+ */
+async function importOffers() {
+  const dryRun = process.argv[2] === "import-offers-plan";
+  if (!dryRun && option("confirm") !== RELEASE) throw new Error(`${RELEASE}: import-offers requires --confirm=${RELEASE}`);
+  if (!dryRun) {
+    const expected = option("expected-database");
+    const fingerprint = await databaseFingerprint();
+    if (expected !== fingerprint) throw new Error(`${RELEASE}: --expected-database must be ${fingerprint}`);
+  }
+
+  const market = option("market")?.toUpperCase();
+  const corpora = [];
+  for (const file of OFFER_CORPORA) {
+    corpora.push(JSON.parse(await readFile(path.join(process.cwd(), file), "utf8")) as {
+      schemaVersion: string; release: string; countryCode: string; commercialAuthority: boolean;
+      observedAt: string; offers: ResearchedOffer[];
+    });
+  }
+  for (const corpus of corpora.filter((entry) => !market || entry.countryCode === market)) {
+  await importOfferCorpus(corpus, dryRun);
+  }
+}
+
+async function importOfferCorpus(
+  corpus: { schemaVersion: string; release: string; countryCode: string; commercialAuthority: boolean; observedAt: string; offers: ResearchedOffer[] },
+  dryRun: boolean,
+) {
+  if (corpus.schemaVersion !== "casino-global-catalog-offers.v1" || corpus.release !== RELEASE) {
+    throw new Error(`${RELEASE}: offer corpus identity mismatch`);
+  }
+  if (corpus.commercialAuthority !== false) throw new Error(`${RELEASE}: an offer corpus must not grant commercial authority`);
+  if (!/^[A-Z]{2}$/.test(corpus.countryCode)) throw new Error(`${RELEASE}: offer corpus needs an exact two-letter market`);
+
+  const actor = dryRun ? { id: "", email: "" } : await selectActor(option("actor-email"));
+  const observedAt = new Date(corpus.observedAt);
+
+  for (const offer of corpus.offers) {
+    const market = await prisma.casinoCountry.findFirst({
+      where: { countryCode: corpus.countryCode, casino: { slug: offer.casinoSlug } },
+      select: { id: true, casinoId: true, primaryCurrency: true, availability: true },
+    });
+    if (!market) throw new Error(`${RELEASE}: ${offer.casinoSlug} has no ${corpus.countryCode} market profile`);
+    if (market.availability !== "AVAILABLE") throw new Error(`${RELEASE}: ${offer.casinoSlug} ${corpus.countryCode} is not available`);
+
+    if (dryRun) {
+      console.log(`  ${offer.casinoSlug.padEnd(16)} ${corpus.countryCode} ${offer.title.slice(0, 46).padEnd(48)} wagering=${offer.wageringMultiplier ?? "—"} minDep=${offer.minimumDeposit ?? "—"}`);
+      continue;
+    }
+
+    const data = {
+      title: offer.title,
+      summary: offer.summary,
+      type: offer.type as never,
+      percentage: offer.percentage ?? null,
+      maximumBonus: offer.maximumBonus ?? null,
+      freeSpins: offer.freeSpins ?? null,
+      currency: market.primaryCurrency,
+      minimumDeposit: offer.minimumDeposit,
+      wageringMultiplier: offer.wageringMultiplier,
+      wageringText: offer.wageringText,
+      eligibility: offer.eligibility,
+      importantConditions: offer.importantConditions,
+      termsUrl: offer.termsUrl,
+      lastVerifiedAt: observedAt,
+      status: EditorialStatus.PUBLISHED,
+      offerStatus: OfferStatus.ACTIVE,
+      updatedBy: actor.id,
+    };
+    await withTransientRetry(offer.slug, async () => {
+      await prisma.casinoBonus.upsert({
+        where: { slug: offer.slug },
+        create: { ...data, slug: offer.slug, casinoId: market.casinoId, casinoCountryId: market.id, createdBy: actor.id },
+        update: data,
+      });
+      await republish(market.casinoId, actor.id);
+    });
+    await prisma.auditLog.create({
+      data: {
+        actorId: actor.id,
+        action: "casino-global-catalog-01-offer-import",
+        entityType: "casino_bonus",
+        entityId: market.casinoId,
+        summary: `${RELEASE}: imported ${corpus.countryCode} offer ${offer.slug} from the operator's own terms`,
+        metadata: {
+          release: RELEASE, casinoSlug: offer.casinoSlug, countryCode: corpus.countryCode,
+          termsUrl: offer.termsUrl, observedAt: corpus.observedAt,
+          commercialAuthorityGranted: false, routeCreated: false,
+        },
+      },
+    });
+    console.log(`  ${offer.casinoSlug.padEnd(16)} imported ${offer.slug}`);
+  }
+  console.log(`${RELEASE}: ${dryRun ? "previewed" : "imported"} ${corpus.offers.length} ${corpus.countryCode} offers`);
 }
 
 async function main() {
@@ -766,7 +915,8 @@ async function main() {
   else if (command === "editorial") await editorial();
   else if (command === "score-plan" || command === "scores") await scores();
   else if (command === "offer-plan" || command === "offers") await offers();
-  else throw new Error(`${RELEASE}: usage — plan | apply | editorial | score-plan | scores | offer-plan | offers`);
+  else if (command === "import-offers-plan" || command === "import-offers") await importOffers();
+  else throw new Error(`${RELEASE}: usage — plan | apply | editorial | score-plan | scores | offer-plan | offers | import-offers-plan | import-offers`);
 }
 
 main()

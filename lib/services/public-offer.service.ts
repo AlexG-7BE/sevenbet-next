@@ -8,6 +8,7 @@ import type {
 } from "@/lib/public-offer/public-offer.types";
 import { publicOfferRepository, type PublicOfferStore } from "@/lib/repositories/public-offer.repository";
 import { isPublicCasinoCmsEnabled } from "@/lib/services/public-casino.service";
+import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import {
   publicCommercialActionResolver,
@@ -192,10 +193,14 @@ export class PublicOfferService {
   async getBestOffersPageData(options: { country?: string; commercialMarketCode?: string; presentationLanguage?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
     const country = options.country;
     const limit = options.limit ?? 12;
+    // Publication is not route eligibility. Requiring a governed action here
+    // emptied the shortlist wherever no partner link existed, which left the
+    // page blank for every country not yet activated.
+    const includeWithoutRoute = offersMayBePresented(country);
     if (!this.cmsEnabled()) {
       const records = selectCommercialBestOfferPool(
         await this.getFeaturedOffers({ country, commercialMarketCode: options.commercialMarketCode, presentationLanguage: options.presentationLanguage, limit: 100 }, authority),
-        { country, limit },
+        { country, limit, includeWithoutRoute },
       );
       return records.length
         ? { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const
@@ -208,7 +213,7 @@ export class PublicOfferService {
         commercialMarketCode: options.commercialMarketCode,
         presentationLanguage: options.presentationLanguage,
       });
-      const records = selectCommercialBestOfferPool(publishedRecords, { country, limit });
+      const records = selectCommercialBestOfferPool(publishedRecords, { country, limit, includeWithoutRoute });
       if (records.length) return { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const;
       return { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
     } catch {

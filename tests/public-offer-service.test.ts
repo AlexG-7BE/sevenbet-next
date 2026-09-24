@@ -279,10 +279,24 @@ test("repository records receive generic published-offer handling", async () => 
 test("Best Offers returns a genuine no-eligible state when the published shortlist is empty", async () => {
   const incomplete = offer("published-incomplete", { score: 10, featured: true });
   incomplete.bonus.eligibility = null;
-  const result = await new PublicOfferService(store([incomplete]), { cmsEnabled: true }, noCommercialActions)
-    .getBestOffersPageData({ country: "GB" }, allowJurisdictionAuthority);
 
-  assert.deepEqual(result, { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" });
+  // Publication is not route eligibility, so a routeless record is no longer
+  // what makes the shortlist empty: where presentation is permitted it is
+  // ranked and marked review-only. The no-eligible state is real where the
+  // policy still withholds the offer — a market that prohibits presenting it —
+  // and where the repository genuinely has nothing to publish.
+  const presented = await new PublicOfferService(store([incomplete]), { cmsEnabled: true }, noCommercialActions)
+    .getBestOffersPageData({ country: "GB" }, allowJurisdictionAuthority);
+  assert.equal(presented.status, "available");
+  assert.deepEqual(presented.records.map((item) => item.action), [null]);
+
+  const prohibited = await new PublicOfferService(store([incomplete]), { cmsEnabled: true }, noCommercialActions)
+    .getBestOffersPageData({ country: "NO" }, allowJurisdictionAuthority);
+  assert.deepEqual(prohibited, { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" });
+
+  const nothingPublished = await new PublicOfferService(store([]), { cmsEnabled: true }, noCommercialActions)
+    .getBestOffersPageData({ country: "GB" }, allowJurisdictionAuthority);
+  assert.deepEqual(nothingPublished, { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" });
 });
 
 test("Best Offers has no source-controlled fallback when CMS is disabled", async () => {

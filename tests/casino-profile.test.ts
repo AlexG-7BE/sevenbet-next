@@ -15,6 +15,7 @@ import {
   profileReviewFreshness,
   selectProfileBonus,
 } from "../lib/casino-profile/presentation";
+import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
 import { casinoProfileMetadata, casinoProfileSchemas, projectCasinoProfileSchemas } from "../lib/casino-profile/seo";
 import type { CasinoEditorialDocument } from "../lib/editorial-review/types";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
@@ -311,13 +312,139 @@ test("a projection cached before regulatoryFootprint existed does not crash the 
     messages: productPageMessages(presentation.locale),
     presentation,
   }));
-  assert.match(markup, /Licensed in/);
-  assert.match(markup, /Licensed in<\/dt><dd>Not verified/);
+  // The page renders rather than throwing, and an empty footprint now drops
+  // the row instead of printing "Not verified" into it.
+  // The page renders rather than throwing, and an empty footprint now drops
+  // the row instead of printing "Not verified" into it. (CSS module classes
+  // resolve to undefined under the test harness, so only rendered text is
+  // asserted here.)
+  assert.match(markup, /Operator<\/dt><dd>Published Operator/);
+  assert.doesNotMatch(markup, /Licensed in/);
+  assert.doesNotMatch(markup, /<dd>undefined<\/dd>/);
 });
 
 test("the detail projection cache key changes when the projected shape changes", () => {
   // A cache key that outlives a shape change serves the old shape to new code.
   const service = readFileSync(new URL("../lib/services/public-casino.service.ts", import.meta.url), "utf8");
-  assert.match(service, /public-casino-detail-editorial-projection-v2/);
-  assert.doesNotMatch(service, /public-casino-detail-editorial-projection-v1/);
+  assert.match(service, /public-casino-detail-editorial-projection-v3/);
+  assert.doesNotMatch(service, /public-casino-detail-editorial-projection-v[12]\b/);
+});
+
+test("a fact with nothing to say is dropped, and an empty section says so once", async () => {
+  // The TurboNino profile printed "Not verified" six times: three in the hero
+  // strip and three in payments. A row that admits ignorance teaches nothing,
+  // and a section built entirely from them teaches nothing repeatedly.
+  (globalThis as typeof globalThis & { React: typeof React }).React = React;
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const presentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
+  const copy = commercialUxMessages(presentation.locale);
+
+  const bare = casino({
+    bonuses: [],
+    offerPresentation: undefined,
+    payments: [],
+    marketProfiles: [],
+    action: null,
+  });
+  const markup = renderToStaticMarkup(React.createElement(CasinoProfile, {
+    availableForPresentation: false,
+    casino: bare,
+    editorial: null,
+    messages: productPageMessages(presentation.locale),
+    presentation,
+  }));
+
+  assert.doesNotMatch(markup, new RegExp(`<dd>${copy.notVerified}</dd>`), "no fact row may admit ignorance");
+  assert.match(markup, new RegExp(copy.nothingPublishedYet), "an emptied section explains itself once");
+  assert.equal(
+    (markup.match(new RegExp(copy.nothingPublishedYet, "g")) ?? []).length <= 3,
+    true,
+    "the explanation replaces rows rather than multiplying them",
+  );
+});
+
+test("a licence held in one market still tells the reader the brand is regulated", async () => {
+  // Skol Casino holds one UKGC licence scoped to GB. It must not be asserted
+  // as authority in the reader's own market, but hiding it entirely leaves the
+  // most important trust question unanswered.
+  (globalThis as typeof globalThis & { React: typeof React }).React = React;
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const presentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
+
+  const markup = renderToStaticMarkup(React.createElement(CasinoProfile, {
+    availableForPresentation: false,
+    casino: casino({
+      licenses: [],
+      marketProfiles: [],
+      regulatoryFootprint: [{ authority: "Gambling Commission", jurisdiction: "GB" }],
+    }),
+    editorial: null,
+    messages: productPageMessages(presentation.locale),
+    presentation,
+  }));
+  assert.match(markup, /Gambling Commission \(GB\)/, "the jurisdiction is named so it cannot read as local authority");
+});
+
+test("a market's withdrawal sentence is shown as written, never parsed into a speed", async () => {
+  // Most markets record withdrawal timing as prose, and the payout fact reads
+  // only the structured per-method field. Parsing this sentence would take
+  // "same day" from it and award a fast-payout badge that a card user never
+  // experiences, so it is displayed verbatim and earns no badge.
+  (globalThis as typeof globalThis & { React: typeof React }).React = React;
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const presentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
+  const copy = commercialUxMessages(presentation.locale);
+  const prose = "After approval: Visa/Mastercard and bank transfer 1-3 banking days; e-wallets same day.";
+
+  const markup = renderToStaticMarkup(React.createElement(CasinoProfile, {
+    availableForPresentation: true,
+    casino: casino({
+      payments: [],
+      marketProfiles: [{
+        id: "gb", countryCode: "GB", availability: "AVAILABLE", localDomain: null, localWebsiteUrl: null,
+        operatingLegalEntity: null, termsUrl: null, privacyUrl: null, responsibleGamblingUrl: null,
+        primaryLanguage: "en", supportedLanguages: [], supportLanguages: [], primaryCurrency: "GBP",
+        supportedCurrencies: [], minimumAge: 18, kycSummary: null, withdrawalSummary: prose,
+        supportSummary: null, lastVerifiedAt: null, evidence: [], licenses: [], payments: [],
+        providers: [], categories: [], bonuses: [], media: [],
+      }],
+    }),
+    editorial: null,
+    messages: productPageMessages(presentation.locale),
+    presentation,
+  }));
+
+  assert.match(markup, /1-3 banking days; e-wallets same day/, "the sentence reaches the reader intact");
+  assert.doesNotMatch(markup, new RegExp(`<dd>${copy.payoutSameDay}</dd>`), "prose never becomes a payout verdict");
+  assert.doesNotMatch(markup, new RegExp(`>${copy.fastPayouts}<`), "prose never earns a fast-payout badge");
+});
+
+test("founded year and control tools reach the reader when the record has them", async () => {
+  // Both fields sat on the DTO but were rendered only by components no route
+  // imports, so nine casinos' responsible-gambling tools — GAMSTOP among them —
+  // were published to nobody.
+  (globalThis as typeof globalThis & { React: typeof React }).React = React;
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const presentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
+  const messages = productPageMessages(presentation.locale);
+
+  const withRecord = renderToStaticMarkup(React.createElement(CasinoProfile, {
+    availableForPresentation: false,
+    casino: casino({ foundedYear: 2014, responsibleGamblingTools: ["Deposit limit", "GAMSTOP"] }),
+    editorial: null,
+    messages,
+    presentation,
+  }));
+  assert.match(withRecord, new RegExp(`<dt>${messages.profile.founded}</dt><dd>2014</dd>`));
+  assert.match(withRecord, new RegExp(`<dt>${messages.profile.controlTools}</dt><dd>Deposit limit · GAMSTOP</dd>`));
+
+  const withoutRecord = renderToStaticMarkup(React.createElement(CasinoProfile, {
+    availableForPresentation: false,
+    casino: casino({ foundedYear: null, responsibleGamblingTools: [] }),
+    editorial: null,
+    messages,
+    presentation,
+  }));
+  assert.doesNotMatch(withoutRecord, new RegExp(messages.profile.founded));
+  assert.doesNotMatch(withoutRecord, new RegExp(messages.profile.controlTools));
 });

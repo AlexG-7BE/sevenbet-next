@@ -15,7 +15,18 @@ import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 
 import styles from "./CasinoProfile.module.css";
 
-function SectionFacts({ facts }: { facts: readonly CommercialFact[] }) {
+/**
+ * A fact row whose value is unknown tells the reader nothing, and a section
+ * built entirely from those told them nothing six times over. Unknown rows are
+ * dropped, and a section left with none says so once, in a line that is about
+ * our record rather than about the casino.
+ */
+function knownFacts(facts: readonly CommercialFact[], unknown: string) {
+  return facts.filter((fact) => fact.value !== unknown && Boolean(fact.value.trim()));
+}
+
+function SectionFacts({ facts, empty }: { facts: readonly CommercialFact[]; empty: string }) {
+  if (!facts.length) return empty ? <p className={styles.notVerified}>{empty}</p> : null;
   return <dl className={styles.sectionFacts}>{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>;
 }
 
@@ -50,6 +61,16 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
     { label: messages.common.maximumBet, value: formatCommercialMoney(bonus.maximumBet, bonus.currency, presentation.locale, copy.notVerified) },
     { label: messages.common.expiry, value: formatProfileDate(bonus.expiresAt, presentation.locale) ?? copy.notVerified },
   ] : [];
+  const heroFacts = knownFacts(decision.heroFacts, copy.notVerified);
+  // Most market profiles record withdrawal timing as a sentence rather than as
+  // a per-method duration, and the payout fact only reads the structured
+  // field. Parsing the sentence into a speed bucket would be unsafe: several
+  // say the opposite of a timing ("method-specific timing not verified"), and
+  // a mixed one such as "cards 1-3 banking days; e-wallets same day" would
+  // yield "same day" and earn a fast-payout badge a card user never sees. The
+  // sentence is shown as written instead, and the badge and the fast-payout
+  // ranking keep reading only the structured field.
+  const withdrawalSummary = decision.marketProfile?.withdrawalSummary?.trim() || null;
   const marketProfile = decision.marketProfile;
   const licence = decision.licence;
   // Without an exact market profile there is no local licence or market to
@@ -64,12 +85,20 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const licensedIn = (casino.regulatoryFootprint ?? [])
     .map((entry) => entry.jurisdiction ? `${entry.authority} (${entry.jurisdiction})` : entry.authority)
     .join(" · ");
+  // Founded year and control tools were carried on the DTO but rendered only
+  // by components no route imports, so neither reached a reader. Both belong
+  // here, and the empty-fact rule keeps them out of sight until the record has
+  // them rather than printing an unknown.
   const regulationFacts: CommercialFact[] = [
     { label: copy.operator, value: casino.operator ?? copy.notVerified },
+    ...(casino.foundedYear ? [{ label: messages.profile.founded, value: String(casino.foundedYear) }] : []),
     ...(marketProfile ? [{ label: copy.market, value: marketProfile.countryCode }] : []),
     licence
       ? { label: copy.licenceStatus, value: `${licence.authority} · ${licence.status === "ACTIVE" ? messages.common.current : copy.notVerified}` }
       : { label: copy.licensedIn, value: licensedIn || copy.notVerified },
+    ...(casino.responsibleGamblingTools.length
+      ? [{ label: messages.profile.controlTools, value: casino.responsibleGamblingTools.join(" · ") }]
+      : []),
   ];
   const supportFacts: CommercialFact[] = [
     { label: copy.supportLanguages, value: marketProfile?.supportLanguages.join(" · ") || casino.languages.join(" · ") || copy.notVerified },
@@ -108,7 +137,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <div className={styles.heroOffer}>
             <span>{copy.currentOffer}</span>
             <h2><OfferHeadline text={offerHeadline} /></h2>
-            <CommercialFacts facts={decision.heroFacts} className={styles.heroFacts} />
+            {heroFacts.length ? <CommercialFacts facts={heroFacts} className={styles.heroFacts} /> : null}
             <div className={styles.heroAction}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_HERO" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}</div>
             <small>{action ? demo ? messages.common.marketPresentationNotice : copy.compactDisclosure : messages.common.reviewAvailableNoAction}</small>
           </div>
@@ -134,14 +163,18 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
 
       <section aria-labelledby="payments-heading" className={`${styles.section} ${styles.altSection}`} id="payments">
         <header><p>02</p><h2 id="payments-heading">{copy.paymentsAndPayouts}</h2></header>
-        <div className={styles.sectionBody}><SectionFacts facts={paymentFacts} />{profilePayments.length ? <div className={styles.methodLabels}>{profilePayments.slice(0, 6).map((payment) => <span key={payment.key}>{payment.name}</span>)}</div> : null}</div>
+        <div className={styles.sectionBody}>
+          <SectionFacts empty={withdrawalSummary ? "" : copy.nothingPublishedYet} facts={knownFacts(paymentFacts, copy.notVerified)} />
+          {profilePayments.length ? <div className={styles.methodLabels}>{profilePayments.slice(0, 6).map((payment) => <span key={payment.key}>{payment.name}</span>)}</div> : null}
+          {withdrawalSummary ? <p className={styles.withdrawalSummary}>{withdrawalSummary}</p> : null}
+        </div>
       </section>
 
       <section aria-labelledby="offer-heading" className={`${styles.section} ${styles.offerSection}`} id="current-offer">
         <header><p>03</p><h2 id="offer-heading">{copy.currentOffer}</h2></header>
         <div className={styles.offerPanel} data-analytics-casino-id={!demo && bonus ? casino.id : undefined} data-analytics-offer-key={!demo && bonus ? bonus.id : undefined}>
           <h3><OfferHeadline text={offerHeadline} /></h3>
-          {bonus ? <SectionFacts facts={offerFacts} /> : <p>{messages.common.reviewAvailableNoAction}</p>}
+          {bonus ? <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(offerFacts, copy.notVerified)} /> : <p>{messages.common.reviewAvailableNoAction}</p>}
           {bonus ? <p className={styles.materialWarning}>{decision.restriction}</p> : null}
           <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION" }} messages={messages.outbound} showDisclosure={false} /> : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}{safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}</div>
         </div>
@@ -149,17 +182,17 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
 
       <section aria-labelledby="games-heading" className={`${styles.section} ${styles.altSection}`} id="games">
         <header><p>04</p><h2 id="games-heading">{messages.profile.games}</h2></header>
-        <div className={styles.sectionBody}>{gameFacts.length ? <SectionFacts facts={gameFacts} /> : <p className={styles.notVerified}>{copy.notVerified}</p>}{providers.length ? <p className={styles.providerLine}><strong>{messages.profile.providers}</strong><span>{providers.join(" · ")}</span></p> : null}</div>
+        <div className={styles.sectionBody}>{gameFacts.length ? <SectionFacts empty={copy.nothingPublishedYet} facts={gameFacts} /> : <p className={styles.notVerified}>{copy.nothingPublishedYet}</p>}{providers.length ? <p className={styles.providerLine}><strong>{messages.profile.providers}</strong><span>{providers.join(" · ")}</span></p> : null}</div>
       </section>
 
       <section aria-labelledby="support-heading" className={styles.section} id="support">
         <header><p>05</p><h2 id="support-heading">{copy.support}</h2></header>
-        <SectionFacts facts={supportFacts} />
+        <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(supportFacts, copy.notVerified)} />
       </section>
 
       <section aria-labelledby="regulation-heading" className={`${styles.section} ${styles.altSection}`} id="regulation">
         <header><p>06</p><h2 id="regulation-heading">{copy.operatorMarketRegulation}</h2></header>
-        <SectionFacts facts={regulationFacts} />
+        <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(regulationFacts, copy.notVerified)} />
       </section>
 
       <section aria-labelledby="faq-heading" className={styles.profileFaq} data-nav-theme="cream" data-premium-section="casino-faq" id="casino-faq">

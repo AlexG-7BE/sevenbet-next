@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { resolvePresentationContext, type PresentationResolution } from "@/lib/market/presentation-resolver";
 import { DEFAULT_MARKET_PROFILE, PUBLISHED_LANGUAGE_ROUTE_PROFILES, marketProfileByLocale, publicMarketPath } from "@/lib/market/registry";
-import type { PublicAccountNavigation } from "@/lib/public-shell";
+import { commercialDestinationsNavigable, type PublicAccountNavigation } from "@/lib/public-shell";
 import type { CommercialProductState } from "@/lib/market/commercial-product-state";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
@@ -55,7 +55,7 @@ export function PublicHeader({
           commercialDesktopBonusesNavigation={commercialDesktopBonusesNavigation}
           commercialMobileBestOffersNavigation={commercialMobileBestOffersNavigation}
           commercialMobileBonusesNavigation={commercialMobileBonusesNavigation}
-          commercialProductsAvailable={commercialProductsAvailable(commercialProductState)}
+          commercialProductsAvailable={commercialDestinationsNavigable(commercialProductsAvailable(commercialProductState), presentation.marketCountryCode)}
           deferCommercialNavigation={deferCommercialNavigation}
           messages={messages}
           presentation={presentation}

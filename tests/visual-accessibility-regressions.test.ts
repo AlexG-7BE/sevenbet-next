@@ -90,7 +90,9 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   assert.match(primitives, /aria-label=\{`\$\{label\} \$\{value\} \/ 10`\}/);
   assert.match(profile, /id="casino-faq"[\s\S]*?id="our-verdict"/);
   assert.doesNotMatch(profile, /copy\.methodologyAndSources/);
-  assert.match(profile, /<SectionFacts facts=\{paymentFacts\}/);
+  // Unknown rows are filtered out and an emptied section explains itself once,
+  // rather than printing "Not verified" into every row.
+  assert.match(profile, /<SectionFacts empty=\{[^}]*\} facts=\{knownFacts\(paymentFacts, copy\.notVerified\)\} \/>/);
   assert.match(profileStyles, /\.stickyAction :global\(\.commercialOutboundPrimary\)\s*\{[^}]*min-height:44px;/);
   assert.match(profileStyles, /\.profileFaq summary\s*\{[^}]*min-height:\s*68px;/);
   assert.match(cssRule(profileStyles, ".page"), /overflow-x: clip/);

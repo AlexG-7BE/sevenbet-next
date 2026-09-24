@@ -32,9 +32,14 @@ export function BestOffersExperience({ inventoryMode, messages, presentation, sh
     low_deposit: copy.lowDeposit,
   };
   const [category, setCategory] = useState<BestOfferCategory>("best_overall");
+  // The shortlist the page hands down is already filtered by the visibility
+  // policy, so a record reaching here may be ranked on its own terms. Filtering
+  // again on a governed route would leave every category empty wherever no
+  // partner link exists, which is the page's whole problem.
   const offers = useMemo(() => rankBestOffersForCategory(shortlist, category, {
     country: presentation.marketCountryCode ?? undefined,
     includeDemonstration: inventoryMode === "DEMO_ONLY",
+    includeWithoutRoute: true,
     limit: 3,
   }), [category, inventoryMode, presentation.marketCountryCode, shortlist]);
 

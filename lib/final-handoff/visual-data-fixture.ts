@@ -669,6 +669,9 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
     currencies: [currency],
     withdrawalTime: formatFixturePayout(sample.payout, locale),
     minimumDeposit: sample.deposit,
+    // Deliberately null: the fixture must not invent payment amounts, and
+    // tests/localized-demo-profile.test.ts pins that. The profile drops a fact
+    // it cannot state, so these rows are simply absent.
     minimumWithdrawal: null,
     maximumWithdrawal: null,
     depositProcessingTime: copy.instant,
@@ -696,7 +699,9 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
     importantConditions: [...copy.bonus.conditions],
     termsUrl: null,
     startsAt: null,
-    expiresAt: null,
+    // Dated so the offer section keeps its fourth fact: an unknown value is
+    // now dropped, and the visual QA layout exists to be measured full.
+    expiresAt: "2030-12-31T00:00:00.000Z",
     media: { CASINO_OFFER_BLOCK: adaptiveCreativePlacement("CASINO_OFFER_BLOCK", 1) },
   }] : [];
   return {
