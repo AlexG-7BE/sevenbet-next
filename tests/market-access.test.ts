@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { egoExactRegulatoryEvidence } from "../lib/current-partner-worldwide-authority/ego-market-authority";
-import { marketAccess, withholdClosedMarketOffers } from "../lib/market-access/access";
+import { marketAccess, offerFitsMarket, presentInMarket } from "../lib/market-access/access";
 import { CASINO_MARKETS, MARKET_RULES } from "../lib/market-access/register";
 import { OFFER_PRESENTATION_PROHIBITED_MARKETS } from "../lib/public-offer/offer-visibility";
 import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
@@ -149,17 +149,45 @@ test("a market has one rule: the prohibition list is not repeated", () => {
   }
 });
 
-test("a closed market keeps the review and loses the offer", () => {
-  const casino = {
-    slug: "playojo",
+function casinoFixture(slug: string, relation: string) {
+  return {
+    slug,
     bonuses: [{ id: "bonus" }],
-    offerPresentation: { selectedOffer: { id: "bonus" }, relation: "EXACT", sourceCountryCode: "DE", presentationCountryCode: "DE", currentMarketVerified: true },
+    offerPresentation: { selectedOffer: { id: "bonus" }, relation, sourceCountryCode: "GB", presentationCountryCode: "SE", currentMarketVerified: relation === "EXACT" },
+    categories: [
+      { key: "slots", name: "Slots", gameCount: null, featured: true },
+      { key: "jackpots", name: "Jackpots", gameCount: null, featured: false },
+      { key: "live-casino", name: "Live Casino", gameCount: null, featured: false },
+      { key: "table-games", name: "Table games", gameCount: null, featured: false },
+    ],
     summary: "Review",
   } as unknown as PublicCasinoDTO;
-  const withheld = withholdClosedMarketOffers(casino, "DE", berlinEvening);
+}
+
+test("a closed market keeps the review and loses the offer", () => {
+  const withheld = presentInMarket(casinoFixture("playojo", "EXACT"), "DE", berlinEvening);
   assert.deepEqual(withheld.bonuses, []);
   assert.equal(withheld.offerPresentation?.relation, "NONE");
   assert.equal(withheld.offerPresentation?.selectedOffer, null);
   assert.equal(withheld.summary, "Review");
-  assert.equal(withholdClosedMarketOffers(casino, "GB", berlinEvening), casino, "an open market is untouched");
+  const open = casinoFixture("playojo", "EXACT");
+  assert.equal(presentInMarket(open, "GB", berlinEvening), open, "an open market with its own offer is untouched");
+});
+
+test("a licensed market shows only the casino's offer for that market", () => {
+  assert.equal(presentInMarket(casinoFixture("megawayscasino", "OTHER_MARKET"), "SE", berlinEvening).offerPresentation?.relation, "NONE", "a British offer is not shown in Sweden");
+  assert.equal(presentInMarket(casinoFixture("nordicbet", "ROW"), "SE", berlinEvening).offerPresentation?.relation, "NONE", "an international offer is not shown in Sweden");
+  assert.equal(presentInMarket(casinoFixture("megawayscasino", "EXACT"), "SE", berlinEvening).offerPresentation?.relation, "EXACT");
+  assert.equal(presentInMarket(casinoFixture("hello-casino", "ROW"), "IE", berlinEvening).offerPresentation?.relation, "ROW", "the grey zone keeps international offers");
+  assert.equal(presentInMarket(casinoFixture("hello-casino", "OTHER_MARKET"), "KZ", berlinEvening).offerPresentation?.relation, "OTHER_MARKET", "a market without a rule keeps RFC-039's cross-market offers");
+  assert.equal(offerFitsMarket("OTHER_MARKET", "DK"), false);
+  assert.equal(offerFitsMarket(undefined, "DK"), true, "no offer is nothing to withhold");
+});
+
+test("German visitors see no jackpot, live or table-game category", () => {
+  const german = presentInMarket(casinoFixture("drueckglueck", "EXACT"), "DE", berlinEvening);
+  assert.deepEqual(german.categories.map((category) => category.key), ["slots"]);
+  assert.equal(german.offerPresentation?.relation, "EXACT", "the licensed offer stays inside the window");
+  const british = presentInMarket(casinoFixture("drueckglueck", "EXACT"), "GB", berlinEvening);
+  assert.equal(british.categories.length, 4);
 });

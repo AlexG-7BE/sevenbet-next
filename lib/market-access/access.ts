@@ -69,6 +69,20 @@ export function marketAccess(casinoSlug: string, market: string | null | undefin
   return OPEN;
 }
 
+function marketRule(market: string | null | undefined) {
+  const key = marketKey(market);
+  return key ? MARKET_RULES[key] ?? MARKET_RULES[key.slice(0, 2)] ?? null : null;
+}
+
+/**
+ * Where a local licence is required, only the casino's offer for that market
+ * may be shown: an offer published for another market carries another
+ * market's terms (and licence), so it is not an offer this visitor can take.
+ */
+export function offerFitsMarket(relation: string | null | undefined, market: string | null | undefined) {
+  return !relation || relation === "EXACT" || relation === "NONE" || marketRule(market)?.regime !== "LICENCE_REQUIRED";
+}
+
 /** The casino with no offer: the review stays, because publication is not promotion (RFC-039). */
 export function withoutOffers<T extends PublicCasinoDTO>(casino: T): T {
   return {
@@ -88,7 +102,17 @@ export function withoutOffers<T extends PublicCasinoDTO>(casino: T): T {
   };
 }
 
-/** Removes a casino's offers where it may not be promoted. */
-export function withholdClosedMarketOffers<T extends PublicCasinoDTO>(casino: T, market: string | null | undefined, now: Date): T {
-  return marketAccess(casino.slug, market, now).open ? casino : withoutOffers(casino);
+/**
+ * The casino as a visitor from `market` may see it now: no offer where the
+ * market is closed or the offer belongs to another licensed market, and no
+ * game category the market forbids. Runs per request, after the editorial cache.
+ */
+export function presentInMarket<T extends PublicCasinoDTO>(casino: T, market: string | null | undefined, now: Date): T {
+  const rule = marketRule(market);
+  const hidden = rule?.regime === "LICENCE_REQUIRED" ? rule.hiddenGameCategories ?? [] : [];
+  const visible = hidden.length
+    ? { ...casino, categories: casino.categories.filter((category) => !hidden.includes(category.key.toLowerCase())) }
+    : casino;
+  const offerAllowed = marketAccess(casino.slug, market, now).open && offerFitsMarket(casino.offerPresentation?.relation, market);
+  return offerAllowed ? visible : withoutOffers(visible);
 }
