@@ -159,6 +159,8 @@ test("analytics environment, bot/device classification, and referrer context sta
   assert.equal(analyticsEnvironment({ VERCEL_ENV: "preview" }), "PREVIEW");
   assert.equal(analyticsEnvironment({}), "LOCAL");
   assert.equal(analyticsTrafficKind(new Headers({ "user-agent": "Googlebot" }), "PRODUCTION"), "BOT");
+  // The launch click check clicks /r/ from Globalping probes; they must never count as visitors.
+  assert.equal(analyticsTrafficKind(new Headers({ "user-agent": "globalping probe (https://github.com/jsdelivr/globalping)" }), "PRODUCTION"), "BOT");
   assert.equal(analyticsTrafficKind(new Headers({ "user-agent": "Mozilla/5.0" }), "PRODUCTION"), "HUMAN");
   assert.equal(analyticsDeviceCategory(new Headers({ "user-agent": "Mozilla iPhone Mobile" })), "MOBILE");
   assert.equal(analyticsDeviceCategory(new Headers({ "user-agent": "Mozilla iPad" })), "TABLET");
