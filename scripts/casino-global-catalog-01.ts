@@ -659,21 +659,23 @@ async function scores() {
 }
 
 /**
- * The EGO import researched and recorded six market offers with complete
- * material terms on 22 September, but its publish step never moved them to
- * `offerStatus = ACTIVE`, so the public mapper has been discarding them ever
- * since. CASINO-REAL-CATALOG-03 performed exactly that activation for its own
- * seven offers as a deliberate, bounded step; this is the equivalent for the
- * EGO set, named one by one so the batch cannot widen by accident.
+ * A published offer is withheld only when the casino has no working partner
+ * route. Where a route is ACTIVE and HEALTHY the offer page is reachable, so
+ * the offer exists and is published everywhere that casino operates — the
+ * Founder rule of 24 September 2026, and the reason GoldenPlay sat on fifteen
+ * live routes with eleven offers stranded in DRAFT.
+ *
+ * Offers already scoped to a country keep that scope and resolve as EXACT
+ * there and OTHER_MARKET elsewhere; offers recorded globally serve as ROW.
  */
-const ACTIVATABLE_OFFERS = [
-  "bacanaplay-pt-welcome",
-  "drueckglueck-de-welcome",
-  "jackpotstar-gb-welcome",
-  "playojo-gb-welcome",
-  "playojo-bingo-gb-welcome",
-  "playuzu-es-welcome",
-] as const;
+async function activatableOfferIds() {
+  const routed = await prisma.marketActivation.findMany({
+    where: { status: "ACTIVE", routeVerificationStatus: "HEALTHY" },
+    select: { casinoId: true },
+    distinct: ["casinoId"],
+  });
+  return new Set(routed.map((route) => route.casinoId));
+}
 
 /** Material terms a reader needs before an offer is worth publishing. */
 function offerTermGaps(bonus: {
@@ -704,6 +706,7 @@ async function offers() {
     if (expected !== fingerprint) throw new Error(`${RELEASE}: --expected-database must be ${fingerprint}`);
   }
 
+  const routedCasinoIds = await activatableOfferIds();
   const inactive = await prisma.casinoBonus.findMany({
     where: { status: EditorialStatus.PUBLISHED, offerStatus: { not: OfferStatus.ACTIVE } },
     orderBy: [{ casino: { slug: "asc" } }, { slug: "asc" }],
@@ -716,26 +719,26 @@ async function offers() {
     },
   });
 
-  console.log(`${RELEASE}: ${inactive.length} published offers are not active`);
+  const targets = inactive.filter((bonus) => routedCasinoIds.has(bonus.casino.id));
+  console.log(`${RELEASE}: ${inactive.length} published offers are not active; ${targets.length} belong to a casino with a working route`);
   for (const bonus of inactive) {
+    const routed = routedCasinoIds.has(bonus.casino.id);
     const gaps = offerTermGaps(bonus);
-    const named = (ACTIVATABLE_OFFERS as readonly string[]).includes(bonus.slug);
-    const verdict = named ? "ACTIVATE" : gaps.length >= 3 ? "HOLD (terms incomplete)" : "HOLD (not in this batch)";
-    console.log(`  ${bonus.casino.slug.padEnd(15)} ${(bonus.marketProfile?.countryCode ?? "global").padEnd(6)} ${bonus.slug.padEnd(38)} ${verdict.padEnd(24)} ${gaps.length ? `missing=${gaps.join(",")}` : "complete"}`);
+    console.log(`  ${bonus.casino.slug.padEnd(15)} ${(bonus.marketProfile?.countryCode ?? "ROW").padEnd(4)} ${bonus.slug.padEnd(38)} ${(routed ? "ACTIVATE" : "HOLD (no route)").padEnd(16)} ${gaps.length ? `missing=${gaps.join(",")}` : "complete"}`);
   }
   if (dryRun) return;
+  if (!targets.length) throw new Error(`${RELEASE}: no inactive offer belongs to a casino with a working route`);
 
   const actor = await selectActor(option("actor-email"));
-  const targets = inactive.filter((bonus) => (ACTIVATABLE_OFFERS as readonly string[]).includes(bonus.slug));
-  if (targets.length !== ACTIVATABLE_OFFERS.length) {
-    throw new Error(`${RELEASE}: expected ${ACTIVATABLE_OFFERS.length} activatable offers, found ${targets.length}`);
-  }
+  const republished = new Set<string>();
   for (const bonus of targets) {
-    // Activation publishes terms that were already researched; it creates no
-    // route, tracking authority or commercial eligibility.
     await withTransientRetry(bonus.slug, async () => {
       await prisma.casinoBonus.update({ where: { id: bonus.id }, data: { offerStatus: OfferStatus.ACTIVE, updatedBy: actor.id } });
-      await republish(bonus.casino.id, actor.id);
+      // One republish per casino, however many of its offers were activated.
+      if (!republished.has(bonus.casino.id)) {
+        await republish(bonus.casino.id, actor.id);
+        republished.add(bonus.casino.id);
+      }
     });
     await prisma.auditLog.create({
       data: {
@@ -743,7 +746,7 @@ async function offers() {
         action: "casino-global-catalog-01-offer",
         entityType: "casino_bonus",
         entityId: bonus.id,
-        summary: `${RELEASE}: activated already-published offer ${bonus.slug}`,
+        summary: `${RELEASE}: activated published offer ${bonus.slug} on a routed casino`,
         metadata: {
           release: RELEASE,
           casinoSlug: bonus.casino.slug,
@@ -756,7 +759,7 @@ async function offers() {
     });
     console.log(`  ${bonus.casino.slug.padEnd(15)} activated ${bonus.slug}`);
   }
-  console.log(`${RELEASE}: activated ${targets.length} offers`);
+  console.log(`${RELEASE}: activated ${targets.length} offers across ${republished.size} casinos`);
 }
 
 async function main() {

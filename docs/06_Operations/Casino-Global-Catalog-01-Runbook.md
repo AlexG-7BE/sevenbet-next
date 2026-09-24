@@ -107,25 +107,19 @@ npm run casino-global-catalog -- offer-plan
 npm run casino-global-catalog -- offers --confirm=CASINO-GLOBAL-CATALOG-01 --actor-email=<admin email> --expected-database=<fingerprint>
 ```
 
-Those six were researched and recorded with complete material terms on
-22 September, but the EGO import's publish step never moved them to
-`offerStatus = ACTIVE`, so the public mapper has been discarding them. This is
-the same bounded activation CASINO-REAL-CATALOG-03 performed for its own seven
-offers. Activation publishes terms that already existed; it creates no route,
-tracking authority or commercial eligibility, and the batch is a literal list
-so it cannot widen by accident.
+A published offer is withheld only when the casino has no working partner
+route. Where a `MarketActivation` is `ACTIVE` with a `HEALTHY` route the offer
+page is reachable, so the offer exists and is published everywhere that casino
+operates — the Founder rule of 24 September 2026.
 
-Deliberately **not** activated:
+An earlier hardcoded batch of six left GoldenPlay sitting on fifteen live
+routes with eleven offers stranded in `DRAFT`, and Betsson on seven routes with
+two. Offers already scoped to a country keep that scope and resolve as `EXACT`
+there and `OTHER_MARKET` elsewhere; offers recorded globally serve as `ROW`.
 
-- Betsson's two `…-observation` rows, which the
-  [SAFE-OFFER-PRESENTATION decision](../07_Decisions/SAFE-OFFER-PRESENTATION-2026-09-08.md)
-  excluded and which lack minimum deposit, wagering and eligibility.
-- Eight of GoldenPlay's eleven CMS-authored offers, each missing minimum
-  deposit, important conditions, terms URL and any verification date.
-- `goldenplay-ie-welcome` (missing only a terms URL) and the two global
-  GoldenPlay welcome rows (missing terms URL and verification date). These are
-  the only realistic candidates for a second pass and need a verification date
-  before publication.
+`offer-plan` shows every inactive offer with the material terms it is missing
+and whether its casino is routed. Incomplete terms no longer withhold an offer
+— they are reported so the gaps can be filled, not used as a veto.
 
 ## What `editorial` does
 
