@@ -109,7 +109,7 @@ export const FI_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqWageringQuestion: "Mitä kierrätysvaatimus tarkoittaa?",
     faqWageringAnswer: "Se kertoo, kuinka paljon julkaistujen ehtojen mukaan on pelattava ennen kuin bonusvoitot voi kotiuttaa.",
     faqCommissionQuestion: "Ansaitsetteko, jos rekisteröidyn?",
-    faqCommissionAnswer: "B4GAMBLE voi saada palkkion tarkistetusta ja selvästi merkitystä kumppanilinkistä. Korvaus ei vaikuta toimitukselliseen arvioon eikä luonnolliseen järjestykseen.",
+    faqCommissionAnswer: "B4GAMBLE voi saada palkkion, kun käytät saatavilla olevaa ja selvästi merkittyä kumppanilinkkiä. Tarjoukset, joihin voimme ohjata sinut, näytetään ensin; kunkin ryhmän sisällä järjestyksen ratkaisee toimituksellinen arvio. Palkkio ei koskaan muuta toimituksellista arviota.",
     faqWhyThreeQuestion: "Miksi tarjouksia on vain kolme?",
     faqWhyThreeAnswer: "Lyhyt lista pitää valinnan selkeänä. Bonukset-sivulta löydät kaikki vertailuun sopivat kohteet.",
   },

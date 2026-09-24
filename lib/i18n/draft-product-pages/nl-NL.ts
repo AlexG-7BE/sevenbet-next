@@ -109,7 +109,7 @@ export const NL_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqWageringQuestion: "Wat betekent de inzetvereiste?",
     faqWageringAnswer: "Dit is het bedrag dat je volgens de gepubliceerde voorwaarden moet inzetten voordat je bonuswinsten kunt opnemen.",
     faqCommissionQuestion: "Verdienen jullie geld als ik me aanmeld?",
-    faqCommissionAnswer: "B4GAMBLE kan commissie ontvangen als je een beschikbare en duidelijk herkenbare affiliatelink gebruikt. Dit beïnvloedt de redactionele beoordeling of rangschikking niet.",
+    faqCommissionAnswer: "B4GAMBLE kan commissie ontvangen als je een beschikbare en duidelijk herkenbare affiliatelink gebruikt. Aanbiedingen waarnaar we kunnen linken, staan bovenaan; binnen elke groep bepaalt de redactionele beoordeling de volgorde. Commissie verandert de redactionele beoordeling nooit.",
     faqWhyThreeQuestion: "Waarom maar drie aanbiedingen?",
     faqWhyThreeAnswer: "Een korte lijst houdt de keuze overzichtelijk; op de pagina Bonussen vind je het volledige aanbod dat in aanmerking komt.",
   },
