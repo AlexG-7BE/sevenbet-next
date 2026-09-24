@@ -83,12 +83,16 @@ export function ProgrammeUnavailableScreen({ error, locale }: { error: string; l
 export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
   busy: boolean;
   error: string;
-  onConfirm: () => void;
+  onConfirm: (processingConsent: boolean) => void;
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
   const [adult, setAdult] = useState(false);
   const [legal, setLegal] = useState(false);
+  // Founder decision, 25 Sep 2026: the explicit consent can be given here, next to the two
+  // required checks, so Mission 01 opens with a working microphone. It stays optional and
+  // unticked; without it the intake screen asks just in time, as before.
+  const [processing, setProcessing] = useState(false);
   return (
     <div className={styles.canvas} data-programme-presentation="access">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
@@ -104,10 +108,14 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
               <input checked={legal} id="programme-legal-acknowledgement" onChange={(event) => setLegal(event.target.checked)} type="checkbox" />
               <span><label htmlFor="programme-legal-acknowledgement">{t("I agree to the Terms and confirm I have read the Privacy Notice")}</label><small>{t("Required")}</small></span>
             </div>
-            <p className={styles.legalLinks}><Link href="/terms">{t("Read Terms")}</Link><Link href="/privacy">{t("Read Privacy Notice")}</Link></p>
-            <button className={styles.primaryAction} disabled={busy || !adult || !legal} onClick={onConfirm} type="button">
+            <label className={`${styles.checkRow} ${styles.consentRow}`} data-programme-access-consent="">
+              <input checked={processing} onChange={(event) => setProcessing(event.target.checked)} type="checkbox" />
+              <span>{t("I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.")} <em>{t("Optional. You can withdraw before saving. Withdrawal stops future processing and clears this draft, but cannot undo processing already completed.")} <Link href="/privacy#ai">{t("Privacy details")}</Link></em></span>
+            </label>
+            <button className={styles.primaryAction} disabled={busy || !adult || !legal} onClick={() => onConfirm(processing)} type="button">
               {busy ? t("Verifying access…") : t("Enter Mission 01")}
             </button>
+            <p className={styles.legalLinks}><Link href="/terms">{t("Read Terms")}</Link><Link href="/privacy">{t("Read Privacy Notice")}</Link></p>
             <StatusMessage error={error} />
             <Link className={styles.helpLink} href={programmeHelpPath(locale)}>{t("Protected Help / pause options →")}</Link>
           </section>
@@ -514,7 +522,7 @@ export function StartingPointReadyScreen({
             </form> : null}
           </>}
           <StatusMessage error={error} />
-          <small>{t("Google provides identity only; it does not verify age or receive your Programme words from B4GAMBLE. Registration adds 0 XP. Programme and Help data never feeds offers or rankings.")}</small>
+          <small>{t("Google provides identity only; it does not verify age or receive your Programme words from B4GAMBLE. Programme and Help data never feeds offers or rankings.")}</small>
           {!authenticated && !googleLinkRecovery ? <button className={styles.withdrawAction} disabled={busy} onClick={onWithdraw} type="button">{t("Withdraw consent and clear this draft")}</button> : null}
           </section>
         </div>
