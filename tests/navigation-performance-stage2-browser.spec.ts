@@ -203,24 +203,21 @@ async function exerciseHeldMobileHeader(browser: Browser, browserName: string, c
     await expect(disclosure).toHaveAttribute("data-navigation-enhanced", "true");
     await expect(page.locator('[data-commercial-navigation-pending="mobile"]')).toHaveCount(0);
 
-    if (country === "PE") {
-      await expect(header.locator('a[href="/en/best-offers"]')).toHaveCount(2);
-      await expect(header.locator('a[href="/en/bonuses"]')).toHaveCount(2);
-    } else {
-      await expect(page.getByRole("link", { name: /Best Offers/ })).toHaveCount(0);
-      await expect(page.getByRole("link", { name: /Bonuses/ })).toHaveCount(0);
-      await expect(page.locator('[href^="/r/"]')).toHaveCount(0);
-    }
+    // Once the commercial state resolves both markets reach the destinations:
+    // navigation follows the presentation policy, not whether a partner route
+    // exists. The route is what still separates them, so KZ arrives at the
+    // same pages carrying no /r/ link.
+    await expect(header.locator('a[href="/en/best-offers"]')).toHaveCount(2);
+    await expect(header.locator('a[href="/en/bonuses"]')).toHaveCount(2);
+    if (country === "KZ") await expect(page.locator('[href^="/r/"]')).toHaveCount(0);
 
     await trigger.click();
     await expect(mobileNavigation).toBeVisible();
     await expect(page.getByRole("button", { name: "Close navigation", exact: true })).toBeFocused();
     await expect(mobileNavigation.getByRole("button", { name: /Change language: English/ })).toBeVisible();
     await expect(page.locator("html")).toHaveCSS("overflow", "hidden");
-    if (country === "PE") {
-      await expect(mobileNavigation.getByRole("link", { name: /Best Offers/ })).toHaveAttribute("href", "/en/best-offers");
-      await expect(mobileNavigation.getByRole("link", { name: /Bonuses/ })).toHaveAttribute("href", "/en/bonuses");
-    }
+    await expect(mobileNavigation.getByRole("link", { name: /Best Offers/ })).toHaveAttribute("href", "/en/best-offers");
+    await expect(mobileNavigation.getByRole("link", { name: /Bonuses/ })).toHaveAttribute("href", "/en/bonuses");
 
     await page.keyboard.press("Escape");
     await expect(mobileNavigation).not.toBeVisible();
