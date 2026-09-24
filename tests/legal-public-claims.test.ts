@@ -51,10 +51,13 @@ test("commercial surfaces state the enforced compensation boundary without aspir
   const methodologyCatalog = source("lib/i18n/static-pages/methodology.ts");
   assert.match(productCatalog, /Affiliate compensation does not determine Editor Score or natural editorial ranking/);
   assert.match(methodologyCatalog, /Affiliate compensation does not determine Editor Score or natural editorial ranking/);
+  assert.match(productCatalog, /faqCommissionAnswer: "No\. Affiliate compensation does not determine Editor Score or natural editorial ranking\."/);
 
   const boundSurfaces = [
     ["app/(public)/methodology/page.tsx", /methodologyMessages\(presentation\.locale\)/],
-    ["components/casino-discovery/CasinoDiscoveryCard.tsx", /messages\.bestOffers\.commissionNote/],
+    // The casino directory lost its card-level note with CasinoDiscoveryCard; the live route
+    // states the same governed sentence through messages.casinos.faqCommissionAnswer.
+    ["app/(public)/casinos/page.tsx", /messages\.casinos\.faqCommissionAnswer/],
     ["components/best-offers/BestOffersExperience.tsx", /messages\.bestOffers\.commissionNote/],
     ["components/public-shell/PublicFooter.tsx", /footer\.commissionDisclosure/],
   ] as const;

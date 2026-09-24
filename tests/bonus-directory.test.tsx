@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 
 test("bonus presentation renders neutral absence and never links an unavailable action", () => {
@@ -118,11 +118,10 @@ test("directory cards use normalized logo stages and preserve a readable respons
   assert.doesNotMatch(marketplaceStyles, /font-size:(?:\s*)1[01]px/);
 });
 
-test("casino and bonus directories share one presentation-only pagination contract", () => {
+test("the bonus directory keeps one presentation-only pagination contract", () => {
   const pagination = readFileSync("components/directory-pagination/DirectoryPagination.tsx", "utf8");
   const paginationStyles = readFileSync("components/directory-pagination/DirectoryPagination.module.css", "utf8");
   const bonuses = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  const casinos = readFileSync("components/casino-discovery/CasinoDiscovery.tsx", "utf8");
 
   assert.match(pagination, /labels\?\.pageOf \?\? "Page \{page\} of \{pages\}"/);
   assert.equal((pagination.match(/aria-disabled="true"/g) || []).length, 2);
@@ -132,7 +131,9 @@ test("casino and bonus directories share one presentation-only pagination contra
   assert.match(paginationStyles, /border-radius: var\(--sb-radius-full\)/);
   assert.match(paginationStyles, /a\.control:focus-visible/);
   assert.match(bonuses, /<DirectoryPagination/);
-  assert.match(casinos, /<DirectoryPagination/);
   assert.match(bonuses, /if \(key !== "page"\) params\.append\(key, item\)/);
-  assert.match(casinos, /discoveryHref\(result\.appliedFilters, \{ page: result\.page [+-] 1 \}\)/);
+  // The casino directory serves one fixed page, so the shared control must have exactly one caller.
+  assert.equal(readdirSync("components", { recursive: true }).filter((entry) =>
+    typeof entry === "string" && entry.endsWith(".tsx")
+    && readFileSync(`components/${entry}`, "utf8").includes("<DirectoryPagination")).length, 1);
 });

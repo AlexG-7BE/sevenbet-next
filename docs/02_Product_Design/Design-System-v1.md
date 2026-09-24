@@ -174,7 +174,9 @@ These are architecture/compliance boundaries, not cosmetic exceptions.
 
 ## Deprecation
 
-**Detected:** five unreachable pre-system presentation wrappers were removed: `CasinoCards.tsx`, `KnowledgeCenter.tsx`, `PageTemplates.tsx`, `ResponsibleGamblingHub.tsx` and `Section.tsx`. Runtime import-graph checks found no current consumers. `PublicOffers.tsx` and `CasinoReviewSections.tsx` remain because tests use them as active safety fixtures.
+**Detected:** five unreachable pre-system presentation wrappers were removed: `CasinoCards.tsx`, `KnowledgeCenter.tsx`, `PageTemplates.tsx`, `ResponsibleGamblingHub.tsx` and `Section.tsx`. Runtime import-graph checks found no current consumers.
+
+**Detected:** `PublicOffers.tsx`, `CasinoReviewSections.tsx` and the `CasinoDiscovery.tsx`/`CasinoDiscoveryCard.tsx`/`MobileCasinoFilters.tsx` trio were removed as well. They had been kept as "active safety fixtures", but no route or component imported them, so the tests were the only consumers — a test reading an unreachable file proves nothing about the product. Worse, they held the sole renderer for `foundedYear` and `responsibleGamblingTools`, which made real published data look missing. Those two fields are re-homed in `CasinoProfile.tsx` on `feat/casino-truthful-empty-states` (52111790), so that change must land first — deleting these files ahead of it would leave both fields with no renderer at all. The live surfaces are `CasinoCollection.tsx` (directory), `CasinoProfile.tsx` (review) and `BonusDirectory.tsx` (offers). `CasinoDiscovery.module.css` stays, because `app/(public)/casinos/error.tsx` still owns its error-state rules.
 
 **Detected:** `Core/Button` was evolved in place, so no approved Figma reusable pattern or page family was superseded. Historical design artefacts were not deleted or moved. New work must use `Core/Button`/shared Action for eligible internal actions and must use the owning domain component for commercial or protected behavior.
 

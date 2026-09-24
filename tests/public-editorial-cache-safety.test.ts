@@ -107,10 +107,13 @@ test("reusable editorial projections cannot authorize commercial actions", () =>
 test("request-specific primary and Casino-detail links disable client-router prefetch", () => {
   const primary = source("components/public-shell/PublicNavigationClient.tsx");
   const trackedReview = source("components/analytics/TrackedReviewLink.tsx");
-  const casinoCard = source("components/casino-discovery/CasinoDiscoveryCard.tsx");
+  const collection = source("components/casino-discovery/CasinoCollection.tsx");
   assert.match(primary, /<Link[\s\S]*?data-navigation-href=\{baseHref\}[\s\S]*?prefetch=\{false\}/);
   assert.match(trackedReview, /<Link[\s\S]*?prefetch=\{false\}/);
-  assert.match(casinoCard, /reviewHref[\s\S]*?<Link[\s\S]*?prefetch=\{false\}/);
+  // The directory card no longer owns a Link of its own: every review hop goes through the
+  // tracked link asserted above, so the prefetch contract holds in one place.
+  assert.match(collection, /card\.reviewHref \? <TrackedReviewLink/);
+  assert.doesNotMatch(collection, /<Link\b/);
 });
 
 test("publication and archive paths invalidate the bounded editorial caches", () => {
