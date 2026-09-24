@@ -231,3 +231,19 @@ test("bonus directory never presents a demonstration offer as current or actiona
   assert.ok(!withReview.includes(copy.casinoReview), "a demonstration must not read as a published review");
   assert.doesNotMatch(withReview, /href="\/r\//);
 });
+
+test("bonus directory searches by operator name inside its sticky controls", async () => {
+  const { filterOffersByCasinoName } = await import("../lib/commercial/commercial-presentation");
+  const { BonusOfferDirectory } = await import("../components/bonus-directory/BonusOfferDirectory");
+  const truth = offer();
+  const other = { ...offer(), id: "other-offer", casino: { ...offer().casino, id: "other-casino", name: "Northwind Casino", slug: "northwind" } };
+
+  assert.deepEqual(filterOffersByCasinoName([truth, other], "  NORTH ", "en-GB").map((item) => item.casino.name), ["Northwind Casino"]);
+  assert.equal(filterOffersByCasinoName([truth, other], "", "en-GB").length, 2);
+
+  const html = renderToStaticMarkup(<BonusOfferDirectory messages={messages} offers={[truth, other]} presentation={presentation} />);
+  // The field sits in the same block as the filter rail, labelled for assistive technology.
+  assert.match(html, /<div><label[^>]*><span>[^<]+<\/span><input[^>]*type="search"[^>]*\/><\/label><div aria-label="[^"]+" role="tablist">/);
+  assert.match(html, /role="tablist"/);
+  assert.match(html, /data-header-autohide=""/);
+});
