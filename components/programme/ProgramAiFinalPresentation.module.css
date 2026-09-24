@@ -96,6 +96,9 @@
   transition: background 200ms cubic-bezier(.2, .8, .2, 1), opacity 200ms ease;
 }
 
+/* `.canvas button { font: inherit }` outranks a single class, so the action type is restated at canvas scope. */
+.canvas .primaryAction, .canvas .secondaryAction, .canvas .lightAction { font-size: 16px; font-weight: 700; }
+
 .primaryAction:hover { background: var(--programme-paper); }
 .primaryAction:disabled, .secondaryAction:disabled, .lightAction:disabled, .microphoneAction:disabled { opacity: .45; cursor: not-allowed; }
 .primaryAction:disabled:hover { background: var(--programme-acid); }
