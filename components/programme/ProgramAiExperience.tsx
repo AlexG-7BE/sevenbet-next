@@ -724,7 +724,9 @@ export function ProgramAiExperience({
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       const boundary = phaseFocusRef.current;
-      if (boundary && !boundary.contains(document.activeElement)) boundary.focus();
+      // A new Programme screen starts at its top, not at the scroll depth of the screen before it.
+      if (phase !== "loading" && window.scrollY > 0) window.scrollTo({ top: 0, behavior: "instant" });
+      if (boundary && !boundary.contains(document.activeElement)) boundary.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [phase]);
