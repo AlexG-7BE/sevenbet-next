@@ -5,6 +5,7 @@ import { worldwideFounderGbAuthorityApplies } from "@/lib/current-partner-worldw
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
 import { scopedCasinoReferralAllowed } from "@/lib/jurisdiction/scoped-commercial-authority";
+import { marketAccess } from "@/lib/market-access/access";
 import { marketActivationRuntime, type MarketActivationRuntime } from "@/lib/market-activation/runtime";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import {
@@ -94,6 +95,7 @@ export class PublicCommercialActionResolver implements PublicCommercialActionAut
       trust: authorityMatches ? "TRUSTED" : "UNTRUSTED",
     });
     const redirectEnabled = this.redirectEnabled();
+    const now = input.now ?? new Date();
 
     const candidates = subjects.filter((subject) => {
       if (!subject.published) {
@@ -110,6 +112,11 @@ export class PublicCommercialActionResolver implements PublicCommercialActionAut
       }
       if (!scopedCasinoReferralAllowed(input.authority, subject.casinoSlug)) {
         decisions.set(subject.casinoId, unavailable(input.authority?.reasonCode ?? "UNKNOWN_LOCATION"));
+        return false;
+      }
+      const access = marketAccess(subject.casinoSlug, marketCode, now);
+      if (!access.open) {
+        decisions.set(subject.casinoId, unavailable(access.closure));
         return false;
       }
       return true;
@@ -137,7 +144,6 @@ export class PublicCommercialActionResolver implements PublicCommercialActionAut
     let gbDecisions = new Map<string, GbCommercialReadinessDecision>();
     if (countryCode === "GB") {
       try {
-        const now = input.now ?? new Date();
         const requests = candidates.flatMap((subject) => {
           const route = routesByCasino.get(subject.casinoId)?.[0];
           const context = route?.gbCommercialReadinessContext;
