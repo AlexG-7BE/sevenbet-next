@@ -66,6 +66,30 @@ async function withTransientRetry<T>(label: string, work: () => Promise<T>, atte
   }
 }
 
+/**
+ * Runs work over a bounded number of lanes. Republishing a casino is a long
+ * interactive transaction against a remote pool, so the lane count is the
+ * tension: more lanes finish sooner, but more casinos sit in DRAFT — and so
+ * off the public site — at the same moment, and a dropped connection strands
+ * that many rather than one.
+ */
+async function inLanes<T>(items: readonly T[], lanes: number, work: (item: T) => Promise<void>) {
+  const queue = [...items];
+  const runners = Array.from({ length: Math.max(1, Math.min(lanes, queue.length)) }, async () => {
+    for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
+      await work(next);
+    }
+  });
+  await Promise.all(runners);
+}
+
+function requestedLanes() {
+  const raw = Number.parseInt(option("concurrency") ?? "1", 10);
+  if (!Number.isSafeInteger(raw) || raw < 1) throw new Error(`${RELEASE}: --concurrency must be a positive integer`);
+  if (raw > 6) throw new Error(`${RELEASE}: --concurrency above 6 risks the connection pool and takes too much of the catalogue offline at once`);
+  return raw;
+}
+
 function decimal(value: Prisma.Decimal | null) {
   return value === null ? null : Number(value);
 }
@@ -357,7 +381,9 @@ async function apply() {
 
   const results = [];
   const failedApply: string[] = [];
-  for (const derivation of derivations) {
+  const lanes = requestedLanes();
+  console.log(`${RELEASE}: applying across ${lanes} lane(s); at most ${lanes} casino(s) leave the site at once`);
+  await inLanes(derivations, lanes, async (derivation) => {
     let written;
     try {
       written = await withTransientRetry(derivation.slug, async () => {
@@ -368,7 +394,7 @@ async function apply() {
     } catch (error) {
       failedApply.push(derivation.slug);
       console.error(`  ${derivation.slug.padEnd(16)} FAILED: ${error instanceof Error ? error.message : error}`);
-      continue;
+      return;
     }
     await prisma.auditLog.create({
       data: {
@@ -393,7 +419,7 @@ async function apply() {
     });
     results.push({ slug: derivation.slug, ...written });
     console.log(`  ${derivation.slug.padEnd(16)} pay=${written.payments} prov=${written.providers} cat=${written.categories} licencesCollapsed=${written.collapsed} identity=${written.identity.join(",") || "—"}`);
-  }
+  });
   console.log(`${RELEASE}: applied to ${results.length} casinos and republished each snapshot`);
   if (failedApply.length) throw new Error(`${RELEASE}: apply failed for ${failedApply.join(", ")}; re-run to resume`);
 }
@@ -498,7 +524,9 @@ async function editorial() {
   const entries = only ? corpus.entries.filter((entry) => entry.slug === only) : corpus.entries;
   if (!entries.length) throw new Error(`${RELEASE}: no editorial entry matched`);
   const failed: string[] = [];
-  for (const entry of entries) {
+  const lanes = requestedLanes();
+  console.log(`${RELEASE}: rewriting across ${lanes} lane(s)`);
+  await inLanes(entries, lanes, async (entry) => {
     try {
       await withTransientRetry(entry.slug, () => applyEditorial(entry, actor.id));
       console.log(`  ${entry.slug.padEnd(16)} rewritten`);
@@ -507,7 +535,7 @@ async function editorial() {
       failed.push(entry.slug);
       console.error(`  ${entry.slug.padEnd(16)} FAILED: ${error instanceof Error ? error.message : error}`);
     }
-  }
+  });
   if (failed.length) throw new Error(`${RELEASE}: editorial rewrite failed for ${failed.join(", ")}; re-run to resume`);
   console.log(`${RELEASE}: rewrote editorial copy for ${entries.length} casinos`);
 }

@@ -687,10 +687,13 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
     currencies: [currency],
     withdrawalTime: formatFixturePayout(sample.payout, locale),
     minimumDeposit: sample.deposit,
-    minimumWithdrawal: null,
+    // Illustrative values, not a claim. The profile drops a fact it cannot
+    // state, so leaving these null empties the payments section and the
+    // German label-overlap check loses the rows it exists to measure.
+    minimumWithdrawal: sample.deposit * 2,
     maximumWithdrawal: null,
     depositProcessingTime: copy.instant,
-    fees: null,
+    fees: "0%",
     crypto: false,
   }));
   const fixtureProviders = [{ key: "visual-slots", name: "Orbit Studios", gameCount: 2400, liveCasino: false }];
