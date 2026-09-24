@@ -103,9 +103,24 @@ test("mounted Mission path is registry-owned and renders all ten current titles 
 
 test("mounted 10 Steps component uses the canonical Programme entry and one trust destination", () => {
   const bodyHrefs = [...runtime.matchAll(/<a\b[^>]*href="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(bodyHrefs, ["/program?entry=start", "/about", "/program?entry=start", "/program?entry=start"]);
+  // Hero, About, the first Mission, the final section and the phone-only sticky start bar.
+  assert.deepEqual(bodyHrefs, ["/program?entry=start", "/about", "/program?entry=start", "/program?entry=start", "/program?entry=start"]);
   assert.doesNotMatch(runtime, /href="\/(?:casinos|bonuses|best-offers|catalog|compare|r\/|go\/)/);
   assert.doesNotMatch(component, /\?mission=|missionIndex|localStorage|sessionStorage/);
+});
+
+test("phone start bar follows the hero action and yields to the final action", async () => {
+  const { shouldShowTenStepsStart } = await import("../app/(public)/10-steps/TenStepsStickyStart");
+  const base = { barHeight: 72, finalTop: 2_000, footerTop: 3_000, headerHeight: 80, heroActionBottom: 400, mobile: true, viewportHeight: 844 };
+  assert.equal(shouldShowTenStepsStart(base), false, "hidden while the hero action is on screen");
+  assert.equal(shouldShowTenStepsStart({ ...base, heroActionBottom: 60 }), true, "shown once the hero action has passed");
+  assert.equal(shouldShowTenStepsStart({ ...base, heroActionBottom: 60, finalTop: 700 }), false, "hidden when the final action arrives");
+  assert.equal(shouldShowTenStepsStart({ ...base, heroActionBottom: 60, footerTop: 880 }), false, "hidden near the footer");
+  assert.equal(shouldShowTenStepsStart({ ...base, heroActionBottom: 60, mobile: false }), false, "never on wider screens");
+  assert.match(runtime, /data-ten-steps-hero-action="true"/);
+  assert.match(runtime, /data-mobile-visible="false" data-ten-steps-sticky-start="true"/);
+  assert.match(componentCss, /\.primaryAction \{[^}]*font-size: 16px;[^}]*letter-spacing: 0;/);
+  assert.doesNotMatch(componentCss.match(/\.primaryAction \{[^}]*\}/)?.[0] ?? "", /uppercase/);
 });
 
 test("mounted Mission 01 copy reflects the Starting Point, timing and reward boundary", () => {
@@ -114,8 +129,9 @@ test("mounted Mission 01 copy reflects the Starting Point, timing and reward bou
   }
   assert.match(runtimeText, /Most Missions take (?:about )?5–8 minutes/i);
   assert.match(runtimeText, /Mission 01 starts with your Starting Point\./i);
-  assert.match(runtimeText, /Starting Point(?:'s|’s) two actions[^.]*40 XP/i);
-  assert.match(runtimeText, /Registration[^.]*only[^.]*ready/i);
+  // Founder decision 25 Sep 2026: the closing line states the benefit, not XP or registration mechanics.
+  assert.match(runtimeText, /Free to use\. No account needed to begin\./);
+  assert.doesNotMatch(messages.text[48], /XP|Registration/);
   assert.doesNotMatch(runtimeText, /Mission 01 takes about one minute|5–15 minutes|\+60 XP/i);
   assert.doesNotMatch(runtimeText, /cash value|money value|bonus eligibility|winnings|deposit reward/i);
 });
