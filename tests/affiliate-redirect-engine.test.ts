@@ -6,6 +6,7 @@ import { resolveAffiliateCandidates, type CandidateOffer } from "../lib/affiliat
 import { safeAffiliateRedirectResponse, unavailableRedirectResponse } from "../lib/affiliate-routing/redirect-response";
 import { normalizeRedirectSlug, validateRedirectTargetUrl } from "../lib/affiliate-routing/redirect-validation";
 import { requestCountrySignalFromHeaders } from "../lib/jurisdiction/request-country";
+import { JurisdictionResolver } from "../lib/jurisdiction/resolver";
 import type { AffiliateRedirectStore } from "../lib/repositories/affiliate-redirect.repository";
 import { AffiliateRedirectService } from "../lib/services/affiliate-redirect.service";
 import { getAdminAccessStatus } from "../lib/auth/policy";
@@ -262,6 +263,31 @@ test("direct redirect resolution obeys exact canonical authority without a legac
   assert.equal(result.ok, true);
   const source = readFileSync("lib/services/affiliate-redirect.service.ts", "utf8");
   assert.doesNotMatch(source, /partnerRouteService|isProductionEligible/);
+});
+
+test("a healthy route never redirects a reader whose market prohibits presenting the offer", async () => {
+  // Uses the real resolver with no country policies, so the only thing that can
+  // deny NO is the Founder's list of markets where offers may not be presented.
+  // Before the list reached this resolver, a HEALTHY activation there still
+  // linked out while the offer pages for the same reader said the opposite.
+  const mapping = {
+    id: "redirect-id", slug: "casino-offer", casinoId: "casino", casinoBonusId: null, affiliateOfferId: "safe",
+    defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
+    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
+  };
+  const service = (countryCode: string) => new AffiliateRedirectService(
+    redirectStore(mapping),
+    { legacyAdminPreviewCandidates: async () => [] },
+    new JurisdictionResolver({ findByCountry: async () => null }),
+    allowGbCommercialReadinessAuthority,
+    canonicalRoute({ offerId: "safe", trackingLinkId: "link-safe", trackingUrl: "https://tracking.example/link-safe" }),
+  ).resolve("casino-offer", { now, requestCountrySignal: trustedSignal(countryCode) });
+
+  const prohibited = await service("NO");
+  assert.equal(prohibited.ok, false);
+  assert.equal(prohibited.ok === false && prohibited.reason, "JURISDICTION_DENIED");
+  // The same healthy route still serves a market the list does not name.
+  assert.equal((await service("SE")).ok, true);
 });
 
 test("redirect canonicalizes a trusted country-scoped region before its single route lookup", async () => {

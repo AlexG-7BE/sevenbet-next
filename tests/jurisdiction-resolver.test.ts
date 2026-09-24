@@ -36,6 +36,27 @@ test("explicit denials fail closed while an absent country policy uses the Found
   assert.equal(invalid.reasonCode, "UNKNOWN_LOCATION");
 });
 
+test("a market that prohibits presenting offers is denied commerce unless it has a policy of its own", async () => {
+  const signal = (countryCode: string) => input({ requestCountrySignal: { countryCode, trust: "TRUSTED", observedAt: now } });
+  for (const countryCode of ["NO", "PL", "CZ", "HR", "ZA"]) {
+    const result = await new JurisdictionResolver(store(null)).resolve(signal(countryCode));
+    assert.equal(result.reasonCode, "OFFER_PRESENTATION_PROHIBITED", countryCode);
+    assert.equal(result.commercialAllowed, false, countryCode);
+    assert.equal(result.referralAllowed, false, countryCode);
+    // Reviews stay readable; only the commercial surface is withheld.
+    assert.equal(result.editorialAllowed, true, countryCode);
+  }
+  for (const countryCode of ["KZ", "DE", "SE"]) {
+    const result = await new JurisdictionResolver(store(null)).resolve(signal(countryCode));
+    assert.equal(result.reasonCode, "FOUNDER_GLOBAL_DEFAULT", countryCode);
+    assert.equal(result.referralAllowed, true, countryCode);
+  }
+  // An explicit country policy is more specific evidence than the list.
+  const licensed = await new JurisdictionResolver(store({ ...policy, countryCode: "NO", marketId: "market-no", jurisdictionId: "jurisdiction-no" })).resolve(signal("NO"));
+  assert.equal(licensed.reasonCode, "POLICY_APPROVED");
+  assert.equal(licensed.referralAllowed, true);
+});
+
 test("commercial and referral capabilities are evaluated independently", async () => {
   const result = await new JurisdictionResolver(store({ ...policy, referralAllowed: false })).resolve(input());
   assert.equal(result.editorialAllowed, true);

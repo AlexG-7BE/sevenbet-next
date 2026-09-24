@@ -1,3 +1,4 @@
+import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { createHash } from "node:crypto";
 
 import { repositoryJurisdictionPolicyStore } from "./policy-store";
@@ -69,6 +70,13 @@ export class JurisdictionResolver {
     let policy: JurisdictionPolicy | null;
     try { policy = await this.store.findByCountry(countryCode); } catch { return deny(input, "POLICY_UNAVAILABLE", countryCode); }
     if (!policy) {
+      // The global default admits commerce wherever no country policy exists,
+      // but the Founder also keeps a list of markets where presenting an offer
+      // is itself prohibited. Without this check the two disagreed: those pages
+      // withheld offers while casino cards and /r/ still linked out, because
+      // both ask this resolver. An explicit country policy still outranks the
+      // list, as the more specific evidence.
+      if (!offersMayBePresented(countryCode)) return deny(input, "OFFER_PRESENTATION_PROHIBITED", countryCode, null, true);
       return decision(input, {
         countryCode,
         marketId: null,
