@@ -43,6 +43,11 @@
 .header[data-shell-theme="light"] .mobilePrimaryAction,
 .header[data-shell-theme="cream"] .mobilePrimaryAction { border-color:rgba(16,15,15,.4); color:var(--shell-ink); }
 .header[data-shell-theme="photo"] { background:linear-gradient(to bottom,rgba(16,15,15,.72),rgba(16,15,15,0)); backdrop-filter:none; }
+/* Home on phones reads its chapters as compact cards rather than full-bleed photos, so a
+   transparent header over them would sit on card text. */
+@media (max-width: 760px) {
+  :global(body:has([data-handoff-page="home"])) .header[data-shell-theme="photo"] { background:rgba(16,15,15,.96); backdrop-filter:blur(14px); }
+}
 
 .header :is(.brand, .primaryNavigation a, .accountLink, .mobilePrimaryAction, .menuButton, .primaryAction) {
   transition:
