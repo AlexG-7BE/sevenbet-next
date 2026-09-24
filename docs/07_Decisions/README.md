@@ -17,6 +17,7 @@ Update when a material decision is approved, superseded, reversed, or retired.
 ## Product direction records
 
 - [PROGRAM-AI-01 Product Direction v2.2](PROGRAM-AI-01-Product-Direction-v2.2.md) — Founder-approved target Programme direction; implementation is not authorised.
+- [Learn next steps](LEARN-NEXT-STEPS-2026-09-25.md) — Founder-approved Programme card after six guides, a mid-guide Programme block, and gated bonus-guide bridges to Bonuses and Best Offers; protected guides unchanged.
 - [10 Steps on a phone](TEN-STEPS-MOBILE-2026-09-25.md) — Founder-approved 16px sentence-case start actions, phone start bar, compact Mission list and a benefit closing line without XP mechanics.
 - [Programme Mission screen on a phone](PROGRAMME-MISSION-SCREEN-2026-09-25.md) — Founder-approved phone Mission layout (first choices on the first screen, sticky confirm) and research links leading the dashboard after Mission 08.
 - [Safe cross-market offer presentation](SAFE-OFFER-PRESENTATION-2026-09-08.md) — Founder-approved published offer knowledge and presentation boundary.
