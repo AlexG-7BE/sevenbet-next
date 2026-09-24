@@ -653,6 +653,34 @@ test("document policy denial is distinct from a browser user denial and keeps th
   await expect(page.getByRole("textbox", { name: "Your situation" })).toBeVisible();
 });
 
+test("consent given on the access screen opens Mission 01 with a working microphone", async ({ page }) => {
+  let authorityPosts = 0;
+  await page.route("**/api/program/program-ai/session", async (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
+  await page.route("**/api/program/program-ai/authority", async (route) => {
+    if (route.request().method() === "POST") authorityPosts += 1;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/program");
+  const consent = page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ });
+  await expect(consent).not.toBeChecked();
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  // The consent is optional: entry is already available without it.
+  await expect(page.getByRole("button", { name: "Enter Mission 01" })).toBeEnabled();
+  await consent.check();
+  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Tap to speak" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "I'd rather type" })).toBeEnabled();
+  const intakeConsent = page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ });
+  await expect(intakeConsent).toBeChecked();
+  await expect(intakeConsent).toBeDisabled();
+  expect(authorityPosts).toBe(1);
+  await noHorizontalOverflow(page);
+});
+
 test("unsupported microphone recording keeps the typed path available", async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, "MediaRecorder", { configurable: true, value: undefined });
@@ -670,6 +698,42 @@ test("unsupported microphone recording keeps the typed path available", async ({
   await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
 });
 
+test("account-first route registers before the story and opens Mission 01 from the dashboard", async ({ page }) => {
+  // Founder decision, 25 Sep 2026: a quiet door to register first. Mission 01 stays the main path.
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/program");
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
+
+  await page.getByRole("button", { name: "Create an account first →" }).click();
+  await expect(page.getByRole("heading", { name: /Save your place first/ })).toBeVisible();
+  await expect(page.getByText("Your Starting Point is ready")).toHaveCount(0);
+  await noHorizontalOverflow(page);
+  await page.getByRole("button", { name: "← Tell my story first" }).click();
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
+  await page.getByRole("button", { name: "Create an account first →" }).click();
+
+  const email = `program-ai-account-first-${randomUUID()}@example.test`;
+  await page.getByRole("button", { name: "Use email instead" }).click();
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
+  await page.getByLabel("Password").fill("Programme-test-password-42!");
+  await page.getByRole("button", { name: "Create account with email" }).click();
+  await expect(page.getByRole("button", { name: /Start Mission 01/i })).toBeVisible();
+
+  const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+  const [acceptance, startingPoints, xp] = await Promise.all([
+    prisma.programmeAccessAcceptance.findUniqueOrThrow({ where: { userId: user.id } }),
+    prisma.programmeStartingPoint.findMany({ where: { userId: user.id } }),
+    prisma.userXpEvent.findMany({ where: { userId: user.id } }),
+  ]);
+  expect(acceptance.userId).toBe(user.id);
+  expect(startingPoints).toHaveLength(0);
+  expect(xp).toHaveLength(0);
+});
+
 test("typed fallback path binds exact authority and is idempotent through real email auth", async ({ page }) => {
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -677,8 +741,9 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await page.goto("/program");
 
   await expect(page.getByRole("heading", { name: "Two checks before you begin" })).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(2);
-  for (const checkbox of await page.getByRole("checkbox").all()) {
+  // Two required checks plus the optional explicit consent; this path leaves consent for intake.
+  await expect(page.getByRole("checkbox")).toHaveCount(3);
+  for (const checkbox of [page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }), page.getByRole("checkbox", { name: /I agree to the Terms/ })]) {
     await checkbox.focus();
     await page.keyboard.press("Space");
     await expect(checkbox).toBeChecked();
