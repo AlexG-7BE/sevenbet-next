@@ -253,8 +253,31 @@ function setupHomeInteractions(root: HTMLElement) {
     window.scrollTo({ behavior: "smooth", top: canonicalDestinations[nextIndex] });
   };
 
+  // Phones read the chapters as compact cards in normal flow (see transformHomeHandoffCss):
+  // the pinned stack animation must not write its inline transforms there.
+  const compactChapters = window.matchMedia("(max-width: 760px)");
+  let compactApplied = false;
+  const showCompactChapters = () => {
+    if (compactApplied) return;
+    compactApplied = true;
+    for (const panel of panels) {
+      panel.style.setProperty("transform", "none", "important");
+      panel.style.setProperty("opacity", "1", "important");
+      panel.style.removeProperty("border-radius");
+      for (const element of [panel.querySelector<HTMLElement>("[data-mob='chapter']"), panel.querySelector<HTMLElement>("[data-stackind]")]) {
+        element?.style.setProperty("opacity", "1", "important");
+      }
+    }
+  };
+
   const syncStack = () => {
-    if (!stack || reducedMotion || !panelLayouts.length) return;
+    if (!stack || reducedMotion) return;
+    if (compactChapters.matches) {
+      showCompactChapters();
+      return;
+    }
+    compactApplied = false;
+    if (!panelLayouts.length) return;
     const scrollY = window.scrollY;
     const opens = panelLayouts.map(({ open }) => open);
 
