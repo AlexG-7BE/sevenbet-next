@@ -194,7 +194,7 @@ const translations: Record<EuropeanHomeLocale, HomeCopySections> = {
 
 const metadata = {
   "en-GB": { title: "B4GAMBLE | Know your limits before you play", description: "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play." },
-  "de-DE": { title: "B4GAMBLE | Kenne deine Grenzen, bevor du spielst", description: "Lernangebote, private Selbstchecks und transparente Casino-Vergleiche helfen Erwachsenen, Risiken zu verstehen und persönliche Grenzen zu setzen, bevor sie spielen." },
+  "de-DE": { title: "B4GAMBLE | Kenne deine Grenzen, bevor du spielst", description: "Lernangebote, private Selbstchecks und transparente Anbietervergleiche helfen Erwachsenen, Risiken zu verstehen und persönliche Grenzen zu setzen, bevor sie spielen." },
   "it-IT": { title: "B4GAMBLE | Conosci i tuoi limiti prima di giocare", description: "Strumenti educativi, autovalutazioni private e confronti trasparenti aiutano gli adulti a comprendere i rischi e a fissare limiti personali prima di giocare." },
   "es-ES": { title: "B4GAMBLE | Conoce tus límites antes de jugar", description: "Herramientas educativas, autoevaluaciones privadas y comparaciones transparentes ayudan a las personas adultas a comprender los riesgos y fijar límites antes de jugar." },
   "es-PE": { title: "B4GAMBLE Perú | Conoce tus límites antes de jugar", description: "Herramientas educativas, autoevaluaciones privadas y comparaciones transparentes para que las personas adultas en Perú comprendan los riesgos y definan límites antes de jugar." },

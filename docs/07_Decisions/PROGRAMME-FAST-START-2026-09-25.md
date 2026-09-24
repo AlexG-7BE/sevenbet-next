@@ -4,7 +4,7 @@
 
 **Decision authority:** explicit Founder instruction, 25 September 2026 (mobile conversion audit, proposals P1–P3)
 
-**Supersedes in part:** RFC-021/RFC-022 "two-control access gate" and "authority only on the intake surface"; RFC-036 GB Legal P0 wording "two-step access plus just-in-time explicit consent". Everything else in those RFCs stands.
+**Supersedes in part:** RFC-021/RFC-022 "two-control access gate" and "authority only on the intake surface"; RFC-036 GB Legal P0 wording "two-step access plus just-in-time explicit consent"; RFC-022/RFC-025 "registration follows the Starting Point" (now also possible before it). Everything else in those RFCs stands.
 
 ## Decision
 
@@ -16,7 +16,13 @@ Starting the Programme on a phone took three checks across two screens before a 
    - It uses the same statement and version as intake. It carries the withdrawal notice (GDPR Art. 7(3)) and a link to the privacy details.
    - Ticking it and entering Mission 01 is the explicit affirmative action. The client records the authority as soon as the anonymous Programme session exists, so intake opens with a working microphone.
    - If the box is not ticked, or recording fails, intake asks just in time exactly as before.
-2. **Registration puts the main action first.** The registration note drops "Registration adds 0 XP". The Google-identity and data-use sentences remain. "Withdraw consent and clear this draft" stays available as a quiet link at the bottom of the screen.
+2. **A quiet account-first route (P2).**
+   - Under "I'd rather type" the intake screen offers a small "Create an account first →" link. It is not a second call to action: Mission 01 stays the main path.
+   - The link opens the registration screen without a Starting Point ("Save your place first.") with Google and email, plus "← Tell my story first".
+   - After sign-up the client records the access checks the person affirmed on this journey for the new account, through the existing authenticated access endpoint.
+   - The dashboard then opens with "Start Mission 01". No claim, Starting Point or XP is created, and Mission 01 later earns its usual XP.
+   - The route is never offered on the SUPPORT_FIRST screen.
+3. **Registration puts the main action first.** The registration note drops "Registration adds 0 XP". The Google-identity and data-use sentences remain. "Withdraw consent and clear this draft" stays available as a quiet link at the bottom of the screen.
 
 ## Unchanged
 
@@ -27,4 +33,6 @@ Starting the Programme on a phone took three checks across two screens before a 
 ## Evidence
 
 - `tests/gb-legal-p0-closure.test.ts` pins the new order (two required checks, the optional access consent, the intake fallback and withdrawal) and that the access consent starts unticked and never gates entry.
-- `tests/program-ai-browser.spec.ts` covers the up-front consent opening intake with an enabled microphone and a single authority POST.
+- `tests/program-ai-browser.spec.ts` covers:
+  - the up-front consent opening intake with an enabled microphone and a single authority POST;
+  - the account-first route end to end with real email auth, checking user access acceptance with no Starting Point and no XP.

@@ -5,17 +5,20 @@ import { cache, Suspense } from "react";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { articlePath, type PublicArticle } from "@/lib/articles/article-types";
 import { relatedReadingListInput, relatedReadingSelection } from "@/lib/articles/related-reading";
+import { learnBridgeMessages } from "@/lib/i18n/learn-bridges-catalog";
 import { learningMessages, localizedLearningCategory } from "@/lib/i18n/learning-center";
+import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { getLearningCategory } from "@/lib/learning-center";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { languageRouteByLocale } from "@/lib/market/registry";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
+import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { articleService } from "@/lib/services";
 import { absoluteUrl, siteUrl } from "@/lib/site";
 
-import { LearningArticleRelated, LearningArticleView } from "./LearningArticleView";
+import { LearningArticleRelated, LearningArticleView, type LearnOfferBridge } from "./LearningArticleView";
 
 export const dynamic = "force-dynamic";
 
@@ -97,10 +100,27 @@ export default async function LearningArticlePage({ params }: { params: Promise<
       categoryTitle={categoryTitle(article.category, presentation.locale)}
       hrefFor={(href) => productHref(presentation, href)}
       messages={messages}
+      offerBridge={offerBridgeFor(article, presentation)}
       programmePath={programmePathForPresentationLocale(presentation.locale)}
       relatedArticlesSlot={<Suspense fallback={null}><RelatedLearningArticles article={article} presentation={presentation} /></Suspense>}
     />
   </>;
+}
+
+/** Bonus guides lead to the public offer pages wherever published offers may be presented. */
+function offerBridgeFor(article: PublicArticle, presentation: PresentationResolution): LearnOfferBridge | null {
+  if (article.category !== "casino-bonuses" || !offersMayBePresented(presentation.marketCountryCode)) return null;
+  const learning = learningMessages(presentation.locale);
+  const shell = publicShellMessages(presentation.locale);
+  return {
+    title: learning.ui.applyChecklist,
+    body: learnBridgeMessages(presentation.locale).offerBridgeBody,
+    bonusesLabel: shell.bonuses,
+    bestOffersLabel: shell.bestOffers,
+    disclosure: learning.ui.commercialDisclosure,
+    bonusesHref: productHref(presentation, "/bonuses"),
+    bestOffersHref: productHref(presentation, "/best-offers"),
+  };
 }
 
 async function RelatedLearningArticles({ article, presentation }: {

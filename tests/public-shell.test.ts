@@ -173,3 +173,23 @@ test("availability states are generic presentation and do not claim live GEO aut
   assert.match(notice, /commercial links remain hidden/);
   assert.doesNotMatch(notice, /country|location detected|your market is/iu);
 });
+
+test("About, FAQ and Methodology end with one next step; Help stays free of it", async () => {
+  const { nextStepMessages } = await import("../lib/i18n/next-step-catalog");
+  const block = readFileSync("components/next-step/TrustNextStep.tsx", "utf8");
+  for (const [page, file] of [["about", "app/(public)/about/page.tsx"], ["faq", "app/(public)/faq/page.tsx"], ["methodology", "app/(public)/methodology/page.tsx"]] as const) {
+    assert.match(readFileSync(file, "utf8"), new RegExp(`<TrustNextStep page="${page}" presentation=\\{presentation\\} />`), page);
+  }
+  for (const help of ["app/help/page.tsx", "app/help/[slug]/page.tsx"]) assert.doesNotMatch(readFileSync(help, "utf8"), /TrustNextStep/);
+  // The Programme leads with the canonical entry; Best Offers follows only where offers may be presented.
+  assert.match(block, /const programmeHref = `\$\{programmePathForPresentationLocale\(presentation\.locale\)\}\?entry=start`;/);
+  assert.match(block, /data-trust-next-step-action="programme"[\s\S]*data-trust-next-step-action="best-offers"/);
+  assert.match(block, /\{offers \? <Link[\s\S]*?href=\{productHref\(presentation, "\/best-offers"\)\}/);
+  assert.match(block, /const offers = offersMayBePresented\(presentation\.marketCountryCode\);/);
+  assert.doesNotMatch(block, /href="\/(?:r|go)\//);
+  for (const locale of ["en-GB", "de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO", "en-CA", "fr-CA"] as const) {
+    const messages = nextStepMessages(locale);
+    for (const [key, value] of Object.entries(messages)) assert.ok(value.trim(), `${locale} ${key}`);
+    assert.doesNotMatch(messages.body, /XP|private/i, `${locale} states no XP or privacy claim`);
+  }
+});

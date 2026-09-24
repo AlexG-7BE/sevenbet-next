@@ -4,28 +4,49 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { recordConsentedBrowserPageView } from "@/lib/analytics/product-analytics-client";
+import { analyticsConsentMessages } from "@/lib/i18n/analytics-consent-catalog";
+import type { SupportedLocale } from "@/lib/market/registry";
 
-export function AnalyticsConsentBanner() {
+export const OPEN_PRIVACY_CHOICES_EVENT = "b4g:open-privacy-choices";
+
+/** Footer control that opens the analytics choice; the banner owns the dialog. */
+export function PrivacyChoicesButton({ className, label }: { className?: string; label: string }) {
+  return (
+    <button className={className} type="button" aria-haspopup="dialog" data-privacy-choices-trigger onClick={(event) => window.dispatchEvent(new CustomEvent<HTMLElement>(OPEN_PRIVACY_CHOICES_EVENT, { detail: event.currentTarget }))}>
+      {label}
+    </button>
+  );
+}
+
+export function AnalyticsConsentBanner({ locale }: { locale: SupportedLocale }) {
+  const text = analyticsConsentMessages(locale);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const dismissRef = useRef<HTMLButtonElement>(null);
-  const restoreTriggerFocus = useRef(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (editing) {
-      dismissRef.current?.focus();
-    } else if (restoreTriggerFocus.current) {
-      restoreTriggerFocus.current = false;
-      triggerRef.current?.focus();
-    }
+    const open = (event: Event) => {
+      // Safari does not focus a clicked button, so the trigger identifies itself for focus return.
+      const detail = (event as CustomEvent<unknown>).detail;
+      opener.current = detail instanceof HTMLElement ? detail : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      setEditing(true);
+    };
+    window.addEventListener(OPEN_PRIVACY_CHOICES_EVENT, open);
+    return () => window.removeEventListener(OPEN_PRIVACY_CHOICES_EVENT, open);
+  }, []);
+
+  useEffect(() => {
+    if (editing) closeRef.current?.focus();
   }, [editing]);
 
   const close = () => {
     setError(false);
-    restoreTriggerFocus.current = true;
     setEditing(false);
+    const target = opener.current;
+    opener.current = null;
+    if (target?.isConnected) target.focus();
   };
 
   const update = async (analytics: boolean) => {
@@ -51,28 +72,23 @@ export function AnalyticsConsentBanner() {
     }
   };
 
-  if (!editing) {
-    return (
-      <button ref={triggerRef} className="privacyChoiceTrigger" type="button" aria-haspopup="dialog" onClick={() => setEditing(true)}>
-        Privacy choices
-      </button>
-    );
-  }
+  if (!editing) return null;
 
   return (
-    <aside className="analyticsConsent" role="dialog" aria-modal="false" aria-label="Analytics privacy choices" aria-live="polite">
+    <aside className="analyticsConsent" role="dialog" aria-modal="false" aria-label={text.dialogLabel} aria-live="polite" onKeyDown={(event) => { if (event.key === "Escape") close(); }}>
       <div>
-        <strong>Your privacy choices</strong>
         <p>
-          We use essential storage to keep B4GAMBLE working. With your permission, first-party analytics help us understand site and Programme use. We do not put email, Programme answers, or partner tracking tokens in analytics. <Link href="/privacy">Privacy notice</Link>
+          <strong className="analyticsConsentTitle">{text.title}.</strong> {text.body} <span className="analyticsConsentDetail">{text.detail}</span> <Link href="/privacy" prefetch={false}>{text.privacyNotice}</Link>
         </p>
-        {error ? <p role="alert" className="analyticsConsentError">Your choice could not be saved. Please try again.</p> : null}
+        {error ? <p role="alert" className="analyticsConsentError">{text.error}</p> : null}
       </div>
       <div className="analyticsConsentActions">
-        <button ref={dismissRef} type="button" disabled={saving} onClick={close}>Not now</button>
-        <button type="button" disabled={saving} onClick={() => void update(false)}>Decline analytics</button>
-        <button type="button" className="button gold" disabled={saving} onClick={() => void update(true)}>Allow analytics</button>
+        <button type="button" className="analyticsConsentDecline" disabled={saving} onClick={() => void update(false)}>{text.decline}</button>
+        <button type="button" className="analyticsConsentAllow" disabled={saving} onClick={() => void update(true)}>{text.allow}</button>
       </div>
+      <button ref={closeRef} type="button" className="analyticsConsentClose" aria-label={text.notNow} disabled={saving} onClick={close}>
+        <span aria-hidden="true">×</span>
+      </button>
     </aside>
   );
 }

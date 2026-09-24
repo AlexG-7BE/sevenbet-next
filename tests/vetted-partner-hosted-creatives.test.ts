@@ -463,12 +463,13 @@ test("affiliate redirects ignore retired creative attribution and use only canon
   const service = new AffiliateRedirectService(
     redirectStore(),
     { legacyAdminPreviewCandidates: async () => [activeOffer()] as never },
-    { async resolve() { events.push("geo"); return allowJurisdictionResolver.resolve(); } },
+    // Sweden, where Betsson holds a licence, so the market-access register admits the route.
+    { async resolve() { events.push("geo"); return { ...(await allowJurisdictionResolver.resolve()), countryCode: "SE" }; } },
     allowGbCommercialReadinessAuthority,
     canonicalActivation,
   );
   const result = await service.resolve("betsson", {
-    requestCountrySignal: { countryCode: "GB", marketCode: "GB", trust: "TRUSTED", observedAt: new Date("2030-01-01T00:00:00Z") },
+    requestCountrySignal: { countryCode: "SE", marketCode: "SE", trust: "TRUSTED", observedAt: new Date("2030-01-01T00:00:00Z") },
     now: new Date("2030-01-01T00:00:00Z"),
   });
   assert.equal(result.ok, true);

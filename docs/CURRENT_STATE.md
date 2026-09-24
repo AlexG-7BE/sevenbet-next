@@ -12,6 +12,21 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Licence-based market access — code in main; activation release pending
+
+**Founder instruction, 24 September 2026:** market decisions follow each
+operator's own licence. [RFC-054](06_RFC/RFC-054-Licence-Market-Access.md)
+adds one casino × market register (`lib/market-access/`) that closes a market
+for a casino when the operator blocks it, the law prohibits it, the casino has
+no local licence, the grey zone is closed, or — in Germany — outside
+21:00–06:00 Europe/Berlin. The same check gates offers, the partner button and
+`/r/`. Launch counts for Monday 28 September: GB 19, SE 15, DK 10, DE 2.
+
+The register already stops the button, redirect and offers in closed markets.
+Disabling the stale activations and enabling the licensed markets that have a
+verified route is a separate data release that needs the Founder's
+confirmation.
+
 ## Casino inventory and data sources
 
 **DETECTED, 24 SEPTEMBER 2026 (copy of the Production database):**

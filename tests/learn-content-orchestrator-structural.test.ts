@@ -155,8 +155,10 @@ test("RFC-053 is ACTIVE and the registry counts include it accurately", () => {
   assert.match(rfc, /supersedes RFC-027's no-autonomy\/no-schedule\/no-/i);
   assert.match(rfc, /RFC-052 remains the sole Article mutation authority/);
   assert.match(registry, /RFC-053 — Autonomous Learn Content Orchestration/);
-  assert.match(registry, /\| `ACTIVE` \| 29 \|/);
-  assert.match(registry, /\| \*\*Total RFC artifacts\*\* \| \*\*53\*\* \|/);
+  const rows = [...registry.matchAll(/^\| \[RFC-[^\n]*?\| `(ACTIVE|HISTORICAL|SUPERSEDED|PROPOSED)` \|/gm)].map((row) => row[1]);
+  const active = rows.filter((lifecycle) => lifecycle === "ACTIVE").length;
+  assert.match(registry, new RegExp(`\\| \`ACTIVE\` \\| ${active} \\|`));
+  assert.match(registry, new RegExp(`\\| \\*\\*Total RFC artifacts\\*\\* \\| \\*\\*${rows.length}\\*\\* \\|`));
 });
 
 test("no autonomous Learn code appears in a browser component or public route", () => {

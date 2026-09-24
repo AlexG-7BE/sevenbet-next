@@ -20,16 +20,20 @@ test("the public action contract accepts only controlled redirect paths", () => 
   assert.equal(isGovernedCommercialAction(null), false);
 });
 
+// The fully described GB fixture: "alpha" in most tests, the real UKGC-licensed Hello Casino where
+// the licence register must keep its offer.
+const FULL_FIXTURE_SLUGS = new Set(["alpha", "hello-casino"]);
+
 function record(id: string, slug: string, title: string, patch: Record<string, unknown> = {}): PublishedCasinoSnapshotRecord {
   const snapshot = {
     id, slug, title, internalName: `${title} canonical`, domain: `${slug}.example`, summary: `${title} review`, description: `${title} description`,
-    status: "PUBLISHED", editorScore: slug === "alpha" ? 9 : 8, publishedAt: "2030-05-01T00:00:00.000Z", pros: ["Clear terms"], responsibleGamblingTools: ["Deposit limits"],
-    reviewBlocks: { __sevenbetCasinoEditor: { general: { featured: slug === "alpha", recommended: false }, licenses: {}, countries: {}, payments: {}, providers: {}, categories: {}, bonuses: {} } },
-    licenses: [{ id: `${id}-license`, authority: slug === "alpha" ? "UKGC" : "MGA", status: "ACTIVE" }],
-    countries: [{ id: `${id}-country`, countryCode: slug === "alpha" ? "GB" : "CA", availability: "AVAILABLE" }],
-    paymentMethods: [{ id: `${id}-payment`, methodKey: slug === "alpha" ? "visa" : "bitcoin", name: slug === "alpha" ? "Visa" : "Bitcoin", crypto: slug !== "alpha" }],
+    status: "PUBLISHED", editorScore: FULL_FIXTURE_SLUGS.has(slug) ? 9 : 8, publishedAt: "2030-05-01T00:00:00.000Z", pros: ["Clear terms"], responsibleGamblingTools: ["Deposit limits"],
+    reviewBlocks: { __sevenbetCasinoEditor: { general: { featured: FULL_FIXTURE_SLUGS.has(slug), recommended: false }, licenses: {}, countries: {}, payments: {}, providers: {}, categories: {}, bonuses: {} } },
+    licenses: [{ id: `${id}-license`, authority: FULL_FIXTURE_SLUGS.has(slug) ? "UKGC" : "MGA", status: "ACTIVE" }],
+    countries: [{ id: `${id}-country`, countryCode: FULL_FIXTURE_SLUGS.has(slug) ? "GB" : "CA", availability: "AVAILABLE" }],
+    paymentMethods: [{ id: `${id}-payment`, methodKey: FULL_FIXTURE_SLUGS.has(slug) ? "visa" : "bitcoin", name: FULL_FIXTURE_SLUGS.has(slug) ? "Visa" : "Bitcoin", crypto: !FULL_FIXTURE_SLUGS.has(slug) }],
     gameProviders: [{ id: `${id}-provider`, providerKey: "evolution", name: "Evolution" }],
-    gameCategories: [{ id: `${id}-category`, categoryKey: slug === "alpha" ? "slots" : "live", name: slug === "alpha" ? "Slots" : "Live Casino" }],
+    gameCategories: [{ id: `${id}-category`, categoryKey: FULL_FIXTURE_SLUGS.has(slug) ? "slots" : "live", name: FULL_FIXTURE_SLUGS.has(slug) ? "Slots" : "Live Casino" }],
     casinoBonuses: [{ id: `${id}-bonus`, slug: `${slug}-welcome`, title: `${title} welcome`, summary: "Terms apply", type: "WELCOME", status: "PUBLISHED", offerStatus: "ACTIVE" }],
     ...patch,
   } as Record<string, unknown>;
@@ -202,32 +206,33 @@ test("Founder editorial matrix remains deterministic while only canonical action
 });
 
 test("every directory filter returns the expected classified identities and count", async () => {
-  const alpha = record("alpha-id", "alpha", "Alpha", { mobileApp: true });
-  const beta = record("beta-id", "beta", "Beta", { casinoBonuses: [], responsibleGamblingTools: [] });
+  // Both casinos hold a UKGC licence, so the market-access register keeps their offers in GB.
+  const alpha = record("alpha-id", "hello-casino", "Alpha", { mobileApp: true });
+  const beta = record("beta-id", "slotnite", "Beta", { casinoBonuses: [], responsibleGamblingTools: [] });
   const service = new PublicCasinoDiscoveryService(
     store([alpha, beta]),
     () => now,
     commercialActionsByCasino({ "alpha-id": "/r/alpha-visit" }),
   );
   const cases: Array<[CasinoDiscoveryQuery, string[]]> = [
-    [{ country: ["CA"] }, ["alpha", "beta"]],
-    [{ currency: ["GBP"] }, ["alpha"]],
-    [{ license: ["ukgc"] }, ["alpha"]],
-    [{ payment: ["visa"] }, ["alpha"]],
-    [{ gameProvider: ["evolution"] }, ["alpha", "beta"]],
-    [{ category: ["slots"] }, ["alpha"]],
-    [{ bonusType: ["WELCOME"] }, ["alpha"]],
-    [{ hasBonus: true }, ["alpha"]],
-    [{ hasAvailableVisitAction: true }, ["alpha"]],
-    [{ hasResponsibleGambling: true }, ["alpha"]],
-    [{ supportsCrypto: true }, ["beta"]],
-    [{ supportsMobile: true }, ["alpha"]],
-    [{ country: ["GB"], supportsMobile: true }, ["alpha"]],
+    [{ country: ["CA"] }, ["hello-casino", "slotnite"]],
+    [{ currency: ["GBP"] }, ["hello-casino"]],
+    [{ license: ["ukgc"] }, ["hello-casino"]],
+    [{ payment: ["visa"] }, ["hello-casino"]],
+    [{ gameProvider: ["evolution"] }, ["hello-casino", "slotnite"]],
+    [{ category: ["slots"] }, ["hello-casino"]],
+    [{ bonusType: ["WELCOME"] }, ["hello-casino"]],
+    [{ hasBonus: true }, ["hello-casino"]],
+    [{ hasAvailableVisitAction: true }, ["hello-casino"]],
+    [{ hasResponsibleGambling: true }, ["hello-casino"]],
+    [{ supportsCrypto: true }, ["slotnite"]],
+    [{ supportsMobile: true }, ["hello-casino"]],
+    [{ country: ["GB"], supportsMobile: true }, ["hello-casino"]],
   ];
 
   const initial = await service.discover({}, allowJurisdictionAuthority, { defaultEditorialCountry: "GB" });
   assert.equal(initial.total, 2);
-  assert.deepEqual(initial.items.map((item) => item.slug), ["alpha", "beta"]);
+  assert.deepEqual(initial.items.map((item) => item.slug), ["hello-casino", "slotnite"]);
   for (const [query, expectedSlugs] of cases) {
     const result = await service.discover(query, allowJurisdictionAuthority, { defaultEditorialCountry: "GB" });
     assert.equal(result.total, expectedSlugs.length, JSON.stringify(query));
