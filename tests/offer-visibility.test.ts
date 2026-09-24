@@ -78,6 +78,67 @@ test("the Best Offers shortlist ranks a published offer without a partner route"
   assert.equal(rankBestOffersForCategory([offer], "best_overall", { includeWithoutRoute: true }).length, 1);
 });
 
+test("Best Offers puts offers a reader can act on first and keeps editorial order within each group", async () => {
+  // Founder decision of 24 September 2026: the route-less top three had left
+  // Best Offers without a clickable offer in any market.
+  const { rankBestOffersForCategory, selectCommercialBestOfferPool } = await import("../lib/public-offer/best-offer-ranking");
+  type Offer = Parameters<typeof rankBestOffersForCategory>[0][number];
+  const offer = (slug: string, score: number, linked: boolean) => ({
+    dataClassification: "PUBLISHED_RECORD" as const,
+    action: linked ? { href: `/r/${slug}` } : null,
+    bonus: {
+      slug: `${slug}-welcome`, type: "WELCOME", percentage: 100, minimumDeposit: 10, maximumBonus: 200,
+      maximumBet: 5, currency: "EUR", freeSpins: 50, wageringMultiplier: 30, wageringText: null,
+      eligibility: "New players", importantConditions: ["Max bet 5"], termsUrl: null, expiresAt: null,
+    },
+    casino: { id: slug, slug, name: slug, editorScore: score, featured: false, recommended: false, payments: [], lastReviewedAt: null, publishedAt: null },
+  }) as unknown as Offer;
+
+  const routeless = offer("routeless", 9.0, false);
+  const linkedLow = offer("linked-low", 8.0, true);
+  const linkedHigh = offer("linked-high", 8.5, true);
+  const ranked = rankBestOffersForCategory([routeless, linkedLow, linkedHigh], "best_overall", { includeWithoutRoute: true });
+  // The higher score still leads among linked offers; the route-less one follows them.
+  assert.deepEqual(ranked.map((item) => item.casino.slug), ["linked-high", "linked-low", "routeless"]);
+
+  // The pool is cut before categories rank it, so it must not let higher-scored
+  // route-less offers crowd out every actionable one.
+  const crowd = Array.from({ length: 6 }, (_, index) => offer(`routeless-${index}`, 9.5 - index / 10, false));
+  const pool = selectCommercialBestOfferPool([...crowd, linkedLow], { includeWithoutRoute: true, limit: 3 });
+  assert.equal(pool[0]?.casino.slug, "linked-low");
+  assert.deepEqual(pool.slice(1).map((item) => item.casino.slug), ["routeless-0", "routeless-1"]);
+});
+
+test("the Best Offers commission answer discloses that linkable offers come first", async () => {
+  // The ordering makes route availability — and so commission — part of the
+  // order on this page, so the page's own answer about commission must say so in
+  // every locale rather than claim the order is independent of it.
+  const { productPageMessages } = await import("../lib/i18n/product-pages-catalog");
+  const ranking = readFileSync(new URL("../lib/public-offer/best-offer-ranking.ts", import.meta.url), "utf8");
+  assert.match(ranking, /function actionableFirst/);
+  const english = productPageMessages("en-GB").bestOffers.faqCommissionAnswer;
+  assert.match(english, /Offers we can link to are listed first/);
+  assert.match(english, /Commission never changes the editorial score/);
+  const retired = [
+    /does not affect the editorial score or ranking/i,
+    /does not determine the editorial score or natural ranking/i,
+    /weder die redaktionelle Bewertung noch die Rangfolge/,
+    /non influenza la valutazione editoriale né la classifica/,
+    /no influye en la puntuación ni en el orden editorial/,
+    /não influencia a pontuação nem a ordenação editorial/,
+    /beïnvloedt de redactionele beoordeling of rangschikking niet/,
+    /påverkar varken betyget eller den redaktionella ordningen/,
+    /påvirker hverken vurderingen eller den redaktionelle rækkefølge/,
+    /ei vaikuta toimitukselliseen arvioon eikä luonnolliseen järjestykseen/,
+    /påvirker ikke den redaksjonelle vurderingen eller den naturlige rangeringen/,
+    /δεν επηρεάζει τη συντακτική βαθμολογία ή την κατάταξη/i,
+  ];
+  for (const locale of ["en-GB", "de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO", "en-CA", "fr-CA"] as const) {
+    const answer = productPageMessages(locale).bestOffers.faqCommissionAnswer;
+    for (const claim of retired) assert.doesNotMatch(answer, claim, `${locale} still claims order is independent of commission`);
+  }
+});
+
 test("the Best Offers page and component both stop gating on a route", () => {
   const service = readFileSync(new URL("../lib/services/public-offer.service.ts", import.meta.url), "utf8");
   assert.match(service, /offersMayBePresented\(country\)/, "the shortlist consults the visibility policy");

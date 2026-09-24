@@ -109,7 +109,7 @@ export const PT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqWageringQuestion: "O que significa requisito de apostas?",
     faqWageringAnswer: "É o volume de apostas exigido pelos termos publicados antes de poderes levantar os ganhos do bónus.",
     faqCommissionQuestion: "Ganham dinheiro se eu me registar?",
-    faqCommissionAnswer: "A B4GAMBLE pode receber uma comissão se utilizares um link de afiliado disponível e claramente identificado. Isto não influencia a pontuação nem a ordenação editorial.",
+    faqCommissionAnswer: "A B4GAMBLE pode receber uma comissão se utilizares um link de afiliado disponível e claramente identificado. As ofertas para as quais podemos encaminhar-te aparecem primeiro; dentro de cada grupo, a pontuação editorial define a ordem. A comissão nunca altera a pontuação editorial.",
     faqWhyThreeQuestion: "Porque apresentam apenas três ofertas?",
     faqWhyThreeAnswer: "Uma lista curta mantém a decisão limitada; a página de Bónus inclui todo o diretório elegível.",
   },
