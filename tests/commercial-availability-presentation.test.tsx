@@ -145,9 +145,10 @@ test("casino directory keeps editorial inventory fail-closed where a record has 
   // Only the record with a canonical action receives one, through the governed redirect.
   assert.equal((html.match(/href="\/r\/[^"]+"/g) ?? []).length, 1);
   assert.match(html, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_COLLECTION_CARD"/);
-  // The other says so plainly and still offers the review.
-  assert.ok(html.includes(messages.common.reviewOnly));
-  assert.match(html, /href="\/casino\/information-only"/);
+  // The other offers its review as the card's live action instead of a dead box.
+  assert.ok(!html.includes(messages.common.reviewOnly));
+  assert.match(html, /<a[^>]*data-review-primary=""[^>]*href="\/casino\/information-only"/);
+  assert.equal((html.match(/data-review-primary=""/g) ?? []).length, 1);
   assert.doesNotMatch(html, /data-commercial-action-source="CREATIVE"/);
 });
 

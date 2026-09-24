@@ -138,7 +138,8 @@ test("casino review is concise, facts-first and suppresses non-governed CTA syst
   await expect(page.locator("#support")).not.toContainText("Mobile support");
   await expect(page.locator("[data-casino-decision-bar]")).toHaveCount(0);
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
-  await expect(page.getByText("Review only", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Review only", { exact: true })).toHaveCount(0);
+  await expect(page.locator("[data-review-no-action]")).toHaveCount(1);
   await expect(page.locator("#current-offer [class*='materialWarning']")).toContainText("Terms shown before action");
   const sectionNav = page.locator("[data-casino-section-nav]");
   await expect(sectionNav.getByRole("link")).toHaveCount(4);

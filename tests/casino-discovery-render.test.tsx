@@ -86,8 +86,10 @@ test("sparse review-only card omits unexplained fact rows and invented values", 
   });
   const html = await render([sparse]);
   assert.match(html, /href="\/casino\/sparse-casino"/);
-  // No governed action means the card says so rather than rendering a dead or invented CTA.
-  assert.ok(html.includes(defaultMessages.common.reviewOnly));
+  // No governed action means the review becomes the card's live action: no dead
+  // "Review only" box and no invented CTA.
+  assert.match(html, /<a[^>]*data-review-primary=""[^>]*href="\/casino\/sparse-casino"/);
+  assert.ok(!html.includes(defaultMessages.common.reviewOnly));
   assert.doesNotMatch(html, /href="\/r\//);
   assert.doesNotMatch(html, /<img|Editorial score|Reviewed/);
   assert.doesNotMatch(html, /No licence|Unlicensed|Unsupported|destinationUrl|trackingUrl/i);

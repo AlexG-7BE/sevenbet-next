@@ -34,10 +34,12 @@
 .card dl.facts dd { margin: 8px 0 0; font-size: 15px; font-variant-numeric: tabular-nums; font-weight: 600; line-height: 1.4; }
 
 .actions { justify-self: end; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
-.card .offerAction { min-height: 48px; padding: 17px 30px; border: 0; border-radius: var(--sb-radius-button); background: var(--acid); color: var(--night); font-size: 12px; font-weight: 600; letter-spacing: .2em; line-height: 1.2; text-transform: uppercase; white-space: nowrap; transition: background 200ms var(--ease); }
+.card .offerAction { min-height: 48px; padding: 14px 26px; border: 0; border-radius: var(--sb-radius-button); background: var(--acid); color: var(--night); font-size: 16px; font-weight: 700; letter-spacing: .01em; line-height: 1.25; text-align: center; text-transform: none; text-wrap: balance; white-space: normal; transition: background 200ms var(--ease); }
 .card .offerAction:hover { transform: none; background: var(--paper); }
-.card .offerAction > span > span { display: none; }
 .reviewOnly { min-height: 48px; padding: 16px 22px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(250, 250, 247, .2); border-radius: var(--sb-radius-button); color: rgba(250, 250, 247, .55); font-size: 12px; letter-spacing: .2em; line-height: 1.2; text-align: center; text-transform: uppercase; white-space: nowrap; }
+/* No governed action: the review is the card's live action, sized like the partner button. */
+.card .actions > a.reviewPrimary { min-height: 48px; padding: 14px 26px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(250, 250, 247, .5); border-radius: var(--sb-radius-button); color: var(--paper); font-size: 16px; font-weight: 700; letter-spacing: .01em; line-height: 1.25; text-align: center; text-decoration: none; transition: background 200ms var(--ease), color 200ms var(--ease); }
+.card .actions > a.reviewPrimary:hover { background: var(--paper); color: var(--night); }
 .researchLinks { display: flex; align-items: center; gap: 20px; white-space: nowrap; }
 .researchLinks a { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: rgba(250, 250, 247, .8); font-size: 13px; letter-spacing: .04em; text-decoration: underline; text-decoration-color: rgba(250, 250, 247, .3); text-decoration-thickness: 1px; text-underline-offset: 6px; transition: color 200ms var(--ease), text-decoration-color 200ms var(--ease); }
 .researchLinks a:first-child:not(:last-child) { color: rgba(250, 250, 247, .55); text-decoration-color: rgba(250, 250, 247, .2); }
@@ -51,7 +53,7 @@
   .card { grid-template-columns: minmax(0, 1fr); }
   .card > * { grid-column: 1; }
   .actions { justify-self: stretch; align-items: stretch; }
-  .actions .offerAction, .reviewOnly { width: 100%; }
+  .actions .offerAction, .reviewOnly, .card .actions > a.reviewPrimary { width: 100%; }
   .researchLinks { justify-content: center; }
 }
 
@@ -63,6 +65,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card, .viewRail button, .card .offerAction { transition: none; }
+  .card, .viewRail button, .card .offerAction, .card .actions > a.reviewPrimary { transition: none; }
   .card:hover { transform: none; }
 }

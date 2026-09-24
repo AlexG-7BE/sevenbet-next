@@ -43,12 +43,10 @@
 .heroOffer dl.heroFacts dt { color:rgba(250,250,247,.45); font-size:12px; font-weight:400; letter-spacing:.16em; line-height:1.35; opacity:1; }
 .heroOffer dl.heroFacts dd { margin:8px 0 0; font-size:15px; font-variant-numeric:tabular-nums; font-weight:600; line-height:1.35; overflow-wrap:normal; }
 .heroOffer small { color:rgba(250,250,247,.5); font-size:12px; line-height:1.55; }
-.heroAction .offerAction,.offerActions .offerAction { min-height:48px; padding:19px 24px; border:0; border-radius:var(--sb-radius-button); background:var(--acid); color:var(--night); font-size:12px; font-weight:600; letter-spacing:.2em; line-height:1.2; text-transform:uppercase; transition:background 200ms var(--ease); }
+.heroAction .offerAction,.offerActions .offerAction { min-height:48px; padding:14px 24px; border:0; border-radius:var(--sb-radius-button); background:var(--acid); color:var(--night); font-size:16px; font-weight:700; letter-spacing:.01em; line-height:1.25; text-align:center; text-transform:none; text-wrap:balance; transition:background 200ms var(--ease); }
 .heroAction .offerAction { width:100%; }
 .heroAction .offerAction:hover,.offerActions .offerAction:hover { transform:none; background:var(--paper); }
-.heroAction .offerAction > span > span,.offerActions .offerAction > span > span { display:none; }
-.reviewOnly { min-height:48px; padding:16px 22px; display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(250,250,247,.2); border-radius:var(--sb-radius-button); color:rgba(250,250,247,.55); font-size:12px; letter-spacing:.2em; line-height:1.2; text-transform:uppercase; white-space:nowrap; }
-.heroAction .reviewOnly { width:100%; }
+.noActionNote { margin:0; color:rgba(250,250,247,.72); font-size:14px; line-height:1.5; }
 
 /* Section navigation */
 .sectionNav { position:sticky; top:var(--sb-header-offset); z-index:24; margin-inline:calc(var(--bleed) * -1); padding:0 var(--bleed); display:flex; overflow-x:auto; border-block:1px solid var(--line); background:rgba(16,15,15,.92); backdrop-filter:blur(14px); scrollbar-width:none; white-space:nowrap; }
@@ -61,7 +59,7 @@
 
 /* Sticky action (tablet and mobile) */
 .stickyAction { display:none; }
-.stickyAction :global(.commercialOutboundPrimary) { flex:0 0 auto; min-height:44px; padding:14px 20px; border:0; border-radius:var(--sb-radius-button); background:var(--acid); color:var(--night); font-size:12px; font-weight:600; letter-spacing:.18em; line-height:1.2; text-transform:uppercase; }
+.stickyAction :global(.commercialOutboundPrimary) { flex:0 0 auto; min-height:44px; padding:12px 20px; border:0; border-radius:var(--sb-radius-button); background:var(--acid); color:var(--night); font-size:16px; font-weight:700; letter-spacing:.01em; line-height:1.2; text-transform:none; }
 .stickyAction :global(.commercialOutboundPrimary):hover { transform:none; background:var(--paper); }
 .stickyAction :global(.commercialOutboundPrimary) > span > span { display:none; }
 
@@ -93,7 +91,7 @@
 .offerPanel > p:not(.materialWarning) { margin:0; color:rgba(250,250,247,.7); font-size:15px; line-height:1.6; }
 .materialWarning { max-width:60ch; margin:0; padding:12px 0 12px 18px; border-left:2px solid var(--acid); color:rgba(250,250,247,.7); font-size:13px; line-height:1.6; }
 .offerActions { max-width:480px; display:flex; align-items:center; flex-wrap:wrap; gap:16px 28px; }
-.offerActions .offerAction { min-width:200px; padding:19px 30px; flex:1; white-space:nowrap; }
+.offerActions .offerAction { min-width:200px; padding:14px 28px; flex:1; white-space:normal; }
 .offerActions > a:not(.offerAction) { min-height:44px; display:inline-flex; align-items:center; gap:6px; color:rgba(250,250,247,.8); font-size:13px; letter-spacing:.04em; text-decoration:underline; text-decoration-color:rgba(250,250,247,.3); text-decoration-thickness:1px; text-underline-offset:6px; white-space:nowrap; }
 .offerActions > a:not(.offerAction):hover { color:var(--paper); text-decoration-color:var(--paper); }
 .providerLine { margin:0; display:grid; gap:8px; color:rgba(250,250,247,.5); font-size:14px; line-height:1.6; }
@@ -192,7 +190,7 @@
   .sectionFacts dd { margin:0; text-align:right; overflow-wrap:break-word; }
   .offerPanel h3 { font-size:40px; }
   .offerActions { max-width:none; flex-direction:column; align-items:stretch; }
-  .offerActions .offerAction,.offerActions .reviewOnly { width:100%; min-width:0; }
+  .offerActions .offerAction { width:100%; min-width:0; }
   .offerActions > a:not(.offerAction) { justify-content:center; }
   .profileFaq { padding:56px var(--bleed); }
   .profileFaq h2 { font-size:34px; }

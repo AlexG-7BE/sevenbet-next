@@ -136,7 +136,10 @@ test("decision-page composition renders three governed VIEW OFFER placements and
   }));
   assert.doesNotMatch(reviewOnlyHtml, /href="\/r\//);
   assert.doesNotMatch(reviewOnlyHtml, /data-casino-decision-bar/);
-  assert.equal((reviewOnlyHtml.match(/Review only/g) ?? []).length, 2);
+  // Without a governed action the profile states it in plain text; no box
+  // styled like a button stands where the partner action would be.
+  assert.equal((reviewOnlyHtml.match(/Review only/g) ?? []).length, 0);
+  assert.ok(reviewOnlyHtml.includes(messages.common.reviewAvailableNoAction));
 
   const repeatedActionableHtml = renderToStaticMarkup(React.createElement(CasinoProfile, {
     availableForPresentation: true,

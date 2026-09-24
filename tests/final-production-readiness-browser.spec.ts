@@ -164,7 +164,12 @@ test("Best Offers local visual fixture preserves decision hierarchy and remains 
   await expect(page.locator("[data-commercial-best-offer-card]")).toHaveCount(3);
   await expect(page.getByRole("link", { name: /View .* offer|Visit /i })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Compare", exact: true })).toHaveCount(0);
-  await expect(page.getByText("Review only", { exact: true })).toHaveCount(3);
+  // Each card holds exactly one action slot: its review, as a live link, where a
+  // review exists; otherwise the plain Review only state. Never both, never a referral.
+  for (const card of await page.locator("[data-commercial-best-offer-card]").all()) {
+    expect((await card.locator("a[data-review-primary]").count()) + (await card.getByText("Review only", { exact: true }).count())).toBe(1);
+  }
+  await expect(page.locator("[data-commercial-best-offer-card] a[data-review-primary]")).toHaveCount(1);
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
   await expect(page.locator("dt:visible").filter({ hasText: /^Wagering$/ }).first()).toBeVisible();
   await expect(page.locator("dt:visible").filter({ hasText: /^Minimum deposit$/ }).first()).toBeVisible();
@@ -190,7 +195,8 @@ test("casino review stays readable through the concise Review Only decision stat
   expect(await page.locator("main section[id]").evaluateAll((sections) => sections.map((section) => section.id))).toEqual([
     "overview", "why-we-rate", "payments", "current-offer", "games", "support", "regulation", "casino-faq", "our-verdict",
   ]);
-  await expect(page.getByText("Review only", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Review only", { exact: true })).toHaveCount(0);
+  await expect(page.locator("[data-review-no-action]")).toHaveCount(1);
   await expect(page.locator("[data-casino-decision-bar]")).toHaveCount(0);
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
