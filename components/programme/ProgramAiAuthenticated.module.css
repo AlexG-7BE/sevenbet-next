@@ -56,7 +56,7 @@
 .currentMissionNumber { margin-bottom: 6px; display: block; color: var(--pg-acid); font-family: var(--font-seven-serif), Georgia, serif; font-size: .72em; font-style: italic; font-weight: 400; letter-spacing: -.02em; text-transform: none; }
 .currentCard p { max-width: 44ch; margin: 0; color: var(--pg-muted); font-family: var(--font-seven-serif), Georgia, serif; font-size: 17px; font-style: italic; line-height: 1.5; }
 .currentActions { margin-top: 28px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-.currentCard button { min-height: 52px; padding: 16px 28px; border: 0; border-radius: 3px; background: var(--pg-acid); color: var(--pg-ink); cursor: pointer; font-size: 14px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; transition: background 200ms var(--pg-ease); }
+.currentCard button { min-height: 52px; padding: 16px 28px; border: 0; border-radius: 3px; background: var(--pg-acid); color: var(--pg-ink); cursor: pointer; font-size: 16px; font-weight: 700; letter-spacing: 0; transition: background 200ms var(--pg-ease); }
 .currentCard button:hover { background: var(--pg-paper); }
 .currentActions small { color: rgba(250, 250, 247, .6); font-size: 13px; line-height: 19px; }
 .currentCard > strong { width: 116px; height: 116px; justify-self: end; border: 12px solid #353532; border-right-color: var(--pg-acid); border-radius: 50%; display: grid; place-content: center; text-align: center; }
@@ -110,7 +110,8 @@
 .challenge { padding: clamp(24px, 3.4vw, 44px); display: grid; gap: 24px; border: 1px solid var(--pg-line); border-radius: 6px; background: var(--pg-card); }
 .challenge h2 { margin: 0; font-size: clamp(26px, 2.6vw, 38px); font-weight: 800; letter-spacing: -.03em; line-height: .98; text-transform: uppercase; }
 .challenge > p { margin: 0; color: var(--pg-muted); font-family: var(--font-seven-serif), Georgia, serif; font-size: 18px; font-style: italic; line-height: 1.45; }
-.challenge > button, .submitRow > button, .reward > button { letter-spacing: .12em; text-transform: uppercase; }
+/* Programme actions read in sentence case at 16px (Founder, 25 Sep 2026). */
+.challenge > button, .submitRow > button, .reward > button { font-size: 16px; font-weight: 700; letter-spacing: 0; }
 .challenge > button { justify-self: start; }
 
 .choices { min-width: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; border: 0; }
@@ -139,7 +140,7 @@
 .guidance ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; }
 .submitRow { padding-top: 8px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
 .submitRow > span { color: var(--pg-muted); font-size: 13px; line-height: 1.5; }
-.reviewMain > button { justify-self: start; letter-spacing: .12em; text-transform: uppercase; }
+.reviewMain > button { justify-self: start; font-size: 16px; font-weight: 700; letter-spacing: 0; }
 .status { margin: 0; color: var(--pg-mint); font-size: 13px; font-weight: 600; }
 .error { margin: 0; color: #ffaaa6; font-weight: 600; }
 
