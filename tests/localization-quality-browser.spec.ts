@@ -105,9 +105,12 @@ test("every Home-ready European locale keeps its hero inside all required viewpo
     const locale = profile.defaultLocale;
     const pathname = publicMarketPath(profile, locale);
     await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
+    // Home streams through Suspense: measure the real hero, never the loading frame's h1
+    // while React swaps it out (which reads as a zero-width heading).
+    const heading = page.locator('main [data-handoff-page="home"] h1[data-home-hero-title]');
+    await expect(heading).toBeVisible();
     for (const width of viewportWidths) {
       await page.setViewportSize({ width, height: width <= 430 ? 844 : 1000 });
-      const heading = page.locator("main h1").first();
       await expect(heading).toBeVisible();
       const geometry = await heading.evaluate((heading) => {
         const rect = heading.getBoundingClientRect();
