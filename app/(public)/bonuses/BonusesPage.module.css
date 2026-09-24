@@ -78,10 +78,17 @@
 }
 
 @media (max-width: 640px) {
-  .hero { padding: 104px 0 0; }
+  .hero { padding: 100px 0 0; }
+  .eyebrow { margin-bottom: 14px; gap: 12px; letter-spacing: .14em; }
+  .eyebrow::before { width: 24px; }
   .hero h1 { font-size: clamp(30px, calc((100vw - 2 * var(--public-outer-gutter)) * .108), 42px); overflow-wrap: anywhere; }
-  .directorySection { padding: 24px 0 72px; }
+  /* The phone's first screen belongs to the offers: the explanation and counts are desktop context,
+     and the directory states its own count right above the cards. */
+  .heroMeta { display: none; }
+  .directorySection { padding: 20px 0 72px; }
   .sectionHeading h2, .method h2 { font-size: 36px; }
+  .sectionHeading { padding-bottom: 12px; }
+  .sectionHeading h2 { font-size: 28px; }
   .method { padding: 72px 0; }
   .method .shell { gap: 40px; }
   .method li { padding: 24px 0; grid-template-columns: 48px minmax(0, 1fr); }

@@ -70,10 +70,18 @@
 }
 
 @media (max-width: 640px) {
-  .hero { padding: 104px 0 0; }
+  .hero { padding: 100px 0 0; }
+  .eyebrow { margin-bottom: 14px; gap: 12px; letter-spacing: .14em; }
+  .eyebrow::before { width: 24px; }
   .hero h1 { font-size: 42px; }
-  .directory { padding: 24px 0 72px; }
+  /* The phone's first screen belongs to the list: the explanation and counts are desktop context,
+     and the directory states its own count right above the cards. */
+  .heroMeta { display: none; }
+  .directory { padding: 20px 0 72px; }
+  .directoryHeading { padding-bottom: 12px; }
+  .directoryHeading p { display: none; }
   .directoryHeading h2, .faq h2 { font-size: 36px; }
+  .directoryHeading h2 { font-size: 28px; }
   .faq { padding: 72px 0; }
   .faq .shell { gap: 40px; }
   .disclosure { grid-template-columns: 1fr; }
