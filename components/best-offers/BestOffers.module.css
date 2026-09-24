@@ -166,13 +166,20 @@
   .rankPrimary > .rankNumber { font-size:56px; }
 }
 @media (max-width:640px) {
-  .hero { padding:104px 0 0; }
+  .hero { padding:100px 0 0; }
+  .kicker { margin-bottom:14px; gap:12px; letter-spacing:.14em; }
+  .kicker::before { width:24px; }
   .hero h1 { font-size:clamp(30px,calc((100vw - 2 * var(--public-outer-gutter)) * .108),42px); overflow-wrap:anywhere; }
-  .heroMeta { margin-top:24px; padding:20px 0 16px; gap:14px; }
-  .heroCopy { font-size:14px; line-height:1.5; }
-  .commercialShortlist { padding:24px 0 72px; }
+  /* The phone's first screen belongs to pick #1: the explanation and counts wait for the method section below. */
+  .heroMeta { margin-top:16px; padding:4px 0 8px; gap:0; }
+  .heroCopy,.heroTicker span { display:none; }
+  .commercialShortlist { padding:8px 0 72px; }
+  /* The selected tab already names the category and the tab list carries the section title;
+     the section keeps its accessible name through aria-labelledby. */
+  .commercialHeading { display:none; }
   .commercialHeading h2,.whyPicked h2,.faq h2 { font-size:36px; }
-  .rankPrimary,.rankSecondary { padding:28px 22px; gap:22px; }
+  .rankPrimary,.rankSecondary { padding:24px 20px; gap:18px; }
+  .rankPrimary > .rankNumber { font-size:44px; }
   .rankIdentity { gap:16px; }
   .rankLogo { width:64px; height:64px; padding:10px; }
   .page dl.rankFacts { display:grid; grid-template-columns:1fr; border-top:0; }
