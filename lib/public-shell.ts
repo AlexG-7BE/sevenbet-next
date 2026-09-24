@@ -1,3 +1,5 @@
+import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
+
 export type ShellRouteKind = "public" | "programme" | "protected-help" | "internal";
 
 export const PUBLIC_NAVIGATION = [
@@ -15,6 +17,20 @@ export function publicNavigationForCommercialState(commercialProductsAvailable: 
 
 export function publicCommercialDestinationVisible(href: string, commercialProductsAvailable: boolean) {
   return commercialProductsAvailable || !commercialMarketOnlyRoutes.has(href);
+}
+
+/**
+ * Whether Best Offers and Bonuses belong in navigation for this reader.
+ *
+ * A partner route is not the test. `commercialProductsAvailable` reports only
+ * that a canonical action exists, and RFC-039 separates publication from route
+ * eligibility: those pages now present published offers wherever advertising is
+ * not prohibited. Gating the links on a route left the pages populated and
+ * unreachable in every country we had not activated. The link follows the page,
+ * and the missing route still means no button once the reader arrives.
+ */
+export function commercialDestinationsNavigable(commercialProductsAvailable: boolean, countryCode?: string | null) {
+  return commercialProductsAvailable || offersMayBePresented(countryCode);
 }
 
 const protectedHelpPrefixes = ["/help"];

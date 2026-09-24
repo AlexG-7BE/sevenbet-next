@@ -591,13 +591,17 @@ test("restricted KZ and supported PE remain isolated across direct localized rou
   const restrictedPage = await restricted.newPage();
   const restrictedResponse = await restrictedPage.goto(`${baseUrl}/en/best-offers`, { waitUntil: "domcontentloaded" });
   expect(restrictedResponse?.status()).toBe(200);
-  await expect(restrictedPage.locator('[data-commercial-market-state="editorial-only"]')).toBeVisible();
+  // KZ has no partner route, and that is no longer a reason to withhold the
+  // offers themselves: published offers are presented wherever advertising is
+  // not prohibited, and the missing route means no visit button rather than no
+  // page. The isolation this test protects is the one that matters — no /r/
+  // destination ever reaches a reader whose market has no governed route —
+  // and it is now checked against a populated page rather than an empty one.
   await expect(restrictedPage.locator('[href^="/r/"]')).toHaveCount(0);
-  await expect(desktopPrimary(restrictedPage).getByRole("link", { name: "Best Offers", exact: true })).toHaveCount(0);
-  await expect(desktopPrimary(restrictedPage).getByRole("link", { name: "Bonuses", exact: true })).toHaveCount(0);
+  await expect(desktopPrimary(restrictedPage).getByRole("link", { name: "Best Offers", exact: true })).toHaveCount(1);
+  await expect(desktopPrimary(restrictedPage).getByRole("link", { name: "Bonuses", exact: true })).toHaveCount(1);
 
   await restrictedPage.goto(`${baseUrl}/en/bonuses`, { waitUntil: "domcontentloaded" });
-  await expect(restrictedPage.locator('[data-commercial-market-state="editorial-only"]')).toBeVisible();
   await expect(restrictedPage.locator('[href^="/r/"]')).toHaveCount(0);
   await supportedPage.goto(`${baseUrl}/en/casinos`, { waitUntil: "domcontentloaded" });
   await expect(supportedPage.locator("[data-commercial-casino-card]").first()).toBeVisible();
