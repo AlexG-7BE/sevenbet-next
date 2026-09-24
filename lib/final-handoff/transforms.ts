@@ -613,10 +613,21 @@ export function transformHomeHandoff(html: string, locale: SupportedLocale = "en
       HOME_SNAP_LABELS.has(label) ? `${tag} data-home-snap="" data-home-snap-label="${label}"` : tag
     ));
 
+  // Phones read the three Programme chapters as compact cards whose own buttons are hidden,
+  // so one primary action follows them. It clones the hero action, whose href already
+  // carries the locale's Programme path; CSS shows it only at phone widths.
+  const heroAction = /<a href="[^"]*" class="scp2" data-home-hero-cta=""[^>]*>[^<]*<\/a>/.exec(transformed)?.[0];
+  const withChaptersAction = heroAction
+    ? transformed.replace(
+      '<div data-screen-label="Built from evidence"',
+      `<div data-home-chapters-cta="">${heroAction.replace(' data-home-hero-cta=""', "")}</div><div data-screen-label="Built from evidence"`,
+    )
+    : transformed;
+
   const withSnapAnchors = HOME_STICKY_SNAP_LABELS.reduce((output, label) => output.replace(
     `<div data-screen-label="${label}"`,
     `<div aria-hidden="true" data-home-snap="" data-home-snap-anchor="" data-home-snap-label="${label}" style="height:1px;margin-bottom:-1px;pointer-events:none;width:1px;"></div><div data-screen-label="${label}"`,
-  ), transformed);
+  ), withChaptersAction);
   return translateHomeHandoff(withSnapAnchors, locale);
 }
 
@@ -671,6 +682,61 @@ export function transformHomeHandoffCss(css: string) {
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-snap-type: none !important; }
+    }
+    [data-home-chapters-cta] { display: none; }
+    /*
+     * Phones (Founder, 24 Sep 2026): the pinned "A plan you can see" theatre and the three
+     * full-screen chapter cards that replaced one another cost about five screens and hid
+     * the only concrete facts behind a growing photo. Below 760px the chapters become three
+     * compact cards in normal flow, the facts stay readable, one primary action follows,
+     * and scrolling is free. Desktop keeps the full composition.
+     */
+    @media (max-width: 760px) {
+      html { scroll-snap-type: none !important; }
+      [data-handoff-page="home"] [data-screen-label="A plan you can see"] {
+        position: relative !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 72px 24px 48px !important;
+      }
+      [data-handoff-page="home"] [data-screen-label="A plan you can see"] > div:nth-of-type(2) { margin-top: 40px !important; }
+      [data-handoff-page="home"] [data-screen-label="A plan you can see"] > div:last-child { display: none !important; }
+      [data-handoff-page="home"] [data-stackpanel] {
+        position: relative !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 16px 16px !important;
+        display: block !important;
+        border: 1px solid rgba(250, 250, 247, .12) !important;
+        border-radius: 20px !important;
+        box-shadow: none !important;
+        transform: none !important;
+        opacity: 1 !important;
+      }
+      [data-handoff-page="home"] [data-stackpanel] > div:first-child {
+        position: relative !important;
+        inset: auto !important;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+      }
+      [data-handoff-page="home"] [data-stackpanel] > div:first-child img { object-position: 50% 28% !important; }
+      [data-handoff-page="home"] [data-stackpanel] > div:nth-child(2),
+      [data-handoff-page="home"] [data-stackpanel] [data-stackind],
+      [data-handoff-page="home"] [data-stackpanel] [data-mob="chapter"] > a { display: none !important; }
+      [data-handoff-page="home"] [data-stackpanel] [data-mob="chapter"] {
+        padding: 20px 20px 24px !important;
+        text-align: left !important;
+        opacity: 1 !important;
+      }
+      [data-handoff-page="home"] [data-stackpanel] [data-mob="chapter"] > div:first-child { margin-bottom: 12px !important; }
+      [data-handoff-page="home"] [data-stackpanel] [data-mob="chapter"] h2 { font-size: 34px !important; }
+      [data-handoff-page="home"] [data-stackpanel] [data-mob="chapter"] p { margin-top: 12px !important; font-size: 16px !important; }
+      [data-handoff-page="home"] [data-home-chapters-cta] {
+        padding: 16px 16px 64px;
+        display: flex;
+        justify-content: center;
+        background: #100F0F;
+      }
     }
   `;
 }
