@@ -34,6 +34,8 @@ export type CommercialUxMessages = Readonly<{
   licenceStatus: string;
   /** Brand-level regulatory footprint, shown where no exact market profile applies. */
   licensedIn: string;
+  /** Replaces a section's worth of empty fact rows with one honest line. */
+  nothingPublishedYet: string;
   market: string;
   operator: string;
   supportLanguages: string;
@@ -102,6 +104,7 @@ const en: CommercialUxMessages = {
   casinosShown: "casinos shown",
   licenceStatus: "Licence status",
   licensedIn: "Licensed in",
+  nothingPublishedYet: "We have not published this detail for this casino yet.",
   market: "Market",
   operator: "Operator",
   supportLanguages: "Support languages",
@@ -201,19 +204,19 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "nb-NO": { minimumWithdrawal: "Minste uttak", fees: "Gebyrer" },
     "fr-CA": { minimumWithdrawal: "Retrait minimum", fees: "Frais" },
   };
-  const globalRecordLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "licensedIn">>> = {
-    "de-DE": { licensedIn: "Lizenziert in" },
-    "it-IT": { licensedIn: "Con licenza in" },
-    "es-ES": { licensedIn: "Con licencia en" },
-    "es-PE": { licensedIn: "Con licencia en" },
-    "pt-PT": { licensedIn: "Licenciado em" },
-    "el-GR": { licensedIn: "Αδειοδοτημένο σε" },
-    "nl-NL": { licensedIn: "Vergunning in" },
-    "sv-SE": { licensedIn: "Licensierat i" },
-    "da-DK": { licensedIn: "Licenseret i" },
-    "fi-FI": { licensedIn: "Lisensoitu maissa" },
-    "nb-NO": { licensedIn: "Lisensiert i" },
-    "fr-CA": { licensedIn: "Sous licence en" },
+  const globalRecordLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "licensedIn" | "nothingPublishedYet">>> = {
+    "de-DE": { licensedIn: "Lizenziert in", nothingPublishedYet: "Diese Angaben haben wir für dieses Casino noch nicht veröffentlicht." },
+    "it-IT": { licensedIn: "Con licenza in", nothingPublishedYet: "Non abbiamo ancora pubblicato questo dato per questo casinò." },
+    "es-ES": { licensedIn: "Con licencia en", nothingPublishedYet: "Todavía no hemos publicado este dato de este casino." },
+    "es-PE": { licensedIn: "Con licencia en", nothingPublishedYet: "Todavía no hemos publicado este dato de este casino." },
+    "pt-PT": { licensedIn: "Licenciado em", nothingPublishedYet: "Ainda não publicámos esta informação sobre este casino." },
+    "el-GR": { licensedIn: "Αδειοδοτημένο σε", nothingPublishedYet: "Δεν έχουμε δημοσιεύσει ακόμη αυτό το στοιχείο για αυτό το καζίνο." },
+    "nl-NL": { licensedIn: "Vergunning in", nothingPublishedYet: "We hebben dit gegeven voor dit casino nog niet gepubliceerd." },
+    "sv-SE": { licensedIn: "Licensierat i", nothingPublishedYet: "Vi har ännu inte publicerat den här uppgiften om det här casinot." },
+    "da-DK": { licensedIn: "Licenseret i", nothingPublishedYet: "Vi har endnu ikke offentliggjort denne oplysning om dette kasino." },
+    "fi-FI": { licensedIn: "Lisensoitu maissa", nothingPublishedYet: "Emme ole vielä julkaisseet tätä tietoa tästä kasinosta." },
+    "nb-NO": { licensedIn: "Lisensiert i", nothingPublishedYet: "Vi har ennå ikke publisert denne opplysningen om dette kasinoet." },
+    "fr-CA": { licensedIn: "Sous licence en", nothingPublishedYet: "Nous n’avons pas encore publié ce détail pour ce casino." },
   };
   const heroMetricLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "publishedReviews" | "rankPrefix" | "eligibleRecords" | "partnerLinks" | "publishedOffers" | "filteredFor">>> = {
     "de-DE": { publishedReviews: "veröffentlichte Bewertungen", rankPrefix: "Nr.", eligibleRecords: "berechtigte Einträge", partnerLinks: "Partnerlinks", publishedOffers: "veröffentlichte Angebote", filteredFor: "Gefiltert für {market}" },

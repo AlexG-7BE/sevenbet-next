@@ -495,10 +495,20 @@ export function mapPublishedCasino(
       structuredData: validatedStructuredData(seo.structuredData),
     },
     licenses,
-    regulatoryFootprint: [...new Map(licenses.map((licence) => [
-      `${licence.authority}\u0000${licence.jurisdiction ?? ""}`,
-      { authority: licence.authority, jurisdiction: licence.jurisdiction },
-    ])).values()],
+    // The repository supplies the unprojected footprint so a national licence
+    // still tells the reader the brand is regulated somewhere, named by its
+    // own jurisdiction. Older snapshots have no such key, so the projected
+    // licences remain the fallback.
+    regulatoryFootprint: [...new Map((list(snapshot.regulatoryFootprint).length
+      ? list(snapshot.regulatoryFootprint).flatMap((entry) => {
+        const record = object(entry);
+        const authority = text(record.authority);
+        const expiresAt = date(record.expiresAt);
+        if (!authority || !licenceIsCurrent(record, expiresAt, now)) return [];
+        return [{ authority, jurisdiction: nullableText(record.jurisdiction) }];
+      })
+      : licenses.map((licence) => ({ authority: licence.authority, jurisdiction: licence.jurisdiction }))
+    ).map((entry) => [`${entry.authority}\u0000${entry.jurisdiction ?? ""}`, entry])).values()],
     countries,
     payments,
     providers,

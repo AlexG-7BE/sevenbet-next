@@ -86,10 +86,34 @@ function projectedPublishedSnapshot(countryCode?: string | null) {
         )
     ), '[]'::jsonb)
   `;
+  // The brand's regulatory footprint is a global identity fact: which
+  // regulators licence it, and in which jurisdiction. It crosses markets where
+  // the licence records themselves must not, so it carries identity only —
+  // authority, jurisdiction and currency — and never a licence number or
+  // verification URL that could read as local authority. Naming the
+  // jurisdiction is what keeps "licensed in GB" from meaning "licensed here".
+  const regulatoryFootprint = Prisma.sql`
+    COALESCE((
+      SELECT jsonb_agg(DISTINCT jsonb_build_object(
+        'authority', licence.entry ->> 'authority',
+        'jurisdiction', licence.entry ->> 'jurisdiction',
+        'status', licence.entry ->> 'status',
+        'canonicalStatus', licence.entry ->> 'canonicalStatus',
+        'expiresAt', licence.entry ->> 'expiresAt'
+      ))
+      FROM jsonb_array_elements(${sourceLicenses}) AS licence(entry)
+      WHERE NULLIF(licence.entry ->> 'authority', '') IS NOT NULL
+    ), '[]'::jsonb)
+  `;
   return Prisma.sql`jsonb_set(
-    jsonb_set(cv.snapshot::jsonb, '{countries}', ${projectedCountries}, true),
-    '{licenses}',
-    ${projectedLicenses},
+    jsonb_set(
+      jsonb_set(cv.snapshot::jsonb, '{countries}', ${projectedCountries}, true),
+      '{licenses}',
+      ${projectedLicenses},
+      true
+    ),
+    '{regulatoryFootprint}',
+    ${regulatoryFootprint},
     true
   )`;
 }
