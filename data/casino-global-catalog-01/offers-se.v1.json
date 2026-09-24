@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "casino-global-catalog-offers.v1",
+  "release": "CASINO-GLOBAL-CATALOG-01",
+  "decisionRef": "FOUNDER-CASINO-GLOBAL-CATALOG-2026-09-23",
+  "countryCode": "SE",
+  "commercialAuthority": false,
+  "observedAt": "2026-09-25T00:00:00.000Z",
+  "note": "Swedish welcome offers read on 25 September 2026 from each operator's own Swedish terms page through a Swedish exit node. They replace the earlier observation records of the same slugs, which lacked the minimum deposit and wagering.",
+  "offers": [
+    {
+      "casinoSlug": "betsson",
+      "slug": "betsson-se-casino-welcome-observation",
+      "title": "100% up to SEK 1,000 in casino plus 50 free spins",
+      "summary": "First deposit only. 100% match to SEK 1,000 at 30x deposit and bonus, plus 50 free spins on Pirots 4.",
+      "type": "WELCOME",
+      "percentage": 100,
+      "maximumBonus": 1000,
+      "freeSpins": 50,
+      "minimumDeposit": 100,
+      "wageringMultiplier": 30,
+      "wageringText": "30x deposit and bonus; free-spin winnings 35x",
+      "eligibility": "New customers registered after 20 October 2025, first deposit only.",
+      "importantConditions": [
+        "Minimum deposit SEK 100.",
+        "Deposit and bonus must be wagered 30 times in the casino before withdrawing.",
+        "Free spins are on Pirots 4 at SEK 2 per spin; their winnings are wagered 35 times.",
+        "Maximum bet while wagering is SEK 60 per round or SEK 5 per line.",
+        "60 days to meet the wagering."
+      ],
+      "termsUrl": "https://offers.betsson.com/sv/valkomstbonus"
+    },
+    {
+      "casinoSlug": "nordicbet",
+      "slug": "nordicbet-se-welcome",
+      "title": "100 free spins on Pirots 4",
+      "summary": "First deposit only. 100 free spins after SEK 200 of casino wagering; winnings at 35x.",
+      "type": "FREE_SPINS",
+      "freeSpins": 100,
+      "minimumDeposit": 200,
+      "wageringMultiplier": 35,
+      "wageringText": "35x free-spin winnings; SEK 200 must be wagered to unlock the spins",
+      "eligibility": "New customers registered after 20 October 2025, first deposit only.",
+      "importantConditions": [
+        "Minimum deposit SEK 200.",
+        "SEK 200 must be wagered in the casino before the spins are credited.",
+        "Free spins are on Pirots 4 at SEK 2 per spin; their winnings are wagered 35 times.",
+        "Maximum bet while wagering is SEK 60 per round or SEK 5 per line.",
+        "60 days to meet the wagering."
+      ],
+      "termsUrl": "https://offers.nordicbet.com/sv/casino-bonus"
+    }
+  ]
+}

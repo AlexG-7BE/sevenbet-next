@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 
+import { analyticsConsentMessages } from "./analytics-consent-catalog";
 import { HOME_SOURCE_COPY, homeTranslation } from "./home-catalog";
+import { learnBridgeMessages } from "./learn-bridges-catalog";
 import { demoProfileCopy } from "./demo-profile-catalog";
 import { learningMessages } from "./learning-center";
 import { productPageMessages } from "./product-pages-catalog";
@@ -55,14 +57,14 @@ function snapshot(locale: SupportedLocale) {
   const learning = learningMessages(locale);
   const methodology = methodologyMessages(locale);
   return {
-    shell: publicShellMessages(locale), footer: publicFooterMessages(locale),
+    shell: publicShellMessages(locale), footer: publicFooterMessages(locale), analyticsConsent: analyticsConsentMessages(locale),
     home: locale === "en-GB" ? HOME_SOURCE_COPY : homeTranslation(locale), product: productPageMessages(locale),
     demoProfile: demoProfileCopy(locale),
     errors: publicErrorMessages(locale), about: aboutMessages(locale), contact: contactMessages(locale), faq: faqMessages(locale),
     methodology: { metadataTitle: methodology.metadataTitle, metadataDescription: methodology.metadataDescription, text: [...methodology.copy.values()] },
     tenSteps: tenStepsTranslation(locale),
     visualFixture: visualFixtureCopy(locale),
-    learning: { categories: learning.categories, hub: learning.hub, ui: learning.ui },
+    learning: { categories: learning.categories, hub: learning.hub, ui: learning.ui, bridges: learnBridgeMessages(locale) },
   };
 }
 

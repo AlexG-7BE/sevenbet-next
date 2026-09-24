@@ -112,3 +112,32 @@ test("metadata, JSON-LD and sitemap use visible canonical Article fields", () =>
   assert.match(sitemap, /articleService\.listPublished/);
   assert.match(sitemap, /articlePath\(article\)/);
 });
+
+test("Founder next steps: a Programme card after six guides, a mid-guide Programme block and gated offer bridges", async () => {
+  const many = Array.from({ length: 8 }, (_, index) => ({ ...fixture, id: `00000000-0000-4000-8000-00000000010${index}`, slug: `guide-${index}`, title: `Guide ${index}` }));
+  const hub = transformLearnHandoff(generatedPages.learn.html, "en-GB", (href) => href, many);
+  assert.equal((hub.match(/data-learn-programme-bridge="inline"/g) ?? []).length, 1);
+  const guideSlugs = [...hub.matchAll(/href="\/learn\/casino-basics\/(guide-\d)"|data-learn-programme-bridge="inline"/g)].map((match) => match[1] ?? "bridge");
+  // The four "Start here" cards come first; in the full list the card follows the sixth guide.
+  assert.deepEqual(guideSlugs.slice(4), ["guide-0", "guide-1", "guide-2", "guide-3", "guide-4", "guide-5", "bridge", "guide-6", "guide-7"]);
+  assert.match(hub, /data-learn-programme-bridge="inline"[\s\S]*?href="\/program\?entry=start"[^>]*>Start Programme<\/a>/);
+  const german = transformLearnHandoff(generatedPages.learn.html, "de-DE", (href) => href, many);
+  assert.match(german, /data-learn-programme-bridge="inline"[\s\S]*?Kostenlos nutzbar/);
+  const few = transformLearnHandoff(generatedPages.learn.html, "en-GB", (href) => href, many.slice(0, 6));
+  assert.doesNotMatch(few, /data-learn-programme-bridge="inline"/);
+  const interactions = read("components/final-handoff/HandoffInteractions.tsx");
+  assert.match(interactions, /learnProgrammeBridge\.hidden = filtered/);
+
+  const { midArticleBridgeIndex } = await import("../lib/articles/article-bridges");
+  const heading = (id: string) => ({ id, type: "heading" as const, level: 2 as const, text: id });
+  const paragraph = (id: string) => ({ id, type: "paragraph" as const, text: id });
+  assert.equal(midArticleBridgeIndex([paragraph("a"), heading("b"), paragraph("c"), paragraph("d"), heading("e"), paragraph("f")]), 4);
+  assert.equal(midArticleBridgeIndex([paragraph("a"), paragraph("b")]), -1);
+
+  const view = read("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx");
+  const article = read("app/(public)/learn/[category]/[slug]/page.tsx");
+  assert.match(view, /const programmeBridgeAt = protectedCategory \|\| offerBridge \? -1 : midArticleBridgeIndex\(article\.bodyBlocks\);/);
+  assert.match(view, /\{offerBridge && !protectedCategory \? <OfferBridge bridge=\{offerBridge\} \/> : null\}/);
+  assert.match(article, /if \(article\.category !== "casino-bonuses" \|\| !offersMayBePresented\(presentation\.marketCountryCode\)\) return null;/);
+  assert.match(article, /disclosure: learning\.ui\.commercialDisclosure/);
+});
