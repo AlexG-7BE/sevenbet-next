@@ -698,6 +698,42 @@ test("unsupported microphone recording keeps the typed path available", async ({
   await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
 });
 
+test("account-first route registers before the story and opens Mission 01 from the dashboard", async ({ page }) => {
+  // Founder decision, 25 Sep 2026: a quiet door to register first. Mission 01 stays the main path.
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/program");
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
+
+  await page.getByRole("button", { name: "Create an account first →" }).click();
+  await expect(page.getByRole("heading", { name: /Save your place first/ })).toBeVisible();
+  await expect(page.getByText("Your Starting Point is ready")).toHaveCount(0);
+  await noHorizontalOverflow(page);
+  await page.getByRole("button", { name: "← Tell my story first" }).click();
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
+  await page.getByRole("button", { name: "Create an account first →" }).click();
+
+  const email = `program-ai-account-first-${randomUUID()}@example.test`;
+  await page.getByRole("button", { name: "Use email instead" }).click();
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
+  await page.getByLabel("Password").fill("Programme-test-password-42!");
+  await page.getByRole("button", { name: "Create account with email" }).click();
+  await expect(page.getByRole("button", { name: /Start Mission 01/i })).toBeVisible();
+
+  const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+  const [acceptance, startingPoints, xp] = await Promise.all([
+    prisma.programmeAccessAcceptance.findUniqueOrThrow({ where: { userId: user.id } }),
+    prisma.programmeStartingPoint.findMany({ where: { userId: user.id } }),
+    prisma.userXpEvent.findMany({ where: { userId: user.id } }),
+  ]);
+  expect(acceptance.userId).toBe(user.id);
+  expect(startingPoints).toHaveLength(0);
+  expect(xp).toHaveLength(0);
+});
+
 test("typed fallback path binds exact authority and is idempotent through real email auth", async ({ page }) => {
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
   await page.emulateMedia({ reducedMotion: "reduce" });
