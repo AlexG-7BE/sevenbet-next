@@ -162,6 +162,18 @@ export function isGovernedBestOfferCandidate(offer: PublicOfferDTO, country?: st
   return isGovernedCommercialAction(offer.action);
 }
 
+/**
+ * Offers the reader can act on come first; within each group the editorial
+ * order is untouched (Array.prototype.sort is stable). Founder decision of
+ * 24 September 2026, after the route-less top three left Best Offers with no
+ * clickable offer in any market. Because this makes route availability — and
+ * so commission — part of the order, the Best Offers commission answer says
+ * so; the Editor Score itself never reads it.
+ */
+function actionableFirst(a: PublicOfferDTO, b: PublicOfferDTO) {
+  return Number(isGovernedCommercialAction(b.action)) - Number(isGovernedCommercialAction(a.action));
+}
+
 function uniqueCasinos(offers: PublicOfferDTO[], limit: number) {
   const seen = new Set<string>();
   return offers.filter((offer) => {
@@ -224,7 +236,7 @@ export function rankBestOffersForCategory(
       || reviewedAt(b) - reviewedAt(a)
       || editorialTieBreak(a, b);
   });
-  return uniqueCasinos(ranked, Math.min(Math.max(options.limit ?? 3, 1), 3));
+  return uniqueCasinos([...ranked].sort(actionableFirst), Math.min(Math.max(options.limit ?? 3, 1), 3));
 }
 
 export function selectCommercialBestOfferPool(
@@ -235,7 +247,10 @@ export function selectCommercialBestOfferPool(
   const eligible = options.includeWithoutRoute
     ? offers
     : offers.filter((offer) => isGovernedBestOfferCandidate(offer, options.country));
-  return rankOffersByEditorialAuthority(eligible).slice(0, limit);
+  // The pool is cut to a limit before categories rank it, so the partition has
+  // to happen here too: otherwise route-less offers with higher scores can fill
+  // the pool and leave no actionable offer for the categories to choose from.
+  return rankOffersByEditorialAuthority(eligible).sort(actionableFirst).slice(0, limit);
 }
 
 export function rankBestBonusCasinoIds(

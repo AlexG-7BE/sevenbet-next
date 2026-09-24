@@ -109,7 +109,7 @@ export const NB_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqWageringQuestion: "Hva betyr omsetningskrav?",
     faqWageringAnswer: "Det er beløpet de publiserte vilkårene krever at du omsetter før bonusgevinster kan tas ut.",
     faqCommissionQuestion: "Tjener dere penger hvis jeg registrerer meg?",
-    faqCommissionAnswer: "B4GAMBLE kan motta provisjon fra en tydelig merket affiliatelenke. Betalingen påvirker ikke den redaksjonelle vurderingen eller den naturlige rangeringen.",
+    faqCommissionAnswer: "B4GAMBLE kan motta provisjon når du bruker en tilgjengelig og tydelig merket affiliatelenke. Tilbud vi kan lenke til, vises først; innenfor hver gruppe avgjør den redaksjonelle vurderingen rekkefølgen. Provisjon endrer aldri den redaksjonelle vurderingen.",
     faqWhyThreeQuestion: "Hvorfor bare tre tilbud?",
     faqWhyThreeAnswer: "En kort liste gjør valget oversiktlig. På Bonuser-siden finner du alle oppføringene som kan sammenlignes.",
   },

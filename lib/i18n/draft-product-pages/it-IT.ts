@@ -109,7 +109,7 @@ export const IT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqWageringQuestion: "Che cos'è il requisito di puntata?",
     faqWageringAnswer: "È il volume di gioco previsto dalle condizioni pubblicate prima di poter prelevare le vincite ottenute con il bonus.",
     faqCommissionQuestion: "Guadagnate se mi iscrivo?",
-    faqCommissionAnswer: "B4GAMBLE può ricevere una commissione se utilizzi un link di affiliazione disponibile e chiaramente indicato. Questo non influenza la valutazione editoriale né la classifica.",
+    faqCommissionAnswer: "B4GAMBLE può ricevere una commissione se utilizzi un link di affiliazione disponibile e chiaramente indicato. Le offerte verso cui possiamo rimandarti compaiono per prime; all’interno di ciascun gruppo l’ordine segue la valutazione editoriale. La commissione non modifica mai la valutazione editoriale.",
     faqWhyThreeQuestion: "Perché solo tre offerte?",
     faqWhyThreeAnswer: "Una selezione breve mantiene la decisione circoscritta; nella pagina Bonus trovi l'elenco completo delle voci idonee.",
   },
