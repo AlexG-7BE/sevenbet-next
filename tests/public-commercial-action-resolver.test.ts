@@ -11,7 +11,8 @@ import type { MarketActivationPublicRoute } from "../lib/market-activation/runti
 import { allowGbCommercialReadinessAuthority } from "./market-authority.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
-const subject = { casinoId: "casino-id", casinoSlug: "published-casino", published: true } as const;
+// Betsson holds a Peruvian licence, so the market-access register admits it in PE.
+const subject = { casinoId: "casino-id", casinoSlug: "betsson", published: true } as const;
 
 function authority(countryCode: string, allowed = true): CommercialJurisdictionAuthority {
   return {
@@ -94,6 +95,20 @@ test("legal denial is intrinsic and prevents the route source from authorizing",
   assert.equal(routeReads, 0);
 });
 
+test("a casino without the market's licence never reaches the route source", async () => {
+  let routeReads = 0;
+  const resolver = new PublicCommercialActionResolver(routeSource(() => {
+    routeReads += 1;
+    return [{ casinoId: subject.casinoId, slug: "must-not-authorize" }];
+  }), allowGbCommercialReadinessAuthority, () => true);
+
+  const unlicensed = await decision(resolver, { subject: { ...subject, casinoSlug: "goldenplay" } });
+  const blocked = await decision(resolver, { subject: { ...subject, casinoSlug: "casino-redkings" }, countryCode: "DK", jurisdiction: authority("DK") });
+  assert.deepEqual(unlicensed, { action: null, reasonCode: "NO_LOCAL_LICENCE" });
+  assert.deepEqual(blocked, { action: null, reasonCode: "OPERATOR_BLOCKS" });
+  assert.equal(routeReads, 0);
+});
+
 test("publication, redirect-engine and trusted-market failures remain non-actionable", async () => {
   const routes = routeSource(() => [{ casinoId: subject.casinoId, slug: "published-casino-pe" }]);
   const enabled = new PublicCommercialActionResolver(routes, allowGbCommercialReadinessAuthority, () => true);
@@ -137,7 +152,7 @@ test("complete GB factual protection and its evidence source both fail closed", 
     async evaluateMany() { throw new Error("evidence unavailable"); },
   };
 
-  const input = { countryCode: "GB", marketCode: "GB", jurisdiction: authority("GB") };
+  const input = { subject: { ...subject, casinoSlug: "hello-casino" }, countryCode: "GB", marketCode: "GB", jurisdiction: authority("GB") };
   const blocked = await decision(new PublicCommercialActionResolver(routes, blockedOperator, () => true), input);
   const unavailable = await decision(new PublicCommercialActionResolver(routes, unavailableOperator, () => true), input);
   assert.deepEqual(blocked, { action: null, reasonCode: "GB_REDIRECT_CONTRACT_INVALID" });

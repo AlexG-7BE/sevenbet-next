@@ -128,7 +128,7 @@ async function authenticateAdmin(page: Page) {
 
 test("cache-on server partitions GEO and locale, serves a real hit, and invalidates publication withdrawal", async ({ browser }) => {
   const peContext = await browser.newContext({
-    extraHTTPHeaders: { "x-vercel-ip-country": "PE" },
+    extraHTTPHeaders: { "x-vercel-ip-country": "IE" },
   });
   const pePage = await peContext.newPage();
   const first = await pePage.goto(`${baseUrl}${casinoPath}`, { waitUntil: "domcontentloaded" });

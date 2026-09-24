@@ -120,7 +120,7 @@ test("8. exact-market facts are projected from one exact market profile", () => 
 test("9. discovery filters operate on the single projected exact market", () => {
   const discovery = read("lib/services/public-casino-discovery.service.ts");
   const query = read("lib/public-casino-discovery/query.ts");
-  const projection = discovery.indexOf("const scoped = projectPublicCasinoMarket");
+  const projection = discovery.indexOf("projectPublicCasinoMarket(casino, requestCountryContext");
   const filters = discovery.indexOf("const matchingProfiles");
   assert.ok(projection > -1 && filters > projection);
   assert.match(discovery.slice(projection, filters), /scoped\.(payments|providers|categories|currencies)/);
