@@ -5,6 +5,13 @@ export const PRIVACY_CHOICE_DISMISSED_KEY = "b4g_privacy_choice_dismissed";
 /** Browser tests opt in to the automatic choice; otherwise automation is never covered by it. */
 export const PRIVACY_CHOICE_AUTOMATION_OPT_IN_KEY = "b4g_privacy_choice_under_automation";
 
+/**
+ * Founder decision 25 Sep 2026 (option B3): the first screen stays clear. An automatic choice
+ * waits for the visitor's first scroll, or this long when they do not scroll.
+ */
+export const PRIVACY_CHOICE_AUTO_OPEN_DELAY_MS = 5000;
+export const PRIVACY_CHOICE_SCROLL_THRESHOLD_PX = 24;
+
 // Focused flows keep their first screen: the Programme, protected Help, sign-in and staff routes.
 const AUTO_OPEN_EXCLUDED = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:program|help|login|admin|editorial-preview|unsubscribe)(?:\/|$)/;
 

@@ -77,22 +77,36 @@ async function authenticateAdmin(page: Page, target: string) {
   await expect(page).toHaveURL(new RegExp(`${target.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`));
 }
 
-test("undecided visitors see the analytics choice on arrival; Not now holds for the tab; the Programme stays clear", async ({ browser }) => {
+test("undecided visitors see the analytics choice after their first scroll or a short delay; Not now holds for the tab; the Programme stays clear", async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await context.addInitScript(() => window.sessionStorage.setItem("b4g_privacy_choice_under_automation", "1"));
   const page = await context.newPage();
   await page.goto(`${baseUrl}/privacy`, { waitUntil: "domcontentloaded" });
   const choices = page.getByRole("dialog", { name: "Analytics privacy choices" });
+  // Founder decision 25 Sep 2026 (B3): the first screen stays clear until the visitor scrolls.
+  await page.waitForTimeout(1500);
+  await expect(choices).toHaveCount(0);
+  await page.evaluate(() => window.scrollTo(0, 400));
   await expect(choices).toBeVisible();
   // A choice that opens by itself is non-modal and leaves focus on the page.
   expect(await choices.evaluate((dialog) => dialog.contains(document.activeElement))).toBe(false);
   await choices.getByRole("button", { name: "Not now" }).click();
   await expect(choices).toHaveCount(0);
   await page.reload({ waitUntil: "domcontentloaded" });
+  await page.evaluate(() => window.scrollTo(0, 400));
   await page.waitForTimeout(500);
   await expect(page.getByRole("dialog", { name: "Analytics privacy choices" })).toHaveCount(0);
   expect((await context.cookies()).find((cookie) => cookie.name === "b4g_analytics_consent")).toBeUndefined();
   await context.close();
+
+  // Without a scroll, the choice still arrives after a short delay.
+  const still = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await still.addInitScript(() => window.sessionStorage.setItem("b4g_privacy_choice_under_automation", "1"));
+  const stillPage = await still.newPage();
+  await stillPage.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
+  await expect(stillPage.getByRole("dialog", { name: "Analytics privacy choices" })).toBeVisible({ timeout: 10_000 });
+  expect(await stillPage.evaluate(() => window.scrollY)).toBe(0);
+  await still.close();
 
   const programme = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await programme.addInitScript(() => window.sessionStorage.setItem("b4g_privacy_choice_under_automation", "1"));

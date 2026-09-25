@@ -38,8 +38,9 @@ Programme, Help, GEO, legal or commercial authority.
   site's visual system; equal-size Decline and Allow buttons and a "Not now"
   close control. The exclusion statement (email, Programme answers, partner
   tokens) stays visible at every width. Also since 25 September 2026, a
-  visitor without a recorded choice sees it on arrival, except on the
-  Programme, Help, sign-in and staff routes. It is non-modal and takes no
+  visitor without a recorded choice sees it after their first scroll or
+  five seconds on the page, except on the Programme, Help, sign-in and staff
+  routes. It is non-modal and takes no
   focus. "Not now" only hides it for the tab session and records nothing, and
   no analytics identifier or event is created before Allow.
 - The signed consent cookie is browser-readable only as a UI hint. Opaque
