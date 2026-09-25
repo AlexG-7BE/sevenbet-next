@@ -48,6 +48,8 @@ export type EnableTarget = Readonly<{
   /** The same casino's market whose link is reused; null when only EGO's link sheet has it. */
   sourceMarket: string | null;
   query?: Readonly<Record<string, string>>;
+  /** The Founder chose this link over the one staged earlier for the market; the staged hash is not required to match. */
+  replacesStagedLink?: string;
   note: string;
 }>;
 
@@ -61,8 +63,8 @@ export const ENABLE_TARGETS: readonly EnableTarget[] = Object.freeze([
   // Sweden and Denmark: MegawaysCasino is on both registers; EGO's brand link is reused (Founder choice, 24 Sep).
   { casinoSlug: "megawayscasino", market: "SE", partner: EGO, sourceMarket: "GB", note: "Spelinspektionen megawayscasino.com/se" },
   { casinoSlug: "megawayscasino", market: "DK", partner: EGO, sourceMarket: "GB", note: "Spillemyndigheden megawayscasino.com/dk" },
-  // Denmark: EUcasino's Danish link was staged on 22 Sep but failed a check made outside Denmark; it lives in EGO's sheet.
-  { casinoSlug: "eucasino", market: "DK", partner: EGO, sourceMarket: null, note: "Spillemyndigheden eucasino.com" },
+  // Denmark: EUcasino's Danish link lives only in EGO's sheet; the Founder chose its Swedish brand link instead (25 Sep).
+  { casinoSlug: "eucasino", market: "DK", partner: EGO, sourceMarket: "SE", replacesStagedLink: "FOUNDER-MARKET-ACCESS-2026-09-24: reuse the Swedish link (25 Sep)", note: "Spillemyndigheden eucasino.com" },
   // Great Britain: the six White Hat Gaming brands, UKGC account 52894; the Superfly canonical link is reused.
   ...["21-prive", "diamond7", "gday-casino", "hello-casino", "skol-casino", "slotnite"].map((casinoSlug) => ({
     casinoSlug, market: "GB", partner: SUPERFLY, sourceMarket: "IE", note: "UKGC 52894",

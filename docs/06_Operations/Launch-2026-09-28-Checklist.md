@@ -23,7 +23,7 @@ with the closure stored as the click's `blockedReason`.
    (`gh api repos/AlexG-7BE/sevenbet-next/deployments` or the Vercel dashboard).
 2. **Activation release.** Run the runbook's `plan` against Production, compare it
    with the runbook, get the Founder's confirmation, run `apply`, keep the JSON
-   report. Expected: 25 disabled, 11 enabled (EUcasino DK needs `--ego-links`).
+   report. Expected: 25 disabled, 11 enabled (EUcasino DK reuses its Swedish link).
    Any `BROKEN_ROUTE` goes back to the partner before launch.
 3. **Real clicks from every market.**
    `npm run launch:click-check` clicks every casino's public `/r/` route from a
