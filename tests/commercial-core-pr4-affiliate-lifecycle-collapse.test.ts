@@ -3,18 +3,22 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { PublicCommercialActionResolver } from "../lib/commercial/public-commercial-action-resolver";
+import { marketAccess } from "../lib/market-access/access";
 import { MarketActivationRuntime } from "../lib/market-activation/runtime";
 import { allowGbCommercialReadinessAuthority } from "./market-authority.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 const casinoId = "10000000-0000-4000-8000-000000000001";
+// Kazakhstan has no rule in the RFC-054 market-access register and is not a
+// prohibited market, so only the lifecycle fields under test can decide the action.
+const market = "KZ";
 
 function activation(lifecycleActive: boolean, trackingUrl = "https://tracker.example/click") {
   return {
     id: "10000000-0000-4000-8000-000000000002",
     casinoId,
-    countryCode: "NL",
-    marketCode: "NL",
+    countryCode: market,
+    marketCode: market,
     product: "CASINO",
     desiredState: "ACTIVE",
     status: "ACTIVE",
@@ -83,7 +87,7 @@ function activation(lifecycleActive: boolean, trackingUrl = "https://tracker.exa
     },
     redirectSlug: {
       id: "10000000-0000-4000-8000-000000000005",
-      slug: "casino-nl",
+      slug: "casino-kz",
       casinoId,
       casinoBonusId: null,
       affiliateOfferId: "10000000-0000-4000-8000-000000000003",
@@ -102,8 +106,9 @@ function runtime(record: ReturnType<typeof activation> | null) {
 }
 
 test("Affiliate lifecycle state alone can neither create nor destroy a GovernedCommercialAction", async () => {
+  assert.deepEqual(marketAccess("casino", market, now), { open: true }, "the fixture market must stay open in the licence register");
   const authority = {
-    countryCode: "NL",
+    countryCode: market,
     commercialAllowed: true,
     referralAllowed: true,
     reasonCode: "POLICY_APPROVED",
@@ -114,29 +119,33 @@ test("Affiliate lifecycle state alone can neither create nor destroy a GovernedC
     return (await resolver.resolveMany({
       subjects: [{ casinoId, casinoSlug: "casino", published: true }],
       authority,
-      countryCode: "NL",
-      marketCode: "NL",
+      countryCode: market,
+      marketCode: market,
       product: "CASINO",
       now,
     })).get(casinoId);
   };
 
-  assert.deepEqual((await resolve(activation(true)))?.action, { href: "/r/casino-nl" });
-  assert.deepEqual((await resolve(activation(false)))?.action, { href: "/r/casino-nl" });
-  assert.equal((await resolve(null))?.action, null, "active legacy entities cannot synthesize canonical authority");
+  assert.deepEqual((await resolve(activation(true)))?.action, { href: "/r/casino-kz" });
+  assert.deepEqual((await resolve(activation(false)))?.action, { href: "/r/casino-kz" });
+  assert.deepEqual(
+    await resolve(null),
+    { action: null, reasonCode: "NO_GOVERNED_ROUTE" },
+    "active legacy entities cannot synthesize canonical authority",
+  );
 });
 
 test("technical and legal blockers remain authoritative after lifecycle collapse", async () => {
-  assert.deepEqual(await runtime(activation(false, "http://unsafe.example")).listActive([casinoId], "NL", now), []);
+  assert.deepEqual(await runtime(activation(false, "http://unsafe.example")).listActive([casinoId], market, now), []);
   let routeReads = 0;
   const resolver = new PublicCommercialActionResolver({
     async listPublicRoutes() { routeReads += 1; return [{ casinoId, slug: "must-not-authorize" }]; },
   }, allowGbCommercialReadinessAuthority, () => true);
   const result = (await resolver.resolveMany({
     subjects: [{ casinoId, casinoSlug: "casino", published: true }],
-    authority: { countryCode: "NL", commercialAllowed: false, referralAllowed: false, reasonCode: "MARKET_RESTRICTED", policyVersion: "test" },
-    countryCode: "NL",
-    marketCode: "NL",
+    authority: { countryCode: market, commercialAllowed: false, referralAllowed: false, reasonCode: "MARKET_RESTRICTED", policyVersion: "test" },
+    countryCode: market,
+    marketCode: market,
     product: "CASINO",
     now,
   })).get(casinoId);
@@ -173,4 +182,10 @@ test("runtime and canonical writes contain no hidden Affiliate lifecycle permiss
   assert.doesNotMatch(legacyBundleRepository, /async apply\(/);
   assert.match(legacyBundleCli, /COMMERCIAL_ACTIVATION_LEGACY_WRITE_RETIRED_BY_PR4/);
   assert.doesNotMatch(legacyBundleCli, /commercialActivationService\.apply/);
+});
+
+test("the lifecycle-collapse suite runs in CI", () => {
+  const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
+  assert.match(packageJson.scripts["ci:quality"], /commercial-core:pr4:test/);
+  assert.match(packageJson.scripts["commercial-core:pr4:test"], /commercial-core-pr4-affiliate-lifecycle-collapse\.test\.ts/);
 });
