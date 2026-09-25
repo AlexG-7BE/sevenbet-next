@@ -16,7 +16,13 @@ import {
 } from "../lib/programme/program-ai/openai-adapters";
 import { ProgrammeProviderError } from "../lib/programme/program-ai/provider-errors";
 import {
+  OpenAiRealtimeTranscriptionAdapter,
+  PROGRAM_AI_REALTIME_SESSION_TIMEOUT_MS,
+} from "../lib/programme/program-ai/openai-realtime-transcription";
+import { parseProgrammeRealtimeTranscriptEvent } from "../lib/programme/program-ai/realtime-transcription-client";
+import {
   PROGRAM_AI_OPENAI_MODEL,
+  PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
   PROGRAM_AI_TRANSCRIPTION_MODEL,
   isProgramAiRealProviderEnabled,
   resolveProgramAiOpenAiConfig,
@@ -29,6 +35,7 @@ const config: ProgramAiOpenAiConfig = {
   apiKey: secret,
   programmeModel: PROGRAM_AI_OPENAI_MODEL,
   transcriptionModel: PROGRAM_AI_TRANSCRIPTION_MODEL,
+  realtimeTranscriptionModel: PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
 };
 
 const turn = {
@@ -78,6 +85,7 @@ test("real-provider runtime gates and exact model IDs fail closed", () => {
     OPENAI_API_KEY: secret,
     PROGRAM_AI_OPENAI_MODEL: PROGRAM_AI_OPENAI_MODEL,
     PROGRAM_AI_TRANSCRIPTION_MODEL: PROGRAM_AI_TRANSCRIPTION_MODEL,
+    PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL: PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
   }), config);
   assert.throws(() => resolveProgramAiOpenAiConfig({
     PROGRAM_AI_V1_ENABLED: "true",
@@ -90,6 +98,13 @@ test("real-provider runtime gates and exact model IDs fail closed", () => {
     PROGRAM_AI_PROVIDER: "openai",
     OPENAI_API_KEY: secret,
     PROGRAM_AI_OPENAI_MODEL: "unapproved-model",
+  }), (error) => errorCode(error) === "PROVIDER_UNAVAILABLE");
+  assert.throws(() => resolveProgramAiOpenAiConfig({
+    PROGRAM_AI_V1_ENABLED: "true",
+    PROGRAM_AI_REAL_PROVIDER_ENABLED: "true",
+    PROGRAM_AI_PROVIDER: "openai",
+    OPENAI_API_KEY: secret,
+    PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL: "unapproved-realtime-model",
   }), (error) => errorCode(error) === "PROVIDER_UNAVAILABLE");
 });
 
@@ -112,6 +127,7 @@ test("Responses request is bounded, stateless, strict and keeps injection text a
           content: [{ type: "output_text", text: JSON.stringify(providerEnvelope) }],
         }],
         usage: { input_tokens: 147, output_tokens: 83 },
+        service_tier: "fast",
       });
     }) as typeof fetch,
     logger: (entry) => logs.push(entry),
@@ -131,6 +147,7 @@ test("Responses request is bounded, stateless, strict and keeps injection text a
   assert.equal(body.store, false);
   assert.equal(body.background, false);
   assert.equal(body.max_output_tokens, PROGRAM_AI_OPENAI_MAX_OUTPUT_TOKENS);
+  assert.equal(body.service_tier, "fast");
   assert.deepEqual(body.reasoning, { effort: "none" });
   assert.equal((body.text as { format: { strict: boolean; schema: unknown } }).format.strict, true);
   assert.equal((body.text as { format: { schema: { additionalProperties: boolean } } }).format.schema.additionalProperties, false);
@@ -153,6 +170,8 @@ test("Responses request is bounded, stateless, strict and keeps injection text a
     inputTokens: 147,
     outputTokens: 83,
     clarificationCount: 1,
+    requestedServiceTier: "fast",
+    actualServiceTier: "fast",
   }]);
   const logged = JSON.stringify(logs);
   assert.doesNotMatch(logged, /Ignore your instructions|late at night|sk-test|Starting Point/i);
@@ -258,6 +277,80 @@ test("Audio Transcriptions sends one bounded file and logs metadata only", async
   assert.doesNotMatch(JSON.stringify(logs), /Editable transcript|sk-test/i);
   assert.equal(logs[0]?.audioBytes, 4);
   assert.equal(logs[0]?.recordingDurationMs, 24_000);
+});
+
+test("Realtime transcription exchanges SDP server-side with a bounded transcription-only session", async () => {
+  let requestUrl = "";
+  let requestInit: RequestInit | undefined;
+  const logs: Array<Record<string, unknown>> = [];
+  const adapter = new OpenAiRealtimeTranscriptionAdapter(config, {
+    fetchImpl: (async (url, init) => {
+      requestUrl = String(url);
+      requestInit = init;
+      return new Response("v=0\r\no=openai answer\r\n", { status: 201, headers: { "content-type": "application/sdp" } });
+    }) as typeof fetch,
+    logger: (entry) => logs.push(entry),
+    now: (() => { let value = 100; return () => (value += 5); })(),
+    timeoutSignal: (milliseconds) => {
+      assert.equal(milliseconds, PROGRAM_AI_REALTIME_SESSION_TIMEOUT_MS);
+      return new AbortController().signal;
+    },
+  });
+  const answer = await adapter.createSession({
+    locale: "en-GB",
+    safetyIdentifier: "opaque-hash-not-user-content",
+    sdp: "v=0\r\no=browser offer\r\n",
+  });
+  assert.match(answer, /^v=0/);
+  assert.equal(requestUrl, "https://api.openai.com/v1/realtime/calls");
+  const headers = new Headers(requestInit?.headers);
+  assert.equal(headers.get("authorization"), `Bearer ${secret}`);
+  assert.equal(headers.get("OpenAI-Safety-Identifier"), "opaque-hash-not-user-content");
+  assert.equal(headers.has("content-type"), false);
+  assert.ok(requestInit?.body instanceof FormData);
+  const form = requestInit.body as FormData;
+  assert.equal(form.get("sdp"), "v=0\r\no=browser offer\r\n");
+  assert.deepEqual(JSON.parse(String(form.get("session"))), {
+    type: "transcription",
+    audio: {
+      input: {
+        transcription: {
+          model: PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
+          languages: ["en"],
+          delay: "minimal",
+        },
+        turn_detection: null,
+      },
+    },
+  });
+  assert.deepEqual(logs, [{
+    event: "programme_provider_operation",
+    provider: "openai",
+    model: PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
+    operation: "transcription_realtime_session",
+    latencyMs: 5,
+    success: true,
+    errorCategory: undefined,
+  }]);
+  assert.doesNotMatch(JSON.stringify(logs), /browser offer|sk-test/i);
+});
+
+test("Realtime transcript parsing keeps partial text separate from the authoritative final", () => {
+  assert.deepEqual(parseProgrammeRealtimeTranscriptEvent(JSON.stringify({
+    type: "conversation.item.input_audio_transcription.delta",
+    item_id: "item_1",
+    delta: "Partial words",
+  })), { type: "partial", itemId: "item_1", text: "Partial words" });
+  assert.deepEqual(parseProgrammeRealtimeTranscriptEvent(JSON.stringify({
+    type: "conversation.item.input_audio_transcription.completed",
+    item_id: "item_1",
+    transcript: "  Authoritative final transcript.  ",
+  })), { type: "final", itemId: "item_1", text: "Authoritative final transcript." });
+  assert.equal(parseProgrammeRealtimeTranscriptEvent("not-json"), null);
+  assert.deepEqual(parseProgrammeRealtimeTranscriptEvent(JSON.stringify({
+    type: "error",
+    error: { message: "raw provider message must not reach UI" },
+  })), { type: "error" });
 });
 
 test("audio upload accepts current browser formats and rejects oversize, long and unsupported input", async () => {

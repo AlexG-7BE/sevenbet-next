@@ -415,6 +415,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
       }
     }
     Object.defineProperty(window, "MediaRecorder", { configurable: true, value: FakeMediaRecorder });
+    Object.defineProperty(window, "RTCPeerConnection", { configurable: true, value: undefined });
     Object.defineProperty(navigator, "mediaDevices", {
       configurable: true,
       value: {
@@ -531,6 +532,100 @@ test("voice recording produces an editable transcript, releases tracks and can b
 
   const cookie = (await page.context().cookies()).find((item) => item.name === "sevenbet_programme_session");
   if (cookie) await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(cookie.value) } });
+});
+
+test("realtime voice shows partial text but promotes only the committed final transcript", async ({ page }) => {
+  await page.addInitScript(() => {
+    class FakeMediaRecorder {
+      static isTypeSupported(type: string) { return type === "audio/webm;codecs=opus"; }
+      state = "inactive";
+      mimeType: string;
+      ondataavailable: ((event: { data: Blob }) => void) | null = null;
+      onstop: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(_stream: MediaStream, options?: { mimeType?: string }) {
+        this.mimeType = options?.mimeType || "audio/webm";
+      }
+      start() { this.state = "recording"; }
+      stop() {
+        this.state = "inactive";
+        this.ondataavailable?.({ data: new Blob([new Uint8Array([1, 2, 3])], { type: this.mimeType }) });
+        this.onstop?.();
+      }
+    }
+    type Listener = (event: { data?: string }) => void;
+    class FakeDataChannel {
+      readyState = "open";
+      private listeners = new Map<string, Listener[]>();
+      addEventListener(name: string, listener: Listener) {
+        this.listeners.set(name, [...(this.listeners.get(name) ?? []), listener]);
+      }
+      emit(name: string, event: { data?: string }) {
+        this.listeners.get(name)?.forEach((listener) => listener(event));
+      }
+      send(value: string) {
+        if ((JSON.parse(value) as { type?: string }).type !== "input_audio_buffer.commit") return;
+        window.setTimeout(() => this.emit("message", { data: JSON.stringify({
+          type: "conversation.item.input_audio_transcription.completed",
+          item_id: "item-1",
+          transcript: "After difficult work days I keep opening betting apps late at night.",
+        }) }), 75);
+      }
+      close() { this.readyState = "closed"; }
+    }
+    class FakePeerConnection {
+      private channel = new FakeDataChannel();
+      createDataChannel() { return this.channel; }
+      addTrack() { return undefined; }
+      async createOffer() { return { type: "offer" as const, sdp: "v=0\r\no=browser-test-offer\r\n" }; }
+      async setLocalDescription() { return undefined; }
+      async setRemoteDescription() {
+        this.channel.emit("message", { data: JSON.stringify({
+          type: "conversation.item.input_audio_transcription.delta",
+          item_id: "item-1",
+          delta: "After difficult work days",
+        }) });
+      }
+      close() { return undefined; }
+    }
+    Object.defineProperty(window, "MediaRecorder", { configurable: true, value: FakeMediaRecorder });
+    Object.defineProperty(window, "RTCPeerConnection", { configurable: true, value: FakePeerConnection });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: async () => ({ getTracks: () => [{ stop: () => undefined }] }) },
+    });
+  });
+  await page.route("**/api/program/program-ai/session", async (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
+  await page.route("**/api/program/program-ai/authority", async (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
+  let realtimeCalls = 0;
+  let fileCalls = 0;
+  await page.route("**/api/program/program-ai/transcription/realtime?locale=en-GB", async (route) => {
+    realtimeCalls += 1;
+    expect(route.request().headers()["content-type"]).toContain("application/sdp");
+    expect(route.request().postData()).toContain("browser-test-offer");
+    await route.fulfill({ status: 201, contentType: "application/sdp", body: "v=0\r\no=openai-test-answer\r\n" });
+  });
+  await page.route("**/api/program/program-ai/transcription", async (route) => {
+    fileCalls += 1;
+    await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ code: "MUST_NOT_FALL_BACK" }) });
+  });
+  await page.goto("/program");
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
+  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+
+  await page.getByRole("button", { name: "Tap to speak" }).click();
+  await expect(page.locator('[data-state="live"]')).toBeVisible();
+  await expect(page.getByText("After difficult work days", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Editable transcript")).toHaveCount(0);
+  await page.getByRole("button", { name: "Stop recording" }).click();
+  await expect(page.locator('[data-state="finalizing"]')).toBeVisible();
+  await expect(page.getByLabel("Editable transcript")).toHaveValue("After difficult work days I keep opening betting apps late at night.");
+  await expect(page.locator('[data-state="success"]')).toBeVisible();
+  expect(realtimeCalls).toBe(1);
+  expect(fileCalls).toBe(0);
+  await noHorizontalOverflow(page);
 });
 
 test("fresh microphone access uses the browser request before denied recovery", async ({ page }) => {

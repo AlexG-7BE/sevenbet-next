@@ -7,8 +7,10 @@ import { ProgrammeProviderError } from "@/lib/programme/program-ai/provider-erro
 import { resolveProgramAiOpenAiConfig } from "@/lib/programme/program-ai/runtime-config";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 
-export const PROGRAM_AI_MISSION_PROMPT_VERSION = "programme-ai-missions:2026-08-11:v1";
+export const PROGRAM_AI_MISSION_PROMPT_VERSION = "programme-ai-missions:2026-09-25:v2";
 const timeoutMs = 20_000;
+export const PROGRAM_AI_GUIDANCE_MAX_OUTPUT_TOKENS = 320;
+export const PROGRAM_AI_REVIEW_MAX_OUTPUT_TOKENS = 620;
 
 const guidanceIds: Record<Exclude<ProgramAiGuidanceOperation, `REVIEW_${string}`>, readonly string[]> = {
   M2_GOAL: ["candidate_1", "candidate_2", "candidate_3"],
@@ -34,7 +36,7 @@ function schemaFor(operation: ProgramAiGuidanceOperation) {
       properties: {
         kind: { type: "string", enum: ["review"] },
         operation: { type: "string", enum: [operation] },
-        title: { type: "string", minLength: 3, maxLength: 100 },
+        title: { type: "string", minLength: 3, maxLength: 72 },
         sections: {
           type: "array",
           minItems: ids.length,
@@ -43,8 +45,8 @@ function schemaFor(operation: ProgramAiGuidanceOperation) {
             type: "object",
             properties: {
               id: { type: "string", enum: ids },
-              title: { type: "string", minLength: 3, maxLength: 80 },
-              body: { type: "string", minLength: 10, maxLength: 700 },
+              title: { type: "string", minLength: 3, maxLength: 64 },
+              body: { type: "string", minLength: 10, maxLength: 420 },
             },
             required: ["id", "title", "body"],
             additionalProperties: false,
@@ -61,8 +63,8 @@ function schemaFor(operation: ProgramAiGuidanceOperation) {
     properties: {
       kind: { type: "string", enum: ["guidance"] },
       operation: { type: "string", enum: [operation] },
-      title: { type: "string", minLength: 3, maxLength: 100 },
-      summary: { type: "string", minLength: 10, maxLength: 500 },
+      title: { type: "string", minLength: 3, maxLength: 72 },
+      summary: { type: "string", minLength: 10, maxLength: 320 },
       options: {
         type: "array",
         minItems: 1,
@@ -71,7 +73,7 @@ function schemaFor(operation: ProgramAiGuidanceOperation) {
           type: "object",
           properties: {
             id: { type: "string", enum: ids },
-            text: { type: "string", minLength: 3, maxLength: 240 },
+            text: { type: "string", minLength: 3, maxLength: 180 },
           },
           required: ["id", "text"],
           additionalProperties: false,
@@ -100,6 +102,7 @@ type ProviderBody = {
   output_text?: unknown;
   output?: unknown;
   usage?: { input_tokens?: unknown; output_tokens?: unknown };
+  service_tier?: unknown;
 };
 
 function outputText(body: ProviderBody) {
@@ -138,7 +141,12 @@ export class OpenAiMissionGuidanceAdapter {
           input: [{ role: "user", content: [{ type: "input_text", text: JSON.stringify(context) }] }],
           reasoning: { effort: "none" },
           text: { format: { type: "json_schema", name: operation.toLowerCase(), strict: true, schema: schemaFor(operation) } },
-          max_output_tokens: operation.startsWith("REVIEW_") ? 700 : 500,
+          max_output_tokens: operation.startsWith("REVIEW_")
+            ? PROGRAM_AI_REVIEW_MAX_OUTPUT_TOKENS
+            : PROGRAM_AI_GUIDANCE_MAX_OUTPUT_TOKENS,
+          // Deterministic GET reviews stay provider-free; explicit POST regeneration blocks the
+          // user's requested interaction and therefore uses the same low-latency tier as guidance.
+          service_tier: "fast",
           store: false,
           background: false,
         }),
@@ -164,6 +172,8 @@ export class OpenAiMissionGuidanceAdapter {
         success: true,
         inputTokens: typeof body.usage?.input_tokens === "number" ? body.usage.input_tokens : undefined,
         outputTokens: typeof body.usage?.output_tokens === "number" ? body.usage.output_tokens : undefined,
+        requestedServiceTier: "fast",
+        actualServiceTier: typeof body.service_tier === "string" ? body.service_tier : undefined,
       }));
       return result;
     } catch (error) {
@@ -182,6 +192,8 @@ export class OpenAiMissionGuidanceAdapter {
         errorCategory: mapped.providerCode,
         inputTokens: typeof body?.usage?.input_tokens === "number" ? body.usage.input_tokens : undefined,
         outputTokens: typeof body?.usage?.output_tokens === "number" ? body.usage.output_tokens : undefined,
+        requestedServiceTier: "fast",
+        actualServiceTier: typeof body?.service_tier === "string" ? body.service_tier : undefined,
       }));
       throw mapped;
     }

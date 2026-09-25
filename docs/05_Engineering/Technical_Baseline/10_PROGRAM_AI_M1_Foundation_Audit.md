@@ -1,12 +1,24 @@
 # PROGRAM-AI M1 Foundation Technical Baseline
 
-Baseline date: **2026-08-13**
+Baseline date: **2026-08-13**; current candidate delta reviewed **2026-09-25**
 
 Repository root: `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next`
 
 Exact base: current main `c52595405f0800c8c2b51d5951c4a8d45c133034`. FULL-SITE-QA-01 Draft PR #72 worktree changes are not treated as merged baseline facts.
 
-The entire active repository was scanned. Dependencies, generated directories, build artefacts, caches, reports and `tsconfig.tsbuildinfo` were excluded from implementation claims. This document records source evidence and the already documented controlled Preview evidence. It does not infer current hosted activation or expose environment values.
+The entire active repository was scanned. Dependencies, generated directories, build artefacts, caches, reports and `tsconfig.tsbuildinfo` were excluded from implementation claims. This document records source evidence and the already documented controlled Preview evidence. It does not infer current hosted activation or expose environment values. The August baseline remains below as historical implementation context; the following delta is current for the RFC-056 candidate branch.
+
+## RFC-056 low-latency candidate delta — 2026-09-25
+
+- **DETECTED:** exact remote base `3c95d276e8978ab0cb16a2add9e2c0d46cfe7092`; candidate branch `codex/programme-ai-low-latency`.
+- **DETECTED:** M1 and M2–M10 provider generation use `gpt-6-luna`, reasoning `none`, strict schemas, `store=false`, `background=false` and Fast service tier. Initial Review GETs remain deterministic; explicit regeneration uses Fast.
+- **DETECTED:** output ceilings are M1 `320`, guidance `320` and Review `620`, with tighter provider field limits and unchanged user-editable domain limits.
+- **DETECTED:** preferred voice uses a server-mediated `gpt-live-transcribe` WebRTC transcription session. The browser receives only an SDP answer; the key and session policy remain server-side. Deltas are live display only and the completed event is authoritative after manual commit.
+- **DETECTED:** the delivered RFC-031 4 MiB/90-second `gpt-4o-transcribe` route remains the captured-file fallback. Recorder states now distinguish recording, live transcription, finalizing, fallback, completion, error, permission and cancellation.
+- **DETECTED:** logging remains content-free and adds requested/actual service tier, voice mode, first-partial latency, stop-to-final latency and bounded fallback category.
+- **DETECTED:** focused contract/structural tests pass `58/58`; production build, mocked realtime Chromium and mocked file-fallback Chromium pass. No database/schema/reward/mission-order/commercial/Help change is present.
+- **UNKNOWN:** live provider quality, actual Fast-tier delivery and old/new latency comparison because this worktree has no approved provider credential; the existing 20-case harness fails closed at `CREDENTIAL REQUIRED`.
+- **NOT AUTHORISED:** merge or Production deployment/configuration.
 
 ## Detected
 
@@ -63,7 +75,7 @@ The entire active repository was scanned. Dependencies, generated directories, b
 
 - OpenAI DPA/subprocessor/location/transfer/account-retention evidence, any ZDR/MAM approval, Production monitoring/human-review decision and any separately approved Production activation.
 - Exact deployed migration/Cron/analytics runtime verification and alerting evidence.
-- If Founder Office approves RFC-031, a 4 MiB raw-audio ceiling, bounded complete-request streaming enforcement and client Type-instead preflight. Current code remains at 8 MiB/90 seconds.
+- Live RFC-056 Preview quality/latency evidence and actual-device microphone/Safari verification. The RFC-031 4 MiB ceiling and bounded request-stream enforcement are already delivered.
 
 ## Not detected
 

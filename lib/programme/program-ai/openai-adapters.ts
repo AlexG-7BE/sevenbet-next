@@ -16,10 +16,10 @@ import {
 import { parseProgrammeAiPortResult } from "@/lib/programme/program-ai/validation";
 import { programmeTranscriptionLanguage } from "@/lib/programme/presentation";
 
-export const PROGRAM_AI_OPENAI_PROMPT_VERSION = "program-ai-m1-openai:2026-08-11:v3";
+export const PROGRAM_AI_OPENAI_PROMPT_VERSION = "program-ai-m1-openai:2026-09-25:v4";
 export const PROGRAM_AI_OPENAI_TIMEOUT_MS = 20_000;
 export const PROGRAM_AI_TRANSCRIPTION_TIMEOUT_MS = 25_000;
-export const PROGRAM_AI_OPENAI_MAX_OUTPUT_TOKENS = 700;
+export const PROGRAM_AI_OPENAI_MAX_OUTPUT_TOKENS = 320;
 
 const OPENAI_API_ORIGIN = "https://api.openai.com";
 
@@ -39,6 +39,8 @@ export type ProgrammeProviderLog = {
   inputTokens?: number;
   outputTokens?: number;
   clarificationCount?: number;
+  requestedServiceTier?: "fast" | "auto";
+  actualServiceTier?: string;
 };
 
 export type ProgrammeProviderLogger = (entry: ProgrammeProviderLog) => void;
@@ -60,6 +62,7 @@ type OpenAiResponseBody = {
   output_text?: unknown;
   output?: unknown;
   usage?: OpenAiUsage;
+  service_tier?: unknown;
 };
 
 const programmeAiOutputSchema = {
@@ -71,7 +74,7 @@ const programmeAiOutputSchema = {
           type: "object",
           properties: {
             type: { type: "string", enum: ["CLARIFICATION_REQUIRED"] },
-            question: { type: "string", minLength: 8, maxLength: 240 },
+            question: { type: "string", minLength: 8, maxLength: 180 },
             reasonCode: {
               type: "string",
               enum: ["DESIRED_CHANGE_UNCLEAR", "CONTEXT_UNCLEAR", "CONTRADICTION"],
@@ -84,8 +87,8 @@ const programmeAiOutputSchema = {
           type: "object",
           properties: {
             type: { type: "string", enum: ["STARTING_POINT_CANDIDATE"] },
-            startingPoint: { type: "string", minLength: 10, maxLength: 320 },
-            desiredChange: { type: "string", minLength: 2, maxLength: 200 },
+            startingPoint: { type: "string", minLength: 10, maxLength: 240 },
+            desiredChange: { type: "string", minLength: 2, maxLength: 140 },
             broadContext: {
               type: "string",
               enum: [
@@ -98,10 +101,10 @@ const programmeAiOutputSchema = {
                 "NOT_SPECIFIED",
               ],
             },
-            continuationCue: { type: "string", minLength: 2, maxLength: 200 },
+            continuationCue: { type: "string", minLength: 2, maxLength: 140 },
             chosenBoundaryAction: {
               anyOf: [
-                { type: "string", minLength: 2, maxLength: 200 },
+                { type: "string", minLength: 2, maxLength: 140 },
                 { type: "null" },
               ],
             },
@@ -251,6 +254,7 @@ export class OpenAiProgrammeAiAdapter implements ProgrammeAiPort {
             },
           },
           max_output_tokens: PROGRAM_AI_OPENAI_MAX_OUTPUT_TOKENS,
+          service_tier: "fast",
           store: false,
           background: false,
         }),
@@ -332,6 +336,8 @@ export class OpenAiProgrammeAiAdapter implements ProgrammeAiPort {
         inputTokens: inputTokens(parsedBody),
         outputTokens: outputTokens(parsedBody),
         clarificationCount: input.clarificationAnswers.length,
+        requestedServiceTier: "fast",
+        actualServiceTier: typeof parsedBody.service_tier === "string" ? parsedBody.service_tier : undefined,
       });
       return validated;
     } catch (error) {
@@ -352,6 +358,8 @@ export class OpenAiProgrammeAiAdapter implements ProgrammeAiPort {
         inputTokens: parsedBody ? inputTokens(parsedBody) : undefined,
         outputTokens: parsedBody ? outputTokens(parsedBody) : undefined,
         clarificationCount: input.clarificationAnswers.length,
+        requestedServiceTier: "fast",
+        actualServiceTier: typeof parsedBody?.service_tier === "string" ? parsedBody.service_tier : undefined,
       });
       throw mapped;
     }

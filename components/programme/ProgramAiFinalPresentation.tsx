@@ -10,10 +10,22 @@ import type { ProgrammeStartingPointValue } from "@/lib/programme/program-ai/con
 import {
   programmeAudioBlobFitsUploadLimit,
 } from "@/lib/programme/program-ai/transcription-limits";
+import {
+  connectProgrammeRealtimeTranscription,
+  type ProgrammeRealtimeTranscription,
+} from "@/lib/programme/program-ai/realtime-transcription-client";
 import { programmeHelpPath, type ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiFinalPresentation.module.css";
 
-export type ProgrammeRecorderState = "idle" | "requesting" | "recording" | "cancelled" | "denied" | "policy-denied" | "unsupported" | "transcribing" | "success" | "error";
+export type ProgrammeRecorderState = "idle" | "requesting" | "recording" | "live" | "finalizing" | "fallback" | "cancelled" | "denied" | "policy-denied" | "unsupported" | "success" | "error";
+export type ProgrammeVoiceTiming = {
+  recordingDurationMs: number;
+  transcriptionMode: "realtime" | "file_fallback";
+  transcriptionRequestMs: number;
+  firstPartialTranscriptMs?: number;
+  stopToFinalTranscriptMs: number;
+  fallbackReason?: string;
+};
 type MicrophonePermissionState = PermissionState | "unknown";
 
 type DocumentPermissionsPolicy = Readonly<{
@@ -140,7 +152,7 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
   disabled: boolean;
   state: ProgrammeRecorderState;
   onState: (state: ProgrammeRecorderState) => void;
-  onTranscript: (transcript: string, timing: { recordingDurationMs: number; transcriptionRequestMs: number }) => void;
+  onTranscript: (transcript: string, timing: ProgrammeVoiceTiming) => void;
   onTranscribe: (audio: Blob, durationMs: number) => Promise<{ transcript: string; transcriptionRequestMs: number }>;
   onUseTyped: () => void;
   locale: ProgrammeLocale;
@@ -150,7 +162,13 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
   const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<Blob[]>([]);
   const retainedRecording = useRef<Blob | null>(null);
+  const realtime = useRef<ProgrammeRealtimeTranscription | null>(null);
+  const realtimeSetup = useRef<Promise<ProgrammeRealtimeTranscription> | null>(null);
+  const realtimeAbandoned = useRef(false);
+  const realtimeFailure = useRef<string | undefined>(undefined);
+  const firstPartialTranscriptMs = useRef<number | undefined>(undefined);
   const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
+  const [partialTranscript, setPartialTranscript] = useState("");
   const [microphonePermission, setMicrophonePermission] = useState<MicrophonePermissionState>("unknown");
   const [recordingError, setRecordingError] = useState("");
   const recordingStartedAt = useRef(0);
@@ -188,6 +206,13 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
     stream.current = null;
   }
 
+  function closeRealtime() {
+    realtimeAbandoned.current = true;
+    realtime.current?.close();
+    realtime.current = null;
+    realtimeSetup.current = null;
+  }
+
   function releaseRecording() {
     retainedRecording.current = null;
     chunks.current = [];
@@ -219,6 +244,7 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
         if (recorder.current.state === "recording") recorder.current.stop();
         recorder.current = null;
       }
+      closeRealtime();
       stopTracks();
       releaseRecording();
     };
@@ -231,7 +257,24 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
     };
   }, []);
 
-  async function transcribe(audio: Blob, durationMs: number) {
+  function logVoiceTiming(timing: ProgrammeVoiceTiming) {
+    console.info(JSON.stringify({
+      event: "programme_voice_transcription_client",
+      transcriptionMode: timing.transcriptionMode,
+      recordingDurationMs: timing.recordingDurationMs,
+      transcriptionRequestMs: timing.transcriptionRequestMs,
+      firstPartialTranscriptMs: timing.firstPartialTranscriptMs,
+      stopToFinalTranscriptMs: timing.stopToFinalTranscriptMs,
+      fallbackReason: timing.fallbackReason,
+    }));
+  }
+
+  async function transcribe(
+    audio: Blob,
+    durationMs: number,
+    stoppedAt = Date.now(),
+    fallbackReason = "manual_retry",
+  ) {
     setRecordingError("");
     if (!programmeAudioBlobFitsUploadLimit(audio.size)) {
       releaseRecording();
@@ -240,11 +283,19 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
       onState("error");
       return;
     }
-    onState("transcribing");
+    onState("fallback");
     try {
       const result = await onTranscribe(audio, durationMs);
+      const timing: ProgrammeVoiceTiming = {
+        recordingDurationMs: durationMs,
+        transcriptionMode: "file_fallback",
+        transcriptionRequestMs: result.transcriptionRequestMs,
+        stopToFinalTranscriptMs: Math.max(0, Date.now() - stoppedAt),
+        fallbackReason,
+      };
       releaseRecording();
-      onTranscript(result.transcript, { recordingDurationMs: durationMs, transcriptionRequestMs: result.transcriptionRequestMs });
+      onTranscript(result.transcript, timing);
+      logVoiceTiming(timing);
       productAnalyticsClient.voiceOutcome("transcription_success");
       onState("success");
     } catch {
@@ -252,6 +303,87 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
       productAnalyticsClient.voiceOutcome("transcription_error");
       onState("error");
     }
+  }
+
+  function withDeadline<T>(promise: Promise<T>, milliseconds: number) {
+    return Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => window.setTimeout(
+        () => reject(new Error("REALTIME_TRANSCRIPTION_TIMEOUT")),
+        milliseconds,
+      )),
+    ]);
+  }
+
+  async function finalize(audio: Blob, durationMs: number) {
+    const stoppedAt = Date.now();
+    onState("finalizing");
+    try {
+      const connection = realtime.current
+        ?? (realtimeSetup.current ? await withDeadline(realtimeSetup.current, 1_500) : null);
+      if (!connection) throw new Error("REALTIME_TRANSCRIPTION_UNAVAILABLE");
+      realtime.current = connection;
+      connection.commit();
+      stopTracks();
+      const transcript = await withDeadline(connection.finalTranscript, 6_000);
+      if (!transcript.trim() || transcript.length > 4_000) {
+        throw new Error("REALTIME_TRANSCRIPTION_INVALID");
+      }
+      const timing: ProgrammeVoiceTiming = {
+        recordingDurationMs: durationMs,
+        transcriptionMode: "realtime",
+        transcriptionRequestMs: 0,
+        firstPartialTranscriptMs: firstPartialTranscriptMs.current,
+        stopToFinalTranscriptMs: Math.max(0, Date.now() - stoppedAt),
+      };
+      connection.close();
+      realtime.current = null;
+      realtimeSetup.current = null;
+      releaseRecording();
+      onTranscript(transcript.trim(), timing);
+      logVoiceTiming(timing);
+      productAnalyticsClient.voiceOutcome("transcription_success");
+      onState("success");
+    } catch {
+      const failure = realtimeFailure.current ?? "realtime_finalization_failed";
+      closeRealtime();
+      stopTracks();
+      await transcribe(audio, durationMs, stoppedAt, failure);
+    }
+  }
+
+  function startRealtime(activeStream: MediaStream) {
+    realtimeAbandoned.current = false;
+    realtimeFailure.current = undefined;
+    firstPartialTranscriptMs.current = undefined;
+    setPartialTranscript("");
+    if (typeof RTCPeerConnection === "undefined") {
+      realtimeFailure.current = "webrtc_unsupported";
+      return;
+    }
+    const setup = connectProgrammeRealtimeTranscription({
+      locale,
+      stream: activeStream,
+      onPartial: (partial) => {
+        if (realtimeAbandoned.current) return;
+        if (firstPartialTranscriptMs.current === undefined) {
+          firstPartialTranscriptMs.current = Math.max(0, Date.now() - recordingStartedAt.current);
+        }
+        setPartialTranscript(partial);
+      },
+    });
+    realtimeSetup.current = setup;
+    void setup.then((connection) => {
+      if (realtimeAbandoned.current) {
+        connection.close();
+        return;
+      }
+      realtime.current = connection;
+      if (recorder.current?.state === "recording") onState("live");
+    }).catch(() => {
+      realtimeFailure.current = "realtime_setup_failed";
+      realtimeSetup.current = null;
+    });
   }
 
   function preferredMimeType() {
@@ -282,15 +414,18 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
         clearMaximumTimer();
         clearRecordingTimer();
         recordingDurationMs.current = Math.min(90_000, Math.max(1, Date.now() - recordingStartedAt.current));
-        stopTracks();
         if (recorderFailed.current) {
           recorderFailed.current = false;
+          closeRealtime();
+          stopTracks();
           releaseRecording();
           onState("error");
           return;
         }
         if (cancelling.current) {
           cancelling.current = false;
+          closeRealtime();
+          stopTracks();
           releaseRecording();
           onState("cancelled");
           return;
@@ -298,7 +433,7 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
         const audio = new Blob(chunks.current, { type: recorder.current?.mimeType || chunks.current[0]?.type || "audio/webm" });
         retainedRecording.current = audio;
         chunks.current = [];
-        void transcribe(audio, recordingDurationMs.current);
+        void finalize(audio, recordingDurationMs.current);
       };
       recorder.current.onerror = () => {
         recorderFailed.current = true;
@@ -317,12 +452,14 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
       recorder.current.start();
       productAnalyticsClient.voiceOutcome("recording_started");
       recordingStartedAt.current = Date.now();
+      startRealtime(stream.current);
       recordingTimer.current = window.setInterval(() => setRecordingElapsedSeconds(Math.min(90, Math.floor((Date.now() - recordingStartedAt.current) / 1_000))), 1_000);
       maximumTimer.current = window.setTimeout(stop, 90_000);
       onState("recording");
     } catch (cause) {
       clearMaximumTimer();
       clearRecordingTimer();
+      closeRealtime();
       stopTracks();
       const denied = cause instanceof DOMException && cause.name === "NotAllowedError";
       if (denied) await readMicrophonePermission();
@@ -348,6 +485,7 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
   function useTyped() {
     clearMaximumTimer();
     clearRecordingTimer();
+    closeRealtime();
     stopTracks();
     releaseRecording();
     onState("idle");
@@ -357,21 +495,25 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
   const elapsed = `${String(Math.floor(recordingElapsedSeconds / 60)).padStart(2, "0")}:${String(recordingElapsedSeconds % 60).padStart(2, "0")}`;
   const blocked = state === "denied" && microphonePermission === "denied";
   const policyDenied = state === "policy-denied";
+  const recording = state === "recording" || state === "live";
   return (
     <section className={styles.voiceControl} data-state={state} data-voice-state={state}>
-      {state === "recording" ? <>
+      {recording ? <>
         <p className={styles.eyebrow}>{t("Listening…")}</p>
         <VoiceWave />
         <p className={styles.recordingTime}>{elapsed} / 01:30</p>
-        <p className={styles.recordingTranscript}>{t("Your editable transcript will appear here when you tap Done.")}</p>
+        <p aria-live="polite" className={styles.recordingTranscript}>{partialTranscript || t("Your editable transcript will appear here when you tap Done.")}</p>
         <strong className={styles.srOnly} role="status">{t("Recording · {elapsed} / 01:30. Microphone is recording now.", { elapsed })}</strong>
         <div className={styles.voiceActions}><button aria-label={t("Stop recording")} className={styles.lightAction} onClick={stop} type="button">{t("Done")}</button><button aria-label={t("Cancel")} className={styles.secondaryAction} onClick={cancel} type="button">{t("Start over")}</button></div>
+      </> : state === "finalizing" ? <>
+        <strong className={styles.voiceLabel} role="status">{t("Transcribing securely…")}</strong>
+        {partialTranscript ? <p className={styles.recordingTranscript}>{partialTranscript}</p> : null}
       </> : state === "success" ? <>
         <button aria-label={t("Record again")} className={styles.typingAction} disabled={disabled} onClick={start} type="button">{t("Record again")}</button>
         <p className={styles.voiceMessage} role="status">{t("Check the editable transcript below, then create your Starting Point.")}</p>
       </> : <>
-        <button aria-label={t(policyDenied ? "Voice recording is unavailable on this page" : blocked ? "Check microphone access" : state === "denied" ? "Try microphone again" : "Tap to speak")} className={styles.microphoneAction} disabled={disabled || policyDenied || state === "requesting" || state === "transcribing"} onClick={state === "denied" ? async () => { if (!blocked || await readMicrophonePermission() !== "denied") await start(); } : start} type="button"><MicrophoneIcon /></button>
-        <strong className={styles.voiceLabel}>{t(state === "requesting" ? "Requesting microphone…" : state === "transcribing" ? "Transcribing securely…" : policyDenied ? "Voice recording is unavailable on this page" : blocked ? "Microphone is blocked for this site" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording discarded" : "Tap to speak")}</strong>
+        <button aria-label={t(policyDenied ? "Voice recording is unavailable on this page" : blocked ? "Check microphone access" : state === "denied" ? "Try microphone again" : "Tap to speak")} className={styles.microphoneAction} disabled={disabled || policyDenied || state === "requesting" || state === "fallback"} onClick={state === "denied" ? async () => { if (!blocked || await readMicrophonePermission() !== "denied") await start(); } : start} type="button"><MicrophoneIcon /></button>
+        <strong className={styles.voiceLabel}>{t(state === "requesting" ? "Requesting microphone…" : state === "fallback" ? "Transcribing securely…" : policyDenied ? "Voice recording is unavailable on this page" : blocked ? "Microphone is blocked for this site" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording discarded" : "Tap to speak")}</strong>
         <button className={styles.typingAction} disabled={disabled} onClick={useTyped} type="button">{t("I'd rather type")}</button>
       </>}
       {state === "error" ? <p className={styles.error} role="alert">{recordingError || t("Voice transcription could not be completed.")} {retainedRecording.current ? <button className={styles.inlineButton} onClick={() => void transcribe(retainedRecording.current!, recordingDurationMs.current)} type="button">{t("Retry this recording")}</button> : null} <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
@@ -405,7 +547,7 @@ export function Mission01IntakeScreen({
   onAccountFirst?: () => void;
   onSituation: (value: string) => void;
   onSubmit: () => void;
-  onTranscript: (transcript: string, timing: { recordingDurationMs: number; transcriptionRequestMs: number }) => void;
+  onTranscript: (transcript: string, timing: ProgrammeVoiceTiming) => void;
   onTranscribe: (audio: Blob, durationMs: number) => Promise<{ transcript: string; transcriptionRequestMs: number }>;
   onUseTyped: () => void;
   inputMode: "text" | "voice";
@@ -416,7 +558,7 @@ export function Mission01IntakeScreen({
   const [recorderState, setRecorderState] = useState<ProgrammeRecorderState>("idle");
   useEffect(() => setAuthority(consentGiven), [consentGiven]);
   const textVisible = inputMode === "text" || Boolean(situation);
-  const recording = recorderState === "recording";
+  const recording = ["recording", "live", "finalizing", "fallback"].includes(recorderState);
   return (
     <div className={styles.canvas} data-programme-presentation="mission-01-intake" data-programme-presentation-state={recording ? "recording" : textVisible ? inputMode === "voice" ? "transcript" : "text-fallback" : "idle"}>
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">

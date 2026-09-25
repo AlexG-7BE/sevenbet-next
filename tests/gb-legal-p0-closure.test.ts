@@ -153,11 +153,14 @@ test("Programme start asks three required checks once and repeats none of them",
 test("OpenAI content controls remain code-enforced without content logging", () => {
   const adapters = source("lib/programme/program-ai/openai-adapters.ts");
   const guidance = source("lib/programme/program-ai/openai-mission-guidance.ts");
-  const combined = `${adapters}\n${guidance}`;
+  const realtime = source("lib/programme/program-ai/openai-realtime-transcription.ts");
+  const combined = `${adapters}\n${guidance}\n${realtime}`;
   assert.equal((combined.match(/\/v1\/responses/g) ?? []).length, 2);
   assert.equal((combined.match(/store: false/g) ?? []).length, 2);
   assert.doesNotMatch(combined, /store: true|console\.(?:info|warn|error)\([^\n]*(?:situation|transcript|audio|output|prompt)/i);
   assert.match(adapters, /\/v1\/audio\/transcriptions/);
+  assert.match(realtime, /\/v1\/realtime\/calls/);
+  assert.match(realtime, /OpenAI-Safety-Identifier/);
   assert.match(adapters, /inputCharacters|audioBytes|durationMs/);
 });
 

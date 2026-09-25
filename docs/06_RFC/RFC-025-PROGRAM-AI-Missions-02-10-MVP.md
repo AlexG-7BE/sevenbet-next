@@ -345,16 +345,18 @@ REVIEW_M10
 
 Mission 05 and Mission 08 remain deterministic. Each operation has an explicit request allow-list, strict operation-specific response schema and output ceiling. User text is delimited as untrusted data. Provider output is validated again locally and falls back on extra keys, malformed output, oversized strings, wrong operation, diagnostic content, XP instructions or commercial recommendations.
 
-The existing OpenAI configuration remains:
+RFC-056 amends the provider latency configuration below. The current OpenAI
+configuration is:
 
-- model `gpt-5.6-terra`;
+- model `gpt-6-luna`;
 - Responses API;
 - reasoning `none`;
+- Fast service tier for guidance and explicit Review regeneration;
 - `store=false`;
 - `background=false`;
 - no tools, web/file search, RAG, provider memory, `previous_response_id`, agent loop, TTS or realtime voice.
 
-The ordinary first-time path makes at most one guidance call in each AI-enabled Mission and one call per Review, with a target ceiling of 10–12 calls across M2–M10 plus Reviews. Ordinary output is at most 500 tokens and Review output at most 700 tokens. No call occurs on render, navigation, click, animation, scroll, XP feedback or commercial navigation.
+The ordinary first-time path makes at most one guidance call in each AI-enabled Mission and one call per Review, with a target ceiling of 10–12 calls across M2–M10 plus Reviews. Guidance output is at most 320 tokens and Review output at most 620 tokens. No call occurs on render, navigation, click, animation, scroll, XP feedback or commercial navigation.
 
 `PROGRAM_AI_REAL_PROVIDER_ENABLED=false`, an unavailable provider, timeout, rate limit, invalid JSON/schema or provider 5xx leaves every Mission completable with identical XP through a truthful deterministic fallback.
 

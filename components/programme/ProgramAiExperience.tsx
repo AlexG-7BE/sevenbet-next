@@ -9,6 +9,7 @@ import {
   ProgrammeSupportScreen,
   ProgrammeUnavailableScreen,
   StartingPointReadyScreen,
+  type ProgrammeVoiceTiming,
 } from "@/components/programme/ProgramAiFinalPresentation";
 import { ProgramAiMissionExperience } from "@/components/programme/ProgramAiMissionExperience";
 import { ProgramAiReviewScreen } from "@/components/programme/ProgramAiReviewScreen";
@@ -176,10 +177,7 @@ export function ProgramAiExperience({
   const emailRedeemStarted = useRef(false);
   const personalisationStartedAt = useRef<number | null>(null);
   const accumulatedAiLatencyMs = useRef(0);
-  const voiceTiming = useRef<{
-    recordingDurationMs: number;
-    transcriptionRequestMs: number;
-  } | null>(null);
+  const voiceTiming = useRef<ProgrammeVoiceTiming | null>(null);
   const phaseFocusRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -441,8 +439,12 @@ export function ProgramAiExperience({
         console.info(JSON.stringify({
           event: "programme_ai_m1_client_latency",
           inputMode: local.inputMode,
+          transcriptionMode: voiceTiming.current?.transcriptionMode,
           recordingDurationMs: voiceTiming.current?.recordingDurationMs,
           transcriptionRequestMs: voiceTiming.current?.transcriptionRequestMs,
+          firstPartialTranscriptMs: voiceTiming.current?.firstPartialTranscriptMs,
+          stopToFinalTranscriptMs: voiceTiming.current?.stopToFinalTranscriptMs,
+          transcriptionFallbackReason: voiceTiming.current?.fallbackReason,
           programmeAiTurnMs: accumulatedAiLatencyMs.current,
           totalSubmitToStartingPointMs: personalisationStartedAt.current === null
             ? undefined
@@ -499,10 +501,7 @@ export function ProgramAiExperience({
     setSensitiveAuthorityActive(true);
   }
 
-  function acceptTranscript(transcript: string, timing: {
-    recordingDurationMs: number;
-    transcriptionRequestMs: number;
-  }) {
+  function acceptTranscript(transcript: string, timing: ProgrammeVoiceTiming) {
     voiceTiming.current = timing;
     personalisationStartedAt.current = null;
     accumulatedAiLatencyMs.current = 0;

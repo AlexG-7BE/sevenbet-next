@@ -83,16 +83,17 @@ orientation.
 | [RFC-053 — Autonomous Learn Content Orchestration](RFC-053-Autonomous-Learn-Content-Orchestration.md) | `ACTIVE` | One bounded scheduled three-role Learn editorial pipeline; models have no write authority and deterministic publication remains exclusively RFC-052 `learn_apply`. |
 | [RFC-054 — Licence-Based Market Access](RFC-054-Licence-Market-Access.md) | `ACTIVE` | One casino × market licence register gates offers, the partner button and `/r/` by the operator's own licence; closures are operator block, prohibition by law, no local licence, closed grey zone and the German advertising window. |
 | [RFC-055 — Claude-Operated Partner CRM](RFC-055-Claude-Operated-Partner-CRM.md) | `ACTIVE` | One service-bearer `/api/mcp/crm` endpoint with seven CRM tools; evidence-gated stage changes (never `ACTIVE`), CRM → catalog identity links, permanent delete of never-contacted prospects only, audited and idempotent; no route, market, CTA, tracking or customer-data authority. Amends RFC-051's no-CRM-transport clause. |
+| [RFC-056 — PROGRAM-AI Low-Latency Text and Voice](RFC-056-PROGRAM-AI-Low-Latency-Text-and-Voice.md) | `ACTIVE` | `gpt-6-luna` Fast structured generation and server-mediated `gpt-live-transcribe` WebRTC with final-only authority and bounded file fallback; amends RFC-023/RFC-025 only within that provider path. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 30 |
+| `ACTIVE` | 31 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 6 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **55** |
+| **Total RFC artifacts** | **56** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or
