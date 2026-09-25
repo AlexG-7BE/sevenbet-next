@@ -9,8 +9,19 @@
 - A visitor with no recorded analytics choice sees the site-style choice when they arrive.
 - It is non-modal and does not take focus. Allow and Decline stay equal in size, and nothing is collected until Allow.
 - "Not now" (×, or Escape) hides it for the rest of the tab session and records no consent. Allow and Decline record the choice as before.
-- It does not open by itself on focused flows: the Programme (`/program` and its localised routes), protected Help, sign-in, admin, editorial preview and unsubscribe. On those routes the footer "Privacy choices" control still opens it.
+- It does not open by itself on focused flows: the Programme (`/program` and its localised routes), protected Help, sign-in, admin, editorial preview and unsubscribe. On those routes the footer "Cookie settings" control still opens it.
 - Under browser automation it opens by itself only when a test opts in through session storage. Otherwise every browser test would start behind an overlay.
+
+## Amendment: compact choice after the first scroll (25 September 2026)
+
+The Founder chose option B3 after the remaining-pages mobile audit. On arrival, the 189px choice covered the acid primary action on the home page and on 10 Steps.
+
+- The automatic choice waits for the visitor's first scroll past 24px, or five seconds on the page, whichever comes first. The first screen and its primary action stay clear.
+- The copy talks about cookies, which people recognise, rather than "analytics" (Founder, 25 Sep 2026). Buttons: "Accept cookies" / "Reject cookies". Footer control: "Cookie settings". Text: "We use our own cookies to see how B4GAMBLE is used. Never your email, Programme answers or partner tokens."
+  - It still states the purpose and that the cookies are our own (first party).
+  - The exclusion statement stays visible at every width.
+  - On a 390px phone the choice is about 141px tall.
+- Equal Allow and Decline, "Not now", the excluded routes, the session dismissal and the automation opt-in are unchanged.
 
 ## Unchanged
 
@@ -22,6 +33,7 @@
 
 - `tests/customer-data-analytics-lifecycle-structural.test.ts` covers the rule: unknown state only, the session dismissal, the excluded routes and the automation opt-in. It also checks that an automatic choice does not take focus.
 - `tests/customer-data-analytics-lifecycle-browser.spec.ts` (CI) covers:
-  - the choice appearing on `/privacy` without a click, with focus left on the page;
+  - the choice staying hidden on arrival at `/privacy`, then appearing after a scroll without a click, with focus left on the page;
+  - the choice arriving after the delay on `/faq` without a scroll;
   - "Not now" hiding it across a reload, with no consent cookie written;
   - `/program` staying clear.
