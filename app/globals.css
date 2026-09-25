@@ -246,6 +246,29 @@ body:has(> [data-public-shell="header"]) {
   transition-property: background-color, border-color, color, filter, transform !important;
 }
 
+/* Readability pass (Founder, 25 Sep 2026). lib/final-handoff/readability.ts marks the
+   captured elements that break a rule; these declarations beat their inline styles.
+   Every handoff page takes them at all widths. Home takes them on phones only: its
+   desktop composition is frozen. */
+[data-handoff-page]:not([data-handoff-page="home"]) [data-readable~="caps"] { font-size: 13px !important; letter-spacing: .08em !important; }
+[data-handoff-page]:not([data-handoff-page="home"]) [data-readable~="paper"] { color: rgba(250, 250, 247, .68) !important; }
+[data-handoff-page]:not([data-handoff-page="home"]) [data-readable~="grey"] { color: #5e5d57 !important; }
+[data-handoff-page]:not([data-handoff-page="home"]) [data-readable~="olive"] { color: var(--sb-acid-contrast) !important; }
+[data-handoff-page]:not([data-handoff-page="home"]) [data-readable~="danger"] { color: var(--sb-danger-text) !important; }
+[data-handoff-page]:not([data-handoff-page="home"]) [data-readable~="prose"] { font-family: var(--font-seven-sans), Arial, sans-serif !important; font-size: 16px !important; font-style: normal !important; line-height: 1.5 !important; }
+[data-handoff-page]:not([data-handoff-page="home"]) [data-readable~="small"] { font-size: 14px !important; }
+[data-handoff-page]:not([data-handoff-page="home"]) [data-readable~="leading"] { line-height: 1.5 !important; }
+@media (max-width: 760px) {
+  [data-handoff-page="home"] [data-readable~="caps"] { font-size: 13px !important; letter-spacing: .08em !important; }
+  [data-handoff-page="home"] [data-readable~="paper"] { color: rgba(250, 250, 247, .68) !important; }
+  [data-handoff-page="home"] [data-readable~="grey"] { color: #5e5d57 !important; }
+  [data-handoff-page="home"] [data-readable~="olive"] { color: var(--sb-acid-contrast) !important; }
+  [data-handoff-page="home"] [data-readable~="danger"] { color: var(--sb-danger-text) !important; }
+  [data-handoff-page="home"] [data-readable~="prose"] { font-family: var(--font-seven-sans), Arial, sans-serif !important; font-size: 16px !important; font-style: normal !important; line-height: 1.5 !important; }
+  [data-handoff-page="home"] [data-readable~="small"] { font-size: 14px !important; }
+  [data-handoff-page="home"] [data-readable~="leading"] { line-height: 1.5 !important; }
+}
+
 /* Home handoff interaction safety contract. The source capture contains prototype-time
    opacity values; the server-rendered page must remain readable until the client layer
    deliberately opts individual elements into a guaranteed reveal. */
@@ -645,8 +668,9 @@ body:has(> [data-public-shell="header"]) {
   [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child > div:nth-child(2) {
     width: calc(100vw - 112px);
     flex: 0 1 calc(100vw - 112px);
-    font-size: 12px !important;
-    letter-spacing: .2em !important;
+    /* Readability pass (Founder, 25 Sep 2026): phone small caps read at 13px with .08em tracking. */
+    font-size: 13px !important;
+    letter-spacing: .08em !important;
   }
   [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="a"],
   [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="b"] {
