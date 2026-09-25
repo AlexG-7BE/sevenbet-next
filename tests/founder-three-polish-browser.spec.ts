@@ -279,14 +279,14 @@ for (const viewport of [
           viewportHeight: innerHeight,
         };
       });
-      if (Math.abs(entryState.ctaTop) <= 1 && entryState.ctaVisible >= entryState.viewportHeight - 1) break;
+      if (Math.abs(entryState.ctaTop) <= 1 && entryState.ctaVisible >= entryState.ctaHeight - 1) break;
       await touchScroll(context, page, "down");
     }
     expect(entryState).not.toBeNull();
     expect(Math.abs(entryState!.ctaTop)).toBeLessThanOrEqual(1);
-    expect(entryState!.ctaHeight).toBeGreaterThanOrEqual(entryState!.viewportHeight - 1);
-    expect(entryState!.ctaVisible).toBeGreaterThanOrEqual(entryState!.viewportHeight - 1);
-    expect(entryState!.footerVisible).toBeLessThanOrEqual(1);
+    // Founder, 25 Sep 2026: on phones the closing block is compact, not a full screen of space.
+    expect(entryState!.ctaHeight).toBeLessThan(entryState!.viewportHeight * .6);
+    expect(entryState!.ctaVisible).toBeGreaterThanOrEqual(entryState!.ctaHeight - 1);
     expect(entryState!.horizontalOverflow).toBe(0);
 
     if (captureEvidence && viewport.width === 390) {

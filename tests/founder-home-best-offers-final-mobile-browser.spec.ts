@@ -98,7 +98,8 @@ test("Home coarse-pointer snap sequence escapes the final CTA into the complete 
   await expect(page.locator('[data-handoff-page="home"]')).toHaveAttribute("data-home-interactions", "ready");
   await expect(finalCta).toBeAttached();
   expect(await finalCta.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("start");
-  expect(await finalCta.evaluate((element) => Number.parseFloat(getComputedStyle(element).minHeight))).toBeGreaterThanOrEqual(843);
+  // Founder, 25 Sep 2026: on phones the closing block is compact rather than a full screen of space.
+  expect(await finalCta.evaluate((element) => Number.parseFloat(getComputedStyle(element).minHeight) || 0)).toBe(0);
   expect(await finalCta.evaluate((element) => Number.parseFloat(getComputedStyle(element).scrollMarginBottom))).toBe(0);
   expect(await footer.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("end");
   expect(await footerBottom.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("end");
