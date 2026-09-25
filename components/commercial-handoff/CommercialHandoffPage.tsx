@@ -1,21 +1,41 @@
 import Link from "next/link";
 
+import type { OutboundRecoveryCasino } from "@/lib/commercial-handoff/recovery.server";
+import { type OutboundRecoveryMessages, withCasinoName } from "@/lib/i18n/outbound-recovery-catalog";
+
 import styles from "./CommercialHandoffPage.module.css";
 
-export function CommercialHandoffUnavailable() {
+/**
+ * Founder decision 25 Sep 2026: a refused casino click leads somewhere useful. The page itself
+ * never shows an offer or an outbound route; it offers the casino's review first, published
+ * offers only where they may be presented, and the homepage when neither applies.
+ */
+export function CommercialHandoffUnavailable({ casino, bestOffersHref, homeHref, homeLabel, text }: {
+  casino: OutboundRecoveryCasino | null;
+  bestOffersHref: string | null;
+  homeHref: string;
+  homeLabel: string;
+  text: OutboundRecoveryMessages;
+}) {
+  const primary = casino
+    ? { href: casino.reviewHref, label: withCasinoName(text.backToReview, casino.name), action: "review" }
+    : bestOffersHref
+      ? { href: bestOffersHref, label: text.bestOffers, action: "best-offers" }
+      : { href: homeHref, label: homeLabel, action: "home" };
+  const secondary = casino && bestOffersHref
+    ? { href: bestOffersHref, label: text.bestOffers, action: "best-offers" }
+    : primary.action === "home" ? null : { href: homeHref, label: homeLabel, action: "home" };
   return (
-    <section className={styles.page} data-commercial-handoff="unavailable" data-figma-desktop="930:3111" data-figma-mobile="930:3123">
+    <section className={styles.page} data-commercial-handoff="unavailable" data-nav-theme="dark">
       <div className={styles.unavailableCard}>
-        <p className={styles.eyebrow}>Outbound status · Fail closed</p>
-        <h1>Destination unavailable.</h1>
-        <p className={styles.copy}>B4GAMBLE could not confirm an eligible outbound destination for this action. No redirect was completed, and no alternative offer has been substituted.</p>
-        <p className={styles.failureBoundary}>No destination · No redirect · No substitute offer</p>
+        <p className={styles.eyebrow}>{text.eyebrow}</p>
+        <h1>{text.title}</h1>
+        <p className={styles.copy}>{casino ? withCasinoName(text.bodyCasino, casino.name) : text.bodyGeneric}</p>
         <div className={styles.recoveryAction}>
-          <Link href="/">Return to B4GAMBLE</Link>
-          <span>Use your browser Back action to return to the page you came from.</span>
+          <Link className={styles.primary} data-recovery-action={primary.action} href={primary.href} prefetch={false}>{primary.label}</Link>
+          {secondary ? <Link className={styles.secondary} data-recovery-action={secondary.action} href={secondary.href} prefetch={false}>{secondary.label}</Link> : null}
         </div>
       </div>
-      <p className={styles.footnote}>Affiliate relationships never permit B4GAMBLE to invent availability or expose an unverified destination.</p>
     </section>
   );
 }

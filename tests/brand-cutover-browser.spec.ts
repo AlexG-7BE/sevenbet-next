@@ -43,7 +43,7 @@ test("Programme, protected Help, legal and unavailable states expose the current
   }
 
   await page.goto(`${baseUrl}/outbound/unavailable`, { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("link", { name: "Return to B4GAMBLE" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Go to homepage" })).toBeVisible();
 });
 
 test("Terms exposes only the B4GAMBLE section identity in the compact handoff document", async ({ page }) => {
