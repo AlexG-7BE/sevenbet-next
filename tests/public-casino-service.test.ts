@@ -351,3 +351,20 @@ test("canonical-action existence uses the same governed decisions without loadin
     assert.equal(disabledReads, 0);
   });
 });
+
+test("findPublishedCasino settles existence from the published projection alone", async () => {
+  let actionCalls = 0;
+  const counting = (repository: PublicCasinoStore, cmsEnabled = true) => new PublicCasinoService(
+    repository,
+    { cmsEnabled, now },
+    commercialActionAuthority(() => { actionCalls += 1; return { href: "/r/never" }; }),
+  );
+  const found = await counting(store([publishedRecord()], [managedSlug])).findPublishedCasino(managedSlug, " gb ");
+  assert.deepEqual(found, { name: "CMS turbonino", slug: managedSlug });
+  assert.equal(actionCalls, 0, "the action decision stays inside the streamed page");
+  assert.equal(await counting(store([], [managedSlug])).findPublishedCasino(managedSlug), null);
+  assert.equal(await counting(store([publishedRecord()], [managedSlug]), false).findPublishedCasino(managedSlug), null);
+  assert.equal(await counting(store([publishedRecord()], [managedSlug])).findPublishedCasino("../turbonino"), null);
+  const failing = store([], [managedSlug], { findPublishedBySlug: async () => { throw new Error("published lookup unavailable"); } });
+  assert.equal(await counting(failing).findPublishedCasino(managedSlug), null, "a lookup failure keeps today's 404");
+});

@@ -8,7 +8,8 @@ export function PublicRouteLoadingFrame({ destination, label }: { destination: P
       <section className={styles.hero} data-nav-theme="dark">
         <div className={styles.heroInner}>
           <p className={styles.kicker} role="status">{label}</p>
-          <h1>{label}</h1>
+          {/* Not a heading: a streamed page arrives beside its frame, and its own h1 must stay the only one. */}
+          <p aria-hidden="true" className={styles.title}>{label}</p>
           <span aria-hidden="true" className={styles.progress} />
         </div>
       </section>

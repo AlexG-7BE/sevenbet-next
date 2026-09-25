@@ -96,6 +96,29 @@ export class PublicCasinoService {
     }
   }
 
+  /** The cached published projection alone; getCasino adds the per-request action decision. */
+  private publishedEditorial(slug: string, countryCode?: string | null) {
+    const normalizedCountry = countryCode?.trim().toUpperCase() || null;
+    return this.repository === publicCasinoRepository && this.options.now === undefined
+      ? cachedPublishedCasinoEditorial(slug, normalizedCountry)
+      : loadPublishedCasinoEditorial(this.repository, slug, normalizedCountry, this.options.now);
+  }
+
+  /**
+   * Whether a casino profile is published, decided before the page streams its frame so a
+   * missing casino still answers 404. It reads the same cache entry getCasino reads next.
+   */
+  async findPublishedCasino(slug: string, countryCode?: string | null): Promise<{ name: string; slug: string } | null> {
+    if (!isSafePublicSlug(slug)) return null;
+    if (!this.cmsEnabled()) return null;
+    try {
+      const projected = await this.publishedEditorial(slug, countryCode);
+      return projected ? { name: projected.name, slug: projected.slug } : null;
+    } catch {
+      return null;
+    }
+  }
+
   async getCasino(
     slug: string,
     authority?: CommercialJurisdictionAuthority | null,
@@ -108,10 +131,7 @@ export class PublicCasinoService {
 
     let projected: PublicCasinoDTO | null = null;
     try {
-      const normalizedCountry = countryCode?.trim().toUpperCase() || null;
-      projected = this.repository === publicCasinoRepository && this.options.now === undefined
-        ? await cachedPublishedCasinoEditorial(slug, normalizedCountry)
-        : await loadPublishedCasinoEditorial(this.repository, slug, normalizedCountry, this.options.now);
+      projected = await this.publishedEditorial(slug, countryCode);
     } catch {
       return null;
     }

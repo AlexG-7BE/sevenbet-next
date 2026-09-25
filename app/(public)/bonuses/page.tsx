@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Instrument_Serif } from "next/font/google";
 import Link from "next/link";
-import { cache } from "react";
+import { cache, Suspense } from "react";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
+import { PublicRouteLoadingFrame } from "@/components/public-shell/PublicRouteLoadingFrame";
 import { BonusOfferDirectory } from "@/components/bonus-directory/BonusOfferDirectory";
 import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -21,6 +23,7 @@ import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { hasPublicOfferFilters, parsePublicOfferQuery, type PublicOfferSearchParams } from "@/lib/public-offer/query";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 import { publicOfferService } from "@/lib/services/public-offer.service";
+import { isCrawlerUserAgent } from "@/lib/seo/crawler";
 import { absoluteUrl } from "@/lib/site";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
@@ -78,9 +81,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   });
 }
 
-export default async function BonusesPage({ searchParams }: PageProps) {
-  const raw = await searchParams;
-  triggerPublicCommercialErrorHarness(raw.errorFixture);
+async function BonusesContent({ raw }: { raw: Record<string, string | string[] | undefined> }) {
   const loaded = await loadBonusDirectory();
   const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
   const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, visualFixture);
@@ -150,4 +151,18 @@ export default async function BonusesPage({ searchParams }: PageProps) {
       </ol>
     </div></section>
   </div>;
+}
+
+/**
+ * The route frame streams at once, the way the home page does, while the catalogue
+ * loads; a cold instance used to send nothing for 3–4.6s (25 Sep 2026). The error
+ * harness still fires before the boundary so its failure keeps a real error status.
+ */
+export default async function BonusesPage({ searchParams }: PageProps) {
+  const raw = await searchParams;
+  triggerPublicCommercialErrorHarness(raw.errorFixture);
+  const [presentation, requestHeaders] = await Promise.all([resolveServerPresentationContext(), headers()]);
+  // Crawlers read the whole page in the first response; only people get the streamed frame.
+  if (isCrawlerUserAgent(requestHeaders.get("user-agent"))) return <BonusesContent raw={raw} />;
+  return <Suspense fallback={<PublicRouteLoadingFrame destination="bonuses" label={publicShellMessages(presentation.locale).bonuses} />}><BonusesContent raw={raw} /></Suspense>;
 }
