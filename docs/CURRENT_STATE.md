@@ -12,6 +12,24 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Claude-operated partner CRM — code ready, disabled until configured
+
+**Founder instruction, 25 September 2026:** "Claude ведёт CRM" — Claude
+operates the partner Commercial CRM. [RFC-055](06_RFC/RFC-055-Claude-Operated-Partner-CRM.md)
+adds one service-bearer, stateless `POST /api/mcp/crm` endpoint with six
+tools: list, get, possible duplicates, the existing research bundle,
+evidence-gated stage transition and CRM → catalog identity links. Writes are
+transactional, idempotent and audited as `PARTNER_OPERATIONS_AGENT` on behalf
+of the `CRM_MCP_ACTOR_ID` staff actor with `channel: "crm-mcp"`. `ACTIVE`
+can be neither set nor cleared; the CRM keeps no route, market, button,
+tracking or customer-data authority (RFC-048).
+
+**PROPOSED — NOT YET LIVE:** the endpoint returns 503 until
+`CRM_MCP_ENABLED=true`, a `CRM_MCP_SERVICE_TOKEN` of at least 32 bytes and a
+`CRM_MCP_ACTOR_ID` with `affiliate.manage` are set in Vercel. The weekly
+mailbox/portal routine and the one-off cleanup start after that
+configuration.
+
 ## Licence-based market access — live; activation release and GB decision pending
 
 **Founder instruction, 24 September 2026:** market decisions follow each
@@ -708,6 +726,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION — HUMAN CRM ONLY** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. The in-app OpenAI Partner Operations run was removed on 25 September 2026 by Founder decision; it had never invoked the provider in Production. |
 | Commercial MCP / operational OAuth | **RETIRED — TRANSPORT, EXTERNAL CONNECTIONS AND STORAGE REMOVED** | PR5 removed the server/provider/routes without a replacement transport. Founder Office removed `B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3`; PR6 applied migration 0041 and removed the retired connector storage. None may be recreated or reconnected. |
+| Commercial CRM — Claude-operated (RFC-055) | **CODE READY; DISABLED UNTIL CONFIGURED** | Claude maintains the Commercial CRM through the separate service-bearer `/api/mcp/crm` endpoint (six tools, no OAuth). It returns 503 until `CRM_MCP_ENABLED`, `CRM_MCP_SERVICE_TOKEN` and `CRM_MCP_ACTOR_ID` are configured. CRM stages and links keep no route, market, button or tracking authority. |
 | Partner tracking registration | **RFC-048 WRITE CORE LIVE; INTERNAL-ONLY AFTER PR5** | CRM/static/lifecycle state is non-authoritative and canonical writes require non-serializable trusted Founder provenance. PR5 removes the old transport caller and adds no new authority boundary. |
 | Production DB reliability | **READY IN PRODUCTION** | The one-connection runtime and narrow secret-safe transient handling remain; transport-specific availability code/tests are retired. |
 | Commercial partner activation | **READY IN PRODUCTION — 39 STORED ACTIVE + HEALTHY ROUTES** | PR2 acceptance verified all 39 stored active/healthy routes unchanged. RFC-042 remains the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |

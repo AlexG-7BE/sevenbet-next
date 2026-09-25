@@ -243,6 +243,11 @@ PR #69 merged the isolated package to `main`. It remains undeployed, unscheduled
 
 ## 16. `COMMERCIAL-OPS-01` Partner Operations amendment
 
+> **AMENDED 25 SEPTEMBER 2026:** [RFC-055](RFC-055-Claude-Operated-Partner-CRM.md)
+> lets Claude change a CRM stage itself through `/api/mcp/crm`, including
+> `APPROVED` with `APPROVAL` evidence, under the staff evidence rules. `ACTIVE`
+> stays outside CRM, and no CRM stage gains commercial authority.
+
 Founder instruction on 2026-08-19 authorises one bounded expansion while preserving package isolation:
 
 1. `partner-operations` replaces `partner-intelligence` as the canonical registry key and name. `partner-intelligence` remains an explicit input compatibility alias resolved to the same definition; there is no duplicate specialist logic.

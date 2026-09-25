@@ -30,12 +30,19 @@ test("PR5 keeps Commercial, Media, and operational OAuth transport retired", () 
       `${path} must not contain a surviving stub`,
     );
   }
-  const allowedLearnMcpFiles = [
+  // RFC-052 Learn and RFC-055 Claude-operated CRM are the only Founder-authorized
+  // service-bearer MCP surfaces; neither uses OAuth, DCR or a connector identity.
+  const allowedMcpFiles = [
+    "app/api/mcp/crm/route.ts",
     "app/api/mcp/learn/route.ts",
+    "lib/mcp/crm/config.ts",
+    "lib/mcp/crm/post-handler.ts",
+    "lib/mcp/crm/server.ts",
     "lib/mcp/learn/config.ts",
     "lib/mcp/learn/post-handler.ts",
     "lib/mcp/learn/rate-limit.ts",
     "lib/mcp/learn/server.ts",
+    "lib/mcp/rate-limit.ts",
   ];
   const allowedLearnMcpCallers = [
     "lib/learn-content-orchestrator/mcp-publisher.server.ts",
@@ -44,7 +51,10 @@ test("PR5 keeps Commercial, Media, and operational OAuth transport retired", () 
     ...(existsSync(join(root, "app/api/mcp")) ? sourceFiles("app/api/mcp") : []),
     ...(existsSync(join(root, "lib/mcp")) ? sourceFiles("lib/mcp") : []),
   ].sort();
-  assert.deepEqual(mcpFiles, allowedLearnMcpFiles, "only the Founder-authorized Learn MCP surface may exist");
+  assert.deepEqual(mcpFiles, allowedMcpFiles, "only the Founder-authorized Learn and CRM MCP surfaces may exist");
+  const crmMcp = ["app/api/mcp/crm/route.ts", "lib/mcp/crm/config.ts", "lib/mcp/crm/post-handler.ts", "lib/mcp/crm/server.ts"]
+    .map(source).join("\n");
+  assert.doesNotMatch(crmMcp, /oauth|clientId|registration_endpoint|well-known|chatgpt|commercial:(?:read|safe_write)|\/api\/mcp\/(?:commercial|media|oauth)/i);
 
   const activeRuntimePaths = [
     ...sourceFiles("app"),
@@ -60,7 +70,7 @@ test("PR5 keeps Commercial, Media, and operational OAuth transport retired", () 
   );
   const activeRuntime = activeRuntimePaths
     .filter((path) => path !== "lib/media-operations/persisted-history.ts"
-      && !allowedLearnMcpFiles.includes(path)
+      && !allowedMcpFiles.includes(path)
       && !allowedLearnMcpCallers.includes(path))
     .map((path) => `// ${path}\n${source(path)}`).join("\n");
   assert.doesNotMatch(
@@ -113,8 +123,13 @@ test("extracted CRM research capability is transport-, client-, and scope-neutra
     ...sourceFiles("components"),
     ...sourceFiles("lib"),
   ].filter((path) => path !== "lib/commercial/commercial-opportunity-research-service.ts"
-    && source(path).includes("commercialOpportunityResearchService"));
-  assert.deepEqual(applicationCallers, [], "PR5 must not add a neutral research service caller or replay adapter");
+    && path !== "lib/repositories/commercial.repository.ts"
+    && /commercialOpportunityResearchService|createCommercialOpportunityResearchService|delegatedCommercialRepository/.test(source(path)));
+  assert.deepEqual(
+    applicationCallers,
+    ["lib/mcp/crm/server.ts"],
+    "RFC-055: the Claude-operated CRM MCP server is the only caller of the neutral research service",
+  );
 });
 
 test("canonical tracking and public runtime remain independent of CRM and retired transport", () => {

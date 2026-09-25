@@ -187,6 +187,44 @@ export const CommercialResearchBundleSchema = z.object({
   }
 });
 
+// A delegated stage transition never names ACTIVE: that stage is derived from
+// governed live routes, not from CRM.
+export const DELEGATED_STAGE_TARGETS = [
+  "PROSPECT", "QUALIFIED", "APPLICATION_READY", "APPLIED", "DUE_DILIGENCE",
+  "NEGOTIATING", "APPROVED", "REJECTED", "ON_HOLD",
+] as const;
+
+export const CommercialOpportunityStageTransitionSchema = z.object({
+  opportunityId: z.string().uuid(),
+  targetStage: z.enum(DELEGATED_STAGE_TARGETS),
+  reason: z.string().min(1).max(2_000),
+  evidenceIds: z.array(z.string().uuid()).max(10).default([]),
+  idempotencyKey: IdempotencyKey,
+}).strict();
+
+export const CATALOG_LINK_FIELDS = [
+  "casinoId", "affiliateNetworkId", "affiliateProgramId", "operatorId", "brandId",
+] as const;
+
+const CatalogLinkId = z.string().uuid().nullable().optional();
+
+export const CommercialOpportunityCatalogLinkSchema = z.object({
+  opportunityId: z.string().uuid(),
+  idempotencyKey: IdempotencyKey,
+  casinoId: CatalogLinkId,
+  affiliateNetworkId: CatalogLinkId,
+  affiliateProgramId: CatalogLinkId,
+  operatorId: CatalogLinkId,
+  brandId: CatalogLinkId,
+}).strict().superRefine((value, context) => {
+  if (CATALOG_LINK_FIELDS.every((field) => value[field] === undefined)) {
+    context.addIssue({ code: "custom", path: [], message: "Provide at least one catalog link; null unlinks it" });
+  }
+});
+
 export type CommercialOpportunityListInput = z.infer<typeof CommercialOpportunityListSchema>;
+export type CommercialOpportunityStageTransitionInput = z.infer<typeof CommercialOpportunityStageTransitionSchema>;
+export type CommercialOpportunityCatalogLinkInput = z.infer<typeof CommercialOpportunityCatalogLinkSchema>;
+export type CatalogLinkField = typeof CATALOG_LINK_FIELDS[number];
 export type CommercialOpportunityDuplicateInput = z.infer<typeof CommercialOpportunityDuplicateSchema>;
 export type CommercialResearchBundle = z.infer<typeof CommercialResearchBundleSchema>;

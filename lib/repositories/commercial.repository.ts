@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 
-import { Prisma } from "@prisma/client";
+import { Prisma, type CommercialOpportunityStage } from "@prisma/client";
+import { CATALOG_LINK_FIELDS } from "@/lib/commercial/commercial-opportunity-research-contract";
 import type {
+  CatalogLinkField,
+  CommercialOpportunityCatalogLinkInput,
+  CommercialOpportunityStageTransitionInput,
   CommercialOpportunityDuplicateInput,
   CommercialOpportunityListInput,
   CommercialResearchBundle,
@@ -294,6 +298,211 @@ async function findCommercialOpportunityDuplicates(
     .sort((a, b) => a.match.localeCompare(b.match))
     .slice(0, input.limit);
 }
+
+// Delegated Partner Operations writes (RFC-055). The caller supplies the staff
+// delegator and a channel label. These functions write only Commercial CRM
+// rows and AuditLog; catalog identity rows are read for existence only.
+
+export type DelegatedCommercialContext = { actorId: string; channel: string };
+
+export type DelegatedCommercialStageFacts = {
+  currentStage: CommercialOpportunityStage;
+  qualificationRationale: string | null;
+  nextActionSummary: string | null;
+  evidence: Array<{ id: string; category: string }>;
+  applicationStates: string[];
+};
+
+async function lockOpportunityForDelegatedWrite(tx: Prisma.TransactionClient, opportunityId: string) {
+  await tx.$queryRaw(Prisma.sql`
+    SELECT pg_advisory_xact_lock(hashtextextended(${`commercial-opportunity-write:${opportunityId}`}, 0))::text AS locked
+  `);
+}
+
+function delegatedStageDetails(evidenceIds: string[]) {
+  return evidenceIds.length ? `Evidence: ${evidenceIds.join(", ")}` : null;
+}
+
+async function transitionDelegatedCommercialStage(
+  input: CommercialOpportunityStageTransitionInput,
+  context: DelegatedCommercialContext,
+  assertAllowed: (facts: DelegatedCommercialStageFacts) => void,
+) {
+  const activityKey = `stage-transition:${input.idempotencyKey}`;
+  const details = delegatedStageDetails(input.evidenceIds);
+  return prisma.$transaction(async (tx) => {
+    await lockOpportunityForDelegatedWrite(tx, input.opportunityId);
+    const existing = await tx.commercialActivity.findUnique({
+      where: { opportunityId_idempotencyKey: { opportunityId: input.opportunityId, idempotencyKey: activityKey } },
+    });
+    if (existing) {
+      if (existing.newStage !== input.targetStage || existing.reason !== input.reason || existing.details !== details) {
+        return { status: "IDEMPOTENCY_CONFLICT" as const };
+      }
+      return {
+        status: "IDEMPOTENT_REPLAY" as const,
+        opportunityId: input.opportunityId,
+        previousStage: existing.previousStage,
+        newStage: existing.newStage,
+        activityId: existing.id,
+      };
+    }
+    const opportunity = await tx.commercialOpportunity.findUnique({
+      where: { id: input.opportunityId },
+      select: {
+        id: true, stage: true, qualificationRationale: true, nextActionSummary: true,
+        evidence: { select: { id: true, category: true } },
+        applications: { select: { state: true } },
+      },
+    });
+    if (!opportunity) return { status: "NOT_FOUND" as const };
+    assertAllowed({
+      currentStage: opportunity.stage,
+      qualificationRationale: opportunity.qualificationRationale,
+      nextActionSummary: opportunity.nextActionSummary,
+      evidence: opportunity.evidence,
+      applicationStates: opportunity.applications.map((application) => application.state),
+    });
+    if (opportunity.stage === input.targetStage) {
+      return {
+        status: "UNCHANGED" as const,
+        opportunityId: opportunity.id,
+        previousStage: opportunity.stage,
+        newStage: opportunity.stage,
+        activityId: null,
+      };
+    }
+    await tx.commercialOpportunity.update({
+      where: { id: opportunity.id },
+      data: { stage: input.targetStage, updatedBy: context.actorId },
+    });
+    const activity = await tx.commercialActivity.create({ data: {
+      opportunityId: opportunity.id,
+      actorId: context.actorId,
+      actorKind: "PARTNER_OPERATIONS_AGENT",
+      type: "STAGE_CHANGE",
+      summary: `Stage changed from ${opportunity.stage} to ${input.targetStage}`,
+      details,
+      reason: input.reason,
+      previousStage: opportunity.stage,
+      newStage: input.targetStage,
+      evidenceId: input.evidenceIds[0] ?? null,
+      idempotencyKey: activityKey,
+    } });
+    await audit(
+      tx,
+      context.actorId,
+      "commercial_delegated_stage_changed",
+      opportunity.id,
+      `Delegated Partner Operations changed commercial stage from ${opportunity.stage} to ${input.targetStage}`,
+      {
+        channel: context.channel,
+        actorKind: "PARTNER_OPERATIONS_AGENT",
+        previousStage: opportunity.stage,
+        newStage: input.targetStage,
+        reason: input.reason,
+        evidenceIds: input.evidenceIds,
+        idempotencyKey: input.idempotencyKey,
+        activityId: activity.id,
+      },
+    );
+    return {
+      status: "TRANSITIONED" as const,
+      opportunityId: opportunity.id,
+      previousStage: opportunity.stage,
+      newStage: input.targetStage,
+      activityId: activity.id,
+    };
+  });
+}
+
+async function catalogRecordExists(tx: Prisma.TransactionClient, field: CatalogLinkField, id: string) {
+  switch (field) {
+    case "casinoId": return Boolean(await tx.casino.findUnique({ where: { id }, select: { id: true } }));
+    case "affiliateNetworkId": return Boolean(await tx.affiliateNetwork.findUnique({ where: { id }, select: { id: true } }));
+    case "affiliateProgramId": return Boolean(await tx.affiliateProgram.findUnique({ where: { id }, select: { id: true } }));
+    case "operatorId": return Boolean(await tx.casinoOperator.findUnique({ where: { id }, select: { id: true } }));
+    case "brandId": return Boolean(await tx.casinoBrand.findUnique({ where: { id }, select: { id: true } }));
+  }
+}
+
+async function linkDelegatedCommercialCatalog(
+  input: CommercialOpportunityCatalogLinkInput,
+  context: DelegatedCommercialContext,
+) {
+  const requested: Partial<Record<CatalogLinkField, string | null>> = {};
+  for (const field of CATALOG_LINK_FIELDS) {
+    if (input[field] !== undefined) requested[field] = input[field] ?? null;
+  }
+  const activityKey = `catalog-link:${input.idempotencyKey}`;
+  return prisma.$transaction(async (tx) => {
+    await lockOpportunityForDelegatedWrite(tx, input.opportunityId);
+    const existing = await tx.commercialActivity.findUnique({
+      where: { opportunityId_idempotencyKey: { opportunityId: input.opportunityId, idempotencyKey: activityKey } },
+    });
+    if (existing) {
+      const recorded = JSON.parse(existing.details ?? "{}") as { links?: unknown; changed?: CatalogLinkField[] };
+      if (JSON.stringify(recorded.links) !== JSON.stringify(requested)) return { status: "IDEMPOTENCY_CONFLICT" as const };
+      return {
+        status: "IDEMPOTENT_REPLAY" as const,
+        opportunityId: input.opportunityId,
+        links: requested,
+        changed: recorded.changed ?? [],
+        activityId: existing.id,
+      };
+    }
+    const opportunity = await tx.commercialOpportunity.findUnique({
+      where: { id: input.opportunityId },
+      select: { id: true, casinoId: true, affiliateNetworkId: true, affiliateProgramId: true, operatorId: true, brandId: true },
+    });
+    if (!opportunity) return { status: "NOT_FOUND" as const };
+    for (const field of CATALOG_LINK_FIELDS) {
+      const id = requested[field];
+      if (id && !(await catalogRecordExists(tx, field, id))) {
+        return { status: "UNKNOWN_REFERENCE" as const, field, id };
+      }
+    }
+    const changed = CATALOG_LINK_FIELDS.filter((field) => field in requested && requested[field] !== opportunity[field]);
+    if (!changed.length) {
+      return { status: "UNCHANGED" as const, opportunityId: opportunity.id, links: requested, changed, activityId: null };
+    }
+    const data: Prisma.CommercialOpportunityUncheckedUpdateInput = { updatedBy: context.actorId };
+    for (const field of changed) data[field] = requested[field] ?? null;
+    await tx.commercialOpportunity.update({ where: { id: opportunity.id }, data });
+    const activity = await tx.commercialActivity.create({ data: {
+      opportunityId: opportunity.id,
+      actorId: context.actorId,
+      actorKind: "PARTNER_OPERATIONS_AGENT",
+      type: "NOTE",
+      summary: `Catalog identity links updated: ${changed.join(", ")}`,
+      details: JSON.stringify({ links: requested, changed }),
+      idempotencyKey: activityKey,
+    } });
+    await audit(
+      tx,
+      context.actorId,
+      "commercial_delegated_catalog_linked",
+      opportunity.id,
+      `Delegated Partner Operations updated catalog identity links: ${changed.join(", ")}`,
+      {
+        channel: context.channel,
+        actorKind: "PARTNER_OPERATIONS_AGENT",
+        idempotencyKey: input.idempotencyKey,
+        activityId: activity.id,
+        changes: Object.fromEntries(changed.map((field) => [field, { from: opportunity[field], to: requested[field] ?? null }])),
+      },
+    );
+    return { status: "LINKED" as const, opportunityId: opportunity.id, links: requested, changed, activityId: activity.id };
+  });
+}
+
+export const delegatedCommercialRepository = {
+  findDelegatingActor(id: string) {
+    return prisma.adminUser.findUnique({ where: { id }, select: { id: true, role: true } });
+  },
+  transitionStage: transitionDelegatedCommercialStage,
+  linkCatalog: linkDelegatedCommercialCatalog,
+};
 
 function scopedResearchEntityKey(sourceHash: string, key: string) {
   return `research:${sourceHash}:${key}`;

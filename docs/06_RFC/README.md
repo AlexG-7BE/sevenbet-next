@@ -82,16 +82,17 @@ orientation.
 | [RFC-052 — Autonomous Learn Publication](RFC-052-Autonomous-Learn-Publication.md) | `ACTIVE` | One service-authenticated `learn_apply` mutation over canonical Article authority; atomic publication, first-party images, replay safety and public verification without reviving retired Commercial/Media OAuth. |
 | [RFC-053 — Autonomous Learn Content Orchestration](RFC-053-Autonomous-Learn-Content-Orchestration.md) | `ACTIVE` | One bounded scheduled three-role Learn editorial pipeline; models have no write authority and deterministic publication remains exclusively RFC-052 `learn_apply`. |
 | [RFC-054 — Licence-Based Market Access](RFC-054-Licence-Market-Access.md) | `ACTIVE` | One casino × market licence register gates offers, the partner button and `/r/` by the operator's own licence; closures are operator block, prohibition by law, no local licence, closed grey zone and the German advertising window. |
+| [RFC-055 — Claude-Operated Partner CRM](RFC-055-Claude-Operated-Partner-CRM.md) | `ACTIVE` | One service-bearer `/api/mcp/crm` endpoint with six CRM tools; evidence-gated stage changes (never `ACTIVE`), CRM → catalog identity links, audited and idempotent; no route, market, CTA, tracking or customer-data authority. Amends RFC-051's no-CRM-transport clause. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 30 |
+| `ACTIVE` | 31 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 5 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **54** |
+| **Total RFC artifacts** | **55** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

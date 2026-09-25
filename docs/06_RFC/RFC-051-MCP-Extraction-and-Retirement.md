@@ -11,6 +11,11 @@
   stubs
 - **Does not authorise:** merge, deployment, Production mutation, external
   connector removal or destructive schema cleanup
+- **Amended by:** [RFC-055](RFC-055-Claude-Operated-Partner-CRM.md) (Founder,
+  25 September 2026) — the neutral CRM research capability below is now
+  exposed through the service-bearer `/api/mcp/crm` endpoint, whose server is
+  its only caller. The retired Commercial/Media transports, operational OAuth
+  and external connectors stay retired.
 
 ## 1. Decision
 
