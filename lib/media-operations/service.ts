@@ -19,6 +19,7 @@ import {
   type MediaIngestionBatch,
   type MediaIngestionPlan,
   type MediaOperationsSource,
+  type MediaSemanticResult,
 } from "@/lib/media-operations/contracts";
 import { resolveMediaIngestionContext } from "@/lib/media-operations/context";
 import { parsePartnerSnippet, persistedCreativeEvidence, safeUrlEvidence } from "@/lib/media-operations/parser";
@@ -37,7 +38,6 @@ import {
 import { buildMediaPlacementPlan, scoreMediaPlacements, type ExistingMediaAssignment } from "@/lib/media-operations/planner";
 import { fetchRemoteImage, RemoteImageFetchError } from "@/lib/media-operations/remote-image-fetch";
 import { mediaIngestionRepository, type MediaIngestionRepository } from "@/lib/media-operations/repository";
-import { analyzeMediaPlan } from "@/lib/media-operations/semantic-analysis";
 import { mediaProductionRevisionService } from "@/lib/media-operations/production-revisions";
 import { prisma } from "@/lib/db/prisma";
 import { commercialCreativePresentationFamily } from "@/lib/media/commercial-formats";
@@ -163,6 +163,35 @@ function failure(error: unknown) {
   }
   if (error && typeof error === "object" && "code" in error && typeof error.code === "string") return { code: error.code.slice(0, 100), message: error instanceof Error ? error.message.slice(0, 500) : "Media ingestion failed" };
   return { code: "MEDIA_INGESTION_FAILED", message: error instanceof Error ? error.message.slice(0, 500) : "Media ingestion failed" };
+}
+
+function needsVisualReview(creativeId: string): MediaSemanticResult {
+  return {
+    creativeId,
+    state: "NEEDS_VISUAL_REVIEW",
+    provider: null,
+    model: null,
+    brandName: null,
+    assetPurpose: "UNKNOWN",
+    language: null,
+    market: null,
+    currency: null,
+    offerText: null,
+    offerAmount: null,
+    offerPercentage: null,
+    freeSpins: null,
+    promoCode: null,
+    callToActionText: null,
+    containsPromotionalText: false,
+    containsFinePrint: false,
+    containsResponsibleGamblingText: false,
+    cropSafety: "UNKNOWN",
+    textReadability: "UNKNOWN",
+    likelyMarkets: [],
+    complianceConcerns: [],
+    confidence: 0,
+    explanation: "Automated visual analysis is retired; first-party creatives require human visual review.",
+  };
 }
 
 function addWarning(plan: MediaIngestionPlan, warning: string) {
@@ -807,7 +836,7 @@ export class MediaOperationsService {
     if ("batchId" in input) {
       const batch = await this.repository.getBatch(input.batchId);
       if (!batch) throw new NotFoundError("Media ingestion batch", { batchId: input.batchId });
-      const plans = await mapWithConcurrency(batch.planIds, 3, (planId) => this.analyzePlan({ planId, useSemanticAnalysis: input.useSemanticAnalysis }, actor));
+      const plans = await mapWithConcurrency(batch.planIds, 3, (planId) => this.analyzePlan({ planId }, actor));
       batch.state = "ANALYZED";
       batch.updatedAt = new Date().toISOString();
       await this.repository.saveBatch(batch, { operation: "BULK_ANALYZE", result: { state: batch.state, plans: plans.length, recommendations: plans.reduce((sum, plan) => sum + plan.recommendations.length, 0) } });
@@ -817,7 +846,7 @@ export class MediaOperationsService {
   }
 
   private async analyzePlan(
-    input: { planId: string; useSemanticAnalysis: boolean },
+    input: { planId: string },
     actor: MediaOperationsActor,
   ): Promise<MediaIngestionPlan> {
     const plan = await this.repository.getPlan(input.planId);
@@ -852,13 +881,7 @@ export class MediaOperationsService {
       explanation: "Deterministic Description/provider metadata only; creative pixels were not inspected.",
     }));
     const firstPartyCreativeIds = new Set(plan.creatives.filter((creative) => !hostedCreativeIds.has(creative.id)).map((creative) => creative.id));
-    const firstPartySemanticResults = firstPartyCreativeIds.size
-      ? await analyzeMediaPlan({
-        ...plan,
-        creatives: plan.creatives.filter((creative) => firstPartyCreativeIds.has(creative.id)),
-        assets: plan.assets.filter((asset) => firstPartyCreativeIds.has(asset.creativeId)),
-      }, input.useSemanticAnalysis)
-      : [];
+    const firstPartySemanticResults = [...firstPartyCreativeIds].map(needsVisualReview);
     const semanticByCreative = new Map([...hostedSemanticResults, ...firstPartySemanticResults].map((result) => [result.creativeId, result]));
     plan.semanticResults = plan.creatives.flatMap((creative) => {
       const result = semanticByCreative.get(creative.id);
@@ -948,7 +971,7 @@ export class MediaOperationsService {
     const batch = await this.repository.getBatch(input.batchId);
     if (!batch) throw new NotFoundError("Media ingestion batch", { batchId: input.batchId });
     if (!["ANALYZED", "APPLIED", "PARTIALLY_APPLIED"].includes(batch.state)) {
-      await this.analyze({ batchId: input.batchId, useSemanticAnalysis: input.useSemanticAnalysis }, actor);
+      await this.analyze({ batchId: input.batchId }, actor);
     }
     return mediaProductionRevisionService.orchestrate(input, actor);
   }

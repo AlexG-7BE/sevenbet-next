@@ -69,7 +69,7 @@ test("PostgreSQL bulk ingest isolates failures, returns three durable plans, ana
     assert.equal(await prisma.siteSetting.count({ where: { key: { startsWith: MEDIA_INGESTION_PLAN_KEY_PREFIX } } }), 3);
     assert.equal(await prisma.siteSetting.count({ where: { key: `${MEDIA_INGESTION_BATCH_KEY_PREFIX}${first.id}` } }), 1);
 
-    const analyzed = await mediaOperationsService.analyze({ batchId: first.id, useSemanticAnalysis: false }, { actorId, source: "SYSTEM" });
+    const analyzed = await mediaOperationsService.analyze({ batchId: first.id }, { actorId, source: "SYSTEM" });
     assert.ok("plans" in analyzed);
     if (!("plans" in analyzed)) return;
     assert.equal(analyzed.plans.reduce((sum, plan) => sum + plan.assets.length, 0), 24);

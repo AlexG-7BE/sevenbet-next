@@ -37,6 +37,14 @@ Application state distinguishes draft/prepared from submitted/sent; external sta
 
 ## Partner Operations execution
 
+**Removed 25 September 2026 (Founder decision):** the Admin "Run bounded
+review" button, its route, the server-only OpenAI adapter and
+`commercialRepository.applyPartnerOperations` are deleted. The adapter never
+invoked the provider in Production. No application code now applies an Agent
+operation batch to the CRM; historical runs stay readable, and the isolated
+`agents/` package keeps the shared contract. This section and the provider
+notes below are historical.
+
 The canonical key is `partner-operations`; `partner-intelligence` is a compatibility alias. A server-only adapter builds the strict bounded snapshot, applies the commercial firewall, invokes one no-tools structured response when a server credential exists, validates the result and evidence references, then sends the closed operation batch to `commercialRepository.applyPartnerOperations`. The batch executes transactionally.
 
 The safe surface can update descriptive profile data; add evidence, contacts and research notes; create tasks and next actions; create draft outreach/applications; record evidenced responses and received terms; propose qualification/stage changes; and prepare an activation packet. Proposed stages are timeline proposals, not stage mutations.
@@ -91,7 +99,7 @@ Rollback is a code rollback plus, only before Production adoption and under sepa
 
 ## Current limitations
 
-- Admin supports live provider execution only when `OPENAI_API_KEY` already exists server-side; no key is requested or stored.
+- Admin has no provider execution since 25 September 2026; CRM work is human-only.
 - The existing role model has no formal Founder role. CRM approval records the authenticated staff actor and never labels that action a Founder decision. A future Founder decision requires its own explicit evidence/event; Founder identity remains an organisational control.
 - Canonical identity linking is represented in the data model but not exposed as a general picker in this first Admin screen.
 - Detailed and aggregate click surfaces have different coverage and cannot be combined into a single total.

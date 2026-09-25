@@ -2,6 +2,16 @@
 
 This is the implementation contract for `COMMERCIAL-OPS-01`, not a future design.
 
+**Removed 25 September 2026 (Founder decision):** the in-app Partner Operations
+run — the Admin "Run bounded review" button,
+`/api/admin/commercial/opportunities/[opportunityId]/partner-operations` and
+`lib/commercial/partner-operations-provider.ts` (OpenAI `gpt-5.6-terra`) — and
+the repository code that applied Agent operations to the CRM. It never invoked
+the provider in Production: every stored `CommercialAgentRun` came from the
+retired MCP transport. Historical runs and operations stay readable. The shared
+contract remains for the isolated `agents/` package. Sections below that
+describe applying an Agent run are historical.
+
 ## Models and enums
 
 The exact Prisma models are `CommercialOpportunity`, `CommercialEvidence`, `CommercialContact`, `CommercialActivity`, `CommercialApplication`, `CommercialTerm`, `CommercialTask`, `CommercialAgentRun`, `CommercialAgentOperation` and `CommercialActivationPacket`. They reuse `AdminUser`, `CasinoOperator`, `CasinoBrand`, `Casino`, `AffiliateNetwork` and `AffiliateProgram` relations.
@@ -12,9 +22,8 @@ The pipeline enum is `CommercialOpportunityStage`: `PROSPECT`, `QUALIFIED`, `APP
 
 - `shared/commercial/partner-operations-contract.ts`: true strict input/result and closed CRM operation contract.
 - `lib/commercial/stage-policy.ts`: deterministic human stage transition rules and Agent-proposable stages.
-- `lib/commercial/commercial-service.ts`: input validation and human/Agent use cases.
+- `lib/commercial/commercial-service.ts`: input validation and human use cases.
 - `lib/repositories/commercial.repository.ts`: only Prisma write boundary, transactions, idempotency and audits.
-- `lib/commercial/partner-operations-provider.ts`: protected snapshot, commercial firewall, no-tools structured provider call and post-provider validation.
 - `/api/admin/commercial/opportunities/**`: permission-protected HTTP boundary.
 
 ## Agent-safe operation union
