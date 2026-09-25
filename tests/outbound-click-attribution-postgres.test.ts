@@ -369,7 +369,7 @@ test("/r preserves successful 302 and blocked recovery responses when observatio
       { headers: { "x-vercel-ip-country": "PE" } },
     ), { params: Promise.resolve({ slug: blockedSlug }) });
     assert.equal(blockedResponse.status, 303);
-    assert.equal(blockedResponse.headers.get("location"), "https://b4gamble.com/outbound/unavailable");
+    assert.equal(blockedResponse.headers.get("location"), `https://b4gamble.com/outbound/unavailable?link=${blockedSlug}`);
     assert.match(blockedResponse.headers.get("cache-control") ?? "", /no-store/);
     await waitFor(
       async () => await prisma.outboundClick.count({ where: { requestedSlug: blockedSlug } }) === 1,

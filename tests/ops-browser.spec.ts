@@ -90,30 +90,37 @@ test("FAQ disclosures remain native and keyboard operable", async ({ page }) => 
   await expect(answer).toBeVisible();
 });
 
-test("legacy outbound routes redirect internally and governed failures remain fail closed without confirmation UI", async ({ browser, page }) => {
+test("legacy outbound routes redirect internally and governed failures recover without confirmation UI", async ({ browser, page }) => {
   const legacy = await page.request.get(`${baseUrl}/outbound/example-managed-action`, { maxRedirects: 0 });
   expect(legacy.status()).toBe(307);
   expect(legacy.headers().location).toBe("/r/example-managed-action");
   await open(page, "/outbound/example-managed-action");
-  await expect(page).toHaveURL(/\/outbound\/unavailable$/);
-  await expect(page.getByText("No destination · No redirect · No substitute offer")).toBeVisible();
+  await expect(page).toHaveURL(/\/outbound\/unavailable\?link=example-managed-action$/);
+  await expect(page.getByRole("heading", { name: "This link isn't available right now." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Continue to eligible partner" })).toHaveCount(0);
   await expect(page.getByText("You are leaving B4GAMBLE.", { exact: true })).toHaveCount(0);
 
   const noJsContext = await browser.newContext({ javaScriptEnabled: false });
   const noJsPage = await noJsContext.newPage();
   await noJsPage.goto(`${baseUrl}/outbound/example-managed-action`, { waitUntil: "domcontentloaded" });
-  await expect(noJsPage).toHaveURL(/\/outbound\/unavailable$/);
-  await expect(noJsPage.getByText("No destination · No redirect · No substitute offer")).toBeVisible();
+  await expect(noJsPage).toHaveURL(/\/outbound\/unavailable\?link=example-managed-action$/);
+  await expect(noJsPage.getByRole("heading", { name: "This link isn't available right now." })).toBeVisible();
   await noJsContext.close();
 
   const response = await page.goto(`${baseUrl}/r/not-a-real-managed-destination`, {
     waitUntil: "domcontentloaded",
   });
   expect(response?.status()).toBe(200);
-  await expect(page).toHaveURL(/\/outbound\/unavailable$/);
-  await expect(page.getByText("No destination · No redirect · No substitute offer")).toBeVisible();
-  await expect(page.locator('main a[href^="/casinos"], main a[href^="/bonuses"]')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/outbound\/unavailable\?link=not-a-real-managed-destination$/);
+  // An unknown slug names no casino: the page leads to published offers and home, never to a partner.
+  await expect(page.locator('[data-recovery-action="review"]')).toHaveCount(0);
+  await expect(page.locator('[data-recovery-action="best-offers"]')).toHaveAttribute("href", "/best-offers");
+  await expect(page.locator('[data-recovery-action="home"]')).toHaveAttribute("href", "/");
+  await expect(page.locator('main a[href^="/r/"], main a[href^="/outbound/"], main a[href^="/go/"], main a[href^="http"], main a[href^="/casinos"], main a[href^="/bonuses"]')).toHaveCount(0);
+
+  await page.goto(`${baseUrl}/outbound/unavailable?link=%3Cscript%3E`, { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { name: "This link isn't available right now." })).toBeVisible();
+  await expect(page.locator("main")).not.toContainText("<script>");
 });
 
 test("shared Action preserves hover and focus visual contracts", async ({ page }) => {

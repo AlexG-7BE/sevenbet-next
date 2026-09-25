@@ -77,7 +77,7 @@
     "xp:test": "node --import tsx --test tests/xp-engine.test.ts",
     "achievement:test": "node --import tsx --test tests/achievement-engine.test.ts",
     "responsible-gambling:test": "node --import tsx --test tests/responsible-gambling-safety.test.ts",
-    "public-ia:test": "node --import tsx --test tests/public-ia-hardening.test.ts tests/public-shell.test.ts tests/responsible-gambling-protected-help.test.ts tests/fe-gap-02-structural.test.ts tests/learning-center-parity.test.ts",
+    "public-ia:test": "node --import tsx --test tests/outbound-recovery.test.ts tests/public-ia-hardening.test.ts tests/public-shell.test.ts tests/responsible-gambling-protected-help.test.ts tests/fe-gap-02-structural.test.ts tests/learning-center-parity.test.ts",
     "public-ia:browser": "playwright test --config=playwright.ci.config.ts tests/public-ia-hardening-browser.spec.ts tests/fe-gap-01-browser.spec.ts tests/responsible-gambling-browser.spec.ts",
     "public-ia:browser:webkit": "playwright test --config=playwright.public-ia.config.ts --project=webkit tests/public-ia-hardening-browser.spec.ts tests/fe-gap-01-browser.spec.ts tests/responsible-gambling-browser.spec.ts",
     "home:test": "node --import tsx --test tests/home-parity.test.ts",
