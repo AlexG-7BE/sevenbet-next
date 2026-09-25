@@ -77,10 +77,12 @@ test("commercial actions use the direct governed route and neutral managed recov
   assert.match(outboundLegacy, /redirect\("\/outbound\/unavailable"\)/);
   assert.match(outboundLegacy, /redirect\(`\/r\/\$\{slug\}`\)/);
   assert.doesNotMatch(outboundLegacy, /affiliateRedirectService|CommercialHandoffConfirmation/);
-  assert.match(unavailable, /No destination · No redirect · No substitute offer/);
+  // Recovery offers the chosen casino's review, published offers or home; never an offer or a partner route.
+  assert.match(unavailable, /data-commercial-handoff="unavailable"/);
+  assert.doesNotMatch(unavailable, /CasinoOutboundAction|\/r\/|\/go\/|affiliateRedirectService|destinationUrl/);
   assert.doesNotMatch(unavailable, /CommercialHandoffConfirmation|You are leaving B4GAMBLE/);
-  assert.match(redirect, /recoveryUrl\.pathname = "\/outbound\/unavailable"/);
-  assert.match(redirect, /NextResponse\.redirect\(recoveryUrl, 303\)/);
+  assert.match(redirect, /NextResponse\.redirect\(outboundRecoveryUrl\(request\.nextUrl, slug\), 303\)/);
+  assert.match(read("lib/commercial-handoff/recovery.ts"), /OUTBOUND_RECOVERY_PATH = "\/outbound\/unavailable"/);
   for (const invariant of ["isAffiliateRedirectEnabled", "requestCountrySignalFromHeaders", "affiliateRedirectService.resolve", "safeAffiliateRedirectResponse", "recordOutboundAttributionBestEffort"]) assert.match(redirect, new RegExp(invariant.replace(".", "\\.")));
   assert.doesNotMatch(redirect, /destinationUrl|trackingUrl|\/casinos|\/bonuses|\/best-offers/);
   assert.match(legacy, /\/outbound\/unavailable/);
