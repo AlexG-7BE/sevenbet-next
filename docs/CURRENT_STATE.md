@@ -67,6 +67,54 @@ published under
 by the [runbook](06_Operations/EGO-SkillOnNet-Import-01-Runbook.md) executor:
 38 exact markets became ACTIVE + HEALTHY (GB 12, DK 9, SE 9, AT 8).
 
+## Mobile conversion audit — released 24–25 September 2026
+
+**DETECTED IN PR, MAIN, CI AND PRODUCTION EVIDENCE, 25 SEPTEMBER 2026:** the
+Founder-approved mobile conversion packages and the Programme/10 Steps/Learn
+proposals P1–P11 are merged to `main` with every required check green:
+
+| Item | PR | Merge commit | What changed |
+| --- | --- | --- | --- |
+| Package 1 | [#344](https://github.com/AlexG-7BE/sevenbet-next/pull/344) | `7a663362` | 16px partner CTA, review link as primary when no partner action, no dead boxes |
+| Mobile home | [#345](https://github.com/AlexG-7BE/sevenbet-next/pull/345) | `76a56374` | Three compact Programme chapter cards on phones; desktop home unchanged |
+| Package 2 | [#346](https://github.com/AlexG-7BE/sevenbet-next/pull/346) | `0f24f112` | Search and filters reveal results; header auto-hide on long decision pages |
+| Package 3 | [#347](https://github.com/AlexG-7BE/sevenbet-next/pull/347) | `0a4ddb45` | Casino #1 on the phone's first screen on Best Offers, Casinos and Bonuses |
+| P1, P3 | [#349](https://github.com/AlexG-7BE/sevenbet-next/pull/349) | `0a6aa468` | Optional explicit consent beside the two required access checks; registration without XP mechanics |
+| P2 | [#354](https://github.com/AlexG-7BE/sevenbet-next/pull/354) | `5d7b8550` | Quiet "Create an account first" route; no claim, Starting Point or XP |
+| P4, P5 | [#351](https://github.com/AlexG-7BE/sevenbet-next/pull/351) | `f65d8c86` | Phone Mission screen with first choices on screen and sticky confirm; research leads the dashboard after Mission 08 |
+| P6 | [#353](https://github.com/AlexG-7BE/sevenbet-next/pull/353) | `fd0d4982` | 10 Steps start bar, compact Mission list, benefit closing line |
+| P7 | [#358](https://github.com/AlexG-7BE/sevenbet-next/pull/358) | `efa23572` | Analytics choice in the site system, localised, opened from the footer |
+| P8, P9 | [#362](https://github.com/AlexG-7BE/sevenbet-next/pull/362) | `8793b742` | Learn Programme card after six guides, mid-guide Programme block, gated bonus-guide bridges |
+| P10 | [#363](https://github.com/AlexG-7BE/sevenbet-next/pull/363) | `acb6cabf` | About, FAQ and Methodology end with a next step |
+| P11 | [#364](https://github.com/AlexG-7BE/sevenbet-next/pull/364) | `8308c419` | Programme buttons in 16px sentence case |
+
+Decision records: `docs/07_Decisions/PROGRAMME-FAST-START-2026-09-25.md`,
+`PROGRAMME-MISSION-SCREEN-2026-09-25.md`, `TEN-STEPS-MOBILE-2026-09-25.md`,
+`LEARN-NEXT-STEPS-2026-09-25.md`, `TRUST-PAGES-NEXT-STEP-2026-09-25.md` and the
+package 1 addendum in `SAFE-OFFER-PRESENTATION-2026-09-08.md`. The GB PECR
+analytics record describes the footer control.
+
+**DETECTED IN PRODUCTION (phone viewport, read-only):** `/program` shows the
+two required checks plus the optional consent with "Enter Mission 01" on the
+first screen; `/10-steps` shows the 16px start action, the phone start bar
+after the hero and the new closing line; `/privacy` has no floating tab, a
+footer "Privacy choices" control and a 189px site-style choice; `/learn` has
+the inline Programme card; `/about`, `/faq` and `/methodology` end with the
+next-step block (Start Programme, then Best Offers); `/bonus-guide` links to
+Bonuses and Best Offers after the checklist. After #364 deployed, "Enter
+Mission 01" renders 16px without uppercase; its weight stayed 400 because
+`.canvas button { font: inherit }` outranks the action class.
+[#366](https://github.com/AlexG-7BE/sevenbet-next/pull/366) (merge `b766dbe2`)
+corrects it; Production then computed 16px, weight 700, no uppercase.
+
+**Unchanged:** reward amounts, XP rules, Mission order, server-owned progress,
+protected Help, SUPPORT_FIRST suppression, the commercial firewall, GEO and
+partner authority, and the desktop home.
+
+**OPEN (Founder decision):** whether the analytics choice should open by itself
+for visitors who have not chosen yet. It currently opens only from the footer
+control, as before the redesign.
+
 ## Navigation Performance Stage 2 — released and verified
 
 **DETECTED IN PR, MAIN, CI, VERCEL AND PRODUCTION EVIDENCE, 17 SEPTEMBER
