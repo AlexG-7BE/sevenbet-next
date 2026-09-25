@@ -116,6 +116,59 @@ choice automatically for visitors without a recorded choice, outside the
 Programme, Help, sign-in and staff routes. See
 [ANALYTICS-CHOICE-AUTO-OPEN-2026-09-25](07_Decisions/ANALYTICS-CHOICE-AUTO-OPEN-2026-09-25.md).
 
+## Remaining-pages mobile audit and instant commercial frame — released 25 September 2026
+
+**DETECTED IN PR, MAIN, CI AND PRODUCTION EVIDENCE, 25 SEPTEMBER 2026:** after
+a phone audit of the pages the 24 September audit did not cover, the Founder
+approved packages A–D. He then approved the cookie wording and the crawler rule
+recorded below. The commercial session handed over the instant commercial frame.
+Each item merged to `main` with every required check green:
+
+| Item | PR | Merge commit | What changed |
+| --- | --- | --- | --- |
+| A | [#374](https://github.com/AlexG-7BE/sevenbet-next/pull/374) | `60047a38` | A refused `/r/<slug>` click now leads to `/outbound/unavailable?link=<slug>`. The page offers "Back to the {casino} review", then Best Offers where offers may be presented, then home. It shows no offer and no partner route. |
+| B | [#376](https://github.com/AlexG-7BE/sevenbet-next/pull/376) | `8e242d71` | The cookie choice speaks of cookies ("Accept cookies" / "Reject cookies"; footer "Cookie settings"). It opens after the first scroll or 5 s and is 141px on a 390px phone. |
+| C | [#379](https://github.com/AlexG-7BE/sevenbet-next/pull/379) | `7c4e45eb` | An early compact offer bridge in bonus guides. Casino-safety and payments guides get bridges to Casinos and Best Offers. "Start here" shows one guide per topic with no repeats. The Bonus Guide's "Read next" lists real guides. Reading pages auto-hide the header. |
+| D | [#380](https://github.com/AlexG-7BE/sevenbet-next/pull/380) | `e80ef8f3` | The drawer leads with an acid Start Programme, with Log in at 16px. Catalogue cards drop unknown facts ("Not verified"). Counts say casinos or offers, not records. Term labels are 13px with contrast of at least 7.7:1. The drawer focus loop skips a closed `<details>`. |
+| Instant frame | [#384](https://github.com/AlexG-7BE/sevenbet-next/pull/384) | `b0d0c4f8` | `/casinos`, `/bonuses`, `/best-offers` and `/casino/[slug]` stream `PublicRouteLoadingFrame` at once. Search, AI and preview crawlers still get the complete page in the first response. A missing casino still answers 404. |
+
+Decision records:
+- [OUTBOUND-RECOVERY-2026-09-25](07_Decisions/OUTBOUND-RECOVERY-2026-09-25.md);
+- [LEARN-OFFER-BRIDGES-2026-09-25](07_Decisions/LEARN-OFFER-BRIDGES-2026-09-25.md);
+- [MOBILE-MENU-AND-CATALOGUE-WORDING-2026-09-25](07_Decisions/MOBILE-MENU-AND-CATALOGUE-WORDING-2026-09-25.md);
+- the amendment in [ANALYTICS-CHOICE-AUTO-OPEN-2026-09-25](07_Decisions/ANALYTICS-CHOICE-AUTO-OPEN-2026-09-25.md);
+- `docs/legal/GB-PECR-ANALYTICS-DECISION.md`, which describes the cookie wording and timing.
+
+**DETECTED IN PRODUCTION (iPhone 14 viewport, read-only):**
+- `/r/playuzu-casino` from an unrouted market answers 303 to `/outbound/unavailable?link=playuzu-casino`. The page shows "Back to the PlayUZU review" and "See offers available to you", and a `<script>` in `link` is never echoed.
+- On `/en` the cookie choice is absent on arrival. After a scroll it is 141px and reads "We use our own cookies to see how B4GAMBLE is used. Never your email, Programme answers or partner tokens."
+- In the guides:
+  - the wagering guide's early bridge sits at about 1.8 screens;
+  - `choosing-an-online-casino` and `payments-withdrawals` link to Casinos and Best Offers;
+  - `how-to-stop-gambling` has no bridge.
+- `/learn` lists 26 guides with no duplicates. The Bonus Guide's "Read next" shows the wagering, welcome-bonus and customer-funds guides.
+- The drawer shows Start Programme at y=328 (acid, 52px, 16px), then Log in (16px), then Help.
+- `/en/casinos`, `/en/bonuses` and `/en/best-offers` show no "Not verified". Their counts read "28 casinos" and "26 offers".
+
+**MEASURED AFTER #384 (Globalping HTTP, GB/SE/DK/DE, first byte):**
+
+| Page | First hit after deploy | Warm |
+| --- | --- | --- |
+| `/en/casinos` | 0.66–1.50 s | 0.24–0.32 s |
+| `/en/bonuses` | 0.22–0.40 s | 0.20–0.47 s |
+| `/en/best-offers` | 0.21–0.38 s | 0.18–0.31 s |
+| `/en/casino/playojo` | 0.50–1.29 s | 0.23–0.39 s |
+
+- The commercial session's measurement before #384 was 3–4.6 s cold and 0.2–0.7 s warm, with the same Globalping user agent.
+- That user agent is not a crawler, so it receives the frame.
+- The remaining cold cost is the function start itself.
+
+**Superseded above:**
+- The P1 row: since [#370](https://github.com/AlexG-7BE/sevenbet-next/pull/370) the access screen has three required checks and asks for consent once.
+- The "Privacy choices" control and the 189px choice on arrival: #376 changed both.
+
+**Open follow-up:** with no known market, the `/casinos` and `/best-offers` hero kickers still name "the global catalog".
+
 ## Navigation Performance Stage 2 — released and verified
 
 **DETECTED IN PR, MAIN, CI, VERCEL AND PRODUCTION EVIDENCE, 17 SEPTEMBER
