@@ -1,6 +1,7 @@
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { SupportedLocale } from "@/lib/market/registry";
 import {
+  availableToVisitorFirst,
   bonusMechanicsCompleteness,
   normalizeWithdrawalTime,
   offerWithdrawalBucket,
@@ -228,6 +229,13 @@ export function availableBonusViews(offers: readonly PublicOfferDTO[]) {
   return base;
 }
 
+function rankBonusView(offers: PublicOfferDTO[], view: BonusDirectoryView) {
+  if (view === "low_wagering") return [...offers].sort((a, b) => (a.bonus.wageringMultiplier ?? Infinity) - (b.bonus.wageringMultiplier ?? Infinity) || b.casino.editorScore - a.casino.editorScore || a.bonus.slug.localeCompare(b.bonus.slug));
+  if (view === "low_deposit") return [...offers].sort((a, b) => (a.bonus.minimumDeposit ?? Infinity) - (b.bonus.minimumDeposit ?? Infinity) || b.casino.editorScore - a.casino.editorScore || a.bonus.slug.localeCompare(b.bonus.slug));
+  if (view === "free_spins") return [...offers].sort((a, b) => (b.bonus.freeSpins ?? 0) - (a.bonus.freeSpins ?? 0) || b.casino.editorScore - a.casino.editorScore || a.bonus.slug.localeCompare(b.bonus.slug));
+  return rankOffersByEditorialAuthority(offers);
+}
+
 export function offersForBonusView(offers: readonly PublicOfferDTO[], view: BonusDirectoryView) {
   const filtered = offers.filter((offer) => {
     if (view === "all") return true;
@@ -238,10 +246,8 @@ export function offersForBonusView(offers: readonly PublicOfferDTO[], view: Bonu
     if (view === "cashback") return offer.bonus.type === "CASHBACK";
     return offer.bonus.type === "NO_DEPOSIT" || offer.bonus.minimumDeposit === 0;
   });
-  if (view === "low_wagering") return [...filtered].sort((a, b) => (a.bonus.wageringMultiplier ?? Infinity) - (b.bonus.wageringMultiplier ?? Infinity) || b.casino.editorScore - a.casino.editorScore || a.bonus.slug.localeCompare(b.bonus.slug));
-  if (view === "low_deposit") return [...filtered].sort((a, b) => (a.bonus.minimumDeposit ?? Infinity) - (b.bonus.minimumDeposit ?? Infinity) || b.casino.editorScore - a.casino.editorScore || a.bonus.slug.localeCompare(b.bonus.slug));
-  if (view === "free_spins") return [...filtered].sort((a, b) => (b.bonus.freeSpins ?? 0) - (a.bonus.freeSpins ?? 0) || b.casino.editorScore - a.casino.editorScore || a.bonus.slug.localeCompare(b.bonus.slug));
-  return rankOffersByEditorialAuthority(filtered);
+  // Each view keeps its own order, but only within "what this reader can take".
+  return availableToVisitorFirst(rankBonusView(filtered, view));
 }
 
 function casinoPayout(casino: PublicCasinoCardDto, copy: CommercialUxMessages) {
