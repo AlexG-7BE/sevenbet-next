@@ -115,7 +115,8 @@ test("client keeps private draft content in sessionStorage and never localStorag
   assert.match(frontend, /window\.sessionStorage/);
   assert.doesNotMatch(frontend, /localStorage/);
   assert.doesNotMatch(frontend, /@prisma\/client|\bprisma\./);
-  assert.match(frontendRuntime, /B4GAMBLE does not save the audio/);
+  // The audio-retention detail lives in the privacy notice the consent links to.
+  assert.match(frontendRuntime, /<Link href="\/privacy#ai">\{t\("Privacy details"\)\}<\/Link>/);
   assert.match(frontendRuntime, /Editable transcript/);
   assert.match(frontend, /new FormData\(\)/);
   assert.match(frontendRuntime, /90_000/);
@@ -136,10 +137,10 @@ test("account-not-linked recovery preserves the claim and requires authenticated
   assert.doesNotMatch(explicitLink, /clearProgrammeOAuthClaimMarker/);
 });
 
-test("combined intake includes JIT authority and does not introduce a separate legal phase", () => {
-  assert.match(frontendRuntime, /Before you share/);
+test("intake asks the explicit consent only when the journey has not given it, and adds no legal phase", () => {
   assert.match(frontendRuntime, /I explicitly consent to B4GAMBLE processing what I type or say/);
-  assert.match(frontendRuntime, /Withdrawal stops future processing/);
+  assert.match(frontendRuntime, /!recording && !consentGiven/);
+  assert.doesNotMatch(frontendRuntime, /Before you share\.|Withdrawal stops future processing/);
   assert.match(frontendRuntime, /What feels hardest to control right now/);
   assert.doesNotMatch(frontend, /type Phase[\s\S]*"legal"/);
 });
@@ -147,13 +148,14 @@ test("combined intake includes JIT authority and does not introduce a separate l
 test("Program AI reuses the signed access contract and exposes no anonymous clarification, editor or reward phase", () => {
   const sessionRoute = read("app/api/program/program-ai/session/route.ts");
   assert.match(sessionRoute, /verifyProgrammeAccessHeaders\(request\.headers/);
-  assert.match(frontendRuntime, /Two checks before you begin/);
+  // Founder decision, 25 Sep 2026: three required checks, including the explicit consent.
+  assert.match(frontendRuntime, /Three checks before you begin/);
   assert.match(frontendRuntime, /htmlFor="programme-legal-acknowledgement"/);
   assert.match(frontendRuntime, /<Link href="\/terms">\{t\("Read Terms"\)\}<\/Link>/);
   assert.match(frontendRuntime, /<Link href="\/privacy">\{t\("Read Privacy Notice"\)\}<\/Link>/);
   assert.doesNotMatch(frontendRuntime, /<label[^>]*><input checked=\{legal\}[\s\S]*?<\/label>/);
   assert.equal((frontendRuntime.match(/type="checkbox"/g) || []).length >= 3, true);
-  assert.doesNotMatch(frontendRuntime, /Three checks before you begin|I accept the current|I have read the current/);
+  assert.doesNotMatch(frontendRuntime, /Two checks before you begin|I accept the current|I have read the current/);
   assert.match(frontendRuntime, /onSubmit=\{\(\) => submitTurn\(true\)\}/);
   assert.match(frontend, /clarificationAnswers: \[\]/);
   assert.match(frontend, /prepareClaimForRegistration/);
