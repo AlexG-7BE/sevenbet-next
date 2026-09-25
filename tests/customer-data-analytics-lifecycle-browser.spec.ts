@@ -82,7 +82,7 @@ test("undecided visitors see the analytics choice after their first scroll or a 
   await context.addInitScript(() => window.sessionStorage.setItem("b4g_privacy_choice_under_automation", "1"));
   const page = await context.newPage();
   await page.goto(`${baseUrl}/privacy`, { waitUntil: "domcontentloaded" });
-  const choices = page.getByRole("dialog", { name: "Analytics privacy choices" });
+  const choices = page.getByRole("dialog", { name: "Cookie settings" });
   // Founder decision 25 Sep 2026 (B3): the first screen stays clear until the visitor scrolls.
   await page.waitForTimeout(1500);
   await expect(choices).toHaveCount(0);
@@ -95,7 +95,7 @@ test("undecided visitors see the analytics choice after their first scroll or a 
   await page.reload({ waitUntil: "domcontentloaded" });
   await page.evaluate(() => window.scrollTo(0, 400));
   await page.waitForTimeout(500);
-  await expect(page.getByRole("dialog", { name: "Analytics privacy choices" })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Cookie settings" })).toHaveCount(0);
   expect((await context.cookies()).find((cookie) => cookie.name === "b4g_analytics_consent")).toBeUndefined();
   await context.close();
 
@@ -104,7 +104,7 @@ test("undecided visitors see the analytics choice after their first scroll or a 
   await still.addInitScript(() => window.sessionStorage.setItem("b4g_privacy_choice_under_automation", "1"));
   const stillPage = await still.newPage();
   await stillPage.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
-  await expect(stillPage.getByRole("dialog", { name: "Analytics privacy choices" })).toBeVisible({ timeout: 10_000 });
+  await expect(stillPage.getByRole("dialog", { name: "Cookie settings" })).toBeVisible({ timeout: 10_000 });
   expect(await stillPage.evaluate(() => window.scrollY)).toBe(0);
   await still.close();
 
@@ -114,7 +114,7 @@ test("undecided visitors see the analytics choice after their first scroll or a 
   await programmePage.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
   await expect(programmePage.locator('[data-public-programme-renderer="program-ai"]')).toHaveCount(1);
   await programmePage.waitForTimeout(800);
-  await expect(programmePage.getByRole("dialog", { name: "Analytics privacy choices" })).toHaveCount(0);
+  await expect(programmePage.getByRole("dialog", { name: "Cookie settings" })).toHaveCount(0);
   await programme.close();
 });
 
@@ -131,26 +131,26 @@ test("affirmative analytics consent persists, emits a minimal event, and dedupli
   // Founder decision 25 Sep 2026: the choice lives in the footer, not a floating tab, and opens a compact site-style banner.
   await expect(page.locator("footer[data-public-shell='footer'] [data-privacy-choices-trigger]")).toHaveCount(1);
   await expect(page.locator("[data-privacy-choices-trigger]")).toHaveCount(1);
-  await page.getByRole("button", { name: "Privacy choices" }).click();
-  const choices = page.getByRole("dialog", { name: "Analytics privacy choices" });
+  await page.getByRole("button", { name: "Cookie settings", exact: true }).click();
+  const choices = page.getByRole("dialog", { name: "Cookie settings" });
   await expect(choices).toBeVisible();
   await expect(choices.getByRole("button", { name: "Not now" })).toBeFocused();
-  const [decline, allow, banner] = await Promise.all([choices.getByRole("button", { name: "Decline analytics" }).boundingBox(), choices.getByRole("button", { name: "Allow analytics" }).boundingBox(), choices.boundingBox()]);
+  const [decline, allow, banner] = await Promise.all([choices.getByRole("button", { name: "Reject cookies" }).boundingBox(), choices.getByRole("button", { name: "Accept cookies" }).boundingBox(), choices.boundingBox()]);
   expect(Math.round(decline!.width)).toBe(Math.round(allow!.width));
   expect(Math.round(decline!.height)).toBe(Math.round(allow!.height));
   // The open banner was 364px (55% of a phone screen) before the redesign.
   expect(banner!.height).toBeLessThanOrEqual(220);
   await page.keyboard.press("Escape");
   await expect(choices).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Privacy choices" })).toBeFocused();
-  await page.getByRole("button", { name: "Privacy choices" }).click();
-  await choices.getByRole("button", { name: "Decline analytics" }).click();
-  await expect(page.getByRole("button", { name: "Privacy choices" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cookie settings", exact: true })).toBeFocused();
+  await page.getByRole("button", { name: "Cookie settings", exact: true }).click();
+  await choices.getByRole("button", { name: "Reject cookies" }).click();
+  await expect(page.getByRole("button", { name: "Cookie settings", exact: true })).toBeVisible();
   expect(observedPayloads).toHaveLength(0);
 
-  await page.getByRole("button", { name: "Privacy choices" }).click();
+  await page.getByRole("button", { name: "Cookie settings", exact: true }).click();
   const ingestion = page.waitForResponse((candidate) => candidate.url().endsWith("/api/analytics/events"));
-  await page.getByRole("button", { name: "Allow analytics" }).click();
+  await page.getByRole("button", { name: "Accept cookies" }).click();
   expect((await ingestion).status()).toBe(202);
   await expect.poll(() => observedPayloads.length).toBe(1);
   const serialized = JSON.stringify(observedPayloads[0]);

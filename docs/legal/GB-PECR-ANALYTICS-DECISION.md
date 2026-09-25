@@ -31,7 +31,7 @@ Programme, Help, GEO, legal or commercial authority.
 
 - The Vercel Analytics package/root runtime is absent.
 - A first-party consent component explains the purpose and offers equally
-  accessible decline/allow controls plus a persistent Privacy choices control.
+  accessible reject/accept controls plus a persistent Cookie settings control.
   Since 25 September 2026 the control sits in the public footer of every
   public and Programme page, and the choice is localised in every supported
   market. It replaces the floating right-edge tab. The choice uses the public
@@ -92,7 +92,7 @@ Programme, Help, GEO, legal or commercial authority.
 
 The public choice states that analytics is first party and excludes email,
 Programme answers and partner tokens. Decline is available before collection.
-Privacy choices remains available after either decision. A denial clears
+Cookie settings remains available after either decision. A denial clears
 anonymous/session identifiers. If preference persistence is unavailable, the
 UI reports failure and no client event is accepted.
 

@@ -416,8 +416,12 @@ test("analytics choice is a compact site-style banner opened from the footer, lo
   assert.doesNotMatch(consentCss, /#101a23|Inter|border-radius: 1rem/);
 
   const english = analyticsConsentMessages("en-GB");
-  assert.equal(english.trigger, "Privacy choices");
-  assert.equal(english.dialogLabel, "Analytics privacy choices");
+  assert.equal(english.trigger, "Cookie settings");
+  assert.equal(english.dialogLabel, "Cookie settings");
+  // Founder decision 25 Sep 2026: people know "cookies", not "analytics".
+  assert.equal(english.allow, "Accept cookies");
+  assert.equal(english.decline, "Reject cookies");
+  assert.match(english.body, /our own cookies/);
   assert.match(english.detail, /email, Programme answers or partner tokens/);
   // The exclusion statement stays on screen at every width.
   assert.match(banner, /<span className="analyticsConsentDetail">\{text\.detail\}<\/span>/);
