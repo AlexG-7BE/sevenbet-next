@@ -241,8 +241,9 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     const record = publishedRecord();
     const casino = (await service(store([record], [managedSlug])).listCasinos(allowJurisdictionAuthority, "DE"))[0];
     assert.equal(casino?.action, null);
-    assert.equal(casino?.bonuses.length, 1);
-    assert.doesNotMatch(JSON.stringify(casino?.bonuses[0]), /affiliate|action/);
+    // The fixture's only offer is its British one; Germany requires a local licence, so it is not shown there.
+    assert.equal(casino?.bonuses.length, 0);
+    assert.equal(casino?.offerPresentation?.relation, "NONE");
   });
 
   await t.test("16. a managed legacy slug never appears during published retrieval failure", async () => {
@@ -282,8 +283,10 @@ test("listCasinos never expands visibility beyond published CMS records", async 
       const [casino] = await service(store([record])).listCasinos(null, country);
       assert.equal(casino?.slug, managedSlug);
       assert.equal(casino?.action, null);
-      assert.equal(casino?.bonuses.length, 1);
     }
+    // Ireland (grey zone) may show the international offer; Sweden requires the casino's Swedish offer.
+    assert.equal((await service(store([record])).listCasinos(null, "IE"))[0]?.offerPresentation?.relation, "ROW");
+    assert.equal((await service(store([record])).listCasinos(null, "SE"))[0]?.offerPresentation?.relation, "NONE");
   });
 
   await t.test("listBonuses does not reintroduce offers from a managed legacy profile", async () => {

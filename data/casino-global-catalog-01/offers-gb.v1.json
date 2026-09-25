@@ -5,7 +5,7 @@
   "countryCode": "GB",
   "commercialAuthority": false,
   "observedAt": "2026-09-24T00:00:00.000Z",
-  "note": "Great Britain welcome offers read from each operator's own promotions page on 24 September 2026 through a United Kingdom exit node, so the terms are the GB variant rather than the .com one. Every casino here already holds an ACTIVE and HEALTHY GB route. Where the operator does not state a minimum deposit on the offer page it is recorded as null rather than assumed from a sibling brand.",
+  "note": "Great Britain welcome offers read from each operator's own promotions page on 24 September 2026 through a United Kingdom exit node, so the terms are the GB variant rather than the .com one. Every casino here already holds an ACTIVE and HEALTHY GB route. Where the operator does not state a minimum deposit on the offer page it is recorded as null rather than assumed from a sibling brand. Corrected on 25 September 2026 from a United Kingdom exit: AHTI Games, Casino RedKings, SlotsMagic and TurboNino state no minimum on the offer page, and their shared GB Bonus Policy (128-UK-N, clause 18) sets £20 unless otherwise specified. On 25 September 2026 the six White Hat Gaming brands were added from a United Kingdom exit: all run the same points-based, wager-free spins offer (terms version of 19 January 2026).",
   "offers": [
     {
       "casinoSlug": "megawayscasino",
@@ -33,15 +33,15 @@
       "summary": "First deposit only. 100 free spins at 10x wagering on free-spin winnings.",
       "type": "FREE_SPINS",
       "freeSpins": 100,
-      "minimumDeposit": null,
+      "minimumDeposit": 20,
       "wageringMultiplier": 10,
       "wageringText": "10x free-spin winnings, slots only",
       "eligibility": "New players, first deposit only.",
       "importantConditions": [
         "Free spins are on Sahara Riches Cash Collect at £0.10 per spin.",
         "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings, or £5 — whichever is lower.",
-        "The operator does not state a minimum deposit on this offer page.",
-        "A bonus does not block withdrawing your own deposit balance."
+        "A bonus does not block withdrawing your own deposit balance.",
+        "Minimum deposit £20: the offer page names none, so the brand's GB Bonus Policy default applies (\"Unless otherwise specified, the minimum deposit to qualify for any deposit bonus is £20\")."
       ],
       "termsUrl": "https://www.redkings.com/promotions/welcome-offer/"
     },
@@ -96,15 +96,15 @@
       "percentage": 100,
       "maximumBonus": 25,
       "freeSpins": 50,
-      "minimumDeposit": null,
+      "minimumDeposit": 20,
       "wageringMultiplier": 10,
       "wageringText": "10x bonus and 10x free-spin winnings, slots only",
       "eligibility": "New players, first deposit only. Credited automatically; cancellation can be requested.",
       "importantConditions": [
         "Free spins are on Big Bass Bonanza at £0.10 per spin.",
         "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings and bonus, or £5 — whichever is lower.",
-        "The operator does not state a minimum deposit on the GB offer page; the .com site states €10.",
-        "Spins must be used before deposited funds."
+        "Spins must be used before deposited funds.",
+        "Minimum deposit £20: the offer page names none, so the brand's GB Bonus Policy default applies (\"Unless otherwise specified, the minimum deposit to qualify for any deposit bonus is £20\")."
       ],
       "termsUrl": "https://www.slotsmagic.com/promotions/welcome-offer/"
     },
@@ -115,7 +115,7 @@
       "summary": "First deposit only. 50 Super Spins at £0.50 each, 10x wagering on winnings.",
       "type": "FREE_SPINS",
       "freeSpins": 50,
-      "minimumDeposit": null,
+      "minimumDeposit": 20,
       "wageringMultiplier": 10,
       "wageringText": "10x free-spin winnings, slots only",
       "eligibility": "New players, first deposit only.",
@@ -123,7 +123,7 @@
         "Super Spins are on Book of Dead at £0.50 per spin — a higher spin value than the usual £0.10.",
         "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings, or £5 — whichever is lower.",
         "The page headline says 100 Super Spins while its own terms state a maximum of 50. The terms are recorded here.",
-        "The operator does not state a minimum deposit on this offer page."
+        "Minimum deposit £20: the offer page names none, so the brand's GB Bonus Policy default applies (\"Unless otherwise specified, the minimum deposit to qualify for any deposit bonus is £20\")."
       ],
       "termsUrl": "https://www.ahtigames.com/promotions/welcome/"
     },
@@ -134,7 +134,7 @@
       "summary": "First deposit only. 100 free spins, but at 60x wagering on the winnings.",
       "type": "FREE_SPINS",
       "freeSpins": 100,
-      "minimumDeposit": null,
+      "minimumDeposit": 20,
       "wageringMultiplier": 60,
       "wageringText": "60x free-spin winnings, slots only",
       "eligibility": "New players, first deposit only.",
@@ -142,9 +142,124 @@
         "Wagering is 60x the free-spin winnings — six times the 10x its sister brands ask, and the single most important term here.",
         "Free spins are on Thor the Trials of Asgard at £0.10 per spin.",
         "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings, or £5 — whichever is lower.",
-        "The home page banner states 10x while the offer page states 60x. The offer page is recorded here."
+        "Minimum deposit £20: the offer page names none, so the brand's GB Bonus Policy default applies (\"Unless otherwise specified, the minimum deposit to qualify for any deposit bonus is £20\").",
+        "The offer page states 60x, while the brand's own GB Bonus Policy (clauses 7 and 32) and the UK cap state 10x. The offer page is recorded here; check it before depositing."
       ],
       "termsUrl": "https://www.turbonino.com/promotions/welcome-offer/"
+    },
+    {
+      "casinoSlug": "21-prive",
+      "slug": "21-prive-gb-welcome",
+      "title": "Up to 526 wager-free spins over 14 days, unlocked by play",
+      "summary": "First deposit of £20 or more. Spins unlock as cash bets earn points; winnings are paid as cash with no wagering.",
+      "type": "FREE_SPINS",
+      "freeSpins": 526,
+      "minimumDeposit": 20,
+      "wageringMultiplier": 0,
+      "wageringText": "No wagering; spin winnings are paid as cash (up to £100 per batch)",
+      "eligibility": "New customers in Great Britain, 18+, first deposit of at least £20; the offer runs 14 days from registration.",
+      "importantConditions": [
+        "Spins are not given up front: cash bets earn points (2 per £10 on slots) and spins unlock at points thresholds.",
+        "All 526 spins need 2,000 points — about £10,000 of cash bets on slots within 14 days.",
+        "Each batch of spins expires 72 hours after it is credited; winnings are capped at £100 per batch.",
+        "One offer per player; affordability checks apply."
+      ],
+      "termsUrl": "https://www.21prive.com/welcome-offer"
+    },
+    {
+      "casinoSlug": "diamond7",
+      "slug": "diamond7-gb-welcome",
+      "title": "Up to 526 wager-free spins over 14 days, unlocked by play",
+      "summary": "First deposit of £20 or more. Spins unlock as cash bets earn points; winnings are paid as cash with no wagering.",
+      "type": "FREE_SPINS",
+      "freeSpins": 526,
+      "minimumDeposit": 20,
+      "wageringMultiplier": 0,
+      "wageringText": "No wagering; spin winnings are paid as cash (up to £100 per batch)",
+      "eligibility": "New customers in Great Britain, 18+, first deposit of at least £20; the offer runs 14 days from registration.",
+      "importantConditions": [
+        "Spins are not given up front: cash bets earn points (2 per £10 on slots) and spins unlock at points thresholds.",
+        "All 526 spins need 2,000 points — about £10,000 of cash bets on slots within 14 days.",
+        "Each batch of spins expires 72 hours after it is credited; winnings are capped at £100 per batch.",
+        "One offer per player; affordability checks apply."
+      ],
+      "termsUrl": "https://www.diamond7casino.com/welcome-offer"
+    },
+    {
+      "casinoSlug": "gday-casino",
+      "slug": "gday-casino-gb-welcome",
+      "title": "Up to 526 wager-free spins over 14 days, unlocked by play",
+      "summary": "First deposit of £20 or more. Spins unlock as cash bets earn points; winnings are paid as cash with no wagering.",
+      "type": "FREE_SPINS",
+      "freeSpins": 526,
+      "minimumDeposit": 20,
+      "wageringMultiplier": 0,
+      "wageringText": "No wagering; spin winnings are paid as cash (up to £100 per batch)",
+      "eligibility": "New customers in Great Britain, 18+, first deposit of at least £20; the offer runs 14 days from registration.",
+      "importantConditions": [
+        "Spins are not given up front: cash bets earn points (2 per £10 on slots) and spins unlock at points thresholds.",
+        "All 526 spins need 2,000 points — about £10,000 of cash bets on slots within 14 days.",
+        "Each batch of spins expires 72 hours after it is credited; winnings are capped at £100 per batch.",
+        "One offer per player; affordability checks apply."
+      ],
+      "termsUrl": "https://www.gdaycasino.com/#newgbterms"
+    },
+    {
+      "casinoSlug": "hello-casino",
+      "slug": "hello-casino-gb-welcome",
+      "title": "Up to 526 wager-free spins over 14 days, unlocked by play",
+      "summary": "First deposit of £20 or more. Spins unlock as cash bets earn points; winnings are paid as cash with no wagering.",
+      "type": "FREE_SPINS",
+      "freeSpins": 526,
+      "minimumDeposit": 20,
+      "wageringMultiplier": 0,
+      "wageringText": "No wagering; spin winnings are paid as cash (up to £100 per batch)",
+      "eligibility": "New customers in Great Britain, 18+, first deposit of at least £20; the offer runs 14 days from registration.",
+      "importantConditions": [
+        "Spins are not given up front: cash bets earn points (2 per £10 on slots) and spins unlock at points thresholds.",
+        "All 526 spins need 2,000 points — about £10,000 of cash bets on slots within 14 days.",
+        "Each batch of spins expires 72 hours after it is credited; winnings are capped at £100 per batch.",
+        "One offer per player; affordability checks apply."
+      ],
+      "termsUrl": "https://www.hellocasino.com/welcome-offer"
+    },
+    {
+      "casinoSlug": "skol-casino",
+      "slug": "skol-casino-gb-welcome",
+      "title": "Up to 526 wager-free spins over 14 days, unlocked by play",
+      "summary": "First deposit of £20 or more. Spins unlock as cash bets earn points; winnings are paid as cash with no wagering.",
+      "type": "FREE_SPINS",
+      "freeSpins": 526,
+      "minimumDeposit": 20,
+      "wageringMultiplier": 0,
+      "wageringText": "No wagering; spin winnings are paid as cash (up to £100 per batch)",
+      "eligibility": "New customers in Great Britain, 18+, first deposit of at least £20; the offer runs 14 days from registration.",
+      "importantConditions": [
+        "Spins are not given up front: cash bets earn points (2 per £10 on slots) and spins unlock at points thresholds.",
+        "All 526 spins need 2,000 points — about £10,000 of cash bets on slots within 14 days.",
+        "Each batch of spins expires 72 hours after it is credited; winnings are capped at £100 per batch.",
+        "One offer per player; affordability checks apply."
+      ],
+      "termsUrl": "https://www.skolcasino.com/welcome-offer"
+    },
+    {
+      "casinoSlug": "slotnite",
+      "slug": "slotnite-gb-welcome",
+      "title": "Up to 526 wager-free spins over 14 days, unlocked by play",
+      "summary": "First deposit of £20 or more. Spins unlock as cash bets earn points; winnings are paid as cash with no wagering.",
+      "type": "FREE_SPINS",
+      "freeSpins": 526,
+      "minimumDeposit": 20,
+      "wageringMultiplier": 0,
+      "wageringText": "No wagering; spin winnings are paid as cash (up to £100 per batch)",
+      "eligibility": "New customers in Great Britain, 18+, first deposit of at least £20; the offer runs 14 days from registration.",
+      "importantConditions": [
+        "Spins are not given up front: cash bets earn points (2 per £10 on slots) and spins unlock at points thresholds.",
+        "All 526 spins need 2,000 points — about £10,000 of cash bets on slots within 14 days.",
+        "Each batch of spins expires 72 hours after it is credited; winnings are capped at £100 per batch.",
+        "One offer per player; affordability checks apply."
+      ],
+      "termsUrl": "https://www.slotnite.com/welcome-offer"
     }
   ]
 }

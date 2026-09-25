@@ -198,7 +198,7 @@ test("consent, ingestion, unsubscribe, webhook, and cron public mutations fail c
   const layout = source("app/layout.tsx");
   assert.match(layout, /isProductAnalyticsEnabled/);
   assert.match(layout, /analyticsEnabled \? <AnalyticsPageView \/> : null/);
-  assert.match(layout, /analyticsEnabled \? <AnalyticsConsentBanner \/> : null/);
+  assert.match(layout, /analyticsEnabled \? <AnalyticsConsentBanner locale=\{presentation\.locale\} \/> : null/);
 
   const consent = source("app/api/consent/analytics/route.ts");
   assert.match(consent, /isSameOriginMutation\(request\)/);
@@ -364,4 +364,41 @@ test("configuration and schedules are explicit and environment-isolated", () => 
   assert.match(source("lib/analytics/product-analytics.ts"), /NEXT_PUBLIC_ANALYTICS_ENABLED === "true"/);
   const schedules = JSON.parse(source("vercel.json")) as { crons?: Array<{ path: string; schedule: string }> };
   assert.equal(schedules.crons?.some((cron) => cron.path === "/api/internal/cron/customer-lifecycle" && Boolean(cron.schedule)), true);
+});
+
+test("analytics choice is a compact site-style banner opened from the footer, localised for every market", async () => {
+  const { analyticsConsentMessages } = await import("../lib/i18n/analytics-consent-catalog");
+  const banner = source("components/analytics/AnalyticsConsentBanner.tsx");
+  const footer = source("components/public-shell/PublicFooter.tsx");
+  const layout = source("app/layout.tsx");
+  const css = source("app/globals.css");
+  const consentCss = css.slice(css.indexOf(".analyticsConsent {"), css.indexOf("* { box-sizing: border-box; }"));
+
+  // No floating edge tab: the choice opens from the footer and only while analytics is enabled.
+  assert.doesNotMatch(banner + css, /privacyChoiceTrigger/);
+  assert.match(banner, /if \(!editing\) return null;/);
+  assert.match(footer, /isProductAnalyticsEnabled\(\) \? <PrivacyChoicesButton className=\{styles\.footerChoice\} label=\{analyticsConsentMessages\(presentation\.locale\)\.trigger\} \/> : null/);
+  assert.match(layout, /<AnalyticsConsentBanner locale=\{presentation\.locale\} \/>/);
+  // Decline is as easy as Allow; "Not now" is the close control.
+  assert.match(banner, /className="analyticsConsentDecline"[\s\S]*className="analyticsConsentAllow"/);
+  assert.match(banner, /className="analyticsConsentClose" aria-label=\{text\.notNow\}/);
+  assert.match(consentCss, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  // Public site system rather than the admin palette.
+  assert.match(consentCss, /background: var\(--sb-night\)/);
+  assert.match(consentCss, /border-radius: var\(--sb-radius-button\)/);
+  assert.doesNotMatch(consentCss, /#101a23|Inter|border-radius: 1rem/);
+
+  const english = analyticsConsentMessages("en-GB");
+  assert.equal(english.trigger, "Privacy choices");
+  assert.equal(english.dialogLabel, "Analytics privacy choices");
+  assert.match(english.detail, /email, Programme answers or partner tracking tokens/);
+  // The exclusion statement stays on screen at every width.
+  assert.match(banner, /<span className="analyticsConsentDetail">\{text\.detail\}<\/span>/);
+  assert.doesNotMatch(consentCss, /analyticsConsentDetail[^{]*\{[^}]*display: none/);
+  for (const locale of ["en-GB", "de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO", "en-CA", "fr-CA"] as const) {
+    const messages = analyticsConsentMessages(locale);
+    for (const [key, value] of Object.entries(messages)) assert.ok(value.trim(), `${locale} ${key}`);
+    assert.notEqual(messages.allow, messages.decline, locale);
+    if (!locale.startsWith("en-")) assert.notEqual(messages.trigger, english.trigger, `${locale} trigger is localised`);
+  }
 });

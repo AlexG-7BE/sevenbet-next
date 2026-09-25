@@ -84,17 +84,20 @@
   gap: 12px;
   background: var(--programme-acid);
   color: var(--programme-ink) !important;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: .12em;
+  /* Programme actions read in sentence case at 16px (Founder, 25 Sep 2026). */
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
   line-height: 1.2;
   text-align: center;
   text-decoration: none;
-  text-transform: uppercase;
   white-space: nowrap;
   cursor: pointer;
   transition: background 200ms cubic-bezier(.2, .8, .2, 1), opacity 200ms ease;
 }
+
+/* `.canvas button { font: inherit }` outranks a single class, so the action type is restated at canvas scope. */
+.canvas .primaryAction, .canvas .secondaryAction, .canvas .lightAction { font-size: 16px; font-weight: 700; }
 
 .primaryAction:hover { background: var(--programme-paper); }
 .primaryAction:disabled, .secondaryAction:disabled, .lightAction:disabled, .microphoneAction:disabled { opacity: .45; cursor: not-allowed; }

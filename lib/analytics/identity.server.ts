@@ -154,7 +154,7 @@ export function analyticsTrafficKind(headers: Headers, environment = analyticsEn
     return "INTERNAL" as const;
   }
   const userAgent = headers.get("user-agent") ?? "";
-  return /bot|crawler|spider|headless|playwright|lighthouse|monitor/i.test(userAgent)
+  return /bot|crawler|spider|headless|playwright|lighthouse|monitor|globalping/i.test(userAgent)
     ? "BOT" as const
     : "HUMAN" as const;
 }

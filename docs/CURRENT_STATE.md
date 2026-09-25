@@ -12,7 +12,7 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Licence-based market access — code in main; activation release pending
+## Licence-based market access — live; activation release and GB decision pending
 
 **Founder instruction, 24 September 2026:** market decisions follow each
 operator's own licence. [RFC-054](06_RFC/RFC-054-Licence-Market-Access.md)
@@ -20,20 +20,34 @@ adds one casino × market register (`lib/market-access/`) that closes a market
 for a casino when the operator blocks it, the law prohibits it, the casino has
 no local licence, the grey zone is closed, or — in Germany — outside
 21:00–06:00 Europe/Berlin. The same check gates offers, the partner button and
-`/r/`. Launch counts for Monday 28 September: GB 19, SE 15, DK 10, DE 2.
+`/r/`; where a local licence is required only the market's own offer is shown,
+and German visitors see no jackpot, live or table-game category. Merged
+25 September 2026 (#350, #360) with the release tooling (#352), the launch
+click check and its twice-daily workflow (#355), the EGO campaign sub-ID
+(#356), German copy (#357) and offer terms (#359).
 
-The register already stops the button, redirect and offers in closed markets.
-Disabling the stale activations and enabling the licensed markets that have a
-verified route is a separate data release that needs the Founder's
-confirmation.
+**DETECTED from real exits in Production, 25 September 2026 (before the
+activation release):** no click in a closed market reached a partner (66
+refused); SE 11 and DK 8 clicks reached partners; GB 0 of 19 and DE 0 of 2.
+
+- **GB:** no GB referral has ever been possible: the RFC-014/015 evidence
+  chain needs a UKGC domain-evidence record and its store is empty by design.
+  PR #365 (draft) makes the licence register GB's operator evidence and waits
+  for the Founder's decision.
+- **Activations:** `npm run market-access:release` (runbook
+  [MARKET-ACCESS-RELEASE-01](06_Operations/Market-Access-Release-01-Runbook.md))
+  disables 25 activations in closed markets and opens 11 licensed ones; it
+  needs the Founder's confirmation to run against Production.
+- **Offers:** the corpora for the launch markets' own offers land through the
+  existing Founder-run offer import.
 
 ## Casino inventory and data sources
 
-**DETECTED, 21 SEPTEMBER 2026 (copy of the Production database):** the
-database holds 16 casinos: 15 `PUBLISHED` (21 Privé, Betsafe, Betsson,
-Diamond7, DragonBet, G'day Casino, GoldenPlay, Hello Casino, Inkabet,
-NordicBet, Rizk, Skol Casino, Slotnite, StarCasino, SuperCasino) and one
-`ARCHIVED` (Boostwin, admin-created, never published). This matches the public
+**DETECTED, 24 SEPTEMBER 2026 (copy of the Production database):**
+the database holds 29 casinos: 28 `PUBLISHED` — the 13 EGO (SkillOnNet)
+brands, the six White Hat Gaming brands, the seven Betsson Group brands,
+GoldenPlay and DragonBet — and one `ARCHIVED` (Boostwin, admin-created, never
+published). This matches the public
 `/casinos` directory. Older checkpoints below that cite 14 real operators
 predate the GoldenPlay publication.
 
@@ -47,13 +61,59 @@ database by default (`PUBLIC_CASINO_CMS_ENABLED` only opts out with `false`,
 which then yields no casinos). The 220-record `data/casinos.json` placeholder
 catalogue and its service fallback were removed on 21 September 2026.
 
-**EGO (SkillOnNet), 22 September 2026:** 13 casinos and a Founder-run
-executor were added under
-[FOUNDER-EGO-2026-09-22](07_Decisions/FOUNDER-EGO-SKILLONNET-2026-09-22.md).
-They are registered as `DRAFT` in `data/casino-registry.json` and are not in the
-database until the [runbook](06_Operations/EGO-SkillOnNet-Import-01-Runbook.md)
-runs. Step 1 can activate AT, DK, SE and ES (29 markets); CA provinces, GB, DE
-and GR need the step 2 legal-authority change.
+**EGO (SkillOnNet), 22 September 2026:** 13 casinos were imported and
+published under
+[FOUNDER-EGO-2026-09-22](07_Decisions/FOUNDER-EGO-SKILLONNET-2026-09-22.md)
+by the [runbook](06_Operations/EGO-SkillOnNet-Import-01-Runbook.md) executor:
+38 exact markets became ACTIVE + HEALTHY (GB 12, DK 9, SE 9, AT 8).
+
+## Mobile conversion audit — released 24–25 September 2026
+
+**DETECTED IN PR, MAIN, CI AND PRODUCTION EVIDENCE, 25 SEPTEMBER 2026:** the
+Founder-approved mobile conversion packages and the Programme/10 Steps/Learn
+proposals P1–P11 are merged to `main` with every required check green:
+
+| Item | PR | Merge commit | What changed |
+| --- | --- | --- | --- |
+| Package 1 | [#344](https://github.com/AlexG-7BE/sevenbet-next/pull/344) | `7a663362` | 16px partner CTA, review link as primary when no partner action, no dead boxes |
+| Mobile home | [#345](https://github.com/AlexG-7BE/sevenbet-next/pull/345) | `76a56374` | Three compact Programme chapter cards on phones; desktop home unchanged |
+| Package 2 | [#346](https://github.com/AlexG-7BE/sevenbet-next/pull/346) | `0f24f112` | Search and filters reveal results; header auto-hide on long decision pages |
+| Package 3 | [#347](https://github.com/AlexG-7BE/sevenbet-next/pull/347) | `0a4ddb45` | Casino #1 on the phone's first screen on Best Offers, Casinos and Bonuses |
+| P1, P3 | [#349](https://github.com/AlexG-7BE/sevenbet-next/pull/349) | `0a6aa468` | Optional explicit consent beside the two required access checks; registration without XP mechanics |
+| P2 | [#354](https://github.com/AlexG-7BE/sevenbet-next/pull/354) | `5d7b8550` | Quiet "Create an account first" route; no claim, Starting Point or XP |
+| P4, P5 | [#351](https://github.com/AlexG-7BE/sevenbet-next/pull/351) | `f65d8c86` | Phone Mission screen with first choices on screen and sticky confirm; research leads the dashboard after Mission 08 |
+| P6 | [#353](https://github.com/AlexG-7BE/sevenbet-next/pull/353) | `fd0d4982` | 10 Steps start bar, compact Mission list, benefit closing line |
+| P7 | [#358](https://github.com/AlexG-7BE/sevenbet-next/pull/358) | `efa23572` | Analytics choice in the site system, localised, opened from the footer |
+| P8, P9 | [#362](https://github.com/AlexG-7BE/sevenbet-next/pull/362) | `8793b742` | Learn Programme card after six guides, mid-guide Programme block, gated bonus-guide bridges |
+| P10 | [#363](https://github.com/AlexG-7BE/sevenbet-next/pull/363) | `acb6cabf` | About, FAQ and Methodology end with a next step |
+| P11 | [#364](https://github.com/AlexG-7BE/sevenbet-next/pull/364) | `8308c419` | Programme buttons in 16px sentence case |
+
+Decision records: `docs/07_Decisions/PROGRAMME-FAST-START-2026-09-25.md`,
+`PROGRAMME-MISSION-SCREEN-2026-09-25.md`, `TEN-STEPS-MOBILE-2026-09-25.md`,
+`LEARN-NEXT-STEPS-2026-09-25.md`, `TRUST-PAGES-NEXT-STEP-2026-09-25.md` and the
+package 1 addendum in `SAFE-OFFER-PRESENTATION-2026-09-08.md`. The GB PECR
+analytics record describes the footer control.
+
+**DETECTED IN PRODUCTION (phone viewport, read-only):** `/program` shows the
+two required checks plus the optional consent with "Enter Mission 01" on the
+first screen; `/10-steps` shows the 16px start action, the phone start bar
+after the hero and the new closing line; `/privacy` has no floating tab, a
+footer "Privacy choices" control and a 189px site-style choice; `/learn` has
+the inline Programme card; `/about`, `/faq` and `/methodology` end with the
+next-step block (Start Programme, then Best Offers); `/bonus-guide` links to
+Bonuses and Best Offers after the checklist. After #364 deployed, "Enter
+Mission 01" renders 16px without uppercase; its weight stayed 400 because
+`.canvas button { font: inherit }` outranks the action class.
+[#366](https://github.com/AlexG-7BE/sevenbet-next/pull/366) (merge `b766dbe2`)
+corrects it; Production then computed 16px, weight 700, no uppercase.
+
+**Unchanged:** reward amounts, XP rules, Mission order, server-owned progress,
+protected Help, SUPPORT_FIRST suppression, the commercial firewall, GEO and
+partner authority, and the desktop home.
+
+**OPEN (Founder decision):** whether the analytics choice should open by itself
+for visitors who have not chosen yet. It currently opens only from the footer
+control, as before the redesign.
 
 ## Navigation Performance Stage 2 — released and verified
 

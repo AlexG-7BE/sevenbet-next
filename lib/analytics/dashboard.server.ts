@@ -122,7 +122,7 @@ export async function commercialDashboard(range: AnalyticsRange) {
     }),
     prisma.outboundClick.findMany({
       where: { environment: "PRODUCTION", trafficKind: "HUMAN", attemptedAt: occurredAt },
-      select: { state: true, casinoId: true, countryCode: true, sourcePage: true, acquisitionSource: true },
+      select: { state: true, blockedReason: true, casinoId: true, countryCode: true, sourcePage: true, acquisitionSource: true },
     }),
   ]);
   const count = (type: AnalyticsEventType) => events.filter((event) => event.type === type).length;
@@ -148,6 +148,8 @@ export async function commercialDashboard(range: AnalyticsRange) {
     byGeo: countBy(outbound.map((item) => item.countryCode)).slice(0, 12),
     bySourcePage: countBy(outbound.map((item) => item.sourcePage)).slice(0, 12),
     byAcquisition: countBy(outbound.map((item) => item.acquisitionSource)).slice(0, 12),
+    // Per market: how many clicks reached a partner, and why the others were refused.
+    byMarketOutcome: countBy(outbound.map((item) => `${item.countryCode ?? "Unknown"} · ${item.state === "SUCCEEDED" ? "to partner" : item.blockedReason ?? "refused"}`)).slice(0, 24),
   };
 }
 

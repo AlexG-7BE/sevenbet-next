@@ -19,7 +19,7 @@ import {
   type PublicCommercialActionAuthority,
 } from "@/lib/commercial/public-commercial-action-resolver";
 import type { PublicCasinoInventoryMode } from "@/lib/public-casino-discovery/public-casino-discovery.types";
-import { withholdClosedMarketOffers } from "@/lib/market-access/access";
+import { presentInMarket } from "@/lib/market-access/access";
 
 type ComparablePublicCasinoDTO = PublicCasinoDTO;
 type ActionedCasino = {
@@ -227,7 +227,7 @@ export class PublicComparisonService {
     });
     const all: ActionedCasino[] = globalCasinos.map((globalCasino) => ({
       casino: {
-        ...withholdClosedMarketOffers(projectPublicCasinoMarket(globalCasino, query.country), commercialMarketCode || query.country, now),
+        ...presentInMarket(projectPublicCasinoMarket(globalCasino, query.country), commercialMarketCode || query.country, now),
         action: actionDecisions.get(globalCasino.id)?.action ?? null,
       },
     }));

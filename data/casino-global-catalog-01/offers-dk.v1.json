@@ -5,7 +5,7 @@
   "countryCode": "DK",
   "commercialAuthority": false,
   "observedAt": "2026-09-24T00:00:00.000Z",
-  "note": "Denmark welcome offers read from each operator's own Danish campaign terms on 24 September 2026 through a Copenhagen exit node. All three brands publish the same terms, which is what the operator serves rather than an assumption on our side. Casino RedKings is excluded: its own site states the brand is not available in Denmark and redirects Danish visitors to SlotsMagic.",
+  "note": "Denmark welcome offers read from each operator's own Danish campaign terms on 24 September 2026 through a Copenhagen exit node. All three brands publish the same terms, which is what the operator serves rather than an assumption on our side. Casino RedKings is excluded: its own site states the brand is not available in Denmark and redirects Danish visitors to SlotsMagic. Extended on 25 September 2026 from a Danish exit with BacanaPlay, DrückGlück, EUcasino, MegawaysCasino, PlayOJO, Betsson and NordicBet; NordicBet's terms state no minimum deposit, so it is null.",
   "offers": [
     {
       "casinoSlug": "turbonino",
@@ -66,6 +66,143 @@
         "Kun spilleautomater bidrager, og gevinster fra spil over maksimal indsats fjernes."
       ],
       "termsUrl": "https://www.slotsmagic.com/bonus-policy/"
+    },
+    {
+      "casinoSlug": "bacanaplay",
+      "slug": "bacanaplay-dk-welcome",
+      "title": "100% op til 200 kr",
+      "summary": "Kun første indbetaling. 100% bonus op til 200 kr med 10x gennemspilskrav.",
+      "type": "WELCOME",
+      "percentage": 100,
+      "maximumBonus": 200,
+      "minimumDeposit": 100,
+      "wageringMultiplier": 10,
+      "wageringText": "10x indbetaling plus bonus, kun spilleautomater",
+      "eligibility": "Nye spillere, kun første indbetaling.",
+      "importantConditions": [
+        "Gennemspilskravet regnes af indbetaling plus bonus: indbetal 100 kr, få 100 kr bonus, gennemspil 2.000 kr.",
+        "Maksimal indsats under gennemspil er 50 kr.",
+        "Bonuskøb tæller som en indsats.",
+        "Kun spilleautomater bidrager, og gevinster fra spil over maksimal indsats fjernes."
+      ],
+      "termsUrl": "https://www.bacanaplay.com/dk/kampagner/velkomst/"
+    },
+    {
+      "casinoSlug": "drueckglueck",
+      "slug": "drueckglueck-dk-welcome",
+      "title": "100% op til 200 kr",
+      "summary": "Kun første indbetaling. 100% bonus op til 200 kr med 10x gennemspilskrav.",
+      "type": "WELCOME",
+      "percentage": 100,
+      "maximumBonus": 200,
+      "minimumDeposit": 100,
+      "wageringMultiplier": 10,
+      "wageringText": "10x indbetaling plus bonus, kun spilleautomater",
+      "eligibility": "Nye spillere, kun første indbetaling.",
+      "importantConditions": [
+        "Gennemspilskravet regnes af indbetaling plus bonus: indbetal 100 kr, få 100 kr bonus, gennemspil 2.000 kr.",
+        "Maksimal indsats under gennemspil er 50 kr.",
+        "Bonuskøb tæller som en indsats.",
+        "Kun spilleautomater bidrager, og gevinster fra spil over maksimal indsats fjernes."
+      ],
+      "termsUrl": "https://www.drueckglueck.com/dk/kampagner/drueckglueck-velkommen/"
+    },
+    {
+      "casinoSlug": "eucasino",
+      "slug": "eucasino-dk-welcome",
+      "title": "100% op til 200 kr",
+      "summary": "Kun første indbetaling. 100% bonus op til 200 kr med 10x gennemspilskrav.",
+      "type": "WELCOME",
+      "percentage": 100,
+      "maximumBonus": 200,
+      "minimumDeposit": 100,
+      "wageringMultiplier": 10,
+      "wageringText": "10x indbetaling plus bonus, kun spilleautomater",
+      "eligibility": "Nye spillere, kun første indbetaling.",
+      "importantConditions": [
+        "Gennemspilskravet regnes af indbetaling plus bonus: indbetal 100 kr, få 100 kr bonus, gennemspil 2.000 kr.",
+        "Maksimal indsats under gennemspil er 50 kr.",
+        "Bonuskøb tæller som en indsats.",
+        "Kun spilleautomater bidrager, og gevinster fra spil over maksimal indsats fjernes."
+      ],
+      "termsUrl": "https://www.eucasino.com/dk/promotions/welcome-offer/"
+    },
+    {
+      "casinoSlug": "megawayscasino",
+      "slug": "megawayscasino-dk-welcome",
+      "title": "100% op til 200 kr",
+      "summary": "Kun første indbetaling. 100% bonus op til 200 kr med 10x gennemspilskrav.",
+      "type": "WELCOME",
+      "percentage": 100,
+      "maximumBonus": 200,
+      "minimumDeposit": 100,
+      "wageringMultiplier": 10,
+      "wageringText": "10x indbetaling plus bonus, kun spilleautomater",
+      "eligibility": "Nye spillere, kun første indbetaling.",
+      "importantConditions": [
+        "Gennemspilskravet regnes af indbetaling plus bonus: indbetal 100 kr, få 100 kr bonus, gennemspil 2.000 kr.",
+        "Maksimal indsats under gennemspil er 50 kr.",
+        "Bonuskøb tæller som en indsats.",
+        "Kampagnesiden siger, at spilleautomater tæller 100% og andre spil 10%; forsiden siger, at kun spilleautomater tæller."
+      ],
+      "termsUrl": "https://www.megawayscasino.com/dk/promotions/"
+    },
+    {
+      "casinoSlug": "playojo",
+      "slug": "playojo-dk-welcome",
+      "title": "50 spins på Book of Dead uden gennemspilskrav",
+      "summary": "Kun første indbetaling. 50 spins à 2 kr; gevinster udbetales kontant uden gennemspilskrav.",
+      "type": "FREE_SPINS",
+      "freeSpins": 50,
+      "minimumDeposit": 100,
+      "wageringMultiplier": 0,
+      "wageringText": "Intet gennemspilskrav; gevinster udbetales kontant",
+      "eligibility": "Nye spillere, kun første indbetaling.",
+      "importantConditions": [
+        "Spinværdi 2 kr (i alt 100 kr).",
+        "Højst 50 spins.",
+        "Uregelmæssigt spil kan føre til, at belønninger fjernes."
+      ],
+      "termsUrl": "https://www.playojo.dk/indspark/"
+    },
+    {
+      "casinoSlug": "betsson",
+      "slug": "betsson-dk-welcome",
+      "title": "100% op til 500 kr casinobonus",
+      "summary": "Første indbetaling. 100% op til 500 kr med 10x gennemspil af indbetaling og bonus inden 60 dage.",
+      "type": "WELCOME",
+      "percentage": 100,
+      "maximumBonus": 500,
+      "minimumDeposit": 100,
+      "wageringMultiplier": 10,
+      "wageringText": "10x indbetaling og 10x bonus på spillemaskiner inden 60 dage",
+      "eligibility": "Nye spillere, første indbetaling inden 60 dage efter registrering, 21+.",
+      "importantConditions": [
+        "Bonussen skal aktiveres under 'Bonusser' efter indbetaling.",
+        "Kun spillemaskiner; en liste over udelukkede spil gælder.",
+        "Kun én velkomstbonus pr. spiller."
+      ],
+      "termsUrl": "https://tilbud.betsson.dk/da/casino-velkomst-bonus"
+    },
+    {
+      "casinoSlug": "nordicbet",
+      "slug": "nordicbet-dk-welcome",
+      "title": "100% op til 300 kr casinobonus",
+      "summary": "Første indbetaling. 100% op til 300 kr med 10x gennemspil af indbetaling og bonus inden 60 dage.",
+      "type": "WELCOME",
+      "percentage": 100,
+      "maximumBonus": 300,
+      "minimumDeposit": null,
+      "wageringMultiplier": 10,
+      "wageringText": "10x indbetaling og 10x bonus i Casino eller Live Casino inden 60 dage",
+      "eligibility": "Nye spillere, første indbetaling inden for 60 dage efter registrering, 21+.",
+      "importantConditions": [
+        "Bonussen skal aktiveres i 'Mine bonusser'.",
+        "En liste over udelukkede spil gælder.",
+        "Én bonus pr. person, husstand eller IP.",
+        "Tilbudsbetingelserne angiver ingen minimumsindbetaling."
+      ],
+      "termsUrl": "https://tilbud.nordicbet.dk/velkomst-casino-bonus"
     }
   ]
 }

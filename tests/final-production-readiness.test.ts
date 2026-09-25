@@ -53,8 +53,8 @@ test("10 Steps runtime exposes the registry-owned Mission path as an accessible 
   assert.match(runtime, /role="list" aria-labelledby="ten-steps-path-title" data-ten-steps-mission-list/);
   assert.equal((runtime.match(/role="listitem" data-ten-steps-mission/g) ?? []).length, programmeMissionTitles.length);
   for (const title of programmeMissionTitles) assert.ok(runtime.includes(`>${title}</div>`), title);
-  assert.match(runtime, /40 XP/);
-  assert.doesNotMatch(runtime, /Mission 01 takes about<br>/);
+  assert.match(runtime, /No account needed to begin\./);
+  assert.doesNotMatch(runtime, /40 XP|Mission 01 takes about<br>/);
 });
 
 test("Bonus Guide keeps fictional examples separate from current GB primary sources", () => {

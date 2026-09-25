@@ -56,6 +56,18 @@ and the offer can never disagree:
 The check runs per request, after the 60-second editorial cache, so the German
 window opens and closes on time. It is a map lookup with no database access.
 
+Two presentation rules follow from the same register (`presentInMarket`):
+
+- **The offer must belong to the market.** Where a local licence is required,
+  only the casino's offer published for that market (`EXACT`) is shown. An
+  offer from another market (`OTHER_MARKET`) or the international one (`ROW`)
+  carries another licence's terms, so it is withheld. Grey-zone and unruled
+  markets keep RFC-039's cross-market presentation.
+- **Forbidden game categories are hidden.** A market rule may list game
+  categories that visitors from it must not see. Germany hides jackpots, table
+  games, live casino, poker, roulette, blackjack and baccarat (only virtual slot
+  games are licensed there; EGO's German rules forbid the rest).
+
 ## 3. Register
 
 - `lib/market-access/register.ts` — market rules and the casino × market

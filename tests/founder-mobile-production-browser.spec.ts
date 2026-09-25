@@ -346,3 +346,32 @@ test("390px touch journeys preserve commercial, learning and canonical Programme
   await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
   await context.close();
 });
+
+test("10 Steps phone start bar appears after the hero action and leaves before the final action", async ({ browser }) => {
+  for (const viewport of [{ width: 390, height: 844 }, { width: 360, height: 640 }]) {
+    const context = await browser.newContext({ viewport, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/10-steps`, { waitUntil: "networkidle" });
+    const bar = page.locator("[data-ten-steps-sticky-start]");
+    const heroAction = page.locator("[data-ten-steps-hero-action]");
+    await expect(heroAction).toBeVisible();
+    expect(await heroAction.evaluate((element) => [getComputedStyle(element).fontSize, getComputedStyle(element).textTransform])).toEqual(["16px", "none"]);
+    await expect(bar).toHaveAttribute("data-mobile-visible", "false");
+    await expect(bar).toBeHidden();
+
+    await page.locator("[data-ten-steps-mission-list]").scrollIntoViewIfNeeded();
+    await expect(bar).toHaveAttribute("data-mobile-visible", "true");
+    await expect(bar.getByRole("link", { name: "Start Mission 01" })).toHaveAttribute("href", "/program?entry=start");
+    await expect.poll(async () => { const box = await bar.boundingBox(); return box!.y + box!.height <= viewport.height + 1; }, { message: `start bar rests on screen at ${viewport.width}px` }).toBe(true);
+
+    await page.locator('[data-ten-steps-section="final-action"]').evaluate((element) => element.scrollIntoView({ block: "center" }));
+    await expect(bar).toHaveAttribute("data-mobile-visible", "false");
+    await context.close();
+  }
+
+  const desktop = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  await desktop.goto(`${baseUrl}/10-steps`, { waitUntil: "domcontentloaded" });
+  await desktop.evaluate(() => window.scrollTo(0, 2_000));
+  await expect(desktop.locator("[data-ten-steps-sticky-start]")).toBeHidden();
+  await desktop.close();
+});

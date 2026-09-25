@@ -5,6 +5,7 @@ import { tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
 import type { SupportedLocale } from "@/lib/market/registry";
 
 import styles from "./TenStepsPage.module.css";
+import { TenStepsStickyStart } from "./TenStepsStickyStart";
 
 const BUILD_NUMERALS = ["I", "II", "III"] as const;
 
@@ -39,7 +40,7 @@ export function TenStepsPage({ aboutHref, locale, programmePath }: {
           <h1 id="ten-steps-title"><span>{text[1]}</span><span><em>{text[2]}</em> {text[3]}</span></h1>
           <p className={styles.lead}>{text[4]}</p>
           <div className={styles.ctas}>
-            <Link className={styles.primaryAction} href={startHref} prefetch={false}>{text[5]}</Link>
+            <Link className={styles.primaryAction} data-ten-steps-hero-action href={startHref} prefetch={false}>{text[5]}</Link>
             <Link className={styles.textLink} href={aboutHref} prefetch={false}>{text[6]}</Link>
           </div>
         </div>
@@ -104,5 +105,10 @@ export function TenStepsPage({ aboutHref, locale, programmePath }: {
         <Link className={`${styles.primaryAction} ${styles.finalAction}`} href={startHref} prefetch={false}>{text[5]}</Link>
       </div>
     </section>
+
+    <div className={styles.stickyStart} data-mobile-visible="false" data-ten-steps-sticky-start>
+      <Link className={styles.primaryAction} href={startHref} prefetch={false}>{text[5]}</Link>
+    </div>
+    <TenStepsStickyStart />
   </div>;
 }
