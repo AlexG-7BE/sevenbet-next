@@ -9,6 +9,8 @@
 //                   MarketActivation controller and registers each licensed market through
 //                   PartnerTrackingRegistrationService, verifying the route from a real exit
 //                   in that market (Globalping). --only=disable or --only=enable limits it.
+//                   A target with `localSite` first points its market profile at that site
+//                   (audited), because registration expects the route to end there.
 //
 // --ego-links <path> reads EGO's link sheet (kept outside git); its link wins for a casino and market.
 //
@@ -105,6 +107,26 @@ async function resolveEnable(target: EnableTarget, activations: Activation[], sh
   return { target, state: "READY" as const, trackingUrl, hash, stagedHashMatches: Boolean(staged) };
 }
 
+/** Points the market profile at the target's licensed local site; returns the host it replaced, or null. */
+async function correctLocalSite(target: EnableTarget, actorId: string) {
+  const site = new URL(target.localSite!);
+  const localDomain = site.hostname.replace(/^www\./, "");
+  return prisma.$transaction(async (tx) => {
+    const profile = await tx.casinoCountry.findFirst({
+      where: { casino: { slug: target.casinoSlug }, countryCode: target.market },
+      select: { id: true, localDomain: true },
+    });
+    if (!profile) throw new Error("MARKET_ACCESS_RELEASE_PROFILE_NOT_FOUND");
+    if (profile.localDomain === localDomain) return null;
+    await tx.casinoCountry.update({ where: { id: profile.id }, data: { localDomain, localWebsiteUrl: site.toString() } });
+    await tx.auditLog.create({ data: {
+      actorId, action: "update", entityType: "casino-country", entityId: profile.id,
+      summary: `${MARKET_ACCESS_RELEASE}: ${target.casinoSlug} ${target.market} local site ${profile.localDomain ?? "none"} → ${localDomain} (${target.note})`,
+    } });
+    return profile.localDomain;
+  });
+}
+
 function marketChecker(country: string, probes: string[]) {
   return ((input: Parameters<typeof checkAffiliateRouteFromMarket>[0]) => checkAffiliateRouteFromMarket({
     url: input.url,
@@ -128,7 +150,7 @@ async function main() {
     decisionRef: MARKET_ACCESS_DECISION_REF,
     database,
     disable: disables.map(({ activation, closure }) => ({ casino: activation.casinoSlug, market: activation.marketCode, closure, activationId: activation.id })),
-    enable: enables.map(({ target, state, hash }) => ({ casino: target.casinoSlug, market: target.market, state, link: hash?.slice(0, 12) ?? null, note: target.note })),
+    enable: enables.map(({ target, state, hash }) => ({ casino: target.casinoSlug, market: target.market, state, link: hash?.slice(0, 12) ?? null, localSite: target.localSite, note: target.note })),
     blocked: BLOCKED_TARGETS,
   };
   if (mode === "plan") {
@@ -197,6 +219,8 @@ async function main() {
       const probes: string[] = [];
       const service = new PartnerTrackingRegistrationService(undefined, marketChecker(target.market.slice(0, 2), probes));
       try {
+        const replacedLocalSite = target.localSite ? await correctLocalSite(target, actor.id) : null;
+        if (replacedLocalSite) progress(`${target.casinoSlug} ${target.market}: local site ${replacedLocalSite} → ${new URL(target.localSite!).hostname}`);
         const result = await service.register(
           { partner: target.partner, casino: target.casinoSlug, trackingUrl: entry.trackingUrl!, geo: target.market },
           { actorId: actor.id, auditOrigin: "INTERNAL_COMMAND", correlationId: `${MARKET_ACCESS_RELEASE}:${target.casinoSlug}:${target.market}`, commercialAuthority: authority },
