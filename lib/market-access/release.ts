@@ -50,6 +50,12 @@ export type EnableTarget = Readonly<{
   query?: Readonly<Record<string, string>>;
   /** The Founder chose this link over the one staged earlier for the market; the staged hash is not required to match. */
   replacesStagedLink?: string;
+  /**
+   * The operator's licensed site for the market when the stored market profile names another
+   * host. Registration expects the route to end on the profile's host, so apply corrects the
+   * profile first. Its host must be the domain the register cites for the market.
+   */
+  localSite?: string;
   note: string;
 }>;
 
@@ -64,7 +70,8 @@ export const ENABLE_TARGETS: readonly EnableTarget[] = Object.freeze([
   { casinoSlug: "megawayscasino", market: "SE", partner: EGO, sourceMarket: "GB", note: "Spelinspektionen megawayscasino.com/se" },
   { casinoSlug: "megawayscasino", market: "DK", partner: EGO, sourceMarket: "GB", note: "Spillemyndigheden megawayscasino.com/dk" },
   // Denmark: EUcasino's Danish link lives only in EGO's sheet; the Founder chose its Swedish brand link instead (25 Sep).
-  { casinoSlug: "eucasino", market: "DK", partner: EGO, sourceMarket: "SE", replacesStagedLink: "FOUNDER-MARKET-ACCESS-2026-09-24: reuse the Swedish link (25 Sep)", note: "Spillemyndigheden eucasino.com" },
+  // Its profile named eucasino.dk, which now redirects to eucasino.com/dk; both are on Spillemyndigheden's list.
+  { casinoSlug: "eucasino", market: "DK", partner: EGO, sourceMarket: "SE", replacesStagedLink: "FOUNDER-MARKET-ACCESS-2026-09-24: reuse the Swedish link (25 Sep)", localSite: "https://www.eucasino.com/dk/", note: "Spillemyndigheden eucasino.com" },
   // Great Britain: the six White Hat Gaming brands, UKGC account 52894; the Superfly canonical link is reused.
   ...["21-prive", "diamond7", "gday-casino", "hello-casino", "skol-casino", "slotnite"].map((casinoSlug) => ({
     casinoSlug, market: "GB", partner: SUPERFLY, sourceMarket: "IE", note: "UKGC 52894",
