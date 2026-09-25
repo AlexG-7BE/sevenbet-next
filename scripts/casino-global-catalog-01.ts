@@ -33,7 +33,7 @@ import { editorialReviewService } from "@/lib/services/editorial-review.service"
 
 const RELEASE = "CASINO-GLOBAL-CATALOG-01";
 const EDITORIAL_CORPUS = "data/casino-global-catalog-01/editorial.v1.json";
-const OFFER_CORPORA = ["data/casino-global-catalog-01/offers-gb.v1.json", "data/casino-global-catalog-01/offers-dk.v1.json", "data/casino-global-catalog-01/offers-se.v1.json"];
+const OFFER_CORPORA = ["data/casino-global-catalog-01/offers-gb.v1.json", "data/casino-global-catalog-01/offers-dk.v1.json", "data/casino-global-catalog-01/offers-se.v1.json", "data/casino-global-catalog-01/offers-de.v1.json"];
 
 function option(name: string) {
   const index = process.argv.indexOf(`--${name}`);

@@ -5,7 +5,7 @@
   "countryCode": "SE",
   "commercialAuthority": false,
   "observedAt": "2026-09-25T00:00:00.000Z",
-  "note": "Swedish welcome offers read on 25 September 2026 from each operator's own Swedish terms page through a Swedish exit node. They replace the earlier observation records of the same slugs, which lacked the minimum deposit and wagering.",
+  "note": "Swedish welcome offers read on 25 September 2026 from each operator's own Swedish terms page through a Swedish exit node. They replace the earlier observation records of the same slugs, which lacked the minimum deposit and wagering. PlayOJO added on 25 September 2026. The other SkillOnNet Swedish sites (AHTI Games, BacanaPlay, Casino RedKings, DrückGlück, EUcasino, JackpotStar, MegawaysCasino, SlotsMagic, TurboNino) show no welcome offer to Swedish visitors, so none is recorded.",
   "offers": [
     {
       "casinoSlug": "betsson",
@@ -48,6 +48,24 @@
         "60 days to meet the wagering."
       ],
       "termsUrl": "https://offers.nordicbet.com/sv/casino-bonus"
+    },
+    {
+      "casinoSlug": "playojo",
+      "slug": "playojo-se-welcome",
+      "title": "100 wager-free free spins on Book of Dead",
+      "summary": "First deposit only. 100 free spins at SEK 1 each; winnings are paid as cash with no wagering.",
+      "type": "FREE_SPINS",
+      "freeSpins": 100,
+      "minimumDeposit": 100,
+      "wageringMultiplier": 0,
+      "wageringText": "No wagering; free-spin winnings are paid as cash",
+      "eligibility": "New players, first deposit only.",
+      "importantConditions": [
+        "Minimum deposit SEK 100.",
+        "Spins are on Book of Dead at SEK 1 per spin.",
+        "Only valid on a first deposit at any Skill On Net licensed casino."
+      ],
+      "termsUrl": "https://www.playojo.com/se/kickers/"
     }
   ]
 }

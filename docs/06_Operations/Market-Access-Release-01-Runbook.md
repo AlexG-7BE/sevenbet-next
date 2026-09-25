@@ -35,21 +35,24 @@ must match. No raw partner URL is printed or kept in git.
 | No local licence (10) | GoldenPlay in AT, BE, BR, CH, DK, FR, PT, SE, SI; PlayUZU in DK |
 | Prohibited by law (5) | GoldenPlay in CZ, HR, NO, PL, ZA (already inert since #341) |
 
-**Enable — 13 licensed markets**
+**Enable — 11 licensed markets**
 
 | Market | Casino | Link |
 | --- | --- | --- |
 | DE | DrückGlück, TurboNino | EGO German links (`cg=german`), hash-matched to the 22 Sep staging; verified healthy from Germany on 24 Sep (www.drueckglueck.de, www.turbonino.de) |
 | GB | 21 Privé, Diamond7, G'day Casino, Hello Casino, Skol Casino, Slotnite | Superfly canonical links (UKGC 52894) |
-| SE | MegawaysCasino, Regency Casino Online, PlayUZU | EGO brand links reused (Founder choice, 24 Sep) |
+| SE | MegawaysCasino | EGO brand link reused (Founder choice, 24 Sep) |
 | DK | MegawaysCasino | EGO brand link reused |
 | DK | EUcasino | EGO's Danish link — needs `--ego-links` (the sheet is outside git) |
 
 **Cannot open yet:** Betsafe SE (no Swedish link from BGA), DragonBet GB (no link;
-Brothers Bet account disabled).
+Brothers Bet account disabled), Regency SE (regencycasino.se answers 401 — not live),
+PlayUZU SE (no Swedish site).
 
-Result after the release: **GB 18 of 19, SE 14 of 15, DK 10 of 10, DE 2 of 2**
-(DragonBet and Betsafe SE wait for links).
+GB referral also needs PR #365 (the licence register as Great Britain's operator
+evidence): without it no GB route produces a click, whatever the activation says.
+
+Result after the release and #365: **GB 18 of 19, SE 12 of 15, DK 10 of 10, DE 2 of 2**.
 
 ## Steps
 

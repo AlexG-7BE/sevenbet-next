@@ -8,8 +8,8 @@ register), [MARKET-ACCESS-RELEASE-01](Market-Access-Release-01-Runbook.md) (acti
 
 | Market | Casinos promoted | Notes |
 | --- | ---: | --- |
-| GB | 19 licensed, 18 with a route | DragonBet waits for a Brothers Bet link |
-| SE | 15 licensed, 14 with a route | Betsafe SE waits for a BGA link; Betsson's licensee becomes Spin Nordic Ltd on 30 Sep (licence already active) |
+| GB | 19 licensed, 18 with a route | DragonBet waits for a Brothers Bet link; every GB click also needs PR #365 |
+| SE | 15 licensed, 12 with a route | Betsafe SE waits for a BGA link; regencycasino.se is password-protected and PlayUZU has no Swedish site; Betsson's licensee becomes Spin Nordic Ltd on 30 Sep (licence already active) |
 | DK | 10 | — |
 | DE | 2 (DrückGlück, TurboNino) | Offers, buttons and `/r/` only 21:00–06:00 Europe/Berlin |
 
@@ -23,7 +23,7 @@ with the closure stored as the click's `blockedReason`.
    (`gh api repos/AlexG-7BE/sevenbet-next/deployments` or the Vercel dashboard).
 2. **Activation release.** Run the runbook's `plan` against Production, compare it
    with the runbook, get the Founder's confirmation, run `apply`, keep the JSON
-   report. Expected: 25 disabled, 13 enabled (EUcasino DK needs `--ego-links`).
+   report. Expected: 25 disabled, 11 enabled (EUcasino DK needs `--ego-links`).
    Any `BROKEN_ROUTE` goes back to the partner before launch.
 3. **Real clicks from every market.**
    `npm run launch:click-check` clicks every casino's public `/r/` route from a
@@ -31,8 +31,8 @@ with the closure stored as the click's `blockedReason`.
    register. It never follows the redirect, so partners receive nothing, and the
    clicks are stored as `BOT` traffic. Accept only:
    - no `VIOLATION` (a closed market reaching a partner) and no `UNEXPECTED`;
-   - `PASS` for every casino in the target table; `NO_ROUTE` only for DragonBet GB
-     and Betsafe SE.
+   - `PASS` for every casino in the target table; `NO_ROUTE` only for DragonBet GB,
+     Betsafe SE, Regency SE and PlayUZU SE.
    Run it once between 21:00 and 06:00 Berlin (Germany `PASS` ×2) and once in the
    day (Germany `PASS_CLOSED` ×2).
 4. **Pages from every market.** On a phone with a local connection (or a VPN exit
