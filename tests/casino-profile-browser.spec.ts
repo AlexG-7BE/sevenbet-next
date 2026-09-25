@@ -373,8 +373,14 @@ test("global Best Offers never reintroduces demo records or ungoverned actions",
   ]) expect(shortlistCopy).not.toContain(falsePublicationClaim);
 });
 
-test("server HTML remains useful with JavaScript disabled", async ({ browser }) => {
-  const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
+// People get the streamed route frame; crawlers, which may not run JavaScript, get the complete
+// profile in the first response (Founder decision 25 Sep 2026).
+test("crawlers receive the complete profile HTML without JavaScript", async ({ browser }) => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    userAgent: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+    viewport: { width: 390, height: 844 },
+  });
   const page = await context.newPage();
   const response = await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
@@ -382,6 +388,7 @@ test("server HTML remains useful with JavaScript disabled", async ({ browser }) 
   await expect(page.getByRole("link", { name: "Visit Solvane Casino" })).toHaveCount(0);
   await expect(page.getByText("Review only", { exact: true })).toHaveCount(0);
   await expect(page.locator("[data-review-no-action]")).toHaveCount(1);
+  await expect(page.locator("[data-route-loading]")).toHaveCount(0);
   await context.close();
 });
 

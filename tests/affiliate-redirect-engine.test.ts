@@ -290,6 +290,34 @@ test("a healthy route never redirects a reader whose market prohibits presenting
   assert.equal((await service("SE")).ok, true);
 });
 
+test("a public click reads its slug once, through the small route identity, never the admin aggregate", async () => {
+  const reads: string[] = [];
+  const store = {
+    ...redirectStore(null),
+    findBySlug: async () => { throw new Error("the admin aggregate must not load on a public click"); },
+    findRouteIdentityBySlug: async (slug: string) => {
+      reads.push(slug);
+      return slug === "casino-offer" ? { id: "redirect-id", casinoId: "casino", casino: { slug: "playojo" } } : null;
+    },
+  } satisfies AffiliateRedirectStore;
+  const at = new Date("2026-09-28T12:00:00Z");
+  const click = (slug: string, route: ReturnType<typeof canonicalRoute>) => new AffiliateRedirectService(
+    store,
+    { legacyAdminPreviewCandidates: async () => [] },
+    new JurisdictionResolver({ findByCountry: async () => null }),
+    allowGbCommercialReadinessAuthority,
+    route,
+  ).resolve(slug, { now: at, requestCountrySignal: { ...trustedSignal("SE"), observedAt: at } });
+
+  const redirected = await click("casino-offer", canonicalRoute({ offerId: "safe", trackingLinkId: "link-safe", trackingUrl: "https://tracking.example/link-safe" }));
+  assert.equal(redirected.ok, true);
+  const refused = await click("casino-offer", canonicalRoute(null));
+  assert.deepEqual(refused.ok ? null : [refused.reason, refused.slugId, refused.casinoId], ["NO_GOVERNED_ROUTE", "redirect-id", "casino"]);
+  const unknown = await click("unknown-slug", canonicalRoute(null));
+  assert.equal(unknown.ok ? "OK" : unknown.reason, "SLUG_NOT_FOUND");
+  assert.deepEqual(reads, ["casino-offer", "casino-offer", "unknown-slug"]);
+});
+
 test("a healthy route never redirects to a casino without the reader's local licence", async () => {
   const mapping = (slug: string) => ({
     id: "redirect-id", slug: "casino-offer", casinoId: "casino", casinoBonusId: null, affiliateOfferId: "safe",

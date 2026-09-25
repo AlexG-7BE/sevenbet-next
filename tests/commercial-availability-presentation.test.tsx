@@ -101,11 +101,40 @@ test("casino cards keep missing bonus data separate from governed visit availabi
     messages={messages}
     presentation={presentation}
   />);
-  assert.ok(cardHtml.includes(copy.currentOffer));
-  assert.ok(cardHtml.includes(copy.notVerified));
+  // Nothing about this record's payout, deposit or offer is known, so the card
+  // shows no fact list at all rather than three "Not verified" rows.
+  assert.ok(!cardHtml.includes(copy.currentOffer));
+  assert.ok(!cardHtml.includes(copy.notVerified));
+  assert.doesNotMatch(cardHtml, /<dl/);
   assert.match(cardHtml, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_COLLECTION_CARD"/);
   assert.ok(!cardHtml.includes(messages.common.reviewOnly));
   assert.ok(!cardHtml.includes(messages.common.commercialUnavailable));
+});
+
+test("catalogue cards render known facts only and never a Not verified row", async () => {
+  const { CasinoCollection } = await import("../components/casino-discovery/CasinoCollection");
+  const { BonusOfferDirectory } = await import("../components/bonus-directory/BonusOfferDirectory");
+  const { BestOffersExperience } = await import("../components/best-offers/BestOffersExperience");
+  const partial = casino({
+    withdrawalTimes: ["ask support"],
+    featuredBonus: { title: "100% up to £100", summary: "Current published terms", type: "WELCOME", keyTerms: [], wageringRequirement: 30, minimumDeposit: 10, currency: "GBP", validUntil: null, termsApply: true },
+  });
+  const casinoHtml = renderToStaticMarkup(<CasinoCollection casinos={[partial]} initialSearch="" messages={messages} presentation={presentation} />);
+  assert.equal((casinoHtml.match(/<dt>/g) ?? []).length, 2);
+  assert.ok(!casinoHtml.includes(`<dt>${messages.common.payout}</dt>`));
+  assert.ok(casinoHtml.includes(`<dt>${messages.common.minimumDeposit}</dt>`) && casinoHtml.includes(`<dt>${copy.currentOffer}</dt>`));
+  assert.ok(!casinoHtml.includes(copy.notVerified));
+
+  const sparse = offer();
+  sparse.bonus = { ...sparse.bonus, wageringMultiplier: null, minimumDeposit: null, maximumBet: null, expiresAt: null };
+  sparse.casino = { ...sparse.casino, payments: sparse.casino.payments.map((payment) => ({ ...payment, withdrawalTime: "ask support" })) };
+  const bonusHtml = renderToStaticMarkup(<BonusOfferDirectory messages={messages} offers={[sparse]} presentation={presentation} />);
+  assert.doesNotMatch(bonusHtml, /<dl/, "no known bonus facts: no list and no padding");
+  assert.ok(!bonusHtml.includes(copy.notVerified));
+  const bestHtml = renderToStaticMarkup(<BestOffersExperience inventoryMode="PUBLISHED_ONLY" messages={messages} presentation={presentation} shortlist={[sparse]} />);
+  assert.match(bestHtml, /data-commercial-best-offer-card/);
+  assert.doesNotMatch(bestHtml, /<dl/);
+  assert.ok(!bestHtml.includes(copy.notVerified), "neither a fact row nor the reason line says Not verified");
 });
 
 test("an unrelated page-level commercial state cannot suppress a canonical card action", async () => {

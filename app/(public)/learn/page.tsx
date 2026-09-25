@@ -28,6 +28,6 @@ export default async function LearnPage() {
     <JsonLd data={{ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl(productCanonicalPath(presentation, "/")) }} />
     <JsonLd data={{ "@context": "https://schema.org", "@type": "CollectionPage", name: messages.ui.metadataTitle, description: messages.ui.metadataDescription, url: absoluteUrl(canonical) }} />
     <JsonLd data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: messages.ui.home, item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.ui.learn, item: absoluteUrl(canonical) }] }} />
-    <HandoffPage name="learn" programmePath={programmePath} transform={(html) => transformLearnHandoff(html, presentation.locale, (href) => productHref(presentation, href), articles, programmePath)} />
+    <HandoffPage headerAutoHide name="learn" programmePath={programmePath} transform={(html) => transformLearnHandoff(html, presentation.locale, (href) => productHref(presentation, href), articles, programmePath)} />
   </>;
 }

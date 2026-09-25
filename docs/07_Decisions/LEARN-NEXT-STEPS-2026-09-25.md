@@ -4,6 +4,8 @@
 
 **Decision authority:** explicit Founder instruction, 25 September 2026 (mobile conversion audit, proposals P8 and P9, option A)
 
+**Amended by:** [Learn offer bridges](LEARN-OFFER-BRIDGES-2026-09-25.md) — early bridges in bonus guides, casino-choice and payment guides join the offer bridges, "Start here" is one guide per topic, and the Bonus Guide's "Read next" uses real guides.
+
 ## Decision
 
 - **Learn hub:** the Programme card ("Knowledge is half of it. The plan is the other half.") also appears after the first six guides in the full list, not only at the end. It uses the hub's existing translated copy and the canonical `?entry=start` entry. It hides while a topic filter or search is active.

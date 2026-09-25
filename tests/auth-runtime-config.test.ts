@@ -212,7 +212,9 @@ test("malformed or contradictory Preview host metadata and unexpected hosts fail
 test("middleware covers application and auth routes while Better Auth trust remains exact and wildcard-free", () => {
   const middlewareSource = readFileSync("middleware.ts", "utf8");
   const runtimeSource = readFileSync("lib/auth/runtime-config.ts", "utf8");
-  assert.match(middlewareSource, /matcher: \["\/:path\*"\]/);
+  // Application and auth routes all run through middleware; only static assets skip it
+  // (tests/middleware-matcher.test.ts lists the covered and skipped paths).
+  assert.match(middlewareSource, /matcher: \["\/\(\(\?!_next\/static\/\|_next\/image\|/);
   assert.match(runtimeSource, /allowedHosts: \[host\]/);
   assert.match(runtimeSource, /trustedOrigins: \[origin\]/);
   assert.doesNotMatch(runtimeSource, /\*\.vercel\.app/);

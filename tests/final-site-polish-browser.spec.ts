@@ -155,7 +155,8 @@ test("Learn has one discovery-adjacent search with combined live filtering and r
   await expect(page.locator("[data-learn-results-status]")).toContainText("No guides match");
   await search.fill("");
   await page.getByRole("button", { name: "All topics", exact: true }).click();
-  await expect(page.locator('a[data-learn-category].scp3:visible')).toHaveCount(13);
+  // Start here and All guides list each guide once between them (Founder, 25 Sep 2026).
+  await expect(page.locator('a[data-learn-category]:visible')).toHaveCount(13);
   await search.focus();
   await expect(search).toBeFocused();
   await noOverflow(page);

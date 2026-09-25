@@ -183,6 +183,18 @@ export function PublicNavigation({
                 );
               })}
             </nav>
+            {/* The Programme is the drawer's one primary action, directly under the routes;
+                Help and the language choice follow it (Founder, 25 September 2026). */}
+            <div className={styles.mobileAccount} data-mobile-menu-account="">
+              <PublicProgrammeActionLink authenticated={authenticated} className={styles.mobileMenuPrimary} href={account.primaryHref}>
+                {authenticated ? messages.openProgramme : primaryLabel}
+              </PublicProgrammeActionLink>
+              {!authenticated ? <Link className={styles.mobileMenuLogin} href={account.accountHref}>{accountLabel}</Link> : null}
+            </div>
+            <div className={styles.mobileHelp}>
+              <span>{messages.controlAndSupport}</span>
+              <PublicNavigationRouteLink baseHref="/help" label={messages.openHelp} presentation={presentation} programme={programme}>{messages.openHelp}</PublicNavigationRouteLink>
+            </div>
             {programme ? (
               <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="mobile" />
             ) : (
@@ -194,16 +206,6 @@ export function PublicNavigation({
                 variant="mobile"
               />
             )}
-            <div className={styles.mobileHelp}>
-              <span>{messages.controlAndSupport}</span>
-              <PublicNavigationRouteLink baseHref="/help" label={messages.openHelp} presentation={presentation} programme={programme}>{messages.openHelp}</PublicNavigationRouteLink>
-            </div>
-            <div className={styles.mobileAccount}>
-              {!authenticated ? <Link href={account.accountHref}>{accountLabel}</Link> : null}
-              <PublicProgrammeActionLink authenticated={authenticated} className={styles.primaryAction} href={account.primaryHref}>
-                {authenticated ? messages.openProgramme : primaryLabel}
-              </PublicProgrammeActionLink>
-            </div>
             <p className={styles.dialogLegal}>{messages.adultServiceNotice}</p>
           </div>
         </details>

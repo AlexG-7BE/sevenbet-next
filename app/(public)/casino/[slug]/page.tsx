@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { cache } from "react";
+import { cache, Suspense } from "react";
 
 import { CasinoProfile } from "@/components/casino-profile/CasinoProfile";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
+import { PublicRouteLoadingFrame } from "@/components/public-shell/PublicRouteLoadingFrame";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { profileEditorialDocument } from "@/lib/casino-profile/presentation";
 import { casinoProfileMetadata, casinoProfileSchemas, projectCasinoProfileSchemas } from "@/lib/casino-profile/seo";
@@ -14,6 +16,7 @@ import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, visualCasin
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { isCrawlerUserAgent } from "@/lib/seo/crawler";
 import { absoluteUrl } from "@/lib/site";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 
@@ -76,11 +79,7 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   });
 }
 
-export default async function CasinoPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const raw = await searchParams;
-  triggerPublicCommercialErrorHarness(raw.errorFixture);
-  const { slug } = await params;
-  const visualDataFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
+async function CasinoContent({ raw, slug, visualDataFixture }: { raw: Record<string, string | string[] | undefined>; slug: string; visualDataFixture: boolean }) {
   const loaded = await loadCasinoPage(slug, visualDataFixture);
   const casino = loaded.casino;
   if (!casino) notFound();
@@ -104,4 +103,24 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
     <CasinoProfile availableForPresentation={loaded.availableForPresentation} casino={runtimeCasino} editorial={editorial} messages={messages} presentation={presentation} />
   </>;
+}
+
+/**
+ * The profile frame streams at once while the review, offers and action decision load; a cold
+ * instance used to send nothing for 3–4.6s (25 Sep 2026). Existence is settled first from the
+ * cached published projection, so a missing casino still answers 404 rather than a streamed 200.
+ */
+export default async function CasinoPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const raw = await searchParams;
+  triggerPublicCommercialErrorHarness(raw.errorFixture);
+  const { slug } = await params;
+  const visualDataFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
+  const [presentation, requestHeaders] = await Promise.all([resolveServerPresentationContext(), headers()]);
+  const published = visualDataFixture
+    ? visualCasinoProfileFixture(slug)
+    : await publicCasinoService.findPublishedCasino(slug, presentation.marketCountryCode);
+  if (!published) notFound();
+  // Crawlers read the whole profile in the first response; only people get the streamed frame.
+  if (isCrawlerUserAgent(requestHeaders.get("user-agent"))) return <CasinoContent raw={raw} slug={slug} visualDataFixture={visualDataFixture} />;
+  return <Suspense fallback={<PublicRouteLoadingFrame destination="casino" label={published.name} />}><CasinoContent raw={raw} slug={slug} visualDataFixture={visualDataFixture} /></Suspense>;
 }

@@ -12,6 +12,8 @@ const redirectSlugInclude = {
 
 export type AffiliateRedirectSlugAggregate = Prisma.AffiliateRedirectSlugGetPayload<{ include: typeof redirectSlugInclude }>;
 
+export type AffiliateRedirectRouteIdentity = { id: string; casinoId: string; casino: { slug: string } };
+
 export interface AffiliateRedirectTargetIdentity {
   casinoExists: boolean;
   bonusCasinoId: string | null;
@@ -22,6 +24,8 @@ export interface AffiliateRedirectStore {
   list(input?: { casinoId?: string; affiliateOfferId?: string; active?: boolean; search?: string; skip?: number; take?: number }): Promise<AffiliateRedirectSlugAggregate[]>;
   findById(id: string): Promise<AffiliateRedirectSlugAggregate | null>;
   findBySlug(slug: string): Promise<AffiliateRedirectSlugAggregate | null>;
+  /** What a public click needs of a slug: its id and its casino. One small read instead of the full aggregate. */
+  findRouteIdentityBySlug?(slug: string): Promise<AffiliateRedirectRouteIdentity | null>;
   existsBySlug(slug: string): Promise<boolean>;
   resolveTargets(casinoId: string, casinoBonusId?: string | null, affiliateOfferId?: string | null): Promise<AffiliateRedirectTargetIdentity>;
   create(input: AffiliateRedirectSlugInput, actorId: string): Promise<AffiliateRedirectSlugAggregate>;
@@ -69,6 +73,10 @@ export class AffiliateRedirectRepository implements AffiliateRedirectStore {
 
   findBySlug(slug: string) {
     return prisma.affiliateRedirectSlug.findUnique({ where: { slug }, include: redirectSlugInclude });
+  }
+
+  findRouteIdentityBySlug(slug: string) {
+    return prisma.affiliateRedirectSlug.findUnique({ where: { slug }, select: { id: true, casinoId: true, casino: { select: { slug: true } } } });
   }
 
   async existsBySlug(slug: string) {

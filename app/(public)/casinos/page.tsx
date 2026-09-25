@@ -1,21 +1,25 @@
 import type { Metadata } from "next";
-import { cache } from "react";
+import { headers } from "next/headers";
+import { cache, Suspense } from "react";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
+import { PublicRouteLoadingFrame } from "@/components/public-shell/PublicRouteLoadingFrame";
 import { CasinoCollection } from "@/components/casino-discovery/CasinoCollection";
 import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/casino-discovery/CasinosPage.module.css";
-import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
+import { commercialUxMessages, countNoun } from "@/lib/commercial/commercial-ux-messages";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffCasinoDiscoveryData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryQuery, CasinoDiscoveryResult } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
+import { isCrawlerUserAgent } from "@/lib/seo/crawler";
 import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -82,9 +86,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   });
 }
 
-export default async function CasinosPage({ searchParams }: PageProps) {
-  const raw = await searchParams;
-  triggerPublicCommercialErrorHarness(raw.errorFixture);
+async function CasinosContent({ raw }: { raw: Record<string, string | string[] | undefined> }) {
   const query = parseCasinoDiscoveryQuery(raw);
   const visualFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
   const loaded = await loadCasinoCollection(visualFixture);
@@ -124,7 +126,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       </div>
     </section>
     <section className={styles.directory} data-nav-theme="dark" id="casino-directory"><div className={styles.shell}>
-      <div className={`${styles.directoryHeading} ${styles.reveal}`}><div><p>{copy.casinosShown}</p><h2><EmphasisTail text={messages.casinos.directoryTitle} /></h2></div><span>{result.total} {messages.common.records}</span></div>
+      <div className={`${styles.directoryHeading} ${styles.reveal}`}><div><p>{copy.casinosShown}</p><h2><EmphasisTail text={messages.casinos.directoryTitle} /></h2></div><span>{result.total} {countNoun(presentation.locale, result.total, copy.casinoOne, copy.casinoOther)}</span></div>
       {result.inventoryMode !== "PUBLISHED_ONLY" ? <aside className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{disclosure}</p></aside> : null}
       {result.items.length ? <CasinoCollection casinos={result.items} initialSearch={query.search} messages={messages} presentation={presentation} /> : <section className={styles.empty} role="status"><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market })}</h2><p>{messages.casinos.reviewOnlyNotice}</p></section>}
     </div></section>
@@ -136,4 +138,18 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       </div>
     </div></section>
   </div>;
+}
+
+/**
+ * The route frame streams at once, the way the home page does, while the catalogue
+ * loads; a cold instance used to send nothing for 3–4.6s (25 Sep 2026). The error
+ * harness still fires before the boundary so its failure keeps a real error status.
+ */
+export default async function CasinosPage({ searchParams }: PageProps) {
+  const raw = await searchParams;
+  triggerPublicCommercialErrorHarness(raw.errorFixture);
+  const [presentation, requestHeaders] = await Promise.all([resolveServerPresentationContext(), headers()]);
+  // Crawlers read the whole page in the first response; only people get the streamed frame.
+  if (isCrawlerUserAgent(requestHeaders.get("user-agent"))) return <CasinosContent raw={raw} />;
+  return <Suspense fallback={<PublicRouteLoadingFrame destination="casinos" label={publicShellMessages(presentation.locale).casinos} />}><CasinosContent raw={raw} /></Suspense>;
 }
