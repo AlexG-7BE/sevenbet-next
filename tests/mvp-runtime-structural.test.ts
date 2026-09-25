@@ -61,7 +61,7 @@ test("analytics has a closed 22-event contract with no identity, narrative, rewa
     analyticsContract,
     /\b(?:userId|emailAddress|situationText|transcript|reviewText|startingPoint|desiredChange|continuationCue|xp|metadata)\s*:/,
   );
-  assert.match(analyticsContract, /\.strict\(\)/);
+  assert.match(analyticsContract, /export const clientAnalyticsEventSchema = z\.strictObject\(/);
   assert.doesNotMatch(analyticsClient, /export function track|return \{\s*track\s*:/);
   assert.doesNotMatch(analyticsClient, /@\/lib\/(?:affiliate|affiliate-commercial|services\/public-offer|services\/public-casino)/);
 });

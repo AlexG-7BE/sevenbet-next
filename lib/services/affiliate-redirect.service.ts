@@ -238,6 +238,7 @@ export class AffiliateRedirectService {
     const gbContext = canonicalGbCommercialReadinessContext(activation);
     const commercialReadiness = await this.commercialReadiness.evaluate({
       casinoId: routing.casinoId,
+      casinoSlug: scopedMapping?.casinoId === routing.casinoId ? scopedMapping.casino.slug : undefined,
       route: gbContext.route,
       jurisdictionDecision,
       redirectContract: gbContext.redirectContract,

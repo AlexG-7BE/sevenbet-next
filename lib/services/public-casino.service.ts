@@ -55,8 +55,9 @@ async function loadPublishedCasinoEditorial(
   return { ...projected, action: null };
 }
 
+// Keyed by slug and market only: the projection does not depend on the page language.
 const cachedPublishedCasinoEditorial = publicEditorialCache(
-  async (slug: string, countryCode: string | null, _presentationLanguage: string | null) => (
+  async (slug: string, countryCode: string | null) => (
     loadPublishedCasinoEditorial(publicCasinoRepository, slug, countryCode)
   ),
   // v3: the projection gained regulatoryFootprint, then began sourcing it from
@@ -109,7 +110,7 @@ export class PublicCasinoService {
     try {
       const normalizedCountry = countryCode?.trim().toUpperCase() || null;
       projected = this.repository === publicCasinoRepository && this.options.now === undefined
-        ? await cachedPublishedCasinoEditorial(slug, normalizedCountry, presentationLanguage?.trim() || null)
+        ? await cachedPublishedCasinoEditorial(slug, normalizedCountry)
         : await loadPublishedCasinoEditorial(this.repository, slug, normalizedCountry, this.options.now);
     } catch {
       return null;
