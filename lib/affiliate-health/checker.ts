@@ -134,6 +134,11 @@ async function terminalResponseFailure(response: Response) {
     : null;
 }
 
+async function isAwsWafChallenge(response: Response) {
+  const prefix = await boundedResponsePrefix(response, 4_096);
+  return /<title>\s*Human Verification\s*<\/title>/i.test(prefix) && /awsWafCookieDomainList|gokuProps/.test(prefix);
+}
+
 function attributionPresent(chain: URL[], names: string[]) {
   const seen = new Set(chain.flatMap((url) => [...url.searchParams.keys()]));
   return names.every((name) => seen.has(name));
@@ -191,6 +196,13 @@ export async function checkAffiliateRouteHttp(input: {
       result = await safeFetchChain(input.url, method, fetcher, deadline, validateUrl, visitorNavigationUserAgent);
     }
     const classified = classify(result, method, input.expectation, performance.now() - started);
+    // White Hat Gaming's brands answer every data-centre probe with an AWS WAF
+    // "Human Verification" challenge (HTTP 405). Reaching it on the expected
+    // brand host proves the partner route lands there; a person passes it.
+    if (classified.status === "BROKEN" && classified.reason === "HTTP_405" && input.inspectTerminalContent
+      && await isAwsWafChallenge(result.response)) {
+      return { ...classified, status: "HEALTHY", reason: "AWS_WAF_CHALLENGE_ON_EXPECTED_HOST" };
+    }
     const inspectTerminal = input.inspectTerminalContent || method === "GET";
     if (!inspectTerminal || classified.status !== "HEALTHY") {
       await result.response.body?.cancel().catch(() => undefined);
