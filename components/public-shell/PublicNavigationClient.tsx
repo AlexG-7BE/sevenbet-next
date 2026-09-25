@@ -20,6 +20,15 @@ type ProgrammePresentation = Readonly<{
 
 const commercialNavigationRefreshes = createCommercialNavigationRetryRegistry();
 
+/**
+ * A closed <details> still lays out its content (content-visibility: hidden), so it has client
+ * rects but cannot take focus. Only its own summary counts for the drawer's focus loop.
+ */
+function insideClosedDetails(element: HTMLElement) {
+  const closed = element.closest("details:not([open])");
+  return Boolean(closed) && !(element.tagName === "SUMMARY" && element.parentElement === closed);
+}
+
 export function PublicCommercialNavigationSettled() {
   const pathname = usePathname();
 
@@ -146,7 +155,7 @@ export function PublicMobileNavigationEnhancement() {
     };
     const focusableElements = () => Array.from(disclosure.querySelectorAll<HTMLElement>(
       'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])',
-    )).filter((element) => element.getClientRects().length > 0 && !element.closest("[inert]"));
+    )).filter((element) => element.getClientRects().length > 0 && !element.closest("[inert]") && !insideClosedDetails(element));
 
     const closeMenu = ({ restoreFocus = true } = {}) => {
       if (disclosure.open) disclosure.open = false;

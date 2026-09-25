@@ -163,6 +163,11 @@ test("the mobile drawer leads with the acid Start Programme action, then Log in,
   const login = rule(".mobileMenuLogin");
   assert.ok(login.includes("font-size: 16px") && login.includes("min-height: 44px"), "Log in reads at 16px with a 44px target");
   assert.doesNotMatch(rule(".mobileAccount"), /margin: auto/, "the account block no longer sinks to the bottom of the drawer");
+  // The language picker now ends the drawer: the focus loop must skip content of a closed <details>
+  // (laid out under content-visibility but not focusable), or Tab from its summary leaves the dialog.
+  const client = readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8");
+  assert.match(client, /function insideClosedDetails\(element: HTMLElement\) \{\s*const closed = element\.closest\("details:not\(\[open\]\)"\);/);
+  assert.match(client, /!element\.closest\("\[inert\]"\) && !insideClosedDetails\(element\)/);
   // The desktop header action keeps its outline look.
   assert.match(rule(".primaryAction"), /background: transparent;[\s\S]*border-radius: var\(--sb-radius-full\)|border-radius: var\(--sb-radius-full\);[\s\S]*background: transparent/);
 });
