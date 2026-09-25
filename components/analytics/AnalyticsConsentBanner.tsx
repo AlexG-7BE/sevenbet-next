@@ -2,12 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
+import { browserAnalyticsConsentState } from "@/lib/analytics/consent-contract";
+import { PRIVACY_CHOICE_AUTOMATION_OPT_IN_KEY, PRIVACY_CHOICE_DISMISSED_KEY, shouldAutoOpenPrivacyChoice } from "@/lib/analytics/consent-prompt";
 import { recordConsentedBrowserPageView } from "@/lib/analytics/product-analytics-client";
 import { analyticsConsentMessages } from "@/lib/i18n/analytics-consent-catalog";
 import type { SupportedLocale } from "@/lib/market/registry";
 
 export const OPEN_PRIVACY_CHOICES_EVENT = "b4g:open-privacy-choices";
+
+function readSession(key: string) {
+  try { return window.sessionStorage.getItem(key); } catch { return null; }
+}
+
+function writeSession(key: string, value: string) {
+  try { window.sessionStorage.setItem(key, value); } catch { /* storage may be unavailable */ }
+}
 
 /** Footer control that opens the analytics choice; the banner owns the dialog. */
 export function PrivacyChoicesButton({ className, label }: { className?: string; label: string }) {
@@ -25,25 +36,46 @@ export function AnalyticsConsentBanner({ locale }: { locale: SupportedLocale }) 
   const [error, setError] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const opener = useRef<HTMLElement | null>(null);
+  const autoOpened = useRef(false);
+  const pathname = usePathname() ?? "/";
+
+  useEffect(() => {
+    if (editing) return;
+    const open = shouldAutoOpenPrivacyChoice({
+      pathname,
+      consentState: browserAnalyticsConsentState(),
+      dismissed: readSession(PRIVACY_CHOICE_DISMISSED_KEY) === "1",
+      automated: navigator.webdriver === true,
+      automationOptIn: readSession(PRIVACY_CHOICE_AUTOMATION_OPT_IN_KEY) === "1",
+    });
+    if (!open) return;
+    // An automatic choice is non-modal and does not take focus from the page.
+    autoOpened.current = true;
+    setEditing(true);
+  }, [editing, pathname]);
 
   useEffect(() => {
     const open = (event: Event) => {
       // Safari does not focus a clicked button, so the trigger identifies itself for focus return.
       const detail = (event as CustomEvent<unknown>).detail;
       opener.current = detail instanceof HTMLElement ? detail : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      autoOpened.current = false;
       setEditing(true);
+      closeRef.current?.focus();
     };
     window.addEventListener(OPEN_PRIVACY_CHOICES_EVENT, open);
     return () => window.removeEventListener(OPEN_PRIVACY_CHOICES_EVENT, open);
   }, []);
 
   useEffect(() => {
-    if (editing) closeRef.current?.focus();
+    if (editing && !autoOpened.current) closeRef.current?.focus();
   }, [editing]);
 
   const close = () => {
     setError(false);
     setEditing(false);
+    autoOpened.current = false;
+    writeSession(PRIVACY_CHOICE_DISMISSED_KEY, "1");
     const target = opener.current;
     opener.current = null;
     if (target?.isConnected) target.focus();
