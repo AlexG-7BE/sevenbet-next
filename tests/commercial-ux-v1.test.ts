@@ -37,7 +37,7 @@ import {
 } from "../lib/public-offer/best-offer-ranking";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
-import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
+import type { PublicCasinoDTO, PublicOfferPresentationRelation } from "../lib/public-casino/public-casino.types";
 import type { SupportedLocale } from "../lib/market/registry";
 
 const controlledHref = "/r/governed-offer";
@@ -52,6 +52,7 @@ function offer(index: number, patch: {
   freeSpins?: number | null;
   type?: string;
   conditions?: string[];
+  relation?: PublicOfferPresentationRelation;
 } = {}): PublicOfferDTO {
   const action = patch.action ?? true;
   return {
@@ -98,6 +99,7 @@ function offer(index: number, patch: {
     },
     action: action ? { href: controlledHref } : null,
     dataClassification: "PUBLISHED_RECORD",
+    ...(patch.relation ? { offerPresentation: { relation: patch.relation, sourceCountryCode: null, presentationCountryCode: "IE", currentMarketVerified: patch.relation === "EXACT" } } : {}),
   };
 }
 
@@ -210,6 +212,21 @@ test("Bonus views use verified mechanics and optional intent requires real depth
   assert.deepEqual(availableBonusViews([welcome, unknownWagering]), [...CORE_BONUS_DIRECTORY_VIEWS]);
   const cashback = [offer(4, { type: "CASHBACK" }), offer(5, { type: "CASHBACK" }), offer(6, { type: "CASHBACK" })];
   assert.deepEqual(availableBonusViews(cashback), [...CORE_BONUS_DIRECTORY_VIEWS, "cashback"]);
+});
+
+test("Bonus views put what this visitor can take first and keep each view's own order within a tier", () => {
+  const otherMarket = offer(1, { score: 9.5, action: false, relation: "OTHER_MARKET", wagering: 5 });
+  const worldwide = offer(2, { score: 9.0, action: false, relation: "ROW" });
+  const ownMarket = offer(3, { score: 8.0, action: false, relation: "EXACT" });
+  const clickableLow = offer(4, { score: 7.0, relation: "OTHER_MARKET", wagering: 10 });
+  const clickableHigh = offer(5, { score: 8.8, relation: "ROW", wagering: 30 });
+  const records = [otherMarket, worldwide, ownMarket, clickableLow, clickableHigh];
+  assert.deepEqual(offersForBonusView(records, "all"), [clickableHigh, clickableLow, ownMarket, worldwide, otherMarket]);
+  // Low wagering still sorts by wagering, but inside each tier: the 5x offer from another market stays below both buttons.
+  assert.deepEqual(offersForBonusView(records, "low_wagering"), [clickableLow, clickableHigh, ownMarket, worldwide, otherMarket]);
+  // A demonstration record carries its seed's market, which means nothing for it.
+  const demo = { ...offer(6, { score: 9.9, action: false, relation: "OTHER_MARKET" }), dataClassification: "DEMO_FIXTURE" as const };
+  assert.deepEqual(offersForBonusView([worldwide, demo], "all"), [demo, worldwide]);
 });
 
 test("presentation adapters never expose raw evidence prose and preserve governed CTA state", () => {
