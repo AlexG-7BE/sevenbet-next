@@ -221,6 +221,13 @@ ambiguous Casino identities.
 
 ## Deterministic and semantic analysis
 
+**Removed 25 September 2026 (Founder decision):** the OpenAI visual adapter
+(`lib/media-operations/semantic-analysis.ts`) and the unmounted
+`MediaOperationsWorkbench` were deleted, together with the
+`useSemanticAnalysis` input field. The retired service now marks every
+first-party creative `NEEDS_VISUAL_REVIEW`. The provider description below is
+historical.
+
 Ordinary code owns checksum, MIME, animation, decoded dimensions, provider,
 identifier/clue extraction, format family, governed-destination correlation,
 offer arithmetic and placement compatibility.

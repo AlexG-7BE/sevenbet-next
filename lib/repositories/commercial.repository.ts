@@ -7,7 +7,6 @@ import type {
   CommercialResearchBundle,
 } from "@/lib/commercial/commercial-opportunity-research-contract";
 import prisma from "@/lib/db/prisma";
-import type { PartnerOperationsResult, PartnerSafeCrmOperation } from "@/shared/commercial/partner-operations-contract";
 
 export const commercialOpportunityInclude = {
   owner: { select: { id: true, name: true, email: true } },
@@ -257,22 +256,6 @@ export const commercialRepository = {
     });
   },
 
-  async applyPartnerOperations(input: { opportunityId: string; result: PartnerOperationsResult; actorId: string; runIdempotencyKey: string; model?: string; modelTier?: string; providerInvoked: boolean; usage?: { inputTokens: number; outputTokens: number; totalTokens: number; requests: number } }) {
-    return prisma.$transaction(async (tx) => {
-      const existingRun = await tx.commercialAgentRun.findUnique({ where: { idempotencyKey: input.runIdempotencyKey }, include: { operations: true } });
-      if (existingRun) return existingRun;
-      const run = await tx.commercialAgentRun.create({ data: { opportunityId: input.opportunityId, specialist: "partner-operations", status: input.result.status, recommendation: input.result.recommendation, summary: input.result.summary, model: input.model, modelTier: input.modelTier, result: input.result as unknown as Prisma.InputJsonValue, inputFingerprint: fingerprint(input.result), evidenceIds: [...new Set(input.result.findings.flatMap((finding) => finding.evidenceIds))], providerInvoked: input.providerInvoked, requestCount: input.usage?.requests ?? 0, inputTokens: input.usage?.inputTokens ?? 0, outputTokens: input.usage?.outputTokens ?? 0, totalTokens: input.usage?.totalTokens ?? 0, idempotencyKey: input.runIdempotencyKey, triggeredBy: input.actorId, completedAt: new Date() } });
-      let applied = 0;
-      let rejected = 0;
-      for (const operation of input.result.proposedCrmOperations) {
-        const outcome = await applySafeOperation(tx, input.opportunityId, run.id, operation, input.actorId);
-        if (outcome === "APPLIED") applied += 1; else rejected += 1;
-      }
-      const completed = await tx.commercialAgentRun.update({ where: { id: run.id }, data: { appliedOperationCount: applied, rejectedOperationCount: rejected }, include: { operations: true } });
-      await audit(tx, input.actorId, "partner_operations_run", input.opportunityId, `Applied bounded Partner Operations run: ${applied} applied, ${rejected} rejected`, { runId: run.id, applied, rejected });
-      return completed;
-    });
-  },
 };
 
 async function findCommercialOpportunityDuplicates(
@@ -733,66 +716,4 @@ async function upsertCommercialResearchBundle(
     );
     return { ...result, runId: run.id };
   });
-}
-
-async function applySafeOperation(tx: Prisma.TransactionClient, opportunityId: string, runId: string, operation: PartnerSafeCrmOperation, actorId: string): Promise<"APPLIED" | "REJECTED"> {
-  const payloadHash = fingerprint(operation.payload);
-  const existing = await tx.commercialAgentOperation.findUnique({ where: { idempotencyKey: operation.idempotencyKey } });
-  if (existing) {
-    await tx.commercialAgentOperation.create({ data: { opportunityId, runId, operationId: operation.operationId, operationType: operation.type, status: "SKIPPED_IDEMPOTENT", idempotencyKey: `${operation.idempotencyKey}:${runId}`, payloadHash, reason: "Previously applied idempotency key" } });
-    return "REJECTED";
-  }
-  let entityType: string | undefined;
-  let entityId: string | undefined;
-  switch (operation.type) {
-    case "UPDATE_PROSPECT_PROFILE": {
-      const payload = operation.payload;
-      const record = await tx.commercialOpportunity.update({ where: { id: opportunityId }, data: { ...payload, updatedBy: actorId } }); entityType = "commercial-opportunity"; entityId = record.id; break;
-    }
-    case "ADD_EVIDENCE": {
-      const payload = operation.payload;
-      const record = await tx.commercialEvidence.create({ data: { opportunityId, sourceType: payload.sourceType, sourceAuthority: payload.sourceAuthority, classification: payload.classification, category: payload.category, sourceUrl: payload.sourceUrl, sourceReference: payload.sourceReference ?? `derived-from:${payload.evidenceIds.join(",")}`, title: payload.title, claim: payload.claim, notes: payload.notes, observedAt: payload.observedAt ? new Date(payload.observedAt) : null, recheckAt: payload.recheckAt ? new Date(payload.recheckAt) : null, contentFingerprint: payloadHash, idempotencyKey: operation.idempotencyKey, recordedBy: actorId } }); entityType = "commercial-evidence"; entityId = record.id; break;
-    }
-    case "ADD_CONTACT": {
-      const payload = operation.payload;
-      const record = await tx.commercialContact.create({ data: { opportunityId, name: payload.name, roleTitle: payload.roleTitle, businessEmail: payload.businessEmail, businessPhone: payload.businessPhone, organizationName: payload.organizationName, operationalNotes: payload.operationalNotes, evidenceId: payload.evidenceIds[0] ?? null, idempotencyKey: operation.idempotencyKey, createdBy: actorId } }); entityType = "commercial-contact"; entityId = record.id; break;
-    }
-    case "ADD_RESEARCH_NOTE":
-    case "RECORD_RESPONSE":
-    case "PROPOSE_STAGE_TRANSITION":
-    case "PROPOSE_QUALIFICATION": {
-      const payload = operation.payload as { summary?: string; rationale?: string; targetStage?: "QUALIFIED" | "APPLICATION_READY" | "APPLIED" | "DUE_DILIGENCE" | "NEGOTIATING" | "REJECTED" | "ON_HOLD"; reason?: string; details?: string | null; evidenceIds: string[] };
-      const summary = operation.type === "PROPOSE_QUALIFICATION" ? payload.rationale! : operation.type === "PROPOSE_STAGE_TRANSITION" ? `Proposed stage: ${payload.targetStage}` : payload.summary!;
-      const evidenceIds = "evidenceIds" in payload ? payload.evidenceIds : [];
-      const record = await tx.commercialActivity.create({ data: { opportunityId, agentRunId: runId, actorKind: "PARTNER_OPERATIONS_AGENT", type: operation.type === "RECORD_RESPONSE" ? "RESPONSE_RECEIVED" : operation.type.startsWith("PROPOSE") ? "STAGE_PROPOSED" : "RESEARCH", summary, details: "details" in payload ? payload.details : null, reason: "reason" in payload ? payload.reason : null, newStage: "targetStage" in payload ? payload.targetStage : null, evidenceId: evidenceIds[0] ?? null, idempotencyKey: operation.idempotencyKey } });
-      if (operation.type === "PROPOSE_QUALIFICATION") await tx.commercialOpportunity.update({ where: { id: opportunityId }, data: { qualificationRationale: payload.rationale, updatedBy: actorId } });
-      entityType = "commercial-activity"; entityId = record.id; break;
-    }
-    case "CREATE_TASK": {
-      const payload = operation.payload;
-      const record = await tx.commercialTask.create({ data: { opportunityId, type: payload.taskType, title: payload.title, dueAt: payload.dueAt ? new Date(payload.dueAt) : null, idempotencyKey: operation.idempotencyKey, createdBy: actorId } }); entityType = "commercial-task"; entityId = record.id; break;
-    }
-    case "UPDATE_NEXT_ACTION": {
-      const payload = operation.payload;
-      const record = await tx.commercialOpportunity.update({ where: { id: opportunityId }, data: { nextActionSummary: payload.summary, nextActionDueAt: payload.dueAt ? new Date(payload.dueAt) : null, waitingOn: payload.waitingOn, updatedBy: actorId } }); entityType = "commercial-opportunity"; entityId = record.id; break;
-    }
-    case "CREATE_DRAFT_OUTREACH":
-    case "CREATE_DRAFT_APPLICATION": {
-      const payload = operation.payload;
-      const record = await tx.commercialApplication.create({ data: { opportunityId, channel: payload.channel, type: operation.type === "CREATE_DRAFT_OUTREACH" ? "OUTREACH" : "APPLICATION", state: "DRAFT", title: payload.title, draftText: payload.draftText, followUpAt: "followUpAt" in payload && payload.followUpAt ? new Date(payload.followUpAt) : null, idempotencyKey: operation.idempotencyKey, createdBy: actorId } });
-      await tx.commercialActivity.create({ data: { opportunityId, agentRunId: runId, actorKind: "PARTNER_OPERATIONS_AGENT", type: operation.type === "CREATE_DRAFT_OUTREACH" ? "OUTREACH_DRAFTED" : "APPLICATION_PREPARED", summary: `${record.type === "OUTREACH" ? "Outreach" : "Application"} draft prepared`, idempotencyKey: `activity:${operation.idempotencyKey}` } }); entityType = "commercial-application"; entityId = record.id; break;
-    }
-    case "RECORD_RECEIVED_TERM": {
-      const payload = operation.payload;
-      const evidenceId = payload.evidenceIds[0]; if (!evidenceId) throw new Error("Received terms require evidence.");
-      const record = await tx.commercialTerm.create({ data: { opportunityId, evidenceId, model: payload.model, status: "RECEIVED", amount: payload.amount, percentage: payload.percentage, currency: payload.currency, qualifyingEvent: payload.qualifyingEvent, paymentCadence: payload.paymentCadence, negativeCarryover: payload.negativeCarryover, minimumPayment: payload.minimumPayment, territory: payload.territory, trafficRestrictions: payload.restrictions, notes: payload.notes, idempotencyKey: operation.idempotencyKey, recordedBy: actorId } }); entityType = "commercial-term"; entityId = record.id; break;
-    }
-    case "PREPARE_ACTIVATION_PACKET": {
-      const payload = operation.payload;
-      const record = await tx.commercialActivationPacket.create({ data: { opportunityId, agentRunId: runId, status: payload.status, checklist: payload.checklist, evidenceIds: payload.evidenceIds, summary: payload.summary, idempotencyKey: operation.idempotencyKey, preparedBy: actorId } }); entityType = "commercial-activation-packet"; entityId = record.id; break;
-    }
-    case "CREATE_PROSPECT": throw new Error("CREATE_PROSPECT is only valid before an opportunity-scoped run.");
-  }
-  await tx.commercialAgentOperation.create({ data: { opportunityId, runId, operationId: operation.operationId, operationType: operation.type, status: "APPLIED", idempotencyKey: operation.idempotencyKey, payloadHash, entityType, entityId } });
-  return "APPLIED";
 }

@@ -195,7 +195,6 @@ test("14-15: prepared duplicate bytes are reused once and repeated preparation h
     idempotencyKey: "media-geo3:resolver:activate",
     targets: [{ countryCode: "FI", languageCode: "fi", languageState: "EXPLICIT", devices: ["MOBILE"] }],
     placements: ["CASINO_REVIEW_RIGHT_HERO"],
-    useSemanticAnalysis: false,
     activate: true,
   } as const;
   assert.equal(mediaOrchestrateProductionInputSchema.safeParse(orchestration).success, true);

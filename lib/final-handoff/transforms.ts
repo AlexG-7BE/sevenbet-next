@@ -806,6 +806,10 @@ export function transformHomeHandoffCss(css: string) {
         justify-content: center;
         background: #100F0F;
       }
+      /* Founder, 25 Sep 2026: the closing "Start with one situation" block no longer fills a
+         whole screen on phones; its content keeps ordinary section spacing to its neighbours. */
+      [data-handoff-page="home"] [data-home-final-composition] { min-height: 0 !important; }
+      [data-handoff-page="home"] [data-home-final-composition] > div:has(> h2) { padding: 56px 24px 64px !important; }
     }
   `;
 }

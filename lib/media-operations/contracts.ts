@@ -87,12 +87,10 @@ export const mediaIngestPartnerBatchInputSchema = z.object({
 
 const mediaAnalyzePlanInputSchema = z.object({
   planId: z.string().uuid(),
-  useSemanticAnalysis: z.boolean().default(true),
 }).strict();
 
 const mediaAnalyzeBatchInputSchema = z.object({
   batchId: z.string().uuid(),
-  useSemanticAnalysis: z.boolean().default(true),
 }).strict();
 
 export const mediaAnalyzeAndPlanInputSchema = z.union([mediaAnalyzePlanInputSchema, mediaAnalyzeBatchInputSchema]);
@@ -136,7 +134,6 @@ export const mediaOrchestrateProductionInputSchema = z.object({
   targets: z.array(mediaProductionTargetSchema).min(1).max(60),
   placements: z.array(z.enum(mediaProductionPlacements)).min(1).max(mediaProductionPlacements.length)
     .default(["CASINO_REVIEW_RIGHT_HERO", "CASINO_DIRECTORY_CARD"]),
-  useSemanticAnalysis: z.boolean().default(true),
   activate: z.boolean().default(true),
 }).strict().superRefine((input, issue) => {
   if (new Set(input.placements).size !== input.placements.length) {
