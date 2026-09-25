@@ -18,6 +18,7 @@ Update when a material decision is approved, superseded, reversed, or retired.
 
 - [PROGRAM-AI-01 Product Direction v2.2](PROGRAM-AI-01-Product-Direction-v2.2.md) — Founder-approved target Programme direction; implementation is not authorised.
 - [Mobile menu order and plain catalogue wording](MOBILE-MENU-AND-CATALOGUE-WORDING-2026-09-25.md) — Founder-approved drawer with Start Programme as the acid primary under the routes, and catalogues that drop unknown facts, count "offers"/"casinos" and read "How we pick".
+- [Quiet transitions and plain market names](TRANSITION-FEEDBACK-AND-MARKET-NAME-2026-09-25.md) — the pending pill and route frame reveal only after 700ms, guide links raise no pill, unrouted countries are named ("Kazakhstan", not "KZ") and no-GEO copy reads "readers worldwide".
 - [Trust pages end with a next step](TRUST-PAGES-NEXT-STEP-2026-09-25.md) — Founder-approved closing block on About, FAQ and Methodology: Start Programme first, Best Offers where offers may be presented.
 - [Learn next steps](LEARN-NEXT-STEPS-2026-09-25.md) — Founder-approved Programme card after six guides, a mid-guide Programme block, and gated bonus-guide bridges to Bonuses and Best Offers; protected guides unchanged.
 - [Learn offer bridges](LEARN-OFFER-BRIDGES-2026-09-25.md) — Founder-approved early and closing offer bridges in bonus, casino-choice and payment guides, a one-per-topic "Start here", real Bonus Guide "Read next" cards and phone header autohide on Learn; protected guides unchanged.
