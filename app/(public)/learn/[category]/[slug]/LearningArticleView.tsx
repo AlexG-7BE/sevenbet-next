@@ -4,7 +4,6 @@ import { Fragment, type ReactNode } from "react";
 import { earlyOfferBridgeIndex, midArticleBridgeIndex, type OfferBridgeKind } from "@/lib/articles/article-bridges";
 import { articlePath, type AdminArticle, type ArticleBlock, type PublicArticle } from "@/lib/articles/article-types";
 import type { LearningMessages } from "@/lib/i18n/learning-center";
-import { PublicLinkPendingSignal } from "@/components/public-shell/PublicNavigationFeedback";
 
 import styles from "./article.module.css";
 import handoffStyles from "./article-handoff.module.css";
@@ -71,7 +70,7 @@ export function LearningArticleRelated({ relatedArticles, messages, hrefFor }: {
   hrefFor: (href: string) => string;
 }) {
   if (!relatedArticles.length) return null;
-  return <section className={`${styles.related} ${handoffStyles.related}`} aria-labelledby="related-reading-title" data-nav-theme="cream"><header><p className={styles.kicker}>{messages.ui.relatedReading}</p><h2 id="related-reading-title">READ NEXT</h2></header><ol>{relatedArticles.map((related, index) => <li key={related.id}><Link href={hrefFor(articlePath(related))}><span>{String(index + 1).padStart(2, "0")}</span><span>{related.category.replaceAll("-", " ")}</span><strong>{related.title}</strong><span>{related.excerpt}</span><i aria-hidden="true">↗</i><PublicLinkPendingSignal label={related.title} /></Link></li>)}</ol></section>;
+  return <section className={`${styles.related} ${handoffStyles.related}`} aria-labelledby="related-reading-title" data-nav-theme="cream"><header><p className={styles.kicker}>{messages.ui.relatedReading}</p><h2 id="related-reading-title">READ NEXT</h2></header><ol>{relatedArticles.map((related, index) => <li key={related.id}><Link href={hrefFor(articlePath(related))}><span>{String(index + 1).padStart(2, "0")}</span><span>{related.category.replaceAll("-", " ")}</span><strong>{related.title}</strong><span>{related.excerpt}</span><i aria-hidden="true">↗</i></Link></li>)}</ol></section>;
 }
 
 export function LearningArticleView({ article, categoryTitle, relatedArticles = [], relatedArticlesSlot, messages, hrefFor, programmePath, preview = false, offerBridge = null }: {

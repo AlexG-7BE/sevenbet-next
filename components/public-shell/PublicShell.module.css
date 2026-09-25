@@ -425,7 +425,11 @@
   gap: 10px;
   pointer-events: none;
   transform: translateX(-50%);
+  /* Founder decision 25 Sep 2026: only a slow transition shows the pill; a quick one ends before it appears. */
+  opacity: 0;
+  animation: navigationFeedbackReveal 160ms var(--sb-ease-standard) 700ms forwards;
 }
+@keyframes navigationFeedbackReveal { to { opacity: 1; } }
 .navigationFeedback > span {
   width: 8px;
   height: 8px;
@@ -819,4 +823,5 @@
   .primaryAction:hover,
   .mobileMenuPrimary:hover { transform: none; }
   .navigationFeedback > span { animation: none; }
+  .navigationFeedback { animation-duration: 1ms; }
 }

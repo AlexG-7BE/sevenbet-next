@@ -174,6 +174,27 @@ function actionableFirst(a: PublicOfferDTO, b: PublicOfferDTO) {
   return Number(isGovernedCommercialAction(b.action)) - Number(isGovernedCommercialAction(a.action));
 }
 
+const marketFitTier: Readonly<Record<string, number>> = { EXACT: 1, ROW: 2, NONE: 2, OTHER_MARKET: 3 };
+
+/**
+ * How directly the reader can take an offer: a partner button that works for
+ * this visit, then the offer published for the reader's own market, then a
+ * worldwide offer, and last an offer published for another market. Founder
+ * decision of 25 September 2026 for the Bonuses page, which before it showed
+ * other markets' offers above the clickable ones (Ireland: the seven buttons
+ * sat at 7th–27th of 27). A demonstration record has no market of its own.
+ */
+export function visitorFitTier(offer: PublicOfferDTO) {
+  if (isGovernedCommercialAction(offer.action)) return 0;
+  if (offer.dataClassification !== "PUBLISHED_RECORD") return marketFitTier.NONE;
+  return marketFitTier[offer.offerPresentation?.relation ?? "NONE"] ?? marketFitTier.NONE;
+}
+
+/** Stable, so the caller's own order holds within each tier. */
+export function availableToVisitorFirst(offers: readonly PublicOfferDTO[]) {
+  return [...offers].sort((a, b) => visitorFitTier(a) - visitorFitTier(b));
+}
+
 function uniqueCasinos(offers: PublicOfferDTO[], limit: number) {
   const seen = new Set<string>();
   return offers.filter((offer) => {

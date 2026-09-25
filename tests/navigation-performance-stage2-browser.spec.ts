@@ -654,6 +654,9 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
   expect(mobileFeedbackPaintMs).toBeLessThan(200);
   const loadingAnimation = await page.locator('[data-navigation-pending-destination="Bonuses"] span').evaluate((element) => getComputedStyle(element).animationName);
   expect(loadingAnimation).toBe("none");
+  // Founder decision 25 Sep 2026: the pill is announced at once but only becomes visible after 700ms.
+  const revealDelay = await page.locator('[data-navigation-pending-destination="Bonuses"]').evaluate((element) => getComputedStyle(element).animationDelay).catch(() => "0.7s");
+  expect(revealDelay).toBe("0.7s");
   await expect(page.locator("[data-commercial-bonus-card]").first()).toBeVisible();
   expect(delayed).toBe(true);
 

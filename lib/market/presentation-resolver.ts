@@ -49,23 +49,37 @@ function acceptedLanguages(value: string | null | undefined) {
     });
 }
 
-const globalCatalogLabel: Readonly<Record<SupportedLanguage, string>> = {
-  en: "the global catalog",
-  de: "den globalen Katalog",
-  es: "el catálogo global",
-  el: "τον παγκόσμιο κατάλογο",
-  sv: "den globala katalogen",
-  da: "det globale katalog",
-  it: "il catalogo globale",
-  pt: "o catálogo global",
-  nl: "de wereldwijde catalogus",
-  fi: "maailmanlaajuinen luettelo",
-  nb: "den globale katalogen",
-  fr: "le catalogue mondial",
+/**
+ * With no trusted country at all, templates such as "Curated for {market}" name the readers,
+ * not an internal "global catalog" (Founder, 25 Sep 2026).
+ */
+const worldwideReadersLabel: Readonly<Record<SupportedLanguage, string>> = {
+  en: "readers worldwide",
+  de: "Leser weltweit",
+  es: "lectores de todo el mundo",
+  el: "αναγνώστες σε όλο τον κόσμο",
+  sv: "läsare över hela världen",
+  da: "læsere i hele verden",
+  it: "lettori di tutto il mondo",
+  pt: "leitores de todo o mundo",
+  nl: "lezers wereldwijd",
+  fi: "koko maailma",
+  nb: "lesere over hele verden",
+  fr: "les lecteurs du monde entier",
 };
 
+/** A trusted country without a market profile is named in the page language, never as its ISO code. */
+function countryDisplayName(countryCode: string, language: SupportedLanguage) {
+  try {
+    return new Intl.DisplayNames([language], { type: "region" }).of(countryCode) ?? countryCode;
+  } catch {
+    return countryCode;
+  }
+}
+
 function knownMarketDisplayName(market: MarketProfile | null, countryCode: string | null, language: SupportedLanguage) {
-  return market?.seoDisplayName ?? countryCode ?? globalCatalogLabel[language];
+  if (market) return market.seoDisplayName;
+  return countryCode ? countryDisplayName(countryCode, language) : worldwideReadersLabel[language];
 }
 
 /**
