@@ -23,7 +23,9 @@ test("public editorial caches are short-lived, tagged and identity-free", () => 
   const articles = source("lib/services/article.service.ts");
   assert.match(casino, /cachedPublished\(countryCode\?\.trim\(\)\.toUpperCase\(\) \|\| null\)/);
   assert.match(casino, /cachedPublishedBySlug\(slug, countryCode\?\.trim\(\)\.toUpperCase\(\) \|\| null\)/);
-  assert.match(offers, /cachedEditorialOffers\([\s\S]*options\.countryCode[\s\S]*options\.presentationLanguage/);
+  // Market-keyed only: the projections do not depend on the page language.
+  assert.match(offers, /cachedEditorialOffers\(options\.countryCode\?\.trim\(\)\.toUpperCase\(\) \|\| null\)/);
+  assert.match(source("lib/services/public-casino.service.ts"), /cachedPublishedCasinoEditorial\(slug, normalizedCountry\)/);
   assert.match(articles, /const category = input\.category\?\.trim\(\) \|\| null/);
   assert.match(articles, /if \(category && !isSafeArticleRoutePart\(category\)\) return \[\]/);
   assert.match(articles, /cachedPublishedArticles\(\s*locale,\s*category,/);
