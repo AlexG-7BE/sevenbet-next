@@ -63,9 +63,6 @@ export const ENABLE_TARGETS: readonly EnableTarget[] = Object.freeze([
   { casinoSlug: "megawayscasino", market: "DK", partner: EGO, sourceMarket: "GB", note: "Spillemyndigheden megawayscasino.com/dk" },
   // Denmark: EUcasino's Danish link was staged on 22 Sep but failed a check made outside Denmark; it lives in EGO's sheet.
   { casinoSlug: "eucasino", market: "DK", partner: EGO, sourceMarket: null, note: "Spillemyndigheden eucasino.com" },
-  // Sweden, register only: Regency and PlayUZU; the brand links are reused.
-  { casinoSlug: "regencycasino", market: "SE", partner: EGO, sourceMarket: "GB", note: "Spelinspektionen regencycasino.se" },
-  { casinoSlug: "playuzu", market: "SE", partner: EGO, sourceMarket: "DK", note: "Spelinspektionen playuzu.com/se" },
   // Great Britain: the six White Hat Gaming brands, UKGC account 52894; the Superfly canonical link is reused.
   ...["21-prive", "diamond7", "gday-casino", "hello-casino", "skol-casino", "slotnite"].map((casinoSlug) => ({
     casinoSlug, market: "GB", partner: SUPERFLY, sourceMarket: "IE", note: "UKGC 52894",
@@ -76,6 +73,8 @@ export const ENABLE_TARGETS: readonly EnableTarget[] = Object.freeze([
 export const BLOCKED_TARGETS = Object.freeze([
   { casinoSlug: "betsafe", market: "SE", reason: "No Swedish Betsafe link from Betsson Group Affiliates." },
   { casinoSlug: "dragonbet", market: "GB", reason: "No DragonBet link from Brothers Bet; the account was disabled." },
+  { casinoSlug: "regencycasino", market: "SE", reason: "Licensed, but regencycasino.se answers 401 (password-protected) on 25 Sep 2026: not live yet." },
+  { casinoSlug: "playuzu", market: "SE", reason: "Licensed, but playuzu.com/se is 404 and playuzu.se does not resolve on 25 Sep 2026: no Swedish site." },
 ]);
 
 export function derivedTrackingUrl(sourceUrl: string, query: EnableTarget["query"]) {

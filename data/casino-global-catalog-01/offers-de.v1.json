@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "casino-global-catalog-offers.v1",
+  "release": "CASINO-GLOBAL-CATALOG-01",
+  "decisionRef": "FOUNDER-CASINO-GLOBAL-CATALOG-2026-09-23",
+  "countryCode": "DE",
+  "commercialAuthority": false,
+  "observedAt": "2026-09-25T00:00:00.000Z",
+  "note": "German welcome offer read on 25 September 2026 from turbonino.de through a German exit node. Written without generic gambling-venue, jackpot or table-game wording, as EGO's German rules require.",
+  "offers": [
+    {
+      "casinoSlug": "turbonino",
+      "slug": "turbonino-de-welcome",
+      "title": "100 Freispiele für Book of Dead",
+      "summary": "Nur erste Einzahlung. 100 Freispiele à 0,10 €; Freispielgewinne mit 60-fachem Umsatz.",
+      "type": "FREE_SPINS",
+      "freeSpins": 100,
+      "minimumDeposit": 10,
+      "wageringMultiplier": 60,
+      "wageringText": "60-facher Umsatz der Freispielgewinne, nur Spielautomaten",
+      "eligibility": "Neue Spieler, nur erste Einzahlung.",
+      "importantConditions": [
+        "Freispielwert 0,10 € (insgesamt 10 €).",
+        "Die Freispiele werden vor dem eingezahlten Guthaben verwendet.",
+        "Maximaler Einsatz beim Umsatz: 10 % der Freispielgewinne (mind. 0,10 €) oder 5 €, je nachdem, was niedriger ist.",
+        "Mindesteinzahlung 10 € laut Bonusrichtlinie; die Angebotsseite nennt keine."
+      ],
+      "termsUrl": "https://www.turbonino.de/promotions/welcome-offer/"
+    }
+  ]
+}

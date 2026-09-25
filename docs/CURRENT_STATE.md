@@ -12,7 +12,7 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Licence-based market access — code in main; activation release pending
+## Licence-based market access — live; activation release and GB decision pending
 
 **Founder instruction, 24 September 2026:** market decisions follow each
 operator's own licence. [RFC-054](06_RFC/RFC-054-Licence-Market-Access.md)
@@ -20,20 +20,34 @@ adds one casino × market register (`lib/market-access/`) that closes a market
 for a casino when the operator blocks it, the law prohibits it, the casino has
 no local licence, the grey zone is closed, or — in Germany — outside
 21:00–06:00 Europe/Berlin. The same check gates offers, the partner button and
-`/r/`. Launch counts for Monday 28 September: GB 19, SE 15, DK 10, DE 2.
+`/r/`; where a local licence is required only the market's own offer is shown,
+and German visitors see no jackpot, live or table-game category. Merged
+25 September 2026 (#350, #360) with the release tooling (#352), the launch
+click check and its twice-daily workflow (#355), the EGO campaign sub-ID
+(#356), German copy (#357) and offer terms (#359).
 
-The register already stops the button, redirect and offers in closed markets.
-Disabling the stale activations and enabling the licensed markets that have a
-verified route is a separate data release that needs the Founder's
-confirmation.
+**DETECTED from real exits in Production, 25 September 2026 (before the
+activation release):** no click in a closed market reached a partner (66
+refused); SE 11 and DK 8 clicks reached partners; GB 0 of 19 and DE 0 of 2.
+
+- **GB:** no GB referral has ever been possible: the RFC-014/015 evidence
+  chain needs a UKGC domain-evidence record and its store is empty by design.
+  PR #365 (draft) makes the licence register GB's operator evidence and waits
+  for the Founder's decision.
+- **Activations:** `npm run market-access:release` (runbook
+  [MARKET-ACCESS-RELEASE-01](06_Operations/Market-Access-Release-01-Runbook.md))
+  disables 25 activations in closed markets and opens 11 licensed ones; it
+  needs the Founder's confirmation to run against Production.
+- **Offers:** the corpora for the launch markets' own offers land through the
+  existing Founder-run offer import.
 
 ## Casino inventory and data sources
 
-**DETECTED, 21 SEPTEMBER 2026 (copy of the Production database):** the
-database holds 16 casinos: 15 `PUBLISHED` (21 Privé, Betsafe, Betsson,
-Diamond7, DragonBet, G'day Casino, GoldenPlay, Hello Casino, Inkabet,
-NordicBet, Rizk, Skol Casino, Slotnite, StarCasino, SuperCasino) and one
-`ARCHIVED` (Boostwin, admin-created, never published). This matches the public
+**DETECTED, 24 SEPTEMBER 2026 (copy of the Production database):**
+the database holds 29 casinos: 28 `PUBLISHED` — the 13 EGO (SkillOnNet)
+brands, the six White Hat Gaming brands, the seven Betsson Group brands,
+GoldenPlay and DragonBet — and one `ARCHIVED` (Boostwin, admin-created, never
+published). This matches the public
 `/casinos` directory. Older checkpoints below that cite 14 real operators
 predate the GoldenPlay publication.
 
@@ -47,13 +61,11 @@ database by default (`PUBLIC_CASINO_CMS_ENABLED` only opts out with `false`,
 which then yields no casinos). The 220-record `data/casinos.json` placeholder
 catalogue and its service fallback were removed on 21 September 2026.
 
-**EGO (SkillOnNet), 22 September 2026:** 13 casinos and a Founder-run
-executor were added under
-[FOUNDER-EGO-2026-09-22](07_Decisions/FOUNDER-EGO-SKILLONNET-2026-09-22.md).
-They are registered as `DRAFT` in `data/casino-registry.json` and are not in the
-database until the [runbook](06_Operations/EGO-SkillOnNet-Import-01-Runbook.md)
-runs. Step 1 can activate AT, DK, SE and ES (29 markets); CA provinces, GB, DE
-and GR need the step 2 legal-authority change.
+**EGO (SkillOnNet), 22 September 2026:** 13 casinos were imported and
+published under
+[FOUNDER-EGO-2026-09-22](07_Decisions/FOUNDER-EGO-SKILLONNET-2026-09-22.md)
+by the [runbook](06_Operations/EGO-SkillOnNet-Import-01-Runbook.md) executor:
+38 exact markets became ACTIVE + HEALTHY (GB 12, DK 9, SE 9, AT 8).
 
 ## Mobile conversion audit — released 24–25 September 2026
 
