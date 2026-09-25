@@ -127,24 +127,27 @@ test("Article 27 particulars publish the confirmed EU and UK representation", ()
   assert.match(csp, /img-src 'self' data: blob: https:/);
 });
 
-test("Programme disclosure keeps two required checks, an optional explicit consent, just-in-time fallback and withdrawal", () => {
-  // Founder decision, 25 Sep 2026: the explicit consent may also be given on the access screen,
-  // beside the two required checks. It is optional and unticked, and intake still asks just in
-  // time for anyone who did not give it there.
+test("Programme start asks three required checks once and repeats none of them", () => {
+  // Founder decision, 25 Sep 2026: 18+, Terms/Privacy and the explicit consent to process the
+  // story are three required checks on the access screen. Intake and registration do not repeat
+  // the consent or its notices; only a journey that never reached that screen is asked once.
   const component = source("components/programme/ProgramAiFinalPresentation.tsx");
+  const experience = source("components/programme/ProgramAiExperience.tsx");
+  const consent = "I explicitly consent to B4GAMBLE processing what I type or say";
   const adult = component.indexOf("I confirm I am 18 or over");
   const legal = component.indexOf("I agree to the Terms and confirm I have read the Privacy Notice");
-  const accessConsent = component.indexOf("I explicitly consent to B4GAMBLE processing what I type or say");
-  const disclosure = component.indexOf("Before you share.");
-  const intakeConsent = component.lastIndexOf("I explicitly consent to B4GAMBLE processing what I type or say");
-  const withdrawal = component.indexOf("Withdraw consent and clear this draft");
-  assert.ok(adult >= 0 && legal > adult && accessConsent > legal && disclosure > accessConsent && intakeConsent > disclosure && withdrawal > intakeConsent);
+  const accessConsent = component.indexOf(consent);
+  assert.ok(adult >= 0 && legal > adult && accessConsent > legal);
   assert.equal(component.match(/I confirm I am 18 or over/g)?.length, 1);
   assert.equal(component.match(/I agree to the Terms and confirm I have read the Privacy Notice/g)?.length, 1);
-  // The access-screen consent starts unticked and never gates entry.
-  assert.match(component, /const \[processing, setProcessing\] = useState\(false\);/);
-  assert.match(component, /disabled=\{busy \|\| !adult \|\| !legal\}/);
-  assert.match(component, /Google provides identity only; it does not verify age or receive your Programme words/);
+  assert.match(component, /disabled=\{busy \|\| !adult \|\| !legal \|\| !processing\}/);
+  assert.match(component, /Three checks before you begin\./);
+  // Intake shows the consent only when this journey has not given it.
+  assert.match(component, /\{!recording && !consentGiven \? <aside className=\{styles\.privacyBoundary\}>/);
+  assert.match(experience, /persist\(\{ \.\.\.emptyLocalState, phase: "intake", processingConsented: true \}, journey\);/);
+  assert.match(experience, /consentGiven=\{sensitiveAuthorityActive \|\| local\.processingConsented === true\}/);
+  // No repeated notices after the access screen.
+  assert.doesNotMatch(component, /Before you share\.|Optional\. You can withdraw|Withdraw consent and clear this draft|Google provides identity only/);
 });
 
 test("OpenAI content controls remain code-enforced without content logging", () => {
