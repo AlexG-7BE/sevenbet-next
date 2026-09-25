@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
 
@@ -15,6 +16,7 @@ import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, visualCasin
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { isCrawlerUserAgent } from "@/lib/seo/crawler";
 import { absoluteUrl } from "@/lib/site";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 
@@ -113,10 +115,12 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const { slug } = await params;
   const visualDataFixture = isCommercialUxVisualDataFixture(raw.visualFixture);
-  const presentation = await resolveServerPresentationContext();
+  const [presentation, requestHeaders] = await Promise.all([resolveServerPresentationContext(), headers()]);
   const published = visualDataFixture
     ? visualCasinoProfileFixture(slug)
     : await publicCasinoService.findPublishedCasino(slug, presentation.marketCountryCode);
   if (!published) notFound();
+  // Crawlers read the whole profile in the first response; only people get the streamed frame.
+  if (isCrawlerUserAgent(requestHeaders.get("user-agent"))) return <CasinoContent raw={raw} slug={slug} visualDataFixture={visualDataFixture} />;
   return <Suspense fallback={<PublicRouteLoadingFrame destination="casino" label={published.name} />}><CasinoContent raw={raw} slug={slug} visualDataFixture={visualDataFixture} /></Suspense>;
 }

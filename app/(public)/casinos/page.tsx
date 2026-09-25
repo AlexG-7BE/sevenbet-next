@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { cache, Suspense } from "react";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
@@ -18,6 +19,7 @@ import { parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryQuery, CasinoDiscoveryResult } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
+import { isCrawlerUserAgent } from "@/lib/seo/crawler";
 import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -146,6 +148,8 @@ async function CasinosContent({ raw }: { raw: Record<string, string | string[] |
 export default async function CasinosPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
-  const presentation = await resolveServerPresentationContext();
+  const [presentation, requestHeaders] = await Promise.all([resolveServerPresentationContext(), headers()]);
+  // Crawlers read the whole page in the first response; only people get the streamed frame.
+  if (isCrawlerUserAgent(requestHeaders.get("user-agent"))) return <CasinosContent raw={raw} />;
   return <Suspense fallback={<PublicRouteLoadingFrame destination="casinos" label={publicShellMessages(presentation.locale).casinos} />}><CasinosContent raw={raw} /></Suspense>;
 }
