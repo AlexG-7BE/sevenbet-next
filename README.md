@@ -18,7 +18,7 @@ The public page-level frontend migration and FE-DS-01 Design System v1 consolida
 
 ## Local development
 
-Prerequisites: Node.js 24.x and the environment values described in `.env.example`.
+Prerequisites: Node.js 24.x (`nvm use` reads `.nvmrc`) and the environment values described in `.env.example`.
 
 ```bash
 npm install
