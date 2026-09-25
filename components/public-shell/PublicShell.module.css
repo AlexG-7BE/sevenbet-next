@@ -288,8 +288,8 @@
   padding: 10px 8px 8px;
   border-top: 1px solid rgba(250, 250, 247, .14);
   color: var(--shell-night-muted);
-  font-size: 12px;
-  line-height: 17px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 .selectorStatus strong { color: var(--shell-white); font-weight: 600; }
 
@@ -331,8 +331,8 @@
 .mobilePresentationSelector p {
   margin: 0;
   color: var(--shell-night-muted);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .primaryNavigation a,
@@ -604,7 +604,7 @@
 .mobileHelp a { min-height: 44px; display: flex; align-items: center; color: #67c8bd; font-weight: 700; }
 
 /* The legal line rests at the bottom of a tall screen and follows the language choice on a short one. */
-.dialogLegal { margin: auto 16px calc(16px + env(safe-area-inset-bottom)); padding-top: 16px; color: var(--shell-night-muted); font-size: 12px; line-height: 18px; }
+.dialogLegal { margin: auto 16px calc(16px + env(safe-area-inset-bottom)); padding-top: 16px; color: var(--shell-night-muted); font-size: 14px; line-height: 1.5; }
 
 :global(body:has(.tiltHomePage)) .header {
   inset: 0 0 auto;
@@ -659,7 +659,7 @@
 .footerLead p { margin: 0; color: rgba(250, 250, 247, .55); font-size: 14px; line-height: 1.6; }
 
 .footerGroup { display: grid; align-content: start; gap: 12px; }
-.footerGroup h2 { margin: 0 0 6px; color: rgba(250, 250, 247, .4); font-size: 12px; line-height: 18px; font-weight: 400; letter-spacing: .2em; text-transform: uppercase; }
+.footerGroup h2 { margin: 0 0 6px; color: rgba(250, 250, 247, .68); font-size: 13px; line-height: 18px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
 .footerGroup a { width: fit-content; color: rgba(250, 250, 247, .75); font-size: 14px; line-height: 20px; }
 .footerNavigationSlot { display: contents; }
 
@@ -703,7 +703,8 @@
   line-height: 20px;
 }
 .footerBaseline > div { display: flex; flex-wrap: wrap; align-items:center; gap: 24px; }
-.footerCommission { margin: 0 0 0 auto; }
+/* The commission line runs past 60 characters: it reads at 14px (readability pass, Founder, 25 Sep 2026). */
+.footerCommission { margin: 0 0 0 auto; font-size: 14px; line-height: 1.5; }
 .footerBaseline a { display: inline-flex; align-items: center; }
 .footerBaseline a:hover { color: var(--shell-white); }
 .footerChoice { padding: 0; border: 0; display: inline-flex; align-items: center; background: none; color: inherit; font: inherit; cursor: pointer; }

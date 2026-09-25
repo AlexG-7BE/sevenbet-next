@@ -1160,7 +1160,7 @@
 .footer { width:100%; max-width:none; min-height:72px; padding:24px 0; background:transparent; }
 .footerBoundary { max-width:none; }
 .footerEyebrow,.footerTitle { display:none; }
-.footerCopy { margin:0; color:rgba(250,250,247,.6); font-size:13px; }
+.footerCopy { margin:0; color:rgba(250,250,247,.6); font-size:14px; line-height:1.5; }
 .footerUtility { width:auto; }
 .separationBadge,.copyright { display:none; }
 .footerLinks { margin:0; }

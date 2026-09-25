@@ -31,8 +31,13 @@
   font-size: 13px;
   line-height: 18px;
   font-weight: 750;
-  letter-spacing: .2em;
+  letter-spacing: .08em;
   text-transform: uppercase;
+}
+/* Home's desktop composition is frozen (Founder, 25 Sep 2026): above phone widths its
+   loading frame keeps the tracking it had before the readability pass. */
+@media (min-width: 761px) {
+  .page[data-navigation-destination="home"] .kicker { letter-spacing: .2em; }
 }
 
 .hero .title {
