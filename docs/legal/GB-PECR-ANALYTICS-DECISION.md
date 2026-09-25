@@ -37,7 +37,11 @@ Programme, Help, GEO, legal or commercial authority.
   market. It replaces the floating right-edge tab. The choice uses the public
   site's visual system; equal-size Decline and Allow buttons and a "Not now"
   close control. The exclusion statement (email, Programme answers, partner
-  tokens) stays visible at every width.
+  tokens) stays visible at every width. Also since 25 September 2026, a
+  visitor without a recorded choice sees it on arrival, except on the
+  Programme, Help, sign-in and staff routes. It is non-modal and takes no
+  focus. "Not now" only hides it for the tab session and records nothing, and
+  no analytics identifier or event is created before Allow.
 - The signed consent cookie is browser-readable only as a UI hint. Opaque
   anonymous/session cookies are HTTP-only and issued only on a grant.
 - The server verifies the consent signature at ingestion and clears identity

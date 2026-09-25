@@ -366,6 +366,27 @@ test("configuration and schedules are explicit and environment-isolated", () => 
   assert.equal(schedules.crons?.some((cron) => cron.path === "/api/internal/cron/customer-lifecycle" && Boolean(cron.schedule)), true);
 });
 
+test("undecided visitors see the analytics choice on arrival, outside focused flows and without losing focus", async () => {
+  const { shouldAutoOpenPrivacyChoice } = await import("../lib/analytics/consent-prompt");
+  const base = { pathname: "/best-offers", consentState: "unknown" as const, dismissed: false, automated: false, automationOptIn: false };
+  assert.equal(shouldAutoOpenPrivacyChoice(base), true);
+  assert.equal(shouldAutoOpenPrivacyChoice({ ...base, consentState: "granted" }), false);
+  assert.equal(shouldAutoOpenPrivacyChoice({ ...base, consentState: "denied" }), false);
+  assert.equal(shouldAutoOpenPrivacyChoice({ ...base, dismissed: true }), false, "Not now holds for the tab session");
+  assert.equal(shouldAutoOpenPrivacyChoice({ ...base, automated: true }), false, "automation opts in explicitly");
+  assert.equal(shouldAutoOpenPrivacyChoice({ ...base, automated: true, automationOptIn: true }), true);
+  for (const pathname of ["/program", "/de/program", "/program/mission", "/help", "/help/gamstop", "/es/help", "/login", "/admin/casinos", "/unsubscribe"]) {
+    assert.equal(shouldAutoOpenPrivacyChoice({ ...base, pathname }), false, pathname);
+  }
+  for (const pathname of ["/", "/de", "/10-steps", "/casino/demo-northstar", "/learn/casino-bonuses/wagering-requirements", "/programme-guide"]) {
+    assert.equal(shouldAutoOpenPrivacyChoice({ ...base, pathname }), true, pathname);
+  }
+  const banner = source("components/analytics/AnalyticsConsentBanner.tsx");
+  assert.match(banner, /if \(editing && !autoOpened\.current\) closeRef\.current\?\.focus\(\);/);
+  assert.match(banner, /writeSession\(PRIVACY_CHOICE_DISMISSED_KEY, "1"\);/);
+  assert.match(banner, /automated: navigator\.webdriver === true/);
+});
+
 test("analytics choice is a compact site-style banner opened from the footer, localised for every market", async () => {
   const { analyticsConsentMessages } = await import("../lib/i18n/analytics-consent-catalog");
   const banner = source("components/analytics/AnalyticsConsentBanner.tsx");

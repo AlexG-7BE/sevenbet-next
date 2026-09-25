@@ -111,9 +111,10 @@ corrects it; Production then computed 16px, weight 700, no uppercase.
 protected Help, SUPPORT_FIRST suppression, the commercial firewall, GEO and
 partner authority, and the desktop home.
 
-**OPEN (Founder decision):** whether the analytics choice should open by itself
-for visitors who have not chosen yet. It currently opens only from the footer
-control, as before the redesign.
+**DECIDED, 25 September 2026:** the Founder chose to open the analytics
+choice automatically for visitors without a recorded choice, outside the
+Programme, Help, sign-in and staff routes. See
+[ANALYTICS-CHOICE-AUTO-OPEN-2026-09-25](07_Decisions/ANALYTICS-CHOICE-AUTO-OPEN-2026-09-25.md).
 
 ## Navigation Performance Stage 2 — released and verified
 
