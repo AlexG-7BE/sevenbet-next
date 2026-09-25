@@ -7,6 +7,7 @@ import { affiliateRedirectHeaders, safeAffiliateRedirectResponse } from "@/lib/a
 import { isAffiliateRedirectEnabled, preferenceHintsFromRequest } from "@/lib/affiliate-routing/redirect-validation";
 import { subIdParameter, withCampaignSubId } from "@/lib/affiliate-routing/sub-id";
 import { consentedCampaign, recordOutboundAttributionBestEffort, safeOutboundPlacement, type OutboundAttributionInput } from "@/lib/analytics/outbound-attribution.server";
+import { outboundRecoveryUrl } from "@/lib/commercial-handoff/recovery";
 import { logJurisdictionDecision } from "@/lib/jurisdiction/decision-log";
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.service";
@@ -17,12 +18,8 @@ function safeDiagnostic(reason: string, metadata: { slugId?: string; casinoId?: 
   console.warn("affiliate_redirect_unavailable", { reason, ...metadata });
 }
 
-function recoveryResponse(request: NextRequest) {
-  const recoveryUrl = request.nextUrl.clone();
-  recoveryUrl.pathname = "/outbound/unavailable";
-  recoveryUrl.search = "";
-  recoveryUrl.hash = "";
-  const response = NextResponse.redirect(recoveryUrl, 303);
+function recoveryResponse(request: NextRequest, slug: string) {
+  const response = NextResponse.redirect(outboundRecoveryUrl(request.nextUrl, slug), 303);
   for (const [name, value] of Object.entries(affiliateRedirectHeaders)) response.headers.set(name, value);
   return response;
 }
@@ -51,7 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       countryCode: requestCountrySignal?.countryCode,
       ...extra,
     });
-    return recoveryResponse(request);
+    return recoveryResponse(request, slug);
   };
 
   if (!isAffiliateRedirectEnabled()) return blocked("ROUTING_DISABLED");
