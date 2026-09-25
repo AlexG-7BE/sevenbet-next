@@ -25,6 +25,15 @@
 
 .heroInner { display: grid; gap: 18px; }
 
+/* The frame's words and bars appear only when loading takes more than 700ms (Founder, 25 Sep 2026),
+   so a quick transition shows no flash of the page name; the backgrounds hold the layout meanwhile. */
+.heroInner,
+.contentInner {
+  opacity: 0;
+  animation: routeFrameReveal 160ms var(--sb-ease-standard) 700ms forwards;
+}
+@keyframes routeFrameReveal { to { opacity: 1; } }
+
 .kicker {
   margin: 0;
   color: var(--sb-acid);
@@ -92,4 +101,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .progress::after { animation: none; transform: none; }
+  .heroInner, .contentInner { animation-duration: 1ms; }
 }
