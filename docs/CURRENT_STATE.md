@@ -29,11 +29,11 @@ confirmation.
 
 ## Casino inventory and data sources
 
-**DETECTED, 21 SEPTEMBER 2026 (copy of the Production database):** the
-database holds 16 casinos: 15 `PUBLISHED` (21 Privé, Betsafe, Betsson,
-Diamond7, DragonBet, G'day Casino, GoldenPlay, Hello Casino, Inkabet,
-NordicBet, Rizk, Skol Casino, Slotnite, StarCasino, SuperCasino) and one
-`ARCHIVED` (Boostwin, admin-created, never published). This matches the public
+**DETECTED, 24 SEPTEMBER 2026 (copy of the Production database):**
+the database holds 29 casinos: 28 `PUBLISHED` — the 13 EGO (SkillOnNet)
+brands, the six White Hat Gaming brands, the seven Betsson Group brands,
+GoldenPlay and DragonBet — and one `ARCHIVED` (Boostwin, admin-created, never
+published). This matches the public
 `/casinos` directory. Older checkpoints below that cite 14 real operators
 predate the GoldenPlay publication.
 
@@ -47,13 +47,11 @@ database by default (`PUBLIC_CASINO_CMS_ENABLED` only opts out with `false`,
 which then yields no casinos). The 220-record `data/casinos.json` placeholder
 catalogue and its service fallback were removed on 21 September 2026.
 
-**EGO (SkillOnNet), 22 September 2026:** 13 casinos and a Founder-run
-executor were added under
-[FOUNDER-EGO-2026-09-22](07_Decisions/FOUNDER-EGO-SKILLONNET-2026-09-22.md).
-They are registered as `DRAFT` in `data/casino-registry.json` and are not in the
-database until the [runbook](06_Operations/EGO-SkillOnNet-Import-01-Runbook.md)
-runs. Step 1 can activate AT, DK, SE and ES (29 markets); CA provinces, GB, DE
-and GR need the step 2 legal-authority change.
+**EGO (SkillOnNet), 22 September 2026:** 13 casinos were imported and
+published under
+[FOUNDER-EGO-2026-09-22](07_Decisions/FOUNDER-EGO-SKILLONNET-2026-09-22.md)
+by the [runbook](06_Operations/EGO-SkillOnNet-Import-01-Runbook.md) executor:
+38 exact markets became ACTIVE + HEALTHY (GB 12, DK 9, SE 9, AT 8).
 
 ## Navigation Performance Stage 2 — released and verified
 
