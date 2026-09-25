@@ -5,7 +5,8 @@
 //
 // Read-only for B4GAMBLE's data: it writes nothing itself. Each click is recorded by /r/ as an
 // OutboundClick with trafficKind BOT (the Globalping user agent), so it never counts as a visitor.
-// The redirect is not followed, so the partner never receives the click.
+// The redirect is not followed, so the partner never receives the click. A NO_ROUTE in an open
+// market is retried from fresh probes (see NO_ROUTE_ATTEMPTS).
 //
 // Output: a Markdown matrix on stdout and the full JSON on stderr's last line. The exit code is 1
 // when any VIOLATION (a closed market reaching a partner) or UNEXPECTED response is found.
@@ -28,7 +29,20 @@ const list = (value: string | undefined) => value?.split(",").map((item) => item
 
 type Row = { market: string; casino: string; route: string; verdict: ClickVerdict; statusCode: number | null; destination: string | null; probe: string | null; error?: string };
 
+// Vercel geolocates some probes' addresses to another country than Globalping does (London OVH
+// probes are seen as FR), and such a click is refused as if it came from there. A partner redirect
+// from any real probe proves the route, so a refusal in an open market is retried from fresh probes.
+const NO_ROUTE_ATTEMPTS = 3;
+
 async function click(site: string, market: string, casino: string): Promise<Row> {
+  let row = await clickOnce(site, market, casino);
+  for (let attempt = 1; attempt < NO_ROUTE_ATTEMPTS && row.verdict === "NO_ROUTE"; attempt += 1) {
+    row = await clickOnce(site, market, casino);
+  }
+  return row;
+}
+
+async function clickOnce(site: string, market: string, casino: string): Promise<Row> {
   const route = publicRouteSlug(casino);
   let probe: string | null = null;
   const fetcher = globalpingFetch(market, { onProbe: (value) => { probe = `${value.city ?? "?"} (${value.network ?? "?"})`; } });
