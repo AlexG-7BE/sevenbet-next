@@ -12,6 +12,8 @@ import { casinoDomainRepository, type CasinoDomainStore } from "@/lib/repositori
 
 export interface GbCommercialReadinessRequest {
   casinoId: string;
+  /** Lets the licence register decide without loading the casino record. */
+  casinoSlug?: string;
   route: GbCommercialRouteEvidence;
   jurisdictionDecision: GbCommercialJurisdictionDecision;
   redirectContract: GbRedirectContractEvidence;
@@ -78,6 +80,8 @@ export class GbCommercialReadinessService implements GbCommercialReadinessAuthor
   ) {}
 
   async evaluate(input: GbCommercialReadinessRequest) {
+    const early = input.casinoSlug ? licenceRegisterReadiness(input, input.casinoSlug) : null;
+    if (early) return early;
     try {
       const casino = await this.casinos.findById(input.casinoId);
       if (!casino) return unavailableGbCommercialReadiness();
@@ -92,10 +96,18 @@ export class GbCommercialReadinessService implements GbCommercialReadinessAuthor
 
   async evaluateMany(inputs: readonly GbCommercialReadinessRequest[]) {
     const unique = [...new Map(inputs.map((input) => [input.casinoId, input])).values()];
+    // The register decides most casinos from their slug alone; only the rest load the full record.
+    const decided = new Map<string, GbCommercialReadinessDecision>();
+    const pending = unique.filter((input) => {
+      const registered = input.casinoSlug ? licenceRegisterReadiness(input, input.casinoSlug) : null;
+      if (registered) decided.set(input.casinoId, registered);
+      return !registered;
+    });
+    if (!pending.length) return decided;
     try {
-      const casinos = await this.casinos.findManyByIds(unique.map((input) => input.casinoId));
+      const casinos = await this.casinos.findManyByIds(pending.map((input) => input.casinoId));
       const byId = new Map(casinos.map((casino) => [casino.id, casino]));
-      return new Map(unique.map((input) => {
+      return new Map([...decided, ...pending.map((input): [string, GbCommercialReadinessDecision] => {
         const casino = byId.get(input.casinoId);
         if (!casino) return [input.casinoId, unavailableGbCommercialReadiness()];
         const registered = licenceRegisterReadiness(input, casino.slug);
@@ -110,9 +122,9 @@ export class GbCommercialReadinessService implements GbCommercialReadinessAuthor
           founderWorldwideAuthority: input.founderWorldwideAuthority,
           now: input.now,
         })];
-      }));
+      })]);
     } catch {
-      return new Map(unique.map((input) => [input.casinoId, unavailableGbCommercialReadiness()]));
+      return new Map([...decided, ...pending.map((input): [string, GbCommercialReadinessDecision] => [input.casinoId, unavailableGbCommercialReadiness()])]);
     }
   }
 }

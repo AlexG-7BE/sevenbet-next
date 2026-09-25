@@ -87,7 +87,7 @@ test("analytics has one closed relational dictionary with no arbitrary JSON or P
   );
   assert.equal((eventNames.match(/^\s+"[a-z_]+",?$/gm) ?? []).length, 22);
   assert.doesNotMatch(dictionary, /programme_start_clicked|programme_home_viewed/);
-  assert.match(dictionary, /\.strict\(\)/);
+  assert.match(dictionary, /export const clientAnalyticsEventSchema = z\.strictObject\(/);
   assert.match(dictionary, /query-free site path/);
   assert.doesNotMatch(dictionary, /email:\s*z\.|password:\s*z\.|token:\s*z\./);
 });
