@@ -9,7 +9,7 @@
   --pg-line: rgba(250, 250, 247, .10);
   --pg-line-strong: rgba(250, 250, 247, .14);
   --pg-muted: rgba(250, 250, 247, .65);
-  --pg-label: rgba(250, 250, 247, .5);
+  --pg-label: rgba(250, 250, 247, .68);
   --pg-ease: cubic-bezier(.2, .8, .2, 1);
   --sb-action-radius: 3px;
   --sb-action-height: 56px;
@@ -65,7 +65,7 @@
 .currentProgress { display: none; }
 .journeyCard { padding: clamp(28px, 3vw, 38px); }
 .journeyCard ol { margin: 20px 0 0; padding: 0; list-style: none; }
-.journeyCard li { min-height: 46px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; border-bottom: 1px solid rgba(250, 250, 247, .09); color: rgba(250, 250, 247, .44); }
+.journeyCard li { min-height: 46px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; border-bottom: 1px solid rgba(250, 250, 247, .09); color: rgba(250, 250, 247, .68); }
 .journeyCard li b { font-family: var(--font-seven-serif), Georgia, serif; font-size: 18px; font-style: italic; font-weight: 400; }
 .journeyCard li strong { font-size: 14px; font-weight: 500; }
 .journeyCard li small { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; }
@@ -75,7 +75,7 @@
 .compactStats { padding: 28px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .compactStats div { display: grid; gap: 6px; }
 .compactStats strong { font-family: var(--font-seven-serif), Georgia, serif; font-size: 34px; font-style: italic; font-weight: 400; letter-spacing: -.02em; line-height: .9; }
-.compactStats span { color: rgba(250, 250, 247, .46); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; }
+.compactStats span { color: rgba(250, 250, 247, .68); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; }
 .mobileStatLabel { display: none; }
 .compactStartingPoint, .compactAchievements, .compactReviews, .compactResearch { padding: 28px; }
 .compactStartingPoint p { margin: 16px 0 10px; color: var(--pg-paper); font-family: var(--font-seven-serif), Georgia, serif; font-size: 18px; font-style: italic; line-height: 1.45; }
@@ -95,7 +95,7 @@
 /* After Mission 08 the research links move under the current mission and read as real actions. */
 .researchFeatured { border-style: solid; border-color: rgba(228, 226, 78, .5); }
 .researchFeatured a { min-height: 44px; display: inline-flex; align-items: center; padding: 10px 16px; font-size: 16px; font-weight: 600; }
-.dashboardFooter { min-height: 52px; padding-top: 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: rgba(250, 250, 247, .45); font-size: 12px; letter-spacing: .02em; }
+.dashboardFooter { min-height: 52px; padding-top: 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: rgba(250, 250, 247, .68); font-size: 12px; letter-spacing: .02em; }
 .mobileNextCard { display: none; }
 
 /* Mission and Review workspace */

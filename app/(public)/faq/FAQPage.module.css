@@ -2,19 +2,19 @@
 .page * { box-sizing: border-box; }
 .page > header { padding: 100px var(--site-gutter) 80px; background: #171616; color: #fafaf7; }
 .page > header > div { max-width: var(--site-content-max); margin: 0 auto; }
-.page > header p { display: flex; align-items: center; gap: 16px; margin: 0 0 24px; color: var(--sb-acid); font-size: 13px; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; }
+.page > header p { display: flex; align-items: center; gap: 16px; margin: 0 0 24px; color: var(--sb-acid); font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 .page > header p span { width: 44px; height: 1px; background: var(--sb-acid); }
 .page h1 { margin: 0; font-size: clamp(30px, 4.6vw, 72px); line-height: 1; letter-spacing: -.015em; text-transform: uppercase; }
 .page h1 em { color: var(--sb-acid); font-family: var(--font-seven-serif), Georgia, serif; font-weight: 400; letter-spacing: -.01em; text-transform: none; }
 .paint { height: 10px; }
 .page main { width: calc(100% - 48px); max-width: 900px; margin: 0 auto; padding: 90px 0 120px; }
 .page section { margin-bottom: 56px; }
-.page h2 { margin: 0 0 8px; color: #777500; font-size: 13px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; }
+.page h2 { margin: 0 0 8px; color: #5a5900; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 .page section > div { border-top: 1px solid rgba(16,15,15,.15); }
 .page details { border-bottom: 1px solid rgba(16,15,15,.12); }
 .page summary { min-width:0; padding: 20px 0; display: flex; align-items: center; justify-content: space-between; gap: 24px; cursor: pointer; font-size: 19px; font-weight: 800; text-transform: uppercase; list-style: none; }
 .page summary::-webkit-details-marker { display: none; }
-.page summary span { color: #777500; font-size: 22px; transition: transform 150ms; }
+.page summary span { color: #5a5900; font-size: 22px; transition: transform 150ms; }
 .page details[open] summary span { transform: rotate(45deg); }
 .page details p { max-width: 64ch; margin: 0; padding: 0 0 22px; color: #64635c; font-size: 15px; line-height: 1.7; }
 .contactRail { padding-top: 24px; display: flex; gap: 16px 40px; flex-wrap: wrap; border-top: 3px double #100f0f; color: #64635c; font-size: 14px; }

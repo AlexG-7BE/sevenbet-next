@@ -2,7 +2,7 @@
 .page a:focus-visible { outline:3px solid var(--sb-focus-color); outline-offset:3px; }
 .page * { box-sizing:border-box; }
 .shell { width:min(1440px,calc(100% - 10vw)); margin:0 auto; }
-.eyebrow { margin:0 0 18px; color:var(--sb-acid); font-size:13px; font-weight:750; letter-spacing:.28em; text-transform:uppercase; }
+.eyebrow { margin:0 0 18px; color:var(--sb-acid); font-size:13px; font-weight:750; letter-spacing:.08em; text-transform:uppercase; }
 .hero { min-height:88svh; display:flex; align-items:flex-end; position:relative; overflow:hidden; background:url('/home/hero-outcome.jpg') 50% 8%/cover no-repeat; color:var(--sb-paper); }
 .hero::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(16,15,15,.5),rgba(16,15,15,.2) 40%,rgba(16,15,15,.94) 88%); }
 .heroInner { width:min(1440px,calc(100% - 10vw)); min-width:0; margin:0 auto; padding:150px 0 80px; position:relative; z-index:1; }
@@ -13,7 +13,7 @@
 .parts h2,.lines h2 { margin:0 0 56px; font-size:clamp(36px,3.4vw,54px); line-height:1; text-transform:uppercase; }
 .partGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; }
 .partGrid article { padding:40px 44px; border:1px solid rgba(16,15,15,.1); border-radius:20px; background:#f4f1eb; }
-.partGrid span { color:#777500; font-family:var(--font-seven-serif),Georgia,serif; font-size:26px; font-style:italic; }
+.partGrid span { color:#5a5900; font-family:var(--font-seven-serif),Georgia,serif; font-size:26px; font-style:italic; }
 .partGrid h3 { margin:18px 0 12px; font-size:24px; text-transform:uppercase; }
 .partGrid p,.partsNote { color:var(--sb-metal); font-size:15px; line-height:1.65; }
 .partsNote { max-width:70ch; margin:40px 0 0; }
@@ -27,7 +27,9 @@
 .separationGrid li::before { content:"✓"; margin-right:14px; color:var(--sb-teal-light); }
 .lines { max-width:1440px; margin:0 auto; padding:110px 5vw; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:64px; }
 .lines h2 { max-width:16ch; margin:0; }
+/* The clear-lines block sits on paper: its eyebrow takes the deep olive, not the acid meant for dark surfaces. */
+.lines .eyebrow { color:var(--sb-acid-contrast); }
 .lines ul { margin:0; padding:0; display:grid; gap:18px; align-content:start; list-style:none; color:var(--sb-metal); font-size:15px; line-height:1.65; }
-.lines li::before { content:"—"; margin-right:14px; color:#777500; }
+.lines li::before { content:"—"; margin-right:14px; color:#5a5900; }
 @media(max-width:800px){.hero{min-height:72svh}.heroInner,.shell{width:calc(100% - 48px)}.heroInner{padding-bottom:56px}.heroInner h1{font-size:clamp(48px,13.25vw,70px);hyphens:auto;hyphenate-limit-chars:14 6 5;overflow-wrap:break-word}.parts,.separation{padding-top:72px;padding-bottom:72px}.partGrid,.separationGrid,.lines{grid-template-columns:1fr}.partGrid{gap:14px}.partGrid article{padding:28px}.separationGrid>div{padding:34px 28px}.separationGrid>div:first-child{border-right:0;border-bottom:3px double rgba(250,250,247,.25)}.lines{padding:72px 24px;gap:42px}}
 @media(max-width:480px){.heroInner h1:lang(el){font-size:clamp(30px,9.5vw,44px);hyphens:none;overflow-wrap:normal;word-break:normal}.heroInner h1:lang(fi){font-size:clamp(44px,12vw,54px);font-stretch:90%;hyphens:none;overflow-wrap:normal;word-break:normal}}
