@@ -586,7 +586,18 @@ test("legacy casino page parameters do not fragment the focused collection", asy
   await expect(page.getByRole("tab")).toHaveCount(3);
   await expect(page.locator("[data-directory-pagination]")).toHaveCount(0);
   await expect(results.locator('a[href^="/r/"]')).toHaveCount(0);
-  for (const card of await cards.all()) await expect(card.locator("dl > div")).toHaveCount(3);
+  // A fact we cannot state is not rendered. Three fixture casinos record their payout
+  // as "mindestens 48 Stunden", which has no speed bucket, so their cards drop the
+  // payout row instead of printing "Nicht verifiziert"; every other fact stays.
+  const copy = commercialUxMessages("de-DE");
+  await expect(results).not.toContainText(copy.notVerified);
+  let cardsWithPayout = 0;
+  for (const card of await cards.all()) {
+    const labels = await card.locator("dl > div > dt").allTextContents();
+    if (labels[0] === messages.common.payout) cardsWithPayout += 1;
+    expect(labels.filter((label) => label !== messages.common.payout)).toEqual([messages.common.minimumDeposit, copy.currentOffer]);
+  }
+  expect(cardsWithPayout).toBe(7);
   await expect(page.getByRole("note")).toContainText(messages.common.demoData);
 });
 

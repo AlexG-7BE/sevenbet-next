@@ -93,8 +93,8 @@ test("sparse review-only card omits unexplained fact rows and invented values", 
   assert.doesNotMatch(html, /href="\/r\//);
   assert.doesNotMatch(html, /<img|Editorial score|Reviewed/);
   assert.doesNotMatch(html, /No licence|Unlicensed|Unsupported|destinationUrl|trackingUrl/i);
-  // Unknown facts stay labelled as unverified instead of being filled in.
-  assert.ok(html.includes(defaultCopy.notVerified));
+  // Unknown facts are neither filled in nor printed as "Not verified": the row is left out.
+  assert.ok(!html.includes(defaultCopy.notVerified));
   assert.doesNotMatch(html, /aria-label="Editor Score/);
 });
 

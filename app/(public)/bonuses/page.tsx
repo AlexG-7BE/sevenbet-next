@@ -8,7 +8,7 @@ import { BonusOfferDirectory } from "@/components/bonus-directory/BonusOfferDire
 import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "./BonusesPage.module.css";
-import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
+import { commercialUxMessages, countNoun } from "@/lib/commercial/commercial-ux-messages";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffBonusDirectoryData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
@@ -136,7 +136,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
     </section>
     <section className={styles.directorySection} data-nav-theme="dark" id="bonus-directory">
       <div className={styles.shell}>
-        <header className={`${styles.sectionHeading} ${styles.reveal}`}><h2><EmphasisTail text={messages.bonuses.directoryTitle} /></h2><p>{result.total} {messages.common.records}</p></header>
+        <header className={`${styles.sectionHeading} ${styles.reveal}`}><h2><EmphasisTail text={messages.bonuses.directoryTitle} /></h2><p>{result.total} {countNoun(presentation.locale, result.total, copy.offerOne, copy.offerOther)}</p></header>
         {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.demoDirectoryDisclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure}</p></aside> : null}
         {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><h2>{messages.bonuses.unavailableTitleBody}</h2><p>{messages.bonuses.unavailableCopy}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></section> : <BonusOfferDirectory messages={messages} offers={result.records} presentation={presentation} />}
       </div>
