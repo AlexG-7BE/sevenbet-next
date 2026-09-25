@@ -34,7 +34,9 @@ with the closure stored as the click's `blockedReason`.
    - `PASS` for every casino in the target table; `NO_ROUTE` only for DragonBet GB,
      Betsafe SE, Regency SE and PlayUZU SE.
    Run it once between 21:00 and 06:00 Berlin (Germany `PASS` ×2) and once in the
-   day (Germany `PASS_CLOSED` ×2).
+   day (Germany `PASS_CLOSED` ×2). A `NO_ROUTE` is retried from fresh probes up to
+   three times: Vercel places some probes elsewhere than Globalping does (London OVH
+   probes are seen as France), and the site then refuses them as French visitors.
 4. **Pages from every market.** On a phone with a local connection (or a VPN exit
    in the market), open `/en/bonuses`, `/en/best-offers` and one licensed casino's
    review: its button leads to the operator's local site. In Germany, `/de` pages
