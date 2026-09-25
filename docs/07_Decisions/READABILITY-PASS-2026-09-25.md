@@ -37,7 +37,7 @@ The desktop Home composition stays frozen.
 - Home takes the handoff tokens only inside `@media (max-width: 760px)`, the breakpoint of the phone Home work. The phone hero kicker override in `app/globals.css` moves to 13px and .08em.
 - The Home stylesheet (`transformHomeHandoffCss` and the compositor fix) is unchanged, so its CSP style hash does not move.
 - Above 760px the Home loading frame keeps its previous kicker tracking.
-- The shared public footer is on every page, desktop Home included. Its group headings (Explore, Programme & Support, Trust) now read at `.68` paper, 13px, .08em, and the commission line reads at 14px/1.5. The language notice in the header's language menu reads at 14px/1.5.
+- The shared public footer is on every page, desktop Home included; the Founder confirmed on 25 September 2026 that the footer should read the same everywhere. Its group headings (Explore, Programme & Support, Trust) now read at `.68` paper, 13px, .08em, and the commission line reads at 14px/1.5. The language notice in the header's language menu reads at 14px/1.5.
 
 ## Not changed
 
