@@ -77,6 +77,33 @@ async function authenticateAdmin(page: Page, target: string) {
   await expect(page).toHaveURL(new RegExp(`${target.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`));
 }
 
+test("undecided visitors see the analytics choice on arrival; Not now holds for the tab; the Programme stays clear", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await context.addInitScript(() => window.sessionStorage.setItem("b4g_privacy_choice_under_automation", "1"));
+  const page = await context.newPage();
+  await page.goto(`${baseUrl}/privacy`, { waitUntil: "domcontentloaded" });
+  const choices = page.getByRole("dialog", { name: "Analytics privacy choices" });
+  await expect(choices).toBeVisible();
+  // A choice that opens by itself is non-modal and leaves focus on the page.
+  expect(await choices.evaluate((dialog) => dialog.contains(document.activeElement))).toBe(false);
+  await choices.getByRole("button", { name: "Not now" }).click();
+  await expect(choices).toHaveCount(0);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(500);
+  await expect(page.getByRole("dialog", { name: "Analytics privacy choices" })).toHaveCount(0);
+  expect((await context.cookies()).find((cookie) => cookie.name === "b4g_analytics_consent")).toBeUndefined();
+  await context.close();
+
+  const programme = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await programme.addInitScript(() => window.sessionStorage.setItem("b4g_privacy_choice_under_automation", "1"));
+  const programmePage = await programme.newPage();
+  await programmePage.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
+  await expect(programmePage.locator('[data-public-programme-renderer="program-ai"]')).toHaveCount(1);
+  await programmePage.waitForTimeout(800);
+  await expect(programmePage.getByRole("dialog", { name: "Analytics privacy choices" })).toHaveCount(0);
+  await programme.close();
+});
+
 test("affirmative analytics consent persists, emits a minimal event, and deduplicates replay", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const observedPayloads: unknown[] = [];

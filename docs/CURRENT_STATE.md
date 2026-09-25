@@ -32,8 +32,8 @@ refused); SE 11 and DK 8 clicks reached partners; GB 0 of 19 and DE 0 of 2.
 
 - **GB:** no GB referral has ever been possible: the RFC-014/015 evidence
   chain needs a UKGC domain-evidence record and its store is empty by design.
-  PR #365 (draft) makes the licence register GB's operator evidence and waits
-  for the Founder's decision.
+  PR #365 makes the licence register GB's operator evidence (Founder
+  decision, 25 September 2026).
 - **Activations:** `npm run market-access:release` (runbook
   [MARKET-ACCESS-RELEASE-01](06_Operations/Market-Access-Release-01-Runbook.md))
   disables 25 activations in closed markets and opens 11 licensed ones; it
@@ -111,9 +111,10 @@ corrects it; Production then computed 16px, weight 700, no uppercase.
 protected Help, SUPPORT_FIRST suppression, the commercial firewall, GEO and
 partner authority, and the desktop home.
 
-**OPEN (Founder decision):** whether the analytics choice should open by itself
-for visitors who have not chosen yet. It currently opens only from the footer
-control, as before the redesign.
+**DECIDED, 25 September 2026:** the Founder chose to open the analytics
+choice automatically for visitors without a recorded choice, outside the
+Programme, Help, sign-in and staff routes. See
+[ANALYTICS-CHOICE-AUTO-OPEN-2026-09-25](07_Decisions/ANALYTICS-CHOICE-AUTO-OPEN-2026-09-25.md).
 
 ## Navigation Performance Stage 2 — released and verified
 
