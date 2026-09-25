@@ -5,7 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { browserAnalyticsConsentState } from "@/lib/analytics/consent-contract";
-import { PRIVACY_CHOICE_AUTOMATION_OPT_IN_KEY, PRIVACY_CHOICE_DISMISSED_KEY, shouldAutoOpenPrivacyChoice } from "@/lib/analytics/consent-prompt";
+import {
+  PRIVACY_CHOICE_AUTO_OPEN_DELAY_MS,
+  PRIVACY_CHOICE_AUTOMATION_OPT_IN_KEY,
+  PRIVACY_CHOICE_DISMISSED_KEY,
+  PRIVACY_CHOICE_SCROLL_THRESHOLD_PX,
+  shouldAutoOpenPrivacyChoice,
+} from "@/lib/analytics/consent-prompt";
 import { recordConsentedBrowserPageView } from "@/lib/analytics/product-analytics-client";
 import { analyticsConsentMessages } from "@/lib/i18n/analytics-consent-catalog";
 import type { SupportedLocale } from "@/lib/market/registry";
@@ -49,9 +55,26 @@ export function AnalyticsConsentBanner({ locale }: { locale: SupportedLocale }) 
       automationOptIn: readSession(PRIVACY_CHOICE_AUTOMATION_OPT_IN_KEY) === "1",
     });
     if (!open) return;
-    // An automatic choice is non-modal and does not take focus from the page.
-    autoOpened.current = true;
-    setEditing(true);
+    // An automatic choice is non-modal and does not take focus from the page. It waits for the
+    // first scroll (or a short delay) so the first screen and its primary action stay clear.
+    let armed = true;
+    const reveal = () => {
+      if (!armed) return;
+      armed = false;
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(timer);
+      autoOpened.current = true;
+      setEditing(true);
+    };
+    const onScroll = () => { if (window.scrollY > PRIVACY_CHOICE_SCROLL_THRESHOLD_PX) reveal(); };
+    const timer = window.setTimeout(reveal, PRIVACY_CHOICE_AUTO_OPEN_DELAY_MS);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => {
+      armed = false;
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(timer);
+    };
   }, [editing, pathname]);
 
   useEffect(() => {
