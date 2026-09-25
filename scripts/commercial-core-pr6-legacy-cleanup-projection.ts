@@ -43,12 +43,18 @@ const retiredRuntimeReference = new RegExp(
 );
 const retiredTransportReference =
   /@modelcontextprotocol|\/api\/mcp|CommercialMcp|MediaMcp|commercial_mcp|COMMERCIAL_MCP|MEDIA_OPERATIONS_MCP|commercial:(?:read|safe_write)|media:(?:read|safe_write|production_write)|chatgpt-work|CHATGPT_WORK|getOperationalMcpAuth|oauthProvider|mcpAuth|mcpPermission|mcpAuthority|mcpConsent/;
+// RFC-052 Learn and RFC-055 CRM service-bearer MCP surfaces.
 const authorizedLearnMcpRuntimeFiles = new Set([
+  "app/api/mcp/crm/route.ts",
   "app/api/mcp/learn/route.ts",
+  "lib/mcp/crm/config.ts",
+  "lib/mcp/crm/post-handler.ts",
+  "lib/mcp/crm/server.ts",
   "lib/mcp/learn/config.ts",
   "lib/mcp/learn/post-handler.ts",
   "lib/mcp/learn/rate-limit.ts",
   "lib/mcp/learn/server.ts",
+  "lib/mcp/rate-limit.ts",
 ]);
 
 type ProjectionMode =
