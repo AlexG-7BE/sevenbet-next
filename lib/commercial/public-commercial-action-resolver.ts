@@ -149,6 +149,7 @@ export class PublicCommercialActionResolver implements PublicCommercialActionAut
           const context = route?.gbCommercialReadinessContext;
           return context && input.authority ? [{
             casinoId: subject.casinoId,
+            casinoSlug: subject.casinoSlug,
             route: context.route,
             jurisdictionDecision: input.authority,
             redirectContract: context.redirectContract,

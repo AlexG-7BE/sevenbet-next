@@ -1,4 +1,5 @@
-import { z } from "zod";
+// zod/mini: this schema also runs in the browser on every page, where full zod costs ~19 kB gzip.
+import * as z from "zod/mini";
 
 /**
  * RFC-046 Product Core v1 has one persisted event dictionary. Database enum
@@ -56,28 +57,33 @@ export const clientProductAnalyticsEventNames = [
 
 export type ClientProductAnalyticsEventName = (typeof clientProductAnalyticsEventNames)[number];
 
-const boundedText = (maximum: number) => z.string().trim().min(1).max(maximum);
-const optionalUuid = z.uuid().optional();
-const optionalAcquisitionDimension = (maximum: number) => boundedText(maximum)
-  .regex(/^[\p{L}\p{N}][\p{L}\p{N} ._+():-]*$/u)
-  .optional();
-const optionalReferrerHost = boundedText(253)
-  .regex(/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i)
-  .optional();
-const optionalPlacement = boundedText(64).regex(/^[A-Z0-9][A-Z0-9_:-]*$/).optional();
-const pagePath = z.string()
-  .min(1)
-  .max(512)
-  .refine((value) => value.startsWith("/") && !/[?#\r\n]/.test(value), "pagePath must be a query-free site path");
-const locale = z.string().regex(/^[a-z]{2}(?:-[A-Z]{2})?$/).max(16);
+const boundedText = (maximum: number, ...checks: Parameters<ReturnType<typeof z.string>["check"]>) => z.string()
+  .check(z.trim(), z.minLength(1), z.maxLength(maximum), ...checks);
+const optionalUuid = z.optional(z.uuid());
+const optionalAcquisitionDimension = (maximum: number) => z.optional(boundedText(
+  maximum,
+  z.regex(/^[\p{L}\p{N}][\p{L}\p{N} ._+():-]*$/u),
+));
+const optionalReferrerHost = z.optional(boundedText(
+  253,
+  z.regex(/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i),
+));
+const optionalPlacement = z.optional(boundedText(64, z.regex(/^[A-Z0-9][A-Z0-9_:-]*$/)));
+const pagePath = z.string().check(
+  z.minLength(1),
+  z.maxLength(512),
+  z.refine((value) => value.startsWith("/") && !/[?#\r\n]/.test(value), "pagePath must be a query-free site path"),
+);
+const locale = z.string().check(z.regex(/^[a-z]{2}(?:-[A-Z]{2})?$/), z.maxLength(16));
+const boundedInt = (maximum: number) => z.optional(z.int().check(z.minimum(1), z.maximum(maximum)));
 
-export const clientAnalyticsEventSchema = z.object({
+export const clientAnalyticsEventSchema = z.strictObject({
   eventId: z.uuid(),
   schemaVersion: z.literal(1),
   name: z.enum(clientProductAnalyticsEventNames),
   occurredAt: z.iso.datetime({ offset: true }),
-  pagePath: pagePath.optional(),
-  locale: locale.optional(),
+  pagePath: z.optional(pagePath),
+  locale: z.optional(locale),
   referrerHost: optionalReferrerHost,
   acquisitionSource: optionalAcquisitionDimension(64),
   utmSource: optionalAcquisitionDimension(100),
@@ -88,9 +94,9 @@ export const clientAnalyticsEventSchema = z.object({
   casinoId: optionalUuid,
   affiliateOfferId: optionalUuid,
   placement: optionalPlacement,
-  position: z.number().int().min(1).max(1000).optional(),
-  programmeStep: z.number().int().min(1).max(10).optional(),
-}).strict().superRefine((event, context) => {
+  position: boundedInt(1000),
+  programmeStep: boundedInt(10),
+}).check(z.superRefine((event, context) => {
   const programmeStepEvent = event.name === "programme_step_viewed";
   if (programmeStepEvent !== (event.programmeStep !== undefined)) {
     context.addIssue({
@@ -126,7 +132,7 @@ export const clientAnalyticsEventSchema = z.object({
   if ((event.name === "commercial_card_viewed" || event.name === "casino_review_clicked") && event.casinoId === undefined) {
     context.addIssue({ code: "custom", path: ["casinoId"], message: "casinoId is required for this interaction" });
   }
-});
+}));
 
 export type ClientProductAnalyticsEvent = z.infer<typeof clientAnalyticsEventSchema>;
 

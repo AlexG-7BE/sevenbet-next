@@ -36,6 +36,28 @@ test("a casino the licence register admits in GB is referral-ready without the p
   }
 });
 
+test("with the casino slug the register decides without loading any casino record", async () => {
+  const untouched = new GbCommercialReadinessService(
+    { findById: async () => assert.fail("findById"), findManyByIds: async () => assert.fail("findManyByIds") } as never,
+    { findExact: () => null },
+  );
+  const withSlug = request({ casinoSlug: "playojo" });
+  assert.equal((await untouched.evaluate(withSlug)).referralReady, true);
+  assert.equal((await untouched.evaluateMany([withSlug])).get("casino-id")?.referralReady, true);
+
+  // Casinos the register does not decide still take the evidence chain, next to decided ones.
+  const loaded: string[][] = [];
+  const casino = { id: "closed-id", slug: "goldenplay", domain: "goldenplay.example" } as unknown as CasinoDomain;
+  const mixed = new GbCommercialReadinessService(
+    { findById: async () => casino, findManyByIds: async (ids: string[]) => { loaded.push(ids); return [casino]; } } as never,
+    { findExact: () => null },
+  );
+  const decisions = await mixed.evaluateMany([withSlug, request({ casinoId: "closed-id", casinoSlug: "goldenplay" })]);
+  assert.deepEqual(loaded, [["closed-id"]]);
+  assert.equal(decisions.get("casino-id")?.referralReady, true);
+  assert.equal(decisions.get("closed-id")?.referralReady, false);
+});
+
 test("the register never opens GB for a casino without a UKGC licence or without jurisdiction", async () => {
   for (const slug of ["goldenplay", "playuzu", "betsson"]) {
     assert.equal((await service(slug).evaluate(request())).referralReady, false, slug);

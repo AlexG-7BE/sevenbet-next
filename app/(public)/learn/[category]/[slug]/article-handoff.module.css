@@ -1,6 +1,7 @@
 .page blockquote { max-width:24ch; margin:56px 0; font-family:var(--font-seven-serif),Georgia,serif; font-size:clamp(28px,3vw,44px); font-style:italic; line-height:1.05; }
 .hero { min-height:545px; padding:156px var(--site-gutter) 64px; }
-.breadcrumbs { margin-bottom:30px; }
+/* The arrow shares the links' text baseline, also when phone links grow to 44px touch targets. */
+.breadcrumbs { margin-bottom:30px; align-items:baseline; }
 .breadcrumbs a:last-child { color:var(--sb-acid); font-weight:750; letter-spacing:.16em; text-transform:uppercase; }
 .heroGrid { display:grid; grid-template-columns:1fr; gap:0; }
 .heroGrid h1 { max-width:18ch; font-size:clamp(50px,4.8vw,76px); }
@@ -60,6 +61,13 @@
 .offerBridge > div { display:flex; flex-wrap:wrap; gap:12px; }
 .offerBridge > div a:last-child { border:1px solid rgba(250,250,247,.5); background:transparent; color:#fafaf7; }
 .offerBridge small { margin-top:16px; display:block; color:rgba(250,250,247,.6); font-size:13px; line-height:1.5; }
+/* Founder decision 25 Sep 2026 (package C): a light early bridge that must not dominate the guide. */
+.offerBridgeCompact { margin:8px 0 40px; padding:14px 18px 12px; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px 20px; border:1px solid rgba(16,15,15,.12); border-left:3px solid #777500; border-radius:14px; background:#f4f1eb; }
+.offerBridgeCompact > p { margin:0; color:#100f0f; font-size:16px; font-weight:700; line-height:1.4; }
+.offerBridgeCompact > div { display:flex; flex-wrap:wrap; gap:8px 10px; }
+.offerBridgeCompact a { min-height:44px; padding:0 16px; display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(16,15,15,.25); border-radius:999px; background:#fafaf7; color:#100f0f; font-size:16px; font-weight:700; text-decoration:none; white-space:nowrap; }
+.offerBridgeCompact a:hover { border-color:#100f0f; }
+.offerBridgeCompact small { grid-column:1 / -1; display:block; color:#64635c; font-size:12px; line-height:1.5; }
 @media(max-width:800px) {
   .heroSummary dl { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .heroSummary dl div { display:block; }
@@ -72,6 +80,7 @@
   .articleBody h2 { margin:0 0 24px; }
   .conversion { padding:28px 24px; }
   .related ol { grid-template-columns:1fr; }
+  .offerBridgeCompact { grid-template-columns:minmax(0,1fr); }
 }
 @media(max-width:520px) {
   .hero { min-height:0; padding:108px 24px 64px; }
@@ -88,5 +97,6 @@
   .conversion dd { overflow-wrap:anywhere; }
   .articleReview { align-items:flex-start; flex-direction:column; }
   .checklist { padding:28px 22px; }
+  .offerBridgeCompact { padding:14px 16px 12px; }
   .commercial { padding:90px 24px; }
 }

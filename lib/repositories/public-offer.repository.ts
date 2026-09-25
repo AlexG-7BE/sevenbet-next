@@ -52,13 +52,12 @@ async function projectEditorialOffers(
   });
 }
 
+// Keyed by market only: the projection does not depend on the page language, and a language
+// in the key would make every market × language pair rebuild it separately.
 const cachedEditorialOffers = publicEditorialCache(
-  async (countryCode: string | null, presentationLanguage: string | null) => projectEditorialOffers(
+  async (countryCode: string | null) => projectEditorialOffers(
     publicCasinoRepository,
-    {
-      ...(countryCode ? { countryCode } : {}),
-      ...(presentationLanguage ? { presentationLanguage } : {}),
-    },
+    countryCode ? { countryCode } : {},
   ),
   ["public-offer-editorial-projection-v1"],
   [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
@@ -72,10 +71,7 @@ export class PublicOfferRepository implements PublicOfferStore {
 
   async listOffers(options: { countryCode?: string; presentationLanguage?: string } = {}) {
     if (this.casinoStore === publicCasinoRepository && this.options.now === undefined) {
-      return cachedEditorialOffers(
-        options.countryCode?.trim().toUpperCase() || null,
-        options.presentationLanguage?.trim() || null,
-      );
+      return cachedEditorialOffers(options.countryCode?.trim().toUpperCase() || null);
     }
     return projectEditorialOffers(this.casinoStore, options, this.options.now);
   }

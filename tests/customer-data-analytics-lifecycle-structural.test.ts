@@ -87,7 +87,7 @@ test("analytics has one closed relational dictionary with no arbitrary JSON or P
   );
   assert.equal((eventNames.match(/^\s+"[a-z_]+",?$/gm) ?? []).length, 22);
   assert.doesNotMatch(dictionary, /programme_start_clicked|programme_home_viewed/);
-  assert.match(dictionary, /\.strict\(\)/);
+  assert.match(dictionary, /export const clientAnalyticsEventSchema = z\.strictObject\(/);
   assert.match(dictionary, /query-free site path/);
   assert.doesNotMatch(dictionary, /email:\s*z\.|password:\s*z\.|token:\s*z\./);
 });
@@ -366,8 +366,8 @@ test("configuration and schedules are explicit and environment-isolated", () => 
   assert.equal(schedules.crons?.some((cron) => cron.path === "/api/internal/cron/customer-lifecycle" && Boolean(cron.schedule)), true);
 });
 
-test("undecided visitors see the analytics choice on arrival, outside focused flows and without losing focus", async () => {
-  const { shouldAutoOpenPrivacyChoice } = await import("../lib/analytics/consent-prompt");
+test("undecided visitors see the analytics choice after their first scroll or a short delay, outside focused flows and without losing focus", async () => {
+  const { PRIVACY_CHOICE_AUTO_OPEN_DELAY_MS, PRIVACY_CHOICE_SCROLL_THRESHOLD_PX, shouldAutoOpenPrivacyChoice } = await import("../lib/analytics/consent-prompt");
   const base = { pathname: "/best-offers", consentState: "unknown" as const, dismissed: false, automated: false, automationOptIn: false };
   assert.equal(shouldAutoOpenPrivacyChoice(base), true);
   assert.equal(shouldAutoOpenPrivacyChoice({ ...base, consentState: "granted" }), false);
@@ -385,6 +385,12 @@ test("undecided visitors see the analytics choice on arrival, outside focused fl
   assert.match(banner, /if \(editing && !autoOpened\.current\) closeRef\.current\?\.focus\(\);/);
   assert.match(banner, /writeSession\(PRIVACY_CHOICE_DISMISSED_KEY, "1"\);/);
   assert.match(banner, /automated: navigator\.webdriver === true/);
+  // Founder decision 25 Sep 2026 (B3): the first screen stays clear until the first scroll or 5 seconds.
+  assert.equal(PRIVACY_CHOICE_AUTO_OPEN_DELAY_MS, 5000);
+  assert.equal(PRIVACY_CHOICE_SCROLL_THRESHOLD_PX, 24);
+  assert.match(banner, /window\.setTimeout\(reveal, PRIVACY_CHOICE_AUTO_OPEN_DELAY_MS\)/);
+  assert.match(banner, /window\.addEventListener\("scroll", onScroll, \{ passive: true \}\)/);
+  assert.match(banner, /return \(\) => \{\s*armed = false;\s*window\.removeEventListener\("scroll", onScroll\);\s*window\.clearTimeout\(timer\);/);
 });
 
 test("analytics choice is a compact site-style banner opened from the footer, localised for every market", async () => {
@@ -410,9 +416,13 @@ test("analytics choice is a compact site-style banner opened from the footer, lo
   assert.doesNotMatch(consentCss, /#101a23|Inter|border-radius: 1rem/);
 
   const english = analyticsConsentMessages("en-GB");
-  assert.equal(english.trigger, "Privacy choices");
-  assert.equal(english.dialogLabel, "Analytics privacy choices");
-  assert.match(english.detail, /email, Programme answers or partner tracking tokens/);
+  assert.equal(english.trigger, "Cookie settings");
+  assert.equal(english.dialogLabel, "Cookie settings");
+  // Founder decision 25 Sep 2026: people know "cookies", not "analytics".
+  assert.equal(english.allow, "Accept cookies");
+  assert.equal(english.decline, "Reject cookies");
+  assert.match(english.body, /our own cookies/);
+  assert.match(english.detail, /email, Programme answers or partner tokens/);
   // The exclusion statement stays on screen at every width.
   assert.match(banner, /<span className="analyticsConsentDetail">\{text\.detail\}<\/span>/);
   assert.doesNotMatch(consentCss, /analyticsConsentDetail[^{]*\{[^}]*display: none/);

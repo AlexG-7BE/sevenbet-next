@@ -2,12 +2,43 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import type { PublicArticle } from "../lib/articles/article-types";
 import generatedPages from "../lib/final-handoff/generated-pages.json";
 import { transformBonusGuideHandoff, transformCommonHandoff } from "../lib/final-handoff/transforms";
 
 const read = (path: string) => readFileSync(path, "utf8");
 const route = read("app/(public)/bonus-guide/page.tsx");
 const document = transformBonusGuideHandoff(transformCommonHandoff(generatedPages.article.html));
+const publishedGuide = (slug: string, category: string, title: string): PublicArticle => ({
+  id: `00000000-0000-4000-8000-${String(slug.length).padStart(12, "0")}`,
+  slug,
+  locale: "en-GB",
+  title,
+  excerpt: "A published guide used as a Read next fixture.",
+  category,
+  tags: [],
+  status: "PUBLISHED",
+  bodyBlocks: [{ id: "intro", type: "paragraph", text: "Visible body." }],
+  heroImageUrl: null,
+  heroImageAlt: null,
+  seoTitle: null,
+  seoDescription: null,
+  canonicalUrl: null,
+  readingTime: "4 min read",
+  difficulty: null,
+  publishedAt: "2026-09-17T00:00:00.000Z",
+  lastReviewedAt: null,
+  archivedAt: null,
+  createdAt: "2026-09-17T00:00:00.000Z",
+  updatedAt: "2026-09-17T00:00:00.000Z",
+  createdBy: "00000000-0000-4000-8000-000000000002",
+  updatedBy: "00000000-0000-4000-8000-000000000002",
+});
+const readNext = [
+  publishedGuide("wagering-requirements", "casino-bonuses", "Wagering requirements"),
+  publishedGuide("payments-withdrawals", "payments", "Payments and withdrawals"),
+];
+const documentWithReadNext = transformBonusGuideHandoff(transformCommonHandoff(generatedPages.article.html), { readNext });
 const css = generatedPages.article.css;
 const publicLayout = read("app/(public)/layout.tsx");
 
@@ -15,7 +46,7 @@ test("Bonus Guide is a standalone server-rendered document inside the Public She
   assert.doesNotMatch(route + document, /["']use client["']|useEffect|useState|localStorage|sessionStorage/);
   assert.match(publicLayout, /<PublicHeader[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<PublicFooter/);
   assert.equal((document.match(/<h1\b/g) ?? []).length, 1);
-  assert.match(route, /<HandoffPage name="article" transform=\{\(html\) => transformBonusGuideHandoff\(html, \{ offerBridge: bridge \}\)\} \/>/);
+  assert.match(route, /<HandoffPage headerAutoHide name="article" transform=\{\(html\) => transformBonusGuideHandoff\(html, \{ offerBridge: bridge, readNext \}\)\} \/>/);
   assert.doesNotMatch(document, /PublicHeader|PublicFooter/);
 });
 
@@ -62,11 +93,23 @@ test("document order and transitions stay within Learn, Help and Programme", () 
   const order = ["The hypothetical 35x example", "Comparing fictional examples", "Game weighting", "Comparing turnover", "The checklist", "Current primary sources", "Read next", "Beyond reading"];
   let cursor = -1;
   for (const marker of order) {
-    const index = document.indexOf(marker, cursor + 1);
+    const index = documentWithReadNext.indexOf(marker, cursor + 1);
     assert.ok(index > cursor, marker);
     cursor = index;
   }
   for (const href of ['href="/learn"', 'href="/help"', 'href="/program\\?entry=start"']) assert.match(document, new RegExp(href));
+});
+
+test("Read next shows only real published guides, in dark ink, and disappears when there are none", () => {
+  const fake = /Free spins: value, weighting and the fine print|How casino payouts really work|Session limits that actually hold|\/learn\?category=/;
+  assert.doesNotMatch(documentWithReadNext, fake);
+  assert.doesNotMatch(document, fake);
+  assert.doesNotMatch(document, /data-screen-label="Read next"/);
+  assert.equal((documentWithReadNext.match(/data-bonus-guide-read-next=""/g) ?? []).length, 2);
+  assert.match(documentWithReadNext, /<a href="\/learn\/casino-bonuses\/wagering-requirements" class="scp2" data-bonus-guide-read-next="" style="display: block;[^"]*color: rgb\(16, 15, 15\);/);
+  assert.match(documentWithReadNext, />Casino Bonuses<\/div>\s*<div [^>]*>Wagering requirements<\/div>\s*<div [^>]*>4 min read<\/div>/);
+  assert.match(documentWithReadNext, /href="\/learn\/payments\/payments-withdrawals"/);
+  assert.match(route, /bonusGuideReadNextSelection\(await articleService\.listPublished\("en-GB"/);
 });
 
 test("responsive reading layout gives the wide table a keyboard-scroll region", () => {

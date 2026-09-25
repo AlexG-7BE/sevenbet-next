@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
 
 import { JsonLd } from "@/components/seo/JsonLd";
+import { offerBridgeKind } from "@/lib/articles/article-bridges";
 import { articlePath, type PublicArticle } from "@/lib/articles/article-types";
 import { relatedReadingListInput, relatedReadingSelection } from "@/lib/articles/related-reading";
 import { learnBridgeMessages } from "@/lib/i18n/learn-bridges-catalog";
@@ -107,19 +108,28 @@ export default async function LearningArticlePage({ params }: { params: Promise<
   </>;
 }
 
-/** Bonus guides lead to the public offer pages wherever published offers may be presented. */
+/**
+ * Bonus guides lead to Bonuses and Best Offers; casino-choice and payment guides
+ * lead to Casinos and Best Offers — only where published offers may be presented.
+ * Protected guides have no offer bridge.
+ */
 function offerBridgeFor(article: PublicArticle, presentation: PresentationResolution): LearnOfferBridge | null {
-  if (article.category !== "casino-bonuses" || !offersMayBePresented(presentation.marketCountryCode)) return null;
+  const kind = offerBridgeKind(article.category);
+  if (!kind || !offersMayBePresented(presentation.marketCountryCode)) return null;
   const learning = learningMessages(presentation.locale);
   const shell = publicShellMessages(presentation.locale);
+  const bridges = learnBridgeMessages(presentation.locale);
+  const casinos = kind === "casinos";
   return {
-    title: learning.ui.applyChecklist,
-    body: learnBridgeMessages(presentation.locale).offerBridgeBody,
-    bonusesLabel: shell.bonuses,
+    kind,
+    title: casinos ? bridges.casinoBridgeTitle : learning.ui.applyChecklist,
+    body: casinos ? bridges.casinoBridgeBody : bridges.offerBridgeBody,
+    lead: casinos ? bridges.casinoBridgeLead : bridges.offerBridgeLead,
+    primaryLabel: casinos ? shell.casinos : shell.bonuses,
+    primaryHref: productHref(presentation, casinos ? "/casinos" : "/bonuses"),
     bestOffersLabel: shell.bestOffers,
-    disclosure: learning.ui.commercialDisclosure,
-    bonusesHref: productHref(presentation, "/bonuses"),
     bestOffersHref: productHref(presentation, "/best-offers"),
+    disclosure: learning.ui.commercialDisclosure,
   };
 }
 
