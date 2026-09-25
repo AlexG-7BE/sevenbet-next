@@ -36,8 +36,7 @@ test("activation packets are preparation-only", () => { const operation = Partne
 
 test("commercial implementation has no Programme-domain or public DTO coupling", async () => {
   const repository = await readFile(new URL("../lib/repositories/commercial.repository.ts", import.meta.url), "utf8");
-  const provider = await readFile(new URL("../lib/commercial/partner-operations-provider.ts", import.meta.url), "utf8");
-  assert.doesNotMatch(repository, /programme|userProgress|help usage/i); assert.doesNotMatch(provider, /from ["'][^"']*programme/i);
+  assert.doesNotMatch(repository, /programme|userProgress|help usage/i);
 });
 test("CRM code cannot mutate affiliate runtime authority", async () => { const repository = await readFile(new URL("../lib/repositories/commercial.repository.ts", import.meta.url), "utf8"); assert.doesNotMatch(repository, /affiliateProgram\.(update|create)|affiliateOffer\.(update|create)|affiliateTrackingLink\.(update|create)/); });
 test("prospect, child records, runs and operations have durable idempotency constraints", async () => { const schema = await readFile(new URL("../prisma/schema.prisma", import.meta.url), "utf8"); assert.match(schema, /creationIdempotencyKey\s+String\?\s+@unique/); assert.ok((schema.match(/@@unique\(\[opportunityId, idempotencyKey\]\)/g) ?? []).length >= 6); assert.match(schema, /model CommercialAgentOperation[\s\S]*@@unique\(\[idempotencyKey\]\)/); });

@@ -80,9 +80,10 @@ and pricing source.
 Partner Operations also exports the strict shared CRM contract from
 `src/partner-operations-contract.ts`. `partner-intelligence` remains an input
 compatibility alias that resolves to the canonical `partner-operations`
-definition. The Next.js application—not this package—owns the authenticated,
-transactional executor for the closed safe-operation union described in
-`docs/commercial/PARTNER-OPS-CRM-HANDOFF.md`.
+definition. Since 25 September 2026 the Next.js application has no executor
+for the closed safe-operation union described in
+`docs/commercial/PARTNER-OPS-CRM-HANDOFF.md`: a run's proposed CRM operations
+are advisory output only, and a person records any of them in Admin.
 
 ## Cost-aware routing
 

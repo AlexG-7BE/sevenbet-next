@@ -506,7 +506,6 @@ test("structural boundary contains no parser execution, publication, route creat
   const service = readFileSync(new URL("../lib/media-operations/service.ts", import.meta.url), "utf8");
   const repository = readFileSync(new URL("../lib/media-operations/repository.ts", import.meta.url), "utf8");
   const remoteFetch = readFileSync(new URL("../lib/media-operations/remote-image-fetch.ts", import.meta.url), "utf8");
-  const semantic = readFileSync(new URL("../lib/media-operations/semantic-analysis.ts", import.meta.url), "utf8");
   assert.doesNotMatch(`${service}\n${repository}`, /publishCasino|createRedirect|trackingLink\.create|mediaAsset\.delete|prisma migrate reset/);
   assert.match(repository, /SUBJECT_NOT_DRAFT/);
   assert.match(repository, /CROP_SAFETY_REQUIRED/);
@@ -521,6 +520,5 @@ test("structural boundary contains no parser execution, publication, route creat
   assert.match(remoteFetch, /method: "GET"/);
   assert.match(remoteFetch, /Accept-Encoding": "identity"/);
   assert.doesNotMatch(remoteFetch, /Cookie|Authorization/);
-  assert.match(semantic, /store: false/);
-  assert.match(semantic, /tools: \[\]/);
+  assert.doesNotMatch(service, /api\.openai\.com|OPENAI_API_KEY/);
 });

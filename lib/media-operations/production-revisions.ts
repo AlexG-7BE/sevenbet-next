@@ -365,7 +365,6 @@ export class MediaProductionRevisionService {
       placements: [...input.placements].sort(),
       targets: input.targets.map((target) => ({ ...target, devices: [...target.devices].sort() }))
         .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right))),
-      useSemanticAnalysis: input.useSemanticAnalysis,
       activate: input.activate,
       prepared: prepared.map((source) => ({ ...source, id: undefined })).sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right))),
     });

@@ -367,7 +367,6 @@ function orchestrate(batchId: string, idempotencyKey: string) {
     idempotencyKey,
     targets: [{ countryCode: "KZ", languageCode: "en", languageState: "EXPLICIT", devices: ["DESKTOP", "MOBILE"] }],
     placements: ["CASINO_REVIEW_RIGHT_HERO", "CASINO_DIRECTORY_CARD"],
-    useSemanticAnalysis: false,
     activate: true,
   }, ACTOR);
 }
