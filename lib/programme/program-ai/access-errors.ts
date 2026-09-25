@@ -11,7 +11,7 @@ export function programmeAccessFailureMessageKey(
   failure: ProgrammeAccessFailure = {},
 ): ProgrammeMessageKey {
   if (stage === "authority") {
-    return "We could not verify Programme access. Check both boxes and try again.";
+    return "We could not verify Programme access. Check all three boxes and try again.";
   }
   if (failure.code === "PROGRAM_AI_DISABLED") {
     return "Mission 01 is temporarily unavailable. Your access checks were accepted. Try again later.";

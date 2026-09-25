@@ -168,7 +168,7 @@ test("Programme requires two access checks plus just-in-time consent and returns
   await page.goto("/program", { waitUntil: "networkidle" });
   const checks = page.getByRole("checkbox");
   const enter = page.getByRole("button", { name: "Enter Mission 01" });
-  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
   await expect(checks).toHaveCount(2);
   for (let mask = 0; mask < 4; mask += 1) {
     for (let index = 0; index < 2; index += 1) await checks.nth(index).setChecked(Boolean(mask & (1 << index)));
@@ -178,11 +178,12 @@ test("Programme requires two access checks plus just-in-time consent and returns
   await enter.click();
   await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
   expect(calls.slice(0, 2)).toEqual(["access-proof", "session"]);
-  await expect(page.getByRole("checkbox")).toHaveCount(1);
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
   await page.reload({ waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
   expect(calls).toContain("authority:GET");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
+  // The consent given on the access screen survives the reload and is not asked again.
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
   await page.getByRole("button", { name: "I'd rather type" }).click();
   await page.getByLabel("Your situation").fill(situation);
   await page.getByRole("button", { name: "Create my Starting Point" }).click();

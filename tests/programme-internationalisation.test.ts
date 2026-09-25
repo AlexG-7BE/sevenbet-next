@@ -166,7 +166,7 @@ test("Permissions Policy grants microphone access only on the eleven canonical P
 
 test("Programme access failures remain stage-specific, localized and free of server codes", () => {
   const cases = [
-    ["authority", {}, "We could not verify Programme access. Check both boxes and try again."],
+    ["authority", {}, "We could not verify Programme access. Check all three boxes and try again."],
     ["session", { code: "PROGRAM_AI_DISABLED" }, "Mission 01 is temporarily unavailable. Your access checks were accepted. Try again later."],
     ["session", { code: "INTERNAL_ERROR" }, "Mission 01 could not be started. Try again."],
   ] as const;

@@ -83,22 +83,21 @@ export function ProgrammeUnavailableScreen({ error, locale }: { error: string; l
 export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
   busy: boolean;
   error: string;
-  onConfirm: (processingConsent: boolean) => void;
+  onConfirm: () => void;
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
   const [adult, setAdult] = useState(false);
   const [legal, setLegal] = useState(false);
-  // Founder decision, 25 Sep 2026: the explicit consent can be given here, next to the two
-  // required checks, so Mission 01 opens with a working microphone. It stays optional and
-  // unticked; without it the intake screen asks just in time, as before.
+  // Founder decision, 25 Sep 2026: the explicit consent to process the story is the third
+  // required check here and is asked nowhere else on this route, so Mission 01 opens ready to speak.
   const [processing, setProcessing] = useState(false);
   return (
     <div className={styles.canvas} data-programme-presentation="access">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.accessState}>
           <p className={styles.eyebrow}>{t("Programme access")}</p>
-          <h1 id="programme-access-title"><SerifTail text={t("Two checks before you begin.")} /></h1>
+          <h1 id="programme-access-title"><SerifTail text={t("Three checks before you begin.")} /></h1>
           <section className={styles.accessBoundary} aria-labelledby="programme-access-title">
             <label className={styles.checkRow}>
               <input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" />
@@ -110,9 +109,9 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
             </div>
             <label className={`${styles.checkRow} ${styles.consentRow}`} data-programme-access-consent="">
               <input checked={processing} onChange={(event) => setProcessing(event.target.checked)} type="checkbox" />
-              <span>{t("I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.")} <em>{t("Optional. You can withdraw before saving. Withdrawal stops future processing and clears this draft, but cannot undo processing already completed.")} <Link href="/privacy#ai">{t("Privacy details")}</Link></em></span>
+              <span>{t("I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.")} <small>{t("Required")}</small></span>
             </label>
-            <button className={styles.primaryAction} disabled={busy || !adult || !legal} onClick={() => onConfirm(processing)} type="button">
+            <button className={styles.primaryAction} disabled={busy || !adult || !legal || !processing} onClick={onConfirm} type="button">
               {busy ? t("Verifying access…") : t("Enter Mission 01")}
             </button>
             <p className={styles.legalLinks}><Link href="/terms">{t("Read Terms")}</Link><Link href="/privacy">{t("Read Privacy Notice")}</Link></p>
@@ -385,7 +384,7 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
 }
 
 export function Mission01IntakeScreen({
-  authorityActive,
+  consentGiven,
   busy,
   error,
   situation,
@@ -398,7 +397,8 @@ export function Mission01IntakeScreen({
   inputMode,
   locale,
 }: {
-  authorityActive: boolean;
+  /** The explicit consent was given on the access screen of this journey, or is already on record. */
+  consentGiven: boolean;
   busy: boolean;
   error: string;
   situation: string;
@@ -412,9 +412,9 @@ export function Mission01IntakeScreen({
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
-  const [authority, setAuthority] = useState(authorityActive);
+  const [authority, setAuthority] = useState(consentGiven);
   const [recorderState, setRecorderState] = useState<ProgrammeRecorderState>("idle");
-  useEffect(() => setAuthority(authorityActive), [authorityActive]);
+  useEffect(() => setAuthority(consentGiven), [consentGiven]);
   const textVisible = inputMode === "text" || Boolean(situation);
   const recording = recorderState === "recording";
   return (
@@ -423,7 +423,6 @@ export function Mission01IntakeScreen({
         <div className={styles.intakeState} data-intake-state={recording ? "recording" : textVisible ? "text" : "idle"}>
           {!recording && !textVisible ? <section className={styles.intakeIntro}>
           <p className={styles.eyebrow}>{t("Mission 01")}</p>
-          <span className={styles.srOnly}>{t("Before you share.")}</span>
           <span className={styles.srOnly}>{t("What feels hardest to control right now?")}</span>
           <h1><SerifTail text={t("Tell us what is happening right now.")} /></h1>
           <p>{t("In your own words. A minute is plenty — we'll build your Starting Point from it.")}</p>
@@ -439,10 +438,10 @@ export function Mission01IntakeScreen({
           <button className={styles.primaryAction} disabled={busy || !authority || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} type="button">{t(busy ? "Preparing your Starting Point…" : "Create my Starting Point")}</button>
         </section> : null}
         <StatusMessage error={error} />
-        {!recording ? <aside className={styles.privacyBoundary}>
-          <div><strong>{t("Before you share.")}</strong><span>{t("Your words may reveal health or other sensitive information. Typed input, or audio for transcription, is sent to our AI provider to create a suggested Starting Point. B4GAMBLE does not save the audio or use your words for offers or rankings.")} <Link href="/privacy#ai">{t("Privacy details")}</Link>.</span></div>
-          <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /><span>{t("I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.")}</span></label>
-          <small>{t("Optional. You can withdraw before saving. Withdrawal stops future processing and clears this draft, but cannot undo processing already completed.")}</small>
+        {/* Asked once: only a journey that never reached the access screen's consent (a signed-in
+            person starting Mission 01 from the dashboard) sees it here. */}
+        {!recording && !consentGiven ? <aside className={styles.privacyBoundary}>
+          <label><input checked={authority} disabled={busy} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /><span>{t("I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.")} <Link href="/privacy#ai">{t("Privacy details")}</Link></span></label>
           </aside> : null}
         </div>
       </main>
@@ -480,7 +479,6 @@ export function StartingPointReadyScreen({
   onEmail,
   onGoogle,
   onLinkGoogle,
-  onWithdraw,
   locale,
 }: {
   authenticated: boolean;
@@ -495,7 +493,6 @@ export function StartingPointReadyScreen({
   onEmail: (input: { email: string; password: string; mode: "sign-up" | "sign-in"; marketingAllowed: boolean }) => void;
   onGoogle: () => void;
   onLinkGoogle: () => void;
-  onWithdraw: () => void;
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
@@ -533,9 +530,7 @@ export function StartingPointReadyScreen({
             </form> : null}
           </>}
           <StatusMessage error={error} />
-          <small>{t("Google provides identity only; it does not verify age or receive your Programme words from B4GAMBLE. Programme and Help data never feeds offers or rankings.")}</small>
           {!candidate && onBack && !googleLinkRecovery ? <button className={styles.typingAction} disabled={busy} onClick={onBack} type="button">{t("← Tell my story first")}</button> : null}
-          {!authenticated && !googleLinkRecovery ? <button className={styles.withdrawAction} disabled={busy} onClick={onWithdraw} type="button">{t("Withdraw consent and clear this draft")}</button> : null}
           </section>
         </div>
       </main>

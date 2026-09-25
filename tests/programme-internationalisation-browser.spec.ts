@@ -367,9 +367,9 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
     await expect(page.locator("html")).toHaveAttribute("lang", route.locale);
     await expect(page.locator('[data-programme-presentation="loading"]')).toBeVisible();
     await expect(page.locator('[data-programme-presentation="access"]')).toBeVisible();
-    await expect(page.getByRole("heading", { name: t(route.locale, "Two checks before you begin.") })).toBeVisible();
+    await expect(page.getByRole("heading", { name: t(route.locale, "Three checks before you begin.") })).toBeVisible();
     await expect(page.locator(`[data-programme-presentation="access"] a[href="${programmeHelpPath(route.locale)}"]`).first()).toBeVisible();
-    await assertNoRepresentativeEnglishLeakage(page, route.locale, ["Two checks before you begin.", "I confirm I am 18 or over", "Enter Mission 01"]);
+    await assertNoRepresentativeEnglishLeakage(page, route.locale, ["Three checks before you begin.", "I confirm I am 18 or over", "Enter Mission 01"]);
     await assertRenderedQuality(page, `${route.locale}:access:${mobile ? "mobile" : "desktop"}`);
 
     const adult = page.getByRole("checkbox", { name: new RegExp(t(route.locale, "I confirm I am 18 or over")) });
@@ -377,9 +377,9 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
     await expect(adult).toBeFocused();
     await adult.check();
     await page.getByRole("checkbox", { name: new RegExp(t(route.locale, "I agree to the Terms and confirm I have read the Privacy Notice")) }).check();
+    await page.getByRole("checkbox", { name: t(route.locale, "I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.") }).check();
     await page.getByRole("button", { name: t(route.locale, "Enter Mission 01") }).click();
     await expect(page.locator('[data-programme-presentation="mission-01-intake"]')).toBeVisible();
-    await page.getByRole("checkbox", { name: t(route.locale, "I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.") }).check();
     await expect(page.getByRole("button", { name: t(route.locale, "Tap to speak") })).toBeEnabled();
     await page.getByRole("button", { name: t(route.locale, "I'd rather type") }).click();
     const textarea = page.getByRole("textbox", { name: t(route.locale, "Your situation") });
