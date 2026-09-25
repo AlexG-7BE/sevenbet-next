@@ -31,15 +31,16 @@ Programme, Help, GEO, legal or commercial authority.
 
 - The Vercel Analytics package/root runtime is absent.
 - A first-party consent component explains the purpose and offers equally
-  accessible decline/allow controls plus a persistent Privacy choices control.
+  accessible reject/accept controls plus a persistent Cookie settings control.
   Since 25 September 2026 the control sits in the public footer of every
   public and Programme page, and the choice is localised in every supported
   market. It replaces the floating right-edge tab. The choice uses the public
   site's visual system; equal-size Decline and Allow buttons and a "Not now"
   close control. The exclusion statement (email, Programme answers, partner
   tokens) stays visible at every width. Also since 25 September 2026, a
-  visitor without a recorded choice sees it on arrival, except on the
-  Programme, Help, sign-in and staff routes. It is non-modal and takes no
+  visitor without a recorded choice sees it after their first scroll or
+  five seconds on the page, except on the Programme, Help, sign-in and staff
+  routes. It is non-modal and takes no
   focus. "Not now" only hides it for the tab session and records nothing, and
   no analytics identifier or event is created before Allow.
 - The signed consent cookie is browser-readable only as a UI hint. Opaque
@@ -91,7 +92,7 @@ Programme, Help, GEO, legal or commercial authority.
 
 The public choice states that analytics is first party and excludes email,
 Programme answers and partner tokens. Decline is available before collection.
-Privacy choices remains available after either decision. A denial clears
+Cookie settings remains available after either decision. A denial clears
 anonymous/session identifiers. If preference persistence is unavailable, the
 UI reports failure and no client event is accepted.
 
