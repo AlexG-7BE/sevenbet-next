@@ -86,7 +86,7 @@ counts: GB 19, SE 15, DK 10, DE 2.
 Every catalogue casino must have an entry. A casino missing from the register
 is closed wherever a local licence is required.
 
-## 3a. Great Britain (proposed with PR, Founder decision pending)
+## 3a. Great Britain (Founder decision, 25 September 2026)
 
 Until now a GB button or redirect also needed the RFC-014/015 per-casino
 evidence chain: an operator profile, a partner-agreement record in the
