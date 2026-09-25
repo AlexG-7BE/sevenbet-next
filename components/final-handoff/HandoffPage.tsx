@@ -34,6 +34,7 @@ export function HandoffPage({
   cssTransform,
   kind,
   effective,
+  headerAutoHide = false,
   programmePath = "/program",
   updated,
 }: {
@@ -42,6 +43,8 @@ export function HandoffPage({
   cssTransform?: (css: string) => string;
   kind?: "privacy" | "terms";
   effective?: string;
+  /** Long mobile reading pages let the fixed header give its height back while scrolling down. */
+  headerAutoHide?: boolean;
   programmePath?: string;
   updated?: string;
 }) {
@@ -52,7 +55,7 @@ export function HandoffPage({
   const css = name === "home" ? `${sourceCss}\n${HOME_STACK_COMPOSITOR_FIX}` : sourceCss;
 
   return (
-    <div data-document-effective={effective} data-document-kind={kind} data-document-updated={updated} data-handoff-page={name} data-legal-document={kind}>
+    <div data-document-effective={effective} data-document-kind={kind} data-document-updated={updated} data-handoff-page={name} data-header-autohide={headerAutoHide ? "" : undefined} data-legal-document={kind}>
       <NonceStyle>{css}</NonceStyle>
       <div dangerouslySetInnerHTML={{ __html: html }} />
       <HandoffInteractions name={name} programmePath={programmePath} />

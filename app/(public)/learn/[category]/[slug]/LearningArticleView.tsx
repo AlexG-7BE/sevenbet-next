@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 
-import { midArticleBridgeIndex } from "@/lib/articles/article-bridges";
+import { earlyOfferBridgeIndex, midArticleBridgeIndex, type OfferBridgeKind } from "@/lib/articles/article-bridges";
 import { articlePath, type AdminArticle, type ArticleBlock, type PublicArticle } from "@/lib/articles/article-types";
 import type { LearningMessages } from "@/lib/i18n/learning-center";
 import { PublicLinkPendingSignal } from "@/components/public-shell/PublicNavigationFeedback";
@@ -14,21 +14,35 @@ function headingId(block: Extract<ArticleBlock, { type: "heading" }>) {
 }
 
 export type LearnOfferBridge = Readonly<{
+  /** Bonus guides lead to Bonuses; casino-choice and payment guides lead to Casinos. */
+  kind: OfferBridgeKind;
+  /** Closing bridge title and body. */
   title: string;
   body: string;
-  bonusesLabel: string;
+  /** The compact early bridge's single line. */
+  lead: string;
+  primaryLabel: string;
+  primaryHref: string;
   bestOffersLabel: string;
-  disclosure: string;
-  bonusesHref: string;
   bestOffersHref: string;
+  disclosure: string;
 }>;
 
 function ProgrammeBridge({ hub, href }: { hub: readonly string[]; href: string }) {
   return <aside aria-label={hub[20]} className={handoffStyles.programmeBridge} data-learn-programme-bridge="article"><p>{hub[20]}</p><strong>{hub[21]} <em>{hub[22]}</em></strong><p>{hub[23]}</p><Link href={href} prefetch={false}>{hub[24]}</Link></aside>;
 }
 
+function OfferBridgeLinks({ bridge }: { bridge: LearnOfferBridge }) {
+  return <div><Link data-learn-offer-bridge-link={bridge.kind} href={bridge.primaryHref} prefetch={false}>{bridge.primaryLabel} <span aria-hidden="true">→</span></Link><Link data-learn-offer-bridge-link="best-offers" href={bridge.bestOffersHref} prefetch={false}>{bridge.bestOffersLabel} <span aria-hidden="true">→</span></Link></div>;
+}
+
 function OfferBridge({ bridge }: { bridge: LearnOfferBridge }) {
-  return <aside aria-label={bridge.title} className={handoffStyles.offerBridge} data-learn-offer-bridge=""><p>{bridge.title}</p><p>{bridge.body}</p><div><Link data-learn-offer-bridge-link="bonuses" href={bridge.bonusesHref} prefetch={false}>{bridge.bonusesLabel} <span aria-hidden="true">→</span></Link><Link data-learn-offer-bridge-link="best-offers" href={bridge.bestOffersHref} prefetch={false}>{bridge.bestOffersLabel} <span aria-hidden="true">→</span></Link></div><small>{bridge.disclosure}</small></aside>;
+  return <aside aria-label={bridge.title} className={handoffStyles.offerBridge} data-learn-offer-bridge=""><p>{bridge.title}</p><p>{bridge.body}</p><OfferBridgeLinks bridge={bridge} /><small>{bridge.disclosure}</small></aside>;
+}
+
+/** Founder decision 25 Sep 2026 (package C): a light one-line bridge after the introduction, before the first section heading. */
+function OfferBridgeCompact({ bridge }: { bridge: LearnOfferBridge }) {
+  return <aside aria-label={bridge.lead} className={handoffStyles.offerBridgeCompact} data-learn-offer-bridge="early"><p>{bridge.lead}</p><OfferBridgeLinks bridge={bridge} /><small>{bridge.disclosure}</small></aside>;
 }
 
 function isExternal(url: string) {
@@ -69,27 +83,28 @@ export function LearningArticleView({ article, categoryTitle, relatedArticles = 
   hrefFor: (href: string) => string;
   programmePath: string;
   preview?: boolean;
-  /** Bonus guides only, and only where published offers may be presented. */
+  /** Bonus, casino-choice and payment guides only, and only where published offers may be presented. */
   offerBridge?: LearnOfferBridge | null;
 }) {
   const headings = article.bodyBlocks.filter((block): block is Extract<ArticleBlock, { type: "heading" }> => block.type === "heading");
   const published = article.publishedAt ? new Intl.DateTimeFormat(article.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(article.publishedAt)) : "Not published";
   const reviewed = article.lastReviewedAt ? new Intl.DateTimeFormat(article.locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(article.lastReviewedAt)) : null;
   const protectedCategory = article.category === "responsible-gambling";
-  // Protected guides keep their neutral support route; bonus guides lead to offers instead of a second Programme block.
+  // Protected guides keep their neutral support route; offer-bridged guides lead to offers instead of a second Programme block.
   const programmeBridgeAt = protectedCategory || offerBridge ? -1 : midArticleBridgeIndex(article.bodyBlocks);
+  const earlyOfferBridgeAt = offerBridge && !protectedCategory ? earlyOfferBridgeIndex(article.bodyBlocks) : -1;
 
-  return <article className={`${styles.page} ${handoffStyles.page}`} data-article-id={article.id} data-article-updated-at={article.updatedAt} data-learning-article data-figma-authority="633:4341" data-runtime-renderer="postgresql-learn-article">
+  return <article className={`${styles.page} ${handoffStyles.page}`} data-article-id={article.id} data-article-updated-at={article.updatedAt} data-learning-article data-figma-authority="633:4341" data-runtime-renderer="postgresql-learn-article" data-header-autohide="">
     <header className={`${styles.hero} ${handoffStyles.hero} ${article.heroImageUrl ? styles.heroWithImage : ""}`} data-nav-theme="dark">
       {article.heroImageUrl && <img alt={article.heroImageAlt || ""} className={styles.heroImage} height={900} src={article.heroImageUrl} width={1600} />}
       <div className={styles.heroContent}>
         <nav className={`${styles.breadcrumbs} ${handoffStyles.breadcrumbs}`} aria-label={messages.ui.breadcrumb}><Link href={hrefFor("/learn")}>{messages.ui.learn}</Link><span aria-hidden="true">→</span><Link href={hrefFor(`/learn/${article.category}`)}>{categoryTitle}</Link></nav>
-        <div className={`${styles.heroGrid} ${handoffStyles.heroGrid}`}><div><p className={styles.kicker}>{preview ? "Authenticated draft preview" : categoryTitle}</p><h1>{article.title}</h1></div><div className={`${styles.heroSummary} ${handoffStyles.heroSummary}`}><p>{article.excerpt}</p><dl><div><dt>Published</dt><dd>{published}</dd></div>{reviewed && <div><dt>Reviewed</dt><dd>{reviewed}</dd></div>}{article.readingTime && <div><dt>{messages.ui.readingTime}</dt><dd>{article.readingTime}</dd></div>}{article.difficulty && <div><dt>Level</dt><dd>{article.difficulty}</dd></div>}</dl></div></div>
+        <div className={`${styles.heroGrid} ${handoffStyles.heroGrid}`}><div>{preview ? <p className={styles.kicker}>Authenticated draft preview</p> : null}<h1>{article.title}</h1></div><div className={`${styles.heroSummary} ${handoffStyles.heroSummary}`}><p>{article.excerpt}</p><dl><div><dt>Published</dt><dd>{published}</dd></div>{reviewed && <div><dt>Reviewed</dt><dd>{reviewed}</dd></div>}{article.readingTime && <div><dt>{messages.ui.readingTime}</dt><dd>{article.readingTime}</dd></div>}{article.difficulty && <div><dt>Level</dt><dd>{article.difficulty}</dd></div>}</dl></div></div>
       </div>
     </header>
     <div className={`${styles.readingLayout} ${handoffStyles.readingLayout}`} data-nav-theme="light">
       <aside className={`${styles.toc} ${handoffStyles.toc}`} aria-label={messages.ui.onThisPage}><p className={styles.kicker}>{messages.ui.onThisPage}</p>{headings.length ? <ol>{headings.map((heading, index) => <li key={heading.id}><a href={`#${headingId(heading)}`}>{String(index + 1).padStart(2, "0")} {heading.text}</a></li>)}</ol> : <p>Structured guide</p>}{protectedCategory && <div className={handoffStyles.supportCard}><strong>Control & support</strong><p>Need a neutral next step away from gambling content?</p><Link href={hrefFor("/help")}>Open protected Help →</Link></div>}</aside>
-      <div className={`${styles.articleBody} ${handoffStyles.articleBody}`}>{article.bodyBlocks.map((block, index) => <Fragment key={block.id}>{index === programmeBridgeAt ? <ProgrammeBridge hub={messages.hub} href={`${programmePath}?entry=start`} /> : null}<ArticleBlockView block={block} /></Fragment>)}{offerBridge && !protectedCategory ? <OfferBridge bridge={offerBridge} /> : null}<div className={handoffStyles.articleReview}><span>Published {published}{reviewed ? ` · reviewed ${reviewed}` : ""}</span><Link href={hrefFor("/methodology")}>Editorial methodology →</Link></div></div>
+      <div className={`${styles.articleBody} ${handoffStyles.articleBody}`}>{article.bodyBlocks.map((block, index) => <Fragment key={block.id}>{index === programmeBridgeAt ? <ProgrammeBridge hub={messages.hub} href={`${programmePath}?entry=start`} /> : null}{offerBridge && index === earlyOfferBridgeAt ? <OfferBridgeCompact bridge={offerBridge} /> : null}<ArticleBlockView block={block} /></Fragment>)}{offerBridge && !protectedCategory ? <OfferBridge bridge={offerBridge} /> : null}<div className={handoffStyles.articleReview}><span>Published {published}{reviewed ? ` · reviewed ${reviewed}` : ""}</span><Link href={hrefFor("/methodology")}>Editorial methodology →</Link></div></div>
     </div>
     {relatedArticlesSlot ?? <LearningArticleRelated hrefFor={hrefFor} messages={messages} relatedArticles={relatedArticles} />}
     {protectedCategory ? <aside className={styles.protectedBridge} aria-label={messages.ui.controlSupport} data-nav-theme="dark"><div><p className={styles.kicker}>{messages.ui.controlSupport}</p><h2>{messages.ui.neutralNextStep}</h2></div><div><p>{messages.ui.responsibleNoTransition}</p><div className={styles.protectedActions}><Link href={hrefFor("/responsible-gambling")}>{messages.ui.exploreResponsible} <span aria-hidden="true">↗</span></Link><Link href={hrefFor("/help")}>{messages.ui.openHelp} <span aria-hidden="true">↗</span></Link></div></div></aside> : <aside className={`${styles.commercial} ${handoffStyles.commercial}`} aria-label={messages.ui.optionalTransition} data-nav-theme="dark"><div><p className={styles.kicker}>{messages.ui.afterAnswer}</p><h2>KNOWLEDGE IS HALF OF IT.<em>The plan is the other half.</em></h2></div><div><p>Turn what you have read into boundaries you can use.</p><Link href={programmePath}>Start Programme</Link></div></aside>}
