@@ -57,12 +57,13 @@
 .empty { padding: 72px 0; border-top: 1px solid var(--sb-line-dark-2); }
 .empty strong { color: rgba(250, 250, 247, .5); font-family: var(--font-seven-serif), Georgia, serif; font-size: 28px; font-style: italic; font-weight: 400; line-height: 1.25; }
 
-/* Founder, 25 Sep 2026: on desktop too, search and filters follow the scroll as they do on phones. */
+/* Founder, 25 Sep 2026: on desktop too, search and filters follow the scroll as they do on phones,
+   and an acid line separates the sticky block from the cards beneath it (phone rule too). */
 @media (min-width: 1001px) {
-  .controls { position: sticky; top: var(--sb-header-offset); z-index: 30; padding-bottom: 16px; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 20px 48px; border-bottom: 1px solid var(--sb-line-dark); background: var(--night); transition: top 220ms var(--ease); }
+  .controls { position: sticky; top: var(--sb-header-offset); z-index: 30; padding-bottom: 16px; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 20px 48px; border-bottom: 2px solid var(--acid); background: var(--night); transition: top 220ms var(--ease); }
 }
 @media (max-width: 1000px) {
-  .controls { position: sticky; top: var(--sb-header-offset); z-index: 30; margin: 0 calc(var(--public-outer-gutter) * -1); padding: 10px var(--public-outer-gutter) 12px; gap: 10px; border-top: 0; border-bottom: 1px solid var(--sb-line-dark); background: var(--night); transition: top 220ms var(--ease); }
+  .controls { position: sticky; top: var(--sb-header-offset); z-index: 30; margin: 0 calc(var(--public-outer-gutter) * -1); padding: 10px var(--public-outer-gutter) 12px; gap: 10px; border-top: 0; border-bottom: 2px solid var(--acid); background: var(--night); transition: top 220ms var(--ease); }
   .search { max-width: none; gap: 0; }
   .search span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .search input { min-height: 44px; padding: 6px 0 8px; font-size: 20px; }

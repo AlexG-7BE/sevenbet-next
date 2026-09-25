@@ -127,6 +127,8 @@ test("desktop catalogues keep search and filters under the header while the list
     const desktop = styles.slice(styles.indexOf("@media (min-width: 1001px)"));
     assert.match(desktop, /^@media \(min-width: 1001px\) \{\s*\.controls \{[^}]*position: sticky; top: var\(--sb-header-offset\); z-index: 30;[^}]*background: var\(--night\);/, path);
     assert.match(styles, /@media \(max-width: 1000px\) \{\s*\.controls \{ position: sticky;/, `${path} keeps the phone rule`);
+    // Founder, 25 Sep 2026: an acid line separates the sticky block from the cards on phones and desktop.
+    assert.equal((styles.match(/\.controls \{ position: sticky;[^}]*border-bottom: 2px solid var\(--acid\);/g) ?? []).length, 2, `${path} separates both sticky rules`);
   }
   // useRevealResults acts whenever the controls are sticky, so a desktop search also lands on its first result.
   assert.match(read("components/commercial/useRevealResults.ts"), /getComputedStyle\(bar\)\.position !== "sticky"/);
