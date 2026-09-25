@@ -141,13 +141,13 @@ async function queryPublished(countryCode?: string | null): Promise<PublishedCas
       cv."publishedAt",
       latest."archivedAt"
     FROM (
-      SELECT DISTINCT ON (candidate."casinoId") candidate.id, c."archivedAt"
-      FROM "CasinoVersion" candidate
-      INNER JOIN "Casino" c ON c.id = candidate."casinoId"
-      WHERE candidate.status = 'PUBLISHED'::"EditorialStatus"
+      SELECT DISTINCT ON (cv."casinoId") cv.id, c."archivedAt"
+      FROM "CasinoVersion" cv
+      INNER JOIN "Casino" c ON c.id = cv."casinoId"
+      WHERE cv.status = 'PUBLISHED'::"EditorialStatus"
         AND c.status = 'PUBLISHED'::"EditorialStatus"
         AND c."archivedAt" IS NULL
-      ORDER BY candidate."casinoId" ASC, candidate.version DESC
+      ORDER BY cv."casinoId" ASC, cv.version DESC
     ) latest
     INNER JOIN "CasinoVersion" cv ON cv.id = latest.id
     ORDER BY cv."casinoId" ASC
