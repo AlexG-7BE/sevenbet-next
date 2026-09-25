@@ -6,7 +6,7 @@ import { CasinoCollection } from "@/components/casino-discovery/CasinoCollection
 import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/casino-discovery/CasinosPage.module.css";
-import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
+import { commercialUxMessages, countNoun } from "@/lib/commercial/commercial-ux-messages";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffCasinoDiscoveryData } from "@/lib/final-handoff/visual-data-fixture";
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
@@ -124,7 +124,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       </div>
     </section>
     <section className={styles.directory} data-nav-theme="dark" id="casino-directory"><div className={styles.shell}>
-      <div className={`${styles.directoryHeading} ${styles.reveal}`}><div><p>{copy.casinosShown}</p><h2><EmphasisTail text={messages.casinos.directoryTitle} /></h2></div><span>{result.total} {messages.common.records}</span></div>
+      <div className={`${styles.directoryHeading} ${styles.reveal}`}><div><p>{copy.casinosShown}</p><h2><EmphasisTail text={messages.casinos.directoryTitle} /></h2></div><span>{result.total} {countNoun(presentation.locale, result.total, copy.casinoOne, copy.casinoOther)}</span></div>
       {result.inventoryMode !== "PUBLISHED_ONLY" ? <aside className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{disclosure}</p></aside> : null}
       {result.items.length ? <CasinoCollection casinos={result.items} initialSearch={query.search} messages={messages} presentation={presentation} /> : <section className={styles.empty} role="status"><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market })}</h2><p>{messages.casinos.reviewOnlyNotice}</p></section>}
     </div></section>

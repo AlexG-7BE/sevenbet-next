@@ -80,14 +80,16 @@
 /* Facts recompose onto a new line instead of fragmenting long localized labels. */
 .page dl.rankFacts { margin:0; display:flex; flex-wrap:wrap; gap:0 16px; }
 .page dl.rankFacts > div { min-width:min-content; padding:0; flex:1 1 0; border:0; }
-.page dl.rankFacts dt { color:rgba(250,250,247,.45); font-size:12px; font-weight:400; letter-spacing:.18em; line-height:1.35; opacity:1; }
+/* Term labels read at 13px with tight tracking; .66 paper is at least 7.7:1 on every card surface (#100f0f–#1d1c1c). */
+.page dl.rankFacts dt { color:rgba(250,250,247,.66); font-size:13px; font-weight:400; letter-spacing:.06em; line-height:1.35; opacity:1; }
 .page dl.rankFacts dd { margin:8px 0 0; font-size:14px; font-variant-numeric:tabular-nums; font-weight:600; line-height:1.35; }
 .rankPrimary dl.rankFacts { border-top:1px solid var(--line-strong); }
 .rankPrimary dl.rankFacts > div { padding-top:20px; }
 .rankPrimary dl.rankFacts dd { font-size:16px; line-height:1.3; }
 .rankSecondary dl.rankFacts { gap:0 14px; }
 .rankActions { display:flex; align-items:center; flex-wrap:wrap; gap:16px 24px; }
-.rankSecondary .rankActions { justify-self:end; gap:12px 20px; }
+/* The actions keep the last column even when a card has no known facts to show. */
+.rankSecondary .rankActions { grid-column:-2/-1; justify-self:end; gap:12px 20px; }
 .rankActions .offerAction { min-height:48px; padding:14px 24px; flex:1; min-width:180px; border:0; border-radius:var(--sb-radius-button); background:var(--acid); color:var(--night); font-size:16px; font-weight:700; letter-spacing:.01em; line-height:1.25; text-align:center; text-transform:none; text-wrap:balance; white-space:normal; transition:background 200ms var(--ease); }
 .rankActions .offerAction:hover { transform:none; background:var(--paper); }
 .rankSecondary .rankActions .offerAction { min-width:0; padding:16px 24px; flex:none; background:var(--paper); }

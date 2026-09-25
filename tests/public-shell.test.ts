@@ -128,6 +128,45 @@ test("desktop and mobile header actions render the shared account label with ico
   assert.match(navigation, /<MarketLanguageSelector/);
 });
 
+test("the mobile drawer leads with the acid Start Programme action, then Log in, Help and language (Founder, 25 September 2026)", () => {
+  const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
+  const shell = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
+  const drawer = navigation.slice(navigation.indexOf('id="public-mobile-navigation"'), navigation.indexOf("</details>"));
+  const order = [
+    "className={styles.mobileRouteList}",
+    "className={styles.mobileMenuPrimary}",
+    "className={styles.mobileMenuLogin}",
+    "className={styles.mobileHelp}",
+    "<ProgrammeLanguageSelector",
+    "<MarketLanguageSelector",
+    "className={styles.dialogLegal}",
+  ].map((marker) => {
+    const position = drawer.indexOf(marker);
+    assert.ok(position >= 0, `drawer is missing ${marker}`);
+    return position;
+  });
+  assert.deepEqual([...order].sort((left, right) => left - right), order, "routes → Start Programme → Log in → Help → language → legal");
+  // The account block stays outside the route <nav>, whose links are the canonical navigation order.
+  assert.ok(drawer.indexOf("</nav>") < drawer.indexOf("className={styles.mobileMenuPrimary}"));
+  // Labels and Programme-context behaviour are unchanged: Log in only for anonymous readers.
+  assert.match(drawer, /\{authenticated \? messages\.openProgramme : primaryLabel\}/);
+  assert.match(drawer, /\{!authenticated \? <Link className=\{styles\.mobileMenuLogin\} href=\{account\.accountHref\}>\{accountLabel\}<\/Link> : null\}/);
+  assert.doesNotMatch(drawer, /className=\{styles\.primaryAction\}/, "the drawer no longer borrows the desktop outline button");
+
+  // Every block whose selector list ends with this exact selector, joined.
+  const rule = (selector: string) => [...shell.matchAll(new RegExp(`\\n${selector.replace(".", "\\.")} \\{([^}]*)\\}`, "g"))].map((match) => match[1]).join("\n");
+  const primary = rule(".mobileMenuPrimary");
+  for (const declaration of ["min-height: 52px", "width: 100%", "border-radius: var(--sb-radius-button)", "background: var(--shell-acid)", "color: var(--shell-night)", "font-size: 16px", "font-weight: 700", "text-transform: none"]) {
+    assert.ok(primary.includes(declaration), `.mobileMenuPrimary needs ${declaration}`);
+  }
+  assert.match(shell, /\.mobileMenuPrimary:hover \{[^}]*background: var\(--shell-acid-hover\)/);
+  const login = rule(".mobileMenuLogin");
+  assert.ok(login.includes("font-size: 16px") && login.includes("min-height: 44px"), "Log in reads at 16px with a 44px target");
+  assert.doesNotMatch(rule(".mobileAccount"), /margin: auto/, "the account block no longer sinks to the bottom of the drawer");
+  // The desktop header action keeps its outline look.
+  assert.match(rule(".primaryAction"), /background: transparent;[\s\S]*border-radius: var\(--sb-radius-full\)|border-radius: var\(--sb-radius-full\);[\s\S]*background: transparent/);
+});
+
 test("the presentation selector applies one-tap choices with an accessible selected state", () => {
   const selector = readFileSync("components/public-shell/MarketLanguageSelector.tsx", "utf8");
 

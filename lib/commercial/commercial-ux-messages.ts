@@ -65,7 +65,11 @@ export type CommercialUxMessages = Readonly<{
   bonusesMarketUnavailableCopy: string;
   publishedReviews: string;
   rankPrefix: string;
-  eligibleRecords: string;
+  /** Counted nouns for catalogue totals; pick one with countNoun(). */
+  offerOne: string;
+  offerOther: string;
+  casinoOne: string;
+  casinoOther: string;
   partnerLinks: string;
   publishedOffers: string;
   filteredFor: string;
@@ -134,7 +138,10 @@ const en: CommercialUxMessages = {
   bonusesMarketUnavailableCopy: "You can still browse our independent casino reviews.",
   publishedReviews: "published reviews",
   rankPrefix: "No.",
-  eligibleRecords: "eligible records",
+  offerOne: "offer",
+  offerOther: "offers",
+  casinoOne: "casino",
+  casinoOther: "casinos",
   partnerLinks: "partner links",
   publishedOffers: "published offers",
   filteredFor: "Filtered for {market}",
@@ -218,19 +225,40 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "nb-NO": { licensedIn: "Lisensiert i", nothingPublishedYet: "Vi har ennå ikke publisert denne opplysningen om dette kasinoet." },
     "fr-CA": { licensedIn: "Sous licence en", nothingPublishedYet: "Nous n’avons pas encore publié ce détail pour ce casino." },
   };
-  const heroMetricLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "publishedReviews" | "rankPrefix" | "eligibleRecords" | "partnerLinks" | "publishedOffers" | "filteredFor">>> = {
-    "de-DE": { publishedReviews: "veröffentlichte Bewertungen", rankPrefix: "Nr.", eligibleRecords: "berechtigte Einträge", partnerLinks: "Partnerlinks", publishedOffers: "veröffentlichte Angebote", filteredFor: "Gefiltert für {market}" },
-    "it-IT": { publishedReviews: "recensioni pubblicate", rankPrefix: "N.", eligibleRecords: "record idonei", partnerLinks: "link partner", publishedOffers: "offerte pubblicate", filteredFor: "Filtrato per {market}" },
-    "es-ES": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º", eligibleRecords: "registros elegibles", partnerLinks: "enlaces de socios", publishedOffers: "ofertas publicadas", filteredFor: "Filtrado para {market}" },
-    "es-PE": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º", eligibleRecords: "registros elegibles", partnerLinks: "enlaces de socios", publishedOffers: "ofertas publicadas", filteredFor: "Filtrado para {market}" },
-    "pt-PT": { publishedReviews: "análises publicadas", rankPrefix: "N.º", eligibleRecords: "registos elegíveis", partnerLinks: "links de parceiros", publishedOffers: "ofertas publicadas", filteredFor: "Filtrado para {market}" },
-    "el-GR": { publishedReviews: "δημοσιευμένες αξιολογήσεις", rankPrefix: "Αρ.", eligibleRecords: "επιλέξιμες εγγραφές", partnerLinks: "σύνδεσμοι συνεργατών", publishedOffers: "δημοσιευμένες προσφορές", filteredFor: "Φιλτραρισμένο για {market}" },
-    "nl-NL": { publishedReviews: "gepubliceerde reviews", rankPrefix: "Nr.", eligibleRecords: "geschikte records", partnerLinks: "partnerlinks", publishedOffers: "gepubliceerde aanbiedingen", filteredFor: "Gefilterd voor {market}" },
-    "sv-SE": { publishedReviews: "publicerade recensioner", rankPrefix: "Nr", eligibleRecords: "behöriga poster", partnerLinks: "partnerlänkar", publishedOffers: "publicerade erbjudanden", filteredFor: "Filtrerat för {market}" },
-    "da-DK": { publishedReviews: "offentliggjorte anmeldelser", rankPrefix: "Nr.", eligibleRecords: "kvalificerede poster", partnerLinks: "partnerlinks", publishedOffers: "offentliggjorte tilbud", filteredFor: "Filtreret for {market}" },
-    "fi-FI": { publishedReviews: "julkaistua arviota", rankPrefix: "Nro", eligibleRecords: "kelpoista tietuetta", partnerLinks: "kumppanilinkkiä", publishedOffers: "julkaistua tarjousta", filteredFor: "Suodatettu: {market}" },
-    "nb-NO": { publishedReviews: "publiserte anmeldelser", rankPrefix: "Nr.", eligibleRecords: "kvalifiserte oppføringer", partnerLinks: "partnerlenker", publishedOffers: "publiserte tilbud", filteredFor: "Filtrert for {market}" },
-    "fr-CA": { publishedReviews: "avis publiés", rankPrefix: "No", eligibleRecords: "fiches admissibles", partnerLinks: "liens partenaires", publishedOffers: "offres publiées", filteredFor: "Filtré pour {market}" },
+  const heroMetricLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "publishedReviews" | "rankPrefix" | "partnerLinks" | "publishedOffers" | "filteredFor">>> = {
+    "de-DE": { publishedReviews: "veröffentlichte Bewertungen", rankPrefix: "Nr.", partnerLinks: "Partnerlinks", publishedOffers: "veröffentlichte Angebote", filteredFor: "Gefiltert für {market}" },
+    "it-IT": { publishedReviews: "recensioni pubblicate", rankPrefix: "N.", partnerLinks: "link partner", publishedOffers: "offerte pubblicate", filteredFor: "Filtrato per {market}" },
+    "es-ES": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º", partnerLinks: "enlaces de socios", publishedOffers: "ofertas publicadas", filteredFor: "Filtrado para {market}" },
+    "es-PE": { publishedReviews: "reseñas publicadas", rankPrefix: "N.º", partnerLinks: "enlaces de socios", publishedOffers: "ofertas publicadas", filteredFor: "Filtrado para {market}" },
+    "pt-PT": { publishedReviews: "análises publicadas", rankPrefix: "N.º", partnerLinks: "links de parceiros", publishedOffers: "ofertas publicadas", filteredFor: "Filtrado para {market}" },
+    "el-GR": { publishedReviews: "δημοσιευμένες αξιολογήσεις", rankPrefix: "Αρ.", partnerLinks: "σύνδεσμοι συνεργατών", publishedOffers: "δημοσιευμένες προσφορές", filteredFor: "Φιλτραρισμένο για {market}" },
+    "nl-NL": { publishedReviews: "gepubliceerde reviews", rankPrefix: "Nr.", partnerLinks: "partnerlinks", publishedOffers: "gepubliceerde aanbiedingen", filteredFor: "Gefilterd voor {market}" },
+    "sv-SE": { publishedReviews: "publicerade recensioner", rankPrefix: "Nr", partnerLinks: "partnerlänkar", publishedOffers: "publicerade erbjudanden", filteredFor: "Filtrerat för {market}" },
+    "da-DK": { publishedReviews: "offentliggjorte anmeldelser", rankPrefix: "Nr.", partnerLinks: "partnerlinks", publishedOffers: "offentliggjorte tilbud", filteredFor: "Filtreret for {market}" },
+    "fi-FI": { publishedReviews: "julkaistua arviota", rankPrefix: "Nro", partnerLinks: "kumppanilinkkiä", publishedOffers: "julkaistua tarjousta", filteredFor: "Suodatettu: {market}" },
+    "nb-NO": { publishedReviews: "publiserte anmeldelser", rankPrefix: "Nr.", partnerLinks: "partnerlenker", publishedOffers: "publiserte tilbud", filteredFor: "Filtrert for {market}" },
+    "fr-CA": { publishedReviews: "avis publiés", rankPrefix: "No", partnerLinks: "liens partenaires", publishedOffers: "offres publiées", filteredFor: "Filtré pour {market}" },
   };
-  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}) };
+  // Catalogue totals count what the reader sees — offers or casinos — never internal "records".
+  // German copy names operators "Anbieter" (see german-terminology.ts); Finnish counts take the partitive.
+  const catalogueNouns: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "offerOne" | "offerOther" | "casinoOne" | "casinoOther">>> = {
+    "de-DE": { offerOne: "Angebot", offerOther: "Angebote", casinoOne: "Anbieter", casinoOther: "Anbieter" },
+    "it-IT": { offerOne: "offerta", offerOther: "offerte", casinoOne: "casinò", casinoOther: "casinò" },
+    "es-ES": { offerOne: "oferta", offerOther: "ofertas", casinoOne: "casino", casinoOther: "casinos" },
+    "es-PE": { offerOne: "oferta", offerOther: "ofertas", casinoOne: "casino", casinoOther: "casinos" },
+    "pt-PT": { offerOne: "oferta", offerOther: "ofertas", casinoOne: "casino", casinoOther: "casinos" },
+    "el-GR": { offerOne: "προσφορά", offerOther: "προσφορές", casinoOne: "καζίνο", casinoOther: "καζίνο" },
+    "nl-NL": { offerOne: "aanbieding", offerOther: "aanbiedingen", casinoOne: "casino", casinoOther: "casino's" },
+    "sv-SE": { offerOne: "erbjudande", offerOther: "erbjudanden", casinoOne: "casino", casinoOther: "casinon" },
+    "da-DK": { offerOne: "tilbud", offerOther: "tilbud", casinoOne: "kasino", casinoOther: "kasinoer" },
+    "fi-FI": { offerOne: "tarjous", offerOther: "tarjousta", casinoOne: "kasino", casinoOther: "kasinoa" },
+    "nb-NO": { offerOne: "tilbud", offerOther: "tilbud", casinoOne: "kasino", casinoOther: "kasinoer" },
+    "fr-CA": { offerOne: "offre", offerOther: "offres", casinoOne: "casino", casinoOther: "casinos" },
+  };
+  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}), ...(catalogueNouns[locale] ?? {}) };
+}
+
+/** The singular or plural noun for a catalogue count, by the locale's own plural rules ("1 offer", "8 offers"). */
+export function countNoun(locale: SupportedLocale, count: number, one: string, other: string) {
+  return new Intl.PluralRules(locale).select(count) === "one" ? one : other;
 }

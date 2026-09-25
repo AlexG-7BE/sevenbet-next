@@ -556,8 +556,43 @@
 .mobileRouteList a[aria-current="page"] { padding-left: 12px; border-left: 3px solid var(--shell-acid); }
 .mobileRouteList small { color: var(--shell-night-muted); font-size: 13px; line-height: 18px; letter-spacing: .08em; }
 
+/* The drawer's primary action sits directly under the routes: the site's acid
+   button at the Programme type scale (16px, bold, sentence case), then Log in. */
+.mobileAccount { margin: 20px 16px 0; display: grid; gap: 4px; }
+.mobileMenuPrimary {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 20px;
+  border: 1px solid var(--shell-acid);
+  border-radius: var(--sb-radius-button);
+  background: var(--shell-acid);
+  color: var(--shell-night);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: none;
+  transition: background-color var(--sb-motion-fast) var(--sb-ease-standard), border-color var(--sb-motion-fast) var(--sb-ease-standard), transform var(--sb-motion-fast) var(--sb-ease-standard);
+}
+.mobileMenuPrimary:hover { border-color: var(--shell-acid-hover); background: var(--shell-acid-hover); color: var(--shell-night); transform: translateY(-1px); }
+.mobileMenuPrimary:active { transform: translateY(0); }
+.mobileMenuLogin {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--shell-white);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 650;
+}
+
 .mobileHelp {
-  margin: 16px;
+  margin: 16px 16px 0;
   padding: 16px;
   display: grid;
   gap: 8px;
@@ -568,18 +603,8 @@
 .mobileHelp span { color: var(--shell-teal); font-size: 14px; line-height: 20px; font-weight: 650; letter-spacing: .05em; }
 .mobileHelp a { min-height: 44px; display: flex; align-items: center; color: #67c8bd; font-weight: 700; }
 
-.mobileAccount { margin: auto 16px 0; display: grid; gap: 8px; }
-.mobileAccount > a:not(.primaryAction) {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--shell-white);
-  font-size: 12px;
-  font-weight: 650;
-}
-.mobileAccount .primaryAction { min-height: 48px; }
-.dialogLegal { margin: 16px 16px calc(16px + env(safe-area-inset-bottom)); color: var(--shell-night-muted); font-size: 12px; line-height: 18px; }
+/* The legal line rests at the bottom of a tall screen and follows the language choice on a short one. */
+.dialogLegal { margin: auto 16px calc(16px + env(safe-area-inset-bottom)); padding-top: 16px; color: var(--shell-night-muted); font-size: 12px; line-height: 18px; }
 
 :global(body:has(.tiltHomePage)) .header {
   inset: 0 0 auto;
@@ -789,7 +814,9 @@
 @media (prefers-reduced-motion: reduce) {
   .header { transition: none; }
   .primaryNavigation a::after,
-  .primaryAction { transition: none; }
-  .primaryAction:hover { transform: none; }
+  .primaryAction,
+  .mobileMenuPrimary { transition: none; }
+  .primaryAction:hover,
+  .mobileMenuPrimary:hover { transform: none; }
   .navigationFeedback > span { animation: none; }
 }

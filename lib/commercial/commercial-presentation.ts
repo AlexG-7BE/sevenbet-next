@@ -44,6 +44,28 @@ function formatCommercialDate(value: string | null | undefined, locale: Supporte
   return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }).format(date);
 }
 
+/**
+ * A fact row whose value is unknown tells the reader nothing, so catalogue cards
+ * render only facts we can state: no "Not verified" rows and no padding up to a
+ * fixed count. A card with no known facts renders no fact list at all. This is
+ * the rule the casino profile already follows ("no dead boxes").
+ */
+export function knownCommercialFacts(facts: readonly Readonly<{ label: string; value: string | null | undefined }>[]): CommercialFact[] {
+  return facts.filter((fact): fact is CommercialFact => typeof fact.value === "string" && Boolean(fact.value.trim()));
+}
+
+function knownMoney(value: number | null | undefined, currency: string | null | undefined, locale: string) {
+  return value === null || value === undefined || !currency ? null : formatCommercialMoney(value, currency, locale, "");
+}
+
+function knownWagering(multiplier: number | null | undefined, locale: string) {
+  return multiplier === null || multiplier === undefined ? null : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(multiplier)}×`;
+}
+
+function knownPayout(payout: Readonly<{ bucket: WithdrawalTimeBucket; primary: string }>) {
+  return payout.bucket === "unknown" ? null : payout.primary;
+}
+
 export function formatCommercialMoney(value: number | null, currency: string | null, locale: string, unknown: string) {
   if (value === null || !currency) return unknown;
   try {
@@ -134,26 +156,20 @@ export function offerCardPresentation(
 ) {
   const action = governedOfferAction(offer);
   const payout = normalizedPayoutDisplay(offer.casino.payments.map((payment) => payment.supportsWithdrawals ? payment.withdrawalTime : null), copy);
-  const wagering = offer.bonus.wageringMultiplier === null
-    ? copy.notVerified
-    : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(offer.bonus.wageringMultiplier)}×`;
-  const deposit = formatCommercialMoney(offer.bonus.minimumDeposit, offer.bonus.currency, locale, copy.notVerified);
-  const maximumBet = formatCommercialMoney(offer.bonus.maximumBet ?? null, offer.bonus.currency, locale, copy.notVerified);
-  const bonusFacts: CommercialFact[] = [
-    offer.bonus.wageringMultiplier !== null ? { label: messages.common.wagering, value: wagering } : null,
-    offer.bonus.minimumDeposit !== null && offer.bonus.currency ? { label: messages.common.minimumDeposit, value: deposit } : null,
-    offer.bonus.maximumBet !== null && offer.bonus.currency ? { label: messages.common.maximumBet, value: maximumBet } : null,
-    formatCommercialDate(offer.bonus.expiresAt, locale) ? { label: messages.common.expiry, value: formatCommercialDate(offer.bonus.expiresAt, locale) as string } : null,
-  ].filter((fact): fact is CommercialFact => Boolean(fact));
-  if (bonusFacts.length < 3 && offer.bonus.wageringMultiplier === null) bonusFacts.push({ label: messages.common.wagering, value: copy.notVerified });
-  if (bonusFacts.length < 3 && (offer.bonus.minimumDeposit === null || !offer.bonus.currency)) bonusFacts.push({ label: messages.common.minimumDeposit, value: copy.notVerified });
+  const wagering = knownWagering(offer.bonus.wageringMultiplier, locale);
+  const deposit = knownMoney(offer.bonus.minimumDeposit, offer.bonus.currency, locale);
   const facts = context === "bonus_directory"
-    ? bonusFacts.slice(0, 3)
-    : [
-        { label: messages.common.payout, value: payout.primary },
+    ? knownCommercialFacts([
         { label: messages.common.wagering, value: wagering },
         { label: messages.common.minimumDeposit, value: deposit },
-      ];
+        { label: messages.common.maximumBet, value: knownMoney(offer.bonus.maximumBet, offer.bonus.currency, locale) },
+        { label: messages.common.expiry, value: formatCommercialDate(offer.bonus.expiresAt, locale) },
+      ]).slice(0, 3)
+    : knownCommercialFacts([
+        { label: messages.common.payout, value: knownPayout(payout) },
+        { label: messages.common.wagering, value: wagering },
+        { label: messages.common.minimumDeposit, value: deposit },
+      ]);
   const badges = offerBadges(offer, copy);
   return {
     casinoId: offer.casino.id,
@@ -181,20 +197,25 @@ export function bestOfferReason(
   copy: CommercialUxMessages,
   category: BestOfferCategory,
 ) {
-  const score = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(offer.casino.editorScore);
-  const wagering = offer.bonus.wageringMultiplier === null ? copy.notVerified : `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(offer.bonus.wageringMultiplier)}×`;
-  const deposit = formatCommercialMoney(offer.bonus.minimumDeposit, offer.bonus.currency, locale, copy.notVerified);
-  if (category === "fast_payouts") {
-    return `${messages.common.payout}: ${payoutDisplayForBucket(offerWithdrawalBucket(offer), copy)} · ${messages.common.editorScore}: ${score}`;
-  }
-  if (category === "best_bonus_terms") {
-    const restriction = severeBonusRestrictionCount(offer)
-      ? offer.bonus.importantConditions.find((condition) => Boolean(condition.trim())) ?? offer.bonus.eligibility
-      : null;
-    return `${messages.common.wagering}: ${wagering} · ${restriction ? singleLine(restriction, 72) : `${messages.common.minimumDeposit}: ${deposit}`}`;
-  }
-  if (category === "low_deposit") return `${messages.common.minimumDeposit}: ${deposit} · ${messages.common.editorScore}: ${score}`;
-  return `${messages.common.editorScore}: ${score} · ${messages.common.wagering}: ${wagering}`;
+  const labelled = (label: string, value: string | null) => value ? `${label}: ${value}` : null;
+  const score = `${messages.common.editorScore}: ${new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(offer.casino.editorScore)}`;
+  const wagering = labelled(messages.common.wagering, knownWagering(offer.bonus.wageringMultiplier, locale));
+  const deposit = labelled(messages.common.minimumDeposit, knownMoney(offer.bonus.minimumDeposit, offer.bonus.currency, locale));
+  const bucket = offerWithdrawalBucket(offer);
+  const payout = labelled(messages.common.payout, bucket === "unknown" ? null : payoutDisplayForBucket(bucket, copy));
+  const restriction = category === "best_bonus_terms" && severeBonusRestrictionCount(offer)
+    ? offer.bonus.importantConditions.find((condition) => Boolean(condition.trim())) ?? offer.bonus.eligibility
+    : null;
+  // A reason names only what we know: an unknown part is left out rather than
+  // written as "Not verified", and the editor score stands in when nothing else is known.
+  const parts = category === "fast_payouts"
+    ? [payout, score]
+    : category === "best_bonus_terms"
+      ? [wagering, restriction?.trim() ? singleLine(restriction, 72) : deposit]
+      : category === "low_deposit"
+        ? [deposit, score]
+        : [score, wagering];
+  return parts.filter((part): part is string => Boolean(part)).join(" · ") || score;
 }
 
 export function availableBonusViews(offers: readonly PublicOfferDTO[]) {
@@ -230,7 +251,6 @@ function casinoPayout(casino: PublicCasinoCardDto, copy: CommercialUxMessages) {
 export function casinoCardPresentation(casino: PublicCasinoCardDto, locale: SupportedLocale, messages: ProductPageMessages, copy: CommercialUxMessages) {
   const action = governedCasinoAction(casino);
   const payout = casinoPayout(casino, copy);
-  const deposit = formatCommercialMoney(casino.featuredBonus?.minimumDeposit ?? null, casino.featuredBonus?.currency ?? null, locale, copy.notVerified);
   const badges = [
     payoutOrder.indexOf(payout.bucket) <= payoutOrder.indexOf("same-day") ? copy.fastPayouts : null,
     casino.featuredBonus?.minimumDeposit !== null && casino.featuredBonus?.minimumDeposit !== undefined && casino.featuredBonus.minimumDeposit <= 10 ? copy.lowDeposit : null,
@@ -245,11 +265,11 @@ export function casinoCardPresentation(casino: PublicCasinoCardDto, locale: Supp
     badges,
     headline: casino.highlights.find((highlight) => Boolean(highlight.trim())) ? singleLine(casino.highlights.find((highlight) => Boolean(highlight.trim())) as string, 112) : null,
     reason: casinoRankingReason(casino, locale, messages, copy),
-    facts: [
-      { label: messages.common.payout, value: payout.primary },
-      { label: messages.common.minimumDeposit, value: deposit },
-      { label: copy.currentOffer, value: casino.featuredBonus ? singleLine(casino.featuredBonus.title, 64) : copy.notVerified },
-    ] satisfies CommercialFact[],
+    facts: knownCommercialFacts([
+      { label: messages.common.payout, value: knownPayout(payout) },
+      { label: messages.common.minimumDeposit, value: knownMoney(casino.featuredBonus?.minimumDeposit, casino.featuredBonus?.currency, locale) },
+      { label: copy.currentOffer, value: casino.featuredBonus ? singleLine(casino.featuredBonus.title, 64) : null },
+    ]),
     action: action
       ? { href: action.href, label: copy.viewOffer }
       : null,

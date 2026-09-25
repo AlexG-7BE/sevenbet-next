@@ -9,12 +9,13 @@ import {
   casinoCardPresentation,
   casinosForCollectionView,
   filterCasinosByName,
+  knownCommercialFacts,
   offerCardPresentation,
   offersForBonusView,
   selectCasinoMarketProfile,
   structuredOfferHeadline,
 } from "../lib/commercial/commercial-presentation";
-import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
+import { commercialUxMessages, countNoun } from "../lib/commercial/commercial-ux-messages";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import {
   commercialUxFixtureMarket,
@@ -37,6 +38,7 @@ import {
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
+import type { SupportedLocale } from "../lib/market/registry";
 
 const controlledHref = "/r/governed-offer";
 
@@ -240,6 +242,96 @@ test("presentation adapters never expose raw evidence prose and preserve governe
   assert.equal(offerCardPresentation(demonstration, "en-GB", messages, copy, "bonus_directory").action, null);
   assert.deepEqual(rankBestOffersForCategory([demonstration], "best_overall"), []);
   assert.equal(rankBestOffersForCategory([demonstration], "best_overall", { includeDemonstration: true }).length, 1);
+});
+
+const catalogueLocales = ["en-GB", "en-CA", "de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO", "fr-CA"] as const satisfies readonly SupportedLocale[];
+
+test("catalogue cards render only known facts and never a Not verified row", () => {
+  assert.deepEqual(knownCommercialFacts([{ label: "A", value: "1" }, { label: "B", value: null }, { label: "C", value: " " }, { label: "D", value: undefined }]), [{ label: "A", value: "1" }]);
+  for (const locale of catalogueLocales) {
+    const messages = productPageMessages(locale);
+    const copy = commercialUxMessages(locale);
+    // Nothing known: no facts at all, and no padding up to three.
+    const bare = offer(1, { payout: "ask support", wagering: null, deposit: null, maximumBet: null });
+    bare.bonus.expiresAt = null;
+    assert.deepEqual(offerCardPresentation(bare, locale, messages, copy, "bonus_directory").facts, [], `${locale} bonus card pads nothing`);
+    for (const category of BEST_OFFER_CATEGORIES) {
+      const card = offerCardPresentation(bare, locale, messages, copy, category);
+      assert.deepEqual(card.facts, [], `${locale} ${category} card shows no unknown rows`);
+      assert.ok(card.reason && !card.reason.includes(copy.notVerified), `${locale} ${category} reason names only what is known`);
+      assert.match(card.reason ?? "", new RegExp(`^${messages.common.editorScore}: `), `${locale} ${category} reason falls back to the editor score`);
+    }
+    const noOfferCasino = { ...casino(1, { payout: "ask support" }), featuredBonus: null };
+    assert.deepEqual(casinoCardPresentation(noOfferCasino, locale, messages, copy).facts, [], `${locale} casino card without known facts`);
+
+    // Partly known: the unknown row is dropped, the known rows keep their order.
+    const partial = offer(2, { payout: "ask support", maximumBet: null });
+    partial.bonus.expiresAt = null;
+    assert.deepEqual(offerCardPresentation(partial, locale, messages, copy, "best_overall").facts.map((fact) => fact.label), [messages.common.wagering, messages.common.minimumDeposit]);
+    assert.deepEqual(offerCardPresentation(partial, locale, messages, copy, "bonus_directory").facts.map((fact) => fact.label), [messages.common.wagering, messages.common.minimumDeposit]);
+    assert.deepEqual(casinoCardPresentation(casino(2, { payout: "ask support" }), locale, messages, copy).facts.map((fact) => fact.label), [messages.common.minimumDeposit, copy.currentOffer]);
+    assert.deepEqual(casinoCardPresentation(casino(3, { deposit: null }), locale, messages, copy).facts.map((fact) => fact.label), [messages.common.payout, copy.currentOffer]);
+    for (const presented of [offerCardPresentation(partial, locale, messages, copy, "fast_payouts"), casinoCardPresentation(casino(2, { payout: "ask support" }), locale, messages, copy)]) {
+      assert.doesNotMatch(JSON.stringify(presented), new RegExp(copy.notVerified), `${locale} renders no "${copy.notVerified}"`);
+    }
+  }
+});
+
+test("catalogue counts and headings use plain words in every locale", () => {
+  assert.equal(`1 ${countNoun("en-GB", 1, "offer", "offers")}`, "1 offer");
+  assert.equal(`8 ${countNoun("en-GB", 8, "offer", "offers")}`, "8 offers");
+  const fi = commercialUxMessages("fi-FI");
+  assert.equal(countNoun("fi-FI", 8, fi.offerOne, fi.offerOther), "tarjousta");
+  assert.equal(countNoun("fi-FI", 1, fi.casinoOne, fi.casinoOther), "kasino");
+  assert.equal(commercialUxMessages("de-DE").casinoOther, "Anbieter", "German copy names operators Anbieter");
+  for (const locale of catalogueLocales) {
+    const copy = commercialUxMessages(locale);
+    const messages = productPageMessages(locale);
+    for (const noun of [copy.offerOne, copy.offerOther, copy.casinoOne, copy.casinoOther]) assert.ok(noun.trim(), locale);
+    assert.doesNotMatch(`${copy.offerOther} ${copy.casinoOther}`, /record|Einträg|registr|poster|εγγραφ|voci|vermelding|kohte|oppføring/i, locale);
+    assert.match(messages.bestOffers.heroCopy, /\{market\}/, `${locale} hero names the market`);
+    assert.doesNotMatch(messages.bestOffers.heroCopyWorldwide, /\{market\}/, `${locale} worldwide hero never prints "the global catalog"`);
+    assert.doesNotMatch(`${messages.bestOffers.heroCopy} ${messages.bestOffers.heroCopyWorldwide}`, /records|Einträge|registros|poster|εγγραφές|voci|registos|vermeldingen|kohteet|oppføringer|filtered|gefiltert|filtr/i, locale);
+    assert.ok(messages.bestOffers.methodTitle.trim() && messages.bestOffers.methodTitle !== messages.common.materialTerms, locale);
+  }
+  assert.equal(productPageMessages("en-GB").bestOffers.heroCopy, "Offers for {market}. Partner links appear only when they are available for this visit.");
+  assert.equal(productPageMessages("en-GB").bestOffers.methodTitle, "How we pick");
+
+  const best = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
+  const bonuses = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
+  const casinos = readFileSync("app/(public)/casinos/page.tsx", "utf8");
+  assert.match(best, /presentation\.marketCountryCode \? messages\.bestOffers\.heroCopy : messages\.bestOffers\.heroCopyWorldwide/);
+  assert.match(best, /<h2><EmphasisTail text=\{messages\.bestOffers\.methodTitle\} \/><\/h2>/);
+  assert.doesNotMatch(best, /eligibleRecords|<h2>\{messages\.common\.materialTerms\} ·|"How we choose"/);
+  assert.match(best, /href=\{productHref\(presentation, "\/methodology"\)\}>\{messages\.common\.reviewMethodology\}/, "the methodology link stays");
+  assert.match(best, /countNoun\(presentation\.locale, result\.records\.length, copy\.offerOne, copy\.offerOther\)/);
+  assert.match(bonuses, /\{result\.total\} \{countNoun\(presentation\.locale, result\.total, copy\.offerOne, copy\.offerOther\)\}/);
+  assert.match(casinos, /\{result\.total\} \{countNoun\(presentation\.locale, result\.total, copy\.casinoOne, copy\.casinoOther\)\}/);
+  for (const source of [bonuses, casinos]) assert.doesNotMatch(source, /messages\.common\.records/);
+});
+
+test("catalogue term labels read at 13px with contrast above 4.5:1", () => {
+  const rules = [
+    ["components/best-offers/BestOffers.module.css", /\.page dl\.rankFacts dt \{([^}]*)\}/],
+    ["components/bonus-directory/BonusOfferDirectory.module.css", /\.card dl\.facts dt \{([^}]*)\}/],
+    ["components/casino-discovery/CasinoCollection.module.css", /\.card dl\.facts dt \{([^}]*)\}/],
+  ] as const;
+  const luminance = (rgb: readonly number[]) => {
+    const [r, g, b] = rgb.map((channel) => { const c = channel / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  for (const [file, pattern] of rules) {
+    const declarations = readFileSync(file, "utf8").match(pattern)?.[1] ?? "";
+    assert.match(declarations, /font-size: ?13px/, file);
+    assert.match(declarations, /letter-spacing: ?\.06em/, file);
+    const alpha = Number(declarations.match(/color: ?rgba\(250, ?250, ?247, ?(\.\d+)\)/)?.[1]);
+    // The lightest card surface these labels sit on is the raised card, #1d1c1c.
+    for (const surface of [[0x10, 0x0f, 0x0f], [0x17, 0x16, 0x16], [0x1d, 0x1c, 0x1c]]) {
+      const text = [250, 250, 247].map((channel, index) => Math.round(channel * alpha + surface[index]! * (1 - alpha)));
+      const ratio = (luminance(text) + 0.05) / (luminance(surface) + 0.05);
+      assert.ok(ratio >= 4.5, `${file} label contrast ${ratio.toFixed(2)}:1`);
+    }
+  }
 });
 
 test("casino profiles select the exact current market deterministically", () => {
