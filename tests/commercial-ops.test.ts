@@ -2,8 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { assertAgentStageProposal, assertHumanCommercialStageTransition } from "../lib/commercial/stage-policy";
-import { assertPartnerOperationsCommercialFirewall, PartnerOperationsInputSchema, PartnerOperationsResultSchema, PartnerSafeCrmOperationSchema, validatePartnerOperationsEvidenceReferences } from "../shared/commercial/partner-operations-contract";
+import { assertHumanCommercialStageTransition } from "../lib/commercial/stage-policy";
 
 const facts = (overrides: Partial<{ qualificationRationale: string | null; nextActionSummary: string | null; evidenceCategories: string[]; applicationStates: string[] }> = {}) => ({ qualificationRationale: null, nextActionSummary: null, evidenceCategories: [], applicationStates: [], ...overrides });
 const transition = (target: Parameters<typeof assertHumanCommercialStageTransition>[0]["target"], stageFacts = facts(), reason = "Explicit human decision") => assertHumanCommercialStageTransition({ current: "PROSPECT", target, reason, facts: stageFacts });
@@ -17,22 +16,6 @@ test("APPROVED requires direct approval evidence", () => { assert.throws(() => t
 test("a public affiliate application page cannot imply APPROVED", () => assert.throws(() => transition("APPROVED", facts({ evidenceCategories: ["APPLICATION_PATH", "MARKET_RELEVANCE"] }))));
 test("ACTIVE is impossible through ordinary CRM transition", () => assert.throws(() => transition("ACTIVE"), /separate commercial activation authority/));
 test("REJECTED requires rejection evidence and ON_HOLD requires reason", () => { assert.throws(() => transition("REJECTED")); assert.doesNotThrow(() => transition("REJECTED", facts({ evidenceCategories: ["REJECTION"] }))); assert.throws(() => transition("ON_HOLD", facts(), "")); });
-test("Agent stage proposals exclude APPROVED and ACTIVE", () => { assert.doesNotThrow(() => assertAgentStageProposal("QUALIFIED")); assert.throws(() => assertAgentStageProposal("APPROVED")); assert.throws(() => assertAgentStageProposal("ACTIVE")); });
-
-const validOperation = { operationId: "op-1", idempotencyKey: "case-idempotency-1", type: "CREATE_DRAFT_OUTREACH", payload: { title: "Introduction", draftText: "Truthful draft", channel: "EMAIL", followUpAt: null } };
-test("closed safe operation accepts a draft but not fake send/approval/activation", () => {
-  assert.equal(PartnerSafeCrmOperationSchema.safeParse(validOperation).success, true);
-  for (const type of ["SEND_EMAIL", "SUBMIT_APPLICATION", "SET_APPROVED", "SET_ACTIVE", "ACCEPT_TERMS", "ENABLE_TRACKING"]) assert.equal(PartnerSafeCrmOperationSchema.safeParse({ ...validOperation, type }).success, false);
-});
-test("strict operation payload rejects arbitrary Prisma fields", () => assert.equal(PartnerSafeCrmOperationSchema.safeParse({ ...validOperation, payload: { ...validOperation.payload, affiliateProgramStatus: "ACTIVE" } }).success, false));
-test("strict Partner Operations input rejects private field injection", () => assert.equal(PartnerOperationsInputSchema.safeParse({ request: "Review", opportunity: {}, evidence: [], contacts: [], applications: [], programmeNarrative: "private" }).success, false));
-test("commercial firewall rejects vulnerability and Programme inputs", () => { assert.throws(() => assertPartnerOperationsCommercialFirewall({ request: "Use mission answers for partner ranking" })); assert.throws(() => assertPartnerOperationsCommercialFirewall({ request: "Target vulnerable people" })); assert.doesNotThrow(() => assertPartnerOperationsCommercialFirewall({ request: "Review supplied public partner evidence" })); });
-
-const validResult = { agent: "partner-operations", status: "NEEDS_REVIEW", recommendation: "REVIEW", summary: "Evidence remains incomplete.", findings: [{ classification: "UNKNOWN", statement: "GB relevance is unknown.", evidenceIds: [] }], evidenceGaps: [{ claim: "GB relevance", requiredEvidence: "Exact official scope evidence", impact: "Cannot qualify GB relevance" }], qualification: { strategicFit: "UNKNOWN", gbRelevance: "UNKNOWN", applicationAccess: "UNKNOWN", evidenceQuality: "LOW", rationale: "Insufficient evidence", evidenceIds: [] }, nextActions: [{ priority: "NOW", description: "Obtain official evidence" }], stageRecommendation: null, draftApplication: null, draftOutreach: null, followUp: null, detectedResponses: [], commercialTerms: [], activationReadiness: { status: "NOT_READY", summary: "Founder and RFC-015 gates remain outstanding.", evidenceIds: [] }, proposedCrmOperations: [validOperation] };
-test("structured Partner Operations output validates", () => assert.equal(PartnerOperationsResultSchema.safeParse(validResult).success, true));
-test("detected claims require evidence", () => assert.equal(PartnerOperationsResultSchema.safeParse({ ...validResult, findings: [{ classification: "DETECTED", statement: "Programme exists", evidenceIds: [] }] }).success, false));
-test("output evidence references must exist in the CRM snapshot", () => { const result = PartnerOperationsResultSchema.parse({ ...validResult, findings: [{ classification: "DETECTED", statement: "Application path detected", evidenceIds: ["11111111-1111-4111-8111-111111111111"] }] }); assert.throws(() => validatePartnerOperationsEvidenceReferences(result, new Set())); assert.doesNotThrow(() => validatePartnerOperationsEvidenceReferences(result, new Set(["11111111-1111-4111-8111-111111111111"]))); });
-test("activation packets are preparation-only", () => { const operation = PartnerSafeCrmOperationSchema.parse({ operationId: "packet-1", idempotencyKey: "packet-key-0001", type: "PREPARE_ACTIVATION_PACKET", payload: { status: "READY_FOR_FOUNDER_REVIEW", summary: "Prepared, not activated", checklist: { founderDecision: "UNKNOWN" }, evidenceIds: [] } }); assert.equal(operation.type, "PREPARE_ACTIVATION_PACKET"); assert.equal(JSON.stringify(operation).includes("ACTIVATED"), false); });
 
 test("commercial implementation has no Programme-domain or public DTO coupling", async () => {
   const repository = await readFile(new URL("../lib/repositories/commercial.repository.ts", import.meta.url), "utf8");

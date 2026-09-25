@@ -105,14 +105,14 @@ media record to public commercial authority.
 | historical Media plan/batch persisted-source decoder | `DATA / HISTORY` | retained read-only compatibility seam |
 | OAuth provider tables and rate buckets | `DATA / HISTORY` | retained inertly for PR6 |
 | migrations 0021–0023 and replay fixture | `HISTORY` | immutable and retained |
-| isolated `agents/` package | `CANONICAL INTERNAL AGENT` | unchanged and tool-free |
+| isolated `agents/` package | `CANONICAL INTERNAL AGENT` | unchanged and tool-free; removed on 25 September 2026 by Founder decision |
 | `.agents/skills/refero-design` MCP-tool guidance | `DEVELOPER DESIGN TOOLING` | retained; outside application runtime |
 
 The isolated `agents/` lockfile contains a transitive
 `@modelcontextprotocol/client` dependency through the official
 `@openai/agents` SDK. The package has no MCP import, configuration, tool or
 application connection, is excluded from the Next.js runtime, and is not the
-retired bridge. Removing the official Agent SDK is outside PR5.
+retired bridge. Removing the official Agent SDK is outside PR5; the package was removed on 25 September 2026 by Founder decision.
 
 ## 4. CRM extraction
 

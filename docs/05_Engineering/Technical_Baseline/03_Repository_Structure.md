@@ -4,7 +4,6 @@
 
 ```text
 sevenbet-next/
-├── agents/           Isolated private operational-agent package; not imported by the consumer runtime
 ├── app/              Next.js App Router pages, layouts, route handlers and metadata
 ├── components/       Public UI, admin builders/editors, shared UI primitives
 ├── data/             Local JSON data
@@ -38,7 +37,8 @@ Route groups do not affect URLs: `(protected)` is an admin implementation groupi
 The counts use current canonical main and exclude `.git/`, dependencies,
 generated/build/test output, caches and `tsconfig.tsbuildinfo`. Source files
 include `.ts`, `.tsx`, `.mjs`, `.cjs`, `.prisma`, and migration `.sql` across
-the repository, including the isolated `agents/` package and tests. Production
+the repository, including tests; they were taken while the isolated `agents/`
+package (removed on 25 September 2026) still existed. Production
 migration state is verified separately.
 
 | Measure | Count / result |

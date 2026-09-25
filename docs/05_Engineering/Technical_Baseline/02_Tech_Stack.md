@@ -31,7 +31,6 @@
 All root runtime dependencies in `package.json` have corresponding source
 imports except Prisma, which is used by generation/migrations and imports
 through `@prisma/client`. The root manifest and lockfile contain no MCP SDK or
-operational OAuth Provider. The isolated `agents/` package retains the official
-`@openai/agents` SDK; its lockfile contains a transitive MCP client, but Agent
-source has no MCP imports/tools and the package is excluded from Next.js. No
-unused-dependency assertion is made beyond that evidence.
+operational OAuth Provider. The isolated `agents/` package and its
+`@openai/agents` SDK were removed on 25 September 2026. No unused-dependency
+assertion is made beyond that evidence.
