@@ -5,6 +5,7 @@ import { CATALOG_LINK_FIELDS } from "@/lib/commercial/commercial-opportunity-res
 import type {
   CatalogLinkField,
   CommercialOpportunityCatalogLinkInput,
+  CommercialOpportunityDeleteInput,
   CommercialOpportunityStageTransitionInput,
   CommercialOpportunityDuplicateInput,
   CommercialOpportunityListInput,
@@ -496,12 +497,136 @@ async function linkDelegatedCommercialCatalog(
   });
 }
 
+export type DelegatedCommercialDeletionFacts = {
+  stage: CommercialOpportunityStage;
+  evidenceSourceTypes: string[];
+  applicationStates: string[];
+  activityTypes: string[];
+  termCount: number;
+  marketSupportCount: number;
+  catalogLinks: Record<CatalogLinkField, string | null>;
+};
+
+const COMMERCIAL_OPPORTUNITY_DELETED = "commercial_opportunity_deleted";
+
+type RecordedDeletion = {
+  displayName?: string;
+  idempotencyKey?: string;
+  childCounts?: Record<string, number>;
+  retainedAgentRunIds?: string[];
+  clearedDuplicateReferenceIds?: string[];
+};
+
+// Deletion cascades evidence, contacts, activities, applications, terms, tasks
+// and activation packets (schema onDelete: Cascade). Agent runs/operations,
+// partner market support and other opportunities' possibleDuplicateOfId are
+// SetNull; the audit row, written before the delete, records all of them.
+async function deleteDelegatedCommercialOpportunity(
+  input: CommercialOpportunityDeleteInput,
+  context: DelegatedCommercialContext,
+  assertDeletable: (facts: DelegatedCommercialDeletionFacts) => void,
+) {
+  return prisma.$transaction(async (tx) => {
+    await lockOpportunityForDelegatedWrite(tx, input.opportunityId);
+    const recorded = await tx.auditLog.findFirst({
+      where: { action: COMMERCIAL_OPPORTUNITY_DELETED, entityType: "commercial-opportunity", entityId: input.opportunityId },
+      orderBy: { timestamp: "asc" },
+    });
+    if (recorded) {
+      const metadata = (recorded.metadata ?? {}) as RecordedDeletion;
+      if (metadata.idempotencyKey !== input.idempotencyKey) {
+        return { status: "ALREADY_DELETED" as const, deletedAt: recorded.timestamp.toISOString() };
+      }
+      return {
+        status: "IDEMPOTENT_REPLAY" as const,
+        opportunityId: input.opportunityId,
+        displayName: metadata.displayName ?? null,
+        deletedAt: recorded.timestamp.toISOString(),
+        auditLogId: recorded.id,
+        childCounts: metadata.childCounts ?? {},
+        retainedAgentRunIds: metadata.retainedAgentRunIds ?? [],
+        clearedDuplicateReferenceIds: metadata.clearedDuplicateReferenceIds ?? [],
+      };
+    }
+    const opportunity = await tx.commercialOpportunity.findUnique({
+      where: { id: input.opportunityId },
+      select: {
+        id: true, displayName: true, legalName: true, stage: true,
+        casinoId: true, affiliateNetworkId: true, affiliateProgramId: true, operatorId: true, brandId: true,
+        evidence: { select: { sourceType: true } },
+        applications: { select: { state: true } },
+        activities: { select: { type: true } },
+        _count: { select: {
+          evidence: true, contacts: true, activities: true, applications: true, terms: true, tasks: true,
+          activationPackets: true, agentRuns: true, agentOperations: true, partnerMarketSupports: true,
+          possibleDuplicates: true,
+        } },
+      },
+    });
+    if (!opportunity) return { status: "NOT_FOUND" as const };
+    if (opportunity.displayName !== input.confirmDisplayName) return { status: "CONFIRMATION_MISMATCH" as const };
+    assertDeletable({
+      stage: opportunity.stage,
+      evidenceSourceTypes: opportunity.evidence.map((item) => item.sourceType),
+      applicationStates: opportunity.applications.map((item) => item.state),
+      activityTypes: opportunity.activities.map((item) => item.type),
+      termCount: opportunity._count.terms,
+      marketSupportCount: opportunity._count.partnerMarketSupports,
+      catalogLinks: {
+        casinoId: opportunity.casinoId,
+        affiliateNetworkId: opportunity.affiliateNetworkId,
+        affiliateProgramId: opportunity.affiliateProgramId,
+        operatorId: opportunity.operatorId,
+        brandId: opportunity.brandId,
+      },
+    });
+    const retainedAgentRunIds = (await tx.commercialAgentRun.findMany({
+      where: { opportunityId: opportunity.id }, select: { id: true }, orderBy: { createdAt: "asc" },
+    })).map((run) => run.id);
+    const clearedDuplicateReferenceIds = (await tx.commercialOpportunity.findMany({
+      where: { possibleDuplicateOfId: opportunity.id }, select: { id: true }, orderBy: { id: "asc" },
+    })).map((record) => record.id);
+    const childCounts = { ...opportunity._count };
+    const auditRow = await audit(
+      tx,
+      context.actorId,
+      COMMERCIAL_OPPORTUNITY_DELETED,
+      opportunity.id,
+      `Delegated Partner Operations permanently deleted never-contacted prospect: ${opportunity.displayName}`,
+      {
+        channel: context.channel,
+        actorKind: "PARTNER_OPERATIONS_AGENT",
+        idempotencyKey: input.idempotencyKey,
+        displayName: opportunity.displayName,
+        legalName: opportunity.legalName,
+        stage: opportunity.stage,
+        reason: input.reason,
+        childCounts,
+        retainedAgentRunIds,
+        clearedDuplicateReferenceIds,
+      },
+    );
+    await tx.commercialOpportunity.delete({ where: { id: opportunity.id } });
+    return {
+      status: "DELETED" as const,
+      opportunityId: opportunity.id,
+      displayName: opportunity.displayName,
+      deletedAt: auditRow.timestamp.toISOString(),
+      auditLogId: auditRow.id,
+      childCounts,
+      retainedAgentRunIds,
+      clearedDuplicateReferenceIds,
+    };
+  });
+}
+
 export const delegatedCommercialRepository = {
   findDelegatingActor(id: string) {
     return prisma.adminUser.findUnique({ where: { id }, select: { id: true, role: true } });
   },
   transitionStage: transitionDelegatedCommercialStage,
   linkCatalog: linkDelegatedCommercialCatalog,
+  deleteOpportunity: deleteDelegatedCommercialOpportunity,
 };
 
 function scopedResearchEntityKey(sourceHash: string, key: string) {

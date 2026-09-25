@@ -110,8 +110,8 @@ Founder-authority-gated canonical tracking service.
 application caller is `lib/mcp/crm/server.ts`, served at the stateless
 `POST /api/mcp/crm` endpoint with one bearer credential and no OAuth. It is
 disabled (503) until `CRM_MCP_ENABLED=true`, `CRM_MCP_SERVICE_TOKEN` (at least
-32 bytes) and `CRM_MCP_ACTOR_ID` (an `AdminUser` with `affiliate.manage`) are
-set.
+32 bytes) and `CRM_MCP_ACTOR_ID` (the Founder's own `AdminUser`; its role
+must grant `affiliate.manage`) are set.
 
 | Tool | Use |
 | --- | --- |
@@ -121,6 +121,7 @@ set.
 | `crm_upsert_research_bundle` | Record mailbox/portal findings: evidence, contacts, notes, tasks, next action, drafts, evidenced terms, proposals |
 | `crm_transition_stage` | Move to a real stage under the staff evidence rules; never into or out of `ACTIVE` |
 | `crm_link_catalog` | Point the opportunity at an existing Casino, AffiliateNetwork, AffiliateProgram, CasinoOperator or CasinoBrand, or clear a link |
+| `crm_delete_opportunity` | Permanently delete a prospect nobody ever contacted, after checking the partner mailbox for the company |
 
 This supersedes the "human-only direct `APPROVED` transition" and "forbidden
 to the Agent: setting `APPROVED`" lines above for this endpoint only:
@@ -129,6 +130,18 @@ recorded as a `PARTNER_OPERATIONS_AGENT` timeline entry plus an `AuditLog`
 row with the delegating actor and `channel: "crm-mcp"`; the same
 `idempotencyKey` replays without a second entry. The CRM still has no route,
 market, button, tracking or customer-data authority.
+
+`crm_delete_opportunity` needs `confirmDisplayName` equal to the stored
+display name and refuses, listing every blocker, when the stage is not
+`PROSPECT`/`REJECTED`/`ON_HOLD` or the opportunity has EMAIL or AGREEMENT
+evidence, a submitted/sent/answered/closed application, a sent-outreach,
+response, meeting, negotiation, terms, Founder-decision or activation
+timeline entry, any term, any partner market support or any catalog link.
+Affiliate-portal and public-web research alone does not block. The
+`commercial_opportunity_deleted` audit row (names, stage, reason, child
+counts, retained agent-run IDs) is written before the delete in the same
+transaction; the CRM children cascade and agent-run history stays. There is
+no archive state.
 
 Connect Claude with:
 

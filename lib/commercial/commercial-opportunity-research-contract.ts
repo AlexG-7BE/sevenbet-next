@@ -222,7 +222,15 @@ export const CommercialOpportunityCatalogLinkSchema = z.object({
   }
 });
 
+export const CommercialOpportunityDeleteSchema = z.object({
+  opportunityId: z.string().uuid(),
+  confirmDisplayName: z.string().min(1).max(200),
+  reason: z.string().min(1).max(2_000),
+  idempotencyKey: IdempotencyKey,
+}).strict();
+
 export type CommercialOpportunityListInput = z.infer<typeof CommercialOpportunityListSchema>;
+export type CommercialOpportunityDeleteInput = z.infer<typeof CommercialOpportunityDeleteSchema>;
 export type CommercialOpportunityStageTransitionInput = z.infer<typeof CommercialOpportunityStageTransitionSchema>;
 export type CommercialOpportunityCatalogLinkInput = z.infer<typeof CommercialOpportunityCatalogLinkSchema>;
 export type CatalogLinkField = typeof CATALOG_LINK_FIELDS[number];

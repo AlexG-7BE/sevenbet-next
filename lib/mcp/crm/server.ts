@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import {
   CommercialOpportunityCatalogLinkSchema,
+  CommercialOpportunityDeleteSchema,
   CommercialOpportunityDuplicateSchema,
   CommercialOpportunityGetSchema,
   CommercialOpportunityListSchema,
@@ -69,11 +70,18 @@ export const crmMcpTools = [
     inputSchema: inputSchema(CommercialOpportunityCatalogLinkSchema),
     annotations: writeAnnotations,
   },
+  {
+    name: "crm_delete_opportunity",
+    title: "Permanently delete a never-contacted prospect",
+    description: "PERMANENTLY delete one opportunity that nobody ever contacted. Before calling, search the partner mailbox for the company's display name, legal name and domain; if any correspondence exists, record it as EMAIL evidence with crm_upsert_research_bundle instead of deleting. Allowed only when the stage is PROSPECT, REJECTED or ON_HOLD and there is no EMAIL or AGREEMENT evidence, no submitted, sent, answered or closed application, no sent-outreach, response, meeting, negotiation, terms, founder-decision or activation activity, no commercial terms, no partner market support and no catalog link; otherwise the call fails with the list of blockers. Agent research evidence (public web, affiliate portal pages) does not block. confirmDisplayName must equal the stored displayName exactly. Evidence, contacts, timeline, drafts, tasks and activation packets are deleted with it; agent run history is kept without the link; an audit row written first records the counts and reason. Replaying the same idempotencyKey returns the recorded outcome.",
+    inputSchema: inputSchema(CommercialOpportunityDeleteSchema),
+    annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  },
 ] as const;
 
 type CrmService = Pick<
   typeof commercialOpportunityResearchService,
-  "list" | "get" | "findPossibleDuplicates" | "upsertResearchBundle" | "resolveDelegatingActor" | "transitionStage" | "linkCatalog"
+  "list" | "get" | "findPossibleDuplicates" | "upsertResearchBundle" | "resolveDelegatingActor" | "transitionStage" | "linkCatalog" | "deleteOpportunity"
 >;
 
 const nonRetryableConfigurationCodes = new Set(["SERVICE_ACTOR_NOT_CONFIGURED", "SERVICE_ACTOR_INVALID"]);
@@ -134,6 +142,10 @@ export function createCrmMcpServer(options: { actorId: string; service?: CrmServ
     crm_link_catalog: async (args) => {
       await service.resolveDelegatingActor(options.actorId);
       return service.linkCatalog(args, context);
+    },
+    crm_delete_opportunity: async (args) => {
+      await service.resolveDelegatingActor(options.actorId);
+      return service.deleteOpportunity(args, context);
     },
   };
 

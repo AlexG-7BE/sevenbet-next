@@ -16,19 +16,27 @@ This checkpoint supersedes older candidate/draft/current-state language where it
 
 **Founder instruction, 25 September 2026:** "Claude ведёт CRM" — Claude
 operates the partner Commercial CRM. [RFC-055](06_RFC/RFC-055-Claude-Operated-Partner-CRM.md)
-adds one service-bearer, stateless `POST /api/mcp/crm` endpoint with six
+adds one service-bearer, stateless `POST /api/mcp/crm` endpoint with seven
 tools: list, get, possible duplicates, the existing research bundle,
-evidence-gated stage transition and CRM → catalog identity links. Writes are
-transactional, idempotent and audited as `PARTNER_OPERATIONS_AGENT` on behalf
-of the `CRM_MCP_ACTOR_ID` staff actor with `channel: "crm-mcp"`. `ACTIVE`
-can be neither set nor cleared; the CRM keeps no route, market, button,
-tracking or customer-data authority (RFC-048).
+evidence-gated stage transition, CRM → catalog identity links and permanent
+delete of a never-contacted prospect. Writes are transactional, idempotent
+and audited as `PARTNER_OPERATIONS_AGENT` on behalf of the
+`CRM_MCP_ACTOR_ID` staff actor (the Founder's own `AdminUser`) with
+`channel: "crm-mcp"`. `ACTIVE` can be neither set nor cleared; the CRM keeps
+no route, market, button, tracking or customer-data authority (RFC-048).
+
+Delete is refused for any opportunity with real partner contact (EMAIL or
+AGREEMENT evidence, a submitted/sent/answered/closed application, sent
+outreach, a response, meeting, negotiation, terms, Founder decision or
+activation), with partner market support or a catalog link, or outside
+`PROSPECT`/`REJECTED`/`ON_HOLD`. Agent research alone does not block. No
+archive state or schema change was added.
 
 **PROPOSED — NOT YET LIVE:** the endpoint returns 503 until
 `CRM_MCP_ENABLED=true`, a `CRM_MCP_SERVICE_TOKEN` of at least 32 bytes and a
 `CRM_MCP_ACTOR_ID` with `affiliate.manage` are set in Vercel. The weekly
 mailbox/portal routine and the one-off cleanup start after that
-configuration.
+configuration; no cleanup or deletion has been run.
 
 ## Licence-based market access — live; activation release and GB decision pending
 
@@ -726,7 +734,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION — HUMAN CRM ONLY** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. The in-app OpenAI Partner Operations run was removed on 25 September 2026 by Founder decision; it had never invoked the provider in Production. |
 | Commercial MCP / operational OAuth | **RETIRED — TRANSPORT, EXTERNAL CONNECTIONS AND STORAGE REMOVED** | PR5 removed the server/provider/routes without a replacement transport. Founder Office removed `B4GAMBLE Commercial Operations2` and `B4GAMBLE Media GEO3`; PR6 applied migration 0041 and removed the retired connector storage. None may be recreated or reconnected. |
-| Commercial CRM — Claude-operated (RFC-055) | **CODE READY; DISABLED UNTIL CONFIGURED** | Claude maintains the Commercial CRM through the separate service-bearer `/api/mcp/crm` endpoint (six tools, no OAuth). It returns 503 until `CRM_MCP_ENABLED`, `CRM_MCP_SERVICE_TOKEN` and `CRM_MCP_ACTOR_ID` are configured. CRM stages and links keep no route, market, button or tracking authority. |
+| Commercial CRM — Claude-operated (RFC-055) | **CODE READY; DISABLED UNTIL CONFIGURED** | Separate from the removed in-app OpenAI run: Claude maintains the Commercial CRM from outside the application through the service-bearer `/api/mcp/crm` endpoint (seven tools, including guarded delete of never-contacted prospects; no OAuth). It returns 503 until `CRM_MCP_ENABLED`, `CRM_MCP_SERVICE_TOKEN` and `CRM_MCP_ACTOR_ID` are configured. CRM stages and links keep no route, market, button or tracking authority. |
 | Partner tracking registration | **RFC-048 WRITE CORE LIVE; INTERNAL-ONLY AFTER PR5** | CRM/static/lifecycle state is non-authoritative and canonical writes require non-serializable trusted Founder provenance. PR5 removes the old transport caller and adds no new authority boundary. |
 | Production DB reliability | **READY IN PRODUCTION** | The one-connection runtime and narrow secret-safe transient handling remain; transport-specific availability code/tests are retired. |
 | Commercial partner activation | **READY IN PRODUCTION — 39 STORED ACTIVE + HEALTHY ROUTES** | PR2 acceptance verified all 39 stored active/healthy routes unchanged. RFC-042 remains the sole activation authority; exact GEO, law, regulatory policy, safe-route and missing-link controls remain fail closed. |

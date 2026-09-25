@@ -4,7 +4,10 @@
 - **Decision owner:** B4GAMBLE Founder
 - **Decision date:** 25 September 2026
 - **Implementation authority:** explicit Founder instruction in chat, 25
-  September 2026: "Claude ведёт CRM" (Claude operates the partner CRM)
+  September 2026: "Claude ведёт CRM" (Claude operates the partner CRM); the
+  same day's follow-up adds permanent delete of never-contacted prospects,
+  names the Founder's own `AdminUser` as the delegating actor and rejects any
+  archive column or migration
 - **Scope:** one service-authenticated, stateless MCP endpoint through which
   Claude reads and maintains the Commercial CRM
 - **Depends on:** Product Vision & Principles, RFC-013, RFC-027, RFC-046,
@@ -15,14 +18,16 @@
   exclude `APPROVED`
 - **Does not change:** RFC-048 (CRM has no Partner, relationship, tracking,
   market, route or public-action authority), RFC-047, RFC-042/049/050/054
-  route authority, RFC-046 customer data, or any database schema
+  route authority, RFC-046 customer data, or any database schema (no
+  migration)
 
 ## 1. Decision
 
 Claude operates the partner Commercial CRM. A weekly scheduled Claude routine
 reads the partner mailbox and affiliate portals and records what it finds in
 the CRM; Claude also performs a one-off cleanup of real stages, duplicates and
-links to canonical catalog identities.
+links to canonical catalog identities, and may permanently delete prospects
+that nobody ever contacted.
 
 The CRM stays an operational record. Everything Claude writes is CRM data:
 nothing it does creates, changes or vetoes an offer, a partner button, a
@@ -46,7 +51,7 @@ built the same way as the RFC-052 Learn endpoint:
 | --- | --- |
 | `CRM_MCP_ENABLED` | Exact `true` enables the endpoint; anything else returns 503 |
 | `CRM_MCP_SERVICE_TOKEN` | Secret bearer credential, at least 32 bytes |
-| `CRM_MCP_ACTOR_ID` | `AdminUser.id` recorded as the delegating staff actor for every write |
+| `CRM_MCP_ACTOR_ID` | `AdminUser.id` recorded as the delegating staff actor for every write; the Founder's own `AdminUser` |
 
 Before every write the actor must exist and its role must grant
 `affiliate.manage`; otherwise the tool fails closed with a non-retryable
@@ -73,6 +78,7 @@ code, message, persistence and retryability, and never a stack.
 | `crm_upsert_research_bundle` | The existing RFC-051 research bundle: evidence, contacts, notes, tasks, next action, drafts, evidenced terms, proposals, activation packet |
 | `crm_transition_stage` | Evidence-gated stage change (§4) |
 | `crm_link_catalog` | Set or clear the opportunity's `casinoId`, `affiliateNetworkId`, `affiliateProgramId`, `operatorId` and `brandId` (§5) |
+| `crm_delete_opportunity` | Permanently delete a never-contacted prospect (§6) |
 
 The research bundle keeps every RFC-051 ceiling: drafts are never sent, terms
 need DETECTED evidence, uncertain identity returns `POSSIBLE_DUPLICATE`
@@ -96,7 +102,8 @@ cites:
 
 `ACTIVE` is derived from governed live routes. The input schema does not
 offer it, and a delegated transition cannot move an opportunity out of
-`ACTIVE` either; a stale `ACTIVE` record is reported to the Founder.
+`ACTIVE` either (Founder-confirmed); a stale `ACTIVE` record is reported to
+the Founder.
 
 This amends RFC-027: under the Founder decision the agent may now change the
 stage itself, including `APPROVED` when it cites `APPROVAL` evidence. A CRM
@@ -111,7 +118,44 @@ only. Only the named foreign keys on `CommercialOpportunity` change. The tool
 never creates or changes a catalog record, PartnerCasinoRelationship,
 MarketActivation, tracking link, redirect, offer or public page.
 
-## 6. Audit and idempotency
+## 6. Deleting a never-contacted prospect
+
+Most CRM rows are agent-researched prospects that nobody contacted.
+`crm_delete_opportunity` removes one of them permanently; there is no archive
+state, column or migration. Its input is `opportunityId`, `confirmDisplayName`
+(must equal the stored display name exactly), `reason` and `idempotencyKey`.
+The tool description tells the caller to search the partner mailbox for the
+company first and to record any correspondence as EMAIL evidence instead.
+
+The delete is refused, with the full blocker list, when any of these is true:
+
+- the stage is not `PROSPECT`, `REJECTED` or `ON_HOLD`;
+- there is EMAIL or AGREEMENT evidence;
+- an application is `SUBMITTED`, `SENT`, `RESPONSE_RECEIVED` or `CLOSED`;
+- the timeline has `APPLICATION_SUBMITTED`, `OUTREACH_SENT`,
+  `RESPONSE_RECEIVED`, `MEETING`, `NEGOTIATION`, `TERMS_RECEIVED`,
+  `FOUNDER_DECISION` or `ACTIVATION_EVENT`;
+- any commercial term exists;
+- any `PartnerCasinoMarketSupport` row references it; or
+- any catalog link is set.
+
+Public-web or affiliate-portal research evidence, drafts, tasks and notes do
+not block. In one transaction the tool writes the `AuditLog` row
+`commercial_opportunity_deleted` first (display and legal name, stage, reason,
+child counts per relation, retained agent-run IDs, cleared duplicate
+references, `channel: "crm-mcp"`) and then deletes the opportunity. Evidence,
+contacts, activities, applications, terms, tasks and activation packets
+cascade. Agent runs and operations keep their history with a null
+opportunity; other opportunities' `possibleDuplicateOfId` pointing at it is
+cleared. Terms would block deletion anyway, so the term→evidence `RESTRICT`
+never fires. A replay with the same `idempotencyKey` returns the recorded
+outcome from the audit row; another key after deletion is a `CONFLICT`.
+
+Replaying an old research bundle key after a delete returns its recorded
+`IDEMPOTENT_REPLAY` and does not recreate the prospect; a new bundle key
+creates a new one.
+
+## 7. Audit and idempotency
 
 Every write runs in one transaction under a per-opportunity advisory lock:
 
@@ -127,12 +171,15 @@ Every write runs in one transaction under a per-opportunity advisory lock:
 - a request that changes nothing returns `UNCHANGED` and writes nothing.
 
 Research bundles keep their RFC-051 run, operation and
-`commercial_research_bundle_upserted` audit records.
+`commercial_research_bundle_upserted` audit records. Deletion records only its
+`commercial_opportunity_deleted` audit row (§6), because the timeline is
+deleted with the opportunity.
 
-## 7. Data boundary
+## 8. Data boundary
 
 The endpoint reads and writes only Commercial CRM rows, `AuditLog`, the
-delegating `AdminUser` (id and role) and catalog ids for existence. It never
+delegating `AdminUser` (id and role), catalog ids for existence and the count
+of `PartnerCasinoMarketSupport` rows that reference an opportunity. It never
 reads or writes customer, `User`, analytics, lifecycle email, Programme or
 Help data (RFC-046, RFC-017), tracking, MarketActivation,
 PartnerCasinoRelationship, redirects or public commercial action code. Public
@@ -140,8 +187,11 @@ runtime and `PartnerTrackingRegistrationService` do not depend on it. Tests
 in `tests/crm-mcp.test.ts` and `tests/commercial-core-pr5-mcp-retirement.test.ts`
 pin these boundaries.
 
-## 8. Rollback
+## 9. Rollback
 
 Set `CRM_MCP_ENABLED` to anything other than `true` (503), or rotate
 `CRM_MCP_SERVICE_TOKEN`. Written CRM rows stay as ordinary, audited CRM
-history and can be corrected through the Admin CRM.
+history and can be corrected through the Admin CRM. A delete is not
+reversible in the application; recovery of a wrongly deleted prospect uses
+its audit row (names, counts, reason) to re-create it, or a database restore
+under RFC-024.

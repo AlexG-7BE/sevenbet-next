@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import {
+  CATALOG_LINK_FIELDS,
   CommercialOpportunityCatalogLinkSchema,
+  CommercialOpportunityDeleteSchema,
   CommercialOpportunityDuplicateSchema,
   CommercialOpportunityGetSchema,
   CommercialOpportunityListSchema,
@@ -15,6 +17,7 @@ import {
   commercialRepository,
   delegatedCommercialRepository,
   type DelegatedCommercialContext,
+  type DelegatedCommercialDeletionFacts,
   type DelegatedCommercialStageFacts,
 } from "@/lib/repositories/commercial.repository";
 import { ConflictError, NotFoundError, ServiceError, ValidationError } from "@/lib/services/service-error";
@@ -66,6 +69,45 @@ function delegatedStageGuard(input: CommercialOpportunityStageTransitionInput) {
       throw error;
     }
   };
+}
+
+// Only a never-contacted prospect may be deleted. Agent research (public web,
+// affiliate-portal pages) does not block; any trace of real partner contact,
+// commercial terms, market support or a catalog identity link does.
+const DELETABLE_STAGES = new Set(["PROSPECT", "REJECTED", "ON_HOLD"]);
+const CONTACT_EVIDENCE_SOURCES = new Set(["EMAIL", "AGREEMENT"]);
+const EXTERNAL_APPLICATION_STATES = new Set(["SUBMITTED", "SENT", "RESPONSE_RECEIVED", "CLOSED"]);
+const CONTACT_ACTIVITY_TYPES = new Set([
+  "APPLICATION_SUBMITTED", "OUTREACH_SENT", "RESPONSE_RECEIVED", "MEETING",
+  "NEGOTIATION", "TERMS_RECEIVED", "FOUNDER_DECISION", "ACTIVATION_EVENT",
+]);
+
+function countBy(values: string[], allowed: Set<string>) {
+  const counts = new Map<string, number>();
+  for (const value of values) if (allowed.has(value)) counts.set(value, (counts.get(value) ?? 0) + 1);
+  return [...counts.entries()].sort(([a], [b]) => a.localeCompare(b));
+}
+
+export function commercialDeletionBlockers(facts: DelegatedCommercialDeletionFacts) {
+  const blockers: string[] = [];
+  if (!DELETABLE_STAGES.has(facts.stage)) blockers.push(`STAGE:${facts.stage}`);
+  for (const [source, count] of countBy(facts.evidenceSourceTypes, CONTACT_EVIDENCE_SOURCES)) blockers.push(`EVIDENCE_${source}:${count}`);
+  for (const [state, count] of countBy(facts.applicationStates, EXTERNAL_APPLICATION_STATES)) blockers.push(`APPLICATION_${state}:${count}`);
+  for (const [type, count] of countBy(facts.activityTypes, CONTACT_ACTIVITY_TYPES)) blockers.push(`ACTIVITY_${type}:${count}`);
+  if (facts.termCount) blockers.push(`COMMERCIAL_TERMS:${facts.termCount}`);
+  if (facts.marketSupportCount) blockers.push(`PARTNER_MARKET_SUPPORT:${facts.marketSupportCount}`);
+  for (const field of CATALOG_LINK_FIELDS) if (facts.catalogLinks[field]) blockers.push(`CATALOG_LINK:${field}`);
+  return blockers;
+}
+
+function assertDeletable(facts: DelegatedCommercialDeletionFacts) {
+  const blockers = commercialDeletionBlockers(facts);
+  if (blockers.length) {
+    throw new ValidationError(
+      `Only a never-contacted prospect can be deleted; blocked by ${blockers.join(", ")}.`,
+      { blockers },
+    );
+  }
 }
 
 type ResearchRepository = Pick<
@@ -149,6 +191,19 @@ export function createCommercialOpportunityResearchService(
       }
       if (result.status === "IDEMPOTENCY_CONFLICT") {
         throw new ConflictError("This idempotency key already recorded different catalog links.", { idempotencyKey: input.idempotencyKey });
+      }
+      return plainJson(result);
+    },
+
+    async deleteOpportunity(value: unknown, context: DelegatedCommercialContext) {
+      const input = parse(CommercialOpportunityDeleteSchema, value);
+      const result = await delegated.deleteOpportunity(input, context, assertDeletable);
+      if (result.status === "NOT_FOUND") throw new NotFoundError("Commercial opportunity", { id: input.opportunityId });
+      if (result.status === "CONFIRMATION_MISMATCH") {
+        throw new ValidationError("confirmDisplayName must equal the opportunity's stored displayName exactly.");
+      }
+      if (result.status === "ALREADY_DELETED") {
+        throw new ConflictError("This opportunity was already deleted under a different idempotency key.", { deletedAt: result.deletedAt });
       }
       return plainJson(result);
     },

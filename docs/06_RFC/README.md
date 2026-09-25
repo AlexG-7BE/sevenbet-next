@@ -82,7 +82,7 @@ orientation.
 | [RFC-052 — Autonomous Learn Publication](RFC-052-Autonomous-Learn-Publication.md) | `ACTIVE` | One service-authenticated `learn_apply` mutation over canonical Article authority; atomic publication, first-party images, replay safety and public verification without reviving retired Commercial/Media OAuth. |
 | [RFC-053 — Autonomous Learn Content Orchestration](RFC-053-Autonomous-Learn-Content-Orchestration.md) | `ACTIVE` | One bounded scheduled three-role Learn editorial pipeline; models have no write authority and deterministic publication remains exclusively RFC-052 `learn_apply`. |
 | [RFC-054 — Licence-Based Market Access](RFC-054-Licence-Market-Access.md) | `ACTIVE` | One casino × market licence register gates offers, the partner button and `/r/` by the operator's own licence; closures are operator block, prohibition by law, no local licence, closed grey zone and the German advertising window. |
-| [RFC-055 — Claude-Operated Partner CRM](RFC-055-Claude-Operated-Partner-CRM.md) | `ACTIVE` | One service-bearer `/api/mcp/crm` endpoint with six CRM tools; evidence-gated stage changes (never `ACTIVE`), CRM → catalog identity links, audited and idempotent; no route, market, CTA, tracking or customer-data authority. Amends RFC-051's no-CRM-transport clause. |
+| [RFC-055 — Claude-Operated Partner CRM](RFC-055-Claude-Operated-Partner-CRM.md) | `ACTIVE` | One service-bearer `/api/mcp/crm` endpoint with seven CRM tools; evidence-gated stage changes (never `ACTIVE`), CRM → catalog identity links, permanent delete of never-contacted prospects only, audited and idempotent; no route, market, CTA, tracking or customer-data authority. Amends RFC-051's no-CRM-transport clause. |
 
 ## Counts
 
