@@ -147,6 +147,29 @@ test("mobile navigation controls are icon-only, accessible, and restore focus", 
   expect((await close.boundingBox())?.width).toBeGreaterThanOrEqual(44);
   expect((await close.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await expect(page.locator("html")).toHaveCSS("overflow", "hidden");
+
+  // Founder, 25 September 2026: the Programme is the drawer's primary action, directly
+  // under the routes, then Log in, then Help and the language choice.
+  const drawer = page.locator("#public-mobile-navigation");
+  const start = drawer.getByRole("link", { name: "Start Programme" });
+  const logIn = drawer.getByRole("link", { name: "Log in" });
+  const help = drawer.getByRole("link", { name: "Open Help" });
+  const language = drawer.getByRole("button", { name: /Change language/ });
+  const lastRoute = drawer.locator("nav [data-navigation-href]").last();
+  const [routeBox, startBox, logInBox, helpBox, languageBox] = await Promise.all([lastRoute, start, logIn, help, language].map((item) => item.boundingBox()));
+  expect(routeBox && startBox && logInBox && helpBox && languageBox).toBeTruthy();
+  expect(startBox!.y).toBeGreaterThan(routeBox!.y);
+  expect(logInBox!.y).toBeGreaterThan(startBox!.y);
+  expect(helpBox!.y).toBeGreaterThan(logInBox!.y);
+  expect(languageBox!.y).toBeGreaterThan(helpBox!.y);
+  expect(startBox!.y + startBox!.height).toBeLessThanOrEqual(844);
+  expect(startBox!.height).toBeGreaterThanOrEqual(52);
+  expect(logInBox!.height).toBeGreaterThanOrEqual(44);
+  await expect(start).toHaveCSS("background-color", "rgb(228, 226, 78)");
+  await expect(start).toHaveCSS("font-size", "16px");
+  await expect(start).toHaveCSS("font-weight", "700");
+  await expect(start).toHaveCSS("text-transform", "none");
+  await expect(logIn).toHaveCSS("font-size", "16px");
   await saveWebp(page, resolve(evidenceRoot, "mobile-menu-open-390.webp"));
 
   await page.keyboard.press("Escape");

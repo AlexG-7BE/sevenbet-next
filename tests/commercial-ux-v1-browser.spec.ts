@@ -32,8 +32,13 @@ test("Best Offers is an exact four-view, governed Top 3 decision flow", async ({
   await expect(page.getByText(/Worth a look/i)).toHaveCount(0);
   const method = page.locator('[data-premium-section="best-offers-method"]');
   const faq = page.locator('[data-premium-section="best-offers-faq"]');
+  // The method heading is plain words; the three checks keep their own labels.
+  await expect(method.locator("h2")).toHaveText("How we pick");
+  await expect(method.locator("h2")).not.toContainText(/Source status/i);
   await expect(method).toContainText(/Material terms/i);
   await expect(method.locator("li")).toHaveCount(3);
+  await expect(page.locator('[class*="heroTicker"] span').first()).toHaveText(/^6\s*offers$/);
+  await expect(page.locator("main")).not.toContainText(/Not verified|eligible records/i);
   await expect(faq).toContainText(/Before you click/i);
   await expect(faq.locator("details")).toHaveCount(3);
   expect(await page.locator("[data-commercial-best-offer-card]").last().evaluate((card) => card.compareDocumentPosition(document.querySelector('[data-premium-section="best-offers-method"]')!) & Node.DOCUMENT_POSITION_FOLLOWING)).toBeTruthy();
@@ -70,6 +75,8 @@ test("Casinos keeps one collection with name search and three reorder views", as
     await expect(page.getByText(removed, { exact: true })).toHaveCount(0);
   }
   await expect(cards.locator("dt").filter({ hasText: /^Wagering$/ })).toHaveCount(0);
+  await expect(page.locator('[class*="directoryHeading"] > span')).toHaveText("10 casinos");
+  await expect(page.locator("main")).not.toContainText("Not verified");
   await page.setViewportSize({ width: 1440, height: 900 });
   const firstTop = await cards.first().evaluate((element) => Math.round(element.getBoundingClientRect().top));
   const secondTop = await cards.nth(1).evaluate((element) => Math.round(element.getBoundingClientRect().top));
@@ -102,6 +109,8 @@ test("Bonuses is an offer-first directory with five bounded intent views", async
   await expect(cards).toHaveCount(8);
 
   expect(await cards.first().locator("dl > div").count()).toBe(3);
+  await expect(page.locator("#bonus-directory header p")).toHaveText("8 offers");
+  await expect(page.locator("main")).not.toContainText("Not verified");
   await expect(page.getByText("Current offer", { exact: true })).toHaveCount(0);
   await expect(cards.locator("dt").filter({ hasText: /^Payout$/ })).toHaveCount(0);
   for (const removed of ["More Filters", "Sort results", "What a bonus really costs", "Bonus calculator"]) {

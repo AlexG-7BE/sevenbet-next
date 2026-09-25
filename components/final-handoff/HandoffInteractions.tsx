@@ -431,6 +431,19 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
       ?? learnSection?.querySelector<HTMLElement>("[data-learn-grid]")
       ?? null;
     const learnStatus = name === "learn" ? document.createElement("p") : null;
+    // Start here guides are not repeated in All guides (Founder, 25 Sep 2026). While a topic or search
+    // is active, a copy of each matching one joins the top of the list, so the results stay complete
+    // without changing the layout above the filters. Unfiltered, the copies are not in the document.
+    const learnStartCards = name === "learn" ? [...root.querySelectorAll<HTMLAnchorElement>("[data-learn-start-section] a[data-learn-category]")] : [];
+    const learnStartEchoes = learnGrid ? learnStartCards.map((card) => {
+      const echo = card.cloneNode(true) as HTMLAnchorElement;
+      echo.classList.replace("scp2", "scp3");
+      echo.dataset.learnStartEcho = "";
+      echo.style.padding = "24px 30px";
+      echo.style.borderRadius = "14px";
+      echo.style.background = "rgb(250, 250, 247)";
+      return echo;
+    }) : [];
     const categoryTopic = new Map([
       ["casino-bonuses", "bonuses"],
       ["payments", "banking"],
@@ -472,25 +485,34 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
 
     const applyLearnFilters = () => {
       let visible = 0;
+      const filtered = learnTopic !== "all topics" || Boolean(learnQuery);
+      const cardMatches = (card: HTMLElement) => (learnTopic === "all topics" || card.dataset.learnCategory === learnTopic)
+        && (!learnQuery || normalized(card.textContent).includes(learnQuery));
       for (const card of learnCards) {
-        const topicMatch = learnTopic === "all topics" || card.dataset.learnCategory === learnTopic;
-        const queryMatch = !learnQuery || normalized(card.textContent).includes(learnQuery);
-        const matches = topicMatch && queryMatch;
+        const matches = cardMatches(card);
         card.hidden = !matches;
         // Captured cards carry inline display:flex. That author style outranks the
         // user-agent [hidden] rule, so apply the visibility state at the same level.
         card.style.display = matches ? "flex" : "none";
         if (!card.hidden) visible += 1;
       }
+      const shownEchoes: HTMLAnchorElement[] = [];
+      learnStartCards.forEach((card, index) => {
+        const matches = cardMatches(card);
+        if (matches) visible += 1;
+        const echo = learnStartEchoes[index];
+        if (echo && filtered && matches) shownEchoes.push(echo);
+      });
+      for (const echo of learnStartEchoes) echo.remove();
+      if (learnGrid && shownEchoes.length) learnGrid.prepend(...shownEchoes);
       if (learnCount) learnCount.textContent = String(visible);
       if (learnProgrammeBridge) {
         // The inline Programme card belongs to the full list; a topic or search result shows guides only.
-        const filtered = learnTopic !== "all topics" || Boolean(learnQuery);
         learnProgrammeBridge.hidden = filtered;
         learnProgrammeBridge.style.display = filtered ? "none" : "flex";
       }
       if (learnStatus) {
-        const idleEmptyCatalogue = learnCards.length === 0 && !learnQuery && learnTopic === "all topics";
+        const idleEmptyCatalogue = learnCards.length === 0 && learnStartCards.length === 0 && !filtered;
         learnStatus.textContent = idleEmptyCatalogue
           ? ""
           : visible
@@ -545,6 +567,7 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
       root.removeEventListener("click", onClick);
       root.removeEventListener("input", onInput);
       learnStatus?.remove();
+      for (const echo of learnStartEchoes) echo.remove();
       window.clearTimeout(pendingNavigationTimeout);
       if (pendingNavigationLabel) {
         navigationFeedback?.({ id: navigationFeedbackId, label: pendingNavigationLabel }, false);

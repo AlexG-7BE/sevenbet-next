@@ -18,7 +18,7 @@ import { resolveServerPresentationContext } from "@/lib/market/server";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
-import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
+import { commercialUxMessages, countNoun } from "@/lib/commercial/commercial-ux-messages";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 import { rankBestOffersForCategory } from "@/lib/public-offer/best-offer-ranking";
 
@@ -109,9 +109,11 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   </div>;
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const demoOnly = result.inventoryMode === "DEMO_ONLY";
+  // With no known country the list is the global one: say so in words rather than "filtered for the global catalog".
+  const heroCopy = presentation.marketCountryCode ? messages.bestOffers.heroCopy : messages.bestOffers.heroCopyWorldwide;
   const hero = demoOnly
     ? { copy: messages.bestOffers.demoCopy, kicker: messages.bestOffers.demoKicker }
-    : { copy: formatProductMessage(messages.bestOffers.heroCopy, { market }), kicker: formatProductMessage(messages.bestOffers.heroKicker, { market }) };
+    : { copy: formatProductMessage(heroCopy, { market }), kicker: formatProductMessage(messages.bestOffers.heroKicker, { market }) };
   const schemaOffers = rankBestOffersForCategory(result.records, "best_overall", {
     country: presentation.marketCountryCode ?? undefined,
     limit: 3,
@@ -139,7 +141,7 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
       <div className={styles.heroMeta}>
         <p className={styles.heroCopy}>{hero.copy}</p>
         <div className={styles.heroTicker}>
-          {result.records.length ? <span><strong>{result.records.length}</strong><small>{copy.eligibleRecords}</small></span> : null}
+          {result.records.length ? <span><strong>{result.records.length}</strong><small>{countNoun(presentation.locale, result.records.length, copy.offerOne, copy.offerOther)}</small></span> : null}
           <Link href={productHref(presentation, "/methodology")}>{messages.bestOffers.rankingLink}</Link>
         </div>
       </div>
@@ -147,7 +149,7 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
     {containsDemo ? <section className={styles.demoDisclosure} data-nav-theme="dark" role="note"><div className={styles.shell}><p><strong>{messages.common.demoData}.</strong> {messages.bestOffers.demoCopy}</p></div></section> : null}
     {result.status === "available" ? <><BestOffersExperience inventoryMode={result.inventoryMode} messages={messages} presentation={presentation} shortlist={result.records} />
       <section className={styles.whyPicked} data-premium-section="best-offers-method" data-nav-theme="cream"><div className={`${styles.shell} ${styles.reveal}`}>
-        <div><p className={styles.lightKicker}>{presentation.language === "en" ? "How we choose" : messages.bestOffers.whyTitle}</p><h2>{messages.common.materialTerms} · <em>{messages.common.sourceStatus}</em></h2><p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} <span aria-hidden="true">→</span></Link></p></div>
+        <div><p className={styles.lightKicker}>{messages.common.methodology}</p><h2><EmphasisTail text={messages.bestOffers.methodTitle} /></h2><p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} <span aria-hidden="true">→</span></Link></p></div>
         <ol>
           <li><span>01</span><div><strong>{messages.common.availability}</strong><p>{messages.bestOffers.whyCopy}</p></div></li>
           <li><span>02</span><div><strong>{messages.common.materialTerms}</strong><p>{messages.bonuses.methodCopy}</p></div></li>

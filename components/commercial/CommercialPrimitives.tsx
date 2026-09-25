@@ -38,7 +38,9 @@ export function CommercialBadges({ badges, className }: { badges: readonly strin
   return <div className={classes(styles.badges, className)}>{badges.slice(0, 2).map((badge) => <span key={badge}>{badge}</span>)}</div>;
 }
 
+/** Renders known facts only; a card with none gets no empty list (see knownCommercialFacts). */
 export function CommercialFacts({ className, facts }: { className?: string; facts: readonly CommercialFact[] }) {
+  if (!facts.length) return null;
   return <dl className={classes(styles.facts, className)}>{facts.slice(0, 3).map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>;
 }
 
