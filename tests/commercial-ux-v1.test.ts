@@ -459,3 +459,18 @@ test("Commercial UX market fixtures are Preview-only, allowlisted, and presentat
     if (previousLocalFlag === undefined) delete process.env.B4GAMBLE_HANDOFF_VISUAL_FIXTURE; else process.env.B4GAMBLE_HANDOFF_VISUAL_FIXTURE = previousLocalFlag;
   }
 });
+
+test("an unrouted country is named in the page language and no country reads as readers worldwide", () => {
+  // Founder, 25 Sep 2026: a KZ visitor saw "Curated for KZ"; without GEO the copy said "the global catalog".
+  assert.equal(resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "KZ" }).marketDisplayName, "Kazakhstan");
+  assert.equal(resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "KZ" }).marketDisplayName, "Kasachstan");
+  assert.equal(resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" }).marketDisplayName, "United Kingdom");
+  assert.equal(resolvePresentationContext({ routeLanguage: "en" }).marketDisplayName, "readers worldwide");
+  for (const language of ["en", "de", "es", "el", "sv", "da", "it", "pt", "nl", "fi", "nb", "fr"]) {
+    const name = resolvePresentationContext({ routeLanguage: language }).marketDisplayName;
+    assert.doesNotMatch(name, /catalog|katalog|catálogo|κατάλογο|luettelo|catalogue/i, language);
+  }
+  const casinos = productPageMessages("en-GB").casinos;
+  const bonuses = productPageMessages("en-GB").bonuses;
+  assert.doesNotMatch(`${casinos.description} ${bonuses.description}`, /the \{market\}/, "descriptions read naturally with any market name");
+});
