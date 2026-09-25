@@ -85,3 +85,23 @@ test("the route itself must be HTTPS even though a partner hop may not be", asyn
   assert.equal(result.reason, "UNSAFE_HEALTH_TARGET");
   assert.equal(api.requested.length, 0);
 });
+
+test("an AWS WAF bot challenge on the expected brand host counts as reaching the brand, a geo-block does not", async () => {
+  const challenge = `<!DOCTYPE html><html><head><title>Human Verification</title><script>window.awsWafCookieDomainList = []; window.gokuProps = {"key":"x"};</script></head></html>`;
+  const reach = (statusCode: number, body: string, host = "www.brand.example") => checkAffiliateRouteFromMarket({
+    url: new URL("https://go.partner.example/c/abc"),
+    country: "GB",
+    expectation: { expectedFinalHost: "brand.example", requiredAttributionParameters: [], allowWwwEquivalentFinalHost: true },
+    globalping: { ...fast, fetcher: fakeGlobalping([
+      { statusCode: 302, country: "GB", headers: { location: `https://${host}/` } },
+      { statusCode, country: "GB", headers: { "content-type": "text/html", server: "CloudFront" }, body },
+    ]).fetcher },
+  });
+  const healthy = await reach(405, challenge);
+  assert.equal(healthy.status, "HEALTHY");
+  assert.equal(healthy.reason, "AWS_WAF_CHALLENGE_ON_EXPECTED_HOST");
+  assert.equal((await reach(405, "<title>Method Not Allowed</title>")).status, "BROKEN", "a plain 405 stays broken");
+  assert.equal((await reach(403, "<title>Forbidden</title>")).status, "EXTERNAL_CHALLENGE", "a 403 geo-block is never healthy");
+  assert.equal((await reach(405, challenge, "www.other.example")).status, "CROSS_GEO", "a challenge on the wrong host is not the brand");
+});
+

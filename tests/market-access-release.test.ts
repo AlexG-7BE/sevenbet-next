@@ -84,3 +84,12 @@ test("the release script never prints a raw partner URL", () => {
   assert.doesNotMatch(source, /console\.info\([^)]*trackingUrl\b(?!\()/);
   assert.doesNotMatch(source, /https:\/\/site\.|go\.superflypartners|record\.betsson/);
 });
+
+test("only a Founder-named target may replace a link staged earlier for its market", () => {
+  const replacing = ENABLE_TARGETS.filter((target) => target.replacesStagedLink);
+  assert.deepEqual(replacing.map((target) => `${target.casinoSlug}:${target.market}`), ["eucasino:DK"]);
+  assert.ok(replacing.every((target) => target.replacesStagedLink?.startsWith(MARKET_ACCESS_DECISION_REF)));
+  const source = readFileSync("scripts/market-access-release.ts", "utf8");
+  assert.match(source, /staged && staged !== hash && !target\.replacesStagedLink/);
+});
+

@@ -101,7 +101,7 @@ async function resolveEnable(target: EnableTarget, activations: Activation[], sh
   const trackingUrl = sheetUrl ?? derivedTrackingUrl(source!.trackingUrl!, target.query);
   const hash = linkHash(trackingUrl);
   const staged = await stagedLinkHash(target.casinoSlug, target.market);
-  if (staged && staged !== hash) return { target, state: "STAGED_LINK_MISMATCH" as const, trackingUrl: null, hash };
+  if (staged && staged !== hash && !target.replacesStagedLink) return { target, state: "STAGED_LINK_MISMATCH" as const, trackingUrl: null, hash };
   return { target, state: "READY" as const, trackingUrl, hash, stagedHashMatches: Boolean(staged) };
 }
 
