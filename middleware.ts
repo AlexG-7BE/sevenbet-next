@@ -504,6 +504,11 @@ export async function middleware(request: NextRequest) {
   )));
 }
 
+// Every application, auth, API and document route runs here, SVG files included (an SVG is a
+// document a CSP applies to). Hashed build assets, the image optimizer (it sets its own sandbox
+// CSP) and raster images or fonts carry no document to protect: skipping them saves an edge
+// invocation and a nonce per file (Founder decision, 25 Sep 2026). Next reads the matcher
+// statically, so it stays a literal; tests/middleware-matcher.test.ts checks which paths it covers.
 export const config = {
-  matcher: ["/:path*"],
+  matcher: ["/((?!_next/static/|_next/image|.*\\.(?:png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf)$).*)"],
 };

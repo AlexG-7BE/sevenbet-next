@@ -69,7 +69,7 @@ test("the access screen is unchecked, account creation stays signed and authenti
   assert.match(middleware, /programmeMutationAccessCategory\(pathname, request\.method\)/);
   assert.match(middleware, /programmeMutationCategory === "anonymous"/);
   assert.match(middleware, /programmeMutationCategory === "unknown"/);
-  assert.match(middleware, /matcher: \["\/:path\*"\]/);
+  assert.match(middleware, /matcher: \["\/\(\(\?!_next\/static\/\|_next\/image\|/);
   assert.match(authRoute, /sign-up\/email/);
   assert.match(authRoute, /programmeAuthAccessDenial/);
   assert.match(accessRoute, /programmeAccessService\.userStatus/);

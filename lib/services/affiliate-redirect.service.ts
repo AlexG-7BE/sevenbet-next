@@ -162,7 +162,10 @@ export class AffiliateRedirectService {
     const now = input.now ?? new Date();
     let normalizedSlug: string | null = null;
     try { normalizedSlug = normalizeRedirectSlug(slugValue); } catch { /* handled after jurisdiction resolution */ }
-    const scopedMapping = normalizedSlug ? await this.store.findBySlug(normalizedSlug) : null;
+    // One small read serves the whole click: the casino for the licence register and the ids for a refusal.
+    const scopedMapping = normalizedSlug
+      ? await (this.store.findRouteIdentityBySlug?.(normalizedSlug) ?? this.store.findBySlug(normalizedSlug))
+      : null;
     const founderGbScope = input.requestCountrySignal?.countryCode === "GB"
       && Boolean(scopedMapping?.casino.slug && worldwideFounderGbAuthorityApplies(scopedMapping.casino.slug));
     const jurisdictionDecision = await this.jurisdiction.resolve({
@@ -196,7 +199,8 @@ export class AffiliateRedirectService {
       ? await this.canonicalActivations.resolveRedirect(slug, marketCode, now)
       : null;
     if (!activation || !activation.redirectSlug || !activation.affiliateOffer || !activation.primaryTrackingLink) {
-      const mapping = await this.store.findBySlug(slug);
+      // `slug` and `normalizedSlug` come from the same normalization, so the mapping is already loaded.
+      const mapping = scopedMapping;
       return {
         ok: false,
         reason: mapping ? "NO_GOVERNED_ROUTE" : "SLUG_NOT_FOUND",
