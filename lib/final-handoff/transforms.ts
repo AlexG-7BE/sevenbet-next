@@ -1,4 +1,5 @@
 import { articlePath, type PublicArticle } from "@/lib/articles/article-types";
+import { learnStartHereSelection } from "@/lib/articles/learn-selection";
 import { HOME_SOURCE_COPY, homeTranslation } from "@/lib/i18n/home-catalog";
 import { learningMessages, localizedLearningCategories } from "@/lib/i18n/learning-center";
 import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
@@ -398,13 +399,15 @@ export function transformLearnHandoff(
     /<div data-learn-meta-axis=""[^>]*>[\s\S]*?<\/div>/,
     (meta) => meta.replaceAll("<span ", '<span data-learn-meta-item="" '),
   );
-  const featured = articles.slice(0, 4);
+  // Founder decision 25 Sep 2026 (package C): Start here is one guide per topic, and All guides never repeats it.
+  const featured = learnStartHereSelection(articles);
+  const featuredIds = new Set(featured.map((article) => article.id));
   let featuredIndex = 0;
   output = output.replace(/<a href="[^"]+" class="scp2"[\s\S]*?<\/a>/g, () => {
     const article = featured[featuredIndex++];
     return article ? startCard(article) : "";
   });
-  const guideCards = articles.map(guideCard);
+  const guideCards = articles.filter((article) => !featuredIds.has(article.id)).map(guideCard);
   // Founder decision 25 Sep 2026: the Programme is offered after the first six guides as well as at the end.
   if (guideCards.length > LEARN_PROGRAMME_BRIDGE_AFTER) {
     guideCards.splice(LEARN_PROGRAMME_BRIDGE_AFTER, 0, learnProgrammeBridgeHtml(messages.hub, escapeHtml(`${programmePath}?entry=start`)));
@@ -458,7 +461,20 @@ export function transformMethodologyHandoff(
     .replaceAll('href="/methodology"', `href="${escapeHtml(hrefFor("/methodology"))}"`);
 }
 
-export function transformBonusGuideHandoff(html: string, options: Readonly<{ offerBridge?: LearnOfferBridgeCopy | null }> = {}) {
+/** A real published guide in the Bonus Guide's "Read next" row: dark ink on the cream card, never acid. */
+function bonusGuideReadNextCard(article: PublicArticle, categoryTitle: string) {
+  return `<a href="${escapeHtml(articlePath(article))}" class="scp2" data-bonus-guide-read-next="" style="display: block; background: rgb(250, 250, 247); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 20px; padding: 32px 36px; color: rgb(16, 15, 15); text-decoration: none; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
+            <div style="font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: rgb(119, 117, 0); font-weight: 600; margin-bottom: 16px;">${escapeHtml(categoryTitle)}</div>
+            <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 21px; line-height: 1.2; margin-bottom: 14px; color: rgb(16, 15, 15);">${escapeHtml(article.title)}</div>
+            <div style="font-size: 13px; color: rgb(100, 99, 92);">${escapeHtml(article.readingTime || "Guide")}</div>
+          </a>`;
+}
+
+export function transformBonusGuideHandoff(html: string, options: Readonly<{
+  offerBridge?: LearnOfferBridgeCopy | null;
+  /** Real published English guides, already selected (`bonusGuideReadNextSelection`). None renders no Read next row. */
+  readNext?: readonly PublicArticle[];
+}> = {}) {
   const replacements: Array<[string, string]> = [
     ["What 35x actually costs you, when a smaller bonus is the better deal, and the three terms that quietly decide everything.", "How wagering changes required turnover, why a smaller bonus can require less play, and which material terms to check first."],
     ["By the B4GAMBLE test team", "By the B4GAMBLE editorial team"],
@@ -515,23 +531,29 @@ export function transformBonusGuideHandoff(html: string, options: Readonly<{ off
     const bridge = options.offerBridge ? learnOfferBridgeHtml(options.offerBridge) : "";
     output = output.slice(0, reviewIndex) + bridge + sources + output.slice(reviewIndex);
   }
-  const nextArticles = [
-    "/learn?category=casino-bonuses",
-    "/learn?category=payments",
-    "/learn?category=responsible-gambling",
-  ];
-  let searchFrom = 0;
-  for (const articlePathname of nextArticles) {
-    const start = output.indexOf('<div class="scp2"', searchFrom);
-    if (start < 0) break;
-    const end = htmlElementEnd(output, start);
-    if (end < 0) break;
-    const element = output.slice(start, end)
-      .replace('<div class="scp2"', `<a href="${escapeHtml(articlePathname)}" class="scp2"`)
-      .replace(/<\/div>\s*$/, "</a>")
-      .replace("cursor: pointer;", "");
-    output = output.slice(0, start) + element + output.slice(end);
-    searchFrom = start + element.length;
+  // Founder decision 25 Sep 2026 (package C): the captured "Read next" cards named guides that do not exist.
+  // They are replaced by real published guides; with none, the row is removed rather than faked.
+  const readNextStart = output.indexOf('<div data-screen-label="Read next"');
+  const readNextEnd = readNextStart >= 0 ? htmlElementEnd(output, readNextStart) : -1;
+  if (readNextEnd > readNextStart) {
+    const readNext = options.readNext ?? [];
+    const categoryTitles = new Map(localizedLearningCategories("en-GB").map((category) => [category.slug, category.title]));
+    const section = output.slice(readNextStart, readNextEnd);
+    const gridStart = section.indexOf('<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">');
+    const gridEnd = gridStart >= 0 ? htmlElementEnd(section, gridStart) : -1;
+    let replacement = "";
+    if (readNext.length && gridEnd > gridStart) {
+      const gridOpen = htmlTagAt(section, gridStart)?.raw ?? "";
+      const cards = readNext.map((article) => bonusGuideReadNextCard(
+        article,
+        categoryTitles.get(article.category) ?? article.category.replaceAll("-", " "),
+      )).join("\n          ");
+      replacement = section.slice(0, gridStart)
+        + gridOpen.replace("<div ", '<div data-bonus-guide-read-next-grid="" ')
+        + `\n          ${cards}\n        </div>`
+        + section.slice(gridEnd);
+    }
+    output = output.slice(0, readNextStart) + replacement + output.slice(readNextEnd);
   }
   return output;
 }
