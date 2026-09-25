@@ -11,7 +11,7 @@ import { useEffect, useRef, type RefObject } from "react";
  * controls rest while stuck — under the header, which returns on any upward
  * scroll — not from their current box: a shorter list can pull the page to its
  * end and carry the controls off screen with their container. Readers above the
- * list, and layouts whose controls are not sticky (desktop), are left alone.
+ * list, and layouts whose controls are not sticky, are left alone.
  */
 export function useRevealResults(controls: RefObject<HTMLElement | null>, start: RefObject<HTMLElement | null>, key: string) {
   const previous = useRef(key);
