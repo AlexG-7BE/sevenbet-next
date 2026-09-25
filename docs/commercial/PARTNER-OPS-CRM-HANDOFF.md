@@ -9,8 +9,8 @@ run — the Admin "Run bounded review" button,
 the repository code that applied Agent operations to the CRM. It never invoked
 the provider in Production: every stored `CommercialAgentRun` came from the
 retired MCP transport. Historical runs and operations stay readable. The shared
-contract remains for the isolated `agents/` package. Sections below that
-describe applying an Agent run are historical.
+contract and the isolated `agents/` package were removed the same day. Sections
+below that describe the contract or applying an Agent run are historical.
 
 ## Models and enums
 
@@ -20,7 +20,7 @@ The pipeline enum is `CommercialOpportunityStage`: `PROSPECT`, `QUALIFIED`, `APP
 
 ## Code authority
 
-- `shared/commercial/partner-operations-contract.ts`: true strict input/result and closed CRM operation contract.
+- `shared/commercial/partner-operations-contract.ts` (removed 25 September 2026): strict input/result and closed CRM operation contract.
 - `lib/commercial/stage-policy.ts`: deterministic human stage transition rules and Agent-proposable stages.
 - `lib/commercial/commercial-service.ts`: input validation and human use cases.
 - `lib/repositories/commercial.repository.ts`: only Prisma write boundary, transactions, idempotency and audits.

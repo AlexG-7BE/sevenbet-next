@@ -41,8 +41,8 @@ Application state distinguishes draft/prepared from submitted/sent; external sta
 review" button, its route, the server-only OpenAI adapter and
 `commercialRepository.applyPartnerOperations` are deleted. The adapter never
 invoked the provider in Production. No application code now applies an Agent
-operation batch to the CRM; historical runs stay readable, and the isolated
-`agents/` package keeps the shared contract. This section and the provider
+operation batch to the CRM; historical runs stay readable. The isolated
+`agents/` package and the shared contract were removed the same day. This section and the provider
 notes below are historical.
 
 The canonical key is `partner-operations`; `partner-intelligence` is a compatibility alias. A server-only adapter builds the strict bounded snapshot, applies the commercial firewall, invokes one no-tools structured response when a server credential exists, validates the result and evidence references, then sends the closed operation batch to `commercialRepository.applyPartnerOperations`. The batch executes transactionally.

@@ -302,7 +302,7 @@ function learnProgrammeBridgeHtml(hub: readonly string[], programmeHref: string)
   const [eyebrow, lead, emphasis, body, action] = [hub[20], hub[21], hub[22], hub[23], hub[24]].map((value) => escapeHtml(value ?? ""));
   return `<aside data-learn-programme-bridge="inline" aria-label="${eyebrow}" style="background: rgb(23, 22, 22); color: rgb(250, 250, 247); border-radius: 14px; padding: 28px 30px; display: flex; align-items: center; gap: 20px 32px; flex-wrap: wrap;">
             <div style="flex: 1 1 320px; min-width: 0;">
-              <div style="font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: rgb(228, 226, 78); margin-bottom: 10px;">${eyebrow}</div>
+              <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(228, 226, 78); margin-bottom: 10px;">${eyebrow}</div>
               <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 22px; line-height: 1.15;">${lead} <em style="font-family: &quot;Instrument Serif&quot;, serif; font-weight: 400; text-transform: none; color: rgb(228, 226, 78);">${emphasis}</em></div>
               <p style="font-size: 15px; line-height: 1.55; color: rgba(250, 250, 247, 0.7); margin: 10px 0px 0px;">${body}</p>
             </div>
@@ -324,13 +324,13 @@ export type LearnOfferBridgeCopy = Readonly<{
 export function learnOfferBridgeHtml(copy: LearnOfferBridgeCopy) {
   const text = (value: string) => escapeHtml(value);
   return `<aside data-learn-offer-bridge="" aria-label="${text(copy.title)}" style="margin: 56px 0px 0px; padding: 28px 30px; border-radius: 20px; background: rgb(16, 15, 15); color: rgb(250, 250, 247);">
-          <div style="font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: rgb(228, 226, 78); font-weight: 600; margin-bottom: 12px;">${text(copy.title)}</div>
+          <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(228, 226, 78); font-weight: 600; margin-bottom: 12px;">${text(copy.title)}</div>
           <p style="margin: 0px 0px 20px; font-size: 17px; line-height: 1.55; color: rgba(250, 250, 247, 0.85);">${text(copy.body)}</p>
           <div style="display: flex; flex-wrap: wrap; gap: 12px;">
             <a href="${text(copy.bonusesHref)}" data-learn-offer-bridge-link="bonuses" style="min-height: 48px; display: inline-flex; align-items: center; padding: 12px 22px; border-radius: 3px; background: rgb(228, 226, 78); color: rgb(16, 15, 15); font: 700 16px Archivo, sans-serif; text-decoration: none;">${text(copy.bonusesLabel)} →</a>
             <a href="${text(copy.bestOffersHref)}" data-learn-offer-bridge-link="best-offers" style="min-height: 48px; display: inline-flex; align-items: center; padding: 12px 22px; border: 1px solid rgba(250, 250, 247, 0.5); border-radius: 3px; color: rgb(250, 250, 247); font: 700 16px Archivo, sans-serif; text-decoration: none;">${text(copy.bestOffersLabel)} →</a>
           </div>
-          <p style="margin: 16px 0px 0px; font-size: 13px; line-height: 1.5; color: rgba(250, 250, 247, 0.6);">${text(copy.disclosure)}</p>
+          <p style="margin: 16px 0px 0px; font-size: 14px; line-height: 1.5; color: rgba(250, 250, 247, 0.6);">${text(copy.disclosure)}</p>
         </aside>`;
 }
 
@@ -358,18 +358,18 @@ export function transformLearnHandoff(
     year: "numeric",
   }).format(new Date(article.updatedAt));
   const startCard = (article: PublicArticle) => `<a href="${escapeHtml(hrefFor(articlePath(article)))}" data-learn-category="${topicFor(article)}" class="scp2" style="background: rgb(244, 241, 235); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 20px; padding: 32px 36px; display: flex; flex-direction: column; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
-          <div style="font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: rgb(119, 117, 0); font-weight: 600; margin-bottom: 16px;">${escapeHtml(categoryTitles.get(article.category) || article.category.replaceAll("-", " "))}</div>
+          <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(90, 89, 0); font-weight: 600; margin-bottom: 16px;">${escapeHtml(categoryTitles.get(article.category) || article.category.replaceAll("-", " "))}</div>
           <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 22px; line-height: 1.2; margin-bottom: 12px;">${escapeHtml(article.title)}</div>
           <p style="font-size: 14px; line-height: 1.6; color: rgb(100, 99, 92); margin: 0px 0px 20px; flex: 1 1 0%;">${escapeHtml(article.excerpt)}</p>
-          <div style="font-size: 13px; color: rgb(139, 138, 130);">${escapeHtml(article.readingTime || "Guide")} · ${escapeHtml(messages.ui.updated)} ${updated(article)}</div>
+          <div style="font-size: 13px; color: rgb(94, 93, 87);">${escapeHtml(article.readingTime || "Guide")} · ${escapeHtml(messages.ui.updated)} ${updated(article)}</div>
         </a>`;
   const guideCard = (article: PublicArticle) => `<a href="${escapeHtml(hrefFor(articlePath(article)))}" data-learn-category="${topicFor(article)}" class="scp3" style="background: rgb(250, 250, 247); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 14px; padding: 24px 30px; display: flex; align-items: center; gap: 20px 32px; flex-wrap: wrap; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
             <div style="flex: 1 1 0%; min-width: 260px;">
-              <div style="font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: rgb(119, 117, 0); font-weight: 600; margin-bottom: 6px;"><span class="sc-interp">${escapeHtml(categoryTitles.get(article.category) || article.category.replaceAll("-", " "))}</span></div>
+              <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(90, 89, 0); font-weight: 600; margin-bottom: 6px;"><span class="sc-interp">${escapeHtml(categoryTitles.get(article.category) || article.category.replaceAll("-", " "))}</span></div>
               <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 19px; line-height: 1.25;"><span class="sc-interp">${escapeHtml(article.title)}</span></div>
               <div style="font-size: 14px; color: rgb(100, 99, 92); margin-top: 6px;"><span class="sc-interp">${escapeHtml(article.excerpt)}</span></div>
             </div>
-            <div style="font-size: 13px; color: rgb(139, 138, 130); white-space: nowrap;"><span class="sc-interp">${escapeHtml(article.readingTime || "Guide")} · ${updated(article)}</span></div>
+            <div style="font-size: 13px; color: rgb(94, 93, 87); white-space: nowrap;"><span class="sc-interp">${escapeHtml(article.readingTime || "Guide")} · ${updated(article)}</span></div>
             <span style="font-size: 14px; color: rgb(16, 15, 15); border-bottom: 1px solid rgba(16, 15, 15, 0.3); padding-bottom: 2px; white-space: nowrap;">${escapeHtml(messages.hub[19])}</span>
           </a>`;
   let output = html
@@ -464,7 +464,7 @@ export function transformMethodologyHandoff(
 /** A real published guide in the Bonus Guide's "Read next" row: dark ink on the cream card, never acid. */
 function bonusGuideReadNextCard(article: PublicArticle, categoryTitle: string) {
   return `<a href="${escapeHtml(articlePath(article))}" class="scp2" data-bonus-guide-read-next="" style="display: block; background: rgb(250, 250, 247); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 20px; padding: 32px 36px; color: rgb(16, 15, 15); text-decoration: none; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
-            <div style="font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: rgb(119, 117, 0); font-weight: 600; margin-bottom: 16px;">${escapeHtml(categoryTitle)}</div>
+            <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(90, 89, 0); font-weight: 600; margin-bottom: 16px;">${escapeHtml(categoryTitle)}</div>
             <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 21px; line-height: 1.2; margin-bottom: 14px; color: rgb(16, 15, 15);">${escapeHtml(article.title)}</div>
             <div style="font-size: 13px; color: rgb(100, 99, 92);">${escapeHtml(article.readingTime || "Guide")}</div>
           </a>`;
@@ -520,7 +520,7 @@ export function transformBonusGuideHandoff(html: string, options: Readonly<{
   const leadIndex = output.indexOf(leadEnd, output.indexOf("A fictional cross-market example"));
   if (leadIndex >= 0) {
     const insertAt = leadIndex + leadEnd.length;
-    const notice = `\n        <div role="note" style="background: rgba(185, 75, 71, 0.07); border: 1px solid rgba(185, 75, 71, 0.25); border-radius: 20px; padding: 24px 28px; margin: 0px 0px 28px;"><strong style="display:block;color:rgb(185,75,71);font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;">Current GB rule</strong><span style="font-size:15px;line-height:1.65;color:rgb(38,37,37);">For GB-licensed operators, LCCP Social Responsibility Code 5.1.1 prohibits wagering requirements over 10 times the incentive. The 35x figures below are hypothetical educational examples, not current eligible GB offers.</span></div>`;
+    const notice = `\n        <div role="note" style="background: rgba(185, 75, 71, 0.07); border: 1px solid rgba(185, 75, 71, 0.25); border-radius: 20px; padding: 24px 28px; margin: 0px 0px 28px;"><strong style="display:block;color:rgb(167,46,42);font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px;">Current GB rule</strong><span style="font-size:15px;line-height:1.65;color:rgb(38,37,37);">For GB-licensed operators, LCCP Social Responsibility Code 5.1.1 prohibits wagering requirements over 10 times the incentive. The 35x figures below are hypothetical educational examples, not current eligible GB offers.</span></div>`;
     output = output.slice(0, insertAt) + notice + output.slice(insertAt);
   }
   const reviewMarker = '<div style="margin-top: 64px; padding-top: 32px; border-top: 3px double rgb(16, 15, 15);';

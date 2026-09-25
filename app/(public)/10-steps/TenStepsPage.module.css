@@ -15,7 +15,7 @@
 .page :focus-visible { outline: 3px solid var(--acid); outline-offset: 3px; }
 .page h1 em, .page h2 em { font-family: var(--font-seven-serif), Georgia, serif; font-style: italic; font-weight: 400; letter-spacing: -.025em; text-transform: none; }
 .shell { position: relative; width: var(--site-content-width); margin: 0 auto; }
-.eyebrow { margin: 0; display: flex; align-items: center; gap: 18px; color: var(--acid); font-size: 12px; letter-spacing: .32em; line-height: 1.4; text-transform: uppercase; }
+.eyebrow { margin: 0; display: flex; align-items: center; gap: 18px; color: var(--acid); font-size: 13px; letter-spacing: .08em; line-height: 1.4; text-transform: uppercase; }
 .eyebrow::before { content: ""; flex: none; width: 44px; height: 1px; background: var(--acid); }
 
 /* Hero */
@@ -40,10 +40,10 @@
 .primaryAction:hover { background: var(--paper); }
 .textLink { min-height: 44px; display: inline-flex; align-items: center; color: rgba(250, 250, 247, .75); font-size: 13px; letter-spacing: .06em; text-decoration: underline; text-decoration-color: rgba(250, 250, 247, .3); text-decoration-thickness: 1px; text-underline-offset: 6px; white-space: nowrap; transition: color 200ms var(--ease), text-decoration-color 200ms var(--ease); }
 .textLink:hover { color: var(--paper); text-decoration-color: var(--paper); }
-.heroMeta { position: relative; padding: 26px var(--public-outer-gutter); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px 48px; border-top: 1px solid var(--sb-line-dark-2); background: rgba(16, 15, 15, .55); backdrop-filter: blur(10px); color: rgba(250, 250, 247, .65); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; }
+.heroMeta { position: relative; padding: 26px var(--public-outer-gutter); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px 48px; border-top: 1px solid var(--sb-line-dark-2); background: rgba(16, 15, 15, .55); backdrop-filter: blur(10px); color: rgba(250, 250, 247, .65); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
 .heroMeta > div { display: flex; flex-wrap: wrap; gap: 12px 40px; }
 .heroMeta em { margin-right: 6px; color: var(--acid); font-family: var(--font-seven-serif), Georgia, serif; font-size: 16px; font-style: italic; letter-spacing: 0; text-transform: none; }
-.heroMeta > span { color: rgba(250, 250, 247, .45); white-space: nowrap; }
+.heroMeta > span { color: rgba(250, 250, 247, .68); white-space: nowrap; }
 
 /* Section frames */
 .builds { position: relative; overflow: hidden; padding: clamp(96px, 12vh, 140px) 0; }
@@ -58,19 +58,19 @@
 .card { min-height: 260px; padding: clamp(28px, 3vw, 40px); display: grid; align-content: start; gap: 22px; }
 .card > span { color: var(--acid); font-family: var(--font-seven-serif), Georgia, serif; font-size: clamp(48px, 4.4vw, 64px); font-style: italic; letter-spacing: -.03em; line-height: .8; }
 .card > strong { display: block; font-size: clamp(20px, 1.7vw, 26px); font-weight: 800; letter-spacing: -.03em; line-height: 1; text-transform: uppercase; }
-.card > p { margin: 0; color: rgba(250, 250, 247, .7); font-family: var(--font-seven-serif), Georgia, serif; font-size: 19px; font-style: italic; line-height: 1.45; }
+.card > p { margin: 0; color: rgba(250, 250, 247, .7); font-family: var(--font-seven-sans), Arial, sans-serif; font-size: 16px; font-style: normal; line-height: 1.5; }
 
 /* Mission path */
 .path { padding: clamp(48px, 6vh, 80px) 0 clamp(96px, 12vh, 140px); }
 .pathHeader { margin-bottom: 24px; padding-bottom: 40px; border-bottom: 1px solid var(--sb-line-dark-2); }
-.pathHeader p { margin: 0 0 20px; color: rgba(250, 250, 247, .45); font-size: 12px; letter-spacing: .32em; text-transform: uppercase; }
+.pathHeader p { margin: 0 0 20px; color: rgba(250, 250, 247, .68); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
 .missionGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
 .mission { min-height: 250px; padding: 28px 24px 26px; display: grid; align-content: start; gap: 18px; }
 .missionTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .missionTop > span { color: rgba(250, 250, 247, .85); font-family: var(--font-seven-serif), Georgia, serif; font-size: 44px; font-style: italic; letter-spacing: -.03em; line-height: .8; }
-.missionTop > small { color: rgba(250, 250, 247, .4); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; }
+.missionTop > small { color: rgba(250, 250, 247, .68); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
 .mission > strong { display: block; font-size: clamp(16px, 1.25vw, 19px); font-weight: 800; letter-spacing: -.02em; line-height: 1.05; text-transform: uppercase; }
-.mission > p { margin: 0; color: rgba(250, 250, 247, .6); font-size: 13px; line-height: 1.55; }
+.mission > p { margin: 0; color: rgba(250, 250, 247, .6); font-size: 14px; line-height: 1.55; }
 .firstMission { border-color: rgba(228, 226, 78, .5); background: var(--sb-surface-card-raised); }
 .firstMission .missionTop > span, .firstMission .missionTop > small { color: var(--acid); }
 .missionLink { min-height: 44px; margin-top: auto; justify-self: start; display: inline-flex; align-items: center; gap: 6px; color: var(--acid) !important; font-size: 16px; font-weight: 600; text-decoration: underline; text-decoration-color: rgba(228, 226, 78, .4); text-underline-offset: 6px; }
@@ -79,14 +79,14 @@
 /* Start private */
 .account { padding: clamp(96px, 12vh, 140px) 0; background: var(--sb-surface-cream); color: var(--ink); }
 .account .shell { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 64px; }
-.lightEyebrow { margin: 0 0 24px; display: flex; align-items: center; gap: 18px; color: var(--sb-muted-dark); font-size: 12px; letter-spacing: .32em; text-transform: uppercase; }
+.lightEyebrow { margin: 0 0 24px; display: flex; align-items: center; gap: 18px; color: var(--sb-muted-dark); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
 .lightEyebrow::before { content: ""; flex: none; width: 44px; height: 1px; background: var(--ink); }
 .account h2 { max-width: 14ch; }
 .account h2 em { color: var(--sb-acid-ink); }
 .account ul { margin: 0; padding: 0; border-top: 1px solid var(--ink); list-style: none; }
 .account li { padding: 26px 0; display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: baseline; gap: 16px; border-bottom: 1px solid var(--sb-line-light); }
 .account li > span { color: var(--sb-teal-ink); font-family: var(--font-seven-serif), Georgia, serif; font-size: 22px; line-height: 1; }
-.account li > p { max-width: 48ch; margin: 0; color: rgba(16, 15, 15, .75); font-family: var(--font-seven-serif), Georgia, serif; font-size: 20px; font-style: italic; line-height: 1.45; }
+.account li > p { max-width: 48ch; margin: 0; color: rgba(16, 15, 15, .75); font-family: var(--font-seven-sans), Arial, sans-serif; font-size: 16px; font-style: normal; line-height: 1.5; }
 .account :focus-visible { outline-color: var(--sb-acid-ink); }
 
 /* Final action */
@@ -95,7 +95,7 @@
 .finalInner { position: relative; max-width: 1050px; display: grid; justify-items: center; gap: 28px; }
 .final h2 { font-size: clamp(48px, 6.8vw, 108px); font-weight: 900; letter-spacing: -.045em; line-height: .88; text-wrap: balance; }
 .final h2 em { color: var(--acid); }
-.finalInner > p { max-width: 40ch; margin: 0; color: rgba(250, 250, 247, .7); font-family: var(--font-seven-serif), Georgia, serif; font-size: clamp(20px, 1.6vw, 26px); font-style: italic; line-height: 1.4; }
+.finalInner > p { max-width: 40ch; margin: 0; color: rgba(250, 250, 247, .7); font-family: var(--font-seven-sans), Arial, sans-serif; font-size: 16px; font-style: normal; line-height: 1.5; }
 .finalAction { margin-top: 12px; padding: 21px 48px; }
 
 /* Phone-only start bar, shown by TenStepsStickyStart once the hero action has scrolled away. */

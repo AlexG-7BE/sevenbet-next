@@ -10,12 +10,13 @@
   archive column or migration
 - **Scope:** one service-authenticated, stateless MCP endpoint through which
   Claude reads and maintains the Commercial CRM
-- **Depends on:** Product Vision & Principles, RFC-013, RFC-027, RFC-046,
+- **Depends on:** Product Vision & Principles, RFC-013, RFC-046,
   RFC-047, RFC-048, RFC-051 and RFC-052
 - **Amends:** RFC-051 §1 and §4, where the neutral CRM research capability is
-  "not exposed by a replacement public transport" and has no caller; RFC-027
-  §16.7 and §17.6–17.7, where agent stage recommendations stay proposals and
-  exclude `APPROVED`
+  "not exposed by a replacement public transport" and has no caller. It also
+  replaces the stage-proposal ceiling of RFC-027 §16.7 and §17.6–17.7 (agent
+  stage recommendations stay proposals and exclude `APPROVED`); RFC-027 itself
+  was superseded on 25 September 2026 when the `agents/` package was removed
 - **Does not change:** RFC-048 (CRM has no Partner, relationship, tracking,
   market, route or public-action authority), RFC-047, RFC-042/049/050/054
   route authority, RFC-046 customer data, or any database schema (no
@@ -105,9 +106,10 @@ offer it, and a delegated transition cannot move an opportunity out of
 `ACTIVE` either (Founder-confirmed); a stale `ACTIVE` record is reported to
 the Founder.
 
-This amends RFC-027: under the Founder decision the agent may now change the
-stage itself, including `APPROVED` when it cites `APPROVAL` evidence. A CRM
-stage, `APPROVED` included, still grants no commercial authority (RFC-048).
+This replaces the stage-proposal ceiling of the superseded RFC-027: under the
+Founder decision the agent may now change the stage itself, including
+`APPROVED` when it cites `APPROVAL` evidence. A CRM stage, `APPROVED` included,
+still grants no commercial authority (RFC-048).
 
 ## 5. Catalog links
 

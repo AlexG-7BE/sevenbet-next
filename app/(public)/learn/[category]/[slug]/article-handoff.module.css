@@ -2,7 +2,7 @@
 .hero { min-height:545px; padding:156px var(--site-gutter) 64px; }
 /* The arrow shares the links' text baseline, also when phone links grow to 44px touch targets. */
 .breadcrumbs { margin-bottom:30px; align-items:baseline; }
-.breadcrumbs a:last-child { color:var(--sb-acid); font-weight:750; letter-spacing:.16em; text-transform:uppercase; }
+.breadcrumbs a:last-child { color:var(--sb-acid); font-weight:750; letter-spacing:.08em; text-transform:uppercase; }
 .heroGrid { display:grid; grid-template-columns:1fr; gap:0; }
 .heroGrid h1 { max-width:18ch; font-size:clamp(50px,4.8vw,76px); }
 .heroGrid h1 em { display:block; color:var(--sb-acid); font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; text-transform:none; }
@@ -13,8 +13,8 @@
 .heroSummary dl div:last-child { margin-left:auto; }
 .readingLayout { padding:96px 24px 110px; }
 .supportCard { margin-top:36px; padding:24px 26px; border:1px solid rgba(16,15,15,.1); border-radius:20px; background:#f4f1eb; }
-.supportCard strong { color:#2a4c48; font-size:12px; letter-spacing:.18em; text-transform:uppercase; }
-.supportCard p,.supportCard a { font-size:13px; line-height:1.6; }
+.supportCard strong { color:#2a4c48; font-size:13px; letter-spacing:.08em; text-transform:uppercase; }
+.supportCard p,.supportCard a { font-size:14px; line-height:1.6; }
 .supportCard a { color:#2a4c48; }
 .articleIntro { margin-bottom:52px; }
 .articleIntro p { color:#262525; font-size:17px; line-height:1.75; }
@@ -31,21 +31,21 @@
 .conversion > div:nth-last-child(-n+2) dd { color:var(--sb-acid); }
 .articleTable { margin:24px 0 28px; overflow:auto; border:1px solid rgba(16,15,15,.12); border-radius:20px; }
 .articleTable > div { min-width:650px; padding:16px 26px; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:16px; border-top:1px solid rgba(16,15,15,.08); font-size:15px; }
-.articleTable > div:first-child { border:0; background:#f4f1eb; color:#8b8a82; font-size:12px; text-transform:uppercase; }
+.articleTable > div:first-child { border:0; background:#f4f1eb; color:#5e5d57; font-size:12px; text-transform:uppercase; }
 .articleTable strong { color:#b94b47; }
 .trap { margin:24px 0; padding:28px 32px; border:1px solid rgba(185,75,71,.25); border-radius:20px; background:rgba(185,75,71,.07); }
-.trap > strong { color:#b94b47; font-size:12px; letter-spacing:.18em; text-transform:uppercase; }
+.trap > strong { color:var(--sb-danger-text); font-size:13px; letter-spacing:.08em; text-transform:uppercase; }
 .trap p { font-size:15px; }
 .checklist { margin:24px 0; padding:36px 40px; border:1px solid rgba(16,15,15,.1); border-radius:24px; background:#f4f1eb; }
-.checklist > strong { color:#777500; font-size:12px; letter-spacing:.2em; text-transform:uppercase; }
+.checklist > strong { color:#5a5900; font-size:13px; letter-spacing:.08em; text-transform:uppercase; }
 .checklist ul { padding:0; display:grid; gap:16px; list-style:none; }
 .checklist li::before { content:"✓"; margin-right:16px; color:#2a4c48; font-weight:900; }
-.articleReview { margin-top:64px; padding-top:28px; border-top:3px double #100f0f; display:flex; justify-content:space-between; gap:30px; color:#8b8a82; font-size:13px; }
+.articleReview { margin-top:64px; padding-top:28px; border-top:3px double #100f0f; display:flex; justify-content:space-between; gap:30px; color:#5e5d57; font-size:13px; }
 .articleReview a { color:#100f0f; }
 .related { padding:96px var(--site-gutter); }
 .related ol { margin-top:44px; }
 .related a { min-height:220px; }
-.related li a > span:nth-child(2) { color:#777500; font-size:12px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+.related li a > span:nth-child(2) { color:#5a5900; font-size:13px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
 .commercial { padding:120px var(--site-gutter); display:block; text-align:center; background:#171616; }
 .commercial h2 { font-size:clamp(40px,4vw,62px); }
 .commercial h2 em { display:block; color:var(--sb-acid); font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; text-transform:none; }
@@ -53,21 +53,21 @@
 .commercial a { margin-top:36px; padding:18px 42px; border-radius:14px; }
 /* Founder decision 25 Sep 2026: a calm Programme block inside ordinary guides, and a bridge from bonus guides to current offers. */
 .programmeBridge, .offerBridge { margin:56px 0; padding:28px 30px; border-radius:20px; background:#171616; color:#fafaf7; }
-.programmeBridge > p:first-child, .offerBridge > p:first-child { margin:0 0 12px; color:var(--sb-acid); font-size:12px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; }
+.programmeBridge > p:first-child, .offerBridge > p:first-child { margin:0 0 12px; color:var(--sb-acid); font-size:13px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
 .programmeBridge > strong { display:block; font-size:22px; font-weight:800; line-height:1.15; text-transform:uppercase; }
 .programmeBridge > strong em { color:var(--sb-acid); font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; text-transform:none; }
 .programmeBridge > p:not(:first-child), .offerBridge > p:not(:first-child) { margin:10px 0 20px; color:rgba(250,250,247,.78); font-size:16px; line-height:1.55; }
 .programmeBridge a, .offerBridge a { min-height:48px; padding:12px 22px; display:inline-flex; align-items:center; gap:8px; border-radius:3px; background:var(--sb-acid); color:#100f0f; font-size:16px; font-weight:700; text-decoration:none; }
 .offerBridge > div { display:flex; flex-wrap:wrap; gap:12px; }
 .offerBridge > div a:last-child { border:1px solid rgba(250,250,247,.5); background:transparent; color:#fafaf7; }
-.offerBridge small { margin-top:16px; display:block; color:rgba(250,250,247,.6); font-size:13px; line-height:1.5; }
+.offerBridge small { margin-top:16px; display:block; color:rgba(250,250,247,.6); font-size:14px; line-height:1.5; }
 /* Founder decision 25 Sep 2026 (package C): a light early bridge that must not dominate the guide. */
 .offerBridgeCompact { margin:8px 0 40px; padding:14px 18px 12px; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px 20px; border:1px solid rgba(16,15,15,.12); border-left:3px solid #777500; border-radius:14px; background:#f4f1eb; }
 .offerBridgeCompact > p { margin:0; color:#100f0f; font-size:16px; font-weight:700; line-height:1.4; }
 .offerBridgeCompact > div { display:flex; flex-wrap:wrap; gap:8px 10px; }
 .offerBridgeCompact a { min-height:44px; padding:0 16px; display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(16,15,15,.25); border-radius:999px; background:#fafaf7; color:#100f0f; font-size:16px; font-weight:700; text-decoration:none; white-space:nowrap; }
 .offerBridgeCompact a:hover { border-color:#100f0f; }
-.offerBridgeCompact small { grid-column:1 / -1; display:block; color:#64635c; font-size:12px; line-height:1.5; }
+.offerBridgeCompact small { grid-column:1 / -1; display:block; color:#64635c; font-size:14px; line-height:1.5; }
 @media(max-width:800px) {
   .heroSummary dl { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .heroSummary dl div { display:block; }
