@@ -127,7 +127,7 @@ const en: ProductPageMessages = {
     faqWhyThreeQuestion: "Why only three offers?", faqWhyThreeAnswer: "A short list keeps the decision bounded; the Bonuses page provides the full eligible directory.",
   },
   casinos: {
-    title: "Casino reviews for {market} | B4GAMBLE", description: "Search and compare published casino reviews filtered for the {market} editorial context.", demoTitle: "Casino review demonstration | B4GAMBLE", demoDescription: "Clearly labelled fictional records show the review format without a live promotion or affiliate action.",
+    title: "Casino reviews for {market} | B4GAMBLE", description: "Search and compare published casino reviews for {market}.", demoTitle: "Casino review demonstration | B4GAMBLE", demoDescription: "Clearly labelled fictional records show the review format without a live promotion or affiliate action.",
     heroKicker: "Curated for {market}", heroLead: "Picked for", heroEmphasis: "how you play.", heroCopy: "Choose your use-case; the directory shows published records for the selected editorial market without implying commercial eligibility.",
     proofEvidence: "Evidence and limitations disclosed", proofLimit: "Maximum three per use-case", proofPublished: "Current published data only", directoryTitle: "Full directory", filterTitle: "Filter Casinos",
     bestOverall: "Best Overall", crypto: "Crypto", mobile: "Mobile", bestBonuses: "Best Bonuses", newCasinos: "New Casinos",
@@ -138,7 +138,7 @@ const en: ProductPageMessages = {
     faqCommissionQuestion: "Does commission affect ranking?", faqCommissionAnswer: "No. Affiliate compensation does not determine Editor Score or natural editorial ranking.",
   },
   bonuses: {
-    title: "Casino bonus comparison for {market} | B4GAMBLE", description: "Compare published bonus terms filtered for the {market} editorial context, without assuming commercial availability.", demoTitle: "Casino bonus demonstration | B4GAMBLE", demoDescription: "Clearly labelled fictional records show how terms are compared. They are not current promotions or partner offers.",
+    title: "Casino bonus comparison for {market} | B4GAMBLE", description: "Compare published bonus terms for {market}, without assuming commercial availability.", demoTitle: "Casino bonus demonstration | B4GAMBLE", demoDescription: "Clearly labelled fictional records show how terms are compared. They are not current promotions or partner offers.",
     heroKicker: "Bonuses · Terms first · 18+", heroLead: "Value, measured", heroEmphasis: "by terms.", heroCopy: "Headline size means little after wagering. Compare deposits, turnover, restrictions and expiry before any action.",
     proofTerms: "Material terms shown first", proofClaims: "No guaranteed-money claims", proofSources: "Source status stays visible", directoryTitle: "All bonuses", filterTitle: "Filter Bonuses", sortedByValue: "sorted by net value",
     noMatchesTitle: "No comparison records match {market} and these filters.", noMatchesCopy: "Remove a filter or change presentation. No ineligible offer is substituted.",

@@ -237,3 +237,13 @@ test("About, FAQ and Methodology end with one next step; Help stays free of it",
     assert.doesNotMatch(messages.body, /XP|private/i, `${locale} states no XP or privacy claim`);
   }
 });
+
+test("the transition pill and route frame reveal only on a slow transition; guide links raise no pill", () => {
+  // Founder decision 25 Sep 2026: a quick transition shows no flash of the page name.
+  const shell = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
+  const frame = readFileSync("components/public-shell/PublicRouteLoading.module.css", "utf8");
+  assert.match(shell, /\.navigationFeedback \{[^}]*opacity: 0;[^}]*animation: navigationFeedbackReveal 160ms var\(--sb-ease-standard\) 700ms forwards;/);
+  assert.match(frame, /\.heroInner,\s*\.contentInner \{[^}]*opacity: 0;[^}]*animation: routeFrameReveal 160ms var\(--sb-ease-standard\) 700ms forwards;/);
+  // Long guide titles made long pills: "Read next" guide links report no pending label.
+  assert.doesNotMatch(readFileSync("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx", "utf8"), /PublicLinkPendingSignal/);
+});
