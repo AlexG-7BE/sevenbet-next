@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cache } from "react";
+import { cache, Suspense } from "react";
 
 import { BestOffersExperience } from "@/components/best-offers/BestOffersExperience";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
+import { PublicRouteLoadingFrame } from "@/components/public-shell/PublicRouteLoadingFrame";
 import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/best-offers/BestOffers.module.css";
@@ -82,9 +83,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   });
 }
 
-export default async function BestOffersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const raw = await searchParams;
-  triggerPublicCommercialErrorHarness(raw.errorFixture);
+async function BestOffersContent({ raw }: { raw: Record<string, string | string[] | undefined> }) {
   const loaded = await loadBestOffersPageData();
   const fixtureEnabled = isCommercialUxVisualDataFixture(raw.visualFixture);
   const fixtureMarket = commercialUxFixtureMarket(raw.qaMarket, fixtureEnabled);
@@ -165,4 +164,16 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
       </div></section>
     </> : <section className={styles.statePage} data-nav-theme="dark" id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{messages.common.commercialUnavailable}</p><h2>{result.status === "unavailable" ? messages.bestOffers.unavailableTitleBody : formatProductMessage(messages.bestOffers.emptyTitle, { market })}</h2><p>{result.status === "unavailable" ? messages.bestOffers.unavailableCopy : messages.bestOffers.emptyCopy}</p><div className={styles.stateActions}><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link></div></div></div></section>}
   </div>;
+}
+
+/**
+ * The route frame streams at once, the way the home page does, while the catalogue
+ * loads; a cold instance used to send nothing for 3–4.6s (25 Sep 2026). The error
+ * harness still fires before the boundary so its failure keeps a real error status.
+ */
+export default async function BestOffersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const raw = await searchParams;
+  triggerPublicCommercialErrorHarness(raw.errorFixture);
+  const presentation = await resolveServerPresentationContext();
+  return <Suspense fallback={<PublicRouteLoadingFrame destination="best-offers" label={publicShellMessages(presentation.locale).bestOffers} />}><BestOffersContent raw={raw} /></Suspense>;
 }
