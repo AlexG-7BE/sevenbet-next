@@ -1,12 +1,19 @@
 # RFC-027: B4GAMBLE Operational Agent Foundation
 
-- **Status:** `ACTIVE` for the isolated internal-agent foundation and authority ceilings; sections 17–21 are historical transport decisions superseded by RFC-051
+- **Status:** `SUPERSEDED` by the Founder decision of 25 September 2026, which removed the `agents/` package, its shared contract and the Agent Core CI job; sections 17–21 were already superseded by RFC-051
 - **Decision authority:** Founder Office `AGENT-CORE-01`; amended by `COMMERCIAL-OPS-01`, `PARTNER-OPS-WORK-BRIDGE-01`, `PARTNER-OPS-WORK-BRIDGE-02`, `PARTNER-TRACKING-REGISTRATION-MECHANISM` and `MEDIA-INGESTION-AUTOPLACEMENT-01` instructions
 - **Approved:** 2026-08-13
 - **Scope:** Isolated internal OpenAI Agents SDK foundation, eight specialist definitions, shared policy/result contracts, explicit cost-aware routing, bounded manual runner, no-key structural evaluation and one narrow application-side Partner Operations CRM executor; former remote transport scope is historical
 - **Implementation:** merged to `main` by PR #69 at `7c36bffb901db62863b02cb8c2cf771cdadaaf89`
 - **Depends on:** Product Vision & Principles v2.0, Project State, Roadmap, RFC-013, RFC-014, RFC-015, RFC-017, RFC-022, RFC-023 and RFC-025
 - **Supersedes:** nothing in the consumer product, Programme, authentication, commercial, data or Production runtime
+
+> **Lifecycle notice, 25 September 2026:** the Founder removed the isolated
+> `agents/` package (eight OpenAI Agents SDK specialists), the
+> `shared/commercial/partner-operations-contract.ts` package and the Agent Core
+> CI job. None ran on real data; internal research, review and drafting now
+> happen in Claude Code sessions. The application-side Partner Operations
+> executor was removed the same day (PR #391). This RFC is historical.
 
 > **Lifecycle notice, 14 September 2026:** RFC-051 supersedes the active
 > authority of sections 17–21 for application MCP/OAuth transports. Those

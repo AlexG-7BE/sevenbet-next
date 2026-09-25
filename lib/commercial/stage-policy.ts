@@ -52,19 +52,3 @@ export function assertHumanCommercialStageTransition(input: {
     throw new CommercialStagePolicyError("REJECTED requires direct rejection or closure evidence.");
   }
 }
-
-export const AGENT_PROPOSABLE_STAGES = [
-  "QUALIFIED",
-  "APPLICATION_READY",
-  "APPLIED",
-  "DUE_DILIGENCE",
-  "NEGOTIATING",
-  "REJECTED",
-  "ON_HOLD",
-] as const satisfies readonly CommercialOpportunityStage[];
-
-export function assertAgentStageProposal(target: string): void {
-  if (!(AGENT_PROPOSABLE_STAGES as readonly string[]).includes(target)) {
-    throw new CommercialStagePolicyError(`The Partner Operations agent cannot propose ${target}.`);
-  }
-}
