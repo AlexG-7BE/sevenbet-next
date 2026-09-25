@@ -91,8 +91,9 @@ the inline Programme card; `/about`, `/faq` and `/methodology` end with the
 next-step block (Start Programme, then Best Offers); `/bonus-guide` links to
 Bonuses and Best Offers after the checklist. After #364 deployed, "Enter
 Mission 01" renders 16px without uppercase; its weight stayed 400 because
-`.canvas button { font: inherit }` outranks the action class, which
-[#366](https://github.com/AlexG-7BE/sevenbet-next/pull/366) corrects.
+`.canvas button { font: inherit }` outranks the action class.
+[#366](https://github.com/AlexG-7BE/sevenbet-next/pull/366) (merge `b766dbe2`)
+corrects it; Production then computed 16px, weight 700, no uppercase.
 
 **Unchanged:** reward amounts, XP rules, Mission order, server-owned progress,
 protected Help, SUPPORT_FIRST suppression, the commercial firewall, GEO and
