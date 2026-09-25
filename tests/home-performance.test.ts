@@ -88,3 +88,13 @@ test("Home-only motion uses native mandatory desktop and proximity coarse-pointe
   assert.doesNotMatch(globals, /scrollbar-width:\s*none|::-webkit-scrollbar[^{}]*\{[^}]*display:\s*none/);
   assert.match(source("playwright.public-ia.config.ts"), /name: "webkit"[\s\S]*browserName: "webkit"/);
 });
+
+test("the closing Start Programme block is compact on phones and unchanged on desktop", () => {
+  // Founder, 25 Sep 2026: on phones the "Start with one situation" block no longer fills a whole screen.
+  const css = transformHomeHandoffCss(generatedPages.home.css);
+  const phone = css.slice(css.lastIndexOf("@media (max-width: 760px)"));
+  assert.match(phone, /\[data-handoff-page="home"\] \[data-home-final-composition\] \{ min-height: 0 !important; \}/);
+  assert.match(phone, /\[data-home-final-composition\] > div:has\(> h2\) \{ padding: 56px 24px 64px !important; \}/);
+  const desktop = css.slice(0, css.lastIndexOf("@media (max-width: 760px)"));
+  assert.doesNotMatch(desktop, /data-home-final-composition/, "desktop keeps the full-screen closing composition");
+});
