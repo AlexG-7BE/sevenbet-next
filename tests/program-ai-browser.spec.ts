@@ -471,7 +471,8 @@ test("voice recording produces an editable transcript, releases tracks and can b
   await page.getByRole("button", { name: "Stop recording" }).click();
   await expect(page.getByText(/recording is too large to upload/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "Retry this recording" })).toHaveCount(0);
-  expect(authorityCalls).toBe(0);
+  // The consent is recorded once, on entry from the access screen; a rejected recording adds nothing.
+  expect(authorityCalls).toBe(1);
   expect(transcriptionCalls).toBe(0);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(1);
   await page.getByRole("button", { name: "type instead" }).click();
@@ -492,6 +493,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
   await page.clock.fastForward(2_000);
   await expect(page.locator('[data-state="success"]')).toHaveCount(1);
   expect(transcriptionCalls).toBe(1);
+  // Transcription does not record the consent again.
   expect(authorityCalls).toBe(1);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(2);
 
@@ -953,7 +955,7 @@ test("durably accepted account survives empty storage, context, login and Missio
   await page.evaluate(() => window.sessionStorage.clear());
   await page.reload();
   await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Two checks before you begin" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Three checks before you begin" })).toHaveCount(0);
 
   const freshContext = await browser.newContext({
     baseURL,
@@ -962,11 +964,11 @@ test("durably accepted account survives empty storage, context, login and Missio
   const freshPage = await freshContext.newPage();
   await freshPage.goto("/program");
   await expect(freshPage.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
-  await expect(freshPage.getByRole("heading", { name: "Two checks before you begin" })).toHaveCount(0);
+  await expect(freshPage.getByRole("heading", { name: "Three checks before you begin" })).toHaveCount(0);
   await freshContext.close();
 
   await page.getByRole("button", { name: "Log out of B4GAMBLE" }).click();
-  await expect(page.getByRole("heading", { name: "Two checks before you begin" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Three checks before you begin" })).toBeVisible();
   const signIn = await page.request.post("/api/auth/sign-in/email", {
     headers: { origin: baseURL, "x-forwarded-for": testClientAddress(email) },
     data: { email, password: "Programme-test-password-42!" },
@@ -977,7 +979,7 @@ test("durably accepted account survives empty storage, context, login and Missio
   authCookieHeader = `${resumedSessionCookie!.name}=${resumedSessionCookie!.value}`;
   await page.goto("/program");
   await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Two checks before you begin" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Three checks before you begin" })).toHaveCount(0);
 
   for (const mission of programAiMissionRegistry) {
     if (mission.missionNumber === 3) {
