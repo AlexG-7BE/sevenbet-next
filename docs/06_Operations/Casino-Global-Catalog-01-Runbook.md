@@ -121,6 +121,18 @@ there and `OTHER_MARKET` elsewhere; offers recorded globally serve as `ROW`.
 and whether its casino is routed. Incomplete terms no longer withhold an offer
 — they are reported so the gaps can be filled, not used as a veto.
 
+### Market offers read from operators' sites
+
+`import-offers` upserts the offers in `data/casino-global-catalog-01/offers-<market>.v1.json`
+by slug, attaches each to its casino's market profile, and republishes that casino.
+`--offer` limits a run to the named slugs, so adding one casino's offer does not
+republish (and briefly unpublish) every casino in the market:
+
+```bash
+npm run casino-global-catalog -- import-offers-plan --market GB --offer bacanaplay-gb-welcome,drueckglueck-gb-welcome
+npm run casino-global-catalog -- import-offers --market GB --offer bacanaplay-gb-welcome,drueckglueck-gb-welcome --confirm=CASINO-GLOBAL-CATALOG-01 --expected-database=<fingerprint>
+```
+
 ## What `editorial` does
 
 Replaces `pros` ("Best for"), `cons` ("Things to know") and `description` for

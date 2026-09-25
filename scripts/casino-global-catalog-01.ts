@@ -848,8 +848,14 @@ async function importOfferCorpus(
 
   const actor = dryRun ? { id: "", email: "" } : await selectActor(option("actor-email"));
   const observedAt = new Date(corpus.observedAt);
+  // `--offer a,b` imports only those slugs, so adding one casino's offer does
+  // not republish (and briefly unpublish) every casino in the market.
+  const only = option("offer")?.split(",").map((slug) => slug.trim()).filter(Boolean);
+  const unknown = only?.filter((slug) => !corpus.offers.some((offer) => offer.slug === slug)) ?? [];
+  if (unknown.length) throw new Error(`${RELEASE}: ${corpus.countryCode} corpus has no offer ${unknown.join(", ")}`);
+  const offers = only ? corpus.offers.filter((offer) => only.includes(offer.slug)) : corpus.offers;
 
-  for (const offer of corpus.offers) {
+  for (const offer of offers) {
     const market = await prisma.casinoCountry.findFirst({
       where: { countryCode: corpus.countryCode, casino: { slug: offer.casinoSlug } },
       select: { id: true, casinoId: true, primaryCurrency: true, availability: true },
@@ -905,7 +911,7 @@ async function importOfferCorpus(
     });
     console.log(`  ${offer.casinoSlug.padEnd(16)} imported ${offer.slug}`);
   }
-  console.log(`${RELEASE}: ${dryRun ? "previewed" : "imported"} ${corpus.offers.length} ${corpus.countryCode} offers`);
+  console.log(`${RELEASE}: ${dryRun ? "previewed" : "imported"} ${offers.length} ${corpus.countryCode} offers`);
 }
 
 async function main() {

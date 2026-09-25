@@ -5,7 +5,7 @@
   "countryCode": "GB",
   "commercialAuthority": false,
   "observedAt": "2026-09-24T00:00:00.000Z",
-  "note": "Great Britain welcome offers read from each operator's own promotions page on 24 September 2026 through a United Kingdom exit node, so the terms are the GB variant rather than the .com one. Every casino here already holds an ACTIVE and HEALTHY GB route. Where the operator does not state a minimum deposit on the offer page it is recorded as null rather than assumed from a sibling brand. Corrected on 25 September 2026 from a United Kingdom exit: AHTI Games, Casino RedKings, SlotsMagic and TurboNino state no minimum on the offer page, and their shared GB Bonus Policy (128-UK-N, clause 18) sets £20 unless otherwise specified. On 25 September 2026 the six White Hat Gaming brands were added from a United Kingdom exit: all run the same points-based, wager-free spins offer (terms version of 19 January 2026).",
+  "note": "Great Britain welcome offers read from each operator's own promotions page on 24 September 2026 through a United Kingdom exit node, so the terms are the GB variant rather than the .com one. Every casino here already holds an ACTIVE and HEALTHY GB route. Where the operator does not state a minimum deposit on the offer page it is recorded as null rather than assumed from a sibling brand. Corrected on 25 September 2026 from a United Kingdom exit: AHTI Games, Casino RedKings, SlotsMagic and TurboNino state no minimum on the offer page, and their shared GB Bonus Policy (128-UK-N, clause 18) sets £20 unless otherwise specified. On 25 September 2026 the six White Hat Gaming brands were added from a United Kingdom exit: all run the same points-based, wager-free spins offer (terms version of 19 January 2026). On 25 September 2026 BacanaPlay and DrückGlück were added from a United Kingdom exit (both on Skill On Net's UKGC account 39326); DrückGlück's offer text contradicts its own banner and GB Bonus Policy, and the offer page is recorded with that contradiction stated.",
   "offers": [
     {
       "casinoSlug": "megawayscasino",
@@ -260,6 +260,46 @@
         "One offer per player; affordability checks apply."
       ],
       "termsUrl": "https://www.slotnite.com/welcome-offer"
+    },
+    {
+      "casinoSlug": "bacanaplay",
+      "slug": "bacanaplay-gb-welcome",
+      "title": "100 free spins on Big Bass Bonanza",
+      "summary": "First deposit only. 100 free spins at £0.10 each, 10x wagering on the winnings.",
+      "type": "FREE_SPINS",
+      "freeSpins": 100,
+      "minimumDeposit": 10,
+      "wageringMultiplier": 10,
+      "wageringText": "10x free-spin winnings within 30 days, slots only",
+      "eligibility": "New players, first deposit only. Credited automatically on deposit; cancellation can be requested.",
+      "importantConditions": [
+        "Free spins are on Big Bass Bonanza at £0.10 per spin.",
+        "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings, or £5 — whichever is lower.",
+        "30 days to meet the wagering.",
+        "Spins must be used before deposited funds.",
+        "A bonus does not block withdrawing your own deposit balance."
+      ],
+      "termsUrl": "https://www.bacanaplay.com/promotions/welcome-bonus/"
+    },
+    {
+      "casinoSlug": "drueckglueck",
+      "slug": "drueckglueck-gb-welcome",
+      "title": "100 free spins on Book of Dead",
+      "summary": "Deposit with code DWL100 for 100 free spins at £0.10 each; the offer text asks 60x wagering on the winnings.",
+      "type": "FREE_SPINS",
+      "freeSpins": 100,
+      "minimumDeposit": 10,
+      "wageringMultiplier": 60,
+      "wageringText": "60x free-spin winnings, slots only, as the offer page states",
+      "eligibility": "New players. Enter bonus code DWL100 when depositing.",
+      "importantConditions": [
+        "Wagering is 60x the free-spin winnings on the offer page — six times the 10x its sister brands ask, and the single most important term here.",
+        "Free spins are on Book of Dead at £0.10 per spin (alternative game: Spinning Wilds).",
+        "Maximum bet while wagering is 10% (minimum £0.10) of the free-spin winnings and bonus, or £5 — whichever is lower.",
+        "One deposit or welcome bonus every 72 hours across all Skill On Net casinos.",
+        "The banner offers spins only, but the offer text also names a £100 maximum bonus at 30x deposit plus bonus, and the brand's GB Bonus Policy sets 10x unless stated otherwise. The offer page is recorded here; check it before depositing."
+      ],
+      "termsUrl": "https://www.drueckglueck.com/promotions/drueckglueck-welcome/"
     }
   ]
 }
