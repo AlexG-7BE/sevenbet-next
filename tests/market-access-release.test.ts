@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { marketAccess } from "../lib/market-access/access";
+import { CASINO_MARKETS } from "../lib/market-access/register";
 import {
   ENABLE_TARGETS,
   MARKET_ACCESS_DECISION_REF,
@@ -50,6 +51,17 @@ test("every market the release opens is licensed there", () => {
   }
   const keys = ENABLE_TARGETS.map((target) => `${target.casinoSlug}:${target.market}`);
   assert.equal(new Set(keys).size, keys.length, "each market is opened once");
+});
+
+test("a corrected local site is the domain the register cites for that market", () => {
+  const corrected = ENABLE_TARGETS.filter((target) => target.localSite);
+  assert.deepEqual(corrected.map((target) => `${target.casinoSlug}:${target.market}`), ["eucasino:DK"]);
+  for (const target of corrected) {
+    const site = new URL(target.localSite!);
+    assert.equal(site.protocol, "https:");
+    const cited = CASINO_MARKETS[target.casinoSlug]?.licensed[target.market] ?? "";
+    assert.equal(site.hostname.replace(/^www\./, ""), cited.replace(/^www\./, "").split("/")[0], `${target.casinoSlug} in ${target.market}`);
+  }
 });
 
 test("a derived partner link changes only the named parameter and is identified by its hash", () => {

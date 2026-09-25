@@ -43,7 +43,7 @@ must match. No raw partner URL is printed or kept in git.
 | GB | 21 Privé, Diamond7, G'day Casino, Hello Casino, Skol Casino, Slotnite | Superfly canonical links (UKGC 52894) |
 | SE | MegawaysCasino | EGO brand link reused (Founder choice, 24 Sep) |
 | DK | MegawaysCasino | EGO brand link reused |
-| DK | EUcasino | EUcasino's Swedish EGO link reused (Founder choice, 25 Sep) |
+| DK | EUcasino | EUcasino's Swedish EGO link reused (Founder choice, 25 Sep). Its DK profile named eucasino.dk, which redirects to www.eucasino.com/dk, so the first apply rejected the route; `apply` now points the profile at www.eucasino.com/dk (on Spillemyndigheden's list) with an audit entry before registering (Founder, 25 Sep) |
 
 **Cannot open yet:** Betsafe SE (no Swedish link from BGA), DragonBet GB (no link;
 Brothers Bet account disabled), Regency SE (regencycasino.se answers 401 — not live),
