@@ -911,7 +911,15 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
 
   await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
-  await expect(page.locator('[data-programme-phase="registration"]')).toBeVisible();
+  await expect(page.getByText(bestEffortStartingPoint.startingPoint, { exact: true })).toBeVisible();
+  const understanding = page.locator("[data-programme-understanding]");
+  await expect(understanding.getByRole("heading", { name: "What we understood" })).toBeVisible();
+  await expect(understanding.getByText(bestEffortStartingPoint.desiredChange, { exact: true })).toBeVisible();
+  await expect(understanding.getByRole("heading", { name: "Where we'll start" })).toBeVisible();
+  await expect(understanding.getByText(bestEffortStartingPoint.continuationCue, { exact: true })).toBeVisible();
+  const registration = page.locator('[data-programme-phase="registration"]');
+  await expect(registration).toBeVisible();
+  await expect(registration.getByRole("button", { name: "Use email instead" })).toBeVisible();
   await expect(page.locator('[data-programme-phase="clarification"], [data-programme-phase="candidate"], [data-programme-phase="reward"]')).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Check your Starting Point." })).toHaveCount(0);
   await expect(page.getByText("ONE SHORT FOLLOW-UP", { exact: false })).toHaveCount(0);
