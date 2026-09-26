@@ -8,6 +8,11 @@
 - **Depends on:** Product Vision & Principles v2.0, RFC-017, RFC-021, RFC-022, PROGRAM-AI-01 Product Direction v2.2, Programme Architecture Standards, Backend Programme Standards and Programme Definition of Done
 - **Supersedes:** RFC-022 only where RFC-022 explicitly deferred selection and activation of a real provider
 
+> **Current amendment (25 September 2026):** RFC-056 supersedes this RFC's
+> `gpt-5.6-terra` selection, completed-file-only preferred voice path and
+> no-realtime constraint. This document remains authority for the provider gate,
+> privacy, error, fallback and Production-release ceilings that RFC-056 preserves.
+
 ## 1. Decision and release ceiling
 
 B4GAMBLE will connect the existing provider-neutral `TranscriptionPort` and `ProgrammeAiPort` to the OpenAI API for controlled Preview validation with Founder/team/developer and synthetic test data only.

@@ -28,6 +28,9 @@ const programmeObserver = read("lib/analytics/programme-observer.server.ts");
 const page = read("app/program/page.tsx");
 const layout = read("app/program/layout.tsx");
 const vercelBuildPreflight = read("scripts/vercel-build-preflight.ts");
+const realtimeRoute = read("app/api/program/program-ai/transcription/realtime/route.ts");
+const realtimeAdapter = read("lib/programme/program-ai/openai-realtime-transcription.ts");
+const realtimeClient = read("lib/programme/program-ai/realtime-transcription-client.ts");
 
 test("PR #106 Preview builds require the exact Programme runtime flag without changing other environments", () => {
   const releaseCandidate = {
@@ -124,6 +127,27 @@ test("client keeps private draft content in sessionStorage and never localStorag
   assert.match(frontendRuntime, /name: "microphone"/);
   assert.match(frontendRuntime, /Microphone is blocked for this site/);
   assert.match(frontendRuntime, /Voice recording is not supported here/);
+});
+
+test("live voice keeps credentials server-side, treats partials as display-only and preserves file fallback", () => {
+  assert.match(realtimeAdapter, /https:\/\/api\.openai\.com\/v1\/realtime\/calls/);
+  assert.match(realtimeAdapter, /type: "transcription"/);
+  assert.match(realtimeAdapter, /turn_detection: null/);
+  assert.match(realtimeAdapter, /delay: "minimal"/);
+  assert.match(realtimeAdapter, /OpenAI-Safety-Identifier/);
+  assert.match(realtimeRoute, /hashOpaqueToken\(token\)/);
+  assert.match(realtimeRoute, /MAX_SDP_BYTES = 32_768/);
+  assert.match(realtimeRoute, /"PROGRAMME_TRANSCRIPTION_SESSION"/);
+  assert.match(realtimeRoute, /"PROGRAMME_TRANSCRIPTION_IP"/);
+  assert.doesNotMatch(realtimeRoute, /PROGRAMME_REALTIME_TRANSCRIPTION_/);
+  assert.match(realtimeClient, /input_audio_buffer\.commit/);
+  assert.match(realtimeClient, /input_audio_transcription\.delta/);
+  assert.match(realtimeClient, /input_audio_transcription\.completed/);
+  assert.match(finalPresentation, /partialTranscript \|\| t\("Your editable transcript will appear here when you tap Done\."\)/);
+  assert.match(finalPresentation, /await transcribe\(audio, durationMs, stoppedAt, failure\)/);
+  assert.match(frontend, /\/api\/program\/program-ai\/transcription/);
+  assert.doesNotMatch(`${realtimeClient}\n${finalPresentation}`, /OPENAI_API_KEY|authorization:\s*`Bearer|NEXT_PUBLIC_/);
+  assert.doesNotMatch(`${realtimeAdapter}\n${realtimeRoute}`, /console\.(?:info|error|warn)\([^)]*(?:sdp|transcript)/i);
 });
 
 test("account-not-linked recovery preserves the claim and requires authenticated explicit linking", () => {

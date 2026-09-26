@@ -228,12 +228,12 @@ export function parseGeneratedResult(
       const item = section as Record<string, unknown>;
       const id = safeString(item.id, 40);
       if (!allowedOutputIds[operation].includes(id)) throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
-      return { id, title: safeString(item.title, 80), body: safeString(item.body, 700) };
+      return { id, title: safeString(item.title, 64), body: safeString(item.body, 420) };
     });
     if (new Set(sections.map((section) => section.id)).size !== allowedOutputIds[operation].length) {
       throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
     }
-    return { kind: "review", operation: operation as ProgramAiReviewResult["operation"], title: safeString(record.title, 100), sections, generation: "provider" };
+    return { kind: "review", operation: operation as ProgramAiReviewResult["operation"], title: safeString(record.title, 72), sections, generation: "provider" };
   }
   if (!exactKeys(record, ["kind", "operation", "title", "summary", "options"]) || record.kind !== "guidance" || record.operation !== operation || !Array.isArray(record.options) || record.options.length < 1 || record.options.length > 4) {
     throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
@@ -245,7 +245,7 @@ export function parseGeneratedResult(
     const item = option as Record<string, unknown>;
     const id = safeString(item.id, 40);
     if (!allowedOutputIds[operation].includes(id)) throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
-    return { id, text: safeString(item.text, 240) };
+    return { id, text: safeString(item.text, 180) };
   });
-  return { kind: "guidance", operation: operation as ProgramAiGuidanceResult["operation"], title: safeString(record.title, 100), summary: safeString(record.summary, 500), options, generation: "provider" };
+  return { kind: "guidance", operation: operation as ProgramAiGuidanceResult["operation"], title: safeString(record.title, 72), summary: safeString(record.summary, 320), options, generation: "provider" };
 }

@@ -37,6 +37,7 @@ import { assertSafeProgrammeGeneratedText } from "../lib/programme/program-ai/ou
 import { ProgrammeProviderError } from "../lib/programme/program-ai/provider-errors";
 import {
   PROGRAM_AI_OPENAI_MODEL,
+  PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
   PROGRAM_AI_TRANSCRIPTION_MODEL,
 } from "../lib/programme/program-ai/runtime-config";
 import {
@@ -266,6 +267,7 @@ test("M1 and Mission guidance provider requests name the requested locale withou
     apiKey: "test-secret",
     programmeModel: PROGRAM_AI_OPENAI_MODEL,
     transcriptionModel: PROGRAM_AI_TRANSCRIPTION_MODEL,
+    realtimeTranscriptionModel: PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
   }, {
     fetchImpl: (async (_url, init) => {
       m1Bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);

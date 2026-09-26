@@ -73,6 +73,13 @@ async function main() {
 
   const inputTokens = logs.reduce((total, entry) => total + (entry.inputTokens ?? 0), 0);
   const outputTokens = logs.reduce((total, entry) => total + (entry.outputTokens ?? 0), 0);
+  const latencies = logs
+    .filter((entry) => entry.operation === "programme_ai" && entry.success)
+    .map((entry) => entry.latencyMs)
+    .sort((a, b) => a - b);
+  const percentile = (fraction: number) => latencies.length
+    ? latencies[Math.min(latencies.length - 1, Math.ceil(latencies.length * fraction) - 1)]
+    : null;
   const inputRate = Number(process.env.PROGRAM_AI_EVAL_INPUT_USD_PER_MILLION || "0");
   const outputRate = Number(process.env.PROGRAM_AI_EVAL_OUTPUT_USD_PER_MILLION || "0");
   const estimatedUsd = inputRate > 0 && outputRate > 0
@@ -80,12 +87,16 @@ async function main() {
     : null;
   console.info(JSON.stringify({
     event: "program_ai_openai_eval_summary",
+    model: config.programmeModel,
+    requestedServiceTier: "fast",
     cases: programmeAiOpenAiEvalCorpus.length,
     passed,
     failed: programmeAiOpenAiEvalCorpus.length - passed,
     providerCalls: logs.length,
     inputTokens,
     outputTokens,
+    latencyP50Ms: percentile(0.5),
+    latencyP95Ms: percentile(0.95),
     estimatedUsd,
   }));
   if (passed !== programmeAiOpenAiEvalCorpus.length) process.exitCode = 1;

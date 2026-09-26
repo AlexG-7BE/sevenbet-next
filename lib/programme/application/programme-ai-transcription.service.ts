@@ -9,6 +9,8 @@ import {
 } from "@/lib/programme/program-ai/transcription-limits";
 import { ServiceError, ValidationError } from "@/lib/services/service-error";
 import { isProgrammeLocale } from "@/lib/programme/presentation";
+import type { ProgrammeLocale } from "@/lib/programme/presentation";
+import { realtimeTranscriptionAdapterFromEnvironment } from "@/lib/programme/program-ai/openai-realtime-transcription";
 
 export {
   PROGRAM_AI_MAX_AUDIO_BYTES,
@@ -59,6 +61,27 @@ export class ProgrammeAiTranscriptionService {
   }
 
   async transcribe(token: string, form: FormData) {
+    await this.assertVoiceAuthority(token);
+    const upload = await parseProgrammeAudioUpload(form);
+    const result = await transcriptionPortFromEnvironment().transcribe(upload);
+    if (result.transcript.length > 4_000) {
+      throw new ProgrammeProviderError("INPUT_TOO_LARGE");
+    }
+    return result;
+  }
+
+  async createRealtimeSession(
+    token: string,
+    input: { locale: ProgrammeLocale; safetyIdentifier: string; sdp: string },
+  ) {
+    await this.assertVoiceAuthority(token);
+    if (!input.sdp.startsWith("v=") || input.sdp.length > 32_768) {
+      throw new ValidationError("Realtime transcription offer is invalid");
+    }
+    return realtimeTranscriptionAdapterFromEnvironment().createSession(input);
+  }
+
+  private async assertVoiceAuthority(token: string) {
     assertProgramAiV1Enabled();
     const authority = await this.missionOneService.authorityStatus(token);
     if (!authority.active) {
@@ -68,12 +91,6 @@ export class ProgrammeAiTranscriptionService {
         403,
       );
     }
-    const upload = await parseProgrammeAudioUpload(form);
-    const result = await transcriptionPortFromEnvironment().transcribe(upload);
-    if (result.transcript.length > 4_000) {
-      throw new ProgrammeProviderError("INPUT_TOO_LARGE");
-    }
-    return result;
   }
 }
 
