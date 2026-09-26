@@ -1,5 +1,7 @@
 import {
   PROGRAMME_ACCESS_INTENT,
+  PROGRAMME_ACCESS_HEADERS,
+  PROGRAMME_ACCESS_HEADER_VALUES,
   PROGRAMME_ACCESS_TTL_MS,
   PROGRAMME_ACCESS_VERSION,
   PROGRAMME_AUTH_ACCESS_HEADERS,
@@ -187,6 +189,22 @@ export function hasProgrammeAccessAuthority(
     return marker?.journeyId === subject.id;
   }
   return Boolean(readUserProgrammeAccess(storage, subject, now));
+}
+
+/**
+ * Browser-provided Programme mutation evidence. This is deliberately derived
+ * from the current subject's unexpired access authority at request time; a
+ * missing, expired or mismatched authority therefore fails closed.
+ */
+export function programmeMutationAccessHeaders(
+  storage: SessionStorageLike,
+  subject: ProgrammeLocalSubject,
+  now = Date.now(),
+): Record<string, string> {
+  if (!hasProgrammeAccessAuthority(storage, subject, now)) return {};
+  return {
+    [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age,
+  };
 }
 
 export function programmeAccessExpiresAt(

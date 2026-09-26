@@ -31,6 +31,8 @@ const vercelBuildPreflight = read("scripts/vercel-build-preflight.ts");
 const realtimeRoute = read("app/api/program/program-ai/transcription/realtime/route.ts");
 const realtimeAdapter = read("lib/programme/program-ai/openai-realtime-transcription.ts");
 const realtimeClient = read("lib/programme/program-ai/realtime-transcription-client.ts");
+const localSubjectStorage = read("lib/programme/local-subject-storage.ts");
+const voiceDraft = read("lib/programme/program-ai/voice-draft.ts");
 
 test("PR #106 Preview builds require the exact Programme runtime flag without changing other environments", () => {
   const releaseCandidate = {
@@ -118,18 +120,18 @@ test("client keeps private draft content in sessionStorage and never localStorag
   assert.match(frontend, /window\.sessionStorage/);
   assert.doesNotMatch(frontend, /localStorage/);
   assert.doesNotMatch(frontend, /@prisma\/client|\bprisma\./);
-  // The audio-retention detail lives in the privacy notice the consent links to.
-  assert.match(frontendRuntime, /<Link href="\/privacy#ai">\{t\("Privacy details"\)\}<\/Link>/);
-  assert.match(frontendRuntime, /Editable transcript/);
+  assert.match(frontendRuntime, /<Link href="\/privacy">\{t\("Read Privacy Notice"\)\}<\/Link>/);
+  assert.match(frontendRuntime, /htmlFor="mission-01-situation"/);
+  assert.match(frontendRuntime, /maxLength=\{4000\}/);
   assert.match(frontend, /new FormData\(\)/);
   assert.match(frontendRuntime, /90_000/);
   assert.match(frontendRuntime, /navigator\.permissions\?\.query/);
   assert.match(frontendRuntime, /name: "microphone"/);
-  assert.match(frontendRuntime, /Microphone is blocked for this site/);
-  assert.match(frontendRuntime, /Voice recording is not supported here/);
+  assert.match(frontendRuntime, /Your browser will not show another prompt while this site is blocked/);
+  assert.match(frontendRuntime, /This browser cannot record audio with the features B4GAMBLE needs/);
 });
 
-test("live voice keeps credentials server-side, treats partials as display-only and preserves file fallback", () => {
+test("live voice keeps credentials server-side, writes partials into the unified draft and preserves file fallback", () => {
   assert.match(realtimeAdapter, /https:\/\/api\.openai\.com\/v1\/realtime\/calls/);
   assert.match(realtimeAdapter, /type: "transcription"/);
   assert.match(realtimeAdapter, /turn_detection: null/);
@@ -143,9 +145,17 @@ test("live voice keeps credentials server-side, treats partials as display-only 
   assert.match(realtimeClient, /input_audio_buffer\.commit/);
   assert.match(realtimeClient, /input_audio_transcription\.delta/);
   assert.match(realtimeClient, /input_audio_transcription\.completed/);
-  assert.match(finalPresentation, /partialTranscript \|\| t\("Your editable transcript will appear here when you tap Done\."\)/);
+  assert.match(realtimeClient, /requestHeaders\?: HeadersInit/);
+  assert.match(realtimeClient, /new Headers\(input\.requestHeaders\)/);
+  assert.match(finalPresentation, /applyVoiceText\(partial\)/);
+  assert.match(finalPresentation, /applyVoiceText\(transcript\)/);
+  assert.match(voiceDraft, /draft\.slice\(0, segment\.start\)/);
+  assert.match(voiceDraft, /conflicted: true/);
   assert.match(finalPresentation, /await transcribe\(audio, durationMs, stoppedAt, failure\)/);
   assert.match(frontend, /\/api\/program\/program-ai\/transcription/);
+  assert.match(frontend, /programmeMutationAccessHeaders\(window\.sessionStorage, subject\)/);
+  assert.match(localSubjectStorage, /if \(!hasProgrammeAccessAuthority\(storage, subject, now\)\) return \{\}/);
+  assert.doesNotMatch(finalPresentation, /I'd rather type|Start over|Record again|Add more by voice/);
   assert.doesNotMatch(`${realtimeClient}\n${finalPresentation}`, /OPENAI_API_KEY|authorization:\s*`Bearer|NEXT_PUBLIC_/);
   assert.doesNotMatch(`${realtimeAdapter}\n${realtimeRoute}`, /console\.(?:info|error|warn)\([^)]*(?:sdp|transcript)/i);
 });
@@ -161,9 +171,10 @@ test("account-not-linked recovery preserves the claim and requires authenticated
   assert.doesNotMatch(explicitLink, /clearProgrammeOAuthClaimMarker/);
 });
 
-test("intake asks the explicit consent only when the journey has not given it, and adds no legal phase", () => {
+test("access owns the explicit consent and intake adds no age or consent prompt", () => {
   assert.match(frontendRuntime, /I explicitly consent to B4GAMBLE processing what I type or say/);
-  assert.match(frontendRuntime, /!recording && !consentGiven/);
+  assert.equal((frontendRuntime.match(/I explicitly consent to B4GAMBLE processing what I type or say/g) || []).length, 1);
+  assert.doesNotMatch(finalPresentation.slice(finalPresentation.indexOf("export function Mission01IntakeScreen"), finalPresentation.indexOf("export function ProgrammeSupportScreen")), /type="checkbox"|consentGiven|I confirm I am 18 or over/);
   assert.doesNotMatch(frontendRuntime, /Before you share\.|Withdrawal stops future processing/);
   assert.match(frontendRuntime, /What feels hardest to control right now/);
   assert.doesNotMatch(frontend, /type Phase[\s\S]*"legal"/);

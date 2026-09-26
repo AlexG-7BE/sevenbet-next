@@ -335,8 +335,7 @@ test("390px touch journeys preserve commercial, learning and canonical Programme
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await expect(page.getByRole("button", { name: "Tap to speak" })).toBeVisible();
-  await page.getByRole("button", { name: "I'd rather type" }).click();
+  await expect(page.getByRole("button", { name: "Start voice input" })).toBeVisible();
   const textarea = page.getByLabel("Your situation");
   expect(await textarea.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
   await textarea.fill("After difficult work days I keep opening betting apps late at night.");

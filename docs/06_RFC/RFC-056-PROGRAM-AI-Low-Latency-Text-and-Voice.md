@@ -1,12 +1,37 @@
 # RFC-056: PROGRAM-AI Low-Latency Text and Voice
 
 - **Status:** `ACTIVE`
-- **Decision authority:** Founder instruction, 25 September 2026
+- **Decision authority:** Founder instructions, 25 and 26 September 2026
 - **Approved:** 2026-09-25
 - **Scope:** Bounded latency reduction for Programme AI text generation and Mission 01 voice transcription
 - **Base:** `3c95d276e8978ab0cb16a2add9e2c0d46cfe7092`
 - **Depends on:** Product Vision & Principles, RFC-002, RFC-013, RFC-017, RFC-022, RFC-023 and RFC-025
 - **Amends:** RFC-023 model/voice transport and RFC-025 provider-model/output-ceiling decisions only
+
+## 26 September amendment — unified Mission 01 composer
+
+The current Founder instruction replaces the split voice/type presentation with
+one Mission-owned editable composer. The situation textarea is always visible.
+One microphone button starts and stops a voice session; partial and final text
+use that same textarea. The only submission authority remains **Create my
+Starting Point**. Mission 01 adds no age or consent prompt: it relies on the
+already established Programme access boundary and the existing sensitive-input
+authority service.
+
+Each voice session owns only its provisional range in the draft. Partial updates
+replace that range, the final reconciles it once, and another session appends a
+new range. Manual changes outside the range are preserved; a manual change that
+overlaps the provisional range wins and blocks subsequent provider text from
+overwriting it. The existing 4,000-character situation limit applies without
+deleting earlier text. File transcription fallback uses the same append and
+reconciliation path.
+
+All browser-originated Programme mutation requests derive age-attestation
+evidence from the current exact subject's unexpired access authority at request
+time. This includes the browser's direct SDP exchange. Missing, expired or
+mismatched authority produces no header and therefore continues to fail closed
+at middleware. This propagation carries existing authority; it does not create,
+extend or replace authority.
 
 ## Decision
 
@@ -20,7 +45,7 @@ user-visible latency:
 | Missions 02–10 guidance | `gpt-6-luna`, Responses API, reasoning `none` | operation schema, 320-token ceiling, Fast service tier |
 | Personal Review regeneration | `gpt-6-luna`, Responses API, reasoning `none` | operation schema, 620-token ceiling, Fast service tier |
 | Initial Personal Review read | existing deterministic server result | no provider wait |
-| Mission 01 preferred voice | `gpt-live-transcribe`, Realtime API over WebRTC | live partial display, manual commit, authoritative final only |
+| Mission 01 preferred voice | `gpt-live-transcribe`, Realtime API over WebRTC | live partial in the editable composer, same-button manual commit, authoritative final reconciliation |
 | Mission 01 voice fallback | `gpt-4o-transcribe`, Audio Transcriptions API | current bounded in-memory completed file |
 
 Explicit Review regeneration is a user-requested blocking interaction, so it uses
@@ -46,16 +71,18 @@ long-lived token or `NEXT_PUBLIC_` provider configuration enters client code.
 
 The transcription session is `type: transcription`, uses
 `gpt-live-transcribe`, the exact Programme language hint, `delay: minimal` and no
-server VAD. Transcript deltas are display-only. Tapping Done sends
-`input_audio_buffer.commit`; only the matching completed event can populate the
-editable transcript. Partial text never auto-submits, creates a Starting Point,
-completes an action or awards XP.
+server VAD. Transcript deltas update only the current session-owned range in the
+editable textarea. Pressing the same microphone button sends
+`input_audio_buffer.commit`; only the matching completed event can reconcile that
+range as the final. Partial or final text never auto-submits, creates a Starting
+Point, completes an action or awards XP.
 
 If WebRTC is unsupported, setup fails, the channel fails, the completed event is
 invalid or finalization exceeds its bound, the already captured Blob goes through
-the existing 4 MiB/90-second file route. Cancel, unmount and Type instead close the
-peer, release tracks and discard the recording. No audio or transcript is written
-to application storage or content logs.
+the existing 4 MiB/90-second file route and appends through the same draft-range
+logic. Stop, failure and unmount close the peer and release tracks; failed voice
+leaves the prior draft intact. No audio or transcript is written to application
+storage or content logs.
 
 ## Observability, privacy and safety
 
@@ -78,8 +105,10 @@ evidence remain Production gates; code does not infer them.
 
 Normal CI uses provider and WebRTC doubles. It must cover exact model gates,
 reasoning `none`, service tier, schema/token ceilings, no-content logging,
-partial-versus-final authority, SDP/key containment, file fallback, cancellation,
-typed fallback, guidance, Reviews, XP/progression regressions and mobile layout.
+partial-versus-final reconciliation, access-header propagation and fail-closed
+expiry/mismatch cases, SDP/key containment, repeated voice append, manual-edit
+preservation, file fallback, typed input, guidance, Reviews, XP/progression
+regressions and mobile layout.
 The existing 20-case synthetic evaluation remains the quality gate for live model
 comparison; absence of an approved credential is recorded as `UNKNOWN`, never a
 pass.

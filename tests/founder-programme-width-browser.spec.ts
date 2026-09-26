@@ -117,8 +117,8 @@ for (const entry of ["/program", "/program?entry=start", "home", "ten-steps"] as
     await expect(page.locator('[data-runtime-renderer="programme"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
     await completeAccess(page);
-    await expect(page.getByRole("button", { name: "Tap to speak" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "I'd rather type" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Start voice input" })).toBeVisible();
+    await expect(page.getByLabel("Your situation")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toHaveCount(0);
   });
 }

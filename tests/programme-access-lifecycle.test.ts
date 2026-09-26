@@ -173,7 +173,7 @@ test("M — authenticated clients and middleware cannot regress to ephemeral-onl
     assert.doesNotMatch(source, /hasProgrammeAccessAuthority|PROGRAMME_ACCESS_HEADERS/);
   }
   const experience = readFileSync("components/programme/ProgramAiExperience.tsx", "utf8");
-  assert.match(experience, /subject\.kind === "journey" && hasProgrammeAccessAuthority/);
+  assert.match(experience, /programmeMutationAccessHeaders\(window\.sessionStorage, subject\)/);
   const middleware = readFileSync("middleware.ts", "utf8");
   assert.match(middleware, /programmeMutationCategory === "anonymous" \|\| programmeMutationCategory === "unknown"/);
   const migration = readFileSync("prisma/migrations/0024_programme_access_acceptance/migration.sql", "utf8");

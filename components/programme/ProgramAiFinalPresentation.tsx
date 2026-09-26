@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { PROGRAMME_MARKETING_OPT_IN_LABEL } from "@/lib/customers/email-preference-client";
@@ -14,10 +14,16 @@ import {
   connectProgrammeRealtimeTranscription,
   type ProgrammeRealtimeTranscription,
 } from "@/lib/programme/program-ai/realtime-transcription-client";
+import {
+  applyProgrammeVoiceDraftText,
+  beginProgrammeVoiceDraftSegment,
+  reconcileProgrammeVoiceDraftEdit,
+  type ProgrammeVoiceDraftSegment,
+} from "@/lib/programme/program-ai/voice-draft";
 import { programmeHelpPath, type ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiFinalPresentation.module.css";
 
-export type ProgrammeRecorderState = "idle" | "requesting" | "recording" | "live" | "finalizing" | "fallback" | "cancelled" | "denied" | "policy-denied" | "unsupported" | "success" | "error";
+export type ProgrammeRecorderState = "idle" | "requesting" | "recording" | "live" | "finalizing" | "fallback" | "denied" | "policy-denied" | "unsupported" | "success" | "error";
 export type ProgrammeVoiceTiming = {
   recordingDurationMs: number;
   transcriptionMode: "realtime" | "file_fallback";
@@ -136,47 +142,88 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
   );
 }
 
-function VoiceWave() {
-  return <span aria-hidden="true" className={styles.voiceWave}>{[18, 38, 58, 30, 46, 22, 40, 28, 16].map((height, index) => <i data-recording-indicator={index === 0 ? "" : undefined} key={index} style={{ "--bar-height": `${height}px`, "--bar-delay": `${index * 70}ms` } as CSSProperties} />)}</span>;
-}
-
 function MicrophoneIcon() {
-  return <svg aria-hidden="true" fill="none" height="36" viewBox="0 0 24 24" width="36"><rect height="11" rx="3" stroke="currentColor" strokeWidth="1.8" width="6" x="9" y="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" /></svg>;
+  return <svg aria-hidden="true" fill="none" height="28" viewBox="0 0 24 24" width="28"><rect height="11" rx="3" stroke="currentColor" strokeWidth="1.8" width="6" x="9" y="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" /></svg>;
 }
 
 function GoogleIcon() {
   return <svg aria-hidden="true" height="18" viewBox="0 0 24 24" width="18"><path d="M21.35 11.1H12v2.9h5.35c-.5 2.4-2.55 3.8-5.35 3.8a5.8 5.8 0 1 1 0-11.6c1.45 0 2.75.5 3.8 1.45l2.15-2.15A8.9 8.9 0 0 0 12 3a9 9 0 1 0 0 18c5.2 0 8.65-3.65 8.65-8.8 0-.35-.1-.75-.3-1.1z" fill="currentColor" /></svg>;
 }
 
-function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTranscribe, onUseTyped, locale }: {
+function Mission01Composer({
+  disabled,
+  getRealtimeRequestHeaders,
+  locale,
+  onPrepareVoice,
+  onSituation,
+  onState,
+  onTranscribe,
+  onVoiceTiming,
+  situation,
+  state,
+}: {
   disabled: boolean;
+  getRealtimeRequestHeaders: () => HeadersInit;
+  locale: ProgrammeLocale;
+  onPrepareVoice: () => Promise<void>;
+  onSituation: (value: string, source: "text" | "voice") => void;
   state: ProgrammeRecorderState;
   onState: (state: ProgrammeRecorderState) => void;
-  onTranscript: (transcript: string, timing: ProgrammeVoiceTiming) => void;
   onTranscribe: (audio: Blob, durationMs: number) => Promise<{ transcript: string; transcriptionRequestMs: number }>;
-  onUseTyped: () => void;
-  locale: ProgrammeLocale;
+  onVoiceTiming: (timing: ProgrammeVoiceTiming) => void;
+  situation: string;
 }) {
   const t = translated(locale);
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<Blob[]>([]);
-  const retainedRecording = useRef<Blob | null>(null);
   const realtime = useRef<ProgrammeRealtimeTranscription | null>(null);
   const realtimeSetup = useRef<Promise<ProgrammeRealtimeTranscription> | null>(null);
   const realtimeAbandoned = useRef(false);
   const realtimeFailure = useRef<string | undefined>(undefined);
   const firstPartialTranscriptMs = useRef<number | undefined>(undefined);
   const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
-  const [partialTranscript, setPartialTranscript] = useState("");
   const [microphonePermission, setMicrophonePermission] = useState<MicrophonePermissionState>("unknown");
   const [recordingError, setRecordingError] = useState("");
+  const [composerNotice, setComposerNotice] = useState("");
+  const draftRef = useRef(situation);
+  const voiceSegment = useRef<ProgrammeVoiceDraftSegment | null>(null);
   const recordingStartedAt = useRef(0);
   const recordingDurationMs = useRef(0);
   const maximumTimer = useRef<number | null>(null);
   const recordingTimer = useRef<number | null>(null);
-  const cancelling = useRef(false);
   const recorderFailed = useRef(false);
+
+  useEffect(() => {
+    draftRef.current = situation;
+  }, [situation]);
+
+  function updateDraft(value: string, source: "text" | "voice") {
+    draftRef.current = value;
+    onSituation(value, source);
+  }
+
+  function applyVoiceText(value: string) {
+    const segment = voiceSegment.current;
+    if (!segment || segment.conflicted) {
+      if (segment?.conflicted) setComposerNotice(t("Your edits are preserved; this voice result will not overwrite them."));
+      return;
+    }
+    const applied = applyProgrammeVoiceDraftText(draftRef.current, segment, value);
+    voiceSegment.current = applied.segment;
+    updateDraft(applied.draft, "voice");
+    setComposerNotice(applied.truncated ? t("Draft limit reached. Your existing text was preserved.") : "");
+  }
+
+  function editDraft(value: string) {
+    if (voiceSegment.current) {
+      voiceSegment.current = reconcileProgrammeVoiceDraftEdit(draftRef.current, value, voiceSegment.current);
+      if (voiceSegment.current.conflicted) {
+        setComposerNotice(t("Your edits are preserved; this voice result will not overwrite them."));
+      }
+    }
+    updateDraft(value, "text");
+  }
 
   async function readMicrophonePermission(): Promise<MicrophonePermissionState> {
     if (!navigator.permissions?.query) return "unknown";
@@ -214,7 +261,6 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
   }
 
   function releaseRecording() {
-    retainedRecording.current = null;
     chunks.current = [];
   }
 
@@ -294,11 +340,13 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
         fallbackReason,
       };
       releaseRecording();
-      onTranscript(result.transcript, timing);
+      applyVoiceText(result.transcript);
+      onVoiceTiming(timing);
       logVoiceTiming(timing);
       productAnalyticsClient.voiceOutcome("transcription_success");
       onState("success");
     } catch {
+      releaseRecording();
       setRecordingError(t("Voice transcription could not be completed."));
       productAnalyticsClient.voiceOutcome("transcription_error");
       onState("error");
@@ -326,7 +374,7 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
       connection.commit();
       stopTracks();
       const transcript = await withDeadline(connection.finalTranscript, 6_000);
-      if (!transcript.trim() || transcript.length > 4_000) {
+      if (!transcript.trim()) {
         throw new Error("REALTIME_TRANSCRIPTION_INVALID");
       }
       const timing: ProgrammeVoiceTiming = {
@@ -340,7 +388,8 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
       realtime.current = null;
       realtimeSetup.current = null;
       releaseRecording();
-      onTranscript(transcript.trim(), timing);
+      applyVoiceText(transcript);
+      onVoiceTiming(timing);
       logVoiceTiming(timing);
       productAnalyticsClient.voiceOutcome("transcription_success");
       onState("success");
@@ -356,7 +405,6 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
     realtimeAbandoned.current = false;
     realtimeFailure.current = undefined;
     firstPartialTranscriptMs.current = undefined;
-    setPartialTranscript("");
     if (typeof RTCPeerConnection === "undefined") {
       realtimeFailure.current = "webrtc_unsupported";
       return;
@@ -364,12 +412,13 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
     const setup = connectProgrammeRealtimeTranscription({
       locale,
       stream: activeStream,
+      requestHeaders: getRealtimeRequestHeaders(),
       onPartial: (partial) => {
         if (realtimeAbandoned.current) return;
         if (firstPartialTranscriptMs.current === undefined) {
           firstPartialTranscriptMs.current = Math.max(0, Date.now() - recordingStartedAt.current);
         }
-        setPartialTranscript(partial);
+        applyVoiceText(partial);
       },
     });
     realtimeSetup.current = setup;
@@ -401,8 +450,10 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
       return;
     }
     setRecordingError("");
+    setComposerNotice("");
     onState("requesting");
     try {
+      await onPrepareVoice();
       releaseRecording();
       stream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicrophonePermission("granted");
@@ -422,16 +473,7 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
           onState("error");
           return;
         }
-        if (cancelling.current) {
-          cancelling.current = false;
-          closeRealtime();
-          stopTracks();
-          releaseRecording();
-          onState("cancelled");
-          return;
-        }
         const audio = new Blob(chunks.current, { type: recorder.current?.mimeType || chunks.current[0]?.type || "audio/webm" });
-        retainedRecording.current = audio;
         chunks.current = [];
         void finalize(audio, recordingDurationMs.current);
       };
@@ -447,8 +489,8 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
           onState("error");
         }
       };
-      cancelling.current = false;
       recorderFailed.current = false;
+      voiceSegment.current = beginProgrammeVoiceDraftSegment(draftRef.current);
       recorder.current.start();
       productAnalyticsClient.voiceOutcome("recording_started");
       recordingStartedAt.current = Date.now();
@@ -475,116 +517,85 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
     recorder.current.stop();
   }
 
-  function cancel() {
-    if (recorder.current?.state !== "recording") return;
-    cancelling.current = true;
-    productAnalyticsClient.voiceOutcome("cancelled");
-    stop();
-  }
-
-  function useTyped() {
-    clearMaximumTimer();
-    clearRecordingTimer();
-    closeRealtime();
-    stopTracks();
-    releaseRecording();
-    onState("idle");
-    onUseTyped();
-  }
-
   const elapsed = `${String(Math.floor(recordingElapsedSeconds / 60)).padStart(2, "0")}:${String(recordingElapsedSeconds % 60).padStart(2, "0")}`;
   const blocked = state === "denied" && microphonePermission === "denied";
   const policyDenied = state === "policy-denied";
   const recording = state === "recording" || state === "live";
+  const transitioning = state === "requesting" || state === "finalizing" || state === "fallback";
+  const microphoneDisabled = disabled || transitioning || policyDenied || state === "unsupported";
+  const microphoneLabel = recording ? t("Stop voice input") : t("Start voice input");
+  const status = state === "requesting"
+    ? t("Requesting microphone…")
+    : state === "finalizing" || state === "fallback"
+      ? t("Transcribing securely…")
+      : recording
+        ? t("Listening…")
+        : state === "success"
+          ? t("Voice added. You can edit it or add more.")
+          : "";
   return (
-    <section className={styles.voiceControl} data-state={state} data-voice-state={state}>
-      {recording ? <>
-        <p className={styles.eyebrow}>{t("Listening…")}</p>
-        <VoiceWave />
-        <p className={styles.recordingTime}>{elapsed} / 01:30</p>
-        <p aria-live="polite" className={styles.recordingTranscript}>{partialTranscript || t("Your editable transcript will appear here when you tap Done.")}</p>
-        <strong className={styles.srOnly} role="status">{t("Recording · {elapsed} / 01:30. Microphone is recording now.", { elapsed })}</strong>
-        <div className={styles.voiceActions}><button aria-label={t("Stop recording")} className={styles.lightAction} onClick={stop} type="button">{t("Done")}</button><button aria-label={t("Cancel")} className={styles.secondaryAction} onClick={cancel} type="button">{t("Start over")}</button></div>
-      </> : state === "finalizing" ? <>
-        <strong className={styles.voiceLabel} role="status">{t("Transcribing securely…")}</strong>
-        {partialTranscript ? <p className={styles.recordingTranscript}>{partialTranscript}</p> : null}
-      </> : state === "success" ? <>
-        <button aria-label={t("Record again")} className={styles.typingAction} disabled={disabled} onClick={start} type="button">{t("Record again")}</button>
-        <p className={styles.voiceMessage} role="status">{t("Check the editable transcript below, then create your Starting Point.")}</p>
-      </> : <>
-        <button aria-label={t(policyDenied ? "Voice recording is unavailable on this page" : blocked ? "Check microphone access" : state === "denied" ? "Try microphone again" : "Tap to speak")} className={styles.microphoneAction} disabled={disabled || policyDenied || state === "requesting" || state === "fallback"} onClick={state === "denied" ? async () => { if (!blocked || await readMicrophonePermission() !== "denied") await start(); } : start} type="button"><MicrophoneIcon /></button>
-        <strong className={styles.voiceLabel}>{t(state === "requesting" ? "Requesting microphone…" : state === "fallback" ? "Transcribing securely…" : policyDenied ? "Voice recording is unavailable on this page" : blocked ? "Microphone is blocked for this site" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording discarded" : "Tap to speak")}</strong>
-        <button className={styles.typingAction} disabled={disabled} onClick={useTyped} type="button">{t("I'd rather type")}</button>
-      </>}
-      {state === "error" ? <p className={styles.error} role="alert">{recordingError || t("Voice transcription could not be completed.")} {retainedRecording.current ? <button className={styles.inlineButton} onClick={() => void transcribe(retainedRecording.current!, recordingDurationMs.current)} type="button">{t("Retry this recording")}</button> : null} <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
-      {state === "unsupported" ? <p className={styles.error} role="alert">{t("This browser cannot record audio with the features B4GAMBLE needs.")} <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
-      {policyDenied ? <p className={styles.error} role="alert">{t("Voice recording is unavailable on this page")} — <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
-      {state === "denied" ? <p className={styles.error} role="alert">{t(blocked ? "Your browser will not show another prompt while this site is blocked. Allow microphone access using the site controls beside the address bar, then check access again." : "The permission prompt was dismissed or the microphone was not made available.")} {t("Nothing was recorded.")} <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
-      {state === "cancelled" ? <p className={styles.voiceMessage} role="status">{t("The recording was discarded. Nothing was submitted.")}</p> : null}
+    <section className={styles.composer} data-state={state} data-voice-state={state}>
+      <label className={styles.composerLabel} htmlFor="mission-01-situation">{t("Your situation")}</label>
+      <div className={styles.composerField} data-recording={recording ? "true" : "false"}>
+        <textarea id="mission-01-situation" maxLength={4000} onChange={(event) => editDraft(event.target.value)} placeholder={t("For example: I keep opening betting apps late at night after a stressful day…")} rows={7} value={situation} />
+        <button aria-label={microphoneLabel} aria-pressed={recording} className={styles.composerMicrophone} disabled={microphoneDisabled} onClick={recording ? stop : state === "denied" ? async () => { if (!blocked || await readMicrophonePermission() !== "denied") await start(); } : start} type="button"><MicrophoneIcon /></button>
+      </div>
+      <div className={styles.composerMeta}>
+        <small>{situation.length}/4000 · {t("This draft stays in this browser session; only the Starting Point you confirm is saved.")}</small>
+        {recording ? <small aria-hidden="true">{elapsed} / 01:30</small> : null}
+      </div>
+      {status ? <p className={styles.composerStatus} role="status">{status}</p> : null}
+      {composerNotice ? <p className={styles.composerStatus} role="status">{composerNotice}</p> : null}
+      {state === "error" ? <p className={styles.error} role="alert">{recordingError || t("Voice transcription could not be completed.")} {t("Your existing draft is still here.")}</p> : null}
+      {state === "unsupported" ? <p className={styles.error} role="alert">{t("This browser cannot record audio with the features B4GAMBLE needs.")} {t("You can keep typing in the same field.")}</p> : null}
+      {policyDenied ? <p className={styles.error} role="alert">{t("Voice recording is unavailable on this page")} — {t("You can keep typing in the same field.")}</p> : null}
+      {state === "denied" ? <p className={styles.error} role="alert">{t(blocked ? "Your browser will not show another prompt while this site is blocked. Allow microphone access using the site controls beside the address bar, then check access again." : "The permission prompt was dismissed or the microphone was not made available.")} {t("Nothing was recorded.")} {t("Your existing draft is still here.")}</p> : null}
     </section>
   );
 }
 
 export function Mission01IntakeScreen({
-  consentGiven,
   busy,
   error,
+  getRealtimeRequestHeaders,
   situation,
   onAccountFirst,
+  onPrepareVoice,
   onSituation,
   onSubmit,
-  onTranscript,
   onTranscribe,
-  onUseTyped,
-  inputMode,
+  onVoiceTiming,
   locale,
 }: {
-  /** The explicit consent was given on the access screen of this journey, or is already on record. */
-  consentGiven: boolean;
   busy: boolean;
   error: string;
+  getRealtimeRequestHeaders: () => HeadersInit;
   situation: string;
   onAccountFirst?: () => void;
-  onSituation: (value: string) => void;
+  onPrepareVoice: () => Promise<void>;
+  onSituation: (value: string, source: "text" | "voice") => void;
   onSubmit: () => void;
-  onTranscript: (transcript: string, timing: ProgrammeVoiceTiming) => void;
   onTranscribe: (audio: Blob, durationMs: number) => Promise<{ transcript: string; transcriptionRequestMs: number }>;
-  onUseTyped: () => void;
-  inputMode: "text" | "voice";
+  onVoiceTiming: (timing: ProgrammeVoiceTiming) => void;
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
-  const [authority, setAuthority] = useState(consentGiven);
   const [recorderState, setRecorderState] = useState<ProgrammeRecorderState>("idle");
-  useEffect(() => setAuthority(consentGiven), [consentGiven]);
-  const textVisible = inputMode === "text" || Boolean(situation);
-  const recording = ["recording", "live", "finalizing", "fallback"].includes(recorderState);
+  const recording = ["requesting", "recording", "live", "finalizing", "fallback"].includes(recorderState);
   return (
-    <div className={styles.canvas} data-programme-presentation="mission-01-intake" data-programme-presentation-state={recording ? "recording" : textVisible ? inputMode === "voice" ? "transcript" : "text-fallback" : "idle"}>
+    <div className={styles.canvas} data-programme-presentation="mission-01-intake" data-programme-presentation-state={recording ? "recording" : "composer"}>
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
-        <div className={styles.intakeState} data-intake-state={recording ? "recording" : textVisible ? "text" : "idle"}>
-          {!recording && !textVisible ? <section className={styles.intakeIntro}>
+        <div className={styles.intakeState} data-intake-state={recording ? "recording" : "composer"}>
+          <section className={styles.intakeIntro}>
           <p className={styles.eyebrow}>{t("Mission 01")}</p>
           <span className={styles.srOnly}>{t("What feels hardest to control right now?")}</span>
           <h1><SerifTail text={t("Tell us what is happening right now.")} /></h1>
           <p>{t("In your own words. A minute is plenty — we'll build your Starting Point from it.")}</p>
-        </section> : null}
-        <Mission01VoiceControl disabled={busy || !authority} locale={locale} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} state={recorderState} />
-        {onAccountFirst && !recording && !textVisible ? <button className={styles.accountFirstAction} data-programme-account-first="" disabled={busy} onClick={onAccountFirst} type="button">{t("Create an account first →")}</button> : null}
-        {textVisible ? <section className={styles.transcriptState} data-transcript-mode={inputMode === "voice" ? "transcript" : "text-fallback"}>
-          <label>
-            <span>{t(inputMode === "voice" ? "Editable transcript" : "Your situation")}</span>
-            <textarea autoFocus maxLength={4000} onChange={(event) => onSituation(event.target.value)} placeholder={t("For example: I keep opening betting apps late at night after a stressful day…")} rows={6} value={situation} />
-            <small>{situation.length}/4000 · {inputMode === "voice" ? t("Correct anything you want. ") : ""}{t("This draft stays in this browser session; only the Starting Point you confirm is saved.")}</small>
-          </label>
-          <button className={styles.primaryAction} disabled={busy || !authority || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} type="button">{t(busy ? "Preparing your Starting Point…" : "Create my Starting Point")}</button>
-        </section> : null}
+          </section>
+        <Mission01Composer disabled={busy} getRealtimeRequestHeaders={getRealtimeRequestHeaders} locale={locale} onPrepareVoice={onPrepareVoice} onSituation={onSituation} onState={setRecorderState} onTranscribe={onTranscribe} onVoiceTiming={onVoiceTiming} situation={situation} state={recorderState} />
+        <button className={styles.primaryAction} disabled={busy || recording || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} type="button">{t(busy ? "Preparing your Starting Point…" : "Create my Starting Point")}</button>
+        {onAccountFirst && !recording && !situation ? <button className={styles.accountFirstAction} data-programme-account-first="" disabled={busy} onClick={onAccountFirst} type="button">{t("Create an account first →")}</button> : null}
         <StatusMessage error={error} />
-        {/* Asked once: only a journey that never reached the access screen's consent (a signed-in
-            person starting Mission 01 from the dashboard) sees it here. */}
-        {!recording && !consentGiven ? <aside className={styles.privacyBoundary}>
-          <label><input checked={authority} disabled={busy} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /><span>{t("I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.")} <Link href="/privacy#ai">{t("Privacy details")}</Link></span></label>
-          </aside> : null}
         </div>
       </main>
     </div>

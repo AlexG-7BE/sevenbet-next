@@ -100,7 +100,7 @@
 .canvas .primaryAction, .canvas .secondaryAction, .canvas .lightAction { font-size: 16px; font-weight: 700; }
 
 .primaryAction:hover { background: var(--programme-paper); }
-.primaryAction:disabled, .secondaryAction:disabled, .lightAction:disabled, .microphoneAction:disabled { opacity: .45; cursor: not-allowed; }
+.primaryAction:disabled, .secondaryAction:disabled, .lightAction:disabled, .composerMicrophone:disabled { opacity: .45; cursor: not-allowed; }
 .primaryAction:disabled:hover { background: var(--programme-acid); }
 .secondaryAction { border: 1px solid rgba(250, 250, 247, .35); background: transparent; color: var(--programme-paper) !important; }
 .secondaryAction:hover { border-color: var(--programme-paper); }
@@ -122,17 +122,28 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: 22px;
   text-align: center;
 }
 
-.intakeIntro { display: grid; justify-items: center; gap: 24px; }
+.intakeIntro { display: grid; justify-items: center; gap: 16px; }
 .intakeIntro h1 { max-width: 14ch; }
 .intakeIntro > p:last-child { max-width: 32ch; margin: 0; color: var(--programme-muted); font-family: var(--font-seven-sans), Arial, sans-serif; font-size: 16px; font-style: normal; line-height: 1.5; }
-.voiceControl { width: 100%; display: grid; justify-items: center; gap: 24px; }
-.microphoneAction { width: 96px; height: 96px; margin-top: 8px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: var(--programme-acid); color: var(--programme-ink); cursor: pointer; transition: transform 200ms cubic-bezier(.2, .8, .2, 1), opacity 200ms ease; }
-.microphoneAction:hover:not(:disabled) { transform: scale(1.04); }
-.voiceLabel { color: var(--programme-muted); font-size: 14px; font-weight: 400; }
+.composer { width: 100%; display: grid; gap: 10px; text-align: left; }
+.composerLabel { color: rgba(250, 250, 247, .6); font-size: 13px; line-height: 16px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
+.composerField { position: relative; border: 1px solid var(--programme-line); background: var(--programme-panel); transition: border-color 200ms ease, box-shadow 200ms ease; }
+.composerField:focus-within { border-color: var(--programme-acid); }
+.composerField[data-recording="true"] { border-color: var(--programme-acid); box-shadow: 0 0 0 1px rgba(228, 226, 78, .2); }
+.composerField textarea { width: 100%; min-height: 168px; padding: 16px 76px 16px 20px; border: 0; border-radius: 0; display: block; resize: vertical; background: transparent; color: var(--programme-paper); outline: none; font-size: 16px; line-height: 1.6; }
+.composerField textarea::placeholder { color: rgba(250, 250, 247, .34); }
+.composerMicrophone { position: absolute; right: 12px; bottom: 12px; width: 52px; height: 52px; padding: 0; border: 1px solid rgba(228, 226, 78, .45); border-radius: 50%; display: grid; place-items: center; background: var(--programme-acid); color: var(--programme-ink); cursor: pointer; transition: transform 180ms cubic-bezier(.2, .8, .2, 1), opacity 180ms ease, box-shadow 180ms ease; }
+.composerMicrophone:hover:not(:disabled) { transform: scale(1.04); }
+.composerField[data-recording="true"] .composerMicrophone { box-shadow: 0 0 0 7px rgba(228, 226, 78, .12); animation: microphone-pulse 1.4s ease-in-out infinite; }
+.composerMeta { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; color: rgba(250, 250, 247, .55); }
+.composerMeta small { font-size: 13px; line-height: 1.5; }
+.composerMeta small:last-child { flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.composerStatus { margin: 0; color: var(--programme-mint); font-size: 14px; line-height: 1.5; }
+.intakeState > .primaryAction { width: 100%; }
 .typingAction, .inlineButton, .withdrawAction { padding: 2px 0; border: 0; border-bottom: 1px solid rgba(250, 250, 247, .3); background: transparent; color: rgba(250, 250, 247, .8); cursor: pointer; }
 .typingAction { min-height: 28px; font-size: 14px; }
 .inlineButton { border-bottom-color: rgba(228, 226, 78, .4); color: var(--programme-acid); font-size: 14px; }
@@ -155,29 +166,10 @@
   .accessBoundary .legalLinks { margin: 12px 0 8px; }
 }
 .consentRow em a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
-.voiceWave { height: 64px; display: flex; align-items: center; gap: 5px; }
-.voiceWave i { width: 4px; height: var(--bar-height); border-radius: 2px; display: block; background: var(--programme-acid); animation: voice-pulse 800ms ease-in-out var(--bar-delay) infinite alternate; }
-.recordingTime { margin: 0; color: var(--programme-muted); font-size: 15px; font-variant-numeric: tabular-nums; }
-.recordingTranscript { width: 100%; max-width: 360px; margin: 0; padding: 16px 20px; border: 1px solid var(--programme-line); background: rgba(250, 250, 247, .06); color: rgba(250, 250, 247, .7); font-size: 14px; line-height: 1.6; text-align: left; }
-.voiceActions { display: flex; gap: 12px; }
-.voiceMessage { max-width: 340px; margin: 0; color: var(--programme-muted); font-size: 14px; line-height: 1.5; }
-
-.transcriptState { width: 100%; display: grid; justify-items: stretch; gap: 16px; text-align: left; }
-.transcriptState label, .emailForm label { display: grid; gap: 10px; }
-.transcriptState label > span, .emailForm label > span { color: rgba(250, 250, 247, .6); font-size: 13px; line-height: 16px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
-.transcriptState textarea, .emailForm input { width: 100%; border: 1px solid var(--programme-line); border-radius: 0; background: var(--programme-panel); color: var(--programme-paper); outline: none; transition: border-color 200ms ease; }
-.transcriptState textarea:focus, .emailForm input:focus { border-color: var(--programme-acid); }
-.transcriptState textarea { min-height: 150px; padding: 16px 20px; resize: vertical; font-size: 15px; line-height: 1.6; }
-.transcriptState small { color: rgba(250, 250, 247, .55); font-size: 14px; line-height: 1.5; }
-.transcriptState .primaryAction { width: 100%; }
-
-.privacyBoundary { width: 100%; max-width: 400px; margin-top: 8px; display: grid; gap: 14px; color: rgba(250, 250, 247, .6); font-size: 14px; line-height: 1.5; text-align: left; }
-.privacyBoundary > div { display: grid; gap: 4px; text-align: center; }
-.privacyBoundary strong { color: rgba(250, 250, 247, .6); font-size: 13px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
-.privacyBoundary a { color: rgba(250, 250, 247, .85); text-decoration: underline; text-decoration-color: rgba(250, 250, 247, .3); text-underline-offset: 4px; }
-.privacyBoundary label { padding-top: 14px; border-top: 1px solid rgba(250, 250, 247, .1); display: grid; grid-template-columns: 18px 1fr; gap: 12px; cursor: pointer; }
-.privacyBoundary input { width: 18px; height: 18px; margin: 0; accent-color: var(--programme-acid); }
-.privacyBoundary small { font-size: 14px; line-height: 1.5; }
+.emailForm label { display: grid; gap: 10px; }
+.emailForm label > span { color: rgba(250, 250, 247, .6); font-size: 13px; line-height: 16px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
+.emailForm input { width: 100%; border: 1px solid var(--programme-line); border-radius: 0; background: var(--programme-panel); color: var(--programme-paper); outline: none; transition: border-color 200ms ease; }
+.emailForm input:focus { border-color: var(--programme-acid); }
 
 .readyState {
   position: relative;
@@ -210,7 +202,7 @@
 .emailForm .marketingChoice span { color: rgba(250, 250, 247, .75); font-size: 14px; line-height: 1.5; font-weight: 400; letter-spacing: 0; text-transform: none; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-@keyframes voice-pulse { from { transform: scaleY(.55); opacity: .55; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes microphone-pulse { 0%, 100% { box-shadow: 0 0 0 7px rgba(228, 226, 78, .08); } 50% { box-shadow: 0 0 0 11px rgba(228, 226, 78, .16); } }
 
 @media (max-width: 640px) {
   .canvas { min-height: 100dvh; }
@@ -218,19 +210,19 @@
   .focusedState h1, .accessState > h1, .intakeIntro h1 { font-size: 28px; }
   .intakeState, .readyState { width: calc(100% - 40px); min-height: 100dvh; padding: 104px 0 calc(112px + env(safe-area-inset-bottom)); justify-content: flex-start; }
   .intakeIntro > p:last-child { display: none; }
-  .microphoneAction { width: 84px; height: 84px; margin-top: 8px; }
-  .privacyBoundary { margin-top: 0; }
+  .composerField textarea { min-height: 184px; padding-right: 72px; font-size: 16px; }
+  .composerMicrophone { width: 48px; height: 48px; }
+  .composerMeta { display: grid; gap: 4px; }
   .readyState > h1 { font-size: 28px; }
   .focusedActions { width: 100%; display: grid; }
   .primaryAction, .secondaryAction, .lightAction { width: 100%; min-height: 48px; white-space: normal; }
   .typingAction, .inlineButton, .withdrawAction { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
-  .transcriptState textarea, .emailForm input { font-size: 16px; }
-  .voiceActions { width: 100%; display: grid; grid-template-columns: 1fr; }
+  .emailForm input { font-size: 16px; }
   .legalLinks { flex-wrap: wrap; }
   .legalLinks a { min-height: 44px; display: inline-flex; align-items: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .canvas *, .canvas *::before, .canvas *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-  .voiceWave i { animation: none !important; }
+  .composerMicrophone { animation: none !important; }
 }
