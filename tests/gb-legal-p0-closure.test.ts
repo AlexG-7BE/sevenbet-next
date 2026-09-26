@@ -130,7 +130,7 @@ test("Article 27 particulars publish the confirmed EU and UK representation", ()
 test("Programme start asks three required checks once and repeats none of them", () => {
   // Founder decision, 25 Sep 2026: 18+, Terms/Privacy and the explicit consent to process the
   // story are three required checks on the access screen. Intake and registration do not repeat
-  // the consent or its notices; only a journey that never reached that screen is asked once.
+  // the consent or its notices.
   const component = source("components/programme/ProgramAiFinalPresentation.tsx");
   const experience = source("components/programme/ProgramAiExperience.tsx");
   const consent = "I explicitly consent to B4GAMBLE processing what I type or say";
@@ -142,10 +142,9 @@ test("Programme start asks three required checks once and repeats none of them",
   assert.equal(component.match(/I agree to the Terms and confirm I have read the Privacy Notice/g)?.length, 1);
   assert.match(component, /disabled=\{busy \|\| !adult \|\| !legal \|\| !processing\}/);
   assert.match(component, /Three checks before you begin\./);
-  // Intake shows the consent only when this journey has not given it.
-  assert.match(component, /\{!recording && !consentGiven \? <aside className=\{styles\.privacyBoundary\}>/);
+  const intake = component.slice(component.indexOf("export function Mission01IntakeScreen"), component.indexOf("export function ProgrammeSupportScreen"));
+  assert.doesNotMatch(intake, /consentGiven|type="checkbox"|I confirm I am 18 or over/);
   assert.match(experience, /persist\(\{ \.\.\.emptyLocalState, phase: "intake", processingConsented: true \}, journey\);/);
-  assert.match(experience, /consentGiven=\{sensitiveAuthorityActive \|\| local\.processingConsented === true\}/);
   // No repeated notices after the access screen.
   assert.doesNotMatch(component, /Before you share\.|Optional\. You can withdraw|Withdraw consent and clear this draft|Google provides identity only/);
 });

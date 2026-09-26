@@ -40,6 +40,7 @@ export async function connectProgrammeRealtimeTranscription(input: {
   locale: ProgrammeLocale;
   stream: MediaStream;
   onPartial: (text: string) => void;
+  requestHeaders?: HeadersInit;
   fetchImpl?: typeof fetch;
   peerConnection?: RTCPeerConnection;
 }): Promise<ProgrammeRealtimeTranscription> {
@@ -89,13 +90,15 @@ export async function connectProgrammeRealtimeTranscription(input: {
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
     if (!offer.sdp) throw new Error("REALTIME_SDP_UNAVAILABLE");
+    const requestHeaders = new Headers(input.requestHeaders);
+    requestHeaders.set("content-type", "application/sdp");
     const response = await fetchImpl(
       `/api/program/program-ai/transcription/realtime?locale=${encodeURIComponent(input.locale)}`,
       {
         method: "POST",
         credentials: "same-origin",
         cache: "no-store",
-        headers: { "content-type": "application/sdp" },
+        headers: requestHeaders,
         body: offer.sdp,
       },
     );

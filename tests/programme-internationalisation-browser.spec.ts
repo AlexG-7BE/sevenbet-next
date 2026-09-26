@@ -380,8 +380,7 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
     await page.getByRole("checkbox", { name: t(route.locale, "I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.") }).check();
     await page.getByRole("button", { name: t(route.locale, "Enter Mission 01") }).click();
     await expect(page.locator('[data-programme-presentation="mission-01-intake"]')).toBeVisible();
-    await expect(page.getByRole("button", { name: t(route.locale, "Tap to speak") })).toBeEnabled();
-    await page.getByRole("button", { name: t(route.locale, "I'd rather type") }).click();
+    await expect(page.getByRole("button", { name: t(route.locale, "Start voice input") })).toBeEnabled();
     const textarea = page.getByRole("textbox", { name: t(route.locale, "Your situation") });
     const submit = page.getByRole("button", { name: t(route.locale, "Create my Starting Point") });
     await expect(submit).toBeDisabled();

@@ -1,12 +1,23 @@
 # PROGRAM-AI M1 Foundation Technical Baseline
 
-Baseline date: **2026-08-13**; current candidate delta reviewed **2026-09-25**
+Baseline date: **2026-08-13**; current candidate delta reviewed **2026-09-26**
 
 Repository root: `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next`
 
 Exact base: current main `c52595405f0800c8c2b51d5951c4a8d45c133034`. FULL-SITE-QA-01 Draft PR #72 worktree changes are not treated as merged baseline facts.
 
 The entire active repository was scanned. Dependencies, generated directories, build artefacts, caches, reports and `tsconfig.tsbuildinfo` were excluded from implementation claims. This document records source evidence and the already documented controlled Preview evidence. It does not infer current hosted activation or expose environment values. The August baseline remains below as historical implementation context; the following delta is current for the RFC-056 candidate branch.
+
+## RFC-056 unified-composer correction candidate — 2026-09-26
+
+- **DETECTED:** repository root `/Users/alex/.codex/worktrees/programme-unified-voice-composer/sevenbet-next`; exact remote base `b4c33d4c37785ce93ac8c3babc30d6b2553fb1ca`; candidate branch `codex/programme-unified-voice-composer`. The tracked active repository inventory was scanned with dependencies, generated output, build artefacts, caches and reports excluded.
+- **DETECTED:** Mission 01 renders one persistent 4,000-character situation textarea, one microphone start/stop button and one **Create my Starting Point** submission action. The former voice panel, mode switch, Done, Start over, Record again and separate transcript field are absent from the runtime component.
+- **DETECTED:** realtime deltas and the completed transcript update only a voice-session-owned draft range. Repeated sessions append; final reconciliation does not duplicate the provisional text; edits outside the range remain; an overlapping manual edit wins over later provider text. The captured-file fallback enters the same range update path and voice failures retain the prior draft.
+- **DETECTED:** `programmeMutationAccessHeaders` derives the age-attestation header from the current exact journey or user authority at request time. The normal Programme request wrapper and direct WebRTC SDP client both use it. Missing, expired and wrong-subject authority return no header and remain middleware-denied.
+- **DETECTED:** Mission 01 contains no new age or consent checkbox. The three-check Programme access screen, sensitive-input authority service, account-first path, protected Help, server-owned reward/progression and commercial separation remain in place.
+- **DETECTED:** unit and structural coverage includes exact authority success/failure cases, session-range reconciliation, 4,000-character bounding, removal of the old controls and the single access-screen consent boundary. Browser coverage includes the outgoing SDP age header, a non-intercepted middleware/route denial-and-admission proof, live text in the textarea, final reconciliation, repeated voice, manual edits and file fallback.
+- **UNKNOWN:** physical microphone/native permission behaviour and live-provider transcription quality on the eventual Preview until manually exercised. Synthetic MediaRecorder/WebRTC coverage is not presented as physical microphone evidence.
+- **NOT AUTHORISED:** merge, Production deployment, Production configuration, provider-model changes or schema/data changes.
 
 ## RFC-056 low-latency candidate delta — 2026-09-25
 

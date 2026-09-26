@@ -75,7 +75,6 @@ async function reachStartingPoint(page: Page) {
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await page.getByRole("button", { name: "I'd rather type" }).click();
   await page.getByLabel("Your situation").fill("After difficult work days I keep opening betting apps late at night.");
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
   await expect(page.locator('[data-programme-presentation="starting-point-ready"]')).toBeVisible();

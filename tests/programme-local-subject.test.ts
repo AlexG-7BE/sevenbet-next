@@ -9,6 +9,7 @@ import {
   loadProgrammeSubjectContent,
   migrateClaimedJourneyToUser,
   programmeAuthAccessHeaders,
+  programmeMutationAccessHeaders,
   programmeLocalStorageKeysForTests,
   readProgrammeAccessContinuation,
   readProgrammeOAuthClaimMarker,
@@ -22,6 +23,8 @@ import {
 } from "../lib/programme/local-subject-storage";
 import {
   PROGRAMME_ACCESS_INTENT,
+  PROGRAMME_ACCESS_HEADERS,
+  PROGRAMME_ACCESS_HEADER_VALUES,
   PROGRAMME_AUTH_ACCESS_HEADERS,
   PROGRAMME_AUTH_ACCESS_PROOF_PURPOSE,
   PROGRAMME_PRIVACY_VERSION,
@@ -152,6 +155,36 @@ test("fresh server authority tolerates bounded browser clock skew without changi
   assert.equal(marker.createdAt, serverIssuedAt);
   assert.equal(marker.expiresAt - marker.createdAt, programmeLocalStorageKeysForTests.accessTtlMs);
   assert.equal(readProgrammeAccessContinuation(storage, browserNow)?.journeyId, journey.id);
+});
+
+test("mutation age evidence is derived from exact live journey or user authority and fails closed", () => {
+  const now = Date.parse("2026-08-10T10:00:00.000Z");
+  const expected = { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age };
+
+  const journeyStorage = new MemoryStorage();
+  const journey = anonymousProgrammeSubject(journeyStorage);
+  assert.deepEqual(programmeMutationAccessHeaders(journeyStorage, journey, now), {}, "missing authority");
+  writeProgrammeAccessContinuation(journeyStorage, journey, authority(journey.id, now), now);
+  assert.deepEqual(programmeMutationAccessHeaders(journeyStorage, journey, now + 1), expected);
+  assert.deepEqual(
+    programmeMutationAccessHeaders(journeyStorage, journey, now + programmeLocalStorageKeysForTests.accessTtlMs),
+    {},
+    "expired authority",
+  );
+
+  const mismatchStorage = new MemoryStorage();
+  const exactJourney = anonymousProgrammeSubject(mismatchStorage);
+  writeProgrammeAccessContinuation(mismatchStorage, exactJourney, authority(exactJourney.id, now), now);
+  const wrongJourney = rotateAnonymousProgrammeSubject(mismatchStorage);
+  assert.deepEqual(programmeMutationAccessHeaders(mismatchStorage, wrongJourney, now + 1), {}, "wrong journey");
+
+  const userStorage = new MemoryStorage();
+  const userJourney = anonymousProgrammeSubject(userStorage);
+  const exactUser = userProgrammeSubject("exact-user");
+  writeProgrammeAccessContinuation(userStorage, userJourney, authority(userJourney.id, now), now);
+  transitionProgrammeAccessToUser(userStorage, userJourney, exactUser, now);
+  assert.deepEqual(programmeMutationAccessHeaders(userStorage, exactUser, now + 1), expected);
+  assert.deepEqual(programmeMutationAccessHeaders(userStorage, userProgrammeSubject("wrong-user"), now + 1), {}, "wrong user");
 });
 
 test("access continuation rejects expired, future, malformed, mismatched and obsolete-copy markers", () => {

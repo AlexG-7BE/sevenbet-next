@@ -19,7 +19,10 @@ import {
   OpenAiRealtimeTranscriptionAdapter,
   PROGRAM_AI_REALTIME_SESSION_TIMEOUT_MS,
 } from "../lib/programme/program-ai/openai-realtime-transcription";
-import { parseProgrammeRealtimeTranscriptEvent } from "../lib/programme/program-ai/realtime-transcription-client";
+import {
+  connectProgrammeRealtimeTranscription,
+  parseProgrammeRealtimeTranscriptEvent,
+} from "../lib/programme/program-ai/realtime-transcription-client";
 import {
   PROGRAM_AI_OPENAI_MODEL,
   PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
@@ -333,6 +336,41 @@ test("Realtime transcription exchanges SDP server-side with a bounded transcript
     errorCategory: undefined,
   }]);
   assert.doesNotMatch(JSON.stringify(logs), /browser offer|sk-test/i);
+});
+
+test("Realtime browser exchange preserves supplied Programme authority headers", async () => {
+  let requestHeaders = new Headers();
+  const channel = {
+    readyState: "open",
+    addEventListener: () => undefined,
+    send: () => undefined,
+    close: () => undefined,
+  } as unknown as RTCDataChannel;
+  const peer = {
+    createDataChannel: () => channel,
+    addTrack: () => undefined,
+    createOffer: async () => ({ type: "offer" as const, sdp: "v=0\r\no=browser-client-test\r\n" }),
+    setLocalDescription: async () => undefined,
+    setRemoteDescription: async () => undefined,
+    close: () => undefined,
+  } as unknown as RTCPeerConnection;
+  const connection = await connectProgrammeRealtimeTranscription({
+    locale: "en-GB",
+    stream: { getTracks: () => [] } as unknown as MediaStream,
+    peerConnection: peer,
+    requestHeaders: {
+      "content-type": "must-be-replaced",
+      "x-sevenbet-age-attestation": "18-or-over",
+    },
+    onPartial: () => undefined,
+    fetchImpl: async (_url, init) => {
+      requestHeaders = new Headers(init?.headers);
+      return new Response("v=0\r\no=server-client-test\r\n", { status: 201 });
+    },
+  });
+  assert.equal(requestHeaders.get("content-type"), "application/sdp");
+  assert.equal(requestHeaders.get("x-sevenbet-age-attestation"), "18-or-over");
+  connection.close();
 });
 
 test("Realtime transcript parsing keeps partial text separate from the authoritative final", () => {

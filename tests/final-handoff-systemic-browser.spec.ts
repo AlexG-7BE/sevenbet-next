@@ -173,7 +173,6 @@ test("Mission 01 uses the final responsive presentation from access through regi
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await expect(page.locator("[data-programme-presentation='mission-01-intake']")).toBeVisible();
   await expect(page.locator("[data-voice-state='idle']")).toBeVisible();
-  await page.getByRole("button", { name: "I'd rather type" }).click();
   await expect(page.locator("[data-programme-presentation-state='text-fallback']")).toBeVisible();
   await page.getByLabel("Your situation").fill("After difficult work days I keep opening betting apps late at night.");
   await page.getByRole("button", { name: "Create my Starting Point" }).click();

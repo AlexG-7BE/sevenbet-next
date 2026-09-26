@@ -27,8 +27,6 @@ import {
 } from "@/lib/auth/google-flow";
 import { programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import {
-  PROGRAMME_ACCESS_HEADERS,
-  PROGRAMME_ACCESS_HEADER_VALUES,
   PROGRAMME_PRIVACY_VERSION,
   PROGRAMME_TERMS_VERSION,
   type ProgrammeAccessAuthority,
@@ -48,6 +46,7 @@ import {
   loadProgrammeSubjectContent,
   mergeProgrammeSubjectContent,
   programmeAuthAccessHeaders,
+  programmeMutationAccessHeaders,
   readProgrammeOAuthClaimMarker,
   rotateAnonymousProgrammeSubject,
   transitionProgrammeAccessToUserForPendingClaim,
@@ -132,9 +131,7 @@ async function programAiRequest<T>(
     ...init,
     headers: {
       ...(init?.body && !(init.body instanceof FormData) ? { "content-type": "application/json" } : {}),
-      ...(subject.kind === "journey" && hasProgrammeAccessAuthority(window.sessionStorage, subject)
-        ? { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age }
-        : {}),
+      ...programmeMutationAccessHeaders(window.sessionStorage, subject),
       ...init?.headers,
     },
   });
@@ -501,18 +498,10 @@ export function ProgramAiExperience({
     setSensitiveAuthorityActive(true);
   }
 
-  function acceptTranscript(transcript: string, timing: ProgrammeVoiceTiming) {
+  function recordVoiceTiming(timing: ProgrammeVoiceTiming) {
     voiceTiming.current = timing;
     personalisationStartedAt.current = null;
     accumulatedAiLatencyMs.current = 0;
-    persist({ ...local, situation: transcript, inputMode: "voice", phase: "intake" });
-  }
-
-  function useTypedInput() {
-    voiceTiming.current = null;
-    personalisationStartedAt.current = null;
-    accumulatedAiLatencyMs.current = 0;
-    persist({ ...local, inputMode: "text", phase: "intake" });
   }
 
   async function continueAfterSupport() {
@@ -736,7 +725,7 @@ export function ProgramAiExperience({
 
   if (phase === "loading" || sessionPending) return renderPhase(<ProgrammeLoadingScreen locale={locale} />);
   if (phase === "access") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />);
-  if (phase === "intake") return renderPhase(<Mission01IntakeScreen consentGiven={sensitiveAuthorityActive || local.processingConsented === true} busy={busy} error={error} inputMode={local.inputMode} locale={locale} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onAccountFirst={startAccountFirst} onUseTyped={useTypedInput} situation={local.situation} />);
+  if (phase === "intake") return renderPhase(<Mission01IntakeScreen busy={busy} error={error} getRealtimeRequestHeaders={() => subject ? programmeMutationAccessHeaders(window.sessionStorage, subject) : {}} locale={locale} onPrepareVoice={ensureSensitiveAuthority} onSituation={(situation, source) => { const next = { ...local, situation, inputMode: source }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(true)} onTranscribe={transcribeVoice} onVoiceTiming={recordVoiceTiming} onAccountFirst={startAccountFirst} situation={local.situation} />);
   if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} locale={locale} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
   if (phase === "registration" && (local.candidate || local.accountFirst)) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} onBack={returnToIntake} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);

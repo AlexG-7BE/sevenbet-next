@@ -161,10 +161,11 @@ test("Programme preserves the canonical voice-first recording waveform and reduc
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await page.getByRole("button", { name: "Tap to speak" }).click();
+  await page.getByRole("button", { name: "Start voice input" }).click();
   await expect(page.locator('[data-voice-state="recording"]')).toBeVisible();
-  await expect(page.locator("[data-recording-indicator]")).toBeVisible();
-  expect(await page.locator("[data-recording-indicator]").evaluate((element) => getComputedStyle(element).animationName)).toContain("voice-pulse");
+  const activeMicrophone = page.getByRole("button", { name: "Stop voice input" });
+  await expect(activeMicrophone).toBeVisible();
+  expect(await activeMicrophone.evaluate((element) => getComputedStyle(element).animationName)).toContain("microphone-pulse");
   await expect(page.locator('[data-public-programme-renderer="program-ai"]')).toHaveCount(1);
   await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
 });

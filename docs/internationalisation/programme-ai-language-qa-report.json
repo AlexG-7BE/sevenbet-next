@@ -16,15 +16,15 @@
     "fi-FI",
     "nb-NO"
   ],
-  "checkedCatalogueKeys": 639,
-  "catalogDigest": "e7e4741472741faac9ba6a4ecb1f14ee570082ff44e69ce3db03f3504dc72f5d",
+  "checkedCatalogueKeys": 646,
+  "catalogDigest": "12d5a22b825bd8b59900966a1892ac4d88a4a13b432cf26fd72986413043708f",
   "status": "AI_LANGUAGE_QA_PASSED",
   "userOwnedContentPolicy": "EXCLUDED_FROM_SYSTEM_COPY_LEAKAGE_CHECKS_AND_PRESERVED_VERBATIM",
   "locales": [
     {
       "locale": "en-GB",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
@@ -46,7 +46,7 @@
     {
       "locale": "de-DE",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
@@ -68,7 +68,7 @@
     {
       "locale": "es-ES",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
@@ -90,7 +90,7 @@
     {
       "locale": "el-GR",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
@@ -112,7 +112,7 @@
     {
       "locale": "sv-SE",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
@@ -134,7 +134,7 @@
     {
       "locale": "da-DK",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
@@ -156,7 +156,7 @@
     {
       "locale": "it-IT",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
@@ -178,7 +178,7 @@
     {
       "locale": "pt-PT",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
@@ -200,7 +200,7 @@
     {
       "locale": "nl-NL",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
@@ -222,7 +222,7 @@
     {
       "locale": "fi-FI",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
@@ -244,7 +244,7 @@
     {
       "locale": "nb-NO",
       "status": "PASS",
-      "checkedStrings": 659,
+      "checkedStrings": 666,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_TRANSLATIONS": "PASS",
