@@ -663,7 +663,16 @@ export function StartingPointReadyScreen({
         <h1><SerifTail text={t("Your Starting Point, in your words.")} words={3} /></h1>
         <section className={styles.startingPointCard}>
           <p>{candidate.startingPoint}</p>
-          <span className={styles.srOnly}>{t("What changes next: {change}. Mission 02 continues here: {cue}.", { change: candidate.desiredChange.replace(/[.!?]+$/, ""), cue: candidate.continuationCue.replace(/[.!?]+$/, "") })}</span>
+        </section>
+        <section className={styles.understandingSummary} data-programme-understanding="">
+          <div>
+            <h2>{t("What we understood")}</h2>
+            <p>{candidate.desiredChange}</p>
+          </div>
+          <div>
+            <h2>{t("Where we'll start")}</h2>
+            <p>{candidate.continuationCue}</p>
+          </div>
         </section>
           </> : <>
         <h1><SerifTail text={t("Save your place first.")} words={2} /></h1>
