@@ -666,12 +666,8 @@ export function StartingPointReadyScreen({
         </section>
         <section className={styles.understandingSummary} data-programme-understanding="">
           <div>
-            <h2>{t("What we understood")}</h2>
+            <h2>{t("What we'll work on first")}</h2>
             <p>{candidate.desiredChange}</p>
-          </div>
-          <div>
-            <h2>{t("Where we'll start")}</h2>
-            <p>{candidate.continuationCue}</p>
           </div>
         </section>
           </> : <>
