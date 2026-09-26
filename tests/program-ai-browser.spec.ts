@@ -913,10 +913,10 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
   await expect(page.getByText(bestEffortStartingPoint.startingPoint, { exact: true })).toBeVisible();
   const understanding = page.locator("[data-programme-understanding]");
-  await expect(understanding.getByRole("heading", { name: "What we understood" })).toBeVisible();
+  await expect(understanding.getByRole("heading", { name: "What we'll work on first" })).toBeVisible();
   await expect(understanding.getByText(bestEffortStartingPoint.desiredChange, { exact: true })).toBeVisible();
-  await expect(understanding.getByRole("heading", { name: "Where we'll start" })).toBeVisible();
-  await expect(understanding.getByText(bestEffortStartingPoint.continuationCue, { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Where we'll start" })).toHaveCount(0);
+  await expect(page.getByText(bestEffortStartingPoint.continuationCue, { exact: true })).toHaveCount(0);
   const registration = page.locator('[data-programme-phase="registration"]');
   await expect(registration).toBeVisible();
   await expect(registration.getByRole("button", { name: "Use email instead" })).toBeVisible();
