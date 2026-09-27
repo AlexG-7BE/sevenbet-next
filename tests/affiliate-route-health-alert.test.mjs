@@ -188,6 +188,23 @@ test("Issue evidence puts actionable routes first and includes required safe fac
   assert.ok(result.body.indexOf("## Actionable routes") < result.body.indexOf("## Compact non-actionable diagnostic summary"));
 });
 
+test("Issue evidence names the market exit a route was checked from and drops unsafe values", () => {
+  const payload = report([
+    route({ currentEvidence: { ...route().currentEvidence, verificationExit: "RS eyeball-network" } }),
+    route({
+      routeKey: "other:GB:other-route:activation-2",
+      casinoSlug: "other",
+      marketCode: "GB",
+      redirectSlug: "other-route",
+      currentEvidence: { ...route().currentEvidence, verificationExit: "https://tracker.example/?aff=1|x" },
+    }),
+  ]);
+  const result = evaluateAffiliateRouteAlert({ report: payload, context: contextFor(payload) });
+  assert.match(result.body, /from=RS eyeball-network/);
+  assert.doesNotMatch(result.body, /tracker\.example/);
+  assert.equal(result.rows[1].currentEvidence.verificationExit, null);
+});
+
 test("freshness display uses one inclusive seven-day threshold without creating a lifecycle state", () => {
   assert.match(describeDirectSuccessFreshness("2026-09-09T06:00:00.000Z", checkedAt), /within the 7-day threshold/);
   assert.match(describeDirectSuccessFreshness("2026-09-09T05:59:59.999Z", checkedAt), /older than the 7-day threshold/);

@@ -51,9 +51,9 @@ with the closure stored as the click's `blockedReason`.
 - **Partner reconciliation.** Compare partner reports with the click report per
   casino and market. EGO: `aname=b4gamble`; Superfly and BGA: their dashboards.
 - **Route health.** The daily route-health workflow keeps checking every active
-  route. A `CROSS_GEO` for a German route from the GitHub runner is expected — it
-  is not in Germany; rerun from the market with
-  `npm run launch:click-check -- --markets DE`.
+  route, each from a real exit in its own market (Globalping), so a `CROSS_GEO`
+  or `BROKEN` there is what a visitor in that market gets. Confirm with
+  `npm run launch:click-check -- --markets DE` before acting.
 - **Betsson Sweden, 30 Sep.** Betsson Nordic Ltd's licence for betsson.com/sv ends;
   Spin Nordic Ltd's licence (from 24 Aug 2026) continues the brand. No action is
   needed for the route; the register already cites the Spin Nordic entry.

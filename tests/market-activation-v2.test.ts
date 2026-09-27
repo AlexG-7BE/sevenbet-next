@@ -10,7 +10,7 @@ import {
 } from "../lib/market-activation/contract";
 import { MarketActivationRuntime } from "../lib/market-activation/runtime";
 import { marketEvidenceBlocksActivation } from "../lib/market-activation/market-evidence";
-import { MarketActivationRouteVerifier } from "../lib/market-activation/verifier";
+import { MarketActivationRouteVerifier, marketExitCountry } from "../lib/market-activation/verifier";
 import { PublicCommercialActionResolver } from "../lib/commercial/public-commercial-action-resolver";
 import { allowGbCommercialReadinessAuthority } from "./market-authority.fixtures";
 
@@ -638,6 +638,33 @@ test("the canonical public resolver consumes activation output with exact-market
   assert.equal(requestedMarket, "US", "CTA and redirect must receive the same canonical country key");
 });
 
+const refuseDirectCheck = (async () => {
+  throw new Error("a market route must not be checked from our own egress");
+}) as never;
+
+function eyeballProbe(country: string, eyeballNetwork = true) {
+  return { country, city: "City", network: "Residential ISP", eyeballNetwork };
+}
+
+function singleRouteDatabase(marketCode: string, overrides: Record<string, unknown> = {}) {
+  return {
+    marketActivation: {
+      findUnique: async () => ({
+        countryCode: marketCode.slice(0, 2),
+        marketCode,
+        casino: { domain: "operator.example", websiteUrl: "https://operator.example/" },
+        marketProfile: { localDomain: "operator.example", localWebsiteUrl: "https://operator.example/" },
+        primaryTrackingLink: {
+          trackingUrl: "https://tracking.example/click",
+          destinationUrl: "https://operator.example/",
+          metadata: {},
+        },
+        ...overrides,
+      }),
+    },
+  } as never;
+}
+
 test("route verification uses the stored exact-market expectation and persists no URL in its result", async () => {
   const checkedAt = new Date("2026-09-07T12:05:00.000Z");
   const database = {
@@ -667,29 +694,33 @@ test("route verification uses the stored exact-market expectation and persists n
       }),
     },
   };
-  const verifier = new MarketActivationRouteVerifier(database as never, async ({ url, expectation }) => {
+  const verifier = new MarketActivationRouteVerifier(database as never, refuseDirectCheck, async ({ url, country, expectation, onProbe }) => {
     assert.equal(url.href, "https://tracking.example/click");
+    assert.equal(country, "PE");
     assert.deepEqual(expectation, {
       expectedFinalHost: "operator.example",
       expectedPathPrefix: "/casino",
       requiredAttributionParameters: ["click_id"],
       allowWwwEquivalentFinalHost: true,
     });
-    return { status: "HEALTHY", reason: "HEAD_OK", method: "HEAD", statusCode: 200, durationMs: 4, redirectCount: 1, finalHost: "operator.example" };
+    onProbe(eyeballProbe("PE"));
+    onProbe(eyeballProbe("PE"));
+    return { status: "HEALTHY", reason: "GET_FALLBACK_OK", method: "GET", statusCode: 200, durationMs: 4, redirectCount: 1, finalHost: "operator.example" };
   });
   assert.deepEqual(await verifier.verify("activation", checkedAt), {
     status: "HEALTHY",
-    reason: "HEAD_OK",
-    method: "HEAD",
+    reason: "GET_FALLBACK_OK",
+    method: "GET",
     statusCode: 200,
     durationMs: 4,
     redirectCount: 1,
     finalHost: "operator.example",
     checkedAt,
+    verificationExit: "PE eyeball-network",
   });
 });
 
-test("route verification reads subdivision expectations by marketCode rather than parent country", async () => {
+test("route verification reads subdivision expectations by marketCode and checks them from the parent country", async () => {
   const verifier = new MarketActivationRouteVerifier({
     marketActivation: {
       findUnique: async () => ({
@@ -711,13 +742,16 @@ test("route verification reads subdivision expectations by marketCode rather tha
         },
       }),
     },
-  } as never, async ({ expectation }) => {
+  } as never, refuseDirectCheck, async ({ country, expectation }) => {
+    assert.equal(country, "AR");
     assert.equal(expectation.expectedFinalHost, "operator.example");
     assert.equal(expectation.expectedPathPrefix, "/city");
     assert.deepEqual(expectation.requiredAttributionParameters, ["aff"]);
     return { status: "HEALTHY", reason: "GET_OK", method: "GET", statusCode: 200, durationMs: 2, redirectCount: 1, finalHost: "operator.example" };
   });
-  assert.equal((await verifier.verify("activation", NOW)).status, "HEALTHY");
+  const result = await verifier.verify("activation", NOW);
+  assert.equal(result.status, "HEALTHY");
+  assert.equal(result.verificationExit, "AR", "no probe reported means no network claim");
 });
 
 test("route verification derives an exact market destination from imported evidence without trusting a foreign observed host", async () => {
@@ -741,7 +775,7 @@ test("route verification derives an exact market destination from imported evide
         },
       }),
     },
-  } as never, async (input) => {
+  } as never, refuseDirectCheck, async (input) => {
     observed.push(input as unknown as Record<string, unknown>);
     return { status: "HEALTHY", reason: "GET_FALLBACK_OK", method: "GET", statusCode: 200, durationMs: 2, redirectCount: 1, finalHost: "offers.betsafe.ee" };
   });
@@ -753,7 +787,7 @@ test("route verification derives an exact market destination from imported evide
     requiredAttributionParameters: [],
     allowWwwEquivalentFinalHost: true,
   });
-  assert.equal(observed[0]?.inspectTerminalContent, true);
+  assert.equal(observed[0]?.country, "EE");
 });
 
 test("global fallback verification uses the canonical Casino host instead of the affiliate tracker host", async () => {
@@ -778,9 +812,83 @@ test("global fallback verification uses the canonical Casino host instead of the
       requiredAttributionParameters: [],
       allowWwwEquivalentFinalHost: true,
     });
+    assert.equal(input.inspectTerminalContent, true);
     return { status: "HEALTHY", reason: "GET_FALLBACK_OK", method: "GET", statusCode: 200, durationMs: 2, redirectCount: 1, finalHost: "www.casino.example" };
+  }, async () => {
+    throw new Error("the global fallback belongs to no market and has no market exit");
   });
-  assert.equal((await verifier.verify("activation", NOW)).status, "HEALTHY");
+  const result = await verifier.verify("activation", NOW);
+  assert.equal(result.status, "HEALTHY");
+  assert.equal(result.verificationExit, "DIRECT");
+});
+
+test("only the global fallback and non-ISO codes lack a market exit; subdivisions use their country", () => {
+  assert.equal(marketExitCountry("GB"), "GB");
+  assert.equal(marketExitCountry("se"), "SE");
+  assert.equal(marketExitCountry("AR-C"), "AR");
+  assert.equal(marketExitCountry("CA-ON"), "CA");
+  assert.equal(marketExitCountry(MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE), null);
+  assert.equal(marketExitCountry("G1"), null);
+  assert.equal(marketExitCountry("GBR"), null);
+});
+
+test("every launch-market route is checked from its own market and records the exit network", async () => {
+  for (const market of ["GB", "SE", "DK", "DE", "RS"]) {
+    const verifier = new MarketActivationRouteVerifier(singleRouteDatabase(market), refuseDirectCheck, async ({ country, onProbe }) => {
+      assert.equal(country, market);
+      onProbe(eyeballProbe(market));
+      onProbe(eyeballProbe(market, false));
+      return { status: "HEALTHY", reason: "GET_FALLBACK_OK", method: "GET", statusCode: 200, durationMs: 2, redirectCount: 1, finalHost: "operator.example" };
+    });
+    const result = await verifier.verify("activation", NOW);
+    assert.equal(result.status, "HEALTHY", market);
+    assert.equal(result.verificationExit, `${market} any-network`, "a hop answered by a non-eyeball fallback probe is recorded");
+  }
+});
+
+test("a response observed from the market exit remains external evidence", async () => {
+  const verifier = new MarketActivationRouteVerifier(singleRouteDatabase("DE"), refuseDirectCheck, async ({ onProbe }) => {
+    onProbe(eyeballProbe("DE"));
+    return { status: "CROSS_GEO", reason: "UNEXPECTED_FINAL_DESTINATION", method: "GET", statusCode: 200, durationMs: 2, redirectCount: 2, finalHost: "www.other.example" };
+  });
+  const result = await verifier.verify("activation", NOW);
+  assert.equal(result.status, "CROSS_GEO");
+  assert.equal(result.verificationExit, "DE eyeball-network");
+});
+
+test("the default market exit asks Globalping for an eyeball-network probe in the route's market", async () => {
+  const requested: Array<{ locations: Array<Record<string, unknown>> }> = [];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    assert.match(url, /^https:\/\/api\.globalping\.io\/v1\/measurements/, "only Globalping is contacted");
+    if (init?.method === "POST") {
+      requested.push(JSON.parse(String(init.body)));
+      return Response.json({ id: "m1" }, { status: 202 });
+    }
+    return Response.json({
+      status: "finished",
+      results: [{
+        probe: { country: "GB", city: "Manchester", network: "Residential ISP", tags: ["eyeball-network"] },
+        result: { status: "finished", statusCode: 200, headers: { "content-type": "text/html" }, rawBody: "<title>Welcome</title>" },
+      }],
+    });
+  }) as typeof fetch;
+  try {
+    const verifier = new MarketActivationRouteVerifier(singleRouteDatabase("GB", {
+      primaryTrackingLink: {
+        trackingUrl: "https://operator.example/welcome",
+        destinationUrl: "https://operator.example/",
+        metadata: {},
+      },
+    }), refuseDirectCheck);
+    const result = await verifier.verify("activation", NOW);
+    assert.equal(result.status, "HEALTHY");
+    assert.equal(result.verificationExit, "GB eyeball-network");
+    assert.deepEqual(requested.map((request) => request.locations), [[{ country: "GB", tags: ["eyeball-network"] }]]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("transport-only route verification failures are inconclusive rather than external blockers", async () => {
@@ -811,6 +919,32 @@ test("transport-only route verification failures are inconclusive rather than ex
     await assert.rejects(
       () => verifier.verify("activation", NOW),
       /MARKET_ACTIVATION_ROUTE_VERIFICATION_INCONCLUSIVE/,
+    );
+  }
+});
+
+test("an unavailable market exit is inconclusive exactly like a transport failure, never BROKEN", async () => {
+  for (const reason of [
+    "GLOBALPING_RATE_LIMITED",
+    "GLOBALPING_UNAVAILABLE",
+    "GLOBALPING_NO_PROBE",
+    "GLOBALPING_PROBE_OUTSIDE_MARKET",
+    "NETWORK_ERROR",
+    "TIMEOUT",
+  ]) {
+    const verifier = new MarketActivationRouteVerifier(singleRouteDatabase("GB"), refuseDirectCheck, async () => ({
+      status: "BROKEN",
+      reason,
+      method: "GET",
+      statusCode: null,
+      durationMs: 800,
+      redirectCount: 0,
+      finalHost: null,
+    }));
+    await assert.rejects(
+      () => verifier.verify("activation", NOW),
+      /MARKET_ACTIVATION_ROUTE_VERIFICATION_INCONCLUSIVE/,
+      reason,
     );
   }
 });

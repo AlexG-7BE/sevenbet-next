@@ -1,3 +1,5 @@
+import { performance } from "node:perf_hooks";
+
 import type { AffiliateRouteHealthStatus } from "@/lib/affiliate-health/checker";
 import { marketActivationRouteVerifier, type MarketActivationRouteVerifierPort } from "@/lib/market-activation/verifier";
 import { affiliateRouteHealthRepository, type AffiliateRouteHealthClaim, type AffiliateRouteHealthClaimStore } from "@/lib/repositories/affiliate-route-health.repository";
@@ -24,11 +26,21 @@ export interface AffiliateRouteHealthResult {
     redirectCount: number | null;
     finalHost: string | null;
     verificationSource: "DIRECT" | null;
+    /** "DIRECT" or the market exit the check left from, e.g. "GB eyeball-network". */
+    verificationExit: string | null;
   };
   evidenceRevision: string;
 }
 
 export const DIRECT_SUCCESS_FRESHNESS_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Each market route is checked from its market through Globalping (one
+ * measurement per redirect hop, a few seconds each, at most 60 s per route).
+ * No new check starts after `startBudgetMs`, so the slowest possible run
+ * (200 s + one 60 s route) still ends inside the endpoint's 300 s maxDuration.
+ */
+export const ROUTE_HEALTH_RUN_LIMITS = { concurrency: 6, startBudgetMs: 200_000 } as const;
 
 const inconclusiveReasons = new Set([
   "NETWORK_ERROR",
@@ -114,6 +126,7 @@ function unavailableResult(claim: AffiliateRouteHealthClaim, status: AffiliateRo
       redirectCount: null,
       finalHost: null,
       verificationSource: null,
+      verificationExit: null,
     },
     evidenceRevision: evidenceRevision(claim),
   };
@@ -137,6 +150,7 @@ export class AffiliateRouteHealthService {
   constructor(
     private readonly claims: AffiliateRouteHealthClaimStore = affiliateRouteHealthRepository,
     private readonly verifier: MarketActivationRouteVerifierPort = marketActivationRouteVerifier,
+    private readonly limits: { concurrency: number; startBudgetMs: number } = ROUTE_HEALTH_RUN_LIMITS,
   ) {}
 
   private async checkClaim(claim: AffiliateRouteHealthClaim, now: Date): Promise<AffiliateRouteHealthResult> {
@@ -173,6 +187,7 @@ export class AffiliateRouteHealthService {
           redirectCount: checked.redirectCount,
           finalHost: checked.finalHost,
           verificationSource: "DIRECT",
+          verificationExit: checked.verificationExit ?? null,
         },
         evidenceRevision: evidenceRevision(claim),
       };
@@ -189,7 +204,12 @@ export class AffiliateRouteHealthService {
     if (countryCode && marketCode && marketCode.slice(0, 2) !== countryCode) throw new ValidationError("marketCode must belong to countryCode");
     const now = filters.now ?? new Date();
     const claims = await this.claims.listClaims({ casino: filters.casino?.trim() || undefined, countryCode, marketCode, now });
-    const results = await mapConcurrent(claims, 5, (claim) => this.checkClaim(claim, now));
+    const started = performance.now();
+    const results = await mapConcurrent(claims, this.limits.concurrency, async (claim) => (
+      performance.now() - started > this.limits.startBudgetMs
+        ? unavailableResult(claim, "DEGRADED", "ROUTE_HEALTH_RUN_BUDGET_EXHAUSTED", now)
+        : this.checkClaim(claim, now)
+    ));
     const statuses = ["HEALTHY", "DEGRADED", "EXTERNAL_CHALLENGE", "BROKEN", "EXPIRED", "CROSS_GEO", "ATTRIBUTION_FAILURE"] as const;
     const diagnostics = Object.fromEntries(statuses.map((status) => [status, results.filter((result) => result.currentEvidence.verifierStatus === status).length])) as Record<AffiliateRouteHealthStatus, number>;
     const routesRequiringAction = results.filter((result) => result.actionRequired).length;

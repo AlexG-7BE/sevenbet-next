@@ -5,7 +5,9 @@ import { affiliateRouteHealthService } from "@/lib/services/affiliate-route-heal
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// Every market route is checked from its own market (Globalping); the service
+// stops starting checks after 200 s so a run ends well inside this limit.
+export const maxDuration = 300;
 
 function productionCommitSha() {
   const sha = process.env.VERCEL_GIT_COMMIT_SHA?.trim().toLowerCase();
