@@ -1,5 +1,5 @@
-import { MARKET_RULES } from "@/lib/market-access/register";
-import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
+import { MARKET_RULES } from "../market-access/register";
+import { offersMayBePresented } from "../public-offer/offer-visibility";
 
 import { marketProfileByCountry, type SupportedLanguage } from "./registry";
 

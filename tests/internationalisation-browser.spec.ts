@@ -17,13 +17,16 @@ import {
   publicMarketPath,
 } from "../lib/market/registry";
 import { formatProductMessage, productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { editorialPresentation } from "../lib/market/editorial-market";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
 function editorialOnlyHeading(locale: Parameters<typeof commercialUxMessages>[0], product: "best-offers" | "bonuses") {
   const routeLanguage = languageRouteByLocale(locale).publicSlug;
-  const market = resolvePresentationContext({ routeLanguage }).marketDisplayName;
+  // CI has no trusted country, so en/sv/da pages present their language's market
+  // (NON-MARKET-EDITORIAL-FALLBACK-2026-09-27) and the rest name readers worldwide.
+  const market = editorialPresentation(resolvePresentationContext({ routeLanguage })).marketDisplayName;
   const messages = commercialUxMessages(locale);
   const template = product === "best-offers"
     ? messages.bestOffersMarketUnavailableTitle
