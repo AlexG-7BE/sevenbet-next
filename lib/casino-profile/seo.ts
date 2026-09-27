@@ -5,7 +5,111 @@ import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { profileFaqItems, selectProfileBonus } from "@/lib/casino-profile/presentation";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { parseRobotsMetadata } from "@/lib/public-casino/public-casino-validation";
+import type { SupportedLocale } from "@/lib/market/registry";
+import { editorialAuthor, EDITORIAL_AUTHOR_NAME, modifiedNotBeforePublished, organizationReference } from "@/lib/seo/structured-data";
 import { absoluteUrl } from "@/lib/site";
+
+export const REVIEW_DESCRIPTION_MAX_LENGTH = 155;
+const AGE_NOTICE = " 18+.";
+
+/** Shortens text to `max` characters at a word boundary, ending with an ellipsis. */
+export function trimAtWordBoundary(text: string, max = REVIEW_DESCRIPTION_MAX_LENGTH) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max - 1);
+  const boundary = cut.lastIndexOf(" ");
+  return `${(boundary > max * 0.6 ? cut.slice(0, boundary) : cut).replace(/[\s,.;:–—-]+$/, "")}…`;
+}
+
+/** The date a review last changed, never earlier than its publication. */
+export function reviewModifiedAt(casino: Pick<PublicCasinoDTO, "publishedAt" | "lastReviewedAt">) {
+  return modifiedNotBeforePublished(casino.publishedAt, casino.lastReviewedAt);
+}
+
+type ReviewCopy = {
+  title: (brand: string, year: string) => string;
+  description: (brand: string, score: string | null) => string;
+};
+
+const namesCasino = (brand: string) => /casino/i.test(brand);
+
+/**
+ * Localized review titles and descriptions for the four indexed languages (audit 27 Sep 2026:
+ * every review was titled "{Brand} review | B4GAMBLE" and Swedish, Danish and German pages
+ * carried an English summary). German follows lib/i18n/german-terminology.ts: no generic
+ * "Casino"; the brand name is kept as it is.
+ */
+const REVIEW_COPY: Partial<Record<SupportedLocale, ReviewCopy>> = {
+  "en-GB": {
+    title: (brand, year) => `${brand}${namesCasino(brand) ? "" : " casino"} review${year}: bonus, payouts & licence | B4GAMBLE`,
+    description: (brand, score) => `${brand}${namesCasino(brand) ? "" : " casino"} review${score ? `: editor score ${score}/10` : ""}. Welcome bonus and wagering, payout speed, payments and licence, checked before you play.`,
+  },
+  "sv-SE": {
+    title: (brand, year) => `${brand}${namesCasino(brand) ? "" : " casino"} recension${year}: bonus, uttag & licens | B4GAMBLE`,
+    description: (brand, score) => `${brand}${namesCasino(brand) ? "" : " casino"} recension${score ? `: betyg ${score}/10` : ""}. Välkomstbonus, omsättningskrav, uttagstid, betalningar och licens – granskat innan du spelar.`,
+  },
+  "da-DK": {
+    title: (brand, year) => `${brand}${namesCasino(brand) ? "" : " casino"} anmeldelse${year}: bonus & udbetaling | B4GAMBLE`,
+    description: (brand, score) => `${brand}${namesCasino(brand) ? "" : " casino"} anmeldelse${score ? `: score ${score}/10` : ""}. Velkomstbonus, omsætningskrav, udbetalingstid, betalinger og licens – gennemgået før du spiller.`,
+  },
+  "de-DE": {
+    title: (brand, year) => `${brand} Test${year}: Bonus, Auszahlung & Lizenz | B4GAMBLE`,
+    description: (brand, score) => `${brand} im Test${score ? `: Wertung ${score}/10` : ""}. Willkommensbonus, Umsatzbedingungen, Auszahlungsdauer, Zahlungen und Lizenz – geprüft, bevor du spielst.`,
+  },
+};
+
+/**
+ * SEO copy the catalogue importers and the mapper write for every casino
+ * (lib/casino-real-catalog/catalog.ts, scripts/casino-real-catalog-03.ts, the EGO editorial
+ * import, lib/public-casino/public-casino.mapper.ts). It is a placeholder, not an editor's
+ * choice, so it does not count as a CMS SEO title or description.
+ */
+const GENERATED_SEO_TITLE = /^.+ (?:casino )?review(?: & editor score)? \| B4GAMBLE$/i;
+const GENERATED_SEO_DESCRIPTION = /evidence limits and market-safe availability context|exact-market facts and B4GAMBLE Editor Score/i;
+
+function editorSet(value: string | null | undefined, generated: RegExp, fallback?: string) {
+  const text = value?.trim();
+  return text && !generated.test(text) && text !== fallback?.trim() ? text : null;
+}
+
+/** The CMS SEO title/description only when an editor wrote one. */
+function cmsSeoCopy(casino: PublicCasinoDTO, editorial: CasinoEditorialDocument | null) {
+  return {
+    title: editorSet(editorial?.seo.title, GENERATED_SEO_TITLE) ?? editorSet(casino.seo.title, GENERATED_SEO_TITLE),
+    description: editorSet(editorial?.seo.description, GENERATED_SEO_DESCRIPTION, casino.summary)
+      ?? editorSet(casino.seo.description, GENERATED_SEO_DESCRIPTION, casino.summary),
+  };
+}
+
+/**
+ * Title and meta description of a review page. The CMS SEO fields are written in English, so
+ * they are honoured on English pages; every indexed language otherwise gets its own template,
+ * with the year of the review's last change. Descriptions stay within 155 characters.
+ */
+export function casinoReviewMetadataCopy(input: {
+  casino: PublicCasinoDTO;
+  editorial: CasinoEditorialDocument | null;
+  locale: SupportedLocale;
+  fallback: { title: string; description: string };
+}) {
+  const { casino, locale } = input;
+  const template = casino.dataClassification === "DEMO_FIXTURE" ? undefined : REVIEW_COPY[locale];
+  const cms = locale === "en-GB" ? cmsSeoCopy(casino, input.editorial) : { title: null, description: null };
+  const modifiedAt = reviewModifiedAt(casino);
+  const year = modifiedAt ? ` ${new Date(modifiedAt).getUTCFullYear()}` : "";
+  const score = typeof casino.editorScore === "number" && Number.isFinite(casino.editorScore)
+    ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(casino.editorScore)
+    : null;
+  return {
+    title: cms.title ?? template?.title(casino.name, year) ?? input.fallback.title,
+    // The age notice survives trimming: the template body is shortened, never "18+".
+    description: cms.description
+      ? trimAtWordBoundary(cms.description)
+      : template
+        ? `${trimAtWordBoundary(template.description(casino.name, score), REVIEW_DESCRIPTION_MAX_LENGTH - AGE_NOTICE.length)}${AGE_NOTICE}`
+        : trimAtWordBoundary(input.fallback.description),
+  };
+}
 
 function editorialCanonical(document: CasinoEditorialDocument | null, fallback: string) {
   const path = document?.seo.canonicalPath;
@@ -59,6 +163,16 @@ export function casinoProfileMetadata(casino: PublicCasinoDTO | null, editorial:
   };
 }
 
+/**
+ * The editorial team writes the reviews: "B4GAMBLE Editorial" (or no byline) is an
+ * Organization, not a Person. A named person in the CMS byline stays a Person.
+ */
+function reviewAuthor(byline: string | undefined) {
+  const name = byline?.trim();
+  if (!name || /b4gamble/i.test(name)) return { ...editorialAuthor(), name: EDITORIAL_AUTHOR_NAME };
+  return { "@type": "Person", name };
+}
+
 export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoEditorialDocument | null) {
   const canonical = profileCanonical(casino, editorial);
   const demo = casino.dataClassification === "DEMO_FIXTURE";
@@ -80,7 +194,7 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
       description: demo ? "Fictional product demonstration; not a current operator, licence claim, partner offer or live promotion." : editorial?.summary || casino.summary,
       url: canonical,
       ...(casino.publishedAt ? { datePublished: casino.publishedAt } : {}),
-      ...(casino.lastReviewedAt ? { dateModified: casino.lastReviewedAt } : {}),
+      ...(reviewModifiedAt(casino) ? { dateModified: reviewModifiedAt(casino) } : {}),
     },
   ];
 
@@ -91,12 +205,12 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
       "@context": "https://schema.org",
       "@type": "Review",
       itemReviewed: { "@type": "Organization", name: casino.name },
-      author: { "@type": editorial?.author ? "Person" : "Organization", name: editorial?.author || "B4GAMBLE" },
-      publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") },
+      author: reviewAuthor(editorial?.author),
+      publisher: organizationReference(),
       reviewRating: { "@type": "Rating", ratingValue: casino.editorScore, bestRating: 10, worstRating: 0 },
       reviewBody: casino.reviewContent,
       ...(casino.publishedAt ? { datePublished: casino.publishedAt } : {}),
-      ...(casino.lastReviewedAt ? { dateModified: casino.lastReviewedAt } : {}),
+      ...(reviewModifiedAt(casino) ? { dateModified: reviewModifiedAt(casino) } : {}),
     });
   }
 

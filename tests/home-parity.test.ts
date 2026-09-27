@@ -32,7 +32,9 @@ test("Home route renders the final handoff with the approved metadata and canoni
   assert.match(productContext, /const robots = explicitlyLocalized[\s\S]*\? \{ index: false, follow: true \}/);
   assert.match(productContext, /alternates: \{[\s\S]*canonical,[\s\S]*languages:/);
   assert.match(productContext, /openGraph: \{[\s\S]*title: input\.title,[\s\S]*description: input\.description/);
-  assert.match(productContext, /twitter: \{[\s\S]*card: input\.images \? "summary_large_image" : "summary"/);
+  // Every page carries a large social image (the default one from app/opengraph-image.tsx).
+  assert.match(productContext, /const images = input\.images \?\? DEFAULT_OPEN_GRAPH_IMAGES/);
+  assert.match(productContext, /twitter: \{[\s\S]*card: "summary_large_image"/);
   assert.equal((home.match(/<h1\b/g) ?? []).length, 1);
   assert.equal(home.match(/href="\/program\?entry=start"/g)?.length, 2);
 });

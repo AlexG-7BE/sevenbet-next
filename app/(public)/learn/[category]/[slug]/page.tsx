@@ -1,22 +1,25 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { cache, Suspense } from "react";
 
 import { JsonLd } from "@/components/seo/JsonLd";
 import { offerBridgeKind } from "@/lib/articles/article-bridges";
 import { articlePath, type PublicArticle } from "@/lib/articles/article-types";
+import { articleLanguageAlternates } from "@/lib/articles/article-seo";
+import { retiredArticleSuccessor } from "@/lib/articles/retired-articles";
 import { relatedReadingListInput, relatedReadingSelection } from "@/lib/articles/related-reading";
 import { learnBridgeMessages } from "@/lib/i18n/learn-bridges-catalog";
 import { learningMessages, localizedLearningCategory } from "@/lib/i18n/learning-center";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { getLearningCategory } from "@/lib/learning-center";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
-import { languageRouteByLocale } from "@/lib/market/registry";
+import { DEFAULT_MARKET_PROFILE, languageRouteByLocale, publicMarketPath } from "@/lib/market/registry";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { articleService } from "@/lib/services";
+import { editorialAuthor, modifiedNotBeforePublished, organizationReference } from "@/lib/seo/structured-data";
 import { absoluteUrl, siteUrl } from "@/lib/site";
 
 import { LearningArticleRelated, LearningArticleView, type LearnOfferBridge } from "./LearningArticleView";
@@ -48,6 +51,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
     title: article.seoTitle || `${article.title} | B4GAMBLE`,
     description: article.seoDescription || article.excerpt,
     openGraphType: "article",
+    languageAlternates: articleLanguageAlternates(article),
     ...(article.heroImageUrl ? { images: [{ url: article.heroImageUrl, alt: article.heroImageAlt || article.title }] } : {}),
   });
   if (!article.canonicalUrl) return metadata;
@@ -78,10 +82,10 @@ function articleSchema(article: PublicArticle, presentation: PresentationResolut
     articleSection: categoryTitle(article.category, presentation.locale),
     keywords: article.tags.join(", "),
     datePublished: article.publishedAt,
-    dateModified: article.updatedAt,
+    dateModified: modifiedNotBeforePublished(article.publishedAt, article.updatedAt) ?? article.updatedAt,
     inLanguage: article.locale,
-    author: { "@type": "Organization", name: "B4GAMBLE Editorial Team", url: absoluteUrl(productCanonicalPath(presentation, "/about")) },
-    publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl(productCanonicalPath(presentation, "/")) },
+    author: editorialAuthor(),
+    publisher: organizationReference(),
     mainEntityOfPage: absoluteUrl(productCanonicalPath(presentation, articlePath(article))),
     ...(article.heroImageUrl ? { image: [absoluteUrl(article.heroImageUrl)] } : {}),
   };
@@ -91,7 +95,16 @@ export default async function LearningArticlePage({ params }: { params: Promise<
   const { category, slug } = await params;
   const presentation = await resolveServerPresentationContext();
   const article = await loadArticle(category, slug, presentation.locale);
-  if (!article) notFound();
+  if (!article) {
+    const successor = retiredArticleSuccessor(category, slug);
+    if (!successor) notFound();
+    // A retired, once-indexed guide moves permanently to its successor: in this language
+    // when the successor is published in it, otherwise in English, where it was published.
+    const localized = await loadArticle(successor.category, successor.slug, presentation.locale);
+    permanentRedirect(localized
+      ? productHref(presentation, successor.path)
+      : publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, successor.path));
+  }
   const messages = learningMessages(presentation.locale);
   return <>
     <JsonLd data={breadcrumbSchema(article, presentation)} />

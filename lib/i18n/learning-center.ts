@@ -163,6 +163,21 @@ const emptyStateCopy: Record<EuropeanLocale, string> = {
   "nb-NO": "Det finnes ennå ingen publiserte guider på dette språket.",
 };
 
+/** Marks an English guide listed on a hub whose language has no guide of its own yet. */
+const englishGuideLabel: Record<EuropeanLocale, string> = {
+  "en-GB": "In English",
+  "de-DE": "Auf Englisch",
+  "it-IT": "In inglese",
+  "es-ES": "En inglés",
+  "pt-PT": "Em inglês",
+  "el-GR": "Στα αγγλικά",
+  "nl-NL": "In het Engels",
+  "sv-SE": "På engelska",
+  "da-DK": "På engelsk",
+  "fi-FI": "Englanniksi",
+  "nb-NO": "På engelsk",
+};
+
 export function learningMessages(locale: SupportedLocale) {
   const effectiveLocale = locale === "es-PE" ? "es-ES" : locale;
   const pack = catalog[effectiveLocale as EuropeanLocale] ?? en;
@@ -172,6 +187,7 @@ export function learningMessages(locale: SupportedLocale) {
   return {
     categories: pack.categories,
     emptyState: emptyStateCopy[effectiveLocale as EuropeanLocale] ?? emptyStateCopy["en-GB"],
+    englishGuide: englishGuideLabel[effectiveLocale as EuropeanLocale] ?? englishGuideLabel["en-GB"],
     hub: pack.hub,
     ui: { ...pack.ui, learn: learnLabels[effectiveLocale as EuropeanLocale] ?? enUi.learn },
     hubCopy: new Map(HUB_SOURCE.map((source, index) => [source, pack.hub[index]])),
