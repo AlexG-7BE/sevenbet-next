@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { CasinoOutboundAction, GovernedCommercialAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CasinoProfileInteractions } from "@/components/casino-profile/CasinoProfileInteractions";
 import { CommercialBadges, CommercialFacts, CommercialScore, EmphasisTail, OfferHeadline } from "@/components/commercial/CommercialPrimitives";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
@@ -176,7 +176,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <h3><OfferHeadline text={offerHeadline} /></h3>
           {bonus ? <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(offerFacts, copy.notVerified)} /> : <p>{messages.common.reviewAvailableNoAction}</p>}
           {bonus ? <p className={styles.materialWarning}>{decision.restriction}</p> : null}
-          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION" }} messages={messages.outbound} showDisclosure={false} /> : bonus ? <p className={styles.noActionNote} data-review-no-action="">{messages.common.reviewAvailableNoAction}</p> : null}{safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}</div>
+          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION" }} messages={messages.outbound} showDisclosure={false} /> : bonus ? <p className={styles.noActionNote} data-review-no-action="">{messages.common.reviewAvailableNoAction}</p> : null}{safeCommercialTermsUrl(bonus?.termsUrl) && action ? <GovernedCommercialAction action={{ href: action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "CASINO_OFFER_TERMS" }}>{copy.terms} <span aria-hidden="true">→</span></GovernedCommercialAction> : safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}</div>
         </div>
       </section>
 

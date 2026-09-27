@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 
 import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
-import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { CasinoOutboundAction, GovernedCommercialAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CommercialFacts, CommercialScore } from "@/components/commercial/CommercialPrimitives";
 import { useRevealResults } from "@/components/commercial/useRevealResults";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
@@ -110,7 +110,11 @@ export function BonusOfferDirectory({ messages, offers, presentation }: {
             {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "BONUS_CARD" }} messages={messages.outbound} showDisclosure={false} /> : card.reviewHref ? null : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
             {!card.action && card.reviewHref ? reviewLink(true) : null}
             <div className={styles.researchLinks}>
-              {card.termsUrl ? <a href={card.termsUrl} rel="noopener noreferrer" target="_blank">{copy.terms}</a> : null}
+              {card.termsUrl && card.action
+                // Terms open on the operator's site next to its sign-up button, so where we have a
+                // partner route the link goes through it; a direct link would lose the referral.
+                ? <GovernedCommercialAction action={{ href: card.action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "BONUS_TERMS" }}>{copy.terms}</GovernedCommercialAction>
+                : card.termsUrl ? <a href={card.termsUrl} rel="noopener noreferrer" target="_blank">{copy.terms}</a> : null}
               {card.action && card.reviewHref ? reviewLink(false) : null}
             </div>
           </div>
