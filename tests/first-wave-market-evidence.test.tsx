@@ -50,7 +50,8 @@ test("review states distinguish source, machine translation, AI QA and Founder a
     assert.equal(state.aiLanguageQa, ["en-CA", "fr-CA"].includes(locale) ? "AI_LANGUAGE_QA_REQUIRED" : "AI_LANGUAGE_QA_PASSED", locale);
     assert.equal(state.founderPublication, acceptedLocales.has(locale) ? "FOUNDER_PUBLICATION_ACCEPTED" : "FOUNDER_PUBLICATION_NOT_ACCEPTED", locale);
     assert.equal(founderEditorialPublicationAccepted(locale as keyof typeof TRANSLATION_REVIEW_STATE), acceptedLocales.has(locale), locale);
-    assert.equal(publicTranslationIndexingApproved(locale as keyof typeof TRANSLATION_REVIEW_STATE), locale === "en-CA", locale);
+    // SEO-INDEX-DE-SV-DA-2026-09-27 opened German, Swedish and Danish to search.
+    assert.equal(publicTranslationIndexingApproved(locale as keyof typeof TRANSLATION_REVIEW_STATE), ["en-CA", "de-DE", "sv-SE", "da-DK"].includes(locale), locale);
   }
   assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "PE", "SE", "DK", "GR"]);
   assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "PE", "GR", "SE", "DK"]);
@@ -136,7 +137,7 @@ test("only GB and the governed safety markets receive localized Help and Respons
   }
   assert.equal(parsePublicMarketRoute("/de/help/article").kind, "INVALID");
   const alternates = firstWaveSafetyLanguageAlternates("/help");
-  assert.deepEqual(Object.keys(alternates).sort(), ["en", "x-default"]);
+  assert.deepEqual(Object.keys(alternates).sort(), ["da", "de", "en", "sv", "x-default"]);
 });
 
 test("first-wave safety presentation is localized, attributed and has no commercial or Programme action", () => {
@@ -157,13 +158,15 @@ test("first-wave safety presentation is localized, attributed and has no commerc
   }
 });
 
-test("first-wave metadata remains noindex and German product terminology avoids generic Casino language", () => {
+test("first-wave metadata is indexed only where the Founder opened search, and German product terminology avoids generic Casino language", () => {
+  // SEO-INDEX-DE-SV-DA-2026-09-27: DE, SE and DK are indexed; ES, GR and PE stay noindex.
+  const indexed = new Set(["DE", "SE", "DK"]);
   for (const market of FIRST_WAVE_MARKETS) {
     const profile = marketProfileByCountry(market);
     assert.ok(profile);
     const presentation = resolvePresentationContext({ routeLanguage: profile.defaultLocale.split("-")[0], trustedCountryCode: market });
     const metadata = productMetadata({ presentation, pathname: "/help", title: "Safety", description: "Safety", robots: { index: true, follow: true }, languageAlternates: firstWaveSafetyLanguageAlternates("/help") });
-    assert.deepEqual(metadata.robots, { index: false, follow: true }, market);
+    assert.deepEqual(metadata.robots, { index: indexed.has(market), follow: true }, market);
   }
   const germanProductCopy = Object.values(productPageMessages("de-DE")).flatMap((section) => Object.values(section)).join("\n");
   assert.doesNotMatch(germanProductCopy, /\b(?:Online-Casino|Casinos?)\b/i);
