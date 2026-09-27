@@ -80,6 +80,8 @@ export interface PublicCasinoCardDto {
   responsibleGamblingLabel: string | null;
   publishedAt: string | null;
   editorialUpdatedAt: string | null;
+  /** False when the review's robots directive keeps it out of search indexes. */
+  indexable?: boolean;
 }
 
 export interface CasinoDiscoveryFacetValue extends PublicLabelDto { count: number }

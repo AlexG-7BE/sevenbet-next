@@ -438,6 +438,15 @@ test("single-connection discovery serializes offer and alias reads", async () =>
   }
 });
 
+test("cards carry the review's robots directive so the sitemap can skip noindex reviews", async () => {
+  const service = new PublicCasinoDiscoveryService(store([
+    record("alpha-id", "alpha", "Alpha"),
+    record("beta-id", "beta", "Beta", { seo: { robots: "noindex,follow" } }),
+  ]), () => now);
+  const result = await service.discover({}, null, { defaultEditorialCountry: "GB" });
+  assert.deepEqual(result.items.map((item) => [item.slug, item.indexable]), [["alpha", true], ["beta", false]]);
+});
+
 test("sorting and pagination are stable and bounded", async () => {
   const records = Array.from({ length: 30 }, (_, index) => record(`id-${index.toString().padStart(2, "0")}`, `casino-${index.toString().padStart(2, "0")}`, `Casino ${index.toString().padStart(2, "0")}`));
   const service = new PublicCasinoDiscoveryService(store(records), () => now);

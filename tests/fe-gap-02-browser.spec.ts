@@ -143,8 +143,9 @@ test("Best Offers, Bonuses, sitemap and llms expose corrected semantics", async 
   await page.goto(`${baseUrl}/bonuses`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("main")).toHaveCount(1);
   const sitemap = await (await page.request.get(`${baseUrl}/sitemap.xml`)).text();
-  expect(sitemap).toContain("/privacy");
-  expect(sitemap).toContain("/terms");
+  // Privacy and Terms are noindex, so the sitemap leaves them out.
+  expect(sitemap).not.toContain("/privacy</loc>");
+  expect(sitemap).not.toContain("/terms</loc>");
   await page.goto(`${baseUrl}/privacy`, { waitUntil: "domcontentloaded" });
   expect(await page.locator('meta[name="robots"]').getAttribute("content")).toMatch(/noindex.*follow/i);
   const siteFooter = page.locator('[data-public-shell="footer"]');

@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
-import { localizedIndexableMarketProfiles } from "../app/sitemap";
+import { indexableMarketProductPaths, localizedIndexableMarketProfiles } from "../app/sitemap";
+import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
+import { coreRoutes } from "../lib/site";
 import {
   INDEXABLE_MARKET_PROFILES,
   MARKET_PUBLICATION_POLICY,
@@ -96,4 +98,26 @@ test("layout, sitemap, robots metadata, and canonicalization use the centralized
   assert.match(middleware, /languageRouteByPublicSlug/);
   assert.match(middleware, /withoutCountryQuery/);
   assert.match(readFileSync("app/robots.ts", "utf8"), /sitemap: absoluteUrl\("\/sitemap\.xml"\)/);
+});
+
+test("the sitemap lists no page that asks search engines not to index it", () => {
+  for (const route of coreRoutes) {
+    const page = [`app/(public)${route}/page.tsx`, `app${route}/page.tsx`].find((file) => existsSync(file));
+    if (page) assert.doesNotMatch(readFileSync(page, "utf8"), /index:\s*false/, `${route} is noindex but listed in the sitemap`);
+  }
+  for (const route of ["/privacy", "/terms"]) {
+    assert.match(readFileSync(`app/(public)${route}/page.tsx`, "utf8"), /index:\s*false/);
+    assert.equal((coreRoutes as readonly string[]).includes(route), false);
+  }
+
+  const card = (slug: string, indexable: boolean) => ({ slug, dataClassification: "PUBLISHED_RECORD", indexable, publishedAt: null, editorialUpdatedAt: null }) as PublicCasinoCardDto;
+  const snapshot = {
+    market: profile("GB"),
+    casinos: [card("alpha", true), card("starcasino", false)],
+    discovery: null,
+    bonuses: null,
+    bestOffers: null,
+  } as unknown as Parameters<typeof indexableMarketProductPaths>[0];
+  const { casinoRoutes } = indexableMarketProductPaths(snapshot, true);
+  assert.deepEqual(casinoRoutes.map((entry) => new URL(entry.url).pathname), ["/en/casino/alpha"]);
 });

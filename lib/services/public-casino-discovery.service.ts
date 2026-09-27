@@ -1,4 +1,5 @@
 import { mapPublishedCasino, projectPublicCasinoMarket } from "@/lib/public-casino/public-casino.mapper";
+import { parseRobotsMetadata } from "@/lib/public-casino/public-casino-validation";
 import { normalizeDiscoverySearch } from "@/lib/public-casino-discovery/query";
 import type {
   CasinoDiscoveryFacetValue, CasinoDiscoveryFacets, CasinoDiscoveryQuery, CasinoDiscoveryResult,
@@ -281,6 +282,7 @@ export class PublicCasinoDiscoveryService {
         responsibleGamblingLabel: scoped.responsibleGamblingTools.length ? "Responsible gambling tools available" : null,
         publishedAt: scoped.publishedAt,
         editorialUpdatedAt: scoped.lastReviewedAt ?? scoped.publishedAt,
+        indexable: parseRobotsMetadata(scoped.seo.robots).index,
       };
       return [{
         card,
