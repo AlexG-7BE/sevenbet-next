@@ -16,6 +16,12 @@ export interface AffiliateRouteHealthExpectation {
   expectedPathPrefix?: string | null;
   requiredAttributionParameters: string[];
   allowWwwEquivalentFinalHost?: boolean;
+  /**
+   * The operator's own sites for the route's market (www-equivalent). A chain
+   * ending on one is a correct landing whatever the stored destination names;
+   * `expectedPathPrefix` applies only to `expectedFinalHost`.
+   */
+  acceptedFinalHosts?: readonly string[];
 }
 
 export interface AffiliateRouteHttpCheck {
@@ -167,8 +173,11 @@ function classify(result: SafeFetchResult, method: "HEAD" | "GET", expectation: 
   const finalHostMatches = finalHost === expectedHost
     || (expectation.allowWwwEquivalentFinalHost
       && finalHost.replace(/^www\./, "") === expectedHost.replace(/^www\./, ""));
-  if (!finalHostMatches
-    || (expectation.expectedPathPrefix && !finalUrl.pathname.startsWith(expectation.expectedPathPrefix))) {
+  const acceptedHostMatches = !finalHostMatches && (expectation.acceptedFinalHosts ?? []).some((host) => (
+    finalHost.replace(/^www\./, "") === host.toLowerCase().replace(/\.$/, "").replace(/^www\./, "")
+  ));
+  if (!(finalHostMatches || acceptedHostMatches)
+    || (finalHostMatches && expectation.expectedPathPrefix && !finalUrl.pathname.startsWith(expectation.expectedPathPrefix))) {
     return { ...base, status: "CROSS_GEO", reason: "UNEXPECTED_FINAL_DESTINATION" };
   }
   if (!attributionPresent(chain, expectation.requiredAttributionParameters)) {

@@ -787,8 +787,49 @@ test("route verification derives an exact market destination from imported evide
     expectedPathPrefix: null,
     requiredAttributionParameters: [],
     allowWwwEquivalentFinalHost: true,
+    acceptedFinalHosts: ["betsafe.ee", "betsafe.co.ee", "betsafe.com.ee", "betsafe.bet.ee"],
   });
   assert.equal(observed[0]?.country, "EE");
+});
+
+test("route verification accepts the operator's own site for the market: the register's licensed site and the brand's country domain", async () => {
+  const expectations: Array<Record<string, unknown>> = [];
+  const verifierFor = (marketCode: string, marketProfile: { localDomain: string | null; localWebsiteUrl: string | null } | null) => new MarketActivationRouteVerifier({
+    marketActivation: {
+      findUnique: async () => ({
+        countryCode: marketCode,
+        marketCode,
+        casino: { slug: "betsson", domain: "betsson.com", websiteUrl: "https://www.betsson.com/" },
+        marketProfile,
+        primaryTrackingLink: {
+          trackingUrl: "https://record.betsson.example/click",
+          destinationUrl: "https://www.betsson.com/en/",
+          metadata: {},
+        },
+      }),
+    },
+  } as never, refuseDirectCheck, async (input) => {
+    expectations.push(input.expectation as unknown as Record<string, unknown>);
+    return { status: "HEALTHY", reason: "GET_FALLBACK_OK", method: "GET", statusCode: 200, durationMs: 2, redirectCount: 1, finalHost: "www.betsson.dk" };
+  });
+
+  // Denmark has no market profile: the stored destination is the global site, the licensed site is betsson.dk.
+  await verifierFor("DK", null).verify("activation", NOW);
+  assert.equal(expectations[0]?.expectedFinalHost, "www.betsson.com");
+  assert.equal(expectations[0]?.expectedPathPrefix, "/en/");
+  assert.deepEqual(expectations[0]?.acceptedFinalHosts, ["betsson.dk", "betsson.co.dk", "betsson.com.dk", "betsson.bet.dk"]);
+
+  // Sweden's profile names betsson.se, but the register's licensed site is www.betsson.com/sv.
+  await verifierFor("SE", { localDomain: "betsson.se", localWebsiteUrl: null }).verify("activation", NOW);
+  assert.equal(expectations[1]?.expectedFinalHost, "betsson.se");
+  assert.deepEqual(expectations[1]?.acceptedFinalHosts, ["betsson.com", "betsson.co.se", "betsson.com.se", "betsson.bet.se"]);
+
+  // Mexico's register entry is a regulator's name, not a host; the brand's country domain still counts.
+  await verifierFor("MX", null).verify("activation", NOW);
+  assert.deepEqual(expectations[2]?.acceptedFinalHosts, ["betsson.mx", "betsson.co.mx", "betsson.com.mx", "betsson.bet.mx"]);
+  // A British site is on .uk.
+  await verifierFor("GB", null).verify("activation", NOW);
+  assert.deepEqual(expectations[3]?.acceptedFinalHosts, ["betsson.uk", "betsson.co.uk", "betsson.com.uk", "betsson.bet.uk"]);
 });
 
 test("global fallback verification uses the canonical Casino host instead of the affiliate tracker host", async () => {

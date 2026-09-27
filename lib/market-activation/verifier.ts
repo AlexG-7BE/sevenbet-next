@@ -8,6 +8,7 @@ import {
 import { checkAffiliateRouteFromMarket, type GlobalpingProbe } from "@/lib/affiliate-health/globalping-fetch";
 import { validateRedirectTargetUrl } from "@/lib/affiliate-routing/redirect-validation";
 import { prisma } from "@/lib/db/prisma";
+import { CASINO_MARKETS } from "@/lib/market-access/register";
 
 import {
   MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
@@ -47,12 +48,41 @@ function belongsToMarketHost(host: string, marketHost: string | null) {
   return Boolean(marketHost && (normalized === marketHost || normalized.endsWith(`.${marketHost}`)));
 }
 
+/** The country-code domains an operator's site for a country is on; a British site is on .uk. */
+function countryDomainSuffixes(country: string) {
+  const code = country === "GB" ? "uk" : country.toLowerCase();
+  return [code, `co.${code}`, `com.${code}`, `bet.${code}`];
+}
+
+/**
+ * The operator's own sites for a market: the licensed site the register cites
+ * for it (RFC-054) and the brand on the market's country-code domain
+ * (betsson.dk, playojo.dk, betsson.mx). A partner sends a local player there
+ * from a link whose stored destination is its global site, so landing on one
+ * is correct; another country's site stays CROSS_GEO.
+ */
+function operatorMarketHosts(marketCode: string, casino: { slug?: string | null; domain: string }) {
+  const hosts = new Set<string>();
+  const register = casino.slug ? CASINO_MARKETS[casino.slug.trim().toLowerCase()] : undefined;
+  const licensedSite = register?.licensed[marketCode] ?? register?.licensed[marketCode.slice(0, 2)];
+  // Register entries are a site (host, optionally with a path) or a regulator's name.
+  if (licensedSite && /^[a-z0-9-]+(?:\.[a-z0-9-]+)+(?:\/\S*)?$/i.test(licensedSite)) {
+    hosts.add(licensedSite.split("/")[0].toLowerCase().replace(/^www\./, ""));
+  }
+  const brand = casino.domain.trim().toLowerCase().replace(/^www\./, "").split(".")[0];
+  const country = marketExitCountry(marketCode);
+  if (brand && country) {
+    for (const suffix of countryDomainSuffixes(country)) hosts.add(`${brand}.${suffix}`);
+  }
+  return [...hosts];
+}
+
 function storedExpectation(
   metadata: Prisma.JsonValue,
   countryCode: string,
   destination: URL,
   marketProfile: { localDomain: string | null; localWebsiteUrl: string | null } | null,
-  casino: { domain: string; websiteUrl: string | null },
+  casino: { slug?: string | null; domain: string; websiteUrl: string | null },
 ): AffiliateRouteHealthExpectation {
   const activation = object(object(metadata).commercialActivationV1 as Prisma.JsonValue);
   const record = object(object(activation.records as Prisma.JsonValue)[countryCode] as Prisma.JsonValue);
@@ -89,13 +119,17 @@ function storedExpectation(
     ? normalizedCasinoHost(casino)
     : null;
   const expectedOperatorHost = evidencedMarketFinalHost || marketHost || globalCasinoHost;
+  const expectedFinalHost = expectedOperatorHost || destination.hostname.toLowerCase();
+  const acceptedFinalHosts = operatorMarketHosts(countryCode, casino)
+    .filter((host) => host !== expectedFinalHost.replace(/^www\./, ""));
   return {
-    expectedFinalHost: expectedOperatorHost || destination.hostname.toLowerCase(),
+    expectedFinalHost,
     expectedPathPrefix: expectedOperatorHost
       ? null
       : destination.pathname === "/" ? null : destination.pathname,
     requiredAttributionParameters,
     allowWwwEquivalentFinalHost: true,
+    ...(acceptedFinalHosts.length ? { acceptedFinalHosts } : {}),
   };
 }
 
@@ -165,7 +199,7 @@ export class MarketActivationRouteVerifier implements MarketActivationRouteVerif
       where: { id: activationId },
       select: {
         marketCode: true,
-        casino: { select: { domain: true, websiteUrl: true } },
+        casino: { select: { slug: true, domain: true, websiteUrl: true } },
         marketProfile: { select: { localDomain: true, localWebsiteUrl: true } },
         primaryTrackingLink: {
           select: { trackingUrl: true, destinationUrl: true, metadata: true },
