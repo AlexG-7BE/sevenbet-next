@@ -1,11 +1,11 @@
 import type { CasinoEditorialLanguage } from "./types";
 
 /**
- * Published editorial text that is already written in a catalog language:
- * offer terms imported for the Danish and German markets. It needs no
- * translation on a page in that language, and it counts as that language
- * when deciding whether a localized FAQ may be described in structured data.
- * On a page in any other language it stays as written.
+ * Published text already written in a catalog language: offer terms imported
+ * for the Danish and German markets. Offer terms are never translated (they
+ * stay as published on every page); this list only lets such a term count as
+ * the page's language when deciding whether a localized FAQ may be described
+ * in structured data.
  */
 export const CASINO_EDITORIAL_NATIVE_TEXT: Readonly<Record<CasinoEditorialLanguage, readonly string[]>> = {
   sv: [],

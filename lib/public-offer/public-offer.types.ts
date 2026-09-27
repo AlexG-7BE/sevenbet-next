@@ -54,12 +54,6 @@ export interface PublicOfferDTO {
     wageringText: string | null;
     eligibility: string | null;
     importantConditions: string[];
-    /**
-     * Set only when eligibility, wagering text and conditions were translated
-     * for the page language: the severe-restriction count read from their
-     * English source wording (lib/public-offer/best-offer-ranking.ts).
-     */
-    sourceSevereRestrictionCount?: number;
     termsUrl?: string | null;
     startsAt: string | null;
     expiresAt: string | null;

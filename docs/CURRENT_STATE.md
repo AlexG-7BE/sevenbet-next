@@ -85,17 +85,18 @@ closed; GoldenPlay × IE was disabled in Production.
 casino editorial text on `sv`, `da` and `de` pages is translated at the public
 presentation boundary from a code catalog keyed by the exact English source
 (`lib/i18n/casino-editorial-translations/`): verdicts and summaries, directory
-highlights, "why we rate" reasons, best-for / keep-in-mind lines, English offer
-text, FAQ questions and answers, control-tool, category and generic payment
-labels, the meta description and the review structured data. A string the
-catalog does not know stays English. A translated profile emits `FAQPage` only
-when every question and answer is translated. No database write or schema change.
+highlights, "why we rate" reasons, best-for / keep-in-mind lines, FAQ questions
+and answers, control-tool, category and generic payment labels, the meta
+description and the review structured data. Offer terms (titles, summaries,
+wagering, eligibility, conditions) stay exactly as published, per RFC-037. A
+string the catalog does not know stays English. A translated profile emits
+`FAQPage` only when every question and answer reads in the page language. No
+database write or schema change.
 
 **PROPOSED — NOT YET LIVE** until merged and deployed. **DETECTED before it:**
 the English text was shown unchanged under translated headings on every sv/da/de
 casino page, and no localized profile had `FAQPage`. **Gap:** market-profile
-sentences and market-only offers the global projection does not show are not
-catalogued yet.
+sentences the global projection does not show are not catalogued yet.
 
 ## Claude-operated partner CRM — code ready, disabled until configured
 

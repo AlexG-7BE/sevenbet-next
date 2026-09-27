@@ -177,9 +177,10 @@ type ProfileFaqEntry = CasinoProfileFaqItem & { inPageLanguage: boolean };
 /**
  * One FAQ builder for the visible profile and its structured data. On a page
  * whose editorial catalog was applied (casino.editorialLanguage), the
- * profile's own questions use that language and published text is shown in
- * its translation where the exact English source is known; each entry records
- * whether every part of it reads in the page language.
+ * profile's own questions use that language and casino editorial text is shown
+ * in its translation where the exact English source is known; offer terms
+ * stay as published. Each entry records whether every part of it reads in the
+ * page language.
  */
 function buildProfileFaq(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | null, editorial: CasinoEditorialDocument | null): ProfileFaqEntry[] {
   if (casino.dataClassification === "DEMO_FIXTURE") {
@@ -203,6 +204,12 @@ function buildProfileFaq(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | nul
     const text = translateCasinoEditorialText(value, language);
     return { text, inPageLanguage: isCasinoEditorialTextInLanguage(text, language) };
   };
+  // Offer terms are never translated (RFC-037); they read in the page language
+  // only when they were published in it (Danish or German market terms).
+  const offerTerm = (value: string) => ({
+    text: value,
+    inPageLanguage: !language || isCasinoEditorialTextInLanguage(value, language),
+  });
   const items: ProfileFaqEntry[] = editorialFaq(editorial).map((item) => {
     const question = published(item.question);
     const answer = published(item.answer);
@@ -219,13 +226,13 @@ function buildProfileFaq(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | nul
   }
   if (bonus) {
     const term = bonus.wageringText !== null && bonus.wageringText !== undefined
-      ? published(bonus.wageringText)
+      ? offerTerm(bonus.wageringText)
       : bonus.wageringMultiplier !== null
         ? { text: copy.wageringListed(language ? new Intl.NumberFormat(copy.locale, { maximumFractionDigits: 2 }).format(bonus.wageringMultiplier) : String(bonus.wageringMultiplier)), inPageLanguage: true }
-        : published(bonus.summary);
+        : offerTerm(bonus.summary);
     if (term.text) items.push({ question: copy.wageringQuestion, answer: term.text, inPageLanguage: term.inPageLanguage });
     if (bonus.eligibility) {
-      const eligibility = published(bonus.eligibility);
+      const eligibility = offerTerm(bonus.eligibility);
       items.push({ question: copy.eligibilityQuestion, answer: eligibility.text, inPageLanguage: eligibility.inPageLanguage });
     }
   }
