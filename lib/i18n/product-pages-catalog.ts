@@ -135,7 +135,7 @@ const en: ProductPageMessages = {
     noPublishedTitle: "No published reviews for {market} yet.", reviewOnlyNotice: "Reviews remain available. Partner links appear only when the market, offer and destination are available.",
     faqTitle: "Before you choose", faqDifferenceQuestion: "How is this different from Best Offers?", faqDifferenceAnswer: "Best Offers is a bounded shortlist. This directory keeps every eligible published review available for comparison.",
     faqReviewOnlyQuestion: "What does review only mean?", faqReviewOnlyAnswer: "The editorial review is available, but there is currently no partner link.",
-    faqCommissionQuestion: "Does commission affect ranking?", faqCommissionAnswer: "No. Affiliate compensation does not determine Editor Score or natural editorial ranking.",
+    faqCommissionQuestion: "Does commission affect ranking?", faqCommissionAnswer: "Commission never changes the Editor Score. Casinos we can link to from your country are listed first; within each group, the Editor Score sets the order.",
   },
   bonuses: {
     title: "Casino bonuses compared by wagering and terms | B4GAMBLE", description: "Compare welcome bonuses by wagering, minimum deposit, maximum bet and expiry: the terms that decide what a bonus is really worth. 18+.", demoTitle: "Casino bonus demonstration | B4GAMBLE", demoDescription: "Clearly labelled fictional records show how terms are compared. They are not current promotions or partner offers.",
@@ -486,7 +486,7 @@ const languageQualityOverrides = {
       heroCopy: "Choose what matters to you; the directory shows global published reviews with current-region facts where available. A review does not mean there is a partner offer.",
       reviewOnlyNotice: "Reviews remain available. Partner links appear only when the market, offer and destination are available.",
       faqReviewOnlyAnswer: "The editorial review is available, but there is currently no partner link.",
-      faqCommissionAnswer: "No. Affiliate compensation does not determine Editor Score or natural editorial ranking.",
+      faqCommissionAnswer: "Commission never changes the Editor Score. Casinos we can link to from your country are listed first; within each group, the Editor Score sets the order.",
     },
     bonuses: {
       disclosureCopy: "B4GAMBLE may receive compensation if a future, clearly labelled affiliate link is available and used. Compensation does not determine the editorial score or ranking. Check current operator terms and local law before acting.",
@@ -537,7 +537,7 @@ const languageQualityOverrides = {
       faqDifferenceQuestion: "Wie unterscheidet sich das von „Beste Angebote“?",
       faqDifferenceAnswer: "Beste Angebote ist eine klar begrenzte Auswahl. In diesem Verzeichnis kannst du alle geeigneten veröffentlichten Bewertungen vergleichen.",
       faqReviewOnlyAnswer: "Die redaktionelle Bewertung ist verfügbar, aber es gibt aktuell keinen Partnerlink.",
-      faqCommissionAnswer: "Nein. Provisionen beeinflussen weder den Editor Score noch die redaktionelle Rangfolge.",
+      faqCommissionAnswer: "Provision verändert den Editor Score nie. Anbieter, auf die wir aus deinem Land verlinken können, stehen zuerst; innerhalb jeder Gruppe bestimmt der Editor Score die Reihenfolge.",
     },
     bonuses: {
       demoDescription: "Fiktive Einträge zeigen, wie Bedingungen verglichen werden. Sie sind keine aktuellen Aktionen oder Partnerangebote.",
@@ -602,7 +602,7 @@ const languageQualityOverrides = {
       reviewOnlyNotice: "Las reseñas siguen disponibles. Los enlaces de socios solo aparecen cuando el mercado, la oferta y el destino están disponibles.",
       faqDifferenceAnswer: "Mejores ofertas es una selección breve. Este directorio permite comparar todas las reseñas publicadas disponibles.",
       faqReviewOnlyAnswer: "La reseña editorial está disponible, pero ahora mismo no hay enlace de socio.",
-      faqCommissionAnswer: "No. Las comisiones no influyen en Editor Score ni en el orden editorial.",
+      faqCommissionAnswer: "La comisión nunca cambia el Editor Score. Los casinos a los que podemos enlazar desde tu país aparecen primero; dentro de cada grupo, el Editor Score decide el orden.",
     },
     bonuses: {
       heroCopy: "La cifra principal dice poco cuando se tiene en cuenta el requisito de apuesta. Compara el depósito, el volumen de apuesta, las restricciones y la caducidad.",
@@ -670,7 +670,7 @@ const languageQualityOverrides = {
       noMatchesCopy: "Ta bort ett filter eller byt visning. B4GAMBLE fyller inte luckan med operatörer som inte uppfyller kraven.",
       reviewOnlyNotice: "Recensionerna finns kvar. Partnerlänkar visas bara när marknad, erbjudande och destination är tillgängliga.",
       faqReviewOnlyAnswer: "Den redaktionella recensionen är tillgänglig, men det finns ingen partnerlänk just nu.",
-      faqCommissionAnswer: "Nej. Provision påverkar varken Editor Score eller den redaktionella ordningen.",
+      faqCommissionAnswer: "Provision ändrar aldrig Editor Score. Casinon som vi kan länka till från ditt land visas först; inom varje grupp avgör Editor Score ordningen.",
     },
     bonuses: {
       heroCopy: "Det framhävda beloppet säger lite när omsättningskravet räknas in. Jämför insättning, omsättning, begränsningar och giltighetstid innan du går vidare.",
@@ -731,7 +731,7 @@ const languageQualityOverrides = {
       noMatchesCopy: "Fjern et filter, eller skift visning. B4GAMBLE fylder ikke hullet med operatører, der ikke opfylder kravene.",
       reviewOnlyNotice: "Anmeldelserne er stadig tilgængelige. Partnerlinks vises kun, når marked, tilbud og destination er tilgængelige.",
       faqReviewOnlyAnswer: "Den redaktionelle anmeldelse er tilgængelig, men der er intet partnerlink lige nu.",
-      faqCommissionAnswer: "Nej. Provision påvirker hverken Editor Score eller den redaktionelle rækkefølge.",
+      faqCommissionAnswer: "Provision ændrer aldrig Editor Score. Kasinoer, som vi kan linke til fra dit land, vises først; inden for hver gruppe afgør Editor Score rækkefølgen.",
     },
     bonuses: {
       heroCopy: "Beløbet i overskriften betyder mindre, når omsætningskravet regnes med. Sammenlign indbetaling, omsætning, begrænsninger og udløb.",
@@ -790,7 +790,7 @@ const languageQualityOverrides = {
       noMatchesCopy: "Αφαίρεσε ένα φίλτρο ή άλλαξε προβολή. Η B4GAMBLE δεν καλύπτει το κενό με παρόχους που δεν πληρούν τα κριτήρια.",
       reviewOnlyNotice: "Οι αξιολογήσεις παραμένουν διαθέσιμες. Οι σύνδεσμοι συνεργατών εμφανίζονται μόνο όταν υπάρχει κατάλληλη προσφορά και διαθέσιμος προορισμός για την τρέχουσα περιοχή.",
       faqReviewOnlyAnswer: "Η συντακτική αξιολόγηση είναι διαθέσιμη, αλλά αυτή τη στιγμή δεν υπάρχει σύνδεσμος συνεργάτη.",
-      faqCommissionAnswer: "Όχι. Η προμήθεια δεν επηρεάζει το Editor Score ή τη συντακτική κατάταξη.",
+      faqCommissionAnswer: "Η προμήθεια δεν αλλάζει ποτέ το Editor Score. Τα καζίνο στα οποία μπορούμε να σε παραπέμψουμε από τη χώρα σου εμφανίζονται πρώτα· μέσα σε κάθε ομάδα, τη σειρά την ορίζει το Editor Score.",
     },
     bonuses: {
       heroLead: "Η αξία μετριέται",

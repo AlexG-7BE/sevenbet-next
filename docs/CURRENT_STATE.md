@@ -21,6 +21,16 @@ Best Offers, Casinos and review pages in the URL language's market: `/en` →
 United Kingdom, `/sv` → Sweden, `/da` → Denmark. Partner buttons still follow
 the visitor's real country, so such a visitor sees no button. German is not
 mapped because of the Berlin advertising window.
+## Launch click package A — in review
+
+**Founder instruction, 27 September 2026** (after the pre-launch audit):
+the Casinos directory lists the casinos a visitor can open first in every view,
+and its commission FAQ says so; "Terms" links on bonus cards and in the review's
+offer section go through the partner route where one exists; the language menus
+name languages from a fixed table, which ends the iPhone Safari re-render of
+every Swedish and Danish page (React #418); the privacy choice sits above a
+visible sticky partner or start bar instead of covering it. See
+[the decision record](07_Decisions/CASINOS-VISITOR-FIT-ORDER-2026-09-27.md).
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
