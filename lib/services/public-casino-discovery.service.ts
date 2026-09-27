@@ -13,6 +13,7 @@ import {
   type PublicCommercialActionAuthority,
 } from "@/lib/commercial/public-commercial-action-resolver";
 import { marketAccess, offerFitsMarket, presentInMarket } from "@/lib/market-access/access";
+import { localizeCasinoCard } from "@/lib/i18n/casino-editorial-translations/localize";
 import { rankBestBonusCasinoIds } from "@/lib/public-offer/best-offer-ranking";
 import { publicCasinoToOffers } from "@/lib/public-offer/public-offer.mapper";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
@@ -358,7 +359,7 @@ export class PublicCasinoDiscoveryService {
       { candidateCasinoIds: pageItems.map((item) => item.card.id) },
     );
     return {
-      items: pageItems.map((item) => item.card),
+      items: pageItems.map((item) => localizeCasinoCard(item.card, options.presentationLanguage)),
       curated: { bestBonusCasinoIds },
       inventoryMode: publicCasinoInventoryMode(filtered.map((item) => item.card)),
       total,

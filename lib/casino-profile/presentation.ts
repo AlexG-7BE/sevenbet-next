@@ -1,6 +1,12 @@
 import type { CasinoEditorialDocument, EditorialBlock } from "@/lib/editorial-review/types";
 import type { PublicCasinoBonus, PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
+import {
+  isCasinoEditorialTextInLanguage,
+  translateCasinoEditorialText,
+  type CasinoEditorialLanguage,
+} from "@/lib/i18n/casino-editorial-translations";
+import { PROFILE_FAQ_COPY } from "@/lib/i18n/casino-editorial-translations/profile-faq-copy";
 
 export function summarizeWithdrawalTimes(payments: Array<{ supportsWithdrawals: boolean | null; withdrawalTime: string | null }>) {
   const timings = payments
@@ -166,40 +172,94 @@ function editorialFaq(document: CasinoEditorialDocument | null) {
     .map((block) => ({ question: block.question, answer: block.answer }));
 }
 
-export function profileFaqItems(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | null, editorial: CasinoEditorialDocument | null): CasinoProfileFaqItem[] {
+type ProfileFaqEntry = CasinoProfileFaqItem & { inPageLanguage: boolean };
+
+/**
+ * One FAQ builder for the visible profile and its structured data. On a page
+ * whose editorial catalog was applied (casino.editorialLanguage), the
+ * profile's own questions use that language and published text is shown in
+ * its translation where the exact English source is known; each entry records
+ * whether every part of it reads in the page language.
+ */
+function buildProfileFaq(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | null, editorial: CasinoEditorialDocument | null): ProfileFaqEntry[] {
   if (casino.dataClassification === "DEMO_FIXTURE") {
     return [
       {
         question: `Is ${casino.name} a real current operator or partner?`,
         answer: "No. This is a fictional product demonstration, not a current GB operator, promotion, partner offer or claimable bonus.",
+        inPageLanguage: false,
       },
       {
         question: "Can I use a commercial visit action from this profile?",
         answer: "No. Demonstration records never provide an outbound affiliate or commercial visit action.",
+        inPageLanguage: false,
       },
     ];
   }
-  const items = editorialFaq(editorial);
+  const language: CasinoEditorialLanguage | null = casino.editorialLanguage ?? null;
+  const copy = PROFILE_FAQ_COPY[language ?? "en"];
+  const published = (value: string) => {
+    if (!language) return { text: value, inPageLanguage: true };
+    const text = translateCasinoEditorialText(value, language);
+    return { text, inPageLanguage: isCasinoEditorialTextInLanguage(text, language) };
+  };
+  const items: ProfileFaqEntry[] = editorialFaq(editorial).map((item) => {
+    const question = published(item.question);
+    const answer = published(item.answer);
+    return { question: question.text, answer: answer.text, inPageLanguage: question.inPageLanguage && answer.inPageLanguage };
+  });
   const licence = casino.licenses[0];
   if (licence) {
-    const checked = formatProfileDate(licence.lastVerifiedAt);
+    const checked = formatProfileDate(licence.lastVerifiedAt, copy.locale);
     items.push({
-      question: `What licence information is published for ${casino.name}?`,
-      answer: `${licence.authority} is listed in the published profile${checked ? `, with evidence checked ${checked}` : ". No independent verification date is published"}. Licensing is a threshold, not a guarantee of suitability or outcomes.`,
+      question: copy.licenceQuestion(casino.name),
+      answer: checked ? copy.licenceChecked(licence.authority, checked) : copy.licenceUnchecked(licence.authority),
+      inPageLanguage: true,
     });
   }
   if (bonus) {
-    const term = bonus.wageringText ?? (bonus.wageringMultiplier !== null ? `${bonus.wageringMultiplier}× wagering is listed.` : bonus.summary);
-    if (term) items.push({ question: "What wagering information is published?", answer: term });
-    if (bonus.eligibility) items.push({ question: "Who does the published offer describe?", answer: bonus.eligibility });
+    const term = bonus.wageringText !== null && bonus.wageringText !== undefined
+      ? published(bonus.wageringText)
+      : bonus.wageringMultiplier !== null
+        ? { text: copy.wageringListed(language ? new Intl.NumberFormat(copy.locale, { maximumFractionDigits: 2 }).format(bonus.wageringMultiplier) : String(bonus.wageringMultiplier)), inPageLanguage: true }
+        : published(bonus.summary);
+    if (term.text) items.push({ question: copy.wageringQuestion, answer: term.text, inPageLanguage: term.inPageLanguage });
+    if (bonus.eligibility) {
+      const eligibility = published(bonus.eligibility);
+      items.push({ question: copy.eligibilityQuestion, answer: eligibility.text, inPageLanguage: eligibility.inPageLanguage });
+    }
   }
-  const withdrawal = casino.payments.filter((payment) => payment.supportsWithdrawals && payment.withdrawalTime).map((payment) => `${payment.name}: ${payment.withdrawalTime}`);
-  if (withdrawal.length) items.push({ question: "What withdrawal timing is listed?", answer: `${withdrawal.join("; ")}. Published timing is not a guarantee and account checks may apply.` });
-  items.push({
-    question: "Can the review remain available without a visit action?",
-    answer: "Yes. Editorial availability and commercial route availability are separate. A missing or ineligible route does not remove the published review.",
-  });
+  const withdrawal = casino.payments
+    .filter((payment) => payment.supportsWithdrawals && payment.withdrawalTime)
+    .map((payment) => ({ name: payment.name, timing: published(payment.withdrawalTime as string) }));
+  if (withdrawal.length) {
+    items.push({
+      question: copy.withdrawalQuestion,
+      answer: copy.withdrawalAnswer(withdrawal.map((entry) => `${entry.name}: ${entry.timing.text}`).join("; ")),
+      inPageLanguage: withdrawal.every((entry) => entry.timing.inPageLanguage),
+    });
+  }
+  items.push({ question: copy.reviewWithoutActionQuestion, answer: copy.reviewWithoutActionAnswer, inPageLanguage: true });
   return items.slice(0, 6);
+}
+
+export function profileFaqItems(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | null, editorial: CasinoEditorialDocument | null): CasinoProfileFaqItem[] {
+  return buildProfileFaq(casino, bonus, editorial).map(({ question, answer }) => ({ question, answer }));
+}
+
+/**
+ * The profile FAQ with its language: `complete` is true when every question
+ * and answer reads in `language`. A translated page may describe its FAQ in
+ * structured data only when it is complete, so the schema never carries
+ * English the reader does not see, or text the reader sees in another language.
+ */
+export function profileFaqLocalization(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | null, editorial: CasinoEditorialDocument | null) {
+  const entries = buildProfileFaq(casino, bonus, editorial);
+  return {
+    language: casino.editorialLanguage ?? null,
+    items: entries.map(({ question, answer }): CasinoProfileFaqItem => ({ question, answer })),
+    complete: entries.every((entry) => entry.inPageLanguage),
+  };
 }
 
 export function profileEditorialDocument(

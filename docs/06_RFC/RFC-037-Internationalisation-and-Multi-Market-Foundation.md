@@ -206,6 +206,8 @@ Required translatable surfaces include:
 
 Operator-owned names, legal entities, licence identifiers and exact offer terms are not machine-translated as facts. They remain source facts and receive localized surrounding explanation only.
 
+Founder decision, 27 September 2026 ([REVIEW-TRANSLATIONS-SV-DA-DE-2026-09-27](../07_Decisions/REVIEW-TRANSLATIONS-SV-DA-DE-2026-09-27.md)): on `sv`, `da` and `de` pages the published English casino editorial text and offer terms may be shown translated through the exact-source catalog in `lib/i18n/casino-editorial-translations/`. Numbers, amounts and names stay as published, and the operator's own terms remain authoritative.
+
 Legal/privacy/affiliate disclosure pages require market-aware content handling. A translation of GB legal copy must not be presented as a market-specific legal conclusion without review.
 
 ## Translation architecture

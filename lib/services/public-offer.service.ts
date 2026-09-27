@@ -10,6 +10,7 @@ import { publicOfferRepository, type PublicOfferStore } from "@/lib/repositories
 import { isPublicCasinoCmsEnabled } from "@/lib/services/public-casino.service";
 import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { marketAccess, offerFitsMarket } from "@/lib/market-access/access";
+import { localizePublicOffer } from "@/lib/i18n/casino-editorial-translations/localize";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import {
   publicCommercialActionResolver,
@@ -131,11 +132,11 @@ export class PublicOfferService {
         marketCode: options.commercialMarketCode,
         product: "CASINO",
       });
-      return records.map((record) => ({
+      return records.map((record) => localizePublicOffer({
         ...record,
         action: decisions.get(record.casino.id)?.action ?? null,
         dataClassification: "PUBLISHED_RECORD" as const,
-      }));
+      }, options.presentationLanguage));
     } catch (cause) {
       if (options.throwOnError) throw cause;
       return [];
