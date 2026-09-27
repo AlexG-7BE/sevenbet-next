@@ -219,6 +219,7 @@ test("rejects ambiguous identity, missing evidence, and unsafe destinations", ()
   assert.equal(safeActivationDestination("https://operator.example/path"), true);
   assert.equal(safeActivationDestination("http://operator.example/path"), false);
   assert.equal(safeActivationDestination("https://user:secret@operator.example/path"), false);
+  assert.equal(safeActivationDestination("https://partner-route.invalid/6017be37"), false, "a scrubbed registration link is not a public route");
   assert.throws(() => normalizeMarketActivationIntent(intent({
     countryCode: MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE,
     origin: "BACKFILL",

@@ -18,6 +18,7 @@ test("a real click is judged against the licence register at the moment it was m
   assert.equal(clickVerdict("turbonino", "DE", noon, refused), "PASS_CLOSED");
   assert.equal(clickVerdict("playojo", "GB", evening, { statusCode: 500, location: null }), "UNEXPECTED");
   assert.equal(clickVerdict("playojo", "GB", evening, { statusCode: 302, location: "https://b4gamble.com/en" }), "UNEXPECTED");
+  assert.equal(clickVerdict("playojo", "GB", evening, { statusCode: 302, location: "https://partner-route.invalid/6017be37" }), "UNEXPECTED", "a placeholder link never counts as reaching the partner");
 });
 
 test("every catalogue casino is clicked on its public route", () => {
