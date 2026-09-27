@@ -39,6 +39,10 @@ const founderPublicationSmoke = [
   { market: "GR", locale: "el-GR", representativePath: "/about", representativeCopy: aboutMessages("el-GR").titleLead },
 ] as const;
 
+// SEO-INDEX-DE-SV-DA-2026-09-27: the launch markets are open to search; other translations stay noindex.
+const indexedMarkets = new Set(["GB", "DE", "SE", "DK"]);
+const indexedLocales = new Set(["en-GB", "de-DE", "sv-SE", "da-DK"]);
+
 const knownEnglishLeakage = /Compare casinos|Best offers|How we test|Online Casino Basics|Open protected Help|Source status|Direct answer/;
 
 test("localized internal rewrites terminate with signed context and expose no continuation credential", async ({ request }) => {
@@ -62,14 +66,14 @@ for (const acceptance of founderPublicationSmoke) {
     { pathname: `${prefix}${acceptance.representativePath}`, heading: acceptance.representativeCopy, publicSelector: true },
   ] as const;
 
-  test(`Founder-publication smoke: ${acceptance.market} is localized, noindex, fail-closed and internally connected`, async ({ page, request }) => {
+  test(`Founder-publication smoke: ${acceptance.market} is localized, fail-closed and internally connected`, async ({ page, request }) => {
     const internalLinks = new Set<string>();
     for (const route of routes) {
       const response = await page.goto(`${baseUrl}${route.pathname}`, { waitUntil: "domcontentloaded" });
       expect(response?.status(), route.pathname).toBe(200);
       await expect(page.locator("html")).toHaveAttribute("lang", acceptance.locale);
       await expect(page.getByRole("heading", { level: 1 })).toContainText(route.heading);
-      await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+      if (!indexedMarkets.has(acceptance.market)) await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
       expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe(route.pathname);
       if (route.publicSelector) {
         await expect(page.getByRole("button", { name: publicShellMessages(acceptance.locale).changeMarketAndLanguage }).first()).toContainText(acceptance.locale.split("-")[0].toUpperCase());
@@ -202,7 +206,7 @@ for (const profile of representativeProductMarkets) {
       await expect(page.getByRole("heading", { level: 1 })).toContainText(expected);
       const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
       expect(new URL(canonical ?? "http://invalid").pathname).toBe(`${prefix}${route}`);
-      if (profile.countryCode !== "GB") {
+      if (!indexedMarkets.has(profile.countryCode)) {
         await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
       }
       expect(await page.locator('main a[href^="/r/"]').count(), `${profile.countryCode}${route} must fail closed`).toBe(0);
@@ -256,7 +260,9 @@ test("localized 10 Steps and About publish complete draft bodies with localized 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(tenSteps.text[1]);
   await expect(page.getByRole("link", { name: tenSteps.text[5] }).first()).toHaveAttribute("href", "/de/program?entry=start");
   await expect(page.locator("main").getByRole("img")).toHaveAttribute("alt", tenSteps.text.at(-1) ?? "");
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+  // An indexable page may omit the robots meta entirely, so read it without waiting for one.
+  const robots = await page.locator('meta[name="robots"]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute("content") ?? ""));
+  expect(robots.join(" ")).not.toMatch(/noindex/i);
   expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/de/10-steps");
 
   const about = aboutMessages("es-ES");
@@ -298,7 +304,7 @@ for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
     await expect(page.getByRole("searchbox", { name: learning.hub[10] })).toBeVisible();
     await expect(page.locator('a[data-learn-category]')).toHaveCount(0);
     await expect(page.locator('[data-learn-empty]')).toBeVisible();
-    if (locale !== "en-GB") await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+    if (!indexedLocales.has(locale)) await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
   });
 }
 

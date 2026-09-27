@@ -4,11 +4,11 @@ const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
 const publishedLanguages = [
   ["/en", "en-GB", "EN", false],
-  ["/de", "de-DE", "DE", true],
+  ["/de", "de-DE", "DE", false],
   ["/es", "es-ES", "ES", true],
   ["/el", "el-GR", "EL", true],
-  ["/sv", "sv-SE", "SV", true],
-  ["/da", "da-DK", "DA", true],
+  ["/sv", "sv-SE", "SV", false],
+  ["/da", "da-DK", "DA", false],
 ] as const;
 
 test("published language homes own canonical identity without a country selector", async ({ page }) => {
