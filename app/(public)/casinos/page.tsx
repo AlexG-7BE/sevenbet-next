@@ -126,11 +126,11 @@ async function CasinosContent({ raw }: { raw: Record<string, string | string[] |
       </div>
     </section>
     <section className={styles.directory} data-nav-theme="dark" id="casino-directory"><div className={styles.shell}>
-      <div className={`${styles.directoryHeading} ${styles.reveal}`}><div><p>{copy.casinosShown}</p><h2><EmphasisTail text={messages.casinos.directoryTitle} /></h2></div><span>{result.total} {countNoun(presentation.locale, result.total, copy.casinoOne, copy.casinoOther)}</span></div>
+      <div className={styles.directoryHeading} data-motion-reveal><div><p>{copy.casinosShown}</p><h2><EmphasisTail text={messages.casinos.directoryTitle} /></h2></div><span>{result.total} {countNoun(presentation.locale, result.total, copy.casinoOne, copy.casinoOther)}</span></div>
       {result.inventoryMode !== "PUBLISHED_ONLY" ? <aside className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{disclosure}</p></aside> : null}
       {result.items.length ? <CasinoCollection casinos={result.items} initialSearch={query.search} messages={messages} presentation={presentation} /> : <section className={styles.empty} role="status"><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market })}</h2><p>{messages.casinos.reviewOnlyNotice}</p></section>}
     </div></section>
-    <section className={styles.faq} data-nav-theme="cream" data-premium-section="casinos-before-you-choose"><div className={`${styles.shell} ${styles.reveal}`}><h2><EmphasisTail text={messages.casinos.faqTitle} /></h2>
+    <section className={styles.faq} data-nav-theme="cream" data-premium-section="casinos-before-you-choose"><div className={styles.shell} data-motion-reveal><h2><EmphasisTail text={messages.casinos.faqTitle} /></h2>
       <div className={styles.faqList}>
         <details name="casinos-faq" open><summary>{messages.casinos.faqDifferenceQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqDifferenceAnswer}</p></details>
         <details name="casinos-faq"><summary>{messages.casinos.faqReviewOnlyQuestion}<span aria-hidden="true">+</span></summary><p>{messages.casinos.faqReviewOnlyAnswer}</p></details>

@@ -26,6 +26,6 @@ export default async function BonusGuidePage() {
   const readNext = bonusGuideReadNextSelection(await articleService.listPublished("en-GB", { take: 100 }).catch(() => []));
   return <>
   <JsonLd data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Learn", item: absoluteUrl("/learn") }, { "@type": "ListItem", position: 2, name: "Bonus Guide", item: absoluteUrl("/bonus-guide") }] }} />
-  <HandoffPage headerAutoHide name="article" transform={(html) => transformBonusGuideHandoff(html, { offerBridge: bridge, readNext })} />
+  <HandoffPage headerAutoHide name="article" revealHeadings transform={(html) => transformBonusGuideHandoff(html, { offerBridge: bridge, readNext })} />
 </>;
 }

@@ -105,7 +105,7 @@ test("SEO identities remain distinct and the public Article API is truthfully em
 });
 
 test("enforced CSP uses matching nonces and representative routes have no violations", async ({ page }) => {
-  for (const route of ["/responsible-gambling", "/help", "/learn", "/login", "/program", "/admin/login", "/definitely-missing"]) {
+  for (const route of ["/responsible-gambling", "/help", "/learn", "/login", "/reset-password", "/program", "/admin/login", "/definitely-missing"]) {
     const errors = collectBrowserErrors(page);
     const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "networkidle" });
     expect([200, 404]).toContain(response?.status());

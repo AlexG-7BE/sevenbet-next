@@ -15,7 +15,9 @@ export function safeAuthReturnTo(value: unknown) {
     const url = new URL(value, "https://b4gamble.invalid");
     if (url.origin !== "https://b4gamble.invalid"
       || url.pathname === "/login"
-      || url.pathname.startsWith("/login/")) {
+      || url.pathname.startsWith("/login/")
+      || url.pathname === "/reset-password"
+      || url.pathname.startsWith("/reset-password/")) {
       return DEFAULT_AUTH_RETURN_TO;
     }
     return `${url.pathname}${url.search}${url.hash}`;

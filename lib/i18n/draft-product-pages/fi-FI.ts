@@ -75,8 +75,8 @@ export const FI_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     breadcrumb: "Murupolku",
   },
   bestOffers: {
-    title: "Kasinotarjousten vertailu: {market} | B4GAMBLE",
-    description: "Toimituksen valitsema lyhyt lista markkinalle {market}. Näet olennaiset ehdot ja kaupallisen saatavuuden ennen kuin teet mitään.",
+    title: "Parhaat kasinotarjoukset: kolme valintaa | B4GAMBLE",
+    description: "Kolme toimituksen valitsemaa kasinotarjousta. Kierrätysvaatimus, minimitalletus ja voimassaolo näkyvät ennen klikkausta. 18+.",
     unavailableTitle: "Kasinotarjousten vertailu ei ole saatavilla | B4GAMBLE",
     unavailableDescription: "Markkinalle {market} julkaistu tarjousvertailu ei juuri nyt ole saatavilla. Emme korvaa sitä välimuistissa olevalla, vanhentuneella tai keksityllä listalla.",
     heroLead: "Kolme poimintaa.",
@@ -116,8 +116,8 @@ export const FI_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqWhyThreeAnswer: "Lyhyt lista pitää valinnan selkeänä. Bonukset-sivulta löydät kaikki vertailuun sopivat kohteet.",
   },
   casinos: {
-    title: "Kasinoarviot: {market} | B4GAMBLE",
-    description: "Hae ja vertaile julkaistuja kasinoarvioita markkinan {market} toimituksellisessa kontekstissa.",
+    title: "Kasinoarviot: lisenssi, maksut ja ehdot | B4GAMBLE",
+    description: "Vertaile kasinoarvioita: lisenssi, maksutavat, kotiutukset ja bonusehdot tarkistettuina ennen pelaamista. 18+.",
     demoTitle: "Kasinoarvioiden esittely | B4GAMBLE",
     demoDescription: "Selvästi merkityt kuvitteelliset kohteet näyttävät arvion rakenteen ilman voimassa olevaa kampanjaa tai kumppanilinkkiä.",
     heroKicker: "Valittu markkinalle {market}",
@@ -147,8 +147,8 @@ export const FI_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqCommissionAnswer: "Ei. Kumppanikorvaus ei vaikuta Editor Scoreen eikä luonnolliseen toimitukselliseen järjestykseen.",
   },
   bonuses: {
-    title: "Kasinobonusten vertailu: {market} | B4GAMBLE",
-    description: "Vertaile markkinalle {market} julkaistuja bonusehtoja ilman oletusta, että vahvistettu tarjouslinkki olisi käytettävissä.",
+    title: "Kasinobonukset kierrätysvaatimuksen mukaan | B4GAMBLE",
+    description: "Vertaile tervetuliaisbonuksia kierrätysvaatimuksen, minimitalletuksen, maksimipanoksen ja voimassaolon mukaan – ehdot ratkaisevat bonuksen arvon. 18+.",
     demoTitle: "Kasinobonusten esittely | B4GAMBLE",
     demoDescription: "Selvästi merkityt kuvitteelliset kohteet näyttävät, miten ehtoja vertaillaan. Ne eivät ole voimassa olevia kampanjoita tai kumppanitarjouksia.",
     heroKicker: "Bonukset · Ehdot ensin · 18+",

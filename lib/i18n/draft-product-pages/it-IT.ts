@@ -75,8 +75,8 @@ export const IT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     breadcrumb: "Percorso di navigazione",
   },
   bestOffers: {
-    title: "Confronto delle offerte dei casinò per {market} | B4GAMBLE",
-    description: "Una selezione editoriale per {market}, con le condizioni essenziali e la disponibilità visibili prima di proseguire.",
+    title: "Migliori offerte casinò: tre scelte, condizioni prima | B4GAMBLE",
+    description: "Tre offerte di casinò scelte dalla redazione, con requisiti di puntata, deposito minimo e scadenza visibili prima del clic. 18+.",
     unavailableTitle: "Confronto delle offerte dei casinò non disponibile | B4GAMBLE",
     unavailableDescription: "Il confronto pubblicato per {market} non è momentaneamente disponibile. Non viene sostituito con un elenco memorizzato, obsoleto o inventato.",
     heroLead: "Tre scelte.",
@@ -116,8 +116,8 @@ export const IT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqWhyThreeAnswer: "Una selezione breve mantiene la decisione circoscritta; nella pagina Bonus trovi l'elenco completo delle voci idonee.",
   },
   casinos: {
-    title: "Recensioni di casinò per {market} | B4GAMBLE",
-    description: "Cerca e confronta le recensioni pubblicate nel contesto editoriale di {market}.",
+    title: "Recensioni di casinò: licenza, pagamenti e condizioni | B4GAMBLE",
+    description: "Confronta le recensioni dei casinò: licenza, metodi di pagamento, prelievi e condizioni dei bonus, verificati prima di giocare. 18+.",
     demoTitle: "Dimostrazione delle recensioni di casinò | B4GAMBLE",
     demoDescription: "Voci fittizie chiaramente indicate mostrano il formato delle recensioni senza promozioni attive o azioni di affiliazione.",
     heroKicker: "Selezionati per {market}",
@@ -147,8 +147,8 @@ export const IT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqCommissionAnswer: "No. Le commissioni non influenzano l’Editor Score né la classifica editoriale.",
   },
   bonuses: {
-    title: "Confronto dei bonus dei casinò per {market} | B4GAMBLE",
-    description: "Confronta le condizioni dei bonus pubblicate nel contesto editoriale di {market}, senza presumere la disponibilità commerciale.",
+    title: "Bonus casinò confrontati per requisiti di puntata | B4GAMBLE",
+    description: "Confronta i bonus di benvenuto per requisiti di puntata, deposito minimo, puntata massima e scadenza: le condizioni che decidono quanto vale un bonus. 18+.",
     demoTitle: "Dimostrazione dei bonus dei casinò | B4GAMBLE",
     demoDescription: "Voci fittizie chiaramente indicate mostrano come confrontiamo le condizioni. Non sono promozioni attuali né offerte di partner.",
     heroKicker: "Bonus · Prima le condizioni · 18+",
