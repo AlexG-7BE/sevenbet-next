@@ -125,6 +125,7 @@ test("URL validation blocks unsafe protocols, credentials, CRLF, and production 
   }
   assert.equal(validateRedirectTargetUrl("http://example.com", { production: true }), null);
   assert.equal(validateRedirectTargetUrl("https://example.com/path")?.hostname, "example.com");
+  assert.equal(validateRedirectTargetUrl("https://partner-route.invalid/6017be37"), null, "the registration placeholder is never a redirect target");
 });
 
 test("public country uses platform headers and ignores ordinary query override", () => {

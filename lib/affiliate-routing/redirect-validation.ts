@@ -8,6 +8,13 @@ const encodedLineBreak = /%0d|%0a/i;
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const reservedSlugPart = /(?:^|-)(?:api-?key|auth|bearer|password|secret|session|token)(?:-|$)/i;
 
+/**
+ * Partner tracking registration overwrites a link that failed verification with
+ * this RFC 6761 host, so the raw partner URL is not kept. It never resolves:
+ * a route still pointing at it must fail closed, not send a player there.
+ */
+export const PARTNER_ROUTE_PLACEHOLDER_HOST = "partner-route.invalid";
+
 export function isIsoCurrencyCode(value: string) {
   const code = value.toUpperCase();
   return /^[A-Z]{3}$/.test(code) && Intl.supportedValuesOf("currency").includes(code);
@@ -53,6 +60,7 @@ export function validateRedirectTargetUrl(value: unknown, { production = process
     return null;
   }
   if (!url.hostname || !["http:", "https:"].includes(url.protocol)) return null;
+  if (url.hostname === PARTNER_ROUTE_PLACEHOLDER_HOST) return null;
   if (production && url.protocol !== "https:") return null;
   if (url.username || url.password || controlCharacters.test(url.href) || encodedLineBreak.test(url.href)) return null;
   return url;
