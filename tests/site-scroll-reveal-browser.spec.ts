@@ -67,6 +67,31 @@ test("offer pages never place an offer card or partner action inside a rising bl
   }
 });
 
+test("streamed content is judged where it lands, not in React's hidden staging container", async ({ browser }) => {
+  const context = await browser.newContext(phone);
+  const page = await context.newPage();
+  await page.goto(`${baseUrl}/faq`, { waitUntil: "networkidle" });
+  await expect(page.locator("html")).toHaveAttribute("data-site-motion", "ready");
+  // React streams a Suspense boundary into <div hidden> and then moves its children into place.
+  const staged = await page.evaluate(async () => {
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 50));
+    const staging = document.createElement("div");
+    staging.hidden = true;
+    staging.innerHTML = '<h2 data-motion-reveal id="streamed-reveal-probe">Streamed section</h2>';
+    document.body.append(staging);
+    await settle();
+    const whileHidden = document.getElementById("streamed-reveal-probe")?.getAttribute("data-motion-state") ?? null;
+    const footer = document.querySelector('[data-public-shell="footer"]');
+    footer!.parentElement!.insertBefore(staging.firstElementChild!, footer);
+    await settle();
+    return { whileHidden, placed: document.getElementById("streamed-reveal-probe")?.getAttribute("data-motion-state") ?? null };
+  });
+  expect(staged).toEqual({ whileHidden: null, placed: "pending" });
+  await page.locator("#streamed-reveal-probe").scrollIntoViewIfNeeded();
+  await expect(page.locator("#streamed-reveal-probe")).toHaveAttribute("data-motion-state", "visible");
+  await context.close();
+});
+
 async function expectFailVisible(browser: Browser, options: { noObserver?: boolean; reducedMotion?: "reduce" }) {
   const context = await browser.newContext({ ...phone, reducedMotion: options.reducedMotion });
   if (options.noObserver) await context.addInitScript(() => Object.defineProperty(window, "IntersectionObserver", { configurable: true, value: undefined }));

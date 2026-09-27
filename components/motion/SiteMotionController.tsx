@@ -69,6 +69,9 @@ export function SiteMotionController() {
         : Array.from(root.querySelectorAll<HTMLElement>(REVEAL_SELECTOR));
       candidates.forEach((element) => {
         if (enrolled.has(element)) return;
+        // Streamed Suspense content first lands in a hidden container and is then moved into
+        // place; judge it when that move re-inserts it, not while it has no box.
+        if (!element.getClientRects().length) return;
         enrolled.add(element);
         const rect = element.getBoundingClientRect();
         const belowFirstViewport = !observerBroken && rect.top > window.innerHeight * .92;
