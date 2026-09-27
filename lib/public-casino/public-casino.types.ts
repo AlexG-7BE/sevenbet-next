@@ -7,6 +7,7 @@ import type {
   PlacementMediaSource,
 } from "@/lib/media/placement-media";
 import type { GovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
+import type { CasinoEditorialLanguage } from "@/lib/i18n/casino-editorial-translations/types";
 
 export type PublicCasinoSource = "cms" | "legacy";
 
@@ -170,6 +171,12 @@ export interface PublicCasinoMarketProfile {
 export interface PublicCasinoDTO {
   /** Present only on the environment-gated visual QA fixture, never on CMS records. */
   dataClassification?: "DEMO_FIXTURE";
+  /**
+   * The page language whose editorial catalog was applied to this record
+   * (lib/i18n/casino-editorial-translations). Absent means the English source
+   * text; a string the catalog does not know keeps its source text either way.
+   */
+  editorialLanguage?: CasinoEditorialLanguage;
   source: PublicCasinoSource;
   id: string;
   slug: string;

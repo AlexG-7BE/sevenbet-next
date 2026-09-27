@@ -87,6 +87,26 @@ visitor's country, because Googlebot crawls from the United States. A partner
 route left on the registration placeholder (`partner-route.invalid`) now fails
 closed; GoldenPlay × IE was disabled in Production.
 
+## Swedish, Danish and German review text — in review
+
+**Founder approval, 27 September 2026** (Package D,
+[REVIEW-TRANSLATIONS-SV-DA-DE-2026-09-27](07_Decisions/REVIEW-TRANSLATIONS-SV-DA-DE-2026-09-27.md)):
+casino editorial text on `sv`, `da` and `de` pages is translated at the public
+presentation boundary from a code catalog keyed by the exact English source
+(`lib/i18n/casino-editorial-translations/`): verdicts and summaries, directory
+highlights, "why we rate" reasons, best-for / keep-in-mind lines, FAQ questions
+and answers, control-tool, category and generic payment labels, the meta
+description and the review structured data. Offer terms (titles, summaries,
+wagering, eligibility, conditions) stay exactly as published, per RFC-037. A
+string the catalog does not know stays English. A translated profile emits
+`FAQPage` only when every question and answer reads in the page language. No
+database write or schema change.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed. **DETECTED before it:**
+the English text was shown unchanged under translated headings on every sv/da/de
+casino page, and no localized profile had `FAQPage`. **Gap:** market-profile
+sentences the global projection does not show are not catalogued yet.
+
 ## Claude-operated partner CRM — code ready, disabled until configured
 
 **Founder instruction, 25 September 2026:** "Claude ведёт CRM" — Claude
