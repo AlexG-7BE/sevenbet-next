@@ -38,6 +38,8 @@ export type MarketActivationRouteVerificationResult = {
   durationMs: number | null;
   redirectCount: number | null;
   finalHost: string | null;
+  /** Where the check left from: "DIRECT" (our own egress) or a market exit such as "GB eyeball-network". */
+  verificationExit?: string | null;
 };
 
 export interface MarketActivationIntentInput {
