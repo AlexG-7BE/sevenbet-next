@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
+import { languageDisplayName, regionDisplayName } from "@/lib/i18n/language-display-names";
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import {
   PROGRAMME_ROUTES,
@@ -12,12 +13,11 @@ import {
 import styles from "@/components/public-shell/PublicShell.module.css";
 
 function languageName(locale: ProgrammeLocale, activeLocale: ProgrammeLocale) {
-  const language = locale.split("-")[0] ?? locale;
-  return new Intl.DisplayNames([activeLocale], { type: "language" }).of(language) ?? language;
+  return languageDisplayName(locale, activeLocale);
 }
 
 function regionName(region: string, activeLocale: ProgrammeLocale) {
-  return new Intl.DisplayNames([activeLocale], { type: "region" }).of(region) ?? region;
+  return regionDisplayName(region, activeLocale);
 }
 
 function languageCode(locale: ProgrammeLocale) {

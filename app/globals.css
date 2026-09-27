@@ -90,6 +90,16 @@
   .analyticsConsentActions button { min-height: 44px; padding: 8px; }
 }
 
+/* A visible sticky partner or start bar keeps the bottom of the screen: the choice sits just
+   above it instead of covering the button until answered (launch audit, 27 Sep 2026).
+   Offsets = the bar's height (12px padding, 44px or 48px action, 12px padding, 1px border) + 11px. */
+@media (max-width: 1000px) {
+  :root:has([data-casino-decision-bar][data-mobile-visible="true"]) .analyticsConsent { bottom: calc(80px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 900px) {
+  :root:has([data-ten-steps-sticky-start][data-mobile-visible="true"]) .analyticsConsent { bottom: calc(84px + env(safe-area-inset-bottom)); }
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 

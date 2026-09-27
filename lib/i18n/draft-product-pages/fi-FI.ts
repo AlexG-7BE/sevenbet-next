@@ -144,7 +144,7 @@ export const FI_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqReviewOnlyQuestion: "Mitä ”vain arvio” tarkoittaa?",
     faqReviewOnlyAnswer: "Arvion voi lukea, mutta vahvistettua rekisteröitymislinkkiä ei ole saatavilla.",
     faqCommissionQuestion: "Vaikuttaako palkkio järjestykseen?",
-    faqCommissionAnswer: "Ei. Kumppanikorvaus ei vaikuta Editor Scoreen eikä luonnolliseen toimitukselliseen järjestykseen.",
+    faqCommissionAnswer: "Palkkio ei koskaan muuta Editor Scorea. Kasinot, joihin voimme ohjata sinut maastasi, näytetään ensin; kunkin ryhmän sisällä järjestyksen ratkaisee Editor Score.",
   },
   bonuses: {
     title: "Kasinobonukset kierrätysvaatimuksen mukaan | B4GAMBLE",

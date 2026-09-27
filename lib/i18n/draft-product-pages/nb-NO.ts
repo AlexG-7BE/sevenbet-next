@@ -144,7 +144,7 @@ export const NB_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqReviewOnlyQuestion: "Hva betyr «kun anmeldelse»?",
     faqReviewOnlyAnswer: "Du kan lese anmeldelsen, men ingen bekreftet registreringslenke er tilgjengelig.",
     faqCommissionQuestion: "Påvirker provisjon rangeringen?",
-    faqCommissionAnswer: "Nei. Affiliatebetaling bestemmer ikke Editor Score eller den naturlige redaksjonelle rangeringen.",
+    faqCommissionAnswer: "Provisjon endrer aldri Editor Score. Kasinoer vi kan lenke til fra landet ditt, vises først; innenfor hver gruppe avgjør Editor Score rekkefølgen.",
   },
   bonuses: {
     title: "Kasinobonuser sammenlignet etter omsetningskrav | B4GAMBLE",

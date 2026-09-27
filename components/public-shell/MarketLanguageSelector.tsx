@@ -3,14 +3,14 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
+import { languageDisplayName } from "@/lib/i18n/language-display-names";
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import type { LanguageRouteProfile } from "@/lib/market/registry";
 import styles from "./PublicShell.module.css";
 
 function languageName(locale: string, activeLocale: string) {
-  const language = locale.split("-")[0] ?? locale;
-  return new Intl.DisplayNames([activeLocale], { type: "language" }).of(language) ?? language;
+  return languageDisplayName(locale, activeLocale);
 }
 
 function languageCode(locale: string) {
