@@ -71,6 +71,19 @@ export async function consentedCampaign(request: Request, at: Date) {
   }
 }
 
+/**
+ * The success-only daily aggregate is the "successful affiliate clicks" report the
+ * Founder reads, and it cannot be filtered after the fact. Only Production human
+ * clicks enter it: the launch click check (BOT), staff test clicks (INTERNAL) and
+ * Preview/local/test traffic stay in the detailed OutboundClick rows only.
+ */
+export function countsTowardSuccessfulClickAggregate(
+  environment: ReturnType<typeof analyticsEnvironment>,
+  trafficKind: ReturnType<typeof analyticsTrafficKind>,
+) {
+  return environment === "PRODUCTION" && trafficKind === "HUMAN";
+}
+
 function successfulAggregateIdentity(input: OutboundAttributionInput): OutboundClickIdentity | null {
   if (input.state !== "SUCCEEDED") return null;
   const dimensions = {
@@ -151,7 +164,11 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
         select: { program: { select: { networkId: true } } },
       }).then((offer) => offer?.program.networkId ?? null)
     : null;
-  const aggregateIdentity = successfulAggregateIdentity(input);
+  // Every successful click is still validated; only Production human clicks are counted.
+  const successfulIdentity = successfulAggregateIdentity(input);
+  const aggregateIdentity = countsTowardSuccessfulClickAggregate(environment, trafficKind)
+    ? successfulIdentity
+    : null;
   // Where a click came from — the path on this site and the button position — is
   // a fact about the site, not about the reader, so it is kept for every click;
   // without it the pages and positions that earn cannot be told apart. Who

@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { headers } from "next/headers";
 
 import { AdminAccessDenied } from "@/components/admin/AdminAccessDenied";
+import { AdminInternalTrafficMarker } from "@/components/admin/InternalTrafficMarker";
+import { hasAnalyticsInternalMarker } from "@/lib/analytics/identity.server";
 import { requireAdminAccess } from "@/lib/auth/admin";
 import { isAdminAuthError } from "@/lib/auth/policy";
 
@@ -12,8 +14,9 @@ export default async function ProtectedAdminLayout({
 }: {
   children: ReactNode;
 }) {
+  const requestHeaders = await headers();
   try {
-    await requireAdminAccess(await headers(), {
+    await requireAdminAccess(requestHeaders, {
       onUnauthenticated: "redirect",
     });
   } catch (error) {
@@ -24,5 +27,9 @@ export default async function ProtectedAdminLayout({
     throw error;
   }
 
-  return children;
+  // A signed-in staff browser without the internal-traffic marker gets it now.
+  return <>
+    {children}
+    {hasAnalyticsInternalMarker(requestHeaders) ? null : <AdminInternalTrafficMarker />}
+  </>;
 }
