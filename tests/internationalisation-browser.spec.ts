@@ -260,7 +260,9 @@ test("localized 10 Steps and About publish complete draft bodies with localized 
   await expect(page.getByRole("heading", { level: 1 })).toContainText(tenSteps.text[1]);
   await expect(page.getByRole("link", { name: tenSteps.text[5] }).first()).toHaveAttribute("href", "/de/program?entry=start");
   await expect(page.locator("main").getByRole("img")).toHaveAttribute("alt", tenSteps.text.at(-1) ?? "");
-  expect(await page.locator('meta[name="robots"]').getAttribute("content") ?? "").not.toMatch(/noindex/i);
+  // An indexable page may omit the robots meta entirely, so read it without waiting for one.
+  const robots = await page.locator('meta[name="robots"]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute("content") ?? ""));
+  expect(robots.join(" ")).not.toMatch(/noindex/i);
   expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/de/10-steps");
 
   const about = aboutMessages("es-ES");
