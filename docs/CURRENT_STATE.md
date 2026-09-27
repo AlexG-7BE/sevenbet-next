@@ -12,6 +12,18 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Search and AI crawlers read the UK, Swedish and Danish offers — in review
+
+**Founder instruction, 27 September 2026** ([NON-MARKET-EDITORIAL-FALLBACK-2026-09-27](07_Decisions/NON-MARKET-EDITORIAL-FALLBACK-2026-09-27.md)):
+a visitor whose country has no market of ours (the United States, where
+Google, Bing and the AI crawlers fetch from, or Kazakhstan) reads the Bonuses,
+Best Offers, Casinos and review pages in the URL language's market: `/en` →
+United Kingdom, `/sv` → Sweden, `/da` → Denmark. Partner buttons still follow
+the visitor's real country, so such a visitor sees no button. German is not
+mapped because of the Berlin advertising window.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Email reachability from sign-up — in review
 
 **Founder instruction, 27 September 2026:** registered customers must be

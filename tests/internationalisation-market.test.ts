@@ -988,3 +988,40 @@ test("preference endpoint persists only a validated presentation choice and can 
     assert.equal(unsafe.status, 400, returnTo.slice(0, 80));
   }
 });
+
+test("visitors from outside our markets read the URL language's market; buttons still follow their real country", async () => {
+  const { editorialPresentation, countryHasOwnEditorialMarket } = await import("../lib/market/editorial-market");
+  const visitor = (language: "en" | "sv" | "da" | "de" | "es", country: string | null) => ({
+    language,
+    marketCountryCode: country,
+    marketCode: country,
+    marketDisplayName: country ?? "readers worldwide",
+  });
+
+  // Search and AI crawlers fetch from the United States.
+  const us = editorialPresentation(visitor("en", "US"));
+  assert.deepEqual([us.marketCountryCode, us.marketCode, us.marketDisplayName, us.editorialFallback], ["GB", "GB", "United Kingdom", true]);
+  assert.deepEqual([editorialPresentation(visitor("sv", "US")).marketCountryCode, editorialPresentation(visitor("da", "KZ")).marketCountryCode], ["SE", "DK"]);
+  assert.equal(editorialPresentation(visitor("sv", "US")).marketDisplayName, "Sverige");
+  assert.equal(editorialPresentation(visitor("en", null)).marketCountryCode, "GB");
+
+  // German stays out: its offers exist only inside the Berlin advertising window.
+  assert.deepEqual([editorialPresentation(visitor("de", "US")).marketCountryCode, editorialPresentation(visitor("de", "US")).editorialFallback], ["US", false]);
+  assert.equal(editorialPresentation(visitor("es", "US")).marketCountryCode, "US");
+
+  // A country with its own market, register entry or prohibition keeps its own view.
+  for (const country of ["GB", "SE", "IE", "PE", "CA", "DE"]) {
+    assert.equal(countryHasOwnEditorialMarket(country), true, country);
+    assert.equal(editorialPresentation(visitor("en", country)).marketCountryCode, country, country);
+  }
+  assert.equal(editorialPresentation(visitor("en", "AU")).marketCountryCode, "AU");
+  assert.equal(editorialPresentation(visitor("en", "AU")).editorialFallback, false);
+
+  // The safety premise: a route is granted only when the trusted jurisdiction is the country asked about.
+  const resolver = readFileSync("lib/commercial/public-commercial-action-resolver.ts", "utf8");
+  assert.match(resolver, /const authorityMatches = Boolean\(countryCode && input\.authority\?\.countryCode === countryCode\);/);
+  assert.match(resolver, /if \(!countryCode \|\| !marketCode \|\| !authorityMatches\) \{/);
+  for (const page of ["app/(public)/bonuses/page.tsx", "app/(public)/best-offers/page.tsx", "app/(public)/casinos/page.tsx", "app/(public)/casino/[slug]/page.tsx"]) {
+    assert.match(readFileSync(page, "utf8"), /const presentation = editorialPresentation\(visitorPresentation\);/, page);
+  }
+});
