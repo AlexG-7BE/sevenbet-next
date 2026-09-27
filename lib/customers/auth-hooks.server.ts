@@ -1,6 +1,7 @@
 import "server-only";
 
 import prisma from "@/lib/db/prisma";
+import { runAfterResponse } from "@/lib/http/after-response";
 
 type AuthUserWrite = { id: string; email: string } & Record<string, unknown>;
 type AuthSessionWrite = { userId: string } & Record<string, unknown>;
@@ -62,14 +63,16 @@ export const customerAuthDatabaseHooks = {
           });
         }
         if (recentlyCreated) {
-          try {
-            const { queueWelcomeEmail } = await import("@/lib/email/service.server");
-            await queueWelcomeEmail(session.userId);
-          } catch {
-            console.warn("[email] welcome queue failed", {
+          // Google sign-ups never pass the email-auth observer. Deliver after
+          // the OAuth redirect response so the provider never slows it down.
+          runAfterResponse(async () => {
+            const { deliverWelcomeEmail } = await import("@/lib/email/service.server");
+            await deliverWelcomeEmail(session.userId);
+          }, () => {
+            console.warn("[email] welcome delivery failed", {
               email_failure_category: "queue",
             });
-          }
+          });
         }
       },
     },

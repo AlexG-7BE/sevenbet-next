@@ -21,7 +21,12 @@ import type {
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import type { ProgrammeMissionNumber } from "@/lib/analytics/product-analytics-events";
 import { authClient, useSession } from "@/lib/auth/client";
-import { saveProgrammeMarketingPreference } from "@/lib/customers/email-preference-client";
+import {
+  clearGoogleMarketingChoice,
+  rememberGoogleMarketingChoice,
+  saveProgrammeMarketingPreference,
+  takeGoogleMarketingChoice,
+} from "@/lib/customers/email-preference-client";
 import {
   programmeGoogleCallbacks,
 } from "@/lib/auth/google-flow";
@@ -57,6 +62,8 @@ import {
 } from "@/lib/programme/local-subject-storage";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiExperience.module.css";
+
+const MARKETING_CHOICE_NOT_SAVED = "Your account was created, but your optional email choice could not be saved. No marketing email will be sent.";
 
 type Phase =
   | "loading"
@@ -240,6 +247,14 @@ export function ProgramAiExperience({
     setPhase("home");
   }, []);
 
+  // The opt-in ticked before leaving for Google is recorded once the account
+  // exists, through the same preference service as the email sign-up.
+  const saveGoogleMarketingChoice = useCallback((journey: ProgrammeLocalSubject) => (
+    takeGoogleMarketingChoice(window.sessionStorage, journey.id)
+      ? saveProgrammeMarketingPreference(locale)
+      : Promise.resolve(true)
+  ), [locale]);
+
   useEffect(() => {
     if (sessionPending) return;
     const authQuery = new URLSearchParams(window.location.search);
@@ -249,6 +264,7 @@ export function ProgramAiExperience({
     const linkFailed = authState === "google-link-error";
     const linkReturned = authState === "google-link-return";
     const recoveryActive = accountNotLinked || linkFailed || (googleLinkRecovery && !linkReturned);
+    if (authState === "google-error" || linkFailed) clearGoogleMarketingChoice(window.sessionStorage);
     if (accountNotLinked) {
       setGoogleLinkRecovery(true);
       setError("");
@@ -275,13 +291,17 @@ export function ProgramAiExperience({
         if (linkReturned) setGoogleLinkRecovery(false);
         oauthRedeemStarted.current = true;
         setBusy(true);
+        const marketingSaved = saveGoogleMarketingChoice(oauthJourney);
         redeem(session.user.id, oauthJourney, restored)
+          .then(async () => { if (!await marketingSaved) setError(programmeText(locale, MARKETING_CHOICE_NOT_SAVED)); })
           .catch(() => setError(programmeText(locale, "Your progress could not be saved yet")))
           .finally(() => setBusy(false));
       } else if (!oauthRedeemStarted.current && restored?.accountFirst) {
         oauthRedeemStarted.current = true;
         setBusy(true);
+        const marketingSaved = saveGoogleMarketingChoice(oauthJourney);
         completeAccountFirst(session.user.id, oauthJourney)
+          .then(async () => { if (!await marketingSaved) setError(programmeText(locale, MARKETING_CHOICE_NOT_SAVED)); })
           .catch(() => setError(programmeText(locale, "Account access failed")))
           .finally(() => setBusy(false));
       }
@@ -326,7 +346,7 @@ export function ProgramAiExperience({
     } else {
       setSensitiveAuthorityActive(false);
     }
-  }, [completeAccountFirst, googleLinkRecovery, locale, redeem, session?.user.id, sessionPending]);
+  }, [completeAccountFirst, googleLinkRecovery, locale, redeem, saveGoogleMarketingChoice, session?.user.id, sessionPending]);
 
   async function grantAccess() {
     if (!subject) return;
@@ -540,12 +560,14 @@ export function ProgramAiExperience({
 
   async function handleEmail(input: { email: string; password: string; mode: "sign-up" | "sign-in"; marketingAllowed: boolean }) {
     if (!subject) return;
+    clearGoogleMarketingChoice(window.sessionStorage);
     emailRedeemStarted.current = true;
     setBusy(true); setError("");
     try {
       if (!googleLinkRecovery && !local.accountFirst) await prepareClaimForRegistration();
       const result = input.mode === "sign-up" && !googleLinkRecovery
-        ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "B4GAMBLE member", fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } })
+        // The confirmation link in the sign-up email lands back on this Programme page.
+        ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "B4GAMBLE member", callbackURL: programmePath, fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } })
         : await authClient.signIn.email({ email: input.email.trim().toLowerCase(), password: input.password });
       if (result.error || !result.data?.user.id) {
         setError(programmeText(locale, input.mode === "sign-up" && !googleLinkRecovery
@@ -561,20 +583,19 @@ export function ProgramAiExperience({
         || await saveProgrammeMarketingPreference(locale);
       if (local.accountFirst && !local.candidate) await completeAccountFirst(result.data.user.id, subject);
       else await redeem(result.data.user.id, subject, local);
-      if (!marketingPreferenceSaved) {
-        setError("Your account was created, but your optional email choice could not be saved. No marketing email will be sent.");
-      }
+      if (!marketingPreferenceSaved) setError(programmeText(locale, MARKETING_CHOICE_NOT_SAVED));
     } catch { setError(programmeText(locale, "Account access failed")); }
     finally { emailRedeemStarted.current = false; setBusy(false); }
   }
 
-  async function handleGoogle() {
+  async function handleGoogle(input: { marketingAllowed: boolean }) {
     if (!subject || subject.kind !== "journey") return;
     setBusy(true); setError("");
     try {
       const callbacks = programmeGoogleCallbacks(locale);
       if (!local.accountFirst) await prepareClaimForRegistration();
       writeProgrammeOAuthClaimMarker(window.sessionStorage, subject);
+      rememberGoogleMarketingChoice(window.sessionStorage, subject.id, input.marketingAllowed);
       const result = await authClient.signIn.social({
         provider: "google",
         ...callbacks,
@@ -584,6 +605,7 @@ export function ProgramAiExperience({
       if (result.error) throw new Error("GOOGLE_ACCOUNT_ACCESS_NOT_STARTED");
     } catch {
       clearProgrammeOAuthClaimMarker(window.sessionStorage);
+      clearGoogleMarketingChoice(window.sessionStorage);
       setError(programmeText(locale, "Google account access failed"));
       setBusy(false);
     }
@@ -730,7 +752,7 @@ export function ProgramAiExperience({
   if (phase === "registration" && (local.candidate || local.accountFirst)) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} onBack={returnToIntake} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
-  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} programmePath={programmePath} userId={session.user.id} />);
+  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} programmePath={programmePath} unconfirmedEmail={session.user.emailVerified ? null : session.user.email} userId={session.user.id} />);
   if (phase === "home") return renderPhase(<ProgrammeUnavailableScreen error={error} locale={locale} />);
   return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />);
 }

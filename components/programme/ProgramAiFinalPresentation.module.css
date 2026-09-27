@@ -201,9 +201,9 @@
 .emailForm .primaryAction { width: 100%; background: var(--programme-paper); }
 .emailForm .primaryAction:hover { background: var(--programme-acid); }
 .emailForm .inlineButton { justify-self: center; }
-.emailForm .marketingChoice { display: grid; grid-template-columns: 18px 1fr; align-items: start; gap: 12px; }
-.emailForm .marketingChoice input { width: 18px; min-height: 18px; margin-top: 2px; accent-color: var(--programme-acid); }
-.emailForm .marketingChoice span { color: rgba(250, 250, 247, .75); font-size: 14px; line-height: 1.5; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.marketingChoice { display: grid; grid-template-columns: 18px 1fr; align-items: start; gap: 12px; cursor: pointer; text-align: left; }
+.marketingChoice input { width: 18px; height: 18px; min-height: 18px; margin: 2px 0 0; accent-color: var(--programme-acid); }
+.marketingChoice span { color: rgba(250, 250, 247, .75); font-size: 14px; line-height: 1.5; font-weight: 400; letter-spacing: 0; text-transform: none; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 @keyframes microphone-pulse { 0%, 100% { box-shadow: 0 0 0 7px rgba(228, 226, 78, .08); } 50% { box-shadow: 0 0 0 11px rgba(228, 226, 78, .16); } }

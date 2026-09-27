@@ -24,6 +24,7 @@ const AUTH_EMAIL_PURPOSES = ["EMAIL_VERIFICATION", "PASSWORD_RESET"] as const sa
 const WORKER_EMAIL_PURPOSES = ["WELCOME", "PROGRAMME_REMINDER", "MARKETING_BROADCAST", "TEST"] as const satisfies readonly EmailPurpose[];
 const CAMPAIGN_SEND_STATES = ["QUEUED", "SENDING"] as const;
 const RETRYABLE_PROVIDER_CODES = new Set(["NOT_CONFIGURED", "TIMEOUT", "NETWORK", "RATE_LIMITED", "PROVIDER_5XX"]);
+const VERIFICATION_RESEND_COOLDOWN_MS = 60_000;
 
 function logEmailDeliveryState(
   state: "claimed" | "stale_claim_reclaimed" | "retry_scheduled" | "terminal_failure" | "campaign_not_authorized",
@@ -237,6 +238,42 @@ export async function queueWelcomeEmail(userId: string) {
     templateId: template.id,
     idempotencyKey: welcomeEmailIdempotencyKey(userId, template.version),
   });
+}
+
+/**
+ * Founder decision, 27 Sep 2026: the welcome email leaves right after sign-up
+ * instead of waiting for the nightly lifecycle run. It reuses the queued
+ * message, its fixed idempotency key and the atomic claim, so a concurrent
+ * worker run or a second sign-up signal can never send it twice; the nightly
+ * run stays the retry path. Like the worker, a disabled or incomplete runtime
+ * leaves the queued message untouched instead of spending an attempt.
+ */
+export async function deliverWelcomeEmail(
+  userId: string,
+  overrides: { provider?: LifecycleEmailProvider; siteUrl?: string; now?: Date } = {},
+) {
+  const message = await queueWelcomeEmail(userId);
+  if (!message || message.status !== "QUEUED") return { status: "not-queued" } as const;
+  if (!resolveLifecycleEmailRuntimeConfig() && !overrides.provider) return { status: "queued" } as const;
+  return processQueuedEmailMessage(message.id, overrides);
+}
+
+/**
+ * True when a confirmation email for this customer was queued, is being sent
+ * or was sent within the last minute, so repeated "send the link again" taps
+ * cost no extra email. Failed attempts do not count.
+ */
+export async function verificationEmailRecentlyQueued(userId: string, now = new Date()) {
+  const recent = await prisma.emailMessage.count({
+    where: {
+      userId,
+      environment: analyticsEnvironment(),
+      purpose: "EMAIL_VERIFICATION",
+      status: { in: ["QUEUED", "SENDING", "SENT", "DELIVERED"] },
+      createdAt: { gte: new Date(now.getTime() - VERIFICATION_RESEND_COOLDOWN_MS) },
+    },
+  });
+  return recent > 0;
 }
 
 async function claimQueuedMessage(messageId: string, now: Date, environment: ReturnType<typeof analyticsEnvironment>) {

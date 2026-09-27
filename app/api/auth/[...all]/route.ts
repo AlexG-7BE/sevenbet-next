@@ -10,6 +10,7 @@ import { programmeAccessSigningSecret } from "@/lib/auth/programme-access-proof"
 import { readBoundedRequestText } from "@/lib/programme/http";
 import { ServiceError } from "@/lib/services/service-error";
 import { observeSuccessfulAuthentication } from "@/lib/customers/auth-observer.server";
+import { getServerSession } from "@/lib/auth/session";
 
 const authJsonPayloadLimit = 32 * 1024;
 
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
   const accountLogin = pathname.endsWith("/sign-in/email");
   const socialAuthentication = pathname.endsWith("/sign-in/social");
   const socialLink = pathname.endsWith("/link-social");
+  const verificationResend = pathname.endsWith("/send-verification-email");
   let downstreamRequest = request;
   let socialRequest: unknown = null;
   if (request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
@@ -113,6 +115,26 @@ export async function POST(request: Request) {
     ));
   }
   if (accessDenial) return privateAuthResponse(accessDenial);
+  if (verificationResend) {
+    // Only a signed-in customer may ask for their own confirmation link again.
+    // Anonymous requests could otherwise spend the shared daily email quota.
+    let signedIn = false;
+    try {
+      signedIn = Boolean(await getServerSession(downstreamRequest.headers));
+    } catch (error) {
+      if (!isTransientDatabaseAvailabilityError(error)) throw error;
+      return privateAuthResponse(Response.json(
+        { code: "AUTH_SERVICE_UNAVAILABLE", message: "Authentication is temporarily unavailable" },
+        { status: 503, headers: { "Retry-After": "3" } },
+      ));
+    }
+    if (!signedIn) {
+      return privateAuthResponse(Response.json(
+        { code: "AUTHENTICATION_REQUIRED", message: "Sign in to receive a new confirmation link" },
+        { status: 401 },
+      ));
+    }
+  }
   const response = await dispatchAuth("POST", downstreamRequest);
   if (response.ok && (accountCreation || accountLogin)) {
     const responseBody = await response.clone().json().catch(() => null) as unknown;

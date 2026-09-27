@@ -19,11 +19,13 @@ import type {
 } from "../lib/email/provider.server";
 import {
   authEmailIdempotencyKey,
+  deliverWelcomeEmail,
   processQueuedEmailBatch,
   processQueuedEmailMessage,
   queueEmailMessage,
   recoverStaleEmailClaims,
   sendAuthEmail,
+  verificationEmailRecentlyQueued,
 } from "../lib/email/service.server";
 import { normalizeResendWebhook, processResendWebhook } from "../lib/email/webhook.server";
 
@@ -487,6 +489,104 @@ test("marketing suppression remains separate from transactional password recover
     const actionUrl = `${SITE_URL}/api/auth/reset-password/transactional-separation?callbackURL=%2Freset-password`;
     assert.equal((await sendAuthEmail({ user, actionUrl, templateKey: "PASSWORD_RESET" }, { provider, siteUrl: SITE_URL })).status, "sent");
     assert.equal(provider.envelopes.length, 1);
+  } finally {
+    await deleteUserEvidence(user.id);
+  }
+});
+
+// Founder decision, 27 Sep 2026: the welcome email leaves right after sign-up.
+test("the immediate welcome and the nightly run race to one claim and one provider call", async () => {
+  const user = await createUser();
+  try {
+    const provider = new RecordingProvider();
+    await Promise.all([
+      deliverWelcomeEmail(user.id, { provider, siteUrl: SITE_URL }),
+      deliverWelcomeEmail(user.id, { provider, siteUrl: SITE_URL }),
+      processQueuedEmailBatch(100, { provider, siteUrl: SITE_URL }),
+    ]);
+    const toUser = provider.envelopes.filter((envelope) => envelope.to === user.email);
+    assert.equal(toUser.length, 1);
+    assert.match(toUser[0]!.subject, /Welcome/);
+    const messages = await prisma.emailMessage.findMany({ where: { userId: user.id, purpose: "WELCOME" } });
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0]!.status, "SENT");
+    assert.equal(messages[0]!.attemptCount, 1);
+    // A later sign-up signal (the Google session hook, a retried observer) sends nothing more.
+    assert.deepEqual(await deliverWelcomeEmail(user.id, { provider, siteUrl: SITE_URL }), { status: "not-queued" });
+    assert.equal(provider.envelopes.filter((envelope) => envelope.to === user.email).length, 1);
+  } finally {
+    await deleteUserEvidence(user.id);
+  }
+});
+
+test("a disabled runtime leaves the welcome queued for the nightly run without spending an attempt", async () => {
+  const user = await createUser();
+  try {
+    assert.equal(process.env.LIFECYCLE_EMAIL_DELIVERY_ENABLED, "false");
+    assert.deepEqual(await deliverWelcomeEmail(user.id), { status: "queued" });
+    const queued = await prisma.emailMessage.findFirstOrThrow({ where: { userId: user.id, purpose: "WELCOME" } });
+    assert.equal(queued.status, "QUEUED");
+    assert.equal(queued.attemptCount, 0);
+    const provider = new RecordingProvider();
+    await processQueuedEmailBatch(100, { provider, siteUrl: SITE_URL });
+    assert.equal(provider.envelopes.filter((envelope) => envelope.to === user.email).length, 1);
+    assert.equal((await prisma.emailMessage.findUniqueOrThrow({ where: { id: queued.id } })).status, "SENT");
+  } finally {
+    await deleteUserEvidence(user.id);
+  }
+});
+
+test("a failed immediate welcome waits for the nightly retry instead of sending again at once", async () => {
+  const user = await createUser();
+  try {
+    const failing = new RecordingProvider({ status: "unavailable", code: "PROVIDER_5XX" });
+    assert.deepEqual(await deliverWelcomeEmail(user.id, { provider: failing, siteUrl: SITE_URL }), { status: "failed", code: "PROVIDER_5XX" });
+    const failed = await prisma.emailMessage.findFirstOrThrow({ where: { userId: user.id, purpose: "WELCOME" } });
+    assert.equal(failed.status, "FAILED");
+    assert.ok(failed.nextAttemptAt && failed.nextAttemptAt > new Date());
+    assert.deepEqual(await deliverWelcomeEmail(user.id, { provider: failing, siteUrl: SITE_URL }), { status: "not-queued" });
+    assert.equal(failing.envelopes.length, 1);
+    const provider = new RecordingProvider();
+    await processQueuedEmailBatch(100, { provider, siteUrl: SITE_URL, now: new Date(failed.nextAttemptAt!.getTime() + 1_000) });
+    assert.equal(provider.envelopes.filter((envelope) => envelope.to === user.email).length, 1);
+    const sent = await prisma.emailMessage.findUniqueOrThrow({ where: { id: failed.id } });
+    assert.equal(sent.status, "SENT");
+    assert.equal(sent.attemptCount, 2);
+  } finally {
+    await deleteUserEvidence(user.id);
+  }
+});
+
+test("an address suppressed for all email gets no immediate welcome", async () => {
+  const user = await createUser();
+  try {
+    await prisma.customerEmailPreference.upsert({
+      where: { userId: user.id },
+      create: { userId: user.id, suppressionScope: "ALL", suppressedAt: new Date(), suppressionReason: "PROVIDER_SUPPRESSION" },
+      update: { suppressionScope: "ALL", suppressedAt: new Date(), suppressionReason: "PROVIDER_SUPPRESSION" },
+    });
+    const provider = new RecordingProvider();
+    assert.deepEqual(await deliverWelcomeEmail(user.id, { provider, siteUrl: SITE_URL }), { status: "not-queued" });
+    assert.equal(provider.envelopes.length, 0);
+    assert.equal((await prisma.emailMessage.findFirstOrThrow({ where: { userId: user.id, purpose: "WELCOME" } })).status, "SUPPRESSED");
+  } finally {
+    await deleteUserEvidence(user.id);
+  }
+});
+
+test("a confirmation link asked for again within a minute costs no second email; a failed one does not count", async () => {
+  const user = await createUser();
+  try {
+    assert.equal(await verificationEmailRecentlyQueued(user.id), false);
+    const rejected = new RecordingProvider({ status: "unavailable", code: "REJECTED" });
+    const firstUrl = `${SITE_URL}/api/auth/verify-email?token=first-token&callbackURL=%2Fprogram`;
+    assert.equal((await sendAuthEmail({ user, actionUrl: firstUrl, templateKey: "EMAIL_VERIFICATION" }, { provider: rejected, siteUrl: SITE_URL })).status, "failed");
+    assert.equal(await verificationEmailRecentlyQueued(user.id), false);
+    const provider = new RecordingProvider();
+    const secondUrl = `${SITE_URL}/api/auth/verify-email?token=second-token&callbackURL=%2Fprogram`;
+    assert.equal((await sendAuthEmail({ user, actionUrl: secondUrl, templateKey: "EMAIL_VERIFICATION" }, { provider, siteUrl: SITE_URL })).status, "sent");
+    assert.equal(await verificationEmailRecentlyQueued(user.id), true);
+    assert.equal(await verificationEmailRecentlyQueued(user.id, new Date(Date.now() + 61_000)), false);
   } finally {
     await deleteUserEvidence(user.id);
   }

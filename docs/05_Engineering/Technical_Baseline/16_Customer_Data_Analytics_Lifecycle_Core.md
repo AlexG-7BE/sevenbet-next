@@ -123,6 +123,17 @@ Lifecycle selection excludes already-queued reminder identities so a full
 early page cannot starve later candidates. Recipient rows remain idempotent by
 campaign and user.
 
+**DETECTED (branch `fix/email-verification-optin`, 27 September 2026):**
+`lib/auth/email-verification.ts` sets Better Auth `sendOnSignUp`,
+`autoSignInAfterVerification` and a 24-hour link; `lib/auth/config.ts` delivers
+the confirmation through `sendAuthEmail` inside `runAfterResponse`
+(`lib/http/after-response.ts`, Next `after()`), skipped when one was queued in
+the last minute. `deliverWelcomeEmail` in `lib/email/service.server.ts` queues
+the welcome and processes it through the ordinary claim unless the runtime is
+disabled; the email-auth observer and the customer session hook call it after
+the response. `app/api/auth/[...all]/route.ts` refuses
+`/send-verification-email` without a session.
+
 **DETECTED:** the Commercial dashboard reader already computes casino/offer
 views, card views, view selections, review clicks, CTA clicks, detailed
 outbound attempts/successes/blocks and CTR. All bounded funnel metrics are
