@@ -17,7 +17,7 @@ export default function CommercialAnalyticsPage() {
       <Card className="adminPanel">
         <Badge>Aggregate-only accounting</Badge>
         <h2>Successful affiliate click report</h2>
-        <p className="muted">The success-only UTC daily aggregate preserves historical click coverage that is not present in detailed storage. New successful traffic can exist in both stores, so never add their totals.</p>
+        <p className="muted">The success-only UTC daily aggregate preserves historical click coverage that is not present in detailed storage. It now counts only Production human clicks; bots such as the launch click check, staff devices and Preview traffic stay out. New successful traffic can exist in both stores, so never add their totals.</p>
         <Link className="button" href="/api/admin/affiliate/outbound-clicks">Open 30-day aggregate report</Link>
       </Card>
     </div>

@@ -109,6 +109,17 @@ Email is never an analytics identifier.
   UTC calendar days and queries use an exclusive next-day upper bound.
 - `LOCAL`, `PREVIEW`, `TEST`, `BOT` and `INTERNAL` observations remain tagged
   and are excluded from Founder metrics.
+- Staff browsers are `INTERNAL`. The first signed-in Admin page a browser opens
+  calls `POST /api/admin/analytics/internal-traffic` (any admin, same-origin),
+  which sets the signed, HTTP-only `b4g_analytics_internal` cookie for 365 days.
+  Events, sessions, sign-ups and `/r` clicks from that browser are then
+  `INTERNAL`. Marking also reclassifies earlier Production `HUMAN` rows of that
+  browser's consented anonymous ID and of the staff account itself. The
+  Analytics page shows the device's status and a "Mark this device as internal"
+  button. `ANALYTICS_INTERNAL_TRAFFIC_TOKEN` remains for scripted traffic.
+- Protected Help (`/help`), the self-check and Admin pages, with or without a
+  language or market prefix, are never recorded: the browser skips them and
+  ingestion rejects any such event with `EXCLUDED_PATH`.
 
 ## 5. Canonical event dictionary
 
@@ -181,7 +192,23 @@ dashboard do not depend on retired Vercel Programme events or reports.
 The Commercial dashboard includes casino/offer views, card views, view
 selections, review clicks, CTA clicks, detailed outbound state and CTR. Its
 detailed figures are distinct from the success-only aggregate affiliate report
-and the two totals must not be added.
+and the two totals must not be added. Its "Conversion by market" table runs
+consented visits → page views of Best Offers, Bonuses, Casinos, casino
+reviews and Compare → CTA clicks → partner redirects per market. Redirects
+count every click; the CTA → partner rate uses only redirects of consented
+visitors, so both sides of the rate are consented.
+
+New registrations exclude staff accounts (`AdminUser`) and sign-ups observed
+as internal, bot or non-Production. The Founder overview credits consented
+`signup_completed` events to their first-touch campaign ("Sign-ups by
+campaign").
+
+Sign-up and login are observed for the email POSTs and for the Google OAuth
+callback (`GET /api/auth/callback/google`); a Google account created within
+60 seconds of the callback is a sign-up, otherwise a login. `User.signup*`
+source, UTM and referrer come from the consented browser's first touch — its
+earliest analytics session with a campaign parameter, `source` label or a
+referrer outside the site — never from the auth request's own Referer.
 
 ## 7. Commercial click attribution
 
@@ -192,9 +219,11 @@ regulatory or unsafe results; only a validated 302 is `SUCCEEDED`.
 
 There is one runtime attribution writer. In one database transaction it
 creates the canonical detailed `OutboundClick`, the attempted plus terminal
-`AnalyticsEvent` projections, and—for `SUCCEEDED` only—the
-`AffiliateOutboundClickDaily` projection. A blocked attempt never increments
-the successful aggregate. Failure to persist this observation does not alter
+`AnalyticsEvent` projections, and—for a `SUCCEEDED` Production human click
+only—the `AffiliateOutboundClickDaily` projection. A blocked attempt never
+increments the successful aggregate, and neither do bot (for example the
+launch click check), internal, Preview, local or test clicks; they keep their
+detailed rows. Aggregate rows written before this rule may include them. Failure to persist this observation does not alter
 the already-authoritative redirect response.
 
 The observer may store safe canonical internal IDs, coarse country, locale,

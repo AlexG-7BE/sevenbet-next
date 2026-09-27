@@ -12,6 +12,14 @@ import {
 
 const SIGNING_DOMAIN = "b4gamble:analytics-cookie:v1";
 export const ANALYTICS_SESSION_INACTIVITY_MS = 30 * 60 * 1000;
+/**
+ * Staff browsers carry this signed, HttpOnly marker so their visits, clicks and
+ * sign-ups are recorded as INTERNAL and stay out of every Founder number. Only an
+ * authenticated admin request can set it (RFC-046 "server-held exact internal marker").
+ */
+export const ANALYTICS_INTERNAL_COOKIE = "b4g_analytics_internal";
+const INTERNAL_MARKER_PAYLOAD = "internal";
+export const ANALYTICS_INTERNAL_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type AnalyticsRuntimeEnvironment = {
@@ -135,6 +143,29 @@ export function applyAnalyticsIdentityCookies(
   });
 }
 
+export function signedAnalyticsInternalMarker(secret = analyticsSigningSecret()) {
+  return signedValue(INTERNAL_MARKER_PAYLOAD, secret);
+}
+
+/** True only for a correctly signed staff marker; a missing signing secret reads as unmarked. */
+export function hasAnalyticsInternalMarker(headers: Headers, secret?: string) {
+  const value = requestCookie(headers, ANALYTICS_INTERNAL_COOKIE);
+  if (!value) return false;
+  try {
+    return verifiedPayload(value, secret ?? analyticsSigningSecret()) === INTERNAL_MARKER_PAYLOAD;
+  } catch {
+    return false;
+  }
+}
+
+export function applyAnalyticsInternalCookie(response: NextResponse, secret = analyticsSigningSecret()) {
+  response.cookies.set(ANALYTICS_INTERNAL_COOKIE, signedAnalyticsInternalMarker(secret), {
+    ...commonCookieOptions(),
+    httpOnly: true,
+    maxAge: ANALYTICS_INTERNAL_MAX_AGE_SECONDS,
+  });
+}
+
 export function clearAnalyticsIdentityCookies(response: NextResponse) {
   response.cookies.set(ANALYTICS_ANONYMOUS_COOKIE, "", { ...commonCookieOptions(), httpOnly: true, maxAge: 0 });
   response.cookies.set(ANALYTICS_SESSION_COOKIE, "", { ...commonCookieOptions(), httpOnly: true, maxAge: 0 });
@@ -153,6 +184,7 @@ export function analyticsTrafficKind(headers: Headers, environment = analyticsEn
   if (configuredInternalToken && headers.get("x-b4gamble-internal-traffic") === configuredInternalToken) {
     return "INTERNAL" as const;
   }
+  if (hasAnalyticsInternalMarker(headers)) return "INTERNAL" as const;
   const userAgent = headers.get("user-agent") ?? "";
   return /bot|crawler|spider|headless|playwright|lighthouse|monitor|globalping/i.test(userAgent)
     ? "BOT" as const

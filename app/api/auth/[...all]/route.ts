@@ -5,6 +5,7 @@ import { getAuth } from "@/lib/auth/server";
 import { withAuthDatabaseAvailabilityCapture } from "@/lib/auth/database-availability";
 import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
 import { GOOGLE_AUTH_CALLBACK, isAllowedGoogleLinkRequest, isAllowedGoogleSignInRequest } from "@/lib/auth/google-flow";
+import { observeOAuthCallbackAuthentication, oauthCallbackSessionCookie } from "@/lib/customers/oauth-callback-observer.server";
 import { programmeAuthAccessDenial } from "@/lib/auth/programme-access-policy";
 import { programmeAccessSigningSecret } from "@/lib/auth/programme-access-proof";
 import { readBoundedRequestText } from "@/lib/programme/http";
@@ -40,7 +41,19 @@ function privateAuthResponse(response: Response) {
 }
 
 export async function GET(request: Request) {
-  return privateAuthResponse(await dispatchAuth("GET", request));
+  const response = await dispatchAuth("GET", request);
+  // Google sign-ups and logins finish on this GET callback, not on the POSTs below.
+  const sessionCookie = oauthCallbackSessionCookie(request, response);
+  if (sessionCookie) {
+    const observe = () => observeOAuthCallbackAuthentication({ request, sessionCookie }).catch(() => {
+      console.warn("[customer] auth observation failed", {
+        customer_failure_category: "database",
+        authentication_kind: "oauth",
+      });
+    });
+    try { after(observe); } catch { void observe(); }
+  }
+  return privateAuthResponse(response);
 }
 
 export async function POST(request: Request) {

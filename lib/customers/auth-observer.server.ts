@@ -14,6 +14,7 @@ import {
   safeReferrerContext,
 } from "@/lib/analytics/identity.server";
 import { recordServerAnalyticsEventBestEffort } from "@/lib/analytics/service.server";
+import { consentedFirstTouch, signupAcquisitionColumns, type AcquisitionTouch } from "@/lib/analytics/first-touch.server";
 import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import prisma from "@/lib/db/prisma";
 import { deliverWelcomeEmail } from "@/lib/email/service.server";
@@ -32,34 +33,6 @@ function resultUser(value: unknown) {
   return candidate && typeof candidate.id === "string" && typeof candidate.email === "string"
     ? { id: candidate.id, email: normalizeCustomerEmail(candidate.email) }
     : null;
-}
-
-function referralAcquisition(request: Request) {
-  const referrer = request.headers.get("referer");
-  if (!referrer) return {};
-  try {
-    const url = new URL(referrer);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return {};
-    const host = url.hostname.toLowerCase();
-    if (!/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(host)) return {};
-    const bounded = (value: string | null, maximum: number) => {
-      const normalized = value?.trim().slice(0, maximum);
-      return normalized && /^[\p{L}\p{N}][\p{L}\p{N} ._+():-]*$/u.test(normalized)
-        ? normalized
-        : null;
-    };
-    return {
-      signupReferrerHost: host.slice(0, 253),
-      signupSource: bounded(url.searchParams.get("source"), 64),
-      signupUtmSource: bounded(url.searchParams.get("utm_source"), 100),
-      signupUtmMedium: bounded(url.searchParams.get("utm_medium"), 100),
-      signupUtmCampaign: bounded(url.searchParams.get("utm_campaign"), 100),
-      signupUtmContent: bounded(url.searchParams.get("utm_content"), 100),
-      signupUtmTerm: bounded(url.searchParams.get("utm_term"), 100),
-    };
-  } catch {
-    return {};
-  }
 }
 
 function requestLocale(request: Request) {
@@ -85,6 +58,9 @@ export async function observeSuccessfulAuthentication({
   let consented = false;
   let anonymousId: string | null = null;
   let analyticsSessionId: string | null = null;
+  // Where the customer came from is the consented browser's first touch, never
+  // the Referer of this auth request (that is our own page or Google).
+  let acquisition: AcquisitionTouch | null = null;
   try {
     const secret = analyticsSigningSecret();
     consented = isProductAnalyticsEnabled() && readAnalyticsConsent(request.headers, secret) === "granted";
@@ -105,6 +81,14 @@ export async function observeSuccessfulAuthentication({
         && (session.userId === null || session.userId === user.id)
         ? session.id
         : null;
+      if (anonymousId && kind === "signup") {
+        acquisition = await consentedFirstTouch({
+          anonymousId,
+          userId: user.id,
+          environment,
+          siteHost: new URL(request.url).hostname,
+        });
+      }
     }
   } catch {
     // The account operation is complete; analytics enrichment is optional.
@@ -119,7 +103,7 @@ export async function observeSuccessfulAuthentication({
         ...(kind === "signup" ? {
           preferredLocale: requestLocale(request),
           signupCountryCode: countryCode,
-          ...(consented ? referralAcquisition(request) : {}),
+          ...(consented && acquisition ? signupAcquisitionColumns(acquisition) : {}),
         } : {}),
       },
     }),
@@ -151,6 +135,7 @@ export async function observeSuccessfulAuthentication({
       pagePath: referrer.sourcePage,
       locale: requestLocale(request),
       countryCode,
+      ...(acquisition ?? {}),
     });
   }
   if (kind === "signup") {

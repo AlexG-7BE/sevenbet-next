@@ -13,11 +13,98 @@ function countBy<T extends string | number>(items: Array<T | null | undefined>) 
   return [...values.entries()].sort((a, b) => b[1] - a[1]);
 }
 
+/** The campaign a sign-up is credited to: its first-touch campaign, else source label, else referring site. */
+export function signupCampaignLabel(event: {
+  utmCampaign: string | null;
+  utmSource: string | null;
+  acquisitionSource: string | null;
+  referrerHost: string | null;
+}) {
+  if (event.utmCampaign) return event.utmSource ? `${event.utmCampaign} · ${event.utmSource}` : event.utmCampaign;
+  return event.utmSource ?? event.acquisitionSource ?? event.referrerHost ?? "Direct / unknown";
+}
+
+// Pages that carry partner buttons: Best Offers, Bonuses, Casinos, a casino review
+// and Compare, with or without a language or market prefix.
+const OFFER_PAGE_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/){0,2}(?:best-offers|bonuses|casinos|compare|casino\/[^/]+)\/?$/i;
+
+export function isOfferPagePath(pathname: string | null) {
+  return Boolean(pathname && OFFER_PAGE_PATH.test(pathname));
+}
+
+export type MarketFunnelRow = {
+  market: string;
+  visits: number;
+  offerPageViews: number;
+  ctaClicks: number;
+  toPartner: number;
+  toPartnerConsented: number;
+  refused: number;
+  ctaRate: number;
+  partnerRate: number;
+};
+
+/**
+ * Visits → offer-page views → CTA clicks → partner redirects, per market. Visits,
+ * views and CTA clicks exist only for visitors who allowed analytics; a partner
+ * redirect is recorded for every click. The CTA → partner rate therefore uses
+ * only the redirects of consented visitors, so it compares like with like.
+ */
+export function marketConversionFunnel(input: {
+  sessions: Array<{ countryCode: string | null; count: number }>;
+  pageViews: Array<{ countryCode: string | null; pagePath: string | null; count: number }>;
+  ctaClicks: Array<{ countryCode: string | null }>;
+  outbound: Array<{ countryCode: string | null; state: string; anonymousId: string | null }>;
+}, limit = 12): MarketFunnelRow[] {
+  const rows = new Map<string, MarketFunnelRow>();
+  const row = (countryCode: string | null) => {
+    const market = countryCode ?? "Unknown";
+    let current = rows.get(market);
+    if (!current) {
+      current = { market, visits: 0, offerPageViews: 0, ctaClicks: 0, toPartner: 0, toPartnerConsented: 0, refused: 0, ctaRate: 0, partnerRate: 0 };
+      rows.set(market, current);
+    }
+    return current;
+  };
+  for (const session of input.sessions) row(session.countryCode).visits += session.count;
+  for (const view of input.pageViews) if (isOfferPagePath(view.pagePath)) row(view.countryCode).offerPageViews += view.count;
+  for (const click of input.ctaClicks) row(click.countryCode).ctaClicks += 1;
+  for (const click of input.outbound) {
+    const current = row(click.countryCode);
+    if (click.state === "SUCCEEDED") {
+      current.toPartner += 1;
+      if (click.anonymousId) current.toPartnerConsented += 1;
+    } else current.refused += 1;
+  }
+  return [...rows.values()]
+    .map((current) => ({
+      ...current,
+      ctaRate: safeRate(current.ctaClicks, current.offerPageViews),
+      partnerRate: safeRate(current.toPartnerConsented, current.ctaClicks),
+    }))
+    .sort((left, right) => right.toPartner - left.toPartner || right.visits - left.visits || left.market.localeCompare(right.market))
+    .slice(0, limit);
+}
+
 export async function founderOverview(range: AnalyticsRange) {
   const occurredAt = { gte: range.from, lt: range.until };
-  const [registeredUsers, newRegistrations, activeEvents, cohort, outbound, sessions] = await Promise.all([
+  const [registeredUsers, newRegistrations, activeEvents, cohort, outbound, sessions, signups] = await Promise.all([
     prisma.user.count({ where: { createdAt: { lt: range.until } } }),
-    prisma.user.count({ where: { createdAt: occurredAt } }),
+    // Staff accounts and sign-ups observed as internal, bot or non-Production
+    // traffic are not new customers. Sign-ups without analytics consent carry no
+    // observation and still count.
+    prisma.user.count({
+      where: {
+        createdAt: occurredAt,
+        adminUser: { is: null },
+        analyticsEvents: {
+          none: {
+            type: "SIGNUP_COMPLETED",
+            OR: [{ environment: { not: "PRODUCTION" } }, { trafficKind: { not: "HUMAN" } }],
+          },
+        },
+      },
+    }),
     prisma.analyticsEvent.findMany({ where: { ...productionHumanEvent, occurredAt, userId: { not: null } }, select: { userId: true }, distinct: ["userId"] }),
     prisma.programEnrollment.findMany({ where: { startedAt: occurredAt }, select: { id: true, completedAt: true } }),
     prisma.outboundClick.findMany({
@@ -27,6 +114,10 @@ export async function founderOverview(range: AnalyticsRange) {
     prisma.analyticsSession.findMany({
       where: { ...productionHumanEvent, startedAt: occurredAt },
       select: { countryCode: true, acquisitionSource: true },
+    }),
+    prisma.analyticsEvent.findMany({
+      where: { ...productionHumanEvent, type: "SIGNUP_COMPLETED", occurredAt },
+      select: { utmCampaign: true, utmSource: true, acquisitionSource: true, referrerHost: true },
     }),
   ]);
   const completed = cohort.filter((item) => item.completedAt && item.completedAt < range.until).length;
@@ -49,6 +140,7 @@ export async function founderOverview(range: AnalyticsRange) {
     topAcquisitionSources: countBy(sessions.map((item) => item.acquisitionSource)).slice(0, 8),
     topCasinos: casinoIds.map(([id, count]) => ({ id, label: names.get(id) ?? "Unknown casino", count })),
     topOutboundPages: countBy(outbound.map((item) => item.sourcePage)).slice(0, 8),
+    signupsByCampaign: countBy(signups.map(signupCampaignLabel)).slice(0, 8),
   };
 }
 
@@ -115,14 +207,24 @@ export async function commercialDashboard(range: AnalyticsRange) {
     "CASINO_VIEWED", "OFFER_VIEWED", "COMMERCIAL_VIEW_SELECTED",
     "COMMERCIAL_CARD_VIEWED", "CASINO_REVIEW_CLICKED", "COMMERCIAL_CTA_CLICKED",
   ];
-  const [events, outbound] = await Promise.all([
+  const [events, outbound, sessionsByMarket, pageViewsByMarket] = await Promise.all([
     prisma.analyticsEvent.findMany({
       where: { ...productionHumanEvent, type: { in: eventTypes }, occurredAt },
       select: { type: true, casinoId: true, countryCode: true, pagePath: true, acquisitionSource: true },
     }),
     prisma.outboundClick.findMany({
       where: { environment: "PRODUCTION", trafficKind: "HUMAN", attemptedAt: occurredAt },
-      select: { state: true, blockedReason: true, casinoId: true, countryCode: true, sourcePage: true, acquisitionSource: true },
+      select: { state: true, blockedReason: true, casinoId: true, countryCode: true, sourcePage: true, acquisitionSource: true, anonymousId: true },
+    }),
+    prisma.analyticsSession.groupBy({
+      by: ["countryCode"],
+      where: { ...productionHumanEvent, startedAt: occurredAt },
+      _count: { _all: true },
+    }),
+    prisma.analyticsEvent.groupBy({
+      by: ["countryCode", "pagePath"],
+      where: { ...productionHumanEvent, type: "PAGE_VIEWED", occurredAt },
+      _count: { _all: true },
     }),
   ]);
   const count = (type: AnalyticsEventType) => events.filter((event) => event.type === type).length;
@@ -150,6 +252,12 @@ export async function commercialDashboard(range: AnalyticsRange) {
     byAcquisition: countBy(outbound.map((item) => item.acquisitionSource)).slice(0, 12),
     // Per market: how many clicks reached a partner, and why the others were refused.
     byMarketOutcome: countBy(outbound.map((item) => `${item.countryCode ?? "Unknown"} · ${item.state === "SUCCEEDED" ? "to partner" : item.blockedReason ?? "refused"}`)).slice(0, 24),
+    marketFunnel: marketConversionFunnel({
+      sessions: sessionsByMarket.map((item) => ({ countryCode: item.countryCode, count: item._count._all })),
+      pageViews: pageViewsByMarket.map((item) => ({ countryCode: item.countryCode, pagePath: item.pagePath, count: item._count._all })),
+      ctaClicks: events.filter((event) => event.type === "COMMERCIAL_CTA_CLICKED"),
+      outbound,
+    }),
   };
 }
 
