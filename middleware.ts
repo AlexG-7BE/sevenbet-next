@@ -306,10 +306,11 @@ export async function middleware(request: NextRequest) {
     return secureResponse(response);
   }
 
-  // A login transition may inherit Programme presentation only from an exact,
-  // validated Programme return path. This affects request-local language only;
-  // it creates no public publication, commercial, cookie or identity authority.
-  const programmeLoginLocale = pathname === "/login"
+  // A login or password-reset transition may inherit Programme presentation only
+  // from an exact, validated Programme return path. This affects request-local
+  // language only; it creates no public publication, commercial, cookie or
+  // identity authority.
+  const programmeLoginLocale = pathname === "/login" || pathname === "/reset-password"
     ? programmeLocaleFromPath(searchParams.get("returnTo"))
     : null;
   if (programmeLoginLocale) {
