@@ -644,7 +644,7 @@ export function StartingPointReadyScreen({
   error: string;
   onSave: () => void;
   onEmail: (input: { email: string; password: string; mode: "sign-up" | "sign-in"; marketingAllowed: boolean }) => void;
-  onGoogle: () => void;
+  onGoogle: (input: { marketingAllowed: boolean }) => void;
   onLinkGoogle: () => void;
   locale: ProgrammeLocale;
 }) {
@@ -654,6 +654,10 @@ export function StartingPointReadyScreen({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [marketingAllowed, setMarketingAllowed] = useState(false);
+  // Founder decision, 27 Sep 2026: one unticked opt-in serves both Google and
+  // email sign-up, asked once on this screen. It hides only while the email
+  // form is switched to signing in to an existing account.
+  const marketingChoiceShown = !googleLinkRecovery && !(emailOpen && mode === "sign-in");
   return (
     <div className={styles.canvas} data-programme-presentation="starting-point-ready">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
@@ -677,12 +681,12 @@ export function StartingPointReadyScreen({
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
           {googleLinkRecovery ? <p>{t("Your confirmed Starting Point stays in this browser while you sign in and link Google securely.")}</p> : null}
           {authenticated && !candidate ? null : authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{t(busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account")}</button> : <>
-            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={onGoogle} type="button"><GoogleIcon />{t("Continue with Google — save my Starting Point")}</button> : null}
+            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle({ marketingAllowed: marketingChoiceShown && marketingAllowed })} type="button"><GoogleIcon />{t("Continue with Google — save my Starting Point")}</button> : null}
+            {marketingChoiceShown ? <label className={styles.marketingChoice} data-programme-marketing-choice=""><input checked={marketingAllowed} onChange={(event) => setMarketingAllowed(event.target.checked)} type="checkbox" /><span>{t(PROGRAMME_MARKETING_OPT_IN_LABEL)}</span></label> : null}
             {!googleLinkRecovery ? <button className={styles.typingAction} onClick={() => setEmailOpen((value) => !value)} type="button">{t(emailOpen ? "Hide email option" : "Use email instead")}</button> : null}
             {emailOpen ? <form className={styles.emailForm} onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode, marketingAllowed: mode === "sign-up" && marketingAllowed }); }}>
               <label><span>{t("Email")}</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
               <label><span>{t("Password")}</span><input autoComplete={mode === "sign-up" ? "new-password" : "current-password"} minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
-              {mode === "sign-up" ? <label className={styles.marketingChoice}><input checked={marketingAllowed} onChange={(event) => setMarketingAllowed(event.target.checked)} type="checkbox" /><span>{PROGRAMME_MARKETING_OPT_IN_LABEL}</span></label> : null}
               <button className={styles.primaryAction} disabled={busy} type="submit">{t(googleLinkRecovery ? "Sign in, then link Google" : mode === "sign-up" ? "Create account with email" : "Sign in with email")}</button>
               {!googleLinkRecovery ? <button className={styles.inlineButton} onClick={() => setMode((value) => value === "sign-up" ? "sign-in" : "sign-up")} type="button">{t(mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one")}</button> : null}
             </form> : null}

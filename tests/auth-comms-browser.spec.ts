@@ -184,6 +184,144 @@ test("canonical Programme registration keeps access proof on email auth and fail
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
+// Founder decision, 27 Sep 2026: one unticked email opt-in on the registration
+// screen serves Google and email sign-up alike, and is asked once.
+test("registration asks the optional email opt-in once for Google and email sign-up", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installAnonymousProgramme(page);
+  await reachRegistration(page);
+
+  const optIn = page.getByRole("checkbox", { name: /Email me occasional B4GAMBLE product/ });
+  await expect(optIn).toHaveCount(1);
+  await expect(optIn).not.toBeChecked();
+  await page.getByRole("button", { name: "Use email instead" }).click();
+  await expect(optIn).toHaveCount(1);
+  await page.getByRole("button", { name: "Already have an account? Sign in" }).click();
+  await expect(optIn).toHaveCount(0);
+  await page.getByRole("button", { name: "Need an account? Create one" }).click();
+  await expect(optIn).toHaveCount(1);
+  expect(await optIn.evaluate((element) => Number.parseFloat(getComputedStyle(element.closest("label")!.querySelector("span")!).fontSize))).toBeGreaterThanOrEqual(14);
+
+  let signUpBody: Record<string, unknown> | null = null;
+  await page.route("**/api/auth/sign-up/email", async (route) => {
+    signUpBody = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ code: "TEST_SIGNUP_STOP" }) });
+  });
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill("opt-in-check@example.test");
+  await page.getByLabel("Password").fill("test-password-1234");
+  await page.getByRole("button", { name: "Create account with email" }).click();
+  await expect(page.locator('p[role="alert"]')).toContainText("could not be created");
+  // The confirmation link in the sign-up email lands back on the Programme.
+  expect(signUpBody).toMatchObject({ email: "opt-in-check@example.test", callbackURL: "/program" });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+
+  if (expectGoogle) {
+    await page.getByRole("button", { name: "Hide email option" }).click();
+    await optIn.check();
+    await page.route("**/api/auth/sign-in/social", (route) => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ url: `${baseUrl}/robots.txt`, redirect: true }),
+    }));
+    await page.getByRole("button", { name: /Continue with Google/ }).click();
+    await page.waitForURL(/robots\.txt/);
+    const carried = await page.evaluate(() => ({
+      choice: sessionStorage.getItem("sevenbet.programme.google-marketing-choice.v1"),
+      journey: sessionStorage.getItem("sevenbet.programme.journey.v2"),
+    }));
+    expect(JSON.parse(carried.choice ?? "null")).toMatchObject({ version: 1, journeyId: carried.journey });
+  }
+});
+
+test("Google return records the opt-in ticked before leaving, once, through the preference service", async ({ page }) => {
+  const userId = "google-return-opt-in-user";
+  const journeyId = "5f0c2a8e-3a1d-4c6b-9e2f-7b1a0d4c8e21";
+  await seedOAuthJourney(page, journeyId);
+  await page.addInitScript((journey) => {
+    if (sessionStorage.getItem("test.opt-in-seeded")) return;
+    sessionStorage.setItem("test.opt-in-seeded", "1");
+    sessionStorage.setItem("sevenbet.programme.google-marketing-choice.v1", JSON.stringify({ version: 1, journeyId: journey, expiresAt: Date.now() + 5 * 60 * 1000 }));
+  }, journeyId);
+  await installAuthenticatedSession(page, userId);
+  const preferences: unknown[] = [];
+  await page.route("**/api/customer/email-preference", (route) => {
+    preferences.push(route.request().postDataJSON());
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ marketingAllowed: true }) });
+  });
+  await page.route("**/api/program/program-ai/claims/redeem", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture() }) }));
+  await open(page, "/program?auth=google-return");
+  await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+  await expect.poll(() => preferences.length).toBe(1);
+  expect(preferences[0]).toEqual({ marketingAllowed: true, locale: "en-GB" });
+  expect(await page.evaluate(() => sessionStorage.getItem("sevenbet.programme.google-marketing-choice.v1"))).toBeNull();
+  await expect(page.locator('p[role="alert"]')).toHaveCount(0);
+  // Google confirmed the address, so the dashboard asks for nothing more.
+  await expect(page.locator("[data-programme-email-confirmation]")).toHaveCount(0);
+});
+
+test("Google return without a ticked opt-in records nothing", async ({ page }) => {
+  const userId = "google-return-no-opt-in-user";
+  const journeyId = "0e7d3b52-6c1f-4a8e-8d2b-3f9a6c1e5b74";
+  await seedOAuthJourney(page, journeyId);
+  await installAuthenticatedSession(page, userId);
+  let preferenceRequests = 0;
+  await page.route("**/api/customer/email-preference", (route) => {
+    preferenceRequests += 1;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ marketingAllowed: true }) });
+  });
+  await page.route("**/api/program/program-ai/claims/redeem", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture() }) }));
+  await open(page, "/program?auth=google-return");
+  await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+  expect(preferenceRequests).toBe(0);
+});
+
+test("an unconfirmed customer can ask for the confirmation link again from the dashboard", async ({ page }) => {
+  const userId = "unconfirmed-email-user";
+  const journeyId = "b3c9e1f4-2a7d-4e5b-9c8f-1d6a2e4b7c90";
+  await page.addInitScript(({ user, access }) => {
+    sessionStorage.setItem(`sevenbet.programme.access-authority.v1:user:${encodeURIComponent(user)}`, JSON.stringify(access));
+  }, { user: userId, access: authority(journeyId) });
+  await page.route("**/api/auth/get-session", (route) => {
+    const now = new Date().toISOString();
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        session: { id: "unconfirmed-session", token: "test-token", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: now, updatedAt: now },
+        user: { id: userId, name: "unconfirmed", email: "unconfirmed@example.test", emailVerified: false, createdAt: now, updatedAt: now },
+      }),
+    });
+  });
+  await page.route("**/api/programme-access/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, accepted: true }) }));
+  await page.route("**/api/program/program-ai/home", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture(2) }) }));
+  const resendBodies: unknown[] = [];
+  await page.route("**/api/auth/send-verification-email", (route) => {
+    resendBodies.push(route.request().postDataJSON());
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: true }) });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, "/program");
+  const notice = page.locator("[data-programme-email-confirmation]");
+  await expect(notice).toContainText("Confirm your email: open the link we sent to unconfirmed@example.test.");
+  const resend = notice.getByRole("button", { name: "Send the link again" });
+  expect(await resend.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return rect.height >= 44 && Number.parseFloat(getComputedStyle(element).fontSize) >= 16;
+  })).toBe(true);
+  await resend.click();
+  await expect(notice.getByRole("status")).toHaveText("Link sent. Check your inbox.");
+  expect(resendBodies).toEqual([{ email: "unconfirmed@example.test", callbackURL: "/program" }]);
+  // The notice follows the current mission and leads the journey.
+  const [card, noticeBox, journey] = await Promise.all([
+    page.locator('[data-programme-presentation="dashboard"] section').first().boundingBox(),
+    notice.boundingBox(),
+    page.locator('[aria-labelledby="programme-path-title"]').boundingBox(),
+  ]);
+  expect(noticeBox!.y).toBeGreaterThan(card!.y);
+  expect(noticeBox!.y).toBeLessThan(journey!.y);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+});
+
 test("canonical access screen reports invalid authority safely", async ({ page }) => {
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await page.route("**/api/programme-access/authority", (route) => {

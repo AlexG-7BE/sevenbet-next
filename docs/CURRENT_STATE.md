@@ -12,6 +12,22 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Email reachability from sign-up — in review
+
+**Founder instruction, 27 September 2026:** registered customers must be
+reachable by email. Branch `fix/email-verification-optin` sends the
+confirmation link on every email sign-up (24 hours; it lands on the Programme
+and signs the customer in), lets an unconfirmed customer ask again from the
+dashboard, offers the one optional email opt-in on Google sign-up too, and
+sends the welcome email right after sign-up instead of at 03:47 UTC. See
+[the decision record](07_Decisions/EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27.md).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed. **DETECTED before it:**
+no email/password customer was ever verified (Better Auth 1.7.1 does not send
+on sign-up by default), so reminders and campaigns reached almost nobody.
+Resend is on the Free plan (100 emails a day across all mail); an email
+sign-up now costs two emails.
+
 ## Claude-operated partner CRM — code ready, disabled until configured
 
 **Founder instruction, 25 September 2026:** "Claude ведёт CRM" — Claude
