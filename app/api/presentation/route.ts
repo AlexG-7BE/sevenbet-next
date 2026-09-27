@@ -7,7 +7,7 @@ import {
 } from "@/lib/market/presentation-preference";
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
 import { isLocalizedPublicDestination, localizePublicPath, parsePublicMarketRoute } from "@/lib/market/routing";
-import { languageRouteByPublicSlug, marketProfileByLocale } from "@/lib/market/registry";
+import { languageRouteByLocale, languageRouteByPublicSlug, marketProfileByLocale, type SupportedLocale } from "@/lib/market/registry";
 import {
   parseProgrammeRoute,
   programmePathForPresentationLocale,
@@ -22,6 +22,24 @@ function invalidPreference() {
     { ok: false, code: "INVALID_PRESENTATION_PREFERENCE" },
     { status: 400, headers: { "Cache-Control": "no-store" } },
   );
+}
+
+/**
+ * A Learn guide exists only in the language it was published in, so switching language on a
+ * guide (or a guide category) lands on the target language's Learn hub unless the same guide
+ * is published in that language; it used to land on a 404 (audit 27 Sep 2026).
+ */
+async function learnReturnPath(pathname: string, locale: SupportedLocale) {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments[0] !== "learn" || segments.length < 2) return pathname;
+  if (segments.length !== 3) return "/learn";
+  try {
+    const { articleService } = await import("@/lib/services/article.service");
+    const article = await articleService.getPublished(segments[1], segments[2], languageRouteByLocale(locale).defaultLocale);
+    return article ? pathname : "/learn";
+  } catch {
+    return "/learn";
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -79,7 +97,9 @@ export async function POST(request: NextRequest) {
       return invalidPreference();
     }
     const equivalentPathname = parsedReturnPath.kind === "INVALID" ? "/" : parsedReturnPath.pathname;
-    const returnPath = isLocalizedPublicDestination(equivalentPathname, destinationProfile) ? equivalentPathname : "/";
+    const localizedPathname = isLocalizedPublicDestination(equivalentPathname, destinationProfile) ? equivalentPathname : "/";
+    const returnPath = await learnReturnPath(localizedPathname, resolution.locale);
+    if (returnPath !== localizedPathname) returnUrl.search = "";
     returnUrl.searchParams.delete("country");
     const safeQuery = returnUrl.searchParams.toString();
     const equivalentReturnPath = `${returnPath}${safeQuery ? `?${safeQuery}` : ""}`;
