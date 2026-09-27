@@ -1,22 +1,30 @@
 // Launch click check — one real click on every casino's public /r/ route from a real exit in
 // each launch market (Globalping), classified against the licence register (RFC-054).
 //
-//   npm run launch:click-check -- [--markets GB,SE,DK,DE] [--casinos playojo,turbonino] [--site https://b4gamble.com]
+//   npm run launch:click-check -- [--markets GB,SE,DK,DE] [--casinos playojo,turbonino] [--site https://b4gamble.com] [--json report.json]
 //
 // Read-only for B4GAMBLE's data: it writes nothing itself. Each click is recorded by /r/ as an
 // OutboundClick with trafficKind BOT (the Globalping user agent), so it never counts as a visitor.
-// The redirect is not followed, so the partner never receives the click. A NO_ROUTE in an open
-// market is retried from fresh probes (see NO_ROUTE_ATTEMPTS).
+// The redirect is not followed, so the partner never receives the click. A refusal in an open
+// market (NO_ROUTE or ROUTE_DOWN) is retried from fresh probes (see NO_ROUTE_ATTEMPTS).
 //
-// Output: a Markdown matrix on stdout and the full JSON on stderr's last line. The exit code is 1
-// when any VIOLATION (a closed market reaching a partner) or UNEXPECTED response is found.
+// Output: a Markdown matrix on stdout and the full JSON on stderr's last line (and in the --json
+// file). The exit code is 1 when any VIOLATION (a closed market reaching a partner), UNEXPECTED
+// response or ROUTE_DOWN (a route expected to reach its partner was refused after its retries; see
+// ROUTES_NOT_YET_LIVE) is found.
+import { writeFileSync } from "node:fs";
+
 import { globalpingFetch } from "../lib/affiliate-health/globalping-fetch";
 import {
   LAUNCH_MARKETS,
+  ROUTES_NOT_YET_LIVE,
+  clickCheckFails,
   clickVerdict,
   launchCasinos,
   publicRouteSlug,
+  retriesClick,
   type ClickVerdict,
+  type LaunchMarket,
 } from "../lib/market-access/launch-click-check";
 
 function option(name: string) {
@@ -36,7 +44,7 @@ const NO_ROUTE_ATTEMPTS = 3;
 
 async function click(site: string, market: string, casino: string): Promise<Row> {
   let row = await clickOnce(site, market, casino);
-  for (let attempt = 1; attempt < NO_ROUTE_ATTEMPTS && row.verdict === "NO_ROUTE"; attempt += 1) {
+  for (let attempt = 1; attempt < NO_ROUTE_ATTEMPTS && retriesClick(row.verdict); attempt += 1) {
     row = await clickOnce(site, market, casino);
   }
   return row;
@@ -83,12 +91,21 @@ async function main() {
   const totals = Object.fromEntries(markets.map((market) => {
     const inMarket = rows.filter((row) => row.market === market);
     const count = (verdict: ClickVerdict) => inMarket.filter((row) => row.verdict === verdict).length;
-    return [market, { partnerClicks: count("PASS"), closedRefused: count("PASS_CLOSED"), noRoute: count("NO_ROUTE"), violations: count("VIOLATION"), unexpected: count("UNEXPECTED") }];
+    return [market, { partnerClicks: count("PASS"), closedRefused: count("PASS_CLOSED"), noRoute: count("NO_ROUTE"), routeDown: count("ROUTE_DOWN"), violations: count("VIOLATION"), unexpected: count("UNEXPECTED") }];
   }));
+  // A known gap that now reaches its partner: its route went live, so the list should drop it.
+  const nowLive = rows.filter((row) => row.verdict === "PASS"
+    && (ROUTES_NOT_YET_LIVE[row.market as LaunchMarket] ?? []).includes(row.casino));
   console.info(lines.join("\n"));
+  if (nowLive.length) {
+    console.info(`\nListed in ROUTES_NOT_YET_LIVE but reached a partner (remove them from the list): ${nowLive.map((row) => `${row.casino} ${row.market}`).join(", ")}`);
+  }
   console.info(`\n${JSON.stringify(totals)}`);
-  console.error(JSON.stringify({ checkedAt: new Date().toISOString(), site, totals, rows }));
-  if (rows.some((row) => row.verdict === "VIOLATION" || row.verdict === "UNEXPECTED")) process.exitCode = 1;
+  const report = JSON.stringify({ checkedAt: new Date().toISOString(), site, totals, rows });
+  console.error(report);
+  const jsonPath = option("--json");
+  if (jsonPath) writeFileSync(jsonPath, `${report}\n`);
+  if (clickCheckFails(rows.map((row) => row.verdict))) process.exitCode = 1;
 }
 
 void main();

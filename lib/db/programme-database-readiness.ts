@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { inspectPrismaRuntimeConnection } from "@/lib/db/prisma-runtime-config";
+import { inspectPrismaRuntimeConnection, runtimeConnectionLimit } from "@/lib/db/prisma-runtime-config";
 
 type DatabaseEnvironment = {
   DATABASE_URL?: string;
@@ -46,6 +46,8 @@ export function inspectProgrammeDatabaseReadiness(environment: DatabaseEnvironme
   }
   return {
     runtimeMode: runtime.mode,
+    /** The per-instance pool the runtime will use (after the code-level pool policy); not a secret. */
+    runtimeConnectionLimit: runtime.mode === "pooled" ? runtimeConnectionLimit(environment.DATABASE_URL) : null,
     directMode,
     runtimeTargetFingerprint: runtimeFingerprint,
     directTargetFingerprint: directFingerprint,
