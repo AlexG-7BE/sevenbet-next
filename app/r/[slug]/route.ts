@@ -13,6 +13,8 @@ import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-coun
 import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.service";
 
 export const dynamic = "force-dynamic";
+// Bounds the redirect and its after() click write; a hung lookup ends at 30 s, not 300 s.
+export const maxDuration = 30;
 
 function safeDiagnostic(reason: string, metadata: { slugId?: string; casinoId?: string; countryCode?: string | null; currencyCode?: string | null; language?: string | null } = {}) {
   console.warn("affiliate_redirect_unavailable", { reason, ...metadata });

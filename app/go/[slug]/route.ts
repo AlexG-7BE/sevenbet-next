@@ -6,6 +6,7 @@ import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-coun
 import { jurisdictionResolver } from "@/lib/jurisdiction/resolver";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   await params;

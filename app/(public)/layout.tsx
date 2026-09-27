@@ -15,6 +15,11 @@ import { programmePathForPresentationLocale } from "@/lib/programme/presentation
 import { accountNavigationFor, commercialDestinationsNavigable } from "@/lib/public-shell";
 import styles from "@/components/public-shell/PublicShell.module.css";
 
+// Every public page under this layout inherits it (Next merges segment config
+// from layout to page): a page whose database read hangs ends at 30 s instead
+// of the platform's 300 s default.
+export const maxDuration = 30;
+
 type Presentation = Awaited<ReturnType<typeof resolveServerPresentationContext>>;
 const COMMERCIAL_NAVIGATION_WAIT_MS = 1_500;
 
