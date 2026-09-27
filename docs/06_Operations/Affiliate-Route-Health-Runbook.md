@@ -63,6 +63,29 @@ successful current direct check reports its actual check time as
 `lastDirectSuccessAt`. No Founder or stored override is relabelled as a direct
 success.
 
+## Where each route is checked from
+
+**DETECTED — 27 September 2026 (#306 follow-up):** partners answer by the
+visitor's address, so a check from the Production function (Vercel `iad1`,
+USA) produced false defects for launch-market routes. Each route is now opened
+from a real network exit in its own market through Globalping
+(`lib/affiliate-health/globalping-fetch.ts`), preferring a residential/mobile
+(`eyeball-network`) probe and falling back to any probe in that country when
+none is online. A subdivision market (for example `CA-ON`) uses a probe in its
+country. Only the historical global fallback `ZZ` is still checked directly.
+`currentEvidence.verificationExit` (Issue: `from=`) names the exit, for example
+`GB eyeball-network`, `SI any-network` or `DIRECT`.
+
+- A Globalping quota, outage or missing probe (`GLOBALPING_*`) is inconclusive,
+  like a network failure.
+- A 401, 403, 429 or CDN 503 challenge is inconclusive wherever the chain
+  stopped; `finalHost` shows that host.
+- A run checks six routes at a time, each for at most 60 seconds, and starts no
+  check after 200 seconds, inside the endpoint's 300-second limit. A route left
+  unchecked reports `ROUTE_HEALTH_RUN_BUDGET_EXHAUSTED` (inconclusive).
+- Every redirect hop is one Globalping measurement. Anonymous use allows 250 an
+  hour per address; an optional `GLOBALPING_API_TOKEN` in Production raises it.
+
 ## Report contract
 
 The protected Production report exposes route identity, Casino, country and
