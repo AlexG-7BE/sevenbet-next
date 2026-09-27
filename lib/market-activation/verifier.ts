@@ -3,7 +3,9 @@ import type { Prisma } from "@prisma/client";
 import {
   checkAffiliateRouteHttp,
   type AffiliateRouteHealthExpectation,
+  type AffiliateRouteHttpCheck,
 } from "@/lib/affiliate-health/checker";
+import { checkAffiliateRouteFromMarket, type GlobalpingProbe } from "@/lib/affiliate-health/globalping-fetch";
 import { validateRedirectTargetUrl } from "@/lib/affiliate-routing/redirect-validation";
 import { prisma } from "@/lib/db/prisma";
 
@@ -97,6 +99,56 @@ function storedExpectation(
   };
 }
 
+/**
+ * The country a route is checked from: its market's own country, or null when
+ * the market has none. Only the historical global fallback (ZZ, "no market")
+ * and a code that is not ISO-shaped have none; those keep the direct check.
+ * A subdivision market (AR-C, CA-ON) is checked from its country, because
+ * Globalping selects probes by country and cannot target a province.
+ */
+export function marketExitCountry(marketCode: string) {
+  const code = marketCode.trim().toUpperCase();
+  if (!/^[A-Z]{2}(?:-[A-Z0-9]{1,12})?$/.test(code)) return null;
+  const country = code.slice(0, 2);
+  return country === MARKET_ACTIVATION_GLOBAL_FALLBACK_COUNTRY_CODE ? null : country;
+}
+
+/** Checks a route from a real network exit inside `country`; reports each probe that answered. */
+export type MarketExitRouteCheck = (input: {
+  url: URL;
+  country: string;
+  expectation: AffiliateRouteHealthExpectation;
+  onProbe: (probe: GlobalpingProbe) => void;
+}) => Promise<AffiliateRouteHttpCheck>;
+
+/** Each redirect hop is one Globalping measurement (about 1-3 s); a six-hop chain fits well inside. */
+export const MARKET_EXIT_ROUTE_TIMEOUT_MS = 60_000;
+
+const checkRouteFromMarketExit: MarketExitRouteCheck = ({ url, country, expectation, onProbe }) => checkAffiliateRouteFromMarket({
+  url,
+  country,
+  expectation,
+  timeoutMs: MARKET_EXIT_ROUTE_TIMEOUT_MS,
+  globalping: {
+    token: process.env.GLOBALPING_API_TOKEN?.trim() || null,
+    preferEyeballNetwork: true,
+    onProbe: (probe) => onProbe(probe),
+  },
+});
+
+function marketExitLabel(country: string, probes: GlobalpingProbe[]) {
+  if (!probes.length) return country;
+  return `${country} ${probes.every((probe) => probe.eyeballNetwork) ? "eyeball-network" : "any-network"}`;
+}
+
+function inconclusiveCheck(checked: AffiliateRouteHttpCheck) {
+  // No response was observed: a transport failure, or the market exit itself
+  // (Globalping quota, outage, no probe in the country) was unavailable.
+  return checked.status === "BROKEN"
+    && checked.statusCode === null
+    && (checked.reason === "NETWORK_ERROR" || checked.reason === "TIMEOUT" || checked.reason.startsWith("GLOBALPING_"));
+}
+
 export interface MarketActivationRouteVerifierPort {
   verify(activationId: string, checkedAt?: Date): Promise<MarketActivationRouteVerificationResult>;
 }
@@ -105,6 +157,7 @@ export class MarketActivationRouteVerifier implements MarketActivationRouteVerif
   constructor(
     private readonly database: Pick<typeof prisma, "marketActivation"> = prisma,
     private readonly httpCheck: typeof checkAffiliateRouteHttp = checkAffiliateRouteHttp,
+    private readonly marketCheck: MarketExitRouteCheck = checkRouteFromMarketExit,
   ) {}
 
   async verify(activationId: string, checkedAt = new Date()): Promise<MarketActivationRouteVerificationResult> {
@@ -134,26 +187,34 @@ export class MarketActivationRouteVerifier implements MarketActivationRouteVerif
         finalHost: null,
       };
     }
-    const checked = await this.httpCheck({
-      url: target,
-      expectation: storedExpectation(
-        tracking.metadata,
-        activation.marketCode,
-        destination,
-        activation.marketProfile,
-        activation.casino,
-      ),
-      inspectTerminalContent: true,
-    });
-    if (checked.status === "BROKEN"
-      && checked.statusCode === null
-      && (checked.reason === "NETWORK_ERROR" || checked.reason === "TIMEOUT")) {
+    const expectation = storedExpectation(
+      tracking.metadata,
+      activation.marketCode,
+      destination,
+      activation.marketProfile,
+      activation.casino,
+    );
+    // Partners answer by the visitor's address: PlayOJO challenges datacentre
+    // IPs, German links send non-German IPs to the .com site. A market route
+    // is therefore judged from a real exit in its own market.
+    const country = marketExitCountry(activation.marketCode);
+    let checked: AffiliateRouteHttpCheck;
+    let verificationExit: string;
+    if (country) {
+      const probes: GlobalpingProbe[] = [];
+      checked = await this.marketCheck({ url: target, country, expectation, onProbe: (probe) => probes.push(probe) });
+      verificationExit = marketExitLabel(country, probes);
+    } else {
+      checked = await this.httpCheck({ url: target, expectation, inspectTerminalContent: true });
+      verificationExit = "DIRECT";
+    }
+    if (inconclusiveCheck(checked)) {
       // A transport failure cannot distinguish an upstream outage from the
       // verifier's own egress/DNS path. Let the controller retry and retain a
       // resumable PREPARING state instead of fabricating external evidence.
       throw new Error("MARKET_ACTIVATION_ROUTE_VERIFICATION_INCONCLUSIVE");
     }
-    return { ...checked, checkedAt };
+    return { ...checked, checkedAt, verificationExit };
   }
 }
 

@@ -74,6 +74,9 @@ function normalizedResult(result, reportCheckedAt) {
         ? currentEvidence.finalHost.trim()
         : null,
       verificationSource: currentEvidence.verificationSource === "DIRECT" ? "DIRECT" : null,
+      verificationExit: typeof currentEvidence.verificationExit === "string" && /^[A-Za-z0-9 -]{1,40}$/.test(currentEvidence.verificationExit)
+        ? currentEvidence.verificationExit
+        : null,
     },
     evidenceRevision: safe(item.evidenceRevision),
   };
@@ -141,6 +144,7 @@ function diagnosticEvidence(row) {
     evidence.statusCode === null ? null : `HTTP=${evidence.statusCode}`,
     evidence.finalHost ? `finalHost=${evidence.finalHost}` : null,
     evidence.method ? `method=${evidence.method}` : null,
+    evidence.verificationExit ? `from=${evidence.verificationExit}` : null,
   ].filter(Boolean).join("; ");
 }
 

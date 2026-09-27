@@ -270,13 +270,53 @@ test("HEAD rejection fallback and CDN challenges are handled without hiding serv
     ),
     validateUrl: noNetworkValidation,
   });
-  assert.equal(wrongHostChallenge.status, "CROSS_GEO", "a challenge must not hide an unexpected destination");
+  assert.equal(wrongHostChallenge.status, "EXTERNAL_CHALLENGE", "a challenge stops the chain before its destination is known");
+  assert.equal(wrongHostChallenge.reason, "HTTP_403");
+  assert.equal(wrongHostChallenge.finalHost, "wrong.example", "the host the chain stopped on stays visible");
+
+  const wrongHostServerError = await checkAffiliateRouteHttp({
+    url: new URL("https://track.example/click?aff=42"), expectation,
+    fetcher: fetchSequence(
+      new Response(null, { status: 302, headers: { location: "https://wrong.example/pe?aff=42" } }),
+      new Response(null, { status: 500 }),
+    ),
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(wrongHostServerError.status, "CROSS_GEO", "a non-challenge response at an unexpected host is still a wrong destination");
 
   const ordinary503 = await checkAffiliateRouteHttp({
     url: new URL("https://casino.example/pe?aff=42"), expectation,
     fetcher: fetchSequence(new Response(null, { status: 503 })), validateUrl: noNetworkValidation,
   });
   assert.equal(ordinary503.status, "BROKEN");
+});
+
+test("challenges are classified before the final host and attribution, so a blocked chain is never a confirmed defect", async () => {
+  // #306: PlayOJO's tracker answers a datacentre address with a Cloudflare
+  // 403 on its own host, and rizk.rs refuses foreign addresses with a 403.
+  for (const response of [
+    () => new Response(null, { status: 401 }),
+    () => new Response(null, { status: 403 }),
+    () => new Response(null, { status: 429 }),
+    () => new Response(null, { status: 503, headers: { "cf-mitigated": "challenge" } }),
+  ]) {
+    const result = await checkAffiliateRouteHttp({
+      url: new URL("https://site.tracker.example/click"),
+      expectation,
+      fetcher: fetchSequence(response()),
+      validateUrl: noNetworkValidation,
+      inspectTerminalContent: true,
+    });
+    assert.equal(result.status, "EXTERNAL_CHALLENGE", String(result.statusCode));
+    assert.equal(result.finalHost, "site.tracker.example");
+  }
+  const cdnChallenge = await checkAffiliateRouteHttp({
+    url: new URL("https://site.tracker.example/click"),
+    expectation,
+    fetcher: fetchSequence(new Response(null, { status: 503, headers: { server: "cloudflare" } })),
+    validateUrl: noNetworkValidation,
+  });
+  assert.equal(cdnChallenge.reason, "HTTP_503_CDN_CHALLENGE");
 });
 
 test("new-destination inspection rejects same-host 200 error pages and JSON terminals", async () => {
@@ -403,6 +443,63 @@ test("route-health service audits the exact canonical activation through its exi
   assert.equal(report.results[0].checkedAt, now.toISOString());
   assert.equal(report.results[0].lastDirectSuccessAt, now.toISOString());
   assert.equal(report.results[0].evidenceRevision, "market-activation:activation:v7");
+});
+
+test("the report shows which market exit a route was checked from", async () => {
+  const service = new AffiliateRouteHealthService(
+    { listClaims: async () => [{ ...canonicalClaim, countryCode: "GB", marketCode: "GB" }] },
+    { verify: async (_activationId, checkedAt) => ({
+      status: "HEALTHY",
+      reason: "GET_FALLBACK_OK",
+      method: "GET",
+      statusCode: 200,
+      durationMs: 1,
+      redirectCount: 2,
+      finalHost: "www.casino.example",
+      checkedAt: checkedAt ?? new Date(),
+      verificationExit: "GB eyeball-network",
+    }) },
+  );
+  const report = await service.run({ now: new Date("2026-09-27T12:00:00.000Z") });
+  assert.equal(report.results[0].currentEvidence.verificationExit, "GB eyeball-network");
+  assert.equal(report.results[0].currentEvidence.verificationSource, "DIRECT");
+  assert.equal(report.results[0].actionRequired, false);
+});
+
+test("a run checks routes with bounded concurrency and starts no check after its budget", async () => {
+  const claims = Array.from({ length: 5 }, (_, index) => ({ ...canonicalClaim, activationId: `activation-${index}` }));
+  let running = 0;
+  let peak = 0;
+  const verified: string[] = [];
+  const service = new AffiliateRouteHealthService(
+    { listClaims: async () => claims },
+    { verify: async (activationId, checkedAt) => {
+      running += 1;
+      peak = Math.max(peak, running);
+      verified.push(activationId);
+      await new Promise((resolve) => setTimeout(resolve, 40));
+      running -= 1;
+      return {
+        status: "HEALTHY",
+        reason: "GET_FALLBACK_OK",
+        method: "GET",
+        statusCode: 200,
+        durationMs: 40,
+        redirectCount: 1,
+        finalHost: "www.casino.example",
+        checkedAt: checkedAt ?? new Date(),
+      };
+    } },
+    { concurrency: 2, startBudgetMs: 20 },
+  );
+  const report = await service.run({ now: new Date("2026-09-08T12:00:00.000Z") });
+  assert.equal(peak, 2);
+  assert.deepEqual(verified, ["activation-0", "activation-1"]);
+  assert.equal(report.summary.totalRoutes, 5);
+  const skipped = report.results.slice(2);
+  assert.ok(skipped.every((result) => result.currentEvidence.verifierStatus === "DEGRADED"
+    && result.currentEvidence.reason === "ROUTE_HEALTH_RUN_BUDGET_EXHAUSTED"));
+  assert.ok(skipped.every((result) => result.actionRequired === false), "an unchecked route keeps its recent direct success");
 });
 
 test("canonical relationship gaps and inconclusive verification fail closed without legacy projection", async () => {

@@ -3,16 +3,21 @@ import test from "node:test";
 
 import { checkAffiliateRouteFromMarket, globalpingFetch } from "../lib/affiliate-health/globalping-fetch";
 
-type Hop = { statusCode: number; headers?: Record<string, string>; body?: string; country?: string };
+type Hop = { statusCode: number; headers?: Record<string, string>; body?: string; country?: string; tags?: string[] };
 
 /** A fake Globalping API: each measurement answers with the next scripted hop. */
-function fakeGlobalping(hops: Hop[]) {
+function fakeGlobalping(hops: Hop[], options: { createStatuses?: number[] } = {}) {
   const requested: Array<{ country: string; host: string; path: string; query?: string }> = [];
+  const locations: unknown[] = [];
+  const createStatuses = [...options.createStatuses ?? []];
   let next = 0;
   const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (init?.method === "POST") {
       const body = JSON.parse(String(init.body));
+      locations.push(body.locations);
+      const status = createStatuses.shift() ?? 202;
+      if (status !== 202) return Response.json({ error: { type: status === 422 ? "no_probes_found" : "error" } }, { status });
       requested.push({ country: body.locations[0].country, host: body.measurementOptions.request.host, path: body.measurementOptions.request.path, query: body.measurementOptions.request.query });
       return Response.json({ id: `m${requested.length}` }, { status: 202 });
     }
@@ -21,12 +26,12 @@ function fakeGlobalping(hops: Hop[]) {
     return Response.json({
       status: "finished",
       results: [{
-        probe: { country: hop.country ?? "DE", city: "Frankfurt", network: "Example" },
+        probe: { country: hop.country ?? "DE", city: "Frankfurt", network: "Example", tags: hop.tags ?? ["datacenter-network"] },
         result: { status: "finished", statusCode: hop.statusCode, headers: hop.headers ?? {}, rawBody: hop.body ?? "" },
       }],
     });
   }) as typeof fetch;
-  return { fetcher, requested };
+  return { fetcher, requested, locations };
 }
 
 const fast = { pollIntervalMs: 0 };
@@ -105,3 +110,75 @@ test("an AWS WAF bot challenge on the expected brand host counts as reaching the
   assert.equal((await reach(405, challenge, "www.other.example")).status, "CROSS_GEO", "a challenge on the wrong host is not the brand");
 });
 
+
+test("an eyeball-network probe is asked for first and recorded when it answers", async () => {
+  const api = fakeGlobalping([{ statusCode: 200, country: "GB", tags: ["eyeball-network"], headers: { "content-type": "text/html" }, body: "<title>Welcome</title>" }]);
+  const probes: Array<{ eyeballNetwork: boolean }> = [];
+  const result = await checkAffiliateRouteFromMarket({
+    url: new URL("https://www.brand.example/"),
+    country: "GB",
+    expectation: { expectedFinalHost: "brand.example", requiredAttributionParameters: [], allowWwwEquivalentFinalHost: true },
+    globalping: { ...fast, fetcher: api.fetcher, preferEyeballNetwork: true, onProbe: (probe) => probes.push(probe) },
+  });
+  assert.equal(result.status, "HEALTHY");
+  assert.deepEqual(api.locations, [[{ country: "GB", tags: ["eyeball-network"] }]]);
+  assert.deepEqual(probes.map((probe) => probe.eyeballNetwork), [true]);
+});
+
+test("a market without an eyeball-network probe falls back to any probe in that market", async () => {
+  const api = fakeGlobalping([{ statusCode: 200, country: "SI", headers: { "content-type": "text/html" }, body: "<title>Welcome</title>" }], { createStatuses: [422] });
+  const probes: Array<{ country: string; eyeballNetwork: boolean }> = [];
+  const result = await checkAffiliateRouteFromMarket({
+    url: new URL("https://www.brand.example/"),
+    country: "SI",
+    expectation: { expectedFinalHost: "brand.example", requiredAttributionParameters: [], allowWwwEquivalentFinalHost: true },
+    globalping: { ...fast, fetcher: api.fetcher, preferEyeballNetwork: true, onProbe: (probe) => probes.push(probe) },
+  });
+  assert.equal(result.status, "HEALTHY");
+  assert.deepEqual(api.locations, [[{ country: "SI", tags: ["eyeball-network"] }], [{ country: "SI" }]]);
+  assert.deepEqual(probes, [{ country: "SI", city: "Frankfurt", network: "Example", eyeballNetwork: false }]);
+});
+
+test("without the eyeball preference the request is unchanged for existing scripts", async () => {
+  const api = fakeGlobalping([{ statusCode: 200, headers: { "content-type": "text/html" }, body: "<title>Welcome</title>" }]);
+  await globalpingFetch("DE", { ...fast, fetcher: api.fetcher })("https://www.partner.example/");
+  assert.deepEqual(api.locations, [[{ country: "DE" }]]);
+});
+
+test("Globalping quota, outage and missing probes surface as GLOBALPING_* with no HTTP status", async () => {
+  const check = (createStatuses: number[]) => checkAffiliateRouteFromMarket({
+    url: new URL("https://www.brand.example/"),
+    country: "GB",
+    expectation: { expectedFinalHost: "brand.example", requiredAttributionParameters: [] },
+    globalping: { ...fast, fetcher: fakeGlobalping([], { createStatuses }).fetcher, preferEyeballNetwork: true },
+  });
+  for (const [createStatuses, reason] of [
+    [[422, 422], "GLOBALPING_NO_PROBE"],
+    [[429], "GLOBALPING_RATE_LIMITED"],
+    [[500], "GLOBALPING_UNAVAILABLE"],
+    [[422, 429], "GLOBALPING_RATE_LIMITED"],
+  ] as const) {
+    const result = await check([...createStatuses]);
+    assert.equal(result.status, "BROKEN", reason);
+    assert.equal(result.reason, reason);
+    assert.equal(result.statusCode, null);
+  }
+});
+
+test("the route deadline stops a measurement that never finishes", async () => {
+  const fetcher = (async (_input: RequestInfo | URL, init?: RequestInit) => (init?.method === "POST"
+    ? Response.json({ id: "m1" }, { status: 202 })
+    : Response.json({ status: "in-progress", results: [] }))) as typeof fetch;
+  const started = Date.now();
+  const result = await checkAffiliateRouteFromMarket({
+    url: new URL("https://www.brand.example/"),
+    country: "GB",
+    expectation: { expectedFinalHost: "brand.example", requiredAttributionParameters: [] },
+    globalping: { fetcher, pollIntervalMs: 10, timeoutMs: 60_000 },
+    timeoutMs: 80,
+  });
+  assert.equal(result.status, "BROKEN");
+  assert.equal(result.reason, "TIMEOUT");
+  assert.equal(result.statusCode, null);
+  assert.ok(Date.now() - started < 2_000, "the route timeout, not Globalping's own, ends the check");
+});
