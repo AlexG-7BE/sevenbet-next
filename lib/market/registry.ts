@@ -43,15 +43,15 @@ export type MarketPublicationPolicy = Readonly<{
 
 export const MARKET_PUBLICATION_POLICY = {
   GB: { routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-09-03" },
-  DE: { routable: true, published: true, indexable: false, indexabilityBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED", reviewedAt: "2026-09-03" },
+  DE: { routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-09-27" },
   IT: { routable: true, published: false, indexable: false, indexabilityBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED", reviewedAt: "2026-09-03" },
   ES: { routable: true, published: true, indexable: false, indexabilityBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED", reviewedAt: "2026-09-03" },
   PE: { routable: true, published: true, indexable: false, indexabilityBlocker: "LOCAL_LEGAL_PRIVACY_REVIEW_AND_REAL_INVENTORY_REQUIRED", reviewedAt: "2026-09-03" },
   PT: { routable: true, published: false, indexable: false, indexabilityBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED", reviewedAt: "2026-09-03" },
   GR: { routable: true, published: true, indexable: false, indexabilityBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED", reviewedAt: "2026-09-03" },
   NL: { routable: true, published: false, indexable: false, indexabilityBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED", reviewedAt: "2026-09-03" },
-  SE: { routable: true, published: true, indexable: false, indexabilityBlocker: "LOCAL_LEGAL_PRIVACY_REVIEW_AND_PLACEHOLDER_INVENTORY_REMOVAL_REQUIRED", reviewedAt: "2026-09-03" },
-  DK: { routable: true, published: true, indexable: false, indexabilityBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED", reviewedAt: "2026-09-03" },
+  SE: { routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-09-27" },
+  DK: { routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-09-27" },
   FI: { routable: true, published: false, indexable: false, indexabilityBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED", reviewedAt: "2026-09-03" },
   NO: { routable: true, published: false, indexable: false, indexabilityBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED", reviewedAt: "2026-09-03" },
   CA: { routable: false, published: false, indexable: false, indexabilityBlocker: "ROUTE_AND_PUBLICATION_NOT_ENABLED", reviewedAt: "2026-09-03" },
@@ -290,11 +290,11 @@ export const MARKET_PROFILES: readonly MarketProfile[] = profiles;
  */
 export const LANGUAGE_ROUTE_PROFILES = [
   { language: "en", publicSlug: "en", defaultLocale: "en-GB", localeVariants: ["en-GB", "en-CA"], label: "English", published: true, indexable: true, publicationBlocker: null },
-  { language: "de", publicSlug: "de", defaultLocale: "de-DE", localeVariants: ["de-DE"], label: "Deutsch", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "de", publicSlug: "de", defaultLocale: "de-DE", localeVariants: ["de-DE"], label: "Deutsch", published: true, indexable: true, publicationBlocker: null },
   { language: "es", publicSlug: "es", defaultLocale: "es-ES", localeVariants: ["es-ES", "es-PE"], label: "Español", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "el", publicSlug: "el", defaultLocale: "el-GR", localeVariants: ["el-GR"], label: "Ελληνικά", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
-  { language: "sv", publicSlug: "sv", defaultLocale: "sv-SE", localeVariants: ["sv-SE"], label: "Svenska", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
-  { language: "da", publicSlug: "da", defaultLocale: "da-DK", localeVariants: ["da-DK"], label: "Dansk", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "sv", publicSlug: "sv", defaultLocale: "sv-SE", localeVariants: ["sv-SE"], label: "Svenska", published: true, indexable: true, publicationBlocker: null },
+  { language: "da", publicSlug: "da", defaultLocale: "da-DK", localeVariants: ["da-DK"], label: "Dansk", published: true, indexable: true, publicationBlocker: null },
   { language: "it", publicSlug: "it", defaultLocale: "it-IT", localeVariants: ["it-IT"], label: "Italiano", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "pt", publicSlug: "pt", defaultLocale: "pt-PT", localeVariants: ["pt-PT"], label: "Português", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "nl", publicSlug: "nl", defaultLocale: "nl-NL", localeVariants: ["nl-NL"], label: "Nederlands", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
