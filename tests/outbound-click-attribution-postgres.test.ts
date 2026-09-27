@@ -6,6 +6,10 @@ import { NextRequest } from "next/server";
 
 import { GET as outboundRedirectGet } from "../app/r/[slug]/route";
 import {
+  ANALYTICS_INTERNAL_COOKIE,
+  signedAnalyticsInternalMarker,
+} from "../lib/analytics/identity.server";
+import {
   recordOutboundAttribution,
   type OutboundAttributionInput,
 } from "../lib/analytics/outbound-attribution.server";
@@ -14,6 +18,8 @@ import { affiliateRedirectService } from "../lib/services/affiliate-redirect.ser
 import { outboundClickService } from "../lib/services/outbound-click.service";
 
 const aggregateFailureConstraint = "OutboundClickAttribution_test_failure";
+const detailedFailureConstraint = "OutboundClickAttribution_detail_test_failure";
+const internalMarkerSecret = "outbound-attribution-internal-marker-secret-32";
 
 function assertDisposableDatabase(value: string | undefined) {
   if (!value) throw new Error("DATABASE_URL is required");
@@ -40,6 +46,19 @@ async function installAggregateFailureConstraint() {
   await dropAggregateFailureConstraint();
   await prisma.$executeRawUnsafe(
     `ALTER TABLE "AffiliateOutboundClickDaily" ADD CONSTRAINT "${aggregateFailureConstraint}" CHECK (false) NOT VALID`,
+  );
+}
+
+async function dropDetailedFailureConstraint() {
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "OutboundClick" DROP CONSTRAINT IF EXISTS "${detailedFailureConstraint}"`,
+  );
+}
+
+async function installDetailedFailureConstraint() {
+  await dropDetailedFailureConstraint();
+  await prisma.$executeRawUnsafe(
+    `ALTER TABLE "OutboundClick" ADD CONSTRAINT "${detailedFailureConstraint}" CHECK (false) NOT VALID`,
   );
 }
 
@@ -113,11 +132,12 @@ function successfulInput(
   clickId: string,
   countryCode: string,
   attemptedAt: Date,
+  headers: Record<string, string> = {},
 ): OutboundAttributionInput {
   return {
     clickId,
     request: new Request(`https://b4gamble.com/r/${fixture.redirectSlug.slug}?placement=casino_detail_hero`, {
-      headers: { referer: "https://b4gamble.com/casinos/outbound-attribution?token=never-persist" },
+      headers: { referer: "https://b4gamble.com/casinos/outbound-attribution?token=never-persist", ...headers },
     }),
     requestedSlug: fixture.redirectSlug.slug,
     attemptedAt,
@@ -161,8 +181,13 @@ async function waitFor(check: () => boolean | Promise<boolean>, message: string)
 
 test("canonical outbound attribution transaction is atomic, success-only, and click-id idempotent", async () => {
   assertDisposableDatabase(process.env.DATABASE_URL);
-  const oldNodeEnv = process.env.NODE_ENV;
-  Object.assign(process.env, { NODE_ENV: "test" });
+  const oldEnvironment = {
+    NODE_ENV: process.env.NODE_ENV,
+    VERCEL_ENV: process.env.VERCEL_ENV,
+    ANALYTICS_SIGNING_SECRET: process.env.ANALYTICS_SIGNING_SECRET,
+  };
+  // The success-only aggregate counts Production human clicks only.
+  Object.assign(process.env, { NODE_ENV: "production", VERCEL_ENV: "production", ANALYTICS_SIGNING_SECRET: internalMarkerSecret });
   const fixture = await createAffiliateFixture();
   const errorMock = mock.method(console, "error", () => undefined);
   const attemptedAt = new Date("2026-09-14T23:59:59.900Z");
@@ -172,6 +197,10 @@ test("canonical outbound attribution transaction is atomic, success-only, and cl
     aggregateFailure: randomUUID(),
     detailedFailure: randomUUID(),
     duplicate: randomUUID(),
+    bot: randomUUID(),
+    internal: randomUUID(),
+    preview: randomUUID(),
+    test: randomUUID(),
   };
 
   try {
@@ -294,11 +323,43 @@ test("canonical outbound attribution transaction is atomic, success-only, and cl
     assert.equal((await prisma.affiliateOutboundClickDaily.findFirstOrThrow({
       where: { casinoId: fixture.casino.id, countryCode: "SE" },
     })).clickCount, 1);
+
+    // The launch click check (BOT), a staff device (INTERNAL), Preview and test
+    // runs keep their detailed rows but never reach the successful-click report.
+    await recordOutboundAttribution(successfulInput(fixture, clickIds.bot, "FI", attemptedAt, {
+      "user-agent": "globalping probe (https://github.com/jsdelivr/globalping)",
+    }));
+    await recordOutboundAttribution(successfulInput(fixture, clickIds.internal, "NO", attemptedAt, {
+      "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
+      cookie: `${ANALYTICS_INTERNAL_COOKIE}=${signedAnalyticsInternalMarker(internalMarkerSecret)}`,
+    }));
+    Object.assign(process.env, { VERCEL_ENV: "preview" });
+    await recordOutboundAttribution(successfulInput(fixture, clickIds.preview, "NL", attemptedAt));
+    Object.assign(process.env, { NODE_ENV: "test" });
+    await recordOutboundAttribution(successfulInput(fixture, clickIds.test, "GR", attemptedAt));
+    assert.deepEqual(
+      (await prisma.outboundClick.findMany({
+        where: { id: { in: [clickIds.bot, clickIds.internal, clickIds.preview, clickIds.test] } },
+        select: { countryCode: true, state: true, environment: true, trafficKind: true },
+        orderBy: { countryCode: "asc" },
+      })),
+      [
+        { countryCode: "FI", state: "SUCCEEDED", environment: "PRODUCTION", trafficKind: "BOT" },
+        { countryCode: "GR", state: "SUCCEEDED", environment: "TEST", trafficKind: "TEST" },
+        { countryCode: "NL", state: "SUCCEEDED", environment: "PREVIEW", trafficKind: "HUMAN" },
+        { countryCode: "NO", state: "SUCCEEDED", environment: "PRODUCTION", trafficKind: "INTERNAL" },
+      ],
+    );
+    assert.equal(await prisma.affiliateOutboundClickDaily.count({
+      where: { casinoId: fixture.casino.id, countryCode: { in: ["FI", "NO", "NL", "GR"] } },
+    }), 0);
   } finally {
     await dropAggregateFailureConstraint().catch(() => undefined);
     await cleanupFixture(fixture);
     errorMock.mock.restore();
-    restoreEnvironment("NODE_ENV", oldNodeEnv);
+    restoreEnvironment("NODE_ENV", oldEnvironment.NODE_ENV);
+    restoreEnvironment("VERCEL_ENV", oldEnvironment.VERCEL_ENV);
+    restoreEnvironment("ANALYTICS_SIGNING_SECRET", oldEnvironment.ANALYTICS_SIGNING_SECRET);
   }
 });
 
@@ -348,7 +409,7 @@ test("/r preserves successful 302 and blocked recovery responses when observatio
   }));
 
   try {
-    await installAggregateFailureConstraint();
+    await installDetailedFailureConstraint();
     const successfulResponse = await outboundRedirectGet(new NextRequest(
       `https://b4gamble.com/r/${fixture.redirectSlug.slug}?language=en`,
       { headers: { "x-vercel-ip-country": "PE" } },
@@ -362,7 +423,7 @@ test("/r preserves successful 302 and blocked recovery responses when observatio
     assert.equal(await prisma.outboundClick.count({ where: { requestedSlug: fixture.redirectSlug.slug } }), 0);
     assert.equal(await prisma.affiliateOutboundClickDaily.count({ where: { casinoId: fixture.casino.id } }), 0);
 
-    await dropAggregateFailureConstraint();
+    await dropDetailedFailureConstraint();
     Object.assign(process.env, { AFFILIATE_REDIRECT_ENGINE_ENABLED: "false" });
     const blockedResponse = await outboundRedirectGet(new NextRequest(
       `https://b4gamble.com/r/${blockedSlug}`,
@@ -381,7 +442,7 @@ test("/r preserves successful 302 and blocked recovery responses when observatio
     resolveMock.mock.restore();
     warnMock.mock.restore();
     errorMock.mock.restore();
-    await dropAggregateFailureConstraint().catch(() => undefined);
+    await dropDetailedFailureConstraint().catch(() => undefined);
     await cleanupFixture(fixture, [blockedSlug]);
     restoreEnvironment("NODE_ENV", oldEnvironment.NODE_ENV);
     restoreEnvironment("VERCEL", oldEnvironment.VERCEL);
@@ -392,5 +453,6 @@ test("/r preserves successful 302 and blocked recovery responses when observatio
 
 test.after(async () => {
   await dropAggregateFailureConstraint().catch(() => undefined);
+  await dropDetailedFailureConstraint().catch(() => undefined);
   await prisma.$disconnect();
 });
