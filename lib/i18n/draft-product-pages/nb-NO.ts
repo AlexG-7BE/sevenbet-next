@@ -75,8 +75,8 @@ export const NB_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     breadcrumb: "Brødsmulenavigasjon",
   },
   bestOffers: {
-    title: "Sammenligning av kasinotilbud for {market} | B4GAMBLE",
-    description: "Et kort redaksjonelt utvalg for {market}, der du ser vesentlige vilkår og kommersiell tilgjengelighet før du gjør noe.",
+    title: "Beste kasinotilbud: tre valg, vilkår først | B4GAMBLE",
+    description: "Tre kasinotilbud valgt av redaksjonen, med omsetningskrav, minsteinnskudd og utløp synlig før du klikker. 18+.",
     unavailableTitle: "Sammenligning av kasinotilbud er ikke tilgjengelig | B4GAMBLE",
     unavailableDescription: "Den publiserte tilbudssammenligningen for {market} er midlertidig utilgjengelig. Vi erstatter den ikke med en lagret, utdatert eller oppdiktet liste.",
     heroLead: "Tre valg.",
@@ -116,8 +116,8 @@ export const NB_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqWhyThreeAnswer: "En kort liste gjør valget oversiktlig. På Bonuser-siden finner du alle oppføringene som kan sammenlignes.",
   },
   casinos: {
-    title: "Kasinoanmeldelser for {market} | B4GAMBLE",
-    description: "Søk i og sammenlign publiserte kasinoanmeldelser i den redaksjonelle konteksten for {market}.",
+    title: "Kasinoanmeldelser: lisens, betalinger og vilkår | B4GAMBLE",
+    description: "Sammenlign kasinoanmeldelser: lisens, betalingsmåter, uttak og bonusvilkår, gjennomgått før du spiller. 18+.",
     demoTitle: "Demonstrasjon av kasinoanmeldelser | B4GAMBLE",
     demoDescription: "Tydelig merkede, oppdiktede oppføringer viser anmeldelsesformatet uten en aktiv kampanje eller affiliatelenke.",
     heroKicker: "Valgt for {market}",
@@ -147,8 +147,8 @@ export const NB_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqCommissionAnswer: "Nei. Affiliatebetaling bestemmer ikke Editor Score eller den naturlige redaksjonelle rangeringen.",
   },
   bonuses: {
-    title: "Sammenligning av kasinobonuser for {market} | B4GAMBLE",
-    description: "Sammenlign publiserte bonusvilkår for {market} uten å anta at en bekreftet tilbudslenke er tilgjengelig.",
+    title: "Kasinobonuser sammenlignet etter omsetningskrav | B4GAMBLE",
+    description: "Sammenlign velkomstbonuser etter omsetningskrav, minsteinnskudd, maksimal innsats og utløp – vilkårene som avgjør hva en bonus er verdt. 18+.",
     demoTitle: "Demonstrasjon av kasinobonuser | B4GAMBLE",
     demoDescription: "Tydelig merkede, oppdiktede oppføringer viser hvordan vilkår sammenlignes. De er ikke aktive kampanjer eller partnertilbud.",
     heroKicker: "Bonuser · Vilkår først · 18+",
