@@ -84,6 +84,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return blocked("UNSAFE_REDIRECT_RESPONSE", {
         casinoId: result.casinoId,
         affiliateOfferId: result.offerId,
+        affiliateNetworkId: result.affiliateNetworkId,
         redirectSlugId: result.slugId,
         trackingLinkId: result.trackingLinkId,
         countryCode: result.jurisdictionDecision.countryCode,
@@ -101,6 +102,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       locale: hints.language,
       casinoId: result.casinoId,
       affiliateOfferId: result.offerId,
+      affiliateNetworkId: result.affiliateNetworkId,
       redirectSlugId: result.slugId,
       trackingLinkId: result.trackingLinkId,
     };

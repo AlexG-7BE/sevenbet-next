@@ -26,9 +26,13 @@ import {
   deriveAnalyticsRateLimitKey,
 } from "../lib/analytics/rate-limit.server";
 import {
+  isRetryableOutboundWriteError,
+  recordOutboundAttribution,
   recordOutboundAttributionBestEffort,
   safeOutboundPlacement,
   safeOutboundSlug,
+  type OutboundAttributionDependencies,
+  type OutboundAttributionInput,
 } from "../lib/analytics/outbound-attribution.server";
 import { customerWhere } from "../lib/customers/admin.server";
 import { normalizeCustomerEmail } from "../lib/customers/auth-hooks.server";
@@ -506,3 +510,154 @@ test("lifecycle cron is fail-closed, exact-Bearer protected, and processes the b
   const unavailable = createLifecycleQueueCronHandler({ environment: {} });
   assert.equal((await unavailable(new Request("https://b4gamble.com/api/internal/cron/customer-lifecycle"))).status, 503);
 });
+
+// Click writes under concurrency (Package B, 27 Sep 2026): one non-interactive
+// batch, retried once on a connection/pool failure, never double-counted.
+
+type BatchStep = { op: string; args: Record<string, unknown> };
+
+function prismaFailure(code: string) {
+  return Object.assign(new Error(`simulated ${code}`), { name: "PrismaClientKnownRequestError", code });
+}
+
+function fakeAttributionDatabase(failures: Array<Error | null> = [], options: { clickAlreadyStored?: boolean } = {}) {
+  const calls = { batches: [] as BatchStep[][], networkReads: 0, clickLookups: 0, sleeps: [] as number[] };
+  let attempt = 0;
+  const step = (op: string) => (args: Record<string, unknown>) => ({ op, args });
+  const database = {
+    outboundClick: {
+      create: step("outboundClick.create"),
+      findUnique: async () => {
+        calls.clickLookups += 1;
+        return options.clickAlreadyStored ? { id: "stored" } : null;
+      },
+    },
+    analyticsEvent: { createMany: step("analyticsEvent.createMany") },
+    affiliateOutboundClickDaily: { upsert: step("affiliateOutboundClickDaily.upsert") },
+    affiliateOffer: {
+      findUnique: async () => {
+        calls.networkReads += 1;
+        return { program: { networkId: "66666666-6666-4666-8666-666666666666" } };
+      },
+    },
+    analyticsSession: { findUnique: async () => null },
+    $transaction: async (batch: unknown) => {
+      assert.ok(Array.isArray(batch), "the click write is a non-interactive batch, never a callback");
+      calls.batches.push(batch as BatchStep[]);
+      const failure = failures[attempt];
+      attempt += 1;
+      if (failure) throw failure;
+      return (batch as BatchStep[]).map(() => ({}));
+    },
+  };
+  const dependencies: OutboundAttributionDependencies = {
+    database: database as unknown as OutboundAttributionDependencies["database"],
+    sleep: async (milliseconds) => { calls.sleeps.push(milliseconds); },
+  };
+  return { calls, dependencies };
+}
+
+function successfulClick(overrides: Partial<OutboundAttributionInput> = {}): OutboundAttributionInput {
+  return {
+    clickId: "11111111-1111-4111-8111-111111111111",
+    request: new Request("https://b4gamble.com/r/verified-casino?placement=review_hero", {
+      headers: { referer: "https://b4gamble.com/en/casino/verified?utm_source=x", "user-agent": "Mozilla/5.0 (iPhone)" },
+    }),
+    requestedSlug: "verified-casino",
+    attemptedAt: new Date("2026-09-28T12:00:00.000Z"),
+    resolvedAt: new Date("2026-09-28T12:00:00.050Z"),
+    state: "SUCCEEDED",
+    countryCode: "GB",
+    locale: "en-GB",
+    casinoId: "22222222-2222-4222-8222-222222222222",
+    affiliateOfferId: "33333333-3333-4333-8333-333333333333",
+    affiliateNetworkId: "77777777-7777-4777-8777-777777777777",
+    redirectSlugId: "44444444-4444-4444-8444-444444444444",
+    trackingLinkId: "55555555-5555-4555-8555-555555555555",
+    ...overrides,
+  };
+}
+
+async function asProductionRuntime<T>(run: () => Promise<T>) {
+  const previous = { NODE_ENV: process.env.NODE_ENV, VERCEL_ENV: process.env.VERCEL_ENV };
+  Object.assign(process.env, { NODE_ENV: "production", VERCEL_ENV: "production" });
+  try {
+    return await run();
+  } finally {
+    for (const [name, value] of Object.entries(previous)) {
+      if (value === undefined) Reflect.deleteProperty(process.env, name);
+      else Object.assign(process.env, { [name]: value });
+    }
+  }
+}
+
+test("a Production human click writes detail, events and the daily count in one batch, without reads", async () => {
+  const { calls, dependencies } = fakeAttributionDatabase();
+  await asProductionRuntime(() => recordOutboundAttribution(successfulClick(), dependencies));
+  assert.equal(calls.batches.length, 1);
+  const [batch] = calls.batches;
+  assert.deepEqual(batch.map(({ op }) => op), ["outboundClick.create", "analyticsEvent.createMany", "affiliateOutboundClickDaily.upsert"]);
+  assert.equal(calls.networkReads, 0, "the network id carried from the route lookup needs no read");
+  const click = batch[0].args.data as Record<string, unknown>;
+  assert.equal(click.affiliateNetworkId, "77777777-7777-4777-8777-777777777777");
+  // Where the click came from is always kept; who clicked stays behind consent.
+  assert.equal(click.sourcePage, "/en/casino/verified");
+  assert.equal(click.placement, "REVIEW_HERO");
+  assert.equal(click.anonymousId, null);
+  assert.equal(click.userId, null);
+  assert.equal(click.locale, null);
+  const events = (batch[1].args.data as Array<Record<string, unknown>>);
+  assert.deepEqual(events.map((event) => event.type), ["OUTBOUND_REDIRECT_ATTEMPTED", "OUTBOUND_REDIRECT_SUCCEEDED"]);
+  assert.deepEqual(events.map((event) => event.deviceCategory), ["UNKNOWN", "UNKNOWN"]);
+  assert.equal(batch[1].args.skipDuplicates, true);
+  const daily = batch[2].args as { update: Record<string, unknown> };
+  assert.deepEqual(daily.update.clickCount, { increment: 1 });
+});
+
+test("without a carried network id the recorder still reads it, and a blocked click adds no daily count", async () => {
+  const { calls, dependencies } = fakeAttributionDatabase();
+  await asProductionRuntime(() => recordOutboundAttribution(successfulClick({
+    state: "BLOCKED",
+    blockedReason: "UNSAFE_REDIRECT_RESPONSE",
+    affiliateNetworkId: undefined,
+  }), dependencies));
+  assert.equal(calls.networkReads, 1);
+  assert.deepEqual(calls.batches[0].map(({ op }) => op), ["outboundClick.create", "analyticsEvent.createMany"]);
+  assert.equal((calls.batches[0][0].args.data as Record<string, unknown>).affiliateNetworkId, "66666666-6666-4666-8666-666666666666");
+});
+
+test("a transient connection or pool failure is retried once with a fresh batch", async () => {
+  for (const code of ["P2028", "P1017", "P2024", "P1001", "P1008", "P2034"]) {
+    assert.equal(isRetryableOutboundWriteError(prismaFailure(code)), true, code);
+    const { calls, dependencies } = fakeAttributionDatabase([prismaFailure(code)]);
+    assert.equal(await recordOutboundAttribution(successfulClick(), dependencies), "11111111-1111-4111-8111-111111111111");
+    assert.equal(calls.batches.length, 2, code);
+    assert.notEqual(calls.batches[0], calls.batches[1], "each attempt builds its own batch");
+    assert.equal(calls.sleeps.length, 1);
+    assert.ok(calls.sleeps[0] >= 150 && calls.sleeps[0] < 300);
+  }
+});
+
+test("data errors are not retried, and a second transient failure gives up", async () => {
+  for (const error of [prismaFailure("P2002"), prismaFailure("P2003"), new Error("check constraint")]) {
+    assert.equal(isRetryableOutboundWriteError(error), false);
+    const { calls, dependencies } = fakeAttributionDatabase([error]);
+    await assert.rejects(recordOutboundAttribution(successfulClick(), dependencies));
+    assert.equal(calls.batches.length, 1);
+  }
+  const { calls, dependencies } = fakeAttributionDatabase([prismaFailure("P1017"), prismaFailure("P1017")]);
+  await assert.rejects(recordOutboundAttribution(successfulClick(), dependencies), /P1017/);
+  assert.equal(calls.batches.length, 2);
+});
+
+test("a retry that meets the click already committed counts it once and succeeds", async () => {
+  const committed = fakeAttributionDatabase([prismaFailure("P1017"), prismaFailure("P2002")], { clickAlreadyStored: true });
+  assert.equal(await recordOutboundAttribution(successfulClick(), committed.dependencies), "11111111-1111-4111-8111-111111111111");
+  assert.equal(committed.calls.batches.length, 2);
+  assert.equal(committed.calls.clickLookups, 1);
+
+  // A duplicate that is not this click (the row is absent) is still an error.
+  const foreign = fakeAttributionDatabase([prismaFailure("P1017"), prismaFailure("P2002")]);
+  await assert.rejects(recordOutboundAttribution(successfulClick(), foreign.dependencies), /P2002/);
+});
+

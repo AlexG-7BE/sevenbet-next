@@ -22,7 +22,7 @@ import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 export type RedirectFailureReason = MarketClosure | "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED" | "NO_GOVERNED_ROUTE" | "SLUG_NOT_FOUND" | "SLUG_INACTIVE" | "NO_ACTIVE_OFFER" | "NO_ELIGIBLE_TRACKING_LINK" | "UNSAFE_REDIRECT_URL";
 
 export type AffiliateRedirectResolution =
-  | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision: JurisdictionDecision; operatorEligibility?: GbOperatorEligibilityDecision; commercialReadiness?: GbCommercialReadinessDecision }
+  | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; affiliateNetworkId?: string | null; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision: JurisdictionDecision; operatorEligibility?: GbOperatorEligibilityDecision; commercialReadiness?: GbCommercialReadinessDecision }
   | { ok: false; reason: RedirectFailureReason; slugId?: string; casinoId?: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision?: JurisdictionDecision; operatorEligibility?: GbOperatorEligibilityDecision; commercialReadiness?: GbCommercialReadinessDecision };
 
 export type AffiliateRedirectPreviewResolution =
@@ -225,6 +225,8 @@ export class AffiliateRedirectService {
       casinoId: activation.casinoId,
       offerId: activation.affiliateOffer.id,
       trackingLinkId: activation.primaryTrackingLink.id,
+      // Carried to the click record so it needs no read of its own.
+      affiliateNetworkId: activation.affiliateOffer.program?.networkId ?? null,
       candidates: [],
     };
 
