@@ -72,7 +72,7 @@ export function indexableMarketProductPaths(snapshot: Awaited<ReturnType<typeof 
     ...(snapshot.bestOffers && snapshot.bestOffers.status !== "unavailable" && snapshot.bestOffers.inventoryMode === "PUBLISHED_ONLY" ? [prefix("/best-offers")] : []),
   ];
   const casinoRoutes = snapshot.casinos
-    .filter((casino) => casino.dataClassification === "PUBLISHED_RECORD")
+    .filter((casino) => casino.dataClassification === "PUBLISHED_RECORD" && casino.indexable !== false)
     .slice(0, 500)
     .map((casino) => ({
       url: absoluteUrl(prefix(`/casino/${casino.slug}`)),
