@@ -75,8 +75,8 @@ export const NL_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     breadcrumb: "Broodkruimelnavigatie",
   },
   bestOffers: {
-    title: "Casinoaanbiedingen vergelijken voor {market} | B4GAMBLE",
-    description: "Een redactionele selectie voor {market}, waarbij je de belangrijke voorwaarden en beschikbaarheid ziet voordat je verdergaat.",
+    title: "Beste casinoaanbiedingen: drie keuzes | B4GAMBLE",
+    description: "Drie casinoaanbiedingen gekozen door de redactie, met inzetvereisten, minimale storting en vervaldatum zichtbaar voordat je klikt. 18+.",
     unavailableTitle: "Vergelijking van casinoaanbiedingen niet beschikbaar | B4GAMBLE",
     unavailableDescription: "De gepubliceerde vergelijking voor {market} is tijdelijk niet beschikbaar. We vervangen deze niet door een opgeslagen, verouderde of verzonnen lijst.",
     heroLead: "Drie keuzes.",
@@ -116,8 +116,8 @@ export const NL_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqWhyThreeAnswer: "Een korte lijst houdt de keuze overzichtelijk; op de pagina Bonussen vind je het volledige aanbod dat in aanmerking komt.",
   },
   casinos: {
-    title: "Casinoreviews voor {market} | B4GAMBLE",
-    description: "Zoek en vergelijk gepubliceerde casinoreviews binnen de redactionele context van {market}.",
+    title: "Casinoreviews: licentie, betalingen en voorwaarden | B4GAMBLE",
+    description: "Vergelijk casinoreviews: licentie, betaalmethoden, uitbetalingen en bonusvoorwaarden, gecontroleerd voordat je speelt. 18+.",
     demoTitle: "Demonstratie van casinoreviews | B4GAMBLE",
     demoDescription: "Duidelijk gemarkeerde fictieve vermeldingen tonen de opzet van een review, zonder actuele promotie of affiliateactie.",
     heroKicker: "Geselecteerd voor {market}",
@@ -147,8 +147,8 @@ export const NL_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqCommissionAnswer: "Nee. Commissie beïnvloedt de Editor Score of redactionele rangschikking niet.",
   },
   bonuses: {
-    title: "Casinobonussen vergelijken voor {market} | B4GAMBLE",
-    description: "Vergelijk gepubliceerde bonusvoorwaarden binnen de redactionele context van {market}, zonder commerciële beschikbaarheid te veronderstellen.",
+    title: "Casinobonussen vergeleken op inzetvereisten | B4GAMBLE",
+    description: "Vergelijk welkomstbonussen op inzetvereisten, minimale storting, maximale inzet en vervaldatum: de voorwaarden die bepalen wat een bonus waard is. 18+.",
     demoTitle: "Demonstratie van casinobonussen | B4GAMBLE",
     demoDescription: "Duidelijk gemarkeerde fictieve vermeldingen laten zien hoe voorwaarden worden vergeleken. Het zijn geen actuele promoties of partneraanbiedingen.",
     heroKicker: "Bonussen · Voorwaarden eerst · 18+",
