@@ -1,11 +1,14 @@
 import { createHash } from "node:crypto";
 
+import { PARTNER_ROUTE_PLACEHOLDER_HOST } from "@/lib/affiliate-routing/redirect-validation";
+
 import { marketAccess, type MarketClosure } from "./access";
 
 /**
  * MARKET-ACCESS-RELEASE-01: bring persisted MarketActivation rows in line
  * with the licence register (RFC-054). Disables every active row in a market
- * the register closes, and registers the licensed markets that have a
+ * the register closes or whose partner link is the registration placeholder,
+ * and registers the licensed markets that have a
  * partner link but no route. Founder-run only, after explicit confirmation.
  */
 export const MARKET_ACCESS_RELEASE = "MARKET-ACCESS-RELEASE-01";
@@ -17,20 +20,35 @@ export type PersistedActivation = Readonly<{
   casinoSlug: string;
   marketCode: string;
   desiredState: "ACTIVE" | "DISABLED";
+  /** The primary tracking link; a registration placeholder means no working partner link. */
+  trackingUrl?: string | null;
 }>;
 
-export type DisableCommand = Readonly<{ activation: PersistedActivation; closure: Exclude<MarketClosure, "OUTSIDE_ADVERTISING_WINDOW"> }>;
+export type DisableClosure = Exclude<MarketClosure, "OUTSIDE_ADVERTISING_WINDOW"> | "PLACEHOLDER_LINK";
+export type DisableCommand = Readonly<{ activation: PersistedActivation; closure: DisableClosure }>;
+
+function placeholderLink(url: string | null | undefined) {
+  if (!url) return false;
+  try {
+    return new URL(url).hostname === PARTNER_ROUTE_PLACEHOLDER_HOST;
+  } catch {
+    return false;
+  }
+}
 
 // A moment inside every advertising window: the German window is a runtime
 // rule, never a reason to take a licensed route down.
 const insideEveryWindow = new Date("2026-09-28T20:00:00Z");
 
 export function planDisables(activations: readonly PersistedActivation[]): DisableCommand[] {
-  return activations.flatMap((activation) => {
+  return activations.flatMap((activation): DisableCommand[] => {
     if (activation.desiredState !== "ACTIVE") return [];
     const access = marketAccess(activation.casinoSlug, activation.marketCode, insideEveryWindow);
-    if (access.open || access.closure === "OUTSIDE_ADVERTISING_WINDOW") return [];
-    return [{ activation, closure: access.closure }];
+    if (!access.open && access.closure !== "OUTSIDE_ADVERTISING_WINDOW") return [{ activation, closure: access.closure }];
+    // An open market whose route was left on the placeholder sends nobody
+    // anywhere; take it down until a working link is registered.
+    if (placeholderLink(activation.trackingUrl)) return [{ activation, closure: "PLACEHOLDER_LINK" }];
+    return [];
   }).sort((left, right) => left.activation.marketCode.localeCompare(right.activation.marketCode)
     || left.activation.casinoSlug.localeCompare(right.activation.casinoSlug));
 }

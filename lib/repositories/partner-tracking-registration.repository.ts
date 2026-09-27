@@ -9,6 +9,7 @@ import {
   type PrismaClient,
 } from "@prisma/client";
 
+import { PARTNER_ROUTE_PLACEHOLDER_HOST } from "@/lib/affiliate-routing/redirect-validation";
 import type {
   PartnerTrackingRegistrationResultRow,
   PartnerTrackingScope,
@@ -877,8 +878,8 @@ export class PartnerTrackingRegistrationRepository {
       where: { id: link.id },
       data: {
         ...(!input.stage.alreadyCanonical && input.verification !== "HEALTHY" ? {
-          destinationUrl: `https://partner-route.invalid/${input.stage.linkHash}`,
-          trackingUrl: `https://partner-route.invalid/${input.stage.linkHash}`,
+          destinationUrl: `https://${PARTNER_ROUTE_PLACEHOLDER_HOST}/${input.stage.linkHash}`,
+          trackingUrl: `https://${PARTNER_ROUTE_PLACEHOLDER_HOST}/${input.stage.linkHash}`,
         } : {}),
         lastCheckedAt: input.checkedAt,
         ...(input.verification === "HEALTHY" ? { verifiedAt: input.checkedAt } : {}),
