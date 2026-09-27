@@ -468,6 +468,7 @@ async function verifyVercelBuildCompatibility() {
     event: "vercel_database_readiness",
     environment: readiness.environment,
     runtimeMode: readiness.runtimeMode,
+    runtimeConnectionLimit: readiness.runtimeConnectionLimit,
     directMode: readiness.directMode,
     sameDatabaseIdentity: readiness.sameDatabaseIdentity,
     ready: readiness.ready,
