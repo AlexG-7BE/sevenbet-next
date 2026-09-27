@@ -27,7 +27,7 @@ with the closure stored as the click's `blockedReason`.
    Any `BROKEN_ROUTE` goes back to the partner before launch.
 3. **Real clicks from every market.**
    `npm run launch:click-check` clicks every casino's public `/r/` route from a
-   Globalping probe in GB, SE, DK and DE and judges each response against the
+   Globalping probe in GB, SE, DK, DE and IE and judges each response against the
    register. It never follows the redirect, so partners receive nothing, and the
    clicks are stored as `BOT` traffic. Accept only:
    - no `VIOLATION` (a closed market reaching a partner) and no `UNEXPECTED`;
