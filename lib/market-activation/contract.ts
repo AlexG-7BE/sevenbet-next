@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { PARTNER_ROUTE_PLACEHOLDER_HOST } from "@/lib/affiliate-routing/redirect-validation";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import {
   canonicalCommercialMarketKey,
@@ -178,7 +179,8 @@ export function normalizeMarketActivationIntent(input: MarketActivationIntentInp
 export function safeActivationDestination(value: string) {
   try {
     const destination = new URL(value);
-    return destination.protocol === "https:" && !destination.username && !destination.password;
+    return destination.protocol === "https:" && !destination.username && !destination.password
+      && destination.hostname !== PARTNER_ROUTE_PLACEHOLDER_HOST;
   } catch {
     return false;
   }

@@ -58,11 +58,6 @@
 .faqList details p { max-width: 56ch; margin: 0; padding: 0 0 32px; color: rgba(16, 15, 15, .72); font-family: var(--font-seven-sans), Arial, sans-serif; font-size: 16px; font-style: normal; line-height: 1.5; }
 .faq :focus-visible { outline-color: var(--sb-acid-ink); }
 
-@keyframes reveal-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
-@supports (animation-timeline: view()) {
-  .reveal { animation: reveal-up 800ms var(--ease) both; animation-timeline: view(); animation-range: entry 0% cover 24%; }
-}
-
 @media (max-width: 1000px) {
   .heroMeta { flex-direction: column; align-items: flex-start; gap: 20px; }
   .heroStats { flex-wrap: wrap; gap: 16px 28px; white-space: normal; }
@@ -89,6 +84,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal { animation: none; }
   .faqList summary span { transition: none; }
 }

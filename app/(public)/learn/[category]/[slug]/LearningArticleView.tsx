@@ -52,7 +52,7 @@ function ArticleBlockView({ block }: { block: ArticleBlock }) {
   if (block.type === "paragraph") return <p>{block.text}</p>;
   if (block.type === "heading") {
     const id = headingId(block);
-    return block.level === 3 ? <h3 id={id}>{block.text}</h3> : <h2 id={id}>{block.text}</h2>;
+    return block.level === 3 ? <h3 id={id}>{block.text}</h3> : <h2 data-motion-reveal id={id}>{block.text}</h2>;
   }
   if (block.type === "list") {
     const items = block.items.map((item, index) => <li key={`${index}-${item}`}>{item}</li>);
@@ -70,7 +70,7 @@ export function LearningArticleRelated({ relatedArticles, messages, hrefFor }: {
   hrefFor: (href: string) => string;
 }) {
   if (!relatedArticles.length) return null;
-  return <section className={`${styles.related} ${handoffStyles.related}`} aria-labelledby="related-reading-title" data-nav-theme="cream"><header><p className={styles.kicker}>{messages.ui.relatedReading}</p><h2 id="related-reading-title">READ NEXT</h2></header><ol>{relatedArticles.map((related, index) => <li key={related.id}><Link href={hrefFor(articlePath(related))}><span>{String(index + 1).padStart(2, "0")}</span><span>{related.category.replaceAll("-", " ")}</span><strong>{related.title}</strong><span>{related.excerpt}</span><i aria-hidden="true">↗</i></Link></li>)}</ol></section>;
+  return <section className={`${styles.related} ${handoffStyles.related}`} aria-labelledby="related-reading-title" data-nav-theme="cream"><header data-motion-reveal><p className={styles.kicker}>{messages.ui.relatedReading}</p><h2 id="related-reading-title">READ NEXT</h2></header><ol>{relatedArticles.map((related, index) => <li key={related.id}><Link href={hrefFor(articlePath(related))}><span>{String(index + 1).padStart(2, "0")}</span><span>{related.category.replaceAll("-", " ")}</span><strong>{related.title}</strong><span>{related.excerpt}</span><i aria-hidden="true">↗</i></Link></li>)}</ol></section>;
 }
 
 export function LearningArticleView({ article, categoryTitle, relatedArticles = [], relatedArticlesSlot, messages, hrefFor, programmePath, preview = false, offerBridge = null }: {

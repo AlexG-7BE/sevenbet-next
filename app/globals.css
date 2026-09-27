@@ -285,6 +285,12 @@ body:has(> [data-public-shell="header"]) {
   transform: translateY(0) !important;
   transition: opacity 460ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms), transform 460ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms) !important;
 }
+/* Phones only: the same short rise as the rest of the site. Desktop Home is unchanged. */
+@media (max-width: 760px) {
+  [data-handoff-page="home"][data-home-interactions="ready"] [data-rise][data-rise-state="pending"] {
+    transform: translateY(16px) !important;
+  }
+}
 [data-handoff-page="home"] [data-stackpanel],
 [data-handoff-page="home"] [data-stackpanel] [data-mob="chapter"],
 [data-handoff-page="home"] [data-stackind] {
@@ -4212,6 +4218,26 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   transition:
     opacity 700ms cubic-bezier(.2,.8,.2,1),
     transform 700ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* Phones scroll fast: a shorter rise that settles within half a second (Founder, 27 Sep 2026). */
+@media (max-width: 760px) {
+  [data-motion-reveal][data-motion-state="pending"] {
+    transform: translateY(16px);
+  }
+
+  [data-motion-reveal][data-motion-state="visible"] {
+    transition-duration: 450ms;
+  }
+}
+
+@media print {
+  [data-motion-reveal],
+  [data-motion-reveal][data-motion-state] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
