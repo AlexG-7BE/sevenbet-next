@@ -1,8 +1,18 @@
 name: Production Smoke
 
+# Read-only Production checks of the conversion path (home in every launch language, Best Offers,
+# Bonuses, Casinos, a casino review, Programme, login, auth) plus the silent fallbacks (sitemap,
+# llms.txt, database-backed lists) and the secret-safe ops-health endpoint. Any failure opens or
+# updates one GitHub issue, "[Production] Smoke alert", assigned to the repository owner; the next
+# green run closes it with a comment. Runbook: docs/06_Operations/Monitoring-and-Incident-Response.md.
+#
+# Every 10 minutes: GitHub drops or delays scheduled runs under load, and the former hourly
+# schedule actually fired only about five times a day (gaps of 3–6 hours, 16–27 Sep 2026).
+# Denser triggers keep a real run inside the one-hour detection target. The repository is
+# public, so standard-runner minutes are free; a run takes well under a minute.
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "4,14,24,34,44,54 * * * *"
   workflow_dispatch:
 
 concurrency:
@@ -11,12 +21,17 @@ concurrency:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   smoke:
     name: Production Smoke
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      ALERT_TITLE: "[Production] Smoke alert"
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -26,4 +41,83 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-      - run: npm run ops:smoke
+
+      - name: Run public checks and ops health
+        id: smoke
+        shell: bash
+        env:
+          OPS_HEALTH_TOKEN: ${{ secrets.AFFILIATE_HEALTH_MONITOR_TOKEN }}
+        run: |
+          set +e
+          node scripts/production-smoke.mjs --require-ops-health --report smoke-report.json --summary smoke-summary.md
+          status="$?"
+          set -e
+          echo "status=${status}" >> "${GITHUB_OUTPUT}"
+          if [[ -s smoke-summary.md ]]; then cat smoke-summary.md >> "${GITHUB_STEP_SUMMARY}"; fi
+
+      - name: Read the open alert issue
+        id: issue
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Plain listing, not search: the search index can lag behind a just-opened issue.
+          issues="$(gh issue list --state open --limit 200 --json number,title,body)"
+          number="$(printf '%s' "${issues}" | jq -r --arg title "${ALERT_TITLE}" '[.[] | select(.title == $title)][0].number // empty')"
+          if [[ -n "${number}" ]]; then
+            printf '%s' "${issues}" | jq -r --argjson number "${number}" '.[] | select(.number == $number) | .body' > existing-issue.md
+            echo "open=true" >> "${GITHUB_OUTPUT}"
+          else
+            printf '' > existing-issue.md
+            echo "open=false" >> "${GITHUB_OUTPUT}"
+          fi
+          echo "number=${number}" >> "${GITHUB_OUTPUT}"
+
+      - name: Prepare the alert
+        id: alert
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/production-smoke-alert.mjs \
+            --report smoke-report.json \
+            --existing-body existing-issue.md \
+            --issue-open "${{ steps.issue.outputs.open }}" \
+            --body smoke-alert.md \
+            --comment smoke-alert-comment.md \
+            --state smoke-alert-state.json
+          echo "action=$(jq -r '.action' smoke-alert-state.json)" >> "${GITHUB_OUTPUT}"
+          echo "notify=$(jq -r '.notify' smoke-alert-state.json)" >> "${GITHUB_OUTPUT}"
+          echo "body_changed=$(jq -r '.bodyChanged' smoke-alert-state.json)" >> "${GITHUB_OUTPUT}"
+
+      - name: Open, update or close the alert issue
+        if: steps.alert.outputs.action != 'none'
+        shell: bash
+        run: |
+          set -euo pipefail
+          number="${{ steps.issue.outputs.number }}"
+          case "${{ steps.alert.outputs.action }}" in
+            open)
+              # Assigning the owner makes GitHub notify them even when they do not watch all activity.
+              gh issue create --title "${ALERT_TITLE}" --body-file smoke-alert.md --assignee "${GITHUB_REPOSITORY_OWNER}" \
+                || gh issue create --title "${ALERT_TITLE}" --body-file smoke-alert.md
+              ;;
+            update)
+              if [[ "${{ steps.alert.outputs.body_changed }}" == "true" ]]; then
+                gh issue edit "${number}" --body-file smoke-alert.md
+              fi
+              if [[ "${{ steps.alert.outputs.notify }}" == "true" ]]; then
+                gh issue comment "${number}" --body-file smoke-alert-comment.md
+              fi
+              ;;
+            close)
+              gh issue comment "${number}" --body-file smoke-alert-comment.md
+              gh issue close "${number}"
+              ;;
+            *)
+              echo "Unexpected alert action: ${{ steps.alert.outputs.action }}" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Fail the run when a check failed
+        if: steps.smoke.outputs.status != '0'
+        run: exit 1
