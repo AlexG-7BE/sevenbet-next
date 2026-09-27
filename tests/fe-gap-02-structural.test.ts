@@ -89,14 +89,18 @@ test("commercial actions use the direct governed route and neutral managed recov
 });
 
 test("runtime text and sitemap policy match current product truth", () => {
-  const llms = read("app/llms.txt/route.ts");
+  const llms = read("app/llms.txt/route.ts") + read("lib/seo/llms.ts");
   const site = read("lib/site.ts");
   const sitemap = read("app/sitemap.ts");
   const footer = read("components/public-shell/PublicFooter.tsx");
   const shellCatalog = read("lib/i18n/public-shell-catalog.ts");
   assert.match(llms, /practical control/);
-  assert.match(llms, /Casino Data Boundary/);
-  assert.match(llms, /Demonstration records are fictional/);
+  // SEO-CRAWLER-READY-2026-09-27: llms.txt leads with the comparison, keeps the Programme as its own
+  // section and no longer describes a demonstration inventory that is not live.
+  assert.match(llms, /## Casino reviews/);
+  assert.match(llms, /## 10-Step Control Programme/);
+  assert.match(llms, /llms-full\.txt/);
+  assert.doesNotMatch(llms, /Demonstration records are fictional|clearly labelled demonstration/);
   assert.doesNotMatch(llms, /getTopCasinos|Top Casino Profiles|wagering x\$\{|license \$\{/);
   assert.doesNotMatch(llms, /session limit and stop-loss calculator|Recommended stop-loss|safe gambling budget/i);
   // Privacy and Terms are noindex, so the sitemap's core routes leave them out.

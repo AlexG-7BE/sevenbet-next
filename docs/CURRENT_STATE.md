@@ -41,6 +41,28 @@ on sign-up by default), so reminders and campaigns reached almost nobody.
 Resend is on the Free plan (100 emails a day across all mail); an email
 sign-up now costs two emails.
 
+## Crawler-ready pages and AI-search basics — in review
+
+**Founder approval, 27 September 2026** (package C2 of the pre-launch audit;
+[decision record](07_Decisions/SEO-CRAWLER-READY-2026-09-27.md)): search
+engines, AI crawlers and agents get complete, correctly marked-up pages. Only a
+real browser (Fetch Metadata present, not a crawler) gets the instant frame on
+the home page and the commercial pages; everything else gets the full page in
+the first response. Metadata sits in `<head>` for every crawler
+(`htmlLimitedBots`). llms.txt now describes the comparison and the four launch
+markets, lists every published review and links a new `/llms-full.txt` with
+each market's current offers (no partner links, never from the requester's
+IP). robots.txt closes `/r/`, `/go/` and `/outbound/` and drops `Host:`. Review
+pages get localized titles and ≤155-character descriptions; German and Danish
+product titles use searched terms; one sitewide Organization and WebSite; a
+default social image, `favicon.ico`; `/program` is noindex outside
+`en`/`de`/`sv`/`da`; Learn guides declare only their own language and the
+`de`/`sv`/`da` hubs list the English guides; `/de/bonuses` stays in the
+sitemap; the retired odds guide redirects; IndexNow key and publish pings.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed. Not changed: `/casino/21`
+(no provable slug mapping), Bing verification (needs a Bing Webmaster token).
+
 ## German, Swedish and Danish open to search — 27 September 2026
 
 **Founder decision, 27 September 2026** ([SEO-INDEX-DE-SV-DA-2026-09-27](07_Decisions/SEO-INDEX-DE-SV-DA-2026-09-27.md)):
