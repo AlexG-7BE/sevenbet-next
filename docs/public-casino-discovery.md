@@ -70,7 +70,7 @@ Only published, active, in-date bonuses from the immutable Casino snapshot are c
 
 ## DTO and server/client boundary
 
-`PublicCasinoCardDto` is plain serializable data: IDs/slugs, labels, safe media, summary, editorial rating, highlights, optional bonus summary, safe visit action, and publication dates. Prisma models, Decimal, Date objects, provider fields, notes, drafts, mappings, payloads, and commercial destinations do not cross the boundary. The page, cards and data service are Server Components/server-only modules; catalog controls use native GET forms and links, so no client fetch waterfall or Prisma client bundle exists. The only Client Component owns the mobile modal lifecycle and receives rendered form children rather than result data or eligibility authority.
+`PublicCasinoCardDto` is plain serializable data: IDs/slugs, labels, safe media, summary, editorial rating, highlights, optional bonus summary, safe visit action, publication dates, and an `indexable` flag from the review's robots directive (the sitemap skips `noindex` reviews). Prisma models, Decimal, Date objects, provider fields, notes, drafts, mappings, payloads, and commercial destinations do not cross the boundary. The page, cards and data service are Server Components/server-only modules; catalog controls use native GET forms and links, so no client fetch waterfall or Prisma client bundle exists. The only Client Component owns the mobile modal lifecycle and receives rendered form children rather than result data or eligibility authority.
 
 ## SEO, accessibility, and safeguards
 

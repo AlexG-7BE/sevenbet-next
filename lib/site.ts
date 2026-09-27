@@ -24,6 +24,7 @@ export function resolveSiteUrl(environment: SiteEnvironment = process.env as Sit
 
 export const siteUrl = resolveSiteUrl();
 
+// Every route here goes into the sitemap, so noindex pages (Privacy, Terms) stay out.
 export const coreRoutes = [
   "",
   "/10-steps",
@@ -37,8 +38,6 @@ export const coreRoutes = [
   "/contact",
   "/faq",
   "/bonus-guide",
-  "/privacy",
-  "/terms",
 ];
 
 export function absoluteUrl(path: string) {
