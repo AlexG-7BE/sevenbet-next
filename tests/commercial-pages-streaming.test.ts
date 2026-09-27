@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { isCrawlerUserAgent } from "../lib/seo/crawler";
+import { isBrowserRequest, shouldStreamRouteFrame } from "../lib/seo/route-frame";
 
 const read = (path: string) => readFileSync(path, "utf8");
 
@@ -19,8 +20,8 @@ test("catalogue pages stream the route frame before their data loads", () => {
     assert.match(exported, new RegExp(`<${content} raw=\\{raw\\} />`), path);
     // The error harness fires before the boundary so a failure keeps its error status.
     assert.ok(exported.indexOf("triggerPublicCommercialErrorHarness(raw.errorFixture)") < exported.indexOf("<Suspense"), path);
-    // Crawlers get the complete page in the first response.
-    assert.match(exported, new RegExp(`if \\(isCrawlerUserAgent\\(requestHeaders\\.get\\("user-agent"\\)\\)\\) return <${content} raw=\\{raw\\} />;`), path);
+    // Only a real browser gets the frame; crawlers, agents and HTTP clients get the complete page (27 Sep 2026).
+    assert.match(exported, new RegExp(`if \\(!shouldStreamRouteFrame\\(requestHeaders\\)\\) return <${content} raw=\\{raw\\} />;`), path);
     // Only presentation (headers and cookies) is awaited before the frame; the catalogue loads inside.
     assert.doesNotMatch(exported, /await load|Service\./, path);
   }
@@ -33,7 +34,43 @@ test("a casino profile settles existence before its frame streams, so a missing 
   assert.ok(exported.indexOf("notFound()") > -1 && exported.indexOf("notFound()") < exported.indexOf("<Suspense"));
   assert.match(exported, /<Suspense fallback=\{<PublicRouteLoadingFrame destination="casino" label=\{published\.name\} \/>\}>/);
   assert.doesNotMatch(exported, /loadCasinoPage\(/, "the review, offers and action decision load inside the boundary");
-  assert.ok(exported.indexOf("isCrawlerUserAgent(") > exported.indexOf("notFound()"), "a crawler also gets a real 404 first");
+  assert.ok(exported.indexOf("shouldStreamRouteFrame(") > exported.indexOf("notFound()"), "a crawler also gets a real 404 first");
+});
+
+test("the home page streams its frame only to browsers, like the commercial pages", () => {
+  const page = read("app/(public)/page.tsx");
+  const exported = page.slice(page.indexOf("export default async function"));
+  assert.match(exported, /if \(!shouldStreamRouteFrame\(await headers\(\)\)\) return <HomeContent \/>;/);
+  assert.match(exported, /<Suspense fallback=\{<PublicRouteLoadingFrame destination="home" label="B4GAMBLE" \/>\}><HomeContent \/><\/Suspense>/);
+});
+
+test("the frame goes to a real browser only: Fetch Metadata present and not a crawler", () => {
+  const chrome = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+  const browserNavigation = new Headers({ "user-agent": chrome, "sec-fetch-mode": "navigate", "sec-fetch-dest": "document" });
+  const browserRscFetch = new Headers({ "user-agent": chrome, "sec-fetch-mode": "cors", "sec-fetch-dest": "empty" });
+  assert.equal(isBrowserRequest(browserNavigation), true);
+  assert.equal(shouldStreamRouteFrame(browserNavigation), true);
+  assert.equal(shouldStreamRouteFrame(browserRscFetch), true, "client-side navigation keeps the frame too");
+  // Google's renderer is headless Chrome and sends Fetch Metadata, but it is a crawler.
+  assert.equal(shouldStreamRouteFrame(new Headers({
+    "user-agent": "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Googlebot/2.1; +http://www.google.com/bot.html) Chrome/129.0.0.0 Safari/537.36",
+    "sec-fetch-mode": "navigate",
+  })), false);
+  for (const userAgent of [
+    "python-requests/2.32.3",
+    "curl/8.7.1",
+    "node",
+    "Go-http-client/2.0",
+    "axios/1.7.7",
+    "ModelContextProtocol/1.0 (Autonomous; +https://github.com/modelcontextprotocol/servers)",
+    "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; MistralAI-User/1.0; +https://docs.mistral.ai/robots)",
+    "GoogleOther",
+    "Google-NotebookLM",
+    chrome,
+  ]) {
+    assert.equal(shouldStreamRouteFrame(new Headers({ "user-agent": userAgent })), false, `${userAgent} without Fetch Metadata gets the complete page`);
+  }
+  assert.equal(shouldStreamRouteFrame(new Headers()), false);
 });
 
 test("search, AI and preview crawlers are recognised; browsers are not", () => {
@@ -51,6 +88,9 @@ test("search, AI and preview crawlers are recognised; browsers are not", () => {
     "WhatsApp/2.23.20.0",
     "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)",
     "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)",
+    "GoogleOther",
+    "Google-NotebookLM",
+    "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; MistralAI-User/1.0; +https://docs.mistral.ai/robots)",
   ]) assert.equal(isCrawlerUserAgent(crawler), true, crawler);
   for (const person of [
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",

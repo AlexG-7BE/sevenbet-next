@@ -10,7 +10,7 @@ import { EmphasisTail } from "@/components/commercial/CommercialPrimitives";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/best-offers/BestOffers.module.css";
 import { publicOfferService } from "@/lib/services/public-offer.service";
-import { isCrawlerUserAgent } from "@/lib/seo/crawler";
+import { shouldStreamRouteFrame } from "@/lib/seo/route-frame";
 import { absoluteUrl } from "@/lib/site";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, withCommercialUxFixturePresentation, withHandoffOfferData } from "@/lib/final-handoff/visual-data-fixture";
@@ -177,7 +177,7 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const [presentation, requestHeaders] = await Promise.all([resolveServerPresentationContext(), headers()]);
-  // Crawlers read the whole page in the first response; only people get the streamed frame.
-  if (isCrawlerUserAgent(requestHeaders.get("user-agent"))) return <BestOffersContent raw={raw} />;
+  // Only a real browser gets the streamed frame; crawlers, agents and HTTP clients read the whole page.
+  if (!shouldStreamRouteFrame(requestHeaders)) return <BestOffersContent raw={raw} />;
   return <Suspense fallback={<PublicRouteLoadingFrame destination="best-offers" label={publicShellMessages(presentation.locale).bestOffers} />}><BestOffersContent raw={raw} /></Suspense>;
 }

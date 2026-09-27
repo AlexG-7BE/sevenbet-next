@@ -8,7 +8,7 @@ import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceV
 import { PublicRouteLoadingFrame } from "@/components/public-shell/PublicRouteLoadingFrame";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { profileEditorialDocument } from "@/lib/casino-profile/presentation";
-import { casinoProfileMetadata, casinoProfileSchemas, projectCasinoProfileSchemas } from "@/lib/casino-profile/seo";
+import { casinoProfileMetadata, casinoProfileSchemas, casinoReviewMetadataCopy, projectCasinoProfileSchemas } from "@/lib/casino-profile/seo";
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
@@ -16,7 +16,7 @@ import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, visualCasin
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { isCrawlerUserAgent } from "@/lib/seo/crawler";
+import { shouldStreamRouteFrame } from "@/lib/seo/route-frame";
 import { absoluteUrl } from "@/lib/site";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 
@@ -66,9 +66,17 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const casino = loaded.casino ? withHandoffCasinoProfileData(loaded.casino, visualFixture, presentation.locale, fixtureMarket) : null;
   const messages = productPageMessages(presentation.locale);
   if (!casino) return productMetadata({ presentation, pathname: `/casino/${slug}`, title: messages.profile.unavailableTitle, description: messages.profile.unavailableDescription, robots: { index: false, follow: false }, openGraphType: "article" });
-  const base = casinoProfileMetadata(casino, profileEditorialDocument(loaded.editorialResult, casino.id));
-  const title = `${casino.name} ${messages.profile.review} | B4GAMBLE`;
-  const description = `${messages.profile.currentReview}: ${casino.name}. ${casino.summary || messages.common.originalSourceCopy}`;
+  const editorial = profileEditorialDocument(loaded.editorialResult, casino.id);
+  const base = casinoProfileMetadata(casino, editorial);
+  const { title, description } = casinoReviewMetadataCopy({
+    casino,
+    editorial,
+    locale: presentation.locale,
+    fallback: {
+      title: `${casino.name} ${messages.profile.review} | B4GAMBLE`,
+      description: `${messages.profile.currentReview}: ${casino.name}. ${casino.summary || messages.common.originalSourceCopy}`,
+    },
+  });
   return productMetadata({
     presentation,
     pathname: `/casino/${casino.slug}`,
@@ -120,7 +128,7 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
     ? visualCasinoProfileFixture(slug)
     : await publicCasinoService.findPublishedCasino(slug, presentation.marketCountryCode);
   if (!published) notFound();
-  // Crawlers read the whole profile in the first response; only people get the streamed frame.
-  if (isCrawlerUserAgent(requestHeaders.get("user-agent"))) return <CasinoContent raw={raw} slug={slug} visualDataFixture={visualDataFixture} />;
+  // Only a real browser gets the streamed frame; crawlers, agents and HTTP clients read the whole profile.
+  if (!shouldStreamRouteFrame(requestHeaders)) return <CasinoContent raw={raw} slug={slug} visualDataFixture={visualDataFixture} />;
   return <Suspense fallback={<PublicRouteLoadingFrame destination="casino" label={published.name} />}><CasinoContent raw={raw} slug={slug} visualDataFixture={visualDataFixture} /></Suspense>;
 }
