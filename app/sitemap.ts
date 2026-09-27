@@ -18,6 +18,7 @@ import { isLocalizedPublicDestination } from "@/lib/market/routing";
 import { bonusDirectoryIndexable } from "@/lib/seo/product-indexing";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 async function failClosed<T>(load: () => Promise<T>): Promise<T | null> {
   try {

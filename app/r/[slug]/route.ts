@@ -13,6 +13,8 @@ import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-coun
 import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.service";
 
 export const dynamic = "force-dynamic";
+// Bounds the redirect and its after() click write; a hung lookup ends at 30 s, not 300 s.
+export const maxDuration = 30;
 
 function safeDiagnostic(reason: string, metadata: { slugId?: string; casinoId?: string; countryCode?: string | null; currencyCode?: string | null; language?: string | null } = {}) {
   console.warn("affiliate_redirect_unavailable", { reason, ...metadata });
@@ -82,6 +84,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return blocked("UNSAFE_REDIRECT_RESPONSE", {
         casinoId: result.casinoId,
         affiliateOfferId: result.offerId,
+        affiliateNetworkId: result.affiliateNetworkId,
         redirectSlugId: result.slugId,
         trackingLinkId: result.trackingLinkId,
         countryCode: result.jurisdictionDecision.countryCode,
@@ -99,6 +102,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       locale: hints.language,
       casinoId: result.casinoId,
       affiliateOfferId: result.offerId,
+      affiliateNetworkId: result.affiliateNetworkId,
       redirectSlugId: result.slugId,
       trackingLinkId: result.trackingLinkId,
     };

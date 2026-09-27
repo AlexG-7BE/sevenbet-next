@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import { warnForUnsafePrismaRuntimeConnection } from "@/lib/db/prisma-runtime-config";
+import { applyRuntimePoolPolicy, warnForUnsafePrismaRuntimeConnection } from "@/lib/db/prisma-runtime-config";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -17,6 +17,15 @@ const transactionOptions =
 
 warnForUnsafePrismaRuntimeConnection();
 
+// The pooled Prisma Postgres URL gets the code-level runtime pool policy
+// (connection_limit, pool/connect/socket timeouts); every other URL is used as
+// configured, through the schema's env("DATABASE_URL").
+const configuredDatabaseUrl = process.env.DATABASE_URL;
+const runtimeDatabaseUrl = applyRuntimePoolPolicy(configuredDatabaseUrl);
+const datasourceOptions: { datasourceUrl?: string } = runtimeDatabaseUrl && runtimeDatabaseUrl !== configuredDatabaseUrl
+  ? { datasourceUrl: runtimeDatabaseUrl }
+  : {};
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
@@ -25,6 +34,7 @@ export const prisma =
         ? ["warn", "error"]
         : ["error"],
     transactionOptions,
+    ...datasourceOptions,
   });
 
 if (process.env.NODE_ENV !== "production") {
