@@ -202,6 +202,30 @@ test("candidate extraction rejects draft, unpublished, inactive, future and expi
   assert.deepEqual(candidates.map((entry) => entry.bonus.slug), ["published-offer"]);
 });
 
+test("a market's offer without a currency takes its market's currency; a worldwide one does not", () => {
+  const base = { slug: "welcome", title: "Offer", status: "PUBLISHED", offerStatus: "ACTIVE", minimumDeposit: 20 };
+  const candidates = extractPublishedOfferCandidates([{
+    casinoId: "casino",
+    globalBonuses: [{ ...base, id: "global", slug: "global-offer" }],
+    marketBonusGroups: [
+      { countryCode: "GB", bonuses: [{ ...base, id: "gb", slug: "gb-offer" }, { ...base, id: "gb-eur", slug: "gb-eur-offer", currency: "EUR" }] },
+      { countryCode: "SE", bonuses: [{ ...base, id: "se", slug: "se-offer" }] },
+      { countryCode: "DK", bonuses: [{ ...base, id: "dk", slug: "dk-offer" }] },
+      { countryCode: "IE", bonuses: [{ ...base, id: "ie", slug: "ie-offer" }] },
+    ],
+    bonusMetadata: {},
+  }], now);
+  const currency = Object.fromEntries(candidates.map((entry) => [entry.bonus.slug, entry.bonus.currency]));
+  assert.deepEqual(currency, {
+    "global-offer": null,
+    "gb-offer": "GBP",
+    "gb-eur-offer": "EUR",
+    "se-offer": "SEK",
+    "dk-offer": "DKK",
+    "ie-offer": null,
+  });
+});
+
 test("the production candidate read is bounded to the latest published snapshot", () => {
   const source = readFileSync(new URL("../lib/repositories/public-casino.repository.ts", import.meta.url), "utf8");
   const method = source.slice(
