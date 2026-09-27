@@ -778,7 +778,11 @@ test("language switching preserves query state, and native mobile navigation wor
   await languageMenu.locator('button[value="de"]').click();
   await expect(page).toHaveURL(`${baseUrl}/de/casinos?q=stage2`);
   await page.goto(`${baseUrl}/de/learn`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("[data-learn-empty]")).toBeVisible();
+  // A language with no guide of its own lists the English guides, marked as English and
+  // linked to their English pages (SEO-CRAWLER-READY-2026-09-27), instead of an empty hub.
+  await expect(page.locator(`a[href="${fixtureArticlePath}"]`).first()).toBeVisible();
+  await expect(page.locator('[data-learn-article-language="en"]').first()).toContainText("Auf Englisch");
+  await expect(page.locator("[data-learn-empty]")).toHaveCount(0);
   await context.close();
 
   const noJavaScript = await marketContext(browser, "IE", {
@@ -804,7 +808,7 @@ test("language switching preserves query state, and native mobile navigation wor
   await noJavaScriptPage.locator("details[data-public-mobile-disclosure] > summary").click();
   await noJavaScriptPage.locator('#public-mobile-navigation a[data-navigation-href="/learn"]').click();
   await expect(noJavaScriptPage).toHaveURL(`${baseUrl}/de/learn`);
-  await expect(noJavaScriptPage.locator("[data-learn-empty]")).toBeVisible();
+  await expect(noJavaScriptPage.locator(`a[href="${fixtureArticlePath}"]`).first()).toBeVisible();
   await noJavaScript.close();
 });
 
