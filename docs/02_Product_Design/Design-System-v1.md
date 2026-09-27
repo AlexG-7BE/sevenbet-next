@@ -126,6 +126,7 @@ New shared components must prove their intrinsic sizing at 320px and at the cons
 - Dialogs retain labelled native dialog behavior, focus return and Escape handling in their domain owner.
 - Disclosures prefer native `details`/`summary`; forms retain visible labels, errors and result focus behavior.
 - Reduced-motion collapses shared transition durations to `0ms`; domain hover transforms are disabled by their existing media queries.
+- Scroll reveal (Founder, 27 Sep 2026): one site-wide rise, `data-motion-reveal` driven by `components/motion/SiteMotionController.tsx`; Home keeps its own `data-rise` layer. A block rises once when it enters the viewport: 24px over 700ms on desktop, 16px over 450ms at 760px and below. It applies to section headings and secondary blocks only. The first screen, offer and casino cards, prices, material terms, partner actions and Programme CTAs never wait for motion, and Help, Self-Check, legal and Programme surfaces do not use it. Content is visible without JavaScript, without `IntersectionObserver`, under reduced motion and in print; `tests/site-scroll-reveal-browser.spec.ts` enforces this in CI.
 - Acid is reserved for primary action hierarchy. Protected/safety emphasis uses semantic teal and does not become an offer cue.
 - Minimum shared Action target height is 52px; consuming layouts may increase it but not reduce it.
 

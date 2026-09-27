@@ -137,12 +137,12 @@ async function BonusesContent({ raw }: { raw: Record<string, string | string[] |
     </section>
     <section className={styles.directorySection} data-nav-theme="dark" id="bonus-directory">
       <div className={styles.shell}>
-        <header className={`${styles.sectionHeading} ${styles.reveal}`}><h2><EmphasisTail text={messages.bonuses.directoryTitle} /></h2><p>{result.total} {countNoun(presentation.locale, result.total, copy.offerOne, copy.offerOther)}</p></header>
+        <header className={styles.sectionHeading} data-motion-reveal><h2><EmphasisTail text={messages.bonuses.directoryTitle} /></h2><p>{result.total} {countNoun(presentation.locale, result.total, copy.offerOne, copy.offerOther)}</p></header>
         {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.demoDirectoryDisclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure}</p></aside> : null}
         {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><h2>{messages.bonuses.unavailableTitleBody}</h2><p>{messages.bonuses.unavailableCopy}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></section> : <BonusOfferDirectory messages={messages} offers={result.records} presentation={presentation} />}
       </div>
     </section>
-    <section className={styles.method} data-premium-section="bonus-terms-method" data-nav-theme="cream"><div className={`${styles.shell} ${styles.reveal}`}>
+    <section className={styles.method} data-premium-section="bonus-terms-method" data-nav-theme="cream"><div className={styles.shell} data-motion-reveal>
       <div><p className={styles.lightKicker}>{messages.bonuses.methodKicker}</p><h2>{messages.bonuses.methodLead}<br /><em>{messages.bonuses.methodEmphasis}</em></h2><p>{messages.bonuses.methodCopy}</p><Link href="/bonus-guide">{messages.bonuses.guideAction}</Link></div>
       <ol>
         <li><span>01</span><div><strong>{messages.common.wagering}</strong><p>{messages.bonuses.methodCopy}</p></div></li>

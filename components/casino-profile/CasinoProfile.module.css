@@ -144,13 +144,6 @@
 .secondaryAction { border:1px solid rgba(250,250,247,.3); background:transparent; }
 .helpLink { min-height:44px; margin-top:12px; display:inline-flex; align-items:center; color:var(--acid) !important; font-size:13px; text-decoration:underline; text-decoration-color:rgba(228,226,78,.4); text-underline-offset:6px; }
 
-@keyframes reveal-up { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
-@supports (animation-timeline:view()) {
-  .section { view-timeline-name:--profile-section; }
-  .section > * { animation:reveal-up 800ms var(--ease) both; animation-timeline:--profile-section; animation-range:entry 0% cover 24%; }
-  .profileFaqInner,.finalVerdictInner { animation:reveal-up 800ms var(--ease) both; animation-timeline:view(); animation-range:entry 0% cover 24%; }
-}
-
 @media (max-width:1000px) {
   .heroGrid,.section { grid-template-columns:1fr; }
   .section { gap:28px; }
@@ -205,5 +198,4 @@
 }
 @media (prefers-reduced-motion:reduce) {
   .stickyAction,.sectionNav,.profileFaq summary span { transition:none; }
-  .section > *,.profileFaqInner,.finalVerdictInner { animation:none; }
 }
