@@ -66,11 +66,6 @@
 .unavailablePanel nav { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 8px 28px; }
 .unavailablePanel nav a { min-height: 44px; display: inline-flex; align-items: center; color: var(--acid); font-size: 13px; letter-spacing: .04em; text-decoration: underline; text-decoration-color: rgba(228, 226, 78, .4); text-underline-offset: 6px; }
 
-@keyframes reveal-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
-@supports (animation-timeline: view()) {
-  .reveal { animation: reveal-up 800ms var(--ease) both; animation-timeline: view(); animation-range: entry 0% cover 24%; }
-}
-
 @media (max-width: 1000px) {
   .heroMeta { flex-direction: column; align-items: flex-start; gap: 20px; }
   .heroStats { flex-wrap: wrap; gap: 12px 28px; white-space: normal; }
@@ -97,8 +92,4 @@
   .unavailable { padding: 120px 0 64px; place-items: start center; }
   .unavailablePanel { padding: 28px 22px; }
   .unavailablePanel nav { flex-direction: column; align-items: flex-start; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .reveal { animation: none; }
 }

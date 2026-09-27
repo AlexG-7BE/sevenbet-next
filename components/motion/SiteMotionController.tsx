@@ -31,8 +31,16 @@ export function SiteMotionController() {
       };
     }
 
+    // An observer reports every target it starts watching, so its first callback proves it works.
+    // The four-second fuse only covers an observer that never reports: revealing everything on a
+    // timer would drop the rise for anyone who reads the first screen for longer than that.
+    let observerReported = false;
+    let observerBroken = false;
+    let safetyTimer = 0;
+
     try {
       observer = new window.IntersectionObserver((entries) => {
+        observerReported = true;
         entries.forEach((entry) => {
           if (entry.isIntersecting) reveal(entry.target as HTMLElement);
         });
@@ -45,6 +53,16 @@ export function SiteMotionController() {
       };
     }
 
+    const watch = (element: HTMLElement) => {
+      observer?.observe(element);
+      if (observerReported || safetyTimer) return;
+      safetyTimer = window.setTimeout(() => {
+        if (observerReported) return;
+        observerBroken = true;
+        enrolled.forEach(reveal);
+      }, 4_000);
+    };
+
     const enroll = (root: ParentNode) => {
       const candidates = root instanceof HTMLElement && root.matches(REVEAL_SELECTOR)
         ? [root, ...root.querySelectorAll<HTMLElement>(REVEAL_SELECTOR)]
@@ -53,9 +71,9 @@ export function SiteMotionController() {
         if (enrolled.has(element)) return;
         enrolled.add(element);
         const rect = element.getBoundingClientRect();
-        const belowFirstViewport = rect.top > window.innerHeight * .92;
+        const belowFirstViewport = !observerBroken && rect.top > window.innerHeight * .92;
         element.dataset.motionState = belowFirstViewport ? "pending" : "visible";
-        if (belowFirstViewport) observer?.observe(element);
+        if (belowFirstViewport) watch(element);
       });
     };
 
@@ -67,7 +85,6 @@ export function SiteMotionController() {
       }));
     });
     mutationObserver.observe(document.body, { childList: true, subtree: true });
-    const safetyTimer = window.setTimeout(() => enrolled.forEach(reveal), 4_000);
 
     return () => {
       window.clearTimeout(safetyTimer);
