@@ -246,6 +246,30 @@ body:has(> [data-public-shell="header"]) {
   transition-property: background-color, border-color, color, filter, transform !important;
 }
 
+/* Learn guide cards answer the pointer (Founder, 27 Sep 2026). The captured cards carry a
+   box-shadow transition but had no hover state. Start here (.scp2), All guides (.scp3) and
+   the filter echoes share it; the lift stays off for reduced motion. */
+@media (hover: hover) and (pointer: fine) {
+  [data-handoff-page="learn"] a.scp2:is(:hover, :focus-visible),
+  [data-handoff-page="learn"] a.scp3:is(:hover, :focus-visible) {
+    border-color: rgba(16, 15, 15, .32) !important;
+    box-shadow: 0 18px 44px rgba(16, 15, 15, .1), 0 2px 6px rgba(16, 15, 15, .05);
+  }
+  [data-handoff-page="learn"] a.scp3:is(:hover, :focus-visible) > span:last-child {
+    border-bottom-color: rgb(16, 15, 15) !important;
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  [data-handoff-page="learn"] a.scp2,
+  [data-handoff-page="learn"] a.scp3 {
+    transition: transform 300ms cubic-bezier(.2, .8, .2, 1), box-shadow 300ms cubic-bezier(.2, .8, .2, 1), border-color 300ms cubic-bezier(.2, .8, .2, 1) !important;
+  }
+  [data-handoff-page="learn"] a.scp2:is(:hover, :focus-visible),
+  [data-handoff-page="learn"] a.scp3:is(:hover, :focus-visible) {
+    transform: translateY(-3px);
+  }
+}
+
 /* Readability pass (Founder, 25 Sep 2026). lib/final-handoff/readability.ts marks the
    captured elements that break a rule; these declarations beat their inline styles.
    Every handoff page takes them at all widths. Home takes them on phones only: its
