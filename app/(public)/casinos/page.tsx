@@ -14,6 +14,7 @@ import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pa
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { editorialPresentation } from "@/lib/market/editorial-market";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryQuery, CasinoDiscoveryResult } from "@/lib/public-casino-discovery/public-casino-discovery.types";
@@ -48,7 +49,8 @@ function emptyCasinoCollection(query: CasinoDiscoveryQuery): CasinoDiscoveryResu
 }
 
 const loadCasinoCollection = cache(async (visualFixture: boolean) => {
-  const [presentation, authority] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction()]);
+  const [visitorPresentation, authority] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction()]);
+  const presentation = editorialPresentation(visitorPresentation);
   const query = collectionQuery();
   const result = visualFixture
     ? emptyCasinoCollection(query)
