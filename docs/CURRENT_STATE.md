@@ -28,6 +28,18 @@ on sign-up by default), so reminders and campaigns reached almost nobody.
 Resend is on the Free plan (100 emails a day across all mail); an email
 sign-up now costs two emails.
 
+## German, Swedish and Danish open to search — 27 September 2026
+
+**Founder decision, 27 September 2026** ([SEO-INDEX-DE-SV-DA-2026-09-27](07_Decisions/SEO-INDEX-DE-SV-DA-2026-09-27.md)):
+`de`, `sv` and `da` and the DE, SE and DK markets are indexable. Pages carry
+reciprocal hreflang (`en`, `de`, `sv`, `da`, `x-default`), and the sitemap lists
+each market's localized core pages, product pages and casino reviews. Spanish,
+Greek, Italian, Portuguese, Dutch, Finnish and Norwegian stay noindex and outside
+the sitemap. The same day, the titles of the commercial pages stopped naming the
+visitor's country, because Googlebot crawls from the United States. A partner
+route left on the registration placeholder (`partner-route.invalid`) now fails
+closed; GoldenPlay × IE was disabled in Production.
+
 ## Claude-operated partner CRM — code ready, disabled until configured
 
 **Founder instruction, 25 September 2026:** "Claude ведёт CRM" — Claude
@@ -887,7 +899,8 @@ retaining independently trusted `KZ`; a `country=PE` query was removed and the
 public API returned the same isolated projection with or without that query.
 Programme exposes all eleven reciprocal locale alternates plus `x-default`;
 review-gated Product translations remain self-canonical `noindex, follow` and
-outside the sitemap until their independent indexing authority is approved.
+outside the sitemap until their independent indexing authority is approved
+(since 27 September 2026 this applies to every translation except de/sv/da).
 
 Casino directory, Best Offers, Bonuses and a published Casino review rendered
 only canonical operator logos or B4GAMBLE-owned composition, with no creative

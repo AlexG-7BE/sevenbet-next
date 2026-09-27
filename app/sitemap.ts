@@ -109,17 +109,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
   });
-  const completedLocalizedEditorialPaths = [
-    "/methodology",
-    "/contact",
-    "/learn",
-  ];
+  // An indexable market lists the same core pages as the English sitemap,
+  // wherever that page has a localized route in the market.
   const localizedEditorialRoutes = localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
-    .flatMap((market) => completedLocalizedEditorialPaths.map((pathname) => ({
-      url: absoluteUrl(publicMarketPath(market, market.defaultLocale, pathname)),
-      changeFrequency: "monthly" as const,
-      priority: pathname === "/learn" ? 0.8 : 0.7,
-    })));
+    .flatMap((market) => coreRoutes
+      .map((route) => route || "/")
+      .filter((pathname) => isLocalizedPublicDestination(pathname, market))
+      .map((pathname) => ({
+        url: absoluteUrl(publicMarketPath(market, market.defaultLocale, pathname)),
+        changeFrequency: "monthly" as const,
+        priority: pathname === "/" ? 1 : pathname === "/learn" ? 0.8 : 0.7,
+      })));
 
   return [
     ...coreRoutes.map((route) => {
