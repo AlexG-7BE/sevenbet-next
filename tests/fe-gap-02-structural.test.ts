@@ -99,8 +99,9 @@ test("runtime text and sitemap policy match current product truth", () => {
   assert.match(llms, /Demonstration records are fictional/);
   assert.doesNotMatch(llms, /getTopCasinos|Top Casino Profiles|wagering x\$\{|license \$\{/);
   assert.doesNotMatch(llms, /session limit and stop-loss calculator|Recommended stop-loss|safe gambling budget/i);
-  assert.match(site, /["']\/privacy["']/);
-  assert.match(site, /["']\/terms["']/);
+  // Privacy and Terms are noindex, so the sitemap's core routes leave them out.
+  assert.doesNotMatch(site, /["']\/privacy["']/);
+  assert.doesNotMatch(site, /["']\/terms["']/);
   assert.match(footer, /<Link href="\/privacy" prefetch=\{false\}>\{footer\.privacy\}<\/Link>/);
   assert.match(footer, /<Link href="\/terms" prefetch=\{false\}>\{footer\.terms\}<\/Link>/);
   assert.match(shellCatalog, /privacy: "Privacy"/);
