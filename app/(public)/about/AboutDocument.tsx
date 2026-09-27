@@ -15,7 +15,7 @@ export function AboutDocument({ messages }: { messages: AboutMessages }) {
     </header>
 
     <section className={styles.parts} data-about-section="three-parts">
-      <div className={styles.shell}>
+      <div className={styles.shell} data-motion-reveal>
         <h2>{messages.partsTitle}</h2>
         <div className={styles.partGrid}>{parts.map(([number, title, body]) => <article key={number}>
           <span>{number}</span><h3>{title}</h3><p>{body}</p>
@@ -25,15 +25,15 @@ export function AboutDocument({ messages }: { messages: AboutMessages }) {
     </section>
 
     <section className={styles.separation} data-about-section="commercial-separation">
-      <div className={styles.separationGrid}>
+      <div className={styles.separationGrid} data-motion-reveal>
         <div><p className={styles.eyebrow}>{messages.fundingTitle}</p><p>{messages.fundingBody}</p><Link href="/affiliate-disclosure">{messages.disclosureLink}</Link></div>
         <div><p className={styles.eyebrow}>{messages.separationTitle}</p><ul>{messages.separationPoints.map((point) => <li key={point}>{point}</li>)}</ul></div>
       </div>
     </section>
 
     <section className={styles.lines} data-about-section="clear-lines">
-      <div><p className={styles.eyebrow}>{messages.boundariesLabel}</p><h2>{messages.boundariesTitle}</h2></div>
-      <ul>{messages.boundaries.map((boundary) => <li key={boundary}>{boundary}</li>)}</ul>
+      <div data-motion-reveal><p className={styles.eyebrow}>{messages.boundariesLabel}</p><h2>{messages.boundariesTitle}</h2></div>
+      <ul data-motion-reveal>{messages.boundaries.map((boundary) => <li key={boundary}>{boundary}</li>)}</ul>
     </section>
   </article>;
 }

@@ -46,7 +46,7 @@ test("Bonus Guide is a standalone server-rendered document inside the Public She
   assert.doesNotMatch(route + document, /["']use client["']|useEffect|useState|localStorage|sessionStorage/);
   assert.match(publicLayout, /<PublicHeader[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<PublicFooter/);
   assert.equal((document.match(/<h1\b/g) ?? []).length, 1);
-  assert.match(route, /<HandoffPage headerAutoHide name="article" transform=\{\(html\) => transformBonusGuideHandoff\(html, \{ offerBridge: bridge, readNext \}\)\} \/>/);
+  assert.match(route, /<HandoffPage headerAutoHide name="article" revealHeadings transform=\{\(html\) => transformBonusGuideHandoff\(html, \{ offerBridge: bridge, readNext \}\)\} \/>/);
   assert.doesNotMatch(document, /PublicHeader|PublicFooter/);
 });
 

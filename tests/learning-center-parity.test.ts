@@ -254,7 +254,7 @@ test("package C: bonus, casino-choice and payment guides get an early and a clos
 
   const bonus = await renderArticle({ ...fixture, category: "casino-bonuses", bodyBlocks: blocks }, bonusBridge);
   const early = bonus.indexOf('data-learn-offer-bridge="early"');
-  assert.ok(early > bonus.indexOf(">lead</p>") && early < bonus.indexOf('<h2 id="first-first">'), "early bridge sits between the introduction and the first heading");
+  assert.ok(early > bonus.indexOf(">lead</p>") && early < bonus.indexOf('id="first-first">'), "early bridge sits between the introduction and the first heading");
   assert.equal((bonus.match(/data-learn-offer-bridge="early"/g) ?? []).length, 1);
   assert.equal((bonus.match(/data-learn-offer-bridge=""/g) ?? []).length, 1);
   assert.ok(bonus.indexOf('data-learn-offer-bridge=""') > bonus.indexOf(">b</p>"), "closing bridge follows the body");

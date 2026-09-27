@@ -157,12 +157,12 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
       </aside> : null}
 
       <section aria-labelledby="why-heading" className={styles.section} id="why-we-rate">
-        <header><p>01</p><h2 id="why-heading">{copy.whyWeRate}</h2></header>
+        <header data-motion-reveal><p>01</p><h2 id="why-heading">{copy.whyWeRate}</h2></header>
         <ul className={styles.ratingReasons}>{decision.reasons.map((item) => <li className={item.tone === "caveat" ? styles.ratingCaveat : undefined} data-reason-tone={item.tone} key={`${item.tone}:${item.text}`}><span aria-hidden="true">{item.tone === "caveat" ? "!" : "+"}</span>{item.text}</li>)}</ul>
       </section>
 
       <section aria-labelledby="payments-heading" className={`${styles.section} ${styles.altSection}`} id="payments">
-        <header><p>02</p><h2 id="payments-heading">{copy.paymentsAndPayouts}</h2></header>
+        <header data-motion-reveal><p>02</p><h2 id="payments-heading">{copy.paymentsAndPayouts}</h2></header>
         <div className={styles.sectionBody}>
           <SectionFacts empty={withdrawalSummary ? "" : copy.nothingPublishedYet} facts={knownFacts(paymentFacts, copy.notVerified)} />
           {profilePayments.length ? <div className={styles.methodLabels}>{profilePayments.slice(0, 6).map((payment) => <span key={payment.key}>{payment.name}</span>)}</div> : null}
@@ -171,7 +171,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
       </section>
 
       <section aria-labelledby="offer-heading" className={`${styles.section} ${styles.offerSection}`} id="current-offer">
-        <header><p>03</p><h2 id="offer-heading">{copy.currentOffer}</h2></header>
+        <header data-motion-reveal><p>03</p><h2 id="offer-heading">{copy.currentOffer}</h2></header>
         <div className={styles.offerPanel} data-analytics-casino-id={!demo && bonus ? casino.id : undefined} data-analytics-offer-key={!demo && bonus ? bonus.id : undefined}>
           <h3><OfferHeadline text={offerHeadline} /></h3>
           {bonus ? <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(offerFacts, copy.notVerified)} /> : <p>{messages.common.reviewAvailableNoAction}</p>}
@@ -181,22 +181,22 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
       </section>
 
       <section aria-labelledby="games-heading" className={`${styles.section} ${styles.altSection}`} id="games">
-        <header><p>04</p><h2 id="games-heading">{messages.profile.games}</h2></header>
+        <header data-motion-reveal><p>04</p><h2 id="games-heading">{messages.profile.games}</h2></header>
         <div className={styles.sectionBody}>{gameFacts.length ? <SectionFacts empty={copy.nothingPublishedYet} facts={gameFacts} /> : <p className={styles.notVerified}>{copy.nothingPublishedYet}</p>}{providers.length ? <p className={styles.providerLine}><strong>{messages.profile.providers}</strong><span>{providers.join(" · ")}</span></p> : null}</div>
       </section>
 
       <section aria-labelledby="support-heading" className={styles.section} id="support">
-        <header><p>05</p><h2 id="support-heading">{copy.support}</h2></header>
+        <header data-motion-reveal><p>05</p><h2 id="support-heading">{copy.support}</h2></header>
         <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(supportFacts, copy.notVerified)} />
       </section>
 
       <section aria-labelledby="regulation-heading" className={`${styles.section} ${styles.altSection}`} id="regulation">
-        <header><p>06</p><h2 id="regulation-heading">{copy.operatorMarketRegulation}</h2></header>
+        <header data-motion-reveal><p>06</p><h2 id="regulation-heading">{copy.operatorMarketRegulation}</h2></header>
         <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(regulationFacts, copy.notVerified)} />
       </section>
 
       <section aria-labelledby="faq-heading" className={styles.profileFaq} data-nav-theme="cream" data-premium-section="casino-faq" id="casino-faq">
-        <div className={styles.profileFaqInner}>
+        <div className={styles.profileFaqInner} data-motion-reveal>
           <h2 id="faq-heading"><EmphasisTail single="plain" text={messages.profile.questions} /></h2>
           {faqItems.map((item) => <details key={item.question} name="casino-faq"><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}
         </div>
@@ -204,7 +204,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
 
       <section aria-labelledby="verdict-heading" className={styles.finalVerdictSection} data-nav-theme="dark" data-premium-section="casino-verdict" id="our-verdict">
         <div aria-hidden="true" className={styles.verdictGlow} />
-        <div className={styles.finalVerdictInner}>
+        <div className={styles.finalVerdictInner} data-motion-reveal>
           <p className={styles.finalVerdictKicker}>{messages.profile.verdict}</p>
           <h2 className={styles.finalVerdictHeading} id="verdict-heading">
             <span>{casino.name}</span><span aria-hidden="true">—</span><em>{formattedScore ?? copy.notVerified}</em>
