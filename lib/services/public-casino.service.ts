@@ -147,8 +147,9 @@ export class PublicCasinoService {
         product: "CASINO",
         now: this.options.now,
       });
-      const presented = presentInMarket(projected, commercialMarketCode || normalizedCountry, this.options.now ?? new Date());
-      return localizePublicCasino({ ...presented, action: decisions.get(projected.id)?.action ?? null }, presentationLanguage);
+      // Text is localized first; the action is set last, from the request-scoped decision only.
+      const presented = localizePublicCasino(presentInMarket(projected, commercialMarketCode || normalizedCountry, this.options.now ?? new Date()), presentationLanguage);
+      return { ...presented, action: decisions.get(projected.id)?.action ?? null };
     }
     return null;
   }
@@ -193,10 +194,10 @@ export class PublicCasinoService {
       now: this.options.now,
     });
     const now = this.options.now ?? new Date();
-    const cms = mapped.map((casino) => localizePublicCasino({
-      ...presentInMarket(casino, commercialMarketCode || normalizedCountry, now),
+    const cms = mapped.map((casino) => ({
+      ...localizePublicCasino(presentInMarket(casino, commercialMarketCode || normalizedCountry, now), presentationLanguage),
       action: decisions.get(casino.id)?.action ?? null,
-    }, presentationLanguage));
+    }));
     const bySlug = new Map<string, PublicCasinoDTO>();
     for (const casino of cms.sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || b.version - a.version)) {
       if (!bySlug.has(casino.slug)) bySlug.set(casino.slug, casino);
