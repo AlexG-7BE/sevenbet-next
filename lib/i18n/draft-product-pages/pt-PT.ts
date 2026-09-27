@@ -75,8 +75,8 @@ export const PT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     breadcrumb: "Percurso de navegação",
   },
   bestOffers: {
-    title: "Comparação de ofertas de casino para {market} | B4GAMBLE",
-    description: "Uma seleção editorial para {market}, com os termos essenciais e a disponibilidade visíveis antes de continuares.",
+    title: "Melhores ofertas de casino: três escolhas | B4GAMBLE",
+    description: "Três ofertas de casino escolhidas pela redação, com requisitos de apostas, depósito mínimo e validade visíveis antes de clicares. 18+.",
     unavailableTitle: "Comparação de ofertas de casino indisponível | B4GAMBLE",
     unavailableDescription: "A comparação publicada para {market} está temporariamente indisponível. Não é substituída por uma lista guardada, antiga ou inventada.",
     heroLead: "Três escolhas.",
@@ -116,8 +116,8 @@ export const PT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqWhyThreeAnswer: "Uma lista curta mantém a decisão limitada; a página de Bónus inclui todo o diretório elegível.",
   },
   casinos: {
-    title: "Análises de casinos para {market} | B4GAMBLE",
-    description: "Pesquisa e compara análises de casinos publicadas no contexto editorial de {market}.",
+    title: "Análises de casinos: licença, pagamentos e termos | B4GAMBLE",
+    description: "Compara análises de casinos: licença, métodos de pagamento, levantamentos e termos de bónus, verificados antes de jogares. 18+.",
     demoTitle: "Demonstração de análises de casinos | B4GAMBLE",
     demoDescription: "Registos fictícios claramente identificados mostram o formato da análise sem promoções ativas nem ações de afiliado.",
     heroKicker: "Selecionados para {market}",
@@ -147,8 +147,8 @@ export const PT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqCommissionAnswer: "Não. As comissões não influenciam o Editor Score nem a ordenação editorial.",
   },
   bonuses: {
-    title: "Comparação de bónus de casino para {market} | B4GAMBLE",
-    description: "Compara os termos de bónus publicados no contexto editorial de {market}, sem presumir disponibilidade comercial.",
+    title: "Bónus de casino comparados por requisitos de apostas | B4GAMBLE",
+    description: "Compara bónus de boas-vindas por requisitos de apostas, depósito mínimo, aposta máxima e validade: os termos que decidem quanto vale um bónus. 18+.",
     demoTitle: "Demonstração de bónus de casino | B4GAMBLE",
     demoDescription: "Registos fictícios claramente identificados mostram como os termos são comparados. Não são promoções atuais nem ofertas de parceiros.",
     heroKicker: "Bónus · Termos em primeiro lugar · 18+",

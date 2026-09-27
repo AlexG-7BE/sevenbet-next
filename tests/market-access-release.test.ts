@@ -40,6 +40,18 @@ test("the release disables active routes the register closes, and nothing else",
   ]);
 });
 
+test("an open market's route left on the registration placeholder is taken down", () => {
+  const placeholder = "https://partner-route.invalid/6017be37";
+  const plan = planDisables([
+    { ...row("goldenplay", "IE"), trackingUrl: placeholder },
+    { ...row("playojo", "GB"), trackingUrl: "https://site.gotoplayojo.com/index.php?aname=b4gamble" },
+    { ...row("rizk", "IE", "DISABLED"), trackingUrl: placeholder },
+  ]);
+  assert.deepEqual(plan.map(({ activation, closure }) => `${activation.casinoSlug}:${activation.marketCode}:${closure}`), [
+    "goldenplay:IE:PLACEHOLDER_LINK",
+  ]);
+});
+
 test("the German advertising window never takes a licensed route down", () => {
   assert.deepEqual(planDisables([row("turbonino", "DE")]), []);
 });

@@ -1,3 +1,5 @@
+import { PARTNER_ROUTE_PLACEHOLDER_HOST } from "@/lib/affiliate-routing/redirect-validation";
+
 import { marketAccess } from "./access";
 import { CASINO_MARKETS } from "./register";
 
@@ -22,7 +24,7 @@ export type ClickVerdict =
   | "VIOLATION"
   /** Open by licence but the click was refused: a missing or broken route, i.e. lost revenue. */
   | "NO_ROUTE"
-  /** Anything else (5xx, a redirect back to B4GAMBLE other than the unavailable page). */
+  /** Anything else (5xx, a redirect back to B4GAMBLE other than the unavailable page, a placeholder link). */
   | "UNEXPECTED";
 
 const siteHosts = new Set(["b4gamble.com", "www.b4gamble.com"]);
@@ -31,7 +33,8 @@ const siteHosts = new Set(["b4gamble.com", "www.b4gamble.com"]);
 export function clickVerdict(casinoSlug: string, market: string, at: Date, outcome: ClickOutcome): ClickVerdict {
   const open = marketAccess(casinoSlug, market, at).open;
   const location = outcome.location ? new URL(outcome.location, "https://b4gamble.com") : null;
-  const partner = outcome.statusCode === 302 && location && !siteHosts.has(location.hostname);
+  const partner = outcome.statusCode === 302 && location && !siteHosts.has(location.hostname)
+    && location.hostname !== PARTNER_ROUTE_PLACEHOLDER_HOST;
   const refused = outcome.statusCode === 303 && location && siteHosts.has(location.hostname)
     && location.pathname.startsWith("/outbound/unavailable");
   if (partner) return open ? "PASS" : "VIOLATION";
