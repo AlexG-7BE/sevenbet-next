@@ -48,7 +48,7 @@ REQUEST
 → OFFER/TRACKING RESOLUTION
 ```
 
-Market and locale are separate concepts. Language never grants market or commercial authority.
+Market and locale are separate concepts. Language never grants market or commercial authority. Narrowed by the Founder on 27 September 2026 ([NON-MARKET-EDITORIAL-FALLBACK-2026-09-27](../07_Decisions/NON-MARKET-EDITORIAL-FALLBACK-2026-09-27.md)): for a visitor whose country has no market of ours, the `en`, `sv` and `da` routes select the editorial view of GB, SE and DK. Commercial authority stays with the trusted country.
 
 ## Founder business objective
 

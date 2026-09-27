@@ -17,6 +17,7 @@ import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { editorialPresentation } from "@/lib/market/editorial-market";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
@@ -33,7 +34,8 @@ type PageProps = { searchParams: Promise<PublicOfferSearchParams> };
 
 const loadBonusDirectory = cache(async () => {
   const commercialProductStatePromise = resolveServerCommercialProductState();
-  const [presentation, authority] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction()]);
+  const [visitorPresentation, authority] = await Promise.all([resolveServerPresentationContext(), resolveServerJurisdiction()]);
+  const presentation = editorialPresentation(visitorPresentation);
   const query = parsePublicOfferQuery({}, 100);
   const resultPromise = publicOfferService.searchOffers(
     { ...query, country: presentation.marketCountryCode ?? undefined },

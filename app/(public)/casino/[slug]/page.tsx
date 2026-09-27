@@ -16,6 +16,7 @@ import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, visualCasin
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { editorialPresentation } from "@/lib/market/editorial-market";
 import { shouldStreamRouteFrame } from "@/lib/seo/route-frame";
 import { absoluteUrl } from "@/lib/site";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
@@ -31,11 +32,12 @@ const loadEditorial = cache(async (slug: string) => {
   }
 });
 const loadCasinoPage = cache(async (slug: string, visualFixture: boolean) => {
-  const [presentation, authority, editorialResult] = await Promise.all([
+  const [visitorPresentation, authority, editorialResult] = await Promise.all([
     resolveServerPresentationContext(),
     resolveServerJurisdiction(),
     visualFixture ? Promise.resolve(null) : loadEditorial(slug),
   ]);
+  const presentation = editorialPresentation(visitorPresentation);
   const candidate = visualFixture
     ? visualCasinoProfileFixture(slug)
     : await publicCasinoService.getCasino(

@@ -18,6 +18,7 @@ import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pa
 import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 import { productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { editorialPresentation } from "@/lib/market/editorial-market";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
@@ -28,10 +29,11 @@ import { rankBestOffersForCategory } from "@/lib/public-offer/best-offer-ranking
 export const dynamic = "force-dynamic";
 const loadBestOffersPageData = cache(async () => {
   const commercialProductStatePromise = resolveServerCommercialProductState();
-  const [presentation, authority] = await Promise.all([
+  const [visitorPresentation, authority] = await Promise.all([
     resolveServerPresentationContext(),
     resolveServerJurisdiction(),
   ]);
+  const presentation = editorialPresentation(visitorPresentation);
   const resultPromise = publicOfferService.getBestOffersPageData(
     {
       country: presentation.marketCountryCode ?? undefined,
