@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
-import { profileFaqItems, selectProfileBonus } from "@/lib/casino-profile/presentation";
+import { casinoEditorialLanguage, translateCasinoEditorialText } from "@/lib/i18n/casino-editorial-translations";
+import { profileFaqLocalization, selectProfileBonus } from "@/lib/casino-profile/presentation";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { parseRobotsMetadata } from "@/lib/public-casino/public-casino-validation";
 import type { SupportedLocale } from "@/lib/market/registry";
@@ -177,7 +178,10 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
   const canonical = profileCanonical(casino, editorial);
   const demo = casino.dataClassification === "DEMO_FIXTURE";
   const legacy = casino.source === "legacy";
-  const faq = profileFaqItems(casino, selectProfileBonus(casino), editorial);
+  const faq = profileFaqLocalization(casino, selectProfileBonus(casino), editorial);
+  const editorialSummary = editorial?.summary && casino.editorialLanguage
+    ? translateCasinoEditorialText(editorial.summary, casino.editorialLanguage)
+    : editorial?.summary;
   const schemas: Array<Record<string, unknown>> = [
     {
       "@context": "https://schema.org",
@@ -191,7 +195,7 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
       "@context": "https://schema.org",
       "@type": "WebPage",
       name: demo ? `${casino.name} fictional review demonstration` : editorial?.title || casino.title,
-      description: demo ? "Fictional product demonstration; not a current operator, licence claim, partner offer or live promotion." : editorial?.summary || casino.summary,
+      description: demo ? "Fictional product demonstration; not a current operator, licence claim, partner offer or live promotion." : editorialSummary || casino.summary,
       url: canonical,
       ...(casino.publishedAt ? { datePublished: casino.publishedAt } : {}),
       ...(reviewModifiedAt(casino) ? { dateModified: reviewModifiedAt(casino) } : {}),
@@ -214,11 +218,14 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
     });
   }
 
-  if (faq.length) {
+  // A translated FAQ is described only when every entry reads in the page
+  // language, and then says which language it is in (see projectCasinoProfileSchemas).
+  if (faq.items.length && (!faq.language || faq.complete)) {
     schemas.push({
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })),
+      ...(faq.language ? { inLanguage: faq.language } : {}),
+      mainEntity: faq.items.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })),
     });
   }
 
@@ -239,8 +246,11 @@ export function projectCasinoProfileSchemas(
 ) {
   const localized = input.locale !== "en-GB";
   const demo = input.casino.dataClassification === "DEMO_FIXTURE";
+  const pageLanguage = casinoEditorialLanguage(input.locale);
   return schemas.flatMap((schema) => {
-    if (localized && schema["@type"] === "FAQPage") return [];
+    // A localized page keeps only an FAQ written in its own language: the
+    // English FAQ would describe questions the reader does not see.
+    if (localized && schema["@type"] === "FAQPage" && !(pageLanguage && schema.inLanguage === pageLanguage)) return [];
     if (schema["@type"] === "BreadcrumbList") {
       return [{
         ...schema,
@@ -257,6 +267,8 @@ export function projectCasinoProfileSchemas(
           name: `${input.casino.name} — ${input.messages.profile.demoReview}`,
           description: input.messages.profile.demoDisclosure,
         } : {}),
+        // The English editorial title ("… Casino Review") is not the page's language.
+        ...(localized && !demo && pageLanguage ? { name: `${input.casino.name} ${input.messages.profile.review}` } : {}),
         url: input.profileUrl,
       }];
     }
