@@ -89,7 +89,8 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `MEDIA_S3_ENDPOINT`, `MEDIA_S3_REGION`, `MEDIA_S3_BUCKET`, `MEDIA_S3_PUBLIC_BASE_URL` | Sensitive configuration | Optional S3-compatible provider; absent from Preview | Storage owner not documented |
 | `MEDIA_S3_ACCESS_KEY_ID`, `MEDIA_S3_SECRET_ACCESS_KEY`, `MEDIA_S3_SESSION_TOKEN` | Secret | Optional S3-compatible provider; absent from Preview | Storage owner not documented |
 | `PRISMA_INTERACTIVE_TRANSACTION_TIMEOUT_MS` | Runtime tuning | Prisma client | Repository maintainer |
-| `PRODUCTION_SMOKE_BASE_URL` | Operational override | Smoke script; HTTPS or explicit loopback only | Repository maintainer |
+| `AFFILIATE_HEALTH_MONITOR_TOKEN` | Secret | Bearer for the two monitor endpoints, `/api/internal/affiliate/route-health` and `/api/internal/ops-health`; the same value is the GitHub Actions secret used by the `Affiliate Route Health` and `Production Smoke` workflows. Unset in Vercel makes `/api/internal/ops-health` answer 404 | Founder Office/config owner; repository maintainer technical consumer |
+| `PRODUCTION_SMOKE_BASE_URL` | Operational override | Smoke script; HTTPS or explicit loopback only. The monitor token is sent only to `https://b4gamble.com` or `http://127.0.0.1:*` | Repository maintainer |
 | `CI`, `NODE_ENV`, `NEXT_TELEMETRY_DISABLED` | Build/runtime mode | Tooling/framework | Automation-owned |
 
 ## Preview isolation runbook
