@@ -326,10 +326,29 @@ creates a new sanitized version. Allowed HTML is a small semantic subset and
 only approved full-URL placeholders may be used in links.
 
 The optional signup marketing-consent sentence and its fail-closed save error
-also remain in explicit English when no approved localized compliance copy
-exists. This is a visible fallback, not a machine-invented translation.
+are shown in every Programme language from the Programme catalogue (Founder
+decision, 27 September 2026); the English sentence stays the source of policy
+`email-marketing-v1`. One unticked checkbox on the registration screen serves
+Google and email sign-up; a ticked box crosses the Google redirect bound to the
+journey for ten minutes and is recorded after OAuth through the same
+preference service.
 
-Signup observation queues one welcome message. The daily lifecycle cron queues
+Every email sign-up is sent the confirmation link at once (Better Auth
+`sendOnSignUp`), delivered after the response. The link is valid for 24 hours,
+lands on the Programme path of the visitor's language and signs the customer
+in while the address is unconfirmed. A signed-in, unconfirmed customer can ask
+for it again from the Programme dashboard; the auth route refuses anonymous
+requests, and a request within a minute of the last queued/sent/delivered
+confirmation sends nothing.
+
+Signup queues one welcome message and delivers it right after the response
+through the same claim, idempotency key and final eligibility check
+(`deliverWelcomeEmail`, called by the email-auth observer and by the session
+hook that Google sign-ups pass). A disabled runtime leaves it queued without
+spending an attempt, and a failed attempt waits for the worker. See
+[the decision record](../07_Decisions/EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27.md).
+The Free Resend plan allows 100 emails a day across all mail; an email sign-up
+now costs two. The daily lifecycle cron queues
 one Programme reminder for a verified, opted-in, unsuppressed user whose
 incomplete enrollment and last activity exceed the configured 7- or 30-day
 threshold. Stable environment-scoped message keys make cron replay a no-op;

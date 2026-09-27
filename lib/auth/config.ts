@@ -4,6 +4,7 @@ import { twoFactor } from "better-auth/plugins";
 
 import prisma from "@/lib/db/prisma";
 import { databaseAwareBetterAuthLogger } from "@/lib/auth/database-availability";
+import { customerEmailVerificationOptions } from "@/lib/auth/email-verification";
 import { resolveGoogleAuthConfig } from "@/lib/auth/google-config";
 import {
   IDENTITY_ONLY_DISABLED_AUTH_PATHS,
@@ -15,6 +16,7 @@ import {
   adminMfaDatabaseHooks,
   adminMfaRequestHooks,
 } from "@/lib/auth/admin-mfa.server";
+import { runAfterResponse } from "@/lib/http/after-response";
 
 type SevenBetAuthOptions = {
   autoSignIn?: boolean;
@@ -41,12 +43,18 @@ export function createSevenBetAuth({
         await sendAuthEmail({ user, actionUrl: url, templateKey: "PASSWORD_RESET" });
       },
     },
-    emailVerification: {
-      sendVerificationEmail: async ({ user, url }) => {
-        const { sendAuthEmail } = await import("@/lib/email/service.server");
-        await sendAuthEmail({ user, actionUrl: url, templateKey: "EMAIL_VERIFICATION" });
-      },
-    },
+    // Sent on every email sign-up (and on request); delivered after the
+    // response so the provider can never slow down or fail a sign-up.
+    emailVerification: customerEmailVerificationOptions(({ user, url }) => runAfterResponse(async () => {
+      const { sendAuthEmail, verificationEmailRecentlyQueued } = await import("@/lib/email/service.server");
+      if (await verificationEmailRecentlyQueued(user.id)) return;
+      await sendAuthEmail({ user, actionUrl: url, templateKey: "EMAIL_VERIFICATION" });
+    }, () => {
+      console.warn("[email] verification delivery failed", {
+        email_failure_category: "delivery",
+        email_purpose: "EMAIL_VERIFICATION",
+      });
+    })),
     account: {
       encryptOAuthTokens: true,
       updateAccountOnSignIn: false,

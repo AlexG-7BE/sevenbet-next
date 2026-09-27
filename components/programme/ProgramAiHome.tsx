@@ -1,15 +1,20 @@
 "use client";
 
+import { useState } from "react";
+
 import { ProgramAiAuthenticatedHeader } from "@/components/programme/ProgramAiAuthenticatedHeader";
 import type { ProgramAiHome } from "@/components/programme/ProgramAiAuthenticated.types";
 import { programmeMissionProgressCopy, programmeReviewStatusCopy } from "@/components/programme/ProgramAiHome.copy";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
+import { authClient } from "@/lib/auth/client";
 import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiAuthenticated.module.css";
 
-export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionOneEntry, onReview, locale, programmePath }: {
+export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionOneEntry, onReview, locale, programmePath, unconfirmedEmail = null }: {
   error?: string;
+  /** The signed-in customer's address while it is still unconfirmed. */
+  unconfirmedEmail?: string | null;
   home: ProgramAiHome;
   userId: string;
   onMission: (missionNumber: number) => void;
@@ -38,6 +43,7 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
               <strong><span>{String(home.currentMission).padStart(2, "0")}/10</span><small>{t("Missions")}</small></strong>
             </section>
             {researchFeatured ? research : null}
+            {unconfirmedEmail ? <EmailConfirmationNotice email={unconfirmedEmail} locale={locale} programmePath={programmePath} /> : null}
             <section className={styles.journeyCard} aria-labelledby="programme-path-title"><span id="programme-path-title">{t("Your 10-mission journey")}</span><ol>{home.missions.map((mission) => <li aria-current={mission.status === "current" ? "step" : undefined} data-state={mission.status} key={mission.missionNumber}><b>{String(mission.missionNumber).padStart(2, "0")}</b><strong>{programmeMissionCopy(locale, mission.missionNumber).title}</strong><small>{t(mission.status === "completed" ? "Complete" : mission.status === "current" ? "In progress" : "Locked")}</small></li>)}</ol></section>
           </div>
           <div className={styles.dashboardRight}>
@@ -51,6 +57,32 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
         <footer className={styles.dashboardFooter}><span>{t("Your data is private. We never use it for offers or rankings.")}</span><span>{t("18+ · Protected Help remains available.")}</span></footer>
       </main>
     </div>
+  );
+}
+
+/**
+ * Founder decision, 27 Sep 2026: an unconfirmed customer can ask for the
+ * confirmation link again from their dashboard. The link lands back here.
+ */
+function EmailConfirmationNotice({ email, locale, programmePath }: { email: string; locale: ProgrammeLocale; programmePath: string }) {
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "failed">("idle");
+  async function resend() {
+    setState("sending");
+    try {
+      const result = await authClient.sendVerificationEmail({ email, callbackURL: programmePath });
+      setState(result.error ? "failed" : "sent");
+    } catch {
+      setState("failed");
+    }
+  }
+  return (
+    <section className={styles.emailNotice} data-programme-email-confirmation={state}>
+      <p>{programmeText(locale, "Confirm your email: open the link we sent to {email}.", { email })}</p>
+      {state === "sent"
+        ? <p role="status">{programmeText(locale, "Link sent. Check your inbox.")}</p>
+        : <button disabled={state === "sending"} onClick={resend} type="button">{programmeText(locale, state === "sending" ? "Sending the link…" : "Send the link again")}</button>}
+      {state === "failed" ? <p role="alert">{programmeText(locale, "The link could not be sent right now. Try again in a few minutes.")}</p> : null}
+    </section>
   );
 }
 

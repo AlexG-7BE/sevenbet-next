@@ -17,7 +17,7 @@ import { recordServerAnalyticsEventBestEffort } from "@/lib/analytics/service.se
 import { consentedFirstTouch, signupAcquisitionColumns, type AcquisitionTouch } from "@/lib/analytics/first-touch.server";
 import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import prisma from "@/lib/db/prisma";
-import { queueWelcomeEmail } from "@/lib/email/service.server";
+import { deliverWelcomeEmail } from "@/lib/email/service.server";
 import { normalizeCustomerEmail } from "@/lib/customers/auth-hooks.server";
 
 function resultUser(value: unknown) {
@@ -139,8 +139,10 @@ export async function observeSuccessfulAuthentication({
     });
   }
   if (kind === "signup") {
-    await queueWelcomeEmail(user.id).catch(() => {
-      console.error("[email] welcome queue failed", {
+    // This observer already runs after the sign-up response, so the welcome
+    // email can leave now; the nightly lifecycle run retries a failure.
+    await deliverWelcomeEmail(user.id).catch(() => {
+      console.error("[email] welcome delivery failed", {
         email_failure_category: "queue",
       });
     });

@@ -257,13 +257,18 @@ test("email delivery remains provider-abstracted, idempotent, and invoked only b
   for (const file of runtimeFiles) {
     const text = source(file);
     assert.doesNotMatch(text, /\b(?:processQueuedEmailMessage|processQueuedEmailBatch|sendAuthEmail|queueAndProcessWelcomeEmail)\b/, file);
+    // Founder decision, 27 Sep 2026: only the two sign-up signals may deliver the welcome at once.
+    if (/\bdeliverWelcomeEmail\b/.test(text)) {
+      assert.ok(["lib/customers/auth-observer.server.ts", "lib/customers/auth-hooks.server.ts"].includes(file), file);
+    }
   }
-  assert.match(source("lib/customers/auth-observer.server.ts"), /queueWelcomeEmail\(user\.id\)/);
+  assert.match(source("lib/customers/auth-observer.server.ts"), /deliverWelcomeEmail\(user\.id\)/);
+  assert.match(service, /export async function deliverWelcomeEmail[\s\S]*const message = await queueWelcomeEmail\(userId\);[\s\S]*if \(!resolveLifecycleEmailRuntimeConfig\(\) && !overrides\.provider\) return \{ status: "queued" \} as const;[\s\S]*return processQueuedEmailMessage\(message\.id, overrides\);/);
   assert.match(source("lib/email/lifecycle-queue-cron.server.ts"), /processQueuedEmailBatch/);
   const authConfig = source("lib/auth/config.ts");
   assert.match(authConfig, /customerAuthDatabaseHooks/);
   assert.match(authConfig, /sendResetPassword:[\s\S]*sendAuthEmail[\s\S]*templateKey: "PASSWORD_RESET"/);
-  assert.match(authConfig, /sendVerificationEmail:[\s\S]*sendAuthEmail[\s\S]*templateKey: "EMAIL_VERIFICATION"/);
+  assert.match(authConfig, /emailVerification: customerEmailVerificationOptions\([\s\S]*sendAuthEmail[\s\S]*templateKey: "EMAIL_VERIFICATION"/);
   assert.doesNotMatch(authConfig, /processQueuedEmailMessage|processQueuedEmailBatch|queueEmailMessage/);
   assert.match(source("lib/customers/auth-hooks.server.ts"), /normalizeCustomerEmail/);
 });
