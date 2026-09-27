@@ -32,6 +32,9 @@ const routes = [
   "/privacy",
   "/terms",
   "/login",
+  "/reset-password",
+  "/reset-password?token=BrowserAuditResetToken00",
+  "/reset-password?error=INVALID_TOKEN",
 ] as const;
 
 type AuditIssue = {

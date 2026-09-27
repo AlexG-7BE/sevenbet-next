@@ -149,7 +149,7 @@ async function BestOffersContent({ raw }: { raw: Record<string, string | string[
     </div></section>
     {containsDemo ? <section className={styles.demoDisclosure} data-nav-theme="dark" role="note"><div className={styles.shell}><p><strong>{messages.common.demoData}.</strong> {messages.bestOffers.demoCopy}</p></div></section> : null}
     {result.status === "available" ? <><BestOffersExperience inventoryMode={result.inventoryMode} messages={messages} presentation={presentation} shortlist={result.records} />
-      <section className={styles.whyPicked} data-premium-section="best-offers-method" data-nav-theme="cream"><div className={`${styles.shell} ${styles.reveal}`}>
+      <section className={styles.whyPicked} data-premium-section="best-offers-method" data-nav-theme="cream"><div className={styles.shell} data-motion-reveal>
         <div><p className={styles.lightKicker}>{messages.common.methodology}</p><h2><EmphasisTail text={messages.bestOffers.methodTitle} /></h2><p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} <span aria-hidden="true">→</span></Link></p></div>
         <ol>
           <li><span>01</span><div><strong>{messages.common.availability}</strong><p>{messages.bestOffers.whyCopy}</p></div></li>
@@ -157,7 +157,7 @@ async function BestOffersContent({ raw }: { raw: Record<string, string | string[
           <li><span>03</span><div><strong>{messages.common.sourceStatus}</strong><p>{messages.bonuses.proofSources}</p></div></li>
         </ol>
       </div></section>
-      <section className={styles.faq} data-nav-theme="dark" data-premium-section="best-offers-faq"><div className={`${styles.faqGrid} ${styles.reveal}`}><h2><EmphasisTail text={messages.bestOffers.beforeClick} /></h2>
+      <section className={styles.faq} data-nav-theme="dark" data-premium-section="best-offers-faq"><div className={styles.faqGrid} data-motion-reveal><h2><EmphasisTail text={messages.bestOffers.beforeClick} /></h2>
         <div className={styles.faqList}>
           <details name="best-offers-faq" open><summary>{messages.bestOffers.faqWageringQuestion}<span aria-hidden="true">+</span></summary><p>{messages.bestOffers.faqWageringAnswer}</p></details>
           <details name="best-offers-faq"><summary>{messages.bestOffers.faqCommissionQuestion}<span aria-hidden="true">+</span></summary><p>{messages.bestOffers.faqCommissionAnswer}</p></details>

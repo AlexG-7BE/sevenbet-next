@@ -146,11 +146,6 @@
 .stateActions a,.stateActions button { min-height:44px; display:inline-flex; align-items:center; justify-content:center; color:var(--acid); font-size:13px; letter-spacing:.04em; text-decoration:underline; text-decoration-color:rgba(228,226,78,.4); text-underline-offset:6px; }
 .stateActions button { padding:0 22px; border:0; border-radius:var(--sb-radius-button); background:var(--acid); color:var(--ink); cursor:pointer; font:inherit; font-size:13px; font-weight:600; letter-spacing:.08em; text-decoration:none; text-transform:uppercase; }
 
-@keyframes reveal-up { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
-@supports (animation-timeline:view()) {
-  .reveal { animation:reveal-up 800ms var(--ease) both; animation-timeline:view(); animation-range:entry 0% cover 24%; }
-}
-
 @media (max-width:1000px) {
   .heroMeta { flex-direction:column; align-items:flex-start; gap:20px; }
   .heroTicker { flex-wrap:wrap; gap:4px 28px; white-space:normal; }
@@ -200,7 +195,6 @@
   .hero h1,.statePanel h1,.statePanel h2 { hyphens:auto; hyphenate-limit-chars:12 5 5; }
 }
 @media (prefers-reduced-motion:reduce) {
-  .reveal { animation:none; }
   .rankPrimary,.rankSecondary,.categoryRail,.categoryRail button,.rankActions .offerAction,.rankActions .reviewPrimary,.faqList summary span { transition:none; }
   .rankPrimary:hover,.rankSecondary:hover { transform:none; }
 }

@@ -53,7 +53,7 @@ export function TenStepsPage({ aboutHref, locale, programmePath }: {
 
     <section aria-labelledby="ten-steps-builds-title" className={styles.builds} data-nav-theme="dark" data-ten-steps-section="programme-builds">
       <div aria-hidden="true" className={styles.buildsGlow} />
-      <div className={`${styles.shell} ${styles.reveal}`}>
+      <div className={styles.shell} data-motion-reveal>
         <header className={styles.sectionHeader}>
           <p className={styles.eyebrow}>{text[11]}</p>
           <h2 id="ten-steps-builds-title"><EmphasisTail text={text[12]} words={3} /></h2>
@@ -70,7 +70,7 @@ export function TenStepsPage({ aboutHref, locale, programmePath }: {
 
     <section aria-labelledby="ten-steps-path-title" className={styles.path} data-nav-theme="dark" data-ten-steps-section="mission-map">
       <div className={styles.shell}>
-        <header className={`${styles.pathHeader} ${styles.reveal}`}>
+        <header className={styles.pathHeader} data-motion-reveal>
           <p>{text[0]}</p>
           <h2 id="ten-steps-path-title"><EmphasisTail text={text[19]} /></h2>
         </header>
@@ -86,7 +86,7 @@ export function TenStepsPage({ aboutHref, locale, programmePath }: {
     </section>
 
     <section aria-labelledby="ten-steps-account-title" className={styles.account} data-nav-theme="cream" data-ten-steps-section="account-boundary">
-      <div className={`${styles.shell} ${styles.reveal}`}>
+      <div className={styles.shell} data-motion-reveal>
         <div>
           <p className={styles.lightEyebrow}>{text[40]}</p>
           <h2 id="ten-steps-account-title">{text[41]} <em>{text[42]}</em></h2>
@@ -99,8 +99,8 @@ export function TenStepsPage({ aboutHref, locale, programmePath }: {
 
     <section aria-labelledby="ten-steps-final-title" className={styles.final} data-nav-theme="dark" data-ten-steps-section="final-action">
       <div aria-hidden="true" className={styles.finalGlow} />
-      <div className={`${styles.finalInner} ${styles.reveal}`}>
-        <h2 id="ten-steps-final-title">{text[46]}<br /><em>{text[47]}</em></h2>
+      <div className={styles.finalInner}>
+        <h2 data-motion-reveal id="ten-steps-final-title">{text[46]}<br /><em>{text[47]}</em></h2>
         <p>{text[48]}</p>
         <Link className={`${styles.primaryAction} ${styles.finalAction}`} href={startHref} prefetch={false}>{text[5]}</Link>
       </div>

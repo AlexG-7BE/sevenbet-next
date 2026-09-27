@@ -380,7 +380,7 @@ test("undecided visitors see the analytics choice after their first scroll or a 
   assert.equal(shouldAutoOpenPrivacyChoice({ ...base, dismissed: true }), false, "Not now holds for the tab session");
   assert.equal(shouldAutoOpenPrivacyChoice({ ...base, automated: true }), false, "automation opts in explicitly");
   assert.equal(shouldAutoOpenPrivacyChoice({ ...base, automated: true, automationOptIn: true }), true);
-  for (const pathname of ["/program", "/de/program", "/program/mission", "/help", "/help/gamstop", "/es/help", "/login", "/admin/casinos", "/unsubscribe"]) {
+  for (const pathname of ["/program", "/de/program", "/program/mission", "/help", "/help/gamstop", "/es/help", "/login", "/reset-password", "/admin/casinos", "/unsubscribe"]) {
     assert.equal(shouldAutoOpenPrivacyChoice({ ...base, pathname }), false, pathname);
   }
   for (const pathname of ["/", "/de", "/10-steps", "/casino/demo-northstar", "/learn/casino-bonuses/wagering-requirements", "/programme-guide"]) {
