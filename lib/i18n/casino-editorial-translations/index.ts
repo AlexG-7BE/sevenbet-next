@@ -8,8 +8,10 @@
  * whitespace collapsed). A source the catalog does not know — including any
  * later editorial change to the English — is shown as written, so a stale
  * translation can never stand in for newer English copy. Numbers, amounts,
- * brand, operator, regulator and game names are kept as in the source. Offer
- * terms are not catalogued: they stay exactly as published (RFC-037).
+ * brand, operator, regulator and game names are kept as in the source. English
+ * offer terms are catalogued too, by explicit Founder decision of 27 September
+ * 2026 that narrows RFC-037 for sv/da/de; the operator's linked terms remain
+ * the authoritative source (docs/07_Decisions/OFFER-TERMS-TRANSLATIONS-SV-DA-DE-2026-09-27.md).
  */
 import { CASINO_EDITORIAL_ENTRIES } from "./entries";
 import { CASINO_EDITORIAL_NATIVE_TEXT } from "./native";
@@ -89,7 +91,10 @@ export function isCasinoEditorialTextInLanguage(text: string, language: string |
   return Boolean(target && textInLanguage.get(target)!.has(normalizeCasinoEditorialSource(text)));
 }
 
-/** The English source(s) of a catalog translation; unknown text has none. */
+/**
+ * The English source(s) of a catalog translation, for rules that read the
+ * canonical English wording. Unknown text has none.
+ */
 export function casinoEditorialSourceTexts(text: string): readonly string[] {
   return sourcesByTranslation.get(normalizeCasinoEditorialSource(text)) ?? [];
 }

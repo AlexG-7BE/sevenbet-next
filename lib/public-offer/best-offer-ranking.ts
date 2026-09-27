@@ -43,9 +43,12 @@ const severeBonusRestriction = /\b(?:max(?:imum)?\s+(?:cash[ -]?out|withdrawal|w
 /**
  * A deliberately narrow signal from canonical terms. This is not a complete
  * legal interpretation: it only prevents a clearly restrictive known term
- * from winning because its wagering multiplier happens to be lower.
+ * from winning because its wagering multiplier happens to be lower. Terms
+ * translated for a Swedish, Danish or German page carry the count read from
+ * their English source, so every page language ranks the same way.
  */
 export function severeBonusRestrictionCount(offer: PublicOfferDTO) {
+  if (offer.bonus.sourceSevereRestrictionCount !== undefined) return offer.bonus.sourceSevereRestrictionCount;
   return [offer.bonus.eligibility, offer.bonus.wageringText, ...offer.bonus.importantConditions]
     .filter((value): value is string => Boolean(value?.trim()))
     .filter((value) => severeBonusRestriction.test(value)).length;
