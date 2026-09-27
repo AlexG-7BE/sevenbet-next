@@ -14,6 +14,11 @@ opens the licensed markets that have a partner link:
   (operator block, prohibition by law, no local licence, closed grey zone), through
   `marketActivationController.disableCasinoInGeo`. The German advertising window
   never disables a route; it is a runtime rule.
+- **Disable** every `ACTIVE` MarketActivation whose primary link is the registration
+  placeholder `https://partner-route.invalid/<hash>` (closure `PLACEHOLDER_LINK`), even
+  in an open market. Since 27 Sep 2026 such a route is already inert at runtime (no
+  button, `/r/` refuses it); this removes the row the route monitor keeps flagging.
+  First case: GoldenPlay × IE (Founder decision, 27 Sep 2026).
 - **Enable** each licensed market in `ENABLE_TARGETS` (`lib/market-access/release.ts`)
   through `PartnerTrackingRegistrationService`, the one canonical route writer. The
   route is verified **from a real exit in that market** (Globalping), so a German link
