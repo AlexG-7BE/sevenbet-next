@@ -63,8 +63,12 @@ Verified by the launch click check on 27 Sep 2026: GB 18, SE 12, DK 10 partner c
 Germany was checked during the day, so its two routes were closed by the advertising
 window, as they should be.
 
-Ireland (added 27 Sep 2026): 6 Superfly routes are live. The 11 EGO targets above
-bring it to 17 once `apply --only=enable` has run.
+Ireland (added 27 Sep 2026): `apply --only=enable` registered the 11 EGO targets
+the same day, each verified from a Dublin exit. With the 6 Superfly routes, the launch
+click check from Dublin shows **IE 17** partner clicks and no violation.
+PlayOJO Bingo lives on playojo.com (`/bingo/`), so its Irish market profile was first
+pointed at `https://www.playojo.com/bingo/`, as in GB (audited); without it
+registration expected the brand's own domain and did not promote the route.
 
 ## Steps
 

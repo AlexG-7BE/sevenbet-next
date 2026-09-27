@@ -90,8 +90,11 @@ refused); SE 11 and DK 8 clicks reached partners; GB 0 of 19 and DE 0 of 2.
   decision, 25 September 2026).
 - **Activations:** `npm run market-access:release` (runbook
   [MARKET-ACCESS-RELEASE-01](06_Operations/Market-Access-Release-01-Runbook.md))
-  disables 25 activations in closed markets and opens 11 licensed ones; it
-  needs the Founder's confirmation to run against Production.
+  has run against Production with the Founder's confirmation. **DETECTED, launch
+  click check from each market, 27 September 2026:** partner clicks GB 18,
+  SE 12, DK 10 and IE 17 (Ireland opened for eleven EGO brands that day,
+  [decision](07_Decisions/IRELAND-EGO-ROUTES-2026-09-27.md)); Germany's two
+  routes open only 21:00–06:00 Europe/Berlin.
 - **Offers:** the corpora for the launch markets' own offers land through the
   existing Founder-run offer import.
 
