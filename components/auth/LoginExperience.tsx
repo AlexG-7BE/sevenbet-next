@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 
 import { authClient, useSession } from "@/lib/auth/client";
 import { googleLoginCallbacks } from "@/lib/auth/google-flow";
+import { passwordResetPath } from "@/lib/auth/password-reset";
 import { programmeText } from "@/lib/i18n/programme-catalog";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { programmeHelpPath, programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
@@ -107,7 +108,7 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
             <form onSubmit={signInWithEmail}>
               <input aria-label={t("Email")} autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} placeholder={t("Email")} required spellCheck={false} type="email" value={email} />
               <input aria-label={t("Password")} autoComplete="current-password" minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} placeholder={t("Password")} required type="password" value={password} />
-              {!linkRecovery ? <span className={styles.forgot}>{t("Forgot password?")}</span> : null}
+              {!linkRecovery ? <Link className={styles.forgot} href={passwordResetPath(returnTo)}>{t("Forgot password?")}</Link> : null}
               <button className={styles.primary} disabled={busy} type="submit">{busy ? t("Checking account…") : linkRecovery ? t("Sign in, then link Google") : shell.logIn}</button>
             </form>
           </>}

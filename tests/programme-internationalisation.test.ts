@@ -206,6 +206,12 @@ test("Programme middleware establishes a distinct request-local context for all 
   assert.equal(login.headers.get(`x-middleware-request-${PRESENTATION_CONTEXT_HEADER}`), PROGRAMME_PRESENTATION_CONTEXT);
   const arbitrary = await middleware(new NextRequest("http://127.0.0.1:4173/login?returnTo=%2Ffi%2Fprogram%2Funknown"));
   assert.equal(arbitrary.headers.get(`x-middleware-request-${PRESENTATION_CONTEXT_HEADER}`), null);
+  // The emailed reset link keeps the language the visitor asked for it in.
+  const reset = await middleware(new NextRequest("http://127.0.0.1:4173/reset-password?returnTo=%2Fde%2Fprogram&token=AbCdEfGh12345678IjKlMnOp"));
+  assert.equal(reset.headers.get("Content-Language"), "de-DE");
+  assert.equal(reset.headers.get(`x-middleware-request-${PRESENTATION_CONTEXT_HEADER}`), PROGRAMME_PRESENTATION_CONTEXT);
+  const resetArbitrary = await middleware(new NextRequest("http://127.0.0.1:4173/reset-password?returnTo=%2Fadmin"));
+  assert.equal(resetArbitrary.headers.get(`x-middleware-request-${PRESENTATION_CONTEXT_HEADER}`), null);
 });
 
 test("Programme switching preserves only bounded callback state and keeps public publication boundaries separate", () => {
@@ -398,6 +404,7 @@ test("active Programme JSX contains no uncatalogued authored system copy", () =>
     "app/program/not-found.tsx",
     "app/program/page.tsx",
     "components/auth/LoginExperience.tsx",
+    "components/auth/PasswordResetExperience.tsx",
     ...readdirSync("components/programme")
       .filter((name) => /^ProgramAi.*\.tsx$/.test(name))
       .map((name) => `components/programme/${name}`),
