@@ -307,7 +307,19 @@ export function casinoRankingReason(
   return parts.slice(0, 3).join(" · ") || null;
 }
 
+/**
+ * Casinos this visitor can open from here come first; the view's own order holds
+ * inside each group (Founder decision 27 Sep 2026, CASINOS-VISITOR-FIT-ORDER). Stable.
+ */
+export function casinosAvailableToVisitorFirst(casinos: readonly PublicCasinoCardDto[]) {
+  return [...casinos].sort((a, b) => Number(!governedCasinoAction(a)) - Number(!governedCasinoAction(b)));
+}
+
 export function casinosForCollectionView(casinos: readonly PublicCasinoCardDto[], view: CasinoCollectionView) {
+  return casinosAvailableToVisitorFirst(casinosInViewOrder(casinos, view));
+}
+
+function casinosInViewOrder(casinos: readonly PublicCasinoCardDto[], view: CasinoCollectionView) {
   // Top Rated is the directory's default order and uses the shared editorial
   // ranking; the other two views are explicit single-criterion sorts.
   if (view === "top_rated") return rankCasinosByEditorialAuthority(casinos);

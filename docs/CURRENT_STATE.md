@@ -37,6 +37,18 @@ the pre-launch audit. Branch `fix/db-connection-stability`:
 and 2× P2024 in 72 h, one page hung 300 s, and 10 of ~257 click records lost to
 the 5 s interactive-transaction timeout (redirects themselves worked). No
 schema, environment or Vercel setting changes.
+## Launch click package A — in review
+
+**Founder instruction, 27 September 2026** (after the pre-launch audit):
+the Casinos directory lists the casinos a visitor can open first in every view,
+and its commission FAQ says so; "Terms" links on bonus cards and in the review's
+offer section go through the partner route where one exists; the language menus
+name languages from a fixed table, which ends the iPhone Safari re-render of
+every Swedish and Danish page (React #418); the privacy choice sits above a
+visible sticky partner or start bar instead of covering it. See
+[the decision record](07_Decisions/CASINOS-VISITOR-FIT-ORDER-2026-09-27.md).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
 
 ## Email reachability from sign-up — in review
 

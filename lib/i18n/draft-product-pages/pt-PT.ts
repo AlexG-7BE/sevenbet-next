@@ -144,7 +144,7 @@ export const PT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqReviewOnlyQuestion: "O que significa «apenas análise»?",
     faqReviewOnlyAnswer: "A análise editorial está disponível, mas neste momento não existe qualquer link de parceiro.",
     faqCommissionQuestion: "A comissão influencia a ordenação?",
-    faqCommissionAnswer: "Não. As comissões não influenciam o Editor Score nem a ordenação editorial.",
+    faqCommissionAnswer: "A comissão nunca altera o Editor Score. Os casinos para os quais podemos encaminhar-te a partir do teu país aparecem primeiro; dentro de cada grupo, o Editor Score define a ordem.",
   },
   bonuses: {
     title: "Bónus de casino comparados por requisitos de apostas | B4GAMBLE",
