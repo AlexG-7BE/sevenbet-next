@@ -88,8 +88,10 @@ country. Only the historical global fallback `ZZ` is still checked directly.
 - **The operator's own site for the market is a correct landing (27 Sep 2026).**
   From a local exit, partners send the player to their local site even when the
   stored destination is their global one (from a DK exit Betsson, NordicBet and
-  PlayOJO end on `betsson.dk`, `nordicbet.dk` and `playojo.dk`). Unless a route's
-  `routeHealth.expectedFinalHost` pins the host, the verifier also accepts:
+  PlayOJO end on `betsson.dk`, `nordicbet.dk` and `playojo.dk`). Beside the
+  expected host (the route's stored `routeHealth.expectedFinalHost`, which
+  registration records as the host it observed, often from another country),
+  the verifier also accepts:
   - the licensed site the register (`lib/market-access/register.ts`) cites for
     the casino and market;
   - the brand on the market's country-code domain (`<brand>.<cc>`, `.co.<cc>`,

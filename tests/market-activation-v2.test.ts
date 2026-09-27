@@ -703,6 +703,7 @@ test("route verification uses the stored exact-market expectation and persists n
       expectedPathPrefix: "/casino",
       requiredAttributionParameters: ["click_id"],
       allowWwwEquivalentFinalHost: true,
+      acceptedFinalHosts: ["operator.pe", "operator.co.pe", "operator.com.pe", "operator.bet.pe"],
     });
     onProbe(eyeballProbe("PE"));
     onProbe(eyeballProbe("PE"));
@@ -830,6 +831,33 @@ test("route verification accepts the operator's own site for the market: the reg
   // A British site is on .uk.
   await verifierFor("GB", null).verify("activation", NOW);
   assert.deepEqual(expectations[3]?.acceptedFinalHosts, ["betsson.uk", "betsson.co.uk", "betsson.com.uk", "betsson.bet.uk"]);
+});
+
+test("the host stored at registration does not shut out the operator's own market site", async () => {
+  let observed: Record<string, unknown> | undefined;
+  const verifier = new MarketActivationRouteVerifier({
+    marketActivation: {
+      findUnique: async () => ({
+        countryCode: "DK",
+        marketCode: "DK",
+        casino: { slug: "betsson", domain: "betsson.com", websiteUrl: "https://www.betsson.com/" },
+        marketProfile: null,
+        primaryTrackingLink: {
+          trackingUrl: "https://record.betsson.example/click",
+          destinationUrl: "https://www.betsson.com/",
+          // Registered from an exit outside Denmark: the global site was observed and stored.
+          metadata: { commercialActivationV1: { records: { DK: { routeHealth: { expectedFinalHost: "www.betsson.com", expectedPathPrefix: "/da" } } } } },
+        },
+      }),
+    },
+  } as never, refuseDirectCheck, async (input) => {
+    observed = input.expectation as unknown as Record<string, unknown>;
+    return { status: "HEALTHY", reason: "GET_FALLBACK_OK", method: "GET", statusCode: 200, durationMs: 2, redirectCount: 1, finalHost: "www.betsson.dk" };
+  });
+  await verifier.verify("activation", NOW);
+  assert.equal(observed?.expectedFinalHost, "www.betsson.com");
+  assert.equal(observed?.expectedPathPrefix, "/da");
+  assert.deepEqual(observed?.acceptedFinalHosts, ["betsson.dk", "betsson.co.dk", "betsson.com.dk", "betsson.bet.dk"]);
 });
 
 test("global fallback verification uses the canonical Casino host instead of the affiliate tracker host", async () => {

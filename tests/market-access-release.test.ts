@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { marketAccess } from "../lib/market-access/access";
-import { CASINO_MARKETS } from "../lib/market-access/register";
+import { CASINO_MARKETS, MARKET_RULES } from "../lib/market-access/register";
 import {
   ENABLE_TARGETS,
   MARKET_ACCESS_DECISION_REF,
@@ -63,6 +63,23 @@ test("every market the release opens is licensed there", () => {
   }
   const keys = ENABLE_TARGETS.map((target) => `${target.casinoSlug}:${target.market}`);
   assert.equal(new Set(keys).size, keys.length, "each market is opened once");
+});
+
+test("Ireland opens eleven EGO brands on their unchanged GB links; Regency stays out", () => {
+  const rule = MARKET_RULES.IE;
+  assert.ok(rule?.regime === "GREY_ZONE" && rule.open, "Ireland is an open grey zone");
+  const ireland = ENABLE_TARGETS.filter((target) => target.market === "IE");
+  assert.deepEqual(ireland.map((target) => target.casinoSlug), [
+    "ahti-games", "bacanaplay", "casino-redkings", "drueckglueck", "eucasino", "jackpotstar",
+    "megawayscasino", "playojo", "playojo-bingo", "slotsmagic", "turbonino",
+  ]);
+  for (const target of ireland) {
+    assert.equal(target.partner, "ego", target.casinoSlug);
+    assert.equal(target.sourceMarket, "GB", target.casinoSlug);
+    assert.equal(target.query, undefined, `${target.casinoSlug}: the GB link is reused unchanged`);
+    assert.equal(target.localSite, undefined, target.casinoSlug);
+    assert.equal(CASINO_MARKETS[target.casinoSlug]?.operatorBlocks?.IE, undefined, `${target.casinoSlug} does not refuse Ireland`);
+  }
 });
 
 test("a corrected local site is the domain the register cites for that market", () => {

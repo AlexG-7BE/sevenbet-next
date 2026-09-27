@@ -49,6 +49,7 @@ must match. No raw partner URL is printed or kept in git.
 | SE | MegawaysCasino | EGO brand link reused (Founder choice, 24 Sep) |
 | DK | MegawaysCasino | EGO brand link reused |
 | DK | EUcasino | EUcasino's Swedish EGO link reused (Founder choice, 25 Sep). Its DK profile named eucasino.dk, which redirects to www.eucasino.com/dk, so the first apply rejected the route; `apply` now points the profile at www.eucasino.com/dk (on Spillemyndigheden's list) with an audit entry before registering (Founder, 25 Sep) |
+| IE | AHTI Games, BacanaPlay, Casino RedKings, DrückGlück, EUcasino, JackpotStar, MegawaysCasino, PlayOJO, PlayOJO Bingo, SlotsMagic, TurboNino | EGO GB brand link reused unchanged ([Founder decision, 27 Sep](../07_Decisions/IRELAND-EGO-ROUTES-2026-09-27.md)). Ireland is an open grey zone: GRAI licenses betting only, so MGA operators serve Irish players. Each GB link, clicked from Irish residential exits on 27 Sep, landed on the brand's English site with no block. Regency is left out (no MGA licence on record) |
 
 **Cannot open yet:** Betsafe SE (no Swedish link from BGA), DragonBet GB (no link;
 Brothers Bet account disabled), Regency SE (regencycasino.se answers 401 — not live),
@@ -58,6 +59,12 @@ GB referral also needs PR #365 (the licence register as Great Britain's operator
 evidence): without it no GB route produces a click, whatever the activation says.
 
 Result after the release and #365: **GB 18 of 19, SE 12 of 15, DK 10 of 10, DE 2 of 2**.
+Verified by the launch click check on 27 Sep 2026: GB 18, SE 12, DK 10 partner clicks.
+Germany was checked during the day, so its two routes were closed by the advertising
+window, as they should be.
+
+Ireland (added 27 Sep 2026): 6 Superfly routes are live. The 11 EGO targets above
+bring it to 17 once `apply --only=enable` has run.
 
 ## Steps
 

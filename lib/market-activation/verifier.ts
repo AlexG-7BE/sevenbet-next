@@ -99,13 +99,20 @@ function storedExpectation(
     && health.requiredAttributionParameters.every((value) => typeof value === "string")
     ? health.requiredAttributionParameters as string[]
     : [];
+  // Registration stores the host it observed, often from another country's exit (the global
+  // site), so the operator's own market sites stay acceptable beside it.
+  const withOperatorHosts = (expectation: AffiliateRouteHealthExpectation): AffiliateRouteHealthExpectation => {
+    const acceptedFinalHosts = operatorMarketHosts(countryCode, casino)
+      .filter((host) => host !== expectation.expectedFinalHost.replace(/^www\./, ""));
+    return acceptedFinalHosts.length ? { ...expectation, acceptedFinalHosts } : expectation;
+  };
   if (explicitFinalHost) {
-    return {
+    return withOperatorHosts({
       expectedFinalHost: explicitFinalHost,
       expectedPathPrefix,
       requiredAttributionParameters,
       allowWwwEquivalentFinalHost: true,
-    };
+    });
   }
   const marketHost = normalizedMarketHost(marketProfile);
   const imported = object(object(metadata).betssonCommercialRoutesV1 as Prisma.JsonValue);
@@ -119,18 +126,14 @@ function storedExpectation(
     ? normalizedCasinoHost(casino)
     : null;
   const expectedOperatorHost = evidencedMarketFinalHost || marketHost || globalCasinoHost;
-  const expectedFinalHost = expectedOperatorHost || destination.hostname.toLowerCase();
-  const acceptedFinalHosts = operatorMarketHosts(countryCode, casino)
-    .filter((host) => host !== expectedFinalHost.replace(/^www\./, ""));
-  return {
-    expectedFinalHost,
+  return withOperatorHosts({
+    expectedFinalHost: expectedOperatorHost || destination.hostname.toLowerCase(),
     expectedPathPrefix: expectedOperatorHost
       ? null
       : destination.pathname === "/" ? null : destination.pathname,
     requiredAttributionParameters,
     allowWwwEquivalentFinalHost: true,
-    ...(acceptedFinalHosts.length ? { acceptedFinalHosts } : {}),
-  };
+  });
 }
 
 /**
