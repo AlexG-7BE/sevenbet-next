@@ -5,12 +5,12 @@ import { getAuth } from "@/lib/auth/server";
 import { withAuthDatabaseAvailabilityCapture } from "@/lib/auth/database-availability";
 import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
 import { GOOGLE_AUTH_CALLBACK, isAllowedGoogleLinkRequest, isAllowedGoogleSignInRequest } from "@/lib/auth/google-flow";
+import { observeOAuthCallbackAuthentication, oauthCallbackSessionCookie } from "@/lib/customers/oauth-callback-observer.server";
 import { programmeAuthAccessDenial } from "@/lib/auth/programme-access-policy";
 import { programmeAccessSigningSecret } from "@/lib/auth/programme-access-proof";
 import { readBoundedRequestText } from "@/lib/programme/http";
 import { ServiceError } from "@/lib/services/service-error";
 import { observeSuccessfulAuthentication } from "@/lib/customers/auth-observer.server";
-import { observeOAuthCallbackAuthentication, oauthCallbackSessionCookie } from "@/lib/customers/oauth-callback-observer.server";
 
 const authJsonPayloadLimit = 32 * 1024;
 
