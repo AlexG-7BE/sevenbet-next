@@ -261,15 +261,26 @@ test("all eleven European product catalogs are complete Preview drafts without E
   assert.notEqual(productPageMessages("el-GR").comparison.unavailable, productPageMessages("en-GB").comparison.unavailable);
 });
 
-test("localized product links and canonicals preserve explicit presentation while noindex stays outside hreflang", () => {
+test("localized product links and canonicals preserve explicit presentation; only indexed languages enter hreflang", () => {
   const presentation = resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "GB" });
   assert.equal(productHref(presentation, "/casino/example?from=compare"), "/de/casino/example?from=compare");
   assert.equal(productHref(presentation, "/methodology"), "/de/methodology");
   const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
   assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/de/casinos");
-  assert.equal(metadata.alternates?.languages, undefined);
-  assert.deepEqual(metadata.robots, { index: false, follow: true });
+  // SEO-INDEX-DE-SV-DA-2026-09-27: German is indexed and carries reciprocal hreflang.
+  assert.deepEqual(Object.keys(metadata.alternates?.languages ?? {}).sort(), ["da", "de", "en", "sv", "x-default"]);
+  assert.equal(metadata.robots, undefined);
   assert.equal(metadata.openGraph && "locale" in metadata.openGraph ? metadata.openGraph.locale : null, "de_DE");
+
+  const spanish = productMetadata({
+    presentation: resolvePresentationContext({ routeLanguage: "es", trustedCountryCode: "GB" }),
+    pathname: "/casinos",
+    title: "Título",
+    description: "Descripción",
+  });
+  assert.equal(new URL(String(spanish.alternates?.canonical)).pathname, "/es/casinos");
+  assert.equal(spanish.alternates?.languages, undefined, "a noindex language stays outside hreflang");
+  assert.deepEqual(spanish.robots, { index: false, follow: true });
 
   const gbPresentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
   const gbMetadata = productMetadata({
@@ -280,7 +291,7 @@ test("localized product links and canonicals preserve explicit presentation whil
     robots: { index: true, follow: true },
   });
   assert.deepEqual(gbMetadata.robots, { index: true, follow: true }, "the approved English baseline must retain its data-driven indexing policy");
-  assert.deepEqual(Object.keys(gbMetadata.alternates?.languages ?? {}).sort(), ["en", "x-default"]);
+  assert.deepEqual(Object.keys(gbMetadata.alternates?.languages ?? {}).sort(), ["da", "de", "en", "sv", "x-default"]);
 
   const differentGeo = resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "NO" });
   const second = productMetadata({ presentation: differentGeo, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
@@ -331,7 +342,11 @@ test("localized Compare takes trusted market from its caller and never serialize
 });
 
 test("localized sitemap publication is review-gated and its market loader has no request-path GB literal", () => {
-  for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) assert.equal(localizedProductIndexingApproved(profile.defaultLocale), false);
+  // SEO-INDEX-DE-SV-DA-2026-09-27: only the Founder-opened launch languages are indexed.
+  const indexed = new Set(["de-DE", "sv-SE", "da-DK"]);
+  for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
+    assert.equal(localizedProductIndexingApproved(profile.defaultLocale), indexed.has(profile.defaultLocale), profile.defaultLocale);
+  }
   const source = readFileSync("app/sitemap.ts", "utf8");
   assert.match(source, /loadMarketSitemapSnapshot\(market/);
   assert.match(source, /defaultEditorialCountry: market\.countryCode/);

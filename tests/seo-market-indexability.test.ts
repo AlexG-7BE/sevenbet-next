@@ -25,26 +25,30 @@ function withIndexable(value: MarketProfile): MarketProfile {
   return { ...value, publication: { ...value.publication, indexable: true, indexabilityBlocker: null } };
 }
 
-test("GB, SE, and PE expose one explicit routable/published/indexable policy", () => {
+test("GB, SE, DE, DK and PE expose one explicit routable/published/indexable policy", () => {
   assert.deepEqual(MARKET_PUBLICATION_POLICY.GB, {
     routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-09-03",
   });
   assert.equal(MARKET_PUBLICATION_POLICY.SE.routable, true);
   assert.equal(MARKET_PUBLICATION_POLICY.SE.published, true);
-  assert.equal(MARKET_PUBLICATION_POLICY.SE.indexable, false);
-  assert.match(MARKET_PUBLICATION_POLICY.SE.indexabilityBlocker ?? "", /LEGAL_PRIVACY.*PLACEHOLDER/);
+  // SEO-INDEX-DE-SV-DA-2026-09-27: the Founder opened the launch markets to search.
+  for (const market of ["SE", "DE", "DK"] as const) {
+    assert.deepEqual(MARKET_PUBLICATION_POLICY[market], {
+      routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-09-27",
+    }, market);
+  }
   assert.equal(MARKET_PUBLICATION_POLICY.PE.routable, true);
   assert.equal(MARKET_PUBLICATION_POLICY.PE.published, true);
   assert.equal(MARKET_PUBLICATION_POLICY.PE.indexable, false);
   assert.match(MARKET_PUBLICATION_POLICY.PE.indexabilityBlocker ?? "", /LEGAL_PRIVACY.*REAL_INVENTORY/);
-  assert.deepEqual(INDEXABLE_MARKET_PROFILES.map((market) => market.countryCode), ["GB"]);
+  assert.deepEqual(INDEXABLE_MARKET_PROFILES.map((market) => market.countryCode).sort(), ["DE", "DK", "GB", "SE"]);
 });
 
 test("noindex languages keep self canonicals without contradictory hreflang", () => {
   const previous = process.env.VERCEL_ENV;
   process.env.VERCEL_ENV = "production";
   try {
-    for (const [_market, language, locale, canonical] of [["SE", "sv", "sv-SE", "/sv/casinos"], ["PE", "es", "es-ES", "/es/casinos"]] as const) {
+    for (const [_market, language, locale, canonical] of [["PE", "es", "es-ES", "/es/casinos"], ["GR", "el", "el-GR", "/el/casinos"]] as const) {
       const presentation = resolvePresentationContext({ routeLanguage: language });
       const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Casinos", description: "Localized casinos" });
       assert.equal(presentation.locale, locale);
@@ -69,7 +73,8 @@ test("GB is indexable with canonical, reciprocal-ready hreflang, and x-default",
     const languages = metadata.alternates?.languages as Record<string, string>;
     assert.equal(new URL(languages.en).pathname, "/en/casinos");
     assert.equal(new URL(languages["x-default"]).pathname, "/casinos");
-    assert.deepEqual(Object.keys(languages).sort(), ["en", "x-default"]);
+    assert.equal(new URL(languages.sv).pathname, "/sv/casinos");
+    assert.deepEqual(Object.keys(languages).sort(), ["da", "de", "en", "sv", "x-default"]);
   } finally {
     if (previous === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previous;
   }
