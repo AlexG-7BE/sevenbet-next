@@ -1,6 +1,7 @@
 "use client";
 
 import { browserAnalyticsConsentState } from "@/lib/analytics/consent-contract";
+import { isAnalyticsExcludedPath } from "@/lib/analytics/excluded-paths";
 import {
   createProductAnalyticsEmitter,
   isProductAnalyticsEnabled,
@@ -91,7 +92,11 @@ export function createProductAnalyticsClient({
   const send = (
     name: ClientProductAnalyticsEventName,
     dimensions: Omit<ClientProductAnalyticsEvent, "eventId" | "schemaVersion" | "name" | "occurredAt"> = {},
-  ) => emit(name, { ...currentPageDimensions(), ...dimensions });
+  ) => {
+    const event = { ...currentPageDimensions(), ...dimensions };
+    if (isAnalyticsExcludedPath(event.pagePath)) return;
+    emit(name, event);
+  };
   const once = (
     marker: string,
     name: ClientProductAnalyticsEventName,
@@ -201,6 +206,9 @@ export function recordConsentedBrowserPageView(pathname: string | null | undefin
   if (!pathname || lastRecordedPagePath === pathname
     || browserAnalyticsConsentState() !== "granted") return false;
   lastRecordedPagePath = pathname;
+  // Protected Help, self-check and Admin are never recorded; leaving one and
+  // returning to the previous page still records that page again.
+  if (isAnalyticsExcludedPath(pathname)) return false;
   productAnalyticsClient.pageViewed({ pagePath: pathname });
   return true;
 }

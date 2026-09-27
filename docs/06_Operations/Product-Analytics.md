@@ -38,7 +38,9 @@ choice and the ingestion route verifies it again.
 Server controls are:
 
 - `ANALYTICS_SIGNING_SECRET`: HMAC signing/rate key; server-only;
-- `ANALYTICS_INTERNAL_TRAFFIC_TOKEN`: exact internal/test marker; server-only;
+- `ANALYTICS_INTERNAL_TRAFFIC_TOKEN`: exact internal/test marker; server-only
+  (staff browsers need no configuration: a signed Admin-set cookie marks them
+  internal);
 - `ANALYTICS_RETENTION_DAYS`: bounded 90–730, default 395; and
 - `CRON_SECRET`: protects the bounded retention scheduler.
 

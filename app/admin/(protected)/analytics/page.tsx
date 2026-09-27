@@ -4,9 +4,11 @@ import { headers } from "next/headers";
 
 import { AdminPageShell, AdminStatCard } from "@/components/admin/AdminShell";
 import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
+import { InternalDeviceControl } from "@/components/admin/InternalTrafficMarker";
 import { Card } from "@/components/ui";
 import { getAdminPageAccess } from "@/lib/auth/admin";
-import { commercialDashboard, emailDashboard, founderOverview, programmeDashboard } from "@/lib/analytics/dashboard.server";
+import { commercialDashboard, emailDashboard, founderOverview, programmeDashboard, type MarketFunnelRow } from "@/lib/analytics/dashboard.server";
+import { hasAnalyticsInternalMarker } from "@/lib/analytics/identity.server";
 import { analyticsRange, canonicalMetricDefinitions, percentage } from "@/lib/analytics/metrics";
 
 export const dynamic = "force-dynamic";
@@ -28,8 +30,23 @@ function RankedList({ rows, empty = "No Production data in this range." }: { row
   })}</div>;
 }
 
+function MarketFunnel({ rows }: { rows: MarketFunnelRow[] }) {
+  if (!rows.length) return <p className="muted">No Production data in this range.</p>;
+  return <div className="analyticsStepTable" role="table" aria-label="Conversion by market">
+    <div role="row"><strong role="columnheader">Market</strong><strong role="columnheader">Visits</strong><strong role="columnheader">Offer pages</strong><strong role="columnheader">CTA (rate)</strong><strong role="columnheader">To partner (rate)</strong></div>
+    {rows.map((row) => <div key={row.market} role="row">
+      <span role="cell">{row.market}</span>
+      <span role="cell">{row.visits}</span>
+      <span role="cell">{row.offerPageViews}</span>
+      <span role="cell">{row.ctaClicks} ({percentage(row.ctaRate)})</span>
+      <span role="cell">{row.toPartner} ({percentage(row.partnerRate)}){row.refused ? ` · ${row.refused} refused` : ""}</span>
+    </div>)}
+  </div>;
+}
+
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   if (!await getAdminPageAccess(await headers(), "analytics")) return <AdminPermissionDenied />;
+  const internalDevice = hasAnalyticsInternalMarker(await headers());
   const search = await searchParams;
   const view: View = ["programme", "commercial", "email"].includes(search.view ?? "") ? search.view as View : "overview";
   const range = analyticsRange({ range: search.range, from: search.from, to: search.to });
@@ -39,14 +56,15 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         : await emailDashboard(range);
   const baseRange = `range=${encodeURIComponent(search.range ?? "30")}${search.from ? `&from=${search.from}` : ""}${search.to ? `&to=${search.to}` : ""}`;
   return (
-    <AdminPageShell area="analytics" title="Analytics" intro="Fixed Product Core dashboards. Production human traffic only; Preview, test, internal, and obvious bot traffic is excluded.">
+    <AdminPageShell area="analytics" title="Analytics" intro="Fixed Product Core dashboards. Production human traffic only; Preview, test, staff devices, and obvious bot traffic are excluded.">
+      <Card className="adminPanel"><InternalDeviceControl marked={internalDevice} /></Card>
       <nav className="analyticsTabs" aria-label="Analytics dashboards">
         {(["overview", "programme", "commercial", "email"] as const).map((item) => <Link aria-current={view === item ? "page" : undefined} href={`/admin/analytics?view=${item}&${baseRange}`} key={item}>{item === "overview" ? "Founder overview" : item[0].toUpperCase() + item.slice(1)}</Link>)}
       </nav>
       <Card className="adminPanel"><form className="analyticsRange" method="get"><input name="view" type="hidden" value={view} /><label><span>Range</span><select defaultValue={search.range ?? "30"} name="range"><option value="7">7 days</option><option value="30">30 days</option><option value="90">90 days</option><option value="custom">Custom UTC range</option></select></label><label><span>From</span><input defaultValue={search.from ?? range.fromDate} name="from" type="date" /></label><label><span>To</span><input defaultValue={search.to ?? range.toDate} name="to" type="date" /></label><button className="button" type="submit">Update</button><p>{range.fromDate} → {range.toDate} · UTC</p></form></Card>
       {view === "overview" && "registeredUsers" in data ? <>
         <div className="adminStatsGrid"><AdminStatCard label="Registered users" value={data.registeredUsers} note="Canonical identities at period end" /><AdminStatCard label="New registrations" value={data.newRegistrations} note="Created in selected range" /><AdminStatCard label="Active users" value={data.activeUsers} note="Distinct consented authenticated actors" /><AdminStatCard label="Programme starts" value={data.programmeStarts} note="Selected start cohort" /><AdminStatCard label="Programme completions" value={data.programmeCompletions} note="Canonical completedAt" /><AdminStatCard label="Programme completion" value={percentage(data.programmeCompletionRate)} note={`${data.programmeCompletions}/${data.programmeStarts} selected-cohort starts`} /><AdminStatCard label="Outbound attempts" value={data.outboundClicks} note={`${data.successfulOutbound} success · ${data.blockedOutbound} blocked`} /><AdminStatCard label="Unique outbound actors" value={data.uniqueOutboundActors} note="User, otherwise session" /></div>
-        <div className="analyticsGrid"><Card className="adminPanel"><h2>Sessions by GEO</h2><RankedList rows={data.topGeos} /></Card><Card className="adminPanel"><h2>Sessions by acquisition source</h2><RankedList rows={data.topAcquisitionSources} /></Card><Card className="adminPanel"><h2>Casinos by outbound traffic</h2><RankedList rows={data.topCasinos} /></Card><Card className="adminPanel"><h2>Pages producing outbound traffic</h2><RankedList rows={data.topOutboundPages} /></Card></div>
+        <div className="analyticsGrid"><Card className="adminPanel"><h2>Sessions by GEO</h2><RankedList rows={data.topGeos} /></Card><Card className="adminPanel"><h2>Sessions by acquisition source</h2><RankedList rows={data.topAcquisitionSources} /></Card><Card className="adminPanel"><h2>Casinos by outbound traffic</h2><RankedList rows={data.topCasinos} /></Card><Card className="adminPanel"><h2>Pages producing outbound traffic</h2><RankedList rows={data.topOutboundPages} /></Card><Card className="adminPanel"><h2>Sign-ups by campaign</h2><RankedList rows={data.signupsByCampaign} empty="No consented Production sign-ups in this range." /></Card></div>
       </> : null}
       {view === "programme" && "starts" in data ? <><div className="adminStatsGrid"><AdminStatCard label="Programme starts" value={data.starts} note="Canonical enrollments" /><AdminStatCard label="Completions" value={data.completions} note="Canonical completedAt" /><AdminStatCard label="Completion rate" value={percentage(data.completionRate)} note="Same start cohort" /></div><div className="analyticsGrid"><Card className="adminPanel"><h2>Step views, completions & drop-off</h2><div className="analyticsStepTable"><div><strong>Step</strong><strong>Views</strong><strong>Completed</strong><strong>From starts</strong><strong>Drop-off</strong></div>{data.steps.map((step) => <div key={step.step}><span>Step {step.step}</span><span>{step.views}</span><span>{step.completed}</span><span>{percentage(step.completionFromStarts)}</span><span>{step.dropOff}</span></div>)}</div><p className="muted">Views are consented Product Core events. Completion and drop-off come from canonical persisted Programme state, never from views.</p></Card><Card className="adminPanel"><h2>Starts by UTC day</h2><RankedList rows={data.trend.map(({ date, count }) => ({ label: date, count }))} /></Card></div></> : null}
       {view === "commercial" && "outboundAttempts" in data ? <>
@@ -60,6 +78,11 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           <AdminStatCard label="Successful outbound" value={data.outboundSuccesses} note={`${data.outboundBlocks} blocked of ${data.outboundAttempts} attempts`} />
           <AdminStatCard label="CTR" value={percentage(data.ctr)} note="CTA clicks ÷ offer views" />
         </div>
+        <Card className="adminPanel">
+          <h2>Conversion by market</h2>
+          <MarketFunnel rows={data.marketFunnel} />
+          <p className="muted">Visits, offer pages and CTA come from visitors who allowed analytics. To partner counts every redirect that reached a partner; its rate uses only those of visitors who allowed analytics.</p>
+        </Card>
         <Card className="adminPanel">
           <h2>Detailed runtime attribution</h2>
           <p className="muted">This dashboard reads current detailed OutboundClick attempts and consented Product Core events. The separate affiliate report is a success-only daily aggregate with unique historical coverage; its totals can overlap and must not be added to these figures.</p>

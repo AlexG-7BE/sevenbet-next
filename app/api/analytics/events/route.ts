@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isAnalyticsExcludedPath } from "@/lib/analytics/excluded-paths";
 import { safeParseProductAnalyticsEvent } from "@/lib/analytics/product-analytics-events";
 import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import {
@@ -70,26 +71,30 @@ export async function POST(request: Request) {
     return response({ code: "ANALYTICS_TEMPORARILY_UNAVAILABLE" }, 503);
   }
 
-  const parsed = rawEvents.map((event, index) => ({
-    index,
-    result: safeParseProductAnalyticsEvent(event),
-  }));
-  const valid = parsed.flatMap((item) => item.result.success
+  const parsed = rawEvents.map((event, index) => {
+    const result = safeParseProductAnalyticsEvent(event);
+    // Protected Help, self-check and Admin activity is never stored, whatever a client sends.
+    const code = !result.success ? "INVALID_EVENT"
+      : isAnalyticsExcludedPath(result.data.pagePath) ? "EXCLUDED_PATH"
+        : null;
+    return { index, result, code };
+  });
+  const valid = parsed.flatMap((item) => item.result.success && !item.code
     ? [{ index: item.index, event: item.result.data }]
     : []);
   if (!valid.length) {
     return response({
       accepted: 0,
       duplicate: 0,
-      rejected: parsed.map(({ index }) => ({ index, code: "INVALID_EVENT" })),
+      rejected: parsed.map(({ index, code }) => ({ index, code: code ?? "INVALID_EVENT" })),
     }, 400);
   }
 
   try {
     const identity = await resolveAnalyticsRequestIdentity(request, valid[0]!.event);
     const outcomes: Array<{ index: number; result: "accepted" | "duplicate" | "rejected"; code?: string }> = parsed
-      .filter((item) => !item.result.success)
-      .map(({ index }) => ({ index, result: "rejected", code: "INVALID_EVENT" }));
+      .filter((item) => item.code)
+      .map(({ index, code }) => ({ index, result: "rejected", code: code ?? "INVALID_EVENT" }));
 
     for (const item of valid) {
       try {
