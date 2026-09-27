@@ -3,8 +3,8 @@ import { PARTNER_ROUTE_PLACEHOLDER_HOST } from "@/lib/affiliate-routing/redirect
 import { marketAccess } from "./access";
 import { CASINO_MARKETS } from "./register";
 
-/** The markets opened on Monday 28 September 2026. */
-export const LAUNCH_MARKETS = ["GB", "SE", "DK", "DE"] as const;
+/** The markets opened on Monday 28 September 2026, and Ireland (open grey zone, opened 27 September). */
+export const LAUNCH_MARKETS = ["GB", "SE", "DK", "DE", "IE"] as const;
 
 /** Superfly's routes were registered as `<casino>-welcome`; every other route is `<casino>-casino`. */
 const WELCOME_ROUTES = new Set(["21-prive", "diamond7", "gday-casino", "hello-casino", "skol-casino", "slotnite"]);
