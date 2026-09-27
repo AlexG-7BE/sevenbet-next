@@ -144,7 +144,7 @@ export const IT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqReviewOnlyQuestion: "Che cosa significa «solo recensione»?",
     faqReviewOnlyAnswer: "La recensione editoriale è disponibile, ma al momento non c'è alcun link al partner.",
     faqCommissionQuestion: "La commissione influisce sulla classifica?",
-    faqCommissionAnswer: "No. Le commissioni non influenzano l’Editor Score né la classifica editoriale.",
+    faqCommissionAnswer: "La commissione non modifica mai l’Editor Score. I casinò verso cui possiamo rimandarti dal tuo Paese compaiono per primi; all’interno di ciascun gruppo l’ordine segue l’Editor Score.",
   },
   bonuses: {
     title: "Bonus casinò confrontati per requisiti di puntata | B4GAMBLE",

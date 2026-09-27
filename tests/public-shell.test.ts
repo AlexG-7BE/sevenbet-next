@@ -247,3 +247,32 @@ test("the transition pill and route frame reveal only on a slow transition; guid
   // Long guide titles made long pills: "Read next" guide links report no pending label.
   assert.doesNotMatch(readFileSync("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx", "utf8"), /PublicLinkPendingSignal/);
 });
+
+test("language menus name languages from one fixed table, never from the browser's ICU", async () => {
+  // Safari names languages differently from Node ("Engelska" vs "engelska"), so client-side
+  // Intl.DisplayNames made React discard every Swedish and Danish page on iPhone (#418).
+  for (const file of ["components/public-shell/MarketLanguageSelector.tsx", "components/programme/ProgrammeLanguageSelector.tsx"]) {
+    const source = readFileSync(file, "utf8");
+    assert.doesNotMatch(source, /Intl\.DisplayNames/, file);
+    assert.match(source, /@\/lib\/i18n\/language-display-names/, file);
+  }
+  const { LANGUAGE_DISPLAY_NAMES, REGION_DISPLAY_NAMES, languageDisplayName, regionDisplayName } = await import("../lib/i18n/language-display-names");
+  const languages = ["en", "de", "es", "el", "sv", "da", "it", "pt", "nl", "fi", "nb", "fr"];
+  for (const display of languages) {
+    const names: Record<string, string> = (LANGUAGE_DISPLAY_NAMES as Record<string, Record<string, string>>)[display] ?? {};
+    for (const language of languages) assert.ok(names[language]?.trim(), `${display}:${language}`);
+    assert.ok(Object.keys((REGION_DISPLAY_NAMES as Record<string, Record<string, string>>)[display] ?? {}).length >= 11, display);
+  }
+  assert.equal(languageDisplayName("en-GB", "sv-SE"), "Engelska");
+  assert.equal(languageDisplayName("nb-NO", "da-DK"), "Norsk bokmål");
+  assert.equal(languageDisplayName("sv-SE", "xx-YY"), "Swedish");
+  assert.equal(regionDisplayName("SE", "de-DE"), "Schweden");
+});
+
+test("the privacy choice sits above a visible sticky partner or start bar instead of covering it", () => {
+  const css = readFileSync("app/globals.css", "utf8");
+  assert.match(css, /:root:has\(\[data-casino-decision-bar\]\[data-mobile-visible="true"\]\) \.analyticsConsent \{ bottom: calc\(80px \+ env\(safe-area-inset-bottom\)\); \}/);
+  assert.match(css, /:root:has\(\[data-ten-steps-sticky-start\]\[data-mobile-visible="true"\]\) \.analyticsConsent \{ bottom: calc\(84px \+ env\(safe-area-inset-bottom\)\); \}/);
+  assert.match(readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8"), /data-casino-decision-bar data-mobile-visible="false"/);
+  assert.match(readFileSync("app/(public)/10-steps/TenStepsPage.tsx", "utf8"), /data-mobile-visible="false" data-ten-steps-sticky-start/);
+});

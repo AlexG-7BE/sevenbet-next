@@ -144,7 +144,7 @@ export const NL_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     faqReviewOnlyQuestion: "Wat betekent «alleen review»?",
     faqReviewOnlyAnswer: "De redactionele review is beschikbaar, maar er is momenteel geen partnerlink.",
     faqCommissionQuestion: "Heeft commissie invloed op de rangschikking?",
-    faqCommissionAnswer: "Nee. Commissie beïnvloedt de Editor Score of redactionele rangschikking niet.",
+    faqCommissionAnswer: "Commissie verandert de Editor Score nooit. Casino’s waarnaar we vanuit jouw land kunnen linken, staan bovenaan; binnen elke groep bepaalt de Editor Score de volgorde.",
   },
   bonuses: {
     title: "Casinobonussen vergeleken op inzetvereisten | B4GAMBLE",

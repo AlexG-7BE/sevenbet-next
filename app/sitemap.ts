@@ -16,6 +16,7 @@ import {
 import { isLocalizedPublicDestination } from "@/lib/market/routing";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 30;
 
 async function failClosed<T>(load: () => Promise<T>): Promise<T | null> {
   try {

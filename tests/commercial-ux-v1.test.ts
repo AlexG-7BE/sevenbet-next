@@ -201,6 +201,23 @@ test("Casino views reorder the same collection and name search is the only narro
   assert.deepEqual(filterCasinosByName(records, "collection 2", "en-GB").map((item) => item.id), [records[1]?.id]);
 });
 
+test("Casino views put casinos this visitor can open first and keep each view's order inside a group", () => {
+  const reviewOnlyTop = casino(1, { score: 9.6, payout: "instant", deposit: 5, action: false });
+  const linkedLow = casino(2, { score: 7.9, payout: "48 hours", deposit: 30 });
+  const linkedHigh = casino(3, { score: 8.8, payout: "24 hours", deposit: 20 });
+  const records = [reviewOnlyTop, linkedLow, linkedHigh];
+  for (const view of CASINO_COLLECTION_VIEWS) {
+    const ordered = casinosForCollectionView(records, view).map((item) => item.id);
+    assert.equal(ordered.at(-1), reviewOnlyTop.id, view);
+    assert.equal(ordered.length, records.length, view);
+  }
+  assert.deepEqual(casinosForCollectionView(records, "top_rated").map((item) => item.id), [linkedHigh.id, linkedLow.id, reviewOnlyTop.id]);
+  assert.deepEqual(casinosForCollectionView(records, "low_deposit").map((item) => item.id), [linkedHigh.id, linkedLow.id, reviewOnlyTop.id]);
+  // Without any partner link the view's own order is untouched.
+  const reviewOnly = records.map((item) => ({ ...item, action: null }));
+  assert.deepEqual(casinosForCollectionView(reviewOnly, "top_rated").map((item) => item.id), [reviewOnlyTop.id, linkedHigh.id, linkedLow.id]);
+});
+
 test("Bonus views use verified mechanics and optional intent requires real depth", () => {
   const welcome = offer(1);
   const unknownWagering = offer(2, { wagering: null });

@@ -55,7 +55,7 @@ This procedure is **Planned**, not executed:
 
 1. Wait for RECOVERY-01 closure and Founder approval for the exact environment.
 2. In each environment's own Prisma authority, generate a matched pooled/direct credential pair for that existing resource. Do not copy Production credentials to Preview or vice versa.
-3. Set `DATABASE_URL` to the pooled `pooled.db.prisma.io` URL with `sslmode=require&connection_limit=1`.
+3. Set `DATABASE_URL` to the pooled `pooled.db.prisma.io` URL with `sslmode=require&connection_limit=1`. Once the runtime pool policy is deployed, the application overrides the pool size and timeouts in code (see [Environment and Secrets — Runtime database pool](Environment-and-Secrets.md#runtime-database-pool)).
 4. Set `DIRECT_URL` to the matched direct `db.prisma.io` URL with `sslmode=require`.
 5. Run `npm run programme:database-readiness -- --label <environment>` in a process holding only that environment. It must report `ready: true` and `sameDatabaseIdentity: true` without printing values.
 6. Compare the Preview and Production redacted target fingerprints. They must be `DIFFERENT`; `MATCH`, `ABSENT` or `UNKNOWN` blocks work.
@@ -135,5 +135,5 @@ Cron rollback removes or disables the schedule only after ensuring no deployment
 - Elevated 429s: inspect aggregate scope/limited logs, route traffic and retry behaviour; never log source identity.
 - Limiter database failures: keep provider calls suppressed, verify the runtime pooled binding and database availability.
 - Purge failure: route returns `PURGE_FAILED`; do not broaden deletion or bypass auth. Run dry mode against the authorised target after the incident is understood.
-- Connection exhaustion: verify runtime hostname is pooled and `connection_limit=1`; do not point migrations at pooled authority.
+- Connection exhaustion: verify runtime hostname is pooled and the effective `runtimeConnectionLimit` in the build's `vercel_database_readiness` event (1 before the runtime pool policy, 3 after); do not point migrations at pooled authority.
 - Analytics failure is independent and must not cause Programme rollback.

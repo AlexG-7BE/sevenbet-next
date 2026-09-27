@@ -30,6 +30,7 @@ const runtimeInclude = {
           casinoId: true,
           operator: true,
           metadata: true,
+          networkId: true,
         },
       },
     },
@@ -165,7 +166,8 @@ const joinedRuntimeProjection = Prisma.sql`
     'programId', ao."programId", 'startAt', ao."startAt", 'expiresAt', ao."expiresAt"
   ) END AS "affiliateOffer",
   CASE WHEN ap.id IS NULL THEN NULL ELSE jsonb_build_object(
-    'id', ap.id, 'casinoId', ap."casinoId", 'operator', ap.operator, 'metadata', ap.metadata
+    'id', ap.id, 'casinoId', ap."casinoId", 'operator', ap.operator, 'metadata', ap.metadata,
+    'networkId', ap."networkId"
   ) END AS "affiliateProgram",
   CASE WHEN cb.id IS NULL THEN NULL ELSE jsonb_build_object(
     'id', cb.id, 'casinoId', cb."casinoId"

@@ -2,6 +2,8 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 
+import type { Prisma } from "@prisma/client";
+
 import prisma from "@/lib/db/prisma";
 import { getServerSession } from "@/lib/auth/session";
 import {
@@ -35,9 +37,42 @@ export type OutboundAttributionInput = {
   locale?: string | null;
   casinoId?: string | null;
   affiliateOfferId?: string | null;
+  /** The offer's network, when the route lookup already carries it; otherwise it is read. */
+  affiliateNetworkId?: string | null;
   redirectSlugId?: string | null;
   trackingLinkId?: string | null;
 };
+
+type OutboundAttributionDatabase = Pick<
+  typeof prisma,
+  "$transaction" | "affiliateOffer" | "affiliateOutboundClickDaily" | "analyticsEvent" | "analyticsSession" | "outboundClick"
+>;
+
+export type OutboundAttributionDependencies = {
+  database?: OutboundAttributionDatabase;
+  /** Waits before the single retry; injectable for tests. */
+  sleep?: (milliseconds: number) => Promise<void>;
+};
+
+/**
+ * Failures of the connection or pool rather than of the data: the whole
+ * write rolled back (or never started), so it is retried once. P2028 is the
+ * transaction API's own failure, P2034 a write conflict or deadlock.
+ */
+const RETRYABLE_WRITE_CODES = new Set(["P1001", "P1002", "P1008", "P1017", "P2024", "P2028", "P2034"]);
+const RETRY_DELAY_MS = 150;
+
+function prismaCode(error: unknown) {
+  const code = error && typeof error === "object" ? (error as { code?: unknown }).code : undefined;
+  return typeof code === "string" ? code : null;
+}
+
+export function isRetryableOutboundWriteError(error: unknown) {
+  const code = prismaCode(error);
+  return Boolean(code && RETRYABLE_WRITE_CODES.has(code));
+}
+
+const defaultSleep = (milliseconds: number) => new Promise<void>((resolve) => { setTimeout(resolve, milliseconds); });
 
 export function safeOutboundSlug(value: string) {
   return value.trim().toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 80) || "invalid";
@@ -110,7 +145,11 @@ function successfulAggregateIdentity(input: OutboundAttributionInput): OutboundC
   };
 }
 
-export async function recordOutboundAttribution(input: OutboundAttributionInput) {
+export async function recordOutboundAttribution(
+  input: OutboundAttributionInput,
+  dependencies: OutboundAttributionDependencies = {},
+) {
+  const database = dependencies.database ?? prisma;
   const environment = analyticsEnvironment();
   const trafficKind = analyticsTrafficKind(input.request.headers, environment);
   const resolvedAt = input.resolvedAt ?? new Date();
@@ -131,7 +170,7 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
         .catch(() => null);
       const candidateSessionId = readAnalyticsUuid(input.request.headers, ANALYTICS_SESSION_COOKIE, secret);
       const session = candidateSessionId
-        ? await prisma.analyticsSession.findUnique({
+        ? await database.analyticsSession.findUnique({
             where: { id: candidateSessionId },
             select: {
               id: true,
@@ -158,12 +197,14 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
     // Missing consent configuration removes optional identity enrichment. It
     // never alters the already-authoritative redirect result.
   }
-  const affiliateNetworkId = input.affiliateOfferId
-    ? await prisma.affiliateOffer.findUnique({
-        where: { id: input.affiliateOfferId },
-        select: { program: { select: { networkId: true } } },
-      }).then((offer) => offer?.program.networkId ?? null)
-    : null;
+  const affiliateNetworkId = input.affiliateNetworkId
+    ? input.affiliateNetworkId
+    : input.affiliateOfferId
+      ? await database.affiliateOffer.findUnique({
+          where: { id: input.affiliateOfferId },
+          select: { program: { select: { networkId: true } } },
+        }).then((offer) => offer?.program.networkId ?? null)
+      : null;
   // Every successful click is still validated; only Production human clicks are counted.
   const successfulIdentity = successfulAggregateIdentity(input);
   const aggregateIdentity = countsTowardSuccessfulClickAggregate(environment, trafficKind)
@@ -192,56 +233,85 @@ export async function recordOutboundAttribution(input: OutboundAttributionInput)
     placement,
     outboundClickId: input.clickId,
   } as const;
-  await prisma.$transaction(async (transaction) => {
-    await transaction.outboundClick.create({
-      data: {
-        id: input.clickId,
-        state: input.state,
-        blockedReason: input.state === "BLOCKED" ? (input.blockedReason || "UNKNOWN").slice(0, 64) : null,
-        environment,
-        trafficKind,
-        attemptedAt: input.attemptedAt,
-        resolvedAt,
-        anonymousId,
-        analyticsSessionId,
-        userId,
-        sourcePage: referrer.sourcePage,
-        locale: consented ? input.locale : null,
-        countryCode: input.countryCode,
-        acquisitionSource,
-        placement,
-        requestedSlug: safeOutboundSlug(input.requestedSlug),
-        casinoId: input.casinoId,
-        affiliateOfferId: input.affiliateOfferId,
-        affiliateNetworkId,
-        redirectSlugId: input.redirectSlugId,
-        trackingLinkId: input.trackingLinkId,
-      },
-    });
-    await transaction.analyticsEvent.createMany({
-      data: [
-        {
-          id: randomUUID(),
-          dedupeKey: `outbound:${input.clickId}:attempted`,
-          schemaVersion: 1,
-          type: "OUTBOUND_REDIRECT_ATTEMPTED",
-          ...common,
+  // One non-interactive batch: the click row, its two events and, last, the
+  // success-only daily count, committed or rolled back together. The engine
+  // runs it without returning to JavaScript between statements, so there is no
+  // interactive-transaction clock to run out, and the daily row is locked only
+  // from its upsert (INSERT … ON CONFLICT DO UPDATE) to the commit.
+  const writes = (): Prisma.PrismaPromise<unknown>[] => {
+    const batch: Prisma.PrismaPromise<unknown>[] = [
+      database.outboundClick.create({
+        data: {
+          id: input.clickId,
+          state: input.state,
+          blockedReason: input.state === "BLOCKED" ? (input.blockedReason || "UNKNOWN").slice(0, 64) : null,
+          environment,
+          trafficKind,
+          attemptedAt: input.attemptedAt,
+          resolvedAt,
+          anonymousId,
+          analyticsSessionId,
+          userId,
+          sourcePage: referrer.sourcePage,
+          locale: consented ? input.locale : null,
+          countryCode: input.countryCode,
+          acquisitionSource,
+          placement,
+          requestedSlug: safeOutboundSlug(input.requestedSlug),
+          casinoId: input.casinoId,
+          affiliateOfferId: input.affiliateOfferId,
+          affiliateNetworkId,
+          redirectSlugId: input.redirectSlugId,
+          trackingLinkId: input.trackingLinkId,
         },
-        {
-          id: randomUUID(),
-          dedupeKey: `outbound:${input.clickId}:${input.state.toLowerCase()}`,
-          schemaVersion: 1,
-          type: input.state === "SUCCEEDED" ? "OUTBOUND_REDIRECT_SUCCEEDED" : "OUTBOUND_REDIRECT_BLOCKED",
-          ...common,
-          occurredAt: resolvedAt,
-        },
-      ],
-      skipDuplicates: true,
-    });
+        select: { id: true },
+      }),
+      database.analyticsEvent.createMany({
+        data: [
+          {
+            id: randomUUID(),
+            dedupeKey: `outbound:${input.clickId}:attempted`,
+            schemaVersion: 1,
+            type: "OUTBOUND_REDIRECT_ATTEMPTED",
+            ...common,
+          },
+          {
+            id: randomUUID(),
+            dedupeKey: `outbound:${input.clickId}:${input.state.toLowerCase()}`,
+            schemaVersion: 1,
+            type: input.state === "SUCCEEDED" ? "OUTBOUND_REDIRECT_SUCCEEDED" : "OUTBOUND_REDIRECT_BLOCKED",
+            ...common,
+            occurredAt: resolvedAt,
+          },
+        ],
+        skipDuplicates: true,
+      }),
+    ];
     if (aggregateIdentity) {
-      await incrementOutboundClickDailyProjection(transaction, aggregateIdentity);
+      batch.push(incrementOutboundClickDailyProjection(database, aggregateIdentity));
     }
-  });
+    return batch;
+  };
+  try {
+    await database.$transaction(writes());
+  } catch (error) {
+    if (!isRetryableOutboundWriteError(error)) throw error;
+    await (dependencies.sleep ?? defaultSleep)(RETRY_DELAY_MS + Math.floor(Math.random() * RETRY_DELAY_MS));
+    try {
+      await database.$transaction(writes());
+    } catch (retryError) {
+      // If the first attempt committed before its connection failed, the retry
+      // meets that click's row (its id is the primary key). The batch is
+      // all-or-nothing, so the click, its events and its count are all there.
+      if (prismaCode(retryError) === "P2002" && await database.outboundClick.findUnique({
+        where: { id: input.clickId },
+        select: { id: true },
+      })) {
+        return input.clickId;
+      }
+      throw retryError;
+    }
+  }
   return input.clickId;
 }
 

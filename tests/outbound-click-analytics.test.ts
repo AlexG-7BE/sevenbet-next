@@ -107,13 +107,16 @@ test("redirect route schedules one canonical observer only after governed safe-r
   assert.doesNotMatch(route, /userId|sessionId|x-forwarded-for|user-agent|Programme|Mission|request\.url/);
 });
 
-test("canonical observer writes detail, events, then the success-only aggregate in one transaction", () => {
+test("canonical observer writes detail, events, then the success-only aggregate in one batch transaction", () => {
   const attribution = readFileSync("lib/analytics/outbound-attribution.server.ts", "utf8");
-  const transaction = attribution.indexOf("prisma.$transaction(async (transaction)");
-  const detailed = attribution.indexOf("transaction.outboundClick.create", transaction);
-  const events = attribution.indexOf("transaction.analyticsEvent.createMany", detailed);
-  const aggregate = attribution.indexOf("incrementOutboundClickDailyProjection(transaction, aggregateIdentity)", events);
-  assert.ok(transaction >= 0 && detailed > transaction && events > detailed && aggregate > events);
+  const batch = attribution.indexOf("const writes = (): Prisma.PrismaPromise<unknown>[] =>");
+  const detailed = attribution.indexOf("database.outboundClick.create", batch);
+  const events = attribution.indexOf("database.analyticsEvent.createMany", detailed);
+  const aggregate = attribution.indexOf("incrementOutboundClickDailyProjection(database, aggregateIdentity)", events);
+  const transaction = attribution.indexOf("await database.$transaction(writes())", aggregate);
+  assert.ok(batch >= 0 && detailed > batch && events > detailed && aggregate > events && transaction > aggregate);
+  // Non-interactive: no transaction callback whose 5 s clock can close under load.
+  assert.doesNotMatch(attribution, /\$transaction\(async/);
   assert.match(attribution, /if \(input\.state !== "SUCCEEDED"\) return null/);
   assert.match(attribution, /day: outboundClickUtcDay\(input\.attemptedAt\)/);
   assert.match(attribution, /clickedAt: input\.attemptedAt/);
