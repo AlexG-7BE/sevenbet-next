@@ -3,7 +3,9 @@ name: Launch Click Check
 # One real click on every casino's public /r/ route from a Globalping probe in each launch market,
 # judged against the licence register (RFC-054). Twice a day: 08:15 UTC, when Germany is closed,
 # and 20:15 UTC, inside the German 21:00–06:00 window. The redirect is never followed, and the
-# clicks are stored as BOT traffic. See docs/06_Operations/Launch-2026-09-28-Checklist.md.
+# clicks are stored as BOT traffic. A route expected to reach its partner (ROUTE_DOWN) fails the
+# run like a violation. The Markdown, the JSON report and the log are kept as a run artifact.
+# See docs/06_Operations/Launch-2026-09-28-Checklist.md.
 on:
   schedule:
     - cron: "15 8 * * *"
@@ -42,22 +44,22 @@ jobs:
         shell: bash
         run: |
           set +e
-          npm run --silent launch:click-check > click-check.md 2> click-check.log
+          npm run --silent launch:click-check -- --json click-check.json > click-check.md 2> click-check.log
           echo "status=$?" >> "${GITHUB_OUTPUT}"
           set -e
           cat click-check.md >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Open or update the alert on a violation
+      - name: Open or update the alert on a violation or a lost route
         if: steps.check.outputs.status != '0'
         shell: bash
         run: |
           set -euo pipefail
           {
-            echo "The launch click check found a closed market reaching a partner, or an unexpected response."
+            echo "The launch click check found a closed market reaching a partner, an expected partner route refusing the click (ROUTE_DOWN), or an unexpected response."
             echo
             echo "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo
-            grep -E '^\| (Market|---)|VIOLATION|UNEXPECTED' click-check.md || true
+            grep -E '^\| (Market|---)|VIOLATION|UNEXPECTED|ROUTE_DOWN' click-check.md || true
           } > alert.md
           number="$(gh issue list --state open --search "${ALERT_TITLE} in:title" --json number,title --jq "[.[] | select(.title == \"${ALERT_TITLE}\")][0].number // empty")"
           if [[ -n "${number}" ]]; then
@@ -65,3 +67,17 @@ jobs:
           else
             gh issue create --title "${ALERT_TITLE}" --body-file alert.md
           fi
+
+      # After the alert, and never failing the job, so an artifact outage cannot hide an alert.
+      - name: Keep the click report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: launch-click-check-${{ github.run_id }}
+          path: |
+            click-check.json
+            click-check.md
+            click-check.log
+          if-no-files-found: warn
+          retention-days: 30

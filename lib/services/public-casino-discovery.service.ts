@@ -6,6 +6,7 @@ import type {
   PublicCasinoCardDto, PublicCasinoDiscoveryStore, PublicMediaDto,
 } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublicCasinoMedia } from "@/lib/public-casino/public-casino.types";
+import { usesSingleConnectionPool } from "@/lib/db/prisma-runtime-config";
 import { publicCasinoDiscoveryRepository } from "@/lib/repositories/public-casino-discovery.repository";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import {
@@ -87,14 +88,6 @@ function facet(items: WorkingCard[], select: (item: WorkingCard) => Array<{ key:
 
 function matchesAny(selected: string[] | undefined, values: string[]) {
   return !selected?.length || selected.some((value) => values.includes(value));
-}
-
-function usesSingleConnectionPool() {
-  try {
-    return new URL(process.env.DATABASE_URL ?? "").searchParams.get("connection_limit") === "1";
-  } catch {
-    return false;
-  }
 }
 
 function discoveryRequestKey(

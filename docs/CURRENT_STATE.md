@@ -21,6 +21,31 @@ Best Offers, Casinos and review pages in the URL language's market: `/en` →
 United Kingdom, `/sv` → Sweden, `/da` → Denmark. Partner buttons still follow
 the visitor's real country, so such a visitor sees no button. German is not
 mapped because of the Berlin advertising window.
+## Database and click stability — in review
+
+**Founder decision, 27 September 2026** ("B. База и клики без провалов"), after
+the pre-launch audit. Branch `fix/db-connection-stability`:
+
+- the runtime applies a code-level pool policy to the pooled Prisma Postgres
+  URL — 3 connections per instance, 5 s pool and connect timeouts, 10 s socket
+  timeout — whatever the environment URL says; the build gate checks the
+  effective pool instead of demanding `connection_limit=1`
+  ([Environment and Secrets — Runtime database pool](06_Operations/Environment-and-Secrets.md#runtime-database-pool));
+- every public read is bounded to 8 s, and public pages, `/r/`, `/go` and the
+  sitemap end at 30 s (`maxDuration`) instead of the 300 s platform default;
+- the `/r/` click record is one non-interactive batch (click, two events, daily
+  count as `INSERT … ON CONFLICT`), retried once on a connection or pool
+  failure and never counted twice; the offer's network comes from the route
+  lookup instead of a separate read;
+- the launch click check pins the expected partner routes per market (GB 18,
+  SE 12, DK 10, IE 17, DE 2 inside the window) and fails on `ROUTE_DOWN`, and
+  its JSON report is kept as a workflow artifact.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed. **DETECTED before it
+(Production 952d0e0b):** `/r/` p90 1.05–1.6 s at ~2.6 req/s, 6× P1001, 2× P1017
+and 2× P2024 in 72 h, one page hung 300 s, and 10 of ~257 click records lost to
+the 5 s interactive-transaction timeout (redirects themselves worked). No
+schema, environment or Vercel setting changes.
 ## Launch click package A — in review
 
 **Founder instruction, 27 September 2026** (after the pre-launch audit):

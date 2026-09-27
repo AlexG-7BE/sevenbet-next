@@ -32,7 +32,14 @@ with the closure stored as the click's `blockedReason`.
    clicks are stored as `BOT` traffic. Accept only:
    - no `VIOLATION` (a closed market reaching a partner) and no `UNEXPECTED`;
    - `PASS` for every casino in the target table; `NO_ROUTE` only for DragonBet GB,
-     Betsafe SE, Regency SE and PlayUZU SE.
+     Betsafe SE, Regency SE and PlayUZU SE (and the eleven Irish gaps).
+   The expected partner routes are pinned: every casino the register opens in a
+   launch market must reach its partner (GB 18, SE 12, DK 10, IE 17, DE 2 inside
+   the window) unless it is listed in `ROUTES_NOT_YET_LIVE`
+   (`lib/market-access/launch-click-check.ts`). A refused click on any other
+   licence-open route is `ROUTE_DOWN`: the run exits 1 and the workflow opens or
+   updates the alert issue, as for a `VIOLATION`. Each run keeps the Markdown, the
+   JSON report and the log as a 30-day artifact.
    Run it once between 21:00 and 06:00 Berlin (Germany `PASS` ×2) and once in the
    day (Germany `PASS_CLOSED` ×2). A `NO_ROUTE` is retried from fresh probes up to
    three times: Vercel places some probes elsewhere than Globalping does (London OVH
@@ -68,6 +75,7 @@ with the closure stored as the click's `blockedReason`.
 - A `VIOLATION` in the click check: close the market in `lib/market-access/register.ts`
   (one line) and deploy, or disable the activation through the controller.
 - A partner reports traffic from a market it refuses: same.
-- A route turns `BROKEN` in a launch market (route-health issue or a `NO_ROUTE` that
-  used to pass): disable it through the controller so the button stops sending
-  visitors to a dead page, and tell the partner.
+- A route turns `BROKEN` in a launch market (route-health issue or a `ROUTE_DOWN` in
+  the click check): disable it through the controller so the button stops sending
+  visitors to a dead page, and tell the partner. When a known gap goes live, the
+  click check says so; remove it from `ROUTES_NOT_YET_LIVE`.

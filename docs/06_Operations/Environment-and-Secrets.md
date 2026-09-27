@@ -93,6 +93,18 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `PRODUCTION_SMOKE_BASE_URL` | Operational override | Smoke script; HTTPS or explicit loopback only. The monitor token is sent only to `https://b4gamble.com` or `http://127.0.0.1:*` | Repository maintainer |
 | `CI`, `NODE_ENV`, `NEXT_TELEMETRY_DISABLED` | Build/runtime mode | Tooling/framework | Automation-owned |
 
+## Runtime database pool
+
+**PROPOSED — NOT YET LIVE until branch `fix/db-connection-stability` is merged and deployed** (Founder decision, 27 September 2026, "B. База и клики без провалов").
+
+- The application's Prisma client applies a code-level pool policy to a `DATABASE_URL` on `pooled.db.prisma.io`: `connection_limit=3`, `pool_timeout=5`, `connect_timeout=5`, `socket_timeout=10` (`RUNTIME_POOL_POLICY` in `lib/db/prisma-runtime-config.ts`). These four values override whatever the environment URL says; host, credentials, database and `sslmode` still come from the environment. The Production URL can keep `connection_limit=1`; no environment change is needed or made.
+- Why: Vercel Fluid compute serves many concurrent requests from one instance, so a one-connection pool serialised every page read, `/r/` lookup, click write and auth query on that instance (27 September audit: `/r/` p90 1.05–1.6 s, P2024 pool timeouts, click writes lost to the 5 s interactive-transaction timeout, one page hung 300 s).
+- Capacity (**INFERRED** from the 27 September audit, not re-measured): Prisma Postgres Starter allows roughly 50–100 pooled connections; instances × 3 stays well inside it at launch traffic. If `P2037`/too-many-connections errors appear, lower the constant and redeploy.
+- The build gate (`lib/db/vercel-database-readiness.ts`) checks the URL as the runtime uses it: pooled host, `sslmode=require`, an effective pool of 1–5 connections and finite pool/connect/socket timeouts, plus the unchanged direct-URL and identity checks. The build log's `vercel_database_readiness` event reports `runtimeConnectionLimit`.
+- Local, CI and any other host keep their URL exactly as configured, so disposable `connection_limit=1` databases keep the one-connection FIFO in `lib/db/public-database-read-coordinator.ts`. Every public read is bounded to 8 s either way.
+- `DIRECT_URL`, migrations and release administration are unchanged.
+- Rollback: revert the change; the environment URL's own `connection_limit=1` then applies again.
+
 ## Preview isolation runbook
 
 1. Create one clearly named non-production Prisma Postgres resource in the same provider family. Connect it to Preview only under a non-Production prefix. Never clone, dump or restore Production into it.
