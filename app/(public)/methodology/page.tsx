@@ -21,7 +21,7 @@ export default async function MethodologyPage() {
   return <>
     <JsonLd data={{ "@context": "https://schema.org", "@type": "WebPage", name: messages.metadataTitle, description: messages.metadataDescription, url: absoluteUrl(path) }} />
     <JsonLd data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "B4GAMBLE", item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.metadataTitle, item: absoluteUrl(path) }] }} />
-    <HandoffPage name="methodology" transform={(html) => transformMethodologyHandoff(html, messages, (href) => productHref(presentation, href))} />
+    <HandoffPage name="methodology" revealHeadings transform={(html) => transformMethodologyHandoff(html, messages, (href) => productHref(presentation, href))} />
     <TrustNextStep page="methodology" presentation={presentation} />
   </>;
 }

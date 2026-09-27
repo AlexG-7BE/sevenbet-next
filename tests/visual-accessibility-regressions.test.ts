@@ -46,7 +46,10 @@ test("Best Offers keeps native cards, material terms, and reachable controls", (
   assert.match(primitives, /facts\.slice\(0, 3\)\.map/);
   assert.match(cssRule(styles, ".categoryRail button"), /min-height:44px/);
   assert.match(cssRule(styles, ".rankActions > a:not(:first-child)"), /min-height:44px/);
-  assert.match(styles, /@media \(prefers-reduced-motion:reduce\)[\s\S]*?animation:none;/);
+  assert.match(styles, /@media \(prefers-reduced-motion:reduce\)[\s\S]*?transition:none;/);
+  // Section rises use the shared site motion, which reduced motion switches off in app/globals.css.
+  assert.doesNotMatch(styles, /animation-timeline|reveal-up/);
+  assert.match(read("app/(public)/best-offers/page.tsx"), /data-motion-reveal/);
 });
 
 test("bonus directory uses native article semantics, announced results and full-size touch targets", () => {

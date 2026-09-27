@@ -37,6 +37,7 @@ export function HandoffPage({
   effective,
   headerAutoHide = false,
   programmePath = "/program",
+  revealHeadings = false,
   updated,
 }: {
   name: HandoffPageName;
@@ -47,12 +48,15 @@ export function HandoffPage({
   /** Long mobile reading pages let the fixed header give its height back while scrolling down. */
   headerAutoHide?: boolean;
   programmePath?: string;
+  /** Section headings rise into view through the shared site motion (Founder, 27 Sep 2026). */
+  revealHeadings?: boolean;
   updated?: string;
 }) {
   const page = generatedPages[name];
   const commonHtml = transformCommonHandoff(page.html, programmePath);
   // Readability pass (Founder, 25 Sep 2026): tokens only; app/globals.css applies the fixes (Home on phones only).
-  const html = markHandoffReadability(transform ? transform(commonHtml) : commonHtml);
+  const readableHtml = markHandoffReadability(transform ? transform(commonHtml) : commonHtml);
+  const html = revealHeadings ? readableHtml.replace(/<h2\b/g, "<h2 data-motion-reveal") : readableHtml;
   const sourceCss = cssTransform ? cssTransform(page.css) : page.css;
   const css = name === "home" ? `${sourceCss}\n${HOME_STACK_COMPOSITOR_FIX}` : sourceCss;
 

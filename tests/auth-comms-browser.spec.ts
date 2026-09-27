@@ -456,3 +456,125 @@ test("Google control honours reduced motion on the canonical registration screen
   expect(transitionSeconds).toBeLessThanOrEqual(0.00001);
   await context.close();
 });
+
+async function expectBoundedTouchControls(page: Page, width: number) {
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  const controls = await page.locator("[data-password-reset-page] main a, [data-password-reset-page] main button, [data-password-reset-page] main input").evaluateAll((elements) => elements.map((element) => {
+    const rect = element.getBoundingClientRect();
+    return { text: element.textContent || element.getAttribute("aria-label"), height: rect.height, left: rect.left, right: rect.right, fontSize: Number.parseFloat(getComputedStyle(element).fontSize) };
+  }));
+  expect(controls.length).toBeGreaterThan(0);
+  for (const control of controls) {
+    expect(control.height, `${control.text} height`).toBeGreaterThanOrEqual(44);
+    expect(control.left, `${control.text} left`).toBeGreaterThanOrEqual(0);
+    expect(control.right, `${control.text} right`).toBeLessThanOrEqual(width);
+    expect(control.fontSize, `${control.text} font size`).toBeGreaterThanOrEqual(14);
+  }
+}
+
+test("Forgot password opens the reset request and confirms neutrally without revealing accounts", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, "/login");
+  const forgot = page.getByRole("link", { name: "Forgot password?" });
+  await expect(forgot).toHaveAttribute("href", "/reset-password");
+  expect(await forgot.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  await forgot.click();
+  await expect(page).toHaveURL(`${baseUrl}/reset-password`);
+  await expect(page.getByRole("heading", { name: "Reset your password." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Back to log in" })).toHaveAttribute("href", "/login");
+
+  const bodies: unknown[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/auth/request-password-reset") bodies.push(request.postDataJSON());
+  });
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill("No-Account.Reset@Example.com");
+  const [response] = await Promise.all([
+    page.waitForResponse((candidate) => new URL(candidate.url()).pathname === "/api/auth/request-password-reset"),
+    page.getByRole("button", { name: "Send reset link" }).click(),
+  ]);
+  // The real endpoint accepts the relative redirect and answers the same way for any address.
+  expect(response.status()).toBe(200);
+  expect(bodies).toEqual([{ email: "no-account.reset@example.com", redirectTo: "/reset-password" }]);
+  await expect(page.getByRole("heading", { name: "Check your email." })).toBeFocused();
+  await expect(page.getByText("If this email belongs to a B4GAMBLE account, we've sent a link there to reset your password. The link works for 1 hour.")).toBeVisible();
+  await expect(page.locator('[data-password-reset-page] [role="alert"]')).toHaveCount(0);
+  for (const width of [360, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    await expectBoundedTouchControls(page, width);
+  }
+  await page.getByRole("button", { name: "Send another link" }).click();
+  await expect(page.getByRole("textbox", { name: "Email", exact: true })).toHaveValue("No-Account.Reset@Example.com");
+});
+
+test("password reset keeps the Programme language through the request and the emailed return", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, "/login?returnTo=%2Fde%2Fprogram");
+  await expect(page.getByRole("link", { name: "Passwort vergessen?" })).toHaveAttribute("href", "/reset-password?returnTo=%2Fde%2Fprogram");
+  await open(page, "/reset-password?returnTo=%2Fde%2Fprogram");
+  expect(await page.evaluate(() => document.documentElement.lang)).toBe("de-DE");
+  await expect(page.getByRole("heading", { name: "Setze dein Passwort zurück." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Zurück zur Anmeldung" })).toHaveAttribute("href", "/login?returnTo=%2Fde%2Fprogram");
+  const bodies: unknown[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/auth/request-password-reset") bodies.push(request.postDataJSON());
+  });
+  await page.getByRole("textbox", { name: "E-Mail", exact: true }).fill("kein-konto@example.com");
+  const [response] = await Promise.all([
+    page.waitForResponse((candidate) => new URL(candidate.url()).pathname === "/api/auth/request-password-reset"),
+    page.getByRole("button", { name: "Link senden" }).click(),
+  ]);
+  expect(response.status()).toBe(200);
+  expect(bodies).toEqual([{ email: "kein-konto@example.com", redirectTo: "/reset-password?returnTo=%2Fde%2Fprogram" }]);
+  await expect(page.getByRole("heading", { name: "Sieh in dein E-Mail-Postfach." })).toBeVisible();
+});
+
+test("an expired or used reset link explains itself and offers a new link", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, "/reset-password?error=INVALID_TOKEN");
+  await expect(page.getByRole("heading", { name: "This link no longer works." })).toBeVisible();
+  await expect(page.getByText("Each reset link works once, for 1 hour. Enter your email and we'll send you a new one.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send reset link" })).toBeVisible();
+  await expectBoundedTouchControls(page, 390);
+
+  // A token the server no longer knows is refused by the real endpoint and lands in the same state.
+  await open(page, "/reset-password?token=BrowserTestUnknownToken0");
+  await expect(page.getByRole("heading", { name: "Choose a new password." })).toBeVisible();
+  await page.getByLabel("New password", { exact: true }).fill("replacement-password-2");
+  await page.getByLabel("Repeat new password", { exact: true }).fill("replacement-password-2");
+  const [response] = await Promise.all([
+    page.waitForResponse((candidate) => new URL(candidate.url()).pathname === "/api/auth/reset-password"),
+    page.getByRole("button", { name: "Save new password" }).click(),
+  ]);
+  expect(response.status()).toBe(400);
+  await expect(page.getByRole("heading", { name: "This link no longer works." })).toBeFocused();
+  await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
+});
+
+test("a valid reset link saves the new password once both entries match", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const bodies: unknown[] = [];
+  await page.route("**/api/auth/reset-password", (route) => {
+    bodies.push(route.request().postDataJSON());
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: true }) });
+  });
+  await open(page, "/reset-password?token=BrowserTestValidToken000");
+  const password = page.getByLabel("New password", { exact: true });
+  const repeat = page.getByLabel("Repeat new password", { exact: true });
+  await expect(password).toHaveAttribute("autocomplete", "new-password");
+  await expect(password).toHaveAttribute("minlength", "8");
+  await expectBoundedTouchControls(page, 390);
+
+  await password.fill("replacement-password-2");
+  await repeat.fill("replacement-password-3");
+  await page.getByRole("button", { name: "Save new password" }).click();
+  await expect(page.locator('[data-password-reset-page] [role="alert"]')).toHaveText("The passwords do not match.");
+  expect(bodies).toEqual([]);
+
+  await repeat.fill("replacement-password-2");
+  await page.getByRole("button", { name: "Save new password" }).click();
+  await expect(page.getByRole("heading", { name: "Password changed." })).toBeFocused();
+  expect(bodies).toEqual([{ newPassword: "replacement-password-2", token: "BrowserTestValidToken000" }]);
+  const logIn = page.getByRole("link", { name: "Log in", exact: true });
+  await expect(logIn).toHaveAttribute("href", "/login");
+  await expectBoundedTouchControls(page, 390);
+});

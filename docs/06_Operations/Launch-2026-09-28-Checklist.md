@@ -42,6 +42,11 @@ with the closure stored as the click's `blockedReason`.
    review: its button leads to the operator's local site. In Germany, `/de` pages
    show no "Casino" wording, no jackpots and no table games.
 
+5. **Password reset.** With a real email/password test account, open
+   `https://b4gamble.com/login` on a phone, tap "Forgot password?", send a link,
+   and confirm the email arrives, its button opens the new-password page, the new
+   password logs in and the old one does not.
+
 ## Monday and after
 
 - **Click report.** Admin → Analytics → Commercial: *Outbound by market and
