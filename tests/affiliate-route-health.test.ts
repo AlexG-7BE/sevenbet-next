@@ -212,6 +212,46 @@ test("4xx, 5xx, expiry, cross-GEO, attribution loss, and redirect loops are dist
   assert.equal(loop.reason, "REDIRECT_LOOP");
 });
 
+test("a chain ending on one of the operator's own market sites is healthy; another country's site is still cross-GEO", async () => {
+  const withLocalSites = { ...expectation, acceptedFinalHosts: ["casino.dk"] };
+  const localSite = await checkAffiliateRouteHttp({
+    url: new URL("https://track.example/click?aff=42"), expectation: withLocalSites,
+    fetcher: fetchSequence(
+      new Response(null, { status: 302, headers: { location: "https://www.casino.dk/velkommen?aff=42" } }),
+      new Response(null, { status: 200 }),
+    ), validateUrl: noNetworkValidation,
+  });
+  assert.equal(localSite.status, "HEALTHY", "the expected host's path prefix does not bind another site");
+  assert.equal(localSite.finalHost, "www.casino.dk");
+
+  const otherCountry = await checkAffiliateRouteHttp({
+    url: new URL("https://track.example/click?aff=42"), expectation: withLocalSites,
+    fetcher: fetchSequence(
+      new Response(null, { status: 302, headers: { location: "https://www.casino.se/?aff=42" } }),
+      new Response(null, { status: 200 }),
+    ), validateUrl: noNetworkValidation,
+  });
+  assert.equal(otherCountry.status, "CROSS_GEO");
+
+  const expectedHostWrongPath = await checkAffiliateRouteHttp({
+    url: new URL("https://track.example/click?aff=42"), expectation: withLocalSites,
+    fetcher: fetchSequence(
+      new Response(null, { status: 302, headers: { location: "https://casino.example/se?aff=42" } }),
+      new Response(null, { status: 200 }),
+    ), validateUrl: noNetworkValidation,
+  });
+  assert.equal(expectedHostWrongPath.status, "CROSS_GEO");
+
+  const localSiteWithoutAttribution = await checkAffiliateRouteHttp({
+    url: new URL("https://track.example/click"), expectation: withLocalSites,
+    fetcher: fetchSequence(
+      new Response(null, { status: 302, headers: { location: "https://casino.dk/" } }),
+      new Response(null, { status: 200 }),
+    ), validateUrl: noNetworkValidation,
+  });
+  assert.equal(localSiteWithoutAttribution.status, "ATTRIBUTION_FAILURE");
+});
+
 test("HEAD rejection fallback and CDN challenges are handled without hiding server failures", async () => {
   const fallback = await checkAffiliateRouteHttp({
     url: new URL("https://casino.example/pe?aff=42"), expectation,
