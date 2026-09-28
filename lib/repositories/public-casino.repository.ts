@@ -12,6 +12,8 @@ export interface PublicCasinoStore {
   listPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]>;
   listPublishedOfferCandidates?(casinoIds: string[], now?: Date): Promise<PublishedOfferCandidate[]>;
   listManagedSlugs(): Promise<string[]>;
+  /** Identity of every published, unarchived casino: enough to ask for actions, no snapshot. */
+  listPublishedIdentities?(): Promise<{ casinoId: string; slug: string }[]>;
 }
 
 function projectedPublishedSnapshot(countryCode?: string | null) {
@@ -188,9 +190,26 @@ const cachedPublishedBySlug = publicEditorialCache(
   [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
 );
 
+// The site shell asks on every page whether any partner button exists for the visitor. That needs
+// only casino identities, not the whole-catalogue snapshot projection, whose per-country
+// revalidation kept timing out for crawler traffic from the United States (28 Sep 2026).
+const cachedPublishedIdentities = publicEditorialCache(
+  async () => runPublicDatabaseRead(() => prisma.casino.findMany({
+    where: { status: EditorialStatus.PUBLISHED, archivedAt: null },
+    select: { id: true, slug: true },
+    orderBy: { id: "asc" },
+  })).then((rows) => rows.map((row) => ({ casinoId: row.id, slug: row.slug }))),
+  ["public-casino-published-identities-v1"],
+  [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
+);
+
 export class PublicCasinoRepository implements PublicCasinoStore {
   async hasManagedSlug(slug: string) {
     return (await runPublicDatabaseRead(() => prisma.casino.count({ where: { slug } }))) > 0;
+  }
+
+  async listPublishedIdentities() {
+    return cachedPublishedIdentities();
   }
 
   async listManagedSlugs() {

@@ -352,6 +352,21 @@ test("canonical-action existence uses the same governed decisions without loadin
     assert.equal(await withPresence(true).hasCanonicalAction(allowJurisdictionAuthority, null, null), false);
   });
 
+  await t.test("answers from published identities without the snapshot projection", async () => {
+    let publishedReads = 0;
+    const repository = store([publishedRecord()], [managedSlug], {
+      listPublished: async () => { publishedReads += 1; return [publishedRecord()]; },
+      listPublishedIdentities: async () => [{ casinoId: publishedRecord().casinoId, slug: managedSlug }],
+    });
+    assert.equal(await authorizedService(repository).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), true);
+    assert.equal(await service(repository).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), false);
+    assert.equal(publishedReads, 0);
+    const empty = store([], [], { listPublishedIdentities: async () => [] });
+    assert.equal(await authorizedService(empty).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), false);
+    const failing = store([], [], { listPublishedIdentities: async () => { throw new Error("identities unavailable"); } });
+    assert.equal(await authorizedService(failing).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), false);
+  });
+
   await t.test("skips the additive offer-corpus read", async () => {
     let offerReads = 0;
     const repository = store([publishedRecord()], [managedSlug], {

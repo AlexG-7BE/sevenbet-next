@@ -236,22 +236,24 @@ export class PublicCasinoService {
       }
     }
 
-    let published: Awaited<ReturnType<PublicCasinoStore["listPublished"]>>;
+    let subjects: { casinoId: string; casinoSlug: string; published: true }[];
     try {
-      published = await this.repository.listPublished(countryCode);
+      // Identities are enough to ask for actions; the snapshot projection is only a fallback
+      // for stores that cannot list them.
+      subjects = this.repository.listPublishedIdentities
+        ? (await this.repository.listPublishedIdentities()).map((entry) => ({ casinoId: entry.casinoId, casinoSlug: entry.slug, published: true as const }))
+        : (await this.repository.listPublished(countryCode)).flatMap((entry) => {
+          const casino = mapPublishedCasino(entry, {
+            now: this.options.now,
+            countryCode: normalizedCountry,
+          });
+          return casino
+            ? [{ casinoId: casino.id, casinoSlug: casino.slug, published: true as const }]
+            : [];
+        });
     } catch {
       return false;
     }
-
-    const subjects = published.flatMap((entry) => {
-      const casino = mapPublishedCasino(entry, {
-        now: this.options.now,
-        countryCode: normalizedCountry,
-      });
-      return casino
-        ? [{ casinoId: casino.id, casinoSlug: casino.slug, published: true as const }]
-        : [];
-    });
     if (!subjects.length) return false;
 
     try {
