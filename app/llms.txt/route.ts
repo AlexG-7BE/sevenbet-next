@@ -1,51 +1,30 @@
-import { articlePath } from "@/lib/articles/article-types";
+import { indexableMarketProductPaths, indexableReviewCards, loadCrawlerBonusDirectory, loadMarketSitemapSnapshot } from "@/app/sitemap";
 import { articleService } from "@/lib/services";
-import { absoluteUrl } from "@/lib/site";
+import { buildLlmsTxt, llmsLaunchMarkets, type LlmsMarketCatalogue } from "@/lib/seo/llms";
+import { stripPublicMarketPrefix } from "@/lib/market/routing";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * llms.txt lists the same pages and reviews the sitemap lists for the launch markets, so
+ * the two never disagree about what is published (see lib/seo/llms.ts for the wording).
+ */
 export async function GET() {
-  const centerArticles = await articleService.listPublished("en-GB", { take: 100 }).catch(() => []);
-  const learningCenterArticles = centerArticles
-    .map((article) => `- [${article.title}](${absoluteUrl(articlePath(article))}): ${article.excerpt}`)
-    .join("\n");
+  const crawlerBonuses = await loadCrawlerBonusDirectory();
+  const [markets, articles] = await Promise.all([
+    Promise.all(llmsLaunchMarkets().map(async (market): Promise<LlmsMarketCatalogue> => {
+      const snapshot = await loadMarketSitemapSnapshot(market, crawlerBonuses).catch(() => null);
+      if (!snapshot) return { market, productPages: [], reviews: [] };
+      return {
+        market,
+        productPages: indexableMarketProductPaths(snapshot, true).routes.map((route) => stripPublicMarketPrefix(route)),
+        reviews: indexableReviewCards(snapshot.casinos).map((casino) => ({ name: casino.name, slug: casino.slug, score: casino.rating })),
+      };
+    })),
+    articleService.listPublished("en-GB", { take: 100 }).catch(() => []),
+  ]);
 
-  const body = `# B4GAMBLE
-
-B4GAMBLE is a responsible gambling platform centered on the B4GAMBLE 10-Step Control Program. Casino comparisons and bonus offers are secondary resources presented inside a control-first framework.
-
-## Core Pages
-
-- [Home](${absoluteUrl("/")}) - program-first responsible gambling entry point.
-- [10-step program](${absoluteUrl("/program")}) - the primary B4GAMBLE control program.
-- [Learning Center](${absoluteUrl("/learn")}) - scalable educational hub for casino basics, bonuses, safety, payments, licensing, games, glossary and country guides.
-- [Responsible Gambling](${absoluteUrl("/responsible-gambling")}) - public orientation hub for education, practical control, the 10-step plan and Help.
-- [Protected Help](${absoluteUrl("/help")}) - non-commercial control and support information with no casino, bonus or affiliate actions.
-- [Casino bonuses](${absoluteUrl("/bonuses")}) - secondary bonus comparison directory.
-- [Casino reviews](${absoluteUrl("/casinos")}) - reviewed casino profiles.
-- [Methodology](${absoluteUrl("/methodology")}) - review criteria and editorial process.
-- [Affiliate disclosure](${absoluteUrl("/affiliate-disclosure")}) - commercial relationship explanation.
-- [Bonus guide](${absoluteUrl("/bonus-guide")}) - wagering, max bet, expiry and withdrawal rules.
-- [B4GAMBLE FAQ](${absoluteUrl("/faq")}) - product and trust answers covering B4GAMBLE, the Programme, private tools, editorial and affiliate boundaries, privacy and Protected Help separation.
-- [Privacy](${absoluteUrl("/privacy")}) - current handling boundaries for account, Programme, Self-Check, Personal Limit Tracker, Protected Help and affiliate-related data.
-- [Terms](${absoluteUrl("/terms")}) - current service, commercial, operator and user boundaries for B4GAMBLE.
-
-## Published Learning Center Articles
-
-${learningCenterArticles}
-
-## Casino Data Boundary
-
-- [Casino reviews](${absoluteUrl("/casinos")}) publishes only the records and presentation state authorised by the current public casino service.
-- [Best Offers](${absoluteUrl("/best-offers")}) may show a clearly labelled demonstration when no complete published offers pass the evidence contract. Demonstration records are fictional and have no commercial outbound action.
-- Casino and bonus availability, terms, licence context and jurisdiction eligibility must be verified on the current page before a user acts.
-
-## Important Context
-
-B4GAMBLE does not operate casinos, accept deposits or guarantee winnings. Some outbound links may be affiliate links. Users should verify operator terms, local legality, licensing, KYC, withdrawal rules and responsible gambling tools before depositing.
-`;
-
-  return new Response(body, {
+  return new Response(buildLlmsTxt({ markets, articles }), {
     headers: {
       "content-type": "text/plain; charset=utf-8",
       "cache-control": "public, max-age=3600",

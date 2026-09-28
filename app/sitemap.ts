@@ -4,6 +4,7 @@ import { absoluteUrl, coreRoutes } from "@/lib/site";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
 import { publicOfferService } from "@/lib/services/public-offer.service";
 import { parsePublicOfferQuery } from "@/lib/public-offer/query";
+import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import {
   DEFAULT_MARKET_PROFILE,
   INDEXABLE_LANGUAGE_ROUTE_PROFILES,
@@ -14,6 +15,7 @@ import {
   type MarketProfile,
 } from "@/lib/market/registry";
 import { isLocalizedPublicDestination } from "@/lib/market/routing";
+import { bonusDirectoryIndexable } from "@/lib/seo/product-indexing";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -26,7 +28,22 @@ async function failClosed<T>(load: () => Promise<T>): Promise<T | null> {
   }
 }
 
-export async function loadMarketSitemapSnapshot(market: MarketProfile) {
+/**
+ * What a crawler is shown on a Bonuses page: every published offer, with no market's
+ * closures applied. Pages are language routes whose market comes from the visitor's IP, and
+ * the crawlers that index them crawl from outside the launch markets (Googlebot from the US),
+ * so this is the inventory their robots decision sees. Using the German market's own
+ * inventory made `/de/bonuses` leave the sitemap from 06:00 to 21:00 Berlin time, when German
+ * rules close offers, while the page itself stayed `index, follow` (audit 27 Sep 2026).
+ */
+export async function loadCrawlerBonusDirectory() {
+  return failClosed(() => publicOfferService.searchOffers(parsePublicOfferQuery({}, 1), null));
+}
+
+export async function loadMarketSitemapSnapshot(
+  market: MarketProfile,
+  crawlerBonuses?: Awaited<ReturnType<typeof loadCrawlerBonusDirectory>>,
+) {
   const discoveryResult = await failClosed(async () => {
     const discovery = await publicCasinoDiscoveryService.discover(
       { page: 1, pageSize: 48 },
@@ -48,11 +65,7 @@ export async function loadMarketSitemapSnapshot(market: MarketProfile) {
     { country: market.countryCode, limit: 12 },
     null,
   ));
-  const bonuses = await failClosed(() => publicOfferService.searchOffers(
-    parsePublicOfferQuery({}, 1),
-    null,
-    { defaultEditorialCountry: market.countryCode },
-  ));
+  const bonuses = crawlerBonuses === undefined ? await loadCrawlerBonusDirectory() : crawlerBonuses;
   return {
     bestOffers,
     bonuses,
@@ -62,6 +75,13 @@ export async function loadMarketSitemapSnapshot(market: MarketProfile) {
   };
 }
 
+/** Published, indexable reviews: the ones the sitemap and llms.txt list. */
+export function indexableReviewCards<T extends Pick<PublicCasinoCardDto, "dataClassification" | "indexable">>(casinos: readonly T[]) {
+  return casinos
+    .filter((casino) => casino.dataClassification === "PUBLISHED_RECORD" && casino.indexable !== false)
+    .slice(0, 500);
+}
+
 export function indexableMarketProductPaths(snapshot: Awaited<ReturnType<typeof loadMarketSitemapSnapshot>>, localized: boolean) {
   const prefix = (pathname: string) => localized
     ? publicMarketPath(snapshot.market, snapshot.market.defaultLocale, pathname)
@@ -69,12 +89,10 @@ export function indexableMarketProductPaths(snapshot: Awaited<ReturnType<typeof 
   const publishedDirectory = Boolean(snapshot.discovery && snapshot.discovery.total > 0 && snapshot.discovery.inventoryMode === "PUBLISHED_ONLY");
   const routes = [
     ...(publishedDirectory ? [prefix("/casinos")] : []),
-    ...(snapshot.bonuses && snapshot.bonuses.total > 0 && snapshot.bonuses.inventoryMode === "PUBLISHED_ONLY" ? [prefix("/bonuses")] : []),
+    ...(bonusDirectoryIndexable(snapshot.bonuses) ? [prefix("/bonuses")] : []),
     ...(snapshot.bestOffers && snapshot.bestOffers.status !== "unavailable" && snapshot.bestOffers.inventoryMode === "PUBLISHED_ONLY" ? [prefix("/best-offers")] : []),
   ];
-  const casinoRoutes = snapshot.casinos
-    .filter((casino) => casino.dataClassification === "PUBLISHED_RECORD" && casino.indexable !== false)
-    .slice(0, 500)
+  const casinoRoutes = indexableReviewCards(snapshot.casinos)
     .map((casino) => ({
       url: absoluteUrl(prefix(`/casino/${casino.slug}`)),
       ...(casino.editorialUpdatedAt || casino.publishedAt
@@ -92,9 +110,10 @@ export function localizedIndexableMarketProfiles(markets: readonly MarketProfile
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { articleService } = await import("@/lib/services/article.service");
-  const baseSnapshot = await failClosed(() => loadMarketSitemapSnapshot(DEFAULT_MARKET_PROFILE));
+  const crawlerBonuses = await loadCrawlerBonusDirectory();
+  const baseSnapshot = await failClosed(() => loadMarketSitemapSnapshot(DEFAULT_MARKET_PROFILE, crawlerBonuses));
   const localizedSnapshots = await Promise.all(localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
-    .map((market) => failClosed(() => loadMarketSitemapSnapshot(market))));
+    .map((market) => failClosed(() => loadMarketSitemapSnapshot(market, crawlerBonuses))));
   const baseProducts = baseSnapshot ? indexableMarketProductPaths(baseSnapshot, true) : { routes: [], casinoRoutes: [] };
   const localizedProducts = localizedSnapshots.flatMap((snapshot) => snapshot ? [indexableMarketProductPaths(snapshot, true)] : []);
   const learningSnapshots = await Promise.all(INDEXABLE_LANGUAGE_ROUTE_PROFILES.map(async (language) => ({

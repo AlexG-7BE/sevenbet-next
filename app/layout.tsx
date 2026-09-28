@@ -8,7 +8,8 @@ import { AnalyticsPageView } from "@/components/analytics/AnalyticsPageView";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { absoluteUrl, siteUrl } from "@/lib/site";
+import { organizationSchema, websiteSchema } from "@/lib/seo/structured-data";
+import { siteUrl } from "@/lib/site";
 import "./design-system.css";
 import "./globals.css";
 
@@ -40,6 +41,10 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "B4GAMBLE",
   },
+  // app/opengraph-image.tsx supplies the default image to every page without its own.
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -51,7 +56,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={presentation.locale}>
       <body className={`${archivo.variable} ${instrumentSerif.variable}`}>
-        <JsonLd data={{ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }} />
+        <JsonLd data={organizationSchema()} />
+        <JsonLd data={websiteSchema()} />
         {children}
         {analyticsEnabled ? <AnalyticsPageView /> : null}
         {analyticsEnabled ? <AnalyticsConsentBanner locale={presentation.locale} /> : null}

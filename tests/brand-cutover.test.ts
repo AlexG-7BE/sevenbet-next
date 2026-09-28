@@ -99,7 +99,7 @@ test("root identity, legal trading name and approved contacts are exact", () => 
   const icon = source("app/icon.svg");
   assert.match(layout, /default: "B4GAMBLE \| Know your limits before you play"/);
   assert.match(layout, /siteName: "B4GAMBLE"/);
-  assert.match(layout, /name: "B4GAMBLE"/);
+  assert.match(source("lib/seo/structured-data.ts"), /name: "B4GAMBLE"/);
   assert.match(layout, /Educational tools, private self-checks and transparent casino comparison/);
   assert.match(home, /homeMetadata\(presentation\.locale\)/);
   assert.match(homeCatalog, /Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play\./);
@@ -136,16 +136,17 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   const contact = source("app/(public)/contact/page.tsx");
   assert.match(contact, /absoluteUrl\(productCanonicalPath\(presentation, "\/contact"\)\)/);
   assert.doesNotMatch(contact, /https:\/\/b4gamble\.com\/contact/);
+  // SEO-CRAWLER-READY-2026-09-27: click redirects are closed to every agent and the non-standard Host line is gone.
   assert.deepEqual(robots(), {
     rules: [
-      { userAgent: "*", allow: "/" },
+      { userAgent: "*", allow: "/", disallow: ["/r/", "/go/", "/outbound/"] },
       {
-        userAgent: ["GPTBot", "ChatGPT-User", "OAI-SearchBot", "ClaudeBot", "Claude-User", "PerplexityBot", "Google-Extended"],
+        userAgent: ["GPTBot", "ChatGPT-User", "OAI-SearchBot", "ClaudeBot", "Claude-User", "Claude-SearchBot", "PerplexityBot", "Perplexity-User", "Google-Extended"],
         allow: "/",
+        disallow: ["/r/", "/go/", "/outbound/"],
       },
     ],
     sitemap: "https://b4gamble.com/sitemap.xml",
-    host: "https://b4gamble.com",
   });
 
   const originalDiscover = publicCasinoDiscoveryService.discover;
@@ -228,7 +229,10 @@ test("home-only canonical and social metadata do not leak into auth, outbound or
   const home = source("app/(public)/page.tsx");
   const productContext = source("lib/market/product-context.ts");
   assert.doesNotMatch(root, /alternates:\s*\{\s*canonical/);
-  assert.match(root, /"@type": "Organization"[\s\S]*url: absoluteUrl\("\/"\)/);
+  // One sitewide Organization and WebSite whose URL is the bare origin in every language.
+  assert.match(root, /<JsonLd data=\{organizationSchema\(\)\} \/>/);
+  assert.match(root, /<JsonLd data=\{websiteSchema\(\)\} \/>/);
+  assert.match(source("lib/seo/structured-data.ts"), /"@type": "Organization",[\s\S]*url: siteUrl,/);
   assert.match(home, /productMetadata\(\{ presentation, pathname: "\/", title, description/);
   assert.match(productContext, /const canonical = absoluteUrl\(productCanonicalPath\(input\.presentation, input\.pathname\)\)/);
   assert.match(productContext, /alternates: \{[\s\S]*canonical,[\s\S]*languages:/);

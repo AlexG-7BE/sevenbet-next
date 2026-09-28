@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { TRANSLATION_REVIEW_STATE } from "@/lib/i18n/review-state";
+import { DEFAULT_OPEN_GRAPH_IMAGES } from "@/lib/seo/social-image";
 import { absoluteUrl } from "@/lib/site";
 import type { PresentationResolution } from "./presentation-resolver";
 import {
@@ -102,6 +103,8 @@ export function productMetadata(input: {
     ? input.languageAlternates ?? productLanguageAlternates(input.pathname)
     : undefined;
   const locale = openGraphLocale(input.presentation.locale);
+  // Setting openGraph here replaces the layout's, so the default social image is named explicitly.
+  const images = input.images ?? DEFAULT_OPEN_GRAPH_IMAGES;
   const alternateLocale = INDEXABLE_LANGUAGE_ROUTE_PROFILES
     .map((profile) => openGraphLocale(profile.defaultLocale))
     .filter((candidate) => candidate !== locale);
@@ -122,13 +125,13 @@ export function productMetadata(input: {
       url: canonical,
       locale,
       alternateLocale,
-      ...(input.images ? { images: input.images } : {}),
+      images,
     },
     twitter: {
-      card: input.images ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: input.title,
       description: input.description,
-      ...(input.images ? { images: input.images } : {}),
+      images,
     },
   };
 }

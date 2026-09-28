@@ -27,7 +27,8 @@ test("page source preserves SSR, metadata, canonical, noindex and ItemList posit
   assert.equal((page.match(/publicOfferService\.searchOffers\(/g) || []).length, 1);
   assert.match(page, /productMetadata\(\{\s*presentation,\s*pathname: "\/bonuses"/);
   // Nothing thin, filtered, demonstrative or unavailable is offered to search.
-  assert.match(page, /robots: marketUnavailable \|\| unavailable \|\| containsDemo \|\| result\.total === 0 \|\| hasPublicOfferFilters\(legacyQuery\) \? \{ index: false, follow: true \}/);
+  // One indexing rule with the sitemap: published offers only and at least one (lib/seo/product-indexing.ts).
+  assert.match(page, /robots: marketUnavailable \|\| !bonusDirectoryIndexable\(result\) \|\| hasPublicOfferFilters\(legacyQuery\) \? \{ index: false, follow: true \}/);
   // Structured data describes published records only, positioned from one.
   assert.match(page, /const schema = result\.inventoryMode === "PUBLISHED_ONLY" && result\.total > 0 \? \{/);
   assert.match(page, /"@type": "ItemList"/);

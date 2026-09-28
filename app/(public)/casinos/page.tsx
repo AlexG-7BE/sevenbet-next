@@ -20,7 +20,7 @@ import { parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryQuery, CasinoDiscoveryResult } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
-import { isCrawlerUserAgent } from "@/lib/seo/crawler";
+import { shouldStreamRouteFrame } from "@/lib/seo/route-frame";
 import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -151,7 +151,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const [presentation, requestHeaders] = await Promise.all([resolveServerPresentationContext(), headers()]);
-  // Crawlers read the whole page in the first response; only people get the streamed frame.
-  if (isCrawlerUserAgent(requestHeaders.get("user-agent"))) return <CasinosContent raw={raw} />;
+  // Only a real browser gets the streamed frame; crawlers, agents and HTTP clients read the whole page.
+  if (!shouldStreamRouteFrame(requestHeaders)) return <CasinosContent raw={raw} />;
   return <Suspense fallback={<PublicRouteLoadingFrame destination="casinos" label={publicShellMessages(presentation.locale).casinos} />}><CasinosContent raw={raw} /></Suspense>;
 }
