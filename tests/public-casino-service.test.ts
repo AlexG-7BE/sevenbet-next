@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
+import type { PublicCommercialActionAuthority } from "../lib/commercial/public-commercial-action-resolver";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { isPublicCasinoCmsEnabled, PublicCasinoService } from "../lib/services/public-casino.service";
 import { allowJurisdictionAuthority } from "./market-authority.fixtures";
@@ -322,6 +323,33 @@ test("canonical-action existence uses the same governed decisions without loadin
         expected,
       );
     }
+  });
+
+  await t.test("skips the whole-catalogue read for a market with no activation rows", async () => {
+    let publishedReads = 0;
+    const asked: string[] = [];
+    const repository = store([publishedRecord()], [managedSlug], {
+      listPublished: async () => { publishedReads += 1; return [publishedRecord()]; },
+    });
+    const withPresence = (present: boolean | Error) => {
+      const authority: PublicCommercialActionAuthority = {
+        ...commercialActionAuthority((subject) => ({ href: `/r/${subject.casinoSlug}` })),
+        hasAnyMarketActivation: async (marketKey) => {
+          asked.push(marketKey);
+          if (present instanceof Error) throw present;
+          return present;
+        },
+      };
+      return new PublicCasinoService(repository, { cmsEnabled: true, now }, authority);
+    };
+    assert.equal(await withPresence(false).hasCanonicalAction(allowJurisdictionAuthority, "US", "US"), false);
+    assert.equal(publishedReads, 0);
+    assert.deepEqual(asked, ["US"]);
+    // Rows exist, or the check cannot answer: the full decision runs as before.
+    assert.equal(await withPresence(true).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), true);
+    assert.equal(await withPresence(new Error("presence unavailable")).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), true);
+    assert.equal(publishedReads, 2);
+    assert.equal(await withPresence(true).hasCanonicalAction(allowJurisdictionAuthority, null, null), false);
   });
 
   await t.test("skips the additive offer-corpus read", async () => {

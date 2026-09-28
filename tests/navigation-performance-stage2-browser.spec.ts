@@ -78,7 +78,9 @@ async function holdPublishedCasinoReads() {
   const lockAcquired = new Promise<void>((resolve) => { acknowledgeLock = resolve; });
   const lockRelease = new Promise<void>((resolve) => { releaseLock = resolve; });
   const transaction = prisma.$transaction(async (client) => {
-    await client.$executeRawUnsafe('LOCK TABLE "CasinoVersion" IN ACCESS EXCLUSIVE MODE');
+    // The commercial decision reads activations first (a market with none skips the catalogue),
+    // so the hold covers both tables to keep that decision pending.
+    await client.$executeRawUnsafe('LOCK TABLE "CasinoVersion", "MarketActivation" IN ACCESS EXCLUSIVE MODE');
     acknowledgeLock();
     await lockRelease;
   }, { maxWait: 5_000, timeout: 60_000 });
