@@ -289,6 +289,18 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     assert.equal((await service(store([record])).listCasinos(null, "SE"))[0]?.offerPresentation?.relation, "NONE");
   });
 
+  await t.test("a market profile's offer without a currency shows the profile's currency", async () => {
+    const record = publishedRecord();
+    const offer = { slug: "gb-welcome", title: "Up to 526 spins", status: "PUBLISHED", offerStatus: "ACTIVE", type: "FREE_SPINS", minimumDeposit: 20, freeSpins: 526 };
+    (record.snapshot as Record<string, unknown>).countries = [
+      { id: `${record.casinoId}-gb`, countryCode: "GB", availability: "AVAILABLE", primaryCurrency: "GBP", supportedCurrencies: ["GBP"], bonuses: [{ ...offer, id: "gb-offer" }, { ...offer, id: "gb-eur-offer", slug: "gb-eur-welcome", currency: "EUR" }] },
+    ];
+    const [gb] = await service(store([record])).listCasinos(null, "GB");
+    const currency = Object.fromEntries((gb?.marketProfiles ?? []).flatMap((profile) => profile.bonuses.map((bonus) => [bonus.id, bonus.currency])));
+    assert.equal(currency["gb-offer"], "GBP");
+    assert.equal(currency["gb-eur-offer"], "EUR");
+  });
+
   await t.test("listBonuses does not reintroduce offers from a managed legacy profile", async () => {
     const repository = store([], [managedSlug], {
       listPublished: async () => { throw new Error("published list unavailable"); },
