@@ -1,3 +1,4 @@
+import { marketProfileByCountry } from "@/lib/market/registry";
 import { isSafePublicSlug, safePublicUrl } from "@/lib/public-casino/public-casino-validation";
 import type {
   PublicCasinoBonus,
@@ -112,6 +113,16 @@ function mapPublishedBonus(value: unknown, now: Date): PublicCasinoBonus | null 
   };
 }
 
+/**
+ * An offer published for one market states its amounts in that market's currency. Several GB
+ * offers were imported without a currency, which hid their £20 minimum deposit (launch audit,
+ * 27 Sep 2026), so a market-scoped offer without one takes its market's only currency.
+ */
+function marketCurrency(countryCode: string) {
+  const hints = marketProfileByCountry(countryCode)?.currencyHints ?? [];
+  return hints.length === 1 ? hints[0] ?? null : null;
+}
+
 function candidate(
   casinoId: string,
   value: unknown,
@@ -120,9 +131,10 @@ function candidate(
   now: Date,
 ): PublishedOfferCandidate | null {
   const bonusRecord = record(value);
-  const bonus = mapPublishedBonus(bonusRecord, now);
-  if (!bonus) return null;
+  const mapped = mapPublishedBonus(bonusRecord, now);
+  if (!mapped) return null;
   const marketScoped = sourceCountryCode !== null;
+  const bonus = mapped.currency || !marketScoped ? mapped : { ...mapped, currency: marketCurrency(sourceCountryCode) };
   return {
     casinoId,
     bonus,
