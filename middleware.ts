@@ -39,6 +39,7 @@ import {
   PROGRAMME_PRESENTATION_CONTEXT,
 } from "@/lib/programme/presentation";
 import { programmeMutationAccessCategory } from "@/lib/programme/mutation-access";
+import { geoBlockGate } from "@/lib/security/geo-block";
 
 const internalPresentationTokenHeader = "x-b4gamble-internal-presentation-token";
 const internalPresentationTokenMaxAgeMs = 30_000;
@@ -265,6 +266,11 @@ export async function middleware(request: NextRequest) {
       },
     ));
   }
+
+  // Country geo-block (Founder, 28 Sep 2026): a blocked country gets HTTP 451 before any
+  // content, page, API, RSC payload or sitemap, unless it carries a valid owner cookie.
+  const geoBlocked = await geoBlockGate(request);
+  if (geoBlocked) return geoBlocked;
 
   if (pathname === "/partner-preview" || pathname.startsWith("/partner-preview/")) {
     return secureResponse(new NextResponse(null, {
