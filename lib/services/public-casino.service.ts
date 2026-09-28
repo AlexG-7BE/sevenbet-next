@@ -1,3 +1,4 @@
+import { canonicalCommercialMarketKey } from "@/lib/jurisdiction/canonical-commercial-market";
 import { mapPublishedCasino, projectPublicCasinoMarket } from "@/lib/public-casino/public-casino.mapper";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
@@ -218,6 +219,23 @@ export class PublicCasinoService {
   ): Promise<boolean> {
     if (!this.cmsEnabled()) return false;
 
+    const normalizedCountry = countryCode?.trim().toUpperCase() || null;
+    // No activation row for the market means no partner button can exist, so the whole-catalogue
+    // projection is not needed to answer. The resolver still decides every market that has rows.
+    const marketKey = canonicalCommercialMarketKey({
+      countryCode: normalizedCountry,
+      marketCode: commercialMarketCode ?? normalizedCountry,
+      trust: "TRUSTED",
+    });
+    if (!marketKey) return false;
+    if (this.repository.hasMarketActivation) {
+      try {
+        if (!(await this.repository.hasMarketActivation(marketKey))) return false;
+      } catch {
+        // An unanswered presence check falls through to the full decision.
+      }
+    }
+
     let published: Awaited<ReturnType<PublicCasinoStore["listPublished"]>>;
     try {
       published = await this.repository.listPublished(countryCode);
@@ -225,7 +243,6 @@ export class PublicCasinoService {
       return false;
     }
 
-    const normalizedCountry = countryCode?.trim().toUpperCase() || null;
     const subjects = published.flatMap((entry) => {
       const casino = mapPublishedCasino(entry, {
         now: this.options.now,

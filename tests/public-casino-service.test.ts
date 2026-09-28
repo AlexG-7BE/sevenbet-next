@@ -324,6 +324,27 @@ test("canonical-action existence uses the same governed decisions without loadin
     }
   });
 
+  await t.test("skips the whole-catalogue read for a market with no activation rows", async () => {
+    let publishedReads = 0;
+    const asked: string[] = [];
+    const counting = (present: boolean | Error) => store([publishedRecord()], [managedSlug], {
+      listPublished: async () => { publishedReads += 1; return [publishedRecord()]; },
+      hasMarketActivation: async (marketKey: string) => {
+        asked.push(marketKey);
+        if (present instanceof Error) throw present;
+        return present;
+      },
+    });
+    assert.equal(await authorizedService(counting(false)).hasCanonicalAction(allowJurisdictionAuthority, "US", "US"), false);
+    assert.equal(publishedReads, 0);
+    assert.deepEqual(asked, ["US"]);
+    // Rows exist, or the check cannot answer: the full decision runs as before.
+    assert.equal(await authorizedService(counting(true)).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), true);
+    assert.equal(await authorizedService(counting(new Error("presence unavailable"))).hasCanonicalAction(allowJurisdictionAuthority, "GB", "GB"), true);
+    assert.equal(publishedReads, 2);
+    assert.equal(await authorizedService(counting(true)).hasCanonicalAction(allowJurisdictionAuthority, null, null), false);
+  });
+
   await t.test("skips the additive offer-corpus read", async () => {
     let offerReads = 0;
     const repository = store([publishedRecord()], [managedSlug], {

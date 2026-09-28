@@ -12,6 +12,8 @@ export interface PublicCasinoStore {
   listPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]>;
   listPublishedOfferCandidates?(casinoIds: string[], now?: Date): Promise<PublishedOfferCandidate[]>;
   listManagedSlugs(): Promise<string[]>;
+  /** Whether any casino market activation exists for this market key, in any state. */
+  hasMarketActivation?(marketKey: string): Promise<boolean>;
 }
 
 function projectedPublishedSnapshot(countryCode?: string | null) {
@@ -188,6 +190,24 @@ const cachedPublishedBySlug = publicEditorialCache(
   [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
 );
 
+// A market with no activation row at all can never show a partner button, so the site shell
+// skips the whole-catalogue projection for it. Crawler traffic from the United States revalidated
+// that projection several times an hour for nothing (28 Sep 2026).
+const cachedMarketActivationPresence = publicEditorialCache(
+  async (marketKey: string) => {
+    const [row] = await runPublicDatabaseRead(() => prisma.$queryRaw<{ present: boolean }[]>(Prisma.sql`
+      SELECT EXISTS (
+        SELECT 1 FROM "MarketActivation" ma
+        WHERE ma."marketCode" = ${marketKey}
+          AND ma.product = 'CASINO'::"MarketActivationProduct"
+      ) AS present
+    `));
+    return Boolean(row?.present);
+  },
+  ["public-market-activation-presence-v1"],
+  [PUBLIC_CASINO_EDITORIAL_CACHE_TAG],
+);
+
 export class PublicCasinoRepository implements PublicCasinoStore {
   async hasManagedSlug(slug: string) {
     return (await runPublicDatabaseRead(() => prisma.casino.count({ where: { slug } }))) > 0;
@@ -195,6 +215,10 @@ export class PublicCasinoRepository implements PublicCasinoStore {
 
   async listManagedSlugs() {
     return (await runPublicDatabaseRead(() => prisma.casino.findMany({ select: { slug: true } }))).map((casino) => casino.slug);
+  }
+
+  async hasMarketActivation(marketKey: string) {
+    return cachedMarketActivationPresence(marketKey);
   }
 
   async listPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]> {
