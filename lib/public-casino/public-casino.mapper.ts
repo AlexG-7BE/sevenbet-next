@@ -6,6 +6,7 @@ import type {
   PublicCasinoPayment,
   PublishedCasinoSnapshotRecord,
 } from "@/lib/public-casino/public-casino.types";
+import { marketProfileByCountry } from "@/lib/market/registry";
 import { isSafePublicSlug, safeCanonical, safePublicUrl, validatedStructuredData } from "@/lib/public-casino/public-casino-validation";
 
 /**
@@ -166,6 +167,11 @@ function mapScopedCategories(entries: unknown[]) {
     const name = text(record.name);
     return name ? [{ key: text(record.categoryKey), name, gameCount: integer(record.gameCount), featured: bool(record.featured) }] : [];
   });
+}
+
+function singleMarketCurrency(countryCode: string) {
+  const hints = marketProfileByCountry(countryCode)?.currencyHints ?? [];
+  return hints.length === 1 ? hints[0] ?? null : null;
 }
 
 function mapScopedBonuses(
@@ -446,10 +452,12 @@ export function mapPublishedCasino(
       payments: mapScopedPayments([...list(record.paymentMethods), ...explicitLegacyPayments]),
       providers: mapScopedProviders(list(record.gameProviders)),
       categories: mapScopedCategories(list(record.gameCategories)),
+      // A market's offer states its amounts in that market's currency. Several GB offers were
+      // imported without one, which hid their £20 minimum deposit (launch audit, 27 Sep 2026).
       bonuses: mapScopedBonuses(
         [...list(record.bonuses), ...explicitLegacyBonuses],
         now,
-      ),
+      ).map((bonus) => bonus.currency ? bonus : { ...bonus, currency: primaryCurrency ?? singleMarketCurrency(countryCode) }),
       media: mediaFromSnapshot(record),
     }];
   });
