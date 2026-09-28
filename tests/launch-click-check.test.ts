@@ -46,6 +46,7 @@ test("a refused click on a route that must reach its partner is ROUTE_DOWN and f
   // Both refusals in an open market are retried from fresh probes before they count.
   assert.equal(retriesClick("ROUTE_DOWN"), true);
   assert.equal(retriesClick("NO_ROUTE"), true);
+  assert.equal(retriesClick("UNEXPECTED"), true);
   assert.equal(retriesClick("PASS_CLOSED"), false);
 });
 

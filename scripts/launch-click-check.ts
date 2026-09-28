@@ -6,7 +6,8 @@
 // Read-only for B4GAMBLE's data: it writes nothing itself. Each click is recorded by /r/ as an
 // OutboundClick with trafficKind BOT (the Globalping user agent), so it never counts as a visitor.
 // The redirect is not followed, so the partner never receives the click. A refusal in an open
-// market (NO_ROUTE or ROUTE_DOWN) is retried from fresh probes (see NO_ROUTE_ATTEMPTS).
+// market (NO_ROUTE or ROUTE_DOWN) and an UNEXPECTED answer (e.g. a probe network error) are retried
+// from fresh probes (see NO_ROUTE_ATTEMPTS).
 //
 // Output: a Markdown matrix on stdout and the full JSON on stderr's last line (and in the --json
 // file). The exit code is 1 when any VIOLATION (a closed market reaching a partner), UNEXPECTED

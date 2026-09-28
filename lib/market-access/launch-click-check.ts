@@ -94,9 +94,11 @@ export function clickVerdict(casinoSlug: string, market: string, at: Date, outco
   return "UNEXPECTED";
 }
 
-/** A refusal in an open market may be a probe Vercel places in another country, so it is retried. */
+/** A refusal in an open market may be a probe Vercel places in another country, and a probe may fail outright, so both are retried. */
 export function retriesClick(verdict: ClickVerdict) {
-  return verdict === "NO_ROUTE" || verdict === "ROUTE_DOWN";
+  // UNEXPECTED includes a probe that never answered (NETWORK_ERROR): on 27 Sep one such Globalping
+  // failure on a closed market opened a false alert (#420). A real fault repeats on fresh probes.
+  return verdict === "NO_ROUTE" || verdict === "ROUTE_DOWN" || verdict === "UNEXPECTED";
 }
 
 /** Verdicts that fail the run and open the alert issue. */
