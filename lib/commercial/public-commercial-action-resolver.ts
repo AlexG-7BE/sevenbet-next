@@ -35,6 +35,8 @@ export type ResolvePublicCommercialActionsInput = Readonly<{
 
 export interface PublicCommercialActionAuthority {
   resolveMany(input: ResolvePublicCommercialActionsInput): Promise<Map<string, CommercialActionDecision>>;
+  /** False only when the market has no activation row at all, so no action can resolve there. */
+  hasAnyMarketActivation?(marketKey: string): Promise<boolean>;
 }
 
 function unavailable(reasonCode: CommercialActionDecisionReason): CommercialActionDecision {
@@ -59,7 +61,12 @@ export class PublicCommercialActionResolver implements PublicCommercialActionAut
     private readonly routes: Pick<MarketActivationRuntime, "listPublicRoutes"> = marketActivationRuntime,
     private readonly gbCommercialReadiness: GbCommercialReadinessAuthority = gbCommercialReadinessService,
     private readonly redirectEnabled: () => boolean = isAffiliateRedirectEnabled,
+    private readonly activationPresence: Pick<MarketActivationRuntime, "hasAnyActivation"> = marketActivationRuntime,
   ) {}
+
+  hasAnyMarketActivation(marketKey: string) {
+    return this.activationPresence.hasAnyActivation(marketKey);
+  }
 
   private readonly resolveRequestScoped = cache(async (serialized: string) => {
     const parsed = JSON.parse(serialized) as Omit<ResolvePublicCommercialActionsInput, "now"> & { now?: string };

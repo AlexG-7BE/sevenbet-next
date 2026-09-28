@@ -228,9 +228,9 @@ export class PublicCasinoService {
       trust: "TRUSTED",
     });
     if (!marketKey) return false;
-    if (this.repository.hasMarketActivation) {
+    if (this.actionAuthority.hasAnyMarketActivation) {
       try {
-        if (!(await this.repository.hasMarketActivation(marketKey))) return false;
+        if (!(await this.actionAuthority.hasAnyMarketActivation(marketKey))) return false;
       } catch {
         // An unanswered presence check falls through to the full decision.
       }

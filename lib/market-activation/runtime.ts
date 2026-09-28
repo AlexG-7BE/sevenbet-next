@@ -326,6 +326,20 @@ function selectUnambiguousExactRoutes(
 export class MarketActivationRuntime {
   constructor(private readonly database: Pick<typeof prisma, "marketActivation"> = prisma) {}
 
+  /**
+   * Whether any casino activation row exists for the market, in any state. With none, no
+   * partner button can exist there, so callers may skip loading the catalogue to find out.
+   */
+  async hasAnyActivation(requestedMarketKey: string): Promise<boolean> {
+    const marketKey = storedCanonicalMarketKey(requestedMarketKey);
+    if (!marketKey) return false;
+    const row = await runPublicDatabaseRead(() => this.database.marketActivation.findFirst({
+      where: { marketCode: marketKey, product: "CASINO" },
+      select: { id: true },
+    }));
+    return Boolean(row);
+  }
+
   async listActive(
     casinoIds: string[],
     requestedMarketKey: string,
