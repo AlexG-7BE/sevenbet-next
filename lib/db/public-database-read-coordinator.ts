@@ -8,6 +8,14 @@ import { usesSingleConnectionPool } from "@/lib/db/prisma-runtime-config";
  */
 export const PUBLIC_DATABASE_READ_BUDGET_MS = 8_000;
 
+/**
+ * The whole-catalogue editorial projections (every published casino snapshot, every offer
+ * candidate, a published review) mostly run as background revalidations of the editorial
+ * cache. At 8 s they failed several times an hour on Production (28 Sep 2026), which left
+ * pages on stale data after a publish or a deploy. They get most of the 30 s function limit.
+ */
+export const PUBLIC_DATABASE_PROJECTION_BUDGET_MS = 25_000;
+
 export class PublicDatabaseReadTimeoutError extends Error {
   readonly code = "PUBLIC_DATABASE_READ_TIMEOUT";
 

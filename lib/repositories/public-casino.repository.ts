@@ -1,6 +1,6 @@
 import { EditorialStatus, Prisma } from "@prisma/client";
 
-import { runPublicDatabaseRead } from "@/lib/db/public-database-read-coordinator";
+import { PUBLIC_DATABASE_PROJECTION_BUDGET_MS, runPublicDatabaseRead } from "@/lib/db/public-database-read-coordinator";
 import { prisma } from "@/lib/db/prisma";
 import { PUBLIC_CASINO_EDITORIAL_CACHE_TAG, publicEditorialCache } from "@/lib/public-editorial-cache";
 import { extractPublishedOfferCandidateRows, type PublishedOfferCandidateRow } from "@/lib/public-offer/offer-presentation";
@@ -151,7 +151,7 @@ async function queryPublished(countryCode?: string | null): Promise<PublishedCas
     ) latest
     INNER JOIN "CasinoVersion" cv ON cv.id = latest.id
     ORDER BY cv."casinoId" ASC
-  `));
+  `), { budgetMs: PUBLIC_DATABASE_PROJECTION_BUDGET_MS });
 }
 
 const cachedPublished = publicEditorialCache(
@@ -306,7 +306,7 @@ export class PublicCasinoRepository implements PublicCasinoStore {
         candidate_rows."casinoId" ASC,
         candidate_rows."sourceCountryCode" ASC NULLS FIRST,
         candidate_rows.bonus ->> 'slug' ASC
-    `));
+    `), { budgetMs: PUBLIC_DATABASE_PROJECTION_BUDGET_MS });
     return extractPublishedOfferCandidateRows(rows, now);
   }
 
