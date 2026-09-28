@@ -12,6 +12,22 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Kazakhstan geo-block with owner bypass — in review
+
+**Founder instruction, 28 September 2026:** close the site to visitors from
+Kazakhstan and keep a personal owner bypass. Branch `feat/kz-geo-block`
+([runbook](06_Operations/Geo-Block-Runbook.md)):
+
+- middleware answers HTTP 451 (private, `noindex`, self-contained RU/EN/KZ
+  page) for every page, API route, RSC payload and sitemap when the trusted
+  Vercel country is in `BLOCKED_COUNTRIES` and `GEO_BLOCK_ENABLED=true`;
+- `OWNER_UNLOCK_PATH?key=OWNER_BYPASS_KEY` sets the HMAC-signed `b4g_owner`
+  cookie (one year, `b4gamble.com` and `www`), which lifts the block; a new key
+  voids every earlier cookie;
+- static assets that skip middleware need the Vercel Firewall rule, and
+  `media.b4gamble.com` needs the Cloudflare rule from the runbook. Neither rule
+  is active and no variable is set in Vercel until the Founder confirms the release.
+
 ## Search and AI crawlers read the UK, Swedish and Danish offers — in review
 
 **Founder instruction, 27 September 2026** ([NON-MARKET-EDITORIAL-FALLBACK-2026-09-27](07_Decisions/NON-MARKET-EDITORIAL-FALLBACK-2026-09-27.md)):
