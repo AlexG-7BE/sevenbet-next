@@ -128,7 +128,9 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
   const [presentation, requestHeaders] = await Promise.all([resolveServerPresentationContext(), headers()]);
   const published = visualDataFixture
     ? visualCasinoProfileFixture(slug)
-    : await publicCasinoService.findPublishedCasino(slug, presentation.marketCountryCode);
+    // The same editorial market as the review content, so a visitor from outside our markets
+    // reuses that market's cached projection instead of building one for their own country.
+    : await publicCasinoService.findPublishedCasino(slug, editorialPresentation(presentation).marketCountryCode);
   if (!published) notFound();
   // Only a real browser gets the streamed frame; crawlers, agents and HTTP clients read the whole profile.
   if (!shouldStreamRouteFrame(requestHeaders)) return <CasinoContent raw={raw} slug={slug} visualDataFixture={visualDataFixture} />;
