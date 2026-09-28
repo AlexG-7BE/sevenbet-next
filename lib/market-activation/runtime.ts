@@ -327,14 +327,16 @@ export class MarketActivationRuntime {
   constructor(private readonly database: Pick<typeof prisma, "marketActivation"> = prisma) {}
 
   /**
-   * Whether any casino activation row exists for the market, in any state. With none, no
-   * partner button can exist there, so callers may skip loading the catalogue to find out.
+   * Whether the market has a casino activation that is ACTIVE and meant to stay so, which every
+   * public route requires (see activeExactRoute). With none, no partner button can exist there,
+   * so callers may skip loading the catalogue to find out. Disabled and draft rows, which the
+   * United States had, no longer count (28 Sep 2026).
    */
   async hasAnyActivation(requestedMarketKey: string): Promise<boolean> {
     const marketKey = storedCanonicalMarketKey(requestedMarketKey);
     if (!marketKey) return false;
     const row = await runPublicDatabaseRead(() => this.database.marketActivation.findFirst({
-      where: { marketCode: marketKey, product: "CASINO" },
+      where: { marketCode: marketKey, product: "CASINO", status: "ACTIVE", desiredState: "ACTIVE" },
       select: { id: true },
     }));
     return Boolean(row);

@@ -30,7 +30,7 @@ test("catalogue pages stream the route frame before their data loads", () => {
 test("a casino profile settles existence before its frame streams, so a missing casino stays a 404", () => {
   const page = read("app/(public)/casino/[slug]/page.tsx");
   const exported = page.slice(page.indexOf("export default async function"));
-  assert.match(exported, /await publicCasinoService\.findPublishedCasino\(slug, presentation\.marketCountryCode\)/);
+  assert.match(exported, /await publicCasinoService\.findPublishedCasino\(slug, editorialPresentation\(presentation\)\.marketCountryCode\)/);
   assert.ok(exported.indexOf("notFound()") > -1 && exported.indexOf("notFound()") < exported.indexOf("<Suspense"));
   assert.match(exported, /<Suspense fallback=\{<PublicRouteLoadingFrame destination="casino" label=\{published\.name\} \/>\}>/);
   assert.doesNotMatch(exported, /loadCasinoPage\(/, "the review, offers and action decision load inside the boundary");
