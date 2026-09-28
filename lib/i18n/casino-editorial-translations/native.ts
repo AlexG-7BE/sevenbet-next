@@ -2,10 +2,10 @@ import type { CasinoEditorialLanguage } from "./types";
 
 /**
  * Published text already written in a catalog language: offer terms imported
- * for the Danish and German markets. Offer terms are never translated (they
- * stay as published on every page); this list only lets such a term count as
- * the page's language when deciding whether a localized FAQ may be described
- * in structured data.
+ * for the Danish and German markets. The catalog translates English source
+ * text only, so these stay as written on every page; this list lets such a
+ * term count as the page's language when deciding whether a localized FAQ may
+ * be described in structured data.
  */
 export const CASINO_EDITORIAL_NATIVE_TEXT: Readonly<Record<CasinoEditorialLanguage, readonly string[]>> = {
   sv: [],

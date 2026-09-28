@@ -1,6 +1,6 @@
 # Swedish, Danish and German casino review text
 
-**Status:** ACCEPTED — implementation **PROPOSED — NOT YET LIVE** until merged and deployed.
+**Status:** ACCEPTED. Extended for offer terms by [OFFER-TERMS-TRANSLATIONS-SV-DA-DE-2026-09-27](OFFER-TERMS-TRANSLATIONS-SV-DA-DE-2026-09-27.md): a later explicit Founder decision the same day translates English offer terms on sv/da/de pages. The "offer terms stay exactly as published" points below describe this decision's own scope.
 
 **Decision authority:** explicit Founder approval of "Package D — Swedish, Danish and German casino review text", 27 September 2026, after the pre-launch audit (launch in GB/SE/DK/DE on 28 September 2026). The approval covers review, verdict and FAQ translations; it does not cover offer terms. The Founder rule for this package: no database writes and no schema change.
 

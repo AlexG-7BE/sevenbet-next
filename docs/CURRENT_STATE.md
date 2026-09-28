@@ -109,6 +109,24 @@ visitor's country, because Googlebot crawls from the United States. A partner
 route left on the registration placeholder (`partner-route.invalid`) now fails
 closed; GoldenPlay × IE was disabled in Production.
 
+## Swedish, Danish and German offer terms — in review
+
+**Explicit Founder decision, 27 September 2026**
+([OFFER-TERMS-TRANSLATIONS-SV-DA-DE-2026-09-27](07_Decisions/OFFER-TERMS-TRANSLATIONS-SV-DA-DE-2026-09-27.md)).
+Asked whether to translate the offer terms themselves (wagering, requirements,
+deposit), with the risk that a machine translation may distort a detail, the
+Founder answered "да, давай переведём".
+
+English offer titles, summaries, wagering text, eligibility and conditions are
+translated on `sv`, `da` and `de` pages through the exact-source catalog: 92
+offer strings, each in sv, da and de. This narrows RFC-037's rule for these
+languages. Numbers, currencies and amounts stay as published, and the
+operator's linked terms remain authoritative. Best Offers ranks identically in
+every language. German passes the terminology guard. Market-language offer text
+and anything uncatalogued stays as published.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Swedish, Danish and German review text — in review
 
 **Founder approval, 27 September 2026** (Package D,

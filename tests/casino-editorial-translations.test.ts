@@ -23,7 +23,7 @@ import {
 } from "../lib/i18n/casino-editorial-translations";
 import { localizeCasinoCard, localizePublicCasino, localizePublicOffer } from "../lib/i18n/casino-editorial-translations/localize";
 import { PROFILE_FAQ_COPY } from "../lib/i18n/casino-editorial-translations/profile-faq-copy";
-import { germanProhibitedTerms } from "../lib/i18n/german-terminology";
+import { GERMAN_PROPER_NAME_ALLOWLIST, germanProhibitedTerms } from "../lib/i18n/german-terminology";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
@@ -70,7 +70,7 @@ function translated(source: string, language: CasinoEditorialLanguage) {
 
 test("every catalogued English source has Swedish, Danish and German text that keeps its numbers", () => {
   const entries = casinoEditorialEntries();
-  assert.ok(entries.length >= 300, `catalog unexpectedly small: ${entries.length}`);
+  assert.ok(entries.length >= 400, `catalog unexpectedly small: ${entries.length}`);
   const sources = entries.map((entry) => normalizeCasinoEditorialSource(entry.en));
   assert.equal(new Set(sources).size, sources.length, "an English source is catalogued twice");
   const hidden = new Set<string>(GERMAN_HIDDEN_CATEGORY_LABELS);
@@ -92,7 +92,7 @@ test("every catalogued English source has Swedish, Danish and German text that k
   }
 });
 
-test("German catalog text and profile FAQ copy pass the German terminology guard", () => {
+test("German catalog text, including offer terms, and profile FAQ copy pass the German terminology guard and name no hidden category", () => {
   const german = [
     ...casinoEditorialEntries().flatMap((entry) => entry.de === null ? [] : [entry.de]),
     ...Object.values(PROFILE_FAQ_COPY.de).flatMap((value) => typeof value === "function"
@@ -101,6 +101,10 @@ test("German catalog text and profile FAQ copy pass the German terminology guard
   ];
   const offending = german.filter((value) => germanProhibitedTerms(value).length > 0);
   assert.deepEqual(offending, []);
+  // Germany hides live games and game shows too; the guard's word list does not name them.
+  const hiddenCategoryWording = /\blive\b|\blive-|game ?shows?|spielshows?/i;
+  const withoutBrands = (value: string) => GERMAN_PROPER_NAME_ALLOWLIST.reduce((text, name) => text.split(name).join(" "), value);
+  assert.deepEqual(german.filter((value) => hiddenCategoryWording.test(withoutBrands(value))), []);
 });
 
 test("the profile FAQ copy is complete in every catalog language and English keeps its source wording", () => {
@@ -131,7 +135,11 @@ test("lookups match the exact English source only and fall back to it otherwise"
     assert.deepEqual(casinoEditorialSourceTexts(swedishOrOther), [SOURCE.pro]);
   }
   for (const offerTerm of [SOURCE.bonusTitle, SOURCE.bonusSummary, SOURCE.wagering, SOURCE.eligibility, SOURCE.condition, SOURCE.severeWagering]) {
-    for (const language of languages) assert.equal(casinoEditorialTranslation(offerTerm, language), null, `offer terms are not catalogued (RFC-037): ${offerTerm}`);
+    for (const language of languages) assert.notEqual(translated(offerTerm, language), offerTerm, `${language} offer term: ${offerTerm}`);
+  }
+  // Offer text already published in a market language is never re-translated.
+  for (const native of [...CASINO_EDITORIAL_NATIVE_TEXT.da, ...CASINO_EDITORIAL_NATIVE_TEXT.de]) {
+    for (const language of languages) assert.equal(translateCasinoEditorialText(native, language), native);
   }
   assert.equal(translateCasinoEditorialText(SOURCE.pro, "en"), SOURCE.pro);
   assert.equal(translateCasinoEditorialText(SOURCE.pro, "es"), SOURCE.pro);
@@ -181,7 +189,7 @@ const editorial: CasinoEditorialDocument = {
   seo: { title: "Betsson review", description: "Betsson review", canonicalPath: "/casino/betsson", robots: "index,follow" },
 };
 
-test("a published casino reads in the page language, keeps offer terms, parsed and identity fields as published, and stays English for English pages", () => {
+test("a published casino and its offers read in the page language, keep numbers, parsed and identity fields, and stay English for English pages", () => {
   const english = casinoDto();
   assert.equal(localizePublicCasino(english, "en"), english, "English pages receive the record untouched");
   assert.equal(localizePublicCasino(english, null), english);
@@ -194,8 +202,16 @@ test("a published casino reads in the page language, keeps offer terms, parsed a
     assert.deepEqual(casino.pros, [translated(SOURCE.pro, language), UNKNOWN], "an unknown source stays English");
     assert.deepEqual(casino.cons, [translated(SOURCE.con, language)]);
     assert.deepEqual(casino.responsibleGamblingTools, [translated("Deposit limits", language), translated(SOURCE.tool, language), "GAMSTOP"]);
-    assert.deepEqual(casino.bonuses, english.bonuses, "offer terms stay exactly as published");
-    assert.deepEqual(casino.offerPresentation, english.offerPresentation);
+    const bonus = casino.bonuses[0]!;
+    assert.equal(bonus.title, translated(SOURCE.bonusTitle, language));
+    assert.equal(bonus.summary, translated(SOURCE.bonusSummary, language));
+    assert.equal(bonus.wageringText, translated(SOURCE.wagering, language));
+    assert.equal(bonus.eligibility, translated(SOURCE.eligibility, language));
+    assert.deepEqual(bonus.importantConditions, [translated(SOURCE.condition, language)]);
+    const numericFields = ({ percentage, minimumDeposit, maximumBonus, maximumBet, currency, freeSpins, wageringMultiplier, termsUrl, id, slug }: typeof bonus) => ({ percentage, minimumDeposit, maximumBonus, maximumBet, currency, freeSpins, wageringMultiplier, termsUrl, id, slug });
+    assert.deepEqual(numericFields(bonus), numericFields(english.bonuses[0]!), "amounts, currency and terms link are kept as published");
+    assert.deepEqual(casino.offerPresentation?.selectedOffer, bonus, "the selected offer reads the same as the listed one");
+    assert.equal(casino.offerPresentation?.relation, english.offerPresentation?.relation);
     assert.equal(casino.categories[0]!.name, translated("Slots", language));
     assert.equal(casino.categories[1]!.name, language === "de" ? "Live casino" : translated("Live casino", language), "German leaves a hidden category label as written");
     assert.equal(casino.payments[1]!.name, translated(SOURCE.paymentName, language));
@@ -228,7 +244,7 @@ function offerRecord(slug: string, score: number, patch: Partial<PublicOfferDTO[
   };
 }
 
-test("offer records and directory cards translate casino text only, keep offer terms as published and rank exactly like English", () => {
+test("offer records and directory cards read in the page language, keep amounts, and rank exactly like English in every Best Offers category", () => {
   const offers = [
     offerRecord("regencycasino", 8),
     offerRecord("eucasino", 8, { wageringText: SOURCE.wagering, wageringMultiplier: 30 }),
@@ -239,7 +255,16 @@ test("offer records and directory cards translate casino text only, keep offer t
   assert.equal(localizePublicOffer(offer, "en"), offer);
   for (const language of languages) {
     const localized = localizePublicOffer(offer, language);
-    assert.deepEqual(localized.bonus, offer.bonus, "offer title, summary, wagering, eligibility and conditions stay as published");
+    assert.equal(localized.bonus.title, translated(SOURCE.bonusTitle, language));
+    assert.equal(localized.bonus.summary, translated(SOURCE.bonusSummary, language));
+    assert.equal(localized.bonus.wageringText, translated(SOURCE.severeWagering, language));
+    assert.equal(localized.bonus.eligibility, translated(SOURCE.eligibility, language));
+    assert.deepEqual(localized.bonus.importantConditions, [translated(SOURCE.condition, language)]);
+    assert.deepEqual(
+      [localized.bonus.percentage, localized.bonus.maximumBonus, localized.bonus.currency, localized.bonus.freeSpins, localized.bonus.minimumDeposit, localized.bonus.wageringMultiplier],
+      [offer.bonus.percentage, offer.bonus.maximumBonus, offer.bonus.currency, offer.bonus.freeSpins, offer.bonus.minimumDeposit, offer.bonus.wageringMultiplier],
+    );
+    assert.equal(localized.bonus.sourceSevereRestrictionCount, 1, "the restriction signal is read from the English terms");
     assert.equal(localized.casino.summary, translated(SOURCE.summary, language));
     assert.equal(localized.casino.payments[0]!.name, translated(SOURCE.paymentName, language));
     assert.equal(localized.casino.payments[0]!.withdrawalTime, SOURCE.withdrawalTime);
@@ -265,7 +290,10 @@ test("offer records and directory cards translate casino text only, keep offer t
     const localized = localizeCasinoCard(card, language);
     assert.deepEqual(localized.highlights, [translated(SOURCE.pro, language), UNKNOWN]);
     assert.equal(localized.shortDescription, translated(SOURCE.summary, language));
-    assert.deepEqual(localized.featuredBonus, card.featuredBonus, "the card's offer stays as published");
+    assert.equal(localized.featuredBonus?.title, translated(SOURCE.bonusTitle, language));
+    assert.equal(localized.featuredBonus?.summary, translated(SOURCE.bonusSummary, language));
+    assert.deepEqual(localized.featuredBonus?.keyTerms, [translated(SOURCE.condition, language)]);
+    assert.equal(localized.featuredBonus?.minimumDeposit, 100);
     assert.equal(localized.paymentMethods[0]!.label, translated(SOURCE.paymentName, language));
     assert.deepEqual(localized.withdrawalTimes, [SOURCE.withdrawalTime]);
     assert.deepEqual(localized.licenses, card.licenses);
@@ -306,7 +334,7 @@ function casinoStore(record = publishedRecord()): PublicCasinoStore {
   };
 }
 
-test("the public casino and offer services translate casino text for sv, da and de, keep offers as published and leave English untouched", async () => {
+test("the public casino and offer services translate casino text and offer terms for sv, da and de and leave English untouched", async () => {
   const service = new PublicCasinoService(casinoStore(), { cmsEnabled: true, now }, noCommercialActions);
   const english = await service.getCasino("turbonino", allowJurisdictionAuthority, "GB", "en", "GB");
   assert.ok(english);
@@ -320,12 +348,13 @@ test("the public casino and offer services translate casino text for sv, da and 
     assert.equal(casino.summary, translated(SOURCE.summary, language), "the meta description and verdict read the translated summary");
     assert.equal(casino.reviewContent, translated(SOURCE.review, language));
     assert.deepEqual(casino.pros, [translated(SOURCE.pro, language), UNKNOWN]);
-    assert.deepEqual(casino.bonuses, english.bonuses, "offer terms stay as published");
+    assert.equal(casino.bonuses[0]?.eligibility, translated(SOURCE.eligibility, language));
+    assert.equal(casino.bonuses[0]?.minimumDeposit, english.bonuses[0]?.minimumDeposit);
     const listed = await service.listCasinos(allowJurisdictionAuthority, "GB", language, "GB");
     assert.equal(listed[0]?.summary, translated(SOURCE.summary, language));
     const bonuses = await service.listBonuses(allowJurisdictionAuthority, "GB", language, "GB");
     assert.ok(bonuses.length > 0);
-    assert.equal(bonuses[0]?.bonus.title, SOURCE.bonusTitle);
+    assert.equal(bonuses[0]?.bonus.title, translated(SOURCE.bonusTitle, language));
     assert.equal(bonuses[0]?.casino.summary, translated(SOURCE.summary, language));
   }
 
@@ -338,8 +367,10 @@ test("the public casino and offer services translate casino text for sv, da and 
   const englishOffers = await offers.searchOffers({ page: 1, pageSize: 24, sort: "editorial" }, null, { defaultEditorialCountry: "KZ", presentationLanguage: "en" });
   assert.equal(englishOffers.records[0]?.bonus.title, SOURCE.bonusTitle);
   const danishOffers = await offers.searchOffers({ page: 1, pageSize: 24, sort: "editorial" }, null, { defaultEditorialCountry: "KZ", presentationLanguage: "da" });
-  assert.deepEqual(danishOffers.records[0]?.bonus, englishOffers.records[0]?.bonus, "offer terms stay as published");
+  assert.equal(danishOffers.records[0]?.bonus.title, translated(SOURCE.bonusTitle, "da"));
+  assert.equal(danishOffers.records[0]?.bonus.wageringText, translated(SOURCE.severeWagering, "da"));
   assert.equal(danishOffers.records[0]?.casino.summary, translated(SOURCE.summary, "da"));
+  assert.equal(severeBonusRestrictionCount(danishOffers.records[0]!), severeBonusRestrictionCount(englishOffers.records[0]!));
 });
 
 function schemasFor(casino: PublicCasinoDTO, locale: "en-GB" | "sv-SE" | "da-DK" | "de-DE") {
@@ -393,13 +424,19 @@ test("a translated profile emits FAQPage in its own language only when every que
     const other = languages.find((candidate) => candidate !== language)!;
     assert.equal(schemasFor(casino, locales[other]).some((entry) => entry["@type"] === "FAQPage"), false);
 
-    // English offer terms stay as published, so the FAQ is shown but not described.
+    // Catalogued English offer terms are translated in the FAQ answers too.
     const withTerms = localizePublicCasino(english, language);
     const withTermsFaq = profileFaqLocalization(withTerms, selectProfileBonus(withTerms), editorial);
-    assert.equal(withTermsFaq.complete, false);
-    assert.ok(withTermsFaq.items.some((item) => item.question === PROFILE_FAQ_COPY[language].wageringQuestion && item.answer === SOURCE.wagering), "the wagering answer is the published term");
-    assert.ok(withTermsFaq.items.some((item) => item.question === PROFILE_FAQ_COPY[language].eligibilityQuestion && item.answer === SOURCE.eligibility));
-    assert.equal(schemasFor(withTerms, locales[language]).some((entry) => entry["@type"] === "FAQPage"), false, "no FAQPage while any answer is English");
+    assert.equal(withTermsFaq.complete, true);
+    assert.ok(withTermsFaq.items.some((item) => item.question === PROFILE_FAQ_COPY[language].wageringQuestion && item.answer === translated(SOURCE.wagering, language)));
+    assert.ok(withTermsFaq.items.some((item) => item.question === PROFILE_FAQ_COPY[language].eligibilityQuestion && item.answer === translated(SOURCE.eligibility, language)));
+    assert.equal(schemasFor(withTerms, locales[language]).find((entry) => entry["@type"] === "FAQPage")?.inLanguage, language);
+
+    // An offer term the catalog does not know stays English, so the FAQ is shown but not described.
+    const partial = localizePublicCasino(casinoDto({ bonuses: [{ ...betssonBonus, eligibility: UNKNOWN }] }), language);
+    assert.equal(profileFaqLocalization(partial, selectProfileBonus(partial), editorial).complete, false);
+    assert.ok(profileFaqItems(partial, selectProfileBonus(partial), editorial).some((item) => item.answer === UNKNOWN), "the visible FAQ still shows the untranslated answer");
+    assert.equal(schemasFor(partial, locales[language]).some((entry) => entry["@type"] === "FAQPage"), false, "no FAQPage while any answer is English");
 
     const unknownEditorial = localizePublicCasino(termsFree, language);
     const unknownFaq: CasinoEditorialDocument = { ...editorial, sections: [{ ...editorial.sections[0]!, blocks: [{ id: "faq-1", type: "faq", question: SOURCE.faqQuestion, answer: UNKNOWN }] }] };
@@ -420,7 +457,7 @@ function html(value: string) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#x27;");
 }
 
-test("the rendered Swedish, Danish and German review shows no catalogued English editorial text and keeps offer terms as published", async () => {
+test("the rendered Swedish, Danish and German review shows no catalogued English editorial text or offer terms", async () => {
   const require = createRequire(import.meta.url);
   require.extensions[".css"] = () => undefined;
   (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -445,7 +482,9 @@ test("the rendered Swedish, Danish and German review shows no catalogued English
     for (const fragment of englishFragments) assert.equal(rendered.includes(fragment), false, `${language} page still shows: ${fragment}`);
     assert.ok(rendered.includes(html(translated(SOURCE.faqQuestion, language))), `${language} FAQ question`);
     assert.ok(rendered.includes(html(translated(SOURCE.faqAnswer, language))), `${language} FAQ answer`);
-    assert.ok(rendered.includes(html(SOURCE.condition)), `${language} page shows the offer condition as published`);
+    assert.equal(rendered.includes(html(SOURCE.condition)), false, `${language} page still shows the English offer condition`);
+    assert.ok(rendered.includes(html(translated(SOURCE.condition, language))), `${language} page shows the translated offer condition`);
+    assert.equal(rendered.includes(html(SOURCE.wagering)), false, `${language} page still shows the English wagering term`);
   }
 });
 
