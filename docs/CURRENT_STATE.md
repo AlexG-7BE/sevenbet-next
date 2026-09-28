@@ -31,8 +31,11 @@ the pre-launch audit. Branch `fix/db-connection-stability`:
   timeout — whatever the environment URL says; the build gate checks the
   effective pool instead of demanding `connection_limit=1`
   ([Environment and Secrets — Runtime database pool](06_Operations/Environment-and-Secrets.md#runtime-database-pool));
-- every public read is bounded to 8 s, and public pages, `/r/`, `/go` and the
-  sitemap end at 30 s (`maxDuration`) instead of the 300 s platform default;
+- every public read is bounded to 8 s, except the whole-catalogue editorial
+  projections (published casinos, offer candidates), which get 25 s because at
+  8 s their background cache revalidations failed and left pages stale
+  (28 September); public pages, `/r/`, `/go` and the sitemap end at 30 s
+  (`maxDuration`) instead of the 300 s platform default;
 - the `/r/` click record is one non-interactive batch (click, two events, daily
   count as `INSERT … ON CONFLICT`), retried once on a connection or pool
   failure and never counted twice; the offer's network comes from the route

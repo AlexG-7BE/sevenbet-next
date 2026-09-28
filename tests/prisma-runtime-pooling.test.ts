@@ -12,6 +12,7 @@ import {
 } from "../lib/db/prisma-runtime-config";
 import { inspectProgrammeDatabaseReadiness } from "../lib/db/programme-database-readiness";
 import {
+  PUBLIC_DATABASE_PROJECTION_BUDGET_MS,
   PUBLIC_DATABASE_READ_BUDGET_MS,
   PublicDatabaseReadTimeoutError,
   runPublicDatabaseRead,
@@ -41,7 +42,7 @@ test("production runtime warns for the direct Prisma Postgres endpoint without r
 });
 
 test("the pooled runtime URL gets the code-level pool policy whatever the environment says", () => {
-  assert.deepEqual(RUNTIME_POOL_POLICY, { connection_limit: 3, pool_timeout: 5, connect_timeout: 5, socket_timeout: 10 });
+  assert.deepEqual(RUNTIME_POOL_POLICY, { connection_limit: 3, pool_timeout: 5, connect_timeout: 5, socket_timeout: 25 });
   for (const configured of [
     pooledUrl,
     "postgresql://runtime-user:super-secret@pooled.db.prisma.io:5432/postgres?sslmode=require",
@@ -56,7 +57,7 @@ test("the pooled runtime URL gets the code-level pool policy whatever the enviro
     assert.equal(effective.searchParams.get("connection_limit"), "3");
     assert.equal(effective.searchParams.get("pool_timeout"), "5");
     assert.equal(effective.searchParams.get("connect_timeout"), "5");
-    assert.equal(effective.searchParams.get("socket_timeout"), "10");
+    assert.equal(effective.searchParams.get("socket_timeout"), "25");
     assert.equal(runtimeConnectionLimit(configured), 3);
     assert.equal(usesSingleConnectionPool(configured), false, "the one-connection FIFO switches off on the pooled runtime");
   }
@@ -127,6 +128,11 @@ test("Programme database readiness compares only redacted identities and require
 
 test("public reads are bounded: a hung read rejects at its budget", async () => {
   assert.equal(PUBLIC_DATABASE_READ_BUDGET_MS, 8_000);
+  // Whole-catalogue projections (mostly background cache revalidations) get most of the 30 s
+  // function limit; at 8 s they failed on Production and left pages stale (28 Sep 2026).
+  assert.equal(PUBLIC_DATABASE_PROJECTION_BUDGET_MS, 25_000);
+  const repository = readFileSync("lib/repositories/public-casino.repository.ts", "utf8");
+  assert.equal(repository.match(/\{ budgetMs: PUBLIC_DATABASE_PROJECTION_BUDGET_MS \}/g)?.length, 2);
   await withDatabaseUrl(pooledUrl, async () => {
     const started = Date.now();
     await assert.rejects(

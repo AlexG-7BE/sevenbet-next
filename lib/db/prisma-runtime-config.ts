@@ -30,9 +30,10 @@ const DIRECT_HOST = "db.prisma.io";
  * - `pool_timeout` 5 s: a request that cannot get a connection fails fast
  *   into its fallback instead of waiting the 10 s default.
  * - `connect_timeout` 5 s: Prisma's documented default, pinned.
- * - `socket_timeout` 10 s: a half-open socket (P1017-class failure) or a hung
- *   query ends after 10 s instead of holding the request to the platform's
- *   300 s limit. Supported by the Prisma ORM 6 query engine for PostgreSQL.
+ * - `socket_timeout` 25 s: a half-open socket (P1017-class failure) or a hung
+ *   query ends inside the 30 s function limit instead of the platform's 300 s.
+ *   10 s cut off the whole-catalogue projection on Production (28 Sep 2026).
+ *   Supported by the Prisma ORM 6 query engine for PostgreSQL.
  *
  * Local, CI and any other host are left exactly as configured, so their
  * `connection_limit=1` disposable databases keep the one-connection FIFO of
@@ -43,7 +44,7 @@ export const RUNTIME_POOL_POLICY = Object.freeze({
   connection_limit: 3,
   pool_timeout: 5,
   connect_timeout: 5,
-  socket_timeout: 10,
+  socket_timeout: 25,
 });
 
 /** The readiness gate refuses a policy that would stop bounding the pool. */
