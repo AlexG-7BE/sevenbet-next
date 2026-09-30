@@ -121,6 +121,51 @@ row byte-identical.
 - Never unpublish or delete Articles, revisions, audits or images as transport
   rollback.
 
+## STEP 1 Production acceptance record
+
+**LIVE — VERIFIED 30 SEPTEMBER 2026.**
+
+- [PR #430](https://github.com/AlexG-7BE/sevenbet-next/pull/430) passed
+  Quality, Build / Browser, Database / Migration Verification and Vercel
+  Preview, and merged normally at 12:46:27 UTC as exact `main`
+  `73673889299b07b1b7e2019105776d38bae2c1df`.
+- Production deployment `dpl_8JTVV3MrJio8bWRk7xmc2M2GoGsP` is Ready at that
+  SHA and owns `https://b4gamble.com` and `https://www.b4gamble.com`.
+- `LEARN_CONTENT_AUTONOMY_ENABLED=false` and `LEARN_CONTENT_LOCALES=en,sv,da,de`
+  in Production, read without printing any secret.
+- Vercel crons: `/api/internal/cron/customer-lifecycle` and
+  `/api/internal/cron/programme-expiry-purge` only. `GET
+  /api/internal/cron/learn-content` returned `200 {"result":"NO_OP","code":
+  "CHATGPT_SCHEDULER_OWNS_EXECUTION"}` without and with a bearer; `POST`
+  returned `405`. Runtime logs show no request to that path at the old 13:13
+  UTC slot.
+- `POST /api/mcp/learn` returned `401` without a bearer and with a wrong one;
+  `GET` returned `405`. `401` rather than `503` shows the endpoint is enabled
+  and configured.
+- `learn_context` scope: the deployed code, run over the Production
+  `PUBLISHED` Article rows read in a `READ ONLY` transaction with the
+  Production launch order, returned for `en`, `sv`, `da` and `de` the target
+  prefix `/en`, `/sv`, `/da`, `/de`, the 30 published `en-GB` guides (no
+  Swedish, Danish or German guide exists yet), 13 categories, the Programme
+  routes and both protected routes, about 13 KB each; `es` returned
+  `TARGET_LANGUAGE_NOT_ALLOWED`. No authenticated call went through the
+  Production endpoint because `LEARN_MCP_SERVICE_TOKEN` is Sensitive and not
+  readable by the release session; the Founder's ChatGPT connector makes the
+  first one.
+- No `learn_apply` call, no test Article, no new managed session. Digests of
+  all Articles, `ContentRevision` rows and the historical state row were
+  identical before and after 13:13 UTC. Public `/en/learn`, `/sv/learn`,
+  `/da/learn`, `/de/learn`, existing Article routes and `/sitemap.xml`
+  returned `200`.
+- Last server run: run `a173598b-cd32-447c-9387-630710d134e7` (`en-GB`,
+  started 11:13 UTC) was reconciled once by the regular 12:13 UTC cron with
+  the existing code: the session was idle (3,773,460 input and 35,977 output
+  tokens), and `learn_apply` created and published
+  `/en/learn/game-guides/roulette-odds-explained` (Article
+  `6323cf0b-e6c9-453e-95e7-2d42191a9571`, hero image) at 12:15:19 UTC. The
+  server MCP client had already given up at its 60-second default, so the state
+  recorded one retryable attempt and stays frozen with that run active.
+
 ## Historical: the retired server pipeline (23–30 September 2026)
 
 The sections below describe the server pipeline as it ran and are kept as
