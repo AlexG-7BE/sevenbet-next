@@ -1,6 +1,6 @@
 # Learn serves two funnels, in every launch language, with a hero image
 
-**Status:** PROPOSED — NOT YET LIVE until merged and deployed
+**Status:** ACCEPTED — live since PR #428 (deployed 30 September 2026, 07:18 UTC); the 8-hour cadence ships with the follow-up PR
 
 **Decision authority:** explicit Founder instructions, 30 September 2026: Learn guides must lead to revenue (partner CTA through the offer pages) and to the Programme start and registration; guides are localized into the launch languages; every guide has a picture. The Founder rewrote the three ChatGPT agent instructions (SEO Growth Lead, Research + Content, Editor + Publisher) to match and asked for the same rules in the autonomous pipeline. Amends [RFC-053](../06_RFC/RFC-053-Autonomous-Learn-Content-Orchestration.md) §§5 and 7 (§10).
 
@@ -11,6 +11,7 @@
 - **Localization.** English guides are localized into Swedish, Danish and German as new articles with native slugs, market facts and support services, commercial guides first, then `responsible-gambling`. The autonomous pipeline gives runs in another language the English inventory as source (`learnContentInventoryLocales`).
 - **Language hubs.** `/{lang}/learn` lists its own guides first, then the English guides marked as English, so the first translation no longer hides the rest.
 - **Hero image.** Every autonomous Article carries a hero image (`HERO_IMAGE_REQUIRED`).
+- **Cadence (Founder, 30 Sep 2026, after #428).** A new autonomous cycle may launch every 8 hours: `LEARN_CONTENT_MIN_INTERVAL_HOURS` defaults to 8 and cannot go below 8. Existing guides stay without hero images.
 - **Firewall gap closed.** The publication firewall now judges localized paths like bare ones, so `/en/casino/…`, `/sv/r/…` and similar routes are rejected; before, only unprefixed commercial routes were.
 
 ## Evidence
@@ -21,5 +22,5 @@
 
 ## Not in this change
 
-- `LEARN_CONTENT_LOCALES` on Vercel stays `en` until the Founder approves the hosted change to `en,sv,da,de`.
+- `LEARN_CONTENT_LOCALES=en,sv,da,de` was set on Vercel Production with Founder approval before the #428 Production deployment.
 - `learn_apply` creates only; existing guides get no hero image or Programme link block through the agents.

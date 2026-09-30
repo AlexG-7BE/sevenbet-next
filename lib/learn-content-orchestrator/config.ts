@@ -5,7 +5,9 @@ import { PUBLISHED_LANGUAGE_ROUTE_PROFILES } from "@/lib/market/registry";
 export const LEARN_CONTENT_STATE_KEY = "learn-content-orchestrator:v1";
 export const LEARN_CONTENT_DEFAULT_MODEL = "gpt-6-astra";
 export const LEARN_CONTENT_ALLOWED_MODELS = [LEARN_CONTENT_DEFAULT_MODEL] as const;
-export const LEARN_CONTENT_DEFAULT_MIN_INTERVAL_HOURS = 24;
+/** Founder, 30 Sep 2026 (LEARN-COMMERCIAL-LOCALIZED-2026-09-30): a new cycle may launch every 8 hours. */
+export const LEARN_CONTENT_DEFAULT_MIN_INTERVAL_HOURS = 8;
+export const LEARN_CONTENT_SHORTEST_MIN_INTERVAL_HOURS = 8;
 export const LEARN_CONTENT_MAX_STATE_BYTES = 4_096;
 export const LEARN_CONTENT_ACTIVE_LEASE_HOURS = 12;
 export const LEARN_CONTENT_MAX_PUBLICATION_ATTEMPTS = 3;
@@ -64,8 +66,8 @@ function resolveLocales(raw: string | undefined) {
 function resolveMinInterval(raw: string | undefined) {
   if (!raw?.trim()) return LEARN_CONTENT_DEFAULT_MIN_INTERVAL_HOURS;
   const value = Number(raw);
-  if (!Number.isSafeInteger(value) || value < 24 || value > 720) {
-    throw new Error("LEARN_CONTENT_MIN_INTERVAL_HOURS must be a whole number from 24 through 720");
+  if (!Number.isSafeInteger(value) || value < LEARN_CONTENT_SHORTEST_MIN_INTERVAL_HOURS || value > 720) {
+    throw new Error(`LEARN_CONTENT_MIN_INTERVAL_HOURS must be a whole number from ${LEARN_CONTENT_SHORTEST_MIN_INTERVAL_HOURS} through 720`);
   }
   return value;
 }

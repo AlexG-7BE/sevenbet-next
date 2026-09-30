@@ -180,7 +180,7 @@ run.
 
 Default policy is:
 
-- at most one new editorial cycle in 24 hours;
+- at most one new editorial cycle in 8 hours (24 hours until the §10 amendment);
 - at most one Article per cycle;
 - no Article quota pressure; and
 - `HOLD`/`NO_OP` is healthy.
@@ -194,7 +194,7 @@ prompt, reasoning, evidence body, Article prose, image/binary or private data.
 Each mutation uses a serializable transaction and PostgreSQL transaction-level
 advisory lock. Overlapping invocations can only observe/reuse the same run; the
 OpenAI session launch also uses a run-derived idempotency key. An active run has
-a 12-hour absolute ceiling. Failures retain the 24-hour launch interval rather
+a 12-hour absolute ceiling. Failures retain the minimum launch interval rather
 than creating quota pressure.
 
 ## 7. Safety and commercial firewall
@@ -221,8 +221,8 @@ New-cycle authority requires exact
 `LEARN_CONTENT_AUTONOMY_ENABLED=true`. It also requires RFC-052's independent
 `LEARN_MCP_ENABLED=true`, valid service token and actor, plus server-only
 `OPENAI_API_KEY`. `LEARN_CONTENT_LOCALES` defaults to `en` and accepts only
-published language slugs. `LEARN_CONTENT_MIN_INTERVAL_HOURS` defaults to 24 and
-cannot be configured below 24. `LEARN_CONTENT_OPENAI_MODEL` defaults to
+published language slugs. `LEARN_CONTENT_MIN_INTERVAL_HOURS` defaults to 8 and
+cannot be configured below 8 (§10). `LEARN_CONTENT_OPENAI_MODEL` defaults to
 `gpt-6-astra` and fails closed unless it is in the code-reviewed model
 allowlist. The initial allowlist contains only `gpt-6-astra`; a model change is
 a reviewed code/configuration change, never a runtime quality downgrade.
@@ -277,6 +277,9 @@ This amends §§5 and 7 for the same pipeline; every other boundary stands.
 - **Hero image.** Every autonomous Article carries a hero image
   (`HERO_IMAGE_REQUIRED`), normally generated through RFC-052 without text,
   logos, brands or real people.
+- **Cadence.** A new cycle may launch every 8 hours
+  (`LEARN_CONTENT_MIN_INTERVAL_HOURS` default and floor 8), so the four
+  languages rotate about three times a day.
 - **Page funnel.** Game and country guides join the offer bridge categories.
   `responsible-gambling` guides show the mid-guide Programme block and a
   Start Programme action beside Responsible Gambling and Help, and never an

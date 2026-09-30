@@ -343,9 +343,10 @@ test("config is fail-closed unless the autonomy switch is exactly true", () => {
   assert.equal(resolveLearnContentConfig({ ...validEnvironment, LEARN_CONTENT_AUTONOMY_ENABLED: "false" }), null);
 });
 
-test("config defaults to English and a 24-hour minimum interval", () => {
+test("config defaults to English and an 8-hour minimum interval", () => {
   const config = resolveLearnContentConfig({ ...validEnvironment, LEARN_CONTENT_LOCALES: undefined, LEARN_CONTENT_MIN_INTERVAL_HOURS: undefined });
   assert.equal(config?.minIntervalHours, LEARN_CONTENT_DEFAULT_MIN_INTERVAL_HOURS);
+  assert.equal(LEARN_CONTENT_DEFAULT_MIN_INTERVAL_HOURS, 8);
   assert.deepEqual(config?.locales, [{ language: "en", locale: "en-GB" }]);
   assert.equal(config?.model, LEARN_CONTENT_DEFAULT_MODEL);
 });
@@ -354,8 +355,9 @@ test("config rejects an unapproved model override instead of silently downgradin
   assert.throws(() => resolveLearnContentConfig({ ...validEnvironment, LEARN_CONTENT_OPENAI_MODEL: "gpt-5.4" }), /must be one of/);
 });
 
-test("config rejects a minimum interval below one day", () => {
-  assert.throws(() => resolveLearnContentConfig({ ...validEnvironment, LEARN_CONTENT_MIN_INTERVAL_HOURS: "23" }), /24 through 720/);
+test("config rejects a minimum interval below 8 hours", () => {
+  assert.throws(() => resolveLearnContentConfig({ ...validEnvironment, LEARN_CONTENT_MIN_INTERVAL_HOURS: "7" }), /8 through 720/);
+  assert.equal(resolveLearnContentConfig({ ...validEnvironment, LEARN_CONTENT_MIN_INTERVAL_HOURS: "8" })?.minIntervalHours, 8);
 });
 
 test("config rejects unpublished locales", () => {
