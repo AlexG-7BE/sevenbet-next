@@ -240,7 +240,9 @@ test("package C: bonus, casino-choice and payment guides get an early and a clos
   assert.equal(offerBridgeKind("casino-bonuses"), "bonuses");
   assert.equal(offerBridgeKind("casino-safety"), "casinos");
   assert.equal(offerBridgeKind("payments"), "casinos");
-  for (const category of ["responsible-gambling", "casino-basics", "crypto-casinos", "game-guides", "toString", "__proto__"]) assert.equal(offerBridgeKind(category), null, category);
+  assert.equal(offerBridgeKind("game-guides"), "casinos");
+  assert.equal(offerBridgeKind("country-guides"), "casinos");
+  for (const category of ["responsible-gambling", "casino-basics", "crypto-casinos", "toString", "__proto__"]) assert.equal(offerBridgeKind(category), null, category);
 
   // The early bridge goes before the first section heading after the introduction.
   const blocks: ArticleBlock[] = [paragraph("intro"), paragraph("lead"), heading("first"), paragraph("a"), heading("second"), paragraph("b")];

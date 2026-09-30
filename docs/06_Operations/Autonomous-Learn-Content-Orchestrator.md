@@ -57,6 +57,12 @@ LEARN_CONTENT_MIN_INTERVAL_HOURS=24
 LEARN_CONTENT_OPENAI_MODEL=gpt-6-astra
 ```
 
+`LEARN_CONTENT_LOCALES=en` is the value recorded at activation. The Founder
+decision [LEARN-COMMERCIAL-LOCALIZED-2026-09-30](../07_Decisions/LEARN-COMMERCIAL-LOCALIZED-2026-09-30.md)
+targets `en,sv,da,de`: the cursor then rotates English CREATE runs with
+Swedish, Danish and German runs that localize English guides first. The change
+is a hosted variable change plus a Production deployment.
+
 Never print values. Verify only presence/scope/sensitivity through the Vercel
 control plane. `LEARN_CONTENT_AUTONOMY_ENABLED`, locale, interval and model are
 non-secret server configuration; credentials remain Sensitive. Any hosted
@@ -177,8 +183,9 @@ orchestrator PostgreSQL suite runs in both database-capable CI jobs.
    public Article. Never manufacture an Article.
 9. If published, require `CREATED|NO_CHANGE`, `LIVE`, `COMMITTED`,
    `PUBLISHED`, `verified: true`; verify exact public route/metadata, Learn
-   collection, sitemap, image/alt text when present, no commercial CTA and the
-   RFC-052 service audit actor.
+   collection, sitemap, hero image and alt text, offer links only to the
+   same-language offer pages in commercial guides, no commercial CTA in
+   `responsible-gambling` guides and the RFC-052 service audit actor.
 
 ## Rollback and recovery
 
