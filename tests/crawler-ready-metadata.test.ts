@@ -269,6 +269,21 @@ test("a language without its own guides lists the English guides, marked and lin
   assert.equal(learningMessages("da-DK").englishGuide, "På engelsk");
 });
 
+test("a language hub lists its own guides first, then the English guides marked as English", () => {
+  const messages = learningMessages("sv-SE");
+  const swedish = { ...article, id: "00000000-0000-4000-8000-000000000009", slug: "omsattningskrav-sa-fungerar-det", locale: "sv-SE", title: "Omsättningskrav: så fungerar det" };
+  const hub = transformLearnHandoff(generatedPages.learn.html, "sv-SE", (href) => `/sv${href}`, [swedish, article], "/sv/program", {
+    articleHrefFor: (href) => `/en${href}`,
+    articleLanguage: { lang: "en", label: messages.englishGuide },
+  });
+  assert.match(hub, /href="\/sv\/learn\/casino-bonuses\/omsattningskrav-sa-fungerar-det"/);
+  assert.match(hub, /href="\/en\/learn\/casino-bonuses\/wagering-requirements"/);
+  assert.equal((hub.match(/data-learn-article-language="en">På engelska</g) ?? []).length, 1);
+  assert.doesNotMatch(hub, /lang="en"[^>]*>Omsättningskrav/);
+  assert.ok(hub.indexOf("Omsättningskrav") < hub.indexOf("Wagering requirements explained"));
+  assert.match(read("app/(public)/learn/page.tsx"), /const articles = \[\.\.\.localizedArticles, \.\.\.englishArticles\];/);
+});
+
 test("the retired odds guide moves permanently to its successor", () => {
   assert.deepEqual(retiredArticleSuccessor("sports-betting-basics", "sports-betting-odds-basics"), {
     category: "sports-betting-basics",
