@@ -39,7 +39,7 @@ hourly CRON_SECRET request
 
 The launch request returns after the session ID is attached; it does not wait
 for the AI run. Later hourly invocations reconcile it. One run is limited to 12
-hours and one new cycle cannot launch more often than every 24 hours.
+hours and one new cycle cannot launch more often than every 8 hours.
 
 ## Hosted configuration
 
@@ -53,7 +53,7 @@ LEARN_MCP_SERVICE_TOKEN=<existing server-only RFC-052 token, at least 32 bytes>
 LEARN_MCP_ACTOR_ID=<existing RFC-052 service actor UUID>
 LEARN_CONTENT_AUTONOMY_ENABLED=true
 LEARN_CONTENT_LOCALES=en
-LEARN_CONTENT_MIN_INTERVAL_HOURS=24
+LEARN_CONTENT_MIN_INTERVAL_HOURS=8
 LEARN_CONTENT_OPENAI_MODEL=gpt-6-astra
 ```
 
@@ -155,7 +155,7 @@ npm run build
 
 The PostgreSQL suite must run only against a disposable loopback `_ci`/test
 database. It proves concurrent claims converge on one run, competing session
-attachments cannot diverge and the 24-hour interval/locale cursor persist. The
+attachments cannot diverge and the minimum interval/locale cursor persist. The
 orchestrator PostgreSQL suite runs in both database-capable CI jobs.
 
 ## Production acceptance
