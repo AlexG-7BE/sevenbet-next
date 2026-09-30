@@ -9,6 +9,13 @@ export const LEARN_CONTENT_DEFAULT_MIN_INTERVAL_HOURS = 24;
 export const LEARN_CONTENT_MAX_STATE_BYTES = 4_096;
 export const LEARN_CONTENT_ACTIVE_LEASE_HOURS = 12;
 export const LEARN_CONTENT_MAX_PUBLICATION_ATTEMPTS = 3;
+/** English guides are the source a run in another language may localize (LEARN-COMMERCIAL-LOCALIZED-2026-09-30). */
+export const LEARN_CONTENT_SOURCE_LOCALE = "en-GB";
+
+/** The published inventory a run sees: its own language plus the English source guides. */
+export function learnContentInventoryLocales(runLocale: string) {
+  return [...new Set([runLocale, LEARN_CONTENT_SOURCE_LOCALE])];
+}
 
 type LearnContentEnvironment = Record<string, string | undefined> & {
   CRON_SECRET?: string;

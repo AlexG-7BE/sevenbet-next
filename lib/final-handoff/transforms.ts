@@ -5,7 +5,7 @@ import { learningMessages, localizedLearningCategories } from "@/lib/i18n/learni
 import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
 import type { MethodologyMessages } from "@/lib/i18n/static-pages/methodology";
 import type { PublicErrorMessages } from "@/lib/i18n/public-errors";
-import type { SupportedLocale } from "@/lib/market/registry";
+import { languageRouteByLocale, type SupportedLocale } from "@/lib/market/registry";
 
 function escapePattern(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -341,19 +341,27 @@ export function transformLearnHandoff(
   articles: readonly PublicArticle[] = [],
   programmePath = "/program",
   /**
-   * Set when the hub lists guides from another language (a language with no guide of its
-   * own lists the English guides): each card links to the guide's own page, carries its
-   * `lang` and says which language it is in.
+   * Set when the hub also lists guides from another language (a language hub lists its own
+   * guides first, then the English guides): each guide not in the hub's language links to its
+   * own page, carries its `lang` and says which language it is in.
    */
   foreignArticles?: { articleHrefFor: (href: string) => string; articleLanguage: { lang: string; label: string } },
 ) {
   const messages = learningMessages(locale);
   const categories = localizedLearningCategories(locale);
-  const articleHref = (article: PublicArticle) => (foreignArticles?.articleHrefFor ?? hrefFor)(articlePath(article));
-  const articleLang = foreignArticles ? ` lang="${escapeHtml(foreignArticles.articleLanguage.lang)}"` : "";
-  const languageBadge = foreignArticles
-    ? ` · <span data-learn-article-language="${escapeHtml(foreignArticles.articleLanguage.lang)}">${escapeHtml(foreignArticles.articleLanguage.label)}</span>`
-    : "";
+  const hubArticleLocale = languageRouteByLocale(locale).defaultLocale;
+  const foreign = (article: PublicArticle) => (foreignArticles && article.locale !== hubArticleLocale ? foreignArticles : null);
+  const articleHref = (article: PublicArticle) => (foreign(article)?.articleHrefFor ?? hrefFor)(articlePath(article));
+  const articleLang = (article: PublicArticle) => {
+    const other = foreign(article);
+    return other ? ` lang="${escapeHtml(other.articleLanguage.lang)}"` : "";
+  };
+  const languageBadge = (article: PublicArticle) => {
+    const other = foreign(article);
+    return other
+      ? ` · <span data-learn-article-language="${escapeHtml(other.articleLanguage.lang)}">${escapeHtml(other.articleLanguage.label)}</span>`
+      : "";
+  };
   const categoryTitles = new Map(categories.map((category) => [category.slug, category.title]));
   const topicFor = (article: PublicArticle) => {
     if (article.category === "casino-bonuses") return "bonuses";
@@ -370,17 +378,17 @@ export function transformLearnHandoff(
   }).format(new Date(article.updatedAt));
   const startCard = (article: PublicArticle) => `<a href="${escapeHtml(articleHref(article))}" data-learn-category="${topicFor(article)}" class="scp2" style="background: rgb(244, 241, 235); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 20px; padding: 32px 36px; display: flex; flex-direction: column; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
           <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(90, 89, 0); font-weight: 600; margin-bottom: 16px;">${escapeHtml(categoryTitles.get(article.category) || article.category.replaceAll("-", " "))}</div>
-          <div${articleLang} style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 22px; line-height: 1.2; margin-bottom: 12px;">${escapeHtml(article.title)}</div>
-          <p${articleLang} style="font-size: 14px; line-height: 1.6; color: rgb(100, 99, 92); margin: 0px 0px 20px; flex: 1 1 0%;">${escapeHtml(article.excerpt)}</p>
-          <div style="font-size: 13px; color: rgb(94, 93, 87);">${escapeHtml(article.readingTime || "Guide")} · ${escapeHtml(messages.ui.updated)} ${updated(article)}${languageBadge}</div>
+          <div${articleLang(article)} style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 22px; line-height: 1.2; margin-bottom: 12px;">${escapeHtml(article.title)}</div>
+          <p${articleLang(article)} style="font-size: 14px; line-height: 1.6; color: rgb(100, 99, 92); margin: 0px 0px 20px; flex: 1 1 0%;">${escapeHtml(article.excerpt)}</p>
+          <div style="font-size: 13px; color: rgb(94, 93, 87);">${escapeHtml(article.readingTime || "Guide")} · ${escapeHtml(messages.ui.updated)} ${updated(article)}${languageBadge(article)}</div>
         </a>`;
   const guideCard = (article: PublicArticle) => `<a href="${escapeHtml(articleHref(article))}" data-learn-category="${topicFor(article)}" class="scp3" style="background: rgb(250, 250, 247); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 14px; padding: 24px 30px; display: flex; align-items: center; gap: 20px 32px; flex-wrap: wrap; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
             <div style="flex: 1 1 0%; min-width: 260px;">
               <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(90, 89, 0); font-weight: 600; margin-bottom: 6px;"><span class="sc-interp">${escapeHtml(categoryTitles.get(article.category) || article.category.replaceAll("-", " "))}</span></div>
-              <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 19px; line-height: 1.25;"><span class="sc-interp"${articleLang}>${escapeHtml(article.title)}</span></div>
-              <div style="font-size: 14px; color: rgb(100, 99, 92); margin-top: 6px;"><span class="sc-interp"${articleLang}>${escapeHtml(article.excerpt)}</span></div>
+              <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 19px; line-height: 1.25;"><span class="sc-interp"${articleLang(article)}>${escapeHtml(article.title)}</span></div>
+              <div style="font-size: 14px; color: rgb(100, 99, 92); margin-top: 6px;"><span class="sc-interp"${articleLang(article)}>${escapeHtml(article.excerpt)}</span></div>
             </div>
-            <div style="font-size: 13px; color: rgb(94, 93, 87); white-space: nowrap;"><span class="sc-interp">${escapeHtml(article.readingTime || "Guide")} · ${updated(article)}</span>${languageBadge}</div>
+            <div style="font-size: 13px; color: rgb(94, 93, 87); white-space: nowrap;"><span class="sc-interp">${escapeHtml(article.readingTime || "Guide")} · ${updated(article)}</span>${languageBadge(article)}</div>
             <span style="font-size: 14px; color: rgb(16, 15, 15); border-bottom: 1px solid rgba(16, 15, 15, 0.3); padding-bottom: 2px; white-space: nowrap;">${escapeHtml(messages.hub[19])}</span>
           </a>`;
   let output = html

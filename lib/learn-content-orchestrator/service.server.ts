@@ -9,6 +9,7 @@ import {
   LEARN_CONTENT_ACTIVE_LEASE_HOURS,
   LEARN_CONTENT_MAX_PUBLICATION_ATTEMPTS,
   authenticateLearnContentCron,
+  learnContentInventoryLocales,
   resolveLearnContentConfig,
 } from "./config";
 import { LEARN_CONTENT_ROLE_NAMES, parseLearnContentModelOutput } from "./contracts";
@@ -140,7 +141,7 @@ export function createLearnContentCronHandler(dependencies: LearnContentCronDepe
     if (claim.action === "LAUNCH") {
       let context: LearnContentSafeContext;
       try {
-        context = await collectContext([run.locale], current);
+        context = await collectContext(learnContentInventoryLocales(run.locale), current);
       } catch {
         await state.finish({ runId: run.runId, now: current, result: "FAILED", code: "SAFE_CONTEXT_FAILED" });
         log({ event: "run_failed", code: "SAFE_CONTEXT_FAILED", runId: run.runId });
@@ -260,7 +261,7 @@ export function createLearnContentCronHandler(dependencies: LearnContentCronDepe
 
     let context: LearnContentSafeContext;
     try {
-      context = await collectContext([run.locale], current);
+      context = await collectContext(learnContentInventoryLocales(run.locale), current);
     } catch {
       await state.finish({ runId: run.runId, now: current, result: "FAILED", code: "SAFE_CONTEXT_FAILED" });
       return response("BLOCKED", "SAFE_CONTEXT_FAILED", 503);

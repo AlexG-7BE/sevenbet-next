@@ -22,12 +22,14 @@ export default async function LearnPage() {
   const messages = learningMessages(presentation.locale);
   const articleLocale = languageRouteByLocale(presentation.locale).defaultLocale;
   const localizedArticles = await articleService.listPublished(articleLocale, { take: 100 }).catch(() => []);
-  // A language with no guide of its own lists the English guides, marked as English and
-  // linked to their English pages, instead of an empty hub (audit 27 Sep 2026).
-  const englishFallback = !localizedArticles.length && articleLocale !== DEFAULT_MARKET_PROFILE.defaultLocale;
-  const articles = englishFallback
+  // A language hub lists its own guides first, then the English guides, marked as English and
+  // linked to their English pages (audit 27 Sep 2026; mixed list since
+  // LEARN-COMMERCIAL-LOCALIZED-2026-09-30, so the first translation does not hide the rest).
+  const englishFallback = articleLocale !== DEFAULT_MARKET_PROFILE.defaultLocale;
+  const englishArticles = englishFallback
     ? await articleService.listPublished(DEFAULT_MARKET_PROFILE.defaultLocale, { take: 100 }).catch(() => [])
-    : localizedArticles;
+    : [];
+  const articles = [...localizedArticles, ...englishArticles];
   const canonical = productCanonicalPath(presentation, "/learn");
   const programmePath = programmePathForPresentationLocale(presentation.locale);
   const localizedHref = (href: string) => productHref(presentation, href);

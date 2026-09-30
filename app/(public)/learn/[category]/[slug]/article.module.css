@@ -77,3 +77,5 @@
   .heroWithImage::after { background: rgba(16,15,15,.78); }
   .heroImage { width: 100%; }
 }
+/* The protected closing block leads to the Programme like the ordinary one (Founder, 30 Sep 2026). */
+.protectedBridge h2 em{display:block;color:var(--sb-acid);font-family:var(--font-seven-serif),Georgia,serif;font-weight:400;text-transform:none}

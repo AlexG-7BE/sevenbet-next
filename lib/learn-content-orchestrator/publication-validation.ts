@@ -1,4 +1,5 @@
 import { publicLearnArticlePath } from "@/lib/learn-apply/public-verification";
+import { LANGUAGE_ROUTE_PROFILES, languageRouteByLocale, type SupportedLocale } from "@/lib/market/registry";
 import { PUBLIC_CANONICAL_ORIGIN } from "@/lib/site";
 
 import { LEARN_CONTENT_ROLE_NAMES, type LearnContentPublishResult, type LearnContentResult } from "./contracts";
@@ -38,6 +39,29 @@ export function validateLearnContentRoleTrace(result: LearnContentResult, trace:
 }
 
 const prohibitedCommercialPath = /^\/(?:casino|casinos|bonuses|best-offers|go|outbound|r|compare|catalog|partner-preview)(?:\/|$)/i;
+
+/**
+ * Founder decision 30 Sep 2026 (LEARN-COMMERCIAL-LOCALIZED-2026-09-30): guides in these
+ * categories may link the offer pages of their own language. Protected guides
+ * (`responsible-gambling`) never can. Casino pages, click redirects and tracking stay closed.
+ */
+export const LEARN_CONTENT_OFFER_LINK_CATEGORIES: ReadonlySet<string> = new Set([
+  "casino-basics",
+  "casino-bonuses",
+  "casino-glossary",
+  "casino-safety",
+  "country-guides",
+  "game-guides",
+  "payments",
+]);
+const offerPagePath = /^\/(?:bonuses|casinos|best-offers)$/;
+const languagePrefix = new RegExp(`^/(${LANGUAGE_ROUTE_PROFILES.map((profile) => profile.publicSlug).join("|")})(?=/|$)`);
+
+/** A public path without its language prefix, so a localized commercial route is judged like the bare one. */
+function routeWithoutLanguage(pathname: string) {
+  const match = languagePrefix.exec(pathname);
+  return { language: match?.[1] ?? null, path: match ? pathname.slice(match[0].length) || "/" : pathname };
+}
 const unsafeTrackingParameter = /^(?:aff|affiliate|click|ref|refer|subid|utm_|bonus)/i;
 const prohibitedPromotion = [
   /\b(?:play|bet|deposit|sign[ -]?up)\s+now\b/i,
@@ -60,12 +84,16 @@ function payloadText(result: LearnContentPublishResult) {
   return [article.title, article.excerpt, ...article.tags, article.seo.title ?? "", article.seo.description ?? "", ...blocks].join("\n");
 }
 
-function validArticleLink(value: string, evidenceUrls: ReadonlySet<string>) {
+function validArticleLink(value: string, evidenceUrls: ReadonlySet<string>, offerLanguage: string | null = null) {
   try {
     const url = new URL(value, PUBLIC_CANONICAL_ORIGIN);
     if (url.protocol !== "https:" || url.username || url.password) return false;
     for (const key of url.searchParams.keys()) if (unsafeTrackingParameter.test(key)) return false;
-    if (url.origin === PUBLIC_CANONICAL_ORIGIN) return !prohibitedCommercialPath.test(url.pathname);
+    if (url.origin === PUBLIC_CANONICAL_ORIGIN) {
+      const route = routeWithoutLanguage(url.pathname);
+      if (offerPagePath.test(route.path)) return offerLanguage !== null && route.language === offerLanguage && !url.search && !url.hash;
+      return !prohibitedCommercialPath.test(route.path);
+    }
     return evidenceUrls.has(url.href);
   } catch {
     return false;
@@ -143,9 +171,13 @@ export function validateLearnContentPublication(input: {
   if (new Set(result.contentPackage.sourceIds).size !== result.contentPackage.sourceIds.length) return fail("DUPLICATE_CONTENT_SOURCE_ID");
   if (result.contentPackage.sourceIds.some((sourceId) => !evidenceById.has(sourceId))) return fail("CONTENT_SOURCE_NOT_FOUND");
 
+  if (!article.heroImage) return fail("HERO_IMAGE_REQUIRED");
   const evidenceUrls = new Set(result.evidence.map((item) => new URL(item.url).href));
+  const offerLanguage = LEARN_CONTENT_OFFER_LINK_CATEGORIES.has(article.category)
+    ? languageRouteByLocale(article.locale as SupportedLocale).publicSlug
+    : null;
   for (const block of article.bodyBlocks) {
-    if (block.type === "link" && !validArticleLink(block.url, evidenceUrls)) return fail("ARTICLE_LINK_NOT_ALLOWED");
+    if (block.type === "link" && !validArticleLink(block.url, evidenceUrls, offerLanguage)) return fail("ARTICLE_LINK_NOT_ALLOWED");
     if (block.type === "image" && block.source.type === "url" && !validArticleLink(block.source.url, evidenceUrls)) return fail("ARTICLE_IMAGE_URL_NOT_ALLOWED");
   }
   if (article.heroImage?.source.type === "url" && !validArticleLink(article.heroImage.source.url, evidenceUrls)) return fail("HERO_IMAGE_URL_NOT_ALLOWED");

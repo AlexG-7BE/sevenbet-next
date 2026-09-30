@@ -193,7 +193,10 @@ function publishEnvelope(options: { crisis?: boolean } = {}) {
           { id: "source", type: "link", label: "Read the regulator guidance", url: "https://www.gamblingcommission.gov.uk/public-and-players/guide/page/how-to-check-if-a-business-is-licensed", description: "Official public guidance." },
           ...(options.crisis ? [] : [{ id: "help", type: "link", label: "B4GAMBLE Help", url: "/help", description: "Protected support routes." }]),
         ],
-        heroImage: null,
+        heroImage: {
+          source: { type: "generate", prompt: "A calm editorial still life of a magnifying glass over a blank official document on a dark charcoal desk, one warm yellow accent, no text.", aspectRatio: "16:9", quality: "high", background: "opaque" },
+          alt: "A magnifying glass over a blank official document on a dark desk.",
+        },
         seo: {
           title: "How to verify a gambling licence",
           description: "Check licensing claims against a public regulator register before relying on them.",
@@ -710,6 +713,37 @@ test("commercial Article routes and ranking language fail the safety firewall", 
   rankingEnvelope.learnApply.article.title = "Top online casinos";
   const rankingResult = parseLearnContentModelOutput(rankingEnvelope);
   assert.deepEqual(validateLearnContentPublication({ result: rankingResult as Extract<typeof rankingResult, { resultClass: "PUBLISH" }>, run: run(), context: safeContext(), allowedLocales: new Set(["en-GB"]), now: NOW }), { ok: false, code: "COMMERCIAL_SAFETY_FIREWALL" });
+});
+
+test("commercial guides may link only their own language's offer pages; protected guides and casino routes never", () => {
+  const verdict = (url: string, patch: { category?: string } = {}) => {
+    const envelope = publishEnvelope();
+    if (patch.category) {
+      envelope.learnApply.article.category = patch.category;
+      (envelope.learnApply.article.seo as { canonicalUrl: string | null }).canonicalUrl = null;
+    }
+    envelope.learnApply.article.bodyBlocks.push({ id: "next", type: "link", label: "Next step", url, description: "Where the reader goes next." });
+    const result = parseLearnContentModelOutput(envelope);
+    const categories = [
+      { slug: "casino-safety", title: "Casino Safety", description: "Safety education." },
+      { slug: "responsible-gambling", title: "Responsible Gambling", description: "Limits and support." },
+    ];
+    return validateLearnContentPublication({ result: result as Extract<typeof result, { resultClass: "PUBLISH" }>, run: run(), context: { ...safeContext(), categories }, allowedLocales: new Set(["en-GB"]), now: NOW });
+  };
+  for (const url of ["/en/casinos", "/en/bonuses", "/en/best-offers", "https://b4gamble.com/en/casinos"]) assert.deepEqual(verdict(url), { ok: true }, url);
+  for (const url of ["/sv/casinos", "/casinos", "/en/casinos?sort=terms", "/en/casino/example", "/sv/casino/example", "/en/r/example", "/en/go/example", "/en/outbound/example"]) {
+    assert.deepEqual(verdict(url), { ok: false, code: "ARTICLE_LINK_NOT_ALLOWED" }, url);
+  }
+  assert.deepEqual(verdict("/en/bonuses", { category: "responsible-gambling" }), { ok: false, code: "ARTICLE_LINK_NOT_ALLOWED" });
+  assert.deepEqual(verdict("/program?entry=start", { category: "responsible-gambling" }), { ok: true });
+  assert.deepEqual(verdict("/sv/program?entry=start", { category: "responsible-gambling" }), { ok: true });
+});
+
+test("every autonomous Article carries a hero image", () => {
+  const envelope = publishEnvelope();
+  (envelope.learnApply.article as { heroImage: unknown }).heroImage = null;
+  const result = parseLearnContentModelOutput(envelope);
+  assert.deepEqual(validateLearnContentPublication({ result: result as Extract<typeof result, { resultClass: "PUBLISH" }>, run: run(), context: safeContext(), allowedLocales: new Set(["en-GB"]), now: NOW }), { ok: false, code: "HERO_IMAGE_REQUIRED" });
 });
 
 test("crisis material requires a protected help route", () => {

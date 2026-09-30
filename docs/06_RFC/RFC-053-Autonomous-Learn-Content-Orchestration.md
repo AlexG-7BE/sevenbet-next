@@ -1,7 +1,8 @@
 # RFC-053: Autonomous Learn Content Orchestration
 
 - **Status:** `ACTIVE`
-- **Decision authority:** explicit Founder instructions, 22–23 September 2026
+- **Decision authority:** explicit Founder instructions, 22–23 September 2026;
+  amended by explicit Founder instruction, 30 September 2026 (§10)
 - **Scope:** one bounded server-side Learn editorial orchestration pipeline
 - **Depends on:** Product Vision & Principles, RFC-013, RFC-017, RFC-027,
   RFC-037, RFC-039, RFC-044, RFC-051 and RFC-052
@@ -141,7 +142,9 @@ Before any side effect the application requires:
   `expectedUpdatedAt = null`;
 - a target slug absent from the current published Article inventory;
 - all material claims mapped to evidence and independently checked by Editor;
-- safe URLs with no affiliate/tracking parameters or commercial route;
+- safe URLs with no affiliate/tracking parameters or commercial route, except
+  the same-language offer pages in the commercial categories of §10;
+- a hero image on every Article (§10);
 - internal-only canonical URL;
 - crisis/help and commercial-safety firewall passage; and
 - parsing through RFC-052's actual current `learnApplyInputSchema`.
@@ -196,10 +199,12 @@ than creating quota pressure.
 
 ## 7. Safety and commercial firewall
 
-Education, welfare and factual accuracy outrank traffic. The pipeline rejects
-promotional urgency, supposedly safe stakes/bets, guaranteed outcomes, chasing
-losses, affiliate/tracking URLs, casino/operator CTAs, bonuses, rankings and
-commercial conversion paths.
+Factual accuracy and usefulness outrank traffic, and conversion comes from
+trust. The pipeline rejects promotional urgency, supposedly safe stakes/bets,
+guaranteed outcomes, chasing losses, affiliate/tracking URLs, casino/operator
+names and CTAs, specific bonus amounts, rankings and every commercial route
+other than the same-language offer pages that §10 allows in commercial
+categories.
 
 Addiction, loss of control, inability to stop, relapse, severe financial harm
 and serious distress require useful neutral action, protected Help or
@@ -247,3 +252,32 @@ Production evidence belongs in
 `docs/06_Operations/Autonomous-Learn-Content-Orchestrator.md` and
 `docs/CURRENT_STATE.md` only after it is observed. Candidate code or tests are
 not Production evidence.
+
+## 10. Amendment — two funnels, localization and hero images (30 September 2026)
+
+Explicit Founder instruction, 30 September 2026
+([LEARN-COMMERCIAL-LOCALIZED-2026-09-30](../07_Decisions/LEARN-COMMERCIAL-LOCALIZED-2026-09-30.md)).
+This amends §§5 and 7 for the same pipeline; every other boundary stands.
+
+- **Two funnels.** Guides in `casino-bonuses`, `payments`, `casino-safety`,
+  `game-guides`, `casino-basics`, `casino-glossary` and `country-guides` answer
+  the questions of adults who gamble and may link the offer pages of their own
+  language only: `/{lang}/bonuses`, `/{lang}/casinos`, `/{lang}/best-offers`.
+  `responsible-gambling` guides stay commercial-free and lead to the free
+  Programme start (`/program?entry=start`, `/{lang}/program?entry=start`) and
+  protected Help. Casino pages, `/r/`, `/go/`, `/outbound/`, tracking
+  parameters, casino/operator names, bonus amounts and rankings stay closed,
+  with or without a language prefix.
+- **Localization.** A run in another language also receives the English
+  (`en-GB`) guide inventory and may localize an eligible English guide as a
+  new CREATE with its own native slug: commercial guides first, then
+  `responsible-gambling`, never `country-guides` or a guide built around one
+  market's rules. Every market fact and support service is replaced with the
+  target market's own.
+- **Hero image.** Every autonomous Article carries a hero image
+  (`HERO_IMAGE_REQUIRED`), normally generated through RFC-052 without text,
+  logos, brands or real people.
+- **Page funnel.** Game and country guides join the offer bridge categories.
+  `responsible-gambling` guides show the mid-guide Programme block and a
+  Start Programme action beside Responsible Gambling and Help, and never an
+  offer.

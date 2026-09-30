@@ -12,7 +12,8 @@ export function midArticleBridgeIndex(blocks: readonly ArticleBlock[]) {
 export type OfferBridgeKind = "bonuses" | "casinos";
 
 /**
- * Founder decisions 25 Sep 2026 (P9, then package C). Only these categories
+ * Founder decisions 25 Sep 2026 (P9, then package C), extended 30 Sep 2026 to game
+ * and country guides (LEARN-COMMERCIAL-LOCALIZED-2026-09-30). Only these categories
  * lead to the offer pages. Protected guides (`responsible-gambling`) are never
  * listed here and stay commercial-free.
  */
@@ -20,6 +21,8 @@ const OFFER_BRIDGE_KINDS: Readonly<Record<string, OfferBridgeKind>> = {
   "casino-bonuses": "bonuses",
   "casino-safety": "casinos",
   payments: "casinos",
+  "game-guides": "casinos",
+  "country-guides": "casinos",
 };
 
 export function offerBridgeKind(category: string): OfferBridgeKind | null {
