@@ -12,7 +12,7 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Learn editorial cycles leave Vercel for a ChatGPT scheduled task — step 1 in review
+## Learn editorial cycles leave Vercel for a ChatGPT scheduled task — step 1 live 30 September 2026
 
 **Founder instruction, 30 September 2026**
 ([LEARN-CHATGPT-SCHEDULER-2026-09-30](07_Decisions/LEARN-CHATGPT-SCHEDULER-2026-09-30.md),
@@ -45,8 +45,28 @@ this change deploys retries the same `requestId`, which resolves to
 to `false` on 30 September 2026 and applies from the next Production
 deployment.
 
-**PROPOSED — NOT YET LIVE** until merged and deployed. The ChatGPT scheduled
-task is **PENDING STEP 2 / NOT ACTIVE YET**.
+**DETECTED IN PRODUCTION, 30 September 2026:**
+[PR #430](https://github.com/AlexG-7BE/sevenbet-next/pull/430) passed Quality,
+Build / Browser, Database / Migration Verification and Vercel, and merged at
+12:46 UTC as `73673889299b07b1b7e2019105776d38bae2c1df`. Production deployment
+`dpl_8JTVV3MrJio8bWRk7xmc2M2GoGsP` is Ready at that SHA and owns
+`b4gamble.com`. Vercel lists two crons (Programme expiry purge, customer
+lifecycle); `GET /api/internal/cron/learn-content` answers `200 NO_OP /
+CHATGPT_SCHEDULER_OWNS_EXECUTION` with or without a bearer, and nothing called
+it at the old 13:13 UTC slot. The Learn MCP answers `401` without or with a
+wrong bearer (so it is enabled and configured). The deployed `learn_context`
+code, run over Production published rows read in a `READ ONLY` transaction,
+returns for `en`, `sv`, `da` and `de` the 30 published `en-GB` guides (no
+Swedish, Danish or German guide is published yet), 13 categories, the
+Programme and protected routes, with launch order `en,sv,da,de`; `es` is
+rejected. An authenticated call through the Production endpoint was not made,
+because `LEARN_MCP_SERVICE_TOKEN` is a Sensitive variable this session cannot
+read; the Founder's ChatGPT connector makes the first one. Article, revision
+and orchestrator-state digests were identical before and after 13:13 UTC; no
+existing Article changed. The historical state row stays frozen at 12:13:29 UTC
+with run `a173598b` marked active; nothing reads it.
+
+The ChatGPT scheduled task is **PENDING STEP 2 / NOT ACTIVE YET**.
 
 ## Kazakhstan geo-block with owner bypass — in review
 
