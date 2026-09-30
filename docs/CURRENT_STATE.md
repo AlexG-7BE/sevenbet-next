@@ -12,6 +12,42 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Learn editorial cycles leave Vercel for a ChatGPT scheduled task — step 1 in review
+
+**Founder instruction, 30 September 2026**
+([LEARN-CHATGPT-SCHEDULER-2026-09-30](07_Decisions/LEARN-CHATGPT-SCHEDULER-2026-09-30.md),
+RFC-053 §11): Vercel stops running paid OpenAI text-agent sessions for Learn.
+The hourly `/api/internal/cron/learn-content` cron is removed from
+`vercel.json`; the route imports nothing and answers `NO_OP /
+CHATGPT_SCHEDULER_OWNS_EXECUTION`; the managed-session provider, cron handler,
+server MCP publisher, state repository, prompts and model contracts are deleted
+and the `openai` SDK dependency is removed. Learn MCP adds the read-only
+`learn_context` tool, which returns the bounded public editorial context
+(published Article metadata for the target language plus the `en-GB` source
+guides, at most 500; categories; ordered launch languages from
+`LEARN_CONTENT_LOCALES`; public Programme and protected routes). `learn_apply`
+is unchanged, create-only and the only mutation. Generated hero images still
+use `gpt-image-2` with `OPENAI_API_KEY`.
+
+**DETECTED IN PRODUCTION BEFORE THIS CHANGE, 30 September 2026:**
+`LEARN_CONTENT_AUTONOMY_ENABLED=true`, `LEARN_CONTENT_LOCALES=en,sv,da,de`;
+the `learn-content-orchestrator:v1` state held active run
+`a173598b-cd32-447c-9387-630710d134e7` (`en-GB`, started 11:13 UTC, managed
+session attached). The regular 12:13 UTC cron reconciled it with the existing
+code: the session was idle (3,773,460 input and 35,977 output tokens) and
+`learn_apply` created and published Article
+`6323cf0b-e6c9-453e-95e7-2d42191a9571`, `/en/learn/game-guides/roulette-odds-explained`,
+with a hero image at 12:15:19 UTC (public route `200`). The orchestrator's MCP
+client gave up after the SDK's 60-second default while the image was generated,
+so the state recorded one retryable publication attempt. An hourly run before
+this change deploys retries the same `requestId`, which resolves to
+`NO_CHANGE` for the stored Article; no new session is launched. The Production value of `LEARN_CONTENT_AUTONOMY_ENABLED` was set
+to `false` on 30 September 2026 and applies from the next Production
+deployment.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed. The ChatGPT scheduled
+task is **PENDING STEP 2 / NOT ACTIVE YET**.
+
 ## Kazakhstan geo-block with owner bypass — in review
 
 **Founder instruction, 28 September 2026:** close the site to visitors from

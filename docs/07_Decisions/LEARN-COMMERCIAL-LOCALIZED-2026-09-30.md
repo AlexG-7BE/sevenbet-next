@@ -20,6 +20,10 @@
 - `tests/learning-center-parity.test.ts` (in `ci:structural`): the bridge categories and the protected guide's Programme block, Start Programme action and Help link.
 - `tests/crawler-ready-metadata.test.ts` (`seo-crawler:test`): the mixed language hub.
 
+## Later the same day
+
+The server-side pipeline that applied these rules was retired on 30 September 2026 ([LEARN-CHATGPT-SCHEDULER-2026-09-30](LEARN-CHATGPT-SCHEDULER-2026-09-30.md)). The rules above stay the editorial specification for the ChatGPT scheduled task, which is pending. The tests named under Evidence were retired with that code; the page-level funnel tests in `learning-center-parity.test.ts` and `crawler-ready-metadata.test.ts` remain.
+
 ## Not in this change
 
 - `LEARN_CONTENT_LOCALES=en,sv,da,de` was set on Vercel Production with Founder approval before the #428 Production deployment.

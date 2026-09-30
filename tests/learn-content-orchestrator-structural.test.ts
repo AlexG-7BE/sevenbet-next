@@ -14,145 +14,135 @@ function filesUnder(path: string): string[] {
   });
 }
 
-const orchestratorFiles = filesUnder("lib/learn-content-orchestrator").filter((path) => path.endsWith(".ts"));
+const runtimeFiles = ["app", "components", "lib"]
+  .flatMap(filesUnder)
+  .filter((path) => /\.(?:tsx|ts|mjs|js)$/.test(path))
+  .concat(["middleware.ts"]);
+const orchestratorFiles = filesUnder("lib/learn-content-orchestrator").filter((path) => path.endsWith(".ts")).sort();
 const orchestrator = orchestratorFiles.map(read).join("\n");
-const provider = read("lib/learn-content-orchestrator/openai-managed-session.server.ts");
-const publisher = read("lib/learn-content-orchestrator/mcp-publisher.server.ts");
-const state = read("lib/learn-content-orchestrator/state-repository.server.ts");
-const context = read("lib/learn-content-orchestrator/safe-context.server.ts");
-const prompts = read("lib/learn-content-orchestrator/prompts.ts");
 const route = read("app/api/internal/cron/learn-content/route.ts");
+const context = read("lib/learn-content-orchestrator/safe-context.server.ts");
+const learnContext = read("lib/learn-content-orchestrator/learn-context.server.ts");
+const mcpServer = read("lib/mcp/learn/server.ts");
 const schema = read("prisma/schema.prisma");
-const packageJson = JSON.parse(read("package.json")) as { dependencies: Record<string, string>; scripts: Record<string, string> };
+const packageJson = JSON.parse(read("package.json")) as { dependencies: Record<string, string>; devDependencies?: Record<string, string>; scripts: Record<string, string> };
 
-test("the cron route is a server-only boundary and never imports Prisma", () => {
-  assert.match(route, /createLearnContentCronHandler/);
-  assert.match(route, /runtime = "nodejs"/);
-  assert.doesNotMatch(route, /Prisma|@prisma|OPENAI_API_KEY|LEARN_MCP_SERVICE_TOKEN/);
+test("Vercel no longer schedules the Learn editorial cron", () => {
+  const vercel = JSON.parse(read("vercel.json")) as { crons: Array<{ path: string; schedule: string }> };
+  assert.equal(vercel.crons.some((cron) => cron.path.includes("learn-content")), false);
+  assert.deepEqual(vercel.crons.map((cron) => cron.path), [
+    "/api/internal/cron/programme-expiry-purge",
+    "/api/internal/cron/customer-lifecycle",
+  ]);
 });
 
-test("the Managed Agents session has only no-environment, programmatic, and live-web tools", () => {
-  assert.match(provider, /environment: \{ type: "none" \}/);
-  assert.match(provider, /type: "programmatic_tool_calling"/);
-  assert.match(provider, /type: "web_search", mode: "live"/);
-  assert.match(provider, /multi_agent: \{ enabled: true, max_concurrent_subagents: 3 \}/);
-  assert.doesNotMatch(provider, /type: "mcp"|\bagent_id\b|LEARN_MCP|learn_apply|serviceToken/);
+test("the retired cron route imports nothing and can reach no provider, state or publisher", () => {
+  assert.doesNotMatch(route, /^\s*import\s/m);
+  assert.doesNotMatch(route, /require\(|await import\(|fetch\(|process\.env/);
+  assert.match(route, /CHATGPT_SCHEDULER_OWNS_EXECUTION/);
+  assert.match(route, /export function GET\(\)/);
+  assert.doesNotMatch(route, /export (?:const|async function|function) (?:POST|PUT|PATCH|DELETE)\b/);
 });
 
-test("the model never receives private, Programme-runtime, analytics, or commercial imports", () => {
+test("the server-side OpenAI text orchestrator is gone and nothing can recreate a managed session", () => {
+  assert.deepEqual(orchestratorFiles, [
+    "lib/learn-content-orchestrator/config.ts",
+    "lib/learn-content-orchestrator/learn-context.server.ts",
+    "lib/learn-content-orchestrator/safe-context.server.ts",
+  ]);
+  for (const retired of [
+    "service.server.ts",
+    "openai-managed-session.server.ts",
+    "mcp-publisher.server.ts",
+    "state-repository.server.ts",
+    "model-output-schema.ts",
+    "prompts.ts",
+  ]) assert.equal(existsSync(`lib/learn-content-orchestrator/${retired}`), false, retired);
+  assert.equal(packageJson.dependencies.openai, undefined);
+  assert.equal(packageJson.devDependencies?.openai, undefined);
+  for (const path of runtimeFiles) {
+    const source = read(path);
+    assert.doesNotMatch(source, /from ["']openai["']|require\(["']openai["']\)/, path);
+    assert.doesNotMatch(source, /agents\.sessions|managed[_ ]session|gpt-6-astra|createLearnContentCronHandler|LEARN_CONTENT_OPENAI_MODEL/i, path);
+  }
+});
+
+test("no runtime code reads the autonomy switch or writes the retired orchestrator state", () => {
+  for (const path of runtimeFiles) {
+    const source = read(path);
+    assert.doesNotMatch(source, /LEARN_CONTENT_AUTONOMY_ENABLED|LEARN_CONTENT_MIN_INTERVAL_HOURS/, path);
+    if (source.includes("LEARN_CONTENT_STATE_KEY")) assert.equal(path, "lib/learn-content-orchestrator/config.ts");
+  }
+  assert.doesNotMatch(orchestrator, /siteSetting|\$transaction|\.create\(|\.update\(|\.upsert\(|\.delete\(|deleteMany|updateMany|createMany/);
+});
+
+test("only the Learn MCP server imports the editorial context, and it adds no second mutation", () => {
+  const importers = runtimeFiles.filter((path) => !path.startsWith("lib/learn-content-orchestrator/") && /@\/lib\/learn-content-orchestrator\//.test(read(path)));
+  assert.deepEqual(importers, ["lib/mcp/learn/server.ts"]);
+  assert.equal((mcpServer.match(/name: "learn_apply"/g) ?? []).length, 1);
+  assert.equal((mcpServer.match(/name: "learn_context"/g) ?? []).length, 1);
+  assert.match(mcpServer, /tools: \[learnContextTool, learnApplyTool\]/);
+  assert.match(mcpServer, /readOnlyHint: true,\s*destructiveHint: false,\s*idempotentHint: true/);
+  assert.doesNotMatch(learnContext, /learnApplyService|callTool|articleService|prisma\./);
+});
+
+test("the editorial context never reads private, Programme-runtime, analytics or commercial data", () => {
   assert.doesNotMatch(orchestrator, /@\/lib\/(?:programme|customers?|analytics|affiliate|affiliate-commercial|commercial|email|auth|media)(?:\/|"|')/);
   assert.doesNotMatch(context, /UserProgress|ProgrammeProgress|ProgrammePause|AnonymousProgramme|AffiliateOffer|TrackingLink|OutboundClick|Customer/);
   assert.match(context, /status: EditorialStatus\.PUBLISHED/);
-  assert.doesNotMatch(context, /bodyBlocks: true|excerpt: true|createdBy: true|updatedBy: true/);
+  assert.match(context, /take: LEARN_CONTENT_MAX_ARTICLE_INVENTORY \+ 1/);
+  assert.match(context, /LEARN_CONTENT_MAX_ARTICLE_INVENTORY = 500/);
+  assert.doesNotMatch(context, /bodyBlocks: true|excerpt: true|createdBy: true|updatedBy: true|heroImage|seoDescription/);
+  assert.match(learnContext, /learnContextResultSchema\.parse/);
+  assert.match(learnContext, /\}\)\.strict\(\)/);
 });
 
-test("the separated role prompt names exactly the three authorized roles and caps rewrites", () => {
-  for (const name of ["B4GAMBLE SEO Growth Lead", "B4GAMBLE Research + Content", "B4GAMBLE Editor + Publisher"]) {
-    assert.match(read("lib/learn-content-orchestrator/contracts.ts") + prompts, new RegExp(name.replaceAll("+", "\\+")));
-  }
-  assert.match(prompts, /at most two rewrite rounds/i);
-  assert.match(prompts, /never directly mutate Production, call publication tools, or publish/i);
-  assert.match(prompts, /application, not any model, is the only publication authority/i);
-  assert.match(prompts, /protected \/help or \/responsible-gambling/);
-  assert.match(prompts, /inherit this session's configured model and high reasoning effort/i);
-  assert.match(prompts, /Wait for SEO_HANDOFF before creating any other role/);
-  assert.match(prompts, /NO_OP must have exactly the single SEO trace/);
-  assert.match(prompts, /bounded taxonomy-wide opportunity scan/i);
-  assert.match(prompts, /single overlapping or weak candidate must never end the scan/i);
-  assert.match(prompts, /Do not expose candidate deliberation or chain-of-thought/i);
-  assert.match(prompts, /seo_strategist/);
-  assert.match(prompts, /\[B4GAMBLE_ROLE:SEO_STRATEGIST_V1\]/);
-  assert.match(prompts, /Only the root orchestrator creates subagents/);
-  const managedSession = read("lib/learn-content-orchestrator/openai-managed-session.server.ts");
-  assert.match(managedSession, /item\.model === session\.agent\.model/);
-  assert.match(managedSession, /subagent\.parentAgentId === input\.rootAgentId/);
-  assert.match(managedSession, /call\.status === "completed"/);
-});
-
-test("only the deterministic MCP publisher can call the sole learn_apply tool", () => {
-  assert.equal((publisher.match(/callTool\(/g) ?? []).length, 1);
-  assert.match(publisher, /name: "learn_apply"/);
-  assert.match(publisher, /tools\.tools\.length !== 1/);
-  assert.match(publisher, /learnApplyToolResultSchema\.parse/);
-  assert.equal(orchestratorFiles.filter((path) => path !== "lib/learn-content-orchestrator/mcp-publisher.server.ts").map(read).join("\n").includes("callTool("), false);
-});
-
-test("publication input is validated through the actual RFC-052 LearnApply schema", () => {
-  const contracts = read("lib/learn-content-orchestrator/contracts.ts");
+test("learn_apply stays create-only and the sole mutation authority", () => {
   const learnApplyContract = read("lib/learn-apply/contract.ts");
   const articleService = read("lib/services/article.service.ts");
   const autonomousApply = articleService.slice(
     articleService.indexOf("async applyPublishedDocument"),
     articleService.indexOf("async isImageUrlReferenced"),
   );
-  assert.match(contracts, /import\s*\{[^}]*learnApplyInputSchema[^}]*\}\s*from "@\/lib\/learn-apply\/contract"/);
-  assert.match(contracts, /learnApply: learnApplyInputSchema/);
   assert.match(learnApplyContract, /articleId: z\.null\(\)/);
   assert.match(learnApplyContract, /expectedUpdatedAt: z\.null\(\)/);
   assert.doesNotMatch(learnApplyContract, /operation: z\.enum\(\["CREATED", "UPDATED"/);
   assert.match(autonomousApply, /tx\.article\.create/);
   assert.doesNotMatch(autonomousApply, /tx\.article\.update|contentRevision\.create|UPDATED/);
-  assert.match(prompts, /Existing Articles are never autonomous update targets/);
-  assert.match(read("lib/mcp/learn/server.ts"), /updates are not supported/);
-  assert.match(read("lib/mcp/learn/server.ts"), /destructiveHint: false/);
-  assert.match(read("lib/learn-content-orchestrator/service.server.ts"), /!published\.error\.retryable/);
-  assert.match(read("lib/learn-content-orchestrator/service.server.ts"), /result !== "LIVE"|result\.result !== "LIVE"/);
-  assert.match(read("lib/learn-content-orchestrator/service.server.ts"), /persistence !== "COMMITTED"/);
-  assert.match(read("lib/learn-content-orchestrator/service.server.ts"), /status !== "PUBLISHED"/);
+  assert.match(mcpServer, /updates are not supported/);
+  assert.match(mcpServer, /destructiveHint: false/);
+  assert.match(read("lib/learn-apply/openai-image-adapter.ts"), /DEFAULT_LEARN_OPENAI_IMAGE_MODEL = "gpt-image-2"/);
 });
 
-test("operational state is one bounded SiteSetting and contains no prose payload field", () => {
-  assert.match(state, /learn-content-orchestrator:v1|LEARN_CONTENT_STATE_KEY/);
-  assert.match(state, /LEARN_CONTENT_MAX_STATE_BYTES/);
-  assert.match(state, /pg_try_advisory_xact_lock/);
-  assert.match(state, /TransactionIsolationLevel\.Serializable/);
-  assert.doesNotMatch(state, /prompt|reasoning|contentPackage|seoHandoff|learnApply|articleBody|rawOutput/);
-});
-
-test("the orchestrator adds no model, table, entity, queue, or migration", () => {
-  assert.doesNotMatch(schema, /model LearnContent|model ContentOrchestrator|LearnContentRun|LearnContentQueue/);
+test("the migration adds no model, table, entity, queue or migration", () => {
+  assert.doesNotMatch(schema, /model LearnContent|model ContentOrchestrator|LearnContentRun|LearnContentQueue|LearnContext/);
   assert.equal((schema.match(/^model Article \{/gm) ?? []).length, 1);
-  assert.equal((schema.match(/^model ContentRevision \{/gm) ?? []).length, 1);
-  assert.equal((schema.match(/^model AuditLog \{/gm) ?? []).length, 1);
   assert.equal((schema.match(/^model SiteSetting \{/gm) ?? []).length, 1);
-  assert.equal(readdirSync("prisma/migrations").some((name) => /learn.*content|orchestrat/i.test(name)), false);
+  assert.equal(readdirSync("prisma/migrations").some((name) => /learn.*(?:content|context)|orchestrat/i.test(name)), false);
 });
 
-test("Vercel has exactly one hourly Learn orchestrator cron", () => {
-  const vercel = JSON.parse(read("vercel.json")) as { crons: Array<{ path: string; schedule: string }> };
-  const matches = vercel.crons.filter((cron) => cron.path === "/api/internal/cron/learn-content");
-  assert.deepEqual(matches, [{ path: "/api/internal/cron/learn-content", schedule: "13 * * * *" }]);
-});
-
-test("all autonomous switches and secret boundaries are documented as server-only env configuration", () => {
+test("environment documentation keeps the launch order and the retired switch server-only", () => {
   const env = read(".env.example");
-  for (const name of [
-    "LEARN_CONTENT_AUTONOMY_ENABLED",
-    "LEARN_CONTENT_LOCALES",
-    "LEARN_CONTENT_MIN_INTERVAL_HOURS",
-    "LEARN_CONTENT_OPENAI_MODEL",
-    "LEARN_MCP_ENABLED",
-    "LEARN_MCP_SERVICE_TOKEN",
-    "LEARN_MCP_ACTOR_ID",
-    "OPENAI_API_KEY",
-    "CRON_SECRET",
-  ]) assert.match(env, new RegExp(`^${name}=`, "m"));
+  for (const name of ["LEARN_CONTENT_AUTONOMY_ENABLED", "LEARN_CONTENT_LOCALES", "LEARN_MCP_ENABLED", "LEARN_MCP_SERVICE_TOKEN", "LEARN_MCP_ACTOR_ID", "OPENAI_API_KEY"]) {
+    assert.match(env, new RegExp(`^${name}=`, "m"));
+  }
+  assert.match(env, /^LEARN_CONTENT_AUTONOMY_ENABLED="false"$/m);
+  assert.doesNotMatch(env, /^LEARN_CONTENT_(?:MIN_INTERVAL_HOURS|OPENAI_MODEL)=/m);
   assert.doesNotMatch(env, /^NEXT_PUBLIC_(?:OPENAI|LEARN|CRON)/m);
 });
 
-test("the official OpenAI SDK is pinned and the orchestrator suites are wired into CI", () => {
-  assert.equal(packageJson.dependencies.openai, "7.20.0");
+test("the Learn context suites are wired into CI", () => {
   assert.match(packageJson.scripts["ci:quality"], /learn-content-orchestrator:test/);
   assert.match(packageJson.scripts["learn-content-orchestrator:test"], /learn-content-orchestrator-structural\.test\.ts/);
-  assert.match(read(".github/workflows/ci.yml"), /learn-content-orchestrator:postgres-test/g);
   assert.equal((read(".github/workflows/ci.yml").match(/learn-content-orchestrator:postgres-test/g) ?? []).length, 2);
 });
 
-test("RFC-053 is ACTIVE and the registry counts include it accurately", () => {
+test("RFC-053 records the retirement and the registry counts stay accurate", () => {
   const rfc = read("docs/06_RFC/RFC-053-Autonomous-Learn-Content-Orchestration.md");
   const registry = read("docs/06_RFC/README.md");
   assert.match(rfc, /\*\*Status:\*\* `ACTIVE`/);
-  assert.match(rfc, /supersedes RFC-027's no-autonomy\/no-schedule\/no-/i);
+  assert.match(rfc, /LEARN-CHATGPT-SCHEDULER-2026-09-30/);
+  assert.match(rfc, /PENDING STEP 2 \/ NOT ACTIVE YET/);
   assert.match(rfc, /RFC-052 remains the sole Article mutation authority/);
   assert.match(registry, /RFC-053 — Autonomous Learn Content Orchestration/);
   const rows = [...registry.matchAll(/^\| \[RFC-[^\n]*?\| `(ACTIVE|HISTORICAL|SUPERSEDED|PROPOSED)` \|/gm)].map((row) => row[1]);
@@ -161,7 +151,7 @@ test("RFC-053 is ACTIVE and the registry counts include it accurately", () => {
   assert.match(registry, new RegExp(`\\| \\*\\*Total RFC artifacts\\*\\* \\| \\*\\*${rows.length}\\*\\* \\|`));
 });
 
-test("no autonomous Learn code appears in a browser component or public route", () => {
+test("no Learn editorial code appears in a browser component or public route", () => {
   for (const path of orchestratorFiles) assert.ok(path.startsWith("lib/learn-content-orchestrator/"));
   assert.equal(existsSync("components/learn-content-orchestrator"), false);
   assert.equal(existsSync("app/(public)/learn-content-orchestrator"), false);

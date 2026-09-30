@@ -515,7 +515,7 @@ test("service bearer auth is fail-closed and independent of browser sessions", (
   assert.equal(authenticateLearnMcpRequest(new Request("https://b4gamble.com/api/mcp/learn", { headers: { cookie: "better-auth.session=founder", authorization: "Bearer wrong" } }), config), false);
 });
 
-test("stateless HTTP transport authenticates before parsing and exposes exactly one tool", async (context) => {
+test("stateless HTTP transport authenticates before parsing and exposes learn_context beside the one mutation tool", async (context) => {
   const keys = ["LEARN_MCP_ENABLED", "LEARN_MCP_SERVICE_TOKEN", "LEARN_MCP_ACTOR_ID"] as const;
   const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
   context.after(() => {
@@ -557,7 +557,7 @@ test("stateless HTTP transport authenticates before parsing and exposes exactly 
   assert.equal(listed.status, 200);
   assert.match(listed.headers.get("cache-control") ?? "", /no-store/);
   const payload = await listed.json() as { result?: { tools?: Array<{ name?: string }> } };
-  assert.deepEqual(payload.result?.tools?.map((tool) => tool.name), ["learn_apply"]);
+  assert.deepEqual(payload.result?.tools?.map((tool) => tool.name), ["learn_context", "learn_apply"]);
 });
 
 test("service actor must be the exact unlinked AUTHOR and is never inferred from a session", async () => {
@@ -573,7 +573,7 @@ test("service actor must be the exact unlinked AUTHOR and is never inferred from
   ), (error: unknown) => error instanceof LearnApplyError && error.code === "SERVICE_ACTOR_INVALID");
 });
 
-test("official MCP client discovers and calls exactly one Learn mutation tool", async () => {
+test("official MCP client discovers learn_context and calls the one Learn mutation tool", async () => {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const expected = {
     result: "LIVE" as const,
@@ -594,7 +594,8 @@ test("official MCP client discovers and calls exactly one Learn mutation tool", 
   await client.connect(clientTransport);
   try {
     const discovered = await client.listTools();
-    assert.deepEqual(discovered.tools.map((tool) => tool.name), ["learn_apply"]);
+    assert.deepEqual(discovered.tools.map((tool) => tool.name), ["learn_context", "learn_apply"]);
+    assert.deepEqual(discovered.tools.filter((tool) => tool.annotations?.readOnlyHint !== true).map((tool) => tool.name), ["learn_apply"]);
     const result = await client.callTool({ name: "learn_apply", arguments: input() });
     assert.equal(result.isError, undefined);
     assert.deepEqual(result.structuredContent, expected);

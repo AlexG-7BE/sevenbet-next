@@ -41,7 +41,12 @@ consent pages, refresh/access-token persistence, Commercial tools, Media tools
 or retired connector registrations.
 
 The new endpoint is the isolated `/api/mcp/learn` stateless Streamable HTTP
-resource. It exposes one tool and requires one server-held bearer credential.
+resource. It exposes one mutation tool and requires one server-held bearer
+credential. Since 30 September 2026
+([LEARN-CHATGPT-SCHEDULER-2026-09-30](../07_Decisions/LEARN-CHATGPT-SCHEDULER-2026-09-30.md))
+the same endpoint also lists the read-only `learn_context` tool, which returns
+bounded public editorial metadata and writes nothing; `learn_apply` remains the
+only mutation.
 It has no browser session, interactive MFA or query-secret path. The direct
 `@modelcontextprotocol/sdk` dependency exists solely for this exact transport.
 

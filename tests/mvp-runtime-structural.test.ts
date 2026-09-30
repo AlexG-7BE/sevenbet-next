@@ -122,21 +122,20 @@ test("the exact Vercel crons call only authenticated bounded internal routes", (
   assert.deepEqual(configuration.crons, [
     { path: "/api/internal/cron/programme-expiry-purge", schedule: "17 4 * * *" },
     { path: "/api/internal/cron/customer-lifecycle", schedule: "47 3 * * *" },
-    { path: "/api/internal/cron/learn-content", schedule: "13 * * * *" },
   ]);
   const route = read("app/api/internal/cron/programme-expiry-purge/route.ts");
   const handler = read("lib/programme/runtime-expiry-purge-cron.ts");
   const customerRoute = read("app/api/internal/cron/customer-lifecycle/route.ts");
   const customerHandler = read("lib/email/lifecycle-queue-cron.server.ts");
   const learnRoute = read("app/api/internal/cron/learn-content/route.ts");
-  const learnHandler = read("lib/learn-content-orchestrator/service.server.ts");
   assert.match(route, /createProgrammeExpiryPurgeCronHandler/);
   assert.match(handler, /CRON_SECRET/);
   assert.match(handler, /timingSafeEqual/);
   assert.match(customerRoute, /createLifecycleQueueCronHandler/);
   assert.match(customerHandler, /CRON_SECRET/);
   assert.match(customerHandler, /timingSafeEqual/);
-  assert.match(learnRoute, /createLearnContentCronHandler/);
-  assert.match(learnHandler, /authenticateLearnContentCron/);
-  assert.doesNotMatch(route + handler + customerRoute + customerHandler + learnRoute + learnHandler, /VERCEL_TOKEN|DATABASE_URL|BETTER_AUTH_SECRET/);
+  // The retired Learn cron path answers a fixed NO_OP and imports nothing.
+  assert.match(learnRoute, /CHATGPT_SCHEDULER_OWNS_EXECUTION/);
+  assert.doesNotMatch(learnRoute, /^\s*import\s/m);
+  assert.doesNotMatch(route + handler + customerRoute + customerHandler + learnRoute, /VERCEL_TOKEN|DATABASE_URL|BETTER_AUTH_SECRET/);
 });

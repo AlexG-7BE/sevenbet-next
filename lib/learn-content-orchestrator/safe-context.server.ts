@@ -10,6 +10,13 @@ import { PUBLIC_CANONICAL_ORIGIN } from "@/lib/site";
 
 export const LEARN_CONTENT_MAX_ARTICLE_INVENTORY = 500;
 
+export class LearnContentInventoryLimitError extends Error {
+  constructor() {
+    super("Published Learn inventory exceeds the bounded editorial context limit");
+    this.name = "LearnContentInventoryLimitError";
+  }
+}
+
 export type LearnContentArticleInventoryItem = {
   id: string;
   slug: string;
@@ -68,9 +75,7 @@ export async function collectLearnContentSafeContext(
       updatedAt: true,
     },
   });
-  if (articles.length > LEARN_CONTENT_MAX_ARTICLE_INVENTORY) {
-    throw new Error("Published Learn inventory exceeds the bounded autonomous context limit");
-  }
+  if (articles.length > LEARN_CONTENT_MAX_ARTICLE_INVENTORY) throw new LearnContentInventoryLimitError();
   return {
     generatedAt: now.toISOString(),
     articles: articles.map((article) => ({

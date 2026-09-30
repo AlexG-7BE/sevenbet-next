@@ -8,12 +8,46 @@ import {
   learnApplyResultSchema,
 } from "@/lib/learn-apply/contract";
 import { learnApplyService } from "@/lib/learn-apply/service";
+import {
+  LearnContextError,
+  learnContextErrorResultSchema,
+  learnContextInputSchema,
+  learnContextResultSchema,
+  readLearnContext,
+  type LearnContextReader,
+} from "@/lib/learn-content-orchestrator/learn-context.server";
 import { ServiceError } from "@/lib/services/service-error";
 
 function withoutSchemaDeclaration(schema: Record<string, unknown>) {
   const { $schema: _schema, ...rest } = schema;
   return rest;
 }
+
+/**
+ * Read-only companion of learn_apply for the ChatGPT scheduled Learn task
+ * (LEARN-CHATGPT-SCHEDULER-2026-09-30). It never writes and returns only public
+ * editorial metadata.
+ */
+export const learnContextTool = {
+  name: "learn_context",
+  title: "Read the public Learn editorial context",
+  description: "Read-only. Returns the bounded public editorial context for one configured launch language: metadata of published Articles (no prose) in the target locale plus the en-GB source guides, the registered categories, the ordered launch languages, the public Programme routes and the protected Help routes. It never creates, updates or publishes anything and returns no private data.",
+  inputSchema: z.toJSONSchema(learnContextInputSchema) as Record<string, unknown>,
+  outputSchema: {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "object",
+    oneOf: [
+      withoutSchemaDeclaration(z.toJSONSchema(learnContextResultSchema) as Record<string, unknown>),
+      withoutSchemaDeclaration(z.toJSONSchema(learnContextErrorResultSchema) as Record<string, unknown>),
+    ],
+  },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+};
 
 export const learnApplyTool = {
   name: "learn_apply",
@@ -62,6 +96,18 @@ function success(value: Awaited<ReturnType<LearnApplyAdapter["apply"]>>) {
   };
 }
 
+function contextFailure(error: unknown) {
+  const safe = error instanceof LearnContextError
+    ? { result: "ERROR", error: { code: error.code, message: error.message, retryable: error.retryable } }
+    : { result: "ERROR", error: { code: "CONTEXT_UNAVAILABLE", message: "The Learn editorial context could not be read. Retry later.", retryable: true } };
+  const validated = learnContextErrorResultSchema.parse(safe);
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(validated) }],
+    structuredContent: validated,
+    isError: true,
+  };
+}
+
 function failure(error: unknown) {
   const details = error instanceof ServiceError && error.details && typeof error.details === "object" && !Array.isArray(error.details)
     ? error.details as Record<string, unknown>
@@ -94,13 +140,24 @@ function failure(error: unknown) {
   };
 }
 
-export function createLearnMcpServer(service: LearnApplyAdapter = learnApplyService) {
+export function createLearnMcpServer(
+  service: LearnApplyAdapter = learnApplyService,
+  readContext: LearnContextReader = readLearnContext,
+) {
   const server = new Server(
     { name: "b4gamble-learn-publication", version: "1.0.0" },
     { capabilities: { tools: {} } },
   );
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [learnApplyTool] } as never));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [learnContextTool, learnApplyTool] } as never));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    if (request.params.name === learnContextTool.name) {
+      try {
+        const value = await readContext(request.params.arguments ?? {});
+        return { content: [{ type: "text" as const, text: JSON.stringify(value) }], structuredContent: value } as never;
+      } catch (error) {
+        return contextFailure(error) as never;
+      }
+    }
     if (request.params.name !== learnApplyTool.name) {
       throw new McpError(ErrorCode.MethodNotFound, "Unknown Learn MCP tool");
     }

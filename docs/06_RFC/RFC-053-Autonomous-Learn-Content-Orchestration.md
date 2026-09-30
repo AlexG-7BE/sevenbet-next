@@ -2,8 +2,11 @@
 
 - **Status:** `ACTIVE`
 - **Decision authority:** explicit Founder instructions, 22–23 September 2026;
-  amended by explicit Founder instruction, 30 September 2026 (§10)
-- **Scope:** one bounded server-side Learn editorial orchestration pipeline
+  amended by explicit Founder instructions, 30 September 2026 (§§10–11)
+- **Scope:** one bounded Learn editorial pipeline. Its server-side execution
+  (§§3, 6, 8 and the server MCP client of §5) is retired by §11; the editorial
+  roles, publication rules and privacy boundary remain the specification for
+  the ChatGPT scheduled task, which is PENDING STEP 2 / NOT ACTIVE YET
 - **Depends on:** Product Vision & Principles, RFC-013, RFC-017, RFC-027,
   RFC-037, RFC-039, RFC-044, RFC-051 and RFC-052
 - **Supersedes:** RFC-027's no-autonomy, no-schedule and no-Production ceiling
@@ -284,3 +287,40 @@ This amends §§5 and 7 for the same pipeline; every other boundary stands.
   `responsible-gambling` guides show the mid-guide Programme block and a
   Start Programme action beside Responsible Gambling and Help, and never an
   offer.
+
+## 11. Amendment — server-side execution retired; ChatGPT scheduler pending (30 September 2026)
+
+Explicit Founder instruction, 30 September 2026
+([LEARN-CHATGPT-SCHEDULER-2026-09-30](../07_Decisions/LEARN-CHATGPT-SCHEDULER-2026-09-30.md)).
+§§1–10 remain the historical record of the server pipeline; this section
+overrides them where they describe execution.
+
+- **Retired.** `Vercel cron → corporate OPENAI_API_KEY → GPT-6 Astra managed
+  session → SEO/Research/Editor → Learn MCP` no longer runs. Vercel does not
+  schedule `/api/internal/cron/learn-content`; the route imports nothing and
+  answers `NO_OP / CHATGPT_SCHEDULER_OWNS_EXECUTION`. The managed-session
+  provider, cron handler, server MCP publisher, state repository, prompts and
+  model contracts are deleted (last present at `1150330c`), and the `openai`
+  SDK dependency is removed. `LEARN_CONTENT_AUTONOMY_ENABLED=false` in
+  Production guards against a revert; no code reads it. No other server-side
+  LLM execution replaces it.
+- **Intended.** `ChatGPT scheduled task → SEO → Research + Content → Editor +
+  Publisher → Learn MCP → Production`, one cycle every 8 hours, rotating the
+  launch languages. Status: **PENDING STEP 2 / NOT ACTIVE YET** until the
+  Founder confirms it is configured in ChatGPT. The editorial rules of §§2, 5,
+  7 and 10 are its specification.
+- **Context.** Learn MCP adds one read-only tool, `learn_context`, which
+  returns the same bounded public context §4 describes (published Article
+  metadata for the target locale plus the `en-GB` source guides, at most 500;
+  registered categories; ordered launch locales from `LEARN_CONTENT_LOCALES`;
+  public Programme routes; protected routes) and nothing private.
+- **Publication.** RFC-052 remains the sole Article mutation authority.
+  `learn_apply` is unchanged and create-only. The §5 deterministic gate ran
+  only in the retired server path; until it moves into `learn_apply` under a
+  separate Founder decision, the ChatGPT Editor alone enforces the evidence,
+  offer-link, commercial-firewall, crisis-Help and hero-image rules.
+- **Images.** Generated hero images still use the server-side OpenAI Images
+  API (`gpt-image-2`) through RFC-052 and `OPENAI_API_KEY`, so image charges
+  remain possible until a separate migration is authorized.
+- **State.** The `learn-content-orchestrator:v1` SiteSetting row is kept as
+  historical evidence; nothing reads or writes it.

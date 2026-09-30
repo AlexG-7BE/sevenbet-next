@@ -1,10 +1,132 @@
 # Autonomous Learn Content Orchestrator
 
-**Status:** LIVE — PRODUCTION RELEASE AND AUTONOMOUS PUBLICATION VERIFIED
+**Status:** SERVER-SIDE EXECUTION RETIRED (30 September 2026). The ChatGPT
+scheduled task that replaces it is **PENDING STEP 2 / NOT ACTIVE YET**.
 
-**Authority:** explicit Founder instruction of 22 September 2026 and RFC-053
+**Authority:** explicit Founder instructions of 22 and 30 September 2026,
+RFC-053 (§11) and
+[LEARN-CHATGPT-SCHEDULER-2026-09-30](../07_Decisions/LEARN-CHATGPT-SCHEDULER-2026-09-30.md)
 
-## Evidence classification
+## Current state
+
+```text
+retired:  Vercel cron → OPENAI_API_KEY → GPT-6 Astra managed session → Learn MCP
+intended: ChatGPT scheduled task → SEO → Research + Content → Editor + Publisher
+          → Learn MCP learn_context (read) → learn_apply (create) → Production
+          PENDING STEP 2 / NOT ACTIVE YET
+```
+
+- Vercel does not schedule `/api/internal/cron/learn-content`. The route stays,
+  imports nothing and always answers
+  `200 {"result":"NO_OP","code":"CHATGPT_SCHEDULER_OWNS_EXECUTION"}`.
+- No server code can create, inspect or reconcile an OpenAI managed session;
+  the provider, cron handler, server MCP publisher, state repository, prompts
+  and model contracts are deleted (last present at `1150330c`) and the
+  `openai` SDK dependency is removed.
+- `LEARN_CONTENT_AUTONOMY_ENABLED=false` in Production. No code reads it; it
+  stays `false` so a revert cannot silently restart paid server cycles.
+- The `learn-content-orchestrator:v1` SiteSetting row is historical evidence.
+  Nothing reads or writes it; do not edit or delete it.
+- `learn_apply` is unchanged and remains the only Article mutation.
+- Generated hero images still call the OpenAI Images API (`gpt-image-2`)
+  through `learn_apply` with `OPENAI_API_KEY`, so image charges remain possible
+  until a separate migration is authorized. Programme AI also reads the key;
+  keep it in Vercel.
+
+## `learn_context` (read-only)
+
+Same endpoint, authentication and transport as `learn_apply`: `POST
+/api/mcp/learn`, stateless Streamable HTTP, `Authorization: Bearer
+<LEARN_MCP_SERVICE_TOKEN>`, responses `private, no-store`. `tools/list`
+returns exactly `learn_context`, then `learn_apply`.
+
+```text
+learn_context { targetLanguage: "en" | configured launch language }
+→ {
+    generatedAt,
+    target: { language, locale, publicPathPrefix },
+    launchLocales: [{ language, locale, publicPathPrefix }]   // LEARN_CONTENT_LOCALES order
+    sourceLocale: "en-GB",
+    articles: [{ id, slug, title, category, locale, publishedAt, updatedAt, url }]  // PUBLISHED, <= 500
+    categories: [{ slug, title, description }],
+    publicProgramme: { route: "/10-steps", applicationRoute: "/program", missionCount: 10, description },
+    protectedRoutes: ["/help", "/responsible-gambling"]
+  }
+```
+
+`en` returns the `en-GB` inventory only. `sv`, `da` and `de` return the target
+locale plus the `en-GB` source guides, exactly as the retired server gave its
+model. Annotations: `readOnlyHint: true`, `destructiveHint: false`,
+`idempotentHint: true`, `openWorldHint: false`. The tool reads published
+Article metadata through `collectLearnContentSafeContext()` and writes nothing.
+
+| Error code | Meaning | Retry |
+| --- | --- | --- |
+| `INVALID_INPUT` | Arguments are not exactly `{ targetLanguage }` with a lowercase slug | No |
+| `TARGET_LANGUAGE_NOT_ALLOWED` | Language is not in the configured launch set | No |
+| `LAUNCH_LOCALES_INVALID` | `LEARN_CONTENT_LOCALES` names an unpublished or duplicate language | No; fix configuration |
+| `CONTEXT_INVENTORY_LIMIT` | More than 500 published Articles in scope | No; raise the bound in a reviewed change |
+| `CONTEXT_UNAVAILABLE` | Database read failed | Yes |
+
+The Learn MCP rate limits are unchanged: 60 authentication attempts and 20
+authenticated requests per 10 minutes per client key, shared by both tools.
+
+## STEP 2 hand-off
+
+The ChatGPT task reproduces the retired server cycle; the editorial
+specification is in the decision record. Per cycle: call `learn_context` for
+the cycle's language, run SEO → Research + Content → Editor + Publisher, and
+call `learn_apply` only after Editor `QA_PASS`, with `articleId = null`,
+`expectedUpdatedAt = null` and a slug absent from `articles`. Success is only
+`result = LIVE`, `persistence = COMMITTED`, `status = PUBLISHED`,
+`verified = true` and `operation = CREATED | NO_CHANGE`; retry an ambiguous
+result at most three times with the same `requestId`. A call that generates a
+hero image can run for about two minutes (the last server cycle's Article
+committed 108 seconds after the call started, after the server's MCP client had
+already given up at the SDK's 60-second default). If the ChatGPT call times out, repeat the identical payload and
+`requestId`: `learn_apply` then reuses the stored image and returns
+`NO_CHANGE / LIVE` instead of creating a second Article. The language rotates in
+`launchLocales` order; a stateless choice is
+`launchLocales[floor(UTC epoch hours / 8) mod launchLocales.length]`.
+
+Until the deterministic gate moves into `learn_apply`, the ChatGPT Editor is
+the only check on evidence mapping, same-language offer links, tracking and
+affiliate parameters, commercial routes, crisis Help and the hero image.
+
+## Verification
+
+```text
+npm run learn-content-orchestrator:test
+npm run learn-content-orchestrator:postgres-test
+npm run learn-apply:test
+npm run learn-apply:postgres-test
+npm run typecheck
+npm run lint
+npm run ci:quality
+npm run build
+```
+
+The PostgreSQL suite runs only against a disposable loopback `_ci`/test
+database. It proves `learn_context` returns only `PUBLISHED` rows in scope for
+each launch language and leaves every Article, SiteSetting, revision and audit
+row byte-identical.
+
+## Rollback
+
+- To stop ChatGPT publication: set `LEARN_MCP_ENABLED=false` and redeploy, or
+  rotate `LEARN_MCP_SERVICE_TOKEN`. Both tools stop together.
+- Do not restore the server orchestrator without a new Founder decision. If a
+  revert ever brings it back, `LEARN_CONTENT_AUTONOMY_ENABLED=false` keeps it
+  idle.
+- Never unpublish or delete Articles, revisions, audits or images as transport
+  rollback.
+
+## Historical: the retired server pipeline (23–30 September 2026)
+
+The sections below describe the server pipeline as it ran and are kept as
+history. They are no longer current behaviour.
+
+### Evidence classification
 
 **DETECTED IN REPOSITORY AND PRODUCTION:** the implementation uses the existing
 canonical Article domain, RFC-052 `learn_apply`, one bounded SiteSetting key,
@@ -18,7 +140,7 @@ database evidence and public runtime evidence are recorded below. Protected
 values were verified only by presence/scope and were not printed or stored in
 documentation.
 
-## Runtime flow
+### Runtime flow
 
 ```text
 hourly CRON_SECRET request
@@ -41,7 +163,7 @@ The launch request returns after the session ID is attached; it does not wait
 for the AI run. Later hourly invocations reconcile it. One run is limited to 12
 hours and one new cycle cannot launch more often than every 8 hours.
 
-## Hosted configuration
+### Hosted configuration
 
 Required Production variables:
 
@@ -75,7 +197,7 @@ sessions/inference. No MCP credential is supplied to OpenAI. The session has
 `environment.type=none`, no shell, no database, no GitHub/Vercel/email tool and
 no mutation MCP.
 
-## State and responses
+### State and responses
 
 The single `learn-content-orchestrator:v1` SiteSetting value is a strict,
 metadata-only object capped at 4,096 bytes. Useful fields are active run/session
@@ -138,7 +260,7 @@ timestamps, token counts and publication operation. Never log prompts, final
 Article text, provider responses, source bodies, tokens, API keys or binary
 content.
 
-## Verification
+### Verification
 
 Local/CI commands:
 
@@ -158,7 +280,7 @@ database. It proves concurrent claims converge on one run, competing session
 attachments cannot diverge and the minimum interval/locale cursor persist. The
 orchestrator PostgreSQL suite runs in both database-capable CI jobs.
 
-## Production acceptance
+### Production acceptance
 
 1. Confirm all required GitHub checks pass on the final PR head and Vercel
    Preview is Ready.
@@ -187,7 +309,7 @@ orchestrator PostgreSQL suite runs in both database-capable CI jobs.
    same-language offer pages in commercial guides, no commercial CTA in
    `responsible-gambling` guides and the RFC-052 service audit actor.
 
-## Rollback and recovery
+### Rollback and recovery
 
 - Set `LEARN_CONTENT_AUTONOMY_ENABLED=false` and redeploy to stop new cycles.
 - Set `LEARN_MCP_ENABLED=false` and redeploy to stop Learn MCP writes.
@@ -199,7 +321,7 @@ orchestrator PostgreSQL suite runs in both database-capable CI jobs.
 Disabling the orchestrator does not disable public Learn reads or unpublish an
 Article.
 
-## Production acceptance record
+## Production acceptance record (retired server pipeline)
 
 **LIVE — VERIFIED 23 SEPTEMBER 2026.**
 
