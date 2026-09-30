@@ -150,7 +150,7 @@ test("Founder next steps: a Programme card after six guides, a mid-guide Program
 
   const view = read("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx");
   const article = read("app/(public)/learn/[category]/[slug]/page.tsx");
-  assert.match(view, /const programmeBridgeAt = protectedCategory \|\| offerBridge \? -1 : midArticleBridgeIndex\(article\.bodyBlocks\);/);
+  assert.match(view, /const programmeBridgeAt = offerBridge && !protectedCategory \? -1 : midArticleBridgeIndex\(article\.bodyBlocks\);/);
   assert.match(view, /\{offerBridge && !protectedCategory \? <OfferBridge bridge=\{offerBridge\} \/> : null\}/);
   assert.match(article, /const kind = offerBridgeKind\(article\.category\);\s*if \(!kind \|\| !offersMayBePresented\(presentation\.marketCountryCode\)\) return null;/);
   assert.match(article, /disclosure: learning\.ui\.commercialDisclosure/);
@@ -283,6 +283,10 @@ test("package C: bonus, casino-choice and payment guides get an early and a clos
   // Protected guides stay commercial-free even if a bridge were supplied.
   const protectedGuide = await renderArticle({ ...fixture, category: "responsible-gambling", bodyBlocks: blocks }, bonusBridge);
   assert.doesNotMatch(protectedGuide, /data-learn-offer-bridge|href="\/(?:bonuses|casinos|best-offers)"/);
+  // Protected guides lead to the Programme start (Founder, 30 Sep 2026) and keep Help.
+  assert.match(protectedGuide, /data-learn-programme-bridge="article"/);
+  assert.match(protectedGuide, /data-learn-programme-start="protected" href="\/program\?entry=start">Start Programme/);
+  assert.match(protectedGuide, /href="\/help">Open protected Help/);
 
   // The route supplies the bridge only for these categories and only where offers may be presented.
   const route = read("app/(public)/learn/[category]/[slug]/page.tsx");
