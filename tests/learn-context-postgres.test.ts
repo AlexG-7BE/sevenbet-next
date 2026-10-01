@@ -145,5 +145,23 @@ test("learn_context reads published PostgreSQL inventory per launch language and
     assert.deepEqual(result.protectedRoutes, ["/help", "/responsible-gambling"]);
   }
 
-  assert.equal(await databaseDigest(), before, "learn_context must not change any Article, SiteSetting, revision or audit row");
+  const callSource = async (slug: string) => {
+    const response = await handleLearnMcpPost(new Request("https://b4gamble.com/api/mcp/learn", {
+      method: "POST",
+      headers: { accept: "application/json, text/event-stream", authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "learn_source", arguments: { slug } } }),
+    }));
+    assert.equal(response.status, 200);
+    return await response.json() as { result?: { isError?: boolean; structuredContent?: { slug?: string; bodyBlocks?: unknown[]; error?: { code?: string } } } };
+  };
+  const source = await callSource("learn-context-pg-en-published");
+  assert.equal(source.result?.isError, undefined);
+  assert.equal(source.result?.structuredContent?.slug, "learn-context-pg-en-published");
+  assert.match(JSON.stringify(source.result?.structuredContent?.bodyBlocks), new RegExp(bodyMarker));
+  assert.doesNotMatch(JSON.stringify(source), new RegExp(actorId));
+  const draft = await callSource("learn-context-pg-en-draft");
+  assert.equal(draft.result?.isError, true);
+  assert.equal(draft.result?.structuredContent?.error?.code, "ARTICLE_NOT_FOUND");
+
+  assert.equal(await databaseDigest(), before, "learn_context and learn_source must not change any Article, SiteSetting, revision or audit row");
 });

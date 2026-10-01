@@ -16,6 +16,14 @@ import {
   readLearnContext,
   type LearnContextReader,
 } from "@/lib/learn-content-orchestrator/learn-context.server";
+import {
+  LearnSourceError,
+  learnSourceErrorResultSchema,
+  learnSourceInputSchema,
+  learnSourceResultSchema,
+  readLearnSource,
+  type LearnSourceReader,
+} from "@/lib/learn-content-orchestrator/learn-source.server";
 import { ServiceError } from "@/lib/services/service-error";
 
 function withoutSchemaDeclaration(schema: Record<string, unknown>) {
@@ -39,6 +47,28 @@ export const learnContextTool = {
     oneOf: [
       withoutSchemaDeclaration(z.toJSONSchema(learnContextResultSchema) as Record<string, unknown>),
       withoutSchemaDeclaration(z.toJSONSchema(learnContextErrorResultSchema) as Record<string, unknown>),
+    ],
+  },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+};
+
+/** Read-only text of one published Article, the source a localization starts from. */
+export const learnSourceTool = {
+  name: "learn_source",
+  title: "Read a published Learn Article",
+  description: "Read-only. Returns the public content of one published Learn Article by slug (title, excerpt, tags, SEO fields, hero alt text and body blocks), the source a localization is written from. Drafts and unpublished Articles are not returned, and nothing is written.",
+  inputSchema: z.toJSONSchema(learnSourceInputSchema) as Record<string, unknown>,
+  outputSchema: {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "object",
+    oneOf: [
+      withoutSchemaDeclaration(z.toJSONSchema(learnSourceResultSchema) as Record<string, unknown>),
+      withoutSchemaDeclaration(z.toJSONSchema(learnSourceErrorResultSchema) as Record<string, unknown>),
     ],
   },
   annotations: {
@@ -108,6 +138,18 @@ function contextFailure(error: unknown) {
   };
 }
 
+function sourceFailure(error: unknown) {
+  const safe = error instanceof LearnSourceError
+    ? { result: "ERROR", error: { code: error.code, message: error.message, retryable: error.retryable } }
+    : { result: "ERROR", error: { code: "SOURCE_UNAVAILABLE", message: "The Learn source could not be read. Retry later.", retryable: true } };
+  const validated = learnSourceErrorResultSchema.parse(safe);
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(validated) }],
+    structuredContent: validated,
+    isError: true,
+  };
+}
+
 function failure(error: unknown) {
   const details = error instanceof ServiceError && error.details && typeof error.details === "object" && !Array.isArray(error.details)
     ? error.details as Record<string, unknown>
@@ -147,12 +189,13 @@ function failure(error: unknown) {
 export function createLearnMcpServer(
   service: LearnApplyAdapter = learnApplyService,
   readContext: LearnContextReader = readLearnContext,
+  readSource: LearnSourceReader = readLearnSource,
 ) {
   const server = new Server(
     { name: "b4gamble-learn-publication", version: "1.0.0" },
     { capabilities: { tools: {} } },
   );
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [learnContextTool, learnApplyTool] } as never));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [learnContextTool, learnSourceTool, learnApplyTool] } as never));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (request.params.name === learnContextTool.name) {
       try {
@@ -160,6 +203,14 @@ export function createLearnMcpServer(
         return { content: [{ type: "text" as const, text: JSON.stringify(value) }], structuredContent: value } as never;
       } catch (error) {
         return contextFailure(error) as never;
+      }
+    }
+    if (request.params.name === learnSourceTool.name) {
+      try {
+        const value = await readSource(request.params.arguments ?? {});
+        return { content: [{ type: "text" as const, text: JSON.stringify(value) }], structuredContent: value } as never;
+      } catch (error) {
+        return sourceFailure(error) as never;
       }
     }
     if (request.params.name !== learnApplyTool.name) {

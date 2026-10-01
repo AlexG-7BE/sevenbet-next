@@ -1076,6 +1076,7 @@ test("NO_CHANGE/LIVE is a successful idempotent completion", async () => {
 });
 
 test("the publisher accepts learn_apply beside the read-only learn_context and nothing else", () => {
+  assert.equal(learnMcpToolSurfaceIsExpected(["learn_context", "learn_source", "learn_apply"]), true);
   assert.equal(learnMcpToolSurfaceIsExpected(["learn_context", "learn_apply"]), true);
   assert.equal(learnMcpToolSurfaceIsExpected(["learn_apply"]), true);
   assert.equal(learnMcpToolSurfaceIsExpected(["learn_context"]), false);

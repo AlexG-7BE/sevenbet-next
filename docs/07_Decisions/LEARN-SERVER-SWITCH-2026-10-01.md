@@ -21,6 +21,14 @@ Unchanged: `learn_apply` is the sole, create-only mutation; the three roles, SEO
 - **One language, one writer.** While Claude Code localizes guides into `sv`, `da` and `de`, the server rotates English only (`LEARN_CONTENT_LOCALES=en`), so two writers never cover the same topic in the same language.
 - **OpenAI stays for what Claude cannot do or what runs inside the product:** server text cycles, hero images (`gpt-image-2`), Programme guidance and voice transcription.
 
+## Same-day localization by Claude Code
+
+Founder, 1 October 2026, after the first localization batch (69 guides: 23 each in `sv`, `da` and `de`): the server keeps writing English only, and every new eligible English guide is localized into Swedish, Danish and German by the Founder's Claude Code on the same day. A daily scheduled Claude Code task does it through the Learn MCP, one `learn_apply` at a time, with the localization toolkit kept outside the repository (validator, writer brief, market fact sheets, ledger of source → localized slug). To serve it without database credentials or the geo-block:
+
+- `learn_context` accepts any published language as `targetLanguage`; `launchLocales` still reports the server's own rotation;
+- a new read-only `learn_source` tool returns the public content of one published Article by slug (title, excerpt, tags, SEO fields, hero alt text, body blocks), never drafts, authorship or lifecycle fields;
+- the server publisher accepts the Learn MCP surface `learn_apply` plus the read-only `learn_context` and `learn_source`.
+
 ## First run after activation
 
 The state row still holds run `a173598b-cd32-447c-9387-630710d134e7` as active with a lease that ended on 1 October 00:13 UTC. Its Article (`/en/learn/game-guides/roulette-odds-explained`) was already published on 30 September. The first cron after activation closes that run as `FAILED / ACTIVE_LEASE_EXPIRED` and, because its next eligible time has passed, launches a new cycle at the next language in the rotation (Swedish, cursor 1 of `en,sv,da,de`).

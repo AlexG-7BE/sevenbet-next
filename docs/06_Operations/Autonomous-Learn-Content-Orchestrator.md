@@ -89,6 +89,13 @@ The owner cookie is needed because the Kazakhstan geo-block also answers `451`
 on `/api/mcp/learn`; it is valid for a year. `claude mcp list` should show
 `b4gamble-learn` as connected; a new session loads the tools.
 
+Tools: `learn_context` (any published language; the English inventory comes
+with every target), `learn_source` (public content of one published Article by
+slug, the localization source) and `learn_apply` (create-only). The daily
+same-day localization task and its toolkit (validator, writer brief, market
+fact sheets, ledger) live outside the repository in the Founder's Claude
+configuration.
+
 Per Article: call `learn_context` for the target language, research and write
 natively, run the repository's deterministic gate rules (evidence mapping,
 same-language offer links only in commercial categories, no tracking or
