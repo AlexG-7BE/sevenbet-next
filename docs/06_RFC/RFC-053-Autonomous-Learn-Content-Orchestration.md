@@ -5,9 +5,9 @@
   amended by explicit Founder instructions, 30 September 2026 (§§10–11) and
   1 October 2026 (§12)
 - **Scope:** one bounded Learn editorial pipeline. Since §12 its server-side
-  execution runs again behind `LEARN_CONTENT_AUTONOMY_ENABLED`, on GPT-5.6 Sol;
-  when the switch is off, a ChatGPT scheduled task may run the same editorial
-  rules through the Learn MCP
+  execution runs again behind `LEARN_CONTENT_AUTONOMY_ENABLED`, on GPT-5.6 Sol.
+  Other editorial work (such as localization batches) runs in the Founder's
+  Claude Code through the Learn MCP; the ChatGPT path is cancelled (§12)
 - **Depends on:** Product Vision & Principles, RFC-013, RFC-017, RFC-027,
   RFC-037, RFC-039, RFC-044, RFC-051 and RFC-052
 - **Supersedes:** RFC-027's no-autonomy, no-schedule and no-Production ceiling
@@ -338,7 +338,14 @@ This reverses the retirement part of §11; its `learn_context` part stands.
 - **Switch.** `LEARN_CONTENT_AUTONOMY_ENABLED=true` runs the server cycle;
   any other value makes the cron a no-cost `NO_OP` that touches no state,
   provider or MCP. Switching is a hosted-variable change and a redeploy. The
-  server cycle and a ChatGPT scheduled task must not run at the same time.
+  Founder set the Production interval to 24 hours
+  (`LEARN_CONTENT_MIN_INTERVAL_HOURS=24`); the code floor stays 8.
+- **ChatGPT cancelled.** The Founder drops the ChatGPT subscription and its
+  agents. The ChatGPT scheduled task of §11 will not be built. Learn work runs
+  in two places only: the server cycle (OpenAI API) and the Founder's Claude
+  Code, which reads `learn_context` and publishes through `learn_apply` with
+  the same service bearer. Work in Claude Code must not create a guide in a
+  language the server cycle is rotating at the same time.
 - **Model.** §3's model becomes `gpt-5.6-sol`, the only entry of the
   code-reviewed allowlist; `gpt-6-astra` fails closed.
 - **Publisher.** §5's discovery check accepts exactly the Learn MCP surface

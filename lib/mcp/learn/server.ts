@@ -24,9 +24,9 @@ function withoutSchemaDeclaration(schema: Record<string, unknown>) {
 }
 
 /**
- * Read-only companion of learn_apply for the ChatGPT scheduled Learn task
- * (LEARN-CHATGPT-SCHEDULER-2026-09-30). It never writes and returns only public
- * editorial metadata.
+ * Read-only companion of learn_apply for MCP clients that run editorial work,
+ * today the Founder's Claude Code (LEARN-SERVER-SWITCH-2026-10-01). It never
+ * writes and returns only public editorial metadata.
  */
 export const learnContextTool = {
   name: "learn_context",
