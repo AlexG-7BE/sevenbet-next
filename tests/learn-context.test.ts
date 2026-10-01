@@ -21,6 +21,11 @@ import {
   LearnContentInventoryLimitError,
   type LearnContentSafeContext,
 } from "@/lib/learn-content-orchestrator/safe-context.server";
+import {
+  LearnSourceError,
+  learnSourceResultSchema,
+  readLearnSource,
+} from "@/lib/learn-content-orchestrator/learn-source.server";
 import { handleLearnMcpPost } from "@/lib/mcp/learn/post-handler";
 import { createLearnMcpServer, learnApplyTool, learnContextTool } from "@/lib/mcp/learn/server";
 
@@ -205,15 +210,23 @@ test("context returns only allowlisted public fields even when the reader over-r
   assert.equal(learnContextResultSchema.safeParse({ ...result, articles: [{ ...result.articles[0], bodyBlocks: [] }] }).success, false);
 });
 
-test("context rejects languages outside the configured launch set and malformed input", async () => {
+test("any published language is a context target, whatever the server rotates", async () => {
+  const englishOnlyServer = reader(seeded, { LEARN_CONTENT_LOCALES: "en" });
+  const swedish = await englishOnlyServer.read({ targetLanguage: "sv" });
+  assert.deepEqual(swedish.target, { language: "sv", locale: "sv-SE", publicPathPrefix: "/sv" });
+  assert.deepEqual(swedish.launchLocales.map((locale) => locale.language), ["en"]);
+  assert.deepEqual(englishOnlyServer.collected, [["sv-SE", "en-GB"]]);
+  assert.equal((await reader(seeded).read({ targetLanguage: "es" })).target.locale, "es-ES");
+});
+
+test("context rejects unpublished languages and malformed input", async () => {
   const context = reader(seeded);
-  assert.equal((await contextError(context.read({ targetLanguage: "es" }))).code, "TARGET_LANGUAGE_NOT_ALLOWED");
   assert.equal((await contextError(context.read({ targetLanguage: "fr" }))).code, "TARGET_LANGUAGE_NOT_ALLOWED");
+  assert.equal((await contextError(context.read({ targetLanguage: "xx" }))).code, "TARGET_LANGUAGE_NOT_ALLOWED");
   assert.equal((await contextError(context.read({ targetLanguage: "EN" }))).code, "INVALID_INPUT");
   assert.equal((await contextError(context.read({ targetLanguage: "en-GB" }))).code, "INVALID_INPUT");
   assert.equal((await contextError(context.read({}))).code, "INVALID_INPUT");
   assert.equal((await contextError(context.read({ targetLanguage: "en", articleId: "x" }))).code, "INVALID_INPUT");
-  assert.equal((await contextError(reader(seeded, { LEARN_CONTENT_LOCALES: "en" }).read({ targetLanguage: "sv" }))).code, "TARGET_LANGUAGE_NOT_ALLOWED");
   assert.equal((await contextError(reader(seeded, { LEARN_CONTENT_LOCALES: "en,fr" }).read({ targetLanguage: "en" }))).code, "LAUNCH_LOCALES_INVALID");
   assert.deepEqual(context.collected, []);
 });
@@ -256,13 +269,15 @@ async function connected(readContext: (input: unknown) => Promise<LearnContextRe
   };
 }
 
-test("MCP discovery exposes exactly learn_context and learn_apply, and only learn_apply writes", async () => {
+test("MCP discovery exposes learn_context, learn_source and learn_apply, and only learn_apply writes", async () => {
   const session = await connected(reader(seeded).read);
   try {
     const discovered = await session.client.listTools();
-    assert.deepEqual(discovered.tools.map((tool) => tool.name), ["learn_context", "learn_apply"]);
+    assert.deepEqual(discovered.tools.map((tool) => tool.name), ["learn_context", "learn_source", "learn_apply"]);
     const byName = Object.fromEntries(discovered.tools.map((tool) => [tool.name, tool]));
     assert.deepEqual(byName.learn_context?.annotations, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
+    assert.deepEqual(byName.learn_source?.annotations, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
+    assert.deepEqual(discovered.tools.filter((tool) => tool.annotations?.readOnlyHint !== true).map((tool) => tool.name), ["learn_apply"]);
     assert.deepEqual(byName.learn_apply?.annotations, learnApplyTool.annotations);
     assert.equal(learnApplyTool.annotations.readOnlyHint, false);
     assert.deepEqual(learnContextTool.inputSchema.required, ["targetLanguage"]);
@@ -295,7 +310,7 @@ test("MCP learn_context reports an invalid language as a structured, schema-decl
       result: "ERROR",
       error: {
         code: "TARGET_LANGUAGE_NOT_ALLOWED",
-        message: "targetLanguage must be one of the configured launch languages: en, sv, da, de.",
+        message: "targetLanguage must be a published language: en, de, es, el, sv, da, it, pt, nl, fi, nb.",
         retryable: false,
       },
     });
@@ -344,7 +359,7 @@ test("HTTP learn_context requires the Learn service bearer and answers private, 
     body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list" }),
   }));
   const tools = await listed.json() as { result?: { tools?: Array<{ name?: string }> } };
-  assert.deepEqual(tools.result?.tools?.map((tool) => tool.name), ["learn_context", "learn_apply"]);
+  assert.deepEqual(tools.result?.tools?.map((tool) => tool.name), ["learn_context", "learn_source", "learn_apply"]);
 });
 
 test("context generatedAt, Programme and routes come from the shared public collector", async () => {
@@ -354,4 +369,82 @@ test("context generatedAt, Programme and routes come from the shared public coll
   assert.deepEqual(result.publicProgramme, collected.publicProgramme);
   assert.deepEqual(result.protectedRoutes, [...collected.protectedRoutes]);
   assert.deepEqual(result.categories, collected.categories);
+});
+
+// learn_source: the published text a localization starts from.
+
+function sourceRow(extra: Record<string, unknown> = {}) {
+  return {
+    id: "00000000-0000-4000-8000-000000000101",
+    slug: "wagering-requirements",
+    locale: "en-GB",
+    category: "casino-bonuses",
+    title: "Wagering Requirements Explained",
+    excerpt: "How the multiplier works.",
+    tags: ["Bonuses"],
+    readingTime: "8 min",
+    difficulty: null,
+    seoTitle: "Wagering requirements explained",
+    seoDescription: "Calculate the turnover.",
+    heroImageAlt: "A calculator on a desk",
+    bodyBlocks: [{ id: "intro", type: "paragraph", text: "The answer first." }],
+    publishedAt: new Date("2026-09-20T10:00:00.000Z"),
+    updatedAt: new Date("2026-09-21T10:00:00.000Z"),
+    ...extra,
+  };
+}
+
+function sourceDatabase(row: Record<string, unknown> | null) {
+  const calls: unknown[] = [];
+  return {
+    calls,
+    database: { article: { async findFirst(args: unknown) { calls.push(args); return row as never; } } },
+  };
+}
+
+test("learn_source reads only a PUBLISHED Article and returns its public fields", async () => {
+  const fake = sourceDatabase(sourceRow({ createdBy: "actor", updatedBy: "actor", status: "PUBLISHED", lastReviewedAt: new Date() }));
+  const result = await readLearnSource({ slug: "wagering-requirements" }, fake.database);
+  const call = fake.calls[0] as { where: unknown; select: Record<string, boolean> };
+  assert.deepEqual(call.where, { slug: "wagering-requirements", status: "PUBLISHED" });
+  assert.equal(call.select.createdBy, undefined);
+  assert.equal(result.url, "https://b4gamble.com/en/learn/casino-bonuses/wagering-requirements");
+  assert.deepEqual(result.bodyBlocks, [{ id: "intro", type: "paragraph", text: "The answer first." }]);
+  assert.doesNotMatch(JSON.stringify(result), /createdBy|updatedBy|lastReviewedAt|"status"/);
+  assert.equal(learnSourceResultSchema.safeParse({ ...result, createdBy: "x" }).success, false);
+});
+
+test("learn_source rejects malformed slugs and unknown or unpublished Articles", async () => {
+  const missing = sourceDatabase(null);
+  await assert.rejects(() => readLearnSource({ slug: "draft-only" }, missing.database), (error: unknown) => error instanceof LearnSourceError && error.code === "ARTICLE_NOT_FOUND");
+  await assert.rejects(() => readLearnSource({ slug: "Bad Slug" }, missing.database), (error: unknown) => error instanceof LearnSourceError && error.code === "INVALID_INPUT");
+  await assert.rejects(() => readLearnSource({ slug: "x", locale: "en" }, missing.database), (error: unknown) => error instanceof LearnSourceError && error.code === "INVALID_INPUT");
+  const broken = { article: { async findFirst() { throw new Error("connection reset by postgres://secret"); } } };
+  await assert.rejects(() => readLearnSource({ slug: "x" }, broken), (error: unknown) => error instanceof LearnSourceError && error.code === "SOURCE_UNAVAILABLE" && error.retryable && !/secret/.test(error.message));
+});
+
+test("MCP learn_source returns schema-valid text and never calls learn_apply", async () => {
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  let applyCalls = 0;
+  const fake = sourceDatabase(sourceRow());
+  const server = createLearnMcpServer(
+    { apply: async () => { applyCalls += 1; throw new Error("never"); } },
+    reader(seeded).read,
+    (input) => readLearnSource(input, fake.database),
+  );
+  const client = new Client({ name: "learn-source-test", version: "1.0.0" });
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+  try {
+    const ok = await client.callTool({ name: "learn_source", arguments: { slug: "wagering-requirements" } });
+    assert.equal(ok.isError, undefined);
+    assert.equal(learnSourceResultSchema.parse(ok.structuredContent).slug, "wagering-requirements");
+    const missing = await client.callTool({ name: "learn_source", arguments: { slug: "Bad Slug" } });
+    assert.equal(missing.isError, true);
+    assert.equal((missing.structuredContent as { error: { code: string } }).error.code, "INVALID_INPUT");
+    assert.equal(applyCalls, 0);
+  } finally {
+    await client.close();
+    await server.close();
+  }
 });

@@ -73,7 +73,7 @@ test("only the deterministic MCP publisher can call the sole learn_apply tool", 
   assert.equal((publisher.match(/callTool\(/g) ?? []).length, 1);
   assert.match(publisher, /name: "learn_apply"/);
   assert.match(publisher, /learnMcpToolSurfaceIsExpected\(tools\.tools\.map/);
-  assert.match(publisher, /new Set\(\["learn_apply", "learn_context"\]\)/);
+  assert.match(publisher, /new Set\(\["learn_apply", "learn_context", "learn_source"\]\)/);
   assert.match(publisher, /\{ timeout: LEARN_APPLY_CALL_TIMEOUT_MS \}/);
   assert.match(publisher, /learnApplyToolResultSchema\.parse/);
   assert.equal(orchestratorFiles.filter((path) => path !== "lib/learn-content-orchestrator/mcp-publisher.server.ts").map(read).join("\n").includes("callTool("), false);
@@ -181,7 +181,12 @@ test("the server cycle runs only GPT-5.6 Sol and Astra is gone from runtime code
 test("learn_context stays a read-only companion of the one mutation tool", () => {
   const server = read("lib/mcp/learn/server.ts");
   const learnContext = read("lib/learn-content-orchestrator/learn-context.server.ts");
-  assert.match(server, /tools: \[learnContextTool, learnApplyTool\]/);
+  assert.match(server, /tools: \[learnContextTool, learnSourceTool, learnApplyTool\]/);
+  const learnSource = read("lib/learn-content-orchestrator/learn-source.server.ts");
+  assert.equal((server.match(/name: "learn_source"/g) ?? []).length, 1);
+  assert.match(learnSource, /status: EditorialStatus\.PUBLISHED/);
+  assert.match(learnSource, /learnSourceResultSchema\.parse/);
+  assert.doesNotMatch(learnSource, /\.create\(|\.update\(|\.upsert\(|\.delete\(|deleteMany|updateMany|createMany|\$transaction|createdBy|updatedBy|lastReviewedAt/);
   assert.equal((server.match(/name: "learn_apply"/g) ?? []).length, 1);
   assert.equal((server.match(/name: "learn_context"/g) ?? []).length, 1);
   assert.match(server, /readOnlyHint: true,\s*destructiveHint: false,\s*idempotentHint: true/);
