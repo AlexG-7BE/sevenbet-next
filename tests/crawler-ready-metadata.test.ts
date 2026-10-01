@@ -111,6 +111,11 @@ test("one sitewide Organization and WebSite with a stable URL and a real logo", 
   assert.equal(organization.url, siteUrl);
   assert.equal(organization.logo.url, absoluteUrl(ORGANIZATION_LOGO_PATH));
   assert.ok(existsSync(`public${ORGANIZATION_LOGO_PATH}`));
+  // The brand's own profiles are tied to the site; every entry is an https profile URL.
+  assert.equal(organization.legalName, "7BE Inc.");
+  assert.ok(organization.sameAs.length >= 5);
+  for (const profile of organization.sameAs) assert.match(profile, /^https:\/\/(?:www\.)?(?:facebook|x|instagram|youtube|tiktok|pinterest|medium|producthunt|crunchbase|trustpilot)\.com\//, profile);
+  assert.equal(new Set(organization.sameAs).size, organization.sameAs.length);
   const website = websiteSchema();
   assert.equal(website["@type"], "WebSite");
   assert.equal(website.name, "B4GAMBLE");

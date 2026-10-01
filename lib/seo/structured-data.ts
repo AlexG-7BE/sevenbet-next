@@ -10,13 +10,32 @@ export const WEBSITE_ID = `${siteUrl}/#website`;
 export const ORGANIZATION_LOGO_PATH = "/brand/b4gamble-logo-512.png";
 export const EDITORIAL_AUTHOR_NAME = "B4GAMBLE Editorial";
 
+/**
+ * The brand's own public profiles, so search engines tie them to the site as one entity
+ * (Founder, 1 Oct 2026). Only profiles B4GAMBLE controls; add one when it goes live.
+ */
+export const ORGANIZATION_PROFILES = [
+  "https://www.facebook.com/b4gamble",
+  "https://x.com/b4gamble",
+  "https://www.instagram.com/b4gamble_com",
+  "https://www.youtube.com/@b4gamble",
+  "https://www.tiktok.com/@b4gamble.com",
+  "https://www.pinterest.com/b4gamble",
+  "https://medium.com/@b4gamble.com",
+  "https://www.producthunt.com/@b4gamble",
+  "https://www.crunchbase.com/organization/b4gamble",
+  "https://www.trustpilot.com/review/b4gamble.com",
+] as const;
+
 export function organizationSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": ORGANIZATION_ID,
     name: "B4GAMBLE",
+    legalName: "7BE Inc.",
     url: siteUrl,
+    sameAs: [...ORGANIZATION_PROFILES],
     logo: {
       "@type": "ImageObject",
       url: absoluteUrl(ORGANIZATION_LOGO_PATH),
