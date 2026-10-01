@@ -345,7 +345,10 @@ This reverses the retirement part of §11; its `learn_context` part stands.
   in two places only: the server cycle (OpenAI API) and the Founder's Claude
   Code, which reads `learn_context` and publishes through `learn_apply` with
   the same service bearer. Work in Claude Code must not create a guide in a
-  language the server cycle is rotating at the same time.
+  language the server cycle is rotating at the same time. The server writes
+  English only; a daily Claude Code task localizes each new eligible English
+  guide into `sv`, `da` and `de` the same day, reading it through the read-only
+  `learn_source` tool. `learn_context` accepts any published language.
 - **Model.** §3's model becomes `gpt-5.6-sol`, the only entry of the
   code-reviewed allowlist; `gpt-6-astra` fails closed.
 - **Publisher.** §5's discovery check accepts exactly the Learn MCP surface

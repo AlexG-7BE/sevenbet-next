@@ -45,7 +45,9 @@ resource. It exposes one mutation tool and requires one server-held bearer
 credential. Since 30 September 2026
 ([LEARN-CHATGPT-SCHEDULER-2026-09-30](../07_Decisions/LEARN-CHATGPT-SCHEDULER-2026-09-30.md))
 the same endpoint also lists the read-only `learn_context` tool, which returns
-bounded public editorial metadata and writes nothing; `learn_apply` remains the
+bounded public editorial metadata and writes nothing, and since 1 October 2026
+the read-only `learn_source` tool, which returns the public content of one
+published Article by slug as a localization source. `learn_apply` remains the
 only mutation.
 It has no browser session, interactive MFA or query-secret path. The direct
 `@modelcontextprotocol/sdk` dependency exists solely for this exact transport.

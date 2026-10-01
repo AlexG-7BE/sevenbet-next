@@ -25,7 +25,7 @@ import {
  * metadata the retired server orchestrator gave its model and nothing else.
  */
 export const learnContextInputSchema = z.object({
-  targetLanguage: z.string().regex(/^[a-z]{2}$/).describe("A configured launch language slug, for example en."),
+  targetLanguage: z.string().regex(/^[a-z]{2}$/).describe("A published language slug, for example en or sv."),
 }).strict();
 
 const localeEntrySchema = z.object({
@@ -115,13 +115,17 @@ export async function readLearnContext(input: unknown, dependencies: LearnContex
   } catch {
     throw new LearnContextError("LAUNCH_LOCALES_INVALID", "The configured Learn launch languages are invalid.");
   }
-  const target = launchLocales.find((candidate) => candidate.language === parsed.data.targetLanguage);
-  if (!target) {
+  // Founder, 1 Oct 2026 (LEARN-SERVER-SWITCH-2026-10-01): the server writes English while
+  // Claude Code localizes into other languages, so any published language is a valid target;
+  // launchLocales still reports the server's own rotation.
+  const profile = PUBLISHED_LANGUAGE_ROUTE_PROFILES.find((candidate) => candidate.language === parsed.data.targetLanguage);
+  if (!profile) {
     throw new LearnContextError(
       "TARGET_LANGUAGE_NOT_ALLOWED",
-      `targetLanguage must be one of the configured launch languages: ${launchLocales.map((candidate) => candidate.language).join(", ")}.`,
+      `targetLanguage must be a published language: ${PUBLISHED_LANGUAGE_ROUTE_PROFILES.map((candidate) => candidate.language).join(", ")}.`,
     );
   }
+  const target = { language: profile.language, locale: profile.defaultLocale, publicPathPrefix: `/${profile.publicSlug}` };
 
   const collect = dependencies.collect ?? ((locales, now) => collectLearnContentSafeContext(locales, undefined, now));
   let context: LearnContentSafeContext;
