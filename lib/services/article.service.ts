@@ -257,6 +257,8 @@ export class ArticleService {
     if (issues.length) throw new ValidationError("Article is not ready for autonomous publication.", { issues });
 
     try {
+      // Concurrent Learn creates wait for a pooled connection instead of failing at
+      // Prisma's 2 s / 5 s defaults after their paid hero image is ready.
       return await prisma.$transaction(async (tx) => {
         const lockKeys = [...new Set([
           `learn-request:${input.requestIdHash}`,
@@ -335,7 +337,7 @@ export class ArticleService {
           },
         });
         return { operation, article: mapArticle(saved), previousPath: null };
-      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 10_000, timeout: 20_000 });
     } catch (error) {
       if (isUniqueConstraint(error)) throw new ConflictError("Article slug already exists.", { slug: parsed.document.slug });
       if (isSerializableConflict(error)) {

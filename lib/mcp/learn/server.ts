@@ -112,14 +112,18 @@ function failure(error: unknown) {
   const details = error instanceof ServiceError && error.details && typeof error.details === "object" && !Array.isArray(error.details)
     ? error.details as Record<string, unknown>
     : null;
+  const declaredPersistence = details?.persistence;
+  const persistence = declaredPersistence === "COMMITTED" || declaredPersistence === "UNKNOWN"
+    ? declaredPersistence
+    : "NOT_COMMITTED";
   const safe = error instanceof ServiceError
     ? {
         result: "ERROR",
         error: {
           code: error.code,
           message: error.message,
-          persistence: details?.persistence === "COMMITTED" ? "COMMITTED" as const : "NOT_COMMITTED" as const,
-          retryable: retryableFailure(error, details?.persistence === "COMMITTED" ? "COMMITTED" : "NOT_COMMITTED"),
+          persistence,
+          retryable: retryableFailure(error, persistence),
           ...(details ? { details } : {}),
         },
       }

@@ -217,6 +217,103 @@ test("NO_CHANGE writes nothing but revalidates and verifies for post-commit reco
   assert.deepEqual(invalidated, ["casino-basics/autonomous-learn-guide"]);
 });
 
+const testActor = async () => ({ id: "22222222-2222-4222-8222-222222222222", name: "B4GAMBLE Content Agent", role: "AUTHOR" as const, userId: null });
+const liveVerifier = { verify: async () => ({ verified: true, checks: ["article_http_and_identity"], attempts: 1, failureCode: null, publicUrl: "https://b4gamble.com/en/learn/casino-basics/autonomous-learn-guide" }) };
+
+test("a transient persistence conflict is retried against the same prepared images", async () => {
+  let prepared = 0;
+  let persistAttempts = 0;
+  const slept: number[] = [];
+  const logged: Array<Record<string, unknown>> = [];
+  const service = new LearnApplyService({
+    articles: {
+      inspectPublishedApply: async () => ({ article: null, requestAudit: null, reusableAudit: null }),
+      applyPublishedDocument: async (value) => {
+        persistAttempts += 1;
+        if (persistAttempts === 1) throw new LearnApplyError("A concurrent Learn create changed the same target. Retry the same requestId.", "SERIALIZABLE_CONFLICT", 503);
+        if (persistAttempts === 2) throw Object.assign(new Error("Timed out fetching a new connection from the connection pool."), { code: "P2024" });
+        return { operation: "CREATED", article: article(value.document), previousPath: null };
+      },
+      isImageUrlReferenced: async () => false,
+    },
+    images: { prepare: async () => { prepared += 1; return { images: [], createdObjects: [], recoveryObjects: [] }; }, cleanupCreated: async () => undefined },
+    actorResolver: testActor,
+    revalidate: () => undefined,
+    verifier: liveVerifier,
+    logger: (entry) => { logged.push(entry); },
+    sleep: async (milliseconds) => { slept.push(milliseconds); },
+  });
+  const result = await service.apply(input());
+  assert.equal(result.result, "LIVE");
+  assert.equal(result.operation, "CREATED");
+  assert.equal(prepared, 1);
+  assert.equal(persistAttempts, 3);
+  assert.deepEqual(slept, [1_000, 2_000]);
+  assert.deepEqual(logged.filter((entry) => entry.event === "learn_apply_transient_retry").map((entry) => entry.reason), ["SERIALIZABLE_CONFLICT", "P2024"]);
+});
+
+test("a transient actor lookup failure is retried before any image is prepared", async () => {
+  let actorAttempts = 0;
+  let prepared = 0;
+  const service = new LearnApplyService({
+    articles: {
+      inspectPublishedApply: async () => ({ article: null, requestAudit: null, reusableAudit: null }),
+      applyPublishedDocument: async (value) => ({ operation: "CREATED", article: article(value.document), previousPath: null }),
+      isImageUrlReferenced: async () => false,
+    },
+    images: { prepare: async () => { prepared += 1; return { images: [], createdObjects: [], recoveryObjects: [] }; }, cleanupCreated: async () => undefined },
+    actorResolver: async () => {
+      actorAttempts += 1;
+      if (actorAttempts === 1) throw Object.assign(new Error("Timed out fetching a new connection from the connection pool."), { code: "P2024" });
+      return testActor();
+    },
+    revalidate: () => undefined,
+    verifier: liveVerifier,
+    logger: () => undefined,
+    sleep: async () => undefined,
+  });
+  assert.equal((await service.apply(input())).result, "LIVE");
+  assert.equal(actorAttempts, 2);
+  assert.equal(prepared, 1);
+});
+
+test("persistence retries are bounded and an unknown database failure is reported as UNKNOWN", async () => {
+  let persistAttempts = 0;
+  const bounded = new LearnApplyService({
+    articles: {
+      inspectPublishedApply: async () => ({ article: null, requestAudit: null, reusableAudit: null }),
+      applyPublishedDocument: async () => { persistAttempts += 1; throw Object.assign(new Error("Transaction API error"), { code: "P2028" }); },
+      isImageUrlReferenced: async () => false,
+    },
+    images: { prepare: async () => ({ images: [], createdObjects: [], recoveryObjects: [] }), cleanupCreated: async () => undefined },
+    actorResolver: testActor,
+    verifier: liveVerifier,
+    logger: () => undefined,
+    sleep: async () => undefined,
+  });
+  await assert.rejects(() => bounded.apply(input()), (error: unknown) => error instanceof LearnApplyError
+    && error.code === "LEARN_APPLY_FAILED"
+    && (error.details as { persistence?: string } | undefined)?.persistence === "UNKNOWN");
+  assert.equal(persistAttempts, 3);
+
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const server = createLearnMcpServer({
+    apply: async () => { throw new LearnApplyError("learn_apply failed before publication completed.", "LEARN_APPLY_FAILED", 500, { persistence: "UNKNOWN" }); },
+  });
+  const client = new Client({ name: "learn-apply-unknown-persistence-test", version: "1.0.0" });
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+  try {
+    const result = await client.callTool({ name: "learn_apply", arguments: input() });
+    assert.equal(result.isError, true);
+    const error = (result.structuredContent as { error: { persistence: string; retryable: boolean } }).error;
+    assert.deepEqual([error.persistence, error.retryable], ["UNKNOWN", true]);
+  } finally {
+    await client.close();
+    await server.close();
+  }
+});
+
 test("preparation failures perform zero Article mutation and DB failures compensate only newly-created image objects", async () => {
   let persisted = 0;
   const generated = input({
