@@ -1,149 +1,151 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
 import test from "node:test";
-
-import { EditorialStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 import { LEARN_CONTENT_STATE_KEY } from "@/lib/learn-content-orchestrator/config";
-import { learnContextResultSchema } from "@/lib/learn-content-orchestrator/learn-context.server";
-import { handleLearnMcpPost } from "@/lib/mcp/learn/post-handler";
-
-const actorId = "00000000-0000-4000-8000-000000000953";
-const token = "learn-context-postgres-token-with-more-than-32-bytes";
-const bodyMarker = "LEARN-CONTEXT-POSTGRES-BODY-PROSE";
+import { PrismaLearnContentStateRepository } from "@/lib/learn-content-orchestrator/state-repository.server";
 
 function assertDisposableDatabase(value: string | undefined) {
   if (!value) throw new Error("DATABASE_URL is required");
   const url = new URL(value);
   if (!new Set(["127.0.0.1", "localhost", "[::1]"]).has(url.hostname) || !/(?:_ci|test|disposable)$/i.test(url.pathname.slice(1))) {
-    throw new Error("Learn context PostgreSQL test requires a disposable loopback database");
+    throw new Error("Learn content orchestrator PostgreSQL test requires a disposable loopback database");
   }
 }
 
-const seeds = [
-  { slug: "learn-context-pg-en-published", locale: "en-GB", status: EditorialStatus.PUBLISHED },
-  { slug: "learn-context-pg-en-draft", locale: "en-GB", status: EditorialStatus.DRAFT },
-  { slug: "learn-context-pg-en-archived", locale: "en-GB", status: EditorialStatus.ARCHIVED },
-  { slug: "learn-context-pg-sv-published", locale: "sv-SE", status: EditorialStatus.PUBLISHED },
-  { slug: "learn-context-pg-da-published", locale: "da-DK", status: EditorialStatus.PUBLISHED },
-  { slug: "learn-context-pg-de-scheduled", locale: "de-DE", status: EditorialStatus.SCHEDULED },
-] as const;
-
-async function seed() {
-  await prisma.article.deleteMany({ where: { createdBy: actorId } });
-  for (const [index, candidate] of seeds.entries()) {
-    await prisma.article.create({
-      data: {
-        slug: candidate.slug,
-        locale: candidate.locale,
-        title: `Learn context guide ${index}`,
-        excerpt: `${bodyMarker} excerpt`,
-        category: index % 2 ? "responsible-gambling" : "casino-bonuses",
-        tags: ["Learning"],
-        status: candidate.status,
-        bodyBlocks: [{ id: "intro", type: "paragraph", text: `${bodyMarker} body` }],
-        publishedAt: candidate.status === EditorialStatus.PUBLISHED ? new Date("2026-09-20T10:00:00.000Z") : null,
-        archivedAt: candidate.status === EditorialStatus.ARCHIVED ? new Date("2026-09-21T10:00:00.000Z") : null,
-        createdBy: actorId,
-        updatedBy: actorId,
-      },
-    });
-  }
-}
-
-async function databaseDigest() {
-  const [articles, settings, revisions, audits] = await Promise.all([
-    prisma.article.findMany({ orderBy: { id: "asc" } }),
-    prisma.siteSetting.findMany({ orderBy: { key: "asc" } }),
-    prisma.contentRevision.count(),
-    prisma.auditLog.count(),
-  ]);
-  return createHash("sha256").update(JSON.stringify({ articles, settings, revisions, audits })).digest("hex");
-}
-
-async function learnContext(targetLanguage: string) {
-  const response = await handleLearnMcpPost(new Request("https://b4gamble.com/api/mcp/learn", {
-    method: "POST",
-    headers: {
-      accept: "application/json, text/event-stream",
-      authorization: `Bearer ${token}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "learn_context", arguments: { targetLanguage } } }),
-  }));
-  assert.equal(response.status, 200);
-  const payload = await response.json() as { result?: { isError?: boolean; structuredContent?: unknown; content?: unknown } };
-  assert.equal(payload.result?.isError, undefined);
-  assert.doesNotMatch(JSON.stringify(payload), new RegExp(bodyMarker));
-  return learnContextResultSchema.parse(payload.result?.structuredContent);
-}
-
-test("learn_context reads published PostgreSQL inventory per launch language and writes nothing", async (context) => {
+test("PostgreSQL state claim serializes overlapping cron invocations and enforces the daily interval", async () => {
   assertDisposableDatabase(process.env.DATABASE_URL);
-  const keys = ["LEARN_MCP_ENABLED", "LEARN_MCP_SERVICE_TOKEN", "LEARN_MCP_ACTOR_ID", "LEARN_CONTENT_LOCALES"] as const;
-  const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
-  Object.assign(process.env, {
-    LEARN_MCP_ENABLED: "true",
-    LEARN_MCP_SERVICE_TOKEN: token,
-    LEARN_MCP_ACTOR_ID: actorId,
-    LEARN_CONTENT_LOCALES: "en,sv,da,de",
-  });
-  const historicalState = {
-    version: 1,
-    nextEligibleAt: "2026-09-30T19:13:22.724Z",
-    localeCursor: 1,
-    consecutiveFailures: 0,
-    haltedCode: null,
-    active: null,
-    last: { runId: "eda24cf7-5eed-46d8-a0d8-7e28618f377f", completedAt: "2026-09-29T12:13:22.539Z", result: "PUBLISHED", code: "CREATED" },
+  await prisma.siteSetting.deleteMany({ where: { key: LEARN_CONTENT_STATE_KEY } });
+  const first = new PrismaLearnContentStateRepository(prisma);
+  const second = new PrismaLearnContentStateRepository(prisma);
+  const startedAt = new Date("2026-09-22T00:00:00.000Z");
+  const input = {
+    now: startedAt,
+    minIntervalHours: 24,
+    locales: [{ language: "en", locale: "en-GB" }, { language: "de", locale: "de-DE" }],
+    model: "gpt-5.6-sol",
   };
-  context.after(async () => {
-    for (const key of keys) {
-      const value = previous[key];
-      if (value === undefined) delete process.env[key];
-      else process.env[key] = value;
+
+  try {
+    const overlapping = await Promise.all([first.claim(input), second.claim(input)]);
+    const claimedRuns = overlapping.flatMap((claim) => "run" in claim ? [claim.run] : []);
+    assert.ok(claimedRuns.length >= 1);
+    assert.equal(new Set(claimedRuns.map((run) => run.runId)).size, 1);
+    assert.equal(claimedRuns[0]?.locale, "en-GB");
+
+    const state = await first.read();
+    assert.equal(state.active?.runId, claimedRuns[0]?.runId);
+    assert.equal(state.nextEligibleAt, "2026-09-23T00:00:00.000Z");
+    assert.ok(Buffer.byteLength(JSON.stringify(state)) <= 4_096);
+
+    const sessionClaims = await Promise.all([
+      first.attachSession({ runId: claimedRuns[0]!.runId, sessionId: "session-a", now: startedAt }),
+      second.attachSession({ runId: claimedRuns[0]!.runId, sessionId: "session-b", now: startedAt }),
+    ]);
+    assert.equal(sessionClaims.filter(Boolean).length, 1);
+
+    assert.equal(await first.finish({ runId: claimedRuns[0]!.runId, now: startedAt, result: "NO_OP", code: "HOLD" }), true);
+    assert.deepEqual(await first.claim({ ...input, now: new Date("2026-09-22T23:59:59.999Z") }), {
+      action: "NOT_DUE",
+      code: "MINIMUM_INTERVAL_ACTIVE",
+    });
+    const next = await first.claim({ ...input, now: new Date("2026-09-23T00:00:00.000Z") });
+    assert.equal(next.action, "LAUNCH");
+    assert.ok("run" in next);
+    if ("run" in next) {
+      assert.notEqual(next.run.runId, claimedRuns[0]!.runId);
+      assert.equal(next.run.locale, "de-DE");
+      assert.equal(await first.finish({
+        runId: next.run.runId,
+        now: new Date("2026-09-23T00:00:00.000Z"),
+        result: "FAILED",
+        code: "SESSION_START_FAILED",
+      }), true);
     }
-    await prisma.article.deleteMany({ where: { createdBy: actorId } });
+
+    const startRetry = await first.claim({ ...input, now: new Date("2026-09-23T00:01:00.000Z") });
+    assert.equal(startRetry.action, "LAUNCH");
+    assert.ok("run" in startRetry);
+    if ("run" in startRetry) {
+      assert.equal(startRetry.run.locale, "de-DE");
+      assert.notEqual(startRetry.run.runId, "run" in next ? next.run.runId : "");
+    }
+    const retryState = await first.read();
+    assert.equal(retryState.nextEligibleAt, "2026-09-24T00:00:00.000Z");
+    assert.equal(retryState.localeCursor, 0);
+
+    assert.deepEqual(await first.claim({ ...input, now: new Date("2026-09-23T13:00:00.000Z") }), {
+      action: "NOT_DUE",
+      code: "MINIMUM_INTERVAL_ACTIVE",
+    });
+    const expired = await first.read();
+    assert.equal(expired.active, null);
+    assert.equal(expired.last?.code, "ACTIVE_LEASE_EXPIRED");
+    assert.equal(expired.consecutiveFailures, 2);
+  } finally {
     await prisma.siteSetting.deleteMany({ where: { key: LEARN_CONTENT_STATE_KEY } });
     await prisma.$disconnect();
-  });
-
-  await seed();
-  await prisma.siteSetting.upsert({
-    where: { key: LEARN_CONTENT_STATE_KEY },
-    create: { key: LEARN_CONTENT_STATE_KEY, value: historicalState },
-    update: { value: historicalState },
-  });
-  const before = await databaseDigest();
-
-  const published = await prisma.article.findMany({ where: { status: EditorialStatus.PUBLISHED }, select: { id: true, locale: true } });
-  const expected = (locales: string[]) => new Set(published.filter((article) => locales.includes(article.locale)).map((article) => article.id));
-  const seededSlugs = (result: Awaited<ReturnType<typeof learnContext>>) => result.articles.map((article) => article.slug).filter((slug) => slug.startsWith("learn-context-pg-")).sort();
-
-  const english = await learnContext("en");
-  assert.deepEqual(english.target, { language: "en", locale: "en-GB", publicPathPrefix: "/en" });
-  assert.deepEqual(new Set(english.articles.map((article) => article.id)), expected(["en-GB"]));
-  assert.deepEqual(seededSlugs(english), ["learn-context-pg-en-published"]);
-
-  const swedish = await learnContext("sv");
-  assert.deepEqual(new Set(swedish.articles.map((article) => article.id)), expected(["sv-SE", "en-GB"]));
-  assert.deepEqual(seededSlugs(swedish), ["learn-context-pg-en-published", "learn-context-pg-sv-published"]);
-
-  const danish = await learnContext("da");
-  assert.deepEqual(new Set(danish.articles.map((article) => article.id)), expected(["da-DK", "en-GB"]));
-  assert.deepEqual(seededSlugs(danish), ["learn-context-pg-da-published", "learn-context-pg-en-published"]);
-
-  const german = await learnContext("de");
-  assert.deepEqual(german.target.locale, "de-DE");
-  assert.deepEqual(seededSlugs(german), ["learn-context-pg-en-published"]);
-
-  for (const result of [english, swedish, danish, german]) {
-    assert.deepEqual(result.launchLocales.map((locale) => locale.language), ["en", "sv", "da", "de"]);
-    assert.equal(result.sourceLocale, "en-GB");
-    assert.ok(result.articles.length <= 500);
-    assert.deepEqual(result.protectedRoutes, ["/help", "/responsible-gambling"]);
   }
+});
 
-  assert.equal(await databaseDigest(), before, "learn_context must not change any Article, SiteSetting, revision or audit row");
+test("PostgreSQL state permits exactly one same-locale output-contract recovery inside the daily interval", async () => {
+  assertDisposableDatabase(process.env.DATABASE_URL);
+  await prisma.siteSetting.deleteMany({ where: { key: LEARN_CONTENT_STATE_KEY } });
+  const repository = new PrismaLearnContentStateRepository(prisma);
+  const startedAt = new Date("2026-09-22T00:00:00.000Z");
+  const input = {
+    now: startedAt,
+    minIntervalHours: 24,
+    locales: [{ language: "en", locale: "en-GB" }, { language: "de", locale: "de-DE" }],
+    model: "gpt-5.6-sol",
+  };
+
+  try {
+    const first = await repository.claim(input);
+    assert.equal(first.action, "LAUNCH");
+    assert.ok("run" in first);
+    if (!("run" in first)) return;
+    assert.equal(first.run.locale, "en-GB");
+    assert.equal(await repository.finish({
+      runId: first.run.runId,
+      now: startedAt,
+      result: "BLOCKED",
+      code: "OUTPUT_CONTRACT_FAILURE",
+    }), true);
+
+    const retry = await repository.claim({ ...input, now: new Date("2026-09-22T00:01:00.000Z") });
+    assert.equal(retry.action, "LAUNCH");
+    assert.ok("run" in retry);
+    if (!("run" in retry)) return;
+    assert.equal(retry.run.locale, "en-GB");
+    assert.equal(retry.run.outputContractRecovery, true);
+    assert.notEqual(retry.run.runId, first.run.runId);
+
+    const duringRetry = await repository.read();
+    assert.equal(duringRetry.localeCursor, 1);
+    assert.equal(duringRetry.nextEligibleAt, "2026-09-23T00:00:00.000Z");
+    assert.equal(await repository.finish({
+      runId: retry.run.runId,
+      now: new Date("2026-09-22T00:02:00.000Z"),
+      result: "BLOCKED",
+      code: "OUTPUT_CONTRACT_FAILURE",
+    }), true);
+
+    const blockedLoop = await repository.claim({ ...input, now: new Date("2026-09-22T00:03:00.000Z") });
+    assert.deepEqual(blockedLoop, { action: "NOT_DUE", code: "MINIMUM_INTERVAL_ACTIVE" });
+    const repeatedFailure = await repository.read();
+    assert.equal(repeatedFailure.consecutiveFailures, 1);
+
+    const nextCycle = await repository.claim({ ...input, now: new Date("2026-09-23T00:00:00.000Z") });
+    assert.equal(nextCycle.action, "LAUNCH");
+    assert.ok("run" in nextCycle);
+    if ("run" in nextCycle) {
+      assert.equal(nextCycle.run.locale, "de-DE");
+      assert.equal(nextCycle.run.outputContractRecovery, undefined);
+    }
+    assert.equal((await repository.read()).consecutiveFailures, 0);
+  } finally {
+    await prisma.siteSetting.deleteMany({ where: { key: LEARN_CONTENT_STATE_KEY } });
+    await prisma.$disconnect();
+  }
 });
