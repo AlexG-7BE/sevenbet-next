@@ -18,6 +18,7 @@ export const ORGANIZATION_PROFILES = [
   "https://www.facebook.com/b4gamble",
   "https://x.com/b4gamble",
   "https://www.instagram.com/b4gamble_com",
+  "https://www.threads.com/@b4gamble_com",
   "https://www.youtube.com/@b4gamble",
   "https://www.tiktok.com/@b4gamble.com",
   "https://www.pinterest.com/b4gamble",
