@@ -20,8 +20,8 @@ import {
 } from "./safe-context.server";
 
 /**
- * Read-only editorial context for the ChatGPT scheduled Learn task
- * (LEARN-CHATGPT-SCHEDULER-2026-09-30). It returns the same bounded public
+ * Read-only editorial context for MCP clients such as the Founder's Claude Code
+ * (LEARN-SERVER-SWITCH-2026-10-01). It returns the same bounded public
  * metadata the retired server orchestrator gave its model and nothing else.
  */
 export const learnContextInputSchema = z.object({

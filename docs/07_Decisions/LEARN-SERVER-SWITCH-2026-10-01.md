@@ -9,10 +9,17 @@
 - **Restored.** The hourly Vercel cron `/api/internal/cron/learn-content` (`13 * * * *`), the managed OpenAI Agents session provider, the cron handler, the server MCP publisher, the state repository, the role prompts, the model contracts and the deterministic publication gate return exactly as they were at `1150330c`, with the `openai` SDK dependency. The `learn-content-orchestrator:v1` state row resumes from where it stopped.
 - **Switch.** `LEARN_CONTENT_AUTONOMY_ENABLED` decides who runs Learn editorial cycles. Exactly `true`: the server cycle runs. Anything else: the cron answers `NO_OP / AUTONOMY_DISABLED` without touching state, a provider or the MCP, and the ChatGPT scheduled task may own the cycle. Changing it is a Vercel variable change plus a redeploy; no code change. Never run both at once: `learn_apply` rejects a duplicate slug, not a duplicate topic.
 - **Model.** The only allowed model is `gpt-5.6-sol` (default and allowlist; `LEARN_CONTENT_OPENAI_MODEL` must say `gpt-5.6-sol` or be empty). `gpt-6-astra` now fails closed as `CONFIGURATION_INVALID`. Official pricing at the time of the decision: $4 input and $20 output per 1M tokens, doubled input and 1.5× output for requests above 272K input tokens. Recorded Astra cycles used 1.6–3.8M input tokens each.
-- **`learn_context` stays.** The read-only tool from 30 September remains for the ChatGPT task and for checks. The server publisher now accepts the Learn MCP surface `learn_apply` plus `learn_context` and still fails closed on any other tool.
+- **`learn_context` stays.** The read-only tool from 30 September remains for the Founder's Claude Code and for checks. The server publisher now accepts the Learn MCP surface `learn_apply` plus `learn_context` and still fails closed on any other tool.
 - **Publication timeout.** The server's `learn_apply` call may take up to 240 s instead of the MCP SDK's 60 s default. On 30 September an image-generating call committed after 108 s while the server had already given up, which cost one hourly retry.
 
 Unchanged: `learn_apply` is the sole, create-only mutation; the three roles, SEO-first `NO_OP`, rewrite limit, two funnels, localization, hero-image and firewall rules of RFC-053 §§2, 5, 7 and 10; the 8-hour minimum interval; the 12-hour lease; three publication attempts; generated images through `gpt-image-2`.
+
+## Later on 1 October: cadence and ChatGPT
+
+- **Cadence.** The Founder set one new server cycle per 24 hours: Production `LEARN_CONTENT_MIN_INTERVAL_HOURS=24` (the code default and floor stay 8).
+- **No ChatGPT.** The Founder drops the ChatGPT subscription and its agents and works only through Claude Code. The ChatGPT scheduled task of LEARN-CHATGPT-SCHEDULER-2026-09-30 is cancelled, not pending. Learn work runs in two places: the server cycle on the OpenAI API, and the Founder's Claude Code, which connects to the Learn MCP with the existing service bearer (and the owner cookie, because the Kazakhstan geo-block also covers `/api/mcp/learn`). The service token is not rotated.
+- **One language, one writer.** While Claude Code localizes guides into `sv`, `da` and `de`, the server rotates English only (`LEARN_CONTENT_LOCALES=en`), so two writers never cover the same topic in the same language.
+- **OpenAI stays for what Claude cannot do or what runs inside the product:** server text cycles, hero images (`gpt-image-2`), Programme guidance and voice transcription.
 
 ## First run after activation
 

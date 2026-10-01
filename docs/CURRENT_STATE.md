@@ -12,7 +12,7 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Server Learn cycle returns behind a switch, on GPT-5.6 Sol — in review
+## Server Learn cycle returns behind a switch, on GPT-5.6 Sol — live 1 October 2026
 
 **Founder instruction, 1 October 2026**
 ([LEARN-SERVER-SWITCH-2026-10-01](07_Decisions/LEARN-SERVER-SWITCH-2026-10-01.md),
@@ -26,8 +26,29 @@ the server cycle to be on at once: Production gets
 `LEARN_CONTENT_AUTONOMY_ENABLED=true` and `LEARN_CONTENT_OPENAI_MODEL=gpt-5.6-sol`
 with this deployment.
 
-**PROPOSED — NOT YET LIVE** until merged and deployed. The section below
-describes the state between 30 September and this change.
+**DETECTED IN PRODUCTION, 1 October 2026:**
+[PR #433](https://github.com/AlexG-7BE/sevenbet-next/pull/433) merged as
+`dee773a7`; deployment `dpl_9nhSf6wFVeCXRM3E6hUJNo4yiD4q` was Ready at 06:11
+UTC with three crons, `LEARN_CONTENT_AUTONOMY_ENABLED=true`,
+`LEARN_CONTENT_OPENAI_MODEL=gpt-5.6-sol` and, by Founder instruction,
+`LEARN_CONTENT_MIN_INTERVAL_HOURS=24`. The 06:13 UTC cron closed the expired
+30 September run as `FAILED / ACTIVE_LEASE_EXPIRED` and launched run
+`9d311b94-967b-4df3-995e-90510e52c6ce` (`sv-SE`) on `gpt-5.6-sol`. At 07:13
+UTC the session was idle (1,875,279 input and 36,671 output tokens) and
+`learn_apply` created `/sv/learn/casino-bonuses/omsattningskrav-casinobonus`
+with a hero image at 07:15 UTC (public route `200` from Sweden). The call
+itself logged `learn_apply_failed / LEARN_APPLY_FAILED` after 106 s although
+the Article and its image were committed, so the run stayed open; its 08:13
+UTC retry stopped at the gate as `BLOCKED / CREATE_SLUG_ALREADY_EXISTS`
+because the inventory check does not recognise the run's own committed slug.
+The Article is unaffected; the next server cycle is due 2 October 06:13 UTC.
+
+**Founder decisions later on 1 October:** ChatGPT is dropped (subscription,
+agents and connector); the ChatGPT scheduled task is cancelled. Other Learn
+work runs in the Founder's Claude Code through the Learn MCP with the existing
+service token and the owner cookie. While Claude Code localizes guides into
+`sv`, `da` and `de`, Production `LEARN_CONTENT_LOCALES=en`, so the server
+rotates English only. The section below describes 30 September.
 
 ## Learn editorial cycles leave Vercel for a ChatGPT scheduled task — step 1 live 30 September 2026
 

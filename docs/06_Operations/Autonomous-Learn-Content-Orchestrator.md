@@ -15,8 +15,10 @@ LEARN_CONTENT_AUTONOMY_ENABLED=true:
   Vercel cron (13 * * * *) → OPENAI_API_KEY → GPT-5.6 Sol managed session
   → SEO / Research / Editor → deterministic gate → Learn MCP learn_apply
 anything else:
-  cron answers NO_OP / AUTONOMY_DISABLED (no state, provider or MCP call);
-  a ChatGPT scheduled task may run the cycle through learn_context + learn_apply
+  cron answers NO_OP / AUTONOMY_DISABLED (no state, provider or MCP call)
+
+Founder's Claude Code (subscription, no API text cost):
+  Learn MCP learn_context (read) → own research and drafting → gate → learn_apply
 ```
 
 - The server pipeline is the one described under "Server cycle reference"
@@ -24,9 +26,12 @@ anything else:
   is `gpt-5.6-sol` (`gpt-6-astra` fails closed); the publisher accepts the
   Learn MCP surface `learn_apply` plus the read-only `learn_context`; and the
   `learn_apply` call may take up to 240 seconds.
-- Switching owner is a Vercel variable change plus a redeploy. Never run the
-  server cycle and a ChatGPT task at the same time: `learn_apply` rejects a
-  duplicate slug, not a duplicate topic.
+- Switching the server cycle is a Vercel variable change plus a redeploy.
+  Production runs it once per 24 hours (`LEARN_CONTENT_MIN_INTERVAL_HOURS=24`).
+- ChatGPT is not used (Founder, 1 October 2026). Never let the server cycle and
+  Claude Code write the same language at the same time: `learn_apply` rejects
+  a duplicate slug, not a duplicate topic. During a Claude Code localization
+  batch the server rotates English only (`LEARN_CONTENT_LOCALES=en`).
 - `learn_apply` is unchanged and remains the only Article mutation.
 - Generated hero images use the OpenAI Images API (`gpt-image-2`) through
   `learn_apply` with `OPENAI_API_KEY`. Programme AI also reads the key.
@@ -69,27 +74,35 @@ Article metadata through `collectLearnContentSafeContext()` and writes nothing.
 The Learn MCP rate limits are unchanged: 60 authentication attempts and 20
 authenticated requests per 10 minutes per client key, shared by both tools.
 
-## ChatGPT task hand-off (only while the server switch is off)
+## Claude Code through the Learn MCP
 
-A ChatGPT task reproduces the server cycle; the editorial
-specification is in the decision record. Per cycle: call `learn_context` for
-the cycle's language, run SEO → Research + Content → Editor + Publisher, and
-call `learn_apply` only after Editor `QA_PASS`, with `articleId = null`,
+Connect once in a terminal on the Founder's Mac (user scope; values come from
+the Founder and are never printed or pasted into chat):
+
+```text
+claude mcp add --transport http --scope user b4gamble-learn https://b4gamble.com/api/mcp/learn \
+  --header "Authorization: Bearer LEARN_MCP_SERVICE_TOKEN value" \
+  --header "Cookie: b4g_owner=owner cookie value"
+```
+
+The owner cookie is needed because the Kazakhstan geo-block also answers `451`
+on `/api/mcp/learn`; it is valid for a year. `claude mcp list` should show
+`b4gamble-learn` as connected; a new session loads the tools.
+
+Per Article: call `learn_context` for the target language, research and write
+natively, run the repository's deterministic gate rules (evidence mapping,
+same-language offer links only in commercial categories, no tracking or
+affiliate parameters or casino, `/r/`, `/go/`, `/outbound/` routes, protected
+Help for crisis material, Programme start for `responsible-gambling`, hero
+image), then call `learn_apply` with `articleId = null`,
 `expectedUpdatedAt = null` and a slug absent from `articles`. Success is only
 `result = LIVE`, `persistence = COMMITTED`, `status = PUBLISHED`,
-`verified = true` and `operation = CREATED | NO_CHANGE`; retry an ambiguous
-result at most three times with the same `requestId`. A call that generates a
-hero image can run for about two minutes (the last server cycle's Article
-committed 108 seconds after the call started, after the server's MCP client had
-already given up at the SDK's 60-second default). If the ChatGPT call times out, repeat the identical payload and
-`requestId`: `learn_apply` then reuses the stored image and returns
-`NO_CHANGE / LIVE` instead of creating a second Article. The language rotates in
-`launchLocales` order; a stateless choice is
-`launchLocales[floor(UTC epoch hours / 8) mod launchLocales.length]`.
-
-Until the deterministic gate moves into `learn_apply`, the ChatGPT Editor is
-the only check on evidence mapping, same-language offer links, tracking and
-affiliate parameters, commercial routes, crisis Help and the hero image.
+`verified = true` and `operation = CREATED | NO_CHANGE`. A call that generates
+a hero image can run for about two minutes (the 30 September server cycle's
+Article committed 108 seconds after the call started). If a call times out,
+repeat the identical payload and `requestId`: `learn_apply` then reuses the
+stored image and returns `NO_CHANGE / LIVE` instead of creating a second
+Article.
 
 ## Verification
 
@@ -114,7 +127,7 @@ while leaving every Article, SiteSetting, revision and audit row byte-identical.
 
 - To stop the server cycle: set `LEARN_CONTENT_AUTONOMY_ENABLED=false` and
   redeploy. An active run is then left as it is; nothing is cancelled.
-- To stop all Learn MCP publication (server and ChatGPT): set
+- To stop all Learn MCP publication (server and Claude Code): set
   `LEARN_MCP_ENABLED=false` and redeploy, or rotate `LEARN_MCP_SERVICE_TOKEN`.
 - Never unpublish or delete Articles, revisions, audits or images as transport
   rollback.

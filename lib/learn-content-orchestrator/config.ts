@@ -94,7 +94,7 @@ function resolveModel(raw: string | undefined) {
 /**
  * The server cycle is the switchable path (LEARN-SERVER-SWITCH-2026-10-01):
  * it runs only when `LEARN_CONTENT_AUTONOMY_ENABLED` is exactly `true`, and is
- * otherwise a no-cost NO_OP while the ChatGPT task may own the cycle.
+ * otherwise a no-cost NO_OP that touches no state, provider or MCP.
  */
 export function resolveLearnContentConfig(environment: LearnContentEnvironment = process.env): LearnContentConfig | null {
   if (environment.LEARN_CONTENT_AUTONOMY_ENABLED?.trim() !== "true") return null;
