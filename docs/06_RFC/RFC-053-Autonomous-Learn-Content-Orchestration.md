@@ -2,11 +2,12 @@
 
 - **Status:** `ACTIVE`
 - **Decision authority:** explicit Founder instructions, 22–23 September 2026;
-  amended by explicit Founder instructions, 30 September 2026 (§§10–11)
-- **Scope:** one bounded Learn editorial pipeline. Its server-side execution
-  (§§3, 6, 8 and the server MCP client of §5) is retired by §11; the editorial
-  roles, publication rules and privacy boundary remain the specification for
-  the ChatGPT scheduled task, which is PENDING STEP 2 / NOT ACTIVE YET
+  amended by explicit Founder instructions, 30 September 2026 (§§10–11) and
+  1 October 2026 (§12)
+- **Scope:** one bounded Learn editorial pipeline. Since §12 its server-side
+  execution runs again behind `LEARN_CONTENT_AUTONOMY_ENABLED`, on GPT-5.6 Sol;
+  when the switch is off, a ChatGPT scheduled task may run the same editorial
+  rules through the Learn MCP
 - **Depends on:** Product Vision & Principles, RFC-013, RFC-017, RFC-027,
   RFC-037, RFC-039, RFC-044, RFC-051 and RFC-052
 - **Supersedes:** RFC-027's no-autonomy, no-schedule and no-Production ceiling
@@ -324,3 +325,25 @@ overrides them where they describe execution.
   remain possible until a separate migration is authorized.
 - **State.** The `learn-content-orchestrator:v1` SiteSetting row is kept as
   historical evidence; nothing reads or writes it.
+
+## 12. Amendment — server execution restored behind a switch, on GPT-5.6 Sol (1 October 2026)
+
+Explicit Founder instruction, 1 October 2026
+([LEARN-SERVER-SWITCH-2026-10-01](../07_Decisions/LEARN-SERVER-SWITCH-2026-10-01.md)).
+This reverses the retirement part of §11; its `learn_context` part stands.
+
+- **Restored.** §§3, 5, 6 and 8 apply again: the hourly authenticated cron,
+  the managed Agents session, the deterministic gate and the server MCP
+  publisher, exactly as at `1150330c`.
+- **Switch.** `LEARN_CONTENT_AUTONOMY_ENABLED=true` runs the server cycle;
+  any other value makes the cron a no-cost `NO_OP` that touches no state,
+  provider or MCP. Switching is a hosted-variable change and a redeploy. The
+  server cycle and a ChatGPT scheduled task must not run at the same time.
+- **Model.** §3's model becomes `gpt-5.6-sol`, the only entry of the
+  code-reviewed allowlist; `gpt-6-astra` fails closed.
+- **Publisher.** §5's discovery check accepts exactly the Learn MCP surface
+  `learn_apply` plus the read-only `learn_context` and fails closed on any
+  other tool. The `learn_apply` call may take up to 240 seconds inside the
+  route's 300-second limit.
+- RFC-052 remains the sole Article mutation authority; `learn_apply` and every
+  editorial rule of §§2, 5, 7 and 10 are unchanged.

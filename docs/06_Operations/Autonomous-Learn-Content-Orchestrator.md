@@ -1,37 +1,35 @@
 # Autonomous Learn Content Orchestrator
 
-**Status:** SERVER-SIDE EXECUTION RETIRED (30 September 2026). The ChatGPT
-scheduled task that replaces it is **PENDING STEP 2 / NOT ACTIVE YET**.
+**Status:** SERVER CYCLE RESTORED BEHIND A SWITCH, ON GPT-5.6 SOL (1 October
+2026). Production activation is recorded in CURRENT_STATE once observed.
 
-**Authority:** explicit Founder instructions of 22 and 30 September 2026,
-RFC-053 (§11) and
+**Authority:** explicit Founder instructions of 22 and 30 September and
+1 October 2026, RFC-053 (§§11–12),
 [LEARN-CHATGPT-SCHEDULER-2026-09-30](../07_Decisions/LEARN-CHATGPT-SCHEDULER-2026-09-30.md)
+and [LEARN-SERVER-SWITCH-2026-10-01](../07_Decisions/LEARN-SERVER-SWITCH-2026-10-01.md)
 
 ## Current state
 
 ```text
-retired:  Vercel cron → OPENAI_API_KEY → GPT-6 Astra managed session → Learn MCP
-intended: ChatGPT scheduled task → SEO → Research + Content → Editor + Publisher
-          → Learn MCP learn_context (read) → learn_apply (create) → Production
-          PENDING STEP 2 / NOT ACTIVE YET
+LEARN_CONTENT_AUTONOMY_ENABLED=true:
+  Vercel cron (13 * * * *) → OPENAI_API_KEY → GPT-5.6 Sol managed session
+  → SEO / Research / Editor → deterministic gate → Learn MCP learn_apply
+anything else:
+  cron answers NO_OP / AUTONOMY_DISABLED (no state, provider or MCP call);
+  a ChatGPT scheduled task may run the cycle through learn_context + learn_apply
 ```
 
-- Vercel does not schedule `/api/internal/cron/learn-content`. The route stays,
-  imports nothing and always answers
-  `200 {"result":"NO_OP","code":"CHATGPT_SCHEDULER_OWNS_EXECUTION"}`.
-- No server code can create, inspect or reconcile an OpenAI managed session;
-  the provider, cron handler, server MCP publisher, state repository, prompts
-  and model contracts are deleted (last present at `1150330c`) and the
-  `openai` SDK dependency is removed.
-- `LEARN_CONTENT_AUTONOMY_ENABLED=false` in Production. No code reads it; it
-  stays `false` so a revert cannot silently restart paid server cycles.
-- The `learn-content-orchestrator:v1` SiteSetting row is historical evidence.
-  Nothing reads or writes it; do not edit or delete it.
+- The server pipeline is the one described under "Server cycle reference"
+  below, restored exactly as at `1150330c`, with three changes: the only model
+  is `gpt-5.6-sol` (`gpt-6-astra` fails closed); the publisher accepts the
+  Learn MCP surface `learn_apply` plus the read-only `learn_context`; and the
+  `learn_apply` call may take up to 240 seconds.
+- Switching owner is a Vercel variable change plus a redeploy. Never run the
+  server cycle and a ChatGPT task at the same time: `learn_apply` rejects a
+  duplicate slug, not a duplicate topic.
 - `learn_apply` is unchanged and remains the only Article mutation.
-- Generated hero images still call the OpenAI Images API (`gpt-image-2`)
-  through `learn_apply` with `OPENAI_API_KEY`, so image charges remain possible
-  until a separate migration is authorized. Programme AI also reads the key;
-  keep it in Vercel.
+- Generated hero images use the OpenAI Images API (`gpt-image-2`) through
+  `learn_apply` with `OPENAI_API_KEY`. Programme AI also reads the key.
 
 ## `learn_context` (read-only)
 
@@ -71,9 +69,9 @@ Article metadata through `collectLearnContentSafeContext()` and writes nothing.
 The Learn MCP rate limits are unchanged: 60 authentication attempts and 20
 authenticated requests per 10 minutes per client key, shared by both tools.
 
-## STEP 2 hand-off
+## ChatGPT task hand-off (only while the server switch is off)
 
-The ChatGPT task reproduces the retired server cycle; the editorial
+A ChatGPT task reproduces the server cycle; the editorial
 specification is in the decision record. Per cycle: call `learn_context` for
 the cycle's language, run SEO → Research + Content → Editor + Publisher, and
 call `learn_apply` only after Editor `QA_PASS`, with `articleId = null`,
@@ -107,17 +105,17 @@ npm run build
 ```
 
 The PostgreSQL suite runs only against a disposable loopback `_ci`/test
-database. It proves `learn_context` returns only `PUBLISHED` rows in scope for
-each launch language and leaves every Article, SiteSetting, revision and audit
-row byte-identical.
+database. It proves concurrent claims converge on one run, competing session
+attachments cannot diverge, the interval and locale cursor persist, and
+`learn_context` returns only `PUBLISHED` rows in scope for each launch language
+while leaving every Article, SiteSetting, revision and audit row byte-identical.
 
 ## Rollback
 
-- To stop ChatGPT publication: set `LEARN_MCP_ENABLED=false` and redeploy, or
-  rotate `LEARN_MCP_SERVICE_TOKEN`. Both tools stop together.
-- Do not restore the server orchestrator without a new Founder decision. If a
-  revert ever brings it back, `LEARN_CONTENT_AUTONOMY_ENABLED=false` keeps it
-  idle.
+- To stop the server cycle: set `LEARN_CONTENT_AUTONOMY_ENABLED=false` and
+  redeploy. An active run is then left as it is; nothing is cancelled.
+- To stop all Learn MCP publication (server and ChatGPT): set
+  `LEARN_MCP_ENABLED=false` and redeploy, or rotate `LEARN_MCP_SERVICE_TOKEN`.
 - Never unpublish or delete Articles, revisions, audits or images as transport
   rollback.
 
@@ -166,10 +164,12 @@ row byte-identical.
   server MCP client had already given up at its 60-second default, so the state
   recorded one retryable attempt and stays frozen with that run active.
 
-## Historical: the retired server pipeline (23–30 September 2026)
+## Server cycle reference (live 23–30 September 2026, restored 1 October 2026)
 
-The sections below describe the server pipeline as it ran and are kept as
-history. They are no longer current behaviour.
+The sections below describe the server pipeline as it first ran. Since
+1 October 2026 it runs again unchanged, except that the model is
+`gpt-5.6-sol` and the publisher accepts `learn_context` beside `learn_apply`.
+Production acceptance records keep the values observed at the time.
 
 ### Evidence classification
 
@@ -221,7 +221,7 @@ LEARN_MCP_ACTOR_ID=<existing RFC-052 service actor UUID>
 LEARN_CONTENT_AUTONOMY_ENABLED=true
 LEARN_CONTENT_LOCALES=en
 LEARN_CONTENT_MIN_INTERVAL_HOURS=8
-LEARN_CONTENT_OPENAI_MODEL=gpt-6-astra
+LEARN_CONTENT_OPENAI_MODEL=gpt-5.6-sol
 ```
 
 `LEARN_CONTENT_LOCALES=en` is the value recorded at activation. The Founder
@@ -234,8 +234,8 @@ Never print values. Verify only presence/scope/sensitivity through the Vercel
 control plane. `LEARN_CONTENT_AUTONOMY_ENABLED`, locale, interval and model are
 non-secret server configuration; credentials remain Sensitive. Any hosted
 variable change requires a new Production deployment. The model value must
-also match the code-reviewed allowlist, which initially contains only
-`gpt-6-astra`.
+also match the code-reviewed allowlist, which contained only `gpt-6-astra`
+until 1 October 2026 and contains only `gpt-5.6-sol` since.
 
 The OpenAI project key requires the permissions needed for managed agent
 sessions/inference. No MCP credential is supplied to OpenAI. The session has
@@ -366,7 +366,7 @@ orchestrator PostgreSQL suite runs in both database-capable CI jobs.
 Disabling the orchestrator does not disable public Learn reads or unpublish an
 Article.
 
-## Production acceptance record (retired server pipeline)
+## Production acceptance record (server pipeline, 23 September 2026)
 
 **LIVE — VERIFIED 23 SEPTEMBER 2026.**
 

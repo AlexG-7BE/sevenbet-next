@@ -10,7 +10,7 @@ import {
   LEARN_CONTENT_SOURCE_LOCALE,
   learnContentInventoryLocales,
   resolveLearnContentLaunchLocales,
-  type LearnContentLocale,
+  type LearnContentLaunchLocale,
 } from "./config";
 import {
   collectLearnContentSafeContext,
@@ -109,7 +109,7 @@ export async function readLearnContext(input: unknown, dependencies: LearnContex
   const parsed = learnContextInputSchema.safeParse(input);
   if (!parsed.success) throw new LearnContextError("INVALID_INPUT", "learn_context accepts exactly { targetLanguage } with a lowercase language slug.");
 
-  let launchLocales: LearnContentLocale[];
+  let launchLocales: LearnContentLaunchLocale[];
   try {
     launchLocales = resolveLearnContentLaunchLocales(dependencies.environment ?? process.env);
   } catch {

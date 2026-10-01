@@ -44,9 +44,9 @@ test("PR5 keeps Commercial, Media, and operational OAuth transport retired", () 
     "lib/mcp/learn/server.ts",
     "lib/mcp/rate-limit.ts",
   ];
-  // The server-side Learn orchestrator and its MCP client were retired on
-  // 30 Sep 2026 (LEARN-CHATGPT-SCHEDULER-2026-09-30); no runtime file calls MCP.
-  const allowedLearnMcpCallers: string[] = [];
+  const allowedLearnMcpCallers = [
+    "lib/learn-content-orchestrator/mcp-publisher.server.ts",
+  ];
   const mcpFiles = [
     ...(existsSync(join(root, "app/api/mcp")) ? sourceFiles("app/api/mcp") : []),
     ...(existsSync(join(root, "lib/mcp")) ? sourceFiles("lib/mcp") : []),

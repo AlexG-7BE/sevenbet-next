@@ -1,5 +1,7 @@
 # Learn editorial cycles move from a Vercel cron to a ChatGPT scheduled task
 
+> **Partly reversed on 1 October 2026** ([LEARN-SERVER-SWITCH-2026-10-01](LEARN-SERVER-SWITCH-2026-10-01.md)): the server cycle is restored behind `LEARN_CONTENT_AUTONOMY_ENABLED` and runs on GPT-5.6 Sol. `learn_context` stays. The record below describes 30 September.
+
 **Status:** ACCEPTED. STEP 1 (retire server-side text AI, add `learn_context`) is live since [PR #430](https://github.com/AlexG-7BE/sevenbet-next/pull/430) (`73673889`, Production deployment `dpl_8JTVV3MrJio8bWRk7xmc2M2GoGsP`, 30 September 2026, 12:49 UTC). STEP 2, the ChatGPT scheduled task, is **PENDING STEP 2 / NOT ACTIVE YET** until the Founder confirms it is configured in ChatGPT.
 
 **Decision authority:** explicit Founder instruction, 30 September 2026. Amends [RFC-053](../06_RFC/RFC-053-Autonomous-Learn-Content-Orchestration.md) (§11) and [RFC-052](../06_RFC/RFC-052-Autonomous-Learn-Publication.md) (§2 tool surface). Keeps [LEARN-COMMERCIAL-LOCALIZED-2026-09-30](LEARN-COMMERCIAL-LOCALIZED-2026-09-30.md) as the editorial rule set.

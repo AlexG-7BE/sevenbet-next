@@ -12,6 +12,23 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Server Learn cycle returns behind a switch, on GPT-5.6 Sol — in review
+
+**Founder instruction, 1 October 2026**
+([LEARN-SERVER-SWITCH-2026-10-01](07_Decisions/LEARN-SERVER-SWITCH-2026-10-01.md),
+RFC-053 §12): the hourly server cycle and its orchestrator code come back
+exactly as at `1150330c`, gated by `LEARN_CONTENT_AUTONOMY_ENABLED` (exact
+`true` runs it; anything else is a no-cost `NO_OP`, leaving the cycle to a
+ChatGPT task). The only model is `gpt-5.6-sol`; `gpt-6-astra` fails closed.
+`learn_context` stays; the server publisher accepts it beside `learn_apply`
+and allows the `learn_apply` call up to 240 seconds. The Founder asked for
+the server cycle to be on at once: Production gets
+`LEARN_CONTENT_AUTONOMY_ENABLED=true` and `LEARN_CONTENT_OPENAI_MODEL=gpt-5.6-sol`
+with this deployment.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed. The section below
+describes the state between 30 September and this change.
+
 ## Learn editorial cycles leave Vercel for a ChatGPT scheduled task — step 1 live 30 September 2026
 
 **Founder instruction, 30 September 2026**
