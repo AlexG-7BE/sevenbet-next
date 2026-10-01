@@ -115,6 +115,19 @@ not retried as if they were transient. A PostgreSQL serialization conflict is
 explicitly retryable with the same request ID. Stack traces, credentials,
 binary data, Article prose and raw provider output are never returned.
 
+Since 1 October 2026 `learn_apply` itself retries transient database failures
+up to three times (1 s, then 2 s apart) before answering: the actor lookup and
+the Article transaction on a serialization conflict, a full connection pool
+(`P2024`), a transaction that could not start or expired (`P2028`) or a dropped
+connection. The retry reuses the already prepared images, so a paid hero image
+is not generated again, and the transaction waits up to 10 s for a connection
+and runs up to 20 s. An unexpected failure inside the Article transaction is
+reported as `persistence: UNKNOWN` and retryable, because the commit may have
+happened unseen; the caller repeats the same request ID and receives
+`NO_CHANGE` or a first create. Production logs on 1 October showed concurrent
+calls failing after image generation for exactly these reasons. The
+`learn_apply_failed` log now names the cause class and database code.
+
 ## Runtime configuration
 
 Required for the endpoint:

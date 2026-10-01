@@ -677,6 +677,14 @@ test("CREATE refuses a slug that appeared before publication", () => {
   assert.deepEqual(validateLearnContentPublication({ result: result as Extract<typeof result, { resultClass: "PUBLISH" }>, run: run(), context, allowedLocales: new Set(["en-GB"]), now: NOW }), { ok: false, code: "CREATE_SLUG_ALREADY_EXISTS" });
 });
 
+test("a retry of the same request leaves an already committed slug to learn_apply", () => {
+  const result = parseLearnContentModelOutput(publishEnvelope());
+  const context = safeContext([{ id: ARTICLE_ID, slug: "verify-a-gambling-licence", title: "Existing", category: "casino-safety", locale: "en-GB", publishedAt: NOW.toISOString(), updatedAt: NOW.toISOString(), url: "https://b4gamble.com/en/learn/casino-safety/verify-a-gambling-licence" }]);
+  const publish = result as Extract<typeof result, { resultClass: "PUBLISH" }>;
+  assert.deepEqual(validateLearnContentPublication({ result: publish, run: run({ publicationAttempts: 1 }), context, allowedLocales: new Set(["en-GB"]), now: NOW }), { ok: true });
+  assert.deepEqual(validateLearnContentPublication({ result: publish, run: run({ publicationAttempts: 0 }), context, allowedLocales: new Set(["en-GB"]), now: NOW }), { ok: false, code: "CREATE_SLUG_ALREADY_EXISTS" });
+});
+
 test("canonical URL must exactly match the candidate public Article route", () => {
   const envelope = publishEnvelope();
   envelope.learnApply.article.seo.canonicalUrl = "/en/learn/casino-safety/a-different-article";

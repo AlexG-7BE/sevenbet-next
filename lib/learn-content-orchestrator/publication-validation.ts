@@ -141,7 +141,11 @@ export function validateLearnContentPublication(input: {
   if (generatedAt < new Date(run.startedAt) || generatedAt > new Date(input.now.valueOf() + 5 * 60 * 1_000)) return fail("RUN_TIMESTAMP_INVALID");
 
   if (article.articleId !== null || article.expectedUpdatedAt !== null || result.seoHandoff.targetArticleId !== null) return fail("CREATE_TARGET_INVALID");
-  if (context.articles.some((candidate) => candidate.slug === article.slug)) return fail("CREATE_SLUG_ALREADY_EXISTS");
+  // A retry of the same requestId may follow a commit the server never saw;
+  // learn_apply then answers NO_CHANGE, or rejects a slug owned by another request.
+  if (run.publicationAttempts === 0 && context.articles.some((candidate) => candidate.slug === article.slug)) {
+    return fail("CREATE_SLUG_ALREADY_EXISTS");
+  }
 
   const evidenceById = new Map(result.evidence.map((item) => [item.id, item]));
   if (evidenceById.size !== result.evidence.length) return fail("DUPLICATE_EVIDENCE_ID");

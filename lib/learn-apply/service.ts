@@ -58,7 +58,29 @@ type LearnApplyDependencies = {
   actorResolver?: typeof resolveLearnServiceActor;
   revalidate?: typeof revalidatePublicArticles;
   logger?: (entry: Record<string, unknown>) => void;
+  sleep?: (milliseconds: number) => Promise<void>;
 };
+
+/**
+ * Concurrent creates on Production (1 Oct 2026) failed after the hero image was
+ * already generated and paid: Serializable write conflicts, a full connection
+ * pool and transactions that could not start in time. These are retried here,
+ * against the same prepared images, before the call fails. The transaction is
+ * idempotent by requestId, so a retry after an unseen commit returns NO_CHANGE.
+ */
+export const LEARN_APPLY_PERSISTENCE_ATTEMPTS = 3;
+const TRANSIENT_PRISMA_CODES = new Set(["P1001", "P1002", "P1008", "P1017", "P2024", "P2028", "P2034"]);
+
+function errorCode(error: unknown) {
+  const code = error && typeof error === "object" ? (error as { code?: unknown }).code : undefined;
+  return typeof code === "string" && /^[A-Z0-9_]{1,40}$/.test(code) ? code : null;
+}
+
+function transientPersistenceReason(error: unknown) {
+  if (error instanceof ServiceError) return error.code === "SERIALIZABLE_CONFLICT" ? error.code : null;
+  const code = errorCode(error);
+  return code && TRANSIENT_PRISMA_CODES.has(code) ? code : null;
+}
 
 function metadataRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -168,6 +190,7 @@ export class LearnApplyService {
   private readonly actorResolver: typeof resolveLearnServiceActor;
   private readonly revalidate: typeof revalidatePublicArticles;
   private readonly logger: (entry: Record<string, unknown>) => void;
+  private readonly sleep: (milliseconds: number) => Promise<void>;
 
   constructor(dependencies: LearnApplyDependencies = {}) {
     this.articles = dependencies.articles ?? articleService;
@@ -181,6 +204,20 @@ export class LearnApplyService {
     this.actorResolver = dependencies.actorResolver ?? resolveLearnServiceActor;
     this.revalidate = dependencies.revalidate ?? revalidatePublicArticles;
     this.logger = dependencies.logger ?? ((entry) => console.info(JSON.stringify(entry)));
+    this.sleep = dependencies.sleep ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
+  }
+
+  private async withTransientRetry<T>(stage: string, requestIdHash: string, work: () => Promise<T>): Promise<T> {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await work();
+      } catch (error) {
+        const reason = transientPersistenceReason(error);
+        if (!reason || attempt >= LEARN_APPLY_PERSISTENCE_ATTEMPTS) throw error;
+        this.logger({ event: "learn_apply_transient_retry", requestIdHash, stage, attempt, reason });
+        await this.sleep(attempt * 1_000);
+      }
+    }
   }
 
   async apply(value: unknown): Promise<LearnApplyResult> {
@@ -192,6 +229,7 @@ export class LearnApplyService {
     const startedAt = performance.now();
     let preparedImages: Awaited<ReturnType<LearnImageService["prepare"]>> | null = null;
     let persisted = false;
+    let persistenceStarted = false;
     let articleId: string | null = null;
     this.logger({
       event: "learn_apply_started",
@@ -202,7 +240,7 @@ export class LearnApplyService {
     });
     try {
       canonicalDocument(desiredDocument(input, null));
-      const actor = await this.actorResolver();
+      const actor = await this.withTransientRetry("actor", requestIdHash, () => this.actorResolver());
       const inspection = await this.articles.inspectPublishedApply({
         slug: input.article.slug,
         requestIdHash,
@@ -234,7 +272,9 @@ export class LearnApplyService {
       );
       const document = canonicalDocument(desiredDocument(input, preparedImages.images));
       const documentFingerprint = articleDocumentFingerprint(document);
-      const applied = await this.articles.applyPublishedDocument({
+      const preparedImageList = preparedImages.images;
+      persistenceStarted = true;
+      const applied = await this.withTransientRetry("persistence", requestIdHash, () => this.articles.applyPublishedDocument({
         document,
         actorId: actor.id,
         requestIdHash,
@@ -242,9 +282,9 @@ export class LearnApplyService {
         documentFingerprint,
         auditMetadata: {
           schemaVersion: 1,
-          images: preparedImages.images,
+          images: preparedImageList,
         },
-      });
+      }));
       persisted = true;
       articleId = applied.article.id;
       if (!applied.article.publishedAt || applied.article.status !== "PUBLISHED") {
@@ -318,9 +358,16 @@ export class LearnApplyService {
       return result;
     } catch (error) {
       if (preparedImages && !persisted) await this.images.cleanupCreated(preparedImages.createdObjects);
+      // A non-service failure during the Article transaction may hide a commit the
+      // caller never saw, so it is reported as UNKNOWN: retry the same requestId.
       const original = error instanceof ServiceError
         ? error
-        : new LearnApplyError("learn_apply failed before publication completed.", "LEARN_APPLY_FAILED", 500);
+        : new LearnApplyError(
+            "learn_apply failed before publication completed.",
+            "LEARN_APPLY_FAILED",
+            500,
+            persistenceStarted ? { persistence: "UNKNOWN" } : undefined,
+          );
       const safeError = persisted
         ? new LearnApplyError(
             original.message,
@@ -338,7 +385,10 @@ export class LearnApplyService {
         requestIdHash,
         articleId,
         persisted,
+        persistenceStarted,
         errorCode: safeError.code,
+        causeName: error instanceof Error ? error.name.slice(0, 80) : typeof error,
+        causeCode: errorCode(error),
         latencyMs: Math.max(0, Math.round(performance.now() - startedAt)),
       });
       throw safeError;
