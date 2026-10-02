@@ -98,7 +98,7 @@ test("raw Programme input cannot enter either new durable model", () => {
 
 test("the public Programme has one canonical renderer and never swaps to the legacy UI", () => {
   assert.match(page, /data-public-programme-renderer="program-ai"/);
-  assert.match(page, /<ProgramAiExperience googleAvailable=\{isGoogleAuthAvailable\(\)\} locale=\{locale\} programmePath=\{path\} \/>/);
+  assert.match(page, /<ProgramAiExperience entryOverview=\{<ProgrammeStepsOverview locale=\{locale\} \/>\} googleAvailable=\{isGoogleAuthAvailable\(\)\} locale=\{locale\} programmePath=\{path\} \/>/);
   assert.doesNotMatch(page, /ActiveControlProgramme/);
   assert.doesNotMatch(page, /isProgramAiV1Enabled|PROGRAM_AI_V1_ENABLED/);
   assert.match(layout, /messages\.skipToMain/);

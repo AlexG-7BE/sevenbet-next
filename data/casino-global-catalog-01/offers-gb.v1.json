@@ -145,7 +145,11 @@
         "Minimum deposit £20: the offer page names none, so the brand's GB Bonus Policy default applies (\"Unless otherwise specified, the minimum deposit to qualify for any deposit bonus is £20\").",
         "The offer page states 60x, while the brand's own GB Bonus Policy (clauses 7 and 32) and the UK cap state 10x. The offer page is recorded here; check it before depositing."
       ],
-      "termsUrl": "https://www.turbonino.com/promotions/welcome-offer/"
+      "termsUrl": "https://www.turbonino.com/promotions/welcome-offer/",
+      "withheld": {
+        "since": "2026-10-02",
+        "reason": "The GB offer page states 60x wagering on free-spin winnings, above the UK 10x cap and against the brand's own banner and Bonus Policy (10x). Paused until the operator confirms the correct term (asked EGO on 2 Oct 2026)."
+      }
     },
     {
       "casinoSlug": "21-prive",

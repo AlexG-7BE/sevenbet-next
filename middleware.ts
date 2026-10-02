@@ -12,6 +12,7 @@ import {
 } from "@/lib/security/content-security-policy";
 import {
   isLocalizedPublicDestination,
+  neutralRouteDestination,
   parsePublicMarketRoute,
   PRESENTATION_CONTEXT_HEADER,
   PRESENTATION_LANGUAGE_HEADER,
@@ -24,12 +25,11 @@ import {
   languageRouteByPublicSlug,
   localeForLanguageSegment,
   marketProfileByCountry,
-  marketProfileByLocale,
   marketProfileByRouteMarket,
   publicMarketPath,
-  type SupportedLanguage,
 } from "@/lib/market/registry";
 import { parsePresentationPreference, PRESENTATION_PREFERENCE_COOKIE } from "@/lib/market/presentation-preference";
+import { neutralRouteLocale } from "@/lib/market/neutral-route";
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import {
@@ -188,14 +188,6 @@ function privateAdminResponse(response: NextResponse) {
     response.headers.set("Vary", vary ? `${vary}, Cookie` : "Cookie");
   }
   return response;
-}
-
-function publicPresentationAvailable(language: SupportedLanguage, locale: Parameters<typeof homeTranslationReady>[0]) {
-  const route = languageRouteByPublicSlug(language);
-  return Boolean(route)
-    && route!.localeVariants.includes(locale)
-    && homeTranslationReady(locale)
-    && (process.env.VERCEL_ENV !== "production" || route!.published);
 }
 
 function withoutCountryQuery(url: URL) {
@@ -392,23 +384,14 @@ export async function middleware(request: NextRequest) {
     // `/compare` is a retired public destination. Fold it into the canonical
     // market directory in the resolver hop so callers never traverse a
     // neutral-locale redirect followed by the page-level permanent redirect.
-    const equivalentPathname = publicMarketRoute.pathname === "/compare"
-      ? "/casinos"
-      : publicMarketRoute.pathname;
-    const preference = parsePresentationPreference(request.cookies.get(PRESENTATION_PREFERENCE_COOKIE)?.value);
-    const resolution = resolvePresentationContext({
-      preference,
+    // Pages render their links with the same resolution (lib/market/neutral-route.ts).
+    const locale = neutralRouteLocale({
+      preference: parsePresentationPreference(request.cookies.get(PRESENTATION_PREFERENCE_COOKIE)?.value),
       trustedCountryCode: requestCountrySignalFromHeaders(request.headers)?.countryCode,
       acceptLanguage: request.headers.get("accept-language"),
     });
-    const resolved = publicPresentationAvailable(resolution.language, resolution.locale)
-      ? resolution
-      : resolvePresentationContext({
-          routeLanguage: "en",
-        });
-    const editorialMarket = marketProfileByLocale(resolved.locale) ?? DEFAULT_MARKET_PROFILE;
     const destination = withoutCountryQuery(new URL(request.url));
-    destination.pathname = publicMarketPath(editorialMarket, resolved.locale, equivalentPathname);
+    destination.pathname = neutralRouteDestination(publicMarketRoute.pathname, locale);
     const response = NextResponse.redirect(
       destination,
       publicMarketRoute.pathname === "/compare" ? 308 : 307,

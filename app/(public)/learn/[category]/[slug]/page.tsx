@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { cache, Suspense } from "react";
 
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -59,6 +59,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   return { ...metadata, alternates: { ...metadata.alternates, canonical }, openGraph: metadata.openGraph ? { ...metadata.openGraph, url: canonical } : metadata.openGraph };
 }
 
+// The category crumb names the filtered hub directly: `/learn/{category}` only answers a 308 to it.
 function breadcrumbSchema(article: PublicArticle, presentation: PresentationResolution) {
   const messages = learningMessages(presentation.locale);
   return {
@@ -67,7 +68,7 @@ function breadcrumbSchema(article: PublicArticle, presentation: PresentationReso
     itemListElement: [
       { "@type": "ListItem", position: 1, name: messages.ui.home, item: absoluteUrl(productCanonicalPath(presentation, "/")) },
       { "@type": "ListItem", position: 2, name: messages.ui.learningCenter, item: absoluteUrl(productCanonicalPath(presentation, "/learn")) },
-      { "@type": "ListItem", position: 3, name: categoryTitle(article.category, presentation.locale), item: absoluteUrl(productCanonicalPath(presentation, `/learn/${article.category}`)) },
+      { "@type": "ListItem", position: 3, name: categoryTitle(article.category, presentation.locale), item: absoluteUrl(productCanonicalPath(presentation, `/learn?category=${encodeURIComponent(article.category)}`)) },
       { "@type": "ListItem", position: 4, name: article.title, item: absoluteUrl(productCanonicalPath(presentation, articlePath(article))) },
     ],
   };
@@ -96,6 +97,13 @@ export default async function LearningArticlePage({ params }: { params: Promise<
   const presentation = await resolveServerPresentationContext();
   const article = await loadArticle(category, slug, presentation.locale);
   if (!article) {
+    // A guide not published in this language opens in English, where it exists. A neutral
+    // `/learn/...` link (an English page, a social post) resolves to the visitor's language
+    // first, and German or Swedish visitors got a 404 (Semrush follow-up, 2 Oct 2026).
+    const english = languageRouteByLocale(presentation.locale).defaultLocale !== DEFAULT_MARKET_PROFILE.defaultLocale
+      ? await loadArticle(category, slug, DEFAULT_MARKET_PROFILE.defaultLocale)
+      : null;
+    if (english) redirect(publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, articlePath(english)));
     const successor = retiredArticleSuccessor(category, slug);
     if (!successor) notFound();
     // A retired, once-indexed guide moves permanently to its successor: in this language

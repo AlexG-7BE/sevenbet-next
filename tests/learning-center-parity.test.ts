@@ -335,9 +335,9 @@ test("package C: article first screen, header autohide and the Bonus Guide read 
   assert.doesNotMatch(withGuides, fakeTitles);
   const cards = [...withGuides.matchAll(/<a href="([^"]+)" class="scp2" data-bonus-guide-read-next="" style="([^"]+)">[\s\S]*?<div [^>]*>([^<]+)<\/div>\s*<div [^>]*>([^<]+)<\/div>\s*<div [^>]*>([^<]+)<\/div>/g)];
   assert.deepEqual(cards.map((match) => [match[1], match[3], match[4], match[5]]), [
-    ["/learn/casino-bonuses/casino-bonuses-14", "Casino Bonuses", "Wagering requirements", "4 min read"],
-    ["/learn/casino-bonuses/casino-bonuses-15", "Casino Bonuses", "Welcome bonus terms", "5 min read"],
-    ["/learn/payments/payments-12", "Payments", "Customer funds", "3 min read"],
+    ["/en/learn/casino-bonuses/casino-bonuses-14", "Casino Bonuses", "Wagering requirements", "4 min read"],
+    ["/en/learn/casino-bonuses/casino-bonuses-15", "Casino Bonuses", "Welcome bonus terms", "5 min read"],
+    ["/en/learn/payments/payments-12", "Payments", "Customer funds", "3 min read"],
   ]);
   // Dark ink on the cream card: the capture's global acid link colour never reaches the titles.
   for (const match of cards) assert.match(match[2], /color: rgb\(16, 15, 15\)/);

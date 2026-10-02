@@ -106,9 +106,9 @@ test("Read next shows only real published guides, in dark ink, and disappears wh
   assert.doesNotMatch(document, fake);
   assert.doesNotMatch(document, /data-screen-label="Read next"/);
   assert.equal((documentWithReadNext.match(/data-bonus-guide-read-next=""/g) ?? []).length, 2);
-  assert.match(documentWithReadNext, /<a href="\/learn\/casino-bonuses\/wagering-requirements" class="scp2" data-bonus-guide-read-next="" style="display: block;[^"]*color: rgb\(16, 15, 15\);/);
+  assert.match(documentWithReadNext, /<a href="\/en\/learn\/casino-bonuses\/wagering-requirements" class="scp2" data-bonus-guide-read-next="" style="display: block;[^"]*color: rgb\(16, 15, 15\);/);
   assert.match(documentWithReadNext, />Casino Bonuses<\/div>\s*<div [^>]*>Wagering requirements<\/div>\s*<div [^>]*>4 min read<\/div>/);
-  assert.match(documentWithReadNext, /href="\/learn\/payments\/payments-withdrawals"/);
+  assert.match(documentWithReadNext, /href="\/en\/learn\/payments\/payments-withdrawals"/);
   assert.match(route, /bonusGuideReadNextSelection\(await articleService\.listPublished\("en-GB"/);
 });
 

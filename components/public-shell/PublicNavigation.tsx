@@ -10,6 +10,7 @@ import { ProgrammeLanguageSelector } from "@/components/programme/ProgrammeLangu
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { DEFAULT_MARKET_PROFILE, marketProfileByLocale, publicMarketPath, type LanguageRouteProfile } from "@/lib/market/registry";
+import { finalPublicHref } from "@/lib/market/routing";
 import { MarketLanguageSelector } from "./MarketLanguageSelector";
 import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 import {
@@ -81,7 +82,7 @@ export function PublicNavigation({
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
     ? publicMarketPath(editorialProfile, presentation.locale)
-    : "/";
+    : finalPublicHref("/", presentation.neutralRouteLocale);
   const accountLabel = authenticated ? messages.myProgramme : messages.logIn;
   const primaryLabel = authenticated ? messages.myProgramme : messages.startProgramme;
   const publicNavigation = publicNavigationForCommercialState(

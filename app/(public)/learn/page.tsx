@@ -11,10 +11,11 @@ import { absoluteUrl } from "@/lib/site";
 import { DEFAULT_MARKET_PROFILE, languageRouteByLocale, publicMarketPath } from "@/lib/market/registry";
 import { articleService } from "@/lib/services";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const presentation = await resolveServerPresentationContext();
+export async function generateMetadata({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
+  const [presentation, query] = await Promise.all([resolveServerPresentationContext(), searchParams]);
   const { ui } = learningMessages(presentation.locale);
-  return productMetadata({ presentation, pathname: "/learn", title: ui.metadataTitle, description: ui.metadataDescription });
+  // A category filter (`?category=…`) canonicalises to the hub and carries no hreflang of its own.
+  return productMetadata({ presentation, pathname: "/learn", title: ui.metadataTitle, description: ui.metadataDescription, queryVariant: Object.keys(query).length > 0 });
 }
 
 export default async function LearnPage() {

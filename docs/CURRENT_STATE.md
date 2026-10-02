@@ -12,6 +12,61 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Semrush Site Audit errors — in review
+
+**Founder instruction, 2 October 2026:** clear the Semrush Site Audit of
+b4gamble.com (Site Health 90%, 31 errors, 205 warnings over 100 crawled pages).
+A local production build crawled with the Semrush user agent from a US exit
+reproduced every error:
+
+- **27 incorrect hreflang links.** `x-default` named the unprefixed path
+  (`/casinos`, `/learn/...`), which only answers a 307 to the visitor's
+  language. It now names the English page itself (`/en/casinos`); the
+  Programme's `/program` already answered 200. A noindex page (`/casino/starcasino`)
+  no longer carries hreflang, so no page names a noindex target.
+- **3 hreflang conflicts.** Query variants (`/learn?category=...`,
+  `/program?entry=start`) canonicalise to the bare page and now carry no
+  hreflang of their own.
+- **1 invalid structured data item.** `/best-offers` published an empty
+  `ItemList` when the visitor's country had no ranked offer (the crawler's US).
+  It now publishes the `ItemList` only with items.
+
+Also: a guide's category crumb links `/{lang}/learn?category=...` instead of
+the `/learn/{category}` path that only answers a 308, and the sitemap lists
+`/de/program`, `/sv/program` and `/da/program`, which were indexable with
+hreflang but missing. A user-facing 404 found on the way is fixed: a neutral
+`/learn/{category}/{slug}` link (the Bonus Guide's "Read next" cards, old social
+posts) redirected German and Swedish visitors to `/de/learn/...`, where the
+English guide does not exist. The cards now link `/en/learn/...`, and a guide
+missing in the visitor's language opens in English (307) instead of a 404.
+This supersedes the neutral `x-default` of
+GEO-LOCALIZATION-01. Regression tests: `tests/seo-market-indexability.test.ts`,
+`tests/crawler-ready-metadata.test.ts`.
+
+**Founder answers, 2 October 2026 (question tool):**
+
+- **Low text-to-HTML ratio: accepted as is.** Every page is under Semrush's 10%
+  because the Next.js page payload is about two thirds of the HTML; Google does
+  not use the ratio.
+- **Programme entry pages: a "what the ten steps are" block.** The Programme
+  renders its loading screen on the server, so crawlers saw almost no text on
+  `/program`. `ProgrammeStepsOverview` shows the heading, overview and ten
+  Missions of the 10 Steps page (already translated in every Programme
+  language) plus two privacy lines, under the loading and access screens only;
+  no Mission, review, registration or home screen carries it.
+- **Final links instead of the neutral 307.** A page links an unprefixed public
+  path (`/casinos`, `/help`, `/`) straight to the language route the middleware
+  would redirect this visitor to: `neutralRouteLocale` in
+  `lib/market/neutral-route.ts` serves both the middleware and
+  `resolveServerPresentationContext` (`neutralRouteLocale` on the
+  presentation), and `finalPublicHref` in `lib/market/routing.ts` resolves the
+  header, navigation, footer and `productHref` links. Same destination, no
+  redirect hop. The Help handoff and the error page keep their own links.
+- External support links (GamCare, NICE, MoneyHelper, FTC) answer 403 to
+  crawlers but open for people; they stay.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Short social links — in review
 
 **Founder instruction, 2 October 2026:** replace the long UTM URLs in social

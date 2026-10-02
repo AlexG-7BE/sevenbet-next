@@ -98,7 +98,7 @@ export function LearningArticleView({ article, categoryTitle, relatedArticles = 
     <header className={`${styles.hero} ${handoffStyles.hero} ${article.heroImageUrl ? styles.heroWithImage : ""}`} data-nav-theme="dark">
       {article.heroImageUrl && <img alt={article.heroImageAlt || ""} className={styles.heroImage} height={900} src={article.heroImageUrl} width={1600} />}
       <div className={styles.heroContent}>
-        <nav className={`${styles.breadcrumbs} ${handoffStyles.breadcrumbs}`} aria-label={messages.ui.breadcrumb}><Link href={hrefFor("/learn")}>{messages.ui.learn}</Link><span aria-hidden="true">→</span><Link href={hrefFor(`/learn/${article.category}`)}>{categoryTitle}</Link></nav>
+        <nav className={`${styles.breadcrumbs} ${handoffStyles.breadcrumbs}`} aria-label={messages.ui.breadcrumb}><Link href={hrefFor("/learn")}>{messages.ui.learn}</Link><span aria-hidden="true">→</span><Link href={hrefFor(`/learn?category=${encodeURIComponent(article.category)}`)}>{categoryTitle}</Link></nav>
         <div className={`${styles.heroGrid} ${handoffStyles.heroGrid}`}><div>{preview ? <p className={styles.kicker}>Authenticated draft preview</p> : null}<h1>{article.title}</h1></div><div className={`${styles.heroSummary} ${handoffStyles.heroSummary}`}><p>{article.excerpt}</p><dl><div><dt>Published</dt><dd>{published}</dd></div>{reviewed && <div><dt>Reviewed</dt><dd>{reviewed}</dd></div>}{article.readingTime && <div><dt>{messages.ui.readingTime}</dt><dd>{article.readingTime}</dd></div>}{article.difficulty && <div><dt>Level</dt><dd>{article.difficulty}</dd></div>}</dl></div></div>
       </div>
     </header>
