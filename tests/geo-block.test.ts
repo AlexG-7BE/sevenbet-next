@@ -77,6 +77,7 @@ test("a visitor from KZ without the owner cookie gets HTTP 451 on every kind of 
     "/en",
     "/en/bonuses",
     "/casino/playojo",
+    "/start",
     "/r/playojo-casino",
     "/api/public/bonuses",
     "/api/presentation",

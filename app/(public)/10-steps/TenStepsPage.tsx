@@ -15,7 +15,8 @@ function stageLabel(value: string) {
 }
 
 export function TenStepsPage({ aboutHref, locale, programmePath }: {
-  aboutHref: string;
+  /** The /start help-ad landing omits it: About carries the public header's casino navigation. */
+  aboutHref?: string;
   locale: SupportedLocale;
   programmePath: string;
 }) {
@@ -41,7 +42,7 @@ export function TenStepsPage({ aboutHref, locale, programmePath }: {
           <p className={styles.lead}>{text[4]}</p>
           <div className={styles.ctas}>
             <Link className={styles.primaryAction} data-ten-steps-hero-action href={startHref} prefetch={false}>{text[5]}</Link>
-            <Link className={styles.textLink} href={aboutHref} prefetch={false}>{text[6]}</Link>
+            {aboutHref ? <Link className={styles.textLink} href={aboutHref} prefetch={false}>{text[6]}</Link> : null}
           </div>
         </div>
       </div>
