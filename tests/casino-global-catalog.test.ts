@@ -257,6 +257,26 @@ test("a published offer is withheld only when the casino has no working route", 
   assert.doesNotMatch(executor, /ACTIVATABLE_OFFERS/, "no hardcoded batch remains");
 });
 
+test("a withheld offer is imported paused and never re-activated", async () => {
+  // A disputed material term (TurboNino GB: 60x on the offer page against the
+  // UK 10x cap) pauses the offer without deleting what was read.
+  const executor = await readFile(path.join(process.cwd(), "scripts/casino-global-catalog-01.ts"), "utf8");
+  assert.match(executor, /offerStatus: offer\.withheld \? OfferStatus\.PAUSED : OfferStatus\.ACTIVE/, "import writes a withheld offer as PAUSED");
+  assert.match(executor, /!withheld\.has\(bonus\.slug\)/, "`offers` skips withheld slugs");
+
+  for (const market of ["gb", "dk", "se", "de"]) {
+    const corpus = JSON.parse(await readFile(
+      path.join(process.cwd(), `data/casino-global-catalog-01/offers-${market}.v1.json`),
+      "utf8",
+    )) as { offers: Array<{ slug: string; withheld?: { since: string; reason: string } }> };
+    for (const offer of corpus.offers) {
+      if (!offer.withheld) continue;
+      assert.match(offer.withheld.since, /^\d{4}-\d{2}-\d{2}$/, `${offer.slug} needs the date it was withheld`);
+      assert.ok(offer.withheld.reason.trim().length > 20, `${offer.slug} needs a reason a reviewer can act on`);
+    }
+  }
+});
+
 test("activating an offer never claims commercial authority", async () => {
   const executor = await readFile(path.join(process.cwd(), "scripts/casino-global-catalog-01.ts"), "utf8");
   const auditBlock = executor.slice(executor.indexOf("casino-global-catalog-01-offer"));
