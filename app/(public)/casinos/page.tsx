@@ -100,7 +100,7 @@ async function CasinosContent({ raw }: { raw: Record<string, string | string[] |
   const result = withHandoffCasinoDiscoveryData(loaded.result, visualFixture, presentation.locale, collectionQuery(), fixtureMarket);
   const containsLocalPreview = result.items.some((casino) => casino.dataClassification === "LOCAL_PREVIEW_FIXTURE");
   const disclosure = containsLocalPreview ? messages.common.marketPresentationNotice : messages.common.demoDisclosure;
-  const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.items.length > 0 ? {
+  const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: messages.casinos.directoryTitle,

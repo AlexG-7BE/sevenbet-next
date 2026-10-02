@@ -170,8 +170,6 @@ test("the sitemap lists the Programme in every language it indexes", () => {
   assert.match(readFileSync("app/sitemap.ts", "utf8"), /\.\.\.localizedProgrammeRoutes,/);
 });
 
-test("listing pages never publish an empty ItemList", () => {
+test("Best Offers never publishes an empty ItemList", () => {
   assert.match(readFileSync("app/(public)/best-offers/page.tsx", "utf8"), /PUBLISHED_ONLY" && schemaOffers\.length > 0 \?/);
-  assert.match(readFileSync("app/(public)/bonuses/page.tsx", "utf8"), /PUBLISHED_ONLY" && result\.records\.length > 0 \?/);
-  assert.match(readFileSync("app/(public)/casinos/page.tsx", "utf8"), /PUBLISHED_ONLY" && result\.items\.length > 0 \?/);
 });

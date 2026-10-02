@@ -108,7 +108,7 @@ async function BonusesContent({ raw }: { raw: Record<string, string | string[] |
       <nav aria-label={shell.bonuses}><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link><Link href="/bonus-guide">{messages.common.bonusGuide}</Link></nav>
     </div></section>
   </div>;
-  const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.records.length > 0 ? {
+  const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: messages.bonuses.directoryTitle,
