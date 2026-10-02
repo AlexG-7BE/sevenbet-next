@@ -29,7 +29,7 @@ reproduced every error:
   hreflang of their own.
 - **1 invalid structured data item.** `/best-offers` published an empty
   `ItemList` when the visitor's country had no ranked offer (the crawler's US).
-  `/best-offers`, `/bonuses` and `/casinos` publish an `ItemList` only with items.
+  It now publishes the `ItemList` only with items.
 
 Also: a guide's category crumb links `/{lang}/learn?category=...` instead of
 the `/learn/{category}` path that only answers a 308, and the sitemap lists
