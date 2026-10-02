@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { cache, Suspense } from "react";
 
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -97,6 +97,13 @@ export default async function LearningArticlePage({ params }: { params: Promise<
   const presentation = await resolveServerPresentationContext();
   const article = await loadArticle(category, slug, presentation.locale);
   if (!article) {
+    // A guide not published in this language opens in English, where it exists. A neutral
+    // `/learn/...` link (an English page, a social post) resolves to the visitor's language
+    // first, and German or Swedish visitors got a 404 (Semrush follow-up, 2 Oct 2026).
+    const english = languageRouteByLocale(presentation.locale).defaultLocale !== DEFAULT_MARKET_PROFILE.defaultLocale
+      ? await loadArticle(category, slug, DEFAULT_MARKET_PROFILE.defaultLocale)
+      : null;
+    if (english) redirect(publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, articlePath(english)));
     const successor = retiredArticleSuccessor(category, slug);
     if (!successor) notFound();
     // A retired, once-indexed guide moves permanently to its successor: in this language

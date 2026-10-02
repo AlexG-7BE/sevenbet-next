@@ -298,6 +298,13 @@ test("a language hub lists its own guides first, then the English guides marked 
   assert.match(read("app/(public)/learn/page.tsx"), /const articles = \[\.\.\.localizedArticles, \.\.\.englishArticles\];/);
 });
 
+test("a guide missing in the visitor's language opens in English instead of a 404", () => {
+  const page = read("app/(public)/learn/[category]/[slug]/page.tsx");
+  assert.match(page, /await loadArticle\(category, slug, DEFAULT_MARKET_PROFILE\.defaultLocale\)/);
+  assert.match(page, /if \(english\) redirect\(publicMarketPath\(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE\.defaultLocale, articlePath\(english\)\)\);/);
+  assert.ok(page.indexOf("if (english) redirect(") < page.indexOf("retiredArticleSuccessor(category, slug)"));
+});
+
 test("the retired odds guide moves permanently to its successor", () => {
   assert.deepEqual(retiredArticleSuccessor("sports-betting-basics", "sports-betting-odds-basics"), {
     category: "sports-betting-basics",

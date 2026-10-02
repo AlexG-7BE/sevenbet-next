@@ -34,7 +34,12 @@ reproduced every error:
 Also: a guide's category crumb links `/{lang}/learn?category=...` instead of
 the `/learn/{category}` path that only answers a 308, and the sitemap lists
 `/de/program`, `/sv/program` and `/da/program`, which were indexable with
-hreflang but missing. This supersedes the neutral `x-default` of
+hreflang but missing. A user-facing 404 found on the way is fixed: a neutral
+`/learn/{category}/{slug}` link (the Bonus Guide's "Read next" cards, old social
+posts) redirected German and Swedish visitors to `/de/learn/...`, where the
+English guide does not exist. The cards now link `/en/learn/...`, and a guide
+missing in the visitor's language opens in English (307) instead of a 404.
+This supersedes the neutral `x-default` of
 GEO-LOCALIZATION-01. Regression tests: `tests/seo-market-indexability.test.ts`,
 `tests/crawler-ready-metadata.test.ts`.
 

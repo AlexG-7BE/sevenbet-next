@@ -5,7 +5,7 @@ import { learningMessages, localizedLearningCategories } from "@/lib/i18n/learni
 import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
 import type { MethodologyMessages } from "@/lib/i18n/static-pages/methodology";
 import type { PublicErrorMessages } from "@/lib/i18n/public-errors";
-import { languageRouteByLocale, type SupportedLocale } from "@/lib/market/registry";
+import { DEFAULT_MARKET_PROFILE, languageRouteByLocale, publicMarketPath, type SupportedLocale } from "@/lib/market/registry";
 
 function escapePattern(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -481,8 +481,11 @@ export function transformMethodologyHandoff(
 }
 
 /** A real published guide in the Bonus Guide's "Read next" row: dark ink on the cream card, never acid. */
+// The guides are English and so is their URL: the unprefixed path redirects to the visitor's
+// language, where the guide does not exist (a German or Swedish visitor got a 404).
 function bonusGuideReadNextCard(article: PublicArticle, categoryTitle: string) {
-  return `<a href="${escapeHtml(articlePath(article))}" class="scp2" data-bonus-guide-read-next="" style="display: block; background: rgb(250, 250, 247); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 20px; padding: 32px 36px; color: rgb(16, 15, 15); text-decoration: none; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
+  const href = publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, articlePath(article));
+  return `<a href="${escapeHtml(href)}" class="scp2" data-bonus-guide-read-next="" style="display: block; background: rgb(250, 250, 247); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 20px; padding: 32px 36px; color: rgb(16, 15, 15); text-decoration: none; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
             <div style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(90, 89, 0); font-weight: 600; margin-bottom: 16px;">${escapeHtml(categoryTitle)}</div>
             <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 21px; line-height: 1.2; margin-bottom: 14px; color: rgb(16, 15, 15);">${escapeHtml(article.title)}</div>
             <div style="font-size: 13px; color: rgb(100, 99, 92);">${escapeHtml(article.readingTime || "Guide")}</div>
