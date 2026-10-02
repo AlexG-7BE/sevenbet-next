@@ -12,7 +12,23 @@ const PROGRAMME_MICROPHONE_ROUTES = [
   "/nb/program",
 ];
 
-const deniedBrowserCapabilities = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
+/**
+ * Short branded links for social profiles and posts (Founder, 2 Oct 2026): `b4gamble.com/ig` instead
+ * of a long UTM URL. Each is a temporary redirect to the homepage carrying the UTM tags that
+ * first-party analytics already reads, so per-network and per-post attribution keeps working.
+ * Post links take a short lower-case code (`/x/n11`) that lands in `utm_content`.
+ */
+const SOCIAL_SHORT_LINKS = [
+  { source: "/ig", destination: "/?utm_source=instagram&utm_medium=social&utm_campaign=bio&utm_content=link_in_bio" },
+  { source: "/fb", destination: "/?utm_source=facebook&utm_medium=social&utm_campaign=bio" },
+  { source: "/x", destination: "/?utm_source=x&utm_medium=social&utm_campaign=bio" },
+  { source: "/threads", destination: "/?utm_source=threads&utm_medium=social&utm_campaign=bio" },
+  { source: "/lana", destination: "/?utm_source=lana&utm_medium=social&utm_campaign=bio" },
+  { source: "/x/:post([a-z0-9-]{2,24})", destination: "/?utm_source=x&utm_medium=social&utm_campaign=post&utm_content=:post" },
+  { source: "/t/:post([a-z0-9-]{2,24})", destination: "/?utm_source=threads&utm_medium=social&utm_campaign=post&utm_content=:post" },
+];
+
+const deniedBrowserCapabilities ="camera=(), microphone=(), geolocation=(), payment=(), usb=()";
 const programmeBrowserCapabilities = "camera=(), microphone=(self), geolocation=(), payment=(), usb=()";
 
 /**
@@ -36,6 +52,10 @@ const nextConfig = {
   // Middleware owns canonical trailing-slash normalization for language,
   // protected and internal routes.
   skipTrailingSlashRedirect: true,
+  async redirects() {
+    // Temporary (307) so a link can be re-pointed later without browsers caching the old target.
+    return SOCIAL_SHORT_LINKS.map((link) => ({ ...link, permanent: false }));
+  },
   async headers() {
     return [
       {

@@ -12,6 +12,20 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Short social links — in review
+
+**Founder instruction, 2 October 2026:** replace the long UTM URLs in social
+bios and post link-replies with short branded links. `next.config.mjs` adds
+temporary (307) redirects to the homepage with the same UTM tags analytics
+already reads: `/ig`, `/fb`, `/x`, `/threads` (brand bios), `/lana` (the
+ambassador account) and `/x/<code>`, `/t/<code>` for X and Threads posts, where
+the lower-case post code becomes `utm_content`. They run before middleware, so
+geo and KZ rules apply on the homepage as usual. No route, data or tracking
+change. `tests/social-short-links.test.ts` pins the table and checks no short
+link shadows an app route or the affiliate paths `/r`, `/go`, `/outbound`.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Help-ad landing `/start` — in review
 
 **Founder instruction, 2 October 2026:** paid UK TikTok "help" ads need a
