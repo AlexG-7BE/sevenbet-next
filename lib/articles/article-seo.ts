@@ -16,13 +16,14 @@ function articleLanguageRoute(locale: string) {
  * A guide exists only in the language it was published in; nothing links a guide to a
  * translation. Its hreflang therefore names that language alone (plus x-default for an
  * English guide) instead of the default four-language set, whose de/sv/da URLs answered 404
- * for all 27 guides (audit 27 Sep 2026).
+ * for all 27 guides (audit 27 Sep 2026). The x-default is the English page itself, never the
+ * unprefixed path that only redirects (Semrush Site Audit, 2 Oct 2026).
  */
 export function articleLanguageAlternates(article: Pick<PublicArticle, "category" | "slug" | "locale">): Record<string, string> {
   const language = articleLanguageRoute(article.locale);
-  const pathname = articlePath(article);
+  const url = absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale as SupportedLocale, articlePath(article)));
   return {
-    [language.language]: absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale as SupportedLocale, pathname)),
-    ...(language.language === "en" ? { "x-default": absoluteUrl(pathname) } : {}),
+    [language.language]: url,
+    ...(language.language === "en" ? { "x-default": url } : {}),
   };
 }

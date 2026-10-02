@@ -251,10 +251,19 @@ const article: PublicArticle = {
 test("a Learn guide declares only the language it exists in", () => {
   assert.deepEqual(articleLanguageAlternates(article), {
     en: absoluteUrl("/en/learn/casino-bonuses/wagering-requirements"),
-    "x-default": absoluteUrl("/learn/casino-bonuses/wagering-requirements"),
+    "x-default": absoluteUrl("/en/learn/casino-bonuses/wagering-requirements"),
   });
   assert.deepEqual(Object.keys(articleLanguageAlternates({ ...article, locale: "de-DE" })), ["de"]);
   assert.match(read("app/(public)/learn/[category]/[slug]/page.tsx"), /languageAlternates: articleLanguageAlternates\(article\)/);
+});
+
+test("a guide's category crumb links the filtered hub itself, not the 308 category path", () => {
+  const view = read("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx");
+  const page = read("app/(public)/learn/[category]/[slug]/page.tsx");
+  for (const source of [view, page]) {
+    assert.match(source, /`\/learn\?category=\$\{encodeURIComponent\(article\.category\)\}`/);
+    assert.doesNotMatch(source, /`\/learn\/\$\{article\.category\}`/);
+  }
 });
 
 test("a language without its own guides lists the English guides, marked and linked as English", () => {

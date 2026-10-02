@@ -59,6 +59,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   return { ...metadata, alternates: { ...metadata.alternates, canonical }, openGraph: metadata.openGraph ? { ...metadata.openGraph, url: canonical } : metadata.openGraph };
 }
 
+// The category crumb names the filtered hub directly: `/learn/{category}` only answers a 308 to it.
 function breadcrumbSchema(article: PublicArticle, presentation: PresentationResolution) {
   const messages = learningMessages(presentation.locale);
   return {
@@ -67,7 +68,7 @@ function breadcrumbSchema(article: PublicArticle, presentation: PresentationReso
     itemListElement: [
       { "@type": "ListItem", position: 1, name: messages.ui.home, item: absoluteUrl(productCanonicalPath(presentation, "/")) },
       { "@type": "ListItem", position: 2, name: messages.ui.learningCenter, item: absoluteUrl(productCanonicalPath(presentation, "/learn")) },
-      { "@type": "ListItem", position: 3, name: categoryTitle(article.category, presentation.locale), item: absoluteUrl(productCanonicalPath(presentation, `/learn/${article.category}`)) },
+      { "@type": "ListItem", position: 3, name: categoryTitle(article.category, presentation.locale), item: absoluteUrl(productCanonicalPath(presentation, `/learn?category=${encodeURIComponent(article.category)}`)) },
       { "@type": "ListItem", position: 4, name: article.title, item: absoluteUrl(productCanonicalPath(presentation, articlePath(article))) },
     ],
   };

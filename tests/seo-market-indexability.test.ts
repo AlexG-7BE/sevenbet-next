@@ -12,7 +12,9 @@ import {
   marketProfileByCountry,
   type MarketProfile,
 } from "../lib/market/registry";
-import { productLanguageAlternatesForProfiles, productMetadata } from "../lib/market/product-context";
+import { localizedProductIndexingApproved, productLanguageAlternatesForProfiles, productMetadata } from "../lib/market/product-context";
+import { PROGRAMME_ROUTES } from "../lib/programme/presentation";
+import { programmeSearchMetadata } from "../lib/seo/programme-metadata";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 
 function profile(countryCode: "GB" | "SE" | "PE") {
@@ -62,7 +64,7 @@ test("noindex languages keep self canonicals without contradictory hreflang", ()
   }
 });
 
-test("GB is indexable with canonical, reciprocal-ready hreflang, and x-default", () => {
+test("GB is indexable with canonical, reciprocal-ready hreflang, and an x-default that never redirects", () => {
   const previous = process.env.VERCEL_ENV;
   process.env.VERCEL_ENV = "production";
   try {
@@ -72,7 +74,7 @@ test("GB is indexable with canonical, reciprocal-ready hreflang, and x-default",
     assert.deepEqual(metadata.robots, { index: true, follow: true });
     const languages = metadata.alternates?.languages as Record<string, string>;
     assert.equal(new URL(languages.en).pathname, "/en/casinos");
-    assert.equal(new URL(languages["x-default"]).pathname, "/casinos");
+    assert.equal(new URL(languages["x-default"]).pathname, "/en/casinos");
     assert.equal(new URL(languages.sv).pathname, "/sv/casinos");
     assert.deepEqual(Object.keys(languages).sort(), ["da", "de", "en", "sv", "x-default"]);
   } finally {
@@ -91,7 +93,7 @@ test("a future policy-only INDEX switch updates sitemap inputs while hreflang st
   assert.equal(new URL(languages.en).pathname, "/en/casinos");
   assert.equal(new URL(languages.sv).pathname, "/sv/casinos");
   assert.equal(new URL(languages.es).pathname, "/es/casinos");
-  assert.equal(new URL(languages["x-default"]).pathname, "/casinos");
+  assert.equal(new URL(languages["x-default"]).pathname, "/en/casinos");
 });
 
 test("layout, sitemap, robots metadata, and canonicalization use the centralized contract", () => {
@@ -125,4 +127,51 @@ test("the sitemap lists no page that asks search engines not to index it", () =>
   } as unknown as Parameters<typeof indexableMarketProductPaths>[0];
   const { casinoRoutes } = indexableMarketProductPaths(snapshot, true);
   assert.deepEqual(casinoRoutes.map((entry) => new URL(entry.url).pathname), ["/en/casino/alpha"]);
+});
+
+// Semrush Site Audit, 2 Oct 2026: 27 incorrect hreflang links and 3 hreflang conflicts.
+test("only an indexable canonical page names its language versions", () => {
+  const previous = process.env.VERCEL_ENV;
+  process.env.VERCEL_ENV = "production";
+  try {
+    const presentation = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "GB" });
+    const base = { presentation, pathname: "/casino/starcasino", title: "Review", description: "Review" };
+    const indexable = productMetadata({ ...base, robots: { index: true, follow: true } });
+    assert.ok(indexable.alternates?.languages);
+    for (const robots of [{ index: false, follow: true }, "noindex, follow", "none"] as const) {
+      assert.equal(productMetadata({ ...base, robots }).alternates?.languages, undefined, `robots ${JSON.stringify(robots)}`);
+    }
+    const filtered = productMetadata({ ...base, pathname: "/learn", queryVariant: true });
+    assert.equal(new URL(String(filtered.alternates?.canonical)).pathname, "/en/learn");
+    assert.equal(filtered.alternates?.languages, undefined);
+  } finally {
+    if (previous === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previous;
+  }
+  const copy = { title: "Programme", description: "Programme" };
+  assert.ok(programmeSearchMetadata("de-DE", copy).alternates?.languages);
+  const start = programmeSearchMetadata("de-DE", copy, { queryVariant: true });
+  assert.equal(new URL(String(start.alternates?.canonical)).pathname, "/de/program");
+  assert.equal(start.alternates?.languages, undefined);
+  assert.match(readFileSync("app/program/page.tsx", "utf8"), /queryVariant: Object\.keys\(query\)\.length > 0/);
+  assert.match(readFileSync("app/(public)/learn/page.tsx", "utf8"), /queryVariant: Object\.keys\(query\)\.length > 0/);
+});
+
+test("every hreflang target is a page that answers 200: no unprefixed x-default", () => {
+  const languages = programmeSearchMetadata("en-GB", { title: "Programme", description: "Programme" }).alternates?.languages as Record<string, string>;
+  assert.equal(new URL(languages["x-default"]).pathname, "/program");
+  const home = productLanguageAlternatesForProfiles("/", [profile("GB"), profile("SE")]);
+  assert.equal(new URL(home["x-default"]).pathname, "/en");
+  assert.equal(home["x-default"], home.en);
+});
+
+test("the sitemap lists the Programme in every language it indexes", () => {
+  const localized = PROGRAMME_ROUTES.filter((route) => localizedProductIndexingApproved(route.locale)).map((route) => route.path);
+  assert.deepEqual([...localized].sort(), ["/da/program", "/de/program", "/sv/program"]);
+  assert.match(readFileSync("app/sitemap.ts", "utf8"), /\.\.\.localizedProgrammeRoutes,/);
+});
+
+test("listing pages never publish an empty ItemList", () => {
+  assert.match(readFileSync("app/(public)/best-offers/page.tsx", "utf8"), /PUBLISHED_ONLY" && schemaOffers\.length > 0 \?/);
+  assert.match(readFileSync("app/(public)/bonuses/page.tsx", "utf8"), /PUBLISHED_ONLY" && result\.records\.length > 0 \?/);
+  assert.match(readFileSync("app/(public)/casinos/page.tsx", "utf8"), /PUBLISHED_ONLY" && result\.items\.length > 0 \?/);
 });

@@ -12,6 +12,42 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Semrush Site Audit errors — in review
+
+**Founder instruction, 2 October 2026:** clear the Semrush Site Audit of
+b4gamble.com (Site Health 90%, 31 errors, 205 warnings over 100 crawled pages).
+A local production build crawled with the Semrush user agent from a US exit
+reproduced every error:
+
+- **27 incorrect hreflang links.** `x-default` named the unprefixed path
+  (`/casinos`, `/learn/...`), which only answers a 307 to the visitor's
+  language. It now names the English page itself (`/en/casinos`); the
+  Programme's `/program` already answered 200. A noindex page (`/casino/starcasino`)
+  no longer carries hreflang, so no page names a noindex target.
+- **3 hreflang conflicts.** Query variants (`/learn?category=...`,
+  `/program?entry=start`) canonicalise to the bare page and now carry no
+  hreflang of their own.
+- **1 invalid structured data item.** `/best-offers` published an empty
+  `ItemList` when the visitor's country had no ranked offer (the crawler's US).
+  `/best-offers`, `/bonuses` and `/casinos` publish an `ItemList` only with items.
+
+Also: a guide's category crumb links `/{lang}/learn?category=...` instead of
+the `/learn/{category}` path that only answers a 308, and the sitemap lists
+`/de/program`, `/sv/program` and `/da/program`, which were indexable with
+hreflang but missing. This supersedes the neutral `x-default` of
+GEO-LOCALIZATION-01. Regression tests: `tests/seo-market-indexability.test.ts`,
+`tests/crawler-ready-metadata.test.ts`.
+
+**Not changed, Founder choice pending:** the low text-to-HTML ratio warning
+(every page is under Semrush's 10%: the Next.js page payload is about two thirds
+of the HTML), the low word count of the Programme entry pages, the unprefixed
+geo-routing links of pages without a language prefix (`/program`, `/terms`,
+`/affiliate-disclosure`, `/bonus-guide`, the Help handoff), which Semrush counts
+as temporary redirects, and external support links (GamCare, NICE, MoneyHelper,
+FTC) that answer 403 to crawlers but open for people.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Short social links — in review
 
 **Founder instruction, 2 October 2026:** replace the long UTM URLs in social
