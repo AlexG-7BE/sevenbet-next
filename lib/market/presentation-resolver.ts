@@ -24,6 +24,11 @@ export type PresentationResolution = Readonly<{
   source: "EXPLICIT_ROUTE" | "USER_PREFERENCE" | "TRUSTED_GEO" | "ACCEPT_LANGUAGE" | "DEFAULT";
   marketSource: "TRUSTED_GEO" | "UNKNOWN";
   explicitRouteValid: boolean;
+  /**
+   * Set on server-resolved requests: the locale an unprefixed public link (`/casinos`) would
+   * redirect this visitor to, so pages can link there directly (lib/market/neutral-route.ts).
+   */
+  neutralRouteLocale?: SupportedLocale;
 }>;
 
 function normalizedCountryCode(value: string | null | undefined) {

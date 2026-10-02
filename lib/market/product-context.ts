@@ -13,7 +13,7 @@ import {
   type MarketProfile,
   type SupportedLocale,
 } from "./registry";
-import { isLocalizedPublicDestination, localizePublicPath } from "./routing";
+import { finalPublicHref, isLocalizedPublicDestination, localizePublicPath } from "./routing";
 
 export const PRODUCT_TRANSLATION_REVIEW_STATE = {
   ...Object.fromEntries(Object.entries(TRANSLATION_REVIEW_STATE).map(([locale, state]) => [
@@ -44,7 +44,7 @@ export function productHref(presentation: PresentationResolution, href: string) 
   const profile = editorialProfile(presentation);
   return presentation.source === "EXPLICIT_ROUTE" && isLocalizedPublicDestination(href, profile)
     ? localizePublicPath(profile, presentation.locale, href)
-    : href;
+    : finalPublicHref(href, presentation.neutralRouteLocale);
 }
 
 export function productCanonicalPath(presentation: PresentationResolution, pathname: string) {

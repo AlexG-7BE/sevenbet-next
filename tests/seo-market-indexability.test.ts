@@ -14,6 +14,9 @@ import {
 } from "../lib/market/registry";
 import { localizedProductIndexingApproved, productLanguageAlternatesForProfiles, productMetadata } from "../lib/market/product-context";
 import { PROGRAMME_ROUTES } from "../lib/programme/presentation";
+import { finalPublicHref } from "../lib/market/routing";
+import { neutralRouteLocale } from "../lib/market/neutral-route";
+import { currentProgrammeCopy } from "../lib/i18n/static-pages/ten-steps";
 import { programmeSearchMetadata } from "../lib/seo/programme-metadata";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 
@@ -101,7 +104,9 @@ test("layout, sitemap, robots metadata, and canonicalization use the centralized
   assert.match(readFileSync("app/sitemap.ts", "utf8"), /localizedIndexableMarketProfiles/);
   assert.match(readFileSync("lib/market/product-context.ts", "utf8"), /productIndexingApproved/);
   const middleware = readFileSync("middleware.ts", "utf8");
-  assert.match(middleware, /publicPresentationAvailable/);
+  assert.match(middleware, /neutralRouteLocale\(/);
+  assert.match(middleware, /neutralRouteDestination\(publicMarketRoute\.pathname, locale\)/);
+  assert.match(readFileSync("lib/market/neutral-route.ts", "utf8"), /publicPresentationAvailable/);
   assert.match(middleware, /languageRouteByPublicSlug/);
   assert.match(middleware, /withoutCountryQuery/);
   assert.match(readFileSync("app/robots.ts", "utf8"), /sitemap: absoluteUrl\("\/sitemap\.xml"\)/);
@@ -174,4 +179,45 @@ test("listing pages never publish an empty ItemList", () => {
   assert.match(readFileSync("app/(public)/best-offers/page.tsx", "utf8"), /PUBLISHED_ONLY" && schemaOffers\.length > 0 \?/);
   assert.match(readFileSync("app/(public)/bonuses/page.tsx", "utf8"), /PUBLISHED_ONLY" && result\.records\.length > 0 \?/);
   assert.match(readFileSync("app/(public)/casinos/page.tsx", "utf8"), /PUBLISHED_ONLY" && result\.items\.length > 0 \?/);
+});
+
+// Founder, 2 Oct 2026: pages without a language prefix link where the neutral 307 would go.
+test("an unprefixed public link resolves past the neutral redirect, everything else stays", () => {
+  assert.equal(finalPublicHref("/casinos", "de-DE"), "/de/casinos");
+  assert.equal(finalPublicHref("/", "sv-SE"), "/sv");
+  assert.equal(finalPublicHref("/learn?category=payments", "en-GB"), "/en/learn?category=payments");
+  assert.equal(finalPublicHref("/compare", "da-DK"), "/da/casinos");
+  assert.equal(finalPublicHref("/help#pause", "en-GB"), "/en/help#pause");
+  for (const href of ["/program", "/terms", "/bonus-guide", "/en/casinos", "/r/partner", "https://example.com/", "#main-content", "//evil.example"]) {
+    assert.equal(finalPublicHref(href, "de-DE"), href, href);
+  }
+  assert.equal(finalPublicHref("/casinos", undefined), "/casinos");
+});
+
+test("the neutral redirect and page links share one locale resolution", () => {
+  assert.equal(neutralRouteLocale({ preference: null, trustedCountryCode: null, acceptLanguage: "de-DE,de;q=0.9" }), "de-DE");
+  assert.equal(neutralRouteLocale({ preference: null, trustedCountryCode: null, acceptLanguage: "en-US,en;q=0.9" }), "en-GB");
+  assert.equal(neutralRouteLocale({ preference: null, trustedCountryCode: "SE", acceptLanguage: null }), "sv-SE");
+  const server = readFileSync("lib/market/server.ts", "utf8");
+  assert.match(server, /neutralRouteLocale: neutralLocale/);
+  for (const file of ["lib/market/product-context.ts", "components/public-shell/PublicHeader.tsx", "components/public-shell/PublicNavigation.tsx", "components/public-shell/PublicNavigationClient.tsx", "components/public-shell/PublicFooter.tsx"]) {
+    assert.match(readFileSync(file, "utf8"), /finalPublicHref\(/, file);
+  }
+});
+
+test("the Programme entry screens tell crawlers and visitors what the ten steps are", () => {
+  for (const locale of ["en-GB", "de-DE", "sv-SE", "da-DK"] as const) {
+    const copy = currentProgrammeCopy(locale);
+    assert.equal(copy.missions.length, 10, locale);
+    const words = [copy.overview, ...copy.missions.flatMap((mission) => [mission.title, mission.description])].join(" ").split(/\s+/).length;
+    assert.ok(words >= 120, `${locale}: ${words} words`);
+  }
+  const page = readFileSync("app/program/page.tsx", "utf8");
+  assert.match(page, /entryOverview=\{<ProgrammeStepsOverview locale=\{locale\} \/>\}/);
+  const experience = readFileSync("components/programme/ProgramAiExperience.tsx", "utf8");
+  // Only the loading and access screens carry the overview; no Mission, review or home screen does.
+  assert.equal((experience.match(/\{ entry: true \}\)/g) ?? []).length, 3);
+  assert.match(experience, /if \(phase === "loading" \|\| sessionPending\) return renderPhase\(<ProgrammeLoadingScreen locale=\{locale\} \/>, \{ entry: true \}\);/);
+  assert.match(experience, /if \(phase === "access"\) return renderPhase\(<ProgrammeAccessScreen [^\n]*, \{ entry: true \}\);/);
+  assert.doesNotMatch(experience, /renderPhase\(<(?:Mission01IntakeScreen|ProgramAiMissionExperience|ProgramAiReviewScreen|ProgramAiHomeScreen|StartingPointReadyScreen)[^\n]*entry: true/);
 });

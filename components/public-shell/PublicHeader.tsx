@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { resolvePresentationContext, type PresentationResolution } from "@/lib/market/presentation-resolver";
 import { DEFAULT_MARKET_PROFILE, PUBLISHED_LANGUAGE_ROUTE_PROFILES, marketProfileByLocale, publicMarketPath } from "@/lib/market/registry";
+import { finalPublicHref } from "@/lib/market/routing";
 import { commercialDestinationsNavigable, type PublicAccountNavigation } from "@/lib/public-shell";
 import type { CommercialProductState } from "@/lib/market/commercial-product-state";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
@@ -41,7 +42,7 @@ export function PublicHeader({
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
     ? publicMarketPath(editorialProfile, presentation.locale)
-    : "/";
+    : finalPublicHref("/", presentation.neutralRouteLocale);
   return (
     <header className={styles.header} data-public-shell="header" data-shell-theme="dark">
       <div className={styles.headerInner}>

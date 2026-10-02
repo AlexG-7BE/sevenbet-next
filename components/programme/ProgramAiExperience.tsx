@@ -156,10 +156,13 @@ async function programAiRequest<T>(
 }
 
 export function ProgramAiExperience({
+  entryOverview,
   googleAvailable = false,
   locale,
   programmePath,
 }: {
+  /** Server-rendered "what the ten steps are", shown under the entry screens only. */
+  entryOverview?: ReactNode;
   googleAvailable?: boolean;
   locale: ProgrammeLocale;
   programmePath: string;
@@ -731,22 +734,25 @@ export function ProgramAiExperience({
     return () => window.cancelAnimationFrame(frame);
   }, [phase]);
 
-  const renderPhase = (screen: ReactNode) => (
-    <div
-      aria-label={programmeText(locale, "Programme {phase} screen", { phase: programmeText(locale, phaseMessageKeys[phase]) })}
-      className={styles.phaseBoundary}
-      data-programme-phase={phase}
-      data-runtime-renderer="programme"
-      ref={phaseFocusRef}
-      role="region"
-      tabIndex={-1}
-    >
-      {screen}
-    </div>
+  const renderPhase = (screen: ReactNode, options: { entry?: boolean } = {}) => (
+    <>
+      <div
+        aria-label={programmeText(locale, "Programme {phase} screen", { phase: programmeText(locale, phaseMessageKeys[phase]) })}
+        className={styles.phaseBoundary}
+        data-programme-phase={phase}
+        data-runtime-renderer="programme"
+        ref={phaseFocusRef}
+        role="region"
+        tabIndex={-1}
+      >
+        {screen}
+      </div>
+      {options.entry ? entryOverview : null}
+    </>
   );
 
-  if (phase === "loading" || sessionPending) return renderPhase(<ProgrammeLoadingScreen locale={locale} />);
-  if (phase === "access") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />);
+  if (phase === "loading" || sessionPending) return renderPhase(<ProgrammeLoadingScreen locale={locale} />, { entry: true });
+  if (phase === "access") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />, { entry: true });
   if (phase === "intake") return renderPhase(<Mission01IntakeScreen busy={busy} error={error} getRealtimeRequestHeaders={() => subject ? programmeMutationAccessHeaders(window.sessionStorage, subject) : {}} locale={locale} onPrepareVoice={ensureSensitiveAuthority} onSituation={(situation, source) => { const next = { ...local, situation, inputMode: source }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(true)} onTranscribe={transcribeVoice} onVoiceTiming={recordVoiceTiming} onAccountFirst={startAccountFirst} situation={local.situation} />);
   if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} locale={locale} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
   if (phase === "registration" && (local.candidate || local.accountFirst)) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} onBack={returnToIntake} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} />);
@@ -754,5 +760,5 @@ export function ProgramAiExperience({
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
   if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} programmePath={programmePath} unconfirmedEmail={session.user.emailVerified ? null : session.user.email} userId={session.user.id} />);
   if (phase === "home") return renderPhase(<ProgrammeUnavailableScreen error={error} locale={locale} />);
-  return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />);
+  return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />, { entry: true });
 }

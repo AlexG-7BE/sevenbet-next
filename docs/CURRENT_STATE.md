@@ -43,13 +43,27 @@ This supersedes the neutral `x-default` of
 GEO-LOCALIZATION-01. Regression tests: `tests/seo-market-indexability.test.ts`,
 `tests/crawler-ready-metadata.test.ts`.
 
-**Not changed, Founder choice pending:** the low text-to-HTML ratio warning
-(every page is under Semrush's 10%: the Next.js page payload is about two thirds
-of the HTML), the low word count of the Programme entry pages, the unprefixed
-geo-routing links of pages without a language prefix (`/program`, `/terms`,
-`/affiliate-disclosure`, `/bonus-guide`, the Help handoff), which Semrush counts
-as temporary redirects, and external support links (GamCare, NICE, MoneyHelper,
-FTC) that answer 403 to crawlers but open for people.
+**Founder answers, 2 October 2026 (question tool):**
+
+- **Low text-to-HTML ratio: accepted as is.** Every page is under Semrush's 10%
+  because the Next.js page payload is about two thirds of the HTML; Google does
+  not use the ratio.
+- **Programme entry pages: a "what the ten steps are" block.** The Programme
+  renders its loading screen on the server, so crawlers saw almost no text on
+  `/program`. `ProgrammeStepsOverview` shows the heading, overview and ten
+  Missions of the 10 Steps page (already translated in every Programme
+  language) plus two privacy lines, under the loading and access screens only;
+  no Mission, review, registration or home screen carries it.
+- **Final links instead of the neutral 307.** A page links an unprefixed public
+  path (`/casinos`, `/help`, `/`) straight to the language route the middleware
+  would redirect this visitor to: `neutralRouteLocale` in
+  `lib/market/neutral-route.ts` serves both the middleware and
+  `resolveServerPresentationContext` (`neutralRouteLocale` on the
+  presentation), and `finalPublicHref` in `lib/market/routing.ts` resolves the
+  header, navigation, footer and `productHref` links. Same destination, no
+  redirect hop. The Help handoff and the error page keep their own links.
+- External support links (GamCare, NICE, MoneyHelper, FTC) answer 403 to
+  crawlers but open for people; they stay.
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 

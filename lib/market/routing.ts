@@ -252,3 +252,23 @@ export function localizePublicHref(href: string, currentPathname: string, profil
     ? localizePublicPath(profile, locale, href)
     : href;
 }
+
+/** The language route of an unprefixed public path. `/compare` folds into the directory. */
+export function neutralRouteDestination(pathname: string, locale: SupportedLocale) {
+  const equivalentPathname = pathname === "/compare" ? "/casinos" : pathname;
+  return publicMarketPath(marketProfileByLocale(locale) ?? DEFAULT_MARKET_PROFILE, locale, equivalentPathname);
+}
+
+/**
+ * A link to an unprefixed public path, resolved past the neutral redirect for this visitor
+ * (Founder, 2 Oct 2026: Semrush counted the 307s as temporary redirects). Every other href,
+ * and every href when the visitor's locale is unknown, stays as it is.
+ */
+export function finalPublicHref(href: string, locale: SupportedLocale | null | undefined) {
+  if (!locale || !href.startsWith("/") || href.startsWith("//")) return href;
+  const suffixIndex = href.search(/[?#]/);
+  const pathname = suffixIndex >= 0 ? href.slice(0, suffixIndex) : href;
+  const route = parsePublicMarketRoute(pathname);
+  if (route.kind !== "MARKET_NEUTRAL") return href;
+  return neutralRouteDestination(route.pathname, locale) + (suffixIndex >= 0 ? href.slice(suffixIndex) : "");
+}

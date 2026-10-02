@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { ProgramAiExperience } from "@/components/programme/ProgramAiExperience";
+import { ProgrammeStepsOverview } from "@/components/programme/ProgrammeStepsOverview";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { isGoogleAuthAvailable } from "@/lib/auth/google-config";
 import { programmeText } from "@/lib/i18n/programme-catalog";
@@ -54,7 +55,7 @@ export default async function ProgramPage() {
     <>
       <JsonLd data={breadcrumbSchema(locale)} />
       <div data-nav-theme="dark" data-public-programme-renderer="program-ai" tabIndex={-1}>
-        <ProgramAiExperience googleAvailable={isGoogleAuthAvailable()} locale={locale} programmePath={path} />
+        <ProgramAiExperience entryOverview={<ProgrammeStepsOverview locale={locale} />} googleAvailable={isGoogleAuthAvailable()} locale={locale} programmePath={path} />
       </div>
     </>
   );
