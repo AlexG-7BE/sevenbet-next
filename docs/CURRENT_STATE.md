@@ -12,6 +12,23 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Help-ad landing `/start` — in review
+
+**Founder instruction, 2 October 2026:** paid UK TikTok "help" ads need a
+landing page without casino navigation, because every public page shows Best
+Offers, Casinos and Bonuses in its header. Branch `feat/ad-landing-start` adds
+`/start`: the `/10-steps` presentation (no About link) in its own shell outside
+the `(public)` group, with the wordmark, Mission 01 actions to
+`/program?entry=start`, and a footer with 18+, the Programme disclaimer, the
+verified UK support links (GamCare, GAMSTOP; no phone numbers), Privacy, Terms
+and Cookie settings. One English page for every visitor; `noindex, follow`;
+outside the sitemap and llms.txt; KZ still gets 451. No new advertising,
+analytics or tracking technology: the root layout's cookie choice and
+first-party analytics apply as on any page. `/program` itself still shows the
+public header with commercial navigation.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Server Learn cycle returns behind a switch, on GPT-5.6 Sol — live 1 October 2026
 
 **Founder instruction, 1 October 2026**

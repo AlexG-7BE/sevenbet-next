@@ -60,6 +60,8 @@ export const PUBLIC_LOCALIZATION_ROUTE_MANIFEST = [
   { root: "responsible-gambling", match: "SUBTREE", policy: "UNPREFIXED_ONLY" },
   { root: "responsible-gaming", match: "EXACT", policy: "UNPREFIXED_ONLY" },
   { root: "self-check", match: "EXACT", policy: "UNPREFIXED_ONLY" },
+  // The UK help-ad landing: one English page for every visitor, never under a language prefix.
+  { root: "start", match: "EXACT", policy: "UNPREFIXED_ONLY" },
   { root: "tools", match: "SUBTREE", policy: "UNPREFIXED_ONLY" },
 
   { root: "affiliate-disclosure", match: "EXACT", policy: "LEGAL_REVIEW_GATED" },

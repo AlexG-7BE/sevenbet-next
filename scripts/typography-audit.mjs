@@ -15,6 +15,7 @@ const allowedDecorativeMicrotype = new Map([
 
 const finalPublicPrefixes = [
   "app/(public)/",
+  "app/start/",
   "components/best-offers/",
   "components/bonus-directory/",
   "components/casino-discovery/",

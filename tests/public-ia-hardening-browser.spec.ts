@@ -80,6 +80,33 @@ test("retired destinations are redirects and absent from canonical discovery", a
   expect(sitemap).toContain("https://b4gamble.com/bonus-guide");
 });
 
+test("the /start help-ad landing has no commercial destination, stays noindex and fits a phone", async ({ browser, request }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  const response = await page.goto(`${baseUrl}/start`, { waitUntil: "networkidle" });
+  expect(response?.status()).toBe(200);
+  await expect(page).toHaveURL(`${baseUrl}/start`);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, follow");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/start");
+  await expect(page.locator("[data-public-shell]")).toHaveCount(0);
+  await expect(page.locator('a[href*="/best-offers"], a[href*="/casinos"], a[href*="/bonuses"], a[href*="/casino/"], a[href*="/r/"], a[href*="/go/"], a[href="/about"], a[href="/"]')).toHaveCount(0);
+  expect(await page.locator("body").innerText()).not.toMatch(/Best Offers|Casinos|Bonuses/);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.locator("[data-ten-steps-hero-action]")).toHaveAttribute("href", "/program?entry=start");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  const footer = page.locator('footer[data-start-shell="footer"]');
+  await expect(footer.getByText("18+")).toBeVisible();
+  await expect(footer.getByText(/does not diagnose or treat gambling addiction/)).toBeVisible();
+  await expect(footer.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
+  await expect(footer.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
+  await context.close();
+
+  const sitemap = await (await request.get(`${baseUrl}/sitemap.xml`)).text();
+  const llms = await (await request.get(`${baseUrl}/llms.txt`)).text();
+  expect(sitemap).not.toContain("https://b4gamble.com/start<");
+  expect(llms).not.toContain("https://b4gamble.com/start)");
+});
+
 test("SEO identities remain distinct and the public Article API is truthfully empty", async ({ page, request }) => {
   const identities = [
     ["/responsible-gambling", "/en/responsible-gambling", /Responsible Gambling \| B4GAMBLE/],
