@@ -251,10 +251,19 @@ const article: PublicArticle = {
 test("a Learn guide declares only the language it exists in", () => {
   assert.deepEqual(articleLanguageAlternates(article), {
     en: absoluteUrl("/en/learn/casino-bonuses/wagering-requirements"),
-    "x-default": absoluteUrl("/learn/casino-bonuses/wagering-requirements"),
+    "x-default": absoluteUrl("/en/learn/casino-bonuses/wagering-requirements"),
   });
   assert.deepEqual(Object.keys(articleLanguageAlternates({ ...article, locale: "de-DE" })), ["de"]);
   assert.match(read("app/(public)/learn/[category]/[slug]/page.tsx"), /languageAlternates: articleLanguageAlternates\(article\)/);
+});
+
+test("a guide's category crumb links the filtered hub itself, not the 308 category path", () => {
+  const view = read("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx");
+  const page = read("app/(public)/learn/[category]/[slug]/page.tsx");
+  for (const source of [view, page]) {
+    assert.match(source, /`\/learn\?category=\$\{encodeURIComponent\(article\.category\)\}`/);
+    assert.doesNotMatch(source, /`\/learn\/\$\{article\.category\}`/);
+  }
 });
 
 test("a language without its own guides lists the English guides, marked and linked as English", () => {
@@ -287,6 +296,13 @@ test("a language hub lists its own guides first, then the English guides marked 
   assert.doesNotMatch(hub, /lang="en"[^>]*>Omsättningskrav/);
   assert.ok(hub.indexOf("Omsättningskrav") < hub.indexOf("Wagering requirements explained"));
   assert.match(read("app/(public)/learn/page.tsx"), /const articles = \[\.\.\.localizedArticles, \.\.\.englishArticles\];/);
+});
+
+test("a guide missing in the visitor's language opens in English instead of a 404", () => {
+  const page = read("app/(public)/learn/[category]/[slug]/page.tsx");
+  assert.match(page, /await loadArticle\(category, slug, DEFAULT_MARKET_PROFILE\.defaultLocale\)/);
+  assert.match(page, /if \(english\) redirect\(publicMarketPath\(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE\.defaultLocale, articlePath\(english\)\)\);/);
+  assert.ok(page.indexOf("if (english) redirect(") < page.indexOf("retiredArticleSuccessor(category, slug)"));
 });
 
 test("the retired odds guide moves permanently to its successor", () => {

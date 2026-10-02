@@ -7,7 +7,7 @@ import { analyticsConsentMessages } from "@/lib/i18n/analytics-consent-catalog";
 import { publicFooterMessages, publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
-import { isLocalizedPublicDestination, localizePublicPath } from "@/lib/market/routing";
+import { finalPublicHref, isLocalizedPublicDestination, localizePublicPath } from "@/lib/market/routing";
 import { DEFAULT_MARKET_PROFILE, marketProfileByLocale } from "@/lib/market/registry";
 import type { CommercialProductState } from "@/lib/market/commercial-product-state";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
@@ -50,7 +50,7 @@ export function PublicFooter({
       && (!programme || programme.localizePublicLinks)
       && isLocalizedPublicDestination(href, editorialProfile)
       ? localizePublicPath(editorialProfile, presentation.locale, href)
-      : href;
+      : finalPublicHref(href, presentation.neutralRouteLocale);
   };
   return (
     <footer aria-label={footer.label} className={styles.footer} data-public-shell="footer">
@@ -99,7 +99,7 @@ export function PublicCommercialFooterLink({
     && programme.localizePublicLinks
     && isLocalizedPublicDestination(href, editorialProfile)
     ? localizePublicPath(editorialProfile, presentation.locale, href)
-    : href;
+    : finalPublicHref(href, presentation.neutralRouteLocale);
 
   const label = destination === "/best-offers" ? shell.bestOffers : shell.bonuses;
   return <Link data-footer-navigation-href={destination} href={localizedHref(destination)} prefetch={false}>{label}</Link>;

@@ -121,7 +121,9 @@ async function BestOffersContent({ raw }: { raw: Record<string, string | string[
     country: presentation.marketCountryCode ?? undefined,
     limit: 3,
   });
-  const schema = result.status === "available" && result.inventoryMode === "PUBLISHED_ONLY" ? {
+  // An ItemList without items is invalid structured data (Semrush, 2 Oct 2026: a visitor
+  // country with no ranked offer, such as the crawler's US, rendered an empty list).
+  const schema = result.status === "available" && result.inventoryMode === "PUBLISHED_ONLY" && schemaOffers.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: `B4GAMBLE ${market} ${messages.bestOffers.sectionTitle}`,

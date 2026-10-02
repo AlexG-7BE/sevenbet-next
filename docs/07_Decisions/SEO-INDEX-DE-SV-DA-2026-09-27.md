@@ -9,7 +9,7 @@
 - **German, Swedish and Danish are indexable.** `lib/market/registry.ts`:
   - `LANGUAGE_ROUTE_PROFILES` for `de`, `sv` and `da` is `indexable: true` with no publication blocker. This drives page robots (`productIndexingApproved`) and hreflang (`productLanguageAlternates`).
   - `MARKET_PUBLICATION_POLICY` for DE, SE and DK is `indexable: true` with no blocker, reviewed 27 September 2026. This drives the localized sitemap (`marketIndexingApproved`).
-- **Every indexable page carries reciprocal hreflang** for `en`, `de`, `sv`, `da` and `x-default`.
+- **Every indexable page carries reciprocal hreflang** for `en`, `de`, `sv`, `da` and `x-default`. Since 2 October 2026 (Semrush Site Audit) `x-default` names the English page, not the unprefixed path that redirects, and noindex pages and query variants carry no hreflang.
 - **The sitemap lists each indexable market's core pages.** It lists the same core pages as the English sitemap wherever the market has a localized route: home, 10 Steps, Learn, Responsible Gambling, Help, Methodology, About, Contact and FAQ. The market's published product pages and casino reviews are listed too, as before.
 - **Spanish, Greek, Italian, Portuguese, Dutch, Finnish and Norwegian stay noindex** and outside the sitemap until the Founder opens them.
 

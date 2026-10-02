@@ -15,6 +15,8 @@ import {
   type MarketProfile,
 } from "@/lib/market/registry";
 import { isLocalizedPublicDestination } from "@/lib/market/routing";
+import { localizedProductIndexingApproved } from "@/lib/market/product-context";
+import { PROGRAMME_ROUTES } from "@/lib/programme/presentation";
 import { bonusDirectoryIndexable } from "@/lib/seo/product-indexing";
 
 export const dynamic = "force-dynamic";
@@ -140,6 +142,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "monthly" as const,
         priority: pathname === "/" ? 1 : pathname === "/learn" ? 0.8 : 0.7,
       })));
+  // The Programme has its own language routes (`/de/program`) outside the public route manifest.
+  // Every one it marks indexable, with hreflang, is listed too (lib/seo/programme-metadata.ts).
+  const localizedProgrammeRoutes = PROGRAMME_ROUTES
+    .filter((route) => localizedProductIndexingApproved(route.locale))
+    .map((route) => ({
+      url: absoluteUrl(route.path),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    }));
 
   return [
     ...coreRoutes.map((route) => {
@@ -160,6 +171,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...learningArticleRoutes,
     ...localizedEditorialRoutes,
+    ...localizedProgrammeRoutes,
     ...baseProducts.casinoRoutes,
     ...localizedProducts.flatMap((entry) => entry.casinoRoutes),
   ];

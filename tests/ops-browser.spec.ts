@@ -113,9 +113,10 @@ test("legacy outbound routes redirect internally and governed failures recover w
   expect(response?.status()).toBe(200);
   await expect(page).toHaveURL(/\/outbound\/unavailable\?link=not-a-real-managed-destination$/);
   // An unknown slug names no casino: the page leads to published offers and home, never to a partner.
+  // The links go straight to the visitor's language route, past the neutral redirect.
   await expect(page.locator('[data-recovery-action="review"]')).toHaveCount(0);
-  await expect(page.locator('[data-recovery-action="best-offers"]')).toHaveAttribute("href", "/best-offers");
-  await expect(page.locator('[data-recovery-action="home"]')).toHaveAttribute("href", "/");
+  await expect(page.locator('[data-recovery-action="best-offers"]')).toHaveAttribute("href", "/en/best-offers");
+  await expect(page.locator('[data-recovery-action="home"]')).toHaveAttribute("href", "/en");
   await expect(page.locator('main a[href^="/r/"], main a[href^="/outbound/"], main a[href^="/go/"], main a[href^="http"], main a[href^="/casinos"], main a[href^="/bonuses"]')).toHaveCount(0);
 
   await page.goto(`${baseUrl}/outbound/unavailable?link=%3Cscript%3E`, { waitUntil: "domcontentloaded" });

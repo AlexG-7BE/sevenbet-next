@@ -12,7 +12,8 @@ test("unknown route is a branded noindex HTTP 404 with safe no-JS recovery", asy
   const heading = page.getByRole("heading", { level: 1, name: "404" });
   await expect(heading).toBeVisible();
   await expect(heading.locator("..")).toContainText(errors.notFoundLost);
-  await expect(page.getByRole("link", { name: errors.notFoundHome, exact: true })).toHaveAttribute("href", "/");
+  // The home link goes straight to the visitor's language route, past the neutral redirect.
+  await expect(page.getByRole("link", { name: errors.notFoundHome, exact: true })).toHaveAttribute("href", "/en");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/i);
   await expect(page.locator("body")).not.toContainText(/digest|stack|database|provider/iu);
 });

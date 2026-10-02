@@ -5,6 +5,7 @@ import { cache } from "react";
 
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import { parsePresentationPreference, PRESENTATION_PREFERENCE_COOKIE } from "./presentation-preference";
+import { neutralRouteLocale } from "./neutral-route";
 import { resolvePresentationContext } from "./presentation-resolver";
 import { languageRouteByPublicSlug } from "./registry";
 import {
@@ -35,9 +36,16 @@ export const resolveServerPresentationContext = cache(async function resolveServ
   const programmeLocale = programmePresentation
     ? languageRouteByPublicSlug(resolution.language)?.defaultLocale ?? "en-GB"
     : null;
+  // Every page, prefixed or not, knows where an unprefixed public link would send this visitor.
+  const neutralLocale = neutralRouteLocale({
+    preference: preference ?? parsePresentationPreference(cookieStore.get(PRESENTATION_PREFERENCE_COOKIE)?.value),
+    trustedCountryCode: trustedCountryCode ?? requestCountrySignalFromHeaders(requestHeaders)?.countryCode,
+    acceptLanguage: requestHeaders.get("accept-language"),
+  });
 
   return {
     ...resolution,
+    neutralRouteLocale: neutralLocale,
     locale: programmeLocale ?? resolution.locale,
     context: programmePresentation ? PROGRAMME_PRESENTATION_CONTEXT : publicPresentation ? "public-v1" : null,
     marketCode: trustedSignal?.marketCode ?? trustedCountryCode,

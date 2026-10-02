@@ -6,7 +6,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
-import { localizePublicHref, stripPublicMarketPrefix } from "@/lib/market/routing";
+import { finalPublicHref, localizePublicHref, stripPublicMarketPrefix } from "@/lib/market/routing";
 import { DEFAULT_MARKET_PROFILE, marketProfileByLocale } from "@/lib/market/registry";
 import { createCommercialNavigationRetryRegistry } from "@/lib/market/navigation-stage2-retry";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
@@ -74,9 +74,10 @@ export function PublicNavigationRouteLink({
 }) {
   const pathname = usePathname();
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
-  const href = programme && !programme.localizePublicLinks
+  // A link the page cannot localize goes straight to where the neutral redirect would send this visitor.
+  const href = finalPublicHref(programme && !programme.localizePublicLinks
     ? baseHref
-    : localizePublicHref(baseHref, pathname, editorialProfile, presentation.locale);
+    : localizePublicHref(baseHref, pathname, editorialProfile, presentation.locale), presentation.neutralRouteLocale);
   return (
     <Link
       aria-current={isCurrentPublicRoute(stripPublicMarketPrefix(pathname), baseHref) ? "page" : undefined}

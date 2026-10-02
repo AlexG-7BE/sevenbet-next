@@ -10,8 +10,10 @@ import { absoluteUrl } from "@/lib/site";
  * (SEO-INDEX-DE-SV-DA-2026-09-27) are indexed and named in hreflang; the other published
  * languages keep a self canonical with noindex, like every other page (audit 27 Sep 2026:
  * `/es|el|it|pt|nl|fi|nb/program` were indexable with a twelve-language hreflang set).
+ * A query variant such as `?entry=start` keeps the canonical but names no language versions:
+ * hreflang on a page whose canonical points elsewhere is a conflict (Semrush, 2 Oct 2026).
  */
-export function programmeSearchMetadata(locale: ProgrammeLocale, copy: { title: string; description: string }): Metadata {
+export function programmeSearchMetadata(locale: ProgrammeLocale, copy: { title: string; description: string }, options: { queryVariant?: boolean } = {}): Metadata {
   const path = programmePath(locale);
   const indexable = productIndexingApproved(locale);
   const { title, description } = copy;
@@ -20,7 +22,7 @@ export function programmeSearchMetadata(locale: ProgrammeLocale, copy: { title: 
     description,
     alternates: {
       canonical: absoluteUrl(path),
-      languages: indexable
+      languages: indexable && !options.queryVariant
         ? Object.fromEntries([
             ...PROGRAMME_ROUTES
               .filter((route) => productIndexingApproved(route.locale))

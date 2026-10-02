@@ -13,7 +13,7 @@ import {
   type MarketProfile,
   type SupportedLocale,
 } from "./registry";
-import { isLocalizedPublicDestination, localizePublicPath } from "./routing";
+import { finalPublicHref, isLocalizedPublicDestination, localizePublicPath } from "./routing";
 
 export const PRODUCT_TRANSLATION_REVIEW_STATE = {
   ...Object.fromEntries(Object.entries(TRANSLATION_REVIEW_STATE).map(([locale, state]) => [
@@ -44,7 +44,7 @@ export function productHref(presentation: PresentationResolution, href: string) 
   const profile = editorialProfile(presentation);
   return presentation.source === "EXPLICIT_ROUTE" && isLocalizedPublicDestination(href, profile)
     ? localizePublicPath(profile, presentation.locale, href)
-    : href;
+    : finalPublicHref(href, presentation.neutralRouteLocale);
 }
 
 export function productCanonicalPath(presentation: PresentationResolution, pathname: string) {
@@ -54,6 +54,15 @@ export function productCanonicalPath(presentation: PresentationResolution, pathn
     : pathname;
 }
 
+/**
+ * `x-default` names the English page itself. The unprefixed path only answers a 307 to the
+ * visitor's language, and a hreflang target that redirects is an error for crawlers
+ * (Semrush Site Audit, 2 Oct 2026: 27 incorrect hreflang links).
+ */
+export function defaultLanguageAlternate(pathname: string) {
+  return absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, pathname));
+}
+
 export function productLanguageAlternatesForProfiles(pathname: string, profiles: readonly MarketProfile[]) {
   const byLanguage = new Map(profiles.map((profile) => {
     const language = languageRouteByLocale(profile.defaultLocale);
@@ -61,7 +70,7 @@ export function productLanguageAlternatesForProfiles(pathname: string, profiles:
   }));
   return Object.fromEntries([
     ...byLanguage.values(),
-    ["x-default", absoluteUrl(pathname)],
+    ["x-default", defaultLanguageAlternate(pathname)],
   ]);
 }
 
@@ -71,8 +80,15 @@ export function productLanguageAlternates(pathname: string) {
       const profile = marketProfileByLocale(language.defaultLocale) ?? DEFAULT_MARKET_PROFILE;
       return [language.language, absoluteUrl(publicMarketPath(profile, language.defaultLocale, pathname))] as const;
     }),
-    ["x-default", absoluteUrl(pathname)],
+    ["x-default", defaultLanguageAlternate(pathname)],
   ]);
+}
+
+/** Whether a robots value lets search engines index the page. */
+export function robotsAllowIndexing(robots: Metadata["robots"] | undefined) {
+  if (!robots) return true;
+  if (typeof robots === "string") return !/\b(?:noindex|none)\b/i.test(robots);
+  return robots.index !== false;
 }
 
 export function firstWaveSafetyLanguageAlternates(pathname: "/help" | "/responsible-gambling") {
@@ -92,6 +108,12 @@ export function productMetadata(input: {
   openGraphType?: "website" | "article";
   images?: NonNullable<Metadata["openGraph"]>["images"];
   languageAlternates?: Record<string, string>;
+  /**
+   * The request carries a query (`/learn?category=…`, `/program?entry=start`) and canonicalises
+   * to the bare page. Only that canonical page names its language versions: a query variant
+   * listing them is a hreflang/canonical conflict, and its alternates never link back to it.
+   */
+  queryVariant?: boolean;
 }): Metadata {
   const canonical = absoluteUrl(productCanonicalPath(input.presentation, input.pathname));
   const explicitlyLocalized = input.presentation.source === "EXPLICIT_ROUTE";
@@ -99,7 +121,9 @@ export function productMetadata(input: {
     && !productIndexingApproved(input.presentation.locale)
     ? { index: false, follow: true }
     : input.robots;
-  const languages = productIndexingApproved(input.presentation.locale)
+  // A noindex page (a review kept out of search, say) stays out of hreflang altogether: its
+  // alternates would point search engines at pages they may not index.
+  const languages = productIndexingApproved(input.presentation.locale) && robotsAllowIndexing(robots) && !input.queryVariant
     ? input.languageAlternates ?? productLanguageAlternates(input.pathname)
     : undefined;
   const locale = openGraphLocale(input.presentation.locale);
