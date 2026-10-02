@@ -748,12 +748,14 @@ async function offers() {
     },
   });
 
-  const targets = inactive.filter((bonus) => routedCasinoIds.has(bonus.casino.id));
-  console.log(`${RELEASE}: ${inactive.length} published offers are not active; ${targets.length} belong to a casino with a working route`);
+  const withheld = await withheldOfferSlugs();
+  const targets = inactive.filter((bonus) => routedCasinoIds.has(bonus.casino.id) && !withheld.has(bonus.slug));
+  console.log(`${RELEASE}: ${inactive.length} published offers are not active; ${targets.length} belong to a casino with a working route and are not withheld`);
   for (const bonus of inactive) {
     const routed = routedCasinoIds.has(bonus.casino.id);
     const gaps = offerTermGaps(bonus);
-    console.log(`  ${bonus.casino.slug.padEnd(15)} ${(bonus.marketProfile?.countryCode ?? "ROW").padEnd(4)} ${bonus.slug.padEnd(38)} ${(routed ? "ACTIVATE" : "HOLD (no route)").padEnd(16)} ${gaps.length ? `missing=${gaps.join(",")}` : "complete"}`);
+    const decision = withheld.has(bonus.slug) ? "HOLD (withheld)" : routed ? "ACTIVATE" : "HOLD (no route)";
+    console.log(`  ${bonus.casino.slug.padEnd(15)} ${(bonus.marketProfile?.countryCode ?? "ROW").padEnd(4)} ${bonus.slug.padEnd(38)} ${decision.padEnd(16)} ${gaps.length ? `missing=${gaps.join(",")}` : "complete"}`);
   }
   if (dryRun) return;
   if (!targets.length) throw new Error(`${RELEASE}: no inactive offer belongs to a casino with a working route`);
@@ -806,6 +808,21 @@ interface ResearchedOffer {
   eligibility: string | null;
   importantConditions: string[];
   termsUrl: string | null;
+  /**
+   * Set while a material term on the operator's page is in doubt. The record is
+   * imported PAUSED, so no market presents it, and `offers` never re-activates it.
+   */
+  withheld?: { since: string; reason: string };
+}
+
+/** Slugs the offer corpora mark as withheld. */
+async function withheldOfferSlugs() {
+  const slugs = new Set<string>();
+  for (const file of OFFER_CORPORA) {
+    const corpus = JSON.parse(await readFile(path.join(process.cwd(), file), "utf8")) as { offers: ResearchedOffer[] };
+    for (const offer of corpus.offers) if (offer.withheld) slugs.add(offer.slug);
+  }
+  return slugs;
 }
 
 /**
@@ -863,8 +880,12 @@ async function importOfferCorpus(
     if (!market) throw new Error(`${RELEASE}: ${offer.casinoSlug} has no ${corpus.countryCode} market profile`);
     if (market.availability !== "AVAILABLE") throw new Error(`${RELEASE}: ${offer.casinoSlug} ${corpus.countryCode} is not available`);
 
+    if (offer.withheld && (!/^\d{4}-\d{2}-\d{2}$/.test(offer.withheld.since) || !offer.withheld.reason.trim())) {
+      throw new Error(`${RELEASE}: ${offer.slug} is withheld without a date and a reason`);
+    }
+
     if (dryRun) {
-      console.log(`  ${offer.casinoSlug.padEnd(16)} ${corpus.countryCode} ${offer.title.slice(0, 46).padEnd(48)} wagering=${offer.wageringMultiplier ?? "—"} minDep=${offer.minimumDeposit ?? "—"}`);
+      console.log(`  ${offer.casinoSlug.padEnd(16)} ${corpus.countryCode} ${offer.title.slice(0, 46).padEnd(48)} wagering=${offer.wageringMultiplier ?? "—"} minDep=${offer.minimumDeposit ?? "—"}${offer.withheld ? " WITHHELD" : ""}`);
       continue;
     }
 
@@ -884,7 +905,7 @@ async function importOfferCorpus(
       termsUrl: offer.termsUrl,
       lastVerifiedAt: observedAt,
       status: EditorialStatus.PUBLISHED,
-      offerStatus: OfferStatus.ACTIVE,
+      offerStatus: offer.withheld ? OfferStatus.PAUSED : OfferStatus.ACTIVE,
       updatedBy: actor.id,
     };
     await withTransientRetry(offer.slug, async () => {
@@ -901,15 +922,15 @@ async function importOfferCorpus(
         action: "casino-global-catalog-01-offer-import",
         entityType: "casino_bonus",
         entityId: market.casinoId,
-        summary: `${RELEASE}: imported ${corpus.countryCode} offer ${offer.slug} from the operator's own terms`,
+        summary: `${RELEASE}: imported ${corpus.countryCode} offer ${offer.slug} from the operator's own terms${offer.withheld ? " (withheld, paused)" : ""}`,
         metadata: {
           release: RELEASE, casinoSlug: offer.casinoSlug, countryCode: corpus.countryCode,
-          termsUrl: offer.termsUrl, observedAt: corpus.observedAt,
+          termsUrl: offer.termsUrl, observedAt: corpus.observedAt, withheld: offer.withheld ?? null,
           commercialAuthorityGranted: false, routeCreated: false,
         },
       },
     });
-    console.log(`  ${offer.casinoSlug.padEnd(16)} imported ${offer.slug}`);
+    console.log(`  ${offer.casinoSlug.padEnd(16)} imported ${offer.slug}${offer.withheld ? " (withheld, paused)" : ""}`);
   }
   console.log(`${RELEASE}: ${dryRun ? "previewed" : "imported"} ${offers.length} ${corpus.countryCode} offers`);
 }
