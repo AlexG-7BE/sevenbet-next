@@ -2,6 +2,10 @@ import type { SupportedLocale } from "@/lib/market/registry";
 
 export type CommercialUxMessages = Readonly<{
   viewOffer: string;
+  /** The partner button's label when the casino has a route but no offer to show: it opens the casino, not an offer. */
+  visitCasino: string;
+  /** Said in place of offer terms when the casino has a route but no offer to show. */
+  noCurrentOfferVisit: string;
   bestOverall: string;
   fastPayouts: string;
   bestBonusTerms: string;
@@ -77,6 +81,8 @@ export type CommercialUxMessages = Readonly<{
 
 const en: CommercialUxMessages = {
   viewOffer: "VIEW OFFER",
+  visitCasino: "VISIT CASINO",
+  noCurrentOfferVisit: "No current welcome offer. You can still visit the casino.",
   bestOverall: "Best Overall",
   fastPayouts: "Fast Payouts",
   bestBonusTerms: "Best Bonus Terms",
@@ -239,6 +245,25 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "nb-NO": { publishedReviews: "publiserte anmeldelser", rankPrefix: "Nr.", partnerLinks: "partnerlenker", publishedOffers: "publiserte tilbud", filteredFor: "Filtrert for {market}" },
     "fr-CA": { publishedReviews: "avis publiés", rankPrefix: "No", partnerLinks: "liens partenaires", publishedOffers: "offres publiées", filteredFor: "Filtré pour {market}" },
   };
+  // A casino can keep its partner route while it has no offer to show (an
+  // offer withheld for a disputed term, or a brand with no offer in this
+  // market). The button then opens the casino, and the copy must say so rather
+  // than "View offer" or "no partner link". German copy names operators
+  // "Anbieter" (see german-terminology.ts).
+  const noOfferVisitLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "visitCasino" | "noCurrentOfferVisit">>> = {
+    "de-DE": { visitCasino: "ZUM ANBIETER", noCurrentOfferVisit: "Derzeit kein Willkommensangebot. Du kannst den Anbieter trotzdem besuchen." },
+    "it-IT": { visitCasino: "VISITA IL CASINÒ", noCurrentOfferVisit: "Nessuna offerta di benvenuto al momento. Puoi comunque visitare il casinò." },
+    "es-ES": { visitCasino: "VISITAR CASINO", noCurrentOfferVisit: "No hay oferta de bienvenida en este momento. Aún puedes visitar el casino." },
+    "es-PE": { visitCasino: "VISITAR CASINO", noCurrentOfferVisit: "No hay oferta de bienvenida en este momento. Aún puedes visitar el casino." },
+    "pt-PT": { visitCasino: "VISITAR CASINO", noCurrentOfferVisit: "De momento, não há oferta de boas-vindas. Ainda assim, pode visitar o casino." },
+    "el-GR": { visitCasino: "ΕΠΙΣΚΕΨΗ ΣΤΟ ΚΑΖΙΝΟ", noCurrentOfferVisit: "Δεν υπάρχει τρέχουσα προσφορά καλωσορίσματος. Μπορείτε ακόμη να επισκεφθείτε το καζίνο." },
+    "nl-NL": { visitCasino: "BEZOEK CASINO", noCurrentOfferVisit: "Er is nu geen welkomstaanbieding. Je kunt het casino nog steeds bezoeken." },
+    "sv-SE": { visitCasino: "BESÖK CASINOT", noCurrentOfferVisit: "Inget aktuellt välkomsterbjudande. Du kan fortfarande besöka casinot." },
+    "da-DK": { visitCasino: "BESØG KASINOET", noCurrentOfferVisit: "Intet aktuelt velkomsttilbud. Du kan stadig besøge kasinoet." },
+    "fi-FI": { visitCasino: "SIIRRY KASINOLLE", noCurrentOfferVisit: "Tervetuliaistarjousta ei ole juuri nyt. Voit silti vierailla kasinolla." },
+    "nb-NO": { visitCasino: "BESØK KASINOET", noCurrentOfferVisit: "Ingen velkomsttilbud akkurat nå. Du kan fortsatt besøke kasinoet." },
+    "fr-CA": { visitCasino: "VISITER LE CASINO", noCurrentOfferVisit: "Aucune offre de bienvenue pour le moment. Vous pouvez quand même visiter le casino." },
+  };
   // Catalogue totals count what the reader sees — offers or casinos — never internal "records".
   // German copy names operators "Anbieter" (see german-terminology.ts); Finnish counts take the partitive.
   const catalogueNouns: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "offerOne" | "offerOther" | "casinoOne" | "casinoOther">>> = {
@@ -255,7 +280,7 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "nb-NO": { offerOne: "tilbud", offerOther: "tilbud", casinoOne: "kasino", casinoOther: "kasinoer" },
     "fr-CA": { offerOne: "offre", offerOther: "offres", casinoOne: "casino", casinoOther: "casinos" },
   };
-  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}), ...(catalogueNouns[locale] ?? {}) };
+  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}), ...(catalogueNouns[locale] ?? {}), ...(noOfferVisitLabels[locale] ?? {}) };
 }
 
 /** The singular or plural noun for a catalogue count, by the locale's own plural rules ("1 offer", "8 offers"). */

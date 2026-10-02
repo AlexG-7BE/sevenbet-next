@@ -5,10 +5,12 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { publicOffersFixture } from "./fixtures/public-presentation-fixtures";
+import { publicCasinoProfilesFixture, publicOffersFixture } from "./fixtures/public-presentation-fixtures";
 import { commercialUxMessages } from "../lib/commercial/commercial-ux-messages";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
+import type { SupportedLocale } from "../lib/market/registry";
+import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
 
@@ -109,6 +111,73 @@ test("casino cards keep missing bonus data separate from governed visit availabi
   assert.match(cardHtml, /href="\/r\/truth-casino-visit\?placement=CTA_CASINO_COLLECTION_CARD"/);
   assert.ok(!cardHtml.includes(messages.common.reviewOnly));
   assert.ok(!cardHtml.includes(messages.common.commercialUnavailable));
+  // With no offer to show, the button opens the casino and says so.
+  assert.ok(cardHtml.includes(copy.visitCasino));
+  assert.ok(!cardHtml.includes(copy.viewOffer));
+
+  const withOffer = renderToStaticMarkup(<CasinoCollection
+    casinos={[casino({ featuredBonus: { title: "100 free spins", summary: "100 free spins", type: "WELCOME", keyTerms: [], wageringRequirement: null, minimumDeposit: null, currency: null, validUntil: null, termsApply: true } })]}
+    initialSearch=""
+    messages={messages}
+    presentation={presentation}
+  />);
+  assert.ok(withOffer.includes(copy.viewOffer));
+  assert.ok(!withOffer.includes(copy.visitCasino));
+});
+
+// A casino keeps its partner route while it has no offer to show: TurboNino's
+// only GB offer was withheld on 2 Oct 2026, and the review page then said
+// "there is no partner link" beside three working VIEW OFFER buttons.
+test("a casino profile with a route but no offer says it can still be visited", async () => {
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const seed = publicCasinoProfilesFixture()[0];
+  assert.ok(seed?.bonuses.length);
+  // A published record carries no classification; only demonstrations do.
+  const record = (patch: Partial<PublicCasinoDTO>): PublicCasinoDTO => ({ ...seed, dataClassification: undefined, offerPresentation: undefined, ...patch });
+  const render = (casino: PublicCasinoDTO, routeLanguage = "en", country = "GB") => {
+    const page = resolvePresentationContext({ routeLanguage, trustedCountryCode: country });
+    return renderToStaticMarkup(<CasinoProfile availableForPresentation casino={casino} editorial={null} messages={productPageMessages(page.locale)} presentation={page} />);
+  };
+  const count = (html: string, text: string) => html.split(text).length - 1;
+  const ctaHrefs = /href="\/r\/truth-casino\?placement=CTA_CASINO_(?:HERO|MOBILE_STICKY|OFFER_SECTION)"/g;
+
+  const visitOnly = render(record({ bonuses: [], action: { href: "/r/truth-casino" } }));
+  assert.equal(visitOnly.match(ctaHrefs)?.length, 3);
+  assert.equal(count(visitOnly, copy.visitCasino), 3);
+  assert.equal(count(visitOnly, copy.viewOffer), 0);
+  assert.equal(count(visitOnly, copy.noCurrentOfferVisit), 1);
+  assert.equal(count(visitOnly, messages.common.reviewAvailableNoAction), 0);
+
+  const withOffer = render(record({ action: { href: "/r/truth-casino" } }));
+  assert.equal(withOffer.match(ctaHrefs)?.length, 3);
+  assert.equal(count(withOffer, copy.viewOffer), 3);
+  assert.equal(count(withOffer, copy.visitCasino), 0);
+  assert.equal(count(withOffer, copy.noCurrentOfferVisit), 0);
+
+  // Without a route the page keeps saying there is no partner link.
+  const reviewOnly = render(record({ bonuses: [], action: null }));
+  assert.doesNotMatch(reviewOnly, /href="\/r\//);
+  assert.ok(reviewOnly.includes(messages.common.reviewAvailableNoAction));
+  assert.equal(count(reviewOnly, copy.noCurrentOfferVisit), 0);
+
+  for (const [routeLanguage, country] of [["sv", "SE"], ["da", "DK"], ["de", "DE"]] as const) {
+    const page = resolvePresentationContext({ routeLanguage, trustedCountryCode: country });
+    const local = commercialUxMessages(page.locale);
+    const html = render(record({ bonuses: [], action: { href: "/r/truth-casino" } }), routeLanguage, country);
+    assert.equal(count(html, local.visitCasino), 3, page.locale);
+    assert.equal(count(html, local.noCurrentOfferVisit), 1, page.locale);
+    assert.equal(count(html, productPageMessages(page.locale).common.reviewAvailableNoAction), 0, page.locale);
+  }
+});
+
+test("every locale that translates VIEW OFFER also translates the route-without-offer copy", () => {
+  const locales: SupportedLocale[] = ["en-GB", "en-CA", "de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO", "fr-CA"];
+  for (const locale of locales) {
+    const local = commercialUxMessages(locale);
+    if (local.viewOffer === copy.viewOffer) continue;
+    assert.notEqual(local.visitCasino, copy.visitCasino, locale);
+    assert.notEqual(local.noCurrentOfferVisit, copy.noCurrentOfferVisit, locale);
+  }
 });
 
 test("catalogue cards render known facts only and never a Not verified row", async () => {

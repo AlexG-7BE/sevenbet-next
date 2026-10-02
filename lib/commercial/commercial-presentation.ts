@@ -276,8 +276,9 @@ export function casinoCardPresentation(casino: PublicCasinoCardDto, locale: Supp
       { label: messages.common.minimumDeposit, value: knownMoney(casino.featuredBonus?.minimumDeposit, casino.featuredBonus?.currency, locale) },
       { label: copy.currentOffer, value: casino.featuredBonus ? singleLine(casino.featuredBonus.title, 64) : null },
     ]),
+    // A route without an offer to show opens the casino, not an offer.
     action: action
-      ? { href: action.href, label: copy.viewOffer }
+      ? { href: action.href, label: casino.featuredBonus ? copy.viewOffer : copy.visitCasino }
       : null,
     reviewOnly: !action,
     demonstration: casino.dataClassification === "DEMO_FIXTURE",
