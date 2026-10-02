@@ -42,7 +42,10 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const bonus = selectProfileBonus(casino);
   const decision = casinoProfileDecisionPresentation(casino, presentation.locale, messages, copy, presentation.marketCountryCode);
   const governed = profileAction(casino);
-  const action = governed ? { ...governed, label: copy.viewOffer } : null;
+  // The partner route and the offer are governed separately: a casino can keep
+  // its route while it has no offer to show. The button then opens the casino,
+  // so it says so instead of promising an offer.
+  const action = governed ? { ...governed, label: bonus ? copy.viewOffer : copy.visitCasino } : null;
   const score = casino.editorScore;
   const offerHeadline = bonus ? structuredOfferHeadline(bonus, presentation.locale, copy) : messages.profile.offerUnavailable;
   const hasClearTerms = Boolean(bonus && bonus.wageringMultiplier !== null && bonus.minimumDeposit !== null);
@@ -174,7 +177,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <header data-motion-reveal><p>03</p><h2 id="offer-heading">{copy.currentOffer}</h2></header>
         <div className={styles.offerPanel} data-analytics-casino-id={!demo && bonus ? casino.id : undefined} data-analytics-offer-key={!demo && bonus ? bonus.id : undefined}>
           <h3><OfferHeadline text={offerHeadline} /></h3>
-          {bonus ? <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(offerFacts, copy.notVerified)} /> : <p>{messages.common.reviewAvailableNoAction}</p>}
+          {bonus ? <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(offerFacts, copy.notVerified)} /> : <p>{action ? copy.noCurrentOfferVisit : messages.common.reviewAvailableNoAction}</p>}
           {bonus ? <p className={styles.materialWarning}>{decision.restriction}</p> : null}
           <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION" }} messages={messages.outbound} showDisclosure={false} /> : bonus ? <p className={styles.noActionNote} data-review-no-action="">{messages.common.reviewAvailableNoAction}</p> : null}{safeCommercialTermsUrl(bonus?.termsUrl) && action ? <GovernedCommercialAction action={{ href: action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "CASINO_OFFER_TERMS" }}>{copy.terms} <span aria-hidden="true">→</span></GovernedCommercialAction> : safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}</div>
         </div>
