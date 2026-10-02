@@ -133,6 +133,24 @@ npm run casino-global-catalog -- import-offers-plan --market GB --offer bacanapl
 npm run casino-global-catalog -- import-offers --market GB --offer bacanaplay-gb-welcome,drueckglueck-gb-welcome --confirm=CASINO-GLOBAL-CATALOG-01 --expected-database=<fingerprint>
 ```
 
+### Withholding an offer
+
+When a material term on the operator's page is in doubt, add
+`"withheld": { "since": "YYYY-MM-DD", "reason": "…" }` to that offer in its
+corpus and re-import only that slug. The record is kept with the terms as read,
+`offerStatus` becomes `PAUSED`, the casino is republished, and no page
+presents the offer. `offers` lists it as `HOLD (withheld)` and never
+re-activates it. To restore the offer, remove `withheld` and re-import the slug.
+
+```bash
+npm run casino-global-catalog -- import-offers-plan --market GB --offer turbonino-gb-welcome
+npm run casino-global-catalog -- import-offers --market GB --offer turbonino-gb-welcome --confirm=CASINO-GLOBAL-CATALOG-01 --expected-database=<fingerprint>
+```
+
+Withheld since 2 October 2026: `turbonino-gb-welcome`. The GB offer page
+states 60x wagering on free-spin winnings, while the brand's banner, its GB
+Bonus Policy and the UK cap state 10x. EGO was asked to confirm the term.
+
 ## What `editorial` does
 
 Replaces `pros` ("Best for"), `cons` ("Things to know") and `description` for
