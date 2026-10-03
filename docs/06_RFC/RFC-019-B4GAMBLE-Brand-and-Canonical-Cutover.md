@@ -49,7 +49,7 @@ Public Shell, protected Help, Programme, authentication, discovery, comparison, 
 
 Root metadata uses:
 
-- default title: `B4GAMBLE | Know your limits before you play`;
+- default title: `B4GAMBLE | Know your limits before you play` (since 3 October 2026 `B4GAMBLE (Before Gamble) | Know your limits before you play`; see [BRAND-BEFORE-GAMBLE-2026-10-03](../07_Decisions/BRAND-BEFORE-GAMBLE-2026-10-03.md));
 - description: `Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.`;
 - OpenGraph site name and Organization name: `B4GAMBLE`.
 

@@ -679,7 +679,7 @@ test("FAQ provides complete localized trust copy without changing commercial or 
     const faq = faqMessages(locale);
     assert.ok(faq.metadataTitle.trim());
     assert.equal(faq.groups.length, 5);
-    assert.equal(faq.groups.reduce((total, group) => total + group.items.length, 0), 12);
+    assert.equal(faq.groups.reduce((total, group) => total + group.items.length, 0), 13);
     const fullText = JSON.stringify(faq);
     assert.match(fullText, /B4GAMBLE/);
     assert.match(fullText, /Editor Score/);

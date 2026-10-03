@@ -119,6 +119,8 @@ test("one sitewide Organization and WebSite with a stable URL and a real logo", 
   const website = websiteSchema();
   assert.equal(website["@type"], "WebSite");
   assert.equal(website.name, "B4GAMBLE");
+  // A search for "before gamble" should find the brand (Founder, 3 Oct 2026).
+  for (const schema of [organization, website]) assert.deepEqual(schema.alternateName, ["Before Gamble", "Before You Gamble", "B4 Gamble"]);
   assert.equal(website.url, siteUrl);
   assert.deepEqual(website.publisher, { "@id": organization["@id"] });
   // The Learn hub no longer emits a second, language-specific Organization.
