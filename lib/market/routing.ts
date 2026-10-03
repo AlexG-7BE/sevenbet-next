@@ -63,6 +63,7 @@ export const PUBLIC_LOCALIZATION_ROUTE_MANIFEST = [
   // The UK help-ad landing: one English page for every visitor, never under a language prefix.
   { root: "start", match: "EXACT", policy: "UNPREFIXED_ONLY" },
   { root: "tools", match: "SUBTREE", policy: "UNPREFIXED_ONLY" },
+  { root: "wagering-calculator", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
 
   { root: "affiliate-disclosure", match: "EXACT", policy: "LEGAL_REVIEW_GATED" },
   { root: "privacy", match: "EXACT", policy: "LEGAL_REVIEW_GATED" },
