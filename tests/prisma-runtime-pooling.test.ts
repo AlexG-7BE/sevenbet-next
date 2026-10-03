@@ -43,7 +43,7 @@ test("production runtime warns for the direct Prisma Postgres endpoint without r
 });
 
 test("the pooled runtime URL gets the code-level pool policy whatever the environment says", () => {
-  assert.deepEqual(RUNTIME_POOL_POLICY, { connection_limit: 3, pool_timeout: 5, connect_timeout: 5, socket_timeout: 25 });
+  assert.deepEqual(RUNTIME_POOL_POLICY, { connection_limit: 3, pool_timeout: 3, connect_timeout: 3, socket_timeout: 25 });
   for (const configured of [
     pooledUrl,
     "postgresql://runtime-user:super-secret@pooled.db.prisma.io:5432/postgres?sslmode=require",
@@ -56,8 +56,8 @@ test("the pooled runtime URL gets the code-level pool policy whatever the enviro
     assert.equal(effective.pathname, "/postgres");
     assert.equal(effective.searchParams.get("sslmode"), "require", "TLS stays as configured");
     assert.equal(effective.searchParams.get("connection_limit"), "3");
-    assert.equal(effective.searchParams.get("pool_timeout"), "5");
-    assert.equal(effective.searchParams.get("connect_timeout"), "5");
+    assert.equal(effective.searchParams.get("pool_timeout"), "3");
+    assert.equal(effective.searchParams.get("connect_timeout"), "3");
     assert.equal(effective.searchParams.get("socket_timeout"), "25");
     assert.equal(runtimeConnectionLimit(configured), 3);
     assert.equal(usesSingleConnectionPool(configured), false, "the one-connection FIFO switches off on the pooled runtime");

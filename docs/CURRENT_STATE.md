@@ -110,7 +110,7 @@ GEO-LOCALIZATION-01. Regression tests: `tests/seo-market-indexability.test.ts`,
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
-## Database driver: `pg` adapter for the runtime client — in review
+## Database driver: `pg` adapter for the runtime client — live, follow-up in review
 
 **Founder instruction, 3 October 2026:** fix the Production
 `prisma:error Timed out fetching a new connection from the connection pool
@@ -124,12 +124,15 @@ timeout.
 
 The runtime client in `lib/db/prisma.ts` now queries through
 `@prisma/adapter-pg` on a `pg` pool built from `DATABASE_URL` by
-`runtimePgPool` (same policy: 3 connections, 5 s wait, 25 s query bound, 5 s
-idle life on the pooled host). The pool (`ReconnectingPool`) drops an idle
+`runtimePgPool` (3 connections, 3 s per connect attempt — 5 s until the
+follow-up below — 25 s query bound, 5 s idle life on the pooled host). The pool (`ReconnectingPool`) drops an idle
 connection that slept through its idle timeout — the frozen-instance case —
 and opens a fresh one, and it opens a connection once more when the pooled
 endpoint answers "Failed to connect to upstream database" (seen on the first
-Preview request; P1001 under the engine). `attachDatabasePool`
+Preview request; P1001 under the engine) or stalls past the connect bound
+(follow-up, 3 October: the first error after go-live at 06:49 UTC was a 5 s
+connect stall, so the bound is 3 s with one retry — at most about 6 s, inside
+the 8 s public read budget). `attachDatabasePool`
 (`@vercel/functions`) was tried and dropped: on Preview every release arrived
 outside the request scope, so it did nothing but log a line per request.
 `sslmode=require` now verifies the certificate. Migrations,
@@ -141,7 +144,7 @@ Decimal, Date, JSON). Details and rollback:
 [Environment and Secrets — Runtime database pool](06_Operations/Environment-and-Secrets.md#runtime-database-pool).
 After deploy, recount P2024/P1001 in `vercel logs` for 48 h.
 
-**PROPOSED — NOT YET LIVE** until merged and deployed.
+**LIVE since 3 October 2026, 06:40 UTC** (#448, Production `dpl_6LchGPbK3eKH6vvYePNBVg2m6FRo`). The 3 s connect bound with a retry for stalled opens is **PROPOSED — NOT YET LIVE** until merged and deployed.
 
 ## Short social links and the `social_hit` count — in review
 

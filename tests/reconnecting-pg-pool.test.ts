@@ -67,10 +67,11 @@ test("only one retry, and none for pool timeouts, auth or other errors", async (
   assert.equal(twice.state.connects, 2);
   await pool.end();
 
-  for (const message of ["timeout exceeded when trying to connect", "Connection terminated due to connection timeout", "password authentication failed for user \"x\""]) {
+  for (const message of ["timeout exceeded when trying to connect", "password authentication failed for user \"x\""]) {
     assert.equal(isTransientConnectFailure(new Error(message)), false, message);
   }
   assert.equal(isTransientConnectFailure(new Error(UPSTREAM)), true);
+  assert.equal(isTransientConnectFailure(new Error("Connection terminated due to connection timeout")), true, "a stalled open (Production, 3 Oct 06:49)");
   assert.equal(isTransientConnectFailure(Object.assign(new Error("connect failed"), { code: "ECONNREFUSED" })), true);
   assert.equal(isTransientConnectFailure("ECONNRESET"), false, "only Error objects");
 });
