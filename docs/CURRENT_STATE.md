@@ -90,6 +90,34 @@ GEO-LOCALIZATION-01. Regression tests: `tests/seo-market-indexability.test.ts`,
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+## Database driver: `pg` adapter for the runtime client — in review
+
+**Founder instruction, 3 October 2026:** fix the Production
+`prisma:error Timed out fetching a new connection from the connection pool
+(connection limit: 3)` with the best option. **DETECTED** in 72 h of Production
+logs: ~486 requests with P2024, plus P1001 and query timeouts, at about one
+request a minute (393 from the uptime monitor's `HEAD /en`, mostly on the
+uncached `marketActivation.findFirst`), nearly all still 200 through fallbacks.
+**INFERRED:** the Prisma engine's pool kept connections across Fluid compute
+suspensions, they went stale, and the next query waited out the 5 s pool
+timeout.
+
+The runtime client in `lib/db/prisma.ts` now queries through
+`@prisma/adapter-pg` on a `pg` pool built from `DATABASE_URL` by
+`runtimePgPool` (same policy: 3 connections, 5 s wait, 25 s query bound, 5 s
+idle life on the pooled host), attached to the function lifecycle with
+`attachDatabasePool` (`@vercel/functions`), so idle connections close before an
+instance suspends. `sslmode=require` now verifies the certificate. Migrations,
+release administration, scripts and tests that build their own client keep the
+Prisma engine. Checked locally against the dev copy of Production: the market
+routes for GB/SE/DK/DE, the casino list and GB bonuses are byte-identical
+through the adapter and the engine; raw queries return the same types (BigInt,
+Decimal, Date, JSON). Details and rollback:
+[Environment and Secrets — Runtime database pool](06_Operations/Environment-and-Secrets.md#runtime-database-pool).
+After deploy, recount P2024/P1001 in `vercel logs` for 48 h.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Short social links and the `social_hit` count — in review
 
 **Founder instruction, 2 October 2026:** replace the long UTM URLs in social

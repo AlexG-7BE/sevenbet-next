@@ -1,6 +1,9 @@
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { attachDatabasePool } from "@vercel/functions/db-connections";
+import { Pool } from "pg";
 
-import { applyRuntimePoolPolicy, warnForUnsafePrismaRuntimeConnection } from "@/lib/db/prisma-runtime-config";
+import { runtimePgPool, warnForUnsafePrismaRuntimeConnection } from "@/lib/db/prisma-runtime-config";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -17,25 +20,32 @@ const transactionOptions =
 
 warnForUnsafePrismaRuntimeConnection();
 
-// The pooled Prisma Postgres URL gets the code-level runtime pool policy
-// (connection_limit, pool/connect/socket timeouts); every other URL is used as
-// configured, through the schema's env("DATABASE_URL").
-const configuredDatabaseUrl = process.env.DATABASE_URL;
-const runtimeDatabaseUrl = applyRuntimePoolPolicy(configuredDatabaseUrl);
-const datasourceOptions: { datasourceUrl?: string } = runtimeDatabaseUrl && runtimeDatabaseUrl !== configuredDatabaseUrl
-  ? { datasourceUrl: runtimeDatabaseUrl }
-  : {};
-
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+/**
+ * The runtime client queries through the `pg` driver adapter (Founder, 3 October 2026): a `pg`
+ * pool built from `DATABASE_URL` with the code-level pool policy (`runtimePgPool`), attached to
+ * the Vercel function lifecycle so idle connections close before Fluid compute suspends the
+ * instance instead of going stale inside it. Outside Vercel `attachDatabasePool` does nothing.
+ * Migrations and release administration keep the direct URL and the Prisma CLI.
+ */
+function createPrismaClient() {
+  const { config, schema } = runtimePgPool(process.env.DATABASE_URL);
+  const pool = new Pool(config);
+  // An idle client dropped by the server must not become an unhandled 'error' event.
+  pool.on("error", (error) => {
+    console.warn("prisma_pg_pool_idle_client_error", { message: error.message });
+  });
+  attachDatabasePool(pool);
+  return new PrismaClient({
+    adapter: new PrismaPg(pool, schema ? { schema } : undefined),
     log:
       process.env.NODE_ENV === "development"
         ? ["warn", "error"]
         : ["error"],
     transactionOptions,
-    ...datasourceOptions,
   });
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;

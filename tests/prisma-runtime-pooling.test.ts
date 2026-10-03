@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   RUNTIME_POOL_POLICY,
   applyRuntimePoolPolicy,
+  runtimePgPool,
   inspectPrismaRuntimeConnection,
   runtimeConnectionLimit,
   usesSingleConnectionPool,
@@ -94,7 +95,7 @@ test("non-production administrative scripts do not emit runtime connection warni
   assert.deepEqual(messages, []);
 });
 
-test("Prisma CLI has a direct URL while the application keeps one module-level client on the policy URL", () => {
+test("Prisma CLI has a direct URL while the application keeps one module-level client on a pg pool built from the policy URL", () => {
   const schema = readFileSync("prisma/schema.prisma", "utf8");
   const example = readFileSync(".env.example", "utf8");
   const client = readFileSync("lib/db/prisma.ts", "utf8");
@@ -103,8 +104,12 @@ test("Prisma CLI has a direct URL while the application keeps one module-level c
   assert.match(example, /DATABASE_URL="postgresql:\/\/USER:PASSWORD@pooled\.db\.prisma\.io:5432\/postgres\?sslmode=require&connection_limit=1"/);
   assert.match(example, /DIRECT_URL="postgresql:\/\/USER:PASSWORD@db\.prisma\.io:5432\/postgres\?sslmode=require"/);
   assert.equal((client.match(/new PrismaClient\(/g) ?? []).length, 1);
-  assert.match(client, /applyRuntimePoolPolicy\(configuredDatabaseUrl\)/);
-  assert.match(client, /datasourceUrl: runtimeDatabaseUrl/);
+  assert.match(client, /runtimePgPool\(process\.env\.DATABASE_URL\)/);
+  assert.match(client, /new Pool\(config\)/);
+  assert.match(client, /attachDatabasePool\(pool\)/, "idle connections close before Fluid compute suspends the instance");
+  assert.match(client, /pool\.on\("error"/, "an idle client dropped by the server is logged, not an unhandled error event");
+  assert.match(client, /adapter: new PrismaPg\(pool/);
+  assert.doesNotMatch(client, /datasourceUrl/, "the adapter, not an engine URL, carries the connection");
   assert.doesNotMatch(client, /DIRECT_URL/);
   assert.doesNotMatch(client, /\$disconnect\(/);
 });
@@ -190,3 +195,47 @@ test("DB-backed public segments, /r/ and /go end hung requests at 30 s", () => {
     assert.doesNotMatch(source, /^["']use client["']/m, file);
   }
 });
+
+test("the pooled runtime URL becomes a pg pool with the same limits, verified TLS and short idle life", () => {
+  const { config, schema } = runtimePgPool(pooledUrl);
+  assert.equal(schema, undefined);
+  assert.equal(config.max, RUNTIME_POOL_POLICY.connection_limit);
+  assert.equal(config.connectionTimeoutMillis, Math.max(RUNTIME_POOL_POLICY.pool_timeout, RUNTIME_POOL_POLICY.connect_timeout) * 1000);
+  assert.equal(config.query_timeout, RUNTIME_POOL_POLICY.socket_timeout * 1000);
+  assert.equal(config.idleTimeoutMillis, 5_000, "a suspended instance keeps no idle connection");
+  assert.equal(config.keepAlive, true);
+  assert.deepEqual(config.ssl, { rejectUnauthorized: true }, "sslmode=require keeps TLS, now with certificate verification");
+  const connection = new URL(config.connectionString!);
+  assert.equal(connection.hostname, "pooled.db.prisma.io");
+  assert.equal(connection.username, "runtime-user");
+  assert.equal(connection.password, "super-secret");
+  assert.equal(connection.pathname, "/postgres");
+  assert.deepEqual([...connection.searchParams.keys()], [], "engine-only parameters never reach pg");
+
+  const environmentSaysOtherwise = runtimePgPool(
+    "postgresql://runtime-user:super-secret@pooled.db.prisma.io:5432/postgres?sslmode=require&connection_limit=40&pool_timeout=0&socket_timeout=600",
+  ).config;
+  assert.equal(environmentSaysOtherwise.max, 3, "the code-level policy still wins on the pooled host");
+  assert.equal(environmentSaysOtherwise.query_timeout, 25_000);
+});
+
+test("local and CI URLs keep their own pool size, no TLS and Prisma's 10 s wait; schema and app parameters carry over", () => {
+  const single = runtimePgPool(localOneConnectionUrl).config;
+  assert.equal(single.max, 1, "the one-connection FIFO databases stay one connection");
+  assert.equal(single.connectionTimeoutMillis, 5_000);
+  assert.equal(single.idleTimeoutMillis, undefined);
+  assert.equal(single.query_timeout, undefined);
+  assert.equal(single.ssl, false);
+
+  const ci = runtimePgPool("postgresql://sevenbet:sevenbet@127.0.0.1:54329/sevenbet_ci").config;
+  assert.equal(ci.max, undefined, "pg's default pool size when the URL sets none");
+  assert.equal(ci.connectionTimeoutMillis, 10_000);
+
+  const scoped = runtimePgPool("postgresql://u:p@127.0.0.1:5432/app?schema=tenant&application_name=b4&pgbouncer=true&sslmode=prefer");
+  assert.equal(scoped.schema, "tenant");
+  assert.equal(scoped.config.ssl, false, "only require/verify modes turn TLS on, as before");
+  assert.deepEqual(Object.fromEntries(new URL(scoped.config.connectionString!).searchParams), { application_name: "b4" });
+  assert.equal(runtimePgPool("postgresql://u:p@127.0.0.1:5432/app?schema=public").schema, undefined);
+  assert.equal(runtimePgPool(undefined).config.connectionString, undefined);
+});
+

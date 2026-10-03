@@ -33,7 +33,10 @@ const DIRECT_HOST = "db.prisma.io";
  * - `socket_timeout` 25 s: a half-open socket (P1017-class failure) or a hung
  *   query ends inside the 30 s function limit instead of the platform's 300 s.
  *   10 s cut off the whole-catalogue projection on Production (28 Sep 2026).
- *   Supported by the Prisma ORM 6 query engine for PostgreSQL.
+ *
+ * Since 3 October 2026 the runtime client talks to the database through the
+ * `pg` driver adapter; {@link runtimePgPool} carries these four values over
+ * to the `pg` pool.
  *
  * Local, CI and any other host are left exactly as configured, so their
  * `connection_limit=1` disposable databases keep the one-connection FIFO of
@@ -133,6 +136,84 @@ export function inspectPrismaRuntimeConnection(value: string | undefined): Prism
     if (!positiveSeconds(effective, timeout)) warnings.push(`Pooled runtime ${timeout} must be a finite number of seconds.`);
   }
   return { mode: "pooled", warnings };
+}
+
+/** Query parameters only the Prisma engine reads; `pg` would ignore them or (sslmode) read them differently. */
+const PRISMA_ENGINE_PARAMETERS = [
+  "connection_limit",
+  "pool_timeout",
+  "connect_timeout",
+  "socket_timeout",
+  "sslmode",
+  "sslaccept",
+  "sslcert",
+  "sslidentity",
+  "sslpassword",
+  "schema",
+  "pgbouncer",
+  "statement_cache_size",
+] as const;
+
+/** `pg` connection settings for the runtime client, without importing `pg` here. */
+export type RuntimePgPoolConfig = {
+  connectionString: string | undefined;
+  max?: number;
+  connectionTimeoutMillis: number;
+  idleTimeoutMillis?: number;
+  query_timeout?: number;
+  keepAlive: true;
+  ssl: false | { rejectUnauthorized: true };
+};
+
+function seconds(url: URL, name: string) {
+  const value = url.searchParams.get(name);
+  return value && /^\d+$/.test(value) ? Number(value) : null;
+}
+
+/**
+ * The runtime database URL translated into a `pg` pool for the Prisma driver adapter (Founder,
+ * 3 October 2026). The Prisma engine's own pool kept connections across Fluid compute
+ * suspensions; they went stale while the instance idled, and the next request waited out the
+ * pool timeout (P2024) at about one request a minute. A `pg` pool attached to the function
+ * lifecycle (`attachDatabasePool` in `lib/db/prisma.ts`) closes idle clients before the
+ * instance suspends instead.
+ *
+ * The same URL parameters keep meaning the same thing, so {@link RUNTIME_POOL_POLICY} still
+ * governs the pooled endpoint:
+ * - `connection_limit` → `max`;
+ * - `pool_timeout` / `connect_timeout` → `connectionTimeoutMillis` (`pg` bounds the wait for a
+ *   pooled client and the connect together, so the longer of the two; Prisma's 10 s default
+ *   when neither is set);
+ * - `socket_timeout` → `query_timeout`, a client-side bound on every query;
+ * - `sslmode=require|verify-ca|verify-full` → TLS with certificate verification (both Prisma
+ *   Postgres hosts present publicly trusted certificates), otherwise no TLS, as before;
+ * - `schema` → the adapter's schema option; the other engine-only parameters are dropped.
+ *
+ * On the pooled endpoint idle clients close after 5 s, so a suspended instance holds none.
+ */
+export function runtimePgPool(value: string | undefined): { config: RuntimePgPoolConfig; schema: string | undefined } {
+  const url = parseUrl(applyRuntimePoolPolicy(value));
+  if (!url) {
+    return { config: { connectionString: value, connectionTimeoutMillis: 10_000, keepAlive: true, ssl: false }, schema: undefined };
+  }
+  const limit = seconds(url, "connection_limit");
+  const waitSeconds = Math.max(seconds(url, "pool_timeout") ?? 0, seconds(url, "connect_timeout") ?? 0) || 10;
+  const querySeconds = seconds(url, "socket_timeout");
+  const sslmode = url.searchParams.get("sslmode");
+  const schema = url.searchParams.get("schema") || undefined;
+  for (const name of PRISMA_ENGINE_PARAMETERS) url.searchParams.delete(name);
+  return {
+    config: {
+      connectionString: url.toString(),
+      ...(limit ? { max: limit } : {}),
+      connectionTimeoutMillis: waitSeconds * 1000,
+      ...(url.hostname === POOLED_HOST ? { idleTimeoutMillis: 5_000 } : {}),
+      ...(querySeconds ? { query_timeout: querySeconds * 1000 } : {}),
+      keepAlive: true,
+      ssl: sslmode === "require" || sslmode === "verify-ca" || sslmode === "verify-full" ? { rejectUnauthorized: true } : false,
+    },
+    schema: schema === "public" ? undefined : schema,
+  };
 }
 
 export function warnForUnsafePrismaRuntimeConnection(
