@@ -67,17 +67,52 @@ GEO-LOCALIZATION-01. Regression tests: `tests/seo-market-indexability.test.ts`,
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
-## Short social links — in review
+## Short social links and the `social_hit` count — in review
 
 **Founder instruction, 2 October 2026:** replace the long UTM URLs in social
-bios and post link-replies with short branded links. `next.config.mjs` adds
-temporary (307) redirects to the homepage with the same UTM tags analytics
-already reads: `/ig`, `/fb`, `/x`, `/threads` (brand bios), `/lana` (the
-ambassador account) and `/x/<code>`, `/t/<code>` for X and Threads posts, where
-the lower-case post code becomes `utm_content`. They run before middleware, so
-geo and KZ rules apply on the homepage as usual. No route, data or tracking
-change. `tests/social-short-links.test.ts` pins the table and checks no short
-link shadows an app route or the affiliate paths `/r`, `/go`, `/outbound`.
+bios and post link-replies with short branded links. PR #440 (live since 2
+October) added them as `next.config.mjs` redirects: `/ig`, `/fb`, `/x`,
+`/threads` (brand bios), `/lana` (the ambassador account) and `/x/<code>`,
+`/t/<code>` for X and Threads posts, where the lower-case post code becomes
+`utm_content`.
+
+**Founder instruction, 3 October 2026:** make those clicks countable. Framework
+redirects never reach a function, so they left no trace in the logs, and
+first-party analytics only sees a visitor after the cookie choice. The links are
+now route handlers (`app/{ig,fb,x,threads,lana}/route.ts`,
+`app/{x,t,fb,ig}/[code]/route.ts`, logic in `lib/social/short-links.ts`) with
+the same 307 to the homepage and the same UTM tags. Two post prefixes are new:
+`/fb/<code>` (the first comment under a Facebook Reel, campaign `post`) and
+`/ig/<code>` (an Instagram Story link sticker, campaign `story`). A code
+`txt-<slug>` marks an SMM agent's own text post: campaign `text`, content
+`<slug>`. Before redirecting, each hit writes exactly one function-log line:
+
+`social_hit src=<network> campaign=<bio|post|story|text> content=<code|-> country=<CC|-> bot=<0|1>`
+
+`country` is the trusted `x-vercel-ip-country` header (`-` elsewhere); `bot=1`
+marks link-preview and search crawlers (`lib/seo/crawler.ts`), which fetch a
+link when a post is composed and are not visits. No IP, user agent, cookie or
+click id is logged, and the response sets no cookie and is `no-store` (a CDN
+copy would skip the function and its line). Middleware still runs first, so
+KZ gets 451 and a trailing slash is normalised; `tests/social-short-links.test.ts`
+(in `ci:quality` via `social-links:test`) pins the destinations, the log line
+and the middleware pass-through.
+
+**How to count clicks from social networks:**
+
+- `bash scripts/local/social-hits.sh [since] [--until <time>] [--bots] [--csv]`
+  from a checkout linked to the Vercel project (the main checkout is). It runs
+  `vercel logs --environment production --no-branch --json --query social_hit`
+  and prints hits by network × campaign:content × country, people only by
+  default. `since` is a UTC date, an ISO time or `24h`/`7d` (default `24h`).
+- Production runtime logs are readable about 30 days back on this project (3
+  Oct 2026: entries 29 days old returned, none at 34 days; Vercel documents 1
+  day for Pro without Observability Plus, so treat 30 days as observed, not
+  guaranteed). The daily stats task stores the `--csv` output so the history
+  outlives the logs.
+- A hit is a click on a short link, before the cookie choice. Visits after
+  consent, Help handoffs and casino clicks per UTM stay in first-party
+  analytics; Vercel Web Analytics is not installed.
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
