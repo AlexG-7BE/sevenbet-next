@@ -38,8 +38,11 @@ Article parity are recorded below. No credential or service email is recorded.
 The endpoint is `POST /api/mcp/learn`. It uses stateless Streamable HTTP and
 requires `Authorization: Bearer <service token>`. `tools/list` exposed exactly
 `learn_apply` until 30 September 2026; it now lists the read-only
-`learn_context` first and `learn_apply` second
-([LEARN-CHATGPT-SCHEDULER-2026-09-30](../07_Decisions/LEARN-CHATGPT-SCHEDULER-2026-09-30.md)).
+`learn_context`, `learn_source` and `social_traffic` first and `learn_apply`
+last
+([LEARN-CHATGPT-SCHEDULER-2026-09-30](../07_Decisions/LEARN-CHATGPT-SCHEDULER-2026-09-30.md),
+[LEARN-SERVER-SWITCH-2026-10-01](../07_Decisions/LEARN-SERVER-SWITCH-2026-10-01.md),
+[SOCIAL-TRAFFIC-MCP-2026-10-03](../07_Decisions/SOCIAL-TRAFFIC-MCP-2026-10-03.md)).
 `learn_apply` remains the only mutation and its contract below is unchanged.
 
 ```text

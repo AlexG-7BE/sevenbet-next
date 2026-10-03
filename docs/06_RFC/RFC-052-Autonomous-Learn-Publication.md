@@ -47,8 +47,12 @@ credential. Since 30 September 2026
 the same endpoint also lists the read-only `learn_context` tool, which returns
 bounded public editorial metadata and writes nothing, and since 1 October 2026
 the read-only `learn_source` tool, which returns the public content of one
-published Article by slug as a localization source. `learn_apply` remains the
-only mutation.
+published Article by slug as a localization source. Since 3 October 2026
+([SOCIAL-TRAFFIC-MCP-2026-10-03](../07_Decisions/SOCIAL-TRAFFIC-MCP-2026-10-03.md),
+RFC-046 §15) it also lists the read-only `social_traffic` tool, which returns
+aggregate visit and partner-click counts per UTM source, campaign and post for
+the Founder's Claude SMM agents and no per-person data. `learn_apply` remains
+the only mutation.
 It has no browser session, interactive MFA or query-secret path. The direct
 `@modelcontextprotocol/sdk` dependency exists solely for this exact transport.
 

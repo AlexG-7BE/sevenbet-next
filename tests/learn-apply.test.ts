@@ -654,7 +654,7 @@ test("stateless HTTP transport authenticates before parsing and exposes learn_co
   assert.equal(listed.status, 200);
   assert.match(listed.headers.get("cache-control") ?? "", /no-store/);
   const payload = await listed.json() as { result?: { tools?: Array<{ name?: string }> } };
-  assert.deepEqual(payload.result?.tools?.map((tool) => tool.name), ["learn_context", "learn_source", "learn_apply"]);
+  assert.deepEqual(payload.result?.tools?.map((tool) => tool.name), ["learn_context", "learn_source", "social_traffic", "learn_apply"]);
 });
 
 test("service actor must be the exact unlinked AUTHOR and is never inferred from a session", async () => {
@@ -691,7 +691,7 @@ test("official MCP client discovers learn_context and calls the one Learn mutati
   await client.connect(clientTransport);
   try {
     const discovered = await client.listTools();
-    assert.deepEqual(discovered.tools.map((tool) => tool.name), ["learn_context", "learn_source", "learn_apply"]);
+    assert.deepEqual(discovered.tools.map((tool) => tool.name), ["learn_context", "learn_source", "social_traffic", "learn_apply"]);
     assert.deepEqual(discovered.tools.filter((tool) => tool.annotations?.readOnlyHint !== true).map((tool) => tool.name), ["learn_apply"]);
     const result = await client.callTool({ name: "learn_apply", arguments: input() });
     assert.equal(result.isError, undefined);

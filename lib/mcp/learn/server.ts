@@ -3,6 +3,14 @@ import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError } fr
 import { z } from "zod";
 
 import {
+  readSocialTraffic,
+  SocialTrafficError,
+  socialTrafficErrorResultSchema,
+  socialTrafficInputSchema,
+  socialTrafficResultSchema,
+  type SocialTrafficReader,
+} from "@/lib/analytics/social-traffic.server";
+import {
   learnApplyErrorResultSchema,
   learnApplyInputSchema,
   learnApplyResultSchema,
@@ -69,6 +77,32 @@ export const learnSourceTool = {
     oneOf: [
       withoutSchemaDeclaration(z.toJSONSchema(learnSourceResultSchema) as Record<string, unknown>),
       withoutSchemaDeclaration(z.toJSONSchema(learnSourceErrorResultSchema) as Record<string, unknown>),
+    ],
+  },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+};
+
+/**
+ * Read-only site analytics for the Founder's Claude SMM agents (Founder, 3 Oct
+ * 2026, SOCIAL-TRAFFIC-MCP-2026-10-03): aggregate counts of consented visits
+ * and partner clicks per UTM source, campaign and post. No per-person data.
+ */
+export const socialTrafficTool = {
+  name: "social_traffic",
+  title: "Read social traffic to b4gamble.com",
+  description: "Read-only aggregates. For a UTC date range (default the last 7 days, at most 92) returns, per UTM source, campaign and content (the post), the number of consented Production visits (analytics sessions), partner-button clicks and clicks that reached the partner casino, with the top visitor countries; untagged visits from social-network referrers are grouped by network. Also returns site-wide totals. Counts only: no visitor, session, user, IP or email data, and nothing is written.",
+  inputSchema: z.toJSONSchema(socialTrafficInputSchema) as Record<string, unknown>,
+  outputSchema: {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "object",
+    oneOf: [
+      withoutSchemaDeclaration(z.toJSONSchema(socialTrafficResultSchema) as Record<string, unknown>),
+      withoutSchemaDeclaration(z.toJSONSchema(socialTrafficErrorResultSchema) as Record<string, unknown>),
     ],
   },
   annotations: {
@@ -150,6 +184,18 @@ function sourceFailure(error: unknown) {
   };
 }
 
+function trafficFailure(error: unknown) {
+  const safe = error instanceof SocialTrafficError
+    ? { result: "ERROR", error: { code: error.code, message: error.message, retryable: error.retryable } }
+    : { result: "ERROR", error: { code: "TRAFFIC_UNAVAILABLE", message: "Site traffic could not be read. Retry later.", retryable: true } };
+  const validated = socialTrafficErrorResultSchema.parse(safe);
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(validated) }],
+    structuredContent: validated,
+    isError: true,
+  };
+}
+
 function failure(error: unknown) {
   const details = error instanceof ServiceError && error.details && typeof error.details === "object" && !Array.isArray(error.details)
     ? error.details as Record<string, unknown>
@@ -190,12 +236,13 @@ export function createLearnMcpServer(
   service: LearnApplyAdapter = learnApplyService,
   readContext: LearnContextReader = readLearnContext,
   readSource: LearnSourceReader = readLearnSource,
+  readTraffic: SocialTrafficReader = readSocialTraffic,
 ) {
   const server = new Server(
     { name: "b4gamble-learn-publication", version: "1.0.0" },
     { capabilities: { tools: {} } },
   );
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [learnContextTool, learnSourceTool, learnApplyTool] } as never));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [learnContextTool, learnSourceTool, socialTrafficTool, learnApplyTool] } as never));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (request.params.name === learnContextTool.name) {
       try {
@@ -211,6 +258,14 @@ export function createLearnMcpServer(
         return { content: [{ type: "text" as const, text: JSON.stringify(value) }], structuredContent: value } as never;
       } catch (error) {
         return sourceFailure(error) as never;
+      }
+    }
+    if (request.params.name === socialTrafficTool.name) {
+      try {
+        const value = await readTraffic(request.params.arguments ?? {});
+        return { content: [{ type: "text" as const, text: JSON.stringify(value) }], structuredContent: value } as never;
+      } catch (error) {
+        return trafficFailure(error) as never;
       }
     }
     if (request.params.name !== learnApplyTool.name) {

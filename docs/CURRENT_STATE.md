@@ -12,6 +12,29 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## SMM agents read social traffic (`social_traffic`) — in review
+
+**Founder instruction, 3 October 2026**
+([SOCIAL-TRAFFIC-MCP-2026-10-03](07_Decisions/SOCIAL-TRAFFIC-MCP-2026-10-03.md),
+RFC-046 §15): give the Claude SMM agents site analytics — visits and casino
+clicks per social network and per post — in a separate PR. Branch
+`feat/mcp-social-traffic` adds the read-only `social_traffic` tool to the
+Learn MCP endpoint the Founder's Claude Code already reaches (`b4gamble-learn`,
+service bearer plus owner cookie), so no new token, Vercel variable or
+connector is needed. For a UTC range of up to 92 days (default 7) it returns,
+per UTM source, campaign and content, consented Production human visits,
+partner-button clicks and the clicks that reached the partner, with the top
+five countries; untagged visits from Instagram, Threads, X, Facebook, YouTube,
+Pinterest or TikTok referrers are grouped per network; site-wide totals
+include clicks without analytics consent. Counts only: no identifier, IP,
+email or referrer host leaves the server, nothing is written and the schema
+is unchanged. The server Learn publisher accepts the new tool in its
+fail-closed discovery check and still calls only `learn_apply`. Contract:
+[Customer Data, Analytics & Lifecycle Core §12.1](06_Operations/Customer-Data-Analytics-Lifecycle-Core.md#121-service-bearer-social-traffic-read).
+Tests: `tests/social-traffic.test.ts`, `tests/social-traffic-postgres.test.ts`.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Semrush Site Audit errors — in review
 
 **Founder instruction, 2 October 2026:** clear the Semrush Site Audit of

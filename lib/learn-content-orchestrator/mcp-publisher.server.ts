@@ -23,10 +23,11 @@ export class LearnContentPublisherError extends Error {
 
 /**
  * The Learn MCP surface the publisher accepts: the one mutation plus the
- * read-only learn_context and learn_source (LEARN-SERVER-SWITCH-2026-10-01).
- * Anything else fails closed.
+ * read-only learn_context and learn_source (LEARN-SERVER-SWITCH-2026-10-01)
+ * and the read-only social_traffic aggregates (SOCIAL-TRAFFIC-MCP-2026-10-03).
+ * The publisher calls only learn_apply; anything else listed fails closed.
  */
-const EXPECTED_LEARN_MCP_TOOLS: ReadonlySet<string> = new Set(["learn_apply", "learn_context", "learn_source"]);
+const EXPECTED_LEARN_MCP_TOOLS: ReadonlySet<string> = new Set(["learn_apply", "learn_context", "learn_source", "social_traffic"]);
 
 /**
  * A learn_apply call that generates a hero image took 108 s in Production on
@@ -55,7 +56,7 @@ export class McpLearnContentPublisher implements LearnContentPublisher {
       await client.connect(transport);
       const tools = await client.listTools();
       if (!learnMcpToolSurfaceIsExpected(tools.tools.map((tool) => tool.name))) {
-        throw new Error("Learn MCP tool surface is not the expected learn_apply plus read-only learn_context and learn_source");
+        throw new Error("Learn MCP tool surface is not the expected learn_apply plus read-only learn_context, learn_source and social_traffic");
       }
       const result = await client.callTool({
         name: "learn_apply",

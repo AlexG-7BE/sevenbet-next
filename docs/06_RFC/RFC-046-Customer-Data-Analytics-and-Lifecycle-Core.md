@@ -5,7 +5,8 @@
 **Decision owner:** B4GAMBLE Founder
 
 **Decision date:** 11 September 2026; Resend Production activation amendment
-approved 12 September 2026
+approved 12 September 2026; aggregate social-traffic read amendment (§15)
+approved 3 October 2026
 
 **Implementation authority:** explicit Founder instruction `B4GAMBLE Customer
 Data, Analytics & Lifecycle — Production Core v1`.
@@ -467,3 +468,33 @@ enabled; the dated activation record is the detailed operational evidence.
 The standing RFC-036 processor/transfer and account-applicability evidence
 levels continue. This RFC does not fabricate a contract acceptance, transfer
 mechanism, deliverability result, DNS state or legal approval.
+
+## 15. Amendment — aggregate social-traffic read for Claude agents (3 October 2026)
+
+Explicit Founder instruction, 3 October 2026
+([SOCIAL-TRAFFIC-MCP-2026-10-03](../07_Decisions/SOCIAL-TRAFFIC-MCP-2026-10-03.md)):
+the Founder's Claude SMM agents may read site analytics as visits and casino
+clicks per social network and per post.
+
+§11 named the staff session with `analytics.view` as the only internal path to
+the fixed dashboards. For this scope only, a second path exists: the read-only
+`social_traffic` tool on the RFC-052 Learn MCP endpoint, authorised by the
+Learn service bearer. It returns aggregate counts and nothing else:
+
+- consented Production human `AnalyticsSession` rows started in a UTC range of
+  at most 92 days, grouped by lower-cased UTM source, campaign and content,
+  plus untagged visits whose referrer is a named social network;
+- Production human `OutboundClick` attempts in the same range, credited to the
+  UTM tags of the consented session they belong to, with the `SUCCEEDED`
+  subset, and site-wide click totals including clicks without analytics
+  consent; and
+- per row, the five most frequent two-letter visitor countries.
+
+No identifier (anonymous, session, user, click), IP, email, landing path,
+referrer host, device, Programme, Help, pause or vulnerability value is
+returned, and the tool never writes. It adds no column, table or migration
+and grants no Customer, dashboard or staff permission. Code:
+`lib/analytics/social-traffic.server.ts`; tests:
+`tests/social-traffic.test.ts`, `tests/social-traffic-postgres.test.ts`.
+Rollback is removing the tool, `LEARN_MCP_ENABLED=false` (which also stops
+Learn publication) or rotating `LEARN_MCP_SERVICE_TOKEN`.
