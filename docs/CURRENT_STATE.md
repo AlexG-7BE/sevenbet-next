@@ -12,6 +12,26 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Wagering requirement calculator page — in review
+
+**Founder instruction, 3 October 2026:** the bonus calculator gets its own page
+so it can rank in search by itself. Branch `feat/wagering-calculator-page` adds
+`/{en,de,sv,da}/wagering-calculator`: the calculator first (deposit, bonus,
+multiplier, base bonus or deposit + bonus, game contribution, RTP), then worked
+examples, the GB 10x rule (en), the Swedish first-occasion bonus rule (sv), the
+Danish 10x deposit + bonus and 1,000 kr limits (da), a checklist and an FAQ, with
+WebApplication, FAQPage and BreadcrumbList structured data. The route is
+`LOCALIZABLE_PUBLIC`, listed in the sitemap for every indexable market, and linked
+from the Bonuses method section in those four languages. Other published languages
+show the English page under `noindex`. A link to `/{lang}/bonuses` appears where
+offers may be presented. The calculator had been off the site since Commercial UX
+v1 (12 September 2026); its orphaned `BonusCalculator` is replaced by
+`app/(public)/wagering-calculator/WageringCalculator.tsx` over the pure
+`lib/tools/wagering-calculator.ts`. Tests: `tests/wagering-calculator.test.ts`
+(in `public-ia:test`).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## SMM agents read social traffic (`social_traffic`) — in review
 
 **Founder instruction, 3 October 2026**

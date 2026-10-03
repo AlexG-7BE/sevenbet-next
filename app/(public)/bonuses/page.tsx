@@ -21,6 +21,7 @@ import { editorialPresentation } from "@/lib/market/editorial-market";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
+import { wageringCalculatorLocale, wageringCalculatorMessages } from "@/lib/i18n/static-pages/wagering-calculator";
 import { hasPublicOfferFilters, parsePublicOfferQuery, type PublicOfferSearchParams } from "@/lib/public-offer/query";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 import { publicOfferService } from "@/lib/services/public-offer.service";
@@ -97,6 +98,8 @@ async function BonusesContent({ raw }: { raw: Record<string, string | string[] |
   const result = withHandoffBonusDirectoryData(loaded.result, visualFixture, presentation.locale, query, fixtureMarket);
   const hasCanonicalAction = result.records.some((offer) => offer.action !== null);
   const offersPermitted = offersMayBePresented(presentation.marketCountryCode);
+  // The calculator is written in four languages; elsewhere its English page is not linked.
+  const calculatorLinkLabel = wageringCalculatorLocale(presentation.locale) === presentation.locale ? wageringCalculatorMessages(presentation.locale).breadcrumbLabel : null;
   const marketUnavailable = !visualFixture
     && (!offersPermitted || (!result.records.length && !hasCanonicalAction && !commercialProductsAvailable(loaded.commercialProductState)));
   if (marketUnavailable) return <div className={`${styles.page} ${instrumentSerif.variable}`} data-commercial-market-state="editorial-only" data-runtime-renderer="bonuses">
@@ -146,7 +149,7 @@ async function BonusesContent({ raw }: { raw: Record<string, string | string[] |
       </div>
     </section>
     <section className={styles.method} data-premium-section="bonus-terms-method" data-nav-theme="cream"><div className={styles.shell} data-motion-reveal>
-      <div><p className={styles.lightKicker}>{messages.bonuses.methodKicker}</p><h2>{messages.bonuses.methodLead}<br /><em>{messages.bonuses.methodEmphasis}</em></h2><p>{messages.bonuses.methodCopy}</p><Link href="/bonus-guide">{messages.bonuses.guideAction}</Link></div>
+      <div><p className={styles.lightKicker}>{messages.bonuses.methodKicker}</p><h2>{messages.bonuses.methodLead}<br /><em>{messages.bonuses.methodEmphasis}</em></h2><p>{messages.bonuses.methodCopy}</p><Link href="/bonus-guide">{messages.bonuses.guideAction}</Link>{calculatorLinkLabel ? <Link href={productHref(presentation, "/wagering-calculator")}>{calculatorLinkLabel}</Link> : null}</div>
       <ol>
         <li><span>01</span><div><strong>{messages.common.wagering}</strong><p>{messages.bonuses.methodCopy}</p></div></li>
         <li><span>02</span><div><strong>{messages.common.materialTerms}</strong><p>{copy.importantRestrictions}</p></div></li>
