@@ -24,8 +24,9 @@ Founder's Claude Code (subscription, no API text cost):
 - The server pipeline is the one described under "Server cycle reference"
   below, restored exactly as at `1150330c`, with three changes: the only model
   is `gpt-5.6-sol` (`gpt-6-astra` fails closed); the publisher accepts the
-  Learn MCP surface `learn_apply` plus the read-only `learn_context`; and the
-  `learn_apply` call may take up to 240 seconds.
+  Learn MCP surface `learn_apply` plus the read-only `learn_context`,
+  `learn_source` and `social_traffic` (and still calls only `learn_apply`); and
+  the `learn_apply` call may take up to 240 seconds.
 - Switching the server cycle is a Vercel variable change plus a redeploy.
   Production runs it once per 24 hours (`LEARN_CONTENT_MIN_INTERVAL_HOURS=24`).
 - ChatGPT is not used (Founder, 1 October 2026). Never let the server cycle and
@@ -41,7 +42,7 @@ Founder's Claude Code (subscription, no API text cost):
 Same endpoint, authentication and transport as `learn_apply`: `POST
 /api/mcp/learn`, stateless Streamable HTTP, `Authorization: Bearer
 <LEARN_MCP_SERVICE_TOKEN>`, responses `private, no-store`. `tools/list`
-returns exactly `learn_context`, then `learn_apply`.
+returns `learn_context`, `learn_source`, `social_traffic`, then `learn_apply`.
 
 ```text
 learn_context { targetLanguage: "en" | configured launch language }
@@ -72,7 +73,8 @@ Article metadata through `collectLearnContentSafeContext()` and writes nothing.
 | `CONTEXT_UNAVAILABLE` | Database read failed | Yes |
 
 The Learn MCP rate limits are unchanged: 60 authentication attempts and 20
-authenticated requests per 10 minutes per client key, shared by both tools.
+authenticated requests per 10 minutes per client key, shared by every tool
+(and by the client's own connect and `tools/list` calls).
 
 ## Claude Code through the Learn MCP
 
@@ -91,7 +93,10 @@ on `/api/mcp/learn`; it is valid for a year. `claude mcp list` should show
 
 Tools: `learn_context` (any published language; the English inventory comes
 with every target), `learn_source` (public content of one published Article by
-slug, the localization source) and `learn_apply` (create-only). The daily
+slug, the localization source), `social_traffic` (aggregate visits and partner
+clicks per UTM source, campaign and post for the SMM agents; contract in
+[Customer Data, Analytics & Lifecycle Core §12.1](Customer-Data-Analytics-Lifecycle-Core.md#121-service-bearer-social-traffic-read))
+and `learn_apply` (create-only). The daily
 same-day localization task and its toolkit (validator, writer brief, market
 fact sheets, ledger) live outside the repository in the Founder's Claude
 configuration.
