@@ -5,9 +5,12 @@ import { Pool, type PoolClient, type PoolConfig } from "pg";
  * Postgres pooled endpoint answers "Failed to connect to upstream database" when it cannot reach
  * the database at that moment; the engine reported the same as P1001 "Can't reach database
  * server" (over 1,000 Production log lines in 72 h, 3 October 2026), and the same request
- * succeeded seconds later.
+ * succeeded seconds later. "Connection terminated due to connection timeout" is pg's word for a
+ * new connection that took longer than `connectionTimeoutMillis` to open (the first error on
+ * Production after the driver change, 3 October 2026, 06:49 UTC); it is retried too. Waiting for
+ * a free pooled connection ("timeout exceeded when trying to connect") is not.
  */
-const TRANSIENT_CONNECT_FAILURE = /upstream database|ECONNRESET|ECONNREFUSED|EPIPE|EAI_AGAIN|Connection terminated unexpectedly/i;
+const TRANSIENT_CONNECT_FAILURE = /upstream database|ECONNRESET|ECONNREFUSED|EPIPE|EAI_AGAIN|Connection terminated unexpectedly|Connection terminated due to connection timeout/i;
 
 export const CONNECT_RETRY_DELAY_MS = 200;
 /** Slack over the idle timeout before an idle client counts as having slept through it. */
@@ -32,10 +35,10 @@ type ConnectCallback = (error: Error | undefined, client: PoolClient | undefined
  *   the instance, and the socket behind it is likely dead (the P2024 / "Timed out fetching a new
  *   connection" pattern at one request a minute). Such a client is destroyed and the next one
  *   taken, up to a fresh connection.
- * - **A connection that fails while opening is opened once more**, after 200 ms. Nothing has run
- *   on it yet, so the retry cannot repeat a statement. A pool timeout ("timeout exceeded when
- *   trying to connect") or a slow connect cut off by `connectionTimeoutMillis` is not retried, so
- *   the wait stays bounded.
+ * - **A connection that fails or stalls while opening is opened once more**, after 200 ms.
+ *   Nothing has run on it yet, so the retry cannot repeat a statement. A full pool ("timeout
+ *   exceeded when trying to connect") is not retried; with the 3 s connect bound a request waits
+ *   at most about 6 s.
  */
 export class ReconnectingPool extends Pool {
   constructor(config?: PoolConfig) {
