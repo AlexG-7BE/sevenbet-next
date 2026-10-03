@@ -12,6 +12,18 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## "Before Gamble" brand signals — in review
+
+**Founder instruction, 3 October 2026:** a Google search for "before gamble"
+should lead to b4gamble.com. The home title now starts with `B4GAMBLE (Before
+Gamble)` in every locale. Organization and WebSite structured data carry
+`alternateName` "Before Gamble", "Before You Gamble" and "B4 Gamble". The FAQ
+answers "What does B4GAMBLE stand for?" in all eleven languages. The desktop home
+page is visually unchanged. Record:
+[BRAND-BEFORE-GAMBLE-2026-10-03](07_Decisions/BRAND-BEFORE-GAMBLE-2026-10-03.md).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Wagering requirement calculator page — in review
 
 **Founder instruction, 3 October 2026:** the bonus calculator gets its own page
