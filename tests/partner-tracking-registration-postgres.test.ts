@@ -706,6 +706,7 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       routeHealth: "HEALTHY" as const,
       reason: "PostgreSQL fixture canonical convergence.",
     }));
+    const auditAt = new Date(NOW.getTime() + 6_000);
     await repository.recordAudit({
       stage: first,
       verification: "HEALTHY",
@@ -714,9 +715,13 @@ test("PostgreSQL tracking registration is concurrent, idempotent, precedence-saf
       actorId: ACTOR_ID,
       auditOrigin: "INTERNAL_APPLICATION",
       correlationId: "partner-tracking-postgres-command",
-      now: new Date(NOW.getTime() + 6_000),
+      now: auditAt,
     });
-    const audit = await client.auditLog.findFirstOrThrow({ where: { actorId: ACTOR_ID, action: "commercial-partner-tracking-link-registered" } });
+    // The service registrations above audit the same actor, relationship and correlation id
+    // (including EXACT_GEO links) at wall-clock time; only the fixed timestamp selects this write.
+    const audit = await client.auditLog.findFirstOrThrow({
+      where: { actorId: ACTOR_ID, action: "commercial-partner-tracking-link-registered", timestamp: auditAt },
+    });
     assert.equal(audit.entityType, "partner-casino-relationship");
     assert.equal(audit.entityId, first.partnerCasinoRelationshipId);
     const diagnostics = JSON.stringify({ audit: { summary: audit.summary, metadata: audit.metadata } });
