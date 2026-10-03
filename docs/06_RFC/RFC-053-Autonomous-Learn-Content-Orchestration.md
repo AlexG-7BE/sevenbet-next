@@ -353,7 +353,11 @@ This reverses the retirement part of §11; its `learn_context` part stands.
   code-reviewed allowlist; `gpt-6-astra` fails closed.
 - **Publisher.** §5's discovery check accepts exactly the Learn MCP surface
   `learn_apply` plus the read-only `learn_context` and fails closed on any
-  other tool. The `learn_apply` call may take up to 240 seconds inside the
+  other tool. Later read-only companions join the accepted surface:
+  `learn_source` (1 October 2026) and `social_traffic` (3 October 2026,
+  [SOCIAL-TRAFFIC-MCP-2026-10-03](../07_Decisions/SOCIAL-TRAFFIC-MCP-2026-10-03.md)).
+  The publisher still calls only `learn_apply`, and no analytics value
+  reaches the managed session (§4). The `learn_apply` call may take up to 240 seconds inside the
   route's 300-second limit.
 - RFC-052 remains the sole Article mutation authority; `learn_apply` and every
   editorial rule of §§2, 5, 7 and 10 are unchanged.

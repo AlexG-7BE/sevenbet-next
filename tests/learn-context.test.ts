@@ -269,11 +269,11 @@ async function connected(readContext: (input: unknown) => Promise<LearnContextRe
   };
 }
 
-test("MCP discovery exposes learn_context, learn_source and learn_apply, and only learn_apply writes", async () => {
+test("MCP discovery exposes learn_context, learn_source, social_traffic and learn_apply, and only learn_apply writes", async () => {
   const session = await connected(reader(seeded).read);
   try {
     const discovered = await session.client.listTools();
-    assert.deepEqual(discovered.tools.map((tool) => tool.name), ["learn_context", "learn_source", "learn_apply"]);
+    assert.deepEqual(discovered.tools.map((tool) => tool.name), ["learn_context", "learn_source", "social_traffic", "learn_apply"]);
     const byName = Object.fromEntries(discovered.tools.map((tool) => [tool.name, tool]));
     assert.deepEqual(byName.learn_context?.annotations, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
     assert.deepEqual(byName.learn_source?.annotations, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
@@ -359,7 +359,7 @@ test("HTTP learn_context requires the Learn service bearer and answers private, 
     body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list" }),
   }));
   const tools = await listed.json() as { result?: { tools?: Array<{ name?: string }> } };
-  assert.deepEqual(tools.result?.tools?.map((tool) => tool.name), ["learn_context", "learn_source", "learn_apply"]);
+  assert.deepEqual(tools.result?.tools?.map((tool) => tool.name), ["learn_context", "learn_source", "social_traffic", "learn_apply"]);
 });
 
 test("context generatedAt, Programme and routes come from the shared public collector", async () => {

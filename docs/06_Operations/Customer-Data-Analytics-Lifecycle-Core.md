@@ -420,6 +420,69 @@ permission independently; POST actions also require same-origin and bounded
 JSON. Navigation filtering is convenience only. Customer IDs do not bypass
 the page-level authorization gate.
 
+### 12.1 Service-bearer social traffic read
+
+Founder instruction, 3 October 2026
+([SOCIAL-TRAFFIC-MCP-2026-10-03](../07_Decisions/SOCIAL-TRAFFIC-MCP-2026-10-03.md),
+RFC-046 §15). The one access path outside the staff session: the read-only
+`social_traffic` tool on the Learn MCP endpoint (`POST /api/mcp/learn`,
+`Authorization: Bearer <LEARN_MCP_SERVICE_TOKEN>`, responses
+`private, no-store`). It serves the Founder's Claude SMM agents, which reach
+the endpoint through the existing `b4gamble-learn` Claude Code connection.
+Code: `lib/analytics/social-traffic.server.ts`.
+
+```text
+social_traffic {
+  from?:      "YYYY-MM-DD" (UTC, inclusive) | ISO date-time with Z/offset (inclusive)
+  to?:        "YYYY-MM-DD" (whole UTC day, inclusive) | ISO date-time (exclusive)
+              defaults: to = now, from = to − 7 days; at most 92 days
+  utmSource?: case-insensitive source, e.g. "x"; also keeps that network's untagged referrer visits
+  groupBy?:   "source" | "source_campaign" | "source_campaign_content" (default)
+  limit?:     1..200 (default 50)
+}
+→ {
+    generatedAt, range: { from, to, days }, groupBy, filter: { utmSource },
+    totals: { rows, sessions, outboundClicks, partnerClicks },        // every matching row
+    site:   { sessions, outboundClicks, partnerClicks, outboundClicksWithoutConsent },
+    rows: [{
+      channel: "utm" | "social_referrer",
+      utmSource, utmCampaign, utmContent,                              // lower-cased; null when absent or grouped out
+      referrerNetwork: "instagram" | "threads" | "x" | "facebook" | "youtube" | "pinterest" | "tiktok" | null,
+      sessions, outboundClicks, partnerClicks,
+      topCountries: [{ countryCode, sessions }]                        // at most 5
+    }],
+    omittedRows, notes
+  }
+```
+
+Definitions (same filters as the fixed dashboards):
+
+- **sessions** — consented `PRODUCTION` + `HUMAN` `AnalyticsSession` rows whose
+  `startedAt` is in the range. A row is `utm` when the session has a UTM
+  source, campaign or content; otherwise `social_referrer` when its referrer
+  host belongs to one of the seven networks (exact host or subdomain:
+  `l.instagram.com`, `t.co`, `l.facebook.com`, `youtu.be`, `pin.it`, …).
+  Search, direct and internal referrers are not rows but are in
+  `site.sessions`.
+- **outboundClicks / partnerClicks** — `PRODUCTION` + `HUMAN` `OutboundClick`
+  attempts whose `attemptedAt` is in the range, credited to the UTM tags of
+  the consented session they belong to; `partnerClicks` is the `SUCCEEDED`
+  subset. A click in range whose session began before the range still counts,
+  so a row may show clicks with zero sessions.
+- **site** — all consented sessions in the range, all partner-button attempts
+  (with or without analytics consent), their `SUCCEEDED` subset, and the
+  attempts without an analytics session, which no post can be credited with.
+
+Only counts, lower-cased UTM values, network names and two-letter country
+codes leave the server: no anonymous/session/user/click ID, IP, email, landing
+path, referrer host or device. The tool never writes. Errors:
+`INVALID_INPUT` and `RANGE_TOO_LONG` (not retryable), `RESULT_TOO_LARGE` (more
+than 20,000 raw session groups or 50,000 attributed clicks; ask for a shorter
+range or one source) and `TRAFFIC_UNAVAILABLE` (database read failed;
+retryable). The Learn MCP rate limit applies: 20 authenticated requests per
+10 minutes per client address in each server instance, shared with the Learn
+tools.
+
 ## 13. Environment variables
 
 | Name | Treatment |
