@@ -97,7 +97,7 @@ test("root identity, legal trading name and approved contacts are exact", () => 
   const home = source("app/(public)/page.tsx");
   const homeCatalog = source("lib/i18n/home-catalog.ts");
   const icon = source("app/icon.svg");
-  assert.match(layout, /default: "B4GAMBLE \| Know your limits before you play"/);
+  assert.match(layout, /default: "B4GAMBLE \(Before Gamble\) \| Know your limits before you play"/);
   assert.match(layout, /siteName: "B4GAMBLE"/);
   assert.match(source("lib/seo/structured-data.ts"), /name: "B4GAMBLE"/);
   assert.match(layout, /Educational tools, private self-checks and transparent casino comparison/);

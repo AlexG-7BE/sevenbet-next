@@ -33,7 +33,7 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "B4GAMBLE | Know your limits before you play",
+    default: "B4GAMBLE (Before Gamble) | Know your limits before you play",
     template: "%s",
   },
   description: "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",

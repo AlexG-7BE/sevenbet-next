@@ -26,7 +26,7 @@ test("Home route renders the final handoff with the approved metadata and canoni
   assert.match(page, /transform=\{\(html\) => transformHomeHandoff\(html, presentation\.locale\)\}/);
   assert.match(page, /programmePath=\{programmePath\}/);
   assert.match(page, /export async function generateMetadata/);
-  assert.match(homeCatalog, /title: "B4GAMBLE \| Know your limits before you play"/);
+  assert.match(homeCatalog, /title: "B4GAMBLE \(Before Gamble\) \| Know your limits before you play"/);
   assert.match(page, /productMetadata\(\{ presentation, pathname: "\/", title, description, robots: \{ index: true, follow: true \} \}\)/);
   assert.match(productContext, /const canonical = absoluteUrl\(productCanonicalPath\(input\.presentation, input\.pathname\)\)/);
   assert.match(productContext, /const robots = explicitlyLocalized[\s\S]*\? \{ index: false, follow: true \}/);

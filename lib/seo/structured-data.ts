@@ -11,6 +11,12 @@ export const ORGANIZATION_LOGO_PATH = "/brand/b4gamble-logo-512.png";
 export const EDITORIAL_AUTHOR_NAME = "B4GAMBLE Editorial";
 
 /**
+ * What the name stands for, so a search for "before gamble" finds the brand
+ * (Founder, 3 Oct 2026). The video outros already say "Before Gamble."
+ */
+export const BRAND_ALTERNATE_NAMES = ["Before Gamble", "Before You Gamble", "B4 Gamble"] as const;
+
+/**
  * The brand's own public profiles, so search engines tie them to the site as one entity
  * (Founder, 1 Oct 2026). Only profiles B4GAMBLE controls; add one when it goes live.
  */
@@ -34,6 +40,7 @@ export function organizationSchema() {
     "@type": "Organization",
     "@id": ORGANIZATION_ID,
     name: "B4GAMBLE",
+    alternateName: [...BRAND_ALTERNATE_NAMES],
     legalName: "7BE Inc.",
     url: siteUrl,
     sameAs: [...ORGANIZATION_PROFILES],
@@ -52,6 +59,7 @@ export function websiteSchema() {
     "@type": "WebSite",
     "@id": WEBSITE_ID,
     name: "B4GAMBLE",
+    alternateName: [...BRAND_ALTERNATE_NAMES],
     url: siteUrl,
     publisher: { "@id": ORGANIZATION_ID },
   };
