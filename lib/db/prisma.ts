@@ -1,6 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
-import { attachDatabasePool } from "@vercel/functions/db-connections";
 
 import { runtimePgPool, warnForUnsafePrismaRuntimeConnection } from "@/lib/db/prisma-runtime-config";
 import { ReconnectingPool } from "@/lib/db/reconnecting-pg-pool";
@@ -21,13 +20,15 @@ const transactionOptions =
 warnForUnsafePrismaRuntimeConnection();
 
 /**
- * The runtime client queries through the `pg` driver adapter (Founder, 3 October 2026): a `pg`
- * pool built from `DATABASE_URL` with the code-level pool policy (`runtimePgPool`), attached to
- * the Vercel function lifecycle so idle connections close before Fluid compute suspends the
- * instance instead of going stale inside it. Outside Vercel `attachDatabasePool` does nothing.
- * A connection that fails while opening (the pooled endpoint's "Failed to connect to upstream
- * database", P1001 under the engine) is opened once more before the query fails.
- * Migrations and release administration keep the direct URL and the Prisma CLI.
+ * The runtime client queries through the `pg` driver adapter (Founder, 3 October 2026) on a pool
+ * built from `DATABASE_URL` with the code-level pool policy (`runtimePgPool`). The pool drops idle
+ * connections that slept through a Fluid compute suspension and opens a connection once more when
+ * the pooled endpoint fails to reach the database (`ReconnectingPool`). Migrations and release
+ * administration keep the direct URL and the Prisma CLI.
+ *
+ * Not `attachDatabasePool` (`@vercel/functions`): tried on Preview, 3 October 2026, every pool
+ * release arrived outside the request scope (the engine calls the driver from native code), so
+ * it could not keep the instance alive and only logged a warning per request.
  */
 function createPrismaClient() {
   const { config, schema } = runtimePgPool(process.env.DATABASE_URL);
@@ -36,7 +37,6 @@ function createPrismaClient() {
   pool.on("error", (error) => {
     console.warn("prisma_pg_pool_idle_client_error", { message: error.message });
   });
-  attachDatabasePool(pool);
   return new PrismaClient({
     adapter: new PrismaPg(pool, schema ? { schema } : undefined),
     log:

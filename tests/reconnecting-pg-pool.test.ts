@@ -12,6 +12,8 @@ const UPSTREAM = "Failed to connect to upstream database. Please contact Prisma 
 function scriptedClient(outcomes: (Error | null)[]) {
   const state = { connects: 0, queries: 0 };
   class ScriptedClient extends EventEmitter {
+    _queryable = true;
+    _ending = false;
     connect(callback: (error?: Error) => void) {
       const outcome = outcomes[state.connects++] ?? null;
       setImmediate(() => callback(outcome ?? undefined));
@@ -71,6 +73,37 @@ test("only one retry, and none for pool timeouts, auth or other errors", async (
   assert.equal(isTransientConnectFailure(new Error(UPSTREAM)), true);
   assert.equal(isTransientConnectFailure(Object.assign(new Error("connect failed"), { code: "ECONNREFUSED" })), true);
   assert.equal(isTransientConnectFailure("ECONNRESET"), false, "only Error objects");
+});
+
+test("an idle client that slept through its idle timeout (a frozen instance) is dropped for a fresh one", async () => {
+  const { Client, state } = scriptedClient([null, null]);
+  const pool = new ReconnectingPool({ Client: Client as never, max: 3, idleTimeoutMillis: 5_000 });
+  const first = await pool.connect();
+  first.release();
+  assert.equal(pool.idleCount, 1);
+  const realNow = Date.now;
+  Date.now = () => realNow() + 5_000 + 1_500;
+  try {
+    const second = await pool.connect();
+    assert.notEqual(second, first, "the slept-through client is not handed out");
+    assert.equal(state.connects, 2, "a fresh connection was opened instead");
+    second.release();
+  } finally {
+    Date.now = realNow;
+  }
+  await pool.end();
+});
+
+test("a recently released idle client is reused as usual", async () => {
+  const { Client, state } = scriptedClient([null]);
+  const pool = new ReconnectingPool({ Client: Client as never, max: 3, idleTimeoutMillis: 5_000 });
+  const first = await pool.connect();
+  first.release();
+  const again = await pool.connect();
+  assert.equal(again, first);
+  assert.equal(state.connects, 1);
+  again.release();
+  await pool.end();
 });
 
 test("the Prisma adapter takes the reconnecting pool as its own pool", () => {

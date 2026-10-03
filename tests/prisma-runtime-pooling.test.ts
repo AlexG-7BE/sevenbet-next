@@ -106,7 +106,7 @@ test("Prisma CLI has a direct URL while the application keeps one module-level c
   assert.equal((client.match(/new PrismaClient\(/g) ?? []).length, 1);
   assert.match(client, /runtimePgPool\(process\.env\.DATABASE_URL\)/);
   assert.match(client, /new ReconnectingPool\(config\)/, "a connection that fails while opening is opened once more");
-  assert.match(client, /attachDatabasePool\(pool\)/, "idle connections close before Fluid compute suspends the instance");
+  assert.doesNotMatch(client, /attachDatabasePool\(/, "its release events arrive outside the request scope under the engine; the pool guards stale clients itself");
   assert.match(client, /pool\.on\("error"/, "an idle client dropped by the server is logged, not an unhandled error event");
   assert.match(client, /adapter: new PrismaPg\(pool/);
   assert.doesNotMatch(client, /datasourceUrl/, "the adapter, not an engine URL, carries the connection");

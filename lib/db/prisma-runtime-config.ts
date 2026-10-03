@@ -174,9 +174,9 @@ function seconds(url: URL, name: string) {
  * The runtime database URL translated into a `pg` pool for the Prisma driver adapter (Founder,
  * 3 October 2026). The Prisma engine's own pool kept connections across Fluid compute
  * suspensions; they went stale while the instance idled, and the next request waited out the
- * pool timeout (P2024) at about one request a minute. A `pg` pool attached to the function
- * lifecycle (`attachDatabasePool` in `lib/db/prisma.ts`) closes idle clients before the
- * instance suspends instead.
+ * pool timeout (P2024) at about one request a minute. The `pg` pool (`ReconnectingPool` in
+ * `lib/db/reconnecting-pg-pool.ts`) drops an idle client that slept through its idle timeout and
+ * reopens a connection the pooled endpoint failed to open.
  *
  * The same URL parameters keep meaning the same thing, so {@link RUNTIME_POOL_POLICY} still
  * governs the pooled endpoint:

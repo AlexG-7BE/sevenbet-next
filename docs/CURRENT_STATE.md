@@ -105,11 +105,13 @@ timeout.
 The runtime client in `lib/db/prisma.ts` now queries through
 `@prisma/adapter-pg` on a `pg` pool built from `DATABASE_URL` by
 `runtimePgPool` (same policy: 3 connections, 5 s wait, 25 s query bound, 5 s
-idle life on the pooled host), attached to the function lifecycle with
-`attachDatabasePool` (`@vercel/functions`), so idle connections close before an
-instance suspends. A connection that fails while opening (the pooled endpoint's
-"Failed to connect to upstream database", seen on the first Preview request and
-as P1001 under the engine) is opened once more before the query fails.
+idle life on the pooled host). The pool (`ReconnectingPool`) drops an idle
+connection that slept through its idle timeout — the frozen-instance case —
+and opens a fresh one, and it opens a connection once more when the pooled
+endpoint answers "Failed to connect to upstream database" (seen on the first
+Preview request; P1001 under the engine). `attachDatabasePool`
+(`@vercel/functions`) was tried and dropped: on Preview every release arrived
+outside the request scope, so it did nothing but log a line per request.
 `sslmode=require` now verifies the certificate. Migrations,
 release administration, scripts and tests that build their own client keep the
 Prisma engine. Checked locally against the dev copy of Production: the market
