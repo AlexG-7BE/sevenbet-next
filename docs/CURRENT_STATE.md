@@ -107,7 +107,10 @@ The runtime client in `lib/db/prisma.ts` now queries through
 `runtimePgPool` (same policy: 3 connections, 5 s wait, 25 s query bound, 5 s
 idle life on the pooled host), attached to the function lifecycle with
 `attachDatabasePool` (`@vercel/functions`), so idle connections close before an
-instance suspends. `sslmode=require` now verifies the certificate. Migrations,
+instance suspends. A connection that fails while opening (the pooled endpoint's
+"Failed to connect to upstream database", seen on the first Preview request and
+as P1001 under the engine) is opened once more before the query fails.
+`sslmode=require` now verifies the certificate. Migrations,
 release administration, scripts and tests that build their own client keep the
 Prisma engine. Checked locally against the dev copy of Production: the market
 routes for GB/SE/DK/DE, the casino list and GB bonuses are byte-identical

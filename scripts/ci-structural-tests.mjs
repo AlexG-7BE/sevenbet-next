@@ -24,6 +24,7 @@ const requiredTests = [
   "tests/learning-center-parity.test.ts",
   "tests/media-presentation.test.ts",
   "tests/prisma-runtime-pooling.test.ts",
+  "tests/reconnecting-pg-pool.test.ts",
   "tests/production-build-read-only.test.ts",
   "tests/public-casino-discovery.test.ts",
   "tests/public-casino-rendering.test.ts",
