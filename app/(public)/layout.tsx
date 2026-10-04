@@ -104,7 +104,7 @@ export default async function PublicLayout({ children }: { children: ReactNode }
   const messages = publicShellMessages(presentation.locale);
 
   return (
-    <PublicNavigationFeedback className={styles.navigationFeedback}>
+    <PublicNavigationFeedback className={styles.navigationFeedback} progressClassName={styles.navigationProgress}>
       <a className="skipLink" href="#main-content">{messages.skipToMain}</a>
       <PublicHeader
         account={account}

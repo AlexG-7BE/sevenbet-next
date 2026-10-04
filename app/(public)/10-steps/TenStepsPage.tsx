@@ -9,6 +9,13 @@ import { TenStepsStickyStart } from "./TenStepsStickyStart";
 
 const BUILD_NUMERALS = ["I", "II", "III"] as const;
 
+// The opening photo ships Home's responsive set instead of the 3500×2336 original (626 KB, 4 Oct 2026):
+// it fills the phone hero (300px tall, full width) and the right 60% of a wider screen.
+const ART_SIZES = "(max-width: 900px) 100vw, 60vw";
+const artCandidates = (format: "avif" | "webp") => [320, 640, 1280, 1920]
+  .map((width) => `/home/responsive/hero-plan-${width}.${format} ${width}w`)
+  .join(", ");
+
 function stageLabel(value: string) {
   const split = value.indexOf(" ");
   return split < 0 ? { range: "", label: value } : { range: value.slice(0, split), label: value.slice(split + 1) };
@@ -33,7 +40,7 @@ export function TenStepsPage({ aboutHref, locale, programmePath }: {
 
   return <div className={styles.page} data-runtime-renderer="ten-steps">
     <section aria-labelledby="ten-steps-title" className={styles.hero} data-nav-theme="dark" data-ten-steps-section="hero">
-      <div className={styles.art}><div className={styles.artMotion}><img alt={text[49]} decoding="async" loading="eager" src="/home/hero-plan.jpg" /></div></div>
+      <div className={styles.art}><div className={styles.artMotion}><picture><source sizes={ART_SIZES} srcSet={artCandidates("avif")} type="image/avif" /><source sizes={ART_SIZES} srcSet={artCandidates("webp")} type="image/webp" /><img alt={text[49]} decoding="async" height={2336} loading="eager" src="/home/hero-plan.jpg" width={3500} /></picture></div></div>
       <div aria-hidden="true" className={styles.gradient} />
       <div className={styles.heroBody}>
         <div className={styles.heroCopy}>

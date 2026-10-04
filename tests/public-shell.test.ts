@@ -248,6 +248,50 @@ test("the transition pill and route frame reveal only on a slow transition; guid
   assert.doesNotMatch(readFileSync("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx", "utf8"), /PublicLinkPendingSignal/);
 });
 
+test("every link that leaves the page starts the top progress bar at once and holds it until the page is in place", async () => {
+  // 4 Oct 2026: a tap that changed nothing for seconds (a slow Learn page, a cold server) read as a dead link.
+  const { navigationClickTarget } = await import("../components/public-shell/navigation-progress");
+  const here = "https://b4gamble.com/en/learn?category=payments#top";
+  assert.equal(navigationClickTarget("/en/casinos", here), "/en/casinos");
+  assert.equal(navigationClickTarget("https://b4gamble.com/en/learn?category=bonuses", here), "/en/learn?category=bonuses");
+  assert.equal(navigationClickTarget("/r/example-casino", here), "/r/example-casino", "an outbound redirect still leaves this page");
+  assert.equal(navigationClickTarget("#faq", here), null, "a same-page anchor moves nothing");
+  assert.equal(navigationClickTarget("/en/learn?category=payments", here), null, "the current page is not a transition");
+  assert.equal(navigationClickTarget("https://partner.example/offer", here), null, "another site gets the browser's own loading state");
+
+  const feedback = readFileSync("components/public-shell/PublicNavigationFeedback.tsx", "utf8");
+  assert.match(feedback, /window\.addEventListener\("click", onClick, true\)/, "capture: the bar starts before a Link or handoff page takes the click");
+  assert.match(feedback, /event\.button !== 0 \|\| event\.metaKey \|\| event\.ctrlKey \|\| event\.shiftKey \|\| event\.altKey/);
+  assert.match(feedback, /anchor\.hasAttribute\("download"\) \|\| \(anchor\.target && anchor\.target !== "_self"\)/);
+  assert.match(feedback, /!document\.querySelector\("\[data-route-loading\]"\)/, "the bar outlasts the loading frame");
+  assert.match(feedback, /const PROGRESS_GIVE_UP_MS = 30_000;/);
+  assert.match(feedback, /<div aria-hidden="true" className=\{progressClassName\} data-navigation-progress=\{progress\} \/>/);
+  assert.match(readFileSync("app/(public)/layout.tsx", "utf8"), /progressClassName=\{styles\.navigationProgress\}/);
+
+  const shell = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
+  const bar = /\.navigationProgress \{([^}]*)\}/.exec(shell)?.[1] ?? "";
+  assert.match(bar, /position: fixed;[\s\S]*top: 0;[\s\S]*pointer-events: none;/);
+  assert.match(bar, /animation: navigationProgressRun 12s [^;]*forwards;/);
+  assert.doesNotMatch(bar, /opacity: 0|\d+ms forwards/, "unlike the named pill, the bar has no reveal delay");
+  // A handoff page's pill no longer gives up at 8 s while the next page is still on its way.
+  assert.match(readFileSync("components/final-handoff/HandoffInteractions.tsx", "utf8"), /pendingNavigationLabel = "";\n\s*\}, 30_000\);/);
+});
+
+test("redesigned pages load behind a dark frame cut like them; Home keeps its frame", () => {
+  // 4 Oct 2026: the 17 Sep frame (dark band over cream columns) flashed the old design before the dark pages.
+  const frame = readFileSync("components/public-shell/PublicRouteLoadingFrame.tsx", "utf8");
+  const css = readFileSync("components/public-shell/PublicRouteLoading.module.css", "utf8");
+  assert.match(frame, /const dark = destination !== "home";/);
+  assert.match(frame, /data-frame-theme=\{dark \? "dark" : "classic"\}/);
+  assert.match(frame, /data-nav-theme=\{dark \? "dark" : "cream"\}/);
+  assert.match(frame, /\{dark \? \(\s*<div className=\{styles\.cards\}>/);
+  assert.doesNotMatch(frame, /<h1/);
+  assert.match(css, /\.page\[data-frame-theme="dark"\] \{[^}]*background: var\(--sb-night\);/);
+  assert.match(css, /\.page\[data-frame-theme="dark"\] \.content \{[^}]*background: var\(--sb-night\);/);
+  assert.match(css, /\.page\[data-frame-theme="dark"\] \.hero \.title \{[^}]*font-size: clamp\(44px, 5\.6vw, 88px\);/);
+  assert.match(css, /\.cards > span \{[^}]*background: var\(--sb-surface-card\);/);
+});
+
 test("language menus name languages from one fixed table, never from the browser's ICU", async () => {
   // Safari names languages differently from Node ("Engelska" vs "engelska"), so client-side
   // Intl.DisplayNames made React discard every Swedish and Danish page on iPhone (#418).

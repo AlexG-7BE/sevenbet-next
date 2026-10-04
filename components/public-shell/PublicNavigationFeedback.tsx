@@ -3,18 +3,89 @@
 import { useLinkStatus } from "next/link";
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 
+import { navigationClickTarget } from "./navigation-progress";
+
 type PendingLink = Readonly<{ id: string; label: string }>;
 type PendingLinkReporter = (pendingLink: PendingLink, pending: boolean) => void;
+type ProgressState = "idle" | "running" | "finishing";
 
 const PendingLinkContext = createContext<PendingLinkReporter | null>(null);
+
+// The public layout's maxDuration: no server answer can still be coming after it.
+const PROGRESS_GIVE_UP_MS = 30_000;
 
 export function usePublicNavigationFeedback() {
   return useContext(PendingLinkContext);
 }
 
-export function PublicNavigationFeedback({ children, className }: { children: ReactNode; className: string }) {
+function anchorFrom(target: EventTarget | null) {
+  const anchor = target instanceof Element ? target.closest("a[href]") : null;
+  return anchor instanceof HTMLAnchorElement ? anchor : null;
+}
+
+/**
+ * A bar at the top of the screen starts on the click itself and holds until the next page is in
+ * place: its address is showing and its loading frame has given way to the page. The named pill
+ * still waits 700ms (Founder decision 25 Sep 2026); the bar names nothing, so it cannot flash.
+ */
+function useNavigationProgress() {
+  const [progress, setProgress] = useState<ProgressState>("idle");
+
+  useEffect(() => {
+    let startedFrom: string | null = null;
+    let poll = 0;
+    let giveUp = 0;
+    let fade = 0;
+    const clearTimers = () => {
+      window.clearInterval(poll);
+      window.clearTimeout(giveUp);
+      window.clearTimeout(fade);
+    };
+    const finish = () => {
+      if (startedFrom === null) return;
+      startedFrom = null;
+      clearTimers();
+      setProgress("finishing");
+      fade = window.setTimeout(() => setProgress("idle"), 240);
+    };
+    const arrived = () => startedFrom !== null
+      && `${window.location.pathname}${window.location.search}` !== startedFrom
+      && !document.querySelector("[data-route-loading]");
+    const onClick = (event: MouseEvent) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = anchorFrom(event.target);
+      if (!anchor || anchor.hasAttribute("download") || (anchor.target && anchor.target !== "_self")) return;
+      if (!navigationClickTarget(anchor.href, window.location.href)) return;
+      clearTimers();
+      startedFrom = `${window.location.pathname}${window.location.search}`;
+      setProgress("running");
+      poll = window.setInterval(() => { if (arrived()) finish(); }, 100);
+      giveUp = window.setTimeout(finish, PROGRESS_GIVE_UP_MS);
+    };
+    // A page restored from the back-forward cache must not come back mid-transition.
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      startedFrom = null;
+      clearTimers();
+      setProgress("idle");
+    };
+    // Capture: the bar starts before a Link or a handoff page takes the click over.
+    window.addEventListener("click", onClick, true);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      clearTimers();
+      window.removeEventListener("click", onClick, true);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, []);
+
+  return progress;
+}
+
+export function PublicNavigationFeedback({ children, className, progressClassName }: { children: ReactNode; className: string; progressClassName: string }) {
   const activeLinks = useRef(new Map<string, PendingLink>());
   const [activeLink, setActiveLink] = useState<PendingLink | null>(null);
+  const progress = useNavigationProgress();
   const report = useCallback<PendingLinkReporter>((pendingLink, pending) => {
     if (pending) {
       activeLinks.current.delete(pendingLink.id);
@@ -28,6 +99,7 @@ export function PublicNavigationFeedback({ children, className }: { children: Re
   return (
     <PendingLinkContext.Provider value={report}>
       {children}
+      {progress === "idle" ? null : <div aria-hidden="true" className={progressClassName} data-navigation-progress={progress} />}
       {activeLink ? (
         <div
           aria-atomic="true"

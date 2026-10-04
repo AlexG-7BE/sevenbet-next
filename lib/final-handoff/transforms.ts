@@ -392,6 +392,7 @@ export function transformLearnHandoff(
             <span style="font-size: 14px; color: rgb(16, 15, 15); border-bottom: 1px solid rgba(16, 15, 15, 0.3); padding-bottom: 2px; white-space: nowrap;">${escapeHtml(messages.hub[19])}</span>
           </a>`;
   let output = html
+    .replace(/<img\b[^>]*\bsrc="\/home\/chapter-apply\.jpg"[^>]*>/, learnResponsiveHeroImage)
     .replace(/<input placeholder="Search guides — wagering, payouts, RTP…"[^>]*>/, "")
     .replace(
       /(<h2[^>]*>All guides<\/h2>)/,
@@ -628,6 +629,22 @@ function homeResponsiveImage(imageTag: string) {
     .replace("decoding=\"async\"", `decoding="async" fetchpriority="${chapter ? "low" : alt === "Creator at work" ? "high" : "auto"}" height="${media.height}" sizes="${sizes}" width="${media.width}"`);
 
   return `<picture data-home-media="${chapter ? "chapter" : "opening"}" style="display:block;width:100%;height:100%;"><source type="image/avif" sizes="${sizes}" srcset="${candidates("avif")}"><source type="image/webp" sizes="${sizes}" srcset="${candidates("webp")}">${responsiveTag}</picture>`;
+}
+
+/**
+ * The Learn hub opened on the 6000×4000 original of Home's chapter photo (2.9 MB, 96 MB decoded)
+ * under an endless Ken Burns zoom. On a phone it held the connection for about 15 s, so a link
+ * tapped meanwhile seemed to do nothing (4 Oct 2026). It now takes Home's responsive set: the
+ * photo fills the phone hero (300px tall, full width) and the right 54% of a wider screen.
+ */
+function learnResponsiveHeroImage(imageTag: string) {
+  const media = HOME_MEDIA["chapter-apply.jpg"];
+  const sizes = "(max-width: 900px) 100vw, 54vw";
+  const candidates = (format: "avif" | "webp") => HOME_MEDIA_WIDTHS
+    .map((width) => `/home/responsive/chapter-apply-${width}.${format} ${width}w`)
+    .join(", ");
+  const responsiveTag = imageTag.replace("decoding=\"async\"", `decoding="async" height="${media.height}" sizes="${sizes}" width="${media.width}"`);
+  return `<picture data-learn-hero-media="" style="display:block;width:100%;height:100%;"><source type="image/avif" sizes="${sizes}" srcset="${candidates("avif")}"><source type="image/webp" sizes="${sizes}" srcset="${candidates("webp")}">${responsiveTag}</picture>`;
 }
 
 function tagHomeHeroKicker(html: string, copy: string) {
