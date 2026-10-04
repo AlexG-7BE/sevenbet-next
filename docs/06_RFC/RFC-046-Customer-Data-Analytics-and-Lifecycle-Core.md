@@ -500,34 +500,29 @@ and grants no Customer, dashboard or staff permission. Code:
 Rollback is removing the tool, `LEARN_MCP_ENABLED=false` (which also stops
 Learn publication) or rotating `LEARN_MCP_SERVICE_TOKEN`.
 
-## 16. Amendment — Google Analytics 4 behind the cookie choice (4 October 2026)
+## 16. Amendment — Google Analytics 4 for every visitor (4 October 2026)
 
-**Founder instruction, 4 October 2026:** add the Google tag for the B4GAMBLE
-GA4 web stream `G-11MX6NPS95`. This amends RFC-036 §3 ("no third-party
-analytics") for this one provider; first-party analytics, the event
-dictionary and every other RFC-046 rule are unchanged.
+**Founder instructions, 4 October 2026:** add the Google tag for the B4GAMBLE
+GA4 web stream `G-11MX6NPS95`, and make it count every visitor from the
+first page without waiting for a cookie choice (the Founder accepted the
+UK/EU storage-and-access risk). This amends RFC-036 §3 and this RFC's §4
+consent model for this one provider; first-party analytics and its consent
+are unchanged.
 
-- **Same choice, no new prompt.** GA4 loads only after "Accept cookies" in the
-  existing choice and never without it. The banner and the Privacy Notice name
-  Google Analytics in every language; the consent ledger records new choices
-  under `privacy-analytics-v2`.
-- **Production human traffic only.** The root layout renders the loader only
-  when the analytics flag is on, `VERCEL_ENV` is `production` and the request
-  is neither bot nor staff-marked (`analyticsTrafficKind === "HUMAN"`).
-  Preview, local and test never load it.
-- **Excluded pages stay excluded.** gtag.js reads `ga-disable-G-11MX6NPS95`
-  before every hit; a getter returns true without a granted choice or on a
-  path `isAnalyticsExcludedPath` covers (protected Help, self-check, Admin),
-  so a client navigation into those pages sends nothing and collection
-  resumes after leaving them.
-- **Analytics only.** Consent default denies `ad_storage`, `ad_user_data` and
-  `ad_personalization`; `allow_google_signals` and
+- **Standard tag.** The Google tag snippet sits in every Production page's
+  `<head>`, nonce-signed, for everyone except staff-marked devices
+  (`analyticsTrafficKind !== "INTERNAL"`). Preview, local and test never
+  render it.
+- **Opt-out only.** gtag.js reads `ga-disable-G-11MX6NPS95` before every hit;
+  a getter returns true once the visitor chose "Reject cookies" (signed
+  denial cookie) and on paths `isAnalyticsExcludedPath` covers (protected
+  Help, self-check, Admin). "Reject cookies" also deletes `_ga` and `_ga_*`.
+- **Analytics only.** `allow_google_signals` and
   `allow_ad_personalization_signals` are false.
-- **Withdrawal.** "Reject cookies" stops the next hit and removes `_ga` and
-  `_ga_*` cookies on the host and parent domain.
-- **CSP.** gtag.js loads through the existing nonce and `'strict-dynamic'`;
-  `connect-src` adds `*.googletagmanager.com`, `*.google-analytics.com` and
-  `*.analytics.google.com`.
+- **CSP.** `connect-src` adds `*.googletagmanager.com`,
+  `*.google-analytics.com`, `*.analytics.google.com` and `www.google.com`.
+- **Disclosure.** The banner and Privacy Notice name Google Analytics; the
+  consent ledger records new choices under `privacy-analytics-v2`.
 
 Code: `lib/analytics/google-analytics.ts`,
 `lib/analytics/google-analytics.server.ts`,
