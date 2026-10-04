@@ -12,7 +12,7 @@ import {
   PRIVACY_CHOICE_SCROLL_THRESHOLD_PX,
   shouldAutoOpenPrivacyChoice,
 } from "@/lib/analytics/consent-prompt";
-import { clearGoogleAnalyticsCookies } from "@/lib/analytics/google-analytics";
+import { revokeGoogleAnalytics } from "@/lib/analytics/google-analytics";
 import { recordConsentedBrowserPageView } from "@/lib/analytics/product-analytics-client";
 import { analyticsConsentMessages } from "@/lib/i18n/analytics-consent-catalog";
 import type { SupportedLocale } from "@/lib/market/registry";
@@ -121,7 +121,7 @@ export function AnalyticsConsentBanner({ locale }: { locale: SupportedLocale }) 
         recordConsentedBrowserPageView(window.location.pathname);
         window.dispatchEvent(new Event("b4g:analytics-consent-granted"));
       } else {
-        clearGoogleAnalyticsCookies();
+        revokeGoogleAnalytics();
       }
     } catch {
       setError(true);

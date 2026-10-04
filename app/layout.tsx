@@ -6,12 +6,13 @@ import { SiteMotionController } from "@/components/motion/SiteMotionController";
 import { ProgrammeDocumentPolicyBoundary } from "@/components/programme/ProgrammeDocumentPolicyBoundary";
 import { AnalyticsConsentBanner } from "@/components/analytics/AnalyticsConsentBanner";
 import { AnalyticsPageView } from "@/components/analytics/AnalyticsPageView";
-import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { googleTagBootstrap } from "@/lib/analytics/google-analytics";
 import { googleAnalyticsMeasurementId } from "@/lib/analytics/google-analytics.server";
 import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { organizationSchema, websiteSchema } from "@/lib/seo/structured-data";
+import { CSP_NONCE_REQUEST_HEADER } from "@/lib/security/content-security-policy";
 import { siteUrl } from "@/lib/site";
 import "./design-system.css";
 import "./globals.css";
@@ -56,16 +57,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // a validated request-local presentation context for the server-rendered lang.
   const presentation = await resolveServerPresentationContext();
   const analyticsEnabled = isProductAnalyticsEnabled();
-  // Google Analytics shares the cookie choice, so it exists only where that choice is offered.
-  const googleAnalyticsId = analyticsEnabled ? googleAnalyticsMeasurementId(await headers()) : null;
+  // Google Analytics: Production only, never on staff-marked devices.
+  const requestHeaders = await headers();
+  const googleAnalyticsId = analyticsEnabled ? googleAnalyticsMeasurementId(requestHeaders) : null;
+  const nonce = requestHeaders.get(CSP_NONCE_REQUEST_HEADER) || undefined;
   return (
     <html lang={presentation.locale}>
+      {googleAnalyticsId ? (
+        <head>
+          {/* Google tag (gtag.js), RFC-046 §16. */}
+          <script async nonce={nonce} src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`} />
+          <script nonce={nonce} dangerouslySetInnerHTML={{ __html: googleTagBootstrap(googleAnalyticsId) }} />
+        </head>
+      ) : null}
       <body className={`${archivo.variable} ${instrumentSerif.variable}`}>
         <JsonLd data={organizationSchema()} />
         <JsonLd data={websiteSchema()} />
         {children}
         {analyticsEnabled ? <AnalyticsPageView /> : null}
-        {googleAnalyticsId ? <GoogleAnalytics measurementId={googleAnalyticsId} /> : null}
         {analyticsEnabled ? <AnalyticsConsentBanner locale={presentation.locale} /> : null}
         <ProgrammeDocumentPolicyBoundary />
         <SiteMotionController />
