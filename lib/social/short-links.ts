@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
+import { DEFAULT_MARKET_PROFILE, publicMarketPath } from "@/lib/market/registry";
 import { isCrawlerUserAgent } from "@/lib/seo/crawler";
 
 /**
@@ -13,6 +14,13 @@ import { isCrawlerUserAgent } from "@/lib/seo/crawler";
  * countable with `vercel logs --query social_hit` (scripts/local/social-hits.sh), including visitors
  * who never answer the cookie choice and so never reach first-party analytics. The line carries the
  * link, the Vercel country header and a crawler flag: no IP, no cookie, no user agent, no click id.
+ *
+ * Link previews are always English (Founder, 4 Oct 2026). People land on the unprefixed homepage,
+ * which the middleware sends to the visitor's language. A link-preview crawler (Facebook, X,
+ * Threads, Slack, WhatsApp…) fetches from wherever its servers sit, so under a British Reel the
+ * Facebook card showed the Danish home (3 Oct). Crawlers, the same `bot=1` user agents the log
+ * line flags, are sent to the English home instead: its title, description, image and `og:url`
+ * are the English home's own metadata, so the card is English whichever country fetched it.
  */
 
 type SocialSource = "instagram" | "facebook" | "x" | "threads" | "lana";
@@ -62,11 +70,17 @@ export function socialPostLink(prefix: SocialPostPrefix, code: string): SocialSh
   return slug ? { source, campaign: "text", content: slug } : null;
 }
 
-/** The homepage URL with the link's UTM tags, in the order the 2 Oct redirects used. */
-export function socialShortLinkDestination(link: SocialShortLink) {
+/** The English home (`/en`), whose metadata every link-preview card shows. */
+export const SOCIAL_PREVIEW_HOME_PATH = publicMarketPath(DEFAULT_MARKET_PROFILE, "en-GB", "/");
+
+/**
+ * The homepage URL with the link's UTM tags, in the order the 2 Oct redirects used: the
+ * unprefixed homepage for people, the English home for link-preview crawlers.
+ */
+export function socialShortLinkDestination(link: SocialShortLink, { crawler = false }: { crawler?: boolean } = {}) {
   const query = new URLSearchParams({ utm_source: link.source, utm_medium: "social", utm_campaign: link.campaign });
   if (link.content) query.set("utm_content", link.content);
-  return `/?${query}`;
+  return `${crawler ? SOCIAL_PREVIEW_HOME_PATH : "/"}?${query}`;
 }
 
 /** The one log line a hit writes. `country` is the trusted Vercel country or null. */
@@ -81,13 +95,14 @@ export function socialShortLinkResponse(
 ) {
   if (!link) return new NextResponse("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
 
+  const crawler = isCrawlerUserAgent(request.headers.get("user-agent"));
   console.info(socialHitLogLine(link, {
     country: requestCountrySignalFromHeaders(request.headers, new Date(), environment)?.countryCode ?? null,
-    crawler: isCrawlerUserAgent(request.headers.get("user-agent")),
+    crawler,
   }));
 
   // Like the framework redirect it replaces: the link's UTM tags win, any other query (fbclid) passes on.
-  const destination = new URL(socialShortLinkDestination(link), "https://b4gamble.com");
+  const destination = new URL(socialShortLinkDestination(link, { crawler }), "https://b4gamble.com");
   for (const [name, value] of request.nextUrl.searchParams) {
     if (!destination.searchParams.has(name)) destination.searchParams.append(name, value);
   }
