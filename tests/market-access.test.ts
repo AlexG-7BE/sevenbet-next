@@ -71,10 +71,17 @@ test("each closed market names why it is closed", () => {
   }
 });
 
-test("grey-zone and unregulated markets stay open", () => {
-  for (const slug of ["goldenplay", "hello-casino", "dragonbet", "playojo"]) {
-    assert.deepEqual(marketAccess(slug, "IE", berlinEvening), { open: true }, `${slug} in IE`);
+test("Ireland is closed to every casino until one holds an Irish licence", () => {
+  // Founder decision, 4 Oct 2026 (Google UK gambling certification): every outbound link must go to an
+  // operator licensed where the visitor is. GRAI has licensed betting only, so no casino opens in Ireland.
+  assert.deepEqual(openIn("IE"), []);
+  for (const slug of ["goldenplay", "hello-casino", "dragonbet", "playojo", "drueckglueck", "not-a-casino"]) {
+    assert.deepEqual(marketAccess(slug, "IE", berlinEvening), { open: false, closure: "NO_LOCAL_LICENCE" }, `${slug} in IE`);
   }
+  assert.equal(presentInMarket(casinoFixture("hello-casino", "ROW"), "IE", berlinEvening).offerPresentation?.relation, "NONE", "no offer is shown in Ireland");
+});
+
+test("unregulated markets stay open", () => {
   assert.deepEqual(marketAccess("playojo", "CA-ON", berlinEvening), { open: true });
   assert.deepEqual(marketAccess("playojo", "KZ", berlinEvening), { open: true }, "no rule is not a prohibition");
   assert.deepEqual(marketAccess("playojo", null, berlinEvening), { open: true });
@@ -178,7 +185,6 @@ test("a licensed market shows only the casino's offer for that market", () => {
   assert.equal(presentInMarket(casinoFixture("megawayscasino", "OTHER_MARKET"), "SE", berlinEvening).offerPresentation?.relation, "NONE", "a British offer is not shown in Sweden");
   assert.equal(presentInMarket(casinoFixture("nordicbet", "ROW"), "SE", berlinEvening).offerPresentation?.relation, "NONE", "an international offer is not shown in Sweden");
   assert.equal(presentInMarket(casinoFixture("megawayscasino", "EXACT"), "SE", berlinEvening).offerPresentation?.relation, "EXACT");
-  assert.equal(presentInMarket(casinoFixture("hello-casino", "ROW"), "IE", berlinEvening).offerPresentation?.relation, "ROW", "the grey zone keeps international offers");
   assert.equal(presentInMarket(casinoFixture("hello-casino", "OTHER_MARKET"), "KZ", berlinEvening).offerPresentation?.relation, "OTHER_MARKET", "a market without a rule keeps RFC-039's cross-market offers");
   assert.equal(offerFitsMarket("OTHER_MARKET", "DK"), false);
   assert.equal(offerFitsMarket(undefined, "DK"), true, "no offer is nothing to withhold");

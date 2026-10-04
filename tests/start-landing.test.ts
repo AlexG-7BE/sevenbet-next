@@ -84,6 +84,11 @@ test("/start renders the 10 Steps pitch with no commercial or public-shell desti
     "/program?entry=start",
     "https://www.gamcare.org.uk/get-support/",
     "https://www.gamstop.co.uk/",
+    // The shared footer compliance lines (Google UK certification, Founder, 4 Oct 2026); no Help link here.
+    "tel:+448088020133",
+    "https://www.gamcare.org.uk/",
+    "https://www.begambleaware.org/",
+    "https://www.gamstop.co.uk/",
     "/privacy",
     "/terms",
   ]);
@@ -112,7 +117,10 @@ test("/start keeps the 18+ notice, the Programme disclaimer, legal links and UK 
     assert.match(external, /rel="noopener noreferrer"/);
     assert.match(external, /target="_blank"/);
   }
-  assert.doesNotMatch(text, /\b0\d{3} ?\d{3} ?\d{3,4}\b/, "no phone number the repository has not verified");
+  assert.deepEqual(text.match(/\b0\d{3} ?\d{3,4} ?\d{3,4}\b/g), ["0808 8020 133"], "the only phone number is the National Gambling Helpline");
+  assert.match(text, /We only link to gambling sites licensed and authorised where you are\./);
+  assert.match(text, /B4GAMBLE is run by 7BE Inc\./);
+  assert.equal((text.match(/18\+/g) ?? []).length, 1, "the footer keeps one 18+ notice");
   assert.doesNotMatch(html, /data-privacy-choices-trigger/, "the cookie control follows the analytics switch");
 
   process.env.NEXT_PUBLIC_ANALYTICS_ENABLED = "true";

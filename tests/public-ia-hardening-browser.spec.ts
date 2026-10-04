@@ -36,7 +36,9 @@ test("final public Responsible Gambling hub and Protected Help remain separate",
   await expect(page.locator('footer[data-public-shell] a[href="/en/responsible-gambling"]')).toHaveCount(1);
   await expect(page.locator('footer[data-public-shell] a[href="/self-check"]')).toHaveCount(0);
   await expect(page.locator('footer[data-public-shell] a[href="/tools/budget-calculator"]')).toHaveCount(0);
-  await expect(page.locator('footer[data-public-shell] a[href="/en/help"]')).toHaveCount(1);
+  // The Programme & Support link, and "Outside Great Britain? Find local help" in the support line (Google UK certification, 4 Oct 2026).
+  await expect(page.locator('footer[data-public-shell] a[href="/en/help"]')).toHaveCount(2);
+  await expect(page.locator('footer[data-public-shell] [data-footer-support] a[href="/en/help"]')).toHaveCount(1);
 
   const helpResponse = await page.goto(`${baseUrl}/help`, { waitUntil: "networkidle" });
   expect(helpResponse?.status()).toBe(200);

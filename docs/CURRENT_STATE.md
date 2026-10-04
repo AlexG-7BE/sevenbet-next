@@ -12,6 +12,34 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Google UK gambling certification: footer, Ireland, DrückGlück GB — in review
+
+**Founder decisions, 4 October 2026**
+([GOOGLE-UK-CERTIFICATION-2026-10-04](07_Decisions/GOOGLE-UK-CERTIFICATION-2026-10-04.md)),
+to make b4gamble.com eligible for Google Ads certification in the United
+Kingdom (a precondition for linking the site from YouTube):
+
+- **Footer on every page, desktop Home included** (explicit exception to the
+  frozen desktop Home): "Adults only" next to the 18+ badge, the statement
+  "We only link to gambling sites licensed and authorised where you are. In
+  Great Britain, that means a UK Gambling Commission licence.", the National
+  Gambling Helpline 0808 8020 133 (GamCare), BeGambleAware.org, GAMSTOP and
+  local help, and "B4GAMBLE is run by 7BE Inc., New York, USA. We hold no
+  gambling licence." Translated in every footer locale; the `/start` footer
+  carries the same lines.
+- **Ireland closed:** `MARKET_RULES.IE` is `LICENCE_REQUIRED` (GRAI); no
+  casino holds an Irish licence, so Irish visitors get no offer, button or
+  `/r/` route. This supersedes IRELAND-EGO-ROUTES-2026-09-27 (IE 17 partner
+  routes); the launch click check expects IE 0.
+- **DrückGlück GB offer withheld** (`drueckglueck-gb-welcome`, 60x on the
+  offer page against the UK 10x cap), with the TurboNino mechanism (#441).
+- **Northern Ireland unchanged:** it stays with GB.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed. Then the Founder runs
+the DrückGlück GB import against Production (the offer stays ACTIVE until
+then) and, optionally, the market-access release that disables the inert
+Irish routes.
+
 ## "Before Gamble" brand signals — in review
 
 **Founder instruction, 3 October 2026:** a Google search for "before gamble"
@@ -554,8 +582,9 @@ refused); SE 11 and DK 8 clicks reached partners; GB 0 of 19 and DE 0 of 2.
   has run against Production with the Founder's confirmation. **DETECTED, launch
   click check from each market, 27 September 2026:** partner clicks GB 18,
   SE 12, DK 10 and IE 17 (Ireland opened for eleven EGO brands that day,
-  [decision](07_Decisions/IRELAND-EGO-ROUTES-2026-09-27.md)); Germany's two
-  routes open only 21:00–06:00 Europe/Berlin.
+  [decision](07_Decisions/IRELAND-EGO-ROUTES-2026-09-27.md); closed again by
+  Founder decision on 4 October 2026, see the Google UK certification entry
+  above); Germany's two routes open only 21:00–06:00 Europe/Berlin.
 - **Offers:** the corpora for the launch markets' own offers land through the
   existing Founder-run offer import.
 

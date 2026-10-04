@@ -56,6 +56,7 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   const header = source("components/public-shell/PublicHeader.tsx");
   const navigation = source("components/public-shell/PublicNavigation.tsx");
   const footer = source("components/public-shell/PublicFooter.tsx");
+  const compliance = source("components/footer-compliance/FooterCompliance.tsx");
   const shellCatalog = source("lib/i18n/public-shell-catalog.ts");
   assert.match(header, /aria-label=\{messages\.homeLabel\}/);
   assert.match(shellCatalog, /homeLabel: "B4GAMBLE home"/);
@@ -63,11 +64,13 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   assert.match(navigation, />B4GAMBLE[\s\S]*?<PublicLinkPendingSignal[^>]*\/>[\s\S]*?<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
   assert.match(footer, /\{footer\.description\}[\s\S]*\{footer\.operatorDisclaimer\}/);
-  assert.match(footer, /\{footer\.financialRisk\}/);
+  assert.match(footer, /<FooterCompliance footer=\{footer\}/);
+  assert.match(compliance, /\{footer\.ageNotice\} \{footer\.financialRisk\}/);
   assert.match(footer, /\{footer\.commissionDisclosure\}/);
   assert.match(shellCatalog, /description: "Information, comparison and education\."/);
   assert.match(shellCatalog, /operatorDisclaimer: "Not a gambling operator\."/);
-  assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk\."/);
+  assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk and can be addictive\."/);
+  assert.match(shellCatalog, /entity: "B4GAMBLE is run by 7BE Inc\., New York, USA\. We hold no gambling licence\."/);
   assert.match(shellCatalog, /clearly labelled affiliate links/);
   for (const service of ["lib/services/public-casino-discovery.service.ts", "lib/services/public-comparison.service.ts", "lib/services/public-offer.service.ts"]) {
     assert.doesNotMatch(source(service), /temporary-demo|isTemporaryDemo|currentPublicCasinoBrand|currentPublicBrandText/);

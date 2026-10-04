@@ -280,13 +280,14 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     }];
 
     assert.equal((await service(store([record])).listCasinos(null, "GB")).length, 1);
-    for (const country of ["IE", "SE"]) {
+    for (const country of ["LU", "SE"]) {
       const [casino] = await service(store([record])).listCasinos(null, country);
       assert.equal(casino?.slug, managedSlug);
       assert.equal(casino?.action, null);
     }
-    // Ireland (grey zone) may show the international offer; Sweden requires the casino's Swedish offer.
-    assert.equal((await service(store([record])).listCasinos(null, "IE"))[0]?.offerPresentation?.relation, "ROW");
+    // Luxembourg (no licence rule) may show the international offer; Sweden and Ireland require the casino's own local offer.
+    assert.equal((await service(store([record])).listCasinos(null, "LU"))[0]?.offerPresentation?.relation, "ROW");
+    assert.equal((await service(store([record])).listCasinos(null, "IE"))[0]?.offerPresentation?.relation, "NONE");
     assert.equal((await service(store([record])).listCasinos(null, "SE"))[0]?.offerPresentation?.relation, "NONE");
   });
 

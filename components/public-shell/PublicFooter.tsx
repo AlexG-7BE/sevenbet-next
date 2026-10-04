@@ -12,6 +12,7 @@ import { DEFAULT_MARKET_PROFILE, marketProfileByLocale } from "@/lib/market/regi
 import type { CommercialProductState } from "@/lib/market/commercial-product-state";
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { commercialDestinationsNavigable, publicCommercialDestinationVisible } from "@/lib/public-shell";
+import { FooterCompliance } from "@/components/footer-compliance/FooterCompliance";
 import styles from "./PublicShell.module.css";
 
 export function PublicFooter({
@@ -74,8 +75,9 @@ export function PublicFooter({
             </div>
           ))}
         </div>
+        <FooterCompliance footer={footer} localHelpHref={localizedHref("/help")} />
         <div className={styles.footerBaseline}>
-          <div><span className={styles.age}>18+</span><span>{footer.financialRisk}</span><Link href="/terms" prefetch={false}>{footer.terms}</Link><Link href="/privacy" prefetch={false}>{footer.privacy}</Link>{isProductAnalyticsEnabled() ? <PrivacyChoicesButton className={styles.footerChoice} label={analyticsConsentMessages(presentation.locale).trigger} /> : null}<Link href={localizedHref("/contact")} prefetch={false}>{footer.contact}</Link></div>
+          <div><Link href="/terms" prefetch={false}>{footer.terms}</Link><Link href="/privacy" prefetch={false}>{footer.privacy}</Link>{isProductAnalyticsEnabled() ? <PrivacyChoicesButton className={styles.footerChoice} label={analyticsConsentMessages(presentation.locale).trigger} /> : null}<Link href={localizedHref("/contact")} prefetch={false}>{footer.contact}</Link></div>
           <p className={styles.footerCommission}>{footer.commissionDisclosure}</p>
         </div>
         <span aria-hidden="true" className={styles.footerEnd} data-public-footer-bottom />

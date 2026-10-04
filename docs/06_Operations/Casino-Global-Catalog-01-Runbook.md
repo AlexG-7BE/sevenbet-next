@@ -151,6 +151,16 @@ Withheld since 2 October 2026: `turbonino-gb-welcome`. The GB offer page
 states 60x wagering on free-spin winnings, while the brand's banner, its GB
 Bonus Policy and the UK cap state 10x. EGO was asked to confirm the term.
 
+Withheld since 4 October 2026: `drueckglueck-gb-welcome`. Its GB offer page
+also states 60x on free-spin winnings, above the UK 10x cap. The Founder
+withheld it for Google's UK gambling certification review; restore it only
+once the operator states a term within the cap.
+
+```bash
+npm run casino-global-catalog -- import-offers-plan --market GB --offer drueckglueck-gb-welcome
+npm run casino-global-catalog -- import-offers --market GB --offer drueckglueck-gb-welcome --confirm=CASINO-GLOBAL-CATALOG-01 --expected-database=<fingerprint>
+```
+
 ## What `editorial` does
 
 Replaces `pros` ("Best for"), `cons` ("Things to know") and `description` for

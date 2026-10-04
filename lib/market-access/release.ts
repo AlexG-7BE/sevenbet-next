@@ -94,12 +94,10 @@ export const ENABLE_TARGETS: readonly EnableTarget[] = Object.freeze([
   ...["21-prive", "diamond7", "gday-casino", "hello-casino", "skol-casino", "slotnite"].map((casinoSlug) => ({
     casinoSlug, market: "GB", partner: SUPERFLY, sourceMarket: "IE", note: "UKGC 52894",
   })),
-  // Ireland: GRAI licenses betting only, so MGA operators serve Ireland (register: IE grey zone, open).
-  // EGO's GB brand link, clicked from Irish residential exits on 27 Sep, lands on each brand's English
-  // site with no block (Founder decision, 27 Sep 2026). Regency is left out: no MGA licence is on record.
-  ...["ahti-games", "bacanaplay", "casino-redkings", "drueckglueck", "eucasino", "jackpotstar", "megawayscasino", "playojo", "playojo-bingo", "slotsmagic", "turbonino"].map((casinoSlug) => ({
-    casinoSlug, market: "IE", partner: EGO, sourceMarket: "GB", note: "Ireland grey zone (MGA); EGO GB brand link",
-  })),
+  // Ireland opened eleven EGO brands on 27 Sep 2026 and closed again on 4 Oct 2026 (Founder decision,
+  // Google UK certification): the register now requires an Irish licence, so the release opens nothing
+  // there and disables every active Irish route. The Superfly GB targets above still read the stored
+  // (disabled) IE link as their source.
 ]);
 
 /** Licensed markets that cannot open yet, and why. */

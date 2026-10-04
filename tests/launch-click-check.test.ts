@@ -35,8 +35,6 @@ test("a real click is judged against the licence register at the moment it was m
 test("a refused click on a route that must reach its partner is ROUTE_DOWN and fails the run", () => {
   assert.equal(clickVerdict("playojo", "GB", evening, refused), "ROUTE_DOWN");
   assert.equal(clickVerdict("betsson", "SE", evening, refused), "ROUTE_DOWN");
-  assert.equal(clickVerdict("playojo", "IE", evening, refused), "ROUTE_DOWN");
-  assert.equal(clickVerdict("goldenplay", "IE", evening, refused), "NO_ROUTE", "GoldenPlay IE is disabled on purpose");
   assert.equal(clickVerdict("turbonino", "DE", evening, refused), "ROUTE_DOWN", "Germany's routes must work inside the window");
 
   assert.equal(clickCheckFails(["PASS", "PASS_CLOSED", "NO_ROUTE"]), false);
@@ -50,16 +48,18 @@ test("a refused click on a route that must reach its partner is ROUTE_DOWN and f
   assert.equal(retriesClick("PASS_CLOSED"), false);
 });
 
+test("Ireland is closed: every Irish click must be refused", () => {
+  for (const casino of launchCasinos()) {
+    assert.equal(clickVerdict(casino, "IE", evening, refused), "PASS_CLOSED", casino);
+    assert.equal(clickVerdict(casino, "IE", evening, toPartner), "VIOLATION", casino);
+  }
+});
+
 test("the expected partner routes per launch market are pinned", () => {
   const counts = (at: Date) => Object.fromEntries(LAUNCH_MARKETS.map((market) => [market, expectedPartnerRoutes(market, at).length]));
-  assert.deepEqual(counts(evening), { GB: 18, SE: 12, DK: 10, DE: 2, IE: 17 });
-  assert.deepEqual(counts(noon), { GB: 18, SE: 12, DK: 10, DE: 0, IE: 17 });
+  assert.deepEqual(counts(evening), { GB: 18, SE: 12, DK: 10, DE: 2, IE: 0 });
+  assert.deepEqual(counts(noon), { GB: 18, SE: 12, DK: 10, DE: 0, IE: 0 });
   assert.deepEqual(expectedPartnerRoutes("DE", evening), ["drueckglueck", "turbonino"]);
-  assert.deepEqual(expectedPartnerRoutes("IE", evening), [
-    "21-prive", "ahti-games", "bacanaplay", "casino-redkings", "diamond7", "drueckglueck",
-    "eucasino", "gday-casino", "hello-casino", "jackpotstar", "megawayscasino", "playojo",
-    "playojo-bingo", "skol-casino", "slotnite", "slotsmagic", "turbonino",
-  ]);
   assert.deepEqual(expectedPartnerRoutes("FI", evening), [], "nothing is pinned outside the launch markets");
 });
 
