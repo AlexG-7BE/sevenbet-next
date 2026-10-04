@@ -104,11 +104,16 @@ date windows and the safe destination.
 
 ## 4. Grey zone
 
-Ireland is open: GRAI has licensed betting only, and MGA operators serve Irish
-players lawfully until its casino phase opens. When it does, Ireland becomes
-`LICENCE_REQUIRED` and closes for every casino without a GRAI licence — a
-one-line change. Canada outside Ontario stays closed under
-FOUNDER-EGO-2026-09-22 pending legal advice.
+Ireland was open from 24 September to 4 October 2026: GRAI has licensed
+betting only, and MGA operators serve Irish players lawfully until its casino
+phase opens. On 4 October 2026 the Founder closed it for Google's UK gambling
+certification, which requires every outbound link to go to an operator
+licensed where the visitor is
+([GOOGLE-UK-CERTIFICATION-2026-10-04](../07_Decisions/GOOGLE-UK-CERTIFICATION-2026-10-04.md)).
+Ireland is now `LICENCE_REQUIRED` (GRAI) and closed for every casino without a
+GRAI licence; when GRAI licenses online casino, a casino opens there by its
+`licensed.IE` entry. Canada outside Ontario stays closed under
+FOUNDER-EGO-2026-09-22 pending legal advice. No grey zone is open.
 
 ## 5. Relationship to MarketActivation
 

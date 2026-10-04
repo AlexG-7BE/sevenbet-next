@@ -66,6 +66,14 @@ window, as they should be.
 Ireland (added 27 Sep 2026): `apply --only=enable` registered the 11 EGO targets
 the same day, each verified from a Dublin exit. With the 6 Superfly routes, the launch
 click check from Dublin shows **IE 17** partner clicks and no violation.
+**Ireland closed (4 Oct 2026,
+[decision](../07_Decisions/GOOGLE-UK-CERTIFICATION-2026-10-04.md)):** the register
+now requires an Irish licence, so the eleven Irish targets left `ENABLE_TARGETS`
+and the plan lists every active Irish route (the 11 EGO and 6 Superfly routes) under
+`NO_LOCAL_LICENCE`. They are inert from deployment; `apply --only=disable` removes
+them after the Founder confirms. The Superfly GB targets still read the stored
+(disabled) Irish link as their source. The launch click check expects **IE 0**.
+
 PlayOJO Bingo lives on playojo.com (`/bingo/`), so its Irish market profile was first
 pointed at `https://www.playojo.com/bingo/`, as in GB (audited); without it
 registration expected the brand's own domain and did not promote the route.

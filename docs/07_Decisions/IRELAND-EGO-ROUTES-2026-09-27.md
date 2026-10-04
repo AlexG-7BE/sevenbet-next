@@ -1,6 +1,6 @@
 # Ireland opens eleven EGO brands on their GB links
 
-**Status:** ACCEPTED; live in Production since 27 September 2026 (see [Production activation](#production-activation))
+**Status:** SUPERSEDED on 4 October 2026 by [GOOGLE-UK-CERTIFICATION-2026-10-04](GOOGLE-UK-CERTIFICATION-2026-10-04.md): the Founder closed Ireland for Google's UK gambling certification. Live in Production from 27 September 2026 until that change deploys (see [Production activation](#production-activation)).
 
 **Decision authority:** explicit Founder instruction, 27 September 2026 (launch eve): "да, открывай Ирландию для 11 брендов", after a click survey showed Ireland with 6 live partner routes and 22 open-market gaps.
 
