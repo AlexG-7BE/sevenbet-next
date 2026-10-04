@@ -363,12 +363,19 @@ test("Founder dashboards exclude staff and internal traffic and show conversion 
       data: [
         event("SIGNUP_COMPLETED", "SE", "HUMAN", { userId: users.customer, utmCampaign: "se-launch", utmSource: "facebook" }),
         event("SIGNUP_COMPLETED", "SE", "INTERNAL", { userId: users.internalSignup, utmCampaign: "staff-test" }),
+        event("PAGE_VIEWED", "SE", "HUMAN", { pagePath: "/sv/best-offers", anonymousId: consented }),
+        event("PAGE_VIEWED", "SE", "HUMAN", { pagePath: "/sv/best-offers", anonymousId: consented }),
+        event("PAGE_VIEWED", "SE", "HUMAN", { pagePath: "/casino/fixture", anonymousId: consented }),
+        event("PAGE_VIEWED", "SE", "HUMAN", { pagePath: "/learn/wagering", anonymousId: consented }),
+        event("PAGE_VIEWED", "SE", "INTERNAL", { pagePath: "/best-offers", anonymousId: consented }),
+        event("PAGE_VIEWED", "DK", "HUMAN", { pagePath: "/da/casinos", anonymousId: consented }),
+        // RFC-046 §17 cookieless count (no anonymous ID): overview visits, never the consented funnel.
         event("PAGE_VIEWED", "SE", "HUMAN", { pagePath: "/sv/best-offers" }),
-        event("PAGE_VIEWED", "SE", "HUMAN", { pagePath: "/sv/best-offers" }),
-        event("PAGE_VIEWED", "SE", "HUMAN", { pagePath: "/casino/fixture" }),
-        event("PAGE_VIEWED", "SE", "HUMAN", { pagePath: "/learn/wagering" }),
-        event("PAGE_VIEWED", "SE", "INTERNAL", { pagePath: "/best-offers" }),
-        event("PAGE_VIEWED", "DK", "HUMAN", { pagePath: "/da/casinos" }),
+        event("PAGE_VIEWED", "SE", "HUMAN", { pagePath: "/sv/bonuses" }),
+        event("SESSION_STARTED", "SE", "HUMAN", { pagePath: "/sv/best-offers", utmSource: "Instagram", referrerHost: "l.instagram.com" }),
+        event("SESSION_STARTED", "SE", "HUMAN", { pagePath: "/sv/best-offers", referrerHost: "t.co" }),
+        event("SESSION_STARTED", "DK", "HUMAN", { pagePath: "/da/casinos" }),
+        event("SESSION_STARTED", "SE", "BOT", { pagePath: "/sv/best-offers" }),
         event("COMMERCIAL_CTA_CLICKED", "SE", "HUMAN", { placement: "CTA_BEST_OFFERS_CARD" }),
         event("COMMERCIAL_CTA_CLICKED", "SE", "HUMAN", { placement: "CTA_BEST_OFFERS_CARD" }),
         event("COMMERCIAL_CTA_CLICKED", "SE", "INTERNAL", { placement: "CTA_BEST_OFFERS_CARD" }),
@@ -390,6 +397,11 @@ test("Founder dashboards exclude staff and internal traffic and show conversion 
     assert.deepEqual(overview.signupsByCampaign, [["se-launch · facebook", 1]]);
     assert.equal(overview.outboundClicks, 3);
     assert.equal(overview.successfulOutbound, 2);
+    assert.equal(overview.allVisits, 3, "cookieless arrivals of human visitors");
+    assert.equal(overview.allPageViews, 2);
+    assert.deepEqual(overview.visitsByCountry, [["SE", 2], ["DK", 1]]);
+    assert.deepEqual(overview.visitsBySource, [["Direct / unknown", 1], ["instagram", 1], ["x", 1]]);
+    assert.deepEqual(overview.visitsByLanding, [["/sv/best-offers", 2], ["/da/casinos", 1]]);
 
     const commercial = await commercialDashboard(range);
     assert.equal(commercial.ctaClicks, 2);
