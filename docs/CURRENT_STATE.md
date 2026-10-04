@@ -248,6 +248,22 @@ and the middleware pass-through.
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+**Founder instruction, 4 October 2026: link previews of short links are always
+English.** The unprefixed homepage answers each visitor in their language, and
+link-preview crawlers fetch from wherever their servers sit: on 3 October the
+Facebook card under a British Reel showed the Danish home copy. A short link
+now sends the same crawlers its `social_hit` line flags `bot=1`
+(`lib/seo/crawler.ts`: Facebook/Meta, X, Slack, LinkedIn, WhatsApp, Telegram,
+Discord, Google and others) to the English home `/en` with the same UTM tags,
+so the card carries the English home's own title, description, social image
+and `og:url` (`https://b4gamble.com/en`) whatever country fetched it. People
+keep the 307 to `/` and their language. The hit is still logged once with
+`bot=1`, the response stays `no-store`, and middleware (KZ 451 included) still
+runs first. A card a network already cached stays Danish until it is
+re-scraped (Facebook Sharing Debugger "Scrape Again"). Pinned by
+`tests/social-short-links.test.ts`. **PROPOSED — NOT YET LIVE** until merged
+and deployed.
+
 ## Help-ad landing `/start` — in review
 
 **Founder instruction, 2 October 2026:** paid UK TikTok "help" ads need a
