@@ -31,7 +31,7 @@
     "ci:build-secrets": "node scripts/check-build-secrets.mjs",
     "ops:smoke": "node scripts/production-smoke.mjs",
     "production-alerts:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/ops-health.test.ts tests/production-smoke.test.mjs",
-    "customer-data-core:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/customer-data-analytics-lifecycle.test.ts tests/customer-data-analytics-lifecycle-structural.test.ts tests/email-verification-signup.test.ts",
+    "customer-data-core:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/customer-data-analytics-lifecycle.test.ts tests/customer-data-analytics-lifecycle-structural.test.ts tests/google-analytics.test.ts tests/email-verification-signup.test.ts",
     "customer-data-core:postgres-test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test --test-concurrency=1 tests/customer-data-analytics-lifecycle-postgres.test.ts tests/outbound-click-attribution-postgres.test.ts",
     "email-reliability:postgres-test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test --test-concurrency=1 tests/email-reliability-postgres.test.ts",
     "customer-data-core:sanity": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local --env-file-if-exists=.env.production.local scripts/customer-data-analytics-lifecycle-sanity.ts",

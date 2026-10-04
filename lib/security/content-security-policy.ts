@@ -1,3 +1,5 @@
+import { GOOGLE_ANALYTICS_HOSTS } from "@/lib/analytics/google-analytics";
+
 export const CONTENT_SECURITY_POLICY_HEADER = "Content-Security-Policy";
 export const CSP_NONCE_REQUEST_HEADER = "x-nonce";
 
@@ -29,7 +31,8 @@ export function buildContentSecurityPolicy(
     "style-src-attr 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    `connect-src 'self'${development ? " ws: wss:" : ""}`,
+    // Google Analytics sends after "Accept cookies"; gtag.js itself loads through 'strict-dynamic'.
+    `connect-src 'self' ${GOOGLE_ANALYTICS_HOSTS.join(" ")}${development ? " ws: wss:" : ""}`,
     "media-src 'self' blob:",
     "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
     "worker-src 'self' blob:",

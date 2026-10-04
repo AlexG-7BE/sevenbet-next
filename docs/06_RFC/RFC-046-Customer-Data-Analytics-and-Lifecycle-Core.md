@@ -6,7 +6,8 @@
 
 **Decision date:** 11 September 2026; Resend Production activation amendment
 approved 12 September 2026; aggregate social-traffic read amendment (§15)
-approved 3 October 2026
+approved 3 October 2026; Google Analytics 4 amendment (§16) instructed
+4 October 2026
 
 **Implementation authority:** explicit Founder instruction `B4GAMBLE Customer
 Data, Analytics & Lifecycle — Production Core v1`.
@@ -498,3 +499,41 @@ and grants no Customer, dashboard or staff permission. Code:
 `tests/social-traffic.test.ts`, `tests/social-traffic-postgres.test.ts`.
 Rollback is removing the tool, `LEARN_MCP_ENABLED=false` (which also stops
 Learn publication) or rotating `LEARN_MCP_SERVICE_TOKEN`.
+
+## 16. Amendment — Google Analytics 4 behind the cookie choice (4 October 2026)
+
+**Founder instruction, 4 October 2026:** add the Google tag for the B4GAMBLE
+GA4 web stream `G-11MX6NPS95`. This amends RFC-036 §3 ("no third-party
+analytics") for this one provider; first-party analytics, the event
+dictionary and every other RFC-046 rule are unchanged.
+
+- **Same choice, no new prompt.** GA4 loads only after "Accept cookies" in the
+  existing choice and never without it. The banner and the Privacy Notice name
+  Google Analytics in every language; the consent ledger records new choices
+  under `privacy-analytics-v2`.
+- **Production human traffic only.** The root layout renders the loader only
+  when the analytics flag is on, `VERCEL_ENV` is `production` and the request
+  is neither bot nor staff-marked (`analyticsTrafficKind === "HUMAN"`).
+  Preview, local and test never load it.
+- **Excluded pages stay excluded.** gtag.js reads `ga-disable-G-11MX6NPS95`
+  before every hit; a getter returns true without a granted choice or on a
+  path `isAnalyticsExcludedPath` covers (protected Help, self-check, Admin),
+  so a client navigation into those pages sends nothing and collection
+  resumes after leaving them.
+- **Analytics only.** Consent default denies `ad_storage`, `ad_user_data` and
+  `ad_personalization`; `allow_google_signals` and
+  `allow_ad_personalization_signals` are false.
+- **Withdrawal.** "Reject cookies" stops the next hit and removes `_ga` and
+  `_ga_*` cookies on the host and parent domain.
+- **CSP.** gtag.js loads through the existing nonce and `'strict-dynamic'`;
+  `connect-src` adds `*.googletagmanager.com`, `*.google-analytics.com` and
+  `*.analytics.google.com`.
+
+Code: `lib/analytics/google-analytics.ts`,
+`lib/analytics/google-analytics.server.ts`,
+`components/analytics/GoogleAnalytics.tsx`; tests:
+`tests/google-analytics.test.ts` (in `customer-data-core:test`). Rollback:
+remove the layout line or set `NEXT_PUBLIC_ANALYTICS_ENABLED` false, which
+also turns off first-party analytics. GA4 property settings (data retention,
+data sharing, internal-traffic filters) live in the Founder's Google account
+and are outside repository evidence.
