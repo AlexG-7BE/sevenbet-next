@@ -188,6 +188,7 @@ test("public safety, affiliate and demonstration disclosures remain at their gov
   const transforms = source("lib/final-handoff/transforms.ts");
   const affiliate = source("app/(public)/affiliate-disclosure/AffiliateDisclosureDocument.tsx");
   const footer = source("components/public-shell/PublicFooter.tsx");
+  const compliance = source("components/footer-compliance/FooterCompliance.tsx");
   const shellCatalog = source("lib/i18n/public-shell-catalog.ts");
   // BonusDirectory was imported by no route. The live /bonuses page carries the
   // demonstration disclosure itself, above the directory, whenever it lists one.
@@ -197,13 +198,15 @@ test("public safety, affiliate and demonstration disclosures remain at their gov
   assert.match(transforms, /No casino, bonus or affiliate actions appear here/);
   assert.match(transforms, /call 999 or go to A&amp;E now/);
   assert.match(affiliate, /Affiliate link · We may earn commission/);
-  assert.match(footer, /\{footer\.financialRisk\}/);
+  assert.match(footer, /<FooterCompliance footer=\{footer\} localHelpHref=\{localizedHref\("\/help"\)\} \/>/);
+  assert.match(compliance, /\{footer\.financialRisk\}/);
   assert.match(footer, /<p className=\{styles\.footerCommission\}>\{footer\.commissionDisclosure\}<\/p>/);
-  assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk\."/);
+  assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk and can be addictive\."/);
   assert.match(shellCatalog, /commissionDisclosure: "We may earn commission from clearly labelled affiliate links\."/);
   assert.equal(footer.match(/"\/affiliate-disclosure"/g)?.length, 1);
   assert.equal(footer.match(/"\/responsible-gambling"/g)?.length, 1);
-  assert.equal(footer.match(/"\/help"/g)?.length, 1);
+  // The Help group link and the compliance line's "Outside Great Britain? Find local help".
+  assert.equal(footer.match(/"\/help"/g)?.length, 2);
   assert.equal(footer.match(/"\/terms"/g)?.length, 1);
   assert.equal(footer.match(/"\/privacy"/g)?.length, 1);
   assert.equal(footer.match(/"\/contact"/g)?.length, 1);

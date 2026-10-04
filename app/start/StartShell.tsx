@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { PrivacyChoicesButton } from "@/components/analytics/AnalyticsConsentBanner";
 import { protectedHelpResources } from "@/components/protected-help/support-resources";
+import { FooterCompliance } from "@/components/footer-compliance/FooterCompliance";
 import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import { analyticsConsentMessages } from "@/lib/i18n/analytics-consent-catalog";
 import { publicFooterMessages } from "@/lib/i18n/public-shell-catalog";
@@ -30,7 +31,8 @@ export function StartHeader() {
  * Only legal, privacy and independent-support destinations: no casino, bonus,
  * offer or partner link, and nothing that leads into the public navigation.
  * UK support comes from the repository's verified list, which deliberately
- * carries no phone numbers.
+ * carries no phone numbers; the shared compliance lines below add the National
+ * Gambling Helpline and the licensed-links statement (Founder, 4 Oct 2026).
  */
 export function StartFooter() {
   const footer = publicFooterMessages(START_LOCALE);
@@ -54,6 +56,7 @@ export function StartFooter() {
         <p className={styles.disclaimer}>
           The B4GAMBLE Programme does not diagnose or treat gambling addiction. Completion does not mean gambling is safe or suitable.
         </p>
+        <FooterCompliance footer={footer} showAge={false} />
         <div className={styles.baseline}>
           <span className={styles.age}>18+</span>
           <span>{footer.financialRisk}</span>
