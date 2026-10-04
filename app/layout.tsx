@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Archivo, Instrument_Serif } from "next/font/google";
+import { headers } from "next/headers";
 import { connection } from "next/server";
 import { SiteMotionController } from "@/components/motion/SiteMotionController";
 import { ProgrammeDocumentPolicyBoundary } from "@/components/programme/ProgrammeDocumentPolicyBoundary";
 import { AnalyticsConsentBanner } from "@/components/analytics/AnalyticsConsentBanner";
 import { AnalyticsPageView } from "@/components/analytics/AnalyticsPageView";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { googleAnalyticsMeasurementId } from "@/lib/analytics/google-analytics.server";
 import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { organizationSchema, websiteSchema } from "@/lib/seo/structured-data";
@@ -53,6 +56,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // a validated request-local presentation context for the server-rendered lang.
   const presentation = await resolveServerPresentationContext();
   const analyticsEnabled = isProductAnalyticsEnabled();
+  // Google Analytics shares the cookie choice, so it exists only where that choice is offered.
+  const googleAnalyticsId = analyticsEnabled ? googleAnalyticsMeasurementId(await headers()) : null;
   return (
     <html lang={presentation.locale}>
       <body className={`${archivo.variable} ${instrumentSerif.variable}`}>
@@ -60,6 +65,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <JsonLd data={websiteSchema()} />
         {children}
         {analyticsEnabled ? <AnalyticsPageView /> : null}
+        {googleAnalyticsId ? <GoogleAnalytics measurementId={googleAnalyticsId} /> : null}
         {analyticsEnabled ? <AnalyticsConsentBanner locale={presentation.locale} /> : null}
         <ProgrammeDocumentPolicyBoundary />
         <SiteMotionController />
