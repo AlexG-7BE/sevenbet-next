@@ -303,7 +303,11 @@
         "One deposit or welcome bonus every 72 hours across all Skill On Net casinos.",
         "The banner offers spins only, but the offer text also names a £100 maximum bonus at 30x deposit plus bonus, and the brand's GB Bonus Policy sets 10x unless stated otherwise. The offer page is recorded here; check it before depositing."
       ],
-      "termsUrl": "https://www.drueckglueck.com/promotions/drueckglueck-welcome/"
+      "termsUrl": "https://www.drueckglueck.com/promotions/drueckglueck-welcome/",
+      "withheld": {
+        "since": "2026-10-04",
+        "reason": "The GB offer page states 60x wagering on free-spin winnings, above the UK 10x cap. Withheld during Google's UK gambling certification review (Founder decision, 4 Oct 2026) until the operator states a term within the cap."
+      }
     }
   ]
 }
