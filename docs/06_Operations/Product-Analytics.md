@@ -22,10 +22,10 @@ The former `vercel-product-analytics.ts`, Vercel Programme event taxonomy and
 `analytics:programme` aggregate report are retired. Programme observation and
 the fixed dashboard use canonical persisted Programme state.
 
-**Google Analytics 4** (RFC-046 §16, 4 October 2026) shares the same cookie
-choice: stream `G-11MX6NPS95` loads only after "Accept cookies", on
-Production for human, non-staff visitors, and never on excluded paths. It
-is a separate Google report and does not feed `/admin/analytics`.
+**Google Analytics 4** (RFC-046 §16, 4 October 2026): stream `G-11MX6NPS95`
+counts every Production visitor except staff-marked devices from the first
+page; "Reject cookies" turns it off, and it never sends from excluded paths.
+It is a separate Google report and does not feed `/admin/analytics`.
 
 ## Runtime controls
 

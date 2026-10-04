@@ -4,7 +4,7 @@
  * Up to two language or legacy market/language prefixes are recognised, so
  * `/sv/help` and `/se/sv/help` are excluded like `/help`.
  */
-const ANALYTICS_EXCLUDED_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/){0,2}(?:help|self-check|admin)(?:\/|$)/i;
+export const ANALYTICS_EXCLUDED_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/){0,2}(?:help|self-check|admin)(?:\/|$)/i;
 
 export function isAnalyticsExcludedPath(pathname: string | null | undefined) {
   if (!pathname) return false;
