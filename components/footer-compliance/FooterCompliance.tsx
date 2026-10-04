@@ -34,7 +34,7 @@ export function FooterCompliance({
   showAge?: boolean;
 }) {
   const external = (href: string, label: string) => (
-    <a href={href} rel="noopener noreferrer" target="_blank">{label}<span className="srOnly"> {footer.opensInNewTab}</span></a>
+    <a href={href} rel="noopener noreferrer" target="_blank"><span>{label}</span><span className="srOnly"> {footer.opensInNewTab}</span></a>
   );
   return (
     <div className={styles.compliance} data-footer-compliance>
@@ -42,14 +42,14 @@ export function FooterCompliance({
         ? <p className={styles.age} data-footer-age><span className={styles.ageBadge}>18+</span><span>{footer.ageNotice} {footer.financialRisk}</span></p>
         : null}
       <p className={styles.licensed} data-footer-licensed-links>{footer.licensedLinks}</p>
-      {/* A wrapping row of links rather than a sentence: every footer link is a 44px target on phones. */}
+      {/* A row of links rather than a sentence: on phones they form a two-column grid of 44px targets, like the footer menu. */}
       <p className={styles.support} data-footer-support>
         <span className={styles.supportLead}>{footer.supportLead}</span>
-        <a href={FOOTER_SUPPORT_LINKS.helplineHref}>{FOOTER_SUPPORT_LINKS.helplineName} <span className={styles.number}>{FOOTER_SUPPORT_LINKS.helplineNumber}</span></a>
+        <a href={FOOTER_SUPPORT_LINKS.helplineHref}><span>{FOOTER_SUPPORT_LINKS.helplineName} <span className={styles.number}>{FOOTER_SUPPORT_LINKS.helplineNumber}</span></span></a>
         {external(FOOTER_SUPPORT_LINKS.gamCare, "GamCare")}
         {external(FOOTER_SUPPORT_LINKS.gambleAware, FOOTER_SUPPORT_LINKS.gambleAwareName)}
         {external(FOOTER_SUPPORT_LINKS.gamstop, footer.gamstop)}
-        {localHelpHref ? <Link href={localHelpHref} prefetch={false}>{footer.localHelp}</Link> : null}
+        {localHelpHref ? <Link href={localHelpHref} prefetch={false}><span>{footer.localHelp}</span></Link> : null}
       </p>
       <p className={styles.entity} data-footer-entity>{footer.entity}</p>
     </div>
