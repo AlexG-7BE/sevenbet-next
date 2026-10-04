@@ -8,6 +8,7 @@ const preExistingCapturedHandoffStyleViolation = /sha256-(?:jCY3Mj0wz8\/Vp\+NcUm
 
 type NavigationTimingWindow = Window & {
   __stage2MobileFeedbackPaint?: Promise<number>;
+  __stage2InstantOpen?: Promise<number>;
 };
 
 async function marketContext(
@@ -473,24 +474,29 @@ async function expectNeutralNavigationFeedback(page: Page, destination: string) 
   await expect(feedback.locator("[data-commercial-best-offer-card], [data-commercial-bonus-card], [data-commercial-casino-card]")).toHaveCount(0);
 }
 
-test("keyboard focus does not prefetch request-specific primary routes", async ({ browser }) => {
+// Founder decision 4 Oct 2026: a page change takes 0.1–0.3 s, so primary destinations load ahead of
+// the click once the current page settles. This supersedes the Stage 2 "never prefetch" rule.
+test("primary destinations prefetch once after the page settles, never an outbound route", async ({ browser }) => {
   const context = await marketContext(browser, "IE", { viewport: { width: 1365, height: 900 } });
   const page = await context.newPage();
   const primaryPaths = ["/en/best-offers", "/en/casinos", "/en/bonuses", "/en/learn"];
   const prefetched: string[] = [];
+  const outbound: string[] = [];
   page.on("request", (request) => {
     const pathname = new URL(request.url()).pathname;
     if (request.headers().rsc === "1" && primaryPaths.includes(pathname)) prefetched.push(pathname);
+    if (/^\/(?:r|go)\//.test(pathname)) outbound.push(pathname);
   });
 
   await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-handoff-page="home"]')).toBeVisible();
-  await page.waitForTimeout(500);
-  expect(prefetched, "there must be no viewport prefetch fan-out").toEqual([]);
+  await expect.poll(() => [...prefetched].sort(), { timeout: 15_000 }).toEqual([...primaryPaths].sort());
 
   for (const path of primaryPaths) await desktopPrimary(page).locator(`a[href="${path}"]`).focus();
+  await desktopPrimary(page).getByRole("link", { name: "Casinos", exact: true }).hover();
   await page.waitForTimeout(500);
-  expect(prefetched, "keyboard focus must not cache request-specific GEO/action payloads").toEqual([]);
+  expect(prefetched.sort(), "focus and hover must not fetch a primary destination twice").toEqual([...primaryPaths].sort());
+  expect(outbound, "a prefetch must never touch an outbound route").toEqual([]);
   await context.close();
 });
 
@@ -519,14 +525,29 @@ test("supported IE fixture covers all primary, detail, article, history and pref
   analyticsRequests.length = 0;
   primaryPrefetchRequests.length = 0;
 
-  await page.waitForTimeout(700);
-  expect(primaryPrefetchRequests, "primary navigation must not fan out before explicit intent").toEqual([]);
+  await expect.poll(() => primaryPrefetchRequests.filter((path) => path === "/en/best-offers").length, { timeout: 15_000 }).toBe(1);
   await desktopPrimary(page).getByRole("link", { name: "Best Offers", exact: true }).hover();
   await page.waitForTimeout(500);
-  expect(primaryPrefetchRequests, "hover must not cache request-specific GEO/action payloads").toEqual([]);
   expect(analyticsRequests, "hover must not emit product analytics").toEqual([]);
+  // The prefetched page opens from the browser: no second request, inside the 0.3 s budget,
+  // measured in the page from the click to the first painted offer card.
+  await page.evaluate(() => {
+    (window as NavigationTimingWindow).__stage2InstantOpen = new Promise((resolve) => {
+      let clickedAt = 0;
+      window.addEventListener("click", () => { clickedAt = performance.now(); }, { capture: true, once: true });
+      const observer = new MutationObserver(() => {
+        if (!clickedAt || !document.querySelector("[data-commercial-best-offer-card]")) return;
+        observer.disconnect();
+        requestAnimationFrame(() => resolve(performance.now() - clickedAt));
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+  });
   await desktopPrimary(page).getByRole("link", { name: "Best Offers", exact: true }).click();
   await expect(page.locator("[data-commercial-best-offer-card]").first()).toBeVisible();
+  const openMs = await page.evaluate(() => (window as NavigationTimingWindow).__stage2InstantOpen!);
+  expect(openMs, "a prefetched primary destination must open within 300ms").toBeLessThan(300);
+  expect(primaryPrefetchRequests.filter((path) => path === "/en/best-offers"), "the click must reuse the prefetched page").toHaveLength(1);
   await expect(page).toHaveURL(`${baseUrl}/en/best-offers`);
 
   const bestDetail = page.locator('[data-commercial-best-offer-card] a[href*="/casino/"]').first();
@@ -617,13 +638,16 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
   });
   const page = await context.newPage();
   const errors = observeRuntimeErrors(page);
-  let delayBonuses = false;
+  // Bonuses is prefetched before the tap, so the slow transition is the prefetch held past it.
   let delayed = false;
+  let markClicked!: () => void;
+  const clicked = new Promise<void>((resolve) => { markClicked = resolve; });
   await page.route("**/*", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
-    if (delayBonuses && !delayed && url.pathname.endsWith("/en/bonuses") && request.headers().rsc === "1") {
+    if (!delayed && url.pathname.endsWith("/en/bonuses") && request.headers().rsc === "1") {
       delayed = true;
+      await clicked;
       await new Promise((resolve) => setTimeout(resolve, 1_200));
     }
     await route.continue();
@@ -635,7 +659,6 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
   await menuButton.click();
   const mobileNavigation = page.locator("#public-mobile-navigation");
   await expect(mobileNavigation).toBeVisible();
-  delayBonuses = true;
   await page.evaluate(() => {
     const startedAt = performance.now();
     (window as NavigationTimingWindow).__stage2MobileFeedbackPaint = new Promise((resolve) => {
@@ -648,6 +671,7 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
     });
   });
   await mobileNavigation.getByRole("link", { name: /Bonuses/ }).click();
+  markClicked();
   await expect(mobileNavigation).not.toBeVisible();
   await expectNeutralNavigationFeedback(page, "Bonuses");
   const mobileFeedbackPaintMs = await page.evaluate(

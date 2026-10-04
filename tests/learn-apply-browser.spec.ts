@@ -53,6 +53,17 @@ test.afterAll(async () => {
   await prisma.$disconnect();
 });
 
+// The guide above is written and deleted straight through Prisma, so no publication tag is
+// invalidated. The public shell prefetches the Learn hub once this page settles (instant
+// navigation, 4 Oct 2026); that would leave the fixture in the shared 60-second editorial cache,
+// where the empty-catalogue Learning Center spec that runs next would still list it. This spec
+// renders only its own document, so background RSC requests answer empty and touch no cache.
+test.beforeEach(async ({ page }) => {
+  await page.route("**/*", (route) => (route.request().headers().rsc === "1"
+    ? route.fulfill({ status: 204 })
+    : route.continue()));
+});
+
 for (const viewport of [
   { width: 1440, height: 900 },
   { width: 390, height: 844 },

@@ -277,6 +277,38 @@ test("every link that leaves the page starts the top progress bar at once and ho
   assert.match(readFileSync("components/final-handoff/HandoffInteractions.tsx", "utf8"), /pendingNavigationLabel = "";\n\s*\}, 30_000\);/);
 });
 
+test("pages open instantly: destinations prefetch ahead of the click, never an outbound or tracked route", async () => {
+  // Founder decision 4 Oct 2026: a page change takes 0.1–0.3 s; only a page already in the browser opens that fast.
+  const { currentPageSettled, INTENT_PREFETCH_SELECTOR, prefetchTarget, PRIMARY_PREFETCH_SELECTOR } = await import("../components/public-shell/navigation-prefetch");
+  const here = "https://b4gamble.com/en/learn/casino-safety/choosing-an-online-casino";
+  assert.equal(prefetchTarget("/en/casinos", here), "/en/casinos");
+  assert.equal(prefetchTarget("/en/learn?category=payments", here), "/en/learn?category=payments");
+  for (const tracked of ["/r/example", "/go/example", "/t/abc", "/x/abc", "/ig/abc", "/fb/abc", "/threads/abc", "/lana/abc", "/api/public/bonuses", "/admin", "/outbound/example", "/en/outbound/example", "/unsubscribe/token", "/partner-preview/x"]) {
+    assert.equal(prefetchTarget(tracked, here), null, tracked);
+  }
+  assert.equal(prefetchTarget(here, here), null, "the current page");
+  assert.equal(prefetchTarget("https://partner.example/offer", here), null, "another site");
+  assert.equal(PRIMARY_PREFETCH_SELECTOR, "a[data-navigation-href]");
+  for (const selector of ["a[data-navigation-href]", "a[data-footer-navigation-href]", "a[data-learn-offer-bridge-link]", "a[data-learn-category]", "a[data-intent-prefetch]"]) {
+    assert.ok(INTENT_PREFETCH_SELECTOR.includes(selector), selector);
+  }
+  const documentWith = (readyState: string, busy: boolean) => ({ readyState, querySelector: () => (busy ? {} : null) }) as unknown as Document;
+  assert.equal(currentPageSettled(documentWith("complete", false)), true);
+  assert.equal(currentPageSettled(documentWith("interactive", false)), false, "the current page is still loading");
+  assert.equal(currentPageSettled(documentWith("complete", true)), false, "a frame or pending commercial navigation is still on the page");
+
+  const feedback = readFileSync("components/public-shell/PublicNavigationFeedback.tsx", "utf8");
+  assert.match(feedback, /prefetchAll\(document, PRIMARY_PREFETCH_SELECTOR\)/, "primary destinations load once the page settles");
+  assert.match(feedback, /window\.requestIdleCallback\(run, \{ timeout: 1_000 \}\)/);
+  assert.match(feedback, /if \(!currentPageSettled\(document\)\) return;/, "no prefetch competes with the current page");
+  assert.match(feedback, /event\.pointerType !== "mouse"/, "a finger scrolling across links is not hover intent");
+  assert.match(feedback, /document\.addEventListener\("touchstart", onTouchStart, \{ passive: true \}\)/);
+  assert.match(feedback, /disclosure\.matches\("\[data-public-mobile-disclosure\]"\)/, "the drawer loads its links as it opens");
+  assert.match(readFileSync("components/analytics/TrackedReviewLink.tsx", "utf8"), /data-intent-prefetch=""/);
+  // Links themselves keep prefetch={false}: no viewport fan-out across lists of casinos.
+  assert.match(readFileSync("components/analytics/TrackedReviewLink.tsx", "utf8"), /prefetch=\{false\}/);
+});
+
 test("redesigned pages load behind a dark frame cut like them; Home keeps its frame", () => {
   // 4 Oct 2026: the 17 Sep frame (dark band over cream columns) flashed the old design before the dark pages.
   const frame = readFileSync("components/public-shell/PublicRouteLoadingFrame.tsx", "utf8");
