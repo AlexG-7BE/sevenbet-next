@@ -1,3 +1,5 @@
+import type { MarketRule } from "../market-access/register";
+
 type NavigationStage2TestEnvironment = Readonly<Record<string, string | undefined>>;
 
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost"]);
@@ -64,4 +66,30 @@ export function navigationStage2EditorialCacheBypassEnabled(
   if (environment.NAVIGATION_STAGE2_STREAMED_HEADER_DATABASE_LOCK !== "true") return false;
   assertNavigationStage2TestSafety(environment);
   return true;
+}
+
+/**
+ * The isolated Navigation Stage 2 catalogue is Irish. It was written when Ireland was the
+ * licence register's open grey zone, where any casino may be promoted, so its fictional casinos
+ * are judged on navigation alone. Production closed Ireland on 4 October 2026 (Founder decision,
+ * Google UK gambling certification). Only the disposable fixture server and the representative
+ * repository test keep the old rule, behind the same local-and-disposable guard as the other seams.
+ */
+export const NAVIGATION_STAGE2_FIXTURE_MARKET = "IE";
+
+const NAVIGATION_STAGE2_FIXTURE_MARKET_RULE: MarketRule = Object.freeze({
+  regime: "GREY_ZONE",
+  open: true,
+  reason: "Disposable Navigation Stage 2 fixture only: the fictional catalogue keeps Ireland's pre-4-October-2026 open grey zone.",
+});
+
+export function navigationStage2FixtureMarketRule(
+  market: string,
+  environment: NavigationStage2TestEnvironment = process.env,
+): MarketRule | null {
+  if (market !== NAVIGATION_STAGE2_FIXTURE_MARKET) return null;
+  if (environment.NAVIGATION_STAGE2_LOCAL_TRUSTED_GEO !== "true"
+    && environment.NAVIGATION_STAGE2_REPRESENTATIVE_DATABASE !== "true") return null;
+  assertNavigationStage2TestSafety(environment);
+  return NAVIGATION_STAGE2_FIXTURE_MARKET_RULE;
 }

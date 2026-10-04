@@ -1,7 +1,8 @@
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
+import { navigationStage2FixtureMarketRule } from "@/lib/market/navigation-stage2-test-safety";
 import { offersMayBePresented } from "@/lib/public-offer/offer-visibility";
 
-import { CASINO_MARKETS, MARKET_RULES, type AdvertisingWindow } from "./register";
+import { CASINO_MARKETS, MARKET_RULES, type AdvertisingWindow, type MarketRule } from "./register";
 
 /** Why a casino may not be promoted in a market. */
 export type MarketClosure =
@@ -59,7 +60,7 @@ export function marketAccess(casinoSlug: string, market: string | null | undefin
   const casino = CASINO_MARKETS[casinoSlug.trim().toLowerCase()];
   if (casino?.operatorBlocks?.[key] ?? casino?.operatorBlocks?.[country]) return closed("OPERATOR_BLOCKS");
 
-  const rule = MARKET_RULES[key] ?? MARKET_RULES[country];
+  const rule = ruleFor(key);
   if (!rule) return OPEN;
   if (rule.regime === "GREY_ZONE") return rule.open ? OPEN : closed("GREY_ZONE_CLOSED");
   if (!(casino?.licensed[key] ?? casino?.licensed[country])) return closed("NO_LOCAL_LICENCE");
@@ -69,9 +70,14 @@ export function marketAccess(casinoSlug: string, market: string | null | undefin
   return OPEN;
 }
 
+/** The exact market's rule, else its country's; the disposable Navigation Stage 2 fixture may supply its own. */
+function ruleFor(key: string): MarketRule | null {
+  return navigationStage2FixtureMarketRule(key) ?? MARKET_RULES[key] ?? MARKET_RULES[key.slice(0, 2)] ?? null;
+}
+
 function marketRule(market: string | null | undefined) {
   const key = marketKey(market);
-  return key ? MARKET_RULES[key] ?? MARKET_RULES[key.slice(0, 2)] ?? null : null;
+  return key ? ruleFor(key) : null;
 }
 
 /**

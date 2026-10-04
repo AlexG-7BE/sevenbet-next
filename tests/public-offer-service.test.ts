@@ -31,7 +31,7 @@ function offer(slug: string, patch: {
       id: `${slug}-casino`, slug, name: `Demo ${slug}`, summary: "Fictional published profile", logo: null, hero: null,
       editorScore: patch.score ?? 8, featured: patch.featured ?? false, recommended: patch.recommended ?? false,
       publishedAt: patch.publishedAt ?? "2030-01-01T00:00:00.000Z", lastReviewedAt: "2030-01-01T00:00:00.000Z",
-      countries: [{ countryCode: patch.country ?? "IE", availability: "AVAILABLE" }],
+      countries: [{ countryCode: patch.country ?? "LU", availability: "AVAILABLE" }],
       licenses: [{ authority: "Demo authority — not real", jurisdiction: "Synthetic", status: "ACTIVE" }],
       payments: [{
         key: (patch.payment ?? "visa").toLowerCase(), name: patch.payment ?? "Visa", minimumDeposit: patch.deposit ?? 10,
@@ -53,9 +53,9 @@ function offer(slug: string, patch: {
 
 const allCommercialActions = commercialActionAuthority((subject) => ({ href: `/r/${subject.casinoSlug}` }));
 
-// The fictional casinos below are listed in Ireland (a grey-zone market open to every casino) and
-// Kazakhstan and the US (no licence rule), so the licence register (lib/market-access) leaves their
-// offers alone in these listing mechanics tests.
+// The fictional casinos below are listed in Luxembourg, Kazakhstan and the US (no licence rule), so
+// the licence register (lib/market-access) leaves their offers alone in these listing mechanics tests.
+// Ireland served here until it closed on 4 Oct 2026; it now requires an Irish licence.
 function store(records: PublicOfferDTO[], error = false): PublicOfferStore {
   return { listOffers: async () => { if (error) throw new Error("unavailable"); return records; } };
 }
@@ -80,14 +80,14 @@ test("search filters eligible public offers and returns deterministic pagination
     offer("gamma", { score: 8.1, type: "CASHBACK", deposit: 5, wagering: 20, maximumBonus: 250, available: true }),
   ];
   const service = new PublicOfferService(store(records), { cmsEnabled: true }, allCommercialActions);
-  const query = parsePublicOfferQuery({ country: "IE", type: "WELCOME", maxDeposit: "20", maxWagering: "30", sort: "highest-bonus" }, 1);
-  const result = await service.searchOffers(query, allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+  const query = parsePublicOfferQuery({ country: "LU", type: "WELCOME", maxDeposit: "20", maxWagering: "30", sort: "highest-bonus" }, 1);
+  const result = await service.searchOffers(query, allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
   assert.equal(result.total, 1);
   assert.equal(result.records[0].casino.slug, "alpha");
   assert.equal(result.page, 1);
   assert.equal(result.pageCount, 1);
 
-  const all = await service.searchOffers(parsePublicOfferQuery({ sort: "lowest-deposit", page: "2" }, 1), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+  const all = await service.searchOffers(parsePublicOfferQuery({ sort: "lowest-deposit", page: "2" }, 1), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
   assert.equal(all.total, 3);
   assert.equal(all.page, 2);
   assert.equal(all.records[0].casino.slug, "beta");
@@ -95,16 +95,16 @@ test("search filters eligible public offers and returns deterministic pagination
 
 test("trusted presentation country owns action projection without hiding global offers", async () => {
   const service = new PublicOfferService(store([
-    offer("ireland", { country: "IE", available: true }),
+    offer("luxembourg", { country: "LU", available: true }),
     offer("kazakhstan", { country: "KZ", featured: true, available: true }),
   ]), { cmsEnabled: true }, allCommercialActions);
   const baseQuery = parsePublicOfferQuery({});
   const kzAuthority = { ...allowJurisdictionAuthority, countryCode: "KZ" };
-  assert.deepEqual((await service.searchOffers(baseQuery, kzAuthority, { defaultEditorialCountry: "KZ" })).records.map((item) => item.casino.slug), ["kazakhstan", "ireland"]);
-  assert.deepEqual((await service.searchOffers(baseQuery, { ...allowJurisdictionAuthority, countryCode: "US" }, { defaultEditorialCountry: "US" })).records.map((item) => item.casino.slug), ["kazakhstan", "ireland"]);
-  assert.deepEqual((await service.searchOffers(parsePublicOfferQuery({ country: "IE" }), kzAuthority, { defaultEditorialCountry: "KZ" })).records.map((item) => item.casino.slug), ["kazakhstan", "ireland"]);
+  assert.deepEqual((await service.searchOffers(baseQuery, kzAuthority, { defaultEditorialCountry: "KZ" })).records.map((item) => item.casino.slug), ["kazakhstan", "luxembourg"]);
+  assert.deepEqual((await service.searchOffers(baseQuery, { ...allowJurisdictionAuthority, countryCode: "US" }, { defaultEditorialCountry: "US" })).records.map((item) => item.casino.slug), ["kazakhstan", "luxembourg"]);
+  assert.deepEqual((await service.searchOffers(parsePublicOfferQuery({ country: "LU" }), kzAuthority, { defaultEditorialCountry: "KZ" })).records.map((item) => item.casino.slug), ["kazakhstan", "luxembourg"]);
   const bestOffers = await service.getBestOffersPageData({ country: "KZ" }, kzAuthority);
-  assert.deepEqual(bestOffers.records.map((item) => item.casino.slug), ["kazakhstan", "ireland"], "ranking does not independently reinterpret market-profile facts");
+  assert.deepEqual(bestOffers.records.map((item) => item.casino.slug), ["kazakhstan", "luxembourg"], "ranking does not independently reinterpret market-profile facts");
 });
 
 test("a casino without the reader's local licence has its offer withheld", async () => {
@@ -121,7 +121,7 @@ test("a casino without the reader's local licence has its offer withheld", async
 test("cross-country authority mismatches preserve offers but suppress actions", async () => {
   const service = new PublicOfferService(store([
     offer("kz-offer", { country: "KZ", available: true }),
-    offer("ie-offer", { country: "IE", available: true }),
+    offer("lu-offer", { country: "LU", available: true }),
   ]), { cmsEnabled: true }, commercialActionAuthority((subject, input) => (
     input.authority?.countryCode === input.countryCode ? { href: `/r/${subject.casinoSlug}` } : null
   )));
@@ -136,7 +136,7 @@ test("cross-country authority mismatches preserve offers but suppress actions", 
   const gbWithDeAuthority = await service.searchOffers(
     parsePublicOfferQuery({}),
     assertedDeAuthority,
-    { defaultEditorialCountry: "IE" },
+    { defaultEditorialCountry: "LU" },
   );
   assert.equal(gbWithDeAuthority.records.length, 2);
   assert.ok(gbWithDeAuthority.records.every((record) => record.action === null));
@@ -145,8 +145,8 @@ test("cross-country authority mismatches preserve offers but suppress actions", 
 test("default page contains 24 records and page two preserves the twenty-fifth", async () => {
   const records = Array.from({ length: 25 }, (_, index) => offer(`offer-${String(index + 1).padStart(2, "0")}`, { score: 9 - index / 100, available: true }));
   const service = new PublicOfferService(store(records), { cmsEnabled: true }, allCommercialActions);
-  const first = await service.searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
-  const second = await service.searchOffers(parsePublicOfferQuery({ page: "2" }), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+  const first = await service.searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
+  const second = await service.searchOffers(parsePublicOfferQuery({ page: "2" }), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
   assert.equal(first.records.length, 24);
   assert.equal(first.total, 25);
   assert.equal(first.pageCount, 2);
@@ -155,8 +155,8 @@ test("default page contains 24 records and page two preserves the twenty-fifth",
 });
 
 test("every supported public bonus filter is real and combined filters can return empty", async () => {
-  const alpha = offer("alpha", { country: "IE", type: "WELCOME", payment: "Visa", crypto: true, deposit: 10, wagering: 25, available: true, featured: true, recommended: false });
-  const beta = offer("beta", { country: "IE", type: "CASHBACK", payment: "Apple Pay", crypto: false, deposit: 30, wagering: 45, available: true, featured: false, recommended: true });
+  const alpha = offer("alpha", { country: "LU", type: "WELCOME", payment: "Visa", crypto: true, deposit: 10, wagering: 25, available: true, featured: true, recommended: false });
+  const beta = offer("beta", { country: "LU", type: "CASHBACK", payment: "Apple Pay", crypto: false, deposit: 30, wagering: 45, available: true, featured: false, recommended: true });
   const service = new PublicOfferService(store([alpha, beta]), { cmsEnabled: true }, allCommercialActions);
   const cases: Array<[Record<string, string>, string]> = [
     [{ type: "WELCOME" }, "alpha"], [{ type: "CASHBACK" }, "beta"], [{ payment: "Visa" }, "alpha"],
@@ -165,13 +165,13 @@ test("every supported public bonus filter is real and combined filters can retur
     [{ recommended: "true" }, "beta"], [{ recommended: "false" }, "alpha"],
   ];
   for (const [params, slug] of cases) {
-    const result = await service.searchOffers(parsePublicOfferQuery(params), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+    const result = await service.searchOffers(parsePublicOfferQuery(params), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
     assert.deepEqual(result.records.map((item) => item.casino.slug), [slug]);
   }
-  assert.deepEqual((await service.searchOffers(parsePublicOfferQuery({ country: "IE" }), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" })).records.map((item) => item.casino.slug), ["alpha", "beta"]);
-  const combined = await service.searchOffers(parsePublicOfferQuery({ country: "IE", type: "WELCOME", payment: "Visa", crypto: "true", maxDeposit: "10", maxWagering: "25", availability: "AVAILABLE", featured: "true", recommended: "false", sort: "lowest-wagering" }), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+  assert.deepEqual((await service.searchOffers(parsePublicOfferQuery({ country: "LU" }), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" })).records.map((item) => item.casino.slug), ["alpha", "beta"]);
+  const combined = await service.searchOffers(parsePublicOfferQuery({ country: "LU", type: "WELCOME", payment: "Visa", crypto: "true", maxDeposit: "10", maxWagering: "25", availability: "AVAILABLE", featured: "true", recommended: "false", sort: "lowest-wagering" }), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
   assert.deepEqual(combined.records.map((item) => item.casino.slug), ["alpha"]);
-  const empty = await service.searchOffers(parsePublicOfferQuery({ country: "IE", type: "WELCOME", payment: "Apple Pay" }), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+  const empty = await service.searchOffers(parsePublicOfferQuery({ country: "LU", type: "WELCOME", payment: "Apple Pay" }), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
   assert.equal(empty.total, 0);
   assert.deepEqual(empty.records, []);
 });
@@ -193,24 +193,24 @@ test("sorting uses stable editorial tie breakers and keeps missing values last",
     offer("beta", { score: 8, deposit: 10, wagering: 20, available: true }),
     offer("alpha", { score: 8, deposit: 10, wagering: 20, available: true }),
   ]), { cmsEnabled: true }, allCommercialActions);
-  const wagering = await service.searchOffers(parsePublicOfferQuery({ sort: "lowest-wagering" }), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+  const wagering = await service.searchOffers(parsePublicOfferQuery({ sort: "lowest-wagering" }), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
   assert.deepEqual(wagering.records.map((item) => item.casino.slug), ["alpha", "beta", "zulu"]);
-  const deposit = await service.searchOffers(parsePublicOfferQuery({ sort: "lowest-deposit" }), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+  const deposit = await service.searchOffers(parsePublicOfferQuery({ sort: "lowest-deposit" }), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
   assert.deepEqual(deposit.records.map((item) => item.casino.slug), ["alpha", "beta", "zulu"]);
 });
 
 test("facets count eligible offer values only and de-duplicate payments within an offer", () => {
   const alpha = offer("alpha", { country: "GB", available: true, crypto: true });
   alpha.casino.payments.push({ ...alpha.casino.payments[0] });
-  const facets = buildOfferFacets([alpha, offer("beta", { type: "CASHBACK", country: "IE", available: false })]);
-  assert.deepEqual(facets.countries.map(({ value, count }) => ({ value, count })), [{ value: "GB", count: 1 }, { value: "IE", count: 1 }]);
+  const facets = buildOfferFacets([alpha, offer("beta", { type: "CASHBACK", country: "LU", available: false })]);
+  assert.deepEqual(facets.countries.map(({ value, count }) => ({ value, count })), [{ value: "GB", count: 1 }, { value: "LU", count: 1 }]);
   assert.equal(facets.payments.find((item) => item.value === "visa")?.count, 2);
   assert.equal(facets.crypto.find((item) => item.value === "true")?.count, 1);
   assert.equal(facets.availability.find((item) => item.value === "AVAILABLE")?.count, 1);
 });
 
 test("best-offer shortlist applies market, completeness, score, flags and term order", () => {
-  const nonGb = offer("non-gb", { country: "IE", score: 10, featured: true });
+  const nonGb = offer("non-gb", { country: "LU", score: 10, featured: true });
   const featured = offer("featured", { score: 8, featured: true, wagering: 35 });
   const lowerWagering = offer("lower", { score: 8, featured: true, wagering: 20 });
   assert.deepEqual(selectOverallShortlist([nonGb, featured, lowerWagering]).map((item) => item.casino.slug), ["lower", "non-gb", "featured"]);
@@ -253,7 +253,7 @@ test("withdrawal normalization is deterministic and missing signals never outran
 
 test("overall shortlist is global, complete and capped at twelve with stable ties", () => {
   const records = Array.from({ length: 14 }, (_, index) => offer(`offer-${String(index).padStart(2, "0")}`, { score: 8, featured: true }));
-  records.push(offer("non-gb", { country: "IE", score: 10, featured: true }));
+  records.push(offer("non-gb", { country: "LU", score: 10, featured: true }));
   records.push(offer("missing", { score: 10, featured: true }));
   records.at(-1)!.bonus.wageringMultiplier = null;
   records.at(-1)!.bonus.wageringText = null;
@@ -276,7 +276,7 @@ test("CMS retrieval failures project unavailable without conflating legitimate e
   assert.equal(empty.total, 0);
   assert.deepEqual(empty.records, []);
 
-  const legacy = await new PublicOfferService(store([], true), { cmsEnabled: false }).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+  const legacy = await new PublicOfferService(store([], true), { cmsEnabled: false }).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
   assert.equal(legacy.total, 0);
   assert.deepEqual(legacy.records, []);
 });
@@ -288,7 +288,7 @@ test("repository records receive generic published-offer handling", async () => 
     store([demonstration, published]),
     { cmsEnabled: true },
     allCommercialActions,
-  ).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+  ).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
   assert.deepEqual(mixed.records.map((item) => item.casino.slug), ["published-real", "test-casino-profile"]);
   assert.ok(mixed.records.every((item) => item.dataClassification === "PUBLISHED_RECORD"));
   assert.equal(mixed.inventoryMode, "PUBLISHED_ONLY");
@@ -297,7 +297,7 @@ test("repository records receive generic published-offer handling", async () => 
     store([demonstration]),
     { cmsEnabled: true },
     allCommercialActions,
-  ).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "IE" });
+  ).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "LU" });
   assert.equal(demoOnly.total, 1);
   assert.equal(demoOnly.inventoryMode, "PUBLISHED_ONLY");
 });
@@ -312,7 +312,7 @@ test("Best Offers returns a genuine no-eligible state when the published shortli
   // policy still withholds the offer — a market that prohibits presenting it —
   // and where the repository genuinely has nothing to publish.
   const presented = await new PublicOfferService(store([incomplete]), { cmsEnabled: true }, noCommercialActions)
-    .getBestOffersPageData({ country: "IE" }, allowJurisdictionAuthority);
+    .getBestOffersPageData({ country: "LU" }, allowJurisdictionAuthority);
   assert.equal(presented.status, "available");
   assert.deepEqual(presented.records.map((item) => item.action), [null]);
 
@@ -321,26 +321,26 @@ test("Best Offers returns a genuine no-eligible state when the published shortli
   assert.deepEqual(prohibited, { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" });
 
   const nothingPublished = await new PublicOfferService(store([]), { cmsEnabled: true }, noCommercialActions)
-    .getBestOffersPageData({ country: "IE" }, allowJurisdictionAuthority);
+    .getBestOffersPageData({ country: "LU" }, allowJurisdictionAuthority);
   assert.deepEqual(nothingPublished, { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" });
 });
 
 test("Best Offers has no source-controlled fallback when CMS is disabled", async () => {
   const result = await new PublicOfferService(store([], true), {
     cmsEnabled: false,
-  }).getBestOffersPageData({ country: "IE" }, allowJurisdictionAuthority);
+  }).getBestOffersPageData({ country: "LU" }, allowJurisdictionAuthority);
 
   assert.deepEqual(result, { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" });
 });
 
 test("Best Offers never replaces a repository failure or eligible published shortlist with fixtures", async () => {
   const unavailable = await new PublicOfferService(store([], true), { cmsEnabled: true }, allCommercialActions)
-    .getBestOffersPageData({ country: "IE" }, allowJurisdictionAuthority);
+    .getBestOffersPageData({ country: "LU" }, allowJurisdictionAuthority);
   assert.deepEqual(unavailable, { status: "unavailable", records: [], inventoryMode: "UNAVAILABLE" });
 
   const published = offer("published-eligible", { score: 9.4, featured: true, available: true });
   const available = await new PublicOfferService(store([published]), { cmsEnabled: true }, allCommercialActions)
-    .getBestOffersPageData({ country: "IE" }, allowJurisdictionAuthority);
+    .getBestOffersPageData({ country: "LU" }, allowJurisdictionAuthority);
   assert.equal(available.status, "available");
   assert.equal(available.inventoryMode, "PUBLISHED_ONLY");
   assert.deepEqual(available.records.map((item) => item.casino.slug), ["published-eligible"]);
@@ -354,7 +354,7 @@ test("the editorial offer repository never constructs actions or carries promoti
         id: "11111111-1111-4111-8111-111111111111", slug: "demo-safe", title: "Demo Safe Casino", domain: "demo-safe.example",
         status: "PUBLISHED", editorScore: 8, publishedAt: "2030-01-01T00:00:00.000Z", responsibleGamblingTools: ["Limits"],
         reviewBlocks: { __sevenbetCasinoEditor: { general: { featured: true, recommended: false }, licenses: {}, countries: {}, payments: {}, providers: {}, categories: {}, bonuses: {} } },
-        countries: [{ id: "country", countryCode: "IE", availability: "AVAILABLE" }],
+        countries: [{ id: "country", countryCode: "LU", availability: "AVAILABLE" }],
         licenses: [{ id: "license", authority: "Demo authority", status: "ACTIVE" }],
         paymentMethods: [{ id: "payment", methodKey: "visa", name: "Visa", supportsDeposits: true, supportsWithdrawals: true, currencies: ["GBP"], minimumDeposit: "10", crypto: false }],
         casinoBonuses: [{ id: "22222222-2222-4222-8222-222222222222", slug: "demo-safe-welcome", title: "Not a live offer", summary: "Synthetic", type: "WELCOME", minimumDeposit: "10", wageringMultiplier: "30", status: "PUBLISHED", offerStatus: "ACTIVE" }],

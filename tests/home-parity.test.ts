@@ -140,6 +140,7 @@ test("Public Shell keeps its approved architecture while exposing the current br
   const header = readFileSync("components/public-shell/PublicHeader.tsx", "utf8");
   const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
   const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
+  const compliance = readFileSync("components/footer-compliance/FooterCompliance.tsx", "utf8");
   const shellCatalog = readFileSync("lib/i18n/public-shell-catalog.ts", "utf8");
   const shellStyles = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
   assert.match(header, /aria-label=\{messages\.homeLabel\}/);
@@ -148,11 +149,11 @@ test("Public Shell keeps its approved architecture while exposing the current br
   assert.match(footer, />B4GAMBLE<\/Link>/);
   assert.match(footer, /\{footer\.description\}/);
   assert.match(footer, /\{footer\.operatorDisclaimer\}/);
-  assert.match(footer, /\{footer\.financialRisk\}/);
+  assert.match(compliance, /\{footer\.financialRisk\}/);
   assert.match(footer, /\{footer\.commissionDisclosure\}/);
   assert.match(shellCatalog, /description: "Information, comparison and education\."/);
   assert.match(shellCatalog, /operatorDisclaimer: "Not a gambling operator\."/);
-  assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk\."/);
+  assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk and can be addictive\."/);
   assert.match(shellCatalog, /commissionDisclosure: "We may earn commission from clearly labelled affiliate links\."/);
   assert.match(shellStyles, /\.footerColumns\s*\{[^}]*grid-template-columns: repeat\(auto-fit, minmax\(200px, 1fr\)\)/s);
 

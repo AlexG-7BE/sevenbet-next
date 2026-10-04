@@ -23,8 +23,9 @@ function offerState(index: number) {
   return { status: "PUBLISHED", offerStatus: "ACTIVE", expiresAt: FUTURE };
 }
 
-// The supported market is Ireland: a grey-zone market open to every casino under the licence
-// register (RFC-054), so this fictional casino's route is judged on navigation alone.
+// The supported market is Ireland, as an open grey zone for every casino. Production closed
+// Ireland on 4 October 2026; the fixture server and repository test keep the old rule through
+// navigationStage2FixtureMarketRule, so this fictional casino's route is judged on navigation alone.
 function bonus(index: number) {
   const state = offerState(index);
   return {

@@ -1,0 +1,36 @@
+/* Google UK gambling certification footer lines (Founder decision, 4 Oct 2026).
+   Sentence-case lines past 60 characters read at 14px with a 1.5 line height
+   (readability pass, 25 Sep 2026); nothing here is smaller than 14px. The block
+   opens the footer baseline: it carries the rule above it, and the legal links
+   follow without a second rule, so the desktop Home closing scene keeps room
+   for its final call to action. */
+.compliance {
+  padding: 20px 0 0;
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid rgba(250, 250, 247, .15);
+  color: rgba(250, 250, 247, .78);
+  font-size: 14px;
+  line-height: 1.5;
+}
+/* Lines never widen the footer past a 320px phone: no grid item sizes by its longest line. */
+.compliance > * { min-width: 0; }
+.compliance p { margin: 0; overflow-wrap: anywhere; }
+.age { display: flex; align-items: baseline; gap: 12px; color: var(--sb-white); }
+.ageBadge { flex: 0 0 auto; padding: 1px 10px; border: 1px solid rgba(255, 255, 255, .35); border-radius: 999px; color: var(--sb-white); font-weight: 600; }
+/* The outbound-link statement is the line Google asks to be prominent. */
+.licensed { color: var(--sb-white); font-weight: 600; }
+.support { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 16px; }
+.support a { color: var(--sb-white); text-decoration: underline; text-decoration-color: rgba(250, 250, 247, .45); text-underline-offset: 3px; }
+.support a:hover { text-decoration-color: currentColor; }
+.number { white-space: nowrap; }
+.entity { color: rgba(250, 250, 247, .68); }
+
+@media (max-width: 900px) {
+  .compliance { gap: 8px; }
+  /* Phones: the lead takes its own row and the links form a two-column grid of 44px
+     touch targets, like the footer menu above; a long label wraps inside its cell. */
+  .support { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
+  .supportLead { grid-column: 1 / -1; padding-bottom: 4px; }
+  .support a { min-width: 0; min-height: 44px; display: flex; align-items: center; }
+}
