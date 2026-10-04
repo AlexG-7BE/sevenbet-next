@@ -33,7 +33,6 @@ export function FooterCompliance({
   /** Pages whose footer already carries the 18+ notice leave it out here. */
   showAge?: boolean;
 }) {
-  const separator = <span aria-hidden="true" className={styles.separator}>·</span>;
   const external = (href: string, label: string) => (
     <a href={href} rel="noopener noreferrer" target="_blank">{label}<span className="srOnly"> {footer.opensInNewTab}</span></a>
   );
@@ -43,13 +42,14 @@ export function FooterCompliance({
         ? <p className={styles.age} data-footer-age><span className={styles.ageBadge}>18+</span><span>{footer.ageNotice} {footer.financialRisk}</span></p>
         : null}
       <p className={styles.licensed} data-footer-licensed-links>{footer.licensedLinks}</p>
+      {/* A wrapping row of links rather than a sentence: every footer link is a 44px target on phones. */}
       <p className={styles.support} data-footer-support>
-        {footer.supportLead}{" "}
-        <a href={FOOTER_SUPPORT_LINKS.helplineHref}>{FOOTER_SUPPORT_LINKS.helplineName} <span className={styles.number}>{FOOTER_SUPPORT_LINKS.helplineNumber}</span></a>{" "}
-        ({external(FOOTER_SUPPORT_LINKS.gamCare, "GamCare")}){separator}
-        {external(FOOTER_SUPPORT_LINKS.gambleAware, FOOTER_SUPPORT_LINKS.gambleAwareName)}{separator}
+        <span className={styles.supportLead}>{footer.supportLead}</span>
+        <a href={FOOTER_SUPPORT_LINKS.helplineHref}>{FOOTER_SUPPORT_LINKS.helplineName} <span className={styles.number}>{FOOTER_SUPPORT_LINKS.helplineNumber}</span></a>
+        {external(FOOTER_SUPPORT_LINKS.gamCare, "GamCare")}
+        {external(FOOTER_SUPPORT_LINKS.gambleAware, FOOTER_SUPPORT_LINKS.gambleAwareName)}
         {external(FOOTER_SUPPORT_LINKS.gamstop, footer.gamstop)}
-        {localHelpHref ? <>{separator}<Link href={localHelpHref} prefetch={false}>{footer.localHelp}</Link></> : null}
+        {localHelpHref ? <Link href={localHelpHref} prefetch={false}>{footer.localHelp}</Link> : null}
       </p>
       <p className={styles.entity} data-footer-entity>{footer.entity}</p>
     </div>

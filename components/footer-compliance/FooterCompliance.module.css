@@ -18,12 +18,16 @@
 .ageBadge { flex: 0 0 auto; padding: 1px 10px; border: 1px solid rgba(255, 255, 255, .35); border-radius: 999px; color: var(--sb-white); font-weight: 600; }
 /* The outbound-link statement is the line Google asks to be prominent. */
 .licensed { color: var(--sb-white); font-weight: 600; }
+.support { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 16px; }
 .support a { color: var(--sb-white); text-decoration: underline; text-decoration-color: rgba(250, 250, 247, .45); text-underline-offset: 3px; }
 .support a:hover { text-decoration-color: currentColor; }
 .number { white-space: nowrap; }
-.separator { margin: 0 8px; color: rgba(250, 250, 247, .68); }
 .entity { color: rgba(250, 250, 247, .68); }
 
 @media (max-width: 900px) {
   .compliance { gap: 10px; }
+  /* Phones: the lead takes its own row and each link is a 44px touch target. */
+  .support { align-items: center; }
+  .supportLead { flex: 1 0 100%; }
+  .support a { min-height: 44px; display: inline-flex; align-items: center; }
 }
