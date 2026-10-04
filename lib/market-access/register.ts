@@ -73,11 +73,10 @@ export const MARKET_RULES: Readonly<Record<string, MarketRule>> = Object.freeze(
   LT: { regime: "LICENCE_REQUIRED", regulator: "Lošimų priežiūros tarnyba" },
   RS: { regime: "LICENCE_REQUIRED", regulator: "Uprava za igre na sreću" },
   "CA-ON": { regime: "LICENCE_REQUIRED", regulator: "iGaming Ontario / AGCO" },
-  IE: {
-    regime: "GREY_ZONE",
-    open: true,
-    reason: "GRAI has licensed betting only (21 Sep 2026 register); casino licensing opens in a later phase, so MGA operators serve Ireland lawfully until then.",
-  },
+  // Closed by Founder decision of 4 Oct 2026 (Google UK gambling certification): every outbound link must go
+  // to an operator licensed where the visitor is. GRAI has licensed betting only, so no casino holds an Irish
+  // licence and none opens in Ireland until GRAI licenses online casino and the register cites that licence.
+  IE: { regime: "LICENCE_REQUIRED", regulator: "Gambling Regulatory Authority of Ireland (no online casino licence issued yet)" },
   CA: {
     regime: "GREY_ZONE",
     open: false,

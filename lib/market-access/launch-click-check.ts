@@ -3,7 +3,11 @@ import { PARTNER_ROUTE_PLACEHOLDER_HOST } from "@/lib/affiliate-routing/redirect
 import { marketAccess } from "./access";
 import { CASINO_MARKETS } from "./register";
 
-/** The markets opened on Monday 28 September 2026, and Ireland (open grey zone, opened 27 September). */
+/**
+ * The markets opened on Monday 28 September 2026, and Ireland. Ireland was an open grey zone
+ * from 27 September until the Founder closed it on 4 October 2026 (Google UK certification);
+ * it stays here so every Irish click is checked: one that reaches a partner is a VIOLATION.
+ */
 export const LAUNCH_MARKETS = ["GB", "SE", "DK", "DE", "IE"] as const;
 
 export type LaunchMarket = (typeof LAUNCH_MARKETS)[number];
@@ -21,13 +25,8 @@ export const ROUTES_NOT_YET_LIVE: Readonly<Record<LaunchMarket, readonly string[
   SE: ["betsafe", "playuzu", "regencycasino"],
   DK: [],
   DE: [],
-  // Ireland opened the six Superfly routes and eleven EGO brands only
-  // (docs/07_Decisions/IRELAND-EGO-ROUTES-2026-09-27.md); GoldenPlay's
-  // placeholder route is disabled on purpose.
-  IE: [
-    "betsafe", "betsson", "dragonbet", "goldenplay", "inkabet", "nordicbet",
-    "playuzu", "regencycasino", "rizk", "starcasino", "supercasino",
-  ],
+  // Ireland is closed to every casino (docs/07_Decisions/GOOGLE-UK-CERTIFICATION-2026-10-04.md).
+  IE: [],
 });
 
 function launchMarket(market: string): LaunchMarket | null {

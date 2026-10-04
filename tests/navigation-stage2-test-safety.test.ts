@@ -5,8 +5,10 @@ import {
   assertNavigationStage2TestSafety,
   navigationStage2CommercialStateRejectionEnabled,
   navigationStage2EditorialCacheBypassEnabled,
+  navigationStage2FixtureMarketRule,
   navigationStage2LocalTrustedGeoEnabled,
 } from "../lib/market/navigation-stage2-test-safety";
+import { marketAccess } from "../lib/market-access/access";
 import { createCommercialNavigationRetryRegistry } from "../lib/market/navigation-stage2-retry";
 
 const disposable = {
@@ -61,6 +63,27 @@ test("Navigation Stage 2 test seams reject missing opt-in, remote, mismatched an
     DATABASE_URL: "postgresql://fixture@database.example:5432/navigation_stage2_ci",
     NAVIGATION_STAGE2_STREAMED_HEADER_DATABASE_LOCK: "true",
   }), /localhost/);
+});
+
+test("only the disposable fixture keeps Ireland open; Production Ireland stays closed", () => {
+  const now = new Date("2026-10-04T12:00:00Z");
+  assert.equal(navigationStage2FixtureMarketRule("IE", disposable), null, "no opt-in, no seam");
+  assert.deepEqual(marketAccess("navigation-stage2-casino", "IE", now), { open: false, closure: "NO_LOCAL_LICENCE" });
+  for (const flag of ["NAVIGATION_STAGE2_LOCAL_TRUSTED_GEO", "NAVIGATION_STAGE2_REPRESENTATIVE_DATABASE"]) {
+    const fixture = { ...disposable, [flag]: "true" };
+    assert.deepEqual(navigationStage2FixtureMarketRule("IE", fixture), {
+      regime: "GREY_ZONE",
+      open: true,
+      reason: "Disposable Navigation Stage 2 fixture only: the fictional catalogue keeps Ireland's pre-4-October-2026 open grey zone.",
+    }, flag);
+    assert.equal(navigationStage2FixtureMarketRule("GB", fixture), null, "no other market is touched");
+    assert.throws(() => navigationStage2FixtureMarketRule("IE", { ...fixture, CI: "false" }), /CI=true/);
+    assert.throws(() => navigationStage2FixtureMarketRule("IE", { ...fixture, VERCEL_ENV: "production" }), /Production/);
+    assert.throws(() => navigationStage2FixtureMarketRule("IE", {
+      ...fixture,
+      DATABASE_URL: "postgresql://fixture@database.example:5432/navigation_stage2_ci",
+    }), /localhost/);
+  }
 });
 
 test("commercial navigation recovery is single-attempt per unresolved episode and resets after settlement", () => {

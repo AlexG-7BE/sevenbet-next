@@ -28,13 +28,19 @@ test("the release disables active routes the register closes, and nothing else",
     row("playojo", "AT"),
     row("playojo", "DK"),
     row("goldenplay", "IE"),
+    row("hello-casino", "IE"),
+    row("playojo", "IE"),
     row("drueckglueck", "DE"),
     row("jackpotstar", "DK", "DISABLED"),
+    row("slotsmagic", "IE", "DISABLED"),
   ]);
   assert.deepEqual(plan.map(({ activation, closure }) => `${activation.casinoSlug}:${activation.marketCode}:${closure}`), [
     "playojo:AT:OPERATOR_BLOCKS",
     "casino-redkings:DK:OPERATOR_BLOCKS",
     "playuzu:DK:NO_LOCAL_LICENCE",
+    "goldenplay:IE:NO_LOCAL_LICENCE",
+    "hello-casino:IE:NO_LOCAL_LICENCE",
+    "playojo:IE:NO_LOCAL_LICENCE",
     "goldenplay:NO:PROHIBITED_BY_LAW",
     "goldenplay:SE:NO_LOCAL_LICENCE",
   ]);
@@ -43,12 +49,12 @@ test("the release disables active routes the register closes, and nothing else",
 test("an open market's route left on the registration placeholder is taken down", () => {
   const placeholder = "https://partner-route.invalid/6017be37";
   const plan = planDisables([
-    { ...row("goldenplay", "IE"), trackingUrl: placeholder },
+    { ...row("goldenplay", "KZ"), trackingUrl: placeholder },
     { ...row("playojo", "GB"), trackingUrl: "https://site.gotoplayojo.com/index.php?aname=b4gamble" },
-    { ...row("rizk", "IE", "DISABLED"), trackingUrl: placeholder },
+    { ...row("rizk", "KZ", "DISABLED"), trackingUrl: placeholder },
   ]);
   assert.deepEqual(plan.map(({ activation, closure }) => `${activation.casinoSlug}:${activation.marketCode}:${closure}`), [
-    "goldenplay:IE:PLACEHOLDER_LINK",
+    "goldenplay:KZ:PLACEHOLDER_LINK",
   ]);
 });
 
@@ -65,21 +71,14 @@ test("every market the release opens is licensed there", () => {
   assert.equal(new Set(keys).size, keys.length, "each market is opened once");
 });
 
-test("Ireland opens eleven EGO brands on their unchanged GB links; Regency stays out", () => {
+test("Ireland is closed: the release opens nothing there and takes every Irish route down", () => {
   const rule = MARKET_RULES.IE;
-  assert.ok(rule?.regime === "GREY_ZONE" && rule.open, "Ireland is an open grey zone");
-  const ireland = ENABLE_TARGETS.filter((target) => target.market === "IE");
-  assert.deepEqual(ireland.map((target) => target.casinoSlug), [
-    "ahti-games", "bacanaplay", "casino-redkings", "drueckglueck", "eucasino", "jackpotstar",
-    "megawayscasino", "playojo", "playojo-bingo", "slotsmagic", "turbonino",
-  ]);
-  for (const target of ireland) {
-    assert.equal(target.partner, "ego", target.casinoSlug);
-    assert.equal(target.sourceMarket, "GB", target.casinoSlug);
-    assert.equal(target.query, undefined, `${target.casinoSlug}: the GB link is reused unchanged`);
-    assert.equal(target.localSite, undefined, target.casinoSlug);
-    assert.equal(CASINO_MARKETS[target.casinoSlug]?.operatorBlocks?.IE, undefined, `${target.casinoSlug} does not refuse Ireland`);
-  }
+  assert.ok(rule?.regime === "LICENCE_REQUIRED", "Ireland requires an Irish licence (Founder decision, 4 Oct 2026)");
+  assert.deepEqual(ENABLE_TARGETS.filter((target) => target.market === "IE"), []);
+  const irishRoutes = Object.keys(CASINO_MARKETS).map((casinoSlug) => row(casinoSlug, "IE"));
+  assert.equal(planDisables(irishRoutes).length, irishRoutes.length);
+  // The Superfly GB routes still derive from the stored Irish link, which a disabled row keeps.
+  assert.deepEqual(ENABLE_TARGETS.filter((target) => target.sourceMarket === "IE").map((target) => target.market), Array(6).fill("GB"));
 });
 
 test("a corrected local site is the domain the register cites for that market", () => {
