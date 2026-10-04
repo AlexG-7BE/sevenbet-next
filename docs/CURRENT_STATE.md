@@ -72,6 +72,19 @@ v1 (12 September 2026); its orphaned `BonusCalculator` is replaced by
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+## Google Analytics 4 behind the cookie choice — in review
+
+**Founder instruction, 4 October 2026** (RFC-046 §16): add the Google tag
+for GA4 stream `G-11MX6NPS95`. Branch `feat/google-analytics-ga4` loads
+gtag.js only after "Accept cookies", only on Production for human visitors
+(no bots, no staff-marked browsers), never on protected Help, the self-check
+or Admin, with Google signals and ad personalisation off. "Reject cookies"
+stops collection and deletes the `_ga` cookies. The banner and Privacy
+Notice name Google Analytics; CSP `connect-src` allows the GA hosts. Tests:
+`tests/google-analytics.test.ts`.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## SMM agents read social traffic (`social_traffic`) — in review
 
 **Founder instruction, 3 October 2026**
