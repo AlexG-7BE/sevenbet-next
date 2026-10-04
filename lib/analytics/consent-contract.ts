@@ -1,7 +1,7 @@
 export const ANALYTICS_CONSENT_COOKIE = "b4g_analytics_consent";
 export const ANALYTICS_ANONYMOUS_COOKIE = "b4g_analytics_anonymous";
 export const ANALYTICS_SESSION_COOKIE = "b4g_analytics_session";
-export const ANALYTICS_CONSENT_POLICY_VERSION = "privacy-analytics-v1";
+export const ANALYTICS_CONSENT_POLICY_VERSION = "privacy-analytics-v2";
 
 export type AnalyticsConsentState = "granted" | "denied" | "unknown";
 
