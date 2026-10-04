@@ -72,16 +72,16 @@ v1 (12 September 2026); its orphaned `BonusCalculator` is replaced by
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
-## Google Analytics 4 behind the cookie choice — in review
+## Google Analytics 4 for every visitor
 
-**Founder instruction, 4 October 2026** (RFC-046 §16): add the Google tag
-for GA4 stream `G-11MX6NPS95`. Branch `feat/google-analytics-ga4` loads
-gtag.js only after "Accept cookies", only on Production for human visitors
-(no bots, no staff-marked browsers), never on protected Help, the self-check
-or Admin, with Google signals and ad personalisation off. "Reject cookies"
-stops collection and deletes the `_ga` cookies. The banner and Privacy
-Notice name Google Analytics; CSP `connect-src` allows the GA hosts. Tests:
-`tests/google-analytics.test.ts`.
+**Founder instructions, 4 October 2026** (RFC-046 §16): the Google tag for
+GA4 stream `G-11MX6NPS95` counts every visitor from the first page. #453
+(merged 4 Oct) loaded it only after "Accept cookies", and Google's tag check
+did not find it; branch `fix/ga-tag-in-head` puts the standard snippet in
+every Production page's `<head>` for everyone except staff-marked devices.
+"Reject cookies" turns it off and deletes the `_ga` cookies; it never sends
+from protected Help, the self-check or Admin; Google signals and ad
+personalisation stay off. Tests: `tests/google-analytics.test.ts`.
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
