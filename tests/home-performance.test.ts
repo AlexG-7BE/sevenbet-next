@@ -3,7 +3,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import test from "node:test";
 
 import generatedPages from "../lib/final-handoff/generated-pages.json";
-import { transformHomeHandoff, transformHomeHandoffCss } from "../lib/final-handoff/transforms";
+import { transformHomeHandoff, transformHomeHandoffCss, transformLearnHandoff } from "../lib/final-handoff/transforms";
 
 const source = (path: string) => readFileSync(path, "utf8");
 
@@ -37,6 +37,22 @@ test("Home media transform provides responsive modern formats and truthful loadi
   assert.match(html, /alt="Applying the plan" loading="lazy"[^>]*height="4000"[^>]*width="6000"/);
   assert.match(html, /alt="Creator at work" loading="eager"[^>]*fetchpriority="high"[^>]*height="3844"[^>]*width="2563"/);
   assert.doesNotMatch(html, /alt="(?:Noticing the moment|Writing the rule|Applying the plan)" loading="eager"/);
+});
+
+test("Learn and 10 Steps open on the responsive photo set, never a multi-megabyte original", () => {
+  // 4 Oct 2026: Learn shipped the 6000×4000 chapter photo (2.9 MB); on a phone it held the connection
+  // for about 15 s and every link tapped meanwhile seemed dead. 10 Steps shipped hero-plan.jpg (626 KB).
+  for (const locale of ["en-GB", "de-DE", "sv-SE"] as const) {
+    const html = transformLearnHandoff(generatedPages.learn.html, locale);
+    assert.equal((html.match(/<picture data-learn-hero-media=""/g) ?? []).length, 1, locale);
+    assert.match(html, /<source type="image\/avif" sizes="\(max-width: 900px\) 100vw, 54vw" srcset="\/home\/responsive\/chapter-apply-320\.avif 320w, [^"]*chapter-apply-1920\.avif 1920w">/);
+    assert.match(html, /<source type="image\/webp" sizes="\(max-width: 900px\) 100vw, 54vw" srcset="[^"]*chapter-apply-640\.webp 640w[^"]*">/);
+    assert.match(html, /<img alt="Editorial desk" loading="eager" decoding="async" height="4000" sizes="[^"]+" width="6000" src="\/home\/chapter-apply\.jpg"[^>]*><\/picture>/);
+  }
+  const tenSteps = readFileSync("app/(public)/10-steps/TenStepsPage.tsx", "utf8");
+  assert.match(tenSteps, /<picture><source sizes=\{ART_SIZES\} srcSet=\{artCandidates\("avif"\)\} type="image\/avif" \/><source sizes=\{ART_SIZES\} srcSet=\{artCandidates\("webp"\)\} type="image\/webp" \/><img [^>]*src="\/home\/hero-plan\.jpg"/);
+  assert.match(tenSteps, /`\/home\/responsive\/hero-plan-\$\{width\}\.\$\{format\} \$\{width\}w`/);
+  assert.match(readFileSync("app/(public)/10-steps/TenStepsPage.module.css", "utf8"), /\.artMotion picture \{ display: block; width: 100%; height: 100%; \}/);
 });
 
 test("responsive image outputs exist and keep the opening AVIF payload below one megabyte", () => {

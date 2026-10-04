@@ -99,6 +99,36 @@
   .columns > div:nth-child(3) { display: none; }
 }
 
+/* The dark frame (4 Oct 2026) is cut like the redesigned pages it stands in for: the same night
+   page, glow, hero spacing, kicker rule and title type as Casinos, and the collection's dark cards. */
+.page[data-frame-theme="dark"] { padding-top: 0; background: var(--sb-night); color: var(--sb-paper); }
+.page[data-frame-theme="dark"] .hero { position: relative; overflow: hidden; min-height: 0; padding: clamp(120px, 14vh, 150px) 0 0; display: block; }
+.glow { position: absolute; top: -20%; right: -10%; width: 70vw; height: 70vw; max-width: 900px; max-height: 900px; background: radial-gradient(circle, rgba(228, 226, 78, .10) 0%, rgba(228, 226, 78, 0) 60%); pointer-events: none; }
+.page[data-frame-theme="dark"] .heroInner,
+.page[data-frame-theme="dark"] .contentInner { position: relative; width: var(--site-content-width); max-width: none; }
+.page[data-frame-theme="dark"] .heroInner { gap: 0; }
+.page[data-frame-theme="dark"] .kicker { margin: 0 0 24px; display: flex; align-items: center; gap: 18px; font-weight: 400; line-height: 1.4; }
+.page[data-frame-theme="dark"] .kicker::before { content: ""; flex: none; width: 44px; height: 1px; background: var(--sb-acid); }
+.page[data-frame-theme="dark"] .hero .title { max-width: none; font-size: clamp(44px, 5.6vw, 88px); line-height: .88; letter-spacing: -.045em; }
+.page[data-frame-theme="dark"] .content { min-height: 0; padding: 56px 0 120px; background: var(--sb-night); }
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.cards > span { min-height: 320px; padding: clamp(28px, 3vw, 40px); display: flex; flex-direction: column; gap: 22px; border: 1px solid var(--sb-line-dark); border-radius: var(--sb-radius-card); background: var(--sb-surface-card); }
+.cards i { display: block; height: 12px; border-radius: 6px; background: rgba(250, 250, 247, .08); }
+.cards i:nth-child(1) { width: 152px; max-width: 46%; height: 76px; border-radius: var(--sb-radius-card); }
+.cards i:nth-child(2) { width: 72%; }
+.cards i:nth-child(3) { width: 100%; height: 52px; margin-top: auto; border-radius: var(--sb-radius-card); }
+
+@media (max-width: 900px) {
+  .cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .page[data-frame-theme="dark"] .hero { padding: 100px 0 28px; }
+  .page[data-frame-theme="dark"] .kicker { margin-bottom: 14px; gap: 12px; }
+  .page[data-frame-theme="dark"] .kicker::before { width: 24px; }
+  .page[data-frame-theme="dark"] .hero .title { font-size: 42px; }
+  .page[data-frame-theme="dark"] .content { padding-top: 28px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .progress::after { animation: none; transform: none; }
   .heroInner, .contentInner { animation-duration: 1ms; }

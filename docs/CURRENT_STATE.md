@@ -12,6 +12,45 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Navigation feedback, dark loading frame, lighter Learn and 10 Steps heroes — in review
+
+**Founder report, 4 October 2026:** opening Casinos, Bonuses or Best Offers
+flashed the old design first, and a link tapped on Learn sometimes seemed to do
+nothing. Founder approved fixes A + B + C:
+
+- **A. Lighter heroes.** **DETECTED:** the Learn hub hero was the 6000×4000
+  original of Home's chapter photo (2.9 MB, 96 MB decoded, endless Ken Burns
+  zoom); on a throttled phone (Slow 4G, 4× CPU) the Learn page reached `load`
+  at about 17 s. Learn now ships Home's existing AVIF/WebP set (22–155 KB);
+  10 Steps does the same for `hero-plan.jpg` (626 KB original).
+- **B. Instant reaction.** Every same-origin link that leaves the page starts
+  a 3px acid bar at the top of the screen on the click itself. The bar holds
+  until the new address shows and the loading frame has gone, with a 30 s
+  fallback. The named pill keeps its 700ms reveal (Founder decision
+  25 September 2026). A handoff page's pill now holds for 30 s instead of
+  vanishing at 8 s while the next page is still on its way.
+- **C. Dark loading frame.** **DETECTED:** the frame drawn on 17 September
+  (dark band over cream columns) still stood in for the dark pages redesigned
+  on 22 September. Casinos, Bonuses, Best Offers and the casino review now load
+  behind a frame cut like them. It uses the night page, glow, hero spacing,
+  kicker rule, title type and dark cards. Home keeps its frame (frozen desktop
+  Home).
+
+**Not changed:** primary navigation, review links and keyboard focus still
+never prefetch request-specific GEO/action payloads (Navigation Performance
+Stage 2 contract). Prefetch on intent is a separate Founder decision.
+
+**UNKNOWN:** the reported reload while scrolling the Casinos catalogue on a
+computer was not reproduced. Desktop Chromium scrolled for 30 s on a cold
+production build with no document navigation. A mid-scroll `router.refresh()`
+from the mobile commercial-navigation retry changed nothing visible in
+Chromium or WebKit. No public code calls `location.reload`.
+
+Tests: `tests/public-shell.test.ts` (`public-ia:test`) and
+`tests/home-performance.test.ts`.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Google UK gambling certification: footer, Ireland, DrückGlück GB — in review
 
 **Founder decisions, 4 October 2026**

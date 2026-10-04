@@ -534,10 +534,12 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
           pendingNavigationLabel = anchor.textContent?.trim().replace(/\s+/g, " ") || destination.pathname;
           navigationFeedback?.({ id: navigationFeedbackId, label: pendingNavigationLabel }, true);
           window.clearTimeout(pendingNavigationTimeout);
+          // Leaving this page clears the pill; until then it holds for the layout's 30 s maxDuration,
+          // because a pill that vanished at 8 s left a slow tap looking dead (4 Oct 2026).
           pendingNavigationTimeout = window.setTimeout(() => {
             navigationFeedback?.({ id: navigationFeedbackId, label: pendingNavigationLabel }, false);
             pendingNavigationLabel = "";
-          }, 8_000);
+          }, 30_000);
           router.push(`${destination.pathname}${destination.search}${destination.hash}`);
           return;
         }
