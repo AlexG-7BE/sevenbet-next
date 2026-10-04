@@ -12,7 +12,7 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Navigation feedback, dark loading frame, lighter Learn and 10 Steps heroes — in review
+## Navigation feedback, instant navigation, dark loading frame, lighter heroes — in review
 
 **Founder report, 4 October 2026:** opening Casinos, Bonuses or Best Offers
 flashed the old design first, and a link tapped on Learn sometimes seemed to do
@@ -36,9 +36,15 @@ nothing. Founder approved fixes A + B + C:
   kicker rule, title type and dark cards. Home keeps its frame (frozen desktop
   Home).
 
-**Not changed:** primary navigation, review links and keyboard focus still
-never prefetch request-specific GEO/action payloads (Navigation Performance
-Stage 2 contract). Prefetch on intent is a separate Founder decision.
+**Instant navigation (Founder decision, 4 October 2026):** a page change must
+take 0.1–0.3 s. With the server in the United States, only a page already in the
+browser opens that fast, so the public shell now prefetches. After the current
+page settles, the primary destinations (Best Offers, Casinos, Bonuses, Learn)
+load in the background. Footer links, Learn bridges and guide cards, and casino
+review links load on hover, touch or focus. The mobile drawer loads its links
+as it opens. `/r/`, short links and API routes are never prefetched. This
+supersedes the Stage 2 "never prefetch" rule. Record:
+[INSTANT-NAVIGATION-2026-10-04](07_Decisions/INSTANT-NAVIGATION-2026-10-04.md).
 
 **UNKNOWN:** the reported reload while scrolling the Casinos catalogue on a
 computer was not reproduced. Desktop Chromium scrolled for 30 s on a cold
@@ -46,8 +52,11 @@ production build with no document navigation. A mid-scroll `router.refresh()`
 from the mobile commercial-navigation retry changed nothing visible in
 Chromium or WebKit. No public code calls `location.reload`.
 
-Tests: `tests/public-shell.test.ts` (`public-ia:test`) and
-`tests/home-performance.test.ts`.
+Tests: `tests/public-shell.test.ts` (`public-ia:test`),
+`tests/home-performance.test.ts` and
+`tests/navigation-performance-stage2-browser.spec.ts`. The browser spec asserts a
+prefetched primary destination opens with no second request, under 300ms from
+click to first offer card.
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 

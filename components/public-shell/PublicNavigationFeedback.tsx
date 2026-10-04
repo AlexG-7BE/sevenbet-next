@@ -1,8 +1,10 @@
 "use client";
 
 import { useLinkStatus } from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 
+import { currentPageSettled, INTENT_PREFETCH_SELECTOR, prefetchTarget, PRIMARY_PREFETCH_SELECTOR } from "./navigation-prefetch";
 import { navigationClickTarget } from "./navigation-progress";
 
 type PendingLink = Readonly<{ id: string; label: string }>;
@@ -82,10 +84,109 @@ function useNavigationProgress() {
   return progress;
 }
 
+// A pointer resting this long on a link is a choice, not a pass across it.
+const HOVER_INTENT_MS = 50;
+// How often a page that is still loading is checked before its primary destinations load.
+const SETTLE_POLL_MS = 300;
+// Next keeps a prefetched page for five minutes; on a longer stay the next intent fetches it again.
+const PREFETCH_AGAIN_AFTER_MS = 240_000;
+
+/**
+ * Pages open in 0.1–0.3 s only when they are already in the browser (Founder decision, 4 Oct 2026).
+ * Once the current page settles, the primary destinations load in the background; any other
+ * eligible link loads on hover, touch or focus, and the mobile drawer loads its links as it opens.
+ * Next keeps each fetched page for five minutes (staleTimes.static), and `/r/` still decides every
+ * outbound click on the server.
+ */
+function useInstantNavigation() {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const requested = new Map<string, number>();
+    let settleTimer = 0;
+    let idleHandle = 0;
+    let hoverTimer = 0;
+    let hovered: HTMLAnchorElement | null = null;
+    const prefetch = (anchor: HTMLAnchorElement) => {
+      if (!currentPageSettled(document)) return;
+      const target = prefetchTarget(anchor.href, window.location.href);
+      if (!target) return;
+      const last = requested.get(target);
+      if (last !== undefined && Date.now() - last < PREFETCH_AGAIN_AFTER_MS) return;
+      requested.set(target, Date.now());
+      router.prefetch(target);
+    };
+    const prefetchAll = (root: ParentNode, selector: string) => {
+      for (const anchor of root.querySelectorAll<HTMLAnchorElement>(selector)) prefetch(anchor);
+    };
+    const whenSettled = () => {
+      if (!currentPageSettled(document)) {
+        settleTimer = window.setTimeout(whenSettled, SETTLE_POLL_MS);
+        return;
+      }
+      const run = () => prefetchAll(document, PRIMARY_PREFETCH_SELECTOR);
+      // Safari before 18 has no requestIdleCallback.
+      if (typeof window.requestIdleCallback === "function") idleHandle = window.requestIdleCallback(run, { timeout: 1_000 });
+      else settleTimer = window.setTimeout(run, 200);
+    };
+    const intentAnchor = (target: EventTarget | null) => {
+      const anchor = target instanceof Element ? target.closest(INTENT_PREFETCH_SELECTOR) : null;
+      return anchor instanceof HTMLAnchorElement ? anchor : null;
+    };
+    const onPointerOver = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      const anchor = intentAnchor(event.target);
+      if (!anchor || anchor === hovered) return;
+      window.clearTimeout(hoverTimer);
+      hovered = anchor;
+      hoverTimer = window.setTimeout(() => prefetch(anchor), HOVER_INTENT_MS);
+    };
+    const onPointerOut = (event: PointerEvent) => {
+      if (!hovered || (event.relatedTarget instanceof Node && hovered.contains(event.relatedTarget))) return;
+      window.clearTimeout(hoverTimer);
+      hovered = null;
+    };
+    const onTouchStart = (event: TouchEvent) => {
+      const anchor = intentAnchor(event.target);
+      if (anchor) prefetch(anchor);
+    };
+    const onFocusIn = (event: FocusEvent) => {
+      const anchor = intentAnchor(event.target);
+      if (anchor) prefetch(anchor);
+    };
+    // `toggle` does not bubble; capture still sees the drawer open.
+    const onToggle = (event: Event) => {
+      const disclosure = event.target;
+      if (disclosure instanceof HTMLDetailsElement && disclosure.open && disclosure.matches("[data-public-mobile-disclosure]")) {
+        prefetchAll(disclosure, PRIMARY_PREFETCH_SELECTOR);
+      }
+    };
+
+    whenSettled();
+    document.addEventListener("pointerover", onPointerOver, { passive: true });
+    document.addEventListener("pointerout", onPointerOut, { passive: true });
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("toggle", onToggle, true);
+    return () => {
+      window.clearTimeout(settleTimer);
+      window.clearTimeout(hoverTimer);
+      if (idleHandle) window.cancelIdleCallback(idleHandle);
+      document.removeEventListener("pointerover", onPointerOver);
+      document.removeEventListener("pointerout", onPointerOut);
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("toggle", onToggle, true);
+    };
+  }, [pathname, router]);
+}
+
 export function PublicNavigationFeedback({ children, className, progressClassName }: { children: ReactNode; className: string; progressClassName: string }) {
   const activeLinks = useRef(new Map<string, PendingLink>());
   const [activeLink, setActiveLink] = useState<PendingLink | null>(null);
   const progress = useNavigationProgress();
+  useInstantNavigation();
   const report = useCallback<PendingLinkReporter>((pendingLink, pending) => {
     if (pending) {
       activeLinks.current.delete(pendingLink.id);

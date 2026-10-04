@@ -20,7 +20,7 @@ export function TrackedReviewLink({ casinoId, children, className, href, pending
   primary?: boolean;
   sourceSurface: ProductAnalyticsEventMap["casino_review_opened"]["sourceSurface"];
 }) {
-  return <Link className={className} data-review-primary={primary ? "" : undefined} href={href} onClick={() => {
+  return <Link className={className} data-intent-prefetch="" data-review-primary={primary ? "" : undefined} href={href} onClick={() => {
     if (casinoId && placement) productAnalyticsClient.casinoReviewClicked(casinoId, placement, position);
     else productAnalyticsClient.casinoReviewOpened(sourceSurface);
   }} prefetch={false}>{children}<PublicLinkPendingSignal label={pendingLabel ?? (typeof children === "string" ? children : "Review")} /></Link>;
