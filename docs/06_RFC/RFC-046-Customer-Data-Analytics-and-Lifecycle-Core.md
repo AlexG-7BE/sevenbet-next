@@ -7,7 +7,7 @@
 **Decision date:** 11 September 2026; Resend Production activation amendment
 approved 12 September 2026; aggregate social-traffic read amendment (§15)
 approved 3 October 2026; Google Analytics 4 amendment (§16) instructed
-4 October 2026
+4 October 2026; cookieless visit count amendment (§17) chosen 4 October 2026
 
 **Implementation authority:** explicit Founder instruction `B4GAMBLE Customer
 Data, Analytics & Lifecycle — Production Core v1`.
@@ -537,3 +537,43 @@ remove the layout line or set `NEXT_PUBLIC_ANALYTICS_ENABLED` false, which
 also turns off first-party analytics. GA4 property settings (data retention,
 data sharing, internal-traffic filters) live in the Founder's Google account
 and are outside repository evidence.
+
+## 17. Amendment — cookieless visit count (4 October 2026)
+
+**Founder decision, 4 October 2026:** count every visit from the first
+second, whatever the cookie choice, in B4GAMBLE's own analytics; Google
+Analytics keeps the §16 consent rule. This amends the §4 PECR assessment for
+page views and arrivals only: the count stores nothing on the device and
+reads no cookie, storage or fingerprinting signal; the browser sends only the
+page URL, its referrer and the navigation type it already holds for that
+page, and the server stores no identifier.
+
+- **What is stored.** For each page view one `PAGE_VIEWED` row and, when the
+  document was opened from outside the site (not a reload), one
+  `SESSION_STARTED` row: page path, locale, referring host, `source` and UTM
+  parameters, trusted country, device category, environment and traffic
+  kind. No anonymous, session or user ID is written; consented rows always
+  carry an anonymous ID, which is how the two populations are told apart
+  (`lib/analytics/cookieless-count.ts`). No new column, table or migration.
+- **Nothing on the device.** The browser sends `POST /api/analytics/visits`
+  without setting or reading analytics cookies or storage; the route reads no
+  analytics cookie, sets none and checks only same-origin, a 4 KiB body, a
+  strict `page_viewed` event, excluded paths (protected Help, self-check,
+  Admin) and the shared rate limit. Staff-marked devices and bots are tagged
+  by the existing traffic-kind rule.
+- **Reports.** `/admin/analytics` overview shows Visits, Page views and
+  visits by GEO, source, landing page and device. Consented sessions,
+  funnels, events and the commercial market funnel stay consented-only, so
+  conversion rates still compare like with like. `social_traffic` (§15) adds
+  `visits` per row, in totals and site-wide, and sorts rows by visits.
+- **Retention and disclosure.** The rows follow the analytics retention
+  (§10). The Privacy Notice describes the count, its fields and its
+  legitimate-interests basis.
+
+Code: `lib/analytics/product-analytics-client.ts`
+(`recordCookielessPageView`), `app/api/analytics/visits/route.ts`,
+`lib/analytics/service.server.ts` (`cookielessVisitRows`),
+`lib/analytics/dashboard.server.ts`, `lib/analytics/social-traffic.server.ts`;
+tests: `tests/cookieless-count.test.ts`, `tests/social-traffic.test.ts`,
+`tests/social-traffic-postgres.test.ts`. Rollback: remove the
+`recordCookielessPageView` effect; stored rows age out under retention.

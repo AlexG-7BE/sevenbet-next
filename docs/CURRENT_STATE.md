@@ -44,6 +44,22 @@ v1 (12 September 2026); its orphaned `BonusCalculator` is replaced by
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+## Visits counted without cookies — in review
+
+**Founder decision, 4 October 2026** (RFC-046 §17): count every visit from
+the first second in our own analytics, whatever the cookie choice. Branch
+`feat/cookieless-visit-count` sends each page view to
+`POST /api/analytics/visits`, which stores a `PAGE_VIEWED` row and, for an
+arrival from outside the site, a `SESSION_STARTED` row with page, source/UTM,
+country and device, and no anonymous, session or user ID; no cookie or
+storage is set or read. `/admin/analytics` shows Visits, Page views and
+visits by GEO, source, landing page and device; consented funnels stay
+consented-only. `social_traffic` returns `visits` per post and site-wide.
+Google Analytics still waits for "Accept cookies". Tests:
+`tests/cookieless-count.test.ts`, `tests/social-traffic*.test.ts`.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Google Analytics 4 behind the cookie choice — in review
 
 **Founder instruction, 4 October 2026** (RFC-046 §16): add the Google tag

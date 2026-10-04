@@ -3,10 +3,14 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-import { recordConsentedBrowserPageView } from "@/lib/analytics/product-analytics-client";
+import { recordConsentedBrowserPageView, recordCookielessPageView } from "@/lib/analytics/product-analytics-client";
 
 export function AnalyticsPageView() {
   const pathname = usePathname();
+
+  useEffect(() => {
+    recordCookielessPageView(pathname);
+  }, [pathname]);
 
   useEffect(() => {
     const record = () => recordConsentedBrowserPageView(pathname);

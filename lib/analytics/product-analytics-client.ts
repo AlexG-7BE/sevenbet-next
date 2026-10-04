@@ -7,10 +7,11 @@ import {
   isProductAnalyticsEnabled,
   type ProductAnalyticsSink,
 } from "@/lib/analytics/product-analytics";
-import type {
-  ClientProductAnalyticsEvent,
-  ClientProductAnalyticsEventName,
-  ProgrammeMissionNumber,
+import {
+  createClientProductAnalyticsEvent,
+  type ClientProductAnalyticsEvent,
+  type ClientProductAnalyticsEventName,
+  type ProgrammeMissionNumber,
 } from "@/lib/analytics/product-analytics-events";
 
 const EVENT_MARKER_PREFIX = "b4gamble:analytics:fired:v2:";
@@ -213,3 +214,46 @@ export function recordConsentedBrowserPageView(pathname: string | null | undefin
   productAnalyticsClient.pageViewed({ pagePath: pathname });
   return true;
 }
+
+let lastCountedPagePath: string | null = null;
+let arrivalCounted = false;
+
+/** A visit starts on the first counted page of a document opened from outside the site; reloads do not start one. */
+export function isExternalArrival(referrer: string, host: string, navigationType: string | undefined) {
+  if (navigationType === "reload") return false;
+  if (!referrer) return true;
+  try { return new URL(referrer).host !== host; } catch { return true; }
+}
+
+/**
+ * Founder decision, 4 Oct 2026 (RFC-046 §17): every page view, and every arrival, is
+ * counted for every visitor without cookies, storage or identifiers, whatever the
+ * cookie choice. The consented events above keep sessions and funnels; this count only
+ * says how many visits and page views there were, from where and to which pages.
+ */
+export function recordCookielessPageView(pathname: string | null | undefined) {
+  if (!pathname || lastCountedPagePath === pathname || !isProductAnalyticsEnabled()) return false;
+  lastCountedPagePath = pathname;
+  if (isAnalyticsExcludedPath(pathname)) return false;
+  let event: ClientProductAnalyticsEvent;
+  try {
+    event = createClientProductAnalyticsEvent("page_viewed", { ...currentPageDimensions(), pagePath: pathname });
+  } catch {
+    return false;
+  }
+  let navigationType: string | undefined;
+  try {
+    navigationType = (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type;
+  } catch { /* the count works without navigation timing */ }
+  const entry = !arrivalCounted && isExternalArrival(document.referrer, window.location.host, navigationType);
+  arrivalCounted = true;
+  void fetch("/api/analytics/visits", {
+    method: "POST",
+    credentials: "same-origin",
+    keepalive: true,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ entry, event }),
+  }).catch(() => undefined);
+  return true;
+}
+

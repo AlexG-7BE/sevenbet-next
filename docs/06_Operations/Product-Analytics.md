@@ -27,6 +27,12 @@ choice: stream `G-11MX6NPS95` loads only after "Accept cookies", on
 Production for human, non-staff visitors, and never on excluded paths. It
 is a separate Google report and does not feed `/admin/analytics`.
 
+**Cookieless visit count** (RFC-046 §17, 4 October 2026): every page view and
+every arrival is stored without any identifier through
+`POST /api/analytics/visits`, for every visitor and without cookies. It feeds
+the Visits and Page views figures on `/admin/analytics` and `visits` in
+`social_traffic`; consented sessions and funnels are unchanged.
+
 ## Runtime controls
 
 The public collection switch is:

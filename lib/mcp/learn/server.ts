@@ -95,7 +95,7 @@ export const learnSourceTool = {
 export const socialTrafficTool = {
   name: "social_traffic",
   title: "Read social traffic to b4gamble.com",
-  description: "Read-only aggregates. For a UTC date range (default the last 7 days, at most 92) returns, per UTM source, campaign and content (the post), the number of consented Production visits (analytics sessions), partner-button clicks and clicks that reached the partner casino, with the top visitor countries; untagged visits from social-network referrers are grouped by network. Also returns site-wide totals. Counts only: no visitor, session, user, IP or email data, and nothing is written.",
+  description: "Read-only aggregates. For a UTC date range (default the last 7 days, at most 92) returns, per UTM source, campaign and content (the post), all Production visits (every arrival, counted without cookies), consented visits (analytics sessions), partner-button clicks and clicks that reached the partner casino, with the top visitor countries; untagged visits from social-network referrers are grouped by network. Also returns site-wide totals. Counts only: no visitor, session, user, IP or email data, and nothing is written.",
   inputSchema: z.toJSONSchema(socialTrafficInputSchema) as Record<string, unknown>,
   outputSchema: {
     $schema: "https://json-schema.org/draft/2020-12/schema",

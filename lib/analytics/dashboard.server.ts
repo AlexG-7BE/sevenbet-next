@@ -3,7 +3,9 @@ import "server-only";
 import type { AnalyticsEventType } from "@prisma/client";
 
 import prisma from "@/lib/db/prisma";
+import { consentedEventWhere, cookielessPageViewWhere, cookielessVisitWhere } from "@/lib/analytics/cookieless-count";
 import { safeRate, type AnalyticsRange } from "@/lib/analytics/metrics";
+import { socialReferrerNetwork } from "@/lib/analytics/social-traffic.server";
 
 const productionHumanEvent = { environment: "PRODUCTION" as const, trafficKind: "HUMAN" as const };
 
@@ -11,6 +13,22 @@ function countBy<T extends string | number>(items: Array<T | null | undefined>) 
   const values = new Map<T, number>();
   for (const item of items) if (item !== null && item !== undefined) values.set(item, (values.get(item) ?? 0) + 1);
   return [...values.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+/** Where a cookieless visit came from: its UTM source, else the social network or site that referred it. */
+export function visitSourceLabel(visit: { utmSource: string | null; referrerHost: string | null }) {
+  const utmSource = visit.utmSource?.trim().toLowerCase();
+  if (utmSource) return utmSource;
+  return socialReferrerNetwork(visit.referrerHost) ?? visit.referrerHost?.replace(/^www\./, "") ?? "Direct / unknown";
+}
+
+function ranked<T>(groups: Array<T & { _count: { _all: number } }>, label: (group: T) => string | null, limit = 8) {
+  const counts = new Map<string, number>();
+  for (const group of groups) {
+    const key = label(group) ?? "Unknown";
+    counts.set(key, (counts.get(key) ?? 0) + group._count._all);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, limit);
 }
 
 /** The campaign a sign-up is credited to: its first-touch campaign, else source label, else referring site. */
@@ -88,7 +106,8 @@ export function marketConversionFunnel(input: {
 
 export async function founderOverview(range: AnalyticsRange) {
   const occurredAt = { gte: range.from, lt: range.until };
-  const [registeredUsers, newRegistrations, activeEvents, cohort, outbound, sessions, signups] = await Promise.all([
+  const visits = { ...productionHumanEvent, ...cookielessVisitWhere, occurredAt };
+  const [registeredUsers, newRegistrations, activeEvents, cohort, outbound, sessions, signups, allPageViews, visitsByCountry, visitsBySource, visitsByLanding, visitsByDevice] = await Promise.all([
     prisma.user.count({ where: { createdAt: { lt: range.until } } }),
     // Staff accounts and sign-ups observed as internal, bot or non-Production
     // traffic are not new customers. Sign-ups without analytics consent carry no
@@ -119,6 +138,11 @@ export async function founderOverview(range: AnalyticsRange) {
       where: { ...productionHumanEvent, type: "SIGNUP_COMPLETED", occurredAt },
       select: { utmCampaign: true, utmSource: true, acquisitionSource: true, referrerHost: true },
     }),
+    prisma.analyticsEvent.count({ where: { ...productionHumanEvent, ...cookielessPageViewWhere, occurredAt } }),
+    prisma.analyticsEvent.groupBy({ by: ["countryCode"], where: visits, _count: { _all: true } }),
+    prisma.analyticsEvent.groupBy({ by: ["utmSource", "referrerHost"], where: visits, _count: { _all: true } }),
+    prisma.analyticsEvent.groupBy({ by: ["pagePath"], where: visits, _count: { _all: true } }),
+    prisma.analyticsEvent.groupBy({ by: ["deviceCategory"], where: visits, _count: { _all: true } }),
   ]);
   const completed = cohort.filter((item) => item.completedAt && item.completedAt < range.until).length;
   const uniqueOutboundActors = new Set(outbound.map((item) => item.userId ? `user:${item.userId}` : item.analyticsSessionId ? `session:${item.analyticsSessionId}` : null).filter(Boolean));
@@ -126,6 +150,12 @@ export async function founderOverview(range: AnalyticsRange) {
   const casinoNames = await prisma.casino.findMany({ where: { id: { in: casinoIds.map(([id]) => id) } }, select: { id: true, title: true } });
   const names = new Map(casinoNames.map((casino) => [casino.id, casino.title]));
   return {
+    allVisits: visitsByDevice.reduce((sum, group) => sum + group._count._all, 0),
+    allPageViews,
+    visitsByCountry: ranked(visitsByCountry, (group) => group.countryCode),
+    visitsBySource: ranked(visitsBySource, visitSourceLabel),
+    visitsByLanding: ranked(visitsByLanding, (group) => group.pagePath),
+    visitsByDevice: ranked(visitsByDevice, (group) => group.deviceCategory.toLowerCase()),
     registeredUsers,
     newRegistrations,
     activeUsers: activeEvents.length,
@@ -223,7 +253,8 @@ export async function commercialDashboard(range: AnalyticsRange) {
     }),
     prisma.analyticsEvent.groupBy({
       by: ["countryCode", "pagePath"],
-      where: { ...productionHumanEvent, type: "PAGE_VIEWED", occurredAt },
+      // Consented page views only, so the funnel compares like with like; cookieless counts are in the overview.
+      where: { ...productionHumanEvent, ...consentedEventWhere, type: "PAGE_VIEWED", occurredAt },
       _count: { _all: true },
     }),
   ]);

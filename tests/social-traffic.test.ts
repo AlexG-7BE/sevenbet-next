@@ -16,6 +16,7 @@ import {
   type SocialTrafficRange,
   type SocialTrafficSessionGroup,
   type SocialTrafficStore,
+  type SocialTrafficVisitGroup,
 } from "@/lib/analytics/social-traffic.server";
 import { learnMcpToolSurfaceIsExpected } from "@/lib/learn-content-orchestrator/mcp-publisher.server";
 import { handleLearnMcpPost } from "@/lib/mcp/learn/post-handler";
@@ -67,11 +68,15 @@ const seededClicks = [
   click(true, "facebook", "post", "old-post"),
 ];
 
-const siteTotals = { sessions: 61, outboundClicks: 11, partnerClicks: 8, outboundClicksWithoutConsent: 5 };
+const siteTotals = { visits: 140, sessions: 61, outboundClicks: 11, partnerClicks: 8, outboundClicksWithoutConsent: 5 };
 
 function store(overrides: Partial<SocialTrafficStore> = {}) {
   const ranges: SocialTrafficRange[] = [];
   const value: SocialTrafficStore = {
+    visitGroups: async (range) => {
+      ranges.push(range);
+      return [];
+    },
     sessionGroups: async (range) => {
       ranges.push(range);
       return seededSessions;
@@ -154,6 +159,7 @@ test("the range defaults to the last 7 days and treats date-only ends as whole U
 test("input outside the closed contract is rejected before any read", async () => {
   let reads = 0;
   const counting = store({
+    visitGroups: async () => { reads += 1; return []; },
     sessionGroups: async () => { reads += 1; return []; },
     attributedClicks: async () => { reads += 1; return []; },
     siteTotals: async () => { reads += 1; return siteTotals; },
@@ -180,7 +186,7 @@ test("default grain gives one row per source, campaign and post, with clicks cre
   const result = await readSocialTraffic(undefined, fake.value, NOW);
   assert.deepEqual(socialTrafficResultSchema.parse(result), result);
   assert.equal(result.groupBy, "source_campaign_content");
-  assert.deepEqual(fake.ranges.map((range) => [range.from.toISOString(), range.until.toISOString()]), Array(3).fill(["2026-09-26T12:00:00.000Z", "2026-10-03T12:00:00.000Z"]));
+  assert.deepEqual(fake.ranges.map((range) => [range.from.toISOString(), range.until.toISOString()]), Array(4).fill(["2026-09-26T12:00:00.000Z", "2026-10-03T12:00:00.000Z"]));
   assert.deepEqual(result.range, { from: "2026-09-26T12:00:00.000Z", to: "2026-10-03T12:00:00.000Z", days: 7 });
 
   const summary = result.rows.map((row) => [row.channel, row.utmSource ?? row.referrerNetwork, row.utmCampaign, row.utmContent, row.sessions, row.outboundClicks, row.partnerClicks]);
@@ -198,7 +204,7 @@ test("default grain gives one row per source, campaign and post, with clicks cre
   assert.deepEqual(result.rows[0]?.topCountries, [{ countryCode: "GB", sessions: 4 }, { countryCode: "SE", sessions: 2 }]);
   assert.deepEqual(result.rows[1]?.topCountries, [{ countryCode: "GB", sessions: 5 }, { countryCode: null, sessions: 1 }]);
   // Non-social referrers (search, the site itself) are not social traffic.
-  assert.deepEqual(result.totals, { rows: 7, sessions: 19, outboundClicks: 5, partnerClicks: 4 });
+  assert.deepEqual(result.totals, { rows: 7, visits: 0, sessions: 19, outboundClicks: 5, partnerClicks: 4 });
   assert.deepEqual(result.site, siteTotals);
   assert.equal(result.omittedRows, 0);
   assert.equal(result.filter.utmSource, null);
@@ -222,7 +228,7 @@ test("coarser grains merge campaigns and posts, and the limit trims rows but not
     ["instagram", "bio", null, 6],
   ]);
   assert.equal(byCampaign.omittedRows, 4);
-  assert.deepEqual(byCampaign.totals, { rows: 6, sessions: 19, outboundClicks: 5, partnerClicks: 4 });
+  assert.deepEqual(byCampaign.totals, { rows: 6, visits: 0, sessions: 19, outboundClicks: 5, partnerClicks: 4 });
 });
 
 test("a utmSource filter keeps that source's tagged rows and its network's untagged referrer visits", async () => {
@@ -232,12 +238,12 @@ test("a utmSource filter keeps that source's tagged rows and its network's untag
     ["utm", "instagram", null, 6, 1],
     ["social_referrer", null, "instagram", 2, 1],
   ]);
-  assert.deepEqual(instagram.totals, { rows: 2, sessions: 8, outboundClicks: 2, partnerClicks: 2 });
+  assert.deepEqual(instagram.totals, { rows: 2, visits: 0, sessions: 8, outboundClicks: 2, partnerClicks: 2 });
   // Site totals stay site-wide so the agent can see its share.
   assert.deepEqual(instagram.site, siteTotals);
 
   const lana = await readSocialTraffic({ utmSource: "lana" }, store().value, NOW);
-  assert.deepEqual([lana.rows, lana.totals], [[], { rows: 0, sessions: 0, outboundClicks: 0, partnerClicks: 0 }]);
+  assert.deepEqual([lana.rows, lana.totals], [[], { rows: 0, visits: 0, sessions: 0, outboundClicks: 0, partnerClicks: 0 }]);
 });
 
 test("the output carries counts only and no per-person value", async () => {
@@ -245,8 +251,34 @@ test("the output carries counts only and no per-person value", async () => {
   const serialized = JSON.stringify(result);
   assert.doesNotMatch(serialized, /anonymousId|userId|analyticsSessionId|"id"|email|\bip\b|referrerHost|l\.instagram\.com|t\.co/i);
   for (const row of result.rows) {
-    assert.deepEqual(Object.keys(row).sort(), ["channel", "outboundClicks", "partnerClicks", "referrerNetwork", "sessions", "topCountries", "utmCampaign", "utmContent", "utmSource"]);
+    assert.deepEqual(Object.keys(row).sort(), ["channel", "outboundClicks", "partnerClicks", "referrerNetwork", "sessions", "topCountries", "utmCampaign", "utmContent", "utmSource", "visits"]);
   }
+});
+
+test("cookieless visits count every arrival per post, lead the order and can form rows without consented sessions", async () => {
+  const visit = (utmSource: string | null, utmCampaign: string | null, utmContent: string | null, visits: number, referrerHost: string | null = null): SocialTrafficVisitGroup =>
+    ({ utmSource, utmCampaign, utmContent, referrerHost, visits });
+  const withVisits = store({
+    visitGroups: async () => [
+      visit("x", "post", "spin-regret", 9),
+      visit("X", "post", "spin-regret", 3),
+      visit("tiktok", "post", "clip-1", 20),
+      visit(null, null, null, 4, "l.instagram.com"),
+      visit(null, null, null, 30, "www.google.com"),
+    ],
+  });
+  const result = await readSocialTraffic({}, withVisits.value, NOW);
+  assert.deepEqual(result.rows.slice(0, 3).map((row) => [row.channel, row.utmSource ?? row.referrerNetwork, row.utmContent, row.visits, row.sessions]), [
+    ["utm", "tiktok", "clip-1", 20, 0],
+    ["utm", "x", "spin-regret", 12, 6],
+    ["social_referrer", "instagram", null, 4, 2],
+  ]);
+  // Search and the site itself are not social traffic; site.visits stays site-wide.
+  assert.deepEqual(result.totals, { rows: 8, visits: 36, sessions: 19, outboundClicks: 5, partnerClicks: 4 });
+  assert.equal(result.site.visits, 140);
+  assert.ok(result.notes.some((note) => /every arrival from every visitor, without cookies/.test(note)));
+  const tiktok = await readSocialTraffic({ utmSource: "tiktok" }, withVisits.value, NOW);
+  assert.deepEqual(tiktok.totals, { rows: 1, visits: 20, sessions: 0, outboundClicks: 0, partnerClicks: 0 });
 });
 
 test("read failures are retryable and never leak connection details; oversize results fail closed", async () => {
@@ -263,6 +295,8 @@ test("the Prisma store reads only Production human rows over indexed columns and
   assert.match(source, /startedAt: \{ gte: from, lt: until \}/);
   assert.match(source, /attemptedAt: \{ gte: from, lt: until \}/);
   assert.match(source, /prisma\.analyticsSession\.groupBy\(/);
+  assert.match(source, /prisma\.analyticsEvent\.groupBy\(/);
+  assert.match(source, /\.\.\.cookielessVisitWhere,\s*occurredAt: \{ gte: from, lt: until \}/);
   assert.match(source, /take: SOCIAL_TRAFFIC_MAX_SESSION_GROUPS \+ 1/);
   assert.match(source, /take: SOCIAL_TRAFFIC_MAX_ATTRIBUTED_CLICKS \+ 1/);
   assert.match(source, /socialTrafficResultSchema\.parse/);

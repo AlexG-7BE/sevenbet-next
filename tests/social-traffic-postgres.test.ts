@@ -60,10 +60,24 @@ const clickSeeds: ClickSeed[] = [
   { session: "x-after", attemptedAt: "2031-03-13T00:05:00.000Z", succeeded: true },
 ];
 
+// RFC-046 §17 cookieless rows: arrivals (SESSION_STARTED without an anonymous ID) are visits;
+// page views, consented session starts and Preview rows are not.
+const eventSeeds: Array<{ type: "SESSION_STARTED" | "PAGE_VIEWED"; occurredAt: string; utm?: [string, string, string]; referrerHost?: string; anonymous?: boolean; environment?: "PRODUCTION" | "PREVIEW" }> = [
+  { type: "SESSION_STARTED", occurredAt: "2031-03-10T09:00:00.000Z", utm: ["x", "post", "spin-regret"] },
+  { type: "SESSION_STARTED", occurredAt: "2031-03-11T09:00:00.000Z", utm: ["X", "post", "spin-regret"] },
+  { type: "SESSION_STARTED", occurredAt: "2031-03-11T10:00:00.000Z", referrerHost: "l.instagram.com" },
+  { type: "SESSION_STARTED", occurredAt: "2031-03-11T11:00:00.000Z" },
+  { type: "PAGE_VIEWED", occurredAt: "2031-03-11T11:00:01.000Z", utm: ["x", "post", "spin-regret"] },
+  { type: "SESSION_STARTED", occurredAt: "2031-03-11T12:00:00.000Z", utm: ["x", "post", "spin-regret"], anonymous: true },
+  { type: "SESSION_STARTED", occurredAt: "2031-03-11T13:00:00.000Z", utm: ["x", "post", "spin-regret"], environment: "PREVIEW" },
+];
+const eventIds = eventSeeds.map(() => randomUUID());
+
 const sessionIds = new Map(sessionSeeds.map((seed) => [seed.key, randomUUID()]));
 const clickIds = clickSeeds.map(() => randomUUID());
 
 async function cleanup() {
+  await prisma.analyticsEvent.deleteMany({ where: { id: { in: eventIds } } });
   await prisma.outboundClick.deleteMany({ where: { id: { in: clickIds } } });
   await prisma.analyticsSession.deleteMany({ where: { id: { in: [...sessionIds.values()] } } });
 }
@@ -87,6 +101,25 @@ async function seed() {
         referrerHost: candidate.referrerHost ?? null,
         utmSource,
         utmMedium: candidate.utm ? "social" : null,
+        utmCampaign,
+        utmContent,
+      },
+    });
+  }
+  for (const [index, candidate] of eventSeeds.entries()) {
+    const [utmSource, utmCampaign, utmContent] = candidate.utm ?? [null, null, null];
+    await prisma.analyticsEvent.create({
+      data: {
+        id: eventIds[index]!,
+        dedupeKey: `social-traffic-fixture:${eventIds[index]}`,
+        type: candidate.type,
+        environment: candidate.environment ?? "PRODUCTION",
+        trafficKind: "HUMAN",
+        occurredAt: new Date(candidate.occurredAt),
+        anonymousId: candidate.anonymous ? randomUUID() : null,
+        pagePath: "/",
+        referrerHost: candidate.referrerHost ?? null,
+        utmSource,
         utmCampaign,
         utmContent,
       },
@@ -131,7 +164,7 @@ async function socialTraffic(argumentsValue: Record<string, unknown>) {
   const payload = await response.json() as { result?: { isError?: boolean; structuredContent?: unknown } };
   assert.equal(payload.result?.isError, undefined, JSON.stringify(payload));
   const serialized = JSON.stringify(payload);
-  for (const id of [...sessionIds.values(), ...clickIds]) assert.equal(serialized.includes(id), false, "no row identifier may leave the tool");
+  for (const id of [...sessionIds.values(), ...clickIds, ...eventIds]) assert.equal(serialized.includes(id), false, "no row identifier may leave the tool");
   assert.doesNotMatch(serialized, /anonymousId|analyticsSessionId|userId|l\.instagram\.com|www\.google\.com/);
   return socialTrafficResultSchema.parse(payload.result?.structuredContent);
 }
@@ -157,15 +190,15 @@ test("social_traffic aggregates PostgreSQL sessions and partner clicks per UTM p
   const result = await socialTraffic({ from: "2031-03-10", to: "2031-03-12" });
   assert.deepEqual(result.range, { from: "2031-03-10T00:00:00.000Z", to: "2031-03-13T00:00:00.000Z", days: 3 });
   // Production human only: staff-marked, Preview and out-of-range rows are absent.
-  assert.deepEqual(result.site, { sessions: 5, outboundClicks: 6, partnerClicks: 5, outboundClicksWithoutConsent: 1 });
-  assert.deepEqual(result.rows.map((row) => [row.channel, row.utmSource ?? row.referrerNetwork, row.utmCampaign, row.utmContent, row.sessions, row.outboundClicks, row.partnerClicks]), [
-    ["utm", "x", "post", "spin-regret", 2, 2, 1],
-    ["social_referrer", "instagram", null, null, 1, 1, 1],
+  assert.deepEqual(result.site, { visits: 4, sessions: 5, outboundClicks: 6, partnerClicks: 5, outboundClicksWithoutConsent: 1 });
+  assert.deepEqual(result.rows.map((row) => [row.channel, row.utmSource ?? row.referrerNetwork, row.utmCampaign, row.utmContent, row.visits, row.sessions, row.outboundClicks, row.partnerClicks]), [
+    ["utm", "x", "post", "spin-regret", 2, 2, 2, 1],
+    ["social_referrer", "instagram", null, null, 1, 1, 1, 1],
     // The click happened in range although its visit began the evening before.
-    ["utm", "facebook", "post", "old-post", 0, 1, 1],
+    ["utm", "facebook", "post", "old-post", 0, 0, 1, 1],
   ]);
   assert.deepEqual(result.rows[0]?.topCountries, [{ countryCode: "GB", sessions: 1 }, { countryCode: "SE", sessions: 1 }]);
-  assert.deepEqual(result.totals, { rows: 3, sessions: 3, outboundClicks: 4, partnerClicks: 3 });
+  assert.deepEqual(result.totals, { rows: 3, visits: 3, sessions: 3, outboundClicks: 4, partnerClicks: 3 });
 
   const xOnly = await socialTraffic({ from: "2031-03-10T00:00:00Z", to: "2031-03-14T00:00:00Z", utmSource: "x", groupBy: "source" });
   assert.deepEqual(xOnly.rows.map((row) => [row.channel, row.utmSource, row.sessions, row.outboundClicks, row.partnerClicks]), [

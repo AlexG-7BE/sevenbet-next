@@ -442,13 +442,13 @@ social_traffic {
 }
 → {
     generatedAt, range: { from, to, days }, groupBy, filter: { utmSource },
-    totals: { rows, sessions, outboundClicks, partnerClicks },        // every matching row
-    site:   { sessions, outboundClicks, partnerClicks, outboundClicksWithoutConsent },
+    totals: { rows, visits, sessions, outboundClicks, partnerClicks },  // every matching row
+    site:   { visits, sessions, outboundClicks, partnerClicks, outboundClicksWithoutConsent },
     rows: [{
       channel: "utm" | "social_referrer",
       utmSource, utmCampaign, utmContent,                              // lower-cased; null when absent or grouped out
       referrerNetwork: "instagram" | "threads" | "x" | "facebook" | "youtube" | "pinterest" | "tiktok" | null,
-      sessions, outboundClicks, partnerClicks,
+      visits, sessions, outboundClicks, partnerClicks,                 // rows sorted by visits, then sessions
       topCountries: [{ countryCode, sessions }]                        // at most 5
     }],
     omittedRows, notes
@@ -456,6 +456,11 @@ social_traffic {
 ```
 
 Definitions (same filters as the fixed dashboards):
+
+- **visits** — RFC-046 §17 cookieless arrivals: `PRODUCTION` + `HUMAN`
+  `SESSION_STARTED` events without an anonymous ID whose `occurredAt` is in
+  the range, from every visitor whatever the cookie choice (added 4 October
+  2026);
 
 - **sessions** — consented `PRODUCTION` + `HUMAN` `AnalyticsSession` rows whose
   `startedAt` is in the range. A row is `utm` when the session has a UTM

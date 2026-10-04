@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
+import { cookielessVisitWhere } from "@/lib/analytics/cookieless-count";
 import { prisma } from "@/lib/db/prisma";
 
 /**
@@ -12,9 +13,11 @@ import { prisma } from "@/lib/db/prisma";
  * email value ever leaves this module, and it writes nothing.
  *
  * Semantics follow the fixed Admin dashboards (`lib/analytics/dashboard.server.ts`):
- * Production + human traffic only; a visit is an AnalyticsSession whose
- * startedAt is in the range; a click is an OutboundClick attempted in the
- * range, credited to the UTM tags of the consented visit it happened in.
+ * Production + human traffic only; a session is an AnalyticsSession whose
+ * startedAt is in the range; a visit is an RFC-046 §17 cookieless arrival
+ * (every visitor, whatever the cookie choice); a click is an OutboundClick
+ * attempted in the range, credited to the UTM tags of the consented session it
+ * happened in.
  */
 
 export const SOCIAL_TRAFFIC_DEFAULT_DAYS = 7;
@@ -86,6 +89,7 @@ const rowSchema = z.object({
   utmCampaign: dimensionSchema,
   utmContent: dimensionSchema,
   referrerNetwork: z.enum(SOCIAL_REFERRER_NETWORKS).nullable(),
+  visits: countSchema,
   sessions: countSchema,
   outboundClicks: countSchema,
   partnerClicks: countSchema,
@@ -99,11 +103,13 @@ export const socialTrafficResultSchema = z.object({
   filter: z.object({ utmSource: dimensionSchema }).strict(),
   totals: z.object({
     rows: countSchema,
+    visits: countSchema,
     sessions: countSchema,
     outboundClicks: countSchema,
     partnerClicks: countSchema,
   }).strict(),
   site: z.object({
+    visits: countSchema,
     sessions: countSchema,
     outboundClicks: countSchema,
     partnerClicks: countSchema,
@@ -140,6 +146,7 @@ export class SocialTrafficError extends Error {
 }
 
 export const SOCIAL_TRAFFIC_NOTES = [
+  "visits count every arrival from every visitor, without cookies, whatever their cookie choice; use them for reach. Top countries come from consented sessions.",
   "Only visitors who allowed analytics cookies are counted as sessions; partner clicks without that consent appear only in site.outboundClicksWithoutConsent.",
   "A session is one visit (it ends after 30 minutes without activity). A click is credited to the UTM tags of the visit it happened in.",
   "social_referrer rows are visits without UTM tags whose referrer was a social network, for example a bio link that dropped the tags.",
@@ -155,11 +162,13 @@ export type SocialTrafficTouch = {
   referrerHost: string | null;
 };
 export type SocialTrafficSessionGroup = SocialTrafficTouch & { countryCode: string | null; sessions: number };
+export type SocialTrafficVisitGroup = SocialTrafficTouch & { visits: number };
 export type SocialTrafficClick = { succeeded: boolean; touch: SocialTrafficTouch };
 export type SocialTrafficSiteTotals = SocialTrafficResult["site"];
 
 /** The only data the tool reads; each method is one bounded aggregate read. */
 export type SocialTrafficStore = {
+  visitGroups(range: SocialTrafficRange): Promise<SocialTrafficVisitGroup[]>;
   sessionGroups(range: SocialTrafficRange): Promise<SocialTrafficSessionGroup[]>;
   attributedClicks(range: SocialTrafficRange): Promise<SocialTrafficClick[]>;
   siteTotals(range: SocialTrafficRange): Promise<SocialTrafficSiteTotals>;
@@ -176,6 +185,36 @@ const productionHuman = { environment: "PRODUCTION", trafficKind: "HUMAN" } as c
  * loaded by primary key in one batched query, not per click).
  */
 export const prismaSocialTrafficStore: SocialTrafficStore = {
+  async visitGroups({ from, until }) {
+    const groups = await prisma.analyticsEvent.groupBy({
+      by: ["utmSource", "utmCampaign", "utmContent", "referrerHost"],
+      where: {
+        ...productionHuman,
+        ...cookielessVisitWhere,
+        occurredAt: { gte: from, lt: until },
+        OR: [
+          { utmSource: { not: null } },
+          { utmCampaign: { not: null } },
+          { utmContent: { not: null } },
+          { referrerHost: { not: null } },
+        ],
+      },
+      _count: { _all: true },
+      orderBy: [{ utmSource: "asc" }, { utmCampaign: "asc" }, { utmContent: "asc" }, { referrerHost: "asc" }],
+      take: SOCIAL_TRAFFIC_MAX_SESSION_GROUPS + 1,
+    });
+    if (groups.length > SOCIAL_TRAFFIC_MAX_SESSION_GROUPS) {
+      throw new SocialTrafficError("RESULT_TOO_LARGE", "The range holds too many distinct sources to aggregate at once. Ask for a shorter range or one utmSource.");
+    }
+    return groups.map((group) => ({
+      utmSource: group.utmSource,
+      utmCampaign: group.utmCampaign,
+      utmContent: group.utmContent,
+      referrerHost: group.referrerHost,
+      visits: group._count._all,
+    }));
+  },
+
   async sessionGroups({ from, until }) {
     const groups = await prisma.analyticsSession.groupBy({
       by: ["utmSource", "utmCampaign", "utmContent", "referrerHost", "countryCode"],
@@ -224,7 +263,8 @@ export const prismaSocialTrafficStore: SocialTrafficStore = {
   },
 
   async siteTotals({ from, until }) {
-    const [sessions, clicksByState, outboundClicksWithoutConsent] = await Promise.all([
+    const [visits, sessions, clicksByState, outboundClicksWithoutConsent] = await Promise.all([
+      prisma.analyticsEvent.count({ where: { ...productionHuman, ...cookielessVisitWhere, occurredAt: { gte: from, lt: until } } }),
       prisma.analyticsSession.count({ where: { ...productionHuman, startedAt: { gte: from, lt: until } } }),
       prisma.outboundClick.groupBy({
         by: ["state"],
@@ -235,7 +275,7 @@ export const prismaSocialTrafficStore: SocialTrafficStore = {
     ]);
     const outboundClicks = clicksByState.reduce((sum, group) => sum + group._count._all, 0);
     const partnerClicks = clicksByState.find((group) => group.state === "SUCCEEDED")?._count._all ?? 0;
-    return { sessions, outboundClicks, partnerClicks, outboundClicksWithoutConsent };
+    return { visits, sessions, outboundClicks, partnerClicks, outboundClicksWithoutConsent };
   },
 };
 
@@ -296,10 +336,11 @@ export function socialTrafficRowKey(touch: SocialTrafficTouch, groupBy: SocialTr
     : null;
 }
 
-type Accumulator = RowKey & { sessions: number; outboundClicks: number; partnerClicks: number; countries: Map<string | null, number> };
+type Accumulator = RowKey & { visits: number; sessions: number; outboundClicks: number; partnerClicks: number; countries: Map<string | null, number> };
 
 /** Pure aggregation of store rows into the tool's rows; exported for tests. */
 export function aggregateSocialTraffic(input: {
+  visitGroups?: readonly SocialTrafficVisitGroup[];
   sessionGroups: readonly SocialTrafficSessionGroup[];
   clicks: readonly SocialTrafficClick[];
   groupBy: SocialTrafficGroupBy;
@@ -315,11 +356,15 @@ export function aggregateSocialTraffic(input: {
     const id = JSON.stringify([key.channel, key.utmSource, key.utmCampaign, key.utmContent, key.referrerNetwork]);
     let current = rows.get(id);
     if (!current) {
-      current = { ...key, sessions: 0, outboundClicks: 0, partnerClicks: 0, countries: new Map() };
+      current = { ...key, visits: 0, sessions: 0, outboundClicks: 0, partnerClicks: 0, countries: new Map() };
       rows.set(id, current);
     }
     return current;
   };
+  for (const group of input.visitGroups ?? []) {
+    const current = rowFor(group);
+    if (current) current.visits += group.visits;
+  }
   for (const group of input.sessionGroups) {
     const current = rowFor(group);
     if (!current) continue;
@@ -340,7 +385,8 @@ export function aggregateSocialTraffic(input: {
         .slice(0, SOCIAL_TRAFFIC_TOP_COUNTRIES)
         .map(([countryCode, sessions]) => ({ countryCode, sessions })),
     }))
-    .sort((left, right) => right.sessions - left.sessions
+    .sort((left, right) => right.visits - left.visits
+      || right.sessions - left.sessions
       || right.outboundClicks - left.outboundClicks
       || right.partnerClicks - left.partnerClicks
       || JSON.stringify([left.channel, left.utmSource, left.utmCampaign, left.utmContent, left.referrerNetwork])
@@ -348,6 +394,7 @@ export function aggregateSocialTraffic(input: {
   return {
     totals: {
       rows: all.length,
+      visits: all.reduce((sum, row) => sum + row.visits, 0),
       sessions: all.reduce((sum, row) => sum + row.sessions, 0),
       outboundClicks: all.reduce((sum, row) => sum + row.outboundClicks, 0),
       partnerClicks: all.reduce((sum, row) => sum + row.partnerClicks, 0),
@@ -370,11 +417,13 @@ export async function readSocialTraffic(
   const groupBy = parsed.data.groupBy ?? "source_campaign_content";
   const limit = parsed.data.limit ?? SOCIAL_TRAFFIC_DEFAULT_LIMIT;
 
+  let visitGroups: SocialTrafficVisitGroup[];
   let sessionGroups: SocialTrafficSessionGroup[];
   let clicks: SocialTrafficClick[];
   let site: SocialTrafficSiteTotals;
   try {
-    [sessionGroups, clicks, site] = await Promise.all([
+    [visitGroups, sessionGroups, clicks, site] = await Promise.all([
+      store.visitGroups(range),
       store.sessionGroups(range),
       store.attributedClicks(range),
       store.siteTotals(range),
@@ -384,7 +433,7 @@ export async function readSocialTraffic(
     throw new SocialTrafficError("TRAFFIC_UNAVAILABLE", "Site traffic could not be read. Retry later.", true);
   }
 
-  const aggregate = aggregateSocialTraffic({ sessionGroups, clicks, groupBy, utmSource: parsed.data.utmSource ?? null, limit });
+  const aggregate = aggregateSocialTraffic({ visitGroups, sessionGroups, clicks, groupBy, utmSource: parsed.data.utmSource ?? null, limit });
   return socialTrafficResultSchema.parse({
     generatedAt: now.toISOString(),
     range: {

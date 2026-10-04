@@ -265,6 +265,55 @@ export async function persistClientAnalyticsEvent({
   }
 }
 
+/**
+ * RFC-046 §17 cookieless count: one PAGE_VIEWED row per page and, for an arrival, one
+ * SESSION_STARTED row with the landing page. Neither carries an anonymous, session or
+ * user identifier, and nothing reads analytics cookies; consented rows always do, which
+ * is how the two populations stay apart.
+ */
+export function cookielessVisitRows({
+  event,
+  entry,
+  headers,
+  now,
+  environment = analyticsEnvironment(),
+}: {
+  event: ClientProductAnalyticsEvent;
+  entry: boolean;
+  headers: Headers;
+  now: Date;
+  environment?: AnalyticsEnvironment;
+}) {
+  const context = {
+    schemaVersion: 1,
+    environment,
+    trafficKind: analyticsTrafficKind(headers, environment),
+    occurredAt: boundedOccurredAt(event.occurredAt, now),
+    receivedAt: now,
+    pagePath: event.pagePath,
+    locale: event.locale,
+    countryCode: requestCountrySignalFromHeaders(headers, now)?.countryCode ?? null,
+    referrerHost: event.referrerHost,
+    acquisitionSource: event.acquisitionSource,
+    utmSource: event.utmSource,
+    utmMedium: event.utmMedium,
+    utmCampaign: event.utmCampaign,
+    utmContent: event.utmContent,
+    utmTerm: event.utmTerm,
+    deviceCategory: analyticsDeviceCategory(headers),
+  };
+  return [
+    { id: event.eventId, dedupeKey: `count:view:${event.eventId}`, type: "PAGE_VIEWED" as const, ...context },
+    ...(entry ? [{ id: randomUUID(), dedupeKey: `count:visit:${event.eventId}`, type: "SESSION_STARTED" as const, ...context }] : []),
+  ];
+}
+
+export async function persistCookielessVisit(input: { event: ClientProductAnalyticsEvent; entry: boolean; headers: Headers; now?: Date }) {
+  const rows = cookielessVisitRows({ ...input, now: input.now ?? new Date() });
+  const { count } = await prisma.analyticsEvent.createMany({ data: rows, skipDuplicates: true });
+  return count ? "accepted" as const : "duplicate" as const;
+}
+
 export type ServerAnalyticsEventInput = {
   name: ProductAnalyticsEventName;
   dedupeKey: string;
