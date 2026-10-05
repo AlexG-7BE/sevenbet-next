@@ -237,6 +237,40 @@ test("phones scroll Home freely through compact chapters and snap state does not
   await context.close();
 });
 
+test("a fresh visit opens Home at the top and nothing snaps behind the loading frame", async ({ page, browserName }) => {
+  // Founder, 5 Oct 2026: a fresh visit opened Home about one frame-height down. The streamed
+  // page's snap rules applied while its loading frame was on screen, and the footer was the
+  // only snap area left.
+  await page.setViewportSize({ height: 900, width: 1440 });
+  await page.addInitScript(() => {
+    const tracked = window as typeof window & { __homeMaxScrollY?: number };
+    tracked.__homeMaxScrollY = 0;
+    window.addEventListener("scroll", () => {
+      tracked.__homeMaxScrollY = Math.max(tracked.__homeMaxScrollY ?? 0, window.scrollY);
+    }, { passive: true });
+  });
+  await bridgeLocalWebKitUpgrade(page, browserName);
+  await page.goto("/", { waitUntil: "networkidle" });
+  await waitForScrollIdle(page);
+  expect(await page.evaluate(() => ({
+    maximum: (window as typeof window & { __homeMaxScrollY?: number }).__homeMaxScrollY,
+    now: window.scrollY,
+  }))).toEqual({ maximum: 0, now: 0 });
+
+  expect(await page.evaluate(() => {
+    const frame = document.createElement("div");
+    frame.setAttribute("data-route-loading", "");
+    document.body.append(frame);
+    const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
+    const behindFrame = {
+      footerAlign: footer ? getComputedStyle(footer).scrollSnapAlign : "missing",
+      rootType: getComputedStyle(document.documentElement).scrollSnapType,
+    };
+    frame.remove();
+    return { afterFrame: getComputedStyle(document.documentElement).scrollSnapType, behindFrame };
+  })).toEqual({ afterFrame: "y mandatory", behindFrame: { footerAlign: "none", rootType: "none" } });
+});
+
 test("Home performs no steady-state RAF or layout reads while idle", async ({ page, browserName }) => {
   await page.addInitScript(() => {
     const counters = { height: 0, raf: 0, rect: 0, style: 0 };
