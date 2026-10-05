@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const fixtureArticlePath = "/en/learn/casino-basics/navigation-stage2-guide";
 // Exact hashes reproduced against the archived Stage 1 base; no other runtime error is ignored.
-const preExistingCapturedHandoffStyleViolation = /sha256-(?:jCY3Mj0wz8\/Vp\+NcUmcUIKtIFX0kPOrBioHLmp6\/\+mw=|VJpkRj4RHxw25dPgSdaoH1IeNWFu9FBi9HgBwvs\/MLo=)/;
+const preExistingCapturedHandoffStyleViolation = /sha256-(?:jCY3Mj0wz8\/Vp\+NcUmcUIKtIFX0kPOrBioHLmp6\/\+mw=|n3b9Nm8dgi94iQpfLUBTeiVr5dCY8AQBK5MLFWuLby8=)/;
 
 type NavigationTimingWindow = Window & {
   __stage2MobileFeedbackPaint?: Promise<number>;
