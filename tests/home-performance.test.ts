@@ -82,6 +82,10 @@ test("Home-only motion uses native mandatory desktop and proximity coarse-pointe
   assert.match(css, /\(pointer: fine\)[\s\S]*scroll-snap-type: y mandatory/);
   assert.match(css, /scroll-snap-stop: normal !important/);
   assert.match(css, /data-public-shell="footer"[\s\S]*scroll-snap-align: end/);
+  // A fresh visit must open at the top: no snapping while the streamed page waits behind its frame.
+  const unguardedSnap = css.replace(/html:not\(:has\(\[data-route-loading\]\)\) (?:\{|\[data-public-shell="footer"\]|\[data-public-footer-bottom\])/g, "");
+  assert.doesNotMatch(unguardedSnap, /html \{ scroll-snap-type: y (?:proximity|mandatory)/);
+  assert.doesNotMatch(unguardedSnap, /\[data-public-shell="footer"\],[\s\S]*?\{\s*scroll-snap-align: end/);
   assert.doesNotMatch(css, /scroll-snap-stop: always/);
   assert.doesNotMatch(css, /scrollbar-width:\s*none|::-webkit-scrollbar[^{}]*\{[^}]*display:\s*none/);
   assert.doesNotMatch(css, /\[data-snap\] \{ scroll-snap-align:start/);

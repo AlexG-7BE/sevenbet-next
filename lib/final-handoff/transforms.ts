@@ -777,16 +777,23 @@ export function transformHomeHandoffCss(css: string) {
       scroll-snap-align: start;
       scroll-snap-stop: normal !important;
     }
-    [data-public-shell="footer"],
-    [data-public-footer-bottom] {
+    /*
+     * Founder, 5 Oct 2026: a fresh visit opened Home about one frame-height down. A browser
+     * gets the instant loading frame first, and React stages the streamed page in a hidden
+     * div, so this stylesheet applies while the frame is still on screen. The footer was then
+     * the only snap area, and mandatory snapping carried the visit to the frame's bottom.
+     * Snapping starts once the frame has been replaced by the page.
+     */
+    html:not(:has([data-route-loading])) [data-public-shell="footer"],
+    html:not(:has([data-route-loading])) [data-public-footer-bottom] {
       scroll-snap-align: end;
       scroll-snap-stop: normal;
     }
     @media (prefers-reduced-motion: no-preference) {
-      html { scroll-snap-type: y proximity; }
+      html:not(:has([data-route-loading])) { scroll-snap-type: y proximity; }
     }
     @media (prefers-reduced-motion: no-preference) and (pointer: fine) {
-      html { scroll-snap-type: y mandatory; }
+      html:not(:has([data-route-loading])) { scroll-snap-type: y mandatory; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-snap-type: none !important; }
