@@ -12,7 +12,7 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Russian language — in review
+## Russian language — live
 
 **Founder instruction, 7 October 2026:** after Ukrainian, translate the site
 into Russian as well. Decision record:
@@ -34,14 +34,20 @@ into Russian as well. Decision record:
   resources are shown there.
 - **No commercial change.** Offers stay withheld in Russia
   (`OFFER_PRESENTATION_PROHIBITED_MARKETS`) and Kazakhstan stays geo-blocked.
-- **Production smoke covers `/uk`.** The Ukrainian home joined the smoke's
-  language checks with this release, once `/uk` was live; `/ru` follows after
-  this release is live, so the smoke cannot alert during the deploy window.
+- **Production smoke covers `/uk` and `/ru`.** Each home joined the smoke's
+  language checks only after it was live, so the smoke could not alert during
+  a deploy window.
 
 Translations are machine translated with both bounded automated language QA
 reports passed for `ru-RU`; that is not native-speaker or legal review.
 
-**PROPOSED — NOT YET LIVE** until merged and deployed.
+**DETECTED — LIVE, 7 October 2026:** PR #464 merged as `134f5740` and its
+Production deployment completed at 19:39 UTC. Globalping probes: `/` with a
+Russian browser answers `307 → /ru` from Germany and `/casinos` answers
+`307 → /ru/casinos` from Latvia; `/ru` and `/ru/program` answer 200 with
+`lang="ru-RU"`; `/help` with a Russian browser answers `307 → /en/help`; from
+Ukraine `/` with a Russian browser still answers `307 → /uk`; Great Britain
+still opens `/en`. The sitemap lists `/uk/…` and `/ru/…` pages.
 
 ## Help and Responsible Gambling open in English where no local page exists — in review
 
