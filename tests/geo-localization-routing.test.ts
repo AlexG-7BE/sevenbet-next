@@ -198,6 +198,47 @@ test("market-sensitive responses and negotiation redirects isolate cache keys", 
   }
 });
 
+// 7 Oct 2026: `/help` with `Accept-Language: it` answered 307 → `/it/help`, a 404.
+test("the neutral redirect of Help and Responsible Gambling always lands on a page that exists", async () => {
+  const previous = { vercel: process.env.VERCEL, vercelEnv: process.env.VERCEL_ENV };
+  process.env.VERCEL = "1";
+  process.env.VERCEL_ENV = "production";
+  try {
+    for (const pathname of ["/help", "/responsible-gambling"]) {
+      for (const [language, country] of [["it", "IT"], ["pt", "PT"], ["nl", "NL"], ["fi", "FI"], ["nb", "NO"]] as const) {
+        const signals: Record<string, string>[] = [
+          { "accept-language": `${language}-${country},${language};q=0.9` },
+          { "x-vercel-ip-country": country },
+          { "accept-language": language, "x-vercel-ip-country": country },
+        ];
+        for (const headers of signals) {
+          const response = await middleware(new NextRequest(`https://b4gamble.com${pathname}?from=footer`, { headers }));
+          assert.equal(response.status, 307, `${pathname} ${JSON.stringify(headers)}`);
+          const location = new URL(response.headers.get("location") ?? "http://invalid");
+          assert.equal(`${location.pathname}${location.search}`, `/en${pathname}?from=footer`, `${pathname} ${JSON.stringify(headers)}`);
+          assert.equal(parsePublicMarketRoute(location.pathname).kind, "CANONICAL_LOCALE", location.pathname);
+        }
+      }
+      // A language with verified local safety evidence keeps its own page.
+      for (const [language, country] of [["de", "DE"], ["es", "ES"], ["es", "PE"], ["sv", "SE"], ["da", "DK"], ["el", "GR"], ["uk", "UA"], ["en", "GB"]] as const) {
+        const response = await middleware(new NextRequest(`https://b4gamble.com${pathname}`, {
+          headers: { "accept-language": language, "x-vercel-ip-country": country },
+        }));
+        assert.equal(response.status, 307, `${pathname} ${language}`);
+        const location = new URL(response.headers.get("location") ?? "http://invalid");
+        assert.equal(location.pathname, `/${language}${pathname}`);
+        assert.equal(parsePublicMarketRoute(location.pathname).kind, "CANONICAL_LOCALE", location.pathname);
+      }
+    }
+    // The fallback is for the two safety pages only: the visitor's language still serves everything else.
+    const casinos = await middleware(new NextRequest("https://b4gamble.com/casinos", { headers: { "accept-language": "it" } }));
+    assert.equal(new URL(casinos.headers.get("location") ?? "http://invalid").pathname, "/it/casinos");
+  } finally {
+    if (previous.vercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = previous.vercel;
+    if (previous.vercelEnv === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previous.vercelEnv;
+  }
+});
+
 test("language metadata is canonical, language-level and preserves noindex authority", () => {
   const presentation = resolvePresentationContext({ routeLanguage: "es", trustedCountryCode: "PE" });
   const metadata = productMetadata({

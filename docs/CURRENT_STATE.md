@@ -12,6 +12,35 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Help and Responsible Gambling open in English where no local page exists — in review
+
+**DETECTED, Production, 7 October 2026** (Globalping, Milan and Helsinki):
+`GET /help` with `Accept-Language: it-IT` answered `307 → /it/help`, and
+`/it/help` answered 404. The same held for `/responsible-gambling` and for
+Portuguese, Dutch, Finnish and Norwegian (`/fi/responsible-gambling` → 404).
+Header, footer and page links on pages in those languages carried the same dead
+address.
+
+**Cause.** Help and Responsible Gambling are `FIRST_WAVE_SAFETY` routes: they
+exist under a language prefix only for GB and the markets in
+`FIRST_WAVE_EVIDENCE_MARKET_CODES`. The unprefixed path is judged for the
+default GB profile, so the neutral redirect sent every visitor to
+`/{language}/help`, including languages without that page.
+
+**Fix.** `neutralRouteDestination` (`lib/market/routing.ts`) now answers with
+the English path (`/en/help`, `/en/responsible-gambling`) when the visitor's
+language route has no page for the path. It asks the same market the route
+parser applies to `/{language}/…`, so the redirect cannot name a route the
+parser rejects. The middleware redirect and every link built with
+`finalPublicHref` share this one function. Nothing else moves: every other
+path keeps the visitor's language, languages with verified local safety
+evidence keep their own Help page, and the Help page shows each market what it
+showed before. No localized Help was added for Italian, Portuguese, Dutch,
+Finnish or Norwegian; that still needs verified local safety evidence.
+
+Tests: `tests/geo-localization-routing.test.ts` (`internationalisation:test`)
+and `tests/seo-market-indexability.test.ts` (`commercial-platform:test`), both
+in `ci:quality`.
 ## Ukrainian language and the Ukraine market — in review
 
 **Founder instruction, 7 October 2026:** add Ukrainian to the site so that it

@@ -2,6 +2,7 @@ import {
   DEFAULT_MARKET_PROFILE,
   FIRST_WAVE_EVIDENCE_MARKET_CODES,
   languageForLocale,
+  languageRouteByLocale,
   languageRouteByPublicSlug,
   localeMarketRoute,
   localeMarketRouteByPublicSlug,
@@ -9,6 +10,7 @@ import {
   marketProfileByLocale,
   marketProfileByRouteMarket,
   publicMarketPath,
+  type LanguageRouteProfile,
   type MarketProfile,
   type SupportedLanguage,
   type SupportedLocale,
@@ -135,6 +137,11 @@ function unprefixedPath(segments: readonly string[]) {
   return segments.length ? `/${segments.join("/")}` : "/";
 }
 
+/** The market that decides which paths exist under a language prefix (`/it/...`). */
+function languageRouteMarket(language: LanguageRouteProfile) {
+  return marketProfileByLocale(language.defaultLocale) ?? DEFAULT_MARKET_PROFILE;
+}
+
 export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse {
   const clean = cleanPathname(pathname);
   if (/%2f|%5c/i.test(clean)) return invalid(clean, "ENCODED_SEPARATOR");
@@ -162,7 +169,7 @@ export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse
     }
 
     const equivalentPathname = unprefixedPath(segments.slice(1));
-    const editorialMarket = marketProfileByLocale(canonicalLanguage.defaultLocale) ?? DEFAULT_MARKET_PROFILE;
+    const editorialMarket = languageRouteMarket(canonicalLanguage);
     if (!isLocalizedPublicDestination(equivalentPathname, editorialMarket)) {
       return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
     }
@@ -254,10 +261,17 @@ export function localizePublicHref(href: string, currentPathname: string, profil
     : href;
 }
 
-/** The language route of an unprefixed public path. `/compare` folds into the directory. */
+/**
+ * The language route of an unprefixed public path. `/compare` folds into the directory.
+ * A path with no page in the visitor's language answers in English instead of a 404: Help and
+ * Responsible Gambling exist only where local safety evidence is verified (FIRST_WAVE_SAFETY).
+ */
 export function neutralRouteDestination(pathname: string, locale: SupportedLocale) {
   const equivalentPathname = pathname === "/compare" ? "/casinos" : pathname;
-  return publicMarketPath(marketProfileByLocale(locale) ?? DEFAULT_MARKET_PROFILE, locale, equivalentPathname);
+  const destinationLocale = isLocalizedPublicDestination(equivalentPathname, languageRouteMarket(languageRouteByLocale(locale)))
+    ? locale
+    : DEFAULT_MARKET_PROFILE.defaultLocale;
+  return publicMarketPath(marketProfileByLocale(destinationLocale) ?? DEFAULT_MARKET_PROFILE, destinationLocale, equivalentPathname);
 }
 
 /**
