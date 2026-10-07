@@ -68,7 +68,7 @@ function translated(source: string, language: CasinoEditorialLanguage) {
   return value;
 }
 
-test("every catalogued English source has Swedish, Danish, German and Ukrainian text that keeps its numbers", () => {
+test("every catalogued English source has Swedish, Danish, German, Ukrainian and Russian text that keeps its numbers", () => {
   const entries = casinoEditorialEntries();
   assert.ok(entries.length >= 400, `catalog unexpectedly small: ${entries.length}`);
   const sources = entries.map((entry) => normalizeCasinoEditorialSource(entry.en));
@@ -373,7 +373,7 @@ test("the public casino and offer services translate casino text and offer terms
   assert.equal(severeBonusRestrictionCount(danishOffers.records[0]!), severeBonusRestrictionCount(englishOffers.records[0]!));
 });
 
-function schemasFor(casino: PublicCasinoDTO, locale: "en-GB" | "sv-SE" | "da-DK" | "de-DE" | "uk-UA") {
+function schemasFor(casino: PublicCasinoDTO, locale: "en-GB" | "sv-SE" | "da-DK" | "de-DE" | "uk-UA" | "ru-RU") {
   return projectCasinoProfileSchemas(casinoProfileSchemas(casino, editorial), {
     casino,
     casinoDirectoryUrl: absoluteUrl("/casinos"),
@@ -391,7 +391,7 @@ test("a translated profile emits FAQPage in its own language only when every que
   assert.equal(englishFaq.inLanguage, undefined);
   assert.equal(schemasFor(english, "sv-SE").some((schema) => schema["@type"] === "FAQPage"), false, "an English FAQ never describes a Swedish page");
 
-  const locales = { sv: "sv-SE", da: "da-DK", de: "de-DE", uk: "uk-UA" } as const;
+  const locales = { sv: "sv-SE", da: "da-DK", de: "de-DE", uk: "uk-UA", ru: "ru-RU" } as const;
   // An offer with no written terms: the wagering answer is B4GAMBLE's own sentence around the number.
   const termsFree = casinoDto({ bonuses: [{ ...betssonBonus, wageringText: null, eligibility: null }] });
   for (const language of languages) {

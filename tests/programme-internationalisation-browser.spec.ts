@@ -451,7 +451,7 @@ test("the Programme selector exposes exactly 11 direct routes and preserves one 
     const selector = page.locator("[data-programme-language-selector]:visible");
     const messages = publicShellMessages((await page.locator("html").getAttribute("lang")) as ProgrammeLocale);
     await selector.getByRole("button", { name: messages.changeMarketAndLanguage }).click();
-    await expect(selector.getByRole("menuitemradio")).toHaveCount(12);
+    await expect(selector.getByRole("menuitemradio")).toHaveCount(13);
     await selector.locator(`a[href^="${route.path}"]`).click();
     await expect(page).toHaveURL(new RegExp(`${route.path.replaceAll("/", "\\/")}(?:\\?auth=google-error&error=account_not_linked)?$`));
     await expect(page.locator("html")).toHaveAttribute("lang", route.locale);

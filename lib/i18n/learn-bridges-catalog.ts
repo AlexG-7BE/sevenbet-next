@@ -99,6 +99,13 @@ const baseMessages = {
     casinoBridgeBody: "Перевір щойно прочитане на казино з наших оглядів та їхніх умовах.",
     casinoBridgeLead: "Порівняй казино з наших оглядів за їхніми умовами",
   },
+  "ru-RU": {
+    offerBridgeBody: "Проверь только что прочитанное на актуальных предложениях и их условиях.",
+    offerBridgeLead: "Сравни актуальные бонусы по их условиям",
+    casinoBridgeTitle: "Хочешь сравнить казино?",
+    casinoBridgeBody: "Проверь только что прочитанное на казино из наших обзоров и их условиях.",
+    casinoBridgeLead: "Сравни казино из наших обзоров по их условиям",
+  },
 } as const satisfies Record<Exclude<SupportedLocale, "es-PE" | "en-CA" | "fr-CA">, LearnBridgeMessages>;
 
 const messages: Record<SupportedLocale, LearnBridgeMessages> = {

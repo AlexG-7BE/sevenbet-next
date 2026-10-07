@@ -12,6 +12,34 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Russian language — in review
+
+**Founder instruction, 7 October 2026:** after Ukrainian, translate the site
+into Russian as well. Decision record:
+[RUSSIAN-LANGUAGE-2026-10-07](07_Decisions/RUSSIAN-LANGUAGE-2026-10-07.md).
+
+- **Thirteenth published language.** `ru` / `ru-RU` at `/ru`, published and
+  indexable, with reciprocal hreflang (`en`, `de`, `sv`, `da`, `uk`, `ru`,
+  `x-default`) and its core pages, reviews and `/ru/program` in the sitemap.
+- **A language, not a market.** `RU` is the registry profile that anchors the
+  locale; it grants nothing commercial. Russian follows the browser language
+  from any country. Ukraine still opens Ukrainian first; a visitor there who
+  picks Russian in the menu keeps it.
+- **Everything is translated** the way Ukrainian is, including the Programme
+  and the casino review and offer-term catalog. The copy is country-neutral and
+  the wagering calculator's examples are in euros.
+- **No Russian Help page.** No Russian-language safety resource was read on an
+  official page, so Help and Responsible Gambling open at the English address
+  from Russian pages; the visitor's own country still decides which verified
+  resources are shown there.
+- **No commercial change.** Offers stay withheld in Russia
+  (`OFFER_PRESENTATION_PROHIBITED_MARKETS`) and Kazakhstan stays geo-blocked.
+
+Translations are machine translated with both bounded automated language QA
+reports passed for `ru-RU`; that is not native-speaker or legal review.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Ukrainian language and the Ukraine market — in review
 
 **Founder instruction, 7 October 2026:** add Ukrainian to the site so that it

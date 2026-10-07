@@ -21,6 +21,7 @@ const catalog: Record<SupportedLocale, VisualFixtureCopy> = {
   "fi-FI": { atLeastHours: "vähintään {hours}", cashbackTitle: "Viikoittainen {percent}:n palautus, enintään {amount}", cryptoPayout: "kryptovaluuttoja tuetaan", welcomeBonusType: "tervetuliaisbonus" },
   "nb-NO": { atLeastHours: "minst {hours}", cashbackTitle: "Ukentlig tilbakebetaling på {percent} opptil {amount}", cryptoPayout: "krypto støttes", welcomeBonusType: "velkomstbonus" },
   "uk-UA": { atLeastHours: "щонайменше {hours}", cashbackTitle: "Щотижневий кешбек {percent} до {amount}", cryptoPayout: "криптовалюта підтримується", welcomeBonusType: "вітальний бонус" },
+  "ru-RU": { atLeastHours: "минимум {hours}", cashbackTitle: "Еженедельный кешбэк {percent} до {amount}", cryptoPayout: "криптовалюта поддерживается", welcomeBonusType: "приветственный бонус" },
   "en-CA": { atLeastHours: "at least {hours}", cashbackTitle: "{percent} weekly cashback up to {amount}", cryptoPayout: "crypto supported", welcomeBonusType: "welcome bonus" },
   "fr-CA": { atLeastHours: "au moins {hours}", cashbackTitle: "Remise hebdomadaire de {percent} jusqu’à {amount}", cryptoPayout: "cryptomonnaies acceptées", welcomeBonusType: "bonus de bienvenue" },
 };

@@ -8,6 +8,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Spilleautomater",
     de: "Slots",
     uk: "Слоти",
+    ru: "Слоты",
   },
   {
     en: "Live Casino",
@@ -15,6 +16,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Live casino",
     de: null,
     uk: "Лайв-казино",
+    ru: "Лайв-казино",
   },
   {
     en: "Table Games",
@@ -22,6 +24,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Bordspil",
     de: null,
     uk: "Настільні ігри",
+    ru: "Настольные игры",
   },
   {
     en: "Crash Games",
@@ -29,6 +32,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Crash-spil",
     de: "Crash-Spiele",
     uk: "Краш-ігри",
+    ru: "Краш-игры",
   },
   {
     en: "Poker",
@@ -36,6 +40,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Poker",
     de: null,
     uk: "Покер",
+    ru: "Покер",
   },
   {
     en: "Casino",
@@ -43,6 +48,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Casino",
     de: null,
     uk: "Казино",
+    ru: "Казино",
   },
   {
     en: "Live casino",
@@ -50,6 +56,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Live casino",
     de: null,
     uk: "Лайв-казино",
+    ru: "Лайв-казино",
   },
   {
     en: "Table games",
@@ -57,6 +64,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Bordspil",
     de: null,
     uk: "Настільні ігри",
+    ru: "Настольные игры",
   },
   {
     en: "Jackpots",
@@ -64,6 +72,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Jackpots",
     de: null,
     uk: "Джекпоти",
+    ru: "Джекпоты",
   },
   {
     en: "Blackjack",
@@ -71,6 +80,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Blackjack",
     de: null,
     uk: "Блекджек",
+    ru: "Блэкджек",
   },
   {
     en: "Roulette",
@@ -78,6 +88,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Roulette",
     de: null,
     uk: "Рулетка",
+    ru: "Рулетка",
   },
   {
     en: "Baccarat",
@@ -85,6 +96,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Baccarat",
     de: null,
     uk: "Баккара",
+    ru: "Баккара",
   },
   {
     en: "Video Poker",
@@ -92,6 +104,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Videopoker",
     de: null,
     uk: "Відеопокер",
+    ru: "Видеопокер",
   },
   {
     en: "Races",
@@ -99,6 +112,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Præmieløb",
     de: "Rennen",
     uk: "Змагання",
+    ru: "Турниры",
   },
   {
     en: "Raffles",
@@ -106,6 +120,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Lodtrækninger",
     de: "Verlosungen",
     uk: "Розіграші",
+    ru: "Розыгрыши",
   },
   {
     en: "2,500+ reported games",
@@ -113,6 +128,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "2,500+ oplyste spil",
     de: "2,500+ Spiele laut Angaben",
     uk: "2,500+ ігор за наявними даними",
+    ru: "2,500+ игр по имеющимся данным",
   },
   {
     en: "Live games",
@@ -120,6 +136,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Livespil",
     de: null,
     uk: "Лайв-ігри",
+    ru: "Лайв-игры",
   },
   {
     en: "Instant Win",
@@ -127,6 +144,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Instant win",
     de: "Sofortgewinne",
     uk: "Ігри миттєвого виграшу",
+    ru: "Игры с мгновенным выигрышем",
   },
   {
     en: "Scratchcards",
@@ -134,6 +152,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Skrabespil",
     de: "Rubbellose",
     uk: "Скретч-картки",
+    ru: "Скретч-карты",
   },
   {
     en: "Crash & Arcade",
@@ -141,6 +160,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Crash og arkade",
     de: "Crash & Arcade",
     uk: "Краш- та аркадні ігри",
+    ru: "Краш- и аркадные игры",
   },
   {
     en: "Virtual Sports",
@@ -148,6 +168,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Virtuel sport",
     de: "Virtuelle Sportwetten",
     uk: "Віртуальний спорт",
+    ru: "Виртуальный спорт",
   },
   {
     en: "Bingo",
@@ -155,6 +176,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Bingo",
     de: "Bingo",
     uk: "Бінго",
+    ru: "Бинго",
   },
   {
     en: "Slingo",
@@ -162,6 +184,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Slingo",
     de: "Slingo",
     uk: "Slingo",
+    ru: "Slingo",
   },
   {
     en: "Deposit limits",
@@ -169,6 +192,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Indbetalingsgrænser",
     de: "Einzahlungslimits",
     uk: "Ліміти депозитів",
+    ru: "Лимиты депозитов",
   },
   {
     en: "Time-out",
@@ -176,6 +200,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Timeout",
     de: "Auszeit",
     uk: "Пауза",
+    ru: "Пауза",
   },
   {
     en: "Self-exclusion",
@@ -183,6 +208,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Selvudelukkelse",
     de: "Selbstausschluss",
     uk: "Самовиключення",
+    ru: "Самоисключение",
   },
   {
     en: "Reality checks",
@@ -190,6 +216,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Realitetstjek",
     de: "Realitätschecks",
     uk: "Нагадування про час гри",
+    ru: "Напоминания о времени игры",
   },
   {
     en: "Session limits",
@@ -197,6 +224,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Sessionsgrænser",
     de: "Sitzungslimits",
     uk: "Ліміти сесій",
+    ru: "Лимиты сессий",
   },
   {
     en: "Spelpaus (Sweden)",
@@ -204,6 +232,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Spelpaus (Sverige)",
     de: "Spelpaus (Schweden)",
     uk: "Spelpaus (Швеція)",
+    ru: "Spelpaus (Швеция)",
   },
   {
     en: "Deposit limit",
@@ -211,6 +240,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Indbetalingsgrænse",
     de: "Einzahlungslimit",
     uk: "Ліміт депозитів",
+    ru: "Лимит депозитов",
   },
   {
     en: "Wager limit",
@@ -218,6 +248,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Indsatsgrænse",
     de: "Einsatzlimit",
     uk: "Ліміт ставок",
+    ru: "Лимит ставок",
   },
   {
     en: "Loss limit",
@@ -225,6 +256,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Tabsgrænse",
     de: "Verlustlimit",
     uk: "Ліміт втрат",
+    ru: "Лимит потерь",
   },
   {
     en: "Session limit",
@@ -232,6 +264,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Sessionsgrænse",
     de: "Sitzungslimit",
     uk: "Ліміт сесії",
+    ru: "Лимит сессии",
   },
   {
     en: "Reality check",
@@ -239,6 +272,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Realitetstjek",
     de: "Realitätscheck",
     uk: "Нагадування про час гри",
+    ru: "Напоминание о времени игры",
   },
   {
     en: "Self-assessment",
@@ -246,6 +280,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Selvtest",
     de: "Selbsttest",
     uk: "Тест для самоперевірки",
+    ru: "Тест для самопроверки",
   },
   {
     en: "3-5 business days",
@@ -253,6 +288,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "3-5 hverdage",
     de: "3-5 Werktage",
     uk: "3-5 робочих днів",
+    ru: "3–5 рабочих дней",
   },
   {
     en: "Instant or next business day",
@@ -260,6 +296,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Straks eller næste hverdag",
     de: "Sofort oder am nächsten Werktag",
     uk: "Миттєво або наступного робочого дня",
+    ru: "Мгновенно или на следующий рабочий день",
   },
   {
     en: "1-5 business days",
@@ -267,6 +304,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "1-5 hverdage",
     de: "1-5 Werktage",
     uk: "1-5 робочих днів",
+    ru: "1–5 рабочих дней",
   },
   {
     en: "Immediate / method-dependent",
@@ -274,6 +312,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Straks / afhænger af metoden",
     de: "Sofort / je nach Zahlungsmethode",
     uk: "Одразу / залежить від способу оплати",
+    ru: "Сразу / зависит от способа",
   },
   {
     en: "1-3 banking days",
@@ -281,6 +320,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "1-3 bankdage",
     de: "1-3 Bankarbeitstage",
     uk: "1-3 банківські дні",
+    ru: "1–3 банковских дня",
   },
   {
     en: "Pending review 24–48 hours; bank/card processing up to 3–7 days",
@@ -288,6 +328,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 24–48 timer; behandling via bank/kort op til 3–7 dage",
     de: "Prüfphase 24–48 Stunden; Bearbeitung per Bank/Karte bis zu 3–7 Tage",
     uk: "Очікування перевірки 24–48 год; обробка через банк/картку до 3–7 днів",
+    ru: "Ожидание проверки 24–48 ч; обработка через банк/карту до 3–7 дней",
   },
   {
     en: "Pending review 24–48 hours; e-wallet processing 0–1 hour",
@@ -295,6 +336,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 24–48 timer; behandling via e-wallet 0–1 time",
     de: "Prüfphase 24–48 Stunden; Bearbeitung per E-Wallet 0–1 Stunde",
     uk: "Очікування перевірки 24–48 год; обробка через електронний гаманець 0–1 год",
+    ru: "Ожидание проверки 24–48 ч; обработка через электронный кошелёк 0–1 ч",
   },
   {
     en: "Pending review reported as 48–96 hours; bank/card processing 3–5 days",
@@ -302,6 +344,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 48–96 timer (oplyst); behandling via bank/kort 3–5 dage",
     de: "Prüfphase laut Angaben 48–96 Stunden; Bearbeitung per Bank/Karte 3–5 Tage",
     uk: "Очікування перевірки, за наявними даними, 48–96 год; обробка через банк/картку 3–5 днів",
+    ru: "Ожидание проверки, по имеющимся данным, 48–96 ч; обработка через банк/карту 3–5 дней",
   },
   {
     en: "Pending review reported as 48–96 hours; e-wallet processing 0–24 hours",
@@ -309,6 +352,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 48–96 timer (oplyst); behandling via e-wallet 0–24 timer",
     de: "Prüfphase laut Angaben 48–96 Stunden; Bearbeitung per E-Wallet 0–24 Stunden",
     uk: "Очікування перевірки, за наявними даними, 48–96 год; обробка через електронний гаманець 0–24 год",
+    ru: "Ожидание проверки, по имеющимся данным, 48–96 ч; обработка через электронный кошелёк 0–24 ч",
   },
   {
     en: "Pending review 24–48 hours; card processing 2–5 days",
@@ -316,6 +360,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 24–48 timer; behandling via kort 2–5 dage",
     de: "Prüfphase 24–48 Stunden; Bearbeitung per Karte 2–5 Tage",
     uk: "Очікування перевірки 24–48 год; обробка через картку 2–5 днів",
+    ru: "Ожидание проверки 24–48 ч; обработка по карте 2–5 дней",
   },
   {
     en: "Pending review 24–48 hours; e-wallet processing 0–24 hours",
@@ -323,6 +368,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 24–48 timer; behandling via e-wallet 0–24 timer",
     de: "Prüfphase 24–48 Stunden; Bearbeitung per E-Wallet 0–24 Stunden",
     uk: "Очікування перевірки 24–48 год; обробка через електронний гаманець 0–24 год",
+    ru: "Ожидание проверки 24–48 ч; обработка через электронный кошелёк 0–24 ч",
   },
   {
     en: "Pending review 24–48 hours; bank processing 5–10 days",
@@ -330,6 +376,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 24–48 timer; behandling via bank 5–10 dage",
     de: "Prüfphase 24–48 Stunden; Bearbeitung per Bank 5–10 Tage",
     uk: "Очікування перевірки 24–48 год; обробка через банк 5–10 днів",
+    ru: "Ожидание проверки 24–48 ч; обработка через банк 5–10 дней",
   },
   {
     en: "Pending review 24–48 hours; e-wallet processing 24–72 hours",
@@ -337,6 +384,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 24–48 timer; behandling via e-wallet 24–72 timer",
     de: "Prüfphase 24–48 Stunden; Bearbeitung per E-Wallet 24–72 Stunden",
     uk: "Очікування перевірки 24–48 год; обробка через електронний гаманець 24–72 год",
+    ru: "Ожидание проверки 24–48 ч; обработка через электронный кошелёк 24–72 ч",
   },
   {
     en: "Pending review 24–48 hours; bank processing 3–5 days",
@@ -344,6 +392,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 24–48 timer; behandling via bank 3–5 dage",
     de: "Prüfphase 24–48 Stunden; Bearbeitung per Bank 3–5 Tage",
     uk: "Очікування перевірки 24–48 год; обробка через банк 3–5 днів",
+    ru: "Ожидание проверки 24–48 ч; обработка через банк 3–5 дней",
   },
   {
     en: "1–2 business days / method-dependent",
@@ -351,6 +400,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "1–2 hverdage / afhænger af metoden",
     de: "1–2 Werktage / je nach Zahlungsmethode",
     uk: "1–2 робочі дні / залежить від способу оплати",
+    ru: "1–2 рабочих дня / зависит от способа",
   },
   {
     en: "Network / verification-dependent",
@@ -358,6 +408,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afhænger af netværk / verifikation",
     de: "Abhängig von Netzwerk / Verifizierung",
     uk: "Залежить від мережі / перевірки",
+    ru: "Зависит от сети / проверки",
   },
   {
     en: "Up to 10 business days in current cash-out guidance",
@@ -365,6 +416,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Op til 10 hverdage ifølge den aktuelle vejledning om udbetalinger",
     de: "Bis zu 10 Werktage laut aktuellen Auszahlungshinweisen",
     uk: "До 10 робочих днів згідно з чинними вказівками щодо виведення коштів",
+    ru: "До 10 рабочих дней по актуальной информации о выводе средств",
   },
   {
     en: "Pending review 24–48 hours; bank/card processing 3–5 days",
@@ -372,6 +424,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 24–48 timer; behandling via bank/kort 3–5 dage",
     de: "Prüfphase 24–48 Stunden; Bearbeitung per Bank/Karte 3–5 Tage",
     uk: "Очікування перевірки 24–48 год; обробка через банк/картку 3–5 днів",
+    ru: "Ожидание проверки 24–48 ч; обработка через банк/карту 3–5 дней",
   },
   {
     en: "Pending review 24–48 hours; e-wallet processing about 24 hours",
@@ -379,6 +432,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Afventer godkendelse i 24–48 timer; behandling via e-wallet cirka 24 timer",
     de: "Prüfphase 24–48 Stunden; Bearbeitung per E-Wallet etwa 24 Stunden",
     uk: "Очікування перевірки 24–48 год; обробка через електронний гаманець близько 24 год",
+    ru: "Ожидание проверки 24–48 ч; обработка через электронный кошелёк около 24 ч",
   },
   {
     en: "Bank transfer",
@@ -386,6 +440,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Bankoverførsel",
     de: "Banküberweisung",
     uk: "Банківський переказ",
+    ru: "Банковский перевод",
   },
   {
     en: "Bank Transfer",
@@ -393,6 +448,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Bankoverførsel",
     de: "Banküberweisung",
     uk: "Банківський переказ",
+    ru: "Банковский перевод",
   },
   {
     en: "Bank Wire",
@@ -400,6 +456,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Bankoverførsel",
     de: "Banküberweisung",
     uk: "Банківський переказ",
+    ru: "Банковский перевод",
   },
   {
     en: "Wire Transfer",
@@ -407,6 +464,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Bankoverførsel",
     de: "Banküberweisung",
     uk: "Банківський переказ",
+    ru: "Банковский перевод",
   },
   {
     en: "Local bank transfer",
@@ -414,6 +472,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Lokal bankoverførsel",
     de: "Lokale Banküberweisung",
     uk: "Місцевий банківський переказ",
+    ru: "Местный банковский перевод",
   },
   {
     en: "Instant bank transfer",
@@ -421,6 +480,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Straksoverførsel",
     de: "Echtzeitüberweisung",
     uk: "Миттєвий банківський переказ",
+    ru: "Мгновенный банковский перевод",
   },
   {
     en: "Instant/Fast Bank Transfer",
@@ -428,6 +488,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Straks- eller hurtig bankoverførsel",
     de: "Echtzeit- oder Schnellüberweisung",
     uk: "Миттєвий або швидкий банківський переказ",
+    ru: "Мгновенный или быстрый банковский перевод",
   },
   {
     en: "Instant Banking",
@@ -435,6 +496,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Direkte bankbetaling",
     de: "Direkte Bankzahlung",
     uk: "Миттєвий банківський платіж",
+    ru: "Мгновенная оплата через банк",
   },
   {
     en: "Credit/Debit Cards",
@@ -442,6 +504,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Kredit- og betalingskort",
     de: "Kredit- und Debitkarten",
     uk: "Кредитні/дебетові картки",
+    ru: "Кредитные и дебетовые карты",
   },
   {
     en: "Prepaid Cards",
@@ -449,6 +512,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Forudbetalte kort",
     de: "Prepaid-Karten",
     uk: "Передплачені картки",
+    ru: "Предоплаченные карты",
   },
   {
     en: "E-Wallets",
@@ -456,6 +520,7 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "E-wallets",
     de: "E-Wallets",
     uk: "Електронні гаманці",
+    ru: "Электронные кошельки",
   },
   {
     en: "Crypto (BTC, ETH, USDT, USDC)",
@@ -463,5 +528,6 @@ export const LABEL_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Krypto (BTC, ETH, USDT, USDC)",
     de: "Krypto (BTC, ETH, USDT, USDC)",
     uk: "Криптовалюта (BTC, ETH, USDT, USDC)",
+    ru: "Криптовалюта (BTC, ETH, USDT, USDC)",
   },
 ];

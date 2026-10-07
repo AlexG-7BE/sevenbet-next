@@ -38,8 +38,8 @@ const namesCasino = (brand: string) => /casino/i.test(brand);
  * Localized review titles and descriptions for the indexed languages (audit 27 Sep 2026:
  * every review was titled "{Brand} review | B4GAMBLE" and Swedish, Danish and German pages
  * carried an English summary). German follows lib/i18n/german-terminology.ts: no generic
- * "Casino"; the brand name is kept as it is. Ukrainian declines nouns, so the brand leads in
- * the nominative ("{Brand} — огляд казино").
+ * "Casino"; the brand name is kept as it is. Ukrainian and Russian decline nouns, so the brand
+ * leads in the nominative ("{Brand} — огляд казино", "{Brand} — обзор казино").
  */
 const REVIEW_COPY: Partial<Record<SupportedLocale, ReviewCopy>> = {
   "en-GB": {
@@ -61,6 +61,10 @@ const REVIEW_COPY: Partial<Record<SupportedLocale, ReviewCopy>> = {
   "uk-UA": {
     title: (brand, year) => `${brand} — огляд${namesCasino(brand) ? "" : " казино"}${year}: бонус, виплати та ліцензія | B4GAMBLE`,
     description: (brand, score) => `${brand} — огляд${namesCasino(brand) ? "" : " казино"}${score ? `: оцінка ${score}/10` : ""}. Вітальний бонус і відіграш, швидкість виплат, платежі та ліцензія — перевірено перед грою.`,
+  },
+  "ru-RU": {
+    title: (brand, year) => `${brand} — обзор${namesCasino(brand) ? "" : " казино"}${year}: бонус, выплаты и лицензия | B4GAMBLE`,
+    description: (brand, score) => `${brand} — обзор${namesCasino(brand) ? "" : " казино"}${score ? `: оценка ${score}/10` : ""}. Приветственный бонус и отыгрыш, скорость выплат, платежи и лицензия — проверено перед игрой.`,
   },
 };
 

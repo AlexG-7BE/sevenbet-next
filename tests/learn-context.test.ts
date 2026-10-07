@@ -310,7 +310,7 @@ test("MCP learn_context reports an invalid language as a structured, schema-decl
       result: "ERROR",
       error: {
         code: "TARGET_LANGUAGE_NOT_ALLOWED",
-        message: "targetLanguage must be a published language: en, de, es, el, sv, da, it, pt, nl, fi, nb, uk.",
+        message: "targetLanguage must be a published language: en, de, es, el, sv, da, it, pt, nl, fi, nb, uk, ru.",
         retryable: false,
       },
     });

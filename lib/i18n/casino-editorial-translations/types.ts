@@ -1,4 +1,4 @@
-export const CASINO_EDITORIAL_LANGUAGES = ["sv", "da", "de", "uk"] as const;
+export const CASINO_EDITORIAL_LANGUAGES = ["sv", "da", "de", "uk", "ru"] as const;
 
 export type CasinoEditorialLanguage = (typeof CASINO_EDITORIAL_LANGUAGES)[number];
 
@@ -18,4 +18,5 @@ export type CasinoEditorialEntry = Readonly<{
    */
   de: string | null;
   uk: string;
+  ru: string;
 }>;
