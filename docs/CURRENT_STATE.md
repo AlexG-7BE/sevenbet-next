@@ -34,6 +34,9 @@ into Russian as well. Decision record:
   resources are shown there.
 - **No commercial change.** Offers stay withheld in Russia
   (`OFFER_PRESENTATION_PROHIBITED_MARKETS`) and Kazakhstan stays geo-blocked.
+- **Production smoke covers `/uk`.** The Ukrainian home joined the smoke's
+  language checks with this release, once `/uk` was live; `/ru` follows after
+  this release is live, so the smoke cannot alert during the deploy window.
 
 Translations are machine translated with both bounded automated language QA
 reports passed for `ru-RU`; that is not native-speaker or legal review.
