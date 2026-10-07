@@ -143,7 +143,7 @@ async function BonusesContent({ raw }: { raw: Record<string, string | string[] |
     </section>
     <section className={styles.directorySection} data-nav-theme="dark" id="bonus-directory">
       <div className={styles.shell}>
-        <header className={styles.sectionHeading} data-motion-reveal><h2><EmphasisTail text={messages.bonuses.directoryTitle} /></h2><p>{result.total} {countNoun(presentation.locale, result.total, copy.offerOne, copy.offerOther)}</p></header>
+        <header className={styles.sectionHeading} data-motion-reveal><h2><EmphasisTail text={messages.bonuses.directoryTitle} /></h2><p>{result.total} {countNoun(presentation.locale, result.total, copy.offerOne, copy.offerOther, copy.offerFew)}</p></header>
         {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.demoDirectoryDisclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure}</p></aside> : null}
         {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><h2>{messages.bonuses.unavailableTitleBody}</h2><p>{messages.bonuses.unavailableCopy}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></section> : <BonusOfferDirectory messages={messages} offers={result.records} presentation={presentation} />}
       </div>

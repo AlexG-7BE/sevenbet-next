@@ -133,17 +133,21 @@ const tenStepsContractSignals: Record<SupportedLocale, {
     startingPoint: /Utgangspunkt/u,
     noAccountToBegin: /ingen konto for å begynne/u,
   },
+  "uk-UA": {
+    startingPoint: /Відправн(?:а|у|ої|ій) точк/u,
+    noAccountToBegin: /Щоб почати, акаунт не потрібен/u,
+  },
   "en-CA": englishTenStepsSignals,
   "fr-CA": englishTenStepsSignals,
 };
 
 test("initial market registry exposes the partner-readiness tranche without implying commercial authority", () => {
-  assert.deepEqual(MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "IT", "ES", "PE", "PT", "GR", "NL", "SE", "DK", "FI", "NO", "CA"]);
+  assert.deepEqual(MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "IT", "ES", "PE", "PT", "GR", "NL", "SE", "DK", "FI", "NO", "UA", "CA"]);
   for (const profile of MARKET_PROFILES) {
     assert.equal(profile.commercialPresentationState, "AUTHORITY_REQUIRED");
   }
-  assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "PE", "SE", "DK", "GR"]);
-  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "PE", "GR", "SE", "DK"]);
+  assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "PE", "SE", "DK", "GR", "UA"]);
+  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "PE", "GR", "SE", "DK", "UA"]);
   for (const profile of MARKET_PROFILES) {
     const expected: "LIVE_BASELINE" | "LIVE_LOCALIZED" | "PREVIEW_LOCALIZED" | "LOCALIZATION_REQUIRED" = profile.countryCode === "GB"
       ? "LIVE_BASELINE"
@@ -162,10 +166,10 @@ test("initial market registry exposes the partner-readiness tranche without impl
   assert.equal(marketProfileByRouteMarket("SE")?.countryCode, "SE");
 });
 
-test("all eleven European runtime profiles exist in their approved order", () => {
+test("all twelve European runtime profiles exist in their approved order", () => {
   assert.deepEqual(
     INITIAL_EUROPEAN_MARKET_PROFILES.map((profile) => `${profile.countryCode}:${profile.defaultLocale}`),
-    ["GB:en-GB", "DE:de-DE", "IT:it-IT", "ES:es-ES", "PT:pt-PT", "GR:el-GR", "NL:nl-NL", "SE:sv-SE", "DK:da-DK", "FI:fi-FI", "NO:nb-NO"],
+    ["GB:en-GB", "DE:de-DE", "IT:it-IT", "ES:es-ES", "PT:pt-PT", "GR:el-GR", "NL:nl-NL", "SE:sv-SE", "DK:da-DK", "FI:fi-FI", "NO:nb-NO", "UA:uk-UA"],
   );
 });
 
@@ -267,8 +271,8 @@ test("localized product links and canonicals preserve explicit presentation; onl
   assert.equal(productHref(presentation, "/methodology"), "/de/methodology");
   const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
   assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/de/casinos");
-  // SEO-INDEX-DE-SV-DA-2026-09-27: German is indexed and carries reciprocal hreflang.
-  assert.deepEqual(Object.keys(metadata.alternates?.languages ?? {}).sort(), ["da", "de", "en", "sv", "x-default"]);
+  // SEO-INDEX-DE-SV-DA-2026-09-27: German is indexed and carries reciprocal hreflang; Ukrainian joined on 7 Oct 2026.
+  assert.deepEqual(Object.keys(metadata.alternates?.languages ?? {}).sort(), ["da", "de", "en", "sv", "uk", "x-default"]);
   assert.equal(metadata.robots, undefined);
   assert.equal(metadata.openGraph && "locale" in metadata.openGraph ? metadata.openGraph.locale : null, "de_DE");
 
@@ -291,7 +295,7 @@ test("localized product links and canonicals preserve explicit presentation; onl
     robots: { index: true, follow: true },
   });
   assert.deepEqual(gbMetadata.robots, { index: true, follow: true }, "the approved English baseline must retain its data-driven indexing policy");
-  assert.deepEqual(Object.keys(gbMetadata.alternates?.languages ?? {}).sort(), ["da", "de", "en", "sv", "x-default"]);
+  assert.deepEqual(Object.keys(gbMetadata.alternates?.languages ?? {}).sort(), ["da", "de", "en", "sv", "uk", "x-default"]);
 
   const differentGeo = resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "NO" });
   const second = productMetadata({ presentation: differentGeo, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
@@ -342,8 +346,8 @@ test("localized Compare takes trusted market from its caller and never serialize
 });
 
 test("localized sitemap publication is review-gated and its market loader has no request-path GB literal", () => {
-  // SEO-INDEX-DE-SV-DA-2026-09-27: only the Founder-opened launch languages are indexed.
-  const indexed = new Set(["de-DE", "sv-SE", "da-DK"]);
+  // SEO-INDEX-DE-SV-DA-2026-09-27 and UKRAINIAN-LANGUAGE-2026-10-07: only the Founder-opened languages are indexed.
+  const indexed = new Set(["de-DE", "sv-SE", "da-DK", "uk-UA"]);
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
     assert.equal(localizedProductIndexingApproved(profile.defaultLocale), indexed.has(profile.defaultLocale), profile.defaultLocale);
   }
@@ -540,7 +544,7 @@ test("translation review state records only first-wave Founder publication accep
         ? "FOUNDER_PUBLICATION_ACCEPTED"
         : "FOUNDER_PUBLICATION_NOT_ACCEPTED",
       legalReview: "REQUIRED",
-      marketEvidenceReview: ["DE", "ES", "SE", "DK", "GR"].includes(profile.countryCode) ? "FIRST_WAVE_EVIDENCE_REVIEWED" : "REQUIRED",
+      marketEvidenceReview: ["DE", "ES", "SE", "DK", "GR", "UA"].includes(profile.countryCode) ? "FIRST_WAVE_EVIDENCE_REVIEWED" : "REQUIRED",
     });
   }
 });
@@ -586,7 +590,7 @@ test("10 Steps localizes the active RFC-025 path and Mission 01 reward boundary 
 
   assert.equal(TEN_STEPS_SOURCE_COPY.length, 50);
   assert.equal(programmeMissionTitles.length, 10);
-  assert.equal(supportedLocales.length, 14);
+  assert.equal(supportedLocales.length, 15);
   assert.equal(
     programAiMissionOneRewardPolicy.situationSubmitted.xp + programAiMissionOneRewardPolicy.startingPointComplete.xp,
     40,

@@ -19,6 +19,7 @@ const baseMessages = {
   "da-DK": { eyebrow: "Dit næste skridt", title: "Omsæt det til praksis.", body: "Ti korte missioner gør det, du har læst, til grænser, der holder. Gratis at bruge." },
   "fi-FI": { eyebrow: "Seuraava askeleesi", title: "Vie se käytäntöön.", body: "Kymmenen lyhyttä tehtävää muuttaa lukemasi pitäviksi rajoiksi. Käyttö on maksutonta." },
   "nb-NO": { eyebrow: "Ditt neste steg", title: "Sett det ut i livet.", body: "Ti korte oppdrag gjør det du har lest til grenser som holder. Gratis å bruke." },
+  "uk-UA": { eyebrow: "Твій наступний крок", title: "Застосуй це на практиці.", body: "Десять коротких місій перетворять прочитане на ліміти, які справді працюють. Безкоштовно." },
   "fr-CA": { eyebrow: "Votre prochaine étape", title: "Passez à la pratique.", body: "Dix courtes missions transforment ce que vous avez lu en limites qui tiennent. Utilisation gratuite." },
 } as const satisfies Record<Exclude<SupportedLocale, "es-PE" | "en-CA">, NextStepMessages>;
 

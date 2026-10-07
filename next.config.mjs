@@ -10,6 +10,7 @@ const PROGRAMME_MICROPHONE_ROUTES = [
   "/nl/program",
   "/fi/program",
   "/nb/program",
+  "/uk/program",
 ];
 
 const deniedBrowserCapabilities ="camera=(), microphone=(), geolocation=(), payment=(), usb=()";

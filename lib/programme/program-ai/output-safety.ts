@@ -55,6 +55,10 @@ export const PROGRAMME_OUTPUT_SAFETY_PATTERNS: Record<ProgrammeLocale, LocalePat
     clinicalOrSafety: [/\bdiagnos\w*\b/i, /\brisikoscore\b/i, /\btrygt å spille\b/i, /\bhvor man spiller\b/i, /\btryggest\w*\b/i, /\bxp\b/i],
     commercialTerms: [/\bkasino(?:er)?\b|\bcasino(?:er)?\b/i, /\boperatør(?:er)?\b/i, /\bbonus(?:er)?\b/i],
   },
+  "uk-UA": {
+    clinicalOrSafety: [/діагно[зс]\p{L}*/iu, /(?:оцінк|показник|бал)\p{L}* ризику/iu, /безпечно грати/iu, /де грати/iu, /найбезпечніш\p{L}*/iu, /\bxp\b/i],
+    commercialTerms: [/казино/iu, /оператор\p{L}*/iu, /бонус\p{L}*/iu],
+  },
 };
 
 export function assertSafeProgrammeGeneratedText(

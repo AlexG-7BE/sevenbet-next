@@ -147,6 +147,18 @@ const baseMessages = {
     notNow: "Ikke nå",
     error: "Valget ditt kunne ikke lagres. Prøv igjen.",
   },
+  "uk-UA": {
+    trigger: "Налаштування cookie",
+    dialogLabel: "Налаштування cookie",
+    title: "Файли cookie: твій вибір",
+    body: "Ми використовуємо власні файли cookie та Google Analytics, щоб бачити, як користуються B4GAMBLE.",
+    detail: "Твою електронну пошту, відповіді в Програмі та партнерські токени — ніколи.",
+    privacyNotice: "Повідомлення про конфіденційність",
+    allow: "Прийняти cookie",
+    decline: "Відхилити cookie",
+    notNow: "Не зараз",
+    error: "Не вдалося зберегти твій вибір. Спробуй ще раз.",
+  },
   "fr-CA": {
     trigger: "Paramètres des témoins",
     dialogLabel: "Paramètres des témoins",

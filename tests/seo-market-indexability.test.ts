@@ -47,7 +47,11 @@ test("GB, SE, DE, DK and PE expose one explicit routable/published/indexable pol
   assert.equal(MARKET_PUBLICATION_POLICY.PE.published, true);
   assert.equal(MARKET_PUBLICATION_POLICY.PE.indexable, false);
   assert.match(MARKET_PUBLICATION_POLICY.PE.indexabilityBlocker ?? "", /LEGAL_PRIVACY.*REAL_INVENTORY/);
-  assert.deepEqual(INDEXABLE_MARKET_PROFILES.map((market) => market.countryCode).sort(), ["DE", "DK", "GB", "SE"]);
+  // UKRAINIAN-LANGUAGE-2026-10-07: Ukraine opened to search with its language.
+  assert.deepEqual(MARKET_PUBLICATION_POLICY.UA, {
+    routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-10-07",
+  });
+  assert.deepEqual(INDEXABLE_MARKET_PROFILES.map((market) => market.countryCode).sort(), ["DE", "DK", "GB", "SE", "UA"]);
 });
 
 test("noindex languages keep self canonicals without contradictory hreflang", () => {
@@ -80,7 +84,7 @@ test("GB is indexable with canonical, reciprocal-ready hreflang, and an x-defaul
     assert.equal(new URL(languages.en).pathname, "/en/casinos");
     assert.equal(new URL(languages["x-default"]).pathname, "/en/casinos");
     assert.equal(new URL(languages.sv).pathname, "/sv/casinos");
-    assert.deepEqual(Object.keys(languages).sort(), ["da", "de", "en", "sv", "x-default"]);
+    assert.deepEqual(Object.keys(languages).sort(), ["da", "de", "en", "sv", "uk", "x-default"]);
   } finally {
     if (previous === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previous;
   }
@@ -172,7 +176,7 @@ test("every hreflang target is a page that answers 200: no unprefixed x-default"
 
 test("the sitemap lists the Programme in every language it indexes", () => {
   const localized = PROGRAMME_ROUTES.filter((route) => localizedProductIndexingApproved(route.locale)).map((route) => route.path);
-  assert.deepEqual([...localized].sort(), ["/da/program", "/de/program", "/sv/program"]);
+  assert.deepEqual([...localized].sort(), ["/da/program", "/de/program", "/sv/program", "/uk/program"]);
   assert.match(readFileSync("app/sitemap.ts", "utf8"), /\.\.\.localizedProgrammeRoutes,/);
 });
 
@@ -214,7 +218,7 @@ test("an unprefixed link never resolves to a language route that does not exist"
     assert.equal(finalPublicHref("/casinos", locale), `/${locale.split("-")[0]}/casinos`, locale);
   }
   // A language with verified local safety evidence keeps its own Help page.
-  for (const [locale, prefix] of [["de-DE", "de"], ["es-ES", "es"], ["es-PE", "es"], ["sv-SE", "sv"], ["da-DK", "da"], ["el-GR", "el"], ["en-GB", "en"]] as const) {
+  for (const [locale, prefix] of [["de-DE", "de"], ["es-ES", "es"], ["es-PE", "es"], ["sv-SE", "sv"], ["da-DK", "da"], ["el-GR", "el"], ["uk-UA", "uk"], ["en-GB", "en"]] as const) {
     assert.equal(finalPublicHref("/help", locale), `/${prefix}/help`, locale);
     assert.equal(finalPublicHref("/responsible-gambling", locale), `/${prefix}/responsible-gambling`, locale);
   }
