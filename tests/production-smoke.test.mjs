@@ -64,6 +64,7 @@ function fakeProduction(overrides = {}, calls = []) {
     if (pathname === "/da") return htmlResponse(html({ lang: "da-DK" }));
     if (pathname === "/de") return htmlResponse(html({ lang: "de-DE" }));
     if (pathname === "/uk") return htmlResponse(html({ lang: "uk-UA" }));
+    if (pathname === "/ru") return htmlResponse(html({ lang: "ru-RU" }));
     if (pathname === "/en/casinos") return htmlResponse(html({ reviews: 28 }));
     if (pathname === "/en/bonuses") return htmlResponse(html({ reviews: 26 }));
     if (pathname === "/en/best-offers") return htmlResponse(html({ reviews: 3 }));
@@ -86,7 +87,7 @@ test("the smoke identifies itself as a monitor so the site records BOT traffic",
 
 test("the check list covers the conversion path, every launch language and the silent fallbacks", () => {
   const paths = PAGE_CHECKS.map((check) => check.path);
-  for (const path of ["/", "/en", "/sv", "/da", "/de", "/uk", "/en/best-offers", "/en/bonuses", "/en/casinos", "/program", "/login", "/api/auth/ok", "/sitemap.xml", "/llms.txt"]) {
+  for (const path of ["/", "/en", "/sv", "/da", "/de", "/uk", "/ru", "/en/best-offers", "/en/bonuses", "/en/casinos", "/program", "/login", "/api/auth/ok", "/sitemap.xml", "/llms.txt"]) {
     assert.ok(paths.includes(path), `${path} is checked`);
   }
   assert.deepEqual(PAGE_CHECKS.filter((check) => check.lang).map((check) => check.lang).slice(0, 4), ["en", "sv", "da", "de"]);

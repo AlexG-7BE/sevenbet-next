@@ -40,6 +40,7 @@ export const PAGE_CHECKS = Object.freeze([
   { id: "home-da", path: "/da", kind: "html", lang: "da" },
   { id: "home-de", path: "/de", kind: "html", lang: "de" },
   { id: "home-uk", path: "/uk", kind: "html", lang: "uk" },
+  { id: "home-ru", path: "/ru", kind: "html", lang: "ru" },
   { id: "best-offers-en", path: "/en/best-offers", kind: "html", lang: "en", minReviewLinks: FLOORS.bestOffersReviewLinks },
   { id: "bonuses-en", path: "/en/bonuses", kind: "html", lang: "en", minReviewLinks: FLOORS.bonusesReviewLinks },
   { id: "casinos-en", path: "/en/casinos", kind: "html", lang: "en", minReviewLinks: FLOORS.casinosReviewLinks },
