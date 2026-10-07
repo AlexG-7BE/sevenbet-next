@@ -13,36 +13,38 @@ import type { SupportedLanguage } from "@/lib/market/registry";
  * the Danish name for Norwegian spelled out. Keep this table the only source.
  */
 type DisplayLanguage = SupportedLanguage;
-type DisplayRegion = "GB" | "DE" | "IT" | "ES" | "PT" | "GR" | "NL" | "SE" | "DK" | "FI" | "NO";
+type DisplayRegion = "GB" | "DE" | "IT" | "ES" | "PT" | "GR" | "NL" | "SE" | "DK" | "FI" | "NO" | "UA";
 
 export const LANGUAGE_DISPLAY_NAMES = {
-  en: { en: "English", de: "German", es: "Spanish", el: "Greek", sv: "Swedish", da: "Danish", it: "Italian", pt: "Portuguese", nl: "Dutch", fi: "Finnish", nb: "Norwegian Bokmål", fr: "French" },
-  de: { en: "Englisch", de: "Deutsch", es: "Spanisch", el: "Griechisch", sv: "Schwedisch", da: "Dänisch", it: "Italienisch", pt: "Portugiesisch", nl: "Niederländisch", fi: "Finnisch", nb: "Norwegisch (Bokmål)", fr: "Französisch" },
-  it: { en: "Inglese", de: "Tedesco", es: "Spagnolo", el: "Greco", sv: "Svedese", da: "Danese", it: "Italiano", pt: "Portoghese", nl: "Olandese", fi: "Finlandese", nb: "Norvegese bokmål", fr: "Francese" },
-  es: { en: "Inglés", de: "Alemán", es: "Español", el: "Griego", sv: "Sueco", da: "Danés", it: "Italiano", pt: "Portugués", nl: "Neerlandés", fi: "Finés", nb: "Noruego bokmal", fr: "Francés" },
-  pt: { en: "Inglês", de: "Alemão", es: "Espanhol", el: "Grego", sv: "Sueco", da: "Dinamarquês", it: "Italiano", pt: "Português", nl: "Holandês", fi: "Finlandês", nb: "Bokmål norueguês", fr: "Francês" },
-  el: { en: "Αγγλικά", de: "Γερμανικά", es: "Ισπανικά", el: "Ελληνικά", sv: "Σουηδικά", da: "Δανικά", it: "Ιταλικά", pt: "Πορτογαλικά", nl: "Ολλανδικά", fi: "Φινλανδικά", nb: "Νορβηγικά Μποκμάλ", fr: "Γαλλικά" },
-  nl: { en: "Engels", de: "Duits", es: "Spaans", el: "Grieks", sv: "Zweeds", da: "Deens", it: "Italiaans", pt: "Portugees", nl: "Nederlands", fi: "Fins", nb: "Noors - Bokmål", fr: "Frans" },
-  sv: { en: "Engelska", de: "Tyska", es: "Spanska", el: "Grekiska", sv: "Svenska", da: "Danska", it: "Italienska", pt: "Portugisiska", nl: "Nederländska", fi: "Finska", nb: "Norskt bokmål", fr: "Franska" },
-  da: { en: "Engelsk", de: "Tysk", es: "Spansk", el: "Græsk", sv: "Svensk", da: "Dansk", it: "Italiensk", pt: "Portugisisk", nl: "Nederlandsk", fi: "Finsk", nb: "Norsk bokmål", fr: "Fransk" },
-  fi: { en: "Englanti", de: "Saksa", es: "Espanja", el: "Kreikka", sv: "Ruotsi", da: "Tanska", it: "Italia", pt: "Portugali", nl: "Hollanti", fi: "Suomi", nb: "Norjan bokmål", fr: "Ranska" },
-  nb: { en: "Engelsk", de: "Tysk", es: "Spansk", el: "Gresk", sv: "Svensk", da: "Dansk", it: "Italiensk", pt: "Portugisisk", nl: "Nederlandsk", fi: "Finsk", nb: "Norsk bokmål", fr: "Fransk" },
-  fr: { en: "Anglais", de: "Allemand", es: "Espagnol", el: "Grec", sv: "Suédois", da: "Danois", it: "Italien", pt: "Portugais", nl: "Néerlandais", fi: "Finnois", nb: "Norvégien bokmål", fr: "Français" },
+  en: { en: "English", de: "German", es: "Spanish", el: "Greek", sv: "Swedish", da: "Danish", it: "Italian", pt: "Portuguese", nl: "Dutch", fi: "Finnish", nb: "Norwegian Bokmål", uk: "Ukrainian", fr: "French" },
+  de: { en: "Englisch", de: "Deutsch", es: "Spanisch", el: "Griechisch", sv: "Schwedisch", da: "Dänisch", it: "Italienisch", pt: "Portugiesisch", nl: "Niederländisch", fi: "Finnisch", nb: "Norwegisch (Bokmål)", uk: "Ukrainisch", fr: "Französisch" },
+  it: { en: "Inglese", de: "Tedesco", es: "Spagnolo", el: "Greco", sv: "Svedese", da: "Danese", it: "Italiano", pt: "Portoghese", nl: "Olandese", fi: "Finlandese", nb: "Norvegese bokmål", uk: "Ucraino", fr: "Francese" },
+  es: { en: "Inglés", de: "Alemán", es: "Español", el: "Griego", sv: "Sueco", da: "Danés", it: "Italiano", pt: "Portugués", nl: "Neerlandés", fi: "Finés", nb: "Noruego bokmal", uk: "Ucraniano", fr: "Francés" },
+  pt: { en: "Inglês", de: "Alemão", es: "Espanhol", el: "Grego", sv: "Sueco", da: "Dinamarquês", it: "Italiano", pt: "Português", nl: "Holandês", fi: "Finlandês", nb: "Bokmål norueguês", uk: "Ucraniano", fr: "Francês" },
+  el: { en: "Αγγλικά", de: "Γερμανικά", es: "Ισπανικά", el: "Ελληνικά", sv: "Σουηδικά", da: "Δανικά", it: "Ιταλικά", pt: "Πορτογαλικά", nl: "Ολλανδικά", fi: "Φινλανδικά", nb: "Νορβηγικά Μποκμάλ", uk: "Ουκρανικά", fr: "Γαλλικά" },
+  nl: { en: "Engels", de: "Duits", es: "Spaans", el: "Grieks", sv: "Zweeds", da: "Deens", it: "Italiaans", pt: "Portugees", nl: "Nederlands", fi: "Fins", nb: "Noors - Bokmål", uk: "Oekraïens", fr: "Frans" },
+  sv: { en: "Engelska", de: "Tyska", es: "Spanska", el: "Grekiska", sv: "Svenska", da: "Danska", it: "Italienska", pt: "Portugisiska", nl: "Nederländska", fi: "Finska", nb: "Norskt bokmål", uk: "Ukrainska", fr: "Franska" },
+  da: { en: "Engelsk", de: "Tysk", es: "Spansk", el: "Græsk", sv: "Svensk", da: "Dansk", it: "Italiensk", pt: "Portugisisk", nl: "Nederlandsk", fi: "Finsk", nb: "Norsk bokmål", uk: "Ukrainsk", fr: "Fransk" },
+  fi: { en: "Englanti", de: "Saksa", es: "Espanja", el: "Kreikka", sv: "Ruotsi", da: "Tanska", it: "Italia", pt: "Portugali", nl: "Hollanti", fi: "Suomi", nb: "Norjan bokmål", uk: "Ukraina", fr: "Ranska" },
+  nb: { en: "Engelsk", de: "Tysk", es: "Spansk", el: "Gresk", sv: "Svensk", da: "Dansk", it: "Italiensk", pt: "Portugisisk", nl: "Nederlandsk", fi: "Finsk", nb: "Norsk bokmål", uk: "Ukrainsk", fr: "Fransk" },
+  uk: { en: "Англійська", de: "Німецька", es: "Іспанська", el: "Грецька", sv: "Шведська", da: "Данська", it: "Італійська", pt: "Португальська", nl: "Нідерландська", fi: "Фінська", nb: "Норвезька (букмол)", uk: "Українська", fr: "Французька" },
+  fr: { en: "Anglais", de: "Allemand", es: "Espagnol", el: "Grec", sv: "Suédois", da: "Danois", it: "Italien", pt: "Portugais", nl: "Néerlandais", fi: "Finnois", nb: "Norvégien bokmål", uk: "Ukrainien", fr: "Français" },
 } as const satisfies Record<DisplayLanguage, Record<SupportedLanguage, string>>;
 
 export const REGION_DISPLAY_NAMES = {
-  en: { GB: "United Kingdom", DE: "Germany", IT: "Italy", ES: "Spain", PT: "Portugal", GR: "Greece", NL: "Netherlands", SE: "Sweden", DK: "Denmark", FI: "Finland", NO: "Norway" },
-  de: { GB: "Vereinigtes Königreich", DE: "Deutschland", IT: "Italien", ES: "Spanien", PT: "Portugal", GR: "Griechenland", NL: "Niederlande", SE: "Schweden", DK: "Dänemark", FI: "Finnland", NO: "Norwegen" },
-  it: { GB: "Regno Unito", DE: "Germania", IT: "Italia", ES: "Spagna", PT: "Portogallo", GR: "Grecia", NL: "Paesi Bassi", SE: "Svezia", DK: "Danimarca", FI: "Finlandia", NO: "Norvegia" },
-  es: { GB: "Reino Unido", DE: "Alemania", IT: "Italia", ES: "España", PT: "Portugal", GR: "Grecia", NL: "Países Bajos", SE: "Suecia", DK: "Dinamarca", FI: "Finlandia", NO: "Noruega" },
-  pt: { GB: "Reino Unido", DE: "Alemanha", IT: "Itália", ES: "Espanha", PT: "Portugal", GR: "Grécia", NL: "Países Baixos", SE: "Suécia", DK: "Dinamarca", FI: "Finlândia", NO: "Noruega" },
-  el: { GB: "Ηνωμένο Βασίλειο", DE: "Γερμανία", IT: "Ιταλία", ES: "Ισπανία", PT: "Πορτογαλία", GR: "Ελλάδα", NL: "Κάτω Χώρες", SE: "Σουηδία", DK: "Δανία", FI: "Φινλανδία", NO: "Νορβηγία" },
-  nl: { GB: "Verenigd Koninkrijk", DE: "Duitsland", IT: "Italië", ES: "Spanje", PT: "Portugal", GR: "Griekenland", NL: "Nederland", SE: "Zweden", DK: "Denemarken", FI: "Finland", NO: "Noorwegen" },
-  sv: { GB: "Storbritannien", DE: "Tyskland", IT: "Italien", ES: "Spanien", PT: "Portugal", GR: "Grekland", NL: "Nederländerna", SE: "Sverige", DK: "Danmark", FI: "Finland", NO: "Norge" },
-  da: { GB: "Storbritannien", DE: "Tyskland", IT: "Italien", ES: "Spanien", PT: "Portugal", GR: "Grækenland", NL: "Nederlandene", SE: "Sverige", DK: "Danmark", FI: "Finland", NO: "Norge" },
-  fi: { GB: "Iso-Britannia", DE: "Saksa", IT: "Italia", ES: "Espanja", PT: "Portugali", GR: "Kreikka", NL: "Alankomaat", SE: "Ruotsi", DK: "Tanska", FI: "Suomi", NO: "Norja" },
-  nb: { GB: "Storbritannia", DE: "Tyskland", IT: "Italia", ES: "Spania", PT: "Portugal", GR: "Hellas", NL: "Nederland", SE: "Sverige", DK: "Danmark", FI: "Finland", NO: "Norge" },
-  fr: { GB: "Royaume-Uni", DE: "Allemagne", IT: "Italie", ES: "Espagne", PT: "Portugal", GR: "Grèce", NL: "Pays-Bas", SE: "Suède", DK: "Danemark", FI: "Finlande", NO: "Norvège" },
+  en: { GB: "United Kingdom", DE: "Germany", IT: "Italy", ES: "Spain", PT: "Portugal", GR: "Greece", NL: "Netherlands", SE: "Sweden", DK: "Denmark", FI: "Finland", NO: "Norway", UA: "Ukraine" },
+  de: { GB: "Vereinigtes Königreich", DE: "Deutschland", IT: "Italien", ES: "Spanien", PT: "Portugal", GR: "Griechenland", NL: "Niederlande", SE: "Schweden", DK: "Dänemark", FI: "Finnland", NO: "Norwegen", UA: "Ukraine" },
+  it: { GB: "Regno Unito", DE: "Germania", IT: "Italia", ES: "Spagna", PT: "Portogallo", GR: "Grecia", NL: "Paesi Bassi", SE: "Svezia", DK: "Danimarca", FI: "Finlandia", NO: "Norvegia", UA: "Ucraina" },
+  es: { GB: "Reino Unido", DE: "Alemania", IT: "Italia", ES: "España", PT: "Portugal", GR: "Grecia", NL: "Países Bajos", SE: "Suecia", DK: "Dinamarca", FI: "Finlandia", NO: "Noruega", UA: "Ucrania" },
+  pt: { GB: "Reino Unido", DE: "Alemanha", IT: "Itália", ES: "Espanha", PT: "Portugal", GR: "Grécia", NL: "Países Baixos", SE: "Suécia", DK: "Dinamarca", FI: "Finlândia", NO: "Noruega", UA: "Ucrânia" },
+  el: { GB: "Ηνωμένο Βασίλειο", DE: "Γερμανία", IT: "Ιταλία", ES: "Ισπανία", PT: "Πορτογαλία", GR: "Ελλάδα", NL: "Κάτω Χώρες", SE: "Σουηδία", DK: "Δανία", FI: "Φινλανδία", NO: "Νορβηγία", UA: "Ουκρανία" },
+  nl: { GB: "Verenigd Koninkrijk", DE: "Duitsland", IT: "Italië", ES: "Spanje", PT: "Portugal", GR: "Griekenland", NL: "Nederland", SE: "Zweden", DK: "Denemarken", FI: "Finland", NO: "Noorwegen", UA: "Oekraïne" },
+  sv: { GB: "Storbritannien", DE: "Tyskland", IT: "Italien", ES: "Spanien", PT: "Portugal", GR: "Grekland", NL: "Nederländerna", SE: "Sverige", DK: "Danmark", FI: "Finland", NO: "Norge", UA: "Ukraina" },
+  da: { GB: "Storbritannien", DE: "Tyskland", IT: "Italien", ES: "Spanien", PT: "Portugal", GR: "Grækenland", NL: "Nederlandene", SE: "Sverige", DK: "Danmark", FI: "Finland", NO: "Norge", UA: "Ukraine" },
+  fi: { GB: "Iso-Britannia", DE: "Saksa", IT: "Italia", ES: "Espanja", PT: "Portugali", GR: "Kreikka", NL: "Alankomaat", SE: "Ruotsi", DK: "Tanska", FI: "Suomi", NO: "Norja", UA: "Ukraina" },
+  nb: { GB: "Storbritannia", DE: "Tyskland", IT: "Italia", ES: "Spania", PT: "Portugal", GR: "Hellas", NL: "Nederland", SE: "Sverige", DK: "Danmark", FI: "Finland", NO: "Norge", UA: "Ukraina" },
+  uk: { GB: "Велика Британія", DE: "Німеччина", IT: "Італія", ES: "Іспанія", PT: "Португалія", GR: "Греція", NL: "Нідерланди", SE: "Швеція", DK: "Данія", FI: "Фінляндія", NO: "Норвегія", UA: "Україна" },
+  fr: { GB: "Royaume-Uni", DE: "Allemagne", IT: "Italie", ES: "Espagne", PT: "Portugal", GR: "Grèce", NL: "Pays-Bas", SE: "Suède", DK: "Danemark", FI: "Finlande", NO: "Norvège", UA: "Ukraine" },
 } as const satisfies Record<DisplayLanguage, Record<DisplayRegion, string>>;
 
 function displayLanguage(locale: string): DisplayLanguage {

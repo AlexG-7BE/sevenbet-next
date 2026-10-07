@@ -75,6 +75,83 @@ test("legacy BCP-47 and market paths migrate directly to language canonicals", (
   }
 });
 
+// UKRAINIAN-LANGUAGE-2026-10-07: in Ukraine the country decides the language before the browser does.
+test("a visitor in Ukraine opens Ukrainian whatever the browser asks for, unless they chose a language", () => {
+  for (const acceptLanguage of ["ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7", "en-US,en;q=0.9", "uk-UA,uk;q=0.9", "de-DE", null]) {
+    const result = resolvePresentationContext({ trustedCountryCode: "UA", acceptLanguage });
+    assert.equal(result.language, "uk", String(acceptLanguage));
+    assert.equal(result.locale, "uk-UA", String(acceptLanguage));
+    assert.equal(result.source, "TRUSTED_GEO", String(acceptLanguage));
+    assert.equal(result.market?.countryCode, "UA");
+    assert.equal(result.marketDisplayName, "Україна");
+  }
+  const chosen = resolvePresentationContext({ preference: { language: "en" }, trustedCountryCode: "UA", acceptLanguage: "uk-UA" });
+  assert.equal(chosen.language, "en");
+  assert.equal(chosen.source, "USER_PREFERENCE");
+  const explicit = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "UA", acceptLanguage: "uk-UA" });
+  assert.equal(explicit.language, "en");
+  assert.equal(explicit.source, "EXPLICIT_ROUTE");
+  assert.equal(explicit.market?.countryCode, "UA");
+
+  // Every other market keeps the browser language first.
+  const sweden = resolvePresentationContext({ trustedCountryCode: "SE", acceptLanguage: "en-US,en;q=0.9" });
+  assert.equal(sweden.language, "en");
+  assert.equal(sweden.source, "ACCEPT_LANGUAGE");
+  // Ukrainian outside Ukraine follows the browser, like any language.
+  const abroad = resolvePresentationContext({ trustedCountryCode: "PL", acceptLanguage: "uk-UA,uk;q=0.9,pl;q=0.8" });
+  assert.equal(abroad.language, "uk");
+  assert.equal(abroad.source, "ACCEPT_LANGUAGE");
+  assert.equal(abroad.market, null);
+});
+
+test("Ukrainian lives at /uk, and the country-shaped addresses reach it in one hop", async () => {
+  assert.equal(languageRouteByPublicSlug("uk")?.defaultLocale, "uk-UA");
+  assert.equal(languageRouteByPublicSlug("uk")?.published, true);
+  assert.equal(languageRouteByPublicSlug("uk")?.indexable, true);
+  for (const path of ["/uk", "/uk/casinos", "/uk/bonuses", "/uk/best-offers", "/uk/learn", "/uk/10-steps", "/uk/help", "/uk/responsible-gambling", "/uk/wagering-calculator"]) {
+    const result = parsePublicMarketRoute(path);
+    assert.equal(result.kind, "CANONICAL_LOCALE", path);
+    if (result.kind === "CANONICAL_LOCALE") {
+      assert.equal(result.locale, "uk-UA", path);
+      assert.equal(result.market.countryCode, "UA", path);
+    }
+  }
+  for (const [path, canonical] of [
+    ["/ua", "/uk"],
+    ["/ua/casinos", "/uk/casinos"],
+    ["/uk-ua/bonuses", "/uk/bonuses"],
+    ["/ua/help", "/uk/help"],
+  ] as const) {
+    const result = parsePublicMarketRoute(path);
+    assert.equal(result.kind, "LEGACY_MARKET_ROUTE", path);
+    if (result.kind === "LEGACY_MARKET_ROUTE") assert.equal(result.canonicalPath, canonical, path);
+  }
+  const programme = await middleware(new NextRequest("http://127.0.0.1:4173/ua/program"));
+  assert.equal(programme.status, 308);
+  assert.equal(new URL(programme.headers.get("location") ?? "http://invalid").pathname, "/uk/program");
+
+  const previous = { vercel: process.env.VERCEL, vercelEnv: process.env.VERCEL_ENV, secret: process.env.BETTER_AUTH_SECRET };
+  process.env.BETTER_AUTH_SECRET = "ukraine-language-first-test-secret";
+  process.env.VERCEL = "1";
+  process.env.VERCEL_ENV = "production";
+  try {
+    for (const path of ["/", "/casinos", "/help"]) {
+      const negotiated = await middleware(new NextRequest(`https://b4gamble.com${path}`, {
+        headers: { "accept-language": "ru-RU,ru;q=0.9,en;q=0.8", "x-vercel-ip-country": "UA" },
+      }));
+      assert.equal(negotiated.status, 307, path);
+      assert.equal(new URL(negotiated.headers.get("location") ?? "http://invalid").pathname, path === "/" ? "/uk" : `/uk${path}`, path);
+    }
+    const canonical = await middleware(new NextRequest("https://b4gamble.com/uk/casinos", { headers: { "x-vercel-ip-country": "UA" } }));
+    assert.equal(canonical.status, 200);
+    assert.equal(canonical.headers.get("content-language"), "uk-UA");
+  } finally {
+    if (previous.secret === undefined) delete process.env.BETTER_AUTH_SECRET; else process.env.BETTER_AUTH_SECRET = previous.secret;
+    if (previous.vercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = previous.vercel;
+    if (previous.vercelEnv === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previous.vercelEnv;
+  }
+});
+
 test("legacy redirects are permanent, one-hop, strip country and preserve safe query", async () => {
   const response = await middleware(new NextRequest("http://127.0.0.1:4173/es-pe/casinos?country=PE&sort=score"));
   assert.equal(response.status, 308);

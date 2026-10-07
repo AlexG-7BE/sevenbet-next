@@ -31,6 +31,14 @@ export type PresentationResolution = Readonly<{
   neutralRouteLocale?: SupportedLocale;
 }>;
 
+/**
+ * Markets where the country decides the language before the browser does (Founder, 7 Oct 2026):
+ * a visitor in Ukraine opens the Ukrainian site whatever their browser is set to, because many
+ * browsers there ask for Russian or English. An explicit language address and a language the
+ * visitor picked themselves still come first.
+ */
+const GEO_LANGUAGE_FIRST_MARKETS: ReadonlySet<string> = new Set(["UA"]);
+
 function normalizedCountryCode(value: string | null | undefined) {
   const normalized = value?.trim().toUpperCase() ?? "";
   return /^[A-Z]{2}$/.test(normalized) ? normalized : null;
@@ -70,6 +78,7 @@ const worldwideReadersLabel: Readonly<Record<SupportedLanguage, string>> = {
   nl: "lezers wereldwijd",
   fi: "koko maailma",
   nb: "lesere over hele verden",
+  uk: "читачі з усього світу",
   fr: "les lecteurs du monde entier",
 };
 
@@ -109,8 +118,10 @@ export function resolvePresentationContext(input: {
     : null;
   const acceptedLanguage = acceptedLanguages(input.acceptLanguage)[0] ?? null;
   const geoLanguage = market ? languageForLocale(market.defaultLocale) : null;
+  const geoFirstLanguage = market && GEO_LANGUAGE_FIRST_MARKETS.has(market.countryCode) ? geoLanguage : null;
   const language = explicitLanguage?.language
     ?? preferredLanguage
+    ?? geoFirstLanguage
     ?? acceptedLanguage
     ?? geoLanguage
     ?? "en";
@@ -118,11 +129,13 @@ export function resolvePresentationContext(input: {
     ? "EXPLICIT_ROUTE" as const
     : preferredLanguage
       ? "USER_PREFERENCE" as const
-      : acceptedLanguage
-        ? "ACCEPT_LANGUAGE" as const
-        : geoLanguage
-          ? "TRUSTED_GEO" as const
-          : "DEFAULT" as const;
+      : geoFirstLanguage
+        ? "TRUSTED_GEO" as const
+        : acceptedLanguage
+          ? "ACCEPT_LANGUAGE" as const
+          : geoLanguage
+            ? "TRUSTED_GEO" as const
+            : "DEFAULT" as const;
 
   return {
     market,

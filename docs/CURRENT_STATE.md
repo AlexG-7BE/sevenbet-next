@@ -12,6 +12,52 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Ukrainian language and the Ukraine market — in review
+
+**Founder instruction, 7 October 2026:** add Ukrainian to the site so that it
+opens in Ukrainian in Ukraine. Founder answers through the question tool the
+same day: the address is `b4gamble.com/uk` (a language section like `/sv`, not
+a separate host), and the release goes straight to Production and to search.
+Decision record:
+[UKRAINIAN-LANGUAGE-2026-10-07](07_Decisions/UKRAINIAN-LANGUAGE-2026-10-07.md).
+
+- **Twelfth published language.** `uk` / `uk-UA` at `/uk`, published and
+  indexable, with reciprocal hreflang (`en`, `de`, `sv`, `da`, `uk`,
+  `x-default`) and its core pages, reviews and `/uk/program` in the sitemap.
+  `/ua`, `/ua/…`, `/uk-ua/…` and `/ua/program` answer one 308 to the `/uk`
+  address.
+- **Ukraine is a market profile** (`UA`, "Україна", `UAH`). For a visitor whose
+  trusted country is `UA` the country decides the language before the browser
+  does, so an unprefixed address opens `/uk…` even from a browser set to
+  Russian or English. An explicit language address and a language picked in
+  the menu still come first. No other market changed its order.
+- **Everything is translated:** header, footer, Home, product pages, Learn hub,
+  static pages, wagering calculator (hryvnia examples), cookie choice, errors,
+  the whole Programme catalogue and its ten Missions, and casino review text
+  and offer terms through the exact-English-source catalog that serves
+  sv/da/de. Counts follow the Ukrainian one/few/many forms
+  (`countNoun` takes an optional `few`). The microphone Permissions-Policy
+  covers `/uk/program`.
+- **Help and Responsible Gambling in Ukrainian with Ukrainian resources.**
+  `UA` joined the governed safety markets with an evidence profile read on
+  7 October 2026 from the State Agency of Ukraine PlayCity's own pages
+  (restriction application, hotline, prevention phone, help directory,
+  self-test). The safety page shows that date for Ukraine.
+- **No commercial change.** **DETECTED, 7 October 2026:** from a Ukrainian exit
+  `/api/public/bonuses` returns 26 published offers, every `action` null. A
+  visitor from Ukraine reads offers without a partner button until partner
+  routes for Ukraine are opened by a separate decision.
+- **Not in this release:** Learn guides in Ukrainian (the hub is Ukrainian and
+  opens guides in English), Cyrillic brand fonts (Archivo and Instrument Serif
+  ship Latin only, so Ukrainian text uses the system fallback), and a `/uk`
+  entry in the Production smoke (to be added once `/uk` is live, so the smoke
+  cannot alert during the deploy window).
+
+Translations are machine translated with both bounded automated language QA
+reports passed for `uk-UA`; that is not native-speaker or legal review.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Navigation feedback, instant navigation, dark loading frame, lighter heroes — in review
 
 **Founder report, 4 October 2026:** opening Casinos, Bonuses or Best Offers

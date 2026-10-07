@@ -14,10 +14,11 @@
     "pt-PT",
     "nl-NL",
     "fi-FI",
-    "nb-NO"
+    "nb-NO",
+    "uk-UA"
   ],
   "checkedCatalogueKeys": 679,
-  "catalogDigest": "a9a3dbb79df87449cb0ce29c554c2f7fa08e12437d40b1da18ebfcd8d6f07345",
+  "catalogDigest": "c56642f2c4ebae72c5e9b6bdefc54791e7d0682126ab7d1f794656077e3739d3",
   "status": "AI_LANGUAGE_QA_PASSED",
   "userOwnedContentPolicy": "EXCLUDED_FROM_SYSTEM_COPY_LEAKAGE_CHECKS_AND_PRESERVED_VERBATIM",
   "locales": [
@@ -243,6 +244,28 @@
     },
     {
       "locale": "nb-NO",
+      "status": "PASS",
+      "checkedStrings": 699,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_TRANSLATIONS": "PASS",
+        "UNTRANSLATED_SOURCE_KEYS": "PASS",
+        "INTERPOLATION_INTEGRITY": "PASS",
+        "OBVIOUS_ENGLISH_SYSTEM_COPY_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "PROTECTED_NAME_INTEGRITY": "PASS",
+        "SEMANTIC_IDENTIFIER_SEPARATION": "PASS",
+        "ESTABLISHED_TERMINOLOGY_CONSISTENCY": "PASS",
+        "LOCALE_ORTHOGRAPHY": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "NO_COMMERCIAL_RECOMMENDATION_SEMANTICS": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "uk-UA",
       "status": "PASS",
       "checkedStrings": 699,
       "checks": {

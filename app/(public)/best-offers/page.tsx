@@ -146,7 +146,7 @@ async function BestOffersContent({ raw }: { raw: Record<string, string | string[
       <div className={styles.heroMeta}>
         <p className={styles.heroCopy}>{hero.copy}</p>
         <div className={styles.heroTicker}>
-          {result.records.length ? <span><strong>{result.records.length}</strong><small>{countNoun(presentation.locale, result.records.length, copy.offerOne, copy.offerOther)}</small></span> : null}
+          {result.records.length ? <span><strong>{result.records.length}</strong><small>{countNoun(presentation.locale, result.records.length, copy.offerOne, copy.offerOther, copy.offerFew)}</small></span> : null}
           <Link href={productHref(presentation, "/methodology")}>{messages.bestOffers.rankingLink}</Link>
         </div>
       </div>

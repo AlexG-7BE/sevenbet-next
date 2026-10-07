@@ -10,7 +10,7 @@ export type MarketEvidenceRecord = Readonly<{
   authority: string;
   title: string;
   url: string;
-  reviewedAt: "2026-09-03";
+  reviewedAt: "2026-09-03" | "2026-10-07";
   nextReviewAt: string;
   classification: EvidenceClassification;
   materialFact: string;
@@ -47,8 +47,10 @@ export type FirstWaveSafetyCopy = Readonly<{
 
 export type FirstWaveMarketEvidenceProfile = Readonly<{
   market: FirstWaveMarketCode;
-  locale: Extract<SupportedLocale, "de-DE" | "es-ES" | "sv-SE" | "da-DK" | "el-GR" | "es-PE">;
+  locale: Extract<SupportedLocale, "de-DE" | "es-ES" | "sv-SE" | "da-DK" | "el-GR" | "es-PE" | "uk-UA">;
   authorityName: string;
+  /** The day the evidence was read, as the page shows it; unset for the profiles reviewed with the first wave. */
+  evidenceReviewedOn?: string;
   evidenceState: "EVIDENCE_FOUNDATION_REVIEWED_NOT_LEGAL_APPROVAL";
   commercialState: "NOT_VERIFIED_FAIL_CLOSED";
   promotionalCopyReview: "REQUIRED";
@@ -66,6 +68,11 @@ function evidence(input: Omit<MarketEvidenceRecord, "reviewedAt" | "classificati
 
 function peruEvidence(input: Omit<MarketEvidenceRecord, "reviewedAt" | "classification">): MarketEvidenceRecord {
   return { ...input, reviewedAt, classification: "DETECTED" };
+}
+
+/** Read on the State Agency's own pages on 7 October 2026 for the Ukrainian release. */
+function ukraineEvidence(input: Omit<MarketEvidenceRecord, "reviewedAt" | "classification">): MarketEvidenceRecord {
+  return { ...input, reviewedAt: "2026-10-07", classification: "DETECTED" };
 }
 
 export const FIRST_WAVE_MARKET_EVIDENCE = {
@@ -226,6 +233,92 @@ export const FIRST_WAVE_MARKET_EVIDENCE = {
       nonCommercial: "Esta página no contiene operadores, bonos ni acciones de afiliación.",
       disclaimer: "B4GAMBLE no es MINCETUR ni un proveedor de tratamiento. Revisa el alcance, el servicio y la privacidad directamente con cada entidad.",
       urgent: "Si existe un peligro inmediato, contacta con los servicios de emergencia locales. B4GAMBLE no es un servicio clínico ni de emergencias.",
+    },
+  },
+  UA: {
+    market: "UA",
+    locale: "uk-UA",
+    authorityName: "Державне агентство України ПлейСіті (PlayCity)",
+    evidenceReviewedOn: "07-10-2026",
+    evidenceState: "EVIDENCE_FOUNDATION_REVIEWED_NOT_LEGAL_APPROVAL",
+    commercialState: "NOT_VERIFIED_FAIL_CLOSED",
+    promotionalCopyReview: "REQUIRED",
+    terminology: [
+      "Use азартні ігри for gambling and відповідальна гра for responsible gambling, as the State Agency does.",
+      "Name the register exactly: Реєстр осіб, яким обмежено доступ до гральних закладів та/або участь в азартних іграх.",
+      "The agency's phone lines are regulator contacts; never present them as counselling or treatment.",
+    ],
+    resources: [
+      {
+        kind: "SELF_EXCLUSION",
+        name: "Заява на обмеження участі в азартних іграх",
+        provider: "Державне агентство України ПлейСіті",
+        url: "https://pc.gov.ua/",
+        attribution: "Онлайн-заява про самообмеження або про обмеження для близької людини; людину вносять до Реєстру осіб, яким обмежено доступ до гральних закладів та/або участь в азартних іграх.",
+      },
+      {
+        kind: "SUPPORT",
+        name: "Безкоштовна гаряча лінія ПлейСіті",
+        provider: "Державне агентство України ПлейСіті",
+        url: "https://playcity.gov.ua/kontakty",
+        phone: "0 800 100 065",
+        attribution: "Лінія державного агентства, а не служба психологічного консультування; години роботи перевір на сайті агентства.",
+      },
+      {
+        kind: "SUPPORT",
+        name: "Запобігання ігровій залежності",
+        provider: "Державне агентство України ПлейСіті",
+        url: "https://playcity.gov.ua/kontakty",
+        phone: "(044) 363-89-75",
+        attribution: "Телефон підрозділу агентства із запобігання ігровій залежності; ел. пошта rg@playcity.gov.ua.",
+      },
+      {
+        kind: "TREATMENT_DIRECTORY",
+        name: "Де отримати допомогу",
+        provider: "Державне агентство України ПлейСіті",
+        url: "https://playcity.gov.ua/borotba-z-ihrovoiu-zalezhnistiu",
+        attribution: "Переліки закладів охорони здоров'я, центрів соціальної допомоги та громадських організацій. За даними агентства, медична і психологічна допомога в державних і комунальних закладах безоплатна.",
+      },
+      {
+        kind: "INFORMATION",
+        name: "Тест на ігрову залежність",
+        provider: "Державне агентство України ПлейСіті",
+        url: "https://playcity.gov.ua/borotba-z-ihrovoiu-zalezhnistiu/test-na-ihrovu-zalezhnist",
+        attribution: "Дев'ять запитань для самооцінки ризику. Результати тесту не є медичним діагнозом.",
+      },
+      {
+        kind: "INFORMATION",
+        name: "Відповідальна гра",
+        provider: "Державне агентство України ПлейСіті",
+        url: "https://playcity.gov.ua/vidpovidalna-hra",
+        attribution: "Офіційне пояснення обов'язків організаторів азартних ігор: ідентифікація гравця, недопуск осіб з обмеженим доступом, заборона заохочень на випадок програшу.",
+      },
+    ],
+    evidence: [
+      ukraineEvidence({ id: "ua-playcity", authority: "PlayCity", title: "Державне агентство України ПлейСіті", url: "https://playcity.gov.ua/", nextReviewAt: "2027-04-07", materialFact: "The State Agency of Ukraine PlayCity is the gambling and lottery regulator and publishes citizen sections on responsible gambling and on preventing gambling addiction.", applicability: "Market evidence context only; not operator approval and not B4GAMBLE commercial authority." }),
+      ukraineEvidence({ id: "ua-self-restriction", authority: "PlayCity", title: "Заява на обмеження", url: "https://pc.gov.ua/", nextReviewAt: "2027-01-07", materialFact: "The agency's portal accepts an online restriction application for oneself or for another person.", applicability: "Ukrainian Help and Responsible Gambling presentation; the restriction period and sign-in method are not asserted." }),
+      ukraineEvidence({ id: "ua-register", authority: "PlayCity", title: "Відповідальна гра", url: "https://playcity.gov.ua/vidpovidalna-hra", nextReviewAt: "2027-04-07", materialFact: "Operators must identify players against the Register of persons restricted from gambling venues and/or gambling, must not admit restricted persons and must not offer incentives for losses.", applicability: "Register name and operator duties as the agency states them; no claim about any exact operator." }),
+      ukraineEvidence({ id: "ua-prevention", authority: "PlayCity", title: "Попередження ігрової залежності", url: "https://playcity.gov.ua/borotba-z-ihrovoiu-zalezhnistiu", nextReviewAt: "2027-01-07", materialFact: "The agency states that people losing control over gambling are entitled to free medical and psychological help in state and communal healthcare institutions, and links directories of facilities, social centres and public organisations.", applicability: "Directory link only; B4GAMBLE names no single treatment provider." }),
+      ukraineEvidence({ id: "ua-self-test", authority: "PlayCity", title: "Тест на ігрову залежність", url: "https://playcity.gov.ua/borotba-z-ihrovoiu-zalezhnistiu/test-na-ihrovu-zalezhnist", nextReviewAt: "2027-04-07", materialFact: "The agency publishes a nine-question risk self-assessment and states that its result is not a medical diagnosis.", applicability: "External information resource; B4GAMBLE makes no diagnosis." }),
+      ukraineEvidence({ id: "ua-contacts", authority: "PlayCity", title: "Контакти", url: "https://playcity.gov.ua/kontakty", nextReviewAt: "2027-01-07", materialFact: "The agency publishes a free hotline, (0800) 100-065, a gambling-addiction-prevention phone, (044) 363-89-75, and the address rg@playcity.gov.ua.", applicability: "Phone numbers and address only; opening hours are intentionally not copied, and the lines are not presented as counselling." }),
+    ],
+    copy: {
+      eyebrow: "Контроль і підтримка",
+      helpTitle: "Допомога, відокремлена від комерційного вмісту.",
+      helpLead: "Перевірені офіційні українські ресурси: самообмеження, підтримка та інформація.",
+      responsibleTitle: "Відповідальна гра",
+      responsibleLead: "Практична інформація про контроль, самообмеження та підтримку — без діагнозів і без пропозицій.",
+      resourcesTitle: "Перевірені зовнішні ресурси",
+      selfExclusionTitle: "Самообмеження",
+      supportTitle: "Підтримка і допомога",
+      informationTitle: "Офіційна інформація",
+      reviewedLabel: "Джерела перевірено",
+      sourceLabel: "Джерело",
+      externalLabel: "Відкрити зовнішній сайт",
+      unavailable: "Перевіреного місцевого ресурсу немає.",
+      nonCommercial: "На цій сторінці немає операторів азартних ігор, бонусів і партнерських посилань.",
+      disclaimer: "B4GAMBLE не є регулятором і не надає лікування чи консультацій. Умови послуг і правила конфіденційності перевіряй безпосередньо в кожної установи.",
+      urgent: "Якщо є безпосередня небезпека, телефонуй 112 або 103. B4GAMBLE не є ні екстреною, ні клінічною службою.",
     },
   },
 } as const satisfies Record<FirstWaveMarketCode, FirstWaveMarketEvidenceProfile>;

@@ -33,4 +33,5 @@ export const CASINO_EDITORIAL_NATIVE_TEXT: Readonly<Record<CasinoEditorialLangua
     "Max. Einsatz 10 % des Bonus / 5 €",
     "1 € Einsatzlimit pro Spin (GlüStV)",
   ],
+  uk: [],
 };

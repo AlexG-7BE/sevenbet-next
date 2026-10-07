@@ -21,6 +21,7 @@ const productionLocales = [
   "nl-NL",
   "fi-FI",
   "nb-NO",
+  "uk-UA",
 ] as const;
 
 test("published locale routes activate all production-ready translations without granting market, legal, or evidence approval", () => {

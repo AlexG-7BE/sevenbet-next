@@ -38,6 +38,7 @@ const requirements: Record<FirstWaveMarketCode, readonly FirstWaveCommercialRequ
   SE: common,
   DK: common,
   GR: [...common, "HGC_AFFILIATE_SUITABILITY_REQUIRED"],
+  UA: common,
 };
 
 function satisfied(requirement: FirstWaveCommercialRequirement, evidence: FirstWaveCommercialEvidence) {
