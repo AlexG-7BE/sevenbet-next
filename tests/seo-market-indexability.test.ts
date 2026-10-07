@@ -7,6 +7,7 @@ import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-
 import { coreRoutes } from "../lib/site";
 import {
   INDEXABLE_MARKET_PROFILES,
+  LANGUAGE_ROUTE_PROFILES,
   MARKET_PUBLICATION_POLICY,
   marketIndexingApproved,
   marketProfileByCountry,
@@ -14,7 +15,7 @@ import {
 } from "../lib/market/registry";
 import { localizedProductIndexingApproved, productLanguageAlternatesForProfiles, productMetadata } from "../lib/market/product-context";
 import { PROGRAMME_ROUTES } from "../lib/programme/presentation";
-import { finalPublicHref } from "../lib/market/routing";
+import { finalPublicHref, neutralRouteDestination, parsePublicMarketRoute } from "../lib/market/routing";
 import { neutralRouteLocale } from "../lib/market/neutral-route";
 import { currentProgrammeCopy } from "../lib/i18n/static-pages/ten-steps";
 import { programmeSearchMetadata } from "../lib/seo/programme-metadata";
@@ -198,6 +199,33 @@ test("an unprefixed public link resolves past the neutral redirect, everything e
     assert.equal(finalPublicHref(href, "de-DE"), href, href);
   }
   assert.equal(finalPublicHref("/casinos", undefined), "/casinos");
+});
+
+// 7 Oct 2026: `/help` answered 307 → `/it/help`, a 404. Help and Responsible Gambling exist only in
+// the languages with verified local safety evidence; every other language gets the English page.
+test("an unprefixed link never resolves to a language route that does not exist", () => {
+  const unprefixed = ["/", "/casinos", "/bonuses", "/best-offers", "/learn", "/10-steps", "/faq", "/compare", "/help", "/responsible-gambling"];
+  for (const language of LANGUAGE_ROUTE_PROFILES) {
+    for (const locale of language.localeVariants) {
+      for (const pathname of unprefixed) {
+        const destination = neutralRouteDestination(pathname, locale);
+        assert.equal(parsePublicMarketRoute(destination).kind, "CANONICAL_LOCALE", `${locale} ${pathname} -> ${destination}`);
+        assert.equal(finalPublicHref(pathname, locale), destination, `${locale} ${pathname}`);
+      }
+    }
+  }
+  for (const locale of ["it-IT", "pt-PT", "nl-NL", "fi-FI", "nb-NO"] as const) {
+    assert.equal(finalPublicHref("/help", locale), "/en/help", locale);
+    assert.equal(finalPublicHref("/help#pause", locale), "/en/help#pause", locale);
+    assert.equal(finalPublicHref("/responsible-gambling", locale), "/en/responsible-gambling", locale);
+    // Only the two safety pages fall back; the rest of the language route is untouched.
+    assert.equal(finalPublicHref("/casinos", locale), `/${locale.split("-")[0]}/casinos`, locale);
+  }
+  // A language with verified local safety evidence keeps its own Help page.
+  for (const [locale, prefix] of [["de-DE", "de"], ["es-ES", "es"], ["es-PE", "es"], ["sv-SE", "sv"], ["da-DK", "da"], ["el-GR", "el"], ["uk-UA", "uk"], ["en-GB", "en"]] as const) {
+    assert.equal(finalPublicHref("/help", locale), `/${prefix}/help`, locale);
+    assert.equal(finalPublicHref("/responsible-gambling", locale), `/${prefix}/responsible-gambling`, locale);
+  }
 });
 
 test("the neutral redirect and page links share one locale resolution", () => {
