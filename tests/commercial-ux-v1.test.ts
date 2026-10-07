@@ -317,6 +317,12 @@ test("catalogue counts and headings use plain words in every locale", () => {
   const fi = commercialUxMessages("fi-FI");
   assert.equal(countNoun("fi-FI", 8, fi.offerOne, fi.offerOther), "tarjousta");
   assert.equal(countNoun("fi-FI", 1, fi.casinoOne, fi.casinoOther), "kasino");
+  // Ukrainian counts one/few/many.
+  const uk = commercialUxMessages("uk-UA");
+  for (const [count, noun] of [[1, "пропозиція"], [3, "пропозиції"], [5, "пропозицій"], [21, "пропозиція"], [22, "пропозиції"], [26, "пропозицій"]] as const) {
+    assert.equal(countNoun("uk-UA", count, uk.offerOne, uk.offerOther, uk.offerFew), noun, String(count));
+  }
+  assert.equal(countNoun("en-GB", 3, "offer", "offers", undefined), "offers");
   assert.equal(commercialUxMessages("de-DE").casinoOther, "Anbieter", "German copy names operators Anbieter");
   for (const locale of catalogueLocales) {
     const copy = commercialUxMessages(locale);
@@ -338,8 +344,8 @@ test("catalogue counts and headings use plain words in every locale", () => {
   assert.match(best, /<h2><EmphasisTail text=\{messages\.bestOffers\.methodTitle\} \/><\/h2>/);
   assert.doesNotMatch(best, /eligibleRecords|<h2>\{messages\.common\.materialTerms\} ·|"How we choose"/);
   assert.match(best, /href=\{productHref\(presentation, "\/methodology"\)\}>\{messages\.common\.reviewMethodology\}/, "the methodology link stays");
-  assert.match(best, /countNoun\(presentation\.locale, result\.records\.length, copy\.offerOne, copy\.offerOther\)/);
-  assert.match(bonuses, /\{result\.total\} \{countNoun\(presentation\.locale, result\.total, copy\.offerOne, copy\.offerOther\)\}/);
+  assert.match(best, /countNoun\(presentation\.locale, result\.records\.length, copy\.offerOne, copy\.offerOther, copy\.offerFew\)/);
+  assert.match(bonuses, /\{result\.total\} \{countNoun\(presentation\.locale, result\.total, copy\.offerOne, copy\.offerOther, copy\.offerFew\)\}/);
   assert.match(casinos, /\{result\.total\} \{countNoun\(presentation\.locale, result\.total, copy\.casinoOne, copy\.casinoOther\)\}/);
   for (const source of [bonuses, casinos]) assert.doesNotMatch(source, /messages\.common\.records/);
 });

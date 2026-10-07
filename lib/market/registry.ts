@@ -1,4 +1,4 @@
-export type MarketCode = "GB" | "DE" | "IT" | "ES" | "PE" | "PT" | "GR" | "NL" | "SE" | "DK" | "FI" | "NO" | "CA";
+export type MarketCode = "GB" | "DE" | "IT" | "ES" | "PE" | "PT" | "GR" | "NL" | "SE" | "DK" | "FI" | "NO" | "UA" | "CA";
 
 export type SupportedLocale =
   | "en-GB"
@@ -13,10 +13,11 @@ export type SupportedLocale =
   | "da-DK"
   | "fi-FI"
   | "nb-NO"
+  | "uk-UA"
   | "en-CA"
   | "fr-CA";
 
-export type SupportedLanguage = "en" | "de" | "es" | "el" | "sv" | "da" | "it" | "pt" | "nl" | "fi" | "nb" | "fr";
+export type SupportedLanguage = "en" | "de" | "es" | "el" | "sv" | "da" | "it" | "pt" | "nl" | "fi" | "nb" | "uk" | "fr";
 
 export type LanguageRouteProfile = Readonly<{
   language: SupportedLanguage;
@@ -54,6 +55,7 @@ export const MARKET_PUBLICATION_POLICY = {
   DK: { routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-09-27" },
   FI: { routable: true, published: false, indexable: false, indexabilityBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED", reviewedAt: "2026-09-03" },
   NO: { routable: true, published: false, indexable: false, indexabilityBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED", reviewedAt: "2026-09-03" },
+  UA: { routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-10-07" },
   CA: { routable: false, published: false, indexable: false, indexabilityBlocker: "ROUTE_AND_PUBLICATION_NOT_ENABLED", reviewedAt: "2026-09-03" },
 } as const satisfies Record<MarketCode, MarketPublicationPolicy>;
 
@@ -262,6 +264,21 @@ const profiles = [
     partnerReadinessNotes: "Localized editorial readiness does not imply commercial legality or referral authority.",
   },
   {
+    countryCode: "UA",
+    publication: MARKET_PUBLICATION_POLICY.UA,
+    routeMarket: "ua",
+    seoDisplayName: "Україна",
+    defaultLocale: "uk-UA",
+    supportedLocales: ["uk-UA"],
+    localeRoutes: [{ locale: "uk-UA", publicSlug: "uk-ua", enabled: true, defaultForMarket: true }],
+    currencyHints: ["UAH"],
+    editorialState: "LIVE_LOCALIZED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "ua",
+    partnerReadinessNotes: "Ukrainian language release (Founder, 7 Oct 2026); commercial authority remains separate.",
+  },
+  {
     countryCode: "CA",
     publication: MARKET_PUBLICATION_POLICY.CA,
     routeMarket: "ca",
@@ -300,6 +317,7 @@ export const LANGUAGE_ROUTE_PROFILES = [
   { language: "nl", publicSlug: "nl", defaultLocale: "nl-NL", localeVariants: ["nl-NL"], label: "Nederlands", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "fi", publicSlug: "fi", defaultLocale: "fi-FI", localeVariants: ["fi-FI"], label: "Suomi", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "nb", publicSlug: "nb", defaultLocale: "nb-NO", localeVariants: ["nb-NO"], label: "Norsk bokmål", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "uk", publicSlug: "uk", defaultLocale: "uk-UA", localeVariants: ["uk-UA"], label: "Українська", published: true, indexable: true, publicationBlocker: null },
   { language: "fr", publicSlug: "fr", defaultLocale: "fr-CA", localeVariants: ["fr-CA"], label: "Français", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
 ] as const satisfies readonly LanguageRouteProfile[];
 
@@ -318,12 +336,13 @@ export const INITIAL_EUROPEAN_MARKET_CODES = [
   "DK",
   "FI",
   "NO",
+  "UA",
 ] as const satisfies readonly MarketCode[];
 
-export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR", "PE"] as const satisfies readonly MarketCode[];
+export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR", "PE", "UA"] as const satisfies readonly MarketCode[];
 export type FirstWaveEvidenceMarketCode = typeof FIRST_WAVE_EVIDENCE_MARKET_CODES[number];
 
-export const FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES = ["DE", "ES", "PE", "SE", "DK", "GR"] as const satisfies readonly MarketCode[];
+export const FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES = ["DE", "ES", "PE", "SE", "DK", "GR", "UA"] as const satisfies readonly MarketCode[];
 export type FounderPublicationAcceptedMarketCode = typeof FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES[number];
 
 const initialEuropeanMarketCodes = new Set<MarketCode>(INITIAL_EUROPEAN_MARKET_CODES);

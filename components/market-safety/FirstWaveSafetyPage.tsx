@@ -81,7 +81,7 @@ export function FirstWaveSafetyPage({
       <aside className={styles.boundary} aria-label={profile.copy.resourcesTitle}>
         <div>
           <p className={styles.boundaryLabel}>{profile.copy.reviewedLabel}</p>
-          <strong>30-08-2026</strong>
+          <strong>{profile.evidenceReviewedOn ?? "30-08-2026"}</strong>
         </div>
         <div>
           <p className={styles.boundaryLabel}>{profile.copy.sourceLabel}</p>

@@ -73,4 +73,17 @@ export const PROFILE_FAQ_COPY: Readonly<Record<"en" | CasinoEditorialLanguage, P
     reviewWithoutActionQuestion: "Bleibt die Bewertung auch ohne Link zum Anbieter online?",
     reviewWithoutActionAnswer: "Ja. Die Bewertung und der Link zum Anbieter sind voneinander getrennt. Fehlt ein Link oder gilt er dort, wo du bist, nicht, bleibt die Bewertung trotzdem online.",
   },
+  uk: {
+    locale: "uk-UA",
+    licenceQuestion: (casinoName) => `Які дані про ліцензію опубліковано для ${casinoName}?`,
+    licenceChecked: (authority, checkedOn) => `В опублікованому профілі зазначено: ${authority}; дані перевірено ${checkedOn}. Ліцензія — це мінімальна вимога, а не гарантія того, що сайт тобі підійде, чи того, як складеться гра.`,
+    licenceUnchecked: (authority) => `В опублікованому профілі зазначено: ${authority}. Дату незалежної перевірки не опубліковано. Ліцензія — це мінімальна вимога, а не гарантія того, що сайт тобі підійде, чи того, як складеться гра.`,
+    wageringQuestion: "Які дані про вимоги до відіграшу опубліковано?",
+    wageringListed: (multiplier) => `Зазначено відіграш ${multiplier}×.`,
+    eligibilityQuestion: "Кого стосується опублікована пропозиція?",
+    withdrawalQuestion: "Які строки виведення коштів зазначено?",
+    withdrawalAnswer: (timings) => `${timings}. Опубліковані строки не є гарантією, і можуть знадобитися перевірки акаунта.`,
+    reviewWithoutActionQuestion: "Чи залишається огляд доступним без посилання на сайт?",
+    reviewWithoutActionAnswer: "Так. Огляд і посилання на сайт — це окремі речі. Якщо посилання немає або воно не діє там, де ти перебуваєш, огляд усе одно залишається.",
+  },
 };

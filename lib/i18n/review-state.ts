@@ -71,6 +71,7 @@ export const TRANSLATION_REVIEW_STATE = {
   "da-DK": firstWavePublicationAccepted,
   "fi-FI": publishedLocaleCoreReady,
   "nb-NO": publishedLocaleCoreReady,
+  "uk-UA": firstWavePublicationAccepted,
   "en-CA": architectureOnlyTranslated,
   "fr-CA": architectureOnlyTranslated,
 } as const satisfies Record<SupportedLocale, TranslationReviewState>;

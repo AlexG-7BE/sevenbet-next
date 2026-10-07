@@ -71,6 +71,8 @@ export type CommercialUxMessages = Readonly<{
   rankPrefix: string;
   /** Counted nouns for catalogue totals; pick one with countNoun(). */
   offerOne: string;
+  /** The form after 2–4 in languages that have one ("3 пропозиції"); the others leave it unset. */
+  offerFew?: string;
   offerOther: string;
   casinoOne: string;
   casinoOther: string;
@@ -168,6 +170,7 @@ const marketStateTranslations: Partial<Record<SupportedLocale, Pick<CommercialUx
   "fi-FI": { bestOffersMarketUnavailableTitle:"Tarjouksia ei ole vielä saatavilla markkinalla {market}.",bestOffersMarketUnavailableCopy:"Emme tällä hetkellä julkaise vahvistettuja kumppanitarjouksia tälle markkinalle.",bonusesMarketUnavailableTitle:"Kumppanien bonustarjouksia ei ole vielä saatavilla markkinalla {market}.",bonusesMarketUnavailableCopy:"Voit silti tutustua riippumattomiin kasinoarvioihimme." },
   "nb-NO": { bestOffersMarketUnavailableTitle:"Tilbud er ennå ikke tilgjengelige i {market}.",bestOffersMarketUnavailableCopy:"Vi publiserer for øyeblikket ingen verifiserte partnertilbud for dette markedet.",bonusesMarketUnavailableTitle:"Partnerbonustilbud er ennå ikke tilgjengelige i {market}.",bonusesMarketUnavailableCopy:"Du kan fortsatt lese våre uavhengige kasinoanmeldelser." },
   "fr-CA": { bestOffersMarketUnavailableTitle:"Les offres ne sont pas encore disponibles au {market}.",bestOffersMarketUnavailableCopy:"Nous ne publions actuellement aucune offre partenaire vérifiée pour ce marché.",bonusesMarketUnavailableTitle:"Les offres de bonus partenaires ne sont pas encore disponibles au {market}.",bonusesMarketUnavailableCopy:"Vous pouvez toujours consulter nos avis indépendants sur les casinos." },
+  "uk-UA": { bestOffersMarketUnavailableTitle:"{market}: пропозицій поки немає.",bestOffersMarketUnavailableCopy:"Наразі ми не публікуємо перевірених партнерських пропозицій для цього регіону.",bonusesMarketUnavailableTitle:"{market}: партнерських бонусних пропозицій поки немає.",bonusesMarketUnavailableCopy:"Ти все одно можеш переглянути наші незалежні огляди казино." },
 };
 
 const de: CommercialUxMessages = {
@@ -200,6 +203,7 @@ const translations: Partial<Record<SupportedLocale, CommercialUxMessages>> = {
   "nb-NO": { ...en, viewOffer:"SE TILBUD",bestOverall:"Best totalt",fastPayouts:"Raske utbetalinger",bestBonusTerms:"Beste bonusvilkår",lowDeposit:"Lavt innskudd",topRated:"Høyest vurdert",all:"Alle",welcome:"Velkomst",lowWagering:"Lavt omsetningskrav",freeSpins:"Gratisspinn",noDeposit:"Uten innskudd",notVerified:"Ikke verifisert",clearTerms:"Klare vilkår",searchCasinos:"Søk kasinoer",searchPlaceholder:"Kasinonavn",noSearchResults:"Ingen kasinonavn samsvarer med søket.",currentOffer:"Gjeldende tilbud",whyWeRate:"Derfor vurderer vi det",paymentsAndPayouts:"Betalinger og utbetalinger",support:"Kundestøtte",operatorMarketRegulation:"Operatør, marked og regulering",termsAndReview:"Vilkår og kasinoanmeldelse",terms:"Vilkår",casinoReview:"Kasinoanmeldelse",upTo:"opptil",spins:"spinn",selected:"valgt",offersShown:"tilbud vises",casinosShown:"kasinoer vises",licenceStatus:"Lisensstatus",market:"Marked",operator:"Operatør",supportLanguages:"Støttespråk",detailsRecorded:"Opplysninger registrert",playResponsibly:"Spill ansvarlig",getHelp:"Få hjelp",importantRestrictions:"Viktige begrensninger gjelder. Sjekk gjeldende vilkår.",methodologyAndSources:"Metode og kilder",verdictStrong:"Sterk helhet med tydelige beslutningsfakta.",verdictSolid:"Et solid vurdert alternativ med synlige vilkår.",verdictReviewed:"Et vurdert alternativ med tydelig viste mangler.",payoutInstant:"Straks",payoutUnderTwoHours:"Under 2 t",payoutSameDay:"Under 24 t",payoutOneDay:"24 t",payoutOneToTwoDays:"1–2 d",payoutThreePlusDays:"3+ d",verifiedPayoutTiming:"Utbetalingstid verifisert",verifiedOfferTerms:"Klare bonusvilkår",currentLicenceRecord:"Gjeldende lisensoppføring",compactDisclosure:"18+ · Vilkår gjelder · Affiliatelenke" },
   "el-GR": { ...en, viewOffer:"ΔΕΙΤΕ ΤΗΝ ΠΡΟΣΦΟΡΑ",bestOverall:"Καλύτερο συνολικά",fastPayouts:"Γρήγορες πληρωμές",bestBonusTerms:"Καλύτεροι όροι μπόνους",lowDeposit:"Χαμηλή κατάθεση",topRated:"Υψηλότερη βαθμολογία",all:"Όλα",welcome:"Καλωσορίσματος",lowWagering:"Χαμηλή απαίτηση",freeSpins:"Δωρεάν περιστροφές",noDeposit:"Χωρίς κατάθεση",notVerified:"Δεν επαληθεύτηκε",clearTerms:"Σαφείς όροι",searchCasinos:"Αναζήτηση καζίνο",searchPlaceholder:"Όνομα καζίνο",noSearchResults:"Κανένα όνομα καζίνο δεν ταιριάζει.",currentOffer:"Τρέχουσα προσφορά",whyWeRate:"Γιατί το αξιολογούμε",paymentsAndPayouts:"Πληρωμές και αναλήψεις",support:"Υποστήριξη",operatorMarketRegulation:"Πάροχος, αγορά και ρύθμιση",termsAndReview:"Όροι και αξιολόγηση",terms:"Όροι",casinoReview:"Αξιολόγηση καζίνο",upTo:"έως",spins:"περιστροφές",selected:"επιλεγμένο",offersShown:"προσφορές εμφανίζονται",casinosShown:"καζίνο εμφανίζονται",licenceStatus:"Κατάσταση άδειας",market:"Αγορά",operator:"Πάροχος",supportLanguages:"Γλώσσες υποστήριξης",detailsRecorded:"Στοιχεία καταγεγραμμένα",playResponsibly:"Παίξτε υπεύθυνα",getHelp:"Λάβετε βοήθεια",importantRestrictions:"Ισχύουν σημαντικοί περιορισμοί. Ελέγξτε τους τρέχοντες όρους.",methodologyAndSources:"Μεθοδολογία και πηγές",verdictStrong:"Ισχυρή συνολική εικόνα με σαφή στοιχεία απόφασης.",verdictSolid:"Μια σταθερή αξιολογημένη επιλογή με ορατούς όρους.",verdictReviewed:"Μια αξιολογημένη επιλογή με σαφώς εμφανή κενά.",payoutInstant:"Άμεσα",payoutUnderTwoHours:"Κάτω από 2 ώρες",payoutSameDay:"Κάτω από 24 ώρες",payoutOneDay:"24 ώρες",payoutOneToTwoDays:"1–2 ημέρες",payoutThreePlusDays:"3+ ημέρες",verifiedPayoutTiming:"Χρόνος πληρωμής επαληθευμένος",verifiedOfferTerms:"Σαφείς όροι μπόνους",currentLicenceRecord:"Τρέχον αρχείο άδειας",compactDisclosure:"18+ · Ισχύουν όροι · Σύνδεσμος συνεργάτη" },
   "fr-CA": { ...en, viewOffer:"VOIR L’OFFRE",bestOverall:"Meilleur choix global",fastPayouts:"Paiements rapides",bestBonusTerms:"Meilleures conditions",lowDeposit:"Dépôt faible",topRated:"Mieux notés",all:"Tous",welcome:"Bienvenue",lowWagering:"Mise faible",freeSpins:"Tours gratuits",noDeposit:"Sans dépôt",notVerified:"Non vérifié",clearTerms:"Conditions claires",searchCasinos:"Rechercher des casinos",searchPlaceholder:"Nom du casino",noSearchResults:"Aucun casino ne correspond à cette recherche.",currentOffer:"Offre actuelle",whyWeRate:"Pourquoi nous le notons",paymentsAndPayouts:"Paiements et retraits",support:"Assistance",operatorMarketRegulation:"Opérateur, marché et réglementation",termsAndReview:"Conditions et avis",terms:"Conditions",casinoReview:"Avis du casino",upTo:"jusqu’à",spins:"tours",selected:"sélectionné",offersShown:"offres affichées",casinosShown:"casinos affichés",licenceStatus:"État de la licence",market:"Marché",operator:"Opérateur",supportLanguages:"Langues d’assistance",detailsRecorded:"Détails consignés",playResponsibly:"Jouez de façon responsable",getHelp:"Obtenir de l’aide",importantRestrictions:"Des restrictions importantes s’appliquent. Vérifiez les conditions actuelles.",methodologyAndSources:"Méthodologie et sources",verdictStrong:"Solide bilan global avec des faits clairs pour décider.",verdictSolid:"Une option solide et examinée avec des conditions visibles.",verdictReviewed:"Une option examinée dont les lacunes sont clairement indiquées.",payoutInstant:"Instantané",payoutUnderTwoHours:"Moins de 2 h",payoutSameDay:"Moins de 24 h",payoutOneDay:"24 h",payoutOneToTwoDays:"1–2 j",payoutThreePlusDays:"3+ j",verifiedPayoutTiming:"Délai de paiement vérifié",verifiedOfferTerms:"Conditions de bonus claires",currentLicenceRecord:"Dossier de licence actuel",compactDisclosure:"18+ · Conditions applicables · Lien affilié" },
+  "uk-UA": { ...en, viewOffer:"ПЕРЕГЛЯНУТИ ПРОПОЗИЦІЮ",bestOverall:"Найкращі загалом",fastPayouts:"Швидкі виплати",bestBonusTerms:"Найкращі умови бонусу",lowDeposit:"Малий депозит",topRated:"Найвищі оцінки",all:"Усі",welcome:"Вітальний бонус",lowWagering:"Низький відіграш",freeSpins:"Безкоштовні обертання",cashback:"Кешбек",noDeposit:"Без депозиту",notVerified:"Не перевірено",clearTerms:"Зрозумілі умови",searchCasinos:"Пошук казино",searchPlaceholder:"Назва казино",noSearchResults:"Казино з такою назвою не знайдено.",currentOffer:"Актуальна пропозиція",whyWeRate:"Чому така оцінка",paymentsAndPayouts:"Платежі та виплати",support:"Підтримка",operatorMarketRegulation:"Оператор, регіон і регулювання",termsAndReview:"Умови та огляд казино",terms:"Умови",casinoReview:"Огляд казино",upTo:"до",spins:"обертань",selected:"вибрано",offersShown:"показано",casinosShown:"казино показано",licenceStatus:"Статус ліцензії",market:"Регіон",operator:"Оператор",supportLanguages:"Мови підтримки",detailsRecorded:"Дані зафіксовано",playResponsibly:"Грай відповідально",getHelp:"Отримати допомогу",importantRestrictions:"Діють важливі обмеження. Перевір актуальні умови.",methodologyAndSources:"Методологія та джерела",verdictStrong:"Сильні показники за всіма критеріями та зрозумілі факти для рішення.",verdictSolid:"Добрий варіант з оглядом, де видно корисні умови.",verdictReviewed:"Варіант з оглядом, де чітко показано основні прогалини.",payoutInstant:"Миттєво",payoutUnderTwoHours:"До 2 год",payoutSameDay:"До 24 год",payoutOneDay:"24 год",payoutOneToTwoDays:"1–2 дні",payoutThreePlusDays:"Від 3 днів",verifiedPayoutTiming:"Строки виплат перевірено",verifiedOfferTerms:"Зрозумілі умови бонусу",currentLicenceRecord:"Актуальні дані про ліцензію",compactDisclosure:"18+ · Діють умови · Партнерське посилання" },
 };
 
 export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessages {
@@ -216,6 +220,7 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "fi-FI": { minimumWithdrawal: "Vähimmäiskotiutus", fees: "Kulut" },
     "nb-NO": { minimumWithdrawal: "Minste uttak", fees: "Gebyrer" },
     "fr-CA": { minimumWithdrawal: "Retrait minimum", fees: "Frais" },
+    "uk-UA": { minimumWithdrawal: "Мінімальна сума виведення", fees: "Комісії" },
   };
   const globalRecordLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "licensedIn" | "nothingPublishedYet">>> = {
     "de-DE": { licensedIn: "Lizenziert in", nothingPublishedYet: "Diese Angaben haben wir für diesen Anbieter noch nicht veröffentlicht." },
@@ -230,6 +235,7 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "fi-FI": { licensedIn: "Lisensoitu maissa", nothingPublishedYet: "Emme ole vielä julkaisseet tätä tietoa tästä kasinosta." },
     "nb-NO": { licensedIn: "Lisensiert i", nothingPublishedYet: "Vi har ennå ikke publisert denne opplysningen om dette kasinoet." },
     "fr-CA": { licensedIn: "Sous licence en", nothingPublishedYet: "Nous n’avons pas encore publié ce détail pour ce casino." },
+    "uk-UA": { licensedIn: "Де ліцензовано", nothingPublishedYet: "Ми ще не опублікували ці дані про це казино." },
   };
   const heroMetricLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "publishedReviews" | "rankPrefix" | "partnerLinks" | "publishedOffers" | "filteredFor">>> = {
     "de-DE": { publishedReviews: "veröffentlichte Bewertungen", rankPrefix: "Nr.", partnerLinks: "Partnerlinks", publishedOffers: "veröffentlichte Angebote", filteredFor: "Gefiltert für {market}" },
@@ -244,6 +250,7 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "fi-FI": { publishedReviews: "julkaistua arviota", rankPrefix: "Nro", partnerLinks: "kumppanilinkkiä", publishedOffers: "julkaistua tarjousta", filteredFor: "Suodatettu: {market}" },
     "nb-NO": { publishedReviews: "publiserte anmeldelser", rankPrefix: "Nr.", partnerLinks: "partnerlenker", publishedOffers: "publiserte tilbud", filteredFor: "Filtrert for {market}" },
     "fr-CA": { publishedReviews: "avis publiés", rankPrefix: "No", partnerLinks: "liens partenaires", publishedOffers: "offres publiées", filteredFor: "Filtré pour {market}" },
+    "uk-UA": { publishedReviews: "опубліковано оглядів", rankPrefix: "№", partnerLinks: "партнерських посилань", publishedOffers: "опубліковано пропозицій", filteredFor: "Добірка: {market}" },
   };
   // A casino can keep its partner route while it has no offer to show (an
   // offer withheld for a disputed term, or a brand with no offer in this
@@ -263,10 +270,12 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "fi-FI": { visitCasino: "SIIRRY KASINOLLE", noCurrentOfferVisit: "Tervetuliaistarjousta ei ole juuri nyt. Voit silti vierailla kasinolla." },
     "nb-NO": { visitCasino: "BESØK KASINOET", noCurrentOfferVisit: "Ingen velkomsttilbud akkurat nå. Du kan fortsatt besøke kasinoet." },
     "fr-CA": { visitCasino: "VISITER LE CASINO", noCurrentOfferVisit: "Aucune offre de bienvenue pour le moment. Vous pouvez quand même visiter le casino." },
+    "uk-UA": { visitCasino: "ПЕРЕЙТИ ДО КАЗИНО", noCurrentOfferVisit: "Актуальної вітальної пропозиції немає. Ти все одно можеш перейти до казино." },
   };
   // Catalogue totals count what the reader sees — offers or casinos — never internal "records".
   // German copy names operators "Anbieter" (see german-terminology.ts); Finnish counts take the partitive.
-  const catalogueNouns: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "offerOne" | "offerOther" | "casinoOne" | "casinoOther">>> = {
+  // Ukrainian counts one/few/many ("1 пропозиція", "3 пропозиції", "5 пропозицій"); "казино" does not decline.
+  const catalogueNouns: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "offerOne" | "offerFew" | "offerOther" | "casinoOne" | "casinoOther">>> = {
     "de-DE": { offerOne: "Angebot", offerOther: "Angebote", casinoOne: "Anbieter", casinoOther: "Anbieter" },
     "it-IT": { offerOne: "offerta", offerOther: "offerte", casinoOne: "casinò", casinoOther: "casinò" },
     "es-ES": { offerOne: "oferta", offerOther: "ofertas", casinoOne: "casino", casinoOther: "casinos" },
@@ -279,11 +288,13 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "fi-FI": { offerOne: "tarjous", offerOther: "tarjousta", casinoOne: "kasino", casinoOther: "kasinoa" },
     "nb-NO": { offerOne: "tilbud", offerOther: "tilbud", casinoOne: "kasino", casinoOther: "kasinoer" },
     "fr-CA": { offerOne: "offre", offerOther: "offres", casinoOne: "casino", casinoOther: "casinos" },
+    "uk-UA": { offerOne: "пропозиція", offerFew: "пропозиції", offerOther: "пропозицій", casinoOne: "казино", casinoOther: "казино" },
   };
   return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}), ...(catalogueNouns[locale] ?? {}), ...(noOfferVisitLabels[locale] ?? {}) };
 }
 
 /** The singular or plural noun for a catalogue count, by the locale's own plural rules ("1 offer", "8 offers"). */
-export function countNoun(locale: SupportedLocale, count: number, one: string, other: string) {
-  return new Intl.PluralRules(locale).select(count) === "one" ? one : other;
+export function countNoun(locale: SupportedLocale, count: number, one: string, other: string, few?: string) {
+  const rule = new Intl.PluralRules(locale).select(count);
+  return rule === "one" ? one : rule === "few" ? few ?? other : other;
 }

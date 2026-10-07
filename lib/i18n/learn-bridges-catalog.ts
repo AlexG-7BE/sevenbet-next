@@ -92,6 +92,13 @@ const baseMessages = {
     casinoBridgeBody: "Prøv det du nettopp har lært mot kasinoene vi anmelder og vilkårene deres.",
     casinoBridgeLead: "Sammenlign kasinoene vi anmelder etter vilkårene deres",
   },
+  "uk-UA": {
+    offerBridgeBody: "Перевір щойно прочитане на актуальних пропозиціях та їхніх умовах.",
+    offerBridgeLead: "Порівняй актуальні бонуси за їхніми умовами",
+    casinoBridgeTitle: "Хочеш порівняти казино?",
+    casinoBridgeBody: "Перевір щойно прочитане на казино з наших оглядів та їхніх умовах.",
+    casinoBridgeLead: "Порівняй казино з наших оглядів за їхніми умовами",
+  },
 } as const satisfies Record<Exclude<SupportedLocale, "es-PE" | "en-CA" | "fr-CA">, LearnBridgeMessages>;
 
 const messages: Record<SupportedLocale, LearnBridgeMessages> = {

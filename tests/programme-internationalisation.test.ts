@@ -79,6 +79,7 @@ const expectedRoutes = [
   ["nl-NL", "nl", "/nl/program", "nl"],
   ["fi-FI", "fi", "/fi/program", "fi"],
   ["nb-NO", "nb", "/nb/program", "no"],
+  ["uk-UA", "uk", "/uk/program", "uk"],
 ] as const;
 
 const providerEnvelope = {
@@ -141,7 +142,7 @@ test("Programme presentation exposes exactly the Founder-approved locale and rou
   assert.equal(programmePathForPresentationLocale("fr-CA"), "/program");
 });
 
-test("Permissions Policy grants microphone access only on the eleven canonical Programme routes", async () => {
+test("Permissions Policy grants microphone access only on the twelve canonical Programme routes", async () => {
   const configUrl = new URL("../next.config.mjs", import.meta.url).href;
   const config = (await import(configUrl)).default as {
     headers: () => Promise<Array<{ source: string; headers: Array<{ key: string; value: string }> }>>;
@@ -329,6 +330,7 @@ test("multilingual provider-output safety rejects at least one prohibited claim 
     "nl-NL": "Je risicoscore is hoog.",
     "fi-FI": "Riskipisteet ovat korkeat.",
     "nb-NO": "Risikoscore er høy.",
+    "uk-UA": "Твій показник ризику високий.",
   };
   for (const locale of PROGRAMME_LOCALES) {
     assert.throws(
@@ -340,12 +342,12 @@ test("multilingual provider-output safety rejects at least one prohibited claim 
   assert.equal(assertSafeProgrammeGeneratedText("USER-OWNED-SENTINEL"), "USER-OWNED-SENTINEL");
 });
 
-test("the Programme catalogue passes the durable 11-locale AI language gate", () => {
+test("the Programme catalogue passes the durable 12-locale AI language gate", () => {
   const report = generateProgrammeLanguageQaReport();
   assert.equal(report.status, "AI_LANGUAGE_QA_PASSED");
   assert.deepEqual(report.supportedLocales, PROGRAMME_LOCALES);
   assert.ok(report.checkedCatalogueKeys > 500);
-  assert.equal(report.locales.length, 11);
+  assert.equal(report.locales.length, 12);
   for (const locale of report.locales) {
     assert.equal(locale.status, "PASS", `${locale.locale}: ${locale.findings.join("; ")}`);
     assert.ok(locale.checkedStrings > 500);

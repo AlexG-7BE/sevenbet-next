@@ -25,6 +25,7 @@ const legacyProgrammePaths: Partial<Record<SupportedLanguage, readonly string[]>
   da: ["/dk/program"],
   el: ["/gr/program"],
   nb: ["/no/program"],
+  uk: ["/ua/program"],
 };
 
 function isProgrammeCatalogLocale(locale: SupportedLocale): locale is ProgrammeLocale {
@@ -84,7 +85,7 @@ export function programmeTranscriptionLanguage(locale: ProgrammeLocale) {
 }
 
 const localizedHelpLocales = new Set<ProgrammeLocale>([
-  "de-DE", "es-ES", "sv-SE", "da-DK", "el-GR",
+  "de-DE", "es-ES", "sv-SE", "da-DK", "el-GR", "uk-UA",
 ]);
 
 export function programmeHelpPath(locale: ProgrammeLocale) {
