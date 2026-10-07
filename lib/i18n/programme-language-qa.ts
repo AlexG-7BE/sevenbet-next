@@ -67,6 +67,7 @@ const sourceEqualAllowlist: Readonly<Partial<Record<ProgrammeLocale, readonly st
   "fi-FI": ["{label}: {status}"],
   "nb-NO": ["Pause", "{label}: {status}"],
   "uk-UA": ["{label}: {status}"],
+  "ru-RU": ["{label}: {status}"],
 };
 
 const localeMarkers: Readonly<Record<Exclude<ProgrammeLocale, "en-GB">, string>> = {
@@ -81,6 +82,7 @@ const localeMarkers: Readonly<Record<Exclude<ProgrammeLocale, "en-GB">, string>>
   "fi-FI": "suojattu ohje",
   "nb-NO": "beskyttet hjelp",
   "uk-UA": "захищена допомога",
+  "ru-RU": "защищённая помощь",
 };
 
 const obviousEnglishSystemCopy = /\b(?:Loading your private Programme session|Programme page not found|This Programme page is unavailable|Return to My Programme|Open protected Help|Read Privacy Notice|Verifying access|Enter Mission|Start mission|Review mission|Resume mission|Current mission|Move up|Move down|Mission progress|Complete Mission|Log out of B4GAMBLE|Forgot password|Checking account|New here)\b/i;
@@ -98,6 +100,7 @@ const clinicalClaims: Readonly<Record<ProgrammeLocale, readonly RegExp[]>> = {
   "fi-FI": [/\bsinulla on peliriippuvuus\b/i, /\briskipisteesi on\b/i, /\bon turvallista pelata\b/i],
   "nb-NO": [/\bdu har spilleavhengighet\b/i, /\brisikoscoren din er\b/i, /\bdet er trygt å spille\b/i],
   "uk-UA": [/у тебе (?:ігрова залежність|розлад)/iu, /твій (?:бал|показник) ризику/iu, /безпечно грати|грати безпечно/iu],
+  "ru-RU": [/у тебя (?:игровая зависимость|расстройство)/iu, /тво[йя] (?:балл|показатель|оценка) риска/iu, /безопасно играть|играть безопасно/iu],
 };
 
 const commercialRecommendations: Readonly<Record<ProgrammeLocale, readonly RegExp[]>> = {
@@ -113,6 +116,7 @@ const commercialRecommendations: Readonly<Record<ProgrammeLocale, readonly RegEx
   "fi-FI": [/(?:suosittelemme|b4gamble suosittelee).*(?:kasino|peliyhtiö|bonus)/i],
   "nb-NO": [/\b(?:vi|b4gamble) anbefaler (?:et |en )?(?:kasino|casino|operatør|bonus)\b/i],
   "uk-UA": [/(?:ми радимо|ми рекомендуємо|b4gamble (?:радить|рекомендує)).*(?:казино|оператор|бонус)/iu],
+  "ru-RU": [/(?:мы советуем|мы рекомендуем|b4gamble (?:советует|рекомендует)).*(?:казино|оператор|бонус)/iu],
 };
 
 function placeholders(value: string) {

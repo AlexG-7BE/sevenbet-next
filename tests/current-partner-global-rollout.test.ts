@@ -137,8 +137,8 @@ test("fr-FR remains ungenerated and localized SEO remains independently review-g
   assert.ok(!MARKET_PROFILES.some((profile) => profile.supportedLocales.includes("fr-FR" as never)));
   assert.ok(!PUBLISHED_LANGUAGE_ROUTE_PROFILES.some((profile) => profile.defaultLocale === ("fr-FR" as never)));
   assert.ok(!PROGRAMME_LOCALES.includes("fr-FR" as never));
-  // SEO-INDEX-DE-SV-DA-2026-09-27 and UKRAINIAN-LANGUAGE-2026-10-07: the Founder opened these languages to search.
-  const founderIndexed = new Set(["de", "sv", "da", "uk"]);
+  // SEO-INDEX-DE-SV-DA-2026-09-27, UKRAINIAN-LANGUAGE-2026-10-07 and RUSSIAN-LANGUAGE-2026-10-07: the Founder opened these languages to search.
+  const founderIndexed = new Set(["de", "sv", "da", "uk", "ru"]);
   for (const profile of PUBLISHED_LANGUAGE_ROUTE_PROFILES.filter((item) => item.language !== "en")) {
     assert.equal(profile.indexable, founderIndexed.has(profile.language), profile.language);
     assert.equal(profile.publicationBlocker, founderIndexed.has(profile.language) ? null : "LOCAL_LEGAL_REVIEW_REQUIRED", profile.language);

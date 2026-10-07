@@ -12,6 +12,37 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Russian language — in review
+
+**Founder instruction, 7 October 2026:** after Ukrainian, translate the site
+into Russian as well. Decision record:
+[RUSSIAN-LANGUAGE-2026-10-07](07_Decisions/RUSSIAN-LANGUAGE-2026-10-07.md).
+
+- **Thirteenth published language.** `ru` / `ru-RU` at `/ru`, published and
+  indexable, with reciprocal hreflang (`en`, `de`, `sv`, `da`, `uk`, `ru`,
+  `x-default`) and its core pages, reviews and `/ru/program` in the sitemap.
+- **A language, not a market.** `RU` is the registry profile that anchors the
+  locale; it grants nothing commercial. Russian follows the browser language
+  from any country. Ukraine still opens Ukrainian first; a visitor there who
+  picks Russian in the menu keeps it.
+- **Everything is translated** the way Ukrainian is, including the Programme
+  and the casino review and offer-term catalog. The copy is country-neutral and
+  the wagering calculator's examples are in euros.
+- **No Russian Help page.** No Russian-language safety resource was read on an
+  official page, so Help and Responsible Gambling open at the English address
+  from Russian pages; the visitor's own country still decides which verified
+  resources are shown there.
+- **No commercial change.** Offers stay withheld in Russia
+  (`OFFER_PRESENTATION_PROHIBITED_MARKETS`) and Kazakhstan stays geo-blocked.
+- **Production smoke covers `/uk`.** The Ukrainian home joined the smoke's
+  language checks with this release, once `/uk` was live; `/ru` follows after
+  this release is live, so the smoke cannot alert during the deploy window.
+
+Translations are machine translated with both bounded automated language QA
+reports passed for `ru-RU`; that is not native-speaker or legal review.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Help and Responsible Gambling open in English where no local page exists — in review
 
 **DETECTED, Production, 7 October 2026** (Globalping, Milan and Helsinki):
@@ -41,7 +72,7 @@ Finnish or Norwegian; that still needs verified local safety evidence.
 Tests: `tests/geo-localization-routing.test.ts` (`internationalisation:test`)
 and `tests/seo-market-indexability.test.ts` (`commercial-platform:test`), both
 in `ci:quality`.
-## Ukrainian language and the Ukraine market — in review
+## Ukrainian language and the Ukraine market — live
 
 **Founder instruction, 7 October 2026:** add Ukrainian to the site so that it
 opens in Ukrainian in Ukraine. Founder answers through the question tool the
@@ -77,15 +108,20 @@ Decision record:
   visitor from Ukraine reads offers without a partner button until partner
   routes for Ukraine are opened by a separate decision.
 - **Not in this release:** Learn guides in Ukrainian (the hub is Ukrainian and
-  opens guides in English), Cyrillic brand fonts (Archivo and Instrument Serif
-  ship Latin only, so Ukrainian text uses the system fallback), and a `/uk`
-  entry in the Production smoke (to be added once `/uk` is live, so the smoke
-  cannot alert during the deploy window).
+  opens guides in English) and Cyrillic brand fonts (Archivo and Instrument
+  Serif ship Latin only, so Ukrainian text uses the system fallback). The
+  `/uk` entry in the Production smoke followed with the Russian release.
 
 Translations are machine translated with both bounded automated language QA
 reports passed for `uk-UA`; that is not native-speaker or legal review.
 
-**PROPOSED — NOT YET LIVE** until merged and deployed.
+**DETECTED — LIVE, 7 October 2026:** PR #462 merged as `0c4c1095` at 18:40 UTC
+and its Production deployment completed. From Ukrainian exits (Globalping,
+Kyiv and Khmelnytskyi): `/` answers `307 → /uk` with a Russian and with an
+English browser, `/casinos` answers `307 → /uk/casinos`, `/ua` answers
+`308 → /uk`, `/uk` and `/uk/help` answer 200 with `lang="uk-UA"`, and
+`/uk/help` carries the PlayCity resources. Great Britain and Sweden with an
+English browser still open `/en`; a Ukrainian browser in Poland opens `/uk`.
 
 ## Navigation feedback, instant navigation, dark loading frame, lighter heroes — in review
 

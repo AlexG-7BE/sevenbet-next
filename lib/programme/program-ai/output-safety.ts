@@ -59,6 +59,10 @@ export const PROGRAMME_OUTPUT_SAFETY_PATTERNS: Record<ProgrammeLocale, LocalePat
     clinicalOrSafety: [/діагно[зс]\p{L}*/iu, /(?:оцінк|показник|бал)\p{L}* ризику/iu, /безпечно грати/iu, /де грати/iu, /найбезпечніш\p{L}*/iu, /\bxp\b/i],
     commercialTerms: [/казино/iu, /оператор\p{L}*/iu, /бонус\p{L}*/iu],
   },
+  "ru-RU": {
+    clinicalOrSafety: [/диагно[зс]\p{L}*/iu, /(?:оценк|показател|балл)\p{L}* риска/iu, /безопасно играть/iu, /где играть/iu, /сам\p{L}+ безопасн\p{L}*/iu, /\bxp\b/i],
+    commercialTerms: [/казино/iu, /оператор\p{L}*/iu, /бонус\p{L}*/iu],
+  },
 };
 
 export function assertSafeProgrammeGeneratedText(

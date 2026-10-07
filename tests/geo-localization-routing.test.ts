@@ -152,6 +152,35 @@ test("Ukrainian lives at /uk, and the country-shaped addresses reach it in one h
   }
 });
 
+// RUSSIAN-LANGUAGE-2026-10-07: Russian follows the browser like every language; Ukraine keeps Ukrainian first.
+test("Russian lives at /ru, follows the browser language and never displaces Ukrainian in Ukraine", () => {
+  assert.equal(languageRouteByPublicSlug("ru")?.defaultLocale, "ru-RU");
+  assert.equal(languageRouteByPublicSlug("ru")?.published, true);
+  assert.equal(languageRouteByPublicSlug("ru")?.indexable, true);
+  for (const path of ["/ru", "/ru/casinos", "/ru/bonuses", "/ru/best-offers", "/ru/learn", "/ru/10-steps", "/ru/wagering-calculator"]) {
+    const result = parsePublicMarketRoute(path);
+    assert.equal(result.kind, "CANONICAL_LOCALE", path);
+    if (result.kind === "CANONICAL_LOCALE") assert.equal(result.locale, "ru-RU", path);
+  }
+  const legacy = parsePublicMarketRoute("/ru-ru/bonuses");
+  assert.equal(legacy.kind, "LEGACY_MARKET_ROUTE");
+  if (legacy.kind === "LEGACY_MARKET_ROUTE") assert.equal(legacy.canonicalPath, "/ru/bonuses");
+
+  for (const country of ["DE", "LV", "KG", "RU", null]) {
+    const result = resolvePresentationContext({ trustedCountryCode: country, acceptLanguage: "ru-RU,ru;q=0.9,en;q=0.8" });
+    assert.equal(result.language, "ru", String(country));
+    assert.equal(result.locale, "ru-RU", String(country));
+  }
+  const ukraine = resolvePresentationContext({ trustedCountryCode: "UA", acceptLanguage: "ru-RU,ru;q=0.9,en;q=0.8" });
+  assert.equal(ukraine.language, "uk");
+  const ukraineChoseRussian = resolvePresentationContext({ preference: { language: "ru" }, trustedCountryCode: "UA", acceptLanguage: "uk-UA" });
+  assert.equal(ukraineChoseRussian.language, "ru");
+  assert.equal(ukraineChoseRussian.source, "USER_PREFERENCE");
+  // The anchor profile grants no market: a Russian page read from Germany stays a German-market page.
+  const fromGermany = resolvePresentationContext({ routeLanguage: "ru", trustedCountryCode: "DE" });
+  assert.equal(fromGermany.market?.countryCode, "DE");
+});
+
 test("legacy redirects are permanent, one-hop, strip country and preserve safe query", async () => {
   const response = await middleware(new NextRequest("http://127.0.0.1:4173/es-pe/casinos?country=PE&sort=score"));
   assert.equal(response.status, 308);

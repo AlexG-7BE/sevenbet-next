@@ -79,6 +79,7 @@ const worldwideReadersLabel: Readonly<Record<SupportedLanguage, string>> = {
   fi: "koko maailma",
   nb: "lesere over hele verden",
   uk: "читачі з усього світу",
+  ru: "читатели со всего мира",
   fr: "les lecteurs du monde entier",
 };
 

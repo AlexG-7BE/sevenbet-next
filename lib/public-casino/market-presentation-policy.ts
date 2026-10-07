@@ -27,6 +27,7 @@ export const CASINO_MARKET_PRESENTATION_POLICIES = {
   FI: { market: "FI", reviewedAt: "2026-09-03", neutralGlobalIdentityAllowed: true, unknownExactMarketInformationAllowed: true, explicitUnavailableInformationAllowed: true },
   NO: { market: "NO", reviewedAt: "2026-09-03", neutralGlobalIdentityAllowed: true, unknownExactMarketInformationAllowed: true, explicitUnavailableInformationAllowed: true },
   UA: { market: "UA", reviewedAt: "2026-10-07", neutralGlobalIdentityAllowed: true, unknownExactMarketInformationAllowed: true, explicitUnavailableInformationAllowed: true },
+  RU: { market: "RU", reviewedAt: "2026-10-07", neutralGlobalIdentityAllowed: true, unknownExactMarketInformationAllowed: true, explicitUnavailableInformationAllowed: true },
   CA: { market: "CA", reviewedAt: "2026-09-03", neutralGlobalIdentityAllowed: true, unknownExactMarketInformationAllowed: true, explicitUnavailableInformationAllowed: true },
 } as const satisfies Record<MarketCode, CasinoMarketPresentationPolicy>;
 

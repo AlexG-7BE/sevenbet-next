@@ -324,7 +324,7 @@ test("the Programme is indexed only in the languages open to search", () => {
   assert.equal(spanish.alternates?.languages, undefined);
   const german = programmeSearchMetadata("de-DE", copy);
   assert.equal(german.robots, undefined);
-  assert.deepEqual(Object.keys(german.alternates?.languages ?? {}).sort(), ["da-DK", "de-DE", "en-GB", "sv-SE", "uk-UA", "x-default"]);
+  assert.deepEqual(Object.keys(german.alternates?.languages ?? {}).sort(), ["da-DK", "de-DE", "en-GB", "ru-RU", "sv-SE", "uk-UA", "x-default"]);
 });
 
 test("German and Danish product titles use the terms people search, stay country-free and short", () => {
@@ -485,13 +485,13 @@ test("IndexNow: a public key file, Production-only announcements and review URLs
   assert.equal(indexNowEnabled({ VERCEL_ENV: "production", INDEXNOW_DISABLED: "true" }), false);
   assert.equal(announceChangedUrls(casinoReviewUrls("betsson"), {}), false);
 
-  assert.deepEqual(casinoReviewUrls("betsson").map((url) => new URL(url).pathname), ["/en/casino/betsson", "/de/casino/betsson", "/sv/casino/betsson", "/da/casino/betsson", "/uk/casino/betsson"]);
+  assert.deepEqual(casinoReviewUrls("betsson").map((url) => new URL(url).pathname), ["/en/casino/betsson", "/de/casino/betsson", "/sv/casino/betsson", "/da/casino/betsson", "/uk/casino/betsson", "/ru/casino/betsson"]);
   assert.deepEqual(learnArticleUrls("casino-bonuses", "wagering-requirements").map((url) => new URL(url).pathname), ["/en/learn/casino-bonuses/wagering-requirements", "/en/learn"]);
 
   const payload = indexNowPayload([...casinoReviewUrls("betsson"), "https://elsewhere.example/page", casinoReviewUrls("betsson")[0]]);
   assert.equal(payload.key, INDEXNOW_KEY);
   assert.equal(payload.keyLocation, absoluteUrl(`/${INDEXNOW_KEY}.txt`));
-  assert.equal(payload.urlList.length, 5, "same host only, no duplicates");
+  assert.equal(payload.urlList.length, 6, "same host only, no duplicates");
 
   const sent: string[] = [];
   const fetchImpl = (async (url: string, init?: RequestInit) => {
@@ -500,7 +500,7 @@ test("IndexNow: a public key file, Production-only announcements and review URLs
   }) as unknown as typeof fetch;
   assert.deepEqual(await submitIndexNow(casinoReviewUrls("betsson"), { environment: { VERCEL_ENV: "preview" }, fetchImpl }), { submitted: 0, status: null });
   assert.equal(sent.length, 0);
-  assert.deepEqual(await submitIndexNow(casinoReviewUrls("betsson"), { environment: { VERCEL_ENV: "production" }, fetchImpl }), { submitted: 5, status: 202 });
+  assert.deepEqual(await submitIndexNow(casinoReviewUrls("betsson"), { environment: { VERCEL_ENV: "production" }, fetchImpl }), { submitted: 6, status: 202 });
   assert.match(sent[0], /^https:\/\/api\.indexnow\.org\/indexnow /);
 
   // Publishing hooks announce what changed.

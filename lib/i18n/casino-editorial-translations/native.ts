@@ -34,4 +34,5 @@ export const CASINO_EDITORIAL_NATIVE_TEXT: Readonly<Record<CasinoEditorialLangua
     "1 € Einsatzlimit pro Spin (GlüStV)",
   ],
   uk: [],
+  ru: [],
 };

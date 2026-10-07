@@ -9,6 +9,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder 21 Privés score på 7.4, at der er et link til casinoet?",
     de: "Bedeutet die Bewertung von 7.4 für 21 Privé, dass es einen Link zum Anbieter gibt?",
     uk: "Чи означає оцінка 21 Privé (7.4), що є посилання на сайт казино?",
+    ru: "Означает ли оценка 7.4 у 21 Privé, что ссылка для перехода доступна?",
   },
   // 21-prive, betsson, diamond7, dragonbet, gday-casino, hello-casino, skol-casino, slotnite
   {
@@ -17,6 +18,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Beviser en synlig knap til casinoet, at det er formelt godkendt i mit land?",
     de: "Beweist ein sichtbarer Button, dass der Anbieter in meinem Land offiziell zugelassen ist?",
     uk: "Чи є видима кнопка переходу до казино доказом офіційного схвалення в моїй країні?",
+    ru: "Доказывает ли видимая кнопка перехода в казино, что в моей стране есть официальное одобрение?",
   },
   // betsafe
   {
@@ -25,6 +27,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder Betsafes score, at B4GAMBLE kan sende mig videre til casinoet?",
     de: "Bedeutet die Bewertung von Betsafe, dass B4GAMBLE mich dorthin weiterleiten kann?",
     uk: "Чи означає оцінка Betsafe, що B4GAMBLE може перенаправити мене туди?",
+    ru: "Означает ли оценка Betsafe, что B4GAMBLE может направить меня туда?",
   },
   // betsson
   {
@@ -33,6 +36,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder Betssons score på 8.8, at der er et link til casinoet?",
     de: "Bedeutet die Bewertung von 8.8 für Betsson, dass es einen Link zum Anbieter gibt?",
     uk: "Чи означає оцінка Betsson (8.8), що є посилання на сайт казино?",
+    ru: "Означает ли оценка 8.8 у Betsson, что ссылка для перехода доступна?",
   },
   // diamond7
   {
@@ -41,6 +45,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder Diamond7s score på 7.9, at der er et link til casinoet?",
     de: "Bedeutet die Bewertung von 7.9 für Diamond7, dass es einen Link zum Anbieter gibt?",
     uk: "Чи означає оцінка Diamond7 (7.9), що є посилання на сайт казино?",
+    ru: "Означает ли оценка 7.9 у Diamond7, что ссылка для перехода доступна?",
   },
   // dragonbet
   {
@@ -49,6 +54,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder DragonBets score på 7.7, at der er et link til casinoet?",
     de: "Bedeutet die Bewertung von 7.7 für DragonBet, dass es einen Link zum Anbieter gibt?",
     uk: "Чи означає оцінка DragonBet (7.7), що є посилання на сайт казино?",
+    ru: "Означает ли оценка 7.7 у DragonBet, что ссылка для перехода доступна?",
   },
   // gday-casino
   {
@@ -57,6 +63,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder G'day Casinos score på 8.1, at der er et link til casinoet?",
     de: "Bedeutet die Bewertung von 8.1 für G'day Casino, dass es einen Link zum Anbieter gibt?",
     uk: "Чи означає оцінка G'day Casino (8.1), що є посилання на сайт казино?",
+    ru: "Означает ли оценка 8.1 у G'day Casino, что ссылка для перехода доступна?",
   },
   // hello-casino
   {
@@ -65,6 +72,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder Hello Casinos score på 8.3, at der er et link til casinoet?",
     de: "Bedeutet die Bewertung von 8.3 für Hello Casino, dass es einen Link zum Anbieter gibt?",
     uk: "Чи означає оцінка Hello Casino (8.3), що є посилання на сайт казино?",
+    ru: "Означает ли оценка 8.3 у Hello Casino, что ссылка для перехода доступна?",
   },
   // inkabet
   {
@@ -73,6 +81,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder Inkabets score, at B4GAMBLE kan sende mig videre til casinoet?",
     de: "Bedeutet die Bewertung von Inkabet, dass B4GAMBLE mich dorthin weiterleiten kann?",
     uk: "Чи означає оцінка Inkabet, що B4GAMBLE може перенаправити мене туди?",
+    ru: "Означает ли оценка Inkabet, что B4GAMBLE может направить меня туда?",
   },
   // nordicbet
   {
@@ -81,6 +90,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder NordicBets score, at B4GAMBLE kan sende mig videre til casinoet?",
     de: "Bedeutet die Bewertung von NordicBet, dass B4GAMBLE mich dorthin weiterleiten kann?",
     uk: "Чи означає оцінка NordicBet, що B4GAMBLE може перенаправити мене туди?",
+    ru: "Означает ли оценка NordicBet, что B4GAMBLE может направить меня туда?",
   },
   // rizk
   {
@@ -89,6 +99,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder Rizks score, at B4GAMBLE kan sende mig videre til casinoet?",
     de: "Bedeutet die Bewertung von Rizk, dass B4GAMBLE mich dorthin weiterleiten kann?",
     uk: "Чи означає оцінка Rizk, що B4GAMBLE може перенаправити мене туди?",
+    ru: "Означает ли оценка Rizk, что B4GAMBLE может направить меня туда?",
   },
   // skol-casino
   {
@@ -97,6 +108,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder Skol Casinos score på 8.4, at der er et link til casinoet?",
     de: "Bedeutet die Bewertung von 8.4 für Skol Casino, dass es einen Link zum Anbieter gibt?",
     uk: "Чи означає оцінка Skol Casino (8.4), що є посилання на сайт казино?",
+    ru: "Означает ли оценка 8.4 у Skol Casino, что ссылка для перехода доступна?",
   },
   // slotnite
   {
@@ -105,6 +117,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder Slotnites score på 7.2, at der er et link til casinoet?",
     de: "Bedeutet die Bewertung von 7.2 für Slotnite, dass es einen Link zum Anbieter gibt?",
     uk: "Чи означає оцінка Slotnite (7.2), що є посилання на сайт казино?",
+    ru: "Означает ли оценка 7.2 у Slotnite, что ссылка для перехода доступна?",
   },
   // starcasino
   {
@@ -113,6 +126,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder StarCasinos score, at B4GAMBLE kan sende mig videre til casinoet?",
     de: "Bedeutet die Bewertung von StarCasino, dass B4GAMBLE mich dorthin weiterleiten kann?",
     uk: "Чи означає оцінка StarCasino, що B4GAMBLE може перенаправити мене туди?",
+    ru: "Означает ли оценка StarCasino, что B4GAMBLE может направить меня туда?",
   },
   // supercasino
   {
@@ -121,6 +135,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Betyder SuperCasinos score, at B4GAMBLE kan sende mig videre til casinoet?",
     de: "Bedeutet die Bewertung von SuperCasino, dass B4GAMBLE mich dorthin weiterleiten kann?",
     uk: "Чи означає оцінка SuperCasino, що B4GAMBLE може перенаправити мене туди?",
+    ru: "Означает ли оценка SuperCasino, что B4GAMBLE может направить меня туда?",
   },
   // 21-prive, betsson, diamond7, dragonbet, gday-casino, hello-casino, skol-casino, slotnite
   {
@@ -129,6 +144,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Nej. Den redaktionelle bedømmelse og retten til at vise et kommercielt link er to adskilte ting. Anmeldelsen kan godt være offentlig, selv om knappen til casinoet ikke er tilgængelig.",
     de: "Nein. Die redaktionelle Bewertung und die Entscheidung, ob wir auf den Anbieter verlinken dürfen, sind voneinander getrennt. Dieser Testbericht kann öffentlich bleiben, auch wenn der Button nicht verfügbar ist.",
     uk: "Ні. Редакційна оцінка і право на комерційне посилання — окремі речі. Цей огляд може залишатися опублікованим, навіть коли кнопка переходу до казино недоступна.",
+    ru: "Нет. Редакционная оценка и право на коммерческую ссылку — разные вещи. Этот обзор может оставаться опубликованным, даже когда кнопка перехода в казино недоступна.",
   },
   // 21-prive, betsson, diamond7, dragonbet, gday-casino, hello-casino, skol-casino, slotnite
   {
@@ -137,6 +153,7 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Nej. At knappen er tilgængelig, betyder, at der findes et rigtigt, godkendt link, og at vi ikke har fundet noget, der blokerer det. Det er ikke en påstand om godkendelse fra en tilsynsmyndighed eller partner; de præcise lokale forhold vurderes særskilt.",
     de: "Nein. Ein verfügbarer Button bedeutet, dass es einen echten, geprüften Link zum Anbieter gibt und keine bekannte Sperre greift. Er ist keine Aussage über eine Genehmigung durch die Aufsichtsbehörde oder den Partner; die genauen Angaben für dein Land werden gesondert eingeordnet.",
     uk: "Ні. Наявність кнопки означає, що є справжнє перевірене посилання і що жодного відомого нам блокування немає. Це не твердження про схвалення регулятора чи партнера; точні місцеві відомості оцінюються окремо.",
+    ru: "Нет. Если кнопка показана, значит, есть настоящая контролируемая ссылка и не действует ни одно известное нам ограничение. Это не утверждение об одобрении регулятором или партнёром; точные местные данные оцениваются отдельно.",
   },
   // betsafe, inkabet, nordicbet, rizk, starcasino, supercasino
   {
@@ -145,5 +162,6 @@ export const FAQ_ENTRIES: readonly CasinoEditorialEntry[] = [
     da: "Nej. At vi offentliggør en anmeldelse, og om vi må sende dig videre til casinoet, er to uafhængige ting. Ethvert link videre til casinoet kræver særskilt godkendelse af både selve linket og retten til at bruge det i det pågældende land.",
     de: "Nein. Ob wir einen Testbericht veröffentlichen und ob wir auf den Anbieter weiterleiten dürfen, sind zwei unabhängige Fragen. Jede Weiterleitung erfordert einen eigens geprüften Link und eine gesonderte Freigabe für das jeweilige Land.",
     uk: "Ні. Редакційна публікація і право на комерційний перехід до казино не залежать одне від одного. Для будь-якого переходу потрібні окремі повноваження — і щодо самого посилання, і щодо конкретної юрисдикції.",
+    ru: "Нет. Редакционная публикация и право на коммерческий переход не зависят друг от друга. Для любого перехода в казино нужно отдельное разрешение — и для самой ссылки, и для конкретной страны.",
   },
 ];

@@ -322,6 +322,10 @@ test("catalogue counts and headings use plain words in every locale", () => {
   for (const [count, noun] of [[1, "пропозиція"], [3, "пропозиції"], [5, "пропозицій"], [21, "пропозиція"], [22, "пропозиції"], [26, "пропозицій"]] as const) {
     assert.equal(countNoun("uk-UA", count, uk.offerOne, uk.offerOther, uk.offerFew), noun, String(count));
   }
+  const ru = commercialUxMessages("ru-RU");
+  for (const [count, noun] of [[1, "предложение"], [3, "предложения"], [5, "предложений"], [21, "предложение"], [24, "предложения"], [26, "предложений"]] as const) {
+    assert.equal(countNoun("ru-RU", count, ru.offerOne, ru.offerOther, ru.offerFew), noun, String(count));
+  }
   assert.equal(countNoun("en-GB", 3, "offer", "offers", undefined), "offers");
   assert.equal(commercialUxMessages("de-DE").casinoOther, "Anbieter", "German copy names operators Anbieter");
   for (const locale of catalogueLocales) {

@@ -159,6 +159,18 @@ const baseMessages = {
     notNow: "Не зараз",
     error: "Не вдалося зберегти твій вибір. Спробуй ще раз.",
   },
+  "ru-RU": {
+    trigger: "Настройки cookie",
+    dialogLabel: "Настройки cookie",
+    title: "Файлы cookie: твой выбор",
+    body: "Мы используем собственные файлы cookie и Google Analytics, чтобы видеть, как пользуются B4GAMBLE.",
+    detail: "Твою электронную почту, ответы в Программе и партнёрские токены — никогда.",
+    privacyNotice: "Уведомление о конфиденциальности",
+    allow: "Принять cookie",
+    decline: "Отклонить cookie",
+    notNow: "Не сейчас",
+    error: "Не удалось сохранить твой выбор. Попробуй ещё раз.",
+  },
   "fr-CA": {
     trigger: "Paramètres des témoins",
     dialogLabel: "Paramètres des témoins",

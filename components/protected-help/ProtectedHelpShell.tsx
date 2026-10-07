@@ -13,6 +13,7 @@ const localizedShellCopy = {
   "da-DK": { skip: "Gå til hovedindhold", badge: "Beskyttet hjælp", help: "Hjælp", back: "Tilbage til siden", exit: "Forlad", privacy: "Privatliv", terms: "Vilkår", about: "Om os" },
   "el-GR": { skip: "Μετάβαση στο κύριο περιεχόμενο", badge: "Προστατευμένη βοήθεια", help: "Βοήθεια", back: "Επιστροφή στον ιστότοπο", exit: "Έξοδος", privacy: "Απόρρητο", terms: "Όροι", about: "Σχετικά" },
   "uk-UA": { skip: "Перейти до основного вмісту", badge: "Захищена допомога", help: "Допомога", back: "Повернутися на сайт", exit: "На сайт", privacy: "Конфіденційність", terms: "Умови", about: "Про нас" },
+  "ru-RU": { skip: "Перейти к основному содержанию", badge: "Защищённая помощь", help: "Помощь", back: "Вернуться на сайт", exit: "На сайт", privacy: "Конфиденциальность", terms: "Условия", about: "О нас" },
 } as const;
 
 export function protectedHelpShellCopy(profile?: FirstWaveMarketEvidenceProfile | null) {

@@ -20,7 +20,7 @@ import type { SupportedLocale } from "@/lib/market/registry";
 import { FIRST_WAVE_MARKET_EVIDENCE } from "@/lib/market/first-wave-evidence";
 
 export const EUROPEAN_MACHINE_TRANSLATED_LOCALES = [
-  "de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO", "uk-UA",
+  "de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO", "uk-UA", "ru-RU",
 ] as const satisfies readonly SupportedLocale[];
 
 export type EuropeanMachineTranslatedLocale = typeof EUROPEAN_MACHINE_TRANSLATED_LOCALES[number];
@@ -97,7 +97,7 @@ const localeMarkers: Record<EuropeanMachineTranslatedLocale, string> = {
   "es-PE": "juego responsable",
   "pt-PT": "jogo responsável", "el-GR": "υπεύθυνο παιχνίδι", "nl-NL": "verantwoord gokken", "sv-SE": "ansvarsfullt spel",
   "da-DK": "ansvarligt spil", "fi-FI": "vastuullinen pelaaminen", "nb-NO": "ansvarlig spill",
-  "uk-UA": "відповідальна гра",
+  "uk-UA": "відповідальна гра", "ru-RU": "ответственная игра",
 };
 const semanticTerms: Record<EuropeanMachineTranslatedLocale, Readonly<{ programme: RegExp; commercial: RegExp; clinical: RegExp; affiliate: RegExp; editorial: RegExp }>> = {
   "de-DE": { programme: /programm/i, commercial: /kommerziell/i, clinical: /klinisch/i, affiliate: /affiliate/i, editorial: /redaktionell/i },
@@ -112,6 +112,7 @@ const semanticTerms: Record<EuropeanMachineTranslatedLocale, Readonly<{ programm
   "fi-FI": { programme: /ohjelma/i, commercial: /kaupalli/i, clinical: /kliinis/i, affiliate: /kumppan/i, editorial: /toimituks/i },
   "nb-NO": { programme: /program/i, commercial: /kommer/i, clinical: /klinisk/i, affiliate: /affiliate/i, editorial: /redaksjon/i },
   "uk-UA": { programme: /програм/i, commercial: /комерц/i, clinical: /клініч/i, affiliate: /партнер/i, editorial: /редакц/i },
+  "ru-RU": { programme: /программ/i, commercial: /коммерч/i, clinical: /клинич/i, affiliate: /партн[её]р/i, editorial: /редакц/i },
 };
 const protectedNames = ["B4GAMBLE", "NHS", "NICE", "Editor Score"] as const;
 const internalRoutingLanguage: Record<EuropeanMachineTranslatedLocale, readonly RegExp[]> = {
@@ -127,6 +128,7 @@ const internalRoutingLanguage: Record<EuropeanMachineTranslatedLocale, readonly 
   "fi-FI": [/aina, kun sitä pyydetään/i, /toiminto pysyy suljettuna/i, /tälle pyynnölle/i, /rekisteröitymisreitti/i, /hallitun kaupallisen linkin/i, /Tuoteraja/i],
   "nb-NO": [/hver gang du ber om å fortsette/i, /handlingen stengt/i, /for denne forespørselen/i, /registreringsvei/i, /styrt registreringsrute/i, /styrt kommersiell lenke/i, /produktgrensen/i],
   "uk-UA": [/окрем\p{L}* дозв\p{L}* під час кожного запиту/iu, /передбачуван\p{L}* ді[яїй]/iu, /дії з пропозиці/iu, /дозволен\p{L}* маршрут\p{L}* реєстрації/iu, /керован\p{L}* маршрут\p{L}* реєстрації/iu, /керован\p{L}* комерційн\p{L}* посиланн/iu, /меж\p{L}* продукту/iu],
+  "ru-RU": [/отдельн\p{L}* разрешени\p{L}* при каждом запросе/iu, /предполагаем\p{L}* действи[яйе]/iu, /действия с предложени/iu, /разреш[её]нн\p{L}* маршрут\p{L}* регистрации/iu, /управляем\p{L}* маршрут\p{L}* регистрации/iu, /управляем\p{L}* коммерческ\p{L}* ссылк/iu, /границ\p{L}* продукта/iu],
 };
 
 function evaluateLocale(locale: EuropeanMachineTranslatedLocale, source: Record<string, string>): LanguageQaLocaleResult {
