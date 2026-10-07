@@ -51,7 +51,9 @@ jobs:
   build-browser:
     name: Build / Browser
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # The job ran 24–25 minutes with eleven languages (5 Oct 2026); every language adds
+    # iterations to the per-language browser specs.
+    timeout-minutes: 40
     container:
       image: mcr.microsoft.com/playwright:v1.61.1-noble
       options: --ipc=host
