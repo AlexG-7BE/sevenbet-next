@@ -47,15 +47,13 @@ test("GB, SE, DE, DK and PE expose one explicit routable/published/indexable pol
   assert.equal(MARKET_PUBLICATION_POLICY.PE.published, true);
   assert.equal(MARKET_PUBLICATION_POLICY.PE.indexable, false);
   assert.match(MARKET_PUBLICATION_POLICY.PE.indexabilityBlocker ?? "", /LEGAL_PRIVACY.*REAL_INVENTORY/);
-  // UKRAINIAN-LANGUAGE-2026-10-07: Ukraine opened to search with its language.
-  assert.deepEqual(MARKET_PUBLICATION_POLICY.UA, {
-    routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-10-07",
-  });
-  // RUSSIAN-LANGUAGE-2026-10-07: the profile that anchors Russian is indexable with its language.
-  assert.deepEqual(MARKET_PUBLICATION_POLICY.RU, {
-    routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-10-07",
-  });
-  assert.deepEqual(INDEXABLE_MARKET_PROFILES.map((market) => market.countryCode).sort(), ["DE", "DK", "GB", "RU", "SE", "UA"]);
+  // LANGUAGES-HIDDEN-2026-10-09: Ukrainian and Russian are withdrawn from the public site; their profiles are neither published nor indexable.
+  for (const market of ["UA", "RU"] as const) {
+    assert.deepEqual(MARKET_PUBLICATION_POLICY[market], {
+      routable: true, published: false, indexable: false, indexabilityBlocker: "LANGUAGE_WITHDRAWN_BY_FOUNDER", reviewedAt: "2026-10-09",
+    });
+  }
+  assert.deepEqual(INDEXABLE_MARKET_PROFILES.map((market) => market.countryCode).sort(), ["DE", "DK", "GB", "SE"]);
 });
 
 test("noindex languages keep self canonicals without contradictory hreflang", () => {
@@ -88,7 +86,7 @@ test("GB is indexable with canonical, reciprocal-ready hreflang, and an x-defaul
     assert.equal(new URL(languages.en).pathname, "/en/casinos");
     assert.equal(new URL(languages["x-default"]).pathname, "/en/casinos");
     assert.equal(new URL(languages.sv).pathname, "/sv/casinos");
-    assert.deepEqual(Object.keys(languages).sort(), ["da", "de", "en", "ru", "sv", "uk", "x-default"]);
+    assert.deepEqual(Object.keys(languages).sort(), ["da", "de", "en", "sv", "x-default"]);
   } finally {
     if (previous === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previous;
   }
@@ -180,7 +178,7 @@ test("every hreflang target is a page that answers 200: no unprefixed x-default"
 
 test("the sitemap lists the Programme in every language it indexes", () => {
   const localized = PROGRAMME_ROUTES.filter((route) => localizedProductIndexingApproved(route.locale)).map((route) => route.path);
-  assert.deepEqual([...localized].sort(), ["/da/program", "/de/program", "/ru/program", "/sv/program", "/uk/program"]);
+  assert.deepEqual([...localized].sort(), ["/da/program", "/de/program", "/sv/program"]);
   assert.match(readFileSync("app/sitemap.ts", "utf8"), /\.\.\.localizedProgrammeRoutes,/);
 });
 

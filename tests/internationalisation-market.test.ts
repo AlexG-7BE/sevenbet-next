@@ -151,7 +151,7 @@ test("initial market registry exposes the partner-readiness tranche without impl
     assert.equal(profile.commercialPresentationState, "AUTHORITY_REQUIRED");
   }
   assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "PE", "SE", "DK", "GR", "UA", "RU"]);
-  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "PE", "GR", "SE", "DK", "UA", "RU"]);
+  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "PE", "GR", "SE", "DK"]);
   for (const profile of MARKET_PROFILES) {
     const expected: "LIVE_BASELINE" | "LIVE_LOCALIZED" | "PREVIEW_LOCALIZED" | "LOCALIZATION_REQUIRED" = profile.countryCode === "GB"
       ? "LIVE_BASELINE"
@@ -170,10 +170,10 @@ test("initial market registry exposes the partner-readiness tranche without impl
   assert.equal(marketProfileByRouteMarket("SE")?.countryCode, "SE");
 });
 
-test("all thirteen European runtime profiles exist in their approved order", () => {
+test("all eleven European runtime profiles exist in their approved order", () => {
   assert.deepEqual(
     INITIAL_EUROPEAN_MARKET_PROFILES.map((profile) => `${profile.countryCode}:${profile.defaultLocale}`),
-    ["GB:en-GB", "DE:de-DE", "IT:it-IT", "ES:es-ES", "PT:pt-PT", "GR:el-GR", "NL:nl-NL", "SE:sv-SE", "DK:da-DK", "FI:fi-FI", "NO:nb-NO", "UA:uk-UA", "RU:ru-RU"],
+    ["GB:en-GB", "DE:de-DE", "IT:it-IT", "ES:es-ES", "PT:pt-PT", "GR:el-GR", "NL:nl-NL", "SE:sv-SE", "DK:da-DK", "FI:fi-FI", "NO:nb-NO"],
   );
 });
 
@@ -275,8 +275,8 @@ test("localized product links and canonicals preserve explicit presentation; onl
   assert.equal(productHref(presentation, "/methodology"), "/de/methodology");
   const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
   assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/de/casinos");
-  // SEO-INDEX-DE-SV-DA-2026-09-27: German is indexed and carries reciprocal hreflang; Ukrainian and Russian joined in October 2026.
-  assert.deepEqual(Object.keys(metadata.alternates?.languages ?? {}).sort(), ["da", "de", "en", "ru", "sv", "uk", "x-default"]);
+  // SEO-INDEX-DE-SV-DA-2026-09-27: German is indexed and carries reciprocal hreflang. LANGUAGES-HIDDEN-2026-10-09: Ukrainian and Russian are withdrawn.
+  assert.deepEqual(Object.keys(metadata.alternates?.languages ?? {}).sort(), ["da", "de", "en", "sv", "x-default"]);
   assert.equal(metadata.robots, undefined);
   assert.equal(metadata.openGraph && "locale" in metadata.openGraph ? metadata.openGraph.locale : null, "de_DE");
 
@@ -299,7 +299,7 @@ test("localized product links and canonicals preserve explicit presentation; onl
     robots: { index: true, follow: true },
   });
   assert.deepEqual(gbMetadata.robots, { index: true, follow: true }, "the approved English baseline must retain its data-driven indexing policy");
-  assert.deepEqual(Object.keys(gbMetadata.alternates?.languages ?? {}).sort(), ["da", "de", "en", "ru", "sv", "uk", "x-default"]);
+  assert.deepEqual(Object.keys(gbMetadata.alternates?.languages ?? {}).sort(), ["da", "de", "en", "sv", "x-default"]);
 
   const differentGeo = resolvePresentationContext({ routeLanguage: "de", trustedCountryCode: "NO" });
   const second = productMetadata({ presentation: differentGeo, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
@@ -350,8 +350,8 @@ test("localized Compare takes trusted market from its caller and never serialize
 });
 
 test("localized sitemap publication is review-gated and its market loader has no request-path GB literal", () => {
-  // SEO-INDEX-DE-SV-DA-2026-09-27, UKRAINIAN-LANGUAGE-2026-10-07 and RUSSIAN-LANGUAGE-2026-10-07: only the Founder-opened languages are indexed.
-  const indexed = new Set(["de-DE", "sv-SE", "da-DK", "uk-UA", "ru-RU"]);
+  // SEO-INDEX-DE-SV-DA-2026-09-27: only the Founder-opened launch languages are indexed. LANGUAGES-HIDDEN-2026-10-09: Ukrainian and Russian are withdrawn.
+  const indexed = new Set(["de-DE", "sv-SE", "da-DK"]);
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
     assert.equal(localizedProductIndexingApproved(profile.defaultLocale), indexed.has(profile.defaultLocale), profile.defaultLocale);
   }

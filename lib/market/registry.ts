@@ -56,8 +56,9 @@ export const MARKET_PUBLICATION_POLICY = {
   DK: { routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-09-27" },
   FI: { routable: true, published: false, indexable: false, indexabilityBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED", reviewedAt: "2026-09-03" },
   NO: { routable: true, published: false, indexable: false, indexabilityBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED", reviewedAt: "2026-09-03" },
-  UA: { routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-10-07" },
-  RU: { routable: true, published: true, indexable: true, indexabilityBlocker: null, reviewedAt: "2026-10-07" },
+  // LANGUAGES-HIDDEN-2026-10-09: Ukrainian and Russian are withdrawn from the public site; the profiles stay so the translations can return.
+  UA: { routable: true, published: false, indexable: false, indexabilityBlocker: "LANGUAGE_WITHDRAWN_BY_FOUNDER", reviewedAt: "2026-10-09" },
+  RU: { routable: true, published: false, indexable: false, indexabilityBlocker: "LANGUAGE_WITHDRAWN_BY_FOUNDER", reviewedAt: "2026-10-09" },
   CA: { routable: false, published: false, indexable: false, indexabilityBlocker: "ROUTE_AND_PUBLICATION_NOT_ENABLED", reviewedAt: "2026-09-03" },
 } as const satisfies Record<MarketCode, MarketPublicationPolicy>;
 
@@ -278,7 +279,7 @@ const profiles = [
     legalContentState: "LOCAL_REVIEW_REQUIRED",
     commercialPresentationState: "AUTHORITY_REQUIRED",
     helpResourceProfile: "ua",
-    partnerReadinessNotes: "Ukrainian language release (Founder, 7 Oct 2026); commercial authority remains separate.",
+    partnerReadinessNotes: "Ukrainian language release (Founder, 7 Oct 2026), withdrawn from the public site on 9 Oct 2026; commercial authority remains separate.",
   },
   {
     countryCode: "RU",
@@ -293,7 +294,7 @@ const profiles = [
     legalContentState: "LOCAL_REVIEW_REQUIRED",
     commercialPresentationState: "AUTHORITY_REQUIRED",
     helpResourceProfile: "ru",
-    partnerReadinessNotes: "Russian language release (Founder, 7 Oct 2026) for Russian-speaking readers worldwide; the profile anchors the language. Offers stay withheld in Russia (OFFER_PRESENTATION_PROHIBITED_MARKETS).",
+    partnerReadinessNotes: "Russian language release (Founder, 7 Oct 2026), withdrawn from the public site on 9 Oct 2026; the profile anchors the language. Offers stay withheld in Russia (OFFER_PRESENTATION_PROHIBITED_MARKETS).",
   },
   {
     countryCode: "CA",
@@ -334,8 +335,9 @@ export const LANGUAGE_ROUTE_PROFILES = [
   { language: "nl", publicSlug: "nl", defaultLocale: "nl-NL", localeVariants: ["nl-NL"], label: "Nederlands", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "fi", publicSlug: "fi", defaultLocale: "fi-FI", localeVariants: ["fi-FI"], label: "Suomi", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
   { language: "nb", publicSlug: "nb", defaultLocale: "nb-NO", localeVariants: ["nb-NO"], label: "Norsk bokmål", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
-  { language: "uk", publicSlug: "uk", defaultLocale: "uk-UA", localeVariants: ["uk-UA"], label: "Українська", published: true, indexable: true, publicationBlocker: null },
-  { language: "ru", publicSlug: "ru", defaultLocale: "ru-RU", localeVariants: ["ru-RU"], label: "Русский", published: true, indexable: true, publicationBlocker: null },
+  // LANGUAGES-HIDDEN-2026-10-09: hidden from every visitor (no route, selector entry, redirect, sitemap or hreflang). The catalogs remain.
+  { language: "uk", publicSlug: "uk", defaultLocale: "uk-UA", localeVariants: ["uk-UA"], label: "Українська", published: false, indexable: false, publicationBlocker: "WITHDRAWN_BY_FOUNDER" },
+  { language: "ru", publicSlug: "ru", defaultLocale: "ru-RU", localeVariants: ["ru-RU"], label: "Русский", published: false, indexable: false, publicationBlocker: "WITHDRAWN_BY_FOUNDER" },
   { language: "fr", publicSlug: "fr", defaultLocale: "fr-CA", localeVariants: ["fr-CA"], label: "Français", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
 ] as const satisfies readonly LanguageRouteProfile[];
 
@@ -354,8 +356,6 @@ export const INITIAL_EUROPEAN_MARKET_CODES = [
   "DK",
   "FI",
   "NO",
-  "UA",
-  "RU",
 ] as const satisfies readonly MarketCode[];
 
 export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR", "PE", "UA"] as const satisfies readonly MarketCode[];

@@ -272,7 +272,7 @@ async function expectTextDoesNotOverlap(page: Page, text: Locator, neighbour: Lo
   expect(overlap, `${context}: text overlap area`).toBeLessThanOrEqual(1);
 }
 
-test("all thirteen European Homes hold the hero contract at every exact Founder viewport", async ({ browser }) => {
+test("all eleven European Homes hold the hero contract at every exact Founder viewport", async ({ browser }) => {
   test.setTimeout(300_000);
   const context = await browser.newContext({
     reducedMotion: "reduce",

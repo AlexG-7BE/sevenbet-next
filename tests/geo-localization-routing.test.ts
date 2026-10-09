@@ -9,6 +9,7 @@ import { resolvePresentationContext } from "../lib/market/presentation-resolver"
 import { productMetadata } from "../lib/market/product-context";
 import {
   GEO_LOCALIZATION_INITIAL_PUBLIC_SLUGS,
+  PUBLISHED_LANGUAGE_ROUTE_PROFILES,
   languageRouteByPublicSlug,
 } from "../lib/market/registry";
 import { parsePublicMarketRoute } from "../lib/market/routing";
@@ -75,110 +76,113 @@ test("legacy BCP-47 and market paths migrate directly to language canonicals", (
   }
 });
 
-// UKRAINIAN-LANGUAGE-2026-10-07: in Ukraine the country decides the language before the browser does.
-test("a visitor in Ukraine opens Ukrainian whatever the browser asks for, unless they chose a language", () => {
-  for (const acceptLanguage of ["ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7", "en-US,en;q=0.9", "uk-UA,uk;q=0.9", "de-DE", null]) {
-    const result = resolvePresentationContext({ trustedCountryCode: "UA", acceptLanguage });
-    assert.equal(result.language, "uk", String(acceptLanguage));
-    assert.equal(result.locale, "uk-UA", String(acceptLanguage));
-    assert.equal(result.source, "TRUSTED_GEO", String(acceptLanguage));
-    assert.equal(result.market?.countryCode, "UA");
-    assert.equal(result.marketDisplayName, "Україна");
+// LANGUAGES-HIDDEN-2026-10-09: Ukrainian and Russian are withdrawn from the public site. The
+// translations stay in the repository; nothing chooses them for a visitor.
+test("a hidden language is never chosen for a visitor: not by country, browser or saved choice", () => {
+  for (const hidden of ["uk", "ru"] as const) {
+    assert.equal(languageRouteByPublicSlug(hidden)?.published, false, hidden);
+    assert.equal(languageRouteByPublicSlug(hidden)?.indexable, false, hidden);
+    assert.equal(languageRouteByPublicSlug(hidden)?.publicationBlocker, "WITHDRAWN_BY_FOUNDER", hidden);
+    assert.ok(!PUBLISHED_LANGUAGE_ROUTE_PROFILES.map((profile): string => profile.language).includes(hidden), hidden);
   }
-  const chosen = resolvePresentationContext({ preference: { language: "en" }, trustedCountryCode: "UA", acceptLanguage: "uk-UA" });
-  assert.equal(chosen.language, "en");
-  assert.equal(chosen.source, "USER_PREFERENCE");
-  const explicit = resolvePresentationContext({ routeLanguage: "en", trustedCountryCode: "UA", acceptLanguage: "uk-UA" });
-  assert.equal(explicit.language, "en");
-  assert.equal(explicit.source, "EXPLICIT_ROUTE");
-  assert.equal(explicit.market?.countryCode, "UA");
 
-  // Every other market keeps the browser language first.
+  // Ukraine: the country no longer decides, and neither Ukrainian nor Russian in the browser is taken.
+  for (const acceptLanguage of ["ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7", "en-US,en;q=0.9", "uk-UA,uk;q=0.9", "uk-UA,uk;q=0.9,ru;q=0.8", null]) {
+    const result = resolvePresentationContext({ trustedCountryCode: "UA", acceptLanguage });
+    assert.equal(result.language, "en", String(acceptLanguage));
+    assert.equal(result.locale, "en-GB", String(acceptLanguage));
+    assert.equal(result.market?.countryCode, "UA");
+    assert.equal(result.marketDisplayName, "Ukraine", "the country is named in the page language");
+  }
+  // The next language the browser asks for is used.
+  const german = resolvePresentationContext({ trustedCountryCode: "UA", acceptLanguage: "uk-UA,uk;q=0.9,de;q=0.8" });
+  assert.equal(german.language, "de");
+  assert.equal(german.source, "ACCEPT_LANGUAGE");
+
+  // Russian in the browser, from anywhere.
+  for (const country of ["DE", "LV", "KG", "RU", null]) {
+    const result = resolvePresentationContext({ trustedCountryCode: country, acceptLanguage: "ru-RU,ru;q=0.9,en;q=0.8" });
+    assert.equal(result.language, "en", String(country));
+  }
+  assert.equal(resolvePresentationContext({ trustedCountryCode: "DE", acceptLanguage: "ru-RU,ru;q=0.9" }).language, "de", "the market language follows a hidden browser language");
+  const russia = resolvePresentationContext({ trustedCountryCode: "RU", acceptLanguage: "ru-RU,ru;q=0.9" });
+  assert.equal(russia.language, "en");
+  assert.equal(russia.source, "DEFAULT");
+  assert.equal(russia.marketDisplayName, "Russia");
+
+  // A choice saved while the language was public no longer applies.
+  for (const hidden of ["uk", "ru"] as const) {
+    const saved = resolvePresentationContext({ preference: { language: hidden }, trustedCountryCode: "UA", acceptLanguage: "uk-UA" });
+    assert.equal(saved.language, "en", hidden);
+    assert.notEqual(saved.source, "USER_PREFERENCE", hidden);
+  }
+
+  // The same rule keeps French, which was never published, out of negotiation.
+  assert.equal(resolvePresentationContext({ acceptLanguage: "fr-CA,fr;q=0.9,sv;q=0.8" }).language, "sv");
+
+  // Published languages are untouched.
   const sweden = resolvePresentationContext({ trustedCountryCode: "SE", acceptLanguage: "en-US,en;q=0.9" });
   assert.equal(sweden.language, "en");
   assert.equal(sweden.source, "ACCEPT_LANGUAGE");
-  // Ukrainian outside Ukraine follows the browser, like any language.
-  const abroad = resolvePresentationContext({ trustedCountryCode: "PL", acceptLanguage: "uk-UA,uk;q=0.9,pl;q=0.8" });
-  assert.equal(abroad.language, "uk");
-  assert.equal(abroad.source, "ACCEPT_LANGUAGE");
-  assert.equal(abroad.market, null);
+  assert.equal(resolvePresentationContext({ trustedCountryCode: "DE" }).marketDisplayName, "Deutschland");
+  const chosen = resolvePresentationContext({ preference: { language: "el" }, trustedCountryCode: "UA", acceptLanguage: "uk-UA" });
+  assert.equal(chosen.language, "el");
+  assert.equal(chosen.source, "USER_PREFERENCE");
 });
 
-test("Ukrainian lives at /uk, and the country-shaped addresses reach it in one hop", async () => {
-  assert.equal(languageRouteByPublicSlug("uk")?.defaultLocale, "uk-UA");
-  assert.equal(languageRouteByPublicSlug("uk")?.published, true);
-  assert.equal(languageRouteByPublicSlug("uk")?.indexable, true);
-  for (const path of ["/uk", "/uk/casinos", "/uk/bonuses", "/uk/best-offers", "/uk/learn", "/uk/10-steps", "/uk/help", "/uk/responsible-gambling", "/uk/wagering-calculator"]) {
-    const result = parsePublicMarketRoute(path);
-    assert.equal(result.kind, "CANONICAL_LOCALE", path);
-    if (result.kind === "CANONICAL_LOCALE") {
-      assert.equal(result.locale, "uk-UA", path);
-      assert.equal(result.market.countryCode, "UA", path);
-    }
-  }
-  for (const [path, canonical] of [
-    ["/ua", "/uk"],
-    ["/ua/casinos", "/uk/casinos"],
-    ["/uk-ua/bonuses", "/uk/bonuses"],
-    ["/ua/help", "/uk/help"],
-  ] as const) {
-    const result = parsePublicMarketRoute(path);
-    assert.equal(result.kind, "LEGACY_MARKET_ROUTE", path);
-    if (result.kind === "LEGACY_MARKET_ROUTE") assert.equal(result.canonicalPath, canonical, path);
-  }
-  const programme = await middleware(new NextRequest("http://127.0.0.1:4173/ua/program"));
-  assert.equal(programme.status, 308);
-  assert.equal(new URL(programme.headers.get("location") ?? "http://invalid").pathname, "/uk/program");
-
+test("Production serves no address of a hidden language and sends nobody to one", async () => {
+  const hiddenPaths = [
+    "/uk", "/uk/casinos", "/uk/help", "/uk/program",
+    "/ru", "/ru/bonuses", "/ru/program",
+    // The country-shaped addresses that used to redirect to them.
+    "/ua", "/ua/casinos", "/ua/program", "/uk-ua/bonuses", "/ru-ru/bonuses",
+  ];
   const previous = { vercel: process.env.VERCEL, vercelEnv: process.env.VERCEL_ENV, secret: process.env.BETTER_AUTH_SECRET };
-  process.env.BETTER_AUTH_SECRET = "ukraine-language-first-test-secret";
+  process.env.BETTER_AUTH_SECRET = "hidden-language-test-secret";
   process.env.VERCEL = "1";
   process.env.VERCEL_ENV = "production";
   try {
-    for (const path of ["/", "/casinos", "/help"]) {
-      const negotiated = await middleware(new NextRequest(`https://b4gamble.com${path}`, {
-        headers: { "accept-language": "ru-RU,ru;q=0.9,en;q=0.8", "x-vercel-ip-country": "UA" },
-      }));
-      assert.equal(negotiated.status, 307, path);
-      assert.equal(new URL(negotiated.headers.get("location") ?? "http://invalid").pathname, path === "/" ? "/uk" : `/uk${path}`, path);
+    for (const headers of [
+      { "accept-language": "ru-RU,ru;q=0.9,en;q=0.8", "x-vercel-ip-country": "UA" },
+      { "accept-language": "uk-UA,uk;q=0.9", "x-vercel-ip-country": "UA" },
+      { "accept-language": "ru-RU,ru;q=0.9", "x-vercel-ip-country": "RU" },
+      { "accept-language": "ru-RU,ru;q=0.9", "x-vercel-ip-country": "LV" },
+    ]) {
+      for (const path of ["/", "/casinos", "/help"]) {
+        const negotiated = await middleware(new NextRequest(`https://b4gamble.com${path}`, { headers }));
+        assert.equal(negotiated.status, 307, `${path} ${JSON.stringify(headers)}`);
+        assert.equal(
+          new URL(negotiated.headers.get("location") ?? "http://invalid").pathname,
+          path === "/" ? "/en" : `/en${path}`,
+          `${path} ${JSON.stringify(headers)}`,
+        );
+      }
     }
-    const canonical = await middleware(new NextRequest("https://b4gamble.com/uk/casinos", { headers: { "x-vercel-ip-country": "UA" } }));
-    assert.equal(canonical.status, 200);
-    assert.equal(canonical.headers.get("content-language"), "uk-UA");
+
+    // No rewrite to a page and no redirect: the application answers these as unknown paths.
+    for (const path of hiddenPaths) {
+      const response = await middleware(new NextRequest(`https://b4gamble.com${path}`, { headers: { "x-vercel-ip-country": "UA" } }));
+      assert.equal(response.headers.get("x-middleware-next"), "1", path);
+      assert.equal(response.headers.get("x-middleware-rewrite"), null, path);
+      assert.equal(response.headers.get("location"), null, path);
+      assert.equal(response.headers.get("content-language"), null, path);
+    }
+
+    const published = await middleware(new NextRequest("https://b4gamble.com/de/casinos", { headers: { "x-vercel-ip-country": "UA" } }));
+    assert.equal(published.headers.get("content-language"), "de-DE");
+
+    // Outside Production the translations still render at their own address, so they can be reviewed and restored.
+    delete process.env.VERCEL_ENV;
+    for (const [path, locale] of [["/uk/casinos", "uk-UA"], ["/ru/casinos", "ru-RU"]] as const) {
+      assert.equal(parsePublicMarketRoute(path).kind, "CANONICAL_LOCALE", path);
+      const preview = await middleware(new NextRequest(`https://b4gamble.com${path}`));
+      assert.equal(preview.headers.get("content-language"), locale, path);
+    }
   } finally {
     if (previous.secret === undefined) delete process.env.BETTER_AUTH_SECRET; else process.env.BETTER_AUTH_SECRET = previous.secret;
     if (previous.vercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = previous.vercel;
     if (previous.vercelEnv === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previous.vercelEnv;
   }
-});
-
-// RUSSIAN-LANGUAGE-2026-10-07: Russian follows the browser like every language; Ukraine keeps Ukrainian first.
-test("Russian lives at /ru, follows the browser language and never displaces Ukrainian in Ukraine", () => {
-  assert.equal(languageRouteByPublicSlug("ru")?.defaultLocale, "ru-RU");
-  assert.equal(languageRouteByPublicSlug("ru")?.published, true);
-  assert.equal(languageRouteByPublicSlug("ru")?.indexable, true);
-  for (const path of ["/ru", "/ru/casinos", "/ru/bonuses", "/ru/best-offers", "/ru/learn", "/ru/10-steps", "/ru/wagering-calculator"]) {
-    const result = parsePublicMarketRoute(path);
-    assert.equal(result.kind, "CANONICAL_LOCALE", path);
-    if (result.kind === "CANONICAL_LOCALE") assert.equal(result.locale, "ru-RU", path);
-  }
-  const legacy = parsePublicMarketRoute("/ru-ru/bonuses");
-  assert.equal(legacy.kind, "LEGACY_MARKET_ROUTE");
-  if (legacy.kind === "LEGACY_MARKET_ROUTE") assert.equal(legacy.canonicalPath, "/ru/bonuses");
-
-  for (const country of ["DE", "LV", "KG", "RU", null]) {
-    const result = resolvePresentationContext({ trustedCountryCode: country, acceptLanguage: "ru-RU,ru;q=0.9,en;q=0.8" });
-    assert.equal(result.language, "ru", String(country));
-    assert.equal(result.locale, "ru-RU", String(country));
-  }
-  const ukraine = resolvePresentationContext({ trustedCountryCode: "UA", acceptLanguage: "ru-RU,ru;q=0.9,en;q=0.8" });
-  assert.equal(ukraine.language, "uk");
-  const ukraineChoseRussian = resolvePresentationContext({ preference: { language: "ru" }, trustedCountryCode: "UA", acceptLanguage: "uk-UA" });
-  assert.equal(ukraineChoseRussian.language, "ru");
-  assert.equal(ukraineChoseRussian.source, "USER_PREFERENCE");
-  // The anchor profile grants no market: a Russian page read from Germany stays a German-market page.
-  const fromGermany = resolvePresentationContext({ routeLanguage: "ru", trustedCountryCode: "DE" });
-  assert.equal(fromGermany.market?.countryCode, "DE");
 });
 
 test("legacy redirects are permanent, one-hop, strip country and preserve safe query", async () => {
@@ -234,7 +238,8 @@ test("the neutral redirect of Help and Responsible Gambling always lands on a pa
   process.env.VERCEL_ENV = "production";
   try {
     for (const pathname of ["/help", "/responsible-gambling"]) {
-      for (const [language, country] of [["it", "IT"], ["pt", "PT"], ["nl", "NL"], ["fi", "FI"], ["nb", "NO"]] as const) {
+      // Ukrainian and Russian are hidden (LANGUAGES-HIDDEN-2026-10-09): their readers get the English page too.
+      for (const [language, country] of [["it", "IT"], ["pt", "PT"], ["nl", "NL"], ["fi", "FI"], ["nb", "NO"], ["uk", "UA"], ["ru", "RU"]] as const) {
         const signals: Record<string, string>[] = [
           { "accept-language": `${language}-${country},${language};q=0.9` },
           { "x-vercel-ip-country": country },
@@ -249,7 +254,7 @@ test("the neutral redirect of Help and Responsible Gambling always lands on a pa
         }
       }
       // A language with verified local safety evidence keeps its own page.
-      for (const [language, country] of [["de", "DE"], ["es", "ES"], ["es", "PE"], ["sv", "SE"], ["da", "DK"], ["el", "GR"], ["uk", "UA"], ["en", "GB"]] as const) {
+      for (const [language, country] of [["de", "DE"], ["es", "ES"], ["es", "PE"], ["sv", "SE"], ["da", "DK"], ["el", "GR"], ["en", "GB"]] as const) {
         const response = await middleware(new NextRequest(`https://b4gamble.com${pathname}`, {
           headers: { "accept-language": language, "x-vercel-ip-country": country },
         }));

@@ -1,6 +1,6 @@
 # Ukrainian language and the Ukraine market
 
-**Status:** ACCEPTED
+**Status:** PUBLICATION WITHDRAWN on 9 October 2026 by [LANGUAGES-HIDDEN-2026-10-09](LANGUAGES-HIDDEN-2026-10-09.md). The language is hidden from the public site; the translations described here remain in the repository.
 
 **Decision authority:** explicit Founder instruction, 7 October 2026: "Мне нужно добавить украинский язык на сайт, чтобы в Украине сайт открывался с украинским поддоменом." Two answers through the question tool the same day: the address is `b4gamble.com/uk`, and the release goes "сразу в прод и в Google".
 

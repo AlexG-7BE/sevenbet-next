@@ -18,11 +18,9 @@ const expectedLocales = [
   "nl-NL",
   "fi-FI",
   "nb-NO",
-  "uk-UA",
-  "ru-RU",
 ] as const;
 
-test("one canonical published-language registry drives the thirteen Home and Programme locales", () => {
+test("one canonical published-language registry drives the eleven Home and Programme locales", () => {
   assert.deepEqual(PUBLISHED_LANGUAGE_ROUTE_PROFILES.map((profile) => profile.defaultLocale), expectedLocales);
   assert.deepEqual(PROGRAMME_LOCALES, expectedLocales);
   assert.deepEqual(PROGRAMME_ROUTES.map((route) => route.language), PUBLISHED_LANGUAGE_ROUTE_PROFILES.map((profile) => profile.language));
