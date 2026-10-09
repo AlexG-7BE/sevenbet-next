@@ -12,7 +12,37 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Russian language — live
+## Ukrainian and Russian are hidden — in review
+
+**Founder instruction, 9 October 2026:** hide Ukrainian and Russian from the
+site for every visitor, so that neither can be opened or picked, without
+deleting anything. Decision record:
+[LANGUAGES-HIDDEN-2026-10-09](07_Decisions/LANGUAGES-HIDDEN-2026-10-09.md).
+It supersedes the two "live" sections below.
+
+- **Eleven published languages again.** `uk` and `ru` are `published: false`,
+  `indexable: false` in `lib/market/registry.ts`; the `UA` and `RU` market
+  profiles are unpublished and leave the European runtime tranche. The
+  catalogs, the casino and offer-term translations and the Ukraine safety
+  evidence stay in the repository. No database change.
+- **Production serves no `/uk…` or `/ru…` address.** They, and `/ua…`,
+  `/uk-ua…`, `/ru-ru…`, answer 404 without a redirect. `/uk/program` and
+  `/ru/program` are not Programme routes.
+- **Nobody is sent to either language or can pick one.** A saved choice, the
+  visitor's country and the browser language never resolve to an unpublished
+  language; the visitor gets the next language they asked for, then the
+  market's language, then English. A visitor from Ukraine or with a Russian
+  browser opens `/en…`. The language menus list published languages only.
+- **Gone from search signals:** sitemap, hreflang, Programme alternates and
+  IndexNow.
+- **A visitor from Ukraine reads "Ukraine"** on an English page: a market
+  whose own language is hidden is named in the page language.
+- **Production smoke** no longer expects `/uk` and `/ru` homes.
+- **PROPOSED, not in this release:** a smoke check that `/uk` and `/ru` answer
+  404, to be added once the release is live so that the smoke cannot alert
+  during the deploy window.
+
+## Russian language — hidden since 9 October 2026
 
 **Founder instruction, 7 October 2026:** after Ukrainian, translate the site
 into Russian as well. Decision record:
@@ -78,7 +108,7 @@ Finnish or Norwegian; that still needs verified local safety evidence.
 Tests: `tests/geo-localization-routing.test.ts` (`internationalisation:test`)
 and `tests/seo-market-indexability.test.ts` (`commercial-platform:test`), both
 in `ci:quality`.
-## Ukrainian language and the Ukraine market — live
+## Ukrainian language and the Ukraine market — hidden since 9 October 2026
 
 **Founder instruction, 7 October 2026:** add Ukrainian to the site so that it
 opens in Ukrainian in Ukraine. Founder answers through the question tool the

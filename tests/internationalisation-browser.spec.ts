@@ -42,9 +42,9 @@ const founderPublicationSmoke = [
   { market: "GR", locale: "el-GR", representativePath: "/about", representativeCopy: aboutMessages("el-GR").titleLead },
 ] as const;
 
-// SEO-INDEX-DE-SV-DA-2026-09-27, UKRAINIAN-LANGUAGE-2026-10-07 and RUSSIAN-LANGUAGE-2026-10-07: these are open to search; other translations stay noindex.
-const indexedMarkets = new Set(["GB", "DE", "SE", "DK", "UA", "RU"]);
-const indexedLocales = new Set(["en-GB", "de-DE", "sv-SE", "da-DK", "uk-UA", "ru-RU"]);
+// SEO-INDEX-DE-SV-DA-2026-09-27: the launch markets are open to search; other translations stay noindex.
+const indexedMarkets = new Set(["GB", "DE", "SE", "DK"]);
+const indexedLocales = new Set(["en-GB", "de-DE", "sv-SE", "da-DK"]);
 
 const knownEnglishLeakage = /Compare casinos|Best offers|How we test|Online Casino Basics|Open protected Help|Source status|Direct answer/;
 

@@ -361,6 +361,15 @@ export async function middleware(request: NextRequest) {
   }
 
   const publicMarketRoute = parsePublicMarketRoute(pathname);
+  // An unpublished language has no address in Production: its own prefix and the older
+  // country-shaped addresses that used to redirect to it both answer as an unknown path.
+  if (
+    publicMarketRoute.kind !== "INVALID"
+    && process.env.VERCEL_ENV === "production"
+    && !languageRouteByPublicSlug(publicMarketRoute.language)?.published
+  ) {
+    return secureResponse(nextResponse());
+  }
   if (publicMarketRoute.kind === "LEGACY_MARKET_ROUTE") {
     const destination = withoutCountryQuery(new URL(request.url));
     destination.pathname = publicMarketRoute.canonicalPath;
@@ -369,13 +378,6 @@ export async function middleware(request: NextRequest) {
   if (
     publicMarketRoute.kind !== "INVALID"
     && !homeTranslationReady(publicMarketRoute.locale)
-  ) {
-    return secureResponse(nextResponse());
-  }
-  if (
-    publicMarketRoute.kind !== "INVALID"
-    && process.env.VERCEL_ENV === "production"
-    && !languageRouteByPublicSlug(publicMarketRoute.language)?.published
   ) {
     return secureResponse(nextResponse());
   }

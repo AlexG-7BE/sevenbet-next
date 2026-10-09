@@ -1,6 +1,6 @@
 # Russian language
 
-**Status:** ACCEPTED
+**Status:** PUBLICATION WITHDRAWN on 9 October 2026 by [LANGUAGES-HIDDEN-2026-10-09](LANGUAGES-HIDDEN-2026-10-09.md). The language is hidden from the public site; the translations described here remain in the repository.
 
 **Decision authority:** explicit Founder instruction, 7 October 2026, given while Ukrainian was being added: "как переведешь на украинский, переведи еще и на русский." The release follows the answer the Founder gave for Ukrainian the same day ("сразу в прод и в Google").
 

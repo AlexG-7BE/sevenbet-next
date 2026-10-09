@@ -1,5 +1,6 @@
 import {
   languageForLocale,
+  languageRouteByLocale,
   languageRouteByPublicSlug,
   localeForLanguageAndMarket,
   marketProfileByCountry,
@@ -39,6 +40,16 @@ export type PresentationResolution = Readonly<{
  */
 const GEO_LANGUAGE_FIRST_MARKETS: ReadonlySet<string> = new Set(["UA"]);
 
+/**
+ * A language the Founder has not published is never chosen for a visitor: not from a saved
+ * choice, the country or the browser. Only its own address names it, and Production does not
+ * serve that address (middleware.ts). The visitor gets the next language they asked for.
+ */
+function publishedLanguage(language: string | null | undefined): SupportedLanguage | null {
+  const profile = languageRouteByPublicSlug(language);
+  return profile?.published ? profile.language : null;
+}
+
 function normalizedCountryCode(value: string | null | undefined) {
   const normalized = value?.trim().toUpperCase() ?? "";
   return /^[A-Z]{2}$/.test(normalized) ? normalized : null;
@@ -56,9 +67,8 @@ function acceptedLanguages(value: string | null | undefined) {
     .filter(({ quality, tag }) => tag && Number.isFinite(quality) && quality > 0)
     .sort((a, b) => b.quality - a.quality || a.position - b.position)
     .flatMap(({ tag }) => {
-      const language = tag.split("-")[0];
-      const profile = languageRouteByPublicSlug(language);
-      return profile ? [profile.language] : [];
+      const language = publishedLanguage(tag.split("-")[0]);
+      return language ? [language] : [];
     });
 }
 
@@ -93,7 +103,8 @@ function countryDisplayName(countryCode: string, language: SupportedLanguage) {
 }
 
 function knownMarketDisplayName(market: MarketProfile | null, countryCode: string | null, language: SupportedLanguage) {
-  if (market) return market.seoDisplayName;
+  // A market whose own language is not published is named in the page language, like any other country.
+  if (market && languageRouteByLocale(market.defaultLocale).published) return market.seoDisplayName;
   return countryCode ? countryDisplayName(countryCode, language) : worldwideReadersLabel[language];
 }
 
@@ -114,11 +125,9 @@ export function resolvePresentationContext(input: {
   const marketSource = trustedCountryCode ? "TRUSTED_GEO" as const : "UNKNOWN" as const;
 
   const explicitLanguage = languageRouteByPublicSlug(input.routeLanguage);
-  const preferredLanguage = input.preference
-    ? languageRouteByPublicSlug(input.preference.language)?.language ?? null
-    : null;
+  const preferredLanguage = input.preference ? publishedLanguage(input.preference.language) : null;
   const acceptedLanguage = acceptedLanguages(input.acceptLanguage)[0] ?? null;
-  const geoLanguage = market ? languageForLocale(market.defaultLocale) : null;
+  const geoLanguage = market ? publishedLanguage(languageForLocale(market.defaultLocale)) : null;
   const geoFirstLanguage = market && GEO_LANGUAGE_FIRST_MARKETS.has(market.countryCode) ? geoLanguage : null;
   const language = explicitLanguage?.language
     ?? preferredLanguage
