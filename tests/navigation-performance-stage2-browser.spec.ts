@@ -523,8 +523,8 @@ test("supported IE fixture covers all primary, detail, article, history and pref
   await expectCanonicalNavigationDomOrder(page);
   documentNavigations.length = 0;
   analyticsRequests.length = 0;
-  primaryPrefetchRequests.length = 0;
 
+  // Counted from the first request: the page may settle and prefetch before the checks above finish.
   await expect.poll(() => primaryPrefetchRequests.filter((path) => path === "/en/best-offers").length, { timeout: 15_000 }).toBe(1);
   await desktopPrimary(page).getByRole("link", { name: "Best Offers", exact: true }).hover();
   await page.waitForTimeout(500);
