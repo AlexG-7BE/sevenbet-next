@@ -13,9 +13,11 @@ import {
 } from "../lib/public-shell";
 import {
   RESEARCH_ACCESS_COOKIE,
+  RESEARCH_OPENED_AT_STORAGE_KEY,
   isResearchSectionRoute,
   researchAccessCookieOptions,
   researchAccessOpen,
+  researchLinksAreNew,
   researchNavigationShown,
 } from "../lib/research-access";
 
@@ -72,7 +74,9 @@ test("the menu chooses its door in the browser, from the current path and the co
 
   // A layout is not rendered again when the page changes, so the door cannot be a server decision.
   assert.ok(client.includes("export function PublicNavigationDoor("));
-  assert.match(client, /useSyncExternalStore\(\s*cookieHasNoSubscription,\s*\(\) => researchAccessOpen\(document\.cookie\),\s*\(\) => researchAccess,\s*\)/);
+  assert.match(client, /useSyncExternalStore\(\s*subscribeToResearchAccess,\s*\(\) => researchAccessOpen\(document\.cookie\),\s*\(\) => researchAccess,\s*\)/);
+  // The one change without a page change, the lesson's completion, is announced in the page.
+  assert.ok(client.includes("window.addEventListener(RESEARCH_ACCESS_CHANGED_EVENT, onChange);"));
   assert.ok(client.includes("researchNavigationShown(stripPublicMarketPrefix(pathname), access)"));
   assert.ok(client.includes('return research === (door === "research") ? <>{children}</> : null;'));
 
@@ -107,6 +111,8 @@ test("only the Programme sets the lesson flag, and no offer, ranking or route co
   assert.deepEqual(readers, [
     "app/(public)/layout.tsx",
     "app/program/layout.tsx",
+    // The Mission's completion screen notes when the links opened, in the browser's own storage.
+    "components/programme/ProgramAiMissionExperience.tsx",
     "components/public-shell/PublicNavigationClient.tsx",
     "lib/programme/http.ts",
   ]);
@@ -129,6 +135,32 @@ test("only the Programme sets the lesson flag, and no offer, ranking or route co
     readFileSync("lib/programme/application/programme-ai-missions.service.ts", "utf8")
       .includes('researchAccess: byMission.get(researchAccessMission)?.status === "COMPLETED" ? "open" as const : "locked" as const,'),
   );
+});
+
+test("the research links carry a mark for a week after the lesson, from this browser's own note", () => {
+  const day = 24 * 60 * 60 * 1000;
+  const now = Date.UTC(2026, 9, 20);
+  assert.equal(RESEARCH_OPENED_AT_STORAGE_KEY, "b4g_research_opened_at");
+  assert.equal(researchLinksAreNew(String(now), now), true);
+  assert.equal(researchLinksAreNew(String(now - 6 * day), now), true);
+  assert.equal(researchLinksAreNew(String(now - 7 * day), now), false);
+  for (const value of [null, undefined, "", "soon", String(now + day), "NaN"]) {
+    assert.equal(researchLinksAreNew(value, now), false, String(value));
+  }
+
+  const client = readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8");
+  const header = readFileSync("components/public-shell/PublicHeader.tsx", "utf8");
+  const shell = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
+  const mark = client.slice(client.indexOf("export function PublicResearchNewMark("), client.indexOf("export function PublicNavigationRouteLink("));
+  assert.ok(mark.includes("window.localStorage.getItem(RESEARCH_OPENED_AT_STORAGE_KEY)"));
+  assert.ok(mark.includes('if (researchAccessOpen(document.cookie) && researchLinksAreNew(openedAt, Date.now())) header.dataset.researchNew = "";'));
+  assert.ok(mark.includes("window.addEventListener(RESEARCH_ACCESS_CHANGED_EVENT, sync);"));
+  assert.ok(mark.includes("else delete header.dataset.researchNew;"));
+  assert.ok(!/fetch\(|sendBeacon/.test(mark), "the mark asks the server nothing");
+  assert.ok(header.includes("<PublicResearchNewMark />"));
+  for (const selector of [".primaryNavigation a:is(", ".mobileRouteList a:is("]) {
+    assert.ok(shell.includes(`.header[data-research-new] ${selector}[data-navigation-href="/best-offers"], [data-navigation-href="/casinos"], [data-navigation-href="/bonuses"])`), selector);
+  }
 });
 
 test("public navigation and footer destinations follow the canonical commercial product state", () => {

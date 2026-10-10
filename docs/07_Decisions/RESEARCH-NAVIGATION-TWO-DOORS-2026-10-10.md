@@ -1,6 +1,6 @@
 # Casino research reaches the menu through two doors
 
-**Status:** ACCEPTED. Parts 1 and 2 are implemented; Part 3 is decided and not yet built.
+**Status:** ACCEPTED. Parts 1, 2 and 3 are implemented.
 
 **Decision authority:** explicit Founder instructions, 10 October 2026.
 
@@ -61,9 +61,23 @@ Lesson completion changes which **menu links** a reader sees. It changes nothing
 
 Recorded as the amendment in RFC-025 §3, which had called the order immutable for the MVP.
 
-### Part 3 — the celebration and the public wording (decided, not yet built)
+### Part 3 — the moment research opens, and the public wording (implemented)
 
-Completing the lesson will be marked on its completion screen as the moment casino research opens, framed by the person's own checklist and weekly goal. The About and FAQ sentences about the Programme and commercial sides will be reworded in the same release to say plainly what happens: finishing the lesson opens the research section in the menu, and a person's answers never choose or rank an offer.
+**On the Mission's completion screen.** When "Research responsibly" is complete, its completion screen says so inside the reward card: "New in your menu — Casinos, bonuses and offers are now open to you", with the three links (Compare casinos, Explore bonuses, Best offers). Below it, "Research with your checklist" shows the checklist the person just built and the Programme's stance in one line: it does not ask anyone to give play up; it helps keep play inside limits they choose. The Bonus guide link sits there.
+
+- The block appears only on that Mission and only when the server reports `researchAccess: "open"`. It moves in once, on the completion itself, and not at all for a reader who asks for reduced motion.
+- The links are the fixed public routes. No answer, artefact, wording or Review reaches a URL, and nothing the person entered picks or orders a link.
+- **The menu on the same page changes with the screen.** The completion answer has already set the flag; the page announces it (`b4g:research-access`) and the header and footer swap to the research links at once.
+- **A mark for a week.** The browser notes the moment in its own storage (`b4g_research_opened_at`), and for seven days Best Offers, Casinos and Bonuses carry a small mark in the header and the drawer. The note is never sent anywhere.
+- **Programme Home shows its Research card only once research is open**, under the current Mission. Before the lesson there is no research card on the dashboard.
+
+**Public wording**, in all thirteen published and prepared languages:
+
+- FAQ, "Is the Programme really free?": free, no paywall, and one Mission, "Research responsibly", ends by opening the casino, bonus and offer pages in the menu; using them is the reader's choice. The earlier "no commercial upsell inside Missions" is withdrawn.
+- Methodology, "Editorial vs commercial": Programme and Help activity is not used to target offers, personalise rankings or feed advertising; finishing that Mission opens those pages in the menu; answers never choose or rank an offer.
+- Privacy Notice (with Part 2): the cookie, what it holds, what it does and does not do.
+
+Left as it is, for the Founder to decide: the Terms still say Programme information "is not used to select, rank or personalise commercial content". Selection and ranking are untouched; whether opening menu links counts as personalising commercial content is a reading the Terms do not settle, and changing accepted Terms is a separate decision.
 
 ## What this supersedes
 
@@ -71,16 +85,18 @@ For the approved scope, this decision supersedes older internal language where i
 
 - **RFC-002** — "commercial eligibility, ranking and promotional exposure are not affected by Program state": eligibility and ranking still are not. Menu exposure of the research section now follows one lesson.
 - **RFC-021 §7** — "Access and authentication state is not available to … commercial personalisation": still true. The menu reads the lesson flag, not access or authentication state.
-- **RFC-025 §13** — generic discovery links from Programme Home and Missions 08 and 10 stay as described; the public menu now also follows the lesson.
+- **RFC-025 §13** — the discovery links stay generic and payload-free. Programme Home now shows them only once research is open, Mission 08's completion presents them inside the reward card, and the public menu follows the lesson. RFC-025's design note rejecting a commercial link inside reward feedback no longer applies to this one Mission.
 - **RFC-017 §4** — the import and data-contract firewall is unchanged and still enforced by its structural tests.
 - **Final design handoff** — "Help" was not a header link. It returns only as a guide link for readers outside the research section before the lesson.
 
 ## Consequences accepted by the Founder
 
 - Pages outside the research section no longer link to Best Offers, Casinos and Bonuses from their header and footer for readers without the lesson, search engines included. The research pages keep their links to one another, the sitemap, the Learn offer bridges and the trust pages' next-step block.
-- A partner compliance review may question a product that opens casino research after a lesson about control. The wording of Part 3 answers it: what the lesson gives is a checklist and an open research section, not an invitation to play.
+- A partner compliance review may question a product that opens casino research after a lesson about control. The wording answers it: what the lesson gives is a checklist and an open research section, and the screen says the Programme does not ask anyone to give play up, not that they should play.
 
 ## Rollback
+
+Part 3 alone: revert its pull request; the menu, the flag and the order stay.
 
 Make `researchNavigationShown` in `lib/research-access.ts` return `true`. The research menu is then shown to everyone on every page, as before 10 October 2026. No data changes either way.
 
@@ -93,3 +109,6 @@ Make `researchNavigationShown` in `lib/research-access.ts` return `true`. The re
 - `tests/ten-steps-parity.test.ts`, `tests/ten-steps-render.test.cjs`, `tests/internationalisation-market.test.ts` — the public 10 Steps page lists the Missions in journey order.
 - `tests/public-ia-hardening-browser.spec.ts` — guide links on Home, research menu on Casinos, the swap without a reload, the flag opening the menu, and the first HTML for both readers.
 - `tests/navigation-performance-stage2-browser.spec.ts` runs as a reader with the flag, so the streamed research menu keeps its Stage 2 coverage.
+- `tests/program-ai-structural.test.ts` — the completion block: shown by that Mission only, fixed routes, no Programme content, thirteen translations per line, readable targets, reduced motion.
+- `tests/program-ai-browser.spec.ts` — the real flow against PostgreSQL: guide menu before, completion screen, flag, the menu changing on the same page, the mark, the research menu on Home, the dashboard card.
+- `tests/public-shell.test.ts` — the week-long mark and the closed list of files that read the contract.

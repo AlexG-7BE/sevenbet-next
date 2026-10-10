@@ -49,8 +49,19 @@ project is. Decision record:
   every earlier Mission of the journey is complete.
 - **The First Personal Review now arrives after step 04**, not 03: it stays
   with "Understand the urge". Mid follows step 07, Full step 10.
-- **Decided, not built:** the completion screen marks the moment research
-  opens and the About and FAQ wording is brought in line.
+- **The moment research opens.** The lesson's completion screen says
+  "Casinos, bonuses and offers are now open to you" inside the reward card,
+  with the three links and, below, the person's own checklist. The menu on
+  that page changes at once, and the three links carry a small mark for seven
+  days (a note in the browser's own storage). Programme Home shows its
+  Research card only once research is open.
+- **Public wording follows.** FAQ ("Is the Programme really free?"),
+  Methodology ("Editorial vs commercial") and the Privacy Notice say that
+  finishing this Mission opens those pages in the menu and that answers never
+  choose or rank an offer, in all thirteen prepared languages.
+- **Open for the Founder:** the Terms still say Programme information "is not
+  used to select, rank or personalise commercial content". Accepted Terms
+  were not changed.
 - **Not measured here:** how many visitors start the Programme today. Take a
   baseline before release to compare against.
 

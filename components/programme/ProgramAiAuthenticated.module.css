@@ -174,6 +174,21 @@
 .reviewReveal { max-width: 520px; padding: 16px 20px; border: 1px solid var(--pg-ink); border-radius: 4px; background: rgba(250, 250, 247, .35); }
 .reviewReveal span { font-size: 12px; font-weight: 600; letter-spacing: .2em; }
 .reviewReveal p { margin-top: 6px; }
+/* The research Mission's completion: the moment its links open in the public menu. */
+.researchReveal { width: 100%; max-width: 620px; padding: clamp(20px, 3vw, 28px); display: grid; gap: 12px; justify-items: center; border-radius: 6px; background: var(--pg-ink); color: var(--pg-paper); }
+.researchReveal[data-programme-research-opened="fresh"] { animation: programme-reveal 520ms var(--pg-ease) 180ms both; }
+.researchReveal > span { color: var(--pg-acid); font-size: 12px; font-weight: 600; letter-spacing: .2em; }
+.researchReveal h3 { margin: 0; font-size: clamp(22px, 2.6vw, 30px); font-weight: 900; letter-spacing: -.02em; line-height: 1.05; text-transform: uppercase; }
+.reward .researchReveal p { max-width: 44ch; color: rgba(250, 250, 247, .78); font-family: inherit; font-size: 16px; font-style: normal; line-height: 1.5; }
+.researchReveal nav { margin-top: 4px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.researchReveal nav a { min-height: 48px; padding: 12px 20px; display: inline-flex; align-items: center; border-radius: 999px; background: var(--pg-acid); color: var(--pg-ink); font-size: 16px; font-weight: 700; text-decoration: none; transition: background 200ms var(--pg-ease); }
+.researchReveal nav a:hover { background: var(--pg-paper); }
+.reward .researchReveal :focus-visible { outline-color: var(--pg-acid); }
+.researchChecklist { display: grid; gap: 8px; }
+.researchChecklist > span { color: var(--pg-muted); font-size: 12px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; }
+.researchChecklist ul { margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; list-style: none; }
+.researchChecklist li { padding: 8px 14px; border: 1px solid var(--pg-line); border-radius: 999px; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .researchReveal[data-programme-research-opened="fresh"] { animation: none; } }
 .commercialAside { padding: clamp(24px, 4vw, 40px); display: grid; gap: 12px; border: 1px solid var(--pg-line); border-radius: 6px; background: var(--pg-card); }
 .commercialAside h3 { margin: 0; font-size: 22px; font-weight: 800; text-transform: uppercase; }
 .commercialAside p { margin: 0; color: var(--pg-muted); }
