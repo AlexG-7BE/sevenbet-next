@@ -37,6 +37,7 @@ What stays exactly as it was:
 - The cookie is a plain flag. It names nobody and holds no Programme answer. It lasts 400 days and is renewed whenever the Programme answers. Sign-out withdraws it, and a home answer for an account that has not finished the lesson withdraws a flag left in the browser by another account.
 - The menu chooses its door in the browser, from the current path and the cookie, because a layout is not rendered again when the page changes. The server reads the same cookie for the first HTML, so nothing swaps in after load.
 - The public shell still reads no session and no Programme state. `lib/research-access.ts` is the whole contract and imports nothing.
+- The Privacy Notice (updated 10 October 2026) names the cookie, what it holds and what it does and does not do, and its boundary line no longer claims that Programme activity never changes commercial content: finishing one step opens the research links, and answers play no part.
 
 ### The boundary that does not move
 

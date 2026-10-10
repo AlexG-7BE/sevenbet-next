@@ -129,7 +129,7 @@ const sections = [
   {
     id: "cookies",
     title: "Cookies and similar technology",
-    content: <><p>This service uses cookies or browser storage needed for a service you request, authentication, security, access confirmation, language preference, same-tab comparison selection and temporary Programme continuity. The presentation cookie stores language only; it does not store your country, raw IP address or commercial eligibility.</p><p>With your affirmative permission, B4GAMBLE sets signed first-party analytics preference and random identifier cookies. A logical analytics session expires after 30 minutes of inactivity. Declining or withdrawing clears analytics identifiers and prevents future analytics collection.</p><p>Google Analytics runs from your first page and sets the <code>_ga</code> and <code>_ga_*</code> cookies for up to two years. “Reject cookies” stops it and removes those cookies. We do not use session replay or third-party advertising pixels.</p><p>Casino and offer pages do not load partner-hosted promotional creative frames, media pixels or impression requests. Language preference remains separate from trusted country detection and commercial eligibility.</p><p>Necessary B4GAMBLE storage is not reused for advertising, affiliate measurement or commercial personalisation. Browser controls can remove stored data, but disabling necessary storage may prevent requested language, account or Programme features from working.</p></>,
+    content: <><p>This service uses cookies or browser storage needed for a service you request, authentication, security, access confirmation, language preference, same-tab comparison selection and temporary Programme continuity. The presentation cookie stores language only; it does not store your country, raw IP address or commercial eligibility.</p><p>With your affirmative permission, B4GAMBLE sets signed first-party analytics preference and random identifier cookies. A logical analytics session expires after 30 minutes of inactivity. Declining or withdrawing clears analytics identifiers and prevents future analytics collection.</p><p>Google Analytics runs from your first page and sets the <code>_ga</code> and <code>_ga_*</code> cookies for up to two years. “Reject cookies” stops it and removes those cookies. We do not use session replay or third-party advertising pixels.</p><p>Casino and offer pages do not load partner-hosted promotional creative frames, media pixels or impression requests. Language preference remains separate from trusted country detection and commercial eligibility.</p><p>When you finish the Programme step “Research responsibly”, we set the <code>b4g_research_access</code> cookie. It holds one word, “open”, and nothing about you or your answers. It makes the Casinos, Bonuses and Best Offers links appear in the menu on every page. It does not change which casinos or offers you are shown, their order or any link to an operator. Signing out removes it.</p><p>Other necessary B4GAMBLE storage is not reused for advertising, affiliate measurement or commercial personalisation. Browser controls can remove stored data, but disabling necessary storage may prevent requested language, account or Programme features from working.</p></>,
   },
   {
     id: "affiliate",
@@ -155,12 +155,12 @@ const sections = [
 
 export default function PrivacyPage() {
   return <HandoffLegalPage
-    boundary={<p>Your Programme and protected Help activity is not used to target offers, set rankings or personalise commercial content.</p>}
+    boundary={<p>Your Programme and protected Help activity is not used to target offers or set rankings. Finishing one Programme step opens the casino research links in your menu; your answers play no part in it.</p>}
     effective="19 August 2026"
     kind="privacy"
     lead="This notice explains what B4GAMBLE processes, why, who receives it, how long it is kept and the choices available to you."
     legalContact={controller}
     sections={sections}
-    updated="4 October 2026"
+    updated="10 October 2026"
   />;
 }
