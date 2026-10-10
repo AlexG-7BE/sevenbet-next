@@ -184,6 +184,7 @@ function homeFixture(missionNumber: ProgramAiMissionNumber): ProgramAiHome {
       { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
     ],
     nextReview: { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", xpRemaining: 500, missionsRemaining: 10 - missionNumber },
+    researchAccess: "locked",
     discoveryLinks: [
       { href: "/casinos", label: "Compare casinos" },
       { href: "/bonuses", label: "Bonuses" },

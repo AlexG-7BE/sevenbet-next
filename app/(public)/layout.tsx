@@ -13,6 +13,7 @@ import { resolveServerCommercialProductState } from "@/lib/market/commercial-pro
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { accountNavigationFor, commercialDestinationsNavigable } from "@/lib/public-shell";
+import { researchAccessOpen } from "@/lib/research-access";
 import styles from "@/components/public-shell/PublicShell.module.css";
 
 // Every public page under this layout inherits it (Next merges segment config
@@ -52,12 +53,14 @@ async function CommercialHeaderNavigation({
   destination,
   messages,
   presentation,
+  researchAccess,
   state,
   variant,
 }: {
   destination: "/best-offers" | "/bonuses";
   messages: ReturnType<typeof publicShellMessages>;
   presentation: Presentation;
+  researchAccess: boolean;
   state: CommercialStatePromise;
   variant: "desktop" | "mobile";
 }) {
@@ -70,24 +73,26 @@ async function CommercialHeaderNavigation({
     : null;
   if (resolution.kind !== "resolved"
     || !commercialDestinationsNavigable(commercialProductsAvailable(resolution.state), presentation.marketCountryCode)) return settled;
-  return <>{settled}<PublicCommercialNavigationItem destination={destination} messages={messages} presentation={presentation} variant={variant} /></>;
+  return <>{settled}<PublicCommercialNavigationItem destination={destination} messages={messages} presentation={presentation} researchAccess={researchAccess} variant={variant} /></>;
 }
 
 async function CommercialFooterNavigation({
   destination,
   presentation,
   programmePath,
+  researchAccess,
   state,
 }: {
   destination: "/best-offers" | "/bonuses";
   presentation: Presentation;
   programmePath: string;
+  researchAccess: boolean;
   state: CommercialStatePromise;
 }) {
   const resolution = await state;
   if (resolution.kind !== "resolved"
     || !commercialDestinationsNavigable(commercialProductsAvailable(resolution.state), presentation.marketCountryCode)) return null;
-  return <PublicCommercialFooterLink destination={destination} presentation={presentation} programme={{ path: programmePath, localizePublicLinks: true }} />;
+  return <PublicCommercialFooterLink destination={destination} presentation={presentation} programme={{ path: programmePath, localizePublicLinks: true }} researchAccess={researchAccess} />;
 }
 
 export default async function PublicLayout({ children }: { children: ReactNode }) {
@@ -99,6 +104,8 @@ export default async function PublicLayout({ children }: { children: ReactNode }
   // The shell reads only session-cookie presence for account chrome. Protected
   // pages and APIs remain the authority for identity and Programme state.
   const authenticated = hasBetterAuthSessionCookie(requestHeaders);
+  // The lesson flag is a plain cookie; no session or Programme state is read to draw the menu.
+  const researchAccess = researchAccessOpen(requestHeaders.get("cookie"));
   const programmePath = programmePathForPresentationLocale(presentation.locale);
   const account = accountNavigationFor({ authenticated, programmePath });
   const messages = publicShellMessages(presentation.locale);
@@ -111,44 +118,46 @@ export default async function PublicLayout({ children }: { children: ReactNode }
         authenticated={authenticated}
         commercialDesktopBestOffersNavigation={(
           <Suspense fallback={<span data-commercial-navigation-pending="desktop" hidden />}>
-            <CommercialHeaderNavigation destination="/best-offers" messages={messages} presentation={presentation} state={commercialProductState} variant="desktop" />
+            <CommercialHeaderNavigation destination="/best-offers" messages={messages} presentation={presentation} researchAccess={researchAccess} state={commercialProductState} variant="desktop" />
           </Suspense>
         )}
         commercialDesktopBonusesNavigation={(
           <Suspense fallback={<span data-commercial-navigation-pending="desktop-bonuses" hidden />}>
-            <CommercialHeaderNavigation destination="/bonuses" messages={messages} presentation={presentation} state={commercialProductState} variant="desktop" />
+            <CommercialHeaderNavigation destination="/bonuses" messages={messages} presentation={presentation} researchAccess={researchAccess} state={commercialProductState} variant="desktop" />
           </Suspense>
         )}
         commercialMobileBestOffersNavigation={(
           <Suspense fallback={<span data-commercial-navigation-pending="mobile" hidden />}>
-            <CommercialHeaderNavigation destination="/best-offers" messages={messages} presentation={presentation} state={commercialProductState} variant="mobile" />
+            <CommercialHeaderNavigation destination="/best-offers" messages={messages} presentation={presentation} researchAccess={researchAccess} state={commercialProductState} variant="mobile" />
           </Suspense>
         )}
         commercialMobileBonusesNavigation={(
           <Suspense fallback={<span data-commercial-navigation-pending="mobile-bonuses" hidden />}>
-            <CommercialHeaderNavigation destination="/bonuses" messages={messages} presentation={presentation} state={commercialProductState} variant="mobile" />
+            <CommercialHeaderNavigation destination="/bonuses" messages={messages} presentation={presentation} researchAccess={researchAccess} state={commercialProductState} variant="mobile" />
           </Suspense>
         )}
         commercialProductState="EDITORIAL_ONLY"
         deferCommercialNavigation
         presentation={presentation}
+        researchAccess={researchAccess}
       />
       <main id="main-content">{children}</main>
       <PublicFooter
         commercialBestOffersNavigation={(
           <Suspense fallback={<span data-commercial-navigation-pending="footer" hidden />}>
-            <CommercialFooterNavigation destination="/best-offers" presentation={presentation} programmePath={programmePath} state={commercialProductState} />
+            <CommercialFooterNavigation destination="/best-offers" presentation={presentation} programmePath={programmePath} researchAccess={researchAccess} state={commercialProductState} />
           </Suspense>
         )}
         commercialBonusesNavigation={(
           <Suspense fallback={<span data-commercial-navigation-pending="footer-bonuses" hidden />}>
-            <CommercialFooterNavigation destination="/bonuses" presentation={presentation} programmePath={programmePath} state={commercialProductState} />
+            <CommercialFooterNavigation destination="/bonuses" presentation={presentation} programmePath={programmePath} researchAccess={researchAccess} state={commercialProductState} />
           </Suspense>
         )}
         commercialProductState="EDITORIAL_ONLY"
         deferCommercialNavigation
         presentation={presentation}
         programme={{ path: programmePath, localizePublicLinks: true }}
+        researchAccess={researchAccess}
       />
     </PublicNavigationFeedback>
   );

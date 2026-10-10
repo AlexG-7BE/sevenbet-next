@@ -1558,6 +1558,7 @@ test("phone Mission screens open at the top with the first choice above a sticky
     missions: titles.map((title, index) => ({ missionNumber: index + 1, title, status: index + 1 < current ? "completed" : index + 1 === current ? "current" : "locked", actionsCompleted: index + 1 < current ? 3 : 0, actionsTotal: 3, xpEarnedHere: index + 1 < current ? 55 : 0, completionBonus: 25 })),
     reviews: [{ milestone: "first", unlockMission: 3, title: "First review", maxWords: 60, status: "locked" }],
     nextReview: null,
+    researchAccess: "locked",
     discoveryLinks: [{ href: "/casinos", label: "Compare casinos" }, { href: "/bonuses", label: "Bonuses" }, { href: "/best-offers", label: "Best offers" }],
   });
   const missionTwo = {

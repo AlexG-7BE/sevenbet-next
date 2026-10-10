@@ -1,6 +1,6 @@
 import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
 import { programmeAiMissionsService } from "@/lib/programme/application/programme-ai-missions.service";
-import { programmeErrorResponse, programmeResponse, readProgrammeJson } from "@/lib/programme/http";
+import { programmeErrorResponse, programmeResponse, readProgrammeJson, withResearchAccess } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { routeMissionNumber } from "@/lib/programme/program-ai/mission-http";
 
@@ -19,7 +19,7 @@ export async function POST(
       missionNumber,
       await readProgrammeJson(request),
     );
-    return programmeResponse({ ok: true, ...result });
+    return withResearchAccess(request, programmeResponse({ ok: true, ...result }), result.home);
   } catch (error) {
     return programmeErrorResponse(error);
   }

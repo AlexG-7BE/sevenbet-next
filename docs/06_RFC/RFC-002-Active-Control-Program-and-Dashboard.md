@@ -12,6 +12,8 @@ Governing Documents:
   - ./RFC-001-Jurisdiction-and-Market-Resolution.md
 ---
 
+> **Founder supersession — 2026-10-10:** where this RFC says promotional exposure is not affected by Program state, one exception now applies: the public menu shows Best Offers, Casinos and Bonuses outside the research section only after the lesson "Research responsibly". Commercial eligibility and ranking remain unaffected by Program state, discovery pages need no account, and no reward is coupled to an offer. Decision record: [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](../07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md).
+
 # RFC-002 — Active Control Program and Personal Control Dashboard
 
 > **Persistence supersession — 2026-08-09:** [RFC-017](RFC-017-GB-Legal-Privacy-and-Launch-Remediation.md) supersedes this RFC only where it describes persistence of participant-authored narrative. Raw M1–M4 narrative is now browser-session local; the server retains only RFC-017's bounded allow-list and neutral legacy-column markers. Mission order, content intent, completion rules and rewards remain approved and unchanged.

@@ -1,6 +1,6 @@
 import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
 import { programmeAiMissionsService } from "@/lib/programme/application/programme-ai-missions.service";
-import { programmeErrorResponse, programmeResponse, readProgrammeJson } from "@/lib/programme/http";
+import { programmeErrorResponse, programmeResponse, readProgrammeJson, withResearchAccess } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { routeMissionNumber } from "@/lib/programme/program-ai/mission-http";
 import { assertOnlyKeys, objectInput } from "@/lib/programme/validation";
@@ -20,7 +20,7 @@ export async function POST(
     assertOnlyKeys(body, []);
     const result = await programmeAiMissionsService.complete(user.id, missionNumber);
     scheduleProgrammeStateObservation(user.id, request.headers);
-    return programmeResponse({ ok: true, ...result });
+    return withResearchAccess(request, programmeResponse({ ok: true, ...result }), result.home);
   } catch (error) {
     return programmeErrorResponse(error);
   }

@@ -13,6 +13,7 @@ import type { CommercialProductState } from "@/lib/market/commercial-product-sta
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { commercialDestinationsNavigable, publicCommercialDestinationVisible } from "@/lib/public-shell";
 import { FooterCompliance } from "@/components/footer-compliance/FooterCompliance";
+import { PublicNavigationDoor } from "./PublicNavigationClient";
 import styles from "./PublicShell.module.css";
 
 export function PublicFooter({
@@ -22,6 +23,7 @@ export function PublicFooter({
   commercialBestOffersNavigation,
   commercialBonusesNavigation,
   deferCommercialNavigation = false,
+  researchAccess = false,
 }: {
   presentation?: PresentationResolution;
   programme?: Readonly<{ path: string; localizePublicLinks: boolean }>;
@@ -29,6 +31,7 @@ export function PublicFooter({
   commercialBestOffersNavigation?: ReactNode;
   commercialBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
+  researchAccess?: boolean;
 }) {
   const shell = publicShellMessages(presentation.locale);
   const footer = publicFooterMessages(presentation.locale);
@@ -45,6 +48,8 @@ export function PublicFooter({
     "/best-offers": commercialBestOffersNavigation,
     "/bonuses": commercialBonusesNavigation,
   } as const;
+  // The research links follow the same two doors as the header (see lib/research-access.ts).
+  const researchLinks = new Set(["/best-offers", "/casinos", "/bonuses"]);
   const localizedHref = (href: string) => {
     if (href === "/program" && programme) return programme.path;
     return presentation.source === "EXPLICIT_ROUTE"
@@ -70,7 +75,10 @@ export function PublicFooter({
                   return <span className={styles.footerNavigationSlot} key={href}>{commercialNavigation}</span>;
                 }
                 if (!publicCommercialDestinationVisible(href, showCommercialProducts)) return null;
-                return <Link data-footer-navigation-href={href} href={localizedHref(href)} key={href} prefetch={false}>{label}</Link>;
+                const link = <Link data-footer-navigation-href={href} href={localizedHref(href)} key={href} prefetch={false}>{label}</Link>;
+                return researchLinks.has(href)
+                  ? <PublicNavigationDoor door="research" key={href} researchAccess={researchAccess}>{link}</PublicNavigationDoor>
+                  : link;
               })}
             </div>
           ))}
@@ -90,10 +98,12 @@ export function PublicCommercialFooterLink({
   destination,
   presentation,
   programme,
+  researchAccess = false,
 }: {
   destination: "/best-offers" | "/bonuses";
   presentation: PresentationResolution;
   programme: Readonly<{ path: string; localizePublicLinks: boolean }>;
+  researchAccess?: boolean;
 }) {
   const shell = publicShellMessages(presentation.locale);
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
@@ -104,5 +114,9 @@ export function PublicCommercialFooterLink({
     : finalPublicHref(href, presentation.neutralRouteLocale);
 
   const label = destination === "/best-offers" ? shell.bestOffers : shell.bonuses;
-  return <Link data-footer-navigation-href={destination} href={localizedHref(destination)} prefetch={false}>{label}</Link>;
+  return (
+    <PublicNavigationDoor door="research" researchAccess={researchAccess}>
+      <Link data-footer-navigation-href={destination} href={localizedHref(destination)} prefetch={false}>{label}</Link>
+    </PublicNavigationDoor>
+  );
 }

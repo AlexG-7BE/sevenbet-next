@@ -5,6 +5,7 @@ import {
   programmeErrorResponse,
   programmeResponse,
   requestAddress,
+  withoutResearchAccess,
 } from "@/lib/programme/http";
 import { requireCurrentUser } from "@/lib/auth/session";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
@@ -55,7 +56,7 @@ export async function DELETE(request: Request) {
       ...privateCookieOptions,
       maxAge: 0,
     });
-    return response;
+    return withoutResearchAccess(response);
   } catch (error) {
     return programmeErrorResponse(error);
   }

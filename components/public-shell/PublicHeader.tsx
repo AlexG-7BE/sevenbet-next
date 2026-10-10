@@ -26,6 +26,7 @@ export function PublicHeader({
   commercialMobileBestOffersNavigation,
   commercialMobileBonusesNavigation,
   deferCommercialNavigation = false,
+  researchAccess = false,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
@@ -37,6 +38,7 @@ export function PublicHeader({
   commercialMobileBestOffersNavigation?: ReactNode;
   commercialMobileBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
+  researchAccess?: boolean;
 }) {
   const messages = publicShellMessages(presentation.locale);
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
@@ -62,6 +64,7 @@ export function PublicHeader({
           messages={messages}
           presentation={presentation}
           programme={programme}
+          researchAccess={researchAccess}
           selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES}
         />
       </div>

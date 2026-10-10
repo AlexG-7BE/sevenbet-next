@@ -377,6 +377,8 @@ Resume selects the first incomplete logical action. Completed actions remain rev
 
 ## 13. Commercial discovery separation
 
+> **Founder supersession — 2026-10-10:** completing Mission 08 "Research responsibly" also opens Best Offers, Casinos and Bonuses in the public header, drawer and footer on every page; before it they show only inside the research section. The Programme home carries `researchAccess` and its answers set the menu's flag cookie. Everything below still holds: the links are generic, receive no Programme payload, award no XP and are never required. The Founder has also decided to move this lesson to the third step; §3 will be amended when that is built. Decision record: [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](../07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md).
+
 Programme Home links generically to `/casinos`, `/compare`, `/bonuses` and `/best-offers`. Mission 08 may additionally link to `/bonus-guide`. Mission 10 may show a separate `What next?` section with Programme return and generic discovery links.
 
 These are ordinary internal links with fixed route targets and order. They receive no Starting Point, Mission artifact, local wording, Review, XP, support or completion payload. Programme code does not invoke ranking, recommendation, offer selection or affiliate resolution. Clicks award zero XP and are never required for completion.

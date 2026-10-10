@@ -61,6 +61,7 @@ function homeFixture(currentMission = 2) {
     nextReview: firstReviewAvailable
       ? { milestone: "mid", unlockMission: 6, title: "Mid-Programme Personal Review", xpRemaining: 225, missionsRemaining: 3 }
       : { milestone: "first", unlockMission: 3, title: "First Personal Review", xpRemaining: 150, missionsRemaining: 2 },
+    researchAccess: "locked",
     discoveryLinks: commercialDiscoveryLinks,
   };
 }

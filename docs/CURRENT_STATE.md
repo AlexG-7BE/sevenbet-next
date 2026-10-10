@@ -12,6 +12,37 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Casino research in the menu: two doors — in review
+
+**Founder instruction, 10 October 2026:** Best Offers, Casinos and Bonuses in
+the header and footer put off visitors who came for help and blur what the
+project is. Decision record:
+[RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md).
+
+- **Two doors.** The research links show in the header, the mobile drawer and
+  the footer when the reader is inside the research section (`/best-offers`,
+  `/casinos`, `/casino/…`, `/bonuses`, `/compare`, `/bonus-guide`,
+  `/wagering-calculator`, `/outbound/…`), or when they have finished the
+  Programme lesson "Research responsibly" (Mission 08). Everyone else sees
+  **10 Steps · Learn · Help**.
+- **Every research page stays public.** No page asks for an account, a lesson
+  or a cookie; the sitemap, the Learn offer bridges and the trust pages'
+  next-step block still link to them. The market rule for Best Offers and
+  Bonuses is unchanged.
+- **One flag.** Programme home answers set the cookie
+  `b4g_research_access=open` while the lesson is complete; sign-out withdraws
+  it. It names nobody and holds no Programme answer. The menu chooses its door
+  in the browser from the path and the cookie; the server reads the same
+  cookie for the first HTML.
+- **The commercial boundary is where it was.** No offer, rank, partner button
+  or `/r/` route reads the flag or any Programme state. The public shell
+  still reads no session.
+- **Decided, not built:** the lesson moves to the third step (amends RFC-025
+  §3), then the completion screen marks the moment research opens and the
+  About and FAQ wording is brought in line.
+- **Not measured here:** how many visitors start the Programme today. Take a
+  baseline before release to compare against.
+
 ## Ukrainian and Russian are hidden — in review
 
 **Founder instruction, 9 October 2026:** hide Ukrainian and Russian from the

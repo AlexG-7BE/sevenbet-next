@@ -42,7 +42,9 @@ The following routes exist only when the exact server-side `PROGRAM_AI_V1_ENABLE
 | `POST /api/program/program-ai/starting-point` | Anonymous cookie + active authority | Confirms the closed browser-held Starting Point and derives `40 XP`; the raw intake/transcript is not accepted. |
 | `POST /api/program/program-ai/claim` | Anonymous cookie | Issues the exact pending claim only from ready-to-save state. |
 | `POST /api/program/program-ai/claims/redeem` | Better Auth + claim cookie | Atomically persists the exact user-confirmed Starting Point and two distinct `20 XP` events, respecting legacy-progress dominance. |
-| `GET /api/program/program-ai/home` | Better Auth | Returns exact M1–M10 current/completed/locked state and M3/M6/M10 Review entitlement. |
+| `GET /api/program/program-ai/home` | Better Auth | Returns exact M1–M10 current/completed/locked state and M3/M6/M10 Review entitlement. The home carries `researchAccess: "open" \| "locked"`: `open` once Mission 08 "Research responsibly" is complete. |
+
+Every answer that carries the home (`home`, `claims/redeem`, `missions/{n}/actions`, `missions/{n}/complete`) keeps the public menu's flag cookie in step with `researchAccess`: it sets `b4g_research_access=open` (not HTTP-only, `SameSite=Lax`, 400 days) while the lesson is complete, and withdraws the cookie when the request carried it for an account that has not finished the lesson. `DELETE /api/program/session`, the sign-out transition, always withdraws it. The cookie holds no identity or Programme content and only the public menu reads it ([decision record](07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md)).
 
 Provider failures use only `PROVIDER_UNAVAILABLE`, `PROVIDER_TIMEOUT`, `PROVIDER_RATE_LIMIT`, `PROVIDER_INVALID_OUTPUT`, `TRANSCRIPTION_FAILED` or `INPUT_TOO_LARGE`. Raw OpenAI errors and request content are never returned. The SDP response is `application/sdp`; JSON routes and all error responses remain `Cache-Control: no-store`.
 

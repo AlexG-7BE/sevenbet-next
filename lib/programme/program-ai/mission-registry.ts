@@ -128,6 +128,13 @@ export const programmeMissionTitles = [
   ...missionSourcePresentation.map((item) => item.title),
 ];
 
+/**
+ * The lesson that opens casino research in the public menu (Founder decision, 10 October 2026;
+ * docs/07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md). Completing it changes the menu
+ * only: no offer, rank or partner route reads it.
+ */
+export const researchAccessMission: ProgramAiMissionNumber = 8;
+
 export const commercialDiscoveryLinks = [
   { href: "/casinos", label: "Compare casinos" },
   { href: "/bonuses", label: "Bonuses" },

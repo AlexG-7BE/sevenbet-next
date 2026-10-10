@@ -9,6 +9,7 @@ import {
   programmeResponse,
   readProgrammeJson,
   requestCookie,
+  withResearchAccess,
 } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { assertOnlyKeys, objectInput } from "@/lib/programme/validation";
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     );
     scheduleProgrammeStateObservation(user.id, request.headers);
     const home = await programmeAiMissionsService.home(user.id);
-    const response = programmeResponse({ ok: true, home });
+    const response = withResearchAccess(request, programmeResponse({ ok: true, home }), home);
     response.cookies.set(pendingProgrammeClaimCookie, "", {
       ...privateCookieOptions,
       maxAge: 0,

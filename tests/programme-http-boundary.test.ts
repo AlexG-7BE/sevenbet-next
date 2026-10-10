@@ -4,7 +4,10 @@ import test from "node:test";
 import {
   programmeErrorResponse,
   programmePayloadLimit,
+  programmeResponse,
   readProgrammeJson,
+  withResearchAccess,
+  withoutResearchAccess,
 } from "../lib/programme/http";
 import { ServiceError } from "../lib/services/service-error";
 
@@ -68,4 +71,26 @@ test("Programme JSON accepts valid streamed UTF-8 within the byte limit and reje
 
   const invalid = bodyRequest([new Uint8Array([0x7b, 0x22, 0x78, 0x22, 0x3a, 0xff, 0x7d])]);
   await assert.rejects(readProgrammeJson(invalid.request), SyntaxError);
+});
+
+test("a Programme home answer sets the menu's lesson flag only when the lesson is complete", () => {
+  const request = (cookie?: string) => new Request("http://localhost/api/program/program-ai/home", cookie ? { headers: { cookie } } : undefined);
+  const flag = (response: Response) => response.headers.getSetCookie().map((value) => value.split("; "));
+  const withdrawnFlag = (parts: string[]) => {
+    assert.equal(parts[0], "b4g_research_access=");
+    assert.ok(parts.includes("Max-Age=0") && parts.includes("Path=/"));
+  };
+
+  const opened = flag(withResearchAccess(request(), programmeResponse({ ok: true }), { researchAccess: "open" }));
+  assert.equal(opened.length, 1);
+  assert.equal(opened[0][0], "b4g_research_access=open");
+  for (const part of ["Path=/", "Max-Age=34560000", "SameSite=lax"]) assert.ok(opened[0].includes(part), part);
+  assert.ok(!opened[0].some((part) => /^httponly$/i.test(part)), "the menu reads the flag in the browser");
+
+  // An account that has not finished the lesson sets nothing…
+  assert.deepEqual(flag(withResearchAccess(request(), programmeResponse({ ok: true }), { researchAccess: "locked" })), []);
+  // …and withdraws a flag another account left in this browser.
+  withdrawnFlag(flag(withResearchAccess(request("b4g_research_access=open"), programmeResponse({ ok: true }), { researchAccess: "locked" }))[0]);
+  // Sign-out always withdraws it.
+  withdrawnFlag(flag(withoutResearchAccess(programmeResponse({ ok: true })))[0]);
 });

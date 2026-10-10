@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  GUIDE_NAVIGATION,
   PUBLIC_NAVIGATION,
   accountNavigationFor,
   classifyShellRoute,
@@ -10,6 +11,13 @@ import {
   publicCommercialDestinationVisible,
   publicNavigationForCommercialState,
 } from "../lib/public-shell";
+import {
+  RESEARCH_ACCESS_COOKIE,
+  isResearchSectionRoute,
+  researchAccessCookieOptions,
+  researchAccessOpen,
+  researchNavigationShown,
+} from "../lib/research-access";
 
 test("public navigation follows the approved Figma information architecture", () => {
   assert.deepEqual(PUBLIC_NAVIGATION, [
@@ -18,6 +26,109 @@ test("public navigation follows the approved Figma information architecture", ()
     { label: "Bonuses", href: "/bonuses", commercial: true },
     { label: "Learn", href: "/learn" },
   ]);
+});
+
+test("research links reach a reader through one of two doors (Founder, 10 October 2026)", () => {
+  // Door one: the reader is already inside the research section.
+  for (const path of ["/best-offers", "/casinos", "/casinos?page=2", "/casino/playojo", "/bonuses", "/compare", "/bonus-guide", "/wagering-calculator", "/outbound/unavailable"]) {
+    assert.equal(isResearchSectionRoute(path), true, path);
+    assert.equal(researchNavigationShown(path, false), true, path);
+  }
+  // Everywhere else a reader without the lesson sees the guide links instead.
+  for (const path of ["/", "/10-steps", "/learn", "/learn/casino-bonuses/wagering-requirements", "/help", "/about", "/faq", "/methodology", "/program", "/responsible-gambling", "/tools/budget-calculator", "/casino-guide", "/bonuses-explained"]) {
+    assert.equal(isResearchSectionRoute(path), false, path);
+    assert.equal(researchNavigationShown(path, false), false, path);
+    // Door two: the lesson flag opens the links on every page.
+    assert.equal(researchNavigationShown(path, true), true, path);
+  }
+  assert.deepEqual(GUIDE_NAVIGATION, [
+    { label: "10 Steps", href: "/10-steps" },
+    { label: "Help", href: "/help", safety: true },
+  ]);
+});
+
+test("the lesson flag is one exact cookie value, readable by the menu and nothing more", () => {
+  assert.equal(RESEARCH_ACCESS_COOKIE, "b4g_research_access");
+  assert.equal(researchAccessOpen("b4g_research_access=open"), true);
+  assert.equal(researchAccessOpen("b4gamble_presentation=sv-SE; b4g_research_access=open; other=1"), true);
+  for (const header of [null, undefined, "", "b4g_research_access=", "b4g_research_access=1", "b4g_research_access=opened", "xb4g_research_access=open", "better-auth.session_token=abc"]) {
+    assert.equal(researchAccessOpen(header), false, String(header));
+  }
+  const open = researchAccessCookieOptions(true);
+  assert.equal(open.httpOnly, false, "the menu reads it in the browser on every page change");
+  assert.equal(open.sameSite, "lax");
+  assert.equal(open.path, "/");
+  assert.equal(open.maxAge, 400 * 24 * 60 * 60);
+  assert.equal(researchAccessCookieOptions(false).maxAge, 0);
+  assert.doesNotMatch(readFileSync("lib/research-access.ts", "utf8"), /^import /m, "the contract imports nothing");
+});
+
+test("the menu chooses its door in the browser, from the current path and the cookie", () => {
+  const client = readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8");
+  const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
+  const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
+  const publicLayout = readFileSync("app/(public)/layout.tsx", "utf8");
+  const programmeLayout = readFileSync("app/program/layout.tsx", "utf8");
+
+  // A layout is not rendered again when the page changes, so the door cannot be a server decision.
+  assert.ok(client.includes("export function PublicNavigationDoor("));
+  assert.match(client, /useSyncExternalStore\(\s*cookieHasNoSubscription,\s*\(\) => researchAccessOpen\(document\.cookie\),\s*\(\) => researchAccess,\s*\)/);
+  assert.ok(client.includes("researchNavigationShown(stripPublicMarketPrefix(pathname), access)"));
+  assert.ok(client.includes('return research === (door === "research") ? <>{children}</> : null;'));
+
+  // Desktop list and drawer: every commercial item sits behind the research door, 10 Steps and Help behind the guide door.
+  assert.equal(navigation.match(/"commercial" in item\s*\? <PublicNavigationDoor door="research"/g)?.length, 2);
+  assert.equal(navigation.match(/<PublicNavigationDoor door="research"/g)?.length, 3, "desktop, drawer and the streamed Best Offers/Bonuses item");
+  assert.equal(navigation.match(/<PublicNavigationDoor door="guide"/g)?.length, 1);
+  const desktop = navigation.slice(navigation.indexOf("className={styles.primaryNavigation}"), navigation.indexOf("className={styles.accountNavigation}"));
+  assert.ok(desktop.indexOf('{leadingGuideNavigation.map((item) => guideLink(item, "desktop"))}') >= 0);
+  assert.ok(desktop.indexOf('{leadingGuideNavigation.map((item) => guideLink(item, "desktop"))}') < desktop.indexOf("{PUBLIC_NAVIGATION.map("));
+  assert.ok(desktop.indexOf("{PUBLIC_NAVIGATION.map(") < desktop.indexOf('{trailingGuideNavigation.map((item) => guideLink(item, "desktop"))}'), "10 Steps · Learn · Help");
+  const drawer = navigation.slice(navigation.indexOf('id="public-mobile-navigation"'), navigation.indexOf("</details>"));
+  assert.ok(drawer.includes('{leadingGuideNavigation.map((item) => guideLink(item, "mobile"))}'));
+  assert.ok(!drawer.includes("trailingGuideNavigation"), "Help keeps its own block in the drawer");
+
+  assert.ok(footer.includes('const researchLinks = new Set(["/best-offers", "/casinos", "/bonuses"]);'));
+  assert.equal(footer.match(/<PublicNavigationDoor door="research"/g)?.length, 2);
+
+  for (const layout of [publicLayout, programmeLayout]) {
+    assert.ok(layout.includes('const researchAccess = researchAccessOpen(requestHeaders.get("cookie"));'));
+  }
+  assert.equal(publicLayout.match(/researchAccess=\{researchAccess\}/g)?.length, 10, "header, footer, six streamed slots and their two items");
+});
+
+test("only the Programme sets the lesson flag, and no offer, ranking or route code reads it", () => {
+  const sources = (root: string) => (readdirSync(root, { recursive: true }) as string[])
+    .filter((name) => /\.(?:tsx|ts)$/.test(name))
+    .map((name) => `${root}/${name}`);
+  const readers = ["app", "components", "lib"].flatMap(sources)
+    .filter((path) => readFileSync(path, "utf8").includes('from "@/lib/research-access"'))
+    .sort();
+  assert.deepEqual(readers, [
+    "app/(public)/layout.tsx",
+    "app/program/layout.tsx",
+    "components/public-shell/PublicNavigationClient.tsx",
+    "lib/programme/http.ts",
+  ]);
+
+  const http = readFileSync("lib/programme/http.ts", "utf8");
+  assert.ok(
+    http.includes('if (open || researchAccessOpen(request.headers.get("cookie"))) {'),
+    "a locked home withdraws a stale flag and otherwise sets nothing",
+  );
+  for (const route of [
+    "app/api/program/program-ai/home/route.ts",
+    "app/api/program/program-ai/claims/redeem/route.ts",
+    "app/api/program/program-ai/missions/[missionNumber]/actions/route.ts",
+    "app/api/program/program-ai/missions/[missionNumber]/complete/route.ts",
+  ]) {
+    assert.ok(readFileSync(route, "utf8").includes("withResearchAccess(request, programmeResponse("), route);
+  }
+  assert.ok(readFileSync("app/api/program/session/route.ts", "utf8").includes("return withoutResearchAccess(response);"), "sign-out withdraws the flag");
+  assert.ok(
+    readFileSync("lib/programme/application/programme-ai-missions.service.ts", "utf8")
+      .includes('researchAccess: byMission.get(researchAccessMission)?.status === "COMPLETED" ? "open" as const : "locked" as const,'),
+  );
 });
 
 test("public navigation and footer destinations follow the canonical commercial product state", () => {
