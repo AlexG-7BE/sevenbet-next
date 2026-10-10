@@ -33,7 +33,7 @@ export function programmeReviewStatusCopy(home: Pick<ProgramAiHome, "nextReview"
   const missionLabel = programmeText(locale, home.nextReview.missionsRemaining === 1 ? "Mission" : "Missions");
   const next = programmeText(locale, "{title} unlocks after Mission {mission} · {missions} {missionLabel} and {xp} XP remaining.", {
     title: reviewTitle(locale, home.nextReview.milestone),
-    mission: String(home.nextReview.unlockMission).padStart(2, "0"),
+    mission: String(home.nextReview.unlockStep).padStart(2, "0"),
     missions: home.nextReview.missionsRemaining,
     missionLabel,
     xp: home.nextReview.xpRemaining,

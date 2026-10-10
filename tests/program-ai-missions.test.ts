@@ -9,7 +9,12 @@ import {
   actionTaskState,
   commercialDiscoveryLinks,
   completionAwardKey,
+  missionAfter,
+  missionStep,
+  missionsBefore,
+  missionsThrough,
   programAiMissionRegistry,
+  programmeJourney,
   researchAccessMission,
 } from "../lib/programme/program-ai/mission-registry";
 import { parseProgramAiMissionAction } from "../lib/programme/program-ai/mission-validation";
@@ -113,6 +118,7 @@ function fakeUnitOfWork({ legacy = false, m1Incomplete = false }: { legacy?: boo
       findControlProgram: async () => source,
       findEnrollment: async (userId: string) => userId === enrollment.userId ? enrollment : null,
       findMissionProgress: async (_enrollmentId: string, missionNumber: number) => progress.get(missionNumber) ?? null,
+      listMissionProgress: async () => [...progress.values()].map(({ missionNumber, status }) => ({ missionNumber, status })),
       upsertMissionProgress: async (input: Omit<Progress, "id" | "createdAt" | "updatedAt">) => {
         const existing = progress.get(input.missionNumber);
         const saved: Progress = {
@@ -165,22 +171,24 @@ function fakeUnitOfWork({ legacy = false, m1Incomplete = false }: { legacy?: boo
       }),
     },
   };
-  return { unit, enrollment, progress, xpEvents, progressEvents };
+  return { unit, enrollment, progress, steps, xpEvents, progressEvents };
 }
 
 function readyMissionTen(fake: ReturnType<typeof fakeUnitOfWork>) {
   const now = new Date("2026-08-11T10:00:00.000Z");
-  fake.progress.set(9, {
-    id: "00000000-0000-4000-8000-000000000009",
-    enrollmentId: fake.enrollment.id,
-    missionNumber: 9,
-    status: "COMPLETED",
-    taskStates: [],
-    draft: null,
-    completedAt: now,
-    createdAt: now,
-    updatedAt: now,
-  });
+  for (const missionNumber of missionsBefore(10).filter((earlier) => earlier !== 1)) {
+    fake.progress.set(missionNumber, {
+      id: `00000000-0000-4000-8000-${String(missionNumber).padStart(12, "0")}`,
+      enrollmentId: fake.enrollment.id,
+      missionNumber,
+      status: "COMPLETED",
+      taskStates: [],
+      draft: null,
+      completedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
   const definition = programAiMissionRegistry.find((mission) => mission.missionNumber === 10)!;
   fake.progress.set(10, {
     id: "00000000-0000-4000-8000-000000000010",
@@ -198,7 +206,12 @@ function readyMissionTen(fake: ReturnType<typeof fakeUnitOfWork>) {
 
 test("Missions 02–10 expose exact immutable action and reward contracts", () => {
   assert.equal(programAiMissionRegistry.length, 9);
-  assert.deepEqual(programAiMissionRegistry.map((mission) => mission.missionNumber), [2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  // The registry walks the journey: "Research responsibly" (08) is the third step.
+  assert.deepEqual(programAiMissionRegistry.map((mission) => mission.missionNumber), [2, 8, 3, 4, 5, 6, 7, 9, 10]);
+  assert.deepEqual(
+    Object.fromEntries(programAiMissionRegistry.map((mission) => [mission.missionNumber, mission.prerequisite])),
+    { 2: 1, 8: 2, 3: 8, 4: 3, 5: 4, 6: 5, 7: 6, 9: 7, 10: 9 },
+  );
   const keys = new Set<string>();
   for (const mission of programAiMissionRegistry) {
     assert.deepEqual(mission.actions.map((action) => action.xp), [15, 20, 15]);
@@ -210,6 +223,26 @@ test("Missions 02–10 expose exact immutable action and reward contracts", () =
   }
   assert.equal(keys.size, 36);
   assert.equal(40 + programAiMissionRegistry.length * 75, 715);
+});
+
+test("a Mission's number is its identity and its step is its place in the journey", () => {
+  assert.deepEqual(programmeJourney, [1, 2, 8, 3, 4, 5, 6, 7, 9, 10]);
+  assert.deepEqual([...programmeJourney].sort((left, right) => left - right), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.deepEqual(programmeJourney.map((missionNumber) => missionStep(missionNumber)), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.equal(missionStep(researchAccessMission), 3);
+  assert.equal(missionStep(0), 0);
+  assert.equal(missionStep(11), 0);
+  assert.deepEqual(missionsBefore(1), []);
+  assert.deepEqual(missionsBefore(8), [1, 2]);
+  assert.deepEqual(missionsBefore(3), [1, 2, 8]);
+  assert.deepEqual(missionsBefore(9), [1, 2, 8, 3, 4, 5, 6, 7]);
+  assert.deepEqual(missionsThrough(3), [1, 2, 8, 3]);
+  assert.deepEqual(missionsThrough(10), programmeJourney);
+  assert.deepEqual(programmeJourney.map((missionNumber) => missionAfter(missionNumber)), [2, 8, 3, 4, 5, 6, 7, 9, 10, null]);
+  // Identity never moves: the keys a reward or a saved action is stored under keep the number.
+  assert.equal(actionTaskState(8, "build_research_checklist"), "programme-ai-v1:m08:build_research_checklist");
+  assert.equal(completionAwardKey(8), "programme-ai-v1:m08:complete:xp");
+  assert.equal(programAiMissionRegistry.find((mission) => mission.missionNumber === 8)?.artifactVersion, "programme-ai-v1:mission-08");
 });
 
 test("Mission 10 completion sets the enrollment to the exact stable Mission timestamp", async () => {
@@ -330,7 +363,7 @@ test("Programme Home projects exact Mission 01 progress and first Review distanc
     );
     assert.deepEqual(
       { xp: empty.nextReview?.xpRemaining, missions: empty.nextReview?.missionsRemaining },
-      { xp: 190, missions: 3 },
+      { xp: 265, missions: 4 },
     );
 
     const partialService = new ProgrammeAiMissionsService(fakeUnitOfWork({ m1Incomplete: true }).unit as never);
@@ -343,7 +376,7 @@ test("Programme Home projects exact Mission 01 progress and first Review distanc
     );
     assert.deepEqual(
       { xp: partial.nextReview?.xpRemaining, missions: partial.nextReview?.missionsRemaining },
-      { xp: 170, missions: 3 },
+      { xp: 245, missions: 4 },
     );
 
     const completedService = new ProgrammeAiMissionsService(fakeUnitOfWork().unit as never);
@@ -356,8 +389,14 @@ test("Programme Home projects exact Mission 01 progress and first Review distanc
     );
     assert.deepEqual(
       { xp: completed.nextReview?.xpRemaining, missions: completed.nextReview?.missionsRemaining },
-      { xp: 150, missions: 2 },
+      { xp: 225, missions: 3 },
     );
+    // The list is the journey: a person reads steps 01–10, and step 03 is "Research responsibly".
+    assert.deepEqual(completed.missions.map((mission) => mission.missionNumber), [1, 2, 8, 3, 4, 5, 6, 7, 9, 10]);
+    assert.deepEqual(completed.missions.map((mission) => mission.step), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    assert.equal(completed.currentStep, 2);
+    assert.deepEqual(completed.reviews.map((review) => [review.unlockMission, review.unlockStep]), [[3, 4], [6, 7], [10, 10]]);
+    assert.equal(completed.nextReview?.unlockStep, 4);
   } finally {
     if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
     else process.env.PROGRAM_AI_V1_ENABLED = previous;
@@ -374,12 +413,14 @@ test("first Review distance follows each remaining approved action and completio
       const next = (await service.home("user-a")).nextReview;
       return [next?.xpRemaining, next?.missionsRemaining];
     };
-    assert.deepEqual(await distance(), [150, 2]);
+    // The first Review follows "Understand the urge", now the fourth step, so the lesson before it counts.
+    assert.deepEqual(await distance(), [225, 3]);
     for (const [missionNumber, expected] of [
-      [2, [[135, 2], [115, 2], [100, 2], [75, 1]]],
+      [2, [[210, 3], [190, 3], [175, 3], [150, 2]]],
+      [8, [[135, 2], [115, 2], [100, 2], [75, 1]]],
       [3, [[60, 1], [40, 1], [25, 1], [225, 3]]],
     ] as const) {
-      const definition = programAiMissionRegistry[missionNumber - 2];
+      const definition = programAiMissionRegistry.find((mission) => mission.missionNumber === missionNumber)!;
       for (let index = 0; index < definition.actions.length; index += 1) {
         const action = definition.actions[index];
         await service.recordAction("user-a", definition.missionNumber, { action: action.id, artifact: actionInputs[action.id] });
@@ -420,20 +461,29 @@ test("Mission projections own action position and Review availability", async ()
     }
     await service.complete("user-a", missionTwo.missionNumber);
 
-    const missionThree = programAiMissionRegistry[1];
-    for (const action of missionThree.actions) {
-      await service.recordAction("user-a", missionThree.missionNumber, {
-        action: action.id,
-        artifact: actionInputs[action.id],
-      });
+    // Steps three and four: "Research responsibly", then "Understand the urge", which unlocks the first Review.
+    let completion = null as Awaited<ReturnType<typeof service.complete>> | null;
+    for (const mission of programAiMissionRegistry.slice(1, 3)) {
+      for (const action of mission.actions) {
+        await service.recordAction("user-a", mission.missionNumber, {
+          action: action.id,
+          artifact: actionInputs[action.id],
+        });
+      }
+      completion = await service.complete("user-a", mission.missionNumber);
+      assert.equal(completion.mission.currentActionPosition, null);
+      assert.equal(
+        completion.home.reviews.find((review) => review.milestone === "first")?.status,
+        mission.missionNumber === 3 ? "available" : "locked",
+      );
     }
-    const completion = await service.complete("user-a", missionThree.missionNumber);
-    assert.equal(completion.mission.currentActionPosition, null);
+    assert.deepEqual([completion!.mission.missionNumber, completion!.mission.step], [3, 4]);
     assert.deepEqual(
-      completion.home.reviews.find((review) => review.milestone === "first"),
+      completion!.home.reviews.find((review) => review.milestone === "first"),
       {
         milestone: "first",
         unlockMission: 3,
+        unlockStep: 4,
         title: "First Personal Review",
         maxWords: 250,
         status: "available",
@@ -463,6 +513,7 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
   try {
     const fake = fakeUnitOfWork();
     const service = new ProgrammeAiMissionsService(fake.unit as never);
+    let lessonDone = false;
     for (const mission of programAiMissionRegistry) {
       for (const action of mission.actions) {
         const duplicate = await Promise.all([
@@ -479,7 +530,7 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
       if (mission.missionNumber < 10) assert.equal(fake.enrollment.completedAt, null);
       // Casino research opens in the public menu with the "Research responsibly" lesson, in the
       // same answer that completes it, and with no other lesson (Founder, 10 October 2026).
-      const lessonDone = mission.missionNumber >= researchAccessMission;
+      lessonDone ||= mission.missionNumber === researchAccessMission;
       assert.deepEqual(
         duplicateCompletion.map((result) => result.home.researchAccess),
         [lessonDone ? "open" : "locked", lessonDone ? "open" : "locked"],
@@ -489,6 +540,8 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
     const home = await service.home("user-a");
     assert.equal(home.totalXp, 715);
     assert.equal(home.currentMission, 10);
+    assert.equal(home.currentStep, 10);
+    assert.equal(fake.enrollment.currentStepId, fake.steps[9].id, "the enrollment ends on the stored step of the last Mission");
     assert.equal(home.primaryAction, "review-mission");
     assert.equal(home.missions[9].status, "completed");
     assert.equal(home.missions[0].xpEarnedHere, 40);
@@ -518,7 +571,8 @@ test("Mission 10 receives completed Programme facts and omits missing artifacts"
     const mission = await service.mission("user-a", 10);
     assert.ok("programmeFacts" in mission);
     assert.equal(mission.programmeFacts?.startingPoint?.startingPoint, "I return quickly after a difficult day.");
-    assert.deepEqual(mission.programmeFacts?.facts.map((fact) => fact.missionNumber), [2, 3, 4, 5, 6, 7, 8, 9]);
+    assert.deepEqual(mission.programmeFacts?.facts.map((fact) => fact.missionNumber), [2, 8, 3, 4, 5, 6, 7, 9]);
+    assert.deepEqual(mission.programmeFacts?.facts.map((fact) => fact.step), [2, 3, 4, 5, 6, 7, 8, 9], "the timeline numbers what was built in the order it was built");
     const rendered = mission.programmeFacts?.facts.flatMap((fact) => presentMissionArtifact(fact.artifact)) ?? [];
     const text = rendered.flatMap((row) => [row.label, row.value]).join(" ");
     assert.match(text, /Pause before one decision/);
@@ -569,7 +623,12 @@ test("M10 final-plan context contains only confirmed history and persisted prior
     assert.deepEqual(Object.keys(context).sort(), ["facts", "locale", "operation", "planPriorityIds", "startingPoint"]);
     assert.equal(context.locale, "en-GB");
     assert.deepEqual(context.planPriorityIds, ["pause_move", "boundary", "fallback"]);
-    assert.deepEqual((context.facts as Array<{ missionNumber: number }>).map((fact) => fact.missionNumber), [2, 3, 4, 5, 6, 7, 8, 9]);
+    assert.deepEqual((context.facts as Array<{ missionNumber: number }>).map((fact) => fact.missionNumber), [2, 8, 3, 4, 5, 6, 7, 9]);
+    assert.deepEqual(
+      (context.facts as Array<Record<string, unknown>>).map((fact) => Object.keys(fact).sort()),
+      Array.from({ length: 8 }, () => ["artifact", "missionNumber"]),
+      "the provider's closed input carries no step number",
+    );
     const serialized = JSON.stringify(context);
     assert.doesNotMatch(serialized, /transcript|rawNarrative|unrestricted old narrative|commercial|affiliate|href|ranking/i);
   } finally {
@@ -596,9 +655,70 @@ test("prerequisites and enrollment ownership deny bypass while legacy completion
     const home = await legacyService.home("user-a");
     assert.equal(home.totalXp, 330);
     assert.equal(home.missions[0].xpEarnedHere, 60);
-    assert.equal(home.currentMission, 5);
-    assert.deepEqual(home.missions.slice(1, 4).map((mission) => mission.xpEarnedHere), [0, 0, 0]);
+    // A person who was past the third step takes "Research responsibly" next.
+    assert.equal(home.currentMission, 8);
+    assert.equal(home.currentStep, 3);
+    assert.deepEqual(home.missions.filter((mission) => [2, 3, 4].includes(mission.missionNumber)).map((mission) => mission.xpEarnedHere), [0, 0, 0]);
+    assert.deepEqual(home.missions.map((mission) => mission.status), ["completed", "completed", "current", "completed", "completed", "locked", "locked", "locked", "locked", "locked"]);
     assert.equal(home.reviews[0].status, "available");
+    assert.equal(home.researchAccess, "locked");
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
+test("a person past the third step takes Research responsibly next, then resumes with saved actions", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fake = fakeUnitOfWork();
+    const now = new Date("2026-08-11T10:00:00.000Z");
+    const row = (missionNumber: number, status: "COMPLETED" | "IN_PROGRESS", taskStates: string[] = []) => fake.progress.set(missionNumber, {
+      id: `00000000-0000-4000-8000-${String(missionNumber).padStart(12, "0")}`,
+      enrollmentId: fake.enrollment.id,
+      missionNumber,
+      status,
+      taskStates,
+      draft: null,
+      completedAt: status === "COMPLETED" ? now : null,
+      createdAt: now,
+      updatedAt: now,
+    });
+    // Before the move this person had finished Missions 02–04 and saved one action of Mission 05.
+    for (const missionNumber of [2, 3, 4]) row(missionNumber, "COMPLETED");
+    row(5, "IN_PROGRESS", [actionTaskState(5, "run_decision_check")]);
+    fake.enrollment.currentStepId = fake.steps[4].id;
+    const service = new ProgrammeAiMissionsService(fake.unit as never);
+
+    const before = await service.home("user-a");
+    assert.deepEqual([before.currentMission, before.currentStep, before.primaryAction], [8, 3, "start-mission"]);
+    assert.equal(before.missions.find((mission) => mission.missionNumber === 5)?.status, "locked");
+    assert.equal(before.researchAccess, "locked");
+
+    // The Mission they were in waits behind the one that moved ahead of it; it cannot be passed by.
+    await assert.rejects(
+      () => service.recordAction("user-a", 5, { action: "build_three_checks", artifact: actionInputs.build_three_checks }),
+      (error: unknown) => error instanceof MissionLockedError && /Mission 03 must be completed before Mission 06/.test(error.message),
+    );
+    await assert.rejects(() => service.mission("user-a", 5), MissionLockedError);
+    await assert.rejects(() => service.mission("user-a", 9), MissionLockedError);
+    // What they finished stays open to read.
+    assert.equal((await service.mission("user-a", 4)).status, "completed");
+
+    const research = programAiMissionRegistry.find((mission) => mission.missionNumber === 8)!;
+    for (const action of research.actions) {
+      await service.recordAction("user-a", 8, { action: action.id, artifact: actionInputs[action.id] });
+    }
+    const completion = await service.complete("user-a", 8);
+    assert.equal(completion.xpAwarded, 25);
+    assert.equal(completion.home.researchAccess, "open");
+    assert.deepEqual([completion.home.currentMission, completion.home.currentStep, completion.home.primaryAction], [5, 6, "resume-mission"]);
+    assert.equal(completion.home.missions.find((mission) => mission.missionNumber === 5)?.actionsCompleted, 1, "the saved action is still there");
+    assert.equal(fake.enrollment.currentStepId, fake.steps[4].id, "the enrollment points at the Mission they return to");
+
+    const resumed = await service.recordAction("user-a", 5, { action: "build_three_checks", artifact: actionInputs.build_three_checks });
+    assert.equal(resumed.xpAwarded, 20);
   } finally {
     if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
     else process.env.PROGRAM_AI_V1_ENABLED = previous;

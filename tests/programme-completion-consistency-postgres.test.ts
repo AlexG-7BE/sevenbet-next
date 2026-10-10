@@ -14,7 +14,12 @@ import { queueProgrammeReminders } from "../lib/email/service.server";
 import { ProgrammeAiMissionsService } from "../lib/programme/application/programme-ai-missions.service";
 import { CONTROL_PROGRAM_SLUG } from "../lib/programme/contract";
 import { programmeUnitOfWork } from "../lib/programme/infrastructure/programme-unit-of-work";
-import { actionTaskState, completionAwardKey, programAiMissionDefinition } from "../lib/programme/program-ai/mission-registry";
+import {
+  actionTaskState,
+  completionAwardKey,
+  missionsBefore,
+  programAiMissionDefinition,
+} from "../lib/programme/program-ai/mission-registry";
 
 function assertDisposablePostgres() {
   assert.equal(process.env.CI, "true");
@@ -143,7 +148,8 @@ test("real Mission 10 completion canonically closes the enrollment and every exi
     const taskStates = missionTen.actions.map((action) => actionTaskState(10, action.id));
     await prisma.programmeMissionProgress.createMany({
       data: [
-        { enrollmentId: enrollment.id, missionNumber: 9, status: "COMPLETED", taskStates: [], completedAt: startedAt },
+        // Mission 10 opens only when every earlier Mission of the journey is complete.
+        ...missionsBefore(10).map((missionNumber) => ({ enrollmentId: enrollment.id, missionNumber, status: "COMPLETED" as const, taskStates: [], completedAt: startedAt })),
         { enrollmentId: enrollment.id, missionNumber: 10, status: "IN_PROGRESS", taskStates },
         { enrollmentId: replayEnrollment.id, missionNumber: 9, status: "COMPLETED", taskStates: [], completedAt: startedAt },
         { enrollmentId: replayEnrollment.id, missionNumber: 10, status: "COMPLETED", taskStates, completedAt },

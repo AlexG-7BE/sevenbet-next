@@ -86,6 +86,13 @@ export class ProgrammeProgressRepository {
     });
   }
 
+  listMissionProgress(enrollmentId: string) {
+    return this.database.programmeMissionProgress.findMany({
+      where: { enrollmentId },
+      select: { missionNumber: true, status: true },
+    });
+  }
+
   upsertMissionProgress(input: {
     enrollmentId: string;
     missionNumber: number;

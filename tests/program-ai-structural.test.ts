@@ -273,8 +273,14 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.doesNotMatch(authenticatedHome, /once your plan is built, not before/);
   assert.doesNotMatch(authenticatedHome, /Research links are temporarily unavailable/);
   assert.match(authenticatedHome, /Use the main navigation for public casino information/);
-  // Founder decision 25 Sep 2026: the same generic research links lead the dashboard once Mission 08 is complete.
-  assert.match(authenticatedHome, /home\.discoveryLinks\.length > 0 && home\.missions\.some\(\(mission\) => mission\.missionNumber === 8 && mission\.status === "completed"\)/);
+  // Founder decision 25 Sep 2026: the same generic research links lead the dashboard once the research Mission is
+  // complete. The server says so (`researchAccess`); the dashboard no longer reads a Mission number for it.
+  assert.ok(authenticatedHome.includes('const researchFeatured = home.discoveryLinks.length > 0 && home.researchAccess === "open";'));
+  assert.ok(!authenticatedHome.includes("mission.missionNumber === 8"));
+  // A person sees a Mission's step, its place in the journey; the number stays its identity.
+  assert.ok(authenticatedHome.includes('number: String(home.currentStep).padStart(2, "0")'));
+  assert.ok(authenticatedHome.includes('<b>{String(mission.step).padStart(2, "0")}</b>'));
+  assert.ok(!authenticatedHome.includes("String(home.currentMission)") && !authenticatedHome.includes("String(mission.missionNumber)"));
   assert.match(authenticatedHome, /data-programme-research=\{researchFeatured \? "featured" : "standard"\}/);
   assert.doesNotMatch(authenticatedHome, /Review or update/);
   assert.match(authenticatedHome, /Saved Starting Point/);
@@ -289,6 +295,7 @@ test("Home exposes truthful states and only the approved review entitlements", (
 test("Home presentation copy uses total Mission guidance and projected Review distance", () => {
   assert.equal(programmeMissionProgressCopy({
     missionNumber: 1,
+    step: 1,
     title: "Map the moment",
     status: "current",
     actionsCompleted: 1,
@@ -298,6 +305,7 @@ test("Home presentation copy uses total Mission guidance and projected Review di
   }, "en-GB"), "1 of 2 actions complete · Short Starting Point");
   assert.equal(programmeMissionProgressCopy({
     missionNumber: 4,
+    step: 5,
     title: "Build one boundary",
     status: "current",
     actionsCompleted: 2,
@@ -309,24 +317,26 @@ test("Home presentation copy uses total Mission guidance and projected Review di
   const firstReview = {
     milestone: "first" as const,
     unlockMission: 3 as const,
+    unlockStep: 4,
     title: "First Personal Review",
     maxWords: 250,
     status: "locked" as const,
   };
   assert.equal(programmeReviewStatusCopy({
     reviews: [firstReview],
-    nextReview: { ...firstReview, xpRemaining: 190, missionsRemaining: 3 },
-  }, "en-GB"), "First Personal Review unlocks after Mission 03 · 3 Missions and 190 XP remaining.");
+    nextReview: { ...firstReview, xpRemaining: 265, missionsRemaining: 4 },
+  }, "en-GB"), "First Personal Review unlocks after Mission 04 · 4 Missions and 265 XP remaining.");
   assert.equal(programmeReviewStatusCopy({
     reviews: [{ ...firstReview, status: "available" }],
     nextReview: {
       milestone: "mid",
       unlockMission: 6,
+      unlockStep: 7,
       title: "Mid-Programme Personal Review",
       xpRemaining: 225,
       missionsRemaining: 3,
     },
-  }, "en-GB"), "A personal review is ready when you are. Next: Mid-Programme Personal Review unlocks after Mission 06 · 3 Missions and 225 XP remaining.");
+  }, "en-GB"), "A personal review is ready when you are. Next: Mid-Programme Personal Review unlocks after Mission 07 · 3 Missions and 225 XP remaining.");
 });
 
 test("mounted Mission presentation consumes server-owned action, reward and Review projections", () => {

@@ -248,7 +248,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const totalXp = home.totalXp;
   const availableReview = home.reviews.find((review) => review.unlockMission === mission.missionNumber && review.status === "available") ?? null;
   const newlyCompleted = (completionReceipt?.xpAwarded ?? 0) > 0;
-  const completeLabel = t("MISSION {number} · COMPLETE", { number: String(mission.missionNumber).padStart(2, "0") });
+  const completeLabel = t("MISSION {number} · COMPLETE", { number: String(mission.step).padStart(2, "0") });
   if (mission.legacyCompletion) return <div className={styles.shell}>
     <ProgramAiAuthenticatedHeader label={completeLabel} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
     <main className={styles.missionMain}><section className={styles.reward}>
@@ -275,10 +275,10 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   </div>;
 
   return <div className={styles.shell}>
-    <ProgramAiAuthenticatedHeader label={`${t("Mission").toLocaleUpperCase(locale)} ${String(mission.missionNumber).padStart(2, "0")} · ${missionCopy.title.toLocaleUpperCase(locale)}`} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
+    <ProgramAiAuthenticatedHeader label={`${t("Mission").toLocaleUpperCase(locale)} ${String(mission.step).padStart(2, "0")} · ${missionCopy.title.toLocaleUpperCase(locale)}`} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
     <main className={styles.missionMain}>
       <div className={styles.missionTopline}><button className={styles.back} onClick={onBack} type="button">← {t("Programme Home")}</button><Link className={styles.back} href={programmeHelpPath(locale)}>{t("Protected Help / pause")}</Link></div>
-      <section className={styles.missionIntro}><span className={styles.eyebrow}>{t("MISSION {number} · {completed}/{total} ACTIONS", { number: String(mission.missionNumber).padStart(2, "0"), completed: mission.actionsCompleted, total: mission.actionsTotal })}</span><h1>{missionCopy.title}</h1><p>{missionCopy.description}</p></section>
+      <section className={styles.missionIntro}><span className={styles.eyebrow}>{t("MISSION {number} · {completed}/{total} ACTIONS", { number: String(mission.step).padStart(2, "0"), completed: mission.actionsCompleted, total: mission.actionsTotal })}</span><h1>{missionCopy.title}</h1><p>{missionCopy.description}</p></section>
       <div aria-label={t("Mission progress")} className={styles.actionRail}>{mission.actions.map((action) => <span data-complete={action.completed} key={action.id} title={t("{label}: {status}", { label: actionUi[action.id] ? t(actionUi[action.id].prompt) : missionCopy.title, status: t(action.completed ? "complete" : "not complete") })} />)}<span data-complete={false} title={t("Mission completion bonus")} /></div>
       {ui && current ? <div className={styles.workspace}>
         <section className={styles.challenge} data-programme-action={current.id}>

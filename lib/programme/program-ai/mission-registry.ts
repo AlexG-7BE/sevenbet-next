@@ -3,6 +3,35 @@ export const PROGRAM_AI_MISSIONS_VERSION = "programme-ai-v1";
 export type ProgramAiMissionNumber = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 export type ProgramAiReviewMilestone = "first" | "mid" | "full";
 
+/**
+ * The order a person takes the Missions in. A Mission's number is its identity: progress rows,
+ * reward keys, artifact versions and routes use it and it never changes. Its step is its place
+ * in this list, and the step is the number a person sees. "Research responsibly" (08) is the
+ * third step (Founder decision, 10 October 2026).
+ */
+export const programmeJourney = [1, 2, 8, 3, 4, 5, 6, 7, 9, 10] as const;
+
+/** A Mission's place in the journey, from 1; 0 for a number that is not a Mission. */
+export function missionStep(missionNumber: number) {
+  return (programmeJourney as readonly number[]).indexOf(missionNumber) + 1;
+}
+
+/** The Missions a person completes before this one, in journey order. */
+export function missionsBefore(missionNumber: number): readonly number[] {
+  const step = missionStep(missionNumber);
+  return step > 0 ? programmeJourney.slice(0, step - 1) : [];
+}
+
+/** This Mission and every one before it, in journey order. */
+export function missionsThrough(missionNumber: number): readonly number[] {
+  return programmeJourney.slice(0, missionStep(missionNumber));
+}
+
+export function missionAfter(missionNumber: number): number | null {
+  const step = missionStep(missionNumber);
+  return step > 0 ? programmeJourney[step] ?? null : null;
+}
+
 type ActionDefinition = {
   id: string;
   xp: 15 | 20;
@@ -21,7 +50,7 @@ function mission(
 ): ProgramAiMissionDefinition {
   return {
     missionNumber,
-    prerequisite: missionNumber - 1,
+    prerequisite: missionsBefore(missionNumber).at(-1) ?? 1,
     artifactVersion: `${PROGRAM_AI_MISSIONS_VERSION}:mission-${String(missionNumber).padStart(2, "0")}`,
     actions: actions.map((id, index) => ({
       id,
@@ -30,14 +59,15 @@ function mission(
   };
 }
 
+/** In journey order, so a walk through the registry is a walk through the Programme. */
 export const programAiMissionRegistry = [
   mission(2, ["choose_direction", "build_7_day_goal", "reality_check"]),
+  mission(8, ["learn_comparison_signals", "decode_offer_terms", "build_research_checklist"]),
   mission(3, ["map_urge_sequence", "name_early_signal", "choose_pause_move"]),
   mission(4, ["choose_boundary", "build_boundary_rule", "choose_execution"]),
   mission(5, ["run_decision_check", "build_three_checks", "commit_pause_rule"]),
   mission(6, ["choose_friction_layer", "build_friction_stack", "rehearse_bypass"]),
   mission(7, ["choose_support_route", "build_support_card", "choose_exit_action"]),
-  mission(8, ["learn_comparison_signals", "decode_offer_terms", "build_research_checklist"]),
   mission(9, ["choose_scenario", "rehearse_response", "build_fallback_response"]),
   mission(10, ["review_my_plan", "assemble_final_plan", "choose_review_cadence"]),
 ] as const;
@@ -101,8 +131,7 @@ export function isProgramAiMissionNumber(value: number): value is ProgramAiMissi
 }
 
 export function programAiMissionDefinition(value: number) {
-  if (!isProgramAiMissionNumber(value)) return null;
-  return programAiMissionRegistry[value - 2];
+  return programAiMissionRegistry.find((definition) => definition.missionNumber === value) ?? null;
 }
 
 export function actionTaskState(missionNumber: number, actionId: string) {
@@ -123,6 +152,7 @@ export const programAiReviewDefinitions = {
   full: { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", maxWords: 450 },
 } as const;
 
+/** Indexed by Mission number minus one, not by step. */
 export const programmeMissionTitles = [
   "Map the moment",
   ...missionSourcePresentation.map((item) => item.title),

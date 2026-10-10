@@ -14,13 +14,17 @@ import {
   actionAwardKey,
   actionTaskState,
   commercialDiscoveryLinks,
-  researchAccessMission,
   completionAwardKey,
+  missionStep,
+  missionsBefore,
+  missionsThrough,
+  programmeJourney,
   programmeMissionTitles,
   programAiMissionDefinition,
   programAiMissionRegistry,
   programAiMissionSourcePresentation,
   programAiReviewDefinitions,
+  researchAccessMission,
   type ProgramAiMissionDefinition,
   type ProgramAiMissionNumber,
 } from "@/lib/programme/program-ai/mission-registry";
@@ -130,8 +134,9 @@ function rewardRemainingThrough(
   const missionOneRemaining = missionOne?.status === "COMPLETED"
     ? 0
     : 40 - anonymousProgramAiXp(missionOne?.taskStates ?? []);
+  const through = missionsThrough(unlockMission);
   return missionOneRemaining + programAiMissionRegistry
-    .filter((mission) => mission.missionNumber <= unlockMission)
+    .filter((mission) => through.includes(mission.missionNumber))
     .reduce((total, mission) => {
       const progress = byMission.get(mission.missionNumber);
       if (progress?.status === "COMPLETED") return total;
@@ -147,19 +152,23 @@ function missionsRemainingThrough(
   unlockMission: number,
   byMission: ReadonlyMap<number, MissionProgress>,
 ) {
-  return [1, ...programAiMissionRegistry
-    .filter((mission) => mission.missionNumber <= unlockMission)
-    .map((mission) => mission.missionNumber)]
+  return missionsThrough(unlockMission)
     .filter((missionNumber) => byMission.get(missionNumber)?.status !== "COMPLETED")
     .length;
 }
 
-function highestActiveMission(progress: readonly MissionProgress[]) {
-  const missionOne = progress.find((item) => item.missionNumber === 1);
-  if (missionOne?.status !== "COMPLETED") return 1;
-  const highestCompleted = Math.max(1, ...progress.filter((item) => item.status === "COMPLETED").map((item) => item.missionNumber));
-  const highestOpen = Math.max(0, ...progress.filter((item) => item.status !== "COMPLETED" && item.status !== "NOT_STARTED").map((item) => item.missionNumber));
-  return Math.min(10, Math.max(2, highestCompleted + 1, highestOpen));
+/**
+ * The first Mission of the journey that is not complete, and the last Mission once all are.
+ * A person who was further along when a Mission moved earlier takes that Mission next and then
+ * returns to where they were, with their saved actions.
+ */
+function reviewAtStep<Review extends { unlockMission: number }>(review: Review) {
+  return { ...review, unlockStep: missionStep(review.unlockMission) };
+}
+
+function currentJourneyMission(progress: readonly Pick<MissionProgress, "missionNumber" | "status">[]) {
+  const completed = new Set(progress.filter((item) => item.status === "COMPLETED").map((item) => item.missionNumber));
+  return programmeJourney.find((missionNumber) => !completed.has(missionNumber)) ?? programmeJourney[programmeJourney.length - 1];
 }
 
 export class ProgrammeAiMissionsService {
@@ -338,21 +347,22 @@ export class ProgrammeAiMissionsService {
         entityId: source.program.steps[missionNumber - 1].id,
         eventKey: `${definition.artifactVersion}:complete:progress`,
       });
-      if (missionNumber < 10) {
-        const next = await unitOfWork.progress.findMissionProgress(enrollment.id, missionNumber + 1);
-        if (!next) {
+      const upcoming = currentJourneyMission(await unitOfWork.progress.listMissionProgress(enrollment.id));
+      if (upcoming !== missionNumber) {
+        if (!await unitOfWork.progress.findMissionProgress(enrollment.id, upcoming)) {
           await unitOfWork.progress.upsertMissionProgress({
             enrollmentId: enrollment.id,
-            missionNumber: missionNumber + 1,
+            missionNumber: upcoming,
             status: "IN_PROGRESS",
             taskStates: [],
             draft: null,
             completedAt: null,
           });
         }
-        const currentStepIndex = source.program.steps.findIndex((step) => step.id === enrollment.currentStepId);
-        if (currentStepIndex <= missionNumber - 1) {
-          await unitOfWork.progress.setEnrollmentCurrentStep(enrollment.id, source.program.steps[missionNumber].id);
+        // The enrollment points at the stored step of the Mission the person takes next.
+        const upcomingStepId = source.program.steps[upcoming - 1].id;
+        if (enrollment.currentStepId !== upcomingStepId) {
+          await unitOfWork.progress.setEnrollmentCurrentStep(enrollment.id, upcomingStepId);
         }
       }
       await unitOfWork.rewards.recordActiveDay({
@@ -418,9 +428,16 @@ export class ProgrammeAiMissionsService {
     progress: MissionProgress | null,
   ) {
     if (progress?.status === "COMPLETED") return;
-    const prerequisite = await unitOfWork.progress.findMissionProgress(enrollmentId, missionNumber - 1);
-    if (prerequisite?.status !== "COMPLETED") {
-      throw new MissionLockedError(missionNumber - 1, missionNumber);
+    // Every earlier Mission of the journey, not only the one before: a person who was further
+    // along when a Mission moved earlier cannot pass it by.
+    const completed = new Set(
+      (await unitOfWork.progress.listMissionProgress(enrollmentId))
+        .filter((item) => item.status === "COMPLETED")
+        .map((item) => item.missionNumber),
+    );
+    const blocking = missionsBefore(missionNumber).find((earlier) => !completed.has(earlier));
+    if (blocking !== undefined) {
+      throw new MissionLockedError(missionStep(blocking), missionStep(missionNumber));
     }
   }
 
@@ -442,6 +459,7 @@ export class ProgrammeAiMissionsService {
     const hasNewContract = actions.every((action) => action.completed);
     return {
       missionNumber: definition.missionNumber,
+      step: missionStep(definition.missionNumber),
       stepId,
       title: sourcePresentation.title,
       purpose: sourcePresentation.purpose,
@@ -482,7 +500,7 @@ export class ProgrammeAiMissionsService {
             if (itemProgress?.status !== "COMPLETED") return [];
             const artifact = artifactFromDraft(itemProgress.draft, item);
             return Object.keys(artifact).length
-              ? [{ missionNumber: item.missionNumber, artifact }]
+              ? [{ missionNumber: item.missionNumber, step: missionStep(item.missionNumber), artifact }]
               : [];
           }),
       },
@@ -525,22 +543,24 @@ export class ProgrammeAiMissionsService {
         currentStreak: dashboard.currentStreak,
         achievements: dashboard.achievements,
         currentMission: 1,
+        currentStep: 1,
         primaryAction: "start-mission-one" as const,
         engagementDayBucket: "unknown" as const,
         currentAction: missionOne.currentAction,
         startingPoint: null,
-        missions: programmeMissionTitles.map((title, index) => ({
-          missionNumber: index + 1,
-          title,
+        missions: programmeJourney.map((missionNumber, index) => ({
+          missionNumber,
+          step: index + 1,
+          title: programmeMissionTitles[missionNumber - 1],
           status: index === 0 ? "current" : "locked",
           actionsCompleted: 0,
-          actionsTotal: index === 0 ? 2 : 3,
+          actionsTotal: missionNumber === 1 ? 2 : 3,
           xpEarnedHere: 0,
-          completionBonus: index === 0 ? 0 : 25,
+          completionBonus: missionNumber === 1 ? 0 : 25,
         })),
-        reviews: Object.values(programAiReviewDefinitions).map((review) => ({ ...review, status: "locked" })),
+        reviews: Object.values(programAiReviewDefinitions).map((review) => ({ ...reviewAtStep(review), status: "locked" })),
         nextReview: {
-          ...programAiReviewDefinitions.first,
+          ...reviewAtStep(programAiReviewDefinitions.first),
           xpRemaining: rewardRemainingThrough(programAiReviewDefinitions.first.unlockMission, byMission),
           missionsRemaining: missionsRemainingThrough(programAiReviewDefinitions.first.unlockMission, byMission),
         },
@@ -551,12 +571,12 @@ export class ProgrammeAiMissionsService {
     const enrollment = result.enrollment;
     const allProgress = enrollment.missionProgress as MissionProgress[];
     const byMission = new Map(allProgress.map((progress) => [progress.missionNumber, progress]));
-    const currentMission = highestActiveMission(allProgress);
+    const currentMission = currentJourneyMission(allProgress);
     const currentDefinition = programAiMissionDefinition(currentMission);
     const currentProgress = byMission.get(currentMission);
     const missionOne = missionOneProjection(byMission.get(1));
     const reviews = Object.values(programAiReviewDefinitions).map((review) => ({
-      ...review,
+      ...reviewAtStep(review),
       status: byMission.get(review.unlockMission)?.status === "COMPLETED" ? "available" : "locked",
     }));
     const nextLockedReview = reviews.find((review) => review.status === "locked");
@@ -573,6 +593,7 @@ export class ProgrammeAiMissionsService {
       currentStreak: dashboard.currentStreak,
       achievements: dashboard.achievements,
       currentMission,
+      currentStep: missionStep(currentMission),
       primaryAction: currentMission === 1
         ? missionOne.actionsCompleted > 0
           ? "finish-mission-one" as const
@@ -597,14 +618,14 @@ export class ProgrammeAiMissionsService {
             chosenBoundaryAction: enrollment.programmeStartingPoint.chosenBoundaryAction,
           }
         : null,
-      missions: programmeMissionTitles.map((title, index) => {
-        const missionNumber = index + 1;
+      missions: programmeJourney.map((missionNumber, index) => {
         const missionProgress = byMission.get(missionNumber);
         const definition = programAiMissionDefinition(missionNumber);
         const missionOneState = missionNumber === 1 ? missionOne : null;
         return {
           missionNumber,
-          title,
+          step: index + 1,
+          title: programmeMissionTitles[missionNumber - 1],
           status: missionProgress?.status === "COMPLETED" ? "completed" : missionNumber === currentMission ? "current" : "locked",
           actionsCompleted: definition
             ? definition.actions.filter((action) => missionProgress?.taskStates.includes(actionTaskState(missionNumber, action.id))).length

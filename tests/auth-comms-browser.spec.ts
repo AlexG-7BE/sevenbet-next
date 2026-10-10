@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { commercialDiscoveryLinks, programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
+import { commercialDiscoveryLinks, missionStep, programmeJourney, programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const expectGoogle = process.env.EXPECT_GOOGLE_AUTH === "true";
@@ -29,16 +29,19 @@ function authority(journeyId: string) {
 }
 
 function homeFixture(currentMission = 2) {
-  const missions = programmeMissionTitles.map((title, index) => ({
-    missionNumber: index + 1,
-    title,
-    status: index + 1 < currentMission ? "completed" : index + 1 === currentMission ? "current" : "locked",
-    actionsCompleted: index + 1 < currentMission ? index === 0 ? 2 : 3 : 0,
-    actionsTotal: index === 0 ? 2 : 3,
-    xpEarnedHere: index + 1 < currentMission ? index === 0 ? 40 : 75 : 0,
-    completionBonus: index === 0 ? 0 : 25,
+  // A Mission's number is its identity; the list and the numbers a person sees follow the journey.
+  const currentStep = missionStep(currentMission);
+  const missions = programmeJourney.map((missionNumber, index) => ({
+    missionNumber,
+    step: index + 1,
+    title: programmeMissionTitles[missionNumber - 1],
+    status: index + 1 < currentStep ? "completed" : index + 1 === currentStep ? "current" : "locked",
+    actionsCompleted: index + 1 < currentStep ? missionNumber === 1 ? 2 : 3 : 0,
+    actionsTotal: missionNumber === 1 ? 2 : 3,
+    xpEarnedHere: index + 1 < currentStep ? missionNumber === 1 ? 40 : 75 : 0,
+    completionBonus: missionNumber === 1 ? 0 : 25,
   }));
-  const firstReviewAvailable = currentMission > 3;
+  const firstReviewAvailable = currentStep > missionStep(3);
   return {
     totalXp: firstReviewAvailable ? 190 : 40,
     activeDays: 1,
@@ -48,19 +51,20 @@ function homeFixture(currentMission = 2) {
       { slug: "boundary-built", title: "Boundary Built", state: currentMission > 4 ? "earned" : "locked", awardedAt: currentMission > 4 ? "2026-08-19T00:00:00.000Z" : null },
     ],
     currentMission,
+    currentStep,
     primaryAction: "start-mission",
     engagementDayBucket: "day_1",
     currentAction: firstReviewAvailable ? "choose_boundary" : "choose_direction",
     startingPoint: candidate,
     missions,
     reviews: [
-      { milestone: "first", unlockMission: 3, title: "First Personal Review", maxWords: 250, status: firstReviewAvailable ? "available" : "locked" },
-      { milestone: "mid", unlockMission: 6, title: "Mid-Programme Personal Review", maxWords: 300, status: "locked" },
-      { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
+      { milestone: "first", unlockMission: 3, unlockStep: 4, title: "First Personal Review", maxWords: 250, status: firstReviewAvailable ? "available" : "locked" },
+      { milestone: "mid", unlockMission: 6, unlockStep: 7, title: "Mid-Programme Personal Review", maxWords: 300, status: "locked" },
+      { milestone: "full", unlockMission: 10, unlockStep: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
     ],
     nextReview: firstReviewAvailable
-      ? { milestone: "mid", unlockMission: 6, title: "Mid-Programme Personal Review", xpRemaining: 225, missionsRemaining: 3 }
-      : { milestone: "first", unlockMission: 3, title: "First Personal Review", xpRemaining: 150, missionsRemaining: 2 },
+      ? { milestone: "mid", unlockMission: 6, unlockStep: 7, title: "Mid-Programme Personal Review", xpRemaining: 225, missionsRemaining: 3 }
+      : { milestone: "first", unlockMission: 3, unlockStep: 4, title: "First Personal Review", xpRemaining: 150, missionsRemaining: 2 },
     researchAccess: "locked",
     discoveryLinks: commercialDiscoveryLinks,
   };
@@ -77,7 +81,7 @@ function partialMissionOneHomeFixture() {
     missions: home.missions.map((mission) => mission.missionNumber === 1
       ? { ...mission, actionsCompleted: 1, xpEarnedHere: 20 }
       : mission),
-    nextReview: { milestone: "first", unlockMission: 3, title: "First Personal Review", xpRemaining: 170, missionsRemaining: 3 },
+    nextReview: { milestone: "first", unlockMission: 3, unlockStep: 4, title: "First Personal Review", xpRemaining: 170, missionsRemaining: 3 },
   };
 }
 
@@ -562,7 +566,8 @@ test("authenticated canonical dashboard logs out into a fresh anonymous access b
   await page.setViewportSize({ width: 1024, height: 900 });
   await open(page, "/program");
   await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
-  await expect(page.getByRole("heading", { name: /Mission 04/ })).toBeVisible();
+  // "Build one boundary" keeps its number 4 and is the fifth step a person takes.
+  await expect(page.getByRole("heading", { name: /Mission 05/ })).toBeVisible();
   const logout = page.getByRole("button", { name: "Log out of B4GAMBLE" });
   await expect(logout).toBeVisible();
   await logout.click();

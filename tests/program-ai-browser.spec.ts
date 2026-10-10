@@ -29,8 +29,11 @@ import { programmeMissionCopy } from "../lib/i18n/programme-catalog";
 import { publicShellMessages } from "../lib/i18n/public-shell-catalog";
 import { programAiMissionOneRewardPolicy } from "../lib/programme/program-ai/reward-policy";
 import {
+  missionStep,
   programAiMissionRegistry,
   programAiMissionSourcePresentation,
+  programmeJourney,
+  researchAccessMission,
 } from "../lib/programme/program-ai/mission-registry";
 import { programmePath, type ProgrammeLocale } from "../lib/programme/presentation";
 
@@ -1129,8 +1132,9 @@ test("durably accepted account survives empty storage, context, login and Missio
 
   for (const mission of programAiMissionRegistry) {
     if (mission.missionNumber === 3) {
+      // "Understand the urge" keeps its number 3 and is the fourth step a person takes.
       await openCurrentMission(page, 3, 390);
-      await expect(page.getByText("MISSION 03 · 0/3 ACTIONS", { exact: true })).toBeVisible();
+      await expect(page.getByText("MISSION 04 · 0/3 ACTIONS", { exact: true })).toBeVisible();
       await expect(page.getByText("ACTION 1 · +15 XP", { exact: true })).toBeVisible();
       const builder = page.getByRole("region", { name: "Place the earliest moment first." });
       await expect(builder.getByRole("listitem").nth(0)).toContainText("Choice point");
@@ -1202,7 +1206,8 @@ test("durably accepted account survives empty storage, context, login and Missio
             where: { enrollment: { userId: user.id }, missionNumber: 6 },
           });
           expect(missionSix.taskStates).toHaveLength(1);
-          expect((await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } }))._sum.xp).toBe(355);
+          // Starting Point 40, five completed Missions (02, 08, 03, 04, 05) at 75 each, and this action's 15.
+          expect((await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } }))._sum.xp).toBe(430);
         }
         if (mission.missionNumber === 4 && index === 0) {
           await openCurrentMission(page, 4, 1024, "Resume mission");
@@ -1314,7 +1319,9 @@ test("durably accepted account survives empty storage, context, login and Missio
       for (const [from, to] of [["en-GB", "de-DE"], ["de-DE", "es-ES"], ["es-ES", "fi-FI"], ["fi-FI", "en-GB"]] as const) {
         await switchProgrammeLocale(page, from, to);
         await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
-        await expect(page.getByText(programmeMissionCopy(to, 3).title, { exact: true }).first()).toBeVisible();
+        // After the 7-day goal the dashboard leads with "Research responsibly", the third step.
+        await expect(page.locator("[data-programme-presentation=\"dashboard\"] h1")).toContainText(programmeMissionCopy(to, 8).title);
+        await expect(page.locator("[aria-labelledby='programme-path-title'] li").nth(2)).toContainText(programmeMissionCopy(to, 8).title);
         await expect(page.getByText(startingPoint.startingPoint, { exact: true })).toBeVisible();
         expect(await programmeInvariantSnapshot(user.id)).toEqual(beforeLocaleSwitch);
         expect(await page.evaluate((key) => ({
@@ -1546,7 +1553,7 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
   }
 });
 
-test("phone Mission screens open at the top with the first choice above a sticky confirm, and research leads after Mission 08", async ({ browser }) => {
+test("phone Mission screens open at the top with the first choice above a sticky confirm, and research leads after the research Mission", async ({ browser }) => {
   const now = new Date().toISOString();
   const userId = "mobile-mission-review-user";
   const titles = Array.from({ length: 10 }, (_, index) => programmeMissionCopy("en-GB", index + 1).title);
@@ -1555,14 +1562,15 @@ test("phone Mission screens open at the top with the first choice above a sticky
     achievements: [{ slug: "first-plan", title: "First Plan", state: "earned", awardedAt: now }],
     currentMission: current, primaryAction: "start-mission", engagementDayBucket: "day_2_3", currentAction: null,
     startingPoint: { startingPoint: "I open betting apps after difficult work days.", desiredChange: "Pause before opening an app", broadContext: "WORK", continuationCue: "Continue from the after-work pause", chosenBoundaryAction: "Put the phone in another room" },
-    missions: titles.map((title, index) => ({ missionNumber: index + 1, title, status: index + 1 < current ? "completed" : index + 1 === current ? "current" : "locked", actionsCompleted: index + 1 < current ? 3 : 0, actionsTotal: 3, xpEarnedHere: index + 1 < current ? 55 : 0, completionBonus: 25 })),
-    reviews: [{ milestone: "first", unlockMission: 3, title: "First review", maxWords: 60, status: "locked" }],
+    currentStep: missionStep(current),
+    missions: programmeJourney.map((missionNumber, index) => ({ missionNumber, step: index + 1, title: titles[missionNumber - 1], status: index + 1 < missionStep(current) ? "completed" : index + 1 === missionStep(current) ? "current" : "locked", actionsCompleted: index + 1 < missionStep(current) ? 3 : 0, actionsTotal: 3, xpEarnedHere: index + 1 < missionStep(current) ? 55 : 0, completionBonus: 25 })),
+    reviews: [{ milestone: "first", unlockMission: 3, unlockStep: 4, title: "First review", maxWords: 60, status: "locked" }],
     nextReview: null,
-    researchAccess: "locked",
+    researchAccess: missionStep(researchAccessMission) < missionStep(current) ? "open" : "locked",
     discoveryLinks: [{ href: "/casinos", label: "Compare casinos" }, { href: "/bonuses", label: "Bonuses" }, { href: "/best-offers", label: "Best offers" }],
   });
   const missionTwo = {
-    missionNumber: 2, stepId: "goal", title: titles[1], purpose: "", status: "current",
+    missionNumber: 2, step: 2, stepId: "goal", title: titles[1], purpose: "", status: "current",
     actions: [
       { id: "choose_direction", label: "Choose a direction", xp: 20, completed: false },
       { id: "build_7_day_goal", label: "Build the 7-day goal", xp: 20, completed: false },

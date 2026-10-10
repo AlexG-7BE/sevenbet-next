@@ -10,7 +10,7 @@ const {
   TEN_STEPS_SOURCE_COPY,
   tenStepsTranslation,
 } = require("../lib/i18n/static-pages/ten-steps.ts");
-const { programmeMissionTitles } = require("../lib/programme/program-ai/mission-registry.ts");
+const { programmeJourney, programmeMissionTitles } = require("../lib/programme/program-ai/mission-registry.ts");
 
 function escapeHtml(value) {
   return value
@@ -38,7 +38,8 @@ test("active 10 Steps Handoff runtime exposes one ordered, labelled Mission sequ
   assert.equal((html.match(/id="ten-steps-path-title"/g) ?? []).length, 1);
   assert.equal((html.match(/role="list" aria-labelledby="ten-steps-path-title" data-ten-steps-mission-list/g) ?? []).length, 1);
   assert.equal((html.match(/role="listitem" data-ten-steps-mission/g) ?? []).length, 10);
-  assert.deepEqual(missionTitles, programmeMissionTitles);
+  // Step numbers 01–10 follow the journey; titles are stored by Mission number.
+  assert.deepEqual(missionTitles, programmeJourney.map((missionNumber) => programmeMissionTitles[missionNumber - 1]));
 
   let cursor = html.indexOf('data-ten-steps-mission-list=""');
   const missionSectionEnd = html.indexOf('data-ten-steps-section="account-boundary"', cursor);

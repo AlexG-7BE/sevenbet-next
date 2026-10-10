@@ -86,7 +86,14 @@ test("the access screen is unchecked, account creation stays signed and authenti
   assert.match(accessContract, /x-sevenbet-privacy-acknowledgement/);
   assert.match(accessContract, /privacy:effective-2026-08-19:updated-2026-08-19/);
   assert.match(accessContract, /terms:effective-2026-08-19:updated-2026-08-19/);
-  assert.match(source("app/(public)/privacy/page.tsx"), /updated="4 October 2026"/);
+  const privacy = source("app/(public)/privacy/page.tsx");
+  assert.match(privacy, /updated="10 October 2026"/);
+  // The research-menu flag is disclosed where it is set: what it holds, what it does and what it does not do.
+  assert.ok(privacy.includes("we set the <code>b4g_research_access</code> cookie"));
+  assert.ok(privacy.includes("It holds one word, “open”, and nothing about you or your answers."));
+  assert.ok(privacy.includes("It does not change which casinos or offers you are shown, their order or any link to an operator."));
+  assert.ok(privacy.includes("Finishing one Programme step opens the casino research links in your menu; your answers play no part in it."));
+  assert.ok(!privacy.includes("personalise commercial content"), "the notice no longer makes a claim the menu flag would contradict");
   assert.match(source("app/(public)/terms/page.tsx"), /updated="19 August 2026"/);
 });
 

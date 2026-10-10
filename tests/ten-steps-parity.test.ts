@@ -7,7 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import React from "react";
 
 import { tenStepsTranslation } from "../lib/i18n/static-pages/ten-steps";
-import { programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
+import { programmeJourney, programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
 import { resolveTenStepsLandingState } from "../lib/ten-steps-landing";
 
 const read = (path: string) => readFileSync(path, "utf8");
@@ -66,6 +66,7 @@ test("mounted 10 Steps component keeps the approved hierarchy inside the Public 
 });
 
 test("mounted Mission path is registry-owned and renders all ten current titles and purposes", () => {
+  // Titles are stored by Mission number.
   assert.deepEqual(programmeMissionTitles, [
     "Map the moment",
     "Set a 7-day goal",
@@ -81,7 +82,9 @@ test("mounted Mission path is registry-owned and renders all ten current titles 
 
   const localizedTitles = Array.from({ length: 10 }, (_, index) => messages.text[20 + index * 2]);
   const localizedPurposes = Array.from({ length: 10 }, (_, index) => messages.text[21 + index * 2]);
-  assert.deepEqual(localizedTitles, programmeMissionTitles);
+  // The page lists them in the order a person takes them: "Research responsibly" is the third step.
+  assert.deepEqual(localizedTitles, programmeJourney.map((missionNumber) => programmeMissionTitles[missionNumber - 1]));
+  assert.deepEqual(localizedTitles.slice(0, 4), ["Map the moment", "Set a 7-day goal", "Research responsibly", "Understand the urge"]);
   assert.equal((runtime.match(/data-ten-steps-mission="[^"]*" role="listitem"/g) ?? []).length, 10);
 
   const missionMap = runtime.slice(

@@ -11,13 +11,17 @@ export type ProgramAiHome = {
     state: "earned" | "locked";
     awardedAt: string | null;
   }>;
+  /** A Mission's number is its identity; its step is its place in the journey, the number a person sees. */
   currentMission: number;
+  currentStep: number;
   primaryAction: "start-mission-one" | "finish-mission-one" | "start-mission" | "resume-mission" | "review-mission";
   engagementDayBucket: ProgrammeEngagementDayBucket;
   currentAction: string | null;
   startingPoint: ProgrammeStartingPointValue | null;
+  /** In journey order. */
   missions: Array<{
     missionNumber: number;
+    step: number;
     title: string;
     status: "completed" | "current" | "locked";
     actionsCompleted: number;
@@ -28,6 +32,7 @@ export type ProgramAiHome = {
   reviews: Array<{
     milestone: "first" | "mid" | "full";
     unlockMission: 3 | 6 | 10;
+    unlockStep: number;
     title: string;
     maxWords: number;
     status: "available" | "locked";
@@ -35,6 +40,7 @@ export type ProgramAiHome = {
   nextReview: null | {
     milestone: "first" | "mid" | "full";
     unlockMission: 3 | 6 | 10;
+    unlockStep: number;
     title: string;
     xpRemaining: number;
     missionsRemaining: number;
@@ -46,6 +52,7 @@ export type ProgramAiHome = {
 
 export type ProgramAiMission = {
   missionNumber: number;
+  step: number;
   stepId: string;
   title: string;
   purpose: string;
@@ -65,6 +72,7 @@ export type ProgramAiMission = {
     startingPoint: ProgrammeStartingPointValue | null;
     facts: Array<{
       missionNumber: number;
+      step: number;
       artifact: Record<string, string | number | boolean | string[]>;
     }>;
   };
