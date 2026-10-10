@@ -4,6 +4,7 @@ import type { AnalyticsEventType } from "@prisma/client";
 
 import prisma from "@/lib/db/prisma";
 import { safeRate, type AnalyticsRange } from "@/lib/analytics/metrics";
+import { programmeJourney, programmeMissionTitles } from "@/lib/programme/program-ai/mission-registry";
 
 const productionHumanEvent = { environment: "PRODUCTION" as const, trafficKind: "HUMAN" as const };
 
@@ -177,12 +178,15 @@ export async function programmeDashboard(range: AnalyticsRange) {
     starts: cohort.length,
     completions,
     completionRate: safeRate(completions, cohort.length),
-    steps: Array.from({ length: 10 }, (_, index) => {
-      const step = index + 1;
-      const completed = completionCounts.get(step) ?? 0;
+    // Rows follow the order people take the Missions in. Events and progress are stored by Mission
+    // number, so each row counts by number and shows its place in the journey.
+    steps: programmeJourney.map((missionNumber, index) => {
+      const completed = completionCounts.get(missionNumber) ?? 0;
       return {
-        step,
-        views: viewCounts.get(step) ?? 0,
+        step: index + 1,
+        missionNumber,
+        title: programmeMissionTitles[missionNumber - 1],
+        views: viewCounts.get(missionNumber) ?? 0,
         completed,
         completionFromStarts: safeRate(completed, cohort.length),
         dropOff: Math.max(0, cohort.length - completed),

@@ -125,6 +125,7 @@ export function ProgrammeTimeline({ startingPoint, facts, locale }: {
   startingPoint?: string | null;
   facts: ReadonlyArray<{
     missionNumber: number;
+    step: number;
     artifact: Record<string, string | number | boolean | string[]>;
   }>;
   locale: ProgrammeLocale;
@@ -133,7 +134,7 @@ export function ProgrammeTimeline({ startingPoint, facts, locale }: {
     ...(startingPoint ? [{ number: 1, label: programmeText(locale, "Starting Point"), rows: [{ key: "startingPoint", label: programmeText(locale, "Confirmed Starting Point"), value: startingPoint }] }] : []),
     ...facts.flatMap((fact) => {
       const rows = presentMissionArtifact(fact.artifact, locale).filter((row) => row.value !== programmeText(locale, "Unavailable"));
-      return rows.length ? [{ number: fact.missionNumber, label: programmeMissionCopy(locale, fact.missionNumber).title, rows }] : [];
+      return rows.length ? [{ number: fact.step, label: programmeMissionCopy(locale, fact.missionNumber).title, rows }] : [];
     }),
   ];
   return <section className={styles.programmeTimeline} aria-labelledby="programme-timeline-title">

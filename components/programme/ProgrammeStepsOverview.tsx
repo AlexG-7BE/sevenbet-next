@@ -1,4 +1,4 @@
-import { currentProgrammeCopy, tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
+import { currentProgrammeCopy, currentProgrammeJourney, tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 
 import styles from "./ProgrammeStepsOverview.module.css";
@@ -17,7 +17,8 @@ const NEVER_ASKS_TO_PLAY = 45;
  */
 export function ProgrammeStepsOverview({ locale }: { locale: ProgrammeLocale }) {
   const { text } = tenStepsTranslation(locale);
-  const { overview, missions } = currentProgrammeCopy(locale);
+  const { overview } = currentProgrammeCopy(locale);
+  const missions = currentProgrammeJourney(locale);
   return (
     <section aria-labelledby="programme-steps-overview" className={styles.overview} data-nav-theme="dark" data-programme-steps-overview="">
       <div className={styles.inner}>

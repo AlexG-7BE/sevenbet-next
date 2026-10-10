@@ -59,6 +59,26 @@ Protected Help, leave and pause remain available. A support-first state contains
 
 ## 3. Mission titles and ordering
 
+> **Founder amendment — 2026-10-10:** "Research responsibly" (Mission 08) is the third step. Decision record: [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](../07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md). The table below is the original order and still gives each Mission's **number**, which is its identity and does not change: progress rows, reward keys (`…:m08:…`), artifact versions, API routes and analytics steps keep it. The order a person takes the Missions in, and the step number they see, is now:
+>
+> | Step | Mission | Title | Prerequisite |
+> | ---: | ---: | --- | ---: |
+> | 01 | 01 | Map the moment | none |
+> | 02 | 02 | Set a 7-day goal | 01 |
+> | 03 | 08 | Research responsibly | 02 |
+> | 04 | 03 | Understand the urge | 08 |
+> | 05 | 04 | Build one boundary | 03 |
+> | 06 | 05 | Check before deciding | 04 |
+> | 07 | 06 | Add friction | 05 |
+> | 08 | 07 | Prepare support | 06 |
+> | 09 | 09 | Rehearse the decision | 07 |
+> | 10 | 10 | Make the plan reviewable | 09 |
+>
+> - A Mission opens when every earlier Mission of this order is complete, not only the one before it. A person who was past the third step when the order changed takes "Research responsibly" next and then returns to the Mission they were in, with their saved actions; no stored progress, reward or XP was changed.
+> - Titles, actions, action XP, completion XP and the 715 XP total are unchanged.
+> - Personal Reviews stay with the Missions that unlock them: First after "Understand the urge" (now step 04), Mid after "Add friction" (step 07), Full after step 10. Their content is unchanged.
+> - `programmeJourney` in `lib/programme/program-ai/mission-registry.ts` is the single source of the order.
+
 The public titles and order are immutable for this MVP:
 
 | Mission | Title | Prerequisite |
@@ -377,7 +397,7 @@ Resume selects the first incomplete logical action. Completed actions remain rev
 
 ## 13. Commercial discovery separation
 
-> **Founder supersession — 2026-10-10:** completing Mission 08 "Research responsibly" also opens Best Offers, Casinos and Bonuses in the public header, drawer and footer on every page; before it they show only inside the research section. The Programme home carries `researchAccess` and its answers set the menu's flag cookie. Everything below still holds: the links are generic, receive no Programme payload, award no XP and are never required. The Founder has also decided to move this lesson to the third step; §3 will be amended when that is built. Decision record: [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](../07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md).
+> **Founder supersession — 2026-10-10:** completing Mission 08 "Research responsibly" also opens Best Offers, Casinos and Bonuses in the public header, drawer and footer on every page; before it they show only inside the research section. The Programme home carries `researchAccess` and its answers set the menu's flag cookie. Everything below still holds: the links are generic, receive no Programme payload, award no XP and are never required. The lesson is now the third step; see the amendment in §3. Decision record: [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](../07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md).
 
 Programme Home links generically to `/casinos`, `/compare`, `/bonuses` and `/best-offers`. Mission 08 may additionally link to `/bonus-guide`. Mission 10 may show a separate `What next?` section with Programme return and generic discovery links.
 

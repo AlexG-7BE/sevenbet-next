@@ -20,9 +20,10 @@ export class ProgrammeStateConflictError extends ConflictError {
 }
 
 export class MissionLockedError extends ProgrammeStateConflictError {
-  constructor(prerequisite: number, missionNumber: number) {
+  /** Both numbers are the Missions' places in the journey, the numbers a person sees. */
+  constructor(prerequisiteStep: number, step: number) {
     super(
-      `Mission ${String(prerequisite).padStart(2, "0")} must be completed before Mission ${String(missionNumber).padStart(2, "0")}`,
+      `Mission ${String(prerequisiteStep).padStart(2, "0")} must be completed before Mission ${String(step).padStart(2, "0")}`,
     );
     this.name = "MissionLockedError";
   }

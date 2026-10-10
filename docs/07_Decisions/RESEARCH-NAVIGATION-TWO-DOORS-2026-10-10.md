@@ -1,6 +1,6 @@
 # Casino research reaches the menu through two doors
 
-**Status:** ACCEPTED. Part 1 is implemented; Parts 2 and 3 are decided and not yet built.
+**Status:** ACCEPTED. Parts 1 and 2 are implemented; Part 3 is decided and not yet built.
 
 **Decision authority:** explicit Founder instructions, 10 October 2026.
 
@@ -48,9 +48,17 @@ Lesson completion changes which **menu links** a reader sees. It changes nothing
 
 `tests/public-shell.test.ts` pins the list of files that may import the flag contract: the two layouts, the menu's client component and the Programme HTTP helper.
 
-### Part 2 — the lesson moves to step 3 (decided, not yet built)
+### Part 2 — the lesson is the third step (implemented)
 
-"Research responsibly" is Mission 08 today. It will become the third step, after "Set a 7-day goal", so that the person has a goal for the week before research opens. Lesson identity, rewards and saved progress will not be renumbered; the order will be separated from the identity. This changes RFC-025 §3, which called the order immutable for the MVP, and will be recorded as an amendment there.
+"Research responsibly" keeps its number, 08, and is now the third step a person takes, after "Set a 7-day goal", so that they have a goal for the week before research opens. The order is 1, 2, 8, 3, 4, 5, 6, 7, 9, 10 (`programmeJourney`).
+
+- **Number is identity, step is order.** Progress rows, reward keys, artifact versions, API routes and analytics steps keep the Mission number. Nothing stored was renumbered or migrated; the 715 XP total and every reward are unchanged.
+- **A person sees steps.** Programme Home, the Mission screens, the timeline in the last Mission, the Review distance line, the public 10 Steps page and the overview under the Programme entry all number and list the Missions in journey order.
+- **People already past the third step** take "Research responsibly" next, then return to the Mission they were in with their saved actions. A Mission opens only when every earlier Mission of the journey is complete, so the lesson cannot be passed by.
+- **Personal Reviews stay with their Missions.** The First Review still follows "Understand the urge", which is now step 04, so it arrives one step later than before; Mid follows step 07, Full step 10. Moving a Review would change what it is written from, and was not part of this decision.
+- **Analytics keep the Mission number.** `programmeStep` in events and the internal Programme dashboard stay keyed by number, so "step 8" there is "Research responsibly" and now completes before "step 3".
+
+Recorded as the amendment in RFC-025 §3, which had called the order immutable for the MVP.
 
 ### Part 3 — the celebration and the public wording (decided, not yet built)
 
@@ -79,6 +87,8 @@ Make `researchNavigationShown` in `lib/research-access.ts` return `true`. The re
 
 - `tests/public-shell.test.ts` — the two doors, the exact cookie contract, the door chosen in the browser, the closed list of files that read the flag.
 - `tests/programme-http-boundary.test.ts` — a home answer sets the flag only for a completed lesson, withdraws a stale one, and sign-out withdraws it.
-- `tests/program-ai-missions.test.ts` — `researchAccess` turns `open` in the answer that completes Mission 08 and with no earlier Mission.
+- `tests/program-ai-missions.test.ts` — `researchAccess` turns `open` in the answer that completes Mission 08 and with no earlier Mission; the journey order, steps and prerequisites; identity keys that do not move; a person past the third step taking the lesson next and resuming with saved actions.
+- `tests/programme-completion-consistency-postgres.test.ts` and `tests/program-ai-browser.spec.ts` — the full journey against PostgreSQL, 715 XP, Reviews after their Missions.
+- `tests/ten-steps-parity.test.ts`, `tests/ten-steps-render.test.cjs`, `tests/internationalisation-market.test.ts` — the public 10 Steps page lists the Missions in journey order.
 - `tests/public-ia-hardening-browser.spec.ts` — guide links on Home, research menu on Casinos, the swap without a reload, the flag opening the menu, and the first HTML for both readers.
 - `tests/navigation-performance-stage2-browser.spec.ts` runs as a reader with the flag, so the streamed research menu keeps its Stage 2 coverage.

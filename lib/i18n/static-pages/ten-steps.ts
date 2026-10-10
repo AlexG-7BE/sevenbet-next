@@ -1,4 +1,5 @@
 import type { SupportedLocale } from "@/lib/market/registry";
+import { programmeJourney } from "@/lib/programme/program-ai/mission-registry";
 
 export const TEN_STEPS_SOURCE_COPY = [
   "The Programme, step by step", "Ten steps.", "One", "plan.",
@@ -372,11 +373,20 @@ export function currentProgrammeCopy(locale: SupportedLocale): CurrentProgrammeC
   return currentProgrammeCatalog[locale];
 }
 
+/** The copy is stored by Mission number; a person reads the Missions in the order they take them. */
+function inJourneyOrder(missions: readonly CurrentMissionCopy[]) {
+  return programmeJourney.map((missionNumber) => missions[missionNumber - 1]);
+}
+
+export function currentProgrammeJourney(locale: SupportedLocale) {
+  return inJourneyOrder(currentProgrammeCopy(locale).missions);
+}
+
 function withCurrentProgrammeCopy(translation: TenStepsTranslation, current: CurrentProgrammeCopy): TenStepsTranslation {
   if (current.missions.length !== 10) throw new Error("10 Steps current Programme copy must contain exactly ten Missions");
   const text = [...translation.text];
   text[4] = current.overview;
-  text.splice(20, 20, ...current.missions.flatMap((mission) => [mission.title, mission.description]));
+  text.splice(20, 20, ...inJourneyOrder(current.missions).flatMap((mission) => [mission.title, mission.description]));
   text[46] = current.closingLead;
   text[47] = current.closingEmphasis;
   text[48] = current.closingBody;

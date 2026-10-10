@@ -21,6 +21,7 @@ import {
   programAiMissionRegistry,
   programmeMissionTitles,
   programAiMissionSourcePresentation,
+  programmeJourney,
 } from "../lib/programme/program-ai/mission-registry";
 import { programAiMissionOneRewardPolicy } from "../lib/programme/program-ai/reward-policy";
 import { programmePathForPresentationLocale } from "../lib/programme/presentation";
@@ -602,9 +603,10 @@ test("10 Steps localizes the active RFC-025 path and Mission 01 reward boundary 
   assert.equal(programAiMissionOneRewardPolicy.registration.xp, 0);
 
   const english = tenStepsTranslation("en-GB");
+  // The page lists the Missions in journey order; titles are stored by Mission number.
   assert.deepEqual(
     Array.from({ length: 10 }, (_, index) => english.text[20 + index * 2]),
-    programmeMissionTitles,
+    programmeJourney.map((missionNumber) => programmeMissionTitles[missionNumber - 1]),
   );
   assert.deepEqual(
     Array.from({ length: 9 }, (_, index) => english.text[23 + index * 2]),

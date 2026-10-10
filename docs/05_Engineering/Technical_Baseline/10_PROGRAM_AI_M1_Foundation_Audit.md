@@ -61,7 +61,7 @@ The entire active repository was scanned. Dependencies, generated directories, b
 
 ## Current-main Missions 02–10 and runtime-hardening delta
 
-- **Detected:** RFC-025's bounded `programAiMissionRegistry` implements Missions 02–10 with exact prerequisites, three action identities per Mission, `15 + 20 + 15` action XP and `25 XP` completion. The clean PROGRAM-AI path totals `715 XP`.
+- **Detected:** RFC-025's bounded `programAiMissionRegistry` implements Missions 02–10 with exact prerequisites, three action identities per Mission, `15 + 20 + 15` action XP and `25 XP` completion. The clean PROGRAM-AI path totals `715 XP`. **Detected (10 October 2026):** the registry is listed in journey order (02, 08, 03, 04, 05, 06, 07, 09, 10); prerequisites follow that order and Mission numbers remain the stored identity.
 - **Detected:** authenticated action, completion, guidance and Review routes use closed mission/milestone contracts. First/Mid/Full Review entitlement derives from M3/M6/M10 completion and awards no XP.
 - **Detected:** deterministic fallbacks keep Missions and Reviews completable when the real provider gate is off or provider output fails validation. Private Programme fields remain excluded from commercial routing and analytics properties.
 - **Detected:** migration 0019 adds one transient rate-limit bucket model. Runtime requests use shared PostgreSQL counters outside isolated Node tests; bounded manual/Cron purge code covers expired anonymous sessions, unconsumed claims and expired buckets.

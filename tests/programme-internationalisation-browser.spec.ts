@@ -16,8 +16,11 @@ import {
   PROGRAMME_TERMS_VERSION,
 } from "../lib/programme/access-contract";
 import {
+  missionStep,
+  programAiMissionDefinition,
   programAiMissionRegistry,
   programAiMissionSourcePresentation,
+  programmeJourney,
   type ProgramAiMissionNumber,
 } from "../lib/programme/program-ai/mission-registry";
 import {
@@ -148,6 +151,7 @@ async function installAnonymousProgramme(
 
 function homeFixture(missionNumber: ProgramAiMissionNumber): ProgramAiHome {
   const now = "2026-08-31T10:00:00.000Z";
+  const currentStep = missionStep(missionNumber);
   return {
     totalXp: 215,
     activeDays: 4,
@@ -157,34 +161,36 @@ function homeFixture(missionNumber: ProgramAiMissionNumber): ProgramAiHome {
       { slug: "boundary-built", title: "Boundary Built", state: "locked", awardedAt: null },
     ],
     currentMission: missionNumber,
+    currentStep,
     primaryAction: "resume-mission",
     engagementDayBucket: "day_8_plus",
-    currentAction: programAiMissionRegistry[missionNumber - 2].actions[0].id,
+    currentAction: programAiMissionDefinition(missionNumber)!.actions[0].id,
     startingPoint: {
       startingPoint: userStartingPoint,
       desiredChange: "USER-OWNED DESIRED CHANGE",
       broadContext: "NOT_SPECIFIED",
       continuationCue: "USER-OWNED CONTINUATION CUE",
     },
-    missions: Array.from({ length: 10 }, (_, index) => {
-      const number = index + 1;
+    missions: programmeJourney.map((number, index) => {
+      const step = index + 1;
       return {
         missionNumber: number,
+        step,
         title: number === 1 ? "Map the moment" : programAiMissionSourcePresentation(number as ProgramAiMissionNumber).title,
-        status: number < missionNumber ? "completed" as const : number === missionNumber ? "current" as const : "locked" as const,
-        actionsCompleted: number < missionNumber ? (number === 1 ? 2 : 3) : number === missionNumber ? 1 : 0,
+        status: step < currentStep ? "completed" as const : step === currentStep ? "current" as const : "locked" as const,
+        actionsCompleted: step < currentStep ? (number === 1 ? 2 : 3) : step === currentStep ? 1 : 0,
         actionsTotal: number === 1 ? 2 : 3,
-        xpEarnedHere: number < missionNumber ? (number === 1 ? 40 : 75) : number === missionNumber ? 15 : 0,
+        xpEarnedHere: step < currentStep ? (number === 1 ? 40 : 75) : step === currentStep ? 15 : 0,
         completionBonus: number === 1 ? 0 : 25,
       };
     }),
     reviews: [
-      { milestone: "first", unlockMission: 3, title: "First Personal Review", maxWords: 250, status: missionNumber > 3 ? "available" : "locked" },
-      { milestone: "mid", unlockMission: 6, title: "Mid-Programme Personal Review", maxWords: 300, status: missionNumber > 6 ? "available" : "locked" },
-      { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
+      { milestone: "first", unlockMission: 3, unlockStep: missionStep(3), title: "First Personal Review", maxWords: 250, status: currentStep > missionStep(3) ? "available" : "locked" },
+      { milestone: "mid", unlockMission: 6, unlockStep: missionStep(6), title: "Mid-Programme Personal Review", maxWords: 300, status: currentStep > missionStep(6) ? "available" : "locked" },
+      { milestone: "full", unlockMission: 10, unlockStep: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
     ],
-    nextReview: { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", xpRemaining: 500, missionsRemaining: 10 - missionNumber },
-    researchAccess: "locked",
+    nextReview: { milestone: "full", unlockMission: 10, unlockStep: 10, title: "Full Programme Personal Review", xpRemaining: 500, missionsRemaining: 10 - currentStep },
+    researchAccess: currentStep > missionStep(8) ? "open" : "locked",
     discoveryLinks: [
       { href: "/casinos", label: "Compare casinos" },
       { href: "/bonuses", label: "Bonuses" },
@@ -194,7 +200,7 @@ function homeFixture(missionNumber: ProgramAiMissionNumber): ProgramAiHome {
 }
 
 function missionFixture(missionNumber: ProgramAiMissionNumber, actionIndex: number | null): ProgramAiMission {
-  const definition = programAiMissionRegistry[missionNumber - 2];
+  const definition = programAiMissionDefinition(missionNumber)!;
   const source = programAiMissionSourcePresentation(missionNumber);
   const current = actionIndex === null ? null : definition.actions[actionIndex];
   const artifact: ProgramAiMission["artifact"] = {};
@@ -203,6 +209,7 @@ function missionFixture(missionNumber: ProgramAiMissionNumber, actionIndex: numb
   if (["build_friction_stack", "rehearse_bypass"].includes(current?.id ?? "")) artifact.frictionMethods = ["bank_block"];
   return {
     missionNumber,
+    step: missionStep(missionNumber),
     stepId: `programme-mission-${missionNumber}`,
     title: source.title,
     purpose: source.purpose,
@@ -231,7 +238,7 @@ function missionFixture(missionNumber: ProgramAiMissionNumber, actionIndex: numb
           broadContext: "NOT_SPECIFIED",
           continuationCue: "USER-OWNED CONTINUATION CUE",
         },
-        facts: [{ missionNumber: 4, artifact: { boundaryCategory: "pause", executionMethod: "bank_block" } }],
+        facts: [{ missionNumber: 4, step: missionStep(4), artifact: { boundaryCategory: "pause", executionMethod: "bank_block" } }],
       },
     } : {}),
   };

@@ -23,7 +23,8 @@ project is. Decision record:
   the footer when the reader is inside the research section (`/best-offers`,
   `/casinos`, `/casino/…`, `/bonuses`, `/compare`, `/bonus-guide`,
   `/wagering-calculator`, `/outbound/…`), or when they have finished the
-  Programme lesson "Research responsibly" (Mission 08). Everyone else sees
+  Programme lesson "Research responsibly" (Mission 08, the third step).
+  Everyone else sees
   **10 Steps · Learn · Help**.
 - **Every research page stays public.** No page asks for an account, a lesson
   or a cookie; the sitemap, the Learn offer bridges and the trust pages'
@@ -37,9 +38,19 @@ project is. Decision record:
 - **The commercial boundary is where it was.** No offer, rank, partner button
   or `/r/` route reads the flag or any Programme state. The public shell
   still reads no session.
-- **Decided, not built:** the lesson moves to the third step (amends RFC-025
-  §3), then the completion screen marks the moment research opens and the
-  About and FAQ wording is brought in line.
+- **The lesson is the third step.** The order a person takes the Missions in
+  is 1, 2, 8, 3, 4, 5, 6, 7, 9, 10 (`programmeJourney`; RFC-025 §3
+  amendment). A Mission's number stays its identity: progress, reward keys,
+  routes and analytics steps keep it and nothing stored was migrated. People
+  see step numbers, on Programme Home, in the Missions, on the public 10 Steps
+  page and under the Programme entry.
+- **People already past the third step** take "Research responsibly" next and
+  then return to their Mission with saved actions. A Mission opens only when
+  every earlier Mission of the journey is complete.
+- **The First Personal Review now arrives after step 04**, not 03: it stays
+  with "Understand the urge". Mid follows step 07, Full step 10.
+- **Decided, not built:** the completion screen marks the moment research
+  opens and the About and FAQ wording is brought in line.
 - **Not measured here:** how many visitors start the Programme today. Take a
   baseline before release to compare against.
 

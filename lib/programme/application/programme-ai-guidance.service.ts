@@ -125,7 +125,8 @@ function finalPlanContext(mission: Awaited<ReturnType<ProgrammeAiMissionsService
   return {
     operation: "M10_FINAL_PLAN" as const,
     startingPoint: programmeFacts?.startingPoint ?? null,
-    facts: programmeFacts?.facts ?? [],
+    // The step number is for the person's timeline; the provider keeps its closed input.
+    facts: (programmeFacts?.facts ?? []).map(({ missionNumber, artifact }) => ({ missionNumber, artifact })),
     planPriorityIds,
   };
 }
