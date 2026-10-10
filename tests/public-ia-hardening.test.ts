@@ -154,7 +154,11 @@ test("shared navigation and footer expose only the final handoff destinations", 
   const shellCatalog = read("lib/i18n/public-shell-catalog.ts");
   const category = read("app/(public)/learn/[category]/LearningCategoryView.tsx");
   for (const destination of ["Best Offers", "Casinos", "Bonuses", "Learn"]) assert.match(navigation, new RegExp(`label: "${destination}"`));
-  assert.doesNotMatch(navigation, /label: "(?:Help|Compare)"/);
+  // Help is not a research destination; it is one of the two guide links shown in their place
+  // to a reader outside the research section before the lesson (Founder, 10 October 2026).
+  const researchMenu = navigation.slice(navigation.indexOf("export const PUBLIC_NAVIGATION"), navigation.indexOf("export const GUIDE_NAVIGATION"));
+  assert.doesNotMatch(researchMenu, /label: "(?:Help|Compare)"/);
+  assert.doesNotMatch(navigation, /label: "Compare"/);
   assert.match(navigation, /const protectedHelpPrefixes = \["\/help"\]/);
   assert.match(footer, /aria-label=\{footer\.label\}/);
   assert.match(shellCatalog, /label: "Control and support"/);

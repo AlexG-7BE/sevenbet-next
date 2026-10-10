@@ -17,7 +17,8 @@ test("desktop and mobile final handoff expose B4GAMBLE without wordmark overflow
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${baseUrl}/methodology`, { waitUntil: "networkidle" });
   await expect(page.getByRole("link", { name: "B4GAMBLE", exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "Casinos", exact: true }).first()).toBeVisible();
+  // Methodology is outside the research section, so a reader without the lesson sees the guide links.
+  await expect(page.getByRole("link", { name: "Learn", exact: true }).first()).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 

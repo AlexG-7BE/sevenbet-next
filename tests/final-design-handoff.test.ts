@@ -16,7 +16,12 @@ test("the final design handoff is governed by an approved bounded RFC and implem
 test("final public navigation and route consolidation match the locked handoff", () => {
   const shell = read("lib/public-shell.ts");
   for (const item of ["Best Offers", "Casinos", "Bonuses", "Learn"]) assert.match(shell, new RegExp(`label: "${item}"`));
-  assert.doesNotMatch(shell, /label: "(?:Compare|Help)"/);
+  // The research menu stays the locked four. Help returns only among the guide links a reader
+  // sees outside the research section before the lesson (Founder, 10 October 2026).
+  const researchMenu = shell.slice(shell.indexOf("export const PUBLIC_NAVIGATION"), shell.indexOf("export const GUIDE_NAVIGATION"));
+  assert.doesNotMatch(researchMenu, /label: "(?:Compare|Help)"/);
+  assert.doesNotMatch(shell, /label: "Compare"/);
+  assert.match(shell, /export const GUIDE_NAVIGATION = \[\s*\{ label: "10 Steps", href: "\/10-steps" \},\s*\{ label: "Help", href: "\/help", safety: true \},\s*\] as const;/);
   assert.match(read("app/(public)/compare/page.tsx"), /permanentRedirect\(productHref\(presentation, `\/casinos/);
   assert.match(read("app/(public)/self-check/page.tsx"), /permanentRedirect\("\/responsible-gambling"\)/);
   assert.match(read("app/(public)/tools/budget-calculator/page.tsx"), /permanentRedirect\("\/responsible-gambling"\)/);

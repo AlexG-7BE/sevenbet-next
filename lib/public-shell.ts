@@ -9,6 +9,15 @@ export const PUBLIC_NAVIGATION = [
   { label: "Learn", href: "/learn" },
 ] as const;
 
+/**
+ * What the menu offers a reader who has come through neither research door (see
+ * `lib/research-access.ts`): the Programme's own pages take the place of the research links.
+ */
+export const GUIDE_NAVIGATION = [
+  { label: "10 Steps", href: "/10-steps" },
+  { label: "Help", href: "/help", safety: true },
+] as const;
+
 const commercialMarketOnlyRoutes = new Set(["/best-offers", "/bonuses"]);
 
 export function publicNavigationForCommercialState(commercialProductsAvailable: boolean) {

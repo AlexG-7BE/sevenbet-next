@@ -1,6 +1,8 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 
+import { RESEARCH_ACCESS_COOKIE, RESEARCH_ACCESS_OPEN } from "../lib/research-access";
+
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const fixtureArticlePath = "/en/learn/casino-basics/navigation-stage2-guide";
 // Exact hashes reproduced against the archived Stage 1 base; no other runtime error is ignored.
@@ -16,13 +18,18 @@ async function marketContext(
   country: "KZ" | "IE",
   options: Parameters<Browser["newContext"]>[0] = {},
 ) {
-  return browser.newContext({
+  const context = await browser.newContext({
     ...options,
     extraHTTPHeaders: {
       ...options.extraHTTPHeaders,
       "x-vercel-ip-country": country,
     },
   });
+  // These journeys exercise the full research menu from Home, so every reader here has finished
+  // the "Research responsibly" lesson. The two doors themselves are covered in
+  // public-ia-hardening-browser.spec.ts.
+  await context.addCookies([{ name: RESEARCH_ACCESS_COOKIE, value: RESEARCH_ACCESS_OPEN, url: baseUrl }]);
+  return context;
 }
 
 function observeRuntimeErrors(page: Page) {

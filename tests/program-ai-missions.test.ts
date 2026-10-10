@@ -10,6 +10,7 @@ import {
   commercialDiscoveryLinks,
   completionAwardKey,
   programAiMissionRegistry,
+  researchAccessMission,
 } from "../lib/programme/program-ai/mission-registry";
 import { parseProgramAiMissionAction } from "../lib/programme/program-ai/mission-validation";
 import { deterministicGuidance, parseGeneratedResult } from "../lib/programme/program-ai/mission-guidance";
@@ -476,6 +477,14 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
       ]);
       assert.deepEqual(duplicateCompletion.map((result) => result.xpAwarded).sort((a, b) => a - b), [0, 25]);
       if (mission.missionNumber < 10) assert.equal(fake.enrollment.completedAt, null);
+      // Casino research opens in the public menu with the "Research responsibly" lesson, in the
+      // same answer that completes it, and with no other lesson (Founder, 10 October 2026).
+      const lessonDone = mission.missionNumber >= researchAccessMission;
+      assert.deepEqual(
+        duplicateCompletion.map((result) => result.home.researchAccess),
+        [lessonDone ? "open" : "locked", lessonDone ? "open" : "locked"],
+        `Mission ${mission.missionNumber}`,
+      );
     }
     const home = await service.home("user-a");
     assert.equal(home.totalXp, 715);

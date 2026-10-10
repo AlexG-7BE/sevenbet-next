@@ -3,6 +3,12 @@ import { NextResponse } from "next/server";
 import { AuthenticationRequiredError } from "@/lib/auth/errors";
 import { ServiceError } from "@/lib/services/service-error";
 import { ProgrammeRateLimitError } from "@/lib/programme/rate-limit";
+import {
+  RESEARCH_ACCESS_COOKIE,
+  RESEARCH_ACCESS_OPEN,
+  researchAccessCookieOptions,
+  researchAccessOpen,
+} from "@/lib/research-access";
 
 export const anonymousProgrammeCookie = "sevenbet_programme_session";
 export const pendingProgrammeClaimCookie = "sevenbet_programme_claim";
@@ -110,6 +116,29 @@ export function programmeErrorResponse(error: unknown) {
     { ok: false, error: "Unable to process programme request", code: "INTERNAL_ERROR" },
     500,
   );
+}
+
+/**
+ * Keeps the menu's research flag in step with the Programme home the response carries: set while
+ * the lesson is complete, withdrawn when a browser still holds it for an account that has not
+ * finished the lesson (see lib/research-access.ts).
+ */
+export function withResearchAccess(
+  request: Request,
+  response: NextResponse,
+  home: Readonly<{ researchAccess: "open" | "locked" }>,
+) {
+  const open = home.researchAccess === "open";
+  if (open || researchAccessOpen(request.headers.get("cookie"))) {
+    response.cookies.set(RESEARCH_ACCESS_COOKIE, open ? RESEARCH_ACCESS_OPEN : "", researchAccessCookieOptions(open));
+  }
+  return response;
+}
+
+/** Sign-out leaves no lesson flag behind for the next reader of this browser. */
+export function withoutResearchAccess(response: NextResponse) {
+  response.cookies.set(RESEARCH_ACCESS_COOKIE, "", researchAccessCookieOptions(false));
+  return response;
 }
 
 export const privateCookieOptions = {

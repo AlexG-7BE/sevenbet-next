@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 
 import {
+  GUIDE_NAVIGATION,
   PUBLIC_NAVIGATION,
   publicNavigationForCommercialState,
   type PublicAccountNavigation,
@@ -15,6 +16,7 @@ import { MarketLanguageSelector } from "./MarketLanguageSelector";
 import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 import {
   PublicMobileNavigationEnhancement,
+  PublicNavigationDoor,
   PublicNavigationRouteLink,
   PublicProgrammeActionLink,
 } from "./PublicNavigationClient";
@@ -33,6 +35,8 @@ function navigationLabel(messages: PublicShellMessages, href: string) {
   if (href === "/casinos") return messages.casinos;
   if (href === "/bonuses") return messages.bonuses;
   if (href === "/learn") return messages.learn;
+  if (href === "/10-steps") return messages.tenSteps;
+  if (href === "/help") return messages.help;
   return href;
 }
 
@@ -65,6 +69,7 @@ export function PublicNavigation({
   commercialMobileBestOffersNavigation,
   commercialMobileBonusesNavigation,
   deferCommercialNavigation = false,
+  researchAccess = false,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
@@ -78,6 +83,7 @@ export function PublicNavigation({
   commercialMobileBestOffersNavigation?: ReactNode;
   commercialMobileBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
+  researchAccess?: boolean;
 }) {
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
@@ -97,20 +103,39 @@ export function PublicNavigation({
     "/best-offers": commercialMobileBestOffersNavigation,
     "/bonuses": commercialMobileBonusesNavigation,
   } as const;
+  // Two doors (Founder, 10 October 2026): research links for a reader inside the research section
+  // or past the lesson, the guide links for everyone else. Help keeps its own block in the drawer.
+  const guideLink = (item: (typeof GUIDE_NAVIGATION)[number], variant: "desktop" | "mobile") => (
+    <PublicNavigationDoor door="guide" key={item.href} researchAccess={researchAccess}>
+      <PublicNavigationRouteLink
+        baseHref={item.href}
+        className={variant === "desktop" && "safety" in item ? styles.helpLink : undefined}
+        label={navigationLabel(messages, item.href)}
+        presentation={presentation}
+        programme={programme}
+      >
+        {variant === "mobile"
+          ? <><span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small></>
+          : navigationLabel(messages, item.href)}
+      </PublicNavigationRouteLink>
+    </PublicNavigationDoor>
+  );
+  const leadingGuideNavigation = GUIDE_NAVIGATION.filter((item) => !("safety" in item));
+  const trailingGuideNavigation = GUIDE_NAVIGATION.filter((item) => "safety" in item);
   return (
     <>
       <div className={styles.desktopNavigation}>
         <nav className={styles.primaryNavigation} aria-label={messages.primaryNavigation}>
+          {leadingGuideNavigation.map((item) => guideLink(item, "desktop"))}
           {PUBLIC_NAVIGATION.map((item) => {
             const commercialNavigation = deferredDesktopNavigation[item.href as keyof typeof deferredDesktopNavigation];
             if (deferCommercialNavigation && commercialNavigation !== undefined) {
               return <Fragment key={item.href}>{commercialNavigation}</Fragment>;
             }
             if (!visibleNavigationHrefs.has(item.href)) return null;
-            return (
+            const link = (
               <PublicNavigationRouteLink
                 baseHref={item.href}
-                className={"safety" in item && item.safety ? styles.helpLink : undefined}
                 key={item.href}
                 label={navigationLabel(messages, item.href)}
                 presentation={presentation}
@@ -119,7 +144,11 @@ export function PublicNavigation({
                 {navigationLabel(messages, item.href)}
               </PublicNavigationRouteLink>
             );
+            return "commercial" in item
+              ? <PublicNavigationDoor door="research" key={item.href} researchAccess={researchAccess}>{link}</PublicNavigationDoor>
+              : link;
           })}
+          {trailingGuideNavigation.map((item) => guideLink(item, "desktop"))}
         </nav>
         <div className={styles.accountNavigation}>
           {programme ? (
@@ -165,13 +194,14 @@ export function PublicNavigation({
               <span aria-hidden="true" className={styles.dialogCloseSpace} />
             </div>
             <nav className={styles.mobileRouteList} aria-label={messages.mobilePrimaryNavigation}>
+              {leadingGuideNavigation.map((item) => guideLink(item, "mobile"))}
               {PUBLIC_NAVIGATION.map((item) => {
                 const commercialNavigation = deferredMobileNavigation[item.href as keyof typeof deferredMobileNavigation];
                 if (deferCommercialNavigation && commercialNavigation !== undefined) {
                   return <Fragment key={item.href}>{commercialNavigation}</Fragment>;
                 }
-                if (!visibleNavigationHrefs.has(item.href) || ("safety" in item && item.safety)) return null;
-                return (
+                if (!visibleNavigationHrefs.has(item.href)) return null;
+                const link = (
                   <PublicNavigationRouteLink
                     baseHref={item.href}
                     key={item.href}
@@ -182,6 +212,9 @@ export function PublicNavigation({
                     <span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small>
                   </PublicNavigationRouteLink>
                 );
+                return "commercial" in item
+                  ? <PublicNavigationDoor door="research" key={item.href} researchAccess={researchAccess}>{link}</PublicNavigationDoor>
+                  : link;
               })}
             </nav>
             {/* The Programme is the drawer's one primary action, directly under the routes;
@@ -220,26 +253,30 @@ export function PublicCommercialNavigationItem({
   messages,
   presentation,
   programme,
+  researchAccess = false,
   variant,
 }: {
   destination: "/best-offers" | "/bonuses";
   messages: PublicShellMessages;
   presentation: PresentationResolution;
   programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
+  researchAccess?: boolean;
   variant: "desktop" | "mobile";
 }) {
   const item = deferredCommercialNavigation.find(({ href }) => href === destination);
   if (!item) return null;
   return (
-    <PublicNavigationRouteLink
-      baseHref={item.href}
-      label={navigationLabel(messages, item.href)}
-      presentation={presentation}
-      programme={programme}
-    >
-      {variant === "mobile" ? (
-        <><span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small></>
-      ) : navigationLabel(messages, item.href)}
-    </PublicNavigationRouteLink>
+    <PublicNavigationDoor door="research" researchAccess={researchAccess}>
+      <PublicNavigationRouteLink
+        baseHref={item.href}
+        label={navigationLabel(messages, item.href)}
+        presentation={presentation}
+        programme={programme}
+      >
+        {variant === "mobile" ? (
+          <><span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small></>
+        ) : navigationLabel(messages, item.href)}
+      </PublicNavigationRouteLink>
+    </PublicNavigationDoor>
   );
 }

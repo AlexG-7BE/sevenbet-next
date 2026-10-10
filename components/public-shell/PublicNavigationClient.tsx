@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
@@ -11,6 +11,7 @@ import { DEFAULT_MARKET_PROFILE, marketProfileByLocale } from "@/lib/market/regi
 import { createCommercialNavigationRetryRegistry } from "@/lib/market/navigation-stage2-retry";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { isCurrentPublicRoute } from "@/lib/public-shell";
+import { researchAccessOpen, researchNavigationShown } from "@/lib/research-access";
 import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 
 type ProgrammePresentation = Readonly<{
@@ -55,6 +56,33 @@ export function PublicCommercialNavigationRetry() {
   }, [pathname, router]);
 
   return <span data-commercial-navigation-timed-out hidden />;
+}
+
+const cookieHasNoSubscription = () => () => {};
+
+/**
+ * Shows research links to a reader inside the research section or with the lesson flag, and the
+ * guide links to everyone else. The layout that renders the menu is not rendered again when the
+ * page changes, so the choice is made here, from the current path and the cookie as it is now;
+ * `researchAccess` is what the server read from the same cookie, for the first paint.
+ */
+export function PublicNavigationDoor({
+  children,
+  door,
+  researchAccess,
+}: {
+  children: ReactNode;
+  door: "research" | "guide";
+  researchAccess: boolean;
+}) {
+  const pathname = usePathname();
+  const access = useSyncExternalStore(
+    cookieHasNoSubscription,
+    () => researchAccessOpen(document.cookie),
+    () => researchAccess,
+  );
+  const research = researchNavigationShown(stripPublicMarketPrefix(pathname), access);
+  return research === (door === "research") ? <>{children}</> : null;
 }
 
 export function PublicNavigationRouteLink({
