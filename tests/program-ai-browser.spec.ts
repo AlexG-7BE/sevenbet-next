@@ -1342,6 +1342,43 @@ test("durably accepted account survives empty storage, context, login and Missio
       await expect(page.getByText("Your result is ready and the completion reward has been added.", { exact: true })).toBeVisible();
       await expect(page.getByText("PERSONAL REVIEW AVAILABLE", { exact: true })).toBeVisible();
       await expect(page.getByText(/First Personal Review is ready\./)).toBeVisible();
+    } else if (mission.missionNumber === researchAccessMission) {
+      // Finishing the research Mission opens casino research: on its completion screen, in the
+      // menu's flag, and in the public header on a page outside the research section.
+      const publicContext = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1000 }, storageState: await page.context().storageState() });
+      const before = await publicContext.newPage();
+      await before.goto("/en");
+      await expect(before.locator('nav[aria-label="Primary navigation"] a[data-navigation-href="/10-steps"]')).toBeVisible();
+      await expect(before.locator('nav[aria-label="Primary navigation"] a[data-navigation-href="/casinos"]')).toHaveCount(0);
+      await publicContext.close();
+
+      await openCurrentMission(page, 8, 1440, "Resume mission");
+      await expect(page.locator("[data-programme-research-opened]")).toHaveCount(0);
+      await page.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
+      const opened = page.locator('[data-programme-research-opened="fresh"]');
+      await expect(opened).toBeVisible();
+      await expect(opened.getByRole("heading", { name: "Casinos, bonuses and offers are now open to you" })).toBeVisible();
+      await expect(opened.getByRole("link")).toHaveCount(3);
+      for (const link of await opened.getByRole("link").all()) {
+        expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(48);
+        expect(await link.getAttribute("href")).toMatch(/^\/(?:en\/)?(?:casinos|bonuses|best-offers)$/);
+      }
+      await expect(page.getByText("Your checklist", { exact: true })).toBeVisible();
+      await expect(page.getByText("Licence and regulatory status", { exact: true })).toBeVisible();
+      await noHorizontalOverflow(page);
+      expect((await page.context().cookies()).find((cookie) => cookie.name === "b4g_research_access")?.value).toBe("open");
+      // The menu on this same page changes with the screen, before any page change.
+      await expect(page.locator('nav[aria-label="Primary navigation"] a[data-navigation-href="/casinos"]')).toBeVisible();
+      await expect(page.locator('nav[aria-label="Primary navigation"] a[data-navigation-href="/10-steps"]')).toHaveCount(0);
+      await expect(page.locator('[data-public-shell="header"]')).toHaveAttribute("data-research-new", "");
+
+      await page.goto("/en");
+      const primary = page.locator('nav[aria-label="Primary navigation"]');
+      await expect.poll(() => primary.locator("[data-navigation-href]").evaluateAll((links) => links.map((link) => link.getAttribute("data-navigation-href"))), { timeout: 15_000 })
+        .toEqual(["/best-offers", "/casinos", "/bonuses", "/learn"]);
+      await expect(page.locator('[data-public-shell="header"]')).toHaveAttribute("data-research-new", "");
+      await page.goto("/program");
+      await expect(page.locator('[data-programme-research="featured"]')).toBeVisible();
     } else {
       const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
         headers: { cookie: authCookieHeader },
@@ -1603,7 +1640,8 @@ test("phone Mission screens open at the top with the first choice above a sticky
         await context.close();
         continue;
       }
-      await expect(research).toHaveAttribute("data-programme-research", "standard");
+      // Before the research Mission is complete the dashboard shows no research card (Founder, 10 October 2026).
+      await expect(research).toHaveCount(0);
       const start = page.getByRole("button", { name: "Start mission", exact: true });
       await start.scrollIntoViewIfNeeded();
       await page.evaluate(() => window.scrollBy(0, 200));

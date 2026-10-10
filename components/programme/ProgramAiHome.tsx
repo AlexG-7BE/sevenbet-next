@@ -26,10 +26,11 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
   const current = home.missions.find((mission) => mission.missionNumber === home.currentMission);
   const currentTitle = programmeMissionCopy(locale, home.currentMission).title;
   const t = (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
-  // Founder decision, 25 Sep 2026: once the "Research responsibly" Mission is complete, the generic
-  // research links sit right under the current mission. They stay generic: no Programme data picks them.
+  // Founder decisions, 25 Sep and 10 Oct 2026: the generic research links appear once the "Research
+  // responsibly" Mission is complete, right under the current mission, and not before. They stay
+  // generic: no Programme data picks them.
   const researchFeatured = home.discoveryLinks.length > 0 && home.researchAccess === "open";
-  const research = <section className={`${styles.compactResearch} ${researchFeatured ? styles.researchFeatured : ""}`.trim()} data-programme-research={researchFeatured ? "featured" : "standard"}><span>{t("Research")}</span>{home.discoveryLinks.length ? <nav>{home.discoveryLinks.map((item) => <a href={item.href} key={item.href} onClick={() => { const destinationRoute = discoveryDestination(item.href); if (destinationRoute) productAnalyticsClient.discoveryClicked({ sourceSurface: "programme_home", destinationRoute }); }}>{discoveryLabel(item.href, locale)}</a>)}</nav> : <p>{t("Use the main navigation for public casino information.")}</p>}</section>;
+  const research = <section className={`${styles.compactResearch} ${styles.researchFeatured}`} data-programme-research="featured"><span>{t("Research")}</span><nav>{home.discoveryLinks.map((item) => <a href={item.href} key={item.href} onClick={() => { const destinationRoute = discoveryDestination(item.href); if (destinationRoute) productAnalyticsClient.discoveryClicked({ sourceSurface: "programme_home", destinationRoute }); }}>{discoveryLabel(item.href, locale)}</a>)}</nav></section>;
   return (
     <div className={`${styles.shell} ${styles.dashboardShell}`} data-programme-presentation="dashboard">
       <ProgramAiAuthenticatedHeader dashboard locale={locale} programmePath={programmePath} totalXp={home.totalXp} userId={userId} />
@@ -51,7 +52,6 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
             {home.startingPoint ? <section className={styles.compactStartingPoint}><span>{t("Your starting point")}</span><p>{home.startingPoint.startingPoint}</p><small>{t("Saved Starting Point")}</small></section> : null}
             <section className={styles.compactAchievements}><span>{t("Achievements")}</span><div>{home.achievements.length ? home.achievements.map((achievement) => <b data-state={achievement.state} key={achievement.slug}>{achievementTitle(achievement.slug, locale)}</b>) : <b data-state="locked">{t("First achievement waits ahead")}</b>}</div></section>
             <section className={styles.compactReviews}><span>{t("Personal reviews")}</span><p>{programmeReviewStatusCopy(home, locale)}</p>{home.reviews.filter((review) => review.status === "available").map((review) => <button key={review.milestone} onClick={() => onReview(review.milestone)} type="button"><strong>{reviewTitle(review.milestone, locale)}</strong><small>{t("Open review")}</small></button>)}</section>
-            {researchFeatured ? null : research}
           </div>
         </div>
         <footer className={styles.dashboardFooter}><span>{t("Your data is private. We never use it for offers or rankings.")}</span><span>{t("18+ · Protected Help remains available.")}</span></footer>

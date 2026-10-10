@@ -12,6 +12,7 @@ import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { PublicHeaderAutoHide } from "./PublicHeaderAutoHide";
 import { PublicHeaderThemeController } from "./PublicHeaderThemeController";
 import { PublicNavigation } from "./PublicNavigation";
+import { PublicResearchNewMark } from "./PublicNavigationClient";
 import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 import styles from "./PublicShell.module.css";
 
@@ -70,6 +71,7 @@ export function PublicHeader({
       </div>
       <PublicHeaderThemeController />
       <PublicHeaderAutoHide />
+      <PublicResearchNewMark />
     </header>
   );
 }

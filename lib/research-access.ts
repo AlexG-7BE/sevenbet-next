@@ -53,3 +53,18 @@ export function isResearchSectionRoute(pathname: string) {
 export function researchNavigationShown(pathname: string, researchAccess: boolean) {
   return researchAccess || isResearchSectionRoute(pathname);
 }
+
+/**
+ * When this browser saw the lesson finished, so the menu can mark its new links for a few days.
+ * It stays in the browser's own storage and is never sent anywhere.
+ */
+export const RESEARCH_OPENED_AT_STORAGE_KEY = "b4g_research_opened_at";
+/** Fired in the page when the lesson finishes, so the menu on that same page changes at once. */
+export const RESEARCH_ACCESS_CHANGED_EVENT = "b4g:research-access";
+export const RESEARCH_NEW_MARK_DAYS = 7;
+
+export function researchLinksAreNew(openedAt: string | null | undefined, now: number) {
+  const opened = Number(openedAt);
+  if (!openedAt || !Number.isFinite(opened) || opened > now) return false;
+  return now - opened < RESEARCH_NEW_MARK_DAYS * 24 * 60 * 60 * 1000;
+}

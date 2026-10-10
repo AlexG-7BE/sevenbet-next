@@ -585,6 +585,26 @@
   font-weight: 650;
 }
 .mobileRouteList a[aria-current="page"] { padding-left: 12px; border-left: 3px solid var(--shell-acid); }
+/* For a week after the "Research responsibly" lesson its new links carry a mark (see PublicResearchNewMark). */
+.header[data-research-new] .primaryNavigation a:is([data-navigation-href="/best-offers"], [data-navigation-href="/casinos"], [data-navigation-href="/bonuses"])::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -9px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--shell-acid);
+}
+.header[data-research-new] .mobileRouteList a:is([data-navigation-href="/best-offers"], [data-navigation-href="/casinos"], [data-navigation-href="/bonuses"]) small::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--shell-acid);
+}
 .mobileRouteList small { color: var(--shell-night-muted); font-size: 13px; line-height: 18px; letter-spacing: .08em; }
 
 /* The drawer's primary action sits directly under the routes: the site's acid

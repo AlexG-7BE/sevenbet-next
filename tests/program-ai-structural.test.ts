@@ -272,7 +272,7 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.doesNotMatch(authenticatedHome, /~6 min left|Week 2 review unlocks after Mission 05/);
   assert.doesNotMatch(authenticatedHome, /once your plan is built, not before/);
   assert.doesNotMatch(authenticatedHome, /Research links are temporarily unavailable/);
-  assert.match(authenticatedHome, /Use the main navigation for public casino information/);
+  assert.ok(!authenticatedHome.includes("Use the main navigation for public casino information"), "the research card is not shown before research opens");
   // Founder decision 25 Sep 2026: the same generic research links lead the dashboard once the research Mission is
   // complete. The server says so (`researchAccess`); the dashboard no longer reads a Mission number for it.
   assert.ok(authenticatedHome.includes('const researchFeatured = home.discoveryLinks.length > 0 && home.researchAccess === "open";'));
@@ -281,7 +281,9 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.ok(authenticatedHome.includes('number: String(home.currentStep).padStart(2, "0")'));
   assert.ok(authenticatedHome.includes('<b>{String(mission.step).padStart(2, "0")}</b>'));
   assert.ok(!authenticatedHome.includes("String(home.currentMission)") && !authenticatedHome.includes("String(mission.missionNumber)"));
-  assert.match(authenticatedHome, /data-programme-research=\{researchFeatured \? "featured" : "standard"\}/);
+  assert.ok(authenticatedHome.includes('data-programme-research="featured"'));
+  assert.ok(authenticatedHome.includes("{researchFeatured ? research : null}"));
+  assert.ok(!authenticatedHome.includes("{researchFeatured ? null : research}"), "no research card before the lesson (Founder, 10 October 2026)");
   assert.doesNotMatch(authenticatedHome, /Review or update/);
   assert.match(authenticatedHome, /Saved Starting Point/);
   assert.match(authenticatedHome, /home\.primaryAction === "review-mission" \? "Mission complete" : "Current mission"/);
@@ -375,4 +377,49 @@ test("public 10-steps metadata uses Starting Point truth and removes stale Momen
   assert.match(tenStepsPage, /tenStepsTranslation\(presentation\.locale\)/);
   assert.match(tenStepsCatalog, /build a personal Starting Point/);
   assert.doesNotMatch(tenStepsPage + tenStepsCatalog, /Moment Map/);
+});
+
+test("the research Mission's completion marks the moment casino research opens (Founder, 10 October 2026)", () => {
+  const experience = readFileSync("components/programme/ProgramAiMissionExperience.tsx", "utf8");
+  const stylesheet = readFileSync("components/programme/ProgramAiAuthenticated.module.css", "utf8");
+  const catalogue = readFileSync("lib/i18n/programme-catalog.ts", "utf8");
+
+  // Shown only by the Mission that opens research, and only when the server says research is open.
+  assert.ok(experience.includes('const researchOpened = mission.missionNumber === researchAccessMission && home.researchAccess === "open";'));
+  assert.ok(experience.includes("{researchOpened ? <ResearchOpened locale={locale} fresh={newlyCompleted} /> : null}"));
+  assert.ok(experience.includes("{researchOpened ? <ResearchChecklist artifact={mission.artifact} locale={locale} /> : null}"));
+  assert.ok(experience.includes("{mission.missionNumber === 10 ? <CommercialNext locale={locale} /> : null}"));
+
+  // The links are the fixed public routes. Nothing the person entered reaches a URL or picks a link.
+  const opened = experience.slice(experience.indexOf("function ResearchOpened("), experience.indexOf("function ResearchChecklist("));
+  assert.deepEqual([...opened.matchAll(/programmePublicHref\(locale, "([^"]+)"\)/g)].map((match) => match[1]), ["/casinos", "/bonuses", "/best-offers"]);
+  assert.ok(!/artifact|startingPoint|localWording|[?&]\w+=/.test(opened), "no Programme content in the opening block");
+  assert.ok(opened.includes("window.localStorage.setItem(RESEARCH_OPENED_AT_STORAGE_KEY, String(Date.now()));"), "the menu's new-link mark starts from this moment, in this browser only");
+  assert.ok(opened.includes("window.dispatchEvent(new Event(RESEARCH_ACCESS_CHANGED_EVENT));"), "the menu on the same page changes with the screen");
+  assert.ok(!/fetch\(|sendBeacon|document\.cookie/.test(opened));
+
+  // The checklist block shows what the person built and the Programme's stance; its only link is the guide.
+  const checklist = experience.slice(experience.indexOf("function ResearchChecklist("), experience.indexOf("function CommercialNext("));
+  assert.ok(checklist.includes('humanValue(criterion, locale, "researchCriteria")'));
+  assert.deepEqual([...checklist.matchAll(/programmePublicHref\(locale, "([^"]+)"\)/g)].map((match) => match[1]), ["/bonus-guide"]);
+
+  // Every new line is translated in every Programme language: thirteen cells per row.
+  for (const key of [
+    "NEW IN YOUR MENU",
+    "Casinos, bonuses and offers are now open to you",
+    "You completed this Mission, so these sections are now in your menu on every page.",
+    "The Programme does not ask you to give play up. It helps you keep it inside limits you choose. Check every offer against your checklist first.",
+    "Your checklist",
+  ]) {
+    const row = catalogue.split("\n").find((line) => line.startsWith(`  [${JSON.stringify(key)}, `));
+    assert.ok(row, key);
+    const cells = JSON.parse(row!.trim().replace(/,$/, "")) as string[];
+    assert.equal(cells.length, 13, key);
+    assert.equal(new Set(cells).size, 13, `${key}: every language has its own wording`);
+  }
+
+  // Readable and reachable: 16px links with a 48px target, and no motion for readers who ask for none.
+  assert.ok(stylesheet.includes(".researchReveal nav a { min-height: 48px;"));
+  assert.match(stylesheet, /\.researchReveal nav a \{[^}]*font-size: 16px;/);
+  assert.ok(stylesheet.includes('@media (prefers-reduced-motion: reduce) { .researchReveal[data-programme-research-opened="fresh"] { animation: none; } }'));
 });
