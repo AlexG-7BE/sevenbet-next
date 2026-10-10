@@ -4,6 +4,22 @@ import { ANALYTICS_EXCLUDED_PATH } from "@/lib/analytics/excluded-paths";
 /** Founder instruction, 4 Oct 2026: the B4GAMBLE web stream of Google Analytics 4 (RFC-046 §16). */
 export const GOOGLE_ANALYTICS_MEASUREMENT_ID = "G-11MX6NPS95";
 
+/** Founder instruction, 10 Oct 2026: the www.b4gamble.com Google Tag Manager container. */
+export const GOOGLE_TAG_MANAGER_CONTAINER_ID = "GTM-MR6HTDB8";
+
+/** The <noscript> half of the Google Tag Manager install, placed right after <body>. */
+export const GOOGLE_TAG_MANAGER_NOSCRIPT_URL = `https://www.googletagmanager.com/ns.html?id=${GOOGLE_TAG_MANAGER_CONTAINER_ID}`;
+
+/** Google's own Tag Manager <head> snippet, in its nonce-aware form for pages with a CSP. */
+export const GOOGLE_TAG_MANAGER_SNIPPET = [
+  "(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':",
+  "new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],",
+  "j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=",
+  "'https://www.googletagmanager.com/gtm.js?id='+i+dl;var n=d.querySelector('[nonce]');",
+  "n&&j.setAttribute('nonce',n.nonce||n.getAttribute('nonce'));f.parentNode.insertBefore(j,f);",
+  `})(window,document,'script','dataLayer','${GOOGLE_TAG_MANAGER_CONTAINER_ID}');`,
+].join("");
+
 export const GOOGLE_ANALYTICS_HOSTS = [
   "https://*.googletagmanager.com",
   "https://*.google-analytics.com",

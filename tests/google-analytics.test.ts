@@ -6,6 +6,8 @@ import { runInNewContext } from "node:vm";
 import { ANALYTICS_CONSENT_COOKIE } from "../lib/analytics/consent-contract";
 import {
   GOOGLE_ANALYTICS_MEASUREMENT_ID,
+  GOOGLE_TAG_MANAGER_NOSCRIPT_URL,
+  GOOGLE_TAG_MANAGER_SNIPPET,
   googleTagBootstrap,
   revokeGoogleAnalytics,
 } from "../lib/analytics/google-analytics";
@@ -110,4 +112,21 @@ test("the tag sits in <head> with the CSP nonce and is named in every banner lan
   assert.match(privacy, /<strong>Google Analytics:<\/strong> unless you reject cookies, Google Analytics 4/);
   assert.match(privacy, /It sends nothing from protected Help, the self-check or staff pages, and Google signals and advertising personalisation are turned off\./);
   assert.match(privacy, /Google Analytics runs from your first page and sets the <code>_ga<\/code> and <code>_ga_\*<\/code> cookies for up to two years\. “Reject cookies” stops it and removes those cookies\./);
+});
+
+test("Google Tag Manager is installed the way Google asks: snippet in <head>, noscript frame right after <body>", () => {
+  assert.match(GOOGLE_TAG_MANAGER_SNIPPET, /'https:\/\/www\.googletagmanager\.com\/gtm\.js\?id='\+i\+dl/);
+  assert.match(GOOGLE_TAG_MANAGER_SNIPPET, /\(window,document,'script','dataLayer','GTM-MR6HTDB8'\);$/);
+  assert.equal(GOOGLE_TAG_MANAGER_NOSCRIPT_URL, "https://www.googletagmanager.com/ns.html?id=GTM-MR6HTDB8");
+
+  const page = { document: { querySelector: () => null, getElementsByTagName: () => [{ parentNode: { insertBefore: (node: unknown) => inserted.push(node) } }], createElement: () => ({ setAttribute() {} }) }, Date } as Record<string, unknown>;
+  const inserted: unknown[] = [];
+  page.window = page;
+  runInNewContext(GOOGLE_TAG_MANAGER_SNIPPET, page);
+  assert.deepEqual(JSON.parse(JSON.stringify(inserted)), [{ async: true, src: "https://www.googletagmanager.com/gtm.js?id=GTM-MR6HTDB8" }]);
+
+  const layout = readFileSync("app/layout.tsx", "utf8");
+  assert.match(layout, /<head>\s*\{\/\* Google Tag Manager \*\/\}\s*<script nonce=\{nonce\} dangerouslySetInnerHTML=\{\{ __html: GOOGLE_TAG_MANAGER_SNIPPET \}\} \/>/);
+  assert.match(layout, /<body className=\{[^\n]+\}>\s*\{googleAnalyticsId \? \(\s*\/\/ Google Tag Manager \(noscript\)\s*<noscript>\s*<iframe src=\{GOOGLE_TAG_MANAGER_NOSCRIPT_URL\}/);
+  assert.match(buildContentSecurityPolicy("nonce"), /frame-src 'self' [^;]*https:\/\/www\.googletagmanager\.com(?:;|$)/);
 });

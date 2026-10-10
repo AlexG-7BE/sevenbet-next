@@ -523,6 +523,14 @@ are unchanged.
   `*.google-analytics.com`, `*.analytics.google.com` and `www.google.com`.
 - **Disclosure.** The banner and Privacy Notice name Google Analytics; the
   consent ledger records new choices under `privacy-analytics-v2`.
+- **Google Tag Manager (Founder instruction, 10 October 2026).** Container
+  `GTM-MR6HTDB8` is installed the way Google asks: its snippet is first in
+  the same `<head>` block and its `<noscript>` frame follows `<body>`, under
+  the same Production and staff-device rule. `frame-src` adds
+  `www.googletagmanager.com` for that frame. The container holds no tags at
+  install; tags added in the Founder's Tag Manager account are outside
+  repository evidence, and the `ga-disable` getter governs Google Analytics
+  only.
 
 Code: `lib/analytics/google-analytics.ts`,
 `lib/analytics/google-analytics.server.ts`,

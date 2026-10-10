@@ -34,7 +34,8 @@ export function buildContentSecurityPolicy(
     // Google Analytics sends after "Accept cookies"; gtag.js itself loads through 'strict-dynamic'.
     `connect-src 'self' ${GOOGLE_ANALYTICS_HOSTS.join(" ")}${development ? " ws: wss:" : ""}`,
     "media-src 'self' blob:",
-    "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
+    // The last host is Google Tag Manager's <noscript> frame.
+    "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com https://www.googletagmanager.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     "object-src 'none'",

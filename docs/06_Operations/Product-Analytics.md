@@ -27,6 +27,11 @@ counts every Production visitor except staff-marked devices from the first
 page; "Reject cookies" turns it off, and it never sends from excluded paths.
 It is a separate Google report and does not feed `/admin/analytics`.
 
+**Google Tag Manager** (RFC-046 §16, 10 October 2026): container
+`GTM-MR6HTDB8` loads on the same pages as the Google tag (Production, not
+staff-marked devices). Its tags are managed in the Founder's Tag Manager
+account.
+
 ## Runtime controls
 
 The public collection switch is:

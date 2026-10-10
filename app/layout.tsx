@@ -7,7 +7,11 @@ import { ProgrammeDocumentPolicyBoundary } from "@/components/programme/Programm
 import { AnalyticsConsentBanner } from "@/components/analytics/AnalyticsConsentBanner";
 import { AnalyticsPageView } from "@/components/analytics/AnalyticsPageView";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { googleTagBootstrap } from "@/lib/analytics/google-analytics";
+import {
+  GOOGLE_TAG_MANAGER_NOSCRIPT_URL,
+  GOOGLE_TAG_MANAGER_SNIPPET,
+  googleTagBootstrap,
+} from "@/lib/analytics/google-analytics";
 import { googleAnalyticsMeasurementId } from "@/lib/analytics/google-analytics.server";
 import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import { resolveServerPresentationContext } from "@/lib/market/server";
@@ -57,7 +61,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // a validated request-local presentation context for the server-rendered lang.
   const presentation = await resolveServerPresentationContext();
   const analyticsEnabled = isProductAnalyticsEnabled();
-  // Google Analytics: Production only, never on staff-marked devices.
+  // Google Tag Manager and Google Analytics: Production only, never on staff-marked devices.
   const requestHeaders = await headers();
   const googleAnalyticsId = analyticsEnabled ? googleAnalyticsMeasurementId(requestHeaders) : null;
   const nonce = requestHeaders.get(CSP_NONCE_REQUEST_HEADER) || undefined;
@@ -65,12 +69,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={presentation.locale}>
       {googleAnalyticsId ? (
         <head>
+          {/* Google Tag Manager */}
+          <script nonce={nonce} dangerouslySetInnerHTML={{ __html: GOOGLE_TAG_MANAGER_SNIPPET }} />
           {/* Google tag (gtag.js), RFC-046 §16. */}
           <script async nonce={nonce} src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`} />
           <script nonce={nonce} dangerouslySetInnerHTML={{ __html: googleTagBootstrap(googleAnalyticsId) }} />
         </head>
       ) : null}
       <body className={`${archivo.variable} ${instrumentSerif.variable}`}>
+        {googleAnalyticsId ? (
+          // Google Tag Manager (noscript)
+          <noscript>
+            <iframe src={GOOGLE_TAG_MANAGER_NOSCRIPT_URL} title="Google Tag Manager" height="0" width="0" style={{ display: "none", visibility: "hidden" }} />
+          </noscript>
+        ) : null}
         <JsonLd data={organizationSchema()} />
         <JsonLd data={websiteSchema()} />
         {children}

@@ -278,6 +278,10 @@ every Production page's `<head>` for everyone except staff-marked devices.
 from protected Help, the self-check or Admin; Google signals and ad
 personalisation stay off. Tests: `tests/google-analytics.test.ts`.
 
+**Founder instruction, 10 October 2026:** Google Tag Manager container
+`GTM-MR6HTDB8` is installed next to it (snippet in `<head>`, `<noscript>`
+frame after `<body>`), under the same Production and staff-device rule.
+
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
 ## SMM agents read social traffic (`social_traffic`) — in review
