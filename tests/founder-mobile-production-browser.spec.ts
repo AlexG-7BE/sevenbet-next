@@ -334,13 +334,13 @@ test("390px touch journeys preserve commercial, learning and canonical Programme
 
   await installAnonymousProgramme(page);
   await page.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await expect(page.getByRole("button", { name: "Start voice input" })).toBeVisible();
-  const textarea = page.getByLabel("Your situation");
-  expect(await textarea.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
-  await textarea.fill("After difficult work days I keep opening betting apps late at night.");
-  await page.getByRole("button", { name: "Create my Starting Point" }).click();
+  // Ready answers read at 16px on a phone and each is a full touch target.
+  const answer = page.getByRole("checkbox", { name: "I chase my losses" });
+  const option = page.locator("[data-programme-ready-answers] label").first();
+  expect(await option.evaluate((element) => Number.parseFloat(getComputedStyle(element.querySelector("span")!).fontSize))).toBeGreaterThanOrEqual(16);
+  expect(await option.evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+  await answer.check();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
   await expect(page.locator('[data-programme-presentation="starting-point-ready"]')).toBeVisible();
   await expect(page.locator('[data-public-programme-renderer="program-ai"]')).toHaveCount(1);
   await expect(page.locator("[data-handoff-page]")).toHaveCount(0);

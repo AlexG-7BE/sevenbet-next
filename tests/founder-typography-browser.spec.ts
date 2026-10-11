@@ -105,6 +105,24 @@ async function installAnonymousProgramme(page: Page) {
   });
   await page.route("**/api/program/program-ai/session", (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
   await page.route("**/api/program/program-ai/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
+  await page.route("**/api/program/program-ai/turn", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      ok: true,
+      result: {
+        kind: "STARTING_POINT_CANDIDATE",
+        disposition: "CONTINUE",
+        candidate: {
+          startingPoint: "What feels hardest right now? I chase my losses.",
+          desiredChange: "Stop a session at the limit you set before it starts.",
+          broadContext: "NOT_SPECIFIED",
+          continuationCue: "Continue from the limit you set.",
+        },
+      },
+      progress: { taskStates: ["situation_described"], xpPreview: 20 },
+    }),
+  }));
 }
 
 async function installDashboard(page: Page) {
@@ -165,12 +183,20 @@ test("Programme Mission 01 and Dashboard retain readable functional text", async
     const missionPage = await missionContext.newPage();
     await installAnonymousProgramme(missionPage);
     await missionPage.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
-    await missionPage.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-    await missionPage.getByRole("button", { name: "Enter Mission 01" }).click();
-    await expect(missionPage.locator('[data-programme-presentation="mission-01-intake"]')).toBeVisible();
-    expect(await visibleTextBelowTwelve(missionPage), `Mission 01 sub-12px at ${viewport.width}px`).toEqual([]);
-    await expectMinimum(missionPage.locator('[data-programme-presentation="mission-01-intake"] button'), 14, `Mission 01 controls at ${viewport.width}px`);
-    await expectNoOverflow(missionPage, `Mission 01 overflow at ${viewport.width}px`);
+    // Mission 01 is the ready-answers start screen, then the save screen (Founder, 11 Oct 2026).
+    const start = missionPage.locator('[data-programme-presentation="start"]');
+    await expect(start).toBeVisible();
+    await missionPage.getByRole("checkbox", { name: "I chase my losses" }).check();
+    expect(await visibleTextBelowTwelve(missionPage), `Mission 01 start sub-12px at ${viewport.width}px`).toEqual([]);
+    await expectMinimum(start.locator("button"), 14, `Mission 01 start controls at ${viewport.width}px`);
+    await expectMinimum(start.locator("[data-programme-ready-answers] label span"), 16, `Mission 01 answers at ${viewport.width}px`);
+    await expectNoOverflow(missionPage, `Mission 01 start overflow at ${viewport.width}px`);
+    await missionPage.getByRole("button", { name: "Agree and continue" }).click();
+    const save = missionPage.locator('[data-programme-presentation="starting-point-ready"]');
+    await expect(save).toBeVisible();
+    expect(await visibleTextBelowTwelve(missionPage), `Mission 01 save sub-12px at ${viewport.width}px`).toEqual([]);
+    await expectMinimum(save.locator("button"), 14, `Mission 01 save controls at ${viewport.width}px`);
+    await expectNoOverflow(missionPage, `Mission 01 save overflow at ${viewport.width}px`);
     await missionContext.close();
 
     const dashboardContext = await browser.newContext({ viewport, isMobile: viewport.width <= 430 });

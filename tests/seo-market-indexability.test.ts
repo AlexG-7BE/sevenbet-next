@@ -247,9 +247,12 @@ test("the Programme entry screens tell crawlers and visitors what the ten steps 
   const page = readFileSync("app/program/page.tsx", "utf8");
   assert.match(page, /entryOverview=\{<ProgrammeStepsOverview locale=\{locale\} \/>\}/);
   const experience = readFileSync("components/programme/ProgramAiExperience.tsx", "utf8");
-  // Only the loading and access screens carry the overview; no Mission, review or home screen does.
-  assert.equal((experience.match(/\{ entry: true \}\)/g) ?? []).length, 3);
+  // Only the loading screen, a first visit's start screen and the account access screen carry
+  // the overview; no Mission, review or home screen does, nor Mission 01 opened from the plan.
+  assert.equal((experience.match(/\{ entry: true \}\)/g) ?? []).length, 2);
   assert.match(experience, /if \(phase === "loading" \|\| sessionPending\) return renderPhase\(<ProgrammeLoadingScreen locale=\{locale\} \/>, \{ entry: true \}\);/);
-  assert.match(experience, /if \(phase === "access"\) return renderPhase\(<ProgrammeAccessScreen [^\n]*, \{ entry: true \}\);/);
-  assert.doesNotMatch(experience, /renderPhase\(<(?:Mission01IntakeScreen|ProgramAiMissionExperience|ProgramAiReviewScreen|ProgramAiHomeScreen|StartingPointReadyScreen)[^\n]*entry: true/);
+  assert.match(experience, /if \(phase === "access" && subject\?\.kind === "user"\) return renderPhase\(<ProgrammeAccessScreen [^\n]*, \{ entry: true \}\);/);
+  assert.match(experience, /const startScreen = \(firstVisit: boolean\) => renderPhase\(<ProgrammeStartScreen [^\n]*, \{ entry: firstVisit \}\);/);
+  assert.match(experience, /if \(phase === "access"\) return startScreen\(true\);\n  if \(phase === "intake"\) return startScreen\(false\);/);
+  assert.doesNotMatch(experience, /renderPhase\(<(?:ProgramAiMissionExperience|ProgramAiReviewScreen|ProgramAiHomeScreen|StartingPointReadyScreen)[^\n]*entry: true/);
 });

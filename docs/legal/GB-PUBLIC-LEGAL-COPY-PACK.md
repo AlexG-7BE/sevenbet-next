@@ -13,28 +13,23 @@ This pack records the final public wording and placement rules implemented by th
 
 ## 1. Programme access and consent
 
-### Entry checks
+Current wording since 11 October 2026 (Founder decisions; `docs/07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md`). It replaces the two entry checks, the just-in-time disclosure and the consent checkbox of the 19 August 2026 pack, and the three checks of 25 September 2026.
 
-1. `I confirm I am 18 or over` — Required.
-2. `I agree to the Terms and confirm I have read the Privacy Notice` — Required, with adjacent Terms and Privacy links.
+### Access line
 
-The special-category consent is not bundled with these checks or repeated at account creation. It appears just in time, before typed or voice input is submitted.
+> By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.
 
-### Just-in-time Programme disclosure
+Placement: under the button on the Programme start screen, on the screen that opens the plan of an account that has not affirmed access yet, and under the form on `/login`, each with adjacent Terms and Privacy links. Continuing is the affirmation; the server records the same three facts and document versions as the former checks. It is not repeated at account creation inside the Programme.
 
-> Before you share. Your words may reveal health or other sensitive information. Typed input, or audio for transcription, is sent to our AI provider to create a suggested Starting Point. B4GAMBLE does not save the audio or use your words for offers or rankings. Privacy details.
+### Explicit consent
 
-### Explicit-consent checkbox
+Statement, placed directly above the button "Agree and continue" on the Programme start screen:
 
-> I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.
+> I agree that B4GAMBLE and its AI provider use my answers, which may reveal my health, to personalise my plan.
 
-Adjacent explanation:
+Mission 01 takes answers picked from a list; there is no typed or voice input. The statement says what is processed (the answers, which may reveal health), by whom (B4GAMBLE and its AI provider) and why. Pressing the button is the explicit consent. It is asked once on this route and is not bundled into a tick or repeated at account creation. Consent statement version: `article-9-authority:2026-10-11:v2`.
 
-> Optional. You can withdraw before saving. Withdrawal stops future processing and clears this draft, but cannot undo processing already completed.
-
-Withdrawal action:
-
-> Withdraw consent and clear this draft
+Withdrawal stays available through the Privacy Notice.
 
 ### Identity disclosure
 

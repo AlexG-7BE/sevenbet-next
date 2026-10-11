@@ -5,11 +5,35 @@ type PreferenceFetcher = (
   init?: RequestInit,
 ) => Promise<Pick<Response, "ok" | "status">>;
 
-// The English wording is the source of policy version email-marketing-v1.
-// The live registration screen shows the Programme catalogue translation of
-// this exact sentence (Founder decision, 27 Sep 2026); the legacy surface
-// keeps the English text.
-export const PROGRAMME_MARKETING_OPT_IN_LABEL = "Email me occasional B4GAMBLE product and Programme updates. Optional; I can unsubscribe at any time.";
+// Founder decision, 11 Oct 2026: a short label, and a box that is ticked when
+// the form opens; the person can untick it. That wording and default are
+// policy version email-marketing-v2 (v1 was the longer, unticked box of
+// 27 Sep 2026). The live screens show the Programme catalogue translation of
+// this exact text; the legacy surface keeps the English text.
+export const PROGRAMME_MARKETING_OPT_IN_LABEL = "Email me B4GAMBLE updates";
+export const PROGRAMME_MARKETING_OPT_IN_DEFAULT = true;
+
+type PreferenceReader = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Pick<Response, "ok" | "json">>;
+
+/**
+ * True when the account already has a recorded choice: subscribed,
+ * unsubscribed or suppressed. Because the box is ticked by default, a sign-in
+ * must not overwrite what a returning person chose earlier. An answer that
+ * cannot be read counts as decided, so nothing is recorded when unsure.
+ */
+export async function marketingPreferenceAlreadyDecided(fetcher: PreferenceReader = fetch) {
+  try {
+    const response = await fetcher("/api/customer/email-preference", { credentials: "same-origin", cache: "no-store" });
+    if (!response.ok) return true;
+    const value = await response.json() as { marketingAllowed?: unknown; unsubscribed?: unknown; suppressed?: unknown };
+    return value.marketingAllowed === true || value.unsubscribed === true || value.suppressed === true;
+  } catch {
+    return true;
+  }
+}
 
 type ChoiceStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
