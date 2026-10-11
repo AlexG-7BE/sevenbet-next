@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
-import { PROGRAMME_MARKETING_OPT_IN_LABEL } from "@/lib/customers/email-preference-client";
+import { PROGRAMME_MARKETING_OPT_IN_DEFAULT, PROGRAMME_MARKETING_OPT_IN_LABEL } from "@/lib/customers/email-preference-client";
 import { programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import type { ProgrammeStartingPointValue } from "@/lib/programme/program-ai/contracts";
 import {
@@ -65,15 +65,15 @@ export function ProgrammeUnavailableScreen({ error, locale }: { error: string; l
  * There is no voice and no free text. One button under the list is the explicit consent to
  * process the picked answers: its statement stands directly above it and is asked nowhere else
  * on this route. On a first visit the same press, under the line, is also the 18+, Terms and
- * Privacy affirmation. There is no consent tick and no separate consent screen.
+ * Privacy affirmation. There is no consent tick and no separate consent screen, and no way to
+ * registration that goes round the answers.
  */
-export function ProgrammeStartScreen({ accessLine, busy, error, onAgree, onAccountFirst, locale }: {
+export function ProgrammeStartScreen({ accessLine, busy, error, onAgree, locale }: {
   /** Shown on a first visit; an account that already affirmed access is not asked again. */
   accessLine: boolean;
   busy: boolean;
   error: string;
   onAgree: (answers: ProgrammeReadyAnswer[]) => void;
-  onAccountFirst?: () => void;
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
@@ -103,7 +103,6 @@ export function ProgrammeStartScreen({ accessLine, busy, error, onAgree, onAccou
             <p className={styles.legalLinks}><Link href="/terms">{t("Read Terms")}</Link><Link href="/privacy">{t("Read Privacy Notice")}</Link></p>
           </> : null}
           <StatusMessage error={error} />
-          {onAccountFirst ? <button className={styles.accountFirstAction} data-programme-account-first="" disabled={busy} onClick={onAccountFirst} type="button">{t("Create an account first →")}</button> : null}
           <Link className={styles.helpLink} href={programmeHelpPath(locale)}>{t("Protected Help / pause options →")}</Link>
         </div>
       </main>
@@ -168,7 +167,6 @@ export function ProgrammeSupportScreen({ busy, error, onContinue, xpPreview, loc
 export function StartingPointReadyScreen({
   authenticated,
   candidate,
-  onBack,
   googleLinkRecovery,
   googleAvailable,
   busy,
@@ -181,9 +179,8 @@ export function StartingPointReadyScreen({
   locale,
 }: {
   authenticated: boolean;
-  /** Null on the account-first route: the person registers before telling their story. */
+  /** Null when a Google sign-up started on Log in returns here without a Starting Point. */
   candidate: ProgrammeStartingPointValue | null;
-  onBack?: () => void;
   googleLinkRecovery: boolean;
   googleAvailable: boolean;
   busy: boolean;
@@ -199,13 +196,14 @@ export function StartingPointReadyScreen({
   const t = translated(locale);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [marketingAllowed, setMarketingAllowed] = useState(false);
+  const [marketingAllowed, setMarketingAllowed] = useState(PROGRAMME_MARKETING_OPT_IN_DEFAULT);
   // Founder decision, 11 Oct 2026: one email step creates the account or signs in to the one
   // that owns the email. The password field arrives with the first typed character, so the
   // form reads as a single field until it is used.
   const passwordShown = googleLinkRecovery || email.length > 0;
-  // Founder decision, 27 Sep 2026: one unticked opt-in serves both Google and
-  // email sign-up, asked once on this screen.
+  // Founder decisions, 27 Sep and 11 Oct 2026: one opt-in serves both Google and email sign-up,
+  // asked once on this screen. It is ticked when the form opens, short, and the last thing in
+  // the form.
   const marketingChoiceShown = !googleLinkRecovery;
   return (
     <div className={styles.canvas} data-programme-presentation="starting-point-ready">
@@ -231,7 +229,6 @@ export function StartingPointReadyScreen({
           {googleLinkRecovery ? <p>{t("Your confirmed Starting Point stays in this browser while you sign in and link Google securely.")}</p> : null}
           {authenticated && !candidate ? null : authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{t(busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account")}</button> : <>
             {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle({ marketingAllowed: marketingChoiceShown && marketingAllowed })} type="button"><GoogleIcon />{t(candidate ? "Continue with Google — save my Starting Point" : "Continue with Google")}</button> : null}
-            {marketingChoiceShown ? <label className={styles.marketingChoice} data-programme-marketing-choice=""><input checked={marketingAllowed} onChange={(event) => setMarketingAllowed(event.target.checked)} type="checkbox" /><span>{t(PROGRAMME_MARKETING_OPT_IN_LABEL)}</span></label> : null}
             {googleAvailable && !googleLinkRecovery ? <p className={styles.entryDivider}><span>{t("or")}</span></p> : null}
             <form className={styles.emailForm} data-programme-email-entry="" onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, marketingAllowed: marketingChoiceShown && marketingAllowed }); }}>
               <label><span>{t("Email")}</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
@@ -239,9 +236,9 @@ export function StartingPointReadyScreen({
               <button className={styles.primaryAction} disabled={busy} type="submit">{t(googleLinkRecovery ? "Sign in, then link Google" : "Continue with email")}</button>
               {passwordResetHref ? <Link className={styles.inlineLink} href={passwordResetHref}>{t("Forgot password?")}</Link> : null}
             </form>
+            {marketingChoiceShown ? <label className={styles.marketingChoice} data-programme-marketing-choice=""><input checked={marketingAllowed} onChange={(event) => setMarketingAllowed(event.target.checked)} type="checkbox" /><span>{t(PROGRAMME_MARKETING_OPT_IN_LABEL)}</span></label> : null}
           </>}
           <StatusMessage error={error} />
-          {!candidate && onBack && !googleLinkRecovery ? <button className={styles.typingAction} disabled={busy} onClick={onBack} type="button">{t("← Tell my story first")}</button> : null}
           </section>
         </div>
       </main>

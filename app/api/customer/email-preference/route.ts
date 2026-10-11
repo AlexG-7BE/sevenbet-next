@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     const preference = await updateCustomerEmailPreference(user.id, {
       marketingAllowed: body.marketingAllowed,
       source: "PROGRAMME_SIGNUP",
-      policyVersion: "email-marketing-v1",
+      policyVersion: "email-marketing-v2",
       locale,
     });
     return response(preference);

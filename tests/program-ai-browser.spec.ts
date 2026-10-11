@@ -456,37 +456,49 @@ test("picked ready answers go straight to the Starting Point under one consent p
   await prisma.anonymousProgrammeSession.deleteMany({ where: { id: anonymousSession.id } });
 });
 
-test("account-first route registers before the story and opens Mission 01 from the dashboard", async ({ page }) => {
-  // Founder decision, 25 Sep 2026: a quiet door to register first. Mission 01 stays the main path.
+test("Log in creates an account for a new person and opens the plan with Mission 01 ahead", async ({ page }) => {
+  // Founder decisions, 11 Oct 2026: Log in creates accounts with the same form. Inside the
+  // Programme nothing reaches registration except the answers, so the start has no side door.
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/program");
-  // The link sits on the start screen; registering first asks no story consent.
   await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Create an account first|Tell my story first/ })).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Create an account first →" }).click();
-  await expect(page.getByRole("heading", { name: /Save your place first/ })).toBeVisible();
-  await expect(page.getByText("Your Starting Point is ready")).toHaveCount(0);
+  await page.goto("/login");
+  await expect(page.locator("[data-login-access-note]")).toContainText("By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.");
+  // The email opt-in is ticked when the form opens.
+  await expect(page.getByRole("checkbox", { name: "Email me B4GAMBLE updates" })).toBeChecked();
   await noHorizontalOverflow(page);
-  await page.getByRole("button", { name: "← Tell my story first" }).click();
-  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
-  await page.getByRole("button", { name: "Create an account first →" }).click();
-
-  const email = `program-ai-account-first-${randomUUID()}@example.test`;
+  const email = `program-ai-login-signup-${randomUUID()}@example.test`;
   await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
   await page.getByLabel("Password").fill("Programme-test-password-42!");
   await page.getByRole("button", { name: "Continue with email" }).click();
   await expect(page.getByRole("button", { name: /Start Mission 01/i })).toBeVisible();
 
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
-  const [acceptance, startingPoints, xp] = await Promise.all([
+  const [acceptance, startingPoints, xp, consent] = await Promise.all([
     prisma.programmeAccessAcceptance.findUniqueOrThrow({ where: { userId: user.id } }),
     prisma.programmeStartingPoint.findMany({ where: { userId: user.id } }),
     prisma.userXpEvent.findMany({ where: { userId: user.id } }),
+    prisma.consentEvent.findFirstOrThrow({ where: { userId: user.id, purpose: "MARKETING_EMAIL" } }),
   ]);
   expect(acceptance.userId).toBe(user.id);
   expect(startingPoints).toHaveLength(0);
   expect(xp).toHaveLength(0);
+  expect(consent).toMatchObject({ action: "GRANTED", source: "PROGRAMME_SIGNUP", policyVersion: "email-marketing-v2" });
+
+  // The same form signs the account back in: no second account, no separate "log in".
+  await page.context().clearCookies();
+  await page.goto("/login");
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
+  await page.getByLabel("Password").fill("Programme-test-password-42!");
+  await page.getByRole("button", { name: "Continue with email" }).click();
+  await expect(page.getByRole("button", { name: /Start Mission 01/i })).toBeVisible();
+  expect(await prisma.user.count({ where: { email } })).toBe(1);
+  expect(await prisma.consentEvent.count({ where: { userId: user.id, purpose: "MARKETING_EMAIL" } })).toBe(1);
+
+  await prisma.user.delete({ where: { id: user.id } });
 });
 
 test("ready answers bind exact authority and are idempotent through real email auth", async ({ page }) => {

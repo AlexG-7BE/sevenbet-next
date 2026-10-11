@@ -217,7 +217,8 @@ test("the application wires verification, the Google opt-in and immediate welcom
   assert.match(presentation, /<span>\{t\(PROGRAMME_MARKETING_OPT_IN_LABEL\)\}<\/span>/);
   assert.match(presentation, /onGoogle\(\{ marketingAllowed: marketingChoiceShown && marketingAllowed \}\)/);
   assert.match(experience, /rememberGoogleMarketingChoice\(window\.sessionStorage, subject\.id, input\.marketingAllowed\)/);
-  assert.match(experience, /takeGoogleMarketingChoice\(window\.sessionStorage, journey\.id\)\s*\? saveProgrammeMarketingPreference\(locale\)/);
+  // The box is ticked by default (11 Oct 2026), so an earlier choice is read first and left alone.
+  assert.match(experience, /if \(!takeGoogleMarketingChoice\(window\.sessionStorage, journey\.id\)\) return true;\s+if \(await marketingPreferenceAlreadyDecided\(\)\) return true;\s+return saveProgrammeMarketingPreference\(locale\);/);
 
   // Welcome: both sign-up signals deliver through the claimed queue, after the response.
   assert.match(observer, /await deliverWelcomeEmail\(user\.id\)/);

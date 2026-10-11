@@ -10,9 +10,10 @@
 - On consent: the choice "Кнопка после ответа", then "вот так лучше всего — и под списком появится одна кнопка «Agree and continue» без отдельного второго экрана".
 - On several answers: "человек может выбрать не только 1 вариант, у него же могут быть вообще все эти вещи".
 - On voice and free text: "может быть вообще стоит убрать возможность человеку рассказать свою историю голосом?… не размывает ли эта функция фокус на том, что нам нужно в первую очередь, что бы человек зарегистрировался", then the choice "Только готовые ответы" (no voice, no own text; a sixth answer "Something else").
+- On the email opt-in and the side door, after seeing the screens: "поставь галочку на email рассылки сразу, если человек захочет пускай сам уберет её, и сделай описание к этой галочке короче… и убери её вниз! и что за Tell my story first? мы же начинаем с этого, как человек дошел до регистрации не сделав этого?"
 - On older rules: "я тот кто эти правила устанавливает. если есть разногласия просто пришли мне их для решения".
 
-**Supersedes in part:** [PROGRAMME-FAST-START-2026-09-25](PROGRAMME-FAST-START-2026-09-25.md) "three required checks on the access screen" (now a line and one consent button). RFC-022, RFC-023 and RFC-056 for Mission 01 input: typed and voice input are no longer offered; the provider, retention and kill-switch boundaries of those RFCs stand for the text request that remains. RFC-029 and the Google readiness record "standalone login is returning-user-only" (Log in now creates accounts). Everything else in those records stands.
+**Supersedes in part:** [PROGRAMME-FAST-START-2026-09-25](PROGRAMME-FAST-START-2026-09-25.md) "three required checks on the access screen" (now a line and one consent button) and its quiet account-first route (removed from the Programme). [EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27](EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27.md) "one unticked checkbox" (now ticked by default, short, last in the form). RFC-022, RFC-023 and RFC-056 for Mission 01 input: typed and voice input are no longer offered; the provider, retention and kill-switch boundaries of those RFCs stand for the text request that remains. RFC-029 and the Google readiness record "standalone login is returning-user-only" (Log in now creates accounts). Everything else in those records stands.
 
 ## Why
 
@@ -31,7 +32,7 @@ The same two actions sit on the Programme save step, on the account-first screen
 - **No activation.** The account works at once and the person lands in their plan. The confirmation link still goes out in the background, as decided on 27 September 2026; a confirmed address gates only marketing mail and later Google linking.
 - **A line replaces two ticks.** "By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice." stands under the Enter button on the Programme access screen and under the form on `/login`, with links to both documents. Continuing is the affirmation. It is asked where a person first meets it and is not repeated on the save step.
 - **The access screen keeps one check** until Part 2: the explicit consent to process the story. Its heading is "One check before you begin."
-- **Log in creates accounts.** A new person who continues with Google or email on `/login` gets an account and opens their plan with "Start Mission 01". The optional email opt-in is offered there too.
+- **Log in creates accounts.** A new person who continues with Google or email on `/login` gets an account and opens their plan with "Start Mission 01". The email opt-in is offered there too.
 - **A Starting Point made in the same tab is not lost.** If a person with an unsaved Starting Point opens `/login`, either action sends them back to the Programme save step, which carries the same form and the claim that saving needs.
 
 What the server records is unchanged: the same three affirmed facts (`adultConfirmed`, `termsAccepted`, `privacyAcknowledged`) with the Terms and Privacy versions, the same signed proof before any account is created, and the same acceptance row for the account. No table, column or enum changed.
@@ -50,10 +51,17 @@ The Programme start is one screen, for a first visit and for an account that sta
 - **One button under the list, "Agree and continue"**, directly under the consent statement. Pressing it is the explicit consent to process the picked answers (special-category data) and, on a first visit, under the same line as in Part 1, the 18+ / Terms / Privacy affirmation. There is no consent tick and no separate consent screen. The button is unavailable until an answer is picked.
 - **The consent statement names what is processed now:** "I explicitly consent to B4GAMBLE processing the answers I choose, including information that may reveal my health, and sending them to its AI provider to personalise my Programme." Typing, speech and the transcription provider left the statement, so it has a new version, `article-9-authority:2026-10-11:v2`. Consents recorded under v1 stay in the database as history; a person who starts Mission 01 again agrees to v2.
 - **What Mission 01 receives** is the question and the picked answers, in the person's language and in list order, exactly as they read them ("What feels hardest right now? I chase my losses. I spend more than I plan."). Nothing the person did not see is added. The Starting Point is built from it as before; the order stays answer → result → save.
-- **The quiet "Create an account first" link** is on the start screen. Registering first records only the 18+ / Terms / Privacy affirmation; the story consent waits for the answers.
+- **No side door.** The quiet "Create an account first" link of 25 September and its "Tell my story first" way back are removed: inside the Programme a person reaches registration only through the answers. A new person who wants an account first uses Log in.
 - **An account that has not affirmed access yet** opens its plan with one button, "Open my plan", under the line. It is not asked for the story consent there.
 
 The server is unchanged apart from the consent version: the Mission 01 request, its validation, the claim, rewards and the support-first route work as before. The picked answers arrive as text input.
+
+### The email opt-in is ticked, short and last (implemented with Part 2)
+
+- The box reads "Email me B4GAMBLE updates", is ticked when the form opens and is the last thing in the form, on the Programme save step and on Log in. A person who does not want the emails unticks it.
+- The wording and the default are policy version `email-marketing-v2`; consent events record it, so subscriptions made with a pre-ticked box can be told apart from the `v1` ones a person ticked.
+- A sign-in never overwrites an earlier choice: on a Google return the account's recorded preference is read first, and a person who is already subscribed, unsubscribed or suppressed is left as they are. Email sign-in to an existing account records nothing.
+- **Stated to the Founder before building:** in Great Britain and the EU a box ticked in advance does not count as consent to marketing email (UK GDPR and PECR, GDPR and the ePrivacy rules), so campaign mail sent on the strength of it can be challenged. The Founder decided to proceed. Unsubscribe links and the suppression list work as before.
 
 ### Part 3 — remove the unused voice code (approved, not built)
 

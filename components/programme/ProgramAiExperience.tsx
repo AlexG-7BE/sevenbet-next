@@ -24,6 +24,7 @@ import { continueWithEmail } from "@/lib/auth/email-entry";
 import { passwordResetPath } from "@/lib/auth/password-reset";
 import {
   clearGoogleMarketingChoice,
+  marketingPreferenceAlreadyDecided,
   rememberGoogleMarketingChoice,
   saveProgrammeMarketingPreference,
   takeGoogleMarketingChoice,
@@ -84,7 +85,7 @@ type ProgramAiLocalState = {
   situation: string;
   candidate: ProgrammeStartingPointValue | null;
   xpPreview: number;
-  /** Founder decision, 25 Sep 2026: a quiet route to register before answering. */
+  /** A Google sign-up that started on Log in returns here to finish without a Starting Point. */
   accountFirst?: boolean;
 };
 
@@ -121,7 +122,7 @@ function restoredAnonymousState(value: ProgramAiLocalState | null | undefined): 
       ? value.candidate ? "registration" : "intake"
       : value.phase === "home" ? "intake" : value.phase;
   const accountFirst = value.accountFirst === true && !value.candidate;
-  // Registration without a Starting Point exists only on the account-first route.
+  // Registration without a Starting Point exists only for a Google return that began on Log in.
   const safePhase = phase === "registration" && !value.candidate && !accountFirst ? "intake" : phase;
   return { phase: safePhase, situation: value.situation || "", candidate: value.candidate || null, xpPreview: Number.isFinite(value.xpPreview) ? value.xpPreview : 0, ...(accountFirst ? { accountFirst: true } : {}) };
 }
@@ -250,13 +251,14 @@ export function ProgramAiExperience({
     setPhase("home");
   }, []);
 
-  // The opt-in ticked before leaving for Google is recorded once the account
-  // exists, through the same preference service as the email sign-up.
-  const saveGoogleMarketingChoice = useCallback((journey: ProgrammeLocalSubject) => (
-    takeGoogleMarketingChoice(window.sessionStorage, journey.id)
-      ? saveProgrammeMarketingPreference(locale)
-      : Promise.resolve(true)
-  ), [locale]);
+  // The opt-in left ticked before leaving for Google is recorded once the account exists, through
+  // the same preference service as the email sign-up. The box is ticked by default, so a
+  // returning person's earlier choice (subscribed or unsubscribed) is left as it is.
+  const saveGoogleMarketingChoice = useCallback(async (journey: ProgrammeLocalSubject) => {
+    if (!takeGoogleMarketingChoice(window.sessionStorage, journey.id)) return true;
+    if (await marketingPreferenceAlreadyDecided()) return true;
+    return saveProgrammeMarketingPreference(locale);
+  }, [locale]);
 
   useEffect(() => {
     if (sessionPending) return;
@@ -620,26 +622,6 @@ export function ProgramAiExperience({
     mergeProgrammeSubjectContent<ProgramAiAuthenticatedLocalContent>(window.sessionStorage, subject, { programAiReviewWording: next });
   }
 
-  // Registering first needs only the affirmation the line states. The story consent waits for
-  // the story.
-  async function startAccountFirst() {
-    if (!subject || subject.kind !== "journey") return;
-    setBusy(true); setError("");
-    try {
-      await affirmAnonymousProgrammeAccess(window.sessionStorage);
-      persist({ ...local, phase: "registration", accountFirst: true });
-    } catch {
-      setError(programmeText(locale, programmeAccessFailureMessageKey("authority")));
-    } finally { setBusy(false); }
-  }
-
-  function returnToStory() {
-    setError("");
-    const next = { ...local, phase: "access" as const };
-    delete next.accountFirst;
-    persist(next);
-  }
-
   async function enterMissionOneFromHome() {
     const journey = rotateAnonymousProgrammeSubject(window.sessionStorage);
     setBusy(true); setError("");
@@ -699,15 +681,14 @@ export function ProgramAiExperience({
   );
 
   if (phase === "loading" || sessionPending) return renderPhase(<ProgrammeLoadingScreen locale={locale} />, { entry: true });
-  // Mission 01 is the start screen. A first visit also carries the 18+ / Terms / Privacy line and
-  // the account-first link; a journey entered from the dashboard already has its session and its
-  // account, so it shows neither.
-  const startScreen = (firstVisit: boolean) => renderPhase(<ProgrammeStartScreen accessLine={firstVisit} busy={busy} error={error} locale={locale} onAccountFirst={firstVisit ? startAccountFirst : undefined} onAgree={agreeAndContinue} />, { entry: firstVisit });
+  // Mission 01 is the start screen. A first visit also carries the 18+ / Terms / Privacy line; a
+  // journey entered from the dashboard already has its session and its account, so it does not.
+  const startScreen = (firstVisit: boolean) => renderPhase(<ProgrammeStartScreen accessLine={firstVisit} busy={busy} error={error} locale={locale} onAgree={agreeAndContinue} />, { entry: firstVisit });
   if (phase === "access" && subject?.kind === "user") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccountAccess} />, { entry: true });
   if (phase === "access") return startScreen(true);
   if (phase === "intake") return startScreen(false);
   if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} locale={locale} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
-  if (phase === "registration" && (local.candidate || local.accountFirst)) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} onBack={returnToStory} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
+  if (phase === "registration" && (local.candidate || local.accountFirst)) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
   if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} programmePath={programmePath} unconfirmedEmail={session.user.emailVerified ? null : session.user.email} userId={session.user.id} />);

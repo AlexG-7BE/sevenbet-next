@@ -88,7 +88,7 @@
 .consentStatement { margin: 8px 0 0; color: rgba(250, 250, 247, .68); font-size: 13px; line-height: 1.5; text-align: left; }
 .startState > .primaryAction { width: 100%; }
 .startState > .legalLinks { margin: 0; }
-.startState > .accountFirstAction, .startState > .helpLink { align-self: center; }
+.startState > .helpLink { align-self: center; }
 .startState > .helpLink { margin-top: 0; }
 .accessBoundary { width: 100%; margin-top: 8px; display: grid; justify-items: stretch; }
 .accessNote { margin: 16px 0 0; color: rgba(250, 250, 247, .68); font-size: 14px; line-height: 1.5; text-align: center; }
@@ -134,12 +134,8 @@
 .status, .error { max-width: 340px; margin: 12px auto 0; font-size: 14px; line-height: 1.5; }
 .status { color: var(--programme-mint); }
 .error { color: #ffaaa6; }
-.typingAction, .withdrawAction { padding: 2px 0; border: 0; border-bottom: 1px solid rgba(250, 250, 247, .3); background: transparent; color: rgba(250, 250, 247, .8); cursor: pointer; }
-.typingAction { min-height: 28px; font-size: 14px; }
+.withdrawAction { padding: 2px 0; border: 0; border-bottom: 1px solid rgba(250, 250, 247, .3); background: transparent; color: rgba(250, 250, 247, .8); cursor: pointer; }
 .withdrawAction { margin-top: 20px; border-bottom-color: rgba(250, 250, 247, .16); color: rgba(250, 250, 247, .68); font-size: 14px; line-height: 20px; }
-/* A quiet door, not a second call to action: Mission 01 stays the main path. */
-.accountFirstAction { justify-self: center; min-height: 44px; margin-top: 4px; padding: 2px 0; border: 0; background: transparent; color: rgba(250, 250, 247, .55); cursor: pointer; font-size: 14px; line-height: 20px; text-decoration: underline; text-decoration-color: rgba(250, 250, 247, .2); text-underline-offset: 4px; }
-.accountFirstAction:hover { color: rgba(250, 250, 247, .85); }
 .accountFirstLead { max-width: 36ch; margin: 12px auto 8px; color: rgba(250, 250, 247, .72); font-size: 16px; line-height: 1.5; text-align: center; }
 @media (max-width: 760px) {
   .accessBoundary .primaryAction { margin-top: 16px; }
@@ -173,7 +169,6 @@
 .understandingSummary p { margin: 0; color: rgba(250, 250, 247, .9); font-size: 16px; line-height: 1.5; text-wrap: pretty; }
 .registrationActions { width: 100%; display: grid; justify-items: stretch; gap: 14px; }
 .registrationActions > small { color: rgba(250, 250, 247, .55); font-size: 14px; line-height: 1.55; text-align: center; }
-.registrationActions > .typingAction, .registrationActions > .withdrawAction { justify-self: center; }
 .googleAction { width: 100%; white-space: normal; }
 .emailForm { padding-top: 6px; display: grid; gap: 14px; text-align: left; }
 .emailForm small { color: rgba(250, 250, 247, .6); font-size: 13px; line-height: 1.4; }
@@ -198,7 +193,7 @@
   .readyState > h1 { font-size: 28px; }
   .focusedActions { width: 100%; display: grid; }
   .primaryAction, .secondaryAction, .lightAction { width: 100%; min-height: 48px; white-space: normal; }
-  .typingAction, .withdrawAction { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .withdrawAction { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
   .emailForm input { font-size: 16px; }
   .legalLinks { flex-wrap: wrap; }
   .legalLinks a { min-height: 44px; display: inline-flex; align-items: center; }

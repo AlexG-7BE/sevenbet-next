@@ -327,11 +327,15 @@ only approved full-URL placeholders may be used in links.
 
 The optional signup marketing-consent sentence and its fail-closed save error
 are shown in every Programme language from the Programme catalogue (Founder
-decision, 27 September 2026); the English sentence stays the source of policy
-`email-marketing-v1`. One unticked checkbox on the registration screen serves
-Google and email sign-up; a ticked box crosses the Google redirect bound to the
-journey for ten minutes and is recorded after OAuth through the same
-preference service.
+decision, 27 September 2026). Since 11 October 2026 the text is "Email me
+B4GAMBLE updates", the checkbox is ticked when the form opens and is the last
+thing in the form, on the Programme save step and on `/login`; that wording
+and default are policy `email-marketing-v2` (`v1` was the longer, unticked
+box). One checkbox serves Google and email sign-up; a ticked box crosses the
+Google redirect bound to the journey for ten minutes and is recorded after
+OAuth through the same preference service, unless the account already has a
+recorded choice (subscribed, unsubscribed or suppressed), which a sign-in
+never overwrites.
 
 Every email sign-up is sent the confirmation link at once (Better Auth
 `sendOnSignUp`), delivered after the response. The link is valid for 24 hours,

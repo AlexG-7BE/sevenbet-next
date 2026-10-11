@@ -8,6 +8,7 @@ import { continueWithEmail } from "@/lib/auth/email-entry";
 import { googleLoginCallbacks, programmeGoogleCallbacks } from "@/lib/auth/google-flow";
 import { passwordResetPath } from "@/lib/auth/password-reset";
 import {
+  PROGRAMME_MARKETING_OPT_IN_DEFAULT,
   PROGRAMME_MARKETING_OPT_IN_LABEL,
   clearGoogleMarketingChoice,
   rememberGoogleMarketingChoice,
@@ -42,7 +43,7 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
   const t = (key: Parameters<typeof programmeText>[1]) => programmeText(locale, key);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [marketingAllowed, setMarketingAllowed] = useState(false);
+  const [marketingAllowed, setMarketingAllowed] = useState(PROGRAMME_MARKETING_OPT_IN_DEFAULT);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(() => {
     if (authState === "google-error" && authError === "account_not_linked") return "";

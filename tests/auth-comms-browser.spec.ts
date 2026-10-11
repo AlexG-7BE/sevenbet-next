@@ -165,7 +165,7 @@ test("canonical Programme registration keeps access proof on email auth and fail
 
   const google = page.getByRole("button", { name: /Continue with Google/ });
   await expect(google).toHaveCount(expectGoogle ? 1 : 0);
-  await expect(page.getByRole("checkbox", { name: /Email me occasional B4GAMBLE product/ })).toHaveCount(1);
+  await expect(page.getByRole("checkbox", { name: "Email me B4GAMBLE updates" })).toHaveCount(1);
   // The password field arrives with the first typed character of the email.
   await expect(page.getByLabel("Password")).toHaveCount(0);
 
@@ -185,16 +185,24 @@ test("canonical Programme registration keeps access proof on email auth and fail
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
-// Founder decision, 27 Sep 2026: one unticked email opt-in on the registration
-// screen serves Google and email sign-up alike, and is asked once.
-test("registration asks the optional email opt-in once for Google and email sign-up", async ({ page }) => {
+// Founder decisions, 27 Sep and 11 Oct 2026: one email opt-in on the registration screen serves
+// Google and email sign-up alike and is asked once. It is ticked when the form opens, short, and
+// the last thing in the form.
+test("registration asks the optional email opt-in once, ticked, at the end of the form", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installAnonymousProgramme(page);
   await reachRegistration(page);
 
-  const optIn = page.getByRole("checkbox", { name: /Email me occasional B4GAMBLE product/ });
+  const optIn = page.getByRole("checkbox", { name: "Email me B4GAMBLE updates" });
   await expect(optIn).toHaveCount(1);
+  await expect(optIn).toBeChecked();
+  expect(await optIn.evaluate((element) => {
+    const form = document.querySelector("[data-programme-email-entry]")!;
+    return Boolean(form.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING);
+  }), "the opt-in follows the email form").toBe(true);
+  await optIn.uncheck();
   await expect(optIn).not.toBeChecked();
+  await optIn.check();
   expect(await optIn.evaluate((element) => Number.parseFloat(getComputedStyle(element.closest("label")!.querySelector("span")!).fontSize))).toBeGreaterThanOrEqual(14);
 
   let signUpBody: Record<string, unknown> | null = null;
@@ -239,6 +247,10 @@ test("Google return records the opt-in ticked before leaving, once, through the 
   await installAuthenticatedSession(page, userId);
   const preferences: unknown[] = [];
   await page.route("**/api/customer/email-preference", (route) => {
+    // The return first asks whether this account already chose; a new account has not.
+    if (route.request().method() === "GET") {
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ marketingAllowed: false, unsubscribed: false, suppressed: false, emailVerified: true }) });
+    }
     preferences.push(route.request().postDataJSON());
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ marketingAllowed: true }) });
   });
@@ -251,6 +263,29 @@ test("Google return records the opt-in ticked before leaving, once, through the 
   await expect(page.locator('p[role="alert"]')).toHaveCount(0);
   // Google confirmed the address, so the dashboard asks for nothing more.
   await expect(page.locator("[data-programme-email-confirmation]")).toHaveCount(0);
+});
+
+test("Google return leaves an earlier unsubscribe alone, although the box is ticked by default", async ({ page }) => {
+  const userId = "google-return-unsubscribed-user";
+  const journeyId = "9b1e6d0c-4f2a-4c7e-8a35-2d6f0b9c1e47";
+  await seedOAuthJourney(page, journeyId);
+  await page.addInitScript((journey) => {
+    if (sessionStorage.getItem("test.opt-in-seeded")) return;
+    sessionStorage.setItem("test.opt-in-seeded", "1");
+    sessionStorage.setItem("sevenbet.programme.google-marketing-choice.v1", JSON.stringify({ version: 1, journeyId: journey, expiresAt: Date.now() + 5 * 60 * 1000 }));
+  }, journeyId);
+  await installAuthenticatedSession(page, userId);
+  const methods: string[] = [];
+  await page.route("**/api/customer/email-preference", (route) => {
+    methods.push(route.request().method());
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ marketingAllowed: false, unsubscribed: true, suppressed: false, emailVerified: true }) });
+  });
+  await page.route("**/api/program/program-ai/claims/redeem", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture() }) }));
+  await open(page, "/program?auth=google-return");
+  await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+  await expect.poll(() => methods.length).toBe(1);
+  expect(methods).toEqual(["GET"]);
+  await expect(page.locator('p[role="alert"]')).toHaveCount(0);
 });
 
 test("Google return without a ticked opt-in records nothing", async ({ page }) => {
@@ -505,7 +540,7 @@ test("authenticated partial Mission 01 truthfully re-enters the ready answers wi
   await expect(page.getByText("1 of 2 actions complete · Short Starting Point", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Finish Mission 01", exact: true }).click();
   // Founder decision, 11 Oct 2026: Mission 01 opens on the ready answers for an account too. The
-  // account already affirmed access, so the 18+ line and the account-first link are not shown.
+  // account already affirmed access, so the 18+ line is not shown.
   await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
   await expect(page.getByRole("checkbox")).toHaveCount(6);
   await expect(page.getByRole("button", { name: "Agree and continue" })).toBeDisabled();

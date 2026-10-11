@@ -43,6 +43,13 @@ record:
   exist, unreachable from the interface, until the clean-up change.
 - **Consent statement v2.** It names "the answers I choose" and the AI
   provider (`article-9-authority:2026-10-11:v2`).
+- **No side door.** The "Create an account first" link is gone from the
+  Programme; registration is reached through the answers, or on `/login`.
+- **Email opt-in ticked by default.** "Email me B4GAMBLE updates" is ticked
+  when the form opens and is the last thing in the form (policy
+  `email-marketing-v2`). A sign-in never overwrites an earlier choice. The
+  Founder was told that a pre-ticked box is not valid marketing consent in
+  Great Britain or the EU and decided to proceed.
 - **Server record otherwise unchanged.** The same three affirmed facts and
   document versions are sent; no table, column or enum changed.
 - **Approved, not built:** removing the unused server voice code, the

@@ -4,6 +4,11 @@ import test from "node:test";
 
 import { continueWithEmail, type EmailEntryAuth } from "../lib/auth/email-entry";
 import {
+  PROGRAMME_MARKETING_OPT_IN_DEFAULT,
+  PROGRAMME_MARKETING_OPT_IN_LABEL,
+  marketingPreferenceAlreadyDecided,
+} from "../lib/customers/email-preference-client";
+import {
   affirmAnonymousProgrammeAccess,
   hasUnsavedStartingPoint,
   prepareAccountFirstGoogleReturn,
@@ -192,4 +197,35 @@ test("Log in creates accounts through the Programme access proof and the Program
   assert.doesNotMatch(login, /There's no signup form/);
   // The Programme restores the handed-over state through the same guard as a reload.
   assert.match(experience, /if \(restored\) setLocal\(restoredAnonymousState\(restored\)\);/);
+});
+
+test("the email opt-in is short and ticked when the form opens, on both screens, at the end of the form", () => {
+  // Founder decision, 11 Oct 2026. The wording and default are policy version email-marketing-v2.
+  assert.equal(PROGRAMME_MARKETING_OPT_IN_LABEL, "Email me B4GAMBLE updates");
+  assert.equal(PROGRAMME_MARKETING_OPT_IN_DEFAULT, true);
+  const presentation = readFileSync("components/programme/ProgramAiFinalPresentation.tsx", "utf8");
+  const login = readFileSync("components/auth/LoginExperience.tsx", "utf8");
+  for (const source of [presentation, login]) {
+    assert.match(source, /useState\(PROGRAMME_MARKETING_OPT_IN_DEFAULT\)/);
+    assert.ok(source.indexOf("</form>") < source.indexOf("t(PROGRAMME_MARKETING_OPT_IN_LABEL)"), "the opt-in follows the form");
+  }
+  assert.match(readFileSync("app/api/customer/email-preference/route.ts", "utf8"), /policyVersion: "email-marketing-v2"/);
+});
+
+test("a ticked-by-default box never overwrites an earlier choice", async () => {
+  const answer = (value: unknown, ok = true) => async () => ({ ok, json: async () => value });
+  assert.equal(await marketingPreferenceAlreadyDecided(answer({ marketingAllowed: false, unsubscribed: false, suppressed: false })), false);
+  assert.equal(await marketingPreferenceAlreadyDecided(answer({ marketingAllowed: true, unsubscribed: false, suppressed: false })), true);
+  assert.equal(await marketingPreferenceAlreadyDecided(answer({ marketingAllowed: false, unsubscribed: true, suppressed: false })), true);
+  assert.equal(await marketingPreferenceAlreadyDecided(answer({ marketingAllowed: false, unsubscribed: false, suppressed: true })), true);
+  // When the answer cannot be read, nothing is recorded.
+  assert.equal(await marketingPreferenceAlreadyDecided(answer({ code: "AUTHENTICATION_REQUIRED" }, false)), true);
+  assert.equal(await marketingPreferenceAlreadyDecided(async () => { throw new Error("offline"); }), true);
+  const experience = readFileSync("components/programme/ProgramAiExperience.tsx", "utf8");
+  assert.match(experience, /if \(await marketingPreferenceAlreadyDecided\(\)\) return true;\n    return saveProgrammeMarketingPreference\(locale\);/);
+});
+
+test("the Programme start has no way to registration that goes round the answers", () => {
+  const runtime = readFileSync("components/programme/ProgramAiExperience.tsx", "utf8") + readFileSync("components/programme/ProgramAiFinalPresentation.tsx", "utf8");
+  assert.doesNotMatch(runtime, /Create an account first|Tell my story first|onAccountFirst|startAccountFirst/);
 });
