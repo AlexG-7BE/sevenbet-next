@@ -21,6 +21,8 @@ import type {
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import type { ProgrammeMissionNumber } from "@/lib/analytics/product-analytics-events";
 import { authClient, useSession } from "@/lib/auth/client";
+import { continueWithEmail } from "@/lib/auth/email-entry";
+import { passwordResetPath } from "@/lib/auth/password-reset";
 import {
   clearGoogleMarketingChoice,
   rememberGoogleMarketingChoice,
@@ -178,6 +180,7 @@ export function ProgramAiExperience({
   const [reviewWording, setReviewWording] = useState<Record<string, string>>({});
   const [sensitiveAuthorityActive, setSensitiveAuthorityActive] = useState(false);
   const [googleLinkRecovery, setGoogleLinkRecovery] = useState(false);
+  const [passwordRejected, setPasswordRejected] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const oauthRedeemStarted = useRef(false);
@@ -281,14 +284,15 @@ export function ProgramAiExperience({
     if (oauthJourney && recoveryActive) {
       const restored = loadProgrammeSubjectContent<{ programAi: ProgramAiLocalState }>(window.sessionStorage, oauthJourney).programAi;
       setSubject(oauthJourney);
-      if (restored) setLocal(restored);
+      if (restored) setLocal(restoredAnonymousState(restored));
       setPhase("registration");
       return;
     }
     if (session?.user.id && oauthJourney) {
       const restored = loadProgrammeSubjectContent<{ programAi: ProgramAiLocalState }>(window.sessionStorage, oauthJourney).programAi;
       setSubject(oauthJourney);
-      if (restored) setLocal(restored);
+      // Log in hands over only the account-first flag, so restore through the reload guard.
+      if (restored) setLocal(restoredAnonymousState(restored));
       setPhase("registration");
       if (!oauthRedeemStarted.current && restored?.candidate) {
         if (linkReturned) setGoogleLinkRecovery(false);
@@ -561,31 +565,35 @@ export function ProgramAiExperience({
     finally { setBusy(false); }
   }
 
-  async function handleEmail(input: { email: string; password: string; mode: "sign-up" | "sign-in"; marketingAllowed: boolean }) {
+  async function handleEmail(input: { email: string; password: string; marketingAllowed: boolean }) {
     if (!subject) return;
     clearGoogleMarketingChoice(window.sessionStorage);
     emailRedeemStarted.current = true;
-    setBusy(true); setError("");
+    setBusy(true); setError(""); setPasswordRejected(false);
     try {
       if (!googleLinkRecovery && !local.accountFirst) await prepareClaimForRegistration();
-      const result = input.mode === "sign-up" && !googleLinkRecovery
+      const entry = await continueWithEmail({ email: input.email, password: input.password, expect: googleLinkRecovery ? "existing-only" : "new" }, {
         // The confirmation link in the sign-up email lands back on this Programme page.
-        ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "B4GAMBLE member", callbackURL: programmePath, fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } })
-        : await authClient.signIn.email({ email: input.email.trim().toLowerCase(), password: input.password });
-      if (result.error || !result.data?.user.id) {
-        setError(programmeText(locale, input.mode === "sign-up" && !googleLinkRecovery
-          ? "This account could not be created. Try signing in if it already exists."
-          : "Email or password is incorrect."));
+        signUp: (credentials) => authClient.signUp.email({ ...credentials, name: credentials.email.split("@")[0] || "B4GAMBLE member", callbackURL: programmePath, fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } }),
+        signIn: (credentials) => authClient.signIn.email(credentials),
+      });
+      if (entry.kind === "wrong-password") {
+        setPasswordRejected(true);
+        setError(programmeText(locale, "Email or password is incorrect."));
+        return;
+      }
+      if (entry.kind === "failed") {
+        setError(programmeText(locale, "Account access failed"));
         return;
       }
       if (googleLinkRecovery) {
         await startGoogleLink();
         return;
       }
-      const marketingPreferenceSaved = input.mode !== "sign-up" || !input.marketingAllowed
+      const marketingPreferenceSaved = entry.kind !== "created" || !input.marketingAllowed
         || await saveProgrammeMarketingPreference(locale);
-      if (local.accountFirst && !local.candidate) await completeAccountFirst(result.data.user.id, subject);
-      else await redeem(result.data.user.id, subject, local);
+      if (local.accountFirst && !local.candidate) await completeAccountFirst(entry.userId, subject);
+      else await redeem(entry.userId, subject, local);
       if (!marketingPreferenceSaved) setError(programmeText(locale, MARKETING_CHOICE_NOT_SAVED));
     } catch { setError(programmeText(locale, "Account access failed")); }
     finally { emailRedeemStarted.current = false; setBusy(false); }
@@ -755,7 +763,7 @@ export function ProgramAiExperience({
   if (phase === "access") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />, { entry: true });
   if (phase === "intake") return renderPhase(<Mission01IntakeScreen busy={busy} error={error} getRealtimeRequestHeaders={() => subject ? programmeMutationAccessHeaders(window.sessionStorage, subject) : {}} locale={locale} onPrepareVoice={ensureSensitiveAuthority} onSituation={(situation, source) => { const next = { ...local, situation, inputMode: source }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(true)} onTranscribe={transcribeVoice} onVoiceTiming={recordVoiceTiming} onAccountFirst={startAccountFirst} situation={local.situation} />);
   if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} locale={locale} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
-  if (phase === "registration" && (local.candidate || local.accountFirst)) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} onBack={returnToIntake} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} />);
+  if (phase === "registration" && (local.candidate || local.accountFirst)) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} onBack={returnToIntake} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
   if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} programmePath={programmePath} unconfirmedEmail={session.user.emailVerified ? null : session.user.email} userId={session.user.id} />);

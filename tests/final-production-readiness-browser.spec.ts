@@ -71,8 +71,6 @@ async function installAnonymousProgramme(page: Page) {
 
 async function reachStartingPoint(page: Page) {
   await open(page, "/program");
-  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
-  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await page.getByLabel("Your situation").fill("After difficult work days I keep opening betting apps late at night.");
@@ -238,8 +236,8 @@ test("fresh Mission 01 delivers value before account continuation and preserves 
   await installAnonymousProgramme(page);
   await reachStartingPoint(page);
   await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Use email instead" })).toBeVisible();
-  const google = page.getByRole("button", { name: "Continue with Google — save your plan" });
+  await expect(page.getByRole("button", { name: "Continue with email" })).toBeVisible();
+  const google = page.getByRole("button", { name: "Continue with Google — save my Starting Point" });
   await expect(google).toHaveCount(expectGoogle ? 1 : 0);
   if (expectGoogle) {
     await expect(google).toBeVisible();
@@ -247,22 +245,22 @@ test("fresh Mission 01 delivers value before account continuation and preserves 
     expect(await actions.first().textContent()).toContain("Continue with Google");
   }
   await capture(page, "critical-states", "programme-starting-point-registration");
-  await page.getByRole("button", { name: "Use email instead" }).click();
-  await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
+  // One email step: the password field arrives with the first typed character.
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill("someone@example.test");
   await expect(page.getByLabel("Password")).toBeVisible();
 });
 
-test("login exposes returning-user Google intent when configured and keeps email fallback usable", async ({ page }) => {
+test("login exposes Google when configured and keeps the email step usable", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/login");
   await expect(page.getByRole("button", { name: "Continue with Google" })).toHaveCount(expectGoogle ? 1 : 0);
   await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with email" })).toBeVisible();
   await capture(page, "critical-states", "login-mobile");
   await page.getByRole("textbox", { name: "Email", exact: true }).fill("not-an-email");
   await page.getByLabel("Password").fill("wrong-password");
-  await page.getByRole("button", { name: "Log in" }).click();
+  await page.getByRole("button", { name: "Continue with email" }).click();
   await expect(page.locator('[role="alert"]')).toBeVisible();
 });
 

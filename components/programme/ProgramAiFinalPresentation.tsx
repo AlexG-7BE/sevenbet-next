@@ -105,33 +105,25 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
-  const [adult, setAdult] = useState(false);
-  const [legal, setLegal] = useState(false);
-  // Founder decision, 25 Sep 2026: the explicit consent to process the story is the third
-  // required check here and is asked nowhere else on this route, so Mission 01 opens ready to speak.
+  // Founder decisions, 25 Sep and 11 Oct 2026: the explicit consent to process the story is the
+  // one check here and is asked nowhere else on this route. Entering under the line below is the
+  // 18+, Terms and Privacy affirmation; it replaced two ticks.
   const [processing, setProcessing] = useState(false);
   return (
     <div className={styles.canvas} data-programme-presentation="access">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.accessState}>
           <p className={styles.eyebrow}>{t("Programme access")}</p>
-          <h1 id="programme-access-title"><SerifTail text={t("Three checks before you begin.")} /></h1>
+          <h1 id="programme-access-title"><SerifTail text={t("One check before you begin.")} /></h1>
           <section className={styles.accessBoundary} aria-labelledby="programme-access-title">
-            <label className={styles.checkRow}>
-              <input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" />
-              <span>{t("I confirm I am 18 or over")} <small>{t("Required")}</small></span>
-            </label>
-            <div className={styles.checkRow}>
-              <input checked={legal} id="programme-legal-acknowledgement" onChange={(event) => setLegal(event.target.checked)} type="checkbox" />
-              <span><label htmlFor="programme-legal-acknowledgement">{t("I agree to the Terms and confirm I have read the Privacy Notice")}</label><small>{t("Required")}</small></span>
-            </div>
             <label className={`${styles.checkRow} ${styles.consentRow}`} data-programme-access-consent="">
               <input checked={processing} onChange={(event) => setProcessing(event.target.checked)} type="checkbox" />
               <span>{t("I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.")} <small>{t("Required")}</small></span>
             </label>
-            <button className={styles.primaryAction} disabled={busy || !adult || !legal || !processing} onClick={onConfirm} type="button">
+            <button className={styles.primaryAction} disabled={busy || !processing} onClick={onConfirm} type="button">
               {busy ? t("Verifying access…") : t("Enter Mission 01")}
             </button>
+            <p className={styles.accessNote} data-programme-access-note="">{t("By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.")}</p>
             <p className={styles.legalLinks}><Link href="/terms">{t("Read Terms")}</Link><Link href="/privacy">{t("Read Privacy Notice")}</Link></p>
             <StatusMessage error={error} />
             <Link className={styles.helpLink} href={programmeHelpPath(locale)}>{t("Protected Help / pause options →")}</Link>
@@ -632,6 +624,7 @@ export function StartingPointReadyScreen({
   onEmail,
   onGoogle,
   onLinkGoogle,
+  passwordResetHref = null,
   locale,
 }: {
   authenticated: boolean;
@@ -643,21 +636,24 @@ export function StartingPointReadyScreen({
   busy: boolean;
   error: string;
   onSave: () => void;
-  onEmail: (input: { email: string; password: string; mode: "sign-up" | "sign-in"; marketingAllowed: boolean }) => void;
+  onEmail: (input: { email: string; password: string; marketingAllowed: boolean }) => void;
   onGoogle: (input: { marketingAllowed: boolean }) => void;
   onLinkGoogle: () => void;
+  /** Set once the email already has an account and the password did not match. */
+  passwordResetHref?: string | null;
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
-  const [emailOpen, setEmailOpen] = useState(googleLinkRecovery);
-  const [mode, setMode] = useState<"sign-up" | "sign-in">(googleLinkRecovery ? "sign-in" : "sign-up");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [marketingAllowed, setMarketingAllowed] = useState(false);
+  // Founder decision, 11 Oct 2026: one email step creates the account or signs in to the one
+  // that owns the email. The password field arrives with the first typed character, so the
+  // form reads as a single field until it is used.
+  const passwordShown = googleLinkRecovery || email.length > 0;
   // Founder decision, 27 Sep 2026: one unticked opt-in serves both Google and
-  // email sign-up, asked once on this screen. It hides only while the email
-  // form is switched to signing in to an existing account.
-  const marketingChoiceShown = !googleLinkRecovery && !(emailOpen && mode === "sign-in");
+  // email sign-up, asked once on this screen.
+  const marketingChoiceShown = !googleLinkRecovery;
   return (
     <div className={styles.canvas} data-programme-presentation="starting-point-ready">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
@@ -681,15 +677,15 @@ export function StartingPointReadyScreen({
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
           {googleLinkRecovery ? <p>{t("Your confirmed Starting Point stays in this browser while you sign in and link Google securely.")}</p> : null}
           {authenticated && !candidate ? null : authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{t(busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account")}</button> : <>
-            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle({ marketingAllowed: marketingChoiceShown && marketingAllowed })} type="button"><GoogleIcon />{t("Continue with Google — save my Starting Point")}</button> : null}
+            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle({ marketingAllowed: marketingChoiceShown && marketingAllowed })} type="button"><GoogleIcon />{t(candidate ? "Continue with Google — save my Starting Point" : "Continue with Google")}</button> : null}
             {marketingChoiceShown ? <label className={styles.marketingChoice} data-programme-marketing-choice=""><input checked={marketingAllowed} onChange={(event) => setMarketingAllowed(event.target.checked)} type="checkbox" /><span>{t(PROGRAMME_MARKETING_OPT_IN_LABEL)}</span></label> : null}
-            {!googleLinkRecovery ? <button className={styles.typingAction} onClick={() => setEmailOpen((value) => !value)} type="button">{t(emailOpen ? "Hide email option" : "Use email instead")}</button> : null}
-            {emailOpen ? <form className={styles.emailForm} onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode, marketingAllowed: mode === "sign-up" && marketingAllowed }); }}>
+            {googleAvailable && !googleLinkRecovery ? <p className={styles.entryDivider}><span>{t("or")}</span></p> : null}
+            <form className={styles.emailForm} data-programme-email-entry="" onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, marketingAllowed: marketingChoiceShown && marketingAllowed }); }}>
               <label><span>{t("Email")}</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
-              <label><span>{t("Password")}</span><input autoComplete={mode === "sign-up" ? "new-password" : "current-password"} minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
-              <button className={styles.primaryAction} disabled={busy} type="submit">{t(googleLinkRecovery ? "Sign in, then link Google" : mode === "sign-up" ? "Create account with email" : "Sign in with email")}</button>
-              {!googleLinkRecovery ? <button className={styles.inlineButton} onClick={() => setMode((value) => value === "sign-up" ? "sign-in" : "sign-up")} type="button">{t(mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one")}</button> : null}
-            </form> : null}
+              {passwordShown ? <label><span>{t("Password")}</span><input autoComplete={googleLinkRecovery ? "current-password" : "new-password"} minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} />{googleLinkRecovery ? null : <small>{t("Use at least 8 characters.")}</small>}</label> : null}
+              <button className={styles.primaryAction} disabled={busy} type="submit">{t(googleLinkRecovery ? "Sign in, then link Google" : "Continue with email")}</button>
+              {passwordResetHref ? <Link className={styles.inlineLink} href={passwordResetHref}>{t("Forgot password?")}</Link> : null}
+            </form>
           </>}
           <StatusMessage error={error} />
           {!candidate && onBack && !googleLinkRecovery ? <button className={styles.typingAction} disabled={busy} onClick={onBack} type="button">{t("← Tell my story first")}</button> : null}

@@ -375,17 +375,16 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
     await expect(page.locator("html")).toHaveAttribute("lang", route.locale);
     await expect(page.locator('[data-programme-presentation="loading"]')).toBeVisible();
     await expect(page.locator('[data-programme-presentation="access"]')).toBeVisible();
-    await expect(page.getByRole("heading", { name: t(route.locale, "Three checks before you begin.") })).toBeVisible();
+    await expect(page.getByRole("heading", { name: t(route.locale, "One check before you begin.") })).toBeVisible();
+    await expect(page.locator("[data-programme-access-note]")).toHaveText(t(route.locale, "By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice."));
     await expect(page.locator(`[data-programme-presentation="access"] a[href="${programmeHelpPath(route.locale)}"]`).first()).toBeVisible();
-    await assertNoRepresentativeEnglishLeakage(page, route.locale, ["Three checks before you begin.", "I confirm I am 18 or over", "Enter Mission 01"]);
+    await assertNoRepresentativeEnglishLeakage(page, route.locale, ["One check before you begin.", "By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.", "Enter Mission 01"]);
     await assertRenderedQuality(page, `${route.locale}:access:${mobile ? "mobile" : "desktop"}`);
 
-    const adult = page.getByRole("checkbox", { name: new RegExp(t(route.locale, "I confirm I am 18 or over")) });
-    await adult.focus();
-    await expect(adult).toBeFocused();
-    await adult.check();
-    await page.getByRole("checkbox", { name: new RegExp(t(route.locale, "I agree to the Terms and confirm I have read the Privacy Notice")) }).check();
-    await page.getByRole("checkbox", { name: t(route.locale, "I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.") }).check();
+    const consent = page.getByRole("checkbox", { name: t(route.locale, "I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.") });
+    await consent.focus();
+    await expect(consent).toBeFocused();
+    await consent.check();
     await page.getByRole("button", { name: t(route.locale, "Enter Mission 01") }).click();
     await expect(page.locator('[data-programme-presentation="mission-01-intake"]')).toBeVisible();
     await expect(page.getByRole("button", { name: t(route.locale, "Start voice input") })).toBeEnabled();
@@ -401,8 +400,8 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
       await page.getByRole("button", { name: t(route.locale, "Continue when I'm ready") }).click();
     }
     await expect(page.locator('[data-programme-presentation="starting-point-ready"]')).toBeVisible();
-    await expect(page.getByRole("button", { name: t(route.locale, "Use email instead") })).toBeVisible();
-    await assertNoRepresentativeEnglishLeakage(page, route.locale, ["Your Starting Point, in your words.", "Use email instead", "Withdraw consent and clear this draft"]);
+    await expect(page.getByRole("button", { name: t(route.locale, "Continue with email") })).toBeVisible();
+    await assertNoRepresentativeEnglishLeakage(page, route.locale, ["Your Starting Point, in your words.", "Continue with email", "Withdraw consent and clear this draft"]);
     await assertRenderedQuality(page, `${route.locale}:registration:${mobile ? "mobile" : "desktop"}`);
     await context.close();
   }
