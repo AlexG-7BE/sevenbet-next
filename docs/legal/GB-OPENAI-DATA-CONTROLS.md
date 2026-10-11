@@ -1,6 +1,7 @@
 # GB OpenAI Data Controls and Account Checklist
 
 - **Evidence date:** 19 August 2026
+- **Repository amendment:** 11 October 2026 — voice input was retired by Founder decision. The application no longer calls `/v1/audio/transcriptions` or the Realtime API; the transcription items below have no runtime. Responses requests are unchanged (`docs/07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md`).
 - **Status:** ACCOUNT-SPECIFIC PROVIDER EVIDENCE: DEFERRED BY FOUNDER
 - **Owner:** OpenAI organisation owner with Privacy / Security review
 

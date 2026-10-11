@@ -29,7 +29,7 @@ Repository evidence was reconciled from root `/Users/alex/Documents/Codex/2026-0
 | Programme runtime exclusivity and Home projection | Feature-on PROGRAM-AI and legacy mutation paths share progression aggregates; current-main Home can misstate partial M1 reward/action and Review distance. | Cross-mode mutation and misleading progress remain current-main defects. Draft PR #72 contains guards/projection fixes, not a deployed correction. | High |
 | Programme metadata/runtime mismatch | Current-main `/program` metadata describes the legacy Moment Map/early-signal journey even when the feature-on server runtime is selected. | Draft PR #72 uses mode-neutral 10-Step Programme metadata; current Production remains unchanged until authorised deployment. | Medium |
 | Sensitive response caching/body limits | Current-main Programme/auth/admin response caching is not uniformly private/no-store, and several JSON paths buffer before applying their nominal 32 KiB limit. | Shared-cache or memory-pressure risk remains in current main. Draft PR #72 contains response-policy and streamed-limit fixes. | High |
-| Programme voice upload ceiling | RFC-023/current code permit an 8 MiB raw file while Vercel documents a 4.5 MB complete Function payload ceiling. | Some contract-valid recordings cannot reach the handler in the deployed architecture. RFC-031 is Proposed only and supplies no implementation authority. | High |
+| Programme voice upload ceiling | **Closed. DETECTED 11 October 2026:** the voice upload route no longer exists; the Founder retired voice input and the transcription code was removed. (RFC-031 had already delivered the 4 MiB ceiling.) | None. | Closed |
 
 ## Reconciled regression evidence
 

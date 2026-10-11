@@ -50,7 +50,7 @@ orientation.
 | [RFC-020 — Google Identity-Only Hardening](RFC-020-Google-Identity-Only-Authentication-Hardening.md) | `ACTIVE` | Google credential minimisation and Better Auth capability containment. |
 | [RFC-021 — Programme Access Continuation and Authenticated Home](RFC-021-Programme-Access-Continuation-and-Authenticated-Home.md) | `ACTIVE` | Same-tab access proof, authentication continuation and authenticated-home authority. |
 | [RFC-022 — PROGRAM-AI M1 Foundation](RFC-022-PROGRAM-AI-M1-Foundation-and-Preview-Vertical-Slice.md) | `ACTIVE` | M1 sensitive-input authority, claim, deterministic reward and provider-port boundaries. |
-| [RFC-023 — OpenAI Voice and Personalisation](RFC-023-OpenAI-Preview-Voice-and-Personalisation-Activation.md) | `ACTIVE` | OpenAI provider, retention, voice-privacy and kill-switch boundaries. |
+| [RFC-023 — OpenAI Voice and Personalisation](RFC-023-OpenAI-Preview-Voice-and-Personalisation-Activation.md) | `ACTIVE` | OpenAI provider, retention and kill-switch boundaries for the text request. Its voice transcription path and voice-privacy rules have no runtime since the Founder retired voice input on 11 October 2026. |
 | [RFC-024 — Database Recovery and Isolated Restore](RFC-024-Database-Recovery-and-Isolated-Restore.md) | `ACTIVE` | Restore-to-new-target, identity-guard and Production read-only recovery architecture. |
 | [RFC-025 — PROGRAM-AI Missions 02–10](RFC-025-PROGRAM-AI-Missions-02-10-MVP.md) | `ACTIVE` | Mission, prerequisite, reward, Review and Programme/commercial-separation authority. |
 | [RFC-026 — Analytics and Programme Runtime Hardening](RFC-026-MVP-Analytics-and-Programme-Runtime-Hardening.md) | `HISTORICAL` | Records the delivered analytics and Programme runtime-hardening workstream. |
@@ -83,7 +83,7 @@ orientation.
 | [RFC-053 — Autonomous Learn Content Orchestration](RFC-053-Autonomous-Learn-Content-Orchestration.md) | `ACTIVE` | The three-role Learn editorial pipeline and public-context boundary; the server cycle runs on GPT-5.6 Sol behind `LEARN_CONTENT_AUTONOMY_ENABLED` (§12), read-only `learn_context` serves the Founder's Claude Code; the ChatGPT path is cancelled; publication remains exclusively RFC-052 `learn_apply`. |
 | [RFC-054 — Licence-Based Market Access](RFC-054-Licence-Market-Access.md) | `ACTIVE` | One casino × market licence register gates offers, the partner button and `/r/` by the operator's own licence; closures are operator block, prohibition by law, no local licence, closed grey zone and the German advertising window. |
 | [RFC-055 — Claude-Operated Partner CRM](RFC-055-Claude-Operated-Partner-CRM.md) | `ACTIVE` | One service-bearer `/api/mcp/crm` endpoint with seven CRM tools; evidence-gated stage changes (never `ACTIVE`), CRM → catalog identity links, permanent delete of never-contacted prospects only, audited and idempotent; no route, market, CTA, tracking or customer-data authority. Amends RFC-051's no-CRM-transport clause. |
-| [RFC-056 — PROGRAM-AI Low-Latency Text and Voice](RFC-056-PROGRAM-AI-Low-Latency-Text-and-Voice.md) | `ACTIVE` | `gpt-6-luna` Fast structured generation and server-mediated `gpt-live-transcribe` WebRTC with final-only authority and bounded file fallback; amends RFC-023/RFC-025 only within that provider path. |
+| [RFC-056 — PROGRAM-AI Low-Latency Text and Voice](RFC-056-PROGRAM-AI-Low-Latency-Text-and-Voice.md) | `ACTIVE` | `gpt-6-luna` Fast structured generation for Mission 01, Mission guidance and Review regeneration; amends RFC-023/RFC-025 only within that provider path. Its voice half (`gpt-live-transcribe` WebRTC, the unified composer and the file fallback) was retired by Founder decision on 11 October 2026 and removed from the code; see [ONE-SIGN-IN-FORM-2026-10-11](../07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md), Part 3. |
 
 ## Counts
 
@@ -94,6 +94,10 @@ orientation.
 | `SUPERSEDED` | 6 |
 | `PROPOSED` | 1 |
 | **Total RFC artifacts** | **56** |
+
+RFC-056 keeps its `ACTIVE` classification after the 11 October 2026 voice
+retirement, because its text-generation contract is still current authority;
+the counts above are unchanged.
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

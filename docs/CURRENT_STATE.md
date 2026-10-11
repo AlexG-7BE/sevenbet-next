@@ -61,6 +61,58 @@ this with a free-scrolling variant (PR #477, closed) and kept paging. The
 thresholds were tuned on modelled trackpad streams; he confirms the feel by
 hand.
 
+## Programme voice code set aside — live 11 October 2026
+
+**Founder decisions, 11 October 2026:** Mission 01 takes picked answers only,
+and the unused voice code leaves the working project while staying easy to
+bring back ("вынести её за скобки… что бы потом легко вернуть… но так, что бы
+она не мешала", then the choice of a named tag in history). Decision record:
+[ONE-SIGN-IN-FORM-2026-10-11](07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md),
+Part 3.
+
+- **Kept under a tag.** `archive/programme-voice-2026-10-11` marks commit
+  `53ee0da0`, the last one on `main` where voice worked end to end. The
+  decision record lists the steps to bring it back.
+- **Removed from the working project:** both transcription routes
+  (`/api/program/program-ai/transcription` and `…/transcription/realtime`),
+  the transcription service, the realtime adapter and browser client, the file
+  adapter and its port, the voice draft helper, the upload limits, the two
+  transcription model settings, the provider codes `TRANSCRIPTION_FAILED` and
+  `INPUT_TOO_LARGE`, and the rate-limit buckets
+  `PROGRAMME_TRANSCRIPTION_SESSION` and `PROGRAMME_TRANSCRIPTION_IP`.
+- **Microphone denied everywhere.** The Programme-only
+  `Permissions-Policy: microphone=(self)` is gone; every page sends the one
+  deny-all policy. Crossing between public pages and the Programme still
+  loads a fresh document.
+- **Mission 01 input is text only.** The turn route accepts
+  `inputMode: "text"` (the picked answers) and refuses anything else.
+- **Public wording.** The Privacy Notice, the Terms and the FAQ answer "Do I
+  need an account to start?" (thirteen languages) no longer describe voice
+  input or a transcription provider. Both documents show "Updated 11 October
+  2026"; the Terms and Privacy versions recorded at acceptance are unchanged.
+- **Programme catalogue:** 77 rows that no screen uses were removed (701 →
+  624 keys) and the language QA report regenerated.
+- **Database unchanged.** No table, column, enum or constraint changed. The
+  rate-limit table's scope check still lists the two voice buckets; nothing
+  writes them.
+- **Hosting.** `PROGRAM_AI_TRANSCRIPTION_MODEL` and
+  `PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL` are no longer read. The Founder
+  ordered the leftover deleted on 11 October 2026 ("удали… что бы не
+  мешала"): `PROGRAM_AI_TRANSCRIPTION_MODEL` was removed from Production and
+  from two Preview entries bound to branches that no longer exist.
+  `DETECTED` afterwards (`vercel env ls`, names only, every environment): no
+  variable with `TRANSCRIPTION` in its name remains.
+- **RFC-056** stays `ACTIVE` for Fast text generation; its voice sections are
+  retired. RFC-023's voice path has no runtime.
+- **Production checked from outside Kazakhstan** after
+  AlexG-7BE/sevenbet-next#480 merged (`60a40b9d`, 11 October 2026):
+  `/program`, `/de/program` and `/sv/program` answer 200 with the deny-all
+  `Permissions-Policy`; both retired voice addresses answer 404 (403 without
+  the age header); `/privacy` and `/terms` show "Updated 11 October 2026"
+  with no voice wording; the FAQ answer reads "You pick ready answers first";
+  the Programme start screen shows six answers, no text field and no
+  microphone control.
+
 ## One sign-in form and a shorter start — in review
 
 **Founder decisions, 11 October 2026:** make registration simpler. Decision
@@ -88,8 +140,8 @@ record:
   consent statement, is the explicit consent; there is no tick and no separate
   consent screen.
 - **No voice and no free text.** The microphone, the text field and their
-  screen are gone from the client. The server transcription routes still
-  exist, unreachable from the interface, until the clean-up change.
+  screen are gone from the client, and the server voice code has left the
+  working project (see the section above).
 - **Consent statement v2.** "I agree that B4GAMBLE and its AI provider use my
   answers, which may reveal my health, to personalise my plan."
   (`article-9-authority:2026-10-11:v2`).
@@ -105,9 +157,6 @@ record:
   Great Britain or the EU and decided to proceed.
 - **Server record otherwise unchanged.** The same three affirmed facts and
   document versions are sent; no table, column or enum changed.
-- **Approved, not built:** removing the unused server voice code, the
-  microphone permission on Programme pages and the voice wording in the
-  Privacy Notice.
 
 ## Footer notice block hidden — in review
 
@@ -302,8 +351,8 @@ Decision record:
   the whole Programme catalogue and its ten Missions, and casino review text
   and offer terms through the exact-English-source catalog that serves
   sv/da/de. Counts follow the Ukrainian one/few/many forms
-  (`countNoun` takes an optional `few`). The microphone Permissions-Policy
-  covers `/uk/program`.
+  (`countNoun` takes an optional `few`). (The Programme's microphone
+  Permissions-Policy of that time was removed on 11 October 2026.)
 - **Help and Responsible Gambling in Ukrainian with Ukrainian resources.**
   `UA` joined the governed safety markets with an evidence profile read on
   7 October 2026 from the State Agency of Ukraine PlayCity's own pages

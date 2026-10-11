@@ -2,31 +2,15 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  PROGRAM_AI_MAX_AUDIO_BYTES,
-  parseProgrammeAudioUpload,
-} from "../lib/programme/application/programme-ai-transcription.service";
-import {
   OpenAiProgrammeAiAdapter,
-  OpenAiTranscriptionAdapter,
   PROGRAM_AI_OPENAI_MAX_OUTPUT_TOKENS,
   PROGRAM_AI_OPENAI_PROMPT_VERSION,
   PROGRAM_AI_OPENAI_TIMEOUT_MS,
-  PROGRAM_AI_TRANSCRIPTION_TIMEOUT_MS,
   type ProgrammeProviderLog,
 } from "../lib/programme/program-ai/openai-adapters";
 import { ProgrammeProviderError } from "../lib/programme/program-ai/provider-errors";
 import {
-  OpenAiRealtimeTranscriptionAdapter,
-  PROGRAM_AI_REALTIME_SESSION_TIMEOUT_MS,
-} from "../lib/programme/program-ai/openai-realtime-transcription";
-import {
-  connectProgrammeRealtimeTranscription,
-  parseProgrammeRealtimeTranscriptEvent,
-} from "../lib/programme/program-ai/realtime-transcription-client";
-import {
   PROGRAM_AI_OPENAI_MODEL,
-  PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
-  PROGRAM_AI_TRANSCRIPTION_MODEL,
   isProgramAiRealProviderEnabled,
   resolveProgramAiOpenAiConfig,
   type ProgramAiOpenAiConfig,
@@ -37,8 +21,6 @@ const config: ProgramAiOpenAiConfig = {
   provider: "openai",
   apiKey: secret,
   programmeModel: PROGRAM_AI_OPENAI_MODEL,
-  transcriptionModel: PROGRAM_AI_TRANSCRIPTION_MODEL,
-  realtimeTranscriptionModel: PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
 };
 
 const turn = {
@@ -87,8 +69,16 @@ test("real-provider runtime gates and exact model IDs fail closed", () => {
     PROGRAM_AI_PROVIDER: "openai",
     OPENAI_API_KEY: secret,
     PROGRAM_AI_OPENAI_MODEL: PROGRAM_AI_OPENAI_MODEL,
-    PROGRAM_AI_TRANSCRIPTION_MODEL: PROGRAM_AI_TRANSCRIPTION_MODEL,
-    PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL: PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
+  }), config);
+  // The voice models were retired on 11 October 2026. A hosted environment that still carries
+  // their variables keeps working, whatever they hold.
+  assert.deepEqual(resolveProgramAiOpenAiConfig({
+    PROGRAM_AI_V1_ENABLED: "true",
+    PROGRAM_AI_REAL_PROVIDER_ENABLED: "true",
+    PROGRAM_AI_PROVIDER: "openai",
+    OPENAI_API_KEY: secret,
+    PROGRAM_AI_TRANSCRIPTION_MODEL: "gpt-4o-transcribe",
+    PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL: "any-leftover-value",
   }), config);
   assert.throws(() => resolveProgramAiOpenAiConfig({
     PROGRAM_AI_V1_ENABLED: "true",
@@ -101,13 +91,6 @@ test("real-provider runtime gates and exact model IDs fail closed", () => {
     PROGRAM_AI_PROVIDER: "openai",
     OPENAI_API_KEY: secret,
     PROGRAM_AI_OPENAI_MODEL: "unapproved-model",
-  }), (error) => errorCode(error) === "PROVIDER_UNAVAILABLE");
-  assert.throws(() => resolveProgramAiOpenAiConfig({
-    PROGRAM_AI_V1_ENABLED: "true",
-    PROGRAM_AI_REAL_PROVIDER_ENABLED: "true",
-    PROGRAM_AI_PROVIDER: "openai",
-    OPENAI_API_KEY: secret,
-    PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL: "unapproved-realtime-model",
   }), (error) => errorCode(error) === "PROVIDER_UNAVAILABLE");
 });
 
@@ -245,176 +228,4 @@ test("provider status, timeout and invalid output map safely with no automatic r
     assert.equal(logs[0]?.errorCategory, fixture.expected);
     assert.doesNotMatch(JSON.stringify(logs), /raw provider detail|raw timeout|sk-test|late at night/i);
   }
-});
-
-test("Audio Transcriptions sends one bounded file and logs metadata only", async () => {
-  const logs: ProgrammeProviderLog[] = [];
-  let requestInit: RequestInit | undefined;
-  const adapter = new OpenAiTranscriptionAdapter(config, {
-    fetchImpl: (async (_url, init) => {
-      requestInit = init;
-      return response({ text: "Editable transcript from the recording." });
-    }) as typeof fetch,
-    logger: (entry) => logs.push(entry),
-    timeoutSignal: (milliseconds) => {
-      assert.equal(milliseconds, PROGRAM_AI_TRANSCRIPTION_TIMEOUT_MS);
-      return new AbortController().signal;
-    },
-  });
-  const result = await adapter.transcribe({
-    locale: "en-GB",
-    audio: new Uint8Array([1, 2, 3, 4]),
-    mimeType: "audio/webm",
-    fileName: "programme-m1.webm",
-    durationMs: 24_000,
-  });
-  assert.equal(result.transcript, "Editable transcript from the recording.");
-  assert.equal(new Headers(requestInit?.headers).has("content-type"), false);
-  assert.equal(new Headers(requestInit?.headers).get("authorization"), `Bearer ${secret}`);
-  assert.ok(requestInit?.body instanceof FormData);
-  const form = requestInit.body as FormData;
-  assert.equal(form.get("model"), PROGRAM_AI_TRANSCRIPTION_MODEL);
-  assert.equal(form.get("language"), "en");
-  assert.equal(form.get("response_format"), "json");
-  assert.ok(form.get("file") instanceof File);
-  assert.doesNotMatch(JSON.stringify(logs), /Editable transcript|sk-test/i);
-  assert.equal(logs[0]?.audioBytes, 4);
-  assert.equal(logs[0]?.recordingDurationMs, 24_000);
-});
-
-test("Realtime transcription exchanges SDP server-side with a bounded transcription-only session", async () => {
-  let requestUrl = "";
-  let requestInit: RequestInit | undefined;
-  const logs: Array<Record<string, unknown>> = [];
-  const adapter = new OpenAiRealtimeTranscriptionAdapter(config, {
-    fetchImpl: (async (url, init) => {
-      requestUrl = String(url);
-      requestInit = init;
-      return new Response("v=0\r\no=openai answer\r\n", { status: 201, headers: { "content-type": "application/sdp" } });
-    }) as typeof fetch,
-    logger: (entry) => logs.push(entry),
-    now: (() => { let value = 100; return () => (value += 5); })(),
-    timeoutSignal: (milliseconds) => {
-      assert.equal(milliseconds, PROGRAM_AI_REALTIME_SESSION_TIMEOUT_MS);
-      return new AbortController().signal;
-    },
-  });
-  const answer = await adapter.createSession({
-    locale: "en-GB",
-    safetyIdentifier: "opaque-hash-not-user-content",
-    sdp: "v=0\r\no=browser offer\r\n",
-  });
-  assert.match(answer, /^v=0/);
-  assert.equal(requestUrl, "https://api.openai.com/v1/realtime/calls");
-  const headers = new Headers(requestInit?.headers);
-  assert.equal(headers.get("authorization"), `Bearer ${secret}`);
-  assert.equal(headers.get("OpenAI-Safety-Identifier"), "opaque-hash-not-user-content");
-  assert.equal(headers.has("content-type"), false);
-  assert.ok(requestInit?.body instanceof FormData);
-  const form = requestInit.body as FormData;
-  assert.equal(form.get("sdp"), "v=0\r\no=browser offer\r\n");
-  assert.deepEqual(JSON.parse(String(form.get("session"))), {
-    type: "transcription",
-    audio: {
-      input: {
-        transcription: {
-          model: PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
-          languages: ["en"],
-          delay: "minimal",
-        },
-        turn_detection: null,
-      },
-    },
-  });
-  assert.deepEqual(logs, [{
-    event: "programme_provider_operation",
-    provider: "openai",
-    model: PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
-    operation: "transcription_realtime_session",
-    latencyMs: 5,
-    success: true,
-    errorCategory: undefined,
-  }]);
-  assert.doesNotMatch(JSON.stringify(logs), /browser offer|sk-test/i);
-});
-
-test("Realtime browser exchange preserves supplied Programme authority headers", async () => {
-  let requestHeaders = new Headers();
-  const channel = {
-    readyState: "open",
-    addEventListener: () => undefined,
-    send: () => undefined,
-    close: () => undefined,
-  } as unknown as RTCDataChannel;
-  const peer = {
-    createDataChannel: () => channel,
-    addTrack: () => undefined,
-    createOffer: async () => ({ type: "offer" as const, sdp: "v=0\r\no=browser-client-test\r\n" }),
-    setLocalDescription: async () => undefined,
-    setRemoteDescription: async () => undefined,
-    close: () => undefined,
-  } as unknown as RTCPeerConnection;
-  const connection = await connectProgrammeRealtimeTranscription({
-    locale: "en-GB",
-    stream: { getTracks: () => [] } as unknown as MediaStream,
-    peerConnection: peer,
-    requestHeaders: {
-      "content-type": "must-be-replaced",
-      "x-sevenbet-age-attestation": "18-or-over",
-    },
-    onPartial: () => undefined,
-    fetchImpl: async (_url, init) => {
-      requestHeaders = new Headers(init?.headers);
-      return new Response("v=0\r\no=server-client-test\r\n", { status: 201 });
-    },
-  });
-  assert.equal(requestHeaders.get("content-type"), "application/sdp");
-  assert.equal(requestHeaders.get("x-sevenbet-age-attestation"), "18-or-over");
-  connection.close();
-});
-
-test("Realtime transcript parsing keeps partial text separate from the authoritative final", () => {
-  assert.deepEqual(parseProgrammeRealtimeTranscriptEvent(JSON.stringify({
-    type: "conversation.item.input_audio_transcription.delta",
-    item_id: "item_1",
-    delta: "Partial words",
-  })), { type: "partial", itemId: "item_1", text: "Partial words" });
-  assert.deepEqual(parseProgrammeRealtimeTranscriptEvent(JSON.stringify({
-    type: "conversation.item.input_audio_transcription.completed",
-    item_id: "item_1",
-    transcript: "  Authoritative final transcript.  ",
-  })), { type: "final", itemId: "item_1", text: "Authoritative final transcript." });
-  assert.equal(parseProgrammeRealtimeTranscriptEvent("not-json"), null);
-  assert.deepEqual(parseProgrammeRealtimeTranscriptEvent(JSON.stringify({
-    type: "error",
-    error: { message: "raw provider message must not reach UI" },
-  })), { type: "error" });
-});
-
-test("audio upload accepts current browser formats and rejects oversize, long and unsupported input", async () => {
-  for (const [mimeType, extension] of [["audio/webm;codecs=opus", "webm"], ["audio/mp4", "m4a"]]) {
-    const form = new FormData();
-    form.set("audio", new File([new Uint8Array([1, 2])], "capture", { type: mimeType }));
-    form.set("durationMs", "90000");
-    form.set("locale", "en-GB");
-    const parsed = await parseProgrammeAudioUpload(form);
-    assert.equal(parsed.fileName, `programme-m1.${extension}`);
-  }
-  const long = new FormData();
-  long.set("audio", new File([new Uint8Array([1])], "capture", { type: "audio/webm" }));
-  long.set("durationMs", "90001");
-  long.set("locale", "en-GB");
-  await assert.rejects(parseProgrammeAudioUpload(long), (error) => errorCode(error) === "INPUT_TOO_LARGE");
-
-  const unsupported = new FormData();
-  unsupported.set("audio", new File([new Uint8Array([1])], "capture", { type: "audio/aac" }));
-  unsupported.set("durationMs", "1000");
-  unsupported.set("locale", "en-GB");
-  await assert.rejects(parseProgrammeAudioUpload(unsupported), /not supported/i);
-
-  const oversize = new FormData();
-  oversize.set("audio", new File([new Uint8Array(PROGRAM_AI_MAX_AUDIO_BYTES + 1)], "capture", { type: "audio/webm" }));
-  oversize.set("durationMs", "1000");
-  oversize.set("locale", "en-GB");
-  await assert.rejects(parseProgrammeAudioUpload(oversize), (error) => errorCode(error) === "INPUT_TOO_LARGE");
 });

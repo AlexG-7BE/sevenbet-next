@@ -64,8 +64,8 @@ const sections = [
     title: "Information we use",
     content: <><p>Depending on how you use the service, we may process:</p><ul>
       <li><strong>Account and identity data:</strong> name, email address, profile image, sign-in provider identifiers, account and session records. If you choose Google sign-in, Google supplies identity information for sign-in. It does not provide B4GAMBLE with your date of birth, contacts, mailbox contents or a gambling profile, and it does not verify your age. Google credentials are used transiently by the server to verify the sign-in and are stripped before the application account relationship is stored. Google sign-in, age confirmation, Terms acceptance and Programme participation do not create reminder or marketing permission.</li>
-      <li><strong>Programme data:</strong> your access confirmations, progress, XP, saved structured plan fields and the Starting Point that you confirm. What you type or say may reveal health or other special-category information.</li>
-      <li><strong>Transient Programme input:</strong> text, clarifications, audio and transcripts used to create a suggested Starting Point. Audio is held in short-lived memory for transcription and is not saved by B4GAMBLE. Draft text remains in the browser session unless and until you choose to save the confirmed output.</li>
+      <li><strong>Programme data:</strong> your access confirmations, progress, XP, saved structured plan fields and the Starting Point that you confirm. What you pick or type may reveal health or other special-category information.</li>
+      <li><strong>Transient Programme input:</strong> picked answers, text and clarifications used to create a suggested Starting Point. Draft text remains in the browser session unless and until you choose to save the confirmed output.</li>
       <li><strong>Technical and security data:</strong> session token, expiry, IP address, the coarse country/region derived by our hosting provider for the request, user agent, language preference, request and security records.</li>
           <li><strong>Outbound link records:</strong> each time a controlled link to a partner site is used, the page on this site it was used from (its path only, without query parameters), the position of the button, the casino and offer, the coarse country and whether the redirect succeeded. Unless you allow analytics, these records carry no browser, session or account identifier.</li>
       <li><strong>Optional first-party analytics:</strong> if you allow analytics, random browser and session identifiers, page path, referring host, selected campaign parameters, device category, coarse country, numbered Programme step, and internal casino, offer and click identifiers. Analytics does not contain your email address, password, Programme words, protected Help activity or partner tracking tokens.</li>
@@ -79,7 +79,7 @@ const sections = [
     title: "Why we use it and our legal bases",
     content: <><p>We use personal data only for the purposes below:</p><dl>
       <div><dt>Provide accounts and the Programme</dt><dd>To authenticate you, maintain a session, save the output you choose to keep, show progress and deliver requested features. Legal basis: performance of our contract with you.</dd></div>
-      <div><dt>Process optional personal Programme input</dt><dd>To transcribe voice input and use AI to suggest a personalised Starting Point. Legal basis: consent. Where the input reveals special-category data, we rely on your explicit consent. You can use protected Help without giving this consent.</dd></div>
+      <div><dt>Process optional personal Programme input</dt><dd>To use AI to suggest a personalised Starting Point. Legal basis: consent. Where the input reveals special-category data, we rely on your explicit consent. You can use protected Help without giving this consent.</dd></div>
       <div><dt>Security and service integrity</dt><dd>To prevent abuse, diagnose failures, protect accounts, keep bounded operational records and establish or defend legal claims. Legal basis: our legitimate interests in operating a secure and reliable service.</dd></div>
           <div><dt>Outbound link measurement</dt><dd>To reconcile commission with partners and to learn which pages and button positions help readers reach an offer. Legal basis: our legitimate interests in operating and measuring our affiliate links. Unless you allow analytics, the record identifies no browser, session or account.</dd></div>
       <div><dt>Optional product analytics</dt><dd>To understand aggregate use of the site, Programme steps and controlled outbound routes and improve reliability. Legal basis: your consent. Declining analytics does not stop the site, account, Programme or controlled redirects from working.</dd></div>
@@ -92,8 +92,8 @@ const sections = [
   },
   {
     id: "ai",
-    title: "AI and voice transcription",
-    content: <><p>If you opt in, the text you submit—or live or recorded audio and its transcript—may be sent to OpenAI acting as a service provider so that B4GAMBLE can transcribe your recording and generate a suggested Starting Point or Programme guidance. The response request uses <code>store: false</code> and does not create an OpenAI conversation. OpenAI states that API data is not used to train its models unless the customer opts in; its current default data controls allow Responses and Realtime API content in abuse-monitoring logs for up to 30 days and list no application-state retention for the selected Realtime path. Contracted or account-specific controls may differ. B4GAMBLE records operational metadata such as model, timing, success or error and input size, not the words you supplied.</p><p>AI output can be incomplete or wrong. Review and edit it before saving. B4GAMBLE does not use AI to diagnose you, decide whether gambling is safe, make a solely automated decision producing legal or similarly significant effects, or determine commercial offers or rankings.</p></>,
+    title: "AI",
+    content: <><p>If you opt in, the answers you pick and the text you submit may be sent to OpenAI acting as a service provider so that B4GAMBLE can generate a suggested Starting Point or Programme guidance. The response request uses <code>store: false</code> and does not create an OpenAI conversation. OpenAI states that API data is not used to train its models unless the customer opts in; its current default data controls allow Responses API content in abuse-monitoring logs for up to 30 days. Contracted or account-specific controls may differ. B4GAMBLE records operational metadata such as model, timing, success or error and input size, not the words you supplied.</p><p>AI output can be incomplete or wrong. Review and edit it before saving. B4GAMBLE does not use AI to diagnose you, decide whether gambling is safe, make a solely automated decision producing legal or similarly significant effects, or determine commercial offers or rankings.</p></>,
   },
   {
     id: "consent",
@@ -103,7 +103,7 @@ const sections = [
   {
     id: "sharing",
     title: "Who receives information",
-    content: <><p>We use service providers only for defined operational purposes: Vercel for hosting and application infrastructure; Prisma&apos;s managed Postgres service for application data; Google for identity-only sign-in and Google Analytics; Resend for Contact delivery and, only if separately activated, account and eligible lifecycle email delivery; Google Workspace for the support mailbox; and OpenAI for optional AI and transcription after your explicit consent. Authorised B4GAMBLE personnel may access information where needed to operate, secure or support the service.</p><p>Published casino and offer pages use operator logos and B4GAMBLE-owned editorial imagery. They do not load partner-hosted promotional creatives. Historical creative-provider records are retained only as inert audit history and are not sent to your browser.</p><p>A Contact message delivered through Resend does not create marketing permission. Email delivery events are normalized; B4GAMBLE does not retain the provider&apos;s full webhook payload. We do not sell personal data.</p><p>We may disclose information if law requires it, to protect legal rights or safety, or in connection with a corporate transaction subject to appropriate protections.</p></>,
+    content: <><p>We use service providers only for defined operational purposes: Vercel for hosting and application infrastructure; Prisma&apos;s managed Postgres service for application data; Google for identity-only sign-in and Google Analytics; Resend for Contact delivery and, only if separately activated, account and eligible lifecycle email delivery; Google Workspace for the support mailbox; and OpenAI for optional AI after your explicit consent. Authorised B4GAMBLE personnel may access information where needed to operate, secure or support the service.</p><p>Published casino and offer pages use operator logos and B4GAMBLE-owned editorial imagery. They do not load partner-hosted promotional creatives. Historical creative-provider records are retained only as inert audit history and are not sent to your browser.</p><p>A Contact message delivered through Resend does not create marketing permission. Email delivery events are normalized; B4GAMBLE does not retain the provider&apos;s full webhook payload. We do not sell personal data.</p><p>We may disclose information if law requires it, to protect legal rights or safety, or in connection with a corporate transaction subject to appropriate protections.</p></>,
   },
   {
     id: "transfers",
@@ -123,7 +123,7 @@ const sections = [
       <li>consented first-party analytics sessions, events and detailed click attribution: generally up to 395 days, with non-identifying daily commercial aggregates retained separately;</li>
       <li>terminal email delivery history: generally up to 730 days; current unsubscribe or suppression state is retained while needed to honour the choice and prevent an unwanted send;</li>
       <li>security and provider records: for the period reasonably required by the applicable service, security and legal purpose.</li>
-      <li>OpenAI Responses and Realtime API content: under OpenAI&apos;s current default controls, up to 30 days in abuse-monitoring logs; the selected Realtime path is listed with no application-state retention. Account-specific controls may differ.</li>
+      <li>OpenAI Responses API content: under OpenAI&apos;s current default controls, up to 30 days in abuse-monitoring logs. Account-specific controls may differ.</li>
     </ul><p>Managed backups may persist for a limited backup cycle after live deletion. We do not promise immediate selective deletion from backups; deleted data is not restored to ordinary use and expires through the backup lifecycle unless it must be retained by law.</p></>,
   },
   {
@@ -161,6 +161,6 @@ export default function PrivacyPage() {
     lead="This notice explains what B4GAMBLE processes, why, who receives it, how long it is kept and the choices available to you."
     legalContact={controller}
     sections={sections}
-    updated="10 October 2026"
+    updated="11 October 2026"
   />;
 }

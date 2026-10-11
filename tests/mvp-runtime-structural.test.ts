@@ -90,8 +90,6 @@ test("the migration adds only the standalone HMAC bucket table and no Programme 
 test("distributed rate limiting uses exact fixed-window scopes, HMAC keys, and one atomic upsert", () => {
   for (const [scope, limit] of Object.entries({
     PROGRAMME_SESSION_CREATE_IP: 12,
-    PROGRAMME_TRANSCRIPTION_SESSION: 6,
-    PROGRAMME_TRANSCRIPTION_IP: 20,
     PROGRAMME_M1_AI_SESSION: 4,
     PROGRAMME_M1_AI_IP: 30,
     PROGRAMME_MISSION_GUIDANCE_USER: 30,
@@ -107,6 +105,10 @@ test("distributed rate limiting uses exact fixed-window scopes, HMAC keys, and o
   assert.doesNotMatch(rateLimit, /NODE_ENV\s*!==\s*["']production["']/);
   assert.doesNotMatch(rateLimit, /x-forwarded-for|localStorage/);
   assert.match(migration, /'PROGRAMME_MUTATION_SESSION'/);
+  // The voice buckets were retired with the voice routes on 11 October 2026. The table's scope
+  // check still lists them: no migration was written for a value nothing writes any more.
+  assert.doesNotMatch(rateLimit, /PROGRAMME_TRANSCRIPTION_/);
+  assert.match(migration, /'PROGRAMME_TRANSCRIPTION_SESSION'/);
 });
 
 test("purge scope is restricted to anonymous sessions, unconsumed claims, and expired limiter buckets", () => {

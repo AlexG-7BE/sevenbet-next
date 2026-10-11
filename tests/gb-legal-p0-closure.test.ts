@@ -162,15 +162,14 @@ test("Programme start asks for consent with one button under its statement and r
 test("OpenAI content controls remain code-enforced without content logging", () => {
   const adapters = source("lib/programme/program-ai/openai-adapters.ts");
   const guidance = source("lib/programme/program-ai/openai-mission-guidance.ts");
-  const realtime = source("lib/programme/program-ai/openai-realtime-transcription.ts");
-  const combined = `${adapters}\n${guidance}\n${realtime}`;
+  const combined = `${adapters}\n${guidance}`;
   assert.equal((combined.match(/\/v1\/responses/g) ?? []).length, 2);
   assert.equal((combined.match(/store: false/g) ?? []).length, 2);
   assert.doesNotMatch(combined, /store: true|console\.(?:info|warn|error)\([^\n]*(?:situation|transcript|audio|output|prompt)/i);
-  assert.match(adapters, /\/v1\/audio\/transcriptions/);
-  assert.match(realtime, /\/v1\/realtime\/calls/);
-  assert.match(realtime, /OpenAI-Safety-Identifier/);
-  assert.match(adapters, /inputCharacters|audioBytes|durationMs/);
+  // Voice left the Programme on 11 October 2026: no audio or realtime endpoint is called.
+  assert.doesNotMatch(combined, /\/v1\/audio\/transcriptions|\/v1\/realtime/);
+  assert.match(adapters, /inputCharacters/);
+  assert.doesNotMatch(adapters, /audioBytes|recordingDurationMs/);
 });
 
 test("commercial evidence cannot move from unknown to verified by timestamp", () => {

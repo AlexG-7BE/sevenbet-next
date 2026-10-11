@@ -9,10 +9,12 @@ function targetsSameWindow(anchor: HTMLAnchorElement) {
 }
 
 /**
- * Permissions-Policy is attached to the top-level document, not to a Next.js
- * client route. Crossing between ordinary public pages (microphone=()) and the
- * Programme (microphone=(self)) must therefore load a fresh document so the
- * browser applies the destination response policy.
+ * Crossing between ordinary public pages and the Programme loads a fresh
+ * document instead of a client transition. The rule dates from the Programme's
+ * own Permissions-Policy (a microphone grant, removed with voice input on
+ * 11 October 2026): a response policy binds to the top-level document, not to
+ * a Next.js client route. Both sides now send the same deny-all policy; the
+ * full load stays until a client transition across this boundary is verified.
  */
 export function ProgrammeDocumentPolicyBoundary() {
   useEffect(() => {
@@ -46,9 +48,9 @@ export function ProgrammeDocumentPolicyBoundary() {
       const destinationIsProgramme = parseProgrammeRoute(destination.pathname) !== null;
       if (currentIsProgramme === destinationIsProgramme) return;
 
-      // Capture-phase prevention stops next/link from converting this security
-      // boundary crossing into an SPA transition. Native modified/new-tab clicks
-      // are intentionally left alone because they create their own document.
+      // Capture-phase prevention stops next/link from converting this boundary
+      // crossing into an SPA transition. Native modified/new-tab clicks are
+      // intentionally left alone because they create their own document.
       event.preventDefault();
       window.location.assign(destination.href);
     };

@@ -12,6 +12,13 @@
 > `gpt-5.6-terra` selection, completed-file-only preferred voice path and
 > no-realtime constraint. This document remains authority for the provider gate,
 > privacy, error, fallback and Production-release ceilings that RFC-056 preserves.
+>
+> **Current amendment (11 October 2026):** the Founder retired voice input.
+> Mission 01 takes answers picked from a list, and the transcription route,
+> adapter, upload limits and recorder described here were removed from the code
+> ([ONE-SIGN-IN-FORM-2026-10-11](../07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md),
+> Part 3). The provider gate, retention, error, fallback and kill-switch rules
+> stand for the text request that remains.
 
 ## 1. Decision and release ceiling
 

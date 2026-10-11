@@ -14,7 +14,7 @@ import type {
 import { isProgrammeLocale } from "@/lib/programme/presentation";
 import { assertSafeProgrammeGeneratedText } from "@/lib/programme/program-ai/output-safety";
 
-const inputModes = ["text", "voice"] as const;
+const inputModes = ["text"] as const;
 const broadContexts = [
   "WORK",
   "HOME",

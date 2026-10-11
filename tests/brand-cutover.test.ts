@@ -121,7 +121,7 @@ test("root identity, legal trading name and approved contacts are exact", () => 
   const terms = source("app/(public)/terms/page.tsx");
   assert.match(terms, /info@7be\.io/);
   assert.match(terms, /effective="19 August 2026"/);
-  assert.match(terms, /updated="19 August 2026"/);
+  assert.match(terms, /updated="11 October 2026"/);
   assert.match(terms, /id: "about-b4gamble"/);
   assert.doesNotMatch(terms, /id: "about-sevenbet"/);
 });

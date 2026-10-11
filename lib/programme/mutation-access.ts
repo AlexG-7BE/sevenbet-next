@@ -12,8 +12,6 @@ const anonymousRoutes = new Set([
   "/api/program/program-ai/session",
   "/api/program/program-ai/authority",
   "/api/program/program-ai/turn",
-  "/api/program/program-ai/transcription",
-  "/api/program/program-ai/transcription/realtime",
   "/api/program/program-ai/starting-point",
   "/api/program/program-ai/support/continue",
   "/api/program/program-ai/claim",

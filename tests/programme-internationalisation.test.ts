@@ -18,9 +18,6 @@ import {
   programmeText,
 } from "../lib/i18n/programme-catalog";
 import {
-  parseProgrammeAudioUpload,
-} from "../lib/programme/application/programme-ai-transcription.service";
-import {
   anonymousProgrammeSubject,
   loadProgrammeSubjectContent,
   saveProgrammeSubjectContent,
@@ -35,11 +32,7 @@ import { OpenAiMissionGuidanceAdapter } from "../lib/programme/program-ai/openai
 import { ProgrammeAiOrchestrator } from "../lib/programme/program-ai/orchestration";
 import { assertSafeProgrammeGeneratedText } from "../lib/programme/program-ai/output-safety";
 import { ProgrammeProviderError } from "../lib/programme/program-ai/provider-errors";
-import {
-  PROGRAM_AI_OPENAI_MODEL,
-  PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
-  PROGRAM_AI_TRANSCRIPTION_MODEL,
-} from "../lib/programme/program-ai/runtime-config";
+import { PROGRAM_AI_OPENAI_MODEL } from "../lib/programme/program-ai/runtime-config";
 import {
   parseProgramAiLocalWording,
 } from "../lib/programme/program-ai/mission-validation";
@@ -56,7 +49,6 @@ import {
   programmePath,
   programmePathForPresentationLocale,
   programmePublicHref,
-  programmeTranscriptionLanguage,
   safeProgrammePresentationSearch,
   type ProgrammeLocale,
 } from "../lib/programme/presentation";
@@ -68,17 +60,17 @@ import {
 import { middleware } from "../middleware";
 
 const expectedRoutes = [
-  ["en-GB", "en", "/program", "en"],
-  ["de-DE", "de", "/de/program", "de"],
-  ["es-ES", "es", "/es/program", "es"],
-  ["el-GR", "el", "/el/program", "el"],
-  ["sv-SE", "sv", "/sv/program", "sv"],
-  ["da-DK", "da", "/da/program", "da"],
-  ["it-IT", "it", "/it/program", "it"],
-  ["pt-PT", "pt", "/pt/program", "pt"],
-  ["nl-NL", "nl", "/nl/program", "nl"],
-  ["fi-FI", "fi", "/fi/program", "fi"],
-  ["nb-NO", "nb", "/nb/program", "no"],
+  ["en-GB", "en", "/program"],
+  ["de-DE", "de", "/de/program"],
+  ["es-ES", "es", "/es/program"],
+  ["el-GR", "el", "/el/program"],
+  ["sv-SE", "sv", "/sv/program"],
+  ["da-DK", "da", "/da/program"],
+  ["it-IT", "it", "/it/program"],
+  ["pt-PT", "pt", "/pt/program"],
+  ["nl-NL", "nl", "/nl/program"],
+  ["fi-FI", "fi", "/fi/program"],
+  ["nb-NO", "nb", "/nb/program"],
 ] as const;
 
 const providerEnvelope = {
@@ -119,7 +111,7 @@ class MemoryStorage implements Storage {
 }
 
 test("Programme presentation exposes exactly the Founder-approved locale and route contract", () => {
-  assert.deepEqual(PROGRAMME_ROUTES.map((route) => [route.locale, route.language, route.path, route.transcriptionLanguage]), expectedRoutes);
+  assert.deepEqual(PROGRAMME_ROUTES.map((route) => [route.locale, route.language, route.path]), expectedRoutes);
   assert.deepEqual(PROGRAMME_LOCALES, expectedRoutes.map(([locale]) => locale));
   for (const [locale, , path] of expectedRoutes) {
     assert.equal(programmePath(locale), path);
@@ -141,7 +133,7 @@ test("Programme presentation exposes exactly the Founder-approved locale and rou
   assert.equal(programmePathForPresentationLocale("fr-CA"), "/program");
 });
 
-test("Permissions Policy grants microphone access only on the eleven canonical Programme routes", async () => {
+test("Permissions Policy denies the microphone on every route, the Programme included", async () => {
   const configUrl = new URL("../next.config.mjs", import.meta.url).href;
   const config = (await import(configUrl)).default as {
     headers: () => Promise<Array<{ source: string; headers: Array<{ key: string; value: string }> }>>;
@@ -152,16 +144,16 @@ test("Permissions Policy grants microphone access only on the eleven canonical P
     ?.headers.find((header) => header.key === "Permissions-Policy")
     ?.value;
   const denied = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
-  const programme = "camera=(), microphone=(self), geolocation=(), payment=(), usb=()";
 
+  // Founder decision, 11 Oct 2026: Mission 01 takes picked answers only, so no route grants the
+  // microphone. One global rule sets the policy; the Programme has no rule of its own.
   assert.equal(permissionsPolicy("/(.*)"), denied);
   assert.deepEqual(
-    rules.filter((rule) => permissionsPolicy(rule.source) === programme).map((rule) => rule.source),
-    PROGRAMME_ROUTES.map((route) => route.path),
+    rules.filter((rule) => rule.headers.some((header) => header.key === "Permissions-Policy")).map((rule) => rule.source),
+    ["/(.*)"],
   );
-  for (const route of PROGRAMME_ROUTES) assert.equal(permissionsPolicy(route.path), programme, route.path);
-  for (const ordinaryPath of ["/", "/de", "/de/learn", "/help", "/program/mission-01", "/de/program/mission-01"]) {
-    assert.equal(permissionsPolicy(ordinaryPath), undefined, `${ordinaryPath} must inherit the global deny policy`);
+  for (const path of [...PROGRAMME_ROUTES.map((route) => route.path), "/", "/de", "/de/learn", "/help", "/program/mission-01", "/de/program/mission-01"]) {
+    assert.equal(permissionsPolicy(path), undefined, `${path} must inherit the global deny policy`);
   }
 });
 
@@ -251,19 +243,14 @@ test("Google callbacks are the exact bounded Programme pairs for all locales", (
   assert.equal(isAllowedGoogleLinkRequest({ provider: "google", callbackURL: "https://attacker.example/", errorCallbackURL: "/program?auth=google-link-error" }), false);
 });
 
-test("every Programme locale is mandatory at HTTP/application boundaries and maps to a verified transcription language", async () => {
-  assert.deepEqual(PROGRAMME_LOCALES.map((locale) => programmeTranscriptionLanguage(locale)), expectedRoutes.map((route) => route[3]));
+test("every Programme locale is mandatory at HTTP/application boundaries and Mission 01 input is text only", () => {
   for (const locale of PROGRAMME_LOCALES) {
     assert.equal(parseProgrammeAiTurn({ locale, inputMode: "text", situation: "I open an app after a difficult working day.", clarificationAnswers: [] }).locale, locale);
     assert.equal(parseProgramAiLocalWording({ locale, localWording: "Kept in this tab" }).locale, locale);
   }
   assert.throws(() => parseProgrammeAiTurn({ locale: "fr-FR", inputMode: "text", situation: "I open an app after a difficult working day.", clarificationAnswers: [] }), /locale/i);
   assert.throws(() => parseProgramAiLocalWording({ locale: "fr-FR" }), /locale/i);
-  const form = new FormData();
-  form.set("audio", new File([new Uint8Array([1])], "voice", { type: "audio/webm" }));
-  form.set("durationMs", "1000");
-  form.set("locale", "fr-FR");
-  await assert.rejects(parseProgrammeAudioUpload(form), /locale/i);
+  assert.throws(() => parseProgrammeAiTurn({ locale: "en-GB", inputMode: "voice", situation: "I open an app after a difficult working day.", clarificationAnswers: [] }), /inputMode/);
 });
 
 test("M1 and Mission guidance provider requests name the requested locale without logging private input", async () => {
@@ -272,8 +259,6 @@ test("M1 and Mission guidance provider requests name the requested locale withou
     provider: "openai",
     apiKey: "test-secret",
     programmeModel: PROGRAM_AI_OPENAI_MODEL,
-    transcriptionModel: PROGRAM_AI_TRANSCRIPTION_MODEL,
-    realtimeTranscriptionModel: PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL,
   }, {
     fetchImpl: (async (_url, init) => {
       m1Bodies.push(JSON.parse(String(init?.body)) as Record<string, unknown>);
