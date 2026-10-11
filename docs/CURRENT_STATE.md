@@ -36,6 +36,11 @@ changes except how the wheel and the trackpad move it.
   The first chapter is now held by sticky positioning while it opens, and
   where the browser supports scroll-driven animations its growth is one of
   them; elsewhere the script scales it.
+- **The chapter screens repaint nothing while they move.** Their progress dot
+  rides a transform, the first chapter's corners square off once, a waiting
+  first chapter stays drawn at 0.001 opacity, and a sheet at rest is 0.999
+  opaque so the one beneath stays rasterised. On the Founder's display the
+  chapter landings went from two to four late frames each to none.
 - **The language menu scrolls.** On Home the controller cancelled the wheel
   over the header's language list as well, so the list could not be scrolled
   and the page moved behind it. A list that scrolls on its own keeps its wheel.

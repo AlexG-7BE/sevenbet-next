@@ -12,6 +12,7 @@ function normalized(value: string | null | undefined) {
 }
 
 const HOME_CHAPTER_WAITING_OPACITY = 0.001;
+const HOME_CHAPTER_RESTING_OPACITY = 0.999;
 // A landing that has not arrived after this long was taken over by the scrollbar or the keyboard.
 const HOME_TRAVEL_EXPIRES_MS = 1200;
 
@@ -88,6 +89,7 @@ function setupHomeInteractions(root: HTMLElement) {
   let stackDirty = Boolean(stack) && !reducedMotion;
   let panelLayouts: Array<{ element: HTMLElement; entranceDistance: number; open: number; pinned: boolean }> = [];
   let dotTracks: number[] = [];
+  let restingPanel = -1;
   let canonicalDestinations: number[] = [];
   let travel: HomeTravel | null = null;
   let queuedDirection = 0;
@@ -248,10 +250,25 @@ function setupHomeInteractions(root: HTMLElement) {
   const beginTravel = (direction: number) => {
     const to = adjacentDestination(travel ? travel.to : window.scrollY, direction);
     if (to === undefined) return false;
+    if (restingPanel > 0) panelLayouts[restingPanel]?.element.style.setProperty("opacity", "1", "important");
+    restingPanel = -1;
     window.scrollTo({ behavior: "smooth", top: to });
     // Turned back before the page had moved: it is already there and no scroll will say so.
     travel = Math.abs(window.scrollY - to) <= 2 ? null : { direction, since: window.performance.now(), to };
     return true;
+  };
+
+  // The chapter the page has come to rest on, if any. A sheet lying fully over another hides
+  // it from the browser, which then drops the hidden sheet's photo and rasterises it again in
+  // the first frames of the way back up. Drawn a thousandth short of opaque while the page
+  // rests, the top sheet hides nothing and the one beneath it is ready before it is needed.
+  const noteRest = () => {
+    if (travel) return;
+    const resting = panelLayouts.findIndex(({ open }) => Math.abs(open - window.scrollY) <= 2);
+    if (resting === restingPanel) return;
+    restingPanel = resting;
+    stackDirty = true;
+    scheduleFrame();
   };
 
   const settleTravel = () => {
@@ -260,6 +277,7 @@ function setupHomeInteractions(root: HTMLElement) {
     travel = null;
     queuedDirection = 0;
     if (next) beginTravel(next);
+    else noteRest();
   };
 
   // An element that scrolls on its own, such as the language menu, keeps its wheel.
@@ -355,8 +373,9 @@ function setupHomeInteractions(root: HTMLElement) {
             element.style.setProperty("opacity", contentVisible ? "1" : "0", "important");
           }
       } else {
+        if (panelIndex === restingPanel && Math.abs(raw) > 2) restingPanel = -1;
         child.style.setProperty("transform", "none", "important");
-        child.style.setProperty("opacity", "1", "important");
+        child.style.setProperty("opacity", panelIndex === restingPanel ? String(HOME_CHAPTER_RESTING_OPACITY) : "1", "important");
         child.style.borderRadius = raw <= 2 ? "0" : "28px 28px 0 0";
         for (const element of [child.querySelector<HTMLElement>("[data-mob='chapter']"), child.querySelector<HTMLElement>("[data-stackind]")]) {
           element?.style.setProperty("opacity", "1", "important");
@@ -442,6 +461,7 @@ function setupHomeInteractions(root: HTMLElement) {
     root.dataset.homeWheelController = "adjacent";
     window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("scroll", settleTravel, { passive: true });
+    window.addEventListener("scrollend", noteRest, { passive: true });
   }
 
   return () => {
@@ -455,6 +475,7 @@ function setupHomeInteractions(root: HTMLElement) {
     window.removeEventListener("scroll", onScroll);
     window.removeEventListener("wheel", onWheel);
     window.removeEventListener("scroll", settleTravel);
+    window.removeEventListener("scrollend", noteRest);
     window.removeEventListener("pointermove", onPointerMove);
     document.documentElement.removeEventListener("pointerleave", onPointerLeave);
     window.cancelAnimationFrame(animationFrame);

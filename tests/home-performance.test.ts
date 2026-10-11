@@ -42,6 +42,12 @@ test("Home reads the wheel gesture, lands with the browser's own smooth scroll a
   assert.match(homeInteractions, /child\.style\.borderRadius = raw > 0 \? "28px" : "0"/);
   assert.match(interactions, /const HOME_CHAPTER_WAITING_OPACITY = 0\.001;/);
   assert.match(homeInteractions, /const waiting = raw - distance <= 2 \? String\(HOME_CHAPTER_WAITING_OPACITY\) : "0";/);
+  // A sheet at rest over another is a thousandth short of opaque, so the one beneath stays
+  // rasterised for the way back up; it is opaque again before the page moves.
+  assert.match(interactions, /const HOME_CHAPTER_RESTING_OPACITY = 0\.999;/);
+  assert.match(homeInteractions, /panelIndex === restingPanel \? String\(HOME_CHAPTER_RESTING_OPACITY\) : "1"/);
+  assert.match(homeInteractions, /if \(restingPanel > 0\) panelLayouts\[restingPanel\]\?\.element\.style\.setProperty\("opacity", "1", "important"\);\s*restingPanel = -1;\s*window\.scrollTo/);
+  assert.match(homeInteractions, /addEventListener\("scrollend", noteRest, \{ passive: true \}\)/);
   // Where the browser can tie an animation to the scroll, it scales the chapter too, with the
   // script's own curve; the script then leaves the transform alone.
   assert.match(homeInteractions, /if \(pinned && scrollDrivenChapter\) \{[^}]*removeProperty\("transform"\)/);
