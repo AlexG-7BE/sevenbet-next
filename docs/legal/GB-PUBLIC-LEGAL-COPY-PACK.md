@@ -31,6 +31,16 @@ Mission 01 takes answers picked from a list; there is no typed or voice input. T
 
 Withdrawal stays available through the Privacy Notice.
 
+### Voice wording removed from the public documents
+
+Current wording since 11 October 2026 (Founder decision; `docs/07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md`, Part 3). Voice input and the transcription provider no longer exist, so the public documents stopped describing them. The meaning is otherwise unchanged.
+
+- **Privacy Notice** (`updated="11 October 2026"`): "What you pick or type may reveal health or other special-category information."; transient Programme input is "picked answers, text and clarifications"; the purpose is "To use AI to suggest a personalised Starting Point."; the section "AI and voice transcription" is titled "AI" and says "the answers you pick and the text you submit may be sent to OpenAI"; OpenAI is named "for optional AI after your explicit consent"; retention names "OpenAI Responses API content" only. Audio, transcripts and the Realtime API are no longer mentioned.
+- **Terms of Use** (`updated="11 October 2026"`): "AI may suggest a Starting Point from the answers you give."
+- **FAQ**, "Do I need an account to start?": "No. You pick ready answers first; registration with Google or email comes only after your Starting Point is ready, so you can save it." (thirteen languages).
+
+The Terms and Privacy versions recorded when a person affirms access (`lib/programme/access-contract.ts`) are unchanged, as they were for the 10 October 2026 notice update.
+
 ### Identity disclosure
 
 > Google provides identity only; it does not verify age or receive your Programme words from B4GAMBLE. Registration adds 0 XP. Programme and Help data never feeds offers or rankings.
