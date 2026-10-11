@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 import { programmeMissionProgressCopy, programmeReviewStatusCopy } from "../components/programme/ProgramAiHome.copy";
@@ -28,9 +28,6 @@ const programmeObserver = read("lib/analytics/programme-observer.server.ts");
 const page = read("app/program/page.tsx");
 const layout = read("app/program/layout.tsx");
 const vercelBuildPreflight = read("scripts/vercel-build-preflight.ts");
-const realtimeRoute = read("app/api/program/program-ai/transcription/realtime/route.ts");
-const realtimeAdapter = read("lib/programme/program-ai/openai-realtime-transcription.ts");
-const realtimeClient = read("lib/programme/program-ai/realtime-transcription-client.ts");
 const localSubjectStorage = read("lib/programme/local-subject-storage.ts");
 
 test("PR #106 Preview builds require the exact Programme runtime flag without changing other environments", () => {
@@ -123,8 +120,7 @@ test("client keeps private draft content in sessionStorage and never localStorag
 });
 
 test("Mission 01 takes picked ready answers and the client has no voice or free-text input", () => {
-  // Founder decisions, 11 Oct 2026: ready answers only. The server voice routes stay until the
-  // clean-up change; nothing in the client reaches them.
+  // Founder decisions, 11 Oct 2026: ready answers only.
   assert.match(finalPresentation, /PROGRAMME_READY_ANSWERS\.map\(\(answer\) =>/);
   assert.match(frontend, /situation: readyAnswersSituation\(locale, answers\)/);
   assert.match(frontend, /body: JSON\.stringify\(\{ locale, inputMode: "text", situation: state\.situation, clarificationAnswers: \[\] \}\)/);
@@ -132,20 +128,34 @@ test("Mission 01 takes picked ready answers and the client has no voice or free-
   assert.doesNotMatch(frontendRuntime, /Mission01IntakeScreen|Mission01Composer|realtime-transcription-client|voice-draft/);
 });
 
-test("the server voice route keeps credentials server-side until it is removed", () => {
-  assert.match(realtimeAdapter, /https:\/\/api\.openai\.com\/v1\/realtime\/calls/);
-  assert.match(realtimeAdapter, /type: "transcription"/);
-  assert.match(realtimeAdapter, /turn_detection: null/);
-  assert.match(realtimeAdapter, /delay: "minimal"/);
-  assert.match(realtimeAdapter, /OpenAI-Safety-Identifier/);
-  assert.match(realtimeRoute, /hashOpaqueToken\(token\)/);
-  assert.match(realtimeRoute, /MAX_SDP_BYTES = 32_768/);
-  assert.match(realtimeRoute, /"PROGRAMME_TRANSCRIPTION_SESSION"/);
-  assert.match(realtimeRoute, /"PROGRAMME_TRANSCRIPTION_IP"/);
-  assert.doesNotMatch(realtimeRoute, /PROGRAMME_REALTIME_TRANSCRIPTION_/);
+test("voice input is gone from the server: no route, adapter, bucket, permission or config remains", () => {
+  // Founder decision, 11 Oct 2026. The last commit where voice worked end to end is tagged
+  // archive/programme-voice-2026-10-11; docs/07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md (Part 3)
+  // says how to bring it back.
+  for (const removed of [
+    "app/api/program/program-ai/transcription/route.ts",
+    "app/api/program/program-ai/transcription/realtime/route.ts",
+    "lib/programme/application/programme-ai-transcription.service.ts",
+    "lib/programme/program-ai/openai-realtime-transcription.ts",
+    "lib/programme/program-ai/realtime-transcription-client.ts",
+    "lib/programme/program-ai/transcription-limits.ts",
+    "lib/programme/program-ai/transcription-request.ts",
+    "lib/programme/program-ai/voice-draft.ts",
+  ]) assert.equal(existsSync(removed), false, removed);
+  assert.doesNotMatch(read("lib/programme/mutation-access.ts"), /transcription/);
+  assert.doesNotMatch(read("lib/programme/rate-limit.ts"), /TRANSCRIPTION/);
+  assert.doesNotMatch(read("lib/programme/program-ai/runtime-config.ts"), /transcri/i);
+  assert.doesNotMatch(read("lib/programme/program-ai/openai-adapters.ts"), /transcri|audio|realtime/i);
+  assert.doesNotMatch(read("lib/programme/program-ai/ports.ts"), /transcri/i);
+  assert.doesNotMatch(read("lib/programme/program-ai/provider-errors.ts"), /TRANSCRIPTION_FAILED|INPUT_TOO_LARGE/);
+  assert.doesNotMatch(read("lib/programme/presentation.ts"), /transcri/i);
+  assert.doesNotMatch(read("next.config.mjs"), /microphone=\(self\)|PROGRAMME_MICROPHONE_ROUTES/);
+  assert.doesNotMatch(read(".env.example"), /TRANSCRIPTION/);
+  // The picked answers travel as text through the turn route, which stays.
+  assert.match(read("lib/programme/program-ai/validation.ts"), /const inputModes = \["text"\] as const;/);
+  assert.equal(existsSync("app/api/program/program-ai/turn/route.ts"), true);
+  // Access evidence is still derived per request from the current subject's own authority.
   assert.match(localSubjectStorage, /if \(!hasProgrammeAccessAuthority\(storage, subject, now\)\) return \{\}/);
-  assert.doesNotMatch(realtimeClient, /OPENAI_API_KEY|authorization:\s*`Bearer|NEXT_PUBLIC_/);
-  assert.doesNotMatch(`${realtimeAdapter}\n${realtimeRoute}`, /console\.(?:info|error|warn)\([^)]*(?:sdp|transcript)/i);
 });
 
 test("account-not-linked recovery preserves the claim and requires authenticated explicit linking", () => {

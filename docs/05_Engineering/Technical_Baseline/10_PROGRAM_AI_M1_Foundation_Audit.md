@@ -8,6 +8,19 @@ Exact base: current main `c52595405f0800c8c2b51d5951c4a8d45c133034`. FULL-SITE-Q
 
 The entire active repository was scanned. Dependencies, generated directories, build artefacts, caches, reports and `tsconfig.tsbuildinfo` were excluded from implementation claims. This document records source evidence and the already documented controlled Preview evidence. It does not infer current hosted activation or expose environment values. The August baseline remains below as historical implementation context; the following delta is current for the RFC-056 candidate branch.
 
+## Voice retirement — 2026-10-11
+
+Repository root for this delta: the `chore/remove-programme-voice` worktree of `AlexG-7BE/sevenbet-next`, based on `main` after PR #479. The entire active repository was scanned; dependencies, generated directories, build artefacts, caches and `tsconfig.tsbuildinfo` were excluded.
+
+- **DETECTED:** Mission 01 renders six ready answers and one consent button. No textarea, microphone control, `MediaRecorder`, `getUserMedia` or WebRTC code exists in `components/programme/ProgramAiExperience.tsx` or `ProgramAiFinalPresentation.tsx`.
+- **DETECTED:** `app/api/program/program-ai/` holds no `transcription` route. `programme-ai-transcription.service.ts`, `openai-realtime-transcription.ts`, `realtime-transcription-client.ts`, `voice-draft.ts`, `transcription-limits.ts` and `transcription-request.ts` are absent.
+- **DETECTED:** `openai-adapters.ts` contains only `OpenAiProgrammeAiAdapter`; `ports.ts` contains only `ProgrammeAiPort`; `runtime-config.ts` resolves one model, `gpt-6-luna`; the closed provider error taxonomy has four codes (`PROVIDER_UNAVAILABLE`, `PROVIDER_TIMEOUT`, `PROVIDER_RATE_LIMIT`, `PROVIDER_INVALID_OUTPUT`).
+- **DETECTED:** the Mission 01 turn accepts `inputMode: "text"` only. `programmeRateLimitPolicies` has seven scopes and no transcription scope. `next.config.mjs` sets one `Permissions-Policy` rule, deny-all, for every route.
+- **DETECTED:** no migration was added. The `ProgrammeRuntimeRateLimitBucket` scope check of migration `0019` still lists `PROGRAMME_TRANSCRIPTION_SESSION` and `PROGRAMME_TRANSCRIPTION_IP`.
+- **DETECTED:** the annotated tag `archive/programme-voice-2026-10-11` points at `53ee0da0`, the last `main` commit that contains the voice client and server.
+- **DETECTED (`vercel env ls production`, names only, 11 October 2026):** Production still has `PROGRAM_AI_TRANSCRIPTION_MODEL` and has no `PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL`. The application no longer reads either. **UNKNOWN:** Preview and Development values.
+- The voice, composer, recorder and transcription statements in the sections below describe the system as it was on their dates.
+
 ## RFC-056 unified-composer correction candidate — 2026-09-26
 
 - **DETECTED:** repository root `/Users/alex/.codex/worktrees/programme-unified-voice-composer/sevenbet-next`; exact remote base `b4c33d4c37785ce93ac8c3babc30d6b2553fb1ca`; candidate branch `codex/programme-unified-voice-composer`. The tracked active repository inventory was scanned with dependencies, generated output, build artefacts, caches and reports excluded.

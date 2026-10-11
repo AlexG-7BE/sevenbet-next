@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-const allowed = "camera=(), microphone=(self), geolocation=(), payment=(), usb=()";
 const denied = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
 
-test("crossing public and Programme boundaries reloads the top-level document so Permissions-Policy changes apply", async ({ page }) => {
+// The Programme had its own microphone grant until 11 October 2026; every document now carries the
+// same deny-all policy. Crossing the boundary still loads a fresh document, as it did before.
+test("public and Programme documents both deny the microphone, and crossing between them reloads the document", async ({ page }) => {
   const publicResponse = await page.goto("/es", { waitUntil: "domcontentloaded" });
   expect(publicResponse?.status()).toBe(200);
   expect(publicResponse?.headers()["permissions-policy"]).toBe(denied);
@@ -19,7 +20,7 @@ test("crossing public and Programme boundaries reloads the top-level document so
   const programmeResponse = await programmeNavigation;
 
   expect(new URL(page.url()).pathname).toBe("/es/program");
-  expect(programmeResponse?.headers()["permissions-policy"]).toBe(allowed);
+  expect(programmeResponse?.headers()["permissions-policy"]).toBe(denied);
   expect(await page.evaluate(() => "__programmePolicyDocumentMarker" in window)).toBe(false);
 
   await page.evaluate(() => {

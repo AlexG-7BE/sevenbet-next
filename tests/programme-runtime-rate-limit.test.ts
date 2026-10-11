@@ -72,7 +72,7 @@ test("IP, anonymous-session, and user sources remain independent and 429 respons
   const now = new Date("2026-08-11T10:01:00.000Z");
   for (const scope of [
     "PROGRAMME_SESSION_CREATE_IP",
-    "PROGRAMME_TRANSCRIPTION_SESSION",
+    "PROGRAMME_M1_AI_SESSION",
     "PROGRAMME_MISSION_GUIDANCE_USER",
   ] as const) {
     const first = scope.endsWith("_IP") ? "198.51.100.1" : scope.endsWith("_SESSION") ? "anonymous-a" : "user-a";
@@ -167,7 +167,7 @@ test("concurrent attempts use one atomic bucket and permit only the configured a
 test("bucket keys are deterministic HMAC digests and raw sources never enter writes", async () => {
   const input = {
     secret: "test-secret",
-    scope: "PROGRAMME_TRANSCRIPTION_IP" as const,
+    scope: "PROGRAMME_SESSION_CREATE_IP" as const,
     source: "198.51.100.42",
     windowNumber: 10,
   };
@@ -181,7 +181,7 @@ test("bucket keys are deterministic HMAC digests and raw sources never enter wri
   const limiter = new PrismaProgrammeRateLimiter(state.database, input.secret);
   await limiter.consume({ scope: input.scope, source: input.source, now: new Date("2026-08-11T10:01:00.000Z") });
   assert.doesNotMatch(JSON.stringify(state.writes), /198\.51\.100\.42/);
-  assert.match(JSON.stringify(state.writes), /PROGRAMME_TRANSCRIPTION_IP/);
+  assert.match(JSON.stringify(state.writes), /PROGRAMME_SESSION_CREATE_IP/);
 
   const rawToken = "anonymous-private-token";
   const tokenHash = hashOpaqueToken(rawToken);

@@ -100,7 +100,7 @@ for (const viewport of viewports) {
 }
 
 for (const entry of ["/program", "/program?entry=start", "home", "ten-steps"] as const) {
-  test(`${entry} reaches the canonical voice-first Mission 01 renderer`, async ({ page }) => {
+  test(`${entry} reaches the canonical Mission 01 renderer`, async ({ page }) => {
     await installAnonymousProgramme(page);
     if (entry === "home") {
       await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
@@ -115,8 +115,6 @@ for (const entry of ["/program", "/program?entry=start", "home", "ten-steps"] as
     await expect(page.locator('[data-runtime-renderer="programme"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
     await completeAccess(page);
-    await expect(page.getByRole("button", { name: "Start voice input" })).toBeVisible();
-    await expect(page.getByLabel("Your situation")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toHaveCount(0);
   });
 }

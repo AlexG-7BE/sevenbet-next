@@ -13,14 +13,14 @@ The runtime model is `ProgrammeRuntimeRateLimitBucket`. It has no user/session r
 | Scope | Limit / 10 minutes | Denial |
 | --- | ---: | --- |
 | `PROGRAMME_SESSION_CREATE_IP` | 12 | HTTP 429 |
-| `PROGRAMME_TRANSCRIPTION_SESSION` | 6 | HTTP 429; Type instead remains usable |
-| `PROGRAMME_TRANSCRIPTION_IP` | 20 | HTTP 429; Type instead remains usable |
 | `PROGRAMME_M1_AI_SESSION` | 4 | provider suppressed; safe fallback |
 | `PROGRAMME_M1_AI_IP` | 30 | provider suppressed; safe fallback |
 | `PROGRAMME_MISSION_GUIDANCE_USER` | 30 | provider suppressed; deterministic fallback |
 | `PROGRAMME_REVIEW_USER` | 12 | provider suppressed; deterministic fallback |
 | `PROGRAMME_MUTATION_SESSION` | 60 | HTTP 429 before anonymous mutation |
 | `PROGRAMME_MUTATION_USER` | 120 | HTTP 429 before mutation |
+
+The scopes `PROGRAMME_TRANSCRIPTION_SESSION` (6) and `PROGRAMME_TRANSCRIPTION_IP` (20) were retired with the voice routes on 11 October 2026. The table's `scope` check constraint still lists them; no migration was written and nothing writes them.
 
 The anonymous mutation source is the existing `hashOpaqueToken(token)` result passed ephemerally into the domain-separated HMAC limiter. Neither the raw token nor that intermediate token hash is persisted or logged; only the final 64-character HMAC bucket key is stored. The generic anonymous scope covers authority confirmation/withdrawal, PROGRAM-AI and legacy pending-claim creation, Starting Point confirmation, support continuation, PROGRAM-AI turn mutation and legacy M1 draft mutation. Provider scopes remain separate and unchanged.
 

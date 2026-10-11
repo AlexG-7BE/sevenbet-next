@@ -47,7 +47,7 @@ function structuralDraft(value: unknown) {
     ? value as Record<string, unknown>
     : {};
   return {
-    inputMode: draft.inputMode === "voice" ? "voice" : "text",
+    inputMode: "text" as const,
     clarificationCount: typeof draft.clarificationCount === "number"
       ? Math.min(2, Math.max(0, draft.clarificationCount))
       : 0,

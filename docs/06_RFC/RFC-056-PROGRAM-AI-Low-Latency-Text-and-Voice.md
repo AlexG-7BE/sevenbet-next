@@ -1,14 +1,44 @@
 # RFC-056: PROGRAM-AI Low-Latency Text and Voice
 
-- **Status:** `ACTIVE`
-- **Decision authority:** Founder instructions, 25 and 26 September 2026
+- **Status:** `ACTIVE` for Fast text generation; the voice sections are retired (Founder decision, 11 October 2026)
+- **Decision authority:** Founder instructions, 25 and 26 September and 11 October 2026
 - **Approved:** 2026-09-25
 - **Scope:** Bounded latency reduction for Programme AI text generation and Mission 01 voice transcription
 - **Base:** `3c95d276e8978ab0cb16a2add9e2c0d46cfe7092`
 - **Depends on:** Product Vision & Principles, RFC-002, RFC-013, RFC-017, RFC-022, RFC-023 and RFC-025
 - **Amends:** RFC-023 model/voice transport and RFC-025 provider-model/output-ceiling decisions only
 
-## 26 September amendment — unified Mission 01 composer
+## 11 October amendment — voice retired, text generation stands
+
+The Founder decided on 11 October 2026 that Mission 01 takes answers picked
+from a list, with no voice and no free text, and that the unused voice code
+leaves the working project and stays recoverable under a tag
+([ONE-SIGN-IN-FORM-2026-10-11](../07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md),
+Parts 2 and 3).
+
+**Still current authority:** the Fast text contract in the Decision table for
+the Mission 01 Starting Point, Missions 02–10 guidance and Personal Review
+regeneration (`gpt-6-luna`, Responses API, reasoning `none`, strict schemas,
+the 320/320/620 output-token ceilings, Fast service tier, deterministic
+initial Review read), with the observability, privacy and safety rules that
+apply to those requests. Mission 01 now sends the picked answers as its text
+input.
+
+**Retired, with no runtime:** the 26 September unified composer amendment,
+the two voice rows of the Decision table, the whole "Realtime voice boundary"
+section, voice telemetry, and the WebRTC and voice parts of the verification
+list. Both transcription routes, the realtime adapter and browser client, the
+file adapter, the voice draft helper, their rate-limit buckets, the two
+transcription model settings and the Programme microphone
+`Permissions-Policy` were removed from the code. The tag
+`archive/programme-voice-2026-10-11` marks the last commit where they worked
+end to end.
+
+The retired sections below are kept as the record of the decision as it was
+taken. Bringing voice back needs a current Founder decision; the decision
+record lists the steps.
+
+## 26 September amendment — unified Mission 01 composer (retired 11 October 2026)
 
 The current Founder instruction replaces the split voice/type presentation with
 one Mission-owned editable composer. The situation textarea is always visible.
@@ -45,8 +75,8 @@ user-visible latency:
 | Missions 02–10 guidance | `gpt-6-luna`, Responses API, reasoning `none` | operation schema, 320-token ceiling, Fast service tier |
 | Personal Review regeneration | `gpt-6-luna`, Responses API, reasoning `none` | operation schema, 620-token ceiling, Fast service tier |
 | Initial Personal Review read | existing deterministic server result | no provider wait |
-| Mission 01 preferred voice | `gpt-live-transcribe`, Realtime API over WebRTC | live partial in the editable composer, same-button manual commit, authoritative final reconciliation |
-| Mission 01 voice fallback | `gpt-4o-transcribe`, Audio Transcriptions API | current bounded in-memory completed file |
+| Mission 01 preferred voice (retired 11 October 2026) | `gpt-live-transcribe`, Realtime API over WebRTC | live partial in the editable composer, same-button manual commit, authoritative final reconciliation |
+| Mission 01 voice fallback (retired 11 October 2026) | `gpt-4o-transcribe`, Audio Transcriptions API | current bounded in-memory completed file |
 
 Explicit Review regeneration is a user-requested blocking interaction, so it uses
 Fast rather than `auto`. The ordinary Review GET remains deterministic and
@@ -59,7 +89,7 @@ ceilings. Provider schemas are tightened to the smallest current presentation
 contract while user-owned legacy/editable domain values keep their existing
 accepted limits.
 
-## Realtime voice boundary
+## Realtime voice boundary (retired 11 October 2026)
 
 The browser obtains microphone permission and starts a `MediaRecorder` capture for
 bounded fallback. When WebRTC is available, it also creates an SDP offer. A

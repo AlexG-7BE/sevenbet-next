@@ -5,6 +5,9 @@
 - **Repository amendment:** 12 September 2026 (Founder approved bounded Resend
   processing and six of six Production acceptance passed; contract/transfer
   evidence remains unverified)
+- **Repository amendment:** 11 October 2026 (the Founder retired voice input;
+  OpenAI receives the picked answers and later Programme text only, and no
+  audio or transcript; the "OpenAI audio" row below has no runtime)
 - **Status:** PROVIDER PUBLIC LEGAL FRAMEWORK REVIEW: COMPLETE
 - **Owner:** Internal Legal/Compliance with Security and account owners
 

@@ -1,9 +1,5 @@
 import type { ProgrammeAiTurn } from "@/lib/programme/program-ai/contracts";
-import type {
-  ProgrammeAiPort,
-  TranscriptionPort,
-  TranscriptionRequest,
-} from "@/lib/programme/program-ai/ports";
+import type { ProgrammeAiPort } from "@/lib/programme/program-ai/ports";
 import {
   ProgrammeProviderError,
   providerErrorCode,
@@ -14,28 +10,22 @@ import {
   type ProgramAiOpenAiConfig,
 } from "@/lib/programme/program-ai/runtime-config";
 import { parseProgrammeAiPortResult } from "@/lib/programme/program-ai/validation";
-import { programmeTranscriptionLanguage } from "@/lib/programme/presentation";
 
 export const PROGRAM_AI_OPENAI_PROMPT_VERSION = "program-ai-m1-openai:2026-09-25:v4";
 export const PROGRAM_AI_OPENAI_TIMEOUT_MS = 20_000;
-export const PROGRAM_AI_TRANSCRIPTION_TIMEOUT_MS = 25_000;
 export const PROGRAM_AI_OPENAI_MAX_OUTPUT_TOKENS = 320;
 
 const OPENAI_API_ORIGIN = "https://api.openai.com";
-
-type ProviderOperation = "programme_ai" | "transcription";
 
 export type ProgrammeProviderLog = {
   event: "programme_provider_operation";
   provider: "openai";
   model: string;
-  operation: ProviderOperation;
+  operation: "programme_ai";
   latencyMs: number;
   success: boolean;
   errorCategory?: ProgrammeProviderErrorCode;
   inputCharacters?: number;
-  audioBytes?: number;
-  recordingDurationMs?: number;
   inputTokens?: number;
   outputTokens?: number;
   clarificationCount?: number;
@@ -181,9 +171,8 @@ function inputTokens(body: OpenAiResponseBody) {
   return typeof body.usage?.input_tokens === "number" ? body.usage.input_tokens : undefined;
 }
 
-function mapStatus(status: number, operation: ProviderOperation) {
+function mapStatus(status: number) {
   if (status === 429) return new ProgrammeProviderError("PROVIDER_RATE_LIMIT");
-  if (operation === "transcription") return new ProgrammeProviderError("TRANSCRIPTION_FAILED");
   return new ProgrammeProviderError("PROVIDER_UNAVAILABLE");
 }
 
@@ -259,7 +248,7 @@ export class OpenAiProgrammeAiAdapter implements ProgrammeAiPort {
           background: false,
         }),
       });
-      if (!response.ok) throw mapStatus(response.status, "programme_ai");
+      if (!response.ok) throw mapStatus(response.status);
       try {
         parsedBody = await response.json() as OpenAiResponseBody;
       } catch {
@@ -366,93 +355,7 @@ export class OpenAiProgrammeAiAdapter implements ProgrammeAiPort {
   }
 }
 
-export class OpenAiTranscriptionAdapter implements TranscriptionPort {
-  private readonly fetchImpl: typeof fetch;
-  private readonly logger: ProgrammeProviderLogger;
-  private readonly now: () => number;
-  private readonly timeoutSignal: (milliseconds: number) => AbortSignal;
-
-  constructor(
-    private readonly config: ProgramAiOpenAiConfig,
-    dependencies: AdapterDependencies = {},
-  ) {
-    this.fetchImpl = dependencies.fetchImpl ?? fetch;
-    this.logger = dependencies.logger ?? defaultLogger;
-    this.now = dependencies.now ?? performance.now.bind(performance);
-    this.timeoutSignal = dependencies.timeoutSignal ?? defaultTimeoutSignal;
-  }
-
-  async transcribe(request: TranscriptionRequest) {
-    const startedAt = this.now();
-    try {
-      const form = new FormData();
-      form.set("model", this.config.transcriptionModel);
-      form.set("language", programmeTranscriptionLanguage(request.locale));
-      form.set("response_format", "json");
-      const audioBuffer = request.audio.buffer.slice(
-        request.audio.byteOffset,
-        request.audio.byteOffset + request.audio.byteLength,
-      ) as ArrayBuffer;
-      form.set("file", new File([audioBuffer], request.fileName, { type: request.mimeType }));
-      const response = await this.fetchImpl(`${OPENAI_API_ORIGIN}/v1/audio/transcriptions`, {
-        method: "POST",
-        headers: { authorization: `Bearer ${this.config.apiKey}` },
-        body: form,
-        signal: this.timeoutSignal(PROGRAM_AI_TRANSCRIPTION_TIMEOUT_MS),
-      });
-      if (!response.ok) throw mapStatus(response.status, "transcription");
-      let body: unknown;
-      try {
-        body = await response.json();
-      } catch {
-        throw new ProgrammeProviderError("TRANSCRIPTION_FAILED");
-      }
-      const transcript = body && typeof body === "object" && !Array.isArray(body)
-        ? (body as { text?: unknown }).text
-        : undefined;
-      if (typeof transcript !== "string" || !transcript.trim()) {
-        throw new ProgrammeProviderError("TRANSCRIPTION_FAILED");
-      }
-      this.logger({
-        event: "programme_provider_operation",
-        provider: "openai",
-        model: this.config.transcriptionModel,
-        operation: "transcription",
-        latencyMs: elapsed(startedAt, this.now),
-        success: true,
-        audioBytes: request.audio.byteLength,
-        recordingDurationMs: request.durationMs,
-      });
-      return { transcript: transcript.trim() };
-    } catch (error) {
-      const mapped = isTimeout(error)
-        ? new ProgrammeProviderError("PROVIDER_TIMEOUT")
-        : error instanceof ProgrammeProviderError
-          ? error
-          : new ProgrammeProviderError("TRANSCRIPTION_FAILED");
-      this.logger({
-        event: "programme_provider_operation",
-        provider: "openai",
-        model: this.config.transcriptionModel,
-        operation: "transcription",
-        latencyMs: elapsed(startedAt, this.now),
-        success: false,
-        errorCategory: providerErrorCode(mapped),
-        audioBytes: request.audio.byteLength,
-        recordingDurationMs: request.durationMs,
-      });
-      throw mapped;
-    }
-  }
-}
-
 export function programmeAiPortFromEnvironment(environment = process.env) {
   const config = resolveProgramAiOpenAiConfig(environment);
   return config ? new OpenAiProgrammeAiAdapter(config) : null;
-}
-
-export function transcriptionPortFromEnvironment(environment = process.env) {
-  const config = resolveProgramAiOpenAiConfig(environment);
-  if (!config) throw new ProgrammeProviderError("PROVIDER_UNAVAILABLE");
-  return new OpenAiTranscriptionAdapter(config);
 }

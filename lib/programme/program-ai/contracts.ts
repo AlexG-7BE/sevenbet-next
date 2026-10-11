@@ -13,7 +13,8 @@ export const programAiMissionOneActions = [
 ] as const;
 
 export type ProgramAiMissionOneAction = (typeof programAiMissionOneActions)[number];
-export type ProgramAiInputMode = "text" | "voice";
+// Mission 01 input arrives as text only: the picked ready answers (Founder decision, 11 Oct 2026).
+export type ProgramAiInputMode = "text";
 export type ProgramAiSupportDisposition = "CONTINUE" | "SUPPORT_FIRST";
 export type ProgramAiBroadContext =
   | "WORK"

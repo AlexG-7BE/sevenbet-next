@@ -33,7 +33,7 @@ Category A is anonymous/pre-account. Category B is authenticated Programme persi
 | A | `POST /api/program/program-ai/session` | Age header + exact signed journey proof; creates opaque session and anonymous acceptance atomically. |
 | A | `POST`, `DELETE /api/program/program-ai/authority` | Age header + opaque anonymous session; separate sensitive-input authority contract. |
 | A | `POST /api/program/program-ai/turn` | Age header + opaque anonymous session + active sensitive-input authority. |
-| A | `POST /api/program/program-ai/transcription` | Age header + bounded anonymous request/rate boundary. |
+| — | `POST /api/program/program-ai/transcription` | Removed on 11 October 2026 with voice input (Founder decision). The address is no longer classified: it answers 403 without the age header and 404 with it. |
 | A | `POST /api/program/program-ai/starting-point` | Age header + opaque anonymous session + Mission state checks. |
 | A | `POST /api/program/program-ai/support/continue` | Age header + opaque anonymous session. |
 | A | `POST /api/program/program-ai/claim` | Age header + opaque anonymous session + completed anonymous actions. |
