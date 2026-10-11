@@ -46,6 +46,33 @@ reader) and `tests/home-performance-browser.spec.ts`.
 tuned on modelled trackpad streams; the Founder confirms the feel by hand on
 the Preview.
 
+## One sign-in form and a shorter start — in review
+
+**Founder decisions, 11 October 2026:** make registration simpler. Decision
+record:
+[ONE-SIGN-IN-FORM-2026-10-11](07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md).
+
+- **One form in three places.** The Programme save step, the account-first
+  screen and `/login` offer "Continue with Google", then email and password
+  with one button, "Continue with email". That button creates the account or
+  signs in to the one that owns the email; the separate "create / sign in"
+  switch and "Use email instead" are gone.
+- **No activation.** The account works at once. The confirmation link still
+  goes out in the background.
+- **Log in creates accounts.** Email sign-up there carries the same signed
+  access proof as the Programme. Google there uses the Programme callback
+  pair and an account-first return, so the server rule that a `/login`
+  callback cannot create a social account is unchanged.
+- **A line replaces two ticks.** "By continuing, you confirm you are 18+ and
+  accept the Terms and Privacy Notice." stands on the Programme access screen
+  and on `/login`. The access screen keeps one check, the explicit consent to
+  process the story, under the heading "One check before you begin."
+- **Server record unchanged.** The same three affirmed facts and document
+  versions are sent; no table, column or enum changed.
+- **Approved, not built:** ready answers on the start screen (several can be
+  picked) with one "Agree and continue" consent button and no separate consent
+  screen.
+
 ## Footer notice block hidden — in review
 
 **Founder instruction, 11 October 2026:** hide the footer block (18+ and

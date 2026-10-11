@@ -1,6 +1,6 @@
 # Programme fast start
 
-**Status:** ACCEPTED
+**Status:** ACCEPTED. Superseded in part on 11 October 2026 by [ONE-SIGN-IN-FORM-2026-10-11](ONE-SIGN-IN-FORM-2026-10-11.md): the access screen has one check and a line, and registration is one email step.
 
 **Decision authority:** explicit Founder instruction, 25 September 2026 (mobile conversion audit, proposals P1–P3)
 

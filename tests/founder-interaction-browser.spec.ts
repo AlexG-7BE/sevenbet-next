@@ -157,8 +157,6 @@ test("Programme preserves the canonical voice-first recording waveform and reduc
   await page.route("**/api/program/program-ai/session", (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
   await page.route("**/api/program/program-ai/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
   await page.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
-  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await page.getByRole("button", { name: "Start voice input" }).click();

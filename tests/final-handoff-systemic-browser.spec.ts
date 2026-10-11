@@ -167,8 +167,6 @@ test("Mission 01 uses the final responsive presentation from access through regi
   await page.goto(`${baseUrl}/program`, { waitUntil: "networkidle" });
   await expect(page.locator("[data-programme-presentation='access']")).toBeVisible();
   await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
-  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
-  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await expect(page.locator("[data-programme-presentation='mission-01-intake']")).toBeVisible();

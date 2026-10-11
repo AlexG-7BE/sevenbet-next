@@ -334,8 +334,6 @@ test("390px touch journeys preserve commercial, learning and canonical Programme
 
   await installAnonymousProgramme(page);
   await page.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
-  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await expect(page.getByRole("button", { name: "Start voice input" })).toBeVisible();

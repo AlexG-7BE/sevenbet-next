@@ -165,8 +165,6 @@ test("Programme Mission 01 and Dashboard retain readable functional text", async
     const missionPage = await missionContext.newPage();
     await installAnonymousProgramme(missionPage);
     await missionPage.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
-    await missionPage.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
-    await missionPage.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
     await missionPage.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
     await missionPage.getByRole("button", { name: "Enter Mission 01" }).click();
     await expect(missionPage.locator('[data-programme-presentation="mission-01-intake"]')).toBeVisible();
