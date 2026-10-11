@@ -142,17 +142,20 @@ test("Programme start asks for consent with one button under its statement and r
   assert.equal(component.split(consent).length - 1, 1, "the consent statement appears once");
   assert.ok(start.indexOf(consent) >= 0 && start.indexOf("data-programme-agree") > start.indexOf(consent));
   assert.ok(start.indexOf(line) > start.indexOf("data-programme-agree"));
-  assert.match(start, /disabled=\{busy \|\| answers\.length === 0\}/);
+  assert.match(start, /disabled=\{answers\.length === 0\}/);
   assert.doesNotMatch(component, /I confirm I am 18 or over|I agree to the Terms and confirm I have read the Privacy Notice|checks? before you begin/);
   const registration = component.slice(component.indexOf("export function StartingPointReadyScreen"));
   assert.doesNotMatch(registration, /I explicitly consent|By continuing, you confirm/);
   // The copy pack carries the same statement, and its change has its own consent version.
   assert.ok(source("docs/legal/GB-PUBLIC-LEGAL-COPY-PACK.md").includes(consent));
   assert.match(contracts, /PROGRAM_AI_SENSITIVE_STATEMENT_VERSION = "article-9-authority:2026-10-11:v2"/);
-  // The press records the consent before any answer is sent.
-  const agree = experience.slice(experience.indexOf("async function agreeAndContinue"), experience.indexOf("async function submitTurn"));
-  assert.ok(agree.indexOf("/api/program/program-ai/authority") < agree.indexOf("await submitTurn("));
-  assert.match(agree, /statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION/);
+  // The press records the consent before any answer is sent; both go behind the next screen.
+  const prepare = experience.slice(experience.indexOf("async function prepareStartingPoint"), experience.indexOf("async function readyForRegistration"));
+  assert.ok(prepare.indexOf("/api/program/program-ai/authority") >= 0);
+  assert.ok(prepare.indexOf("/api/program/program-ai/authority") < prepare.indexOf("/api/program/program-ai/turn"));
+  assert.match(prepare, /statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION/);
+  // A failed consent record stops there: the answers are not sent.
+  assert.match(prepare, /\} catch \{\s+setError\(programmeText\(locale, programmeAccessFailureMessageKey\("session"\)\)\);\s+return null;\s+\}\s+try \{\s+const payload = await programAiRequest/);
   // The server still receives the three affirmed facts and both document versions.
   assert.match(accessClient, /adultConfirmed: true,\s+termsAccepted: true,\s+privacyAcknowledged: true,\s+termsVersion: PROGRAMME_TERMS_VERSION,\s+privacyVersion: PROGRAMME_PRIVACY_VERSION,/);
   // No repeated notices after the start screen.
