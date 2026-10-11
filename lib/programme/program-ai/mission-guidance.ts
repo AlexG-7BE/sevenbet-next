@@ -172,7 +172,7 @@ export function deterministicReview(
   const sections = operation === "REVIEW_M3"
     ? [...common, { id: "next_focus", title: t("Next focus"), body: t("Carry the goal, early signal and pause move into the next three Missions.") }]
     : operation === "REVIEW_M6"
-      ? [...common, { id: "in_place", title: t("What is in place"), body: t("Your boundary, decision checks and friction choices are ready to be tested in ordinary situations.") }, { id: "next_focus", title: t("Next focus"), body: t("Prepare support, research checks and one rehearsed fallback.") }]
+      ? [...common, { id: "in_place", title: t("What is in place"), body: t("Your boundary, decision checks and friction choices are ready to be tested in ordinary situations.") }, { id: "next_focus", title: t("Next focus"), body: t("Prepare support and one rehearsed fallback.") }]
       : [...common, { id: "in_place", title: t("What you now have in place"), body: t("The completed structural choices form one reviewable plan; no commercial choice is part of it.") }, { id: "review_next", title: t("What to review next"), body: t("At your chosen cadence, keep what is useful and revise what is hard to use.") }, { id: "one_screen", title: t("Your plan in one screen"), body: t("Notice the cue. Pause. Use the relevant boundary, checks, friction or support route. Leave when that is the better next action.") }];
   return {
     kind: "review",
