@@ -44,6 +44,11 @@ import {
   type ProgrammeStartingPointValue,
 } from "@/lib/programme/program-ai/contracts";
 import { programmeAccessFailureMessageKey } from "@/lib/programme/program-ai/access-errors";
+import {
+  PENDING_CLAIM_FRESH_FOR_EMAIL_MS,
+  PENDING_CLAIM_FRESH_FOR_GOOGLE_MS,
+  pendingClaimIsFresh,
+} from "@/lib/programme/program-ai/pending-claim-client";
 import { pickedReadyAnswers, readyAnswersSituation, type ProgrammeReadyAnswer } from "@/lib/programme/program-ai/ready-answers";
 import {
   anonymousProgrammeSubject,
@@ -85,6 +90,8 @@ type ProgramAiLocalState = {
   answers?: ProgrammeReadyAnswer[];
   /** The Starting Point the server built from the answers; registration needs it. */
   candidate: ProgrammeStartingPointValue | null;
+  /** When the pending claim was made behind the screen; a press reuses it while it is fresh. */
+  claimReadyAt?: number;
   xpPreview: number;
   /** A Google sign-up that started on Log in returns here to finish without a Starting Point. */
   accountFirst?: boolean;
@@ -123,7 +130,7 @@ function restoredAnonymousState(value: ProgramAiLocalState | null | undefined): 
     // Registration shows the picked answers' lines, or finishes a Google return that began on Log in.
     ? value.candidate || answers.length || accountFirst ? "registration" : "access"
     : value.phase === "home" ? "access" : value.phase;
-  return { phase, situation: value.situation || "", candidate: value.candidate || null, xpPreview: Number.isFinite(value.xpPreview) ? value.xpPreview : 0, ...(answers.length ? { answers } : {}), ...(accountFirst ? { accountFirst: true } : {}) };
+  return { phase, situation: value.situation || "", candidate: value.candidate || null, xpPreview: Number.isFinite(value.xpPreview) ? value.xpPreview : 0, ...(answers.length ? { answers } : {}), ...(accountFirst ? { accountFirst: true } : {}), ...(value.candidate && typeof value.claimReadyAt === "number" ? { claimReadyAt: value.claimReadyAt } : {}) };
 }
 
 async function programAiRequest<T>(
@@ -468,6 +475,7 @@ export function ProgramAiExperience({
         throw new Error("STARTING_POINT_NOT_PREPARED");
       }
       const ready: ProgramAiLocalState = { ...state, candidate: payload.result.candidate, phase: payload.result.disposition === "SUPPORT_FIRST" ? "support" : "registration", xpPreview: payload.progress?.xpPreview ?? 0 };
+      delete ready.claimReadyAt;
       persist(ready, journey);
       if (ready.phase === "registration") {
         productAnalyticsClient.personalisedValue("starting_point");
@@ -482,6 +490,18 @@ export function ProgramAiExperience({
           summedTechnicalLatencyMs: accumulatedAiLatencyMs.current,
           clarificationCount: 0,
         }));
+        // Founder decision, 11 Oct 2026: the claim is made here, behind the screen, so a press on
+        // Google or email does not wait for it. Nothing personal is stored by it: the Starting
+        // Point is still saved once, when an account redeems the claim. If it cannot be made now,
+        // the press makes it and says so.
+        try {
+          await prepareClaimForRegistration(journey, ready);
+          const claimed: ProgramAiLocalState = { ...ready, claimReadyAt: Date.now() };
+          persist(claimed, journey);
+          return claimed;
+        } catch {
+          return ready;
+        }
       }
       return ready;
     } catch {
@@ -526,16 +546,34 @@ export function ProgramAiExperience({
     await programAiRequest("/api/program/program-ai/claim", journey, { method: "POST" });
   }
 
+  // A claim made behind the screen is reused while it is fresh; otherwise it is made now.
+  async function ensureClaim(journey: ProgrammeLocalSubject, state: ProgramAiLocalState, freshForMs: number) {
+    if (!pendingClaimIsFresh(state.claimReadyAt, freshForMs)) await prepareClaimForRegistration(journey, state);
+  }
+
+  // A claim made earlier can lapse or be reset before it is used: if redeeming it fails, it is
+  // made again and redeemed once more.
+  async function redeemClaim(userId: string, journey: ProgrammeLocalSubject, state: ProgramAiLocalState) {
+    try {
+      await redeem(userId, journey, state);
+    } catch (cause) {
+      if (typeof state.claimReadyAt !== "number") throw cause;
+      await prepareClaimForRegistration(journey, state);
+      await redeem(userId, journey, state);
+    }
+  }
+
   // An account's answers are saved to its plan without another press; the plan opens when the
-  // save is done. The "Save to my account" button stays as the way to try again.
-  async function saveForAccount(userId: string, journey: ProgrammeLocalSubject, pending: Promise<ProgramAiLocalState | null>) {
+  // save is done. The "Save to my account" button stays as the way to try again, with a new claim.
+  async function saveForAccount(userId: string, journey: ProgrammeLocalSubject, pending: Promise<ProgramAiLocalState | null>, newClaim = false) {
     setBusy(true);
     try {
       const ready = await pending;
       // Support first shows its own screen and saves nothing here.
       if (ready?.phase !== "registration") return;
-      await prepareClaimForRegistration(journey, ready);
-      await redeem(userId, journey, ready);
+      if (newClaim) await prepareClaimForRegistration(journey, ready);
+      else await ensureClaim(journey, ready, PENDING_CLAIM_FRESH_FOR_EMAIL_MS);
+      await redeemClaim(userId, journey, ready);
     }
     catch { setError(programmeText(locale, "Your progress could not be saved yet")); }
     finally { setBusy(false); }
@@ -546,7 +584,7 @@ export function ProgramAiExperience({
     setError("");
     const userId = session.user.id;
     const journey = subject;
-    await saveForAccount(userId, journey, readyForRegistration());
+    await saveForAccount(userId, journey, readyForRegistration(), true);
   }
 
   async function handleEmail(input: { email: string; password: string; marketingAllowed: boolean }) {
@@ -557,7 +595,7 @@ export function ProgramAiExperience({
     try {
       const ready = googleLinkRecovery ? local : await readyForRegistration();
       if (!ready) return;
-      if (!googleLinkRecovery && !ready.accountFirst) await prepareClaimForRegistration(subject, ready);
+      if (!googleLinkRecovery && !ready.accountFirst) await ensureClaim(subject, ready, PENDING_CLAIM_FRESH_FOR_EMAIL_MS);
       const entry = await continueWithEmail({ email: input.email, password: input.password, expect: googleLinkRecovery ? "existing-only" : "new" }, {
         // The confirmation link in the sign-up email lands back on this Programme page.
         signUp: (credentials) => authClient.signUp.email({ ...credentials, name: credentials.email.split("@")[0] || "B4GAMBLE member", callbackURL: programmePath, fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } }),
@@ -579,7 +617,7 @@ export function ProgramAiExperience({
       const marketingPreferenceSaved = entry.kind !== "created" || !input.marketingAllowed
         || await saveProgrammeMarketingPreference(locale);
       if (ready.accountFirst && !ready.candidate) await completeAccountFirst(entry.userId, subject);
-      else await redeem(entry.userId, subject, ready);
+      else await redeemClaim(entry.userId, subject, ready);
       if (!marketingPreferenceSaved) setError(programmeText(locale, MARKETING_CHOICE_NOT_SAVED));
     } catch { setError(programmeText(locale, "Account access failed")); }
     finally { emailRedeemStarted.current = false; setBusy(false); }
@@ -592,7 +630,8 @@ export function ProgramAiExperience({
       const callbacks = programmeGoogleCallbacks(locale);
       const ready = await readyForRegistration();
       if (!ready) { setBusy(false); return; }
-      if (!ready.accountFirst) await prepareClaimForRegistration(subject, ready);
+      // Google leaves the page before the claim is redeemed, so it must have most of its time left.
+      if (!ready.accountFirst) await ensureClaim(subject, ready, PENDING_CLAIM_FRESH_FOR_GOOGLE_MS);
       writeProgrammeOAuthClaimMarker(window.sessionStorage, subject);
       rememberGoogleMarketingChoice(window.sessionStorage, subject.id, input.marketingAllowed);
       const result = await authClient.signIn.social({

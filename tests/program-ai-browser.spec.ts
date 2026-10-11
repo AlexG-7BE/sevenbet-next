@@ -452,6 +452,7 @@ test("picked ready answers open the next screen at once under one consent press"
     await route.continue();
   });
   const turnAnswered = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/program/program-ai/turn");
+  const claimMade = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/program/program-ai/claim");
   await agree.click();
 
   await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible({ timeout: 1_500 });
@@ -466,9 +467,11 @@ test("picked ready answers open the next screen at once under one consent press"
   await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue with email" })).toBeVisible();
-  // Behind the screen: the consent is recorded once, then the answers are sent.
+  // Behind the screen: the consent is recorded once, then the answers are sent, then the claim
+  // is made, so a press on Google or email does not wait for it.
   expect((await turnAnswered).status()).toBe(200);
   expect(consentPosts).toBe(1);
+  expect((await claimMade).status()).toBe(201);
   const anonymousSession = await anonymousSessionFromContext(page.context());
   const authority = await prisma.programmeSensitiveInputAuthority.findFirstOrThrow({
     where: { anonymousSessionId: anonymousSession.id, withdrawnAt: null },
@@ -567,6 +570,7 @@ test("ready answers bind exact authority and are idempotent through real email a
     if (value) capturedClaimCookie = { name: "sevenbet_programme_claim", value, domain: "127.0.0.1", path: "/", expires: -1, httpOnly: true, secure: false, sameSite: "Lax" };
   });
   const turnAnswered = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/program/program-ai/turn");
+  const claimMade = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/program/program-ai/claim");
   await page.getByRole("button", { name: "Agree and continue" }).click();
 
   await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
@@ -576,8 +580,13 @@ test("ready answers bind exact authority and are idempotent through real email a
   const understanding = page.locator("[data-programme-understanding]");
   await expect(understanding.locator("li")).toHaveCount(2);
   await expect(understanding.getByText(bestEffortStartingPoint.desiredChange, { exact: true })).toHaveCount(0);
-  // The session, the consent record and the answers went behind the screen.
+  // The session, the consent record, the answers and the claim went behind the screen, before
+  // any registration press.
   expect((await turnAnswered).status()).toBe(200);
+  expect((await claimMade).status()).toBe(201);
+  // The listener above reads the response headers asynchronously.
+  await expect.poll(() => capturedClaimCookie, "the claim is made behind the screen").toBeTruthy();
+  const claimBeforePress = (capturedClaimCookie as unknown as { value: string }).value;
   await expect(page.getByRole("heading", { name: "What we'll work on first" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Where we'll start" })).toHaveCount(0);
   await expect(page.getByText(bestEffortStartingPoint.continuationCue, { exact: true })).toHaveCount(0);
@@ -603,7 +612,8 @@ test("ready answers bind exact authority and are idempotent through real email a
     data: { locale: "en-GB", inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(duplicateTurn.status()).toBe(200);
-  expect((await duplicateTurn.json()).progress.xpPreview).toBe(20);
+  // Both Mission 01 actions are complete once the claim is made; a duplicate submission adds nothing.
+  expect((await duplicateTurn.json()).progress.xpPreview).toBe(40);
 
   await page.setViewportSize({ width: 320, height: 760 });
   await noHorizontalOverflow(page);
@@ -615,7 +625,9 @@ test("ready answers bind exact authority and are idempotent through real email a
   await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Programme progress" })).toContainText("40 XP");
   await noHorizontalOverflow(page);
-  expect(capturedClaimCookie, "claim was created only when the registration action was submitted").toBeTruthy();
+  // The duplicate submission above reset the server's state, so the first claim could not be
+  // redeemed: the press made a new one and redeemed that.
+  expect((capturedClaimCookie as unknown as { value: string }).value, "a reset claim is made again").not.toBe(claimBeforePress);
 
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
   const [durableStartingPoints, programmeAiXp, boundAuthority, claim, accessAcceptance] = await Promise.all([

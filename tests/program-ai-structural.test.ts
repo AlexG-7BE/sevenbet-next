@@ -153,9 +153,28 @@ test("the screen after the answers opens at once and registration waits for the 
   for (const handler of ["async function handleEmail", "async function handleGoogle"]) {
     const body = frontend.slice(frontend.indexOf(handler), frontend.indexOf(handler) + 900);
     assert.match(body, /await readyForRegistration\(\)/, handler);
-    assert.ok(body.indexOf("readyForRegistration()") < body.indexOf("prepareClaimForRegistration("), handler);
+    assert.ok(body.indexOf("readyForRegistration()") < body.indexOf("ensureClaim("), handler);
   }
-  assert.match(frontend, /if \(ready\?\.phase !== "registration"\) return;\s+await prepareClaimForRegistration\(journey, ready\);\s+await redeem\(userId, journey, ready\);/);
+  assert.match(frontend, /if \(ready\?\.phase !== "registration"\) return;\s+if \(newClaim\) await prepareClaimForRegistration\(journey, ready\);\s+else await ensureClaim\(journey, ready, PENDING_CLAIM_FRESH_FOR_EMAIL_MS\);\s+await redeemClaim\(userId, journey, ready\);/);
+});
+
+test("the pending claim is made behind the screen, reused only while fresh, and made again if it lapsed", () => {
+  // Founder decision, 11 Oct 2026: a press on Google or email does not wait for the claim.
+  const prepare = frontend.slice(frontend.indexOf("async function prepareStartingPoint"), frontend.indexOf("async function readyForRegistration"));
+  // After the answers, and only when the server said "continue"; a failure is left to the press.
+  assert.ok(prepare.indexOf("/api/program/program-ai/turn") < prepare.indexOf("await prepareClaimForRegistration(journey, ready);"));
+  assert.match(prepare, /if \(ready\.phase === "registration"\) \{[\s\S]*await prepareClaimForRegistration\(journey, ready\);\s+const claimed: ProgramAiLocalState = \{ \.\.\.ready, claimReadyAt: Date\.now\(\) \};[\s\S]*\} catch \{\s+return ready;\s+\}/);
+  // New answers reset the server's state, so an older claim is never carried over.
+  assert.match(prepare, /delete ready\.claimReadyAt;/);
+  // A press reuses the claim only while it is fresh; Google gets the shorter window.
+  assert.match(frontend, /if \(!pendingClaimIsFresh\(state\.claimReadyAt, freshForMs\)\) await prepareClaimForRegistration\(journey, state\);/);
+  assert.match(frontend, /await ensureClaim\(subject, ready, PENDING_CLAIM_FRESH_FOR_GOOGLE_MS\);/);
+  assert.match(frontend, /await ensureClaim\(subject, ready, PENDING_CLAIM_FRESH_FOR_EMAIL_MS\);/);
+  // A lapsed or reset claim is made again and redeemed once more; a manual retry always makes a new one.
+  assert.match(frontend, /\} catch \(cause\) \{\s+if \(typeof state\.claimReadyAt !== "number"\) throw cause;\s+await prepareClaimForRegistration\(journey, state\);\s+await redeem\(userId, journey, state\);/);
+  assert.match(frontend, /await saveForAccount\(userId, journey, readyForRegistration\(\), true\);/);
+  // The claim stores nothing personal: the server keeps the confirmed content in the browser session.
+  assert.match(service, /confirmedContentStorage: "browser_session"/);
 });
 
 test("an account that has not answered opens on the answers, and may open its plan instead", () => {

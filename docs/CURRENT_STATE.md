@@ -101,6 +101,11 @@ record:
   the AI provider. The session, the consent record and the answers go to the
   server behind it, in that order; every registration action waits for the
   Starting Point. Email, password and the button are all visible at once.
+- **The pending claim is made behind that screen too**, so a press on Google
+  or email does not wait for it. Nothing personal is stored earlier: the
+  Starting Point is still saved once, when an account redeems the claim. A
+  claim is reused only while fresh (20 minutes for email, 5 for Google) and
+  made again if it lapsed.
 - **"Something else" opens one short optional note** (up to 280 characters),
   sent with the answers under the same consent. There is no voice.
 - **An account that has not answered opens on the answers**, with a quiet

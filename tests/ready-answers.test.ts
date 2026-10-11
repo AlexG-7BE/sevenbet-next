@@ -11,7 +11,13 @@ import {
   pickedReadyAnswers,
   readyAnswersSituation,
 } from "../lib/programme/program-ai/ready-answers";
+import {
+  PENDING_CLAIM_FRESH_FOR_EMAIL_MS,
+  PENDING_CLAIM_FRESH_FOR_GOOGLE_MS,
+  pendingClaimIsFresh,
+} from "../lib/programme/program-ai/pending-claim-client";
 import { parseProgrammeAiTurn } from "../lib/programme/program-ai/validation";
+import { pendingClaimLifetimeMs } from "../lib/programme/security";
 
 // Founder decisions, 11 Oct 2026: Mission 01 starts with ready answers a person picks, several
 // at once, with no voice; "Something else" may carry one short note.
@@ -90,4 +96,22 @@ test("every answer has a first-focus line of ours, translated, so the next scree
 test("restored answers keep list order and drop anything that is not a ready answer", () => {
   assert.deepEqual(pickedReadyAnswers(["Something else", "I chase my losses", "not an answer", 7, null]), ["I chase my losses", "Something else"]);
   assert.deepEqual(pickedReadyAnswers([]), []);
+});
+
+test("a claim made behind the screen is reused only while enough of the server's time is left", () => {
+  // Founder decision, 11 Oct 2026. The server keeps a pending claim for 30 minutes.
+  const minute = 60 * 1000;
+  assert.equal(pendingClaimLifetimeMs, 30 * minute);
+  // Email redeems at once; Google leaves the page and must have at least 25 minutes to come back.
+  assert.ok(PENDING_CLAIM_FRESH_FOR_EMAIL_MS < pendingClaimLifetimeMs);
+  assert.ok(pendingClaimLifetimeMs - PENDING_CLAIM_FRESH_FOR_GOOGLE_MS >= 25 * minute);
+  const now = 1_800_000_000_000;
+  assert.equal(pendingClaimIsFresh(now - 4 * minute, PENDING_CLAIM_FRESH_FOR_GOOGLE_MS, now), true);
+  assert.equal(pendingClaimIsFresh(now - 5 * minute, PENDING_CLAIM_FRESH_FOR_GOOGLE_MS, now), false);
+  assert.equal(pendingClaimIsFresh(now - 19 * minute, PENDING_CLAIM_FRESH_FOR_EMAIL_MS, now), true);
+  assert.equal(pendingClaimIsFresh(now - 20 * minute, PENDING_CLAIM_FRESH_FOR_EMAIL_MS, now), false);
+  // No claim, a damaged value or a time in the future is never fresh: the press makes the claim.
+  for (const value of [undefined, null, "1800000000000", Number.NaN, now + minute]) {
+    assert.equal(pendingClaimIsFresh(value, PENDING_CLAIM_FRESH_FOR_EMAIL_MS, now), false, String(value));
+  }
 });

@@ -1,6 +1,6 @@
 # One sign-in form, and a shorter start
 
-**Status:** ACCEPTED. Parts 1, 2, 3 and 4 are implemented.
+**Status:** ACCEPTED. Parts 1 to 5 are implemented.
 
 **Decision authority:** explicit Founder instructions, 11 October 2026.
 
@@ -15,6 +15,7 @@
 - On the password: "куда ты убрал password который был ниже поля для email? он должен ввести email а затем пароль, и нажать на кнопку continue with email".
 - On the unused voice code: "а мы можем не удалять эту часть кода, а просто вынести её за скобки из проекта пока, что бы потом легко вернуть в случае необходимости? но так, что бы она не мешала", then the choice "Метка в истории" (out of the working project, kept under a named tag).
 - After using the live start: "во первых, почему так долго теперь открывается? во вторых когда человек выбирает something else — наверное надо в этом поле дать ему что-то вписать? в третьих… когда он нажимает на log in и пытается зарегистрироваться там… мы должны просто его зарегистрировать без старта, или как?", then the choices "Сразу к готовым ответам" and "Да, короткое поле".
+- On the wait after a press on Google or email: the choice "Записывать заранее".
 - On older rules: "я тот кто эти правила устанавливает. если есть разногласия просто пришли мне их для решения".
 
 **Supersedes in part:** [PROGRAMME-FAST-START-2026-09-25](PROGRAMME-FAST-START-2026-09-25.md) "three required checks on the access screen" (now a line and one consent button) and its quiet account-first route (removed from the Programme). [EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27](EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27.md) "one unticked checkbox" (now ticked by default, short, last in the form). RFC-022, RFC-023 and RFC-056 for Mission 01 input: typed and voice input are no longer offered; the provider, retention and kill-switch boundaries of those RFCs stand for the text request that remains. RFC-029 and the Google readiness record "standalone login is returning-user-only" (Log in now creates accounts). Everything else in those records stands.
@@ -108,7 +109,20 @@ Changed after the Founder used the live start. This part amends three statements
 - **"Something else" opens one short optional note** (up to 280 characters, no microphone), shown only while that answer is picked. It is part of the answers: it is sent with them as "Something else: …", under the same consent statement, and nowhere else. The Privacy Notice already names "what you pick or type".
 - **A new account opens on the answers, not on an empty plan.** After sign-up on Log in, and for any account that has not answered yet, the Programme page shows the answers, without the 18+ line (the account already affirmed it) and with a quiet link "Open my plan". The picked answers are saved to the plan without another press; the plan opens when the save is done, and "Save to my account" stays as the way to try again. An account that has answered opens on its plan, as before. "Start Mission 01" in the plan opens the answers at once.
 
-Not changed: what the server stores and when. The Starting Point is stored for an anonymous person only when a registration action is pressed, as RFC-022 requires; that is why a press on Google or email still takes a moment before the next page.
+Not changed: what the server stores. The Starting Point is saved once, when an account redeems the claim (RFC-022).
+
+### Part 5 — the claim is made behind the screen (implemented)
+
+**Why.** A press on "Continue with Google" or "Continue with email" first told the server that the Starting Point was ready and asked it for the pending claim, and only then started Google or created the account. In the production request checked (11 October, 14:25 UTC) those two requests took about three seconds between the press and the Google request.
+
+- **Both requests now follow the answers, behind the screen.** When the server has answered "continue", the client marks the Starting Point ready and asks for the claim at once. A press then starts Google or creates the account without those two requests.
+- **Nothing personal is stored earlier.** The server keeps the confirmed Starting Point in the browser session (`confirmedContentStorage: "browser_session"`); these two requests change the anonymous session's state and create a claim token that lasts 30 minutes. The Starting Point itself is still saved once, when an account redeems the claim. A person who never registers leaves a ready mark and an expired token, which the existing runtime purge removes with the session.
+- **A claim made earlier is used only while fresh.** The server keeps it for 30 minutes. An email press reuses a claim made up to 20 minutes ago; a Google press, which leaves the page first, reuses one made up to 5 minutes ago, so at least 25 minutes remain to come back. Otherwise the press makes the claim again, as it always did.
+- **A lapsed or reset claim is made again.** If redeeming an earlier claim fails, the client makes a new one and redeems once more. "Save to my account" always makes a new one.
+- **Not after support first.** The server refuses to mark a Starting Point ready while its support-first state stands; the claim is then made by the press, after "Continue when I'm ready".
+- **Both Mission 01 actions count as complete once the claim is made**, so the anonymous XP preview on the server reads 40 from that moment instead of from the press. Rewards are still created only when the claim is redeemed.
+
+This was first put to the Founder as a change to an RFC-022 rule. On reading the server it is not one: RFC-022 fixes when the Starting Point is saved (once, at the claim's redemption), not when the claim is created. The earlier timing was the client's own, pinned by one browser test.
 
 ## Not chosen
 
@@ -122,6 +136,7 @@ Not changed: what the server stores and when. The Starting Point is stored for a
 
 - `tests/account-entry.test.ts` (in `auth-comms:test`): one request for a new email on the Programme and for a returning person on Log in, sign-in through the same button, the wrong-password answer in both orders, no fall-through after a refused creation, the full affirmation body and proof reuse, the account-first Google hand-over, and the Log in wiring.
 - `tests/ready-answers.test.ts` (in `programme:test`): six answers, the text Mission 01 receives, and every single answer in every Programme language passing the server's Mission 01 check.
+- Part 5: `tests/ready-answers.test.ts` (the freshness windows against the server's 30 minutes), `tests/program-ai-structural.test.ts` (the claim follows the answers and only "continue"; reused only while fresh; made again if redeeming fails) and `tests/program-ai-browser.spec.ts` (the claim exists before any press; a claim reset on the server is made again and the account is still created with its Starting Point).
 - Part 4: `tests/ready-answers.test.ts` (the note is tidied, bounded and sent only with "Something else"; every answer has a translated line of ours), `tests/program-ai-structural.test.ts` (the press awaits nothing; the consent is recorded before the answers are sent; every registration action waits for the Starting Point and support first suppresses it; an account without answers opens on them), and `tests/program-ai-browser.spec.ts` (with the answers held back for three seconds the next screen is there within 1.5 seconds; sign-up on Log in, the answers, the note and the plan with real email auth).
 - `tests/gb-legal-p0-closure.test.ts` and `tests/program-ai-structural.test.ts`: the consent statement once and directly above its button, no tick, the consent recorded before any answer is sent, the v2 consent version, the unchanged affirmation sent to the server, and no voice or free-text input in the client.
 - Part 3: `tests/program-ai-structural.test.ts` (no voice route, adapter, bucket, permission or setting remains; the turn route stays), `tests/programme-internationalisation.test.ts` (one deny-all Permissions-Policy rule; `inputMode: "voice"` refused), `tests/program-ai-openai-adapters.test.ts` (leftover voice variables in hosting do not break the provider configuration), `tests/legal-programme-privacy.test.ts` (no voice wording in the Privacy Notice or the Terms), and in the browser `tests/program-ai-browser.spec.ts` (both retired routes answer 404), `tests/programme-document-policy-boundary-browser.spec.ts` and `tests/programme-internationalisation-browser.spec.ts` (every Programme route denies the microphone).
