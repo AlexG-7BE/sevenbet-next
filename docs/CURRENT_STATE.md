@@ -33,11 +33,20 @@ while checking the Programme boundary.
 - **What a visitor sees.** A page looks the same after a transition inside the
   site as when it is opened directly. On desktop Home that includes its paged
   scroll.
+- **A tapped link keeps no hover colour.** The captured pages colour every
+  hovered link. A touch browser keeps `:hover` on the element that was tapped
+  and the header stays mounted across a client transition, so with the
+  stylesheet applied a logo tapped on a phone arrived on Home yellow and
+  underlined. The captured `a:hover` rule now sits behind
+  `@media (hover: hover)` (`transformCommonHandoffCss`). Nothing changes for a
+  mouse; on a touch screen a tapped link on these pages no longer shows the
+  hover colour.
 - **Tests.** `tests/handoff-style-client-arrival-browser.spec.ts` (in
   `ci:browser`) compares Home after Learn → logo with Home as a document load
   on a phone and a desktop viewport, checks the Learn hub the same way and that
-  Home's page-level rules leave with Home. The Navigation Stage 2 browser spec
-  no longer tolerates the refused-stylesheet console error.
+  Home's page-level rules leave with Home, and taps the logo on a touch device.
+  The Navigation Stage 2 browser spec no longer tolerates the
+  refused-stylesheet console error.
 
 ## The Programme opens without a document load — in review
 
