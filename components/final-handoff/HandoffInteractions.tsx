@@ -11,6 +11,7 @@ function normalized(value: string | null | undefined) {
   return (value || "").trim().toLowerCase();
 }
 
+const HOME_CHAPTER_WAITING_OPACITY = 0.001;
 // A landing that has not arrived after this long was taken over by the scrollbar or the keyboard.
 const HOME_TRAVEL_EXPIRES_MS = 1200;
 
@@ -75,6 +76,7 @@ function setupHomeInteractions(root: HTMLElement) {
   const panels = Array.from(root.querySelectorAll<HTMLElement>("[data-stackpanel]"));
   const stack = panels[0]?.parentElement ?? null;
   const dots = Array.from(root.querySelectorAll<HTMLElement>("[data-stackdot]"));
+  for (const dot of dots) dot.style.willChange = "transform";
   let publicFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
   let animationFrame = 0;
   let observer: IntersectionObserver | null = null;
@@ -85,6 +87,7 @@ function setupHomeInteractions(root: HTMLElement) {
   let geometryDirty = Boolean(stack) && !reducedMotion;
   let stackDirty = Boolean(stack) && !reducedMotion;
   let panelLayouts: Array<{ element: HTMLElement; entranceDistance: number; open: number; pinned: boolean }> = [];
+  let dotTracks: number[] = [];
   let canonicalDestinations: number[] = [];
   let travel: HomeTravel | null = null;
   let queuedDirection = 0;
@@ -229,6 +232,7 @@ function setupHomeInteractions(root: HTMLElement) {
     }
 
     panelLayouts = nextLayouts;
+    dotTracks = dots.map((dot) => dot.parentElement?.clientWidth ?? 0);
     measureCanonicalDestinations();
   };
 
@@ -331,15 +335,18 @@ function setupHomeInteractions(root: HTMLElement) {
           const progress = Math.min(1, Math.max(0, 1 - raw / distance));
           const eased = progress * progress * (3 - 2 * progress);
           const opening = raw > 0 && raw < distance;
-          child.style.setProperty("opacity", opening ? Math.min(1, progress * 10).toFixed(2) : raw > 0 ? "0" : "1", "important");
+          // Waiting, it is as good as invisible but still drawn: at exactly 0 the browser drops
+          // its photo and rasterises all of it again in the frames where it starts to appear.
+          child.style.setProperty("opacity", opening ? Math.max(HOME_CHAPTER_WAITING_OPACITY, Math.min(1, progress * 10)).toFixed(3) : raw > 0 ? String(HOME_CHAPTER_WAITING_OPACITY) : "1", "important");
           if (pinned && scrollDrivenChapter) {
             // The browser scales it with the scroll, off the main thread (see transformHomeHandoffCss).
             child.style.removeProperty("transform");
           } else {
             child.style.setProperty("transform", opening ? `${pinned ? "" : `translateY(${-raw}px) `}scale(${(0.24 + 0.76 * eased).toFixed(4)})` : "none", "important");
           }
-          if (opening) child.style.borderRadius = `${Math.round(28 * Math.min(1, (1 - eased) * 10))}px`;
-          else if (raw <= 0) child.style.borderRadius = "0";
+          // The corners square off once, when it is fully open. Easing them over the last
+          // stretch repainted the whole photo on every step, in the middle of the motion.
+          child.style.borderRadius = raw > 0 ? "28px" : "0";
           const contentVisible = raw <= 4;
           for (const element of [child.querySelector<HTMLElement>("[data-mob='chapter']"), child.querySelector<HTMLElement>("[data-stackind]")]) {
             if (!element) continue;
@@ -357,7 +364,12 @@ function setupHomeInteractions(root: HTMLElement) {
 
     if (dots.length && opens.length >= 3) {
       const progress = Math.min(1, Math.max(0, (scrollY - opens[0]) / Math.max(1, opens[2] - opens[0])));
-      dots.forEach((dot) => { dot.style.left = `calc(${(progress * 100).toFixed(2)}% - 4.5px)`; });
+      // Each dot rides its own layer on a transform. Moved by `left`, it repainted its
+      // chapter's whole photo on every frame the page scrolled between chapters.
+      dots.forEach((dot, index) => {
+        const shift = `translateX(${(progress * dotTracks[index]).toFixed(1)}px)`;
+        if (dot.style.transform !== shift) dot.style.transform = shift;
+      });
     }
   };
 

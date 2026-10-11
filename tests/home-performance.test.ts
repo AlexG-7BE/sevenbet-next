@@ -33,6 +33,14 @@ test("Home reads the wheel gesture, lands with the browser's own smooth scroll a
   // and never has to chase the browser's scroll with a translate.
   assert.match(homeInteractions, /open: anchorTop \?\? stackTop \+ flow \+ marginTop,\s*pinned: marginTop < 0/);
   assert.match(homeInteractions, /\$\{pinned \? "" : `translateY\(\$\{-raw\}px\) `\}scale\(/);
+  // Founder, 11 Oct 2026: the chapter screens still stuttered. Nothing may repaint a chapter's
+  // full-screen photo while the page moves: its dot rides a transform on its own layer, its
+  // corners change once, and a waiting chapter stays drawn so it is not rasterised as it appears.
+  assert.match(homeInteractions, /for \(const dot of dots\) dot\.style\.willChange = "transform"/);
+  assert.match(homeInteractions, /dot\.style\.transform = shift/);
+  assert.doesNotMatch(homeInteractions, /dot\.style\.left/);
+  assert.match(homeInteractions, /child\.style\.borderRadius = raw > 0 \? "28px" : "0"/);
+  assert.match(interactions, /const HOME_CHAPTER_WAITING_OPACITY = 0\.001;/);
   // Where the browser can tie an animation to the scroll, it scales the chapter too, with the
   // script's own curve; the script then leaves the transform alone.
   assert.match(homeInteractions, /if \(pinned && scrollDrivenChapter\) \{[^}]*removeProperty\("transform"\)/);

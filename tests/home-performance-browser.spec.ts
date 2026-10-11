@@ -333,6 +333,28 @@ test("the first chapter stays in the middle of the screen while it opens", async
     expect(Math.abs(state.scale - (0.24 + 0.76 * share * share * (3 - 2 * share)))).toBeLessThan(0.002);
   }
   expect(targets.map(({ position }) => position).slice(0, 8)).toEqual([0, 900, 1800, 2700, 3600, 4500, 5400, 6300]);
+
+  // Waiting behind "A plan you can see" it is drawn but as good as invisible, and takes no clicks.
+  await page.evaluate((top) => window.scrollTo(0, top), plan);
+  await page.waitForTimeout(250);
+  expect(await firstMission.evaluate((panel) => ({ opacity: Number(getComputedStyle(panel).opacity), pointerEvents: getComputedStyle(panel).pointerEvents })))
+    .toEqual({ opacity: 0.001, pointerEvents: "none" });
+
+  // Between chapters the progress dot travels its track on a transform; its `left` never changes.
+  const dot = page.locator('[data-screen-label="Missions 04-07"] [data-stackdot]');
+  const dotAt = async (top: number) => {
+    await page.evaluate((y) => window.scrollTo(0, y), top);
+    await page.waitForTimeout(250);
+    return dot.evaluate((element) => ({
+      left: (element as HTMLElement).style.left,
+      offset: Math.round(element.getBoundingClientRect().left - element.parentElement!.getBoundingClientRect().left),
+    }));
+  };
+  const first = targets.find((target) => target.label === "Missions 01-03")!.position;
+  const third = targets.find((target) => target.label === "Missions 08-10")!.position;
+  expect(await dotAt(first)).toEqual({ left: "calc(0% - 4.5px)", offset: -4 });
+  expect(await dotAt((first + third) / 2)).toEqual({ left: "calc(0% - 4.5px)", offset: 71 });
+  expect(await dotAt(third)).toEqual({ left: "calc(0% - 4.5px)", offset: 146 });
 });
 
 test("the language menu scrolls under the wheel and the page behind it stays", async ({ page, browserName }) => {
