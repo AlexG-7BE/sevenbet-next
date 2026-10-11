@@ -37,7 +37,8 @@ import {
 } from "../lib/programme/program-ai/mission-registry";
 import { programmePath, type ProgrammeLocale } from "../lib/programme/presentation";
 
-const baseURL = "http://127.0.0.1:4173";
+// The other browser specs read the port the same way, so two sessions can run side by side.
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const authSecret = "program-ai-ci-auth-secret-not-used-by-production";
 const prisma = new PrismaClient();
 
@@ -421,10 +422,10 @@ test("the retired voice routes are gone and an unlisted Programme mutation still
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(session.token) } });
 });
 
-test("picked ready answers go straight to the Starting Point under one consent press", async ({ page }) => {
-  // Founder decisions, 11 Oct 2026: ready answers only, several can be picked; one button is the
+test("picked ready answers open the next screen at once under one consent press", async ({ page }) => {
+  // Founder decisions, 11 Oct 2026: ready answers, several can be picked; one button is the
   // explicit consent and, under the line, the 18+, Terms and Privacy affirmation. No tick, no
-  // second screen, no microphone and no text field.
+  // second screen and no microphone. The next screen does not wait for the server.
   let consentPosts = 0;
   page.on("request", (request) => {
     if (request.method() === "POST" && new URL(request.url()).pathname === "/api/program/program-ai/authority") consentPosts += 1;
@@ -445,18 +446,32 @@ test("picked ready answers go straight to the Starting Point under one consent p
   await page.getByRole("checkbox", { name: "I spend more than I plan" }).check();
   await expect(agree).toBeEnabled();
   await noHorizontalOverflow(page);
+  // The answers are held back for three seconds; the next screen must not wait for them.
+  await page.route("**/api/program/program-ai/turn", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
+    await route.continue();
+  });
+  const turnAnswered = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/program/program-ai/turn");
+  const claimMade = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/program/program-ai/claim");
   await agree.click();
 
-  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
-  expect(consentPosts).toBe(1);
-  // The screen shows the first thing to work on and does not repeat the picked answers back.
-  await expect(page.locator("[data-programme-understanding]")).toHaveText(bestEffortStartingPoint.desiredChange);
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible({ timeout: 1_500 });
+  // One line of ours per picked answer; the picked answers are not repeated back.
+  await expect(page.locator("[data-programme-understanding] li")).toHaveText([
+    "Set a stop point before you play, so a loss ends the session instead of starting a chase.",
+    "Fix your budget before you play and make it hard to add more.",
+  ], { timeout: 1_500 });
   await expect(page.getByText(situation, { exact: true })).toHaveCount(0);
   await expect(page.getByText("Your Starting Point is ready")).toHaveCount(0);
   // Email, then password, then the button, all visible at once.
   await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue with email" })).toBeVisible();
+  // Behind the screen: the consent is recorded once, then the answers are sent, then the claim
+  // is made, so a press on Google or email does not wait for it.
+  expect((await turnAnswered).status()).toBe(200);
+  expect(consentPosts).toBe(1);
+  expect((await claimMade).status()).toBe(201);
   const anonymousSession = await anonymousSessionFromContext(page.context());
   const authority = await prisma.programmeSensitiveInputAuthority.findFirstOrThrow({
     where: { anonymousSessionId: anonymousSession.id, withdrawnAt: null },
@@ -465,14 +480,15 @@ test("picked ready answers go straight to the Starting Point under one consent p
   await prisma.anonymousProgrammeSession.deleteMany({ where: { id: anonymousSession.id } });
 });
 
-test("Log in creates an account for a new person and opens the plan with Mission 01 ahead", async ({ page }) => {
-  // Founder decisions, 11 Oct 2026: Log in creates accounts with the same form. Inside the
-  // Programme nothing reaches registration except the answers, so the start has no side door.
+test("Log in creates an account for a new person, who answers once and lands in the plan", async ({ page }) => {
+  // Founder decisions, 11 Oct 2026: Log in creates accounts with the same form, and a new account
+  // opens on the answers, not on an empty plan with a Start button. Inside the Programme nothing
+  // reaches registration except the answers.
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/program");
   await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Create an account first|Tell my story first/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Create an account first|Tell my story first|Open my plan/ })).toHaveCount(0);
 
   await page.goto("/login");
   await expect(page.locator("[data-login-access-note]")).toContainText("By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.");
@@ -483,8 +499,10 @@ test("Log in creates an account for a new person and opens the plan with Mission
   await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
   await page.getByLabel("Password").fill("Programme-test-password-42!");
   await page.getByRole("button", { name: "Continue with email" }).click();
-  await expect(page.getByRole("button", { name: /Start Mission 01/i })).toBeVisible();
 
+  // The account exists and affirmed access on Log in, so the answers carry no 18+ line.
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  await expect(page.locator("[data-programme-access-note]")).toHaveCount(0);
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
   const [acceptance, startingPoints, xp, consent] = await Promise.all([
     prisma.programmeAccessAcceptance.findUniqueOrThrow({ where: { userId: user.id } }),
@@ -497,13 +515,32 @@ test("Log in creates an account for a new person and opens the plan with Mission
   expect(xp).toHaveLength(0);
   expect(consent).toMatchObject({ action: "GRANTED", source: "PROGRAMME_SIGNUP", policyVersion: "email-marketing-v2" });
 
-  // The same form signs the account back in: no second account, no separate "log in".
+  // The plan is one quiet link away, and Mission 01 leads back to the answers.
+  await page.getByRole("button", { name: "Open my plan" }).click();
+  await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+  await page.getByRole("button", { name: /Start Mission 01/i }).click();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+
+  // "Something else" opens one short note; the answers are saved to the plan without another press.
+  await expect(page.getByRole("textbox")).toHaveCount(0);
+  await page.getByRole("checkbox", { name: "Something else" }).check();
+  await page.getByRole("textbox", { name: "Tell us in a few words" }).fill("I bet on football every weekend");
+  await noHorizontalOverflow(page);
+  await page.getByRole("button", { name: "Agree and continue" }).click();
+  await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Programme progress" })).toContainText("40 XP");
+  const saved = await prisma.programmeStartingPoint.findMany({ where: { userId: user.id } });
+  expect(saved).toHaveLength(1);
+  expect(saved[0].startingPoint).toBe("What feels hardest right now? Something else: I bet on football every weekend.");
+
+  // The same form signs the account back in, to its plan: no second account, no answers again.
   await page.context().clearCookies();
   await page.goto("/login");
   await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
   await page.getByLabel("Password").fill("Programme-test-password-42!");
   await page.getByRole("button", { name: "Continue with email" }).click();
-  await expect(page.getByRole("button", { name: /Start Mission 01/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toHaveCount(0);
   expect(await prisma.user.count({ where: { email } })).toBe(1);
   expect(await prisma.consentEvent.count({ where: { userId: user.id, purpose: "MARKETING_EMAIL" } })).toBe(1);
 
@@ -532,6 +569,8 @@ test("ready answers bind exact authority and are idempotent through real email a
     const value = setCookie?.match(/sevenbet_programme_claim=([^;]+)/)?.[1];
     if (value) capturedClaimCookie = { name: "sevenbet_programme_claim", value, domain: "127.0.0.1", path: "/", expires: -1, httpOnly: true, secure: false, sameSite: "Lax" };
   });
+  const turnAnswered = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/program/program-ai/turn");
+  const claimMade = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/program/program-ai/claim");
   await page.getByRole("button", { name: "Agree and continue" }).click();
 
   await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
@@ -539,7 +578,15 @@ test("ready answers bind exact authority and are idempotent through real email a
   await expect(page.getByRole("checkbox", { name: "I chase my losses" })).toHaveCount(0);
   await expect(page.getByText(bestEffortStartingPoint.startingPoint, { exact: true })).toHaveCount(0);
   const understanding = page.locator("[data-programme-understanding]");
-  await expect(understanding.getByText(bestEffortStartingPoint.desiredChange, { exact: true })).toBeVisible();
+  await expect(understanding.locator("li")).toHaveCount(2);
+  await expect(understanding.getByText(bestEffortStartingPoint.desiredChange, { exact: true })).toHaveCount(0);
+  // The session, the consent record, the answers and the claim went behind the screen, before
+  // any registration press.
+  expect((await turnAnswered).status()).toBe(200);
+  expect((await claimMade).status()).toBe(201);
+  // The listener above reads the response headers asynchronously.
+  await expect.poll(() => capturedClaimCookie, "the claim is made behind the screen").toBeTruthy();
+  const claimBeforePress = (capturedClaimCookie as unknown as { value: string }).value;
   await expect(page.getByRole("heading", { name: "What we'll work on first" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Where we'll start" })).toHaveCount(0);
   await expect(page.getByText(bestEffortStartingPoint.continuationCue, { exact: true })).toHaveCount(0);
@@ -565,7 +612,8 @@ test("ready answers bind exact authority and are idempotent through real email a
     data: { locale: "en-GB", inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(duplicateTurn.status()).toBe(200);
-  expect((await duplicateTurn.json()).progress.xpPreview).toBe(20);
+  // Both Mission 01 actions are complete once the claim is made; a duplicate submission adds nothing.
+  expect((await duplicateTurn.json()).progress.xpPreview).toBe(40);
 
   await page.setViewportSize({ width: 320, height: 760 });
   await noHorizontalOverflow(page);
@@ -577,7 +625,9 @@ test("ready answers bind exact authority and are idempotent through real email a
   await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Programme progress" })).toContainText("40 XP");
   await noHorizontalOverflow(page);
-  expect(capturedClaimCookie, "claim was created only when the registration action was submitted").toBeTruthy();
+  // The duplicate submission above reset the server's state, so the first claim could not be
+  // redeemed: the press made a new one and redeemed that.
+  expect((capturedClaimCookie as unknown as { value: string }).value, "a reset claim is made again").not.toBe(claimBeforePress);
 
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
   const [durableStartingPoints, programmeAiXp, boundAuthority, claim, accessAcceptance] = await Promise.all([

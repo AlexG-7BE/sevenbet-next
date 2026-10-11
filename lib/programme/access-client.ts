@@ -57,6 +57,21 @@ export async function affirmAnonymousProgrammeAccess(
   return journey;
 }
 
+/**
+ * A signed-in account that already affirmed access asks for the proof its new
+ * journey needs. Nothing is affirmed again.
+ */
+export async function refreshAccountJourneyAccess(
+  storage: AccessStorage,
+  journey: ProgrammeLocalSubject,
+  fetcher: AccessFetcher = fetch,
+) {
+  const response = await affirm(fetcher, { journeyId: journey.id });
+  const payload = await response.json() as { authority?: ProgrammeAccessAuthority };
+  if (!response.ok || !payload.authority) throw new Error("PROGRAMME_ACCESS_NOT_VERIFIED");
+  writeProgrammeAccessContinuation(storage, journey, payload.authority);
+}
+
 /** Records the same affirmation for the signed-in account, once. */
 export async function recordAccountProgrammeAccess(fetcher: AccessFetcher = fetch) {
   const response = await affirm(fetcher, AFFIRMATION);

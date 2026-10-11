@@ -3,7 +3,7 @@
 - **Processing:** B4GAMBLE accounts, Active Control Programme, optional AI personalisation and voice transcription
 - **Controller:** 7BE Inc., trading as B4GAMBLE
 - **Assessment date:** 19 August 2026
-- **Repository amendment:** 11 October 2026 — the Founder retired voice input and free text for Mission 01. No audio or transcript is captured, sent to OpenAI or handled by the application; the microphone is denied on every page; Mission 01 sends answers picked from a list. The audio, recording and transcription statements below describe the system as assessed on 19 August 2026 and now have no runtime (`docs/07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md`).
+- **Repository amendment:** 11 October 2026 — the Founder retired voice input and the free-text story for Mission 01. No audio or transcript is captured, sent to OpenAI or handled by the application; the microphone is denied on every page; Mission 01 sends answers picked from a list and, when "Something else" is picked, one short optional typed note (up to 280 characters) under the same explicit consent. The audio, recording and transcription statements below describe the system as assessed on 19 August 2026 and now have no runtime (`docs/07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md`).
 - **Status:** FINAL — READY FOR INTERNAL CONTROLLER APPROVAL
 - **Owner:** Internal Legal/Compliance with Product and Security
 

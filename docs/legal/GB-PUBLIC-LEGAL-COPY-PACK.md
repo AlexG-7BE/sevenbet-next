@@ -27,7 +27,7 @@ Statement, placed directly above the button "Agree and continue" on the Programm
 
 > I agree that B4GAMBLE and its AI provider use my answers, which may reveal my health, to personalise my plan.
 
-Mission 01 takes answers picked from a list; there is no typed or voice input. The statement says what is processed (the answers, which may reveal health), by whom (B4GAMBLE and its AI provider) and why. Pressing the button is the explicit consent. It is asked once on this route and is not bundled into a tick or repeated at account creation. Consent statement version: `article-9-authority:2026-10-11:v2`.
+Mission 01 takes answers picked from a list. Picking "Something else" opens one short optional note (up to 280 characters), which is part of the answers and is sent with them; there is no voice input. The statement says what is processed (the answers, which may reveal health), by whom (B4GAMBLE and its AI provider) and why. Pressing the button is the explicit consent. It is asked once on this route and is not bundled into a tick or repeated at account creation. Consent statement version: `article-9-authority:2026-10-11:v2`.
 
 Withdrawal stays available through the Privacy Notice.
 
