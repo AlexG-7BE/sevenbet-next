@@ -753,6 +753,9 @@
   font-size: 13px;
   line-height: 20px;
 }
+/* While the compliance lines are hidden (FOOTER_COMPLIANCE_VISIBLE, 11 Oct 2026) the baseline follows
+   the columns directly and carries the rule itself, as it did before those lines existed. */
+.footerColumns + .footerBaseline { padding: 24px 0; border-top: 1px solid rgba(250, 250, 247, .15); }
 .footerBaseline > div { display: flex; flex-wrap: wrap; align-items:center; gap: 24px; }
 /* The commission line runs past 60 characters: it reads at 14px (readability pass, Founder, 25 Sep 2026). */
 .footerCommission { margin: 0 0 0 auto; font-size: 14px; line-height: 1.5; }
@@ -825,6 +828,7 @@
   .footerGroup a { width:100%; min-height:44px; display:flex; align-items:center; overflow-wrap:anywhere; }
   .footerGroup:last-child { grid-column:1/-1; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:20px; }
   .footerBaseline { padding:12px 0 calc(20px + env(safe-area-inset-bottom)); align-items:flex-start; flex-direction:column; gap:12px; }
+  .footerColumns + .footerBaseline { padding:20px 0 calc(20px + env(safe-area-inset-bottom)); }
   .footerBaseline > div { width:100%; gap:4px 18px; }
   .footerBaseline a, .footerChoice { min-height:44px; }
   .footerBaseline a { min-width:44px; }

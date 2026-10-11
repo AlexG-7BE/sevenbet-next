@@ -348,6 +348,35 @@ test("the public layout owns one landmark and reads only session-cookie presence
   assert.doesNotMatch(navigation + navigationClient, /location\.href|window\.open/);
 });
 
+test("the footer notice block is hidden from every visitor and kept whole (Founder, 11 October 2026)", () => {
+  const compliance = readFileSync("components/footer-compliance/FooterCompliance.tsx", "utf8");
+  const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
+  const start = readFileSync("app/start/StartShell.tsx", "utf8");
+  const catalog = readFileSync("lib/i18n/public-shell-catalog.ts", "utf8");
+
+  // One switch, and the component renders nothing before it builds anything.
+  assert.ok(compliance.includes("export const FOOTER_COMPLIANCE_VISIBLE: boolean = false;"));
+  const body = compliance.slice(compliance.indexOf("export function FooterCompliance("));
+  assert.ok(body.indexOf("if (!FOOTER_COMPLIANCE_VISIBLE) return null;") > 0);
+  assert.ok(body.indexOf("if (!FOOTER_COMPLIANCE_VISIBLE) return null;") < body.indexOf("const external ="));
+
+  // Nothing is deleted: both footers still mount it, the four lines are still written and translated.
+  assert.ok(footer.includes('<FooterCompliance footer={footer} localHelpHref={localizedHref("/help")} />'));
+  assert.ok(start.includes("<FooterCompliance footer={footer} showAge={false} />"));
+  for (const marker of ["data-footer-age", "data-footer-licensed-links", "data-footer-support", "data-footer-entity"]) {
+    assert.ok(compliance.includes(marker), marker);
+  }
+  for (const key of ["ageNotice", "licensedLinks", "supportLead", "entity"]) {
+    assert.equal(catalog.match(new RegExp(`^    ${key}: "`, "gm"))?.length, 15, `${key} stays in every footer language`);
+  }
+  // The block carried the rule above the legal links; while it is hidden the baseline carries it.
+  assert.ok(readFileSync("components/public-shell/PublicShell.module.css", "utf8")
+    .includes(".footerColumns + .footerBaseline { padding: 24px 0; border-top: 1px solid rgba(250, 250, 247, .15); }"));
+  // What the footer still tells every visitor.
+  assert.ok(footer.includes("{footer.description}<br />{footer.operatorDisclaimer}"));
+  assert.ok(footer.includes("<p className={styles.footerCommission}>{footer.commissionDisclosure}</p>"));
+});
+
 test("the stable Footer does not reintroduce automatic speculative navigation", () => {
   const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
   assert.equal((footer.match(/<Link\b/g) ?? []).length, (footer.match(/prefetch=\{false\}/g) ?? []).length);

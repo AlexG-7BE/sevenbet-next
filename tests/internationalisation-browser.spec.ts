@@ -113,7 +113,10 @@ for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
     await expect(page.getByRole("navigation", { name: messages.primaryNavigation })).toBeVisible();
     await expect(page.getByRole("button", { name: messages.changeMarketAndLanguage }).first()).toContainText(locale.split("-")[0].toUpperCase());
     const footer = publicFooterMessages(locale);
-    await expect(page.getByRole("contentinfo", { name: footer.label })).toContainText(footer.financialRisk);
+    // The footer speaks the page's language. Its notice block is hidden (Founder, 11 Oct 2026), so the
+    // check reads the commission line, which every visitor still sees.
+    await expect(page.getByRole("contentinfo", { name: footer.label })).toContainText(footer.commissionDisclosure);
+    await expect(page.locator("[data-footer-compliance]")).toHaveCount(0);
   });
 }
 

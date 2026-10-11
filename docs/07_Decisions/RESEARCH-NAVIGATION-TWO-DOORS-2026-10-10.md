@@ -77,7 +77,10 @@ Recorded as the amendment in RFC-025 §3, which had called the order immutable f
 - Methodology, "Editorial vs commercial": Programme and Help activity is not used to target offers, personalise rankings or feed advertising; finishing that Mission opens those pages in the menu; answers never choose or rank an offer.
 - Privacy Notice (with Part 2): the cookie, what it holds, what it does and does not do.
 
-Left as it is, for the Founder to decide: the Terms still say Programme information "is not used to select, rank or personalise commercial content". Selection and ranking are untouched; whether opening menu links counts as personalising commercial content is a reading the Terms do not settle, and changing accepted Terms is a separate decision.
+**Decided by the Founder, 11 October 2026:**
+
+- **The Terms stay as they are.** "мы не делаем контент персонализированным, мы просто его открываем": opening the research links is not personalisation, so the sentence that Programme information "is not used to select, rank or personalise commercial content" stands.
+- **The First Personal Review stays after step 04**, with "Understand the urge". The lesson's completion screen at step 03 carries the research opening alone.
 
 ## What this supersedes
 
