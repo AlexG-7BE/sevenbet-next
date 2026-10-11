@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { devices, expect, test, type Page } from "@playwright/test";
 
 // Home and the Learn hub carry their stylesheet inline, under the Content-Security-Policy nonce.
 // The nonce belongs to the document; a page that arrives by client transition was rendered by a
@@ -85,3 +85,30 @@ for (const viewport of [{ name: "phone", width: 390, height: 844 }, { name: "des
     expect(policyErrors, "no stylesheet was refused").toEqual([]);
   });
 }
+
+// A touch browser keeps :hover on the element that was tapped, and the header stays mounted
+// across a client transition. The captured pages colour every hovered link, so without a pointer
+// that can hover the tapped logo must not arrive on Home in its hover colour.
+test("a tapped logo arrives on Home looking as it does on a Home that was opened directly", async ({ browser }) => {
+  const context = await browser.newContext({ ...devices["Pixel 7"], locale: "en-GB" });
+  const page = await context.newPage();
+  const logo = page.locator("header[data-public-shell] a[translate='no']:visible").first();
+  const logoLook = () => logo.evaluate((link) => {
+    const style = getComputedStyle(link);
+    return { color: style.color, decoration: style.textDecorationLine };
+  });
+
+  await page.goto("/en", { waitUntil: "load" });
+  await hydrated(page);
+  const untouched = await logoLook();
+
+  await page.goto("/en/learn", { waitUntil: "load" });
+  await hydrated(page);
+  await page.evaluate(() => { (window as MarkedWindow).__handoffStyleDocument = "learn"; });
+  await logo.tap();
+  await expect(page.locator('[data-handoff-page="home"]')).toBeVisible();
+  expect(await page.evaluate(() => (window as MarkedWindow).__handoffStyleDocument)).toBe("learn");
+  expect(await page.evaluate(() => document.querySelector<HTMLStyleElement>('[data-handoff-page="home"] > style')?.sheet?.cssRules.length ?? 0)).toBeGreaterThan(0);
+  await expect.poll(logoLook).toEqual(untouched);
+  await context.close();
+});

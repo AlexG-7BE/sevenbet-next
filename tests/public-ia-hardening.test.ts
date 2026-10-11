@@ -207,6 +207,24 @@ test("production CSP is nonce-based and has only documented compatibility except
   assert.throws(() => buildContentSecurityPolicy("bad nonce"), /Invalid CSP nonce/);
 });
 
+// A touch browser keeps :hover on a tapped link, and the header outlives a client transition.
+test("the captured pages colour a hovered link only where a pointer can hover", async () => {
+  const { transformCommonHandoffCss } = await import("../lib/final-handoff/transforms");
+  const pages = JSON.parse(read("lib/final-handoff/generated-pages.json")) as Record<string, { css: string }>;
+  const bareHover = /(^|\n)[ \t]*a:hover \{/g;
+  let gated = 0;
+  for (const [name, page] of Object.entries(pages)) {
+    const css = transformCommonHandoffCss(page.css);
+    const before = page.css.match(bareHover)?.length ?? 0;
+    assert.doesNotMatch(css, /(^|\n)[ \t]*a:hover \{/, name);
+    assert.equal(css.match(/@media \(hover: hover\) \{ a:hover \{/g)?.length ?? 0, before, name);
+    assert.equal(css.replace(/@media \(hover: hover\) \{ (a:hover \{[^}]*\}) \}/g, "$1"), page.css, `${name}: nothing else changes`);
+    gated += before;
+  }
+  assert.ok(gated >= 15, "every captured page carries the rule");
+  assert.match(read("components/final-handoff/HandoffPage.tsx"), /transformCommonHandoffCss\(page\.css\)/);
+});
+
 test("JSON-LD escapes markup input and runtime source has no Pexels hotlink", () => {
   const serialized = serializeJsonLd({ value: "</script><script>alert(1)</script>\u2028" });
   assert.doesNotMatch(serialized, /<\/script>|<script>/);
