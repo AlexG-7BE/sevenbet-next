@@ -523,8 +523,8 @@ test("expired access continuation returns to the canonical access screen", async
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await open(page, "/program");
   await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
-  // Three required checks, including the explicit consent (Founder decision, 25 Sep 2026).
-  await expect(page.getByRole("checkbox")).toHaveCount(3);
+  // One required check, the explicit consent (Founder decision, 11 Oct 2026).
+  await expect(page.getByRole("checkbox")).toHaveCount(1);
   await expect(page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing/ })).not.toBeChecked();
 });
 
