@@ -1,6 +1,6 @@
 # The Programme opens without a document load
 
-**Status:** ACCEPTED; **PROPOSED — NOT YET LIVE** until merged and deployed
+**Status:** ACCEPTED; live since 11 October 2026 (PR #483, Production deployment of `af2d4031`)
 
 **Decision authority:** explicit Founder choice, 11 October 2026. Offered three options after the
 measurements below (open the Programme without a reload and fetch it ahead of the tap; remove the

@@ -48,7 +48,7 @@ while checking the Programme boundary.
   The Navigation Stage 2 browser spec no longer tolerates the
   refused-stylesheet console error.
 
-## The Programme opens without a document load — in review
+## The Programme opens without a document load — live 11 October 2026
 
 **Founder choice, 11 October 2026** ("Только вход + подгрузка"). Decision
 record:
@@ -71,6 +71,13 @@ record:
   root layout, which a client transition keeps mounted; one that opened by
   itself on a public page is not shown in the Programme, Help or sign-in.
 - **Database, Programme rules, rewards and consent are unchanged.**
+- **Production.** `DETECTED` on 11 October 2026: PR #483 merged at 17:11 UTC
+  and the Production deployment of `af2d4031` succeeded at 17:14 UTC. On
+  `https://b4gamble.com/en` the Programme page was fetched once ahead of the
+  click; the header button opened `/program` in the same document with no
+  further request and no cookie choice on the start screen; the logo then
+  loaded Home as a new document with its stylesheet. Google Analytics page
+  views on that transition were not checked.
 
 ## Desktop Home: one screen per gesture, read properly — in review
 
