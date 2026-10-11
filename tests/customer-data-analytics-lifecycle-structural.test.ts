@@ -414,7 +414,7 @@ test("analytics choice is a compact site-style banner opened from the footer, lo
 
   // No floating edge tab: the choice opens from the footer and only while analytics is enabled.
   assert.doesNotMatch(banner + css, /privacyChoiceTrigger/);
-  assert.match(banner, /if \(!editing\) return null;/);
+  assert.match(banner, /if \(!editing \|\| \(automatic && isFocusedFlow\(pathname\)\)\) return null;/);
   assert.match(footer, /isProductAnalyticsEnabled\(\) \? <PrivacyChoicesButton className=\{styles\.footerChoice\} label=\{analyticsConsentMessages\(presentation\.locale\)\.trigger\} \/> : null/);
   assert.match(layout, /<AnalyticsConsentBanner locale=\{presentation\.locale\} \/>/);
   // Decline is as easy as Allow; "Not now" is the close control.
