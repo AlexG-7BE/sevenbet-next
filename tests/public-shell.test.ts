@@ -20,6 +20,8 @@ import {
   researchLinksAreNew,
   researchNavigationShown,
 } from "../lib/research-access";
+import { ORGANIZATION_PROFILES } from "../lib/seo/structured-data";
+import { BRAND_SOCIAL_PROFILES } from "../lib/social/brand-profiles";
 
 test("public navigation follows the approved Figma information architecture", () => {
   assert.deepEqual(PUBLIC_NAVIGATION, [
@@ -375,6 +377,40 @@ test("the footer notice block is hidden from every visitor and kept whole (Found
   // What the footer still tells every visitor.
   assert.ok(footer.includes("{footer.description}<br />{footer.operatorDisclaimer}"));
   assert.ok(footer.includes("<p className={styles.footerCommission}>{footer.commissionDisclosure}</p>"));
+});
+
+test("the footer links to the brand's five social profiles and the schema names the same accounts (Founder, 11 October 2026)", () => {
+  const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
+  const links = readFileSync("components/public-shell/BrandSocialLinks.tsx", "utf8");
+  const catalog = readFileSync("lib/i18n/public-shell-catalog.ts", "utf8");
+  const styles = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
+
+  assert.deepEqual(BRAND_SOCIAL_PROFILES.map((profile) => [profile.network, profile.href]), [
+    ["instagram", "https://www.instagram.com/b4gamble.c0m"],
+    ["youtube", "https://www.youtube.com/@b4gamble"],
+    ["x", "https://x.com/b4gamble"],
+    ["facebook", "https://www.facebook.com/b4gamble"],
+    ["threads", "https://www.threads.com/@b4gamble.c0m"],
+  ]);
+  // One list: the Organization schema opens with exactly the footer's accounts, and the retired handle is gone.
+  assert.deepEqual(ORGANIZATION_PROFILES.slice(0, BRAND_SOCIAL_PROFILES.length), BRAND_SOCIAL_PROFILES.map((profile) => profile.href));
+  assert.ok(!ORGANIZATION_PROFILES.some((profile) => profile.includes("b4gamble_com")));
+
+  // The row sits under the brand description in the one shared footer.
+  assert.ok(footer.includes("<p>{footer.description}<br />{footer.operatorDisclaimer}</p>\n            <BrandSocialLinks label={footer.social} opensInNewTab={footer.opensInNewTab} />"));
+  // Each icon opens a new tab and has a name a screen reader can say.
+  assert.ok(links.includes('rel="me noopener noreferrer" target="_blank"'));
+  assert.ok(links.includes('<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">'));
+  assert.ok(links.includes('<span className="srOnly">{profile.name} {opensInNewTab}</span>'));
+  assert.equal(catalog.match(/^    social: "/gm)?.length, 15, "the row is labelled in every footer language");
+  // 44px targets on phones.
+  assert.ok(styles.includes("  .footerSocial a { width:44px; height:44px; }"));
+
+  // /start has no way out of the landing and Help stays about help: neither carries the row.
+  for (const file of ["app/start/StartShell.tsx", "components/protected-help/ProtectedHelpShell.tsx"]) {
+    const source = readFileSync(file, "utf8");
+    assert.ok(!source.includes("BrandSocialLinks") && !source.includes("brand-profiles"), file);
+  }
 });
 
 test("the stable Footer does not reintroduce automatic speculative navigation", () => {

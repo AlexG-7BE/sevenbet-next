@@ -203,6 +203,22 @@ record:
 - **Server record otherwise unchanged.** The same three affirmed facts and
   document versions are sent; no table, column or enum changed.
 
+## Social links in the footer — in review
+
+**Founder instruction, 11 October 2026:** link to the brand's social networks
+from every page. Decision record:
+[FOOTER-SOCIAL-LINKS-2026-10-11](07_Decisions/FOOTER-SOCIAL-LINKS-2026-10-11.md).
+
+- **Where:** a row of five icons (Instagram, YouTube, X, Facebook, Threads)
+  under the brand in `PublicFooter`: Home, every public page, the Programme
+  and the 404 page. `/start` and Help keep their own footers without it.
+- **One list:** `lib/social/brand-profiles.ts` feeds both the footer and the
+  first five entries of the Organization `sameAs`.
+- **Handles corrected:** Instagram and Threads are `b4gamble.c0m`; the schema
+  named the retired `b4gamble_com` until this change.
+- **Size:** 44px targets on phones (the footer is 54px taller); on desktop the
+  footer's height is unchanged, so Home's closing screen is too.
+
 ## Footer notice block hidden — in review
 
 **Founder instruction, 11 October 2026:** hide the footer block (18+ and

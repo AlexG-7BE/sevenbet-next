@@ -708,6 +708,13 @@
 .footerLead { display: block; }
 .footerBrand { margin-bottom: 14px; }
 .footerLead p { margin: 0; color: rgba(250, 250, 247, .55); font-size: 14px; line-height: 1.6; }
+/* The brand's own profiles (Founder, 11 Oct 2026): a quiet row under the brand. A glyph sits
+   centred in its target, so the row starts half the inset to the left of the text above it.
+   Sized so the lead column stays shorter than a four-link column: the desktop footer keeps its height. */
+.footerSocial { margin: 8px 0 0 -10px; padding: 0; display: flex; flex-wrap: wrap; list-style: none; }
+.footerSocial a { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: rgba(250, 250, 247, .75); }
+.footerSocial svg { width: 20px; height: 20px; fill: currentColor; }
+@media (hover: hover) { .footerSocial a:hover { color: var(--shell-white); } }
 
 .footerGroup { display: grid; align-content: start; gap: 12px; }
 .footerGroup h2 { margin: 0 0 6px; color: rgba(250, 250, 247, .68); font-size: 13px; line-height: 18px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
@@ -823,6 +830,9 @@
   .footer { padding-top:64px; }
   .footerColumns { padding-bottom:52px; grid-template-columns:repeat(2,minmax(0,1fr)); gap:34px 20px; }
   .footerLead { grid-column:1/-1; }
+  .footerSocial { margin:10px 0 0 -11px; }
+  .footerSocial a { width:44px; height:44px; }
+  .footerSocial svg { width:22px; height:22px; }
   .footerGroup { min-width:0; gap:0; }
   .footerGroup h2 { grid-column:1/-1; margin-bottom:8px; }
   .footerGroup a { width:100%; min-height:44px; display:flex; align-items:center; overflow-wrap:anywhere; }
