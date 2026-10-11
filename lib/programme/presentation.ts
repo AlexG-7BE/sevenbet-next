@@ -138,6 +138,24 @@ export function parseProgrammeRoute(pathname: string): ProgrammeRouteParse | nul
   return null;
 }
 
+/**
+ * Whether a same-origin link must load a fresh document instead of a client transition
+ * (Founder decision, 11 October 2026). Entering the Programme from a public page does not;
+ * leaving it does, and so does entering it in another language than the page's.
+ *
+ * `<html lang>` is set by the root layout, which is not rendered again on a client transition,
+ * so a crossing that changes the language needs its own document. On the way out, Home and the
+ * Learn hub also carry their stylesheet under the nonce of the request that rendered them, and
+ * that nonce matches the document's Content-Security-Policy only on a full load.
+ */
+export function programmeCrossingNeedsDocument(currentPathname: string, destinationPathname: string, documentLanguage: string) {
+  const current = parseProgrammeRoute(currentPathname);
+  const destination = parseProgrammeRoute(destinationPathname);
+  if (current) return destination === null;
+  if (!destination) return false;
+  return destination.legacy || destination.route.locale !== documentLanguage;
+}
+
 export function programmeLocaleFromPath(value: unknown): ProgrammeLocale | null {
   if (typeof value !== "string") return null;
   const parsed = parseProgrammeRoute(value);

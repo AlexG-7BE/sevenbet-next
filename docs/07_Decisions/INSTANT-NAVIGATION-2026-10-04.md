@@ -22,7 +22,8 @@ unprefetched" ([17_Navigation_Performance_Stage_2](../05_Engineering/Technical_B
 - **Primary destinations ahead of time.** Once the current page has settled (document complete,
   no loading frame, commercial navigation resolved or not timed out), the public shell prefetches
   every header and drawer destination in an idle callback. Those are Best Offers, Casinos,
-  Bonuses and Learn.
+  Bonuses and Learn. Since 11 October 2026 the Programme button is one of them
+  ([PROGRAMME-ENTRY-WITHOUT-RELOAD-2026-10-11](PROGRAMME-ENTRY-WITHOUT-RELOAD-2026-10-11.md)).
 - **Other links on intent.** Footer links, Learn offer bridges, Learn guide cards and casino
   review links prefetch on a 50ms mouse hover, a touch or keyboard focus. Opening the mobile drawer
   prefetches its links.

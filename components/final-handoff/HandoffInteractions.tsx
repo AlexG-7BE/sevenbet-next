@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId } from "react";
 
 import { usePublicNavigationFeedback } from "@/components/public-shell/PublicNavigationFeedback";
+import { programmeCrossingNeedsDocument } from "@/lib/programme/presentation";
 
 import { createHomeWheelIntent } from "./homeWheelIntent";
 
@@ -624,7 +625,9 @@ export function HandoffInteractions({ name, programmePath = "/program" }: { name
       if (anchor && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && !anchor.download && (!anchor.target || anchor.target === "_self")) {
         const destination = new URL(anchor.href, window.location.href);
         const sameDocument = destination.pathname === window.location.pathname && destination.search === window.location.search;
-        if (destination.origin === window.location.origin && !sameDocument) {
+        // A link that needs a fresh document is already loading one (ProgrammeDocumentBoundary).
+        const documentLoad = programmeCrossingNeedsDocument(window.location.pathname, destination.pathname, document.documentElement.lang);
+        if (destination.origin === window.location.origin && !sameDocument && !documentLoad) {
           event.preventDefault();
           pendingNavigationLabel = anchor.textContent?.trim().replace(/\s+/g, " ") || destination.pathname;
           navigationFeedback?.({ id: navigationFeedbackId, label: pendingNavigationLabel }, true);

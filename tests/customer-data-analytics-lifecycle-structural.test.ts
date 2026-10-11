@@ -372,7 +372,7 @@ test("configuration and schedules are explicit and environment-isolated", () => 
 });
 
 test("undecided visitors see the analytics choice after their first scroll or a short delay, outside focused flows and without losing focus", async () => {
-  const { PRIVACY_CHOICE_AUTO_OPEN_DELAY_MS, PRIVACY_CHOICE_SCROLL_THRESHOLD_PX, shouldAutoOpenPrivacyChoice } = await import("../lib/analytics/consent-prompt");
+  const { isFocusedFlow, PRIVACY_CHOICE_AUTO_OPEN_DELAY_MS, PRIVACY_CHOICE_SCROLL_THRESHOLD_PX, shouldAutoOpenPrivacyChoice } = await import("../lib/analytics/consent-prompt");
   const base = { pathname: "/best-offers", consentState: "unknown" as const, dismissed: false, automated: false, automationOptIn: false };
   assert.equal(shouldAutoOpenPrivacyChoice(base), true);
   assert.equal(shouldAutoOpenPrivacyChoice({ ...base, consentState: "granted" }), false);
@@ -387,6 +387,12 @@ test("undecided visitors see the analytics choice after their first scroll or a 
     assert.equal(shouldAutoOpenPrivacyChoice({ ...base, pathname }), true, pathname);
   }
   const banner = source("components/analytics/AnalyticsConsentBanner.tsx");
+  // The Programme opens without a document load (11 Oct 2026): a choice opened automatically on a
+  // public page must not follow the visitor onto the Programme's first screen.
+  assert.equal(isFocusedFlow("/program"), true);
+  assert.equal(isFocusedFlow("/sv/program"), true);
+  assert.equal(isFocusedFlow("/en/learn"), false);
+  assert.match(banner, /if \(!editing \|\| \(automatic && isFocusedFlow\(pathname\)\)\) return null;/);
   assert.match(banner, /if \(editing && !autoOpened\.current\) closeRef\.current\?\.focus\(\);/);
   assert.match(banner, /writeSession\(PRIVACY_CHOICE_DISMISSED_KEY, "1"\);/);
   assert.match(banner, /automated: navigator\.webdriver === true/);
@@ -408,7 +414,7 @@ test("analytics choice is a compact site-style banner opened from the footer, lo
 
   // No floating edge tab: the choice opens from the footer and only while analytics is enabled.
   assert.doesNotMatch(banner + css, /privacyChoiceTrigger/);
-  assert.match(banner, /if \(!editing\) return null;/);
+  assert.match(banner, /if \(!editing \|\| \(automatic && isFocusedFlow\(pathname\)\)\) return null;/);
   assert.match(footer, /isProductAnalyticsEnabled\(\) \? <PrivacyChoicesButton className=\{styles\.footerChoice\} label=\{analyticsConsentMessages\(presentation\.locale\)\.trigger\} \/> : null/);
   assert.match(layout, /<AnalyticsConsentBanner locale=\{presentation\.locale\} \/>/);
   // Decline is as easy as Allow; "Not now" is the close control.

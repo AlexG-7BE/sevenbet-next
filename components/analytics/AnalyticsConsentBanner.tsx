@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 
 import { browserAnalyticsConsentState } from "@/lib/analytics/consent-contract";
 import {
+  isFocusedFlow,
   PRIVACY_CHOICE_AUTO_OPEN_DELAY_MS,
   PRIVACY_CHOICE_AUTOMATION_OPT_IN_KEY,
   PRIVACY_CHOICE_DISMISSED_KEY,
@@ -44,6 +45,8 @@ export function AnalyticsConsentBanner({ locale }: { locale: SupportedLocale }) 
   const closeRef = useRef<HTMLButtonElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const autoOpened = useRef(false);
+  // The same fact as `autoOpened`, readable while rendering.
+  const [automatic, setAutomatic] = useState(false);
   const pathname = usePathname() ?? "/";
 
   useEffect(() => {
@@ -65,6 +68,7 @@ export function AnalyticsConsentBanner({ locale }: { locale: SupportedLocale }) 
       window.removeEventListener("scroll", onScroll);
       window.clearTimeout(timer);
       autoOpened.current = true;
+      setAutomatic(true);
       setEditing(true);
     };
     const onScroll = () => { if (window.scrollY > PRIVACY_CHOICE_SCROLL_THRESHOLD_PX) reveal(); };
@@ -84,6 +88,7 @@ export function AnalyticsConsentBanner({ locale }: { locale: SupportedLocale }) 
       const detail = (event as CustomEvent<unknown>).detail;
       opener.current = detail instanceof HTMLElement ? detail : document.activeElement instanceof HTMLElement ? document.activeElement : null;
       autoOpened.current = false;
+      setAutomatic(false);
       setEditing(true);
       closeRef.current?.focus();
     };
@@ -99,6 +104,7 @@ export function AnalyticsConsentBanner({ locale }: { locale: SupportedLocale }) 
     setError(false);
     setEditing(false);
     autoOpened.current = false;
+    setAutomatic(false);
     writeSession(PRIVACY_CHOICE_DISMISSED_KEY, "1");
     const target = opener.current;
     opener.current = null;
@@ -130,7 +136,10 @@ export function AnalyticsConsentBanner({ locale }: { locale: SupportedLocale }) 
     }
   };
 
-  if (!editing) return null;
+  // A client transition keeps this component mounted, so an automatic choice opened on a public
+  // page would follow the visitor into a focused flow (the Programme, Help, sign-in). It is not
+  // shown there and records nothing; a choice the visitor opened themselves stays.
+  if (!editing || (automatic && isFocusedFlow(pathname))) return null;
 
   return (
     <aside className="analyticsConsent" role="dialog" aria-modal="false" aria-label={text.dialogLabel} aria-live="polite" onKeyDown={(event) => { if (event.key === "Escape") close(); }}>

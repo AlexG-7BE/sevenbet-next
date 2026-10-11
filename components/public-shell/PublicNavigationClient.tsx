@@ -172,8 +172,10 @@ export function PublicProgrammeActionLink({
   href: string;
 }) {
   const isProgrammeHref = href === "/program" || /^\/[a-z]{2}\/program(?:[/?#]|$)/.test(href);
+  // The public shell loads this destination ahead of the tap (navigation-prefetch.ts), so the
+  // link itself does not prefetch.
   return (
-    <Link className={className} href={href} onClick={() => {
+    <Link className={className} data-programme-entry={isProgrammeHref ? "" : undefined} href={href} prefetch={false} onClick={() => {
       if (!authenticated && isProgrammeHref) productAnalyticsClient.startClicked("public_header");
     }}>
       {children}
