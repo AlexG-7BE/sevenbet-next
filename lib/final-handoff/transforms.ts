@@ -798,6 +798,43 @@ export function transformHomeHandoffCss(css: string) {
     @media (prefers-reduced-motion: reduce) {
       html { scroll-snap-type: none !important; }
     }
+    /*
+     * The first chapter grows out of "A plan you can see" while the page scrolls one screen.
+     * It sits one screen earlier than its place in the flow, so sticky positioning holds it
+     * still for that whole stretch and the script only scales it; held by a transform instead,
+     * it trails the browser's own scrolling by a frame. The margin below gives the screen
+     * back, so it lets go a screen sooner, by then behind the second chapter. The extra pixel
+     * is the snap anchor above it: that anchor's own -1px margin collapses into this one.
+     */
+    @media (min-width: 761px) {
+      [data-handoff-page="home"][data-home-interactions="ready"] [data-home-chapter="01-03"] {
+        margin-top: calc(-100svh - 1px) !important;
+        margin-bottom: 100svh !important;
+      }
+    }
+    /*
+     * Where the browser can tie an animation to the scroll position itself, the first chapter
+     * grows there, off the main thread like the scroll that drives it: scaled by the script, it
+     * stuttered whenever that thread was busy. The range is the first of the three screens the
+     * chapters' container travels while it covers the viewport; the curve is the script's
+     * smoothstep. The script keeps the fade and the corners, and does all of it elsewhere.
+     */
+    @supports (animation-timeline: view()) {
+      @media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
+        [data-handoff-page="home"][data-home-interactions="ready"] :has(> [data-home-chapter="01-03"]) {
+          view-timeline: --home-chapters block;
+        }
+        [data-handoff-page="home"][data-home-interactions="ready"] [data-home-chapter="01-03"] {
+          animation: home-chapter-grow linear both;
+          animation-timeline: --home-chapters;
+          animation-range: contain 0% contain 33.3333%;
+        }
+      }
+      @keyframes home-chapter-grow {
+        from { scale: 0.24; animation-timing-function: cubic-bezier(0.333333, 0, 0.666667, 1); }
+        to { scale: 1; }
+      }
+    }
     [data-home-chapters-cta] { display: none; }
     /*
      * Phones (Founder, 24 Sep 2026): the pinned "A plan you can see" theatre and the three

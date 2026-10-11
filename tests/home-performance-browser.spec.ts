@@ -261,7 +261,7 @@ test("a trackpad gesture moves one screen: a brush moves nothing, inertia adds n
   expect(await waitForScrollIdle(page)).toBe(first);
   await page.waitForTimeout(400);
 
-  // One strong swipe: about 2.5 s of inertia, one screen, and the page travels there itself.
+  // One strong swipe: about 2.5 s of inertia, one screen, on the browser's own smooth scroll.
   await page.evaluate(() => {
     const frames: Array<{ snap: string; y: number }> = [];
     (window as typeof window & { __homeTravel?: typeof frames }).__homeTravel = frames;
@@ -287,7 +287,8 @@ test("a trackpad gesture moves one screen: a brush moves nothing, inertia adds n
   expect(travel.highest).toBe(destinations[1]);
   expect(travel.backwards).toBe(0);
   expect(travel.inBetween).toBeGreaterThan(8);
-  expect(travel.travellingSnap).toEqual(["none"]);
+  // Snapping is never held off: the browser moves the page and rests it on the stop.
+  expect(travel.travellingSnap).toEqual(["y mandatory"]);
   expect(travel.restingSnap).toBe("y mandatory");
 
   // A second swipe 350 ms after the fingers lift, while the first one's inertia is still arriving.
@@ -295,13 +296,43 @@ test("a trackpad gesture moves one screen: a brush moves nothing, inertia adds n
   await wheelStream(page, [...swipe({ inertiaFrames: 21 }), ...swipe()]);
   expect(await waitForScrollIdle(page)).toBe(destinations[3]);
 
-  // A key pressed mid-travel is still the browser's to scroll and snap.
+  // A key pressed mid-landing is the browser's to scroll and snap, as it always was.
   await page.waitForTimeout(400);
   await page.mouse.wheel(0, 120);
   await page.waitForTimeout(120);
   await page.keyboard.press("End");
   expect(await waitForScrollIdle(page)).toBe(footerEnd);
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("y mandatory");
+});
+
+test("the first chapter stays in the middle of the screen while it opens", async ({ page, browserName }) => {
+  // It is held by sticky positioning, not by a transform that follows the scroll position:
+  // the browser scrolls off the main thread and a following transform trails it by a frame.
+  await page.setViewportSize({ height: 900, width: 1440 });
+  await bridgeLocalWebKitUpgrade(page, browserName);
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator('[data-handoff-page="home"]')).toHaveAttribute("data-home-interactions", "ready");
+  const { targets } = await snapState(page);
+  const plan = targets.find((target) => target.label === "A plan you can see")!.position;
+  const firstMission = page.locator('[data-screen-label="Missions 01-03"]');
+  await page.evaluate(() => {
+    document.documentElement.style.setProperty("scroll-snap-type", "none", "important");
+    document.documentElement.style.setProperty("scroll-behavior", "auto", "important");
+  });
+  for (const share of [0.25, 0.5, 0.9]) {
+    await page.evaluate((top) => window.scrollTo(0, top), plan + Math.round(900 * share));
+    await page.waitForTimeout(250);
+    const state = await firstMission.evaluate((panel) => {
+      const rect = panel.getBoundingClientRect();
+      const matrix = new DOMMatrixReadOnly(getComputedStyle(panel).transform);
+      return { centre: Math.round(rect.top + rect.height / 2), scale: rect.width / (panel as HTMLElement).offsetWidth, shift: Math.round(Math.hypot(matrix.e, matrix.f)) };
+    });
+    expect(state.centre).toBe(450);
+    expect(state.shift).toBe(0);
+    // The same curve whether the browser's scroll-driven animation or the script draws it.
+    expect(Math.abs(state.scale - (0.24 + 0.76 * share * share * (3 - 2 * share)))).toBeLessThan(0.002);
+  }
+  expect(targets.map(({ position }) => position).slice(0, 8)).toEqual([0, 900, 1800, 2700, 3600, 4500, 5400, 6300]);
 });
 
 test("the language menu scrolls under the wheel and the page behind it stays", async ({ page, browserName }) => {

@@ -11,17 +11,12 @@ function normalized(value: string | null | undefined) {
   return (value || "").trim().toLowerCase();
 }
 
-// One screen of travel, eased in and out; a shorter way back takes proportionally less.
-const HOME_TRAVEL_MS = 750;
-const HOME_TRAVEL_MIN_MS = 320;
-const HOME_SCROLL_KEYS = new Set([" ", "ArrowDown", "ArrowUp", "End", "Home", "PageDown", "PageUp"]);
+// A landing that has not arrived after this long was taken over by the scrollbar or the keyboard.
+const HOME_TRAVEL_EXPIRES_MS = 1200;
 
 type HomeTravel = {
   direction: number;
-  duration: number;
-  from: number;
-  last: number;
-  start: number;
+  since: number;
   to: number;
 };
 
@@ -89,13 +84,14 @@ function setupHomeInteractions(root: HTMLElement) {
   let stackObserver: ResizeObserver | null = null;
   let geometryDirty = Boolean(stack) && !reducedMotion;
   let stackDirty = Boolean(stack) && !reducedMotion;
-  let panelLayouts: Array<{ element: HTMLElement; entranceDistance: number; open: number }> = [];
+  let panelLayouts: Array<{ element: HTMLElement; entranceDistance: number; open: number; pinned: boolean }> = [];
   let canonicalDestinations: number[] = [];
   let travel: HomeTravel | null = null;
   let queuedDirection = 0;
   let wheelTarget: EventTarget | null = null;
   let ownScroller: Element | null = null;
   const readWheelIntent = createHomeWheelIntent(() => window.innerHeight);
+  const scrollDrivenChapter = typeof CSS !== "undefined" && CSS.supports("animation-timeline: view()");
 
   const measureCanonicalDestinations = () => {
     const maximum = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
@@ -209,6 +205,7 @@ function setupHomeInteractions(root: HTMLElement) {
     const scrollY = window.scrollY;
     const stackTop = stack.getBoundingClientRect().top + scrollY;
     let flow = 0;
+    let anchorTop: number | null = null;
     const nextLayouts: typeof panelLayouts = [];
 
     for (const child of Array.from(stack.children) as HTMLElement[]) {
@@ -216,12 +213,17 @@ function setupHomeInteractions(root: HTMLElement) {
       const childStyle = window.getComputedStyle(child);
       const marginTop = Number.parseFloat(childStyle.marginTop) || 0;
       const marginBottom = Number.parseFloat(childStyle.marginBottom) || 0;
+      if (child.hasAttribute("data-home-snap-anchor")) anchorTop = child.getBoundingClientRect().top + scrollY;
       if (child.hasAttribute("data-stackpanel")) {
+        // A panel is fully open at the anchor in front of it. One pulled up by a negative
+        // margin is already pinned while it opens (see transformHomeHandoffCss).
         nextLayouts.push({
           element: child,
           entranceDistance: Math.max(viewportHeight, flow),
-          open: stackTop + flow + marginTop,
+          open: anchorTop ?? stackTop + flow + marginTop,
+          pinned: marginTop < 0,
         });
+        anchorTop = null;
       }
       flow += marginTop + child.offsetHeight + marginBottom;
     }
@@ -235,69 +237,25 @@ function setupHomeInteractions(root: HTMLElement) {
     return ordered.find((destination) => (direction > 0 ? destination > position + 4 : destination < position - 4));
   };
 
-  const releaseScroll = () => {
-    document.documentElement.style.removeProperty("scroll-snap-type");
-    document.documentElement.style.removeProperty("scroll-behavior");
-  };
-
-  // The page is moved here, frame by frame, so the landing has one duration and one curve in
-  // every browser and the chapter stack is drawn in the same frame as the scroll position.
-  // While it travels the browser must neither snap nor smooth the positions it is given.
+  // The landing is the browser's own smooth scroll (Founder, 11 Oct 2026: it has to be
+  // perfectly smooth). That scroll runs off the main thread, so a busy page cannot stall it;
+  // moved from here frame by frame instead, the page froze for 50-150ms whenever the main
+  // thread did. Every stop is a snap position, so the browser rests exactly on it.
   const beginTravel = (direction: number) => {
-    const from = window.scrollY;
-    const to = adjacentDestination(travel ? travel.to : from, direction);
+    const to = adjacentDestination(travel ? travel.to : window.scrollY, direction);
     if (to === undefined) return false;
-    if (Math.abs(to - from) < 1) {
-      // Turned back before the page had moved: there is nowhere to travel, only a landing to call off.
-      travel = null;
-      releaseScroll();
-      return false;
-    }
-    document.documentElement.style.setProperty("scroll-snap-type", "none", "important");
-    document.documentElement.style.setProperty("scroll-behavior", "auto", "important");
-    travel = {
-      direction,
-      duration: Math.max(HOME_TRAVEL_MIN_MS, HOME_TRAVEL_MS * Math.min(1, Math.abs(to - from) / window.innerHeight)),
-      from,
-      last: from,
-      start: window.performance.now(),
-      to,
-    };
-    scheduleFrame();
+    window.scrollTo({ behavior: "smooth", top: to });
+    // Turned back before the page had moved: it is already there and no scroll will say so.
+    travel = Math.abs(window.scrollY - to) <= 2 ? null : { direction, since: window.performance.now(), to };
     return true;
   };
 
-  const advanceTravel = () => {
-    if (!travel) return;
-    // The scrollbar or a touch moved the page: it is theirs now.
-    if (Math.abs(window.scrollY - travel.last) > 2) {
-      travel = null;
-      queuedDirection = 0;
-      releaseScroll();
-      return;
-    }
-    const progress = Math.min(1, Math.max(0, (window.performance.now() - travel.start) / travel.duration));
-    const eased = progress < 0.5 ? 4 * progress ** 3 : 1 - (2 - 2 * progress) ** 3 / 2;
-    window.scrollTo(0, progress === 1 ? travel.to : travel.from + (travel.to - travel.from) * eased);
-    travel.last = window.scrollY;
-    stackDirty = true;
-    if (progress < 1) return;
+  const settleTravel = () => {
+    if (!travel || Math.abs(window.scrollY - travel.to) > 2) return;
     const next = queuedDirection;
     travel = null;
     queuedDirection = 0;
-    if (!next || !beginTravel(next)) releaseScroll();
-  };
-
-  // Keyboard scrolling stays the browser's. A key pressed mid-travel finds the page already on
-  // its screen, so the browser scrolls and snaps from there as it does from any other.
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (!travel || !HOME_SCROLL_KEYS.has(event.key)) return;
-    window.scrollTo(0, travel.to);
-    travel = null;
-    queuedDirection = 0;
-    releaseScroll();
-    stackDirty = true;
-    scheduleFrame();
+    if (next) beginTravel(next);
   };
 
   // An element that scrolls on its own, such as the language menu, keeps its wheel.
@@ -322,8 +280,10 @@ function setupHomeInteractions(root: HTMLElement) {
     }
     event.preventDefault();
     if (canonicalDestinations.length < 2) return;
-    const direction = readWheelIntent(event, window.performance.now());
+    const now = window.performance.now();
+    const direction = readWheelIntent(event, now);
     if (!direction) return;
+    if (travel && now - travel.since > HOME_TRAVEL_EXPIRES_MS) travel = null;
     // A second gesture made while a screen is still arriving follows it; the opposite one turns back at once.
     if (travel?.direction === direction) {
       queuedDirection = direction;
@@ -344,6 +304,7 @@ function setupHomeInteractions(root: HTMLElement) {
       panel.style.setProperty("transform", "none", "important");
       panel.style.setProperty("opacity", "1", "important");
       panel.style.removeProperty("border-radius");
+      panel.style.removeProperty("pointer-events");
       for (const element of [panel.querySelector<HTMLElement>("[data-mob='chapter']"), panel.querySelector<HTMLElement>("[data-stackind]")]) {
         element?.style.setProperty("opacity", "1", "important");
       }
@@ -361,24 +322,24 @@ function setupHomeInteractions(root: HTMLElement) {
     const scrollY = window.scrollY;
     const opens = panelLayouts.map(({ open }) => open);
 
-    panelLayouts.forEach(({ element: child, entranceDistance, open }, panelIndex) => {
+    panelLayouts.forEach(({ element: child, entranceDistance, open, pinned }, panelIndex) => {
       const raw = open - scrollY;
       if (panelIndex === 0) {
           const distance = entranceDistance;
-          if (raw >= distance) {
-            child.style.setProperty("transform", "none", "important");
-            child.style.setProperty("opacity", "0", "important");
-          } else if (raw > 0) {
-            const progress = 1 - raw / distance;
-            const eased = progress * progress * (3 - 2 * progress);
-            child.style.setProperty("transform", `translateY(${-raw}px) scale(${(0.24 + 0.76 * eased).toFixed(4)})`, "important");
-            child.style.setProperty("opacity", Math.min(1, progress * 10).toFixed(2), "important");
-            child.style.borderRadius = `${Math.round(28 * Math.min(1, (1 - eased) * 10))}px`;
+          // Unseen, it must not take clicks meant for the screen it is waiting over.
+          child.style.pointerEvents = raw >= distance ? "none" : "";
+          const progress = Math.min(1, Math.max(0, 1 - raw / distance));
+          const eased = progress * progress * (3 - 2 * progress);
+          const opening = raw > 0 && raw < distance;
+          child.style.setProperty("opacity", opening ? Math.min(1, progress * 10).toFixed(2) : raw > 0 ? "0" : "1", "important");
+          if (pinned && scrollDrivenChapter) {
+            // The browser scales it with the scroll, off the main thread (see transformHomeHandoffCss).
+            child.style.removeProperty("transform");
           } else {
-            child.style.setProperty("transform", "none", "important");
-            child.style.setProperty("opacity", "1", "important");
-            child.style.borderRadius = "0";
+            child.style.setProperty("transform", opening ? `${pinned ? "" : `translateY(${-raw}px) `}scale(${(0.24 + 0.76 * eased).toFixed(4)})` : "none", "important");
           }
+          if (opening) child.style.borderRadius = `${Math.round(28 * Math.min(1, (1 - eased) * 10))}px`;
+          else if (raw <= 0) child.style.borderRadius = "0";
           const contentVisible = raw <= 4;
           for (const element of [child.querySelector<HTMLElement>("[data-mob='chapter']"), child.querySelector<HTMLElement>("[data-stackind]")]) {
             if (!element) continue;
@@ -426,13 +387,12 @@ function setupHomeInteractions(root: HTMLElement) {
       measureStack();
       stackDirty = true;
     }
-    advanceTravel();
     if (stackDirty) {
       stackDirty = false;
       syncStack();
     }
     syncSprings();
-    if (travel || springsAreMoving()) scheduleFrame();
+    if (springsAreMoving()) scheduleFrame();
   };
 
   function scheduleFrame() {
@@ -467,7 +427,7 @@ function setupHomeInteractions(root: HTMLElement) {
   if (finePointer && !reducedMotion) {
     root.dataset.homeWheelController = "adjacent";
     window.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("keydown", onKeyDown, { passive: true });
+    window.addEventListener("scroll", settleTravel, { passive: true });
   }
 
   return () => {
@@ -480,11 +440,10 @@ function setupHomeInteractions(root: HTMLElement) {
     window.removeEventListener("resize", onResize);
     window.removeEventListener("scroll", onScroll);
     window.removeEventListener("wheel", onWheel);
-    window.removeEventListener("keydown", onKeyDown);
+    window.removeEventListener("scroll", settleTravel);
     window.removeEventListener("pointermove", onPointerMove);
     document.documentElement.removeEventListener("pointerleave", onPointerLeave);
     window.cancelAnimationFrame(animationFrame);
-    if (travel) releaseScroll();
     root.style.removeProperty("--home-public-footer-height");
     delete root.dataset.homeWheelController;
     delete root.dataset.homeInteractions;

@@ -8,28 +8,38 @@ import { transformHomeHandoff, transformHomeHandoffCss, transformLearnHandoff } 
 
 const source = (path: string) => readFileSync(path, "utf8");
 
-test("Home moves one screen per wheel gesture itself and runs no perpetual layout loop", () => {
+test("Home reads the wheel gesture, lands with the browser's own smooth scroll and runs no perpetual layout loop", () => {
   const interactions = source("components/final-handoff/HandoffInteractions.tsx");
   const homeInteractions = interactions.slice(
     interactions.indexOf("function setupHomeInteractions"),
     interactions.indexOf("export function HandoffInteractions"),
   );
   assert.match(interactions, /addEventListener\("wheel", onWheel, \{ passive: false \}\)/);
-  assert.match(homeInteractions, /const onWheel[\s\S]*event\.preventDefault\(\)[\s\S]*readWheelIntent\(event, window\.performance\.now\(\)\)[\s\S]*beginTravel\(direction\)/);
-  // The landing is ours, not the browser's: one duration and one curve everywhere, with snapping
-  // and smoothing held off only while the page travels.
-  assert.doesNotMatch(homeInteractions, /behavior: "smooth"/);
-  assert.match(homeInteractions, /setProperty\("scroll-snap-type", "none", "important"\)[\s\S]*setProperty\("scroll-behavior", "auto", "important"\)/);
-  assert.match(homeInteractions, /removeProperty\("scroll-snap-type"\)[\s\S]*removeProperty\("scroll-behavior"\)/);
-  assert.match(homeInteractions, /Math\.abs\(window\.scrollY - travel\.last\) > 2/);
+  assert.match(homeInteractions, /const onWheel[\s\S]*event\.preventDefault\(\)[\s\S]*readWheelIntent\(event, now\)[\s\S]*beginTravel\(direction\)/);
+  // Founder, 11 Oct 2026: the landing has to be perfectly smooth. A page moved from the main
+  // thread frame by frame froze whenever that thread was busy; the browser's own smooth
+  // scroll does not. So nothing here animates the scroll position or holds snapping off.
+  assert.match(homeInteractions, /window\.scrollTo\(\{ behavior: "smooth", top: to \}\)/);
+  assert.doesNotMatch(homeInteractions, /window\.scrollTo\(0,|setProperty\("scroll-(?:snap-type|behavior)"|advanceTravel/);
+  assert.match(homeInteractions, /addEventListener\("scroll", settleTravel, \{ passive: true \}\)/);
   assert.doesNotMatch(homeInteractions, /setTimeout|setInterval|scroll-snap-stop:\s*always/);
   assert.doesNotMatch(homeInteractions, /requestAnimationFrame\(tick\)|requestAnimationFrame\(runFrame\)[\s\S]*requestAnimationFrame\(runFrame\)/);
   assert.match(interactions, /addEventListener\("scroll", onScroll, \{ passive: true \}\)/);
   assert.match(interactions, /new window\.ResizeObserver\(onResize\)/);
   assert.match(interactions, /geometryDirty[\s\S]*measureStack\(\)/);
   assert.match(interactions, /measureCanonicalDestinations\(\)/);
-  assert.match(interactions, /advanceTravel\(\);\s*if \(stackDirty\)/);
-  assert.match(interactions, /if \(travel \|\| springsAreMoving\(\)\) scheduleFrame\(\)/);
+  assert.match(interactions, /if \(springsAreMoving\(\)\) scheduleFrame\(\)/);
+  // The first chapter is held by sticky positioning while it opens, so the script scales it
+  // and never has to chase the browser's scroll with a translate.
+  assert.match(homeInteractions, /open: anchorTop \?\? stackTop \+ flow \+ marginTop,\s*pinned: marginTop < 0/);
+  assert.match(homeInteractions, /\$\{pinned \? "" : `translateY\(\$\{-raw\}px\) `\}scale\(/);
+  // Where the browser can tie an animation to the scroll, it scales the chapter too, with the
+  // script's own curve; the script then leaves the transform alone.
+  assert.match(homeInteractions, /if \(pinned && scrollDrivenChapter\) \{[^}]*removeProperty\("transform"\)/);
+  const css = transformHomeHandoffCss(generatedPages.home.css);
+  assert.match(css, /@media \(min-width: 761px\) \{\s*\[data-handoff-page="home"\]\[data-home-interactions="ready"\] \[data-home-chapter="01-03"\] \{\s*margin-top: calc\(-100svh - 1px\) !important;\s*margin-bottom: 100svh !important;/);
+  assert.match(css, /@supports \(animation-timeline: view\(\)\) \{\s*@media \(min-width: 761px\) and \(prefers-reduced-motion: no-preference\)[\s\S]*view-timeline: --home-chapters block;[\s\S]*animation-timeline: --home-chapters;\s*animation-range: contain 0% contain 33\.3333%;/);
+  assert.match(css, /@keyframes home-chapter-grow \{\s*from \{ scale: 0\.24; animation-timing-function: cubic-bezier\(0\.333333, 0, 0\.666667, 1\); \}\s*to \{ scale: 1; \}/);
 });
 
 // Wheel streams as a browser reports them: a swipe ramps up under the fingers, then macOS

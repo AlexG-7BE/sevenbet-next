@@ -4,7 +4,7 @@
 
 **Approved for bounded Draft-PR and Preview implementation on 2026-08-18; Founder native-snap refinements, sequential-input correction and final public-site polish addendum approved on 2026-08-19.** Authority is the supplied `HOME-PERFORMANCE-MOTION-POLISH-01` and `B4GAMBLE — FINAL SITE POLISH / PRODUCT FREEZE` Founder workstream instructions for existing Draft PR #77. This RFC authorises no merge, Production deployment, Production configuration or data change.
 
-> **Wheel controller replaced on 11 October 2026** by Founder instruction: see [HOME-WHEEL-GESTURE-2026-10-11](../07_Decisions/HOME-WHEEL-GESTURE-2026-10-11.md). The 140ms momentum grouping and the native smooth scroll described below are history; one screen per gesture, the canonical order and the native scrollbar and keyboard stand.
+> **Wheel controller replaced on 11 October 2026** by Founder instruction: see [HOME-WHEEL-GESTURE-2026-10-11](../07_Decisions/HOME-WHEEL-GESTURE-2026-10-11.md). The 140ms momentum grouping described below is history; one screen per gesture, the canonical order, the native smooth scroll and the native scrollbar and keyboard stand.
 
 ## Decision
 

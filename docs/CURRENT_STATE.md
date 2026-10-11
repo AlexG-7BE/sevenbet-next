@@ -30,9 +30,12 @@ changes except how the wheel and the trackpad move it.
   has moved a screen moves another only when it goes silent, turns round, or
   slows down and speeds up again. Inertia never adds a screen, and a swipe made
   over live inertia is heard at once.
-- **The landing is ours.** 750ms for a full screen, eased in and out, the same
-  in every browser, with the chapter stack drawn in the same frame. Native snap
-  and smooth scrolling are held off on `<html>` only while the page travels.
+- **The landing is the browser's own smooth scroll.** It runs off the main
+  thread, so a busy page cannot stall it. A script-driven 750ms landing was
+  built first and rejected as rough: it froze for 50–150ms in most landings.
+  The first chapter is now held by sticky positioning while it opens, and
+  where the browser supports scroll-driven animations its growth is one of
+  them; elsewhere the script scales it.
 - **The language menu scrolls.** On Home the controller cancelled the wheel
   over the header's language list as well, so the list could not be scrolled
   and the page moved behind it. A list that scrolls on its own keeps its wheel.
@@ -42,9 +45,10 @@ changes except how the wheel and the trackpad move it.
 Tests: `tests/home-performance.test.ts` (wheel streams replayed through the
 reader) and `tests/home-performance-browser.spec.ts`.
 
-**PROPOSED — NOT YET LIVE** until merged and deployed. The thresholds were
-tuned on modelled trackpad streams; the Founder confirms the feel by hand on
-the Preview.
+**PROPOSED — NOT YET LIVE** until merged and deployed. The Founder compared
+this with a free-scrolling variant (PR #477, closed) and kept paging. The
+thresholds were tuned on modelled trackpad streams; he confirms the feel by
+hand.
 
 ## One sign-in form and a shorter start — in review
 
