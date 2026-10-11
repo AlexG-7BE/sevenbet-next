@@ -127,21 +127,23 @@ test("Article 27 particulars publish the confirmed EU and UK representation", ()
   assert.match(csp, /img-src 'self' data: blob: https:/);
 });
 
-test("Programme start asks three required checks once and repeats none of them", () => {
-  // Founder decision, 25 Sep 2026: 18+, Terms/Privacy and the explicit consent to process the
-  // story are three required checks on the access screen. Intake and registration do not repeat
-  // the consent or its notices.
+test("Programme start asks one consent check under the access line and repeats nothing", () => {
+  // Founder decisions, 25 Sep and 11 Oct 2026: the explicit consent to process the story is the
+  // one required check on the access screen. Entering under the line is the 18+, Terms and
+  // Privacy affirmation; it replaced two ticks. Intake and registration repeat neither.
   const component = source("components/programme/ProgramAiFinalPresentation.tsx");
   const experience = source("components/programme/ProgramAiExperience.tsx");
   const consent = "I explicitly consent to B4GAMBLE processing what I type or say";
-  const adult = component.indexOf("I confirm I am 18 or over");
-  const legal = component.indexOf("I agree to the Terms and confirm I have read the Privacy Notice");
-  const accessConsent = component.indexOf(consent);
-  assert.ok(adult >= 0 && legal > adult && accessConsent > legal);
-  assert.equal(component.match(/I confirm I am 18 or over/g)?.length, 1);
-  assert.equal(component.match(/I agree to the Terms and confirm I have read the Privacy Notice/g)?.length, 1);
-  assert.match(component, /disabled=\{busy \|\| !adult \|\| !legal \|\| !processing\}/);
-  assert.match(component, /Three checks before you begin\./);
+  const line = "By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.";
+  const access = component.slice(component.indexOf("export function ProgrammeAccessScreen"), component.indexOf("function MicrophoneIcon"));
+  assert.equal(access.match(/type="checkbox"/g)?.length, 1);
+  assert.ok(access.indexOf(consent) >= 0 && access.indexOf(line) > access.indexOf(consent));
+  assert.equal(component.split(line).length - 1, 1, "the line is not repeated on intake or registration");
+  assert.doesNotMatch(component, /I confirm I am 18 or over|I agree to the Terms and confirm I have read the Privacy Notice/);
+  assert.match(component, /disabled=\{busy \|\| !processing\}/);
+  assert.match(component, /One check before you begin\./);
+  // The server still receives the three affirmed facts and both document versions.
+  assert.match(experience, /adultConfirmed: true,\s+termsAccepted: true,\s+privacyAcknowledged: true,\s+termsVersion: PROGRAMME_TERMS_VERSION,\s+privacyVersion: PROGRAMME_PRIVACY_VERSION,/);
   const intake = component.slice(component.indexOf("export function Mission01IntakeScreen"), component.indexOf("export function ProgrammeSupportScreen"));
   assert.doesNotMatch(intake, /consentGiven|type="checkbox"|I confirm I am 18 or over/);
   assert.match(experience, /persist\(\{ \.\.\.emptyLocalState, phase: "intake", processingConsented: true \}, journey\);/);

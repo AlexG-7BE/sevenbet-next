@@ -106,9 +106,7 @@ async function installAnonymousProgramme(page: Page) {
 
 async function reachRegistration(page: Page) {
   await open(page, "/program");
-  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
-  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
-  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
   await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await expect(page.getByRole("button", { name: "Start voice input" })).toBeVisible();
@@ -170,8 +168,9 @@ test("canonical Programme registration keeps access proof on email auth and fail
 
   const google = page.getByRole("button", { name: /Continue with Google/ });
   await expect(google).toHaveCount(expectGoogle ? 1 : 0);
-  await page.getByRole("button", { name: "Use email instead" }).click();
   await expect(page.getByRole("checkbox", { name: /Email me occasional B4GAMBLE product/ })).toHaveCount(1);
+  // The password field arrives with the first typed character of the email.
+  await expect(page.getByLabel("Password")).toHaveCount(0);
 
   let proofHeader: string | null = null;
   let journeyHeader: string | null = null;
@@ -182,8 +181,8 @@ test("canonical Programme registration keeps access proof on email auth and fail
   });
   await page.getByRole("textbox", { name: "Email", exact: true }).fill("proof-check@example.test");
   await page.getByLabel("Password").fill("test-password-1234");
-  await page.getByRole("button", { name: "Create account with email" }).click();
-  await expect(page.locator('p[role="alert"]')).toContainText("could not be created");
+  await page.getByRole("button", { name: "Continue with email" }).click();
+  await expect(page.locator('p[role="alert"]')).toHaveText("Account access failed");
   expect(proofHeader).toBe("pa1.browser-test.browser-signature");
   expect(journeyHeader).toMatch(/^[0-9a-f-]{36}$/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
@@ -199,12 +198,6 @@ test("registration asks the optional email opt-in once for Google and email sign
   const optIn = page.getByRole("checkbox", { name: /Email me occasional B4GAMBLE product/ });
   await expect(optIn).toHaveCount(1);
   await expect(optIn).not.toBeChecked();
-  await page.getByRole("button", { name: "Use email instead" }).click();
-  await expect(optIn).toHaveCount(1);
-  await page.getByRole("button", { name: "Already have an account? Sign in" }).click();
-  await expect(optIn).toHaveCount(0);
-  await page.getByRole("button", { name: "Need an account? Create one" }).click();
-  await expect(optIn).toHaveCount(1);
   expect(await optIn.evaluate((element) => Number.parseFloat(getComputedStyle(element.closest("label")!.querySelector("span")!).fontSize))).toBeGreaterThanOrEqual(14);
 
   let signUpBody: Record<string, unknown> | null = null;
@@ -214,14 +207,13 @@ test("registration asks the optional email opt-in once for Google and email sign
   });
   await page.getByRole("textbox", { name: "Email", exact: true }).fill("opt-in-check@example.test");
   await page.getByLabel("Password").fill("test-password-1234");
-  await page.getByRole("button", { name: "Create account with email" }).click();
-  await expect(page.locator('p[role="alert"]')).toContainText("could not be created");
+  await page.getByRole("button", { name: "Continue with email" }).click();
+  await expect(page.locator('p[role="alert"]')).toHaveText("Account access failed");
   // The confirmation link in the sign-up email lands back on the Programme.
   expect(signUpBody).toMatchObject({ email: "opt-in-check@example.test", callbackURL: "/program" });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 
   if (expectGoogle) {
-    await page.getByRole("button", { name: "Hide email option" }).click();
     await optIn.check();
     await page.route("**/api/auth/sign-in/social", (route) => route.fulfill({
       status: 200,
@@ -337,12 +329,10 @@ test("canonical access screen reports invalid authority safely", async ({ page }
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: value }) });
   });
   await open(page, "/program");
-  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
-  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   const alert = page.locator('p[role="alert"]');
-  await expect(alert).toHaveText("We could not verify Programme access. Check all three boxes and try again.");
+  await expect(alert).toHaveText("We could not verify Programme access. Try again.");
   await expect(alert).not.toContainText(/authority|continuation|proof/i);
 });
 
@@ -361,8 +351,6 @@ test("canonical access screen distinguishes a disabled runtime from session crea
   });
 
   await open(page, "/program");
-  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
-  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   const enter = page.getByRole("button", { name: "Enter Mission 01" });
   await enter.click();
@@ -401,25 +389,23 @@ test("Google cancellation without a provider code still keeps recovery actions v
   await open(page, "/program?auth=google-error");
   await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toHaveText("Google account access was not completed. You can retry or use email instead.");
-  await expect(page.getByRole("button", { name: "Use email instead" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with email" })).toBeVisible();
 });
 
-test("Programme Google remains the account-continuation action after changing the email form mode", async ({ page }) => {
+test("Programme Google stays the account-continuation action beside the email step", async ({ page }) => {
   test.skip(!expectGoogle, "Google is intentionally unavailable without complete server credentials");
   await installAnonymousProgramme(page);
   await reachRegistration(page);
 
-  await page.getByRole("button", { name: "Use email instead" }).click();
-  await page.getByRole("button", { name: "Already have an account? Sign in" }).click();
-  await page.getByRole("button", { name: "Hide email option" }).click();
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill("someone@example.test");
 
   let requestSignUp: boolean | undefined;
   await page.route("**/api/auth/sign-in/social", (route) => {
     requestSignUp = (route.request().postDataJSON() as { requestSignUp?: boolean }).requestSignUp;
     return route.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ code: "TEST_STOP" }) });
   });
-  await page.getByRole("button", { name: "Continue with Google — save your plan" }).click();
-  await expect(page.locator('p[role="alert"]')).toContainText("Google account access could not be started");
+  await page.getByRole("button", { name: "Continue with Google — save my Starting Point" }).click();
+  await expect(page.locator('p[role="alert"]')).toContainText("Google account access failed");
   expect(requestSignUp).toBe(true);
 });
 
@@ -430,8 +416,8 @@ test("Google Programme, login and recovery controls fit every Founder mobile wid
 
   for (const width of [360, 375, 390, 412, 430]) {
     await page.setViewportSize({ width, height: 844 });
-    const google = page.getByRole("button", { name: "Continue with Google — save your plan" });
-    const email = page.getByRole("button", { name: "Use email instead" });
+    const google = page.getByRole("button", { name: "Continue with Google — save my Starting Point" });
+    const email = page.getByRole("button", { name: "Continue with email" });
     await expect(google).toBeVisible();
     await expect(email).toBeVisible();
     expect(await google.evaluate((element) => {
@@ -522,7 +508,7 @@ test("authenticated partial Mission 01 truthfully re-enters private intake witho
   await expect(page.getByText("1 of 2 actions complete · Short Starting Point", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Finish Mission 01", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "One check before you begin." })).toHaveCount(0);
 });
 
 test("expired access continuation returns to the canonical access screen", async ({ page }) => {
@@ -536,7 +522,7 @@ test("expired access continuation returns to the canonical access screen", async
   }, { journey: journeyId, access: expired });
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await open(page, "/program");
-  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
   // Three required checks, including the explicit consent (Founder decision, 25 Sep 2026).
   await expect(page.getByRole("checkbox")).toHaveCount(3);
   await expect(page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing/ })).not.toBeChecked();
@@ -571,7 +557,7 @@ test("authenticated canonical dashboard logs out into a fresh anonymous access b
   const logout = page.getByRole("button", { name: "Log out of B4GAMBLE" });
   await expect(logout).toBeVisible();
   await logout.click();
-  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
   expect(signOutRequests).toBe(1);
   expect(transitionRequests).toBe(1);
   const storage = await page.evaluate((user) => ({

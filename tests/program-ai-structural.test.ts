@@ -183,20 +183,22 @@ test("access owns the explicit consent and intake adds no age or consent prompt"
 test("Program AI reuses the signed access contract and exposes no anonymous clarification, editor or reward phase", () => {
   const sessionRoute = read("app/api/program/program-ai/session/route.ts");
   assert.match(sessionRoute, /verifyProgrammeAccessHeaders\(request\.headers/);
-  // Founder decision, 25 Sep 2026: three required checks, including the explicit consent.
-  assert.match(frontendRuntime, /Three checks before you begin/);
-  assert.match(frontendRuntime, /htmlFor="programme-legal-acknowledgement"/);
+  // Founder decision, 11 Oct 2026: one required check, the explicit consent; entering under the
+  // line is the 18+, Terms and Privacy affirmation.
+  assert.match(frontendRuntime, /One check before you begin/);
+  assert.match(frontendRuntime, /By continuing, you confirm you are 18\+ and accept the Terms and Privacy Notice\./);
   assert.match(frontendRuntime, /<Link href="\/terms">\{t\("Read Terms"\)\}<\/Link>/);
   assert.match(frontendRuntime, /<Link href="\/privacy">\{t\("Read Privacy Notice"\)\}<\/Link>/);
-  assert.doesNotMatch(frontendRuntime, /<label[^>]*><input checked=\{legal\}[\s\S]*?<\/label>/);
-  assert.equal((frontendRuntime.match(/type="checkbox"/g) || []).length >= 3, true);
-  assert.doesNotMatch(frontendRuntime, /Two checks before you begin|I accept the current|I have read the current/);
+  assert.doesNotMatch(frontendRuntime, /Three checks before you begin|Two checks before you begin|I accept the current|I have read the current/);
   assert.match(frontendRuntime, /onSubmit=\{\(\) => submitTurn\(true\)\}/);
   assert.match(frontend, /clarificationAnswers: \[\]/);
   assert.match(frontend, /prepareClaimForRegistration/);
   assert.match(frontendRuntime, /Your Starting Point is ready/);
   assert.match(frontendRuntime, /Continue with Google — save my Starting Point/);
-  assert.match(frontendRuntime, /Use email instead/);
+  // Founder decision, 11 Oct 2026: one email step creates the account or signs in.
+  assert.match(frontendRuntime, /Continue with email/);
+  assert.match(frontend, /continueWithEmail\(\{ email: input\.email, password: input\.password, expect: googleLinkRecovery \? "existing-only" : "new" \}/);
+  assert.doesNotMatch(frontendRuntime, /Use email instead|Already have an account\? Sign in|Need an account\? Create one/);
   assert.match(frontend, /async function handleGoogle\(input: \{ marketingAllowed: boolean \}\)[\s\S]*requestSignUp: true/);
   assert.doesNotMatch(frontendRuntime, /function (?:ClarificationScreen|CandidateScreen|RewardScreen)/);
   assert.doesNotMatch(frontendRuntime, /phase === "(?:clarification|candidate|reward)"/);
