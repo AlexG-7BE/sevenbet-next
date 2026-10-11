@@ -41,6 +41,7 @@ test("Home reads the wheel gesture, lands with the browser's own smooth scroll a
   assert.doesNotMatch(homeInteractions, /dot\.style\.left/);
   assert.match(homeInteractions, /child\.style\.borderRadius = raw > 0 \? "28px" : "0"/);
   assert.match(interactions, /const HOME_CHAPTER_WAITING_OPACITY = 0\.001;/);
+  assert.match(homeInteractions, /const waiting = raw - distance <= 2 \? String\(HOME_CHAPTER_WAITING_OPACITY\) : "0";/);
   // Where the browser can tie an animation to the scroll, it scales the chapter too, with the
   // script's own curve; the script then leaves the transform alone.
   assert.match(homeInteractions, /if \(pinned && scrollDrivenChapter\) \{[^}]*removeProperty\("transform"\)/);

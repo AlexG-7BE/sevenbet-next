@@ -335,9 +335,11 @@ function setupHomeInteractions(root: HTMLElement) {
           const progress = Math.min(1, Math.max(0, 1 - raw / distance));
           const eased = progress * progress * (3 - 2 * progress);
           const opening = raw > 0 && raw < distance;
-          // Waiting, it is as good as invisible but still drawn: at exactly 0 the browser drops
-          // its photo and rasterises all of it again in the frames where it starts to appear.
-          child.style.setProperty("opacity", opening ? Math.max(HOME_CHAPTER_WAITING_OPACITY, Math.min(1, progress * 10)).toFixed(3) : raw > 0 ? String(HOME_CHAPTER_WAITING_OPACITY) : "1", "important");
+          // At rest on the screen before it, it is as good as invisible but drawn: at exactly 0
+          // the browser drops its photo and rasterises all of it again in the frames where it
+          // starts to appear. Further away it stays at 0, so that work is not done mid-landing.
+          const waiting = raw - distance <= 2 ? String(HOME_CHAPTER_WAITING_OPACITY) : "0";
+          child.style.setProperty("opacity", opening ? Math.max(HOME_CHAPTER_WAITING_OPACITY, Math.min(1, progress * 10)).toFixed(3) : raw > 0 ? waiting : "1", "important");
           if (pinned && scrollDrivenChapter) {
             // The browser scales it with the scroll, off the main thread (see transformHomeHandoffCss).
             child.style.removeProperty("transform");
