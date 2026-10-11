@@ -18,7 +18,7 @@ Repository root for this delta: the `chore/remove-programme-voice` worktree of `
 - **DETECTED:** the Mission 01 turn accepts `inputMode: "text"` only. `programmeRateLimitPolicies` has seven scopes and no transcription scope. `next.config.mjs` sets one `Permissions-Policy` rule, deny-all, for every route.
 - **DETECTED:** no migration was added. The `ProgrammeRuntimeRateLimitBucket` scope check of migration `0019` still lists `PROGRAMME_TRANSCRIPTION_SESSION` and `PROGRAMME_TRANSCRIPTION_IP`.
 - **DETECTED:** the annotated tag `archive/programme-voice-2026-10-11` points at `53ee0da0`, the last `main` commit that contains the voice client and server.
-- **DETECTED (`vercel env ls production`, names only, 11 October 2026):** Production still has `PROGRAM_AI_TRANSCRIPTION_MODEL` and has no `PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL`. The application no longer reads either. **UNKNOWN:** Preview and Development values.
+- **DETECTED (`vercel env ls`, names only, every environment, 11 October 2026):** no variable with `TRANSCRIPTION` in its name is set. `PROGRAM_AI_TRANSCRIPTION_MODEL` had been set in Production and in two Preview entries bound to deleted branches; all three were removed that day on the Founder's instruction. `PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL` was not set. The application reads neither.
 - The voice, composer, recorder and transcription statements in the sections below describe the system as it was on their dates.
 
 ## RFC-056 unified-composer correction candidate — 2026-09-26
