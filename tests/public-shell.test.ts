@@ -451,7 +451,7 @@ test("every link that leaves the page starts the top progress bar at once and ho
 
 test("pages open instantly: destinations prefetch ahead of the click, never an outbound or tracked route", async () => {
   // Founder decision 4 Oct 2026: a page change takes 0.1–0.3 s; only a page already in the browser opens that fast.
-  const { currentPageSettled, INTENT_PREFETCH_SELECTOR, prefetchTarget, PRIMARY_PREFETCH_SELECTOR } = await import("../components/public-shell/navigation-prefetch");
+  const { currentPageSettled, INTENT_PREFETCH_SELECTOR, leadsIntoProgramme, opensWithDocumentLoad, prefetchTarget, PRIMARY_PREFETCH_SELECTOR } = await import("../components/public-shell/navigation-prefetch");
   const here = "https://b4gamble.com/en/learn/casino-safety/choosing-an-online-casino";
   assert.equal(prefetchTarget("/en/casinos", here), "/en/casinos");
   assert.equal(prefetchTarget("/en/learn?category=payments", here), "/en/learn?category=payments");
@@ -460,10 +460,21 @@ test("pages open instantly: destinations prefetch ahead of the click, never an o
   }
   assert.equal(prefetchTarget(here, here), null, "the current page");
   assert.equal(prefetchTarget("https://partner.example/offer", here), null, "another site");
-  assert.equal(PRIMARY_PREFETCH_SELECTOR, "a[data-navigation-href]");
-  for (const selector of ["a[data-navigation-href]", "a[data-footer-navigation-href]", "a[data-learn-offer-bridge-link]", "a[data-learn-category]", "a[data-intent-prefetch]"]) {
+  // Founder decision 11 Oct 2026: the Programme opens without a document load, so it loads ahead too.
+  assert.equal(PRIMARY_PREFETCH_SELECTOR, "a[data-navigation-href], a[data-programme-entry]");
+  for (const selector of ["a[data-navigation-href]", "a[data-programme-entry]", "a[data-footer-navigation-href]", "a[data-learn-offer-bridge-link]", "a[data-learn-category]", "a[data-intent-prefetch]"]) {
     assert.ok(INTENT_PREFETCH_SELECTOR.includes(selector), selector);
   }
+  assert.equal(prefetchTarget("/program", here), "/program");
+  assert.equal(prefetchTarget("/de/program?entry=start", here), "/de/program?entry=start");
+  assert.equal(leadsIntoProgramme("/program?entry=start", here), true, "any link into the Programme loads on intent");
+  assert.equal(leadsIntoProgramme("/sv/program", here), true);
+  assert.equal(leadsIntoProgramme("/en/learn", here), false);
+  assert.equal(leadsIntoProgramme("/en/learn", "https://b4gamble.com/program"), false, "the Programme itself prefetches nothing");
+  assert.equal(leadsIntoProgramme("https://partner.example/program", here), false);
+  assert.equal(opensWithDocumentLoad("/program", here, "en-GB"), false);
+  assert.equal(opensWithDocumentLoad("/program", "https://b4gamble.com/de/learn", "de-DE"), true, "a link that loads a document is not prefetched");
+  assert.equal(opensWithDocumentLoad("/en/casinos", here, "en-GB"), false);
   const documentWith = (readyState: string, busy: boolean) => ({ readyState, querySelector: () => (busy ? {} : null) }) as unknown as Document;
   assert.equal(currentPageSettled(documentWith("complete", false)), true);
   assert.equal(currentPageSettled(documentWith("interactive", false)), false, "the current page is still loading");
@@ -476,6 +487,10 @@ test("pages open instantly: destinations prefetch ahead of the click, never an o
   assert.match(feedback, /event\.pointerType !== "mouse"/, "a finger scrolling across links is not hover intent");
   assert.match(feedback, /document\.addEventListener\("touchstart", onTouchStart, \{ passive: true \}\)/);
   assert.match(feedback, /disclosure\.matches\("\[data-public-mobile-disclosure\]"\)/, "the drawer loads its links as it opens");
+  assert.match(feedback, /opensWithDocumentLoad\(anchor\.href, window\.location\.href, document\.documentElement\.lang\)/, "nothing is fetched for a link that loads a document");
+  assert.match(feedback, /leadsIntoProgramme\(anchor\.href, window\.location\.href\)/);
+  const programmeAction = readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8");
+  assert.match(programmeAction, /data-programme-entry=\{isProgrammeHref \? "" : undefined\} href=\{href\} prefetch=\{false\}/, "the header and drawer Programme button is a primary destination");
   assert.match(readFileSync("components/analytics/TrackedReviewLink.tsx", "utf8"), /data-intent-prefetch=""/);
   // Links themselves keep prefetch={false}: no viewport fan-out across lists of casinos.
   assert.match(readFileSync("components/analytics/TrackedReviewLink.tsx", "utf8"), /prefetch=\{false\}/);

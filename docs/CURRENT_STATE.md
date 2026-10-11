@@ -12,6 +12,34 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## The Programme opens without a document load — in review
+
+**Founder choice, 11 October 2026** ("Только вход + подгрузка"). Decision
+record:
+[PROGRAMME-ENTRY-WITHOUT-RELOAD-2026-10-11](07_Decisions/PROGRAMME-ENTRY-WITHOUT-RELOAD-2026-10-11.md).
+
+- **Into the Programme: a client transition.** A link from a public page to
+  the Programme in the page's own language no longer loads a document. The
+  rule is `programmeCrossingNeedsDocument` in `lib/programme/presentation.ts`;
+  `ProgrammeDocumentBoundary` (formerly `ProgrammeDocumentPolicyBoundary`)
+  applies it.
+- **Fetched ahead of the tap.** The header and drawer Programme button is a
+  primary destination of the public shell (`a[data-programme-entry]`); every
+  other link into the Programme loads on hover, touch or focus.
+- **Out of the Programme: a document load, as before.** Two things depend on
+  it: `<html lang>`, which the root layout sets once per document (the
+  Programme's menu can lead to a page in another language), and the Home and
+  Learn stylesheets, which the browser blocks on a client arrival.
+- **The automatic cookie choice stays out of the Programme.** It lives in the
+  root layout, which a client transition keeps mounted; one that opened by
+  itself on a public page is not shown in the Programme, Help or sign-in.
+- **Known defect, not changed here:** on any client arrival Home and the Learn
+  hub lose their inline stylesheet (the `<style>` carries the nonce of the
+  request that rendered it, not the document's). On a phone Home then shows
+  the full-screen pinned chapters instead of the compact cards; on desktop it
+  loses its paged scroll. The Founder approved a separate repair.
+- **Database, Programme rules, rewards and consent are unchanged.**
+
 ## Programme voice code set aside — in review
 
 **Founder decisions, 11 October 2026:** Mission 01 takes picked answers only,
@@ -33,8 +61,8 @@ Part 3.
   `PROGRAMME_TRANSCRIPTION_SESSION` and `PROGRAMME_TRANSCRIPTION_IP`.
 - **Microphone denied everywhere.** The Programme-only
   `Permissions-Policy: microphone=(self)` is gone; every page sends the one
-  deny-all policy. Crossing between public pages and the Programme still
-  loads a fresh document.
+  deny-all policy. Leaving the Programme still loads a fresh document;
+  entering it no longer does (see the section above).
 - **Mission 01 input is text only.** The turn route accepts
   `inputMode: "text"` (the picked answers) and refuses anything else.
 - **Public wording.** The Privacy Notice, the Terms and the FAQ answer "Do I
