@@ -18,3 +18,29 @@ export function pendingClaimIsFresh(claimReadyAt: unknown, maxAgeMs: number, now
     && claimReadyAt <= now
     && now - claimReadyAt < maxAgeMs;
 }
+
+type ClaimFetcher = (input: string, init: RequestInit) => Promise<Pick<Response, "ok">>;
+
+/**
+ * Tells the server the Starting Point is ready and asks it for the pending
+ * claim. Log in uses it too, so a person who already answered is not sent back
+ * to the Programme to press the same button again (Founder, 11 Oct 2026).
+ * `accessHeaders` is the current journey's mutation evidence.
+ */
+export async function makePendingClaim(
+  accessHeaders: Record<string, string>,
+  startingPoint: unknown,
+  fetcher: ClaimFetcher = fetch,
+) {
+  const post = (path: string, body?: string) => fetcher(path, {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: { ...(body ? { "content-type": "application/json" } : {}), ...accessHeaders },
+    ...(body ? { body } : {}),
+  });
+  if (!(await post("/api/program/program-ai/starting-point", JSON.stringify(startingPoint))).ok) {
+    throw new Error("STARTING_POINT_NOT_READY");
+  }
+  if (!(await post("/api/program/program-ai/claim")).ok) throw new Error("PENDING_CLAIM_NOT_MADE");
+}

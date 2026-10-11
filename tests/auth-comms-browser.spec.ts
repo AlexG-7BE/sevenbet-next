@@ -558,6 +558,83 @@ test("authenticated partial Mission 01 truthfully re-enters the ready answers wi
   await expect(page.getByRole("heading", { name: "Mission 01 — Map the moment" })).toBeVisible();
 });
 
+// Founder, 11 Oct 2026: pressing Google on Log in sent a person who had already answered back to
+// the Programme screen to press the same button again. It now starts Google at once and the
+// Starting Point goes with the account.
+test("Google on Log in starts at once for a person who already answered, with the Starting Point carried", async ({ page }) => {
+  test.skip(!expectGoogle, "Google is intentionally unavailable without complete server credentials");
+  const journeyId = "6c2f1e0a-9b3d-4f7c-8a15-0e4d2b7c9f31";
+  await installAnonymousProgramme(page);
+  await page.addInitScript(({ journey, access, startingPoint }) => {
+    // Seed once: the script runs again on the page Google is "left" for.
+    if (sessionStorage.getItem("test.answered-seeded")) return;
+    sessionStorage.setItem("test.answered-seeded", "1");
+    sessionStorage.setItem("sevenbet.programme.journey.v2", journey);
+    sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify(access));
+    sessionStorage.setItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`, JSON.stringify({
+      programAi: { phase: "registration", situation: startingPoint.startingPoint, answers: ["I chase my losses"], candidate: startingPoint },
+    }));
+  }, { journey: journeyId, access: authority(journeyId), startingPoint: candidate });
+  const programmeCalls: string[] = [];
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (request.method() === "POST" && /program-ai\/(starting-point|claim)$/.test(path)) programmeCalls.push(path);
+  });
+  const visited: string[] = [];
+  page.on("framenavigated", (frame) => { if (frame === page.mainFrame()) visited.push(new URL(frame.url()).pathname); });
+  let social: Record<string, unknown> | null = null;
+  await page.route("**/api/auth/sign-in/social", (route) => {
+    social = route.request().postDataJSON() as Record<string, unknown>;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ url: `${baseUrl}/robots.txt`, redirect: true }) });
+  });
+
+  await open(page, "/login");
+  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await page.waitForURL(/robots\.txt/);
+
+  // One press: Google was started from Log in, and the Programme screen was never shown first.
+  expect(visited.filter((path) => path.endsWith("/program"))).toEqual([]);
+  expect(social).toMatchObject({ provider: "google", requestSignUp: true, callbackURL: "/program?auth=google-return" });
+  // The claim was made behind the press, and the journey is marked for the Programme page to redeem.
+  expect(programmeCalls).toEqual(["/api/program/program-ai/starting-point", "/api/program/program-ai/claim"]);
+  const carried = await page.evaluate((journey) => ({
+    marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
+    content: sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`),
+  }), journeyId);
+  expect(carried.marker).toContain(journeyId);
+  expect(JSON.parse(carried.content ?? "{}").programAi).toMatchObject({ candidate, answers: ["I chase my losses"] });
+  expect(typeof JSON.parse(carried.content ?? "{}").programAi.claimReadyAt).toBe("number");
+});
+
+test("answers picked before the account existed are shown picked after sign-in, not asked again", async ({ page }) => {
+  const userId = "kept-answers-user";
+  const journeyId = "3a9d7c41-5e2b-4b8f-9c06-7f1e2d3a4b5c";
+  await page.addInitScript(({ journey, access }) => {
+    if (sessionStorage.getItem("test.kept-answers-seeded")) return;
+    sessionStorage.setItem("test.kept-answers-seeded", "1");
+    sessionStorage.setItem("sevenbet.programme.journey.v2", journey);
+    sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify(access));
+    sessionStorage.setItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`, JSON.stringify({
+      programAi: { phase: "registration", situation: "What feels hardest right now? I chase my losses. Something else.", answers: ["I chase my losses", "Something else"], candidate: null },
+    }));
+  }, { journey: journeyId, access: authority(journeyId) });
+  await installAuthenticatedSession(page, userId);
+  await page.route("**/api/program/program-ai/home", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ ok: true, home: { ...partialMissionOneHomeFixture(), primaryAction: "start-mission-one" } }),
+  }));
+  await open(page, "/program");
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "I chase my losses" })).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "Something else" })).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "I spend more than I plan" })).not.toBeChecked();
+  // One press is left: the consent is still given by the button.
+  await expect(page.getByRole("button", { name: "Agree and continue" })).toBeEnabled();
+  // The earlier journey's content is not left behind in the tab.
+  expect(await page.evaluate((journey) => sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`), journeyId)).toBeNull();
+});
+
 test("expired access continuation returns to the canonical access screen", async ({ page }) => {
   const journeyId = "2a5dfb88-a766-4ac1-9b1b-b8e5eac1aef4";
   const expired = authority(journeyId);

@@ -190,6 +190,11 @@ record:
   access proof as the Programme. Google there uses the Programme callback
   pair and an account-first return, so the server rule that a `/login`
   callback cannot create a social account is unchanged.
+- **Log in carries what the tab already holds.** A person who answered and
+  then opens `/login` is not sent back to the Programme screen: Google starts
+  at once and email signs in first, the pending claim is made from `/login`,
+  and the Programme page redeems it. Answers without a Starting Point are
+  shown picked after sign-in.
 - **A line replaces two ticks.** "By continuing, you confirm you are 18+ and
   accept the Terms and Privacy Notice." stands on the Programme start screen,
   on the screen that opens the plan of an account that has not affirmed access

@@ -125,7 +125,8 @@ function restoredAnonymousState(value: ProgramAiLocalState | null | undefined): 
   if (!value) return emptyLocalState;
   const legacyPhase = String(value.phase);
   const answers = Array.isArray(value.answers) ? pickedReadyAnswers(value.answers) : [];
-  const accountFirst = value.accountFirst === true && !value.candidate && !answers.length;
+  // Log in may hand over answers picked in this tab together with the account-first flag.
+  const accountFirst = value.accountFirst === true && !value.candidate;
   const phase = ["clarification", "candidate", "reward", "registration"].includes(legacyPhase)
     // Registration shows the picked answers' lines, or finishes a Google return that began on Log in.
     ? value.candidate || answers.length || accountFirst ? "registration" : "access"
@@ -236,8 +237,13 @@ export function ProgramAiExperience({
   // Founder decision, 11 Oct 2026: an account that has not answered yet opens on the answers, not
   // on an empty plan with a Start button. The journey's session is opened when the answers are sent.
   const startMissionOneForAccount = useCallback(() => {
+    // Answers picked in this tab before the account existed are shown picked, not asked again.
+    const previous = anonymousProgrammeSubject(window.sessionStorage);
+    const kept = loadProgrammeSubjectContent<{ programAi: ProgramAiLocalState }>(window.sessionStorage, previous).programAi?.answers;
+    const picked = Array.isArray(kept) ? pickedReadyAnswers(kept) : [];
+    clearProgrammeSubjectContent(window.sessionStorage, previous);
     const journey = rotateAnonymousProgrammeSubject(window.sessionStorage);
-    const next: ProgramAiLocalState = { ...emptyLocalState, phase: "intake" };
+    const next: ProgramAiLocalState = { ...emptyLocalState, phase: "intake", ...(picked.length ? { answers: picked } : {}) };
     personalisationStartedAt.current = null;
     accumulatedAiLatencyMs.current = 0;
     preparation.current = null;
@@ -275,9 +281,10 @@ export function ProgramAiExperience({
     const payload = await homeResponse.json() as ApiPayload<{ home: ProgramAiHome }>;
     if (!homeResponse.ok || !payload.home) throw new Error("PROGRAMME_HOME_UNAVAILABLE");
     clearProgrammeOAuthClaimMarker(window.sessionStorage);
-    clearProgrammeSubjectContent(window.sessionStorage, journey);
     setSubject(userProgrammeSubject(userId));
+    // Reads any answers kept for this journey before its content is cleared.
     showPlanOrAnswers(payload.home);
+    clearProgrammeSubjectContent(window.sessionStorage, journey);
   }, [showPlanOrAnswers]);
 
   // The opt-in left ticked before leaving for Google is recorded once the account exists, through
@@ -754,10 +761,12 @@ export function ProgramAiExperience({
   // Mission 01 is the start screen. A first visit also carries the 18+ / Terms / Privacy line; an
   // account already affirmed it, and may open its plan instead of answering now.
   const signedIn = Boolean(session?.user.id);
-  const startScreen = () => renderPhase(<ProgrammeStartScreen accessLine={!signedIn} error={error} locale={locale} onAgree={agreeAndContinue} onOpenPlan={signedIn && home ? openPlanInstead : undefined} />, { entry: !signedIn });
+  const startScreen = () => renderPhase(<ProgrammeStartScreen accessLine={!signedIn} error={error} initialAnswers={phase === "intake" ? local.answers : undefined} locale={locale} onAgree={agreeAndContinue} onOpenPlan={signedIn && home ? openPlanInstead : undefined} />, { entry: !signedIn });
   if (phase === "access" && subject?.kind === "user") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccountAccess} />, { entry: true });
   if (phase === "access" || phase === "intake") return startScreen();
   if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} locale={locale} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
+  // A Google sign-up that began on Log in is being finished: nothing to press on this screen.
+  if (phase === "registration" && signedIn && local.accountFirst && !googleLinkRecovery && !error) return renderPhase(<ProgrammeLoadingScreen locale={locale} />);
   if (phase === "registration" && (local.candidate || local.accountFirst || local.answers?.length)) return renderPhase(<StartingPointReadyScreen answers={local.answers ?? []} authenticated={signedIn} fallbackFocus={local.candidate?.desiredChange ?? null} busy={busy} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
