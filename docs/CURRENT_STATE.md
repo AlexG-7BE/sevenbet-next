@@ -40,7 +40,7 @@ record:
   loses its paged scroll. The Founder approved a separate repair.
 - **Database, Programme rules, rewards and consent are unchanged.**
 
-## Programme voice code set aside — in review
+## Programme voice code set aside — live 11 October 2026
 
 **Founder decisions, 11 October 2026:** Mission 01 takes picked answers only,
 and the unused voice code leaves the working project while staying easy to
@@ -75,14 +75,22 @@ Part 3.
   rate-limit table's scope check still lists the two voice buckets; nothing
   writes them.
 - **Hosting.** `PROGRAM_AI_TRANSCRIPTION_MODEL` and
-  `PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL` are no longer read. `DETECTED` on
-  11 October 2026 (`vercel env ls production`, names only): Production still
-  has `PROGRAM_AI_TRANSCRIPTION_MODEL` and has no
-  `PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL`. The leftover variable is ignored;
-  deleting it is an optional clean-up that waits for the Founder. Preview and
-  Development were not inspected.
+  `PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL` are no longer read. The Founder
+  ordered the leftover deleted on 11 October 2026 ("удали… что бы не
+  мешала"): `PROGRAM_AI_TRANSCRIPTION_MODEL` was removed from Production and
+  from two Preview entries bound to branches that no longer exist.
+  `DETECTED` afterwards (`vercel env ls`, names only, every environment): no
+  variable with `TRANSCRIPTION` in its name remains.
 - **RFC-056** stays `ACTIVE` for Fast text generation; its voice sections are
   retired. RFC-023's voice path has no runtime.
+- **Production checked from outside Kazakhstan** after
+  AlexG-7BE/sevenbet-next#480 merged (`60a40b9d`, 11 October 2026):
+  `/program`, `/de/program` and `/sv/program` answer 200 with the deny-all
+  `Permissions-Policy`; both retired voice addresses answer 404 (403 without
+  the age header); `/privacy` and `/terms` show "Updated 11 October 2026"
+  with no voice wording; the FAQ answer reads "You pick ready answers first";
+  the Programme start screen shows six answers, no text field and no
+  microphone control.
 
 ## One sign-in form and a shorter start — in review
 
