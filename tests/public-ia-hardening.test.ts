@@ -214,6 +214,13 @@ test("JSON-LD escapes markup input and runtime source has no Pexels hotlink", ()
   assert.match(serialized, /\\u2028/);
   const nonceStyle = read("components/security/NonceStyle.tsx");
   assert.match(nonceStyle, /nonce=\{nonce\}/);
+  // A page that arrives by client transition was rendered by a later request; its stylesheet
+  // carries the nonce of the document on screen, or the browser refuses it.
+  const documentNonceStyle = read("components/security/DocumentNonceStyle.tsx");
+  assert.match(documentNonceStyle, /^"use client";/);
+  assert.match(documentNonceStyle, /document\.querySelector<HTMLScriptElement>\("script\[nonce\]"\)\?\.nonce/);
+  assert.match(documentNonceStyle, /useSyncExternalStore\(subscribe, \(\) => documentNonce\(\) \?\? nonce, \(\) => nonce\)/);
+  assert.match(documentNonceStyle, /<style nonce=\{applied\}>\{css\}<\/style>/);
   assert.match(read("app/(public)/contact/page.tsx"), /<NonceStyle>/);
 
   const runtime = ["app", "components", "lib"]

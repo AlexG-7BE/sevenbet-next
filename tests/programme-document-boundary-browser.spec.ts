@@ -130,7 +130,7 @@ test("a cookie choice that opened on the public page does not follow the visitor
 });
 
 // Leaving the Programme keeps its document load: the root layout sets `<html lang>` once per
-// document, and Home carries its stylesheet under the nonce of the request that rendered it.
+// document, and the Programme's menu can lead to a page in another language.
 test("leaving the Programme loads a fresh document: the page language and the Home stylesheet are right", async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },

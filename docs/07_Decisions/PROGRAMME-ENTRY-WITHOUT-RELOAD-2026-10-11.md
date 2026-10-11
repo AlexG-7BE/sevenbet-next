@@ -63,6 +63,11 @@ return, and a clean console. Google Analytics does not load on a local build and
 someone on a public page, so without a fetch ahead the first Programme screen appeared later than
 with the document load (see the table).
 
+**Later the same day** the stylesheet dependency was repaired: in the browser the stylesheet now
+carries the document's own nonce (`components/security/DocumentNonceStyle.tsx`), so Home and the
+Learn hub keep it after a client transition. The page language is the one remaining reason for the
+document load on the way out.
+
 ## Decision
 
 - **Into the Programme: a client transition.** A link from a public page to the Programme in the
@@ -73,7 +78,8 @@ with the document load (see the table).
   link into the Programme, whichever page or block rendered it, loads on a mouse hover, a touch or
   keyboard focus. The button itself no longer prefetches (`prefetch={false}`), like the other
   links of the public shell.
-- **Out of the Programme: a document load, as before**, for the two reasons above.
+- **Out of the Programme: a document load, as before**, for the two reasons above (since the
+  stylesheet repair: for the page language).
 - **Into the Programme in another language than the page's: a document load.** No public page
   links that way today; the rule keeps `<html lang>` right if one ever does. Nothing is fetched
   ahead for a link that loads a document.

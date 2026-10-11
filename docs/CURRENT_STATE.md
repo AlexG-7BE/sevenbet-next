@@ -12,6 +12,33 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Home and Learn keep their stylesheet after a client transition — in review
+
+**Founder approval, 11 October 2026** ("Да, делай"), after the defect was found
+while checking the Programme boundary.
+
+- **The defect.** Pages built from the captured design (Home, the Learn hub,
+  About, FAQ, Methodology, the legal pages and others) carry their stylesheet
+  in an inline `<style>` under the Content-Security-Policy nonce. The nonce
+  belongs to the document. A page that arrives by client transition was
+  rendered by a later request with its own nonce, so the browser refused the
+  stylesheet. Home reached from another page showed the full-screen pinned
+  chapters on a phone (8199 px tall instead of 6210 px) and lost its paged
+  scroll on desktop; the Learn hub lost 29 rules the same way.
+- **The repair.** In the browser the stylesheet carries the document's own
+  nonce (`components/security/DocumentNonceStyle.tsx`, behind `NonceStyle`).
+  The server, and the hydration of a document load, use the request's nonce,
+  which is the same value there, so the HTML of a directly opened page is
+  unchanged. The policy itself is unchanged: `style-src 'self' 'nonce-…'`.
+- **What a visitor sees.** A page looks the same after a transition inside the
+  site as when it is opened directly. On desktop Home that includes its paged
+  scroll.
+- **Tests.** `tests/handoff-style-client-arrival-browser.spec.ts` (in
+  `ci:browser`) compares Home after Learn → logo with Home as a document load
+  on a phone and a desktop viewport, checks the Learn hub the same way and that
+  Home's page-level rules leave with Home. The Navigation Stage 2 browser spec
+  no longer tolerates the refused-stylesheet console error.
+
 ## The Programme opens without a document load — in review
 
 **Founder choice, 11 October 2026** ("Только вход + подгрузка"). Decision
@@ -26,18 +53,14 @@ record:
 - **Fetched ahead of the tap.** The header and drawer Programme button is a
   primary destination of the public shell (`a[data-programme-entry]`); every
   other link into the Programme loads on hover, touch or focus.
-- **Out of the Programme: a document load, as before.** Two things depend on
-  it: `<html lang>`, which the root layout sets once per document (the
-  Programme's menu can lead to a page in another language), and the Home and
-  Learn stylesheets, which the browser blocks on a client arrival.
+- **Out of the Programme: a document load, as before.** `<html lang>` depends
+  on it: the root layout sets it once per document, and the Programme's menu
+  can lead to a page in another language. The second reason found on
+  11 October, the Home and Learn stylesheets, is repaired (see the section
+  above).
 - **The automatic cookie choice stays out of the Programme.** It lives in the
   root layout, which a client transition keeps mounted; one that opened by
   itself on a public page is not shown in the Programme, Help or sign-in.
-- **Known defect, not changed here:** on any client arrival Home and the Learn
-  hub lose their inline stylesheet (the `<style>` carries the nonce of the
-  request that rendered it, not the document's). On a phone Home then shows
-  the full-screen pinned chapters instead of the compact cards; on desktop it
-  loses its paged scroll. The Founder approved a separate repair.
 - **Database, Programme rules, rewards and consent are unchanged.**
 
 ## Desktop Home: one screen per gesture, read properly — in review
