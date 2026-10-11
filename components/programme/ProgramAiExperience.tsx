@@ -3,13 +3,12 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ProgramAiHomeScreen } from "@/components/programme/ProgramAiHome";
 import {
-  Mission01IntakeScreen,
   ProgrammeAccessScreen,
   ProgrammeLoadingScreen,
+  ProgrammeStartScreen,
   ProgrammeSupportScreen,
   ProgrammeUnavailableScreen,
   StartingPointReadyScreen,
-  type ProgrammeVoiceTiming,
 } from "@/components/programme/ProgramAiFinalPresentation";
 import { ProgramAiMissionExperience } from "@/components/programme/ProgramAiMissionExperience";
 import { ProgramAiReviewScreen } from "@/components/programme/ProgramAiReviewScreen";
@@ -38,13 +37,14 @@ import {
   PROGRAMME_TERMS_VERSION,
   type ProgrammeAccessAuthority,
 } from "@/lib/programme/access-contract";
+import { affirmAnonymousProgrammeAccess, recordAccountProgrammeAccess } from "@/lib/programme/access-client";
 import {
   PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
   PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
   type ProgrammeStartingPointValue,
 } from "@/lib/programme/program-ai/contracts";
 import { programmeAccessFailureMessageKey } from "@/lib/programme/program-ai/access-errors";
-import { programmeAudioBlobFitsUploadLimit } from "@/lib/programme/program-ai/transcription-limits";
+import { readyAnswersSituation, type ProgrammeReadyAnswer } from "@/lib/programme/program-ai/ready-answers";
 import {
   anonymousProgrammeSubject,
   clearProgrammeOAuthClaimMarker,
@@ -80,14 +80,12 @@ type Phase =
 
 type ProgramAiLocalState = {
   phase: Phase;
+  /** The picked ready answers, as the person read them. */
   situation: string;
   candidate: ProgrammeStartingPointValue | null;
-  inputMode: "text" | "voice";
   xpPreview: number;
-  /** Founder decision, 25 Sep 2026: a quiet route to register before telling the story. */
+  /** Founder decision, 25 Sep 2026: a quiet route to register before answering. */
   accountFirst?: boolean;
-  /** The explicit consent was given on this journey's access screen; it is not asked again. */
-  processingConsented?: boolean;
 };
 
 type ApiPayload<T> = { ok?: boolean; error?: string; code?: string } & T;
@@ -100,7 +98,6 @@ const emptyLocalState: ProgramAiLocalState = {
   phase: "access",
   situation: "",
   candidate: null,
-  inputMode: "voice",
   xpPreview: 0,
 };
 
@@ -126,7 +123,7 @@ function restoredAnonymousState(value: ProgramAiLocalState | null | undefined): 
   const accountFirst = value.accountFirst === true && !value.candidate;
   // Registration without a Starting Point exists only on the account-first route.
   const safePhase = phase === "registration" && !value.candidate && !accountFirst ? "intake" : phase;
-  return { phase: safePhase, situation: value.situation || "", candidate: value.candidate || null, inputMode: value.inputMode === "text" ? "text" : "voice", xpPreview: Number.isFinite(value.xpPreview) ? value.xpPreview : 0, ...(accountFirst ? { accountFirst: true } : {}), ...(value.processingConsented === true ? { processingConsented: true } : {}) };
+  return { phase: safePhase, situation: value.situation || "", candidate: value.candidate || null, xpPreview: Number.isFinite(value.xpPreview) ? value.xpPreview : 0, ...(accountFirst ? { accountFirst: true } : {}) };
 }
 
 async function programAiRequest<T>(
@@ -178,16 +175,16 @@ export function ProgramAiExperience({
   const [activeReview, setActiveReview] = useState<{ milestone: "first" | "mid" | "full"; review: ProgramAiReview } | null>(null);
   const [missionWording, setMissionWording] = useState<Record<string, string>>({});
   const [reviewWording, setReviewWording] = useState<Record<string, string>>({});
-  const [sensitiveAuthorityActive, setSensitiveAuthorityActive] = useState(false);
   const [googleLinkRecovery, setGoogleLinkRecovery] = useState(false);
   const [passwordRejected, setPasswordRejected] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const oauthRedeemStarted = useRef(false);
+  /** The journey whose anonymous session already exists, so a second press does not open another. */
+  const openedJourneyId = useRef<string | null>(null);
   const emailRedeemStarted = useRef(false);
   const personalisationStartedAt = useRef<number | null>(null);
   const accumulatedAiLatencyMs = useRef(0);
-  const voiceTiming = useRef<ProgrammeVoiceTiming | null>(null);
   const phaseFocusRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -346,97 +343,86 @@ export function ProgramAiExperience({
     const restoredWithAccess = accessActive ? restored : { ...emptyLocalState, phase: "access" as const };
     setLocal(restoredWithAccess);
     setPhase(restoredWithAccess.phase);
-    if (accessActive) {
-      programAiRequest<{ authority: { active: boolean } }>("/api/program/program-ai/authority", journey)
-        .then((payload) => setSensitiveAuthorityActive(Boolean(payload.authority?.active)))
-        .catch(() => setSensitiveAuthorityActive(false));
-    } else {
-      setSensitiveAuthorityActive(false);
-    }
   }, [completeAccountFirst, googleLinkRecovery, locale, redeem, saveGoogleMarketingChoice, session?.user.id, sessionPending]);
 
-  async function grantAccess() {
-    if (!subject) return;
-    const entryMode = subject.kind === "journey" && hasProgrammeAccessAuthority(window.sessionStorage, subject) ? "resume" : "start";
+  // A signed-in account that has not affirmed access yet: one press under the line, then the plan.
+  async function grantAccountAccess() {
     productAnalyticsClient.startClicked("other_public");
     setBusy(true); setError("");
-    const journey = subject.kind === "journey" ? subject : null;
     try {
-      const response = await fetch("/api/programme-access/authority", {
-        method: "POST",
-        credentials: "same-origin",
-        cache: "no-store",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          ...(journey ? { journeyId: journey.id } : {}),
-          adultConfirmed: true,
-          termsAccepted: true,
-          privacyAcknowledged: true,
-          termsVersion: PROGRAMME_TERMS_VERSION,
-          privacyVersion: PROGRAMME_PRIVACY_VERSION,
-        }),
-      });
-      const payload = await response.json() as ApiPayload<{ accepted: boolean; authority?: ProgrammeAccessAuthority }>;
-      if (!response.ok || payload.ok === false) throw new Error("PROGRAMME_ACCESS_NOT_VERIFIED");
-      if (!journey) {
-        const homeResponse = await fetch("/api/program/program-ai/home", { credentials: "same-origin", cache: "no-store" });
-        const homePayload = await homeResponse.json() as ApiPayload<{ home: ProgramAiHome }>;
-        if (!homeResponse.ok || !homePayload.home) throw new Error("PROGRAMME_HOME_UNAVAILABLE");
-        productAnalyticsClient.accessGranted(entryMode);
-        setHome(homePayload.home);
-        setPhase("home");
-        setBusy(false);
-        return;
-      }
-      if (!payload.authority) throw new Error("PROGRAMME_ACCESS_NOT_VERIFIED");
-      writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
+      await recordAccountProgrammeAccess();
+      const homeResponse = await fetch("/api/program/program-ai/home", { credentials: "same-origin", cache: "no-store" });
+      const homePayload = await homeResponse.json() as ApiPayload<{ home: ProgramAiHome }>;
+      if (!homeResponse.ok || !homePayload.home) throw new Error("PROGRAMME_HOME_UNAVAILABLE");
+      productAnalyticsClient.accessGranted("start");
+      setHome(homePayload.home);
+      setPhase("home");
     } catch {
       setError(programmeText(locale, programmeAccessFailureMessageKey("authority")));
-      setBusy(false);
-      return;
+    } finally { setBusy(false); }
+  }
+
+  // First visit: records the 18+ / Terms / Privacy affirmation the line states and opens the
+  // anonymous Programme session. Returns the message to show when a stage fails.
+  async function openJourney(journey: ProgrammeLocalSubject): Promise<ProgrammeMessageKey | null> {
+    const entryMode = hasProgrammeAccessAuthority(window.sessionStorage, journey) ? "resume" : "start";
+    try {
+      await affirmAnonymousProgrammeAccess(window.sessionStorage);
+    } catch {
+      return programmeAccessFailureMessageKey("authority");
     }
     try {
-      if (!journey) return;
       await programAiRequest("/api/program/program-ai/session", journey, {
         method: "POST",
         headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
       });
-      productAnalyticsClient.accessGranted(entryMode);
-      productAnalyticsClient.missionOpened(1, entryMode);
-      setSensitiveAuthorityActive(false);
-      personalisationStartedAt.current = null;
-      accumulatedAiLatencyMs.current = 0;
-      voiceTiming.current = null;
-      setSubject(journey);
-      // The required consent ticked on the access screen is the explicit affirmative action. It is
-      // recorded as soon as the anonymous session exists; if that request fails, the first
-      // recording or submission records it (ensureSensitiveAuthority) without asking again.
-      try {
-        await programAiRequest("/api/program/program-ai/authority", journey, {
-          method: "POST",
-          body: JSON.stringify({
-            confirmed: true,
-            purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
-            statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
-          }),
-        });
-        setSensitiveAuthorityActive(true);
-      } catch {
-        setSensitiveAuthorityActive(false);
-      }
-      persist({ ...emptyLocalState, phase: "intake", processingConsented: true }, journey);
     } catch (cause) {
-      const requestError = cause as Error & { code?: string };
-      setError(programmeText(locale, programmeAccessFailureMessageKey("session", requestError)));
-    } finally { setBusy(false); }
+      return programmeAccessFailureMessageKey("session", cause as Error & { code?: string });
+    }
+    openedJourneyId.current = journey.id;
+    productAnalyticsClient.accessGranted(entryMode);
+    productAnalyticsClient.missionOpened(1, entryMode);
+    personalisationStartedAt.current = null;
+    accumulatedAiLatencyMs.current = 0;
+    return null;
   }
 
-  async function submitTurn(confirmSensitiveAuthority = false) {
-    if (!subject) return;
+  // Founder decisions, 11 Oct 2026: one press under the consent statement. It is the explicit
+  // consent to process the picked answers and, on a first visit, the 18+ / Terms / Privacy
+  // affirmation. The answers go straight to the Starting Point.
+  async function agreeAndContinue(answers: ProgrammeReadyAnswer[]) {
+    if (!subject || subject.kind !== "journey" || answers.length === 0) return;
+    const journey = subject;
+    setBusy(true); setError("");
+    // A journey entered from the dashboard already has its session; so does a second press here.
+    if (phase === "access" && openedJourneyId.current !== journey.id) {
+      productAnalyticsClient.startClicked("other_public");
+      const failure = await openJourney(journey);
+      if (failure) { setError(programmeText(locale, failure)); setBusy(false); return; }
+    }
+    try {
+      await programAiRequest("/api/program/program-ai/authority", journey, {
+        method: "POST",
+        body: JSON.stringify({
+          confirmed: true,
+          purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
+          statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
+        }),
+      });
+    } catch {
+      setError(programmeText(locale, programmeAccessFailureMessageKey("session")));
+      setBusy(false);
+      return;
+    }
+    // The start screen stays up while the Starting Point is prepared; if that fails, the same
+    // press sends the answers again.
+    await submitTurn({ ...local, situation: readyAnswersSituation(locale, answers), candidate: null }, journey);
+  }
+
+  async function submitTurn(state: ProgramAiLocalState, journey: ProgrammeLocalSubject) {
     if (personalisationStartedAt.current === null) personalisationStartedAt.current = performance.now();
     setBusy(true); setError("");
     try {
-      if (confirmSensitiveAuthority) await ensureSensitiveAuthority();
       const payload = await programAiRequest<{
         result: {
           kind: "CLARIFICATION_REQUIRED" | "STARTING_POINT_CANDIDATE";
@@ -445,90 +431,36 @@ export function ProgramAiExperience({
         };
         progress: { taskStates: string[]; xpPreview: number };
         timing?: { programmeAiTurnMs?: number };
-      }>("/api/program/program-ai/turn", subject, {
+      }>("/api/program/program-ai/turn", journey, {
         method: "POST",
-        body: JSON.stringify({ locale, inputMode: local.inputMode, situation: local.situation, clarificationAnswers: [] }),
+        body: JSON.stringify({ locale, inputMode: "text", situation: state.situation, clarificationAnswers: [] }),
       });
       accumulatedAiLatencyMs.current += payload.timing?.programmeAiTurnMs ?? 0;
       if (payload.result.kind !== "STARTING_POINT_CANDIDATE" || !payload.result.candidate) {
         throw new Error("STARTING_POINT_NOT_PREPARED");
       }
-      const readyState = { ...local, candidate: payload.result.candidate, phase: "registration" as const, xpPreview: payload.progress?.xpPreview ?? 0 };
+      const readyState = { ...state, candidate: payload.result.candidate, phase: "registration" as const, xpPreview: payload.progress?.xpPreview ?? 0 };
       if (payload.result.disposition === "SUPPORT_FIRST") {
-        persist({ ...readyState, phase: "support" });
+        persist({ ...readyState, phase: "support" }, journey);
       } else {
-        persist(readyState);
+        persist(readyState, journey);
         productAnalyticsClient.personalisedValue("starting_point");
         productAnalyticsClient.registrationCtaPresented();
         console.info(JSON.stringify({
           event: "programme_ai_m1_client_latency",
-          inputMode: local.inputMode,
-          transcriptionMode: voiceTiming.current?.transcriptionMode,
-          recordingDurationMs: voiceTiming.current?.recordingDurationMs,
-          transcriptionRequestMs: voiceTiming.current?.transcriptionRequestMs,
-          firstPartialTranscriptMs: voiceTiming.current?.firstPartialTranscriptMs,
-          stopToFinalTranscriptMs: voiceTiming.current?.stopToFinalTranscriptMs,
-          transcriptionFallbackReason: voiceTiming.current?.fallbackReason,
+          inputMode: "text",
           programmeAiTurnMs: accumulatedAiLatencyMs.current,
           totalSubmitToStartingPointMs: personalisationStartedAt.current === null
             ? undefined
             : Math.round(performance.now() - personalisationStartedAt.current),
-          summedTechnicalLatencyMs: (voiceTiming.current?.transcriptionRequestMs ?? 0)
-            + accumulatedAiLatencyMs.current,
+          summedTechnicalLatencyMs: accumulatedAiLatencyMs.current,
           clarificationCount: 0,
         }));
       }
-    } catch (cause) {
-      const requestError = cause as Error & { code?: string };
-      if (requestError.code === "SENSITIVE_INPUT_AUTHORITY_REQUIRED") {
-        setSensitiveAuthorityActive(false);
-        persist({ ...local, candidate: null, phase: "intake" });
-      }
+    } catch {
       setError(programmeText(locale, "Your Starting Point could not be prepared"));
     }
     finally { setBusy(false); }
-  }
-
-  async function transcribeVoice(audio: Blob, durationMs: number) {
-    if (!subject) throw new Error(programmeText(locale, "Programme session unavailable"));
-    if (!programmeAudioBlobFitsUploadLimit(audio.size)) {
-      throw new Error(programmeText(locale, "This recording is too large to upload. Record a shorter voice note or type instead."));
-    }
-    await ensureSensitiveAuthority();
-    const form = new FormData();
-    form.set("audio", audio, "programme-m1-recording");
-    form.set("durationMs", String(durationMs));
-    form.set("locale", locale);
-    const payload = await programAiRequest<{
-      transcript: string;
-      timing?: { transcriptionRequestMs?: number };
-    }>("/api/program/program-ai/transcription", subject, {
-      method: "POST",
-      body: form,
-    });
-    return {
-      transcript: payload.transcript,
-      transcriptionRequestMs: payload.timing?.transcriptionRequestMs ?? 0,
-    };
-  }
-
-  async function ensureSensitiveAuthority() {
-    if (!subject || sensitiveAuthorityActive) return;
-    await programAiRequest("/api/program/program-ai/authority", subject, {
-      method: "POST",
-      body: JSON.stringify({
-        confirmed: true,
-        purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
-        statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
-      }),
-    });
-    setSensitiveAuthorityActive(true);
-  }
-
-  function recordVoiceTiming(timing: ProgrammeVoiceTiming) {
-    voiceTiming.current = timing;
-    personalisationStartedAt.current = null;
-    accumulatedAiLatencyMs.current = 0;
   }
 
   async function continueAfterSupport() {
@@ -688,14 +620,22 @@ export function ProgramAiExperience({
     mergeProgrammeSubjectContent<ProgramAiAuthenticatedLocalContent>(window.sessionStorage, subject, { programAiReviewWording: next });
   }
 
-  function startAccountFirst() {
-    setError("");
-    persist({ ...local, phase: "registration", accountFirst: true });
+  // Registering first needs only the affirmation the line states. The story consent waits for
+  // the story.
+  async function startAccountFirst() {
+    if (!subject || subject.kind !== "journey") return;
+    setBusy(true); setError("");
+    try {
+      await affirmAnonymousProgrammeAccess(window.sessionStorage);
+      persist({ ...local, phase: "registration", accountFirst: true });
+    } catch {
+      setError(programmeText(locale, programmeAccessFailureMessageKey("authority")));
+    } finally { setBusy(false); }
   }
 
-  function returnToIntake() {
+  function returnToStory() {
     setError("");
-    const next = { ...local, phase: "intake" as const };
+    const next = { ...local, phase: "access" as const };
     delete next.accountFirst;
     persist(next);
   }
@@ -719,10 +659,9 @@ export function ProgramAiExperience({
         headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
       });
       setSubject(journey);
-      setSensitiveAuthorityActive(false);
+      openedJourneyId.current = journey.id;
       personalisationStartedAt.current = null;
       accumulatedAiLatencyMs.current = 0;
-      voiceTiming.current = null;
       persist({ ...emptyLocalState, phase: "intake" }, journey);
     } catch {
       setError(programmeText(locale, programmeAccessFailureMessageKey("authority")));
@@ -760,13 +699,18 @@ export function ProgramAiExperience({
   );
 
   if (phase === "loading" || sessionPending) return renderPhase(<ProgrammeLoadingScreen locale={locale} />, { entry: true });
-  if (phase === "access") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />, { entry: true });
-  if (phase === "intake") return renderPhase(<Mission01IntakeScreen busy={busy} error={error} getRealtimeRequestHeaders={() => subject ? programmeMutationAccessHeaders(window.sessionStorage, subject) : {}} locale={locale} onPrepareVoice={ensureSensitiveAuthority} onSituation={(situation, source) => { const next = { ...local, situation, inputMode: source }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(true)} onTranscribe={transcribeVoice} onVoiceTiming={recordVoiceTiming} onAccountFirst={startAccountFirst} situation={local.situation} />);
+  // Mission 01 is the start screen. A first visit also carries the 18+ / Terms / Privacy line and
+  // the account-first link; a journey entered from the dashboard already has its session and its
+  // account, so it shows neither.
+  const startScreen = (firstVisit: boolean) => renderPhase(<ProgrammeStartScreen accessLine={firstVisit} busy={busy} error={error} locale={locale} onAccountFirst={firstVisit ? startAccountFirst : undefined} onAgree={agreeAndContinue} />, { entry: firstVisit });
+  if (phase === "access" && subject?.kind === "user") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccountAccess} />, { entry: true });
+  if (phase === "access") return startScreen(true);
+  if (phase === "intake") return startScreen(false);
   if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} locale={locale} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
-  if (phase === "registration" && (local.candidate || local.accountFirst)) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} onBack={returnToIntake} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
+  if (phase === "registration" && (local.candidate || local.accountFirst)) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} onBack={returnToStory} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
   if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} programmePath={programmePath} unconfirmedEmail={session.user.emailVerified ? null : session.user.email} userId={session.user.id} />);
   if (phase === "home") return renderPhase(<ProgrammeUnavailableScreen error={error} locale={locale} />);
-  return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />, { entry: true });
+  return startScreen(true);
 }

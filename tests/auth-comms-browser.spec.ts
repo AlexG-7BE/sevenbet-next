@@ -106,13 +106,10 @@ async function installAnonymousProgramme(page: Page) {
 
 async function reachRegistration(page: Page) {
   await open(page, "/program");
-  await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await expect(page.getByRole("button", { name: "Start voice input" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "I'd rather type" })).toHaveCount(0);
-  await page.getByLabel("Your situation").fill(candidate.startingPoint);
-  await page.getByRole("button", { name: "Create my Starting Point" }).click();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  // Founder decisions, 11 Oct 2026: ready answers only, then one button.
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
   await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
 }
 
@@ -329,8 +326,8 @@ test("canonical access screen reports invalid authority safely", async ({ page }
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: value }) });
   });
   await open(page, "/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
   const alert = page.locator('p[role="alert"]');
   await expect(alert).toHaveText("We could not verify Programme access. Try again.");
   await expect(alert).not.toContainText(/authority|continuation|proof/i);
@@ -351,8 +348,8 @@ test("canonical access screen distinguishes a disabled runtime from session crea
   });
 
   await open(page, "/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  const enter = page.getByRole("button", { name: "Enter Mission 01" });
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  const enter = page.getByRole("button", { name: "Agree and continue" });
   await enter.click();
   const alert = page.locator('p[role="alert"]');
   await expect(alert).toHaveText("Mission 01 is temporarily unavailable. Your access checks were accepted. Try again later.");
@@ -489,7 +486,7 @@ test("Google return retries canonical claim redemption and transfers local autho
   expect(transferred.userAuthority).toContain(journeyId);
 });
 
-test("authenticated partial Mission 01 truthfully re-enters private intake without discarding saved progress", async ({ page }) => {
+test("authenticated partial Mission 01 truthfully re-enters the ready answers without discarding saved progress", async ({ page }) => {
   const userId = "partial-mission-one-user";
   await installAuthenticatedSession(page, userId);
   await page.route("**/api/program/program-ai/home", (route) => route.fulfill({
@@ -507,8 +504,13 @@ test("authenticated partial Mission 01 truthfully re-enters private intake witho
   await expect(page.getByText("Your first action and XP are saved. For privacy, the situation itself was not retained. Enter one again to finish your Starting Point.", { exact: true })).toBeVisible();
   await expect(page.getByText("1 of 2 actions complete · Short Starting Point", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Finish Mission 01", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "One check before you begin." })).toHaveCount(0);
+  // Founder decision, 11 Oct 2026: Mission 01 opens on the ready answers for an account too. The
+  // account already affirmed access, so the 18+ line and the account-first link are not shown.
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(6);
+  await expect(page.getByRole("button", { name: "Agree and continue" })).toBeDisabled();
+  await expect(page.locator("[data-programme-access-note]")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Create an account first →" })).toHaveCount(0);
 });
 
 test("expired access continuation returns to the canonical access screen", async ({ page }) => {
@@ -522,10 +524,10 @@ test("expired access continuation returns to the canonical access screen", async
   }, { journey: journeyId, access: expired });
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await open(page, "/program");
-  await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
-  // One required check, the explicit consent (Founder decision, 11 Oct 2026).
-  await expect(page.getByRole("checkbox")).toHaveCount(1);
-  await expect(page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing/ })).not.toBeChecked();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  // Nothing is picked and nothing is agreed after an expired proof (Founder decision, 11 Oct 2026).
+  await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Agree and continue" })).toBeDisabled();
 });
 
 test("authenticated canonical dashboard logs out into a fresh anonymous access boundary", async ({ page }) => {
@@ -557,7 +559,7 @@ test("authenticated canonical dashboard logs out into a fresh anonymous access b
   const logout = page.getByRole("button", { name: "Log out of B4GAMBLE" });
   await expect(logout).toBeVisible();
   await logout.click();
-  await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
   expect(signOutRequests).toBe(1);
   expect(transitionRequests).toBe(1);
   const storage = await page.evaluate((user) => ({

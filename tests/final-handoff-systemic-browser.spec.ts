@@ -167,13 +167,11 @@ test("Mission 01 uses the final responsive presentation from access through regi
   await page.goto(`${baseUrl}/program`, { waitUntil: "networkidle" });
   await expect(page.locator("[data-programme-presentation='access']")).toBeVisible();
   await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
   await expect(page.locator("[data-programme-presentation='mission-01-intake']")).toBeVisible();
   await expect(page.locator("[data-voice-state='idle']")).toBeVisible();
   await expect(page.locator("[data-programme-presentation-state='text-fallback']")).toBeVisible();
-  await page.getByLabel("Your situation").fill("After difficult work days I keep opening betting apps late at night.");
-  await page.getByRole("button", { name: "Create my Starting Point" }).click();
   await expect(page.locator("[data-programme-presentation='starting-point-ready']")).toBeVisible();
   await expect(page.locator("[data-programme-presentation-state='registration']")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();

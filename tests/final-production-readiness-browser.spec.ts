@@ -71,10 +71,8 @@ async function installAnonymousProgramme(page: Page) {
 
 async function reachStartingPoint(page: Page) {
   await open(page, "/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await page.getByLabel("Your situation").fill("After difficult work days I keep opening betting apps late at night.");
-  await page.getByRole("button", { name: "Create my Starting Point" }).click();
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
   await expect(page.locator('[data-programme-presentation="starting-point-ready"]')).toBeVisible();
 }
 

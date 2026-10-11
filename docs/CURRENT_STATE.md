@@ -30,14 +30,24 @@ record:
   pair and an account-first return, so the server rule that a `/login`
   callback cannot create a social account is unchanged.
 - **A line replaces two ticks.** "By continuing, you confirm you are 18+ and
-  accept the Terms and Privacy Notice." stands on the Programme access screen
-  and on `/login`. The access screen keeps one check, the explicit consent to
-  process the story, under the heading "One check before you begin."
-- **Server record unchanged.** The same three affirmed facts and document
-  versions are sent; no table, column or enum changed.
-- **Approved, not built:** ready answers on the start screen (several can be
-  picked) with one "Agree and continue" consent button and no separate consent
-  screen.
+  accept the Terms and Privacy Notice." stands on the Programme start screen,
+  on the screen that opens the plan of an account that has not affirmed access
+  yet, and on `/login`.
+- **Ready answers start the Programme.** One screen asks "What feels hardest
+  right now?" with six answers, several of which can be picked ("Something
+  else" is the sixth). One button, "Agree and continue", directly under the
+  consent statement, is the explicit consent; there is no tick and no separate
+  consent screen.
+- **No voice and no free text.** The microphone, the text field and their
+  screen are gone from the client. The server transcription routes still
+  exist, unreachable from the interface, until the clean-up change.
+- **Consent statement v2.** It names "the answers I choose" and the AI
+  provider (`article-9-authority:2026-10-11:v2`).
+- **Server record otherwise unchanged.** The same three affirmed facts and
+  document versions are sent; no table, column or enum changed.
+- **Approved, not built:** removing the unused server voice code, the
+  microphone permission on Programme pages and the voice wording in the
+  Privacy Notice.
 
 ## Footer notice block hidden — in review
 

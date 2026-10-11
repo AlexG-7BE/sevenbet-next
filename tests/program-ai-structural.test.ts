@@ -32,7 +32,6 @@ const realtimeRoute = read("app/api/program/program-ai/transcription/realtime/ro
 const realtimeAdapter = read("lib/programme/program-ai/openai-realtime-transcription.ts");
 const realtimeClient = read("lib/programme/program-ai/realtime-transcription-client.ts");
 const localSubjectStorage = read("lib/programme/local-subject-storage.ts");
-const voiceDraft = read("lib/programme/program-ai/voice-draft.ts");
 
 test("PR #106 Preview builds require the exact Programme runtime flag without changing other environments", () => {
   const releaseCandidate = {
@@ -121,17 +120,19 @@ test("client keeps private draft content in sessionStorage and never localStorag
   assert.doesNotMatch(frontend, /localStorage/);
   assert.doesNotMatch(frontend, /@prisma\/client|\bprisma\./);
   assert.match(frontendRuntime, /<Link href="\/privacy">\{t\("Read Privacy Notice"\)\}<\/Link>/);
-  assert.match(frontendRuntime, /htmlFor="mission-01-situation"/);
-  assert.match(frontendRuntime, /maxLength=\{4000\}/);
-  assert.match(frontend, /new FormData\(\)/);
-  assert.match(frontendRuntime, /90_000/);
-  assert.match(frontendRuntime, /navigator\.permissions\?\.query/);
-  assert.match(frontendRuntime, /name: "microphone"/);
-  assert.match(frontendRuntime, /Your browser will not show another prompt while this site is blocked/);
-  assert.match(frontendRuntime, /This browser cannot record audio with the features B4GAMBLE needs/);
 });
 
-test("live voice keeps credentials server-side, writes partials into the unified draft and preserves file fallback", () => {
+test("Mission 01 takes picked ready answers and the client has no voice or free-text input", () => {
+  // Founder decisions, 11 Oct 2026: ready answers only. The server voice routes stay until the
+  // clean-up change; nothing in the client reaches them.
+  assert.match(finalPresentation, /PROGRAMME_READY_ANSWERS\.map\(\(answer\) =>/);
+  assert.match(frontend, /situation: readyAnswersSituation\(locale, answers\)/);
+  assert.match(frontend, /body: JSON\.stringify\(\{ locale, inputMode: "text", situation: state\.situation, clarificationAnswers: \[\] \}\)/);
+  assert.doesNotMatch(frontendRuntime, /<textarea|getUserMedia|MediaRecorder|navigator\.permissions|microphone|transcription|new FormData\(\)|In my own words/i);
+  assert.doesNotMatch(frontendRuntime, /Mission01IntakeScreen|Mission01Composer|realtime-transcription-client|voice-draft/);
+});
+
+test("the server voice route keeps credentials server-side until it is removed", () => {
   assert.match(realtimeAdapter, /https:\/\/api\.openai\.com\/v1\/realtime\/calls/);
   assert.match(realtimeAdapter, /type: "transcription"/);
   assert.match(realtimeAdapter, /turn_detection: null/);
@@ -142,21 +143,8 @@ test("live voice keeps credentials server-side, writes partials into the unified
   assert.match(realtimeRoute, /"PROGRAMME_TRANSCRIPTION_SESSION"/);
   assert.match(realtimeRoute, /"PROGRAMME_TRANSCRIPTION_IP"/);
   assert.doesNotMatch(realtimeRoute, /PROGRAMME_REALTIME_TRANSCRIPTION_/);
-  assert.match(realtimeClient, /input_audio_buffer\.commit/);
-  assert.match(realtimeClient, /input_audio_transcription\.delta/);
-  assert.match(realtimeClient, /input_audio_transcription\.completed/);
-  assert.match(realtimeClient, /requestHeaders\?: HeadersInit/);
-  assert.match(realtimeClient, /new Headers\(input\.requestHeaders\)/);
-  assert.match(finalPresentation, /applyVoiceText\(partial\)/);
-  assert.match(finalPresentation, /applyVoiceText\(transcript\)/);
-  assert.match(voiceDraft, /draft\.slice\(0, segment\.start\)/);
-  assert.match(voiceDraft, /conflicted: true/);
-  assert.match(finalPresentation, /await transcribe\(audio, durationMs, stoppedAt, failure\)/);
-  assert.match(frontend, /\/api\/program\/program-ai\/transcription/);
-  assert.match(frontend, /programmeMutationAccessHeaders\(window\.sessionStorage, subject\)/);
   assert.match(localSubjectStorage, /if \(!hasProgrammeAccessAuthority\(storage, subject, now\)\) return \{\}/);
-  assert.doesNotMatch(finalPresentation, /I'd rather type|Start over|Record again|Add more by voice/);
-  assert.doesNotMatch(`${realtimeClient}\n${finalPresentation}`, /OPENAI_API_KEY|authorization:\s*`Bearer|NEXT_PUBLIC_/);
+  assert.doesNotMatch(realtimeClient, /OPENAI_API_KEY|authorization:\s*`Bearer|NEXT_PUBLIC_/);
   assert.doesNotMatch(`${realtimeAdapter}\n${realtimeRoute}`, /console\.(?:info|error|warn)\([^)]*(?:sdp|transcript)/i);
 });
 
@@ -171,26 +159,30 @@ test("account-not-linked recovery preserves the claim and requires authenticated
   assert.doesNotMatch(explicitLink, /clearProgrammeOAuthClaimMarker/);
 });
 
-test("access owns the explicit consent and intake adds no age or consent prompt", () => {
-  assert.match(frontendRuntime, /I explicitly consent to B4GAMBLE processing what I type or say/);
-  assert.equal((frontendRuntime.match(/I explicitly consent to B4GAMBLE processing what I type or say/g) || []).length, 1);
-  assert.doesNotMatch(finalPresentation.slice(finalPresentation.indexOf("export function Mission01IntakeScreen"), finalPresentation.indexOf("export function ProgrammeSupportScreen")), /type="checkbox"|consentGiven|I confirm I am 18 or over/);
-  assert.doesNotMatch(frontendRuntime, /Before you share\.|Withdrawal stops future processing/);
-  assert.match(frontendRuntime, /What feels hardest to control right now/);
+test("the start screen owns the explicit consent: one statement above one button, and no tick", () => {
+  const statement = /I explicitly consent to B4GAMBLE processing the answers I choose, including information that may reveal my health, and sending them to its AI provider to personalise my Programme\./g;
+  assert.equal((frontendRuntime.match(statement) || []).length, 1);
+  const start = finalPresentation.slice(finalPresentation.indexOf("export function ProgrammeStartScreen"), finalPresentation.indexOf("export function ProgrammeAccessScreen"));
+  assert.ok(start.search(statement) < start.indexOf("data-programme-agree"), "the statement stands above the button");
+  assert.match(start, /disabled=\{busy \|\| answers\.length === 0\}/);
+  assert.match(start, /t\("Agree and continue"\)/);
+  // The only checkboxes on the start screen are the answers themselves.
+  assert.equal((start.match(/type="checkbox"/g) || []).length, 1);
+  assert.doesNotMatch(frontendRuntime, /Before you share\.|Withdrawal stops future processing|I confirm I am 18 or over|what I type or say/);
   assert.doesNotMatch(frontend, /type Phase[\s\S]*"legal"/);
 });
 
 test("Program AI reuses the signed access contract and exposes no anonymous clarification, editor or reward phase", () => {
   const sessionRoute = read("app/api/program/program-ai/session/route.ts");
   assert.match(sessionRoute, /verifyProgrammeAccessHeaders\(request\.headers/);
-  // Founder decision, 11 Oct 2026: one required check, the explicit consent; entering under the
-  // line is the 18+, Terms and Privacy affirmation.
-  assert.match(frontendRuntime, /One check before you begin/);
-  assert.match(frontendRuntime, /By continuing, you confirm you are 18\+ and accept the Terms and Privacy Notice\./);
+  // Founder decisions, 11 Oct 2026: continuing under the line is the 18+, Terms and Privacy
+  // affirmation, on the start screen and for an account that has not affirmed yet.
+  assert.equal((finalPresentation.match(/By continuing, you confirm you are 18\+ and accept the Terms and Privacy Notice\./g) || []).length, 2);
+  assert.match(frontend, /await affirmAnonymousProgrammeAccess\(window\.sessionStorage\);/);
+  assert.match(frontend, /await recordAccountProgrammeAccess\(\);/);
   assert.match(frontendRuntime, /<Link href="\/terms">\{t\("Read Terms"\)\}<\/Link>/);
   assert.match(frontendRuntime, /<Link href="\/privacy">\{t\("Read Privacy Notice"\)\}<\/Link>/);
-  assert.doesNotMatch(frontendRuntime, /Three checks before you begin|Two checks before you begin|I accept the current|I have read the current/);
-  assert.match(frontendRuntime, /onSubmit=\{\(\) => submitTurn\(true\)\}/);
+  assert.doesNotMatch(frontendRuntime, /checks? before you begin|I accept the current|I have read the current/);
   assert.match(frontend, /clarificationAnswers: \[\]/);
   assert.match(frontend, /prepareClaimForRegistration/);
   assert.match(frontendRuntime, /Your Starting Point is ready/);

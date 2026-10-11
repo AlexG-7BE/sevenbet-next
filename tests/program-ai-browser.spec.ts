@@ -53,7 +53,8 @@ const startingPoint: ProgrammeStartingPointValue = {
   chosenBoundaryAction: "Put the phone in another room",
 };
 
-const situation = "After difficult work days I keep opening betting apps late at night.";
+// Founder decisions, 11 Oct 2026: Mission 01 takes picked ready answers; this is what two of them send.
+const situation = "What feels hardest right now? I chase my losses. I spend more than I plan.";
 const bestEffortStartingPoint: ProgrammeStartingPointValue = {
   startingPoint: situation,
   desiredChange: "Build more control around the situation described here.",
@@ -393,263 +394,6 @@ test("distributed session creation limiting returns a safe 429 while Help stays 
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: { in: tokenHashes } } });
 });
 
-test("unified composer preserves typed text, appends file fallback voice and releases tracks", async ({ page }) => {
-  await page.addInitScript(() => {
-    const stoppedTracksKey = "program-ai-test-stopped-tracks";
-    if (window.sessionStorage.getItem(stoppedTracksKey) === null) window.sessionStorage.setItem(stoppedTracksKey, "0");
-    let failRecorder: (() => void) | null = null;
-    let recordingBytes = 3;
-    class FakeMediaRecorder {
-      static isTypeSupported(type: string) { return type === "audio/webm;codecs=opus"; }
-      state = "inactive";
-      mimeType: string;
-      ondataavailable: ((event: { data: Blob }) => void) | null = null;
-      onstop: (() => void) | null = null;
-      onerror: (() => void) | null = null;
-      constructor(_stream: MediaStream, options?: { mimeType?: string }) {
-        this.mimeType = options?.mimeType || "audio/webm";
-        failRecorder = () => this.onerror?.();
-      }
-      start() { this.state = "recording"; }
-      stop() {
-        this.state = "inactive";
-        this.ondataavailable?.({ data: new Blob([new Uint8Array(recordingBytes)], { type: this.mimeType }) });
-        this.onstop?.();
-      }
-    }
-    Object.defineProperty(window, "MediaRecorder", { configurable: true, value: FakeMediaRecorder });
-    Object.defineProperty(window, "RTCPeerConnection", { configurable: true, value: undefined });
-    Object.defineProperty(navigator, "mediaDevices", {
-      configurable: true,
-      value: {
-        getUserMedia: async () => ({
-          getTracks: () => [{ stop: () => window.sessionStorage.setItem(stoppedTracksKey, String(Number(window.sessionStorage.getItem(stoppedTracksKey)) + 1)) }],
-        }),
-      },
-    });
-    Object.defineProperty(window, "__programAiStoppedTracks", { get: () => Number(window.sessionStorage.getItem(stoppedTracksKey)) });
-    Object.defineProperty(window, "__programAiFailRecorder", { value: () => failRecorder?.() });
-    Object.defineProperty(window, "__programAiNextRecordingBytes", { value: (bytes: number) => (recordingBytes = bytes) });
-  });
-  await page.clock.install();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.route("**/api/program/program-ai/session", async (route) => {
-    await route.fulfill({
-      status: 201,
-      contentType: "application/json",
-      body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }),
-    });
-  });
-  let authorityCalls = 0;
-  await page.route("**/api/program/program-ai/authority", async (route) => {
-    authorityCalls += 1;
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ ok: true, authority: { active: true } }),
-    });
-  });
-  await page.goto("/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  let transcriptionCalls = 0;
-  await page.route("**/api/program/program-ai/transcription", async (route) => {
-    transcriptionCalls += 1;
-    expect(route.request().method()).toBe("POST");
-    expect(route.request().headers()["content-type"]).toContain("multipart/form-data");
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        ok: true,
-        transcript: "After difficult work days I keep opening betting apps late at night.",
-        timing: { transcriptionRequestMs: 321 },
-      }),
-    });
-  });
-
-  const composer = page.getByLabel("Your situation");
-  await expect(composer).toBeVisible();
-  await composer.fill("I typed this first.");
-  await expect(page.getByRole("button", { name: "I'd rather type" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Done" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Start over" })).toHaveCount(0);
-
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  expect(await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(4_194_305))).toBe(4_194_305);
-  await page.getByRole("button", { name: "Stop voice input" }).click();
-  await expect(page.getByText(/recording is too large to upload/i)).toBeVisible();
-  await expect(composer).toHaveValue("I typed this first.");
-  expect(authorityCalls).toBe(1);
-  expect(transcriptionCalls).toBe(0);
-  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(1);
-
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  expect(await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(4_194_304))).toBe(4_194_304);
-  await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "recording");
-  await expect(page.getByText("00:00 / 01:30", { exact: true })).toBeVisible();
-  const microphone = page.getByRole("button", { name: "Stop voice input" });
-  expect(await microphone.evaluate((element) => getComputedStyle(element).animationName)).not.toBe("none");
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(microphone).toHaveCSS("animation-name", "none");
-  await page.clock.fastForward(1_000);
-  await expect(page.getByText("00:01 / 01:30", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Stop voice input" }).click();
-  await expect(composer).toHaveValue(`I typed this first. ${situation}`);
-  await expect(page.locator('[data-state="success"]')).toHaveCount(1);
-  expect(transcriptionCalls).toBe(1);
-  expect(authorityCalls).toBe(1);
-  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(2);
-
-  await composer.fill(`My edited opening. ${situation}`);
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(3));
-  await page.getByRole("button", { name: "Stop voice input" }).click();
-  await expect(composer).toHaveValue(`My edited opening. ${situation} ${situation}`);
-  expect(transcriptionCalls).toBe(2);
-  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(3);
-
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  await page.clock.fastForward(90_000);
-  await expect(page.locator('[data-state="success"]')).toHaveCount(1);
-  expect(transcriptionCalls).toBe(3);
-
-  const preservedBeforeRecorderError = await composer.inputValue();
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  await page.evaluate(() => (window as unknown as { __programAiFailRecorder: () => void }).__programAiFailRecorder());
-  await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "error");
-  await expect(composer).toHaveValue(preservedBeforeRecorderError);
-  expect(transcriptionCalls).toBe(3);
-
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  await expect(page.locator('[data-state="recording"]')).toHaveCount(1);
-  await page.goto("/");
-  await expect(page).toHaveURL("/en");
-  expect(transcriptionCalls).toBe(3);
-  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(6);
-  await noHorizontalOverflow(page);
-
-  const cookie = (await page.context().cookies()).find((item) => item.name === "sevenbet_programme_session");
-  if (cookie) await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(cookie.value) } });
-});
-
-test("realtime voice writes live text into one draft, reconciles finals and appends across sessions", async ({ page }) => {
-  await page.addInitScript(() => {
-    class FakeMediaRecorder {
-      static isTypeSupported(type: string) { return type === "audio/webm;codecs=opus"; }
-      state = "inactive";
-      mimeType: string;
-      ondataavailable: ((event: { data: Blob }) => void) | null = null;
-      onstop: (() => void) | null = null;
-      onerror: (() => void) | null = null;
-      constructor(_stream: MediaStream, options?: { mimeType?: string }) {
-        this.mimeType = options?.mimeType || "audio/webm";
-      }
-      start() { this.state = "recording"; }
-      stop() {
-        this.state = "inactive";
-        this.ondataavailable?.({ data: new Blob([new Uint8Array([1, 2, 3])], { type: this.mimeType }) });
-        this.onstop?.();
-      }
-    }
-    type Listener = (event: { data?: string }) => void;
-    let voiceSession = 0;
-    class FakeDataChannel {
-      readyState = "open";
-      private listeners = new Map<string, Listener[]>();
-      constructor(private readonly sessionNumber: number) {}
-      addEventListener(name: string, listener: Listener) {
-        this.listeners.set(name, [...(this.listeners.get(name) ?? []), listener]);
-      }
-      emit(name: string, event: { data?: string }) {
-        this.listeners.get(name)?.forEach((listener) => listener(event));
-      }
-      send(value: string) {
-        if ((JSON.parse(value) as { type?: string }).type !== "input_audio_buffer.commit") return;
-        window.setTimeout(() => this.emit("message", { data: JSON.stringify({
-          type: "conversation.item.input_audio_transcription.completed",
-          item_id: `item-${this.sessionNumber}`,
-          transcript: this.sessionNumber === 1
-            ? "First voice final."
-            : this.sessionNumber === 2
-              ? "Second voice final."
-              : "Third provider final.",
-        }) }), 75);
-      }
-      close() { this.readyState = "closed"; }
-    }
-    class FakePeerConnection {
-      private readonly sessionNumber = ++voiceSession;
-      private channel = new FakeDataChannel(this.sessionNumber);
-      createDataChannel() { return this.channel; }
-      addTrack() { return undefined; }
-      async createOffer() { return { type: "offer" as const, sdp: "v=0\r\no=browser-test-offer\r\n" }; }
-      async setLocalDescription() { return undefined; }
-      async setRemoteDescription() {
-        this.channel.emit("message", { data: JSON.stringify({
-          type: "conversation.item.input_audio_transcription.delta",
-          item_id: `item-${this.sessionNumber}`,
-          delta: this.sessionNumber === 1 ? "LIVE-FIRST" : this.sessionNumber === 2 ? "LIVE-SECOND" : "LIVE-THIRD",
-        }) });
-      }
-      close() { return undefined; }
-    }
-    Object.defineProperty(window, "MediaRecorder", { configurable: true, value: FakeMediaRecorder });
-    Object.defineProperty(window, "RTCPeerConnection", { configurable: true, value: FakePeerConnection });
-    Object.defineProperty(navigator, "mediaDevices", {
-      configurable: true,
-      value: { getUserMedia: async () => ({ getTracks: () => [{ stop: () => undefined }] }) },
-    });
-  });
-  await page.route("**/api/program/program-ai/session", async (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
-  await page.route("**/api/program/program-ai/authority", async (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
-  let realtimeCalls = 0;
-  let fileCalls = 0;
-  await page.route("**/api/program/program-ai/transcription/realtime?locale=en-GB", async (route) => {
-    realtimeCalls += 1;
-    expect(route.request().headers()["content-type"]).toContain("application/sdp");
-    expect(route.request().headers()[PROGRAMME_ACCESS_HEADERS.age]).toBe(PROGRAMME_ACCESS_HEADER_VALUES.age);
-    expect(route.request().postData()).toContain("browser-test-offer");
-    await route.fulfill({ status: 201, contentType: "application/sdp", body: "v=0\r\no=openai-test-answer\r\n" });
-  });
-  await page.route("**/api/program/program-ai/transcription", async (route) => {
-    fileCalls += 1;
-    await route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ code: "MUST_NOT_FALL_BACK" }) });
-  });
-  await page.goto("/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-
-  const composer = page.getByLabel("Your situation");
-  await expect(composer).toBeVisible();
-  await composer.fill("Typed beginning.");
-
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  await expect(page.locator('[data-state="live"]')).toBeVisible();
-  await expect(composer).toHaveValue("Typed beginning. LIVE-FIRST");
-  await page.getByRole("button", { name: "Stop voice input" }).click();
-  await expect(page.locator('[data-state="finalizing"]')).toBeVisible();
-  await expect(composer).toHaveValue("Typed beginning. First voice final.");
-  await expect(page.locator('[data-state="success"]')).toBeVisible();
-
-  await composer.fill("Manually edited beginning. First voice final.");
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  await expect(composer).toHaveValue("Manually edited beginning. First voice final. LIVE-SECOND");
-  await page.getByRole("button", { name: "Stop voice input" }).click();
-  await expect(composer).toHaveValue("Manually edited beginning. First voice final. Second voice final.");
-
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  await expect(composer).toHaveValue("Manually edited beginning. First voice final. Second voice final. LIVE-THIRD");
-  await composer.fill("Manually edited beginning. First voice final. Second voice final. My live correction.");
-  await page.getByRole("button", { name: "Stop voice input" }).click();
-  await expect(composer).toHaveValue("Manually edited beginning. First voice final. Second voice final. My live correction.");
-  await expect(page.getByText(/edits are preserved/i)).toBeVisible();
-
-  expect(realtimeCalls).toBe(3);
-  expect(fileCalls).toBe(0);
-  await noHorizontalOverflow(page);
-});
-
 test("realtime route fails without age evidence and reaches its handler with current authority evidence", async ({ request }) => {
   const session = await createProgrammeSession(request);
   await confirmSensitiveAuthority(request, session.cookieHeader);
@@ -673,164 +417,43 @@ test("realtime route fails without age evidence and reaches its handler with cur
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(session.token) } });
 });
 
-test("fresh microphone access uses the browser request before denied recovery", async ({ page }) => {
-  await page.addInitScript(() => {
-    let permissionRequests = 0;
-    Object.defineProperty(navigator, "permissions", {
-      configurable: true,
-      value: { query: async () => ({ state: "prompt", addEventListener: () => undefined, removeEventListener: () => undefined }) },
-    });
-    Object.defineProperty(navigator, "mediaDevices", {
-      configurable: true,
-      value: {
-        getUserMedia: async () => {
-          permissionRequests += 1;
-          throw new DOMException("Permission denied by test user", "NotAllowedError");
-        },
-      },
-    });
-    Object.defineProperty(window, "__programAiPermissionRequests", { get: () => permissionRequests });
+test("picked ready answers go straight to the Starting Point under one consent press", async ({ page }) => {
+  // Founder decisions, 11 Oct 2026: ready answers only, several can be picked; one button is the
+  // explicit consent and, under the line, the 18+, Terms and Privacy affirmation. No tick, no
+  // second screen, no microphone and no text field.
+  let consentPosts = 0;
+  page.on("request", (request) => {
+    if (request.method() === "POST" && new URL(request.url()).pathname === "/api/program/program-ai/authority") consentPosts += 1;
   });
-  await page.route("**/api/program/program-ai/session", async (route) => {
-    await route.fulfill({
-      status: 201,
-      contentType: "application/json",
-      body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }),
-    });
-  });
-  await page.route("**/api/program/program-ai/authority", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ ok: true, authority: { active: true } }),
-    });
-  });
-  await page.goto("/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-
-  await expect(page.getByRole("button", { name: "Start voice input" })).toBeVisible();
-  await expect(page.locator('[data-state] p[role="alert"]')).toHaveCount(0);
-  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
-  await expect(page.locator('[data-state] p[role="alert"]')).toContainText(/permission prompt was dismissed|microphone was not made available/i);
-  await expect(page.getByLabel("Your situation")).toBeVisible();
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(2);
-});
-
-test("persistently denied microphone state explains browser recovery and rechecks before retry", async ({ page }) => {
-  await page.addInitScript(() => {
-    let permissionRequests = 0;
-    const listeners = new Set<() => void>();
-    const status = {
-      state: "denied" as PermissionState,
-      addEventListener: (_name: string, listener: () => void) => listeners.add(listener),
-      removeEventListener: (_name: string, listener: () => void) => listeners.delete(listener),
-    };
-    Object.defineProperty(navigator, "permissions", { configurable: true, value: { query: async () => status } });
-    Object.defineProperty(navigator, "mediaDevices", {
-      configurable: true,
-      value: { getUserMedia: async () => { permissionRequests += 1; throw new DOMException("Blocked", "NotAllowedError"); } },
-    });
-    Object.defineProperty(window, "__programAiPermissionRequests", { get: () => permissionRequests });
-    Object.defineProperty(window, "__programAiPermissionState", {
-      value: (next: PermissionState) => { status.state = next; listeners.forEach((listener) => listener()); },
-    });
-  });
-  await page.route("**/api/program/program-ai/session", async (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
-  await page.route("**/api/program/program-ai/authority", async (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
-  await page.goto("/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-
-  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  await expect(page.locator('[data-state] p[role="alert"]')).toContainText(/browser will not show another prompt/i);
-  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
-  await page.evaluate(() => (window as unknown as { __programAiPermissionState: (state: PermissionState) => void }).__programAiPermissionState("prompt"));
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(2);
-});
-
-test("document policy denial is distinct from a browser user denial and keeps the typed path available", async ({ page }) => {
-  await page.addInitScript(() => {
-    let permissionRequests = 0;
-    Object.defineProperty(document, "permissionsPolicy", {
-      configurable: true,
-      value: { allowsFeature: (feature: string) => feature !== "microphone" },
-    });
-    Object.defineProperty(navigator, "permissions", {
-      configurable: true,
-      value: { query: async () => ({ state: "prompt", addEventListener: () => undefined, removeEventListener: () => undefined }) },
-    });
-    Object.defineProperty(navigator, "mediaDevices", {
-      configurable: true,
-      value: { getUserMedia: async () => { permissionRequests += 1; throw new Error("must not be called"); } },
-    });
-    Object.defineProperty(window, "__programAiPermissionRequests", { get: () => permissionRequests });
-  });
-  await page.route("**/api/program/program-ai/session", async (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
-  await page.route("**/api/program/program-ai/authority", async (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
-  await page.goto("/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  await expect(page.locator('[data-state="policy-denied"]')).toBeVisible();
-  await expect(page.locator('[data-state="policy-denied"] p[role="alert"]')).toContainText("Voice recording is unavailable on this page");
-  await expect(page.locator('[data-state="policy-denied"]')).not.toContainText(/site controls beside the address bar/i);
-  await expect(page.getByRole("button", { name: "Start voice input" })).toBeDisabled();
-  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
-  await expect(page.getByRole("textbox", { name: "Your situation" })).toBeVisible();
-});
-
-test("one consent check under the access line opens Mission 01 with a working microphone and no second consent", async ({ page }) => {
-  let authorityPosts = 0;
-  await page.route("**/api/program/program-ai/session", async (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
-  await page.route("**/api/program/program-ai/authority", async (route) => {
-    if (route.request().method() === "POST") authorityPosts += 1;
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) });
-  });
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/program");
-  const consent = page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ });
-  await expect(consent).not.toBeChecked();
-  // Founder decision, 11 Oct 2026: the consent is the one check; entering under the line is the
-  // 18+, Terms and Privacy affirmation.
-  await expect(page.getByRole("checkbox")).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  const agree = page.getByRole("button", { name: "Agree and continue" });
+  await expect(page.getByRole("checkbox")).toHaveCount(6);
+  await expect(page.getByRole("checkbox", { name: "Something else" })).toBeVisible();
+  await expect(page.getByRole("textbox")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /voice|microphone/i })).toHaveCount(0);
+  await expect(page.locator("[data-programme-start-consent]")).toHaveText("I explicitly consent to B4GAMBLE processing the answers I choose, including information that may reveal my health, and sending them to its AI provider to personalise my Programme.");
   await expect(page.locator("[data-programme-access-note]")).toHaveText("By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.");
-  await expect(page.getByRole("button", { name: "Enter Mission 01" })).toBeDisabled();
-  await consent.check();
-  await expect(page.getByRole("button", { name: "Enter Mission 01" })).toBeEnabled();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-
-  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Start voice input" })).toBeEnabled();
-  await expect(page.getByLabel("Your situation")).toBeVisible();
-  await expect(page.getByRole("button", { name: "I'd rather type" })).toHaveCount(0);
-  await expect(page.getByRole("checkbox")).toHaveCount(0);
-  await expect(page.getByText(/Before you share|Optional\. You can withdraw/)).toHaveCount(0);
-  expect(authorityPosts).toBe(1);
+  await expect(agree).toBeDisabled();
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  await page.getByRole("checkbox", { name: "I spend more than I plan" }).check();
+  await expect(agree).toBeEnabled();
   await noHorizontalOverflow(page);
-});
+  await agree.click();
 
-test("unsupported microphone recording keeps the typed path available", async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(window, "MediaRecorder", { configurable: true, value: undefined });
-    Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: undefined });
+  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  expect(consentPosts).toBe(1);
+  // Without a provider the Starting Point is the person's own answer, exactly as they read it.
+  await expect(page.getByText(situation, { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue with email" })).toBeVisible();
+  const anonymousSession = await anonymousSessionFromContext(page.context());
+  const authority = await prisma.programmeSensitiveInputAuthority.findFirstOrThrow({
+    where: { anonymousSessionId: anonymousSession.id, withdrawnAt: null },
   });
-  await page.route("**/api/program/program-ai/session", async (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
-  await page.route("**/api/program/program-ai/authority", async (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
-  await page.goto("/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await page.getByRole("button", { name: "Start voice input" }).click();
-  await expect(page.locator('[data-state] p[role="alert"]')).toContainText(/cannot record audio with the features B4GAMBLE needs/i);
-  await expect(page.getByLabel("Your situation")).toBeVisible();
+  expect(authority.statementVersion).toBe(PROGRAM_AI_SENSITIVE_STATEMENT_VERSION);
+  await prisma.anonymousProgrammeSession.deleteMany({ where: { id: anonymousSession.id } });
 });
 
 test("account-first route registers before the story and opens Mission 01 from the dashboard", async ({ page }) => {
@@ -838,16 +461,15 @@ test("account-first route registers before the story and opens Mission 01 from t
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
+  // The link sits on the start screen; registering first asks no story consent.
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
 
   await page.getByRole("button", { name: "Create an account first →" }).click();
   await expect(page.getByRole("heading", { name: /Save your place first/ })).toBeVisible();
   await expect(page.getByText("Your Starting Point is ready")).toHaveCount(0);
   await noHorizontalOverflow(page);
   await page.getByRole("button", { name: "← Tell my story first" }).click();
-  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
   await page.getByRole("button", { name: "Create an account first →" }).click();
 
   const email = `program-ai-account-first-${randomUUID()}@example.test`;
@@ -867,28 +489,21 @@ test("account-first route registers before the story and opens Mission 01 from t
   expect(xp).toHaveLength(0);
 });
 
-test("typed fallback path binds exact authority and is idempotent through real email auth", async ({ page }) => {
+test("ready answers bind exact authority and are idempotent through real email auth", async ({ page }) => {
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/program");
 
-  await expect(page.getByRole("heading", { name: "One check before you begin" })).toBeVisible();
-  // Founder decision, 11 Oct 2026: one required check, the explicit consent.
-  await expect(page.getByRole("checkbox")).toHaveCount(1);
-  const consentCheck = page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ });
-  await consentCheck.focus();
-  await page.keyboard.press("Space");
-  await expect(consentCheck).toBeChecked();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  // Founder decisions, 11 Oct 2026: ready answers picked with the keyboard, then one button.
+  for (const answer of ["I chase my losses", "I spend more than I plan"]) {
+    const option = page.getByRole("checkbox", { name: answer });
+    await option.focus();
+    await page.keyboard.press("Space");
+    await expect(option).toBeChecked();
+  }
   await noHorizontalOverflow(page);
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-
-  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
-  // The consent given on the access screen is not asked again.
-  await expect(page.getByRole("checkbox")).toHaveCount(0);
-  const situationField = page.getByLabel("Your situation");
-  await situationField.focus();
-  await situationField.fill(situation);
   let capturedClaimCookie: { name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite: "Lax" } | null = null;
   page.on("response", async (response) => {
     if (!response.url().endsWith("/api/program/program-ai/claim")) return;
@@ -896,9 +511,11 @@ test("typed fallback path binds exact authority and is idempotent through real e
     const value = setCookie?.match(/sevenbet_programme_claim=([^;]+)/)?.[1];
     if (value) capturedClaimCookie = { name: "sevenbet_programme_claim", value, domain: "127.0.0.1", path: "/", expires: -1, httpOnly: true, secure: false, sameSite: "Lax" };
   });
-  await page.getByRole("button", { name: "Create my Starting Point" }).click();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
 
   await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  // The start screen and its answers are gone; the consent is not asked again.
+  await expect(page.getByRole("checkbox", { name: "I chase my losses" })).toHaveCount(0);
   await expect(page.getByText(bestEffortStartingPoint.startingPoint, { exact: true })).toBeVisible();
   const understanding = page.locator("[data-programme-understanding]");
   await expect(understanding.getByRole("heading", { name: "What we'll work on first" })).toBeVisible();
@@ -1088,7 +705,7 @@ test("durably accepted account survives empty storage, context, login and Missio
   await page.evaluate(() => window.sessionStorage.clear());
   await page.reload();
   await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
-  await expect(page.getByRole("heading", { name: "One check before you begin" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toHaveCount(0);
 
   const freshContext = await browser.newContext({
     baseURL,
@@ -1097,11 +714,11 @@ test("durably accepted account survives empty storage, context, login and Missio
   const freshPage = await freshContext.newPage();
   await freshPage.goto("/program");
   await expect(freshPage.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
-  await expect(freshPage.getByRole("heading", { name: "One check before you begin" })).toHaveCount(0);
+  await expect(freshPage.getByRole("heading", { name: "What feels hardest right now?" })).toHaveCount(0);
   await freshContext.close();
 
   await page.getByRole("button", { name: "Log out of B4GAMBLE" }).click();
-  await expect(page.getByRole("heading", { name: "One check before you begin" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
   const signIn = await page.request.post("/api/auth/sign-in/email", {
     headers: { origin: baseURL, "x-forwarded-for": testClientAddress(email) },
     data: { email, password: "Programme-test-password-42!" },
@@ -1112,7 +729,7 @@ test("durably accepted account survives empty storage, context, login and Missio
   authCookieHeader = `${resumedSessionCookie!.name}=${resumedSessionCookie!.value}`;
   await page.goto("/program");
   await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
-  await expect(page.getByRole("heading", { name: "One check before you begin" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toHaveCount(0);
 
   for (const mission of programAiMissionRegistry) {
     if (mission.missionNumber === 3) {
@@ -1534,13 +1151,9 @@ test("completed legacy Mission 01 dominates a new claim and awards no new 40 XP"
 test("support-first keeps 20 XP, protected Help, and no registration CTA", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 760 });
   await page.goto("/program");
-  await expect(page.getByRole("button", { name: "Enter Mission 01" })).toBeDisabled();
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await expect(page.getByRole("button", { name: "Enter Mission 01" })).toBeEnabled();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(0);
-  await page.getByLabel("Your situation").fill(situation);
+  await expect(page.getByRole("button", { name: "Agree and continue" })).toBeDisabled();
+  await page.getByRole("checkbox", { name: "I can't stop once I start" }).check();
+  await expect(page.getByRole("button", { name: "Agree and continue" })).toBeEnabled();
   await page.route("**/api/program/program-ai/turn", async (route) => {
     await route.fulfill({
       status: 200,
@@ -1557,7 +1170,7 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
       }),
     });
   });
-  await page.getByRole("button", { name: "Create my Starting Point" }).click();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
 
   await expect(page.getByRole("heading", { name: "Pause the Programme. Keep support close." })).toBeVisible();
   await expect(page.getByText(/Your 20 XP for describing the situation is preserved/)).toBeVisible();

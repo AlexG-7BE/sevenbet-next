@@ -65,8 +65,8 @@ async function installAnonymousProgramme(page: Page) {
 }
 
 async function completeAccess(page: Page) {
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
   await expect(page.locator('[data-programme-presentation="mission-01-intake"]')).toBeVisible();
 }
 
@@ -113,7 +113,7 @@ for (const entry of ["/program", "/program?entry=start", "home", "ten-steps"] as
     }
     await expect(page.locator('[data-public-programme-renderer="program-ai"]')).toBeVisible();
     await expect(page.locator('[data-runtime-renderer="programme"]')).toBeVisible();
-    await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
     await completeAccess(page);
     await expect(page.getByRole("button", { name: "Start voice input" })).toBeVisible();
     await expect(page.getByLabel("Your situation")).toBeVisible();

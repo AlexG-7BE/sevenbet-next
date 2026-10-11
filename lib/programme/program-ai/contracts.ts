@@ -3,7 +3,9 @@ import type { ProgrammeLocale } from "@/lib/programme/presentation";
 export const PROGRAM_AI_M1_VERSION = "program-ai-01:v1";
 export const PROGRAM_AI_EVIDENCE_VERSION = "program-ai-m1-foundation:2026-08-10";
 export const PROGRAM_AI_SENSITIVE_PURPOSE_VERSION = "programme-personalisation:program-ai-01:v1";
-export const PROGRAM_AI_SENSITIVE_STATEMENT_VERSION = "article-9-authority:2026-08-10:v1";
+// v2 (11 Oct 2026): Mission 01 takes picked answers only, so the statement names "the answers
+// I choose" and the AI provider; typing, speech and the transcription provider left it.
+export const PROGRAM_AI_SENSITIVE_STATEMENT_VERSION = "article-9-authority:2026-10-11:v2";
 
 export const programAiMissionOneActions = [
   "program_ai_situation_submitted",
