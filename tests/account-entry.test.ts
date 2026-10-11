@@ -10,9 +10,11 @@ import {
 } from "../lib/customers/email-preference-client";
 import {
   affirmAnonymousProgrammeAccess,
-  hasUnsavedStartingPoint,
+  markStartingPointForAccount,
+  noteClaimMade,
   prepareAccountFirstGoogleReturn,
   recordAccountProgrammeAccess,
+  tabProgrammeProgress,
 } from "../lib/programme/access-client";
 import {
   PROGRAMME_PRIVACY_VERSION,
@@ -25,6 +27,7 @@ import {
   programmeAuthAccessHeaders,
   readProgrammeOAuthClaimMarker,
 } from "../lib/programme/local-subject-storage";
+import { makePendingClaim } from "../lib/programme/program-ai/pending-claim-client";
 
 // Founder decision, 11 Oct 2026: one sign-in form for new and returning people, in the
 // Programme and on Log in; the 18+ / Terms / Privacy ticks became a line.
@@ -166,18 +169,72 @@ test("the account affirmation carries no journey", async () => {
 test("a Google sign-up started on Log in hands the Programme an account-first return", () => {
   const storage = memoryStorage();
   const journey = anonymousProgrammeSubject(storage);
-  assert.equal(hasUnsavedStartingPoint(storage, journey), false);
+  assert.deepEqual(tabProgrammeProgress(storage, journey), { kind: "none" });
 
   prepareAccountFirstGoogleReturn(storage, journey);
   assert.deepEqual(loadProgrammeSubjectContent(storage, journey), { programAi: { phase: "registration", accountFirst: true } });
   assert.deepEqual(readProgrammeOAuthClaimMarker(storage), journey);
 });
 
-test("a Starting Point made in the tab is recognised so Log in sends the person back to save it", () => {
+// Founder, 11 Oct 2026, after pressing Google on Log in and being sent back to the Programme
+// screen: "почему при нажатии на гугл регистрацию меня отправляет вот сюда? даже если я уже
+// ответил там на вопросы." A person who already answered is never sent back to press twice.
+test("Log in knows what the tab already holds: a Starting Point, picked answers, or nothing", () => {
   const storage = memoryStorage();
   const journey = anonymousProgrammeSubject(storage);
-  mergeProgrammeSubjectContent(storage, journey, { programAi: { phase: "registration", candidate: { startingPoint: "…" } } });
-  assert.equal(hasUnsavedStartingPoint(storage, journey), true);
+  const startingPoint = { startingPoint: "…", desiredChange: "…" };
+
+  mergeProgrammeSubjectContent(storage, journey, { programAi: { phase: "registration", answers: ["I chase my losses"], candidate: startingPoint, claimReadyAt: 123 } });
+  assert.deepEqual(tabProgrammeProgress(storage, journey), { kind: "starting-point", startingPoint, claimReadyAt: 123 });
+
+  // The answers were sent but the Starting Point never arrived: the answers are kept.
+  mergeProgrammeSubjectContent(storage, journey, { programAi: { phase: "registration", answers: ["I chase my losses"], candidate: null } });
+  assert.deepEqual(tabProgrammeProgress(storage, journey), { kind: "answers", answers: ["I chase my losses"] });
+
+  // Support first holds registration back, so nothing is carried into an account from it.
+  mergeProgrammeSubjectContent(storage, journey, { programAi: { phase: "support", answers: ["I chase my losses"], candidate: startingPoint } });
+  assert.deepEqual(tabProgrammeProgress(storage, journey), { kind: "none" });
+});
+
+test("a Starting Point goes with the account from Log in: the claim is made and marked for the Programme page", async () => {
+  const storage = memoryStorage();
+  const journey = anonymousProgrammeSubject(storage);
+  const startingPoint = { startingPoint: "…", desiredChange: "…" };
+  mergeProgrammeSubjectContent(storage, journey, { programAi: { phase: "registration", answers: ["I chase my losses"], candidate: startingPoint } });
+
+  const requests: Array<{ path: string; method: string; body: unknown; headers: Record<string, string> }> = [];
+  await makePendingClaim({ "x-test-access": "current" }, startingPoint, async (path, init) => {
+    requests.push({ path, method: String(init.method), body: init.body ? JSON.parse(String(init.body)) : null, headers: init.headers as Record<string, string> });
+    return { ok: true };
+  });
+  // Ready first, then the claim; both carry the journey's access evidence and the cookie.
+  assert.deepEqual(requests.map((request) => request.path), ["/api/program/program-ai/starting-point", "/api/program/program-ai/claim"]);
+  assert.deepEqual(requests[0].body, startingPoint);
+  assert.equal(requests[1].body, null);
+  for (const request of requests) {
+    assert.equal(request.method, "POST");
+    assert.equal(request.headers["x-test-access"], "current");
+  }
+
+  noteClaimMade(storage, journey, 1_800_000_000_000);
+  assert.deepEqual(tabProgrammeProgress(storage, journey), { kind: "starting-point", startingPoint, claimReadyAt: 1_800_000_000_000 });
+  markStartingPointForAccount(storage, journey);
+  assert.deepEqual(readProgrammeOAuthClaimMarker(storage), journey);
+  // The Starting Point and the answers are still there for the Programme page to redeem.
+  assert.deepEqual(loadProgrammeSubjectContent<{ programAi: { candidate: unknown } }>(storage, journey).programAi?.candidate, startingPoint);
+});
+
+test("a refused claim is reported, so Log in can still sign the person in with the answers kept", async () => {
+  const refuse = (failAt: number) => { let call = 0; return async () => ({ ok: ++call !== failAt }); };
+  await assert.rejects(makePendingClaim({}, {}, refuse(1)), /STARTING_POINT_NOT_READY/);
+  await assert.rejects(makePendingClaim({}, {}, refuse(2)), /PENDING_CLAIM_NOT_MADE/);
+
+  // Without a claim the Google return is account-first, and the picked answers travel with it.
+  const storage = memoryStorage();
+  const journey = anonymousProgrammeSubject(storage);
+  mergeProgrammeSubjectContent(storage, journey, { programAi: { phase: "registration", answers: ["I chase my losses", "Something else"], candidate: null } });
+  prepareAccountFirstGoogleReturn(storage, journey);
+  assert.deepEqual(loadProgrammeSubjectContent(storage, journey), { programAi: { phase: "registration", accountFirst: true, answers: ["I chase my losses", "Something else"] } });
 });
 
 test("Log in creates accounts through the Programme access proof and the Programme Google return", () => {
@@ -190,8 +247,20 @@ test("Log in creates accounts through the Programme access proof and the Program
   assert.match(login, /const journey = await affirmAnonymousProgrammeAccess\(window\.sessionStorage\);[\s\S]*authClient\.signUp\.email\([\s\S]*programmeAuthAccessHeaders\(window\.sessionStorage, journey\)/);
   assert.match(login, /await recordAccountProgrammeAccess\(\)/);
   // Google: the Programme callbacks are the only ones the server lets create an account.
-  assert.match(login, /prepareAccountFirstGoogleReturn\(window\.sessionStorage, journey\);[\s\S]*\.\.\.programmeGoogleCallbacks\(locale\),\s+requestSignUp: true,/);
+  assert.match(login, /if \(!carried\) prepareAccountFirstGoogleReturn\(window\.sessionStorage, journey\);[\s\S]*\.\.\.programmeGoogleCallbacks\(locale\),\s+requestSignUp: true,/);
   assert.doesNotMatch(login, /requestSignUp: false/);
+  // Neither action sends a person who already answered back to the Programme before signing
+  // in: Google starts at once with the Starting Point carried, and email carries it after auth.
+  const google = login.slice(login.indexOf("async function startGoogle()"), login.indexOf("async function startGoogleLink()"));
+  assert.doesNotMatch(google, /window\.location/);
+  assert.match(google, /if \(progress\.kind === "starting-point"\) \{[\s\S]*await carryStartingPoint\(journey, progress, PENDING_CLAIM_FRESH_FOR_GOOGLE_MS\); carried = true;/);
+  const emailEntry = login.slice(login.indexOf("async function continueWithEmailEntry"));
+  assert.ok(emailEntry.indexOf("await continueWithEmail(") < emailEntry.indexOf("window.location.assign(programmePath)"), "email signs in before any move to the Programme");
+  assert.match(emailEntry, /await carryStartingPoint\(journey, progress, PENDING_CLAIM_FRESH_FOR_EMAIL_MS\);\s+window\.location\.assign\(programmePath\);/);
+  assert.doesNotMatch(login, /unsavedStartingPointOpened|hasUnsavedStartingPoint/);
+  // Answers picked before the account existed are shown picked on the Programme page.
+  assert.match(experience, /const picked = Array\.isArray\(kept\) \? pickedReadyAnswers\(kept\) : \[\];/);
+  assert.match(experience, /initialAnswers=\{phase === "intake" \? local\.answers : undefined\}/);
   // The line is the first and only ask on Log in; the old dead end is gone.
   assert.match(login, /By continuing, you confirm you are 18\+ and accept the Terms and Privacy Notice\./);
   assert.doesNotMatch(login, /There's no signup form/);

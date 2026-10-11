@@ -17,15 +17,26 @@ import {
 import { programmeText } from "@/lib/i18n/programme-catalog";
 import {
   affirmAnonymousProgrammeAccess,
-  hasUnsavedStartingPoint,
+  markStartingPointForAccount,
+  noteClaimMade,
   prepareAccountFirstGoogleReturn,
   recordAccountProgrammeAccess,
+  tabProgrammeProgress,
+  type TabProgrammeProgress,
 } from "@/lib/programme/access-client";
 import {
   anonymousProgrammeSubject,
   clearProgrammeOAuthClaimMarker,
   programmeAuthAccessHeaders,
+  programmeMutationAccessHeaders,
+  type ProgrammeLocalSubject,
 } from "@/lib/programme/local-subject-storage";
+import {
+  PENDING_CLAIM_FRESH_FOR_EMAIL_MS,
+  PENDING_CLAIM_FRESH_FOR_GOOGLE_MS,
+  makePendingClaim,
+  pendingClaimIsFresh,
+} from "@/lib/programme/program-ai/pending-claim-client";
 import { programmeHelpPath, programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./LoginExperience.module.css";
 
@@ -58,23 +69,32 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
     window.location.assign(returnTo);
   }
 
-  // A Starting Point made in this tab is saved where it was made: the Programme screen carries
-  // the same form and the claim that saving needs.
-  function unsavedStartingPointOpened() {
-    if (!hasUnsavedStartingPoint(window.sessionStorage, anonymousProgrammeSubject(window.sessionStorage))) return false;
-    window.location.assign(programmePath);
-    return true;
+  // Founder decision, 11 Oct 2026: a person who already answered in this tab is not sent back to
+  // the Programme to press the same button again. Their Starting Point goes with the account from
+  // here: the claim is made (or reused while fresh) and the Programme page redeems it on arrival.
+  async function carryStartingPoint(journey: ProgrammeLocalSubject, progress: Extract<TabProgrammeProgress, { kind: "starting-point" }>, freshForMs: number) {
+    if (!pendingClaimIsFresh(progress.claimReadyAt, freshForMs)) {
+      await makePendingClaim(programmeMutationAccessHeaders(window.sessionStorage, journey), progress.startingPoint);
+      noteClaimMade(window.sessionStorage, journey);
+    }
+    markStartingPointForAccount(window.sessionStorage, journey);
   }
 
   // Founder decision, 11 Oct 2026: Log in also creates the account. Continuing under the line
   // below the form is the 18+, Terms and Privacy affirmation. The Programme page finishes a
-  // Google return: it records the affirmation for the account and opens the plan.
+  // Google return: it redeems a Starting Point made in this tab, or records the affirmation for
+  // the account and opens the answers.
   async function startGoogle() {
-    if (unsavedStartingPointOpened()) return;
     setBusy(true); setError("");
     try {
       const journey = await affirmAnonymousProgrammeAccess(window.sessionStorage);
-      prepareAccountFirstGoogleReturn(window.sessionStorage, journey);
+      const progress = tabProgrammeProgress(window.sessionStorage, journey);
+      let carried = false;
+      if (progress.kind === "starting-point") {
+        // If the claim cannot be made, signing in still goes ahead; the answers stay picked.
+        try { await carryStartingPoint(journey, progress, PENDING_CLAIM_FRESH_FOR_GOOGLE_MS); carried = true; } catch { carried = false; }
+      }
+      if (!carried) prepareAccountFirstGoogleReturn(window.sessionStorage, journey);
       rememberGoogleMarketingChoice(window.sessionStorage, journey.id, marketingAllowed);
       const result = await authClient.signIn.social({
         provider: "google",
@@ -105,7 +125,6 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
 
   async function continueWithEmailEntry(event: FormEvent) {
     event.preventDefault();
-    if (!linkRecovery && unsavedStartingPointOpened()) return;
     setBusy(true); setError("");
     try {
       const entry = await continueWithEmail({ email, password, expect: linkRecovery ? "existing-only" : "returning" }, {
@@ -130,6 +149,18 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
       // request fails, the Programme asks its own access check once instead.
       await recordAccountProgrammeAccess().catch(() => undefined);
       if (entry.kind === "created" && marketingAllowed) await saveProgrammeMarketingPreference(locale);
+      // A Starting Point made in this tab goes with the account: the Programme page redeems it.
+      const progress = tabProgrammeProgress(window.sessionStorage, anonymousProgrammeSubject(window.sessionStorage));
+      if (progress.kind === "starting-point") {
+        try {
+          const journey = await affirmAnonymousProgrammeAccess(window.sessionStorage);
+          await carryStartingPoint(journey, progress, PENDING_CLAIM_FRESH_FOR_EMAIL_MS);
+          window.location.assign(programmePath);
+          return;
+        } catch {
+          // The Programme page then shows the answers again, already picked.
+        }
+      }
       continueToDestination();
     } catch {
       setError(t("Account access failed"));
