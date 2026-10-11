@@ -144,9 +144,8 @@ export function parseProgrammeRoute(pathname: string): ProgrammeRouteParse | nul
  * leaving it does, and so does entering it in another language than the page's.
  *
  * `<html lang>` is set by the root layout, which is not rendered again on a client transition,
- * so a crossing that changes the language needs its own document. On the way out, Home and the
- * Learn hub also carry their stylesheet under the nonce of the request that rendered them, and
- * that nonce matches the document's Content-Security-Policy only on a full load.
+ * so a crossing that can change the language needs its own document: the Programme's menu
+ * leads a visitor without a published market to pages in their own language.
  */
 export function programmeCrossingNeedsDocument(currentPathname: string, destinationPathname: string, documentLanguage: string) {
   const current = parseProgrammeRoute(currentPathname);

@@ -1,6 +1,6 @@
 import generatedPages from "@/lib/final-handoff/generated-pages.json";
 import { markHandoffReadability } from "@/lib/final-handoff/readability";
-import { transformCommonHandoff } from "@/lib/final-handoff/transforms";
+import { transformCommonHandoff, transformCommonHandoffCss } from "@/lib/final-handoff/transforms";
 import { NonceStyle } from "@/components/security/NonceStyle";
 import { HandoffInteractions } from "./HandoffInteractions";
 
@@ -57,7 +57,8 @@ export function HandoffPage({
   // Readability pass (Founder, 25 Sep 2026): tokens only; app/globals.css applies the fixes (Home on phones only).
   const readableHtml = markHandoffReadability(transform ? transform(commonHtml) : commonHtml);
   const html = revealHeadings ? readableHtml.replace(/<h2\b/g, "<h2 data-motion-reveal") : readableHtml;
-  const sourceCss = cssTransform ? cssTransform(page.css) : page.css;
+  const commonCss = transformCommonHandoffCss(page.css);
+  const sourceCss = cssTransform ? cssTransform(commonCss) : commonCss;
   const css = name === "home" ? `${sourceCss}\n${HOME_STACK_COMPOSITOR_FIX}` : sourceCss;
 
   return (

@@ -15,7 +15,7 @@ function targetsSameWindow(anchor: HTMLAnchorElement) {
  *
  * The rule dates from the Programme's own Permissions-Policy (a microphone grant, removed with
  * voice input on 11 October 2026). Every document now sends the same deny-all policy, so the
- * policy no longer needs the load; the page language and the public pages' stylesheets do.
+ * policy no longer needs the load; the page language does.
  */
 export function ProgrammeDocumentBoundary() {
   useEffect(() => {
