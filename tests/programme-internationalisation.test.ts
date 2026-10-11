@@ -43,6 +43,7 @@ import {
   PROGRAMME_ROUTES,
   parseProgrammeLocale,
   parseProgrammeRoute,
+  programmeCrossingNeedsDocument,
   programmeHelpPath,
   programmeLocaleFromPath,
   programmeLocaleHref,
@@ -109,6 +110,36 @@ class MemoryStorage implements Storage {
   setItem(key: string, value: string) { this.values.set(key, value); }
   entries() { return [...this.values.entries()]; }
 }
+
+// Founder decision, 11 October 2026: entering the Programme is a client transition; a link that
+// changes the page language, and every link out of the Programme, still loads a fresh document.
+test("only links out of the Programme, or into it in another language, load a fresh document", () => {
+  for (const route of PROGRAMME_ROUTES) {
+    const publicHome = `/${route.language}`;
+    assert.equal(programmeCrossingNeedsDocument(publicHome, route.path, route.locale), false, `${publicHome} -> ${route.path}`);
+    assert.equal(programmeCrossingNeedsDocument(`${publicHome}/learn`, `${route.path}/unknown`, route.locale), false);
+    assert.equal(programmeCrossingNeedsDocument(route.path, publicHome, route.locale), true, `${route.path} -> ${publicHome}`);
+    assert.equal(programmeCrossingNeedsDocument(route.path, "/login", route.locale), true);
+    assert.equal(programmeCrossingNeedsDocument(route.path, "/help", route.locale), true);
+    assert.equal(programmeCrossingNeedsDocument(route.path, route.path, route.locale), false, "inside the Programme");
+    for (const legacy of route.legacyPaths) {
+      assert.equal(programmeCrossingNeedsDocument(publicHome, legacy, route.locale), true, `${legacy} redirects`);
+    }
+  }
+  assert.equal(programmeCrossingNeedsDocument("/de/learn", "/program", "de-DE"), true, "the English Programme from a German page");
+  assert.equal(programmeCrossingNeedsDocument("/es", "/es/program", "es-PE"), true, "a regional page language is not the Programme's");
+  assert.equal(programmeCrossingNeedsDocument("/en", "/program", ""), true, "an unknown page language");
+  assert.equal(programmeCrossingNeedsDocument("/de/program", "/sv/program", "de-DE"), false, "the Programme's own language links are plain anchors");
+  assert.equal(programmeCrossingNeedsDocument("/en/learn", "/en/casinos", "en-GB"), false, "public pages are not a crossing");
+  assert.equal(programmeCrossingNeedsDocument("/en/learn", "/en/programme-guide", "en-GB"), false);
+
+  const boundary = readFileSync("components/programme/ProgrammeDocumentBoundary.tsx", "utf8");
+  assert.match(boundary, /programmeCrossingNeedsDocument\(window\.location\.pathname, destination\.pathname, document\.documentElement\.lang\)/);
+  assert.match(boundary, /document\.addEventListener\("click", onClick, true\)/);
+  assert.match(readFileSync("app/layout.tsx", "utf8"), /<ProgrammeDocumentBoundary \/>/);
+  // A handoff page drives its own links; it must not also start a client transition for a link that loads a document.
+  assert.match(readFileSync("components/final-handoff/HandoffInteractions.tsx", "utf8"), /!sameDocument && !documentLoad\)/);
+});
 
 test("Programme presentation exposes exactly the Founder-approved locale and route contract", () => {
   assert.deepEqual(PROGRAMME_ROUTES.map((route) => [route.locale, route.language, route.path]), expectedRoutes);

@@ -1,3 +1,5 @@
+import { parseProgrammeRoute, programmeCrossingNeedsDocument } from "@/lib/programme/presentation";
+
 /**
  * Instant navigation (Founder decision, 4 Oct 2026): a page change must take 0.1–0.3 s. With the
  * server in the United States, only a page already in the browser before the click can open that
@@ -5,12 +7,17 @@
  * Performance Stage 2 rule that primary navigation is never prefetched.
  */
 
-/** Primary destinations (header and drawer) load in the background once the current page settles. */
-export const PRIMARY_PREFETCH_SELECTOR = "a[data-navigation-href]";
+/**
+ * Primary destinations (header and drawer) load in the background once the current page settles.
+ * The Programme is one of them (Founder decision, 11 October 2026): its header and drawer button
+ * opens it without a document load, so it can be in the browser before the tap.
+ */
+export const PRIMARY_PREFETCH_SELECTOR = "a[data-navigation-href], a[data-programme-entry]";
 
 /** Other links load when the visitor shows intent: a mouse resting on them, a touch, focus. */
 export const INTENT_PREFETCH_SELECTOR = [
   "a[data-navigation-href]",
+  "a[data-programme-entry]",
   "a[data-footer-navigation-href]",
   "a[data-learn-offer-bridge-link]",
   "a[data-learn-category]",
@@ -31,6 +38,34 @@ export function prefetchTarget(href: string, current: string) {
     return `${destination.pathname}${destination.search}`;
   } catch {
     return null;
+  }
+}
+
+/**
+ * Whether a link opens the Programme from a public page. Every such link loads on intent, whichever
+ * page or block rendered it: starting the Programme is the site's primary action.
+ */
+export function leadsIntoProgramme(href: string, current: string) {
+  try {
+    const here = new URL(current);
+    const destination = new URL(href, here);
+    return destination.origin === here.origin
+      && parseProgrammeRoute(here.pathname) === null
+      && parseProgrammeRoute(destination.pathname) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** A link that loads a fresh document gains nothing from a page fetched for the client router. */
+export function opensWithDocumentLoad(href: string, current: string, documentLanguage: string) {
+  try {
+    const here = new URL(current);
+    const destination = new URL(href, here);
+    return destination.origin === here.origin
+      && programmeCrossingNeedsDocument(here.pathname, destination.pathname, documentLanguage);
+  } catch {
+    return false;
   }
 }
 

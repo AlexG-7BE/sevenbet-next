@@ -4,7 +4,7 @@ import { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 
-import { currentPageSettled, INTENT_PREFETCH_SELECTOR, prefetchTarget, PRIMARY_PREFETCH_SELECTOR } from "./navigation-prefetch";
+import { currentPageSettled, INTENT_PREFETCH_SELECTOR, leadsIntoProgramme, opensWithDocumentLoad, prefetchTarget, PRIMARY_PREFETCH_SELECTOR } from "./navigation-prefetch";
 import { navigationClickTarget } from "./navigation-progress";
 
 type PendingLink = Readonly<{ id: string; label: string }>;
@@ -93,8 +93,9 @@ const PREFETCH_AGAIN_AFTER_MS = 240_000;
 
 /**
  * Pages open in 0.1–0.3 s only when they are already in the browser (Founder decision, 4 Oct 2026).
- * Once the current page settles, the primary destinations load in the background; any other
- * eligible link loads on hover, touch or focus, and the mobile drawer loads its links as it opens.
+ * Once the current page settles, the primary destinations and the Programme load in the
+ * background; any other eligible link, and every other link into the Programme, loads on hover,
+ * touch or focus, and the mobile drawer loads its links as it opens.
  * Next keeps each fetched page for five minutes (staleTimes.static), and `/r/` still decides every
  * outbound click on the server.
  */
@@ -111,7 +112,7 @@ function useInstantNavigation() {
     const prefetch = (anchor: HTMLAnchorElement) => {
       if (!currentPageSettled(document)) return;
       const target = prefetchTarget(anchor.href, window.location.href);
-      if (!target) return;
+      if (!target || opensWithDocumentLoad(anchor.href, window.location.href, document.documentElement.lang)) return;
       const last = requested.get(target);
       if (last !== undefined && Date.now() - last < PREFETCH_AGAIN_AFTER_MS) return;
       requested.set(target, Date.now());
@@ -131,8 +132,11 @@ function useInstantNavigation() {
       else settleTimer = window.setTimeout(run, 200);
     };
     const intentAnchor = (target: EventTarget | null) => {
-      const anchor = target instanceof Element ? target.closest(INTENT_PREFETCH_SELECTOR) : null;
-      return anchor instanceof HTMLAnchorElement ? anchor : null;
+      if (!(target instanceof Element)) return null;
+      const marked = target.closest(INTENT_PREFETCH_SELECTOR);
+      if (marked instanceof HTMLAnchorElement) return marked;
+      const anchor = target.closest("a[href]");
+      return anchor instanceof HTMLAnchorElement && leadsIntoProgramme(anchor.href, window.location.href) ? anchor : null;
     };
     const onPointerOver = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;

@@ -15,6 +15,11 @@ export const PRIVACY_CHOICE_SCROLL_THRESHOLD_PX = 24;
 // Focused flows keep their first screen: the Programme, protected Help, sign-in, password reset and staff routes.
 const AUTO_OPEN_EXCLUDED = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:program|help|login|reset-password|admin|editorial-preview|unsubscribe)(?:\/|$)/;
 
+/** Whether a page belongs to a focused flow, where the automatic choice is never on screen. */
+export function isFocusedFlow(pathname: string) {
+  return AUTO_OPEN_EXCLUDED.test(pathname);
+}
+
 /**
  * Founder decision, 25 Sep 2026: visitors without a recorded analytics choice see it on arrival.
  * Nothing is collected until they allow it, and declining stays as easy as allowing.
@@ -28,5 +33,5 @@ export function shouldAutoOpenPrivacyChoice({ pathname, consentState, dismissed,
 }) {
   if (consentState !== "unknown" || dismissed) return false;
   if (automated && !automationOptIn) return false;
-  return !AUTO_OPEN_EXCLUDED.test(pathname);
+  return !isFocusedFlow(pathname);
 }

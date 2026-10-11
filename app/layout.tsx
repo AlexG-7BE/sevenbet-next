@@ -3,7 +3,7 @@ import { Archivo, Instrument_Serif } from "next/font/google";
 import { headers } from "next/headers";
 import { connection } from "next/server";
 import { SiteMotionController } from "@/components/motion/SiteMotionController";
-import { ProgrammeDocumentPolicyBoundary } from "@/components/programme/ProgrammeDocumentPolicyBoundary";
+import { ProgrammeDocumentBoundary } from "@/components/programme/ProgrammeDocumentBoundary";
 import { AnalyticsConsentBanner } from "@/components/analytics/AnalyticsConsentBanner";
 import { AnalyticsPageView } from "@/components/analytics/AnalyticsPageView";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -76,7 +76,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {children}
         {analyticsEnabled ? <AnalyticsPageView /> : null}
         {analyticsEnabled ? <AnalyticsConsentBanner locale={presentation.locale} /> : null}
-        <ProgrammeDocumentPolicyBoundary />
+        <ProgrammeDocumentBoundary />
         <SiteMotionController />
       </body>
     </html>
