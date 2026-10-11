@@ -37,20 +37,9 @@ async function snapState(page: Page) {
   });
 }
 
-async function expectValidSnapLanding(page: Page, scrollY: number) {
-  const { destinations } = await snapState(page);
-  expect(Math.min(...destinations.map((position) => Math.abs(position - scrollY)))).toBeLessThanOrEqual(3);
-}
-
-async function returnToFirstSnap(page: Page) {
-  await page.keyboard.press("Home");
-  const landed = await waitForScrollIdle(page);
-  await expectValidSnapLanding(page, landed);
-  return landed;
-}
-
 for (const viewport of [{ height: 900, width: 1440 }, { height: 768, width: 1024 }]) {
-  test(`desktop wheel contract is adjacent and fully revealed — ${viewport.width}x${viewport.height}`, async ({ page, browserName }) => {
+  test(`desktop Home scrolls freely and the chapters open under the reader's scroll — ${viewport.width}x${viewport.height}`, async ({ page, browserName }) => {
+    // Founder, 11 Oct 2026: with a mouse or a trackpad nothing pages Home and nothing snaps it.
     test.setTimeout(60_000);
     await page.setViewportSize(viewport);
     const errors: string[] = [];
@@ -59,27 +48,22 @@ for (const viewport of [{ height: 900, width: 1440 }, { height: 768, width: 1024
     await bridgeLocalWebKitUpgrade(page, browserName);
     await page.goto("/", { waitUntil: "networkidle" });
 
-    expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("y mandatory");
-    await expect(page.locator('[data-handoff-page="home"]')).toHaveAttribute("data-home-wheel-controller", "adjacent");
-    const targets = page.locator('[data-handoff-page="home"] [data-home-snap]');
-    await expect(targets).toHaveCount(9);
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("none");
+    const home = page.locator('[data-handoff-page="home"]');
+    await expect(home).toHaveAttribute("data-home-interactions", "ready");
+    await expect(home).not.toHaveAttribute("data-home-wheel-controller", /.*/);
     const initialState = await snapState(page);
     expect(initialState.targets.map(({ label }) => label)).toEqual([
       "Hero", "Recognition", "A plan you can see", "Missions 01-03", "Missions 04-07",
       "Missions 08-10", "Built from evidence", "Why trust", "Final CTA",
     ]);
-    expect(initialState.targets.every(({ align, stop }) => align === "start" && stop === "normal")).toBe(true);
     expect(initialState.targets.slice(0, 8).map(({ position }, index) => (
       Math.abs(position - initialState.targets[index === 0 ? 0 : index - 1].position - (index === 0 ? 0 : viewport.height)) <= 20
     ))).toEqual([true, true, true, true, true, true, true, true]);
-    expect(await page.locator('[data-screen-label="Final CTA"]').evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(viewport.height + 1);
     expect(await page.locator('[data-public-shell="header"]').evaluate((element) => ({
       height: Math.round(element.getBoundingClientRect().height),
       position: getComputedStyle(element).position,
     }))).toEqual({ height: 81, position: "fixed" });
-    expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollPaddingTop)).toBe("auto");
-    expect(await page.locator('[data-snap]:not([data-home-snap])').evaluateAll((elements) => elements.every((element) => getComputedStyle(element).scrollSnapAlign === "none"))).toBe(true);
-    expect(await page.locator('[data-public-shell="footer"]').evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("end");
     expect(await page.evaluate(() => ({
       bodyScrollbarDisplay: getComputedStyle(document.body, "::-webkit-scrollbar").display,
       documentScrollable: document.documentElement.scrollHeight > innerHeight,
@@ -92,112 +76,69 @@ for (const viewport of [{ height: 900, width: 1440 }, { height: 768, width: 1024
       rootScrollbarWidth: expect.not.stringMatching(/^none$/),
     });
 
-    await returnToFirstSnap(page);
-    await page.mouse.move(viewport.width - 3, 36);
-    await page.mouse.down();
-    await page.mouse.move(viewport.width - 3, Math.round(viewport.height * 0.7), { steps: 12 });
-    await page.mouse.up();
-    const thumbLanding = await waitForScrollIdle(page);
-    test.info().annotations.push({
-      description: thumbLanding >= initialState.destinations[5]
-        ? `${browserName} native thumb moved directly from Hero to ${thumbLanding}px without walking intermediate wheel destinations.`
-        : `${browserName} headless browser chrome did not expose a draggable native thumb; source/runtime no-hide and no-generic-scroll evidence still passed.`,
-      type: "native-scrollbar",
-    });
-    await page.evaluate(() => window.scrollTo({ behavior: "auto", top: 0 }));
-    await waitForScrollIdle(page);
+    // The wheel moves the page by what it asks for and the page stays there.
+    await page.mouse.move(Math.round(viewport.width / 2), Math.round(viewport.height / 2));
+    await page.mouse.wheel(0, 300);
+    expect(await waitForScrollIdle(page)).toBe(300);
+    await page.mouse.wheel(0, 120);
+    expect(await waitForScrollIdle(page)).toBe(420);
+    await page.waitForTimeout(600);
+    expect(await page.evaluate(() => window.scrollY)).toBe(420);
+    await page.mouse.wheel(0, -420);
+    expect(await waitForScrollIdle(page)).toBe(0);
 
-    const first = await returnToFirstSnap(page);
-    await page.mouse.wheel(0, 120);
-    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[1]);
-    await page.mouse.wheel(0, 120);
-    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[2]);
-    await page.mouse.wheel(0, 120);
-    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[3]);
-    for (let index = 4; index < initialState.destinations.length; index += 1) {
-      await page.mouse.wheel(0, 120);
-      expect(await waitForScrollIdle(page)).toBe(initialState.destinations[index]);
-      if (index > 5) continue;
-      const label = index === 4 ? "Missions 04-07" : "Missions 08-10";
+    // The first chapter grows out of "A plan you can see". Sticky positioning holds it in the
+    // middle of the screen wherever the reader stops; its words arrive as the photo fills it.
+    const plan = initialState.targets[2].position;
+    const firstMission = page.locator('[data-screen-label="Missions 01-03"]');
+    const opening = async (share: number) => {
+      await page.evaluate((top) => window.scrollTo({ behavior: "instant", top }), plan + Math.round(viewport.height * share));
+      await page.waitForTimeout(650);
+      return firstMission.evaluate((panel) => {
+        const rect = panel.getBoundingClientRect();
+        const matrix = new DOMMatrixReadOnly(getComputedStyle(panel).transform);
+        return {
+          centre: Math.round(rect.top + rect.height / 2),
+          copy: getComputedStyle(panel.querySelector<HTMLElement>('[data-mob="chapter"]')!).opacity,
+          opacity: getComputedStyle(panel).opacity,
+          scale: Number(matrix.a.toFixed(2)),
+          shift: Math.round(Math.hypot(matrix.e, matrix.f)),
+        };
+      });
+    };
+    const centre = Math.round(viewport.height / 2);
+    expect(await opening(0)).toEqual({ centre, copy: "0", opacity: "0", scale: 1, shift: 0 });
+    const quarter = await opening(0.25);
+    expect(quarter).toEqual({ centre, copy: "0", opacity: "1", scale: quarter.scale, shift: 0 });
+    expect(quarter.scale).toBeGreaterThan(0.3);
+    expect(quarter.scale).toBeLessThan(0.45);
+    const half = await opening(0.5);
+    expect(half).toEqual({ centre, copy: "0", opacity: "1", scale: 0.62, shift: 0 });
+    const nearlyOpen = await opening(0.92);
+    expect(nearlyOpen).toEqual({ centre, copy: "1", opacity: "1", scale: nearlyOpen.scale, shift: 0 });
+    expect(nearlyOpen.scale).toBeGreaterThan(0.97);
+
+    // Each chapter is whole where its anchor is, and the next one slides over it.
+    for (const label of ["Missions 01-03", "Missions 04-07", "Missions 08-10"]) {
+      const position = initialState.targets.find((target) => target.label === label)!.position;
+      await page.evaluate((top) => window.scrollTo({ behavior: "instant", top }), position);
+      await page.waitForTimeout(650);
       const mission = page.locator(`[data-screen-label="${label}"]`);
       await expect(mission.locator('[data-mob="chapter"]')).toHaveCSS("opacity", "1");
       await expect(mission.locator("[data-stackind]")).toHaveCSS("opacity", "1");
-      expect(await mission.evaluate((panel, snapLabel) => {
-        const anchor = document.querySelector<HTMLElement>(`[data-home-snap-label="${snapLabel}"]`)!;
-        return {
-          borderRadius: getComputedStyle(panel).borderRadius,
-          raw: Math.round(anchor.getBoundingClientRect().top),
-          transform: getComputedStyle(panel).transform,
-        };
-      }, label)).toEqual({ borderRadius: "0px", raw: 0, transform: "none" });
-    }
-
-    await returnToFirstSnap(page);
-    for (let input = 0; input < 12; input += 1) {
-      await page.mouse.wheel(0, 900);
-      await page.waitForTimeout(16);
-    }
-    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[1]);
-
-    await returnToFirstSnap(page);
-    await page.mouse.wheel(0, 5_000);
-    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[1]);
-    await page.mouse.wheel(0, 5_000);
-    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[2]);
-
-    await returnToFirstSnap(page);
-    await page.mouse.wheel(0, 300);
-    await page.waitForTimeout(20);
-    await page.mouse.wheel(0, -300);
-    expect(await waitForScrollIdle(page)).toBe(first);
-
-    await page.evaluate((position) => window.scrollTo({ behavior: "auto", top: position }), initialState.destinations[2]);
-    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[2]);
-    await page.mouse.wheel(0, 120);
-    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[3]);
-    const firstMission = page.locator('[data-screen-label="Missions 01-03"]');
-    await expect(firstMission.locator('[data-mob="chapter"]')).toHaveCSS("opacity", "1");
-    await expect(firstMission.locator("[data-stackind]")).toHaveCSS("opacity", "1");
-    await expect(firstMission.getByText("01–03 · Understand", { exact: true })).toBeVisible();
-    await expect(firstMission.getByRole("heading", { name: "See the pattern." })).toBeVisible();
-    const fullOpen = await firstMission.evaluate((panel) => {
-      const anchor = document.querySelector<HTMLElement>('[data-home-snap-label="Missions 01-03"]')!;
-      const chapter = panel.querySelector<HTMLElement>('[data-mob="chapter"]')!;
-      const indicator = panel.querySelector<HTMLElement>("[data-stackind]")!;
-      return {
+      expect(await mission.evaluate((panel) => ({
         borderRadius: getComputedStyle(panel).borderRadius,
-        chapterOpacity: getComputedStyle(chapter).opacity,
-        descriptionVisible: chapter.innerText.includes("Notice the trigger, the moment and the cost before the next decision."),
         height: Math.round(panel.getBoundingClientRect().height),
-        indicatorOpacity: getComputedStyle(indicator).opacity,
-        raw: Math.round(anchor.getBoundingClientRect().top + scrollY - scrollY),
-        startVisible: chapter.innerText.includes("Start Programme"),
+        top: Math.round(panel.getBoundingClientRect().top),
         transform: getComputedStyle(panel).transform,
-      };
-    });
-    expect(fullOpen).toEqual({
-      borderRadius: "0px",
-      chapterOpacity: "1",
-      descriptionVisible: true,
-      height: viewport.height,
-      indicatorOpacity: "1",
-      raw: 0,
-      startVisible: true,
-      transform: "none",
-    });
+      }))).toEqual({ borderRadius: "0px", height: viewport.height, top: 0, transform: "none" });
+    }
+    await expect(firstMission.getByText("01–03 · Understand", { exact: true })).toBeAttached();
 
-    await returnToFirstSnap(page);
-    await page.keyboard.press("PageDown");
-    const pageDown = await waitForScrollIdle(page);
-    await expectValidSnapLanding(page, pageDown);
-    expect(pageDown).toBeGreaterThan(first);
-    await page.keyboard.press("PageUp");
-    const pageUp = await waitForScrollIdle(page);
-    await expectValidSnapLanding(page, pageUp);
-    expect(pageUp).toBeLessThan(pageDown);
-
+    await page.evaluate(() => window.scrollTo({ behavior: "instant", top: 0 }));
+    await waitForScrollIdle(page);
     await page.keyboard.press("End");
-    const end = await waitForScrollIdle(page);
+    await waitForScrollIdle(page);
     const ending = await page.evaluate(() => ({
       documentHeight: document.documentElement.scrollHeight,
       footerVisible: (() => {
@@ -206,12 +147,10 @@ for (const viewport of [{ height: 900, width: 1440 }, { height: 768, width: 1024
       })(),
       viewportBottom: scrollY + innerHeight,
     }));
-    expect(end).toBe((await snapState(page)).footerEnd);
     expect(ending.viewportBottom).toBeGreaterThanOrEqual(ending.documentHeight - 2);
     expect(ending.footerVisible).toBeGreaterThan(0);
-
     await page.keyboard.press("Home");
-    expect(await waitForScrollIdle(page)).toBe(first);
+    expect(await waitForScrollIdle(page)).toBe(0);
     expect(errors).toEqual([]);
   });
 }
@@ -268,7 +207,7 @@ test("a fresh visit opens Home at the top and nothing snaps behind the loading f
     };
     frame.remove();
     return { afterFrame: getComputedStyle(document.documentElement).scrollSnapType, behindFrame };
-  })).toEqual({ afterFrame: "y mandatory", behindFrame: { footerAlign: "none", rootType: "none" } });
+  })).toEqual({ afterFrame: "none", behindFrame: { footerAlign: "none", rootType: "none" } });
 });
 
 test("Home performs no steady-state RAF or layout reads while idle", async ({ page, browserName }) => {

@@ -7,23 +7,26 @@ import { transformHomeHandoff, transformHomeHandoffCss, transformLearnHandoff } 
 
 const source = (path: string) => readFileSync(path, "utf8");
 
-test("Home uses only the bounded adjacent wheel fallback and no perpetual layout loop", () => {
+test("Home leaves the wheel to the browser and runs no perpetual layout loop", () => {
   const interactions = source("components/final-handoff/HandoffInteractions.tsx");
   const homeInteractions = interactions.slice(
     interactions.indexOf("function setupHomeInteractions"),
     interactions.indexOf("export function HandoffInteractions"),
   );
-  assert.match(interactions, /addEventListener\("wheel", onWheel, \{ passive: false \}\)/);
-  assert.match(interactions, /const onWheel[\s\S]*event\.preventDefault\(\)[\s\S]*window\.scrollTo\(\{ behavior: "smooth", top: canonicalDestinations\[nextIndex\] \}\)/);
-  assert.doesNotMatch(homeInteractions, /wheelAccumulator|snapLockedUntil|scrollTweenFrame|setTimeout|setInterval|scroll-snap-stop:\s*always/);
+  // Founder, 11 Oct 2026: with a mouse or a trackpad Home scrolls freely. Nothing listens to
+  // the wheel, cancels it, or moves the page for the reader.
+  assert.doesNotMatch(homeInteractions, /"wheel"|preventDefault|scrollTo\(|homeWheelController/);
+  assert.doesNotMatch(homeInteractions, /setTimeout|setInterval|scroll-snap/);
   assert.doesNotMatch(homeInteractions, /requestAnimationFrame\(tick\)|requestAnimationFrame\(runFrame\)[\s\S]*requestAnimationFrame\(runFrame\)/);
   assert.match(interactions, /addEventListener\("scroll", onScroll, \{ passive: true \}\)/);
   assert.match(interactions, /new window\.ResizeObserver\(onResize\)/);
   assert.match(interactions, /geometryDirty[\s\S]*measureStack\(\)/);
-  assert.match(interactions, /measureCanonicalDestinations\(\)/);
-  assert.match(interactions, /quietFor < 140 \|\| !activeReached/);
-  assert.match(interactions, /const reversing[\s\S]*direction !== lastWheelDirection/);
   assert.match(interactions, /if \(springsAreMoving\(\)\) scheduleFrame\(\)/);
+  // The first chapter is held by sticky positioning while it opens, so the script scales it
+  // and never has to chase the scroll position with a translate.
+  assert.match(homeInteractions, /open: anchorTop \?\? stackTop \+ flow \+ marginTop,\s*pinned: marginTop < 0/);
+  assert.match(homeInteractions, /\$\{pinned \? "" : `translateY\(\$\{-raw\}px\) `\}scale\(/);
+  assert.match(homeInteractions, /const contentVisible = raw <= distance \* HOME_CHAPTER_COPY_AT/);
 });
 
 test("Home media transform provides responsive modern formats and truthful loading priority", () => {
@@ -71,15 +74,16 @@ test("responsive image outputs exist and keep the opening AVIF payload below one
   assert.ok(opening640Bytes < 1_000_000, `opening 640px AVIF payload was ${opening640Bytes} bytes`);
 });
 
-test("Home-only motion uses native mandatory desktop and proximity coarse-pointer snap", () => {
+test("Home scrolls freely with a fine pointer and keeps proximity snap for coarse pointers", () => {
   const interactions = source("components/final-handoff/HandoffInteractions.tsx");
   const globals = source("app/globals.css");
   const html = transformHomeHandoff(generatedPages.home.html);
   const css = transformHomeHandoffCss(generatedPages.home.css);
   assert.match(interactions, /index \* 60/);
   assert.match(globals, /data-home-interactions="ready"[\s\S]*460ms cubic-bezier/);
-  assert.match(css, /scroll-snap-type: y proximity/);
-  assert.match(css, /\(pointer: fine\)[\s\S]*scroll-snap-type: y mandatory/);
+  assert.match(css, /@media \(prefers-reduced-motion: no-preference\) and \(pointer: coarse\) \{\s*html:not\(:has\(\[data-route-loading\]\)\) \{ scroll-snap-type: y proximity; \}/);
+  assert.doesNotMatch(css, /scroll-snap-type:\s*y mandatory|\(pointer: fine\)/);
+  assert.match(css, /@media \(min-width: 761px\) \{\s*\[data-handoff-page="home"\]\[data-home-interactions="ready"\] \[data-home-chapter="01-03"\] \{\s*margin-top: calc\(-100svh - 1px\) !important;\s*margin-bottom: 100svh !important;/);
   assert.match(css, /scroll-snap-stop: normal !important/);
   assert.match(css, /data-public-shell="footer"[\s\S]*scroll-snap-align: end/);
   // A fresh visit must open at the top: no snapping while the streamed page waits behind its frame.

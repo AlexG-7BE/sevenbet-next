@@ -227,17 +227,10 @@ for (const viewport of [
       await saveWebp(page, resolve(evidenceRoot, "founder-header-home-responsive-review/home-final-desktop-1440.webp"));
     }
 
-    const previousCanonicalDestination = await page.evaluate(() => {
-      const maximum = document.documentElement.scrollHeight - innerHeight;
-      const positions = Array.from(document.querySelectorAll<HTMLElement>("[data-home-snap]"), (element) => (
-        Math.min(maximum, Math.round(element.getBoundingClientRect().top + scrollY))
-      ));
-      const destinations = [...new Set([...positions, maximum])].sort((left, right) => left - right);
-      return destinations.at(-2) ?? 0;
-    });
-    await page.mouse.wheel(0, -920);
+    // With a fine pointer Home scrolls freely: the wheel moves it back by what it asks for.
+    await page.mouse.wheel(0, -600);
     await page.waitForTimeout(750);
-    expect(Math.abs(await page.evaluate(() => scrollY) - previousCanonicalDestination)).toBeLessThanOrEqual(3);
+    expect(Math.abs(await page.evaluate(() => scrollY) - (closing.scrollY - 600))).toBeLessThanOrEqual(3);
     await context.close();
   });
 }

@@ -789,14 +789,30 @@ export function transformHomeHandoffCss(css: string) {
       scroll-snap-align: end;
       scroll-snap-stop: normal;
     }
-    @media (prefers-reduced-motion: no-preference) {
+    /*
+     * Founder, 11 Oct 2026: with a mouse or a trackpad Home scrolls freely, as any page does.
+     * Nothing pages it and nothing snaps it; the chapters open as the reader scrolls through
+     * them. A touch screen wider than a phone keeps its optional alignment.
+     */
+    @media (prefers-reduced-motion: no-preference) and (pointer: coarse) {
       html:not(:has([data-route-loading])) { scroll-snap-type: y proximity; }
-    }
-    @media (prefers-reduced-motion: no-preference) and (pointer: fine) {
-      html:not(:has([data-route-loading])) { scroll-snap-type: y mandatory; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-snap-type: none !important; }
+    }
+    /*
+     * The first chapter grows out of "A plan you can see" while the reader scrolls one screen.
+     * It sits one screen earlier than its place in the flow, so sticky positioning holds it
+     * still for that whole stretch and the script only scales it; held by a transform instead,
+     * it trails a freely scrolling page by a frame. The margin below gives the screen back, so
+     * it lets go a screen sooner, by then behind the second chapter. The extra pixel is the
+     * snap anchor above it: that anchor's own -1px margin collapses into this one.
+     */
+    @media (min-width: 761px) {
+      [data-handoff-page="home"][data-home-interactions="ready"] [data-home-chapter="01-03"] {
+        margin-top: calc(-100svh - 1px) !important;
+        margin-bottom: 100svh !important;
+      }
     }
     [data-home-chapters-cta] { display: none; }
     /*

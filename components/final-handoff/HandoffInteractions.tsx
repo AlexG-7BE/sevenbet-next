@@ -9,6 +9,9 @@ function normalized(value: string | null | undefined) {
   return (value || "").trim().toLowerCase();
 }
 
+// The share of its opening scroll left when the first chapter's words fade in (the photo is then at 98%).
+const HOME_CHAPTER_COPY_AT = 0.12;
+
 type HomeSpring = {
   depth: number;
   element: HTMLElement;
@@ -73,20 +76,7 @@ function setupHomeInteractions(root: HTMLElement) {
   let stackObserver: ResizeObserver | null = null;
   let geometryDirty = Boolean(stack) && !reducedMotion;
   let stackDirty = Boolean(stack) && !reducedMotion;
-  let panelLayouts: Array<{ element: HTMLElement; entranceDistance: number; open: number }> = [];
-  let canonicalDestinations: number[] = [];
-  let wheelTargetIndex: number | null = null;
-  let lastWheelAt = Number.NEGATIVE_INFINITY;
-  let lastWheelDirection = 0;
-
-  const measureCanonicalDestinations = () => {
-    const maximum = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-    const positions = Array.from(root.querySelectorAll<HTMLElement>("[data-home-snap]"), (element) => (
-      Math.min(maximum, Math.max(0, Math.round(element.getBoundingClientRect().top + window.scrollY)))
-    ));
-    if (!positions.some((position) => Math.abs(position - maximum) <= 3)) positions.push(maximum);
-    canonicalDestinations = [...new Set(positions)].sort((left, right) => left - right);
-  };
+  let panelLayouts: Array<{ element: HTMLElement; entranceDistance: number; open: number; pinned: boolean }> = [];
 
   const syncClosingComposition = () => {
     const currentFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
@@ -191,6 +181,7 @@ function setupHomeInteractions(root: HTMLElement) {
     const scrollY = window.scrollY;
     const stackTop = stack.getBoundingClientRect().top + scrollY;
     let flow = 0;
+    let anchorTop: number | null = null;
     const nextLayouts: typeof panelLayouts = [];
 
     for (const child of Array.from(stack.children) as HTMLElement[]) {
@@ -198,59 +189,22 @@ function setupHomeInteractions(root: HTMLElement) {
       const childStyle = window.getComputedStyle(child);
       const marginTop = Number.parseFloat(childStyle.marginTop) || 0;
       const marginBottom = Number.parseFloat(childStyle.marginBottom) || 0;
+      if (child.hasAttribute("data-home-snap-anchor")) anchorTop = child.getBoundingClientRect().top + scrollY;
       if (child.hasAttribute("data-stackpanel")) {
+        // A panel is fully open at the anchor in front of it. One pulled up by a negative
+        // margin is already pinned while it opens (see transformHomeHandoffCss).
         nextLayouts.push({
           element: child,
           entranceDistance: Math.max(viewportHeight, flow),
-          open: stackTop + flow + marginTop,
+          open: anchorTop ?? stackTop + flow + marginTop,
+          pinned: marginTop < 0,
         });
+        anchorTop = null;
       }
       flow += marginTop + child.offsetHeight + marginBottom;
     }
 
     panelLayouts = nextLayouts;
-    measureCanonicalDestinations();
-  };
-
-  const nearestDestinationIndex = () => canonicalDestinations.reduce((nearest, destination, index) => (
-    Math.abs(destination - window.scrollY) < Math.abs(canonicalDestinations[nearest] - window.scrollY) ? index : nearest
-  ), 0);
-
-  const onWheel = (event: WheelEvent) => {
-    if (reducedMotion || !finePointer || event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-    event.preventDefault();
-    if (canonicalDestinations.length < 2 || event.deltaY === 0) return;
-
-    const now = window.performance.now();
-    const quietFor = now - lastWheelAt;
-    const direction = event.deltaY > 0 ? 1 : -1;
-    const activeDestination = wheelTargetIndex === null ? null : canonicalDestinations[wheelTargetIndex];
-    const currentDestinationIndex = nearestDestinationIndex();
-    const currentAtAnotherDestination = wheelTargetIndex !== null
-      && currentDestinationIndex !== wheelTargetIndex
-      && Math.abs(window.scrollY - canonicalDestinations[currentDestinationIndex]) <= 4;
-    const movedByAnotherInput = activeDestination !== null && (
-      currentAtAnotherDestination
-      || Math.abs(window.scrollY - activeDestination) > window.innerHeight * 1.25
-    );
-    const reversing = wheelTargetIndex !== null && direction !== lastWheelDirection;
-    const activeReached = activeDestination === null || Math.abs(window.scrollY - activeDestination) <= 4;
-    lastWheelAt = now;
-
-    // Momentum events from one wheel/trackpad gesture are consumed by the same adjacent
-    // landing. A new gesture is accepted after the stream goes quiet and the landing is
-    // complete; the opposite direction can retarget immediately.
-    if (!reversing && !movedByAnotherInput && (quietFor < 140 || !activeReached)) return;
-
-    const baseIndex = movedByAnotherInput || wheelTargetIndex === null
-      ? currentDestinationIndex
-      : wheelTargetIndex;
-    const nextIndex = Math.min(canonicalDestinations.length - 1, Math.max(0, baseIndex + direction));
-    wheelTargetIndex = nextIndex;
-    lastWheelDirection = direction;
-    if (reversing) window.scrollTo({ behavior: "auto", top: window.scrollY });
-    if (nextIndex === baseIndex) return;
-    window.scrollTo({ behavior: "smooth", top: canonicalDestinations[nextIndex] });
   };
 
   // Phones read the chapters as compact cards in normal flow (see transformHomeHandoffCss):
@@ -264,6 +218,7 @@ function setupHomeInteractions(root: HTMLElement) {
       panel.style.setProperty("transform", "none", "important");
       panel.style.setProperty("opacity", "1", "important");
       panel.style.removeProperty("border-radius");
+      panel.style.removeProperty("pointer-events");
       for (const element of [panel.querySelector<HTMLElement>("[data-mob='chapter']"), panel.querySelector<HTMLElement>("[data-stackind]")]) {
         element?.style.setProperty("opacity", "1", "important");
       }
@@ -281,17 +236,19 @@ function setupHomeInteractions(root: HTMLElement) {
     const scrollY = window.scrollY;
     const opens = panelLayouts.map(({ open }) => open);
 
-    panelLayouts.forEach(({ element: child, entranceDistance, open }, panelIndex) => {
+    panelLayouts.forEach(({ element: child, entranceDistance, open, pinned }, panelIndex) => {
       const raw = open - scrollY;
       if (panelIndex === 0) {
           const distance = entranceDistance;
+          // Unseen, it must not take clicks meant for the screen it is waiting over.
+          child.style.pointerEvents = raw >= distance ? "none" : "";
           if (raw >= distance) {
             child.style.setProperty("transform", "none", "important");
             child.style.setProperty("opacity", "0", "important");
           } else if (raw > 0) {
             const progress = 1 - raw / distance;
             const eased = progress * progress * (3 - 2 * progress);
-            child.style.setProperty("transform", `translateY(${-raw}px) scale(${(0.24 + 0.76 * eased).toFixed(4)})`, "important");
+            child.style.setProperty("transform", `${pinned ? "" : `translateY(${-raw}px) `}scale(${(0.24 + 0.76 * eased).toFixed(4)})`, "important");
             child.style.setProperty("opacity", Math.min(1, progress * 10).toFixed(2), "important");
             child.style.borderRadius = `${Math.round(28 * Math.min(1, (1 - eased) * 10))}px`;
           } else {
@@ -299,7 +256,8 @@ function setupHomeInteractions(root: HTMLElement) {
             child.style.setProperty("opacity", "1", "important");
             child.style.borderRadius = "0";
           }
-          const contentVisible = raw <= 4;
+          // A reader may stop anywhere: the words arrive once the photo all but fills the screen.
+          const contentVisible = raw <= distance * HOME_CHAPTER_COPY_AT;
           for (const element of [child.querySelector<HTMLElement>("[data-mob='chapter']"), child.querySelector<HTMLElement>("[data-stackind]")]) {
             if (!element) continue;
             element.style.setProperty("opacity", contentVisible ? "1" : "0", "important");
@@ -383,10 +341,6 @@ function setupHomeInteractions(root: HTMLElement) {
     }
     scheduleFrame();
   }
-  if (finePointer && !reducedMotion) {
-    root.dataset.homeWheelController = "adjacent";
-    window.addEventListener("wheel", onWheel, { passive: false });
-  }
 
   return () => {
     destroyed = true;
@@ -397,12 +351,10 @@ function setupHomeInteractions(root: HTMLElement) {
     window.removeEventListener("resize", syncClosingComposition);
     window.removeEventListener("resize", onResize);
     window.removeEventListener("scroll", onScroll);
-    window.removeEventListener("wheel", onWheel);
     window.removeEventListener("pointermove", onPointerMove);
     document.documentElement.removeEventListener("pointerleave", onPointerLeave);
     window.cancelAnimationFrame(animationFrame);
     root.style.removeProperty("--home-public-footer-height");
-    delete root.dataset.homeWheelController;
     delete root.dataset.homeInteractions;
   };
 }
