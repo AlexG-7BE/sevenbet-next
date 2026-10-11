@@ -36,8 +36,8 @@
 .newHere a { color: var(--sb-action-primary); font-size: 14px; font-weight: 600; text-decoration: none; }
 .error,.assurance { margin-top: 18px; padding: 13px 15px; border-left: 4px solid var(--sb-status-danger); background: color-mix(in srgb, var(--sb-status-danger) 12%, transparent); font-size: 14px; line-height: 1.5; }
 .assurance { border-color: var(--sb-safety-verified); }
-.marketing { margin-top: 18px; display: grid; grid-template-columns: 18px 1fr; align-items: start; gap: 12px; cursor: pointer; color: color-mix(in srgb, var(--sb-text-on-night) 75%, transparent); font-size: 14px; line-height: 1.5; }
-.panel .marketing input { width: 18px; height: 18px; min-height: 18px; margin: 2px 0 0; padding: 0; border-radius: 4px; accent-color: var(--sb-action-primary); }
+.marketing { margin-top: 12px; min-height: 44px; display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 12px; cursor: pointer; color: color-mix(in srgb, var(--sb-text-on-night) 75%, transparent); font-size: 14px; line-height: 1.5; }
+.panel .marketing input { width: 18px; height: 18px; min-height: 18px; margin: 0; padding: 0; border-radius: 4px; accent-color: var(--sb-action-primary); }
 .legal a { color: inherit; text-decoration: underline; text-underline-offset: 4px; }
 .legal span { margin-top: 6px; display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 20px; }
 .legal span a { min-height: 44px; display: inline-flex; align-items: center; }

@@ -106,14 +106,11 @@ async function installAnonymousProgramme(page: Page) {
 
 async function reachRegistration(page: Page) {
   await open(page, "/program");
-  await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await expect(page.getByRole("button", { name: "Start voice input" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "I'd rather type" })).toHaveCount(0);
-  await page.getByLabel("Your situation").fill(candidate.startingPoint);
-  await page.getByRole("button", { name: "Create my Starting Point" }).click();
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  // Founder decisions, 11 Oct 2026: ready answers only, then one button.
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
 }
 
 async function seedOAuthJourney(page: Page, journeyId: string) {
@@ -168,9 +165,9 @@ test("canonical Programme registration keeps access proof on email auth and fail
 
   const google = page.getByRole("button", { name: /Continue with Google/ });
   await expect(google).toHaveCount(expectGoogle ? 1 : 0);
-  await expect(page.getByRole("checkbox", { name: /Email me occasional B4GAMBLE product/ })).toHaveCount(1);
-  // The password field arrives with the first typed character of the email.
-  await expect(page.getByLabel("Password")).toHaveCount(0);
+  await expect(page.getByRole("checkbox", { name: "Email me B4GAMBLE updates" })).toHaveCount(1);
+  // Email, then password, then the button, all visible at once.
+  await expect(page.getByLabel("Password")).toBeVisible();
 
   let proofHeader: string | null = null;
   let journeyHeader: string | null = null;
@@ -188,16 +185,24 @@ test("canonical Programme registration keeps access proof on email auth and fail
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
-// Founder decision, 27 Sep 2026: one unticked email opt-in on the registration
-// screen serves Google and email sign-up alike, and is asked once.
-test("registration asks the optional email opt-in once for Google and email sign-up", async ({ page }) => {
+// Founder decisions, 27 Sep and 11 Oct 2026: one email opt-in on the registration screen serves
+// Google and email sign-up alike and is asked once. It is ticked when the form opens, short, and
+// the last thing in the form.
+test("registration asks the optional email opt-in once, ticked, at the end of the form", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installAnonymousProgramme(page);
   await reachRegistration(page);
 
-  const optIn = page.getByRole("checkbox", { name: /Email me occasional B4GAMBLE product/ });
+  const optIn = page.getByRole("checkbox", { name: "Email me B4GAMBLE updates" });
   await expect(optIn).toHaveCount(1);
+  await expect(optIn).toBeChecked();
+  expect(await optIn.evaluate((element) => {
+    const form = document.querySelector("[data-programme-email-entry]")!;
+    return Boolean(form.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING);
+  }), "the opt-in follows the email form").toBe(true);
+  await optIn.uncheck();
   await expect(optIn).not.toBeChecked();
+  await optIn.check();
   expect(await optIn.evaluate((element) => Number.parseFloat(getComputedStyle(element.closest("label")!.querySelector("span")!).fontSize))).toBeGreaterThanOrEqual(14);
 
   let signUpBody: Record<string, unknown> | null = null;
@@ -242,6 +247,10 @@ test("Google return records the opt-in ticked before leaving, once, through the 
   await installAuthenticatedSession(page, userId);
   const preferences: unknown[] = [];
   await page.route("**/api/customer/email-preference", (route) => {
+    // The return first asks whether this account already chose; a new account has not.
+    if (route.request().method() === "GET") {
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ marketingAllowed: false, unsubscribed: false, suppressed: false, emailVerified: true }) });
+    }
     preferences.push(route.request().postDataJSON());
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ marketingAllowed: true }) });
   });
@@ -254,6 +263,29 @@ test("Google return records the opt-in ticked before leaving, once, through the 
   await expect(page.locator('p[role="alert"]')).toHaveCount(0);
   // Google confirmed the address, so the dashboard asks for nothing more.
   await expect(page.locator("[data-programme-email-confirmation]")).toHaveCount(0);
+});
+
+test("Google return leaves an earlier unsubscribe alone, although the box is ticked by default", async ({ page }) => {
+  const userId = "google-return-unsubscribed-user";
+  const journeyId = "9b1e6d0c-4f2a-4c7e-8a35-2d6f0b9c1e47";
+  await seedOAuthJourney(page, journeyId);
+  await page.addInitScript((journey) => {
+    if (sessionStorage.getItem("test.opt-in-seeded")) return;
+    sessionStorage.setItem("test.opt-in-seeded", "1");
+    sessionStorage.setItem("sevenbet.programme.google-marketing-choice.v1", JSON.stringify({ version: 1, journeyId: journey, expiresAt: Date.now() + 5 * 60 * 1000 }));
+  }, journeyId);
+  await installAuthenticatedSession(page, userId);
+  const methods: string[] = [];
+  await page.route("**/api/customer/email-preference", (route) => {
+    methods.push(route.request().method());
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ marketingAllowed: false, unsubscribed: true, suppressed: false, emailVerified: true }) });
+  });
+  await page.route("**/api/program/program-ai/claims/redeem", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture() }) }));
+  await open(page, "/program?auth=google-return");
+  await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+  await expect.poll(() => methods.length).toBe(1);
+  expect(methods).toEqual(["GET"]);
+  await expect(page.locator('p[role="alert"]')).toHaveCount(0);
 });
 
 test("Google return without a ticked opt-in records nothing", async ({ page }) => {
@@ -329,8 +361,8 @@ test("canonical access screen reports invalid authority safely", async ({ page }
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: value }) });
   });
   await open(page, "/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
   const alert = page.locator('p[role="alert"]');
   await expect(alert).toHaveText("We could not verify Programme access. Try again.");
   await expect(alert).not.toContainText(/authority|continuation|proof/i);
@@ -351,8 +383,8 @@ test("canonical access screen distinguishes a disabled runtime from session crea
   });
 
   await open(page, "/program");
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
-  const enter = page.getByRole("button", { name: "Enter Mission 01" });
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  const enter = page.getByRole("button", { name: "Agree and continue" });
   await enter.click();
   const alert = page.locator('p[role="alert"]');
   await expect(alert).toHaveText("Mission 01 is temporarily unavailable. Your access checks were accepted. Try again later.");
@@ -369,7 +401,7 @@ test("Google cancellation retains the canonical Starting Point without legacy UI
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await page.route("**/api/program/program-ai/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
   await open(page, "/program?auth=google-error&error=provider-payload-must-not-render");
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toContainText("Google account access was not completed");
   await expect(page.locator('p[role="alert"]')).not.toContainText("provider-payload-must-not-render");
   await expect(page.locator('[data-programme-runtime="legacy"], [data-legacy-programme]')).toHaveCount(0);
@@ -387,7 +419,7 @@ test("Google cancellation without a provider code still keeps recovery actions v
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await page.route("**/api/program/program-ai/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
   await open(page, "/program?auth=google-error");
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toHaveText("Google account access was not completed. You can retry or use email instead.");
   await expect(page.getByRole("button", { name: "Continue with email" })).toBeVisible();
 });
@@ -404,7 +436,7 @@ test("Programme Google stays the account-continuation action beside the email st
     requestSignUp = (route.request().postDataJSON() as { requestSignUp?: boolean }).requestSignUp;
     return route.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ code: "TEST_STOP" }) });
   });
-  await page.getByRole("button", { name: "Continue with Google — save my Starting Point" }).click();
+  await page.getByRole("button", { name: "Continue with Google" }).click();
   await expect(page.locator('p[role="alert"]')).toContainText("Google account access failed");
   expect(requestSignUp).toBe(true);
 });
@@ -416,7 +448,7 @@ test("Google Programme, login and recovery controls fit every Founder mobile wid
 
   for (const width of [360, 375, 390, 412, 430]) {
     await page.setViewportSize({ width, height: 844 });
-    const google = page.getByRole("button", { name: "Continue with Google — save my Starting Point" });
+    const google = page.getByRole("button", { name: "Continue with Google" });
     const email = page.getByRole("button", { name: "Continue with email" });
     await expect(google).toBeVisible();
     await expect(email).toBeVisible();
@@ -470,7 +502,7 @@ test("Google return retries canonical claim redemption and transfers local autho
       : { status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture() }) });
   });
   await open(page, "/program?auth=google-return");
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toHaveText("Your progress could not be saved yet");
   expect(redemptions).toBe(1);
   await page.getByRole("button", { name: "Save to my account" }).click();
@@ -489,7 +521,7 @@ test("Google return retries canonical claim redemption and transfers local autho
   expect(transferred.userAuthority).toContain(journeyId);
 });
 
-test("authenticated partial Mission 01 truthfully re-enters private intake without discarding saved progress", async ({ page }) => {
+test("authenticated partial Mission 01 truthfully re-enters the ready answers without discarding saved progress", async ({ page }) => {
   const userId = "partial-mission-one-user";
   await installAuthenticatedSession(page, userId);
   await page.route("**/api/program/program-ai/home", (route) => route.fulfill({
@@ -507,8 +539,13 @@ test("authenticated partial Mission 01 truthfully re-enters private intake witho
   await expect(page.getByText("Your first action and XP are saved. For privacy, the situation itself was not retained. Enter one again to finish your Starting Point.", { exact: true })).toBeVisible();
   await expect(page.getByText("1 of 2 actions complete · Short Starting Point", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Finish Mission 01", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "One check before you begin." })).toHaveCount(0);
+  // Founder decision, 11 Oct 2026: Mission 01 opens on the ready answers for an account too. The
+  // account already affirmed access, so the 18+ line is not shown.
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(6);
+  await expect(page.getByRole("button", { name: "Agree and continue" })).toBeDisabled();
+  await expect(page.locator("[data-programme-access-note]")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Create an account first →" })).toHaveCount(0);
 });
 
 test("expired access continuation returns to the canonical access screen", async ({ page }) => {
@@ -522,10 +559,10 @@ test("expired access continuation returns to the canonical access screen", async
   }, { journey: journeyId, access: expired });
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await open(page, "/program");
-  await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
-  // One required check, the explicit consent (Founder decision, 11 Oct 2026).
-  await expect(page.getByRole("checkbox")).toHaveCount(1);
-  await expect(page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing/ })).not.toBeChecked();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
+  // Nothing is picked and nothing is agreed after an expired proof (Founder decision, 11 Oct 2026).
+  await expect(page.getByRole("checkbox", { checked: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Agree and continue" })).toBeDisabled();
 });
 
 test("authenticated canonical dashboard logs out into a fresh anonymous access boundary", async ({ page }) => {
@@ -557,7 +594,7 @@ test("authenticated canonical dashboard logs out into a fresh anonymous access b
   const logout = page.getByRole("button", { name: "Log out of B4GAMBLE" });
   await expect(logout).toBeVisible();
   await logout.click();
-  await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toBeVisible();
   expect(signOutRequests).toBe(1);
   expect(transitionRequests).toBe(1);
   const storage = await page.evaluate((user) => ({
