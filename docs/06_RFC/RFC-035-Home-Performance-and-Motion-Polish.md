@@ -4,6 +4,8 @@
 
 **Approved for bounded Draft-PR and Preview implementation on 2026-08-18; Founder native-snap refinements, sequential-input correction and final public-site polish addendum approved on 2026-08-19.** Authority is the supplied `HOME-PERFORMANCE-MOTION-POLISH-01` and `B4GAMBLE — FINAL SITE POLISH / PRODUCT FREEZE` Founder workstream instructions for existing Draft PR #77. This RFC authorises no merge, Production deployment, Production configuration or data change.
 
+> **Wheel controller replaced on 11 October 2026** by Founder instruction: see [HOME-WHEEL-GESTURE-2026-10-11](../07_Decisions/HOME-WHEEL-GESTURE-2026-10-11.md). The 140ms momentum grouping described below is history; one screen per gesture, the canonical order, the native smooth scroll and the native scrollbar and keyboard stand.
+
 ## Decision
 
 Preserve the RFC-034 final Home composition while replacing its input-intercepting and continuously layout-reading interaction implementation with native scrolling and event-driven work. Deliver responsive Home-only image variants and shorten Home reveal timing without changing content, information architecture, commercial logic, Programme logic or security architecture.
