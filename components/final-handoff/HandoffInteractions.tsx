@@ -77,7 +77,6 @@ function setupHomeInteractions(root: HTMLElement) {
   const panels = Array.from(root.querySelectorAll<HTMLElement>("[data-stackpanel]"));
   const stack = panels[0]?.parentElement ?? null;
   const dots = Array.from(root.querySelectorAll<HTMLElement>("[data-stackdot]"));
-  for (const dot of dots) dot.style.willChange = "transform";
   let publicFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
   let animationFrame = 0;
   let observer: IntersectionObserver | null = null;
@@ -88,8 +87,9 @@ function setupHomeInteractions(root: HTMLElement) {
   let geometryDirty = Boolean(stack) && !reducedMotion;
   let stackDirty = Boolean(stack) && !reducedMotion;
   let panelLayouts: Array<{ element: HTMLElement; entranceDistance: number; open: number; pinned: boolean }> = [];
-  let dotTracks: number[] = [];
   let restingPanel = -1;
+  // Which chapters have had their corners squared off (see syncStack).
+  const squared: boolean[] = [];
   let canonicalDestinations: number[] = [];
   let travel: HomeTravel | null = null;
   let queuedDirection = 0;
@@ -234,7 +234,16 @@ function setupHomeInteractions(root: HTMLElement) {
     }
 
     panelLayouts = nextLayouts;
-    dotTracks = dots.map((dot) => dot.parentElement?.clientWidth ?? 0);
+    if (!compactChapters.matches) {
+      nextLayouts.forEach(({ element }, index) => {
+        for (const part of [element.querySelector<HTMLElement>("[data-mob='chapter']"), element.querySelector<HTMLElement>("[data-stackind]")]) {
+          part?.style.setProperty("opacity", "1", "important");
+        }
+        // Each chapter shows its own place on the track: first, middle, last.
+        const dot = dots[index];
+        if (dot) dot.style.left = `calc(${nextLayouts.length > 1 ? (index / (nextLayouts.length - 1)) * 100 : 0}% - 4.5px)`;
+      });
+    }
     measureCanonicalDestinations();
   };
 
@@ -267,6 +276,11 @@ function setupHomeInteractions(root: HTMLElement) {
     const resting = panelLayouts.findIndex(({ open }) => Math.abs(open - window.scrollY) <= 2);
     if (resting === restingPanel) return;
     restingPanel = resting;
+    // The chapter the page rests on, and the one it lies over, square their corners now: a
+    // chapter is one picture to the browser, and a corner change redraws all of it, so it is
+    // never done while the page moves.
+    if (resting >= 0) squared[resting] = true;
+    if (resting >= 1) squared[resting - 1] = true;
     stackDirty = true;
     scheduleFrame();
   };
@@ -342,56 +356,42 @@ function setupHomeInteractions(root: HTMLElement) {
     compactApplied = false;
     if (!panelLayouts.length) return;
     const scrollY = window.scrollY;
-    const opens = panelLayouts.map(({ open }) => open);
 
+    // Every chapter is one layer and nothing inside it changes while the page moves: the words
+    // and the progress dot are part of the picture. Founder, 11 Oct 2026: at a full-screen
+    // window the chapters stuttered where the other screens did not, because a chapter made of
+    // several layers under rounded corners cost the GPU up to three passes a frame.
+    const viewportHeight = window.innerHeight;
     panelLayouts.forEach(({ element: child, entranceDistance, open, pinned }, panelIndex) => {
       const raw = open - scrollY;
-      if (panelIndex === 0) {
-          const distance = entranceDistance;
-          // Unseen, it must not take clicks meant for the screen it is waiting over.
-          child.style.pointerEvents = raw >= distance ? "none" : "";
-          const progress = Math.min(1, Math.max(0, 1 - raw / distance));
-          const eased = progress * progress * (3 - 2 * progress);
-          const opening = raw > 0 && raw < distance;
-          // At rest on the screen before it, it is as good as invisible but drawn: at exactly 0
-          // the browser drops its photo and rasterises all of it again in the frames where it
-          // starts to appear. Further away it stays at 0, so that work is not done mid-landing.
-          const waiting = raw - distance <= 2 ? String(HOME_CHAPTER_WAITING_OPACITY) : "0";
-          child.style.setProperty("opacity", opening ? Math.max(HOME_CHAPTER_WAITING_OPACITY, Math.min(1, progress * 10)).toFixed(3) : raw > 0 ? waiting : "1", "important");
-          if (pinned && scrollDrivenChapter) {
-            // The browser scales it with the scroll, off the main thread (see transformHomeHandoffCss).
-            child.style.removeProperty("transform");
-          } else {
-            child.style.setProperty("transform", opening ? `${pinned ? "" : `translateY(${-raw}px) `}scale(${(0.24 + 0.76 * eased).toFixed(4)})` : "none", "important");
-          }
-          // The corners square off once, when it is fully open. Easing them over the last
-          // stretch repainted the whole photo on every step, in the middle of the motion.
-          child.style.borderRadius = raw > 0 ? "28px" : "0";
-          const contentVisible = raw <= 4;
-          for (const element of [child.querySelector<HTMLElement>("[data-mob='chapter']"), child.querySelector<HTMLElement>("[data-stackind]")]) {
-            if (!element) continue;
-            element.style.setProperty("opacity", contentVisible ? "1" : "0", "important");
-          }
+      const first = panelIndex === 0;
+      const away = first ? entranceDistance : viewportHeight;
+      if (raw >= away - 2) squared[panelIndex] = false;
+      const corners = squared[panelIndex] ? "0" : first ? "28px" : "28px 28px 0 0";
+      if (child.style.borderRadius !== corners) child.style.borderRadius = corners;
+      if (first) {
+        const distance = entranceDistance;
+        // Unseen, it must not take clicks meant for the screen it is waiting over.
+        child.style.pointerEvents = raw >= distance ? "none" : "";
+        const progress = Math.min(1, Math.max(0, 1 - raw / distance));
+        const opening = raw > 0 && raw < distance;
+        // Waiting, it is as good as invisible but drawn: at exactly 0 the browser drops its
+        // photo and rasterises all of it in the frames where it starts to appear. Drawn, it is
+        // prepared ahead, while the reader is still a screen or two away.
+        child.style.setProperty("opacity", opening ? Math.max(HOME_CHAPTER_WAITING_OPACITY, Math.min(1, progress * 10)).toFixed(3) : raw > 0 ? String(HOME_CHAPTER_WAITING_OPACITY) : "1", "important");
+        if (pinned && scrollDrivenChapter) {
+          // The browser scales it with the scroll, off the main thread (see transformHomeHandoffCss).
+          child.style.removeProperty("transform");
+        } else {
+          // It grows in step with the scroll, so it moves as every other screen does.
+          child.style.setProperty("transform", opening ? `${pinned ? "" : `translateY(${-raw}px) `}scale(${(0.24 + 0.76 * progress).toFixed(4)})` : "none", "important");
+        }
       } else {
         if (panelIndex === restingPanel && Math.abs(raw) > 2) restingPanel = -1;
         child.style.setProperty("transform", "none", "important");
         child.style.setProperty("opacity", panelIndex === restingPanel ? String(HOME_CHAPTER_RESTING_OPACITY) : "1", "important");
-        child.style.borderRadius = raw <= 2 ? "0" : "28px 28px 0 0";
-        for (const element of [child.querySelector<HTMLElement>("[data-mob='chapter']"), child.querySelector<HTMLElement>("[data-stackind]")]) {
-          element?.style.setProperty("opacity", "1", "important");
-        }
       }
     });
-
-    if (dots.length && opens.length >= 3) {
-      const progress = Math.min(1, Math.max(0, (scrollY - opens[0]) / Math.max(1, opens[2] - opens[0])));
-      // Each dot rides its own layer on a transform. Moved by `left`, it repainted its
-      // chapter's whole photo on every frame the page scrolled between chapters.
-      dots.forEach((dot, index) => {
-        const shift = `translateX(${(progress * dotTracks[index]).toFixed(1)}px)`;
-        if (dot.style.transform !== shift) dot.style.transform = shift;
-      });
-    }
   };
 
   const syncSprings = () => {
@@ -457,6 +457,22 @@ function setupHomeInteractions(root: HTMLElement) {
     }
     scheduleFrame();
   }
+  // The chapters' photos are fetched and decoded while the reader is still on the opening
+  // screens. Left to load lazily, a chapter reached quickly came in without its photo for a
+  // few frames and the decode landed in the middle of the motion.
+  let photoWarmUp = 0;
+  const warmChapterPhotos = () => {
+    photoWarmUp = 0;
+    for (const image of root.querySelectorAll<HTMLImageElement>('[data-stackpanel] [data-home-media="chapter"] img')) {
+      image.loading = "eager";
+      image.decode().catch(() => undefined);
+    }
+  };
+  if (stack && !reducedMotion && !compactChapters.matches) {
+    photoWarmUp = typeof window.requestIdleCallback === "function"
+      ? window.requestIdleCallback(warmChapterPhotos, { timeout: 2500 })
+      : window.requestAnimationFrame(warmChapterPhotos);
+  }
   if (finePointer && !reducedMotion) {
     root.dataset.homeWheelController = "adjacent";
     window.addEventListener("wheel", onWheel, { passive: false });
@@ -479,6 +495,7 @@ function setupHomeInteractions(root: HTMLElement) {
     window.removeEventListener("pointermove", onPointerMove);
     document.documentElement.removeEventListener("pointerleave", onPointerLeave);
     window.cancelAnimationFrame(animationFrame);
+    if (photoWarmUp) (typeof window.cancelIdleCallback === "function" ? window.cancelIdleCallback : window.cancelAnimationFrame)(photoWarmUp);
     root.style.removeProperty("--home-public-footer-height");
     delete root.dataset.homeWheelController;
     delete root.dataset.homeInteractions;

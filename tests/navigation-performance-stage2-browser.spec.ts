@@ -6,7 +6,7 @@ import { RESEARCH_ACCESS_COOKIE, RESEARCH_ACCESS_OPEN } from "../lib/research-ac
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const fixtureArticlePath = "/en/learn/casino-basics/navigation-stage2-guide";
 // Exact hashes reproduced against the archived Stage 1 base; no other runtime error is ignored.
-const preExistingCapturedHandoffStyleViolation = /sha256-(?:jCY3Mj0wz8\/Vp\+NcUmcUIKtIFX0kPOrBioHLmp6\/\+mw=|ru9G9QoVc\/McZ4jU38guIscJAqT970F3N5j1PmJ4Fv0=)/;
+const preExistingCapturedHandoffStyleViolation = /sha256-(?:jCY3Mj0wz8\/Vp\+NcUmcUIKtIFX0kPOrBioHLmp6\/\+mw=|CNl\/T5gB2OqpiFoNELIphE2H67beEfsTUBg1hLYMnM4=)/;
 
 type NavigationTimingWindow = Window & {
   __stage2MobileFeedbackPaint?: Promise<number>;

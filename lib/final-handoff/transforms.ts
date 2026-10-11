@@ -816,8 +816,8 @@ export function transformHomeHandoffCss(css: string) {
      * Where the browser can tie an animation to the scroll position itself, the first chapter
      * grows there, off the main thread like the scroll that drives it: scaled by the script, it
      * stuttered whenever that thread was busy. The range is the first of the three screens the
-     * chapters' container travels while it covers the viewport; the curve is the script's
-     * smoothstep. The script keeps the fade and the corners, and does all of it elsewhere.
+     * chapters' container travels while it covers the viewport. It grows in step with the
+     * scroll, so it moves exactly as every other screen does. The script does the same elsewhere.
      */
     @supports (animation-timeline: view()) {
       @media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
@@ -831,8 +831,25 @@ export function transformHomeHandoffCss(css: string) {
         }
       }
       @keyframes home-chapter-grow {
-        from { scale: 0.24; animation-timing-function: cubic-bezier(0.333333, 0, 0.666667, 1); }
+        from { scale: 0.24; }
         to { scale: 1; }
+      }
+    }
+    /*
+     * Founder, 11 Oct 2026: the chapters have to move exactly as the other screens do. Each one
+     * is a single layer: its photo is not lifted onto a layer of its own, and its words and
+     * progress dot do not fade or move while the page does. Split into several layers under
+     * rounded corners, a chapter cost the GPU up to three passes a frame at a full-screen
+     * window, where every other screen costs one.
+     */
+    @media (min-width: 761px) {
+      [data-handoff-page="home"][data-home-interactions="ready"] [data-stackpanel] [data-home-media="chapter"],
+      [data-handoff-page="home"][data-home-interactions="ready"] [data-stackpanel] [data-home-media="chapter"] img {
+        backface-visibility: visible;
+      }
+      [data-handoff-page="home"][data-home-interactions="ready"] [data-stackpanel] [data-mob="chapter"],
+      [data-handoff-page="home"][data-home-interactions="ready"] [data-stackpanel] [data-stackind] {
+        transition: none !important;
       }
     }
     [data-home-chapters-cta] { display: none; }

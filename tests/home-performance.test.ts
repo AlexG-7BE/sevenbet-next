@@ -32,29 +32,33 @@ test("Home reads the wheel gesture, lands with the browser's own smooth scroll a
   // The first chapter is held by sticky positioning while it opens, so the script scales it
   // and never has to chase the browser's scroll with a translate.
   assert.match(homeInteractions, /open: anchorTop \?\? stackTop \+ flow \+ marginTop,\s*pinned: marginTop < 0/);
-  assert.match(homeInteractions, /\$\{pinned \? "" : `translateY\(\$\{-raw\}px\) `\}scale\(/);
-  // Founder, 11 Oct 2026: the chapter screens still stuttered. Nothing may repaint a chapter's
-  // full-screen photo while the page moves: its dot rides a transform on its own layer, its
-  // corners change once, and a waiting chapter stays drawn so it is not rasterised as it appears.
-  assert.match(homeInteractions, /for \(const dot of dots\) dot\.style\.willChange = "transform"/);
-  assert.match(homeInteractions, /dot\.style\.transform = shift/);
-  assert.doesNotMatch(homeInteractions, /dot\.style\.left/);
-  assert.match(homeInteractions, /child\.style\.borderRadius = raw > 0 \? "28px" : "0"/);
+  assert.match(homeInteractions, /\$\{pinned \? "" : `translateY\(\$\{-raw\}px\) `\}scale\(\$\{\(0\.24 \+ 0\.76 \* progress\)\.toFixed\(4\)\}\)/);
+  // Founder, 11 Oct 2026: the chapters have to move exactly as the other screens do. A chapter
+  // is one layer and nothing inside it changes while the page moves: no moving dot, no fading
+  // words, and its corners change only while the page rests or the chapter is out of sight.
+  assert.doesNotMatch(homeInteractions, /dot\.style\.(?:transform|willChange)|contentVisible|dotTracks/);
+  assert.match(homeInteractions, /if \(dot\) dot\.style\.left = `calc\(\$\{nextLayouts\.length > 1 \? \(index \/ \(nextLayouts\.length - 1\)\) \* 100 : 0\}% - 4\.5px\)`/);
+  assert.match(homeInteractions, /if \(resting >= 0\) squared\[resting\] = true;\s*if \(resting >= 1\) squared\[resting - 1\] = true;/);
+  assert.match(homeInteractions, /if \(raw >= away - 2\) squared\[panelIndex\] = false;\s*const corners = squared\[panelIndex\] \? "0" : first \? "28px" : "28px 28px 0 0";/);
   assert.match(interactions, /const HOME_CHAPTER_WAITING_OPACITY = 0\.001;/);
-  assert.match(homeInteractions, /const waiting = raw - distance <= 2 \? String\(HOME_CHAPTER_WAITING_OPACITY\) : "0";/);
   // A sheet at rest over another is a thousandth short of opaque, so the one beneath stays
   // rasterised for the way back up; it is opaque again before the page moves.
   assert.match(interactions, /const HOME_CHAPTER_RESTING_OPACITY = 0\.999;/);
   assert.match(homeInteractions, /panelIndex === restingPanel \? String\(HOME_CHAPTER_RESTING_OPACITY\) : "1"/);
   assert.match(homeInteractions, /if \(restingPanel > 0\) panelLayouts\[restingPanel\]\?\.element\.style\.setProperty\("opacity", "1", "important"\);\s*restingPanel = -1;\s*window\.scrollTo/);
   assert.match(homeInteractions, /addEventListener\("scrollend", noteRest, \{ passive: true \}\)/);
+  // The chapters' photos are fetched and decoded ahead, not on arrival.
+  assert.match(homeInteractions, /image\.loading = "eager";\s*image\.decode\(\)\.catch/);
   // Where the browser can tie an animation to the scroll, it scales the chapter too, with the
   // script's own curve; the script then leaves the transform alone.
   assert.match(homeInteractions, /if \(pinned && scrollDrivenChapter\) \{[^}]*removeProperty\("transform"\)/);
   const css = transformHomeHandoffCss(generatedPages.home.css);
   assert.match(css, /@media \(min-width: 761px\) \{\s*\[data-handoff-page="home"\]\[data-home-interactions="ready"\] \[data-home-chapter="01-03"\] \{\s*margin-top: calc\(-100svh - 1px\) !important;\s*margin-bottom: 100svh !important;/);
   assert.match(css, /@supports \(animation-timeline: view\(\)\) \{\s*@media \(min-width: 761px\) and \(prefers-reduced-motion: no-preference\)[\s\S]*view-timeline: --home-chapters block;[\s\S]*animation-timeline: --home-chapters;\s*animation-range: contain 0% contain 33\.3333%;/);
-  assert.match(css, /@keyframes home-chapter-grow \{\s*from \{ scale: 0\.24; animation-timing-function: cubic-bezier\(0\.333333, 0, 0\.666667, 1\); \}\s*to \{ scale: 1; \}/);
+  // It grows in step with the scroll, with no curve of its own on top of the scroll's.
+  assert.match(css, /@keyframes home-chapter-grow \{\s*from \{ scale: 0\.24; \}\s*to \{ scale: 1; \}/);
+  assert.match(css, /\[data-stackpanel\] \[data-home-media="chapter"\] img \{\s*backface-visibility: visible;/);
+  assert.match(css, /\[data-stackpanel\] \[data-stackind\] \{\s*transition: none !important;/);
 });
 
 // Wheel streams as a browser reports them: a swipe ramps up under the fingers, then macOS
@@ -102,6 +106,27 @@ test("a new swipe is heard while the previous one's inertia is still arriving", 
   assert.deepEqual(gestures([...swipe({ liftAfterInertiaFrames: 11 }), ...swipe({ sign: -1 })]), [1, -1]);
 });
 
+test("fast flicks one after another are each heard, with the previous one's inertia still strong", () => {
+  // Founder, 11 Oct 2026: "you scroll too slowly; scroll faster and you will see". A flick
+  // every 180-280ms leaves the previous inertia at 60-85% of its peak when the next one starts.
+  const flicks = (count: number, everyMs: number, decay: number) => {
+    const stream: Array<{ deltaY: number; gap: number }> = [];
+    const perFlick = Math.round(everyMs / FRAME_MS);
+    for (let n = 0; n < count; n += 1) {
+      const deltas: number[] = [];
+      for (let frame = 0; frame < 7; frame += 1) deltas.push(Math.max(2, Math.round(70 * Math.sin(((frame + 1) / 7) * Math.PI / 2))));
+      for (let velocity = 70 * decay; Math.round(velocity) >= 1 && (n === count - 1 || deltas.length < perFlick); velocity *= decay) deltas.push(Math.round(velocity));
+      stream.push(...deltas.map((deltaY) => ({ deltaY, gap: FRAME_MS })));
+    }
+    return stream;
+  };
+  for (const everyMs of [180, 220, 280, 340]) {
+    for (const decay of [0.95, 0.97, 0.985]) {
+      assert.deepEqual(gestures(flicks(5, everyMs, decay)), [1, 1, 1, 1, 1], `every ${everyMs}ms, decay ${decay}`);
+    }
+  }
+});
+
 test("a brush of the trackpad is not a gesture, and slow travel has to add up", () => {
   assert.deepEqual(gestures([{ deltaY: 1, gap: 0 }, { deltaY: 2, gap: FRAME_MS }]), []);
   assert.deepEqual(gestures(Array.from({ length: 12 }, () => ({ deltaY: 1, gap: 150 }))), []);
@@ -137,6 +162,14 @@ test("a busy main thread in the middle of inertia does not read as silence or as
     ...inertia.slice(15),
   ];
   assert.deepEqual(gestures(backlog), [1]);
+  // A main thread falling further behind with every event: each delivery merges more frames
+  // than the one before, so the events grow three times in a row, and each is handled late.
+  const fallingBehind = [
+    ...inertia.slice(0, 40),
+    ...[2, 3, 4, 5].map((frames, index) => ({ deltaY: inertia[40].deltaY * frames, gap: frames * FRAME_MS, late: 60 + index * 20 })),
+    ...inertia.slice(54),
+  ];
+  assert.deepEqual(gestures(fallingBehind), [1]);
 });
 
 test("uneven event timing in the middle of inertia does not read as a new swipe", () => {

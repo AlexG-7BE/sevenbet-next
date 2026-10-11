@@ -36,11 +36,17 @@ changes except how the wheel and the trackpad move it.
   The first chapter is now held by sticky positioning while it opens, and
   where the browser supports scroll-driven animations its growth is one of
   them; elsewhere the script scales it.
-- **The chapter screens repaint nothing while they move.** Their progress dot
-  rides a transform, the first chapter's corners square off once, a waiting
-  first chapter stays drawn at 0.001 opacity, and a sheet at rest is 0.999
-  opaque so the one beneath stays rasterised. On the Founder's display the
-  chapter landings went from two to four late frames each to none.
+- **A chapter is one layer and nothing in it changes while the page moves.**
+  Measured in the Founder's Chrome at his full window, a chapter built of
+  several layers under rounded corners cost the GPU up to 3.3 passes a frame;
+  every other screen costs one. The photo is no longer on a layer of its own,
+  the first chapter's words are there from the start and grow with it, each
+  chapter shows its own place on the progress track, corners change only at
+  rest, the first chapter grows in step with the scroll, and on a desktop the
+  chapter photos are fetched and decoded ahead. Fast flicks through the
+  chapters: from 6 late frames a landing to none.
+- **Fast flicks are each heard.** A flick made 180–280ms after the last one
+  used to be swallowed (fourteen fast flicks moved one screen).
 - **The language menu scrolls.** On Home the controller cancelled the wheel
   over the header's language list as well, so the list could not be scrolled
   and the page moved behind it. A list that scrolls on its own keeps its wheel.
