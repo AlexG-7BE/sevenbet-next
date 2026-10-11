@@ -36,16 +36,15 @@ import { programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-ca
 import {
   PROGRAMME_PRIVACY_VERSION,
   PROGRAMME_TERMS_VERSION,
-  type ProgrammeAccessAuthority,
 } from "@/lib/programme/access-contract";
-import { affirmAnonymousProgrammeAccess, recordAccountProgrammeAccess } from "@/lib/programme/access-client";
+import { affirmAnonymousProgrammeAccess, recordAccountProgrammeAccess, refreshAccountJourneyAccess } from "@/lib/programme/access-client";
 import {
   PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
   PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
   type ProgrammeStartingPointValue,
 } from "@/lib/programme/program-ai/contracts";
 import { programmeAccessFailureMessageKey } from "@/lib/programme/program-ai/access-errors";
-import { readyAnswersSituation, type ProgrammeReadyAnswer } from "@/lib/programme/program-ai/ready-answers";
+import { pickedReadyAnswers, readyAnswersSituation, type ProgrammeReadyAnswer } from "@/lib/programme/program-ai/ready-answers";
 import {
   anonymousProgrammeSubject,
   clearProgrammeOAuthClaimMarker,
@@ -59,7 +58,6 @@ import {
   rotateAnonymousProgrammeSubject,
   transitionProgrammeAccessToUserForPendingClaim,
   userProgrammeSubject,
-  writeProgrammeAccessContinuation,
   writeProgrammeOAuthClaimMarker,
   type ProgrammeLocalSubject,
 } from "@/lib/programme/local-subject-storage";
@@ -81,8 +79,11 @@ type Phase =
 
 type ProgramAiLocalState = {
   phase: Phase;
-  /** The picked ready answers, as the person read them. */
+  /** The picked ready answers and the note for "Something else", as the person read and wrote them. */
   situation: string;
+  /** The picked answers: the screen after them shows its lines before the server has answered. */
+  answers?: ProgrammeReadyAnswer[];
+  /** The Starting Point the server built from the answers; registration needs it. */
   candidate: ProgrammeStartingPointValue | null;
   xpPreview: number;
   /** A Google sign-up that started on Log in returns here to finish without a Starting Point. */
@@ -116,15 +117,13 @@ const phaseMessageKeys = {
 function restoredAnonymousState(value: ProgramAiLocalState | null | undefined): ProgramAiLocalState {
   if (!value) return emptyLocalState;
   const legacyPhase = String(value.phase);
-  const phase = legacyPhase === "clarification"
-    ? "intake"
-    : legacyPhase === "candidate" || legacyPhase === "reward"
-      ? value.candidate ? "registration" : "intake"
-      : value.phase === "home" ? "intake" : value.phase;
-  const accountFirst = value.accountFirst === true && !value.candidate;
-  // Registration without a Starting Point exists only for a Google return that began on Log in.
-  const safePhase = phase === "registration" && !value.candidate && !accountFirst ? "intake" : phase;
-  return { phase: safePhase, situation: value.situation || "", candidate: value.candidate || null, xpPreview: Number.isFinite(value.xpPreview) ? value.xpPreview : 0, ...(accountFirst ? { accountFirst: true } : {}) };
+  const answers = Array.isArray(value.answers) ? pickedReadyAnswers(value.answers) : [];
+  const accountFirst = value.accountFirst === true && !value.candidate && !answers.length;
+  const phase = ["clarification", "candidate", "reward", "registration"].includes(legacyPhase)
+    // Registration shows the picked answers' lines, or finishes a Google return that began on Log in.
+    ? value.candidate || answers.length || accountFirst ? "registration" : "access"
+    : value.phase === "home" ? "access" : value.phase;
+  return { phase, situation: value.situation || "", candidate: value.candidate || null, xpPreview: Number.isFinite(value.xpPreview) ? value.xpPreview : 0, ...(answers.length ? { answers } : {}), ...(accountFirst ? { accountFirst: true } : {}) };
 }
 
 async function programAiRequest<T>(
@@ -181,8 +180,12 @@ export function ProgramAiExperience({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const oauthRedeemStarted = useRef(false);
-  /** The journey whose anonymous session already exists, so a second press does not open another. */
+  /** The journey whose anonymous session already exists, so it is not opened twice. */
   const openedJourneyId = useRef<string | null>(null);
+  /** The server work behind the screen that follows the answers. Registration waits for it. */
+  const preparation = useRef<Promise<ProgramAiLocalState | null> | null>(null);
+  /** An account chose "Open my plan" on the answers screen; it is not sent back there this visit. */
+  const planChosen = useRef(false);
   const emailRedeemStarted = useRef(false);
   const personalisationStartedAt = useRef<number | null>(null);
   const accumulatedAiLatencyMs = useRef(0);
@@ -223,8 +226,28 @@ export function ProgramAiExperience({
     setPhase("home");
   }, []);
 
+  // Founder decision, 11 Oct 2026: an account that has not answered yet opens on the answers, not
+  // on an empty plan with a Start button. The journey's session is opened when the answers are sent.
+  const startMissionOneForAccount = useCallback(() => {
+    const journey = rotateAnonymousProgrammeSubject(window.sessionStorage);
+    const next: ProgramAiLocalState = { ...emptyLocalState, phase: "intake" };
+    personalisationStartedAt.current = null;
+    accumulatedAiLatencyMs.current = 0;
+    preparation.current = null;
+    setSubject(journey);
+    setLocal(next);
+    mergeProgrammeSubjectContent(window.sessionStorage, journey, { programAi: next });
+    setPhase("intake");
+  }, []);
+
+  const showPlanOrAnswers = useCallback((nextHome: ProgramAiHome) => {
+    setHome(nextHome);
+    if (nextHome.primaryAction === "start-mission-one" && !planChosen.current) startMissionOneForAccount();
+    else setPhase("home");
+  }, [startMissionOneForAccount]);
+
   // Account first: the access checks were affirmed minutes earlier on this journey; record them
-  // for the new account, then open the dashboard, where Mission 01 starts whenever they choose.
+  // for the new account, then open the answers (or the plan of an account that already answered).
   const completeAccountFirst = useCallback(async (userId: string, journey: ProgrammeLocalSubject) => {
     const response = await fetch("/api/programme-access/authority", {
       method: "POST",
@@ -247,9 +270,8 @@ export function ProgramAiExperience({
     clearProgrammeOAuthClaimMarker(window.sessionStorage);
     clearProgrammeSubjectContent(window.sessionStorage, journey);
     setSubject(userProgrammeSubject(userId));
-    setHome(payload.home);
-    setPhase("home");
-  }, []);
+    showPlanOrAnswers(payload.home);
+  }, [showPlanOrAnswers]);
 
   // The opt-in left ticked before leaving for Google is recorded once the account exists, through
   // the same preference service as the email sign-up. The box is ticked by default, so a
@@ -332,8 +354,7 @@ export function ProgramAiExperience({
           const homeResponse = await fetch("/api/program/program-ai/home", { credentials: "same-origin", cache: "no-store" });
           const payload = await homeResponse.json() as ApiPayload<{ home: ProgramAiHome }>;
           if (!homeResponse.ok || !payload.home) throw new Error("PROGRAMME_HOME_UNAVAILABLE");
-          setHome(payload.home);
-          setPhase("home");
+          showPlanOrAnswers(payload.home);
         })
         .catch(() => { setError(programmeText(locale, "Programme home unavailable")); setHome(null); setPhase("home"); });
       return;
@@ -345,7 +366,7 @@ export function ProgramAiExperience({
     const restoredWithAccess = accessActive ? restored : { ...emptyLocalState, phase: "access" as const };
     setLocal(restoredWithAccess);
     setPhase(restoredWithAccess.phase);
-  }, [completeAccountFirst, googleLinkRecovery, locale, redeem, saveGoogleMarketingChoice, session?.user.id, sessionPending]);
+  }, [completeAccountFirst, googleLinkRecovery, locale, redeem, saveGoogleMarketingChoice, session?.user.id, sessionPending, showPlanOrAnswers]);
 
   // A signed-in account that has not affirmed access yet: one press under the line, then the plan.
   async function grantAccountAccess() {
@@ -357,19 +378,20 @@ export function ProgramAiExperience({
       const homePayload = await homeResponse.json() as ApiPayload<{ home: ProgramAiHome }>;
       if (!homeResponse.ok || !homePayload.home) throw new Error("PROGRAMME_HOME_UNAVAILABLE");
       productAnalyticsClient.accessGranted("start");
-      setHome(homePayload.home);
-      setPhase("home");
+      showPlanOrAnswers(homePayload.home);
     } catch {
       setError(programmeText(locale, programmeAccessFailureMessageKey("authority")));
     } finally { setBusy(false); }
   }
 
-  // First visit: records the 18+ / Terms / Privacy affirmation the line states and opens the
-  // anonymous Programme session. Returns the message to show when a stage fails.
+  // Opens the journey's Programme session. A first visit records the 18+ / Terms / Privacy
+  // affirmation the line states; an account that already affirmed asks only for the journey's
+  // proof. Returns the message to show when a stage fails.
   async function openJourney(journey: ProgrammeLocalSubject): Promise<ProgrammeMessageKey | null> {
     const entryMode = hasProgrammeAccessAuthority(window.sessionStorage, journey) ? "resume" : "start";
     try {
-      await affirmAnonymousProgrammeAccess(window.sessionStorage);
+      if (session?.user.id) await refreshAccountJourneyAccess(window.sessionStorage, journey);
+      else await affirmAnonymousProgrammeAccess(window.sessionStorage);
     } catch {
       return programmeAccessFailureMessageKey("authority");
     }
@@ -384,23 +406,36 @@ export function ProgramAiExperience({
     openedJourneyId.current = journey.id;
     productAnalyticsClient.accessGranted(entryMode);
     productAnalyticsClient.missionOpened(1, entryMode);
-    personalisationStartedAt.current = null;
-    accumulatedAiLatencyMs.current = 0;
     return null;
   }
 
   // Founder decisions, 11 Oct 2026: one press under the consent statement. It is the explicit
-  // consent to process the picked answers and, on a first visit, the 18+ / Terms / Privacy
-  // affirmation. The answers go straight to the Starting Point.
-  async function agreeAndContinue(answers: ProgrammeReadyAnswer[]) {
-    if (!subject || subject.kind !== "journey" || answers.length === 0) return;
+  // consent to process the answers and, on a first visit, the 18+ / Terms / Privacy affirmation.
+  // The next screen opens at once (a screen change takes 0.1–0.3 s); the server work runs behind
+  // it, and registration waits for that work only if a button is pressed before it is done.
+  function agreeAndContinue(choice: { answers: ProgrammeReadyAnswer[]; note: string }) {
+    if (!subject || subject.kind !== "journey" || choice.answers.length === 0) return;
     const journey = subject;
-    setBusy(true); setError("");
-    // A journey entered from the dashboard already has its session; so does a second press here.
-    if (phase === "access" && openedJourneyId.current !== journey.id) {
-      productAnalyticsClient.startClicked("other_public");
+    setError("");
+    if (openedJourneyId.current !== journey.id) productAnalyticsClient.startClicked("other_public");
+    const shown: ProgramAiLocalState = { ...emptyLocalState, phase: "registration", situation: readyAnswersSituation(locale, choice.answers, choice.note), answers: pickedReadyAnswers(choice.answers) };
+    persist(shown, journey);
+    const pending: Promise<ProgramAiLocalState | null> = prepareStartingPoint(journey, shown).then((ready) => {
+      // A failed preparation is forgotten, so the next press sends the answers again.
+      if (!ready && preparation.current === pending) preparation.current = null;
+      return ready;
+    });
+    preparation.current = pending;
+    if (session?.user.id) void saveForAccount(session.user.id, journey, pending);
+  }
+
+  // Opens the session if the journey has none, records the consent the button gave, then sends
+  // the answers. Returns the state that carries the Starting Point, or null after saying why not.
+  async function prepareStartingPoint(journey: ProgrammeLocalSubject, state: ProgramAiLocalState): Promise<ProgramAiLocalState | null> {
+    if (personalisationStartedAt.current === null) personalisationStartedAt.current = performance.now();
+    if (openedJourneyId.current !== journey.id) {
       const failure = await openJourney(journey);
-      if (failure) { setError(programmeText(locale, failure)); setBusy(false); return; }
+      if (failure) { setError(programmeText(locale, failure)); return null; }
     }
     try {
       await programAiRequest("/api/program/program-ai/authority", journey, {
@@ -413,17 +448,8 @@ export function ProgramAiExperience({
       });
     } catch {
       setError(programmeText(locale, programmeAccessFailureMessageKey("session")));
-      setBusy(false);
-      return;
+      return null;
     }
-    // The start screen stays up while the Starting Point is prepared; if that fails, the same
-    // press sends the answers again.
-    await submitTurn({ ...local, situation: readyAnswersSituation(locale, answers), candidate: null }, journey);
-  }
-
-  async function submitTurn(state: ProgramAiLocalState, journey: ProgrammeLocalSubject) {
-    if (personalisationStartedAt.current === null) personalisationStartedAt.current = performance.now();
-    setBusy(true); setError("");
     try {
       const payload = await programAiRequest<{
         result: {
@@ -441,11 +467,9 @@ export function ProgramAiExperience({
       if (payload.result.kind !== "STARTING_POINT_CANDIDATE" || !payload.result.candidate) {
         throw new Error("STARTING_POINT_NOT_PREPARED");
       }
-      const readyState = { ...state, candidate: payload.result.candidate, phase: "registration" as const, xpPreview: payload.progress?.xpPreview ?? 0 };
-      if (payload.result.disposition === "SUPPORT_FIRST") {
-        persist({ ...readyState, phase: "support" }, journey);
-      } else {
-        persist(readyState, journey);
+      const ready: ProgramAiLocalState = { ...state, candidate: payload.result.candidate, phase: payload.result.disposition === "SUPPORT_FIRST" ? "support" : "registration", xpPreview: payload.progress?.xpPreview ?? 0 };
+      persist(ready, journey);
+      if (ready.phase === "registration") {
         productAnalyticsClient.personalisedValue("starting_point");
         productAnalyticsClient.registrationCtaPresented();
         console.info(JSON.stringify({
@@ -459,10 +483,24 @@ export function ProgramAiExperience({
           clarificationCount: 0,
         }));
       }
+      return ready;
     } catch {
       setError(programmeText(locale, "Your Starting Point could not be prepared"));
+      return null;
     }
-    finally { setBusy(false); }
+  }
+
+  // Registration needs the Starting Point the server built from the answers. It is usually there
+  // by the time a button is pressed; otherwise the press waits for it, or sends the answers again.
+  async function readyForRegistration(): Promise<ProgramAiLocalState | null> {
+    if (!subject) return null;
+    if (local.candidate || local.accountFirst) return local;
+    const pending = preparation.current ?? prepareStartingPoint(subject, local);
+    preparation.current = pending;
+    const ready = await pending;
+    if (!ready && preparation.current === pending) preparation.current = null;
+    // Support first shows its own screen and suppresses registration.
+    return ready?.phase === "registration" ? ready : null;
   }
 
   async function continueAfterSupport() {
@@ -479,24 +517,36 @@ export function ProgramAiExperience({
     finally { setBusy(false); }
   }
 
-  async function prepareClaimForRegistration() {
-    if (!subject || !local.candidate) throw new Error(programmeText(locale, "Your Starting Point is unavailable in this browser session"));
-    await programAiRequest("/api/program/program-ai/starting-point", subject, {
+  async function prepareClaimForRegistration(journey: ProgrammeLocalSubject, state: ProgramAiLocalState) {
+    if (!state.candidate) throw new Error(programmeText(locale, "Your Starting Point is unavailable in this browser session"));
+    await programAiRequest("/api/program/program-ai/starting-point", journey, {
       method: "POST",
-      body: JSON.stringify(local.candidate),
+      body: JSON.stringify(state.candidate),
     });
-    await programAiRequest("/api/program/program-ai/claim", subject, { method: "POST" });
+    await programAiRequest("/api/program/program-ai/claim", journey, { method: "POST" });
+  }
+
+  // An account's answers are saved to its plan without another press; the plan opens when the
+  // save is done. The "Save to my account" button stays as the way to try again.
+  async function saveForAccount(userId: string, journey: ProgrammeLocalSubject, pending: Promise<ProgramAiLocalState | null>) {
+    setBusy(true);
+    try {
+      const ready = await pending;
+      // Support first shows its own screen and saves nothing here.
+      if (ready?.phase !== "registration") return;
+      await prepareClaimForRegistration(journey, ready);
+      await redeem(userId, journey, ready);
+    }
+    catch { setError(programmeText(locale, "Your progress could not be saved yet")); }
+    finally { setBusy(false); }
   }
 
   async function saveAuthenticated() {
     if (!session?.user.id || !subject) return;
-    setBusy(true); setError("");
-    try {
-      await prepareClaimForRegistration();
-      await redeem(session.user.id, subject, local);
-    }
-    catch { setError(programmeText(locale, "Your progress could not be saved yet")); }
-    finally { setBusy(false); }
+    setError("");
+    const userId = session.user.id;
+    const journey = subject;
+    await saveForAccount(userId, journey, readyForRegistration());
   }
 
   async function handleEmail(input: { email: string; password: string; marketingAllowed: boolean }) {
@@ -505,7 +555,9 @@ export function ProgramAiExperience({
     emailRedeemStarted.current = true;
     setBusy(true); setError(""); setPasswordRejected(false);
     try {
-      if (!googleLinkRecovery && !local.accountFirst) await prepareClaimForRegistration();
+      const ready = googleLinkRecovery ? local : await readyForRegistration();
+      if (!ready) return;
+      if (!googleLinkRecovery && !ready.accountFirst) await prepareClaimForRegistration(subject, ready);
       const entry = await continueWithEmail({ email: input.email, password: input.password, expect: googleLinkRecovery ? "existing-only" : "new" }, {
         // The confirmation link in the sign-up email lands back on this Programme page.
         signUp: (credentials) => authClient.signUp.email({ ...credentials, name: credentials.email.split("@")[0] || "B4GAMBLE member", callbackURL: programmePath, fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } }),
@@ -526,8 +578,8 @@ export function ProgramAiExperience({
       }
       const marketingPreferenceSaved = entry.kind !== "created" || !input.marketingAllowed
         || await saveProgrammeMarketingPreference(locale);
-      if (local.accountFirst && !local.candidate) await completeAccountFirst(entry.userId, subject);
-      else await redeem(entry.userId, subject, local);
+      if (ready.accountFirst && !ready.candidate) await completeAccountFirst(entry.userId, subject);
+      else await redeem(entry.userId, subject, ready);
       if (!marketingPreferenceSaved) setError(programmeText(locale, MARKETING_CHOICE_NOT_SAVED));
     } catch { setError(programmeText(locale, "Account access failed")); }
     finally { emailRedeemStarted.current = false; setBusy(false); }
@@ -538,7 +590,9 @@ export function ProgramAiExperience({
     setBusy(true); setError("");
     try {
       const callbacks = programmeGoogleCallbacks(locale);
-      if (!local.accountFirst) await prepareClaimForRegistration();
+      const ready = await readyForRegistration();
+      if (!ready) { setBusy(false); return; }
+      if (!ready.accountFirst) await prepareClaimForRegistration(subject, ready);
       writeProgrammeOAuthClaimMarker(window.sessionStorage, subject);
       rememberGoogleMarketingChoice(window.sessionStorage, subject.id, input.marketingAllowed);
       const result = await authClient.signIn.social({
@@ -622,35 +676,12 @@ export function ProgramAiExperience({
     mergeProgrammeSubjectContent<ProgramAiAuthenticatedLocalContent>(window.sessionStorage, subject, { programAiReviewWording: next });
   }
 
-  async function enterMissionOneFromHome() {
-    const journey = rotateAnonymousProgrammeSubject(window.sessionStorage);
-    setBusy(true); setError("");
-    try {
-      const response = await fetch("/api/programme-access/authority", {
-        method: "POST",
-        credentials: "same-origin",
-        cache: "no-store",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ journeyId: journey.id }),
-      });
-      const payload = await response.json() as ApiPayload<{ authority?: ProgrammeAccessAuthority }>;
-      if (!response.ok || !payload.authority) throw new Error("PROGRAMME_ACCESS_REFRESH_FAILED");
-      writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
-      await programAiRequest("/api/program/program-ai/session", journey, {
-        method: "POST",
-        headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
-      });
-      setSubject(journey);
-      openedJourneyId.current = journey.id;
-      personalisationStartedAt.current = null;
-      accumulatedAiLatencyMs.current = 0;
-      persist({ ...emptyLocalState, phase: "intake" }, journey);
-    } catch {
-      setError(programmeText(locale, programmeAccessFailureMessageKey("authority")));
-      setPhase("home");
-    } finally {
-      setBusy(false);
-    }
+  // "Open my plan" on the answers screen: the plan, for this visit, without answering now.
+  function openPlanInstead() {
+    planChosen.current = true;
+    setError("");
+    if (session?.user.id) setSubject(userProgrammeSubject(session.user.id));
+    setPhase("home");
   }
 
   useEffect(() => {
@@ -681,17 +712,17 @@ export function ProgramAiExperience({
   );
 
   if (phase === "loading" || sessionPending) return renderPhase(<ProgrammeLoadingScreen locale={locale} />, { entry: true });
-  // Mission 01 is the start screen. A first visit also carries the 18+ / Terms / Privacy line; a
-  // journey entered from the dashboard already has its session and its account, so it does not.
-  const startScreen = (firstVisit: boolean) => renderPhase(<ProgrammeStartScreen accessLine={firstVisit} busy={busy} error={error} locale={locale} onAgree={agreeAndContinue} />, { entry: firstVisit });
+  // Mission 01 is the start screen. A first visit also carries the 18+ / Terms / Privacy line; an
+  // account already affirmed it, and may open its plan instead of answering now.
+  const signedIn = Boolean(session?.user.id);
+  const startScreen = () => renderPhase(<ProgrammeStartScreen accessLine={!signedIn} error={error} locale={locale} onAgree={agreeAndContinue} onOpenPlan={signedIn && home ? openPlanInstead : undefined} />, { entry: !signedIn });
   if (phase === "access" && subject?.kind === "user") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccountAccess} />, { entry: true });
-  if (phase === "access") return startScreen(true);
-  if (phase === "intake") return startScreen(false);
+  if (phase === "access" || phase === "intake") return startScreen();
   if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} locale={locale} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
-  if (phase === "registration" && (local.candidate || local.accountFirst)) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
+  if (phase === "registration" && (local.candidate || local.accountFirst || local.answers?.length)) return renderPhase(<StartingPointReadyScreen answers={local.answers ?? []} authenticated={signedIn} fallbackFocus={local.candidate?.desiredChange ?? null} busy={busy} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
-  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} programmePath={programmePath} unconfirmedEmail={session.user.emailVerified ? null : session.user.email} userId={session.user.id} />);
+  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={startMissionOneForAccount} onReview={openReview} programmePath={programmePath} unconfirmedEmail={session.user.emailVerified ? null : session.user.email} userId={session.user.id} />);
   if (phase === "home") return renderPhase(<ProgrammeUnavailableScreen error={error} locale={locale} />);
-  return startScreen(true);
+  return startScreen();
 }

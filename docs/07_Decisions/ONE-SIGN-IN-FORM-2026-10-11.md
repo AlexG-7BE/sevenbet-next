@@ -1,6 +1,6 @@
 # One sign-in form, and a shorter start
 
-**Status:** ACCEPTED. Parts 1, 2 and 3 are implemented.
+**Status:** ACCEPTED. Parts 1, 2, 3 and 4 are implemented.
 
 **Decision authority:** explicit Founder instructions, 11 October 2026.
 
@@ -14,6 +14,7 @@
 - On the consent wording and the screen after the answers: "а можно ли сделать формулировку… короче? и зачем нам your starting point in your words — если он просто пересказывает то, что выбрал человек на 1 шаге? может оставить там только what we will work first? при этом переименовав это на что-то вроде — вот что мы сможем с вами сделать? и сделать это тоже большим заголовком".
 - On the password: "куда ты убрал password который был ниже поля для email? он должен ввести email а затем пароль, и нажать на кнопку continue with email".
 - On the unused voice code: "а мы можем не удалять эту часть кода, а просто вынести её за скобки из проекта пока, что бы потом легко вернуть в случае необходимости? но так, что бы она не мешала", then the choice "Метка в истории" (out of the working project, kept under a named tag).
+- After using the live start: "во первых, почему так долго теперь открывается? во вторых когда человек выбирает something else — наверное надо в этом поле дать ему что-то вписать? в третьих… когда он нажимает на log in и пытается зарегистрироваться там… мы должны просто его зарегистрировать без старта, или как?", then the choices "Сразу к готовым ответам" and "Да, короткое поле".
 - On older rules: "я тот кто эти правила устанавливает. если есть разногласия просто пришли мне их для решения".
 
 **Supersedes in part:** [PROGRAMME-FAST-START-2026-09-25](PROGRAMME-FAST-START-2026-09-25.md) "three required checks on the access screen" (now a line and one consent button) and its quiet account-first route (removed from the Programme). [EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27](EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27.md) "one unticked checkbox" (now ticked by default, short, last in the form). RFC-022, RFC-023 and RFC-056 for Mission 01 input: typed and voice input are no longer offered; the provider, retention and kill-switch boundaries of those RFCs stand for the text request that remains. RFC-029 and the Google readiness record "standalone login is returning-user-only" (Log in now creates accounts). Everything else in those records stands.
@@ -94,6 +95,21 @@ The client stopped reaching the transcription routes in Part 2. The Founder aske
 3. The screen is the larger job: the microphone and composer were replaced by the ready-answers start, so `ProgramAiExperience.tsx` and `ProgramAiFinalPresentation.tsx` at the tag are a reference to rebuild from, not files to copy over.
 4. Before release: a new consent statement version that names speech and the transcription provider again, the Privacy Notice and Terms wording, and the voice sections of RFC-056.
 
+### Part 4 — the next screen opens at once; a note for "Something else"; a new account opens on the answers (implemented)
+
+Changed after the Founder used the live start. This part amends three statements of Part 2: the next screen no longer waits for the server, "Something else" has a short note, and the screen after the answers shows lines of ours instead of the server's focus text.
+
+**Why.** In production the press on "Agree and continue" took about four seconds before the next screen: the access record, the Programme session, the consent record and the answers went to the server one after another, and the screen waited for all four. In the request checked (11 October, 14:25 UTC) the AI provider refused the answers for its rate limit, so the text shown after the wait was the general fallback.
+
+- **The next screen opens at once.** The press shows "Here's what we can do together." before any request is sent. The same four requests then run behind the screen, in the same order: the consent is still recorded before the answers are sent, and a failed consent record stops there.
+- **The screen shows lines of ours, one per picked answer** ("Set a stop point before you play, so a loss ends the session instead of starting a chase." for "I chase my losses", and so on, in every Programme language). It therefore does not depend on the AI provider. The Starting Point the server builds from the answers is still what is saved to the account and shown in the plan.
+- **Registration waits for the server, not the screen.** Every registration action (Google, email, saving to an account) first waits for the Starting Point; it is normally there before a person has typed an email. If the work behind the screen failed, the screen says so and the same press sends the answers again; no account is created before the server has answered.
+- **Support first is unchanged in effect.** If the server answers "support first", its screen replaces the form and nothing is registered. The form can be visible for the moment before that answer arrives; no registration action can complete in that moment. The production provider adapter returns "continue" for every request today.
+- **"Something else" opens one short optional note** (up to 280 characters, no microphone), shown only while that answer is picked. It is part of the answers: it is sent with them as "Something else: …", under the same consent statement, and nowhere else. The Privacy Notice already names "what you pick or type".
+- **A new account opens on the answers, not on an empty plan.** After sign-up on Log in, and for any account that has not answered yet, the Programme page shows the answers, without the 18+ line (the account already affirmed it) and with a quiet link "Open my plan". The picked answers are saved to the plan without another press; the plan opens when the save is done, and "Save to my account" stays as the way to try again. An account that has answered opens on its plan, as before. "Start Mission 01" in the plan opens the answers at once.
+
+Not changed: what the server stores and when. The Starting Point is stored for an anonymous person only when a registration action is pressed, as RFC-022 requires; that is why a press on Google or email still takes a moment before the next page.
+
 ## Not chosen
 
 - **Voice out, with a quiet text field kept** on the start screen. The Founder chose ready answers only, to keep the first screen on one thing.
@@ -106,6 +122,7 @@ The client stopped reaching the transcription routes in Part 2. The Founder aske
 
 - `tests/account-entry.test.ts` (in `auth-comms:test`): one request for a new email on the Programme and for a returning person on Log in, sign-in through the same button, the wrong-password answer in both orders, no fall-through after a refused creation, the full affirmation body and proof reuse, the account-first Google hand-over, and the Log in wiring.
 - `tests/ready-answers.test.ts` (in `programme:test`): six answers, the text Mission 01 receives, and every single answer in every Programme language passing the server's Mission 01 check.
+- Part 4: `tests/ready-answers.test.ts` (the note is tidied, bounded and sent only with "Something else"; every answer has a translated line of ours), `tests/program-ai-structural.test.ts` (the press awaits nothing; the consent is recorded before the answers are sent; every registration action waits for the Starting Point and support first suppresses it; an account without answers opens on them), and `tests/program-ai-browser.spec.ts` (with the answers held back for three seconds the next screen is there within 1.5 seconds; sign-up on Log in, the answers, the note and the plan with real email auth).
 - `tests/gb-legal-p0-closure.test.ts` and `tests/program-ai-structural.test.ts`: the consent statement once and directly above its button, no tick, the consent recorded before any answer is sent, the v2 consent version, the unchanged affirmation sent to the server, and no voice or free-text input in the client.
 - Part 3: `tests/program-ai-structural.test.ts` (no voice route, adapter, bucket, permission or setting remains; the turn route stays), `tests/programme-internationalisation.test.ts` (one deny-all Permissions-Policy rule; `inputMode: "voice"` refused), `tests/program-ai-openai-adapters.test.ts` (leftover voice variables in hosting do not break the provider configuration), `tests/legal-programme-privacy.test.ts` (no voice wording in the Privacy Notice or the Terms), and in the browser `tests/program-ai-browser.spec.ts` (both retired routes answer 404), `tests/programme-document-policy-boundary-browser.spec.ts` and `tests/programme-internationalisation-browser.spec.ts` (every Programme route denies the microphone).
 - `tests/auth-comms-browser.spec.ts`, `tests/program-ai-browser.spec.ts`, `tests/programme-internationalisation-browser.spec.ts`, `tests/final-production-readiness-browser.spec.ts`, `tests/founder-mobile-production-browser.spec.ts`: the start screen, picked answers through real email auth, the account-first route, support-first and every Programme language.

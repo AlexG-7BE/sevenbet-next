@@ -5,8 +5,9 @@ import { useState, type FormEvent } from "react";
 
 import { PROGRAMME_MARKETING_OPT_IN_DEFAULT, PROGRAMME_MARKETING_OPT_IN_LABEL } from "@/lib/customers/email-preference-client";
 import { programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
-import type { ProgrammeStartingPointValue } from "@/lib/programme/program-ai/contracts";
 import {
+  PROGRAMME_ANSWER_FOCUS,
+  PROGRAMME_ANSWER_NOTE_MAX_LENGTH,
   PROGRAMME_READY_ANSWERS,
   PROGRAMME_START_QUESTION,
   type ProgrammeReadyAnswer,
@@ -61,23 +62,25 @@ export function ProgrammeUnavailableScreen({ error, locale }: { error: string; l
 }
 
 /**
- * Founder decisions, 11 Oct 2026. The Programme starts with ready answers; several can be picked.
- * There is no voice and no free text. One button under the list is the explicit consent to
- * process the picked answers: its statement stands directly above it and is asked nowhere else
- * on this route. On a first visit the same press, under the line, is also the 18+, Terms and
- * Privacy affirmation. There is no consent tick and no separate consent screen, and no way to
- * registration that goes round the answers.
+ * Founder decisions, 11 Oct 2026. The Programme starts with ready answers; several can be picked,
+ * and "Something else" opens a short optional note. There is no voice. One button under the list
+ * is the explicit consent to process the answers: its statement stands directly above it and is
+ * asked nowhere else on this route. On a first visit the same press, under the line, is also the
+ * 18+, Terms and Privacy affirmation. There is no consent tick and no separate consent screen,
+ * and the next screen opens at once.
  */
-export function ProgrammeStartScreen({ accessLine, busy, error, onAgree, locale }: {
+export function ProgrammeStartScreen({ accessLine, error, onAgree, onOpenPlan, locale }: {
   /** Shown on a first visit; an account that already affirmed access is not asked again. */
   accessLine: boolean;
-  busy: boolean;
   error: string;
-  onAgree: (answers: ProgrammeReadyAnswer[]) => void;
+  onAgree: (choice: { answers: ProgrammeReadyAnswer[]; note: string }) => void;
+  /** An account may open its plan without answering now. */
+  onOpenPlan?: () => void;
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
   const [answers, setAnswers] = useState<ProgrammeReadyAnswer[]>([]);
+  const [note, setNote] = useState("");
   const toggle = (answer: ProgrammeReadyAnswer) => setAnswers((current) => current.includes(answer) ? current.filter((item) => item !== answer) : [...current, answer]);
   return (
     <div className={styles.canvas} data-programme-presentation="start">
@@ -89,20 +92,22 @@ export function ProgrammeStartScreen({ accessLine, busy, error, onAgree, locale 
           <div aria-labelledby="programme-start-title" className={styles.answerList} data-programme-ready-answers="" role="group">
             {PROGRAMME_READY_ANSWERS.map((answer) => (
               <label className={styles.answerOption} key={answer}>
-                <input checked={answers.includes(answer)} disabled={busy} onChange={() => toggle(answer)} type="checkbox" />
+                <input checked={answers.includes(answer)} onChange={() => toggle(answer)} type="checkbox" />
                 <span>{t(answer)}</span>
               </label>
             ))}
+            {answers.includes("Something else") ? <textarea aria-label={t("Tell us in a few words")} className={styles.answerNote} data-programme-answer-note="" maxLength={PROGRAMME_ANSWER_NOTE_MAX_LENGTH} onChange={(event) => setNote(event.target.value)} placeholder={t("Tell us in a few words")} rows={2} value={note} /> : null}
           </div>
           <p className={styles.consentStatement} data-programme-start-consent="">{t("I agree that B4GAMBLE and its AI provider use my answers, which may reveal my health, to personalise my plan.")}</p>
-          <button className={styles.primaryAction} data-programme-agree="" disabled={busy || answers.length === 0} onClick={() => onAgree(answers)} type="button">
-            {busy ? t("Preparing your Starting Point…") : t("Agree and continue")}
+          <button className={styles.primaryAction} data-programme-agree="" disabled={answers.length === 0} onClick={() => onAgree({ answers, note: answers.includes("Something else") ? note : "" })} type="button">
+            {t("Agree and continue")}
           </button>
           {accessLine ? <>
             <p className={styles.accessNote} data-programme-access-note="">{t("By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.")}</p>
             <p className={styles.legalLinks}><Link href="/terms">{t("Read Terms")}</Link><Link href="/privacy">{t("Read Privacy Notice")}</Link></p>
           </> : null}
           <StatusMessage error={error} />
+          {onOpenPlan ? <button className={styles.quietAction} data-programme-open-plan="" onClick={onOpenPlan} type="button">{t("Open my plan")}</button> : null}
           <Link className={styles.helpLink} href={programmeHelpPath(locale)}>{t("Protected Help / pause options →")}</Link>
         </div>
       </main>
@@ -166,7 +171,8 @@ export function ProgrammeSupportScreen({ busy, error, onContinue, xpPreview, loc
 
 export function StartingPointReadyScreen({
   authenticated,
-  candidate,
+  answers,
+  fallbackFocus = null,
   googleLinkRecovery,
   googleAvailable,
   busy,
@@ -179,8 +185,10 @@ export function StartingPointReadyScreen({
   locale,
 }: {
   authenticated: boolean;
-  /** Null when a Google sign-up started on Log in returns here without a Starting Point. */
-  candidate: ProgrammeStartingPointValue | null;
+  /** The picked answers. Empty when a Google sign-up started on Log in returns here without them. */
+  answers: readonly ProgrammeReadyAnswer[];
+  /** The focus of a Starting Point kept in the tab from before the answers were remembered. */
+  fallbackFocus?: string | null;
   googleLinkRecovery: boolean;
   googleAvailable: boolean;
   busy: boolean;
@@ -203,16 +211,18 @@ export function StartingPointReadyScreen({
   // asked once on this screen. It is ticked when the form opens, short, and the last thing in
   // the form.
   const marketingChoiceShown = !googleLinkRecovery;
+  // Founder decisions, 11 Oct 2026: the screen does not repeat the picked answers back. It shows
+  // what the Programme will work on first, one line of ours per answer, under one large heading,
+  // so it opens at once and waits for nothing.
+  const lines = answers.length ? answers.map((answer) => t(PROGRAMME_ANSWER_FOCUS[answer])) : fallbackFocus ? [fallbackFocus] : [];
   return (
     <div className={styles.canvas} data-programme-presentation="starting-point-ready">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.readyState}>
-          {candidate ? <>
-        {/* Founder decision, 11 Oct 2026: the screen does not repeat the picked answers back. It
-            shows the first thing the Programme will work on, under one large heading. */}
+          {lines.length ? <>
         <h1><SerifTail text={t("Here's what we can do together.")} /></h1>
         <section className={styles.startingPointCard} data-programme-understanding="">
-          <p>{candidate.desiredChange}</p>
+          <ul>{lines.map((line) => <li key={line}>{line}</li>)}</ul>
         </section>
           </> : <>
         <h1><SerifTail text={t("Save your place first.")} words={2} /></h1>
@@ -220,7 +230,7 @@ export function StartingPointReadyScreen({
           </>}
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
           {googleLinkRecovery ? <p>{t("Your confirmed Starting Point stays in this browser while you sign in and link Google securely.")}</p> : null}
-          {authenticated && !candidate ? null : authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{t(busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account")}</button> : <>
+          {authenticated && !lines.length ? null : authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{t(busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account")}</button> : <>
             {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle({ marketingAllowed: marketingChoiceShown && marketingAllowed })} type="button"><GoogleIcon />{t("Continue with Google")}</button> : null}
             {googleAvailable && !googleLinkRecovery ? <p className={styles.entryDivider}><span>{t("or")}</span></p> : null}
             <form className={styles.emailForm} data-programme-email-entry="" onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, marketingAllowed: marketingChoiceShown && marketingAllowed }); }}>

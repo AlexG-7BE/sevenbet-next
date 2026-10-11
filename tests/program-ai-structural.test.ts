@@ -119,13 +119,55 @@ test("client keeps private draft content in sessionStorage and never localStorag
   assert.match(frontendRuntime, /<Link href="\/privacy">\{t\("Read Privacy Notice"\)\}<\/Link>/);
 });
 
-test("Mission 01 takes picked ready answers and the client has no voice or free-text input", () => {
-  // Founder decisions, 11 Oct 2026: ready answers only.
+test("Mission 01 takes picked ready answers, one short note for Something else, and no voice", () => {
+  // Founder decisions, 11 Oct 2026: ready answers; "Something else" opens one short optional
+  // note; no voice.
   assert.match(finalPresentation, /PROGRAMME_READY_ANSWERS\.map\(\(answer\) =>/);
-  assert.match(frontend, /situation: readyAnswersSituation\(locale, answers\)/);
+  assert.match(frontend, /situation: readyAnswersSituation\(locale, choice\.answers, choice\.note\)/);
   assert.match(frontend, /body: JSON\.stringify\(\{ locale, inputMode: "text", situation: state\.situation, clarificationAnswers: \[\] \}\)/);
-  assert.doesNotMatch(frontendRuntime, /<textarea|getUserMedia|MediaRecorder|navigator\.permissions|microphone|transcription|new FormData\(\)|In my own words/i);
+  // The note exists only while "Something else" is picked, and is sent only then.
+  assert.equal((frontendRuntime.match(/<textarea/g) || []).length, 1);
+  assert.match(finalPresentation, /\{answers\.includes\("Something else"\) \? <textarea [^\n]*maxLength=\{PROGRAMME_ANSWER_NOTE_MAX_LENGTH\}/);
+  assert.match(finalPresentation, /onAgree\(\{ answers, note: answers\.includes\("Something else"\) \? note : "" \}\)/);
+  assert.doesNotMatch(frontendRuntime, /getUserMedia|MediaRecorder|navigator\.permissions|microphone|transcription|new FormData\(\)|In my own words/i);
   assert.doesNotMatch(frontendRuntime, /Mission01IntakeScreen|Mission01Composer|realtime-transcription-client|voice-draft/);
+});
+
+test("the screen after the answers opens at once and registration waits for the server, not the screen", () => {
+  // Founder decision, 11 Oct 2026 (a screen change takes 0.1–0.3 s). The press shows the next
+  // screen before any request; the session, the consent record and the answers go behind it.
+  const agree = frontend.slice(frontend.indexOf("function agreeAndContinue"), frontend.indexOf("async function prepareStartingPoint"));
+  assert.doesNotMatch(agree, /await /, "the press awaits nothing");
+  assert.ok(agree.indexOf("persist(shown, journey)") < agree.indexOf("prepareStartingPoint(journey, shown)"));
+  assert.match(agree, /phase: "registration", situation: readyAnswersSituation\(locale, choice\.answers, choice\.note\), answers: pickedReadyAnswers\(choice\.answers\)/);
+  // The lines on that screen are ours, one per picked answer, so it needs no server answer.
+  assert.match(finalPresentation, /const lines = answers\.length \? answers\.map\(\(answer\) => t\(PROGRAMME_ANSWER_FOCUS\[answer\]\)\) : fallbackFocus \? \[fallbackFocus\] : \[\];/);
+  assert.match(finalPresentation, /<ul>\{lines\.map\(\(line\) => <li key=\{line\}>\{line\}<\/li>\)\}<\/ul>/);
+  // The consent is recorded before the answers are sent, in that order, behind the screen.
+  const prepare = frontend.slice(frontend.indexOf("async function prepareStartingPoint"), frontend.indexOf("async function readyForRegistration"));
+  assert.ok(prepare.indexOf("/api/program/program-ai/authority") < prepare.indexOf("/api/program/program-ai/turn"));
+  assert.match(prepare, /statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION/);
+  // Every registration action waits for the Starting Point, and support first suppresses it.
+  const ready = frontend.slice(frontend.indexOf("async function readyForRegistration"), frontend.indexOf("async function continueAfterSupport"));
+  assert.match(ready, /return ready\?\.phase === "registration" \? ready : null;/);
+  for (const handler of ["async function handleEmail", "async function handleGoogle"]) {
+    const body = frontend.slice(frontend.indexOf(handler), frontend.indexOf(handler) + 900);
+    assert.match(body, /await readyForRegistration\(\)/, handler);
+    assert.ok(body.indexOf("readyForRegistration()") < body.indexOf("prepareClaimForRegistration("), handler);
+  }
+  assert.match(frontend, /if \(ready\?\.phase !== "registration"\) return;\s+await prepareClaimForRegistration\(journey, ready\);\s+await redeem\(userId, journey, ready\);/);
+});
+
+test("an account that has not answered opens on the answers, and may open its plan instead", () => {
+  // Founder decision, 11 Oct 2026: after sign-up on Log in a person sees the answers, not an
+  // empty plan with a Start button. The answers are saved to the plan without another press.
+  assert.match(frontend, /if \(nextHome\.primaryAction === "start-mission-one" && !planChosen\.current\) startMissionOneForAccount\(\);\s+else setPhase\("home"\);/);
+  assert.equal((frontend.match(/showPlanOrAnswers\((?:payload|homePayload)\.home\)/g) || []).length, 3);
+  assert.match(frontend, /if \(session\?\.user\.id\) void saveForAccount\(session\.user\.id, journey, pending\);/);
+  assert.match(frontend, /onOpenPlan=\{signedIn && home \? openPlanInstead : undefined\}/);
+  assert.match(frontend, /accessLine=\{!signedIn\}/);
+  // An account that already affirmed access asks only for its journey's proof.
+  assert.match(frontend, /if \(session\?\.user\.id\) await refreshAccountJourneyAccess\(window\.sessionStorage, journey\);\s+else await affirmAnonymousProgrammeAccess\(window\.sessionStorage\);/);
 });
 
 test("voice input is gone from the server: no route, adapter, bucket, permission or config remains", () => {
@@ -174,7 +216,7 @@ test("the start screen owns the explicit consent: one statement above one button
   assert.equal((frontendRuntime.match(statement) || []).length, 1);
   const start = finalPresentation.slice(finalPresentation.indexOf("export function ProgrammeStartScreen"), finalPresentation.indexOf("export function ProgrammeAccessScreen"));
   assert.ok(start.search(statement) < start.indexOf("data-programme-agree"), "the statement stands above the button");
-  assert.match(start, /disabled=\{busy \|\| answers\.length === 0\}/);
+  assert.match(start, /disabled=\{answers\.length === 0\}/);
   assert.match(start, /t\("Agree and continue"\)/);
   // The only checkboxes on the start screen are the answers themselves.
   assert.equal((start.match(/type="checkbox"/g) || []).length, 1);
@@ -198,8 +240,8 @@ test("Program AI reuses the signed access contract and exposes no anonymous clar
   // Founder decision, 11 Oct 2026: the save screen shows what the Programme will work on first
   // and does not repeat the picked answers back.
   assert.match(finalPresentation, /Here's what we can do together\./);
-  assert.match(finalPresentation, /data-programme-understanding="">\s*<p>\{candidate\.desiredChange\}<\/p>/);
-  assert.doesNotMatch(finalPresentation, /candidate\.startingPoint|Your Starting Point is ready|Your Starting Point, in your words|save my Starting Point/);
+  assert.match(finalPresentation, /data-programme-understanding="">\s*<ul>/);
+  assert.doesNotMatch(finalPresentation, /candidate\.|Your Starting Point is ready|Your Starting Point, in your words|save my Starting Point/);
   // Email, then password, then the button, all visible at once.
   assert.doesNotMatch(finalPresentation, /passwordShown/);
   // Founder decision, 11 Oct 2026: one email step creates the account or signs in.
@@ -299,7 +341,7 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.match(authenticatedHome, /programmePrimaryActionLabel\(home\.primaryAction, locale\)/);
   assert.match(authenticatedHome, /home\.primaryAction === "finish-mission-one"/);
   assert.match(authenticatedHome, /For privacy, the situation itself was not retained/);
-  assert.match(frontend, /onMissionOneEntry=\{enterMissionOneFromHome\}/);
+  assert.match(frontend, /onMissionOneEntry=\{startMissionOneForAccount\}/);
   assert.doesNotMatch(authenticatedHome + frontend, /continue-mission-one|Continue Mission 01|startFromHome/);
 });
 
