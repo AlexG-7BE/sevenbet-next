@@ -169,7 +169,7 @@ test("Programme requires two access checks plus just-in-time consent and returns
   await page.goto("/program", { waitUntil: "networkidle" });
   const checks = page.getByRole("checkbox");
   const enter = page.getByRole("button", { name: "Enter Mission 01" });
-  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "One check before you begin." })).toBeVisible();
   await expect(checks).toHaveCount(2);
   for (let mask = 0; mask < 4; mask += 1) {
     for (let index = 0; index < 2; index += 1) await checks.nth(index).setChecked(Boolean(mask & (1 << index)));
