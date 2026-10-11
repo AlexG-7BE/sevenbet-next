@@ -398,6 +398,9 @@ test("all 11 Programme routes render localized anonymous, access, support and re
     }
     await expect(page.locator('[data-programme-presentation="starting-point-ready"]')).toBeVisible();
     await expect(page.getByRole("button", { name: t(route.locale, "Continue with email") })).toBeVisible();
+    // The next screen opens before the answers are sent; wait for them to be sent in this language.
+    await expect.poll(() => turnLocales.at(-1)).toBe(route.locale);
+    await expect(page.locator("[data-programme-understanding] li")).toHaveText(t(route.locale, "Set a stop point before you play, so a loss ends the session instead of starting a chase."));
     await assertNoRepresentativeEnglishLeakage(page, route.locale, ["Here's what we can do together.", "Continue with email"]);
     await assertRenderedQuality(page, `${route.locale}:registration:${mobile ? "mobile" : "desktop"}`);
     await context.close();

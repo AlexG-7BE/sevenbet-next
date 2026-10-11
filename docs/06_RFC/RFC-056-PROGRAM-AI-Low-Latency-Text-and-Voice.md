@@ -11,10 +11,11 @@
 ## 11 October amendment — voice retired, text generation stands
 
 The Founder decided on 11 October 2026 that Mission 01 takes answers picked
-from a list, with no voice and no free text, and that the unused voice code
-leaves the working project and stays recoverable under a tag
+from a list, with no voice and no free-text story, and that the unused voice
+code leaves the working project and stays recoverable under a tag
 ([ONE-SIGN-IN-FORM-2026-10-11](../07_Decisions/ONE-SIGN-IN-FORM-2026-10-11.md),
-Parts 2 and 3).
+Parts 2 and 3). The same day "Something else" gained one short optional typed
+note, sent with the answers through the same text request (Part 4).
 
 **Still current authority:** the Fast text contract in the Decision table for
 the Mission 01 Starting Point, Missions 02–10 guidance and Personal Review

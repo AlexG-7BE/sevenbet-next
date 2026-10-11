@@ -118,15 +118,27 @@ record:
   else" is the sixth). One button, "Agree and continue", directly under the
   consent statement, is the explicit consent; there is no tick and no separate
   consent screen.
-- **No voice and no free text.** The microphone, the text field and their
-  screen are gone from the client, and the server voice code has left the
-  working project (see the section above).
+- **No voice.** The microphone and its screen are gone from the client, and
+  the server voice code has left the working project (see the section above).
 - **Consent statement v2.** "I agree that B4GAMBLE and its AI provider use my
   answers, which may reveal my health, to personalise my plan."
   (`article-9-authority:2026-10-11:v2`).
-- **The screen after the answers** shows the first thing the Programme will
-  work on under "Here's what we can do together." and no longer repeats the
-  answers back. Email, password and the button are all visible at once.
+- **The screen after the answers** opens at once, before any request is
+  sent, under "Here's what we can do together.", with one line of ours per
+  picked answer; it no longer repeats the answers back and does not depend on
+  the AI provider. The session, the consent record and the answers go to the
+  server behind it, in that order; every registration action waits for the
+  Starting Point. Email, password and the button are all visible at once.
+- **The pending claim is made behind that screen too**, so a press on Google
+  or email does not wait for it. Nothing personal is stored earlier: the
+  Starting Point is still saved once, when an account redeems the claim. A
+  claim is reused only while fresh (20 minutes for email, 5 for Google) and
+  made again if it lapsed.
+- **"Something else" opens one short optional note** (up to 280 characters),
+  sent with the answers under the same consent. There is no voice.
+- **An account that has not answered opens on the answers**, with a quiet
+  "Open my plan" link; its answers are saved to the plan without another
+  press. This is where sign-up on `/login` lands.
 - **No side door.** The "Create an account first" link is gone from the
   Programme; registration is reached through the answers, or on `/login`.
 - **Email opt-in ticked by default.** "Email me B4GAMBLE updates" is ticked

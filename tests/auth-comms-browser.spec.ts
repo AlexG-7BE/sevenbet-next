@@ -384,14 +384,21 @@ test("canonical access screen distinguishes a disabled runtime from session crea
 
   await open(page, "/program");
   await page.getByRole("checkbox", { name: "I chase my losses" }).check();
-  const enter = page.getByRole("button", { name: "Agree and continue" });
-  await enter.click();
+  await page.getByRole("button", { name: "Agree and continue" }).click();
+  // The next screen is already open; the failure behind it is said there.
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   const alert = page.locator('p[role="alert"]');
   await expect(alert).toHaveText("Mission 01 is temporarily unavailable. Your access checks were accepted. Try again later.");
   await expect(alert).not.toContainText(/PROGRAM_AI|server detail|404/i);
 
-  await enter.click();
+  // A registration press sends the answers again before anything is created.
+  let signUps = 0;
+  await page.route("**/api/auth/sign-up/email", (route) => { signUps += 1; return route.abort(); });
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill("retry-check@example.test");
+  await page.getByLabel("Password").fill("test-password-1234");
+  await page.getByRole("button", { name: "Continue with email" }).click();
   await expect(alert).toHaveText("Mission 01 could not be started. Try again.");
+  expect(signUps).toBe(0);
   await expect(alert).not.toContainText(/INTERNAL_ERROR|server detail|500/i);
 });
 
@@ -546,6 +553,9 @@ test("authenticated partial Mission 01 truthfully re-enters the ready answers wi
   await expect(page.getByRole("button", { name: "Agree and continue" })).toBeDisabled();
   await expect(page.locator("[data-programme-access-note]")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Create an account first →" })).toHaveCount(0);
+  // The plan stays one quiet link away.
+  await page.getByRole("button", { name: "Open my plan" }).click();
+  await expect(page.getByRole("heading", { name: "Mission 01 — Map the moment" })).toBeVisible();
 });
 
 test("expired access continuation returns to the canonical access screen", async ({ page }) => {
