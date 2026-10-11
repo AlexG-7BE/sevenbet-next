@@ -12,6 +12,55 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Desktop Home: one screen per gesture, read properly — in review
+
+**Founder instruction, 11 October 2026:** on a MacBook trackpad Home lagged,
+sometimes did not scroll and sometimes scrolled several screens. One screen per
+gesture stays; it has to be done as well as tilt.com does it. Decision record:
+[HOME-WHEEL-GESTURE-2026-10-11](07_Decisions/HOME-WHEEL-GESTURE-2026-10-11.md).
+This is an explicit exception to the frozen desktop Home; nothing on the page
+changes except how the wheel and the trackpad move it.
+
+- **Cause.** The controller waited for 140ms of silence in the wheel stream
+  before it accepted a new gesture. Trackpad inertia keeps the stream alive for
+  one to two and a half seconds, so the next swipes were swallowed; a slow drag
+  with short rests ran several screens; a 3px brush moved a full one.
+- **Now.** `components/final-handoff/homeWheelIntent.ts` reads the stream: 40px
+  of deliberate travel (or one wheel detent) is a gesture, and a stream that
+  has moved a screen moves another only when it goes silent, turns round, or
+  slows down and speeds up again. Inertia never adds a screen, and a swipe made
+  over live inertia is heard at once.
+- **The landing is the browser's own smooth scroll.** It runs off the main
+  thread, so a busy page cannot stall it. A script-driven 750ms landing was
+  built first and rejected as rough: it froze for 50–150ms in most landings.
+  The first chapter is now held by sticky positioning while it opens, and
+  where the browser supports scroll-driven animations its growth is one of
+  them; elsewhere the script scales it.
+- **A chapter is one layer and nothing in it changes while the page moves.**
+  Measured in the Founder's Chrome at his full window, a chapter built of
+  several layers under rounded corners cost the GPU up to 3.3 passes a frame;
+  every other screen costs one. The photo is no longer on a layer of its own,
+  the first chapter's words are there from the start and grow with it, each
+  chapter shows its own place on the progress track, corners change only at
+  rest, the first chapter grows in step with the scroll, and on a desktop the
+  chapter photos are fetched and decoded ahead. Fast flicks through the
+  chapters: from 6 late frames a landing to none.
+- **Fast flicks are each heard.** A flick made 180–280ms after the last one
+  used to be swallowed (fourteen fast flicks moved one screen).
+- **The language menu scrolls.** On Home the controller cancelled the wheel
+  over the header's language list as well, so the list could not be scrolled
+  and the page moved behind it. A list that scrolls on its own keeps its wheel.
+- **Unchanged.** The order of screens, the native scrollbar, the keyboard,
+  phones, touch and reduced motion.
+
+Tests: `tests/home-performance.test.ts` (wheel streams replayed through the
+reader) and `tests/home-performance-browser.spec.ts`.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed. The Founder compared
+this with a free-scrolling variant (PR #477, closed) and kept paging. The
+thresholds were tuned on modelled trackpad streams; he confirms the feel by
+hand.
+
 ## Programme voice code set aside — live 11 October 2026
 
 **Founder decisions, 11 October 2026:** Mission 01 takes picked answers only,

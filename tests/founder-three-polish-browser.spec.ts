@@ -189,7 +189,7 @@ for (const viewport of [
     for (let index = 0; index < 6; index += 1) {
       if (await page.evaluate(() => Math.abs(scrollY + innerHeight - document.documentElement.scrollHeight) <= 2)) break;
       await page.mouse.wheel(0, 920);
-      await page.waitForTimeout(750);
+      await page.waitForTimeout(1_000);
     }
 
     const closing = await page.evaluate(() => {
@@ -236,7 +236,7 @@ for (const viewport of [
       return destinations.at(-2) ?? 0;
     });
     await page.mouse.wheel(0, -920);
-    await page.waitForTimeout(750);
+    await page.waitForTimeout(1_000);
     expect(Math.abs(await page.evaluate(() => scrollY) - previousCanonicalDestination)).toBeLessThanOrEqual(3);
     await context.close();
   });
