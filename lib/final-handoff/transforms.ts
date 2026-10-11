@@ -277,6 +277,16 @@ function capturedLinkToRoute(html: string, label: string, href: string) {
   return html.replace(pattern, `<a href="${href}"$1>${label}</a>`);
 }
 
+/**
+ * The captured pages style the hover state of every link on the page. A touch browser keeps
+ * `:hover` on the element that was tapped, and the site header stays mounted across a client
+ * transition, so a tapped header link would arrive on the next page in its hover colour. The
+ * rule applies only where a pointer can hover.
+ */
+export function transformCommonHandoffCss(css: string) {
+  return css.replace(/(^|\n)([ \t]*)a:hover \{([^}]*)\}/g, "$1$2@media (hover: hover) { a:hover {$3} }");
+}
+
 export function transformCommonHandoff(html: string, programmePath = "/program") {
   const programmeEntryHref = `${programmePath}?entry=start`;
   const output = buttonToLink(qualifyUnsupportedHandoffClaims(stripHandoffGlobalChrome(html)), "Start Programme", programmeEntryHref)

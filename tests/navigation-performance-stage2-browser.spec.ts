@@ -5,8 +5,6 @@ import { RESEARCH_ACCESS_COOKIE, RESEARCH_ACCESS_OPEN } from "../lib/research-ac
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const fixtureArticlePath = "/en/learn/casino-basics/navigation-stage2-guide";
-// Exact hashes reproduced against the archived Stage 1 base; no other runtime error is ignored.
-const preExistingCapturedHandoffStyleViolation = /sha256-(?:jCY3Mj0wz8\/Vp\+NcUmcUIKtIFX0kPOrBioHLmp6\/\+mw=|CNl\/T5gB2OqpiFoNELIphE2H67beEfsTUBg1hLYMnM4=)/;
 
 type NavigationTimingWindow = Window & {
   __stage2MobileFeedbackPaint?: Promise<number>;
@@ -258,7 +256,7 @@ async function exerciseHeldMobileHeader(browser: Browser, browserName: string, c
     await expect(page.locator("footer")).not.toHaveAttribute("inert", "");
     if (browserName === "chromium") expect(delayedDestination).toBe(true);
     expect(enhancedBeforeNavigation || browserName === "webkit").toBe(true);
-    expect(errors.filter((error) => !preExistingCapturedHandoffStyleViolation.test(error))).toEqual([]);
+    expect(errors).toEqual([]);
   } finally {
     await commercialHold.release();
     await context.close();
@@ -467,7 +465,7 @@ test("rejected commercial resolution keeps truthful basic navigation usable", as
   await menu.locator('a[data-navigation-href="/learn"]').click();
   await expect(page).toHaveURL(`${baseUrl}/en/learn`);
   await expect(page.locator('[data-handoff-page="learn"]')).toBeVisible();
-  expect(errors.filter((error) => !preExistingCapturedHandoffStyleViolation.test(error))).toEqual([]);
+  expect(errors).toEqual([]);
   await context.close();
 });
 
@@ -603,7 +601,7 @@ test("supported IE fixture covers all primary, detail, article, history and pref
   await page.getByRole("link", { name: "B4GAMBLE home", exact: true }).first().click();
   await expect(page.locator('[data-handoff-page="home"]')).toBeVisible();
   expect(documentNavigations, "hydrated internal journeys should stay inside the App Router").toEqual([]);
-  expect(errors.filter((error) => !preExistingCapturedHandoffStyleViolation.test(error))).toEqual([]);
+  expect(errors).toEqual([]);
   await context.close();
 });
 
@@ -698,7 +696,7 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
   await page.keyboard.press("Escape");
   await expect(mobileNavigation).not.toBeVisible();
   await expect(menuButton).toBeFocused();
-  expect(errors.filter((error) => !preExistingCapturedHandoffStyleViolation.test(error))).toEqual([]);
+  expect(errors).toEqual([]);
   await context.close();
 });
 

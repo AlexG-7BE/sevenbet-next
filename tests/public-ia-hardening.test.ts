@@ -207,6 +207,24 @@ test("production CSP is nonce-based and has only documented compatibility except
   assert.throws(() => buildContentSecurityPolicy("bad nonce"), /Invalid CSP nonce/);
 });
 
+// A touch browser keeps :hover on a tapped link, and the header outlives a client transition.
+test("the captured pages colour a hovered link only where a pointer can hover", async () => {
+  const { transformCommonHandoffCss } = await import("../lib/final-handoff/transforms");
+  const pages = JSON.parse(read("lib/final-handoff/generated-pages.json")) as Record<string, { css: string }>;
+  const bareHover = /(^|\n)[ \t]*a:hover \{/g;
+  let gated = 0;
+  for (const [name, page] of Object.entries(pages)) {
+    const css = transformCommonHandoffCss(page.css);
+    const before = page.css.match(bareHover)?.length ?? 0;
+    assert.doesNotMatch(css, /(^|\n)[ \t]*a:hover \{/, name);
+    assert.equal(css.match(/@media \(hover: hover\) \{ a:hover \{/g)?.length ?? 0, before, name);
+    assert.equal(css.replace(/@media \(hover: hover\) \{ (a:hover \{[^}]*\}) \}/g, "$1"), page.css, `${name}: nothing else changes`);
+    gated += before;
+  }
+  assert.ok(gated >= 15, "every captured page carries the rule");
+  assert.match(read("components/final-handoff/HandoffPage.tsx"), /transformCommonHandoffCss\(page\.css\)/);
+});
+
 test("JSON-LD escapes markup input and runtime source has no Pexels hotlink", () => {
   const serialized = serializeJsonLd({ value: "</script><script>alert(1)</script>\u2028" });
   assert.doesNotMatch(serialized, /<\/script>|<script>/);
@@ -214,6 +232,13 @@ test("JSON-LD escapes markup input and runtime source has no Pexels hotlink", ()
   assert.match(serialized, /\\u2028/);
   const nonceStyle = read("components/security/NonceStyle.tsx");
   assert.match(nonceStyle, /nonce=\{nonce\}/);
+  // A page that arrives by client transition was rendered by a later request; its stylesheet
+  // carries the nonce of the document on screen, or the browser refuses it.
+  const documentNonceStyle = read("components/security/DocumentNonceStyle.tsx");
+  assert.match(documentNonceStyle, /^"use client";/);
+  assert.match(documentNonceStyle, /document\.querySelector<HTMLScriptElement>\("script\[nonce\]"\)\?\.nonce/);
+  assert.match(documentNonceStyle, /useSyncExternalStore\(subscribe, \(\) => documentNonce\(\) \?\? nonce, \(\) => nonce\)/);
+  assert.match(documentNonceStyle, /<style nonce=\{applied\}>\{css\}<\/style>/);
   assert.match(read("app/(public)/contact/page.tsx"), /<NonceStyle>/);
 
   const runtime = ["app", "components", "lib"]
