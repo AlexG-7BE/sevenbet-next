@@ -12,7 +12,27 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
-## Casino research in the menu: two doors — in review
+## Footer notice block hidden — in review
+
+**Founder instruction, 11 October 2026:** hide the footer block (18+ and
+"Adults only", the licensed-links statement, the Great Britain support links,
+the company line) from everyone for now, without deleting it. Decision record:
+[FOOTER-NOTICE-HIDDEN-2026-10-11](07_Decisions/FOOTER-NOTICE-HIDDEN-2026-10-11.md).
+
+- **Not rendered anywhere:** `FOOTER_COMPLIANCE_VISIBLE` in
+  `components/footer-compliance/FooterCompliance.tsx` is `false`. Every public
+  footer, the Programme footer and `/start` leave the block out, for every
+  visitor.
+- **Kept whole:** the component, its lines, fifteen translations and styles
+  stay; setting the switch to `true` brings the block back.
+- **Still shown:** "Not a gambling operator", the commission line, Terms,
+  Privacy, Contact and the Help link; `/start` keeps its own support list and
+  18+.
+- **Consequence:** while hidden, the site does not carry the footer lines
+  Google's UK gambling certification asks for (the precondition for a YouTube
+  link). The Founder confirmed after being told.
+
+## Casino research in the menu: two doors — live 10 October 2026
 
 **Founder instruction, 10 October 2026:** Best Offers, Casinos and Bonuses in
 the header and footer put off visitors who came for help and blur what the
@@ -59,9 +79,9 @@ project is. Decision record:
   Methodology ("Editorial vs commercial") and the Privacy Notice say that
   finishing this Mission opens those pages in the menu and that answers never
   choose or rank an offer, in all thirteen prepared languages.
-- **Open for the Founder:** the Terms still say Programme information "is not
-  used to select, rank or personalise commercial content". Accepted Terms
-  were not changed.
+- **Founder decisions, 11 October 2026:** the Terms stay as they are (opening
+  the links is not personalisation), and the First Personal Review stays
+  after step 04.
 - **Not measured here:** how many visitors start the Programme today. Take a
   baseline before release to compare against.
 
@@ -261,6 +281,9 @@ click to first offer card.
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
 ## Google UK gambling certification: footer, Ireland, DrückGlück GB — in review
+
+> **Footer hidden since 11 October 2026** on the Founder's instruction; see
+> "Footer notice block hidden" above. Ireland and DrückGlück GB are unchanged.
 
 **Founder decisions, 4 October 2026**
 ([GOOGLE-UK-CERTIFICATION-2026-10-04](07_Decisions/GOOGLE-UK-CERTIFICATION-2026-10-04.md)),
