@@ -69,17 +69,19 @@ export function ProgrammeUnavailableScreen({ error, locale }: { error: string; l
  * 18+, Terms and Privacy affirmation. There is no consent tick and no separate consent screen,
  * and the next screen opens at once.
  */
-export function ProgrammeStartScreen({ accessLine, error, onAgree, onOpenPlan, locale }: {
+export function ProgrammeStartScreen({ accessLine, error, initialAnswers, onAgree, onOpenPlan, locale }: {
   /** Shown on a first visit; an account that already affirmed access is not asked again. */
   accessLine: boolean;
   error: string;
+  /** Answers picked in this tab before the account existed; shown picked, to be agreed once. */
+  initialAnswers?: readonly ProgrammeReadyAnswer[];
   onAgree: (choice: { answers: ProgrammeReadyAnswer[]; note: string }) => void;
   /** An account may open its plan without answering now. */
   onOpenPlan?: () => void;
   locale: ProgrammeLocale;
 }) {
   const t = translated(locale);
-  const [answers, setAnswers] = useState<ProgrammeReadyAnswer[]>([]);
+  const [answers, setAnswers] = useState<ProgrammeReadyAnswer[]>(() => [...(initialAnswers ?? [])]);
   const [note, setNote] = useState("");
   const toggle = (answer: ProgrammeReadyAnswer) => setAnswers((current) => current.includes(answer) ? current.filter((item) => item !== answer) : [...current, answer]);
   return (

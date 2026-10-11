@@ -78,17 +78,55 @@ export async function recordAccountProgrammeAccess(fetcher: AccessFetcher = fetc
   if (!response.ok) throw new Error("PROGRAMME_ACCESS_NOT_VERIFIED");
 }
 
-/** True while this tab holds a Starting Point that no account has saved yet. */
-export function hasUnsavedStartingPoint(storage: AccessStorage, journey: ProgrammeLocalSubject) {
-  return Boolean(loadProgrammeSubjectContent<{ programAi?: { candidate?: unknown } }>(storage, journey).programAi?.candidate);
+type TabProgrammeState = {
+  programAi?: { phase?: unknown; candidate?: unknown; answers?: unknown; claimReadyAt?: unknown };
+};
+
+/**
+ * What this tab already holds for the Programme when a person opens Log in:
+ * a Starting Point no account has saved yet, picked answers without one, or
+ * nothing. Support first holds registration back, so it counts as nothing.
+ */
+export type TabProgrammeProgress =
+  | { kind: "starting-point"; startingPoint: object; claimReadyAt: unknown }
+  | { kind: "answers"; answers: unknown[] }
+  | { kind: "none" };
+
+export function tabProgrammeProgress(storage: AccessStorage, journey: ProgrammeLocalSubject): TabProgrammeProgress {
+  const state = loadProgrammeSubjectContent<TabProgrammeState>(storage, journey).programAi;
+  if (!state || state.phase === "support") return { kind: "none" };
+  if (state.candidate && typeof state.candidate === "object") {
+    return { kind: "starting-point", startingPoint: state.candidate, claimReadyAt: state.claimReadyAt };
+  }
+  if (Array.isArray(state.answers) && state.answers.length > 0) return { kind: "answers", answers: state.answers };
+  return { kind: "none" };
+}
+
+/** Remembers when the pending claim was made, for the journey's stored state. */
+export function noteClaimMade(storage: AccessStorage, journey: ProgrammeLocalSubject, now = Date.now()) {
+  const state = loadProgrammeSubjectContent<TabProgrammeState>(storage, journey).programAi;
+  if (state) mergeProgrammeSubjectContent(storage, journey, { programAi: { ...state, claimReadyAt: now } });
 }
 
 /**
- * Log in can start a Google sign-up outside the Programme. The Programme page
- * finishes it on return: it restores this account-first state, records the
- * access affirmation for the account and opens the plan.
+ * Founder decision, 11 Oct 2026: a Starting Point made in this tab goes with
+ * the account from Log in. The Programme page redeems its claim on arrival,
+ * for Google and for email alike; nobody is sent back to press a button twice.
+ */
+export function markStartingPointForAccount(storage: AccessStorage, journey: ProgrammeLocalSubject) {
+  writeProgrammeOAuthClaimMarker(storage, journey);
+}
+
+/**
+ * Log in can start a Google sign-up without a Starting Point. The Programme
+ * page finishes it on return: it records the access affirmation for the
+ * account and opens the answers. Answers already picked in this tab are kept,
+ * so they are shown picked.
  */
 export function prepareAccountFirstGoogleReturn(storage: AccessStorage, journey: ProgrammeLocalSubject) {
-  mergeProgrammeSubjectContent(storage, journey, { programAi: { phase: "registration", accountFirst: true } });
+  const progress = tabProgrammeProgress(storage, journey);
+  mergeProgrammeSubjectContent(storage, journey, {
+    programAi: { phase: "registration", accountFirst: true, ...(progress.kind === "answers" ? { answers: progress.answers } : {}) },
+  });
   writeProgrammeOAuthClaimMarker(storage, journey);
 }

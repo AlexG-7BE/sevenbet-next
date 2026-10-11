@@ -547,6 +547,39 @@ test("Log in creates an account for a new person, who answers once and lands in 
   await prisma.user.delete({ where: { id: user.id } });
 });
 
+test("answers first, then Log in: the account gets the Starting Point and nothing is pressed twice", async ({ page }) => {
+  // Founder, 11 Oct 2026: a person who had answered and then used Log in was sent back to the
+  // Programme screen to press the same button again. The Starting Point now goes with the
+  // account from Log in.
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/program");
+  await page.getByRole("checkbox", { name: "I chase my losses" }).check();
+  await page.getByRole("checkbox", { name: "I spend more than I plan" }).check();
+  const claimMade = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/program/program-ai/claim");
+  await page.getByRole("button", { name: "Agree and continue" }).click();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
+  expect((await claimMade).status()).toBe(201);
+
+  // The person opens Log in instead of using the form in front of them.
+  await page.goto("/login");
+  const email = `program-ai-answers-then-login-${randomUUID()}@example.test`;
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill(email);
+  await page.getByLabel("Password").fill("Programme-test-password-42!");
+  await page.getByRole("button", { name: "Continue with email" }).click();
+
+  // One press: the plan opens with the Starting Point saved, and the answers are not asked again.
+  await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Programme progress" })).toContainText("40 XP");
+  await expect(page.getByRole("heading", { name: "What feels hardest right now?" })).toHaveCount(0);
+  const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+  const saved = await prisma.programmeStartingPoint.findMany({ where: { userId: user.id } });
+  expect(saved).toHaveLength(1);
+  expect(saved[0].startingPoint).toBe(situation);
+
+  await prisma.user.delete({ where: { id: user.id } });
+});
+
 test("ready answers bind exact authority and are idempotent through real email auth", async ({ page }) => {
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
   await page.emulateMedia({ reducedMotion: "reduce" });

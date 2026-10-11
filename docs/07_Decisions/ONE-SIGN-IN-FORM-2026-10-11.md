@@ -1,6 +1,6 @@
 # One sign-in form, and a shorter start
 
-**Status:** ACCEPTED. Parts 1 to 5 are implemented.
+**Status:** ACCEPTED. Parts 1 to 6 are implemented.
 
 **Decision authority:** explicit Founder instructions, 11 October 2026.
 
@@ -16,6 +16,7 @@
 - On the unused voice code: "а мы можем не удалять эту часть кода, а просто вынести её за скобки из проекта пока, что бы потом легко вернуть в случае необходимости? но так, что бы она не мешала", then the choice "Метка в истории" (out of the working project, kept under a named tag).
 - After using the live start: "во первых, почему так долго теперь открывается? во вторых когда человек выбирает something else — наверное надо в этом поле дать ему что-то вписать? в третьих… когда он нажимает на log in и пытается зарегистрироваться там… мы должны просто его зарегистрировать без старта, или как?", then the choices "Сразу к готовым ответам" and "Да, короткое поле".
 - On the wait after a press on Google or email: the choice "Записывать заранее".
+- On Log in sending him back to the Programme screen: "почему при нажатии на гугл регистрацию меня отправляет вот сюда? даже если я уже ответил там… на вопросы."
 - On older rules: "я тот кто эти правила устанавливает. если есть разногласия просто пришли мне их для решения".
 
 **Supersedes in part:** [PROGRAMME-FAST-START-2026-09-25](PROGRAMME-FAST-START-2026-09-25.md) "three required checks on the access screen" (now a line and one consent button) and its quiet account-first route (removed from the Programme). [EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27](EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27.md) "one unticked checkbox" (now ticked by default, short, last in the form). RFC-022, RFC-023 and RFC-056 for Mission 01 input: typed and voice input are no longer offered; the provider, retention and kill-switch boundaries of those RFCs stand for the text request that remains. RFC-029 and the Google readiness record "standalone login is returning-user-only" (Log in now creates accounts). Everything else in those records stands.
@@ -38,7 +39,7 @@ The same two actions sit on the Programme save step, on the account-first screen
 - **A line replaces two ticks.** "By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice." stands under the Enter button on the Programme access screen and under the form on `/login`, with links to both documents. Continuing is the affirmation. It is asked where a person first meets it and is not repeated on the save step.
 - **The access screen keeps one check** until Part 2: the explicit consent to process the story. Its heading is "One check before you begin."
 - **Log in creates accounts.** A new person who continues with Google or email on `/login` gets an account and opens their plan with "Start Mission 01". The email opt-in is offered there too.
-- **A Starting Point made in the same tab is not lost.** If a person with an unsaved Starting Point opens `/login`, either action sends them back to the Programme save step, which carries the same form and the claim that saving needs.
+- **A Starting Point made in the same tab is not lost.** If a person with an unsaved Starting Point opens `/login`, it goes with the account from there (Part 6). The first build sent that person back to the Programme save step to press the same button again; the Founder rejected it the same day.
 
 What the server records is unchanged: the same three affirmed facts (`adultConfirmed`, `termsAccepted`, `privacyAcknowledged`) with the Terms and Privacy versions, the same signed proof before any account is created, and the same acceptance row for the account. No table, column or enum changed.
 
@@ -124,6 +125,18 @@ Not changed: what the server stores. The Starting Point is saved once, when an a
 
 This was first put to the Founder as a change to an RFC-022 rule. On reading the server it is not one: RFC-022 fixes when the Starting Point is saved (once, at the claim's redemption), not when the claim is created. The earlier timing was the client's own, pinned by one browser test.
 
+### Part 6 — Log in carries what the tab already holds (implemented)
+
+**Why.** Part 1 sent a person who had already answered back from `/login` to the Programme save step, where the same Google or email button had to be pressed a second time. The Founder met it on production and rejected it.
+
+- **A Starting Point made in the tab goes with the account from Log in.** A press on Google makes the pending claim there (or reuses one made up to 5 minutes ago), marks the journey and starts Google at once; the Programme page redeems the claim on return. Email signs in or creates the account first, then does the same and opens the Programme page, which redeems the claim. Nothing is pressed twice and the answers are not asked again.
+- **If the claim cannot be made, signing in still goes ahead** and the picked answers travel with it.
+- **Answers without a Starting Point are shown picked.** If the answers were sent but the Starting Point never arrived, the new account opens on the answers with those answers already picked; one press on "Agree and continue" is left, because the consent is given by that button.
+- **Support first carries nothing.** It holds registration back, so Log in treats that tab as empty.
+- While a Google sign-up that began on Log in is being finished, the Programme page shows its loading screen instead of a form with nothing to press.
+
+The server is unchanged. `/login` uses the same two claim requests as the Programme screen (`makePendingClaim`).
+
 ## Not chosen
 
 - **Voice out, with a quiet text field kept** on the start screen. The Founder chose ready answers only, to keep the first screen on one thing.
@@ -136,6 +149,7 @@ This was first put to the Founder as a change to an RFC-022 rule. On reading the
 
 - `tests/account-entry.test.ts` (in `auth-comms:test`): one request for a new email on the Programme and for a returning person on Log in, sign-in through the same button, the wrong-password answer in both orders, no fall-through after a refused creation, the full affirmation body and proof reuse, the account-first Google hand-over, and the Log in wiring.
 - `tests/ready-answers.test.ts` (in `programme:test`): six answers, the text Mission 01 receives, and every single answer in every Programme language passing the server's Mission 01 check.
+- Part 6: `tests/account-entry.test.ts` (what the tab holds; the two claim requests and their access evidence; the mark for the Programme page; a refused claim leaves the answers; neither Log in action moves to the Programme before signing in) and the browser specs (answers, then Log in with real email auth: one press, the plan with the Starting Point; Google from Log in with the Starting Point carried, run only where Google is configured; answers shown picked after sign-in).
 - Part 5: `tests/ready-answers.test.ts` (the freshness windows against the server's 30 minutes), `tests/program-ai-structural.test.ts` (the claim follows the answers and only "continue"; reused only while fresh; made again if redeeming fails) and `tests/program-ai-browser.spec.ts` (the claim exists before any press; a claim reset on the server is made again and the account is still created with its Starting Point).
 - Part 4: `tests/ready-answers.test.ts` (the note is tidied, bounded and sent only with "Something else"; every answer has a translated line of ours), `tests/program-ai-structural.test.ts` (the press awaits nothing; the consent is recorded before the answers are sent; every registration action waits for the Starting Point and support first suppresses it; an account without answers opens on them), and `tests/program-ai-browser.spec.ts` (with the answers held back for three seconds the next screen is there within 1.5 seconds; sign-up on Log in, the answers, the note and the plan with real email auth).
 - `tests/gb-legal-p0-closure.test.ts` and `tests/program-ai-structural.test.ts`: the consent statement once and directly above its button, no tick, the consent recorded before any answer is sent, the v2 consent version, the unchanged affirmation sent to the server, and no voice or free-text input in the client.
