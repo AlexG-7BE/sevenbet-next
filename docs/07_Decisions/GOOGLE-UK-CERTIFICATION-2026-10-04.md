@@ -9,6 +9,8 @@
 3. **Withhold the DrückGlück GB offer** (60x, above the UK 10x cap) during the Google review.
 4. **Northern Ireland is not changed.** It stays with GB; no `GB-NIR` rule is added.
 
+> **Footer suspended — 11 October 2026:** on the Founder's instruction the footer lines below are hidden from every visitor, not deleted ([FOOTER-NOTICE-HIDDEN-2026-10-11](FOOTER-NOTICE-HIDDEN-2026-10-11.md)). While they are hidden the site does not meet the footer requirement described here. The rest of this record stands.
+
 ## Why
 
 YouTube lets the channel link to b4gamble.com only once Google Ads certifies the domain for "online gambling-promoting content" in the United Kingdom. Google's policy (adspolicy 15132179, read 4 Oct 2026) asks an affiliate site for an age warning, addiction resources, terms, a privacy policy naming the controller, and "a prominent statement confirming that all outbound links are exclusively to gambling entities licensed and authorised in the relevant geographic location" in the site footer.

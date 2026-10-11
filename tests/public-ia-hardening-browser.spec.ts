@@ -37,9 +37,12 @@ test("final public Responsible Gambling hub and Protected Help remain separate",
   await expect(page.locator('footer[data-public-shell] a[href="/en/responsible-gambling"]')).toHaveCount(1);
   await expect(page.locator('footer[data-public-shell] a[href="/self-check"]')).toHaveCount(0);
   await expect(page.locator('footer[data-public-shell] a[href="/tools/budget-calculator"]')).toHaveCount(0);
-  // The Programme & Support link, and "Outside Great Britain? Find local help" in the support line (Google UK certification, 4 Oct 2026).
-  await expect(page.locator('footer[data-public-shell] a[href="/en/help"]')).toHaveCount(2);
-  await expect(page.locator('footer[data-public-shell] [data-footer-support] a[href="/en/help"]')).toHaveCount(1);
+  // The Programme & Support link. The footer notice block, with its "Find local help" link, is hidden
+  // from every visitor (Founder, 11 Oct 2026) and stays in the source behind FOOTER_COMPLIANCE_VISIBLE.
+  await expect(page.locator('footer[data-public-shell] a[href="/en/help"]')).toHaveCount(1);
+  await expect(page.locator("[data-footer-compliance]")).toHaveCount(0);
+  await expect(page.locator('footer[data-public-shell]')).not.toContainText("Adults only");
+  await expect(page.locator('footer[data-public-shell]')).toContainText("We may earn commission from clearly labelled affiliate links.");
 
   const helpResponse = await page.goto(`${baseUrl}/help`, { waitUntil: "networkidle" });
   expect(helpResponse?.status()).toBe(200);

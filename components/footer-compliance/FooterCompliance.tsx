@@ -12,6 +12,15 @@ import styles from "./FooterCompliance.module.css";
  * the National Gambling Helpline is run by GamCare, and begambleaware.org
  * forwards to GambleAware's live help site.
  */
+/**
+ * Hidden from every visitor since 11 October 2026 (Founder instruction: "скрой это, пока что, не
+ * удаляй… пока в этом нет смысла"; docs/07_Decisions/FOOTER-NOTICE-HIDDEN-2026-10-11.md). Nothing
+ * is deleted: the lines, their translations and their styles stay. Set this to `true` to show the
+ * block again on every public footer and on `/start`. While it is hidden the site does not carry
+ * the footer lines Google's UK gambling certification asks for.
+ */
+export const FOOTER_COMPLIANCE_VISIBLE: boolean = false;
+
 export const FOOTER_SUPPORT_LINKS = Object.freeze({
   helplineName: "National Gambling Helpline",
   helplineNumber: "0808 8020 133",
@@ -33,6 +42,7 @@ export function FooterCompliance({
   /** Pages whose footer already carries the 18+ notice leave it out here. */
   showAge?: boolean;
 }) {
+  if (!FOOTER_COMPLIANCE_VISIBLE) return null;
   const external = (href: string, label: string) => (
     <a href={href} rel="noopener noreferrer" target="_blank"><span>{label}</span><span className="srOnly"> {footer.opensInNewTab}</span></a>
   );
