@@ -1,6 +1,6 @@
 # One sign-in form, and a shorter start
 
-**Status:** ACCEPTED. Parts 1 and 2 are implemented. Part 3 (removing the unused server voice code) is approved and not built yet.
+**Status:** ACCEPTED. Parts 1, 2 and 3 are implemented.
 
 **Decision authority:** explicit Founder instructions, 11 October 2026.
 
@@ -13,6 +13,7 @@
 - On the email opt-in and the side door, after seeing the screens: "поставь галочку на email рассылки сразу, если человек захочет пускай сам уберет её, и сделай описание к этой галочке короче… и убери её вниз! и что за Tell my story first? мы же начинаем с этого, как человек дошел до регистрации не сделав этого?"
 - On the consent wording and the screen after the answers: "а можно ли сделать формулировку… короче? и зачем нам your starting point in your words — если он просто пересказывает то, что выбрал человек на 1 шаге? может оставить там только what we will work first? при этом переименовав это на что-то вроде — вот что мы сможем с вами сделать? и сделать это тоже большим заголовком".
 - On the password: "куда ты убрал password который был ниже поля для email? он должен ввести email а затем пароль, и нажать на кнопку continue with email".
+- On the unused voice code: "а мы можем не удалять эту часть кода, а просто вынести её за скобки из проекта пока, что бы потом легко вернуть в случае необходимости? но так, что бы она не мешала", then the choice "Метка в истории" (out of the working project, kept under a named tag).
 - On older rules: "я тот кто эти правила устанавливает. если есть разногласия просто пришли мне их для решения".
 
 **Supersedes in part:** [PROGRAMME-FAST-START-2026-09-25](PROGRAMME-FAST-START-2026-09-25.md) "three required checks on the access screen" (now a line and one consent button) and its quiet account-first route (removed from the Programme). [EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27](EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27.md) "one unticked checkbox" (now ticked by default, short, last in the form). RFC-022, RFC-023 and RFC-056 for Mission 01 input: typed and voice input are no longer offered; the provider, retention and kill-switch boundaries of those RFCs stand for the text request that remains. RFC-029 and the Google readiness record "standalone login is returning-user-only" (Log in now creates accounts). Everything else in those records stands.
@@ -66,9 +67,32 @@ The server is unchanged apart from the consent version: the Mission 01 request, 
 - A sign-in never overwrites an earlier choice: on a Google return the account's recorded preference is read first, and a person who is already subscribed, unsubscribed or suppressed is left as they are. Email sign-in to an existing account records nothing.
 - **Stated to the Founder before building:** in Great Britain and the EU a box ticked in advance does not count as consent to marketing email (UK GDPR and PECR, GDPR and the ePrivacy rules), so campaign mail sent on the strength of it can be challenged. The Founder decided to proceed. Unsubscribe links and the suppression list work as before.
 
-### Part 3 — remove the unused voice code (approved, not built)
+### Part 3 — the voice code leaves the working project and stays under a tag (implemented)
 
-The client no longer reaches the transcription routes. A follow-up change removes them, the realtime adapter and client, the voice draft helper, the microphone permission on Programme pages and the voice wording in the Privacy Notice, and records the lifecycle of RFC-056.
+The client stopped reaching the transcription routes in Part 2. The Founder asked that the code be set aside so that it does not get in the way and can be brought back, and chose a named tag in history over an archive folder or a switched-off copy.
+
+**Kept:** the annotated tag `archive/programme-voice-2026-10-11` on commit `53ee0da0`, the last commit on `main` where voice worked end to end: the microphone and composer screen, both routes, the realtime and file adapters, their tests and all thirteen translations.
+
+**Removed from the working project:**
+
+- the routes `POST /api/program/program-ai/transcription` and `POST /api/program/program-ai/transcription/realtime`, the transcription service, the realtime adapter and browser client, the voice draft helper, the upload limits and the bounded multipart reader;
+- the audio adapter and port in `openai-adapters.ts` and `ports.ts`, the two transcription models in `runtime-config.ts`, the provider codes `TRANSCRIPTION_FAILED` and `INPUT_TOO_LARGE`, the transcription language of each Programme route, and the rate-limit buckets `PROGRAMME_TRANSCRIPTION_SESSION` and `PROGRAMME_TRANSCRIPTION_IP`;
+- the Programme-only `Permissions-Policy: microphone=(self)`. Every page, the Programme included, now sends the one deny-all policy. Crossing between public pages and the Programme still loads a fresh document, as before;
+- `voice` as a Mission 01 input mode: the turn route accepts `inputMode: "text"` and refuses anything else;
+- voice wording in the Privacy Notice, the Terms and the FAQ answer "Do I need an account to start?" (thirteen languages). Both documents show "Updated 11 October 2026"; the Terms and Privacy versions recorded at acceptance are unchanged, as they were for the 10 October notice update;
+- 77 Programme catalogue rows that no screen uses (the microphone and composer texts, the two- and three-check headings, "Enter Mission 01", "Use email instead", the account-first links and other rows left behind by earlier screens). The catalogue has 624 keys; the language QA report was regenerated;
+- tests that covered only this code, and the removed test file in the npm script lists.
+
+**Unchanged:** the text turn (`/api/program/program-ai/turn`), consent, claim, rewards and the support-first route. No table, column, enum or constraint changed: the rate-limit table's scope check still lists the two voice buckets and nothing writes them. `PROGRAM_AI_TRANSCRIPTION_MODEL` and `PROGRAM_AI_REALTIME_TRANSCRIPTION_MODEL` are no longer read; a hosting environment that still has them keeps working. On 11 October 2026 Production still had the first and did not have the second; deleting the leftover is optional and waits for the Founder.
+
+**RFC-056** stays `ACTIVE` for Fast text generation; its voice sections are retired. RFC-023's voice transport and voice-privacy rules have no runtime.
+
+**Bringing voice back.** Everything is at the tag.
+
+1. Restore the deleted files as they were: `git checkout archive/programme-voice-2026-10-11 -- app/api/program/program-ai/transcription lib/programme/application/programme-ai-transcription.service.ts lib/programme/program-ai/openai-realtime-transcription.ts lib/programme/program-ai/realtime-transcription-client.ts lib/programme/program-ai/voice-draft.ts lib/programme/program-ai/transcription-limits.ts lib/programme/program-ai/transcription-request.ts tests/program-ai-transcription-request.test.ts tests/programme-voice-draft.test.ts`.
+2. Bring back the removed parts of the edited files with `git diff main archive/programme-voice-2026-10-11 -- <file>`: `openai-adapters.ts`, `ports.ts`, `runtime-config.ts`, `provider-errors.ts`, `contracts.ts`, `validation.ts`, `lib/programme/presentation.ts`, `lib/programme/rate-limit.ts`, `lib/programme/mutation-access.ts`, `next.config.mjs`, `.env.example` and the catalogue rows.
+3. The screen is the larger job: the microphone and composer were replaced by the ready-answers start, so `ProgramAiExperience.tsx` and `ProgramAiFinalPresentation.tsx` at the tag are a reference to rebuild from, not files to copy over.
+4. Before release: a new consent statement version that names speech and the transcription provider again, the Privacy Notice and Terms wording, and the voice sections of RFC-056.
 
 ## Not chosen
 
@@ -83,4 +107,5 @@ The client no longer reaches the transcription routes. A follow-up change remove
 - `tests/account-entry.test.ts` (in `auth-comms:test`): one request for a new email on the Programme and for a returning person on Log in, sign-in through the same button, the wrong-password answer in both orders, no fall-through after a refused creation, the full affirmation body and proof reuse, the account-first Google hand-over, and the Log in wiring.
 - `tests/ready-answers.test.ts` (in `programme:test`): six answers, the text Mission 01 receives, and every single answer in every Programme language passing the server's Mission 01 check.
 - `tests/gb-legal-p0-closure.test.ts` and `tests/program-ai-structural.test.ts`: the consent statement once and directly above its button, no tick, the consent recorded before any answer is sent, the v2 consent version, the unchanged affirmation sent to the server, and no voice or free-text input in the client.
+- Part 3: `tests/program-ai-structural.test.ts` (no voice route, adapter, bucket, permission or setting remains; the turn route stays), `tests/programme-internationalisation.test.ts` (one deny-all Permissions-Policy rule; `inputMode: "voice"` refused), `tests/program-ai-openai-adapters.test.ts` (leftover voice variables in hosting do not break the provider configuration), `tests/legal-programme-privacy.test.ts` (no voice wording in the Privacy Notice or the Terms), and in the browser `tests/program-ai-browser.spec.ts` (both retired routes answer 404), `tests/programme-document-policy-boundary-browser.spec.ts` and `tests/programme-internationalisation-browser.spec.ts` (every Programme route denies the microphone).
 - `tests/auth-comms-browser.spec.ts`, `tests/program-ai-browser.spec.ts`, `tests/programme-internationalisation-browser.spec.ts`, `tests/final-production-readiness-browser.spec.ts`, `tests/founder-mobile-production-browser.spec.ts`: the start screen, picked answers through real email auth, the account-first route, support-first and every Programme language.
