@@ -394,25 +394,29 @@ test("distributed session creation limiting returns a safe 429 while Help stays 
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: { in: tokenHashes } } });
 });
 
-test("realtime route fails without age evidence and reaches its handler with current authority evidence", async ({ request }) => {
+test("the retired voice routes are gone and an unlisted Programme mutation still needs age evidence", async ({ request }) => {
+  // Founder decision, 11 Oct 2026: Mission 01 takes picked answers only; the voice routes were removed.
   const session = await createProgrammeSession(request);
   await confirmSensitiveAuthority(request, session.cookieHeader);
   const offer = "v=0\r\no=programme-authority-integration-test\r\n";
 
-  const rejected = await request.post("/api/program/program-ai/transcription/realtime?locale=en-GB", {
-    headers: { cookie: session.cookieHeader, "content-type": "application/sdp" },
-    data: offer,
-  });
-  expect(rejected.status()).toBe(403);
-  expect(await rejected.json()).toMatchObject({ code: "AGE_ATTESTATION_REQUIRED" });
+  for (const path of [
+    "/api/program/program-ai/transcription",
+    "/api/program/program-ai/transcription/realtime?locale=en-GB",
+  ]) {
+    const rejected = await request.post(path, {
+      headers: { cookie: session.cookieHeader, "content-type": "application/sdp" },
+      data: offer,
+    });
+    expect(rejected.status(), path).toBe(403);
+    expect(await rejected.json(), path).toMatchObject({ code: "AGE_ATTESTATION_REQUIRED" });
 
-  const admitted = await request.post("/api/program/program-ai/transcription/realtime?locale=en-GB", {
-    headers: { ...programmeAgeHeader, cookie: session.cookieHeader, "content-type": "application/sdp" },
-    data: offer,
-  });
-  expect(admitted.status()).not.toBe(403);
-  const payload = await admitted.json() as { code?: string };
-  expect(payload.code).not.toBe("AGE_ATTESTATION_REQUIRED");
+    const missing = await request.post(path, {
+      headers: { ...programmeAgeHeader, cookie: session.cookieHeader, "content-type": "application/sdp" },
+      data: offer,
+    });
+    expect(missing.status(), path).toBe(404);
+  }
 
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(session.token) } });
 });

@@ -17,7 +17,6 @@ export type ProgrammeRouteDefinition = Readonly<{
   language: SupportedLanguage;
   path: string;
   legacyPaths: readonly string[];
-  transcriptionLanguage: string;
 }>;
 
 const legacyProgrammePaths: Partial<Record<SupportedLanguage, readonly string[]>> = {
@@ -42,7 +41,6 @@ export const PROGRAMME_ROUTES: readonly ProgrammeRouteDefinition[] = PUBLISHED_L
     language: profile.language,
     path: profile.language === "en" ? "/program" : `/${profile.publicSlug}/program`,
     legacyPaths: legacyProgrammePaths[profile.language] ?? [],
-    transcriptionLanguage: profile.language === "nb" ? "no" : profile.language,
   };
 });
 
@@ -78,10 +76,6 @@ export function programmePath(locale: ProgrammeLocale) {
 /** Resolve any internal locale variant through its canonical Programme language route. */
 export function programmePathForPresentationLocale(locale: SupportedLocale) {
   return routeByLanguage.get(languageRouteByLocale(locale).language)?.path ?? "/program";
-}
-
-export function programmeTranscriptionLanguage(locale: ProgrammeLocale) {
-  return programmeRoute(locale).transcriptionLanguage;
 }
 
 const localizedHelpLocales = new Set<ProgrammeLocale>([

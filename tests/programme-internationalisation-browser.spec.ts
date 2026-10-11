@@ -361,7 +361,7 @@ async function installAuthenticatedProgramme(
   });
 }
 
-test("all 11 Programme routes render localized anonymous, access, voice, text, support and registration states", async ({ browser }) => {
+test("all 11 Programme routes render localized anonymous, access, support and registration states", async ({ browser }) => {
   test.setTimeout(180_000);
   const turnLocales: ProgrammeLocale[] = [];
   for (const [index, route] of PROGRAMME_ROUTES.entries()) {
@@ -371,7 +371,7 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
     await installAnonymousProgramme(page, route.locale, turnLocales);
     const response = await page.goto(`${baseUrl}${route.path}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), route.path).toBe(200);
-    expect(response?.headers()["permissions-policy"], route.path).toBe("camera=(), microphone=(self), geolocation=(), payment=(), usb=()");
+    expect(response?.headers()["permissions-policy"], route.path).toBe("camera=(), microphone=(), geolocation=(), payment=(), usb=()");
     await expect(page.locator("html")).toHaveAttribute("lang", route.locale);
     await expect(page.locator('[data-programme-presentation="loading"]')).toBeVisible();
     await expect(page.locator('[data-programme-presentation="start"]')).toBeVisible();
@@ -398,7 +398,7 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
     }
     await expect(page.locator('[data-programme-presentation="starting-point-ready"]')).toBeVisible();
     await expect(page.getByRole("button", { name: t(route.locale, "Continue with email") })).toBeVisible();
-    await assertNoRepresentativeEnglishLeakage(page, route.locale, ["Here's what we can do together.", "Continue with email", "Withdraw consent and clear this draft"]);
+    await assertNoRepresentativeEnglishLeakage(page, route.locale, ["Here's what we can do together.", "Continue with email"]);
     await assertRenderedQuality(page, `${route.locale}:registration:${mobile ? "mobile" : "desktop"}`);
     await context.close();
   }

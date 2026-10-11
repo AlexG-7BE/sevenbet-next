@@ -165,7 +165,6 @@ export function createProductAnalyticsClient({
     },
     reviewOpened(_milestone: "first" | "mid" | "full") {},
     discoveryClicked(_properties: { sourceSurface: string; destinationRoute: string }) {},
-    voiceOutcome(_result: string) {},
     commercialSurfaceViewed(surface: "best_offers" | "casinos" | "bonuses" | "casino_review") {
       if (surface === "casino_review") this.casinoViewed();
     },
