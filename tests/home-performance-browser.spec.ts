@@ -21,6 +21,38 @@ async function waitForScrollIdle(page: Page) {
   return previous;
 }
 
+// A wheel stream on the test's own clock: the gap between two events is the stream's, not a
+// protocol round trip's, because the controller reads a long enough silence as a new gesture.
+type WheelStream = Array<{ deltaY: number; gap: number }>;
+
+async function wheelStream(page: Page, stream: WheelStream) {
+  // An operating system stamps a wheel event when the wheel moves, however late the browser gets
+  // to it. Chromium takes that time with the event; elsewhere it is the moment of dispatch.
+  const session = page.context().browser()?.browserType().name() === "chromium" ? await page.context().newCDPSession(page) : null;
+  const viewport = page.viewportSize() ?? { height: 900, width: 1440 };
+  const start = performance.timeOrigin + performance.now();
+  const sent: Array<Promise<unknown>> = [];
+  let at = 0;
+  for (const { deltaY, gap } of stream) {
+    at += gap;
+    const wait = start + at - (performance.timeOrigin + performance.now());
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    sent.push(session
+      ? session.send("Input.dispatchMouseEvent", { deltaX: 0, deltaY, timestamp: (start + at) / 1000, type: "mouseWheel", x: viewport.width / 2, y: viewport.height / 2 })
+      : page.mouse.wheel(0, deltaY));
+  }
+  await Promise.all(sent);
+  await session?.detach();
+}
+
+// A trackpad swipe: travel ramps up under the fingers, then inertia decays frame by frame.
+function swipe({ decay = 0.95, inertiaFrames = Number.POSITIVE_INFINITY, peak = 30 } = {}): WheelStream {
+  const deltas: number[] = [];
+  for (let frame = 0; frame < 9; frame += 1) deltas.push(Math.max(1, Math.round(peak * Math.sin(((frame + 1) / 9) * Math.PI / 2))));
+  for (let velocity = peak * decay, frames = 0; Math.round(velocity) >= 1 && frames < inertiaFrames; velocity *= decay, frames += 1) deltas.push(Math.round(velocity));
+  return deltas.map((deltaY) => ({ deltaY, gap: 1000 / 60 }));
+}
+
 async function snapState(page: Page) {
   return page.evaluate(() => {
     const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-home-snap]"), (element) => ({
@@ -133,10 +165,7 @@ for (const viewport of [{ height: 900, width: 1440 }, { height: 768, width: 1024
     }
 
     await returnToFirstSnap(page);
-    for (let input = 0; input < 12; input += 1) {
-      await page.mouse.wheel(0, 900);
-      await page.waitForTimeout(16);
-    }
+    await wheelStream(page, Array.from({ length: 12 }, () => ({ deltaY: 900, gap: 16 })));
     expect(await waitForScrollIdle(page)).toBe(initialState.destinations[1]);
 
     await returnToFirstSnap(page);
@@ -215,6 +244,89 @@ for (const viewport of [{ height: 900, width: 1440 }, { height: 768, width: 1024
     expect(errors).toEqual([]);
   });
 }
+
+test("a trackpad gesture moves one screen: a brush moves nothing, inertia adds nothing, the next swipe is heard", async ({ page, browserName }) => {
+  // Founder, 11 Oct 2026: on a MacBook trackpad Home "lags, sometimes does not scroll, sometimes
+  // scrolls a lot". Inertia kept the wheel stream alive, so swipes made meanwhile were swallowed.
+  test.setTimeout(60_000);
+  await page.setViewportSize({ height: 900, width: 1440 });
+  await bridgeLocalWebKitUpgrade(page, browserName);
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator('[data-handoff-page="home"]')).toHaveAttribute("data-home-wheel-controller", "adjacent");
+  const { destinations, footerEnd } = await snapState(page);
+  const first = await returnToFirstSnap(page);
+  await page.mouse.move(720, 450);
+
+  await wheelStream(page, [{ deltaY: 1, gap: 0 }, { deltaY: 2, gap: 16 }]);
+  expect(await waitForScrollIdle(page)).toBe(first);
+  await page.waitForTimeout(400);
+
+  // One strong swipe: about 2.5 s of inertia, one screen, and the page travels there itself.
+  await page.evaluate(() => {
+    const frames: Array<{ snap: string; y: number }> = [];
+    (window as typeof window & { __homeTravel?: typeof frames }).__homeTravel = frames;
+    const record = () => {
+      frames.push({ snap: getComputedStyle(document.documentElement).scrollSnapType, y: window.scrollY });
+      if (frames.length < 600) requestAnimationFrame(record);
+    };
+    requestAnimationFrame(record);
+  });
+  await wheelStream(page, swipe({ decay: 0.965, peak: 90 }));
+  expect(await waitForScrollIdle(page)).toBe(destinations[1]);
+  const travel = await page.evaluate(() => {
+    const frames = (window as typeof window & { __homeTravel?: Array<{ snap: string; y: number }> }).__homeTravel ?? [];
+    frames.length = Math.min(frames.length, 599);
+    return {
+      backwards: frames.filter((frame, index) => index > 0 && frame.y < frames[index - 1].y - 1).length,
+      highest: Math.max(...frames.map((frame) => frame.y)),
+      inBetween: new Set(frames.map((frame) => Math.round(frame.y))).size,
+      restingSnap: getComputedStyle(document.documentElement).scrollSnapType,
+      travellingSnap: [...new Set(frames.filter((frame, index) => index > 0 && frame.y !== frames[index - 1].y).map((frame) => frame.snap))],
+    };
+  });
+  expect(travel.highest).toBe(destinations[1]);
+  expect(travel.backwards).toBe(0);
+  expect(travel.inBetween).toBeGreaterThan(8);
+  expect(travel.travellingSnap).toEqual(["none"]);
+  expect(travel.restingSnap).toBe("y mandatory");
+
+  // A second swipe 350 ms after the fingers lift, while the first one's inertia is still arriving.
+  await page.waitForTimeout(400);
+  await wheelStream(page, [...swipe({ inertiaFrames: 21 }), ...swipe()]);
+  expect(await waitForScrollIdle(page)).toBe(destinations[3]);
+
+  // A key pressed mid-travel is still the browser's to scroll and snap.
+  await page.waitForTimeout(400);
+  await page.mouse.wheel(0, 120);
+  await page.waitForTimeout(120);
+  await page.keyboard.press("End");
+  expect(await waitForScrollIdle(page)).toBe(footerEnd);
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("y mandatory");
+});
+
+test("the language menu scrolls under the wheel and the page behind it stays", async ({ page, browserName }) => {
+  // The wheel controller cancels the page's own scrolling; a list that scrolls on its own keeps its wheel.
+  await page.setViewportSize({ height: 768, width: 1024 });
+  await bridgeLocalWebKitUpgrade(page, browserName);
+  await page.goto("/", { waitUntil: "networkidle" });
+  await expect(page.locator('[data-handoff-page="home"]')).toHaveAttribute("data-home-wheel-controller", "adjacent");
+  const first = await returnToFirstSnap(page);
+  await page.locator('summary[aria-controls="public-language-menu-desktop"]').click();
+  const menu = page.locator("#public-language-menu-desktop");
+  await expect(menu).toBeVisible();
+  const overflow = await menu.evaluate((element) => element.scrollHeight - element.clientHeight);
+  expect(overflow).toBeGreaterThan(40);
+  await menu.locator('[role="menuitemradio"]').nth(2).hover();
+
+  await page.mouse.wheel(0, 120);
+  await expect.poll(() => menu.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  for (let input = 0; input < 12; input += 1) {
+    await page.mouse.wheel(0, 240);
+    await page.waitForTimeout(60);
+  }
+  expect(await menu.evaluate((element) => Math.round(element.scrollHeight - element.clientHeight - element.scrollTop))).toBeLessThanOrEqual(1);
+  expect(await waitForScrollIdle(page)).toBe(first);
+});
 
 test("phones scroll Home freely through compact chapters and snap state does not leak to other routes", async ({ browser, browserName }) => {
   const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { height: 844, width: 390 } });

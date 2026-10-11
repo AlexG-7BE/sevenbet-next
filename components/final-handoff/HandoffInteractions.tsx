@@ -5,9 +5,25 @@ import { useEffect, useId } from "react";
 
 import { usePublicNavigationFeedback } from "@/components/public-shell/PublicNavigationFeedback";
 
+import { createHomeWheelIntent } from "./homeWheelIntent";
+
 function normalized(value: string | null | undefined) {
   return (value || "").trim().toLowerCase();
 }
+
+// One screen of travel, eased in and out; a shorter way back takes proportionally less.
+const HOME_TRAVEL_MS = 750;
+const HOME_TRAVEL_MIN_MS = 320;
+const HOME_SCROLL_KEYS = new Set([" ", "ArrowDown", "ArrowUp", "End", "Home", "PageDown", "PageUp"]);
+
+type HomeTravel = {
+  direction: number;
+  duration: number;
+  from: number;
+  last: number;
+  start: number;
+  to: number;
+};
 
 type HomeSpring = {
   depth: number;
@@ -75,9 +91,11 @@ function setupHomeInteractions(root: HTMLElement) {
   let stackDirty = Boolean(stack) && !reducedMotion;
   let panelLayouts: Array<{ element: HTMLElement; entranceDistance: number; open: number }> = [];
   let canonicalDestinations: number[] = [];
-  let wheelTargetIndex: number | null = null;
-  let lastWheelAt = Number.NEGATIVE_INFINITY;
-  let lastWheelDirection = 0;
+  let travel: HomeTravel | null = null;
+  let queuedDirection = 0;
+  let wheelTarget: EventTarget | null = null;
+  let ownScroller: Element | null = null;
+  const readWheelIntent = createHomeWheelIntent(() => window.innerHeight);
 
   const measureCanonicalDestinations = () => {
     const maximum = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
@@ -212,45 +230,107 @@ function setupHomeInteractions(root: HTMLElement) {
     measureCanonicalDestinations();
   };
 
-  const nearestDestinationIndex = () => canonicalDestinations.reduce((nearest, destination, index) => (
-    Math.abs(destination - window.scrollY) < Math.abs(canonicalDestinations[nearest] - window.scrollY) ? index : nearest
-  ), 0);
+  const adjacentDestination = (position: number, direction: number) => {
+    const ordered = direction > 0 ? canonicalDestinations : [...canonicalDestinations].reverse();
+    return ordered.find((destination) => (direction > 0 ? destination > position + 4 : destination < position - 4));
+  };
+
+  const releaseScroll = () => {
+    document.documentElement.style.removeProperty("scroll-snap-type");
+    document.documentElement.style.removeProperty("scroll-behavior");
+  };
+
+  // The page is moved here, frame by frame, so the landing has one duration and one curve in
+  // every browser and the chapter stack is drawn in the same frame as the scroll position.
+  // While it travels the browser must neither snap nor smooth the positions it is given.
+  const beginTravel = (direction: number) => {
+    const from = window.scrollY;
+    const to = adjacentDestination(travel ? travel.to : from, direction);
+    if (to === undefined) return false;
+    if (Math.abs(to - from) < 1) {
+      // Turned back before the page had moved: there is nowhere to travel, only a landing to call off.
+      travel = null;
+      releaseScroll();
+      return false;
+    }
+    document.documentElement.style.setProperty("scroll-snap-type", "none", "important");
+    document.documentElement.style.setProperty("scroll-behavior", "auto", "important");
+    travel = {
+      direction,
+      duration: Math.max(HOME_TRAVEL_MIN_MS, HOME_TRAVEL_MS * Math.min(1, Math.abs(to - from) / window.innerHeight)),
+      from,
+      last: from,
+      start: window.performance.now(),
+      to,
+    };
+    scheduleFrame();
+    return true;
+  };
+
+  const advanceTravel = () => {
+    if (!travel) return;
+    // The scrollbar or a touch moved the page: it is theirs now.
+    if (Math.abs(window.scrollY - travel.last) > 2) {
+      travel = null;
+      queuedDirection = 0;
+      releaseScroll();
+      return;
+    }
+    const progress = Math.min(1, Math.max(0, (window.performance.now() - travel.start) / travel.duration));
+    const eased = progress < 0.5 ? 4 * progress ** 3 : 1 - (2 - 2 * progress) ** 3 / 2;
+    window.scrollTo(0, progress === 1 ? travel.to : travel.from + (travel.to - travel.from) * eased);
+    travel.last = window.scrollY;
+    stackDirty = true;
+    if (progress < 1) return;
+    const next = queuedDirection;
+    travel = null;
+    queuedDirection = 0;
+    if (!next || !beginTravel(next)) releaseScroll();
+  };
+
+  // Keyboard scrolling stays the browser's. A key pressed mid-travel finds the page already on
+  // its screen, so the browser scrolls and snaps from there as it does from any other.
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (!travel || !HOME_SCROLL_KEYS.has(event.key)) return;
+    window.scrollTo(0, travel.to);
+    travel = null;
+    queuedDirection = 0;
+    releaseScroll();
+    stackDirty = true;
+    scheduleFrame();
+  };
+
+  // An element that scrolls on its own, such as the language menu, keeps its wheel.
+  const findOwnScroller = (target: EventTarget | null) => {
+    for (let element = target instanceof Element ? target : null; element && element !== document.body; element = element.parentElement) {
+      if (element.scrollHeight > element.clientHeight + 1 && /auto|scroll/.test(window.getComputedStyle(element).overflowY)) return element;
+    }
+    return null;
+  };
 
   const onWheel = (event: WheelEvent) => {
     if (reducedMotion || !finePointer || event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    if (event.target !== wheelTarget) {
+      wheelTarget = event.target;
+      ownScroller = findOwnScroller(wheelTarget);
+    }
+    if (ownScroller) {
+      // At its end the list holds the wheel rather than handing it to the page behind.
+      const room = event.deltaY > 0 ? ownScroller.scrollHeight - ownScroller.clientHeight - ownScroller.scrollTop : ownScroller.scrollTop;
+      if (room <= 1) event.preventDefault();
+      return;
+    }
     event.preventDefault();
-    if (canonicalDestinations.length < 2 || event.deltaY === 0) return;
-
-    const now = window.performance.now();
-    const quietFor = now - lastWheelAt;
-    const direction = event.deltaY > 0 ? 1 : -1;
-    const activeDestination = wheelTargetIndex === null ? null : canonicalDestinations[wheelTargetIndex];
-    const currentDestinationIndex = nearestDestinationIndex();
-    const currentAtAnotherDestination = wheelTargetIndex !== null
-      && currentDestinationIndex !== wheelTargetIndex
-      && Math.abs(window.scrollY - canonicalDestinations[currentDestinationIndex]) <= 4;
-    const movedByAnotherInput = activeDestination !== null && (
-      currentAtAnotherDestination
-      || Math.abs(window.scrollY - activeDestination) > window.innerHeight * 1.25
-    );
-    const reversing = wheelTargetIndex !== null && direction !== lastWheelDirection;
-    const activeReached = activeDestination === null || Math.abs(window.scrollY - activeDestination) <= 4;
-    lastWheelAt = now;
-
-    // Momentum events from one wheel/trackpad gesture are consumed by the same adjacent
-    // landing. A new gesture is accepted after the stream goes quiet and the landing is
-    // complete; the opposite direction can retarget immediately.
-    if (!reversing && !movedByAnotherInput && (quietFor < 140 || !activeReached)) return;
-
-    const baseIndex = movedByAnotherInput || wheelTargetIndex === null
-      ? currentDestinationIndex
-      : wheelTargetIndex;
-    const nextIndex = Math.min(canonicalDestinations.length - 1, Math.max(0, baseIndex + direction));
-    wheelTargetIndex = nextIndex;
-    lastWheelDirection = direction;
-    if (reversing) window.scrollTo({ behavior: "auto", top: window.scrollY });
-    if (nextIndex === baseIndex) return;
-    window.scrollTo({ behavior: "smooth", top: canonicalDestinations[nextIndex] });
+    if (canonicalDestinations.length < 2) return;
+    const direction = readWheelIntent(event, window.performance.now());
+    if (!direction) return;
+    // A second gesture made while a screen is still arriving follows it; the opposite one turns back at once.
+    if (travel?.direction === direction) {
+      queuedDirection = direction;
+      return;
+    }
+    queuedDirection = 0;
+    beginTravel(direction);
   };
 
   // Phones read the chapters as compact cards in normal flow (see transformHomeHandoffCss):
@@ -346,12 +426,13 @@ function setupHomeInteractions(root: HTMLElement) {
       measureStack();
       stackDirty = true;
     }
+    advanceTravel();
     if (stackDirty) {
       stackDirty = false;
       syncStack();
     }
     syncSprings();
-    if (springsAreMoving()) scheduleFrame();
+    if (travel || springsAreMoving()) scheduleFrame();
   };
 
   function scheduleFrame() {
@@ -386,6 +467,7 @@ function setupHomeInteractions(root: HTMLElement) {
   if (finePointer && !reducedMotion) {
     root.dataset.homeWheelController = "adjacent";
     window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("keydown", onKeyDown, { passive: true });
   }
 
   return () => {
@@ -398,9 +480,11 @@ function setupHomeInteractions(root: HTMLElement) {
     window.removeEventListener("resize", onResize);
     window.removeEventListener("scroll", onScroll);
     window.removeEventListener("wheel", onWheel);
+    window.removeEventListener("keydown", onKeyDown);
     window.removeEventListener("pointermove", onPointerMove);
     document.documentElement.removeEventListener("pointerleave", onPointerLeave);
     window.cancelAnimationFrame(animationFrame);
+    if (travel) releaseScroll();
     root.style.removeProperty("--home-public-footer-height");
     delete root.dataset.homeWheelController;
     delete root.dataset.homeInteractions;

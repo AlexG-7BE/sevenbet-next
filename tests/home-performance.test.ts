@@ -2,28 +2,144 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import test from "node:test";
 
+import { createHomeWheelIntent, HOME_WHEEL_INTENT_PX } from "../components/final-handoff/homeWheelIntent";
 import generatedPages from "../lib/final-handoff/generated-pages.json";
 import { transformHomeHandoff, transformHomeHandoffCss, transformLearnHandoff } from "../lib/final-handoff/transforms";
 
 const source = (path: string) => readFileSync(path, "utf8");
 
-test("Home uses only the bounded adjacent wheel fallback and no perpetual layout loop", () => {
+test("Home moves one screen per wheel gesture itself and runs no perpetual layout loop", () => {
   const interactions = source("components/final-handoff/HandoffInteractions.tsx");
   const homeInteractions = interactions.slice(
     interactions.indexOf("function setupHomeInteractions"),
     interactions.indexOf("export function HandoffInteractions"),
   );
   assert.match(interactions, /addEventListener\("wheel", onWheel, \{ passive: false \}\)/);
-  assert.match(interactions, /const onWheel[\s\S]*event\.preventDefault\(\)[\s\S]*window\.scrollTo\(\{ behavior: "smooth", top: canonicalDestinations\[nextIndex\] \}\)/);
-  assert.doesNotMatch(homeInteractions, /wheelAccumulator|snapLockedUntil|scrollTweenFrame|setTimeout|setInterval|scroll-snap-stop:\s*always/);
+  assert.match(homeInteractions, /const onWheel[\s\S]*event\.preventDefault\(\)[\s\S]*readWheelIntent\(event, window\.performance\.now\(\)\)[\s\S]*beginTravel\(direction\)/);
+  // The landing is ours, not the browser's: one duration and one curve everywhere, with snapping
+  // and smoothing held off only while the page travels.
+  assert.doesNotMatch(homeInteractions, /behavior: "smooth"/);
+  assert.match(homeInteractions, /setProperty\("scroll-snap-type", "none", "important"\)[\s\S]*setProperty\("scroll-behavior", "auto", "important"\)/);
+  assert.match(homeInteractions, /removeProperty\("scroll-snap-type"\)[\s\S]*removeProperty\("scroll-behavior"\)/);
+  assert.match(homeInteractions, /Math\.abs\(window\.scrollY - travel\.last\) > 2/);
+  assert.doesNotMatch(homeInteractions, /setTimeout|setInterval|scroll-snap-stop:\s*always/);
   assert.doesNotMatch(homeInteractions, /requestAnimationFrame\(tick\)|requestAnimationFrame\(runFrame\)[\s\S]*requestAnimationFrame\(runFrame\)/);
   assert.match(interactions, /addEventListener\("scroll", onScroll, \{ passive: true \}\)/);
   assert.match(interactions, /new window\.ResizeObserver\(onResize\)/);
   assert.match(interactions, /geometryDirty[\s\S]*measureStack\(\)/);
   assert.match(interactions, /measureCanonicalDestinations\(\)/);
-  assert.match(interactions, /quietFor < 140 \|\| !activeReached/);
-  assert.match(interactions, /const reversing[\s\S]*direction !== lastWheelDirection/);
-  assert.match(interactions, /if \(springsAreMoving\(\)\) scheduleFrame\(\)/);
+  assert.match(interactions, /advanceTravel\(\);\s*if \(stackDirty\)/);
+  assert.match(interactions, /if \(travel \|\| springsAreMoving\(\)\) scheduleFrame\(\)/);
+});
+
+// Wheel streams as a browser reports them: a swipe ramps up under the fingers, then macOS
+// inertia decays frame by frame for a second or two after they lift.
+type Wheel = { deltaMode: number; deltaY: number; timeStamp: number };
+const FRAME_MS = 1000 / 60;
+
+function swipe({ decay = 0.95, fingerFrames = 9, peak = 30, sign = 1, liftAfterInertiaFrames = Number.POSITIVE_INFINITY } = {}) {
+  const deltas: number[] = [];
+  for (let frame = 0; frame < fingerFrames; frame += 1) deltas.push(Math.max(1, Math.round(peak * Math.sin(((frame + 1) / fingerFrames) * Math.PI / 2))));
+  for (let velocity = peak * decay, frames = 0; Math.round(velocity) >= 1 && frames < liftAfterInertiaFrames; velocity *= decay, frames += 1) deltas.push(Math.round(velocity));
+  return deltas.map((delta) => ({ deltaY: delta * sign, gap: FRAME_MS }));
+}
+
+// `late` is how long the event waited for a busy main thread before the page handled it.
+function gestures(stream: Array<{ deltaMode?: number; deltaY: number; gap: number; late?: number }>) {
+  const read = createHomeWheelIntent(() => 900);
+  let timeStamp = 10_000;
+  const moves: number[] = [];
+  for (const { deltaMode = 0, deltaY, gap, late = 1 } of stream) {
+    timeStamp += gap;
+    const event: Wheel = { deltaMode, deltaY, timeStamp };
+    const direction = read(event, timeStamp + late);
+    if (direction) moves.push(direction);
+  }
+  return moves;
+}
+
+const after = (gap: number, stream: ReturnType<typeof swipe>) => stream.map((event, index) => (index ? event : { ...event, gap }));
+
+test("a trackpad swipe is one gesture however long its inertia runs", () => {
+  assert.deepEqual(gestures(swipe()), [1]);
+  assert.deepEqual(gestures(swipe({ decay: 0.965, peak: 90 })), [1]);
+  assert.deepEqual(gestures(swipe({ decay: 0.98, peak: 140 })), [1]);
+  assert.deepEqual(gestures(swipe({ sign: -1 })), [-1]);
+  // 120Hz reports half the travel per event.
+  assert.deepEqual(gestures(swipe({ fingerFrames: 18, peak: 15, decay: 0.975 }).map((event) => ({ ...event, gap: FRAME_MS / 2 }))), [1]);
+});
+
+test("a new swipe is heard while the previous one's inertia is still arriving", () => {
+  // Founder, 11 Oct 2026: the second and third swipe were swallowed with their own inertia.
+  assert.deepEqual(gestures([...swipe({ liftAfterInertiaFrames: 21 }), ...swipe()]), [1, 1]);
+  assert.deepEqual(gestures([...swipe({ liftAfterInertiaFrames: 21 }), ...swipe({ liftAfterInertiaFrames: 21 }), ...swipe()]), [1, 1, 1]);
+  assert.deepEqual(gestures([...swipe(), ...after(400, swipe())]), [1, 1]);
+  assert.deepEqual(gestures([...swipe({ liftAfterInertiaFrames: 11 }), ...swipe({ sign: -1 })]), [1, -1]);
+});
+
+test("a brush of the trackpad is not a gesture, and slow travel has to add up", () => {
+  assert.deepEqual(gestures([{ deltaY: 1, gap: 0 }, { deltaY: 2, gap: FRAME_MS }]), []);
+  assert.deepEqual(gestures(Array.from({ length: 12 }, () => ({ deltaY: 1, gap: 150 }))), []);
+  // Sparse 1px events at the very end of inertia are neither a new gesture nor travel worth a screen.
+  assert.deepEqual(gestures([...swipe(), ...Array.from({ length: 6 }, () => ({ deltaY: 1, gap: 140 }))]), [1]);
+  const slowDrag = Array.from({ length: 150 }, () => ({ deltaY: 2, gap: FRAME_MS }));
+  assert.deepEqual(gestures(slowDrag), [1]);
+  assert.equal(HOME_WHEEL_INTENT_PX, 40);
+});
+
+test("a busy main thread in the middle of inertia does not read as silence or as a new swipe", () => {
+  // While the page is busy the browser holds the next event back and merges the ones behind it:
+  // one event is handled late, the next carries the travel of all the frames that were missed.
+  const stalled = (stream: ReturnType<typeof swipe>, at: number, frames: number) => [
+    ...stream.slice(0, at),
+    { ...stream[at], late: (frames - 1) * FRAME_MS },
+    { deltaY: stream.slice(at + 1, at + frames).reduce((sum, event) => sum + event.deltaY, 0), gap: (frames - 1) * FRAME_MS },
+    ...stream.slice(at + frames),
+  ];
+  const inertia = swipe({ decay: 0.965, peak: 90 });
+  assert.deepEqual(gestures(stalled(inertia, 30, 10)), [1]);
+  assert.deepEqual(gestures(stalled(inertia, 60, 20)), [1]);
+  assert.deepEqual(gestures(stalled(stalled(inertia, 30, 10), 34, 10)), [1]);
+  // The same gap with nothing held back is a real pause, and what follows it is a new gesture.
+  assert.deepEqual(gestures([...inertia.slice(0, 31), { deltaY: 100, gap: 9 * FRAME_MS }]), [1, 1]);
+  // Held back upstream as well: a gap in the timestamps themselves, then the backlog in a burst
+  // of merged events, each handled later than the one before.
+  const backlog = [
+    ...inertia.slice(0, 5),
+    { ...inertia[5], late: 160 },
+    { deltaY: inertia[6].deltaY, gap: 153, late: 66 },
+    ...[7, 9, 11, 13].map((at, index) => ({ deltaY: inertia[at].deltaY + inertia[at + 1].deltaY, gap: 5, late: 90 + index * 10 })),
+    ...inertia.slice(15),
+  ];
+  assert.deepEqual(gestures(backlog), [1]);
+});
+
+test("uneven event timing in the middle of inertia does not read as a new swipe", () => {
+  const inertia = swipe({ decay: 0.965, peak: 90 });
+  // Delivered in pairs: the same travel, 2ms and 31ms apart in turn.
+  assert.deepEqual(gestures(inertia.map((event, index) => ({ ...event, gap: index % 2 ? 2 : 2 * FRAME_MS - 2 }))), [1]);
+  // Timestamps a third of a frame early or late, from a fixed sequence.
+  let seed = 7;
+  const jitter = () => {
+    seed = (seed * 1_103_515_245 + 12_345) % 2_147_483_648;
+    return (seed / 2_147_483_648 - 0.5) * 11;
+  };
+  for (let run = 0; run < 25; run += 1) {
+    assert.deepEqual(gestures(inertia.map((event, index) => ({ ...event, gap: index ? FRAME_MS + jitter() : 0 }))), [1], `run ${run}`);
+    assert.deepEqual(gestures([...swipe({ liftAfterInertiaFrames: 21 }), ...swipe()].map((event, index) => ({ ...event, gap: index ? FRAME_MS + jitter() : 0 }))), [1, 1], `run ${run}`);
+  }
+});
+
+test("a mouse wheel moves one screen per detent or per spin", () => {
+  assert.deepEqual(gestures([{ deltaY: 100, gap: 0 }]), [1]);
+  // macOS reports a slow detent of an ordinary mouse as about 4px.
+  assert.deepEqual(gestures([{ deltaY: 4.000244140625, gap: 0 }]), [1]);
+  assert.deepEqual(gestures([{ deltaMode: 1, deltaY: 3, gap: 0 }]), [1]);
+  assert.deepEqual(gestures(Array.from({ length: 4 }, () => ({ deltaY: 100, gap: 60 }))), [1]);
+  assert.deepEqual(gestures([4, 12, 40, 90, 120].map((deltaY) => ({ deltaY, gap: 40 }))), [1]);
+  assert.deepEqual(gestures(Array.from({ length: 3 }, () => ({ deltaY: 100, gap: 700 }))), [1, 1, 1]);
+  assert.deepEqual(gestures([{ deltaY: 300, gap: 0 }, { deltaY: -300, gap: 20 }]), [1, -1]);
+  assert.deepEqual(gestures(Array.from({ length: 12 }, () => ({ deltaY: 900, gap: 16 }))), [1]);
 });
 
 test("Home media transform provides responsive modern formats and truthful loading priority", () => {
