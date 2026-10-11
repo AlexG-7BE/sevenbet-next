@@ -160,7 +160,7 @@ test("account-not-linked recovery preserves the claim and requires authenticated
 });
 
 test("the start screen owns the explicit consent: one statement above one button, and no tick", () => {
-  const statement = /I explicitly consent to B4GAMBLE processing the answers I choose, including information that may reveal my health, and sending them to its AI provider to personalise my Programme\./g;
+  const statement = /I agree that B4GAMBLE and its AI provider use my answers, which may reveal my health, to personalise my plan\./g;
   assert.equal((frontendRuntime.match(statement) || []).length, 1);
   const start = finalPresentation.slice(finalPresentation.indexOf("export function ProgrammeStartScreen"), finalPresentation.indexOf("export function ProgrammeAccessScreen"));
   assert.ok(start.search(statement) < start.indexOf("data-programme-agree"), "the statement stands above the button");
@@ -185,8 +185,13 @@ test("Program AI reuses the signed access contract and exposes no anonymous clar
   assert.doesNotMatch(frontendRuntime, /checks? before you begin|I accept the current|I have read the current/);
   assert.match(frontend, /clarificationAnswers: \[\]/);
   assert.match(frontend, /prepareClaimForRegistration/);
-  assert.match(frontendRuntime, /Your Starting Point is ready/);
-  assert.match(frontendRuntime, /Continue with Google — save my Starting Point/);
+  // Founder decision, 11 Oct 2026: the save screen shows what the Programme will work on first
+  // and does not repeat the picked answers back.
+  assert.match(finalPresentation, /Here's what we can do together\./);
+  assert.match(finalPresentation, /data-programme-understanding="">\s*<p>\{candidate\.desiredChange\}<\/p>/);
+  assert.doesNotMatch(finalPresentation, /candidate\.startingPoint|Your Starting Point is ready|Your Starting Point, in your words|save my Starting Point/);
+  // Email, then password, then the button, all visible at once.
+  assert.doesNotMatch(finalPresentation, /passwordShown/);
   // Founder decision, 11 Oct 2026: one email step creates the account or signs in.
   assert.match(frontendRuntime, /Continue with email/);
   assert.match(frontend, /continueWithEmail\(\{ email: input\.email, password: input\.password, expect: googleLinkRecovery \? "existing-only" : "new" \}/);

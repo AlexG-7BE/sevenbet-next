@@ -376,7 +376,7 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
     await expect(page.locator('[data-programme-presentation="loading"]')).toBeVisible();
     await expect(page.locator('[data-programme-presentation="start"]')).toBeVisible();
     await expect(page.getByRole("heading", { name: t(route.locale, "What feels hardest right now?") })).toBeVisible();
-    await expect(page.locator("[data-programme-start-consent]")).toHaveText(t(route.locale, "I explicitly consent to B4GAMBLE processing the answers I choose, including information that may reveal my health, and sending them to its AI provider to personalise my Programme."));
+    await expect(page.locator("[data-programme-start-consent]")).toHaveText(t(route.locale, "I agree that B4GAMBLE and its AI provider use my answers, which may reveal my health, to personalise my plan."));
     await expect(page.locator("[data-programme-access-note]")).toHaveText(t(route.locale, "By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice."));
     await expect(page.locator(`[data-programme-presentation="start"] a[href="${programmeHelpPath(route.locale)}"]`).first()).toBeVisible();
     await assertNoRepresentativeEnglishLeakage(page, route.locale, ["What feels hardest right now?", "I chase my losses", "By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.", "Agree and continue"]);
@@ -398,7 +398,7 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
     }
     await expect(page.locator('[data-programme-presentation="starting-point-ready"]')).toBeVisible();
     await expect(page.getByRole("button", { name: t(route.locale, "Continue with email") })).toBeVisible();
-    await assertNoRepresentativeEnglishLeakage(page, route.locale, ["Your Starting Point, in your words.", "Continue with email", "Withdraw consent and clear this draft"]);
+    await assertNoRepresentativeEnglishLeakage(page, route.locale, ["Here's what we can do together.", "Continue with email", "Withdraw consent and clear this draft"]);
     await assertRenderedQuality(page, `${route.locale}:registration:${mobile ? "mobile" : "desktop"}`);
     await context.close();
   }

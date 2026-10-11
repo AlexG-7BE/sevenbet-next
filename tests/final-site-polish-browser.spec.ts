@@ -185,7 +185,7 @@ test("Programme requires two access checks plus just-in-time consent and returns
   expect(calls).toContain("authority:GET");
   // The consent given on the access screen survives the reload and is not asked again.
   await expect(page.getByRole("checkbox")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   expect(calls).toContain("authority:POST");
   await page.getByRole("button", { name: "Withdraw consent and clear this draft" }).click();
   await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();

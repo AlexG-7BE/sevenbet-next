@@ -41,8 +41,12 @@ record:
 - **No voice and no free text.** The microphone, the text field and their
   screen are gone from the client. The server transcription routes still
   exist, unreachable from the interface, until the clean-up change.
-- **Consent statement v2.** It names "the answers I choose" and the AI
-  provider (`article-9-authority:2026-10-11:v2`).
+- **Consent statement v2.** "I agree that B4GAMBLE and its AI provider use my
+  answers, which may reveal my health, to personalise my plan."
+  (`article-9-authority:2026-10-11:v2`).
+- **The screen after the answers** shows the first thing the Programme will
+  work on under "Here's what we can do together." and no longer repeats the
+  answers back. Email, password and the button are all visible at once.
 - **No side door.** The "Create an account first" link is gone from the
   Programme; registration is reached through the answers, or on `/login`.
 - **Email opt-in ticked by default.** "Email me B4GAMBLE updates" is ticked

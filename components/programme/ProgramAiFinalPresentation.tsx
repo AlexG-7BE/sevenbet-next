@@ -94,7 +94,7 @@ export function ProgrammeStartScreen({ accessLine, busy, error, onAgree, locale 
               </label>
             ))}
           </div>
-          <p className={styles.consentStatement} data-programme-start-consent="">{t("I explicitly consent to B4GAMBLE processing the answers I choose, including information that may reveal my health, and sending them to its AI provider to personalise my Programme.")}</p>
+          <p className={styles.consentStatement} data-programme-start-consent="">{t("I agree that B4GAMBLE and its AI provider use my answers, which may reveal my health, to personalise my plan.")}</p>
           <button className={styles.primaryAction} data-programme-agree="" disabled={busy || answers.length === 0} onClick={() => onAgree(answers)} type="button">
             {busy ? t("Preparing your Starting Point…") : t("Agree and continue")}
           </button>
@@ -197,10 +197,8 @@ export function StartingPointReadyScreen({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [marketingAllowed, setMarketingAllowed] = useState(PROGRAMME_MARKETING_OPT_IN_DEFAULT);
-  // Founder decision, 11 Oct 2026: one email step creates the account or signs in to the one
-  // that owns the email. The password field arrives with the first typed character, so the
-  // form reads as a single field until it is used.
-  const passwordShown = googleLinkRecovery || email.length > 0;
+  // Founder decisions, 11 Oct 2026: one email step creates the account or signs in to the one
+  // that owns the email. Email, then password, then the button, all visible at once.
   // Founder decisions, 27 Sep and 11 Oct 2026: one opt-in serves both Google and email sign-up,
   // asked once on this screen. It is ticked when the form opens, short, and the last thing in
   // the form.
@@ -210,16 +208,11 @@ export function StartingPointReadyScreen({
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.readyState}>
           {candidate ? <>
-          <p className={styles.readyEyebrow}>{t("✓ Your Starting Point is ready")}</p>
-        <h1><SerifTail text={t("Your Starting Point, in your words.")} words={3} /></h1>
-        <section className={styles.startingPointCard}>
-          <p>{candidate.startingPoint}</p>
-        </section>
-        <section className={styles.understandingSummary} data-programme-understanding="">
-          <div>
-            <h2>{t("What we'll work on first")}</h2>
-            <p>{candidate.desiredChange}</p>
-          </div>
+        {/* Founder decision, 11 Oct 2026: the screen does not repeat the picked answers back. It
+            shows the first thing the Programme will work on, under one large heading. */}
+        <h1><SerifTail text={t("Here's what we can do together.")} /></h1>
+        <section className={styles.startingPointCard} data-programme-understanding="">
+          <p>{candidate.desiredChange}</p>
         </section>
           </> : <>
         <h1><SerifTail text={t("Save your place first.")} words={2} /></h1>
@@ -228,11 +221,11 @@ export function StartingPointReadyScreen({
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
           {googleLinkRecovery ? <p>{t("Your confirmed Starting Point stays in this browser while you sign in and link Google securely.")}</p> : null}
           {authenticated && !candidate ? null : authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{t(busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account")}</button> : <>
-            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle({ marketingAllowed: marketingChoiceShown && marketingAllowed })} type="button"><GoogleIcon />{t(candidate ? "Continue with Google — save my Starting Point" : "Continue with Google")}</button> : null}
+            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle({ marketingAllowed: marketingChoiceShown && marketingAllowed })} type="button"><GoogleIcon />{t("Continue with Google")}</button> : null}
             {googleAvailable && !googleLinkRecovery ? <p className={styles.entryDivider}><span>{t("or")}</span></p> : null}
             <form className={styles.emailForm} data-programme-email-entry="" onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, marketingAllowed: marketingChoiceShown && marketingAllowed }); }}>
               <label><span>{t("Email")}</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
-              {passwordShown ? <label><span>{t("Password")}</span><input autoComplete={googleLinkRecovery ? "current-password" : "new-password"} minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} />{googleLinkRecovery ? null : <small>{t("Use at least 8 characters.")}</small>}</label> : null}
+              <label><span>{t("Password")}</span><input autoComplete={googleLinkRecovery ? "current-password" : "new-password"} minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} />{googleLinkRecovery ? null : <small>{t("Use at least 8 characters.")}</small>}</label>
               <button className={styles.primaryAction} disabled={busy} type="submit">{t(googleLinkRecovery ? "Sign in, then link Google" : "Continue with email")}</button>
               {passwordResetHref ? <Link className={styles.inlineLink} href={passwordResetHref}>{t("Forgot password?")}</Link> : null}
             </form>

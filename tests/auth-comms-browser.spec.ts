@@ -110,7 +110,7 @@ async function reachRegistration(page: Page) {
   // Founder decisions, 11 Oct 2026: ready answers only, then one button.
   await page.getByRole("checkbox", { name: "I chase my losses" }).check();
   await page.getByRole("button", { name: "Agree and continue" }).click();
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
 }
 
 async function seedOAuthJourney(page: Page, journeyId: string) {
@@ -166,8 +166,8 @@ test("canonical Programme registration keeps access proof on email auth and fail
   const google = page.getByRole("button", { name: /Continue with Google/ });
   await expect(google).toHaveCount(expectGoogle ? 1 : 0);
   await expect(page.getByRole("checkbox", { name: "Email me B4GAMBLE updates" })).toHaveCount(1);
-  // The password field arrives with the first typed character of the email.
-  await expect(page.getByLabel("Password")).toHaveCount(0);
+  // Email, then password, then the button, all visible at once.
+  await expect(page.getByLabel("Password")).toBeVisible();
 
   let proofHeader: string | null = null;
   let journeyHeader: string | null = null;
@@ -401,7 +401,7 @@ test("Google cancellation retains the canonical Starting Point without legacy UI
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await page.route("**/api/program/program-ai/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
   await open(page, "/program?auth=google-error&error=provider-payload-must-not-render");
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toContainText("Google account access was not completed");
   await expect(page.locator('p[role="alert"]')).not.toContainText("provider-payload-must-not-render");
   await expect(page.locator('[data-programme-runtime="legacy"], [data-legacy-programme]')).toHaveCount(0);
@@ -419,7 +419,7 @@ test("Google cancellation without a provider code still keeps recovery actions v
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await page.route("**/api/program/program-ai/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
   await open(page, "/program?auth=google-error");
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toHaveText("Google account access was not completed. You can retry or use email instead.");
   await expect(page.getByRole("button", { name: "Continue with email" })).toBeVisible();
 });
@@ -436,7 +436,7 @@ test("Programme Google stays the account-continuation action beside the email st
     requestSignUp = (route.request().postDataJSON() as { requestSignUp?: boolean }).requestSignUp;
     return route.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ code: "TEST_STOP" }) });
   });
-  await page.getByRole("button", { name: "Continue with Google — save my Starting Point" }).click();
+  await page.getByRole("button", { name: "Continue with Google" }).click();
   await expect(page.locator('p[role="alert"]')).toContainText("Google account access failed");
   expect(requestSignUp).toBe(true);
 });
@@ -448,7 +448,7 @@ test("Google Programme, login and recovery controls fit every Founder mobile wid
 
   for (const width of [360, 375, 390, 412, 430]) {
     await page.setViewportSize({ width, height: 844 });
-    const google = page.getByRole("button", { name: "Continue with Google — save my Starting Point" });
+    const google = page.getByRole("button", { name: "Continue with Google" });
     const email = page.getByRole("button", { name: "Continue with email" });
     await expect(google).toBeVisible();
     await expect(email).toBeVisible();
@@ -502,7 +502,7 @@ test("Google return retries canonical claim redemption and transfers local autho
       : { status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture() }) });
   });
   await open(page, "/program?auth=google-return");
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toHaveText("Your progress could not be saved yet");
   expect(redemptions).toBe(1);
   await page.getByRole("button", { name: "Save to my account" }).click();

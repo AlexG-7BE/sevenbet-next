@@ -136,7 +136,7 @@ test("Programme start asks for consent with one button under its statement and r
   const experience = source("components/programme/ProgramAiExperience.tsx");
   const accessClient = source("lib/programme/access-client.ts");
   const contracts = source("lib/programme/program-ai/contracts.ts");
-  const consent = "I explicitly consent to B4GAMBLE processing the answers I choose, including information that may reveal my health, and sending them to its AI provider to personalise my Programme.";
+  const consent = "I agree that B4GAMBLE and its AI provider use my answers, which may reveal my health, to personalise my plan.";
   const line = "By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.";
   const start = component.slice(component.indexOf("export function ProgrammeStartScreen"), component.indexOf("export function ProgrammeAccessScreen"));
   assert.equal(component.split(consent).length - 1, 1, "the consent statement appears once");

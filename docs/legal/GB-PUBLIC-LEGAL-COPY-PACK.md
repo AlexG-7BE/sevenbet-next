@@ -25,9 +25,9 @@ Placement: under the button on the Programme start screen, on the screen that op
 
 Statement, placed directly above the button "Agree and continue" on the Programme start screen:
 
-> I explicitly consent to B4GAMBLE processing the answers I choose, including information that may reveal my health, and sending them to its AI provider to personalise my Programme.
+> I agree that B4GAMBLE and its AI provider use my answers, which may reveal my health, to personalise my plan.
 
-Mission 01 takes answers picked from a list; there is no typed or voice input. Pressing the button is the explicit consent. It is asked once on this route and is not bundled into a tick or repeated at account creation. Consent statement version: `article-9-authority:2026-10-11:v2`.
+Mission 01 takes answers picked from a list; there is no typed or voice input. The statement says what is processed (the answers, which may reveal health), by whom (B4GAMBLE and its AI provider) and why. Pressing the button is the explicit consent. It is asked once on this route and is not bundled into a tick or repeated at account creation. Consent statement version: `article-9-authority:2026-10-11:v2`.
 
 Withdrawal stays available through the Privacy Notice.
 

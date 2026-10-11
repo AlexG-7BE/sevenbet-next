@@ -434,7 +434,7 @@ test("picked ready answers go straight to the Starting Point under one consent p
   await expect(page.getByRole("checkbox", { name: "Something else" })).toBeVisible();
   await expect(page.getByRole("textbox")).toHaveCount(0);
   await expect(page.getByRole("button", { name: /voice|microphone/i })).toHaveCount(0);
-  await expect(page.locator("[data-programme-start-consent]")).toHaveText("I explicitly consent to B4GAMBLE processing the answers I choose, including information that may reveal my health, and sending them to its AI provider to personalise my Programme.");
+  await expect(page.locator("[data-programme-start-consent]")).toHaveText("I agree that B4GAMBLE and its AI provider use my answers, which may reveal my health, to personalise my plan.");
   await expect(page.locator("[data-programme-access-note]")).toHaveText("By continuing, you confirm you are 18+ and accept the Terms and Privacy Notice.");
   await expect(agree).toBeDisabled();
   await page.getByRole("checkbox", { name: "I chase my losses" }).check();
@@ -443,10 +443,15 @@ test("picked ready answers go straight to the Starting Point under one consent p
   await noHorizontalOverflow(page);
   await agree.click();
 
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   expect(consentPosts).toBe(1);
-  // Without a provider the Starting Point is the person's own answer, exactly as they read it.
-  await expect(page.getByText(situation, { exact: true })).toBeVisible();
+  // The screen shows the first thing to work on and does not repeat the picked answers back.
+  await expect(page.locator("[data-programme-understanding]")).toHaveText(bestEffortStartingPoint.desiredChange);
+  await expect(page.getByText(situation, { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Your Starting Point is ready")).toHaveCount(0);
+  // Email, then password, then the button, all visible at once.
+  await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Password")).toBeVisible();
   await expect(page.getByRole("button", { name: "Continue with email" })).toBeVisible();
   const anonymousSession = await anonymousSessionFromContext(page.context());
   const authority = await prisma.programmeSensitiveInputAuthority.findFirstOrThrow({
@@ -525,13 +530,13 @@ test("ready answers bind exact authority and are idempotent through real email a
   });
   await page.getByRole("button", { name: "Agree and continue" }).click();
 
-  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   // The start screen and its answers are gone; the consent is not asked again.
   await expect(page.getByRole("checkbox", { name: "I chase my losses" })).toHaveCount(0);
-  await expect(page.getByText(bestEffortStartingPoint.startingPoint, { exact: true })).toBeVisible();
+  await expect(page.getByText(bestEffortStartingPoint.startingPoint, { exact: true })).toHaveCount(0);
   const understanding = page.locator("[data-programme-understanding]");
-  await expect(understanding.getByRole("heading", { name: "What we'll work on first" })).toBeVisible();
   await expect(understanding.getByText(bestEffortStartingPoint.desiredChange, { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What we'll work on first" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Where we'll start" })).toHaveCount(0);
   await expect(page.getByText(bestEffortStartingPoint.continuationCue, { exact: true })).toHaveCount(0);
   const registration = page.locator('[data-programme-phase="registration"]');
