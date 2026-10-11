@@ -1,4 +1,5 @@
 import { absoluteUrl, siteUrl } from "@/lib/site";
+import { BRAND_SOCIAL_PROFILES } from "@/lib/social/brand-profiles";
 
 /**
  * One sitewide identity for search engines and AI crawlers (audit 27 Sep 2026: the
@@ -19,13 +20,10 @@ export const BRAND_ALTERNATE_NAMES = ["Before Gamble", "Before You Gamble", "B4 
 /**
  * The brand's own public profiles, so search engines tie them to the site as one entity
  * (Founder, 1 Oct 2026). Only profiles B4GAMBLE controls; add one when it goes live.
+ * The five the footer links to come first, from the list the footer itself renders.
  */
 export const ORGANIZATION_PROFILES = [
-  "https://www.facebook.com/b4gamble",
-  "https://x.com/b4gamble",
-  "https://www.instagram.com/b4gamble_com",
-  "https://www.threads.com/@b4gamble_com",
-  "https://www.youtube.com/@b4gamble",
+  ...BRAND_SOCIAL_PROFILES.map((profile) => profile.href),
   "https://www.tiktok.com/@b4gamble.com",
   "https://www.pinterest.com/b4gamble",
   "https://medium.com/@b4gamble.com",

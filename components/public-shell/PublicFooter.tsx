@@ -13,6 +13,7 @@ import type { CommercialProductState } from "@/lib/market/commercial-product-sta
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { commercialDestinationsNavigable, publicCommercialDestinationVisible } from "@/lib/public-shell";
 import { FooterCompliance } from "@/components/footer-compliance/FooterCompliance";
+import { BrandSocialLinks } from "./BrandSocialLinks";
 import { PublicNavigationDoor } from "./PublicNavigationClient";
 import styles from "./PublicShell.module.css";
 
@@ -65,6 +66,7 @@ export function PublicFooter({
           <div className={styles.footerLead}>
             <Link className={styles.footerBrand} href={localizedHref("/")} prefetch={false} translate="no">B4GAMBLE</Link>
             <p>{footer.description}<br />{footer.operatorDisclaimer}</p>
+            <BrandSocialLinks label={footer.social} opensInNewTab={footer.opensInNewTab} />
           </div>
           {groups.map((group) => (
             <div className={styles.footerGroup} key={group.title}>
