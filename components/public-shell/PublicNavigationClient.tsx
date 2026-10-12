@@ -11,7 +11,7 @@ import { finalPublicHref, localizePublicHref, stripPublicMarketPrefix } from "@/
 import { DEFAULT_MARKET_PROFILE, marketProfileByLocale } from "@/lib/market/registry";
 import { createCommercialNavigationRetryRegistry } from "@/lib/market/navigation-stage2-retry";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
-import { isCurrentPublicRoute } from "@/lib/public-shell";
+import { isCurrentPublicRoute, leadsToCurrentProgrammePage } from "@/lib/public-shell";
 import {
   RESEARCH_ACCESS_CHANGED_EVENT,
   RESEARCH_OPENED_AT_STORAGE_KEY,
@@ -177,9 +177,7 @@ export function PublicProgrammeActionLink({
 }) {
   const pathname = usePathname();
   const isProgrammeHref = href === "/program" || /^\/[a-z]{2}\/program(?:[/?#]|$)/.test(href);
-  // The browser sees the address itself (`/sv/program`); the server renders a localized Programme
-  // page under the path it is rewritten to (`/program`). Both name the page this button leads to.
-  if (hiddenOnDestination && (pathname === href || (isProgrammeHref && pathname === "/program"))) return null;
+  if (hiddenOnDestination && leadsToCurrentProgrammePage(pathname, href)) return null;
   // The public shell loads this destination ahead of the tap (navigation-prefetch.ts), so the
   // link itself does not prefetch.
   return (

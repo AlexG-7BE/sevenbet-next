@@ -8,6 +8,7 @@ import {
   accountNavigationFor,
   classifyShellRoute,
   commercialDestinationsNavigable,
+  leadsToCurrentProgrammePage,
   publicCommercialDestinationVisible,
   publicNavigationForCommercialState,
 } from "../lib/public-shell";
@@ -409,7 +410,16 @@ test("the header does not offer Start Programme on the page it leads to; a signe
   const action = client.slice(client.indexOf("export function PublicProgrammeActionLink("), client.indexOf("export function PublicMobileAccountLine("));
   assert.match(action, /hiddenOnDestination = false,/);
   assert.match(action, /const pathname = usePathname\(\);/);
-  assert.match(action, /if \(hiddenOnDestination && pathname === href\) return null;/);
+  assert.match(action, /if \(hiddenOnDestination && leadsToCurrentProgrammePage\(pathname, href\)\) return null;/);
+  // The browser sees the address itself; the server renders a localized Programme page under the
+  // path it is rewritten to. Both must agree, or the first HTML would carry the button.
+  assert.equal(leadsToCurrentProgrammePage("/sv/program", "/sv/program"), true, "in the browser");
+  assert.equal(leadsToCurrentProgrammePage("/program", "/sv/program"), true, "on the server, under the rewritten path");
+  assert.equal(leadsToCurrentProgrammePage("/program", "/program"), true, "the English Programme");
+  for (const elsewhere of ["/sv", "/sv/10-steps", "/10-steps", "/sv/casinos", "/sv/program/missing", "/program/missing", "/login"]) {
+    assert.equal(leadsToCurrentProgrammePage(elsewhere, "/sv/program"), false, elsewhere);
+  }
+  assert.equal(leadsToCurrentProgrammePage("/program", "/login?returnTo=%2Fsv%2Fprogram"), false);
 
   const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
   assert.match(footer, /\[authenticated \? shell\.myProgramme : shell\.startProgramme, "\/program"\]/);
