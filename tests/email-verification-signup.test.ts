@@ -216,7 +216,10 @@ test("the application wires verification, the Google opt-in and immediate welcom
   assert.equal(presentation.match(/PROGRAMME_MARKETING_OPT_IN_LABEL/g)?.length, 2);
   assert.match(presentation, /<span>\{t\(PROGRAMME_MARKETING_OPT_IN_LABEL\)\}<\/span>/);
   assert.match(presentation, /onGoogle\(\{ marketingAllowed: marketingChoiceShown && marketingAllowed \}\)/);
-  assert.match(experience, /rememberGoogleMarketingChoice\(window\.sessionStorage, subject\.id, input\.marketingAllowed\)/);
+  // Both ways a press on Google leaves the page (at once with what was prepared, or after doing
+  // the work itself; 12 Oct 2026) remember the choice through the same step.
+  assert.match(experience, /function markGoogleDeparture\(journey: ProgrammeLocalSubject, marketingAllowed: boolean\) \{\s+writeProgrammeOAuthClaimMarker\(window\.sessionStorage, journey\);\s+rememberGoogleMarketingChoice\(window\.sessionStorage, journey\.id, marketingAllowed\);/);
+  assert.equal(experience.match(/markGoogleDeparture\(subject, input\.marketingAllowed\);/g)?.length, 2);
   // The box is ticked by default (11 Oct 2026), so an earlier choice is read first and left alone.
   assert.match(experience, /if \(!takeGoogleMarketingChoice\(window\.sessionStorage, journey\.id\)\) return true;\s+if \(await marketingPreferenceAlreadyDecided\(\)\) return true;\s+return saveProgrammeMarketingPreference\(locale\);/);
 

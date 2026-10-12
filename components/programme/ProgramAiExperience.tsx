@@ -21,7 +21,9 @@ import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client
 import type { ProgrammeMissionNumber } from "@/lib/analytics/product-analytics-events";
 import { authClient, useSession } from "@/lib/auth/client";
 import { continueWithEmail } from "@/lib/auth/email-entry";
+import { PENDING_CLAIM_RENEW_FOR_GOOGLE_AFTER_MS } from "@/lib/auth/google-press";
 import { passwordResetPath } from "@/lib/auth/password-reset";
+import { useGooglePress } from "@/lib/auth/use-google-press";
 import {
   clearGoogleMarketingChoice,
   marketingPreferenceAlreadyDecided,
@@ -37,7 +39,7 @@ import {
   PROGRAMME_PRIVACY_VERSION,
   PROGRAMME_TERMS_VERSION,
 } from "@/lib/programme/access-contract";
-import { affirmAnonymousProgrammeAccess, recordAccountProgrammeAccess, refreshAccountJourneyAccess } from "@/lib/programme/access-client";
+import { affirmAnonymousProgrammeAccess, forgetClaimMade, noteClaimMade, recordAccountProgrammeAccess, refreshAccountJourneyAccess } from "@/lib/programme/access-client";
 import {
   PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
   PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
@@ -186,7 +188,11 @@ export function ProgramAiExperience({
   const [googleLinkRecovery, setGoogleLinkRecovery] = useState(false);
   const [passwordRejected, setPasswordRejected] = useState(false);
   const [busy, setBusy] = useState(false);
+  /** A press on Google is leaving the page: the button says so at once. */
+  const [googleOpening, setGoogleOpening] = useState(false);
   const [error, setError] = useState("");
+  /** A press on Google is under way, so a second one does nothing. */
+  const googlePressed = useRef(false);
   const oauthRedeemStarted = useRef(false);
   /** The journey whose anonymous session already exists, so it is not opened twice. */
   const openedJourneyId = useRef<string | null>(null);
@@ -382,6 +388,44 @@ export function ProgramAiExperience({
     setPhase(restoredWithAccess.phase);
   }, [completeAccountFirst, googleLinkRecovery, locale, redeem, saveGoogleMarketingChoice, session?.user.id, sessionPending, showPlanOrAnswers]);
 
+  // Founder decision, 12 Oct 2026: a press on Google leaves at once. While the registration screen
+  // is on, the Google address (the same sign-in request, answered without a redirect) and the
+  // claim are kept ready behind it. Nothing reaches Google before the press.
+  const googleJourney = subject?.kind === "journey" ? subject : null;
+  const googlePress = useGooglePress({
+    enabled: googleAvailable && phase === "registration" && !session?.user.id && !googleLinkRecovery && Boolean(googleJourney && (local.candidate || local.accountFirst)),
+    paused: busy,
+    prepareAddress: async () => {
+      // The request needs the tab's access proof; without it the press says what failed, as before.
+      const headers = googleJourney ? programmeAuthAccessHeaders(window.sessionStorage, googleJourney) : {};
+      if (!Object.keys(headers).length) return null;
+      const result = await authClient.signIn.social({ provider: "google", ...programmeGoogleCallbacks(locale), requestSignUp: true, disableRedirect: true, fetchOptions: { headers } });
+      return result.data;
+    },
+    claim: () => {
+      // A Google sign-up that began on Log in is finished here without a Starting Point: no claim.
+      if (!googleJourney || !rememberedState(googleJourney)?.candidate) return null;
+      const journey = googleJourney;
+      return {
+        readyAt: rememberedState(journey)?.claimReadyAt,
+        make: async () => {
+          // The screen's own preparation makes the first claim; a second is never made beside it.
+          await preparation.current;
+          const state = rememberedState(journey);
+          // Support first holds registration back, and its claim is made by the press.
+          if (!state?.candidate || state.phase !== "registration" || pendingClaimIsFresh(state.claimReadyAt, PENDING_CLAIM_RENEW_FOR_GOOGLE_AFTER_MS)) return;
+          forgetClaim(journey);
+          await prepareClaimForRegistration(journey, state);
+          rememberClaim(journey);
+        },
+      };
+    },
+    onStayed: (reason) => {
+      restoreGoogleButton();
+      if (reason === "not-left") setError(programmeText(locale, "Google account access failed"));
+    },
+  });
+
   // A signed-in account that has not affirmed access yet: one press under the line, then the plan.
   async function grantAccountAccess() {
     productAnalyticsClient.startClicked("other_public");
@@ -553,9 +597,39 @@ export function ProgramAiExperience({
     await programAiRequest("/api/program/program-ai/claim", journey, { method: "POST" });
   }
 
-  // A claim made behind the screen is reused while it is fresh; otherwise it is made now.
+  /** What the tab remembers for the journey; it survives a reload and a return from Google. */
+  function rememberedState(journey: ProgrammeLocalSubject) {
+    return loadProgrammeSubjectContent<{ programAi: ProgramAiLocalState }>(window.sessionStorage, journey).programAi;
+  }
+
+  // Founder, 12 Oct 2026: three presses on Google in 20 seconds each made the claim again, because
+  // only the claim made right after the answers was remembered. Every claim is remembered now.
+  function rememberClaim(journey: ProgrammeLocalSubject) {
+    const at = Date.now();
+    noteClaimMade(window.sessionStorage, journey, at);
+    setLocal((current) => current.candidate ? { ...current, claimReadyAt: at } : current);
+  }
+
+  // The server drops the earlier claim as soon as a new one is started. Its time is forgotten
+  // first, so a claim that fails half-way never counts as ready: the next press makes it.
+  function forgetClaim(journey: ProgrammeLocalSubject) {
+    forgetClaimMade(window.sessionStorage, journey);
+    setLocal((current) => {
+      if (current.claimReadyAt === undefined) return current;
+      const next = { ...current };
+      delete next.claimReadyAt;
+      return next;
+    });
+  }
+
+  // A claim made earlier is reused while it is fresh; otherwise it is made now and remembered.
   async function ensureClaim(journey: ProgrammeLocalSubject, state: ProgramAiLocalState, freshForMs: number) {
-    if (!pendingClaimIsFresh(state.claimReadyAt, freshForMs)) await prepareClaimForRegistration(journey, state);
+    // A claim being renewed behind the screen is finished first: two are never made at once.
+    await googlePress.settled();
+    if (pendingClaimIsFresh(rememberedState(journey)?.claimReadyAt ?? state.claimReadyAt, freshForMs)) return;
+    forgetClaim(journey);
+    await prepareClaimForRegistration(journey, state);
+    rememberClaim(journey);
   }
 
   // A claim made earlier can lapse or be reset before it is used: if redeeming it fails, it is
@@ -630,17 +704,40 @@ export function ProgramAiExperience({
     finally { emailRedeemStarted.current = false; setBusy(false); }
   }
 
+  // What a press on Google does right before the page leaves: the journey is marked, so the
+  // return can redeem its claim, and the email opt-in is remembered.
+  function markGoogleDeparture(journey: ProgrammeLocalSubject, marketingAllowed: boolean) {
+    writeProgrammeOAuthClaimMarker(window.sessionStorage, journey);
+    rememberGoogleMarketingChoice(window.sessionStorage, journey.id, marketingAllowed);
+  }
+
+  function restoreGoogleButton() {
+    googlePressed.current = false;
+    setGoogleOpening(false);
+    setBusy(false);
+  }
+
   async function handleGoogle(input: { marketingAllowed: boolean }) {
-    if (!subject || subject.kind !== "journey") return;
-    setBusy(true); setError("");
+    if (!subject || subject.kind !== "journey" || googlePressed.current) return;
+    // Founder decision, 12 Oct 2026: the button answers at once, and a second press does nothing.
+    googlePressed.current = true;
+    setBusy(true); setGoogleOpening(true); setError("");
     try {
+      // With the address and a fresh claim ready behind the screen, the press awaits nothing. A
+      // request in flight is finished first, so two never compete for the one sign-in state.
+      const prepared = googlePress.press() ?? await googlePress.settled();
+      if (prepared) {
+        markGoogleDeparture(subject, input.marketingAllowed);
+        googlePress.leave(prepared);
+        return;
+      }
+      // Something was missing or stale: the press does the work itself, as it always did.
       const callbacks = programmeGoogleCallbacks(locale);
       const ready = await readyForRegistration();
-      if (!ready) { setBusy(false); return; }
+      if (!ready) { googlePress.release(); restoreGoogleButton(); return; }
       // Google leaves the page before the claim is redeemed, so it must have most of its time left.
       if (!ready.accountFirst) await ensureClaim(subject, ready, PENDING_CLAIM_FRESH_FOR_GOOGLE_MS);
-      writeProgrammeOAuthClaimMarker(window.sessionStorage, subject);
-      rememberGoogleMarketingChoice(window.sessionStorage, subject.id, input.marketingAllowed);
+      markGoogleDeparture(subject, input.marketingAllowed);
       const result = await authClient.signIn.social({
         provider: "google",
         ...callbacks,
@@ -648,11 +745,13 @@ export function ProgramAiExperience({
         fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) },
       });
       if (result.error) throw new Error("GOOGLE_ACCOUNT_ACCESS_NOT_STARTED");
+      googlePress.leave();
     } catch {
       clearProgrammeOAuthClaimMarker(window.sessionStorage);
       clearGoogleMarketingChoice(window.sessionStorage);
       setError(programmeText(locale, "Google account access failed"));
-      setBusy(false);
+      googlePress.release();
+      restoreGoogleButton();
     }
   }
 
@@ -767,7 +866,7 @@ export function ProgramAiExperience({
   if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} locale={locale} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
   // A Google sign-up that began on Log in is being finished: nothing to press on this screen.
   if (phase === "registration" && signedIn && local.accountFirst && !googleLinkRecovery && !error) return renderPhase(<ProgrammeLoadingScreen locale={locale} />);
-  if (phase === "registration" && (local.candidate || local.accountFirst || local.answers?.length)) return renderPhase(<StartingPointReadyScreen answers={local.answers ?? []} authenticated={signedIn} fallbackFocus={local.candidate?.desiredChange ?? null} busy={busy} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
+  if (phase === "registration" && (local.candidate || local.accountFirst || local.answers?.length)) return renderPhase(<StartingPointReadyScreen answers={local.answers ?? []} authenticated={signedIn} fallbackFocus={local.candidate?.desiredChange ?? null} busy={busy} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} googleOpening={googleOpening} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
   if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={startMissionOneForAccount} onReview={openReview} programmePath={programmePath} unconfirmedEmail={session.user.emailVerified ? null : session.user.email} userId={session.user.id} />);
