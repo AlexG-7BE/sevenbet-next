@@ -754,6 +754,12 @@ and the middleware pass-through.
   `vercel logs --environment production --no-branch --json --query social_hit`
   and prints hits by network × campaign:content × country, people only by
   default. `since` is a UTC date, an ISO time or `24h`/`7d` (default `24h`).
+  `vercel logs` (CLI 55) returns at most 50 rows per call whatever `-n` asks
+  for, so the script reads 6-hour windows and halves any window that comes
+  back with 50 or more rows, down to 2 minutes (it warns on stderr if even
+  that is full); each call has a 90-second timeout and is retried. Counts
+  taken with the earlier script between about 7 and 11 October 2026 were
+  capped at 50 hits per run and are too low.
 - Production runtime logs are readable about 30 days back on this project (3
   Oct 2026: entries 29 days old returned, none at 34 days; Vercel documents 1
   day for Pro without Observability Plus, so treat 30 days as observed, not
