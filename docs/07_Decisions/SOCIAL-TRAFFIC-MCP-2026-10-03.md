@@ -2,7 +2,9 @@
 
 **Status:** ACCEPTED — ships with the PR that adds this record. It is live only
 after that PR is merged and deployed; [CURRENT_STATE](../CURRENT_STATE.md)
-records it as live only once observed.
+records it as live only once observed. Amended on 12 October 2026: the report
+also counts Programme starts and first-step completions (see
+[the amendment](#amendment--programme-starts-per-source-and-post-12-october-2026)).
 
 **Decision authority:** explicit Founder instruction in chat, 3 October 2026:
 "Дать агентам доступ к аналитике сайта: визиты и клики в казино по каждой
@@ -51,7 +53,9 @@ who allow analytics cookies.
   `learn_apply`; it accepts `social_traffic` in the listed surface so its
   fail-closed discovery check keeps passing. Nothing from `social_traffic`
   reaches the OpenAI session (RFC-053 §4). Programme, Help, pause and
-  vulnerability data are not read.
+  vulnerability data are not read. (Since the 12 October 2026 amendment below,
+  two aggregate Programme counters are read; Help, pause and vulnerability
+  data are still not read.)
 
 ## RFC-046 boundary, stated precisely
 
@@ -74,6 +78,58 @@ the tool in a PR, or disable the whole endpoint with `LEARN_MCP_ENABLED`
   address in each server instance, shared by every tool and by the client's own
   connect and list calls) is unchanged. Several agents starting at the same moment from one address can
   hit it and receive HTTP 429; they should retry later.
+
+## Amendment — Programme starts per source and post (12 October 2026)
+
+**Decision authority:** explicit Founder approval in chat, 12 October 2026
+("да, делай"), for this scope: the report says how many of the visitors a
+social source, campaign or post brought started the Programme and how many
+completed its first step.
+
+**Previous boundary.** This record and RFC-046 §15 said the tool reads and
+returns no Programme value. The Founder approval supersedes that for two
+aggregate counters and nothing else.
+
+- **Added output.** Each row gains `programmeStarts`, `stepOneCompletions` and
+  `programmeStartCountries` (at most three `{ countryCode, starts }`);
+  `totals` and `site` gain the two counters.
+- **Source.** The `programme_started` observations and the
+  `programme_step_completed` observations of the first step (Mission 01) that
+  RFC-046 §5–§6 already record for visitors who allowed analytics cookies;
+  Production human traffic only; `occurredAt` in the range. No new tracking
+  and no new column, table, index or migration.
+- **Once per visitor.** One person's start can be observed while anonymous and
+  again with the account. Both rows carry the same browser analytics ID, so a
+  counter counts an analytics ID once per range and the earliest observation
+  decides the credit.
+- **Attribution.** These observations carry no session. An event is credited
+  to the same analytics ID's most recent consented visit that began at or
+  before the event, at most 30 days before it, and has a social touch by this
+  record's rule (a UTM tag or a social-network referrer); it counts in that
+  visit's row and country. An event with no such visit counts only in the
+  site-wide totals.
+- **Purpose limitation kept.** Aggregate, read-only measurement. It changes
+  nothing a visitor sees, and no page, offer, ranking or route reads these
+  numbers. RFC-046 §6 allows aggregate product analysis of Programme
+  observations and forbids using them to select, rank, time or personalise a
+  casino, offer, bonus, affiliate link or advertisement for an individual;
+  that prohibition is unchanged. Programme answers, Help, pause and
+  vulnerability data are not read.
+- **Counts only, still.** The analytics ID is read only inside the store to
+  match an event to a visit. No anonymous, session or user ID, and no time of
+  an individual event, leaves the server.
+- **Consequences.** A row can show a small number with a country (for example
+  one start from Sweden for one post); the report already shows visit counts
+  at that grain. A count is per browser, so a person who starts on two
+  devices counts twice.
+- **Rollback.** Revert the PR that adds this amendment; the report returns to
+  visits and partner clicks. The wider rollbacks above still apply.
+
+Evidence: the Programme cases in `tests/social-traffic.test.ts` (latest social
+visit, 30-day window, no social visit, one count per visitor, no identifier in
+the output, only the Learn MCP tool imports the report) and in
+`tests/social-traffic-postgres.test.ts` (Production human filter and both
+reads on PostgreSQL).
 
 ## Evidence
 

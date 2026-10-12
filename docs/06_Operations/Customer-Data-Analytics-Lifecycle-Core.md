@@ -433,7 +433,9 @@ RFC-046 §15). The one access path outside the staff session: the read-only
 `Authorization: Bearer <LEARN_MCP_SERVICE_TOKEN>`, responses
 `private, no-store`). It serves the Founder's Claude SMM agents, which reach
 the endpoint through the existing `b4gamble-learn` Claude Code connection.
-Code: `lib/analytics/social-traffic.server.ts`.
+Code: `lib/analytics/social-traffic.server.ts`. Since the Founder approval of
+12 October 2026 it also counts Programme starts and first-step completions
+per row (amendment in the decision record and RFC-046 §15).
 
 ```text
 social_traffic {
@@ -446,14 +448,18 @@ social_traffic {
 }
 → {
     generatedAt, range: { from, to, days }, groupBy, filter: { utmSource },
-    totals: { rows, sessions, outboundClicks, partnerClicks },        // every matching row
-    site:   { sessions, outboundClicks, partnerClicks, outboundClicksWithoutConsent },
+    totals: { rows, sessions, outboundClicks, partnerClicks,          // every matching row
+              programmeStarts, stepOneCompletions },
+    site:   { sessions, outboundClicks, partnerClicks, outboundClicksWithoutConsent,
+              programmeStarts, stepOneCompletions },                   // with or without a social visit
     rows: [{
       channel: "utm" | "social_referrer",
       utmSource, utmCampaign, utmContent,                              // lower-cased; null when absent or grouped out
       referrerNetwork: "instagram" | "threads" | "x" | "facebook" | "youtube" | "pinterest" | "tiktok" | null,
       sessions, outboundClicks, partnerClicks,
-      topCountries: [{ countryCode, sessions }]                        // at most 5
+      programmeStarts, stepOneCompletions,
+      topCountries: [{ countryCode, sessions }],                       // at most 5
+      programmeStartCountries: [{ countryCode, starts }]               // at most 3
     }],
     omittedRows, notes
   }
@@ -473,16 +479,48 @@ Definitions (same filters as the fixed dashboards):
   the consented session they belong to; `partnerClicks` is the `SUCCEEDED`
   subset. A click in range whose session began before the range still counts,
   so a row may show clicks with zero sessions.
+- **programmeStarts / stepOneCompletions** — `PRODUCTION` + `HUMAN`
+  `AnalyticsEvent` rows of type `PROGRAMME_STARTED`, and of type
+  `PROGRAMME_STEP_COMPLETED` with `programmeStep = 1` (Mission 01, the first
+  step of the journey), whose `occurredAt` is in the range. These rows exist
+  only for visitors who allowed analytics cookies; a first-step completion
+  exists once the step is saved to an account.
+  - *Once per visitor.* A start can be observed twice for one person, while
+    anonymous (`programme:anonymous:<token>:started`) and again with the
+    account (`programme:<enrolment>:started`). Both rows carry the same
+    `anonymousId`, so each counter counts an `anonymousId` once per range and
+    the earliest observation in the range decides the credit. A row without
+    an `anonymousId` can only be an enrolment observation, which exists once
+    per enrolment; it is counted as it is.
+  - *Attribution.* These rows carry no `analyticsSessionId`. An event is
+    credited to the same `anonymousId`'s most recent `PRODUCTION` + `HUMAN`
+    `AnalyticsSession` that began at or before the event's `occurredAt`, at
+    most 30 days before it, and has a social touch by the rule above (a UTM
+    tag or a social-network referrer). It counts in that session's row;
+    `programmeStartCountries` holds that session's `countryCode`. A later
+    direct or search visit does not take the credit away. Like a click, an
+    event in range whose session began before the range still counts, so a
+    row may show a start with zero sessions.
+  - *No social visit.* An event with no such session counts only in
+    `site.programmeStarts` / `site.stepOneCompletions`.
 - **site** — all consented sessions in the range, all partner-button attempts
-  (with or without analytics consent), their `SUCCEEDED` subset, and the
-  attempts without an analytics session, which no post can be credited with.
+  (with or without analytics consent), their `SUCCEEDED` subset, the attempts
+  without an analytics session, which no post can be credited with, and every
+  counted Programme start and first-step completion.
+
+The Programme counters are aggregate, read-only measurement (RFC-046 §6
+"aggregate product analysis"). They change nothing a visitor sees, and no
+page, offer, ranking or route reads them: only the Learn MCP tool imports the
+report.
 
 Only counts, lower-cased UTM values, network names and two-letter country
 codes leave the server: no anonymous/session/user/click ID, IP, email, landing
-path, referrer host or device. The tool never writes. Errors:
+path, referrer host or device. The `anonymousId` is read only inside the store
+to match a Programme event to a session. The tool never writes. Errors:
 `INVALID_INPUT` and `RANGE_TOO_LONG` (not retryable), `RESULT_TOO_LARGE` (more
-than 20,000 raw session groups or 50,000 attributed clicks; ask for a shorter
-range or one source) and `TRAFFIC_UNAVAILABLE` (database read failed;
+than 20,000 raw session groups, 50,000 attributed clicks, 10,000 Programme
+observations or 50,000 sessions of their visitors; ask for a shorter range or
+one source) and `TRAFFIC_UNAVAILABLE` (database read failed;
 retryable). The Learn MCP rate limit applies: 20 authenticated requests per
 10 minutes per client address in each server instance, shared with the Learn
 tools.
