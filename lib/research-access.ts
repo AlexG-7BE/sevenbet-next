@@ -68,3 +68,41 @@ export function researchLinksAreNew(openedAt: string | null | undefined, now: nu
   if (!openedAt || !Number.isFinite(opened) || opened > now) return false;
   return now - opened < RESEARCH_NEW_MARK_DAYS * 24 * 60 * 60 * 1000;
 }
+
+/**
+ * A declared pause keeps the door shut (Founder decision, 12 October 2026). The page
+ * /pause-plan writes the last day of a Spelpaus or ROFUS break into a plain cookie; while that
+ * day has not passed, the menu shows no research links even when the lesson flag is set, and it
+ * opens by itself the day after. Only the menu door reads it: nothing that selects, ranks or
+ * routes an offer does, and the research pages stay public.
+ */
+export const PAUSE_UNTIL_COOKIE = "b4g_pause_until";
+
+/** The pause's last day as YYYY-MM-DD, or null when the cookie is absent or malformed. */
+export function pauseUntil(cookieHeader: string | null | undefined): string | null {
+  if (!cookieHeader) return null;
+  for (const part of cookieHeader.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator < 0) continue;
+    if (part.slice(0, separator).trim() !== PAUSE_UNTIL_COOKIE) continue;
+    const value = part.slice(separator + 1).trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+  }
+  return null;
+}
+
+function localIsoDate(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** True through the pause's last day; calendar days compare as YYYY-MM-DD strings. */
+export function pauseActive(cookieHeader: string | null | undefined, today: string = localIsoDate(new Date())) {
+  const until = pauseUntil(cookieHeader);
+  return until !== null && today <= until;
+}
+
+/** What the menu door reads: the lesson is finished and no declared pause is running. */
+export function researchDoorOpen(cookieHeader: string | null | undefined, today?: string) {
+  return researchAccessOpen(cookieHeader) && !pauseActive(cookieHeader, today);
+}
