@@ -8,6 +8,7 @@ import {
   hasProgrammeAccessAuthority,
   loadProgrammeSubjectContent,
   mergeProgrammeSubjectContent,
+  readProgrammeAccessContinuation,
   writeProgrammeAccessContinuation,
   writeProgrammeOAuthClaimMarker,
   type ProgrammeLocalSubject,
@@ -64,6 +65,16 @@ export async function affirmAnonymousProgrammeAccess(
 }
 
 /**
+ * The tab's anonymous journey, when it already holds an unexpired access proof.
+ * Nothing is created or affirmed here: work behind a screen may use a proof the
+ * person already gave, and never asks for one on their behalf.
+ */
+export function journeyWithAccessProof(storage: AccessStorage): ProgrammeLocalSubject | null {
+  const proof = readProgrammeAccessContinuation(storage);
+  return proof ? { kind: "journey", id: proof.journeyId } : null;
+}
+
+/**
  * A signed-in account that already affirmed access asks for the proof its new
  * journey needs. Nothing is affirmed again.
  */
@@ -112,6 +123,18 @@ export function tabProgrammeProgress(storage: AccessStorage, journey: ProgrammeL
 export function noteClaimMade(storage: AccessStorage, journey: ProgrammeLocalSubject, now = Date.now()) {
   const state = loadProgrammeSubjectContent<TabProgrammeState>(storage, journey).programAi;
   if (state) mergeProgrammeSubjectContent(storage, journey, { programAi: { ...state, claimReadyAt: now } });
+}
+
+/**
+ * Forgets when the claim was made, right before it is made again. The server
+ * drops the earlier claim as soon as a new one is started, so if the new one
+ * fails half-way nothing must still count as ready: the next press makes it.
+ */
+export function forgetClaimMade(storage: AccessStorage, journey: ProgrammeLocalSubject) {
+  const state = loadProgrammeSubjectContent<TabProgrammeState>(storage, journey).programAi;
+  if (!state || !("claimReadyAt" in state)) return;
+  const { claimReadyAt: _earlier, ...rest } = state;
+  mergeProgrammeSubjectContent(storage, journey, { programAi: rest });
 }
 
 /**

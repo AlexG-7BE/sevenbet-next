@@ -125,6 +125,8 @@ Not changed: what the server stores. The Starting Point is saved once, when an a
 
 This was first put to the Founder as a change to an RFC-022 rule. On reading the server it is not one: RFC-022 fixes when the Starting Point is saved (once, at the claim's redemption), not when the claim is created. The earlier timing was the client's own, pinned by one browser test.
 
+**Extended on 12 October 2026** by [PROGRAMME-INSTANT-GOOGLE-PRESS-2026-10-12](PROGRAMME-INSTANT-GOOGLE-PRESS-2026-10-12.md): a claim made by a press is remembered as well, the claim is renewed behind the screen while the Google button is on it, and the Google address is prepared there too.
+
 ### Part 6 — Log in carries what the tab already holds (implemented)
 
 **Why.** Part 1 sent a person who had already answered back from `/login` to the Programme save step, where the same Google or email button had to be pressed a second time. The Founder met it on production and rejected it.

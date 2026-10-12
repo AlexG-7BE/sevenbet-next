@@ -70,6 +70,53 @@ plus fix the connection drops themselves).
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+## A press on Google leaves at once — in review
+
+**Founder choice, 12 October 2026** ("Мгновенная кнопка Google"). Decision
+record:
+[PROGRAMME-INSTANT-GOOGLE-PRESS-2026-10-12](07_Decisions/PROGRAMME-INSTANT-GOOGLE-PRESS-2026-10-12.md).
+Not on Production yet, and not yet walked with real Google.
+
+**DETECTED before the change (Production request log, 12 October 2026):**
+every press on "Continue with Google" sent `starting-point`, `claim` and
+`sign-in/social`, 0.4–0.6 s apart, before the browser left for Google. Three
+presses within 20 seconds each repeated the two claim requests.
+
+- **Prepared behind the registration screen.** For a person who can press the
+  Google button and has a Starting Point, the client sends the same sign-in
+  request with `disableRedirect: true` and keeps the returned Google address
+  in memory. Nothing is sent to Google before the press.
+- **The press leaves at once.** With a prepared address and a fresh claim it
+  writes the claim marker and the remembered email opt-in, then assigns the
+  location; no request is awaited. Anything missing or stale falls back to
+  the earlier path, unchanged.
+- **Freshness.** Better Auth 1.7.1 keeps the sign-in `state` cookie for 5
+  minutes. A prepared address is used for 1 minute at most and renewed after
+  45 seconds, so at least 4 minutes remain at Google. The claim is renewed
+  after 4 minutes; a Google press uses one made up to 5 minutes ago, so at
+  least 25 of the server's 30 minutes remain for the return, as before.
+- **Every claim is remembered.** A claim a press had to make is stored with
+  its time, so the next press reuses it; a reloaded screen makes a missing
+  claim behind itself. A claim being made again is not counted as ready.
+- **No work in a hidden tab.** No timer runs there; a tab shown again asks
+  for a new address. Preparation pauses during email sign-up or saving, rests
+  30 seconds after a failure, stops on a screen untouched for 15 minutes and
+  when the screen is left.
+- **The button answers at once.** It is disabled and reads "Opening Google…";
+  a second press does nothing; a failure restores it with "Google account
+  access failed".
+- **Log in.** The same for a tab that already holds the access proof. Nothing
+  is affirmed behind the screen; for anyone else the press affirms and starts
+  Google, as before.
+- **Server.** The sign-in allow-list accepts one more key, `disableRedirect`,
+  only as `true`. Nothing else in the route changed. No table, column or enum
+  changed; nothing new is tracked.
+- **Cost.** One short-lived sign-in state row per preparation (10 minutes, no
+  personal data) and two claim requests per renewal, also for people who
+  never press Google.
+- **Not run in CI:** the four browser tests that need the Google button
+  (`EXPECT_GOOGLE_AUTH=true`), like the file's other Google tests.
+
 ## Home and Learn keep their stylesheet after a client transition — in review
 
 **Founder approval, 11 October 2026** ("Да, делай"), after the defect was found
@@ -284,7 +331,9 @@ record:
   or email does not wait for it. Nothing personal is stored earlier: the
   Starting Point is still saved once, when an account redeems the claim. A
   claim is reused only while fresh (20 minutes for email, 5 for Google) and
-  made again if it lapsed.
+  made again if it lapsed. Since the 12 October change above, a claim made by
+  a press is remembered too, and the claim is renewed behind the screen while
+  the Google button is on it.
 - **"Something else" opens one short optional note** (up to 280 characters),
   sent with the answers under the same consent. There is no voice.
 - **An account that has not answered opens on the answers**, with a quiet

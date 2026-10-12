@@ -57,12 +57,17 @@ const GOOGLE_SIGN_IN_KEYS = new Set([
   "callbackURL",
   "errorCallbackURL",
   "requestSignUp",
+  // Founder decision, 12 Oct 2026: the Google address is asked for before the press, so the
+  // press leaves at once. It is the same request, answered without a redirect header; it adds
+  // nothing to what Google or the account receives.
+  "disableRedirect",
 ]);
 
 export function isAllowedGoogleSignInRequest(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const body = value as Record<string, unknown>;
   if (Object.keys(body).some((key) => !GOOGLE_SIGN_IN_KEYS.has(key))) return false;
+  if (body.disableRedirect !== undefined && body.disableRedirect !== true) return false;
   if (body.provider !== "google"
     || !isAllowedCallbackPair(body.callbackURL, body.errorCallbackURL, "sign-in")
     || typeof body.requestSignUp !== "boolean") return false;
