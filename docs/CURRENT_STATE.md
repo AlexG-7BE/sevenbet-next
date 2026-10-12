@@ -12,6 +12,64 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## A failed Programme request repeats itself once — in review
+
+**Founder choice, 12 October 2026** ("Повтор вместо ошибки": if the database
+did not answer, the action repeats by itself and the person sees no error;
+plus fix the connection drops themselves).
+
+- **Evidence.** `DETECTED`, Production log, 12 October 2026, the Founder's own
+  walk through the Programme: `POST /api/program/program-ai/missions/2/actions`
+  arrived at 11:03:08.692 UTC and answered 500. Its log holds
+  `prisma_pg_connect_retry`, then `Connection terminated due to connection
+  timeout` at 11:03:15.020 (cause: `Connection terminated unexpectedly`): the
+  session lookup waited 3 s for a database connection that did not open,
+  200 ms, then 3 s for the repeat, which did not open either — 6.3 s in all.
+  The screen said "The action could not be saved"; the same press at 11:03:17
+  was saved.
+- **The Programme client (browser).** A request that fails on the network or
+  is answered 5xx is sent once more after 600 ms
+  (`fetchProgrammeWithRetry`, `lib/programme/request-retry.ts`). The screen
+  stays busy over both attempts and shows its existing error text only when
+  the repeat fails too; there is no new wording. Answers below 500 (refused,
+  invalid, rate-limited) are final. Used by `programAiRequest`
+  (`ProgramAiExperience.tsx`), the Mission screen's `request`
+  (`ProgramAiMissionExperience.tsx`), the Review's `generateReview` and the
+  access affirmation (`lib/programme/access-client.ts`).
+- **Only requests the server answers the same way twice are repeated:**
+  reads; a Mission action and a Mission completion (one serializable
+  transaction; an action already recorded or a Mission already complete is
+  answered with the stored result and 0 XP; XP, progress events and active
+  days are written under fixed keys with duplicates skipped — RFC-025: "a
+  request retry cannot award XP again"); Mission guidance and Review
+  generation (they store nothing; a repeat can spend one more call from the
+  person's AI allowance); the consent to process the answers, the Starting
+  Point confirmation and the return from the support-first screen (each sets
+  one state); redeeming a claim (a claim already consumed by the same account
+  is answered with its plan); the 18+ / Terms / Privacy affirmation (recorded
+  once).
+- **Sent once, as before:** `program-ai/session` (every call creates a new
+  anonymous session), `program-ai/turn` (every call reserves one of the
+  session's three AI calls) and `program-ai/claim` (refused once a claim
+  exists; the client already makes a new claim when redeeming fails). The
+  plan and access reads that `ProgramAiExperience.tsx` makes with a plain
+  `fetch` (opening the Programme as an account) are not switched yet, to keep
+  this change apart from the Google sign-in work in the same file; the unused
+  legacy client `ActiveControlProgramme.tsx` is untouched.
+- **The database connection (server).** See the database driver section
+  below: a connection still unopened after 1 s gets a second one opened
+  beside it.
+- **Tests.** `tests/programme-request-retry.test.ts` (in `ci:structural`):
+  which requests are repeated and which are not, one repeat only, the pause,
+  no repeat below 500, and the server rules the repeat relies on.
+  `tests/programme-request-retry-browser.spec.ts` (in `ci:browser`, Programme
+  config): a Mission action answered 500 once is saved by the repeat with the
+  button busy and no error on screen; two failures show the usual error; a
+  refusal is not sent again. `tests/reconnecting-pg-pool.test.ts` holds the
+  connection scenarios.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## A press on Google leaves at once — in review
 
 **Founder choice, 12 October 2026** ("Мгновенная кнопка Google"). Decision
@@ -638,6 +696,32 @@ v1 (12 September 2026); its orphaned `BonusCalculator` is replaced by
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+## Pause plan page — in review
+
+**Founder decisions, 12 October 2026 (growth strategy, zero advertising budget):**
+the spearhead is a free ten-day plan beside the national self-exclusion pause,
+«10 dagar. 10 steg.» in Sweden (Spelpaus added a 10-day period in July 2026) and
+«Dagen efter ROFUS. 10 trin.» in Denmark, launched together. Branch
+`feat/sv-10-dagar` adds `/{sv,da,en}/pause-plan`: a tool that takes the day the
+pause started and its period (Spelpaus 10 days, 1, 3, 6 months, until further
+notice; ROFUS 24 hours, 1, 3, 6 months, permanent) and shows the pause's last
+day, the day after and the ten plan days with dates; the ten steps in journey
+order with one move each; a "day 11" block with the main phrase and the
+Programme start link; an FAQ with FAQPage structured data; the national
+helplines (Stödlinjen, StopSpillet). Other published languages read the
+English page under `noindex`. The page never links to a casino.
+
+**A declared pause keeps the research door shut.** "Show my plan" writes the
+pause's last day into the plain cookie `b4g_pause_until`; `researchDoorOpen`
+in `lib/research-access.ts` (lesson flag and no running pause) is what the
+public and Programme layouts and the client door read, so no research link
+appears for that browser until the day after the pause, even when the lesson is
+complete. The lesson flag, the Programme answers and every offer, ranking and
+`/r/` route are untouched; research pages stay public. Pure date logic:
+`lib/tools/pause-plan.ts`. Tests: `tests/pause-plan.test.ts` (`pause-plan:test`).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Google Analytics 4 for every visitor
 
 **Founder instructions, 4 October 2026** (RFC-046 §16): the Google tag for
@@ -817,7 +901,52 @@ Decimal, Date, JSON). Details and rollback:
 [Environment and Secrets — Runtime database pool](06_Operations/Environment-and-Secrets.md#runtime-database-pool).
 After deploy, recount P2024/P1001 in `vercel logs` for 48 h.
 
-**LIVE since 3 October 2026, 06:40 UTC** (#448, Production `dpl_6LchGPbK3eKH6vvYePNBVg2m6FRo`). The 3 s connect bound with a retry for stalled opens is **PROPOSED — NOT YET LIVE** until merged and deployed.
+**LIVE since 3 October 2026, 06:40 UTC** (#448, Production `dpl_6LchGPbK3eKH6vvYePNBVg2m6FRo`). The 3 s connect bound with a retry for stalled opens (commit `26aa17a3`, 3 October) is live too: **DETECTED** in the Production log of 12 October 2026 (`prisma_pg_connect_retry` lines, and the 3 s + 200 ms + 3 s request below).
+
+**Follow-up, 12 October 2026 — a second connection beside a slow one** (Founder
+choice "Повтор вместо ошибки"; see the section at the top of this document).
+
+- **DETECTED, Production log.** The Programme action of 11:03:08.692 UTC
+  answered 500 after 6.3 s: its first connection did not open within 3 s
+  (`pg` then ends it — "Connection terminated due to connection timeout",
+  cause "Connection terminated unexpectedly"), the pool logged
+  `prisma_pg_connect_retry`, waited 200 ms and opened once more, and that
+  open did not arrive within 3 s either. So the "open once more" rule ran and
+  was not enough. Sampled hours (08:00–09:00 UTC on 4, 6, 8, 10, 11 and 12
+  October) hold 8–15 requests an hour with a `prisma_pg_connect_retry` line —
+  each waited out a 3 s stalled open — and in 1–3 of them an hour the repeat
+  failed as well; those were page reads that still answered 200 through
+  their fallbacks.
+- **INFERRED.** For most stalled opens the repeat 3.2 s later opens at once,
+  so the stall belongs to one connection attempt and not to the whole pooled
+  endpoint. **UNKNOWN:** why an attempt stalls. From US East the pooled host
+  resolves to changing sets of three out of at least seven addresses; a TCP
+  and TLS handshake to each of the seven took about 0.5 s from the Founder's
+  workstation, 56 of 56, so nothing was caught at that level. The login step
+  behind the handshake was not probed (it needs the Production credentials).
+- **The change.** `ReconnectingPool` opens a second connection when the first
+  is still unopened after 1 s (`CONNECT_SECOND_OPEN_AFTER_MS`); the first to
+  open serves the request and a later one stays in the pool as an idle
+  client. The first open keeps its full 3 s and the repeat after a failed
+  open stays, so a request gets up to three opens (0 s, 1 s, 3.2 s) and still
+  fails no later than about 6 s; the pool size (3), the 3 s connect bound and
+  the 8 s / 25 s public read budgets are unchanged. The second open is not
+  made when it would take the pool's last free slot, so local and CI
+  one-connection databases and a busy instance behave as before. Opening a
+  connection sends no statement, so no query can run twice. A new log line,
+  `prisma_pg_connect_second_open`, counts the opens that were still pending
+  at 1 s.
+- **What a visitor gets.** A stalled open costs about 1 s instead of 3.2 s
+  when the second open arrives, and a request fails only when all three opens
+  stall. **UNKNOWN** whether the second open would have arrived for the
+  11:03:08 request; the browser's own repeat covers that case.
+- **After deploy.** Count `prisma_pg_connect_second_open`,
+  `prisma_pg_connect_retry` and "Connection terminated due to connection
+  timeout" in `vercel logs` for 48 h against the numbers above. If stalled
+  opens stay this frequent, the address-level cause is a question for Prisma
+  support.
+
+The follow-up is **PROPOSED — NOT YET LIVE** until merged and deployed.
 
 ## Short social links and the `social_hit` count — in review
 

@@ -33,6 +33,7 @@ const requiredTests = [
   "tests/public-offer-service.test.ts",
   "tests/public-shell.test.ts",
   "tests/programme-access-lifecycle.test.ts",
+  "tests/programme-request-retry.test.ts",
   "tests/responsible-gambling-protected-help.test.ts",
   "tests/responsible-gambling-safety.test.ts",
   "tests/ten-steps-parity.test.ts",

@@ -69,6 +69,7 @@ import {
   type ProgrammeLocalSubject,
 } from "@/lib/programme/local-subject-storage";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
+import { fetchProgrammeWithRetry } from "@/lib/programme/request-retry";
 import styles from "./ProgramAiExperience.module.css";
 
 const MARKETING_CHOICE_NOT_SAVED = "Your account was created, but your optional email choice could not be saved. No marketing email will be sent.";
@@ -141,7 +142,9 @@ async function programAiRequest<T>(
   subject: ProgrammeLocalSubject,
   init?: RequestInit,
 ) {
-  const response = await fetch(path, {
+  // A request the server treats as safe to repeat is sent once more after a network failure or a
+  // 5xx answer (lib/programme/request-retry.ts); the caller's busy state covers both attempts.
+  const response = await fetchProgrammeWithRetry(path, {
     credentials: "same-origin",
     cache: "no-store",
     ...init,
