@@ -26,6 +26,7 @@ import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@
 import { humanValue } from "@/lib/programme/program-ai/mission-presentation";
 import { researchAccessMission } from "@/lib/programme/program-ai/mission-registry";
 import { programmeHelpPath, programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
+import { fetchProgrammeWithRetry } from "@/lib/programme/request-retry";
 import { RESEARCH_ACCESS_CHANGED_EVENT, RESEARCH_OPENED_AT_STORAGE_KEY } from "@/lib/research-access";
 import styles from "./ProgramAiAuthenticated.module.css";
 
@@ -75,8 +76,10 @@ const localWordingActions = new Set(["build_7_day_goal", "build_boundary_rule", 
 const guidanceBuilderActions = new Set(["build_7_day_goal", "build_boundary_rule", "build_friction_stack", "build_support_card", "rehearse_response"]);
 const correctSequence = ["cue", "early_signal", "urge_builds", "choice_point"];
 
+// A Mission action, its completion and its guidance are safe to send twice, so one failed attempt
+// (network or 5xx) is repeated before the screen says anything (lib/programme/request-retry.ts).
 async function request<T>(path: string, init?: RequestInit) {
-  const response = await fetch(path, { credentials: "same-origin", cache: "no-store", ...init, headers: { ...(init?.body ? { "content-type": "application/json" } : {}), ...init?.headers } });
+  const response = await fetchProgrammeWithRetry(path, { credentials: "same-origin", cache: "no-store", ...init, headers: { ...(init?.body ? { "content-type": "application/json" } : {}), ...init?.headers } });
   const payload = await response.json() as T & { ok?: boolean };
   if (!response.ok || payload.ok === false) throw new Error("PROGRAMME_MISSION_REQUEST_FAILED");
   return payload;

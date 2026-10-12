@@ -177,6 +177,7 @@ export function StartingPointReadyScreen({
   fallbackFocus = null,
   googleLinkRecovery,
   googleAvailable,
+  googleOpening = false,
   busy,
   error,
   onSave,
@@ -193,6 +194,8 @@ export function StartingPointReadyScreen({
   fallbackFocus?: string | null;
   googleLinkRecovery: boolean;
   googleAvailable: boolean;
+  /** A press on Google is leaving the page: the button is off and says so (Founder, 12 Oct 2026). */
+  googleOpening?: boolean;
   busy: boolean;
   error: string;
   onSave: () => void;
@@ -233,7 +236,7 @@ export function StartingPointReadyScreen({
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
           {googleLinkRecovery ? <p>{t("Your confirmed Starting Point stays in this browser while you sign in and link Google securely.")}</p> : null}
           {authenticated && !lines.length ? null : authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{t(busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account")}</button> : <>
-            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle({ marketingAllowed: marketingChoiceShown && marketingAllowed })} type="button"><GoogleIcon />{t("Continue with Google")}</button> : null}
+            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle({ marketingAllowed: marketingChoiceShown && marketingAllowed })} type="button"><GoogleIcon />{t(googleOpening ? "Opening Google…" : "Continue with Google")}</button> : null}
             {googleAvailable && !googleLinkRecovery ? <p className={styles.entryDivider}><span>{t("or")}</span></p> : null}
             <form className={styles.emailForm} data-programme-email-entry="" onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, marketingAllowed: marketingChoiceShown && marketingAllowed }); }}>
               <label><span>{t("Email")}</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>

@@ -113,6 +113,33 @@ async function reachRegistration(page: Page) {
   await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
 }
 
+/** What a press may send: the Programme requests and the sign-in request, in the order sent. */
+function recordPressRequests(page: Page) {
+  const requests: string[] = [];
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (request.method() === "POST" && (path.startsWith("/api/program/program-ai/") || path === "/api/auth/sign-in/social")) requests.push(path);
+  });
+  return requests;
+}
+
+/**
+ * Answers the sign-in request the way the server does: a request that asks for no redirect (the
+ * one made behind the screen) gets the address without one. `address` returns null to refuse.
+ */
+async function installGoogleSignIn(page: Page, address: (prepared: boolean) => string | null) {
+  const bodies: Array<Record<string, unknown>> = [];
+  await page.route("**/api/auth/sign-in/social", (route) => {
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    bodies.push(body);
+    const url = address(body.disableRedirect === true);
+    return url
+      ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ url, redirect: body.disableRedirect !== true }) })
+      : route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ code: "TEST_SIGN_IN_REFUSED" }) });
+  });
+  return bodies;
+}
+
 async function seedOAuthJourney(page: Page, journeyId: string) {
   await page.addInitScript(({ journey, access, startingPoint }) => {
     sessionStorage.setItem("sevenbet.programme.journey.v2", journey);
@@ -220,11 +247,7 @@ test("registration asks the optional email opt-in once, ticked, at the end of th
 
   if (expectGoogle) {
     await optIn.check();
-    await page.route("**/api/auth/sign-in/social", (route) => route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ url: `${baseUrl}/robots.txt`, redirect: true }),
-    }));
+    await installGoogleSignIn(page, () => `${baseUrl}/robots.txt`);
     await page.getByRole("button", { name: /Continue with Google/ }).click();
     await page.waitForURL(/robots\.txt/);
     const carried = await page.evaluate(() => ({
@@ -446,6 +469,166 @@ test("Programme Google stays the account-continuation action beside the email st
   await page.getByRole("button", { name: "Continue with Google" }).click();
   await expect(page.locator('p[role="alert"]')).toContainText("Google account access failed");
   expect(requestSignUp).toBe(true);
+  // A press that could not start Google gives the button back.
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Opening Google…" })).toHaveCount(0);
+});
+
+// Founder decision, 12 Oct 2026 ("Мгновенная кнопка Google"). In the production log of the
+// Founder's own walk every press sent starting-point → claim → sign-in/social, 0.4–0.6 s apart,
+// before Google opened. The address and the claim are now prepared behind the screen.
+test("a press on Google leaves at once with the address and the claim prepared behind the screen", async ({ page }) => {
+  test.skip(!expectGoogle, "Google is intentionally unavailable without complete server credentials");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installAnonymousProgramme(page);
+  const requests = recordPressRequests(page);
+  let proofHeader: string | null = null;
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/auth/sign-in/social") proofHeader = request.headers()["x-sevenbet-programme-access-proof"] ?? null;
+  });
+  // Only a prepared request is answered: a press that asked for anything itself would fail.
+  const signIns = await installGoogleSignIn(page, (prepared) => prepared ? `${baseUrl}/google-prepared` : null);
+  // "Google" takes a moment to answer, so the page is still there right after the press.
+  let opened = 0;
+  await page.route("**/google-prepared", async (route) => {
+    opened += 1;
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    await route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>Google</title><p>Google</p>" });
+  });
+
+  await reachRegistration(page);
+  // Behind the screen, without a press: the claim, and the same sign-in request with the redirect off.
+  await expect.poll(() => requests.filter((path) => path.endsWith("/program-ai/claim")).length).toBe(1);
+  await expect.poll(() => signIns.length).toBeGreaterThanOrEqual(1);
+  await page.waitForTimeout(500);
+  expect(signIns[0]).toEqual({ provider: "google", callbackURL: "/program?auth=google-return", errorCallbackURL: "/program?auth=google-error", requestSignUp: true, disableRedirect: true });
+  expect(proofHeader).toBe("pa1.browser-test.browser-signature");
+  expect(opened, "nothing goes to Google before the press").toBe(0);
+  const sentBeforePress = requests.length;
+  const preparedBeforePress = signIns.length;
+
+  // The button right after the press is looked at from inside the page (Playwright waits for a
+  // navigation that has started before it looks): in the next turn of the event loop the button
+  // is read and pressed a second time.
+  await page.evaluate(() => {
+    const button = Array.from(document.querySelectorAll("button")).find((candidate) => candidate.textContent?.includes("Continue with Google"))!;
+    button.addEventListener("click", () => window.setTimeout(() => {
+      const seen = { disabled: button.disabled, label: button.textContent, path: window.location.pathname };
+      button.click();
+      sessionStorage.setItem("test.google-button-after-press", JSON.stringify(seen));
+    }, 0), { once: true });
+  });
+  await page.getByRole("button", { name: "Continue with Google" }).click({ noWaitAfter: true });
+  await page.waitForURL(/\/google-prepared$/);
+  // The button answered at once: it was off and said where the page was going.
+  const seen = await page.evaluate(() => sessionStorage.getItem("test.google-button-after-press"));
+  expect(JSON.parse(seen ?? "null")).toEqual({ disabled: true, label: "Opening Google…", path: "/program" });
+  // The second press did nothing: Google was opened once.
+  expect(opened).toBe(1);
+  // The press went straight to the prepared address: no Programme request and no sign-in request.
+  expect(requests.slice(sentBeforePress)).toEqual([]);
+  expect(signIns).toHaveLength(preparedBeforePress);
+  // What a press always did right before leaving is still done.
+  const carried = await page.evaluate(() => ({
+    marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
+    choice: sessionStorage.getItem("sevenbet.programme.google-marketing-choice.v1"),
+    journey: sessionStorage.getItem("sevenbet.programme.journey.v2"),
+  }));
+  expect(JSON.parse(carried.marker ?? "null")).toMatchObject({ intent: "PROGRAMME_CLAIM_GOOGLE", journeyId: carried.journey });
+  expect(JSON.parse(carried.choice ?? "null")).toMatchObject({ version: 1, journeyId: carried.journey });
+});
+
+test("a press on Google does the work itself when nothing could be prepared, and reuses the claim made behind the screen", async ({ page }) => {
+  test.skip(!expectGoogle, "Google is intentionally unavailable without complete server credentials");
+  await installAnonymousProgramme(page);
+  const requests = recordPressRequests(page);
+  // The preparation is refused; a press is answered as it always was.
+  const signIns = await installGoogleSignIn(page, (prepared) => prepared ? null : `${baseUrl}/robots.txt`);
+  await reachRegistration(page);
+  await expect.poll(() => requests.filter((path) => path.endsWith("/program-ai/claim")).length).toBe(1);
+  await expect.poll(() => signIns.length).toBeGreaterThanOrEqual(1);
+  await page.waitForTimeout(500);
+  const sentBeforePress = requests.length;
+
+  await page.getByRole("button", { name: "Continue with Google" }).click({ noWaitAfter: true });
+  await page.waitForURL(/robots\.txt/);
+  // One sign-in request, exactly the earlier one, and no second claim.
+  expect(requests.slice(sentBeforePress)).toEqual(["/api/auth/sign-in/social"]);
+  expect(signIns.at(-1)).toEqual({ provider: "google", callbackURL: "/program?auth=google-return", errorCallbackURL: "/program?auth=google-error", requestSignUp: true });
+});
+
+// The Founder pressed Google three times in 20 seconds, coming back with the Back button each
+// time, and every press made the claim again: the claim behind the screen had not been made, and
+// a claim made by a press was not remembered.
+test("back from Google, the next press does not make the claim again", async ({ page }) => {
+  test.skip(!expectGoogle, "Google is intentionally unavailable without complete server credentials");
+  await installAnonymousProgramme(page);
+  // The claim cannot be made behind the screen; the first press has to make it.
+  let claimsWork = false;
+  await page.route("**/api/program/program-ai/claim", (route) => claimsWork
+    ? route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true }) })
+    : route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ ok: false, code: "TEST_CLAIM_NOT_MADE" }) }));
+  const requests = recordPressRequests(page);
+  const signIns = await installGoogleSignIn(page, (prepared) => prepared ? null : `${baseUrl}/robots.txt`);
+  await reachRegistration(page);
+  // Behind the screen the claim is tried by the screen's own preparation and once more, and fails.
+  await expect.poll(() => requests.filter((path) => path.endsWith("/program-ai/claim")).length).toBeGreaterThanOrEqual(2);
+  await expect.poll(() => signIns.length).toBeGreaterThanOrEqual(1);
+  await page.waitForTimeout(500);
+  claimsWork = true;
+
+  const sentBeforeFirstPress = requests.length;
+  await page.getByRole("button", { name: "Continue with Google" }).click({ noWaitAfter: true });
+  await page.waitForURL(/robots\.txt/);
+  expect(requests.slice(sentBeforeFirstPress)).toEqual(["/api/program/program-ai/starting-point", "/api/program/program-ai/claim", "/api/auth/sign-in/social"]);
+
+  const sentBeforeReturn = requests.length;
+  const signInsBeforeReturn = signIns.length;
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
+  // The screen prepares the address again behind itself (refused here); the claim it finds is fresh.
+  await expect.poll(() => signIns.length).toBeGreaterThan(signInsBeforeReturn);
+  await page.waitForTimeout(500);
+  const sentBeforeSecondPress = requests.length;
+  await page.getByRole("button", { name: "Continue with Google" }).click({ noWaitAfter: true });
+  await page.waitForURL(/robots\.txt/);
+  // The claim made a moment earlier is still valid: the press sends the sign-in request only.
+  expect(requests.slice(sentBeforeSecondPress)).toEqual(["/api/auth/sign-in/social"]);
+  expect(requests.slice(sentBeforeReturn).filter((path) => path.startsWith("/api/program/program-ai/")), "no Programme request after coming back").toEqual([]);
+});
+
+// The same reuse for email, which needs no Google: a claim the press had to make is remembered.
+test("a claim a press had to make is remembered, so the next press does not make it again", async ({ page }) => {
+  await installAnonymousProgramme(page);
+  let claimsWork = false;
+  await page.route("**/api/program/program-ai/claim", (route) => claimsWork
+    ? route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true }) })
+    : route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ ok: false, code: "TEST_CLAIM_NOT_MADE" }) }));
+  const requests = recordPressRequests(page);
+  let signUps = 0;
+  await page.route("**/api/auth/sign-up/email", (route) => {
+    signUps += 1;
+    return route.fulfill({ status: 403, contentType: "application/json", body: JSON.stringify({ code: "TEST_SIGNUP_STOP" }) });
+  });
+  await reachRegistration(page);
+  await expect.poll(() => requests.filter((path) => path.endsWith("/program-ai/claim")).length).toBeGreaterThanOrEqual(1);
+  await page.waitForTimeout(500);
+  claimsWork = true;
+
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill("claim-reuse@example.test");
+  await page.getByLabel("Password").fill("test-password-1234");
+  let sentBefore = requests.length;
+  await page.getByRole("button", { name: "Continue with email" }).click();
+  await expect.poll(() => signUps).toBe(1);
+  await expect(page.locator('p[role="alert"]')).toHaveText("Account access failed");
+  expect(requests.slice(sentBefore)).toEqual(["/api/program/program-ai/starting-point", "/api/program/program-ai/claim"]);
+
+  sentBefore = requests.length;
+  await expect(page.getByRole("button", { name: "Continue with email" })).toBeEnabled();
+  await page.getByRole("button", { name: "Continue with email" }).click();
+  await expect.poll(() => signUps).toBe(2);
+  await expect(page.locator('p[role="alert"]')).toHaveText("Account access failed");
+  expect(requests.slice(sentBefore), "the second press makes no claim").toEqual([]);
 });
 
 test("Google Programme, login and recovery controls fit every Founder mobile width", async ({ page }) => {
@@ -502,20 +685,22 @@ test("Google return retries canonical claim redemption and transfers local autho
   await page.route("**/api/program/program-ai/starting-point", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   await page.route("**/api/program/program-ai/claim", (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   let redemptions = 0;
+  // The page repeats a failed redemption once by itself (Founder, 12 Oct 2026), so the error
+  // shows only when the repeat fails too; the person's own press is then the third attempt.
   await page.route("**/api/program/program-ai/claims/redeem", (route) => {
     redemptions += 1;
-    return route.fulfill(redemptions === 1
+    return route.fulfill(redemptions <= 2
       ? { status: 503, contentType: "application/json", body: JSON.stringify({ ok: false, error: "Your progress could not be saved yet" }) }
       : { status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture() }) });
   });
   await open(page, "/program?auth=google-return");
   await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toHaveText("Your progress could not be saved yet");
-  expect(redemptions).toBe(1);
+  expect(redemptions).toBe(2);
   await page.getByRole("button", { name: "Save to my account" }).click();
   await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
   await expect(page.getByRole("heading", { name: /Mission 02/ })).toBeVisible();
-  expect(redemptions).toBe(2);
+  expect(redemptions).toBe(3);
   const transferred = await page.evaluate(({ journey, user }) => ({
     marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
     journeyContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`),
@@ -582,20 +767,23 @@ test("Google on Log in starts at once for a person who already answered, with th
   });
   const visited: string[] = [];
   page.on("framenavigated", (frame) => { if (frame === page.mainFrame()) visited.push(new URL(frame.url()).pathname); });
-  let social: Record<string, unknown> | null = null;
-  await page.route("**/api/auth/sign-in/social", (route) => {
-    social = route.request().postDataJSON() as Record<string, unknown>;
-    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ url: `${baseUrl}/robots.txt`, redirect: true }) });
-  });
+  const signIns = await installGoogleSignIn(page, () => `${baseUrl}/robots.txt`);
 
+  // Founder decision, 12 Oct 2026: this tab already affirmed access in the Programme, so the claim
+  // and the Google address are prepared behind Log in and the press leaves at once.
   await open(page, "/login");
-  await page.getByRole("button", { name: "Continue with Google" }).click();
+  await expect.poll(() => programmeCalls.length).toBe(2);
+  await expect.poll(() => signIns.length).toBeGreaterThanOrEqual(1);
+  await page.waitForTimeout(500);
+  const preparedBeforePress = signIns.length;
+  await page.getByRole("button", { name: "Continue with Google" }).click({ noWaitAfter: true });
   await page.waitForURL(/robots\.txt/);
 
   // One press: Google was started from Log in, and the Programme screen was never shown first.
   expect(visited.filter((path) => path.endsWith("/program"))).toEqual([]);
-  expect(social).toMatchObject({ provider: "google", requestSignUp: true, callbackURL: "/program?auth=google-return" });
-  // The claim was made behind the press, and the journey is marked for the Programme page to redeem.
+  expect(signIns.at(-1)).toMatchObject({ provider: "google", requestSignUp: true, callbackURL: "/program?auth=google-return" });
+  expect(signIns, "the press itself asked for nothing").toHaveLength(preparedBeforePress);
+  // The claim was made once, behind the screen, and the journey is marked for the Programme page to redeem.
   expect(programmeCalls).toEqual(["/api/program/program-ai/starting-point", "/api/program/program-ai/claim"]);
   const carried = await page.evaluate((journey) => ({
     marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),

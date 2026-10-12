@@ -115,3 +115,27 @@ Make `researchNavigationShown` in `lib/research-access.ts` return `true`. The re
 - `tests/program-ai-structural.test.ts` — the completion block: shown by that Mission only, fixed routes, no Programme content, thirteen translations per line, readable targets, reduced motion.
 - `tests/program-ai-browser.spec.ts` — the real flow against PostgreSQL: guide menu before, completion screen, flag, the menu changing on the same page, the mark, the research menu on Home, the dashboard card.
 - `tests/public-shell.test.ts` — the week-long mark and the closed list of files that read the contract.
+
+## Amendment, 12 October 2026 — a declared pause keeps the door shut
+
+**Founder decision (question tool, 12 October 2026, growth strategy):** a visitor
+who names a Spelpaus or ROFUS break on `/pause-plan` sees no offers until the day
+after the pause ends; everyone else keeps the two doors above.
+
+- The page writes the pause's last day (`YYYY-MM-DD`) into the plain cookie
+  `b4g_pause_until`. It names nobody and holds no Programme answer.
+- `researchDoorOpen` in `lib/research-access.ts` is the lesson flag with no
+  running pause. The public layout, the Programme layout and the client door read
+  it; `withResearchAccess` in `lib/programme/http.ts` keeps reading the bare
+  lesson flag, so a lesson finished during a pause still sets the flag and the
+  menu opens by itself the day after.
+- The boundary that does not move still does not move: no offer, rank, partner
+  button or `/r/` route reads either cookie, and the research pages stay public
+  and indexable. A paused visitor who types a research address sees the page.
+- Why it is also the commercial choice: Swedish and Danish licensees may not
+  direct marketing at self-excluded people, and their affiliates act for them. A
+  partner receives a player who came back by their own rules on the day they are
+  allowed to play, not a visitor the operator would have to refuse.
+- Rollback: make `researchDoorOpen` return `researchAccessOpen`; the cookie is
+  then ignored. Evidence: `tests/pause-plan.test.ts`.
+

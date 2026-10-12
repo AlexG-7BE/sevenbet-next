@@ -30,7 +30,9 @@ const DIRECT_HOST = "db.prisma.io";
  * - `pool_timeout` / `connect_timeout` 3 s (5 s until 3 October 2026): one attempt to get or
  *   open a connection. A new connection the pooled endpoint is slow to open is opened once more
  *   (`ReconnectingPool`), so a request waits at most about 6 s — inside the 8 s public read
- *   budget — instead of failing at 5 s. A normal connect from iad1 takes well under a second.
+ *   budget — instead of failing at 5 s. A normal connect from iad1 takes well under a second;
+ *   since 12 October 2026 an open still pending after 1 s gets a second one opened beside it,
+ *   without changing these bounds.
  * - `socket_timeout` 25 s: a half-open socket (P1017-class failure) or a hung
  *   query ends inside the 30 s function limit instead of the platform's 300 s.
  *   10 s cut off the whole-catalogue projection on Production (28 Sep 2026).

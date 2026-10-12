@@ -150,8 +150,8 @@ test("the screen after the answers opens at once and registration waits for the 
   // Every registration action waits for the Starting Point, and support first suppresses it.
   const ready = frontend.slice(frontend.indexOf("async function readyForRegistration"), frontend.indexOf("async function continueAfterSupport"));
   assert.match(ready, /return ready\?\.phase === "registration" \? ready : null;/);
-  for (const handler of ["async function handleEmail", "async function handleGoogle"]) {
-    const body = frontend.slice(frontend.indexOf(handler), frontend.indexOf(handler) + 900);
+  for (const [handler, next] of [["async function handleEmail", "function markGoogleDeparture"], ["async function handleGoogle", "async function startGoogleLink"]]) {
+    const body = frontend.slice(frontend.indexOf(handler), frontend.indexOf(next));
     assert.match(body, /await readyForRegistration\(\)/, handler);
     assert.ok(body.indexOf("readyForRegistration()") < body.indexOf("ensureClaim("), handler);
   }
@@ -166,8 +166,13 @@ test("the pending claim is made behind the screen, reused only while fresh, and 
   assert.match(prepare, /if \(ready\.phase === "registration"\) \{[\s\S]*await prepareClaimForRegistration\(journey, ready\);\s+const claimed: ProgramAiLocalState = \{ \.\.\.ready, claimReadyAt: Date\.now\(\) \};[\s\S]*\} catch \{\s+return ready;\s+\}/);
   // New answers reset the server's state, so an older claim is never carried over.
   assert.match(prepare, /delete ready\.claimReadyAt;/);
-  // A press reuses the claim only while it is fresh; Google gets the shorter window.
-  assert.match(frontend, /if \(!pendingClaimIsFresh\(state\.claimReadyAt, freshForMs\)\) await prepareClaimForRegistration\(journey, state\);/);
+  // A press reuses the claim only while it is fresh; Google gets the shorter window. A claim the
+  // press had to make is remembered (Founder, 12 Oct 2026: three presses each made it again).
+  // The earlier claim's time is forgotten before a new one is started: the server drops the earlier
+  // claim at that moment, so one that fails half-way must not still count as ready.
+  assert.match(frontend, /if \(pendingClaimIsFresh\(rememberedState\(journey\)\?\.claimReadyAt \?\? state\.claimReadyAt, freshForMs\)\) return;\s+forgetClaim\(journey\);\s+await prepareClaimForRegistration\(journey, state\);\s+rememberClaim\(journey\);/);
+  assert.match(frontend, /function forgetClaim\(journey: ProgrammeLocalSubject\) \{\s+forgetClaimMade\(window\.sessionStorage, journey\);/);
+  assert.match(frontend, /function rememberClaim\(journey: ProgrammeLocalSubject\) \{\s+const at = Date\.now\(\);\s+noteClaimMade\(window\.sessionStorage, journey, at\);\s+setLocal\(\(current\) => current\.candidate \? \{ \.\.\.current, claimReadyAt: at \} : current\);/);
   assert.match(frontend, /await ensureClaim\(subject, ready, PENDING_CLAIM_FRESH_FOR_GOOGLE_MS\);/);
   assert.match(frontend, /await ensureClaim\(subject, ready, PENDING_CLAIM_FRESH_FOR_EMAIL_MS\);/);
   // A lapsed or reset claim is made again and redeemed once more; a manual retry always makes a new one.
@@ -175,6 +180,39 @@ test("the pending claim is made behind the screen, reused only while fresh, and 
   assert.match(frontend, /await saveForAccount\(userId, journey, readyForRegistration\(\), true\);/);
   // The claim stores nothing personal: the server keeps the confirmed content in the browser session.
   assert.match(service, /confirmedContentStorage: "browser_session"/);
+});
+
+test("a press on Google leaves at once with what was prepared behind the screen, and otherwise does what it always did", () => {
+  // Founder decision, 12 Oct 2026 ("Мгновенная кнопка Google"). In production every press sent
+  // starting-point → claim → sign-in/social before Google opened.
+  const press = frontend.slice(frontend.indexOf("async function handleGoogle"), frontend.indexOf("async function startGoogleLink"));
+  // The button answers before anything else happens, and a second press does nothing.
+  assert.match(press, /if \(!subject \|\| subject\.kind !== "journey" \|\| googlePressed\.current\) return;/);
+  assert.ok(press.indexOf("setGoogleOpening(true)") < press.indexOf("googlePress.press()"));
+  assert.match(finalPresentation, /disabled=\{busy\} onClick=\{\(\) => onGoogle\(\{ marketingAllowed: marketingChoiceShown && marketingAllowed \}\)\} type="button"><GoogleIcon \/>\{t\(googleOpening \? "Opening Google…" : "Continue with Google"\)\}/);
+  // The prepared address is taken without waiting; only work already in flight is waited for.
+  assert.match(press, /const prepared = googlePress\.press\(\) \?\? await googlePress\.settled\(\);\s+if \(prepared\) \{\s+markGoogleDeparture\(subject, input\.marketingAllowed\);\s+googlePress\.leave\(prepared\);\s+return;\s+\}/);
+  const instant = press.slice(0, press.indexOf("// Something was missing or stale"));
+  assert.doesNotMatch(instant, /fetch\(|programAiRequest|authClient|readyForRegistration|ensureClaim/, "the prepared press sends nothing");
+  // Leaving does what the press always did right before it: the claim marker and the opt-in.
+  assert.match(frontend, /function markGoogleDeparture\(journey: ProgrammeLocalSubject, marketingAllowed: boolean\) \{\s+writeProgrammeOAuthClaimMarker\(window\.sessionStorage, journey\);\s+rememberGoogleMarketingChoice\(window\.sessionStorage, journey\.id, marketingAllowed\);/);
+  // The fallback is the earlier path, unchanged in what it sends.
+  const fallback = press.slice(press.indexOf("// Something was missing or stale"));
+  assert.match(fallback, /markGoogleDeparture\(subject, input\.marketingAllowed\);\s+const result = await authClient\.signIn\.social\(\{\s+provider: "google",\s+\.\.\.callbacks,\s+requestSignUp: true,\s+fetchOptions: \{ headers: programmeAuthAccessHeaders\(window\.sessionStorage, subject\) \},\s+\}\);/);
+  assert.doesNotMatch(fallback, /disableRedirect/);
+  // A failure restores the button and shows the existing text.
+  assert.match(fallback, /setError\(programmeText\(locale, "Google account access failed"\)\);\s+googlePress\.release\(\);\s+restoreGoogleButton\(\);/);
+  // Behind the screen: the same request with the redirect off, only for a person who can press
+  // the button, and never beside the screen's own first claim.
+  assert.match(frontend, /enabled: googleAvailable && phase === "registration" && !session\?\.user\.id && !googleLinkRecovery && Boolean\(googleJourney && \(local\.candidate \|\| local\.accountFirst\)\),\s+paused: busy,/);
+  assert.match(frontend, /authClient\.signIn\.social\(\{ provider: "google", \.\.\.programmeGoogleCallbacks\(locale\), requestSignUp: true, disableRedirect: true, fetchOptions: \{ headers \} \}\)/);
+  assert.match(frontend, /await preparation\.current;\s+const state = rememberedState\(journey\);\s+\/\/ Support first holds registration back, and its claim is made by the press\.\s+if \(!state\?\.candidate \|\| state\.phase !== "registration" \|\| pendingClaimIsFresh\(state\.claimReadyAt, PENDING_CLAIM_RENEW_FOR_GOOGLE_AFTER_MS\)\) return;\s+forgetClaim\(journey\);\s+await prepareClaimForRegistration\(journey, state\);\s+rememberClaim\(journey\);/);
+  // The address is kept in memory only: nothing about it is written to the tab's storage.
+  const hook = read("lib/auth/use-google-press.ts") + read("lib/auth/google-press.ts");
+  assert.doesNotMatch(hook, /sessionStorage|localStorage|document\.cookie/);
+  // No timer in a hidden tab, a new address when the tab is shown again, and a stop when the screen is left.
+  assert.match(hook, /if \(tabVisible\(\)\) \{ preparation\.resume\(\); startTimer\(\); \} else \{ preparation\.hide\(\); stopTimer\(\); \}/);
+  assert.match(hook, /return \(\) => \{\s+stopTimer\(\);[\s\S]*preparation\.stop\(\);\s+\};/);
 });
 
 test("an account that has not answered opens on the answers, and may open its plan instead", () => {

@@ -39,6 +39,7 @@ export const coreRoutes = [
   "/faq",
   "/bonus-guide",
   "/wagering-calculator",
+  "/pause-plan",
 ];
 
 export function absoluteUrl(path: string) {

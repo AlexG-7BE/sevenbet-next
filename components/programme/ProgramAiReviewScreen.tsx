@@ -7,10 +7,12 @@ import { ProgramAiAuthenticatedHeader } from "@/components/programme/ProgramAiAu
 import type { ProgramAiReview } from "@/components/programme/ProgramAiAuthenticated.types";
 import { programmeText } from "@/lib/i18n/programme-catalog";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
+import { fetchProgrammeWithRetry } from "@/lib/programme/request-retry";
 import styles from "./ProgramAiAuthenticated.module.css";
 
+// The Review text is built from stored facts and stores nothing, so one failed attempt is repeated.
 async function generateReview(milestone: string, localWording: string, locale: ProgrammeLocale) {
-  const response = await fetch(`/api/program/program-ai/reviews/${milestone}?locale=${encodeURIComponent(locale)}`, {
+  const response = await fetchProgrammeWithRetry(`/api/program/program-ai/reviews/${milestone}?locale=${encodeURIComponent(locale)}`, {
     method: "POST",
     credentials: "same-origin",
     cache: "no-store",
