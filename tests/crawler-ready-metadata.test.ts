@@ -487,6 +487,9 @@ test("IndexNow: a public key file, Production-only announcements and review URLs
 
   assert.deepEqual(casinoReviewUrls("betsson").map((url) => new URL(url).pathname), ["/en/casino/betsson", "/de/casino/betsson", "/sv/casino/betsson", "/da/casino/betsson"]);
   assert.deepEqual(learnArticleUrls("casino-bonuses", "wagering-requirements").map((url) => new URL(url).pathname), ["/en/learn/casino-bonuses/wagering-requirements", "/en/learn"]);
+  assert.deepEqual(learnArticleUrls("game-guides", "baccarat-spelregler", "sv-SE").map((url) => new URL(url).pathname), ["/sv/learn/game-guides/baccarat-spelregler", "/sv/learn"], "a Swedish guide is announced under /sv/, not /en/");
+  assert.deepEqual(learnArticleUrls("game-guides", "baccarat-regler", "da-DK").map((url) => new URL(url).pathname), ["/da/learn/game-guides/baccarat-regler", "/da/learn"]);
+  assert.deepEqual(learnArticleUrls("game-guides", "x", "xx-XX").map((url) => new URL(url).pathname), ["/en/learn/game-guides/x", "/en/learn"], "an unknown locale falls back to English");
 
   const payload = indexNowPayload([...casinoReviewUrls("betsson"), "https://elsewhere.example/page", casinoReviewUrls("betsson")[0]]);
   assert.equal(payload.key, INDEXNOW_KEY);
@@ -505,7 +508,8 @@ test("IndexNow: a public key file, Production-only announcements and review URLs
 
   // Publishing hooks announce what changed.
   assert.match(read("lib/public-casino/cache.ts"), /announceChangedUrls\(casinoSlug \? casinoReviewUrls\(casinoSlug\) : productDirectoryUrls\(\)\)/);
-  assert.match(read("lib/articles/cache.ts"), /announceChangedUrls\(learnArticleUrls\(category, slug\)\)/);
+  assert.match(read("lib/articles/cache.ts"), /announceChangedUrls\(learnArticleUrls\(category, slug, locale\)\)/);
+  assert.match(read("app/api/admin/articles/[articleId]/action/route.ts"), /revalidatePublicArticles\(article\.category, article\.slug, article\.locale\)/);
 });
 
 test("switching language on a guide that is not published in the target language lands on that language's Learn hub", async () => {

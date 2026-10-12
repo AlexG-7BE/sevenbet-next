@@ -4,6 +4,7 @@ import { articlePath } from "@/lib/articles/article-types";
 import {
   DEFAULT_MARKET_PROFILE,
   INDEXABLE_LANGUAGE_ROUTE_PROFILES,
+  LANGUAGE_ROUTE_PROFILES,
   publicMarketPath,
 } from "@/lib/market/registry";
 import { absoluteUrl, siteUrl } from "@/lib/site";
@@ -77,10 +78,17 @@ export function productDirectoryUrls() {
     .map((pathname) => absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale, pathname))));
 }
 
-/** A guide is published in English today (see lib/articles/article-seo.ts), plus the English hub. */
-export function learnArticleUrls(category: string, slug: string) {
+/**
+ * A guide under the language it is published in, plus that language's Learn hub. Until
+ * 12 October 2026 every guide was announced under `/en/`, so Swedish, Danish and German guides
+ * reached Bing as `/en/learn/<category>/<swedish-slug>`, which answers 404 (Bing Webmaster
+ * listed 31 such submissions). An unknown locale falls back to English.
+ */
+export function learnArticleUrls(category: string, slug: string, locale: string = DEFAULT_MARKET_PROFILE.defaultLocale) {
+  const language = LANGUAGE_ROUTE_PROFILES.find((profile) => (profile.localeVariants as readonly string[]).includes(locale))
+    ?? LANGUAGE_ROUTE_PROFILES.find((profile) => profile.defaultLocale === DEFAULT_MARKET_PROFILE.defaultLocale)!;
   return [
-    absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, articlePath({ category, slug }))),
-    absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, "/learn")),
+    absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale, articlePath({ category, slug }))),
+    absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale, "/learn")),
   ];
 }
