@@ -33,7 +33,7 @@ export default async function ProgrammeLayout({ children }: { children: ReactNod
       <a className="skipLink" href="#main-content">{messages.skipToMain}</a>
       <PublicHeader account={account} authenticated={authenticated} commercialProductState={commercialProductState} presentation={presentation} programme={{ locale, localizePublicLinks }} researchAccess={researchAccess} />
       <div id="main-content" data-public-programme-shell>{children}</div>
-      <PublicFooter commercialProductState={commercialProductState} presentation={presentation} programme={{ path, localizePublicLinks }} researchAccess={researchAccess} />
+      <PublicFooter authenticated={authenticated} commercialProductState={commercialProductState} presentation={presentation} programme={{ path, localizePublicLinks }} researchAccess={researchAccess} />
     </>
   );
 }

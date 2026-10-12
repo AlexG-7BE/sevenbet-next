@@ -8,6 +8,7 @@
 
 1. **A phone Mission screen puts the first choices on the first screen.**
    - On a phone the Mission screen drops the Programme context bar (mission label, XP and log out). XP remains in the action rail and on completion, and log out remains on the Programme dashboard.
+   - **Later change, 12 October 2026 (Founder):** at phone width the dashboard hid its log-out button too, so a phone had no way to log out. Log out is now a line in the site menu, shown on every page to a signed-in person; the dashboard's own row is not shown on a phone. See "Programme words and small things after the Swedish walk" in `docs/CURRENT_STATE.md`.
    - "← Programme Home" and "Protected Help / pause" stay at the top of every Mission screen.
    - The intro and the action prompt use smaller type and tighter spacing.
    - The confirm action is sticky at the bottom of the action card while the choices are in view.

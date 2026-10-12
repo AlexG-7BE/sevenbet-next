@@ -597,3 +597,109 @@ test("Italian Programme availability does not confer ordinary second-wave public
   await expect(page.locator('[data-runtime-renderer="programme"]')).toHaveCount(0);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/i);
 });
+
+// Founder walk in Swedish on a phone, 12 October 2026: two "Mitt program" pills one above the
+// other, no way to log out, a menu sentence that ended with a colon, and an English "RESEARCH"
+// heading over links that went through a redirect.
+test("Swedish phone Programme home: one My Programme pill, Log out in the menu, the region after the notice, research links in Swedish", async ({ browser }) => {
+  const locale: ProgrammeLocale = "sv-SE";
+  const shell = publicShellMessages(locale);
+  const context = await browser.newContext({ viewport: { width: 412, height: 800 }, isMobile: true, hasTouch: true });
+  // The site header reads only whether a session cookie is present; the session is answered in the page.
+  await context.addCookies([{ name: "better-auth.session_token", value: "fixture", url: baseUrl }]);
+  const page = await context.newPage();
+  // "Understand the urge" is the fourth step: the research lesson before it is complete.
+  const control: AuthenticatedFixtureControl = { missionNumber: 3, actionIndex: null };
+  await installAuthenticatedProgramme(page, control, []);
+  let programmeSessionsEnded = 0;
+  page.on("request", (request) => {
+    if (request.method() === "DELETE" && new URL(request.url()).pathname === "/api/program/session") programmeSessionsEnded += 1;
+  });
+  await page.goto(`${baseUrl}${programmePath(locale)}`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+
+  // One "Mitt program": the site header's. The Programme home's own row shows nothing on a phone.
+  const pills = page.locator(`[data-public-shell="header"] :text-is("${shell.myProgramme}"):visible, [data-programme-presentation="dashboard"] :text-is("${shell.myProgramme}"):visible`);
+  await expect(pills).toHaveCount(1);
+  await expect(page.locator("[data-programme-context-header]")).toBeHidden();
+  await expect(page.locator('[data-public-shell="footer"] a[data-footer-navigation-href="/program"]')).toHaveText(shell.myProgramme);
+
+  // The research box is headed in Swedish and its links open the Swedish pages directly.
+  const research = page.locator('[data-programme-research="featured"]');
+  await expect(research.locator("> span")).toHaveText("Undersök och jämför");
+  expect(await research.getByRole("link").evaluateAll((links) => links.map((link) => [link.getAttribute("href"), link.textContent]))).toEqual([
+    ["/sv/casinos", "Jämför casinon"],
+    ["/sv/bonuses", shell.bonuses],
+    ["/sv/best-offers", shell.bestOffers],
+  ]);
+  await expect(page.locator("main")).not.toContainText(/research|kasino/i);
+
+  // The menu: Log out where a visitor has Log in, and the notice names the region after its colon.
+  await page.locator("details[data-public-mobile-disclosure] > summary").click();
+  const drawer = page.locator("#public-mobile-navigation");
+  const logOut = drawer.locator("[data-public-log-out]");
+  await expect(logOut).toBeVisible();
+  await expect(logOut).toHaveText(shell.logOut);
+  await expect(drawer.locator('a[href^="/login"]')).toHaveCount(0);
+  const logOutBox = await logOut.boundingBox();
+  expect(logOutBox!.height).toBeGreaterThanOrEqual(44);
+  expect(await logOut.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(14);
+  const notice = drawer.locator("[data-programme-language-selector] > p");
+  await expect(notice).toContainText(shell.presentationOnlyNotice);
+  await expect(notice.locator("strong")).toHaveText(/\S/);
+  expect((await notice.innerText()).trim()).not.toMatch(/:$/);
+  await assertRenderedQuality(page, `${locale}:dashboard-menu:mobile`);
+
+  await logOut.click();
+  await expect(page.locator('[data-programme-presentation="start"]')).toBeVisible();
+  await expect(page).toHaveURL(`${baseUrl}${programmePath(locale)}`);
+  expect(control.signedIn).toBe(false);
+  expect(programmeSessionsEnded).toBe(1);
+  await context.close();
+
+  // A person who signed in without a new document (email, inside the Programme): the header was
+  // rendered for a visitor, and the menu still gives Log out once the Programme shows the account.
+  const lateContext = await browser.newContext({ viewport: { width: 412, height: 800 }, isMobile: true, hasTouch: true });
+  const latePage = await lateContext.newPage();
+  await installAuthenticatedProgramme(latePage, { missionNumber: 2, actionIndex: null }, []);
+  await latePage.goto(`${baseUrl}${programmePath(locale)}`, { waitUntil: "domcontentloaded" });
+  await expect(latePage.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+  await expect(latePage.locator('[data-public-shell="header"] a[data-programme-entry]:visible')).toHaveCount(0);
+  await latePage.locator("details[data-public-mobile-disclosure] > summary").click();
+  const lateAccount = latePage.locator("#public-mobile-navigation [data-mobile-menu-account]");
+  await expect(lateAccount.locator("[data-public-log-out]")).toHaveText(shell.logOut);
+  await expect(lateAccount.locator('a[href^="/login"]')).toHaveCount(0);
+  await lateContext.close();
+});
+
+test("the header offers Start Programme on public pages and not on the Programme's own first screen", async ({ browser }) => {
+  const locale: ProgrammeLocale = "sv-SE";
+  const shell = publicShellMessages(locale);
+  for (const viewport of [{ width: 412, height: 800 }, { width: 1440, height: 1000 }]) {
+    const mobile = viewport.width < 900;
+    const context = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile });
+    const page = await context.newPage();
+    await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
+    const header = page.locator('[data-public-shell="header"]');
+
+    const programme = await page.goto(`${baseUrl}${programmePath(locale)}`, { waitUntil: "domcontentloaded" });
+    // The document itself arrives with one Programme button, the drawer's: nothing flashes in the header.
+    expect((await programme!.text()).match(/<a [^>]*data-programme-entry=""/g) ?? []).toHaveLength(1);
+    await expect(page.locator('[data-programme-presentation="start"]')).toBeVisible();
+    await expect(header.locator("a[data-programme-entry]:visible"), `${viewport.width}px`).toHaveCount(0);
+    if (mobile) {
+      // The drawer keeps its primary action and its Log in line.
+      await page.locator("details[data-public-mobile-disclosure] > summary").click();
+      const account = page.locator("#public-mobile-navigation [data-mobile-menu-account]");
+      await expect(account.locator("a[data-programme-entry]")).toHaveText(shell.startProgramme);
+      await expect(account.getByRole("link", { name: shell.logIn, exact: true })).toBeVisible();
+      await expect(account.locator("[data-public-log-out]")).toHaveCount(0);
+    }
+
+    await page.goto(`${baseUrl}/sv/10-steps`, { waitUntil: "domcontentloaded" });
+    const start = header.locator("a[data-programme-entry]:visible").first();
+    await expect(start, `${viewport.width}px`).toHaveText(shell.startProgramme);
+    await expect(start).toHaveAttribute("href", programmePath(locale));
+    await context.close();
+  }
+});

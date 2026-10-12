@@ -493,3 +493,29 @@ test("the research Mission's completion marks the moment casino research opens (
   assert.match(stylesheet, /\.researchReveal nav a \{[^}]*font-size: 16px;/);
   assert.ok(stylesheet.includes('@media (prefers-reduced-motion: reduce) { .researchReveal[data-programme-research-opened="fresh"] { animation: none; } }'));
 });
+
+// Founder walk in Swedish on a phone, 12 October 2026.
+test("Programme home research links open in the Programme's language and the home carries no second My Programme pill", async () => {
+  // The links keep their fixed targets and order; each is written past the unprefixed address's redirect.
+  const { programmePublicHref, PROGRAMME_ROUTES } = await import("../lib/programme/presentation");
+  const { commercialDiscoveryLinks } = await import("../lib/programme/program-ai/mission-registry");
+  assert.deepEqual(commercialDiscoveryLinks.map((link) => link.href), ["/casinos", "/bonuses", "/best-offers"]);
+  assert.ok(authenticatedHome.includes("{home.discoveryLinks.map((item) => <a href={programmePublicHref(locale, item.href)} key={item.href}"));
+  assert.ok(!authenticatedHome.includes("<a href={item.href}"), "no research link goes through the redirect");
+  assert.deepEqual(commercialDiscoveryLinks.map((link) => programmePublicHref("sv-SE", link.href)), ["/sv/casinos", "/sv/bonuses", "/sv/best-offers"]);
+  for (const route of PROGRAMME_ROUTES) {
+    for (const link of commercialDiscoveryLinks) assert.equal(programmePublicHref(route.locale, link.href), `/${route.language}${link.href}`, `${route.locale} ${link.href}`);
+  }
+  // Labels and the analytics destination still read the fixed target, not the localized address.
+  assert.ok(authenticatedHome.includes("const destinationRoute = discoveryDestination(item.href);"));
+  assert.ok(authenticatedHome.includes("{discoveryLabel(item.href, locale)}"));
+
+  // One "My Programme" on the Programme home: the site header's. The yellow label under it is gone.
+  const contextHeader = read("components/programme/ProgramAiAuthenticatedHeader.tsx");
+  assert.ok(!contextHeader.includes("myProgramme"));
+  assert.ok(!contextHeader.includes("public-shell-catalog"));
+  assert.ok(contextHeader.includes('{dashboard ? null : <span className={styles.programmeLabel}>{label ?? programmeText(locale, "10-STEP CONTROL PROGRAMME")}</span>}'));
+  const stylesheet = read("components/programme/ProgramAiAuthenticated.module.css");
+  assert.ok(!stylesheet.includes(".myProgramme"));
+  assert.ok(stylesheet.includes(".dashboardShell .header[data-dashboard-header] { padding: 14px 0; gap: 24px; grid-template-columns: 1fr auto; }"), "XP and Log out keep their places on a wide screen");
+});

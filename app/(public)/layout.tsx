@@ -143,6 +143,7 @@ export default async function PublicLayout({ children }: { children: ReactNode }
       />
       <main id="main-content">{children}</main>
       <PublicFooter
+        authenticated={authenticated}
         commercialBestOffersNavigation={(
           <Suspense fallback={<span data-commercial-navigation-pending="footer" hidden />}>
             <CommercialFooterNavigation destination="/best-offers" presentation={presentation} programmePath={programmePath} researchAccess={researchAccess} state={commercialProductState} />

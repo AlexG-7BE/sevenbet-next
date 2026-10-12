@@ -18,6 +18,7 @@ import { PublicNavigationDoor } from "./PublicNavigationClient";
 import styles from "./PublicShell.module.css";
 
 export function PublicFooter({
+  authenticated = false,
   presentation = resolvePresentationContext({}),
   programme,
   commercialProductState = "SUPPORTED_COMMERCIAL",
@@ -26,6 +27,8 @@ export function PublicFooter({
   deferCommercialNavigation = false,
   researchAccess = false,
 }: {
+  /** The session cookie the document was rendered with, as in the header: it only picks the Programme link's label. */
+  authenticated?: boolean;
   presentation?: PresentationResolution;
   programme?: Readonly<{ path: string; localizePublicLinks: boolean }>;
   commercialProductState?: CommercialProductState;
@@ -42,7 +45,7 @@ export function PublicFooter({
     : commercialDestinationsNavigable(commercialProductsAvailable(commercialProductState), presentation.marketCountryCode);
   const groups = [
     { title: footer.explore, links: [[shell.bestOffers, "/best-offers"], [shell.casinos, "/casinos"], [shell.bonuses, "/bonuses"], [shell.learn, "/learn"]] },
-    { title: footer.programmeAndSupport, links: [[shell.startProgramme, "/program"], [footer.tenSteps, "/10-steps"], [footer.responsibleGambling, "/responsible-gambling"], [footer.protectedHelp, "/help"]] },
+    { title: footer.programmeAndSupport, links: [[authenticated ? shell.myProgramme : shell.startProgramme, "/program"], [footer.tenSteps, "/10-steps"], [footer.responsibleGambling, "/responsible-gambling"], [footer.protectedHelp, "/help"]] },
     { title: footer.trust, links: [[footer.about, "/about"], [footer.methodology, "/methodology"], [footer.faq, "/faq"], [footer.affiliateDisclosure, "/affiliate-disclosure"]] },
   ] as const;
   const deferredCommercialLinks = {

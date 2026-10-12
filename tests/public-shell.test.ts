@@ -294,8 +294,10 @@ test("the mobile drawer leads with the acid Start Programme action, then Log in,
   // The account block stays outside the route <nav>, whose links are the canonical navigation order.
   assert.ok(drawer.indexOf("</nav>") < drawer.indexOf("className={styles.mobileMenuPrimary}"));
   // Labels and Programme-context behaviour are unchanged: Log in only for anonymous readers.
+  // A signed-in person gets Log out on the same line (Founder, 12 October 2026).
   assert.match(drawer, /\{authenticated \? messages\.openProgramme : primaryLabel\}/);
-  assert.match(drawer, /\{!authenticated \? <Link className=\{styles\.mobileMenuLogin\} href=\{account\.accountHref\}>\{accountLabel\}<\/Link> : null\}/);
+  assert.match(drawer, /<PublicMobileAccountLine\s+authenticated=\{authenticated\}\s+className=\{styles\.mobileMenuLogout\}\s+labels=\{\{ logOut: messages\.logOut, loggingOut: messages\.loggingOut, logOutRetry: messages\.logOutRetry \}\}\s+login=\{<Link className=\{styles\.mobileMenuLogin\} href=\{account\.accountHref\}>\{accountLabel\}<\/Link>\}\s+programmeHref=\{account\.primaryHref\}\s+\/>/);
+  assert.equal(drawer.match(/mobileMenuLogin\b/g)?.length, 1, "Log in is offered once, through the account line");
   assert.doesNotMatch(drawer, /className=\{styles\.primaryAction\}/, "the drawer no longer borrows the desktop outline button");
 
   // Every block whose selector list ends with this exact selector, joined.
@@ -307,6 +309,8 @@ test("the mobile drawer leads with the acid Start Programme action, then Log in,
   assert.match(shell, /\.mobileMenuPrimary:hover \{[^}]*background: var\(--shell-acid-hover\)/);
   const login = rule(".mobileMenuLogin");
   assert.ok(login.includes("font-size: 16px") && login.includes("min-height: 44px"), "Log in reads at 16px with a 44px target");
+  const logout = rule(".mobileMenuLogout");
+  assert.ok(logout.includes("font-size: 16px") && logout.includes("min-height: 44px") && logout.includes("width: 100%"), "Log out reads at 16px with a full-width 44px target");
   assert.doesNotMatch(rule(".mobileAccount"), /margin: auto/, "the account block no longer sinks to the bottom of the drawer");
   // The language picker now ends the drawer: the focus loop must skip content of a closed <details>
   // (laid out under content-visibility but not focusable), or Tab from its summary leaves the dialog.
@@ -315,6 +319,119 @@ test("the mobile drawer leads with the acid Start Programme action, then Log in,
   assert.match(client, /!element\.closest\("\[inert\]"\) && !insideClosedDetails\(element\)/);
   // The desktop header action keeps its outline look.
   assert.match(rule(".primaryAction"), /background: transparent;[\s\S]*border-radius: var\(--sb-radius-full\)|border-radius: var\(--sb-radius-full\);[\s\S]*background: transparent/);
+});
+
+// Founder walk on a phone, 12 October 2026: the Programme home hid its log-out button and the menu had none.
+test("a signed-in person logs out from the menu: one place on a phone, the Programme's own sign-out steps", async () => {
+  const client = readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8");
+  const line = client.slice(client.indexOf("export function PublicMobileAccountLine("), client.indexOf("export function PublicMobileNavigationEnhancement("));
+  // A visitor keeps Log in; the cookie the document was rendered with, or an account the Programme
+  // has shown since, turns the line into Log out.
+  assert.match(line, /const knownUserId = useSyncExternalStore\(subscribeSignedInUser, signedInUser, \(\) => null\);/);
+  assert.match(line, /if \(!authenticated && !knownUserId\) return <>\{login\}<\/>;/);
+  assert.match(line, /<button className=\{className\} data-public-log-out="" disabled=\{state === "busy"\} onClick=\{logOut\} type="button">/);
+  assert.match(line, /state === "busy" \? labels\.loggingOut : state === "failed" \? labels\.logOutRetry : labels\.logOut/);
+  // The sign-out code (and the account client behind it) loads on the press, not with every public page.
+  assert.match(line, /const \{ signOutOfB4gamble \} = await import\("@\/lib\/auth\/sign-out-client"\);\s*await signOutOfB4gamble\(knownUserId\);/);
+  assert.doesNotMatch(client, /from "@\/lib\/auth\/(?:client|sign-out-client)"/, "the public menu does not ship the account client");
+  assert.match(line, /if \(window\.location\.pathname === programmeHref\) window\.location\.assign\(programmeHref\);\s*else window\.location\.reload\(\);/);
+
+  // One sequence for the menu and the Programme's own button: the Programme session first (its answer
+  // withdraws the research menu flag), then the account session, then this tab's access notes.
+  const signOut = readFileSync("lib/auth/sign-out-client.ts", "utf8");
+  const order = [
+    'await fetch("/api/program/session", {',
+    'if (!transition.ok) throw new Error("Subject transition failed");',
+    "const result = await authClient.signOut();",
+    'if (result.error) throw new Error("Sign out failed");',
+    "clearProgrammeAccessAuthority(window.sessionStorage, userProgrammeSubject(userId));",
+    "clearProgrammeAccessContinuation(window.sessionStorage);",
+    "clearProgrammeOAuthClaimMarker(window.sessionStorage);",
+    "rotateAnonymousProgrammeSubject(window.sessionStorage);",
+  ].map((step) => {
+    assert.ok(signOut.includes(step), step);
+    return signOut.indexOf(step);
+  });
+  assert.deepEqual([...order].sort((left, right) => left - right), order);
+  assert.match(signOut, /method: "DELETE"/);
+  assert.match(signOut, /const userId = knownUserId \?\? \(await authClient\.getSession\(\)\)\.data\?\.user\.id \?\? null;/, "the menu asks whose session it is only when the page does not know");
+  const programmeHeader = readFileSync("components/programme/ProgramAiAuthenticatedHeader.tsx", "utf8");
+  assert.match(programmeHeader, /await signOutOfB4gamble\(userId\);\s*window\.location\.assign\(programmePath\);/);
+  assert.match(programmeHeader, /useEffect\(\(\) => \{\s*noteSignedInUser\(userId\);\s*\}, \[userId\]\);/, "a sign-in without a new document still gives the menu its Log out line");
+
+  const { noteSignedInUser, signedInUser, subscribeSignedInUser } = await import("../lib/auth/signed-in-signal");
+  assert.equal(signedInUser(), null);
+  let heard = 0;
+  const unsubscribe = subscribeSignedInUser(() => { heard += 1; });
+  noteSignedInUser("user-one");
+  noteSignedInUser("user-one");
+  assert.equal(signedInUser(), "user-one");
+  assert.equal(heard, 1, "the same account is announced once");
+  unsubscribe();
+  noteSignedInUser("user-two");
+  assert.equal(heard, 1);
+
+  // On a phone the Programme home's own row is gone, so the menu is the one place to log out.
+  const programmeCss = readFileSync("components/programme/ProgramAiAuthenticated.module.css", "utf8");
+  const phone = programmeCss.slice(programmeCss.indexOf("@media (max-width: 600px) {"), programmeCss.indexOf("@media (prefers-reduced-motion: reduce) {\n  .shell *"));
+  assert.match(phone, /\.dashboardShell \.header\[data-dashboard-header\] \{ display: none; \}/);
+  assert.doesNotMatch(phone, /\.logout[^{]*\{ display: none; \}/, "no rule hides the button alone and leaves an empty row");
+
+  // Every shell language names the action, in the Programme's own words where the Programme has them.
+  const { publicShellMessages } = await import("../lib/i18n/public-shell-catalog");
+  const { programmeText } = await import("../lib/i18n/programme-catalog");
+  const { PROGRAMME_LOCALES } = await import("../lib/programme/presentation");
+  for (const locale of [...PROGRAMME_LOCALES, "es-PE", "en-CA", "fr-CA"] as const) {
+    const shellMessages = publicShellMessages(locale);
+    for (const label of [shellMessages.logOut, shellMessages.loggingOut, shellMessages.logOutRetry]) assert.ok(label.trim(), locale);
+    assert.notEqual(shellMessages.logOut, shellMessages.logIn, locale);
+  }
+  for (const locale of PROGRAMME_LOCALES) {
+    const shellMessages = publicShellMessages(locale);
+    assert.equal(shellMessages.logOut, programmeText(locale, "Log out"), locale);
+    assert.equal(shellMessages.loggingOut, programmeText(locale, "Logging out…"), locale);
+    assert.equal(shellMessages.logOutRetry, programmeText(locale, "Try log out"), locale);
+  }
+  assert.equal(publicShellMessages("sv-SE").logOut, "Logga ut");
+  assert.notEqual(publicShellMessages("fr-CA").logOut, publicShellMessages("en-GB").logOut);
+});
+
+test("the header does not offer Start Programme on the page it leads to; a signed-in footer says My Programme", () => {
+  const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
+  // Both header buttons (desktop and phone) step aside for a visitor who is already there. The
+  // drawer keeps its primary action, and a signed-in person keeps "My Programme" in the header.
+  assert.equal(navigation.match(/hiddenOnDestination=\{!authenticated\} href=\{account\.primaryHref\}>\{primaryLabel\}/g)?.length, 2);
+  assert.equal(navigation.match(/hiddenOnDestination/g)?.length, 2);
+  assert.match(navigation, /className=\{styles\.mobileMenuPrimary\} href=\{account\.primaryHref\}>/);
+  const client = readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8");
+  const action = client.slice(client.indexOf("export function PublicProgrammeActionLink("), client.indexOf("export function PublicMobileAccountLine("));
+  assert.match(action, /hiddenOnDestination = false,/);
+  assert.match(action, /const pathname = usePathname\(\);/);
+  assert.match(action, /if \(hiddenOnDestination && pathname === href\) return null;/);
+
+  const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
+  assert.match(footer, /\[authenticated \? shell\.myProgramme : shell\.startProgramme, "\/program"\]/);
+  assert.match(footer, /authenticated = false,/);
+  assert.match(readFileSync("app/program/layout.tsx", "utf8"), /<PublicFooter authenticated=\{authenticated\}/);
+  assert.match(readFileSync("app/(public)/layout.tsx", "utf8"), /<PublicFooter\s+authenticated=\{authenticated\}/);
+});
+
+test("the language notice ends with the visitor's region in the public menu and in the Programme's", async () => {
+  // The sentence ends with a colon in every language, so each menu that prints it prints the region after it.
+  // On Programme pages the drawer printed the sentence alone (Founder walk, 12 October 2026).
+  const { publicShellMessages } = await import("../lib/i18n/public-shell-catalog");
+  const { PROGRAMME_LOCALES } = await import("../lib/programme/presentation");
+  for (const locale of [...PROGRAMME_LOCALES, "es-PE", "en-CA", "fr-CA"] as const) {
+    assert.match(publicShellMessages(locale).presentationOnlyNotice, /\s?:$/, locale);
+  }
+  const publicSelector = readFileSync("components/public-shell/MarketLanguageSelector.tsx", "utf8");
+  assert.match(publicSelector, /\{messages\.presentationOnlyNotice\} <strong>\{presentation\.marketDisplayName\}<\/strong>/);
+  const programmeSelector = readFileSync("components/programme/ProgrammeLanguageSelector.tsx", "utf8");
+  assert.match(programmeSelector, /\{variant === "mobile" \? <p>\{messages\.presentationOnlyNotice\} <strong>\{region\}<\/strong><\/p> : null\}/);
+  assert.equal(programmeSelector.match(/presentationOnlyNotice/g)?.length, 1, "the sentence is never printed without the region");
+  const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
+  assert.equal(navigation.match(/<ProgrammeLanguageSelector locale=\{programme\.locale\} messages=\{messages\} region=\{presentation\.marketDisplayName\} variant="(?:desktop|mobile)" \/>/g)?.length, 2);
+  assert.match(readFileSync("components/public-shell/PublicShell.module.css", "utf8"), /\.mobilePresentationSelector p strong \{ color: var\(--shell-white\); font-weight: 600; \}/);
 });
 
 test("the presentation selector applies one-tap choices with an accessible selected state", () => {
