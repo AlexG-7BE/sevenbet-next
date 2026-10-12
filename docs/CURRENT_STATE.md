@@ -683,6 +683,60 @@ Tests: `tests/social-traffic.test.ts`, `tests/social-traffic-postgres.test.ts`.
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+### Programme starts per source and post — in review
+
+**Founder approval, 12 October 2026** ("да, делай"): the report also says how
+many of the visitors a source, campaign or post brought started the Programme
+and how many completed its first step, so it can read "Facebook brought 20
+visitors from Sweden, 3 started the Programme". Branch
+`feat/social-traffic-programme-starts`.
+
+- **What is added.** Every row gains `programmeStarts`, `stepOneCompletions`
+  and `programmeStartCountries` (the three countries with the most starts);
+  `totals` and `site` gain the two counters. The tool description and its
+  `notes` explain them.
+- **What is counted.** The `programme_started` observations and the
+  `programme_step_completed` observations of the first step (Mission 01) that
+  the site already records, Production human traffic only, inside the
+  requested range. Only visitors who allowed analytics cookies have such
+  rows. A first-step completion is recorded once the step is saved to an
+  account.
+- **Once per visitor.** One person's start can be observed twice, while
+  anonymous and again with the account. Both rows carry the same browser
+  analytics ID, so each counter counts an analytics ID once per range and the
+  earliest observation decides the credit.
+- **Attribution rule.** An event is credited to the same visitor's most
+  recent visit that began at or before the event, at most 30 days before it,
+  and has a social touch by the report's own rule (a UTM tag or a
+  social-network referrer). It counts in that visit's row and country. A
+  later direct or search visit does not take the credit away. An event with
+  no such visit appears only in `site.programmeStarts` and
+  `site.stepOneCompletions`.
+- **Boundary.** This is aggregate, read-only measurement. It changes nothing
+  a visitor sees, and no page, offer, ranking or route reads these numbers:
+  only the Learn MCP tool imports the report (pinned by a test). RFC-046 §6
+  allows aggregate product analysis of Programme observations and forbids
+  using them to select anything commercial for an individual; that stays as
+  it is. The analytics ID is read only to match an event to a visit inside
+  the store and never leaves the server. No column, table, index, migration
+  or new tracking.
+- **Records amended.** SOCIAL-TRAFFIC-MCP-2026-10-03 and RFC-046 §15 said the
+  tool reads and returns no Programme value. Both carry the 12 October 2026
+  amendment for these two aggregate counters only.
+- **Limits.** `RESULT_TOO_LARGE` also covers more than 10,000 Programme
+  observations in a range or more than 50,000 visits of their visitors.
+  **UNKNOWN:** how many such observations Production holds. On 12 October
+  2026 the local development copy held no `programme_started` observation,
+  so the match is proven by tests and not yet by real data.
+
+Tests: `tests/social-traffic.test.ts` (in `ci:quality`) covers the latest
+social visit, the 30-day window, events with no social visit, one count per
+visitor and the absence of identifiers; `tests/social-traffic-postgres.test.ts`
+(both database CI jobs) covers the Production human filter and the two reads
+on PostgreSQL.
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Semrush Site Audit errors — in review
 
 **Founder instruction, 2 October 2026:** clear the Semrush Site Audit of

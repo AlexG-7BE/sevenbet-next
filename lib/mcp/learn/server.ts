@@ -90,12 +90,14 @@ export const learnSourceTool = {
 /**
  * Read-only site analytics for the Founder's Claude SMM agents (Founder, 3 Oct
  * 2026, SOCIAL-TRAFFIC-MCP-2026-10-03): aggregate counts of consented visits
- * and partner clicks per UTM source, campaign and post. No per-person data.
+ * and partner clicks per UTM source, campaign and post, and (Founder, 12 Oct
+ * 2026) how many of those visitors started the Programme and completed its
+ * first step. No per-person data.
  */
 export const socialTrafficTool = {
   name: "social_traffic",
   title: "Read social traffic to b4gamble.com",
-  description: "Read-only aggregates. For a UTC date range (default the last 7 days, at most 92) returns, per UTM source, campaign and content (the post), the number of consented Production visits (analytics sessions), partner-button clicks and clicks that reached the partner casino, with the top visitor countries; untagged visits from social-network referrers are grouped by network. Also returns site-wide totals. Counts only: no visitor, session, user, IP or email data, and nothing is written.",
+  description: "Read-only aggregates. For a UTC date range (default the last 7 days, at most 92) returns, per UTM source, campaign and content (the post), the number of consented Production visits (analytics sessions), partner-button clicks and clicks that reached the partner casino, with the top visitor countries; untagged visits from social-network referrers are grouped by network. Each row also says how many of those visitors started the Programme (programmeStarts, with the top three countries in programmeStartCountries) and how many completed its first step (stepOneCompletions): only visitors who allowed analytics cookies are counted, each once per range, attributed to the visitor's latest social visit within 30 days before the event. Also returns site-wide totals, which include Programme starts with no social visit to credit. Counts only: no visitor, session, user, IP or email data, and nothing is written.",
   inputSchema: z.toJSONSchema(socialTrafficInputSchema) as Record<string, unknown>,
   outputSchema: {
     $schema: "https://json-schema.org/draft/2020-12/schema",

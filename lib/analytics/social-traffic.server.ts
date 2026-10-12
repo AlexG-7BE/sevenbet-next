@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 
 import { prisma } from "@/lib/db/prisma";
+import { programmeJourney } from "@/lib/programme/program-ai/mission-registry";
 
 /**
  * Read-only social traffic aggregates for the Founder's Claude SMM agents
@@ -15,6 +16,14 @@ import { prisma } from "@/lib/db/prisma";
  * Production + human traffic only; a visit is an AnalyticsSession whose
  * startedAt is in the range; a click is an OutboundClick attempted in the
  * range, credited to the UTM tags of the consented visit it happened in.
+ *
+ * Since 12 Oct 2026 (Founder) the report also says how many of those visitors
+ * started the Programme and how many completed its first step. This is
+ * aggregate, read-only measurement: it changes nothing a visitor sees, and no
+ * page, offer, ranking or route reads these numbers. The Programme
+ * observations carry no session, so the store matches each one to a visit by
+ * the browser's analytics ID; that ID is used only for the match inside the
+ * store and is dropped before anything is returned.
  */
 
 export const SOCIAL_TRAFFIC_DEFAULT_DAYS = 7;
@@ -22,11 +31,18 @@ export const SOCIAL_TRAFFIC_MAX_DAYS = 92;
 export const SOCIAL_TRAFFIC_DEFAULT_LIMIT = 50;
 export const SOCIAL_TRAFFIC_MAX_LIMIT = 200;
 export const SOCIAL_TRAFFIC_TOP_COUNTRIES = 5;
-/** Fail closed instead of returning partial sums when a range holds more raw groups or clicks than this. */
+export const SOCIAL_TRAFFIC_TOP_PROGRAMME_COUNTRIES = 3;
+/** A Programme start is credited to the visitor's latest social visit that began at most this many days before it. */
+export const SOCIAL_TRAFFIC_PROGRAMME_ATTRIBUTION_DAYS = 30;
+/** Fail closed instead of returning partial sums when a range holds more raw groups, clicks or Programme rows than this. */
 export const SOCIAL_TRAFFIC_MAX_SESSION_GROUPS = 20_000;
 export const SOCIAL_TRAFFIC_MAX_ATTRIBUTED_CLICKS = 50_000;
+export const SOCIAL_TRAFFIC_MAX_PROGRAMME_EVENTS = 10_000;
+export const SOCIAL_TRAFFIC_MAX_PROGRAMME_SESSIONS = 50_000;
 
 const DAY_MS = 86_400_000;
+/** Programme events store the Mission number; the first step people take is the first Mission of the journey (01). */
+const FIRST_STEP_MISSION_NUMBER = programmeJourney[0];
 
 export const SOCIAL_TRAFFIC_GROUP_BY = ["source", "source_campaign", "source_campaign_content"] as const;
 export type SocialTrafficGroupBy = (typeof SOCIAL_TRAFFIC_GROUP_BY)[number];
@@ -75,9 +91,16 @@ export const socialTrafficInputSchema = z.object({
 const countSchema = z.number().int().min(0);
 const dimensionSchema = z.string().min(1).max(100).nullable();
 
+const countryCodeSchema = z.string().regex(/^[A-Z]{2}$/).nullable();
+
 const countrySchema = z.object({
-  countryCode: z.string().regex(/^[A-Z]{2}$/).nullable(),
+  countryCode: countryCodeSchema,
   sessions: countSchema,
+}).strict();
+
+const programmeStartCountrySchema = z.object({
+  countryCode: countryCodeSchema,
+  starts: countSchema,
 }).strict();
 
 const rowSchema = z.object({
@@ -89,7 +112,10 @@ const rowSchema = z.object({
   sessions: countSchema,
   outboundClicks: countSchema,
   partnerClicks: countSchema,
+  programmeStarts: countSchema,
+  stepOneCompletions: countSchema,
   topCountries: z.array(countrySchema).max(SOCIAL_TRAFFIC_TOP_COUNTRIES),
+  programmeStartCountries: z.array(programmeStartCountrySchema).max(SOCIAL_TRAFFIC_TOP_PROGRAMME_COUNTRIES),
 }).strict();
 
 export const socialTrafficResultSchema = z.object({
@@ -102,12 +128,16 @@ export const socialTrafficResultSchema = z.object({
     sessions: countSchema,
     outboundClicks: countSchema,
     partnerClicks: countSchema,
+    programmeStarts: countSchema,
+    stepOneCompletions: countSchema,
   }).strict(),
   site: z.object({
     sessions: countSchema,
     outboundClicks: countSchema,
     partnerClicks: countSchema,
     outboundClicksWithoutConsent: countSchema,
+    programmeStarts: countSchema,
+    stepOneCompletions: countSchema,
   }).strict(),
   rows: z.array(rowSchema).max(SOCIAL_TRAFFIC_MAX_LIMIT),
   omittedRows: countSchema,
@@ -145,6 +175,8 @@ export const SOCIAL_TRAFFIC_NOTES = [
   "social_referrer rows are visits without UTM tags whose referrer was a social network, for example a bio link that dropped the tags.",
   "Production human traffic only: staff-marked, bot, preview and test traffic are excluded. UTM values are compared in lower case.",
   "outboundClicks are all partner-button clicks; partnerClicks are those that reached the partner (the others were refused by market or route rules).",
+  "programmeStarts are visitors who started the Programme in the range; stepOneCompletions are visitors whose first Programme step was saved as completed in the range (that needs an account). Only visitors who allowed analytics cookies are counted, each visitor once per range.",
+  "A Programme start or first-step completion is attributed to the visitor's latest social visit (UTM tags or a social-network referrer) within 30 days before the event, and counts in that visit's row and country. Events with no such visit appear only in site.programmeStarts and site.stepOneCompletions.",
 ] as const;
 
 export type SocialTrafficRange = { from: Date; until: Date };
@@ -156,24 +188,58 @@ export type SocialTrafficTouch = {
 };
 export type SocialTrafficSessionGroup = SocialTrafficTouch & { countryCode: string | null; sessions: number };
 export type SocialTrafficClick = { succeeded: boolean; touch: SocialTrafficTouch };
-export type SocialTrafficSiteTotals = SocialTrafficResult["site"];
+/** Site-wide visit and click totals; the reader adds the Programme counters from the Programme events. */
+export type SocialTrafficSiteTotals = Pick<SocialTrafficResult["site"], "sessions" | "outboundClicks" | "partnerClicks" | "outboundClicksWithoutConsent">;
 
-/** The only data the tool reads; each method is one bounded aggregate read. */
+export type SocialTrafficProgrammeEventKind = "started" | "step_one_completed";
+/**
+ * One visitor's Programme start or first-step completion, already counted once
+ * and matched to the visit it is credited to (null when there is none). It
+ * carries no identifier.
+ */
+export type SocialTrafficProgrammeEvent = {
+  kind: SocialTrafficProgrammeEventKind;
+  visit: (SocialTrafficTouch & { countryCode: string | null }) | null;
+};
+/** A raw Programme observation; `visitor` is the browser's analytics ID and never leaves the store. */
+export type SocialTrafficProgrammeObservation = {
+  kind: SocialTrafficProgrammeEventKind;
+  occurredAt: Date;
+  visitor: string | null;
+};
+/** A consented visit of one of the observed visitors; `visitor` never leaves the store. */
+export type SocialTrafficVisitorSession = SocialTrafficTouch & {
+  visitor: string;
+  startedAt: Date;
+  countryCode: string | null;
+};
+
+/** The only data the tool reads; each method is one bounded aggregate read (two for Programme events). */
 export type SocialTrafficStore = {
   sessionGroups(range: SocialTrafficRange): Promise<SocialTrafficSessionGroup[]>;
   attributedClicks(range: SocialTrafficRange): Promise<SocialTrafficClick[]>;
+  programmeEvents(range: SocialTrafficRange): Promise<SocialTrafficProgrammeEvent[]>;
   siteTotals(range: SocialTrafficRange): Promise<SocialTrafficSiteTotals>;
 };
 
 export type SocialTrafficReader = (input: unknown) => Promise<SocialTrafficResult>;
 
 const productionHuman = { environment: "PRODUCTION", trafficKind: "HUMAN" } as const;
+/** A visit that may carry a social touch: any UTM tag or any referrer (the network is checked in code). */
+const taggedOrReferred = [
+  { utmSource: { not: null } },
+  { utmCampaign: { not: null } },
+  { utmContent: { not: null } },
+  { referrerHost: { not: null } },
+];
 
 /**
  * Prisma reads over the indexed [environment, trafficKind, startedAt|attemptedAt]
  * columns. Sessions are grouped in the database; clicks come back one row per
  * click with only the state and their visit's UTM/referrer fields (the visit is
- * loaded by primary key in one batched query, not per click).
+ * loaded by primary key in one batched query, not per click). Programme events
+ * are read over [environment, type, occurredAt] and their visitors' visits
+ * over the session index on the analytics ID and startedAt.
  */
 export const prismaSocialTrafficStore: SocialTrafficStore = {
   async sessionGroups({ from, until }) {
@@ -182,12 +248,7 @@ export const prismaSocialTrafficStore: SocialTrafficStore = {
       where: {
         ...productionHuman,
         startedAt: { gte: from, lt: until },
-        OR: [
-          { utmSource: { not: null } },
-          { utmCampaign: { not: null } },
-          { utmContent: { not: null } },
-          { referrerHost: { not: null } },
-        ],
+        OR: taggedOrReferred,
       },
       _count: { _all: true },
       orderBy: [{ utmSource: "asc" }, { utmCampaign: "asc" }, { utmContent: "asc" }, { referrerHost: "asc" }, { countryCode: "asc" }],
@@ -221,6 +282,51 @@ export const prismaSocialTrafficStore: SocialTrafficStore = {
     return clicks.flatMap((click) => click.session
       ? [{ succeeded: click.state === "SUCCEEDED", touch: click.session }]
       : []);
+  },
+
+  /**
+   * Programme starts and first-step completions observed in the range, then
+   * the consented visits of the same browsers that could be credited with
+   * them. The analytics ID joins the two reads and goes no further:
+   * `attributeProgrammeEvents` returns only a kind, a touch and a country.
+   */
+  async programmeEvents({ from, until }) {
+    const observed = await prisma.analyticsEvent.findMany({
+      where: {
+        ...productionHuman,
+        occurredAt: { gte: from, lt: until },
+        OR: [
+          { type: "PROGRAMME_STARTED" },
+          { type: "PROGRAMME_STEP_COMPLETED", programmeStep: FIRST_STEP_MISSION_NUMBER },
+        ],
+      },
+      select: { type: true, occurredAt: true, anonymousId: true },
+      take: SOCIAL_TRAFFIC_MAX_PROGRAMME_EVENTS + 1,
+    });
+    if (observed.length > SOCIAL_TRAFFIC_MAX_PROGRAMME_EVENTS) {
+      throw new SocialTrafficError("RESULT_TOO_LARGE", "The range holds too many Programme starts to aggregate at once. Ask for a shorter range.");
+    }
+    const observations = observed.map((event): SocialTrafficProgrammeObservation => ({
+      kind: event.type === "PROGRAMME_STARTED" ? "started" : "step_one_completed",
+      occurredAt: event.occurredAt,
+      visitor: event.anonymousId,
+    }));
+    const visitors = [...new Set(observations.flatMap((observation) => observation.visitor ? [observation.visitor] : []))];
+    if (visitors.length === 0) return attributeProgrammeEvents(observations, []);
+    const sessions = await prisma.analyticsSession.findMany({
+      where: {
+        ...productionHuman,
+        anonymousId: { in: visitors },
+        startedAt: { gte: new Date(from.getTime() - SOCIAL_TRAFFIC_PROGRAMME_ATTRIBUTION_DAYS * DAY_MS), lt: until },
+        OR: taggedOrReferred,
+      },
+      select: { anonymousId: true, startedAt: true, countryCode: true, utmSource: true, utmCampaign: true, utmContent: true, referrerHost: true },
+      take: SOCIAL_TRAFFIC_MAX_PROGRAMME_SESSIONS + 1,
+    });
+    if (sessions.length > SOCIAL_TRAFFIC_MAX_PROGRAMME_SESSIONS) {
+      throw new SocialTrafficError("RESULT_TOO_LARGE", "The visitors who started the Programme in this range have too many visits to match at once. Ask for a shorter range.");
+    }
+    return attributeProgrammeEvents(observations, sessions.map(({ anonymousId, ...session }) => ({ ...session, visitor: anonymousId })));
   },
 
   async siteTotals({ from, until }) {
@@ -296,12 +402,100 @@ export function socialTrafficRowKey(touch: SocialTrafficTouch, groupBy: SocialTr
     : null;
 }
 
-type Accumulator = RowKey & { sessions: number; outboundClicks: number; partnerClicks: number; countries: Map<string | null, number> };
+/**
+ * Counts each visitor's Programme start and first-step completion once and
+ * credits it to a visit; exported for tests.
+ *
+ * Once per visitor: one person's start can be observed twice, first while
+ * anonymous (dedupe key `programme:anonymous:<token>:started`) and again when
+ * the account's enrolment is observed (`programme:<enrolment>:started`). The
+ * database keys differ, but both rows carry the same browser analytics ID, so
+ * a kind is counted once per analytics ID and the earliest observation in the
+ * range wins — the start is credited to the visit that led to it. An
+ * observation without an analytics ID can only be an enrolment observation,
+ * which the database already holds once per enrolment; it is counted as it is
+ * and can be matched to no visit.
+ *
+ * Credit: the same visitor's most recent visit that began at or before the
+ * event, at most 30 days before it, and has a social touch by the report's
+ * own rule (`socialTrafficRowKey`: a UTM tag or a social-network referrer).
+ * A later direct or search visit does not take the credit away.
+ */
+export function attributeProgrammeEvents(
+  observations: readonly SocialTrafficProgrammeObservation[],
+  sessions: readonly SocialTrafficVisitorSession[],
+): SocialTrafficProgrammeEvent[] {
+  const socialVisits = new Map<string, SocialTrafficVisitorSession[]>();
+  for (const session of sessions) {
+    if (!socialTrafficRowKey(session, "source")) continue;
+    const visitor = session.visitor.toLowerCase();
+    const visits = socialVisits.get(visitor);
+    if (visits) visits.push(session);
+    else socialVisits.set(visitor, [session]);
+  }
+  const counted = new Set<string>();
+  const events: SocialTrafficProgrammeEvent[] = [];
+  for (const observation of [...observations].sort((left, right) => left.occurredAt.getTime() - right.occurredAt.getTime())) {
+    const visitor = observation.visitor?.toLowerCase() ?? null;
+    if (visitor) {
+      const once = `${observation.kind}:${visitor}`;
+      if (counted.has(once)) continue;
+      counted.add(once);
+    }
+    const occurredAt = observation.occurredAt.getTime();
+    const earliest = occurredAt - SOCIAL_TRAFFIC_PROGRAMME_ATTRIBUTION_DAYS * DAY_MS;
+    let credited: SocialTrafficVisitorSession | null = null;
+    for (const visit of visitor ? socialVisits.get(visitor) ?? [] : []) {
+      const startedAt = visit.startedAt.getTime();
+      if (startedAt > occurredAt || startedAt < earliest) continue;
+      if (!credited || startedAt > credited.startedAt.getTime()) credited = visit;
+    }
+    events.push({
+      kind: observation.kind,
+      visit: credited && {
+        utmSource: credited.utmSource,
+        utmCampaign: credited.utmCampaign,
+        utmContent: credited.utmContent,
+        referrerHost: credited.referrerHost,
+        countryCode: credited.countryCode,
+      },
+    });
+  }
+  return events;
+}
+
+type Accumulator = RowKey & {
+  sessions: number;
+  outboundClicks: number;
+  partnerClicks: number;
+  programmeStarts: number;
+  stepOneCompletions: number;
+  countries: Map<string | null, number>;
+  programmeStartCountries: Map<string | null, number>;
+};
+
+/**
+ * Countries by count; on a tie by code, an unknown country last. (The earlier
+ * `"~"` placeholder compared by locale sorted before every letter, so an
+ * unknown country came first on a tie.)
+ */
+function topCountries(counts: Map<string | null, number>, limit: number) {
+  return [...counts.entries()]
+    .sort((left, right) => {
+      if (right[1] !== left[1]) return right[1] - left[1];
+      if (left[0] === right[0]) return 0;
+      if (left[0] === null) return 1;
+      if (right[0] === null) return -1;
+      return left[0] < right[0] ? -1 : 1;
+    })
+    .slice(0, limit);
+}
 
 /** Pure aggregation of store rows into the tool's rows; exported for tests. */
 export function aggregateSocialTraffic(input: {
   sessionGroups: readonly SocialTrafficSessionGroup[];
   clicks: readonly SocialTrafficClick[];
+  programmeEvents: readonly SocialTrafficProgrammeEvent[];
   groupBy: SocialTrafficGroupBy;
   utmSource: string | null;
   limit: number;
@@ -315,7 +509,16 @@ export function aggregateSocialTraffic(input: {
     const id = JSON.stringify([key.channel, key.utmSource, key.utmCampaign, key.utmContent, key.referrerNetwork]);
     let current = rows.get(id);
     if (!current) {
-      current = { ...key, sessions: 0, outboundClicks: 0, partnerClicks: 0, countries: new Map() };
+      current = {
+        ...key,
+        sessions: 0,
+        outboundClicks: 0,
+        partnerClicks: 0,
+        programmeStarts: 0,
+        stepOneCompletions: 0,
+        countries: new Map(),
+        programmeStartCountries: new Map(),
+      };
       rows.set(id, current);
     }
     return current;
@@ -332,17 +535,31 @@ export function aggregateSocialTraffic(input: {
     current.outboundClicks += 1;
     if (click.succeeded) current.partnerClicks += 1;
   }
+  // Like a click, a Programme event counts in the range it happened in, so its
+  // row may show it with zero sessions when the credited visit began earlier.
+  for (const event of input.programmeEvents) {
+    if (!event.visit) continue;
+    const current = rowFor(event.visit);
+    if (!current) continue;
+    if (event.kind === "started") {
+      current.programmeStarts += 1;
+      current.programmeStartCountries.set(event.visit.countryCode, (current.programmeStartCountries.get(event.visit.countryCode) ?? 0) + 1);
+    } else {
+      current.stepOneCompletions += 1;
+    }
+  }
   const all = [...rows.values()]
-    .map(({ countries, ...row }): SocialTrafficRow => ({
+    .map(({ countries, programmeStartCountries, ...row }): SocialTrafficRow => ({
       ...row,
-      topCountries: [...countries.entries()]
-        .sort((left, right) => right[1] - left[1] || String(left[0] ?? "~").localeCompare(String(right[0] ?? "~")))
-        .slice(0, SOCIAL_TRAFFIC_TOP_COUNTRIES)
+      topCountries: topCountries(countries, SOCIAL_TRAFFIC_TOP_COUNTRIES)
         .map(([countryCode, sessions]) => ({ countryCode, sessions })),
+      programmeStartCountries: topCountries(programmeStartCountries, SOCIAL_TRAFFIC_TOP_PROGRAMME_COUNTRIES)
+        .map(([countryCode, starts]) => ({ countryCode, starts })),
     }))
     .sort((left, right) => right.sessions - left.sessions
       || right.outboundClicks - left.outboundClicks
       || right.partnerClicks - left.partnerClicks
+      || right.programmeStarts - left.programmeStarts
       || JSON.stringify([left.channel, left.utmSource, left.utmCampaign, left.utmContent, left.referrerNetwork])
         .localeCompare(JSON.stringify([right.channel, right.utmSource, right.utmCampaign, right.utmContent, right.referrerNetwork])));
   return {
@@ -351,6 +568,13 @@ export function aggregateSocialTraffic(input: {
       sessions: all.reduce((sum, row) => sum + row.sessions, 0),
       outboundClicks: all.reduce((sum, row) => sum + row.outboundClicks, 0),
       partnerClicks: all.reduce((sum, row) => sum + row.partnerClicks, 0),
+      programmeStarts: all.reduce((sum, row) => sum + row.programmeStarts, 0),
+      stepOneCompletions: all.reduce((sum, row) => sum + row.stepOneCompletions, 0),
+    },
+    // Site-wide: every counted Programme event, with or without a social visit to credit.
+    siteProgramme: {
+      programmeStarts: input.programmeEvents.filter((event) => event.kind === "started").length,
+      stepOneCompletions: input.programmeEvents.filter((event) => event.kind === "step_one_completed").length,
     },
     rows: all.slice(0, input.limit),
     omittedRows: Math.max(0, all.length - input.limit),
@@ -372,11 +596,13 @@ export async function readSocialTraffic(
 
   let sessionGroups: SocialTrafficSessionGroup[];
   let clicks: SocialTrafficClick[];
+  let programmeEvents: SocialTrafficProgrammeEvent[];
   let site: SocialTrafficSiteTotals;
   try {
-    [sessionGroups, clicks, site] = await Promise.all([
+    [sessionGroups, clicks, programmeEvents, site] = await Promise.all([
       store.sessionGroups(range),
       store.attributedClicks(range),
+      store.programmeEvents(range),
       store.siteTotals(range),
     ]);
   } catch (error) {
@@ -384,7 +610,7 @@ export async function readSocialTraffic(
     throw new SocialTrafficError("TRAFFIC_UNAVAILABLE", "Site traffic could not be read. Retry later.", true);
   }
 
-  const aggregate = aggregateSocialTraffic({ sessionGroups, clicks, groupBy, utmSource: parsed.data.utmSource ?? null, limit });
+  const aggregate = aggregateSocialTraffic({ sessionGroups, clicks, programmeEvents, groupBy, utmSource: parsed.data.utmSource ?? null, limit });
   return socialTrafficResultSchema.parse({
     generatedAt: now.toISOString(),
     range: {
@@ -395,7 +621,13 @@ export async function readSocialTraffic(
     groupBy,
     filter: { utmSource: parsed.data.utmSource?.toLowerCase() ?? null },
     totals: aggregate.totals,
-    site,
+    site: {
+      sessions: site.sessions,
+      outboundClicks: site.outboundClicks,
+      partnerClicks: site.partnerClicks,
+      outboundClicksWithoutConsent: site.outboundClicksWithoutConsent,
+      ...aggregate.siteProgramme,
+    },
     rows: aggregate.rows,
     omittedRows: aggregate.omittedRows,
     notes: [...SOCIAL_TRAFFIC_NOTES],
