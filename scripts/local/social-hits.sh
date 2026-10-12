@@ -28,11 +28,19 @@ while [ $# -gt 0 ]; do
 done
 
 SINCE="$SINCE" UNTIL="$UNTIL" MODE="$MODE" BOTS="$BOTS" python3 - <<'PY'
-import collections, datetime as dt, json, os, re, subprocess, sys
+import collections, concurrent.futures, datetime as dt, json, os, re, subprocess, sys, time
 
-LIMIT = 1000
+# `vercel logs` (CLI 55) answers with at most 50 rows per call whatever `-n` asks for, so a window
+# that comes back with 50 or more rows is treated as cut off and read again in two halves.
+REQUEST = 1000
+PAGE_CAP = 50
+FIRST_WINDOW = dt.timedelta(hours=6)
+SMALLEST_WINDOW = dt.timedelta(minutes=2)
+CALL_TIMEOUT = 90
+ATTEMPTS = 4
+WORKERS = 4
 LINE = re.compile(r"social_hit src=(\S+) campaign=(\S+) content=(\S+) country=(\S+)(?: bot=([01]))?")
-now = dt.datetime.now(dt.timezone.utc)
+now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
 
 def parse_time(value):
     match = re.fullmatch(r"(\d+)([mhd])", value)
@@ -47,31 +55,59 @@ def parse_time(value):
 def iso(moment):
     return moment.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-def fetch(since, until):
-    """One `vercel logs` call; halves the window while it comes back full."""
+def call(since, until):
+    """One `vercel logs` call with a timeout; a hung or failed call is retried."""
     command = ["vercel", "logs", "--environment", "production", "--no-branch", "--json",
-               "--query", "social_hit", "--since", iso(since), "--until", iso(until), "-n", str(LIMIT)]
+               "--query", "social_hit", "--since", iso(since), "--until", iso(until), "-n", str(REQUEST)]
     project = os.environ.get("VERCEL_PROJECT")
     if project:
         command += ["--project", project]
-    result = subprocess.run(command, capture_output=True, text=True)
-    if result.returncode != 0:
-        sys.exit(f"vercel logs failed: {result.stderr.strip()[-400:]}")
-    entries = [json.loads(line) for line in result.stdout.splitlines() if line.startswith("{")]
-    if len(entries) >= LIMIT and until - since > dt.timedelta(minutes=10):
-        middle = since + (until - since) / 2
+    problem = ""
+    for attempt in range(ATTEMPTS):
+        if attempt:
+            time.sleep(2 * attempt)
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, timeout=CALL_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            problem = f"no answer in {CALL_TIMEOUT} s"
+            continue
+        if result.returncode == 0:
+            return [json.loads(line) for line in result.stdout.splitlines() if line.startswith("{")]
+        problem = result.stderr.strip()[-400:]
+    raise RuntimeError(f"vercel logs failed for {iso(since)}..{iso(until)}: {problem}")
+
+def fetch(since, until):
+    """Reads one window; halves it while it comes back full."""
+    entries = call(since, until)
+    if len(entries) < min(REQUEST, PAGE_CAP):
+        return entries
+    if until - since > SMALLEST_WINDOW:
+        middle = since + dt.timedelta(seconds=int((until - since).total_seconds()) // 2)
         return fetch(since, middle) + fetch(middle, until)
-    if len(entries) >= LIMIT:
-        print(f"warning: {LIMIT}+ hits in {iso(since)}..{iso(until)}; counts are a floor", file=sys.stderr)
+    print(f"warning: {len(entries)}+ hits in {iso(since)}..{iso(until)}; counts are a floor", file=sys.stderr)
     return entries
+
+def fetch_all(since, until):
+    windows, start = [], since
+    while start < until:
+        windows.append((start, min(start + FIRST_WINDOW, until)))
+        start += FIRST_WINDOW
+    with concurrent.futures.ThreadPoolExecutor(max_workers=WORKERS) as pool:
+        try:
+            return [entry for batch in pool.map(lambda window: fetch(*window), windows) for entry in batch]
+        except RuntimeError as error:
+            pool.shutdown(cancel_futures=True)
+            sys.exit(str(error))
 
 since, until = parse_time(os.environ["SINCE"]), parse_time(os.environ["UNTIL"])
 seen, hits, bots = set(), collections.Counter(), 0
-for entry in fetch(since, until):
+for entry in fetch_all(since, until):
     match = LINE.search(entry.get("message") or "")
-    if not match or entry.get("id") in seen:
+    # Neighbouring windows share their boundary second, so the same entry can arrive twice.
+    key = entry.get("id") or (entry.get("timestamp"), entry.get("message"))
+    if not match or key in seen:
         continue
-    seen.add(entry.get("id"))
+    seen.add(key)
     source, campaign, content, country, bot = match.groups()
     if bot == "1":
         bots += 1
