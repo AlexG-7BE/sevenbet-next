@@ -502,20 +502,22 @@ test("Google return retries canonical claim redemption and transfers local autho
   await page.route("**/api/program/program-ai/starting-point", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   await page.route("**/api/program/program-ai/claim", (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true }) }));
   let redemptions = 0;
+  // The page repeats a failed redemption once by itself (Founder, 12 Oct 2026), so the error
+  // shows only when the repeat fails too; the person's own press is then the third attempt.
   await page.route("**/api/program/program-ai/claims/redeem", (route) => {
     redemptions += 1;
-    return route.fulfill(redemptions === 1
+    return route.fulfill(redemptions <= 2
       ? { status: 503, contentType: "application/json", body: JSON.stringify({ ok: false, error: "Your progress could not be saved yet" }) }
       : { status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture() }) });
   });
   await open(page, "/program?auth=google-return");
   await expect(page.getByRole("heading", { name: "Here's what we can do together." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toHaveText("Your progress could not be saved yet");
-  expect(redemptions).toBe(1);
+  expect(redemptions).toBe(2);
   await page.getByRole("button", { name: "Save to my account" }).click();
   await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
   await expect(page.getByRole("heading", { name: /Mission 02/ })).toBeVisible();
-  expect(redemptions).toBe(2);
+  expect(redemptions).toBe(3);
   const transferred = await page.evaluate(({ journey, user }) => ({
     marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
     journeyContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`),
