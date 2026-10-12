@@ -14,7 +14,7 @@ import { isCurrentPublicRoute } from "@/lib/public-shell";
 import {
   RESEARCH_ACCESS_CHANGED_EVENT,
   RESEARCH_OPENED_AT_STORAGE_KEY,
-  researchAccessOpen,
+  researchDoorOpen,
   researchLinksAreNew,
   researchNavigationShown,
 } from "@/lib/research-access";
@@ -89,7 +89,7 @@ export function PublicNavigationDoor({
   const pathname = usePathname();
   const access = useSyncExternalStore(
     subscribeToResearchAccess,
-    () => researchAccessOpen(document.cookie),
+    () => researchDoorOpen(document.cookie),
     () => researchAccess,
   );
   const research = researchNavigationShown(stripPublicMarketPrefix(pathname), access);
@@ -114,7 +114,7 @@ export function PublicResearchNewMark() {
       } catch {
         // Storage can be blocked; the menu simply carries no mark.
       }
-      if (researchAccessOpen(document.cookie) && researchLinksAreNew(openedAt, Date.now())) header.dataset.researchNew = "";
+      if (researchDoorOpen(document.cookie) && researchLinksAreNew(openedAt, Date.now())) header.dataset.researchNew = "";
       else delete header.dataset.researchNew;
     };
     sync();
