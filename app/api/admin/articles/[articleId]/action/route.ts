@@ -28,7 +28,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { articleId } = await params;
     const article = await articleService.transition(articleId, body.action, actor, body.expectedUpdatedAt);
     if (["publish", "revise", "archive"].includes(body.action)) {
-      revalidatePublicArticles(article.category, article.slug);
+      revalidatePublicArticles(article.category, article.slug, article.locale);
     }
     return NextResponse.json({ ok: true, article, source: "postgresql" });
   } catch (error) {

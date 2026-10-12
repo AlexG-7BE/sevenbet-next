@@ -1,0 +1,23 @@
+name: IndexNow resubmit
+
+# Announces every URL in the Production sitemap to IndexNow (Bing, Yandex, Seznam, Naver).
+# Manual: Actions → IndexNow resubmit → Run workflow. Runs from a GitHub host, so the site's
+# geo-blocks never get in the way. The key file is public by design (lib/seo/indexnow.ts).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resubmit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Announce the sitemap
+        run: node scripts/indexnow-submit.mjs --submit
