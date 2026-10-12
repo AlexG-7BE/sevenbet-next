@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 
 import { authClient, useSession } from "@/lib/auth/client";
 import { continueWithEmail } from "@/lib/auth/email-entry";
 import { googleLoginCallbacks, programmeGoogleCallbacks } from "@/lib/auth/google-flow";
 import { passwordResetPath } from "@/lib/auth/password-reset";
+import { useGooglePress } from "@/lib/auth/use-google-press";
 import {
   PROGRAMME_MARKETING_OPT_IN_DEFAULT,
   PROGRAMME_MARKETING_OPT_IN_LABEL,
@@ -17,6 +18,8 @@ import {
 import { programmeText } from "@/lib/i18n/programme-catalog";
 import {
   affirmAnonymousProgrammeAccess,
+  forgetClaimMade,
+  journeyWithAccessProof,
   markStartingPointForAccount,
   noteClaimMade,
   prepareAccountFirstGoogleReturn,
@@ -56,6 +59,8 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
   const [password, setPassword] = useState("");
   const [marketingAllowed, setMarketingAllowed] = useState(PROGRAMME_MARKETING_OPT_IN_DEFAULT);
   const [busy, setBusy] = useState(false);
+  /** A press on Google is under way, so a second one does nothing. */
+  const googlePressed = useRef(false);
   const [error, setError] = useState(() => {
     if (authState === "google-error" && authError === "account_not_linked") return "";
     if (authState === "google-link-error") return t("Google linking was not completed. Your account is unchanged; you can retry safely.");
@@ -80,13 +85,63 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
     markStartingPointForAccount(window.sessionStorage, journey);
   }
 
+  // Founder decision, 12 Oct 2026: a press on Google leaves at once where that needs no new
+  // consent. Nothing is affirmed behind the screen, so the Google address is prepared only in a
+  // tab that already holds the access proof (the person continued under the line in the
+  // Programme); a Starting Point made there has its claim kept ready too. Anyone else gets the
+  // immediate button feedback, and the press does the rest.
+  const googlePress = useGooglePress({
+    enabled: googleAvailable && !linkRecovery,
+    paused: busy,
+    prepareAddress: async () => {
+      const journey = journeyWithAccessProof(window.sessionStorage);
+      if (!journey) return null;
+      const result = await authClient.signIn.social({ provider: "google", ...programmeGoogleCallbacks(locale), requestSignUp: true, disableRedirect: true, fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, journey) } });
+      return result.data;
+    },
+    claim: () => {
+      const journey = journeyWithAccessProof(window.sessionStorage);
+      const progress = journey ? tabProgrammeProgress(window.sessionStorage, journey) : null;
+      if (!journey || progress?.kind !== "starting-point") return null;
+      return {
+        readyAt: progress.claimReadyAt,
+        make: async () => {
+          // The earlier claim stops counting as soon as a new one is started.
+          forgetClaimMade(window.sessionStorage, journey);
+          await makePendingClaim(programmeMutationAccessHeaders(window.sessionStorage, journey), progress.startingPoint);
+          noteClaimMade(window.sessionStorage, journey);
+        },
+      };
+    },
+    onStayed: (reason) => {
+      googlePressed.current = false;
+      setBusy(false);
+      if (reason === "not-left") setError(t("Google account access failed"));
+    },
+  });
+
   // Founder decision, 11 Oct 2026: Log in also creates the account. Continuing under the line
   // below the form is the 18+, Terms and Privacy affirmation. The Programme page finishes a
   // Google return: it redeems a Starting Point made in this tab, or records the affirmation for
   // the account and opens the answers.
   async function startGoogle() {
+    if (googlePressed.current) return;
+    // Founder decision, 12 Oct 2026: the button answers at once, and a second press does nothing.
+    googlePressed.current = true;
     setBusy(true); setError("");
     try {
+      // With the address ready behind the screen (and the claim, for a person who answered), the
+      // press awaits nothing. A request in flight is finished first.
+      const prepared = googlePress.press() ?? await googlePress.settled();
+      const held = prepared ? journeyWithAccessProof(window.sessionStorage) : null;
+      if (prepared && held) {
+        if (tabProgrammeProgress(window.sessionStorage, held).kind === "starting-point") markStartingPointForAccount(window.sessionStorage, held);
+        else prepareAccountFirstGoogleReturn(window.sessionStorage, held);
+        rememberGoogleMarketingChoice(window.sessionStorage, held.id, marketingAllowed);
+        googlePress.leave(prepared);
+        return;
+      }
+      // Nothing was prepared, or it went stale: the press does the work itself, as it always did.
       const journey = await affirmAnonymousProgrammeAccess(window.sessionStorage);
       const progress = tabProgrammeProgress(window.sessionStorage, journey);
       let carried = false;
@@ -103,10 +158,13 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
         fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, journey) },
       });
       if (result.error) throw new Error("GOOGLE_SIGN_IN_NOT_STARTED");
+      googlePress.leave();
     } catch {
       clearProgrammeOAuthClaimMarker(window.sessionStorage);
       clearGoogleMarketingChoice(window.sessionStorage);
       setError(t("Google account access failed"));
+      googlePress.release();
+      googlePressed.current = false;
       setBusy(false);
     }
   }
@@ -150,6 +208,8 @@ export function LoginExperience({ authError, authState, googleAvailable, locale,
       await recordAccountProgrammeAccess().catch(() => undefined);
       if (entry.kind === "created" && marketingAllowed) await saveProgrammeMarketingPreference(locale);
       // A Starting Point made in this tab goes with the account: the Programme page redeems it.
+      // A claim being renewed behind the screen is finished first.
+      await googlePress.settled();
       const progress = tabProgrammeProgress(window.sessionStorage, anonymousProgrammeSubject(window.sessionStorage));
       if (progress.kind === "starting-point") {
         try {
