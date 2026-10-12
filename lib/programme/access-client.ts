@@ -12,9 +12,15 @@ import {
   writeProgrammeOAuthClaimMarker,
   type ProgrammeLocalSubject,
 } from "@/lib/programme/local-subject-storage";
+import { fetchProgrammeWithRetry } from "@/lib/programme/request-retry";
 
 type AccessStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 type AccessFetcher = (input: string, init: RequestInit) => Promise<Pick<Response, "ok" | "json">>;
+/**
+ * The affirmation is safe to send twice (an anonymous visitor gets a signed proof and nothing is
+ * stored; an account's acceptance is recorded once), so one failed attempt is repeated.
+ */
+const accessFetch: AccessFetcher = (input, init) => fetchProgrammeWithRetry(input, init);
 
 /**
  * Founder decision, 11 Oct 2026: continuing under the line "By continuing, you
@@ -46,7 +52,7 @@ function affirm(fetcher: AccessFetcher, body: Record<string, unknown>) {
  */
 export async function affirmAnonymousProgrammeAccess(
   storage: AccessStorage,
-  fetcher: AccessFetcher = fetch,
+  fetcher: AccessFetcher = accessFetch,
 ): Promise<ProgrammeLocalSubject> {
   const journey = anonymousProgrammeSubject(storage);
   if (hasProgrammeAccessAuthority(storage, journey)) return journey;
@@ -64,7 +70,7 @@ export async function affirmAnonymousProgrammeAccess(
 export async function refreshAccountJourneyAccess(
   storage: AccessStorage,
   journey: ProgrammeLocalSubject,
-  fetcher: AccessFetcher = fetch,
+  fetcher: AccessFetcher = accessFetch,
 ) {
   const response = await affirm(fetcher, { journeyId: journey.id });
   const payload = await response.json() as { authority?: ProgrammeAccessAuthority };
@@ -73,7 +79,7 @@ export async function refreshAccountJourneyAccess(
 }
 
 /** Records the same affirmation for the signed-in account, once. */
-export async function recordAccountProgrammeAccess(fetcher: AccessFetcher = fetch) {
+export async function recordAccountProgrammeAccess(fetcher: AccessFetcher = accessFetch) {
   const response = await affirm(fetcher, AFFIRMATION);
   if (!response.ok) throw new Error("PROGRAMME_ACCESS_NOT_VERIFIED");
 }
