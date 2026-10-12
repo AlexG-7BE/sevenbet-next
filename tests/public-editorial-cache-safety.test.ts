@@ -128,7 +128,7 @@ test("publication and archive paths invalidate the bounded editorial caches", ()
   assert.match(casinoInvalidation, /revalidateTag\(PUBLIC_CASINO_EDITORIAL_CACHE_TAG\)/);
   assert.match(articleInvalidation, /revalidateTag\(PUBLIC_ARTICLE_EDITORIAL_CACHE_TAG\)/);
   assert.match(articleAction, /\["publish", "revise", "archive"\]\.includes\(body\.action\)/);
-  assert.match(articleAction, /revalidatePublicArticles\(article\.category, article\.slug\)/);
+  assert.match(articleAction, /revalidatePublicArticles\(article\.category, article\.slug, article\.locale\)/);
   assert.ok((reviewAction.match(/revalidatePublicCasino\(\)/g) ?? []).length >= 2);
   assert.match(
     casinoAction,
