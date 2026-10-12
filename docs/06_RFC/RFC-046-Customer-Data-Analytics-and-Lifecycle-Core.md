@@ -7,7 +7,7 @@
 **Decision date:** 11 September 2026; Resend Production activation amendment
 approved 12 September 2026; aggregate social-traffic read amendment (§15)
 approved 3 October 2026; Google Analytics 4 amendment (§16) instructed
-4 October 2026
+4 October 2026; §15 extended to aggregate Programme starts on 12 October 2026
 
 **Implementation authority:** explicit Founder instruction `B4GAMBLE Customer
 Data, Analytics & Lifecycle — Production Core v1`.
@@ -499,6 +499,22 @@ and grants no Customer, dashboard or staff permission. Code:
 `tests/social-traffic.test.ts`, `tests/social-traffic-postgres.test.ts`.
 Rollback is removing the tool, `LEARN_MCP_ENABLED=false` (which also stops
 Learn publication) or rotating `LEARN_MCP_SERVICE_TOKEN`.
+
+**Extended on 12 October 2026** (explicit Founder approval,
+[SOCIAL-TRAFFIC-MCP-2026-10-03, amendment](../07_Decisions/SOCIAL-TRAFFIC-MCP-2026-10-03.md#amendment--programme-starts-per-source-and-post-12-october-2026)).
+The paragraph above said no Programme value is returned. For this scope only,
+the tool also returns two aggregate counters per row, in the row totals and
+site-wide: Production human `programme_started` observations and
+`programme_step_completed` observations of the first step in the range, each
+analytics ID counted once, credited to that ID's most recent consented visit
+with a UTM tag or social-network referrer that began at or before the event
+and at most 30 days before it, with the three most frequent countries of the
+credited starts. This is the aggregate product analysis §6 allows. §6's
+prohibition is unchanged: the numbers change nothing a visitor sees and no
+page, offer, ranking or route reads them. The analytics ID is read only to
+match an event to a visit and is not returned; Programme answers, Help, pause
+and vulnerability values are still neither read nor returned; no column,
+table or migration is added.
 
 ## 16. Amendment — Google Analytics 4 for every visitor (4 October 2026)
 

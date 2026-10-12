@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import test from "node:test";
 
-import type { AnalyticsEnvironment, AnalyticsTrafficKind } from "@prisma/client";
+import type { AnalyticsEnvironment, AnalyticsEventType, AnalyticsTrafficKind } from "@prisma/client";
 
 import { socialTrafficResultSchema } from "@/lib/analytics/social-traffic.server";
 import { prisma } from "@/lib/db/prisma";
@@ -21,6 +21,8 @@ function assertDisposableDatabase(value: string | undefined) {
 
 type SessionSeed = {
   key: string;
+  /** The browser the visit belongs to; a visit is its own visitor unless it names another visit's key. */
+  visitor?: string;
   startedAt: string;
   environment?: AnalyticsEnvironment;
   trafficKind?: AnalyticsTrafficKind;
@@ -40,6 +42,10 @@ const sessionSeeds: SessionSeed[] = [
   { key: "preview", startedAt: "2031-03-11T13:00:00.000Z", environment: "PREVIEW", countryCode: "GB", utm: ["instagram", "bio", "link_in_bio"] },
   { key: "facebook-before", startedAt: "2031-03-09T23:50:00.000Z", countryCode: "DK", utm: ["facebook", "post", "old-post"] },
   { key: "x-after", startedAt: "2031-03-13T00:00:00.000Z", countryCode: "GB", utm: ["x", "post", "spin-regret"] },
+  // The X visitor from Great Britain returns from a search two days later: not a social visit.
+  { key: "x-post-gb-return", visitor: "x-post-gb", startedAt: "2031-03-12T08:00:00.000Z", countryCode: "NO", referrerHost: "www.google.com" },
+  // A social visit more than 30 days before its visitor starts the Programme.
+  { key: "x-long-ago", startedAt: "2031-02-01T10:00:00.000Z", countryCode: "GB", utm: ["x", "post", "long-ago"] },
 ];
 
 type ClickSeed = {
@@ -60,10 +66,48 @@ const clickSeeds: ClickSeed[] = [
   { session: "x-after", attemptedAt: "2031-03-13T00:05:00.000Z", succeeded: true },
 ];
 
+type ProgrammeEventSeed = {
+  /** The session key of the visitor's browser; null is an observation without an analytics ID. */
+  visitor: string | null;
+  type: Extract<AnalyticsEventType, "PROGRAMME_STARTED" | "PROGRAMME_STEP_COMPLETED">;
+  occurredAt: string;
+  /** How the observer keyed the row: the anonymous start or the account's enrolment. */
+  observedAs: "anonymous" | "enrolment";
+  programmeStep?: number;
+  environment?: AnalyticsEnvironment;
+  trafficKind?: AnalyticsTrafficKind;
+};
+
+const programmeEventSeeds: ProgrammeEventSeed[] = [
+  // One visitor, observed while anonymous and again with the account: one start, credited to the X post.
+  { visitor: "x-post-se", type: "PROGRAMME_STARTED", occurredAt: "2031-03-10T11:10:00.000Z", observedAs: "anonymous" },
+  { visitor: "x-post-se", type: "PROGRAMME_STARTED", occurredAt: "2031-03-10T11:40:00.000Z", observedAs: "enrolment" },
+  { visitor: "x-post-se", type: "PROGRAMME_STEP_COMPLETED", programmeStep: 1, occurredAt: "2031-03-10T11:45:00.000Z", observedAs: "enrolment" },
+  // A later step is not the first step.
+  { visitor: "x-post-se", type: "PROGRAMME_STEP_COMPLETED", programmeStep: 2, occurredAt: "2031-03-10T12:00:00.000Z", observedAs: "enrolment" },
+  // The latest social visit decides, although a search visit came after it.
+  { visitor: "x-post-gb", type: "PROGRAMME_STARTED", occurredAt: "2031-03-12T09:00:00.000Z", observedAs: "anonymous" },
+  { visitor: "instagram-untagged", type: "PROGRAMME_STARTED", occurredAt: "2031-03-11T09:10:00.000Z", observedAs: "anonymous" },
+  // The credited visit began the evening before the range.
+  { visitor: "facebook-before", type: "PROGRAMME_STARTED", occurredAt: "2031-03-10T00:10:00.000Z", observedAs: "anonymous" },
+  // No social visit, a social visit 38 days earlier, no analytics ID: site totals only.
+  { visitor: "search", type: "PROGRAMME_STARTED", occurredAt: "2031-03-11T10:05:00.000Z", observedAs: "anonymous" },
+  { visitor: "x-long-ago", type: "PROGRAMME_STARTED", occurredAt: "2031-03-11T15:00:00.000Z", observedAs: "anonymous" },
+  { visitor: null, type: "PROGRAMME_STARTED", occurredAt: "2031-03-12T08:00:00.000Z", observedAs: "enrolment" },
+  // Staff-marked and Preview observations are not Production human traffic.
+  { visitor: "staff", type: "PROGRAMME_STARTED", occurredAt: "2031-03-11T12:05:00.000Z", observedAs: "anonymous", trafficKind: "INTERNAL" },
+  { visitor: "preview", type: "PROGRAMME_STARTED", occurredAt: "2031-03-11T13:05:00.000Z", observedAs: "anonymous", environment: "PREVIEW" },
+  // After the three-day range, inside the wider one.
+  { visitor: "x-after", type: "PROGRAMME_STARTED", occurredAt: "2031-03-13T00:05:00.000Z", observedAs: "anonymous" },
+];
+
 const sessionIds = new Map(sessionSeeds.map((seed) => [seed.key, randomUUID()]));
+const visitorIds = new Map(sessionSeeds.filter((seed) => !seed.visitor).map((seed) => [seed.key, randomUUID()]));
 const clickIds = clickSeeds.map(() => randomUUID());
+const programmeEventIds = programmeEventSeeds.map(() => randomUUID());
 
 async function cleanup() {
+  await prisma.analyticsEvent.deleteMany({ where: { id: { in: programmeEventIds } } });
   await prisma.outboundClick.deleteMany({ where: { id: { in: clickIds } } });
   await prisma.analyticsSession.deleteMany({ where: { id: { in: [...sessionIds.values()] } } });
 }
@@ -76,7 +120,7 @@ async function seed() {
     await prisma.analyticsSession.create({
       data: {
         id: sessionIds.get(candidate.key)!,
-        anonymousId: randomUUID(),
+        anonymousId: visitorIds.get(candidate.visitor ?? candidate.key)!,
         environment: candidate.environment ?? "PRODUCTION",
         trafficKind: candidate.trafficKind ?? "HUMAN",
         startedAt,
@@ -110,6 +154,22 @@ async function seed() {
       },
     });
   }
+  for (const [index, candidate] of programmeEventSeeds.entries()) {
+    const step = candidate.type === "PROGRAMME_STARTED" ? "started" : `step:${candidate.programmeStep}:completed`;
+    // The observer never sets the session on these rows, so only the analytics ID can link them to a visit.
+    await prisma.analyticsEvent.create({
+      data: {
+        id: programmeEventIds[index]!,
+        dedupeKey: candidate.observedAs === "anonymous" ? `programme:anonymous:${randomUUID()}:${step}` : `programme:${randomUUID()}:${step}`,
+        type: candidate.type,
+        environment: candidate.environment ?? "PRODUCTION",
+        trafficKind: candidate.trafficKind ?? "HUMAN",
+        occurredAt: new Date(candidate.occurredAt),
+        anonymousId: candidate.visitor ? visitorIds.get(candidate.visitor)! : null,
+        programmeStep: candidate.programmeStep ?? 1,
+      },
+    });
+  }
 }
 
 async function databaseDigest() {
@@ -131,12 +191,12 @@ async function socialTraffic(argumentsValue: Record<string, unknown>) {
   const payload = await response.json() as { result?: { isError?: boolean; structuredContent?: unknown } };
   assert.equal(payload.result?.isError, undefined, JSON.stringify(payload));
   const serialized = JSON.stringify(payload);
-  for (const id of [...sessionIds.values(), ...clickIds]) assert.equal(serialized.includes(id), false, "no row identifier may leave the tool");
-  assert.doesNotMatch(serialized, /anonymousId|analyticsSessionId|userId|l\.instagram\.com|www\.google\.com/);
+  for (const id of [...sessionIds.values(), ...visitorIds.values(), ...clickIds, ...programmeEventIds]) assert.equal(serialized.includes(id), false, "no row identifier may leave the tool");
+  assert.doesNotMatch(serialized, /anonymousId|analyticsSessionId|userId|dedupeKey|programme:anonymous|l\.instagram\.com|www\.google\.com/);
   return socialTrafficResultSchema.parse(payload.result?.structuredContent);
 }
 
-test("social_traffic aggregates PostgreSQL sessions and partner clicks per UTM post and writes nothing", async (context) => {
+test("social_traffic aggregates PostgreSQL sessions, partner clicks and Programme starts per UTM post and writes nothing", async (context) => {
   assertDisposableDatabase(process.env.DATABASE_URL);
   const keys = ["LEARN_MCP_ENABLED", "LEARN_MCP_SERVICE_TOKEN", "LEARN_MCP_ACTOR_ID"] as const;
   const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
@@ -157,20 +217,29 @@ test("social_traffic aggregates PostgreSQL sessions and partner clicks per UTM p
   const result = await socialTraffic({ from: "2031-03-10", to: "2031-03-12" });
   assert.deepEqual(result.range, { from: "2031-03-10T00:00:00.000Z", to: "2031-03-13T00:00:00.000Z", days: 3 });
   // Production human only: staff-marked, Preview and out-of-range rows are absent.
-  assert.deepEqual(result.site, { sessions: 5, outboundClicks: 6, partnerClicks: 5, outboundClicksWithoutConsent: 1 });
-  assert.deepEqual(result.rows.map((row) => [row.channel, row.utmSource ?? row.referrerNetwork, row.utmCampaign, row.utmContent, row.sessions, row.outboundClicks, row.partnerClicks]), [
-    ["utm", "x", "post", "spin-regret", 2, 2, 1],
-    ["social_referrer", "instagram", null, null, 1, 1, 1],
-    // The click happened in range although its visit began the evening before.
-    ["utm", "facebook", "post", "old-post", 0, 1, 1],
+  // Seven visitors started (the one observed twice counts once; the staff-marked and Preview starts do not count)
+  // and one completed the first step; three of the starts have no social visit within 30 days to credit.
+  assert.deepEqual(result.site, { sessions: 6, outboundClicks: 6, partnerClicks: 5, outboundClicksWithoutConsent: 1, programmeStarts: 7, stepOneCompletions: 1 });
+  assert.deepEqual(result.rows.map((row) => [row.channel, row.utmSource ?? row.referrerNetwork, row.utmCampaign, row.utmContent, row.sessions, row.outboundClicks, row.partnerClicks, row.programmeStarts, row.stepOneCompletions]), [
+    ["utm", "x", "post", "spin-regret", 2, 2, 1, 2, 1],
+    ["social_referrer", "instagram", null, null, 1, 1, 1, 1, 0],
+    // The click and the Programme start happened in range although their visit began the evening before.
+    ["utm", "facebook", "post", "old-post", 0, 1, 1, 1, 0],
   ]);
   assert.deepEqual(result.rows[0]?.topCountries, [{ countryCode: "GB", sessions: 1 }, { countryCode: "SE", sessions: 1 }]);
-  assert.deepEqual(result.totals, { rows: 3, sessions: 3, outboundClicks: 4, partnerClicks: 3 });
+  // The start carries the country of the credited X visit, not of the later search visit from Norway.
+  assert.deepEqual(result.rows.map((row) => row.programmeStartCountries), [
+    [{ countryCode: "GB", starts: 1 }, { countryCode: "SE", starts: 1 }],
+    [{ countryCode: "GB", starts: 1 }],
+    [{ countryCode: "DK", starts: 1 }],
+  ]);
+  assert.deepEqual(result.totals, { rows: 3, sessions: 3, outboundClicks: 4, partnerClicks: 3, programmeStarts: 4, stepOneCompletions: 1 });
 
   const xOnly = await socialTraffic({ from: "2031-03-10T00:00:00Z", to: "2031-03-14T00:00:00Z", utmSource: "x", groupBy: "source" });
-  assert.deepEqual(xOnly.rows.map((row) => [row.channel, row.utmSource, row.sessions, row.outboundClicks, row.partnerClicks]), [
-    ["utm", "x", 3, 3, 2],
+  assert.deepEqual(xOnly.rows.map((row) => [row.channel, row.utmSource, row.sessions, row.outboundClicks, row.partnerClicks, row.programmeStarts, row.stepOneCompletions]), [
+    ["utm", "x", 3, 3, 2, 3, 1],
   ]);
+  assert.deepEqual([xOnly.site.programmeStarts, xOnly.site.stepOneCompletions], [8, 1]);
 
   assert.equal(await databaseDigest(), before, "social_traffic must not change any analytics session, click or event row");
 });
