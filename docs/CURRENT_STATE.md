@@ -589,6 +589,32 @@ v1 (12 September 2026); its orphaned `BonusCalculator` is replaced by
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+## Pause plan page — in review
+
+**Founder decisions, 12 October 2026 (growth strategy, zero advertising budget):**
+the spearhead is a free ten-day plan beside the national self-exclusion pause,
+«10 dagar. 10 steg.» in Sweden (Spelpaus added a 10-day period in July 2026) and
+«Dagen efter ROFUS. 10 trin.» in Denmark, launched together. Branch
+`feat/sv-10-dagar` adds `/{sv,da,en}/pause-plan`: a tool that takes the day the
+pause started and its period (Spelpaus 10 days, 1, 3, 6 months, until further
+notice; ROFUS 24 hours, 1, 3, 6 months, permanent) and shows the pause's last
+day, the day after and the ten plan days with dates; the ten steps in journey
+order with one move each; a "day 11" block with the main phrase and the
+Programme start link; an FAQ with FAQPage structured data; the national
+helplines (Stödlinjen, StopSpillet). Other published languages read the
+English page under `noindex`. The page never links to a casino.
+
+**A declared pause keeps the research door shut.** "Show my plan" writes the
+pause's last day into the plain cookie `b4g_pause_until`; `researchDoorOpen`
+in `lib/research-access.ts` (lesson flag and no running pause) is what the
+public and Programme layouts and the client door read, so no research link
+appears for that browser until the day after the pause, even when the lesson is
+complete. The lesson flag, the Programme answers and every offer, ranking and
+`/r/` route are untouched; research pages stay public. Pure date logic:
+`lib/tools/pause-plan.ts`. Tests: `tests/pause-plan.test.ts` (`pause-plan:test`).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Google Analytics 4 for every visitor
 
 **Founder instructions, 4 October 2026** (RFC-046 §16): the Google tag for

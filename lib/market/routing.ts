@@ -57,6 +57,7 @@ export const PUBLIC_LOCALIZATION_ROUTE_MANIFEST = [
   { root: "learn", match: "SUBTREE", policy: "LOCALIZABLE_PUBLIC" },
   { root: "login", match: "EXACT", policy: "UNPREFIXED_ONLY" },
   { root: "methodology", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
+  { root: "pause-plan", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
   { root: "reset-password", match: "EXACT", policy: "UNPREFIXED_ONLY" },
   { root: "responsible-gambling", match: "EXACT", policy: "FIRST_WAVE_SAFETY" },
   { root: "responsible-gambling", match: "SUBTREE", policy: "UNPREFIXED_ONLY" },
