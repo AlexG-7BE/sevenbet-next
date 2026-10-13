@@ -16,6 +16,7 @@ Update when a material decision is approved, superseded, reversed, or retired.
 
 ## Product direction records
 
+- [The question screen of a Programme step](PROGRAMME-QUESTION-SCREEN-2026-10-13.md) — Founder instruction, 13 Oct: a more premium, comfortable question screen (top bar with step number, progress inside the step, option cards with a line under each, one pinned button without XP); no press removed, rewards and order unchanged.
 - [PROGRAM-AI-01 Product Direction v2.2](PROGRAM-AI-01-Product-Direction-v2.2.md) — Founder-approved target Programme direction; implementation is not authorised.
 - [Customers are reachable by email from sign-up](EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27.md) — Founder-approved confirmation link on every email sign-up (24 hours, lands signed in on the Programme), dashboard resend, the one optional email opt-in also on Google sign-up, and the welcome email sent right after sign-up.
 - [Mobile menu order and plain catalogue wording](MOBILE-MENU-AND-CATALOGUE-WORDING-2026-09-25.md) — Founder-approved drawer with Start Programme as the acid primary under the routes, and catalogues that drop unknown facts, count "offers"/"casinos" and read "How we pick".

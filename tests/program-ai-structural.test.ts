@@ -475,7 +475,9 @@ test("consumer Programme uses distinct interaction primitives and hides provider
   }
   assert.doesNotMatch(missionExperience + reviewScreen + authenticatedHome, /PRIVATE STRUCTURAL REVIEW|BOUNDED AI REVIEW|DETERMINISTIC REVIEW|Provider-off|provider-failure|Generic public navigation|No Programme data is sent|criterion IDs/);
   assert.doesNotMatch(missionPrimitives, /guidance\.generation|deterministic_fallback|provider/);
-  assert.match(missionExperience, /t\("Check sequence · \+\{xp\} XP when correct", \{ xp: current\.xp \}\)/);
+  // The button says what it does and carries no XP (Founder, 13 October 2026).
+  assert.match(missionExperience, /t\(sequenceAction \? "Check sequence" : "Continue"\)/);
+  assert.doesNotMatch(missionExperience, /Confirm action|XP when correct|t\("Saving…"\)/);
   assert.match(missionExperience, /No XP awarded\. Adjust the order and try again/);
 });
 
