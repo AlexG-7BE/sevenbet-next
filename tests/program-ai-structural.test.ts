@@ -387,14 +387,15 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.ok(!authenticatedHome.includes("mission.missionNumber === 8"));
   // A person sees a Mission's step, its place in the journey; the number stays its identity.
   assert.ok(authenticatedHome.includes('number: String(home.currentStep).padStart(2, "0")'));
-  assert.ok(authenticatedHome.includes('<b>{String(mission.step).padStart(2, "0")}</b>'));
+  // The path's mark is the step too (the home of 13 October 2026): a tick once complete, else the step.
+  assert.ok(authenticatedHome.includes(": mission.step}</i>"));
   assert.ok(!authenticatedHome.includes("String(home.currentMission)") && !authenticatedHome.includes("String(mission.missionNumber)"));
   assert.ok(authenticatedHome.includes('data-programme-research="featured"'));
-  assert.ok(authenticatedHome.includes("{researchFeatured ? research : null}"));
+  assert.ok(authenticatedHome.includes("{researchLinksShown && researchFeatured ? research : null}"));
   assert.ok(!authenticatedHome.includes("{researchFeatured ? null : research}"), "no research card before the lesson (Founder, 10 October 2026)");
   assert.doesNotMatch(authenticatedHome, /Review or update/);
   assert.match(authenticatedHome, /Saved Starting Point/);
-  assert.match(authenticatedHome, /home\.primaryAction === "review-mission" \? "Mission complete" : "Current mission"/);
+  assert.match(authenticatedHome, /home\.primaryAction === "review-mission" \? "Mission complete" : "Next step"/);
   assert.match(authenticatedHome, /programmePrimaryActionLabel\(home\.primaryAction, locale\)/);
   assert.match(authenticatedHome, /home\.primaryAction === "finish-mission-one"/);
   assert.match(authenticatedHome, /For privacy, the situation itself was not retained/);

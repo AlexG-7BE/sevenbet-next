@@ -34,6 +34,7 @@ import {
 } from "@/lib/programme/program-ai/mission-validation";
 import { assertProgramAiV1Enabled } from "@/lib/programme/program-ai/runtime-config";
 import { anonymousProgramAiXp, programAiMissionOneActions } from "@/lib/programme/program-ai/contracts";
+import { programmeWeekGoal } from "@/lib/programme/program-ai/week-goal";
 import { dateOnlyUtc, localDateAt } from "@/lib/programme/security";
 
 type MissionProgress = {
@@ -57,6 +58,9 @@ const artifactFields: Record<ProgramAiMissionNumber, readonly string[]> = {
   10: ["reviewCadenceDays", "planPriorityIds", "timelineReviewed"],
 };
 
+/** The "Set a 7-day goal" Mission: its result feeds the weekly goal card of the home. */
+const WEEK_GOAL_MISSION = 2;
+
 function recordValue(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -76,6 +80,14 @@ function artifactFromDraft(draft: unknown, definition: ProgramAiMissionDefinitio
     });
   }
   return artifact as ProgramAiStructuralArtifact;
+}
+
+/** One stored value of a Mission's result, or null. It never throws: the home opens on any record. */
+function storedArtifactValue(draft: unknown, definition: ProgramAiMissionDefinition | null, key: string) {
+  if (!definition) return null;
+  const namespace = recordValue(recordValue(draft).programAiV1);
+  if (namespace.version !== definition.artifactVersion) return null;
+  return recordValue(namespace.artifact)[key] ?? null;
 }
 
 function mergedDraft(
@@ -530,7 +542,7 @@ export class ProgrammeAiMissionsService {
     };
   }
 
-  private async projectHome(unitOfWork: ProgrammeUnitOfWork, userId: string) {
+  private async projectHome(unitOfWork: ProgrammeUnitOfWork, userId: string, now = new Date()) {
     const source = await requireControlProgram(unitOfWork);
     const result = await unitOfWork.programAiMissionOne.home(userId, source.program.id);
     const dashboard = await programmeDashboardService.project(unitOfWork, userId, source.program.id);
@@ -548,6 +560,7 @@ export class ProgrammeAiMissionsService {
         engagementDayBucket: "unknown" as const,
         currentAction: missionOne.currentAction,
         startingPoint: null,
+        weekGoal: null,
         missions: programmeJourney.map((missionNumber, index) => ({
           missionNumber,
           step: index + 1,
@@ -575,6 +588,17 @@ export class ProgrammeAiMissionsService {
     const currentDefinition = programAiMissionDefinition(currentMission);
     const currentProgress = byMission.get(currentMission);
     const missionOne = missionOneProjection(byMission.get(1));
+    // The weekly goal card of the home (Founder, 13 October 2026): only once the goal Mission is
+    // complete, from its saved approach and its completion date. Nothing new is stored for it.
+    const goalProgress = byMission.get(WEEK_GOAL_MISSION);
+    const weekGoal = goalProgress?.status === "COMPLETED"
+      ? programmeWeekGoal({
+          goalStyle: storedArtifactValue(goalProgress.draft, programAiMissionDefinition(WEEK_GOAL_MISSION), "goalStyle"),
+          completedAt: goalProgress.completedAt,
+          timezone: enrollment.timezone,
+          now,
+        })
+      : null;
     const reviews = Object.values(programAiReviewDefinitions).map((review) => ({
       ...reviewAtStep(review),
       status: byMission.get(review.unlockMission)?.status === "COMPLETED" ? "available" : "locked",
@@ -618,6 +642,7 @@ export class ProgrammeAiMissionsService {
             chosenBoundaryAction: enrollment.programmeStartingPoint.chosenBoundaryAction,
           }
         : null,
+      weekGoal,
       missions: programmeJourney.map((missionNumber, index) => {
         const missionProgress = byMission.get(missionNumber);
         const definition = programAiMissionDefinition(missionNumber);

@@ -75,6 +75,48 @@ Evidence: `tests/programme-question-screen.test.ts` (in `programme:test`) and
 `tests/programme-question-screen-browser.spec.ts` (in `ci:browser`); the
 three existing Programme browser specs follow the new labels.
 
+## The Programme home, redrawn — in review
+
+**Founder instruction, 13 October 2026.** Same brief as the question screen
+(premium and comfortable, not shorter); he approved the mockup of the home.
+Ordinary interface work plus one addition to the server's home read: no RFC,
+no table, no column, no change to rewards, Mission order, prerequisites, the
+research door or any offer. `components/programme/ProgramAiHome.tsx`, one
+column of 560px on every width, under the site header.
+
+- **Greeting and numbers.** "Hello." in the italic serif with one quiet line;
+  XP, streak and active days stay, as one quiet row instead of the counters
+  card.
+- **Weekly goal card.** Shown once Mission 02 ("Set a 7-day goal") is
+  complete. The home read now carries `weekGoal`
+  (`lib/programme/program-ai/week-goal.ts`, projected in
+  `ProgrammeAiMissionsService`): the Mission's saved approach (`goalStyle`),
+  the running day 1–7 and the check-in date, worked out on the server from the
+  Mission's completion date in the enrolment's time zone. Day 1 is the
+  completion day; the check-in is seven days later. From the check-in date on
+  `day` is null: the card shows "Check-in {date}" and lights no day.
+  **The card shows the saved approach in the catalogue's words, not a
+  sentence the person wrote:** personal wording stays in the tab and is never
+  stored, so the server has no sentence to send. Storing one is a separate
+  Founder decision.
+- **Before Mission 02 is complete** the Starting Point (the server's text,
+  unchanged) stands in the goal's place; once the goal card exists it moves
+  under the path.
+- **Next step card** (acid outline): "Next step", the step as "03 / 10", the
+  Mission title, "About N minutes · N questions" (N is the Mission's own
+  number of actions) and the existing button with its label and behaviour. It
+  replaces the "N of M actions complete · About 5–8 min total" line. A
+  completed Programme keeps "Mission complete" and "Review mission".
+- **Path.** "Your path" shows five rows around the current step; "Show all 10
+  steps" unfolds the list in place and "Show fewer steps" folds it. All ten
+  rows are always in the page.
+- **Unchanged in content and logic:** the research card after step 3 (behind
+  one boolean, `researchLinksShown`, a seam for the clean route), the email
+  confirmation notice, Personal reviews, Achievements, the privacy footer.
+- **Tests.** `tests/programme-home-screen.test.ts` (in `programme:test` and
+  `program-ai:test`) and `tests/programme-home-screen-browser.spec.ts` (in
+  `ci:browser` and `program-ai:browser`).
+
 ## Programme words and small things after the Swedish walk — in review
 
 **Founder choice, 12 October 2026** ("clean up words and small things"), after

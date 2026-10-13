@@ -1330,7 +1330,7 @@ test("phone Mission screens open at the top with the first choice above a sticky
       const research = page.locator("[data-programme-research]");
       if (current === 9) {
         await expect(research).toHaveAttribute("data-programme-research", "featured");
-        const [card, researchBox, journey] = await Promise.all([page.locator('[data-programme-presentation="dashboard"] section').first().boundingBox(), research.boundingBox(), page.locator('[aria-labelledby="programme-path-title"]').boundingBox()]);
+        const [card, researchBox, journey] = await Promise.all([page.locator('[data-programme-home="next"]').boundingBox(), research.boundingBox(), page.locator('[aria-labelledby="programme-path-title"]').boundingBox()]);
         expect(researchBox!.y, `research follows the current mission at ${viewport.width}px`).toBeGreaterThan(card!.y);
         expect(researchBox!.y, `research leads the journey at ${viewport.width}px`).toBeLessThan(journey!.y);
         for (const link of await research.getByRole("link").all()) {
