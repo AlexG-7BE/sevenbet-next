@@ -104,8 +104,8 @@ const sv: PausePlanMessages = {
     saved: "Sparat i den här webbläsaren. Inget skickas någonstans.",
     reset: "Ta bort pausen från den här webbläsaren",
     dayLabel: "Dag",
-    planHeading: "Ett steg om dagen",
-    planIntro: "Tio steg ur B4GAMBLE-programmet, i den ordning du gör dem. Varje steg tar 5–15 minuter och slutar med något du behåller.",
+    planHeading: "Alla tio på en kväll, eller ett om dagen",
+    planIntro: "Tio steg ur B4GAMBLE-programmet, i den ordning du gör dem. Varje steg tar 5–15 minuter och slutar med något du behåller. Du väljer takten: hela planen på en kväll, eller ett steg om dagen tills pausen är slut. Du fortsätter alltid där du slutade.",
     stepLabel: "Steg",
   },
   days: [
@@ -185,8 +185,8 @@ const da: PausePlanMessages = {
     saved: "Gemt i denne browser. Intet sendes nogen steder hen.",
     reset: "Fjern pausen fra denne browser",
     dayLabel: "Dag",
-    planHeading: "Ét trin om dagen",
-    planIntro: "Ti trin fra B4GAMBLE-programmet i den rækkefølge, du tager dem. Hvert trin tager 5–15 minutter og slutter med noget, du beholder.",
+    planHeading: "Alle ti på én aften, eller ét om dagen",
+    planIntro: "Ti trin fra B4GAMBLE-programmet i den rækkefølge, du tager dem. Hvert trin tager 5–15 minutter og slutter med noget, du beholder. Du vælger tempoet: hele planen på én aften, eller ét trin om dagen, til pausen er slut. Du fortsætter altid, hvor du slap.",
     stepLabel: "Trin",
   },
   days: [
@@ -279,8 +279,8 @@ const en: PausePlanMessages = {
     saved: "Saved in this browser. Nothing is sent anywhere.",
     reset: "Remove the pause from this browser",
     dayLabel: "Day",
-    planHeading: "One step a day",
-    planIntro: "Ten steps from the B4GAMBLE Programme, in the order you take them. Each takes 5–15 minutes and ends with something you keep.",
+    planHeading: "All ten in one evening, or one a day",
+    planIntro: "Ten steps from the B4GAMBLE Programme, in the order you take them. Each takes 5–15 minutes and ends with something you keep. You set the pace: the whole plan in one evening, or one step a day until the pause ends. You always continue where you left off.",
     stepLabel: "Step",
   },
   days: [
