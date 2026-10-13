@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ActionButton } from "@/components/design-system/Action";
 import { ProgramAiAuthenticatedHeader } from "@/components/programme/ProgramAiAuthenticatedHeader";
@@ -23,8 +23,9 @@ import type {
 } from "@/components/programme/ProgramAiAuthenticated.types";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
-import { humanValue } from "@/lib/programme/program-ai/mission-presentation";
+import { humanValue, presentMissionArtifact } from "@/lib/programme/program-ai/mission-presentation";
 import { researchAccessMission } from "@/lib/programme/program-ai/mission-registry";
+import { QUESTION_REWARD_LABEL_MS, questionOptionLine, questionWhyLine, splitQuestionHeadline } from "@/lib/programme/program-ai/question-screen";
 import { programmeHelpPath, programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
 import { fetchProgrammeWithRetry } from "@/lib/programme/request-retry";
 import { RESEARCH_ACCESS_CHANGED_EVENT, RESEARCH_OPENED_AT_STORAGE_KEY } from "@/lib/research-access";
@@ -94,12 +95,12 @@ function initialValues(ui: ActionUi, artifact: ProgramAiMission["artifact"]) {
   return values;
 }
 
-function localizedOptions(field: Field, locale: ProgrammeLocale) {
-  return field.options.map((item) => ({
-    value: item.value,
-    label: programmeText(locale, item.label),
-    description: item.description ? programmeText(locale, item.description) : undefined,
-  }));
+function localizedOptions(field: Field, locale: ProgrammeLocale, actionId?: string) {
+  return field.options.map((item) => {
+    // The line under an option is presentation: the one the option already carries, or the question screen's own.
+    const line = item.description ?? (actionId ? questionOptionLine(actionId, item.value) : undefined);
+    return { value: item.value, label: programmeText(locale, item.label), description: line ? programmeText(locale, line) : undefined };
+  });
 }
 
 function selectionNote(field: Field, locale: ProgrammeLocale) {
@@ -107,6 +108,26 @@ function selectionNote(field: Field, locale: ProgrammeLocale) {
   return field.minimum === field.maximum
     ? programmeText(locale, "choose {count}", { count: field.minimum })
     : programmeText(locale, "choose {minimum}–{maximum}", { minimum: field.minimum, maximum: field.maximum });
+}
+
+/** Content that opens after a pick is brought on screen: it would otherwise open under the pinned bar. */
+function bringIntoView(element: HTMLElement | null) {
+  if (!element) return;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const tall = element.getBoundingClientRect().height > window.innerHeight * 0.55;
+  element.scrollIntoView({ block: tall ? "start" : "nearest", behavior: reducedMotion ? "auto" : "smooth" });
+}
+
+function BackIcon() {
+  return <svg aria-hidden="true" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></svg>;
+}
+
+function ArrowIcon() {
+  return <svg aria-hidden="true" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
+}
+
+function SavingDots() {
+  return <span aria-hidden="true" className={styles.stepDots} data-programme-saving-dots=""><i /><i /><i /></span>;
 }
 
 export function ProgramAiMissionExperience({ mission: initialMission, home: initialHome, userId, localWording, onLocalWording, onHome, onBack, locale, programmePath }: {
@@ -125,8 +146,16 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const [values, setValues] = useState<Record<string, string[]>>({});
   const [guidance, setGuidance] = useState<ProgramAiGuidance | null>(null);
   const [busy, setBusy] = useState(false);
+  // Which request keeps the screen busy: only a save shows the dots on the button.
+  const [busyWith, setBusyWith] = useState<"save" | "other">("other");
+  const saving = busy && busyWith === "save";
   const [error, setError] = useState("");
   const [announcement, setAnnouncement] = useState("");
+  // What the server just awarded stands in the progress label for a moment, then the question count returns.
+  const [rewardLabel, setRewardLabel] = useState("");
+  const rewardTimer = useRef<number | null>(null);
+  const questionRef = useRef<HTMLHeadingElement | null>(null);
+  const revealRef = useRef<HTMLDivElement | null>(null);
   const [completionReceipt, setCompletionReceipt] = useState<MissionCompletionReceipt | null>(null);
   const [sequenceOrder, setSequenceOrder] = useState(["choice_point", "cue", "urge_builds", "early_signal"]);
   const [sequenceFeedback, setSequenceFeedback] = useState("");
@@ -140,8 +169,28 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const finalPlanStage = mission.missionNumber === 10 && current?.id === "choose_review_cadence";
   useEffect(() => {
     if (ui) setValues(initialValues(ui, mission.artifact));
-    setGuidance(null); setGuidanceSelected(""); setSequenceFeedback(""); setAppliedChecks([]); setFirstCheck("");
+    setGuidance(null); setGuidanceSelected(""); setSequenceFeedback(""); setAnnouncement(""); setAppliedChecks([]); setFirstCheck("");
   }, [mission.currentAction]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The next question opens at its top, with the reader's place on its heading.
+  const shownAction = useRef(mission.currentAction);
+  useEffect(() => {
+    if (shownAction.current === mission.currentAction) return;
+    shownAction.current = mission.currentAction;
+    window.scrollTo({ top: 0, behavior: "instant" });
+    questionRef.current?.focus({ preventScroll: true });
+  }, [mission.currentAction]);
+  useEffect(() => () => { if (rewardTimer.current !== null) window.clearTimeout(rewardTimer.current); }, []);
+  const revealed = !current ? ""
+    : current.id === "decode_offer_terms" ? values.offerTermSignal?.[0] ?? ""
+      : current.id === "run_decision_check" ? values.scenarioChoice?.[0] ?? ""
+        : guidance ? `guidance:${guidance.title}` : "";
+  const lastRevealed = useRef({ action: mission.currentAction, value: "" });
+  useEffect(() => {
+    const previous = lastRevealed.current;
+    lastRevealed.current = { action: mission.currentAction, value: revealed };
+    if (!revealed || previous.action !== mission.currentAction || previous.value === revealed) return;
+    bringIntoView(revealRef.current);
+  }, [mission.currentAction, revealed]);
   const valid = useMemo(() => {
     if (!ui || !current) return false;
     const fieldsValid = current.id === "map_urge_sequence" || ui.fields.every((field) => {
@@ -170,8 +219,14 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     });
   }
 
+  function showReward(label: string) {
+    if (rewardTimer.current !== null) window.clearTimeout(rewardTimer.current);
+    setRewardLabel(label);
+    rewardTimer.current = window.setTimeout(() => { rewardTimer.current = null; setRewardLabel(""); }, QUESTION_REWARD_LABEL_MS);
+  }
+
   function moveSequence(index: number, direction: -1 | 1) {
-    setSequenceFeedback("");
+    setSequenceFeedback(""); setAnnouncement("");
     setSequenceOrder((currentOrder) => {
       const target = index + direction;
       if (target < 0 || target >= currentOrder.length) return currentOrder;
@@ -198,6 +253,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
       setAnnouncement(t("No XP awarded. Adjust the order and try again."));
       return;
     }
+    setBusyWith("save");
     setBusy(true); setError("");
     try {
       const artifact: Record<string, string | number | boolean | string[]> = { ...(ui.constants ?? {}) };
@@ -208,12 +264,14 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
       }
       const result = await request<{ mission: ProgramAiMission; home: ProgramAiHome; xpAwarded: number }>(`/api/program/program-ai/missions/${mission.missionNumber}/actions`, { method: "POST", body: JSON.stringify({ action: current.id, artifact }) });
       setMission(result.mission); setHome(result.home); onHome(result.home);
-      setAnnouncement(result.xpAwarded ? t("Action complete. {xp} XP earned.", { xp: result.xpAwarded }) : t("This action was already saved."));
+      // The number is the server's. It is shown once, briefly, and never stays under the next question.
+      showReward(result.xpAwarded ? `+${result.xpAwarded} XP` : t("This action was already saved."));
     } catch { setError(t("The action could not be saved")); }
     finally { setBusy(false); }
   }
 
   async function getGuidance() {
+    setBusyWith("other");
     setBusy(true); setError("");
     try {
       const result = await request<{ guidance: ProgramAiGuidance }>(`/api/program/program-ai/missions/${mission.missionNumber}/guidance`, { method: "POST", body: JSON.stringify({ locale, ...(localWording.trim() ? { localWording: localWording.trim() } : {}) }) });
@@ -242,6 +300,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   }
 
   async function complete() {
+    setBusyWith("other");
     setBusy(true); setError("");
     try {
       const result = await request<{ mission: ProgramAiMission; home: ProgramAiHome; xpAwarded: number }>(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, { method: "POST", body: "{}" });
@@ -284,41 +343,95 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     </main>
   </div>;
 
-  return <div className={styles.shell}>
-    <ProgramAiAuthenticatedHeader label={`${t("Mission").toLocaleUpperCase(locale)} ${String(mission.step).padStart(2, "0")} · ${missionCopy.title.toLocaleUpperCase(locale)}`} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
+  const header = <ProgramAiAuthenticatedHeader label={`${t("Mission").toLocaleUpperCase(locale)} ${String(mission.step).padStart(2, "0")} · ${missionCopy.title.toLocaleUpperCase(locale)}`} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />;
+  const supportNote = mission.missionNumber === 7 ? <aside className={styles.guidance}><h3>{t("Your support route is ready")}</h3><p>{t("Keep it simple enough to use.")} <Link href={programmeHelpPath(locale)}>{t("Help")}</Link> {t("is always available.")}</p></aside> : null;
+  // All actions are saved: the result with its finish press. This screen is as it was.
+  if (!ui || !current) return <div className={styles.shell}>
+    {header}
     <main className={styles.missionMain}>
       <div className={styles.missionTopline}><button className={styles.back} onClick={onBack} type="button">← {t("Programme Home")}</button><Link className={styles.back} href={programmeHelpPath(locale)}>{t("Protected Help / pause")}</Link></div>
       <section className={styles.missionIntro}><span className={styles.eyebrow}>{t("MISSION {number} · {completed}/{total} ACTIONS", { number: String(mission.step).padStart(2, "0"), completed: mission.actionsCompleted, total: mission.actionsTotal })}</span><h1>{missionCopy.title}</h1><p>{missionCopy.description}</p></section>
       <div aria-label={t("Mission progress")} className={styles.actionRail}>{mission.actions.map((action) => <span data-complete={action.completed} key={action.id} title={t("{label}: {status}", { label: actionUi[action.id] ? t(actionUi[action.id].prompt) : missionCopy.title, status: t(action.completed ? "complete" : "not complete") })} />)}<span data-complete={false} title={t("Mission completion bonus")} /></div>
-      {ui && current ? <div className={styles.workspace}>
-        <section className={styles.challenge} data-programme-action={current.id}>
-          <span className={styles.eyebrow}>{t("ACTION {position} · +{xp} XP", { position: mission.currentActionPosition ?? "", xp: current.xp })}</span><h2>{t(ui.prompt)}</h2><p>{t(ui.explanation)}</p>
-          {current.id === "map_urge_sequence" ? <SequenceBuilder feedback={sequenceFeedback} locale={locale} onMove={moveSequence} order={sequenceOrder} /> : null}
-          {current.id === "review_my_plan" ? <ProgrammeTimeline facts={mission.programmeFacts?.facts ?? []} locale={locale} startingPoint={mission.programmeFacts?.startingPoint?.startingPoint} /> : null}
-          {current.id === "reality_check" ? <ScenarioPanel eyebrow={t("REALITY CHECK")} locale={locale} scenario={t("It’s been a difficult day. Which version still feels realistic?")} /> : null}
-          {["run_decision_check", "choose_scenario"].includes(current.id) && (values.scenarioChoice?.[0] || values.scenarioType?.[0]) ? <ScenarioPanel locale={locale} scenario={values.scenarioChoice?.[0] ?? values.scenarioType?.[0] ?? ""} /> : null}
-          {current.id === "rehearse_response" && typeof mission.artifact.scenarioType === "string" ? <ScenarioPanel eyebrow={t("YOUR REHEARSAL")} locale={locale} scenario={mission.artifact.scenarioType} /> : null}
-          {current.id === "choose_execution" ? <ScenarioPanel eyebrow={t("PRESSURE CHECK")} locale={locale} scenario={t("The boundary is ready on paper. What would it need before a pressured moment?")} /> : null}
-          {current.id === "rehearse_bypass" ? <ScenarioPanel eyebrow={t("BYPASS TEST")} locale={locale} scenario={t("What could make this easy to undo?")} /> : null}
-          {current.id === "commit_pause_rule" ? <><ScenarioPanel eyebrow={t("APPLY YOUR CHECKS")} locale={locale} scenario={t("A second decision appears with less time and more pressure. Use the routine before choosing your pause rule.")} /><DecisionApplication applied={appliedChecks} checks={Array.isArray(mission.artifact.decisionChecks) ? mission.artifact.decisionChecks : []} locale={locale} onToggle={toggleAppliedCheck} /></> : null}
-          {finalPlanStage ? <>
-            {!guidance ? <ActionButton disabled={busy} onClick={getGuidance} variant="ghost-night">{t("Build my plan")}</ActionButton> : <AiCandidatePicker guidance={guidance} heading={t("Review your one-screen plan")} locale={locale} onSelect={selectGuidance} selectedId={guidanceSelected} />}
-            {guidance ? <label className={styles.localField}><span>{t("Your wording · kept in this tab")}</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder={t("Use the grounded draft above or write your own version…")} value={localWording} /></label> : null}
-            {guidance ? ui.fields.map((field) => <ChoiceCards key={field.key} legend={t(field.legend)} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={localizedOptions(field, locale)} selected={values[field.key] ?? []} selectionNote={selectionNote(field, locale)} />) : null}
-          </> : ui.fields.filter(() => current.id !== "map_urge_sequence" && current.id !== "rehearse_response").map((field) => <ChoiceCards key={field.key} legend={t(field.legend)} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={localizedOptions(field, locale)} selected={values[field.key] ?? []} selectionNote={selectionNote(field, locale)} />)}
-          {current.id === "run_decision_check" && values.scenarioChoice?.[0] ? <ChoiceCards legend={t("What would you check first?")} onChoose={setFirstCheck} options={localizedOptions({ key: "decisionChecks", legend: "Three checks", options: [option("purpose", "Why am I considering this?"), option("terms", "Are the material terms clear?"), option("mood", "Am I reacting to the moment?"), option("exit", "What is my exit route?")] }, locale)} selected={firstCheck ? [firstCheck] : []} /> : null}
-          {current.id === "build_friction_stack" ? <StackBuilder locale={locale} onMove={(index, direction) => moveSelected("frictionMethods", index, direction)} selected={values.frictionMethods ?? []} /> : null}
-          {current.id === "decode_offer_terms" ? <OfferDecoder locale={locale} selected={values.offerTermSignal?.[0] ?? ""} /> : null}
-          {guidance && guidanceBuilderActions.has(current.id) ? <AiCandidatePicker guidance={guidance} heading={current.id === "rehearse_response" ? guidance.title : t("Choose or edit the wording that fits")} locale={locale} onSelect={selectGuidance} selectedId={guidanceSelected} /> : null}
-          {guidance && !guidanceBuilderActions.has(current.id) ? <aside className={styles.guidance} aria-live="polite"><span className={styles.eyebrow}>{t("USEFUL INSIGHT")}</span><h3>{guidance.title}</h3><p>{guidance.summary}</p><ul>{guidance.options.map((item) => <li key={item.id}>{item.text}</li>)}</ul></aside> : null}
-          {current.id === "rehearse_response" && guidanceSelected ? <p className={styles.contextFeedback} role="status">{t("That response creates a clear next move. You can still choose a different option before confirming it.")}</p> : null}
-          {localWordingActions.has(current.id) ? <label className={styles.localField}><span>{t("Your wording · kept in this tab")}</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder={t("Choose a draft above or write your own version…")} value={localWording} /></label> : null}
-          <div className={styles.submitRow}>{guidanceActions.has(current.id) && !guidance ? <ActionButton disabled={busy} onClick={getGuidance} variant="ghost-night">{t(current.id === "rehearse_response" ? "Create my rehearsal" : current.id === "build_friction_stack" ? "Suggest an order" : current.id === "name_early_signal" ? "Show one possible pattern" : "Create personal drafts")}</ActionButton> : null}<ActionButton disabled={busy || !valid} onClick={saveAction} size="large">{busy ? t("Saving…") : current.id === "map_urge_sequence" ? t("Check sequence · +{xp} XP when correct", { xp: current.xp }) : t("Confirm action · +{xp} XP", { xp: current.xp })}</ActionButton></div>
-          {error ? <p className={styles.error} role="alert">{error}</p> : null}<p aria-live="polite" className={styles.status}>{announcement}</p>
-        </section>
-        <HumanArtifact artifact={mission.artifact} guidance={guidance} guidanceSelected={guidanceSelected} locale={locale} localWording={localWording} missionNumber={mission.missionNumber} />
-      </div> : <section className={styles.challenge}><span className={styles.eyebrow}>{t("YOUR RESULT IS READY")}</span><h2>{t("Review what you built, then finish the Mission.")}</h2><p>{t("The final step adds the {xp} XP completion reward.", { xp: mission.completionBonus })}</p><HumanArtifact artifact={mission.artifact} guidance={guidance} locale={locale} localWording={localWording} missionNumber={mission.missionNumber} /><ActionButton disabled={busy} onClick={complete} size="large">{busy ? t("Completing…") : t("Complete Mission · +{xp} XP", { xp: mission.completionBonus })}</ActionButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}</section>}
-      {mission.missionNumber === 7 ? <aside className={styles.guidance}><h3>{t("Your support route is ready")}</h3><p>{t("Keep it simple enough to use.")} <Link href={programmeHelpPath(locale)}>{t("Help")}</Link> {t("is always available.")}</p></aside> : null}
+      <section className={styles.challenge}><span className={styles.eyebrow}>{t("YOUR RESULT IS READY")}</span><h2>{t("Review what you built, then finish the Mission.")}</h2><p>{t("The final step adds the {xp} XP completion reward.", { xp: mission.completionBonus })}</p><HumanArtifact artifact={mission.artifact} guidance={guidance} locale={locale} localWording={localWording} missionNumber={mission.missionNumber} /><ActionButton disabled={busy} onClick={complete} size="large">{busy ? t("Completing…") : t("Complete Mission · +{xp} XP", { xp: mission.completionBonus })}</ActionButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}</section>
+      {supportNote}
+    </main>
+  </div>;
+
+  const headline = splitQuestionHeadline(t(ui.prompt));
+  const whyLine = questionWhyLine(current.id);
+  const sequenceAction = current.id === "map_urge_sequence";
+  const guidanceLabel = finalPlanStage ? t("Build my plan")
+    : guidanceActions.has(current.id) ? t(current.id === "rehearse_response" ? "Create my rehearsal" : current.id === "build_friction_stack" ? "Suggest an order" : current.id === "name_early_signal" ? "Show one possible pattern" : "Create personal drafts")
+      : "";
+  const choiceFields = sequenceAction || current.id === "rehearse_response" ? [] : ui.fields;
+  // A lone single-choice list is named by the question itself; its legend stays for assistive technology.
+  const legendHidden = choiceFields.length === 1 && !choiceFields[0].multiple;
+  const choiceCards = (field: Field) => <ChoiceCards key={field.key} legend={t(field.legend)} legendHidden={legendHidden} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={localizedOptions(field, locale, current.id)} selected={values[field.key] ?? []} selectionNote={selectionNote(field, locale)} />;
+  // One short line under a disabled button says what is missing.
+  const missing = (() => {
+    if (valid) return "";
+    if (finalPlanStage && !guidance) return t("Press “{label}” first.", { label: guidanceLabel });
+    const open = choiceFields.filter((field) => { const count = values[field.key]?.length ?? 0; return count < (field.minimum ?? 1) || count > (field.maximum ?? 1); });
+    if (open.length) return choiceFields.length > 1 ? t("Answer every part to continue.") : selectionNote(open[0], locale) ?? t("Choose an answer to continue.");
+    if (guidanceBuilderActions.has(current.id) && !guidance) return t("Press “{label}” first.", { label: guidanceLabel });
+    if (["build_7_day_goal", "build_boundary_rule", "rehearse_response"].includes(current.id) && !guidanceSelected) return t("Choose one of the suggestions above.");
+    return t("Answer every part to continue.");
+  })();
+  const artifactShown = presentMissionArtifact(mission.artifact, locale).length > 0 || Boolean(localWording.trim()) || Boolean(guidanceSelected);
+  const hintId = `programme-step-hint-${current.id}`;
+
+  return <div className={`${styles.shell} ${styles.stepShell}`} data-programme-step-frame="">
+    {header}
+    <main className={styles.stepMain} data-programme-action={current.id}>
+      <div className={styles.stepBar}>
+        <button aria-label={`← ${t("Programme Home")}`} className={styles.stepBack} onClick={onBack} type="button"><BackIcon /></button>
+        <p className={styles.stepWhere}>{t("Step {step} of {total}", { step: mission.step, total: home.missions.length })}</p>
+        <Link className={styles.stepHelp} href={programmeHelpPath(locale)}>{t("Protected Help / pause")}</Link>
+      </div>
+      <div className={styles.stepProgress}>
+        <div aria-hidden="true" className={styles.stepSegments}>{mission.actions.map((action) => <i data-on={action.completed || action.id === current.id} key={action.id} />)}</div>
+        <p className={styles.stepCount} data-programme-step-count={rewardLabel ? "reward" : "question"} role="status">{rewardLabel || t("Question {position} of {total}", { position: mission.currentActionPosition ?? "", total: mission.actionsTotal })}</p>
+      </div>
+      <section className={styles.stepQuestion} key={current.id}>
+        <header className={styles.stepHeading}>
+          <h1 className={styles.stepEyebrow}>{missionCopy.title}</h1>
+          <h2 className={styles.stepHeadline} ref={questionRef} tabIndex={-1}>{headline.head}{headline.tail ? <> <em>{headline.tail}</em></> : null}</h2>
+          <p className={styles.stepHelper}>{t(ui.explanation)}</p>
+          {whyLine ? <p className={styles.stepWhy} data-programme-why=""><svg aria-hidden="true" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" /></svg><span><b>{t("Why we ask:")}</b> {t(whyLine)}</span></p> : null}
+        </header>
+        {sequenceAction ? <SequenceBuilder feedback={sequenceFeedback} locale={locale} onMove={moveSequence} order={sequenceOrder} /> : null}
+        {current.id === "review_my_plan" ? <ProgrammeTimeline facts={mission.programmeFacts?.facts ?? []} locale={locale} startingPoint={mission.programmeFacts?.startingPoint?.startingPoint} /> : null}
+        {current.id === "reality_check" ? <ScenarioPanel eyebrow={t("REALITY CHECK")} locale={locale} scenario={t("It’s been a difficult day. Which version still feels realistic?")} /> : null}
+        {["run_decision_check", "choose_scenario"].includes(current.id) && (values.scenarioChoice?.[0] || values.scenarioType?.[0]) ? <ScenarioPanel locale={locale} scenario={values.scenarioChoice?.[0] ?? values.scenarioType?.[0] ?? ""} /> : null}
+        {current.id === "rehearse_response" && typeof mission.artifact.scenarioType === "string" ? <ScenarioPanel eyebrow={t("YOUR REHEARSAL")} locale={locale} scenario={mission.artifact.scenarioType} /> : null}
+        {current.id === "choose_execution" ? <ScenarioPanel eyebrow={t("PRESSURE CHECK")} locale={locale} scenario={t("The boundary is ready on paper. What would it need before a pressured moment?")} /> : null}
+        {current.id === "rehearse_bypass" ? <ScenarioPanel eyebrow={t("BYPASS TEST")} locale={locale} scenario={t("What could make this easy to undo?")} /> : null}
+        {current.id === "commit_pause_rule" ? <><ScenarioPanel eyebrow={t("APPLY YOUR CHECKS")} locale={locale} scenario={t("A second decision appears with less time and more pressure. Use the routine before choosing your pause rule.")} /><DecisionApplication applied={appliedChecks} checks={Array.isArray(mission.artifact.decisionChecks) ? mission.artifact.decisionChecks : []} locale={locale} onToggle={toggleAppliedCheck} /></> : null}
+        {finalPlanStage ? <>
+          {!guidance ? <ActionButton className={styles.stepSecondary} disabled={busy} onClick={getGuidance} variant="ghost-night">{guidanceLabel}{busy && !saving ? <SavingDots /> : null}</ActionButton> : <div className={styles.stepReveal} ref={revealRef}><AiCandidatePicker guidance={guidance} heading={t("Review your one-screen plan")} locale={locale} onSelect={selectGuidance} selectedId={guidanceSelected} /></div>}
+          {guidance ? <label className={styles.localField}><span>{t("Your wording · kept in this tab")}</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder={t("Use the grounded draft above or write your own version…")} value={localWording} /></label> : null}
+          {guidance ? choiceFields.map(choiceCards) : null}
+        </> : choiceFields.map(choiceCards)}
+        {current.id === "run_decision_check" && values.scenarioChoice?.[0] ? <div className={styles.stepReveal} ref={revealRef}><ChoiceCards legend={t("What would you check first?")} onChoose={setFirstCheck} options={localizedOptions({ key: "decisionChecks", legend: "Three checks", options: [option("purpose", "Why am I considering this?"), option("terms", "Are the material terms clear?"), option("mood", "Am I reacting to the moment?"), option("exit", "What is my exit route?")] }, locale)} selected={firstCheck ? [firstCheck] : []} /></div> : null}
+        {current.id === "build_friction_stack" ? <StackBuilder locale={locale} onMove={(index, direction) => moveSelected("frictionMethods", index, direction)} selected={values.frictionMethods ?? []} /> : null}
+        {current.id === "decode_offer_terms" ? <div className={styles.stepReveal} ref={revealRef}><OfferDecoder locale={locale} selected={values.offerTermSignal?.[0] ?? ""} /></div> : null}
+        {!finalPlanStage && guidanceActions.has(current.id) && !guidance ? <ActionButton className={styles.stepSecondary} disabled={busy} onClick={getGuidance} variant="ghost-night">{guidanceLabel}{busy && !saving ? <SavingDots /> : null}</ActionButton> : null}
+        {guidance && guidanceBuilderActions.has(current.id) ? <div className={styles.stepReveal} ref={revealRef}><AiCandidatePicker guidance={guidance} heading={current.id === "rehearse_response" ? guidance.title : t("Choose or edit the wording that fits")} locale={locale} onSelect={selectGuidance} selectedId={guidanceSelected} /></div> : null}
+        {guidance && !guidanceBuilderActions.has(current.id) && !finalPlanStage ? <div className={styles.stepReveal} ref={revealRef}><aside className={styles.guidance} aria-live="polite"><span className={styles.eyebrow}>{t("USEFUL INSIGHT")}</span><h3>{guidance.title}</h3><p>{guidance.summary}</p><ul>{guidance.options.map((item) => <li key={item.id}>{item.text}</li>)}</ul></aside></div> : null}
+        {current.id === "rehearse_response" && guidanceSelected ? <p className={styles.contextFeedback} role="status">{t("That response creates a clear next move. You can still choose a different option before confirming it.")}</p> : null}
+        {localWordingActions.has(current.id) ? <label className={styles.localField}><span>{t("Your wording · kept in this tab")}</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder={t("Choose a draft above or write your own version…")} value={localWording} /></label> : null}
+      </section>
+      {artifactShown ? <HumanArtifact artifact={mission.artifact} guidance={guidance} guidanceSelected={guidanceSelected} locale={locale} localWording={localWording} missionNumber={mission.missionNumber} /> : null}
+      {supportNote}
+      <div className={styles.stepCta} data-programme-step-cta="">
+        <button aria-busy={saving || undefined} aria-describedby={missing && !busy ? hintId : undefined} className={styles.stepContinue} data-saving={saving ? "" : undefined} disabled={busy || !valid} onClick={saveAction} type="button">
+          <span>{t(sequenceAction ? "Check sequence" : "Continue")}</span>{saving ? <SavingDots /> : <ArrowIcon />}
+        </button>
+        {error ? <p className={styles.stepNote} data-tone="error" role="alert"><span>{error}</span></p>
+          : announcement ? <p className={styles.stepNote} data-tone="notice" role="status"><span>{announcement}</span></p>
+            : missing && !busy ? <p className={styles.stepNote} data-programme-step-hint="" id={hintId}><span>{missing}</span></p>
+              : <p className={styles.stepNote} data-programme-privacy-cue=""><svg aria-hidden="true" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24"><rect height="9" rx="2" width="14" x="5" y="11" /><path d="M8 11V8a4 4 0 018 0v3" /></svg><span>{t("Your data is private. We never use it for offers or rankings.")}</span></p>}
+      </div>
     </main>
   </div>;
 }

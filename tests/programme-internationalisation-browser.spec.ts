@@ -515,11 +515,12 @@ test("all Missions and every action render interactively across the 11-locale de
       const workspace = page.locator(`[data-programme-action="${action.id}"]`);
       await expect(workspace).toBeVisible();
       await expect(page.getByRole("heading", { name: programmeMissionCopy(locale, mission.missionNumber).title, exact: true })).toBeVisible();
-      await expect(workspace).toContainText(t(locale, "ACTION {position} · +{xp} XP", { position: actionIndex + 1, xp: action.xp }));
+      await expect(workspace).toContainText(t(locale, "Question {position} of {total}", { position: actionIndex + 1, total: mission.actions.length }));
+      await expect(workspace).toContainText(t(locale, "Step {step} of {total}", { step: missionStep(mission.missionNumber), total: programmeJourney.length }));
       const firstChoice = workspace.locator("input:not([disabled])").first();
       if (await firstChoice.count()) await firstChoice.check();
       if (action.id === "map_urge_sequence") {
-        await workspace.getByRole("button", { name: t(locale, "Check sequence · +{xp} XP when correct", { xp: action.xp }) }).click();
+        await workspace.getByRole("button", { name: t(locale, "Check sequence"), exact: true }).click();
         await expect(workspace).toContainText(t(locale, "No XP awarded. Adjust the order and try again."));
       }
       const guidanceLabel = guidanceActionLabels[action.id];
@@ -535,7 +536,7 @@ test("all Missions and every action render interactively across the 11-locale de
       const focusTarget = workspace.locator("button:not([disabled]), input:not([disabled]), textarea:not([disabled])").first();
       await focusTarget.focus();
       await expect(focusTarget).toBeFocused();
-      await assertNoRepresentativeEnglishLeakage(page, locale, ["Programme Home", "Protected Help / pause", "Confirm action · +{xp} XP"]);
+      await assertNoRepresentativeEnglishLeakage(page, locale, ["Protected Help / pause", "Why we ask:", "Choose an answer to continue.", "Answer every part to continue."]);
       await assertRenderedQuality(page, `${locale}:M${mission.missionNumber}:${action.id}:${mobile ? "mobile" : "desktop"}`);
     }
   }
