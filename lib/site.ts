@@ -40,6 +40,8 @@ export const coreRoutes = [
   "/bonus-guide",
   "/wagering-calculator",
   "/pause-plan",
+  "/for-creators",
+  "/beside",
   "/pause-statistics",
 ];
 

@@ -58,6 +58,13 @@ export type PausePlanMessages = Readonly<{
   support: readonly Readonly<{ label: string; href: string }>[];
   homeLabel: string;
   breadcrumbLabel: string;
+  /** The revenue model, stated first on every clean-route page (Founder decision, 13 October 2026). */
+  revenueLine: string;
+  /** Day 11, not going back: five lines the person takes to the helpline. */
+  notBack: Readonly<{ heading: string; intro: string; lines: readonly string[]; copy: string; copied: string; supportLabel: string; supportHref: string }>;
+  /** The door opens only by the person's own action, after the pause's last day. */
+  door: Readonly<{ afterHeading: string; afterBody: string; open: string; opened: string; closedNote: string; removeNote: string }>;
+  ics: Readonly<{ download: string; title: string; description: string }>;
 }>;
 
 const spelpausSv: PausePlanRegisterMessages = {
@@ -134,6 +141,25 @@ const sv: PausePlanMessages = {
   ],
   homeLabel: "Hem",
   breadcrumbLabel: "10 dagar, 10 steg",
+  revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. På den här vägen visas inga.",
+  notBack: {
+    heading: "Dag 11: inte tillbaka?",
+    intro: "Om du bestämmer dig för att inte gå tillbaka, ta med dig det du redan vet till Stödlinjen. Fem rader räcker, och de gör samtalet kortare:",
+    lines: ["Jag tog en paus på: …", "Det jag bestämde om summa och tid: …", "Den gräns som höll: …", "Den som vet den riktiga siffran: …", "Det jag vill ha hjälp med nu: …"],
+    copy: "Kopiera de fem raderna",
+    copied: "Kopierat",
+    supportLabel: "Stödlinjen – 020-81 91 00, chatt och telefon",
+    supportHref: "https://www.stodlinjen.se/",
+  },
+  door: {
+    afterHeading: "Pausen är slut",
+    afterBody: "Kontona är öppna hos spelbolagen. Här förblir casinoavsnittet stängt tills du själv öppnar det. Inget öppnas av sig självt.",
+    open: "Öppna casinoavsnittet i den här webbläsaren",
+    opened: "Öppnat. Menyn visar casinon, bonusar och erbjudanden när steg 3 i programmet är klart.",
+    closedNote: "Casinoavsnittet är stängt i den här webbläsaren tills du öppnar det själv.",
+    removeNote: "Pausen är borttagen. Casinoavsnittet förblir stängt tills du öppnar det själv.",
+  },
+  ics: { download: "Lägg dag 11 i kalendern", title: "Dag 11 – kontona öppnas, mina regler gäller", description: "Summan innan appen. Tiden innan appen. En person vet. Planen: https://b4gamble.com/sv/pause-plan" },
 };
 
 const da: PausePlanMessages = {
@@ -196,6 +222,25 @@ const da: PausePlanMessages = {
   ],
   homeLabel: "Forside",
   breadcrumbLabel: "Dagen efter ROFUS",
+  revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. På denne vej vises ingen.",
+  notBack: {
+    heading: "Dagen efter: ikke tilbage?",
+    intro: "Hvis du beslutter ikke at gå tilbage, så tag det, du allerede ved, med til StopSpillet. Fem linjer er nok, og de gør samtalen kortere:",
+    lines: ["Jeg tog en pause på: …", "Det, jeg besluttede om beløb og tid: …", "Den grænse, der holdt: …", "Den, der kender det rigtige tal: …", "Det, jeg vil have hjælp til nu: …"],
+    copy: "Kopiér de fem linjer",
+    copied: "Kopieret",
+    supportLabel: "StopSpillet – 70 22 28 25, chat og telefon",
+    supportHref: "https://www.stopspillet.dk/",
+  },
+  door: {
+    afterHeading: "Pausen er slut",
+    afterBody: "Kontiene er åbne hos spiludbyderne. Her forbliver casinodelen lukket, indtil du selv åbner den. Intet åbner af sig selv.",
+    open: "Åbn casinodelen i denne browser",
+    opened: "Åbnet. Menuen viser casinoer, bonusser og tilbud, når trin 3 i programmet er gennemført.",
+    closedNote: "Casinodelen er lukket i denne browser, indtil du selv åbner den.",
+    removeNote: "Pausen er fjernet. Casinodelen forbliver lukket, indtil du selv åbner den.",
+  },
+  ics: { download: "Læg dagen efter i kalenderen", title: "Dagen efter – kontiene åbner, mine regler gælder", description: "Beløbet før appen. Tiden før appen. Én person ved det. Planen: https://b4gamble.com/da/pause-plan" },
 };
 
 const en: PausePlanMessages = {
@@ -271,6 +316,25 @@ const en: PausePlanMessages = {
   ],
   homeLabel: "Home",
   breadcrumbLabel: "The day after your pause",
+  revenueLine: "B4GAMBLE earns commission from licensed casinos. None are shown on this route.",
+  notBack: {
+    heading: "The day after: not going back?",
+    intro: "If you decide not to go back, take what you already know to the helpline. Five lines are enough, and they make the call shorter:",
+    lines: ["I took a pause of: …", "What I decided about amount and time: …", "The boundary that held: …", "The person who knows the real number: …", "What I want help with now: …"],
+    copy: "Copy the five lines",
+    copied: "Copied",
+    supportLabel: "Stödlinjen (Sweden) 020-81 91 00 · StopSpillet (Denmark) 70 22 28 25",
+    supportHref: "https://www.stodlinjen.se/",
+  },
+  door: {
+    afterHeading: "The pause is over",
+    afterBody: "Your accounts work again at the operators. Here the casino section stays closed until you open it yourself. Nothing opens by itself.",
+    open: "Open the casino section in this browser",
+    opened: "Opened. The menu shows casinos, bonuses and offers once Programme step 3 is complete.",
+    closedNote: "The casino section is closed in this browser until you open it yourself.",
+    removeNote: "The pause is removed. The casino section stays closed until you open it yourself.",
+  },
+  ics: { download: "Add the day after to my calendar", title: "The day after – accounts reopen, my rules apply", description: "The amount before the app. The time before the app. One person knows. The plan: https://b4gamble.com/en/pause-plan" },
 };
 
 const catalog: Readonly<Partial<Record<SupportedLocale, PausePlanMessages>>> = {

@@ -139,3 +139,28 @@ after the pause ends; everyone else keeps the two doors above.
 - Rollback: make `researchDoorOpen` return `researchAccessOpen`; the cookie is
   then ignored. Evidence: `tests/pause-plan.test.ts`.
 
+## Amendment 2, 13 October 2026 — the clean route
+
+**Founder decision (question tool, 13 October 2026, incentive layer of the growth strategy):**
+nothing opens by itself on day 11. The amendment of 12 October ("the door opens the day
+after the pause") is replaced:
+
+- A declared pause keeps the door shut for as long as its cookie exists, past its last day.
+  After the last day `/pause-plan` offers one button that opens the door; removing a running
+  pause leaves the door shut.
+- The first document navigation onto `/pause-plan`, `/innan` or `/beside`, or from one of the
+  communities, regulators and helplines we speak to (Reddit, Flashback, Lånforum, Familjeliv,
+  Spelinspektionen, Spelpaus, Stödlinjen, Spillemyndigheden, ROFUS, StopSpillet, Center for
+  Ludomani, PokerNet), writes the plain cookie `b4g_clean_route=1` in middleware
+  (`markCleanRoute`). While it exists the menu shows no research links even when the lesson
+  is complete. The person clears it with the same button on `/pause-plan`.
+- `researchDoorOpen` = lesson flag, no declared pause, no clean route. The layouts and the
+  client door read it; `withResearchAccess` still reads the bare lesson flag.
+- These pages state the revenue model in their first lines and link to no casino
+  (`tests/clean-route.test.ts` pins both).
+- Still outside this record: the Programme Home research card and the step-3 completion screen
+  follow the API's `researchAccess` and will take the same closed-state variant in a follow-up
+  once the "no stops" Programme rework has merged (agreed with that session on 13 October).
+- Rollback: make `researchDoorOpen` ignore `cleanRouteDeclared` and `pauseDeclared`; delete
+  `markCleanRoute`. Evidence: `tests/clean-route.test.ts`, `tests/pause-plan.test.ts`.
+

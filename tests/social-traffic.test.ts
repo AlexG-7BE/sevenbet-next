@@ -508,12 +508,14 @@ test("the Prisma store reads only Production human rows over indexed columns and
   assert.match(programmeRead, /anonymousId: \{ in: visitors \}/);
   assert.match(programmeRead, /return attributeProgrammeEvents\(/);
   assert.doesNotMatch(source.replace(programmeRead, ""), /anonymousId/);
-  // No page, offer, ranking or route reads these numbers: only the Learn MCP tool imports the report.
+  // No offer, ranking or route reads these numbers. Two readers only: the Learn MCP tool, and the
+  // creators' named page (Founder, 13 October 2026), which shows two counts of its own tag and
+  // nothing else; tests/for-creators.test.ts pins that call and keeps the page free of anything commercial.
   const importers = ["app", "components", "lib"].flatMap((root) => (readdirSync(root, { recursive: true }) as string[])
     .filter((file) => /\.(?:ts|tsx|mjs)$/.test(file))
     .map((file) => `${root}/${file}`)
     .filter((file) => readFileSync(file, "utf8").includes("analytics/social-traffic.server")));
-  assert.deepEqual(importers, ["lib/mcp/learn/server.ts"]);
+  assert.deepEqual(importers, ["app/(public)/for-creators/[creator]/page.tsx", "lib/mcp/learn/server.ts"]);
   const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
   assert.match(packageJson.scripts["learn-content-orchestrator:test"] ?? "", /tests\/social-traffic\.test\.ts/);
   assert.match(packageJson.scripts["learn-content-orchestrator:postgres-test"] ?? "", /tests\/social-traffic-postgres\.test\.ts/);
