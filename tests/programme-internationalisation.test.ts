@@ -372,6 +372,40 @@ test("the Programme catalogue passes the durable 11-locale AI language gate", ()
   }
 });
 
+// Founder walk in Swedish, 12 October 2026: English "research" inside Swedish text, "kasino" beside
+// the site's "casino", and "fliken" (a browser tab) on a phone.
+test("Swedish Programme copy keeps the step's own words, the site's spelling of casino and no browser jargon", async () => {
+  const { programmeMissionCopy } = await import("../lib/i18n/programme-catalog");
+  const { publicShellMessages } = await import("../lib/i18n/public-shell-catalog");
+  const swedish = programmeCatalogueEntries("sv-SE");
+  for (const { key, value } of swedish) {
+    assert.doesNotMatch(value, /research/i, `sv-SE ${key}`);
+    assert.doesNotMatch(value, /kasino/i, `sv-SE ${key}`);
+    assert.doesNotMatch(value, /\bflik/i, `sv-SE ${key}`);
+  }
+  // The step is "Undersök ansvarsfullt"; what it asks for inside uses the same verb.
+  assert.match(programmeMissionCopy("sv-SE", 8).title, /^Undersök /);
+  assert.equal(programmeText("sv-SE", "Research"), "Undersök och jämför");
+  assert.equal(programmeText("sv-SE", "Research only after a pause"), "Undersök först efter en paus");
+  assert.equal(programmeText("sv-SE", "Research with your checklist"), "Undersök med din checklista");
+  assert.equal(programmeText("sv-SE", "MY RESEARCH CHECKLIST"), "MIN CHECKLISTA FÖR JÄMFÖRELSER");
+  // One spelling with the menu ("Casinon") and the casino pages.
+  assert.equal(publicShellMessages("sv-SE").casinos, "Casinon");
+  assert.equal(programmeText("sv-SE", "Compare casinos"), "Jämför casinon");
+  assert.equal(programmeText("sv-SE", "Casinos, bonuses and offers are now open to you"), "Casinon, bonusar och erbjudanden är nu öppna för dig");
+  assert.equal(programmeText("sv-SE", "Who operates the casino"), "Vem som driver casinot");
+  // The personal wording is kept in this tab's storage and is not written to the account: said without "tab".
+  assert.equal(programmeText("sv-SE", "Your wording · kept in this tab"), "Din formulering · stannar på den här sidan");
+  assert.match(programmeText("sv-SE", "The wording can stay broad. Your optional personal wording stays in this tab."), /stannar på den här sidan och sparas inte på ditt konto\.$/);
+
+  // Danish had the same leftover in the same rows; its step is "Undersøg ansvarligt".
+  for (const { key, value } of programmeCatalogueEntries("da-DK")) assert.doesNotMatch(value, /research/i, `da-DK ${key}`);
+  assert.match(programmeMissionCopy("da-DK", 8).title, /^Undersøg /);
+  assert.equal(programmeText("da-DK", "Research"), "Undersøg og sammenlign");
+  // German never carried the English word: "Recherche" is its own.
+  assert.equal(programmeText("de-DE", "Research"), "Recherche");
+});
+
 test("locale switching cannot mutate Programme subject identity or browser-local narrative", () => {
   const storage = new MemoryStorage();
   const subject = anonymousProgrammeSubject(storage);

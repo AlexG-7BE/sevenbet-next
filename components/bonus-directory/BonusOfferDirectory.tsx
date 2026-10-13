@@ -9,7 +9,7 @@ import { useRevealResults } from "@/components/commercial/useRevealResults";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { availableBonusViews, filterOffersByCasinoName, offerCardPresentation, offersForBonusView, type BonusDirectoryView } from "@/lib/commercial/commercial-presentation";
-import { commercialUxMessages } from "@/lib/commercial/commercial-ux-messages";
+import { commercialUxMessages, countNoun } from "@/lib/commercial/commercial-ux-messages";
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
@@ -70,7 +70,7 @@ export function BonusOfferDirectory({ messages, offers, presentation }: {
         {views.map((key) => <button aria-controls="bonus-directory-results" aria-selected={view === key} id={`bonus-view-${key}`} key={key} onClick={() => selectView(key)} role="tab" type="button">{labels[key]}</button>)}
       </div>
     </div>
-    <p aria-atomic="true" aria-live="polite" className={styles.count} ref={resultsStartRef} role="status">{results.length} {copy.offersShown}</p>
+    <p aria-atomic="true" aria-live="polite" className={styles.count} ref={resultsStartRef} role="status">{results.length} {countNoun(presentation.locale, results.length, copy.offerShownOne, copy.offersShown)}</p>
     {results.length ? <div aria-labelledby={`bonus-view-${view}`} className={styles.cards} id="bonus-directory-results" role="tabpanel">
       {results.map((offer, index) => {
         const card = offerCardPresentation(offer, presentation.locale, messages, copy, "bonus_directory");

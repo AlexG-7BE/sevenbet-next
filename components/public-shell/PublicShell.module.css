@@ -334,6 +334,7 @@
   font-size: 14px;
   line-height: 1.5;
 }
+.mobilePresentationSelector p strong { color: var(--shell-white); font-weight: 600; }
 
 .primaryNavigation a,
 .accountLink,
@@ -641,6 +642,25 @@
   line-height: 22px;
   font-weight: 650;
 }
+/* Log out takes Log in's place for a signed-in person: the same line, as a button. */
+.mobileMenuLogout {
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--shell-white);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.mobileMenuLogout:disabled { cursor: default; opacity: .7; }
 
 .mobileHelp {
   margin: 16px 16px 0;
