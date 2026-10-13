@@ -164,3 +164,30 @@ after the pause") is replaced:
 - Rollback: make `researchDoorOpen` ignore `cleanRouteDeclared` and `pauseDeclared`; delete
   `markCleanRoute`. Evidence: `tests/clean-route.test.ts`, `tests/pause-plan.test.ts`.
 
+## Amendment 3, 13 October 2026 — both amendments above are withdrawn
+
+**Founder decision (13 October 2026, the same day):** the pause plan stays as an ordinary
+landing page; the buttons and the menu closing go. The site exists to make a visitor start
+the Programme, and the research menu opens from inside it, at step 3. Nothing else decides
+the menu.
+
+- The declared-pause rule (amendment of 12 October) and the clean route (amendment 2) no
+  longer exist in code. `lib/research-access.ts` is back to the lesson flag alone;
+  `researchDoorOpen`, `b4g_pause_until`, `b4g_clean_route` and the middleware mark are
+  deleted. The public layout, the Programme layout and the client door read
+  `researchAccessOpen` again. Cookies of those two names already in a browser are simply
+  ignored and expire on their own.
+- `/pause-plan` keeps its date tool, the ten steps, the calendar file and the Programme
+  start link. It sets no cookie, stores nothing and changes nothing in the menu. The
+  "show my plan", "remove the pause" and "open the casino section" controls are removed,
+  together with every sentence that promised a closed menu, on `/pause-plan`, `/innan`
+  and `/beside`.
+- Unchanged: the two doors of 10 October (parts 1–3 above), the lesson at step 3, and the
+  boundary that no offer, rank, partner button or `/r/` route reads the flag. The three
+  landing pages still link to no casino themselves and still state the revenue model.
+- The `researchLinksShown` seams left in `ProgramAiMissionExperience.tsx` and
+  `ProgramAiHome.tsx` for the withdrawn rule stay `true`; the closed-state follow-up
+  (PR #502) was closed unmerged. They can be removed in a later Programme pass.
+- Evidence: `tests/pause-plan.test.ts`, `tests/clean-route.test.ts`,
+  `tests/public-shell.test.ts`.
+

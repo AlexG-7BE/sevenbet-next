@@ -13,7 +13,7 @@ import { resolveServerCommercialProductState } from "@/lib/market/commercial-pro
 import { commercialProductsAvailable } from "@/lib/market/commercial-product-state";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { accountNavigationFor, commercialDestinationsNavigable } from "@/lib/public-shell";
-import { researchDoorOpen } from "@/lib/research-access";
+import { researchAccessOpen } from "@/lib/research-access";
 import styles from "@/components/public-shell/PublicShell.module.css";
 
 // Every public page under this layout inherits it (Next merges segment config
@@ -105,7 +105,7 @@ export default async function PublicLayout({ children }: { children: ReactNode }
   // pages and APIs remain the authority for identity and Programme state.
   const authenticated = hasBetterAuthSessionCookie(requestHeaders);
   // The lesson flag and a declared pause are plain cookies; no session or Programme state is read to draw the menu.
-  const researchAccess = researchDoorOpen(requestHeaders.get("cookie"));
+  const researchAccess = researchAccessOpen(requestHeaders.get("cookie"));
   const programmePath = programmePathForPresentationLocale(presentation.locale);
   const account = accountNavigationFor({ authenticated, programmePath });
   const messages = publicShellMessages(presentation.locale);

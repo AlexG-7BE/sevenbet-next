@@ -23,9 +23,8 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * The ten-day plan beside a Spelpaus or ROFUS break (Founder, 12 October 2026). The tool and
  * the plan render in the browser; the rest is static. The page links to the Programme start and
- * to the national helplines, and never to a casino. A visitor who names a pause here, or who
- * merely arrives here, sees no research links until they open the door themselves on this page
- * (the clean route, lib/research-access.ts).
+ * to the national helplines, and never to a casino. It is an ordinary landing page: it sets no
+ * cookie and changes nothing in the menu (Founder, 13 October 2026).
  */
 export default async function PausePlanPage() {
   const presentation = await resolveServerPresentationContext();
@@ -49,7 +48,7 @@ export default async function PausePlanPage() {
       <p className={styles.revenue} data-clean-route-line>{messages.revenueLine}</p>
     </div></header>
 
-    <PausePlanTool days={messages.days} door={messages.door} ics={messages.ics} locale={contentLocale} messages={messages.tool} register={messages.register} registers={messages.registers} />
+    <PausePlanTool days={messages.days} ics={messages.ics} locale={contentLocale} messages={messages.tool} register={messages.register} registers={messages.registers} />
 
     <section className={styles.dayEleven} data-nav-theme="dark"><div>
       <h2>{messages.dayEleven.heading}</h2>
