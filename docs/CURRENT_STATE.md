@@ -722,6 +722,18 @@ complete. The lesson flag, the Programme answers and every offer, ranking and
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+## Self-exclusion in numbers — in review
+
+**Founder decision, 13 October 2026 (incentive layer, mechanism «Öppna data»):**
+`/{sv,da,en}/pause-statistics` publishes the regulators' Spelpaus and ROFUS
+figures with sources, as open CSV (`public/data/*.csv`, CC BY 4.0, Dataset
+structured data), the periods, what nobody publishes, the status of our
+public-records requests, and the first thematic cut of a 4,211-post forum
+corpus with its method. The page states the revenue model and links only to
+the pause plan. Tests: `tests/pause-statistics.test.ts` (`pause-plan:test`).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Google Analytics 4 for every visitor
 
 **Founder instructions, 4 October 2026** (RFC-046 §16): the Google tag for
