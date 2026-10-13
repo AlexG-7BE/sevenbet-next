@@ -12,6 +12,69 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## The question screen of a Programme step — in review
+
+**Founder instruction, 13 October 2026.** The Programme's screens felt like a
+cheap survey form; he asked for a more premium, comfortable feel and not for
+fewer presses: «СДЕЛАТЬ ПРОДУКТ И ЕГО ОЩУЩЕНИЕ БОЛЕЕ ПРЕМИАЛЬНЫМ И УДОБНЫМ, А
+НЕ ТУПО СОКРАТИТЬ ВСЁ ЧТО МОЖНО РАДИ НЕСКОЛЬКИХ КЛИКОВ». He approved a mockup
+of the question screen and said «делай экран вопроса». Decision record:
+`docs/07_Decisions/PROGRAMME-QUESTION-SCREEN-2026-10-13.md`. Ordinary
+interface work: no RFC, no database change, no API change, no change to
+rewards, Mission order, prerequisites, the research door or any offer.
+
+This round redraws one screen: the screen of a Mission action ("question").
+The result screen with its finish press, the completion screen and the
+Programme home are unchanged and are later rounds.
+
+- **Top bar of a step.** A round back button (same destination and accessible
+  name as the former "← Programme Home"), "Step N of 10" (the step a person
+  sees, not the Mission's identity number) and the protected Help / pause link
+  as a pill, with its label, target and behaviour unchanged. On a phone
+  (640px and narrower) the site header is not shown while a question is open;
+  it returns with the Programme home, where the menu and Log out are. A wide
+  screen keeps the site header and the Programme row, and shows the step as
+  one centred column.
+- **Progress inside the step.** One thin segment per action and the label
+  "Question 1 of 3". Position and total are the server's projection.
+- **The question is the headline**, set in two voices by a rule: the tail (the
+  last third of the words, two to four) in the italic serif, the rest in heavy
+  capitals. No question or option was reworded. The Mission title is the
+  eyebrow.
+- **Options are cards** for single and multiple choice: 66px or taller, 16px
+  corners, acid border, filled tick and a soft glow when chosen. "Choose 2–3"
+  keeps its place and wording.
+- **A line under each option and a "Why we ask" line**, written for step 2
+  (Mission 02) and step 3 (Mission 08) in every language of the catalogue,
+  hidden languages included. Both are optional in the layout. The map from
+  option to line is presentation code
+  (`lib/programme/program-ai/question-screen.ts`); the server's Mission
+  definitions do not know it.
+- **One pinned button**, "Continue", without XP. While the server answers it
+  keeps its word, is disabled and shows three dots. The bar takes its own room
+  at the end of the column, so the last card is never under it.
+- **XP is the server's and is quiet.** After a save the progress label shows
+  "+15 XP" for about two seconds, then the question count. The former line
+  "Action complete. 15 XP earned." no longer stays under the next question;
+  that catalogue row, "Confirm action · +{xp} XP", "ACTION {position} · +{xp}
+  XP" and "Check sequence · +{xp} XP when correct" are retired.
+- **A disabled button says what is missing** in one line. When it is ready the
+  same place shows the privacy line the Programme home already carries ("Your
+  data is private. We never use it for offers or rankings."). No new privacy
+  wording.
+- **Motion.** A question arrives with a 220ms slide and fade; what opens after
+  a pick is scrolled into view above the bar; reduced motion has no
+  transforms.
+- **Not changed.** Every press stays ("Create personal drafts", "Build my
+  plan", "Complete Mission"); nothing opens or finishes by itself. The
+  placeholder card "Complete the first action to begin building this result."
+  is not shown on the first question; from the first saved answer the live
+  result stands under the cards as before.
+
+Evidence: `tests/programme-question-screen.test.ts` (in `programme:test`) and
+`tests/programme-question-screen-browser.spec.ts` (in `ci:browser`); the
+three existing Programme browser specs follow the new labels.
+
 ## Programme words and small things after the Swedish walk — in review
 
 **Founder choice, 12 October 2026** ("clean up words and small things"), after

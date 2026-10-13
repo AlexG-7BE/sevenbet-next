@@ -124,18 +124,25 @@
 .challenge > button, .submitRow > button, .reward > button { font-size: 16px; font-weight: 700; letter-spacing: 0; }
 .challenge > button { justify-self: start; }
 
-.choices { min-width: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; border: 0; }
-.choices legend { margin-bottom: 12px; color: var(--pg-label); font-size: 12px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; }
-.choice { min-height: 76px; padding: 16px 18px; display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--pg-line-strong); background: var(--pg-ink); cursor: pointer; line-height: 1.35; transition: border-color 200ms var(--pg-ease), background 200ms var(--pg-ease); }
-.choice:hover { border-color: rgba(250, 250, 247, .5); }
-.choice:has(input:checked) { border-color: var(--pg-acid); background: var(--pg-raised); }
-.choice input { width: 18px; height: 18px; margin: 1px 0 0; flex: 0 0 auto; appearance: none; border: 1px solid rgba(250, 250, 247, .4); border-radius: 50%; background: transparent; cursor: pointer; }
-.choice input[type="checkbox"] { border-radius: 2px; }
-.choice input:checked { border-color: var(--pg-acid); background: radial-gradient(circle, var(--pg-ink) 0 3.5px, var(--pg-acid) 4.5px); }
-.choice input[type="checkbox"]:checked { background: linear-gradient(var(--pg-ink), var(--pg-ink)) center / 8px 8px no-repeat, var(--pg-acid); }
-.choice > span { display: grid; gap: 5px; }
-.choice strong { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
-.choice small { color: rgba(250, 250, 247, .55); font-size: 12px; line-height: 1.4; }
+/* Option cards (Founder, 13 October 2026): one card for single and multiple choice. The line under
+   the title is optional: without it the card shows its title only, with no gap. */
+.choices { min-width: 0; margin: 0; padding: 0; display: grid; gap: 8px; border: 0; }
+.choices legend { margin-bottom: 10px; padding: 0; color: var(--pg-label); font-size: 12px; font-weight: 600; letter-spacing: .18em; line-height: 1.4; text-transform: uppercase; }
+.choice { position: relative; min-height: 66px; padding: 12px 16px; display: flex; gap: 14px; align-items: center; border: 1px solid var(--pg-line); border-radius: 16px; background: rgba(250, 250, 247, .035); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color 180ms var(--pg-ease), background 180ms var(--pg-ease), box-shadow 180ms var(--pg-ease), transform 120ms var(--pg-ease); }
+@media (hover: hover) { .choice:hover { border-color: rgba(250, 250, 247, .3); } }
+.choice:active { transform: scale(.985); }
+.choice:has(input:checked) { border-color: var(--pg-acid); background: linear-gradient(180deg, rgba(228, 226, 78, .13), rgba(228, 226, 78, .045)); box-shadow: 0 0 0 1px var(--pg-acid) inset, 0 14px 34px -16px rgba(228, 226, 78, .5); }
+.choice:has(input:focus-visible) { outline: var(--sb-focus-width) solid var(--pg-acid); outline-offset: var(--sb-focus-offset); }
+/* The control covers its card: the whole card is the tap target, the tick beside the title shows the state. */
+.choice input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; appearance: none; border: 0; border-radius: inherit; background: transparent; opacity: 0; cursor: pointer; }
+.choiceTick { width: 24px; height: 24px; flex: 0 0 auto; display: grid; place-items: center; border: 1.5px solid rgba(250, 250, 247, .34); border-radius: 50%; color: var(--pg-ink); transition: background 160ms var(--pg-ease), border-color 160ms var(--pg-ease); }
+.choice input[type="checkbox"] + .choiceTick { border-radius: 8px; }
+.choiceTick svg { width: 13px; height: 13px; opacity: 0; transform: scale(.6); transition: opacity 140ms var(--pg-ease), transform 180ms var(--pg-ease); }
+.choice:has(input:checked) .choiceTick { border-color: var(--pg-acid); background: var(--pg-acid); }
+.choice:has(input:checked) .choiceTick svg { opacity: 1; transform: none; }
+.choiceText { min-width: 0; display: block; }
+.choiceText strong { display: block; font-size: 16.5px; font-weight: 650; letter-spacing: -.005em; line-height: 1.25; overflow-wrap: anywhere; }
+.choiceText small { margin-top: 3px; display: block; color: var(--pg-muted); font-size: 13.5px; line-height: 1.3; }
 
 .localField { display: grid; gap: 8px; }
 .localField span { color: var(--pg-label); font-size: 12px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; }
@@ -248,6 +255,71 @@
 .artifact, .reviewSurface, .reward { animation: programme-reveal 320ms var(--pg-ease) both; }
 @keyframes programme-reveal { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
+/* The question screen of a step (Founder, 13 October 2026): top bar, progress inside the step,
+   the question in two voices, option cards and one pinned button. The same column on every width. */
+.stepShell { --pg-soft: rgba(250, 250, 247, .56); --pg-line-2: rgba(250, 250, 247, .16); min-height: 100dvh; display: flex; flex-direction: column; background: radial-gradient(130% 46% at 50% -8%, rgba(228, 226, 78, .085) 0%, rgba(228, 226, 78, 0) 60%), linear-gradient(180deg, #0c0c0b 0%, #080808 60%, var(--pg-night) 100%); }
+.stepShell::before { display: none; }
+.stepMain { --step-gutter: 0px; width: min(560px, var(--site-content-width)); margin: 0 auto; flex: 1 1 auto; display: flex; flex-direction: column; }
+.stepBar { min-height: 64px; padding-top: 10px; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.stepBack { width: 44px; height: 44px; padding: 0; display: grid; place-items: center; border: 1px solid var(--pg-line-2); border-radius: 50%; background: transparent; color: var(--pg-paper); cursor: pointer; transition: border-color 200ms var(--pg-ease), background 200ms var(--pg-ease); }
+.stepBack svg { width: 18px; height: 18px; }
+.stepWhere { margin: 0; color: var(--pg-muted); font-size: 12px; font-weight: 650; letter-spacing: .2em; line-height: 1.35; text-align: center; text-transform: uppercase; text-wrap: balance; }
+.stepHelp { max-width: 208px; min-height: 44px; padding: 6px 14px; justify-self: end; display: inline-flex; align-items: center; border: 1px solid var(--pg-line-2); border-radius: 22px; color: var(--pg-paper); font-size: 14px; font-weight: 600; line-height: 1.2; text-align: center; text-decoration: none; transition: border-color 200ms var(--pg-ease), background 200ms var(--pg-ease); }
+@media (hover: hover) { .stepBack:hover, .stepHelp:hover { border-color: rgba(250, 250, 247, .5); background: rgba(250, 250, 247, .05); } }
+.stepProgress { margin-top: 14px; display: flex; gap: 12px; align-items: center; }
+.stepSegments { flex: 1 1 auto; display: flex; gap: 6px; }
+.stepSegments i { height: 4px; flex: 1 1 0; border-radius: 2px; background: var(--pg-line-2); transition: background 240ms var(--pg-ease), box-shadow 240ms var(--pg-ease); }
+.stepSegments i[data-on="true"] { background: var(--pg-acid); box-shadow: 0 0 14px rgba(228, 226, 78, .55); }
+.stepCount { margin: 0; flex: 0 1 auto; color: var(--pg-muted); font-size: 12px; font-weight: 600; letter-spacing: .06em; line-height: 1.35; text-align: right; }
+.stepCount[data-programme-step-count="reward"] { color: var(--pg-acid); }
+.stepQuestion { padding-bottom: 20px; display: grid; gap: 18px; align-content: start; animation: programme-question-in 220ms var(--pg-ease) both; }
+@keyframes programme-question-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+.stepHeading { padding-top: 26px; }
+.stepEyebrow { margin: 0; color: var(--pg-acid); font-size: 12px; font-weight: 650; letter-spacing: .2em; line-height: 1.35; text-transform: uppercase; }
+.stepHeadline { margin: 12px 0 0; font-size: clamp(21px, 6.1vw, 25px); font-stretch: 125%; font-weight: 800; letter-spacing: -.01em; line-height: 1.04; outline: none; overflow-wrap: break-word; text-transform: uppercase; text-wrap: balance; }
+.stepHeadline em { margin-top: 2px; display: block; color: var(--pg-acid); font-family: var(--font-seven-serif), Georgia, serif; font-size: 1.48em; font-stretch: 100%; font-style: italic; font-weight: 400; letter-spacing: -.02em; line-height: 1; text-transform: none; }
+/* The heading takes the reader’s place when a question changes; it is not a control and shows no ring. */
+.shell .stepHeadline:focus-visible { outline: none; }
+.stepHelper { margin: 12px 0 0; color: var(--pg-muted); font-size: 15px; line-height: 1.45; }
+.stepWhy { margin: 12px 0 0; display: flex; gap: 9px; align-items: flex-start; color: var(--pg-soft); font-size: 13px; line-height: 1.4; }
+.stepWhy b { color: var(--pg-muted); font-weight: 650; }
+.stepWhy svg { width: 15px; height: 15px; margin-top: 1px; flex: 0 0 auto; }
+.stepReveal { min-width: 0; display: grid; scroll-margin-top: calc(var(--sb-header-offset) + 16px); scroll-margin-bottom: 176px; }
+.stepShell .stepSecondary { width: 100%; min-height: 52px; gap: 10px; border-radius: 16px; font-size: 16px; font-weight: 700; letter-spacing: 0; }
+/* The widgets keep their content; inside a step they take the cards' corners. */
+.stepMain :is(.aiPicker, .stackBuilder, .applicationPanel, .offerDecoder, .scenarioPanel, .artifact) { border-radius: 16px; }
+.stepMain .aiPicker button { border-radius: 14px; }
+.stepMain .aiPicker button[aria-pressed="true"] { box-shadow: 0 0 0 1px var(--pg-acid) inset; }
+.stepMain .applicationPanel label, .stepMain .localField textarea { border-radius: 12px; }
+.stepMain > .artifact { margin-bottom: 20px; }
+.stepMain > .guidance { margin-bottom: 20px; }
+/* The button rides at the bottom of the screen and rests after the last card: the bar takes its
+   own room in the column, so at the end of the list no card is under it, at any height. */
+.stepCta { position: sticky; bottom: 0; z-index: 5; margin: auto calc(var(--step-gutter) * -1) 0; padding: 18px var(--step-gutter) calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 10px; background: linear-gradient(180deg, rgba(6, 7, 8, 0) 0, var(--pg-night) 26px); }
+.stepContinue { width: 100%; min-height: 58px; padding: 0 20px; display: flex; gap: 10px; align-items: center; justify-content: center; border: 0; border-radius: 16px; background: var(--pg-acid); box-shadow: 0 16px 34px -18px rgba(228, 226, 78, .75); color: var(--pg-ink); cursor: pointer; font-family: inherit; font-size: 17px; font-weight: 750; letter-spacing: 0; line-height: 1.2; transition: background 200ms var(--pg-ease), color 200ms var(--pg-ease), box-shadow 200ms var(--pg-ease), transform 120ms var(--pg-ease); }
+.stepContinue svg { width: 18px; height: 18px; flex: 0 0 auto; }
+@media (hover: hover) { .stepContinue:hover:not(:disabled) { background: var(--pg-paper); } }
+.stepContinue:active:not(:disabled) { transform: scale(.985); }
+/* Opaque in every state: the list scrolls under the bar and must not show through the button. */
+.stepContinue:disabled { background: #1f1f1e; box-shadow: none; color: rgba(250, 250, 247, .56); cursor: default; }
+/* While the server answers the button keeps its word and its colour; three dots say it is working. */
+.stepContinue[data-saving]:disabled { background: #c4c243; color: var(--pg-ink); }
+.stepDots { display: inline-flex; gap: 5px; align-items: center; }
+.stepDots i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: programme-step-dot 900ms ease-in-out infinite; }
+.stepDots i:nth-child(2) { animation-delay: 150ms; }
+.stepDots i:nth-child(3) { animation-delay: 300ms; }
+@keyframes programme-step-dot { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+.stepNote { min-height: 34px; margin: 0; color: var(--pg-soft); font-size: 12.5px; line-height: 1.35; text-align: center; text-wrap: balance; }
+.stepNote::first-letter { text-transform: uppercase; }
+.stepNote svg { width: 13px; height: 13px; margin-right: 6px; display: inline-block; vertical-align: -2px; }
+.stepNote[data-programme-step-hint] { color: var(--pg-muted); }
+.stepNote[data-tone="notice"] { color: var(--pg-paper); font-weight: 600; }
+.stepNote[data-tone="error"] { color: #ffaaa6; font-size: 14px; font-weight: 600; }
+@media (prefers-reduced-motion: reduce) {
+  .stepQuestion, .stepDots i { animation: none; }
+  .choice:active, .stepContinue:active:not(:disabled), .choiceTick svg { transform: none; }
+}
+
 @media (max-width: 1000px) {
   .dashboardGrid, .workspace { grid-template-columns: 1fr; }
   .currentCard { grid-template-columns: 1fr; }
@@ -264,7 +336,6 @@
 @media (max-width: 640px) {
   .missionMain, .reviewMain { width: calc(100% - 40px); padding: 32px 0 112px; gap: 28px; }
   .missionIntro h1, .reviewIntro h1 { font-size: 36px; }
-  .choices { grid-template-columns: 1fr; }
   .sequenceBuilder li, .stackBuilder li { grid-template-columns: 34px 1fr; }
   .sequenceBuilder li div, .stackBuilder li div { grid-column: 1 / -1; }
   .programmeTimeline dl > div { grid-template-columns: 1fr; gap: 2px; }
@@ -282,10 +353,15 @@
   .challenge { padding: 20px; gap: 16px; }
   .challenge h2 { font-size: 22px; line-height: 1.05; }
   .challenge > p { font-size: 16px; line-height: 1.4; }
-  .choice { min-height: 56px; padding: 14px 16px; align-items: center; }
-  .choice input { margin: 0; }
-  /* The confirm action rides at the bottom of the screen while the choices are in view. */
-  .challenge > .submitRow { position: sticky; bottom: 0; z-index: 5; margin: 0 -20px -20px; padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--pg-line); background: var(--pg-card); }
+  /* A step on a phone is a focused screen: its own top bar stands where the site header was
+     (components/public-shell/PublicShell.module.css hides that header while a step is open). */
+  .stepShell { padding-top: env(safe-area-inset-top, 0px); }
+  .stepMain { width: 100%; --step-gutter: 20px; padding: 0 var(--step-gutter); }
+  .stepReveal { scroll-margin-top: 16px; }
+}
+@media (max-width: 400px) {
+  .stepWhere { letter-spacing: .12em; }
+  .stepHelp { max-width: 148px; padding-inline: 12px; }
 }
 @media (max-width: 600px) {
   .dashboardShell { background: var(--pg-card); }
