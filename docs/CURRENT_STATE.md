@@ -920,9 +920,12 @@ the door with the one button on `/pause-plan`; nothing opens by itself on day
 browser, no button onwards) and `/beside` (for the person beside a player: the
 real number, one message in her words, day 11, the helplines). Every clean-route
 page states the revenue model first and links to no casino. The lesson flag, the
-Programme answers and every offer, ranking and `/r/` route are untouched; the
-Programme Home research card and the step-3 completion screen still follow the
-API's `researchAccess` until the follow-up after the "no stops" rework. Pure date
+Programme answers and every offer, ranking and `/r/` route are untouched. The
+Programme Home research card and the step-3 completion screen follow the same
+door on the client (`components/programme/useResearchDoor.ts` reads the same
+cookies and event as the public menu): behind a shut door each shows one quiet
+line from the Programme catalogue and no link, while the lesson flag, XP and
+the server's `researchAccess` are unchanged. Pure date
 logic: `lib/tools/pause-plan.ts`. Tests: `tests/pause-plan.test.ts`,
 `tests/clean-route.test.ts` (`pause-plan:test`). Proof from outside Kazakhstan
 (Production answers the Founder's machine with 451): the manual workflow

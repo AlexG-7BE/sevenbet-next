@@ -20,6 +20,7 @@ import {
   referrerHost,
   researchDoorOpen,
 } from "../lib/research-access";
+import { programmeText } from "../lib/i18n/programme-catalog";
 import { coreRoutes } from "../lib/site";
 
 const lesson = `${RESEARCH_ACCESS_COOKIE}=${RESEARCH_ACCESS_OPEN}`;
@@ -108,4 +109,18 @@ test("innan and beside speak Swedish, Danish and English, and are registered as 
   assert.equal(publicRoutePolicy("/beside"), "LOCALIZABLE_PUBLIC");
   assert.ok(coreRoutes.includes("/beside"), "the relatives' page is in the sitemap");
   assert.ok(!coreRoutes.includes("/innan"), "the rule screen is a tool, not a search landing");
+});
+
+test("the Programme screens follow the same door: the step-3 completion screen and the home card read it on the client and say one quiet line when it is shut", () => {
+  const hook = read("components/programme/useResearchDoor.ts");
+  assert.match(hook, /researchDoorOpen\(document\.cookie\)/);
+  assert.match(hook, /RESEARCH_ACCESS_CHANGED_EVENT/);
+  for (const file of ["components/programme/ProgramAiMissionExperience.tsx", "components/programme/ProgramAiHome.tsx"]) {
+    const source = read(file);
+    assert.match(source, /useResearchDoor\(\)/, file);
+    assert.doesNotMatch(source, /researchLinksShown = true/, file);
+    assert.match(source, /Your menu stays as it is during the pause\. You open it yourself when the pause ends\./, file);
+  }
+  assert.equal(programmeText("sv-SE", "Your menu stays as it is during the pause. You open it yourself when the pause ends."), "Din meny är oförändrad under pausen. Du öppnar den själv när pausen är slut.");
+  assert.equal(programmeText("da-DK", "Your menu stays as it is during the pause. You open it yourself when the pause ends."), "Din menu er uændret under pausen. Du åbner den selv, når pausen er slut.");
 });

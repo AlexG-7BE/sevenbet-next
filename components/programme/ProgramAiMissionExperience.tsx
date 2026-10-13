@@ -31,6 +31,7 @@ import { QUESTION_REWARD_LABEL_MS, questionOptionLine, questionWhyLine, splitQue
 import { programmeHelpPath, programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
 import { fetchProgrammeWithRetry } from "@/lib/programme/request-retry";
 import { RESEARCH_ACCESS_CHANGED_EVENT, RESEARCH_OPENED_AT_STORAGE_KEY } from "@/lib/research-access";
+import { useResearchDoor } from "@/components/programme/useResearchDoor";
 import styles from "./ProgramAiAuthenticated.module.css";
 
 type Option = { value: string; label: ProgrammeMessageKey; description?: ProgrammeMessageKey };
@@ -182,6 +183,9 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const missionCopy = programmeMissionCopy(locale, mission.missionNumber);
   const t = (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
   const finalPlanStage = mission.missionNumber === 10 && current?.id === "choose_review_cadence";
+  // The clean route: a declared pause or an arrival through the pause, beside or innan pages keeps
+  // the research door shut on this screen too, exactly as in the public menu.
+  const researchLinksShown = useResearchDoor();
   useEffect(() => {
     if (ui) setValues(initialValues(ui, mission.artifact));
     setGuidance(null); setGuidanceSelected(""); setSequenceFeedback(""); setAnnouncement(""); setAppliedChecks([]); setFirstCheck("");
@@ -367,8 +371,6 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     const doneTitle = splitQuestionHeadline(keepsake.title);
     // The reward, once: every number is the server's (this Mission's XP and the steps it lists as completed).
     const stepsDone = home.missions.filter((item) => item.status === "completed").length;
-    // clean route: see lib/research-access.ts researchDoorOpen
-    const researchLinksShown = true;
     return <div className={`${styles.shell} ${styles.stepShell}`} data-programme-step-frame="">
       <ProgramAiAuthenticatedHeader label={completeLabel} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
       <main className={styles.stepMain} data-programme-completion={newlyCompleted ? "fresh" : "review"}>
@@ -382,7 +384,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
           <KeepsakeCard rows={keepsake.rows} sentence={keepsake.sentence} title={keepsake.title} />
           <div className={styles.keepsakeActions}><button data-programme-save-image="" disabled={imageState === "busy"} onClick={saveAsImage} type="button"><DownloadIcon /><span>{t("Save as image")}</span></button></div>
           {imageState === "failed" ? <p className={styles.error} role="alert">{t("The image could not be saved.")}</p> : null}
-          {researchOpened && researchLinksShown ? <ResearchOpened locale={locale} fresh={newlyCompleted} /> : null}
+          {researchOpened ? (researchLinksShown ? <ResearchOpened locale={locale} fresh={newlyCompleted} /> : <ResearchClosed locale={locale} />) : null}
           {availableReview ? <div className={styles.reviewReveal}><span>{t("PERSONAL REVIEW AVAILABLE")}</span><p>{t("{title} is ready. Return Home to open it and see what you have built so far.", { title: programmeText(locale, availableReview.milestone === "first" ? "First Personal Review" : availableReview.milestone === "mid" ? "Mid-Programme Personal Review" : "Full Programme Personal Review") })}</p></div> : null}
           {researchOpened && researchLinksShown ? <ResearchChecklist artifact={mission.artifact} locale={locale} /> : null}
           {mission.missionNumber === 10 ? <CommercialNext locale={locale} /> : null}
@@ -532,6 +534,19 @@ function ResearchOpened({ locale, fresh }: { locale: ProgrammeLocale; fresh: boo
       <Link href={programmePublicHref(locale, "/bonuses")} onClick={() => discovery("bonuses")}>{t("Explore bonuses")}</Link>
       <Link href={programmePublicHref(locale, "/best-offers")} onClick={() => discovery("best_offers")}>{t("Best offers")}</Link>
     </nav>
+  </div>;
+}
+
+/**
+ * The same moment behind a shut door (the clean route, 13 October 2026): the Mission is complete and
+ * the lesson flag is set, but a declared pause or a clean-route arrival keeps the links out of the
+ * menu until the person opens the door on the pause page. One quiet line, no link.
+ */
+function ResearchClosed({ locale }: { locale: ProgrammeLocale }) {
+  const t = (key: ProgrammeMessageKey) => programmeText(locale, key);
+  return <div className={styles.researchReveal} data-programme-research-opened="closed">
+    <span>{t("Research")}</span>
+    <p>{t("Your menu stays as it is during the pause. You open it yourself when the pause ends.")}</p>
   </div>;
 }
 
