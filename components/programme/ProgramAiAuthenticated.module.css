@@ -339,6 +339,74 @@
   .choice:active, .stepContinue:active:not(:disabled), .choiceTick svg { transform: none; }
 }
 
+/* The end of a step (Founder, 13 October 2026): the result as a keepsake card on its result and
+   completion screens, inside the step's frame. */
+.stepCount[data-programme-step-count="completion"] { color: var(--pg-muted); }
+.keepsakeIntro { margin: 4px 0 -6px; color: var(--pg-soft); font-size: 12px; font-weight: 600; letter-spacing: .18em; line-height: 1.4; text-transform: uppercase; }
+.keepsake { position: relative; min-width: 0; border-radius: 22px; background: var(--pg-paper); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .9), 0 0 0 1px rgba(255, 255, 255, .06); color: var(--pg-ink); }
+.keepsakeTop { padding: 24px 24px 26px; }
+.keepsakeTop:has(+ .keepsakeRows) { padding-bottom: 2px; }
+.keepsakeLabel { margin: 0; display: flex; gap: 14px; align-items: flex-start; justify-content: space-between; color: rgba(16, 15, 15, .62); font-size: 12px; font-weight: 700; letter-spacing: .18em; line-height: 1.35; text-transform: uppercase; }
+.keepsakeLabel span { min-width: 0; overflow-wrap: anywhere; }
+.keepsakeLabel b { flex: 0 0 auto; color: var(--pg-ink); font-stretch: 125%; font-weight: 900; letter-spacing: .02em; }
+.keepsake blockquote { margin: 18px 0 0; font-family: var(--font-seven-serif), Georgia, serif; font-size: 35px; font-style: italic; font-weight: 400; letter-spacing: -.015em; line-height: 1.06; overflow-wrap: anywhere; }
+.keepsake blockquote[data-length="medium"] { font-size: 26px; line-height: 1.14; }
+.keepsake blockquote[data-length="long"] { font-size: 19px; letter-spacing: 0; line-height: 1.3; }
+/* The ticket cut: a dashed line with a notch on each edge, in the colour of the page behind the card. */
+.keepsakeCut { position: relative; height: 0; margin: 0 18px; border-top: 1.5px dashed rgba(16, 15, 15, .22); }
+.keepsakeCut::before, .keepsakeCut::after { content: ""; position: absolute; top: -10px; width: 20px; height: 20px; border-radius: 50%; background: #090909; }
+.keepsakeCut::before { left: -28px; }
+.keepsakeCut::after { right: -28px; }
+.keepsakeRows { margin: 0; padding: 22px 24px 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
+.keepsakeRows > div { min-width: 0; }
+.keepsakeRows > div[data-wide] { grid-column: 1 / -1; }
+.keepsakeRows dt { color: rgba(16, 15, 15, .62); font-size: 12px; font-weight: 700; letter-spacing: .08em; line-height: 1.35; text-transform: uppercase; overflow-wrap: break-word; }
+.keepsakeRows dd { margin: 5px 0 0; font-size: 16px; font-weight: 650; line-height: 1.25; overflow-wrap: anywhere; }
+.keepsakeActions { display: flex; gap: 10px; }
+.keepsakeActions button { min-height: 48px; padding: 0 16px; flex: 1 1 0; display: flex; gap: 8px; align-items: center; justify-content: center; border: 1px solid var(--pg-line-2); border-radius: 12px; background: transparent; color: var(--pg-paper); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; letter-spacing: 0; transition: border-color 200ms var(--pg-ease), background 200ms var(--pg-ease); }
+.keepsakeActions button svg { width: 16px; height: 16px; flex: 0 0 auto; }
+.keepsakeActions button:disabled { cursor: default; opacity: .6; }
+@media (hover: hover) { .keepsakeActions button:hover:not(:disabled) { border-color: rgba(250, 250, 247, .5); background: rgba(250, 250, 247, .05); } }
+/* Completion: the step is done, what was built, one line, then the card. */
+.stepDone { padding-top: 30px; }
+.stepDoneTick { margin: 0; display: inline-flex; gap: 9px; align-items: center; color: var(--pg-mint); font-size: 12px; font-weight: 650; letter-spacing: .2em; line-height: 1.35; text-transform: uppercase; }
+.stepDoneTick i { width: 22px; height: 22px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: var(--pg-mint); color: var(--pg-ink); }
+.stepDoneTick svg { width: 12px; height: 12px; }
+.stepDone .stepHeadline { margin-top: 16px; font-size: clamp(22px, 7vw, 29px); line-height: 1.02; }
+.stepDone .stepHeadline em { text-transform: lowercase; }
+.stepDone .stepHelper { font-size: 16px; }
+.stepDoneBody { padding: 26px 0 20px; display: grid; gap: 16px; align-content: start; }
+.stepDoneBody > .error { font-size: 14px; }
+/* The reward, once: ten dots for the ten steps and one quiet line. */
+.stepReward { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+/* The reward row stands on the solid part of the bar, clear of what scrolls under its fade. */
+.stepCta:has(.stepReward) { padding-top: 32px; }
+.stepRewardDots { display: flex; gap: 7px; flex: 0 0 auto; }
+.stepRewardDots i { width: 9px; height: 9px; border-radius: 50%; background: var(--pg-line-2); }
+.stepRewardDots i[data-on="true"] { background: var(--pg-acid); }
+.stepReward p { margin: 0; color: var(--pg-muted); font-size: 13px; font-weight: 600; line-height: 1.35; text-align: right; }
+/* What a completion screen can also carry sits calmly under the card: same content, order and links. */
+.stepMain .researchReveal { max-width: none; padding: 20px; justify-items: start; border: 1px solid var(--pg-line-2); border-radius: 16px; background: rgba(250, 250, 247, .035); text-align: left; }
+.stepMain .researchReveal[data-programme-research-opened="fresh"] { animation: programme-keepsake-in 240ms var(--pg-ease) 200ms both; }
+.stepMain .researchReveal h3 { font-size: 20px; line-height: 1.1; }
+.stepMain .researchReveal p { margin: 0; color: var(--pg-muted); font-size: 15px; line-height: 1.5; }
+.stepMain .researchReveal nav { justify-content: flex-start; }
+.stepMain .researchReveal nav a { border: 1px solid var(--pg-acid); background: transparent; color: var(--pg-acid); }
+@media (hover: hover) { .stepMain .researchReveal nav a:hover { background: var(--pg-acid); color: var(--pg-ink); } }
+.stepMain .reviewReveal { max-width: none; padding: 18px 20px; border: 1px solid var(--pg-line-2); border-radius: 16px; background: rgba(250, 250, 247, .035); }
+.stepMain .reviewReveal span { color: var(--pg-acid); line-height: 1.35; }
+.stepMain .reviewReveal p { margin: 6px 0 0; color: var(--pg-muted); font-size: 15px; line-height: 1.5; }
+.stepMain .commercialAside { padding: 20px; border-radius: 16px; }
+/* A new completion arrives: the card rises, then the tick and the step's dot. */
+.stepMain[data-programme-completion="fresh"] .keepsake { animation: programme-keepsake-in 240ms var(--pg-ease) both; }
+.stepMain[data-programme-completion="fresh"] .stepDoneTick i { animation: programme-step-pop 260ms var(--pg-ease) 240ms both; }
+.stepMain[data-programme-completion="fresh"] .stepRewardDots i[data-new] { animation: programme-step-pop 260ms var(--pg-ease) 420ms both; }
+@keyframes programme-keepsake-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes programme-step-pop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .stepMain[data-programme-completion="fresh"] .keepsake, .stepMain[data-programme-completion="fresh"] .stepDoneTick i, .stepMain[data-programme-completion="fresh"] .stepRewardDots i[data-new], .stepMain .researchReveal[data-programme-research-opened="fresh"] { animation: none; }
+}
+
 @media (max-width: 1000px) {
   .workspace { grid-template-columns: 1fr; }
   .workspace > .artifact { position: static; }

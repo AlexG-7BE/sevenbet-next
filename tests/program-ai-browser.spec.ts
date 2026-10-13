@@ -993,17 +993,19 @@ test("durably accepted account survives empty storage, context, login and Missio
       const replayPage = await page.context().newPage();
       await openCurrentMission(replayPage, 2, 375, "Resume mission");
       const completionResponse = page.waitForResponse((response) => response.url().endsWith("/api/program/program-ai/missions/2/complete"));
-      await page.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
+      await page.getByRole("button", { name: "Complete Mission", exact: true }).click();
       expect((await (await completionResponse).json()).xpAwarded).toBe(25);
-      await expect(page.getByText("Your result is ready and the completion reward has been added.", { exact: true })).toBeVisible();
+      await expect(page.getByText("You built it yourself. It is yours, not ours.", { exact: true })).toBeVisible();
       const replayResponse = replayPage.waitForResponse((response) => response.url().endsWith("/api/program/program-ai/missions/2/complete"));
-      await replayPage.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
+      await replayPage.getByRole("button", { name: "Complete Mission", exact: true }).click();
       expect((await (await replayResponse).json()).xpAwarded).toBe(0);
       const completionPages = [page, replayPage];
-      await Promise.all(completionPages.map((candidate) => expect(candidate.getByText("MISSION COMPLETE", { exact: true })).toBeVisible()));
-      await expect(page.getByText("Your result is ready and the completion reward has been added.", { exact: true })).toBeVisible();
+      await Promise.all(completionPages.map((candidate) => expect(candidate.getByText("Step 2 done", { exact: true })).toBeVisible()));
+      // The reward is said once, with the server's numbers; the screen that only replayed the press shows what the Mission holds.
+      await expect(page.getByText("+25 XP · 2 of 10 steps", { exact: true })).toBeVisible();
+      await expect(replayPage.getByText("75 XP · 2 of 10 steps", { exact: true })).toBeVisible();
       await expect(replayPage.getByText(/This Mission was already complete\. Your completed result is ready to review\./)).toBeVisible();
-      await expect(replayPage.getByText("+25", { exact: true })).toHaveCount(0);
+      await expect(replayPage.getByText(/\+25/)).toHaveCount(0);
       await replayPage.close();
 
       const localContentKey = `sevenbet.programme.local-content.v2:user:${encodeURIComponent(user.id)}`;
@@ -1045,8 +1047,8 @@ test("durably accepted account survives empty storage, context, login and Missio
       }
     } else if (mission.missionNumber === 3) {
       await openCurrentMission(page, 3, 390, "Resume mission");
-      await page.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
-      await expect(page.getByText("Your result is ready and the completion reward has been added.", { exact: true })).toBeVisible();
+      await page.getByRole("button", { name: "Complete Mission", exact: true }).click();
+      await expect(page.getByText("You built it yourself. It is yours, not ours.", { exact: true })).toBeVisible();
       await expect(page.getByText("PERSONAL REVIEW AVAILABLE", { exact: true })).toBeVisible();
       await expect(page.getByText(/First Personal Review is ready\./)).toBeVisible();
     } else if (mission.missionNumber === researchAccessMission) {
@@ -1061,7 +1063,7 @@ test("durably accepted account survives empty storage, context, login and Missio
 
       await openCurrentMission(page, 8, 1440, "Resume mission");
       await expect(page.locator("[data-programme-research-opened]")).toHaveCount(0);
-      await page.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
+      await page.getByRole("button", { name: "Complete Mission", exact: true }).click();
       const opened = page.locator('[data-programme-research-opened="fresh"]');
       await expect(opened).toBeVisible();
       await expect(opened.getByRole("heading", { name: "Casinos, bonuses and offers are now open to you" })).toBeVisible();
