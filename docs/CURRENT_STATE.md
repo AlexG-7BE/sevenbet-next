@@ -727,9 +727,15 @@ Programme answers and every offer, ranking and `/r/` route are untouched; the
 Programme Home research card and the step-3 completion screen still follow the
 API's `researchAccess` until the follow-up after the "no stops" rework. Pure date
 logic: `lib/tools/pause-plan.ts`. Tests: `tests/pause-plan.test.ts`,
-`tests/clean-route.test.ts` (`pause-plan:test`).
+`tests/clean-route.test.ts` (`pause-plan:test`). Proof from outside Kazakhstan
+(Production answers the Founder's machine with 451): the manual workflow
+"Production screenshots (clean route)" runs
+`scripts/research/production-screenshots.mjs` on a GitHub-hosted runner, which
+photographs the three pages and the menu before and after the pause page, counts
+research links on each and keeps the pictures with `REPORT.md` as a workflow
+artifact for 14 days.
 
-**PROPOSED — NOT YET LIVE** until merged and deployed.
+Live on Production since 12–13 October 2026 (PRs #491 and #494).
 
 ## Open agreement for creators — in review
 
