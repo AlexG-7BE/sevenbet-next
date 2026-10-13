@@ -711,14 +711,23 @@ Programme start link; an FAQ with FAQPage structured data; the national
 helplines (Stödlinjen, StopSpillet). Other published languages read the
 English page under `noindex`. The page never links to a casino.
 
-**A declared pause keeps the research door shut.** "Show my plan" writes the
-pause's last day into the plain cookie `b4g_pause_until`; `researchDoorOpen`
-in `lib/research-access.ts` (lesson flag and no running pause) is what the
-public and Programme layouts and the client door read, so no research link
-appears for that browser until the day after the pause, even when the lesson is
-complete. The lesson flag, the Programme answers and every offer, ranking and
-`/r/` route are untouched; research pages stay public. Pure date logic:
-`lib/tools/pause-plan.ts`. Tests: `tests/pause-plan.test.ts` (`pause-plan:test`).
+**The clean route (Founder decision, 13 October 2026).** "Show my plan" writes
+the pause's last day into the plain cookie `b4g_pause_until`; middleware writes
+`b4g_clean_route=1` on the first document navigation onto `/pause-plan`, `/innan`
+or `/beside`, or from one of the communities, regulators and helplines we speak
+to. `researchDoorOpen` in `lib/research-access.ts` (lesson flag, no declared
+pause, no clean route) is what the public and Programme layouts and the client
+door read, so no research link appears for that browser until the person opens
+the door with the one button on `/pause-plan`; nothing opens by itself on day
+11. Two more clean-route pages: `/innan` (the rule before the app, kept in the
+browser, no button onwards) and `/beside` (for the person beside a player: the
+real number, one message in her words, day 11, the helplines). Every clean-route
+page states the revenue model first and links to no casino. The lesson flag, the
+Programme answers and every offer, ranking and `/r/` route are untouched; the
+Programme Home research card and the step-3 completion screen still follow the
+API's `researchAccess` until the follow-up after the "no stops" rework. Pure date
+logic: `lib/tools/pause-plan.ts`. Tests: `tests/pause-plan.test.ts`,
+`tests/clean-route.test.ts` (`pause-plan:test`).
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 

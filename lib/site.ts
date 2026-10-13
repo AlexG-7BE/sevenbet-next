@@ -41,6 +41,7 @@ export const coreRoutes = [
   "/wagering-calculator",
   "/pause-plan",
   "/for-creators",
+  "/beside",
 ];
 
 export function absoluteUrl(path: string) {
