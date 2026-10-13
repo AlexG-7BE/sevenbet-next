@@ -61,7 +61,7 @@
     "auth-comms:browser": "playwright test tests/auth-comms-browser.spec.ts",
     "brand-cutover:test": "NEXT_PUBLIC_SITE_URL=https://b4gamble.com node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/brand-cutover.test.ts tests/production-canonical-host.test.ts",
     "social-links:test": "node --import tsx --test tests/social-short-links.test.ts",
-    "pause-plan:test": "node --import tsx --test tests/pause-plan.test.ts",
+    "pause-plan:test": "node --import tsx --test tests/pause-plan.test.ts tests/clean-route.test.ts",
     "seo-crawler:test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test tests/crawler-ready-metadata.test.ts",
     "seo:indexnow": "node scripts/indexnow-submit.mjs",
     "canonical-host:test": "NEXT_PUBLIC_SITE_URL=https://b4gamble.com node --import tsx --test tests/production-canonical-host.test.ts",

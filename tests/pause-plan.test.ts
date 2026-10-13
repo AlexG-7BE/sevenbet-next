@@ -35,19 +35,19 @@ test("a 24-hour ROFUS pause is one day, and month-long pauses keep to the calend
   assert.equal(parseIsoDate("12.10.2026"), null);
 });
 
-test("a declared pause keeps the research door shut through its last day and opens it the day after", () => {
+test("a declared pause keeps the research door shut, through and past its last day, until the person removes it", () => {
   const paused = `${lessonOpen}; ${PAUSE_UNTIL_COOKIE}=2026-10-21`;
   assert.equal(pauseUntil(paused), "2026-10-21");
   assert.equal(researchAccessOpen(paused), true, "the lesson flag itself is untouched");
   assert.equal(pauseActive(paused, "2026-10-12"), true);
   assert.equal(pauseActive(paused, "2026-10-21"), true);
-  assert.equal(pauseActive(paused, "2026-10-22"), false);
-  assert.equal(researchDoorOpen(paused, "2026-10-21"), false);
-  assert.equal(researchDoorOpen(paused, "2026-10-22"), true);
-  assert.equal(researchDoorOpen(`${PAUSE_UNTIL_COOKIE}=2026-10-21`, "2026-10-22"), false, "no lesson, no door");
+  assert.equal(pauseActive(paused, "2026-10-22"), false, "the date only says whether the pause still runs");
+  assert.equal(researchDoorOpen(paused), false, "the clean route (13 Oct 2026): nothing opens by itself on day 11");
+  assert.equal(researchDoorOpen(`${PAUSE_UNTIL_COOKIE}=2026-10-21`), false, "no lesson, no door");
   assert.equal(pauseUntil(`${PAUSE_UNTIL_COOKIE}=next week`), null, "a malformed value is no pause");
   assert.equal(pauseActive(`${PAUSE_UNTIL_COOKIE}=next week`, "2026-10-12"), false);
-  assert.equal(researchDoorOpen(lessonOpen, "2026-10-12"), true);
+  assert.equal(researchDoorOpen(`${lessonOpen}; ${PAUSE_UNTIL_COOKIE}=next week`), true, "a malformed pause is no pause");
+  assert.equal(researchDoorOpen(lessonOpen), true);
 });
 
 test("Swedish, Danish and English copy cover every period and all ten days", () => {
@@ -76,6 +76,7 @@ test("the page is a localizable public route in the sitemap and links to no casi
   const page = readFileSync("app/(public)/pause-plan/page.tsx", "utf8");
   assert.doesNotMatch(page, /\/best-offers|\/casinos|\/bonuses|\/r\//);
   assert.match(page, /entry=start/);
+  assert.match(page, /data-clean-route-line/);
   assert.match(readFileSync("app/(public)/layout.tsx", "utf8"), /researchDoorOpen\(/);
   assert.match(readFileSync("app/program/layout.tsx", "utf8"), /researchDoorOpen\(/);
   assert.match(readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8"), /researchDoorOpen\(document\.cookie\)/);

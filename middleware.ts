@@ -17,7 +17,16 @@ import {
   PRESENTATION_CONTEXT_HEADER,
   PRESENTATION_LANGUAGE_HEADER,
   PRESENTATION_MARKET_HEADER,
+  stripPublicMarketPrefix,
 } from "@/lib/market/routing";
+import {
+  CLEAN_ROUTE_COOKIE,
+  CLEAN_ROUTE_OPEN,
+  cleanRouteCookieOptions,
+  cleanRouteDeclared,
+  cleanRouteEntry,
+  referrerHost,
+} from "@/lib/research-access";
 import { homeTranslationReady } from "@/lib/i18n/review-state";
 import {
   DEFAULT_MARKET_PROFILE,
@@ -234,10 +243,21 @@ export async function middleware(request: NextRequest) {
   const nextResponse = (rewriteUrl?: URL) => rewriteUrl
     ? NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } })
     : NextResponse.next({ request: { headers: requestHeaders } });
+  // The clean route (lib/research-access.ts, Founder decision of 13 October 2026): the first
+  // document navigation onto a pause, beside or innan page, or from one of the communities,
+  // regulators and helplines we speak to, closes the research door for this browser until the
+  // person opens it on the pause page. A plain cookie; nothing commercial reads it.
+  const markCleanRoute = (response: NextResponse) => {
+    if (request.method !== "GET" || request.headers.get("sec-fetch-dest") !== "document") return response;
+    if (cleanRouteDeclared(request.headers.get("cookie"))) return response;
+    if (!cleanRouteEntry(stripPublicMarketPrefix(pathname), referrerHost(request.headers.get("referer")))) return response;
+    response.cookies.set(CLEAN_ROUTE_COOKIE, CLEAN_ROUTE_OPEN, cleanRouteCookieOptions(true));
+    return response;
+  };
   const secureResponse = (response: NextResponse) => {
     response.headers.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
     response.headers.set("X-Frame-Options", "DENY");
-    return response;
+    return markCleanRoute(response);
   };
 
   const canonicalHost = resolveRuntimeCanonicalHost(request.url);
