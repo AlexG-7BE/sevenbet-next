@@ -45,6 +45,13 @@ Ordinary interface work: no RFC, no database change, no API change.
    from option to line lives in `question-screen.ts`, and the server's Mission definitions do not
    know it. The checklist question of step 3 lists the same seven facts as its first question, so
    each keeps the line it already carried there.
+   - **Later the same day:** the lines are written for every other step as well (Missions 03–07,
+     09 and 10), so each of the 27 questions has a why-line and every option card has a line, in
+     every language of the catalogue. Two questions show no option cards and carry the why-line
+     only: the sequence to put in order (step 4, first question) and the drafted responses to
+     choose from (step 9, second question). The second list of "Run a decision check" ("What
+     would you check first?") is drawn without its action and takes no line. An option offered in
+     more than one question keeps one line.
 6. **One pinned button.** A full-width acid button, "Continue", without XP. While the server
    answers it keeps its word, is disabled and shows three small dots; it does not say "Saving…".
    The bar takes its own room at the end of the column, so at the end of the list the last card

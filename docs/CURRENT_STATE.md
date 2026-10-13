@@ -44,9 +44,11 @@ Programme home are unchanged and are later rounds.
 - **Options are cards** for single and multiple choice: 66px or taller, 16px
   corners, acid border, filled tick and a soft glow when chosen. "Choose 2–3"
   keeps its place and wording.
-- **A line under each option and a "Why we ask" line**, written for step 2
-  (Mission 02) and step 3 (Mission 08) in every language of the catalogue,
-  hidden languages included. Both are optional in the layout. The map from
+- **A line under each option and a "Why we ask" line**, written for every
+  step after sign-in (Missions 02–10) in every language of the catalogue,
+  hidden languages included. Two questions show no option cards and carry the
+  why-line only (the sequence of step 4, the drafted responses of step 9).
+  Both are optional in the layout. The map from
   option to line is presentation code
   (`lib/programme/program-ai/question-screen.ts`); the server's Mission
   definitions do not know it.
