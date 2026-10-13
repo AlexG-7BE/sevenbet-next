@@ -4,11 +4,8 @@ import test from "node:test";
 
 import { pausePlanLocale, pausePlanMessages } from "../lib/i18n/static-pages/pause-plan";
 import { publicRoutePolicy } from "../lib/market/routing";
-import { PAUSE_UNTIL_COOKIE, RESEARCH_ACCESS_COOKIE, RESEARCH_ACCESS_OPEN, pauseActive, pauseUntil, researchAccessOpen, researchDoorOpen } from "../lib/research-access";
 import { coreRoutes } from "../lib/site";
 import { PAUSE_PERIODS, PLAN_DAYS, addMonths, dayAfter, parseIsoDate, pauseEndDate, pausePeriod, planDates, toIsoDate } from "../lib/tools/pause-plan";
-
-const lessonOpen = `${RESEARCH_ACCESS_COOKIE}=${RESEARCH_ACCESS_OPEN}`;
 
 test("a ten-day Spelpaus registered on the 12th covers the 12th to the 21st; the plan is for the 22nd", () => {
   const start = parseIsoDate("2026-10-12");
@@ -33,21 +30,6 @@ test("a 24-hour ROFUS pause is one day, and month-long pauses keep to the calend
   assert.equal(pausePeriod("rofus", "final")?.openEnded, true);
   assert.equal(parseIsoDate("2026-02-30"), null);
   assert.equal(parseIsoDate("12.10.2026"), null);
-});
-
-test("a declared pause keeps the research door shut, through and past its last day, until the person removes it", () => {
-  const paused = `${lessonOpen}; ${PAUSE_UNTIL_COOKIE}=2026-10-21`;
-  assert.equal(pauseUntil(paused), "2026-10-21");
-  assert.equal(researchAccessOpen(paused), true, "the lesson flag itself is untouched");
-  assert.equal(pauseActive(paused, "2026-10-12"), true);
-  assert.equal(pauseActive(paused, "2026-10-21"), true);
-  assert.equal(pauseActive(paused, "2026-10-22"), false, "the date only says whether the pause still runs");
-  assert.equal(researchDoorOpen(paused), false, "the clean route (13 Oct 2026): nothing opens by itself on day 11");
-  assert.equal(researchDoorOpen(`${PAUSE_UNTIL_COOKIE}=2026-10-21`), false, "no lesson, no door");
-  assert.equal(pauseUntil(`${PAUSE_UNTIL_COOKIE}=next week`), null, "a malformed value is no pause");
-  assert.equal(pauseActive(`${PAUSE_UNTIL_COOKIE}=next week`, "2026-10-12"), false);
-  assert.equal(researchDoorOpen(`${lessonOpen}; ${PAUSE_UNTIL_COOKIE}=next week`), true, "a malformed pause is no pause");
-  assert.equal(researchDoorOpen(lessonOpen), true);
 });
 
 test("Swedish, Danish and English copy cover every period and all ten days", () => {
@@ -77,7 +59,22 @@ test("the page is a localizable public route in the sitemap and links to no casi
   assert.doesNotMatch(page, /\/best-offers|\/casinos|\/bonuses|\/r\//);
   assert.match(page, /entry=start/);
   assert.match(page, /data-clean-route-line/);
-  assert.match(readFileSync("app/(public)/layout.tsx", "utf8"), /researchDoorOpen\(/);
-  assert.match(readFileSync("app/program/layout.tsx", "utf8"), /researchDoorOpen\(/);
-  assert.match(readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8"), /researchDoorOpen\(document\.cookie\)/);
+});
+
+test("the pause plan is an ordinary landing page: it keeps nothing and changes nothing in the menu", () => {
+  // Founder, 13 October 2026: the declared-pause and clean-route door rules are withdrawn.
+  const tool = readFileSync("app/(public)/pause-plan/PausePlanTool.tsx", "utf8");
+  assert.doesNotMatch(tool, /document\.cookie|localStorage|sessionStorage|fetch\(|research-access/);
+  assert.equal(tool.match(/<button /g)?.length, 1, "one button: the calendar file");
+  const contract = readFileSync("lib/research-access.ts", "utf8");
+  assert.doesNotMatch(contract, /pause|clean.?route|researchDoorOpen/i);
+  assert.doesNotMatch(readFileSync("middleware.ts", "utf8"), /research-access|cleanRoute|b4g_clean_route|b4g_pause_until/);
+  for (const reader of ["app/(public)/layout.tsx", "app/program/layout.tsx"]) {
+    assert.match(readFileSync(reader, "utf8"), /researchAccessOpen\(requestHeaders\.get\("cookie"\)\)/, reader);
+  }
+  assert.match(readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8"), /researchAccessOpen\(document\.cookie\)/);
+  for (const locale of ["sv-SE", "da-DK", "en-GB"] as const) {
+    const text = JSON.stringify(pausePlanMessages(locale));
+    assert.doesNotMatch(text, /Dörren|casinoavsnittet|Døren|casinodelen|The door|casino section|så länge du är i pausen|så længe du er i pausen|while you are paused/, `${locale}: no promise about the menu`);
+  }
 });
