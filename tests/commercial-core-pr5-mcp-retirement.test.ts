@@ -100,7 +100,7 @@ test("retired transport dependencies and commands stay absent", () => {
     dependencies: Record<string, string>;
     scripts: Record<string, string>;
   };
-  assert.equal(pkg.dependencies["@modelcontextprotocol/sdk"], "1.30.0");
+  assert.equal(pkg.dependencies["@modelcontextprotocol/sdk"], "1.31.0");
   assert.equal(pkg.dependencies["@better-auth/oauth-provider"], undefined);
   assert.equal(pkg.dependencies["@better-auth/utils"], undefined);
   assert.equal(Object.keys(pkg.scripts).some((name) => /mcp-bridge|partner-tracking:production-smoke/i.test(name)), false);
