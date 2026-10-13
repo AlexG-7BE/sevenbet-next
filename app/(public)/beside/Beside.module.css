@@ -1,0 +1,30 @@
+.page { background:#100f0f; color:#fafaf7; font-family:var(--font-seven-sans),Arial,sans-serif; overflow-wrap:anywhere; }
+.page * { box-sizing:border-box; }
+.page h2 { margin:0; font-size:clamp(1.4rem,3vw,2rem); line-height:1.1; letter-spacing:-.03em; }
+
+.header { padding:clamp(132px,14vw,178px) var(--site-gutter) 40px; background:radial-gradient(circle at 88% 10%,rgba(228,226,78,.08),transparent 38rem),#100f0f; }
+.header > div { width:min(var(--site-content-max),100%); margin:0 auto; }
+.header small { display:flex; align-items:center; gap:14px; color:#e4e24e; font-size:13px; letter-spacing:.24em; text-transform:uppercase; }
+.header small::before { content:""; width:44px; height:1px; flex:0 0 auto; background:#e4e24e; }
+.header h1 { margin:24px 0 0; font-size:clamp(2.1rem,5.6vw,4.4rem); line-height:1.02; letter-spacing:-.04em; }
+.header h1 em { display:block; color:#e4e24e; font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; letter-spacing:-.01em; }
+.header p { max-width:62ch; margin:22px 0 0; color:rgba(250,250,247,.72); font-size:18px; line-height:1.6; }
+.revenue { font-size:14px !important; color:#c3c0b7 !important; }
+
+.body { width:min(var(--site-content-max),100%); margin:0 auto; padding:0 var(--site-gutter) 96px; display:grid; gap:18px; }
+.card { padding:28px 30px; border:1px solid rgba(250,250,247,.12); border-radius:20px; background:#171616; }
+.card p { max-width:62ch; margin:12px 0 0; color:#c3c0b7; font-size:16px; line-height:1.55; }
+.card ul { margin:14px 0 0; padding-left:1.2rem; color:#e0ded7; font-size:16px; line-height:1.55; display:grid; gap:10px; }
+.message .copy p { margin:16px 0 0; padding:18px 20px; border-radius:14px; background:#242323; color:#fafaf7; font-size:17px; line-height:1.55; user-select:all; }
+.message .copy button { min-height:48px; margin-top:14px; padding:0 22px; border:0; border-radius:999px; background:#e4e24e; color:#100f0f; font:inherit; font-size:15px; font-weight:850; cursor:pointer; }
+.message .copy button:focus-visible { outline:3px solid #fafaf7; outline-offset:3px; }
+.note { font-size:14px !important; }
+.note a { color:#e4e24e; }
+.dayEleven { background:#e4e24e; color:#100f0f; }
+.dayEleven p { color:#100f0f; font-size:18px; font-weight:600; }
+.support h2 { font-size:1.2rem; }
+.support ul { margin:14px 0 0; padding:0; list-style:none; display:grid; gap:10px; }
+.support a { color:#e4e24e; font-size:17px; font-weight:700; }
+.support a:focus-visible { outline:3px solid #e4e24e; outline-offset:3px; }
+
+@media (max-width: 900px) { .card { padding:22px; } }
