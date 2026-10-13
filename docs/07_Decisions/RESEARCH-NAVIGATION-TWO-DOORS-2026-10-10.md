@@ -178,7 +178,7 @@ the menu.
   `researchAccessOpen` again. Cookies of those two names already in a browser are simply
   ignored and expire on their own.
 - `/pause-plan` keeps its date tool, the ten steps, the calendar file and the Programme
-  start link. It sets no cookie, stores nothing and changes nothing in the menu. The
+  start link. It sets no cookie, stores nothing and changes nothing in the menu (since 14 October 2026 this holds while the pause letters are switched off; see [PAUSE-LETTERS-2026-10-14](PAUSE-LETTERS-2026-10-14.md)). The
   "show my plan", "remove the pause" and "open the casino section" controls are removed,
   together with every sentence that promised a closed menu, on `/pause-plan`, `/innan`
   and `/beside`.

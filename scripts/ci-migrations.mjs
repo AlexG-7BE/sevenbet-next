@@ -109,6 +109,8 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
   const migration0041Index = migrationEntries.indexOf("0041_commercial_core_legacy_connector_cleanup");
   const migration0042Index = migrationEntries.indexOf("0042_admin_mfa");
   const migration0043Index = migrationEntries.indexOf("0043_article_learning_center");
+  const migration0044Index = migrationEntries.indexOf("0044_pause_letters_enum_values");
+  const migration0045Index = migrationEntries.indexOf("0045_pause_letters");
   if (
     migration0020Index < programmeMigrationIndex
     || migration0021Index !== migration0020Index + 1
@@ -116,9 +118,11 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
     || migration0041Index !== migration0040Index + 1
     || migration0042Index !== migration0041Index + 1
     || migration0043Index !== migration0042Index + 1
-    || migration0043Index !== migrationEntries.length - 1
+    || migration0044Index !== migration0043Index + 1
+    || migration0045Index !== migration0044Index + 1
+    || migration0045Index !== migrationEntries.length - 1
   ) {
-    throw new Error("Expected sequential migrations 0020-0022, Admin MFA 0042, and exact latest Article migration 0043");
+    throw new Error("Expected sequential migrations 0020-0022, Admin MFA 0042, Article 0043, and exact latest pause-letter migrations 0044-0045");
   }
 
   const schema = "better_auth_17_upgrade_ci";
@@ -805,8 +809,8 @@ async function verifyArticleLearningCenterUpgrade(migrationEntries, programmeMig
   const migration = "0043_article_learning_center";
   const migrationIndex = migrationEntries.indexOf(migration);
   const priorIndex = migrationEntries.indexOf("0042_admin_mfa");
-  if (migrationIndex !== priorIndex + 1 || migrationIndex !== migrationEntries.length - 1) {
-    throw new Error(`Expected ${migration} directly after 0042 and as the exact latest migration`);
+  if (migrationIndex !== priorIndex + 1) {
+    throw new Error(`Expected ${migration} directly after 0042`);
   }
 
   const schema = "article_learning_center_upgrade_ci";
@@ -884,6 +888,127 @@ async function verifyArticleLearningCenterUpgrade(migrationEntries, programmeMig
       defaultLocale: preserved[0].locale,
       additiveColumns: columns.length,
       indexes: indexes.length,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+/**
+ * 0044 adds enum values and 0045 uses them: two additive migrations that must leave every
+ * existing account and letter as it was and seed the new letters.
+ */
+async function verifyPauseLettersUpgrade(migrationEntries, programmeMigrationIndex) {
+  const enumMigration = "0044_pause_letters_enum_values";
+  const migration = "0045_pause_letters";
+  const priorIndex = migrationEntries.indexOf("0043_article_learning_center");
+  const enumIndex = migrationEntries.indexOf(enumMigration);
+  const migrationIndex = migrationEntries.indexOf(migration);
+  if (enumIndex !== priorIndex + 1 || migrationIndex !== enumIndex + 1 || migrationIndex !== migrationEntries.length - 1) {
+    throw new Error(`Expected ${enumMigration} and ${migration} directly after 0043 and ${migration} as the exact latest migration`);
+  }
+
+  const schema = "pause_letters_upgrade_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+  const preProgramme = await stageMigrations(migrationEntries.slice(0, programmeMigrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(preProgramme, "schema.prisma")], environment);
+    run("npx", ["prisma", "db", "execute", "--schema", "prisma/schema.prisma", "--file", "prisma/preflight/0015_active_control_program_flow.sql"], environment);
+  } finally {
+    await rm(preProgramme, { recursive: true, force: true });
+  }
+  await deployMigrationPrefix(migrationEntries, priorIndex, environment);
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  try {
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO "${schema}"."User" ("id", "name", "email", "emailVerified", "createdAt", "updatedAt")
+      VALUES ('pre-0044-account', 'Pre-0044 Account', 'pre-0044-account@example.test', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `);
+    const templatesBefore = await prisma.$queryRawUnsafe(`
+      SELECT "id", "key"::text AS "key", "locale", "subject", "htmlBody", "textBody", "version", "active"
+      FROM "${schema}"."EmailTemplate" ORDER BY "id"
+    `);
+    await deployMigrationPrefix(migrationEntries, migrationIndex, environment);
+    const [columns, table, constraint, templatesAfter, seeded, preserved, enumValues] = await Promise.all([
+      prisma.$queryRawUnsafe(`
+        SELECT "column_name" AS "columnName", "is_nullable" AS "isNullable", "column_default" AS "columnDefault", "data_type" AS "dataType"
+        FROM information_schema.columns
+        WHERE table_schema = '${schema}' AND table_name = 'User' AND column_name IN ('pauseEndsOn', 'pauseRegister')
+        ORDER BY column_name
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT COUNT(*)::int AS "columns" FROM information_schema.columns
+        WHERE table_schema = '${schema}' AND table_name = 'PauseReminder'
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT pg_get_constraintdef(c.oid) AS "definition" FROM pg_constraint c
+        JOIN pg_namespace n ON n.oid = c.connamespace
+        WHERE n.nspname = '${schema}' AND c.conname = 'EmailTemplate_key_type_check'
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT "id", "key"::text AS "key", "locale", "subject", "htmlBody", "textBody", "version", "active"
+        FROM "${schema}"."EmailTemplate" WHERE "createdBy" <> 'migration-0045' ORDER BY "id"
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT "key"::text AS "key", "locale", "type"::text AS "type", "active"
+        FROM "${schema}"."EmailTemplate" WHERE "createdBy" = 'migration-0045' ORDER BY "key"::text, "locale"
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT "email", "pauseEndsOn", "pauseRegister"::text AS "pauseRegister"
+        FROM "${schema}"."User" WHERE "id" = 'pre-0044-account'
+      `),
+      prisma.$queryRawUnsafe(`
+        SELECT t.typname AS "type", COUNT(*)::int AS "values" FROM pg_enum e
+        JOIN pg_type t ON t.oid = e.enumtypid JOIN pg_namespace n ON n.oid = t.typnamespace
+        WHERE n.nspname = '${schema}' AND t.typname IN ('EmailTemplateKey', 'EmailPurpose', 'PauseRegister')
+        GROUP BY t.typname ORDER BY t.typname
+      `),
+    ]);
+    const seededKeys = seeded.map((row) => `${row.key}:${row.locale}`);
+    const expectedSeeded = [
+      "PAUSE_ENDS_TOMORROW:da", "PAUSE_ENDS_TOMORROW:en", "PAUSE_ENDS_TOMORROW:sv",
+      "PAUSE_OVER:da", "PAUSE_OVER:en", "PAUSE_OVER:sv",
+      "PAUSE_TOOL_CONFIRMATION:da", "PAUSE_TOOL_CONFIRMATION:en", "PAUSE_TOOL_CONFIRMATION:sv",
+      "PROGRAMME_DAY_10:da", "PROGRAMME_DAY_10:en", "PROGRAMME_DAY_10:sv",
+      "PROGRAMME_DAY_3:da", "PROGRAMME_DAY_3:en", "PROGRAMME_DAY_3:sv",
+      "PROGRAMME_DAY_7:da", "PROGRAMME_DAY_7:en", "PROGRAMME_DAY_7:sv",
+      "PROGRAMME_REMINDER:da", "PROGRAMME_REMINDER:sv",
+      "WELCOME:da", "WELCOME:sv",
+    ];
+    if (
+      columns.length !== 2
+      || columns.some((column) => column.isNullable !== "YES" || column.columnDefault !== null)
+      || columns[0].dataType !== "date"
+      || table[0]?.columns !== 14
+      || constraint.length !== 1
+      || !String(constraint[0].definition).includes("PAUSE_TOOL_CONFIRMATION")
+      || JSON.stringify(templatesAfter) !== JSON.stringify(templatesBefore)
+      || JSON.stringify(seededKeys) !== JSON.stringify(expectedSeeded)
+      || seeded.some((row) => row.type !== "LIFECYCLE" || row.active !== true)
+      || preserved.length !== 1
+      || preserved[0].email !== "pre-0044-account@example.test"
+      || preserved[0].pauseEndsOn !== null
+      || preserved[0].pauseRegister !== null
+      || JSON.stringify(enumValues) !== JSON.stringify([
+        { type: "EmailPurpose", values: 13 },
+        { type: "EmailTemplateKey", values: 12 },
+        { type: "PauseRegister", values: 2 },
+      ])
+    ) {
+      throw new Error("Pause letters additive migration shape, seed or preservation verification failed");
+    }
+    console.info("Pause letters staged migration smoke passed", {
+      from: "0043_article_learning_center",
+      to: migration,
+      preservedAccounts: preserved.length,
+      unchangedTemplates: templatesAfter.length,
+      seededTemplates: seeded.length,
+      accountColumns: columns.length,
+      reminderColumns: table[0].columns,
     });
   } finally {
     await prisma.$disconnect();
@@ -1906,6 +2031,7 @@ async function main() {
   await verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationIndex);
   await verifyAdminMfaUpgrade(migrationEntries, programmeMigrationIndex);
   await verifyArticleLearningCenterUpgrade(migrationEntries, programmeMigrationIndex);
+  await verifyPauseLettersUpgrade(migrationEntries, programmeMigrationIndex);
   await verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrationIndex);
   await verifyProgrammeAccessUpgrade(migrationEntries);
   await verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex);

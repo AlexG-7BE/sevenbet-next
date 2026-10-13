@@ -63,11 +63,23 @@ test("the page is a localizable public route in the sitemap and links to no casi
   assert.match(page, /data-clean-route-line/);
 });
 
-test("the pause plan is an ordinary landing page: it keeps nothing and changes nothing in the menu", () => {
+test("the pause plan is an ordinary landing page: it changes nothing in the menu and keeps only what the pause letters need, behind their switch", () => {
   // Founder, 13 October 2026: the declared-pause and clean-route door rules are withdrawn.
   const tool = readFileSync("app/(public)/pause-plan/PausePlanTool.tsx", "utf8");
   assert.doesNotMatch(tool, /document\.cookie|localStorage|sessionStorage|fetch\(|research-access/);
   assert.equal(tool.match(/<button /g)?.length, 1, "one button: the calendar file");
+  // Founder, 13 October 2026 (docs/07_Decisions/PAUSE-LETTERS-2026-10-14.md): while the pause
+  // letters are switched on, the page keeps exactly two things, both for the timing of letters:
+  // the register and last pause day in a one-hour cookie when the Programme button is pressed,
+  // and an address the person leaves in the email field. Both live in one component that the
+  // tool renders only under the switch; tests/pause-letters.test.ts pins the rest.
+  const letters = readFileSync("app/(public)/pause-plan/PausePlanLetters.tsx", "utf8");
+  assert.match(tool, /\{letters \? <PausePlanLetters /);
+  assert.match(tool, /letters = false/);
+  assert.equal(letters.match(/document\.cookie = /g)?.length, 1);
+  assert.equal(letters.match(/fetch\(/g)?.length, 1);
+  assert.doesNotMatch(letters, /localStorage|sessionStorage|research-access/);
+  assert.match(readFileSync("app/(public)/pause-plan/page.tsx", "utf8"), /letters=\{pauseLettersEnabled\(\)\}/);
   const contract = readFileSync("lib/research-access.ts", "utf8");
   assert.doesNotMatch(contract, /pause|clean.?route|researchDoorOpen/i);
   assert.doesNotMatch(readFileSync("middleware.ts", "utf8"), /research-access|cleanRoute|b4g_clean_route|b4g_pause_until/);

@@ -125,7 +125,14 @@ test("the exact Vercel crons call only authenticated bounded internal routes", (
     { path: "/api/internal/cron/programme-expiry-purge", schedule: "17 4 * * *" },
     { path: "/api/internal/cron/customer-lifecycle", schedule: "47 3 * * *" },
     { path: "/api/internal/cron/learn-content", schedule: "13 * * * *" },
+    { path: "/api/internal/cron/pause-letters", schedule: "23 * * * *" },
   ]);
+  const pauseLettersRoute = read("app/api/internal/cron/pause-letters/route.ts");
+  const pauseLettersHandler = read("lib/email/pause-letters/cron.server.ts");
+  assert.match(pauseLettersRoute, /createPauseLettersCronHandler/);
+  assert.match(pauseLettersHandler, /CRON_SECRET/);
+  assert.match(pauseLettersHandler, /timingSafeEqual/);
+  assert.doesNotMatch(pauseLettersRoute + pauseLettersHandler, /VERCEL_TOKEN|DATABASE_URL|BETTER_AUTH_SECRET/);
   const route = read("app/api/internal/cron/programme-expiry-purge/route.ts");
   const handler = read("lib/programme/runtime-expiry-purge-cron.ts");
   const customerRoute = read("app/api/internal/cron/customer-lifecycle/route.ts");

@@ -12,6 +12,7 @@ import {
   ResendLifecycleEmailProvider,
   type LifecycleEmailProvider,
 } from "@/lib/email/provider.server";
+import { pauseLetterLanguage, pauseLetterPlanUrl, pauseLettersEnabled } from "@/lib/email/pause-letters/schedule";
 import { resolveLifecycleEmailRuntimeConfig } from "@/lib/email/runtime-config.server";
 import { activeEmailTemplate, renderEmailTemplate } from "@/lib/email/templates.server";
 
@@ -22,6 +23,13 @@ const EMAIL_CLAIM_STALE_MS = 15 * 60_000;
 const PROVIDER_IDEMPOTENCY_HORIZON_MS = 23 * 60 * 60_000;
 const AUTH_EMAIL_PURPOSES = ["EMAIL_VERIFICATION", "PASSWORD_RESET"] as const satisfies readonly EmailPurpose[];
 const WORKER_EMAIL_PURPOSES = ["WELCOME", "PROGRAMME_REMINDER", "MARKETING_BROADCAST", "TEST"] as const satisfies readonly EmailPurpose[];
+/**
+ * The day letters and the dated pause letters. The nightly worker never picks them up: only the
+ * hourly pause-letter run sends them, inside the local hours of `PAUSE_LETTER_SCHEDULE`.
+ */
+export const PAUSE_LETTER_PURPOSES = [
+  "PROGRAMME_DAY_3", "PROGRAMME_DAY_7", "PROGRAMME_DAY_10", "PAUSE_ENDS_TOMORROW", "PAUSE_OVER",
+] as const satisfies readonly EmailPurpose[];
 const CAMPAIGN_SEND_STATES = ["QUEUED", "SENDING"] as const;
 const RETRYABLE_PROVIDER_CODES = new Set(["NOT_CONFIGURED", "TIMEOUT", "NETWORK", "RATE_LIMITED", "PROVIDER_5XX"]);
 const VERIFICATION_RESEND_COOLDOWN_MS = 60_000;
@@ -43,6 +51,12 @@ const purposeByTemplate: Record<EmailTemplateKey, EmailPurpose> = {
   WELCOME: "WELCOME",
   PROGRAMME_REMINDER: "PROGRAMME_REMINDER",
   MARKETING_BROADCAST: "MARKETING_BROADCAST",
+  PROGRAMME_DAY_3: "PROGRAMME_DAY_3",
+  PROGRAMME_DAY_7: "PROGRAMME_DAY_7",
+  PROGRAMME_DAY_10: "PROGRAMME_DAY_10",
+  PAUSE_ENDS_TOMORROW: "PAUSE_ENDS_TOMORROW",
+  PAUSE_OVER: "PAUSE_OVER",
+  PAUSE_TOOL_CONFIRMATION: "PAUSE_TOOL_CONFIRMATION",
 };
 
 function isUniqueConflict(error: unknown) {
@@ -91,7 +105,7 @@ function claimableState(now: Date): Prisma.EmailMessageWhereInput {
   };
 }
 
-function providerForRuntime(): { provider: LifecycleEmailProvider; siteUrl: string | null } {
+export function providerForRuntime(): { provider: LifecycleEmailProvider; siteUrl: string | null } {
   const config = resolveLifecycleEmailRuntimeConfig();
   return config
     ? { provider: new ResendLifecycleEmailProvider(config), siteUrl: config.siteUrl }
@@ -107,7 +121,7 @@ export function hashUnsubscribeToken(token: string) {
   return createHash("sha256").update(token, "utf8").digest("hex");
 }
 
-function opaqueLifecycleKey(scope: "welcome" | "programme-reminder", subjectId: string, templateVersion: number) {
+function opaqueLifecycleKey(scope: "welcome" | "programme-reminder" | "pause-letter", subjectId: string, templateVersion: number) {
   const digest = createHash("sha256")
     .update(`b4gamble:lifecycle:${scope}:v1\n${subjectId}\n${templateVersion}`, "utf8")
     .digest("hex");
@@ -133,6 +147,23 @@ export function programmeReminderIdempotencyKey(enrollmentId: string, templateVe
     throw new Error("Programme reminder idempotency input is invalid");
   }
   return opaqueLifecycleKey("programme-reminder", enrollmentId, templateVersion);
+}
+
+/**
+ * One day letter or dated pause letter per enrolment (or per account and pause day): the subject
+ * names the letter, so a second run, or a template in another language, cannot send it again.
+ */
+export function pauseLetterIdempotencyKey(templateKey: EmailTemplateKey, subjectId: string) {
+  if (!subjectId) throw new Error("Pause letter idempotency input is invalid");
+  return opaqueLifecycleKey("pause-letter", `${templateKey}\n${subjectId}`, 1);
+}
+
+/**
+ * The letter in the account's language, with the existing English fallback. While the pause
+ * letters are switched off, every letter stays English, as before.
+ */
+export function emailTemplateForLocale(key: EmailTemplateKey, preferredLocale: string | null | undefined) {
+  return activeEmailTemplate(key, pauseLettersEnabled() ? pauseLetterLanguage(preferredLocale) : "en");
 }
 
 async function currentEligibility(userId: string, purpose: EmailPurpose) {
@@ -230,7 +261,9 @@ export async function queueEmailMessage({
 }
 
 export async function queueWelcomeEmail(userId: string) {
-  const template = await activeEmailTemplate("WELCOME", "en");
+  const account = await prisma.user.findUnique({ where: { id: userId }, select: { preferredLocale: true } });
+  if (!account) return null;
+  const template = await emailTemplateForLocale("WELCOME", account.preferredLocale);
   if (!template) return null;
   return queueEmailMessage({
     userId,
@@ -449,6 +482,7 @@ export async function processQueuedEmailMessage(
       name: finalEligibility.user.name,
       action_url: actionUrl ?? "",
       programme_url: `${siteUrl}/program`,
+      plan_url: pauseLetterPlanUrl(siteUrl, message.template.locale),
       unsubscribe_url: token ? `${siteUrl}/unsubscribe?token=${encodeURIComponent(token)}` : `${siteUrl}/unsubscribe?test=1`,
     });
   } catch {
@@ -579,7 +613,7 @@ export async function recoverStaleEmailClaims(now = new Date()) {
 
 export async function processQueuedEmailBatch(
   limit = 50,
-  overrides: { provider?: LifecycleEmailProvider; siteUrl?: string; now?: Date } = {},
+  overrides: { provider?: LifecycleEmailProvider; siteUrl?: string; now?: Date; purposes?: readonly EmailPurpose[] } = {},
 ) {
   // A disabled or incomplete Production runtime is an intentional operational
   // state, not a delivery attempt. Leave durable intent untouched so a staged
@@ -600,7 +634,7 @@ export async function processQueuedEmailBatch(
   const messages = await prisma.emailMessage.findMany({
     where: {
       environment,
-      purpose: { in: [...WORKER_EMAIL_PURPOSES] },
+      purpose: { in: [...(overrides.purposes ?? WORKER_EMAIL_PURPOSES)] },
       attemptCount: { lt: MAX_EMAIL_ATTEMPTS },
       AND: [claimableState(now), campaignSendAuthority(environment)],
     },
@@ -669,8 +703,19 @@ export async function queueProgrammeReminders() {
   const configuredDays = Number.parseInt(process.env.PROGRAMME_REMINDER_INACTIVITY_DAYS ?? "7", 10);
   const inactivityDays = configuredDays === 30 ? 30 : 7;
   const before = new Date(Date.now() - inactivityDays * 86_400_000);
-  const template = await activeEmailTemplate("PROGRAMME_REMINDER", "en");
-  if (!template) return { eligible: 0, queued: 0 };
+  // One reminder per person in their own language: the Swedish, the Danish and the English letter
+  // are the same reminder, so having any of them is having had it.
+  const templates = await prisma.emailTemplate.findMany({
+    where: { key: "PROGRAMME_REMINDER", active: true, ...(pauseLettersEnabled() ? {} : { locale: "en" }) },
+    orderBy: { version: "desc" },
+    select: { id: true, locale: true, version: true },
+  });
+  const templateByLanguage = new Map<string, (typeof templates)[number]>();
+  for (const candidate of templates) {
+    if (!templateByLanguage.has(candidate.locale)) templateByLanguage.set(candidate.locale, candidate);
+  }
+  if (!templateByLanguage.has("en")) return { eligible: 0, queued: 0 };
+  const reminderTemplateIds = [...templateByLanguage.values()].map((candidate) => candidate.id);
   const environment = analyticsEnvironment();
   const enrollments = await prisma.programEnrollment.findMany({
     where: {
@@ -688,16 +733,18 @@ export async function queueProgrammeReminders() {
           },
         },
         emailMessages: {
-          none: { templateId: template.id, purpose: "PROGRAMME_REMINDER", environment },
+          none: { templateId: { in: reminderTemplateIds }, purpose: "PROGRAMME_REMINDER", environment },
         },
       },
     },
-    select: { id: true, userId: true },
+    select: { id: true, userId: true, user: { select: { preferredLocale: true } } },
     orderBy: { startedAt: "asc" },
     take: 500,
   });
   let queued = 0;
   for (const enrollment of enrollments) {
+    const template = templateByLanguage.get(pauseLetterLanguage(enrollment.user.preferredLocale)) ?? templateByLanguage.get("en");
+    if (!template) continue;
     const message = await queueEmailMessage({
       userId: enrollment.userId,
       templateKey: "PROGRAMME_REMINDER",

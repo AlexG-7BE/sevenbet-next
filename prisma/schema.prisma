@@ -516,6 +516,12 @@ enum EmailTemplateKey {
   WELCOME
   PROGRAMME_REMINDER
   MARKETING_BROADCAST
+  PROGRAMME_DAY_3
+  PROGRAMME_DAY_7
+  PROGRAMME_DAY_10
+  PAUSE_ENDS_TOMORROW
+  PAUSE_OVER
+  PAUSE_TOOL_CONFIRMATION
 }
 
 enum EmailTemplateType {
@@ -532,6 +538,18 @@ enum EmailPurpose {
   PROGRAMME_REMINDER
   MARKETING_BROADCAST
   TEST
+  PROGRAMME_DAY_3
+  PROGRAMME_DAY_7
+  PROGRAMME_DAY_10
+  PAUSE_ENDS_TOMORROW
+  PAUSE_OVER
+  PAUSE_TOOL_CONFIRMATION
+}
+
+/// The national self-exclusion register a person named in the tool on /pause-plan.
+enum PauseRegister {
+  SPELPAUS
+  ROFUS
 }
 
 enum EmailMessageStatus {
@@ -868,6 +886,10 @@ model User {
   signupUtmCampaign  String?              @db.VarChar(100)
   signupUtmContent   String?              @db.VarChar(100)
   signupUtmTerm      String?              @db.VarChar(100)
+  /// The last day of the pause the person named on /pause-plan before signing up. It times two
+  /// letters and nothing else; no offer, ranking, route or advertisement may read it.
+  pauseEndsOn        DateTime?            @db.Date
+  pauseRegister      PauseRegister?
   lastSeenAt         DateTime?
   twoFactorEnabled   Boolean?             @default(false)
   createdAt          DateTime             @default(now())
@@ -2934,6 +2956,30 @@ model EmailUnsubscribeToken {
   user    User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([userId, consumedAt])
+}
+
+/// An address left in the tool on /pause-plan by a person without an account, with the one
+/// consent line shown there. It receives three letters: one at once, one the evening before the
+/// pause ends and one the morning it is over. The row is for the timing of those letters only.
+model PauseReminder {
+  id                 String               @id @default(uuid()) @db.Uuid
+  environment        AnalyticsEnvironment
+  email              String               @db.VarChar(320)
+  locale             String               @db.VarChar(16)
+  register           PauseRegister
+  pauseEndsOn        DateTime             @db.Date
+  tokenHash          String               @unique @db.Char(64)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  confirmationSentAt DateTime?
+  dayBeforeSentAt    DateTime?
+  overSentAt         DateTime?
+  unsubscribedAt     DateTime?
+  /// Set when the address signs up: the account's own letters take over and these stop.
+  takenOverAt        DateTime?
+
+  @@unique([environment, email])
+  @@index([environment, pauseEndsOn])
 }
 
 /// One-way transient abuse counter. bucketKey is a purpose-separated HMAC and

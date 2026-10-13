@@ -940,6 +940,18 @@ and `hava-spelpaus` (Swedish), `spille-under-rofus` and `fortryde-rofus`
 and name no casino. Image generation on Production was rate-limited that day,
 so the four guides reuse hero images already published for other languages.
 
+**What the page keeps (Founder decisions, 13 October 2026;
+[PAUSE-LETTERS-2026-10-14](07_Decisions/PAUSE-LETTERS-2026-10-14.md)) — in
+review, behind a switch that is off.** The statement above, "sets no cookie,
+stores nothing", holds while `PAUSE_LETTERS_ENABLED` is not `true`. With the
+switch on the page keeps exactly two things, both for the timing of letters and
+for nothing else: (1) when a person presses the Programme button after choosing
+their dates, the register and the last pause day stay in the first-party cookie
+`b4g_pause_end` for one hour, and the sign-up that follows saves them on the
+account; (2) an address a person without an account leaves in the email field
+under the result, with one consent line. It still changes nothing in the menu
+and links to no casino. See "Letters at the right moment" below.
+
 Pure date logic: `lib/tools/pause-plan.ts`. Tests: `tests/pause-plan.test.ts`,
 `tests/clean-route.test.ts` (`pause-plan:test`). Pictures from outside
 Kazakhstan (Production answers the Founder's machine with 451): the manual
@@ -992,6 +1004,58 @@ from protected Help, the self-check or Admin; Google signals and ad
 personalisation stay off. Tests: `tests/google-analytics.test.ts`.
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
+
+## Letters at the right moment — in review, switched off
+
+**Founder decisions, 13 October 2026**
+([PAUSE-LETTERS-2026-10-14](07_Decisions/PAUSE-LETTERS-2026-10-14.md)): more
+letters, on day 3, 7 and 10; the pause date from the tool on `/pause-plan`
+travels into the account; an email field in the tool for a person without an
+account. Branch `feat/pause-letters`. **Not merged by the night run: the PR
+carries migrations 0044 and 0045 and waits for review.** Nothing reaches a
+person until the migrations are applied to Production (DB-first: the build
+preflight refuses a Production build without them), the PR is merged and
+`PAUSE_LETTERS_ENABLED` is exactly `true`.
+
+- **Switch.** `PAUSE_LETTERS_ENABLED`, read only in
+  `lib/email/pause-letters/schedule.ts`. Off: nothing new is queued, sent,
+  stored or shown, and the welcome and reminder letters stay English.
+- **Day letters.** `PROGRAMME_DAY_3`, `PROGRAMME_DAY_7`, `PROGRAMME_DAY_10`,
+  once per enrolment, 3, 7 and 10 local days after the Programme start, while
+  the Programme is unfinished; the same authority and unsubscribe link as
+  `PROGRAMME_REMINDER`; Swedish, Danish, English by `preferredLocale`. The
+  welcome and reminder letters gain Swedish and Danish versions.
+- **Pause date in the account.** Two nullable columns, `User.pauseEndsOn` and
+  `User.pauseRegister`, saved by the existing sign-up observer from the
+  one-hour cookie; no registration question and no Programme file changed.
+  Dated letters once each: `PAUSE_ENDS_TOMORROW` the evening of the last pause
+  day, `PAUSE_OVER` the morning after. A dated letter replaces that day's day
+  letter. An open-ended pause carries nothing.
+- **Email field.** Table `PauseReminder`; `POST /api/public/pause-reminder`
+  (same-origin, 5 an hour per source, 3 a day per address); three letters (at
+  once, the evening before, the morning after), each with a one-click
+  unsubscribe on the existing `/unsubscribe` page; an account's address is not
+  stored; an address that signs up is taken over by the account; rows are
+  deleted after 30 days.
+- **Hours.** Local time in Sweden and Denmark, summer and winter: day letters
+  and "ends tomorrow" from 18:00, "ends today" from 07:00, nothing between
+  21:00 and 07:00. One hourly run, `/api/internal/cron/pause-letters`; the
+  nightly lifecycle run is unchanged and never sends these letters.
+- **Cap.** 60 pause letters per UTC day (the provider's free plan is 100);
+  above it nothing is sent late: a letter whose day has passed is cancelled.
+- **Purpose.** The pause date and the address time these letters and nothing
+  else: never offers, rankings, routes, advertising, analytics or the CRM.
+  Letters link only to the Programme, the pause plan and their unsubscribe
+  address. Founder authority is recorded in the decision note.
+- **Open before switching on:** the Privacy Notice must name the new data; no
+  double opt-in yet; native review of the Swedish and Danish letters; a
+  lawyer's view on writing to people who are in a national exclusion register.
+
+Tests: `tests/pause-letters.test.ts` (`pause-letters:test`, in `ci:quality`),
+`tests/pause-letters-postgres.test.ts` (`email-reliability:postgres-test`), and
+the staged upgrade in `scripts/ci-migrations.mjs`.
+
+**PROPOSED — NOT YET LIVE.**
 
 ## SMM agents read social traffic (`social_traffic`) — in review
 

@@ -28,6 +28,8 @@
 .calendar { justify-self:start; min-height:52px; padding:0 22px; border:1px solid rgba(250,250,247,.35); border-radius:999px; background:none; color:#fafaf7; font:inherit; font-size:15px; font-weight:800; cursor:pointer; }
 .calendar:disabled { opacity:.5; cursor:default; }
 .calendar:focus-visible { outline:3px solid #e4e24e; outline-offset:3px; }
+.reminder { display:grid; gap:12px; margin-top:24px; padding-top:24px; border-top:1px solid rgba(250,250,247,.12); }
+.reminder .note:empty { display:none; }
 .note { margin:0; color:#c3c0b7; font-size:14px; line-height:20px; }
 
 .result { padding:32px; border:1px solid rgba(250,250,247,.08); border-radius:20px; background:#171616; }

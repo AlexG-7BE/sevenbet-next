@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { PausePlanTool } from "./PausePlanTool";
 import styles from "./PausePlan.module.css";
 import { articlePath } from "@/lib/articles/article-types";
+import { pauseLettersEnabled } from "@/lib/email/pause-letters/schedule";
 import { pauseHubGuides } from "@/lib/articles/pause-hub.server";
 import { pausePlanLocale, pausePlanMessages } from "@/lib/i18n/static-pages/pause-plan";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
@@ -25,8 +26,11 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * The ten-day plan beside a Spelpaus or ROFUS break (Founder, 12 October 2026). The tool and
  * the plan render in the browser; the rest is static. The page links to the Programme start and
- * to the national helplines, and never to a casino. It is an ordinary landing page: it sets no
- * cookie and changes nothing in the menu (Founder, 13 October 2026). It is also the hub of the
+ * to the national helplines, and never to a casino. It is an ordinary landing page: it changes
+ * nothing in the menu (Founder, 13 October 2026). It keeps nothing unless the pause letters are
+ * switched on (Founder, 13 October 2026; docs/07_Decisions/PAUSE-LETTERS-2026-10-14.md): then
+ * the Programme button carries the pause date to the account in a one-hour cookie, and the tool
+ * offers an email field, both for the timing of letters only. It is also the hub of the
  * guides for a person on a pause: it lists the published guides of its language that carry the
  * register's name as a tag (lib/articles/pause-hub.server.ts).
  */
@@ -54,12 +58,12 @@ export default async function PausePlanPage() {
       <p className={styles.revenue} data-clean-route-line>{messages.revenueLine}</p>
     </div></header>
 
-    <PausePlanTool days={messages.days} ics={messages.ics} locale={contentLocale} messages={messages.tool} register={messages.register} registers={messages.registers} />
+    <PausePlanTool days={messages.days} ics={messages.ics} letters={pauseLettersEnabled()} locale={contentLocale} messages={messages.tool} register={messages.register} registers={messages.registers} />
 
     <section className={styles.dayEleven} data-nav-theme="dark"><div>
       <h2>{messages.dayEleven.heading}</h2>
       <p>{messages.dayEleven.body}</p>
-      <Link className={styles.cta} href={startHref}>{messages.dayEleven.cta}</Link>
+      <Link className={styles.cta} data-pause-plan-start href={startHref}>{messages.dayEleven.cta}</Link>
     </div></section>
 
     <section className={styles.notBack} data-nav-theme="dark" data-pause-plan-not-back><div>
