@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Instrument_Serif } from "next/font/google";
 import Link from "next/link";
 
+import { CopyText } from "@/components/clean-route/CopyText";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PausePlanTool } from "./PausePlanTool";
 import styles from "./PausePlan.module.css";
@@ -22,8 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * The ten-day plan beside a Spelpaus or ROFUS break (Founder, 12 October 2026). The tool and
  * the plan render in the browser; the rest is static. The page links to the Programme start and
- * to the national helplines, and never to a casino: a visitor who names a pause here sees no
- * research links until the day after it ends (lib/research-access.ts).
+ * to the national helplines, and never to a casino. A visitor who names a pause here, or who
+ * merely arrives here, sees no research links until they open the door themselves on this page
+ * (the clean route, lib/research-access.ts).
  */
 export default async function PausePlanPage() {
   const presentation = await resolveServerPresentationContext();
@@ -44,14 +46,22 @@ export default async function PausePlanPage() {
       <small>{messages.eyebrow}</small>
       <h1>{messages.titleLead} <em>{messages.titleEmphasis}</em></h1>
       <p>{messages.intro}</p>
+      <p className={styles.revenue} data-clean-route-line>{messages.revenueLine}</p>
     </div></header>
 
-    <PausePlanTool days={messages.days} locale={contentLocale} messages={messages.tool} register={messages.register} registers={messages.registers} />
+    <PausePlanTool days={messages.days} door={messages.door} ics={messages.ics} locale={contentLocale} messages={messages.tool} register={messages.register} registers={messages.registers} />
 
     <section className={styles.dayEleven} data-nav-theme="dark"><div>
       <h2>{messages.dayEleven.heading}</h2>
       <p>{messages.dayEleven.body}</p>
       <Link className={styles.cta} href={startHref}>{messages.dayEleven.cta}</Link>
+    </div></section>
+
+    <section className={styles.notBack} data-nav-theme="dark" data-pause-plan-not-back><div>
+      <h2>{messages.notBack.heading}</h2>
+      <p>{messages.notBack.intro}</p>
+      <CopyText className={styles.copy} copiedLabel={messages.notBack.copied} copyLabel={messages.notBack.copy} lines={messages.notBack.lines} />
+      <p><a href={messages.notBack.supportHref} rel="noopener noreferrer" target="_blank">{messages.notBack.supportLabel}</a></p>
     </div></section>
 
     <section className={styles.faq} data-nav-theme="dark"><div>
