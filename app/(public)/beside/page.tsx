@@ -20,8 +20,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * For the person beside a player (Founder decision, 13 October 2026): an entrance from search,
- * not an exit from a Mission. A clean-route page: no casino, no account, and arriving here
- * closes the research door for this browser (lib/research-access.ts).
+ * not an exit from a Mission. An ordinary landing page: no casino, no account, and it changes
+ * nothing in the menu.
  */
 export default async function BesidePage() {
   const presentation = await resolveServerPresentationContext();

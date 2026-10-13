@@ -38,7 +38,8 @@
 .result .after { color:#e4e24e; }
 .result .note { margin-top:16px; }
 
-.plan { width:min(var(--site-content-max),100%); margin:48px auto 0; }
+/* The plan is a second block of the tool section, not a third column pair of the form grid. */
+.tool > .plan { display:block; width:min(var(--site-content-max),100%); margin:48px auto 0; }
 .plan > p { max-width:60ch; margin:14px 0 0; color:rgba(250,250,247,.72); font-size:17px; line-height:1.6; }
 .days { list-style:none; margin:28px 0 0; padding:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
 .days li { display:grid; grid-template-columns:auto 1fr; gap:6px 14px; align-items:center; padding:18px 20px; border:1px solid rgba(250,250,247,.12); border-radius:16px; background:#171616; }
@@ -60,8 +61,13 @@
 .copy ol { margin:16px 0 0; padding:18px 20px 18px 40px; border-radius:14px; background:#242323; color:#fafaf7; font-size:16px; line-height:1.6; display:grid; gap:6px; }
 .copy button { min-height:48px; margin-top:14px; padding:0 22px; border:0; border-radius:999px; background:#e4e24e; color:#100f0f; font:inherit; font-size:15px; font-weight:850; cursor:pointer; }
 .copy button:focus-visible { outline:3px solid #fafaf7; outline-offset:3px; }
-.faq,.support { padding:0 var(--site-gutter) 72px; }
-.faq > div,.support > div { width:min(var(--site-content-max),100%); margin:0 auto; }
+.faq,.support,.questions { padding:0 var(--site-gutter) 72px; }
+.faq > div,.support > div,.questions > div { width:min(var(--site-content-max),100%); margin:0 auto; }
+.questions p { max-width:62ch; margin:12px 0 0; color:#c3c0b7; font-size:16px; line-height:1.55; }
+.questions ul { margin:24px 0 0; padding:0; list-style:none; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.questions a { display:block; height:100%; padding:18px 22px; border:1px solid rgba(250,250,247,.12); border-radius:16px; background:#171616; color:#fafaf7; font-size:17px; font-weight:800; line-height:1.35; text-decoration:none; }
+.questions a:hover { border-color:#e4e24e; }
+.questions a:focus-visible { outline:3px solid #e4e24e; outline-offset:3px; }
 .faq dl { margin:24px 0 0; display:grid; gap:12px; }
 .faq dl > div { padding:20px 22px; border:1px solid rgba(250,250,247,.12); border-radius:16px; background:#171616; }
 .faq dt { font-size:17px; font-weight:800; line-height:1.35; }
@@ -73,5 +79,6 @@
 @media (max-width: 900px) {
   .tool > div { grid-template-columns:1fr; gap:20px; }
   .days { grid-template-columns:1fr; }
+  .questions ul { grid-template-columns:1fr; }
   .form,.result,.dayEleven > div { padding:24px; }
 }

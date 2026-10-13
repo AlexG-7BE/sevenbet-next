@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import type { PublicArticle } from "../lib/articles/article-types";
+import { PAUSE_HUB_CATEGORY, pauseHubSelection } from "../lib/articles/pause-hub-selection";
 import { pausePlanLocale, pausePlanMessages } from "../lib/i18n/static-pages/pause-plan";
 import { publicRoutePolicy } from "../lib/market/routing";
 import { coreRoutes } from "../lib/site";
@@ -77,4 +79,39 @@ test("the pause plan is an ordinary landing page: it keeps nothing and changes n
     const text = JSON.stringify(pausePlanMessages(locale));
     assert.doesNotMatch(text, /Dörren|casinoavsnittet|Døren|casinodelen|The door|casino section|så länge du är i pausen|så længe du er i pausen|while you are paused/, `${locale}: no promise about the menu`);
   }
+});
+
+test("the pause plan is the hub of the guides for a person on a pause", () => {
+  // Founder, 13 October 2026: many guides for Sweden and Denmark, all linked together.
+  const guide = (slug: string, category: string, tags: string[]) => ({ id: slug, slug, category, tags, title: slug }) as unknown as PublicArticle;
+  const published = [
+    guide("hava-spelpaus", "responsible-gambling", ["Häva Spelpaus", "Spelpaus"]),
+    guide("spela-under-spelpaus", "responsible-gambling", ["Spelpaus", "Självavstängning"]),
+    guide("spelsug", "responsible-gambling", ["Spelsug"]),
+    guide("casino-med-svensk-licens", "casino-safety", ["Spelpaus"]),
+  ];
+  assert.deepEqual(pauseHubSelection(published, "Spelpaus").map((article) => article.slug), ["hava-spelpaus", "spela-under-spelpaus"], "the register's name as a tag, protected guides only, newest first");
+  assert.deepEqual(pauseHubSelection(published, " spelpaus ").map((article) => article.slug), ["hava-spelpaus", "spela-under-spelpaus"], "case and spaces do not matter");
+  assert.deepEqual(pauseHubSelection(published, "ROFUS"), []);
+  assert.deepEqual(pauseHubSelection(published, ""), [], "the English page speaks about both registers and lists nothing");
+  assert.equal(pauseHubSelection(published, "Spelpaus", 1).length, 1);
+  assert.equal(PAUSE_HUB_CATEGORY, "responsible-gambling");
+
+  const read = readFileSync("lib/articles/pause-hub.server.ts", "utf8");
+  assert.match(read, /articleService\.listPublished\(locale, \{ category: PAUSE_HUB_CATEGORY, take: 100 \}\)\.catch\(\(\) => \[\]\)/, "a failed read leaves the page standing");
+  assert.match(read, /from "@\/lib\/services\/article\.service"/, "the editorial article service alone");
+  assert.doesNotMatch(read, /from "@\/lib\/services"|@\/lib\/commercial|@\/lib\/public-offer|@\/lib\/market-access|@\/lib\/public-casino/);
+  const page = readFileSync("app/(public)/pause-plan/page.tsx", "utf8");
+  assert.match(page, /await pauseHubGuides\(contentLocale, registerName\)/);
+  assert.match(page, /guides\.length > 0 \?/, "no guides, no section");
+  assert.match(page, /productHref\(presentation, articlePath\(guide\)\)/, "links keep the page's language");
+  assert.doesNotMatch(page, /@prisma\/client|lib\/db\/prisma/);
+  for (const locale of ["sv-SE", "da-DK", "en-GB"] as const) {
+    const messages = pausePlanMessages(locale);
+    assert.ok(messages.questionsHeading && messages.questionsIntro, locale);
+  }
+  const css = readFileSync("app/(public)/pause-plan/PausePlan.module.css", "utf8");
+  assert.match(css, /\.tool > \.plan \{ display:block;/, "the ten steps span the page width on a desktop instead of half of the form grid");
+  assert.equal(pausePlanMessages("sv-SE").registers.spelpaus?.name, "Spelpaus");
+  assert.equal(pausePlanMessages("da-DK").registers.rofus?.name, "ROFUS");
 });
