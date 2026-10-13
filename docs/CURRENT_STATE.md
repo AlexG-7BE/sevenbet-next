@@ -722,6 +722,23 @@ complete. The lesson flag, the Programme answers and every offer, ranking and
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+## Open agreement for creators — in review
+
+**Founder decision, 13 October 2026 (incentive layer, mechanism «Öppet avtal»):**
+`/{sv,da,en}/for-creators` publishes the terms in full — 40–50 percent of our
+commission only for a viewer who completed all ten Programme steps and later
+signed up with a licensed operator through the ordinary route; zero for views,
+clicks, starts or a viewer who never plays; monthly public ledger as the
+labelling of the cooperation — with what we never do, what every creator gets
+regardless, a calculator (`lib/tools/creator-terms.ts`) and an FAQ.
+`/for-creators/[creator]` is a named page for six creators (`CREATOR_PAGES`),
+reached by its link only (`noindex`), with a 90-day counter of consented visits
+carrying `utm_source=<slug>` and sign-ups after the Programme, read through the
+same `readSocialTraffic` aggregate the social reports use. One email removes a
+page. Tests: `tests/for-creators.test.ts` (`pause-plan:test`).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Google Analytics 4 for every visitor
 
 **Founder instructions, 4 October 2026** (RFC-046 §16): the Google tag for
