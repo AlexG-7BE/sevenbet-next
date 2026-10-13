@@ -81,19 +81,22 @@ test("a Mission action that fails once is sent again: the screen stays busy and 
     await route.fulfill(saved);
   });
 
-  await page.getByRole("button", { name: "Confirm action · +20 XP" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   // The repeat is on its way: the button is still busy and nothing has been said about a failure.
   await expect.poll(() => bodies.length, { message: "the action is sent a second time" }).toBe(2);
-  const saving = page.getByRole("button", { name: "Saving…" });
-  await expect(saving).toBeVisible();
+  // Busy keeps the button's word: it is disabled and shows the three dots, not "Saving…".
+  const saving = page.getByRole("button", { name: "Continue", exact: true });
   await expect(saving).toBeDisabled();
+  await expect(saving).toHaveAttribute("aria-busy", "true");
+  await expect(saving.locator("[data-programme-saving-dots]")).toBeVisible();
+  await expect(page.getByText("Saving…")).toHaveCount(0);
   await expect(page.getByText("The action could not be saved")).toHaveCount(0);
   expect(secondArrivedAt - firstFailedAt, "the repeat follows the short pause").toBeGreaterThanOrEqual(PROGRAMME_RETRY_DELAY_MS - 50);
   expect(bodies[1], "the same action, unchanged").toBe(bodies[0]);
   expect(JSON.parse(bodies[0])).toEqual({ action: "choose_direction", artifact: { direction: "pause" } });
 
   releaseSecond();
-  await expect(page.getByText("Action complete. 20 XP earned.")).toBeVisible();
+  await expect(page.getByText("+20 XP", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Create personal drafts" }), "the next action is on screen").toBeVisible();
   await expect(page.getByText("The action could not be saved")).toHaveCount(0);
   expect(bodies.length, "one press, two requests, no third").toBe(2);
@@ -104,14 +107,14 @@ test("when the repeat fails too, the usual error shows and the person can press 
     await route.fulfill(attempt <= 2 ? serverFailure : saved);
   });
 
-  await page.getByRole("button", { name: "Confirm action · +20 XP" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: "The action could not be saved" })).toBeVisible();
   expect(bodies.length, "the first attempt and one repeat").toBe(2);
-  const confirm = page.getByRole("button", { name: "Confirm action · +20 XP" });
+  const confirm = page.getByRole("button", { name: "Continue", exact: true });
   await expect(confirm).toBeEnabled();
 
   await confirm.click();
-  await expect(page.getByText("Action complete. 20 XP earned.")).toBeVisible();
+  await expect(page.getByText("+20 XP", { exact: true })).toBeVisible();
   await expect(page.getByText("The action could not be saved")).toHaveCount(0);
   expect(bodies.length).toBe(3);
 });
@@ -121,7 +124,7 @@ test("an action the server refuses is not sent again", async ({ page }) => {
     await route.fulfill(json({ ok: false, error: "Complete the current Mission action first", code: "PROGRAMME_STATE_CONFLICT" }, 409));
   });
 
-  await page.getByRole("button", { name: "Confirm action · +20 XP" }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: "The action could not be saved" })).toBeVisible();
   // Longer than the pause before a repeat: none follows a refusal.
   await page.waitForTimeout(PROGRAMME_RETRY_DELAY_MS + 400);

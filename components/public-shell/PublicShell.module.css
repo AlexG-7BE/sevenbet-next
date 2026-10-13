@@ -43,6 +43,12 @@
 @media (max-width: 760px) {
   :global(html[data-header-hidden="true"]) .header { transform: translateY(-100%); }
 }
+/* A Programme step on a phone is a focused screen with its own top bar: back to the Programme home,
+   the step number and protected Help (Founder, 13 October 2026). The site header returns with the
+   Programme home, where the menu and Log out are. */
+@media (max-width: 640px) {
+  :global(html:has([data-programme-step-frame])) .header { display: none; }
+}
 .header[data-shell-theme="light"], .header[data-shell-theme="cream"] { border-bottom-color:rgba(16,15,15,.14); background:rgba(250,250,247,.96); color:var(--shell-ink); }
 .header[data-shell-theme="cream"] { background:rgba(244,241,235,.96); }
 .header[data-shell-theme="light"] .primaryAction,
@@ -334,6 +340,7 @@
   font-size: 14px;
   line-height: 1.5;
 }
+.mobilePresentationSelector p strong { color: var(--shell-white); font-weight: 600; }
 
 .primaryNavigation a,
 .accountLink,
@@ -641,6 +648,25 @@
   line-height: 22px;
   font-weight: 650;
 }
+/* Log out takes Log in's place for a signed-in person: the same line, as a button. */
+.mobileMenuLogout {
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--shell-white);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.mobileMenuLogout:disabled { cursor: default; opacity: .7; }
 
 .mobileHelp {
   margin: 16px 16px 0;

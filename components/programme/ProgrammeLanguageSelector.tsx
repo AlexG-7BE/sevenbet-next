@@ -44,10 +44,13 @@ function CheckIcon() {
 export function ProgrammeLanguageSelector({
   locale,
   messages,
+  region,
   variant,
 }: {
   locale: ProgrammeLocale;
   messages: PublicShellMessages;
+  /** The visitor's region as the server resolved it; the notice under the mobile menu ends with it. */
+  region: string;
   variant: "desktop" | "mobile";
 }) {
   const searchParams = useSearchParams();
@@ -157,7 +160,7 @@ export function ProgrammeLanguageSelector({
           })}
         </div>
       </details>
-      {variant === "mobile" ? <p>{messages.presentationOnlyNotice}</p> : null}
+      {variant === "mobile" ? <p>{messages.presentationOnlyNotice} <strong>{region}</strong></p> : null}
     </div>
   );
 }

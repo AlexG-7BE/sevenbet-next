@@ -63,6 +63,17 @@ export function isCurrentPublicRoute(pathname: string, href: string) {
   return matchesPrefix(pathname, href);
 }
 
+/**
+ * Whether a link to the Programme's start leads to the page being rendered. The browser sees the
+ * address itself (`/sv/program`); the server renders a localized Programme page under the path
+ * it is rewritten to (`/program`), so both name it and the first HTML agrees with the browser.
+ * Another Programme address (`/sv/program/anything`, the not-found screen) is another page.
+ */
+export function leadsToCurrentProgrammePage(pathname: string, href: string) {
+  if (pathname === href) return true;
+  return pathname === "/program" && /^\/[a-z]{2}\/program$/.test(href);
+}
+
 export function accountNavigationFor({
   authenticated,
   authoritativeXp,

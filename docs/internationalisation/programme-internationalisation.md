@@ -113,7 +113,10 @@ states. It exposes exactly the 11 canonical Programme routes and performs a
 full-document navigation so request-local language and `<html lang>` change
 together. It does not call `/api/presentation`, write the public presentation
 cookie, rotate subject identity, clear local content or preserve arbitrary
-query data.
+query data. In the mobile menu it prints the language notice followed by the
+visitor's region, as the server resolved it for the request (the same
+`marketDisplayName` the public menu prints); the selector itself reads no
+country and calls nothing.
 
 Only the four bounded Programme authentication states may survive a locale
 switch. Google sign-in and explicit account-link flows use exact allowlisted

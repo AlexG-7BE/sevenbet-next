@@ -839,8 +839,8 @@ test("durably accepted account survives empty storage, context, login and Missio
     if (mission.missionNumber === 3) {
       // "Understand the urge" keeps its number 3 and is the fourth step a person takes.
       await openCurrentMission(page, 3, 390);
-      await expect(page.getByText("MISSION 04 · 0/3 ACTIONS", { exact: true })).toBeVisible();
-      await expect(page.getByText("ACTION 1 · +15 XP", { exact: true })).toBeVisible();
+      await expect(page.getByText("Step 4 of 10", { exact: true })).toBeVisible();
+      await expect(page.getByText("Question 1 of 3", { exact: true })).toBeVisible();
       const builder = page.getByRole("region", { name: "Place the earliest moment first." });
       await expect(builder.getByRole("listitem").nth(0)).toContainText("Choice point");
       await page.getByRole("button", { name: /Check sequence/ }).click();
@@ -850,8 +850,10 @@ test("durably accepted account survives empty storage, context, login and Missio
       await builder.getByRole("listitem").filter({ hasText: "Early signal" }).getByRole("button", { name: "Move up" }).click();
       await builder.getByRole("listitem").filter({ hasText: "Choice point" }).getByRole("button", { name: "Move down" }).click();
       await page.getByRole("button", { name: /Check sequence/ }).click();
-      await expect(page.getByText("Action complete. 15 XP earned.")).toBeVisible();
-      await expect(page.getByText("ACTION 2 · +20 XP", { exact: true })).toBeVisible();
+      // The server's number stands in the progress label for a moment, then the question count returns.
+      await expect(page.getByText("+15 XP", { exact: true })).toBeVisible();
+      await expect(page.getByText("Question 2 of 3", { exact: true })).toBeVisible();
+      await expect(page.getByText("+15 XP", { exact: true })).toHaveCount(0);
     }
     if (mission.missionNumber === 5) {
       await openCurrentMission(page, 5, 768);
@@ -888,16 +890,16 @@ test("durably accepted account survives empty storage, context, login and Missio
         await page.reload();
         await expect(page.getByRole("button", { name: "Resume mission", exact: true })).toBeVisible();
         await page.getByRole("button", { name: "Resume mission", exact: true }).click();
-        await expect(page.getByText("MISSION 02 · 1/3 ACTIONS", { exact: true })).toBeVisible();
-        await expect(page.getByText("ACTION 2 · +20 XP", { exact: true })).toBeVisible();
+        await expect(page.getByText("Step 2 of 10", { exact: true })).toBeVisible();
+        await expect(page.getByText("Question 2 of 3", { exact: true })).toBeVisible();
         await page.getByRole("radio", { name: "Pause before one decision" }).check();
         await page.getByRole("button", { name: "Create personal drafts" }).click();
         await expect(page.getByRole("heading", { name: "Choose or edit the wording that fits" })).toBeVisible();
         await expect(page.locator("[aria-pressed]")).toHaveCount(3);
         await page.locator("[aria-pressed]").nth(1).click();
         await expect(page.getByTestId("programme-artifact").locator("blockquote")).toContainText("seven days");
-        await page.getByRole("button", { name: "Confirm action · +20 XP" }).click();
-        await expect(page.getByText("ACTION 3 · +15 XP", { exact: true })).toBeVisible();
+        await page.getByRole("button", { name: "Continue", exact: true }).click();
+        await expect(page.getByText("Question 3 of 3", { exact: true })).toBeVisible();
         await noHorizontalOverflow(page);
       } else {
         const response = await requestAction();
@@ -974,14 +976,14 @@ test("durably accepted account survives empty storage, context, login and Missio
           for (const priority of ["Pause move", "Boundary", "Fallback"]) {
             await page.getByRole("checkbox", { name: priority }).check();
           }
-          await page.getByRole("button", { name: "Confirm action · +20 XP" }).click();
+          await page.getByRole("button", { name: "Continue", exact: true }).click();
           await expect(page.getByRole("heading", { name: "Build the plan, then choose when to review it." })).toBeVisible();
           await page.getByRole("button", { name: "Build my plan" }).click();
           await expect(page.getByRole("heading", { name: "Review your one-screen plan" })).toBeVisible();
           await expect(page.getByTestId("programme-artifact").locator("blockquote")).toContainText("Pause move: Wait 10 minutes");
           await expect(page.getByTestId("programme-artifact").locator("blockquote")).toContainText("Boundary: When the early signal appears; Bank block; Pause");
           await page.getByRole("radio", { name: "Every 14 days" }).check();
-          await page.getByRole("button", { name: "Confirm action · +15 XP" }).click();
+          await page.getByRole("button", { name: "Continue", exact: true }).click();
           await noHorizontalOverflow(page);
         }
       }
@@ -1350,7 +1352,10 @@ test("phone Mission screens open at the top with the first choice above a sticky
       await expect(page.locator("[data-programme-context-header]")).toBeHidden();
       await expect(page.getByRole("button", { name: "← Programme Home" })).toBeVisible();
       await expect(page.getByRole("link", { name: "Protected Help / pause" })).toBeVisible();
-      const confirm = page.getByRole("button", { name: /Confirm action/ });
+      const confirm = page.getByRole("button", { name: "Continue", exact: true });
+      await expect(page.getByText("Step 2 of 10", { exact: true })).toBeVisible();
+      // On a phone the step's own bar stands where the site header was.
+      await expect(page.locator('[data-public-shell="header"]')).toBeHidden();
       const firstChoice = page.locator("[data-programme-action] label").first();
       const [choiceBox, confirmBox] = await Promise.all([firstChoice.boundingBox(), confirm.boundingBox()]);
       expect(confirmBox!.y + confirmBox!.height, `confirm sits on the first screen at ${viewport.width}px`).toBeLessThanOrEqual(viewport.height);

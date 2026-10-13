@@ -22,6 +22,7 @@ export function ChoiceCards({
   selected,
   multiple = false,
   selectionNote,
+  legendHidden = false,
   onChoose,
 }: {
   legend: string;
@@ -29,15 +30,19 @@ export function ChoiceCards({
   selected: readonly string[];
   multiple?: boolean;
   selectionNote?: string;
+  /** The question above already names a lone single-choice list: the legend stays for assistive technology only. */
+  legendHidden?: boolean;
   onChoose: (value: string) => void;
 }) {
+  // One card for single and multiple choice: a title, an optional line under it, and a tick.
   return <fieldset className={styles.choices}>
-    <legend>{legend}{selectionNote ? ` · ${selectionNote}` : ""}</legend>
+    <legend className={legendHidden ? "srOnly" : undefined}>{legend}{selectionNote ? ` · ${selectionNote}` : ""}</legend>
     {options.map((item) => {
       const checked = selected.includes(item.value);
-      return <label className={styles.choice} key={item.value}>
+      return <label className={styles.choice} data-programme-choice={checked ? "selected" : "idle"} key={item.value}>
         <input checked={checked} name={legend} onChange={() => onChoose(item.value)} type={multiple ? "checkbox" : "radio"} />
-        <span><strong>{item.label}</strong>{item.description ? <small>{item.description}</small> : null}</span>
+        <span aria-hidden="true" className={styles.choiceTick}><svg fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.4" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+        <span className={styles.choiceText}><strong>{item.label}</strong>{item.description ? <small>{item.description}</small> : null}</span>
       </label>;
     })}
   </fieldset>;
