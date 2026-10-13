@@ -118,6 +118,8 @@ test("only the Programme sets the lesson flag, and no offer, ranking or route co
     "app/program/layout.tsx",
     // The Mission's completion screen notes when the links opened, in the browser's own storage.
     "components/programme/ProgramAiMissionExperience.tsx",
+    // The Programme screens read the same door as the public menu, on the client (13 October 2026).
+    "components/programme/useResearchDoor.ts",
     "components/public-shell/PublicNavigationClient.tsx",
     "lib/programme/http.ts",
   ]);
