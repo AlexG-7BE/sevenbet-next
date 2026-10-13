@@ -522,8 +522,8 @@ test("the Prisma store reads only Production human rows over indexed columns and
   assert.match(packageJson.scripts["ci:quality"] ?? "", /npm run learn-content-orchestrator:test/);
 });
 
-test("the server publisher still accepts the Learn MCP surface with social_traffic and calls only learn_apply", () => {
-  assert.equal(learnMcpToolSurfaceIsExpected(["learn_context", "learn_source", "social_traffic", "learn_apply"]), true);
+test("the server publisher still accepts the Learn MCP surface with social_traffic and programme_funnel and calls only learn_apply", () => {
+  assert.equal(learnMcpToolSurfaceIsExpected(["learn_context", "learn_source", "social_traffic", "programme_funnel", "learn_apply"]), true);
   assert.equal(learnMcpToolSurfaceIsExpected(["social_traffic"]), false);
   assert.equal(learnMcpToolSurfaceIsExpected(["social_traffic", "learn_apply", "social_traffic_write"]), false);
   const publisher = readFileSync("lib/learn-content-orchestrator/mcp-publisher.server.ts", "utf8");
@@ -558,7 +558,7 @@ test("MCP discovery lists social_traffic as a read-only tool beside the Learn to
   const session = await connected((input) => readSocialTraffic(input, store().value, NOW));
   try {
     const discovered = await session.client.listTools();
-    assert.deepEqual(discovered.tools.map((tool) => tool.name), ["learn_context", "learn_source", "social_traffic", "learn_apply"]);
+    assert.deepEqual(discovered.tools.map((tool) => tool.name), ["learn_context", "learn_source", "social_traffic", "programme_funnel", "learn_apply"]);
     const tool = discovered.tools.find((candidate) => candidate.name === "social_traffic");
     assert.deepEqual(tool?.annotations, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
     assert.deepEqual(discovered.tools.filter((candidate) => candidate.annotations?.readOnlyHint !== true).map((candidate) => candidate.name), ["learn_apply"]);

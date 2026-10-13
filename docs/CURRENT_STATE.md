@@ -993,6 +993,31 @@ personalisation stay off. Tests: `tests/google-analytics.test.ts`.
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 
+## Weekly funnel count (`programme_funnel`) — in review
+
+**Founder plan, 13 October 2026**
+([PROGRAMME-FUNNEL-MCP-2026-10-14](07_Decisions/PROGRAMME-FUNNEL-MCP-2026-10-14.md)):
+a weekly funnel count by country and source. Branch
+`feat/programme-funnel-tool` adds the read-only `programme_funnel` tool to the
+Learn MCP endpoint, next to `social_traffic` and behind the same service
+bearer. For a UTC range of up to 92 days (default 7) it returns, by the
+account's sign-up country and by its sign-up source (UTM source, else
+acquisition source): accounts created, Programme starts (enrolments),
+completions of the third step "Research responsibly", partner-button presses
+by signed-in people and the presses that reached the partner. Each stage is
+counted by its own date. Counts only: no identifier, email, answer, Help or
+pause value is read; a cell of 1 or 2 is withheld (and one more when it would
+stand alone in its column); staff accounts are excluded; nothing is written
+and the schema is unchanged. The only importer is the MCP server
+(`lib/analytics/programme-funnel.server.ts`), so no page, offer, ranking, route
+or letter reads the numbers. Tool order on the endpoint: `learn_context`,
+`learn_source`, `social_traffic`, `programme_funnel`, `learn_apply`; the server
+Learn publisher accepts the new tool in its fail-closed discovery check and
+still calls only `learn_apply`. Tests: `tests/programme-funnel.test.ts`
+(`learn-content-orchestrator:test`, in `ci:quality`).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## SMM agents read social traffic (`social_traffic`) — in review
 
 **Founder instruction, 3 October 2026**

@@ -3,6 +3,14 @@ import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError } fr
 import { z } from "zod";
 
 import {
+  ProgrammeFunnelError,
+  programmeFunnelErrorResultSchema,
+  programmeFunnelInputSchema,
+  programmeFunnelResultSchema,
+  readProgrammeFunnel,
+  type ProgrammeFunnelReader,
+} from "@/lib/analytics/programme-funnel.server";
+import {
   readSocialTraffic,
   SocialTrafficError,
   socialTrafficErrorResultSchema,
@@ -115,6 +123,33 @@ export const socialTrafficTool = {
   },
 };
 
+/**
+ * The weekly funnel count for the Founder (plan of 13 Oct 2026,
+ * PROGRAMME-FUNNEL-MCP-2026-10-14): accounts created, Programme starts, third-step
+ * completions and partner-button presses by sign-up country and sign-up source.
+ * Read-only aggregates with small cells withheld; no per-person data.
+ */
+export const programmeFunnelTool = {
+  name: "programme_funnel",
+  title: "Read the Programme funnel by sign-up country and source",
+  description: "Read-only aggregates. For a UTC date range (default the last 7 days, at most 92) returns how many accounts were created, how many Programmes were started (enrolments), how many people completed the third step, the lesson Research responsibly (stepThreeCompletions), how many partner buttons signed-in people pressed (outboundClicks) and how many of those reached the partner (partnerClicks). Each stage is counted by its own date and shown twice: by the country the account was created from (byCountry) and by its sign-up source (bySource: the sign-up UTM source, else the acquisition source). Counts only: no account, user, session, email, IP, answer or pause data. A cell that would describe one or two people is withheld (null), staff accounts are excluded, and nothing is written.",
+  inputSchema: z.toJSONSchema(programmeFunnelInputSchema) as Record<string, unknown>,
+  outputSchema: {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "object",
+    oneOf: [
+      withoutSchemaDeclaration(z.toJSONSchema(programmeFunnelResultSchema) as Record<string, unknown>),
+      withoutSchemaDeclaration(z.toJSONSchema(programmeFunnelErrorResultSchema) as Record<string, unknown>),
+    ],
+  },
+  annotations: {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+};
+
 export const learnApplyTool = {
   name: "learn_apply",
   title: "Apply and publish a Learn Article",
@@ -198,6 +233,18 @@ function trafficFailure(error: unknown) {
   };
 }
 
+function funnelFailure(error: unknown) {
+  const safe = error instanceof ProgrammeFunnelError
+    ? { result: "ERROR", error: { code: error.code, message: error.message, retryable: error.retryable } }
+    : { result: "ERROR", error: { code: "FUNNEL_UNAVAILABLE", message: "The Programme funnel could not be read. Retry later.", retryable: true } };
+  const validated = programmeFunnelErrorResultSchema.parse(safe);
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(validated) }],
+    structuredContent: validated,
+    isError: true,
+  };
+}
+
 function failure(error: unknown) {
   const details = error instanceof ServiceError && error.details && typeof error.details === "object" && !Array.isArray(error.details)
     ? error.details as Record<string, unknown>
@@ -239,12 +286,13 @@ export function createLearnMcpServer(
   readContext: LearnContextReader = readLearnContext,
   readSource: LearnSourceReader = readLearnSource,
   readTraffic: SocialTrafficReader = readSocialTraffic,
+  readFunnel: ProgrammeFunnelReader = readProgrammeFunnel,
 ) {
   const server = new Server(
     { name: "b4gamble-learn-publication", version: "1.0.0" },
     { capabilities: { tools: {} } },
   );
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [learnContextTool, learnSourceTool, socialTrafficTool, learnApplyTool] } as never));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [learnContextTool, learnSourceTool, socialTrafficTool, programmeFunnelTool, learnApplyTool] } as never));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (request.params.name === learnContextTool.name) {
       try {
@@ -268,6 +316,14 @@ export function createLearnMcpServer(
         return { content: [{ type: "text" as const, text: JSON.stringify(value) }], structuredContent: value } as never;
       } catch (error) {
         return trafficFailure(error) as never;
+      }
+    }
+    if (request.params.name === programmeFunnelTool.name) {
+      try {
+        const value = await readFunnel(request.params.arguments ?? {});
+        return { content: [{ type: "text" as const, text: JSON.stringify(value) }], structuredContent: value } as never;
+      } catch (error) {
+        return funnelFailure(error) as never;
       }
     }
     if (request.params.name !== learnApplyTool.name) {
