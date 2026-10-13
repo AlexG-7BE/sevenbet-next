@@ -15,6 +15,7 @@ import { finalPublicHref } from "@/lib/market/routing";
 import { MarketLanguageSelector } from "./MarketLanguageSelector";
 import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 import {
+  PublicMobileAccountLine,
   PublicMobileNavigationEnhancement,
   PublicNavigationDoor,
   PublicNavigationRouteLink,
@@ -152,7 +153,7 @@ export function PublicNavigation({
         </nav>
         <div className={styles.accountNavigation}>
           {programme ? (
-            <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="desktop" />
+            <ProgrammeLanguageSelector locale={programme.locale} messages={messages} region={presentation.marketDisplayName} variant="desktop" />
           ) : (
             <MarketLanguageSelector
               messages={messages}
@@ -164,13 +165,15 @@ export function PublicNavigation({
           )}
           {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
           {!authenticated ? <Link className={styles.accountLink} href={account.accountHref}>{accountLabel}</Link> : null}
-          <PublicProgrammeActionLink authenticated={authenticated} className={styles.primaryAction} href={account.primaryHref}>{primaryLabel}</PublicProgrammeActionLink>
+          <PublicProgrammeActionLink authenticated={authenticated} className={styles.primaryAction} hiddenOnDestination={!authenticated} href={account.primaryHref}>{primaryLabel}</PublicProgrammeActionLink>
         </div>
       </div>
 
       <div className={styles.mobileNavigation}>
         {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
-        <PublicProgrammeActionLink authenticated={authenticated} className={styles.mobilePrimaryAction} href={account.primaryHref}>{primaryLabel}</PublicProgrammeActionLink>
+        {/* "Start Programme" is not offered on the Programme's own first screens, where it leads
+            to the page the visitor is already on (Founder, 12 October 2026). */}
+        <PublicProgrammeActionLink authenticated={authenticated} className={styles.mobilePrimaryAction} hiddenOnDestination={!authenticated} href={account.primaryHref}>{primaryLabel}</PublicProgrammeActionLink>
         <details aria-label={messages.siteNavigation} className={styles.mobileDisclosure} data-public-mobile-disclosure>
           <summary
             aria-controls="public-mobile-navigation"
@@ -223,14 +226,21 @@ export function PublicNavigation({
               <PublicProgrammeActionLink authenticated={authenticated} className={styles.mobileMenuPrimary} href={account.primaryHref}>
                 {authenticated ? messages.openProgramme : primaryLabel}
               </PublicProgrammeActionLink>
-              {!authenticated ? <Link className={styles.mobileMenuLogin} href={account.accountHref}>{accountLabel}</Link> : null}
+              {/* Log in for a visitor; Log out, in the same place, for a signed-in person. */}
+              <PublicMobileAccountLine
+                authenticated={authenticated}
+                className={styles.mobileMenuLogout}
+                labels={{ logOut: messages.logOut, loggingOut: messages.loggingOut, logOutRetry: messages.logOutRetry }}
+                login={<Link className={styles.mobileMenuLogin} href={account.accountHref}>{accountLabel}</Link>}
+                programmeHref={account.primaryHref}
+              />
             </div>
             <div className={styles.mobileHelp}>
               <span>{messages.controlAndSupport}</span>
               <PublicNavigationRouteLink baseHref="/help" label={messages.openHelp} presentation={presentation} programme={programme}>{messages.openHelp}</PublicNavigationRouteLink>
             </div>
             {programme ? (
-              <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="mobile" />
+              <ProgrammeLanguageSelector locale={programme.locale} messages={messages} region={presentation.marketDisplayName} variant="mobile" />
             ) : (
               <MarketLanguageSelector
                 messages={messages}

@@ -39,12 +39,12 @@
 .programmeLabel { color: var(--pg-label); font-size: 12px; font-weight: 400; letter-spacing: .22em; text-transform: uppercase; }
 .xp { justify-self: end; padding: 8px 14px; border: 1px solid rgba(228, 226, 78, .4); border-radius: 999px; color: var(--pg-acid); font-size: 12px; font-weight: 400; letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; }
 .logout { min-height: 44px; padding: 8px 14px; border: 1px solid rgba(250, 250, 247, .28); border-radius: 999px; background: transparent; color: var(--pg-paper); font-size: 14px; line-height: 20px; font-weight: 600; cursor: pointer; }
-.myProgramme { width: fit-content; padding: 10px 20px; border-radius: 999px; background: var(--pg-acid); color: var(--pg-ink); font-size: 14px; line-height: 20px; font-weight: 600; white-space: nowrap; }
 .eyebrow { color: var(--pg-acid); font-size: 12px; font-weight: 400; letter-spacing: .28em; text-transform: uppercase; }
 
 /* Programme Home dashboard */
 .dashboardShell { width: 100%; min-height: 100svh; margin: 0; }
-.dashboardShell .header[data-dashboard-header] { padding: 14px 0; gap: 24px; }
+/* The Programme home's row holds XP and Log out; the site header's "My Programme" names the page. */
+.dashboardShell .header[data-dashboard-header] { padding: 14px 0; gap: 24px; grid-template-columns: 1fr auto; }
 .dashboardShell .header[data-dashboard-header] .logout { width: 44px; padding: 0; border: 0; display: grid; place-items: center; background: var(--pg-raised); color: var(--pg-acid); }
 .dashboard { width: var(--site-content-width); margin: 0 auto; padding: 40px 0 16px; }
 .dashboardGrid { display: grid; grid-template-columns: minmax(0, 1.58fr) minmax(320px, .92fr); gap: 24px; align-items: start; }
@@ -289,9 +289,8 @@
 }
 @media (max-width: 600px) {
   .dashboardShell { background: var(--pg-card); }
-  .dashboardShell .header[data-dashboard-header] { min-height: 56px; padding: 12px 0; border: 0; grid-template-columns: 1fr auto; }
-  .dashboardShell .xp, .dashboardShell .header[data-dashboard-header] .logout { display: none; }
-  .dashboardShell .myProgramme { justify-self: end; padding: 8px 14px; }
+  /* On a phone the row has nothing to show: XP stands in the stats card and Log out is in the site menu. */
+  .dashboardShell .header[data-dashboard-header] { display: none; }
   .dashboard { padding: 14px 0 16px; }
   .dashboardGrid { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
   .dashboardLeft, .dashboardRight { display: contents; }

@@ -34,6 +34,8 @@ export type CommercialUxMessages = Readonly<{
   spins: string;
   selected: string;
   offersShown: string;
+  /** The same line for a count of one ("1 offer shown"); pick with countNoun(). */
+  offerShownOne: string;
   casinosShown: string;
   licenceStatus: string;
   /** Brand-level regulatory footprint, shown where no exact market profile applies. */
@@ -113,6 +115,7 @@ const en: CommercialUxMessages = {
   spins: "spins",
   selected: "selected",
   offersShown: "offers shown",
+  offerShownOne: "offer shown",
   casinosShown: "casinos shown",
   licenceStatus: "Licence status",
   licensedIn: "Licensed in",
@@ -280,23 +283,24 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
   };
   // Catalogue totals count what the reader sees — offers or casinos — never internal "records".
   // German copy names operators "Anbieter" (see german-terminology.ts); Finnish counts take the partitive.
+  // `offerShownOne` is the results line for a count of one ("1 erbjudande visas", not "1 erbjudanden visas").
   // Ukrainian and Russian count one/few/many ("1 пропозиція", "3 пропозиції", "5 пропозицій";
   // "1 предложение", "3 предложения", "5 предложений"); "казино" does not decline.
-  const catalogueNouns: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "offerOne" | "offerFew" | "offerOther" | "casinoOne" | "casinoOther">>> = {
-    "de-DE": { offerOne: "Angebot", offerOther: "Angebote", casinoOne: "Anbieter", casinoOther: "Anbieter" },
-    "it-IT": { offerOne: "offerta", offerOther: "offerte", casinoOne: "casinò", casinoOther: "casinò" },
-    "es-ES": { offerOne: "oferta", offerOther: "ofertas", casinoOne: "casino", casinoOther: "casinos" },
-    "es-PE": { offerOne: "oferta", offerOther: "ofertas", casinoOne: "casino", casinoOther: "casinos" },
-    "pt-PT": { offerOne: "oferta", offerOther: "ofertas", casinoOne: "casino", casinoOther: "casinos" },
-    "el-GR": { offerOne: "προσφορά", offerOther: "προσφορές", casinoOne: "καζίνο", casinoOther: "καζίνο" },
-    "nl-NL": { offerOne: "aanbieding", offerOther: "aanbiedingen", casinoOne: "casino", casinoOther: "casino's" },
-    "sv-SE": { offerOne: "erbjudande", offerOther: "erbjudanden", casinoOne: "casino", casinoOther: "casinon" },
-    "da-DK": { offerOne: "tilbud", offerOther: "tilbud", casinoOne: "kasino", casinoOther: "kasinoer" },
-    "fi-FI": { offerOne: "tarjous", offerOther: "tarjousta", casinoOne: "kasino", casinoOther: "kasinoa" },
-    "nb-NO": { offerOne: "tilbud", offerOther: "tilbud", casinoOne: "kasino", casinoOther: "kasinoer" },
-    "fr-CA": { offerOne: "offre", offerOther: "offres", casinoOne: "casino", casinoOther: "casinos" },
-    "uk-UA": { offerOne: "пропозиція", offerFew: "пропозиції", offerOther: "пропозицій", casinoOne: "казино", casinoOther: "казино" },
-    "ru-RU": { offerOne: "предложение", offerFew: "предложения", offerOther: "предложений", casinoOne: "казино", casinoOther: "казино" },
+  const catalogueNouns: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "offerOne" | "offerFew" | "offerOther" | "offerShownOne" | "casinoOne" | "casinoOther">>> = {
+    "de-DE": { offerOne: "Angebot", offerOther: "Angebote", offerShownOne: "Angebot angezeigt", casinoOne: "Anbieter", casinoOther: "Anbieter" },
+    "it-IT": { offerOne: "offerta", offerOther: "offerte", offerShownOne: "offerta mostrata", casinoOne: "casinò", casinoOther: "casinò" },
+    "es-ES": { offerOne: "oferta", offerOther: "ofertas", offerShownOne: "oferta mostrada", casinoOne: "casino", casinoOther: "casinos" },
+    "es-PE": { offerOne: "oferta", offerOther: "ofertas", offerShownOne: "oferta mostrada", casinoOne: "casino", casinoOther: "casinos" },
+    "pt-PT": { offerOne: "oferta", offerOther: "ofertas", offerShownOne: "oferta apresentada", casinoOne: "casino", casinoOther: "casinos" },
+    "el-GR": { offerOne: "προσφορά", offerOther: "προσφορές", offerShownOne: "προσφορά εμφανίζεται", casinoOne: "καζίνο", casinoOther: "καζίνο" },
+    "nl-NL": { offerOne: "aanbieding", offerOther: "aanbiedingen", offerShownOne: "aanbieding getoond", casinoOne: "casino", casinoOther: "casino's" },
+    "sv-SE": { offerOne: "erbjudande", offerOther: "erbjudanden", offerShownOne: "erbjudande visas", casinoOne: "casino", casinoOther: "casinon" },
+    "da-DK": { offerOne: "tilbud", offerOther: "tilbud", offerShownOne: "tilbud vises", casinoOne: "kasino", casinoOther: "kasinoer" },
+    "fi-FI": { offerOne: "tarjous", offerOther: "tarjousta", offerShownOne: "tarjous näytetään", casinoOne: "kasino", casinoOther: "kasinoa" },
+    "nb-NO": { offerOne: "tilbud", offerOther: "tilbud", offerShownOne: "tilbud vises", casinoOne: "kasino", casinoOther: "kasinoer" },
+    "fr-CA": { offerOne: "offre", offerOther: "offres", offerShownOne: "offre affichée", casinoOne: "casino", casinoOther: "casinos" },
+    "uk-UA": { offerOne: "пропозиція", offerFew: "пропозиції", offerOther: "пропозицій", offerShownOne: "показано", casinoOne: "казино", casinoOther: "казино" },
+    "ru-RU": { offerOne: "предложение", offerFew: "предложения", offerOther: "предложений", offerShownOne: "показано", casinoOne: "казино", casinoOther: "казино" },
   };
   return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}), ...(catalogueNouns[locale] ?? {}), ...(noOfferVisitLabels[locale] ?? {}) };
 }

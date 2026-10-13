@@ -58,8 +58,8 @@ export type ProgrammeLanguageQaReport = Readonly<{
 const sourceEqualAllowlist: Readonly<Partial<Record<ProgrammeLocale, readonly string[]>>> = {
   "de-DE": ["Mission 01", "Mission {number} — {title}", "Mission", "Pause", "{label}: {status}"],
   "es-ES": ["{label}: {status}"],
-  "sv-SE": ["Research", "{label}: {status}"],
-  "da-DK": ["Mission 01", "Mission {number} — {title}", "Start Mission 01", "Start mission", "Research", "Mission", "mission", "Pause", "{label}: {status}"],
+  "sv-SE": ["{label}: {status}"],
+  "da-DK": ["Mission 01", "Mission {number} — {title}", "Start Mission 01", "Start mission", "Mission", "mission", "Pause", "{label}: {status}"],
   "el-GR": ["Email", "{label}: {status}"],
   "it-IT": ["Home", "Email", "Password", "home", "{label}: {status}"],
   "pt-PT": ["Email", "{label}: {status}"],

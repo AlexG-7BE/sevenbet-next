@@ -301,7 +301,8 @@ test("bonus directory routes an available offer only through the governed action
   assert.equal((html.match(/href="\/r\/[^"]+"/g) ?? []).length, 1);
   assert.match(html, /href="\/r\/truth-test\?placement=CTA_BONUS_CARD"/);
   assert.match(html, /data-commercial-action-source="CTA"/);
-  assert.ok(html.includes(`1 ${copy.offersShown}`));
+  assert.ok(html.includes(`1 ${copy.offerShownOne}`));
+  assert.ok(!html.includes(`1 ${copy.offersShown}`), "one offer is not counted in the plural");
   assert.ok(!html.includes(messages.common.reviewOnly));
   assert.ok(!html.includes(messages.common.commercialUnavailable));
   assert.doesNotMatch(html, />Current</);
@@ -309,6 +310,45 @@ test("bonus directory routes an available offer only through the governed action
   assert.doesNotMatch(html, /destinationUrl|trackingUrl|https:\/\/tracking/);
   for (const [, href] of html.matchAll(/<a[^>]+href="(https?:[^"]+)"/g)) assert.match(href, /^https:\/\//);
   assert.match(html, /data-analytics-casino-id=/);
+});
+
+// Founder walk in Swedish, 12 October 2026: the bonuses page read "1 ERBJUDANDEN VISAS".
+test("the bonus directory counts one offer in the singular in every language", async () => {
+  const { BonusOfferDirectory } = await import("../components/bonus-directory/BonusOfferDirectory");
+  const { countNoun } = await import("../lib/commercial/commercial-ux-messages");
+  const second = { ...offer(), id: "truth-offer-second", slug: "truth-offer-second" };
+  const expected: Record<string, readonly [one: string, two: string]> = {
+    "en-GB": ["1 offer shown", "2 offers shown"],
+    "en-CA": ["1 offer shown", "2 offers shown"],
+    "de-DE": ["1 Angebot angezeigt", "2 Angebote angezeigt"],
+    "es-ES": ["1 oferta mostrada", "2 ofertas mostradas"],
+    "es-PE": ["1 oferta mostrada", "2 ofertas mostradas"],
+    "it-IT": ["1 offerta mostrata", "2 offerte mostrate"],
+    "pt-PT": ["1 oferta apresentada", "2 ofertas apresentadas"],
+    "nl-NL": ["1 aanbieding getoond", "2 aanbiedingen getoond"],
+    "sv-SE": ["1 erbjudande visas", "2 erbjudanden visas"],
+    "da-DK": ["1 tilbud vises", "2 tilbud vises"],
+    "fi-FI": ["1 tarjous näytetään", "2 tarjousta näytetään"],
+    "nb-NO": ["1 tilbud vises", "2 tilbud vises"],
+    "el-GR": ["1 προσφορά εμφανίζεται", "2 προσφορές εμφανίζονται"],
+    "fr-CA": ["1 offre affichée", "2 offres affichées"],
+    "uk-UA": ["1 показано", "2 показано"],
+    "ru-RU": ["1 показано", "2 показано"],
+  };
+  for (const [locale, [one, two]] of Object.entries(expected) as [SupportedLocale, readonly [string, string]][]) {
+    const localeCopy = commercialUxMessages(locale);
+    assert.equal(`1 ${countNoun(locale, 1, localeCopy.offerShownOne, localeCopy.offersShown)}`, one, locale);
+    assert.equal(`2 ${countNoun(locale, 2, localeCopy.offerShownOne, localeCopy.offersShown)}`, two, locale);
+    // No language inherits the English singular by omission.
+    if (!locale.startsWith("en-")) assert.notEqual(localeCopy.offerShownOne, copy.offerShownOne, locale);
+  }
+
+  const swedish = { ...presentation, locale: "sv-SE" as const, language: "sv" as const };
+  const swedishMessages = productPageMessages("sv-SE");
+  const single = renderToStaticMarkup(<BonusOfferDirectory messages={swedishMessages} offers={[offer()]} presentation={swedish} />);
+  assert.match(single, /role="status"[^>]*>1 erbjudande visas</);
+  const pair = renderToStaticMarkup(<BonusOfferDirectory messages={swedishMessages} offers={[offer(), second]} presentation={swedish} />);
+  assert.match(pair, /role="status"[^>]*>2 erbjudanden visas</);
 });
 
 test("bonus directory never presents a demonstration offer as current or actionable", async () => {

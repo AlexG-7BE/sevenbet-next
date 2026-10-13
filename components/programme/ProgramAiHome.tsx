@@ -8,7 +8,7 @@ import { programmeMissionProgressCopy, programmeReviewStatusCopy } from "@/compo
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { authClient } from "@/lib/auth/client";
 import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
-import type { ProgrammeLocale } from "@/lib/programme/presentation";
+import { programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiAuthenticated.module.css";
 
 export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionOneEntry, onReview, locale, programmePath, unconfirmedEmail = null }: {
@@ -28,9 +28,10 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
   const t = (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
   // Founder decisions, 25 Sep and 10 Oct 2026: the generic research links appear once the "Research
   // responsibly" Mission is complete, right under the current mission, and not before. They stay
-  // generic: no Programme data picks them.
+  // generic: no Programme data picks them. Each opens in the Programme's own language, as the
+  // completion screen's links do, instead of going through the unprefixed address's redirect.
   const researchFeatured = home.discoveryLinks.length > 0 && home.researchAccess === "open";
-  const research = <section className={`${styles.compactResearch} ${styles.researchFeatured}`} data-programme-research="featured"><span>{t("Research")}</span><nav>{home.discoveryLinks.map((item) => <a href={item.href} key={item.href} onClick={() => { const destinationRoute = discoveryDestination(item.href); if (destinationRoute) productAnalyticsClient.discoveryClicked({ sourceSurface: "programme_home", destinationRoute }); }}>{discoveryLabel(item.href, locale)}</a>)}</nav></section>;
+  const research = <section className={`${styles.compactResearch} ${styles.researchFeatured}`} data-programme-research="featured"><span>{t("Research")}</span><nav>{home.discoveryLinks.map((item) => <a href={programmePublicHref(locale, item.href)} key={item.href} onClick={() => { const destinationRoute = discoveryDestination(item.href); if (destinationRoute) productAnalyticsClient.discoveryClicked({ sourceSurface: "programme_home", destinationRoute }); }}>{discoveryLabel(item.href, locale)}</a>)}</nav></section>;
   return (
     <div className={`${styles.shell} ${styles.dashboardShell}`} data-programme-presentation="dashboard">
       <ProgramAiAuthenticatedHeader dashboard locale={locale} programmePath={programmePath} totalXp={home.totalXp} userId={userId} />

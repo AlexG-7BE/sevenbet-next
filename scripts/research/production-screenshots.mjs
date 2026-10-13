@@ -1,0 +1,146 @@
+// Pictures and a plain proof of the clean route on Production (Founder decision, 13 October 2026;
+// lib/research-access.ts), taken from a GitHub-hosted runner because Production answers the
+// Founder's machine with 451. For each language the script opens the pause page as a first-time
+// visitor on a phone, opens the menu, goes home and opens the menu again, then photographs the
+// pages for the person beside a player and the rule before the app. A second browser that already
+// holds the lesson flag shows the research links at home and none once the pause page has been
+// opened: that is the clean route itself. Only ordinary page loads leave the runner; the cookies
+// the site sets are listed by name. Output: <out>/*.png, <out>/REPORT.md and <out>/report.json.
+//
+//   node scripts/research/production-screenshots.mjs --base=https://b4gamble.com --locales=sv,da --out=screenshots
+//
+import { mkdirSync, writeFileSync } from "node:fs";
+import { chromium } from "@playwright/test";
+
+const options = Object.fromEntries(process.argv.slice(2).map((arg) => {
+  const [key, ...rest] = arg.replace(/^--/, "").split("=");
+  return [key, rest.join("=")];
+}));
+const base = (options.base || "https://b4gamble.com").replace(/\/$/, "");
+const locales = (options.locales || "sv,da").split(/[\s,]+/).filter(Boolean);
+const out = options.out || "screenshots";
+mkdirSync(out, { recursive: true });
+
+const LESSON_COOKIE = "b4g_research_access";
+const CLEAN_ROUTE_COOKIE = "b4g_clean_route";
+// A link into the research section or to a partner, with or without a language prefix.
+const RESEARCH_LINK = /^(?:\/[a-z]{2}(?:-[a-z]{2})?)?\/(?:best-offers|casinos|casino|bonuses|r)(?:\/|$)/i;
+const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
+const DESKTOP = { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 };
+const LANGUAGE_TAGS = { sv: "sv-SE", da: "da-DK", de: "de-DE", en: "en-GB" };
+
+const rows = [];
+
+function contextOptions(locale, device) {
+  const tag = LANGUAGE_TAGS[locale] ?? "en-GB";
+  return { ...device, locale: tag, extraHTTPHeaders: { "accept-language": `${tag},${locale};q=0.8` } };
+}
+
+async function visit(page, path) {
+  const response = await page.goto(`${base}${path}`, { waitUntil: "networkidle", timeout: 60_000 });
+  await page.waitForTimeout(800);
+  return response?.status() ?? 0;
+}
+
+async function openMenu(page) {
+  const summary = page.locator("[data-public-mobile-disclosure] > summary");
+  if ((await summary.count()) === 0) return false;
+  await summary.first().click();
+  await page.waitForTimeout(600);
+  return true;
+}
+
+/** One row of the report: what the page shows, which cookies exist, where the picture went. */
+async function record(page, context, { step, file, status, expect = null, fullPage = false }) {
+  await page.screenshot({ path: `${out}/${file}`, fullPage });
+  const cookies = (await context.cookies(base)).map((cookie) => cookie.name).sort();
+  const paths = await page.evaluate(() => Array.from(document.querySelectorAll("a[href]"))
+    .map((anchor) => new URL(anchor.getAttribute("href") ?? "", location.href).pathname));
+  const research = paths.filter((path) => RESEARCH_LINK.test(path));
+  rows.push({
+    step,
+    url: page.url(),
+    status,
+    title: await page.title(),
+    file,
+    cookies,
+    cleanRoute: cookies.includes(CLEAN_ROUTE_COOKIE),
+    researchLinks: research.length,
+    researchLinkSample: [...new Set(research)].slice(0, 5),
+    expect,
+  });
+}
+
+const browser = await chromium.launch();
+try {
+  for (const locale of locales) {
+    // 1. A first-time visitor on a phone: the pause page and its menu, then home and its menu, then
+    //    the two other pages of the clean route.
+    {
+      const context = await browser.newContext(contextOptions(locale, PHONE));
+      const page = await context.newPage();
+      let status = await visit(page, `/${locale}/pause-plan`);
+      await record(page, context, { step: `${locale}: pause page, first visit`, file: `${locale}-1-pause-plan-phone.png`, status, expect: "none", fullPage: true });
+      if (await openMenu(page)) {
+        await record(page, context, { step: `${locale}: pause page, menu open`, file: `${locale}-2-pause-plan-menu-phone.png`, status, expect: "none" });
+      }
+      status = await visit(page, `/${locale}`);
+      if (await openMenu(page)) {
+        await record(page, context, { step: `${locale}: home after the pause page, menu open`, file: `${locale}-3-home-menu-after-pause-plan-phone.png`, status, expect: "none" });
+      }
+      for (const path of ["innan", "beside"]) {
+        status = await visit(page, `/${locale}/${path}`);
+        await record(page, context, { step: `${locale}: /${path}`, file: `${locale}-4-${path}-phone.png`, status, expect: "none", fullPage: true });
+      }
+      await context.close();
+    }
+    // 2. A reader who finished the lesson "Research responsibly": the research links show at home
+    //    and are gone once the pause page has been opened.
+    {
+      const context = await browser.newContext(contextOptions(locale, PHONE));
+      await context.addCookies([{ name: LESSON_COOKIE, value: "open", url: base }]);
+      const page = await context.newPage();
+      let status = await visit(page, `/${locale}`);
+      if (await openMenu(page)) {
+        await record(page, context, { step: `${locale}: lesson done, home menu`, file: `${locale}-5-lesson-done-home-menu-phone.png`, status, expect: "some" });
+      }
+      await visit(page, `/${locale}/pause-plan`);
+      status = await visit(page, `/${locale}`);
+      if (await openMenu(page)) {
+        await record(page, context, { step: `${locale}: lesson done, home menu after the pause page`, file: `${locale}-6-lesson-done-home-menu-after-pause-plan-phone.png`, status, expect: "none" });
+      }
+      await context.close();
+    }
+    // 3. The pause page on a desktop, with its header.
+    {
+      const context = await browser.newContext(contextOptions(locale, DESKTOP));
+      const page = await context.newPage();
+      const status = await visit(page, `/${locale}/pause-plan`);
+      await record(page, context, { step: `${locale}: pause page on a desktop`, file: `${locale}-7-pause-plan-desktop.png`, status, expect: "none", fullPage: true });
+      await context.close();
+    }
+  }
+} finally {
+  await browser.close();
+}
+
+const takenAt = new Date().toISOString();
+const failures = rows.filter((row) => row.status >= 400 || row.status === 0
+  || (row.expect === "none" && row.researchLinks > 0)
+  || (row.expect === "some" && row.researchLinks === 0));
+const lines = [
+  "# The clean route on Production",
+  "",
+  `Site: ${base} · taken ${takenAt} from a GitHub-hosted runner · research links = links to Best Offers, Casinos, a casino review, Bonuses or a partner route on the page`,
+  "",
+  "| Step | HTTP | Research links | Clean-route cookie | Cookies | Picture |",
+  "|---|---|---|---|---|---|",
+  ...rows.map((row) => `| ${row.step} | ${row.status} | ${row.researchLinks}${row.expect === "none" && row.researchLinks > 0 ? " ✗" : ""}${row.expect === "some" && row.researchLinks === 0 ? " (door never opened: nothing to compare)" : ""} | ${row.cleanRoute ? "yes" : "no"} | ${row.cookies.join(", ") || "—"} | ${row.file} |`),
+  "",
+  failures.length ? `**${failures.length} step(s) did not hold.**` : "**Every step holds: no research link on the clean route, and the lesson's links vanish after the pause page.**",
+  "",
+];
+writeFileSync(`${out}/REPORT.md`, lines.join("\n"));
+writeFileSync(`${out}/report.json`, `${JSON.stringify({ base, takenAt, rows }, null, 2)}\n`);
+console.log(lines.join("\n"));
+if (failures.length) process.exit(1);

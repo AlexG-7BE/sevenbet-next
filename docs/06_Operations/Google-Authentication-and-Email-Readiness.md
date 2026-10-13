@@ -86,7 +86,7 @@ Use synthetic/non-sensitive accounts in Preview. Do not enter Programme narrativ
 11. Confirm direct client-supplied Google ID-token sign-in is rejected while the normal redirect flow remains available.
 12. Confirm `/get-access-token`, `/refresh-token` and `/account-info` are unavailable to authenticated and unauthenticated requests. Confirm `/link-social` rejects unauthenticated, other-provider, extra-field, token/scope and arbitrary-callback requests while the exact authenticated Google-link request succeeds; confirm `/get-session` and `/sign-out` remain available.
 13. Confirm user-visible failures are generic and no token, email, database detail, secret or provider payload appears in HTML, logs or URLs.
-14. Use the authenticated Programme logout control. Confirm the B4GAMBLE session ends, a fresh anonymous Programme subject starts and the global Google session is not treated as part of B4GAMBLE logout.
+14. Use the authenticated Programme logout control (on a phone: "Log out" in the site menu; both run the same steps). Confirm the B4GAMBLE session ends, a fresh anonymous Programme subject starts and the global Google session is not treated as part of B4GAMBLE logout.
 15. Revoke/delete the synthetic accounts and verify the active-database `Account`/session rows follow the approved privacy process.
 
 ## Account-linking and recovery rules
