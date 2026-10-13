@@ -42,6 +42,7 @@ export const coreRoutes = [
   "/pause-plan",
   "/for-creators",
   "/beside",
+  "/pause-statistics",
 ];
 
 export function absoluteUrl(path: string) {
