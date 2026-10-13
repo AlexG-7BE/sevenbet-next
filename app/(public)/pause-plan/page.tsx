@@ -6,8 +6,10 @@ import { CopyText } from "@/components/clean-route/CopyText";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PausePlanTool } from "./PausePlanTool";
 import styles from "./PausePlan.module.css";
+import { articlePath } from "@/lib/articles/article-types";
+import { pauseHubGuides } from "@/lib/articles/pause-hub.server";
 import { pausePlanLocale, pausePlanMessages } from "@/lib/i18n/static-pages/pause-plan";
-import { productCanonicalPath, productMetadata } from "@/lib/market/product-context";
+import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
@@ -24,7 +26,9 @@ export async function generateMetadata(): Promise<Metadata> {
  * The ten-day plan beside a Spelpaus or ROFUS break (Founder, 12 October 2026). The tool and
  * the plan render in the browser; the rest is static. The page links to the Programme start and
  * to the national helplines, and never to a casino. It is an ordinary landing page: it sets no
- * cookie and changes nothing in the menu (Founder, 13 October 2026).
+ * cookie and changes nothing in the menu (Founder, 13 October 2026). It is also the hub of the
+ * guides for a person on a pause: it lists the published guides of its language that carry the
+ * register's name as a tag (lib/articles/pause-hub.server.ts).
  */
 export default async function PausePlanPage() {
   const presentation = await resolveServerPresentationContext();
@@ -33,6 +37,8 @@ export default async function PausePlanPage() {
   const url = absoluteUrl(productCanonicalPath(presentation, "/pause-plan"));
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
+  const registerName = messages.register === "both" ? "" : messages.registers[messages.register]?.name ?? "";
+  const guides = await pauseHubGuides(contentLocale, registerName);
   const schema = [
     { "@context": "https://schema.org", "@type": "WebPage", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") } },
     { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: messages.faq.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
@@ -62,6 +68,14 @@ export default async function PausePlanPage() {
       <CopyText className={styles.copy} copiedLabel={messages.notBack.copied} copyLabel={messages.notBack.copy} lines={messages.notBack.lines} />
       <p><a href={messages.notBack.supportHref} rel="noopener noreferrer" target="_blank">{messages.notBack.supportLabel}</a></p>
     </div></section>
+
+    {guides.length > 0 ? <section className={styles.questions} data-nav-theme="dark" data-pause-plan-guides><div>
+      <h2>{messages.questionsHeading}</h2>
+      <p>{messages.questionsIntro}</p>
+      <ul>
+        {guides.map((guide) => <li key={guide.id}><Link href={productHref(presentation, articlePath(guide))}>{guide.title}</Link></li>)}
+      </ul>
+    </div></section> : null}
 
     <section className={styles.faq} data-nav-theme="dark"><div>
       <h2>{messages.faqHeading}</h2>

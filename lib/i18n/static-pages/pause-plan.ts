@@ -48,6 +48,9 @@ export type PausePlanMessages = Readonly<{
   tool: PausePlanToolMessages;
   days: readonly PausePlanDay[];
   dayEleven: Readonly<{ heading: string; body: string; cta: string }>;
+  /** The hub of guides for a person on a pause; shown only when the language has such guides. */
+  questionsHeading: string;
+  questionsIntro: string;
   faqHeading: string;
   faq: readonly (readonly [string, string])[];
   supportHeading: string;
@@ -115,6 +118,8 @@ const sv: PausePlanMessages = {
     body: "Kontona öppnas. Dina regler är klara: summan är bestämd innan appen, tiden är bestämd innan appen, en person vet. Du behöver inte sluta. Du behöver ha kontrollen.",
     cta: "Börja steg 1 nu",
   },
+  questionsHeading: "Frågor under pausen",
+  questionsIntro: "Raka svar på det man undrar medan pausen pågår.",
   faqHeading: "Vanliga frågor",
   faq: [
     ["Kan jag avsluta spelpausen i förtid?", "Nej. En avstängning på spelpaus.se går inte att ångra eller avbryta. 10 dagar är 10 dagar."],
@@ -184,6 +189,8 @@ const da: PausePlanMessages = {
     body: "Du kan spille igen. Dine regler er klar: beløbet er bestemt før appen, tiden er bestemt før appen, én person ved det. Du behøver ikke stoppe. Du skal bevare kontrollen.",
     cta: "Start trin 1 nu",
   },
+  questionsHeading: "Spørgsmål i pausen",
+  questionsIntro: "Klare svar på det, man spørger om, mens pausen varer.",
   faqHeading: "Ofte stillede spørgsmål",
   faq: [
     ["Kan jeg ophæve min ROFUS-pause før tid?", "Nej. En midlertidig udelukkelse i ROFUS kan ikke ophæves, før perioden er udløbet. En endelig udelukkelse kan først ophæves efter mindst et år, og kun på din egen anmodning."],
@@ -266,6 +273,8 @@ const en: PausePlanMessages = {
     body: "Your accounts work again. Your rules are ready: the amount is set before the app, the time is set before the app, one person knows. You don't have to quit. You have to be in control.",
     cta: "Start step 1 now",
   },
+  questionsHeading: "Questions during a pause",
+  questionsIntro: "Plain answers to what people ask while a pause runs.",
   faqHeading: "Questions people ask",
   faq: [
     ["Can I end the pause early?", "No. Neither Spelpaus nor a temporary ROFUS exclusion can be cancelled before the period ends."],

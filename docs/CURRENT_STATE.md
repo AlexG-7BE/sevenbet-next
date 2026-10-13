@@ -923,6 +923,23 @@ beside a player: the real number, one message in her words, day 11, the
 helplines). All three link to no casino themselves and state the revenue model;
 none makes a promise about the menu. Decision record:
 `docs/07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md`, amendment 3.
+
+**The hub of the pause guides (Founder decision, 13 October 2026).** The
+Founder's plan for people on a pause calls for many Learn guides for Sweden and
+Denmark, each answering one question, all linked together. `/pause-plan` is the
+hub: under "Frågor under pausen" / "Spørgsmål i pausen" it lists the published
+`responsible-gambling` guides of its own language that carry the register's
+name as a tag ("Spelpaus" in Swedish, "ROFUS" in Danish), newest first, at most
+24 (`lib/articles/pause-hub-selection.ts`, read through
+`articleService.listPublished`). A guide joins by its tag, with no code change;
+the English page speaks about both registers and lists nothing. Each guide
+links back to the plan and to the Programme start from its own body. First
+guides, published 13 October 2026 through `learn_apply`: `spela-under-spelpaus`
+and `hava-spelpaus` (Swedish), `spille-under-rofus` and `fortryde-rofus`
+(Danish). They state that no licensed operator accepts a player during a pause
+and name no casino. Image generation on Production was rate-limited that day,
+so the four guides reuse hero images already published for other languages.
+
 Pure date logic: `lib/tools/pause-plan.ts`. Tests: `tests/pause-plan.test.ts`,
 `tests/clean-route.test.ts` (`pause-plan:test`). Pictures from outside
 Kazakhstan (Production answers the Founder's machine with 451): the manual

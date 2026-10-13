@@ -15,9 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The rule before the app (Founder decision, 13 October 2026). A clean-route page: it never
- * links to a casino, and arriving here closes the research door for this browser
- * (lib/research-access.ts). The rule and the weekly count live in the browser only.
+ * The rule before the app (Founder decision, 13 October 2026). An ordinary landing page: it
+ * never links to a casino and changes nothing in the menu. The rule and the weekly count live
+ * in the browser only.
  */
 export default async function InnanPage() {
   const presentation = await resolveServerPresentationContext();
