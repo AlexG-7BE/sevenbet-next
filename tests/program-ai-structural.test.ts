@@ -387,14 +387,15 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.ok(!authenticatedHome.includes("mission.missionNumber === 8"));
   // A person sees a Mission's step, its place in the journey; the number stays its identity.
   assert.ok(authenticatedHome.includes('number: String(home.currentStep).padStart(2, "0")'));
-  assert.ok(authenticatedHome.includes('<b>{String(mission.step).padStart(2, "0")}</b>'));
+  // The path's mark is the step too (the home of 13 October 2026): a tick once complete, else the step.
+  assert.ok(authenticatedHome.includes(": mission.step}</i>"));
   assert.ok(!authenticatedHome.includes("String(home.currentMission)") && !authenticatedHome.includes("String(mission.missionNumber)"));
   assert.ok(authenticatedHome.includes('data-programme-research="featured"'));
-  assert.ok(authenticatedHome.includes("{researchFeatured ? research : null}"));
+  assert.ok(authenticatedHome.includes("{researchLinksShown && researchFeatured ? research : null}"));
   assert.ok(!authenticatedHome.includes("{researchFeatured ? null : research}"), "no research card before the lesson (Founder, 10 October 2026)");
   assert.doesNotMatch(authenticatedHome, /Review or update/);
   assert.match(authenticatedHome, /Saved Starting Point/);
-  assert.match(authenticatedHome, /home\.primaryAction === "review-mission" \? "Mission complete" : "Current mission"/);
+  assert.match(authenticatedHome, /home\.primaryAction === "review-mission" \? "Mission complete" : "Next step"/);
   assert.match(authenticatedHome, /programmePrimaryActionLabel\(home\.primaryAction, locale\)/);
   assert.match(authenticatedHome, /home\.primaryAction === "finish-mission-one"/);
   assert.match(authenticatedHome, /For privacy, the situation itself was not retained/);
@@ -452,7 +453,6 @@ test("Home presentation copy uses total Mission guidance and projected Review di
 test("mounted Mission presentation consumes server-owned action, reward and Review projections", () => {
   assert.match(missionsService, /actionsTotal: actions\.length/);
   assert.match(missionsService, /currentActionPosition: currentActionIndex >= 0 \? currentActionIndex \+ 1 : null/);
-  assert.match(missionExperience, /completed: mission\.actionsCompleted, total: mission\.actionsTotal/);
   assert.match(missionExperience, /mission\.currentActionPosition/);
   assert.match(missionExperience, /home\.reviews\.find\(\(review\) => review\.unlockMission === mission\.missionNumber && review\.status === "available"\)/);
   assert.match(missionExperience, /completionReceipt\?\.xpAwarded/);
@@ -496,8 +496,11 @@ test("the research Mission's completion marks the moment casino research opens (
 
   // Shown only by the Mission that opens research, and only when the server says research is open.
   assert.ok(experience.includes('const researchOpened = mission.missionNumber === researchAccessMission && home.researchAccess === "open";'));
-  assert.ok(experience.includes("{researchOpened ? <ResearchOpened locale={locale} fresh={newlyCompleted} /> : null}"));
-  assert.ok(experience.includes("{researchOpened ? <ResearchChecklist artifact={mission.artifact} locale={locale} /> : null}"));
+  // One switch, on by default, stands in front of both parts of the block: the seam for the clean route.
+  assert.ok(experience.includes("    // clean route: see lib/research-access.ts researchDoorOpen\n    const researchLinksShown = true;"));
+  assert.ok(experience.includes("{researchOpened && researchLinksShown ? <ResearchOpened locale={locale} fresh={newlyCompleted} /> : null}"));
+  assert.ok(experience.includes("{researchOpened && researchLinksShown ? <ResearchChecklist artifact={mission.artifact} locale={locale} /> : null}"));
+  assert.ok(experience.indexOf("<ResearchOpened locale") < experience.indexOf("styles.reviewReveal") && experience.indexOf("styles.reviewReveal") < experience.indexOf("<ResearchChecklist artifact") && experience.indexOf("<ResearchChecklist artifact") < experience.indexOf("<CommercialNext locale"), "the blocks keep their order");
   assert.ok(experience.includes("{mission.missionNumber === 10 ? <CommercialNext locale={locale} /> : null}"));
 
   // The links are the fixed public routes. Nothing the person entered reaches a URL or picks a link.

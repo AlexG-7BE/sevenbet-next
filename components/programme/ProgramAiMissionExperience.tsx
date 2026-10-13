@@ -10,6 +10,7 @@ import {
   ChoiceCards,
   DecisionApplication,
   HumanArtifact,
+  KeepsakeCard,
   OfferDecoder,
   ProgrammeTimeline,
   ScenarioPanel,
@@ -23,7 +24,8 @@ import type {
 } from "@/components/programme/ProgramAiAuthenticated.types";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
-import { humanValue, presentMissionArtifact } from "@/lib/programme/program-ai/mission-presentation";
+import { deliverKeepsakeImage, keepsakeFonts, keepsakeImage } from "@/lib/programme/program-ai/keepsake-image";
+import { humanValue, presentMissionArtifact, programmeMissionResultTitle } from "@/lib/programme/program-ai/mission-presentation";
 import { researchAccessMission } from "@/lib/programme/program-ai/mission-registry";
 import { QUESTION_REWARD_LABEL_MS, questionOptionLine, questionWhyLine, splitQuestionHeadline } from "@/lib/programme/program-ai/question-screen";
 import { programmeHelpPath, programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
@@ -126,6 +128,18 @@ function ArrowIcon() {
   return <svg aria-hidden="true" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
 }
 
+function TickIcon() {
+  return <svg aria-hidden="true" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.6" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>;
+}
+
+function DownloadIcon() {
+  return <svg aria-hidden="true" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>;
+}
+
+function LockIcon() {
+  return <svg aria-hidden="true" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24"><rect height="9" rx="2" width="14" x="5" y="11" /><path d="M8 11V8a4 4 0 018 0v3" /></svg>;
+}
+
 function SavingDots() {
   return <span aria-hidden="true" className={styles.stepDots} data-programme-saving-dots=""><i /><i /><i /></span>;
 }
@@ -157,6 +171,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const questionRef = useRef<HTMLHeadingElement | null>(null);
   const revealRef = useRef<HTMLDivElement | null>(null);
   const [completionReceipt, setCompletionReceipt] = useState<MissionCompletionReceipt | null>(null);
+  const [imageState, setImageState] = useState<"idle" | "busy" | "failed">("idle");
   const [sequenceOrder, setSequenceOrder] = useState(["choice_point", "cue", "urge_builds", "early_signal"]);
   const [sequenceFeedback, setSequenceFeedback] = useState("");
   const [guidanceSelected, setGuidanceSelected] = useState("");
@@ -180,6 +195,12 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     questionRef.current?.focus({ preventScroll: true });
   }, [mission.currentAction]);
   useEffect(() => () => { if (rewardTimer.current !== null) window.clearTimeout(rewardTimer.current); }, []);
+  // The completion screen opens at its top too, with the reader's place on its heading.
+  useEffect(() => {
+    if (!completionReceipt) return;
+    window.scrollTo({ top: 0, behavior: "instant" });
+    questionRef.current?.focus({ preventScroll: true });
+  }, [completionReceipt]);
   const revealed = !current ? ""
     : current.id === "decode_offer_terms" ? values.offerTermSignal?.[0] ?? ""
       : current.id === "run_decision_check" ? values.scenarioChoice?.[0] ?? ""
@@ -305,7 +326,6 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     try {
       const result = await request<{ mission: ProgramAiMission; home: ProgramAiHome; xpAwarded: number }>(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, { method: "POST", body: "{}" });
       setMission(result.mission); setHome(result.home); onHome(result.home); setCompletionReceipt({ xpAwarded: result.xpAwarded });
-      setAnnouncement(result.xpAwarded ? t("Mission complete. {xp} XP earned.", { xp: result.xpAwarded }) : t("This Mission was already complete."));
     } catch { setError(t("The Mission could not be completed")); }
     finally { setBusy(false); }
   }
@@ -325,37 +345,88 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
       <ActionButton onClick={onBack} size="large">{t("Return to Programme Home")}</ActionButton>
     </section></main>
   </div>;
-  if (completionReceipt || mission.status === "completed") return <div className={styles.shell}>
-    <ProgramAiAuthenticatedHeader label={completeLabel} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
-    <main className={styles.missionMain}>
-      <section className={styles.reward}>
-        <span className={styles.eyebrow}>{t("MISSION COMPLETE")}</span>
-        <strong>{newlyCompleted ? `+${completionReceipt?.xpAwarded}` : `${mission.xpEarnedHere} XP`}</strong>
-        <h2>{missionCopy.title}</h2>
-        <p>{newlyCompleted ? t("Your result is ready and the completion reward has been added.") : completionReceipt ? t("This Mission was already complete. Your completed result is ready to review.") : t("Your completed result is ready to review.")}</p>
-        {researchOpened ? <ResearchOpened locale={locale} fresh={newlyCompleted} /> : null}
-        {availableReview ? <div className={styles.reviewReveal}><span>{t("PERSONAL REVIEW AVAILABLE")}</span><p>{t("{title} is ready. Return Home to open it and see what you have built so far.", { title: programmeText(locale, availableReview.milestone === "first" ? "First Personal Review" : availableReview.milestone === "mid" ? "Mid-Programme Personal Review" : "Full Programme Personal Review") })}</p></div> : null}
-        <ActionButton onClick={onBack} size="large">{t("Continue from Programme Home")}</ActionButton>
-        <p aria-live="polite">{announcement}</p>
-      </section>
-      {researchOpened ? <ResearchChecklist artifact={mission.artifact} locale={locale} /> : null}
-      {mission.missionNumber === 10 ? <CommercialNext locale={locale} /> : null}
-    </main>
+  // A step's own bar, on its question, result and completion screens.
+  const stepBar = <div className={styles.stepBar}>
+    <button aria-label={`← ${t("Programme Home")}`} className={styles.stepBack} onClick={onBack} type="button"><BackIcon /></button>
+    <p className={styles.stepWhere}>{t("Step {step} of {total}", { step: mission.step, total: home.missions.length })}</p>
+    <Link className={styles.stepHelp} href={programmeHelpPath(locale)}>{t("Protected Help / pause")}</Link>
   </div>;
+  const privacyCue = <p className={styles.stepNote} data-programme-privacy-cue=""><LockIcon /><span>{t("Your data is private. We never use it for offers or rankings.")}</span></p>;
+  // The person's result as a keepsake: its own sentence when it has one, and its rows.
+  const keepsake = { title: programmeMissionResultTitle(mission.missionNumber, locale), sentence: localWording.trim() || undefined, rows: presentMissionArtifact(mission.artifact, locale) };
+  // The picture is made on the device from what the card shows; nothing is sent anywhere.
+  async function saveAsImage() {
+    setImageState("busy");
+    try {
+      const image = await keepsakeImage(keepsake, keepsakeFonts(document.body));
+      await deliverKeepsakeImage(image, `b4gamble-step-${mission.step}.png`);
+      setImageState("idle");
+    } catch { setImageState("failed"); }
+  }
+  if (completionReceipt || mission.status === "completed") {
+    const doneTitle = splitQuestionHeadline(keepsake.title);
+    // The reward, once: every number is the server's (this Mission's XP and the steps it lists as completed).
+    const stepsDone = home.missions.filter((item) => item.status === "completed").length;
+    // clean route: see lib/research-access.ts researchDoorOpen
+    const researchLinksShown = true;
+    return <div className={`${styles.shell} ${styles.stepShell}`} data-programme-step-frame="">
+      <ProgramAiAuthenticatedHeader label={completeLabel} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
+      <main className={styles.stepMain} data-programme-completion={newlyCompleted ? "fresh" : "review"}>
+        {stepBar}
+        <section className={styles.stepDone}>
+          <p className={styles.stepDoneTick}><i aria-hidden="true"><TickIcon /></i><span>{t("Step {step} done", { step: mission.step })}</span></p>
+          <h1 className={styles.stepHeadline} ref={questionRef} tabIndex={-1}>{doneTitle.head}{doneTitle.tail ? <> <em>{doneTitle.tail}</em></> : null}</h1>
+          <p className={styles.stepHelper}>{newlyCompleted ? t("You built it yourself. It is yours, not ours.") : completionReceipt ? t("This Mission was already complete. Your completed result is ready to review.") : t("Your completed result is ready to review.")}</p>
+        </section>
+        <div className={styles.stepDoneBody}>
+          <KeepsakeCard rows={keepsake.rows} sentence={keepsake.sentence} title={keepsake.title} />
+          <div className={styles.keepsakeActions}><button data-programme-save-image="" disabled={imageState === "busy"} onClick={saveAsImage} type="button"><DownloadIcon /><span>{t("Save as image")}</span></button></div>
+          {imageState === "failed" ? <p className={styles.error} role="alert">{t("The image could not be saved.")}</p> : null}
+          {researchOpened && researchLinksShown ? <ResearchOpened locale={locale} fresh={newlyCompleted} /> : null}
+          {availableReview ? <div className={styles.reviewReveal}><span>{t("PERSONAL REVIEW AVAILABLE")}</span><p>{t("{title} is ready. Return Home to open it and see what you have built so far.", { title: programmeText(locale, availableReview.milestone === "first" ? "First Personal Review" : availableReview.milestone === "mid" ? "Mid-Programme Personal Review" : "Full Programme Personal Review") })}</p></div> : null}
+          {researchOpened && researchLinksShown ? <ResearchChecklist artifact={mission.artifact} locale={locale} /> : null}
+          {mission.missionNumber === 10 ? <CommercialNext locale={locale} /> : null}
+        </div>
+        <div className={styles.stepCta} data-programme-step-cta="">
+          <div className={styles.stepReward}>
+            <span aria-hidden="true" className={styles.stepRewardDots}>{home.missions.map((item) => <i data-new={newlyCompleted && item.missionNumber === mission.missionNumber ? "" : undefined} data-on={item.status === "completed"} key={item.missionNumber} />)}</span>
+            <p data-programme-step-reward="">{t("{xp} XP · {done} of {total} steps", { xp: newlyCompleted ? `+${completionReceipt?.xpAwarded}` : mission.xpEarnedHere, done: stepsDone, total: home.missions.length })}</p>
+          </div>
+          <button className={styles.stepContinue} onClick={onBack} type="button"><span>{t("Continue from Programme Home")}</span><ArrowIcon /></button>
+        </div>
+      </main>
+    </div>;
+  }
 
   const header = <ProgramAiAuthenticatedHeader label={`${t("Mission").toLocaleUpperCase(locale)} ${String(mission.step).padStart(2, "0")} · ${missionCopy.title.toLocaleUpperCase(locale)}`} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />;
   const supportNote = mission.missionNumber === 7 ? <aside className={styles.guidance}><h3>{t("Your support route is ready")}</h3><p>{t("Keep it simple enough to use.")} <Link href={programmeHelpPath(locale)}>{t("Help")}</Link> {t("is always available.")}</p></aside> : null;
-  // All actions are saved: the result with its finish press. This screen is as it was.
-  if (!ui || !current) return <div className={styles.shell}>
-    {header}
-    <main className={styles.missionMain}>
-      <div className={styles.missionTopline}><button className={styles.back} onClick={onBack} type="button">← {t("Programme Home")}</button><Link className={styles.back} href={programmeHelpPath(locale)}>{t("Protected Help / pause")}</Link></div>
-      <section className={styles.missionIntro}><span className={styles.eyebrow}>{t("MISSION {number} · {completed}/{total} ACTIONS", { number: String(mission.step).padStart(2, "0"), completed: mission.actionsCompleted, total: mission.actionsTotal })}</span><h1>{missionCopy.title}</h1><p>{missionCopy.description}</p></section>
-      <div aria-label={t("Mission progress")} className={styles.actionRail}>{mission.actions.map((action) => <span data-complete={action.completed} key={action.id} title={t("{label}: {status}", { label: actionUi[action.id] ? t(actionUi[action.id].prompt) : missionCopy.title, status: t(action.completed ? "complete" : "not complete") })} />)}<span data-complete={false} title={t("Mission completion bonus")} /></div>
-      <section className={styles.challenge}><span className={styles.eyebrow}>{t("YOUR RESULT IS READY")}</span><h2>{t("Review what you built, then finish the Mission.")}</h2><p>{t("The final step adds the {xp} XP completion reward.", { xp: mission.completionBonus })}</p><HumanArtifact artifact={mission.artifact} guidance={guidance} locale={locale} localWording={localWording} missionNumber={mission.missionNumber} /><ActionButton disabled={busy} onClick={complete} size="large">{busy ? t("Completing…") : t("Complete Mission · +{xp} XP", { xp: mission.completionBonus })}</ActionButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}</section>
-      {supportNote}
-    </main>
-  </div>;
+  // All actions are saved: the result as a keepsake, with its finish press pinned and without XP on it.
+  if (!ui || !current) {
+    const review = splitQuestionHeadline(t("Review what you built, then finish the Mission."));
+    return <div className={`${styles.shell} ${styles.stepShell}`} data-programme-step-frame="">
+      {header}
+      <main className={styles.stepMain} data-programme-result="">
+        {stepBar}
+        <div className={styles.stepProgress}>
+          <div aria-hidden="true" className={styles.stepSegments}>{mission.actions.map((action) => <i data-on="true" key={action.id} />)}</div>
+          <p className={styles.stepCount} data-programme-step-count={rewardLabel ? "reward" : "completion"} role="status">{rewardLabel || `+${mission.completionBonus} XP`}</p>
+        </div>
+        <section className={styles.stepQuestion}>
+          <header className={styles.stepHeading}>
+            <h1 className={styles.stepEyebrow}>{missionCopy.title}</h1>
+            <h2 className={styles.stepHeadline} ref={questionRef} tabIndex={-1}>{review.head}{review.tail ? <> <em>{review.tail}</em></> : null}</h2>
+          </header>
+          <p className={styles.keepsakeIntro}>{t("YOUR RESULT IS READY")}</p>
+          <KeepsakeCard rows={keepsake.rows} sentence={keepsake.sentence} title={keepsake.title} />
+        </section>
+        {supportNote}
+        <div className={styles.stepCta} data-programme-step-cta="">
+          <button aria-busy={busy || undefined} className={styles.stepContinue} data-saving={busy ? "" : undefined} disabled={busy} onClick={complete} type="button"><span>{t("Complete Mission")}</span>{busy ? <SavingDots /> : <ArrowIcon />}</button>
+          {error ? <p className={styles.stepNote} data-tone="error" role="alert"><span>{error}</span></p> : privacyCue}
+        </div>
+      </main>
+    </div>;
+  }
 
   const headline = splitQuestionHeadline(t(ui.prompt));
   const whyLine = questionWhyLine(current.id);
@@ -383,11 +454,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   return <div className={`${styles.shell} ${styles.stepShell}`} data-programme-step-frame="">
     {header}
     <main className={styles.stepMain} data-programme-action={current.id}>
-      <div className={styles.stepBar}>
-        <button aria-label={`← ${t("Programme Home")}`} className={styles.stepBack} onClick={onBack} type="button"><BackIcon /></button>
-        <p className={styles.stepWhere}>{t("Step {step} of {total}", { step: mission.step, total: home.missions.length })}</p>
-        <Link className={styles.stepHelp} href={programmeHelpPath(locale)}>{t("Protected Help / pause")}</Link>
-      </div>
+      {stepBar}
       <div className={styles.stepProgress}>
         <div aria-hidden="true" className={styles.stepSegments}>{mission.actions.map((action) => <i data-on={action.completed || action.id === current.id} key={action.id} />)}</div>
         <p className={styles.stepCount} data-programme-step-count={rewardLabel ? "reward" : "question"} role="status">{rewardLabel || t("Question {position} of {total}", { position: mission.currentActionPosition ?? "", total: mission.actionsTotal })}</p>
@@ -430,7 +497,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
         {error ? <p className={styles.stepNote} data-tone="error" role="alert"><span>{error}</span></p>
           : announcement ? <p className={styles.stepNote} data-tone="notice" role="status"><span>{announcement}</span></p>
             : missing && !busy ? <p className={styles.stepNote} data-programme-step-hint="" id={hintId}><span>{missing}</span></p>
-              : <p className={styles.stepNote} data-programme-privacy-cue=""><svg aria-hidden="true" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24"><rect height="9" rx="2" width="14" x="5" y="11" /><path d="M8 11V8a4 4 0 018 0v3" /></svg><span>{t("Your data is private. We never use it for offers or rankings.")}</span></p>}
+              : privacyCue}
       </div>
     </main>
   </div>;

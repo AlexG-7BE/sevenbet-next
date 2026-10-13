@@ -18,6 +18,11 @@ export type ProgramAiHome = {
   engagementDayBucket: ProgrammeEngagementDayBucket;
   currentAction: string | null;
   startingPoint: ProgrammeStartingPointValue | null;
+  /**
+   * The weekly goal card: present once the "Set a 7-day goal" Mission is complete. The day and the
+   * check-in date are the server's; `day` is null from the check-in date on.
+   */
+  weekGoal?: null | { goalStyle: string; totalDays: number; day: number | null; checkInDate: string };
   /** In journey order. */
   missions: Array<{
     missionNumber: number;
