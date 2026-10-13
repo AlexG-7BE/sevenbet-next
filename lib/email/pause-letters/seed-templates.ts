@@ -191,7 +191,8 @@ export function pauseLetterSeedBodies(letter: PauseLetterSeed) {
   }).join("");
   const text = letter.paragraphs.map((paragraph) => {
     const link = LINK.exec(paragraph);
-    return link ? `${link[1]}: {{${link[2]}}}` : paragraph;
+    // "10 dagar. 10 steg." keeps its full stop in the link, but not before the colon.
+    return link ? `${link[1].replace(/\.$/, "")}: {{${link[2]}}}` : paragraph;
   }).join("\n\n");
   return { htmlBody: html, textBody: text };
 }
