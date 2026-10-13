@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { programmeCatalogueEntries, programmeText } from "../lib/i18n/programme-catalog";
+import { PROGRAMME_MESSAGE_KEYS, programmeCatalogueEntries, programmeText } from "../lib/i18n/programme-catalog";
 import { PROGRAMME_LOCALES, type ProgrammeLocale } from "../lib/programme/presentation";
 import { missionStep, programAiMissionRegistry } from "../lib/programme/program-ai/mission-registry";
 import {
@@ -60,13 +60,45 @@ test("a question's headline is split by rule: the last third of its words, two t
   }
 });
 
-test("the lines of the question screen are presentation: written for the first two steps after sign-in, in every language, unknown to the server", () => {
-  // Mission 02 is step 2 and Mission 08 is step 3: all three actions of each carry a why-line.
+test("the lines of the question screen are presentation: written for every step after sign-in, in every language, unknown to the server", () => {
+  // Mission 02 is step 2 and Mission 08 is step 3; every action of every Mission carries a why-line.
   assert.equal(missionStep(2), 2);
   assert.equal(missionStep(8), 3);
+  const allActions = programAiMissionRegistry.flatMap((mission) => mission.actions.map((action) => action.id as string));
+  assert.equal(allActions.length, 27);
+  assert.deepEqual([...QUESTION_SCREEN_ACTIONS_WITH_LINES].sort(), [...allActions].sort());
+  for (const actionId of allActions) assert.ok(questionWhyLine(actionId), `${actionId} has a why-line`);
   const firstSteps = programAiMissionRegistry.filter((mission) => mission.missionNumber === 2 || mission.missionNumber === 8).flatMap((mission) => mission.actions.map((action) => action.id as string));
-  assert.deepEqual([...QUESTION_SCREEN_ACTIONS_WITH_LINES].sort(), [...firstSteps].sort());
-  // Every option of those actions has a line: the screen's own, or the one the option already carried.
+
+  // The option cards of every action, read from the Mission screen itself: each card has a line,
+  // the screen's own or the one the option already carried. Two questions show no option cards
+  // (a sequence to put in order, drafted responses to choose from) and carry the why-line only.
+  const optionLists: Record<string, string> = {};
+  for (const [, name, body] of missionExperience.matchAll(/^function (\w+Options)\(\) \{ return \[(.*)\]; \}$/gm)) optionLists[name] = body;
+  assert.deepEqual(Object.keys(optionLists).sort(), ["comparisonOptions", "frictionOptions", "researchOptions", "responseOptions"]);
+  const cardsByAction: Record<string, { value: string; described: boolean }[]> = {};
+  for (const [, actionId, definition] of missionExperience.matchAll(/^  (\w+): \{ prompt: "[^"]+", explanation: "[^"]+",(.*)\},$/gm)) {
+    const fields = Object.entries(optionLists).reduce((text, [name, body]) => text.replace(`${name}()`, `[${body}]`), definition);
+    cardsByAction[actionId] = [...fields.matchAll(/option\("([^"]+)", "[^"]+"(, "[^"]+")?\)/g)].map(([, value, description]) => ({ value, described: Boolean(description) }));
+  }
+  assert.deepEqual(Object.keys(cardsByAction).sort(), [...allActions].sort());
+  const withoutCards = ["map_urge_sequence", "rehearse_response"];
+  assert.ok(missionExperience.includes('const choiceFields = sequenceAction || current.id === "rehearse_response" ? [] : ui.fields;'));
+  assert.ok(missionExperience.includes('const sequenceAction = current.id === "map_urge_sequence";'));
+  let optionLineCount = 0;
+  for (const actionId of allActions) {
+    const cards = cardsByAction[actionId];
+    assert.ok(cards.length > 0, actionId);
+    const lines = questionOptionLineEntries(actionId);
+    if (withoutCards.includes(actionId) || cards.every((card) => card.described)) assert.deepEqual(lines, [], actionId);
+    else {
+      assert.ok(cards.every((card) => !card.described), actionId);
+      assert.deepEqual(lines.map(([value]) => value), cards.map((card) => card.value), actionId);
+      optionLineCount += lines.length;
+    }
+  }
+  // 28 lines for step 2 and the last two questions of step 3, and 101 for Missions 03–07, 09 and 10.
+  assert.equal(optionLineCount, 6 + 5 + 4 + 6 + 7 + (10 + 20 + 14 + 22 + 13 + 8 + 14));
   const optionsByAction: Record<string, readonly string[]> = {
     choose_direction: ["understand", "pause", "reduce_impulse", "set_boundary", "research_later", "seek_support"],
     build_7_day_goal: ["notice_and_note", "pause_first", "use_one_boundary", "research_after_pause", "ask_for_support"],
@@ -82,30 +114,68 @@ test("the lines of the question screen are presentation: written for the first t
   assert.deepEqual(questionOptionLineEntries("learn_comparison_signals"), []);
   assert.ok(missionExperience.includes('option("licensing_status", "Licence / regulatory status", "Confirms whether the product is permitted for the relevant market.")'));
   assert.ok(missionExperience.includes("const line = item.description ?? (actionId ? questionOptionLine(actionId, item.value) : undefined);"));
-  // A Mission without lines shows its options and helper only: both are optional in the layout.
-  assert.equal(questionWhyLine("choose_boundary"), undefined);
-  assert.equal(questionOptionLine("choose_boundary", "money"), undefined);
+  // A question without lines shows its options and helper only: both are optional in the layout.
+  assert.equal(questionWhyLine("not_an_action"), undefined);
+  assert.equal(questionOptionLine("not_an_action", "money"), undefined);
   assert.equal(questionOptionLine("choose_direction", "not-an-option"), undefined);
+  assert.equal(questionOptionLine("map_urge_sequence", "yes"), undefined);
+  // The second list of "Run a decision check" is drawn without the action, so it takes no line.
+  assert.ok(missionExperience.includes('option("exit", "What is my exit route?")] }, locale)} selected={firstCheck ? [firstCheck] : []} />'));
   assert.ok(missionExperience.includes("{whyLine ? <p className={styles.stepWhy}"));
   assert.ok(missionPrimitives.includes("<strong>{item.label}</strong>{item.description ? <small>{item.description}</small> : null}"));
 
   // One short plain sentence each, in every language the catalogue carries; no promise, no jargon.
-  const written = [
+  const firstWritten = [
     ...firstSteps.map((actionId) => questionWhyLine(actionId)!),
     ...["choose_direction", "build_7_day_goal", "reality_check", "decode_offer_terms"].flatMap((actionId) => questionOptionLineEntries(actionId).map(([, line]) => line)),
   ];
-  assert.equal(written.length, 6 + 6 + 5 + 4 + 6);
-  assert.equal(new Set(written).size, written.length);
+  assert.equal(firstWritten.length, 6 + 6 + 5 + 4 + 6);
+  assert.equal(new Set(firstWritten).size, firstWritten.length);
+  // Every line the mapping names: a why-line per action, a line per option card. An option offered
+  // in more than one question keeps one line, so the rows are fewer than the cards.
+  const mapped = [...new Set([
+    ...allActions.map((actionId) => questionWhyLine(actionId)!),
+    ...allActions.flatMap((actionId) => questionOptionLineEntries(actionId).map(([, line]) => line)),
+  ])];
+  // The checklist of step 3 keeps the seven lines its options carried before this screen.
+  const inherited = new Set(questionOptionLineEntries("build_research_checklist").map(([, line]) => line));
+  const written = mapped.filter((key) => !inherited.has(key));
+  assert.equal(inherited.size, 7);
+  assert.equal(written.length, firstWritten.length + 21 + 79);
+  for (const key of firstWritten) assert.ok(written.includes(key), key);
   for (const locale of PROGRAMME_LOCALES) assert.ok(CATALOGUE_LOCALES.includes(locale));
+  assert.equal(CATALOGUE_LOCALES.length, 13);
   for (const key of written) {
     assert.ok(key.length <= 60, `${key}: ${key.length} characters`);
     assert.match(key, /\.$/);
-    assert.doesNotMatch(key, /guarantee|will stop|will win|safe to|cure|always works|never lose|XP|casino/i, key);
+    assert.doesNotMatch(key, /guarantee|will stop|will win|safe to|cure|always works|never lose|XP|casino|quit|\?/i, key);
+  }
+  for (const key of mapped) {
+    // Every mapped line is a row of the catalogue, with every language cell filled and translated.
+    assert.ok(PROGRAMME_MESSAGE_KEYS.includes(key), `${key} is a row of the catalogue`);
     for (const locale of CATALOGUE_LOCALES) {
       const value = programmeText(locale, key);
-      assert.ok(value.trim().length > 0 && value.length <= 80, `${locale} ${key}: ${value.length} characters`);
+      assert.ok(value.trim().length > 0 && value === value.trim(), `${locale} ${key} is filled`);
+      if (!inherited.has(key)) {
+        assert.ok(value.length <= 80, `${locale} ${key}: ${value.length} characters`);
+        assert.match(value, /[.]$/u, `${locale} ${key} is a sentence`);
+      }
+      assert.doesNotMatch(value, /XP|\{|\}/, `${locale} ${key}`);
       if (locale !== "en-GB") assert.notEqual(value, key, `${locale} ${key} is translated`);
     }
+    // The launch languages and German: no cell is the English source left in place.
+    for (const locale of ["sv-SE", "da-DK", "de-DE"] as const) assert.notEqual(programmeText(locale, key), key, `${locale} ${key}`);
+    // No English loan word for comparing in Swedish or Danish, and Swedish writes "casino" with a c.
+    for (const locale of ["sv-SE", "da-DK"] as const) assert.doesNotMatch(programmeText(locale, key), /research/i, `${locale} ${key}`);
+    assert.doesNotMatch(programmeText("sv-SE", key), /kasino/i, key);
+  }
+  // A why-line continues "Why we ask:", so it starts in lower case (German sets its first word in capitals).
+  for (const actionId of allActions) {
+    const key = questionWhyLine(actionId)!;
+    assert.match(key, /^[a-z]/, key);
+    assert.doesNotMatch(key, /why we ask/i, key);
+    for (const locale of ["sv-SE", "da-DK"] as const) assert.match(programmeText(locale, key), /^\p{Ll}/u, `${locale} ${key}`);
+    for (const locale of CATALOGUE_LOCALES) assert.ok(!programmeText(locale, key).includes(programmeText(locale, "Why we ask:").replace(":", "")), `${locale} ${key} repeats the prefix`);
   }
   // The Swedish the Founder approved on the mockup for the first question.
   assert.equal(programmeText("sv-SE", "Why we ask:"), "Varför vi frågar:");
