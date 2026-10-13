@@ -1,0 +1,33 @@
+name: Research fetch (Reddit)
+
+# Collects public Reddit posts and comments for the research corpus from a GitHub-hosted runner
+# (reddit.com refuses the Founder's machine) and keeps them as a workflow artifact for 14 days.
+# Manual only: Actions → Research fetch (Reddit) → Run workflow. Nothing is written to the repo.
+
+on:
+  workflow_dispatch:
+    inputs:
+      specs:
+        description: 'Space-separated "subreddit:query1,query2" specs'
+        required: true
+        default: 'sweden:spelpaus,casino,spelberoende PrivatEkonomi:spelpaus,casino,spelberoende Denmark:rofus,ludoman,casino dkfinance:rofus,casino,ludoman'
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Fetch public listings
+        run: node scripts/research/reddit-fetch.mjs ${{ inputs.specs }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reddit-corpus
+          path: research/reddit/
+          retention-days: 14
