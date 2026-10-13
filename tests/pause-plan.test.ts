@@ -110,6 +110,8 @@ test("the pause plan is the hub of the guides for a person on a pause", () => {
     const messages = pausePlanMessages(locale);
     assert.ok(messages.questionsHeading && messages.questionsIntro, locale);
   }
+  const css = readFileSync("app/(public)/pause-plan/PausePlan.module.css", "utf8");
+  assert.match(css, /\.tool > \.plan \{ display:block;/, "the ten steps span the page width on a desktop instead of half of the form grid");
   assert.equal(pausePlanMessages("sv-SE").registers.spelpaus?.name, "Spelpaus");
   assert.equal(pausePlanMessages("da-DK").registers.rofus?.name, "ROFUS");
 });
