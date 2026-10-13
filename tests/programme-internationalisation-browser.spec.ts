@@ -554,9 +554,12 @@ test("localized completion, Review, unavailable, not-found and logout states rem
   await page.goto(`${baseUrl}${programmePath(locale)}`, { waitUntil: "domcontentloaded" });
   await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
   await page.getByRole("button", { name: t(locale, "Resume mission"), exact: true }).click();
-  await page.getByRole("button", { name: t(locale, "Complete Mission · +{xp} XP", { xp: 25 }) }).click();
-  await expect(page.locator("main")).toContainText(t(locale, "MISSION COMPLETE"));
-  await expect(page.locator("main")).toContainText(t(locale, "Your result is ready and the completion reward has been added."));
+  await expect(page.locator("[data-programme-keepsake]")).toBeVisible();
+  await assertRenderedQuality(page, `${locale}:result`);
+  await page.getByRole("button", { name: t(locale, "Complete Mission"), exact: true }).click();
+  await expect(page.locator("main")).toContainText(t(locale, "Step {step} done", { step: missionStep(3) }));
+  await expect(page.locator("main")).toContainText(t(locale, "You built it yourself. It is yours, not ours."));
+  await expect(page.getByRole("button", { name: t(locale, "Save as image") })).toBeVisible();
   await assertRenderedQuality(page, `${locale}:completion`);
 
   await page.getByRole("button", { name: t(locale, "Continue from Programme Home") }).click();

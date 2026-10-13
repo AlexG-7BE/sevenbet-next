@@ -157,16 +157,14 @@ test("the question screen keeps every press, takes XP off the button and leaves 
   // Not in this round: no press is removed and nothing finishes or opens by itself.
   assert.ok(missionExperience.includes('"Create personal drafts"'));
   assert.ok(missionExperience.includes('t("Build my plan")'));
-  assert.ok(missionExperience.includes('{busy ? t("Completing…") : t("Complete Mission · +{xp} XP", { xp: mission.completionBonus })}'));
-  assert.ok(missionExperience.includes('<ActionButton onClick={onBack} size="large">{t("Continue from Programme Home")}</ActionButton>'));
+  assert.ok(missionExperience.includes('onClick={complete} type="button"><span>{t("Complete Mission")}</span>'));
+  assert.ok(missionExperience.includes('<button className={styles.stepContinue} onClick={onBack} type="button"><span>{t("Continue from Programme Home")}</span><ArrowIcon /></button>'));
   assert.equal(missionExperience.match(/onClick=\{complete\}/g)?.length, 1, "completion is asked for by its own press only");
   assert.equal(missionExperience.match(/\bcomplete\(\)/g)?.length, 1, "complete() is declared once and called by nothing else");
   assert.equal(missionExperience.match(/onClick=\{getGuidance\}/g)?.length, 2, "drafts and the plan are still asked for by a press");
   assert.doesNotMatch(missionExperience, /useEffect\(\(\) => \{[^}]*(?:getGuidance|saveAction)\(/);
-  // The result screen keeps its own layout.
-  assert.ok(missionExperience.includes('<section className={styles.challenge}><span className={styles.eyebrow}>{t("YOUR RESULT IS READY")}</span>'));
-  assert.ok(missionExperience.includes('t("MISSION {number} · {completed}/{total} ACTIONS"'));
-  assert.equal(missionExperience.match(/data-programme-step-frame/g)?.length, 1, "only the question screen is a step frame");
+  // The question, the result and the completion are the step's three framed screens; the legacy one is not.
+  assert.equal(missionExperience.match(/data-programme-step-frame/g)?.length, 3);
 
   // The privacy cue is wording the Programme home already carries.
   const cue = 't("Your data is private. We never use it for offers or rankings.")';
@@ -188,4 +186,76 @@ test("the question screen keeps every press, takes XP off the button and leaves 
   for (const size of stepRules.matchAll(/font-size: ([\d.]+)px/g)) assert.ok(Number(size[1]) >= 12, `text of ${size[1]}px`);
   // On a phone the step's bar stands where the site header was; a wide screen keeps the header.
   assert.ok(shell.includes("@media (max-width: 640px) {\n  :global(html:has([data-programme-step-frame])) .header { display: none; }\n}"));
+});
+
+test("the end of a step: a keepsake card, the finish press without XP, the reward said once, and the same flow", async () => {
+  const { keepsakeRowIsWide, keepsakeSentenceSize, KEEPSAKE_WIDE_VALUE } = await import("../lib/programme/program-ai/keepsake-image");
+  const catalogue = read("lib/i18n/programme-catalog.ts");
+  const image = read("lib/programme/program-ai/keepsake-image.ts");
+
+  // The flow: result → "Complete Mission" → completion → the Programme home. Nothing leads into the next step.
+  assert.ok(missionExperience.includes('disabled={busy} onClick={complete} type="button"><span>{t("Complete Mission")}</span>{busy ? <SavingDots /> : <ArrowIcon />}</button>'));
+  assert.ok(missionExperience.includes('<button className={styles.stepContinue} onClick={onBack} type="button"><span>{t("Continue from Programme Home")}</span><ArrowIcon /></button>'));
+  assert.doesNotMatch(missionExperience, /Next step|onMission|openMission|nextMission/);
+  for (const locale of CATALOGUE_LOCALES) assert.doesNotMatch(programmeText(locale, "Complete Mission"), /XP|\d/, `${locale}: no XP on the finish press`);
+
+  // The reward: the server's numbers, once. The lines that repeated it are gone from the screen and the catalogue.
+  assert.ok(missionExperience.includes("{rewardLabel || `+${mission.completionBonus} XP`}"), "the completion reward is the quiet label by the progress");
+  assert.ok(missionExperience.includes('t("{xp} XP · {done} of {total} steps", { xp: newlyCompleted ? `+${completionReceipt?.xpAwarded}` : mission.xpEarnedHere, done: stepsDone, total: home.missions.length })'));
+  assert.ok(missionExperience.includes('const stepsDone = home.missions.filter((item) => item.status === "completed").length;'));
+  for (const gone of ["The final step adds the {xp} XP completion reward.", "Your result is ready and the completion reward has been added.", "Mission complete. {xp} XP earned.", "Complete Mission · +{xp} XP", "MISSION COMPLETE"]) {
+    assert.ok(!catalogue.includes(`  [${JSON.stringify(gone)},`), gone);
+    assert.ok(!missionExperience.includes(gone), gone);
+  }
+
+  // "Change the plan" is not offered: the server answers a completed Mission, and an action already
+  // recorded, without writing, so there is nothing such a button could change.
+  const service = read("lib/programme/application/programme-ai-missions.service.ts");
+  const record = service.slice(service.indexOf("async recordAction("), service.indexOf("const saved = await unitOfWork.progress.upsertMissionProgress({"));
+  assert.match(record, /if \(progress\?\.status === "COMPLETED"\) \{\s+return \{\s+actionPosition: null,\s+xpAwarded: 0,/);
+  assert.match(record, /if \(existingStates\.includes\(taskState\)\) \{[\s\S]*?xpAwarded: 0,/);
+  assert.doesNotMatch(missionExperience, /Change the plan/);
+  assert.ok(!catalogue.includes('["Change the plan"'));
+
+  // The card draws any Mission's rows; a long value takes the whole width; a long sentence is set smaller.
+  assert.ok(missionPrimitives.includes("{sentence ? <blockquote data-length={keepsakeSentenceSize(sentence)}>{sentence}</blockquote> : null}"));
+  assert.ok(missionPrimitives.includes('<div data-wide={keepsakeRowIsWide(row.value, row.label) ? "" : undefined} key={row.key}><dt>{row.label}</dt><dd>{row.value}</dd></div>'));
+  assert.ok(missionExperience.includes("const keepsake = { title: programmeMissionResultTitle(mission.missionNumber, locale), sentence: localWording.trim() || undefined, rows: presentMissionArtifact(mission.artifact, locale) };"));
+  assert.equal(keepsakeRowIsWide("x".repeat(KEEPSAKE_WIDE_VALUE)), false);
+  assert.equal(keepsakeRowIsWide("x".repeat(KEEPSAKE_WIDE_VALUE + 1)), true);
+  // A label with a very long word takes the whole width too, so no word breaks inside itself.
+  assert.equal(keepsakeRowIsWide("Om 7 dagar", "Granskningspunkt"), true);
+  assert.equal(keepsakeRowIsWide("Öva på en paus", "Din riktning"), false);
+  assert.deepEqual(["x".repeat(90), "x".repeat(91), "x".repeat(180), "x".repeat(181)].map(keepsakeSentenceSize), ["short", "medium", "medium", "long"]);
+  assert.match(stylesheet, /\.keepsake \{[^}]*background: var\(--pg-paper\);[^}]*color: var\(--pg-ink\); \}/);
+  assert.ok(stylesheet.includes(".keepsakeRows > div[data-wide] { grid-column: 1 / -1; }"));
+
+  // "Save as image": made on the device from what the card shows. No request, no markup injection,
+  // nothing the Content-Security-Policy would have to allow, and the policy file is not touched for it.
+  assert.doesNotMatch(image, /fetch\(|XMLHttpRequest|sendBeacon|innerHTML|new Image\(|foreignObject|eval\(|new Worker/);
+  assert.match(image, /canvas\.toBlob\(/);
+  assert.match(image, /navigator\.canShare\(\{ files: \[file\] \}\)/);
+  assert.match(image, /link\.download = fileName;/);
+  assert.ok(missionExperience.includes("const image = await keepsakeImage(keepsake, keepsakeFonts(document.body));"));
+  assert.match(read("lib/security/content-security-policy.ts"), /"img-src 'self' data: blob: https:",/);
+
+  // The research block keeps its door logic; this screen adds one switch in front of it and nothing else.
+  assert.equal(missionExperience.match(/from "@\/lib\/research-access"/g)?.length, 1);
+  assert.ok(missionExperience.includes('import { RESEARCH_ACCESS_CHANGED_EVENT, RESEARCH_OPENED_AT_STORAGE_KEY } from "@/lib/research-access";'));
+  assert.doesNotMatch(missionExperience, /researchDoorOpen\(/);
+
+  // Motion: the card rises, the tick and the new dot follow; none for readers who ask for none.
+  assert.ok(stylesheet.includes('.stepMain[data-programme-completion="fresh"] .keepsake { animation: programme-keepsake-in 240ms var(--pg-ease) both; }'));
+  assert.match(stylesheet, /@media \(prefers-reduced-motion: reduce\) \{\s*\.stepMain\[data-programme-completion="fresh"\] \.keepsake,[^}]*\{ animation: none; \}\s*\}/);
+
+  // The new words, in every cell of the catalogue.
+  assert.equal(programmeText("sv-SE", "Step {step} done", { step: 2 }), "Steg 2 klart");
+  assert.equal(programmeText("sv-SE", "You built it yourself. It is yours, not ours."), "Du har byggt den själv. Den är din, inte vår.");
+  assert.equal(programmeText("sv-SE", "Save as image"), "Spara som bild");
+  assert.equal(programmeText("sv-SE", "{xp} XP · {done} of {total} steps", { xp: "+25", done: 2, total: 10 }), "+25 XP · 2 av 10 steg");
+  for (const key of ["Complete Mission", "Step {step} done", "You built it yourself. It is yours, not ours.", "Save as image", "The image could not be saved.", "{xp} XP · {done} of {total} steps"] as const) {
+    const cells = CATALOGUE_LOCALES.map((locale) => programmeText(locale, key));
+    assert.equal(new Set(cells).size, key === "Complete Mission" ? cells.length : 13, key);
+    for (const cell of cells) assert.ok(cell.trim().length > 0, key);
+  }
 });

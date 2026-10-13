@@ -62,6 +62,52 @@ Ordinary interface work: no RFC, no database change, no API change.
     blocks, sequence builder, scenario panel, stack builder, offer decoder). They sit inside the
     new frame and take the cards' corners; their plain option rows are the new cards.
 
+## The end of a step: result and completion screens (same day, second round)
+
+Approved by the Founder on 13 October 2026 («сделай итог шага») from the second mockup, with one
+correction: the mockup's button that led into the next step is not built. **The flow does not
+change:** result screen → the person presses "Complete Mission" → completion screen → the button
+returns to the Programme home.
+
+1. **Result screen.** The step's frame (top bar, every segment lit, the Mission title as the
+   eyebrow, the existing headline through the split rule). The server's completion reward is the
+   quiet label by the progress ("+25 XP"); the XP of the last action shows there first for about
+   two seconds. The sentence "The final step adds the {xp} XP completion reward." left the screen.
+   "Complete Mission" is the pinned button, without XP, on screen at any height.
+2. **The keepsake card.** The person's result on paper with ink text: the result's name and the
+   brand mark, the result's own sentence in the italic serif when it has one, a dashed ticket cut,
+   and its rows as small label + value in two columns (a long value takes both). It draws whatever
+   rows a Mission's result has.
+3. **Completion screen.** A tick and "Step N done", the result's existing name as the headline,
+   one line ("You built it yourself. It is yours, not ours."), the same card, "Save as image",
+   and the reward once: ten dots for the ten steps and "+25 XP · 2 of 10 steps", every number from
+   the server. The yellow "+25" card and the lines "Your result is ready and the completion reward
+   has been added." and "Mission complete. 25 XP earned." are gone. The button keeps its label and
+   destination ("Continue from Programme Home").
+4. **"Save as image"** draws the card on a canvas on the device and gives it to the share sheet
+   (touch devices that offer it) or saves it as a PNG. Nothing is sent to the server. It needs
+   nothing from the Content-Security-Policy that the policy did not already allow, and the policy
+   is unchanged.
+5. **"Change the plan" is not built.** The server does not let a recorded answer of a completed
+   Mission be changed (`recordAction` answers a completed Mission, and an action already recorded,
+   without writing). No Mission rule was changed for a button.
+6. **What a completion screen can also carry keeps its content, logic and order**, restyled to sit
+   under the card: the research block of step 3 ("New in your menu" with its three links, then
+   "Put it to use" with the checklist and the guide link), the "Personal Review available" note,
+   and the public guides after step 10. The research block's render stands behind one switch,
+   `researchLinksShown` (on), as a seam for the clean route; this screen adds no door logic.
+
+Completion-screen variants: just completed; "Complete Mission" pressed on a Mission that was
+already complete (it shows "This Mission was already complete. Your completed result is ready to
+review." and the Mission's XP without a plus); a completed Mission opened again from the Programme
+home ("Your completed result is ready to review."); each of these with or without the research
+block (step 3, research open), the Review note (a Review became available) and the public guides
+(step 10). The older "Already complete" screen of a Mission completed before Missions had actions
+is unchanged.
+
+Evidence: `tests/programme-result-screen-browser.spec.ts` (in `ci:browser`) and the end-of-step
+test in `tests/programme-question-screen.test.ts` (in `programme:test`).
+
 ## Unchanged
 
 - Every press. "Create personal drafts", "Build my plan" and the finish press "Complete Mission"

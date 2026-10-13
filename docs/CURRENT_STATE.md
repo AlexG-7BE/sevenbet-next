@@ -71,6 +71,36 @@ Programme home are unchanged and are later rounds.
   is not shown on the first question; from the first saved answer the live
   result stands under the cards as before.
 
+**Second round, same day («сделай итог шага»): the two screens at the end of a
+step.** The flow is unchanged: result → "Complete Mission" → completion → the
+Programme home.
+
+- **Result screen** in the step's frame: every segment lit, the completion
+  reward as the quiet label by the progress ("+25 XP", the server's number; the
+  last action's XP shows there first for about two seconds), the person's
+  result as a **keepsake card** (paper, ink, the result's own sentence in the
+  serif when it has one, a ticket cut, rows in two columns), and "Complete
+  Mission" pinned, without XP. "The final step adds the {xp} XP completion
+  reward." left the screen.
+- **Completion screen**: a tick and "Step N done", the result's existing name
+  as the headline, one line ("You built it yourself. It is yours, not ours."),
+  the same card, "Save as image", and the reward once: ten dots and "+25 XP ·
+  2 of 10 steps". The yellow "+25" card, "Your result is ready and the
+  completion reward has been added." and "Mission complete. 25 XP earned." are
+  gone. The button is still "Continue from Programme Home".
+- **"Save as image"** is drawn on a canvas on the device and shared or saved
+  as a PNG. Nothing is sent to the server; the Content-Security-Policy is
+  unchanged.
+- **"Change the plan" is not built**: the server does not let a recorded
+  answer of a completed Mission be changed, and no Mission rule was changed.
+- **The research block after step 3, the Review note and the guides after
+  step 10** keep their content, logic and order under the card. The research
+  block's render stands behind one switch, `researchLinksShown` (on).
+- Ten catalogue rows are retired (the three lines above, "Complete Mission ·
+  +{xp} XP", "Completing…", "MISSION COMPLETE", "This Mission was already
+  complete." and three labels of the old progress rail); six are added in all
+  thirteen cells.
+
 Evidence: `tests/programme-question-screen.test.ts` (in `programme:test`) and
 `tests/programme-question-screen-browser.spec.ts` (in `ci:browser`); the
 three existing Programme browser specs follow the new labels.
