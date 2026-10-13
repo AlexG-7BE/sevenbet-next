@@ -137,7 +137,10 @@ test("the goal card appears only after the goal Mission, with the server's day a
 
   const card = page.locator(goal);
   await expect(card.getByText("Your goal this week", { exact: true })).toBeVisible();
+  // This tab holds no wording of the goal: the saved approach is the sentence, with no second line.
   await expect(card.locator("blockquote")).toHaveText("Pause before one decision");
+  await expect(card.locator("blockquote")).toHaveAttribute("data-goal-sentence", "approach");
+  await expect(card.locator("[data-goal-approach]")).toHaveCount(0);
   // Seven circles; the server's day is the lit one, the days before it are passed.
   const circles = card.locator("ol > li");
   await expect(circles).toHaveCount(7);
@@ -153,6 +156,33 @@ test("the goal card appears only after the goal Mission, with the server's day a
   expect(pathTop).toBeLessThan(pointTop);
   await expect(page.locator(startingPoint)).toHaveAttribute("data-place", "below");
   await expect(page.locator(startingPoint)).toContainText(startingPointText);
+});
+
+test("a tab that holds the person's own wording shows it as the goal, with the approach under it; nothing is sent", async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 915 });
+  const wording = "For seven days I pause for ten minutes before one decision.";
+  // The tab storage the goal Mission's result card reads: the account's own namespace.
+  await page.addInitScript(([key, value]) => { window.sessionStorage.setItem(key, value); }, [`sevenbet.programme.local-content.v2:user:${encodeURIComponent(userId)}`, JSON.stringify({ programAiMissionWording: { 2: wording } })]);
+  const sent: string[] = [];
+  page.on("request", (request) => { if (`${request.url()}${request.postData() ?? ""}`.includes("ten minutes")) sent.push(request.url()); });
+  await openHome(page, homeAt(8, { weekGoal: { goalStyle: "pause_first", totalDays: 7, day: 3, checkInDate: "2026-10-20" } }));
+
+  const card = page.locator(goal);
+  await expect(card.locator("blockquote")).toHaveText(wording);
+  await expect(card.locator("blockquote")).toHaveAttribute("data-goal-sentence", "own");
+  const approach = card.locator("[data-goal-approach]");
+  await expect(approach).toHaveText("Pause before one decision");
+  // The sentence keeps the serif voice; the approach is a small quiet line under it.
+  const [sentenceBox, approachBox] = await Promise.all([card.locator("blockquote").boundingBox(), approach.boundingBox()]);
+  expect(approachBox!.y).toBeGreaterThanOrEqual(sentenceBox!.y + sentenceBox!.height);
+  expect(await card.locator("blockquote").evaluate((element) => getComputedStyle(element).fontStyle)).toBe("italic");
+  const approachSize = await approach.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
+  expect(approachSize).toBeGreaterThanOrEqual(12);
+  expect(approachSize).toBeLessThan(await card.locator("blockquote").evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize)));
+  // Day and date are still the server's, and the wording stayed in the tab.
+  await expect(card.locator("p")).toHaveText("Day 3 of 7 · check-in 20 October");
+  await noHorizontalOverflow(page, "home with the person's own goal");
+  expect(sent, "the wording is not sent anywhere").toEqual([]);
 });
 
 test("from the check-in date on the goal card shows the date and lights no day", async ({ page }) => {

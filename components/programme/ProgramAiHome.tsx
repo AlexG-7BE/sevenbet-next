@@ -12,8 +12,16 @@ import { programmePublicHref, type ProgrammeLocale } from "@/lib/programme/prese
 import { humanValue } from "@/lib/programme/program-ai/mission-presentation";
 import styles from "./ProgramAiAuthenticated.module.css";
 
-export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionOneEntry, onReview, locale, programmePath, unconfirmedEmail = null }: {
+/** The Mission whose wording, kept in the tab, is the sentence of the weekly goal. */
+export const GOAL_WORDING_MISSION = 2;
+
+export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionOneEntry, onReview, locale, programmePath, unconfirmedEmail = null, goalWording = "" }: {
   error?: string;
+  /**
+   * The person's own wording of the goal, when this tab holds it (the same tab storage the result
+   * card of the goal Mission reads). It is shown and nothing else: the home never sends or stores it.
+   */
+  goalWording?: string;
   /** The signed-in customer's address while it is still unconfirmed. */
   unconfirmedEmail?: string | null;
   home: ProgramAiHome;
@@ -40,6 +48,9 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
   // they come. The path only folds: all its rows stay in the page.
   const [allSteps, setAllSteps] = useState(false);
   const weekGoal = home.weekGoal ?? null;
+  // The goal's sentence is the person's own wording while this tab holds it; otherwise, and on any
+  // other device, the saved approach the server sends stands as the sentence.
+  const ownGoal = goalWording.trim();
   const pathStart = Math.min(Math.max(home.currentStep - PATH_ROWS_BEFORE - 1, 0), Math.max(home.missions.length - PATH_ROWS, 0));
   const startingPoint = home.startingPoint ? <section className={styles.homeStartingPoint} data-place={weekGoal ? "below" : "lead"} data-programme-home="starting-point"><span>{t("Your starting point")}</span><p>{home.startingPoint.startingPoint}</p><small>{t("Saved Starting Point")}</small></section> : null;
   return (
@@ -55,7 +66,8 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
         {weekGoal ? (
           <section className={styles.homeGoal} data-goal-day={weekGoal.day ?? "check-in"} data-programme-home="goal">
             <span>{t("Your goal this week")}</span>
-            <blockquote>{humanValue(weekGoal.goalStyle, locale, "goalStyle")}</blockquote>
+            <blockquote data-goal-sentence={ownGoal ? "own" : "approach"}>{ownGoal || humanValue(weekGoal.goalStyle, locale, "goalStyle")}</blockquote>
+            {ownGoal ? <small data-goal-approach>{humanValue(weekGoal.goalStyle, locale, "goalStyle")}</small> : null}
             <ol aria-hidden="true">{Array.from({ length: weekGoal.totalDays }, (_, index) => <li data-day={weekGoalDayMark(weekGoal.day, index + 1)} key={index}>{index + 1}</li>)}</ol>
             <p>{weekGoal.day ? t("Day {day} of {total} · check-in {date}", { day: weekGoal.day, total: weekGoal.totalDays, date: formatProgrammeDate(weekGoal.checkInDate, locale) }) : t("Check-in {date}", { date: formatProgrammeDate(weekGoal.checkInDate, locale) })}</p>
           </section>

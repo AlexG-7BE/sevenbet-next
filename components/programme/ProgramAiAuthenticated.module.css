@@ -64,6 +64,9 @@
 /* The weekly goal: the goal in the serif voice, seven days and the check-in date the server gives. */
 .homeGoal, .homeStartingPoint[data-place="lead"] { border-color: var(--pg-line-2); background: linear-gradient(180deg, #1b1a17, #141413); }
 .homeGoal blockquote { margin: 10px 0 0; font-family: var(--font-seven-serif), Georgia, serif; font-size: 24px; font-style: italic; letter-spacing: -.01em; line-height: 1.12; overflow-wrap: anywhere; }
+/* A person's own wording can be long: the card shows its first lines. */
+.homeGoal blockquote[data-goal-sentence="own"] { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 6; }
+.homeGoal small { margin-top: 8px; display: block; color: var(--pg-soft); font-size: 13px; line-height: 1.4; }
 .homeGoal ol { max-width: 340px; margin: 16px 0 0; padding: 0; display: flex; gap: 4px; justify-content: space-between; list-style: none; }
 .homeGoal li { min-width: 0; flex: 0 1 34px; aspect-ratio: 1; display: grid; place-items: center; border: 1px solid var(--pg-line-2); border-radius: 50%; color: var(--pg-soft); font-size: 12px; font-weight: 650; }
 .homeGoal li[data-day="past"] { border-color: rgba(123, 199, 173, .34); background: rgba(123, 199, 173, .12); color: var(--pg-mint); }

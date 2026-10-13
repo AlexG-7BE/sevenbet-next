@@ -20,6 +20,8 @@ const stylesheet = read("components/programme/ProgramAiAuthenticated.module.css"
 const service = read("lib/programme/application/programme-ai-missions.service.ts");
 const route = read("app/api/program/program-ai/home/route.ts");
 const types = read("components/programme/ProgramAiAuthenticated.types.ts");
+const experience = read("components/programme/ProgramAiExperience.tsx");
+const weekGoalSource = read("lib/programme/program-ai/week-goal.ts");
 
 const stockholm = "Europe/Stockholm";
 const at = (iso: string) => new Date(iso);
@@ -72,7 +74,7 @@ test("no goal card without a completed goal Mission and its saved approach", () 
 test("the home renders the goal the server sends and works nothing out about it", () => {
   assert.ok(home.includes("const weekGoal = home.weekGoal ?? null;"));
   // The goal is the saved approach in the catalogue's own words, in every language.
-  assert.ok(home.includes('<blockquote>{humanValue(weekGoal.goalStyle, locale, "goalStyle")}</blockquote>'));
+  assert.ok(home.includes('<blockquote data-goal-sentence={ownGoal ? "own" : "approach"}>{ownGoal || humanValue(weekGoal.goalStyle, locale, "goalStyle")}</blockquote>'));
   for (const style of ["notice_and_note", "pause_first", "use_one_boundary", "research_after_pause", "ask_for_support"]) {
     for (const locale of CATALOGUE_LOCALES) assert.notEqual(humanValue(style, locale, "goalStyle"), programmeText(locale, "Unavailable"), `${style} in ${locale}`);
   }
@@ -88,6 +90,24 @@ test("the home renders the goal the server sends and works nothing out about it"
   assert.ok(home.includes("{weekGoal ? startingPoint : null}"));
   assert.ok(home.indexOf('data-programme-home="path"') < home.indexOf("{weekGoal ? startingPoint : null}"));
   assert.ok(home.includes('<p>{home.startingPoint.startingPoint}</p><small>{t("Saved Starting Point")}</small>'), "the server's text, not reworded");
+});
+
+test("the goal's sentence is the person's own wording only while the tab holds it, and it never leaves the tab", () => {
+  // The parent hands the home the wording it already keeps in the tab for the goal Mission: the
+  // same tab storage the Mission's result card reads, in the account's own namespace.
+  assert.ok(home.includes("export const GOAL_WORDING_MISSION = 2;"));
+  assert.ok(experience.includes('goalWording={missionWording[GOAL_WORDING_MISSION] ?? ""}'));
+  assert.ok(experience.includes("const localContent = loadProgrammeSubjectContent<ProgramAiAuthenticatedLocalContent>(window.sessionStorage, userSubject);"));
+  assert.ok(experience.includes("setMissionWording(localContent.programAiMissionWording ?? {});"));
+  // With wording: it is the sentence and the saved approach is the quiet line under it. Without:
+  // the approach is the sentence and there is no second line.
+  assert.ok(home.includes("const ownGoal = goalWording.trim();"));
+  assert.ok(home.includes('{ownGoal ? <small data-goal-approach>{humanValue(weekGoal.goalStyle, locale, "goalStyle")}</small> : null}'));
+  assert.equal(home.match(/goalWording|ownGoal/g)?.length, 7, "the wording is read for the goal card and nowhere else");
+  // The home sends nothing and stores nothing; the server's goal knows no wording.
+  assert.doesNotMatch(home, /fetch\(|sessionStorage|localStorage|document\.cookie/);
+  assert.doesNotMatch(service + weekGoalSource + route + types, /goalWording|missionWording|localWording|programAiMissionWording/);
+  assert.match(stylesheet, /\.homeGoal small \{[^}]*font-size: 13px;/);
 });
 
 test("the next step card keeps the button, its label and what it does", () => {
