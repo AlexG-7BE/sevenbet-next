@@ -35,7 +35,7 @@ const sv: BesideMessages = {
   titleLead: "Du behöver inte få honom att sluta.",
   titleEmphasis: "Du behöver se.",
   intro: "Nästan varannan som kontaktar Stödlinjen är en anhörig, oftast en partner eller en mamma. Rådet du får överallt slutar på ”sätt honom i Spelpaus”. Den här sidan börjar där rådet tar slut: vad du kan se själv, vad du kan säga i stället för ”sluta”, och vad du gör dag 11 när kontot öppnas igen.",
-  revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. På den här vägen visas inga.",
+  revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. Den här texten innehåller inga.",
   realNumber: {
     heading: "Se den riktiga siffran själv",
     body: "Inte hans uppskattning och inte din. Tre ställen där siffran finns:",
@@ -51,7 +51,7 @@ const sv: BesideMessages = {
     text: "Jag ber dig inte sluta. Jag ber dig om tio dagar med regler jag kan se: summan innan appen, tiden innan appen, och att jag får veta den riktiga siffran. Planen finns här: b4gamble.com/sv/pause-plan",
     copy: "Kopiera meddelandet",
     copied: "Kopierat",
-    after: "När han öppnar länken visas inga casinon för honom. Dörren till den delen av sajten öppnar bara han själv, efter pausen.",
+    after: "När han öppnar länken ser han planen: tio steg, utan casinon och utan erbjudanden i den.",
   },
   dayEleven: {
     heading: "Dag 11",
@@ -78,7 +78,7 @@ const da: BesideMessages = {
   titleLead: "Du behøver ikke få ham til at stoppe.",
   titleEmphasis: "Du skal kunne se.",
   intro: "Mange af dem, der kontakter StopSpillet, er pårørende, oftest en partner eller en mor. Rådet, du får alle steder, ender på ”få ham i ROFUS”. Denne side begynder, hvor rådet slutter: hvad du selv kan se, hvad du kan sige i stedet for ”stop”, og hvad du gør dagen efter, når pausen udløber.",
-  revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. På denne vej vises ingen.",
+  revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. Denne tekst indeholder ingen.",
   realNumber: {
     heading: "Se det rigtige tal selv",
     body: "Ikke hans skøn og ikke dit. Tre steder, hvor tallet findes:",
@@ -94,7 +94,7 @@ const da: BesideMessages = {
     text: "Jeg beder dig ikke om at stoppe. Jeg beder om ti dage med regler, jeg kan se: beløbet før appen, tiden før appen, og at jeg får det rigtige tal at vide. Planen er her: b4gamble.com/da/pause-plan",
     copy: "Kopiér beskeden",
     copied: "Kopieret",
-    after: "Når han åbner linket, vises ingen casinoer for ham. Døren til den del af sitet åbner kun han selv, efter pausen.",
+    after: "Når han åbner linket, ser han planen: ti trin, uden casinoer og uden tilbud i den.",
   },
   dayEleven: {
     heading: "Dagen efter",
@@ -121,7 +121,7 @@ const en: BesideMessages = {
   titleLead: "You don't have to make him quit.",
   titleEmphasis: "You have to be able to see.",
   intro: "Many of the people who contact a helpline are partners and mothers. The advice ends everywhere at “put him on self-exclusion”. This page starts where the advice ends: what you can see yourself, what to say instead of “quit”, and what to do the day the pause ends.",
-  revenueLine: "B4GAMBLE earns commission from licensed casinos. None are shown on this route.",
+  revenueLine: "B4GAMBLE earns commission from licensed casinos. This text contains none.",
   realNumber: {
     heading: "See the real number yourself",
     body: "Not his estimate and not yours. Three places where the number lives:",
@@ -137,7 +137,7 @@ const en: BesideMessages = {
     text: "I'm not asking you to quit. I'm asking for ten days with rules I can see: the amount before the app, the time before the app, and that I get to know the real number. The plan is here: b4gamble.com/en/pause-plan",
     copy: "Copy the message",
     copied: "Copied",
-    after: "When he opens the link, no casinos are shown to him. Only he opens that part of the site, after the pause.",
+    after: "When he opens the link he sees the plan: ten steps, with no casinos and no offers in it.",
   },
   dayEleven: {
     heading: "The day after",

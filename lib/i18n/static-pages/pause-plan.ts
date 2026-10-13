@@ -26,13 +26,9 @@ export type PausePlanToolMessages = Readonly<{
   startLabel: string;
   startHint: string;
   periodLabel: string;
-  submit: string;
   endsLabel: string;
   dayAfterLabel: string;
   openEndedNote: string;
-  noOffers: string;
-  saved: string;
-  reset: string;
   dayLabel: string;
   planHeading: string;
   planIntro: string;
@@ -58,12 +54,10 @@ export type PausePlanMessages = Readonly<{
   support: readonly Readonly<{ label: string; href: string }>[];
   homeLabel: string;
   breadcrumbLabel: string;
-  /** The revenue model, stated first on every clean-route page (Founder decision, 13 October 2026). */
+  /** The revenue model, stated in the header. */
   revenueLine: string;
   /** Day 11, not going back: five lines the person takes to the helpline. */
   notBack: Readonly<{ heading: string; intro: string; lines: readonly string[]; copy: string; copied: string; supportLabel: string; supportHref: string }>;
-  /** The door opens only by the person's own action, after the pause's last day. */
-  door: Readonly<{ afterHeading: string; afterBody: string; open: string; opened: string; closedNote: string; removeNote: string }>;
   ics: Readonly<{ download: string; title: string; description: string }>;
 }>;
 
@@ -83,11 +77,11 @@ const rofusDa: PausePlanRegisterMessages = {
 
 const sv: PausePlanMessages = {
   metadataTitle: "10 dagar. 10 steg. Planen för din spelpaus",
-  metadataDescription: "Spelpaus kan nu tas i 10 dagar. Här är planen för dagarna i pausen och för dag 11: ett steg om dagen, inga casinon under pausen. Gratis och privat.",
+  metadataDescription: "Spelpaus kan nu tas i 10 dagar. Här är planen för dagarna i pausen och för dag 11: alla tio steg på en kväll eller ett om dagen. Gratis och privat.",
   eyebrow: "Spelpaus · 10 dagar",
   titleLead: "10 dagar.",
   titleEmphasis: "10 steg.",
-  intro: "Sedan sommaren 2026 kan du stänga av dig från allt licensierat spel i 10 dagar på spelpaus.se. Pausen går inte att ångra, och när den tar slut öppnas kontona av sig själva. Det som avgör dag 11 är vad du gjorde dag 1–10. Här är planen: ett steg om dagen. Vi visar inga casinon så länge du är i pausen.",
+  intro: "Sedan sommaren 2026 kan du stänga av dig från allt licensierat spel i 10 dagar på spelpaus.se. Pausen går inte att ångra, och när den tar slut öppnas kontona av sig själva. Det som avgör dag 11 är vad du gjorde dag 1–10. Här är planen: tio steg, i din takt.",
   register: "spelpaus",
   registers: { spelpaus: spelpausSv },
   tool: {
@@ -96,13 +90,9 @@ const sv: PausePlanMessages = {
     startLabel: "Pausen började",
     startHint: "Välj dagen du registrerade pausen.",
     periodLabel: "Period",
-    submit: "Visa min plan",
     endsLabel: "Pausen gäller till och med",
     dayAfterLabel: "Dag 11: kontona öppnas",
     openEndedNote: "En avstängning tills vidare har inget slutdatum. Vi räknar med minst 12 månader.",
-    noOffers: "Så länge pausen pågår visar den här sajten inga casinon eller erbjudanden för dig. Dörren öppnas dagen efter.",
-    saved: "Sparat i den här webbläsaren. Inget skickas någonstans.",
-    reset: "Ta bort pausen från den här webbläsaren",
     dayLabel: "Dag",
     planHeading: "Alla tio på en kväll, eller ett om dagen",
     planIntro: "Tio steg ur B4GAMBLE-programmet, i den ordning du gör dem. Varje steg tar 5–15 minuter och slutar med något du behåller. Du väljer takten: hela planen på en kväll, eller ett steg om dagen tills pausen är slut. Du fortsätter alltid där du slutade.",
@@ -129,7 +119,7 @@ const sv: PausePlanMessages = {
   faq: [
     ["Kan jag avsluta spelpausen i förtid?", "Nej. En avstängning på spelpaus.se går inte att ångra eller avbryta. 10 dagar är 10 dagar."],
     ["Vad händer när pausen tar slut?", "Dina spelkonton hos licensierade spelbolag aktiveras automatiskt, om du inte registrerar en ny avstängning. Därför är planen för dag 11 viktigare än själva pausen."],
-    ["Visar ni casinon under pausen?", "Nej. När du anger din paus här visar sajten inga casinon eller erbjudanden för dig förrän dagen efter att pausen gått ut. Licensierade spelbolag får inte heller rikta marknadsföring till dig under tiden."],
+    ["Finns det casinon i planen?", "Nej. Planen och dess tio steg innehåller inga casinon och inga erbjudanden. Licensierade spelbolag får inte heller rikta marknadsföring till dig under pausen."],
     ["Behöver jag ett konto?", "Inte för att läsa planen. För att göra stegen och spara dina svar skapar du ett konto i programmet. Det är gratis, och dina svar används aldrig för erbjudanden, rankningar eller annonser."],
     ["Gäller spelpaus casinon utan svensk licens?", "Nej. Spelpaus gäller bara spelbolag med svensk licens. Sajter som marknadsför ”casino utan spelpaus” saknar licens i Sverige, och där har du inget svenskt konsumentskydd."],
     ["Vart vänder jag mig om det är akut?", "Stödlinjen för spelare och anhöriga: 020-81 91 00, stodlinjen.se. Gratis och anonymt."],
@@ -141,7 +131,7 @@ const sv: PausePlanMessages = {
   ],
   homeLabel: "Hem",
   breadcrumbLabel: "10 dagar, 10 steg",
-  revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. På den här vägen visas inga.",
+  revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. Planen innehåller inga.",
   notBack: {
     heading: "Dag 11: inte tillbaka?",
     intro: "Om du bestämmer dig för att inte gå tillbaka, ta med dig det du redan vet till Stödlinjen. Fem rader räcker, och de gör samtalet kortare:",
@@ -151,24 +141,16 @@ const sv: PausePlanMessages = {
     supportLabel: "Stödlinjen – 020-81 91 00, chatt och telefon",
     supportHref: "https://www.stodlinjen.se/",
   },
-  door: {
-    afterHeading: "Pausen är slut",
-    afterBody: "Kontona är öppna hos spelbolagen. Här förblir casinoavsnittet stängt tills du själv öppnar det. Inget öppnas av sig självt.",
-    open: "Öppna casinoavsnittet i den här webbläsaren",
-    opened: "Öppnat. Menyn visar casinon, bonusar och erbjudanden när steg 3 i programmet är klart.",
-    closedNote: "Casinoavsnittet är stängt i den här webbläsaren tills du öppnar det själv.",
-    removeNote: "Pausen är borttagen. Casinoavsnittet förblir stängt tills du öppnar det själv.",
-  },
   ics: { download: "Lägg dag 11 i kalendern", title: "Dag 11 – kontona öppnas, mina regler gäller", description: "Summan innan appen. Tiden innan appen. En person vet. Planen: https://b4gamble.com/sv/pause-plan" },
 };
 
 const da: PausePlanMessages = {
   metadataTitle: "Dagen efter ROFUS. 10 trin til din pause",
-  metadataDescription: "ROFUS kan tages for 24 timer, 1, 3 eller 6 måneder. Her er planen for pausen og for dagen efter: ét trin om dagen, ingen casinoer under pausen. Gratis og privat.",
+  metadataDescription: "ROFUS kan tages for 24 timer, 1, 3 eller 6 måneder. Her er planen for pausen og for dagen efter: alle ti trin på én aften eller ét om dagen. Gratis og privat.",
   eyebrow: "ROFUS · pausen",
   titleLead: "Dagen efter ROFUS.",
   titleEmphasis: "10 trin.",
-  intro: "På rofus.nu kan du udelukke dig fra alt dansk licenseret spil i 24 timer, 1, 3 eller 6 måneder – eller endeligt. En midlertidig pause kan ikke ophæves før tid, og når den udløber, kan du spille igen. Det, der afgør dagen efter, er, hvad du gjorde i pausen. Her er planen: ét trin om dagen. Vi viser ingen casinoer, så længe du er i pausen.",
+  intro: "På rofus.nu kan du udelukke dig fra alt dansk licenseret spil i 24 timer, 1, 3 eller 6 måneder – eller endeligt. En midlertidig pause kan ikke ophæves før tid, og når den udløber, kan du spille igen. Det, der afgør dagen efter, er, hvad du gjorde i pausen. Her er planen: ti trin, i dit tempo.",
   register: "rofus",
   registers: { rofus: rofusDa },
   tool: {
@@ -177,13 +159,9 @@ const da: PausePlanMessages = {
     startLabel: "Pausen startede",
     startHint: "Vælg den dag, du registrerede pausen.",
     periodLabel: "Periode",
-    submit: "Vis min plan",
     endsLabel: "Pausen gælder til og med",
     dayAfterLabel: "Dagen efter: du kan spille igen",
     openEndedNote: "En endelig udelukkelse har ingen slutdato. Vi regner med mindst 12 måneder.",
-    noOffers: "Så længe pausen varer, viser denne side ingen casinoer eller tilbud til dig. Døren åbner dagen efter.",
-    saved: "Gemt i denne browser. Intet sendes nogen steder hen.",
-    reset: "Fjern pausen fra denne browser",
     dayLabel: "Dag",
     planHeading: "Alle ti på én aften, eller ét om dagen",
     planIntro: "Ti trin fra B4GAMBLE-programmet i den rækkefølge, du tager dem. Hvert trin tager 5–15 minutter og slutter med noget, du beholder. Du vælger tempoet: hele planen på én aften, eller ét trin om dagen, til pausen er slut. Du fortsætter altid, hvor du slap.",
@@ -210,7 +188,7 @@ const da: PausePlanMessages = {
   faq: [
     ["Kan jeg ophæve min ROFUS-pause før tid?", "Nej. En midlertidig udelukkelse i ROFUS kan ikke ophæves, før perioden er udløbet. En endelig udelukkelse kan først ophæves efter mindst et år, og kun på din egen anmodning."],
     ["Hvad sker der, når pausen udløber?", "Du kan igen logge ind hos spiludbydere med dansk licens. Derfor er planen for dagen efter vigtigere end selve pausen."],
-    ["Viser I casinoer under pausen?", "Nej. Når du angiver din pause her, viser siden ingen casinoer eller tilbud til dig, før dagen efter pausen er udløbet. Udbydere med dansk licens må heller ikke sende dig markedsføring, mens du er i ROFUS."],
+    ["Er der casinoer i planen?", "Nej. Planen og dens ti trin indeholder ingen casinoer og ingen tilbud. Udbydere med dansk licens må heller ikke sende dig markedsføring, mens du er i ROFUS."],
     ["Skal jeg have en konto?", "Ikke for at læse planen. For at tage trinnene og gemme dine svar opretter du en konto i programmet. Det er gratis, og dine svar bruges aldrig til tilbud, rangeringer eller reklamer."],
     ["Gælder ROFUS udenlandske casinoer?", "Nej. ROFUS gælder kun spiludbydere med dansk licens. Sider uden dansk licens er ikke omfattet, og der har du ingen dansk forbrugerbeskyttelse."],
     ["Hvor henvender jeg mig, hvis det haster?", "StopSpillet: 70 22 28 25, stopspillet.dk. Gratis og anonymt. Center for Ludomani: 70 11 18 10."],
@@ -222,7 +200,7 @@ const da: PausePlanMessages = {
   ],
   homeLabel: "Forside",
   breadcrumbLabel: "Dagen efter ROFUS",
-  revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. På denne vej vises ingen.",
+  revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. Planen indeholder ingen.",
   notBack: {
     heading: "Dagen efter: ikke tilbage?",
     intro: "Hvis du beslutter ikke at gå tilbage, så tag det, du allerede ved, med til StopSpillet. Fem linjer er nok, og de gør samtalen kortere:",
@@ -232,24 +210,16 @@ const da: PausePlanMessages = {
     supportLabel: "StopSpillet – 70 22 28 25, chat og telefon",
     supportHref: "https://www.stopspillet.dk/",
   },
-  door: {
-    afterHeading: "Pausen er slut",
-    afterBody: "Kontiene er åbne hos spiludbyderne. Her forbliver casinodelen lukket, indtil du selv åbner den. Intet åbner af sig selv.",
-    open: "Åbn casinodelen i denne browser",
-    opened: "Åbnet. Menuen viser casinoer, bonusser og tilbud, når trin 3 i programmet er gennemført.",
-    closedNote: "Casinodelen er lukket i denne browser, indtil du selv åbner den.",
-    removeNote: "Pausen er fjernet. Casinodelen forbliver lukket, indtil du selv åbner den.",
-  },
   ics: { download: "Læg dagen efter i kalenderen", title: "Dagen efter – kontiene åbner, mine regler gælder", description: "Beløbet før appen. Tiden før appen. Én person ved det. Planen: https://b4gamble.com/da/pause-plan" },
 };
 
 const en: PausePlanMessages = {
   metadataTitle: "The Day After Your Gambling Pause: 10 Steps",
-  metadataDescription: "A free ten-day plan beside a Spelpaus or ROFUS break: one step a day, and no casinos shown while you are paused.",
+  metadataDescription: "A free ten-day plan beside a Spelpaus or ROFUS break: all ten steps in one evening or one a day.",
   eyebrow: "Self-exclusion pause",
   titleLead: "The day after.",
   titleEmphasis: "10 steps.",
-  intro: "Sweden's Spelpaus and Denmark's ROFUS block you from every licensed operator for a fixed time. The pause cannot be cancelled early, and when it ends your accounts work again. What decides the day after is what you did during the pause. Here is the plan: one step a day. We show you no casinos while you are paused.",
+  intro: "Sweden's Spelpaus and Denmark's ROFUS block you from every licensed operator for a fixed time. The pause cannot be cancelled early, and when it ends your accounts work again. What decides the day after is what you did during the pause. Here is the plan: ten steps, at your pace.",
   register: "both",
   registers: {
     spelpaus: {
@@ -271,13 +241,9 @@ const en: PausePlanMessages = {
     startLabel: "The pause started",
     startHint: "Pick the day you registered the pause.",
     periodLabel: "Period",
-    submit: "Show my plan",
     endsLabel: "The pause runs to the end of",
     dayAfterLabel: "The day after: accounts work again",
     openEndedNote: "An open-ended exclusion has no end date. We count at least 12 months.",
-    noOffers: "While the pause runs, this site shows you no casinos or offers. The door opens the day after.",
-    saved: "Saved in this browser. Nothing is sent anywhere.",
-    reset: "Remove the pause from this browser",
     dayLabel: "Day",
     planHeading: "All ten in one evening, or one a day",
     planIntro: "Ten steps from the B4GAMBLE Programme, in the order you take them. Each takes 5–15 minutes and ends with something you keep. You set the pace: the whole plan in one evening, or one step a day until the pause ends. You always continue where you left off.",
@@ -304,7 +270,7 @@ const en: PausePlanMessages = {
   faq: [
     ["Can I end the pause early?", "No. Neither Spelpaus nor a temporary ROFUS exclusion can be cancelled before the period ends."],
     ["What happens when the pause ends?", "Your accounts with licensed operators work again, unless you register a new exclusion. That is why the plan for the day after matters more than the pause itself."],
-    ["Do you show casinos during the pause?", "No. Once you enter your pause here, this site shows you no casinos or offers until the day after it ends. Licensed operators may not market to you during the pause either."],
+    ["Are there casinos in the plan?", "No. The plan and its ten steps contain no casinos and no offers. Licensed operators may not market to you during the pause either."],
     ["Do I need an account?", "Not to read the plan. To take the steps and keep your answers you create a free Programme account. Your answers are never used for offers, rankings or ads."],
     ["Does the pause cover unlicensed casinos?", "No. Spelpaus covers Swedish-licensed operators and ROFUS covers Danish-licensed ones. Sites advertising casinos \"without\" the register hold no local licence and give you no local consumer protection."],
     ["Where do I turn if it is urgent?", "Sweden: Stödlinjen, 020-81 91 00. Denmark: StopSpillet, 70 22 28 25. Both are free and anonymous."],
@@ -316,7 +282,7 @@ const en: PausePlanMessages = {
   ],
   homeLabel: "Home",
   breadcrumbLabel: "The day after your pause",
-  revenueLine: "B4GAMBLE earns commission from licensed casinos. None are shown on this route.",
+  revenueLine: "B4GAMBLE earns commission from licensed casinos. The plan contains none.",
   notBack: {
     heading: "The day after: not going back?",
     intro: "If you decide not to go back, take what you already know to the helpline. Five lines are enough, and they make the call shorter:",
@@ -325,14 +291,6 @@ const en: PausePlanMessages = {
     copied: "Copied",
     supportLabel: "Stödlinjen (Sweden) 020-81 91 00 · StopSpillet (Denmark) 70 22 28 25",
     supportHref: "https://www.stodlinjen.se/",
-  },
-  door: {
-    afterHeading: "The pause is over",
-    afterBody: "Your accounts work again at the operators. Here the casino section stays closed until you open it yourself. Nothing opens by itself.",
-    open: "Open the casino section in this browser",
-    opened: "Opened. The menu shows casinos, bonuses and offers once Programme step 3 is complete.",
-    closedNote: "The casino section is closed in this browser until you open it yourself.",
-    removeNote: "The pause is removed. The casino section stays closed until you open it yourself.",
   },
   ics: { download: "Add the day after to my calendar", title: "The day after – accounts reopen, my rules apply", description: "The amount before the app. The time before the app. One person knows. The plan: https://b4gamble.com/en/pause-plan" },
 };

@@ -1,11 +1,12 @@
-// Pictures and a plain proof of the clean route on Production (Founder decision, 13 October 2026;
-// lib/research-access.ts), taken from a GitHub-hosted runner because Production answers the
-// Founder's machine with 451. For each language the script opens the pause page as a first-time
-// visitor on a phone, opens the menu, goes home and opens the menu again, then photographs the
-// pages for the person beside a player and the rule before the app. A second browser that already
-// holds the lesson flag shows the research links at home and none once the pause page has been
-// opened: that is the clean route itself. Only ordinary page loads leave the runner; the cookies
-// the site sets are listed by name. Output: <out>/*.png, <out>/REPORT.md and <out>/report.json.
+// Pictures of the pause landing pages on Production, taken from a GitHub-hosted runner because
+// Production answers the Founder's machine with 451. For each language the script opens the pause
+// plan as a first-time visitor on a phone, opens the menu, goes home and opens the menu again, then
+// photographs the pages for the person beside a player and the rule before the app. A second
+// browser that already holds the lesson flag checks that the pause plan changes nothing in the
+// menu: the research links are there before and after (Founder, 13 October 2026: an ordinary
+// landing page; the declared-pause and clean-route door rules are withdrawn). Only ordinary page
+// loads leave the runner; the cookies the site sets are listed by name.
+// Output: <out>/*.png, <out>/REPORT.md and <out>/report.json.
 //
 //   node scripts/research/production-screenshots.mjs --base=https://b4gamble.com --locales=sv,da --out=screenshots
 //
@@ -22,7 +23,6 @@ const out = options.out || "screenshots";
 mkdirSync(out, { recursive: true });
 
 const LESSON_COOKIE = "b4g_research_access";
-const CLEAN_ROUTE_COOKIE = "b4g_clean_route";
 // A link into the research section or to a partner, with or without a language prefix.
 const RESEARCH_LINK = /^(?:\/[a-z]{2}(?:-[a-z]{2})?)?\/(?:best-offers|casinos|casino|bonuses|r)(?:\/|$)/i;
 const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
@@ -64,7 +64,6 @@ async function record(page, context, { step, file, status, expect = null, fullPa
     title: await page.title(),
     file,
     cookies,
-    cleanRoute: cookies.includes(CLEAN_ROUTE_COOKIE),
     researchLinks: research.length,
     researchLinkSample: [...new Set(research)].slice(0, 5),
     expect,
@@ -74,8 +73,8 @@ async function record(page, context, { step, file, status, expect = null, fullPa
 const browser = await chromium.launch();
 try {
   for (const locale of locales) {
-    // 1. A first-time visitor on a phone: the pause page and its menu, then home and its menu, then
-    //    the two other pages of the clean route.
+    // 1. A first-time visitor on a phone: the pause plan and its menu, then home and its menu, then
+    //    the two other landing pages. No research link before the lesson (the two doors).
     {
       const context = await browser.newContext(contextOptions(locale, PHONE));
       const page = await context.newPage();
@@ -95,7 +94,7 @@ try {
       await context.close();
     }
     // 2. A reader who finished the lesson "Research responsibly": the research links show at home
-    //    and are gone once the pause page has been opened.
+    //    before and after the pause plan, which changes nothing in the menu.
     {
       const context = await browser.newContext(contextOptions(locale, PHONE));
       await context.addCookies([{ name: LESSON_COOKIE, value: "open", url: base }]);
@@ -107,7 +106,7 @@ try {
       await visit(page, `/${locale}/pause-plan`);
       status = await visit(page, `/${locale}`);
       if (await openMenu(page)) {
-        await record(page, context, { step: `${locale}: lesson done, home menu after the pause page`, file: `${locale}-6-lesson-done-home-menu-after-pause-plan-phone.png`, status, expect: "none" });
+        await record(page, context, { step: `${locale}: lesson done, home menu after the pause page`, file: `${locale}-6-lesson-done-home-menu-after-pause-plan-phone.png`, status, expect: "some" });
       }
       await context.close();
     }
@@ -129,15 +128,15 @@ const failures = rows.filter((row) => row.status >= 400 || row.status === 0
   || (row.expect === "none" && row.researchLinks > 0)
   || (row.expect === "some" && row.researchLinks === 0));
 const lines = [
-  "# The clean route on Production",
+  "# The pause landing pages on Production",
   "",
   `Site: ${base} · taken ${takenAt} from a GitHub-hosted runner · research links = links to Best Offers, Casinos, a casino review, Bonuses or a partner route on the page`,
   "",
-  "| Step | HTTP | Research links | Clean-route cookie | Cookies | Picture |",
-  "|---|---|---|---|---|---|",
-  ...rows.map((row) => `| ${row.step} | ${row.status} | ${row.researchLinks}${row.expect === "none" && row.researchLinks > 0 ? " ✗" : ""}${row.expect === "some" && row.researchLinks === 0 ? " (door never opened: nothing to compare)" : ""} | ${row.cleanRoute ? "yes" : "no"} | ${row.cookies.join(", ") || "—"} | ${row.file} |`),
+  "| Step | HTTP | Research links | Cookies | Picture |",
+  "|---|---|---|---|---|",
+  ...rows.map((row) => `| ${row.step} | ${row.status} | ${row.researchLinks}${row.expect === "none" && row.researchLinks > 0 ? " ✗" : ""}${row.expect === "some" && row.researchLinks === 0 ? " ✗" : ""} | ${row.cookies.join(", ") || "—"} | ${row.file} |`),
   "",
-  failures.length ? `**${failures.length} step(s) did not hold.**` : "**Every step holds: no research link on the clean route, and the lesson's links vanish after the pause page.**",
+  failures.length ? `**${failures.length} step(s) did not hold.**` : "**Every step holds: no research link before the lesson, and the pause plan changes nothing in the menu after it.**",
   "",
 ];
 writeFileSync(`${out}/REPORT.md`, lines.join("\n"));

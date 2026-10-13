@@ -908,31 +908,31 @@ Programme start link; an FAQ with FAQPage structured data; the national
 helplines (Stödlinjen, StopSpillet). Other published languages read the
 English page under `noindex`. The page never links to a casino.
 
-**The clean route (Founder decision, 13 October 2026).** "Show my plan" writes
-the pause's last day into the plain cookie `b4g_pause_until`; middleware writes
-`b4g_clean_route=1` on the first document navigation onto `/pause-plan`, `/innan`
-or `/beside`, or from one of the communities, regulators and helplines we speak
-to. `researchDoorOpen` in `lib/research-access.ts` (lesson flag, no declared
-pause, no clean route) is what the public and Programme layouts and the client
-door read, so no research link appears for that browser until the person opens
-the door with the one button on `/pause-plan`; nothing opens by itself on day
-11. Two more clean-route pages: `/innan` (the rule before the app, kept in the
-browser, no button onwards) and `/beside` (for the person beside a player: the
-real number, one message in her words, day 11, the helplines). Every clean-route
-page states the revenue model first and links to no casino. The lesson flag, the
-Programme answers and every offer, ranking and `/r/` route are untouched; the
-Programme Home research card and the step-3 completion screen still follow the
-API's `researchAccess` until the follow-up after the "no stops" rework. Pure date
-logic: `lib/tools/pause-plan.ts`. Tests: `tests/pause-plan.test.ts`,
-`tests/clean-route.test.ts` (`pause-plan:test`). Proof from outside Kazakhstan
-(Production answers the Founder's machine with 451): the manual workflow
-"Production screenshots (clean route)" runs
+**An ordinary landing page (Founder decision, 13 October 2026, later the same
+day).** The declared-pause rule of 12 October and the clean route of 13 October
+are withdrawn: `/pause-plan` sets no cookie, stores nothing and changes nothing
+in the menu; its "show my plan", "remove the pause" and "open the casino
+section" controls are gone, and the one remaining button saves the day after as
+a calendar file. `lib/research-access.ts` is the lesson flag alone again, the
+middleware mark is deleted, and the public layout, the Programme layout and the
+client door read `researchAccessOpen`. The two doors of 10 October are
+unchanged: research links appear inside the research section or after the
+lesson at step 3. Two more landing pages stay: `/innan` (the rule before the
+app, kept in the browser, no button onwards) and `/beside` (for the person
+beside a player: the real number, one message in her words, day 11, the
+helplines). All three link to no casino themselves and state the revenue model;
+none makes a promise about the menu. Decision record:
+`docs/07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md`, amendment 3.
+Pure date logic: `lib/tools/pause-plan.ts`. Tests: `tests/pause-plan.test.ts`,
+`tests/clean-route.test.ts` (`pause-plan:test`). Pictures from outside
+Kazakhstan (Production answers the Founder's machine with 451): the manual
+workflow "Production screenshots (pause landing)" runs
 `scripts/research/production-screenshots.mjs` on a GitHub-hosted runner, which
-photographs the three pages and the menu before and after the pause page, counts
-research links on each and keeps the pictures with `REPORT.md` as a workflow
-artifact for 14 days.
+photographs the three pages and the menu, counts research links on each and
+keeps the pictures with `REPORT.md` as a workflow artifact for 14 days.
 
-Live on Production since 12–13 October 2026 (PRs #491 and #494).
+Live on Production since 12–13 October 2026 (PRs #491 and #494); the door rules
+were removed again on 13 October 2026.
 
 ## Open agreement for creators — in review
 

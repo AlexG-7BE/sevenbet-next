@@ -25,20 +25,10 @@
 .segmented input { position:absolute; opacity:0; pointer-events:none; }
 .segmented label:has(input:focus-visible) { outline:3px solid #e4e24e; outline-offset:2px; }
 .segmented .selected { border-color:#e4e24e; background:#e4e24e; color:#100f0f; }
-.submit { min-height:52px; padding:0 24px; border:0; border-radius:999px; background:#e4e24e; color:#100f0f; font:inherit; font-size:16px; font-weight:850; cursor:pointer; }
-.submit:disabled { opacity:.5; cursor:default; }
-.buttons { display:flex; flex-wrap:wrap; gap:10px; }
-.secondary { min-height:52px; padding:0 22px; border:1px solid rgba(250,250,247,.35); border-radius:999px; background:none; color:#fafaf7; font:inherit; font-size:15px; font-weight:800; cursor:pointer; }
-.secondary:disabled { opacity:.5; cursor:default; }
-.secondary:focus-visible { outline:3px solid #e4e24e; outline-offset:3px; }
-.doorBlock { margin-top:18px; padding:18px 20px; border:1px solid rgba(228,226,78,.5); border-radius:14px; display:grid; gap:12px; }
-.doorBlock h3 { margin:0; font-size:1.2rem; line-height:1.2; }
-.doorBlock p { margin:0; color:#c3c0b7; font-size:15px; line-height:1.5; }
-.submit:focus-visible { outline:3px solid #fafaf7; outline-offset:3px; }
+.calendar { justify-self:start; min-height:52px; padding:0 22px; border:1px solid rgba(250,250,247,.35); border-radius:999px; background:none; color:#fafaf7; font:inherit; font-size:15px; font-weight:800; cursor:pointer; }
+.calendar:disabled { opacity:.5; cursor:default; }
+.calendar:focus-visible { outline:3px solid #e4e24e; outline-offset:3px; }
 .note { margin:0; color:#c3c0b7; font-size:14px; line-height:20px; }
-.saved { margin:0; color:#e4e24e; font-size:14px; line-height:20px; }
-.reset { padding:0; border:0; background:none; color:#fafaf7; font:inherit; font-size:14px; text-decoration:underline; cursor:pointer; }
-.reset:focus-visible { outline:3px solid #e4e24e; outline-offset:2px; }
 
 .result { padding:32px; border:1px solid rgba(250,250,247,.08); border-radius:20px; background:#171616; }
 .result dl { margin:0; }

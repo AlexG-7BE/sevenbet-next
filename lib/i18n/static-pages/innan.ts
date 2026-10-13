@@ -40,7 +40,7 @@ const sv: InnanMessages = {
   eyebrow: "Innan appen",
   title: "Din regel innan appen",
   intro: "Tre rader som du bestämmer själv: summan, tiden, personen som vet. Skärmen visar dem, räknar hur många gånger du öppnade den den här veckan och har ingen knapp vidare. Lägg den som bokmärke eller på hemskärmen och öppna den innan appen.",
-  revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. På den här vägen visas inga.",
+  revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. Verktyget här innehåller inga.",
   form: {
     heading: "Skriv dina tre rader",
     amountLabel: "Summan",
@@ -76,7 +76,7 @@ const da: InnanMessages = {
   eyebrow: "Før appen",
   title: "Din regel før appen",
   intro: "Tre linjer, du selv bestemmer: beløbet, tiden, personen der ved det. Skærmen viser dem, tæller hvor mange gange du åbnede den i denne uge og har ingen knap videre. Gem den som bogmærke eller på startskærmen, og åbn den før appen.",
-  revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. På denne vej vises ingen.",
+  revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. Værktøjet her indeholder ingen.",
   form: {
     heading: "Skriv dine tre linjer",
     amountLabel: "Beløbet",
@@ -112,7 +112,7 @@ const en: InnanMessages = {
   eyebrow: "Before the app",
   title: "Your rule before the app",
   intro: "Three lines you decide yourself: the amount, the time, the person who knows. The screen shows them, counts how often you opened it this week, and has no button onwards. Bookmark it or add it to your home screen, and open it before the app.",
-  revenueLine: "B4GAMBLE earns commission from licensed casinos. None are shown on this route.",
+  revenueLine: "B4GAMBLE earns commission from licensed casinos. This tool contains none.",
   form: {
     heading: "Write your three lines",
     amountLabel: "The amount",

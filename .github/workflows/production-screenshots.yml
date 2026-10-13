@@ -1,8 +1,8 @@
-name: Production screenshots (clean route)
+name: Production screenshots (pause landing)
 
-# Pictures and a plain proof of the clean route on Production, taken from a GitHub-hosted runner
-# because Production answers the Founder's machine with 451. Manual only: Actions → Production
-# screenshots (clean route) → Run workflow. Nothing is written to the repo: the pictures, REPORT.md
+# Pictures of the pause landing pages on Production, taken from a GitHub-hosted runner because
+# Production answers the Founder's machine with 451. Manual only: Actions → Production
+# screenshots (pause landing) → Run workflow. Nothing is written to the repo: the pictures, REPORT.md
 # and report.json are a workflow artifact for 14 days, and the report is shown in the run summary.
 # Script: scripts/research/production-screenshots.mjs.
 
@@ -36,7 +36,7 @@ jobs:
           cache: npm
       - name: Install dependencies without build scripts
         run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Photograph the clean route
+      - name: Photograph the pause landing pages
         run: node scripts/research/production-screenshots.mjs --base=${{ inputs.base }} --locales=${{ inputs.locales }} --out=screenshots
       - name: Show the report
         if: always()
@@ -44,6 +44,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: clean-route-screenshots
+          name: pause-landing-screenshots
           path: screenshots/
           retention-days: 14
