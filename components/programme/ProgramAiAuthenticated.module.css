@@ -41,69 +41,88 @@
 .logout { min-height: 44px; padding: 8px 14px; border: 1px solid rgba(250, 250, 247, .28); border-radius: 999px; background: transparent; color: var(--pg-paper); font-size: 14px; line-height: 20px; font-weight: 600; cursor: pointer; }
 .eyebrow { color: var(--pg-acid); font-size: 12px; font-weight: 400; letter-spacing: .28em; text-transform: uppercase; }
 
-/* Programme Home dashboard */
-.dashboardShell { width: 100%; min-height: 100svh; margin: 0; }
+/* Programme home (Founder, 13 October 2026): a greeting, the weekly goal, the next step and the
+   folded path, in the step screen's column on every width. */
+.dashboardShell { --pg-soft: rgba(250, 250, 247, .56); --pg-line-2: rgba(250, 250, 247, .16); width: 100%; min-height: 100svh; margin: 0; background: radial-gradient(130% 46% at 50% -8%, rgba(228, 226, 78, .085) 0%, rgba(228, 226, 78, 0) 60%), linear-gradient(180deg, #0c0c0b 0%, #080808 60%, var(--pg-night) 100%); }
+.dashboardShell::before { display: none; }
 /* The Programme home's row holds XP and Log out; the site header's "My Programme" names the page. */
 .dashboardShell .header[data-dashboard-header] { padding: 14px 0; gap: 24px; grid-template-columns: 1fr auto; }
 .dashboardShell .header[data-dashboard-header] .logout { width: 44px; padding: 0; border: 0; display: grid; place-items: center; background: var(--pg-raised); color: var(--pg-acid); }
-.dashboard { width: var(--site-content-width); margin: 0 auto; padding: 40px 0 16px; }
-.dashboardGrid { display: grid; grid-template-columns: minmax(0, 1.58fr) minmax(320px, .92fr); gap: 24px; align-items: start; }
-.dashboardLeft, .dashboardRight { display: grid; gap: 24px; align-content: start; }
-.currentCard, .journeyCard, .compactStats, .compactStartingPoint, .compactAchievements, .compactReviews, .compactResearch { border: 1px solid var(--pg-line); border-radius: 6px; background: var(--pg-card); }
-.currentCard { padding: clamp(28px, 3vw, 44px); display: grid; grid-template-columns: minmax(0, 1fr) 132px; gap: 32px; align-items: center; border-color: rgba(228, 226, 78, .3); background: linear-gradient(135deg, var(--pg-raised) 0%, var(--pg-card) 70%); box-shadow: 0 32px 90px rgba(0, 0, 0, .45); }
-.currentCard > div > span, .journeyCard > span, .compactStartingPoint > span, .compactAchievements > span, .compactReviews > span, .compactResearch > span { color: var(--pg-label); font-size: 12px; font-weight: 400; letter-spacing: .28em; text-transform: uppercase; }
-.currentCard h1 { max-width: 16ch; margin: 16px 0 12px; font-size: clamp(28px, 2.8vw, 40px); font-weight: 900; letter-spacing: -.035em; line-height: .96; text-transform: uppercase; }
-.currentMissionNumber { margin-bottom: 6px; display: block; color: var(--pg-acid); font-family: var(--font-seven-serif), Georgia, serif; font-size: .72em; font-style: italic; font-weight: 400; letter-spacing: -.02em; text-transform: none; }
-.currentCard p { max-width: 44ch; margin: 0; color: var(--pg-muted); font-family: var(--font-seven-serif), Georgia, serif; font-size: 17px; font-style: italic; line-height: 1.5; }
-.currentActions { margin-top: 28px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-.currentCard button { min-height: 52px; padding: 16px 28px; border: 0; border-radius: 3px; background: var(--pg-acid); color: var(--pg-ink); cursor: pointer; font-size: 16px; font-weight: 700; letter-spacing: 0; transition: background 200ms var(--pg-ease); }
-.currentCard button:hover { background: var(--pg-paper); }
-.currentActions small { color: rgba(250, 250, 247, .6); font-size: 13px; line-height: 19px; }
-.currentCard > strong { width: 116px; height: 116px; justify-self: end; border: 12px solid #353532; border-right-color: var(--pg-acid); border-radius: 50%; display: grid; place-content: center; text-align: center; }
-.currentCard > strong span { font-family: var(--font-seven-serif), Georgia, serif; font-size: 26px; font-style: italic; font-weight: 400; letter-spacing: -.02em; line-height: 1; }
-.currentCard > strong small { margin-top: 4px; color: var(--pg-label); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; }
-.currentProgress { display: none; }
-.journeyCard { padding: clamp(28px, 3vw, 38px); }
-.journeyCard ol { margin: 20px 0 0; padding: 0; list-style: none; }
-.journeyCard li { min-height: 46px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; border-bottom: 1px solid rgba(250, 250, 247, .09); color: rgba(250, 250, 247, .68); }
-.journeyCard li b { font-family: var(--font-seven-serif), Georgia, serif; font-size: 18px; font-style: italic; font-weight: 400; }
-.journeyCard li strong { font-size: 14px; font-weight: 500; }
-.journeyCard li small { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; }
-.journeyCard li[data-state=completed] { color: var(--pg-mint); }
-.journeyCard li[data-state=current] { color: var(--pg-paper); }
-.journeyCard li[data-state=current] b, .journeyCard li[data-state=current] small { color: var(--pg-acid); }
-.compactStats { padding: 28px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.compactStats div { display: grid; gap: 6px; }
-.compactStats strong { font-family: var(--font-seven-serif), Georgia, serif; font-size: 34px; font-style: italic; font-weight: 400; letter-spacing: -.02em; line-height: .9; }
-.compactStats span { color: rgba(250, 250, 247, .68); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; }
+.home { width: min(560px, var(--site-content-width)); margin: 0 auto; padding: 28px 0 16px; display: grid; gap: 12px; }
+.home > section { min-width: 0; }
+.homeHello { padding-bottom: 6px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; }
+.homeGreeting { margin: 0; font-family: var(--font-seven-serif), Georgia, serif; font-size: 40px; font-style: italic; font-weight: 400; letter-spacing: -.02em; line-height: .95; }
+.homeQuiet { margin: 8px 0 0; color: var(--pg-muted); font-size: 14px; line-height: 1.4; }
+/* The three numbers, as one quiet row. */
+.homeStats { max-width: 100%; padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 2px 8px; border: 1px solid var(--pg-line-2); border-radius: 18px; color: var(--pg-muted); font-size: 13px; font-weight: 600; line-height: 1.4; }
+.homeStats > span { white-space: nowrap; }
+.homeStats > span + span::before { content: "·"; margin-right: 8px; }
+.homeStats b { color: var(--pg-paper); font-weight: 700; }
 .mobileStatLabel { display: none; }
-.compactStartingPoint, .compactAchievements, .compactReviews, .compactResearch { padding: 28px; }
-.compactStartingPoint p { margin: 16px 0 10px; color: var(--pg-paper); font-family: var(--font-seven-serif), Georgia, serif; font-size: 18px; font-style: italic; line-height: 1.45; }
-.compactStartingPoint small, .compactResearch p { color: rgba(250, 250, 247, .55); font-size: 12px; line-height: 1.5; }
-.compactAchievements > div { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
-.compactAchievements b { padding: 8px 12px; border: 1px solid rgba(250, 250, 247, .2); border-radius: 999px; color: rgba(250, 250, 247, .48); font-size: 12px; font-weight: 500; letter-spacing: .04em; }
-.compactAchievements b[data-state=earned] { border-color: var(--pg-acid); color: var(--pg-acid); }
-.compactReviews { display: grid; gap: 10px; }
-.compactReviews p { margin: 4px 0 0; color: rgba(250, 250, 247, .72); font-size: 13px; line-height: 1.55; }
-.compactReviews button { min-height: 44px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--pg-line); display: flex; align-items: center; justify-content: space-between; gap: 12px; background: transparent; color: var(--pg-paper); cursor: pointer; font-size: 14px; text-align: left; }
-.compactReviews button small { color: var(--pg-acid); font-size: 13px; }
-.compactResearch { border: 1px dashed rgba(228, 226, 78, .35); }
-.compactResearch p { margin: 16px 0 0; }
-.compactResearch nav { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
+.homeGoal, .homeStartingPoint, .homePath, .homeReviews, .homeAchievements, .compactResearch { padding: 18px 20px; border: 1px solid var(--pg-line); border-radius: 20px; background: rgba(250, 250, 247, .03); }
+.homeGoal > span, .homeStartingPoint > span, .homePath > div > span, .homeReviews > span, .homeAchievements > span, .compactResearch > span { color: var(--pg-soft); font-size: 12px; font-weight: 600; letter-spacing: .18em; line-height: 1.4; text-transform: uppercase; }
+/* The weekly goal: the goal in the serif voice, seven days and the check-in date the server gives. */
+.homeGoal, .homeStartingPoint[data-place="lead"] { border-color: var(--pg-line-2); background: linear-gradient(180deg, #1b1a17, #141413); }
+.homeGoal blockquote { margin: 10px 0 0; font-family: var(--font-seven-serif), Georgia, serif; font-size: 24px; font-style: italic; letter-spacing: -.01em; line-height: 1.12; overflow-wrap: anywhere; }
+/* A person's own wording can be long: the card shows its first lines. */
+.homeGoal blockquote[data-goal-sentence="own"] { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 6; }
+.homeGoal small { margin-top: 8px; display: block; color: var(--pg-soft); font-size: 13px; line-height: 1.4; }
+.homeGoal ol { max-width: 340px; margin: 16px 0 0; padding: 0; display: flex; gap: 4px; justify-content: space-between; list-style: none; }
+.homeGoal li { min-width: 0; flex: 0 1 34px; aspect-ratio: 1; display: grid; place-items: center; border: 1px solid var(--pg-line-2); border-radius: 50%; color: var(--pg-soft); font-size: 12px; font-weight: 650; }
+.homeGoal li[data-day="past"] { border-color: rgba(123, 199, 173, .34); background: rgba(123, 199, 173, .12); color: var(--pg-mint); }
+.homeGoal li[data-day="now"] { border-color: var(--pg-acid); background: var(--pg-acid); color: var(--pg-ink); }
+.homeGoal p { margin: 12px 0 0; color: var(--pg-muted); font-size: 13px; font-weight: 600; line-height: 1.4; }
+.homeStartingPoint p { margin: 10px 0 8px; color: var(--pg-paper); font-family: var(--font-seven-serif), Georgia, serif; font-size: 20px; font-style: italic; line-height: 1.3; overflow-wrap: anywhere; }
+.homeStartingPoint small { color: var(--pg-soft); font-size: 12px; line-height: 1.5; }
+/* The next step: the one outlined card, with the one button. */
+.homeNext { padding: 18px 20px 20px; border: 1px solid rgba(228, 226, 78, .55); border-radius: 20px; background: linear-gradient(180deg, rgba(228, 226, 78, .10), rgba(228, 226, 78, .03)); box-shadow: 0 22px 44px -28px rgba(228, 226, 78, .55); }
+.homeNext > div { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; }
+.homeNext > div span { color: var(--pg-acid); font-size: 12px; font-weight: 650; letter-spacing: .2em; line-height: 1.35; text-transform: uppercase; }
+.homeNext > div em { color: var(--pg-acid); font-family: var(--font-seven-serif), Georgia, serif; font-size: 19px; font-style: italic; letter-spacing: -.01em; white-space: nowrap; }
+.homeNext h1 { margin: 10px 0 0; font-size: clamp(19px, 5.6vw, 23px); font-stretch: 125%; font-weight: 800; letter-spacing: -.01em; line-height: 1.04; overflow-wrap: break-word; text-transform: uppercase; text-wrap: balance; }
+.homeNext p { margin: 8px 0 0; color: var(--pg-muted); font-size: 14px; line-height: 1.45; }
+.homeNext button { width: 100%; min-height: 54px; margin-top: 16px; padding: 0 20px; display: flex; gap: 10px; align-items: center; justify-content: center; border: 0; border-radius: 16px; background: var(--pg-acid); box-shadow: 0 16px 34px -18px rgba(228, 226, 78, .75); color: var(--pg-ink); cursor: pointer; font-family: inherit; font-size: 17px; font-weight: 750; letter-spacing: 0; line-height: 1.2; transition: background 200ms var(--pg-ease), transform 120ms var(--pg-ease); }
+.homeNext button svg { width: 18px; height: 18px; flex: 0 0 auto; }
+@media (hover: hover) { .homeNext button:hover { background: var(--pg-paper); } }
+.homeNext button:active { transform: scale(.985); }
+/* The path: the rows around the current step; one press unfolds all of them in place. */
+.homePath { padding-bottom: 6px; }
+.homePath > div { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.homePath > div button { min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--pg-muted); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; text-align: right; text-decoration: underline; text-decoration-color: var(--pg-line-2); text-underline-offset: 4px; }
+.homePath ol { margin: 0; padding: 0; list-style: none; }
+.homePath li { min-height: 46px; padding: 6px 0; display: flex; gap: 14px; align-items: center; color: var(--pg-soft); font-size: 15px; line-height: 1.25; }
+.homePath li[hidden] { display: none; }
+.homePath li:not([hidden]) ~ li:not([hidden]) { border-top: 1px solid var(--pg-line); }
+.homePath li strong { min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.homePath li i { width: 26px; height: 26px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid var(--pg-line-2); border-radius: 50%; font-family: var(--font-seven-serif), Georgia, serif; font-size: 15px; font-style: normal; }
+.homePath li i svg { width: 12px; height: 12px; }
+.homePath li small { margin-left: auto; color: var(--pg-acid); font-size: 12px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; }
+.homePath li[data-state=completed] { color: var(--pg-muted); }
+.homePath li[data-state=completed] i { border-color: transparent; background: rgba(123, 199, 173, .16); color: var(--pg-mint); }
+.homePath li[data-state=current] { color: var(--pg-paper); }
+.homePath li[data-state=current] i { border-color: var(--pg-acid); background: var(--pg-acid); color: var(--pg-ink); }
+.homeAchievements > div { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+.homeAchievements b { min-height: 44px; padding: 8px 14px; display: inline-flex; align-items: center; border: 1px solid var(--pg-line-2); border-radius: 999px; color: var(--pg-soft); font-size: 13px; font-weight: 500; letter-spacing: .02em; }
+.homeAchievements b[data-state=earned] { border-color: var(--pg-acid); color: var(--pg-acid); }
+.homeReviews { display: grid; gap: 8px; }
+.homeReviews p { margin: 2px 0 0; color: var(--pg-muted); font-size: 14px; line-height: 1.5; }
+.homeReviews button { min-height: 48px; padding: 12px 0; border: 0; border-top: 1px solid var(--pg-line); display: flex; gap: 12px; align-items: center; justify-content: space-between; background: transparent; color: var(--pg-paper); cursor: pointer; font-family: inherit; font-size: 15px; text-align: left; }
+.homeReviews button small { color: var(--pg-acid); font-size: 14px; font-weight: 600; white-space: nowrap; }
+/* After the research lesson its links sit under the next step and read as real actions. */
+.compactResearch nav { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
 .compactResearch a { padding: 8px 14px; border: 1px solid var(--pg-acid); border-radius: 999px; color: var(--pg-acid); font-size: 13px; text-decoration: none; transition: background 200ms var(--pg-ease), color 200ms var(--pg-ease); }
 .compactResearch a:hover { background: var(--pg-acid); color: var(--pg-ink); }
-/* After Mission 08 the research links move under the current mission and read as real actions. */
-.researchFeatured { border-style: solid; border-color: rgba(228, 226, 78, .5); }
+.researchFeatured { border-color: rgba(228, 226, 78, .34); }
 .researchFeatured a { min-height: 44px; display: inline-flex; align-items: center; padding: 10px 16px; font-size: 16px; font-weight: 600; }
-.emailNotice { padding: 20px 24px; border: 1px solid var(--pg-line-strong); border-radius: 6px; background: var(--pg-card); display: grid; gap: 14px; justify-items: start; }
+.emailNotice { padding: 18px 20px; border: 1px solid var(--pg-line-strong); border-radius: 20px; background: var(--pg-card); display: grid; gap: 14px; justify-items: start; }
 .emailNotice p { margin: 0; color: var(--pg-paper); font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
 .emailNotice p[role="status"] { color: var(--pg-mint); }
 .emailNotice p[role="alert"] { color: var(--pg-muted); font-size: 14px; }
-.emailNotice button { min-height: 44px; padding: 10px 18px; border: 1px solid var(--pg-acid); border-radius: 3px; background: transparent; color: var(--pg-acid); cursor: pointer; font-size: 16px; font-weight: 600; letter-spacing: 0; transition: background 200ms var(--pg-ease), color 200ms var(--pg-ease); }
+.emailNotice button { min-height: 44px; padding: 10px 18px; border: 1px solid var(--pg-acid); border-radius: 12px; background: transparent; color: var(--pg-acid); cursor: pointer; font-size: 16px; font-weight: 600; letter-spacing: 0; transition: background 200ms var(--pg-ease), color 200ms var(--pg-ease); }
 .emailNotice button:hover:not(:disabled) { background: var(--pg-acid); color: var(--pg-ink); }
 .emailNotice button:disabled { cursor: default; opacity: .7; }
-.dashboardFooter { min-height: 52px; padding-top: 24px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: rgba(250, 250, 247, .68); font-size: 12px; letter-spacing: .02em; }
-.mobileNextCard { display: none; }
+.dashboardFooter { min-height: 52px; padding-top: 12px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: rgba(250, 250, 247, .68); font-size: 12px; letter-spacing: .02em; }
+@media (prefers-reduced-motion: reduce) { .homeNext button:active { transform: none; } }
 
 /* Mission and Review workspace */
 .missionMain, .reviewMain { width: min(1200px, var(--site-content-width)); margin: 0 auto; padding: clamp(32px, 5vw, 56px) 0 100px; display: grid; gap: 36px; }
@@ -320,17 +339,80 @@
   .choice:active, .stepContinue:active:not(:disabled), .choiceTick svg { transform: none; }
 }
 
+/* The end of a step (Founder, 13 October 2026): the result as a keepsake card on its result and
+   completion screens, inside the step's frame. */
+.stepCount[data-programme-step-count="completion"] { color: var(--pg-muted); }
+.keepsakeIntro { margin: 4px 0 -6px; color: var(--pg-soft); font-size: 12px; font-weight: 600; letter-spacing: .18em; line-height: 1.4; text-transform: uppercase; }
+.keepsake { position: relative; min-width: 0; border-radius: 22px; background: var(--pg-paper); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .9), 0 0 0 1px rgba(255, 255, 255, .06); color: var(--pg-ink); }
+.keepsakeTop { padding: 24px 24px 26px; }
+.keepsakeTop:has(+ .keepsakeRows) { padding-bottom: 2px; }
+.keepsakeLabel { margin: 0; display: flex; gap: 14px; align-items: flex-start; justify-content: space-between; color: rgba(16, 15, 15, .62); font-size: 12px; font-weight: 700; letter-spacing: .18em; line-height: 1.35; text-transform: uppercase; }
+.keepsakeLabel span { min-width: 0; overflow-wrap: anywhere; }
+.keepsakeLabel b { flex: 0 0 auto; color: var(--pg-ink); font-stretch: 125%; font-weight: 900; letter-spacing: .02em; }
+.keepsake blockquote { margin: 18px 0 0; font-family: var(--font-seven-serif), Georgia, serif; font-size: 35px; font-style: italic; font-weight: 400; letter-spacing: -.015em; line-height: 1.06; overflow-wrap: anywhere; }
+.keepsake blockquote[data-length="medium"] { font-size: 26px; line-height: 1.14; }
+.keepsake blockquote[data-length="long"] { font-size: 19px; letter-spacing: 0; line-height: 1.3; }
+/* The ticket cut: a dashed line with a notch on each edge, in the colour of the page behind the card. */
+.keepsakeCut { position: relative; height: 0; margin: 0 18px; border-top: 1.5px dashed rgba(16, 15, 15, .22); }
+.keepsakeCut::before, .keepsakeCut::after { content: ""; position: absolute; top: -10px; width: 20px; height: 20px; border-radius: 50%; background: #090909; }
+.keepsakeCut::before { left: -28px; }
+.keepsakeCut::after { right: -28px; }
+.keepsakeRows { margin: 0; padding: 22px 24px 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
+.keepsakeRows > div { min-width: 0; }
+.keepsakeRows > div[data-wide] { grid-column: 1 / -1; }
+.keepsakeRows dt { color: rgba(16, 15, 15, .62); font-size: 12px; font-weight: 700; letter-spacing: .08em; line-height: 1.35; text-transform: uppercase; overflow-wrap: break-word; }
+.keepsakeRows dd { margin: 5px 0 0; font-size: 16px; font-weight: 650; line-height: 1.25; overflow-wrap: anywhere; }
+.keepsakeActions { display: flex; gap: 10px; }
+.keepsakeActions button { min-height: 48px; padding: 0 16px; flex: 1 1 0; display: flex; gap: 8px; align-items: center; justify-content: center; border: 1px solid var(--pg-line-2); border-radius: 12px; background: transparent; color: var(--pg-paper); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; letter-spacing: 0; transition: border-color 200ms var(--pg-ease), background 200ms var(--pg-ease); }
+.keepsakeActions button svg { width: 16px; height: 16px; flex: 0 0 auto; }
+.keepsakeActions button:disabled { cursor: default; opacity: .6; }
+@media (hover: hover) { .keepsakeActions button:hover:not(:disabled) { border-color: rgba(250, 250, 247, .5); background: rgba(250, 250, 247, .05); } }
+/* Completion: the step is done, what was built, one line, then the card. */
+.stepDone { padding-top: 30px; }
+.stepDoneTick { margin: 0; display: inline-flex; gap: 9px; align-items: center; color: var(--pg-mint); font-size: 12px; font-weight: 650; letter-spacing: .2em; line-height: 1.35; text-transform: uppercase; }
+.stepDoneTick i { width: 22px; height: 22px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: var(--pg-mint); color: var(--pg-ink); }
+.stepDoneTick svg { width: 12px; height: 12px; }
+.stepDone .stepHeadline { margin-top: 16px; font-size: clamp(22px, 7vw, 29px); line-height: 1.02; }
+.stepDone .stepHeadline em { text-transform: lowercase; }
+.stepDone .stepHelper { font-size: 16px; }
+.stepDoneBody { padding: 26px 0 20px; display: grid; gap: 16px; align-content: start; }
+.stepDoneBody > .error { font-size: 14px; }
+/* The reward, once: ten dots for the ten steps and one quiet line. */
+.stepReward { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+/* The reward row stands on the solid part of the bar, clear of what scrolls under its fade. */
+.stepCta:has(.stepReward) { padding-top: 32px; }
+.stepRewardDots { display: flex; gap: 7px; flex: 0 0 auto; }
+.stepRewardDots i { width: 9px; height: 9px; border-radius: 50%; background: var(--pg-line-2); }
+.stepRewardDots i[data-on="true"] { background: var(--pg-acid); }
+.stepReward p { margin: 0; color: var(--pg-muted); font-size: 13px; font-weight: 600; line-height: 1.35; text-align: right; }
+/* What a completion screen can also carry sits calmly under the card: same content, order and links. */
+.stepMain .researchReveal { max-width: none; padding: 20px; justify-items: start; border: 1px solid var(--pg-line-2); border-radius: 16px; background: rgba(250, 250, 247, .035); text-align: left; }
+.stepMain .researchReveal[data-programme-research-opened="fresh"] { animation: programme-keepsake-in 240ms var(--pg-ease) 200ms both; }
+.stepMain .researchReveal h3 { font-size: 20px; line-height: 1.1; }
+.stepMain .researchReveal p { margin: 0; color: var(--pg-muted); font-size: 15px; line-height: 1.5; }
+.stepMain .researchReveal nav { justify-content: flex-start; }
+.stepMain .researchReveal nav a { border: 1px solid var(--pg-acid); background: transparent; color: var(--pg-acid); }
+@media (hover: hover) { .stepMain .researchReveal nav a:hover { background: var(--pg-acid); color: var(--pg-ink); } }
+.stepMain .reviewReveal { max-width: none; padding: 18px 20px; border: 1px solid var(--pg-line-2); border-radius: 16px; background: rgba(250, 250, 247, .035); }
+.stepMain .reviewReveal span { color: var(--pg-acid); line-height: 1.35; }
+.stepMain .reviewReveal p { margin: 6px 0 0; color: var(--pg-muted); font-size: 15px; line-height: 1.5; }
+.stepMain .commercialAside { padding: 20px; border-radius: 16px; }
+/* A new completion arrives: the card rises, then the tick and the step's dot. */
+.stepMain[data-programme-completion="fresh"] .keepsake { animation: programme-keepsake-in 240ms var(--pg-ease) both; }
+.stepMain[data-programme-completion="fresh"] .stepDoneTick i { animation: programme-step-pop 260ms var(--pg-ease) 240ms both; }
+.stepMain[data-programme-completion="fresh"] .stepRewardDots i[data-new] { animation: programme-step-pop 260ms var(--pg-ease) 420ms both; }
+@keyframes programme-keepsake-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes programme-step-pop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .stepMain[data-programme-completion="fresh"] .keepsake, .stepMain[data-programme-completion="fresh"] .stepDoneTick i, .stepMain[data-programme-completion="fresh"] .stepRewardDots i[data-new], .stepMain .researchReveal[data-programme-research-opened="fresh"] { animation: none; }
+}
+
 @media (max-width: 1000px) {
-  .dashboardGrid, .workspace { grid-template-columns: 1fr; }
-  .currentCard { grid-template-columns: 1fr; }
-  .currentCard > strong { justify-self: start; }
+  .workspace { grid-template-columns: 1fr; }
   .workspace > .artifact { position: static; }
 }
 @media (max-width: 900px) {
   .programmeLabel { display: none; }
-  .dashboard { padding: 24px 0; }
-  .dashboardRight { grid-template-columns: 1fr 1fr; }
-  .compactStats, .compactStartingPoint { grid-column: 1 / -1; }
   .offerDecoder > div { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 640px) {
@@ -364,39 +446,14 @@
   .stepHelp { max-width: 148px; padding-inline: 12px; }
 }
 @media (max-width: 600px) {
-  .dashboardShell { background: var(--pg-card); }
-  /* On a phone the row has nothing to show: XP stands in the stats card and Log out is in the site menu. */
+  /* On a phone the row has nothing to show: XP stands in the home's own row and Log out is in the site menu. */
   .dashboardShell .header[data-dashboard-header] { display: none; }
-  .dashboard { padding: 14px 0 16px; }
-  .dashboardGrid { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
-  .dashboardLeft, .dashboardRight { display: contents; }
-  .currentCard { position: relative; order: 1; padding: 16px 22px 20px; display: block; border-radius: 6px; box-shadow: none; }
-  .currentCard > div > span { letter-spacing: .16em; }
-  .currentCard h1 { margin: 10px 0 12px; font-size: 22px; line-height: 1.1; }
-  .currentMissionNumber { display: none; }
-  .currentCard p { display: none; }
-  .currentCard > strong { position: absolute; top: 16px; right: 22px; width: auto; height: auto; border: 0; display: block; color: var(--pg-acid); font-weight: 400; }
-  .currentCard > strong span { font-size: 16px; }
-  .currentCard > strong small { display: none; }
-  .currentActions { margin-top: 0; display: block; }
-  .currentCard button { width: 100%; min-height: 48px; margin: 0; padding: 12px 14px; }
-  .currentActions small { display: none; }
-  .emailNotice { order: 2; padding: 16px 20px; }
-  .compactStats { order: 2; padding: 14px 20px; text-align: center; }
-  .compactStats strong { font-size: 24px; line-height: 1; }
-  .compactStats span { font-size: 12px; letter-spacing: .12em; }
+  .home { padding: 20px 0 16px; }
+  /* The cue under the next step is a wide-screen line, as before. */
+  .homeNextCue { display: none; }
   .desktopStatLabel { display: none; }
-  .mobileStatLabel { display: block; }
-  .compactStartingPoint { order: 3; display: block; padding: 20px; }
-  .journeyCard { order: 4; display: block; padding: 20px; }
-  .journeyCard li { min-height: 48px; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; }
-  .compactAchievements { order: 5; display: block; padding: 20px; }
-  .compactAchievements b { min-height: 44px; display: inline-flex; align-items: center; }
-  .compactReviews { order: 6; padding: 20px; }
-  .compactResearch { order: 7; display: block; padding: 20px; }
-  .researchFeatured { order: 1; }
-  .compactResearch a { min-height: 44px; display: inline-flex; align-items: center; }
-  .dashboardFooter { order: 8; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); align-items: flex-start; flex-direction: column; gap: 8px; }
+  .mobileStatLabel { display: inline; }
+  .dashboardFooter { padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); align-items: flex-start; flex-direction: column; gap: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .shell *, .shell *::before, .shell *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

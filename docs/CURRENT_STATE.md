@@ -23,9 +23,10 @@ of the question screen and said «делай экран вопроса». Decisi
 interface work: no RFC, no database change, no API change, no change to
 rewards, Mission order, prerequisites, the research door or any offer.
 
-This round redraws one screen: the screen of a Mission action ("question").
-The result screen with its finish press, the completion screen and the
-Programme home are unchanged and are later rounds.
+The first round redraws one screen: the screen of a Mission action
+("question"). The result screen with its finish press and the completion
+screen follow in the second round below; the Programme home has its own
+section after this one.
 
 - **Top bar of a step.** A round back button (same destination and accessible
   name as the former "← Programme Home"), "Step N of 10" (the step a person
@@ -44,9 +45,11 @@ Programme home are unchanged and are later rounds.
 - **Options are cards** for single and multiple choice: 66px or taller, 16px
   corners, acid border, filled tick and a soft glow when chosen. "Choose 2–3"
   keeps its place and wording.
-- **A line under each option and a "Why we ask" line**, written for step 2
-  (Mission 02) and step 3 (Mission 08) in every language of the catalogue,
-  hidden languages included. Both are optional in the layout. The map from
+- **A line under each option and a "Why we ask" line**, written for every
+  step after sign-in (Missions 02–10) in every language of the catalogue,
+  hidden languages included. Two questions show no option cards and carry the
+  why-line only (the sequence of step 4, the drafted responses of step 9).
+  Both are optional in the layout. The map from
   option to line is presentation code
   (`lib/programme/program-ai/question-screen.ts`); the server's Mission
   definitions do not know it.
@@ -71,9 +74,84 @@ Programme home are unchanged and are later rounds.
   is not shown on the first question; from the first saved answer the live
   result stands under the cards as before.
 
+**Second round, same day («сделай итог шага»): the two screens at the end of a
+step.** The flow is unchanged: result → "Complete Mission" → completion → the
+Programme home.
+
+- **Result screen** in the step's frame: every segment lit, the completion
+  reward as the quiet label by the progress ("+25 XP", the server's number; the
+  last action's XP shows there first for about two seconds), the person's
+  result as a **keepsake card** (paper, ink, the result's own sentence in the
+  serif when it has one, a ticket cut, rows in two columns), and "Complete
+  Mission" pinned, without XP. "The final step adds the {xp} XP completion
+  reward." left the screen.
+- **Completion screen**: a tick and "Step N done", the result's existing name
+  as the headline, one line ("You built it yourself. It is yours, not ours."),
+  the same card, "Save as image", and the reward once: ten dots and "+25 XP ·
+  2 of 10 steps". The yellow "+25" card, "Your result is ready and the
+  completion reward has been added." and "Mission complete. 25 XP earned." are
+  gone. The button is still "Continue from Programme Home".
+- **"Save as image"** is drawn on a canvas on the device and shared or saved
+  as a PNG. Nothing is sent to the server; the Content-Security-Policy is
+  unchanged.
+- **"Change the plan" is not built**: the server does not let a recorded
+  answer of a completed Mission be changed, and no Mission rule was changed.
+- **The research block after step 3, the Review note and the guides after
+  step 10** keep their content, logic and order under the card. The research
+  block's render stands behind one switch, `researchLinksShown` (on).
+- Ten catalogue rows are retired (the three lines above, "Complete Mission ·
+  +{xp} XP", "Completing…", "MISSION COMPLETE", "This Mission was already
+  complete." and three labels of the old progress rail); six are added in all
+  thirteen cells.
+
 Evidence: `tests/programme-question-screen.test.ts` (in `programme:test`) and
 `tests/programme-question-screen-browser.spec.ts` (in `ci:browser`); the
 three existing Programme browser specs follow the new labels.
+
+## The Programme home, redrawn — in review
+
+**Founder instruction, 13 October 2026.** Same brief as the question screen
+(premium and comfortable, not shorter); he approved the mockup of the home.
+Ordinary interface work plus one addition to the server's home read: no RFC,
+no table, no column, no change to rewards, Mission order, prerequisites, the
+research door or any offer. `components/programme/ProgramAiHome.tsx`, one
+column of 560px on every width, under the site header.
+
+- **Greeting and numbers.** "Hello." in the italic serif with one quiet line;
+  XP, streak and active days stay, as one quiet row instead of the counters
+  card.
+- **Weekly goal card.** Shown once Mission 02 ("Set a 7-day goal") is
+  complete. The home read now carries `weekGoal`
+  (`lib/programme/program-ai/week-goal.ts`, projected in
+  `ProgrammeAiMissionsService`): the Mission's saved approach (`goalStyle`),
+  the running day 1–7 and the check-in date, worked out on the server from the
+  Mission's completion date in the enrolment's time zone. Day 1 is the
+  completion day; the check-in is seven days later. From the check-in date on
+  `day` is null: the card shows "Check-in {date}" and lights no day.
+  **The goal's sentence.** Personal wording stays in the tab and is never
+  stored, so the server has no sentence to send. While the tab holds the
+  wording of Mission 02 (the tab storage its result card reads, in the
+  account's own namespace) the card shows it as the sentence, with the saved
+  approach as a small quiet line under it. In a tab that holds nothing
+  (another device, a new tab) the saved approach, in the catalogue's words, is
+  the sentence. The home sends and stores nothing for this.
+- **Before Mission 02 is complete** the Starting Point (the server's text,
+  unchanged) stands in the goal's place; once the goal card exists it moves
+  under the path.
+- **Next step card** (acid outline): "Next step", the step as "03 / 10", the
+  Mission title, "About N minutes · N questions" (N is the Mission's own
+  number of actions) and the existing button with its label and behaviour. It
+  replaces the "N of M actions complete · About 5–8 min total" line. A
+  completed Programme keeps "Mission complete" and "Review mission".
+- **Path.** "Your path" shows five rows around the current step; "Show all 10
+  steps" unfolds the list in place and "Show fewer steps" folds it. All ten
+  rows are always in the page.
+- **Unchanged in content and logic:** the research card after step 3 (behind
+  one boolean, `researchLinksShown`, a seam for the clean route), the email
+  confirmation notice, Personal reviews, Achievements, the privacy footer.
+- **Tests.** `tests/programme-home-screen.test.ts` (in `programme:test` and
+  `program-ai:test`) and `tests/programme-home-screen-browser.spec.ts` (in
+  `ci:browser` and `program-ai:browser`).
 
 ## Programme words and small things after the Swedish walk — in review
 

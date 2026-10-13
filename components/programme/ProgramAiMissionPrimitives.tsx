@@ -11,6 +11,7 @@ import {
   programmeScenarioText,
   presentMissionArtifact,
 } from "@/lib/programme/program-ai/mission-presentation";
+import { keepsakeRowIsWide, keepsakeSentenceSize, type KeepsakeRow } from "@/lib/programme/program-ai/keepsake-image";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiAuthenticated.module.css";
 
@@ -145,6 +146,22 @@ export function ProgrammeTimeline({ startingPoint, facts, locale }: {
   return <section className={styles.programmeTimeline} aria-labelledby="programme-timeline-title">
     <span className={styles.eyebrow}>{programmeText(locale, "YOUR PROGRAMME TIMELINE")}</span><h3 id="programme-timeline-title">{programmeText(locale, "What you have built, in order.")}</h3>
     <ol>{items.map((item) => <li key={item.number}><span>{String(item.number).padStart(2, "0")}</span><div><strong>{item.label}</strong><dl>{item.rows.map((row) => <div key={row.key}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></div></li>)}</ol>
+  </section>;
+}
+
+/**
+ * The person's result as a keepsake (Founder, 13 October 2026): its name and the brand mark, its own
+ * sentence when it has one, and its rows. It draws whatever rows a Mission's result has; a long
+ * value takes the whole width.
+ */
+export function KeepsakeCard({ title, sentence, rows }: { title: string; sentence?: string; rows: readonly KeepsakeRow[] }) {
+  return <section className={styles.keepsake} data-programme-keepsake="">
+    <div className={styles.keepsakeTop}>
+      <p className={styles.keepsakeLabel}><span>{title}</span><b translate="no">B4GAMBLE</b></p>
+      {sentence ? <blockquote data-length={keepsakeSentenceSize(sentence)}>{sentence}</blockquote> : null}
+    </div>
+    {sentence && rows.length ? <div aria-hidden="true" className={styles.keepsakeCut} /> : null}
+    {rows.length ? <dl className={styles.keepsakeRows}>{rows.map((row) => <div data-wide={keepsakeRowIsWide(row.value, row.label) ? "" : undefined} key={row.key}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl> : null}
   </section>;
 }
 

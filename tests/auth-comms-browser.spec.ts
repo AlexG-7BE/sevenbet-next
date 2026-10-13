@@ -363,9 +363,9 @@ test("an unconfirmed customer can ask for the confirmation link again from the d
   await resend.click();
   await expect(notice.getByRole("status")).toHaveText("Link sent. Check your inbox.");
   expect(resendBodies).toEqual([{ email: "unconfirmed@example.test", callbackURL: "/program" }]);
-  // The notice follows the current mission and leads the journey.
+  // The notice follows the next step and leads the path.
   const [card, noticeBox, journey] = await Promise.all([
-    page.locator('[data-programme-presentation="dashboard"] section').first().boundingBox(),
+    page.locator('[data-programme-home="next"]').boundingBox(),
     notice.boundingBox(),
     page.locator('[aria-labelledby="programme-path-title"]').boundingBox(),
   ]);
@@ -729,7 +729,7 @@ test("authenticated partial Mission 01 truthfully re-enters the ready answers wi
   await open(page, "/program");
   await expect(page.getByRole("heading", { name: "Mission 01 — Map the moment" })).toBeVisible();
   await expect(page.getByText("Your first action and XP are saved. For privacy, the situation itself was not retained. Enter one again to finish your Starting Point.", { exact: true })).toBeVisible();
-  await expect(page.getByText("1 of 2 actions complete · Short Starting Point", { exact: true })).toBeVisible();
+  await expect(page.getByText("About 2 minutes · 2 questions", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Finish Mission 01", exact: true }).click();
   // Founder decision, 11 Oct 2026: Mission 01 opens on the ready answers for an account too. The
   // account already affirmed access, so the 18+ line is not shown.

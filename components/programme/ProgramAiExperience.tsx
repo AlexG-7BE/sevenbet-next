@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ProgramAiHomeScreen } from "@/components/programme/ProgramAiHome";
+import { GOAL_WORDING_MISSION, ProgramAiHomeScreen } from "@/components/programme/ProgramAiHome";
 import {
   ProgrammeAccessScreen,
   ProgrammeLoadingScreen,
@@ -872,7 +872,7 @@ export function ProgramAiExperience({
   if (phase === "registration" && (local.candidate || local.accountFirst || local.answers?.length)) return renderPhase(<StartingPointReadyScreen answers={local.answers ?? []} authenticated={signedIn} fallbackFocus={local.candidate?.desiredChange ?? null} busy={busy} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} googleOpening={googleOpening} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} passwordResetHref={passwordRejected ? passwordResetPath(programmePath) : null} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
-  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={startMissionOneForAccount} onReview={openReview} programmePath={programmePath} unconfirmedEmail={session.user.emailVerified ? null : session.user.email} userId={session.user.id} />);
+  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} goalWording={missionWording[GOAL_WORDING_MISSION] ?? ""} home={home} locale={locale} onMission={openMission} onMissionOneEntry={startMissionOneForAccount} onReview={openReview} programmePath={programmePath} unconfirmedEmail={session.user.emailVerified ? null : session.user.email} userId={session.user.id} />);
   if (phase === "home") return renderPhase(<ProgrammeUnavailableScreen error={error} locale={locale} />);
   return startScreen();
 }
