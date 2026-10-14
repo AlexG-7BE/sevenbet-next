@@ -1,6 +1,14 @@
 import type { EmailPurpose, EmailSuppressionScope } from "@prisma/client";
 
-export const marketingEmailPurposes = ["PROGRAMME_REMINDER", "MARKETING_BROADCAST"] as const satisfies readonly EmailPurpose[];
+/**
+ * Letters that need the marketing authority (a verified address, the opt-in, no unsubscribe) and
+ * carry an unsubscribe link. The day letters and the dated pause letters are sent exactly like
+ * the Programme reminder (Founder decision, 13 October 2026).
+ */
+export const marketingEmailPurposes = [
+  "PROGRAMME_REMINDER", "MARKETING_BROADCAST",
+  "PROGRAMME_DAY_3", "PROGRAMME_DAY_7", "PROGRAMME_DAY_10", "PAUSE_ENDS_TOMORROW", "PAUSE_OVER",
+] as const satisfies readonly EmailPurpose[];
 export type EmailEligibilityInput = {
   accountState: "ACTIVE" | "SUSPENDED";
   emailVerified: boolean;

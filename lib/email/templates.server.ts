@@ -8,6 +8,8 @@ import prisma from "@/lib/db/prisma";
 const templateKeys = [
   "EMAIL_VERIFICATION", "PASSWORD_RESET", "ACCOUNT_SECURITY",
   "WELCOME", "PROGRAMME_REMINDER", "MARKETING_BROADCAST",
+  "PROGRAMME_DAY_3", "PROGRAMME_DAY_7", "PROGRAMME_DAY_10",
+  "PAUSE_ENDS_TOMORROW", "PAUSE_OVER", "PAUSE_TOOL_CONFIRMATION",
 ] as const satisfies readonly EmailTemplateKey[];
 const templateTypes = ["TRANSACTIONAL", "LIFECYCLE", "MARKETING"] as const satisfies readonly EmailTemplateType[];
 const templateTypeByKey: Record<EmailTemplateKey, EmailTemplateType> = {
@@ -17,9 +19,16 @@ const templateTypeByKey: Record<EmailTemplateKey, EmailTemplateType> = {
   WELCOME: "LIFECYCLE",
   PROGRAMME_REMINDER: "LIFECYCLE",
   MARKETING_BROADCAST: "MARKETING",
+  PROGRAMME_DAY_3: "LIFECYCLE",
+  PROGRAMME_DAY_7: "LIFECYCLE",
+  PROGRAMME_DAY_10: "LIFECYCLE",
+  PAUSE_ENDS_TOMORROW: "LIFECYCLE",
+  PAUSE_OVER: "LIFECYCLE",
+  PAUSE_TOOL_CONFIRMATION: "LIFECYCLE",
 };
-const ALLOWED_VARIABLES = new Set(["name", "action_url", "programme_url", "unsubscribe_url"]);
-const URL_VARIABLES = ["action_url", "programme_url", "unsubscribe_url"] as const;
+// `plan_url` is the pause plan in the letter's language; `pause_date` is a day written in words.
+const ALLOWED_VARIABLES = new Set(["name", "action_url", "programme_url", "unsubscribe_url", "plan_url", "pause_date"]);
+const URL_VARIABLES = ["action_url", "programme_url", "unsubscribe_url", "plan_url"] as const;
 const HEADER_CONTROL_PATTERN = /[\u0000-\u001f\u007f]/;
 const REQUIRED_BODY_VARIABLES: Record<EmailTemplateKey, readonly string[]> = {
   EMAIL_VERIFICATION: ["action_url"],
@@ -28,6 +37,12 @@ const REQUIRED_BODY_VARIABLES: Record<EmailTemplateKey, readonly string[]> = {
   WELCOME: ["programme_url"],
   PROGRAMME_REMINDER: ["programme_url", "unsubscribe_url"],
   MARKETING_BROADCAST: ["unsubscribe_url"],
+  PROGRAMME_DAY_3: ["programme_url", "unsubscribe_url"],
+  PROGRAMME_DAY_7: ["programme_url", "unsubscribe_url"],
+  PROGRAMME_DAY_10: ["programme_url", "unsubscribe_url"],
+  PAUSE_ENDS_TOMORROW: ["plan_url", "unsubscribe_url"],
+  PAUSE_OVER: ["plan_url", "unsubscribe_url"],
+  PAUSE_TOOL_CONFIRMATION: ["plan_url", "unsubscribe_url"],
 };
 
 function approvedStaticEmailUrl(value: string) {
@@ -121,7 +136,7 @@ export function sanitizeEmailTemplate(value: unknown) {
   });
   for (const match of sanitizedHtml.matchAll(/<a\b[^>]*\bhref=(?:"([^"]*)"|'([^']*)')/gi)) {
     const href = (match[1] ?? match[2] ?? "").trim();
-    const placeholder = /^https:\/\/template\.invalid\/__(action_url|programme_url|unsubscribe_url)__$/.test(href);
+    const placeholder = /^https:\/\/template\.invalid\/__(action_url|programme_url|unsubscribe_url|plan_url)__$/.test(href);
     if (!placeholder && !approvedStaticEmailUrl(href)) {
       throw new Error("Sanitized email links must use an approved URL placeholder or the canonical B4GAMBLE HTTPS origin");
     }

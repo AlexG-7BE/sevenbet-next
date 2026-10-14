@@ -1,0 +1,17 @@
+-- Additive: the template keys and purposes of the pause letters (Founder decisions,
+-- 13 October 2026; docs/07_Decisions/PAUSE-LETTERS-2026-10-14.md).
+-- PostgreSQL cannot use a new enum value in the transaction that adds it, so the
+-- values arrive here and migration 0045 uses them.
+ALTER TYPE "EmailTemplateKey" ADD VALUE IF NOT EXISTS 'PROGRAMME_DAY_3';
+ALTER TYPE "EmailTemplateKey" ADD VALUE IF NOT EXISTS 'PROGRAMME_DAY_7';
+ALTER TYPE "EmailTemplateKey" ADD VALUE IF NOT EXISTS 'PROGRAMME_DAY_10';
+ALTER TYPE "EmailTemplateKey" ADD VALUE IF NOT EXISTS 'PAUSE_ENDS_TOMORROW';
+ALTER TYPE "EmailTemplateKey" ADD VALUE IF NOT EXISTS 'PAUSE_OVER';
+ALTER TYPE "EmailTemplateKey" ADD VALUE IF NOT EXISTS 'PAUSE_TOOL_CONFIRMATION';
+
+ALTER TYPE "EmailPurpose" ADD VALUE IF NOT EXISTS 'PROGRAMME_DAY_3';
+ALTER TYPE "EmailPurpose" ADD VALUE IF NOT EXISTS 'PROGRAMME_DAY_7';
+ALTER TYPE "EmailPurpose" ADD VALUE IF NOT EXISTS 'PROGRAMME_DAY_10';
+ALTER TYPE "EmailPurpose" ADD VALUE IF NOT EXISTS 'PAUSE_ENDS_TOMORROW';
+ALTER TYPE "EmailPurpose" ADD VALUE IF NOT EXISTS 'PAUSE_OVER';
+ALTER TYPE "EmailPurpose" ADD VALUE IF NOT EXISTS 'PAUSE_TOOL_CONFIRMATION';

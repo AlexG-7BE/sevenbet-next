@@ -17,7 +17,10 @@ import { recordServerAnalyticsEventBestEffort } from "@/lib/analytics/service.se
 import { consentedFirstTouch, signupAcquisitionColumns, type AcquisitionTouch } from "@/lib/analytics/first-touch.server";
 import { isProductAnalyticsEnabled } from "@/lib/analytics/product-analytics";
 import prisma from "@/lib/db/prisma";
+import { takeOverPauseReminder } from "@/lib/email/pause-letters/reminders.server";
+import { pauseLettersEnabled } from "@/lib/email/pause-letters/schedule";
 import { deliverWelcomeEmail } from "@/lib/email/service.server";
+import { carriedPauseDateFromCookieHeader } from "@/lib/tools/pause-date-carry";
 import { normalizeCustomerEmail } from "@/lib/customers/auth-hooks.server";
 
 function resultUser(value: unknown) {
@@ -94,6 +97,10 @@ export async function observeSuccessfulAuthentication({
     // The account operation is complete; analytics enrichment is optional.
   }
   const countryCode = requestCountrySignalFromHeaders(request.headers, now)?.countryCode ?? null;
+  // The pause date the person named in the tool on /pause-plan, carried by a one-hour cookie
+  // (lib/tools/pause-date-carry.ts). Saved at sign-up, or at the first sign-in that brings one to
+  // an account without a date. It times two letters and is read for nothing else.
+  const carriedPause = pauseLettersEnabled() ? carriedPauseDateFromCookieHeader(request.headers.get("cookie"), now) : null;
   await prisma.$transaction([
     prisma.user.update({
       where: { id: user.id },
@@ -112,6 +119,16 @@ export async function observeSuccessfulAuthentication({
       create: { userId: user.id },
       update: {},
     }),
+    ...(carriedPause ? [
+      prisma.user.updateMany({
+        // A sign-in replaces only a missing date or one that has already passed.
+        where: { id: user.id, ...(kind === "signup" ? {} : { OR: [{ pauseEndsOn: null }, { pauseEndsOn: { lt: new Date(now.toISOString().slice(0, 10)) } }] }) },
+        data: {
+          pauseEndsOn: new Date(`${carriedPause.endsOn}T00:00:00.000Z`),
+          pauseRegister: carriedPause.register === "rofus" ? "ROFUS" : "SPELPAUS",
+        },
+      }),
+    ] : []),
     ...(consented && anonymousId ? [
       prisma.analyticsSession.updateMany({ where: { anonymousId, userId: null }, data: { userId: user.id } }),
       prisma.analyticsEvent.updateMany({ where: { anonymousId, userId: null }, data: { userId: user.id } }),
@@ -138,6 +155,10 @@ export async function observeSuccessfulAuthentication({
       ...(acquisition ?? {}),
     });
   }
+  // An address left in the tool's email field now has an account: its stand-alone letters stop.
+  await takeOverPauseReminder(user, now).catch(() => {
+    console.error("[email] pause reminder take-over failed", { email_failure_category: "take_over" });
+  });
   if (kind === "signup") {
     // This observer already runs after the sign-up response, so the welcome
     // email can leave now; the nightly lifecycle run retries a failure.

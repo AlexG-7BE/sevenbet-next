@@ -175,7 +175,8 @@ test("PR6 removal remains exact while the later official MFA model is isolated",
     baselineModels.filter((model) => !currentSet.has(model)),
     expectedModels,
   );
-  assert.deepEqual(currentModels.filter((model) => !baselineSet.has(model)), ["TwoFactor"]);
+  // Added since: the Admin MFA model (0042) and the pause-letter addresses (0045).
+  assert.deepEqual(currentModels.filter((model) => !baselineSet.has(model)), ["TwoFactor", "PauseReminder"]);
   for (const model of expectedModels) {
     assert.doesNotMatch(currentSchema, new RegExp(`^model ${model} \\{`, "m"));
   }
@@ -221,7 +222,7 @@ test("0041 is an exact explicit no-CASCADE cleanup and cannot target the KEEP se
     .map((entry) => entry.name)
     .sort();
   assert.ok(migrations.includes("0041_commercial_core_legacy_connector_cleanup"));
-  assert.equal(migrations.at(-1), "0043_article_learning_center");
+  assert.equal(migrations.at(-1), "0045_pause_letters");
 
   const sql = source(PR6_MIGRATION_PATH);
   const inspection = inspectPr6MigrationSql(sql);

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { PausePlanLetters } from "./PausePlanLetters";
 import styles from "./PausePlan.module.css";
 import type { PausePlanDay, PausePlanMessages, PausePlanRegisterMessages, PausePlanToolMessages } from "@/lib/i18n/static-pages/pause-plan";
 import { PAUSE_PERIODS, dayAfter, parseIsoDate, pauseEndDate, pausePeriod, planDates, toIsoDate, type PauseRegister } from "@/lib/tools/pause-plan";
@@ -31,13 +32,20 @@ function calendarFile(date: Date, title: string, description: string) {
 
 /**
  * The visitor names the day the pause started and its length; the tool shows the last day of
- * the pause, the day after, and the ten plan days with their dates, as they type. It keeps
- * nothing: no cookie, no storage, no request (Founder, 13 October 2026: an ordinary landing
- * page). The one button saves the day after as a calendar file on the person's own device.
+ * the pause, the day after, and the ten plan days with their dates, as they type. The tool
+ * itself keeps nothing: no cookie, no storage, no request (Founder, 13 October 2026: an ordinary
+ * landing page). The one button saves the day after as a calendar file on the person's own
+ * device.
+ *
+ * While the pause letters are switched on (`letters`), `PausePlanLetters` adds the two things
+ * this page keeps, both for the timing of letters only: the pause date carried to the account
+ * when the Programme button is pressed, and the email field under the result.
  */
-export function PausePlanTool({ days, ics, locale, messages, register, registers }: {
+export function PausePlanTool({ days, ics, letters = false, locale, messages, register, registers }: {
   days: readonly PausePlanDay[];
   ics: PausePlanMessages["ics"];
+  /** The pause-letter switch, read on the server. */
+  letters?: boolean;
   locale: string;
   messages: PausePlanToolMessages;
   register: PauseRegister | "both";
@@ -48,6 +56,7 @@ export function PausePlanTool({ days, ics, locale, messages, register, registers
   const periods = PAUSE_PERIODS[chosenRegister];
   const [periodId, setPeriodId] = useState(periods[0]?.id ?? "");
   const [startText, setStartText] = useState("");
+  const [touched, setTouched] = useState(false);
 
   // The date input starts at today; the server cannot know the visitor's day.
   useEffect(() => {
@@ -66,6 +75,7 @@ export function PausePlanTool({ days, ics, locale, messages, register, registers
   const registerMessages = registers[chosenRegister];
 
   const choosePeriodsFor = (next: PauseRegister) => {
+    setTouched(true);
     setChosenRegister(next);
     setPeriodId(PAUSE_PERIODS[next][0]?.id ?? "");
   };
@@ -96,11 +106,11 @@ export function PausePlanTool({ days, ics, locale, messages, register, registers
           </div></fieldset>
           : null}
         <label className={styles.field} htmlFor="pause-start"><span>{messages.startLabel}</span>
-          <input id="pause-start" max="2099-12-31" min="2019-01-01" name="pause-start" onChange={(event) => setStartText(event.target.value)} required type="date" value={startText} />
+          <input id="pause-start" max="2099-12-31" min="2019-01-01" name="pause-start" onChange={(event) => { setTouched(true); setStartText(event.target.value); }} required type="date" value={startText} />
           <small>{messages.startHint}</small>
         </label>
         <label className={styles.field} htmlFor="pause-period"><span>{messages.periodLabel}</span>
-          <select id="pause-period" name="pause-period" onChange={(event) => setPeriodId(event.target.value)} value={periodId}>
+          <select id="pause-period" name="pause-period" onChange={(event) => { setTouched(true); setPeriodId(event.target.value); }} value={periodId}>
             {periods.map((option) => <option key={option.id} value={option.id}>{registerMessages?.periods[option.id] ?? option.id}</option>)}
           </select>
         </label>
@@ -114,6 +124,7 @@ export function PausePlanTool({ days, ics, locale, messages, register, registers
           <div><dt>{messages.dayAfterLabel}</dt><dd className={styles.after} data-pause-plan-after={result ? toIsoDate(result.after) : ""}>{result ? longDate.format(result.after) : "—"}</dd></div>
         </dl>
         {registerMessages ? <p className={styles.note}>{registerMessages.whatHappens}</p> : null}
+        {letters ? <PausePlanLetters endsOn={result && !period?.openEnded ? toIsoDate(result.end) : null} locale={locale} messages={messages.reminder} register={chosenRegister} touched={touched} /> : null}
       </div>
     </div>
 

@@ -355,6 +355,11 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
         "prisma/migrations/0043_article_learning_center/migration.sql",
         "prisma/schema.prisma",
       ],
+      [
+        "prisma/migrations/0044_pause_letters_enum_values/migration.sql",
+        "prisma/migrations/0045_pause_letters/migration.sql",
+        "prisma/schema.prisma",
+      ],
       ["prisma/schema.prisma"],
     ];
     assert.ok(approvedExactSchemaChangeSets.some(

@@ -33,6 +33,17 @@ export type PausePlanToolMessages = Readonly<{
   planHeading: string;
   planIntro: string;
   stepLabel: string;
+  /** The email field under the result; shown only while the pause letters are switched on. */
+  reminder: PausePlanReminderMessages;
+}>;
+
+export type PausePlanReminderMessages = Readonly<{
+  label: string;
+  /** The one line that says what is sent and when. It is the consent; nothing else asks again. */
+  consent: string;
+  submit: string;
+  done: string;
+  error: string;
 }>;
 
 export type PausePlanMessages = Readonly<{
@@ -100,6 +111,13 @@ const sv: PausePlanMessages = {
     planHeading: "Alla tio på en kväll, eller ett om dagen",
     planIntro: "Tio steg ur B4GAMBLE-programmet, i den ordning du gör dem. Varje steg tar 5–15 minuter och slutar med något du behåller. Du väljer takten: hela planen på en kväll, eller ett steg om dagen tills pausen är slut. Du fortsätter alltid där du slutade.",
     stepLabel: "Steg",
+    reminder: {
+      label: "Din e-postadress",
+      consent: "Vi skriver nu, dagen innan din paus tar slut och dagen då den är slut. Du kan avsluta när som helst.",
+      submit: "Påminn mig",
+      done: "Klart. Vi hörs dagen innan din paus tar slut.",
+      error: "Det gick inte just nu. Försök igen om en stund.",
+    },
   },
   days: [
     { title: "Säg som det är", move: "Skriv ner den riktiga summan och den riktiga tiden. Bara för dig. Det är din startpunkt." },
@@ -171,6 +189,13 @@ const da: PausePlanMessages = {
     planHeading: "Alle ti på én aften, eller ét om dagen",
     planIntro: "Ti trin fra B4GAMBLE-programmet i den rækkefølge, du tager dem. Hvert trin tager 5–15 minutter og slutter med noget, du beholder. Du vælger tempoet: hele planen på én aften, eller ét trin om dagen, til pausen er slut. Du fortsætter altid, hvor du slap.",
     stepLabel: "Trin",
+    reminder: {
+      label: "Din e-mailadresse",
+      consent: "Vi skriver nu, dagen før, din pause udløber, og dagen, hvor den er slut. Du kan stoppe når som helst.",
+      submit: "Påmind mig",
+      done: "Det er på plads. Vi skriver dagen før, din pause udløber.",
+      error: "Det lykkedes ikke lige nu. Prøv igen om lidt.",
+    },
   },
   days: [
     { title: "Sig det, som det er", move: "Skriv det rigtige beløb og den rigtige tid ned. Kun for dig. Det er dit startpunkt." },
@@ -255,6 +280,13 @@ const en: PausePlanMessages = {
     planHeading: "All ten in one evening, or one a day",
     planIntro: "Ten steps from the B4GAMBLE Programme, in the order you take them. Each takes 5–15 minutes and ends with something you keep. You set the pace: the whole plan in one evening, or one step a day until the pause ends. You always continue where you left off.",
     stepLabel: "Step",
+    reminder: {
+      label: "Your email address",
+      consent: "We write now, the day before your pause ends and the day it is over. You can stop at any time.",
+      submit: "Remind me",
+      done: "Done. We write the day before your pause ends.",
+      error: "That did not work just now. Try again in a moment.",
+    },
   },
   days: [
     { title: "Say what is happening", move: "Write down the real amount and the real time. For you only. That is your Starting Point." },

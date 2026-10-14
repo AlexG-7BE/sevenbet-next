@@ -30,6 +30,8 @@ const COMMERCIAL_UX_ANALYTICS_MIGRATION = "0038_commercial_ux_analytics_events";
 const COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION = "0039_commercial_core_partner_relationship";
 const COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION = "0040_commercial_core_exact_routes_geo_simplification";
 const ARTICLE_LEARNING_CENTER_MIGRATION = "0043_article_learning_center";
+const PAUSE_LETTERS_ENUM_MIGRATION = "0044_pause_letters_enum_values";
+const PAUSE_LETTERS_MIGRATION = "0045_pause_letters";
 
 type MigrationRow = {
   migration_name: string;
@@ -481,7 +483,7 @@ async function verifyVercelBuildCompatibility() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION, COMMERCIAL_UX_ANALYTICS_MIGRATION, COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION, COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION, ARTICLE_LEARNING_CENTER_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION, VETTED_PARTNER_HOSTED_CREATIVES_TARGET_MIGRATION, MEDIA_OPERATIONS_BULK_TARGET_MIGRATION, MARKET_ACTIVATION_BASE_MIGRATION, MARKET_ACTIVATION_TARGET_MIGRATION, MEDIA_GEO3_TARGET_MIGRATION, MEDIA_RETIREMENT_TARGET_MIGRATION, MARKET_ACTIVATION_EXACT_MARKET_MIGRATION, RUNTIME_PARTNER_MARKET_SUPPORT_MIGRATION, CUSTOMER_DATA_ANALYTICS_LIFECYCLE_MIGRATION, COMMERCIAL_UX_ANALYTICS_MIGRATION, COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION, COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION, ARTICLE_LEARNING_CENTER_MIGRATION, PAUSE_LETTERS_ENUM_MIGRATION, PAUSE_LETTERS_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -495,6 +497,7 @@ async function verifyVercelBuildCompatibility() {
   let commercialCorePartnerRelationshipSchemaReady = false;
   let commercialCoreExactRoutesSchemaReady = false;
   let articleLearningCenterSchemaReady = false;
+  let pauseLettersSchemaReady = false;
   let mediaRetirementReady = false;
   try {
     await prisma.$transaction(async (transaction) => {
@@ -543,6 +546,8 @@ async function verifyVercelBuildCompatibility() {
       ...(!applied.has(COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION) ? [COMMERCIAL_CORE_PARTNER_RELATIONSHIP_MIGRATION] : []),
       ...(!applied.has(COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION) ? [COMMERCIAL_CORE_EXACT_ROUTES_MIGRATION] : []),
       ...(!applied.has(ARTICLE_LEARNING_CENTER_MIGRATION) ? [ARTICLE_LEARNING_CENTER_MIGRATION] : []),
+      ...(!applied.has(PAUSE_LETTERS_ENUM_MIGRATION) ? [PAUSE_LETTERS_ENUM_MIGRATION] : []),
+      ...(!applied.has(PAUSE_LETTERS_MIGRATION) ? [PAUSE_LETTERS_MIGRATION] : []),
     ];
 
     if (
@@ -874,6 +879,35 @@ async function verifyVercelBuildCompatibility() {
         invalidLocaleRows: Number(schema.invalid_locale_rows),
       });
     }
+    if (applied.has(PAUSE_LETTERS_ENUM_MIGRATION) && applied.has(PAUSE_LETTERS_MIGRATION)) {
+      assertChecksum(completedByName.get(PAUSE_LETTERS_ENUM_MIGRATION), PAUSE_LETTERS_ENUM_MIGRATION);
+      assertChecksum(completedByName.get(PAUSE_LETTERS_MIGRATION), PAUSE_LETTERS_MIGRATION);
+      // The application reads the two account columns on every account query, so the build
+      // waits for them. Counts only: no account or address is read here.
+      const [schema] = await prisma.$queryRawUnsafe<Array<{
+        account_columns: bigint;
+        reminder_table: string | null;
+        seeded_templates: bigint;
+      }>>(`
+        SELECT
+          (SELECT COUNT(*)::bigint FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'User'
+              AND column_name IN ('pauseEndsOn', 'pauseRegister')) AS account_columns,
+          to_regclass('public."PauseReminder"')::text AS reminder_table,
+          (SELECT COUNT(*)::bigint FROM "EmailTemplate" WHERE "createdBy" = 'migration-0045') AS seeded_templates
+      `);
+      if (schema?.account_columns !== 2n || !schema.reminder_table || schema.seeded_templates < 1n) {
+        throw new Error("Production migration guard found incomplete pause-letter schema.");
+      }
+      pauseLettersSchemaReady = true;
+      writeEvent({
+        event: "production_pause_letters_readiness",
+        migration: PAUSE_LETTERS_MIGRATION,
+        accountColumns: Number(schema.account_columns),
+        reminderTable: true,
+        seededTemplates: Number(schema.seeded_templates),
+      });
+    }
     if (applied.has(MEDIA_RETIREMENT_TARGET_MIGRATION)) {
       assertChecksum(completedByName.get(MEDIA_RETIREMENT_TARGET_MIGRATION), MEDIA_RETIREMENT_TARGET_MIGRATION);
       await assertMediaRetirementInvariants(prisma);
@@ -923,6 +957,10 @@ async function verifyVercelBuildCompatibility() {
 
   if (!articleLearningCenterSchemaReady) {
     throw new Error(`Production DB-first release requires completed ${ARTICLE_LEARNING_CENTER_MIGRATION} before this application build.`);
+  }
+
+  if (!pauseLettersSchemaReady) {
+    throw new Error(`Production DB-first release requires completed ${PAUSE_LETTERS_ENUM_MIGRATION} and ${PAUSE_LETTERS_MIGRATION} before this application build.`);
   }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();

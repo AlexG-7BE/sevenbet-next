@@ -2,6 +2,7 @@ import "server-only";
 
 import prisma from "@/lib/db/prisma";
 import { recordServerAnalyticsEventBestEffort } from "@/lib/analytics/service.server";
+import { unsubscribePauseReminder } from "@/lib/email/pause-letters/reminders.server";
 import { hashUnsubscribeToken } from "@/lib/email/service.server";
 
 export function isValidUnsubscribeToken(token: string) {
@@ -14,7 +15,9 @@ export async function unsubscribeWithToken(token: string, now = new Date()) {
     where: { tokenHash: hashUnsubscribeToken(token) },
     include: { message: { select: { id: true, userId: true, locale: true, environment: true } } },
   });
-  if (!record) return { status: "invalid" } as const;
+  // A letter from the email field on /pause-plan belongs to no account: its link stops that
+  // address's letters and touches nothing else.
+  if (!record) return unsubscribePauseReminder(token, now);
   if (record.userId !== record.message.userId) return { status: "invalid" } as const;
   const changed = await prisma.$transaction(async (transaction) => {
     const consumed = await transaction.emailUnsubscribeToken.updateMany({
