@@ -89,11 +89,31 @@ function publishedArticle(overrides: Partial<PublicArticle> = {}): PublicArticle
   };
 }
 
+test("related reading links each guide to its neighbours, same-tag guides first, not the three newest", () => {
+  const guides = Array.from({ length: 8 }, (_, index) => publishedArticle({
+    id: `00000000-0000-4000-8000-00000000010${index}`,
+    slug: `guide-${index}`,
+    tags: index === 1 || index === 6 ? ["Spelpaus"] : ["Responsible Gambling"],
+  }));
+  const ids = (articles: PublicArticle[]) => articles.map((article) => article.slug);
+  // Newest first: guide-4 sits between guide-3 and guide-5.
+  assert.deepEqual(ids(relatedReadingSelection(guides[4], guides)), ["guide-5", "guide-3", "guide-6"]);
+  // A pause guide links to the other pause guide first, then to its own neighbours.
+  assert.deepEqual(ids(relatedReadingSelection(guides[1], guides)), ["guide-6", "guide-2", "guide-0"]);
+  // The oldest guide wraps round to the newest one.
+  assert.deepEqual(ids(relatedReadingSelection(guides[7], guides)), ["guide-0", "guide-5", "guide-6"]);
+  // Every guide is linked from at least two others.
+  const linksIn = new Map<string, number>();
+  for (const guide of guides) {
+    for (const related of relatedReadingSelection(guide, guides)) linksIn.set(related.slug, (linksIn.get(related.slug) ?? 0) + 1);
+  }
+  assert.ok(guides.every((guide) => (linksIn.get(guide.slug) ?? 0) >= 2), JSON.stringify([...linksIn]));
+});
+
 test("protected related reading constrains the query and rendered selection without commercial fallback", () => {
   const protectedArticle = publishedArticle();
   assert.deepEqual(relatedReadingListInput(protectedArticle), {
-    take: 3,
-    excludeId: protectedArticle.id,
+    take: 100,
     category: "responsible-gambling",
   });
 
@@ -114,8 +134,7 @@ test("protected related reading constrains the query and rendered selection with
 
   const generalArticle = publishedArticle({ category: "casino-safety" });
   assert.deepEqual(relatedReadingListInput(generalArticle), {
-    take: 3,
-    excludeId: generalArticle.id,
+    take: 100,
   });
   assert.deepEqual(
     relatedReadingSelection(generalArticle, [protectedCandidate, commercialCandidate]),

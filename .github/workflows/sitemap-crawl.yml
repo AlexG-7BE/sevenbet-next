@@ -17,9 +17,6 @@ on:
         description: Comma-separated language homes the click depth counts from
         required: true
         default: sv,da,de,en
-  push:
-    branches: [feat/search-indexing-crawl]
-    paths: [scripts/research/sitemap-crawl.mjs, .github/workflows/sitemap-crawl.yml]
 
 permissions:
   contents: read
@@ -34,7 +31,7 @@ jobs:
         with:
           node-version-file: .nvmrc
       - name: Crawl the sitemap
-        run: node scripts/research/sitemap-crawl.mjs --base=${{ inputs.base || 'https://b4gamble.com' }} --homes=${{ inputs.homes || 'sv,da,de,en' }} --out=crawl
+        run: node scripts/research/sitemap-crawl.mjs --base=${{ inputs.base }} --homes=${{ inputs.homes }} --out=crawl
       - name: Show the report
         if: always()
         run: if [ -s crawl/REPORT.md ]; then cat crawl/REPORT.md >> "$GITHUB_STEP_SUMMARY"; fi

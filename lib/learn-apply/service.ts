@@ -296,7 +296,7 @@ export class LearnApplyService {
 
       let cacheFailure = false;
       try {
-        this.revalidate(applied.article.category, applied.article.slug);
+        this.revalidate(applied.article.category, applied.article.slug, applied.article.locale);
       } catch (error) {
         cacheFailure = true;
         this.logger({

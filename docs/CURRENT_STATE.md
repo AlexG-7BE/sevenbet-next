@@ -12,6 +12,41 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Search indexing: guides link to their neighbours, guides announced in their own language — in review
+
+**DETECTED, Search Console, read 15 October 2026** (report last updated 9 October): 166
+pages indexed, 339 not — "Discovered – currently not indexed" 234 (about 147 casino reviews
+in six languages, about 70 Learn guides, the rest hubs; none ever crawled), noindex 56 (all
+intended: languages closed to search, `/login`, `/outbound`, demo casinos), duplicate with a
+Google-chosen canonical 19 (`/en/*` pages plus `/sv/help`, `/da/help`), "Crawled – currently
+not indexed" 18 (five Swedish guides, twelve stylesheet URLs, `/learn/casino-reviews`),
+redirects 9, canonical variants 3. Bing Webmaster: one page indexed (`/`); on 14 October
+IndexNow still received the Swedish guide `ta-bort-spelpaus` as `/en/learn/…` (404).
+
+**DETECTED, Production crawl of the 310 sitemap URLs from a GitHub runner** (new manual
+workflow `Sitemap crawl (indexing audit)`, script `scripts/research/sitemap-crawl.mjs`):
+every URL answers 200 with a self canonical and no noindex. Learn guides sit two clicks
+from their language home but 16 have one internal link in (the Learn index) while 38 have
+more than five: "Read next" always showed the three newest guides of the language (or of
+Responsible Gambling). Casino reviews sit three or four clicks deep with two or three links
+in and a median of 294 words. Ten language pages serve the English text under an English
+title (`/sv|da|de/help`, `/sv|da|de/responsible-gambling`, `/de/pause-plan`, `/de/beside`,
+`/de/for-creators`, `/de/pause-statistics`). `/for-creators`, `/beside` and
+`/pause-statistics` are in the sitemap with no internal link.
+
+**Changed.** `relatedReadingSelection` (`lib/articles/related-reading.ts`) picks the guides
+that share a tag with the article first (the Spelpaus and ROFUS pause guides link to each
+other), then the guides published just before and after it, wrapping at the ends; the
+protected Responsible Gambling constraint is unchanged. Every guide is now linked from at
+least two others. `learn_apply` passes the article's locale to the cache revalidation, so
+IndexNow announces a guide under its own language (`lib/learn-apply/service.ts`; the admin
+path already did). Tests: `tests/article-learning.test.ts` (`ci:structural`) and
+`tests/learn-apply.test.ts` (`learn-apply:test`), both in `ci:quality`.
+
+**Not changed (Founder decision).** Translating Help and Responsible Gambling for
+sv/da/de (protected Help content) or pointing those copies' canonical to English; the
+thin, templated casino reviews; links to the three orphan pages.
+
 ## The question screen of a Programme step — in review
 
 **Founder instruction, 13 October 2026.** The Programme's screens felt like a
