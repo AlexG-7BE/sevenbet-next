@@ -465,11 +465,13 @@ test("the email field refuses bad input, is rate-limited per source and per addr
 
 test("an address that signs up is taken over by the account: the stand-alone letters stop and the account carries the date", async () => {
   const evening = lastLocalHour(18);
-  const today = pauseLetterLocalTime(evening).day;
+  // The sign-up below runs on the real clock, and a take-over keeps only a pause that has not ended yet.
+  // Before 18:00 local time `evening` is yesterday, so the pause ends tomorrow by the real local date.
+  const endsOn = shiftIsoDay(pauseLetterLocalTime(new Date()).day, 1);
   const provider = new RecordingProvider();
   const options = { provider, siteUrl: SITE_URL, now: evening };
   const email = address();
-  await subscribePauseReminder({ email, register: "spelpaus", endsOn: today, locale: "sv" }, `takeover-${randomUUID()}`, options);
+  await subscribePauseReminder({ email, register: "spelpaus", endsOn, locale: "sv" }, `takeover-${randomUUID()}`, options);
 
   const suffix = randomUUID();
   const account = await prisma.user.create({ data: { id: `pause-letters-${suffix}`, name: "Take-over Fixture", email, emailVerified: true, preferredLocale: "sv" } });
@@ -482,7 +484,7 @@ test("an address that signs up is taken over by the account: the stand-alone let
   const reminder = await prisma.pauseReminder.findFirstOrThrow({ where: { email } });
   assert.ok(reminder.takenOverAt);
   const stored = await prisma.user.findUniqueOrThrow({ where: { id: account.id } });
-  assert.deepEqual([stored.pauseEndsOn?.toISOString().slice(0, 10), stored.pauseRegister], [today, "SPELPAUS"]);
+  assert.deepEqual([stored.pauseEndsOn?.toISOString().slice(0, 10), stored.pauseRegister], [endsOn, "SPELPAUS"]);
 
   await sendDuePauseReminders(50, options);
   assert.deepEqual(provider.envelopes.filter((envelope) => envelope.to === email).map((envelope) => envelope.subject), ["Din paus: vi hörs dagen innan den tar slut"]);

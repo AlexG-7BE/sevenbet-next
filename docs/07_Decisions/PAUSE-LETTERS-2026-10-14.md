@@ -178,7 +178,11 @@ refuses a Production build until both migrations are applied.
 Set `PAUSE_LETTERS_ENABLED` to anything but `true` and redeploy: nothing new is
 queued, sent, stored or shown. The columns and the table are additive and can
 stay. Reverting the PR after the migrations are applied needs the usual care
-with the Prisma schema; the switch is the intended rollback.
+with the Prisma schema; the switch is the intended rollback. Do not use a Vercel
+instant rollback to a build from before this change once the migrations are
+applied: an older Prisma client fails on the new `EmailTemplate` key values,
+so the admin template pages (`/admin/templates`, `/admin/email`) answer 500.
+Turn the switch off and redeploy instead.
 
 ## Evidence
 
