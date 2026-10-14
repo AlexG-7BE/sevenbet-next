@@ -25,7 +25,8 @@ Founder's Claude Code (subscription, no API text cost):
   below, restored exactly as at `1150330c`, with three changes: the only model
   is `gpt-5.6-sol` (`gpt-6-astra` fails closed); the publisher accepts the
   Learn MCP surface `learn_apply` plus the read-only `learn_context`,
-  `learn_source` and `social_traffic` (and still calls only `learn_apply`); and
+  `learn_source`, `social_traffic` and `programme_funnel` (and still calls only
+  `learn_apply`); and
   the `learn_apply` call may take up to 240 seconds.
 - Switching the server cycle is a Vercel variable change plus a redeploy.
   Production runs it once per 24 hours (`LEARN_CONTENT_MIN_INTERVAL_HOURS=24`).
@@ -42,7 +43,8 @@ Founder's Claude Code (subscription, no API text cost):
 Same endpoint, authentication and transport as `learn_apply`: `POST
 /api/mcp/learn`, stateless Streamable HTTP, `Authorization: Bearer
 <LEARN_MCP_SERVICE_TOKEN>`, responses `private, no-store`. `tools/list`
-returns `learn_context`, `learn_source`, `social_traffic`, then `learn_apply`.
+returns `learn_context`, `learn_source`, `social_traffic`, `programme_funnel`,
+then `learn_apply`.
 
 ```text
 learn_context { targetLanguage: "en" | configured launch language }
