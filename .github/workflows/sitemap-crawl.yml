@@ -1,0 +1,43 @@
+name: Sitemap crawl (indexing audit)
+
+# Crawls the Production sitemap from a GitHub-hosted runner, because Production answers the
+# Founder's machine with 451. Per URL: status, canonical, robots, hreflang, words, internal links
+# out and in, click depth from the language home. Manual only: Actions → Sitemap crawl (indexing
+# audit) → Run workflow. Nothing is written to the repo: pages.csv, pages.json and REPORT.md are a
+# workflow artifact for 14 days. Script: scripts/research/sitemap-crawl.mjs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: Site to crawl
+        required: true
+        default: https://b4gamble.com
+      homes:
+        description: Comma-separated language homes the click depth counts from
+        required: true
+        default: sv,da,de,en
+
+permissions:
+  contents: read
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Crawl the sitemap
+        run: node scripts/research/sitemap-crawl.mjs --base=${{ inputs.base }} --homes=${{ inputs.homes }} --out=crawl
+      - name: Show the report
+        if: always()
+        run: if [ -s crawl/REPORT.md ]; then cat crawl/REPORT.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sitemap-crawl
+          path: crawl/
+          retention-days: 14

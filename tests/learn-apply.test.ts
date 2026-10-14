@@ -173,14 +173,14 @@ test("orchestration creates LIVE without images and invalidates the canonical su
       cleanupCreated: async () => { calls.push("cleanup"); },
     },
     actorResolver: async () => ({ id: "22222222-2222-4222-8222-222222222222", name: "B4GAMBLE Content Agent", role: "AUTHOR", userId: null }),
-    revalidate: (category, slug) => { calls.push(`revalidate:${category}/${slug}`); },
+    revalidate: (category, slug, locale) => { calls.push(`revalidate:${locale}:${category}/${slug}`); },
     verifier: { verify: async () => ({ verified: true, checks: ["article_http_and_identity"], attempts: 1, failureCode: null, publicUrl: "https://b4gamble.com/en/learn/casino-basics/autonomous-learn-guide" }) },
     logger: () => undefined,
   });
   const result = await service.apply(input());
   assert.equal(result.result, "LIVE");
   assert.equal(result.operation, "CREATED");
-  assert.deepEqual(calls, ["images:0", "persist", "revalidate:casino-basics/autonomous-learn-guide"]);
+  assert.deepEqual(calls, ["images:0", "persist", "revalidate:en-GB:casino-basics/autonomous-learn-guide"]);
   assert.equal(result.articleId, article(desired).id);
 });
 
