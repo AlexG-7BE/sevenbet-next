@@ -21,6 +21,12 @@ import { isCrawlerUserAgent } from "@/lib/seo/crawler";
  * Facebook card showed the Danish home (3 Oct). Crawlers, the same `bot=1` user agents the log
  * line flags, are sent to the English home instead: its title, description, image and `og:url`
  * are the English home's own metadata, so the card is English whichever country fetched it.
+ *
+ * Profile links land on the pause plan (Founder plan, 13 Oct 2026). The brand accounts speak Swedish
+ * and Lana's speak Danish, so `/ig`, `/fb`, `/x` and `/threads` go to `/sv/pause-plan` and `/lana` to
+ * `/da/pause-plan`. That page carries its language in the path, so a crawler gets the same address
+ * as a person and the card is Swedish or Danish wherever it was fetched from. Per-post links
+ * (`/<prefix>/<code>`) keep the homepage.
  */
 
 type SocialSource = "instagram" | "facebook" | "x" | "threads" | "lana";
@@ -31,15 +37,21 @@ export type SocialShortLink = Readonly<{
   campaign: SocialCampaign;
   /** Becomes `utm_content`: the post code, or `link_in_bio` for the Instagram profile link. */
   content: string | null;
+  /** A language-prefixed page the link lands on instead of the homepage, for people and crawlers alike. */
+  landing?: SocialLandingPath;
 }>;
 
-/** Profile (bio) links, one per account. */
+/** The pause plan in the language of the account that carries the link. */
+export const SOCIAL_LANDING_PATHS = { sv: "/sv/pause-plan", da: "/da/pause-plan" } as const;
+type SocialLandingPath = (typeof SOCIAL_LANDING_PATHS)[keyof typeof SOCIAL_LANDING_PATHS];
+
+/** Profile (bio) links, one per account: the brand accounts are Swedish, Lana's are Danish. */
 export const SOCIAL_PROFILE_LINKS = {
-  "/ig": { source: "instagram", campaign: "bio", content: "link_in_bio" },
-  "/fb": { source: "facebook", campaign: "bio", content: null },
-  "/x": { source: "x", campaign: "bio", content: null },
-  "/threads": { source: "threads", campaign: "bio", content: null },
-  "/lana": { source: "lana", campaign: "bio", content: null },
+  "/ig": { source: "instagram", campaign: "bio", content: "link_in_bio", landing: SOCIAL_LANDING_PATHS.sv },
+  "/fb": { source: "facebook", campaign: "bio", content: null, landing: SOCIAL_LANDING_PATHS.sv },
+  "/x": { source: "x", campaign: "bio", content: null, landing: SOCIAL_LANDING_PATHS.sv },
+  "/threads": { source: "threads", campaign: "bio", content: null, landing: SOCIAL_LANDING_PATHS.sv },
+  "/lana": { source: "lana", campaign: "bio", content: null, landing: SOCIAL_LANDING_PATHS.da },
 } as const satisfies Record<string, SocialShortLink>;
 
 export type SocialProfilePath = keyof typeof SOCIAL_PROFILE_LINKS;
@@ -74,13 +86,14 @@ export function socialPostLink(prefix: SocialPostPrefix, code: string): SocialSh
 export const SOCIAL_PREVIEW_HOME_PATH = publicMarketPath(DEFAULT_MARKET_PROFILE, "en-GB", "/");
 
 /**
- * The homepage URL with the link's UTM tags, in the order the 2 Oct redirects used: the
- * unprefixed homepage for people, the English home for link-preview crawlers.
+ * Where the link lands, with its UTM tags in the order the 2 Oct redirects used. A link with a
+ * `landing` goes there for everyone; any other goes to the unprefixed homepage for people and to the
+ * English home for link-preview crawlers.
  */
 export function socialShortLinkDestination(link: SocialShortLink, { crawler = false }: { crawler?: boolean } = {}) {
   const query = new URLSearchParams({ utm_source: link.source, utm_medium: "social", utm_campaign: link.campaign });
   if (link.content) query.set("utm_content", link.content);
-  return `${crawler ? SOCIAL_PREVIEW_HOME_PATH : "/"}?${query}`;
+  return `${link.landing ?? (crawler ? SOCIAL_PREVIEW_HOME_PATH : "/")}?${query}`;
 }
 
 /** The one log line a hit writes. `country` is the trusted Vercel country or null. */

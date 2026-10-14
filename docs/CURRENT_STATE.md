@@ -1302,6 +1302,21 @@ re-scraped (Facebook Sharing Debugger "Scrape Again"). Pinned by
 `tests/social-short-links.test.ts`. **PROPOSED — NOT YET LIVE** until merged
 and deployed.
 
+**Founder plan, 13 October 2026: profile links land on the pause plan.** The
+brand accounts speak Swedish and Lana's speak Danish, so the five profile
+links no longer open Home: `/ig`, `/fb`, `/x` and `/threads` answer 307 to
+`/sv/pause-plan`, `/lana` to `/da/pause-plan`, with the same UTM tags
+(`utm_campaign=bio`) and the same single `social_hit` line. The page carries
+its language in the path, so a link-preview crawler is sent to the same
+address as a person and the card is Swedish or Danish wherever it was fetched
+from; the 4 October "always English" rule now applies to per-post links only.
+Per-post links (`/x/<code>`, `/t/<code>`, `/fb/<code>`, `/ig/<code>`) are
+unchanged: people get the homepage in their language, crawlers `/en`. The
+targets live in `SOCIAL_LANDING_PATHS` (`lib/social/short-links.ts`); a profile
+link never targets an offer, casino, `/r` or `/go` path. Pinned by
+`tests/social-short-links.test.ts` (`social-links:test`, in `ci:quality`).
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Help-ad landing `/start` — in review
 
 **Founder instruction, 2 October 2026:** paid UK TikTok "help" ads need a
