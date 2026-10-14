@@ -1057,6 +1057,31 @@ the staged upgrade in `scripts/ci-migrations.mjs`.
 
 **PROPOSED — NOT YET LIVE.**
 
+## Weekly funnel count (`programme_funnel`) — in review
+
+**Founder plan, 13 October 2026**
+([PROGRAMME-FUNNEL-MCP-2026-10-14](07_Decisions/PROGRAMME-FUNNEL-MCP-2026-10-14.md)):
+a weekly funnel count by country and source. Branch
+`feat/programme-funnel-tool` adds the read-only `programme_funnel` tool to the
+Learn MCP endpoint, next to `social_traffic` and behind the same service
+bearer. For a UTC range of up to 92 days (default 7) it returns, by the
+account's sign-up country and by its sign-up source (UTM source, else
+acquisition source): accounts created, Programme starts (enrolments),
+completions of the third step "Research responsibly", partner-button presses
+by signed-in people and the presses that reached the partner. Each stage is
+counted by its own date. Counts only: no identifier, email, answer, Help or
+pause value is read; a cell of 1 or 2 is withheld (and one more when it would
+stand alone in its column); staff accounts are excluded; nothing is written
+and the schema is unchanged. The only importer is the MCP server
+(`lib/analytics/programme-funnel.server.ts`), so no page, offer, ranking, route
+or letter reads the numbers. Tool order on the endpoint: `learn_context`,
+`learn_source`, `social_traffic`, `programme_funnel`, `learn_apply`; the server
+Learn publisher accepts the new tool in its fail-closed discovery check and
+still calls only `learn_apply`. Tests: `tests/programme-funnel.test.ts`
+(`learn-content-orchestrator:test`, in `ci:quality`).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## SMM agents read social traffic (`social_traffic`) — in review
 
 **Founder instruction, 3 October 2026**
@@ -1340,6 +1365,21 @@ runs first. A card a network already cached stays Danish until it is
 re-scraped (Facebook Sharing Debugger "Scrape Again"). Pinned by
 `tests/social-short-links.test.ts`. **PROPOSED — NOT YET LIVE** until merged
 and deployed.
+
+**Founder plan, 13 October 2026: profile links land on the pause plan.** The
+brand accounts speak Swedish and Lana's speak Danish, so the five profile
+links no longer open Home: `/ig`, `/fb`, `/x` and `/threads` answer 307 to
+`/sv/pause-plan`, `/lana` to `/da/pause-plan`, with the same UTM tags
+(`utm_campaign=bio`) and the same single `social_hit` line. The page carries
+its language in the path, so a link-preview crawler is sent to the same
+address as a person and the card is Swedish or Danish wherever it was fetched
+from; the 4 October "always English" rule now applies to per-post links only.
+Per-post links (`/x/<code>`, `/t/<code>`, `/fb/<code>`, `/ig/<code>`) are
+unchanged: people get the homepage in their language, crawlers `/en`. The
+targets live in `SOCIAL_LANDING_PATHS` (`lib/social/short-links.ts`); a profile
+link never targets an offer, casino, `/r` or `/go` path. Pinned by
+`tests/social-short-links.test.ts` (`social-links:test`, in `ci:quality`).
+**PROPOSED — NOT YET LIVE** until merged and deployed.
 
 ## Help-ad landing `/start` — in review
 

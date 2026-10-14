@@ -21,6 +21,7 @@ import { PRESENTATION_LANGUAGE_HEADER } from "../lib/market/routing";
 import { DEFAULT_OPEN_GRAPH_IMAGES } from "../lib/seo/social-image";
 import { absoluteUrl } from "../lib/site";
 import {
+  SOCIAL_LANDING_PATHS,
   SOCIAL_POST_LINKS,
   SOCIAL_PREVIEW_HOME_PATH,
   SOCIAL_PROFILE_LINKS,
@@ -57,13 +58,13 @@ function utm(response: Response) {
   return new URL(location ?? "", "https://b4gamble.com").searchParams;
 }
 
-test("profile short links land on the homepage with their network's bio UTM tags", async () => {
+test("profile short links land on the pause plan of the account's language with their network's bio UTM tags", async () => {
   const expected = [
-    [instagramProfile, "/ig", "/?utm_source=instagram&utm_medium=social&utm_campaign=bio&utm_content=link_in_bio"],
-    [facebookProfile, "/fb", "/?utm_source=facebook&utm_medium=social&utm_campaign=bio"],
-    [xProfile, "/x", "/?utm_source=x&utm_medium=social&utm_campaign=bio"],
-    [threadsProfile, "/threads", "/?utm_source=threads&utm_medium=social&utm_campaign=bio"],
-    [lanaProfile, "/lana", "/?utm_source=lana&utm_medium=social&utm_campaign=bio"],
+    [instagramProfile, "/ig", "/sv/pause-plan?utm_source=instagram&utm_medium=social&utm_campaign=bio&utm_content=link_in_bio"],
+    [facebookProfile, "/fb", "/sv/pause-plan?utm_source=facebook&utm_medium=social&utm_campaign=bio"],
+    [xProfile, "/x", "/sv/pause-plan?utm_source=x&utm_medium=social&utm_campaign=bio"],
+    [threadsProfile, "/threads", "/sv/pause-plan?utm_source=threads&utm_medium=social&utm_campaign=bio"],
+    [lanaProfile, "/lana", "/da/pause-plan?utm_source=lana&utm_medium=social&utm_campaign=bio"],
   ] as const;
   assert.deepEqual(expected.map(([, path]) => path).sort(), Object.keys(SOCIAL_PROFILE_LINKS).sort());
   const lines = await capturedInfo(() => {
@@ -74,6 +75,11 @@ test("profile short links land on the homepage with their network's bio UTM tags
     }
   });
   assert.equal(lines.length, expected.length, "one log line per hit");
+  assert.deepEqual(SOCIAL_LANDING_PATHS, { sv: "/sv/pause-plan", da: "/da/pause-plan" });
+  for (const landing of Object.values(SOCIAL_LANDING_PATHS)) {
+    assert.ok(existsSync("app/(public)/pause-plan/page.tsx"), `${landing} is a real page`);
+    assert.doesNotMatch(landing, /^\/(?:r|go|outbound|bonuses|casinos?|best-offers)(?:\/|$)/, "never an offer or casino page");
+  }
 });
 
 test("post short links carry the post code into utm_content; Instagram's is a Story, txt- codes are text posts", async () => {
@@ -213,14 +219,16 @@ const SHORT_LINK_HITS = [
   ["/x/n11", () => socialPostLink("x", "n11"), "/?utm_source=x&utm_medium=social&utm_campaign=post&utm_content=n11"],
   ["/t/txt-poll1", () => socialPostLink("t", "txt-poll1"), "/?utm_source=threads&utm_medium=social&utm_campaign=text&utm_content=poll1"],
   ["/ig/b4r1a", () => socialPostLink("ig", "b4r1a"), "/?utm_source=instagram&utm_medium=social&utm_campaign=story&utm_content=b4r1a"],
-  ["/ig", () => SOCIAL_PROFILE_LINKS["/ig"], "/?utm_source=instagram&utm_medium=social&utm_campaign=bio&utm_content=link_in_bio"],
-  ["/threads", () => SOCIAL_PROFILE_LINKS["/threads"], "/?utm_source=threads&utm_medium=social&utm_campaign=bio"],
-  ["/lana", () => SOCIAL_PROFILE_LINKS["/lana"], "/?utm_source=lana&utm_medium=social&utm_campaign=bio"],
+  ["/ig", () => SOCIAL_PROFILE_LINKS["/ig"], "/sv/pause-plan?utm_source=instagram&utm_medium=social&utm_campaign=bio&utm_content=link_in_bio"],
+  ["/threads", () => SOCIAL_PROFILE_LINKS["/threads"], "/sv/pause-plan?utm_source=threads&utm_medium=social&utm_campaign=bio"],
+  ["/lana", () => SOCIAL_PROFILE_LINKS["/lana"], "/da/pause-plan?utm_source=lana&utm_medium=social&utm_campaign=bio"],
 ] as const;
 
-test("link-preview crawlers are sent to the English home with the same UTM tags; people keep the localized homepage", async () => {
+test("link-preview crawlers of post links are sent to the English home; profile links give crawlers and people the same pause plan", async () => {
   assert.equal(SOCIAL_PREVIEW_HOME_PATH, "/en");
   for (const [path, link, peopleLocation] of SHORT_LINK_HITS) {
+    // A post link lands on the unprefixed homepage, whose language follows the fetcher; the pause plan carries its language in the path.
+    const crawlerLocation = peopleLocation.startsWith("/?") ? `/en${peopleLocation.slice(1)}` : peopleLocation;
     for (const userAgent of PREVIEW_CRAWLERS) {
       const lines = await capturedInfo(() => {
         const response = socialShortLinkResponse(
@@ -229,7 +237,7 @@ test("link-preview crawlers are sent to the English home with the same UTM tags;
           VERCEL_PRODUCTION,
         );
         assert.equal(response.status, 307, `${path} ${userAgent}`);
-        assert.equal(response.headers.get("location"), `/en${peopleLocation.slice(1)}`, `${path} ${userAgent}`);
+        assert.equal(response.headers.get("location"), crawlerLocation, `${path} ${userAgent}`);
         assert.match(response.headers.get("cache-control") ?? "", /no-store/, "never cached, so a person never gets the crawler's redirect");
       });
       assert.equal(lines.length, 1, "still exactly one hit");
@@ -285,6 +293,17 @@ test("the English home answers a Danish crawler in English, while the unprefixed
     const neutral = await crawler(`/${query}`, "DK");
     assert.equal(neutral.status, 307);
     assert.equal(new URL(neutral.headers.get("location") ?? "http://invalid").pathname, "/da", "the 3 Oct Danish card");
+
+    // A profile link's landing keeps its own language whoever fetches it: a crawler in the US, a person in Britain.
+    for (const [landing, language, contentLanguage] of [["/sv/pause-plan", "sv", "sv-SE"], ["/da/pause-plan", "da", "da-DK"]] as const) {
+      for (const country of ["US", "GB", "DK", "SE"]) {
+        const plan = await crawler(`${landing}?utm_source=facebook&utm_medium=social&utm_campaign=bio`, country);
+        assert.equal(plan.headers.get("location"), null, `${landing} from ${country} is served, not redirected`);
+        assert.equal(new URL(plan.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/pause-plan");
+        assert.equal(plan.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), language);
+        assert.equal(plan.headers.get("content-language"), contentLanguage);
+      }
+    }
 
     const blocked = await crawler("/fb/v01", "KZ");
     assert.equal(blocked.status, 451, "the KZ geo-block still answers before the short link");
