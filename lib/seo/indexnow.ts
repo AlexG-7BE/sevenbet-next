@@ -7,6 +7,7 @@ import {
   LANGUAGE_ROUTE_PROFILES,
   publicMarketPath,
 } from "@/lib/market/registry";
+import { reviewIndexable } from "@/lib/seo/review-indexing";
 import { absoluteUrl, siteUrl } from "@/lib/site";
 
 /**
@@ -67,9 +68,11 @@ export function announceChangedUrls(urls: readonly string[], environment: Enviro
   }
 }
 
-/** A review in every language open to search. */
+/** A review in every language open to search where its casino is licensed (lib/seo/review-indexing.ts). */
 export function casinoReviewUrls(slug: string) {
-  return INDEXABLE_LANGUAGE_ROUTE_PROFILES.map((language) => absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale, `/casino/${slug}`)));
+  return INDEXABLE_LANGUAGE_ROUTE_PROFILES
+    .filter((language) => reviewIndexable(slug, language.language))
+    .map((language) => absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, language.defaultLocale, `/casino/${slug}`)));
 }
 
 /** The commercial directories in every language open to search. */
