@@ -242,7 +242,7 @@
     "@prisma/adapter-pg": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "better-auth": "1.7.1",
-    "next": "15.5.24",
+    "next": "15.5.28",
     "openai": "7.20.0",
     "pg": "^8.23.1",
     "qrcode.react": "4.2.0",
