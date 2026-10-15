@@ -107,13 +107,13 @@ export function BonusOfferDirectory({ messages, offers, presentation }: {
           </div>
           <CommercialFacts facts={card.facts} className={styles.facts} />
           <div className={styles.actions}>
-            {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "BONUS_CARD" }} messages={messages.outbound} showDisclosure={false} /> : card.reviewHref ? null : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
+            {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "BONUS_CARD", casino: card.casinoSlug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /> : card.reviewHref ? null : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
             {!card.action && card.reviewHref ? reviewLink(true) : null}
             <div className={styles.researchLinks}>
               {card.termsUrl && card.action
                 // Terms open on the operator's site next to its sign-up button, so where we have a
                 // partner route the link goes through it; a direct link would lose the referral.
-                ? <GovernedCommercialAction action={{ href: card.action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "BONUS_TERMS" }}>{copy.terms}</GovernedCommercialAction>
+                ? <GovernedCommercialAction action={{ href: card.action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "BONUS_TERMS", casino: card.casinoSlug, market: presentation.marketCountryCode }}>{copy.terms}</GovernedCommercialAction>
                 : card.termsUrl ? <a href={card.termsUrl} rel="noopener noreferrer" target="_blank">{copy.terms}</a> : null}
               {card.action && card.reviewHref ? reviewLink(false) : null}
             </div>

@@ -89,7 +89,7 @@ export function CasinoCollection({ casinos, initialSearch = "", messages, presen
           <CommercialFacts facts={card.facts} className={styles.facts} />
           {view === "top_rated" && card.reason ? <p className={styles.reason}>{card.reason}</p> : null}
           <div className={styles.actions}>
-            {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_COLLECTION_CARD" }} messages={messages.outbound} showDisclosure={false} /> : card.reviewHref ? null : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
+            {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_COLLECTION_CARD", casino: card.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /> : card.reviewHref ? null : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
             {card.reviewHref ? <TrackedReviewLink
               casinoId={published ? card.casinoId : undefined}
               className={card.action ? undefined : styles.reviewPrimary}

@@ -147,7 +147,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             <span>{copy.currentOffer}</span>
             <h2><OfferHeadline text={offerHeadline} /></h2>
             {heroFacts.length ? <CommercialFacts facts={heroFacts} className={styles.heroFacts} /> : null}
-            {action ? <div className={styles.heroAction}><CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_HERO" }} messages={messages.outbound} showDisclosure={false} /></div> : null}
+            {action ? <div className={styles.heroAction}><CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_HERO", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /></div> : null}
             <small>{action ? demo ? messages.common.marketPresentationNotice : copy.compactDisclosure : messages.common.reviewAvailableNoAction}</small>
           </div>
         </div>
@@ -162,7 +162,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
 
       {action ? <aside className={styles.stickyAction} data-casino-decision-bar data-mobile-visible="false">
         <span><strong>{casino.name}</strong>{formattedScore === null ? null : <em>{formattedScore}</em>}</span>
-        <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_MOBILE_STICKY" }} messages={messages.outbound} showDisclosure={false} />
+        <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_MOBILE_STICKY", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} />
       </aside> : null}
 
       <section aria-labelledby="why-heading" className={styles.section} id="why-we-rate">
@@ -185,7 +185,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <h3><OfferHeadline text={offerHeadline} /></h3>
           {bonus ? <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(offerFacts, copy.notVerified)} /> : <p>{action ? copy.noCurrentOfferVisit : messages.common.reviewAvailableNoAction}</p>}
           {bonus ? <p className={styles.materialWarning}>{decision.restriction}</p> : null}
-          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION" }} messages={messages.outbound} showDisclosure={false} /> : bonus ? <p className={styles.noActionNote} data-review-no-action="">{messages.common.reviewAvailableNoAction}</p> : null}{safeCommercialTermsUrl(bonus?.termsUrl) && action ? <GovernedCommercialAction action={{ href: action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "CASINO_OFFER_TERMS" }}>{copy.terms} <span aria-hidden="true">→</span></GovernedCommercialAction> : safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}</div>
+          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /> : bonus ? <p className={styles.noActionNote} data-review-no-action="">{messages.common.reviewAvailableNoAction}</p> : null}{safeCommercialTermsUrl(bonus?.termsUrl) && action ? <GovernedCommercialAction action={{ href: action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "CASINO_OFFER_TERMS", casino: casino.slug, market: presentation.marketCountryCode }}>{copy.terms} <span aria-hidden="true">→</span></GovernedCommercialAction> : safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}</div>
           {sport && action ? <div aria-labelledby="sport-offer-heading" className={styles.sportOffer} data-casino-sport={sport.market} role="group">
             <p className={styles.sportKicker}>{sport.kicker}</p>
             <h3 id="sport-offer-heading">{sport.heading}</h3>
@@ -193,7 +193,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             <p className={styles.sportHeadline}>{sport.offer}</p>
             <SectionFacts empty="" facts={sport.facts} />
             <p className={styles.materialWarning}>{sport.conditions}</p>
-            <div className={styles.offerActions}><CasinoOutboundAction action={{ ...action, label: sport.cta }} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_SPORT_OFFER" }} messages={messages.outbound} showDisclosure={false} /><a href={sport.termsUrl} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a></div>
+            <div className={styles.offerActions}><CasinoOutboundAction action={{ ...action, label: sport.cta }} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_SPORT_OFFER", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /><a href={sport.termsUrl} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a></div>
             <small className={styles.sportChecked}>{sport.checkedLine} · {copy.compactDisclosure}</small>
           </div> : null}
         </div>

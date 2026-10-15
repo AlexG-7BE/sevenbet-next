@@ -121,7 +121,7 @@ export function CommercialOfferMedia({ offer, variant, messages }: { offer: Publ
       }}
       ariaLabel={creativeAriaLabel}
       className={styles.creativeAction}
-      context={{ source: "CREATIVE", placement }}
+      context={{ source: "CREATIVE", placement, casino: offer.casino.slug }}
       messages={messages.outbound}
       offerMediaVariant={variant}
     >{content}</GovernedCommercialAction>;

@@ -481,7 +481,7 @@ test("active Admin and public surfaces keep CTA paths while promotional placemen
   assert.match(commercialStyles, /\.frame\[data-offer-media\]\[data-mobile-presentation-family="MOBILE_LANDSCAPE"\]/);
   assert.match(commercialStyles, /\.mediaArtwork \{ width:auto; height:auto; max-width:100%; max-height:100%/);
   assert.doesNotMatch(commercial, /compositionIdentity|controlledStrip/);
-  assert.match(profile, /context=\{\{ source: "CTA", placement: "CASINO_OFFER_SECTION" \}\}/);
+  assert.match(profile, /context=\{\{ source: "CTA", placement: "CASINO_OFFER_SECTION"(?:, casino: casino\.slug, market: presentation\.marketCountryCode)? \}\}/);
   assert.match(profile, /casino\.media\.logo/);
   assert.match(profile, /ResponsivePlacementImage/);
   assert.doesNotMatch(profile, /source: "CREATIVE"|CASINO_REVIEW_RIGHT_HERO/);

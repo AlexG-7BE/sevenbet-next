@@ -2,6 +2,7 @@
 
 import { browserAnalyticsConsentState } from "@/lib/analytics/consent-contract";
 import { isAnalyticsExcludedPath } from "@/lib/analytics/excluded-paths";
+import { sendGooglePartnerClick } from "@/lib/analytics/google-analytics";
 import {
   createProductAnalyticsEmitter,
   isProductAnalyticsEnabled,
@@ -19,9 +20,14 @@ type ExistingOutboundPlacement = "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | 
   | "BEST_OFFERS_CARD" | "CASINO_COLLECTION_CARD" | "BONUS_CARD" | "CASINO_HERO" | "CASINO_OFFER_SECTION" | "CASINO_MOBILE_STICKY"
   | "BONUS_TERMS" | "CASINO_OFFER_TERMS" | "CASINO_SPORT_OFFER";
 
-export type OutboundIntentContext =
+export type OutboundIntentContext = (
   | { source: "CTA"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" }
-  | { source: "CREATIVE"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" | "CASINO_DETAIL_HERO" | "CASINO_REVIEW_RIGHT_HERO" };
+  | { source: "CREATIVE"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" | "CASINO_DETAIL_HERO" | "CASINO_REVIEW_RIGHT_HERO" }
+) & {
+  /** The casino's slug and the visitor's market, for the GA4 `partner_click` event only. */
+  casino?: string;
+  market?: string | null;
+};
 
 function browserStorage(): StorageLike | undefined {
   try { return window.sessionStorage; } catch { return undefined; }
@@ -172,6 +178,12 @@ export function createProductAnalyticsClient({
     comparisonOpened(_selectionCount: "two" | "three") {},
     outboundIntent(_outcome: "direct" | "confirmation_opened" | "continued", context: OutboundIntentContext = { source: "CTA", placement: "UNSPECIFIED" }) {
       this.commercialCtaClicked(`${context.source}_${context.placement}`);
+      // GA4 follows the Google tag's own rule, not the product consent (lib/analytics/google-analytics.ts).
+      try {
+        sendGooglePartnerClick({ casino: context.casino, placement: `${context.source}_${context.placement}`, market: context.market });
+      } catch {
+        // Analytics never blocks the partner tab.
+      }
     },
   };
 }

@@ -43,3 +43,41 @@ export function revokeGoogleAnalytics(target: Pick<Window, "document" | "locatio
     for (const domain of domains) target.document.cookie = `${name}=; Max-Age=0; path=/; domain=.${domain}`;
   }
 }
+
+export type GooglePartnerClick = Readonly<{
+  /** The casino's slug. */
+  casino?: string;
+  /** `<source>_<placement>` of the button, as the product event names it. */
+  placement: string;
+  /** The visitor's market (ISO country) the button was shown for. */
+  market?: string | null;
+}>;
+
+type GoogleTagWindow = Pick<Window, "document" | "location"> & { gtag?: (...args: unknown[]) => void };
+
+/**
+ * A click on a partner button as the GA4 event `partner_click` (affiliate traffic audit,
+ * 15 October 2026): the button opens our `/r/` route, which GA4 does not count as an outbound
+ * click. The same rule as the tag itself: nothing after "Reject cookies", nothing from protected
+ * Help, the self-check or Admin, and nothing when the tag is not on the page. Sent as a beacon,
+ * so it leaves before the partner's tab opens.
+ */
+export function sendGooglePartnerClick(click: GooglePartnerClick, target: GoogleTagWindow | undefined = typeof window === "undefined" ? undefined : window) {
+  if (!target || typeof target.gtag !== "function") return false;
+  if (googleAnalyticsRejected(target.document.cookie) || ANALYTICS_EXCLUDED_PATH.test(target.location.pathname)) return false;
+  const bounded = (value: string | null | undefined, maximum: number) => value?.trim().slice(0, maximum) || undefined;
+  target.gtag("event", "partner_click", {
+    placement: bounded(click.placement, 100),
+    ...(bounded(click.casino, 100) ? { casino: bounded(click.casino, 100) } : {}),
+    ...(bounded(click.market, 8) ? { market: bounded(click.market, 8)!.toUpperCase() } : {}),
+    transport_type: "beacon",
+  });
+  return true;
+}
+
+const REJECTED_CONSENT = new RegExp(`(?:^|;\\s*)${ANALYTICS_CONSENT_COOKIE}=v1\\.denied\\.`);
+
+/** The "Reject cookies" marker the Google tag reads (googleTagBootstrap). */
+export function googleAnalyticsRejected(cookie: string) {
+  return REJECTED_CONSENT.test(cookie);
+}
