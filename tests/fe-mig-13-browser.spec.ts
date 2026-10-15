@@ -12,7 +12,7 @@ test("Affiliate Disclosure renders the approved seven-section trust document", a
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/HOW WE'RE\s*FUNDED\./i);
-  await expect(page.getByRole("link", { name: "Methodology", exact: true })).toHaveAttribute("href", "/methodology");
+  await expect(page.getByRole("link", { name: "Methodology", exact: true })).toHaveAttribute("href", "/en/methodology");
   for (const heading of [
     "1. THE COMMERCIAL RELATIONSHIP",
     "2. HOW WE LABEL COMMERCIAL CONTENT",

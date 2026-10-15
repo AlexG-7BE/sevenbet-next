@@ -21,6 +21,20 @@ until merged and deployed: a failed catalogue read on a live review throws
 of 404; `/bonuses` and `/best-offers` no longer set `noindex` while their inventory is
 unavailable; the sitemap serves each market's last good product list
 (`lastGoodMarketProductPaths`, 10-minute `unstable_cache` entry no casino update clears).
+## Commercial indexing hygiene — in review
+
+**Founder's choice in the affiliate traffic audit, 15 October 2026**
+([decision](07_Decisions/COMMERCIAL-INDEXING-HYGIENE-2026-10-15.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed:
+
+- review sitemap `lastmod` and WebPage/Review `dateModified` take the latest of the database date
+  and the long sv/da review check date (`lib/casino-profile/seo.ts`, `app/sitemap.ts`);
+- after each successful Production deployment, `.github/workflows/indexnow-resubmit.yml` announces
+  only the review pages whose long review changed (`scripts/indexnow-changed-reviews.mjs`); the
+  manual full resubmit stays;
+- the English bonus guide and affiliate disclosure link to `/en/…` instead of bare paths that 307;
+- `reviewIndexable` reads `BLOCKED_TARGETS` (`lib/market-access/blocked-targets.ts`): Betsafe SE,
+  Regency SE, PlayUZU SE and DragonBet GB are `noindex, follow` and leave the sitemap.
 
 ## Production build preflight reads through the direct binding — in review
 

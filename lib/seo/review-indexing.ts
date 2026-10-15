@@ -1,3 +1,4 @@
+import { BLOCKED_TARGETS } from "@/lib/market-access/blocked-targets";
 import { CASINO_MARKETS } from "@/lib/market-access/register";
 
 /**
@@ -13,6 +14,11 @@ import { CASINO_MARKETS } from "@/lib/market-access/register";
  * page's robots value is the same for every crawler at every time (Germany's advertising window
  * closes offers by day; a rule on the live offer would take German reviews in and out daily).
  * Languages outside this map keep their own rules (they are `noindex` as languages today).
+ *
+ * A licensed market that cannot open yet (BLOCKED_TARGETS: no partner link, or no local site)
+ * also keeps its review out of the index: the page leads that reader to no button (Founder's
+ * choice in the affiliate traffic audit, 15 October 2026: Betsafe SE, Regency SE, PlayUZU SE,
+ * DragonBet GB). The review returns to the index when its target leaves that list.
  */
 export const REVIEW_INDEX_MARKETS: Readonly<Record<string, string>> = Object.freeze({
   en: "GB",
@@ -24,7 +30,9 @@ export const REVIEW_INDEX_MARKETS: Readonly<Record<string, string>> = Object.fre
 export function reviewIndexable(slug: string, language: string) {
   const market = REVIEW_INDEX_MARKETS[language];
   if (!market) return true;
-  return Boolean(CASINO_MARKETS[slug.trim().toLowerCase()]?.licensed[market]);
+  const key = slug.trim().toLowerCase();
+  if (BLOCKED_TARGETS.some((target) => target.casinoSlug === key && target.market === market)) return false;
+  return Boolean(CASINO_MARKETS[key]?.licensed[market]);
 }
 
 /**

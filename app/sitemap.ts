@@ -21,6 +21,8 @@ import { localizedProductIndexingApproved } from "@/lib/market/product-context";
 import { PROGRAMME_ROUTES } from "@/lib/programme/presentation";
 import { bonusDirectoryIndexable } from "@/lib/seo/product-indexing";
 import { reviewIndexable } from "@/lib/seo/review-indexing";
+import { modifiedNotBeforePublished } from "@/lib/seo/structured-data";
+import { inDepthCheckedAt } from "@/lib/casino-profile/in-depth";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -101,15 +103,18 @@ export function indexableMarketProductPaths(snapshot: Awaited<ReturnType<typeof 
     ...(bonusDirectoryIndexable(snapshot.bonuses) ? [prefix("/bonuses")] : []),
     ...(snapshot.bestOffers && snapshot.bestOffers.status !== "unavailable" && snapshot.bestOffers.inventoryMode === "PUBLISHED_ONLY" ? [prefix("/best-offers")] : []),
   ];
+  const language = languageForLocale(snapshot.market.defaultLocale);
   const casinoRoutes = indexableReviewCards(snapshot.casinos, languageForLocale(snapshot.market.defaultLocale))
-    .map((casino) => ({
-      url: absoluteUrl(prefix(`/casino/${casino.slug}`)),
-      ...(casino.editorialUpdatedAt || casino.publishedAt
-        ? { lastModified: casino.editorialUpdatedAt ?? casino.publishedAt ?? undefined }
-        : {}),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    }));
+    .map((casino) => {
+      // The latest of the database change and the check of this language's long review.
+      const lastModified = modifiedNotBeforePublished(casino.editorialUpdatedAt ?? casino.publishedAt, inDepthCheckedAt(casino.slug, language));
+      return {
+        url: absoluteUrl(prefix(`/casino/${casino.slug}`)),
+        ...(lastModified ? { lastModified } : {}),
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      };
+    });
   return { routes, casinoRoutes };
 }
 

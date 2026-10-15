@@ -28,10 +28,10 @@ test("Bonus Guide renders the approved editorial contract with truthful evidence
 test("the supplied guide links and Programme transition are mapped exactly", async ({ page }) => {
   await page.goto(`${baseUrl}/bonus-guide`, { waitUntil: "networkidle" });
   // "Read next" (and its "All guides →" link) renders only when real published guides exist; the breadcrumb always leads to Learn.
-  await expect(page.locator('[data-handoff-page="article"] a[href="/learn"]').first()).toBeVisible();
+  await expect(page.locator('[data-handoff-page="article"] a[href="/en/learn"]').first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Start Programme" }).last()).toHaveAttribute("href", "/program");
   await expect(page.getByRole("link", { name: "Open Help — no offers there →" })).toHaveAttribute("href", "/help");
-  await expect(page.getByRole("link", { name: "How ranking works →" })).toHaveAttribute("href", "/methodology");
+  await expect(page.getByRole("link", { name: "How ranking works →" })).toHaveAttribute("href", "/en/methodology");
   await expect(page.locator('[data-handoff-page="article"] a[href^="/r/"], [data-handoff-page="article"] a[href^="/go/"]')).toHaveCount(0);
   await expect(page.locator('[data-handoff-page="article"] a[href="/tools/budget-calculator"]')).toHaveCount(0);
 });
