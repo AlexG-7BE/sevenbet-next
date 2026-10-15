@@ -6,6 +6,10 @@ export type CommercialUxMessages = Readonly<{
   visitCasino: string;
   /** Said in place of offer terms when the casino has a route but no offer to show. */
   noCurrentOfferVisit: string;
+  /** Heading of the neighbouring reviews under a review; `{country}` is the licence market's name. */
+  licensedNeighboursTitle: string;
+  /** Link to the wagering calculator next to an offer's terms. */
+  wageringCalculator: string;
   bestOverall: string;
   fastPayouts: string;
   bestBonusTerms: string;
@@ -87,6 +91,8 @@ const en: CommercialUxMessages = {
   viewOffer: "VIEW OFFER",
   visitCasino: "VISIT CASINO",
   noCurrentOfferVisit: "No current welcome offer. You can still visit the casino.",
+  licensedNeighboursTitle: "Other casinos licensed in {country}",
+  wageringCalculator: "Wagering calculator",
   bestOverall: "Best Overall",
   fastPayouts: "Fast Payouts",
   bestBonusTerms: "Best Bonus Terms",
@@ -302,7 +308,14 @@ export function commercialUxMessages(locale: SupportedLocale): CommercialUxMessa
     "uk-UA": { offerOne: "пропозиція", offerFew: "пропозиції", offerOther: "пропозицій", offerShownOne: "показано", casinoOne: "казино", casinoOther: "казино" },
     "ru-RU": { offerOne: "предложение", offerFew: "предложения", offerOther: "предложений", offerShownOne: "показано", casinoOne: "казино", casinoOther: "казино" },
   };
-  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}), ...(catalogueNouns[locale] ?? {}), ...(noOfferVisitLabels[locale] ?? {}) };
+  // Shown only in the languages whose reviews are indexed per licence market (lib/seo/review-indexing.ts).
+  // German names operators "Anbieter" (german-terminology.ts).
+  const reviewLinkLabels: Partial<Record<SupportedLocale, Pick<CommercialUxMessages, "licensedNeighboursTitle" | "wageringCalculator">>> = {
+    "sv-SE": { licensedNeighboursTitle: "Fler casinon med licens i {country}", wageringCalculator: "Räkna på omsättningskravet" },
+    "da-DK": { licensedNeighboursTitle: "Andre casinoer med licens i {country}", wageringCalculator: "Beregn omsætningskravet" },
+    "de-DE": { licensedNeighboursTitle: "Weitere Anbieter mit Lizenz in {country}", wageringCalculator: "Umsatzbedingungen berechnen" },
+  };
+  return { ...(translations[locale] ?? en), ...(marketStateTranslations[locale] ?? {}), ...(factLabels[locale] ?? {}), ...(globalRecordLabels[locale] ?? {}), ...(heroMetricLabels[locale] ?? {}), ...(catalogueNouns[locale] ?? {}), ...(noOfferVisitLabels[locale] ?? {}), ...(reviewLinkLabels[locale] ?? {}) };
 }
 
 /** The singular or plural noun for a catalogue count, by the locale's own plural rules ("1 offer", "8 offers"). */
