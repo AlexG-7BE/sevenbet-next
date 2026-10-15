@@ -22,3 +22,9 @@ export function casinoInDepthReview(slug: string, language: SupportedLanguage) {
   const review = entry?.reviews[slug];
   return entry && review ? { heading: entry.heading, ...review } : null;
 }
+
+/** The check date of a casino's long review in a language (ISO `YYYY-MM-DD`), or null. */
+export function inDepthCheckedAt(slug: string | null | undefined, language: string | null | undefined) {
+  if (!slug || !language) return null;
+  return casinoInDepthReview(slug.trim().toLowerCase(), language as SupportedLanguage)?.checked ?? null;
+}
