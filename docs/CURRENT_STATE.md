@@ -32,7 +32,7 @@ What the evidence shows:
   the 09:55 and 11:11 UTC failures, Production requests on the pooled endpoint logged the same
   `Query read timeout` (`learn_apply` failed after 27 s; public reads ran past their 8 s
   budget). The direct-binding preflight answered normally at 11:11:12–18, inside that window.
-  A read-only watch of `pg_stat_activity` (15 October, 11:29–12:40 UTC, every 2–5 s) saw at
+  A read-only watch of `pg_stat_activity` (15 October, 11:29–11:58 UTC, every 2–5 s) saw at
   most four backends, nearly always idle, and no open transaction; `max_connections` is 50.
   During a pooled connect stall at 11:48:59 (`prisma_pg_connect_retry`), the database had three
   idle backends and nothing active.
