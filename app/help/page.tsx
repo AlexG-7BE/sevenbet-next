@@ -5,7 +5,7 @@ import { FirstWaveSafetyPage } from "@/components/market-safety/FirstWaveSafetyP
 import { JsonLd } from "@/components/seo/JsonLd";
 import { absoluteUrl } from "@/lib/site";
 import { transformHelpHandoff } from "@/lib/final-handoff/transforms";
-import { firstWaveMarketEvidence } from "@/lib/market/first-wave-evidence";
+import { firstWaveSafetyProfile } from "@/lib/market/first-wave-evidence";
 import { firstWaveSafetyLanguageAlternates, productCanonicalPath, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 
@@ -14,7 +14,7 @@ const description = "Find practical pause, self-exclusion and access-control opt
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
-  const profile = presentation.market ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
+  const profile = firstWaveSafetyProfile(presentation);
   return productMetadata({
     presentation,
     pathname: "/help",
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HelpPage() {
   const presentation = await resolveServerPresentationContext();
-  const profile = presentation.market ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
+  const profile = firstWaveSafetyProfile(presentation);
   const pageTitle = profile?.copy.helpTitle ?? title;
   const pageDescription = profile?.copy.helpLead ?? description;
   const pageUrl = absoluteUrl(productCanonicalPath(presentation, "/help"));
