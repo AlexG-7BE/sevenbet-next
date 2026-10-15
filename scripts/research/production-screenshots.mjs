@@ -127,7 +127,7 @@ try {
         const status = await visit(page, startHref);
         await record(page, context, { step: `${locale}: Programme start from the pause plan`, file: `${locale}-9-programme-start-phone.png`, status, fullPage: true });
       }
-      const status = await visit(page, `/${locale}/login`);
+      const status = await visit(page, `/login?returnTo=${encodeURIComponent(new URL(startHref ?? `/${locale}/program`, base).pathname)}`);
       await record(page, context, { step: `${locale}: sign-in screen`, file: `${locale}-10-login-phone.png`, status, expect: "none", fullPage: true });
       await context.close();
     }
