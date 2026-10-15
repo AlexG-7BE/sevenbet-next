@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
+import { CONTROL_PATHS, controlHubLinkLabel } from "@/lib/i18n/static-pages/gambling-control";
 import { tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
@@ -20,8 +21,10 @@ export default async function TenStepsPage() {
   const shell = publicShellMessages(presentation.locale);
   const canonicalPath = productCanonicalPath(presentation, "/10-steps");
   const programmePath = programmePathForPresentationLocale(presentation.locale);
+  const controlLabel = controlHubLinkLabel(presentation.locale);
+  const control = controlLabel ? { href: productHref(presentation, CONTROL_PATHS.hub), label: controlLabel } : undefined;
   return <>
     <JsonLd data={[{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: shell.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.metadataTitle, item: absoluteUrl(canonicalPath) }] }, { "@context": "https://schema.org", "@type": "WebPage", name: messages.metadataTitle, description: messages.metadataDescription, url: absoluteUrl(canonicalPath) }]} />
-    <TenStepsPresentation aboutHref={productHref(presentation, "/about")} locale={presentation.locale} programmePath={programmePath} />
+    <TenStepsPresentation aboutHref={productHref(presentation, "/about")} control={control} locale={presentation.locale} programmePath={programmePath} />
   </>;
 }

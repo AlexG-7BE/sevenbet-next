@@ -8,6 +8,7 @@ import {
 } from "@/lib/market/registry";
 import { isLocalizedPublicDestination } from "@/lib/market/routing";
 import { absoluteUrl } from "@/lib/site";
+import { BRAND_STATEMENT, CONTROL_PATHS } from "@/lib/i18n/static-pages/gambling-control";
 
 /**
  * The launch markets B4GAMBLE is built for (28 Sep 2026), in the order llms.txt lists them.
@@ -70,9 +71,31 @@ const PRODUCT_PAGE_LINKS: Record<string, { name: string; description: string }> 
 };
 
 /**
+ * The answer pages (Founder decision, 15 October 2026; docs/07_Decisions/AEO-CONTROL-PAGES-2026-10-15.md),
+ * in the order llms.txt lists them, with their English titles. Each is written in Swedish and Danish too.
+ */
+export const LLMS_CONTROL_ANSWER_PAGES = [
+  { path: CONTROL_PATHS.hub, title: "Gambling control: straight answers", description: "the hub: what B4GAMBLE is and is not, and a link to every answer below" },
+  { path: CONTROL_PATHS.withoutQuitting, title: "How can I keep my gambling under control without quitting?", description: "the amount and the time decided before playing, one person who knows, the ten steps, and when a self-exclusion is the better first step" },
+  { path: CONTROL_PATHS.tools, title: "Which gambling control tool fits you?", description: "national self-exclusion, blocking software, bank blocks, operator limits, helplines and B4GAMBLE compared for the United Kingdom, Sweden and Denmark, with sources" },
+  { path: CONTROL_PATHS.trust, title: "Can you trust B4GAMBLE if it earns money from casinos?", description: "how B4GAMBLE earns, what is free, what it does not do, when casino pages appear in the Programme and what stays private" },
+] as const;
+
+/** The Swedish and Danish versions of a page, by their own language routes. */
+function nordicUrls(pathname: string) {
+  return (["SE", "DK"] as const).map((code) => {
+    const market = marketProfileByCountry(code);
+    if (!market) throw new Error(`Market ${code} is missing from the registry`);
+    return { label: languageRouteByLocale(market.defaultLocale).label, url: marketUrl(market, pathname) };
+  });
+}
+
+/**
  * llms.txt (llmstxt.org): what B4GAMBLE is, for which markets, where each market's pages
- * are, every published review, the Programme and the policies. Commercial pages first,
- * written plainly; every link is a canonical URL, so no agent follows a redirect.
+ * are, every published review, the Programme and the policies. The Programme comes first
+ * (Founder, 15 October 2026): the opening summary is the one phrase, the Programme and the
+ * answer pages come before the markets, and the casino comparison follows. Every link is a
+ * canonical URL, so no agent follows a redirect.
  */
 export function buildLlmsTxt(input: {
   markets: readonly LlmsMarketCatalogue[];
@@ -113,13 +136,35 @@ export function buildLlmsTxt(input: {
   const articleLines = input.articles
     .map((article) => `- [${oneLine(article.title)}](${canonicalEnglishUrl(articlePath(article))}): ${oneLine(article.excerpt)}`);
 
+  const answerLines = LLMS_CONTROL_ANSWER_PAGES.map((page) => {
+    const versions = nordicUrls(page.path).map((version) => `[${version.label}](${version.url})`).join(" · ");
+    return `- [${page.title}](${canonicalEnglishUrl(page.path)}): ${page.description}. Also in ${versions}.`;
+  });
+
   return `# B4GAMBLE
 
-> B4GAMBLE compares online casinos and their bonus terms for adults (18+) in ${marketList}. Each published review covers licence, payment methods, payout times and games, and gives an editor score from 0 to 10. The bonus pages compare wagering requirements, minimum deposit, maximum bet and expiry side by side, so the terms that decide what a bonus is worth are visible before anyone signs up.
+> ${BRAND_STATEMENT["en-GB"]} Its ten short, private steps help a person decide the amount and the time before playing, notice what comes before the urge, add friction and support, and keep it all in a plan they review; it blocks nothing and is not treatment.
+
+B4GAMBLE also compares online casinos and their bonus terms for adults (18+) in ${marketList}. Each published review covers licence, payment methods, payout times and games, and gives an editor score from 0 to 10. The bonus pages compare wagering requirements, minimum deposit, maximum bet and expiry side by side, so the terms that decide what a bonus is worth are visible before anyone signs up.
 
 B4GAMBLE does not run a casino, take deposits or accept bets. Some links to operators are affiliate links: B4GAMBLE may earn a commission when a reader signs up through one, and commission never changes an editor score. Offers depend on the reader's country: readers in ${marketList} see only offers from operators licensed there, and readers in Germany see offers only between 21:00 and 06:00 Berlin time, as German rules require.
 
 The offers each market's Bonuses page shows right now, with their terms, are listed in [llms-full.txt](${absoluteUrl("/llms-full.txt")}).
+
+## 10-Step Control Programme
+
+The Programme is B4GAMBLE's own private plan for keeping gambling under control. It is free and separate from the casino pages: nothing a person writes or chooses in it is used to select, rank or personalise offers or advertising. Finishing its third step, "Research responsibly", adds the casino, bonus and offer pages to the site menu; the person's answers play no part in that.
+
+- [10-Step Control Programme](${canonicalEnglishUrl("/program")}): the private plan, one step at a time.
+- [The 10 steps](${canonicalEnglishUrl("/10-steps")}): what each step covers.
+- [Responsible gambling](${canonicalEnglishUrl("/responsible-gambling")}): education, practical control, the 10-step plan and Help.
+- [Help](${canonicalEnglishUrl("/help")}): support information with no casino, bonus or affiliate links.
+
+## Gambling control answers
+
+Plain answers about keeping gambling under control without quitting and about the day a self-exclusion ends. No casino, bonus or affiliate link appears on these pages.
+
+${answerLines.join("\n")}
 
 ## Markets
 
@@ -139,15 +184,6 @@ ${marketSections.join("\n\n")}
 ## Casino reviews
 
 ${reviewSections.length ? reviewSections.join("\n\n") : "No review is published at the moment."}
-
-## 10-Step Control Programme
-
-The Programme is B4GAMBLE's own private plan for keeping gambling under control. It is separate from the casino pages: nothing a person does in it is used for offers or advertising.
-
-- [10-Step Control Programme](${canonicalEnglishUrl("/program")}): the private plan, one step at a time.
-- [The 10 steps](${canonicalEnglishUrl("/10-steps")}): what each step covers.
-- [Responsible gambling](${canonicalEnglishUrl("/responsible-gambling")}): education, practical control, the 10-step plan and Help.
-- [Help](${canonicalEnglishUrl("/help")}): support information with no casino, bonus or affiliate links.
 
 ## Published Learning Center Articles
 
