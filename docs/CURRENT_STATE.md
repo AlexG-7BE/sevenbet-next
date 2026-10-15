@@ -12,6 +12,78 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Production build preflight reads through the direct binding — in review
+
+**Founder task, 15 October 2026:** Production builds failed intermittently; find the cause and
+make the build preflight reliable without weakening what it verifies.
+
+**DETECTED (Vercel build logs):** five Production builds since 14 October 22:12 UTC
+(`hxif3h31z`, `ssjp35qep`, `116z9tsny`, `aj9a39znv`, `q9w4qyhh5`; four of the seven on
+15 October) ended in Error about 40 s in. Each time `scripts/vercel-build-preflight.ts`
+finished, then `scripts/logo-only-media-build-preflight.ts production-verify` printed
+`Query read timeout` 25 s later: pg's `query_timeout`, set from the runtime `socket_timeout`.
+A good build passes that step in about 0.6 s; the earlier builds sampled from 14 October passed it.
+
+What the evidence shows:
+
+- **DETECTED — the stall is in the Prisma Postgres pooled endpoint, not in the database.** The
+  logo step was the first step on the pooled endpoint (the runtime client). The preflight just
+  before it reads the same database through `DIRECT_URL` and never failed. In the seconds of
+  the 09:55 and 11:11 UTC failures, Production requests on the pooled endpoint logged the same
+  `Query read timeout` (`learn_apply` failed after 27 s; public reads ran past their 8 s
+  budget). The direct-binding preflight answered normally at 11:11:12–18, inside that window.
+  A read-only watch of `pg_stat_activity` (15 October, 11:29–12:40 UTC, every 2–5 s) saw at
+  most four backends, nearly always idle, and no open transaction; `max_connections` is 50.
+  During a pooled connect stall at 11:48:59 (`prisma_pg_connect_retry`), the database had three
+  idle backends and nothing active.
+- **DETECTED — not new.** Production logs show `Query read timeout` a few times an hour since
+  at least 11 October, and pool waits (`timeout exceeded when trying to connect`) more often.
+  Both roughly doubled from 14 October about 16:00 UTC; the build failures began that evening.
+- **Ruled out:** the 11 queries in `Promise.all` (one connection runs them in turn, and the same
+  stall hits single-query page reads); the build's pool (one connection in use); a stalled open
+  (bounded at 3 s, and it fails as a connect error, not `Query read timeout`); a cold database
+  (the direct preflight had just read it).
+- **UNKNOWN:** why the pooled endpoint stops answering. That is inside Prisma's
+  infrastructure.
+- **Reproduced locally** with PostgreSQL 16 behind a proxy that lets a connection log in and
+  then holds its statements: the unchanged step fails with `Query read timeout`, exit 1, after
+  26 s.
+
+The change (**PROPOSED — NOT YET LIVE** until merged and deployed): both build verifiers, the
+logo-only media check and CASINO-REAL-CATALOG-03 `production-verify`, run through
+`lib/db/release-verification.ts`:
+
+- they read through the direct binding the main preflight uses;
+- each attempt is one PostgreSQL-enforced read-only, repeatable-read snapshot;
+- an attempt ends at its transaction bounds plus 5 s;
+- an attempt is repeated, at most three in all, only after a failure to reach or hear from the
+  database. A failed invariant, a SQL error or a transaction that is not read-only fails at
+  once.
+
+Every invariant, message and the order in `vercel.json` stay the same. The scripts exit once
+their output is written: locally, a client whose connection never answered kept the process,
+and so the build, alive after the second attempt had passed. The same proxy run now passes on
+the second attempt and exits 0.
+
+Tests:
+
+- `tests/release-verification.test.ts` runs in ci:structural;
+- `tests/release-verification-postgres.test.ts` checks a direct connection that never answers
+  and a write PostgreSQL refuses;
+- `tests/production-build-read-only-postgres.test.ts` adds a run with a dead runtime
+  `DATABASE_URL`.
+
+The last two run in `release-governance:postgres-test`.
+
+**Open finding, runtime, not changed here (DETECTED locally; the same log lines appear in
+Production on 15 October at 11:12 UTC):** a statement inside an interactive transaction times
+out, and its ROLLBACK then times out behind it (`prisma:error transaction failed to roll
+back`). `@prisma/adapter-pg` releases the connection without an error, so pg-pool keeps it while
+the server-side transaction stays open. The next query on that instance runs inside that
+transaction. In the local run an INSERT reported success and was lost when the pool closed the
+connection 10 s later. Proposed fix: `ReconnectingPool` destroys a client released with a
+statement still in flight. It waits for the Founder's go.
+
 ## Answer pages for AI assistants: gambling control without quitting — in review
 
 **Founder decision, 15 October 2026 (question tool):** pages that ChatGPT, Perplexity,

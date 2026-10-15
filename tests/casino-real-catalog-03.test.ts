@@ -159,5 +159,7 @@ test("Production build verifies catalog state without invoking release mutation"
   assert.equal(vercel.buildCommand.indexOf("scripts/casino-real-catalog-03.ts build-preflight"), -1);
   assert.equal(vercel.buildCommand.indexOf("scripts/gp-meta.ts"), -1);
   assert.ok(vercel.buildCommand.indexOf("scripts/logo-only-media-build-preflight.ts production-verify") < vercel.buildCommand.indexOf("scripts/casino-real-catalog-03.ts production-verify"));
-  assert.match(releaseSource, /SET TRANSACTION READ ONLY/);
+  // The verification runs in the shared PostgreSQL-enforced read-only snapshot on the direct binding.
+  assert.match(releaseSource, /runReadOnlyReleaseVerification\(\{/);
+  assert.match(read("lib/db/release-verification.ts"), /SET TRANSACTION READ ONLY/);
 });
