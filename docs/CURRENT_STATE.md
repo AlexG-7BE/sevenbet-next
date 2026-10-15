@@ -1091,7 +1091,7 @@ v1 (12 September 2026); its orphaned `BonusCalculator` is replaced by
 
 **Founder decisions, 12 October 2026 (growth strategy, zero advertising budget):**
 the spearhead is a free ten-day plan beside the national self-exclusion pause,
-«10 dagar. 10 steg.» in Sweden (Spelpaus added a 10-day period in July 2026) and
+«10 dagar. 10 steg.» in Sweden (Spelpaus added a 10-day period on 29 June 2026) and
 «Dagen efter ROFUS. 10 trin.» in Denmark, launched together. Branch
 `feat/sv-10-dagar` adds `/{sv,da,en}/pause-plan`: a tool that takes the day the
 pause started and its period (Spelpaus 10 days, 1, 3, 6 months, until further
@@ -1189,9 +1189,13 @@ labelling of the cooperation — with what we never do, what every creator gets
 regardless, a calculator (`lib/tools/creator-terms.ts`) and an FAQ.
 `/for-creators/[creator]` is a named page for six creators (`CREATOR_PAGES`),
 reached by its link only (`noindex`), with a 90-day counter of consented visits
-carrying `utm_source=<slug>` and sign-ups after the Programme, read through the
-same `readSocialTraffic` aggregate the social reports use. One email removes a
-page. Tests: `tests/for-creators.test.ts` (`pause-plan:test`).
+carrying `utm_source=<slug>` and the partner clicks from those visits that
+reached an operator (labelled as clicks: the counter cannot tell who completed
+the Programme), read through the same `readSocialTraffic` aggregate the social
+reports use. One email removes a page. The terms make no promise about a
+pause: since the clean route was withdrawn (13 October 2026) a pause changes
+nothing on the site, and the page says so. Tests: `tests/for-creators.test.ts`
+(`pause-plan:test`).
 
 **PROPOSED — NOT YET LIVE** until merged and deployed.
 

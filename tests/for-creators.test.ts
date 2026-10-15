@@ -52,3 +52,19 @@ test("the routes are registered, the hub is in the sitemap, the named page is no
     assert.doesNotMatch(source, /@\/lib\/db\/prisma/, `${page} never imports Prisma`);
   }
 });
+
+test("the terms promise nothing about a pause, and the named counter is labelled by what it counts", () => {
+  for (const locale of ["sv-SE", "da-DK", "en-GB"] as const) {
+    const messages = forCreatorsMessages(locale);
+    const text = JSON.stringify(messages);
+    // The declared-pause route was withdrawn on 13 October 2026 (PR #503): a pause hides nothing and stops no count.
+    assert.doesNotMatch(text, /ingenting räknas|intet tælles|nothing is counted|angett en paus|angivet en pause|declared a pause|aldrig under en paus|aldrig under en pause|never during a pause/, locale);
+    // The counter reads tagged visits and their partner clicks; it cannot see who completed the Programme.
+    assert.doesNotMatch(messages.named.clicks, /registrer|sign-up|programme|programmet/i, `${locale}: the click counter does not claim sign-ups`);
+    assert.doesNotMatch(text, /räknar starter|tæller starter|counts starts/, `${locale}: no counter mode that does not exist`);
+  }
+  assert.equal(forCreatorsMessages("sv-SE").named.clicks, "Klick vidare till spelbolag");
+  assert.equal(forCreatorsMessages("da-DK").named.clicks, "Klik videre til spiludbydere");
+  assert.equal(forCreatorsMessages("en-GB").named.clicks, "Clicks through to operators");
+  assert.match(read("app/(public)/for-creators/[creator]/page.tsx"), /clicks: result\.totals\.partnerClicks/, "the click counter is the partner clicks of the tagged visits");
+});

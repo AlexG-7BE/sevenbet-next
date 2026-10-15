@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ creator: 
   return productMetadata({ presentation, pathname: `/for-creators/${page?.slug ?? creator}`, title: page ? `${messages.named.title} – ${page.name}` : messages.named.title, description: messages.named.intro, robots: { index: false, follow: false } });
 }
 
-/** Consented visits with the creator's tag and the sign-ups after the Programme among them, last 90 days. Counts only. */
+/** Consented visits with the creator's tag and the partner clicks among them that reached an operator, last 90 days. Counts only. */
 async function counter(slug: string) {
   try {
     const now = new Date();
