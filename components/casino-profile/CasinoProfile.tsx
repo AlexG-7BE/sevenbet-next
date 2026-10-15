@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { CasinoOutboundAction, GovernedCommercialAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CasinoProfileInteractions } from "@/components/casino-profile/CasinoProfileInteractions";
@@ -14,6 +15,7 @@ import { productHref } from "@/lib/market/product-context";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { casinoInDepthReview } from "@/lib/casino-profile/in-depth";
 import { casinoSportOffer } from "@/lib/casino-profile/sport-offer";
+import { licensedNeighbourMarket } from "@/lib/casino-profile/licensed-neighbours";
 
 import styles from "./CasinoProfile.module.css";
 
@@ -32,12 +34,14 @@ function SectionFacts({ facts, empty }: { facts: readonly CommercialFact[]; empt
   return <dl className={styles.sectionFacts}>{facts.map((fact) => <div key={fact.label}><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl>;
 }
 
-export function CasinoProfile({ casino, editorial, messages, presentation, availableForPresentation }: {
+export function CasinoProfile({ casino, editorial, messages, presentation, availableForPresentation, neighbours = null }: {
   casino: PublicCasinoDTO;
   editorial: CasinoEditorialDocument | null;
   messages: ProductPageMessages;
   presentation: PresentationResolution;
   availableForPresentation: boolean;
+  /** "Other casinos licensed in <country>", streamed by the page (components/casino-profile/LicensedNeighbours.tsx). */
+  neighbours?: ReactNode;
 }) {
   const copy = commercialUxMessages(presentation.locale);
   const inDepth = casinoInDepthReview(casino.slug, presentation.language);
@@ -147,7 +151,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             <span>{copy.currentOffer}</span>
             <h2><OfferHeadline text={offerHeadline} /></h2>
             {heroFacts.length ? <CommercialFacts facts={heroFacts} className={styles.heroFacts} /> : null}
-            {action ? <div className={styles.heroAction}><CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_HERO" }} messages={messages.outbound} showDisclosure={false} /></div> : null}
+            {action ? <div className={styles.heroAction}><CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_HERO", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /></div> : null}
             <small>{action ? demo ? messages.common.marketPresentationNotice : copy.compactDisclosure : messages.common.reviewAvailableNoAction}</small>
           </div>
         </div>
@@ -162,7 +166,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
 
       {action ? <aside className={styles.stickyAction} data-casino-decision-bar data-mobile-visible="false">
         <span><strong>{casino.name}</strong>{formattedScore === null ? null : <em>{formattedScore}</em>}</span>
-        <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_MOBILE_STICKY" }} messages={messages.outbound} showDisclosure={false} />
+        <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_MOBILE_STICKY", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} />
       </aside> : null}
 
       <section aria-labelledby="why-heading" className={styles.section} id="why-we-rate">
@@ -185,7 +189,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <h3><OfferHeadline text={offerHeadline} /></h3>
           {bonus ? <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(offerFacts, copy.notVerified)} /> : <p>{action ? copy.noCurrentOfferVisit : messages.common.reviewAvailableNoAction}</p>}
           {bonus ? <p className={styles.materialWarning}>{decision.restriction}</p> : null}
-          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION" }} messages={messages.outbound} showDisclosure={false} /> : bonus ? <p className={styles.noActionNote} data-review-no-action="">{messages.common.reviewAvailableNoAction}</p> : null}{safeCommercialTermsUrl(bonus?.termsUrl) && action ? <GovernedCommercialAction action={{ href: action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "CASINO_OFFER_TERMS" }}>{copy.terms} <span aria-hidden="true">→</span></GovernedCommercialAction> : safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}</div>
+          <div className={styles.offerActions}>{action ? <CasinoOutboundAction action={action} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_OFFER_SECTION", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /> : bonus ? <p className={styles.noActionNote} data-review-no-action="">{messages.common.reviewAvailableNoAction}</p> : null}{safeCommercialTermsUrl(bonus?.termsUrl) && action ? <GovernedCommercialAction action={{ href: action.href, label: copy.terms }} className="" context={{ source: "CTA", placement: "CASINO_OFFER_TERMS", casino: casino.slug, market: presentation.marketCountryCode }}>{copy.terms} <span aria-hidden="true">→</span></GovernedCommercialAction> : safeCommercialTermsUrl(bonus?.termsUrl) ? <a href={safeCommercialTermsUrl(bonus?.termsUrl) as string} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a> : null}{bonus?.wageringMultiplier && licensedNeighbourMarket(presentation.language) ? <Link data-wagering-calculator-link="" href={productHref(presentation, "/wagering-calculator")}>{copy.wageringCalculator} <span aria-hidden="true">→</span></Link> : null}</div>
           {sport && action ? <div aria-labelledby="sport-offer-heading" className={styles.sportOffer} data-casino-sport={sport.market} role="group">
             <p className={styles.sportKicker}>{sport.kicker}</p>
             <h3 id="sport-offer-heading">{sport.heading}</h3>
@@ -193,7 +197,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             <p className={styles.sportHeadline}>{sport.offer}</p>
             <SectionFacts empty="" facts={sport.facts} />
             <p className={styles.materialWarning}>{sport.conditions}</p>
-            <div className={styles.offerActions}><CasinoOutboundAction action={{ ...action, label: sport.cta }} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_SPORT_OFFER" }} messages={messages.outbound} showDisclosure={false} /><a href={sport.termsUrl} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a></div>
+            <div className={styles.offerActions}><CasinoOutboundAction action={{ ...action, label: sport.cta }} className={styles.offerAction} context={{ source: "CTA", placement: "CASINO_SPORT_OFFER", casino: casino.slug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /><a href={sport.termsUrl} rel="noopener noreferrer" target="_blank">{copy.terms} <span aria-hidden="true">→</span></a></div>
             <small className={styles.sportChecked}>{sport.checkedLine} · {copy.compactDisclosure}</small>
           </div> : null}
         </div>
@@ -218,6 +222,8 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <header data-motion-reveal><h2 id="in-depth-heading">{inDepth.heading}</h2></header>
         <div className={styles.inDepth}>{inDepth.parts.map((part) => <div key={part.title}><h3>{part.title}</h3>{part.paragraphs.map((paragraph) => <p key={paragraph.slice(0, 48)}>{paragraph}</p>)}</div>)}</div>
       </section> : null}
+
+      {neighbours}
 
       <section aria-labelledby="faq-heading" className={styles.profileFaq} data-nav-theme="cream" data-premium-section="casino-faq" id="casino-faq">
         <div className={styles.profileFaqInner} data-motion-reveal>

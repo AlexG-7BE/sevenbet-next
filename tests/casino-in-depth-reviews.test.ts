@@ -48,5 +48,5 @@ test("the long review renders only on its own language and stays out of every ot
   assert.equal(casinoInDepthReview("no-such-casino", "sv"), null);
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
   assert.match(profile, /const inDepth = casinoInDepthReview\(casino\.slug, presentation\.language\);/);
-  assert.match(profile, /\{inDepth \? <section aria-labelledby="in-depth-heading"[\s\S]*?: null\}\n\n      <section aria-labelledby="faq-heading"/);
+  assert.match(profile, /\{inDepth \? <section aria-labelledby="in-depth-heading"[\s\S]*?: null\}\n\n      (?:\{neighbours\}\n\n      )?<section aria-labelledby="faq-heading"/);
 });

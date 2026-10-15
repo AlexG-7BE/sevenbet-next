@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { unstable_cache } from "next/cache";
 import { articlePath } from "@/lib/articles/article-types";
 import { absoluteUrl, coreRoutes } from "@/lib/site";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
@@ -117,6 +118,65 @@ export function indexableMarketProductPaths(snapshot: Awaited<ReturnType<typeof 
   return { routes, casinoRoutes };
 }
 
+/** Thrown when part of a market's catalogue could not be read; carries what was read. */
+export class SitemapCatalogueUnavailable extends Error {
+  constructor(readonly partial: ReturnType<typeof indexableMarketProductPaths>) {
+    super("SITEMAP_MARKET_CATALOGUE_UNAVAILABLE");
+  }
+}
+
+/**
+ * A market's product URLs from a complete snapshot. A snapshot with any part unread (a database
+ * stall: no discovery, no bonuses, Best Offers unavailable) throws instead, so it never replaces
+ * the last good list below.
+ */
+export function completeMarketProductPaths(snapshot: Awaited<ReturnType<typeof loadMarketSitemapSnapshot>>) {
+  const paths = indexableMarketProductPaths(snapshot, true);
+  const incomplete = !snapshot.discovery
+    || !snapshot.bonuses || snapshot.bonuses.inventoryMode === "UNAVAILABLE"
+    || !snapshot.bestOffers || snapshot.bestOffers.status === "unavailable";
+  if (incomplete) throw new SitemapCatalogueUnavailable(paths);
+  return paths;
+}
+
+/**
+ * The sitemap keeps the last good list of a market's reviews and directories when the database
+ * stalls (affiliate traffic audit, 15 October 2026). Every casino update clears the catalogue
+ * cache and announces the review to IndexNow, so a crawler arrived exactly when nothing was cached
+ * and, during a pooler stall, got a sitemap without the casino pages. This entry has no tag a
+ * casino update clears; after 10 minutes it is refreshed in the background, and a failed refresh
+ * (a throw) leaves the previous list in place. With no list yet, what could be read is used.
+ */
+export async function lastGoodMarketProductPaths(
+  market: MarketProfile,
+  crawlerBonuses: Awaited<ReturnType<typeof loadCrawlerBonusDirectory>>,
+  cache: typeof unstable_cache = unstable_cache,
+  load: typeof loadMarketSitemapSnapshot = loadMarketSitemapSnapshot,
+) {
+  const read = async () => completeMarketProductPaths(await load(market, crawlerBonuses));
+  const partialOf = (cause: unknown) => cause instanceof SitemapCatalogueUnavailable ? cause.partial : null;
+  let attempted: ReturnType<typeof indexableMarketProductPaths> | null = null;
+  try {
+    return await cache(async () => {
+      try {
+        return await read();
+      } catch (cause) {
+        attempted = partialOf(cause);
+        throw cause;
+      }
+    }, ["sitemap-market-products-v1", market.countryCode], { revalidate: 600 })();
+  } catch (cause) {
+    const partial = partialOf(cause) ?? attempted;
+    if (partial) return partial;
+    // The cache itself failed (outside a Next.js request, or its store): read directly once.
+    try {
+      return await read();
+    } catch (direct) {
+      return partialOf(direct) ?? { routes: [], casinoRoutes: [] };
+    }
+  }
+}
+
 export function localizedIndexableMarketProfiles(markets: readonly MarketProfile[]) {
   return markets.filter((market) => market.countryCode !== DEFAULT_MARKET_PROFILE.countryCode && marketIndexingApproved(market));
 }
@@ -124,11 +184,9 @@ export function localizedIndexableMarketProfiles(markets: readonly MarketProfile
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { articleService } = await import("@/lib/services/article.service");
   const crawlerBonuses = await loadCrawlerBonusDirectory();
-  const baseSnapshot = await failClosed(() => loadMarketSitemapSnapshot(DEFAULT_MARKET_PROFILE, crawlerBonuses));
-  const localizedSnapshots = await Promise.all(localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
-    .map((market) => failClosed(() => loadMarketSitemapSnapshot(market, crawlerBonuses))));
-  const baseProducts = baseSnapshot ? indexableMarketProductPaths(baseSnapshot, true) : { routes: [], casinoRoutes: [] };
-  const localizedProducts = localizedSnapshots.flatMap((snapshot) => snapshot ? [indexableMarketProductPaths(snapshot, true)] : []);
+  const baseProducts = await lastGoodMarketProductPaths(DEFAULT_MARKET_PROFILE, crawlerBonuses);
+  const localizedProducts = await Promise.all(localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
+    .map((market) => lastGoodMarketProductPaths(market, crawlerBonuses)));
   const learningSnapshots = await Promise.all(INDEXABLE_LANGUAGE_ROUTE_PROFILES.map(async (language) => ({
     language,
     articles: await failClosed(() => articleService.listPublished(language.defaultLocale, { take: 500 })) ?? [],

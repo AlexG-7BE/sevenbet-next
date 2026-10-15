@@ -100,7 +100,7 @@ export function BestOffersExperience({ inventoryMode, messages, presentation, sh
             <div className={styles.rankTerms}>
               <CommercialFacts facts={card.facts} className={styles.rankFacts} />
               <div className={styles.rankActions}>
-                {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "BEST_OFFERS_CARD" }} messages={messages.outbound} showDisclosure={false} /> : card.reviewHref ? null : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
+                {card.action ? <CasinoOutboundAction action={card.action} className={styles.offerAction} context={{ source: "CTA", placement: "BEST_OFFERS_CARD", casino: card.casinoSlug, market: presentation.marketCountryCode }} messages={messages.outbound} showDisclosure={false} /> : card.reviewHref ? null : <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>}
                 {card.reviewHref ? <TrackedReviewLink
                   casinoId={published ? card.casinoId : undefined}
                   className={card.action ? undefined : styles.reviewPrimary}

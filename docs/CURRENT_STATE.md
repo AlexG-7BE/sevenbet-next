@@ -12,6 +12,32 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## GA4 partner_click — in review
+
+**Founder's choice in the affiliate traffic audit, 15 October 2026**
+([decision](07_Decisions/GA4-PARTNER-CLICK-2026-10-15.md)). **PROPOSED — NOT YET LIVE** until merged
+and deployed: a partner button click also sends the GA4 event `partner_click` (`casino`,
+`placement`, `market`) from `productAnalyticsClient.outboundIntent`, under the Google tag's rule
+(nothing after "Reject cookies", nothing from protected Help, the self-check or Admin). **Founder
+action:** mark `partner_click` as a key event in GA4 Admin.
+## Licensed neighbours on review pages — in review
+
+**Founder's choice in the affiliate traffic audit, 15 October 2026**
+([decision](07_Decisions/REVIEW-LICENSED-NEIGHBOURS-2026-10-15.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed: each review shows "Other casinos licensed in <country>" — up to six
+published reviews indexed in the page language, in the casinos page's default order, streamed in
+its own boundary and hidden when empty — and a wagering calculator link beside the offer terms
+(en/sv/da/de).
+
+## Database stalls keep commercial pages indexed — in review
+
+**Founder's choice in the affiliate traffic audit, 15 October 2026**
+([decision](07_Decisions/DB-STALL-KEEPS-PAGES-INDEXED-2026-10-15.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed: a failed catalogue read on a live review throws
+`PublicCatalogueUnavailableError` (answered 500, a temporary error; a page cannot send 503) instead
+of 404; `/bonuses` and `/best-offers` no longer set `noindex` while their inventory is
+unavailable; the sitemap serves each market's last good product list
+(`lastGoodMarketProductPaths`, 10-minute `unstable_cache` entry no casino update clears).
 ## Commercial indexing hygiene — in review
 
 **Founder's choice in the affiliate traffic audit, 15 October 2026**

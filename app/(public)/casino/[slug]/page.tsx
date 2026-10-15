@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
 
+import { LicensedNeighbours } from "@/components/casino-profile/LicensedNeighbours";
 import { CasinoProfile } from "@/components/casino-profile/CasinoProfile";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { PublicRouteLoadingFrame } from "@/components/public-shell/PublicRouteLoadingFrame";
@@ -47,6 +48,7 @@ const loadCasinoPage = cache(async (slug: string, visualFixture: boolean) => {
         presentation.marketCountryCode,
         presentation.language,
         presentation.marketCode,
+        { throwOnUnavailable: true },
       );
   const availableForPresentation = candidate
     ? Boolean(presentation.marketCountryCode && candidate.countries.some((country) => country.countryCode === presentation.marketCountryCode && country.availability === "AVAILABLE"))
@@ -116,7 +118,15 @@ async function CasinoContent({ raw, slug, visualDataFixture }: { raw: Record<str
   return <>
     <CommercialSurfaceView casinoId={runtimeCasino.id} surface="casino_review" />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
-    <CasinoProfile availableForPresentation={loaded.availableForPresentation} casino={runtimeCasino} editorial={editorial} messages={messages} presentation={presentation} />
+    <CasinoProfile
+      availableForPresentation={loaded.availableForPresentation}
+      casino={runtimeCasino}
+      editorial={editorial}
+      messages={messages}
+      // Neighbouring licensed reviews stream on their own and never delay the review (audit, 15 Oct 2026).
+      neighbours={visualDataFixture || runtimeCasino.dataClassification === "DEMO_FIXTURE" ? null : <Suspense fallback={null}><LicensedNeighbours casinoSlug={runtimeCasino.slug} messages={messages} presentation={presentation} /></Suspense>}
+      presentation={presentation}
+    />
   </>;
 }
 
@@ -135,7 +145,8 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
     ? visualCasinoProfileFixture(slug)
     // The same editorial market as the review content, so a visitor from outside our markets
     // reuses that market's cached projection instead of building one for their own country.
-    : await publicCasinoService.findPublishedCasino(slug, editorialPresentation(presentation).marketCountryCode);
+    // A failed read throws (a temporary 5xx that crawlers retry); only a missing casino is a 404.
+    : await publicCasinoService.findPublishedCasino(slug, editorialPresentation(presentation).marketCountryCode, { throwOnUnavailable: true });
   if (!published) notFound();
   // Only a real browser gets the streamed frame; crawlers, agents and HTTP clients read the whole profile.
   if (!shouldStreamRouteFrame(requestHeaders)) return <CasinoContent raw={raw} slug={slug} visualDataFixture={visualDataFixture} />;
