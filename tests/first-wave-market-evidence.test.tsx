@@ -6,7 +6,7 @@ import { evaluateFirstWaveCommercialReadiness, type FirstWaveCommercialEvidence,
 import { generateLanguageQaReport } from "../lib/i18n/language-qa";
 import { TRANSLATION_REVIEW_STATE, founderEditorialPublicationAccepted, publicTranslationIndexingApproved } from "../lib/i18n/review-state";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
-import { FIRST_WAVE_MARKET_EVIDENCE, FIRST_WAVE_MARKETS } from "../lib/market/first-wave-evidence";
+import { FIRST_WAVE_MARKET_EVIDENCE, FIRST_WAVE_MARKETS, firstWaveSafetyProfile } from "../lib/market/first-wave-evidence";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import { firstWaveSafetyLanguageAlternates, productHref, productMetadata } from "../lib/market/product-context";
 import { FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, PUBLICATION_APPROVED_MARKET_PROFILES, marketProfileByCountry } from "../lib/market/registry";
@@ -171,4 +171,21 @@ test("first-wave metadata is indexed only where the Founder opened search, and G
   }
   const germanProductCopy = Object.values(productPageMessages("de-DE")).flatMap((section) => Object.values(section)).join("\n");
   assert.doesNotMatch(germanProductCopy, /\b(?:Online-Casino|Casinos?)\b/i);
+});
+
+test("a Swedish, Danish or German Help address shows that market's verified page to a visitor from elsewhere (Founder, 15 October 2026)", () => {
+  const route = (locale: "sv-SE" | "da-DK" | "de-DE" | "en-GB", country: string | null, source: "EXPLICIT_ROUTE" | "TRUSTED_GEO" = "EXPLICIT_ROUTE") => ({
+    locale,
+    source,
+    market: marketProfileByCountry(country),
+  });
+  // Google reads from the United States: the language address decides.
+  assert.equal(firstWaveSafetyProfile(route("sv-SE", "US"))?.market, "SE");
+  assert.equal(firstWaveSafetyProfile(route("da-DK", "US"))?.market, "DK");
+  assert.equal(firstWaveSafetyProfile(route("de-DE", null))?.market, "DE");
+  // The visitor's own verified country still comes first.
+  assert.equal(firstWaveSafetyProfile(route("sv-SE", "DK"))?.market, "DK");
+  // English keeps the English page, and an address without a language keeps the country rule.
+  assert.equal(firstWaveSafetyProfile(route("en-GB", "US")), null);
+  assert.equal(firstWaveSafetyProfile(route("sv-SE", "US", "TRUSTED_GEO")), null);
 });
