@@ -12,6 +12,21 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Commercial indexing hygiene — in review
+
+**Founder's choice in the affiliate traffic audit, 15 October 2026**
+([decision](07_Decisions/COMMERCIAL-INDEXING-HYGIENE-2026-10-15.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed:
+
+- review sitemap `lastmod` and WebPage/Review `dateModified` take the latest of the database date
+  and the long sv/da review check date (`lib/casino-profile/seo.ts`, `app/sitemap.ts`);
+- after each successful Production deployment, `.github/workflows/indexnow-resubmit.yml` announces
+  only the review pages whose long review changed (`scripts/indexnow-changed-reviews.mjs`); the
+  manual full resubmit stays;
+- the English bonus guide and affiliate disclosure link to `/en/…` instead of bare paths that 307;
+- `reviewIndexable` reads `BLOCKED_TARGETS` (`lib/market-access/blocked-targets.ts`): Betsafe SE,
+  Regency SE, PlayUZU SE and DragonBet GB are `noindex, follow` and leave the sitemap.
+
 ## Production build preflight reads through the direct binding — in review
 
 **Founder task, 15 October 2026:** Production builds failed intermittently; find the cause and

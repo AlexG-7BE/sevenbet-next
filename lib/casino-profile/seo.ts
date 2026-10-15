@@ -6,7 +6,8 @@ import { casinoEditorialLanguage, translateCasinoEditorialText } from "@/lib/i18
 import { profileFaqLocalization, selectProfileBonus } from "@/lib/casino-profile/presentation";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { parseRobotsMetadata } from "@/lib/public-casino/public-casino-validation";
-import type { SupportedLocale } from "@/lib/market/registry";
+import { inDepthCheckedAt } from "@/lib/casino-profile/in-depth";
+import { languageForLocale, type SupportedLocale } from "@/lib/market/registry";
 import { editorialAuthor, EDITORIAL_AUTHOR_NAME, modifiedNotBeforePublished, organizationReference } from "@/lib/seo/structured-data";
 import { absoluteUrl } from "@/lib/site";
 
@@ -22,10 +23,18 @@ export function trimAtWordBoundary(text: string, max = REVIEW_DESCRIPTION_MAX_LE
   return `${(boundary > max * 0.6 ? cut.slice(0, boundary) : cut).replace(/[\s,.;:–—-]+$/, "")}…`;
 }
 
-/** The date a review last changed, never earlier than its publication. */
-export function reviewModifiedAt(casino: Pick<PublicCasinoDTO, "publishedAt" | "lastReviewedAt">) {
-  return modifiedNotBeforePublished(casino.publishedAt, casino.lastReviewedAt);
+/**
+ * The date a review last changed, never earlier than its publication. With a language, the
+ * check date of that language's long review counts too (lib/casino-profile/in-depth.ts): the
+ * Swedish and Danish reviews grew on 15 October 2026 while the database row kept September.
+ */
+export function reviewModifiedAt(
+  casino: Pick<PublicCasinoDTO, "publishedAt" | "lastReviewedAt"> & Partial<Pick<PublicCasinoDTO, "slug">>,
+  language?: string | null,
+) {
+  return modifiedNotBeforePublished(casino.publishedAt, casino.lastReviewedAt, inDepthCheckedAt(casino.slug, language));
 }
+
 
 type ReviewCopy = {
   title: (brand: string, year: string) => string;
@@ -105,7 +114,7 @@ export function casinoReviewMetadataCopy(input: {
   const { casino, locale } = input;
   const template = casino.dataClassification === "DEMO_FIXTURE" ? undefined : REVIEW_COPY[locale];
   const cms = locale === "en-GB" ? cmsSeoCopy(casino, input.editorial) : { title: null, description: null };
-  const modifiedAt = reviewModifiedAt(casino);
+  const modifiedAt = reviewModifiedAt(casino, languageForLocale(locale));
   const year = modifiedAt ? ` ${new Date(modifiedAt).getUTCFullYear()}` : "";
   const score = typeof casino.editorScore === "number" && Number.isFinite(casino.editorScore)
     ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(casino.editorScore)
@@ -246,7 +255,7 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
 export function projectCasinoProfileSchemas(
   schemas: readonly Record<string, unknown>[],
   input: {
-    casino: Pick<PublicCasinoDTO, "id" | "name" | "dataClassification">;
+    casino: Pick<PublicCasinoDTO, "id" | "name" | "dataClassification"> & Partial<Pick<PublicCasinoDTO, "slug" | "publishedAt" | "lastReviewedAt">>;
     casinoDirectoryUrl: string;
     locale: string;
     messages: ProductPageMessages;
@@ -256,7 +265,12 @@ export function projectCasinoProfileSchemas(
   const localized = input.locale !== "en-GB";
   const demo = input.casino.dataClassification === "DEMO_FIXTURE";
   const pageLanguage = casinoEditorialLanguage(input.locale);
-  return schemas.flatMap((schema) => {
+  // The page's own long review moves its modification date (see reviewModifiedAt).
+  const modifiedAt = input.casino.publishedAt !== undefined || input.casino.lastReviewedAt !== undefined
+    ? reviewModifiedAt({ publishedAt: input.casino.publishedAt ?? null, lastReviewedAt: input.casino.lastReviewedAt ?? null, slug: input.casino.slug }, pageLanguage)
+    : null;
+  const withModified = (schema: Record<string, unknown>) => (modifiedAt && "dateModified" in schema ? { ...schema, dateModified: modifiedAt } : schema);
+  return schemas.map(withModified).flatMap((schema) => {
     // A localized page keeps only an FAQ written in its own language: the
     // English FAQ would describe questions the reader does not see.
     if (localized && schema["@type"] === "FAQPage" && !(pageLanguage && schema.inLanguage === pageLanguage)) return [];
