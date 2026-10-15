@@ -75,14 +75,66 @@ Tests:
 
 The last two run in `release-governance:postgres-test`.
 
-**Open finding, runtime, not changed here (DETECTED locally; the same log lines appear in
+**Runtime finding, not changed here (DETECTED locally; the same log lines appear in
 Production on 15 October at 11:12 UTC):** a statement inside an interactive transaction times
 out, and its ROLLBACK then times out behind it (`prisma:error transaction failed to roll
 back`). `@prisma/adapter-pg` releases the connection without an error, so pg-pool keeps it while
 the server-side transaction stays open. The next query on that instance runs inside that
 transaction. In the local run an INSERT reported success and was lost when the pool closed the
-connection 10 s later. Proposed fix: `ReconnectingPool` destroys a client released with a
-statement still in flight. It waits for the Founder's go.
+connection 10 s later. Addressed by PR #521: `ReconnectingPool` closes a client handed back with
+a statement in flight, statements queued or a transaction open
+(`prisma_pg_client_discarded_in_flight`).
+## A database connection handed back mid-statement is closed, not reused — in review
+
+**Founder task, 15 October 2026:** fix the runtime finding recorded with the build preflight work:
+after a stalled statement, the next write on the instance could be lost.
+
+**DETECTED (Production log, 15 October 2026, 11:12 UTC, POST /api/mcp/learn; reproduced
+locally):** a statement inside an interactive transaction stalled on the pooled endpoint past
+the 25 s `query_timeout` (`Query read timeout`), and its ROLLBACK then timed out behind it
+(`prisma:error transaction failed to roll back`). Three driver facts made that lose data:
+
+- pg keeps a statement that was already sent as the client's active query after its read
+  timeout fires; only a statement still waiting to be sent is removed;
+- `@prisma/adapter-pg` hands a transaction's client back to the pool without an error, after
+  commit and rollback alike;
+- pg-pool closes only clients that report a connection error or are ending, so it kept the
+  client as idle, with its transaction still open on the server.
+
+The next statement on the instance ran inside that transaction. In the local run (PostgreSQL 16
+behind a proxy that holds a connection's statements, `socket_timeout=2`) an INSERT reported one
+row, the table stayed empty, and the backend sat `idle in transaction` until the connection
+closed. On the pooled endpoint the open transaction also pins a backend until the client closes.
+
+The change (**PROPOSED — NOT YET LIVE** until merged and deployed): `ReconnectingPool`
+(`lib/db/reconnecting-pg-pool.ts`) checks every client the application hands back. A client with
+work still open is closed instead of pooled: a statement sent and not answered, statements
+queued behind it, or a transaction the server last reported open. Closing it ends the server's
+transaction. The pool logs one line, `prisma_pg_client_discarded_in_flight` with the reason
+(`statement_in_flight`, `statements_queued` or `transaction_open`), and the next request opens a
+fresh connection. A normal release after COMMIT, ROLLBACK or a `pool.query` answer finds the
+client idle and keeps it, because pg clears the answered statement and records the transaction
+status before it calls the statement's callback. A release with an error was closed already and
+logs nothing new. Pool size, timeouts, the stale-idle drop and the second open are unchanged
+(`RUNTIME_POOL_POLICY` untouched).
+
+Tests:
+
+- `tests/reconnecting-pg-pool.test.ts` (ci:structural): a client handed back with a statement in
+  flight, with statements queued or inside an open transaction is removed and not reused; a
+  clean release after COMMIT, ROLLBACK and `pool.query` is reused.
+- `tests/reconnecting-pg-pool-postgres.test.ts` (`production-db-reliability:postgres-test`,
+  Database / Migration Verification): the Production sequence through a stalling proxy, with the
+  real Prisma client and adapter. Before this change the INSERT reported one row and the table
+  stayed empty; now the row is committed, the write uses a fresh connection, and no backend is
+  left in a transaction. Committed, rolled-back and failed transactions still reuse their one
+  connection.
+
+Locally the mvp-runtime, customer-data-core, email-reliability, learn-apply,
+commercial-research and market-activation Postgres suites logged no discarded client.
+
+**Not changed:** why the pooled endpoint stalls (UNKNOWN, inside Prisma's infrastructure). A
+stalled statement still fails its request after 25 s; only the next request is protected.
 
 ## Answer pages for AI assistants: gambling control without quitting — in review
 
@@ -114,6 +166,26 @@ sitemap with no internal link (`/pause-plan`, `/beside`, `/pause-statistics`,
 three join "Programme and support", creators joins the trust column. Labels in all fifteen
 footer languages (`lib/i18n/public-shell-catalog.ts`); links follow the existing footer
 localisation. On the Home page the four links are hidden (`html:has([data-home-snap])`): its desktop screen paging measures the footer, and the frozen desktop Home keeps its footer height. Test: `tests/public-shell.test.ts` (`ci:structural`).
+
+## Sports offer on the Swedish and Danish Betsson and NordicBet reviews — in review
+
+Founder decisions, 15 October 2026 (question tool): add sports betting narrowly, Sweden and
+Denmark only ("Узко: SE+DK"), with no schema change; Swedish and Danish sports guides may name
+Betsson and NordicBet and link to their reviews (amendment to
+[LEARN-COMMERCIAL-LOCALIZED-2026-09-30](07_Decisions/LEARN-COMMERCIAL-LOCALIZED-2026-09-30.md)).
+Betsson and NordicBet are the only partners in SE/DK with a sportsbook, and Betsson Group
+Affiliates pays on sports and casino through the same tracking route.
+
+**Changed.** Inside the `#current-offer` section of `/sv/casino/{betsson,nordicbet}` and
+`/da/casino/{betsson,nordicbet}`, a sub-panel shows the brand's sports welcome offer as the
+alternative to the casino offer (one welcome offer per new customer, chosen at the first
+deposit), its key terms, the review's own partner button with placement
+`CTA_CASINO_SPORT_OFFER`, and a link to the operator's terms page
+(`lib/casino-profile/sport-offer.ts`). It renders only beside the partner button and only in the
+language's own market, so crawlers and visitors elsewhere see the page as before. Terms were read
+on 15 October 2026 from the operators' own campaign pages; they change, and the file carries the
+check date. No new section id, no migration. Test: `tests/casino-editorial-translations.test.ts`
+(`internationalisation:test`).
 
 ## Long Swedish and Danish casino reviews — in review
 

@@ -1,11 +1,21 @@
-import { expect, test } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+
+import { base32 } from "@better-auth/utils/base32";
+import { createOTP } from "@better-auth/utils/otp";
+import { expect, test, type Page } from "@playwright/test";
+import { hashPassword } from "better-auth/crypto";
 
 import { prisma } from "../lib/db/prisma";
 
+const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const articleId = "00000000-0000-4000-8000-000000000952";
 const actorId = "00000000-0000-4000-8000-000000000953";
 const slug = "learn-apply-browser-acceptance";
 const path = `/learn/casino-basics/${slug}`;
+const adminUserId = `learn-apply-browser-admin-${randomUUID()}`;
+const adminEmail = `${adminUserId}@example.invalid`;
+const adminPassword = "Learn-Apply-Browser-Acceptance-42!";
+let adminProfileId: string | null = null;
 
 function assertDisposableDatabase(value: string | undefined) {
   if (!value) throw new Error("DATABASE_URL is required");
@@ -46,22 +56,76 @@ test.beforeAll(async () => {
       updatedBy: actorId,
     },
   });
+  await prisma.user.create({
+    data: {
+      id: adminUserId,
+      name: "Learn Apply Browser Admin",
+      email: adminEmail,
+      emailVerified: true,
+      accounts: {
+        create: {
+          id: `credential-${adminUserId}`,
+          issuer: "local:credential",
+          accountId: adminUserId,
+          providerId: "credential",
+          password: await hashPassword(adminPassword),
+        },
+      },
+    },
+  });
+  const profile = await prisma.adminUser.create({
+    data: { userId: adminUserId, name: "Learn Apply Browser Admin", email: adminEmail, role: "ADMIN" },
+  });
+  adminProfileId = profile.id;
 });
 
-test.afterAll(async () => {
-  await prisma.article.deleteMany({ where: { id: articleId, slug } });
-  await prisma.$disconnect();
-});
+async function authenticateAdmin(page: Page) {
+  await page.goto(`${baseUrl}/admin`, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/admin\/login/);
+  await page.getByLabel("Email").fill(adminEmail);
+  await page.getByLabel("Password").fill(adminPassword);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/admin\/security\/enroll/);
+  await page.getByLabel("Confirm your password").fill(adminPassword);
+  await page.getByRole("button", { name: "Set up authenticator" }).click();
+  const encodedSecret = await page.locator(".adminMfaSecret").innerText();
+  const totpSecret = new TextDecoder().decode(base32.decode(encodedSecret.trim()));
+  await page.getByLabel("I have stored these backup codes securely.").check();
+  await page.getByLabel("6-digit code").fill(await createOTP(totpSecret).totp());
+  await page.getByRole("button", { name: "Verify and activate MFA" }).click();
+  await expect(page.getByText("Multi-factor authentication is active.")).toBeVisible();
+  await page.getByRole("button", { name: "Continue to Admin" }).click();
+  await expect(page).toHaveURL(`${baseUrl}/admin`);
+}
 
-// The guide above is written and deleted straight through Prisma, so no publication tag is
-// invalidated. The public shell prefetches the Learn hub once this page settles (instant
-// navigation, 4 Oct 2026); that would leave the fixture in the shared 60-second editorial cache,
-// where the empty-catalogue Learning Center spec that runs next would still list it. This spec
-// renders only its own document, so background RSC requests answer empty and touch no cache.
-test.beforeEach(async ({ page }) => {
-  await page.route("**/*", (route) => (route.request().headers().rsc === "1"
-    ? route.fulfill({ status: 204 })
-    : route.continue()));
+// The guide is written straight through Prisma, so the server's editorial cache never hears of
+// it. Every render of it still fills the shared Learn list: Read next reads the same `take: 100`
+// list as the Learn index (15 Oct 2026), and that entry lives up to 60 seconds. Retire the guide
+// the way an editor does: the Admin archive action invalidates the Learn editorial cache tag
+// inside the server, so the empty-catalogue Learning Center spec that runs next reads a fresh
+// list whatever the cache held before.
+test.afterAll(async ({ browser }) => {
+  try {
+    const context = await browser.newContext();
+    try {
+      const page = await context.newPage();
+      await authenticateAdmin(page);
+      const current = await prisma.article.findUniqueOrThrow({ where: { id: articleId }, select: { updatedAt: true } });
+      const archive = await page.request.post(`${baseUrl}/api/admin/articles/${articleId}/action`, {
+        headers: { origin: baseUrl, "content-type": "application/json" },
+        data: { action: "archive", expectedUpdatedAt: current.updatedAt.toISOString() },
+      });
+      expect(archive.status()).toBe(200);
+    } finally {
+      await context.close();
+    }
+  } finally {
+    await prisma.contentRevision.deleteMany({ where: { entityType: "article", entityId: articleId } });
+    await prisma.article.deleteMany({ where: { id: articleId, slug } });
+    if (adminProfileId) await prisma.adminUser.deleteMany({ where: { id: adminProfileId } });
+    await prisma.user.deleteMany({ where: { id: adminUserId } });
+    await prisma.$disconnect();
+  }
 });
 
 for (const viewport of [

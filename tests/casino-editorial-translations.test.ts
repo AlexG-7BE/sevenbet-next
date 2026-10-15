@@ -499,3 +499,49 @@ test("the catalog is wired into ci:quality and reaches the page only through the
   assert.doesNotMatch(readFileSync("lib/public-offer/best-offer-ranking.ts", "utf8"), /casino-editorial-translations/);
   assert.doesNotMatch(readFileSync("lib/commercial/commercial-presentation.ts", "utf8"), /casino-editorial-translations/);
 });
+
+test("the sports offer shows on the Swedish and Danish Betsson and NordicBet reviews only beside the partner button in that market", async () => {
+  const { CASINO_SPORT_OFFERS, casinoSportOffer } = await import("../lib/casino-profile/sport-offer");
+  const { CASINO_MARKETS } = await import("../lib/market-access/register");
+  for (const [language, offers] of Object.entries(CASINO_SPORT_OFFERS)) {
+    for (const [slug, offer] of Object.entries(offers)) {
+      assert.ok(CASINO_MARKETS[slug]?.licensed[offer.market], `${language}/${slug}: licensed in ${offer.market}`);
+      assert.equal(offer.market, language === "sv" ? "SE" : "DK", `${language}/${slug}: the language's own market`);
+      assert.match(offer.termsUrl, /^https:\/\/(offers\.(betsson|nordicbet)\.com\/sv|tilbud\.(betsson|nordicbet)\.dk)\//, `${language}/${slug}: the operator's own terms page`);
+      assert.match(offer.checked, /^\d{4}-\d{2}-\d{2}$/);
+    }
+  }
+  assert.equal(casinoSportOffer("betsson", "en", "SE"), null);
+  assert.equal(casinoSportOffer("betsson", "sv", "DK"), null, "Swedish text never reaches the Danish market");
+  assert.equal(casinoSportOffer("playojo", "sv", "SE"), null);
+
+  const require = createRequire(import.meta.url);
+  require.extensions[".css"] = () => undefined;
+  (globalThis as typeof globalThis & { React: typeof React }).React = React;
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const render = (routeLanguage: "sv" | "da" | "en", trustedCountryCode: string, patch: Partial<PublicCasinoDTO>) => {
+    const presentation = resolvePresentationContext({ routeLanguage, trustedCountryCode });
+    return renderToStaticMarkup(React.createElement(CasinoProfile, {
+      availableForPresentation: true, casino: casinoDto(patch), editorial, messages: productPageMessages(presentation.locale), presentation,
+    }));
+  };
+  const withButton = { action: { href: "/r/betsson-casino" as const } };
+
+  const swedish = render("sv", "SE", withButton);
+  assert.match(swedish, /data-casino-sport="SE"/);
+  assert.ok(swedish.includes("250 kr gratisspel + 50 freespins"));
+  assert.ok(swedish.includes('href="/r/betsson-casino?placement=CTA_CASINO_SPORT_OFFER"'), "the sports button is the review's own partner route");
+  assert.ok(swedish.includes('href="https://offers.betsson.com/sv/valkomstbonus-sport"'));
+  assert.ok(swedish.indexOf('id="current-offer"') < swedish.indexOf("data-casino-sport") && swedish.indexOf("data-casino-sport") < swedish.indexOf('id="games"'), "inside the offer section");
+
+  const danish = render("da", "DK", withButton);
+  assert.match(danish, /data-casino-sport="DK"/);
+  assert.ok(danish.includes("250 kr. freebet"));
+
+  const nordicbet = render("da", "DK", { ...withButton, slug: "nordicbet", name: "NordicBet" });
+  assert.ok(nordicbet.includes("500 kr. freebet"));
+
+  assert.doesNotMatch(render("sv", "SE", { action: null }), /data-casino-sport/, "no partner button, no sports offer");
+  assert.doesNotMatch(render("en", "SE", withButton), /data-casino-sport/, "English review stays as it was");
+  assert.doesNotMatch(render("sv", "SE", { ...withButton, slug: "playojo", name: "PlayOJO" }), /data-casino-sport/, "casino-only brand");
+});
