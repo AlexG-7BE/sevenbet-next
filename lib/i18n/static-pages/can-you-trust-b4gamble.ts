@@ -54,7 +54,7 @@ function en(): TrustMessages {
         paragraphs: [
           "Some links on the casino and bonus pages are affiliate links, and they are labelled as such. When a person follows one and then signs up or deposits, the casino or its affiliate network may pay a commission to 7BE Inc., the company behind B4GAMBLE. It costs you nothing extra.",
           "Commission never changes an editor score. It does change the order in one way: casinos and offers that B4GAMBLE can link to from your country are listed first, and within each group the editor score sets the order.",
-          "If you never sign up with a casino through B4GAMBLE, it earns nothing from you. That is a conflict of interest, and this page names it so you can weigh it yourself.",
+          "If you never sign up with a casino through B4GAMBLE, it earns nothing from you. So B4GAMBLE has a commercial interest in casino sign-ups, and that is why the rules on this page are fixed and can be checked.",
         ],
       },
       {
@@ -130,7 +130,7 @@ function sv(): TrustMessages {
         paragraphs: [
           "En del länkar på casino- och bonussidorna är affiliatelänkar, och de är märkta som det. När någon följer en sådan länk och sedan registrerar sig eller sätter in pengar kan casinot eller dess affiliatenätverk betala provision till 7BE Inc., företaget bakom B4GAMBLE. Det kostar dig ingenting extra.",
           "Provision ändrar aldrig redaktionens betyg. Den påverkar ordningen på ett sätt: casinon och erbjudanden som B4GAMBLE kan länka till från ditt land visas först, och inom varje grupp avgör redaktionens betyg ordningen.",
-          "Om du aldrig registrerar dig hos ett casino via B4GAMBLE tjänar sajten ingenting på dig. Det är en intressekonflikt, och den här sidan säger det rakt ut så att du själv kan väga in det.",
+          "Om du aldrig registrerar dig hos ett casino via B4GAMBLE tjänar sajten ingenting på dig. B4GAMBLE har alltså ett kommersiellt intresse av att folk registrerar sig hos casinon, och därför är reglerna på den här sidan fasta och går att kontrollera.",
         ],
       },
       {
@@ -206,7 +206,7 @@ function da(): TrustMessages {
         paragraphs: [
           "Nogle links på casino- og bonussiderne er affiliatelinks, og de er markeret som sådan. Når nogen følger et af dem og derefter opretter en konto eller indbetaler, kan casinoet eller dets affiliatenetværk betale provision til 7BE Inc., virksomheden bag B4GAMBLE. Det koster dig ikke noget ekstra.",
           "Provision ændrer aldrig redaktionens karakter. Den påvirker rækkefølgen på én måde: casinoer og tilbud, som B4GAMBLE kan linke til fra dit land, vises først, og inden for hver gruppe afgør redaktionens karakter rækkefølgen.",
-          "Hvis du aldrig opretter en konto hos et casino via B4GAMBLE, tjener siden ingenting på dig. Det er en interessekonflikt, og denne side siger det ligeud, så du selv kan tage stilling til den.",
+          "Hvis du aldrig opretter en konto hos et casino via B4GAMBLE, tjener siden ingenting på dig. B4GAMBLE har altså en kommerciel interesse i, at folk opretter sig hos casinoer, og derfor er reglerne på denne side faste og til at kontrollere.",
         ],
       },
       {
