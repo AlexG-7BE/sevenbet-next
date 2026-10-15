@@ -36,3 +36,13 @@ test("the page is a localizable public route in the sitemap, states the revenue 
   assert.doesNotMatch(page, /\/best-offers|\/casinos|\/bonuses|\/r\/|\/go\//);
   assert.doesNotMatch(page, /@\/lib\/commercial|@\/lib\/public-offer|@\/lib\/services|@\/lib\/market-access|@\/lib\/public-casino|@\/lib\/db\/prisma/);
 });
+
+test("the 10-day Spelpaus period is dated by Spelinspektionen's own notice, 29 June 2026", () => {
+  assert.match(pauseStatisticsMessages("sv-SE").periods.body, /sedan den 29 juni 2026/);
+  assert.match(pauseStatisticsMessages("en-GB").periods.body, /since 29 June 2026/);
+  for (const locale of ["sv-SE", "en-GB"] as const) {
+    const messages = pauseStatisticsMessages(locale);
+    assert.doesNotMatch(messages.periods.body, /juli 2026|July 2026/, locale);
+    assert.ok(messages.sources.items.some((item) => item.href.startsWith("https://www.spelinspektionen.se/nyhetsarkiv/nu-kan-du-stanga-av-dig-fran-spel-i-10-dagar")), `${locale}: the regulator's notice is a source`);
+  }
+});
