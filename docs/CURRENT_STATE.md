@@ -20,6 +20,22 @@ sitemap with no internal link (`/pause-plan`, `/beside`, `/pause-statistics`,
 three join "Programme and support", creators joins the trust column. Labels in all fifteen
 footer languages (`lib/i18n/public-shell-catalog.ts`); links follow the existing footer
 localisation. On the Home page the four links are hidden (`html:has([data-home-snap])`): its desktop screen paging measures the footer, and the frozen desktop Home keeps its footer height. Test: `tests/public-shell.test.ts` (`ci:structural`).
+## Swedish, Danish and German Help pages no longer fall back to English — in review
+
+**DETECTED, crawl of 15 October 2026 from a United States runner:** `/sv|da|de/help` and
+`/sv|da|de/responsible-gambling` served the English page under an English title, and Search
+Console listed `/sv/help` and `/da/help` as copies with a Google-chosen canonical. The
+verified Swedish, Danish and German profiles (`lib/market/first-wave-evidence.ts`) were
+chosen by the visitor's country only, and Google reads from the United States.
+
+**Changed (Founder decision, 15 October 2026: these pages in their own language).**
+`firstWaveSafetyProfile` keeps the visitor's verified country first; on an explicit language
+address it falls back to that language's market (sv → SE, da → DK, de → DE) when the
+visitor's country has none. English and addresses without a language keep the country rule.
+No text was added: the pages show the verified copy and resources SE, DK and DE visitors
+already saw. Used by `app/help/page.tsx`, `app/help/layout.tsx` and
+`app/(public)/responsible-gambling/page.tsx`. Test: `tests/first-wave-market-evidence.test.tsx`
+(`internationalisation:test`).
 
 ## Search indexing: guides link to their neighbours, guides announced in their own language — in review
 
