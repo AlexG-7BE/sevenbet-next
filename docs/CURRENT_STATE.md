@@ -28,7 +28,7 @@ code behaves), built like the pause plan and linking to no casino. llms.txt open
 phrase and lists the Programme and the answers before the markets; the Organization schema
 carries the phrase; the home meta description leads with it in every visible language
 (metadata only, the home page is unchanged). One link in from 10 Steps, the pause plan and
-Responsible Gambling; Help and the footer are unchanged. The pause plan's helpline heading
+Responsible Gambling, and a footer link beside #512's (hidden on Home); Help is unchanged. The pause plan's helpline heading
 no longer says "around the clock". Tests: `tests/gambling-control.test.ts`
 (`gambling-control:test`, in `ci:quality`).
 

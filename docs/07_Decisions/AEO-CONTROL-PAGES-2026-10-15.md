@@ -62,7 +62,11 @@ Also changed:
   English Responsible Gambling page, and in the closing links of the Swedish and Danish
   safety pages for Responsible Gambling. **Help is not changed**: its first-wave page carries
   no Programme action by contract, and the hub's main action is the Programme start. The
-  footer and the home page are not touched.
+  home page is not touched.
+- **Footer** (Founder, 15 October 2026, after #512): the hub joins the footer links #512 added
+  for the pause plan, family and friends, statistics and creators, in "Programme and support",
+  labelled in all fifteen footer languages and hidden on the Home page like the other four, so
+  the frozen desktop Home keeps its footer height.
 
 ## The trust page against the code
 

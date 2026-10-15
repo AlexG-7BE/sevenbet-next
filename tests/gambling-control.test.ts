@@ -244,7 +244,7 @@ test("the home description leads with the phrase's meaning and stays metadata on
   assert.doesNotMatch(read("lib/final-handoff/transforms.ts"), /homeMetadata/);
 });
 
-test("10 Steps, the pause plan and Responsible Gambling link to the hub; Help and the footer do not change", () => {
+test("10 Steps, the pause plan, Responsible Gambling and the footer link to the hub; Help does not change", () => {
   const tenSteps = read("app/(public)/10-steps/page.tsx");
   assert.match(tenSteps, /productHref\(presentation, CONTROL_PATHS\.hub\)/);
   assert.match(read("app/(public)/10-steps/TenStepsPage.tsx"), /\{control \? <Link className=\{styles\.controlLink\} data-ten-steps-control-link href=\{control\.href\}/);
@@ -253,7 +253,9 @@ test("10 Steps, the pause plan and Responsible Gambling link to the hub; Help an
   assert.match(read("lib/final-handoff/transforms.ts"), /data-rg-control-link="" href="\/gambling-control"/);
   const safety = read("components/market-safety/FirstWaveSafetyPage.tsx");
   assert.match(safety, /variant === "responsible" \? controlHubLinkLabel\(presentation\.locale, "moreLink"\) : null/);
-  for (const untouched of ["app/help/page.tsx", "components/public-shell/PublicFooter.tsx"]) {
-    assert.doesNotMatch(read(untouched), /gambling-control|CONTROL_PATHS/, untouched);
-  }
+  assert.doesNotMatch(read("app/help/page.tsx"), /gambling-control|CONTROL_PATHS/, "Help is unchanged");
+  // Founder, 15 October 2026: the hub joins the footer links of #512, hidden on the frozen desktop Home.
+  const footer = read("components/public-shell/PublicFooter.tsx");
+  assert.ok(footer.includes('[footer.gamblingControl, "/gambling-control"]'), "the footer links the hub");
+  assert.match(footer, /const extraLinks = new Set\(\[[^\]]*"\/gambling-control"/, "the hub link is hidden on Home");
 });
