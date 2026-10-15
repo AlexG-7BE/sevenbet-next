@@ -1,3 +1,4 @@
+import { catalogueTier } from "@/lib/commercial/catalogue-order";
 import { mapPublishedCasino, projectPublicCasinoMarket } from "@/lib/public-casino/public-casino.mapper";
 import { parseRobotsMetadata } from "@/lib/public-casino/public-casino-validation";
 import { normalizeDiscoverySearch } from "@/lib/public-casino-discovery/query";
@@ -333,13 +334,16 @@ export class PublicCasinoDiscoveryService {
     }
     const filtered = [...filteredByCasino.values()];
     const sort = query.sort ?? (normalizedSearch ? "RELEVANCE" : "FEATURED");
+    const orderContext = { language: options.presentationLanguage ?? null, market: commercialMarketContext };
     filtered.sort((a, b) => {
       if (sort === "RELEVANCE") return b.relevance - a.relevance || a.card.name.localeCompare(b.card.name) || a.card.id.localeCompare(b.card.id);
       if (sort === "NEWEST") return (Date.parse(b.card.publishedAt ?? "") || 0) - (Date.parse(a.card.publishedAt ?? "") || 0) || a.card.id.localeCompare(b.card.id);
       if (sort === "NAME_ASC") return a.card.name.localeCompare(b.card.name) || a.card.id.localeCompare(b.card.id);
       if (sort === "NAME_DESC") return b.card.name.localeCompare(a.card.name) || a.card.id.localeCompare(b.card.id);
-      const actionOrder = Number(Boolean(b.card.action)) - Number(Boolean(a.card.action));
-      if (actionOrder) return actionOrder;
+      // A button for this visitor first (a withheld offer does not count), then casinos licensed in
+      // the page language's market (lib/commercial/catalogue-order.ts), then the editorial order.
+      const tierOrder = catalogueTier(a.card.slug, Boolean(a.card.action), orderContext) - catalogueTier(b.card.slug, Boolean(b.card.action), orderContext);
+      if (tierOrder) return tierOrder;
       return Number(b.featured) - Number(a.featured) || Number(b.recommended) - Number(a.recommended) || (b.card.rating ?? 0) - (a.card.rating ?? 0) || a.card.name.localeCompare(b.card.name) || a.card.id.localeCompare(b.card.id);
     });
     const total = filtered.length;

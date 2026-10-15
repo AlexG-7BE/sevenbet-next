@@ -23,10 +23,11 @@ export function licensedNeighbours(
   currentSlug: string,
   language: string,
   limit = LICENSED_NEIGHBOURS_LIMIT,
+  market: string | null = null,
 ): LicensedNeighbour[] {
   if (!licensedNeighbourMarket(language)) return [];
   const current = currentSlug.trim().toLowerCase();
-  return casinosForCollectionView(cards, "top_rated")
+  return casinosForCollectionView(cards, "top_rated", { language, market })
     .filter((card) => card.dataClassification === "PUBLISHED_RECORD" && card.slug.toLowerCase() !== current && reviewIndexable(card.slug, language))
     .slice(0, limit)
     .map((card) => ({ slug: card.slug, name: card.name, rating: card.rating }));

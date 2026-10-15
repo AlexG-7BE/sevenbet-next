@@ -20,6 +20,7 @@ import { parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryQuery, CasinoDiscoveryResult } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
+import { reviewIndexable } from "@/lib/seo/review-indexing";
 import { shouldStreamRouteFrame } from "@/lib/seo/route-frame";
 import { absoluteUrl } from "@/lib/site";
 
@@ -100,12 +101,15 @@ async function CasinosContent({ raw }: { raw: Record<string, string | string[] |
   const result = withHandoffCasinoDiscoveryData(loaded.result, visualFixture, presentation.locale, collectionQuery(), fixtureMarket);
   const containsLocalPreview = result.items.some((casino) => casino.dataClassification === "LOCAL_PREVIEW_FIXTURE");
   const disclosure = containsLocalPreview ? messages.common.marketPresentationNotice : messages.common.demoDisclosure;
-  const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {
+  // The search markup lists only reviews that are themselves indexed in this language, in the
+  // catalogue's order (affiliate traffic audit, 15 Oct 2026; lib/seo/review-indexing.ts).
+  const listedReviews = result.items.filter((casino) => reviewIndexable(casino.slug, presentation.language));
+  const schema = result.inventoryMode === "PUBLISHED_ONLY" && listedReviews.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: messages.casinos.directoryTitle,
-    numberOfItems: result.total,
-    itemListElement: result.items.map((casino, index) => ({
+    numberOfItems: listedReviews.length,
+    itemListElement: listedReviews.map((casino, index) => ({
       "@type": "ListItem",
       position: index + 1,
       name: casino.name,

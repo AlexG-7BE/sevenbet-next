@@ -32,9 +32,9 @@ export function CasinoCollection({ casinos, initialSearch = "", messages, presen
   const [view, setView] = useState<CasinoCollectionView>("top_rated");
   const [search, setSearch] = useState(initialSearch);
   const results = useMemo(() => {
-    const ordered = casinosForCollectionView(casinos, view);
+    const ordered = casinosForCollectionView(casinos, view, { language: presentation.language, market: presentation.marketCountryCode });
     return filterCasinosByName(ordered, search, presentation.locale);
-  }, [casinos, presentation.locale, search, view]);
+  }, [casinos, presentation.language, presentation.locale, presentation.marketCountryCode, search, view]);
 
   const controlsRef = useRef<HTMLDivElement>(null);
   const resultsStartRef = useRef<HTMLParagraphElement>(null);

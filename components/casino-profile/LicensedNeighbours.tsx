@@ -48,7 +48,7 @@ export async function LicensedNeighbours({ casinoSlug, messages, presentation }:
           presentationLanguage: editorial.language,
         },
       );
-      return result.inventoryMode === "PUBLISHED_ONLY" ? licensedNeighbours(result.items, casinoSlug, presentation.language) : [];
+      return result.inventoryMode === "PUBLISHED_ONLY" ? licensedNeighbours(result.items, casinoSlug, presentation.language, undefined, editorial.marketCountryCode) : [];
     } catch {
       return [];
     }

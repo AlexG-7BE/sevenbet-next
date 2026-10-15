@@ -12,6 +12,17 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Catalogue order by licence and the sports offer for every reader — in review
+
+**Founder's choice in the affiliate traffic audit, 15 October 2026**
+([decision](07_Decisions/CATALOGUE-LICENCE-ORDER-AND-SPORT-2026-10-15.md)). **PROPOSED — NOT YET
+LIVE** until merged and deployed: the casinos catalogue orders button (a withheld offer does not
+count) → licensed in the page language's market → editorial order (`lib/commercial/catalogue-order.ts`),
+in the client views and the discovery `FEATURED` sort; Bonuses put licensed casinos first inside
+each tier; the casinos ItemList lists only indexed reviews; the Betsson/NordicBet sports block
+shows its text and terms without the button, and its "Terms" go through `/r/` when a route exists;
+those four sv/da reviews are titled "casino & odds".
+
 ## GA4 partner_click — in review
 
 **Founder's choice in the affiliate traffic audit, 15 October 2026**

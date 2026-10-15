@@ -19,7 +19,7 @@ test("discovery directories filter server-rendered records and hold no data auth
   assert.match(collection, /useMemo\(\(\) => \{/);
   assert.match(bonusesPage, /publicOfferService\.searchOffers/);
   // The operator-name search narrows the same server-rendered view in memory.
-  assert.match(bonuses, /useMemo\(\s*\(\) => filterOffersByCasinoName\(offersForBonusView\(offers, view\), search,/);
+  assert.match(bonuses, /useMemo\(\s*\(\) => filterOffersByCasinoName\(offersForBonusView\(offers, view, presentation\.language\), search,/);
   for (const source of [collection, bonuses]) {
     assert.doesNotMatch(source, /fetch\(|useEffect|@prisma\/client|prisma\.|\/api\//);
   }
