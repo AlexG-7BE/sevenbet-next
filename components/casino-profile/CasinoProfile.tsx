@@ -201,7 +201,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
       </section>
 
       {inDepth ? <section aria-labelledby="in-depth-heading" className={styles.section} data-casino-in-depth={presentation.language} id="in-depth">
-        <header data-motion-reveal><p>07</p><h2 id="in-depth-heading">{inDepth.heading}</h2></header>
+        <header data-motion-reveal><h2 id="in-depth-heading">{inDepth.heading}</h2></header>
         <div className={styles.inDepth}>{inDepth.parts.map((part) => <div key={part.title}><h3>{part.title}</h3>{part.paragraphs.map((paragraph) => <p key={paragraph.slice(0, 48)}>{paragraph}</p>)}</div>)}</div>
       </section> : null}
 

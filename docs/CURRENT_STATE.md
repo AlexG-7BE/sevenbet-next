@@ -18,7 +18,7 @@ Founder decision, 15 October 2026 (question tool): expand the reviews shown in S
 Denmark, leave the rest. The templated review page held about 300 words, and the crawl of 15
 October found the casino reviews to be the bulk of "Discovered – currently not indexed".
 
-**Changed.** A section "07 Vår genomgång" / "Vores gennemgang" renders before the FAQ on
+**Changed.** An unnumbered section "Vår genomgång" / "Vores gennemgang" renders before the FAQ on
 `/sv/casino/{slug}` and `/da/casino/{slug}` when a native long review exists
 (`lib/casino-profile/in-depth.ts`, texts in `lib/casino-profile/in-depth/{sv,da}.ts`). Eleven
 Swedish (casinos licensed for SE in `lib/market-access/register.ts`, minus the SE
