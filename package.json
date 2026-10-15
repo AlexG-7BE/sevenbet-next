@@ -41,7 +41,7 @@
     "production-db-reliability:test": "node --import tsx --test tests/production-db-reliability.test.ts",
     "production-db-reliability:postgres-test": "node --import tsx --import ./tests/fixtures/register-server-only.mjs --test --test-concurrency=1 tests/production-db-reliability-postgres.test.ts tests/reconnecting-pg-pool-postgres.test.ts",
     "release-governance:test": "node --import tsx --test tests/production-build-read-only.test.ts",
-    "release-governance:postgres-test": "node --import tsx --test --test-concurrency=1 tests/production-build-read-only-postgres.test.ts",
+    "release-governance:postgres-test": "node --import tsx --test --test-concurrency=1 tests/production-build-read-only-postgres.test.ts tests/release-verification-postgres.test.ts",
     "visual:qa": "node scripts/visual-qa.mjs",
     "typography:audit": "node scripts/typography-audit.mjs",
     "typography:browser": "playwright test --config=playwright.ci.config.ts tests/founder-typography-browser.spec.ts",
