@@ -8,7 +8,9 @@ import type { PauseRegister } from "@/lib/tools/pause-plan";
  * other language reads, marked `lang="en"` by the route like the wagering calculator.
  *
  * Helpline numbers: Stödlinjen 020-81 91 00 (stodlinjen.se), StopSpillet 70 22 28 25
- * (stopspillet.dk), Center for Ludomani 70 11 18 10. Checked 12 October 2026.
+ * (stopspillet.dk), Center for Ludomani 70 11 18 10. Checked 12 October 2026. Neither line is open
+ * around the clock (Stödlinjen: weekdays; StopSpillet: Mon–Thu 9–21, Fri 9–17; read 15 October 2026),
+ * and StopSpillet calls itself confidential, not anonymous.
  */
 export type PausePlanDay = Readonly<{ title: string; move: string }>;
 
@@ -158,7 +160,7 @@ const sv: PausePlanMessages = {
     ["Gäller spelpaus casinon utan svensk licens?", "Nej. Spelpaus gäller bara spelbolag med svensk licens. Sajter som marknadsför ”casino utan spelpaus” saknar licens i Sverige, och där har du inget svenskt konsumentskydd."],
     ["Vart vänder jag mig om det är akut?", "Stödlinjen för spelare och anhöriga: 020-81 91 00, stodlinjen.se. Gratis och anonymt."],
   ],
-  supportHeading: "Hjälp som finns dygnet runt",
+  supportHeading: "Här finns hjälp",
   support: [
     { label: "Stödlinjen – 020-81 91 00", href: "https://www.stodlinjen.se/" },
     { label: "Spelpaus.se – registrera eller läs om pausen", href: "https://www.spelpaus.se/" },
@@ -234,9 +236,9 @@ const da: PausePlanMessages = {
     ["Er der casinoer i planen?", "Nej. Planen og dens ti trin indeholder ingen casinoer og ingen tilbud. Udbydere med dansk licens må heller ikke sende dig markedsføring, mens du er i ROFUS."],
     ["Skal jeg have en konto?", "Ikke for at læse planen. For at tage trinnene og gemme dine svar opretter du en konto i programmet. Det er gratis, og dine svar bruges aldrig til tilbud, rangeringer eller reklamer."],
     ["Gælder ROFUS udenlandske casinoer?", "Nej. ROFUS gælder kun spiludbydere med dansk licens. Sider uden dansk licens er ikke omfattet, og der har du ingen dansk forbrugerbeskyttelse."],
-    ["Hvor henvender jeg mig, hvis det haster?", "StopSpillet: 70 22 28 25, stopspillet.dk. Gratis og anonymt. Center for Ludomani: 70 11 18 10."],
+    ["Hvor henvender jeg mig, hvis det haster?", "StopSpillet: 70 22 28 25, stopspillet.dk. Gratis og fortroligt. Center for Ludomani: 70 11 18 10."],
   ],
-  supportHeading: "Hjælp, der er åben hele døgnet",
+  supportHeading: "Her kan du få hjælp",
   support: [
     { label: "StopSpillet – 70 22 28 25", href: "https://www.stopspillet.dk/" },
     { label: "ROFUS – registrer dig eller læs om pausen", href: "https://www.rofus.nu/" },

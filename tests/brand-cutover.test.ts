@@ -105,7 +105,8 @@ test("root identity, legal trading name and approved contacts are exact", () => 
   assert.match(source("lib/seo/structured-data.ts"), /name: "B4GAMBLE"/);
   assert.match(layout, /Educational tools, private self-checks and transparent casino comparison/);
   assert.match(home, /homeMetadata\(presentation\.locale\)/);
-  assert.match(homeCatalog, /Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play\./);
+  // AEO-CONTROL-PAGES-2026-10-15: the home description leads with the one phrase's meaning.
+  assert.match(homeCatalog, /"en-GB": \{ title: "B4GAMBLE \(Before Gamble\) \| Know your limits before you play", description: "A free 10-step programme that helps adults keep online gambling under control without having to quit, and a transparent comparison of licensed casinos\." \}/);
   assert.match(icon, /<svg/);
   assert.match(icon, /fill="#ccff00"/);
   assert.match(icon, /fill="#100f0f"/);

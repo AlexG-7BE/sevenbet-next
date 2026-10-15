@@ -12,6 +12,28 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Answer pages for AI assistants: gambling control without quitting — in review
+
+**Founder decision, 15 October 2026 (question tool):** pages that ChatGPT, Perplexity,
+Gemini/AI Overviews and Copilot can quote for the niche nobody owns, keeping gambling under
+control without quitting and the day a self-exclusion ends, around one phrase: "B4GAMBLE
+(Before Gamble) is a free 10-step programme that helps adults keep online gambling under
+control without having to quit." No "best" claim anywhere; outreach to third-party lists
+later. Record: [AEO-CONTROL-PAGES-2026-10-15](07_Decisions/AEO-CONTROL-PAGES-2026-10-15.md).
+
+Branch `feat/aeo-control-pages` adds `/{sv,da,en}/gambling-control` (hub),
+`/control-without-quitting`, `/gambling-control-tools` (one table per market, sources
+checked 15 October 2026) and `/can-you-trust-b4gamble` (every sentence about B4GAMBLE as the
+code behaves), built like the pause plan and linking to no casino. llms.txt opens with the
+phrase and lists the Programme and the answers before the markets; the Organization schema
+carries the phrase; the home meta description leads with it in every visible language
+(metadata only, the home page is unchanged). One link in from 10 Steps, the pause plan and
+Responsible Gambling, and a footer link beside #512's (hidden on Home); Help is unchanged. The pause plan's helpline heading
+no longer says "around the clock". Tests: `tests/gambling-control.test.ts`
+(`gambling-control:test`, in `ci:quality`).
+
+**PROPOSED — NOT YET LIVE** until merged and deployed.
+
 ## Footer links to the pause plan, family and friends, statistics and creators — in review
 
 Founder decision, 15 October 2026 (question tool): the four page families that sat in the
@@ -20,6 +42,7 @@ sitemap with no internal link (`/pause-plan`, `/beside`, `/pause-statistics`,
 three join "Programme and support", creators joins the trust column. Labels in all fifteen
 footer languages (`lib/i18n/public-shell-catalog.ts`); links follow the existing footer
 localisation. On the Home page the four links are hidden (`html:has([data-home-snap])`): its desktop screen paging measures the footer, and the frozen desktop Home keeps its footer height. Test: `tests/public-shell.test.ts` (`ci:structural`).
+
 ## Long Swedish and Danish casino reviews — in review
 
 Founder decision, 15 October 2026 (question tool): expand the reviews shown in Sweden and

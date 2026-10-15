@@ -95,10 +95,12 @@ test("runtime text and sitemap policy match current product truth", () => {
   const footer = read("components/public-shell/PublicFooter.tsx");
   const shellCatalog = read("lib/i18n/public-shell-catalog.ts");
   assert.match(llms, /practical control/);
-  // SEO-CRAWLER-READY-2026-09-27: llms.txt leads with the comparison, keeps the Programme as its own
-  // section and no longer describes a demonstration inventory that is not live.
+  // SEO-CRAWLER-READY-2026-09-27: llms.txt keeps the Programme and the reviews as their own sections
+  // and no longer describes a demonstration inventory that is not live. Since AEO-CONTROL-PAGES-2026-10-15
+  // it leads with the Programme and lists the gambling control answers before the markets.
   assert.match(llms, /## Casino reviews/);
   assert.match(llms, /## 10-Step Control Programme/);
+  assert.match(llms, /## Gambling control answers/);
   assert.match(llms, /llms-full\.txt/);
   assert.doesNotMatch(llms, /Demonstration records are fictional|clearly labelled demonstration/);
   assert.doesNotMatch(llms, /getTopCasinos|Top Casino Profiles|wagering x\$\{|license \$\{/);

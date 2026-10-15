@@ -9,6 +9,7 @@ import styles from "./PausePlan.module.css";
 import { articlePath } from "@/lib/articles/article-types";
 import { pauseLettersEnabled } from "@/lib/email/pause-letters/schedule";
 import { pauseHubGuides } from "@/lib/articles/pause-hub.server";
+import { CONTROL_PATHS, controlSharedMessages } from "@/lib/i18n/static-pages/gambling-control";
 import { pausePlanLocale, pausePlanMessages } from "@/lib/i18n/static-pages/pause-plan";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
@@ -88,6 +89,7 @@ export default async function PausePlanPage() {
       <dl>
         {messages.faq.map(([question, answer]) => <div key={question}><dt>{question}</dt><dd>{answer}</dd></div>)}
       </dl>
+      <p className={styles.more}><Link data-pause-plan-control-link href={productHref(presentation, CONTROL_PATHS.hub)}>{controlSharedMessages(contentLocale).moreLink}</Link></p>
     </div></section>
 
     <section className={styles.support} data-nav-theme="dark"><div>
