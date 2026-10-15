@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { FirstWaveSafetyPage } from "@/components/market-safety/FirstWaveSafetyPage";
 import { transformResponsibleGamblingHandoff } from "@/lib/final-handoff/transforms";
-import { firstWaveMarketEvidence } from "@/lib/market/first-wave-evidence";
+import { firstWaveSafetyProfile } from "@/lib/market/first-wave-evidence";
 import { firstWaveSafetyLanguageAlternates, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 
@@ -11,7 +11,7 @@ const description = "Practical control information and protected support routes.
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
-  const profile = presentation.market ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
+  const profile = firstWaveSafetyProfile(presentation);
   return productMetadata({
     presentation,
     pathname: "/responsible-gambling",
@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ResponsibleGamblingPage() {
   const presentation = await resolveServerPresentationContext();
-  const profile = presentation.market ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
+  const profile = firstWaveSafetyProfile(presentation);
   return profile
     ? <FirstWaveSafetyPage presentation={presentation} profile={profile} variant="responsible" />
     : <HandoffPage name="responsibleGambling" transform={transformResponsibleGamblingHandoff} />;
