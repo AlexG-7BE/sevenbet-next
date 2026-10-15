@@ -67,6 +67,7 @@ async function record(page, context, { step, file, status, expect = null, fullPa
     cookies,
     researchLinks: research.length,
     researchLinkSample: [...new Set(research)].slice(0, 5),
+    partnerLinks: [...new Set(paths.filter((path) => /^\/r\//.test(path)))].slice(0, 12),
     expect,
   });
 }
@@ -108,6 +109,14 @@ try {
       status = await visit(page, `/${locale}`);
       if (await openMenu(page)) {
         await record(page, context, { step: `${locale}: lesson done, home menu after the pause page`, file: `${locale}-6-lesson-done-home-menu-after-pause-plan-phone.png`, status, expect: "some" });
+      }
+      // The casino list and the first casino review behind it, with their partner buttons.
+      status = await visit(page, `/${locale}/casinos`);
+      await record(page, context, { step: `${locale}: lesson done, casino list`, file: `${locale}-11-casinos-phone.png`, status, expect: "some" });
+      const reviewHref = await page.locator("main a[href*='/casino/']").first().getAttribute("href").catch(() => null);
+      if (reviewHref) {
+        status = await visit(page, reviewHref);
+        await record(page, context, { step: `${locale}: lesson done, first casino review`, file: `${locale}-12-casino-review-phone.png`, status, fullPage: true });
       }
       await context.close();
     }
