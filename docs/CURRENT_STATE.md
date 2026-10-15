@@ -12,6 +12,16 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Database stalls keep commercial pages indexed — in review
+
+**Founder's choice in the affiliate traffic audit, 15 October 2026**
+([decision](07_Decisions/DB-STALL-KEEPS-PAGES-INDEXED-2026-10-15.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed: a failed catalogue read on a live review throws
+`PublicCatalogueUnavailableError` (answered 500, a temporary error; a page cannot send 503) instead
+of 404; `/bonuses` and `/best-offers` no longer set `noindex` while their inventory is
+unavailable; the sitemap serves each market's last good product list
+(`lastGoodMarketProductPaths`, 10-minute `unstable_cache` entry no casino update clears).
+
 ## Production build preflight reads through the direct binding — in review
 
 **Founder task, 15 October 2026:** Production builds failed intermittently; find the cause and

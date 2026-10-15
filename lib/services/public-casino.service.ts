@@ -13,6 +13,19 @@ import { presentInMarket } from "@/lib/market-access/access";
 import { localizePublicCasino } from "@/lib/i18n/casino-editorial-translations/localize";
 import { PUBLIC_CASINO_EDITORIAL_CACHE_TAG, publicEditorialCache } from "@/lib/public-editorial-cache";
 
+/**
+ * The published catalogue could not be read (a database stall with nothing cached). It is not a
+ * missing casino: a review page that throws it answers a temporary server error, which crawlers
+ * retry, instead of the 404 that takes a live review out of the index (affiliate traffic audit,
+ * 15 October 2026).
+ */
+export class PublicCatalogueUnavailableError extends Error {
+  constructor(cause?: unknown) {
+    super("PUBLIC_CATALOGUE_UNAVAILABLE", { cause });
+    this.name = "PublicCatalogueUnavailableError";
+  }
+}
+
 function projectRequestedMarket(casino: PublicCasinoDTO, countryCode: string | null | undefined) {
   if (countryCode !== undefined) return projectPublicCasinoMarket(casino, countryCode ?? "");
   if (!casino.marketProfiles.length) return casino;
@@ -110,13 +123,19 @@ export class PublicCasinoService {
    * Whether a casino profile is published, decided before the page streams its frame so a
    * missing casino still answers 404. It reads the same cache entry getCasino reads next.
    */
-  async findPublishedCasino(slug: string, countryCode?: string | null): Promise<{ name: string; slug: string } | null> {
+  async findPublishedCasino(
+    slug: string,
+    countryCode?: string | null,
+    options: { throwOnUnavailable?: boolean } = {},
+  ): Promise<{ name: string; slug: string } | null> {
     if (!isSafePublicSlug(slug)) return null;
     if (!this.cmsEnabled()) return null;
     try {
       const projected = await this.publishedEditorial(slug, countryCode);
       return projected ? { name: projected.name, slug: projected.slug } : null;
-    } catch {
+    } catch (cause) {
+      // A failed read is not a missing casino: the review page answers a temporary error then.
+      if (options.throwOnUnavailable) throw new PublicCatalogueUnavailableError(cause);
       return null;
     }
   }
@@ -127,6 +146,7 @@ export class PublicCasinoService {
     countryCode?: string | null,
     presentationLanguage?: string | null,
     commercialMarketCode?: string | null,
+    options: { throwOnUnavailable?: boolean } = {},
   ): Promise<PublicCasinoDTO | null> {
     if (!isSafePublicSlug(slug)) return null;
     if (!this.cmsEnabled()) return null;
@@ -134,7 +154,8 @@ export class PublicCasinoService {
     let projected: PublicCasinoDTO | null = null;
     try {
       projected = await this.publishedEditorial(slug, countryCode);
-    } catch {
+    } catch (cause) {
+      if (options.throwOnUnavailable) throw new PublicCatalogueUnavailableError(cause);
       return null;
     }
 

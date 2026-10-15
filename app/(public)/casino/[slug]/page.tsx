@@ -47,6 +47,7 @@ const loadCasinoPage = cache(async (slug: string, visualFixture: boolean) => {
         presentation.marketCountryCode,
         presentation.language,
         presentation.marketCode,
+        { throwOnUnavailable: true },
       );
   const availableForPresentation = candidate
     ? Boolean(presentation.marketCountryCode && candidate.countries.some((country) => country.countryCode === presentation.marketCountryCode && country.availability === "AVAILABLE"))
@@ -135,7 +136,8 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
     ? visualCasinoProfileFixture(slug)
     // The same editorial market as the review content, so a visitor from outside our markets
     // reuses that market's cached projection instead of building one for their own country.
-    : await publicCasinoService.findPublishedCasino(slug, editorialPresentation(presentation).marketCountryCode);
+    // A failed read throws (a temporary 5xx that crawlers retry); only a missing casino is a 404.
+    : await publicCasinoService.findPublishedCasino(slug, editorialPresentation(presentation).marketCountryCode, { throwOnUnavailable: true });
   if (!published) notFound();
   // Only a real browser gets the streamed frame; crawlers, agents and HTTP clients read the whole profile.
   if (!shouldStreamRouteFrame(requestHeaders)) return <CasinoContent raw={raw} slug={slug} visualDataFixture={visualDataFixture} />;

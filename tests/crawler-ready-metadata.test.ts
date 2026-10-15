@@ -5,7 +5,9 @@ import test from "node:test";
 import { HTML_LIMITED_BOT_UA_RE } from "next/dist/shared/lib/router/utils/html-bots";
 
 import robots from "../app/robots";
-import { indexableMarketProductPaths, indexableReviewCards } from "../app/sitemap";
+import { completeMarketProductPaths, indexableMarketProductPaths, indexableReviewCards, lastGoodMarketProductPaths, SitemapCatalogueUnavailable } from "../app/sitemap";
+import { PublicCasinoService, PublicCatalogueUnavailableError } from "../lib/services/public-casino.service";
+import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { articleLanguageAlternates } from "../lib/articles/article-seo";
 import type { PublicArticle } from "../lib/articles/article-types";
 import { retiredArticleSuccessor } from "../lib/articles/retired-articles";
@@ -567,4 +569,63 @@ test("switching language on a guide that is not published in the target language
   // Other pages keep their path and query.
   const casinos = await switchTo("da", "/en/casinos?sort=score");
   assert.equal(casinos.headers.get("location"), "/da/casinos?sort=score");
+});
+
+test("a database stall answers a temporary error on a live review, never a 404", async () => {
+  // Affiliate traffic audit, 15 October 2026: during pooler stalls live reviews answered 404.
+  const stalled: PublicCasinoStore = {
+    listPublished: async () => { throw new Error("Query read timeout"); },
+    listManagedSlugs: async () => [],
+    findPublishedBySlug: async () => { throw new Error("Query read timeout"); },
+    hasManagedSlug: async () => true,
+  };
+  const service = new PublicCasinoService(stalled, { cmsEnabled: true, now: new Date("2026-10-16T00:00:00Z") });
+  assert.equal(await service.findPublishedCasino("betsson", "SE"), null, "other callers keep the null");
+  await assert.rejects(service.findPublishedCasino("betsson", "SE", { throwOnUnavailable: true }), PublicCatalogueUnavailableError);
+  assert.equal(await service.getCasino("betsson", null, "SE"), null);
+  await assert.rejects(service.getCasino("betsson", null, "SE", "sv", "SE", { throwOnUnavailable: true }), PublicCatalogueUnavailableError);
+  const missing = new PublicCasinoService({ ...stalled, findPublishedBySlug: async () => null, listPublished: async () => [] }, { cmsEnabled: true });
+  assert.equal(await missing.findPublishedCasino("not-a-casino", "SE", { throwOnUnavailable: true }), null, "a missing casino is still a 404");
+  const page = read("app/(public)/casino/[slug]/page.tsx");
+  assert.match(page, /findPublishedCasino\(slug, editorialPresentation\(presentation\)\.marketCountryCode, \{ throwOnUnavailable: true \}\)/);
+  assert.match(page, /presentation\.marketCode,\n\s+\{ throwOnUnavailable: true \},\n\s+\);/);
+});
+
+test("Bonuses and Best Offers keep their index value while the database stalls", () => {
+  assert.match(read("app/(public)/bonuses/page.tsx"), /robots: \(marketUnavailable && !unavailable\) \|\| \(!unavailable && !bonusDirectoryIndexable\(result\)\)/);
+  const best = read("app/(public)/best-offers/page.tsx");
+  assert.match(best, /robots: \(marketUnavailable && !unavailable\) \|\| containsDemo \?/);
+  assert.doesNotMatch(best, /robots: marketUnavailable \|\| unavailable/);
+});
+
+test("the sitemap keeps the last good market list when the database stalls", async () => {
+  const complete = {
+    market: market("SE"),
+    casinos: [{ slug: "betsson", dataClassification: "PUBLISHED_RECORD", indexable: true, publishedAt: "2026-09-01T00:00:00.000Z" }],
+    discovery: { total: 1, inventoryMode: "PUBLISHED_ONLY" },
+    bestOffers: { status: "available", inventoryMode: "PUBLISHED_ONLY" },
+    bonuses: { total: 3, inventoryMode: "PUBLISHED_ONLY" },
+  } as unknown as Parameters<typeof completeMarketProductPaths>[0];
+  assert.deepEqual(completeMarketProductPaths(complete).routes, ["/sv/casinos", "/sv/bonuses", "/sv/best-offers"]);
+  for (const broken of [
+    { ...complete, discovery: null, casinos: [] },
+    { ...complete, bonuses: null },
+    { ...complete, bonuses: { total: 0, inventoryMode: "UNAVAILABLE" } },
+    { ...complete, bestOffers: { status: "unavailable", inventoryMode: "UNAVAILABLE" } },
+  ] as unknown as Parameters<typeof completeMarketProductPaths>[0][]) {
+    assert.throws(() => completeMarketProductPaths(broken), SitemapCatalogueUnavailable);
+  }
+  const stale = { routes: ["/sv/casinos"], casinoRoutes: [{ url: "https://b4gamble.com/sv/casino/betsson", changeFrequency: "weekly" as const, priority: 0.7 }] };
+  // A stale entry is served while its refresh fails (unstable_cache keeps it).
+  const servedStale = (() => async () => stale) as unknown as Parameters<typeof lastGoodMarketProductPaths>[2];
+  assert.deepEqual(await lastGoodMarketProductPaths(market("SE"), null, servedStale), stale);
+  // With nothing cached yet, what could be read is used; an unexpected error lists nothing.
+  const partial = { routes: ["/sv/bonuses"], casinoRoutes: [] };
+  const noEntry = (() => async () => { throw new SitemapCatalogueUnavailable(partial); }) as unknown as Parameters<typeof lastGoodMarketProductPaths>[2];
+  assert.deepEqual(await lastGoodMarketProductPaths(market("SE"), null, noEntry), partial);
+  const broken = (() => async () => { throw new Error("boom"); }) as unknown as Parameters<typeof lastGoodMarketProductPaths>[2];
+  assert.deepEqual(await lastGoodMarketProductPaths(market("SE"), null, broken), { routes: [], casinoRoutes: [] });
+  const sitemap = read("app/sitemap.ts");
+  assert.match(sitemap, /\["sitemap-market-products-v1", market\.countryCode\],\n\s+\{ revalidate: 600 \}/);
+  assert.match(sitemap, /const baseProducts = await lastGoodMarketProductPaths\(DEFAULT_MARKET_PROFILE, crawlerBonuses\);/);
 });
