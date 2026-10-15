@@ -45,8 +45,8 @@ export function PublicFooter({
     : commercialDestinationsNavigable(commercialProductsAvailable(commercialProductState), presentation.marketCountryCode);
   const groups = [
     { title: footer.explore, links: [[shell.bestOffers, "/best-offers"], [shell.casinos, "/casinos"], [shell.bonuses, "/bonuses"], [shell.learn, "/learn"]] },
-    { title: footer.programmeAndSupport, links: [[authenticated ? shell.myProgramme : shell.startProgramme, "/program"], [footer.tenSteps, "/10-steps"], [footer.responsibleGambling, "/responsible-gambling"], [footer.protectedHelp, "/help"]] },
-    { title: footer.trust, links: [[footer.about, "/about"], [footer.methodology, "/methodology"], [footer.faq, "/faq"], [footer.affiliateDisclosure, "/affiliate-disclosure"]] },
+    { title: footer.programmeAndSupport, links: [[authenticated ? shell.myProgramme : shell.startProgramme, "/program"], [footer.tenSteps, "/10-steps"], [footer.responsibleGambling, "/responsible-gambling"], [footer.protectedHelp, "/help"], [footer.pausePlan, "/pause-plan"], [footer.beside, "/beside"], [footer.pauseStatistics, "/pause-statistics"]] },
+    { title: footer.trust, links: [[footer.about, "/about"], [footer.methodology, "/methodology"], [footer.faq, "/faq"], [footer.affiliateDisclosure, "/affiliate-disclosure"], [footer.forCreators, "/for-creators"]] },
   ] as const;
   const deferredCommercialLinks = {
     "/best-offers": commercialBestOffersNavigation,

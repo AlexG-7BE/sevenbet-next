@@ -12,6 +12,15 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Footer links to the pause plan, family and friends, statistics and creators — in review
+
+Founder decision, 15 October 2026 (question tool): the four page families that sat in the
+sitemap with no internal link (`/pause-plan`, `/beside`, `/pause-statistics`,
+`/for-creators`; crawl of 15 October) get quiet text links in the shared footer. The first
+three join "Programme and support", creators joins the trust column. Labels in all fifteen
+footer languages (`lib/i18n/public-shell-catalog.ts`); links follow the existing footer
+localisation. No layout or style change. Test: `tests/public-shell.test.ts` (`ci:structural`).
+
 ## Search indexing: guides link to their neighbours, guides announced in their own language — in review
 
 **DETECTED, Search Console, read 15 October 2026** (report last updated 9 October): 166
