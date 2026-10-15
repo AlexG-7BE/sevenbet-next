@@ -385,3 +385,53 @@ test("bonus directory searches by operator name inside its sticky controls", asy
   assert.match(html, /role="tablist"/);
   assert.match(html, /data-header-autohide=""/);
 });
+
+// Affiliate traffic audit, 15 October 2026: a review linked to nothing but its breadcrumb.
+test("a review's neighbours are reviews licensed in its language's market, in catalogue order", async () => {
+  const { licensedNeighbours, LICENSED_NEIGHBOURS_LIMIT } = await import("../lib/casino-profile/licensed-neighbours");
+  const cards = [
+    casino({ id: "betsson", slug: "betsson", name: "Betsson", rating: 8.1 }),
+    casino({ id: "nordicbet", slug: "nordicbet", name: "NordicBet", rating: 8.6, action: null }),
+    casino({ id: "betsafe", slug: "betsafe", name: "Betsafe", rating: 9.5 }),
+    casino({ id: "inkabet", slug: "inkabet", name: "Inkabet", rating: 9.9 }),
+    casino({ id: "playojo", slug: "playojo", name: "PlayOJO", rating: 9.1 }),
+    casino({ id: "demo", slug: "ahti-games", name: "Demo", rating: 9.8, dataClassification: "DEMO_FIXTURE" }),
+  ];
+  assert.deepEqual(
+    licensedNeighbours(cards, "playojo", "sv").map((neighbour) => neighbour.slug),
+    ["betsson", "nordicbet"],
+    "the page's own casino, Betsafe (blocked in SE), Inkabet (no SE licence) and demonstrations are left out; a button comes first, as in the catalogue",
+  );
+  assert.deepEqual(licensedNeighbours(cards, "betsson", "da").map((neighbour) => neighbour.slug), ["playojo", "nordicbet"]);
+  assert.deepEqual(licensedNeighbours([casino({ slug: "turbonino", name: "TurboNino" }), casino({ id: "dg", slug: "drueckglueck", name: "DrückGlück" })], "turbonino", "de").map((neighbour) => neighbour.slug), ["drueckglueck"], "Germany shows what exists");
+  assert.deepEqual(licensedNeighbours(cards, "playojo", "es"), [], "no licence market, no block");
+  assert.deepEqual(licensedNeighbours([], "playojo", "sv"), []);
+  assert.equal(LICENSED_NEIGHBOURS_LIMIT, 6);
+  for (const locale of ["en-GB", "sv-SE", "da-DK", "de-DE"] as const) {
+    const local = commercialUxMessages(locale);
+    assert.match(local.licensedNeighboursTitle, /\{country\}/, locale);
+    assert.ok(local.wageringCalculator.trim(), locale);
+  }
+  assert.doesNotMatch(commercialUxMessages("de-DE").licensedNeighboursTitle, /Casino/, "German names operators Anbieter");
+});
+
+test("the review renders its neighbours before the FAQ and links the wagering calculator beside the offer terms", async () => {
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const seed = publicCasinoProfilesFixture()[0];
+  assert.ok(seed?.bonuses[0]);
+  const casinoRecord: PublicCasinoDTO = { ...seed, dataClassification: undefined, offerPresentation: undefined, bonuses: [{ ...seed.bonuses[0], wageringMultiplier: 10 }] };
+  const render = (routeLanguage: string, country: string) => {
+    const page = resolvePresentationContext({ routeLanguage, trustedCountryCode: country });
+    return renderToStaticMarkup(<CasinoProfile availableForPresentation casino={casinoRecord} editorial={null} messages={productPageMessages(page.locale)} neighbours={<aside data-casino-neighbours="SE">neighbours</aside>} presentation={page} />);
+  };
+  const swedish = render("sv", "SE");
+  assert.ok(swedish.indexOf("data-casino-neighbours") > 0 && swedish.indexOf("data-casino-neighbours") < swedish.indexOf('id="casino-faq"'));
+  assert.match(swedish, /<a data-wagering-calculator-link="" href="\/sv\/wagering-calculator">Räkna på omsättningskravet/);
+  assert.doesNotMatch(render("es", "ES"), /data-wagering-calculator-link/, "only where the link is translated");
+  const page = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
+  assert.match(page, /<Suspense fallback=\{null\}><LicensedNeighbours casinoSlug=\{runtimeCasino\.slug\}/);
+  assert.match(page, /visualDataFixture \|\| runtimeCasino\.dataClassification === "DEMO_FIXTURE" \? null/);
+  const block = readFileSync("components/casino-profile/LicensedNeighbours.tsx", "utf8");
+  assert.match(block, /<aside aria-labelledby="licensed-neighbours-heading"/, "an aside, not a numbered section");
+  assert.match(block, /catch \{\n\s+return \[\];/, "a failed catalogue read hides the block");
+});

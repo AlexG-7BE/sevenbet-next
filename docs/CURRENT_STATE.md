@@ -20,6 +20,15 @@ and deployed: a partner button click also sends the GA4 event `partner_click` (`
 `placement`, `market`) from `productAnalyticsClient.outboundIntent`, under the Google tag's rule
 (nothing after "Reject cookies", nothing from protected Help, the self-check or Admin). **Founder
 action:** mark `partner_click` as a key event in GA4 Admin.
+## Licensed neighbours on review pages — in review
+
+**Founder's choice in the affiliate traffic audit, 15 October 2026**
+([decision](07_Decisions/REVIEW-LICENSED-NEIGHBOURS-2026-10-15.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed: each review shows "Other casinos licensed in <country>" — up to six
+published reviews indexed in the page language, in the casinos page's default order, streamed in
+its own boundary and hidden when empty — and a wagering calculator link beside the offer terms
+(en/sv/da/de).
+
 ## Commercial indexing hygiene — in review
 
 **Founder's choice in the affiliate traffic audit, 15 October 2026**

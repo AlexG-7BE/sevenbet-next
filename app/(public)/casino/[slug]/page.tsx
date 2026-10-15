@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { cache, Suspense } from "react";
 
+import { LicensedNeighbours } from "@/components/casino-profile/LicensedNeighbours";
 import { CasinoProfile } from "@/components/casino-profile/CasinoProfile";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { PublicRouteLoadingFrame } from "@/components/public-shell/PublicRouteLoadingFrame";
@@ -116,7 +117,15 @@ async function CasinoContent({ raw, slug, visualDataFixture }: { raw: Record<str
   return <>
     <CommercialSurfaceView casinoId={runtimeCasino.id} surface="casino_review" />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
-    <CasinoProfile availableForPresentation={loaded.availableForPresentation} casino={runtimeCasino} editorial={editorial} messages={messages} presentation={presentation} />
+    <CasinoProfile
+      availableForPresentation={loaded.availableForPresentation}
+      casino={runtimeCasino}
+      editorial={editorial}
+      messages={messages}
+      // Neighbouring licensed reviews stream on their own and never delay the review (audit, 15 Oct 2026).
+      neighbours={visualDataFixture || runtimeCasino.dataClassification === "DEMO_FIXTURE" ? null : <Suspense fallback={null}><LicensedNeighbours casinoSlug={runtimeCasino.slug} messages={messages} presentation={presentation} /></Suspense>}
+      presentation={presentation}
+    />
   </>;
 }
 
