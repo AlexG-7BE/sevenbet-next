@@ -710,4 +710,7 @@ test("the footer links the pages that had no internal link: pause plan, family a
     assert.ok(footer.includes(`[footer.${key}, "${href}"]`), `${href} is a footer link`);
     assert.equal(catalog.match(new RegExp(`^    ${key}: "`, "gm"))?.length, 15, `${key} is labelled in every footer language`);
   }
+  // The desktop Home footer keeps its height: its screen paging measures it.
+  assert.ok(footer.includes('const extraLinks = new Set(["/pause-plan", "/beside", "/pause-statistics", "/for-creators"]);'));
+  assert.ok(readFileSync("components/public-shell/PublicShell.module.css", "utf8").includes(":global(html:has([data-home-snap])) .footerExtra { display: none; }"));
 });

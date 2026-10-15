@@ -745,6 +745,10 @@
 .footerGroup { display: grid; align-content: start; gap: 12px; }
 .footerGroup h2 { margin: 0 0 6px; color: rgba(250, 250, 247, .68); font-size: 13px; line-height: 18px; font-weight: 400; letter-spacing: .08em; text-transform: uppercase; }
 .footerGroup a { width: fit-content; color: rgba(250, 250, 247, .75); font-size: 14px; line-height: 20px; }
+/* The desktop Home pages by whole screens and its last screen includes the footer, so the footer
+   there keeps its height (Founder: desktop Home frozen). The page links added on 15 Oct 2026 show
+   on every other page. */
+:global(html:has([data-home-snap])) .footerExtra { display: none; }
 .footerNavigationSlot { display: contents; }
 
 .footerHelp {

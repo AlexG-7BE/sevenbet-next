@@ -19,7 +19,7 @@ sitemap with no internal link (`/pause-plan`, `/beside`, `/pause-statistics`,
 `/for-creators`; crawl of 15 October) get quiet text links in the shared footer. The first
 three join "Programme and support", creators joins the trust column. Labels in all fifteen
 footer languages (`lib/i18n/public-shell-catalog.ts`); links follow the existing footer
-localisation. No layout or style change. Test: `tests/public-shell.test.ts` (`ci:structural`).
+localisation. On the Home page the four links are hidden (`html:has([data-home-snap])`): its desktop screen paging measures the footer, and the frozen desktop Home keeps its footer height. Test: `tests/public-shell.test.ts` (`ci:structural`).
 
 ## Search indexing: guides link to their neighbours, guides announced in their own language — in review
 

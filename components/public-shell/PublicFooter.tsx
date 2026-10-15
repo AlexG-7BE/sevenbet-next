@@ -54,6 +54,8 @@ export function PublicFooter({
   } as const;
   // The research links follow the same two doors as the header (see lib/research-access.ts).
   const researchLinks = new Set(["/best-offers", "/casinos", "/bonuses"]);
+  // Hidden on the Home page, whose screen paging measures the footer (PublicShell.module.css).
+  const extraLinks = new Set(["/pause-plan", "/beside", "/pause-statistics", "/for-creators"]);
   const localizedHref = (href: string) => {
     if (href === "/program" && programme) return programme.path;
     return presentation.source === "EXPLICIT_ROUTE"
@@ -80,7 +82,7 @@ export function PublicFooter({
                   return <span className={styles.footerNavigationSlot} key={href}>{commercialNavigation}</span>;
                 }
                 if (!publicCommercialDestinationVisible(href, showCommercialProducts)) return null;
-                const link = <Link data-footer-navigation-href={href} href={localizedHref(href)} key={href} prefetch={false}>{label}</Link>;
+                const link = <Link className={extraLinks.has(href) ? styles.footerExtra : undefined} data-footer-navigation-href={href} href={localizedHref(href)} key={href} prefetch={false}>{label}</Link>;
                 return researchLinks.has(href)
                   ? <PublicNavigationDoor door="research" key={href} researchAccess={researchAccess}>{link}</PublicNavigationDoor>
                   : link;
