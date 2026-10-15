@@ -128,7 +128,7 @@ async function untilNoBackendInTransaction(admin: Client) {
   }
 }
 
-// Production, 15 October 2026, 11:12 UTC, POST /api/mcp/learn: a statement inside an interactive
+// Production, 15 October 2026, 11:12 UTC, in the Learn apply endpoint: a statement inside an interactive
 // transaction ran into `Query read timeout`, then `transaction failed to roll back`. The adapter
 // handed the connection back without an error and the pool kept it, its transaction still open
 // on the server; the next write on the instance ran inside that transaction and was lost when

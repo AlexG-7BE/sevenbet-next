@@ -96,7 +96,7 @@ type ConnectCallback = (error: Error | undefined, client: PoolClient | undefined
  *   slot, so a one-connection pool (local, CI) and a busy instance behave as before. Opening a
  *   connection sends no statement, so no query can run twice.
  * - **A connection handed back with work still open is closed, not pooled** (15 October 2026).
- *   Production, 15 October, 11:12 UTC, POST /api/mcp/learn: a statement inside an interactive
+ *   Production, 15 October, 11:12 UTC, in the Learn apply endpoint: a statement inside an interactive
  *   transaction hit `Query read timeout` and its ROLLBACK timed out behind it ("transaction
  *   failed to roll back"). pg keeps a sent statement as the client's active query after its read
  *   timeout, and `@prisma/adapter-pg` hands the client back without an error, so pg-pool kept it
