@@ -398,7 +398,7 @@ function reviewCards(names: string[]) {
   return names.map((name) => ({ name, slug: name.toLowerCase().replace(/\s+/g, "-"), score: 8.1 }));
 }
 
-test("llms.txt is commercial-first, factual and uses canonical URLs only", async () => {
+test("llms.txt leads with the Programme, stays factual and uses canonical URLs only", async () => {
   const { llmsArticleCount } = await importMjs<{ llmsArticleCount: (text: string) => number }>("../scripts/production-smoke.mjs");
   const markets = llmsLaunchMarkets();
   assert.deepEqual(markets.map((profile) => profile.countryCode), ["GB", "SE", "DK", "DE"]);
@@ -406,11 +406,17 @@ test("llms.txt is commercial-first, factual and uses canonical URLs only", async
     markets: markets.map((profile) => ({ market: profile, productPages: ["/casinos", "/bonuses", "/best-offers"], reviews: reviewCards(["Betsson", "PlayOJO"]) })),
     articles: [article],
   });
-  assert.match(body, /^# B4GAMBLE\n\n> B4GAMBLE compares online casinos and their bonus terms/);
-  assert.match(body, /the United Kingdom, Sweden, Denmark and Germany/);
+  // AEO-CONTROL-PAGES-2026-10-15: the summary is the one phrase; the comparison is the second paragraph.
+  assert.match(body, /^# B4GAMBLE\n\n> B4GAMBLE \(Before Gamble\) is a free 10-step programme that helps adults keep online gambling under control without having to quit\. /);
+  assert.match(body, /\n\nB4GAMBLE also compares online casinos and their bonus terms for adults \(18\+\) in the United Kingdom, Sweden, Denmark and Germany\./);
+  assert.match(body, /B4GAMBLE does not run a casino, take deposits or accept bets\. Some links to operators are affiliate links: B4GAMBLE may earn a commission when a reader signs up through one, and commission never changes an editor score\./);
   assert.match(body, /wagering requirements, minimum deposit, maximum bet and expiry/);
   assert.match(body, /editor score from 0 to 10/);
-  assert.ok(body.indexOf("## Markets") < body.indexOf("## 10-Step Control Programme"));
+  assert.ok(body.indexOf("## 10-Step Control Programme") < body.indexOf("## Gambling control answers"));
+  assert.ok(body.indexOf("## Gambling control answers") < body.indexOf("## Markets"));
+  for (const path of ["/en/gambling-control", "/sv/control-without-quitting", "/da/gambling-control-tools", "/en/can-you-trust-b4gamble"]) {
+    assert.ok(body.includes(`(${absoluteUrl(path)})`), path);
+  }
   for (const path of ["/en/bonuses", "/sv/best-offers", "/da/casinos", "/de/bonuses", "/sv/casino/betsson", "/de/casino/playojo"]) {
     assert.ok(body.includes(`(${absoluteUrl(path)})`), path);
   }

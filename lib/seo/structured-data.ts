@@ -1,3 +1,4 @@
+import { BRAND_STATEMENT } from "@/lib/i18n/static-pages/gambling-control";
 import { absoluteUrl, siteUrl } from "@/lib/site";
 import { BRAND_SOCIAL_PROFILES } from "@/lib/social/brand-profiles";
 
@@ -40,6 +41,8 @@ export function organizationSchema() {
     name: "B4GAMBLE",
     alternateName: [...BRAND_ALTERNATE_NAMES],
     legalName: "7BE Inc.",
+    // The one phrase (Founder, 15 October 2026), the same words llms.txt opens with.
+    description: BRAND_STATEMENT["en-GB"],
     url: siteUrl,
     sameAs: [...ORGANIZATION_PROFILES],
     logo: {

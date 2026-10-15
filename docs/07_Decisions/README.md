@@ -16,6 +16,7 @@ Update when a material decision is approved, superseded, reversed, or retired.
 
 ## Product direction records
 
+- [Answer pages for AI assistants: gambling control without quitting](AEO-CONTROL-PAGES-2026-10-15.md) — Founder decision, 15 Oct: the one phrase opens llms.txt, the Organization schema and the home description; a hub and three answer pages in sv/da/en (control without quitting, the control tools compared per market with sources, can you trust B4GAMBLE); no "best" claim and no casino link; facts checked 15 Oct, what could not be verified is left out; outreach to third-party lists later.
 - [The question screen of a Programme step](PROGRAMME-QUESTION-SCREEN-2026-10-13.md) — Founder instruction, 13 Oct: a more premium, comfortable question screen (top bar with step number, progress inside the step, option cards with a line under each, one pinned button without XP); no press removed, rewards and order unchanged.
 - [PROGRAM-AI-01 Product Direction v2.2](PROGRAM-AI-01-Product-Direction-v2.2.md) — Founder-approved target Programme direction; implementation is not authorised.
 - [Customers are reachable by email from sign-up](EMAIL-REACHABILITY-AT-SIGNUP-2026-09-27.md) — Founder-approved confirmation link on every email sign-up (24 hours, lands signed in on the Programme), dashboard resend, the one optional email opt-in also on Google sign-up, and the welcome email sent right after sign-up.

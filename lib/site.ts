@@ -43,6 +43,10 @@ export const coreRoutes = [
   "/for-creators",
   "/beside",
   "/pause-statistics",
+  "/gambling-control",
+  "/control-without-quitting",
+  "/gambling-control-tools",
+  "/can-you-trust-b4gamble",
 ];
 
 export function absoluteUrl(path: string) {

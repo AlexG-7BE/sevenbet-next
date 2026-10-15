@@ -21,9 +21,11 @@ function stageLabel(value: string) {
   return split < 0 ? { range: "", label: value } : { range: value.slice(0, split), label: value.slice(split + 1) };
 }
 
-export function TenStepsPage({ aboutHref, locale, programmePath }: {
+export function TenStepsPage({ aboutHref, control, locale, programmePath }: {
   /** The /start help-ad landing omits it: About carries the public header's casino navigation. */
   aboutHref?: string;
+  /** The gambling control answers (Founder, 15 October 2026), where they exist in the page's language; /start omits it. */
+  control?: Readonly<{ href: string; label: string }>;
   locale: SupportedLocale;
   programmePath: string;
 }) {
@@ -111,6 +113,7 @@ export function TenStepsPage({ aboutHref, locale, programmePath }: {
         <h2 data-motion-reveal id="ten-steps-final-title">{text[46]}<br /><em>{text[47]}</em></h2>
         <p>{text[48]}</p>
         <Link className={`${styles.primaryAction} ${styles.finalAction}`} href={startHref} prefetch={false}>{text[5]}</Link>
+        {control ? <Link className={styles.controlLink} data-ten-steps-control-link href={control.href} prefetch={false}>{control.label}</Link> : null}
       </div>
     </section>
 

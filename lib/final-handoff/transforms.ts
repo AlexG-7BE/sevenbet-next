@@ -994,7 +994,12 @@ export function transformResponsibleGamblingHandoff(html: string) {
     .replace("No tests to pass, no labels, no judgement. Three ways forward — pick the one that fits today.", "Information and self-directed tools, without diagnosis or judgement. Choose support, practical controls or the Programme—at your pace.")
     .replace("Ten private missions: understand your patterns, set boundaries that fit your life, keep a plan you can review.", "Ten self-directed missions to notice patterns, set personal boundaries and keep a plan you can review. This is education, not treatment or a safety guarantee.")
     .replace("A boundary worth stating: B4GAMBLE does not diagnose, does not calculate a \"safe\" gambling amount, and does not determine what you can afford. Those judgements stay yours — our job is to give you the tools and the quiet to make them.", "B4GAMBLE does not diagnose, provide treatment, calculate a ‘safe’ gambling amount or decide what you can afford. Gambling involves financial risk. If you are worried about harm, independent support and self-exclusion may be more appropriate than continuing the Programme.")
-    .replace("B4GAMBLE uses public NHS and NICE guidance to shape recognition language and Programme risk boundaries. The complete Programme has not yet been clinically evaluated.", "Public NHS and NICE guidance informs recognition language and Programme boundaries. The complete Programme has not been clinically evaluated and is not medical care, treatment or crisis support.");
+    .replace("B4GAMBLE uses public NHS and NICE guidance to shape recognition language and Programme risk boundaries. The complete Programme has not yet been clinically evaluated.", "Public NHS and NICE guidance informs recognition language and Programme boundaries. The complete Programme has not been clinically evaluated and is not medical care, treatment or crisis support.")
+    // The gambling control answers (Founder, 15 October 2026), under the guides card.
+    .replace(
+      "Plain-language guides on limits, self-exclusion, blocking tools and what actually helps — written without alarm or judgement.</p>",
+      'Plain-language guides on limits, self-exclusion, blocking tools and what actually helps — written without alarm or judgement.</p><a data-rg-control-link="" href="/gambling-control" style="align-self: flex-start; margin: -12px 0px 24px; color: rgb(42, 76, 72); font-size: 15px; font-weight: 600; line-height: 1.4; text-decoration: underline; text-underline-offset: 4px;">More straight answers about gambling control →</a>',
+    );
   return output;
 }
 
