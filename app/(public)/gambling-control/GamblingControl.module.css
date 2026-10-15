@@ -24,7 +24,7 @@
 .rules { list-style:none; margin:20px 0 0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
 .rules li { padding:20px 22px; border:1px solid rgba(250,250,247,.12); border-radius:16px; background:#100f0f; }
 .rules p { margin:8px 0 0; color:#c3c0b7; font-size:15px; line-height:1.55; }
-.line { margin:22px 0 0; color:#e4e24e; font-family:var(--font-seven-serif),Georgia,serif; font-size:clamp(1.5rem,3vw,2.1rem); line-height:1.2; }
+.card > .line { max-width:none; margin:22px 0 0; color:#e4e24e; font-family:var(--font-seven-serif),Georgia,serif; font-size:clamp(1.5rem,3vw,2.1rem); line-height:1.2; }
 
 .steps { list-style:none; margin:20px 0 0; padding:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; counter-reset:step; }
 .steps li { display:grid; grid-template-columns:auto 1fr; gap:4px 14px; align-items:start; padding:16px 18px; border:1px solid rgba(250,250,247,.12); border-radius:16px; background:#100f0f; counter-increment:step; }
@@ -82,7 +82,7 @@
 }
 
 @media (max-width: 760px) {
-  .table,.table tbody,.table tr,.table th,.table td { display:block; width:100%; }
+  .table,.table caption,.table tbody,.table tr,.table th,.table td { display:block; width:100%; }
   .table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
   .table tr { margin:0 0 12px; border:1px solid rgba(250,250,247,.12); border-radius:16px; overflow:hidden; background:#100f0f; }
   .table tbody th { padding:16px 18px 6px; border-bottom:0; }
