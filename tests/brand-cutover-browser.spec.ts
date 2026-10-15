@@ -10,7 +10,7 @@ test("desktop and mobile final handoff expose B4GAMBLE without wordmark overflow
   await expect(page.locator('[data-handoff-page="home"]')).toContainText("Keep gambling your decision, not a habit");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",
+    "A free 10-step programme that helps adults keep online gambling under control without having to quit, and a transparent comparison of licensed casinos.",
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 
