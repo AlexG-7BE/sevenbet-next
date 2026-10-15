@@ -14,9 +14,10 @@ import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { commercialUxFixtureMarket, isCommercialUxVisualDataFixture, visualCasinoProfileFixture, withCommercialUxFixturePresentation, withHandoffCasinoEditorialData, withHandoffCasinoProfileData } from "@/lib/final-handoff/visual-data-fixture";
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
-import { productHref, productMetadata } from "@/lib/market/product-context";
+import { productHref, productLanguageAlternates, productMetadata, robotsAllowIndexing } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { editorialPresentation } from "@/lib/market/editorial-market";
+import { reviewIndexable, reviewLanguageAlternates } from "@/lib/seo/review-indexing";
 import { shouldStreamRouteFrame } from "@/lib/seo/route-frame";
 import { absoluteUrl } from "@/lib/site";
 import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
@@ -79,12 +80,16 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
       description: `${messages.profile.currentReview}: ${casino.name}. ${casino.summary || messages.common.originalSourceCopy}`,
     },
   });
+  // A review of a casino with no licence in this language's market stays out of the index
+  // (Founder, 15 October 2026; lib/seo/review-indexing.ts), and out of its siblings' hreflang.
+  const indexable = reviewIndexable(casino.slug, presentation.language);
   return productMetadata({
     presentation,
     pathname: `/casino/${casino.slug}`,
     title,
     description,
-    robots: base.robots,
+    robots: indexable || !robotsAllowIndexing(base.robots) ? base.robots : { index: false, follow: true },
+    languageAlternates: reviewLanguageAlternates(casino.slug, productLanguageAlternates(`/casino/${casino.slug}`)),
     openGraphType: "article",
   });
 }

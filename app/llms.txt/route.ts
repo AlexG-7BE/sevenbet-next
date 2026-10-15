@@ -1,6 +1,7 @@
 import { indexableMarketProductPaths, indexableReviewCards, loadCrawlerBonusDirectory, loadMarketSitemapSnapshot } from "@/app/sitemap";
 import { articleService } from "@/lib/services";
 import { buildLlmsTxt, llmsLaunchMarkets, type LlmsMarketCatalogue } from "@/lib/seo/llms";
+import { languageForLocale } from "@/lib/market/registry";
 import { stripPublicMarketPrefix } from "@/lib/market/routing";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,7 @@ export async function GET() {
       return {
         market,
         productPages: indexableMarketProductPaths(snapshot, true).routes.map((route) => stripPublicMarketPrefix(route)),
-        reviews: indexableReviewCards(snapshot.casinos).map((casino) => ({ name: casino.name, slug: casino.slug, score: casino.rating })),
+        reviews: indexableReviewCards(snapshot.casinos, languageForLocale(market.defaultLocale)).map((casino) => ({ name: casino.name, slug: casino.slug, score: casino.rating })),
       };
     })),
     articleService.listPublished("en-GB", { take: 100 }).catch(() => []),
