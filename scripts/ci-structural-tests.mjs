@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 
 const requiredTests = [
+  "tests/casino-in-depth-reviews.test.ts",
   "tests/admin-auth.test.ts",
   "tests/article-learning.test.ts",
   "tests/auth-runtime-config.test.ts",
