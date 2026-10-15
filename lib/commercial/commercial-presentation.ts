@@ -1,5 +1,6 @@
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { SupportedLocale } from "@/lib/market/registry";
+import { catalogueTier, type CatalogueOrderContext } from "@/lib/commercial/catalogue-order";
 import {
   availableToVisitorFirst,
   bonusMechanicsCompleteness,
@@ -236,7 +237,7 @@ function rankBonusView(offers: PublicOfferDTO[], view: BonusDirectoryView) {
   return rankOffersByEditorialAuthority(offers);
 }
 
-export function offersForBonusView(offers: readonly PublicOfferDTO[], view: BonusDirectoryView) {
+export function offersForBonusView(offers: readonly PublicOfferDTO[], view: BonusDirectoryView, language?: string | null) {
   const filtered = offers.filter((offer) => {
     if (view === "all") return true;
     if (view === "welcome") return offer.bonus.type === "WELCOME";
@@ -247,7 +248,8 @@ export function offersForBonusView(offers: readonly PublicOfferDTO[], view: Bonu
     return offer.bonus.type === "NO_DEPOSIT" || offer.bonus.minimumDeposit === 0;
   });
   // Each view keeps its own order, but only within "what this reader can take".
-  return availableToVisitorFirst(rankBonusView(filtered, view));
+  // Inside each tier, casinos licensed in the page language's market lead (audit, 15 Oct 2026).
+  return availableToVisitorFirst(rankBonusView(filtered, view), language);
 }
 
 function casinoPayout(casino: PublicCasinoCardDto, copy: CommercialUxMessages) {
@@ -309,15 +311,17 @@ export function casinoRankingReason(
 }
 
 /**
- * Casinos this visitor can open from here come first; the view's own order holds
- * inside each group (Founder decision 27 Sep 2026, CASINOS-VISITOR-FIT-ORDER). Stable.
+ * Casinos this visitor can open from here come first, then casinos licensed in the page
+ * language's market; the view's own order holds inside each group (Founder decisions 27 Sep 2026,
+ * CASINOS-VISITOR-FIT-ORDER, and 15 Oct 2026, affiliate traffic audit; lib/commercial/catalogue-order.ts).
+ * A withheld offer does not count as a button. Without a context only the button counts. Stable.
  */
-export function casinosAvailableToVisitorFirst(casinos: readonly PublicCasinoCardDto[]) {
-  return [...casinos].sort((a, b) => Number(!governedCasinoAction(a)) - Number(!governedCasinoAction(b)));
+export function casinosAvailableToVisitorFirst(casinos: readonly PublicCasinoCardDto[], context: CatalogueOrderContext = {}) {
+  return [...casinos].sort((a, b) => catalogueTier(a.slug, Boolean(governedCasinoAction(a)), context) - catalogueTier(b.slug, Boolean(governedCasinoAction(b)), context));
 }
 
-export function casinosForCollectionView(casinos: readonly PublicCasinoCardDto[], view: CasinoCollectionView) {
-  return casinosAvailableToVisitorFirst(casinosInViewOrder(casinos, view));
+export function casinosForCollectionView(casinos: readonly PublicCasinoCardDto[], view: CasinoCollectionView, context: CatalogueOrderContext = {}) {
+  return casinosAvailableToVisitorFirst(casinosInViewOrder(casinos, view), context);
 }
 
 function casinosInViewOrder(casinos: readonly PublicCasinoCardDto[], view: CasinoCollectionView) {

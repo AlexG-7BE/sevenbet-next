@@ -173,8 +173,9 @@ test("review titles and descriptions: localized templates, CMS copy honoured in 
   const copy = (locale: "en-GB" | "sv-SE" | "da-DK" | "de-DE", casino = reviewCasino(), editorial = null) => casinoReviewMetadataCopy({ casino, editorial, locale, fallback });
 
   assert.equal(copy("en-GB").title, "Betsson casino review 2026: bonus, payouts & licence | B4GAMBLE");
-  assert.match(copy("sv-SE").title, /^Betsson casino recension 2026: /);
-  assert.match(copy("da-DK").title, /^Betsson casino anmeldelse 2026: /);
+  // Betsson's Swedish and Danish reviews carry its sports offer too (audit, 15 Oct 2026).
+  assert.match(copy("sv-SE").title, /^Betsson casino & odds recension 2026: /);
+  assert.match(copy("da-DK").title, /^Betsson casino & odds anmeldelse 2026: /);
   assert.equal(copy("de-DE").title, "Betsson Test 2026: Bonus, Auszahlung & Lizenz | B4GAMBLE");
   // A brand that already names itself a casino is not called "casino" twice.
   assert.equal(copy("en-GB", reviewCasino({ name: "Casino RedKings" })).title, "Casino RedKings review 2026: bonus, payouts & licence | B4GAMBLE");
@@ -192,7 +193,7 @@ test("review titles and descriptions: localized templates, CMS copy honoured in 
   const edited = reviewCasino({ seo: { ...reviewCasino().seo, title: "Betsson: our verdict | B4GAMBLE", description: "An editor's own description." } });
   assert.equal(copy("en-GB", edited).title, "Betsson: our verdict | B4GAMBLE");
   assert.equal(copy("en-GB", edited).description, "An editor's own description.");
-  assert.match(copy("sv-SE", edited).title, /casino recension/);
+  assert.match(copy("sv-SE", edited).title, /casino (?:& odds )?recension/);
 
   // The year is the year of the review's latest change, never earlier than publication.
   assert.match(copy("en-GB", reviewCasino({ publishedAt: "2025-12-30T00:00:00.000Z", lastReviewedAt: null })).title, / review 2025:/);

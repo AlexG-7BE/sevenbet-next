@@ -7,6 +7,8 @@ import { profileFaqLocalization, selectProfileBonus } from "@/lib/casino-profile
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { parseRobotsMetadata } from "@/lib/public-casino/public-casino-validation";
 import { inDepthCheckedAt } from "@/lib/casino-profile/in-depth";
+import { casinoSportOffer } from "@/lib/casino-profile/sport-offer";
+import { REVIEW_INDEX_MARKETS } from "@/lib/seo/review-indexing";
 import { languageForLocale, type SupportedLocale } from "@/lib/market/registry";
 import { editorialAuthor, EDITORIAL_AUTHOR_NAME, modifiedNotBeforePublished, organizationReference } from "@/lib/seo/structured-data";
 import { absoluteUrl } from "@/lib/site";
@@ -38,6 +40,8 @@ export function reviewModifiedAt(
 
 type ReviewCopy = {
   title: (brand: string, year: string) => string;
+  /** The title of a review that also carries the brand's sports offer (lib/casino-profile/sport-offer.ts). */
+  sportTitle?: (brand: string, year: string) => string;
   description: (brand: string, score: string | null) => string;
 };
 
@@ -57,10 +61,12 @@ const REVIEW_COPY: Partial<Record<SupportedLocale, ReviewCopy>> = {
   },
   "sv-SE": {
     title: (brand, year) => `${brand}${namesCasino(brand) ? "" : " casino"} recension${year}: bonus, uttag & licens | B4GAMBLE`,
+    sportTitle: (brand, year) => `${brand} casino & odds recension${year}: bonus & uttag | B4GAMBLE`,
     description: (brand, score) => `${brand}${namesCasino(brand) ? "" : " casino"} recension${score ? `: betyg ${score}/10` : ""}. Välkomstbonus, omsättningskrav, uttagstid, betalningar och licens – granskat innan du spelar.`,
   },
   "da-DK": {
     title: (brand, year) => `${brand}${namesCasino(brand) ? "" : " casino"} anmeldelse${year}: bonus & udbetaling | B4GAMBLE`,
+    sportTitle: (brand, year) => `${brand} casino & odds anmeldelse${year}: bonus & udbetaling | B4GAMBLE`,
     description: (brand, score) => `${brand}${namesCasino(brand) ? "" : " casino"} anmeldelse${score ? `: score ${score}/10` : ""}. Velkomstbonus, omsætningskrav, udbetalingstid, betalinger og licens – gennemgået før du spiller.`,
   },
   "de-DE": {
@@ -114,13 +120,15 @@ export function casinoReviewMetadataCopy(input: {
   const { casino, locale } = input;
   const template = casino.dataClassification === "DEMO_FIXTURE" ? undefined : REVIEW_COPY[locale];
   const cms = locale === "en-GB" ? cmsSeoCopy(casino, input.editorial) : { title: null, description: null };
-  const modifiedAt = reviewModifiedAt(casino, languageForLocale(locale));
+  const language = languageForLocale(locale);
+  const modifiedAt = reviewModifiedAt(casino, language);
   const year = modifiedAt ? ` ${new Date(modifiedAt).getUTCFullYear()}` : "";
   const score = typeof casino.editorScore === "number" && Number.isFinite(casino.editorScore)
     ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(casino.editorScore)
     : null;
   return {
-    title: cms.title ?? template?.title(casino.name, year) ?? input.fallback.title,
+    // Betsson and NordicBet in Swedish and Danish also review the sportsbook (audit, 15 Oct 2026).
+    title: cms.title ?? (template?.sportTitle && casinoSportOffer(casino.slug, language, REVIEW_INDEX_MARKETS[language] ?? null) ? template.sportTitle(casino.name, year) : null) ?? template?.title(casino.name, year) ?? input.fallback.title,
     // The age notice survives trimming: the template body is shortened, never "18+".
     description: cms.description
       ? trimAtWordBoundary(cms.description)

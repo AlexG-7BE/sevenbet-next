@@ -20,3 +20,21 @@
 - `tests/commercial-ux-v1.test.ts` ("Casino views put casinos this visitor can open first…") pins the two groups and the per-view order inside them.
 - `tests/legal-public-claims.test.ts` pins the new English answer and fails if the old one returns.
 - Launch audit, 27 September 2026 (live GB page read and code review of `BonusOfferDirectory.tsx`, `CasinoProfile.tsx`, `casinosForCollectionView`).
+
+## Amendment, 15 October 2026 — licensed casinos second
+
+**Decision authority:** explicit Founder decision, 15 October 2026 — the Founder's choice in the
+affiliate traffic audit. See [Catalogue order by licence, and the sports offer for every reader](CATALOGUE-LICENCE-ORDER-AND-SPORT-2026-10-15.md).
+
+- The directory now has three groups: (1) a partner button that works for this visit — a withheld
+  offer (TurboNino and DrückGlück in GB, `WITHHELD_OFFER_MARKETS`) does not count; (2) casinos
+  licensed in the market of the page's language (en→GB, sv→SE, da→DK, de→DE, from the licence
+  register and `BLOCKED_TARGETS`); (3) the rest. The view's own order holds inside each group.
+  The rule is `catalogueTier` in `lib/commercial/catalogue-order.ts`, used by
+  `casinosAvailableToVisitorFirst` and by the discovery `FEATURED` sort.
+- Why: Google fetches from the United States and sees no button, so `/sv/casinos` and
+  `/da/casinos` opened with Inkabet (licensed only in Peru); 6 (sv) and 7 (da) of the first ten
+  cards led to reviews kept out of the index. A visitor with buttons sees no change: the buttons
+  still come first and the FAQ answer stays true.
+- The casinos page's ItemList markup lists only reviews indexed in the page language.
+- Point 3 (Terms links) now also covers the sports offer on the Betsson and NordicBet reviews.

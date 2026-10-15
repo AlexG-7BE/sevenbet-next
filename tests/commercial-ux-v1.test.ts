@@ -501,3 +501,59 @@ test("an unrouted country is named in the page language and no country reads as 
   const bonuses = productPageMessages("en-GB").bonuses;
   assert.doesNotMatch(`${casinos.description} ${bonuses.description}`, /the \{market\}/, "descriptions read naturally with any market name");
 });
+
+// Affiliate traffic audit, 15 October 2026: Google crawls from the US and sees no button, so
+// /sv/casinos opened with a casino licensed only in Peru.
+test("the catalogue puts buttons first, then casinos licensed in the page language's market, then the editorial order", async () => {
+  const { WITHHELD_OFFER_MARKETS, catalogueTier, licensedInRouteMarket, offerWithheldInMarket } = await import("../lib/commercial/catalogue-order");
+  const card = (slug: string, score: number, action: boolean) => ({ ...casino(score * 10, { score, action }), slug, name: slug });
+  const cards = [card("inkabet", 9.6, false), card("betsson", 8.4, false), card("nordicbet", 8.9, false), card("playojo", 8.0, true), card("betsafe", 9.0, false)];
+  const crawler = { language: "sv", market: "SE" };
+  assert.deepEqual(casinosForCollectionView(cards, "top_rated", crawler).map((entry) => entry.slug), ["playojo", "nordicbet", "betsson", "inkabet", "betsafe"],
+    "button, then SE-licensed by rating; Betsafe SE is blocked, so it is not counted as licensed");
+  assert.deepEqual(casinosForCollectionView(cards, "top_rated").map((entry) => entry.slug), ["playojo", "inkabet", "betsafe", "nordicbet", "betsson"], "without a context only the button counts");
+  // A withheld offer keeps the route but is not a button: TurboNino and DrückGlück in GB.
+  assert.deepEqual(WITHHELD_OFFER_MARKETS.map((entry) => `${entry.casinoSlug}:${entry.market}`), ["turbonino:GB", "drueckglueck:GB"]);
+  assert.equal(offerWithheldInMarket("TurboNino ", "gb"), true);
+  assert.equal(offerWithheldInMarket("turbonino", "DE"), false);
+  assert.equal(catalogueTier("turbonino", true, { language: "en", market: "GB" }), 1, "licensed in GB, but no button");
+  assert.equal(catalogueTier("turbonino", true, { language: "de", market: "DE" }), 0);
+  assert.equal(licensedInRouteMarket("inkabet", "sv"), false);
+  assert.equal(licensedInRouteMarket("betsson", "es"), false, "a language without a licence market licenses nobody");
+  const { readdirSync } = await import("node:fs");
+  const withheld = readdirSync("data/casino-global-catalog-01").filter((file) => /^offers-[a-z]{2}\.v1\.json$/.test(file)).flatMap((file) => {
+    const corpus = JSON.parse(readFileSync(`data/casino-global-catalog-01/${file}`, "utf8")) as { countryCode: string; offers: Array<{ casinoSlug: string; withheld?: unknown }> };
+    return corpus.offers.filter((entry) => entry.withheld).map((entry) => `${entry.casinoSlug}:${corpus.countryCode}`);
+  });
+  assert.deepEqual([...withheld].sort(), WITHHELD_OFFER_MARKETS.map((entry) => `${entry.casinoSlug}:${entry.market}`).sort(), "the list follows the offer corpora");
+  const discovery = readFileSync("lib/services/public-casino-discovery.service.ts", "utf8");
+  assert.match(discovery, /catalogueTier\(a\.card\.slug, Boolean\(a\.card\.action\), orderContext\) - catalogueTier\(b\.card\.slug, Boolean\(b\.card\.action\), orderContext\)/);
+  assert.match(readFileSync("components/casino-discovery/CasinoCollection.tsx", "utf8"), /casinosForCollectionView\(casinos, view, \{ language: presentation\.language, market: presentation\.marketCountryCode \}\)/);
+  const page = readFileSync("app/(public)/casinos/page.tsx", "utf8");
+  assert.match(page, /const listedReviews = result\.items\.filter\(\(casino\) => reviewIndexable\(casino\.slug, presentation\.language\)\);/);
+  assert.match(page, /numberOfItems: listedReviews\.length,\n\s+itemListElement: listedReviews\.map/);
+});
+
+test("Bonus offers of casinos licensed in the page language's market lead inside each tier", () => {
+  const licensed = { ...offer(11, { score: 7.0, action: false, relation: "ROW" }) };
+  licensed.casino = { ...licensed.casino, slug: "turbonino" };
+  const unlicensed = { ...offer(12, { score: 9.0, action: false, relation: "ROW" }) };
+  unlicensed.casino = { ...unlicensed.casino, slug: "inkabet" };
+  const clickable = offer(13, { score: 6.0, relation: "OTHER_MARKET" });
+  assert.deepEqual(offersForBonusView([unlicensed, licensed, clickable], "all", "de"), [clickable, licensed, unlicensed]);
+  assert.deepEqual(offersForBonusView([unlicensed, licensed, clickable], "all"), [clickable, unlicensed, licensed], "without a language the editorial order holds");
+  assert.match(readFileSync("components/bonus-directory/BonusOfferDirectory.tsx", "utf8"), /offersForBonusView\(offers, view, presentation\.language\)/);
+});
+
+test("Betsson and NordicBet reviews in Swedish and Danish are titled casino & odds", async () => {
+  const { casinoReviewMetadataCopy } = await import("../lib/casino-profile/seo");
+  const title = (slug: string, name: string, locale: "sv-SE" | "da-DK" | "en-GB") => casinoReviewMetadataCopy({
+    casino: { slug, name, publishedAt: "2026-09-01T00:00:00.000Z", lastReviewedAt: "2026-09-02T00:00:00.000Z", editorScore: 8.4, dataClassification: undefined, seoTitle: null, seoDescription: null } as never,
+    editorial: null,
+    locale,
+    fallback: { title: "fallback", description: "fallback" },
+  }).title;
+  assert.equal(title("betsson", "Betsson", "sv-SE"), "Betsson casino & odds recension 2026: bonus & uttag | B4GAMBLE");
+  assert.equal(title("nordicbet", "NordicBet", "da-DK"), "NordicBet casino & odds anmeldelse 2026: bonus & udbetaling | B4GAMBLE");
+  assert.doesNotMatch(title("playojo", "PlayOJO", "sv-SE"), /odds/);
+});

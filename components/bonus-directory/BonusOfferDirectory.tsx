@@ -42,8 +42,8 @@ export function BonusOfferDirectory({ messages, offers, presentation }: {
   const [view, setView] = useState<BonusDirectoryView>("all");
   const [search, setSearch] = useState("");
   const results = useMemo(
-    () => filterOffersByCasinoName(offersForBonusView(offers, view), search, presentation.locale),
-    [offers, presentation.locale, search, view],
+    () => filterOffersByCasinoName(offersForBonusView(offers, view, presentation.language), search, presentation.locale),
+    [offers, presentation.language, presentation.locale, search, view],
   );
   const controlsRef = useRef<HTMLDivElement>(null);
   const resultsStartRef = useRef<HTMLParagraphElement>(null);

@@ -1,3 +1,4 @@
+import { licensedInRouteMarket } from "@/lib/commercial/catalogue-order";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import { isGovernedCommercialAction } from "@/lib/commercial/governed-commercial-action";
 
@@ -193,9 +194,14 @@ export function visitorFitTier(offer: PublicOfferDTO) {
   return marketFitTier[offer.offerPresentation?.relation ?? "NONE"] ?? marketFitTier.NONE;
 }
 
-/** Stable, so the caller's own order holds within each tier. */
-export function availableToVisitorFirst(offers: readonly PublicOfferDTO[]) {
-  return [...offers].sort((a, b) => visitorFitTier(a) - visitorFitTier(b));
+/**
+ * Stable, so the caller's own order holds within each tier. With the page's language, offers of
+ * casinos licensed in that language's market lead inside each tier (affiliate traffic audit,
+ * 15 October 2026), so a crawler reading `/de/bonuses` from the United States sees them first.
+ */
+export function availableToVisitorFirst(offers: readonly PublicOfferDTO[], language?: string | null) {
+  const licensed = (offer: PublicOfferDTO) => (language && licensedInRouteMarket(offer.casino.slug, language) ? 0 : 1);
+  return [...offers].sort((a, b) => visitorFitTier(a) - visitorFitTier(b) || licensed(a) - licensed(b));
 }
 
 function uniqueCasinos(offers: PublicOfferDTO[], limit: number) {

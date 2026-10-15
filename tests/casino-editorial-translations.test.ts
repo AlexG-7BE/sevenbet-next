@@ -531,7 +531,8 @@ test("the sports offer shows on the Swedish and Danish Betsson and NordicBet rev
   assert.match(swedish, /data-casino-sport="SE"/);
   assert.ok(swedish.includes("250 kr gratisspel + 50 freespins"));
   assert.ok(swedish.includes('href="/r/betsson-casino?placement=CTA_CASINO_SPORT_OFFER"'), "the sports button is the review's own partner route");
-  assert.ok(swedish.includes('href="https://offers.betsson.com/sv/valkomstbonus-sport"'));
+  assert.ok(swedish.includes('href="/r/betsson-casino?placement=CTA_CASINO_OFFER_TERMS"'), "with a partner route the sports terms go through it (decision 27 Sep 2026)");
+  assert.ok(!swedish.includes('href="https://offers.betsson.com/sv/valkomstbonus-sport"'));
   assert.ok(swedish.indexOf('id="current-offer"') < swedish.indexOf("data-casino-sport") && swedish.indexOf("data-casino-sport") < swedish.indexOf('id="games"'), "inside the offer section");
 
   const danish = render("da", "DK", withButton);
@@ -541,7 +542,14 @@ test("the sports offer shows on the Swedish and Danish Betsson and NordicBet rev
   const nordicbet = render("da", "DK", { ...withButton, slug: "nordicbet", name: "NordicBet" });
   assert.ok(nordicbet.includes("500 kr. freebet"));
 
-  assert.doesNotMatch(render("sv", "SE", { action: null }), /data-casino-sport/, "no partner button, no sports offer");
+  // Affiliate traffic audit, 15 Oct 2026: the text and terms are shown to Google and to readers
+  // outside SE/DK, without the button, as the casino offer already is.
+  for (const [language, country] of [["sv", "SE"], ["sv", "US"], ["da", "GB"]] as const) {
+    const withoutButton = render(language, country, { action: null });
+    assert.match(withoutButton, new RegExp(`data-casino-sport="${language === "sv" ? "SE" : "DK"}"`), `${language} from ${country}`);
+    assert.doesNotMatch(withoutButton, /placement=CTA_CASINO_SPORT_OFFER/, "no button without a route");
+    assert.match(withoutButton, language === "sv" ? /href="https:\/\/offers\.betsson\.com\/sv\/valkomstbonus-sport"/ : /href="https:\/\/tilbud\.betsson\.dk\//, "the terms link directly without a route");
+  }
   assert.doesNotMatch(render("en", "SE", withButton), /data-casino-sport/, "English review stays as it was");
   assert.doesNotMatch(render("sv", "SE", { ...withButton, slug: "playojo", name: "PlayOJO" }), /data-casino-sport/, "casino-only brand");
 });

@@ -26,3 +26,13 @@ The Bonuses page makes no ranking claim. The Editor Score never reads route avai
 ## Evidence
 
 - `tests/commercial-ux-v1.test.ts` ("Bonus views put what this visitor can take first…") pins the tier order, the per-view order inside a tier, and the neutral tier for demonstration records.
+
+## Amendment, 15 October 2026 — licensed casinos lead inside each tier
+
+**Decision authority:** explicit Founder decision, 15 October 2026 — the Founder's choice in the
+affiliate traffic audit. Inside each of the four tiers, offers of casinos licensed in the market of
+the page's language (en→GB, sv→SE, da→DK, de→DE) come before the others; the view's own order holds
+within each half (`availableToVisitorFirst(offers, language)`, `offersForBonusView(offers, view,
+language)`). It changes nothing for a visitor whose offers are all of one kind; it lets a crawler
+reading `/de/bonuses` from the United States see German-licensed casinos first. See
+[Catalogue order by licence, and the sports offer for every reader](CATALOGUE-LICENCE-ORDER-AND-SPORT-2026-10-15.md).

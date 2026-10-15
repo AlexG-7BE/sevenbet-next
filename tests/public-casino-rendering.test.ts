@@ -149,7 +149,7 @@ test("public routes use the service boundary and invalidate all publication surf
   const directory = readFileSync("app/(public)/casinos/page.tsx", "utf8");
   assert.match(directory, /containsDemo \|\| result\.total === 0 \|\| Boolean\(query\.search\)/);
   assert.match(directory, /CasinoCollection casinos=\{result\.items\}/);
-  assert.match(directory, /result\.inventoryMode === "PUBLISHED_ONLY" && result\.total > 0/);
+  assert.match(directory, /result\.inventoryMode === "PUBLISHED_ONLY" && listedReviews\.length > 0/);
   assert.match(readFileSync("app/(public)/catalog/page.tsx", "utf8"), /permanentRedirect/);
   const page = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
