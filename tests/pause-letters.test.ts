@@ -239,7 +239,9 @@ test("the page shows the email field and carries the date only while the switch 
   assert.match(page, /letters=\{pauseLettersEnabled\(\)\}/);
   assert.match(page, /data-pause-plan-start href=\{startHref\}/);
   assert.equal((tool.match(/<PausePlanLetters /g) ?? []).length, 1);
-  assert.match(tool, /\{letters \? <PausePlanLetters endsOn=\{result && !period\?\.openEnded \? toIsoDate\(result\.end\) : null\}/, "an open-ended pause carries nothing and shows no field");
+  assert.match(tool, /\{letters && lettersRegister \? <PausePlanLetters endsOn=\{result && !period\?\.openEnded \? toIsoDate\(result\.end\) : null\}/, "an open-ended pause carries nothing and shows no field");
+  assert.match(tool, /const lettersRegister = letterRegister\(chosenRegister\);/, "a GAMSTOP date carries nothing and shows no field");
+  assert.match(tool, /register=\{lettersRegister\}/);
   // The cookie is set on the press of the Programme button, and only for dates the person chose.
   assert.match(letters, /closest\("a\[data-pause-plan-start\]"\)/);
   assert.match(letters, /if \(!target \|\| !touched\) return;/);

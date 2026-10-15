@@ -1054,8 +1054,29 @@ hub: under "Frågor under pausen" / "Spørgsmål i pausen" it lists the publishe
 name as a tag ("Spelpaus" in Swedish, "ROFUS" in Danish), newest first, at most
 24 (`lib/articles/pause-hub-selection.ts`, read through
 `articleService.listPublished`). A guide joins by its tag, with no code change;
-the English page speaks about both registers and lists nothing. Each guide
-links back to the plan and to the Programme start from its own body. First
+the English page lists the guides tagged "GAMSTOP" (below). Each guide
+links back to the plan and to the Programme start from its own body.
+
+**The English page is the GAMSTOP plan (Founder decision, 15 October 2026) —
+in review.** Branch `feat/gamstop-pause-plan`: the English `/pause-plan` speaks
+first to Great Britain, "Before you lift GAMSTOP. 10 steps.", and keeps
+Spelpaus and ROFUS as the other two choices of its scheme selector. GAMSTOP is a
+third register in `lib/tools/pause-plan.ts` with minimum periods of six months,
+one year, five years and five years with auto-renewal. Because GAMSTOP never
+lifts by itself (it sends no reminder and keeps the block a further seven years
+unless the person asks), its result lines read "Your minimum period runs to the
+end of" and "From this day you can ask GAMSTOP to lift it", its calendar entry
+says the same, and auto-renewal names the new five-year minimum instead
+(`PausePlanRegisterMessages` `endsLabel`, `dayAfterLabel`, `icsTitle`,
+`periodNotes`). The FAQ, the support list and "Keeping GAMSTOP?" carry the
+National Gambling Helpline (GamCare, 0808 8020 133) and GAMSTOP's removal route
+(chat or 0800 138 6518, then a 24-hour cooling-off); facts read at
+info.gamstop.co.uk and gamcare.org.uk on 15 October 2026. The hub lists English
+guides with the tag "GAMSTOP" (`hubTag`). The pause letters know Spelpaus and
+ROFUS only (`LETTER_REGISTERS`; their register is a database enum): a GAMSTOP
+date carries no cookie and shows no email field, so this change needs no
+migration. Letters for GAMSTOP would need a new `PauseRegister` enum value and a
+longer date window; not built. First
 guides, published 13 October 2026 through `learn_apply`: `spela-under-spelpaus`
 and `hava-spelpaus` (Swedish), `spille-under-rofus` and `fortryde-rofus`
 (Danish). They state that no licensed operator accepts a player during a pause

@@ -4,8 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import styles from "./PausePlan.module.css";
 import type { PausePlanReminderMessages } from "@/lib/i18n/static-pages/pause-plan";
-import { carriedPauseDateCookie } from "@/lib/tools/pause-date-carry";
-import type { PauseRegister } from "@/lib/tools/pause-plan";
+import { carriedPauseDateCookie, type CarriedPauseRegister } from "@/lib/tools/pause-date-carry";
 
 /**
  * What the tool keeps, and only while the pause letters are switched on (Founder decisions,
@@ -25,7 +24,7 @@ export function PausePlanLetters({ endsOn, locale, messages, register, touched }
   endsOn: string | null;
   locale: string;
   messages: PausePlanReminderMessages;
-  register: PauseRegister;
+  register: CarriedPauseRegister;
   /** True once the person has changed a date, a period or the register. */
   touched: boolean;
 }) {

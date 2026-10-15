@@ -1,12 +1,12 @@
 /**
- * Pure date logic for the pause plan page (/pause-plan): when a Spelpaus or ROFUS break ends,
- * which day is "the day after", and the ten plan days. It reads no request, cookie or
+ * Pure date logic for the pause plan page (/pause-plan): when a Spelpaus, ROFUS or GAMSTOP break
+ * ends, which day is "the day after", and the ten plan days. It reads no request, cookie or
  * Programme state, so the page, the menu door and the tests share one calendar.
  *
  * Dates are calendar days in the visitor's own time zone: the registers count a pause from the
  * moment of registration, and a day is the finest unit a person plans with.
  */
-export type PauseRegister = "spelpaus" | "rofus";
+export type PauseRegister = "spelpaus" | "rofus" | "gamstop";
 
 export type PausePeriod = Readonly<{
   id: string;
@@ -33,7 +33,28 @@ export const PAUSE_PERIODS: Readonly<Record<PauseRegister, readonly PausePeriod[
     { id: "6m", months: 6 },
     { id: "final", months: 12, openEnded: true },
   ],
+  // GAMSTOP (Great Britain; Founder, 15 October 2026): these are minimum periods. GAMSTOP never
+  // lifts by itself; from the day after, the person may ask for removal (info.gamstop.co.uk,
+  // read 15 October 2026). With auto-renewal a new five-year minimum starts instead.
+  gamstop: [
+    { id: "6m", months: 6 },
+    { id: "1y", months: 12 },
+    { id: "5y", months: 60 },
+    { id: "5y-renew", months: 60 },
+  ],
 };
+
+/**
+ * The registers the pause letters know: their register is a database value. A GAMSTOP date
+ * carries nothing and shows no email field. The carried-date cookie keeps the same list, and
+ * tests/pause-plan.test.ts holds the two together.
+ */
+export const LETTER_REGISTERS = ["spelpaus", "rofus"] as const;
+export type LetterRegister = (typeof LETTER_REGISTERS)[number];
+
+export function letterRegister(register: PauseRegister): LetterRegister | null {
+  return (LETTER_REGISTERS as readonly string[]).includes(register) ? register as LetterRegister : null;
+}
 
 export const PLAN_DAYS = 10;
 
