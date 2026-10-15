@@ -26,16 +26,52 @@ export const STALE_IDLE_GRACE_MS = 1_000;
 const IDLE_SINCE = Symbol("idleSince");
 type TrackedClient = PoolClient & { [IDLE_SINCE]?: number };
 
+/** The parts of pg.Client that tell whether it still has work open; pg-pool reads `_queryable` alike. */
+type InspectableClient = PoolClient & {
+  _getActiveQuery?: () => unknown;
+  _queryQueue?: unknown[];
+  getTransactionStatus?: () => string | null;
+};
+
 export function isTransientConnectFailure(error: unknown) {
   if (!(error instanceof Error)) return false;
   const code = (error as { code?: unknown }).code;
   return TRANSIENT_CONNECT_FAILURE.test(`${error.message} ${typeof code === "string" ? code : ""}`);
 }
 
+/**
+ * What a client handed back to the pool still has open, or undefined when it is clean: a
+ * statement sent and not answered, statements waiting behind it, or a transaction the server
+ * last reported open ("T", or "E" after a failed statement). A clean release has none of these:
+ * pg clears the answered statement and records the server's transaction status before it calls
+ * the statement's callback, so a release after COMMIT, ROLLBACK or a `pool.query` answer sees an
+ * idle client.
+ */
+export function unfinishedWork(client: PoolClient) {
+  const inspected = client as InspectableClient;
+  if (inspected._getActiveQuery?.()) return "statement_in_flight";
+  if (inspected._queryQueue?.length) return "statements_queued";
+  const status = inspected.getTransactionStatus?.();
+  if (status === "T" || status === "E") return "transaction_open";
+  return undefined;
+}
+
+/** The request's client, closed instead of pooled when it is handed back with work still open. */
+function closeUnfinishedOnRelease(client: PoolClient) {
+  const release = client.release;
+  client.release = (error?: Error | boolean) => {
+    const unfinished = error ? undefined : unfinishedWork(client);
+    if (unfinished) console.warn("prisma_pg_client_discarded_in_flight", { unfinished });
+    release(unfinished ? true : error);
+  };
+  return client;
+}
+
 type ConnectCallback = (error: Error | undefined, client: PoolClient | undefined, done: (release?: unknown) => void) => void;
 
 /**
- * The runtime `pg` pool (Founder, 3 October 2026). Two guards around handing out a connection:
+ * The runtime `pg` pool (Founder, 3 October 2026). Guards around handing out a connection, and
+ * one around taking it back:
  *
  * - **Stale idle clients are dropped.** An idle client is closed by its idle timer. One that is
  *   still in the pool well past that timeout can only have slept through it: Fluid compute froze
@@ -59,6 +95,15 @@ type ConnectCallback = (error: Error | undefined, client: PoolClient | undefined
  *   ends by about 6 s. The second open is skipped when it would take the pool's last free
  *   slot, so a one-connection pool (local, CI) and a busy instance behave as before. Opening a
  *   connection sends no statement, so no query can run twice.
+ * - **A connection handed back with work still open is closed, not pooled** (15 October 2026).
+ *   Production, 15 October, 11:12 UTC, in the Learn apply endpoint: a statement inside an interactive
+ *   transaction hit `Query read timeout` and its ROLLBACK timed out behind it ("transaction
+ *   failed to roll back"). pg keeps a sent statement as the client's active query after its read
+ *   timeout, and `@prisma/adapter-pg` hands the client back without an error, so pg-pool kept it
+ *   with the server-side transaction open. The next statement on the instance ran inside that
+ *   transaction; locally an INSERT reported one row and was lost when the connection closed. Such
+ *   a release now closes the client ({@link unfinishedWork}, one `prisma_pg_client_discarded_in_flight`
+ *   line); closing it ends the server's transaction. A release with an error was closed already.
  */
 export class ReconnectingPool extends Pool {
   constructor(config?: PoolConfig) {
@@ -87,7 +132,7 @@ export class ReconnectingPool extends Pool {
         }
         handedOut = true;
         clearTimeout(secondOpenTimer);
-        resolve(client);
+        resolve(closeUnfinishedOnRelease(client));
       };
       secondOpenTimer = setTimeout(() => {
         if (handedOut || this.ending || !this.hasRoomForSecondOpen()) return;

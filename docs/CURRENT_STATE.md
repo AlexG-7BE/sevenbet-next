@@ -12,6 +12,58 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## A database connection handed back mid-statement is closed, not reused — in review
+
+**Founder task, 15 October 2026:** fix the runtime finding recorded with the build preflight work:
+after a stalled statement, the next write on the instance could be lost.
+
+**DETECTED (Production log, 15 October 2026, 11:12 UTC, POST /api/mcp/learn; reproduced
+locally):** a statement inside an interactive transaction stalled on the pooled endpoint past
+the 25 s `query_timeout` (`Query read timeout`), and its ROLLBACK then timed out behind it
+(`prisma:error transaction failed to roll back`). Three driver facts made that lose data:
+
+- pg keeps a statement that was already sent as the client's active query after its read
+  timeout fires; only a statement still waiting to be sent is removed;
+- `@prisma/adapter-pg` hands a transaction's client back to the pool without an error, after
+  commit and rollback alike;
+- pg-pool closes only clients that report a connection error or are ending, so it kept the
+  client as idle, with its transaction still open on the server.
+
+The next statement on the instance ran inside that transaction. In the local run (PostgreSQL 16
+behind a proxy that holds a connection's statements, `socket_timeout=2`) an INSERT reported one
+row, the table stayed empty, and the backend sat `idle in transaction` until the connection
+closed. On the pooled endpoint the open transaction also pins a backend until the client closes.
+
+The change (**PROPOSED — NOT YET LIVE** until merged and deployed): `ReconnectingPool`
+(`lib/db/reconnecting-pg-pool.ts`) checks every client the application hands back. A client with
+work still open is closed instead of pooled: a statement sent and not answered, statements
+queued behind it, or a transaction the server last reported open. Closing it ends the server's
+transaction. The pool logs one line, `prisma_pg_client_discarded_in_flight` with the reason
+(`statement_in_flight`, `statements_queued` or `transaction_open`), and the next request opens a
+fresh connection. A normal release after COMMIT, ROLLBACK or a `pool.query` answer finds the
+client idle and keeps it, because pg clears the answered statement and records the transaction
+status before it calls the statement's callback. A release with an error was closed already and
+logs nothing new. Pool size, timeouts, the stale-idle drop and the second open are unchanged
+(`RUNTIME_POOL_POLICY` untouched).
+
+Tests:
+
+- `tests/reconnecting-pg-pool.test.ts` (ci:structural): a client handed back with a statement in
+  flight, with statements queued or inside an open transaction is removed and not reused; a
+  clean release after COMMIT, ROLLBACK and `pool.query` is reused.
+- `tests/reconnecting-pg-pool-postgres.test.ts` (`production-db-reliability:postgres-test`,
+  Database / Migration Verification): the Production sequence through a stalling proxy, with the
+  real Prisma client and adapter. Before this change the INSERT reported one row and the table
+  stayed empty; now the row is committed, the write uses a fresh connection, and no backend is
+  left in a transaction. Committed, rolled-back and failed transactions still reuse their one
+  connection.
+
+Locally the mvp-runtime, customer-data-core, email-reliability, learn-apply,
+commercial-research and market-activation Postgres suites logged no discarded client.
+
+**Not changed:** why the pooled endpoint stalls (UNKNOWN, inside Prisma's infrastructure). A
+stalled statement still fails its request after 25 s; only the next request is protected.
+
 ## Answer pages for AI assistants: gambling control without quitting — in review
 
 **Founder decision, 15 October 2026 (question tool):** pages that ChatGPT, Perplexity,

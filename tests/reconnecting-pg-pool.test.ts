@@ -3,21 +3,29 @@ import { EventEmitter } from "node:events";
 import test, { type TestContext } from "node:test";
 
 import { PrismaPg } from "@prisma/adapter-pg";
+import type { PoolClient } from "pg";
 
 import { runtimePgPool } from "../lib/db/prisma-runtime-config";
-import { CONNECT_SECOND_OPEN_AFTER_MS, ReconnectingPool, isTransientConnectFailure } from "../lib/db/reconnecting-pg-pool";
+import { CONNECT_SECOND_OPEN_AFTER_MS, ReconnectingPool, isTransientConnectFailure, unfinishedWork } from "../lib/db/reconnecting-pg-pool";
 
 const UPSTREAM = "Failed to connect to upstream database. Please contact Prisma support if the problem persists.";
 
 /** Besides success (null) and failure: an open that never answers, and one that answers late. */
 type ScriptedOpen = Error | null | "stall" | { openAfterMs: number };
 
-/** A stand-in for pg.Client: each connect() takes the next scripted outcome. */
+/**
+ * A stand-in for pg.Client: each connect() takes the next scripted outcome. The statement "stall"
+ * is sent and never answered, and statements after it wait behind it, as in pg; BEGIN, COMMIT and
+ * ROLLBACK move the transaction status the server would report.
+ */
 function scriptedClient(outcomes: ScriptedOpen[]) {
-  const state = { connects: 0, queries: 0 };
+  const state = { connects: 0, queries: 0, ended: 0 };
   class ScriptedClient extends EventEmitter {
     _queryable = true;
     _ending = false;
+    _activeQuery: string | null = null;
+    _queryQueue: string[] = [];
+    _txStatus = "I";
     connection?: { stream: { destroy(): void } };
     connect(callback: (error?: Error) => void) {
       const outcome = outcomes[state.connects++] ?? null;
@@ -32,12 +40,28 @@ function scriptedClient(outcomes: ScriptedOpen[]) {
       }
       setImmediate(() => callback(outcome ?? undefined));
     }
-    query(_text: unknown, _values: unknown, callback?: (error: Error | undefined, result: unknown) => void) {
+    query(_text: unknown, _values?: unknown, callback?: (error: Error | undefined, result: unknown) => void) {
       state.queries++;
+      const text = String(_text);
       const done = typeof _values === "function" ? _values as typeof callback : callback;
+      if (this._activeQuery) {
+        this._queryQueue.push(text);
+        return;
+      }
+      if (text === "stall") {
+        this._activeQuery = text;
+        return;
+      }
+      if (text === "BEGIN") this._txStatus = "T";
+      if (text === "COMMIT" || text === "ROLLBACK") this._txStatus = "I";
       setImmediate(() => done?.(undefined, { rows: [{ one: 1 }] }));
     }
-    end(callback?: () => void) { setImmediate(() => callback?.()); }
+    _getActiveQuery() { return this._activeQuery; }
+    getTransactionStatus() { return this._txStatus; }
+    end(callback?: () => void) {
+      state.ended++;
+      setImmediate(() => callback?.());
+    }
     isConnected() { return true; }
   }
   return { Client: ScriptedClient, state };
@@ -119,6 +143,100 @@ test("a recently released idle client is reused as usual", async () => {
   assert.equal(state.connects, 1);
   again.release();
   await pool.end();
+});
+
+function run(client: PoolClient, text: string) {
+  return new Promise((resolve, reject) => {
+    client.query(text, (error: Error | undefined, result: unknown) => (error ? reject(error) : resolve(result)));
+  });
+}
+
+// Production, 15 October 2026, 11:12 UTC: a statement inside a transaction timed out, its ROLLBACK
+// timed out behind it, and the adapter handed the client back without an error. pg still held
+// the statement as sent, so the next request's statements ran inside the open transaction.
+test("a client handed back with a statement still in flight is closed, not reused", async () => {
+  const { Client, state } = scriptedClient([null, null]);
+  const pool = new ReconnectingPool({ Client: Client as never, max: 3, idleTimeoutMillis: 5_000 });
+  const { value: next, warnings } = await quietly(async () => {
+    const stalled = await pool.connect();
+    await run(stalled, "BEGIN");
+    void run(stalled, "stall");
+    void run(stalled, "ROLLBACK");
+    stalled.release();
+    assert.equal(pool.totalCount, 0, "removed from the pool at once");
+    assert.equal(pool.idleCount, 0);
+    const next = await pool.connect();
+    assert.notEqual(next, stalled, "the next request gets a fresh connection");
+    return next;
+  });
+  assert.equal(state.connects, 2);
+  assert.equal(state.ended, 1, "the stalled client was closed, which ends the server's transaction");
+  assert.deepEqual(warnings, [["prisma_pg_client_discarded_in_flight", { unfinished: "statement_in_flight" }]]);
+  next.release();
+  await pool.end();
+});
+
+test("a client handed back with statements queued or a transaction open is closed too", async () => {
+  for (const [script, unfinished] of [
+    [(client: PoolClient & { _activeQuery: string | null }) => {
+      void run(client, "stall");
+      void run(client, "select 1");
+      // As after pg's read timeout fired for a statement that was never sent.
+      client._activeQuery = null;
+    }, "statements_queued"],
+    [(client: PoolClient) => run(client, "BEGIN"), "transaction_open"],
+  ] as const) {
+    const { Client } = scriptedClient([null]);
+    const pool = new ReconnectingPool({ Client: Client as never, max: 3 });
+    const { warnings } = await quietly(async () => {
+      const client = await pool.connect();
+      await script(client as never);
+      client.release();
+    });
+    assert.equal(pool.totalCount, 0, unfinished);
+    assert.deepEqual(warnings, [["prisma_pg_client_discarded_in_flight", { unfinished }]]);
+    await pool.end();
+  }
+});
+
+test("a clean release keeps the client for the next request, and a release with an error closes it as before", async () => {
+  const { Client, state } = scriptedClient([null, null]);
+  const pool = new ReconnectingPool({ Client: Client as never, max: 3, idleTimeoutMillis: 5_000 });
+  const { warnings } = await quietly(async () => {
+    const first = await pool.connect();
+    await run(first, "BEGIN");
+    await run(first, "select 1");
+    await run(first, "COMMIT");
+    first.release();
+    assert.equal(pool.idleCount, 1);
+
+    const second = await pool.connect();
+    assert.equal(second, first, "reused after COMMIT");
+    await run(second, "BEGIN");
+    await run(second, "ROLLBACK");
+    second.release();
+
+    await pool.query("select 1");
+    assert.equal(pool.idleCount, 1, "pool.query hands its client back for reuse");
+    const third = await pool.connect();
+    assert.equal(third, first);
+    third.release(new Error("statement failed"));
+    assert.equal(pool.totalCount, 0);
+  });
+  assert.equal(state.connects, 1);
+  assert.deepEqual(warnings, [], "only a release that would have pooled unfinished work logs the line");
+  await pool.end();
+});
+
+test("unfinishedWork reads an idle pg client as clean", () => {
+  const client = Object.assign(new EventEmitter(), {
+    _getActiveQuery: () => null,
+    _queryQueue: [],
+    getTransactionStatus: () => "I",
+  });
+  assert.equal(unfinishedWork(client as never), undefined);
+  assert.equal(unfinishedWork({ getTransactionStatus: () => "E" } as never), "transaction_open", "after a failed statement");
+  assert.equal(unfinishedWork({ getTransactionStatus: () => null } as never), undefined, "status not known yet");
 });
 
 test("the Prisma adapter takes the reconnecting pool as its own pool", () => {
