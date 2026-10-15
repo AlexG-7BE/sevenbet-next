@@ -159,7 +159,7 @@ const hub: Readonly<Record<ControlLocale, ControlHubMessages>> = {
       { path: CONTROL_PATHS.withoutQuitting, title: "How can I keep my gambling under control without quitting?", body: "Three rules you set before you play, and the ten steps that build them." },
       { path: CONTROL_PATHS.tools, title: "Which gambling control tool fits you?", body: "Self-exclusion, blocking software, a bank block, limits, helplines and B4GAMBLE, side by side." },
       { path: CONTROL_PATHS.trust, title: "Can you trust B4GAMBLE if it earns money from casinos?", body: "How it earns, what it does not do, when casino pages appear and what stays private." },
-      { path: "/pause-plan", title: "My pause is ending. What then?", body: "The ten-day plan beside a Spelpaus or ROFUS pause, with the day your pause ends." },
+      { path: "/pause-plan", title: "My self-exclusion is ending. What then?", body: "Ten steps before you lift GAMSTOP, or beside a Spelpaus or ROFUS pause, with the date your minimum period ends." },
       { path: "/10-steps", title: "What happens in the ten steps?", body: "Every step, what it asks of you and what you keep." },
       { path: "/help", title: "I want to stop or pause now", body: "Self-exclusion and free, confidential support, with no casino links." },
     ],
