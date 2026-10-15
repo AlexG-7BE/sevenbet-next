@@ -1,4 +1,5 @@
-import { FIRST_WAVE_EVIDENCE_MARKET_CODES, type FirstWaveEvidenceMarketCode, type MarketCode, type SupportedLocale } from "./registry";
+import { FIRST_WAVE_EVIDENCE_MARKET_CODES, marketProfileByLocale, type FirstWaveEvidenceMarketCode, type MarketCode, type SupportedLocale } from "./registry";
+import type { PresentationResolution } from "./presentation-resolver";
 
 export const FIRST_WAVE_MARKETS = FIRST_WAVE_EVIDENCE_MARKET_CODES;
 export type FirstWaveMarketCode = FirstWaveEvidenceMarketCode;
@@ -329,4 +330,18 @@ export function isFirstWaveMarket(market: MarketCode): market is FirstWaveMarket
 
 export function firstWaveMarketEvidence(market: MarketCode) {
   return isFirstWaveMarket(market) ? FIRST_WAVE_MARKET_EVIDENCE[market] : null;
+}
+
+/**
+ * The verified local Help and Responsible Gambling profile for a request. The visitor's country
+ * comes first, as before. On an explicit language address (`/sv/help`, `/da/responsible-gambling`)
+ * a visitor whose country has no verified profile gets the profile of that language's market
+ * instead of the English page: until 15 October 2026 Google, which reads from the United States,
+ * saw `/sv/help`, `/da/help` and `/de/help` as copies of `/en/help` and indexed none of them.
+ */
+export function firstWaveSafetyProfile(presentation: Pick<PresentationResolution, "market" | "source" | "locale">) {
+  const visitorProfile = presentation.market ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
+  if (visitorProfile || presentation.source !== "EXPLICIT_ROUTE") return visitorProfile;
+  const languageMarket = marketProfileByLocale(presentation.locale);
+  return languageMarket ? firstWaveMarketEvidence(languageMarket.countryCode) : null;
 }
