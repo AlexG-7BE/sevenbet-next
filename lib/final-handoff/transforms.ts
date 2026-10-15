@@ -503,6 +503,23 @@ function bonusGuideReadNextCard(article: PublicArticle, categoryTitle: string) {
           </a>`;
 }
 
+/** English pages the unprefixed English handoffs link to; their bare path answers a 307 to `/en/…`. */
+const ENGLISH_PREFIXED_DESTINATIONS = ["/bonuses", "/best-offers", "/casinos", "/learn", "/methodology", "/contact"] as const;
+
+/**
+ * Points the bare links of an unprefixed English page (the bonus guide) at their `/en/` pages, so
+ * crawlers and readers reach them without the 307 (affiliate traffic audit, 15 October 2026).
+ * Only the listed destinations change; Programme and other links keep their own rules.
+ */
+export function localizeEnglishHandoffHrefs(html: string) {
+  return html.replace(/href="(\/[^"#?]*)([^"]*)"/g, (match, pathname: string, rest: string) => {
+    const destination = ENGLISH_PREFIXED_DESTINATIONS.find((candidate) => pathname === candidate || pathname.startsWith(`${candidate}/`));
+    return destination
+      ? `href="${escapeHtml(publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, pathname))}${rest}"`
+      : match;
+  });
+}
+
 export function transformBonusGuideHandoff(html: string, options: Readonly<{
   offerBridge?: LearnOfferBridgeCopy | null;
   /** Real published English guides, already selected (`bonusGuideReadNextSelection`). None renders no Read next row. */
@@ -588,7 +605,7 @@ export function transformBonusGuideHandoff(html: string, options: Readonly<{
     }
     output = output.slice(0, readNextStart) + replacement + output.slice(readNextEnd);
   }
-  return output;
+  return localizeEnglishHandoffHrefs(output);
 }
 
 /**

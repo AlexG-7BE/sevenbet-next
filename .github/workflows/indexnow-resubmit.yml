@@ -1,17 +1,22 @@
 name: IndexNow resubmit
 
-# Announces every URL in the Production sitemap to IndexNow (Bing, Yandex, Seznam, Naver).
-# Manual: Actions → IndexNow resubmit → Run workflow. Runs from a GitHub host, so the site's
-# geo-blocks never get in the way. The key file is public by design (lib/seo/indexnow.ts).
+# Announces URLs to IndexNow (Bing, Yandex, Seznam, Naver). Runs from a GitHub host, so the
+# site's geo-blocks never get in the way. The key file is public by design (lib/seo/indexnow.ts).
+# - Manual (Actions → IndexNow resubmit → Run workflow): every URL in the Production sitemap.
+# - After each successful Production deployment: only the review pages that deploy changed
+#   (scripts/indexnow-changed-reviews.mjs), compared with the previous successful one.
 
 on:
   workflow_dispatch:
+  deployment_status:
 
 permissions:
   contents: read
+  deployments: read
 
 jobs:
   resubmit:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -21,3 +26,35 @@ jobs:
           node-version-file: .nvmrc
       - name: Announce the sitemap
         run: node scripts/indexnow-submit.mjs --submit
+
+  changed-reviews:
+    if: >-
+      github.event_name == 'deployment_status' &&
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Find the previous successful Production deployment
+        id: base
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT: ${{ github.event.deployment.id }}
+        run: |
+          base=""
+          for row in $(gh api "repos/${{ github.repository }}/deployments?environment=Production&per_page=30" --jq ".[] | select(.id != ${CURRENT}) | \"\(.id):\(.sha)\""); do
+            id="${row%%:*}"
+            if [ "$(gh api "repos/${{ github.repository }}/deployments/${id}/statuses" --jq '[.[] | select(.state == "success")] | length')" != "0" ]; then
+              base="${row#*:}"
+              break
+            fi
+          done
+          echo "sha=${base}" >> "$GITHUB_OUTPUT"
+      - name: Announce the changed reviews
+        run: node scripts/indexnow-changed-reviews.mjs --base "${{ steps.base.outputs.sha }}" --head "${{ github.event.deployment.sha }}" --submit

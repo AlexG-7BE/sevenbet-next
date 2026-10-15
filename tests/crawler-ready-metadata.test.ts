@@ -12,7 +12,8 @@ import { retiredArticleSuccessor } from "../lib/articles/retired-articles";
 import { REVIEW_INDEX_MARKETS, reviewIndexable, reviewLanguageAlternates } from "../lib/seo/review-indexing";
 import { DA_IN_DEPTH } from "../lib/casino-profile/in-depth/da";
 import { SV_IN_DEPTH } from "../lib/casino-profile/in-depth/sv";
-import { casinoProfileSchemas, casinoReviewMetadataCopy, trimAtWordBoundary } from "../lib/casino-profile/seo";
+import { casinoProfileSchemas, casinoReviewMetadataCopy, projectCasinoProfileSchemas, reviewModifiedAt, trimAtWordBoundary } from "../lib/casino-profile/seo";
+import { BLOCKED_TARGETS } from "../lib/market-access/release";
 import generatedPages from "../lib/final-handoff/generated-pages.json";
 import { transformLearnHandoff } from "../lib/final-handoff/transforms";
 import { germanProhibitedTerms } from "../lib/i18n/german-terminology";
@@ -372,6 +373,47 @@ test("German and Danish product titles use the terms people search, stay country
     }
   }
   assert.deepEqual(germanProhibitedTerms([de.casinos, de.bonuses, de.bestOffers].map((page) => `${page.title} ${page.description}`).join(" ")), []);
+});
+
+test("a licensed market that cannot open yet keeps its review out of the index", () => {
+  // Founder's choice in the affiliate traffic audit, 15 October 2026: reviews that lead to no button.
+  assert.deepEqual(BLOCKED_TARGETS.map((target) => `${target.casinoSlug}:${target.market}`).sort(), ["betsafe:SE", "dragonbet:GB", "playuzu:SE", "regencycasino:SE"]);
+  assert.equal(reviewIndexable("betsafe", "sv"), false);
+  assert.equal(reviewIndexable("regencycasino", "sv"), false);
+  assert.equal(reviewIndexable("playuzu", "sv"), false);
+  assert.equal(reviewIndexable("dragonbet", "en"), false);
+  assert.equal(reviewIndexable("DragonBet ", "en"), false, "slug case and spaces do not matter");
+  const cards = ["betsafe", "betsson", "regencycasino", "playuzu"].map((slug) => ({ slug, dataClassification: "PUBLISHED_RECORD" as const, indexable: true }));
+  assert.deepEqual(indexableReviewCards(cards, "sv").map((card) => card.slug), ["betsson"]);
+});
+
+test("a review's modification date includes the check of its long review in that language", () => {
+  const [slug, review] = Object.entries(SV_IN_DEPTH)[0];
+  const casino = { slug, publishedAt: "2026-09-01T00:00:00.000Z", lastReviewedAt: "2026-09-20T00:00:00.000Z" };
+  assert.equal(reviewModifiedAt(casino), "2026-09-20T00:00:00.000Z", "without a language the database date stands");
+  assert.equal(reviewModifiedAt(casino, "sv"), new Date(review.checked).toISOString());
+  assert.equal(reviewModifiedAt(casino, "en"), "2026-09-20T00:00:00.000Z", "English has no long review");
+  assert.equal(reviewModifiedAt({ ...casino, lastReviewedAt: "2026-12-01T00:00:00.000Z" }, "sv"), "2026-12-01T00:00:00.000Z", "a later database change wins");
+  const schemas = projectCasinoProfileSchemas([
+    { "@type": "WebPage", dateModified: "2026-09-20T00:00:00.000Z" },
+    { "@type": "Review", dateModified: "2026-09-20T00:00:00.000Z" },
+    { "@type": "Organization" },
+  ], {
+    casino: { id: "c1", name: "Example", dataClassification: "PUBLISHED_RECORD", ...casino } as never,
+    casinoDirectoryUrl: "https://b4gamble.com/sv/casinos",
+    locale: "sv-SE",
+    messages: productPageMessages("sv-SE"),
+    profileUrl: `https://b4gamble.com/sv/casino/${slug}`,
+  });
+  assert.deepEqual(schemas.map((schema) => schema.dateModified), [new Date(review.checked).toISOString(), new Date(review.checked).toISOString(), undefined]);
+  const snapshot = {
+    market: market("SE"),
+    casinos: [{ slug, dataClassification: "PUBLISHED_RECORD", indexable: true, editorialUpdatedAt: "2026-09-20T00:00:00.000Z", publishedAt: "2026-09-01T00:00:00.000Z" }],
+    discovery: null,
+    bestOffers: null,
+    bonuses: null,
+  } as unknown as Parameters<typeof indexableMarketProductPaths>[0];
+  assert.deepEqual(indexableMarketProductPaths(snapshot, true).casinoRoutes.map((route) => route.lastModified), [new Date(review.checked).toISOString()]);
 });
 
 test("the Bonuses page and the sitemap share one indexing rule, so /de/bonuses is listed whenever it is indexable", () => {

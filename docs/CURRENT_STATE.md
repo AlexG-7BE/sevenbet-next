@@ -20,6 +20,20 @@ and deployed: a partner button click also sends the GA4 event `partner_click` (`
 `placement`, `market`) from `productAnalyticsClient.outboundIntent`, under the Google tag's rule
 (nothing after "Reject cookies", nothing from protected Help, the self-check or Admin). **Founder
 action:** mark `partner_click` as a key event in GA4 Admin.
+## Commercial indexing hygiene — in review
+
+**Founder's choice in the affiliate traffic audit, 15 October 2026**
+([decision](07_Decisions/COMMERCIAL-INDEXING-HYGIENE-2026-10-15.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed:
+
+- review sitemap `lastmod` and WebPage/Review `dateModified` take the latest of the database date
+  and the long sv/da review check date (`lib/casino-profile/seo.ts`, `app/sitemap.ts`);
+- after each successful Production deployment, `.github/workflows/indexnow-resubmit.yml` announces
+  only the review pages whose long review changed (`scripts/indexnow-changed-reviews.mjs`); the
+  manual full resubmit stays;
+- the English bonus guide and affiliate disclosure link to `/en/…` instead of bare paths that 307;
+- `reviewIndexable` reads `BLOCKED_TARGETS` (`lib/market-access/blocked-targets.ts`): Betsafe SE,
+  Regency SE, PlayUZU SE and DragonBet GB are `noindex, follow` and leave the sitemap.
 
 ## Production build preflight reads through the direct binding — in review
 

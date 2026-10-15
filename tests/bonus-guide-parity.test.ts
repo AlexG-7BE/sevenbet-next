@@ -97,7 +97,7 @@ test("document order and transitions stay within Learn, Help and Programme", () 
     assert.ok(index > cursor, marker);
     cursor = index;
   }
-  for (const href of ['href="/learn"', 'href="/help"', 'href="/program\\?entry=start"']) assert.match(document, new RegExp(href));
+  for (const href of ['href="/en/learn"', 'href="/help"', 'href="/program\\?entry=start"']) assert.match(document, new RegExp(href));
 });
 
 test("Read next shows only real published guides, in dark ink, and disappears when there are none", () => {
@@ -126,8 +126,10 @@ test("the checklist leads to current offers only where offers may be presented, 
   assert.equal((bridged.match(/data-learn-offer-bridge=""/g) ?? []).length, 1);
   assert.ok(bridged.indexOf("data-learn-offer-bridge") > bridged.indexOf("Before you accept any bonus"));
   assert.ok(bridged.indexOf("data-learn-offer-bridge") < bridged.indexOf("data-bonus-guide-sources"));
-  assert.match(bridged, /href="\/bonuses" data-learn-offer-bridge-link="bonuses"/);
-  assert.match(bridged, /href="\/best-offers" data-learn-offer-bridge-link="best-offers"/);
+  assert.match(bridged, /href="\/en\/bonuses" data-learn-offer-bridge-link="bonuses"/);
+  assert.match(bridged, /href="\/en\/best-offers" data-learn-offer-bridge-link="best-offers"/);
+  // The unprefixed English guide links straight to the /en/ pages, never through a 307 (audit 15 Oct 2026).
+  assert.doesNotMatch(bridged, /href="\/(?:bonuses|best-offers|casinos|learn|methodology|contact)(?:[/?#"])/);
   assert.match(bridged, /Commercial disclosure: B4GAMBLE may receive compensation/);
   assert.doesNotMatch(bridged, /href="\/(?:r|go)\//);
 });
