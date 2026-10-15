@@ -220,7 +220,7 @@ const da: PausePlanMessages = {
     { title: "Tilføj friktion", move: "Fjern appen fra startskærmen og gemte kort. Gør den hurtige vej langsom." },
     { title: "Forbered støtte", move: "Vælg én person, der kender det rigtige tal. Én er nok." },
     { title: "Øv beslutningen", move: "Sig højt, hvad du gør aftenen efter pausen. Øv svaret, før det gælder." },
-    { title: "Gør planen til at tjekke", move: "Skriv planen på én side: beløbet, tidspunktet, personen. Beslut, hvornår du læser den igen." },
+    { title: "Gør planen klar til gennemgang", move: "Skriv planen på én side: beløbet, tidspunktet, personen. Beslut, hvornår du læser den igen." },
   ],
   dayEleven: {
     heading: "Dagen efter",
@@ -234,7 +234,7 @@ const da: PausePlanMessages = {
     ["Kan jeg ophæve min ROFUS-pause før tid?", "Nej. En midlertidig udelukkelse i ROFUS kan ikke ophæves, før perioden er udløbet. En endelig udelukkelse kan først ophæves efter mindst et år, og kun på din egen anmodning."],
     ["Hvad sker der, når pausen udløber?", "Du kan igen logge ind hos spiludbydere med dansk licens. Derfor er planen for dagen efter vigtigere end selve pausen."],
     ["Er der casinoer i planen?", "Nej. Planen og dens ti trin indeholder ingen casinoer og ingen tilbud. Udbydere med dansk licens må heller ikke sende dig markedsføring, mens du er i ROFUS."],
-    ["Skal jeg have en konto?", "Ikke for at læse planen. For at tage trinnene og gemme dine svar opretter du en konto i programmet. Det er gratis, og dine svar bruges aldrig til tilbud, rangeringer eller reklamer."],
+    ["Skal jeg have en konto?", "Ikke for at læse planen. For at tage trinene og gemme dine svar opretter du en konto i programmet. Det er gratis, og dine svar bruges aldrig til tilbud, rangeringer eller reklamer."],
     ["Gælder ROFUS udenlandske casinoer?", "Nej. ROFUS gælder kun spiludbydere med dansk licens. Sider uden dansk licens er ikke omfattet, og der har du ingen dansk forbrugerbeskyttelse."],
     ["Hvor henvender jeg mig, hvis det haster?", "StopSpillet: 70 22 28 25, stopspillet.dk. Gratis og fortroligt. Center for Ludomani: 70 11 18 10."],
   ],
@@ -248,7 +248,7 @@ const da: PausePlanMessages = {
   revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. Planen indeholder ingen.",
   notBack: {
     heading: "Dagen efter: ikke tilbage?",
-    intro: "Hvis du beslutter ikke at gå tilbage, så tag det, du allerede ved, med til StopSpillet. Fem linjer er nok, og de gør samtalen kortere:",
+    intro: "Hvis du beslutter dig for ikke at gå tilbage, så tag det, du allerede ved, med til StopSpillet. Fem linjer er nok, og de gør samtalen kortere:",
     lines: ["Jeg tog en pause på: …", "Det, jeg besluttede om beløb og tid: …", "Den grænse, der holdt: …", "Den, der kender det rigtige tal: …", "Det, jeg vil have hjælp til nu: …"],
     copy: "Kopiér de fem linjer",
     copied: "Kopieret",
