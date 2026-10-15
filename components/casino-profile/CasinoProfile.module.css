@@ -66,6 +66,10 @@
 /* Numbered sections */
 .section { margin-inline:calc(var(--bleed) * -1); padding:clamp(64px,8vh,96px) var(--bleed); display:grid; grid-template-columns:minmax(220px,.42fr) minmax(0,1fr); align-items:start; gap:clamp(32px,6vw,84px); border-bottom:1px solid var(--line); background:var(--night); }
 .altSection { background:var(--card); }
+.inDepth { display:grid; gap:32px; max-width:68ch; }
+.inDepth h3 { margin:0 0 12px; font-size:clamp(20px,2vw,26px); font-weight:800; letter-spacing:-.02em; line-height:1.15; }
+.inDepth p { margin:0 0 14px; color:var(--paper); font-size:17px; line-height:1.65; }
+.inDepth p:last-child { margin-bottom:0; }
 .section > header p { margin:0 0 16px; color:var(--acid); font-family:var(--font-seven-serif),Georgia,serif; font-size:36px; font-style:italic; line-height:1; }
 .section > header h2 { margin:0; font-size:clamp(32px,3.6vw,56px); font-weight:800; letter-spacing:-.04em; line-height:.92; overflow-wrap:anywhere; text-transform:uppercase; }
 .sectionBody { min-width:0; display:grid; gap:28px; }

@@ -12,6 +12,23 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## Long Swedish and Danish casino reviews — in review
+
+Founder decision, 15 October 2026 (question tool): expand the reviews shown in Sweden and
+Denmark, leave the rest. The templated review page held about 300 words, and the crawl of 15
+October found the casino reviews to be the bulk of "Discovered – currently not indexed".
+
+**Changed.** An unnumbered section "Vår genomgång" / "Vores gennemgang" renders before the FAQ on
+`/sv/casino/{slug}` and `/da/casino/{slug}` when a native long review exists
+(`lib/casino-profile/in-depth.ts`, texts in `lib/casino-profile/in-depth/{sv,da}.ts`). Eleven
+Swedish (casinos licensed for SE in `lib/market-access/register.ts`, minus the SE
+`BLOCKED_TARGETS` and Megaways Casino, which has no SE/DK catalogue rows) and nine Danish
+reviews, 450–650 words each, written from the catalogue (dev copy of 2 October 2026), the
+register comments and the verified Spelpaus/ROFUS facts. No volatile figures (bonus amounts,
+wagering, payout times): the page shows those in its live rows. Every other page renders as
+before. No migration. Test: `tests/casino-in-depth-reviews.test.ts` (`ci:structural`):
+licensed and not blocked, 450–700 words, 4–6 parts, no volatile figures, no sentence copied
+between casinos.
 ## Swedish, Danish and German Help pages no longer fall back to English — in review
 
 **DETECTED, crawl of 15 October 2026 from a United States runner:** `/sv|da|de/help` and
