@@ -3,10 +3,11 @@ import { Instrument_Serif } from "next/font/google";
 import Link from "next/link";
 
 import { JsonLd } from "@/components/seo/JsonLd";
-import { ControlCard, ControlFaqSection, ControlHeader, ControlRelated, ControlStart, controlPageSchema } from "../gambling-control/ControlPage";
+import { ControlCard, ControlFaqSection, ControlHeader, ControlRelated, ControlStart } from "../gambling-control/ControlPage";
 import styles from "../gambling-control/GamblingControl.module.css";
 import { CONTROL_PATHS, controlLocale, controlRelatedLinks, controlSharedMessages } from "@/lib/i18n/static-pages/gambling-control";
 import { controlToolsMessages } from "@/lib/i18n/static-pages/gambling-control-tools";
+import { controlPageSchema } from "@/lib/seo/control-page-schema";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";

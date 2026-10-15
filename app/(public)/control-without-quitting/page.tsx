@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { Instrument_Serif } from "next/font/google";
 
 import { JsonLd } from "@/components/seo/JsonLd";
-import { ControlCard, ControlFaqSection, ControlHeader, ControlRelated, ControlHelpBox, ControlStart, controlPageSchema } from "../gambling-control/ControlPage";
+import { ControlCard, ControlFaqSection, ControlHeader, ControlRelated, ControlHelpBox, ControlStart } from "../gambling-control/ControlPage";
 import styles from "../gambling-control/GamblingControl.module.css";
 import { withoutQuittingMessages } from "@/lib/i18n/static-pages/control-without-quitting";
 import { CONTROL_PATHS, controlLocale, controlRelatedLinks, controlSharedMessages } from "@/lib/i18n/static-pages/gambling-control";
 import { currentProgrammeJourney } from "@/lib/i18n/static-pages/ten-steps";
+import { controlPageSchema } from "@/lib/seo/control-page-schema";
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";

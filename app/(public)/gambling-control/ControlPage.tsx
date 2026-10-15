@@ -3,12 +3,12 @@ import type { ReactNode } from "react";
 
 import styles from "./GamblingControl.module.css";
 import { CONTROL_PAGES_UPDATED, type ControlFaq, type ControlLink, type ControlSharedMessages } from "@/lib/i18n/static-pages/gambling-control";
-import { organizationReference } from "@/lib/seo/structured-data";
 
 /**
  * The parts the four answer pages share (Founder decision, 15 October 2026): the header with the
  * visible update line and the revenue line, the first step when gambling already hurts, the FAQ,
- * the Programme start and the structured data. Server components only; nothing runs in the browser.
+ * the Programme start. Server components only; nothing runs in the browser. The structured data
+ * lives in lib/seo/control-page-schema.ts.
  */
 export function ControlHeader({ eyebrow, titleLead, titleEmphasis, answer, intro = [], shared }: {
   eyebrow: string;
@@ -77,35 +77,3 @@ export function ControlRelated({ heading, links, hrefFor }: { heading: string; l
     </ul>
   </nav>;
 }
-
-type Crumb = Readonly<{ name: string; item: string }>;
-
-/** WebPage, FAQPage and BreadcrumbList, like the pause plan, with the date the facts were checked. */
-export function controlPageSchema(input: { name: string; description: string; url: string; inLanguage: string; faq: ControlFaq; breadcrumbs: readonly Crumb[] }) {
-  return [
-    {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      name: input.name,
-      description: input.description,
-      url: input.url,
-      inLanguage: input.inLanguage,
-      isAccessibleForFree: true,
-      datePublished: CONTROL_PAGES_UPDATED,
-      dateModified: CONTROL_PAGES_UPDATED,
-      publisher: organizationReference(),
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      mainEntity: input.faq.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })),
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: input.breadcrumbs.map((crumb, index) => ({ "@type": "ListItem", position: index + 1, name: crumb.name, item: crumb.item })),
-    },
-  ];
-}
-
-export { styles as controlStyles };
