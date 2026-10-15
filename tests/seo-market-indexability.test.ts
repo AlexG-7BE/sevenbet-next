@@ -132,13 +132,14 @@ test("the sitemap lists no page that asks search engines not to index it", () =>
   const card = (slug: string, indexable: boolean) => ({ slug, dataClassification: "PUBLISHED_RECORD", indexable, publishedAt: null, editorialUpdatedAt: null }) as PublicCasinoCardDto;
   const snapshot = {
     market: profile("GB"),
-    casinos: [card("alpha", true), card("starcasino", false)],
+    casinos: [card("slotsmagic", true), card("starcasino", false), card("betsson", true)],
     discovery: null,
     bonuses: null,
     bestOffers: null,
   } as unknown as Parameters<typeof indexableMarketProductPaths>[0];
   const { casinoRoutes } = indexableMarketProductPaths(snapshot, true);
-  assert.deepEqual(casinoRoutes.map((entry) => new URL(entry.url).pathname), ["/en/casino/alpha"]);
+  // Founder, 15 October 2026: betsson holds no UKGC licence, so its English review leaves the sitemap.
+  assert.deepEqual(casinoRoutes.map((entry) => new URL(entry.url).pathname), ["/en/casino/slotsmagic"]);
 });
 
 // Semrush Site Audit, 2 Oct 2026: 27 incorrect hreflang links and 3 hreflang conflicts.
