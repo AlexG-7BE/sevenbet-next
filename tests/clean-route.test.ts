@@ -59,3 +59,9 @@ test("the pages make no promise about the menu: the door rules of 12 and 13 Octo
     assert.doesNotMatch(text, /På den här vägen visas inga|På denne vej vises ingen|None are shown on this route|Dörren|Døren|opens that part of the site/, locale);
   }
 });
+
+test("the helplines are not described as open around the clock: Stödlinjen and StopSpillet keep weekday hours", () => {
+  for (const locale of ["sv-SE", "da-DK", "en-GB"] as const) {
+    assert.doesNotMatch(JSON.stringify(besideMessages(locale)), /dygnet runt|hele døgnet|døgnet rundt|around the clock|24\/7/i, locale);
+  }
+});

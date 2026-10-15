@@ -7,7 +7,9 @@ import type { SupportedLocale } from "@/lib/market/registry";
  * message in her own words, what to say on day 11, the helplines first. No casino, no account.
  *
  * Helplines checked 12 October 2026: Stödlinjen 020-81 91 00 (anhörigstöd), StopSpillet
- * 70 22 28 25, Center for Ludomani 70 11 18 10.
+ * 70 22 28 25, Center for Ludomani 70 11 18 10. Neither line is open around the clock
+ * (Stödlinjen: weekdays, Mon 9–19, Tue–Wed 9–17, Thu 11–19, Fri 9–15; StopSpillet by phone:
+ * Mon–Thu 9–21, Fri 9–17; read on their own pages 15 October 2026), so the heading names no hours.
  */
 export type BesideMessages = Readonly<{
   metadataTitle: string;
@@ -61,7 +63,7 @@ const sv: BesideMessages = {
     heading: "Dina egna gränser",
     body: "Du får bestämma vad du betalar, vad du vill veta och när du behöver prata med någon som inte är han. Stödlinjens anhörigstöd är till för dig, inte för honom.",
   },
-  supportHeading: "Hjälp för dig, dygnet runt",
+  supportHeading: "Här finns hjälp för dig",
   support: [
     { label: "Stödlinjen, anhörigstöd – 020-81 91 00", href: "https://www.stodlinjen.se/" },
     { label: "Spelpaus.se – så fungerar pausen", href: "https://www.spelpaus.se/" },
@@ -104,7 +106,7 @@ const da: BesideMessages = {
     heading: "Dine egne grænser",
     body: "Du må bestemme, hvad du betaler, hvad du vil vide, og hvornår du har brug for at tale med en, der ikke er ham. StopSpillet er også til pårørende.",
   },
-  supportHeading: "Hjælp til dig, hele døgnet",
+  supportHeading: "Her kan du få hjælp",
   support: [
     { label: "StopSpillet – 70 22 28 25", href: "https://www.stopspillet.dk/" },
     { label: "Center for Ludomani – 70 11 18 10", href: "https://ludomani.dk/" },
@@ -147,7 +149,7 @@ const en: BesideMessages = {
     heading: "Your own limits",
     body: "You decide what you pay, what you want to know, and when you need to talk to someone who is not him. The helplines are for you too.",
   },
-  supportHeading: "Help for you, around the clock",
+  supportHeading: "Where you can get help",
   support: [
     { label: "Stödlinjen (Sweden) – 020-81 91 00", href: "https://www.stodlinjen.se/" },
     { label: "StopSpillet (Denmark) – 70 22 28 25", href: "https://www.stopspillet.dk/" },
