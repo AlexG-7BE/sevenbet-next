@@ -151,15 +151,29 @@ export async function lastGoodMarketProductPaths(
   market: MarketProfile,
   crawlerBonuses: Awaited<ReturnType<typeof loadCrawlerBonusDirectory>>,
   cache: typeof unstable_cache = unstable_cache,
+  load: typeof loadMarketSitemapSnapshot = loadMarketSitemapSnapshot,
 ) {
+  const read = async () => completeMarketProductPaths(await load(market, crawlerBonuses));
+  const partialOf = (cause: unknown) => cause instanceof SitemapCatalogueUnavailable ? cause.partial : null;
+  let attempted: ReturnType<typeof indexableMarketProductPaths> | null = null;
   try {
-    return await cache(
-      async () => completeMarketProductPaths(await loadMarketSitemapSnapshot(market, crawlerBonuses)),
-      ["sitemap-market-products-v1", market.countryCode],
-      { revalidate: 600 },
-    )();
+    return await cache(async () => {
+      try {
+        return await read();
+      } catch (cause) {
+        attempted = partialOf(cause);
+        throw cause;
+      }
+    }, ["sitemap-market-products-v1", market.countryCode], { revalidate: 600 })();
   } catch (cause) {
-    return cause instanceof SitemapCatalogueUnavailable ? cause.partial : { routes: [], casinoRoutes: [] };
+    const partial = partialOf(cause) ?? attempted;
+    if (partial) return partial;
+    // The cache itself failed (outside a Next.js request, or its store): read directly once.
+    try {
+      return await read();
+    } catch (direct) {
+      return partialOf(direct) ?? { routes: [], casinoRoutes: [] };
+    }
   }
 }
 

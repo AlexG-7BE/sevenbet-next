@@ -665,9 +665,11 @@ test("the sitemap keeps the last good market list when the database stalls", asy
   const partial = { routes: ["/sv/bonuses"], casinoRoutes: [] };
   const noEntry = (() => async () => { throw new SitemapCatalogueUnavailable(partial); }) as unknown as Parameters<typeof lastGoodMarketProductPaths>[2];
   assert.deepEqual(await lastGoodMarketProductPaths(market("SE"), null, noEntry), partial);
-  const broken = (() => async () => { throw new Error("boom"); }) as unknown as Parameters<typeof lastGoodMarketProductPaths>[2];
-  assert.deepEqual(await lastGoodMarketProductPaths(market("SE"), null, broken), { routes: [], casinoRoutes: [] });
+  // A cache that cannot run (outside a Next.js request) reads directly once.
+  const broken = (() => async () => { throw new Error("incrementalCache missing"); }) as unknown as Parameters<typeof lastGoodMarketProductPaths>[2];
+  assert.deepEqual(await lastGoodMarketProductPaths(market("SE"), null, broken, async () => complete), completeMarketProductPaths(complete));
+  assert.deepEqual(await lastGoodMarketProductPaths(market("SE"), null, broken, async () => { throw new Error("boom"); }), { routes: [], casinoRoutes: [] });
   const sitemap = read("app/sitemap.ts");
-  assert.match(sitemap, /\["sitemap-market-products-v1", market\.countryCode\],\n\s+\{ revalidate: 600 \}/);
+  assert.match(sitemap, /\["sitemap-market-products-v1", market\.countryCode\], \{ revalidate: 600 \}/);
   assert.match(sitemap, /const baseProducts = await lastGoodMarketProductPaths\(DEFAULT_MARKET_PROFILE, crawlerBonuses\);/);
 });
