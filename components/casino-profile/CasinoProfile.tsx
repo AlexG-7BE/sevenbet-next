@@ -12,6 +12,7 @@ import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/produ
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
+import { casinoInDepthReview } from "@/lib/casino-profile/in-depth";
 
 import styles from "./CasinoProfile.module.css";
 
@@ -38,6 +39,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   availableForPresentation: boolean;
 }) {
   const copy = commercialUxMessages(presentation.locale);
+  const inDepth = casinoInDepthReview(casino.slug, presentation.language);
   const demo = casino.dataClassification === "DEMO_FIXTURE";
   const bonus = selectProfileBonus(casino);
   const decision = casinoProfileDecisionPresentation(casino, presentation.locale, messages, copy, presentation.marketCountryCode);
@@ -197,6 +199,11 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <header data-motion-reveal><p>06</p><h2 id="regulation-heading">{copy.operatorMarketRegulation}</h2></header>
         <SectionFacts empty={copy.nothingPublishedYet} facts={knownFacts(regulationFacts, copy.notVerified)} />
       </section>
+
+      {inDepth ? <section aria-labelledby="in-depth-heading" className={styles.section} data-casino-in-depth={presentation.language} id="in-depth">
+        <header data-motion-reveal><p>07</p><h2 id="in-depth-heading">{inDepth.heading}</h2></header>
+        <div className={styles.inDepth}>{inDepth.parts.map((part) => <div key={part.title}><h3>{part.title}</h3>{part.paragraphs.map((paragraph) => <p key={paragraph.slice(0, 48)}>{paragraph}</p>)}</div>)}</div>
+      </section> : null}
 
       <section aria-labelledby="faq-heading" className={styles.profileFaq} data-nav-theme="cream" data-premium-section="casino-faq" id="casino-faq">
         <div className={styles.profileFaqInner} data-motion-reveal>
