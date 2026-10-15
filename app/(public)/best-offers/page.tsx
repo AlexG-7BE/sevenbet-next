@@ -83,7 +83,9 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
     pathname: "/best-offers",
     title,
     description,
-    robots: marketUnavailable || unavailable || containsDemo ? { index: false, follow: true } : { index: true, follow: true },
+    // A database stall ("unavailable") is temporary: the page keeps its index value rather than
+    // telling crawlers to drop it (affiliate traffic audit, 15 Oct 2026).
+    robots: (marketUnavailable && !unavailable) || containsDemo ? { index: false, follow: true } : { index: true, follow: true },
   });
 }
 

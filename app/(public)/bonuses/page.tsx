@@ -81,7 +81,9 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     pathname: "/bonuses",
     title,
     description,
-    robots: marketUnavailable || !bonusDirectoryIndexable(result) || hasPublicOfferFilters(legacyQuery) ? { index: false, follow: true } : { index: true, follow: true },
+    // A database stall (UNAVAILABLE) is temporary: the page keeps its index value rather than
+    // telling crawlers to drop it (affiliate traffic audit, 15 Oct 2026).
+    robots: (marketUnavailable && !unavailable) || (!unavailable && !bonusDirectoryIndexable(result)) || hasPublicOfferFilters(legacyQuery) ? { index: false, follow: true } : { index: true, follow: true },
   });
 }
 

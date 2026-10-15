@@ -29,6 +29,15 @@ published reviews indexed in the page language, in the casinos page's default or
 its own boundary and hidden when empty — and a wagering calculator link beside the offer terms
 (en/sv/da/de).
 
+## Database stalls keep commercial pages indexed — in review
+
+**Founder's choice in the affiliate traffic audit, 15 October 2026**
+([decision](07_Decisions/DB-STALL-KEEPS-PAGES-INDEXED-2026-10-15.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed: a failed catalogue read on a live review throws
+`PublicCatalogueUnavailableError` (answered 500, a temporary error; a page cannot send 503) instead
+of 404; `/bonuses` and `/best-offers` no longer set `noindex` while their inventory is
+unavailable; the sitemap serves each market's last good product list
+(`lastGoodMarketProductPaths`, 10-minute `unstable_cache` entry no casino update clears).
 ## Commercial indexing hygiene — in review
 
 **Founder's choice in the affiliate traffic audit, 15 October 2026**
