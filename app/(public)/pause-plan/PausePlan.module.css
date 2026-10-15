@@ -75,6 +75,9 @@
 .faq dt { font-size:17px; font-weight:800; line-height:1.35; }
 .faq dd { margin:8px 0 0; color:#c3c0b7; font-size:15px; line-height:1.55; }
 .support ul { margin:20px 0 0; padding:0; list-style:none; display:grid; gap:10px; }
+.more { margin:20px 0 0; }
+.more a { color:#e4e24e; font-size:16px; font-weight:700; }
+.more a:focus-visible { outline:3px solid #e4e24e; outline-offset:3px; }
 .support a { color:#e4e24e; font-size:17px; font-weight:700; }
 .support a:focus-visible { outline:3px solid #e4e24e; outline-offset:3px; }
 

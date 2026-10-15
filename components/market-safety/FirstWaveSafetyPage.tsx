@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { FirstWaveMarketEvidenceProfile, SafetyResource } from "@/lib/market/first-wave-evidence";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
+import { CONTROL_PATHS, controlHubLinkLabel } from "@/lib/i18n/static-pages/gambling-control";
 import { productHref } from "@/lib/market/product-context";
 import styles from "./FirstWaveSafetyPage.module.css";
 
@@ -44,6 +45,9 @@ export function FirstWaveSafetyPage({
   const selfExclusion = resourceGroup(profile, "SELF_EXCLUSION");
   const support = resourceGroup(profile, "SUPPORT");
   const information = resourceGroup(profile, "INFORMATION");
+  // The gambling control answers (Founder, 15 October 2026), on Responsible Gambling only and only where
+  // they speak the page's language. Help stays as it is.
+  const controlLabel = variant === "responsible" ? controlHubLinkLabel(presentation.locale, "moreLink") : null;
 
   return (
     <article className={styles.page} data-first-wave-safety={profile.market} data-safety-variant={variant}>
@@ -106,6 +110,7 @@ export function FirstWaveSafetyPage({
       <nav className={styles.localNavigation} aria-label={profile.copy.eyebrow}>
         <Link href={productHref(presentation, "/help")}>{profile.copy.helpTitle}</Link>
         <Link href={productHref(presentation, "/responsible-gambling")}>{profile.copy.responsibleTitle}</Link>
+        {controlLabel ? <Link data-safety-control-link href={productHref(presentation, CONTROL_PATHS.hub)}>{controlLabel}</Link> : null}
       </nav>
     </article>
   );

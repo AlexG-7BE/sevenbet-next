@@ -51,6 +51,8 @@ export type ControlSharedMessages = Readonly<{
   relatedHeading: string;
   /** The link to the hub from other pages (/10-steps, /pause-plan, /responsible-gambling). */
   hubLink: string;
+  /** The same link where the reader has just read something else: the pause plan, Responsible Gambling. */
+  moreLink: string;
   start: Readonly<{ heading: string; body: string; cta: string }>;
   /** The national self-exclusion and helplines, for the box "when it already hurts". */
   help: readonly ControlLink[];
@@ -83,6 +85,7 @@ const shared: Readonly<Record<ControlLocale, ControlSharedMessages>> = {
     faqHeading: "Questions people ask",
     relatedHeading: "More straight answers",
     hubLink: "Questions first? Straight answers about gambling control",
+    moreLink: "More straight answers about gambling control",
     start: {
       heading: "Start with step 1",
       body: "Free and private. You need no account to begin; you create one only when you want to save your Starting Point and carry on.",
@@ -104,6 +107,7 @@ const shared: Readonly<Record<ControlLocale, ControlSharedMessages>> = {
     faqHeading: "Vanliga frågor",
     relatedHeading: "Fler raka svar",
     hubLink: "Frågor först? Raka svar om kontroll över spelet",
+    moreLink: "Fler raka svar om kontroll över spelet",
     start: {
       heading: "Börja med steg 1",
       body: "Gratis och privat. Du behöver inget konto för att börja; ett konto skapar du först när du vill spara din startpunkt och fortsätta.",
@@ -123,6 +127,7 @@ const shared: Readonly<Record<ControlLocale, ControlSharedMessages>> = {
     faqHeading: "Ofte stillede spørgsmål",
     relatedHeading: "Flere klare svar",
     hubLink: "Spørgsmål først? Klare svar om styr på spillet",
+    moreLink: "Flere klare svar om styr på spillet",
     start: {
       heading: "Start med trin 1",
       body: "Gratis og privat. Du behøver ingen konto for at begynde; en konto opretter du først, når du vil gemme dit udgangspunkt og fortsætte.",
@@ -232,8 +237,8 @@ export function controlSharedMessages(locale: SupportedLocale): ControlSharedMes
 }
 
 /** The hub link's label in the visitor's own language, or null where the hub reads English. */
-export function controlHubLinkLabel(locale: SupportedLocale): string | null {
-  return controlLocale(locale) === locale ? shared[locale as ControlLocale].hubLink : null;
+export function controlHubLinkLabel(locale: SupportedLocale, kind: "hubLink" | "moreLink" = "hubLink"): string | null {
+  return controlLocale(locale) === locale ? shared[locale as ControlLocale][kind] : null;
 }
 
 export function gamblingControlHubMessages(locale: SupportedLocale): ControlHubMessages {
