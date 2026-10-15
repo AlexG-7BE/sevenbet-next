@@ -7,7 +7,8 @@ import { PAUSE_HUB_CATEGORY, pauseHubSelection } from "../lib/articles/pause-hub
 import { pausePlanLocale, pausePlanMessages } from "../lib/i18n/static-pages/pause-plan";
 import { publicRoutePolicy } from "../lib/market/routing";
 import { coreRoutes } from "../lib/site";
-import { PAUSE_PERIODS, PLAN_DAYS, addMonths, dayAfter, parseIsoDate, pauseEndDate, pausePeriod, planDates, toIsoDate } from "../lib/tools/pause-plan";
+import { PAUSE_REGISTERS, parseCarriedPauseDate } from "../lib/tools/pause-date-carry";
+import { LETTER_REGISTERS, PAUSE_PERIODS, PLAN_DAYS, addMonths, dayAfter, letterRegister, parseIsoDate, pauseEndDate, pausePeriod, planDates, toIsoDate, type PauseRegister } from "../lib/tools/pause-plan";
 
 test("a ten-day Spelpaus registered on the 12th covers the 12th to the 21st; the plan is for the 22nd", () => {
   const start = parseIsoDate("2026-10-12");
@@ -34,13 +35,53 @@ test("a 24-hour ROFUS pause is one day, and month-long pauses keep to the calend
   assert.equal(parseIsoDate("12.10.2026"), null);
 });
 
+test("GAMSTOP minimum periods keep to the calendar, and a GAMSTOP date carries no letter", () => {
+  // Founder, 15 October 2026: the English page speaks first to Great Britain.
+  const start = parseIsoDate("2026-10-15")!;
+  assert.deepEqual(PAUSE_PERIODS.gamstop.map((period) => period.id), ["6m", "1y", "5y", "5y-renew"]);
+  const sixMonths = pauseEndDate(start, pausePeriod("gamstop", "6m")!);
+  assert.equal(toIsoDate(sixMonths), "2027-04-14");
+  assert.equal(toIsoDate(dayAfter(sixMonths)), "2027-04-15");
+  assert.equal(toIsoDate(pauseEndDate(start, pausePeriod("gamstop", "1y")!)), "2027-10-14");
+  assert.equal(toIsoDate(pauseEndDate(start, pausePeriod("gamstop", "5y")!)), "2031-10-14");
+  assert.ok(PAUSE_PERIODS.gamstop.every((period) => !period.openEnded), "every GAMSTOP period has a date");
+  // The letters know Spelpaus and ROFUS only (their register is a database value).
+  assert.deepEqual([...LETTER_REGISTERS], [...PAUSE_REGISTERS], "the tool and the cookie know the same registers");
+  assert.equal(letterRegister("gamstop"), null);
+  assert.equal(letterRegister("spelpaus"), "spelpaus");
+  assert.equal(letterRegister("rofus"), "rofus");
+  assert.equal(parseCarriedPauseDate("gamstop.2026-10-20", new Date("2026-10-15T12:00:00Z")), null);
+});
+
+test("the English page is the GAMSTOP plan: it never says the block lifts by itself", () => {
+  const messages = pausePlanMessages("en-GB");
+  assert.equal(messages.register, "both");
+  assert.deepEqual(Object.keys(messages.registers), ["gamstop", "spelpaus", "rofus"], "GAMSTOP is the first choice");
+  assert.equal(messages.hubTag, "GAMSTOP");
+  const gamstop = messages.registers.gamstop!;
+  assert.equal(gamstop.name, "GAMSTOP");
+  assert.match(gamstop.whatHappens, /does not contact you/);
+  assert.match(gamstop.whatHappens, /seven years/);
+  assert.match(gamstop.whatHappens, /0800 138 6518/);
+  assert.match(gamstop.dayAfterLabel ?? "", /ask GAMSTOP to lift it/);
+  assert.doesNotMatch(`${gamstop.whatHappens} ${gamstop.dayAfterLabel} ${gamstop.icsTitle}`, /work again|reopen|reactivated/, "GAMSTOP never lifts by itself");
+  assert.match(gamstop.periodNotes?.["5y-renew"]?.note ?? "", /last six months/);
+  assert.match(messages.titleLead, /GAMSTOP/);
+  assert.match(messages.dayEleven.body, /You don't have to quit\. You have to be in control\./);
+  assert.ok(messages.support.some((line) => line.href === "https://www.gamcare.org.uk/" && line.label.includes("0808 8020 133")));
+  assert.match(JSON.stringify(messages.faq), /not on GAMSTOP/);
+  const tool = readFileSync("app/(public)/pause-plan/PausePlanTool.tsx", "utf8");
+  assert.match(tool, /registerMessages\?\.icsTitle \?\? ics\.title/);
+  assert.match(tool, /periodNote\?\.dayAfterLabel \?\? registerMessages\?\.dayAfterLabel \?\? messages\.dayAfterLabel/);
+});
+
 test("Swedish, Danish and English copy cover every period and all ten days", () => {
   for (const locale of ["sv-SE", "da-DK", "en-GB"] as const) {
     const messages = pausePlanMessages(locale);
     assert.equal(messages.days.length, PLAN_DAYS, locale);
     assert.ok(messages.faq.length >= 5, locale);
     assert.ok(messages.support.length >= 2, locale);
-    const registers = messages.register === "both" ? (["spelpaus", "rofus"] as const) : [messages.register];
+    const registers = messages.register === "both" ? (Object.keys(messages.registers) as PauseRegister[]) : [messages.register];
     for (const register of registers) {
       const copy = messages.registers[register];
       assert.ok(copy, `${locale} ${register}`);
@@ -74,7 +115,7 @@ test("the pause plan is an ordinary landing page: it changes nothing in the menu
   // and an address the person leaves in the email field. Both live in one component that the
   // tool renders only under the switch; tests/pause-letters.test.ts pins the rest.
   const letters = readFileSync("app/(public)/pause-plan/PausePlanLetters.tsx", "utf8");
-  assert.match(tool, /\{letters \? <PausePlanLetters /);
+  assert.match(tool, /\{letters && lettersRegister \? <PausePlanLetters /);
   assert.match(tool, /letters = false/);
   assert.equal(letters.match(/document\.cookie = /g)?.length, 1);
   assert.equal(letters.match(/fetch\(/g)?.length, 1);
@@ -105,7 +146,9 @@ test("the pause plan is the hub of the guides for a person on a pause", () => {
   assert.deepEqual(pauseHubSelection(published, "Spelpaus").map((article) => article.slug), ["hava-spelpaus", "spela-under-spelpaus"], "the register's name as a tag, protected guides only, newest first");
   assert.deepEqual(pauseHubSelection(published, " spelpaus ").map((article) => article.slug), ["hava-spelpaus", "spela-under-spelpaus"], "case and spaces do not matter");
   assert.deepEqual(pauseHubSelection(published, "ROFUS"), []);
-  assert.deepEqual(pauseHubSelection(published, ""), [], "the English page speaks about both registers and lists nothing");
+  assert.deepEqual(pauseHubSelection(published, ""), [], "no tag, no list");
+  const english = [guide("cancel-gamstop-early", "responsible-gambling", ["GAMSTOP", "Self-exclusion"]), guide("self-exclusion-and-gambling-blocks", "responsible-gambling", ["Self-exclusion"])];
+  assert.deepEqual(pauseHubSelection(english, pausePlanMessages("en-GB").hubTag ?? "").map((article) => article.slug), ["cancel-gamstop-early"], "the English page lists the GAMSTOP guides");
   assert.equal(pauseHubSelection(published, "Spelpaus", 1).length, 1);
   assert.equal(PAUSE_HUB_CATEGORY, "responsible-gambling");
 
