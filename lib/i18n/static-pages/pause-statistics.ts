@@ -62,7 +62,7 @@ const sv: PauseStatisticsMessages = {
   },
   periods: {
     heading: "Perioderna",
-    body: "10 dagar (sedan juli 2026, den första ändringen sedan 2019), 1 månad, 3 månader, 6 månader eller tills vidare, som innebär minst 12 månader. En avstängning kan inte ångras. När perioden är slut aktiveras spelkontona automatiskt om personen inte registrerar sig igen. Spelpaus gäller bara spelbolag med svensk licens.",
+    body: "10 dagar (sedan den 29 juni 2026, den första ändringen sedan 2019), 1 månad, 3 månader, 6 månader eller tills vidare, som innebär minst 12 månader. En avstängning kan inte ångras. När perioden är slut aktiveras spelkontona automatiskt om personen inte registrerar sig igen. Spelpaus gäller bara spelbolag med svensk licens.",
   },
   unknown: {
     heading: "Det ingen publicerar",
@@ -98,7 +98,7 @@ const sv: PauseStatisticsMessages = {
       { label: "Spelpaus.se", href: "https://www.spelpaus.se/" },
       { label: "Spelinspektionens årsredovisning 2025, refererad av Gambling Insider", href: "https://www.gamblinginsider.com/se/nyheter/101024/spelinspektionen-arsredovisning-2025-spelmarknad" },
       { label: "Kvartalsstatistik Q1 2026, refererad av Gambling Insider", href: "https://www.gamblinginsider.com/se/nyheter/102109/svenska-spelmarknaden-q1-2026-omsattning-spelpaus" },
-      { label: "10-dagarsperioden, CasinoBeats 1 juli 2026", href: "https://casinobeats.com/se/2026/07/01/spelpaus-infor-10-dagars-avstangning/" },
+      { label: "Spelinspektionen: 10 dagar på Spelpaus.se, 29 juni 2026", href: "https://www.spelinspektionen.se/nyhetsarkiv/nu-kan-du-stanga-av-dig-fran-spel-i-10-dagar-pa-spelpaus.se/" },
     ],
   },
   homeLabel: "Hem",
@@ -201,7 +201,7 @@ const en: PauseStatisticsMessages = {
   },
   periods: {
     heading: "The periods",
-    body: "Spelpaus: 10 days (since July 2026, the first change since 2019), 1, 3 or 6 months, or until further notice (12 months minimum); cannot be cancelled; accounts reactivate automatically. ROFUS: a 24-hour pause, 1, 3 or 6 months, or permanent exclusion; a temporary exclusion cannot be lifted early. Neither covers unlicensed sites.",
+    body: "Spelpaus: 10 days (since 29 June 2026, the first change since 2019), 1, 3 or 6 months, or until further notice (12 months minimum); cannot be cancelled; accounts reactivate automatically. ROFUS: a 24-hour pause, 1, 3 or 6 months, or permanent exclusion; a temporary exclusion cannot be lifted early. Neither covers unlicensed sites.",
   },
   unknown: {
     heading: "What nobody publishes",
@@ -244,6 +244,7 @@ const en: PauseStatisticsMessages = {
     heading: "Sources",
     items: [
       { label: "Spelinspektionen: statistics", href: "https://www.spelinspektionen.se/om-oss/statistik/" },
+      { label: "Spelinspektionen: the 10-day period on Spelpaus.se, 29 June 2026", href: "https://www.spelinspektionen.se/nyhetsarkiv/nu-kan-du-stanga-av-dig-fran-spel-i-10-dagar-pa-spelpaus.se/" },
       { label: "Spelpaus.se", href: "https://www.spelpaus.se/" },
       { label: "Spillemyndigheden", href: "https://www.spillemyndigheden.dk/" },
       { label: "ROFUS", href: "https://www.rofus.nu/" },

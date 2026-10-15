@@ -105,9 +105,15 @@ test("catalog and logo build verification are PostgreSQL-enforced read-only path
   const safeOffer = read("lib/casino-offer-corpus/safe-offer-corpus.ts");
   const safeOfferVerify = safeOffer.slice(safeOffer.indexOf("export async function verifySafeOfferCorpusInTransaction"));
   const logo = read("scripts/logo-only-media-build-preflight.ts");
+  const releaseVerification = read("lib/db/release-verification.ts");
 
-  assert.match(catalogVerify, /SET TRANSACTION READ ONLY/);
-  assert.match(catalogVerify, /SHOW transaction_read_only/);
+  // Both verifiers run inside the shared read-only snapshot, which PostgreSQL enforces before any check.
+  assert.match(releaseVerification, /SET TRANSACTION READ ONLY/);
+  assert.match(releaseVerification, /SHOW transaction_read_only/);
+  assert.match(releaseVerification, /TransactionIsolationLevel\.RepeatableRead/);
+  assert.doesNotMatch(releaseVerification, directBusinessMutation);
+  assert.doesNotMatch(releaseVerification, mutatingSql);
+  assert.match(catalogVerify, /runReadOnlyReleaseVerification\(\{/);
   assert.match(catalogVerify, /verifySafeOfferCorpusInTransaction\(transaction\)/);
   assert.match(catalogVerify, /Founder score\/order mismatch|score mismatch/);
   assert.match(catalogVerify, /is not published/);
@@ -121,10 +127,32 @@ test("catalog and logo build verification are PostgreSQL-enforced read-only path
   assert.doesNotMatch(safeOfferVerify, directBusinessMutation);
   assert.doesNotMatch(safeOfferVerify, mutatingSql);
 
-  assert.match(logo, /SET TRANSACTION READ ONLY/);
-  assert.match(logo, /SHOW transaction_read_only/);
+  assert.match(logo, /runReadOnlyReleaseVerification\(\{/);
   assert.doesNotMatch(logo, directBusinessMutation);
   assert.doesNotMatch(logo, mutatingSql);
+});
+
+test("catalog and logo build verification read through the direct binding, not the site's pooled endpoint", () => {
+  // 14–15 October 2026: the pooled endpoint stalled the logo step past its 25 s query bound in five
+  // Production builds while the direct-binding preflight before it finished normally.
+  const catalog = read("scripts/casino-real-catalog-03.ts");
+  const catalogVerify = catalog.slice(
+    catalog.indexOf("async function verifyState"),
+    catalog.indexOf("async function main"),
+  );
+  const logo = read("scripts/logo-only-media-build-preflight.ts");
+  const releaseVerification = read("lib/db/release-verification.ts");
+
+  assert.match(releaseVerification, /createCasinoMarket0025AdminClient\(\)/);
+  assert.doesNotMatch(releaseVerification, /@\/lib\/db\/prisma"/);
+  assert.doesNotMatch(logo, /@\/lib\/db\/prisma"/);
+  assert.doesNotMatch(catalogVerify, /\bprisma\./);
+  for (const source of [logo, catalog]) {
+    assert.match(source, /exitWhenOutputIsWritten/);
+  }
+  // Only a failure to reach or hear from the database is repeated, a bounded number of times.
+  assert.match(releaseVerification, /RELEASE_VERIFICATION_ATTEMPTS = 3/);
+  assert.match(releaseVerification, /attempt >= attempts \|\| !isTransientReleaseVerificationFailure\(error\)/);
 });
 
 test("Vercel schema and compatibility preflight has no migration or business-data writer", () => {

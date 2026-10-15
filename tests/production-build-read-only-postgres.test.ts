@@ -21,7 +21,7 @@ function assertDisposableDatabase(value: string | undefined) {
   }
 }
 
-function executeScript(script: string, mode: string) {
+function executeScript(script: string, mode: string, overrides: Record<string, string> = {}) {
   return spawnSync(
     process.execPath,
     ["--import", "tsx", script, mode],
@@ -33,13 +33,14 @@ function executeScript(script: string, mode: string) {
         CI: "true",
         VERCEL_ENV: "production",
         PRISMA_INTERACTIVE_TRANSACTION_TIMEOUT_MS: "30000",
+        ...overrides,
       },
     },
   );
 }
 
-function runScript(script: string, mode: string) {
-  const result = executeScript(script, mode);
+function runScript(script: string, mode: string, overrides: Record<string, string> = {}) {
+  const result = executeScript(script, mode, overrides);
   assert.equal(result.status, 0, [result.stdout, result.stderr].filter(Boolean).join("\n"));
   return result.stdout;
 }
@@ -141,6 +142,12 @@ test("Production-mode catalog and logo verifiers leave every application table b
     const catalogOutput = runScript("scripts/casino-real-catalog-03.ts", "production-verify");
     assert.match(logoOutput, /"verified":true/);
     assert.match(catalogOutput, /"verified": true/);
+
+    // Both verifiers read through the direct binding (DIRECT_URL), so the runtime pooled URL, here
+    // a port nobody listens on, cannot fail them (Production builds of 14–15 October 2026).
+    const deadRuntimeBinding = { DATABASE_URL: "postgresql://invalid:invalid@127.0.0.1:1/unreachable_ci?socket_timeout=25" };
+    assert.match(runScript("scripts/logo-only-media-build-preflight.ts", "production-verify", deadRuntimeBinding), /"verified":true/);
+    assert.match(runScript("scripts/casino-real-catalog-03.ts", "production-verify", deadRuntimeBinding), /"verified": true/);
 
     const after = await applicationTableDigests(prisma);
     assert.deepEqual(after, before);

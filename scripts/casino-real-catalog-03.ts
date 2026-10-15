@@ -16,6 +16,7 @@ import {
 } from "@/lib/casino-offer-corpus/safe-offer-corpus";
 import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
 import prisma from "@/lib/db/prisma";
+import { exitWhenOutputIsWritten, runReadOnlyReleaseVerification } from "@/lib/db/release-verification";
 import { casinoService } from "@/lib/services/casino.service";
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 
@@ -374,84 +375,81 @@ async function syncCasino(entry: CatalogEntry, actorId: string) {
 }
 
 async function verifyState(corpus: CatalogCorpus) {
-  await prisma.$transaction(async (transaction) => {
-    await transaction.$executeRawUnsafe("SET TRANSACTION READ ONLY");
-    const [transactionSafety] = await transaction.$queryRawUnsafe<Array<{ transaction_read_only: string }>>(
-      "SHOW transaction_read_only",
-    );
-    if (transactionSafety?.transaction_read_only !== "on") {
-      throw new Error(`${RELEASE}: PostgreSQL did not enforce the read-only verification transaction`);
-    }
-    await assertProductionSchema(transaction);
-
-    const state = [];
-    for (const entry of corpus.entries) {
-      const casino = await transaction.casino.findUnique({
-        where: { slug: entry.slug },
-        include: {
-          countries: {
-            select: {
-              countryCode: true,
-              availability: true,
-              paymentMethods: { select: { id: true } },
-              gameProviders: { select: { id: true } },
-              gameCategories: { select: { id: true } },
-              bonuses: { select: { id: true } },
-            },
-          },
-          seo: true,
-          editorialReview: { select: { status: true, publishedRevisionId: true } },
-          versions: { where: { status: "PUBLISHED" }, orderBy: { version: "desc" }, take: 1 },
-        },
-      });
-      if (!casino) throw new Error(`${RELEASE}: ${entry.slug} missing after release`);
-      if (casino.status !== "PUBLISHED" || casino.domainPublicationStatus !== "PUBLISHED") throw new Error(`${RELEASE}: ${entry.slug} is not published`);
-      if (casino.editorScore !== entry.score) throw new Error(`${RELEASE}: ${entry.slug} score mismatch`);
-      if (casino.editorialReview?.status !== "PUBLISHED" || !casino.editorialReview.publishedRevisionId) throw new Error(`${RELEASE}: ${entry.slug} review is not published`);
-      const actualMarkets = casino.countries.map((market) => market.countryCode).sort();
-      for (const market of entry.markets) if (!actualMarkets.includes(market)) throw new Error(`${RELEASE}: ${entry.slug} missing market ${market}`);
-      if (entry.slug === "rizk" && actualMarkets.includes("NZ")) throw new Error(`${RELEASE}: Rizk NZ unexpectedly entered runtime publication`);
-      const activeRedirects = await transaction.affiliateRedirectSlug.count({ where: { casinoId: casino.id, active: true, archivedAt: null } });
-      const activeMarketActivations = await transaction.marketActivation.count({ where: {
-        casinoId: casino.id,
-        desiredState: "ACTIVE",
-        status: "ACTIVE",
-        routeVerificationStatus: "HEALTHY",
-      } });
-      if (entry.slug === "starcasino") {
-        if (casino.seo?.robots !== "noindex,follow") throw new Error(`${RELEASE}: StarCasino must remain noindex informational-only`);
-        if (activeMarketActivations !== 0) throw new Error(`${RELEASE}: StarCasino must not gain an active MarketActivation`);
-      }
-      const snapshot = casino.versions[0]?.snapshot as Prisma.JsonObject | undefined;
-      if (!snapshot || snapshot.editorScore !== entry.score) throw new Error(`${RELEASE}: ${entry.slug} latest published snapshot is stale`);
-      const snapshotCountries = Array.isArray(snapshot.countries) ? snapshot.countries as Prisma.JsonObject[] : [];
-      const snapshotBonuses = snapshotCountries.flatMap((market) => Array.isArray(market.bonuses) ? market.bonuses as Prisma.JsonObject[] : []);
-      if (snapshotBonuses.length !== casino.countries.reduce((sum, market) => sum + market.bonuses.length, 0)) {
-        throw new Error(`${RELEASE}: ${entry.slug} published bonus snapshot count mismatch`);
-      }
-      if (snapshotBonuses.some((bonus) => bonus.status !== "PUBLISHED" || bonus.offerStatus !== "ACTIVE")) {
-        throw new Error(`${RELEASE}: ${entry.slug} contains a non-public bonus in its published snapshot`);
-      }
-      state.push({
-        slug: entry.slug,
-        score: casino.editorScore,
-        markets: actualMarkets,
-        payments: casino.countries.reduce((sum, market) => sum + market.paymentMethods.length, 0),
-        providers: casino.countries.reduce((sum, market) => sum + market.gameProviders.length, 0),
-        categories: casino.countries.reduce((sum, market) => sum + market.gameCategories.length, 0),
-        bonuses: casino.countries.reduce((sum, market) => sum + market.bonuses.length, 0),
-        activeRedirects,
-        activeMarketActivations,
-        robots: casino.seo?.robots ?? null,
-      });
-    }
-    const safeOfferCorpus = await verifySafeOfferCorpusInTransaction(transaction);
-    console.info(JSON.stringify({ release: RELEASE, verified: true, state, safeOfferCorpus }, null, 2));
-  }, {
-    isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+  // A read-only snapshot over the direct binding, as in scripts/vercel-build-preflight.ts, not the
+  // pooled endpoint the site uses (lib/db/release-verification.ts, 15 October 2026).
+  const verified = await runReadOnlyReleaseVerification({
+    release: RELEASE,
     maxWait: 10_000,
     timeout: 60_000,
+    verify: async (transaction) => {
+      await assertProductionSchema(transaction);
+
+      const state = [];
+      for (const entry of corpus.entries) {
+        const casino = await transaction.casino.findUnique({
+          where: { slug: entry.slug },
+          include: {
+            countries: {
+              select: {
+                countryCode: true,
+                availability: true,
+                paymentMethods: { select: { id: true } },
+                gameProviders: { select: { id: true } },
+                gameCategories: { select: { id: true } },
+                bonuses: { select: { id: true } },
+              },
+            },
+            seo: true,
+            editorialReview: { select: { status: true, publishedRevisionId: true } },
+            versions: { where: { status: "PUBLISHED" }, orderBy: { version: "desc" }, take: 1 },
+          },
+        });
+        if (!casino) throw new Error(`${RELEASE}: ${entry.slug} missing after release`);
+        if (casino.status !== "PUBLISHED" || casino.domainPublicationStatus !== "PUBLISHED") throw new Error(`${RELEASE}: ${entry.slug} is not published`);
+        if (casino.editorScore !== entry.score) throw new Error(`${RELEASE}: ${entry.slug} score mismatch`);
+        if (casino.editorialReview?.status !== "PUBLISHED" || !casino.editorialReview.publishedRevisionId) throw new Error(`${RELEASE}: ${entry.slug} review is not published`);
+        const actualMarkets = casino.countries.map((market) => market.countryCode).sort();
+        for (const market of entry.markets) if (!actualMarkets.includes(market)) throw new Error(`${RELEASE}: ${entry.slug} missing market ${market}`);
+        if (entry.slug === "rizk" && actualMarkets.includes("NZ")) throw new Error(`${RELEASE}: Rizk NZ unexpectedly entered runtime publication`);
+        const activeRedirects = await transaction.affiliateRedirectSlug.count({ where: { casinoId: casino.id, active: true, archivedAt: null } });
+        const activeMarketActivations = await transaction.marketActivation.count({ where: {
+          casinoId: casino.id,
+          desiredState: "ACTIVE",
+          status: "ACTIVE",
+          routeVerificationStatus: "HEALTHY",
+        } });
+        if (entry.slug === "starcasino") {
+          if (casino.seo?.robots !== "noindex,follow") throw new Error(`${RELEASE}: StarCasino must remain noindex informational-only`);
+          if (activeMarketActivations !== 0) throw new Error(`${RELEASE}: StarCasino must not gain an active MarketActivation`);
+        }
+        const snapshot = casino.versions[0]?.snapshot as Prisma.JsonObject | undefined;
+        if (!snapshot || snapshot.editorScore !== entry.score) throw new Error(`${RELEASE}: ${entry.slug} latest published snapshot is stale`);
+        const snapshotCountries = Array.isArray(snapshot.countries) ? snapshot.countries as Prisma.JsonObject[] : [];
+        const snapshotBonuses = snapshotCountries.flatMap((market) => Array.isArray(market.bonuses) ? market.bonuses as Prisma.JsonObject[] : []);
+        if (snapshotBonuses.length !== casino.countries.reduce((sum, market) => sum + market.bonuses.length, 0)) {
+          throw new Error(`${RELEASE}: ${entry.slug} published bonus snapshot count mismatch`);
+        }
+        if (snapshotBonuses.some((bonus) => bonus.status !== "PUBLISHED" || bonus.offerStatus !== "ACTIVE")) {
+          throw new Error(`${RELEASE}: ${entry.slug} contains a non-public bonus in its published snapshot`);
+        }
+        state.push({
+          slug: entry.slug,
+          score: casino.editorScore,
+          markets: actualMarkets,
+          payments: casino.countries.reduce((sum, market) => sum + market.paymentMethods.length, 0),
+          providers: casino.countries.reduce((sum, market) => sum + market.gameProviders.length, 0),
+          categories: casino.countries.reduce((sum, market) => sum + market.gameCategories.length, 0),
+          bonuses: casino.countries.reduce((sum, market) => sum + market.bonuses.length, 0),
+          activeRedirects,
+          activeMarketActivations,
+          robots: casino.seo?.robots ?? null,
+        });
+      }
+      const safeOfferCorpus = await verifySafeOfferCorpusInTransaction(transaction);
+      return { state, safeOfferCorpus };
+    },
   });
+  console.info(JSON.stringify({ release: RELEASE, verified: true, ...verified }, null, 2));
 }
 
 async function main() {
@@ -480,4 +478,5 @@ void main().catch((error) => {
   process.exitCode = 1;
 }).finally(async () => {
   await prisma.$disconnect();
+  exitWhenOutputIsWritten();
 });

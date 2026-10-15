@@ -332,14 +332,22 @@ test("held commercial resolution times out once and recovers without replacing o
   });
   const page = await context.newPage();
   let homeRefreshes = 0;
+  const isHomeRefresh = (request: { url(): string; headers(): Record<string, string> }) => (
+    new URL(request.url()).pathname === "/en"
+    && request.headers().rsc === "1"
+    && request.headers()["next-router-prefetch"] !== "1"
+  );
   page.on("request", (request) => {
-    if (
-      new URL(request.url()).pathname === "/en"
-      && request.headers().rsc === "1"
-      && request.headers()["next-router-prefetch"] !== "1"
-    ) {
-      homeRefreshes += 1;
-    }
+    if (isHomeRefresh(request)) homeRefreshes += 1;
+  });
+  // The one refresh fires 750 ms after the timeout and the server waits 1.5 s again, so on a slow
+  // runner it could time out a second time while the table is still locked. Holding it in the
+  // browser until the lock is gone keeps the test about recovery, not about runner speed.
+  let openRefresh!: () => void;
+  const refreshMayLeave = new Promise<void>((resolve) => { openRefresh = resolve; });
+  await page.route("**/*", async (route) => {
+    if (isHomeRefresh(route.request())) await refreshMayLeave;
+    await route.continue();
   });
 
   try {
@@ -364,6 +372,7 @@ test("held commercial resolution times out once and recovers without replacing o
     commercialHold.assertHeld();
 
     await commercialHold.release();
+    openRefresh();
     await expect(menu.locator('a[data-navigation-href="/best-offers"]')).toHaveAttribute("href", "/en/best-offers");
     await expect(menu.locator('a[data-navigation-href="/bonuses"]')).toHaveAttribute("href", "/en/bonuses");
     await expect(page.locator('[data-commercial-navigation-timed-out]')).toHaveCount(0);
@@ -379,6 +388,7 @@ test("held commercial resolution times out once and recovers without replacing o
 
   } finally {
     await commercialHold.release();
+    openRefresh();
     await context.close();
   }
 });
@@ -665,7 +675,10 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
   const mobileNavigation = page.locator("#public-mobile-navigation");
   await expect(mobileNavigation).toBeVisible();
   await page.evaluate(() => {
-    const startedAt = performance.now();
+    // Counted from the press itself, so the driver's own round trips before the tap are not
+    // charged to the page.
+    let startedAt = performance.now();
+    document.addEventListener("pointerdown", () => { startedAt = performance.now(); }, { capture: true, once: true });
     (window as NavigationTimingWindow).__stage2MobileFeedbackPaint = new Promise((resolve) => {
       const observer = new MutationObserver(() => {
         if (!document.querySelector('[data-navigation-pending-destination="Bonuses"]')) return;
