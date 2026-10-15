@@ -28,3 +28,11 @@ The server-side pipeline that applied these rules was retired on 30 September 20
 
 - `LEARN_CONTENT_LOCALES=en,sv,da,de` was set on Vercel Production with Founder approval before the #428 Production deployment.
 - `learn_apply` creates only; existing guides get no hero image or Programme link block through the agents.
+
+## Amendment, 15 October 2026: Swedish and Danish sports guides
+
+**Decision authority:** explicit Founder instructions, 15 October 2026 (question tool): add sports betting for Sweden and Denmark ("Узко: SE+DK"), and let the sports guides lead to the Betsson and NordicBet reviews ("На обзоры Betsson/NordicBet").
+
+- `sports-betting-basics` guides may be written natively in Swedish and Danish; the earlier "never localized" rule for this category no longer applies to `sv` and `da`.
+- Those guides may name Betsson and NordicBet, the only partners in SE/DK with a sportsbook, and link to their review pages (`/{lang}/casino/betsson`, `/{lang}/casino/nordicbet`). The review shows the sports welcome offer beside the partner button only to visitors in that market (`lib/casino-profile/sport-offer.ts`).
+- Unchanged: no `/r/` or other click routes, no tracking parameters, no rankings, no urgency, and no other operator names. Bonus amounts stay on the review page, which carries the check date, rather than in create-only guides. Every other rule above stands.

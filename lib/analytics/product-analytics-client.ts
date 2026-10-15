@@ -17,7 +17,7 @@ const EVENT_MARKER_PREFIX = "b4gamble:analytics:fired:v2:";
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 type ExistingOutboundPlacement = "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_OFFER_BLOCK" | "CASINO_COMPARE" | "OFFER_DETAIL" | "UNSPECIFIED"
   | "BEST_OFFERS_CARD" | "CASINO_COLLECTION_CARD" | "BONUS_CARD" | "CASINO_HERO" | "CASINO_OFFER_SECTION" | "CASINO_MOBILE_STICKY"
-  | "BONUS_TERMS" | "CASINO_OFFER_TERMS";
+  | "BONUS_TERMS" | "CASINO_OFFER_TERMS" | "CASINO_SPORT_OFFER";
 
 export type OutboundIntentContext =
   | { source: "CTA"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" }
