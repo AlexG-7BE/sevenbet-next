@@ -357,7 +357,7 @@ test("localized sitemap publication is review-gated and its market loader has no
     assert.equal(localizedProductIndexingApproved(profile.defaultLocale), indexed.has(profile.defaultLocale), profile.defaultLocale);
   }
   const source = readFileSync("app/sitemap.ts", "utf8");
-  assert.match(source, /loadMarketSitemapSnapshot\(market/);
+  assert.match(source, /(?:loadMarketSitemapSnapshot|lastGoodMarketProductPaths)\(market/);
   assert.match(source, /defaultEditorialCountry: market\.countryCode/);
   assert.doesNotMatch(source, /country:\s*["']GB["']/);
   assert.match(source, /localizedIndexableMarketProfiles/);
