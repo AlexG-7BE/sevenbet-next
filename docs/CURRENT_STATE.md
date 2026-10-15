@@ -43,6 +43,26 @@ three join "Programme and support", creators joins the trust column. Labels in a
 footer languages (`lib/i18n/public-shell-catalog.ts`); links follow the existing footer
 localisation. On the Home page the four links are hidden (`html:has([data-home-snap])`): its desktop screen paging measures the footer, and the frozen desktop Home keeps its footer height. Test: `tests/public-shell.test.ts` (`ci:structural`).
 
+## Sports offer on the Swedish and Danish Betsson and NordicBet reviews — in review
+
+Founder decisions, 15 October 2026 (question tool): add sports betting narrowly, Sweden and
+Denmark only ("Узко: SE+DK"), with no schema change; Swedish and Danish sports guides may name
+Betsson and NordicBet and link to their reviews (amendment to
+[LEARN-COMMERCIAL-LOCALIZED-2026-09-30](07_Decisions/LEARN-COMMERCIAL-LOCALIZED-2026-09-30.md)).
+Betsson and NordicBet are the only partners in SE/DK with a sportsbook, and Betsson Group
+Affiliates pays on sports and casino through the same tracking route.
+
+**Changed.** Inside the `#current-offer` section of `/sv/casino/{betsson,nordicbet}` and
+`/da/casino/{betsson,nordicbet}`, a sub-panel shows the brand's sports welcome offer as the
+alternative to the casino offer (one welcome offer per new customer, chosen at the first
+deposit), its key terms, the review's own partner button with placement
+`CTA_CASINO_SPORT_OFFER`, and a link to the operator's terms page
+(`lib/casino-profile/sport-offer.ts`). It renders only beside the partner button and only in the
+language's own market, so crawlers and visitors elsewhere see the page as before. Terms were read
+on 15 October 2026 from the operators' own campaign pages; they change, and the file carries the
+check date. No new section id, no migration. Test: `tests/casino-editorial-translations.test.ts`
+(`internationalisation:test`).
+
 ## Long Swedish and Danish casino reviews — in review
 
 Founder decision, 15 October 2026 (question tool): expand the reviews shown in Sweden and
