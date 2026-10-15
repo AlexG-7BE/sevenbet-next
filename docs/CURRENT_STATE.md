@@ -54,6 +54,28 @@ already saw. Used by `app/help/page.tsx`, `app/help/layout.tsx` and
 `app/(public)/responsible-gambling/page.tsx`. Test: `tests/first-wave-market-evidence.test.tsx`
 (`internationalisation:test`).
 
+## Search indexing: reviews only where the casino is licensed, two duplicate guides retired — in review
+
+**Founder decision, 15 October 2026 ("keep the pace of the pause guides, remove the ballast").**
+Branch `fix/indexing-ballast`:
+
+- A casino review is indexed in a language only where that language's market licenses the
+  casino in the licence register (RFC-054): en GB, sv SE, da DK, de DE
+  (`lib/seo/review-indexing.ts`). Other reviews stay published but answer `noindex, follow`,
+  leave the sitemap, llms.txt and IndexNow, and drop out of their siblings' hreflang. Against
+  the live sitemap of 15 October 2026 that is 62 of 108 reviews (en 8, sv 12, da 17, de 25); all
+  eleven Swedish and nine Danish in-depth reviews stay indexed. The rule reads the register,
+  not the visitor's market or the hour, so robots never change with Germany's advertising
+  window.
+- Two pause guides answered the same search as a newer one: `hava-spelpaus` moves permanently
+  to `ta-bort-spelpaus` and `fortryde-rofus` to `melde-sig-ud-af-rofus`
+  (`lib/articles/retired-articles.ts`; Swedes search "ta bort", Danes "melde sig ud"). The
+  redirect fires once each guide is archived in the admin. Five queued topics with the same
+  intent as a published guide are marked `merged` in the toolkit queue and are not written.
+- Every Monday a scheduled task reads Search Console and Bing and asks the fixed AI question
+  set (content repo `research/aeo/`); it recommends lowering the guides to one a day per
+  language only if the "Discovered – currently not indexed" queue grows two weeks running.
+
 ## Search indexing: guides link to their neighbours, guides announced in their own language — in review
 
 **DETECTED, Search Console, read 15 October 2026** (report last updated 9 October): 166

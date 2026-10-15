@@ -9,6 +9,7 @@ import {
   DEFAULT_MARKET_PROFILE,
   INDEXABLE_LANGUAGE_ROUTE_PROFILES,
   INITIAL_EUROPEAN_MARKET_PROFILES,
+  languageForLocale,
   marketIndexingApproved,
   marketProfileByLocale,
   publicMarketPath,
@@ -18,6 +19,7 @@ import { isLocalizedPublicDestination } from "@/lib/market/routing";
 import { localizedProductIndexingApproved } from "@/lib/market/product-context";
 import { PROGRAMME_ROUTES } from "@/lib/programme/presentation";
 import { bonusDirectoryIndexable } from "@/lib/seo/product-indexing";
+import { reviewIndexable } from "@/lib/seo/review-indexing";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -77,10 +79,14 @@ export async function loadMarketSitemapSnapshot(
   };
 }
 
-/** Published, indexable reviews: the ones the sitemap and llms.txt list. */
-export function indexableReviewCards<T extends Pick<PublicCasinoCardDto, "dataClassification" | "indexable">>(casinos: readonly T[]) {
+/**
+ * Published, indexable reviews: the ones the sitemap and llms.txt list. With a language, only the
+ * reviews of casinos licensed in that language's market (lib/seo/review-indexing.ts).
+ */
+export function indexableReviewCards<T extends Pick<PublicCasinoCardDto, "dataClassification" | "indexable" | "slug">>(casinos: readonly T[], language?: string) {
   return casinos
     .filter((casino) => casino.dataClassification === "PUBLISHED_RECORD" && casino.indexable !== false)
+    .filter((casino) => !language || reviewIndexable(casino.slug, language))
     .slice(0, 500);
 }
 
@@ -94,7 +100,7 @@ export function indexableMarketProductPaths(snapshot: Awaited<ReturnType<typeof 
     ...(bonusDirectoryIndexable(snapshot.bonuses) ? [prefix("/bonuses")] : []),
     ...(snapshot.bestOffers && snapshot.bestOffers.status !== "unavailable" && snapshot.bestOffers.inventoryMode === "PUBLISHED_ONLY" ? [prefix("/best-offers")] : []),
   ];
-  const casinoRoutes = indexableReviewCards(snapshot.casinos)
+  const casinoRoutes = indexableReviewCards(snapshot.casinos, languageForLocale(snapshot.market.defaultLocale))
     .map((casino) => ({
       url: absoluteUrl(prefix(`/casino/${casino.slug}`)),
       ...(casino.editorialUpdatedAt || casino.publishedAt

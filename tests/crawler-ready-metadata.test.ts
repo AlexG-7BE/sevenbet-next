@@ -9,6 +9,9 @@ import { indexableMarketProductPaths, indexableReviewCards } from "../app/sitema
 import { articleLanguageAlternates } from "../lib/articles/article-seo";
 import type { PublicArticle } from "../lib/articles/article-types";
 import { retiredArticleSuccessor } from "../lib/articles/retired-articles";
+import { REVIEW_INDEX_MARKETS, reviewIndexable, reviewLanguageAlternates } from "../lib/seo/review-indexing";
+import { DA_IN_DEPTH } from "../lib/casino-profile/in-depth/da";
+import { SV_IN_DEPTH } from "../lib/casino-profile/in-depth/sv";
 import { casinoProfileSchemas, casinoReviewMetadataCopy, trimAtWordBoundary } from "../lib/casino-profile/seo";
 import generatedPages from "../lib/final-handoff/generated-pages.json";
 import { transformLearnHandoff } from "../lib/final-handoff/transforms";
@@ -307,13 +310,39 @@ test("a guide missing in the visitor's language opens in English instead of a 40
   assert.ok(page.indexOf("if (english) redirect(") < page.indexOf("retiredArticleSuccessor(category, slug)"));
 });
 
-test("the retired odds guide moves permanently to its successor", () => {
+test("a review is indexed only in the languages whose market licenses the casino", () => {
+  // Founder, 15 October 2026: remove the ballast. 62 of 108 reviews led their readers to no offer.
+  assert.deepEqual(REVIEW_INDEX_MARKETS, { en: "GB", sv: "SE", da: "DK", de: "DE" });
+  assert.equal(reviewIndexable("turbonino", "de"), true);
+  assert.equal(reviewIndexable("betsson", "en"), false, "no UKGC licence");
+  assert.equal(reviewIndexable("betsson", "sv"), true);
+  assert.equal(reviewIndexable("betsson", "de"), false);
+  assert.equal(reviewIndexable("Betsson ", "da"), true, "slug case and spaces do not matter");
+  assert.equal(reviewIndexable("slotsmagic", "en"), true);
+  assert.equal(reviewIndexable("not-in-the-register", "en"), false, "no licence evidence, no index");
+  assert.equal(reviewIndexable("betsson", "es"), true, "other languages keep their own rules");
+  const alternates = { en: "https://b4gamble.com/en/casino/betsson", sv: "https://b4gamble.com/sv/casino/betsson", da: "https://b4gamble.com/da/casino/betsson", de: "https://b4gamble.com/de/casino/betsson", "x-default": "https://b4gamble.com/en/casino/betsson" };
+  assert.deepEqual(Object.keys(reviewLanguageAlternates("betsson", alternates)), ["sv", "da"], "x-default goes with the English review");
+  // Every in-depth Swedish or Danish review stays indexed in its language.
+  for (const [language, reviews] of [["sv", SV_IN_DEPTH], ["da", DA_IN_DEPTH]] as const) {
+    for (const slug of Object.keys(reviews)) assert.equal(reviewIndexable(slug, language), true, `${language} ${slug}`);
+  }
+  const page = read("app/(public)/casino/[slug]/page.tsx");
+  assert.match(page, /const indexable = reviewIndexable\(casino\.slug, presentation\.language\);/);
+  assert.match(page, /robots: indexable \|\| !robotsAllowIndexing\(base\.robots\) \? base\.robots : \{ index: false, follow: true \}/);
+  assert.match(page, /languageAlternates: reviewLanguageAlternates\(casino\.slug, productLanguageAlternates\(`\/casino\/\$\{casino\.slug\}`\)\)/);
+});
+
+test("retired guides move permanently to their successors", () => {
   assert.deepEqual(retiredArticleSuccessor("sports-betting-basics", "sports-betting-odds-basics"), {
     category: "sports-betting-basics",
     slug: "sportsbook-bonus-basics",
     path: "/learn/sports-betting-basics/sportsbook-bonus-basics",
   });
   assert.equal(retiredArticleSuccessor("casino-bonuses", "wagering-requirements"), null);
+  // Founder, 15 October 2026: two pause guides that answered the same search as a newer one.
+  assert.equal(retiredArticleSuccessor("responsible-gambling", "hava-spelpaus")?.path, "/learn/responsible-gambling/ta-bort-spelpaus");
+  assert.equal(retiredArticleSuccessor("responsible-gambling", "fortryde-rofus")?.path, "/learn/responsible-gambling/melde-sig-ud-af-rofus");
   assert.match(read("app/(public)/learn/[category]/[slug]/page.tsx"), /permanentRedirect\(/);
 });
 
@@ -471,7 +500,8 @@ test("the sitemap and llms.txt list the same published reviews", () => {
     { slug: "demo", name: "Demo", dataClassification: "DEMO_FIXTURE", indexable: true },
   ] as const;
   assert.deepEqual(indexableReviewCards(cards).map((card) => card.slug), ["alpha"]);
-  assert.match(read("app/llms.txt/route.ts"), /indexableReviewCards\(snapshot\.casinos\)/);
+  assert.match(read("app/llms.txt/route.ts"), /indexableReviewCards\(snapshot\.casinos, languageForLocale\(market\.defaultLocale\)\)/);
+  assert.match(read("app/sitemap.ts"), /indexableReviewCards\(snapshot\.casinos, languageForLocale\(snapshot\.market\.defaultLocale\)\)/);
 });
 
 test("IndexNow: a public key file, Production-only announcements and review URLs in every indexed language", async () => {
@@ -483,15 +513,17 @@ test("IndexNow: a public key file, Production-only announcements and review URLs
   assert.equal(indexNowEnabled({ VERCEL_ENV: "preview" }), false);
   assert.equal(indexNowEnabled({}), false);
   assert.equal(indexNowEnabled({ VERCEL_ENV: "production", INDEXNOW_DISABLED: "true" }), false);
-  assert.equal(announceChangedUrls(casinoReviewUrls("betsson"), {}), false);
+  assert.equal(announceChangedUrls(casinoReviewUrls("turbonino"), {}), false);
 
-  assert.deepEqual(casinoReviewUrls("betsson").map((url) => new URL(url).pathname), ["/en/casino/betsson", "/de/casino/betsson", "/sv/casino/betsson", "/da/casino/betsson"]);
+  assert.deepEqual(casinoReviewUrls("turbonino").map((url) => new URL(url).pathname), ["/en/casino/turbonino", "/de/casino/turbonino", "/sv/casino/turbonino", "/da/casino/turbonino"]);
+  // Founder, 15 October 2026: a review is announced only in the languages whose market licenses the casino.
+  assert.deepEqual(casinoReviewUrls("betsson").map((url) => new URL(url).pathname), ["/sv/casino/betsson", "/da/casino/betsson"]);
   assert.deepEqual(learnArticleUrls("casino-bonuses", "wagering-requirements").map((url) => new URL(url).pathname), ["/en/learn/casino-bonuses/wagering-requirements", "/en/learn"]);
   assert.deepEqual(learnArticleUrls("game-guides", "baccarat-spelregler", "sv-SE").map((url) => new URL(url).pathname), ["/sv/learn/game-guides/baccarat-spelregler", "/sv/learn"], "a Swedish guide is announced under /sv/, not /en/");
   assert.deepEqual(learnArticleUrls("game-guides", "baccarat-regler", "da-DK").map((url) => new URL(url).pathname), ["/da/learn/game-guides/baccarat-regler", "/da/learn"]);
   assert.deepEqual(learnArticleUrls("game-guides", "x", "xx-XX").map((url) => new URL(url).pathname), ["/en/learn/game-guides/x", "/en/learn"], "an unknown locale falls back to English");
 
-  const payload = indexNowPayload([...casinoReviewUrls("betsson"), "https://elsewhere.example/page", casinoReviewUrls("betsson")[0]]);
+  const payload = indexNowPayload([...casinoReviewUrls("turbonino"), "https://elsewhere.example/page", casinoReviewUrls("turbonino")[0]]);
   assert.equal(payload.key, INDEXNOW_KEY);
   assert.equal(payload.keyLocation, absoluteUrl(`/${INDEXNOW_KEY}.txt`));
   assert.equal(payload.urlList.length, 4, "same host only, no duplicates");
@@ -501,9 +533,9 @@ test("IndexNow: a public key file, Production-only announcements and review URLs
     sent.push(`${url} ${init?.body}`);
     return new Response(null, { status: 202 });
   }) as unknown as typeof fetch;
-  assert.deepEqual(await submitIndexNow(casinoReviewUrls("betsson"), { environment: { VERCEL_ENV: "preview" }, fetchImpl }), { submitted: 0, status: null });
+  assert.deepEqual(await submitIndexNow(casinoReviewUrls("turbonino"), { environment: { VERCEL_ENV: "preview" }, fetchImpl }), { submitted: 0, status: null });
   assert.equal(sent.length, 0);
-  assert.deepEqual(await submitIndexNow(casinoReviewUrls("betsson"), { environment: { VERCEL_ENV: "production" }, fetchImpl }), { submitted: 4, status: 202 });
+  assert.deepEqual(await submitIndexNow(casinoReviewUrls("turbonino"), { environment: { VERCEL_ENV: "production" }, fetchImpl }), { submitted: 4, status: 202 });
   assert.match(sent[0], /^https:\/\/api\.indexnow\.org\/indexnow /);
 
   // Publishing hooks announce what changed.
