@@ -18,6 +18,15 @@ export type PausePlanRegisterMessages = Readonly<{
   /** Labels by period id from lib/tools/pause-plan.ts. */
   periods: Readonly<Record<string, string>>;
   whatHappens: string;
+  /**
+   * A register whose block does not lift by itself (GAMSTOP) names its own result lines and
+   * calendar entry instead of the tool's "accounts work again".
+   */
+  endsLabel?: string;
+  dayAfterLabel?: string;
+  icsTitle?: string;
+  /** A period that ends differently (GAMSTOP auto-renewal) replaces the day-after line and the note. */
+  periodNotes?: Readonly<Record<string, Readonly<{ dayAfterLabel?: string; note: string }>>>;
 }>;
 
 export type PausePlanToolMessages = Readonly<{
@@ -53,9 +62,11 @@ export type PausePlanMessages = Readonly<{
   titleLead: string;
   titleEmphasis: string;
   intro: string;
-  /** Which register the page speaks about; "both" offers a choice. */
+  /** Which register the page speaks about; "both" offers a choice, the first register first. */
   register: PauseRegister | "both";
   registers: Readonly<Partial<Record<PauseRegister, PausePlanRegisterMessages>>>;
+  /** The tag that puts a guide on this page's list when the page offers a choice of registers. */
+  hubTag?: string;
   tool: PausePlanToolMessages;
   days: readonly PausePlanDay[];
   dayEleven: Readonly<{ heading: string; body: string; cta: string }>;
@@ -245,40 +256,65 @@ const da: PausePlanMessages = {
   ics: { download: "Læg dagen efter i kalenderen", title: "Dagen efter – kontiene åbner, mine regler gælder", description: "Beløbet før appen. Tiden før appen. Én person ved det. Planen: https://b4gamble.com/da/pause-plan" },
 };
 
+/**
+ * English speaks first to Great Britain (Founder, 15 October 2026: the GAMSTOP version of the
+ * plan), and keeps Spelpaus and ROFUS as choices for every other reader of the English page.
+ * GAMSTOP facts read at info.gamstop.co.uk on 15 October 2026: six months, one year, five years or
+ * five years with auto-renewal; no early removal; no reminder when the minimum ends, and the block
+ * stays a further seven years unless the person asks; removal by chat or 0800 138 6518 (10am to
+ * 8pm), then a 24-hour cooling-off; online only. National Gambling Helpline (GamCare) 0808 8020
+ * 133, 24 hours a day (gamcare.org.uk, read 15 October 2026).
+ */
 const en: PausePlanMessages = {
-  metadataTitle: "The Day After Your Gambling Pause: 10 Steps",
-  metadataDescription: "A free ten-day plan beside a Spelpaus or ROFUS break: all ten steps in one evening or one a day.",
-  eyebrow: "Self-exclusion pause",
-  titleLead: "The day after.",
+  metadataTitle: "Before You Lift GAMSTOP: 10 Steps for the Day You Decide",
+  metadataDescription: "GAMSTOP never lifts by itself and never tells you when the minimum is over. Find your date, then take ten free steps before you decide. No casinos in the plan.",
+  eyebrow: "GAMSTOP · the day you decide",
+  titleLead: "Before you lift GAMSTOP.",
   titleEmphasis: "10 steps.",
-  intro: "Sweden's Spelpaus and Denmark's ROFUS block you from every licensed operator for a fixed time. The pause cannot be cancelled early, and when it ends your accounts work again. What decides the day after is what you did during the pause. Here is the plan: ten steps, at your pace.",
+  intro: "GAMSTOP blocks you from the websites and apps of every gambling company licensed in Great Britain for six months, one year or five years, and it cannot be cancelled early. When the minimum ends, nothing happens by itself: GAMSTOP does not tell you, and the block stays until you ask for it to be removed. What decides that day is what you did before it. Here is the plan: ten steps, at your pace.",
   register: "both",
+  hubTag: "GAMSTOP",
   registers: {
+    gamstop: {
+      name: "GAMSTOP",
+      url: "https://www.gamstop.co.uk/",
+      periods: { "6m": "6 months", "1y": "1 year", "5y": "5 years", "5y-renew": "5 years with auto-renewal" },
+      whatHappens: "GAMSTOP does not contact you when the minimum ends, and the block stays for a further seven years. To lift it, you sign in to your GAMSTOP account, check that it has expired and ask for removal by chat or on 0800 138 6518. A 24-hour cooling-off follows. Your account shows the exact dates.",
+      endsLabel: "Your minimum period runs to the end of",
+      dayAfterLabel: "From this day you can ask GAMSTOP to lift it",
+      icsTitle: "GAMSTOP: my minimum period is over – my rules come first",
+      periodNotes: {
+        "5y-renew": {
+          dayAfterLabel: "A new five-year minimum starts",
+          note: "With auto-renewal, a new five-year minimum starts on this day without you contacting GAMSTOP. You can turn auto-renewal off in your account, but only in the last six months of the five years.",
+        },
+      },
+    },
     spelpaus: {
-      name: "Spelpaus (Sweden)",
+      name: "Spelpaus",
       url: "https://www.spelpaus.se/",
       periods: { "10d": "10 days", "1m": "1 month", "3m": "3 months", "6m": "6 months", open: "Until further notice (12 months minimum)" },
-      whatHappens: "When the period ends, your accounts with Swedish-licensed operators are reactivated automatically unless you register a new exclusion.",
+      whatHappens: "Sweden: when the period ends, your accounts with Swedish-licensed operators are reactivated automatically unless you register a new exclusion.",
     },
     rofus: {
-      name: "ROFUS (Denmark)",
+      name: "ROFUS",
       url: "https://www.rofus.nu/",
       periods: { "24h": "24-hour pause", "1m": "1 month", "3m": "3 months", "6m": "6 months", final: "Permanent exclusion" },
-      whatHappens: "When a temporary exclusion expires, you can log in again with Danish-licensed operators.",
+      whatHappens: "Denmark: when a temporary exclusion expires, you can log in again with Danish-licensed operators.",
     },
   },
   tool: {
-    heading: "When does your pause end?",
-    registerLabel: "Register",
-    startLabel: "The pause started",
-    startHint: "Pick the day you registered the pause.",
+    heading: "When does your exclusion end?",
+    registerLabel: "Scheme",
+    startLabel: "You registered on",
+    startHint: "Pick the day you registered the exclusion.",
     periodLabel: "Period",
-    endsLabel: "The pause runs to the end of",
+    endsLabel: "The exclusion runs to the end of",
     dayAfterLabel: "The day after: accounts work again",
     openEndedNote: "An open-ended exclusion has no end date. We count at least 12 months.",
     dayLabel: "Day",
     planHeading: "All ten in one evening, or one a day",
-    planIntro: "Ten steps from the B4GAMBLE Programme, in the order you take them. Each takes 5–15 minutes and ends with something you keep. You set the pace: the whole plan in one evening, or one step a day until the pause ends. You always continue where you left off.",
+    planIntro: "Ten steps from the B4GAMBLE Programme, in the order you take them. Each takes 5–15 minutes and ends with something you keep. You set the pace: the whole plan in one evening, or one step a day. You always continue where you left off.",
     stepLabel: "Step",
     reminder: {
       label: "Your email address",
@@ -301,39 +337,42 @@ const en: PausePlanMessages = {
     { title: "Make the plan reviewable", move: "Write the plan on one page: the amount, the time, the person. Decide when you read it again." },
   ],
   dayEleven: {
-    heading: "The day after",
-    body: "Your accounts work again. Your rules are ready: the amount is set before the app, the time is set before the app, one person knows. You don't have to quit. You have to be in control.",
+    heading: "The day you decide",
+    body: "When the minimum is over, the choice is yours: keep GAMSTOP, or ask for it to be lifted. If you go back, your rules are ready: the amount is set before the app, the time is set before the app, one person knows. You don't have to quit. You have to be in control.",
     cta: "Start step 1 now",
   },
-  questionsHeading: "Questions during a pause",
-  questionsIntro: "Plain answers to what people ask while a pause runs.",
+  questionsHeading: "Questions about GAMSTOP",
+  questionsIntro: "Plain answers to what people ask while the exclusion runs.",
   faqHeading: "Questions people ask",
   faq: [
-    ["Can I end the pause early?", "No. Neither Spelpaus nor a temporary ROFUS exclusion can be cancelled before the period ends."],
-    ["What happens when the pause ends?", "Your accounts with licensed operators work again, unless you register a new exclusion. That is why the plan for the day after matters more than the pause itself."],
-    ["Are there casinos in the plan?", "No. The plan and its ten steps contain no casinos and no offers. Licensed operators may not market to you during the pause either."],
+    ["Can I cancel GAMSTOP early?", "No. GAMSTOP will not remove an exclusion before its minimum period ends, whatever the reason. Spelpaus and a temporary ROFUS exclusion cannot be cancelled early either."],
+    ["What happens when the minimum period ends?", "Nothing, by itself. GAMSTOP does not contact you, and the block stays in place for a further seven years. To lift it, you sign in to your GAMSTOP account, check that it has expired and ask for removal by chat or on 0800 138 6518, every day from 10am to 8pm. A 24-hour cooling-off follows, and you can cancel the request during it."],
+    ["Does GAMSTOP cover betting shops, casinos and the National Lottery?", "GAMSTOP covers online gambling with companies licensed in Great Britain. Betting shops, bingo halls, casinos and arcades have schemes of their own. National Lottery draw games such as Lotto and EuroMillions are not covered; its online instant win games are."],
+    ["Are there casinos in the plan?", "No. The plan and its ten steps contain no casinos and no offers. While you are on GAMSTOP, every gambling company licensed in Great Britain must check it whenever you sign up or log in."],
     ["Do I need an account?", "Not to read the plan. To take the steps and keep your answers you create a free Programme account. Your answers are never used for offers, rankings or ads."],
-    ["Does the pause cover unlicensed casinos?", "No. Spelpaus covers Swedish-licensed operators and ROFUS covers Danish-licensed ones. Sites advertising casinos \"without\" the register hold no local licence and give you no local consumer protection."],
-    ["Where do I turn if it is urgent?", "Sweden: Stödlinjen, 020-81 91 00. Denmark: StopSpillet, 70 22 28 25. Both are free and anonymous."],
+    ["What about sites \"not on GAMSTOP\"?", "They hold no licence in Great Britain, so GAMSTOP does not reach them and neither does British consumer protection. The same goes for sites advertising casinos \"without\" Spelpaus or ROFUS. We never link to them."],
+    ["Where do I turn if it is urgent?", "Great Britain: the National Gambling Helpline, run by GamCare, 0808 8020 133, free, confidential and open 24 hours a day. Sweden: Stödlinjen, 020-81 91 00, free and anonymous. Denmark: StopSpillet, 70 22 28 25, free and confidential. In an emergency call 999, or 112 in Sweden and Denmark."],
   ],
-  supportHeading: "Help that is open around the clock",
+  supportHeading: "Where to get help",
   support: [
+    { label: "National Gambling Helpline (GamCare) – 0808 8020 133", href: "https://www.gamcare.org.uk/" },
+    { label: "GAMSTOP – sign in or read about the scheme", href: "https://www.gamstop.co.uk/" },
     { label: "Stödlinjen (Sweden) – 020-81 91 00", href: "https://www.stodlinjen.se/" },
     { label: "StopSpillet (Denmark) – 70 22 28 25", href: "https://www.stopspillet.dk/" },
   ],
   homeLabel: "Home",
-  breadcrumbLabel: "The day after your pause",
+  breadcrumbLabel: "Before you lift GAMSTOP",
   revenueLine: "B4GAMBLE earns commission from licensed casinos. The plan contains none.",
   notBack: {
-    heading: "The day after: not going back?",
-    intro: "If you decide not to go back, take what you already know to the helpline. Five lines are enough, and they make the call shorter:",
-    lines: ["I took a pause of: …", "What I decided about amount and time: …", "The boundary that held: …", "The person who knows the real number: …", "What I want help with now: …"],
+    heading: "Keeping GAMSTOP?",
+    intro: "If you decide to keep it, you do not have to do anything: the block stays. If you want to talk it through, take what you already know to the helpline. Five lines are enough, and they make the call shorter:",
+    lines: ["I have been excluded since: …", "What I decided about amount and time: …", "The boundary that held: …", "The person who knows the real number: …", "What I want help with now: …"],
     copy: "Copy the five lines",
     copied: "Copied",
-    supportLabel: "Stödlinjen (Sweden) 020-81 91 00 · StopSpillet (Denmark) 70 22 28 25",
-    supportHref: "https://www.stodlinjen.se/",
+    supportLabel: "National Gambling Helpline 0808 8020 133 (GamCare)",
+    supportHref: "https://www.gamcare.org.uk/",
   },
-  ics: { download: "Add the day after to my calendar", title: "The day after – accounts reopen, my rules apply", description: "The amount before the app. The time before the app. One person knows. The plan: https://b4gamble.com/en/pause-plan" },
+  ics: { download: "Add the date to my calendar", title: "The day after – accounts reopen, my rules apply", description: "The amount before the app. The time before the app. One person knows. The plan: https://b4gamble.com/en/pause-plan" },
 };
 
 const catalog: Readonly<Partial<Record<SupportedLocale, PausePlanMessages>>> = {

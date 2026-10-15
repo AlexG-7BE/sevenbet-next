@@ -24,7 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The ten-day plan beside a Spelpaus or ROFUS break (Founder, 12 October 2026). The tool and
+ * The ten-day plan beside a Spelpaus or ROFUS break (Founder, 12 October 2026), and in English
+ * before a person asks GAMSTOP to lift theirs (Founder, 15 October 2026). The tool and
  * the plan render in the browser; the rest is static. The page links to the Programme start and
  * to the national helplines, and never to a casino. It is an ordinary landing page: it changes
  * nothing in the menu (Founder, 13 October 2026). It keeps nothing unless the pause letters are
@@ -32,7 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
  * the Programme button carries the pause date to the account in a one-hour cookie, and the tool
  * offers an email field, both for the timing of letters only. It is also the hub of the
  * guides for a person on a pause: it lists the published guides of its language that carry the
- * register's name as a tag (lib/articles/pause-hub.server.ts).
+ * register's name as a tag, or the page's hub tag ("GAMSTOP" in English) when it offers a choice
+ * of registers (lib/articles/pause-hub.server.ts).
  */
 export default async function PausePlanPage() {
   const presentation = await resolveServerPresentationContext();
@@ -41,7 +43,7 @@ export default async function PausePlanPage() {
   const url = absoluteUrl(productCanonicalPath(presentation, "/pause-plan"));
   const title = `${messages.titleLead} ${messages.titleEmphasis}`;
   const startHref = `${programmePathForPresentationLocale(presentation.locale)}?entry=start`;
-  const registerName = messages.register === "both" ? "" : messages.registers[messages.register]?.name ?? "";
+  const registerName = messages.hubTag ?? (messages.register === "both" ? "" : messages.registers[messages.register]?.name ?? "");
   const guides = await pauseHubGuides(contentLocale, registerName);
   const schema = [
     { "@context": "https://schema.org", "@type": "WebPage", name: title, description: messages.metadataDescription, url, inLanguage: contentLocale, isAccessibleForFree: true, publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") } },

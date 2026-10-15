@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PausePlanLetters } from "./PausePlanLetters";
 import styles from "./PausePlan.module.css";
 import type { PausePlanDay, PausePlanMessages, PausePlanRegisterMessages, PausePlanToolMessages } from "@/lib/i18n/static-pages/pause-plan";
-import { PAUSE_PERIODS, dayAfter, parseIsoDate, pauseEndDate, pausePeriod, planDates, toIsoDate, type PauseRegister } from "@/lib/tools/pause-plan";
+import { PAUSE_PERIODS, dayAfter, letterRegister, parseIsoDate, pauseEndDate, pausePeriod, planDates, toIsoDate, type PauseRegister } from "@/lib/tools/pause-plan";
 
 type Registers = Readonly<Partial<Record<PauseRegister, PausePlanRegisterMessages>>>;
 
@@ -39,7 +39,8 @@ function calendarFile(date: Date, title: string, description: string) {
  *
  * While the pause letters are switched on (`letters`), `PausePlanLetters` adds the two things
  * this page keeps, both for the timing of letters only: the pause date carried to the account
- * when the Programme button is pressed, and the email field under the result.
+ * when the Programme button is pressed, and the email field under the result. The letters know
+ * Spelpaus and ROFUS only; a GAMSTOP date carries nothing and shows no field.
  */
 export function PausePlanTool({ days, ics, letters = false, locale, messages, register, registers }: {
   days: readonly PausePlanDay[];
@@ -73,6 +74,10 @@ export function PausePlanTool({ days, ics, letters = false, locale, messages, re
   const longDate = useMemo(() => new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }), [locale]);
   const shortDate = useMemo(() => new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" }), [locale]);
   const registerMessages = registers[chosenRegister];
+  const periodNote = registerMessages?.periodNotes?.[period?.id ?? ""];
+  const endsLabel = registerMessages?.endsLabel ?? messages.endsLabel;
+  const dayAfterLabel = periodNote?.dayAfterLabel ?? registerMessages?.dayAfterLabel ?? messages.dayAfterLabel;
+  const lettersRegister = letterRegister(chosenRegister);
 
   const choosePeriodsFor = (next: PauseRegister) => {
     setTouched(true);
@@ -82,7 +87,7 @@ export function PausePlanTool({ days, ics, letters = false, locale, messages, re
 
   const downloadCalendar = () => {
     if (!result) return;
-    const blob = new Blob([calendarFile(result.after, ics.title, ics.description)], { type: "text/calendar;charset=utf-8" });
+    const blob = new Blob([calendarFile(result.after, registerMessages?.icsTitle ?? ics.title, ics.description)], { type: "text/calendar;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -120,11 +125,11 @@ export function PausePlanTool({ days, ics, letters = false, locale, messages, re
 
       <div className={styles.result}>
         <dl>
-          <div><dt>{messages.endsLabel}</dt><dd data-pause-plan-end={result ? toIsoDate(result.end) : ""}>{result ? longDate.format(result.end) : "—"}</dd></div>
-          <div><dt>{messages.dayAfterLabel}</dt><dd className={styles.after} data-pause-plan-after={result ? toIsoDate(result.after) : ""}>{result ? longDate.format(result.after) : "—"}</dd></div>
+          <div><dt>{endsLabel}</dt><dd data-pause-plan-end={result ? toIsoDate(result.end) : ""}>{result ? longDate.format(result.end) : "—"}</dd></div>
+          <div><dt>{dayAfterLabel}</dt><dd className={styles.after} data-pause-plan-after={result ? toIsoDate(result.after) : ""}>{result ? longDate.format(result.after) : "—"}</dd></div>
         </dl>
-        {registerMessages ? <p className={styles.note}>{registerMessages.whatHappens}</p> : null}
-        {letters ? <PausePlanLetters endsOn={result && !period?.openEnded ? toIsoDate(result.end) : null} locale={locale} messages={messages.reminder} register={chosenRegister} touched={touched} /> : null}
+        {registerMessages ? <p className={styles.note}>{periodNote?.note ?? registerMessages.whatHappens}</p> : null}
+        {letters && lettersRegister ? <PausePlanLetters endsOn={result && !period?.openEnded ? toIsoDate(result.end) : null} locale={locale} messages={messages.reminder} register={lettersRegister} touched={touched} /> : null}
       </div>
     </div>
 

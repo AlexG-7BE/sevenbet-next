@@ -20,8 +20,8 @@
 .field input,.field select { width:100%; height:48px; padding:0 16px; border:1px solid rgba(250,250,247,.28); border-radius:10px; background:#242323; color:#fafaf7; font:inherit; font-size:16px; font-weight:700; color-scheme:dark; }
 .field input:focus-visible,.field select:focus-visible { outline:3px solid #e4e24e; outline-offset:2px; }
 .field small { display:block; margin-top:8px; color:#aaa79e; font-size:13px; line-height:18px; }
-.segmented { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.segmented label { position:relative; min-height:44px; display:flex; align-items:center; justify-content:center; padding:8px 12px; border:1px solid rgba(250,250,247,.28); border-radius:999px; color:#e0ded7; font-size:var(--sb-type-control-size); line-height:var(--sb-type-control-line); font-weight:700; text-align:center; cursor:pointer; }
+.segmented { display:grid; grid-template-columns:repeat(auto-fit, minmax(112px, 1fr)); gap:8px; }
+.segmented label { position:relative; min-height:44px; display:flex; align-items:center; justify-content:center; padding:8px 12px; white-space:nowrap; border:1px solid rgba(250,250,247,.28); border-radius:999px; color:#e0ded7; font-size:var(--sb-type-control-size); line-height:var(--sb-type-control-line); font-weight:700; text-align:center; cursor:pointer; }
 .segmented input { position:absolute; opacity:0; pointer-events:none; }
 .segmented label:has(input:focus-visible) { outline:3px solid #e4e24e; outline-offset:2px; }
 .segmented .selected { border-color:#e4e24e; background:#e4e24e; color:#100f0f; }
