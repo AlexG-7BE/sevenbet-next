@@ -1,7 +1,8 @@
 // Pictures of the pause landing pages on Production, taken from a GitHub-hosted runner because
 // Production answers the Founder's machine with 451. For each language the script opens the pause
 // plan as a first-time visitor on a phone, opens the menu, goes home and opens the menu again, then
-// photographs the pages for the person beside a player and the rule before the app. A second
+// photographs the pages for the person beside a player and the rule before the app, then the first
+// guide on the pause plan, the Programme start behind its button and the sign-in screen. A second
 // browser that already holds the lesson flag checks that the pause plan changes nothing in the
 // menu: the research links are there before and after (Founder, 13 October 2026: an ordinary
 // landing page; the declared-pause and clean-route door rules are withdrawn). Only ordinary page
@@ -108,6 +109,26 @@ try {
       if (await openMenu(page)) {
         await record(page, context, { step: `${locale}: lesson done, home menu after the pause page`, file: `${locale}-6-lesson-done-home-menu-after-pause-plan-phone.png`, status, expect: "some" });
       }
+      await context.close();
+    }
+    // 2b. The path to the Programme on a phone: the first guide listed on the pause plan, the
+    //     Programme start behind the plan's button, and the sign-in screen. Nothing is submitted.
+    {
+      const context = await browser.newContext(contextOptions(locale, PHONE));
+      const page = await context.newPage();
+      await visit(page, `/${locale}/pause-plan`);
+      const guideHref = await page.locator("main a[href*='/learn/']").first().getAttribute("href").catch(() => null);
+      const startHref = await page.locator("[data-pause-plan-start]").first().getAttribute("href").catch(() => null);
+      if (guideHref) {
+        const status = await visit(page, guideHref);
+        await record(page, context, { step: `${locale}: first guide on the pause plan`, file: `${locale}-8-guide-phone.png`, status, expect: "none", fullPage: true });
+      }
+      if (startHref) {
+        const status = await visit(page, startHref);
+        await record(page, context, { step: `${locale}: Programme start from the pause plan`, file: `${locale}-9-programme-start-phone.png`, status, fullPage: true });
+      }
+      const status = await visit(page, `/${locale}/login`);
+      await record(page, context, { step: `${locale}: sign-in screen`, file: `${locale}-10-login-phone.png`, status, expect: "none", fullPage: true });
       await context.close();
     }
     // 3. The pause page on a desktop, with its header.
