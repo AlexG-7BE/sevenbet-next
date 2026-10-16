@@ -3,29 +3,53 @@
 - **Status:** `PROPOSED` — not approved and not current authority. Nothing in
   this RFC is implemented. It becomes `ACTIVE` only after the Founder answers
   the questions in §22 and approves the architecture.
-- **Decision authority:** Founder decisions of 16 October 2026, given through
-  the question tool in the partner-traffic audit session:
+- **Decision authority:** Founder decisions of 16 and 17 October 2026.
+
+  16 October, through the question tool in the partner-traffic audit session:
   1. «Без казино для всех» — the Programme shows no casino link to anyone
      ([PROGRAMME-NO-CASINO-LINKS-2026-10-16](../07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md),
      PR #530, merged on 16 October 2026 as `774dd2f7`);
   2. «Тот же код, второй домен» — a separate help-only site on a second domain,
      served by the same code and the same Vercel project, where the request
      host decides what is shown. The domain was open in the decision; the
-     Founder chose and bought `pauseplan.help` the same day (§3, Q1);
+     Founder chose and bought `pauseplan.help` the same day (§3);
   3. the step-3 lesson (Mission 08 «Research responsibly») is replaced by a
      help lesson; Mission number, step order and rewards stay; the Founder sees
      the text and screens before any merge.
 
-  This RFC records the architecture for decision 2. It does not implement
-  decisions 1 or 3; it depends on both (§18).
+  17 October, in chat, approving the two-site plan put to him that morning:
+  4. **`b4gamble.com` is the commercial site.** «Полное меню для всех. Казино,
+     бонусы и лучшие офферы видны каждому посетителю, а не только на страницах
+     каталога. Это обычный коммерческий сайт для тех, кто играет и выбирает,
+     где играть.» Casinos, Bonuses and Best Offers show in the header, the
+     drawer and the footer of every public page to every visitor. This reverses
+     the remaining door of
+     [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](../07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md)
+     (door two was already withdrawn by its amendment 4). The menu change is
+     its own decision record,
+     `docs/07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md`, and its
+     own pull request, written in parallel with this revision; this RFC
+     references it and does not depend on its wording.
+  5. **The Programme moves to `pauseplan.help`.** «Программа переезжает на
+     pauseplan.help. С b4gamble.com туда ведёт одна ссылка „нужна помощь“.»
+     One quiet link, no other help content on the commercial site (§5, §6.6).
+  6. **Growth is commercial:** review and bonus SEO, sports betting, new
+     partners. Outside this RFC's scope; it is the reason the main site must
+     not be slowed down by help-shaped navigation.
+
+  This RFC records the architecture for decisions 2 and 5, and the host half of
+  decision 4. It does not implement decisions 1, 3 or 4; it depends on all
+  three (§18).
 - **Scope:** which routes the second domain serves, what `b4gamble.com` does
-  with them, host routing, sign-in, consent and analytics, e-mail links,
-  search files, the country block, CSP and media, Learn publication, social
-  links, data, the owner-disclosure page, rollout, rollback and tests.
+  with them and what it keeps, the one "need help" link, host routing,
+  sign-in, consent and analytics, e-mail links, search files, the country
+  block, CSP and media, Learn publication, social links, data, the
+  owner-disclosure page, rollout, rollback and tests.
 - **Depends on:** Product Vision & Principles §13–§17, RFC-002, RFC-017,
   RFC-018, RFC-019, RFC-020, RFC-021, RFC-025, RFC-028, RFC-030, RFC-036,
-  RFC-037, RFC-039, RFC-046, RFC-052, RFC-053 and
-  PROGRAMME-NO-CASINO-LINKS-2026-10-16.
+  RFC-037, RFC-039, RFC-046, RFC-052, RFC-053,
+  PROGRAMME-NO-CASINO-LINKS-2026-10-16 and the menu record of 17 October 2026
+  (`COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17`, parallel PR).
 - **Would amend, once approved (`ACTIVE` RFCs):** RFC-021 §5 (Production
   Better Auth trusts two exact hosts); RFC-046 §16 (Google Analytics on the
   help host, as the Founder answers Q3) and, if Q7 (a) is chosen, RFC-046 §7
@@ -42,6 +66,13 @@
   Mission order, prerequisites, rewards or XP; commercial authority
   (RFC-042, RFC-047, RFC-049, RFC-054); the `b4gamble.com` desktop home page,
   which stays visually unchanged; the country block policy.
+- **Does not touch PR #530.** The Programme shows no casino, offer, bonus,
+  comparison or `/r/` link to anyone, on either host. `app/program/layout.tsx`
+  keeps passing `researchNavigation={false}` (or its successor), so the
+  Programme keeps its clean shell while it still lives on `b4gamble.com`,
+  although every other page there now shows the full commercial menu
+  (§4.3). No Programme-to-casino path, cookie, lesson door or letter link
+  comes back.
 
 Throughout, `<help-domain>` stands for the help domain. **DETECTED (Vercel,
 read 17 October 2026):** the Founder chose and bought `pauseplan.help` on
@@ -82,8 +113,11 @@ rules disagree).
   `prisma/schema.prisma`, `docs/06_Operations/Geo-Block-Runbook.md`,
   `docs/06_Operations/Admin-Auth-Security.md`,
   `docs/06_Operations/Google-Authentication-and-Email-Readiness.md`,
-  `docs/07_Decisions/PROGRAMME-FUNNEL-MCP-2026-10-14.md` and
-  `docs/07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md`.
+  `docs/07_Decisions/PROGRAMME-FUNNEL-MCP-2026-10-14.md`,
+  `docs/07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md` and
+  `docs/07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md`.
+  For this revision also `components/public-shell/PublicFooter.tsx` (the three
+  footer columns and `FooterCompliance`) and `lib/i18n/public-shell-catalog.ts`.
 - Outside the repository:
   - the help-channel audit of 16 October 2026
     (`b4gamble-content/research/help-channels-audit-2026-10-16/REPORT.md`);
@@ -91,34 +125,58 @@ rules disagree).
     16 October 2026 (session record, not the audit): 171 pages indexed,
     1 click and 2.03k impressions in 28 days;
   - the Vercel domain and project-domain records, read 17 October 2026
-    (`pauseplan.help` bought, not attached).
+    (`pauseplan.help` bought, not attached);
+  - the Founder's chat decision of 17 October 2026 (the two-site plan quoted
+    in the header), recorded in parallel as
+    `COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17`.
 
 ## 1. Decision summary (PROPOSED)
 
-1. **One project, two sites.** The Vercel project `sevenbet-next` serves two
-   exact Production hosts: `b4gamble.com` (the main site, unchanged in
-   purpose) and `<help-domain>` (the help site). Middleware classifies the
-   host once, from an exact match against source constants, and every later
-   decision reads that class. No request value ever chooses an origin.
+1. **One project, two sites with two purposes.** The Vercel project
+   `sevenbet-next` serves two exact Production hosts.
+   - `b4gamble.com` is the **commercial site**: an ordinary comparison site
+     for adults who already gamble and are choosing where to play. Casinos,
+     Bonuses and Best Offers are in the header, the drawer and the footer of
+     every public page, for every visitor (Founder, 17 October; the menu
+     itself is the parallel record's change, not this RFC's).
+   - `<help-domain>` is the **help site**: the Programme, the 10 steps, the
+     pause plans, the help guides, `/beside`, `/innan`, the control answers
+     and the helplines.
+
+   Middleware classifies the host once, from an exact match against source
+   constants, and every later decision reads that class. No request value ever
+   chooses an origin.
 2. **The help site is an allowlist.** It serves the Programme, the 10 steps,
-   the pause plans, help and responsible-gambling pages, help guides, `/beside`,
-   `/innan`, the control answer pages, pause statistics, legal pages, contact
-   and two new pages (owner disclosure, data statement for organisations).
+   the pause plans (sv, da, en), help and responsible-gambling pages, help
+   guides, `/beside`, `/innan`, the control answer pages, the helpline lists
+   those pages print (**DETECTED**: they live in the page texts,
+   `lib/i18n/static-pages/*`, not in a separate route), pause statistics,
+   legal pages, contact and two new pages (owner disclosure, data statement
+   for organisations).
    Every commercial or internal route, and every route not on the list,
    answers **404** there; static files the middleware never sees are covered
    by a Firewall rule (§4.2).
-3. **One-way links.** The help site never links to a commercial page, and
-   never links to `b4gamble.com` at all. The main site may link to the help
-   site.
+3. **One-way links, and one link back.** The help site never links to a
+   commercial page, and never links to `b4gamble.com` at all. The main site
+   links to the help site in exactly one place: one quiet "need help" line in
+   the footer of every public page, in the page's language (§6.6). It is the
+   only help content the main site carries.
 4. **The main site hands help routes over.** After the help site is live and
    verified, `b4gamble.com` answers a permanent **301** for every help route to
-   the same path on `HELP_ORIGIN`. The help site's pages are self-canonical on
-   `HELP_ORIGIN`.
+   the same path on `HELP_ORIGIN`, and stops serving the Programme, the pause
+   plans, the 10 steps, protected Help, the control pages and the help guides
+   (§5). The help site's pages are self-canonical on `HELP_ORIGIN`.
 5. **Same database, separate sessions.** Both sites use the one existing
    PostgreSQL database and the same user records. Sessions are host-only
-   cookies, so a person signs in on each site separately. A separate database
-   is a later option (§16.4).
+   cookies, so a person signs in on each site separately. From phase 3 the
+   customer account lives only on the help site, because every customer
+   account is a Programme account (§9.2). A separate database is a later
+   option (§16.4).
 6. **No schema change.** The host is not stored anywhere.
+7. **PR #530 is untouched.** On both hosts the Programme shows no casino,
+   offer, bonus, comparison or `/r/` link to anyone, and keeps its own clean
+   shell (`researchNavigation={false}`) while it still lives on
+   `b4gamble.com` (§4.3).
 
 ## 2. Why
 
@@ -150,11 +208,28 @@ catalogue earn affiliate commission, every help channel sees the catalogue
 first. A second domain with no commercial content is the smallest change that
 lets the help channels judge the help content on its own.
 
+**The other half, decided on 17 October 2026.** The split is not only about
+the help side. On 10 October the research links were taken out of the menu
+for most readers because help visitors met an affiliate menu first
+(RESEARCH-NAVIGATION-TWO-DOORS, door two withdrawn on 16 October). Once the
+help audience has its own domain, that reason no longer applies to
+`b4gamble.com`: its visitors are adults choosing where to play, and hiding
+the catalogue from them costs commercial clicks for no remaining benefit. The
+Founder therefore reversed the rule for the main site and put growth there
+(review and bonus SEO, sports betting, new partners). The two decisions are
+one shape: **each site stops pretending to be the other.** The help site can
+be judged by help channels, and the main site can be an ordinary comparison
+site.
+
+**INFERRED:** the measured cost of the split on the main site is small. Search
+Console reported 171 indexed pages, 1 click and 2.03k impressions in 28 days
+(16 October), and the help pages are a minority of them (§23).
+
 ## 3. Hosts
 
 | Request host (Production) | Today (DETECTED) | Proposed |
 | --- | --- | --- |
-| `b4gamble.com` | serves the site | main site |
+| `b4gamble.com` | serves the site | main site (commercial) |
 | `www.b4gamble.com` | Vercel domain redirect 308 to the apex | unchanged |
 | `<help-domain>` | `pauseplan.help`, bought 16 October 2026, Vercel nameservers, not attached to the project | help site, when `HELP_SITE_SERVING` is on (§7.3) |
 | `www.<help-domain>` | not attached | Vercel domain redirect 308 to the apex; middleware fallback 308 to `HELP_ORIGIN` |
@@ -181,11 +256,16 @@ language prefix and legacy market prefixes are removed, so `/sv/casinos`,
 
 | Class | Help host | Main host |
 | --- | --- | --- |
-| `HELP` | serves | serves until phase 3, then 301 to `HELP_ORIGIN` |
-| `SHARED` | serves, with the help shell and help-host content | serves as today |
-| `COMMERCIAL` | 404 | serves as today |
+| `HELP` | serves | serves until phase 3, then 301 to `HELP_ORIGIN` and never again |
+| `SHARED` | serves, with the help shell and help-host content | serves as today, with the commercial shell |
+| `COMMERCIAL` | 404 | serves as today, and is the main site's whole purpose |
 | `INTERNAL` | 404 | serves as today |
 | not in the manifest | 404 | as today |
+
+A class is about the **host that serves a route**, not about who may read it.
+Every commercial page stays public, indexable and free of any account or
+lesson gate (Product Vision §5 and §12), and after 17 October its links are in
+the menu for every visitor of the main site.
 
 ### 4.1 Inventory (DETECTED routes, PROPOSED class)
 
@@ -222,7 +302,8 @@ language prefix and legacy market prefixes are removed, so `/sv/casinos`,
 `/bonus-guide`, `/wagering-calculator`, `/outbound/*`, `/r/*`, `/go/*`,
 `/partner-creatives/*`, `/partner-preview`, every other Learn category and its
 guides, `/faq`, `/methodology`, `/about`, `/affiliate-disclosure`,
-`/can-you-trust-b4gamble` (its substance moves to `/who-runs-this`, §5),
+`/can-you-trust-b4gamble` (it stays on the main site as its trust page; the
+help site has its own `/who-runs-this`, §5),
 `/for-creators`, `/for-creators/*` (its future is an open Founder choice of
 16 October; it stays commercial either way), `/llms-full.txt`,
 `/opengraph-image` (its text reads "Reviews, bonus terms side by side…",
@@ -262,6 +343,32 @@ middleware alone.
   sitemap and are not indexed; the matcher stays as it is (Founder decision of
   25 September 2026).
 
+### 4.3 Help routes on the main host between the menu change and phase 3
+
+The menu change (parallel record) ships before this RFC's phases. Between the
+two, `HELP` routes are still served on `b4gamble.com`, now inside a shell that
+shows Casinos, Bonuses and Best Offers to everyone. **Accepted and
+time-bounded** — the Founder decided both halves on the same day, and phase 3
+ends it by moving those routes off the main host:
+
+- `/pause-plan`, `/beside`, `/innan`, `/10-steps`, `/pause-statistics`, the
+  control pages and `/responsible-gambling` show the commercial menu on
+  `b4gamble.com` until phase 3. A visitor who arrives there from a social post
+  sees the catalogue in the header. This is the state the help site exists to
+  end, so phase 3 is the point of the work, not an optional tail.
+- **The Programme is the exception and does not change.** `app/program/layout.tsx`
+  passes `researchNavigation={false}` and `EDITORIAL_ONLY` (**DETECTED**,
+  PR #530), and the root not-found boundary does the same inside a Programme
+  document, so no Programme document carries a research address even in its
+  inline page data. The menu change must not touch that prop, and the help
+  gate must not reintroduce it: the Programme keeps the clean shell on both
+  hosts, before and after the move. `tests/programme-no-casino-links.test.tsx`
+  and `tests/public-shell.test.ts` already fail if it is lost; phase 1 keeps
+  both passing (§20.1).
+- **Protected Help** (`/help`) keeps its own shell (`ProtectedHelpShell`,
+  **DETECTED**), which never carried research links, so it is unaffected by
+  the menu change on either host.
+
 ## 5. What `b4gamble.com` does with help routes
 
 **PROPOSED, phase 3 (§18):**
@@ -270,15 +377,76 @@ middleware alone.
   path and query on `HELP_ORIGIN`, in one hop: language and legacy
   normalisation happen first, inside the same response, so no request crosses
   a 308 and then a 301. API routes are never redirected.
-- `/can-you-trust-b4gamble` and its language versions answer 301 to
-  `HELP_ORIGIN/who-runs-this` in the same language.
+- **The 301 list**, every one of them in every published language and with
+  their legacy prefixes:
+
+  | From (`b4gamble.com`) | To (`HELP_ORIGIN`) |
+  | --- | --- |
+  | `/program`, `/program/*` | the same path |
+  | `/10-steps`, `/start` | the same path |
+  | `/pause-plan`, `/innan`, `/beside`, `/pause-statistics` | the same path |
+  | `/gambling-control`, `/control-without-quitting`, `/gambling-control-tools` | the same path |
+  | `/help`, `/help/*` | the same path |
+  | `/responsible-gambling`, `/responsible-gambling/*` | the same path |
+  | `/responsible-gaming`, `/self-check`, `/tools/budget-calculator` | their existing target on the help host, in one hop (today they redirect to `/responsible-gambling`) |
+  | `/learn/responsible-gambling`, `/learn/responsible-gambling/*` | the same path (§14) |
+  | `/login`, `/reset-password` | the same path (§9.2) |
+  | `/ig`, `/fb`, `/x`, `/threads`, `/lana`, `/ig/*`, `/fb/*`, `/x/*`, `/t/*` | straight to the final help URL, one hop, not 307 then 301 (§15) |
+
+- **`/can-you-trust-b4gamble` stays on the main site** and is `COMMERCIAL`.
+  Changed in this revision: the earlier draft had it 301 to
+  `HELP_ORIGIN/who-runs-this`. A commercial site that takes affiliate
+  commission needs its own trust page, and `/who-runs-this` is a different
+  page for a different reader — who runs the **help** site and how the company
+  earns elsewhere. Keeping both is not duplicate content as long as the texts
+  differ, which the Founder's copy review checks (§17.1). What changes on the
+  main page: its help-shaped next-step block becomes the one "need help" link,
+  and `CONTROL_PATHS.trust` on the help host points at `/who-runs-this`
+  (§6.5).
+- **The main site keeps no other help content.** After phase 3 no page,
+  section, card or menu entry of `b4gamble.com` carries the Programme, a pause
+  plan, the 10 steps, protected Help, a control page, a help guide or a
+  helpline list. The footer's "Programme and support" column
+  (**DETECTED**, `PublicFooter.tsx:49`: eight links — Programme, 10 Steps,
+  Responsible Gambling, Help, Pause plan, Beside, Pause statistics, Gambling
+  control) is replaced by the single "need help" line (§6.6). The only things
+  that stay are the legal notices the footer already prints for every reader
+  — `ageNotice` "Adults only.", `operatorDisclaimer` "Not a gambling
+  operator.", `commissionDisclosure` (**DETECTED**,
+  `lib/i18n/public-shell-catalog.ts`) — and whatever a market's advertising
+  rules require. **UNKNOWN:** whether GB, SE, DK or DE advertising rules
+  oblige an affiliate page to name a national helpline; nothing in the
+  repository records such an obligation, and `FooterCompliance` (which takes a
+  local help href, **DETECTED** `PublicFooter.tsx:95`) is behind
+  `FOOTER_COMPLIANCE_VISIBLE` and hidden today. **Gate:** before the
+  "Programme and support" column is removed, confirm per launch market
+  (GB, SE, DK, DE) that no required notice disappears with it; where one is
+  required, it stays as text on the main site, with the helpline named, and
+  the "need help" link beside it.
 - The main site's own links to the Programme, the 10 steps, the pause plan
-  and help pages become absolute `HELP_ORIGIN` links, so no internal link
-  depends on the redirect. On the home page only the `href` values change; the
-  desktop home stays visually unchanged.
+  and help pages are **removed, not re-pointed**, except where the home page
+  rule below applies, so no internal link depends on the redirect.
+- **The home page is the one place where two Founder rules meet.**
+  **DETECTED:** the home renders the Programme call to action
+  (`programmePathForPresentationLocale` → `href="/program"`, replaced in
+  `transformCommonHandoff`, `app/(public)/page.tsx:21-26`,
+  `lib/final-handoff/transforms.ts:290-294`) and the handoff's "About the
+  Programme →" link to `/10-steps` (`transforms.ts:1047,1081`). Removing them
+  would change the desktop home, which the Founder's standing rule keeps
+  untouched; keeping them means the home carries help links after the move.
+  **PROPOSED:** on the home page those existing `href` values point at
+  `HELP_ORIGIN` and nothing else about the home changes — same layout, same
+  position, same words until the Founder chooses new ones. The home is
+  therefore listed in §6.6 as a page allowed more than the single footer
+  link. **For the Founder:** the words of that call to action were written
+  for a site that carried the Programme; on a commercial home they can stay,
+  change to the "need help" wording of §6.6, or go altogether, and all three
+  are visible changes to a page he asked not to touch. His call, before
+  phase 3.
 - The main sitemap stops listing help routes; the main `llms.txt` names the
-  help site for the Programme (§12).
-- Before phase 3 the main site serves help routes exactly as today.
+  help site once (§12).
+- Before phase 3 the main site serves help routes exactly as today, inside
+  the new commercial shell (§4.3).
 
 ## 6. One-way link rule
 
@@ -309,7 +477,13 @@ middleware alone.
    `/affiliate-disclosure`, `/methodology`, `/about` or `/faq` link, no
    commission line, and it never passes research links as children, not even
    hidden ones.
-4. **CONTRADICTION (DETECTED):** the help pages and their shells carry
+4. **The rule is one-directional.** `b4gamble.com` → help site is allowed, in
+   exactly one place (§6.6). Help site → `b4gamble.com` is never allowed,
+   except the two text exceptions above. The reason the directions differ:
+   a commercial site that points people to help loses nothing, while a help
+   site that points people to a casino catalogue loses the help channels,
+   which is the whole purpose of the second domain.
+5. **CONTRADICTION (DETECTED):** the help pages and their shells carry
    commercial links today, some of them invisible:
    - The raw captures in `lib/final-handoff/generated-pages.json` contain
      `/best-offers`, `/casinos` and `/bonuses` in every page a help or shared
@@ -325,6 +499,14 @@ middleware alone.
      are still written into the inline page data. The Trust column
      (`PublicFooter.tsx:50`) links `/about`, `/methodology`, `/faq`,
      `/affiliate-disclosure` and `/for-creators`.
+     **After the menu change of 17 October the door is gone** and those
+     research links are rendered for everyone on the main site, so on the
+     main host they are no longer hidden — which is the point of that change,
+     and makes nothing worse here. On the help host the links must not exist
+     at all: the help shell builds them nowhere, hidden or shown, and the
+     guard checks the inline page data either way. **INFERRED:** removing the
+     door makes the help gate simpler, because "hidden children that still
+     travel" stops being a main-site pattern the help shell could inherit.
    - The root `app/not-found.tsx` renders `PublicHeader` and `PublicFooter`.
      Its own comment (lines 15-18) says Next writes this boundary into every
      document's inline data. PR #530 builds it without research links only in
@@ -353,6 +535,74 @@ from the help shell there.
 | `app/(public)/learn/[category]/[slug]/LearningArticleView.tsx:107` | "Editorial methodology →" `/methodology` | removed |
 | `PublicFooter.tsx` Explore and Trust columns, `PublicHeader` research door | research and trust links | not rendered (help shell) |
 | `app/not-found.tsx` | public header and footer | help shell |
+
+### 6.6 The main host's one link to the help site
+
+**PROPOSED.** `b4gamble.com` carries exactly one link to the help site.
+
+- **Where:** one line in the footer, on every public page, in the page's own
+  language. Not in the header, not in the drawer, not on the home hero, not
+  repeated inside page bodies. The desktop home is not redesigned for it; the
+  footer line is the only change there.
+- **How:** an ordinary text link to `HELP_ORIGIN` (the page's language prefix
+  when the help site publishes that language, otherwise the help site's own
+  default), `rel="nofollow"`, no logo, no banner, no interstitial.
+- **Count:** every main-host page carries that one footer link and no other
+  link to the help site. Three pages may carry more, and only those: the home
+  (its existing Programme call to action and "About the Programme →" link,
+  §5), `/can-you-trust-b4gamble` and `/about` (one mention each, if the
+  Founder's copy review puts it there, §6.7). The test in §20.1 fails on any
+  main-host response with no `HELP_ORIGIN` link, or with more than one
+  outside those three pages.
+- **Wording for the Founder to approve** (two options per language; the third
+  column is the plain meaning). Other published languages are translated from
+  the chosen option:
+
+  | Language | A — short | B — explicit (recommended) |
+  | --- | --- | --- |
+  | English | "Need help?" | "Need help with your gambling? Free pause plan and 10-step programme →" |
+  | Swedish | "Behöver du hjälp?" | "Behöver du hjälp med ditt spelande? Gratis pausplan och 10-stegsprogram →" |
+  | Danish | "Brug for hjælp?" | "Brug for hjælp med dit spil? Gratis pauseplan og 10-trinsprogram →" |
+
+  **Recommendation: B.** On a casino-comparison site a bare "Need help?"
+  reads as customer support for the site; B says what is on the other end and
+  needs no second click to find out. It is still one quiet line of text.
+- **INFERRED, the cost of the link:** it is a public, machine-readable
+  association between the two domains. Blockers and site-classification
+  services follow outbound links, so the help domain can be joined to a
+  gambling-affiliate domain by anyone who looks — exactly what phase 4 asks
+  them not to do. `rel="nofollow"` keeps search engines from treating it as an
+  endorsement but hides nothing. The association exists anyway, because
+  `/who-runs-this` names the owner in plain text; the honest version is
+  better than a hidden one. The alternative, no link at all, was rejected: a
+  person who needs help and is on the commercial site must have a way out of
+  it.
+- **UNKNOWN:** whether a blocker that classifies `b4gamble.com` as a gambling
+  affiliate also classifies a domain it links to. The phase-2 blocker check
+  (§20.3) is run again after the link ships, and the link is the first thing
+  to remove if a blocker categorises the help domain because of it.
+
+### 6.7 What each host says about the other
+
+**PROPOSED.** Both sites tell the truth about the other; only one of them
+links.
+
+| Surface | What it says about the other site |
+| --- | --- |
+| `b4gamble.com` footer, every page | the one "need help" link (§6.6) |
+| `b4gamble.com` home | its existing Programme call to action and "About the Programme →" link point at `HELP_ORIGIN`; nothing else about the home changes (§5) |
+| `b4gamble.com` `/can-you-trust-b4gamble` and `/about` | may name the help site in plain words and link it once more in the page body — the only pages allowed a second link (§6.6), and only if the Founder's copy review puts it there |
+| `b4gamble.com` `/privacy`, `/terms` | name the operator (7BE Inc.) as today; no change for the help site |
+| `b4gamble.com` `llms.txt` | one line naming the help site for help and the Programme (§12) |
+| `b4gamble.com` sitemap, hreflang, JSON-LD | never contain a `HELP_ORIGIN` URL (the 301s do the moving) |
+| help site `/who-runs-this` | names 7BE Inc. and `b4gamble.com` in plain text, **not linked** (§6, rule 2; §17) |
+| help site `/for-organisations` | the same plain-text naming, with the data answers (§16.3) |
+| help site everywhere else | nothing: no mention, no link, no logo, no shared share image |
+| help site `llms.txt`, sitemap, JSON-LD | only `HELP_ORIGIN` URLs; the `Organization` node is the help site's own (§8) |
+
+**INFERRED:** an organisation that checks the help site will find the owner
+named on the first page it looks at, and will not be able to click through to
+a casino catalogue. That is the asymmetry the audit's refusals asked for.
 
 ## 7. Host routing in middleware
 
@@ -535,6 +785,21 @@ canonical URLs.
 - **Cookies stay host-only.** Two registrable domains cannot share a cookie,
   and they should not: a session on the help host is a separate session row
   for the same user. Signing out on one site does not sign out the other.
+  Nothing is read across hosts, and no cookie is set on one host for the
+  other. The whole inventory, per host:
+
+  | Cookie | Main host | Help host |
+  | --- | --- | --- |
+  | `__Secure-better-auth.session_token` and the OAuth state/PKCE cookies | as today; no customer sign-in surface from phase 3, staff only | its own, host-only; a sign-in starts and finishes on one host |
+  | consent choice (cookie banner) | as today (RFC-046 §16) | none with G3; its own, host-only, with G1/G2/G4 — the banner is then shown again after the 301 (§10) |
+  | `b4g_owner` (geo unlock) | `Domain=b4gamble.com` as today | host-only; the owner unlocks once there (§13) |
+  | `b4g_research_access`, `b4g_research_opened_at`, the `b4g:research-access` event | **gone** since PR #530; an old cookie in a browser is ignored and expires on its own | never existed and is never created |
+  | Programme access proof and anonymous journey (`sessionStorage`, signed) | per origin, as today | per origin; never copied across origins (RFC-021) |
+
+  **The menu change of 17 October adds no cookie.** The main site's menu now
+  shows the same links to everyone, so it reads no cookie, no session and no
+  Programme state at all — which is strictly less than the two-doors code it
+  replaces.
 - **Google:** the Founder adds `HELP_ORIGIN` to the Production client's
   authorised JavaScript origins and
   `HELP_ORIGIN/api/auth/callback/google` to its authorised redirect URIs, and
@@ -554,6 +819,15 @@ canonical URLs.
   links. Option (b) needs Better Auth to choose the Google client by host
   (**INFERRED:** one Better Auth instance per site; feasibility checked in
   phase 1) and its own consent-screen verification.
+- **Customers end up only on the help site.** Every customer account is a
+  Programme account (**DETECTED**, PROGRAMME-NO-CASINO-LINKS §5: accounts are
+  opened on the Programme's save step or through Log in, which leads into the
+  Programme). Once the Programme is on the help site, the main site has
+  nothing for a signed-in customer to do, so from phase 3 `/login` and
+  `/reset-password` 301 there (§5) and **the commercial site shows no Log in
+  or account entry in its menu at all** — one less help-shaped thing on a
+  commercial page, and no second sign-in surface to keep safe. The help
+  site's sign-in is unchanged by this. Admin is separate and untouched.
 - **Staff stay on the main site.** `/admin` and `/api/admin` are 404 on the
   help host; a small hook refuses staff sign-in on the help host, so no staff
   session exists there.
@@ -638,13 +912,19 @@ letter at all.
   two-origin allowlist (§9.2), so e-mail sign-up and reset work on the help
   host from phase 2.
 - **Phase 3:** every customer letter (welcome, Programme, pause) links to
-  `HELP_ORIGIN`; the runtime config accepts the help origin for those
-  purposes; unsubscribe works on either host because the token lives in the
-  shared database.
+  `HELP_ORIGIN` — and only there. The runtime config accepts the help origin
+  for those purposes; unsubscribe works on either host because the token
+  lives in the shared database.
 - Casino links are already refused in every letter (PR #530). From phase 3
   the template guard also refuses every `b4gamble.com` link in customer
   templates, the marketing broadcast included, because every customer account
-  is a Programme account.
+  is a Programme account. **The 17 October decision does not loosen this.**
+  The main site's menu opening to every visitor is about the site; it says
+  nothing about letters, which go to people who came for the Programme. A
+  commercial letter to Programme people would be exactly the use of Programme
+  data for commercial targeting that AGENTS.md forbids. If the Founder ever
+  wants a commercial mailing list, it needs its own consented list and its own
+  decision, not these accounts.
 - The sender stays `@b4gamble.com` until the Founder chooses otherwise (Q6); a
   help-domain sender needs Resend DNS records on `<help-domain>`.
 - Contact (RFC-028) is unchanged: the form posts to the host's own
@@ -656,12 +936,12 @@ letter at all.
 
 | File | Help host | Main host |
 | --- | --- | --- |
-| `sitemap.xml` | `HELP` and help-relevant `SHARED` routes in every indexable language, help guides only | today's list minus `HELP` routes (from phase 3) |
-| `robots.txt` | rendered per request (§7.4): allow all, `Sitemap: HELP_ORIGIN/sitemap.xml`; no `/r/` rules needed (404) | unchanged, now rendered per request |
-| `llms.txt` | the help site: the one phrase, the Programme, pause plans, help guides, control answers, owner page, data statement; no casino text | the Programme section names the help site; the comparison text stays |
+| `sitemap.xml` | `HELP` and help-relevant `SHARED` routes in every indexable language, help guides only; no `b4gamble.com` URL ever appears in it | from phase 3, today's list minus every `HELP` route and the moved help guides: casinos, reviews, offers, bonuses, the other Learn categories, the trust and legal pages. It never lists a `HELP_ORIGIN` URL — the 301s move readers, the help sitemap moves crawlers |
+| `robots.txt` | rendered per request (§7.4): allow all, `Sitemap: HELP_ORIGIN/sitemap.xml`; no `/r/` rules needed (404) | unchanged, now rendered per request; its `Sitemap:` line stays the main one |
+| `llms.txt` | the help site: the one phrase, the Programme, pause plans, help guides, control answers, owner page, data statement; no casino text | the commercial site, with the help site named in one line for readers who need help — the mirror of the footer link (§6.6). The 15 October ordering that put the Programme first (AEO work) is reversed on this host: comparison first, the help line last |
 | `llms-full.txt` | 404 (offers) | unchanged |
-| IndexNow | its own, second key and key file; announcements are grouped by host, one POST per host with that host's key, and a guide is announced under the host it lives on | unchanged for commercial URLs; its key file is not served on the help host |
-| hreflang | language alternates on `HELP_ORIGIN` only | commercial pages only |
+| IndexNow | its own, second key and key file; announcements are grouped by host, one POST per host with that host's key, and a guide is announced under the host it lives on | unchanged for commercial URLs; its key file is not served on the help host. At phase 3 the moved URLs are announced on both: the old ones from the main host (so the 301 is read) and the new ones from the help host |
+| hreflang | language alternates on `HELP_ORIGIN` only | commercial pages only, alternates on `b4gamble.com` only. No page ever lists an alternate on the other host: two hosts are two sites, not two languages of one |
 
 **DETECTED:** `indexNowPayload` filters URLs to the single host of `siteUrl`,
 the key is a public constant (`INDEXNOW_KEY`, `lib/seo/indexnow.ts:18`), and
@@ -670,15 +950,25 @@ same key would technically work on both hosts, but a key file shared by two
 domains is a public marker that blockers and site-classification services can
 use to join them, so the help host gets its own key.
 
-**Search Console and Bing (Founder, outside the repository):** a new Domain
-property `sc-domain:<help-domain>` verified by a DNS TXT record under his
-Google account, the help sitemap submitted there, and the site added in Bing
-Webmaster (import from Search Console). **INFERRED:** Google's change-of-address
-tool is for moving a whole site, so a partial move relies on the 301s and the
-new sitemap; verify before use. **DETECTED (Search Console, read in the
-Founder's Chrome on 16 October; session record, not the audit):** 171 pages
-indexed, 1 click and 2.03k impressions in 28 days, so moving help pages costs
-little ranking.
+**Search Console and Bing (Founder, outside the repository):** two properties
+from phase 2, one per site.
+
+- `sc-domain:b4gamble.com` stays as it is and becomes a purely commercial
+  property: after phase 3 its help URLs fall out through the 301s, and what
+  is left is the catalogue, reviews, offers, bonuses and the commercial Learn
+  categories. That is also the property whose numbers measure the commercial
+  growth of decision 6.
+- `sc-domain:<help-domain>`, a new Domain property verified by a DNS TXT
+  record under the Founder's Google account, with the help sitemap submitted
+  there, and the site added in Bing Webmaster (import from Search Console).
+- **INFERRED:** Google's change-of-address tool is for moving a whole site, so
+  a partial move relies on the 301s and the new sitemap; verify before use.
+- **DETECTED (Search Console, read in the Founder's Chrome on 16 October;
+  session record, not the audit):** 171 pages indexed, 1 click and 2.03k
+  impressions in 28 days, so moving help pages costs little ranking.
+- **Keep both properties separate in reporting.** A single number across the
+  two sites would hide exactly what the split is for: whether commercial
+  search grows on one and help search grows on the other.
 
 ## 13. Country block, Vercel Firewall, CSP and media
 
@@ -756,6 +1046,16 @@ breaks the self-canonical rule (§1.4) and points at a URL that answers 301.
   `responsible-gambling` once `HELP_SITE_REDIRECTS` is on, main origin for
   every other category. The verifier, the result URL, IndexNow, the sitemap,
   `learn_source` and `learn_context` use it.
+- **The main site's Learn hub keeps everything else.** Bonuses, Banking,
+  Casinos, Games and Industry stay there with their chips and their offer
+  bridges; from phase 3 the hub stops listing `responsible-gambling` guides
+  and the pause tag hubs (Spelpaus, ROFUS, GAMSTOP), which move with their
+  category. A guide of a commercial category may link to the catalogue as
+  today — the menu decision of 17 October makes that ordinary, not a door.
+  **UNKNOWN:** how many published commercial guides link to a
+  `responsible-gambling` guide; the phase-3 audit lists them and those links
+  become either the one help link's target or plain text (they must not
+  become a second main-host link to the help site, §6.6).
 - On the help host the guide page uses only the path of a stored canonical,
   resolved against the guide's public origin, and the verifier expects the
   same; the "Editorial methodology" link is not rendered there (§6.5).
@@ -909,12 +1209,17 @@ company behind the site also runs a casino-comparison site, with a link to
 
 ## 18. Rollout
 
+The menu change of 17 October is **not a phase of this RFC**. It ships in its
+own pull request against the main site, before or beside phase 1, and needs
+nothing from the help site (§4.3). Its only contract with this RFC is that it
+must not touch `researchNavigation={false}` in the Programme layout.
+
 | Phase | What | Gate before the next phase |
 | --- | --- | --- |
 | **0 — Decisions and accounts** (Founder) | answers to §22; domain done (`pauseplan.help` bought 16 October, DNS at Vercel); Search Console Domain property and Bing site; optional Resend domain; a second Google client if Q8 (b) | answers recorded in a decision record |
-| **1 — Code, dark** | one or more PRs: host manifest (with metadata routes and `public/`), middleware gate, help shell and host-aware root not-found, help home, host-aware root metadata and the help share image, per-site origins and site-keyed caches, Better Auth two-host config (code only), auth letters accepting the request's own origin, per-host search files (robots per request, second IndexNow key), e-mail origins, Learn origin by category and the stored-canonical rule, first-party help images, help-host copy (§17.1), owner page and data statement, link guard over raw HTML, inline page data and `?_rsc=` responses, and two-host browser specs. All switches off: the main site behaves exactly as before, which tests prove | PR #530 merged (done, `774dd2f7`); the replacement step-3 lesson (decision 3) merged, so the help site never launches with a casino-comparison lesson; the Founder has seen help-host screens and copy as Production renders them (phone first, Google button shown); CI green |
+| **1 — Code, dark** | one or more PRs: host manifest (with metadata routes and `public/`), middleware gate, help shell and host-aware root not-found, help home, host-aware root metadata and the help share image, per-site origins and site-keyed caches, Better Auth two-host config (code only), auth letters accepting the request's own origin, per-host search files (robots per request, second IndexNow key), e-mail origins, Learn origin by category and the stored-canonical rule, first-party help images, help-host copy (§17.1), owner page and data statement, link guard over raw HTML, inline page data and `?_rsc=` responses, and two-host browser specs. All switches off: the main site behaves exactly as before, which tests prove | PR #530 merged (done, `774dd2f7`) and `researchNavigation={false}` still passed by the Programme layout after the menu change; the replacement step-3 lesson (decision 3) merged, so the help site never launches with a casino-comparison lesson; the Founder has seen help-host screens and copy as Production renders them (phone first, Google button shown); CI green |
 | **2 — Help host live, not indexed, not linked** | the help-host Firewall deny rule (§4.2); attach `<help-domain>` and `www` to the project; set `BETTER_AUTH_TRUSTED_ORIGINS`; add the Google origin and callback; `HELP_SITE_SERVING=true`; redeploy | checks in §20.3 pass, including e-mail sign-up and reset, the Founder's own Google sign-in on his phone and the blocker check; help pages fetched 200 from GB, SE, DK |
-| **3 — Move and index** | `HELP_SITE_REDIRECTS=true`, in one deployment: help-host pages become indexable and main-host 301s start together, so no page is indexable on both hosts; absolute links from the main site, Learn origin switch, letters, short links; submit the help sitemap and IndexNow for help URLs; bios on the Founder's word; registry and `CURRENT_STATE` updated | one-hop 301s verified; help guides announced; no 404 among moved URLs |
+| **3 — Move and index** | `HELP_SITE_REDIRECTS=true`, in one deployment: help-host pages become indexable and main-host 301s start together, so no page is indexable on both hosts; the main site drops its help links, its "Programme and support" footer column and its customer Log in, and gains the one "need help" line (§5, §6.6, §9.2); Learn origin switch, letters, short links; submit the help sitemap and IndexNow for help URLs; bios on the Founder's word; registry and `CURRENT_STATE` updated | one-hop 301s verified; help guides announced; no 404 among moved URLs; the required-notice check of §5 done for GB, SE, DK and DE; exactly one help link per main-host page |
 | **4 — Outreach** | help organisations, blockers (category review for the new domain), directories, with the owner page and data statement | §16.3 gate |
 | **Later** | separate database; non-profit entity | Founder decision |
 
@@ -962,8 +1267,22 @@ not run.
   segments and queries (`/casinos`, `/sv/casinos`, `/se/sv/casinos/`,
   `/r/x`, `/go/x`, `/outbound/x`, `/casino/x`, `/learn/casino-bonuses/x`,
   `/api/public/bonuses`, `/api/admin/x`, `/admin`).
-- Main-host 301s: path and query preserved, one hop, language kept; API
-  routes never redirected; `/can-you-trust-b4gamble` → `/who-runs-this`.
+- Main-host 301s: every row of the §5 list, path and query preserved, one
+  hop, language kept; API routes never redirected; `/can-you-trust-b4gamble`
+  still answers 200 on the main host and is never redirected.
+- The main host after phase 3: no response contains a link to a `HELP` route
+  on its own host, and no `HELP_ORIGIN` link beyond the allowed ones — the
+  footer "need help" line on every page (exactly once, `rel="nofollow"`,
+  translated in every published language) plus the home's two existing
+  Programme links and one mention each on `/about` and
+  `/can-you-trust-b4gamble` (§6.6). The test reads the raw HTML and the
+  inline page data, as the help-host guard does.
+- **PR #530 still holds, on both hosts:** `tests/programme-no-casino-links.test.tsx`
+  and `tests/public-shell.test.ts` pass unchanged; the Programme layout passes
+  `researchNavigation={false}`; no Programme document on either host carries a
+  research or partner address, in the HTML or in the inline page data; no
+  Programme answer sets a menu cookie. A test asserts the prop itself, so the
+  menu change cannot drop it by accident.
 - Country block on both hosts; owner cookie host-only on the help host.
 - Origins: canonical, hreflang, JSON-LD, sitemap, robots, `llms.txt` and
   IndexNow payloads on the help host contain only `HELP_ORIGIN` URLs;
@@ -1025,7 +1344,13 @@ not run.
 - The Founder's real Google sign-in on the help host from his phone.
 - A blocker check: BetBlocker (free) and, if available, Gamban in a separate
   Chrome profile open `HELP_ORIGIN` and `HELP_ORIGIN/sv/pause-plan`.
-- Phase 3: every moved URL from the old sitemap answers one 301 to a 200.
+- Phase 3: every moved URL from the old sitemap answers one 301 to a 200;
+  every `HELP` route on the main host 301s and none of them answers 200; the
+  main host's footer carries the one "need help" line in each published
+  language and nothing else of the help site; `/can-you-trust-b4gamble`
+  answers 200 on the main host; a Programme page on the help host carries no
+  research address in its HTML or inline page data (the PR #530 check, run
+  against Production on the new host).
 
 ## 21. Contradictions and findings
 
@@ -1048,7 +1373,7 @@ not run.
 8. The captured handoffs, the footer (visible and hidden links) and the root
    not-found boundary carry research and trust links; several help pages link
    `/about`, `/can-you-trust-b4gamble`, `/affiliate-disclosure` or
-   `/methodology` (§6.4, §6.5).
+   `/methodology` (§6, rule 5; §6.5).
 9. Found in passing, outside this RFC's scope: **DETECTED** —
    `/api/internal/cron/pause-letters` is scheduled in `vercel.json` (hourly at
    minute 23) but is missing from the three cron paths that
@@ -1075,50 +1400,138 @@ not run.
 16. The middleware matcher skips raster files, fonts and `/_next/image`, so
     commercial static folders would be served on the help host (§4.2).
 17. The domain was written as not chosen; it was chosen and bought on
-    16 October (`pauseplan.help`). Resolved in this revision (§3, Q1).
+    16 October (`pauseplan.help`). Resolved in the previous revision (§3).
+18. **RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10 versus the Founder's decision
+    of 17 October.** Door one (the research section) was the last part of that
+    record still standing after its amendment 4; the 17 October decision
+    withdraws it, so the main site shows the research links everywhere. Under
+    GOVERNANCE a newer explicit Founder decision outranks the older record;
+    the reversal is written in `COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17`
+    (parallel PR), which amends the 10 October record. This RFC records the
+    consequence for the hosts and does not itself change the menu.
+19. **Help routes on a commercial-menu main site, until phase 3.** Between the
+    menu change and phase 3, `/pause-plan`, `/beside`, `/innan`, `/10-steps`,
+    the control pages and `/responsible-gambling` are served on
+    `b4gamble.com` inside a shell that shows the catalogue to everyone, which
+    is the state the audit's refusals were about. Accepted by the Founder as
+    temporary; phase 3 ends it; the Programme is excluded throughout (§4.3).
+20. **The one link is also an association.** `b4gamble.com` linking to the
+    help domain is what tells a blocker or a classifier that the two are the
+    same company, while phase 4 asks those same services to judge the help
+    domain on its own. Accepted knowingly: the owner page names the owner
+    anyway, and a person who needs help must have a way off the commercial
+    site (§6.6). It is the first thing to remove if a blocker categorises the
+    help domain because of it.
+21. **The frozen desktop home versus the move.** The Founder's standing rule
+    keeps the desktop home untouched, and that home links to the Programme
+    and the 10 steps, which leave the host at phase 3 (**DETECTED**, §5).
+    Any of the three ways out is a visible change or a cross-site link on the
+    home. Put to him as Q9; the recommendation keeps the home as it looks.
+22. **A commercial site with no account, and letters that are all help
+    letters.** From phase 3 `b4gamble.com` has no customer sign-in while every
+    stored customer account is a Programme account on the other host
+    (§9.2, §11). That is deliberate, not an oversight: a commercial mailing
+    list, if it is ever wanted, needs its own consented list and its own
+    decision.
 
 ## 22. Open Founder questions
 
-1. **Domain — answered.** You chose and bought `pauseplan.help` on
-   16 October 2026; its DNS is at Vercel, which keeps the visitor's country
-   signal. It stays unattached until phase 2. Nothing to decide.
+Two earlier questions are closed and are not repeated here: the **domain**
+(answered 16 October — `pauseplan.help`, bought, DNS at Vercel, §3) and
+**which site is which** (answered 17 October — `b4gamble.com` commercial with
+the full menu, the Programme and the help content on the help site; §1).
+Their old numbers are kept free so that Q2–Q8 below still mean what they mean
+everywhere else in this RFC.
+
+Each question ends with my recommendation in one line. They are
+recommendations, not decisions.
+
 2. **Name.** Keep "B4GAMBLE" on the help site, or give it its own name. The
    name sets the wordmark, page titles, structured data, the owner page,
    letter sender name and bios.
+   **Recommendation: its own name, taken from the domain ("Pause Plan"),**
+   because a B4GAMBLE wordmark re-joins the two sites in one glance for the
+   organisations the split is meant to open, while `/who-runs-this` still
+   names 7BE Inc. honestly.
 3. **Google Analytics on the help site:** G1 same as `b4gamble.com` (your
-   4 October choice), G2 only after "Accept cookies", **G3 none — no banner,
-   counts from the server (recommended)**, or G4 GA4 except the Programme and
-   Help. `b4gamble.com` stays as it is in every option.
+   4 October choice), G2 only after "Accept cookies", G3 none — no banner,
+   counts from the server, or G4 GA4 except the Programme and Help.
+   `b4gamble.com` stays as it is in every option.
+   **Recommendation: G3.** It is the only one that lets the owner page say
+   "this site sets no tracking cookies", it needs no banner, and the same GA4
+   ID on both domains is a public marker joining them.
 4. **Non-profit entity, later.** Not needed for phases 1–3; if you want it
    later, which country and form. It would also bring the separate database.
+   **Recommendation: not now.** Decide it only if a named organisation makes
+   it the condition for working with us; it costs a separate entity, database
+   and accounts for a door that may never be used.
 5. **Help home page:** (a) the current home layout with the help menu, no new
    design, or (b) the pause plan as the home page.
+   **Recommendation: (b).** The pause plan is where the social links already
+   land (`/ig` → `/sv/pause-plan`), it exists in sv, da and en, and it helps
+   on the first screen; the Programme entry stays its main call to action.
 6. **Sender and contact address on the help side:** (a) keep `@b4gamble.com`
    (then the contact page keeps its `mailto:support@b4gamble.com` link, the
    one allowed `b4gamble.com` address on the help site), or (b) a mailbox on
    `<help-domain>` (DNS records for Resend and an alias in Google Workspace).
+   **Recommendation: (b), with (a) acceptable for phase 2.** An organisation
+   that receives a help letter from `@b4gamble.com` learns the connection from
+   the envelope; moving the mailbox is DNS work, not code, and can be done
+   between phases 2 and 4.
 7. **What still ties the Programme to the casino side.** Casino links in
    letters are already refused, the marketing broadcast included (PR #530).
    What remains: (a) remove the partner-press stages from the weekly
    `programme_funnel` count and stop storing the account on new partner
    presses (no schema change; it changes RFC-046 §7); older presses keep their
-   account link unless you also want it cleared, which is a data update
-   (recommended: it makes the owner page's sentence true), or (b) keep both and
-   say so on the owner page.
+   account link unless you also want it cleared, which is a data update, or
+   (b) keep both and say so on the owner page.
+   **Recommendation: (a), including clearing the older links.** It is what
+   makes the owner page's sentence true, and after 17 October the count has
+   lost its purpose anyway: the Programme no longer leads to the catalogue, so
+   partner presses measure the commercial site, not the Programme.
 8. **Google sign-in screen on the help site:** (a) one Google client: Google's
    screen names B4GAMBLE and links `b4gamble.com` home, privacy and terms; or
    (b) a second Google client in its own Google Cloud project, with the help
    site's name and links (more setup and its own Google review).
+   **Recommendation: (a) for phase 2, (b) before phase 4.** Sign-in must work
+   on the help host first; by the time we write to help organisations, the
+   consent screen should carry the name chosen in Q2 and the help site's own
+   links.
+9. **New, from the 17 October decision — the home page's Programme call to
+   action.** The desktop home links to the Programme and to the 10 steps
+   (**DETECTED**, §5). After the move those links lead to the other site. Your
+   standing rule is that the desktop home is not touched, so: (a) the links
+   stay exactly as they are and point at the help site; (b) they keep their
+   place but take the "need help" wording of §6.6; or (c) they go, and the
+   home becomes purely commercial.
+   **Recommendation: (a) now, (c) later if the commercial home is redesigned.**
+   (a) changes nothing a visitor sees and needs no decision about the home's
+   design; the footer line already gives every other page its way out.
 
 ## 23. Consequences
 
-- **Revenue:** none directly; PR #530 already ended the Programme's path to
-  casino pages. The main site loses the help pages' traffic to the help
-  site; **INFERRED** small (1 Search Console click in 28 days, read
-  16 October).
+- **Revenue:** this RFC adds none directly, and PR #530 already ended the
+  Programme's path to casino pages. What is expected to move the number is
+  the other half of the 17 October decision, which is outside this RFC: the
+  full menu for every visitor of `b4gamble.com`, and the growth work behind
+  it. What this RFC contributes is that the commercial site stops carrying a
+  help section it has to look consistent with. The main site loses the help
+  pages' traffic to the help site; **INFERRED** small (1 Search Console click
+  in 28 days, read 16 October). **Measure it:** the two Search Console
+  properties separately (§12), and partner presses before and after the menu
+  change through `programme_funnel` — with the caveat of Q7 (a), which would
+  retire those stages.
 - **Operations:** one more domain, Search Console property, Firewall check and
   runbook row; one code base and one deployment.
 - **People:** signed-in users sign in once more after phase 3; anonymous
-  in-progress journeys at the moment of the switch start again.
+  in-progress journeys at the moment of the switch start again. A visitor of
+  the commercial site who needs help has one quiet line to follow, instead of
+  a help section; a visitor of the help site has no way to reach a casino
+  from it.
 - **Trust:** the help site can be judged on its own content; the owner
-  objection remains until a non-profit option is taken.
+  objection remains until a non-profit option is taken. The link from the
+  commercial site makes the connection discoverable to anyone who looks
+  (§21.20), which is why the owner page states it first.
+- **Clarity:** each site can be described in one sentence, to a reader, a
+  help organisation, a partner and a search engine. That is the point of the
+  17 October decision, and the reason the two halves ship together.
