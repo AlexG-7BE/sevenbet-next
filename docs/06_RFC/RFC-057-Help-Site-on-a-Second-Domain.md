@@ -116,8 +116,25 @@ rules disagree).
   `docs/07_Decisions/PROGRAMME-FUNNEL-MCP-2026-10-14.md`,
   `docs/07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md` and
   `docs/07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md`.
-  For this revision also `components/public-shell/PublicFooter.tsx` (the three
-  footer columns and `FooterCompliance`) and `lib/i18n/public-shell-catalog.ts`.
+  For the previous revision also `components/public-shell/PublicFooter.tsx`
+  (the three footer columns and `FooterCompliance`) and
+  `lib/i18n/public-shell-catalog.ts`.
+- Read for **this** revision, after a line-by-line review of the previous one
+  against `774dd2f7`: `tests/programme-no-casino-links.test.tsx`,
+  `tests/public-shell.test.ts`, `lib/public-shell.ts`,
+  `components/public-shell/PublicNavigation.tsx`, `app/not-found.tsx`,
+  the error boundaries (`app/global-error.tsx`, `app/(public)/error.tsx`,
+  `app/(public)/casinos/error.tsx`, `app/(public)/compare/error.tsx`,
+  `app/(public)/casino/[slug]/error.tsx`), the Learn views
+  (`LearningCenterPage.tsx`, `LearningCategoryView.tsx`,
+  `LearningArticleView.tsx`), `lib/seo/structured-data.ts`,
+  `lib/seo/control-page-schema.ts`, `app/layout.tsx`,
+  `lib/security/geo-block.ts`, `app/llms.txt/route.ts`, the IndexNow key
+  route, `components/footer-compliance/FooterCompliance.tsx`, `lib/site.ts`,
+  the top level of `public/`, and `lib/final-handoff/transforms.ts` with
+  `generated-pages.json` — the last two by **running** the common transform
+  over every capture and reading the links in the result, which replaces
+  several UNKNOWNs and corrects three citations (§5, §6 rule 5, §21.23).
 - Outside the repository:
   - the help-channel audit of 16 October 2026
     (`b4gamble-content/research/help-channels-audit-2026-10-16/REPORT.md`);
@@ -175,8 +192,11 @@ rules disagree).
 6. **No schema change.** The host is not stored anywhere.
 7. **PR #530 is untouched.** On both hosts the Programme shows no casino,
    offer, bonus, comparison or `/r/` link to anyone, and keeps its own clean
-   shell (`researchNavigation={false}`) while it still lives on
-   `b4gamble.com` (§4.3).
+   shell: `app/program/layout.tsx` passes `researchNavigation={false}` twice,
+   on `b4gamble.com` while the Programme still lives there (§4.3) and on the
+   help host afterwards (§6.5). The guard is
+   `tests/programme-no-casino-links.test.tsx:262-263`, and it keeps passing
+   through the menu change, phase 1 and phase 3.
 
 ## 2. Why
 
@@ -282,6 +302,7 @@ the menu for every visitor of the main site.
 | `/learn/responsible-gambling`, `/learn/responsible-gambling/*` | help guides: the protected category, which never carries an offer bridge (**DETECTED** `lib/articles/article-bridges.ts`) and whose related reading stays inside the category (**DETECTED** `lib/articles/related-reading.ts`). Not clean yet (**DETECTED**): every guide, the protected category included, ends with "Editorial methodology →" `/methodology` (`LearningArticleView.tsx:107`), a `COMMERCIAL` route; and the page prints a stored canonical URL resolved against `siteUrl` (§14). On the help host the methodology link is left out and only the path of a stored canonical is used |
 | `/who-runs-this`, `/for-organisations` | new pages, §17 and §16.3 (slugs PROPOSED; they follow the name chosen in Q2) |
 | `/help-share-image` | the help host's default social image (path PROPOSED, §8): no review, bonus or casino words |
+| `/api/help-media/[key]` | the first-party help-guide image route (path PROPOSED, §13): it reads the same content-addressed storage keys as `/api/media/*` and serves only keys referenced by a published `responsible-gambling` guide. `/api/media/*` itself stays `COMMERCIAL` and answers 404 here, so no help page ever loads an image from `media.b4gamble.com` |
 
 **`SHARED`**
 
@@ -333,11 +354,29 @@ middleware alone.
 
 **PROPOSED:**
 
-- A Vercel Firewall deny rule limited to the help host (host equals
-  `<help-domain>`) for the commercial `public/` folders and for `/_next/image`
-  requests whose `url` points into them. It is added in phase 2, before
+- A Vercel Firewall rule limited to the help host (host equals
+  `<help-domain>`) over the `public/` tree, and over `/_next/image` requests
+  whose `url` points into it. It is added in phase 2, before
   `HELP_SITE_SERVING` is turned on, and listed in the geo-block runbook next to
   the static-asset rule.
+- **It is written as an allowlist, with a verdict for every top-level entry
+  of `public/`** (corrected in this revision: the earlier deny list named six
+  of the eleven, so "every route not on the list answers 404 there" did not
+  hold for the other five). **DETECTED**, the eleven entries and their
+  PROPOSED verdict on the help host:
+
+  | `public/` entry | Help host |
+  | --- | --- |
+  | `best-offers`, `bonus-directory`, `casino-brands`, `casino-directory`, `demo-casinos`, `partner-preview` | **denied** — commercial imagery |
+  | `brand` (`b4gamble-logo-512.png`) | **denied** — it is the B4GAMBLE mark and an absolute `b4gamble.com` URL in JSON-LD today (§8); whatever logo the help site uses follows Q2 and is served from its own path |
+  | `learn` (`magazine-shelf-…jpg`, `welcome-bonus-feature-cover.png`) | **denied** — both are covers of commercial guides; help-guide images are first-party through the help image route (§13) |
+  | `about` (`fresh-interruption.png`) | **denied** — `/about` is `COMMERCIAL` |
+  | `data` (`spelpaus-registrations.csv`, `rofus-registrations.csv`) | **allowed** — the pause statistics the help pages print |
+  | `home` (hero and chapter images, tool SVGs) | **allowed only if Q5 (a)** is chosen (the handoff home as the help home); with Q5 (b) the pause plan is the home and the folder is denied |
+
+  The rule is reviewed whenever a top-level entry is added; the manifest test
+  of §4.1 already fails on an unclassified folder, and the Firewall rule is
+  the runtime half of the same list.
 - Stated exception: hashed build files under `/_next/static/` are served on
   both hosts. They are not linked from help pages, carry no address in the
   sitemap and are not indexed; the matcher stays as it is (Founder decision of
@@ -362,9 +401,23 @@ ends it by moving those routes off the main host:
   document, so no Programme document carries a research address even in its
   inline page data. The menu change must not touch that prop, and the help
   gate must not reintroduce it: the Programme keeps the clean shell on both
-  hosts, before and after the move. `tests/programme-no-casino-links.test.tsx`
-  and `tests/public-shell.test.ts` already fail if it is lost; phase 1 keeps
-  both passing (§20.1).
+  hosts, before and after the move.
+  **The guard is one assertion** (**DETECTED**,
+  `tests/programme-no-casino-links.test.tsx:262-263`): it reads
+  `app/program/layout.tsx` as text and requires `researchNavigation={false}`
+  to appear exactly twice, for the header and the footer. That assertion is
+  what the menu change and phase 1 must both keep passing.
+  **`tests/public-shell.test.ts` is not that guard.** Corrected in this
+  revision: the file contains no `researchNavigation` assertion at all
+  (**DETECTED**). What it holds is the two-doors contract itself, asserted
+  against the source text — the exact `GUIDE_NAVIGATION` array (`:36-38`),
+  the literal body of `PublicNavigationDoor` (`:57-59`), the door counts 2, 3
+  and 1 (`:63-65`), and the literal `const researchLinks = new Set([…])` line
+  of `PublicFooter.tsx` with its count of 2 (`:74-75`). The 17 October menu
+  change deletes that door, so **the menu PR rewrites this file**; it cannot
+  "pass unchanged". Its other assertions must survive the rewrite: that no
+  shell source — the Programme layout included (`:54`, `:78-82`) — reads the
+  research contract or passes a lesson flag (§18, §20.1).
 - **Protected Help** (`/help`) keeps its own shell (`ProtectedHelpShell`,
   **DETECTED**), which never carried research links, so it is unaffected by
   the menu change on either host.
@@ -414,34 +467,89 @@ ends it by moving those routes off the main host:
   — `ageNotice` "Adults only.", `operatorDisclaimer` "Not a gambling
   operator.", `commissionDisclosure` (**DETECTED**,
   `lib/i18n/public-shell-catalog.ts`) — and whatever a market's advertising
-  rules require. **UNKNOWN:** whether GB, SE, DK or DE advertising rules
-  oblige an affiliate page to name a national helpline; nothing in the
-  repository records such an obligation, and `FooterCompliance` (which takes a
-  local help href, **DETECTED** `PublicFooter.tsx:95`) is behind
-  `FOOTER_COMPLIANCE_VISIBLE` and hidden today. **Gate:** before the
-  "Programme and support" column is removed, confirm per launch market
-  (GB, SE, DK, DE) that no required notice disappears with it; where one is
-  required, it stays as text on the main site, with the helpline named, and
-  the "need help" link beside it.
+  rules require. **UNKNOWN:** whether GB, SE, DK or DE advertising *law*
+  obliges an affiliate page to name a national helpline; no such obligation
+  is recorded in the repository.
+  **DETECTED, and the nearest recorded obligation (added in this revision):**
+  `components/footer-compliance/FooterCompliance.tsx:7-13` records **Google's
+  UK gambling certification** (Founder decision, 4 October 2026) as the
+  reason every footer should state that outbound links go only to operators
+  licensed where the visitor is, list free support in Great Britain — the
+  National Gambling Helpline (GamCare) `0808 8020 133`, GamCare,
+  BeGambleAware, GAMSTOP — name the company and mark the site 18+. That block
+  is hidden, not removed (`FOOTER_COMPLIANCE_VISIBLE = false`, `:22`,
+  Founder, 11 October 2026), and it takes a local help href
+  (`PublicFooter.tsx:95`), which is one of the links phase 3 moves.
+  **Gate:** before the "Programme and support" column is removed, confirm per
+  launch market (GB, SE, DK, DE) that no required notice disappears with it,
+  and decide what the Google-certification lines do if they are ever shown
+  again — their GB support links are external (helpline, GamCare,
+  BeGambleAware, GAMSTOP), so they survive the move, but their local help
+  href does not. Where a notice is required, it stays as text on the main
+  site, with the helpline named, and the "need help" link beside it.
 - The main site's own links to the Programme, the 10 steps, the pause plan
   and help pages are **removed, not re-pointed**, except where the home page
   rule below applies, so no internal link depends on the redirect.
+- **The full inventory of those links (DETECTED), added in this revision.**
+  The earlier revision named only the footer column, which made phase 3 look
+  like a configuration flip; it is about a dozen code changes, and §20.1's
+  "exactly one help link per main-host page" fails until every row is done.
+  Each row says what happens to it at phase 3.
+
+  | Where (DETECTED) | What it links | Phase 3 |
+  | --- | --- | --- |
+  | `components/public-shell/PublicFooter.tsx:49` | the "Programme and support" column: Programme, 10 Steps, Responsible Gambling, Help, Pause plan, Beside, Pause statistics, Gambling control | the whole column goes; the single "need help" line takes its place (§6.6) |
+  | `lib/public-shell.ts:16-19` `GUIDE_NAVIGATION` ("10 Steps" `/10-steps`, "Help" `/help`), rendered in the desktop header and the drawer of every public page (`PublicNavigation.tsx:134,157,205`) | two `HELP` routes in the menu of every page | both entries go from the main host's menu; the help shell keeps its own (§6, rule 3) |
+  | `lib/public-shell.ts:77-101` `accountNavigationFor` → "Start Programme" `/program` and "Log in" `/login`, rendered at `PublicNavigation.tsx:172-173,181,232,240-241` | the primary action and account entry of every public page | both go: the commercial site shows no customer Log in and no Programme action (§9.2) |
+  | `lib/final-handoff/transforms.ts:290-294` (`transformCommonHandoff`, run by `components/final-handoff/HandoffPage.tsx:56` for **every** handoff page) | rewrites `Start Programme` and `href="/program"` into a live Programme link | the rewrite is dropped for every page except the home, whose rule is below. 19 of the 21 captures carry the `Start Programme` marker, and the seven live users of `HandoffPage` are the home, `/learn`, `/methodology`, `/responsible-gambling`, `/bonus-guide`, `app/help/page.tsx` and `app/not-found.tsx` (the outbound pages use `CommercialHandoffPage`, which does not run this transform) |
+  | `app/not-found.tsx:27` → `transformNotFoundHandoff` (`transforms.ts:1070-1081`) | `/10-steps`, verified present in the rendered output | removed. This is the root 404 boundary, which Next writes into **every** document's inline page data (its own comment, `:15-18`), so leaving it would put a `HELP` link in every main-host response and fail §20.1's own test |
+  | `app/global-error.tsx:19`, `app/(public)/error.tsx:18`, `app/(public)/casino/[slug]/error.tsx:17`, `app/(public)/casinos/error.tsx:11`, `app/(public)/compare/error.tsx:11` | "Protected Help" `/help` on the error screens | each becomes the one "need help" link or plain text; an error screen is a page like any other for the count rule |
+  | `app/(public)/contact/page.tsx:42`, `app/(public)/terms/page.tsx:26`, `app/(public)/bonus-guide/BonusGuideDocument.tsx:12` | `/help` inside the page body | the same |
+  | `app/(public)/learn/LearningCenterPage.tsx:13` | "Start Programme" `/program` in the Learn bridge | removed from the commercial hub |
+  | `app/(public)/learn/[category]/LearningCategoryView.tsx:42` | `/responsible-gambling` | removed; the category moves with its guides (§14) |
+  | `app/(public)/learn/[category]/[slug]/LearningArticleView.tsx:107,110` | the in-body Programme bridge, and in the non-protected branch a `programmePath` link; the protected branch also links `/responsible-gambling` and `/help` | the non-protected branch loses its Programme link; the protected branch moves to the help host with its category |
+
+  **PROPOSED:** the phase-3 PR changes every row above, and the §20.1 test is
+  what proves none was missed — it reads the raw HTML and the inline page
+  data of every main-host route, not only the footer.
 - **The home page is the one place where two Founder rules meet.**
-  **DETECTED:** the home renders the Programme call to action
-  (`programmePathForPresentationLocale` → `href="/program"`, replaced in
-  `transformCommonHandoff`, `app/(public)/page.tsx:21-26`,
-  `lib/final-handoff/transforms.ts:290-294`) and the handoff's "About the
-  Programme →" link to `/10-steps` (`transforms.ts:1047,1081`). Removing them
-  would change the desktop home, which the Founder's standing rule keeps
-  untouched; keeping them means the home carries help links after the move.
-  **PROPOSED:** on the home page those existing `href` values point at
-  `HELP_ORIGIN` and nothing else about the home changes — same layout, same
-  position, same words until the Founder chooses new ones. The home is
-  therefore listed in §6.6 as a page allowed more than the single footer
-  link. **For the Founder:** the words of that call to action were written
-  for a site that carried the Programme; on a commercial home they can stay,
-  change to the "need help" wording of §6.6, or go altogether, and all three
-  are visible changes to a page he asked not to touch. His call, before
+  **DETECTED, corrected in this revision by running the transforms over the
+  captured home and reading the result:** the home renders **one** Programme
+  link and no `/10-steps` link.
+  - The one link is the hero call to action. The capture's
+    `href="/program"` (and any `Start Programme` button) is rewritten by
+    `transformCommonHandoff` to the language's Programme path
+    (`lib/final-handoff/transforms.ts:290-294`, called from
+    `components/final-handoff/HandoffPage.tsx:56`;
+    `programmePathForPresentationLocale` supplies the path,
+    `app/(public)/page.tsx:21-26`), and `transformHomeHandoff` only marks it
+    `data-home-hero-cta` (`transforms.ts:741`).
+  - The previous revision cited "About the Programme →" and
+    `transforms.ts:1047,1081` for the home. That was wrong:
+    `:1023-1047` is `transformHelpHandoff` (used by `app/help/page.tsx`) and
+    `:1070-1081` is `transformNotFoundHandoff` (used by `app/not-found.tsx`).
+    The marker "About the Programme" is absent from the `home` capture and
+    present only in the `help` and `notFound` captures.
+  - The home capture's single `/10-steps` sits inside the captured footer
+    "Programme & Support" column, which `stripHandoffGlobalChrome`
+    (`transforms.ts:225-266`) removes before React mounts the real shell.
+    Rendered, the home's only route links of this kind are the Programme
+    path and `/affiliate-disclosure`.
+
+  Removing the hero link would change the desktop home, which the Founder's
+  standing rule keeps untouched; keeping it means the home carries one
+  cross-site link after the move.
+  **PROPOSED:** the hero call to action keeps its words, place and look, and
+  points at `HELP_ORIGIN`. **This is a change to the home's transform, not to
+  an `href` in `page.tsx`:** the Programme path handed to `HandoffPage`
+  becomes the help origin on the home, or `transformCommonHandoff` learns a
+  cross-site Programme target for it. Nothing in the capture is edited. The
+  home is therefore listed in §6.6 as a page allowed more than the single
+  footer link — **one** extra link, not two.
+  **For the Founder:** the words of that call to action were written for a
+  site that carried the Programme; on a commercial home they can stay, change
+  to the "need help" wording of §6.6, or go altogether, and all three are
+  visible changes to a page he asked not to touch. His call (Q9), before
   phase 3.
 - The main sitemap stops listing help routes; the main `llms.txt` names the
   help site once (§12).
@@ -486,12 +594,30 @@ ends it by moving those routes off the main host:
 5. **CONTRADICTION (DETECTED):** the help pages and their shells carry
    commercial links today, some of them invisible:
    - The raw captures in `lib/final-handoff/generated-pages.json` contain
-     `/best-offers`, `/casinos` and `/bonuses` in every page a help or shared
-     route uses (`home`, `tenSteps`, `learn`, `responsibleGambling`, `contact`,
-     `privacy`, `terms`, `notFound`), and most of them also `/about`,
-     `/methodology`, `/faq` and `/affiliate-disclosure`. Whether they reach the
-     rendered page after `stripHandoffGlobalChrome` and the transforms is
-     **UNKNOWN**; the guard decides.
+     `/best-offers`, `/casinos` and `/bonuses` in **every** page a help or
+     shared route uses (`home`, `tenSteps`, `learn`, `responsibleGambling`,
+     `contact`, `privacy`, `terms`, `notFound`). The four trust links are
+     narrower than the previous revision said (measured in this revision):
+     `/about`, `/methodology`, `/faq` and `/affiliate-disclosure` are in
+     `home`, `tenSteps` and `learn` only; `terms` carries
+     `/affiliate-disclosure` alone; `responsibleGambling`, `contact`,
+     `privacy` and `notFound` carry none of the four. The `programme`,
+     `help` and `login` captures carry no commercial or trust marker at all
+     (`login` carries `href="/program"` and `/help`, which are `HELP`
+     routes).
+   - **What survives the common transform is now measured, not UNKNOWN**
+     (`transformCommonHandoff`, which runs `stripHandoffGlobalChrome`, over
+     each capture at `774dd2f7`): `home` → the Programme path and
+     `/affiliate-disclosure`; `terms` → `/affiliate-disclosure`; `learn` →
+     the Programme path and one guide link; `responsibleGambling` → the
+     Programme path; `notFound` → `/10-steps`; `casinos`, `privacy`,
+     `contact` and `help` → none. The captured chrome is stripped, so the
+     commercial menu does not survive; the trust link
+     `/affiliate-disclosure` does, and so do the Programme links. Page-level
+     transforms may add more, so the guard still decides for the rendered
+     page — but the help host must drop `/affiliate-disclosure` from the
+     `home` and `terms` captures and from the Privacy and Terms sections that
+     link it in code either way (§6.5).
    - The footer (`components/public-shell/PublicFooter.tsx`) has an Explore
      column whose research links sit inside `PublicNavigationDoor`
      (`PublicNavigationClient.tsx:67-77`, used at `PublicFooter.tsx:88-90`).
@@ -524,6 +650,22 @@ render the help shell; `help` and `start` keep their own shells with the
 mapping below; the root not-found reads `resolveServerSite()` and is built
 from the help shell there.
 
+**The Programme's shell, stated exactly** (resolved in this revision; §1.7
+and §4.3 promise the Programme the same clean shell on both hosts, and this
+section asks the help host for a help shell — the two must be one design):
+the help shell is **not a different component for the Programme**. It is the
+same `PublicHeader` and `PublicFooter`, given the help host's link set, and
+`app/program/layout.tsx` keeps passing `researchNavigation={false}` and
+`commercialProductState="EDITORIAL_ONLY"` to them on both hosts, twice each,
+unchanged as text. A Programme page on the help host therefore shows the help
+shell's own links (10 Steps · Pause plan · Guides · Help) minus the research
+links it never had, and the guard of
+`tests/programme-no-casino-links.test.tsx:262-263` still counts two
+occurrences. If an implementation ever needs a separate component on the help
+host, the guard moves to asserting the prop per branch **in the same
+commit**, and the help-host branch is covered by the same test; it is never
+allowed to lose the count quietly (§20.1).
+
 | Where (DETECTED) | Link | On the help host (PROPOSED) |
 | --- | --- | --- |
 | `app/(public)/10-steps/page.tsx:28` → `TenStepsPage.tsx:54` (`aboutHref`) | `/about` | → `/who-runs-this` |
@@ -548,12 +690,18 @@ from the help shell there.
   when the help site publishes that language, otherwise the help site's own
   default), `rel="nofollow"`, no logo, no banner, no interstitial.
 - **Count:** every main-host page carries that one footer link and no other
-  link to the help site. Three pages may carry more, and only those: the home
-  (its existing Programme call to action and "About the Programme →" link,
-  §5), `/can-you-trust-b4gamble` and `/about` (one mention each, if the
-  Founder's copy review puts it there, §6.7). The test in §20.1 fails on any
-  main-host response with no `HELP_ORIGIN` link, or with more than one
-  outside those three pages.
+  link to the help site. Three pages may carry one more, and only those: the
+  home (its existing hero call to action — one link, §5),
+  `/can-you-trust-b4gamble` and `/about` (one mention each, if the Founder's
+  copy review puts it there, §6.7). The test in §20.1 fails on any main-host
+  response with no `HELP_ORIGIN` link, or with more than one outside those
+  three pages.
+- **The count is reached by code changes, not by configuration.** Every row
+  of the §5 inventory — the menu's `10 Steps` and `Help` entries, the
+  "Start Programme" action, the account entry, the handoff rewrite, the root
+  404 boundary, the error screens and the Learn bridges — is a main-host
+  surface that links a `HELP` route today. Until all of them are changed,
+  the count rule fails on most pages of the site.
 - **Wording for the Founder to approve** (two options per language; the third
   column is the plain meaning). Other published languages are translated from
   the chosen option:
@@ -590,7 +738,7 @@ links.
 | Surface | What it says about the other site |
 | --- | --- |
 | `b4gamble.com` footer, every page | the one "need help" link (§6.6) |
-| `b4gamble.com` home | its existing Programme call to action and "About the Programme →" link point at `HELP_ORIGIN`; nothing else about the home changes (§5) |
+| `b4gamble.com` home | its existing hero call to action — one link — points at `HELP_ORIGIN`; nothing else about the home changes (§5) |
 | `b4gamble.com` `/can-you-trust-b4gamble` and `/about` | may name the help site in plain words and link it once more in the page body — the only pages allowed a second link (§6.6), and only if the Founder's copy review puts it there |
 | `b4gamble.com` `/privacy`, `/terms` | name the operator (7BE Inc.) as today; no change for the help site |
 | `b4gamble.com` `llms.txt` | one line naming the help site for help and the Programme (§12) |
@@ -612,8 +760,13 @@ a casino catalogue. That is the asymmetry the audit's refusals asked for.
    host → `main`; exact help host with `HELP_SITE_SERVING` on → `help`;
    `www.<help-domain>` → 308 to `HELP_ORIGIN`; cron paths on generated hosts →
    continue; everything else → 308 to `b4gamble.com` (RFC-030, unchanged).
-2. **Country block** (`geoBlockGate`), unchanged and host-independent
-   (**DETECTED**: the gate does not read the host).
+2. **Country block** (`geoBlockGate`), unchanged. Corrected in this revision:
+   the gate is host-independent **for the 451 decision only**. It does read
+   the hostname — for the owner cookie's domain
+   (`ownerCookieDomain`, `lib/security/geo-block.ts:134-135`, used at `:153`
+   and `:168`) and for the log line (`:201`) — which is exactly what gives
+   the owner cookie `Domain=b4gamble.com` on the main host and a host-only
+   cookie everywhere else (§13). **DETECTED.**
 3. **Help gate** (help host only): classify the path (§4). `COMMERCIAL`,
    `INTERNAL` or unknown → rewrite to a help-safe not-found page with status
    404, `Cache-Control: private, no-store` and `X-Robots-Tag: noindex`. While
@@ -684,11 +837,22 @@ HTML for the other.
   after the read.
 - `app/opengraph-image.tsx` is a file-convention image with commercial text;
   it is `COMMERCIAL` (§4.1), and the help host has its own image (§8).
+- **Two routes send a shared `public` cache header** (added in this revision;
+  `export const dynamic = "force-dynamic"` governs Next's render, not the CDN
+  header, so the `force-dynamic` note above does not cover them):
+  `app/llms.txt/route.ts:30` sends `cache-control: public, max-age=3600` and
+  the IndexNow key route `app/219017cffaba5177842beab195a2564c.txt/route.ts:8`
+  sends `public, max-age=86400`. Both bodies differ by host under §12 — a
+  per-host `llms.txt`, and a main key file that must answer 404 on the help
+  host. **PROPOSED:** both take the rule below; `llms.txt` is served with a
+  host-varying cache policy (`private`, or `public` only once the host is
+  proven to be part of the cache key), and the key files are two different
+  paths, one per host, so neither can be served from the other's cache.
 
 **UNKNOWN:** whether Vercel's CDN cache key includes the host for responses
 marked `public` with `s-maxage`. **PROPOSED rule:** any response whose body
 differs by host is `private, no-store` or lives at a host-specific path; the
-phase-2 checks prove it on Production.
+phase-2 checks prove it on Production, `llms.txt` and the key files included.
 
 ## 8. Origins in code
 
@@ -712,6 +876,21 @@ URLs resolve to `b4gamble.com`.
 it explicitly do so through `OPEN_GRAPH_IMAGE_PATH` (`lib/seo/social-image.ts`)
 and `DEFAULT_OPEN_GRAPH_IMAGES` (`lib/seo/programme-metadata.ts:35`), the
 Programme's pages included.
+
+**DETECTED, the JSON-LD the root layout prints on every page** (added in this
+revision): `app/layout.tsx:74-75` renders `organizationSchema()` and
+`websiteSchema()` in the body of every document, help pages included.
+`lib/seo/structured-data.ts:35-54` hardcodes `name: "B4GAMBLE"`,
+`alternateName` ("Before Gamble", "Before You Gamble", "B4 Gamble"),
+`legalName: "7BE Inc."`, `url: siteUrl`, `sameAs` (the brand's profiles) and
+a `logo.url` of `absoluteUrl(ORGANIZATION_LOGO_PATH)` — an absolute
+`b4gamble.com` URL to `/brand/b4gamble-logo-512.png` (`:12`), which rule §6.1
+forbids on a help-host response. Two more call sites print the same identity
+on `HELP` pages: `lib/seo/control-page-schema.ts:20`
+(`organizationReference()` as the publisher of every **control page**) and
+`app/(public)/learn/[category]/[slug]/page.tsx:88-89` (`editorialAuthor()`
+and `organizationReference()` on every guide, the **help guides** included);
+both helpers return `url: siteUrl` (`structured-data.ts:70-77`).
 
 **CONTRADICTION:** one module constant cannot give two sites their own
 canonical URLs.
@@ -737,6 +916,21 @@ canonical URLs.
   7BE Inc., `url: HELP_ORIGIN`), because a `b4gamble.com` URL in JSON-LD would
   break rule §6.1. The display name follows Q2; `sameAs` lists the social
   profiles whose bios point to the help site (§15).
+  Every field above takes the site, not only the `url`:
+  - `logo` — the help host cannot print `ORGANIZATION_LOGO_PATH` resolved
+    against `siteUrl`, and it cannot serve `public/brand/b4gamble-logo-512.png`
+    first-party either, because that re-exports the B4GAMBLE mark onto a site
+    Q2 may rename (and §4.2 denies the folder). The help host's `logo` is its
+    own file at its own path, made with the Q2 name, or the field is left out
+    until that name exists;
+  - `name` and `alternateName` — the Q2 name; the "Before Gamble" aliases are
+    the main site's brand and are not printed on the help host;
+  - `organizationReference()` and `editorialAuthor()` take the site too, so
+    the control pages (`lib/seo/control-page-schema.ts:20`) and the help
+    guides (`app/(public)/learn/[category]/[slug]/page.tsx:88-89`) print the
+    help identity;
+  - the link guard of §20.2 reads JSON-LD, so a missed field fails a test
+    rather than reaching a help organisation's crawler.
 - Hardcoded `b4gamble.com` strings that help pages print (**DETECTED**): the
   "plan is here" texts in `lib/i18n/static-pages/beside.ts`, the calendar
   descriptions in `lib/i18n/static-pages/pause-plan.ts`, the calendar UID in
@@ -940,8 +1134,22 @@ letter at all.
 | `robots.txt` | rendered per request (§7.4): allow all, `Sitemap: HELP_ORIGIN/sitemap.xml`; no `/r/` rules needed (404) | unchanged, now rendered per request; its `Sitemap:` line stays the main one |
 | `llms.txt` | the help site: the one phrase, the Programme, pause plans, help guides, control answers, owner page, data statement; no casino text | the commercial site, with the help site named in one line for readers who need help — the mirror of the footer link (§6.6). The 15 October ordering that put the Programme first (AEO work) is reversed on this host: comparison first, the help line last |
 | `llms-full.txt` | 404 (offers) | unchanged |
-| IndexNow | its own, second key and key file; announcements are grouped by host, one POST per host with that host's key, and a guide is announced under the host it lives on | unchanged for commercial URLs; its key file is not served on the help host. At phase 3 the moved URLs are announced on both: the old ones from the main host (so the 301 is read) and the new ones from the help host |
+| IndexNow | its own, second key and key file, at its own path; announcements are grouped by host, one POST per host with that host's key, and a guide is announced under the host it lives on | unchanged for commercial URLs; its key file is not served on the help host. At phase 3 the moved URLs are announced on both: the old ones from the main host (so the 301 is read) and the new ones from the help host |
+| icons (`app/icon.svg`, `app/favicon.ico`) | the help site's own icon, following the name of Q2; the current `icon.svg` is the B4GAMBLE mark, so with Q2's recommendation it is replaced rather than shared | unchanged |
 | hreflang | language alternates on `HELP_ORIGIN` only | commercial pages only, alternates on `b4gamble.com` only. No page ever lists an alternate on the other host: two hosts are two sites, not two languages of one |
+
+**DETECTED, where the per-host sitemap split actually happens:** the sitemap
+is built from `coreRoutes` in `lib/site.ts:28-50`, a single list that mixes
+`HELP` paths (`/10-steps`, `/program`, `/responsible-gambling`, `/help`,
+`/pause-plan`, `/beside`, `/pause-statistics`, `/gambling-control`,
+`/control-without-quitting`, `/gambling-control-tools`) with `COMMERCIAL`
+ones (`/casinos` and the rest through the market product paths, plus
+`/methodology`, `/affiliate-disclosure`, `/about`, `/faq`, `/bonus-guide`,
+`/wagering-calculator`, `/for-creators`, `/can-you-trust-b4gamble`). **PROPOSED:**
+that list is split by the §4 class — it is the one place to change, and the
+route-manifest test of §4.1 is what keeps the two in step.
+Both hosts' `cache-control` for these files follows §7.4: `llms.txt` and the
+key files may not share a `public` cache entry across hosts.
 
 **DETECTED:** `indexNowPayload` filters URLs to the single host of `siteUrl`,
 the key is a public constant (`INDEXNOW_KEY`, `lib/seo/indexnow.ts:18`), and
@@ -974,8 +1182,10 @@ from phase 2, one per site.
 
 **DETECTED (`Geo-Block-Runbook.md`, `lib/security/geo-block*.ts`):**
 
-- Middleware answers 451 to Kazakhstan before any content; the gate does not
-  read the host, so it will run on the help host too.
+- Middleware answers 451 to Kazakhstan before any content. The 451 decision
+  itself does not depend on the host, so it will run on the help host too;
+  the gate does read the hostname for the owner cookie's domain and for its
+  log line (`geo-block.ts:134-135,153,168,201`), which is the next bullet.
 - The owner cookie `b4g_owner` gets `Domain=b4gamble.com` only on that host;
   on any other host it is host-only.
 - The Vercel Firewall rule for static assets has conditions on environment,
@@ -1007,6 +1217,11 @@ from phase 2, one per site.
   commercial domain. Help-guide images are served first-party on the help host
   from a small route over the same storage keys (`content/learn/<sha256>.<ext>`,
   RFC-052 §5), cacheable for a year because the keys are content-addressed.
+  **The route has a path and a class** (added in this revision, because the
+  manifest test of §4.1 fails on a `route.ts` with no class):
+  `/api/help-media/[key]`, class `HELP`, serving only keys referenced by a
+  published `responsible-gambling` guide. `/api/media/*` stays `COMMERCIAL`
+  and answers 404 on the help host.
   Raster paths fall under the Firewall rule. **UNKNOWN:** the storage provider
   behind `MEDIA_S3_PUBLIC_BASE_URL` (Cloudflare is named in the runbook). The
   alternative, `media.<help-domain>` on the storage itself, needs the zone on
@@ -1211,8 +1426,17 @@ company behind the site also runs a casino-comparison site, with a link to
 
 The menu change of 17 October is **not a phase of this RFC**. It ships in its
 own pull request against the main site, before or beside phase 1, and needs
-nothing from the help site (§4.3). Its only contract with this RFC is that it
-must not touch `researchNavigation={false}` in the Programme layout.
+nothing from the help site (§4.3). Its contract with this RFC is exactly two
+lines of test:
+
+- `tests/programme-no-casino-links.test.tsx:262-263` keeps passing unchanged —
+  `researchNavigation={false}` twice in `app/program/layout.tsx`;
+- `tests/public-shell.test.ts` is the two-doors contract and is **rewritten**
+  by that PR (it asserts the door's literal source, its counts and the
+  footer's `researchLinks` set, and holds no `researchNavigation`
+  assertion, **DETECTED**). The rewrite keeps the part that is not about the
+  door: no shell source, the Programme layout included, reads the research
+  contract or passes a lesson flag (`:54`, `:78-82`).
 
 | Phase | What | Gate before the next phase |
 | --- | --- | --- |
@@ -1273,16 +1497,31 @@ not run.
 - The main host after phase 3: no response contains a link to a `HELP` route
   on its own host, and no `HELP_ORIGIN` link beyond the allowed ones — the
   footer "need help" line on every page (exactly once, `rel="nofollow"`,
-  translated in every published language) plus the home's two existing
-  Programme links and one mention each on `/about` and
+  translated in every published language) plus the home's one existing hero
+  call to action and one mention each on `/about` and
   `/can-you-trust-b4gamble` (§6.6). The test reads the raw HTML and the
-  inline page data, as the help-host guard does.
-- **PR #530 still holds, on both hosts:** `tests/programme-no-casino-links.test.tsx`
-  and `tests/public-shell.test.ts` pass unchanged; the Programme layout passes
-  `researchNavigation={false}`; no Programme document on either host carries a
-  research or partner address, in the HTML or in the inline page data; no
-  Programme answer sets a menu cookie. A test asserts the prop itself, so the
-  menu change cannot drop it by accident.
+  inline page data, as the help-host guard does, and it covers the error
+  screens and the root 404 boundary, which carry `/help` and `/10-steps`
+  today (§5).
+- **PR #530 still holds, on both hosts:**
+  `tests/programme-no-casino-links.test.tsx` passes unchanged, including the
+  one assertion that is the guard (`:262-263`: `researchNavigation={false}`
+  appears exactly twice in `app/program/layout.tsx`); no Programme document
+  on either host carries a research or partner address, in the HTML or in the
+  inline page data; no Programme answer sets a menu cookie.
+  `tests/public-shell.test.ts` is **rewritten by the menu PR**, not kept
+  unchanged (§4.3): it encodes the two-doors contract, not the Programme
+  prop. Phase 1 checks that the rewritten file still forbids every shell
+  source, the Programme layout included, from reading the research contract,
+  and adds the help host to the same assertions.
+- **The Programme shell on the help host** (§6.5): the help shell wraps the
+  same `PublicHeader` and `PublicFooter` with the same
+  `researchNavigation={false}` and `commercialProductState="EDITORIAL_ONLY"`,
+  so the count of two in `app/program/layout.tsx` is unchanged by the host
+  branch. A test renders the Programme on both hosts and asserts the prop
+  per host; if an implementation ever needs a different component there, the
+  guard moves to asserting the prop per branch in the same commit, and never
+  silently loses its count.
 - Country block on both hosts; owner cookie host-only on the help host.
 - Origins: canonical, hreflang, JSON-LD, sitemap, robots, `llms.txt` and
   IndexNow payloads on the help host contain only `HELP_ORIGIN` URLs;
@@ -1292,7 +1531,10 @@ not run.
   description has no casino words, `siteName` follows Q2 and the default image
   is the help share image; on the main host the metadata is unchanged.
 - Caches: robots differs by host in the same process; every cache entry
-  holding absolute URLs has the site in its key.
+  holding absolute URLs has the site in its key; no response whose body
+  differs by host is sent with a shared `public` cache header — the test
+  names `app/llms.txt/route.ts` and the IndexNow key routes explicitly
+  (§7.4).
 - Better Auth: Production config lists exactly two hosts; a set
   `BETTER_AUTH_URL` cannot fix the base URL to one host once
   `HELP_SITE_SERVING` is on; Preview unchanged; staff sign-in refused on the
@@ -1331,10 +1573,12 @@ not run.
 
 - From GB, SE, DK, DE and US (Globalping or the GitHub-hosted smoke):
   help pages 200, commercial paths 404, `www` 308, help responses `private`
-  where they differ by host, `noindex` until phase 3; commercial `public/`
-  folders (`/casino-brands/…`, `/demo-casinos/…`, `/partner-preview/…`,
-  `/casino-directory/…`) and `/_next/image` requests for them refused on the
-  help host (§4.2).
+  where they differ by host, `noindex` until phase 3; every denied `public/`
+  folder of §4.2 (`/best-offers/…`, `/bonus-directory/…`, `/casino-brands/…`,
+  `/casino-directory/…`, `/demo-casinos/…`, `/partner-preview/…`,
+  `/brand/b4gamble-logo-512.png`, `/learn/…`, `/about/…`, and `/home/…`
+  unless Q5 (a)) and `/_next/image` requests for them refused on the help
+  host, with `/data/*.csv` still served (§4.2).
 - From a KZ exit: 451 on the help host; 403 on its raster assets.
 - The four path-only Firewall rules (auth entry, second factor, contact,
   `/r/*`; `docs/06_Operations/Admin-Auth-Security.md:117-134`) also limit
@@ -1373,7 +1617,12 @@ not run.
 8. The captured handoffs, the footer (visible and hidden links) and the root
    not-found boundary carry research and trust links; several help pages link
    `/about`, `/can-you-trust-b4gamble`, `/affiliate-disclosure` or
-   `/methodology` (§6, rule 5; §6.5).
+   `/methodology` (§6, rule 5; §6.5). **Wider than the previous revision
+   said:** the main site links `HELP` routes from the menu
+   (`GUIDE_NAVIGATION`), the account area (`accountNavigationFor`), the
+   handoff rewrite that runs on every handoff page, the root 404 boundary,
+   five error screens, `/contact`, `/terms`, `/bonus-guide` and three Learn
+   views — the full inventory and its phase-3 verdicts are in §5.
 9. Found in passing, outside this RFC's scope: **DETECTED** —
    `/api/internal/cron/pause-letters` is scheduled in `vercel.json` (hourly at
    minute 23) but is missing from the three cron paths that
@@ -1423,16 +1672,48 @@ not run.
     site (§6.6). It is the first thing to remove if a blocker categorises the
     help domain because of it.
 21. **The frozen desktop home versus the move.** The Founder's standing rule
-    keeps the desktop home untouched, and that home links to the Programme
-    and the 10 steps, which leave the host at phase 3 (**DETECTED**, §5).
-    Any of the three ways out is a visible change or a cross-site link on the
-    home. Put to him as Q9; the recommendation keeps the home as it looks.
+    keeps the desktop home untouched, and that home carries one Programme
+    link — the hero call to action — whose target leaves the host at phase 3
+    (**DETECTED**, §5; the earlier claim of a second `/10-steps` link on the
+    home was wrong and is corrected there). Any of the three ways out is a
+    visible change or a cross-site link on the home, and the change is made
+    in the home's transform rather than in a page file. Put to him as Q9; the
+    recommendation keeps the home as it looks.
 22. **A commercial site with no account, and letters that are all help
     letters.** From phase 3 `b4gamble.com` has no customer sign-in while every
     stored customer account is a Programme account on the other host
     (§9.2, §11). That is deliberate, not an oversight: a commercial mailing
     list, if it is ever wanted, needs its own consented list and its own
     decision.
+23. **Corrections to the previous revision of this RFC**, found by reviewing
+    it line by line against `774dd2f7` and recorded here so the change is
+    visible rather than silent:
+    - the PR #530 guard is
+      `tests/programme-no-casino-links.test.tsx:262-263`;
+      `tests/public-shell.test.ts` holds no `researchNavigation` assertion
+      and is rewritten by the menu PR, not kept unchanged (§4.3, §18, §20.1);
+    - the main site's links into `HELP` routes are a dozen surfaces, not one
+      footer column (§5), so phase 3's "exactly one help link per page" is
+      code work, not configuration;
+    - the home carries **one** Programme link (the hero call to action) and
+      no `/10-steps`; `transforms.ts:1047` and `:1081` belong to the help and
+      not-found transforms, not the home (§5, §21.21, Q9);
+    - `geoBlockGate` does read the hostname, for the owner cookie's domain
+      and its log line (§7.1, §13);
+    - the Firewall rule covered 6 of the 11 top-level `public/` folders
+      (§4.2);
+    - `llms.txt` and the IndexNow key file send a shared `public` cache
+      header that `force-dynamic` does not govern (§7.4, §12);
+    - the root layout's JSON-LD carries the B4GAMBLE name, aliases and an
+      absolute logo URL on every page, and two more call sites print the
+      same identity on control pages and guides (§8);
+    - `/api/media/*` is `COMMERCIAL`, so the first-party help-image route
+      needed a path and a class of its own (§4.1, §13);
+    - the nearest recorded notice obligation is Google's UK gambling
+      certification in `FooterCompliance.tsx:7-13`, not "nothing in the
+      repository" (§5);
+    - the per-host sitemap split happens in `coreRoutes`
+      (`lib/site.ts:28-50`), and `app/icon.svg` needed a row in §12.
 
 ## 22. Open Founder questions
 
@@ -1498,15 +1779,20 @@ recommendations, not decisions.
    consent screen should carry the name chosen in Q2 and the help site's own
    links.
 9. **New, from the 17 October decision — the home page's Programme call to
-   action.** The desktop home links to the Programme and to the 10 steps
-   (**DETECTED**, §5). After the move those links lead to the other site. Your
-   standing rule is that the desktop home is not touched, so: (a) the links
-   stay exactly as they are and point at the help site; (b) they keep their
-   place but take the "need help" wording of §6.6; or (c) they go, and the
-   home becomes purely commercial.
+   action.** The desktop home carries exactly one Programme link, the hero
+   call to action (**DETECTED**, §5: the "10 Steps" link in the captured
+   footer never reaches the page, and the home has no "About the Programme →"
+   link). After the move that one link leads to the other site. Your standing
+   rule is that the desktop home is not touched, so: (a) the link stays
+   exactly as it is and points at the help site; (b) it keeps its place but
+   takes the "need help" wording of §6.6; or (c) it goes, and the home
+   becomes purely commercial.
    **Recommendation: (a) now, (c) later if the commercial home is redesigned.**
    (a) changes nothing a visitor sees and needs no decision about the home's
-   design; the footer line already gives every other page its way out.
+   design; the footer line already gives every other page its way out. Note
+   for implementation: even (a) is a change to the home's transform, which is
+   the code the do-not-touch rule protects, so it is written and reviewed as
+   carefully as a visible change.
 
 ## 23. Consequences
 
