@@ -129,10 +129,10 @@ test("the four pages are localizable public routes in the sitemap, built like th
   const parts = read("app/(public)/gambling-control/ControlPage.tsx");
   assert.match(parts, /data-clean-route-line>\{shared\.revenueLine\}/, "the revenue model is stated in the header");
   assert.match(parts, /<time dateTime=\{CONTROL_PAGES_UPDATED\}>\{shared\.updatedDate\}<\/time>/, "a visible update line");
-  assert.equal(CONTROL_PAGES_UPDATED, "2026-10-15");
-  assert.equal(controlSharedMessages("en-GB").updatedDate, "15 October 2026");
-  assert.equal(controlSharedMessages("sv-SE").updatedDate, "15 oktober 2026");
-  assert.equal(controlSharedMessages("da-DK").updatedDate, "15. oktober 2026");
+  assert.equal(CONTROL_PAGES_UPDATED, "2026-10-17");
+  assert.equal(controlSharedMessages("en-GB").updatedDate, "17 October 2026");
+  assert.equal(controlSharedMessages("sv-SE").updatedDate, "17 oktober 2026");
+  assert.equal(controlSharedMessages("da-DK").updatedDate, "17. oktober 2026");
   assert.deepEqual(controlRelatedLinks("en-GB", CONTROL_PATHS.tools).map((link) => link.href), [CONTROL_PATHS.hub, CONTROL_PATHS.withoutQuitting, CONTROL_PATHS.trust]);
 });
 
@@ -141,7 +141,8 @@ test("each page carries WebPage, FAQPage and BreadcrumbList structured data with
   const schema = controlPageSchema({ name: "Q", description: "D", url: "https://b4gamble.com/sv/control-without-quitting", inLanguage: "sv-SE", faq, breadcrumbs: [{ name: "Hem", item: "https://b4gamble.com/sv" }, { name: "Q", item: "https://b4gamble.com/sv/control-without-quitting" }] });
   assert.deepEqual(schema.map((entry) => entry["@type"]), ["WebPage", "FAQPage", "BreadcrumbList"]);
   const [webPage, faqPage, breadcrumbs] = schema as unknown as [Record<string, unknown>, { mainEntity: Array<Record<string, unknown>> }, { itemListElement: Array<Record<string, unknown>> }];
-  assert.equal(webPage.dateModified, "2026-10-15");
+  assert.equal(webPage.datePublished, "2026-10-15");
+  assert.equal(webPage.dateModified, "2026-10-17");
   assert.equal(webPage.isAccessibleForFree, true);
   assert.equal(faqPage.mainEntity.length, faq.length);
   for (const [index, entry] of faqPage.mainEntity.entries()) {

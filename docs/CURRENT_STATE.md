@@ -26,10 +26,13 @@ until merged and deployed (branch `feat/commercial-menu-for-everyone`):
 - nothing gates it any more: no path, lesson, step, account or cookie.
   `lib/research-access.ts` and `PublicNavigationDoor` are deleted, and the list of commercial
   roots moves to `lib/commercial-section.ts`, read only by the Programme and letter guards' tests;
-- the market rule is untouched: a link shows only where offers may be presented for that visitor
-  (`commercialDestinationsNavigable`), with the same 1.5-second bounded wait in
+- the market rule is untouched: Best Offers and Bonuses follow it (`commercialDestinationsNavigable`,
+  `commercialMarketOnlyRoutes`), with the same 1.5-second bounded wait in
   `app/(public)/layout.tsx`, the one timed-out retry, the settled marker and the rejected state. A
-  prohibited market still sees no Best Offers and no Bonuses;
+  prohibited market still sees no Best Offers and no Bonuses. The casino directory is editorial
+  and has never been on that list, so **in a prohibited market the Casinos link now appears on
+  every public page** where before it appeared only on a casino page — recorded under Consequences
+  in the decision;
 - the Programme keeps the clean shell of PR #530: `app/program/layout.tsx` still passes
   `researchNavigation={false}` and `app/not-found.tsx` `researchNavigation={!programmeDocument}`,
   so no Programme document carries a casino address. A test renders the Programme shell under

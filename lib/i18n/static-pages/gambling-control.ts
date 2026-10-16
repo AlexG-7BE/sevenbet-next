@@ -15,8 +15,16 @@ export type ControlLocale = "en-GB" | "sv-SE" | "da-DK";
 
 export const CONTROL_LOCALES = ["en-GB", "sv-SE", "da-DK"] as const satisfies readonly ControlLocale[];
 
-/** The day these pages were written and their facts checked. */
-export const CONTROL_PAGES_UPDATED = "2026-10-15";
+/** The day these pages were first published. */
+export const CONTROL_PAGES_PUBLISHED = "2026-10-15";
+
+/**
+ * The day these pages were last changed and their facts re-checked. Bumped on 17 October 2026
+ * with the commercial menu (docs/07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md): the
+ * revenue line below, and the casino-pages section of /can-you-trust-b4gamble, were rewritten
+ * because the menu now links to the casino pages from every public page.
+ */
+export const CONTROL_PAGES_UPDATED = "2026-10-17";
 
 export const CONTROL_PATHS = {
   hub: "/gambling-control",
@@ -78,8 +86,8 @@ export type ControlHubMessages = Readonly<{
 const shared: Readonly<Record<ControlLocale, ControlSharedMessages>> = {
   "en-GB": {
     updatedLabel: "Updated",
-    updatedDate: "15 October 2026",
-    revenueLine: "B4GAMBLE earns commission from licensed casinos. This page links to none of them.",
+    updatedDate: "17 October 2026",
+    revenueLine: "B4GAMBLE earns commission from licensed casinos. Nothing on this page recommends or links to one; the site menu does.",
     homeLabel: "Home",
     hubLabel: "Gambling control",
     faqHeading: "Questions people ask",
@@ -100,8 +108,8 @@ const shared: Readonly<Record<ControlLocale, ControlSharedMessages>> = {
   },
   "sv-SE": {
     updatedLabel: "Uppdaterad",
-    updatedDate: "15 oktober 2026",
-    revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. Den här sidan länkar inte till något av dem.",
+    updatedDate: "17 oktober 2026",
+    revenueLine: "B4GAMBLE tjänar provision från licensierade casinon. Ingenting på den här sidan rekommenderar eller länkar till något av dem; det gör menyn.",
     homeLabel: "Hem",
     hubLabel: "Kontroll över spelet",
     faqHeading: "Vanliga frågor",
@@ -120,8 +128,8 @@ const shared: Readonly<Record<ControlLocale, ControlSharedMessages>> = {
   },
   "da-DK": {
     updatedLabel: "Opdateret",
-    updatedDate: "15. oktober 2026",
-    revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. Denne side linker ikke til nogen af dem.",
+    updatedDate: "17. oktober 2026",
+    revenueLine: "B4GAMBLE tjener provision fra licenserede casinoer. Intet på denne side anbefaler eller linker til nogen af dem; det gør menuen.",
     homeLabel: "Forside",
     hubLabel: "Styr på spillet",
     faqHeading: "Ofte stillede spørgsmål",

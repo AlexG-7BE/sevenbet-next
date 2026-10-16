@@ -109,12 +109,15 @@ test("the whole menu reaches every visitor, on every public page (Founder, 17 Oc
     expect(html).toContain('data-footer-navigation-href="/casinos"');
   }
 
-  // The Programme keeps the clean shell (Founder, 16 October 2026; PR #530).
-  const programme = await (await request.get(`${baseUrl}/program`)).text();
-  expect(programme).toContain('data-navigation-href="/10-steps"');
-  expect(programme).not.toContain("/casinos");
-  expect(programme).not.toContain("/best-offers");
-  expect(programme).not.toContain("/bonuses");
+  // The Programme keeps the clean shell (Founder, 16 October 2026; PR #530), on the English route
+  // and on the localized ones the middleware rewrites to the same layout.
+  for (const route of ["/program", "/sv/program", "/da/program"]) {
+    const programme = await (await request.get(`${baseUrl}${route}`)).text();
+    expect(programme, route).toContain('data-navigation-href="/10-steps"');
+    expect(programme, route).not.toContain("/casinos");
+    expect(programme, route).not.toContain("/best-offers");
+    expect(programme, route).not.toContain("/bonuses");
+  }
 });
 
 test("retired destinations are redirects and absent from canonical discovery", async ({ request }) => {

@@ -50,8 +50,9 @@ const REQUIRED_BODY_VARIABLES: Record<EmailTemplateKey, readonly string[]> = {
  * 16 October 2026: the Programme ends in help). Accounts are Programme accounts and a broadcast can
  * be aimed at Programme progress, so the marketing broadcast follows the same rule.
  * `/catalog` is listed because it redirects to `/casinos`. The roots repeat the commercial section
- * of `lib/commercial-section.ts` (which this module must not import); a test keeps the two lists
- * equal.
+ * of `lib/commercial-section.ts` (which this module must not import); the two cannot drift because
+ * `tests/programme-no-casino-links.test.tsx` reads `COMMERCIAL_SECTION_ROOTS` and asserts that the
+ * guard below refuses every one of them, bare, language-prefixed and with a child path.
  */
 const RESEARCH_SECTION_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:best-offers|casinos|casino|catalog|bonuses|compare|bonus-guide|wagering-calculator|outbound)(?:\/|$)/i;
 const PARTNER_ROUTE_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:r|go)(?:\/|$)/i;

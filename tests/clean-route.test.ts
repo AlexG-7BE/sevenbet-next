@@ -3,8 +3,11 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { besideLocale, besideMessages } from "../lib/i18n/static-pages/beside";
+import { trustMessages } from "../lib/i18n/static-pages/can-you-trust-b4gamble";
+import { controlSharedMessages } from "../lib/i18n/static-pages/gambling-control";
 import { innanLocale, innanMessages } from "../lib/i18n/static-pages/innan";
 import { pausePlanMessages } from "../lib/i18n/static-pages/pause-plan";
+import { pauseStatisticsMessages } from "../lib/i18n/static-pages/pause-statistics";
 import { publicRoutePolicy } from "../lib/market/routing";
 import { coreRoutes } from "../lib/site";
 
@@ -57,6 +60,27 @@ test("the pages make no promise about the menu: the door rules of 12 and 13 Octo
   for (const locale of ["sv-SE", "da-DK", "en-GB"] as const) {
     const text = JSON.stringify([innanMessages(locale), besideMessages(locale)]);
     assert.doesNotMatch(text, /På den här vägen visas inga|På denne vej vises ingen|None are shown on this route|Dörren|Døren|opens that part of the site/, locale);
+  }
+});
+
+/**
+ * Since 17 October 2026 the menu carries Casinos, Bonuses and Best Offers on every public page
+ * (docs/07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md), so no public page may claim
+ * that its *route* shows none. A claim about the page's own body, plan, tool or text still holds.
+ */
+test("no public page claims its route or page links to no casino, which the menu now does", () => {
+  for (const locale of ["sv-SE", "da-DK", "en-GB"] as const) {
+    for (const [name, text] of [
+      ["pause-statistics", JSON.stringify(pauseStatisticsMessages(locale))],
+      ["gambling-control", JSON.stringify(controlSharedMessages(locale))],
+      ["can-you-trust-b4gamble", JSON.stringify(trustMessages(locale))],
+    ] as const) {
+      assert.doesNotMatch(
+        text,
+        /på den (?:här )?väg(?:en)? visas inga|på denne vej vises ingen|are shown on (?:this|that) route|[Dd]en här sidan länkar inte till|[Dd]enne side linker ikke til|[Tt]his page links to none/,
+        `${locale}: ${name}`,
+      );
+    }
   }
 });
 

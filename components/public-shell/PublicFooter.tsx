@@ -34,7 +34,11 @@ export function PublicFooter({
   commercialBestOffersNavigation?: ReactNode;
   commercialBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
-  /** False in the Programme's shell: the footer is built without Best Offers, Casinos and Bonuses. */
+  /**
+   * False in the Programme's shell: the footer is built without Best Offers, Casinos and Bonuses.
+   * The name is historical, as in `PublicHeader`: no research gate remains and nothing reads the
+   * path. Renamed to `commercialNavigation` in the RFC-057 phase.
+   */
   researchNavigation?: boolean;
 }) {
   const shell = publicShellMessages(presentation.locale);

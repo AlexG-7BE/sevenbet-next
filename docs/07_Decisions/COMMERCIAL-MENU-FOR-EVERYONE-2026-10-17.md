@@ -59,11 +59,16 @@ older internal language where it conflicts. Each affected `ACTIVE` RFC carries a
   document carries those addresses even in its inline data. No letter links to them. No Programme
   answer sets a cookie that changes a menu. Nothing here reintroduces a Programme-to-casino path,
   cookie, lesson door or e-mail link.
-- **The market rule.** A commercial link is shown only where offers may be presented for that
-  visitor. `commercialDestinationsNavigable(commercialProductsAvailable(state), countryCode)`,
-  the 1.5-second bounded wait in `app/(public)/layout.tsx`, the one timed-out retry, the settled
+- **The market rule, as the code actually draws it.** Best Offers and Bonuses follow the market
+  rule; the casino directory is editorial and is linked everywhere. `commercialMarketOnlyRoutes`
+  in `lib/public-shell.ts` holds `/best-offers` and `/bonuses` only, so
+  `publicNavigationForCommercialState` and `publicCommercialDestinationVisible` always keep
+  `/casinos`, and `app/(public)/casinos/page.tsx` never consults `offersMayBePresented`.
+  `commercialDestinationsNavigable(commercialProductsAvailable(state), countryCode)`, the
+  1.5-second bounded wait in `app/(public)/layout.tsx`, the one timed-out retry, the settled
   marker and the rejected state are untouched: only the path condition is gone. A prohibited
-  market (NO, IT, NL, TR, GR …) still sees no Best Offers and no Bonuses.
+  market (NO, IT, NL, TR, GR …) still sees no Best Offers and no Bonuses. What this decision does
+  change for those markets is recorded under Consequences.
 - **Offer, ranking, partner-route and commercial-analytics behaviour**, the research pages
   themselves, the sitemap, the catalogue and the reviews.
 - **No migration, no new column, no data change.**
@@ -104,6 +109,15 @@ the clean shell of PR #530.
 - **A visitor who came for help** meets the commercial menu on b4gamble.com again. Inside the
   Programme they still meet none of it, and the help site will be the place where they meet none
   of it anywhere.
+- **Prohibited markets see the casino directory more often than before.** The market rule is
+  unchanged, but it never covered `/casinos`. In `OFFER_PRESENTATION_PROHIBITED_MARKETS` (NO, IT,
+  NL, TR, GR, FI, PL, CZ, HU, RO and the rest) the Casinos link used to appear only once the
+  visitor was already on a casino page; it now appears in the header, the drawer and the footer of
+  every public page there. Best Offers and Bonuses are still withheld in those markets, no offer
+  is presented and no partner button or `/r/` route resolves. The casino directory is editorial,
+  which is why it was never on the market list — but the exposure change is real and the Founder
+  takes it knowingly. If it should follow the market rule instead, add `/casinos` to
+  `commercialMarketOnlyRoutes` in `lib/public-shell.ts`: one line, no other change.
 - **Help-channel relationships** (Beroendecentrum Stockholm, Help for Dependency, Bremen) were
   refused over the casino catalogue sharing this domain. This decision does not change that; the
   help site on its own domain is the answer, and it is part B.
@@ -163,6 +177,35 @@ back:
   that no layout and no middleware reads it.
 - Browser: `tests/public-ia-hardening-browser.spec.ts` (the full menu on Home, on a commercial page,
   after a soft navigation back, with and without the old lesson cookie, in the first HTML, and the
-  Programme's clean shell beside it), `tests/navigation-performance-stage2-browser.spec.ts` (the
-  canonical DOM order, with the streamed market gate, the bounded wait, the retry and the rejected
-  state unchanged) and `tests/program-ai-browser.spec.ts` (finishing step 3 changes neither menu).
+  Programme's clean shell beside it on `/program`, `/sv/program` and `/da/program`),
+  `tests/navigation-performance-stage2-browser.spec.ts` (the canonical DOM order, with the streamed
+  market gate, the bounded wait, the retry and the rejected state unchanged) and
+  `tests/program-ai-browser.spec.ts` (finishing step 3 changes neither menu).
+
+## Pages that described the old menu, corrected here
+
+A page that tells a reader it links to no casino has to mean its own body now, because the shell
+around it links to three. These were found in review before merge:
+
+- `lib/i18n/static-pages/gambling-control.ts` — the revenue line under the title of
+  `/gambling-control`, `/gambling-control-tools`, `/control-without-quitting` and
+  `/can-you-trust-b4gamble` said "This page links to none of them" (en/sv/da). It now says nothing
+  on the page recommends or links to one, and that the site menu does. These are the AEO answer
+  pages, so an assistant lifts the sentence whole; on the trust page it also contradicted the
+  paragraph this change added.
+- `lib/i18n/static-pages/pause-statistics.ts` — "None are shown on this route" (en/sv/da) and the
+  "day after" paragraph's claim about the `/pause-plan` route, both scoped to the figures and to
+  the plan itself. `tests/clean-route.test.ts` (in `ci:quality` through `pause-plan:test`) now
+  fails on any route-level claim in the statistics, control and trust copy.
+- Still true and left alone: `pause-plan.ts` "The plan contains none", `innan.ts` "This tool
+  contains none", `beside.ts` "This text contains none", and the Protected Help paragraph in
+  `about.ts` — `/help` keeps its own shell through `app/help/layout.tsx`.
+- `CONTROL_PAGES_UPDATED` moves to `2026-10-17` because that copy changed; `CONTROL_PAGES_PUBLISHED`
+  is new and keeps `datePublished` in the structured data at `2026-10-15`.
+- `scripts/research/production-screenshots.mjs` — the production evidence run recorded
+  `expect: "none"` for the pause plan, Home, `/innan`, `/beside`, a guide, the sign-in screen and
+  the old-cookie journeys. Every one of those now legitimately shows the menu, so the run would
+  have reported violations against this very change; they are `"some"`, and the Programme start is
+  now checked for `"none"`, which is the row that matters.
+- `app/(public)/can-you-trust-b4gamble/page.tsx` and `lib/email/templates.server.ts`: module
+  comments corrected to what the code does.
