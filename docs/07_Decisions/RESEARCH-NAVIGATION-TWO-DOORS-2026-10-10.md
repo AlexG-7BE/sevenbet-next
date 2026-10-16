@@ -1,6 +1,6 @@
 # Casino research reaches the menu through two doors
 
-**Status:** ACCEPTED, amended. Door one (the research section) and Part 2 (the lesson at step 3) stand; door two (the lesson flag) and Part 3 (the moment research opens) are withdrawn by [amendment 4](#amendment-4-16-october-2026--the-programme-opens-no-door) of 16 October 2026.
+**Status:** SUPERSEDED IN FULL. Door two and Part 3 were withdrawn by [amendment 4](#amendment-4-16-october-2026--the-programme-opens-no-door) of 16 October 2026; door one, the last of the rule, is withdrawn by [amendment 5](#amendment-5-17-october-2026--there-is-no-door) of 17 October 2026. Nothing of the two-doors rule is current authority. Part 2 (the lesson "Research responsibly" at step 3) is the one thing that outlives it, and it now stands on its own. Current record: [COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17](COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md).
 
 **Decision authority:** explicit Founder instructions, 10 October 2026.
 
@@ -220,3 +220,27 @@ no casino, offer, bonus, comparison or partner link to anyone, so that it ends i
   record. Evidence: `tests/programme-no-casino-links.test.tsx`, `tests/public-shell.test.ts`,
   `tests/public-ia-hardening-browser.spec.ts`.
 
+## Amendment 5, 17 October 2026 — there is no door
+
+**Founder decision, 17 October 2026 (chat):** «Полное меню для всех. Казино, бонусы и лучшие
+офферы видны каждому посетителю, а не только на страницах каталога. Это обычный коммерческий сайт
+для тех, кто играет и выбирает, где играть.» The help work moves to its own domain,
+`pauseplan.help`, with one quiet "need help" link from b4gamble.com, so the commercial site no
+longer has to look like a help site.
+
+- **Door one is withdrawn.** Best Offers, Casinos and Bonuses show in the header, the drawer and
+  the footer on every public page, to every visitor. The reader's path decides nothing.
+- **The whole two-doors rule is therefore superseded**, together with the reasoning of 10 October
+  that commercial links in the menu put off visitors who came for help. The answer to that is now
+  the second domain, not a narrower menu.
+- `lib/research-access.ts` and `PublicNavigationDoor` are deleted. The list of commercial roots
+  lives on in `lib/commercial-section.ts` for the two guards that still need it: the Programme
+  shows no casino link to anyone and no letter links to one (amendment 4 and
+  [PROGRAMME-NO-CASINO-LINKS-2026-10-16](PROGRAMME-NO-CASINO-LINKS-2026-10-16.md), both unchanged).
+- Unchanged: the market rule for Best Offers and Bonuses (RFC-039, RFC-054) with its bounded wait,
+  retry and settled states; the research pages themselves; the lesson at step 3 and its text; the
+  commercial boundary that no offer, rank, partner button or `/r/` route reads Programme state.
+- Rollback: the tag `archive/research-section-menu-gate-2026-10-17` (`774dd2f7`) and the restore
+  steps in the new record. Evidence: `tests/public-shell.test.ts`,
+  `tests/programme-no-casino-links.test.tsx`, `tests/public-ia-hardening-browser.spec.ts`,
+  `tests/navigation-performance-stage2-browser.spec.ts`, `tests/program-ai-browser.spec.ts`.

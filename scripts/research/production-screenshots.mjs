@@ -3,10 +3,10 @@
 // plan as a first-time visitor on a phone, opens the menu, goes home and opens the menu again, then
 // photographs the pages for the person beside a player and the rule before the app, then the first
 // guide on the pause plan, the Programme start behind its button and the sign-in screen. A second
-// browser that still holds the old lesson cookie checks that it opens nothing: no research link in
-// the menu at home, before or after the pause plan, and the research links only on the casino
-// pages themselves (Founder, 16 October 2026: the Programme shows no casino links to anyone; the
-// pause plan stays an ordinary landing page). Only ordinary page loads leave the runner; the
+// browser that still holds the old lesson cookie checks that the cookie changes nothing, because
+// since 17 October 2026 every public page already shows the commercial menu to every visitor
+// (docs/07_Decisions/COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md). The Programme is the one shell
+// built without it (Founder, 16 October 2026). Only ordinary page loads leave the runner; the
 // cookies the site sets are listed by name.
 // Output: <out>/*.png, <out>/REPORT.md and <out>/report.json.
 //
@@ -24,9 +24,9 @@ const locales = (options.locales || "sv,da").split(/[\s,]+/).filter(Boolean);
 const out = options.out || "screenshots";
 mkdirSync(out, { recursive: true });
 
-// The cookie step 3 set until 16 October 2026; a browser may still hold it, and it must open nothing.
+// The cookie step 3 set until 16 October 2026; a browser may still hold it, and it must change nothing.
 const OLD_LESSON_COOKIE = "b4g_research_access";
-// A link into the research section or to a partner, with or without a language prefix.
+// A link into the commercial section or to a partner, with or without a language prefix.
 const RESEARCH_LINK = /^(?:\/[a-z]{2}(?:-[a-z]{2})?)?\/(?:best-offers|casinos|casino|bonuses|r)(?:\/|$)/i;
 const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 const DESKTOP = { viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 };
@@ -78,39 +78,39 @@ const browser = await chromium.launch();
 try {
   for (const locale of locales) {
     // 1. A first-time visitor on a phone: the pause plan and its menu, then home and its menu, then
-    //    the two other landing pages. No research link outside the research section.
+    //    the two other landing pages. Every one of them carries the commercial menu (17 October 2026).
     {
       const context = await browser.newContext(contextOptions(locale, PHONE));
       const page = await context.newPage();
       let status = await visit(page, `/${locale}/pause-plan`);
-      await record(page, context, { step: `${locale}: pause page, first visit`, file: `${locale}-1-pause-plan-phone.png`, status, expect: "none", fullPage: true });
+      await record(page, context, { step: `${locale}: pause page, first visit`, file: `${locale}-1-pause-plan-phone.png`, status, expect: "some", fullPage: true });
       if (await openMenu(page)) {
-        await record(page, context, { step: `${locale}: pause page, menu open`, file: `${locale}-2-pause-plan-menu-phone.png`, status, expect: "none" });
+        await record(page, context, { step: `${locale}: pause page, menu open`, file: `${locale}-2-pause-plan-menu-phone.png`, status, expect: "some" });
       }
       status = await visit(page, `/${locale}`);
       if (await openMenu(page)) {
-        await record(page, context, { step: `${locale}: home after the pause page, menu open`, file: `${locale}-3-home-menu-after-pause-plan-phone.png`, status, expect: "none" });
+        await record(page, context, { step: `${locale}: home after the pause page, menu open`, file: `${locale}-3-home-menu-after-pause-plan-phone.png`, status, expect: "some" });
       }
       for (const path of ["innan", "beside"]) {
         status = await visit(page, `/${locale}/${path}`);
-        await record(page, context, { step: `${locale}: /${path}`, file: `${locale}-4-${path}-phone.png`, status, expect: "none", fullPage: true });
+        await record(page, context, { step: `${locale}: /${path}`, file: `${locale}-4-${path}-phone.png`, status, expect: "some", fullPage: true });
       }
       await context.close();
     }
-    // 2. A browser that still holds the old lesson cookie: it opens nothing, so home shows no
-    //    research link before or after the pause plan; the casino list itself still does.
+    // 2. A browser that still holds the old lesson cookie: it decides nothing either way, so home
+    //    shows the same menu before and after the pause plan, as every public page now does.
     {
       const context = await browser.newContext(contextOptions(locale, PHONE));
       await context.addCookies([{ name: OLD_LESSON_COOKIE, value: "open", url: base }]);
       const page = await context.newPage();
       let status = await visit(page, `/${locale}`);
       if (await openMenu(page)) {
-        await record(page, context, { step: `${locale}: old lesson cookie, home menu`, file: `${locale}-5-old-lesson-cookie-home-menu-phone.png`, status, expect: "none" });
+        await record(page, context, { step: `${locale}: old lesson cookie, home menu`, file: `${locale}-5-old-lesson-cookie-home-menu-phone.png`, status, expect: "some" });
       }
       await visit(page, `/${locale}/pause-plan`);
       status = await visit(page, `/${locale}`);
       if (await openMenu(page)) {
-        await record(page, context, { step: `${locale}: old lesson cookie, home menu after the pause page`, file: `${locale}-6-old-lesson-cookie-home-menu-after-pause-plan-phone.png`, status, expect: "none" });
+        await record(page, context, { step: `${locale}: old lesson cookie, home menu after the pause page`, file: `${locale}-6-old-lesson-cookie-home-menu-after-pause-plan-phone.png`, status, expect: "some" });
       }
       // The casino list and the first casino review behind it, with their partner buttons.
       status = await visit(page, `/${locale}/casinos`);
@@ -132,14 +132,15 @@ try {
       const startHref = await page.locator("[data-pause-plan-start]").first().getAttribute("href").catch(() => null);
       if (guideHref) {
         const status = await visit(page, guideHref);
-        await record(page, context, { step: `${locale}: first guide on the pause plan`, file: `${locale}-8-guide-phone.png`, status, expect: "none", fullPage: true });
+        await record(page, context, { step: `${locale}: first guide on the pause plan`, file: `${locale}-8-guide-phone.png`, status, expect: "some", fullPage: true });
       }
       if (startHref) {
+        // The Programme is the one shell built without the commercial menu (Founder, 16 October 2026).
         const status = await visit(page, startHref);
-        await record(page, context, { step: `${locale}: Programme start from the pause plan`, file: `${locale}-9-programme-start-phone.png`, status, fullPage: true });
+        await record(page, context, { step: `${locale}: Programme start from the pause plan`, file: `${locale}-9-programme-start-phone.png`, status, expect: "none", fullPage: true });
       }
       const status = await visit(page, `/login?returnTo=${encodeURIComponent(new URL(startHref ?? `/${locale}/program`, base).pathname)}`);
-      await record(page, context, { step: `${locale}: sign-in screen`, file: `${locale}-10-login-phone.png`, status, expect: "none", fullPage: true });
+      await record(page, context, { step: `${locale}: sign-in screen`, file: `${locale}-10-login-phone.png`, status, expect: "some", fullPage: true });
       await context.close();
     }
     // 3. The pause page on a desktop, with its header.
@@ -147,7 +148,7 @@ try {
       const context = await browser.newContext(contextOptions(locale, DESKTOP));
       const page = await context.newPage();
       const status = await visit(page, `/${locale}/pause-plan`);
-      await record(page, context, { step: `${locale}: pause page on a desktop`, file: `${locale}-7-pause-plan-desktop.png`, status, expect: "none", fullPage: true });
+      await record(page, context, { step: `${locale}: pause page on a desktop`, file: `${locale}-7-pause-plan-desktop.png`, status, expect: "some", fullPage: true });
       await context.close();
     }
   }
@@ -162,13 +163,13 @@ const failures = rows.filter((row) => row.status >= 400 || row.status === 0
 const lines = [
   "# The pause landing pages on Production",
   "",
-  `Site: ${base} · taken ${takenAt} from a GitHub-hosted runner · research links = links to Best Offers, Casinos, a casino review, Bonuses or a partner route on the page`,
+  `Site: ${base} · taken ${takenAt} from a GitHub-hosted runner · commercial links = links to Best Offers, Casinos, a casino review, Bonuses or a partner route on the page`,
   "",
-  "| Step | HTTP | Research links | Cookies | Picture |",
+  "| Step | HTTP | Commercial links | Cookies | Picture |",
   "|---|---|---|---|---|",
   ...rows.map((row) => `| ${row.step} | ${row.status} | ${row.researchLinks}${row.expect === "none" && row.researchLinks > 0 ? " ✗" : ""}${row.expect === "some" && row.researchLinks === 0 ? " ✗" : ""} | ${row.cookies.join(", ") || "—"} | ${row.file} |`),
   "",
-  failures.length ? `**${failures.length} step(s) did not hold.**` : "**Every step holds: no research link outside the research section, and the old lesson cookie opens nothing.**",
+  failures.length ? `**${failures.length} step(s) did not hold.**` : "**Every step holds: every public page carries the commercial menu, and the old lesson cookie changes nothing.**",
   "",
 ];
 writeFileSync(`${out}/REPORT.md`, lines.join("\n"));

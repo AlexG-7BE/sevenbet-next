@@ -1,10 +1,10 @@
 import type { ControlFaq } from "@/lib/i18n/static-pages/gambling-control";
-import { CONTROL_PAGES_UPDATED } from "@/lib/i18n/static-pages/gambling-control";
+import { CONTROL_PAGES_PUBLISHED, CONTROL_PAGES_UPDATED } from "@/lib/i18n/static-pages/gambling-control";
 import { organizationReference } from "@/lib/seo/structured-data";
 
 type Crumb = Readonly<{ name: string; item: string }>;
 
-/** WebPage, FAQPage and BreadcrumbList, like the pause plan, with the date the facts were checked. */
+/** WebPage, FAQPage and BreadcrumbList, like the pause plan, with the day the facts were last checked. */
 export function controlPageSchema(input: { name: string; description: string; url: string; inLanguage: string; faq: ControlFaq; breadcrumbs: readonly Crumb[] }) {
   return [
     {
@@ -15,7 +15,7 @@ export function controlPageSchema(input: { name: string; description: string; ur
       url: input.url,
       inLanguage: input.inLanguage,
       isAccessibleForFree: true,
-      datePublished: CONTROL_PAGES_UPDATED,
+      datePublished: CONTROL_PAGES_PUBLISHED,
       dateModified: CONTROL_PAGES_UPDATED,
       publisher: organizationReference(),
     },

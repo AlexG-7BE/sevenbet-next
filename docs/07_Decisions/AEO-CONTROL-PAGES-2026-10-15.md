@@ -74,7 +74,7 @@ Also changed:
 |---|---|
 | Commission when a reader signs up or deposits through a labelled affiliate link, paid to 7BE Inc.; no extra charge | `app/(public)/affiliate-disclosure/AffiliateDisclosureDocument.tsx` |
 | Commission never changes an editor score; casinos and offers B4GAMBLE can link to from the reader's country come first, then by editor score | `lib/i18n/product-pages-catalog.ts` (`faqCommissionAnswer`) |
-| Casino, bonus and offer pages are public; the menu shows them only on those pages (since 16 October 2026; before, also after step 3) | `lib/research-access.ts` |
+| Casino, bonus and offer pages are public; the menu links to them from every public page (since 17 October 2026; 16–17 October only on those pages; before that, also after step 3) | `components/public-shell/PublicNavigation.tsx`, [COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17](COMMERCIAL-MENU-FOR-EVERYONE-2026-10-17.md) |
 | No Programme screen links to them and finishing a step opens nothing (since 16 October 2026; before, step 3's and step 10's last screens linked to them and step 3 set one cookie, `b4g_research_access`) | `components/programme/ProgramAiMissionExperience.tsx`, `components/programme/ProgramAiHome.tsx`, [PROGRAMME-NO-CASINO-LINKS-2026-10-16](PROGRAMME-NO-CASINO-LINKS-2026-10-16.md) |
 | Programme answers are not used to choose, rank or personalise casinos, offers, affiliate links or ads; no sale of personal data | Privacy notice, Affiliate disclosure §4 |
 | Google Analytics counts Programme pages too unless "Reject cookies", never on Help, advertising features off, no Programme answers | `lib/analytics/google-analytics.ts`, `lib/analytics/excluded-paths.ts` (no custom events anywhere) |
