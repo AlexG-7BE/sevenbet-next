@@ -17,6 +17,7 @@ import { controlProgrammePath } from "../lib/programme/contract";
 import { PROGRAMME_LOCALES, PROGRAMME_ROUTES, programmePath, type ProgrammeLocale } from "../lib/programme/presentation";
 import {
   HELP_SERVICE_SOURCES,
+  keepNumbersTogether,
   PROGRAMME_HELP_SERVICE_TYPES,
   programmeHelpMarket,
 } from "../lib/programme/program-ai/help-services";
@@ -38,6 +39,7 @@ import {
 } from "../lib/programme/program-ai/mission-registry";
 import { parseProgramAiMissionAction } from "../lib/programme/program-ai/mission-validation";
 import { questionOptionLineEntries, questionWhyLine } from "../lib/programme/program-ai/question-screen";
+import { ProgrammeAiGuidanceService } from "../lib/programme/application/programme-ai-guidance.service";
 import { ProgrammeAiMissionsService } from "../lib/programme/application/programme-ai-missions.service";
 import { fakeUnitOfWork, readyMissionTen } from "./fixtures/programme-ai-fake-unit-of-work";
 
@@ -66,12 +68,12 @@ const LESSON_KEYS: readonly ProgrammeMessageKey[] = [
   "Or write the line in your own words…",
   "Which kind of help would you try first?",
   "Choose the one you would really use. You will see who answers and when.",
-  "Your help service", "Talk on the phone", "Write in a chat", "Meet in person", "Get help with money and debt", "Help for the people close to me",
-  "YOUR HELP SERVICE", "Call {number}", "Open the website", "When it is closed", "If you have thoughts of suicide",
-  "The Help page lists the services we have checked for your country.", "Call your local emergency number now.", "See the Help page",
+  "Your help service", "Talk on the phone", "Write in a chat", "Join a group or see a counsellor", "Get help with money and debt", "Help for the people close to me",
+  "YOUR HELP SERVICE", "Call {number}", "Open the website", "When the urge comes", "When it is closed", "If you have thoughts of suicide",
+  "The Help page lists help services.", "Call your local emergency number now.", "See the Help page",
   "What will you do in the first 10 minutes of an urge?",
   "Choose two or three moves, in the order you will make them.",
-  "Your first 10 minutes", "Put the phone away", "Send my line to my person", "Call or write to my help service", "Go outside or move", "Read my support card",
+  "Your first 10 minutes", "Put the phone away", "Send my line to my person", "Call or write to my help service", "Wait for 10 minutes", "Go outside or move", "Read my support card",
   "MY SUPPORT CARD", "My person", "What I will say", "My help service", "First 10 minutes",
   "Your person, your help service and your first 10 minutes.",
 ];
@@ -201,16 +203,16 @@ test("the help lesson end to end: 50 XP for its actions, 25 for its completion, 
 test("the support card names the checked service, its number and hours, and the crisis line of the market", () => {
   const artifact = { ...NEW_ANSWERS.learn_comparison_signals, ...NEW_ANSWERS.decode_offer_terms, ...NEW_ANSWERS.build_research_checklist };
   const expected: Partial<Record<ProgrammeLocale, { service: string; crisis: RegExp; title: string; sentence: string }>> = {
-    "sv-SE": { service: "Stödlinjen · 020-81 91 00 · Helgfria vardagar: måndag 9–19, tisdag 9–17, onsdag 9–17, torsdag 11–19, fredag 9–15", crisis: /Självmordslinjen \(Mind\) · 90101 .*112/, title: "MITT STÖDKORT", sentence: "Om jag sms:ar dig ett ord, kan du ringa mig då?" },
-    "da-DK": { service: "StopSpillet · 70 22 28 25 · Mandag–torsdag 9.00–21.00, fredag 9.00–17.00", crisis: /Livslinien · 70 201 201 · alle årets dage fra kl\. 09-05\. .*112/, title: "MIT STØTTEKORT", sentence: "Hvis jeg skriver ét ord til dig, kan du så ringe til mig?" },
-    "en-GB": { service: "National Gambling Helpline · 0808 8020 133 · Free, 24 hours a day, 7 days a week", crisis: /Samaritans · 116 123 .*999/, title: "MY SUPPORT CARD", sentence: "If I text you one word, can you call me?" },
+    "sv-SE": { service: "Stödlinjen · 020-81 91 00 · Helgfria vardagar: mån 9–19, tis–ons 9–17, tors 11–19, fre 9–15", crisis: /^Självmordslinjen \(Mind\) · 90101 · dygnet runt, alla dagar · chatt på mind\.se\. Om det är bråttom: ring 112\.$/, title: "MITT STÖDKORT", sentence: "Om jag sms:ar dig ett ord, kan du ringa mig då?" },
+    "da-DK": { service: "StopSpillet · 70 22 28 25 · Mandag–torsdag 9.00–21.00, fredag 9.00–17.00", crisis: /^Livslinien · 70\u00a0201\u00a0201 · alle dage fra kl\. 9 om morgenen til kl\. 5 om natten\. Er du akut selvmordstruet: ring 112\.$/, title: "MIT STØTTEKORT", sentence: "Hvis jeg skriver ét ord til dig, kan du så ringe til mig?" },
+    "en-GB": { service: "National Gambling Helpline · 0808 8020 133 · Free, 24 hours a day, 7 days a week · In Wales: NHS Wales Helpline 0808 2819 265, free, 24 hours a day", crisis: /^Samaritans · 116\u00a0123 · any time, day or night, free from any phone\. If a life is at risk: call 999 or 112\.$/, title: "MY SUPPORT CARD", sentence: "If I text you one word, can you call me?" },
   };
   for (const [locale, want] of Object.entries(expected) as Array<[ProgrammeLocale, NonNullable<(typeof expected)["en-GB"]>]>) {
     const card = programmeMissionKeepsake(STEP_THREE, artifact, locale);
     assert.equal(card.title, want.title, locale);
     assert.equal(card.sentence, want.sentence, `${locale}: the chosen line is the card's sentence`);
     assert.ok(!card.rows.some((row) => row.key === "openingLine"), `${locale}: the line is shown once`);
-    assert.equal(card.rows.find((row) => row.key === "helpService")?.value, want.service, locale);
+    assert.equal(card.rows.find((row) => row.key === "helpService")?.value, keepNumbersTogether(want.service), locale);
     assert.match(card.rows.at(-1)!.value, want.crisis, locale);
     assert.equal(card.rows.at(-1)!.key, "crisisLine");
     // Words the person wrote in the tab replace the chosen line.
@@ -219,7 +221,7 @@ test("the support card names the checked service, its number and hours, and the 
   // Sweden's phone line closes evenings and weekends: the card adds the line that answers then.
   const swedish = programmeMissionKeepsake(STEP_THREE, artifact, "sv-SE").rows;
   assert.deepEqual(swedish.map((row) => row.key), ["trustedPerson", "helpService", "afterHours", "firstTenMinutes", "crisisLine"]);
-  assert.match(swedish.find((row) => row.key === "afterHours")!.value, /^Föreningen Spelfriheten · 08-37 43 00 · Öppet dygnet runt, året om$/);
+  assert.equal(swedish.find((row) => row.key === "afterHours")!.value, keepNumbersTogether("Föreningen Spelfriheten · 08-37 43 00 · Öppet dygnet runt, året om"));
   // A language whose market we have not checked shows no number at all and points to the Help page.
   for (const locale of PROGRAMME_LOCALES.filter((value) => !programmeHelpMarket(value))) {
     const card = programmeMissionKeepsake(STEP_THREE, artifact, locale);
@@ -244,13 +246,17 @@ test("every checked service has its source page, a number or website, and one li
       if (service.tel) assert.equal(service.tel, service.contact.replace(/\D/g, ""), `${locale} ${type}: the link dials the number shown`);
       if (service.tel) numbers.add(service.contact);
     }
+    for (const service of Object.values(market.afterHours)) {
+      if (service.tel) assert.equal(service.tel, service.contact.replace(/\D/g, ""), `${locale} ${service.name}: the link dials the number shown`);
+    }
     assert.equal(market.crisis.tel, market.crisis.contact.replace(/\D/g, ""));
+    assert.ok(market.crisis.emergency.includes(market.crisis.emergencyTel), `${locale}: the emergency link dials the number shown`);
     numbers.add(market.crisis.contact);
   }
   // The numbers as each service writes them (checked 16 October 2026); a change here is a deliberate re-check.
   assert.deepEqual([...numbers].sort(), ["0800 138 1111", "020-81 91 00", "0808 8020 133", "116 123", "63 40 11 49", "70 11 18 10", "70 201 201", "70 22 28 25", "90101"].sort());
   const sourceHosts = new Set(HELP_SERVICE_SOURCES.map((source) => new URL(source.url).host));
-  for (const host of ["stodlinjen.se", "foreningenspelfriheten.se", "spelberoende.se", "www.konsumentverket.se", "www.1177.se", "www.stopspillet.dk", "ludomani.dk", "www.raad.dk", "www.livslinien.dk", "www.nhs.uk", "www.begambleaware.org", "www.gamblersanonymous.org.uk", "www.stepchange.org", "gamfam.org.uk", "www.samaritans.org"]) {
+  for (const host of ["stodlinjen.se", "foreningenspelfriheten.se", "spelberoende.se", "www.konsumentverket.se", "mind.se", "www.1177.se", "www.stopspillet.dk", "ludomani.dk", "www.raad.dk", "www.livslinien.dk", "www.nhs.uk", "www.gambleaware.org", "www.gamcare.org.uk", "www.stepchange.org", "gamfam.org.uk", "www.samaritans.org"]) {
     assert.ok(sourceHosts.has(host), host);
   }
 });
@@ -298,10 +304,42 @@ test("the public 10 Steps page and the step lists show the help lesson as step 3
 test("the final plan names the support card and leaves out a stored research checklist", () => {
   const facts = [{ missionNumber: STEP_THREE, artifact: { ...NEW_ANSWERS.learn_comparison_signals, ...NEW_ANSWERS.decode_offer_terms, ...NEW_ANSWERS.build_research_checklist } }];
   const plan = deterministicFinalPlanText({ facts, planPriorityIds: ["support_card"] }, "en-GB");
-  assert.match(plan, /^Support card: A friend; National Gambling Helpline/);
+  assert.equal(plan, "Support card: A friend; Put the phone away · Send my line to my person; National Gambling Helpline");
   // A plan saved while "Research checklist" was a priority shows the rest of its priorities, not "Unavailable".
   assert.deepEqual(presentMissionArtifact({ planPriorityIds: ["research", "boundary"] }, "en-GB"), [{ key: "planPriorityIds", label: "Plan priorities", value: "Boundary" }]);
   assert.equal(deterministicFinalPlanText({ facts, planPriorityIds: ["research"] }, "en-GB"), "Review only the confirmed parts of your Programme; add nothing that is missing.");
+});
+
+test("the final plan never cuts a number, an opening time or a move of the support card", () => {
+  const moves = ["phone_away", "send_line", "contact_service", "wait_ten_minutes", "go_outside", "read_card"];
+  const moveSets: string[][] = [];
+  for (let a = 0; a < moves.length; a += 1) for (let b = a + 1; b < moves.length; b += 1) {
+    moveSets.push([moves[a], moves[b]]);
+    for (let c = b + 1; c < moves.length; c += 1) moveSets.push([moves[a], moves[b], moves[c]]);
+  }
+  const people = ["partner", "family", "friend", "colleague", "been_there", "professional", "service_first"];
+  let cases = 0;
+  for (const locale of ["sv-SE", "da-DK", "en-GB", "de-DE", "el-GR"] as const) {
+    const market = programmeHelpMarket(locale);
+    const numbers = market ? [...Object.values(market.services), ...Object.values(market.afterHours)].flatMap((service) => service.tel ? [service.tel] : []) : [];
+    const label = `${programmeText(locale, "Support card")}: `;
+    for (const helpService of PROGRAMME_HELP_SERVICE_TYPES) for (const trustedPerson of people) for (const firstTenMinutes of moveSets) {
+      const artifact = { trustedPerson, openingLine: "call_me", helpService, firstTenMinutes };
+      const plan = deterministicFinalPlanText({ facts: [{ missionNumber: STEP_THREE, artifact }], planPriorityIds: ["support_card"] }, locale);
+      const where = `${locale} ${helpService} ${trustedPerson} ${firstTenMinutes.join(",")}`;
+      assert.ok(plan.startsWith(label), where);
+      const segment = plan.slice(label.length);
+      assert.ok(segment.length <= 84, `${where}: ${segment.length}`);
+      assert.doesNotMatch(segment, /…/, `${where}: nothing is cut`);
+      assert.doesNotMatch(segment, /\d[\s\u00a0\u2060.–-]+\d/, `${where}: no number or time range`);
+      for (const tel of numbers) assert.ok(!segment.replace(/\D/g, "").includes(tel.slice(0, 5)), `${where}: no phone number`);
+      assert.ok(segment.startsWith(presentMissionArtifact({ trustedPerson }, locale)[0].value), `${where}: the person comes first`);
+      // In the three languages with a checked list the first move always fits after the person.
+      if (market) assert.ok(segment.includes(presentMissionArtifact({ firstTenMinutes: [firstTenMinutes[0]] }, locale)[0].value), `${where}: the first move is kept`);
+      cases += 1;
+    }
+  }
+  assert.equal(cases, 5 * 5 * 7 * 35);
 });
 
 const now = "2026-10-16T09:00:00.000Z";
@@ -339,8 +377,8 @@ test("the screens of step 3 render the help lesson, its support card, and an old
     const done = render(stepThree(completed), locale);
     assert.match(done, /data-programme-completion=/, locale);
     assert.ok(done.includes(programmeText(locale, "MY SUPPORT CARD")), locale);
-    assert.ok(done.includes(programmeHelpMarket(locale)!.services.phone.contact), `${locale}: the number is on the card`);
-    assert.ok(done.includes(programmeHelpMarket(locale)!.crisis.contact), `${locale}: the crisis line is on the card`);
+    assert.ok(done.includes(keepNumbersTogether(programmeHelpMarket(locale)!.services.phone.contact)), `${locale}: the number is on the card`);
+    assert.ok(done.includes(keepNumbersTogether(programmeHelpMarket(locale)!.crisis.contact)), `${locale}: the crisis line is on the card`);
   }
   // An old research record, as the server sends it now: already complete, nothing of the research shown.
   const old = render(stepThree({ ...completed, artifact: {}, legacyCompletion: true }), "sv-SE");
@@ -361,3 +399,76 @@ test("the provider never writes a number, and the policy says the support card h
     assert.throws(() => parseGeneratedResult("REVIEW_M10", review(body)), Error, body);
   }
 });
+
+test("a service that cannot answer during an urge brings the market's phone line, and every card ends with a line that answers", async () => {
+  const { HelpServiceCard } = await import("../components/programme/ProgramAiMissionPrimitives");
+  const keys = (locale: ProgrammeLocale, helpService: string) => programmeMissionKeepsake(STEP_THREE, { ...NEW_ANSWERS.learn_comparison_signals, helpService, ...NEW_ANSWERS.build_research_checklist }, locale).rows.map((row) => row.key);
+  const expected: Record<"sv-SE" | "da-DK" | "en-GB", Record<string, string[]>> = {
+    "sv-SE": { phone: ["afterHours"], chat: ["afterHours"], in_person: ["urgeLine", "afterHours"], debt: ["urgeLine", "afterHours"], close_ones: ["afterHours"] },
+    "da-DK": { phone: [], chat: [], in_person: ["urgeLine"], debt: ["urgeLine"], close_ones: ["urgeLine"] },
+    "en-GB": { phone: [], chat: [], in_person: ["urgeLine"], debt: ["urgeLine"], close_ones: ["urgeLine"] },
+  };
+  for (const [locale, byService] of Object.entries(expected) as Array<["sv-SE" | "da-DK" | "en-GB", Record<string, string[]>]>) {
+    const market = programmeHelpMarket(locale)!;
+    for (const [helpService, extras] of Object.entries(byService)) {
+      assert.deepEqual(keys(locale, helpService), ["trustedPerson", "helpService", ...extras, "firstTenMinutes", "crisisLine"], `${locale} ${helpService}`);
+      const card = programmeMissionKeepsake(STEP_THREE, { helpService }, locale);
+      const urge = card.rows.find((row) => row.key === "urgeLine");
+      if (urge) {
+        assert.equal(urge.label, programmeText(locale, "When the urge comes"));
+        assert.ok(urge.value.includes(keepNumbersTogether(market.services.phone.contact)), `${locale} ${helpService}: the urge line has a number`);
+      }
+      // Every card but a chat carries a number to call, besides the crisis line.
+      if (helpService !== "chat") assert.match(card.rows.filter((row) => row.key !== "crisisLine").map((row) => row.value).join(" "), /\d[\d\u00a0\u2060 -]{5,}\d/, `${locale} ${helpService}`);
+      const html = renderToStaticMarkup(<HelpServiceCard locale={locale} service={helpService} />);
+      assert.equal(html.includes(programmeText(locale, "When the urge comes")), Boolean(urge), `${locale} ${helpService}: the card on screen matches the keepsake`);
+      assert.ok(html.includes(`href="tel:${market.crisis.emergencyTel}"`), `${locale}: the emergency number can be tapped`);
+    }
+  }
+  // Wales: the British helpline and its chat serve England and Scotland; the card names the Welsh line.
+  assert.match(programmeMissionKeepsake(STEP_THREE, { helpService: "phone" }, "en-GB").rows[0].value, /In Wales: NHS Wales Helpline 0808\u00a02819\u00a0265/);
+  assert.match(renderToStaticMarkup(<HelpServiceCard locale="en-GB" service="chat" />), /For people in England and Scotland/);
+  assert.match(renderToStaticMarkup(<HelpServiceCard locale="en-GB" service="phone" />), /Great\u00a0Britain/);
+  // A language without a checked list still shows no number.
+  assert.doesNotMatch(renderToStaticMarkup(<HelpServiceCard locale="de-DE" service="in_person" />), /tel:|\d{3}/);
+});
+
+test("question 3 leaves out \"Send my line to my person\" when the first question was answered under the earlier lesson", async () => {
+  const { ProgramAiMissionExperience } = await import("../components/programme/ProgramAiMissionExperience");
+  const atQuestionThree = (artifact: Artifact) => renderToStaticMarkup(
+    <ProgramAiMissionExperience home={homeAfterStepTwo()} locale="en-GB" localWording="" mission={stepThree({ currentAction: "build_research_checklist", currentActionPosition: 3, actionsCompleted: 2, artifact, actions: stepThree({}).actions.map((action, index) => ({ ...action, completed: index < 2 })) })} onBack={() => undefined} onHome={() => undefined} onLocalWording={() => undefined} programmePath={programmePath("en-GB")} userId="step-three-user" />,
+  );
+  const withLine = atQuestionThree({ ...NEW_ANSWERS.learn_comparison_signals, ...NEW_ANSWERS.decode_offer_terms });
+  assert.ok(withLine.includes("Send my line to my person"));
+  assert.ok(withLine.includes("Wait for 10 minutes"));
+  const withoutLine = atQuestionThree({ helpService: "chat" });
+  assert.ok(!withoutLine.includes("Send my line to my person"));
+  assert.ok(withoutLine.includes("Put the phone away"));
+});
+
+test("only the final plan and the full Review, which read the support card, refuse a phone-number-like run of digits", () => {
+  const goal = (text: string) => ({ kind: "guidance", operation: "M2_GOAL", title: "Three ways to word it", summary: "Pick one.", options: [{ id: "candidate_1", text }] });
+  for (const text of ["For seven days I keep to högst 10 000 kr.", "I check in on 2026-10-30."]) {
+    assert.equal(parseGeneratedResult("M2_GOAL", goal(text)).kind, "guidance", text);
+  }
+  const plan = (text: string) => ({ kind: "guidance", operation: "M10_FINAL_PLAN", title: "Your plan", summary: "One screen.", options: [{ id: "plan", text }] });
+  assert.equal(parseGeneratedResult("M10_FINAL_PLAN", plan("Keep your support card close.")).kind, "guidance");
+  assert.throws(() => parseGeneratedResult("M10_FINAL_PLAN", plan("Ring 020-81 91 00.")));
+});
+
+test("a final plan saved with the retired research priority does not send it to the provider", async () => withProgrammeAi(async () => {
+  const fake = personWithOldStepThree("COMPLETED");
+  readyMissionTen(fake);
+  const ten = programAiMissionDefinition(10)!;
+  fake.progress.set(10, { ...fake.progress.get(10)!, taskStates: ten.actions.slice(0, 2).map((action) => actionTaskState(10, action.id)), draft: { programAiV1: { version: ten.artifactVersion, artifact: { timelineReviewed: true, planPriorityIds: ["research", "boundary"] } } } });
+  const service = new ProgrammeAiMissionsService(fake.unit as never);
+  let sent: unknown;
+  const guidance = new ProgrammeAiGuidanceService(service, {
+    generate: async (operation, context) => {
+      sent = context;
+      return { kind: "guidance", operation, title: "Your plan", summary: "One screen.", options: [{ id: "plan", text: "Keep the boundary." }], generation: "provider" } as never;
+    },
+  });
+  await guidance.missionGuidance("user-a", 10, { locale: "en-GB" });
+  assert.deepEqual((sent as { planPriorityIds: string[] }).planPriorityIds, ["boundary"]);
+}));

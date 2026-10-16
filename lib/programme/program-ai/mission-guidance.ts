@@ -201,12 +201,19 @@ const allowedOutputIds: Record<ProgramAiGuidanceOperation, readonly string[]> = 
   REVIEW_M10: ["where_started", "what_built", "in_place", "review_next", "one_screen"],
 };
 
-function safeString(value: unknown, maximum: number) {
+/**
+ * The operations whose input holds the support card of step 3 (Mission 08): the final plan and the
+ * full Review. Only their output is refused for a phone-number-like run of digits; every other
+ * operation may echo a person's own amounts and dates ("10 000 kr", "2026-10-30").
+ */
+const SUPPORT_CARD_OPERATIONS: ReadonlySet<ProgramAiGuidanceOperation> = new Set(["M10_FINAL_PLAN", "REVIEW_M10"]);
+
+function safeOutputString(value: unknown, maximum: number, noPhoneNumbers = false) {
   if (typeof value !== "string" || !value.trim() || value.length > maximum) {
     throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
   }
   const result = value.trim();
-  return assertSafeProgrammeGeneratedText(result, { strictCommercialTerms: true, noPhoneNumbers: true });
+  return assertSafeProgrammeGeneratedText(result, { strictCommercialTerms: true, noPhoneNumbers });
 }
 
 export function parseGeneratedResult(
@@ -217,6 +224,8 @@ export function parseGeneratedResult(
     throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
   }
   const record = value as Record<string, unknown>;
+  const noPhoneNumbers = SUPPORT_CARD_OPERATIONS.has(operation);
+  const safeString = (item: unknown, maximum: number) => safeOutputString(item, maximum, noPhoneNumbers);
   if (operation.startsWith("REVIEW_")) {
     if (!exactKeys(record, ["kind", "operation", "title", "sections"]) || record.kind !== "review" || record.operation !== operation || !Array.isArray(record.sections) || record.sections.length < 3 || record.sections.length > 5) {
       throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");

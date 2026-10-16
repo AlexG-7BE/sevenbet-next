@@ -5,6 +5,7 @@ import {
   crisisLine,
   helpContactLine,
   isProgrammeHelpServiceType,
+  programmeHelpExtras,
   programmeHelpMarket,
 } from "@/lib/programme/program-ai/help-services";
 
@@ -168,7 +169,7 @@ const fieldValueLabels: Record<string, Record<string, ProgrammeMessageKey>> = {
   helpService: {
     phone: "Talk on the phone",
     chat: "Write in a chat",
-    in_person: "Meet in person",
+    in_person: "Join a group or see a counsellor",
     debt: "Get help with money and debt",
     close_ones: "Help for the people close to me",
   },
@@ -176,7 +177,7 @@ const fieldValueLabels: Record<string, Record<string, ProgrammeMessageKey>> = {
     phone_away: "Put the phone away",
     send_line: "Send my line to my person",
     contact_service: "Call or write to my help service",
-    wait_ten_minutes: "Wait 10 minutes",
+    wait_ten_minutes: "Wait for 10 minutes",
     go_outside: "Go outside or move",
     read_card: "Read my support card",
   },
@@ -187,6 +188,11 @@ const retiredFieldValues: Record<string, readonly string[]> = {
   // "Research checklist" was a final-plan priority while step 3 was "Research responsibly".
   planPriorityIds: ["research"],
 };
+
+/** A stored value an earlier lesson offered and the current one does not: screens and the provider leave it out. */
+export function isRetiredFieldValue(key: string, value: unknown) {
+  return (retiredFieldValues[key] ?? []).includes(String(value));
+}
 
 const missionResultTitles: Record<number, ProgrammeMessageKey> = {
   2: "MY 7-DAY GOAL",
@@ -207,8 +213,7 @@ function presentValue(key: string, value: string | number | boolean | string[], 
   if (key === "reviewCadenceDays") return programmeText(locale, "Every {days} days", { days: String(value) });
   if (key === "timelineReviewed") return programmeText(locale, value === true ? "Reviewed" : "Not reviewed yet");
   if (key === "helpService") return helpServiceValue(value, locale);
-  const retired = retiredFieldValues[key] ?? [];
-  const values = (Array.isArray(value) ? value : [value]).filter((item) => !retired.includes(String(item)));
+  const values = (Array.isArray(value) ? value : [value]).filter((item) => !isRetiredFieldValue(key, item));
   if (!values.length) return programmeText(locale, "Unavailable");
   return values.map((item) => {
     const label = fieldValueLabels[key]?.[String(item)] ?? valueLabels[String(item)];
@@ -261,8 +266,43 @@ const planPriorityFacts: Record<string, { missionNumber: number; fields: readonl
   fallback: { missionNumber: 9, fields: ["responseStrategy", "fallbackStrategy"] },
 };
 
-function boundedSegment(value: string, maximum = 84) {
+const PLAN_SEGMENT_MAXIMUM = 84;
+
+function boundedSegment(value: string, maximum = PLAN_SEGMENT_MAXIMUM) {
   return value.length <= maximum ? value : `${value.slice(0, maximum - 1).trimEnd()}…`;
+}
+
+/**
+ * The support card in the one-screen plan (code review, 17 October 2026): the person, then the
+ * moves for the first 10 minutes, then the help service by name. Only whole parts are taken, so
+ * no number, opening time or move is ever cut; the number itself stays on the support card of
+ * step 3. A language without a checked list names the kind of help.
+ */
+function supportCardPlanSegment(artifact: ProgramAiStructuralArtifact, locale: ProgrammeLocale) {
+  const label = (key: string, value: unknown) => {
+    const message = typeof value === "string" ? fieldValueLabels[key]?.[value] : undefined;
+    return message ? programmeText(locale, message) : "";
+  };
+  const market = programmeHelpMarket(locale);
+  const service = isProgrammeHelpServiceType(artifact.helpService)
+    ? market ? market.services[artifact.helpService].name : label("helpService", artifact.helpService)
+    : "";
+  const moves = Array.isArray(artifact.firstTenMinutes) ? artifact.firstTenMinutes.map((move) => label("firstTenMinutes", move)) : [];
+  const groups = [[label("trustedPerson", artifact.trustedPerson)], moves, [service]]
+    .map((group) => group.filter(Boolean))
+    .filter((group) => group.length);
+  let text = "";
+  for (const group of groups) {
+    let part = "";
+    for (const item of group) {
+      const nextPart = part ? `${part} · ${item}` : item;
+      const candidate = text ? `${text}; ${nextPart}` : nextPart;
+      if (candidate.length > PLAN_SEGMENT_MAXIMUM) break;
+      part = nextPart;
+    }
+    if (part) text = text ? `${text}; ${part}` : part;
+  }
+  return text || (groups[0] ? boundedSegment(groups[0][0]) : "");
 }
 
 export function deterministicFinalPlanText(context: unknown, locale: ProgrammeLocale = "en-GB") {
@@ -289,6 +329,10 @@ export function deterministicFinalPlanText(context: unknown, locale: ProgrammeLo
     const artifact = fact?.artifact && typeof fact.artifact === "object" && !Array.isArray(fact.artifact)
       ? fact.artifact as ProgramAiStructuralArtifact
       : {};
+    if (priority === "support_card") {
+      const card = supportCardPlanSegment(artifact, locale);
+      return card ? [`${humanValue(priority, locale)}: ${card}`] : [];
+    }
     const values = presentMissionArtifact(artifact, locale)
       .filter((row) => projection.fields.includes(row.key) && row.value !== "Unavailable")
       .map((row) => row.value);
@@ -341,19 +385,22 @@ export function programmeMissionKeepsake(
   return {
     title,
     sentence: written || line || undefined,
-    // The line that answers when the service is closed stands right under the service.
+    // The line to call when the urge comes and the one that answers when it is closed stand
+    // right under the service.
     rows: [
-      ...rows.filter((row) => row.key !== "openingLine").flatMap((row) => row.key === "helpService" ? [row, ...programmeAfterHoursRows(artifact, locale)] : [row]),
+      ...rows.filter((row) => row.key !== "openingLine").flatMap((row) => row.key === "helpService" ? [row, ...programmeHelpExtraRows(artifact, locale)] : [row]),
       programmeCrisisRow(locale),
     ],
   };
 }
 
-/** The line that answers when the chosen service is closed, where the market has one. */
-function programmeAfterHoursRows(artifact: ProgramAiStructuralArtifact, locale: ProgrammeLocale): PresentedArtifactRow[] {
+/** The rows under the chosen service: its market's phone line for the urge, and the line for when it is closed. */
+function programmeHelpExtraRows(artifact: ProgramAiStructuralArtifact, locale: ProgrammeLocale): PresentedArtifactRow[] {
   const market = programmeHelpMarket(locale);
-  const afterHours = market && isProgrammeHelpServiceType(artifact.helpService) ? market.afterHours[artifact.helpService] : undefined;
-  return afterHours ? [{ key: "afterHours", label: programmeText(locale, "When it is closed"), value: helpContactLine(afterHours) }] : [];
+  if (!market || !isProgrammeHelpServiceType(artifact.helpService)) return [];
+  return programmeHelpExtras(market, artifact.helpService).map(({ kind, contact }) => kind === "urge"
+    ? { key: "urgeLine", label: programmeText(locale, "When the urge comes"), value: helpContactLine(contact) }
+    : { key: "afterHours", label: programmeText(locale, "When it is closed"), value: helpContactLine(contact) });
 }
 
 export function programmeCrisisRow(locale: ProgrammeLocale): PresentedArtifactRow {

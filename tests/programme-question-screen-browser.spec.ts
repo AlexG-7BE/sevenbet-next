@@ -248,6 +248,32 @@ test("multiple choice uses the same card and keeps its pick 2–3 rule", async (
   await expect(page.locator('[data-programme-choice="selected"]')).toHaveCount(3);
 });
 
+// Step 3 at its second question: the kind of help, then the service that answers for it.
+const missionEightHelpService = {
+  ...missionEight,
+  actions: missionEight.actions.map((action, index) => ({ ...action, completed: index < 1 })),
+  currentAction: "decode_offer_terms", currentActionPosition: 2, actionsCompleted: 1,
+  artifact: { trustedPerson: "friend", openingLine: "call_me" }, xpEarnedHere: 15,
+};
+
+test("step 3's help service card fits a phone: no sideways scroll, 44px call buttons, the urge line for a group", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openStep(page, missionEightHelpService);
+  await expect(page.getByRole("heading", { name: "Which kind of help would you try first?" })).toBeVisible();
+  for (const [choice, service, urge] of [["Talk on the phone", "National Gambling Helpline", false], ["Join a group or see a counsellor", "NHS gambling clinics", true], ["Get help with money and debt", "StepChange", true]] as const) {
+    await page.getByRole("radio", { name: new RegExp(choice) }).check();
+    const card = page.locator("[data-programme-help-service]");
+    await expect(card.getByRole("heading", { name: service, exact: true })).toBeVisible();
+    await expect(card.getByText("When the urge comes", { exact: true })).toHaveCount(urge ? 1 : 0);
+    await expect(card.locator("[data-programme-crisis-line]")).toContainText("Samaritans · 116 123");
+    await expect(card.locator("a[data-programme-emergency-call]")).toHaveAttribute("href", "tel:999");
+    for (const call of await card.locator("a[data-programme-help-call]").all()) {
+      expect((await call.boundingBox())!.height, `${choice}: a call button is a 44px target`).toBeGreaterThanOrEqual(44);
+    }
+    await noHorizontalOverflow(page, choice);
+  }
+});
+
 test("at the end of the list the last card is never under the pinned bar", async ({ page }) => {
   for (const viewport of [{ width: 412, height: 640 }, { width: 412, height: 800 }, { width: 390, height: 700 }, { width: 412, height: 915 }, { width: 320, height: 640 }]) {
     await page.setViewportSize(viewport);

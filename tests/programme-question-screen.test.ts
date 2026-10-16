@@ -83,7 +83,9 @@ test("the lines of the question screen are presentation: written for every step 
   }
   assert.deepEqual(Object.keys(cardsByAction).sort(), [...allActions].sort());
   const withoutCards = ["map_urge_sequence", "rehearse_response"];
-  assert.ok(missionExperience.includes('const choiceFields = sequenceAction || current.id === "rehearse_response" ? [] : ui.fields;'));
+  // Step 3's last question leaves out "Send my line to my person" when no line was chosen (an answer from the earlier lesson).
+  assert.ok(missionExperience.includes('const choiceFields = sequenceAction || current.id === "rehearse_response" ? []\n'));
+  assert.ok(missionExperience.includes('options: field.options.filter((item) => item.value !== "send_line")'));
   assert.ok(missionExperience.includes('const sequenceAction = current.id === "map_urge_sequence";'));
   let optionLineCount = 0;
   for (const actionId of allActions) {

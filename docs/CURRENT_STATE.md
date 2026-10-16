@@ -16,26 +16,30 @@ This checkpoint supersedes older candidate/draft/current-state language where it
 
 **Founder decision, 16 October 2026** (question tool;
 [decision](07_Decisions/STEP3-HELP-LESSON-2026-10-16.md)). **PROPOSED — NOT YET LIVE** until the
-Founder approves the text and screens and the branch `feat/step3-help-lesson` (built on
-`feat/programme-no-casino-links`) is merged and deployed:
+Founder approves the text and screens and the branch `feat/step3-help-lesson` (draft PR #532) is
+merged and deployed:
 
 - Mission 08 keeps its number, step 3, prerequisite, action ids, reward keys and XP; its lesson
   "Research responsibly" (comparison signals, a bonus-terms card, a research checklist) is replaced
   by "Know who to turn to": one person (who they are to you, never a name) and one short line; one
   kind of help, shown as the checked service of the person's market (sv → Sweden, da → Denmark,
-  en → Great Britain) with its number and hours and the crisis line; the first 10 minutes of an
-  urge. Keepsake "MY SUPPORT CARD"; final-plan priority "Support card".
+  en → Great Britain) with how to reach it, its hours and the crisis line; a group, a clinic, a
+  debt adviser or a service for relatives also brings the market's phone line "When the urge
+  comes"; the first 10 minutes of an urge. Keepsake "MY SUPPORT CARD"; final-plan priority
+  "Support card" (person, moves, service by name; never a number cut short).
 - The ten other Programme languages show no number: the Help page and "call your local emergency
   number".
 - Old Mission 08 answers are read as retired: never shown or sent to the provider, dropped on the
   next save; a step 3 completed under the research lesson opens as already complete.
 - The public 10 Steps page (13 languages), the trust page and the control page FAQ (en/sv/da) say
-  what step 3 now does. Provider guidance and Reviews never write a phone number.
+  what step 3 now does. The final plan and the full Review never write a phone number.
 
+## The Programme shows no casino links, to anyone — live
 
 **Founder decision, 16 October 2026** (question tool, «Без казино для всех»;
-[decision](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)). **PROPOSED — NOT YET LIVE**
-until merged and deployed (branch `feat/programme-no-casino-links`):
+[decision](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)). **DETECTED — LIVE**: PR #530
+was merged into `main` as `774dd2f7` on 16 October 2026 (19:33 UTC) and its Production deployment
+(GitHub deployment `7127836331`, 19:35 UTC) reports success:
 
 - no Programme screen, card, dashboard or letter links to a casino, bonus, offer, comparison or
   partner page: the step-3 completion block ("New in your menu", "Put it to use"), the Programme
@@ -54,8 +58,9 @@ until merged and deployed (branch `feat/programme-no-casino-links`):
   and a Programme document no longer reads partner availability for a menu;
 - FAQ, Methodology (13 languages), the Privacy Notice (updated 16 October 2026), the trust and
   control pages (en/sv/da) and `llms.txt` say so;
-- unchanged: the Mission 08 lesson text, Mission order, rewards and prerequisites, the research
-  pages, catalogue, reviews and `/r/` routes. Way back: tag
+- unchanged by #530: the Mission 08 lesson text (replaced separately, see the section above),
+  Mission order, rewards and prerequisites, the research pages, catalogue, reviews and `/r/`
+  routes. Way back: tag
   `archive/programme-research-door-2026-10-16` (`800c2eb0`) and the restore steps in the record.
 
 ## Catalogue order by licence and the sports offer for every reader — in review

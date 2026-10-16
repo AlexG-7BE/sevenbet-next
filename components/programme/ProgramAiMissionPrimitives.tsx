@@ -13,6 +13,8 @@ import {
 } from "@/lib/programme/program-ai/mission-presentation";
 import {
   isProgrammeHelpServiceType,
+  keepNumbersTogether,
+  programmeHelpExtras,
   programmeHelpMarket,
   type ProgrammeHelpContact,
 } from "@/lib/programme/program-ai/help-services";
@@ -130,9 +132,10 @@ function HelpContact({ contact, label, locale }: { contact: ProgrammeHelpContact
     {label ? <span className={styles.helpContactLabel}>{label}</span> : null}
     <h3>{contact.name}</h3>
     <p>{contact.about}</p>
-    {contact.hours ? <p className={styles.helpHours}>{contact.hours}</p> : null}
+    {contact.hours ? <p className={styles.helpHours}>{keepNumbersTogether(contact.hours)}</p> : null}
+    {contact.regional ? <p>{keepNumbersTogether(contact.regional)}</p> : null}
     <div className={styles.helpLinks}>
-      {contact.tel ? <a data-programme-help-call="" href={`tel:${contact.tel}`}>{programmeText(locale, "Call {number}", { number: contact.contact })}</a> : null}
+      {contact.tel ? <a data-programme-help-call="" href={`tel:${contact.tel}`}>{programmeText(locale, "Call {number}", { number: keepNumbersTogether(contact.contact) })}</a> : null}
       <a href={contact.href} {...external}>{contact.tel ? programmeText(locale, "Open the website") : contact.contact}<span aria-hidden="true">↗</span></a>
     </div>
   </div>;
@@ -141,25 +144,26 @@ function HelpContact({ contact, label, locale }: { contact: ProgrammeHelpContact
 /**
  * The help service of step 3 (Founder, 16 October 2026): the kind of help a person picked, shown as
  * the service that answers for it in their language's market, with its number and opening hours,
- * then the crisis line. A language without a checked list points to the Help page instead.
+ * the line to call when the urge comes where the service cannot answer then, the line for when it
+ * is closed, then the crisis line. A language without a checked list points to the Help page.
  */
 export function HelpServiceCard({ service, locale }: { service: string; locale: ProgrammeLocale }) {
   const market = programmeHelpMarket(locale);
   const crisis = programmeCrisisRow(locale);
   const type = isProgrammeHelpServiceType(service) ? service : null;
-  const afterHours = market && type ? market.afterHours[type] : undefined;
+  const extras = market && type ? programmeHelpExtras(market, type) : [];
   return <section className={styles.helpService} data-programme-help-service={type ?? ""}>
-    <span className={styles.eyebrow}>{programmeText(locale, "YOUR HELP SERVICE")}{market ? ` · ${market.country}` : ""}</span>
+    <span className={styles.eyebrow}>{programmeText(locale, "YOUR HELP SERVICE")}{market ? ` · ${market.country.replaceAll(" ", "\u00a0")}` : ""}</span>
     {market && type ? <>
       <HelpContact contact={market.services[type]} locale={locale} />
-      {afterHours ? <HelpContact contact={afterHours} label={programmeText(locale, "When it is closed")} locale={locale} /> : null}
+      {extras.map(({ kind, contact }) => <HelpContact contact={contact} key={kind} label={programmeText(locale, kind === "urge" ? "When the urge comes" : "When it is closed")} locale={locale} />)}
     </> : <div className={styles.helpContact}>
-      <p>{programmeText(locale, "The Help page lists the services we have checked for your country.")}</p>
+      <p>{programmeText(locale, "The Help page lists help services.")}</p>
       <div className={styles.helpLinks}><a href={programmeHelpPath(locale)}>{programmeText(locale, "Open Help")}</a></div>
     </div>}
     <div className={styles.helpCrisis} data-programme-crisis-line="">
       <strong>{crisis.label}</strong>
-      {market ? <p><a href={`tel:${market.crisis.tel}`}>{market.crisis.name} · {market.crisis.contact}</a>{market.crisis.hours ? ` · ${market.crisis.hours}` : ""}. {market.crisis.emergency}.</p> : <p>{crisis.value}</p>}
+      {market ? <p><a href={`tel:${market.crisis.tel}`}>{market.crisis.name} · {keepNumbersTogether(market.crisis.contact)}</a>{market.crisis.hours ? ` · ${market.crisis.hours}` : ""}. <a data-programme-emergency-call="" href={`tel:${market.crisis.emergencyTel}`}>{market.crisis.emergency}</a>.</p> : <p>{crisis.value}</p>}
     </div>
   </section>;
 }

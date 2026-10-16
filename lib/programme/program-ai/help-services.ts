@@ -6,8 +6,8 @@ import type { ProgrammeLocale } from "@/lib/programme/presentation";
  * comes). One list per Programme language whose market we checked: Swedish for Sweden, Danish
  * for Denmark, English for Great Britain. Names, numbers and opening hours are copied from each
  * service's own page on 16 October 2026; the source of every line is in `HELP_SERVICE_SOURCES`.
- * Where a service's own page refused an automated visit (mind.se, gamcare.org.uk), the line is
- * copied from the national health service page that lists it (1177.se, nhs.uk).
+ * mind.se and gamcare.org.uk refuse automated visits; the safety review of 17 October 2026 read
+ * them once in a normal browser (Självmordslinjen's hours, GamCare's chat and helpline).
  *
  * A Programme language without a checked list (German, Spanish, Greek, Italian, Portuguese,
  * Dutch, Finnish, Norwegian, Ukrainian, Russian) shows no number: it points to the Help page,
@@ -33,6 +33,8 @@ export type ProgrammeHelpContact = Readonly<{
   tel?: string;
   href: string;
   hours?: string;
+  /** A line for one part of the market that the main one does not serve (Great Britain: Wales). */
+  regional?: string;
 }>;
 
 export type ProgrammeCrisisLine = Readonly<{
@@ -43,18 +45,33 @@ export type ProgrammeCrisisLine = Readonly<{
   hours?: string;
   /** The emergency number, in the words of the page that names it. */
   emergency: string;
+  /** Digits for the `tel:` link of the emergency number. */
+  emergencyTel: string;
 }>;
 
 export type ProgrammeHelpMarket = Readonly<{
   /** Shown after "YOUR HELP SERVICE", in the market's language. */
   country: string;
   services: Readonly<Record<ProgrammeHelpServiceType, ProgrammeHelpContact>>;
-  /** A line that answers when the first one is closed (Sweden: Stödlinjen closes evenings and weekends). */
+  /**
+   * A line that answers when the chosen one is closed (Sweden: Stödlinjen closes evenings and
+   * weekends; Föreningen Spelfriheten answers by phone and chat around the clock, relatives too).
+   * `afterHours.phone` also follows the market's phone line when that line stands on a card as
+   * the line to call when the urge comes.
+   */
   afterHours: Partial<Readonly<Record<ProgrammeHelpServiceType, ProgrammeHelpContact>>>;
   crisis: ProgrammeCrisisLine;
 }>;
 
-const stodlinjenHours = "Helgfria vardagar: måndag 9–19, tisdag 9–17, onsdag 9–17, torsdag 11–19, fredag 9–15";
+const stodlinjenHours = "Helgfria vardagar: mån 9–19, tis–ons 9–17, tors 11–19, fre 9–15";
+const spelfriheten = {
+  name: "Föreningen Spelfriheten",
+  about: "Du pratar med någon som själv levt med beroendet eller är anhörig – idag i tillfrisknande.",
+  contact: "08-37 43 00",
+  tel: "08374300",
+  href: "https://foreningenspelfriheten.se/",
+  hours: "Öppet dygnet runt, året om",
+} as const;
 const centerForLudomani = {
   contact: "70 11 18 10",
   tel: "70111810",
@@ -102,22 +119,24 @@ const sweden: ProgrammeHelpMarket = {
     },
   },
   afterHours: {
-    phone: {
-      name: "Föreningen Spelfriheten",
-      about: "Du pratar med någon som själv levt med beroendet eller är anhörig – idag i tillfrisknande.",
-      contact: "08-37 43 00",
-      tel: "08374300",
+    phone: spelfriheten,
+    chat: {
+      name: "Föreningen Spelfriheten, chatt",
+      about: "Chatta med någon som själv levt med beroendet eller är anhörig – idag i tillfrisknande.",
+      contact: "foreningenspelfriheten.se",
       href: "https://foreningenspelfriheten.se/",
       hours: "Öppet dygnet runt, året om",
     },
+    close_ones: spelfriheten,
   },
   crisis: {
     name: "Självmordslinjen (Mind)",
     contact: "90101",
     tel: "90101",
-    href: "https://www.1177.se/sjukdomar--besvar/psykiska-sjukdomar-och-besvar/sjalvmordstankar/till-dig-som-har-sjalvmordstankar/",
-    hours: "ring eller chatta via mind.se",
+    href: "https://mind.se/stod-kunskap/prata-eller-chatta-med-volontar/sjalvmordslinjen/",
+    hours: "dygnet runt, alla dagar · chatt på mind.se",
     emergency: "Om det är bråttom: ring 112",
+    emergencyTel: "112",
   },
 };
 
@@ -166,8 +185,9 @@ const denmark: ProgrammeHelpMarket = {
     contact: "70 201 201",
     tel: "70201201",
     href: "https://www.livslinien.dk/",
-    hours: "alle årets dage fra kl. 09-05",
+    hours: "alle dage fra kl. 9 om morgenen til kl. 5 om natten",
     emergency: "Er du akut selvmordstruet: ring 112",
+    emergencyTel: "112",
   },
 };
 
@@ -176,24 +196,26 @@ const greatBritain: ProgrammeHelpMarket = {
   services: {
     phone: {
       name: "National Gambling Helpline",
-      about: "Run by GamCare: free information, support and counselling.",
+      about: "Run by GamCare: free information, support and counselling. For people in England and Scotland.",
       contact: "0808 8020 133",
       tel: "08088020133",
       href: "https://www.nhs.uk/live-well/addiction-support/gambling-addiction/",
       hours: "Free, 24 hours a day, 7 days a week",
+      regional: "In Wales: NHS Wales Helpline 0808 2819 265, free, 24 hours a day",
     },
     chat: {
-      name: "GambleAware",
-      about: "Chat online to an adviser for confidential advice, information and support. Only for Great Britain residents.",
-      contact: "begambleaware.org",
-      href: "https://www.begambleaware.org/",
-      hours: "Free, 24/7",
+      name: "National Gambling Helpline, live chat",
+      about: "Chat online with a GamCare adviser, free and confidential. For people in England and Scotland.",
+      contact: "gamcare.org.uk",
+      href: "https://www.gamcare.org.uk/",
+      hours: "24 hours a day, every day of the year",
     },
     in_person: {
-      name: "Gamblers Anonymous",
-      about: "Meetings every day of the week throughout England, Wales and Ulster. No appointment is needed, just turn up.",
-      contact: "gamblersanonymous.org.uk",
-      href: "https://www.gamblersanonymous.org.uk/",
+      name: "NHS gambling clinics",
+      about: "Free NHS treatment from a specialist team in England. You can refer yourself, or ask a GP.",
+      contact: "nhs.uk",
+      href: "https://www.nhs.uk/live-well/addiction-support/gambling-addiction/",
+      regional: "In Wales: All Wales Gambling Treatment Service, self-referral 0300 0859 464",
     },
     debt: {
       name: "StepChange",
@@ -217,7 +239,8 @@ const greatBritain: ProgrammeHelpMarket = {
     tel: "116123",
     href: "https://www.samaritans.org/how-we-can-help/contact-samaritan/",
     hours: "any time, day or night, free from any phone",
-    emergency: "If a life is at risk: call 999",
+    emergency: "If a life is at risk: call 999 or 112",
+    emergencyTel: "999",
   },
 };
 
@@ -236,30 +259,61 @@ export function isProgrammeHelpServiceType(value: unknown): value is ProgrammeHe
   return typeof value === "string" && (PROGRAMME_HELP_SERVICE_TYPES as readonly string[]).includes(value);
 }
 
+/**
+ * A number or a time range never breaks across two lines: "0808 8020 133", "020-81 91 00" and
+ * "9–19" stay whole on a phone and in the saved picture (no-break spaces, word joiners around a
+ * dash between digits).
+ */
+export function keepNumbersTogether(text: string) {
+  return text
+    .replace(/(\d) (?=\d)/g, "$1\u00a0")
+    .replace(/(\d)([–-])(?=\d)/g, "$1\u2060$2\u2060");
+}
+
 /** "Name · contact · hours", the form a service takes on the card and in the saved picture. */
-export function helpContactLine(contact: Pick<ProgrammeHelpContact, "name" | "contact" | "hours">) {
-  return [contact.name, contact.contact, contact.hours].filter(Boolean).join(" · ");
+export function helpContactLine(contact: Pick<ProgrammeHelpContact, "name" | "contact" | "hours" | "regional">) {
+  return keepNumbersTogether([contact.name, contact.contact, contact.hours, contact.regional].filter(Boolean).join(" · "));
 }
 
 export function crisisLine(crisis: ProgrammeCrisisLine) {
-  return [crisis.name, crisis.contact, crisis.hours].filter(Boolean).join(" · ");
+  return keepNumbersTogether([crisis.name, crisis.contact, crisis.hours].filter(Boolean).join(" · "));
+}
+
+export type ProgrammeHelpExtra = Readonly<{ kind: "urge" | "afterHours"; contact: ProgrammeHelpContact }>;
+
+/**
+ * The lines a card shows under the chosen service (safety review, 17 October 2026). A group, a
+ * clinic, a debt adviser or a service for relatives cannot be reached in the first 10 minutes of
+ * an urge, so for them the card adds the market's phone line, "When the urge comes", unless the
+ * chosen service already is that number, and the line that answers when that one is closed. A
+ * phone or chat line brings only the line that answers when it is closed.
+ */
+export function programmeHelpExtras(market: ProgrammeHelpMarket, type: ProgrammeHelpServiceType): ProgrammeHelpExtra[] {
+  const phone = market.services.phone;
+  const urge = type !== "phone" && type !== "chat" && market.services[type].tel !== phone.tel;
+  const afterHours = urge ? market.afterHours.phone : market.afterHours[type];
+  return [
+    ...(urge ? [{ kind: "urge" as const, contact: phone }] : []),
+    ...(afterHours ? [{ kind: "afterHours" as const, contact: afterHours }] : []),
+  ];
 }
 
 /** Every page a line above was copied from on 16 October 2026, for the record and the tests. */
 export const HELP_SERVICE_SOURCES = [
   { market: "SE", service: "Stödlinjen (telefon, öppettider)", url: "https://stodlinjen.se/om-oss/ett-samtal-med-oss" },
   { market: "SE", service: "Stödlinjen (chatt)", url: "https://stodlinjen.se/chatt" },
-  { market: "SE", service: "Föreningen Spelfriheten", url: "https://foreningenspelfriheten.se/" },
+  { market: "SE", service: "Föreningen Spelfriheten (telefon och chatt dygnet runt, även anhöriga)", url: "https://foreningenspelfriheten.se/" },
   { market: "SE", service: "Spelberoendes Riksförbund", url: "https://spelberoende.se/online/" },
   { market: "SE", service: "Kommunal budget- och skuldrådgivning", url: "https://www.konsumentverket.se/ekonomi/kommunal-budget-och-skuldradgivning/" },
-  { market: "SE", service: "Självmordslinjen (via 1177; mind.se refused the visit)", url: "https://www.1177.se/sjukdomar--besvar/psykiska-sjukdomar-och-besvar/sjalvmordstankar/till-dig-som-har-sjalvmordstankar/" },
+  { market: "SE", service: "Självmordslinjen (Mind: telefon och chatt dygnet runt, varje dag; read in a normal browser 17 October 2026)", url: "https://mind.se/stod-kunskap/prata-eller-chatta-med-volontar/sjalvmordslinjen/" },
+  { market: "SE", service: "Självmordslinjen 90101 and 112 (1177)", url: "https://www.1177.se/sjukdomar--besvar/psykiska-sjukdomar-och-besvar/sjalvmordstankar/till-dig-som-har-sjalvmordstankar/" },
   { market: "DK", service: "StopSpillet", url: "https://www.stopspillet.dk/" },
   { market: "DK", service: "Center for Ludomani", url: "https://ludomani.dk/" },
   { market: "DK", service: "KFUM's Sociale Arbejde, økonomi- og gældsrådgivning", url: "https://www.raad.dk/om-raadgivningen/oekonomisk-raadgivning" },
   { market: "DK", service: "Livslinien", url: "https://www.livslinien.dk/" },
-  { market: "GB", service: "National Gambling Helpline (via NHS; gamcare.org.uk refused the visit)", url: "https://www.nhs.uk/live-well/addiction-support/gambling-addiction/" },
-  { market: "GB", service: "GambleAware", url: "https://www.begambleaware.org/" },
-  { market: "GB", service: "Gamblers Anonymous", url: "https://www.gamblersanonymous.org.uk/" },
+  { market: "GB", service: "National Gambling Helpline and NHS gambling clinics (NHS)", url: "https://www.nhs.uk/live-well/addiction-support/gambling-addiction/" },
+  { market: "GB", service: "National Gambling Helpline, phone and live chat for England and Scotland; NHS Wales Helpline; All Wales Gambling Treatment Service", url: "https://www.gambleaware.org/get-help-now/" },
+  { market: "GB", service: "GamCare (helpline and live chat 24/7; read in a normal browser 17 October 2026)", url: "https://www.gamcare.org.uk/" },
   { market: "GB", service: "StepChange", url: "https://www.stepchange.org/contact-us.aspx" },
   { market: "GB", service: "GamFam", url: "https://gamfam.org.uk/" },
   { market: "GB", service: "Samaritans", url: "https://www.samaritans.org/how-we-can-help/contact-samaritan/" },
