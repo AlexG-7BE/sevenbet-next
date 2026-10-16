@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { commercialDiscoveryLinks, missionStep, programmeJourney, programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
+import { missionStep, programmeJourney, programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const expectGoogle = process.env.EXPECT_GOOGLE_AUTH === "true";
@@ -65,8 +65,6 @@ function homeFixture(currentMission = 2) {
     nextReview: firstReviewAvailable
       ? { milestone: "mid", unlockMission: 6, unlockStep: 7, title: "Mid-Programme Personal Review", xpRemaining: 225, missionsRemaining: 3 }
       : { milestone: "first", unlockMission: 3, unlockStep: 4, title: "First Personal Review", xpRemaining: 150, missionsRemaining: 2 },
-    researchAccess: "locked",
-    discoveryLinks: commercialDiscoveryLinks,
   };
 }
 

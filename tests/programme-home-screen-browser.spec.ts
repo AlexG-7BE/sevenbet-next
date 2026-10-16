@@ -5,7 +5,8 @@ import { missionStep, programmeJourney } from "../lib/programme/program-ai/missi
 
 // Founder, 13 October 2026: the Programme home. A greeting, the three numbers as one quiet row, the
 // weekly goal once the goal Mission is complete (its day and check-in date are the server's), the
-// next step with the one button, the folded path, and the research links after their lesson.
+// next step with the one button and the folded path. No research card and no casino link, after
+// any step (Founder, 16 October 2026).
 // Every API answer here is a page-level mock: the spec only decides what the server says.
 
 const now = new Date().toISOString();
@@ -16,7 +17,7 @@ const startingPointText = "I open betting apps after difficult work days.";
 
 type WeekGoal = null | { goalStyle: string; totalDays: number; day: number | null; checkInDate: string };
 
-function homeAt(missionNumber: number, extra: { weekGoal?: WeekGoal; primaryAction?: string; researchAccess?: "open" | "locked" } = {}) {
+function homeAt(missionNumber: number, extra: { weekGoal?: WeekGoal; primaryAction?: string } = {}) {
   const current = missionStep(missionNumber);
   return {
     totalXp: 110, activeDays: 3, currentStreak: 2,
@@ -28,8 +29,6 @@ function homeAt(missionNumber: number, extra: { weekGoal?: WeekGoal; primaryActi
     missions: programmeJourney.map((number, index) => ({ missionNumber: number, step: index + 1, title: titles[number - 1], status: index + 1 < current ? "completed" : index + 1 === current ? "current" : "locked", actionsCompleted: index + 1 < current ? 3 : 0, actionsTotal: number === 1 ? 2 : 3, xpEarnedHere: index + 1 < current ? 75 : 0, completionBonus: 25 })),
     reviews: [{ milestone: "first", unlockMission: 3, unlockStep: 4, title: "First review", maxWords: 60, status: "locked" }],
     nextReview: null,
-    researchAccess: extra.researchAccess ?? "locked",
-    discoveryLinks: [{ href: "/casinos", label: "Compare casinos" }, { href: "/bonuses", label: "Bonuses" }, { href: "/best-offers", label: "Best offers" }],
   };
 }
 
@@ -225,31 +224,21 @@ test("the path shows the rows around the current step; one press unfolds all ten
   await expect(card.locator("ol > li:visible")).toHaveCount(5);
 });
 
-test("the research card after its lesson: the same heading, links, order and place", async ({ page }) => {
+test("past the third step the home shows no research card and links to no casino (Founder, 16 October 2026)", async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 });
-  await openHome(page, homeAt(3, { researchAccess: "open", weekGoal: { goalStyle: "pause_first", totalDays: 7, day: 1, checkInDate: "2026-10-20" } }));
+  await openHome(page, homeAt(3, { weekGoal: { goalStyle: "pause_first", totalDays: 7, day: 1, checkInDate: "2026-10-20" } }));
 
-  const card = page.locator(research);
-  await expect(card.locator("> span")).toHaveText("Research");
-  expect(await card.getByRole("link").evaluateAll((links) => links.map((link) => [link.getAttribute("href"), link.textContent]))).toEqual([
-    ["/en/casinos", "Compare casinos"],
-    ["/en/bonuses", "Bonuses"],
-    ["/en/best-offers", "Best offers"],
-  ]);
-  for (const link of await card.getByRole("link").all()) {
-    expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-    expect(await link.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
-  }
-  const [nextTop, researchTop, pathTop] = await tops(page, [next, research, path]);
-  expect(researchTop).toBeGreaterThan(nextTop);
-  expect(researchTop).toBeLessThan(pathTop);
+  await expect(page.locator(research)).toHaveCount(0);
+  await expect(page.locator(homeMain).locator('a[href*="/casinos"], a[href*="/casino/"], a[href*="/bonuses"], a[href*="/best-offers"], a[href*="/compare"], a[href*="/bonus-guide"], a[href*="/wagering-calculator"], a[href^="/r/"], a[href^="/go/"]')).toHaveCount(0);
+  const [nextTop, pathTop] = await tops(page, [next, path]);
+  expect(nextTop).toBeLessThan(pathTop);
   // The privacy footer keeps its two lines.
   await expect(page.getByText("Your data is private. We never use it for offers or rankings.", { exact: true })).toBeVisible();
   await expect(page.getByText("18+ · Protected Help remains available.", { exact: true })).toBeVisible();
 });
 
 test("the home fits phones from 320px to 430px and keeps one column on a wide screen", async ({ page }) => {
-  const home = homeAt(3, { researchAccess: "open", weekGoal: { goalStyle: "research_after_pause", totalDays: 7, day: 7, checkInDate: "2026-10-20" } });
+  const home = homeAt(3, { weekGoal: { goalStyle: "research_after_pause", totalDays: 7, day: 7, checkInDate: "2026-10-20" } });
   for (const width of [320, 360, 412, 430]) {
     await page.setViewportSize({ width, height: 800 });
     await page.unrouteAll({ behavior: "ignoreErrors" });
@@ -291,7 +280,7 @@ test("the home fits phones from 320px to 430px and keeps one column on a wide sc
   await noHorizontalOverflow(page, "home at 1280px");
   const column = await page.locator(homeMain).boundingBox();
   expect(column!.width).toBeLessThanOrEqual(560);
-  for (const selector of [goal, next, research, path, startingPoint]) {
+  for (const selector of [goal, next, path, startingPoint]) {
     const box = await page.locator(selector).boundingBox();
     expect(Math.round(box!.x), `${selector} starts at the column's edge`).toBe(Math.round(column!.x));
     expect(Math.round(box!.width), `${selector} fills the column`).toBe(Math.round(column!.width));

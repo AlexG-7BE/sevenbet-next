@@ -25,8 +25,6 @@ function homeAt(missionNumber: number) {
     missions: programmeJourney.map((number, index) => ({ missionNumber: number, step: index + 1, title: titles[number - 1], status: index + 1 < current ? "completed" : index + 1 === current ? "current" : "locked", actionsCompleted: index + 1 < current ? 3 : 0, actionsTotal: 3, xpEarnedHere: index + 1 < current ? 75 : 0, completionBonus: 25 })),
     reviews: [{ milestone: "first", unlockMission: 3, unlockStep: 4, title: "First review", maxWords: 60, status: "locked" }],
     nextReview: null,
-    researchAccess: "locked",
-    discoveryLinks: [{ href: "/casinos", label: "Compare casinos" }, { href: "/bonuses", label: "Bonuses" }, { href: "/best-offers", label: "Best offers" }],
   };
 }
 

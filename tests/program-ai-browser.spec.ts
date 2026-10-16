@@ -33,7 +33,6 @@ import {
   programAiMissionRegistry,
   programAiMissionSourcePresentation,
   programmeJourney,
-  researchAccessMission,
 } from "../lib/programme/program-ai/mission-registry";
 import { programmePath, type ProgrammeLocale } from "../lib/programme/presentation";
 
@@ -420,6 +419,25 @@ test("the retired voice routes are gone and an unlisted Programme mutation still
   }
 
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(session.token) } });
+});
+
+test("no Programme document carries a casino, offer or partner address, the old lesson cookie included", async ({ request }) => {
+  // Founder, 16 October 2026: the Programme links to no casino page. Its header and footer are built
+  // without the research links, so not even the page's inline data (where the children of a client
+  // component are written) carries their addresses.
+  for (const urlPath of ["/program", "/sv/program", "/da/program", "/program/missing", "/sv/program/missing"]) {
+    for (const cookie of [undefined, "b4g_research_access=open"]) {
+      const response = await request.get(urlPath, cookie ? { headers: { cookie } } : undefined);
+      const html = await response.text();
+      // The Programme's own shell answered, with its menu (a 404 carries the menu in its inline data).
+      expect(html, urlPath).toContain("data-public-programme-shell");
+      expect(html, urlPath).toMatch(/navigation-href[^/]{1,8}\/learn/);
+      for (const address of ["/best-offers", "/casinos", "/casino/", "/catalog", "/bonuses", "/compare", "/bonus-guide", "/wagering-calculator", "/outbound"]) {
+        expect(html, `${urlPath}: ${address}${cookie ? " (old lesson cookie)" : ""}`).not.toContain(address);
+      }
+      expect(html, urlPath).not.toMatch(/(?:["'(]|https?:\/\/[a-z0-9.:-]+)(?:\/[a-z]{2})?\/(?:r|go)\//i);
+    }
+  }
 });
 
 test("picked ready answers open the next screen at once under one consent press", async ({ page }) => {
@@ -1051,43 +1069,39 @@ test("durably accepted account survives empty storage, context, login and Missio
       await expect(page.getByText("You built it yourself. It is yours, not ours.", { exact: true })).toBeVisible();
       await expect(page.getByText("PERSONAL REVIEW AVAILABLE", { exact: true })).toBeVisible();
       await expect(page.getByText(/First Personal Review is ready\./)).toBeVisible();
-    } else if (mission.missionNumber === researchAccessMission) {
-      // Finishing the research Mission opens casino research: on its completion screen, in the
-      // menu's flag, and in the public header on a page outside the research section.
+    } else if (mission.missionNumber === 8) {
+      // Finishing the third step, "Research responsibly", opens nothing (Founder, 16 October 2026):
+      // no research block or casino link on its completion screen, no menu cookie, the same guide
+      // menu on this page and on Home, and no research card on the Programme home.
+      const guideMenu = ["/10-steps", "/learn", "/help"];
+      const primary = page.locator('nav[aria-label="Primary navigation"]');
+      const primaryMenu = () => primary.locator("[data-navigation-href]").evaluateAll((links) => links.map((link) => link.getAttribute("data-navigation-href")));
+      const researchLinks = 'a[href*="/casinos"], a[href*="/casino/"], a[href*="/bonuses"], a[href*="/best-offers"], a[href*="/compare"], a[href*="/bonus-guide"], a[href*="/wagering-calculator"], a[href*="/outbound"], a[href^="/r/"], a[href^="/go/"]';
       const publicContext = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1000 }, storageState: await page.context().storageState() });
       const before = await publicContext.newPage();
       await before.goto("/en");
-      await expect(before.locator('nav[aria-label="Primary navigation"] a[data-navigation-href="/10-steps"]')).toBeVisible();
-      await expect(before.locator('nav[aria-label="Primary navigation"] a[data-navigation-href="/casinos"]')).toHaveCount(0);
+      await expect.poll(() => before.locator('nav[aria-label="Primary navigation"] [data-navigation-href]').evaluateAll((links) => links.map((link) => link.getAttribute("data-navigation-href"))), { timeout: 15_000 }).toEqual(guideMenu);
       await publicContext.close();
 
       await openCurrentMission(page, 8, 1440, "Resume mission");
-      await expect(page.locator("[data-programme-research-opened]")).toHaveCount(0);
       await page.getByRole("button", { name: "Complete Mission", exact: true }).click();
-      const opened = page.locator('[data-programme-research-opened="fresh"]');
-      await expect(opened).toBeVisible();
-      await expect(opened.getByRole("heading", { name: "Casinos, bonuses and offers are now open to you" })).toBeVisible();
-      await expect(opened.getByRole("link")).toHaveCount(3);
-      for (const link of await opened.getByRole("link").all()) {
-        expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(48);
-        expect(await link.getAttribute("href")).toMatch(/^\/(?:en\/)?(?:casinos|bonuses|best-offers)$/);
-      }
-      await expect(page.getByText("Your checklist", { exact: true })).toBeVisible();
-      await expect(page.getByText("Licence and regulatory status", { exact: true })).toBeVisible();
+      await expect(page.getByText("You built it yourself. It is yours, not ours.", { exact: true })).toBeVisible();
+      await expect(page.locator("[data-programme-research-opened], [data-programme-research]")).toHaveCount(0);
+      await expect(page.getByText(/now open to you|NEW IN YOUR MENU|PUT IT TO USE/)).toHaveCount(0);
+      await expect(page.locator(researchLinks)).toHaveCount(0);
       await noHorizontalOverflow(page);
-      expect((await page.context().cookies()).find((cookie) => cookie.name === "b4g_research_access")?.value).toBe("open");
-      // The menu on this same page changes with the screen, before any page change.
-      await expect(page.locator('nav[aria-label="Primary navigation"] a[data-navigation-href="/casinos"]')).toBeVisible();
-      await expect(page.locator('nav[aria-label="Primary navigation"] a[data-navigation-href="/10-steps"]')).toHaveCount(0);
-      await expect(page.locator('[data-public-shell="header"]')).toHaveAttribute("data-research-new", "");
+      expect((await page.context().cookies()).find((cookie) => cookie.name === "b4g_research_access")).toBeUndefined();
+      // The menu on this same page keeps its guide links.
+      await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(guideMenu);
+      await expect(page.locator('[data-public-shell="header"]')).not.toHaveAttribute("data-research-new", "");
 
       await page.goto("/en");
-      const primary = page.locator('nav[aria-label="Primary navigation"]');
-      await expect.poll(() => primary.locator("[data-navigation-href]").evaluateAll((links) => links.map((link) => link.getAttribute("data-navigation-href"))), { timeout: 15_000 })
-        .toEqual(["/best-offers", "/casinos", "/bonuses", "/learn"]);
-      await expect(page.locator('[data-public-shell="header"]')).toHaveAttribute("data-research-new", "");
+      await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(guideMenu);
+      await expect(page.locator('[data-public-shell] a[href$="/casinos"]')).toHaveCount(0);
       await page.goto("/program");
-      await expect(page.locator('[data-programme-research="featured"]')).toBeVisible();
+      await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+      await expect(page.locator('[data-programme-research="featured"]')).toHaveCount(0);
+      await expect(page.locator(`main ${researchLinks.split(", ").join(", main ")}`)).toHaveCount(0);
     } else {
       const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
         headers: { cookie: authCookieHeader },
@@ -1293,7 +1307,7 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
   }
 });
 
-test("phone Mission screens open at the top with the first choice above a sticky confirm, and research leads after the research Mission", async ({ browser }) => {
+test("phone Mission screens open at the top with the first choice above a sticky confirm, and no research card follows the research Mission", async ({ browser }) => {
   const now = new Date().toISOString();
   const userId = "mobile-mission-review-user";
   const titles = Array.from({ length: 10 }, (_, index) => programmeMissionCopy("en-GB", index + 1).title);
@@ -1306,8 +1320,6 @@ test("phone Mission screens open at the top with the first choice above a sticky
     missions: programmeJourney.map((missionNumber, index) => ({ missionNumber, step: index + 1, title: titles[missionNumber - 1], status: index + 1 < missionStep(current) ? "completed" : index + 1 === missionStep(current) ? "current" : "locked", actionsCompleted: index + 1 < missionStep(current) ? 3 : 0, actionsTotal: 3, xpEarnedHere: index + 1 < missionStep(current) ? 55 : 0, completionBonus: 25 })),
     reviews: [{ milestone: "first", unlockMission: 3, unlockStep: 4, title: "First review", maxWords: 60, status: "locked" }],
     nextReview: null,
-    researchAccess: missionStep(researchAccessMission) < missionStep(current) ? "open" : "locked",
-    discoveryLinks: [{ href: "/casinos", label: "Compare casinos" }, { href: "/bonuses", label: "Bonuses" }, { href: "/best-offers", label: "Best offers" }],
   });
   const missionTwo = {
     missionNumber: 2, step: 2, stepId: "goal", title: titles[1], purpose: "", status: "current",
@@ -1330,21 +1342,13 @@ test("phone Mission screens open at the top with the first choice above a sticky
       await page.goto("/program");
       await expect(page.locator('[data-programme-phase="home"]')).toBeVisible();
       const research = page.locator("[data-programme-research]");
+      // No research card before or after the research Mission (Founder, 16 October 2026).
+      await expect(research).toHaveCount(0);
       if (current === 9) {
-        await expect(research).toHaveAttribute("data-programme-research", "featured");
-        const [card, researchBox, journey] = await Promise.all([page.locator('[data-programme-home="next"]').boundingBox(), research.boundingBox(), page.locator('[aria-labelledby="programme-path-title"]').boundingBox()]);
-        expect(researchBox!.y, `research follows the current mission at ${viewport.width}px`).toBeGreaterThan(card!.y);
-        expect(researchBox!.y, `research leads the journey at ${viewport.width}px`).toBeLessThan(journey!.y);
-        for (const link of await research.getByRole("link").all()) {
-          const box = await link.boundingBox();
-          expect(box!.height).toBeGreaterThanOrEqual(44);
-          expect(await link.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
-        }
+        await expect(page.locator('[data-programme-presentation="dashboard"] main a[href*="/casinos"], [data-programme-presentation="dashboard"] main a[href*="/bonuses"], [data-programme-presentation="dashboard"] main a[href*="/best-offers"]')).toHaveCount(0);
         await context.close();
         continue;
       }
-      // Before the research Mission is complete the dashboard shows no research card (Founder, 10 October 2026).
-      await expect(research).toHaveCount(0);
       const start = page.getByRole("button", { name: "Start mission", exact: true });
       await start.scrollIntoViewIfNeeded();
       await page.evaluate(() => window.scrollBy(0, 200));

@@ -153,7 +153,7 @@ The offers each market's Bonuses page shows right now, with their terms, are lis
 
 ## 10-Step Control Programme
 
-The Programme is B4GAMBLE's own private plan for keeping gambling under control. It is free and separate from the casino pages: nothing a person writes or chooses in it is used to select, rank or personalise offers or advertising. Finishing its third step, "Research responsibly", adds the casino, bonus and offer pages to the site menu; the person's answers play no part in that.
+The Programme is B4GAMBLE's own private plan for keeping gambling under control. It is free and separate from the casino pages: nothing a person writes or chooses in it is used to select, rank or personalise offers or advertising. It links to no casino, bonus or offer page, and finishing a step changes nothing in the site menu: the Programme ends in help.
 
 - [10-Step Control Programme](${canonicalEnglishUrl("/program")}): the private plan, one step at a time.
 - [The 10 steps](${canonicalEnglishUrl("/10-steps")}): what each step covers.

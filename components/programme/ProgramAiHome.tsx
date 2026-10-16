@@ -5,10 +5,9 @@ import { useState } from "react";
 import { ProgramAiAuthenticatedHeader } from "@/components/programme/ProgramAiAuthenticatedHeader";
 import type { ProgramAiHome } from "@/components/programme/ProgramAiAuthenticated.types";
 import { programmeReviewStatusCopy } from "@/components/programme/ProgramAiHome.copy";
-import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { authClient } from "@/lib/auth/client";
 import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
-import { programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
+import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { humanValue } from "@/lib/programme/program-ai/mission-presentation";
 import styles from "./ProgramAiAuthenticated.module.css";
 
@@ -35,14 +34,6 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
   const current = home.missions.find((mission) => mission.missionNumber === home.currentMission);
   const currentTitle = programmeMissionCopy(locale, home.currentMission).title;
   const t = (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
-  // Founder decisions, 25 Sep and 10 Oct 2026: the generic research links appear once the "Research
-  // responsibly" Mission is complete, right under the current mission, and not before. They stay
-  // generic: no Programme data picks them. Each opens in the Programme's own language, as the
-  // completion screen's links do, instead of going through the unprefixed address's redirect.
-  const researchFeatured = home.discoveryLinks.length > 0 && home.researchAccess === "open";
-  // clean route: see lib/research-access.ts researchDoorOpen
-  const researchLinksShown = true;
-  const research = <section className={`${styles.compactResearch} ${styles.researchFeatured}`} data-programme-research="featured"><span>{t("Research")}</span><nav>{home.discoveryLinks.map((item) => <a href={programmePublicHref(locale, item.href)} key={item.href} onClick={() => { const destinationRoute = discoveryDestination(item.href); if (destinationRoute) productAnalyticsClient.discoveryClicked({ sourceSurface: "programme_home", destinationRoute }); }}>{discoveryLabel(item.href, locale)}</a>)}</nav></section>;
   // The home (Founder, 13 October 2026). Every number, date and state below is the server's: the
   // weekly goal's day and check-in date, the step, the statuses and the action count are shown as
   // they come. The path only folds: all its rows stay in the page.
@@ -79,7 +70,6 @@ export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionO
           <p className={styles.homeNextCue}>{programmeCurrentCue(home, locale)}</p>
           <button onClick={() => home.primaryAction === "start-mission-one" || home.primaryAction === "finish-mission-one" ? onMissionOneEntry() : onMission(home.currentMission)} type="button">{programmePrimaryActionLabel(home.primaryAction, locale)}<svg aria-hidden="true" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.4" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg></button>
         </section>
-        {researchLinksShown && researchFeatured ? research : null}
         {unconfirmedEmail ? <EmailConfirmationNotice email={unconfirmedEmail} locale={locale} programmePath={programmePath} /> : null}
         <section className={styles.homePath} aria-labelledby="programme-path-title" data-programme-home="path" data-programme-path={allSteps ? "all" : "folded"}>
           <div><span id="programme-path-title">{t("Your path")}</span><button aria-controls="programme-path-steps" aria-expanded={allSteps} onClick={() => setAllSteps((shown) => !shown)} type="button">{allSteps ? t("Show fewer steps") : t("Show all {count} steps", { count: home.missions.length })}</button></div>
@@ -164,21 +154,4 @@ function achievementTitle(slug: string, locale: ProgrammeLocale) {
   if (slug === "first-plan") return programmeText(locale, "First Plan");
   if (slug === "boundary-built") return programmeText(locale, "Boundary Built");
   return slug;
-}
-
-function discoveryLabel(href: string, locale: ProgrammeLocale) {
-  if (href === "/casinos") return programmeText(locale, "Compare casinos");
-  if (href === "/bonuses") return programmeText(locale, "Bonuses");
-  if (href === "/best-offers") return programmeText(locale, "Best offers");
-  return href;
-}
-
-function discoveryDestination(href: string) {
-  switch (href) {
-    case "/casinos": return "casinos" as const;
-    case "/bonuses": return "bonuses" as const;
-    case "/best-offers": return "best_offers" as const;
-    case "/bonus-guide": return "bonus_guide" as const;
-    default: return null;
-  }
 }

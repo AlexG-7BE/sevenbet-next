@@ -50,9 +50,6 @@ export type ProgramAiHome = {
     xpRemaining: number;
     missionsRemaining: number;
   };
-  /** Whether the "Research responsibly" lesson is complete; it opens casino research in the public menu. */
-  researchAccess: "open" | "locked";
-  discoveryLinks: ReadonlyArray<{ href: string; label: string }>;
 };
 
 export type ProgramAiMission = {

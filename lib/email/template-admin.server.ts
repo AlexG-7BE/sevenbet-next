@@ -77,6 +77,16 @@ export async function setEmailTemplateActive(templateId: string, active: boolean
     const template = await transaction.emailTemplate.findUnique({ where: { id: templateId } });
     if (!template) throw new Error("Template not found");
     if (active) {
+      // A version saved before today's rules (or written outside Admin) passes them again before it
+      // can send: since 16 October 2026 no letter links to a casino page or a partner route.
+      sanitizeEmailTemplate({
+        key: template.key,
+        type: template.type,
+        locale: template.locale,
+        subject: template.subject,
+        htmlBody: template.htmlBody,
+        textBody: template.textBody,
+      });
       await transaction.emailTemplate.updateMany({
         where: { key: template.key, locale: template.locale, active: true, id: { not: template.id } },
         data: { active: false, updatedBy: actorId },

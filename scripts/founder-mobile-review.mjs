@@ -121,11 +121,6 @@ async function installDashboardProgramme(page) {
           { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
         ],
         nextReview: { milestone: "mid", unlockMission: 6, title: "Mid-Programme Personal Review", xpRemaining: 210, missionsRemaining: 3 },
-        discoveryLinks: [
-          { href: "/casinos", label: "Compare casinos" },
-          { href: "/bonuses", label: "Bonuses" },
-          { href: "/best-offers", label: "Best offers" },
-        ],
       },
     }),
   }));

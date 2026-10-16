@@ -381,18 +381,14 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.doesNotMatch(authenticatedHome, /once your plan is built, not before/);
   assert.doesNotMatch(authenticatedHome, /Research links are temporarily unavailable/);
   assert.ok(!authenticatedHome.includes("Use the main navigation for public casino information"), "the research card is not shown before research opens");
-  // Founder decision 25 Sep 2026: the same generic research links lead the dashboard once the research Mission is
-  // complete. The server says so (`researchAccess`); the dashboard no longer reads a Mission number for it.
-  assert.ok(authenticatedHome.includes('const researchFeatured = home.discoveryLinks.length > 0 && home.researchAccess === "open";'));
+  // Founder decision 16 Oct 2026: the dashboard carries no research card and no casino link for anyone.
+  assert.doesNotMatch(authenticatedHome, /researchAccess|discoveryLinks|data-programme-research|programmePublicHref/);
   assert.ok(!authenticatedHome.includes("mission.missionNumber === 8"));
   // A person sees a Mission's step, its place in the journey; the number stays its identity.
   assert.ok(authenticatedHome.includes('number: String(home.currentStep).padStart(2, "0")'));
   // The path's mark is the step too (the home of 13 October 2026): a tick once complete, else the step.
   assert.ok(authenticatedHome.includes(": mission.step}</i>"));
   assert.ok(!authenticatedHome.includes("String(home.currentMission)") && !authenticatedHome.includes("String(mission.missionNumber)"));
-  assert.ok(authenticatedHome.includes('data-programme-research="featured"'));
-  assert.ok(authenticatedHome.includes("{researchLinksShown && researchFeatured ? research : null}"));
-  assert.ok(!authenticatedHome.includes("{researchFeatured ? null : research}"), "no research card before the lesson (Founder, 10 October 2026)");
   assert.doesNotMatch(authenticatedHome, /Review or update/);
   assert.match(authenticatedHome, /Saved Starting Point/);
   assert.match(authenticatedHome, /home\.primaryAction === "review-mission" \? "Mission complete" : "Next step"/);
@@ -489,70 +485,33 @@ test("public 10-steps metadata uses Starting Point truth and removes stale Momen
   assert.doesNotMatch(tenStepsPage + tenStepsCatalog, /Moment Map/);
 });
 
-test("the research Mission's completion marks the moment casino research opens (Founder, 10 October 2026)", () => {
+test("no completion screen opens or links to casino research, step 3 and step 10 included (Founder, 16 October 2026)", () => {
   const experience = readFileSync("components/programme/ProgramAiMissionExperience.tsx", "utf8");
   const stylesheet = readFileSync("components/programme/ProgramAiAuthenticated.module.css", "utf8");
   const catalogue = readFileSync("lib/i18n/programme-catalog.ts", "utf8");
 
-  // Shown only by the Mission that opens research, and only when the server says research is open.
-  assert.ok(experience.includes('const researchOpened = mission.missionNumber === researchAccessMission && home.researchAccess === "open";'));
-  // One switch, on by default, stands in front of both parts of the block: the seam for the clean route.
-  assert.ok(experience.includes("    // clean route: see lib/research-access.ts researchDoorOpen\n    const researchLinksShown = true;"));
-  assert.ok(experience.includes("{researchOpened && researchLinksShown ? <ResearchOpened locale={locale} fresh={newlyCompleted} /> : null}"));
-  assert.ok(experience.includes("{researchOpened && researchLinksShown ? <ResearchChecklist artifact={mission.artifact} locale={locale} /> : null}"));
-  assert.ok(experience.indexOf("<ResearchOpened locale") < experience.indexOf("styles.reviewReveal") && experience.indexOf("styles.reviewReveal") < experience.indexOf("<ResearchChecklist artifact") && experience.indexOf("<ResearchChecklist artifact") < experience.indexOf("<CommercialNext locale"), "the blocks keep their order");
-  assert.ok(experience.includes("{mission.missionNumber === 10 ? <CommercialNext locale={locale} /> : null}"));
-
-  // The links are the fixed public routes. Nothing the person entered reaches a URL or picks a link.
-  const opened = experience.slice(experience.indexOf("function ResearchOpened("), experience.indexOf("function ResearchChecklist("));
-  assert.deepEqual([...opened.matchAll(/programmePublicHref\(locale, "([^"]+)"\)/g)].map((match) => match[1]), ["/casinos", "/bonuses", "/best-offers"]);
-  assert.ok(!/artifact|startingPoint|localWording|[?&]\w+=/.test(opened), "no Programme content in the opening block");
-  assert.ok(opened.includes("window.localStorage.setItem(RESEARCH_OPENED_AT_STORAGE_KEY, String(Date.now()));"), "the menu's new-link mark starts from this moment, in this browser only");
-  assert.ok(opened.includes("window.dispatchEvent(new Event(RESEARCH_ACCESS_CHANGED_EVENT));"), "the menu on the same page changes with the screen");
-  assert.ok(!/fetch\(|sendBeacon|document\.cookie/.test(opened));
-
-  // The checklist block shows what the person built and the Programme's stance; its only link is the guide.
-  const checklist = experience.slice(experience.indexOf("function ResearchChecklist("), experience.indexOf("function CommercialNext("));
-  assert.ok(checklist.includes('humanValue(criterion, locale, "researchCriteria")'));
-  assert.deepEqual([...checklist.matchAll(/programmePublicHref\(locale, "([^"]+)"\)/g)].map((match) => match[1]), ["/bonus-guide"]);
-
-  // Every new line is translated in every Programme language: thirteen cells per row.
+  assert.doesNotMatch(experience, /ResearchOpened|ResearchChecklist|CommercialNext|researchOpened|researchLinksShown|researchAccess/);
+  assert.doesNotMatch(experience, /from "@\/lib\/research-access"|RESEARCH_ACCESS_CHANGED_EVENT|RESEARCH_OPENED_AT_STORAGE_KEY|discoveryClicked|programmePublicHref/);
+  assert.doesNotMatch(stylesheet, /\.researchReveal|\.researchChecklist|\.commercialAside|\.exploreLinks|\.compactResearch|\.researchFeatured/);
+  // The lines that announced the opening are gone from every Programme language.
   for (const key of [
     "NEW IN YOUR MENU",
     "Casinos, bonuses and offers are now open to you",
     "You completed this Mission, so these sections are now in your menu on every page.",
-    "The Programme does not ask you to give play up. It helps you keep it inside limits you choose. Check every offer against your checklist first.",
-    "Your checklist",
+    "Research with your checklist",
+    "PUT IT TO USE",
+    "Explore when you are ready",
+    "Compare casinos",
+    "Explore bonuses",
+    "Best offers",
+    "Bonus guide",
   ]) {
-    const row = catalogue.split("\n").find((line) => line.startsWith(`  [${JSON.stringify(key)}, `));
-    assert.ok(row, key);
-    const cells = JSON.parse(row!.trim().replace(/,$/, "")) as string[];
-    assert.equal(cells.length, 13, key);
-    assert.equal(new Set(cells).size, 13, `${key}: every language has its own wording`);
+    assert.ok(!catalogue.includes(`  [${JSON.stringify(key)}, `), key);
   }
-
-  // Readable and reachable: 16px links with a 48px target, and no motion for readers who ask for none.
-  assert.ok(stylesheet.includes(".researchReveal nav a { min-height: 48px;"));
-  assert.match(stylesheet, /\.researchReveal nav a \{[^}]*font-size: 16px;/);
-  assert.ok(stylesheet.includes('@media (prefers-reduced-motion: reduce) { .researchReveal[data-programme-research-opened="fresh"] { animation: none; } }'));
 });
 
 // Founder walk in Swedish on a phone, 12 October 2026.
-test("Programme home research links open in the Programme's language and the home carries no second My Programme pill", async () => {
-  // The links keep their fixed targets and order; each is written past the unprefixed address's redirect.
-  const { programmePublicHref, PROGRAMME_ROUTES } = await import("../lib/programme/presentation");
-  const { commercialDiscoveryLinks } = await import("../lib/programme/program-ai/mission-registry");
-  assert.deepEqual(commercialDiscoveryLinks.map((link) => link.href), ["/casinos", "/bonuses", "/best-offers"]);
-  assert.ok(authenticatedHome.includes("{home.discoveryLinks.map((item) => <a href={programmePublicHref(locale, item.href)} key={item.href}"));
-  assert.ok(!authenticatedHome.includes("<a href={item.href}"), "no research link goes through the redirect");
-  assert.deepEqual(commercialDiscoveryLinks.map((link) => programmePublicHref("sv-SE", link.href)), ["/sv/casinos", "/sv/bonuses", "/sv/best-offers"]);
-  for (const route of PROGRAMME_ROUTES) {
-    for (const link of commercialDiscoveryLinks) assert.equal(programmePublicHref(route.locale, link.href), `/${route.language}${link.href}`, `${route.locale} ${link.href}`);
-  }
-  // Labels and the analytics destination still read the fixed target, not the localized address.
-  assert.ok(authenticatedHome.includes("const destinationRoute = discoveryDestination(item.href);"));
-  assert.ok(authenticatedHome.includes("{discoveryLabel(item.href, locale)}"));
-
+test("the Programme home carries no second My Programme pill", () => {
   // One "My Programme" on the Programme home: the site header's. The yellow label under it is gone.
   const contextHeader = read("components/programme/ProgramAiAuthenticatedHeader.tsx");
   assert.ok(!contextHeader.includes("myProgramme"));

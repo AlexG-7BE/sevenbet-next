@@ -190,12 +190,6 @@ function homeFixture(missionNumber: ProgramAiMissionNumber): ProgramAiHome {
       { milestone: "full", unlockMission: 10, unlockStep: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
     ],
     nextReview: { milestone: "full", unlockMission: 10, unlockStep: 10, title: "Full Programme Personal Review", xpRemaining: 500, missionsRemaining: 10 - currentStep },
-    researchAccess: currentStep > missionStep(8) ? "open" : "locked",
-    discoveryLinks: [
-      { href: "/casinos", label: "Compare casinos" },
-      { href: "/bonuses", label: "Bonuses" },
-      { href: "/best-offers", label: "Best offers" },
-    ],
   };
 }
 
@@ -628,14 +622,9 @@ test("Swedish phone Programme home: one My Programme pill, Log out in the menu, 
   await expect(page.locator("[data-programme-context-header]")).toBeHidden();
   await expect(page.locator('[data-public-shell="footer"] a[data-footer-navigation-href="/program"]')).toHaveText(shell.myProgramme);
 
-  // The research box is headed in Swedish and its links open the Swedish pages directly.
-  const research = page.locator('[data-programme-research="featured"]');
-  await expect(research.locator("> span")).toHaveText("Undersök och jämför");
-  expect(await research.getByRole("link").evaluateAll((links) => links.map((link) => [link.getAttribute("href"), link.textContent]))).toEqual([
-    ["/sv/casinos", "Jämför casinon"],
-    ["/sv/bonuses", shell.bonuses],
-    ["/sv/best-offers", shell.bestOffers],
-  ]);
+  // No research box and no casino link on the Swedish home (Founder, 16 October 2026).
+  await expect(page.locator('[data-programme-research="featured"]')).toHaveCount(0);
+  await expect(page.locator('[data-programme-presentation="dashboard"] a[href*="/casinos"], [data-programme-presentation="dashboard"] a[href*="/bonuses"], [data-programme-presentation="dashboard"] a[href*="/best-offers"]')).toHaveCount(0);
   await expect(page.locator("main")).not.toContainText(/research|kasino/i);
 
   // The menu: Log out where a visitor has Log in, and the notice names the region after its colon.

@@ -25,7 +25,7 @@ export function PublicFooter({
   commercialBestOffersNavigation,
   commercialBonusesNavigation,
   deferCommercialNavigation = false,
-  researchAccess = false,
+  researchNavigation = true,
 }: {
   /** The session cookie the document was rendered with, as in the header: it only picks the Programme link's label. */
   authenticated?: boolean;
@@ -35,7 +35,8 @@ export function PublicFooter({
   commercialBestOffersNavigation?: ReactNode;
   commercialBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
-  researchAccess?: boolean;
+  /** False in the Programme's shell: the footer is built without Best Offers, Casinos and Bonuses. */
+  researchNavigation?: boolean;
 }) {
   const shell = publicShellMessages(presentation.locale);
   const footer = publicFooterMessages(presentation.locale);
@@ -52,7 +53,7 @@ export function PublicFooter({
     "/best-offers": commercialBestOffersNavigation,
     "/bonuses": commercialBonusesNavigation,
   } as const;
-  // The research links follow the same two doors as the header (see lib/research-access.ts).
+  // The research links follow the same door as the header: the research section only (lib/research-access.ts).
   const researchLinks = new Set(["/best-offers", "/casinos", "/bonuses"]);
   // Hidden on the Home page, whose screen paging measures the footer (PublicShell.module.css).
   const extraLinks = new Set(["/pause-plan", "/beside", "/pause-statistics", "/gambling-control", "/for-creators"]);
@@ -77,6 +78,7 @@ export function PublicFooter({
             <div className={styles.footerGroup} key={group.title}>
               <h2>{group.title}</h2>
               {group.links.map(([label, href]) => {
+                if (!researchNavigation && researchLinks.has(href)) return null;
                 const commercialNavigation = deferredCommercialLinks[href as keyof typeof deferredCommercialLinks];
                 if (deferCommercialNavigation && commercialNavigation !== undefined) {
                   return <span className={styles.footerNavigationSlot} key={href}>{commercialNavigation}</span>;
@@ -84,7 +86,7 @@ export function PublicFooter({
                 if (!publicCommercialDestinationVisible(href, showCommercialProducts)) return null;
                 const link = <Link className={extraLinks.has(href) ? styles.footerExtra : undefined} data-footer-navigation-href={href} href={localizedHref(href)} key={href} prefetch={false}>{label}</Link>;
                 return researchLinks.has(href)
-                  ? <PublicNavigationDoor door="research" key={href} researchAccess={researchAccess}>{link}</PublicNavigationDoor>
+                  ? <PublicNavigationDoor door="research" key={href}>{link}</PublicNavigationDoor>
                   : link;
               })}
             </div>
@@ -105,12 +107,10 @@ export function PublicCommercialFooterLink({
   destination,
   presentation,
   programme,
-  researchAccess = false,
 }: {
   destination: "/best-offers" | "/bonuses";
   presentation: PresentationResolution;
   programme: Readonly<{ path: string; localizePublicLinks: boolean }>;
-  researchAccess?: boolean;
 }) {
   const shell = publicShellMessages(presentation.locale);
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
@@ -122,7 +122,7 @@ export function PublicCommercialFooterLink({
 
   const label = destination === "/best-offers" ? shell.bestOffers : shell.bonuses;
   return (
-    <PublicNavigationDoor door="research" researchAccess={researchAccess}>
+    <PublicNavigationDoor door="research">
       <Link data-footer-navigation-href={destination} href={localizedHref(destination)} prefetch={false}>{label}</Link>
     </PublicNavigationDoor>
   );

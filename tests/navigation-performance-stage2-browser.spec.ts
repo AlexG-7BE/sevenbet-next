@@ -1,10 +1,13 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 
-import { RESEARCH_ACCESS_COOKIE, RESEARCH_ACCESS_OPEN } from "../lib/research-access";
-
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const fixtureArticlePath = "/en/learn/casino-basics/navigation-stage2-guide";
+// The research menu shows only inside the research section (Founder, 10 and 16 October 2026), so the
+// journeys that exercise it start on the wagering calculator: a research page that reads no casino,
+// so a held casino read holds only the streamed menu items, as it did on Home.
+const researchStart = "/wagering-calculator";
+const researchStartPage = '[data-runtime-renderer="wagering-calculator"]';
 
 type NavigationTimingWindow = Window & {
   __stage2MobileFeedbackPaint?: Promise<number>;
@@ -23,10 +26,8 @@ async function marketContext(
       "x-vercel-ip-country": country,
     },
   });
-  // These journeys exercise the full research menu from Home, so every reader here has finished
-  // the "Research responsibly" lesson. The two doors themselves are covered in
+  // The door itself (research links only inside the research section) is covered in
   // public-ia-hardening-browser.spec.ts.
-  await context.addCookies([{ name: RESEARCH_ACCESS_COOKIE, value: RESEARCH_ACCESS_OPEN, url: baseUrl }]);
   return context;
 }
 
@@ -156,7 +157,7 @@ async function exerciseHeldMobileHeader(browser: Browser, browserName: string, c
   });
 
   try {
-    const response = await page.goto(`${baseUrl}/en`, { waitUntil: "commit" });
+    const response = await page.goto(`${baseUrl}/en${researchStart}`, { waitUntil: "commit" });
     expect(response?.status()).toBe(200);
     const header = page.locator('[data-public-shell="header"]');
     const trigger = page.getByRole("button", { name: "Open navigation", exact: true });
@@ -282,7 +283,7 @@ test("open native navigation preserves identity, focus and scroll while commerci
   });
   const page = await context.newPage();
   try {
-    const response = await page.goto(`${baseUrl}/de`, { waitUntil: "commit" });
+    const response = await page.goto(`${baseUrl}/de${researchStart}`, { waitUntil: "commit" });
     expect(response?.status()).toBe(200);
     const header = page.locator('[data-public-shell="header"]');
     const disclosure = page.locator("details[data-public-mobile-disclosure]");
@@ -333,7 +334,7 @@ test("held commercial resolution times out once and recovers without replacing o
   const page = await context.newPage();
   let homeRefreshes = 0;
   const isHomeRefresh = (request: { url(): string; headers(): Record<string, string> }) => (
-    new URL(request.url()).pathname === "/en"
+    new URL(request.url()).pathname === `/en${researchStart}`
     && request.headers().rsc === "1"
     && request.headers()["next-router-prefetch"] !== "1"
   );
@@ -351,7 +352,7 @@ test("held commercial resolution times out once and recovers without replacing o
   });
 
   try {
-    const response = await page.goto(`${baseUrl}/en`, { waitUntil: "commit" });
+    const response = await page.goto(`${baseUrl}/en${researchStart}`, { waitUntil: "commit" });
     expect(response?.status()).toBe(200);
     const header = page.locator('[data-public-shell="header"]');
     const disclosure = page.locator("details[data-public-mobile-disclosure]");
@@ -412,7 +413,7 @@ test("commercial completion before application JavaScript preserves the native o
     await route.continue();
   });
   try {
-    const response = await page.goto(`${baseUrl}/en`, { waitUntil: "commit" });
+    const response = await page.goto(`${baseUrl}/en${researchStart}`, { waitUntil: "commit" });
     expect(response?.status()).toBe(200);
     const disclosure = page.locator("details[data-public-mobile-disclosure]");
     const menu = page.locator("#public-mobile-navigation");
@@ -460,7 +461,7 @@ test("rejected commercial resolution keeps truthful basic navigation usable", as
   });
   const page = await context.newPage();
   const errors = observeRuntimeErrors(page);
-  const response = await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(`${baseUrl}/en${researchStart}`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.locator('[data-public-shell="header"]')).toHaveCount(1);
   await expect(page.locator('a[data-navigation-href="/best-offers"]')).toHaveCount(0);
@@ -503,8 +504,8 @@ test("primary destinations prefetch once after the page settles, never an outbou
     if (/^\/(?:r|go)\//.test(pathname)) outbound.push(pathname);
   });
 
-  await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-handoff-page="home"]')).toBeVisible();
+  await page.goto(`${baseUrl}/en${researchStart}`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator(researchStartPage)).toBeVisible();
   await expect.poll(() => [...prefetched].sort(), { timeout: 15_000 }).toEqual([...primaryPaths].sort());
 
   for (const path of primaryPaths) await desktopPrimary(page).locator(`a[href="${path}"]`).focus();
@@ -531,9 +532,9 @@ test("supported IE fixture covers all primary, detail, article, history and pref
       && request.headers().rsc === "1") primaryPrefetchRequests.push(pathname);
   });
 
-  const response = await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(`${baseUrl}/en${researchStart}`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
-  await expect(page.locator('[data-handoff-page="home"]')).toBeVisible();
+  await expect(page.locator(researchStartPage)).toBeVisible();
   await expect(desktopPrimary(page).getByRole("link", { name: "Best Offers", exact: true })).toBeVisible();
   await expectCanonicalNavigationDomOrder(page);
   documentNavigations.length = 0;
@@ -667,8 +668,8 @@ test("mobile feedback survives menu close, stays neutral while slow, and honors 
     }
     await route.continue();
   });
-  await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-handoff-page="home"]')).toBeVisible();
+  await page.goto(`${baseUrl}/en${researchStart}`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator(researchStartPage)).toBeVisible();
 
   const menuButton = page.getByRole("button", { name: "Open navigation", exact: true });
   await menuButton.click();
@@ -775,8 +776,8 @@ test("rapid transitions resolve to the last destination and failed raw Learn nav
   test.setTimeout(45_000);
   const context = await marketContext(browser, "IE", { viewport: { width: 1365, height: 900 } });
   const page = await context.newPage();
-  await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
-  await expect(page.locator('[data-handoff-page="home"]')).toBeVisible();
+  await page.goto(`${baseUrl}/en${researchStart}`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator(researchStartPage)).toBeVisible();
   await page.evaluate(() => {
     const nav = document.querySelector('nav[aria-label="Primary navigation"]');
     const links = Array.from(nav?.querySelectorAll<HTMLAnchorElement>("a") ?? []);

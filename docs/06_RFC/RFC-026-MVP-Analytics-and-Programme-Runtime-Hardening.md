@@ -70,7 +70,7 @@ The approved events are:
 | `programme_mission_completed` | `mission: 1..10` |
 | `programme_review_opened` | `milestone: first | mid | full` |
 | `programme_completed` | `pathVersion: program_ai_v1` |
-| `programme_discovery_clicked` | `sourceSurface: programme_home | mission_08 | mission_10`; `destinationRoute: casinos | compare | bonuses | best_offers | bonus_guide` |
+| `programme_discovery_clicked` | `sourceSurface: programme_home | mission_08 | mission_10`; `destinationRoute: casinos | compare | bonuses | best_offers | bonus_guide` (no source since 16 October 2026: the Programme shows no discovery links, [PROGRAMME-NO-CASINO-LINKS-2026-10-16](../07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)) |
 | `programme_ai_outcome` | `operation`: one RFC-023/RFC-025 closed operation; `result: provider | fallback | rate_limited | timeout | invalid_output | provider_error` |
 | `programme_voice_outcome` | `result: recording_started | transcription_success | permission_denied | transcription_error | cancelled` |
 

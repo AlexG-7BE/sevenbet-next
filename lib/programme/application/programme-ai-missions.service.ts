@@ -13,7 +13,6 @@ import { programmeUnitOfWork } from "@/lib/programme/infrastructure/programme-un
 import {
   actionAwardKey,
   actionTaskState,
-  commercialDiscoveryLinks,
   completionAwardKey,
   missionStep,
   missionsBefore,
@@ -24,7 +23,6 @@ import {
   programAiMissionRegistry,
   programAiMissionSourcePresentation,
   programAiReviewDefinitions,
-  researchAccessMission,
   type ProgramAiMissionDefinition,
   type ProgramAiMissionNumber,
 } from "@/lib/programme/program-ai/mission-registry";
@@ -577,8 +575,6 @@ export class ProgrammeAiMissionsService {
           xpRemaining: rewardRemainingThrough(programAiReviewDefinitions.first.unlockMission, byMission),
           missionsRemaining: missionsRemainingThrough(programAiReviewDefinitions.first.unlockMission, byMission),
         },
-        researchAccess: "locked" as const,
-        discoveryLinks: commercialDiscoveryLinks,
       };
     }
     const enrollment = result.enrollment;
@@ -662,8 +658,6 @@ export class ProgrammeAiMissionsService {
       }),
       reviews,
       nextReview,
-      researchAccess: byMission.get(researchAccessMission)?.status === "COMPLETED" ? "open" as const : "locked" as const,
-      discoveryLinks: commercialDiscoveryLinks,
     };
   }
 }

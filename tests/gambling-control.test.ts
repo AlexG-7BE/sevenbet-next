@@ -19,7 +19,6 @@ import { controlToolsMessages } from "../lib/i18n/static-pages/gambling-control-
 import { currentProgrammeJourney } from "../lib/i18n/static-pages/ten-steps";
 import { homeMetadata } from "../lib/i18n/home-catalog";
 import { parsePublicMarketRoute, publicRoutePolicy } from "../lib/market/routing";
-import { RESEARCH_ACCESS_COOKIE } from "../lib/research-access";
 import { buildLlmsTxt, llmsLaunchMarkets } from "../lib/seo/llms";
 import { controlPageSchema } from "../lib/seo/control-page-schema";
 import { organizationSchema } from "../lib/seo/structured-data";
@@ -208,15 +207,16 @@ test("the control page lists the Programme's real steps, and the trust page stat
 
   for (const locale of CONTROL_LOCALES) {
     const text = JSON.stringify(trustMessages(locale));
-    assert.ok(text.includes(RESEARCH_ACCESS_COOKIE), `${locale}: names the one cookie step 3 sets`);
+    // Founder, 16 October 2026: the Programme opens nothing and sets no menu cookie.
+    assert.ok(!text.includes("b4g_research_access"), `${locale}: no menu cookie to name`);
     assert.ok(text.includes(currentProgrammeJourney(locale)[2].title), `${locale}: names step 3 by its catalogue title`);
     assert.match(text, /privacy@7be\.io/);
   }
+  assert.doesNotMatch(JSON.stringify(withoutQuittingMessages("en-GB")), /After step 3|menu also shows/);
   const research = read("lib/research-access.ts");
-  assert.match(research, /RESEARCH_ACCESS_OPEN = "open"/, "the cookie holds the word the page quotes");
   for (const root of ["/best-offers", "/casinos", "/bonuses"]) assert.ok(research.includes(`"${root}"`), `${root} is a public research page`);
   const mission = read("components/programme/ProgramAiMissionExperience.tsx");
-  assert.match(mission, /mission\.missionNumber === 10 \? <CommercialNext/, "the last screen of step 10 links to the research pages");
+  assert.doesNotMatch(mission, /CommercialNext|ResearchOpened|ResearchChecklist/, "no step's last screen links to the research pages");
   assert.match(read("lib/analytics/excluded-paths.ts"), /help\|self-check\|admin/, "Google Analytics never runs on Help");
   assert.match(read("lib/analytics/google-analytics.ts"), /allow_google_signals:false,allow_ad_personalization_signals:false/);
 });
