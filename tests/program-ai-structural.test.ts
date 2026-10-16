@@ -491,7 +491,7 @@ test("no completion screen opens or links to casino research, step 3 and step 10
   const catalogue = readFileSync("lib/i18n/programme-catalog.ts", "utf8");
 
   assert.doesNotMatch(experience, /ResearchOpened|ResearchChecklist|CommercialNext|researchOpened|researchLinksShown|researchAccess/);
-  assert.doesNotMatch(experience, /from "@\/lib\/research-access"|RESEARCH_ACCESS_CHANGED_EVENT|RESEARCH_OPENED_AT_STORAGE_KEY|discoveryClicked|programmePublicHref/);
+  assert.doesNotMatch(experience, /from "@\/lib\/(?:research-access|commercial-section)"|RESEARCH_ACCESS_CHANGED_EVENT|RESEARCH_OPENED_AT_STORAGE_KEY|discoveryClicked|programmePublicHref/);
   assert.doesNotMatch(stylesheet, /\.researchReveal|\.researchChecklist|\.commercialAside|\.exploreLinks|\.compactResearch|\.researchFeatured/);
   // The lines that announced the opening are gone from every Programme language.
   for (const key of [

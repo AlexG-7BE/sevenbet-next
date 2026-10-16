@@ -14,7 +14,6 @@ import { commercialProductsAvailable } from "@/lib/market/commercial-product-sta
 import { commercialDestinationsNavigable, publicCommercialDestinationVisible } from "@/lib/public-shell";
 import { FooterCompliance } from "@/components/footer-compliance/FooterCompliance";
 import { BrandSocialLinks } from "./BrandSocialLinks";
-import { PublicNavigationDoor } from "./PublicNavigationClient";
 import styles from "./PublicShell.module.css";
 
 export function PublicFooter({
@@ -53,7 +52,8 @@ export function PublicFooter({
     "/best-offers": commercialBestOffersNavigation,
     "/bonuses": commercialBonusesNavigation,
   } as const;
-  // The research links follow the same door as the header: the research section only (lib/research-access.ts).
+  // The commercial links follow the header: every public page, withheld only by the market rule
+  // (Founder, 17 October 2026). The Programme's footer is built without them.
   const researchLinks = new Set(["/best-offers", "/casinos", "/bonuses"]);
   // Hidden on the Home page, whose screen paging measures the footer (PublicShell.module.css).
   const extraLinks = new Set(["/pause-plan", "/beside", "/pause-statistics", "/gambling-control", "/for-creators"]);
@@ -84,10 +84,7 @@ export function PublicFooter({
                   return <span className={styles.footerNavigationSlot} key={href}>{commercialNavigation}</span>;
                 }
                 if (!publicCommercialDestinationVisible(href, showCommercialProducts)) return null;
-                const link = <Link className={extraLinks.has(href) ? styles.footerExtra : undefined} data-footer-navigation-href={href} href={localizedHref(href)} key={href} prefetch={false}>{label}</Link>;
-                return researchLinks.has(href)
-                  ? <PublicNavigationDoor door="research" key={href}>{link}</PublicNavigationDoor>
-                  : link;
+                return <Link className={extraLinks.has(href) ? styles.footerExtra : undefined} data-footer-navigation-href={href} href={localizedHref(href)} key={href} prefetch={false}>{label}</Link>;
               })}
             </div>
           ))}
@@ -121,9 +118,5 @@ export function PublicCommercialFooterLink({
     : finalPublicHref(href, presentation.neutralRouteLocale);
 
   const label = destination === "/best-offers" ? shell.bestOffers : shell.bonuses;
-  return (
-    <PublicNavigationDoor door="research">
-      <Link data-footer-navigation-href={destination} href={localizedHref(destination)} prefetch={false}>{label}</Link>
-    </PublicNavigationDoor>
-  );
+  return <Link data-footer-navigation-href={destination} href={localizedHref(destination)} prefetch={false}>{label}</Link>;
 }

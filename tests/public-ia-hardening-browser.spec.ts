@@ -32,7 +32,7 @@ test("final public Responsible Gambling hub and Protected Help remain separate",
     await expect(page.getByRole("link", { name: new RegExp(name, "i") }).first()).toBeVisible();
   }
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/en/responsible-gambling");
-  // The hub is outside the research section: Help is one of the guide links there (Founder, 10 October 2026).
+  // Help is one of the menu's links on every public page (Founder, 10 and 17 October 2026).
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "Help", exact: true })).toHaveAttribute("href", "/en/help");
   await expect(page.locator('footer[data-public-shell] a[href="/en/responsible-gambling"]')).toHaveCount(1);
   await expect(page.locator('footer[data-public-shell] a[href="/self-check"]')).toHaveCount(0);
@@ -66,50 +66,55 @@ test("final public Responsible Gambling hub and Protected Help remain separate",
   }
 });
 
-test("research links show only inside the research section; everyone else gets the guide links (Founder, 10 and 16 October 2026)", async ({ browser, request }) => {
-  const researchMenu = ["/best-offers", "/casinos", "/bonuses", "/learn"];
-  const guideMenu = ["/10-steps", "/learn", "/help"];
+test("the whole menu reaches every visitor, on every public page (Founder, 17 October 2026)", async ({ browser, request }) => {
+  // b4gamble.com is the commercial site for adults who already gamble: Casinos, Bonuses and Best
+  // Offers are in the header, the drawer and the footer wherever the visitor is, with no path,
+  // lesson, account or cookie in the way. Only the market rule may withhold one.
+  const fullMenu = ["/10-steps", "/best-offers", "/casinos", "/bonuses", "/learn", "/help"];
   const context = await browser.newContext({ viewport: { width: 1365, height: 900 } });
   const page = await context.newPage();
   const primaryMenu = () => page.locator('nav[aria-label="Primary navigation"] [data-navigation-href]').evaluateAll(
     (links) => links.map((link) => link.getAttribute("data-navigation-href")),
   );
-  const shellResearchLinks = page.locator(
-    '[data-public-shell] a[href$="/best-offers"], [data-public-shell] a[href$="/casinos"], [data-public-shell] a[href$="/bonuses"]',
-  );
+  const footerCommercial = () => page.locator('footer [data-footer-navigation-href="/best-offers"], footer [data-footer-navigation-href="/casinos"], footer [data-footer-navigation-href="/bonuses"]');
 
-  // Outside the research section, a reader without the lesson gets the guide links and no research link.
+  // Home: the full menu, header and footer.
   await page.goto(`${baseUrl}/en`, { waitUntil: "domcontentloaded" });
-  await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(guideMenu);
-  await expect(shellResearchLinks).toHaveCount(0);
-  await expect(page.locator("#public-mobile-navigation nav [data-navigation-href]")).toHaveCount(2);
+  await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(fullMenu);
+  await expect(footerCommercial()).toHaveCount(3);
+  await expect(page.locator("#public-mobile-navigation nav [data-navigation-href]")).toHaveCount(5);
 
-  // Door one: arriving inside the research section shows the research menu, header and footer.
+  // A commercial page keeps the same menu.
   await page.goto(`${baseUrl}/en/casinos`, { waitUntil: "domcontentloaded" });
-  await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(researchMenu);
+  await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(fullMenu);
   await expect(page.locator('footer [data-footer-navigation-href="/casinos"]')).toHaveCount(1);
 
-  // Leaving it without a reload swaps the menu back: the layout is not rendered again.
+  // Leaving it without a reload changes nothing: there is no door left to swap.
   await page.locator('[data-public-shell="header"] a[aria-label="B4GAMBLE home"]').click();
   await expect(page).toHaveURL(/\/en$/);
-  await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(guideMenu);
-  await expect(shellResearchLinks).toHaveCount(0);
+  await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(fullMenu);
 
-  // No second door: the old lesson cookie, still in some browsers, opens nothing (Founder, 16 October 2026).
+  // A guide page, reached by a soft navigation, is the same again; an old lesson cookie is inert.
   await context.addCookies([{ name: "b4g_research_access", value: "open", url: baseUrl }]);
   await page.locator('nav[aria-label="Primary navigation"] a[data-navigation-href="/learn"]').click();
   await expect(page).toHaveURL(/\/en\/learn$/);
-  await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(guideMenu);
-  await expect(shellResearchLinks).toHaveCount(0);
+  await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(fullMenu);
   await context.close();
 
-  // The first HTML already carries the right menu, so nothing swaps in after the page loads.
+  // The first HTML already carries the menu, so nothing swaps in after the page loads.
   for (const cookie of [undefined, "b4g_research_access=open"]) {
     const html = await (await request.get(`${baseUrl}/en/about`, cookie ? { headers: { cookie } } : undefined)).text();
     expect(html).toContain('data-navigation-href="/10-steps"');
-    expect(html).not.toContain('data-navigation-href="/casinos"');
-    expect(html).not.toContain('data-footer-navigation-href="/casinos"');
+    expect(html).toContain('data-navigation-href="/casinos"');
+    expect(html).toContain('data-footer-navigation-href="/casinos"');
   }
+
+  // The Programme keeps the clean shell (Founder, 16 October 2026; PR #530).
+  const programme = await (await request.get(`${baseUrl}/program`)).text();
+  expect(programme).toContain('data-navigation-href="/10-steps"');
+  expect(programme).not.toContain("/casinos");
+  expect(programme).not.toContain("/best-offers");
+  expect(programme).not.toContain("/bonuses");
 });
 
 test("retired destinations are redirects and absent from canonical discovery", async ({ request }) => {

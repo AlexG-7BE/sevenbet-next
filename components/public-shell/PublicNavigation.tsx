@@ -17,7 +17,6 @@ import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 import {
   PublicMobileAccountLine,
   PublicMobileNavigationEnhancement,
-  PublicNavigationDoor,
   PublicNavigationRouteLink,
   PublicProgrammeActionLink,
 } from "./PublicNavigationClient";
@@ -85,8 +84,9 @@ export function PublicNavigation({
   commercialMobileBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
   /**
-   * False in the Programme's shell (Founder, 16 October 2026): the research links are not built at
-   * all there, not even behind the door, so no Programme document carries their addresses.
+   * False in the Programme's shell (Founder, 16 October 2026): the commercial links are not built
+   * at all there, so no Programme document carries their addresses. Every public page builds them
+   * (Founder, 17 October 2026).
    */
   researchNavigation?: boolean;
 }) {
@@ -108,22 +108,23 @@ export function PublicNavigation({
     "/best-offers": commercialMobileBestOffersNavigation,
     "/bonuses": commercialMobileBonusesNavigation,
   } as const;
-  // Research links for a reader inside the research section, the guide links for everyone else
-  // (Founder, 10 and 16 October 2026). Help keeps its own block in the drawer.
+  // One menu for every visitor (Founder, 17 October 2026): the guide links keep the places they
+  // have had since 10 October and the commercial destinations are simply shown to everyone, so the
+  // desktop list reads 10 Steps · Best Offers · Casinos · Bonuses · Learn · Help. Help keeps its
+  // own block in the drawer, so only 10 Steps joins the drawer's route list.
   const guideLink = (item: (typeof GUIDE_NAVIGATION)[number], variant: "desktop" | "mobile") => (
-    <PublicNavigationDoor door="guide" key={item.href}>
-      <PublicNavigationRouteLink
-        baseHref={item.href}
-        className={variant === "desktop" && "safety" in item ? styles.helpLink : undefined}
-        label={navigationLabel(messages, item.href)}
-        presentation={presentation}
-        programme={programme}
-      >
-        {variant === "mobile"
-          ? <><span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small></>
-          : navigationLabel(messages, item.href)}
-      </PublicNavigationRouteLink>
-    </PublicNavigationDoor>
+    <PublicNavigationRouteLink
+      baseHref={item.href}
+      className={variant === "desktop" && "safety" in item ? styles.helpLink : undefined}
+      key={item.href}
+      label={navigationLabel(messages, item.href)}
+      presentation={presentation}
+      programme={programme}
+    >
+      {variant === "mobile"
+        ? <><span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small></>
+        : navigationLabel(messages, item.href)}
+    </PublicNavigationRouteLink>
   );
   const leadingGuideNavigation = GUIDE_NAVIGATION.filter((item) => !("safety" in item));
   const trailingGuideNavigation = GUIDE_NAVIGATION.filter((item) => "safety" in item);
@@ -139,7 +140,7 @@ export function PublicNavigation({
               return <Fragment key={item.href}>{commercialNavigation}</Fragment>;
             }
             if (!visibleNavigationHrefs.has(item.href)) return null;
-            const link = (
+            return (
               <PublicNavigationRouteLink
                 baseHref={item.href}
                 key={item.href}
@@ -150,9 +151,6 @@ export function PublicNavigation({
                 {navigationLabel(messages, item.href)}
               </PublicNavigationRouteLink>
             );
-            return "commercial" in item
-              ? <PublicNavigationDoor door="research" key={item.href}>{link}</PublicNavigationDoor>
-              : link;
           })}
           {trailingGuideNavigation.map((item) => guideLink(item, "desktop"))}
         </nav>
@@ -210,7 +208,7 @@ export function PublicNavigation({
                   return <Fragment key={item.href}>{commercialNavigation}</Fragment>;
                 }
                 if (!visibleNavigationHrefs.has(item.href)) return null;
-                const link = (
+                return (
                   <PublicNavigationRouteLink
                     baseHref={item.href}
                     key={item.href}
@@ -221,9 +219,6 @@ export function PublicNavigation({
                     <span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small>
                   </PublicNavigationRouteLink>
                 );
-                return "commercial" in item
-                  ? <PublicNavigationDoor door="research" key={item.href}>{link}</PublicNavigationDoor>
-                  : link;
               })}
             </nav>
             {/* The Programme is the drawer's one primary action, directly under the routes;
@@ -280,17 +275,15 @@ export function PublicCommercialNavigationItem({
   const item = deferredCommercialNavigation.find(({ href }) => href === destination);
   if (!item) return null;
   return (
-    <PublicNavigationDoor door="research">
-      <PublicNavigationRouteLink
-        baseHref={item.href}
-        label={navigationLabel(messages, item.href)}
-        presentation={presentation}
-        programme={programme}
-      >
-        {variant === "mobile" ? (
-          <><span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small></>
-        ) : navigationLabel(messages, item.href)}
-      </PublicNavigationRouteLink>
-    </PublicNavigationDoor>
+    <PublicNavigationRouteLink
+      baseHref={item.href}
+      label={navigationLabel(messages, item.href)}
+      presentation={presentation}
+      programme={programme}
+    >
+      {variant === "mobile" ? (
+        <><span>{navigationLabel(messages, item.href)}</span><small>{messages.view}</small></>
+      ) : navigationLabel(messages, item.href)}
+    </PublicNavigationRouteLink>
   );
 }

@@ -213,8 +213,8 @@ test("the control page lists the Programme's real steps, and the trust page stat
     assert.match(text, /privacy@7be\.io/);
   }
   assert.doesNotMatch(JSON.stringify(withoutQuittingMessages("en-GB")), /After step 3|menu also shows/);
-  const research = read("lib/research-access.ts");
-  for (const root of ["/best-offers", "/casinos", "/bonuses"]) assert.ok(research.includes(`"${root}"`), `${root} is a public research page`);
+  const commercialSection = read("lib/commercial-section.ts");
+  for (const root of ["/best-offers", "/casinos", "/bonuses"]) assert.ok(commercialSection.includes(`"${root}"`), `${root} is a public commercial page`);
   const mission = read("components/programme/ProgramAiMissionExperience.tsx");
   assert.doesNotMatch(mission, /CommercialNext|ResearchOpened|ResearchChecklist/, "no step's last screen links to the research pages");
   assert.match(read("lib/analytics/excluded-paths.ts"), /help\|self-check\|admin/, "Google Analytics never runs on Help");

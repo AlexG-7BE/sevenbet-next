@@ -16,7 +16,7 @@ import { emailTemplateLinksToCasinoPages, renderEmailTemplate, sanitizeEmailTemp
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import { PROGRAMME_ROUTES, programmePath } from "../lib/programme/presentation";
 import { missionStep, programmeJourney, programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
-import { isResearchSectionRoute } from "../lib/research-access";
+import { COMMERCIAL_SECTION_ROOTS } from "../lib/commercial-section";
 
 const require = createRequire(import.meta.url);
 require.extensions[".css"] = (module) => { module.exports = {}; };
@@ -29,8 +29,14 @@ require.extensions[".css"] = (module) => { module.exports = {}; };
 const RESEARCH_HREF = /href="(?:https:\/\/b4gamble\.com)?(?:\/[a-z]{2}(?:-[a-z]{2})?)?\/(?:best-offers|casinos|casino|catalog|bonuses|compare|bonus-guide|wagering-calculator|outbound|r|go)(?:[/?#"]|$)/i;
 /** The same targets written as a route literal in source. */
 const RESEARCH_LITERAL = /["'`](?:\/[a-z]{2})?\/(?:best-offers|casinos|casino\/|catalog\b|bonuses|compare|bonus-guide|wagering-calculator|outbound|r\/|go\/)/;
-/** The research section's roots as `lib/research-access.ts` lists them (it exports only its reader). */
-const researchSectionRoots = [...readFileSync("lib/research-access.ts", "utf8").matchAll(/^\s+"(\/[a-z-]+)",$/gm)].map((match) => match[1]);
+/** The commercial section's roots, the one list `lib/commercial-section.ts` keeps. */
+const researchSectionRoots = [...COMMERCIAL_SECTION_ROOTS];
+
+/** `pathname` with any market prefix already stripped. */
+function insideCommercialSection(pathname: string) {
+  const cleanPath = pathname.split(/[?#]/, 1)[0] || "/";
+  return researchSectionRoots.some((root) => cleanPath === root || cleanPath.startsWith(`${root}/`));
+}
 
 function sources(root: string) {
   return (readdirSync(root, { recursive: true }) as string[])
@@ -50,19 +56,23 @@ test("no Programme source names a research route or a partner route", () => {
   for (const path of programmeSources) {
     const source = readFileSync(path, "utf8");
     assert.doesNotMatch(source, RESEARCH_LITERAL, path);
-    assert.doesNotMatch(source, /from "@\/lib\/research-access"|b4g_research_access|b4g:research-access|b4g_research_opened_at/, path);
+    assert.doesNotMatch(source, /from "@\/lib\/(?:research-access|commercial-section)"|b4g_research_access|b4g:research-access|b4g_research_opened_at/, path);
     assert.doesNotMatch(source, /discoveryLinks|researchAccess|discoveryClicked|sourceSurface: "mission_(?:08|10)"|programme_home/, path);
   }
 });
 
-test("no Programme path is inside the research section, so the menu there never shows casino links", () => {
+test("no Programme path is inside the commercial section, and the shell prop is what keeps casino links out", () => {
+  // Since 17 October 2026 the path decides nothing in the menu (every public page shows the
+  // commercial links). The Programme stays clean through `researchNavigation={false}`, pinned
+  // below. A Programme path is still outside the commercial section, which is what lets the
+  // letter and source guards above treat those roots as "casino pages".
   for (const route of PROGRAMME_ROUTES) {
     for (const path of [programmePath(route.locale), `${programmePath(route.locale)}/missing`]) {
-      assert.equal(isResearchSectionRoute(path.replace(/^\/[a-z]{2}(?=\/)/, "")), false, path);
-      assert.equal(isResearchSectionRoute(path), false, path);
+      assert.equal(insideCommercialSection(path.replace(/^\/[a-z]{2}(?=\/)/, "")), false, path);
+      assert.equal(insideCommercialSection(path), false, path);
     }
   }
-  assert.equal(isResearchSectionRoute("/program"), false);
+  assert.equal(insideCommercialSection("/program"), false);
 });
 
 const now = "2026-10-16T09:00:00.000Z";
@@ -270,21 +280,24 @@ test("the Programme's header and footer are built without research links, so no 
   assert.match(rootNotFound, /const commercialProductState = programmeDocument \? "EDITORIAL_ONLY" : await resolveServerCommercialProductState\(\);/);
   assert.equal(rootNotFound.match(/researchNavigation=\{!programmeDocument\}/g)?.length, 2, "header and footer");
 
-  // Rendered under a research path, where the menu's door would open if the links had been built.
-  const shell = (researchNavigation: boolean, locale: (typeof PROGRAMME_ROUTES)[number]["locale"], language: string) => renderToStaticMarkup(
-    <PathnameContext.Provider value="/casinos">
+  // The path decides nothing since 17 October 2026, so both a commercial path and the Programme's
+  // own path must give the same answer: the prop alone keeps the links out.
+  const shell = (researchNavigation: boolean, locale: (typeof PROGRAMME_ROUTES)[number]["locale"], language: string, pathname: string) => renderToStaticMarkup(
+    <PathnameContext.Provider value={pathname}>
       <SearchParamsContext.Provider value={new URLSearchParams() as never}>
         <PublicHeader account={accountNavigationFor({ authenticated: false, programmePath: programmePath(locale) })} authenticated={false} commercialProductState="EDITORIAL_ONLY" presentation={resolvePresentationContext({ routeLanguage: language })} programme={{ locale, localizePublicLinks: true }} researchNavigation={researchNavigation} />
         <PublicFooter authenticated={false} commercialProductState="EDITORIAL_ONLY" presentation={resolvePresentationContext({ routeLanguage: language })} programme={{ path: programmePath(locale), localizePublicLinks: true }} researchNavigation={researchNavigation} />
       </SearchParamsContext.Provider>
     </PathnameContext.Provider>,
   );
-  assert.match(shell(true, "en-GB", "en"), /href="[^"]*\/casinos"/, "the public shell still builds them (control)");
-  for (const route of PROGRAMME_ROUTES) {
-    const html = shell(false, route.locale, route.language);
-    assert.match(html, /data-navigation-href="\/learn"/, route.locale);
-    assert.doesNotMatch(html, RESEARCH_HREF, route.locale);
-    assert.doesNotMatch(html, /\/(?:casinos|best-offers|bonuses)\b/, route.locale);
+  for (const pathname of ["/casinos", "/program", "/"]) {
+    assert.match(shell(true, "en-GB", "en", pathname), /href="[^"]*\/casinos"/, `the public shell builds them on ${pathname} (control)`);
+    for (const route of PROGRAMME_ROUTES) {
+      const html = shell(false, route.locale, route.language, pathname);
+      assert.match(html, /data-navigation-href="\/learn"/, `${route.locale} ${pathname}`);
+      assert.doesNotMatch(html, RESEARCH_HREF, `${route.locale} ${pathname}`);
+      assert.doesNotMatch(html, /\/(?:casinos|best-offers|bonuses)\b/, `${route.locale} ${pathname}`);
+    }
   }
 });
 

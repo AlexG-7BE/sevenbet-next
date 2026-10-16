@@ -49,8 +49,9 @@ const REQUIRED_BODY_VARIABLES: Record<EmailTemplateKey, readonly string[]> = {
  * No letter links to a casino, bonus, offer or comparison page, or to a partner route (Founder,
  * 16 October 2026: the Programme ends in help). Accounts are Programme accounts and a broadcast can
  * be aimed at Programme progress, so the marketing broadcast follows the same rule.
- * `/catalog` is listed because it redirects to `/casinos`. The roots repeat the research section of
- * `lib/research-access.ts` (which this module must not import); a test keeps the two lists equal.
+ * `/catalog` is listed because it redirects to `/casinos`. The roots repeat the commercial section
+ * of `lib/commercial-section.ts` (which this module must not import); a test keeps the two lists
+ * equal.
  */
 const RESEARCH_SECTION_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:best-offers|casinos|casino|catalog|bonuses|compare|bonus-guide|wagering-calculator|outbound)(?:\/|$)/i;
 const PARTNER_ROUTE_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:r|go)(?:\/|$)/i;

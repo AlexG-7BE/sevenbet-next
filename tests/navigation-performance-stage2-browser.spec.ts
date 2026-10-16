@@ -3,9 +3,9 @@ import { PrismaClient } from "@prisma/client";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const fixtureArticlePath = "/en/learn/casino-basics/navigation-stage2-guide";
-// The research menu shows only inside the research section (Founder, 10 and 16 October 2026), so the
-// journeys that exercise it start on the wagering calculator: a research page that reads no casino,
-// so a held casino read holds only the streamed menu items, as it did on Home.
+// The commercial menu reaches every public page (Founder, 17 October 2026). These journeys still
+// start on the wagering calculator because that page reads no casino of its own, so a held casino
+// read holds only the streamed menu items, as it did on Home.
 const researchStart = "/wagering-calculator";
 const researchStartPage = '[data-runtime-renderer="wagering-calculator"]';
 
@@ -26,8 +26,7 @@ async function marketContext(
       "x-vercel-ip-country": country,
     },
   });
-  // The door itself (research links only inside the research section) is covered in
-  // public-ia-hardening-browser.spec.ts.
+  // That the whole menu reaches every page is covered in public-ia-hardening-browser.spec.ts.
   return context;
 }
 
@@ -53,10 +52,10 @@ async function expectCanonicalNavigationDomOrder(page: Page) {
     attribute,
   );
   await expect.poll(() => hrefs('nav[aria-label="Primary navigation"] [data-navigation-href]', "data-navigation-href")).toEqual([
-    "/best-offers", "/casinos", "/bonuses", "/learn",
+    "/10-steps", "/best-offers", "/casinos", "/bonuses", "/learn", "/help",
   ]);
   await expect.poll(() => hrefs('#public-mobile-navigation nav [data-navigation-href]', "data-navigation-href")).toEqual([
-    "/best-offers", "/casinos", "/bonuses", "/learn",
+    "/10-steps", "/best-offers", "/casinos", "/bonuses", "/learn",
   ]);
   await expect.poll(async () => (await hrefs('footer [data-footer-navigation-href]', "data-footer-navigation-href")).slice(0, 4)).toEqual([
     "/best-offers", "/casinos", "/bonuses", "/learn",

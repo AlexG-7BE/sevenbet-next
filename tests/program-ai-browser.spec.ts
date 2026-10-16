@@ -1070,17 +1070,20 @@ test("durably accepted account survives empty storage, context, login and Missio
       await expect(page.getByText("PERSONAL REVIEW AVAILABLE", { exact: true })).toBeVisible();
       await expect(page.getByText(/First Personal Review is ready\./)).toBeVisible();
     } else if (mission.missionNumber === 8) {
-      // Finishing the third step, "Research responsibly", opens nothing (Founder, 16 October 2026):
-      // no research block or casino link on its completion screen, no menu cookie, the same guide
-      // menu on this page and on Home, and no research card on the Programme home.
-      const guideMenu = ["/10-steps", "/learn", "/help"];
+      // Finishing the third step, "Research responsibly", changes nothing (Founder, 16 October
+      // 2026): no research block or casino link on its completion screen, no menu cookie, the same
+      // menu before and after on both shells, and no research card on the Programme home. The
+      // public menu already carries the commercial links to everyone (Founder, 17 October 2026),
+      // so what this step must not do is change either menu.
+      const programmeMenu = ["/10-steps", "/learn", "/help"];
+      const publicMenu = ["/10-steps", "/best-offers", "/casinos", "/bonuses", "/learn", "/help"];
       const primary = page.locator('nav[aria-label="Primary navigation"]');
       const primaryMenu = () => primary.locator("[data-navigation-href]").evaluateAll((links) => links.map((link) => link.getAttribute("data-navigation-href")));
       const researchLinks = 'a[href*="/casinos"], a[href*="/casino/"], a[href*="/bonuses"], a[href*="/best-offers"], a[href*="/compare"], a[href*="/bonus-guide"], a[href*="/wagering-calculator"], a[href*="/outbound"], a[href^="/r/"], a[href^="/go/"]';
       const publicContext = await browser.newContext({ baseURL, viewport: { width: 1440, height: 1000 }, storageState: await page.context().storageState() });
       const before = await publicContext.newPage();
       await before.goto("/en");
-      await expect.poll(() => before.locator('nav[aria-label="Primary navigation"] [data-navigation-href]').evaluateAll((links) => links.map((link) => link.getAttribute("data-navigation-href"))), { timeout: 15_000 }).toEqual(guideMenu);
+      await expect.poll(() => before.locator('nav[aria-label="Primary navigation"] [data-navigation-href]').evaluateAll((links) => links.map((link) => link.getAttribute("data-navigation-href"))), { timeout: 15_000 }).toEqual(publicMenu);
       await publicContext.close();
 
       await openCurrentMission(page, 8, 1440, "Resume mission");
@@ -1091,13 +1094,13 @@ test("durably accepted account survives empty storage, context, login and Missio
       await expect(page.locator(researchLinks)).toHaveCount(0);
       await noHorizontalOverflow(page);
       expect((await page.context().cookies()).find((cookie) => cookie.name === "b4g_research_access")).toBeUndefined();
-      // The menu on this same page keeps its guide links.
-      await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(guideMenu);
+      // The Programme's own menu keeps its three links: the Programme shows no casino to anyone.
+      await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(programmeMenu);
       await expect(page.locator('[data-public-shell="header"]')).not.toHaveAttribute("data-research-new", "");
 
+      // The public menu is what it was before the step: the same for everyone, opened by nothing.
       await page.goto("/en");
-      await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(guideMenu);
-      await expect(page.locator('[data-public-shell] a[href$="/casinos"]')).toHaveCount(0);
+      await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(publicMenu);
       await page.goto("/program");
       await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
       await expect(page.locator('[data-programme-research="featured"]')).toHaveCount(0);

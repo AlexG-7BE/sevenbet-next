@@ -12,7 +12,7 @@ import {
   publicCommercialDestinationVisible,
   publicNavigationForCommercialState,
 } from "../lib/public-shell";
-import { isResearchSectionRoute } from "../lib/research-access";
+import { COMMERCIAL_SECTION_ROOTS } from "../lib/commercial-section";
 import { ORGANIZATION_PROFILES } from "../lib/seo/structured-data";
 import { BRAND_SOCIAL_PROFILES } from "../lib/social/brand-profiles";
 
@@ -25,26 +25,24 @@ test("public navigation follows the approved Figma information architecture", ()
   ]);
 });
 
-test("research links reach a reader only inside the research section (Founder, 10 and 16 October 2026)", () => {
-  for (const path of ["/best-offers", "/casinos", "/casinos?page=2", "/casino/playojo", "/bonuses", "/compare", "/bonus-guide", "/wagering-calculator", "/outbound/unavailable"]) {
-    assert.equal(isResearchSectionRoute(path), true, path);
-  }
-  // Everywhere else, the Programme's own pages included, every reader sees the guide links instead.
-  for (const path of ["/", "/10-steps", "/learn", "/learn/casino-bonuses/wagering-requirements", "/help", "/about", "/faq", "/methodology", "/program", "/program/missing", "/responsible-gambling", "/tools/budget-calculator", "/casino-guide", "/bonuses-explained"]) {
-    assert.equal(isResearchSectionRoute(path), false, path);
-  }
+test("the whole menu reaches every visitor, on every public page (Founder, 17 October 2026)", () => {
+  // b4gamble.com is the commercial site: Casinos, Bonuses and Best Offers are not behind a path,
+  // a lesson, an account or a cookie. Only the market rule may withhold one.
   assert.deepEqual(GUIDE_NAVIGATION, [
     { label: "10 Steps", href: "/10-steps" },
     { label: "Help", href: "/help", safety: true },
   ]);
-  // The Programme opens nothing: the contract has no lesson flag, cookie, event or browser note.
-  const contract = readFileSync("lib/research-access.ts", "utf8");
+  // The commercial roots stay named in one place, for the Programme and letter guards alone.
+  assert.deepEqual([...COMMERCIAL_SECTION_ROOTS], [
+    "/best-offers", "/casinos", "/casino", "/bonuses", "/compare", "/bonus-guide", "/wagering-calculator", "/outbound",
+  ]);
+  const contract = readFileSync("lib/commercial-section.ts", "utf8");
   assert.doesNotMatch(contract, /^import /m, "the contract imports nothing");
-  assert.deepEqual([...contract.matchAll(/^export (?:const|function) (\w+)/gm)].map((match) => match[1]), ["isResearchSectionRoute"]);
-  assert.doesNotMatch(contract.replace(/\/\*[\s\S]*?\*\//g, ""), /cookie|localStorage|addEventListener|b4g_research/i);
+  assert.deepEqual([...contract.matchAll(/^export (?:const|function) (\w+)/gm)].map((match) => match[1]), ["COMMERCIAL_SECTION_ROOTS"]);
+  assert.doesNotMatch(contract.replace(/\/\*[\s\S]*?\*\//g, ""), /cookie|localStorage|addEventListener|b4g_research|pathname/i);
 });
 
-test("the menu chooses its door in the browser, from the current path alone", () => {
+test("no door is left in the shell: the menu is built from the lists alone", () => {
   const client = readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8");
   const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
   const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
@@ -53,42 +51,38 @@ test("the menu chooses its door in the browser, from the current path alone", ()
   const publicLayout = readFileSync("app/(public)/layout.tsx", "utf8");
   const programmeLayout = readFileSync("app/program/layout.tsx", "utf8");
 
-  // A layout is not rendered again when the page changes, so the door cannot be a server decision.
-  const door = client.slice(client.indexOf("export function PublicNavigationDoor("), client.indexOf("export function PublicNavigationRouteLink("));
-  assert.ok(door.includes("const research = isResearchSectionRoute(stripPublicMarketPrefix(pathname));"));
-  assert.ok(door.includes('return research === (door === "research") ? <>{children}</> : null;'));
-  assert.doesNotMatch(client, /document\.cookie|researchAccess|b4g:research-access|b4g_research|PublicResearchNewMark/);
+  for (const source of [client, navigation, footer, header, publicLayout, programmeLayout]) {
+    assert.doesNotMatch(source, /PublicNavigationDoor|researchAccess|from "@\/lib\/research-access"|PublicResearchNewMark/);
+  }
+  assert.doesNotMatch(client, /document\.cookie|b4g:research-access|b4g_research/);
+  assert.doesNotMatch(shell, /data-research-new/);
 
-  // Desktop list and drawer: every commercial item sits behind the research door, 10 Steps and Help behind the guide door.
-  assert.equal(navigation.match(/"commercial" in item\s*\? <PublicNavigationDoor door="research"/g)?.length, 2);
-  assert.equal(navigation.match(/<PublicNavigationDoor door="research"/g)?.length, 3, "desktop, drawer and the streamed Best Offers/Bonuses item");
-  assert.equal(navigation.match(/<PublicNavigationDoor door="guide"/g)?.length, 1);
+  // Desktop list and drawer: the guide links keep their places from 10 October and the commercial
+  // destinations sit between them, shown to everyone. Help keeps its own block in the drawer.
   const desktop = navigation.slice(navigation.indexOf("className={styles.primaryNavigation}"), navigation.indexOf("className={styles.accountNavigation}"));
   assert.ok(desktop.indexOf('{leadingGuideNavigation.map((item) => guideLink(item, "desktop"))}') >= 0);
   assert.ok(desktop.indexOf('{leadingGuideNavigation.map((item) => guideLink(item, "desktop"))}') < desktop.indexOf("{PUBLIC_NAVIGATION.map("));
-  assert.ok(desktop.indexOf("{PUBLIC_NAVIGATION.map(") < desktop.indexOf('{trailingGuideNavigation.map((item) => guideLink(item, "desktop"))}'), "10 Steps · Learn · Help");
+  assert.ok(desktop.indexOf("{PUBLIC_NAVIGATION.map(") < desktop.indexOf('{trailingGuideNavigation.map((item) => guideLink(item, "desktop"))}'), "10 Steps · Best Offers · Casinos · Bonuses · Learn · Help");
   const drawer = navigation.slice(navigation.indexOf('id="public-mobile-navigation"'), navigation.indexOf("</details>"));
-  assert.ok(drawer.includes('{leadingGuideNavigation.map((item) => guideLink(item, "mobile"))}'));
+  assert.ok(drawer.indexOf('{leadingGuideNavigation.map((item) => guideLink(item, "mobile"))}') < drawer.indexOf("{PUBLIC_NAVIGATION.map("));
   assert.ok(!drawer.includes("trailingGuideNavigation"), "Help keeps its own block in the drawer");
 
+  // The Programme's shell is the one place the commercial links are not built (PR #530).
   assert.ok(footer.includes('const researchLinks = new Set(["/best-offers", "/casinos", "/bonuses"]);'));
-  assert.equal(footer.match(/<PublicNavigationDoor door="research"/g)?.length, 2);
-
-  // Nothing reads or passes a lesson flag any more, and the week-long mark is gone.
-  for (const source of [navigation, footer, header, publicLayout, programmeLayout]) {
-    assert.doesNotMatch(source, /researchAccess|from "@\/lib\/research-access"|PublicResearchNewMark/);
-  }
-  assert.doesNotMatch(shell, /data-research-new/);
+  assert.ok(footer.includes("if (!researchNavigation && researchLinks.has(href)) return null;"));
+  assert.equal(navigation.match(/if \(!researchNavigation && "commercial" in item\) return null;/g)?.length, 2, "desktop list and drawer");
+  assert.equal(programmeLayout.match(/researchNavigation=\{false\}/g)?.length, 2, "the Programme header and footer");
+  assert.doesNotMatch(publicLayout, /researchNavigation/, "every public page builds them");
 });
 
-test("only the menu's door reads the research contract, and no Programme answer sets a menu cookie", () => {
+test("nothing outside the Programme and letter guards names the commercial roots", () => {
   const sources = (root: string) => (readdirSync(root, { recursive: true }) as string[])
     .filter((name) => /\.(?:tsx|ts)$/.test(name))
     .map((name) => `${root}/${name}`);
   const readers = ["app", "components", "lib"].flatMap(sources)
-    .filter((path) => readFileSync(path, "utf8").includes('from "@/lib/research-access"'))
+    .filter((path) => readFileSync(path, "utf8").includes('from "@/lib/commercial-section"'))
     .sort();
-  assert.deepEqual(readers, ["components/public-shell/PublicNavigationClient.tsx"]);
+  assert.deepEqual(readers, [], "no runtime module gates navigation on the path");
 
   assert.doesNotMatch(readFileSync("lib/programme/http.ts", "utf8"), /research|withResearchAccess|withoutResearchAccess/i);
   for (const route of [
