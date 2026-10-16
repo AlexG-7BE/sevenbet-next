@@ -1,6 +1,6 @@
 # Casino research reaches the menu through two doors
 
-**Status:** ACCEPTED. Parts 1, 2 and 3 are implemented.
+**Status:** ACCEPTED, amended. Door one (the research section) and Part 2 (the lesson at step 3) stand; door two (the lesson flag) and Part 3 (the moment research opens) are withdrawn by [amendment 4](#amendment-4-16-october-2026--the-programme-opens-no-door) of 16 October 2026.
 
 **Decision authority:** explicit Founder instructions, 10 October 2026.
 
@@ -190,4 +190,33 @@ the menu.
   (PR #502) was closed unmerged. They can be removed in a later Programme pass.
 - Evidence: `tests/pause-plan.test.ts`, `tests/clean-route.test.ts`,
   `tests/public-shell.test.ts`.
+
+## Amendment 4, 16 October 2026 — the Programme opens no door
+
+**Founder decision (question tool, 16 October 2026, «Без казино для всех»):** the Programme shows
+no casino, offer, bonus, comparison or partner link to anyone, so that it ends in help. Record:
+[PROGRAMME-NO-CASINO-LINKS-2026-10-16](PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).
+
+- **Door two is withdrawn.** Finishing "Research responsibly" no longer opens Best Offers, Casinos
+  and Bonuses in the header, drawer or footer. The cookie `b4g_research_access`, the event
+  `b4g:research-access`, the note `b4g_research_opened_at`, the week-long mark and the home's
+  `researchAccess` / `discoveryLinks` fields are deleted from code; a cookie already in a browser
+  is ignored and expires on its own.
+- **Part 3 is withdrawn.** The step-3 completion block ("New in your menu", "Put it to use"), the
+  Programme Home Research card and the step-10 "Explore when you are ready" links are removed. The
+  FAQ, Methodology, Privacy Notice, trust page, control page and `llms.txt` say so.
+- **Door one stands, unchanged.** On a research page (`/best-offers`, `/casinos`, `/casino/…`,
+  `/bonuses`, `/compare`, `/bonus-guide`, `/wagering-calculator`, `/outbound/…`) the menu shows
+  the research links; everywhere else, the Programme included, it shows 10 Steps · Learn · Help.
+  `lib/research-access.ts` is `isResearchSectionRoute` alone. The Programme's own header and
+  footer are built without the research links at all (`researchNavigation={false}`), since the
+  Programme layout only ever renders Programme paths.
+- **No letter links to a casino page or a partner route**, the marketing broadcast included.
+- **Part 2 stands for now:** "Research responsibly" keeps its number 08 and its place at step 3.
+  Whether it should stay there now that it opens nothing is an open question for the Founder.
+- **Supersedes** amendment 3's line that "the research menu opens from inside it, at step 3", and
+  the Founder's funnel model of 13 October 2026 that kept the door as the revenue chain.
+- Rollback: the tag `archive/programme-research-door-2026-10-16` and the restore steps in the new
+  record. Evidence: `tests/programme-no-casino-links.test.tsx`, `tests/public-shell.test.ts`,
+  `tests/public-ia-hardening-browser.spec.ts`.
 

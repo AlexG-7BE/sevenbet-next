@@ -103,6 +103,9 @@ returns to the Programme home.
    "Put it to use" with the checklist and the guide link), the "Personal Review available" note,
    and the public guides after step 10. The research block's render stands behind one switch,
    `researchLinksShown` (on), as a seam for the clean route; this screen adds no door logic.
+   *Superseded 16 October 2026 ([PROGRAMME-NO-CASINO-LINKS-2026-10-16](PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)):
+   the research block of step 3, the public guides after step 10 and the switch are removed; the
+   completion screen carries the card, the Review note and the continue bar.*
 
 Completion-screen variants: just completed; "Complete Mission" pressed on a Mission that was
 already complete (it shows "This Mission was already complete. Your completed result is ready to

@@ -27,6 +27,7 @@ import {
   sendAuthEmail,
   verificationEmailRecentlyQueued,
 } from "../lib/email/service.server";
+import { setEmailTemplateActive } from "../lib/email/template-admin.server";
 import { normalizeResendWebhook, processResendWebhook } from "../lib/email/webhook.server";
 
 const prisma = new PrismaClient();
@@ -588,6 +589,48 @@ test("a confirmation link asked for again within a minute costs no second email;
     assert.equal(await verificationEmailRecentlyQueued(user.id), true);
     assert.equal(await verificationEmailRecentlyQueued(user.id, new Date(Date.now() + 61_000)), false);
   } finally {
+    await deleteUserEvidence(user.id);
+  }
+});
+
+test("a stored letter that links to a casino page is never sent, whenever and however it was saved", async () => {
+  // Founder, 16 October 2026: no letter links to a casino page. The Admin editor refuses such a
+  // link; a row written outside it (SQL, a migration) or saved before the rule must not send either.
+  const user = await createUser();
+  const template = await prisma.emailTemplate.create({
+    data: {
+      key: "WELCOME",
+      type: "LIFECYCLE",
+      locale: "is",
+      subject: "Welcome to B4GAMBLE",
+      htmlBody: '<p>Hello {{name}},</p><p><a href="{{programme_url}}">Continue</a></p>',
+      textBody: "Hello {{name}},\n\nContinue: {{programme_url}}",
+      version: 1,
+      active: true,
+      createdBy: "email-reliability",
+      updatedBy: "email-reliability",
+    },
+  });
+  try {
+    const provider = new RecordingProvider();
+    const queued = await queueEmailMessage({ userId: user.id, templateKey: "WELCOME", templateId: template.id, idempotencyKey: `email-reliability:casino-link:${randomUUID()}` });
+    assert.equal(queued?.status, "QUEUED");
+    await prisma.emailTemplate.update({
+      where: { id: template.id },
+      data: { htmlBody: '<p>Hello {{name}},</p><p><a href="{{programme_url}}">Continue</a> <a href="https://b4gamble.com/sv/casinos">Compare casinos</a></p>' },
+    });
+    assert.deepEqual(await processQueuedEmailMessage(queued!.id, { provider, siteUrl: SITE_URL }), { status: "failed", code: "TEMPLATE_RENDER_INVALID" });
+    assert.equal(provider.envelopes.length, 0);
+    const cancelled = await prisma.emailMessage.findUniqueOrThrow({ where: { id: queued!.id } });
+    assert.deepEqual({ status: cancelled.status, code: cancelled.deliveryErrorCode }, { status: "CANCELLED", code: "TEMPLATE_RENDER_INVALID" });
+    await assert.rejects(queueEmailMessage({ userId: user.id, templateKey: "WELCOME", templateId: template.id, idempotencyKey: `email-reliability:casino-link:${randomUUID()}` }), /casino pages/);
+    // An inactive older version cannot be switched back on from Admin either.
+    await prisma.emailTemplate.update({ where: { id: template.id }, data: { active: false } });
+    await assert.rejects(setEmailTemplateActive(template.id, true, "email-reliability-admin"), /casino pages/);
+    assert.equal((await prisma.emailTemplate.findUniqueOrThrow({ where: { id: template.id } })).active, false);
+  } finally {
+    await prisma.emailMessage.deleteMany({ where: { templateId: template.id } });
+    await prisma.emailTemplate.delete({ where: { id: template.id } });
     await deleteUserEvidence(user.id);
   }
 });

@@ -220,6 +220,8 @@ The Mission teaches only comparison concepts supported by current public product
 
 After educational completion, a separate section may link to `/casinos`, `/compare`, `/bonuses`, `/best-offers` and `/bonus-guide`. Completion does not require a click. Private Programme state is never placed in a URL, ranking call or affiliate destination.
 
+> **Founder supersession — 2026-10-16:** the paragraph above no longer applies. The Mission's completion shows no research section and no casino, bonus, offer or comparison link, and completing it opens nothing in the public menu. The lesson's own content, actions, XP and place are unchanged. Decision record: [PROGRAMME-NO-CASINO-LINKS-2026-10-16](../07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).
+
 ### 5.8 Mission 09 — Rehearse the decision
 
 | Action | XP |
@@ -393,9 +395,13 @@ The server-owned feature-on Home shows:
 - available Reviews; and
 - a visually secondary `Explore B4GAMBLE` rail.
 
+> **Founder supersession — 2026-10-16:** Programme Home has no `Explore B4GAMBLE` rail and no research card; it links to no casino, bonus, offer or comparison page. See §13. Decision record: [PROGRAMME-NO-CASINO-LINKS-2026-10-16](../07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).
+
 Resume selects the first incomplete logical action. Completed actions remain reviewable but award zero further XP. Retention uses visible useful progress, near-term deterministic reward, Review distance and built artifacts. It does not use random rewards, XP loss/expiry, punitive streaks, fake urgency, chance multipliers or casino-like mechanics.
 
 ## 13. Commercial discovery separation
+
+> **Founder supersession — 2026-10-16:** the Programme shows no commercial discovery links to anyone. Programme Home has no research card, Mission 08 and Mission 10 completions carry no discovery section, the home read model no longer carries `researchAccess` or `discoveryLinks`, and no Programme answer sets the menu's flag cookie (the cookie no longer exists). The public menu shows the research links only on the research pages themselves. The supersession of 2026-10-10 below and the paragraph after it are historical; the separation rules that follow them still hold for every commercial surface outside the Programme. Decision record: [PROGRAMME-NO-CASINO-LINKS-2026-10-16](../07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).
 
 > **Founder supersession — 2026-10-10:** completing Mission 08 "Research responsibly" also opens Best Offers, Casinos and Bonuses in the public header, drawer and footer on every page; before it they show only inside the research section. The Programme home carries `researchAccess` and its answers set the menu's flag cookie. Everything below still holds: the links are generic, receive no Programme payload, award no XP and are never required. The lesson is now the third step; see the amendment in §3. Its completion screen presents the three links inside the reward card and the checklist below it; Programme Home shows its discovery links only once the lesson is complete; the design note in §15 that rejects a commercial link inside reward feedback does not apply to this one Mission. Decision record: [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](../07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md).
 

@@ -45,7 +45,7 @@ const en: WithoutQuittingMessages = {
   steps: {
     heading: "The ten steps",
     intro: "The Programme's steps in the order you take them. Most take 5–8 minutes and end with something you keep.",
-    note: "After step 3 the site menu also shows its casino, bonus and offer pages. No step asks you to use them.",
+    note: "No step links to a casino, a bonus or an offer, and none asks you to deposit or play.",
   },
   notForYou: {
     heading: "When control is not the right goal",
@@ -82,7 +82,7 @@ const sv: WithoutQuittingMessages = {
   steps: {
     heading: "De tio stegen",
     intro: "Programmets steg i den ordning du gör dem. De flesta tar 5–8 minuter och slutar med något du behåller.",
-    note: "Efter steg 3 visar menyn på sajten också sidorna om casinon, bonusar och erbjudanden. Inget steg ber dig använda dem.",
+    note: "Inget steg länkar till ett casino, en bonus eller ett erbjudande, och inget ber dig sätta in pengar eller spela.",
   },
   notForYou: {
     heading: "När kontroll inte är rätt mål",
@@ -119,7 +119,7 @@ const da: WithoutQuittingMessages = {
   steps: {
     heading: "De ti trin",
     intro: "Programmets trin i den rækkefølge, du tager dem. De fleste tager 5–8 minutter og slutter med noget, du beholder.",
-    note: "Efter trin 3 viser menuen på siden også siderne om casinoer, bonusser og tilbud. Intet trin beder dig om at bruge dem.",
+    note: "Intet trin linker til et casino, en bonus eller et tilbud, og intet beder dig om at indbetale eller spille.",
   },
   notForYou: {
     heading: "Når kontrol ikke er det rigtige mål",

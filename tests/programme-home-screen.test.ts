@@ -125,7 +125,7 @@ test("the next step card keeps the button, its label and what it does", () => {
   assert.match(stylesheet, /\.homeNext button \{ width: 100%; min-height: 54px;[^}]*font-size: 17px;/);
 });
 
-test("the path folds and removes nothing; the research card keeps its content behind one seam", () => {
+test("the path folds and removes nothing; the home carries no research card (Founder, 16 October 2026)", () => {
   // All rows are rendered; the ones outside the window are hidden until the press.
   assert.ok(home.includes("<ol id=\"programme-path-steps\">{home.missions.map((mission, index) => <li "));
   assert.ok(home.includes("hidden={!allSteps && (index < pathStart || index >= pathStart + PATH_ROWS)}"));
@@ -135,14 +135,9 @@ test("the path folds and removes nothing; the research card keeps its content be
   assert.ok(stylesheet.includes(".homePath li[hidden] { display: none; }"));
   assert.match(stylesheet, /\.homePath > div button \{ min-height: 44px;[^}]*font-size: 14px;/);
 
-  // The seam for the clean route: one boolean, true, where the card is rendered; no door logic here.
-  assert.ok(home.includes("  // clean route: see lib/research-access.ts researchDoorOpen\n  const researchLinksShown = true;\n"));
-  assert.ok(home.includes("{researchLinksShown && researchFeatured ? research : null}"));
-  assert.equal(home.match(/researchLinksShown/g)?.length, 2);
-  assert.doesNotMatch(home, /from "@\/lib\/research-access"|researchDoorOpen\(/);
-  // The card itself is the one the home had: heading, links in the server's order, analytics, language.
-  assert.ok(home.includes('const research = <section className={`${styles.compactResearch} ${styles.researchFeatured}`} data-programme-research="featured"><span>{t("Research")}</span><nav>{home.discoveryLinks.map((item) => <a href={programmePublicHref(locale, item.href)} key={item.href} onClick={() => { const destinationRoute = discoveryDestination(item.href); if (destinationRoute) productAnalyticsClient.discoveryClicked({ sourceSurface: "programme_home", destinationRoute }); }}>{discoveryLabel(item.href, locale)}</a>)}</nav></section>;'));
-  assert.ok(home.includes('const researchFeatured = home.discoveryLinks.length > 0 && home.researchAccess === "open";'));
+  // No research card, no discovery link and no lesson state: the dashboard ends in help.
+  assert.doesNotMatch(home, /researchLinksShown|researchFeatured|discoveryLinks|researchAccess|data-programme-research|programmePublicHref|from "@\/lib\/research-access"/);
+  assert.doesNotMatch(home, /href=\{?["'`]?\/(?:casinos|bonuses|best-offers|compare|bonus-guide)/);
   // The privacy footer keeps its two lines.
   assert.ok(home.includes('<footer className={styles.dashboardFooter}><span>{t("Your data is private. We never use it for offers or rankings.")}</span><span>{t("18+ · Protected Help remains available.")}</span></footer>'));
 });

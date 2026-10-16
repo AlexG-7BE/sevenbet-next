@@ -24,7 +24,8 @@ again; you take the game into your own hands and become its master.
 - It never promises play during a pause and names no way around one.
 - It points to nothing but the Programme. The two doors of 10 October are
   unchanged: research links appear only inside the research section or after
-  the lesson at step 3.
+  the lesson at step 3. (Since 16 October 2026 only inside the research section:
+  [PROGRAMME-NO-CASINO-LINKS-2026-10-16](PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).)
 - Unlicensed operators are never mentioned as an option. Promoting them is an
   offence for an affiliate in both countries and would end the partner
   agreements this site lives on.

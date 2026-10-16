@@ -378,13 +378,6 @@ function Header({ xp }: { xp?: number }) {
   return (
     <header className={styles.header}>
       <Link className={styles.wordmark} href="/">B4GAMBLE</Link>
-      <nav className={styles.nav} aria-label="Commercial navigation">
-        <Link href="/casinos">Casinos</Link>
-        <Link href="/bonuses">Bonuses</Link>
-        <Link href="/best-offers">Best offers</Link>
-        <Link href="/casinos">Reviews</Link>
-        <Link href="/casinos">Compare casinos</Link>
-      </nav>
       <div className={styles.accountNav}>
         <Link href="/help">Help</Link>
         {isPending

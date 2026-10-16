@@ -12,13 +12,7 @@ import { DEFAULT_MARKET_PROFILE, marketProfileByLocale } from "@/lib/market/regi
 import { createCommercialNavigationRetryRegistry } from "@/lib/market/navigation-stage2-retry";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { isCurrentPublicRoute, leadsToCurrentProgrammePage } from "@/lib/public-shell";
-import {
-  RESEARCH_ACCESS_CHANGED_EVENT,
-  RESEARCH_OPENED_AT_STORAGE_KEY,
-  researchAccessOpen,
-  researchLinksAreNew,
-  researchNavigationShown,
-} from "@/lib/research-access";
+import { isResearchSectionRoute } from "@/lib/research-access";
 import { PublicLinkPendingSignal } from "./PublicNavigationFeedback";
 
 type ProgrammePresentation = Readonly<{
@@ -65,65 +59,21 @@ export function PublicCommercialNavigationRetry() {
   return <span data-commercial-navigation-timed-out hidden />;
 }
 
-// A cookie raises no event of its own. The Programme announces the one moment it changes without
-// a page change: the lesson's completion, on the page the person is looking at.
-function subscribeToResearchAccess(onChange: () => void) {
-  window.addEventListener(RESEARCH_ACCESS_CHANGED_EVENT, onChange);
-  return () => window.removeEventListener(RESEARCH_ACCESS_CHANGED_EVENT, onChange);
-}
-
 /**
- * Shows research links to a reader inside the research section or with the lesson flag, and the
- * guide links to everyone else. The layout that renders the menu is not rendered again when the
- * page changes, so the choice is made here, from the current path and the cookie as it is now;
- * `researchAccess` is what the server read from the same cookie, for the first paint.
+ * Shows research links to a reader inside the research section and the guide links to everyone
+ * else (lib/research-access.ts). The layout that renders the menu is not rendered again when the
+ * page changes, so the choice is made here, from the current path alone.
  */
 export function PublicNavigationDoor({
   children,
   door,
-  researchAccess,
 }: {
   children: ReactNode;
   door: "research" | "guide";
-  researchAccess: boolean;
 }) {
   const pathname = usePathname();
-  const access = useSyncExternalStore(
-    subscribeToResearchAccess,
-    () => researchAccessOpen(document.cookie),
-    () => researchAccess,
-  );
-  const research = researchNavigationShown(stripPublicMarketPrefix(pathname), access);
+  const research = isResearchSectionRoute(stripPublicMarketPrefix(pathname));
   return research === (door === "research") ? <>{children}</> : null;
-}
-
-/**
- * For a week after the lesson, the research links in the header and the drawer carry a small
- * mark (Founder, 10 October 2026). The date lives in this browser's storage; nothing is fetched.
- */
-export function PublicResearchNewMark() {
-  const pathname = usePathname();
-  const markerRef = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    const header = markerRef.current?.closest<HTMLElement>("[data-public-shell='header']");
-    if (!header) return;
-    const sync = () => {
-      let openedAt: string | null = null;
-      try {
-        openedAt = window.localStorage.getItem(RESEARCH_OPENED_AT_STORAGE_KEY);
-      } catch {
-        // Storage can be blocked; the menu simply carries no mark.
-      }
-      if (researchAccessOpen(document.cookie) && researchLinksAreNew(openedAt, Date.now())) header.dataset.researchNew = "";
-      else delete header.dataset.researchNew;
-    };
-    sync();
-    window.addEventListener(RESEARCH_ACCESS_CHANGED_EVENT, sync);
-    return () => window.removeEventListener(RESEARCH_ACCESS_CHANGED_EVENT, sync);
-  }, [pathname]);
-
-  return <span data-public-research-new-mark hidden ref={markerRef} />;
 }
 
 export function PublicNavigationRouteLink({

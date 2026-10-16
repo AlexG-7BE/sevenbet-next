@@ -152,11 +152,6 @@ async function captureProgrammeImplementation(context, state) {
           { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
         ],
         nextReview: { milestone: "first", unlockMission: 3, title: "First Personal Review", xpRemaining: 150, missionsRemaining: 2 },
-        discoveryLinks: [
-          { href: "/casinos", label: "Compare casinos" },
-          { href: "/bonuses", label: "Bonuses" },
-          { href: "/best-offers", label: "Best offers" },
-        ],
       } }),
     }));
     await page.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });

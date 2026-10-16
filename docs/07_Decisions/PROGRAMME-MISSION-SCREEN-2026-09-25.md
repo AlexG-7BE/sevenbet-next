@@ -15,7 +15,7 @@
    - The confirm action is sticky at the bottom of the action card while the choices are in view.
    - Every Programme screen opens at its top instead of the scroll depth of the screen before it.
 2. **After Mission 08 the research links lead the dashboard.**
-   - Once Mission 08 "Research responsibly" is complete, the dashboard's research card sits directly under the current mission, with 16px links and 44px tap targets.
+   - Once Mission 08 "Research responsibly" is complete, the dashboard's research card sits directly under the current mission, with 16px links and 44px tap targets. *(Withdrawn 16 October 2026: the dashboard has no research card; [PROGRAMME-NO-CASINO-LINKS-2026-10-16](PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).)*
    - Before that it stays in its usual place.
    - The links are the same generic public links (casinos, bonuses, best offers) for every member. No Programme answer, pause or Help data chooses or orders them.
    - If the server sends no research links, nothing is promoted.

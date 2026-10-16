@@ -9,10 +9,10 @@ import { currentProgrammeJourney } from "./ten-steps";
  * - commission: app/(public)/affiliate-disclosure (qualifying action, no charge to the reader,
  *   no effect on the Editor Score) and lib/i18n/product-pages-catalog.ts (casinos and offers we
  *   can link to from the reader's country are listed first, then by Editor Score);
- * - casino pages in the Programme: lib/research-access.ts (public research pages, the menu after
- *   the step "Research responsibly", the one-word cookie) and
- *   components/programme/ProgramAiMissionExperience.tsx (links on the last screens of steps 3
- *   and 10);
+ * - casino pages and the Programme: lib/research-access.ts (the research links show in the menu
+ *   only on the public research pages) and docs/07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md
+ *   (no Programme screen, card or letter links to a casino, bonus or offer page; no step opens
+ *   anything in the menu);
  * - privacy: app/(public)/privacy/page.tsx and lib/analytics (Google Analytics on every page
  *   except Help, the self-check and Admin, signals and ad personalisation off, no custom events).
  *
@@ -79,11 +79,11 @@ function en(): TrustMessages {
       },
       {
         id: "casino-pages",
-        heading: "When casino pages appear in the Programme",
+        heading: "The Programme shows no casino pages",
         paragraphs: [
           "The casino, bonus and offer pages are public. Anyone can open them from a search or a link, and while you are on one of them the site menu shows them.",
-          `Everywhere else, the menu shows the casino, bonus and offer pages only after you finish step 3 of the Programme, “${research}”. That step teaches you to read the terms of an offer and ends with your own checklist; its last screen then links to those pages. The last screen of step 10 links to them again.`,
-          "Finishing step 3 stores one cookie, b4g_research_access, which holds the word “open” and nothing about you. Your answers play no part in which casinos or offers you see, or in their order.",
+          `Everywhere else, the menu shows 10 Steps, Learn and Help, to everyone. The Programme links to no casino, bonus or offer page, and finishing a step changes nothing in the menu. Step 3, “${research}”, teaches you to read the terms of an offer and ends with your own checklist; it does not send you to a casino.`,
+          "Nothing you write or choose in the Programme changes which casinos or offers the site shows, or their order.",
           "Offers appear only where the law allows them, and only from casinos licensed for your country.",
         ],
       },
@@ -106,7 +106,7 @@ function en(): TrustMessages {
     faq: [
       ["How does B4GAMBLE make money?", "From commission. When someone follows a labelled affiliate link and signs up or deposits with a licensed casino, the casino or its affiliate network may pay B4GAMBLE. The Programme itself is free and sells nothing."],
       ["Does commission change the scores?", "No. Commission never changes an editor score. Casinos and offers that B4GAMBLE can link to from your country are listed first; within each group the editor score sets the order."],
-      ["Will the Programme push me towards a casino?", `No step asks you to deposit, claim a bonus or play. After step 3, “${research}”, the menu shows the casino, bonus and offer pages, and the last screens of steps 3 and 10 link to them. Opening them is your choice and earns nothing in the Programme.`],
+      ["Will the Programme push me towards a casino?", `No. No step asks you to deposit, claim a bonus or play, and no screen of the Programme links to a casino, bonus or offer page. Step 3, “${research}”, teaches you to read an offer's terms; it opens nothing in the menu.`],
       ["Are my Programme answers shared with casinos?", "No. B4GAMBLE does not sell personal data, and your Programme answers are not used to choose, rank or personalise casinos, offers, affiliate links or ads."],
       ["Who runs B4GAMBLE?", "7BE Inc., a company in New York, trading as B4GAMBLE."],
     ],
@@ -155,11 +155,11 @@ function sv(): TrustMessages {
       },
       {
         id: "casino-pages",
-        heading: "När casinosidor visas i programmet",
+        heading: "Programmet visar inga casinosidor",
         paragraphs: [
           "Sidorna om casinon, bonusar och erbjudanden är öppna för alla. Vem som helst kan nå dem via en sökning eller en länk, och medan du är på en av dem visar menyn dem.",
-          `På resten av sajten visar menyn sidorna om casinon, bonusar och erbjudanden först när du har gjort klart steg 3 i programmet, ”${research}”. Steget lär dig läsa villkoren i ett erbjudande och slutar med din egen checklista; stegets sista skärm länkar sedan till de sidorna. Den sista skärmen i steg 10 länkar till dem igen.`,
-          "När steg 3 är klart sparas en cookie, b4g_research_access, som bara innehåller ordet ”open” och ingenting om dig. Dina svar påverkar inte vilka casinon eller erbjudanden du ser, eller i vilken ordning.",
+          `På resten av sajten visar menyn 10 steg, Lär dig och Hjälp, för alla. Programmet länkar inte till några sidor om casinon, bonusar eller erbjudanden, och när du gör klart ett steg ändras ingenting i menyn. Steg 3, ”${research}”, lär dig läsa villkoren i ett erbjudande och slutar med din egen checklista; det skickar dig inte vidare till något casino.`,
+          "Det du skriver eller väljer i programmet påverkar inte vilka casinon eller erbjudanden sajten visar, eller i vilken ordning.",
           "Erbjudanden visas bara där lagen tillåter det, och bara från casinon med licens för ditt land.",
         ],
       },
@@ -182,7 +182,7 @@ function sv(): TrustMessages {
     faq: [
       ["Hur tjänar B4GAMBLE pengar?", "På provision. När någon följer en märkt affiliatelänk och registrerar sig eller sätter in pengar hos ett licensierat casino kan casinot eller dess affiliatenätverk betala B4GAMBLE. Själva programmet är gratis och säljer ingenting."],
       ["Ändrar provisionen betygen?", "Nej. Provision ändrar aldrig redaktionens betyg. Casinon och erbjudanden som B4GAMBLE kan länka till från ditt land visas först; inom varje grupp avgör betyget ordningen."],
-      ["Knuffar programmet mig mot ett casino?", `Inget steg ber dig sätta in pengar, ta en bonus eller spela. Efter steg 3, ”${research}”, visar menyn sidorna om casinon, bonusar och erbjudanden, och de sista skärmarna i steg 3 och 10 länkar till dem. Om du öppnar dem är ditt val, och det ger ingenting i programmet.`],
+      ["Knuffar programmet mig mot ett casino?", `Nej. Inget steg ber dig sätta in pengar, ta en bonus eller spela, och ingen skärm i programmet länkar till sidor om casinon, bonusar eller erbjudanden. Steg 3, ”${research}”, lär dig läsa villkoren i ett erbjudande; det öppnar ingenting i menyn.`],
       ["Delas mina svar i programmet med casinon?", "Nej. B4GAMBLE säljer inga personuppgifter, och dina svar i programmet används inte för att välja, rangordna eller anpassa casinon, erbjudanden, affiliatelänkar eller annonser."],
       ["Vem driver B4GAMBLE?", "7BE Inc., ett företag i New York, under namnet B4GAMBLE."],
     ],
@@ -231,11 +231,11 @@ function da(): TrustMessages {
       },
       {
         id: "casino-pages",
-        heading: "Hvornår casinosider vises i programmet",
+        heading: "Programmet viser ingen casinosider",
         paragraphs: [
           "Siderne om casinoer, bonusser og tilbud er åbne for alle. Alle kan finde dem via en søgning eller et link, og mens du er på en af dem, viser menuen dem.",
-          `På resten af siden viser menuen siderne om casinoer, bonusser og tilbud først, når du har gennemført trin 3 i programmet, ”${research}”. Trinnet lærer dig at læse vilkårene for et tilbud og slutter med din egen tjekliste; trinnets sidste skærm linker derefter til de sider. Den sidste skærm i trin 10 linker til dem igen.`,
-          "Når trin 3 er gennemført, gemmes én cookie, b4g_research_access, som kun indeholder ordet ”open” og intet om dig. Dine svar har ingen betydning for, hvilke casinoer eller tilbud du ser, eller for rækkefølgen.",
+          `På resten af siden viser menuen 10 trin, Lær og Hjælp, for alle. Programmet linker ikke til sider om casinoer, bonusser eller tilbud, og når du gennemfører et trin, ændres intet i menuen. Trin 3, ”${research}”, lærer dig at læse vilkårene for et tilbud og slutter med din egen tjekliste; det sender dig ikke videre til et casino.`,
+          "Det, du skriver eller vælger i programmet, har ingen betydning for, hvilke casinoer eller tilbud siden viser, eller for rækkefølgen.",
           "Tilbud vises kun, hvor loven tillader det, og kun fra casinoer med licens til dit land.",
         ],
       },
@@ -258,7 +258,7 @@ function da(): TrustMessages {
     faq: [
       ["Hvordan tjener B4GAMBLE penge?", "På provision. Når nogen følger et markeret affiliatelink og opretter en konto eller indbetaler hos et licenseret casino, kan casinoet eller dets affiliatenetværk betale B4GAMBLE. Selve programmet er gratis og sælger ingenting."],
       ["Ændrer provisionen karaktererne?", "Nej. Provision ændrer aldrig redaktionens karakter. Casinoer og tilbud, som B4GAMBLE kan linke til fra dit land, vises først; inden for hver gruppe afgør karakteren rækkefølgen."],
-      ["Skubber programmet mig hen mod et casino?", `Intet trin beder dig om at indbetale, tage en bonus eller spille. Efter trin 3, ”${research}”, viser menuen siderne om casinoer, bonusser og tilbud, og de sidste skærme i trin 3 og 10 linker til dem. Om du åbner dem, er dit valg, og det giver ingenting i programmet.`],
+      ["Skubber programmet mig hen mod et casino?", `Nej. Intet trin beder dig om at indbetale, tage en bonus eller spille, og ingen skærm i programmet linker til sider om casinoer, bonusser eller tilbud. Trin 3, ”${research}”, lærer dig at læse vilkårene for et tilbud; det åbner intet i menuen.`],
       ["Deles mine svar i programmet med casinoer?", "Nej. B4GAMBLE sælger ikke personoplysninger, og dine svar i programmet bruges ikke til at vælge, rangere eller tilpasse casinoer, tilbud, affiliatelinks eller reklamer."],
       ["Hvem driver B4GAMBLE?", "7BE Inc., en virksomhed i New York, under navnet B4GAMBLE."],
     ],

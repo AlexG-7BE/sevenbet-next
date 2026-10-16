@@ -12,6 +12,33 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## The Programme shows no casino links, to anyone — in review
+
+**Founder decision, 16 October 2026** (question tool, «Без казино для всех»;
+[decision](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed (branch `feat/programme-no-casino-links`):
+
+- no Programme screen, card, dashboard or letter links to a casino, bonus, offer, comparison or
+  partner page: the step-3 completion block ("New in your menu", "Put it to use"), the Programme
+  Home Research card and the step-10 "Explore when you are ready" links are removed;
+- finishing step 3 "Research responsibly" opens nothing: the lesson flag (cookie
+  `b4g_research_access`, event `b4g:research-access`, note `b4g_research_opened_at`, the week-long
+  menu mark) and the home's `researchAccess` / `discoveryLinks` fields are deleted; the menu shows
+  Best Offers, Casinos and Bonuses only on the research pages themselves, everyone else sees
+  10 Steps · Learn · Help;
+- no letter links to a casino page or a partner route, the marketing broadcast included (it goes
+  to Programme people): the Admin editor refuses such a link, activating an older version checks it
+  again, and a stored row with one cannot be rendered, so it is never sent; the pause letters stay
+  switched off. Production's own `EmailTemplate` rows are not yet checked (open release gate);
+- the Programme's header and footer, and the root not-found boundary inside a Programme
+  document, are built without the research links, so no Programme page carries their addresses,
+  and a Programme document no longer reads partner availability for a menu;
+- FAQ, Methodology (13 languages), the Privacy Notice (updated 16 October 2026), the trust and
+  control pages (en/sv/da) and `llms.txt` say so;
+- unchanged: the Mission 08 lesson text, Mission order, rewards and prerequisites, the research
+  pages, catalogue, reviews and `/r/` routes. Way back: tag
+  `archive/programme-research-door-2026-10-16` (`800c2eb0`) and the restore steps in the record.
+
 ## Catalogue order by licence and the sports offer for every reader — in review
 
 **Founder's choice in the affiliate traffic audit, 15 October 2026**
@@ -421,6 +448,8 @@ Programme home.
 - **The research block after step 3, the Review note and the guides after
   step 10** keep their content, logic and order under the card. The research
   block's render stands behind one switch, `researchLinksShown` (on).
+  Superseded 16 October 2026 (PROPOSED until deployed): removed, see [PROGRAMME-NO-CASINO-LINKS-2026-10-16](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md). The research block and its switch are gone; the Review note
+  and the guides stay.
 - Ten catalogue rows are retired (the three lines above, "Complete Mission ·
   +{xp} XP", "Completing…", "MISSION COMPLETE", "This Mission was already
   complete." and three labels of the old progress rail); six are added in all
@@ -471,6 +500,7 @@ column of 560px on every width, under the site header.
 - **Unchanged in content and logic:** the research card after step 3 (behind
   one boolean, `researchLinksShown`, a seam for the clean route), the email
   confirmation notice, Personal reviews, Achievements, the privacy footer.
+  Superseded 16 October 2026 (PROPOSED until deployed): removed, see [PROGRAMME-NO-CASINO-LINKS-2026-10-16](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md). The research card and its boolean are gone.
 - **Tests.** `tests/programme-home-screen.test.ts` (in `programme:test` and
   `program-ai:test`) and `tests/programme-home-screen-browser.spec.ts` (in
   `ci:browser` and `program-ai:browser`).
@@ -513,7 +543,7 @@ prerequisites, the research door or any offer.
   Home open `/sv/casinos`, `/sv/bonuses`, `/sv/best-offers` (and the same in
   every Programme language) instead of the unprefixed address and its
   redirect. Targets and order are unchanged. The completion screen's links
-  already did.
+  already did. Superseded 16 October 2026 (PROPOSED until deployed): removed, see [PROGRAMME-NO-CASINO-LINKS-2026-10-16](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).
 - **No "Start Programme" in the header on the Programme's own first
   screens.** The header button is left out on the page it leads to while the
   visitor has not signed in; the drawer keeps its button. A signed-in
@@ -906,6 +936,11 @@ the company line) from everyone for now, without deleting it. Decision record:
 
 ## Casino research in the menu: two doors — live 10 October 2026
 
+> **Superseded in part (PROPOSED, 16 October 2026):** door two (the lesson flag) and "the moment
+> research opens" are withdrawn once [PROGRAMME-NO-CASINO-LINKS-2026-10-16](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)
+> is merged and deployed; door one and the lesson at step 3 stay. The section below describes
+> Production until then.
+
 **Founder instruction, 10 October 2026:** Best Offers, Casinos and Bonuses in
 the header and footer put off visitors who came for help and blur what the
 project is. Decision record:
@@ -1239,7 +1274,10 @@ a calendar file. `lib/research-access.ts` is the lesson flag alone again, the
 middleware mark is deleted, and the public layout, the Programme layout and the
 client door read `researchAccessOpen`. The two doors of 10 October are
 unchanged: research links appear inside the research section or after the
-lesson at step 3. Two more landing pages stay: `/innan` (the rule before the
+lesson at step 3. (Since 16 October 2026, PROPOSED until deployed: research
+links appear only inside the research section; the lesson flag and
+`researchAccessOpen` are deleted. See
+[PROGRAMME-NO-CASINO-LINKS-2026-10-16](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).) Two more landing pages stay: `/innan` (the rule before the
 app, kept in the browser, no button onwards) and `/beside` (for the person
 beside a player: the real number, one message in her words, day 11, the
 helplines). All three link to no casino themselves and state the revenue model;

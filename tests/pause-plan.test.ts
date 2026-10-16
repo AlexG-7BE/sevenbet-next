@@ -124,10 +124,11 @@ test("the pause plan is an ordinary landing page: it changes nothing in the menu
   const contract = readFileSync("lib/research-access.ts", "utf8");
   assert.doesNotMatch(contract, /pause|clean.?route|researchDoorOpen/i);
   assert.doesNotMatch(readFileSync("middleware.ts", "utf8"), /research-access|cleanRoute|b4g_clean_route|b4g_pause_until/);
+  // Since 16 October 2026 the menu follows the path alone: no layout reads a cookie for it.
   for (const reader of ["app/(public)/layout.tsx", "app/program/layout.tsx"]) {
-    assert.match(readFileSync(reader, "utf8"), /researchAccessOpen\(requestHeaders\.get\("cookie"\)\)/, reader);
+    assert.doesNotMatch(readFileSync(reader, "utf8"), /research-access|researchAccess/, reader);
   }
-  assert.match(readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8"), /researchAccessOpen\(document\.cookie\)/);
+  assert.match(readFileSync("components/public-shell/PublicNavigationClient.tsx", "utf8"), /isResearchSectionRoute\(stripPublicMarketPrefix\(pathname\)\)/);
   for (const locale of ["sv-SE", "da-DK", "en-GB"] as const) {
     const text = JSON.stringify(pausePlanMessages(locale));
     assert.doesNotMatch(text, /Dörren|casinoavsnittet|Døren|casinodelen|The door|casino section|så länge du är i pausen|så længe du er i pausen|while you are paused/, `${locale}: no promise about the menu`);

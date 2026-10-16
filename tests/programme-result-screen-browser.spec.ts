@@ -21,7 +21,7 @@ const results: Record<number, { actions: [string, string, string]; artifact: Art
   4: { actions: ["choose_boundary", "build_boundary_rule", "choose_execution"], artifact: { boundaryCategory: "money", triggerType: "before_access", executionMethod: "bank_block", pressureCheck: "easy_to_use" }, title: "MY BOUNDARY", rows: 4 },
 };
 
-function homeAt(missionNumber: number, completed: boolean, researchAccess: "locked" | "open" = "locked") {
+function homeAt(missionNumber: number, completed: boolean) {
   const current = missionStep(missionNumber);
   const done = completed ? current : current - 1;
   return {
@@ -33,8 +33,6 @@ function homeAt(missionNumber: number, completed: boolean, researchAccess: "lock
     missions: programmeJourney.map((number, index) => ({ missionNumber: number, step: index + 1, title: titles[number - 1], status: index + 1 <= done ? "completed" : index + 1 === done + 1 ? "current" : "locked", actionsCompleted: index + 1 <= current ? 3 : 0, actionsTotal: 3, xpEarnedHere: index + 1 <= done ? 75 : 0, completionBonus: 25 })),
     reviews: [{ milestone: "first", unlockMission: 3, unlockStep: 4, title: "First review", maxWords: 60, status: "locked" }],
     nextReview: null,
-    researchAccess,
-    discoveryLinks: [{ href: "/casinos", label: "Compare casinos" }, { href: "/bonuses", label: "Bonuses" }, { href: "/best-offers", label: "Best offers" }],
   };
 }
 
@@ -58,11 +56,11 @@ async function openResult(page: Page, missionNumber: number, options: { wording?
   await page.route("**/api/auth/get-session**", (route) => route.fulfill(json({ session: { id: "result-screen-session", token: "visual", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: now, updatedAt: now }, user: { id: userId, name: "Result screen", email: "result-screen@example.invalid", emailVerified: true, createdAt: now, updatedAt: now } })));
   await page.route("**/api/programme-access/authority", (route) => route.fulfill(json({ ok: true, accepted: true })));
   let completed = false;
-  await page.route("**/api/program/program-ai/home", (route) => route.fulfill(json({ ok: true, home: homeAt(missionNumber, completed, completed && missionNumber === 8 ? "open" : "locked") })));
+  await page.route("**/api/program/program-ai/home", (route) => route.fulfill(json({ ok: true, home: homeAt(missionNumber, completed) })));
   await page.route(`**/api/program/program-ai/missions/${missionNumber}`, (route) => route.fulfill(json({ ok: true, mission: missionReady(missionNumber, completed) })));
   await page.route(`**/api/program/program-ai/missions/${missionNumber}/complete`, async (route) => {
     completed = true;
-    await route.fulfill(json({ ok: true, xpAwarded: 25, mission: missionReady(missionNumber, true), home: homeAt(missionNumber, true, missionNumber === 8 ? "open" : "locked") }));
+    await route.fulfill(json({ ok: true, xpAwarded: 25, mission: missionReady(missionNumber, true), home: homeAt(missionNumber, true) }));
   });
   await page.goto("/program");
   await expect(page.locator('[data-programme-phase="home"]')).toBeVisible();
@@ -184,31 +182,21 @@ test("Save as image gives a PNG of the card, made on the device", async ({ page 
   await expect(page.getByText("The image could not be saved.")).toHaveCount(0);
 });
 
-test("the research Mission's completion keeps its block: same content, order and links, under the card", async ({ page }) => {
+test("the research Mission's completion ends with the step itself: no research block and no casino link (Founder, 16 October 2026)", async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 });
   await openResult(page, 8);
-  await expect(page.locator("[data-programme-research-opened]")).toHaveCount(0);
   await finish(page).click();
   const completion = page.locator('[data-programme-completion="fresh"]');
   await expect(completion.getByText("Step 3 done", { exact: true })).toBeVisible();
-  const opened = completion.locator('[data-programme-research-opened="fresh"]');
-  await expect(opened).toBeVisible();
-  await expect(opened.locator("> span")).toHaveText("NEW IN YOUR MENU");
-  await expect(opened.getByRole("heading", { name: "Casinos, bonuses and offers are now open to you" })).toBeVisible();
-  await expect(opened.locator("p")).toHaveText("You completed this Mission, so these sections are now in your menu on every page.");
-  expect(await opened.getByRole("link").evaluateAll((links) => links.map((link) => [link.textContent, new URL((link as HTMLAnchorElement).href).pathname.replace(/^\/en/, "")]))).toEqual([["Compare casinos", "/casinos"], ["Explore bonuses", "/bonuses"], ["Best offers", "/best-offers"]]);
-  for (const link of await opened.getByRole("link").all()) {
-    expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(48);
-    expect(await link.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
+  await expect(completion.locator("[data-programme-keepsake]")).toBeVisible();
+  await expect(page.locator("[data-programme-research-opened], [data-programme-research]")).toHaveCount(0);
+  for (const text of ["NEW IN YOUR MENU", "PUT IT TO USE", "Casinos, bonuses and offers are now open to you", "Research with your checklist"]) {
+    await expect(page.getByText(text, { exact: true })).toHaveCount(0);
   }
-  await expect(completion.getByText("PUT IT TO USE", { exact: true })).toBeVisible();
-  await expect(completion.getByRole("heading", { name: "Research with your checklist" })).toBeVisible();
-  await expect(completion.getByText("Your checklist", { exact: true })).toBeVisible();
-  await expect(completion.getByRole("link", { name: "Bonus guide" })).toBeVisible();
-  // Order on the page: the card, then "new in your menu", then "put it to use".
-  const tops = await Promise.all([completion.locator("[data-programme-keepsake]"), opened, completion.getByText("PUT IT TO USE", { exact: true })].map(async (locator) => (await locator.boundingBox())!.y));
-  expect(tops[0]).toBeLessThan(tops[1]);
-  expect(tops[1]).toBeLessThan(tops[2]);
+  await expect(completion.locator('a[href*="/casinos"], a[href*="/casino/"], a[href*="/bonuses"], a[href*="/best-offers"], a[href*="/compare"], a[href*="/bonus-guide"], a[href*="/wagering-calculator"], a[href^="/r/"], a[href^="/go/"]')).toHaveCount(0);
+  // The menu on the same page keeps its guide links: finishing the step opens nothing.
+  await expect.poll(() => page.locator('nav[aria-label="Primary navigation"] [data-navigation-href]').evaluateAll((links) => links.map((link) => link.getAttribute("data-navigation-href"))), { timeout: 15_000 }).toEqual(["/10-steps", "/learn", "/help"]);
+  expect((await page.context().cookies()).find((cookie) => cookie.name === "b4g_research_access")).toBeUndefined();
   const geometry = await page.evaluate(() => ({ document: document.documentElement.scrollWidth, viewport: window.innerWidth }));
   expect(geometry.document).toBeLessThanOrEqual(geometry.viewport + 1);
 });

@@ -3,10 +3,11 @@
 // plan as a first-time visitor on a phone, opens the menu, goes home and opens the menu again, then
 // photographs the pages for the person beside a player and the rule before the app, then the first
 // guide on the pause plan, the Programme start behind its button and the sign-in screen. A second
-// browser that already holds the lesson flag checks that the pause plan changes nothing in the
-// menu: the research links are there before and after (Founder, 13 October 2026: an ordinary
-// landing page; the declared-pause and clean-route door rules are withdrawn). Only ordinary page
-// loads leave the runner; the cookies the site sets are listed by name.
+// browser that still holds the old lesson cookie checks that it opens nothing: no research link in
+// the menu at home, before or after the pause plan, and the research links only on the casino
+// pages themselves (Founder, 16 October 2026: the Programme shows no casino links to anyone; the
+// pause plan stays an ordinary landing page). Only ordinary page loads leave the runner; the
+// cookies the site sets are listed by name.
 // Output: <out>/*.png, <out>/REPORT.md and <out>/report.json.
 //
 //   node scripts/research/production-screenshots.mjs --base=https://b4gamble.com --locales=sv,da --out=screenshots
@@ -23,7 +24,8 @@ const locales = (options.locales || "sv,da").split(/[\s,]+/).filter(Boolean);
 const out = options.out || "screenshots";
 mkdirSync(out, { recursive: true });
 
-const LESSON_COOKIE = "b4g_research_access";
+// The cookie step 3 set until 16 October 2026; a browser may still hold it, and it must open nothing.
+const OLD_LESSON_COOKIE = "b4g_research_access";
 // A link into the research section or to a partner, with or without a language prefix.
 const RESEARCH_LINK = /^(?:\/[a-z]{2}(?:-[a-z]{2})?)?\/(?:best-offers|casinos|casino|bonuses|r)(?:\/|$)/i;
 const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
@@ -76,7 +78,7 @@ const browser = await chromium.launch();
 try {
   for (const locale of locales) {
     // 1. A first-time visitor on a phone: the pause plan and its menu, then home and its menu, then
-    //    the two other landing pages. No research link before the lesson (the two doors).
+    //    the two other landing pages. No research link outside the research section.
     {
       const context = await browser.newContext(contextOptions(locale, PHONE));
       const page = await context.newPage();
@@ -95,28 +97,28 @@ try {
       }
       await context.close();
     }
-    // 2. A reader who finished the lesson "Research responsibly": the research links show at home
-    //    before and after the pause plan, which changes nothing in the menu.
+    // 2. A browser that still holds the old lesson cookie: it opens nothing, so home shows no
+    //    research link before or after the pause plan; the casino list itself still does.
     {
       const context = await browser.newContext(contextOptions(locale, PHONE));
-      await context.addCookies([{ name: LESSON_COOKIE, value: "open", url: base }]);
+      await context.addCookies([{ name: OLD_LESSON_COOKIE, value: "open", url: base }]);
       const page = await context.newPage();
       let status = await visit(page, `/${locale}`);
       if (await openMenu(page)) {
-        await record(page, context, { step: `${locale}: lesson done, home menu`, file: `${locale}-5-lesson-done-home-menu-phone.png`, status, expect: "some" });
+        await record(page, context, { step: `${locale}: old lesson cookie, home menu`, file: `${locale}-5-old-lesson-cookie-home-menu-phone.png`, status, expect: "none" });
       }
       await visit(page, `/${locale}/pause-plan`);
       status = await visit(page, `/${locale}`);
       if (await openMenu(page)) {
-        await record(page, context, { step: `${locale}: lesson done, home menu after the pause page`, file: `${locale}-6-lesson-done-home-menu-after-pause-plan-phone.png`, status, expect: "some" });
+        await record(page, context, { step: `${locale}: old lesson cookie, home menu after the pause page`, file: `${locale}-6-old-lesson-cookie-home-menu-after-pause-plan-phone.png`, status, expect: "none" });
       }
       // The casino list and the first casino review behind it, with their partner buttons.
       status = await visit(page, `/${locale}/casinos`);
-      await record(page, context, { step: `${locale}: lesson done, casino list`, file: `${locale}-11-casinos-phone.png`, status, expect: "some" });
+      await record(page, context, { step: `${locale}: casino list`, file: `${locale}-11-casinos-phone.png`, status, expect: "some" });
       const reviewHref = await page.locator("main a[href*='/casino/']").first().getAttribute("href").catch(() => null);
       if (reviewHref) {
         status = await visit(page, reviewHref);
-        await record(page, context, { step: `${locale}: lesson done, first casino review`, file: `${locale}-12-casino-review-phone.png`, status, fullPage: true });
+        await record(page, context, { step: `${locale}: first casino review`, file: `${locale}-12-casino-review-phone.png`, status, fullPage: true });
       }
       await context.close();
     }
@@ -166,7 +168,7 @@ const lines = [
   "|---|---|---|---|---|",
   ...rows.map((row) => `| ${row.step} | ${row.status} | ${row.researchLinks}${row.expect === "none" && row.researchLinks > 0 ? " ✗" : ""}${row.expect === "some" && row.researchLinks === 0 ? " ✗" : ""} | ${row.cookies.join(", ") || "—"} | ${row.file} |`),
   "",
-  failures.length ? `**${failures.length} step(s) did not hold.**` : "**Every step holds: no research link before the lesson, and the pause plan changes nothing in the menu after it.**",
+  failures.length ? `**${failures.length} step(s) did not hold.**` : "**Every step holds: no research link outside the research section, and the old lesson cookie opens nothing.**",
   "",
 ];
 writeFileSync(`${out}/REPORT.md`, lines.join("\n"));
