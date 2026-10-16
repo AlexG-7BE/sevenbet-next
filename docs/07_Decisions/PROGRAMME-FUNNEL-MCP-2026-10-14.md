@@ -19,6 +19,11 @@ pressed after that. `social_traffic` counts visits per post, but nothing said,
 per country and per source, how many accounts were created, how many started,
 how many reached the third step and how many pressed a partner button.
 
+*Amended 16 October 2026 ([PROGRAMME-NO-CASINO-LINKS-2026-10-16](PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)):
+the third step no longer opens the research menu and the Programme links to no casino. The tool is
+unchanged and still counts third-step completions and partner presses by signed-in people; those
+presses now come only from the public research pages.*
+
 ## Decision
 
 - **Tool.** The Learn MCP endpoint (`POST /api/mcp/learn`) lists one more

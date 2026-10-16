@@ -22,15 +22,12 @@ import type {
   ProgramAiHome,
   ProgramAiMission,
 } from "@/components/programme/ProgramAiAuthenticated.types";
-import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import { deliverKeepsakeImage, keepsakeFonts, keepsakeImage } from "@/lib/programme/program-ai/keepsake-image";
-import { humanValue, presentMissionArtifact, programmeMissionResultTitle } from "@/lib/programme/program-ai/mission-presentation";
-import { researchAccessMission } from "@/lib/programme/program-ai/mission-registry";
+import { presentMissionArtifact, programmeMissionResultTitle } from "@/lib/programme/program-ai/mission-presentation";
 import { QUESTION_REWARD_LABEL_MS, questionOptionLine, questionWhyLine, splitQuestionHeadline } from "@/lib/programme/program-ai/question-screen";
-import { programmeHelpPath, programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
+import { programmeHelpPath, type ProgrammeLocale } from "@/lib/programme/presentation";
 import { fetchProgrammeWithRetry } from "@/lib/programme/request-retry";
-import { RESEARCH_ACCESS_CHANGED_EVENT, RESEARCH_OPENED_AT_STORAGE_KEY } from "@/lib/research-access";
 import styles from "./ProgramAiAuthenticated.module.css";
 
 type Option = { value: string; label: ProgrammeMessageKey; description?: ProgrammeMessageKey };
@@ -333,8 +330,6 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const totalXp = home.totalXp;
   const availableReview = home.reviews.find((review) => review.unlockMission === mission.missionNumber && review.status === "available") ?? null;
   const newlyCompleted = (completionReceipt?.xpAwarded ?? 0) > 0;
-  // The Mission that opens casino research in the public menu marks that moment on its completion screen.
-  const researchOpened = mission.missionNumber === researchAccessMission && home.researchAccess === "open";
   const completeLabel = t("MISSION {number} · COMPLETE", { number: String(mission.step).padStart(2, "0") });
   if (mission.legacyCompletion) return <div className={styles.shell}>
     <ProgramAiAuthenticatedHeader label={completeLabel} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
@@ -367,8 +362,6 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     const doneTitle = splitQuestionHeadline(keepsake.title);
     // The reward, once: every number is the server's (this Mission's XP and the steps it lists as completed).
     const stepsDone = home.missions.filter((item) => item.status === "completed").length;
-    // clean route: see lib/research-access.ts researchDoorOpen
-    const researchLinksShown = true;
     return <div className={`${styles.shell} ${styles.stepShell}`} data-programme-step-frame="">
       <ProgramAiAuthenticatedHeader label={completeLabel} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
       <main className={styles.stepMain} data-programme-completion={newlyCompleted ? "fresh" : "review"}>
@@ -382,10 +375,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
           <KeepsakeCard rows={keepsake.rows} sentence={keepsake.sentence} title={keepsake.title} />
           <div className={styles.keepsakeActions}><button data-programme-save-image="" disabled={imageState === "busy"} onClick={saveAsImage} type="button"><DownloadIcon /><span>{t("Save as image")}</span></button></div>
           {imageState === "failed" ? <p className={styles.error} role="alert">{t("The image could not be saved.")}</p> : null}
-          {researchOpened && researchLinksShown ? <ResearchOpened locale={locale} fresh={newlyCompleted} /> : null}
           {availableReview ? <div className={styles.reviewReveal}><span>{t("PERSONAL REVIEW AVAILABLE")}</span><p>{t("{title} is ready. Return Home to open it and see what you have built so far.", { title: programmeText(locale, availableReview.milestone === "first" ? "First Personal Review" : availableReview.milestone === "mid" ? "Mid-Programme Personal Review" : "Full Programme Personal Review") })}</p></div> : null}
-          {researchOpened && researchLinksShown ? <ResearchChecklist artifact={mission.artifact} locale={locale} /> : null}
-          {mission.missionNumber === 10 ? <CommercialNext locale={locale} /> : null}
         </div>
         <div className={styles.stepCta} data-programme-step-cta="">
           <div className={styles.stepReward}>
@@ -501,58 +491,4 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
       </div>
     </main>
   </div>;
-}
-
-type DiscoveryRoute = "casinos" | "compare" | "bonuses" | "best_offers" | "bonus_guide";
-
-/**
- * The moment casino research opens (Founder decision, 10 October 2026). The links are the same
- * generic public routes as everywhere else: nothing the person entered picks or orders them.
- */
-function ResearchOpened({ locale, fresh }: { locale: ProgrammeLocale; fresh: boolean }) {
-  const t = (key: ProgrammeMessageKey) => programmeText(locale, key);
-  useEffect(() => {
-    if (!fresh) return;
-    try {
-      // The public menu marks its new links for a few days from this moment (lib/research-access.ts).
-      window.localStorage.setItem(RESEARCH_OPENED_AT_STORAGE_KEY, String(Date.now()));
-    } catch {
-      // Storage can be blocked; the links still open.
-    }
-    // The completion answer has already set the menu's flag; the menu on this page follows it now.
-    window.dispatchEvent(new Event(RESEARCH_ACCESS_CHANGED_EVENT));
-  }, [fresh]);
-  const discovery = (destinationRoute: DiscoveryRoute) => productAnalyticsClient.discoveryClicked({ sourceSurface: "mission_08", destinationRoute });
-  return <div className={styles.researchReveal} data-programme-research-opened={fresh ? "fresh" : "open"}>
-    <span>{t("NEW IN YOUR MENU")}</span>
-    <h3>{t("Casinos, bonuses and offers are now open to you")}</h3>
-    <p>{t("You completed this Mission, so these sections are now in your menu on every page.")}</p>
-    <nav aria-label={t("Public guides")}>
-      <Link href={programmePublicHref(locale, "/casinos")} onClick={() => discovery("casinos")}>{t("Compare casinos")}</Link>
-      <Link href={programmePublicHref(locale, "/bonuses")} onClick={() => discovery("bonuses")}>{t("Explore bonuses")}</Link>
-      <Link href={programmePublicHref(locale, "/best-offers")} onClick={() => discovery("best_offers")}>{t("Best offers")}</Link>
-    </nav>
-  </div>;
-}
-
-/** What the person takes into the research section: the checklist they just built. */
-function ResearchChecklist({ artifact, locale }: { artifact: ProgramAiMission["artifact"]; locale: ProgrammeLocale }) {
-  const t = (key: ProgrammeMessageKey) => programmeText(locale, key);
-  const criteria = Array.isArray(artifact.researchCriteria) ? artifact.researchCriteria : [];
-  return <aside className={styles.commercialAside}>
-    <span className={styles.eyebrow}>{t("PUT IT TO USE")}</span>
-    <h3>{t("Research with your checklist")}</h3>
-    <p>{t("The Programme does not ask you to give play up. It helps you keep it inside limits you choose. Check every offer against your checklist first.")}</p>
-    {criteria.length ? <div className={styles.researchChecklist}><span>{t("Your checklist")}</span><ul>{criteria.map((criterion) => <li key={criterion}>{humanValue(criterion, locale, "researchCriteria")}</li>)}</ul></div> : null}
-    <nav className={styles.exploreLinks} aria-label={t("Public guides")}>
-      <Link href={programmePublicHref(locale, "/bonus-guide")} onClick={() => productAnalyticsClient.discoveryClicked({ sourceSurface: "mission_08", destinationRoute: "bonus_guide" })}>{t("Bonus guide")}</Link>
-    </nav>
-  </aside>;
-}
-
-function CommercialNext({ locale }: { locale: ProgrammeLocale }) {
-  const discovery = (destinationRoute: DiscoveryRoute) => {
-    productAnalyticsClient.discoveryClicked({ sourceSurface: "mission_10", destinationRoute });
-  };
-  return <aside className={styles.commercialAside}><span className={styles.eyebrow}>{programmeText(locale, "PUT IT TO USE")}</span><h3>{programmeText(locale, "Explore when you are ready")}</h3><p>{programmeText(locale, "Use B4GAMBLE’s public guides to compare facts and understand offers.")}</p><nav className={styles.exploreLinks} aria-label={programmeText(locale, "Public guides")}><Link href={programmePublicHref(locale, "/casinos")} onClick={() => discovery("casinos")}>{programmeText(locale, "Compare casinos")}</Link><Link href={programmePublicHref(locale, "/bonuses")} onClick={() => discovery("bonuses")}>{programmeText(locale, "Explore bonuses")}</Link><Link href={programmePublicHref(locale, "/best-offers")} onClick={() => discovery("best_offers")}>{programmeText(locale, "Best offers")}</Link></nav></aside>;
 }

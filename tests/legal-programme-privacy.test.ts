@@ -49,7 +49,8 @@ test("Programme client uses tab-scoped storage and sends bounded server payloads
   assert.match(active, /signalChoice: urgeLearning\.notNow \? "not_now" : "local"/);
   assert.match(active, /sourceMomentMapId: goal\.sourceMomentMapId/);
   assert.match(active, /Personal wording stays only in this browser session/);
-  assert.match(active, /<Link href="\/casinos">Compare casinos<\/Link>/);
+  // The retired legacy screen keeps no casino links either (Founder, 16 October 2026).
+  assert.doesNotMatch(active, /href="\/(?:casinos|bonuses|best-offers|compare|bonus-guide)"/);
 });
 
 test("the access screen is unchecked, account creation stays signed and authenticated access is durable", () => {
@@ -87,15 +88,15 @@ test("the access screen is unchecked, account creation stays signed and authenti
   assert.match(accessContract, /privacy:effective-2026-08-19:updated-2026-08-19/);
   assert.match(accessContract, /terms:effective-2026-08-19:updated-2026-08-19/);
   const privacy = source("app/(public)/privacy/page.tsx");
-  assert.match(privacy, /updated="11 October 2026"/);
+  assert.match(privacy, /updated="16 October 2026"/);
   // Voice left the Programme on 11 October 2026; the notice and the Terms no longer describe it.
   assert.doesNotMatch(privacy, /voice|transcri|audio|Realtime/i);
-  // The research-menu flag is disclosed where it is set: what it holds, what it does and what it does not do.
-  assert.ok(privacy.includes("we set the <code>b4g_research_access</code> cookie"));
-  assert.ok(privacy.includes("It holds one word, “open”, and nothing about you or your answers."));
-  assert.ok(privacy.includes("It does not change which casinos or offers you are shown, their order or any link to an operator."));
-  assert.ok(privacy.includes("Finishing one Programme step opens the casino research links in your menu; your answers play no part in it."));
-  assert.ok(!privacy.includes("personalise commercial content"), "the notice no longer makes a claim the menu flag would contradict");
+  // Founder, 16 October 2026: no Programme step sets a menu cookie. The notice says the old one is no
+  // longer set or read, and the boundary line again says Programme activity personalises nothing.
+  assert.ok(privacy.includes("No Programme step sets a cookie that changes the menu or any page."));
+  assert.ok(privacy.includes("B4GAMBLE no longer sets or reads it"));
+  assert.ok(privacy.includes("Your Programme and protected Help activity is not used to target offers, set rankings or personalise commercial content. The Programme links to no casino, bonus or offer page."));
+  assert.ok(!privacy.includes("opens the casino research links"));
   const terms = source("app/(public)/terms/page.tsx");
   assert.match(terms, /updated="11 October 2026"/);
   assert.doesNotMatch(terms, /voice|transcri|audio/i);

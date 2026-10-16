@@ -170,7 +170,6 @@ export function createProductAnalyticsClient({
       this.programmeStepViewed(mission);
     },
     reviewOpened(_milestone: "first" | "mid" | "full") {},
-    discoveryClicked(_properties: { sourceSurface: string; destinationRoute: string }) {},
     commercialSurfaceViewed(surface: "best_offers" | "casinos" | "bonuses" | "casino_review") {
       if (surface === "casino_review") this.casinoViewed();
     },

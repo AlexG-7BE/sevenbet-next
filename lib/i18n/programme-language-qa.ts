@@ -202,11 +202,9 @@ function evaluateLocale(locale: ProgrammeLocale, source: ReturnType<typeof stati
 
   const shell = publicShellMessages(locale);
   for (const [key, expected] of [
-    ["Best offers", shell.bestOffers],
-    ["Bonuses", shell.bonuses],
     ["Open Help", shell.openHelp],
   ] as const) {
-    if (programmeText(locale, key) !== expected && !(locale === "en-GB" && key === "Best offers" && programmeText(locale, key).toLocaleLowerCase(locale) === expected.toLocaleLowerCase(locale))) {
+    if (programmeText(locale, key) !== expected) {
       fail("ESTABLISHED_TERMINOLOGY_CONSISTENCY", `${key} differs from the public shell`);
     }
   }

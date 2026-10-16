@@ -7,7 +7,6 @@ import { MissionLockedError, ProgrammeStateConflictError } from "../lib/programm
 import {
   actionAwardKey,
   actionTaskState,
-  commercialDiscoveryLinks,
   completionAwardKey,
   missionAfter,
   missionStep,
@@ -15,7 +14,6 @@ import {
   missionsThrough,
   programAiMissionRegistry,
   programmeJourney,
-  researchAccessMission,
 } from "../lib/programme/program-ai/mission-registry";
 import { parseProgramAiMissionAction } from "../lib/programme/program-ai/mission-validation";
 import { deterministicGuidance, parseGeneratedResult } from "../lib/programme/program-ai/mission-guidance";
@@ -229,7 +227,7 @@ test("a Mission's number is its identity and its step is its place in the journe
   assert.deepEqual(programmeJourney, [1, 2, 8, 3, 4, 5, 6, 7, 9, 10]);
   assert.deepEqual([...programmeJourney].sort((left, right) => left - right), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   assert.deepEqual(programmeJourney.map((missionNumber) => missionStep(missionNumber)), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-  assert.equal(missionStep(researchAccessMission), 3);
+  assert.equal(missionStep(8), 3, "Research responsibly is the third step");
   assert.equal(missionStep(0), 0);
   assert.equal(missionStep(11), 0);
   assert.deepEqual(missionsBefore(1), []);
@@ -513,7 +511,6 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
   try {
     const fake = fakeUnitOfWork();
     const service = new ProgrammeAiMissionsService(fake.unit as never);
-    let lessonDone = false;
     for (const mission of programAiMissionRegistry) {
       for (const action of mission.actions) {
         const duplicate = await Promise.all([
@@ -528,14 +525,12 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
       ]);
       assert.deepEqual(duplicateCompletion.map((result) => result.xpAwarded).sort((a, b) => a - b), [0, 25]);
       if (mission.missionNumber < 10) assert.equal(fake.enrollment.completedAt, null);
-      // Casino research opens in the public menu with the "Research responsibly" lesson, in the
-      // same answer that completes it, and with no other lesson (Founder, 10 October 2026).
-      lessonDone ||= mission.missionNumber === researchAccessMission;
-      assert.deepEqual(
-        duplicateCompletion.map((result) => result.home.researchAccess),
-        [lessonDone ? "open" : "locked", lessonDone ? "open" : "locked"],
-        `Mission ${mission.missionNumber}`,
-      );
+      // No completion opens casino research or carries a link to it, the third step's included
+      // (Founder, 16 October 2026): the home has no research state and no discovery links.
+      for (const result of duplicateCompletion) {
+        assert.ok(!("researchAccess" in result.home) && !("discoveryLinks" in result.home), `Mission ${mission.missionNumber}`);
+        assert.doesNotMatch(JSON.stringify(result), /\/(?:casinos|casino\/|bonuses|best-offers|compare|bonus-guide|wagering-calculator|outbound|r\/|go\/)/, `Mission ${mission.missionNumber}`);
+      }
     }
     const home = await service.home("user-a");
     assert.equal(home.totalXp, 715);
@@ -661,7 +656,7 @@ test("prerequisites and enrollment ownership deny bypass while legacy completion
     assert.deepEqual(home.missions.filter((mission) => [2, 3, 4].includes(mission.missionNumber)).map((mission) => mission.xpEarnedHere), [0, 0, 0]);
     assert.deepEqual(home.missions.map((mission) => mission.status), ["completed", "completed", "current", "completed", "completed", "locked", "locked", "locked", "locked", "locked"]);
     assert.equal(home.reviews[0].status, "available");
-    assert.equal(home.researchAccess, "locked");
+    assert.ok(!("researchAccess" in home));
   } finally {
     if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
     else process.env.PROGRAM_AI_V1_ENABLED = previous;
@@ -694,7 +689,6 @@ test("a person past the third step takes Research responsibly next, then resumes
     const before = await service.home("user-a");
     assert.deepEqual([before.currentMission, before.currentStep, before.primaryAction], [8, 3, "start-mission"]);
     assert.equal(before.missions.find((mission) => mission.missionNumber === 5)?.status, "locked");
-    assert.equal(before.researchAccess, "locked");
 
     // The Mission they were in waits behind the one that moved ahead of it; it cannot be passed by.
     await assert.rejects(
@@ -712,7 +706,7 @@ test("a person past the third step takes Research responsibly next, then resumes
     }
     const completion = await service.complete("user-a", 8);
     assert.equal(completion.xpAwarded, 25);
-    assert.equal(completion.home.researchAccess, "open");
+    assert.ok(!("researchAccess" in completion.home) && !("discoveryLinks" in completion.home), "finishing step 3 opens nothing");
     assert.deepEqual([completion.home.currentMission, completion.home.currentStep, completion.home.primaryAction], [5, 6, "resume-mission"]);
     assert.equal(completion.home.missions.find((mission) => mission.missionNumber === 5)?.actionsCompleted, 1, "the saved action is still there");
     assert.equal(fake.enrollment.currentStepId, fake.steps[4].id, "the enrollment points at the Mission they return to");
@@ -768,8 +762,7 @@ test("Reviews fall back safely, stay completion-derived and never call a reward 
   }
 });
 
-test("provider output is locally strict and commercial navigation is immutable", () => {
-  assert.deepEqual(commercialDiscoveryLinks.map((link) => link.href), ["/casinos", "/bonuses", "/best-offers"]);
+test("provider output is locally strict and recommends no casino or bonus", () => {
   const valid = parseGeneratedResult("M9_REHEARSAL", { kind: "guidance", operation: "M9_REHEARSAL", title: "Rehearse once", summary: "Choose the response that makes a clear decision point.", options: [{ id: "pause_and_check", text: "Pause and run the checks." }] });
   assert.equal(valid.generation, "provider");
   assert.throws(() => parseGeneratedResult("M9_REHEARSAL", { kind: "guidance", operation: "M9_REHEARSAL", title: "Play safely", summary: "We recommend a casino bonus for you.", options: [{ id: "cashout", text: "Continue" }] }), /Personalisation|valid/i);

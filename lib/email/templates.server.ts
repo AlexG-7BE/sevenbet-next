@@ -45,7 +45,14 @@ const REQUIRED_BODY_VARIABLES: Record<EmailTemplateKey, readonly string[]> = {
   PAUSE_TOOL_CONFIRMATION: ["plan_url", "unsubscribe_url"],
 };
 
-function approvedStaticEmailUrl(value: string) {
+/**
+ * A letter about the Programme, a pause or an account links to no casino, bonus, offer or comparison
+ * page (Founder, 16 October 2026: the Programme ends in help). Only the marketing broadcast, which
+ * is not a Programme letter, may link into the research section.
+ */
+const RESEARCH_SECTION_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:best-offers|casinos|casino|bonuses|compare|bonus-guide|wagering-calculator|outbound)(?:\/|$)/i;
+
+function approvedStaticEmailUrl(value: string, key: EmailTemplateKey) {
   try {
     const url = new URL(value);
     let decodedPath = url.pathname;
@@ -55,7 +62,8 @@ function approvedStaticEmailUrl(value: string) {
     return url.origin === "https://b4gamble.com"
       && !url.username
       && !url.password
-      && !/^\/(?:r|go)(?:\/|$)/i.test(decodedPath);
+      && !/^\/(?:r|go)(?:\/|$)/i.test(decodedPath)
+      && (key === "MARKETING_BROADCAST" || !RESEARCH_SECTION_PATH.test(decodedPath));
   } catch {
     return false;
   }
@@ -114,13 +122,13 @@ export function sanitizeEmailTemplate(value: unknown) {
         throw new Error("Link variables must use one approved URL placeholder as the complete href");
       }
     }
-    if (!variables.length && !approvedStaticEmailUrl(match[2].trim())) {
-      throw new Error("Static email links must use the canonical B4GAMBLE HTTPS origin and cannot be outbound routes");
+    if (!variables.length && !approvedStaticEmailUrl(match[2].trim(), key)) {
+      throw new Error("Static email links must use the canonical B4GAMBLE HTTPS origin and cannot be outbound routes or, outside the marketing broadcast, casino pages");
     }
   }
   for (const match of textBody.matchAll(/https?:\/\/[^\s<>()]+/gi)) {
-    if (!approvedStaticEmailUrl(match[0])) {
-      throw new Error("Plain-text links must use the canonical B4GAMBLE HTTPS origin");
+    if (!approvedStaticEmailUrl(match[0], key)) {
+      throw new Error("Plain-text links must use the canonical B4GAMBLE HTTPS origin and, outside the marketing broadcast, cannot lead to casino pages");
     }
   }
   const protectedHtml = URL_VARIABLES.reduce(
@@ -137,7 +145,7 @@ export function sanitizeEmailTemplate(value: unknown) {
   for (const match of sanitizedHtml.matchAll(/<a\b[^>]*\bhref=(?:"([^"]*)"|'([^']*)')/gi)) {
     const href = (match[1] ?? match[2] ?? "").trim();
     const placeholder = /^https:\/\/template\.invalid\/__(action_url|programme_url|unsubscribe_url|plan_url)__$/.test(href);
-    if (!placeholder && !approvedStaticEmailUrl(href)) {
+    if (!placeholder && !approvedStaticEmailUrl(href, key)) {
       throw new Error("Sanitized email links must use an approved URL placeholder or the canonical B4GAMBLE HTTPS origin");
     }
   }

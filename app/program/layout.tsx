@@ -9,7 +9,6 @@ import { resolveServerPresentationContext } from "@/lib/market/server";
 import { resolveServerCommercialProductState } from "@/lib/market/commercial-product-state.server";
 import { marketEditorialPublicationApproved } from "@/lib/market/registry";
 import { accountNavigationFor } from "@/lib/public-shell";
-import { researchAccessOpen } from "@/lib/research-access";
 import { isProgrammeLocale, programmePath } from "@/lib/programme/presentation";
 
 export default async function ProgrammeLayout({ children }: { children: ReactNode }) {
@@ -21,7 +20,6 @@ export default async function ProgrammeLayout({ children }: { children: ReactNod
   // Header navigation is presentational. Mission pages and APIs continue to
   // resolve the authoritative session before granting access or writing data.
   const authenticated = hasBetterAuthSessionCookie(requestHeaders);
-  const researchAccess = researchAccessOpen(requestHeaders.get("cookie"));
   const locale = isProgrammeLocale(presentation.locale) ? presentation.locale : "en-GB";
   const path = programmePath(locale);
   const localizePublicLinks = presentation.market ? marketEditorialPublicationApproved(presentation.market) : false;
@@ -31,9 +29,9 @@ export default async function ProgrammeLayout({ children }: { children: ReactNod
   return (
     <>
       <a className="skipLink" href="#main-content">{messages.skipToMain}</a>
-      <PublicHeader account={account} authenticated={authenticated} commercialProductState={commercialProductState} presentation={presentation} programme={{ locale, localizePublicLinks }} researchAccess={researchAccess} />
+      <PublicHeader account={account} authenticated={authenticated} commercialProductState={commercialProductState} presentation={presentation} programme={{ locale, localizePublicLinks }} />
       <div id="main-content" data-public-programme-shell>{children}</div>
-      <PublicFooter authenticated={authenticated} commercialProductState={commercialProductState} presentation={presentation} programme={{ path, localizePublicLinks }} researchAccess={researchAccess} />
+      <PublicFooter authenticated={authenticated} commercialProductState={commercialProductState} presentation={presentation} programme={{ path, localizePublicLinks }} />
     </>
   );
 }

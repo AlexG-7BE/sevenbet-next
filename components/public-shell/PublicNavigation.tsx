@@ -70,7 +70,6 @@ export function PublicNavigation({
   commercialMobileBestOffersNavigation,
   commercialMobileBonusesNavigation,
   deferCommercialNavigation = false,
-  researchAccess = false,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
@@ -84,7 +83,6 @@ export function PublicNavigation({
   commercialMobileBestOffersNavigation?: ReactNode;
   commercialMobileBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
-  researchAccess?: boolean;
 }) {
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
@@ -104,10 +102,10 @@ export function PublicNavigation({
     "/best-offers": commercialMobileBestOffersNavigation,
     "/bonuses": commercialMobileBonusesNavigation,
   } as const;
-  // Two doors (Founder, 10 October 2026): research links for a reader inside the research section
-  // or past the lesson, the guide links for everyone else. Help keeps its own block in the drawer.
+  // Research links for a reader inside the research section, the guide links for everyone else
+  // (Founder, 10 and 16 October 2026). Help keeps its own block in the drawer.
   const guideLink = (item: (typeof GUIDE_NAVIGATION)[number], variant: "desktop" | "mobile") => (
-    <PublicNavigationDoor door="guide" key={item.href} researchAccess={researchAccess}>
+    <PublicNavigationDoor door="guide" key={item.href}>
       <PublicNavigationRouteLink
         baseHref={item.href}
         className={variant === "desktop" && "safety" in item ? styles.helpLink : undefined}
@@ -146,7 +144,7 @@ export function PublicNavigation({
               </PublicNavigationRouteLink>
             );
             return "commercial" in item
-              ? <PublicNavigationDoor door="research" key={item.href} researchAccess={researchAccess}>{link}</PublicNavigationDoor>
+              ? <PublicNavigationDoor door="research" key={item.href}>{link}</PublicNavigationDoor>
               : link;
           })}
           {trailingGuideNavigation.map((item) => guideLink(item, "desktop"))}
@@ -216,7 +214,7 @@ export function PublicNavigation({
                   </PublicNavigationRouteLink>
                 );
                 return "commercial" in item
-                  ? <PublicNavigationDoor door="research" key={item.href} researchAccess={researchAccess}>{link}</PublicNavigationDoor>
+                  ? <PublicNavigationDoor door="research" key={item.href}>{link}</PublicNavigationDoor>
                   : link;
               })}
             </nav>
@@ -263,20 +261,18 @@ export function PublicCommercialNavigationItem({
   messages,
   presentation,
   programme,
-  researchAccess = false,
   variant,
 }: {
   destination: "/best-offers" | "/bonuses";
   messages: PublicShellMessages;
   presentation: PresentationResolution;
   programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
-  researchAccess?: boolean;
   variant: "desktop" | "mobile";
 }) {
   const item = deferredCommercialNavigation.find(({ href }) => href === destination);
   if (!item) return null;
   return (
-    <PublicNavigationDoor door="research" researchAccess={researchAccess}>
+    <PublicNavigationDoor door="research">
       <PublicNavigationRouteLink
         baseHref={item.href}
         label={navigationLabel(messages, item.href)}

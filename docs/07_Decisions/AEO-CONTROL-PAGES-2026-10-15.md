@@ -74,9 +74,8 @@ Also changed:
 |---|---|
 | Commission when a reader signs up or deposits through a labelled affiliate link, paid to 7BE Inc.; no extra charge | `app/(public)/affiliate-disclosure/AffiliateDisclosureDocument.tsx` |
 | Commission never changes an editor score; casinos and offers B4GAMBLE can link to from the reader's country come first, then by editor score | `lib/i18n/product-pages-catalog.ts` (`faqCommissionAnswer`) |
-| Casino, bonus and offer pages are public; the menu shows them on those pages, elsewhere only after step 3 "Research responsibly" | `lib/research-access.ts` |
-| Step 3's last screen links to them, and so does step 10's | `components/programme/ProgramAiMissionExperience.tsx` (`ResearchOpened`, `CommercialNext`) |
-| One cookie, `b4g_research_access`, holding "open" | `lib/research-access.ts`, Privacy notice |
+| Casino, bonus and offer pages are public; the menu shows them only on those pages (since 16 October 2026; before, also after step 3) | `lib/research-access.ts` |
+| No Programme screen links to them and finishing a step opens nothing (since 16 October 2026; before, step 3's and step 10's last screens linked to them and step 3 set one cookie, `b4g_research_access`) | `components/programme/ProgramAiMissionExperience.tsx`, `components/programme/ProgramAiHome.tsx`, [PROGRAMME-NO-CASINO-LINKS-2026-10-16](PROGRAMME-NO-CASINO-LINKS-2026-10-16.md) |
 | Programme answers are not used to choose, rank or personalise casinos, offers, affiliate links or ads; no sale of personal data | Privacy notice, Affiliate disclosure §4 |
 | Google Analytics counts Programme pages too unless "Reject cookies", never on Help, advertising features off, no Programme answers | `lib/analytics/google-analytics.ts`, `lib/analytics/excluded-paths.ts` (no custom events anywhere) |
 
@@ -103,7 +102,8 @@ end-of-March 2026 Spelpaus figure on an official page.
 
 - **llms.txt** said nothing a person does in the Programme "is used for offers or
   advertising". Finishing step 3 opens the casino, bonus and offer pages in the menu. The
-  sentence now says what the code does.
+  sentence now says what the code does. (Since 16 October 2026 step 3 opens nothing, and
+  `llms.txt` says so.)
 - **`/pause-plan`** headed its helplines "open around the clock" in all three languages and
   called StopSpillet anonymous. Corrected in this branch (StopSpillet calls itself
   confidential).

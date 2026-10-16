@@ -66,7 +66,7 @@ test("final public Responsible Gambling hub and Protected Help remain separate",
   }
 });
 
-test("research links reach a reader through two doors; everyone else gets the guide links (Founder, 10 October 2026)", async ({ browser, request }) => {
+test("research links show only inside the research section; everyone else gets the guide links (Founder, 10 and 16 October 2026)", async ({ browser, request }) => {
   const researchMenu = ["/best-offers", "/casinos", "/bonuses", "/learn"];
   const guideMenu = ["/10-steps", "/learn", "/help"];
   const context = await browser.newContext({ viewport: { width: 1365, height: 900 } });
@@ -95,23 +95,21 @@ test("research links reach a reader through two doors; everyone else gets the gu
   await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(guideMenu);
   await expect(shellResearchLinks).toHaveCount(0);
 
-  // Door two: the lesson flag opens the research menu on every page, from the next page change on.
+  // No second door: the old lesson cookie, still in some browsers, opens nothing (Founder, 16 October 2026).
   await context.addCookies([{ name: "b4g_research_access", value: "open", url: baseUrl }]);
   await page.locator('nav[aria-label="Primary navigation"] a[data-navigation-href="/learn"]').click();
   await expect(page).toHaveURL(/\/en\/learn$/);
-  await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(researchMenu);
-  await expect(page.locator('footer [data-footer-navigation-href="/casinos"]')).toHaveCount(1);
+  await expect.poll(primaryMenu, { timeout: 15_000 }).toEqual(guideMenu);
+  await expect(shellResearchLinks).toHaveCount(0);
   await context.close();
 
   // The first HTML already carries the right menu, so nothing swaps in after the page loads.
-  const guestHtml = await (await request.get(`${baseUrl}/en/about`)).text();
-  expect(guestHtml).toContain('data-navigation-href="/10-steps"');
-  expect(guestHtml).not.toContain('data-navigation-href="/casinos"');
-  expect(guestHtml).not.toContain('data-footer-navigation-href="/casinos"');
-  const lessonHtml = await (await request.get(`${baseUrl}/en/about`, { headers: { cookie: "b4g_research_access=open" } })).text();
-  expect(lessonHtml).toContain('data-navigation-href="/casinos"');
-  expect(lessonHtml).toContain('data-footer-navigation-href="/casinos"');
-  expect(lessonHtml).not.toContain('data-navigation-href="/10-steps"');
+  for (const cookie of [undefined, "b4g_research_access=open"]) {
+    const html = await (await request.get(`${baseUrl}/en/about`, cookie ? { headers: { cookie } } : undefined)).text();
+    expect(html).toContain('data-navigation-href="/10-steps"');
+    expect(html).not.toContain('data-navigation-href="/casinos"');
+    expect(html).not.toContain('data-footer-navigation-href="/casinos"');
+  }
 });
 
 test("retired destinations are redirects and absent from canonical discovery", async ({ request }) => {

@@ -12,6 +12,28 @@ Documentation-only commits may advance `main` and trigger equivalent Vercel rebu
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
+## The Programme shows no casino links, to anyone — in review
+
+**Founder decision, 16 October 2026** (question tool, «Без казино для всех»;
+[decision](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)). **PROPOSED — NOT YET LIVE**
+until merged and deployed (branch `feat/programme-no-casino-links`):
+
+- no Programme screen, card, dashboard or letter links to a casino, bonus, offer, comparison or
+  partner page: the step-3 completion block ("New in your menu", "Put it to use"), the Programme
+  Home Research card and the step-10 "Explore when you are ready" links are removed;
+- finishing step 3 "Research responsibly" opens nothing: the lesson flag (cookie
+  `b4g_research_access`, event `b4g:research-access`, note `b4g_research_opened_at`, the week-long
+  menu mark) and the home's `researchAccess` / `discoveryLinks` fields are deleted; the menu shows
+  Best Offers, Casinos and Bonuses only on the research pages themselves, everyone else sees
+  10 Steps · Learn · Help;
+- the Admin template editor refuses a link into the research section in every letter except the
+  marketing broadcast; the pause letters stay switched off;
+- FAQ, Methodology (13 languages), the Privacy Notice (updated 16 October 2026), the trust and
+  control pages (en/sv/da) and `llms.txt` say so;
+- unchanged: the Mission 08 lesson text, Mission order, rewards and prerequisites, the research
+  pages, catalogue, reviews and `/r/` routes. Way back: tag
+  `archive/programme-research-door-2026-10-16` (`800c2eb0`) and the restore steps in the record.
+
 ## Catalogue order by licence and the sports offer for every reader — in review
 
 **Founder's choice in the affiliate traffic audit, 15 October 2026**
@@ -905,6 +927,11 @@ the company line) from everyone for now, without deleting it. Decision record:
   link). The Founder confirmed after being told.
 
 ## Casino research in the menu: two doors — live 10 October 2026
+
+> **Superseded in part (PROPOSED, 16 October 2026):** door two (the lesson flag) and "the moment
+> research opens" are withdrawn once [PROGRAMME-NO-CASINO-LINKS-2026-10-16](07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md)
+> is merged and deployed; door one and the lesson at step 3 stay. The section below describes
+> Production until then.
 
 **Founder instruction, 10 October 2026:** Best Offers, Casinos and Bonuses in
 the header and footer put off visitors who came for help and blur what the
