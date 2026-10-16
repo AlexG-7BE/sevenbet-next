@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
-import { articlePath } from "@/lib/articles/article-types";
+import { articlePath, type PublicArticle } from "@/lib/articles/article-types";
 import { absoluteUrl, coreRoutes } from "@/lib/site";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
 import { publicOfferService } from "@/lib/services/public-offer.service";
@@ -177,19 +177,57 @@ export async function lastGoodMarketProductPaths(
   }
 }
 
+/** What the sitemap needs of a guide; the cached list stays small (no bodies). */
+type SitemapArticle = Pick<PublicArticle, "category" | "slug" | "updatedAt">;
+
+async function loadPublishedArticles(locale: string): Promise<SitemapArticle[]> {
+  const { articleService } = await import("@/lib/services/article.service");
+  const articles = await articleService.listPublished(locale, { take: 500 });
+  return articles.map(({ category, slug, updatedAt }) => ({ category, slug, updatedAt }));
+}
+
+/**
+ * The sitemap keeps the last good list of a language's Learn guides when the database stalls,
+ * like the market lists above. Every publish (pause guides and their localisations, several a
+ * day) clears the article list cache, so a crawler could arrive with nothing cached and, during
+ * a pooler stall, get a sitemap without a single guide. This entry has no tag a publish clears;
+ * after 10 minutes it is refreshed in the background, and a failed refresh (a throw) leaves the
+ * previous list in place. With no list yet and no database answer, the language lists no guides.
+ */
+export async function lastGoodPublishedArticles(
+  locale: string,
+  cache: typeof unstable_cache = unstable_cache,
+  load: (locale: string) => Promise<SitemapArticle[]> = loadPublishedArticles,
+): Promise<SitemapArticle[]> {
+  let readFailed = false;
+  try {
+    return await cache(async () => {
+      try {
+        return await load(locale);
+      } catch (cause) {
+        readFailed = true;
+        throw cause;
+      }
+    }, ["sitemap-learn-articles-v1", locale], { revalidate: 600 })();
+  } catch {
+    if (readFailed) return [];
+    // The cache itself failed (outside a Next.js request, or its store): read directly once.
+    return await failClosed(() => load(locale)) ?? [];
+  }
+}
+
 export function localizedIndexableMarketProfiles(markets: readonly MarketProfile[]) {
   return markets.filter((market) => market.countryCode !== DEFAULT_MARKET_PROFILE.countryCode && marketIndexingApproved(market));
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { articleService } = await import("@/lib/services/article.service");
   const crawlerBonuses = await loadCrawlerBonusDirectory();
   const baseProducts = await lastGoodMarketProductPaths(DEFAULT_MARKET_PROFILE, crawlerBonuses);
   const localizedProducts = await Promise.all(localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
     .map((market) => lastGoodMarketProductPaths(market, crawlerBonuses)));
   const learningSnapshots = await Promise.all(INDEXABLE_LANGUAGE_ROUTE_PROFILES.map(async (language) => ({
     language,
-    articles: await failClosed(() => articleService.listPublished(language.defaultLocale, { take: 500 })) ?? [],
+    articles: await lastGoodPublishedArticles(language.defaultLocale),
   })));
   const learningArticleRoutes = learningSnapshots.flatMap(({ articles, language }) => {
     const market = marketProfileByLocale(language.defaultLocale) ?? DEFAULT_MARKET_PROFILE;
