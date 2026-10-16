@@ -133,7 +133,7 @@ function HelpContact({ contact, label, locale }: { contact: ProgrammeHelpContact
     {contact.hours ? <p className={styles.helpHours}>{contact.hours}</p> : null}
     <div className={styles.helpLinks}>
       {contact.tel ? <a data-programme-help-call="" href={`tel:${contact.tel}`}>{programmeText(locale, "Call {number}", { number: contact.contact })}</a> : null}
-      <a href={contact.href} {...external}>{contact.tel ? programmeText(locale, "Open the website") : contact.contact}<span aria-hidden="true"> ↗</span></a>
+      <a href={contact.href} {...external}>{contact.tel ? programmeText(locale, "Open the website") : contact.contact}<span aria-hidden="true">↗</span></a>
     </div>
   </div>;
 }

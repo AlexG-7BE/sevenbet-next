@@ -235,7 +235,7 @@
 .helpService p { color: rgba(250, 250, 247, .72); }
 .helpService .helpHours { color: var(--pg-paper); font-weight: 600; }
 .helpLinks { display: flex; flex-wrap: wrap; gap: 8px; }
-.helpLinks a { min-height: 44px; padding: 10px 16px; display: inline-flex; align-items: center; border: 1px solid rgba(250, 250, 247, .25); border-radius: 12px; color: var(--pg-paper); font-size: 14px; font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+.helpLinks a { min-height: 44px; padding: 10px 16px; display: inline-flex; gap: 6px; align-items: center; border: 1px solid rgba(250, 250, 247, .25); border-radius: 12px; color: var(--pg-paper); font-size: 14px; font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
 .helpLinks a[data-programme-help-call] { border-color: var(--pg-acid); background: var(--pg-acid); color: var(--pg-ink); }
 .helpCrisis { padding: 14px 16px; display: grid; gap: 6px; border-left: 2px solid var(--pg-mint); background: var(--pg-card); }
 .helpCrisis strong { font-size: 14px; }
