@@ -204,8 +204,8 @@ test("the support card names the checked service, its number and hours, and the 
   const artifact = { ...NEW_ANSWERS.learn_comparison_signals, ...NEW_ANSWERS.decode_offer_terms, ...NEW_ANSWERS.build_research_checklist };
   const expected: Partial<Record<ProgrammeLocale, { service: string; crisis: RegExp; title: string; sentence: string }>> = {
     "sv-SE": { service: "Stödlinjen · 020-81 91 00 · Helgfria vardagar: mån 9–19, tis–ons 9–17, tors 11–19, fre 9–15", crisis: /^Självmordslinjen \(Mind\) · 90101 · dygnet runt, alla dagar · chatt på mind\.se\. Om det är bråttom: ring 112\.$/, title: "MITT STÖDKORT", sentence: "Om jag sms:ar dig ett ord, kan du ringa mig då?" },
-    "da-DK": { service: "StopSpillet · 70 22 28 25 · Mandag–torsdag 9.00–21.00, fredag 9.00–17.00", crisis: /^Livslinien · 70\u00a0201\u00a0201 · alle dage fra kl\. 9 om morgenen til kl\. 5 om natten\. Er du akut selvmordstruet: ring 112\.$/, title: "MIT STØTTEKORT", sentence: "Hvis jeg skriver ét ord til dig, kan du så ringe til mig?" },
-    "en-GB": { service: "National Gambling Helpline · 0808 8020 133 · Free, 24 hours a day, 7 days a week · In Wales: NHS Wales Helpline 0808 2819 265, free, 24 hours a day", crisis: /^Samaritans · 116\u00a0123 · any time, day or night, free from any phone\. If a life is at risk: call 999 or 112\.$/, title: "MY SUPPORT CARD", sentence: "If I text you one word, can you call me?" },
+    "da-DK": { service: "StopSpillet · 70 22 28 25 · Mandag–torsdag 9.00–21.00, fredag 9.00–17.00", crisis: /^Livslinien · 70\u00a0201\u00a0201 · alle årets dage fra kl\. 9 om morgenen til kl\. 5 om natten\. Er du akut selvmordstruet: ring 112\.$/, title: "MIT STØTTEKORT", sentence: "Hvis jeg skriver ét ord til dig, kan du så ringe til mig?" },
+    "en-GB": { service: "National Gambling Helpline · 0808 8020 133 · Free, 24 hours a day, 7 days a week · In Wales: NHS Wales Helpline 0808 281 9265, 24/7, free from a landline or mobile", crisis: /^Samaritans · 116\u00a0123 · any time, day or night, free from any phone\. If a life is at risk: call 999 or 112\.$/, title: "MY SUPPORT CARD", sentence: "If I text you one word, can you call me?" },
   };
   for (const [locale, want] of Object.entries(expected) as Array<[ProgrammeLocale, NonNullable<(typeof expected)["en-GB"]>]>) {
     const card = programmeMissionKeepsake(STEP_THREE, artifact, locale);
@@ -245,6 +245,12 @@ test("every checked service has its source page, a number or website, and one li
       assert.ok(service.name && service.about && service.contact, `${locale} ${type}`);
       if (service.tel) assert.equal(service.tel, service.contact.replace(/\D/g, ""), `${locale} ${type}: the link dials the number shown`);
       if (service.tel) numbers.add(service.contact);
+      if (service.regionalCall) {
+        const shown = service.regionalCall.label.match(/^[\d ]+\d/)![0];
+        assert.equal(shown.replace(/\D/g, ""), service.regionalCall.tel, `${locale} ${type}: the regional link dials the number shown`);
+        assert.ok(service.regional?.includes(shown), `${locale} ${type}: the regional line names the number its button dials`);
+        numbers.add(shown);
+      }
     }
     for (const service of Object.values(market.afterHours)) {
       if (service.tel) assert.equal(service.tel, service.contact.replace(/\D/g, ""), `${locale} ${service.name}: the link dials the number shown`);
@@ -254,9 +260,9 @@ test("every checked service has its source page, a number or website, and one li
     numbers.add(market.crisis.contact);
   }
   // The numbers as each service writes them (checked 16 October 2026); a change here is a deliberate re-check.
-  assert.deepEqual([...numbers].sort(), ["0800 138 1111", "020-81 91 00", "0808 8020 133", "116 123", "63 40 11 49", "70 11 18 10", "70 201 201", "70 22 28 25", "90101"].sort());
+  assert.deepEqual([...numbers].sort(), ["0800 138 1111", "020-81 91 00", "0808 8020 133", "0808 281 9265", "03000 859464", "116 123", "63 40 11 49", "70 11 18 10", "70 201 201", "70 22 28 25", "90101"].sort());
   const sourceHosts = new Set(HELP_SERVICE_SOURCES.map((source) => new URL(source.url).host));
-  for (const host of ["stodlinjen.se", "foreningenspelfriheten.se", "spelberoende.se", "www.konsumentverket.se", "mind.se", "www.1177.se", "www.stopspillet.dk", "ludomani.dk", "www.raad.dk", "www.livslinien.dk", "www.nhs.uk", "www.gambleaware.org", "www.gamcare.org.uk", "www.stepchange.org", "gamfam.org.uk", "www.samaritans.org"]) {
+  for (const host of ["stodlinjen.se", "foreningenspelfriheten.se", "spelberoende.se", "www.konsumentverket.se", "mind.se", "www.1177.se", "www.stopspillet.dk", "ludomani.dk", "www.raad.dk", "www.livslinien.dk", "www.nhs.uk", "www.gambleaware.org", "www.gamcare.org.uk", "bcuhb.nhs.wales", "www.stepchange.org", "gamfam.org.uk", "www.samaritans.org"]) {
     assert.ok(sourceHosts.has(host), host);
   }
 });
@@ -426,7 +432,10 @@ test("a service that cannot answer during an urge brings the market's phone line
     }
   }
   // Wales: the British helpline and its chat serve England and Scotland; the card names the Welsh line.
-  assert.match(programmeMissionKeepsake(STEP_THREE, { helpService: "phone" }, "en-GB").rows[0].value, /In Wales: NHS Wales Helpline 0808\u00a02819\u00a0265/);
+  assert.match(programmeMissionKeepsake(STEP_THREE, { helpService: "phone" }, "en-GB").rows[0].value, /In Wales: NHS Wales Helpline 0808\u00a0281\u00a09265, 24\/7/);
+  // The Welsh numbers can be tapped, as their provider writes them.
+  assert.match(renderToStaticMarkup(<HelpServiceCard locale="en-GB" service="phone" />), /href="tel:08082819265">Call 0808\u00a0281\u00a09265 in Wales</);
+  assert.match(renderToStaticMarkup(<HelpServiceCard locale="en-GB" service="in_person" />), /href="tel:03000859464">Call 03000\u00a0859464 in Wales</);
   assert.match(renderToStaticMarkup(<HelpServiceCard locale="en-GB" service="chat" />), /For people in England and Scotland/);
   assert.match(renderToStaticMarkup(<HelpServiceCard locale="en-GB" service="phone" />), /Great\u00a0Britain/);
   // A language without a checked list still shows no number.

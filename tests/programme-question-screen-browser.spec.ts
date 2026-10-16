@@ -260,13 +260,15 @@ test("step 3's help service card fits a phone: no sideways scroll, 44px call but
   await page.setViewportSize({ width: 390, height: 844 });
   await openStep(page, missionEightHelpService);
   await expect(page.getByRole("heading", { name: "Which kind of help would you try first?" })).toBeVisible();
-  for (const [choice, service, urge] of [["Talk on the phone", "National Gambling Helpline", false], ["Join a group or see a counsellor", "NHS gambling clinics", true], ["Get help with money and debt", "StepChange", true]] as const) {
+  for (const [choice, service, urge] of [["Talk on the phone", "National Gambling Helpline", false], ["Join a group or see a counsellor", "NHS gambling treatment clinics", true], ["Get help with money and debt", "StepChange", true]] as const) {
     await page.getByRole("radio", { name: new RegExp(choice) }).check();
     const card = page.locator("[data-programme-help-service]");
     await expect(card.getByRole("heading", { name: service, exact: true })).toBeVisible();
     await expect(card.getByText("When the urge comes", { exact: true })).toHaveCount(urge ? 1 : 0);
     await expect(card.locator("[data-programme-crisis-line]")).toContainText("Samaritans · 116 123");
     await expect(card.locator("a[data-programme-emergency-call]")).toHaveAttribute("href", "tel:999");
+    // Wales has its own NHS lines; each card can dial one.
+    await expect(card.getByRole("link", { name: /in Wales$/ }).first()).toHaveAttribute("href", /^tel:0(8082819265|3000859464)$/);
     for (const call of await card.locator("a[data-programme-help-call]").all()) {
       expect((await call.boundingBox())!.height, `${choice}: a call button is a 44px target`).toBeGreaterThanOrEqual(44);
     }

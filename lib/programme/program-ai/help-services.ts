@@ -6,8 +6,9 @@ import type { ProgrammeLocale } from "@/lib/programme/presentation";
  * comes). One list per Programme language whose market we checked: Swedish for Sweden, Danish
  * for Denmark, English for Great Britain. Names, numbers and opening hours are copied from each
  * service's own page on 16 October 2026; the source of every line is in `HELP_SERVICE_SOURCES`.
- * mind.se and gamcare.org.uk refuse automated visits; the safety review of 17 October 2026 read
- * them once in a normal browser (Självmordslinjen's hours, GamCare's chat and helpline).
+ * mind.se and gamcare.org.uk refuse automated visits; they were read in a normal browser on
+ * 17 October 2026 (Självmordslinjen's hours, GamCare's helpline and chat). The Welsh lines are
+ * written as their provider, Betsi Cadwaladr University Health Board, writes them.
  *
  * A Programme language without a checked list (German, Spanish, Greek, Italian, Portuguese,
  * Dutch, Finnish, Norwegian, Ukrainian, Russian) shows no number: it points to the Help page,
@@ -35,6 +36,8 @@ export type ProgrammeHelpContact = Readonly<{
   hours?: string;
   /** A line for one part of the market that the main one does not serve (Great Britain: Wales). */
   regional?: string;
+  /** The call button of the regional line: its number and where it answers, and the digits it dials. */
+  regionalCall?: Readonly<{ label: string; tel: string }>;
 }>;
 
 export type ProgrammeCrisisLine = Readonly<{
@@ -185,7 +188,7 @@ const denmark: ProgrammeHelpMarket = {
     contact: "70 201 201",
     tel: "70201201",
     href: "https://www.livslinien.dk/",
-    hours: "alle dage fra kl. 9 om morgenen til kl. 5 om natten",
+    hours: "alle årets dage fra kl. 9 om morgenen til kl. 5 om natten",
     emergency: "Er du akut selvmordstruet: ring 112",
     emergencyTel: "112",
   },
@@ -199,23 +202,25 @@ const greatBritain: ProgrammeHelpMarket = {
       about: "Run by GamCare: free information, support and counselling. For people in England and Scotland.",
       contact: "0808 8020 133",
       tel: "08088020133",
-      href: "https://www.nhs.uk/live-well/addiction-support/gambling-addiction/",
+      href: "https://www.gamcare.org.uk/",
       hours: "Free, 24 hours a day, 7 days a week",
-      regional: "In Wales: NHS Wales Helpline 0808 2819 265, free, 24 hours a day",
+      regional: "In Wales: NHS Wales Helpline 0808 281 9265, 24/7, free from a landline or mobile",
+      regionalCall: { label: "0808 281 9265 in Wales", tel: "08082819265" },
     },
     chat: {
       name: "National Gambling Helpline, live chat",
       about: "Chat online with a GamCare adviser, free and confidential. For people in England and Scotland.",
       contact: "gamcare.org.uk",
-      href: "https://www.gamcare.org.uk/",
-      hours: "24 hours a day, every day of the year",
+      href: "https://www.gamcare.org.uk/get-support/talk-to-us-now/",
+      hours: "Support is available 24/7",
     },
     in_person: {
-      name: "NHS gambling clinics",
-      about: "Free NHS treatment from a specialist team in England. You can refer yourself, or ask a GP.",
+      name: "NHS gambling treatment clinics",
+      about: "Specialist clinics in England, with a team of psychiatrists and psychologists. You can self-refer to a clinic near you, or ask a GP.",
       contact: "nhs.uk",
       href: "https://www.nhs.uk/live-well/addiction-support/gambling-addiction/",
-      regional: "In Wales: All Wales Gambling Treatment Service, self-referral 0300 0859 464",
+      regional: "In Wales: All Wales Gambling Treatment Service, referrals 03000 859464",
+      regionalCall: { label: "03000 859464 in Wales", tel: "03000859464" },
     },
     debt: {
       name: "StepChange",
@@ -311,9 +316,11 @@ export const HELP_SERVICE_SOURCES = [
   { market: "DK", service: "Center for Ludomani", url: "https://ludomani.dk/" },
   { market: "DK", service: "KFUM's Sociale Arbejde, økonomi- og gældsrådgivning", url: "https://www.raad.dk/om-raadgivningen/oekonomisk-raadgivning" },
   { market: "DK", service: "Livslinien", url: "https://www.livslinien.dk/" },
-  { market: "GB", service: "National Gambling Helpline and NHS gambling clinics (NHS)", url: "https://www.nhs.uk/live-well/addiction-support/gambling-addiction/" },
-  { market: "GB", service: "National Gambling Helpline, phone and live chat for England and Scotland; NHS Wales Helpline; All Wales Gambling Treatment Service", url: "https://www.gambleaware.org/get-help-now/" },
-  { market: "GB", service: "GamCare (helpline and live chat 24/7; read in a normal browser 17 October 2026)", url: "https://www.gamcare.org.uk/" },
+  { market: "GB", service: "National Gambling Helpline (free, 24 hours a day, 7 days a week) and NHS gambling treatment clinics (NHS)", url: "https://www.nhs.uk/live-well/addiction-support/gambling-addiction/" },
+  { market: "GB", service: "National Gambling Helpline, phone and live chat for England and Scotland only; NHS Wales Helpline; All Wales Gambling Treatment Service", url: "https://www.gambleaware.org/get-help-now/" },
+  { market: "GB", service: "GamCare (0808 8020 133, \"Support is available 24/7\"; read in a normal browser 17 October 2026)", url: "https://www.gamcare.org.uk/" },
+  { market: "GB", service: "GamCare live chat (read in a normal browser 17 October 2026)", url: "https://www.gamcare.org.uk/get-support/talk-to-us-now/" },
+  { market: "GB", service: "NHS Wales: 24/7 Helpline 0808 281 9265 and All Wales Gambling Treatment Service 03000 859464 (Betsi Cadwaladr University Health Board)", url: "https://bcuhb.nhs.wales/news/2026/a-new-gambling-treatment-service-and-247-helpline-is-going-live-for-people-across-wales/" },
   { market: "GB", service: "StepChange", url: "https://www.stepchange.org/contact-us.aspx" },
   { market: "GB", service: "GamFam", url: "https://gamfam.org.uk/" },
   { market: "GB", service: "Samaritans", url: "https://www.samaritans.org/how-we-can-help/contact-samaritan/" },

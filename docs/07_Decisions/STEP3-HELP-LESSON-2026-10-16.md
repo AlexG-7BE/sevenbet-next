@@ -27,29 +27,33 @@ before any merge.
 The help services are a checked list in `lib/programme/program-ai/help-services.ts`, one per
 Programme language whose market we checked: Swedish → Sweden, Danish → Denmark, English → Great
 Britain. Every name, number and opening time was copied from the service's own page on
-16 October 2026. mind.se and gamcare.org.uk refuse automated visits; the safety review of
-17 October 2026 read them once in a normal browser (Självmordslinjen: phone and chat around the
-clock, every day; GamCare: helpline and live chat 24/7). The safety review also corrected Great
-Britain: the National Gambling Helpline and its live chat serve England and Scotland only, so the
-card names the NHS Wales Helpline (0808 2819 265, 24/7) for Wales (source
-gambleaware.org/get-help-now). The ten other Programme languages show no number: they point to the
+16 October 2026 and checked again on 17 October 2026. mind.se and gamcare.org.uk refuse automated
+visits; they were read in a normal browser on 17 October 2026 (Självmordslinjen: "Vi har öppet
+dygnet runt, varje dag", phone and chat; GamCare: 0808 8020 133, "Support is available 24/7", live
+chat on its "Chat to us now" page). The safety review also corrected Great Britain: the National
+Gambling Helpline and its live chat serve England and Scotland only (gambleaware.org/get-help-now),
+so the card names the Welsh lines as their provider, Betsi Cadwaladr University Health Board,
+writes them (bcuhb.nhs.wales): the NHS Wales Helpline 0808 281 9265, 24/7, free from a landline or
+mobile, and the All Wales Gambling Treatment Service, referrals 03000 859464. Both have a
+tap-to-call button. The ten other Programme languages show no number: they point to the
 Help page, and their crisis row asks the reader to call the local emergency number. A person's
 answer stores only the kind of help; the service is drawn from the list when the card is shown,
 so a corrected number reaches every card at once.
 
 | Kind of help | Sweden | Denmark | Great Britain |
 | --- | --- | --- | --- |
-| Phone | Stödlinjen 020-81 91 00, weekdays; when closed: Föreningen Spelfriheten 08-37 43 00, around the clock | StopSpillet 70 22 28 25, Mon–Thu 9–21, Fri 9–17 | National Gambling Helpline 0808 8020 133, 24/7 (England and Scotland); Wales: NHS Wales Helpline 0808 2819 265 |
+| Phone | Stödlinjen 020-81 91 00, weekdays; when closed: Föreningen Spelfriheten 08-37 43 00, around the clock | StopSpillet 70 22 28 25, Mon–Thu 9–21, Fri 9–17 | National Gambling Helpline 0808 8020 133, 24/7 (England and Scotland); Wales: NHS Wales Helpline 0808 281 9265, 24/7 |
 | Chat | Stödlinjen chat, weekdays; when closed: Spelfriheten chat, around the clock | StopSpillet chat, Mon–Thu 17–21, Fri 14–17 | National Gambling Helpline live chat (GamCare), 24/7, England and Scotland |
-| A group or a counsellor | Spelberoendes Riksförbund (+ urge line Stödlinjen, then Spelfriheten) | Center for Ludomani 70 11 18 10 (+ urge line StopSpillet) | NHS gambling clinics, England, self-referral; Wales: All Wales Gambling Treatment Service 0300 0859 464 (+ urge line National Gambling Helpline) |
+| A group or a counsellor | Spelberoendes Riksförbund (+ urge line Stödlinjen, then Spelfriheten) | Center for Ludomani 70 11 18 10 (+ urge line StopSpillet) | NHS gambling treatment clinics, England, self-referral or via a GP; Wales: All Wales Gambling Treatment Service, referrals 03000 859464 (+ urge line National Gambling Helpline) |
 | Money and debt | Municipal budget and debt advice (+ urge line Stödlinjen, then Spelfriheten) | KFUM's Sociale Arbejde 63 40 11 49 (+ urge line StopSpillet) | StepChange 0800 138 1111 (+ urge line National Gambling Helpline) |
 | People close to me | Stödlinjen 020-81 91 00; when closed: Spelfriheten | Center for Ludomani (+ urge line StopSpillet) | GamFam, Zoom meetings (+ urge line National Gambling Helpline) |
-| Crisis | Självmordslinjen 90101, around the clock; 112 | Livslinien 70 201 201, every day 9 in the morning to 5 at night; 112 | Samaritans 116 123; 999 or 112 |
+| Crisis | Självmordslinjen 90101, around the clock; 112 | Livslinien 70 201 201, every day of the year, 9 in the morning to 5 at night; 112 | Samaritans 116 123; 999 or 112 |
 
 Both readers are respected: the lesson says nothing about quitting, either way. Some services in the
 list (Spelberoendes Riksförbund, Föreningen Spelfriheten, GamFam) work towards not gambling at all;
 they are offered as services, not as a verdict. For Great Britain the group-or-counsellor choice
-names the NHS gambling clinics (free treatment for gambling harms, self-referral) rather than
+names the NHS gambling treatment clinics (specialist NHS teams in England, self-referral or via a
+GP) rather than
 Gamblers Anonymous, whose meetings are for people stopping gambling and whose English site does not
 cover Scotland.
 
@@ -122,8 +126,8 @@ lesson's description, objective and takeaway (`scripts/seed-active-control-progr
   Saturday sees closed services and the crisis line. One option: a "Når der er lukket" line
   pointing to the person and plan, and ROFUS (rofus.nu, linked from stopspillet.dk; its own page
   is not checked yet).
-- **Great Britain, a group or a counsellor**: the card names the NHS gambling clinics (England,
-  self-referral; Wales: All Wales Gambling Treatment Service). The alternative is Gamblers
+- **Great Britain, a group or a counsellor**: the card names the NHS gambling treatment clinics
+  (England, self-referral or via a GP; Wales: All Wales Gambling Treatment Service). The alternative is Gamblers
   Anonymous with "Meetings for people who want to stop gambling. In Scotland: ga-scotland.org".
 - **Step 2** still offers "Research only after a pause" / "Research after a pause", and the
   pause plan's day 3 still says "Learn to read terms, odds and RTP"; both are outside this change.

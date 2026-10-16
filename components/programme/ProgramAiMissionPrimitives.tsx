@@ -136,6 +136,7 @@ function HelpContact({ contact, label, locale }: { contact: ProgrammeHelpContact
     {contact.regional ? <p>{keepNumbersTogether(contact.regional)}</p> : null}
     <div className={styles.helpLinks}>
       {contact.tel ? <a data-programme-help-call="" href={`tel:${contact.tel}`}>{programmeText(locale, "Call {number}", { number: keepNumbersTogether(contact.contact) })}</a> : null}
+      {contact.regionalCall ? <a data-programme-help-call="regional" href={`tel:${contact.regionalCall.tel}`}>{programmeText(locale, "Call {number}", { number: keepNumbersTogether(contact.regionalCall.label) })}</a> : null}
       <a href={contact.href} {...external}>{contact.tel ? programmeText(locale, "Open the website") : contact.contact}<span aria-hidden="true">↗</span></a>
     </div>
   </div>;
