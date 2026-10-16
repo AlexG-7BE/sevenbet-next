@@ -421,6 +421,25 @@ test("the retired voice routes are gone and an unlisted Programme mutation still
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(session.token) } });
 });
 
+test("no Programme document carries a casino, offer or partner address, the old lesson cookie included", async ({ request }) => {
+  // Founder, 16 October 2026: the Programme links to no casino page. Its header and footer are built
+  // without the research links, so not even the page's inline data (where the children of a client
+  // component are written) carries their addresses.
+  for (const urlPath of ["/program", "/sv/program", "/da/program", "/program/missing", "/sv/program/missing"]) {
+    for (const cookie of [undefined, "b4g_research_access=open"]) {
+      const response = await request.get(urlPath, cookie ? { headers: { cookie } } : undefined);
+      const html = await response.text();
+      // The Programme's own shell answered, with its menu (a 404 carries the menu in its inline data).
+      expect(html, urlPath).toContain("data-public-programme-shell");
+      expect(html, urlPath).toMatch(/navigation-href[^/]{1,8}\/learn/);
+      for (const address of ["/best-offers", "/casinos", "/casino/", "/catalog", "/bonuses", "/compare", "/bonus-guide", "/wagering-calculator", "/outbound"]) {
+        expect(html, `${urlPath}: ${address}${cookie ? " (old lesson cookie)" : ""}`).not.toContain(address);
+      }
+      expect(html, urlPath).not.toMatch(/(?:["'(]|https?:\/\/[a-z0-9.:-]+)(?:\/[a-z]{2})?\/(?:r|go)\//i);
+    }
+  }
+});
+
 test("picked ready answers open the next screen at once under one consent press", async ({ page }) => {
   // Founder decisions, 11 Oct 2026: ready answers, several can be picked; one button is the
   // explicit consent and, under the line, the 18+, Terms and Privacy affirmation. No tick, no

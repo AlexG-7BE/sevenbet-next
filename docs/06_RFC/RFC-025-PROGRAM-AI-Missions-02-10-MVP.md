@@ -395,6 +395,8 @@ The server-owned feature-on Home shows:
 - available Reviews; and
 - a visually secondary `Explore B4GAMBLE` rail.
 
+> **Founder supersession — 2026-10-16:** Programme Home has no `Explore B4GAMBLE` rail and no research card; it links to no casino, bonus, offer or comparison page. See §13. Decision record: [PROGRAMME-NO-CASINO-LINKS-2026-10-16](../07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).
+
 Resume selects the first incomplete logical action. Completed actions remain reviewable but award zero further XP. Retention uses visible useful progress, near-term deterministic reward, Review distance and built artifacts. It does not use random rewards, XP loss/expiry, punitive streaks, fake urgency, chance multipliers or casino-like mechanics.
 
 ## 13. Commercial discovery separation

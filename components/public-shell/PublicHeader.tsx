@@ -26,6 +26,7 @@ export function PublicHeader({
   commercialMobileBestOffersNavigation,
   commercialMobileBonusesNavigation,
   deferCommercialNavigation = false,
+  researchNavigation = true,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
@@ -37,6 +38,8 @@ export function PublicHeader({
   commercialMobileBestOffersNavigation?: ReactNode;
   commercialMobileBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
+  /** False in the Programme's shell: its menu is built without Best Offers, Casinos and Bonuses. */
+  researchNavigation?: boolean;
 }) {
   const messages = publicShellMessages(presentation.locale);
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
@@ -62,6 +65,7 @@ export function PublicHeader({
           messages={messages}
           presentation={presentation}
           programme={programme}
+          researchNavigation={researchNavigation}
           selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES}
         />
       </div>

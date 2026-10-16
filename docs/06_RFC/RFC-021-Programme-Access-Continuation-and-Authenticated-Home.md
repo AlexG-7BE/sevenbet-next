@@ -13,6 +13,8 @@
 
 > **Founder supersession — 2026-10-10:** the public menu now shows Best Offers, Casinos and Bonuses outside the research section only to a reader who has finished the Programme lesson "Research responsibly". §7 still holds as written: the menu reads one lesson flag, not access or authentication state, and no ranking, operator selection, affiliate routing or commercial personalisation reads either. Decision record: [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](../07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md).
 
+> **Founder supersession — 2026-10-16:** the 2026-10-10 note above is withdrawn. The lesson flag, its cookie `b4g_research_access`, its page event and browser note are deleted; the menu reads only the current path (`isResearchSectionRoute`) and shows the research links only on the research pages. The authenticated home carries no `researchAccess` or `discoveryLinks`, and no Programme answer sets a menu cookie. §7 still holds as written. Decision record: [PROGRAMME-NO-CASINO-LINKS-2026-10-16](../07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).
+
 ## 1. Decision
 
 B4GAMBLE will replace the fragmented Programme age and account-creation controls with one access screen. The screen has exactly two unchecked required controls:

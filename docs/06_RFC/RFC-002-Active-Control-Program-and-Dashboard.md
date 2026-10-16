@@ -12,7 +12,9 @@ Governing Documents:
   - ./RFC-001-Jurisdiction-and-Market-Resolution.md
 ---
 
-> **Founder supersession — 2026-10-10:** where this RFC says promotional exposure is not affected by Program state, one exception now applies: the public menu shows Best Offers, Casinos and Bonuses outside the research section only after the lesson "Research responsibly". Commercial eligibility and ranking remain unaffected by Program state, discovery pages need no account, and no reward is coupled to an offer. Decision record: [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](../07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md).
+> **Founder supersession — 2026-10-16:** the Programme shows no casino, offer, bonus, comparison or partner link to anyone, so that it ends in help. The 2026-10-10 exception below is withdrawn: finishing "Research responsibly" opens nothing, and the public menu shows Best Offers, Casinos and Bonuses only on the research pages themselves. §5's "clearly separated commercial discovery", §5.1 item 6 (persistent `Casinos`, `Bonuses` and `Best offers` navigation) and the commercial column of §5.2 no longer apply: the Dashboard (Programme Home) carries no commercial discovery in any state, and the Programme's own header and footer carry no research links. Commercial eligibility, ranking and rewards remain separate from Program state, and discovery pages stay public. Decision record: [PROGRAMME-NO-CASINO-LINKS-2026-10-16](../07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md).
+
+> **Founder supersession — 2026-10-10 (withdrawn 2026-10-16, see above):** where this RFC says promotional exposure is not affected by Program state, one exception now applies: the public menu shows Best Offers, Casinos and Bonuses outside the research section only after the lesson "Research responsibly". Commercial eligibility and ranking remain unaffected by Program state, discovery pages need no account, and no reward is coupled to an offer. Decision record: [RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10](../07_Decisions/RESEARCH-NAVIGATION-TWO-DOORS-2026-10-10.md).
 
 # RFC-002 — Active Control Program and Personal Control Dashboard
 
