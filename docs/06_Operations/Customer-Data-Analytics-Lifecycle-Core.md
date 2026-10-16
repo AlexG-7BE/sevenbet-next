@@ -325,6 +325,17 @@ back to English; do not invent legal/commercial translations. Admin editing
 creates a new sanitized version. Allowed HTML is a small semantic subset and
 only approved full-URL placeholders may be used in links.
 
+Since 16 October 2026 no template, the marketing broadcast included, may link
+to a casino, bonus, offer or comparison page (the research section and
+`/catalog`) or to a partner route (`/r/`, `/go/`): the Programme ends in help,
+and accounts are Programme accounts. The editor refuses such a
+link, activating an older version runs the editor's checks again, and
+rendering refuses a stored row that carries one: the worker and campaigns
+cancel the letter as `TEMPLATE_RENDER_INVALID` and a pause reminder fails, so
+nothing is sent
+(`lib/email/templates.server.ts`; decision record
+`docs/07_Decisions/PROGRAMME-NO-CASINO-LINKS-2026-10-16.md`).
+
 The optional signup marketing-consent sentence and its fail-closed save error
 are shown in every Programme language from the Programme catalogue (Founder
 decision, 27 September 2026). Since 11 October 2026 the text is "Email me

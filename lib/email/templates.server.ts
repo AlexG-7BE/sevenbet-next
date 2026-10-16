@@ -46,27 +46,74 @@ const REQUIRED_BODY_VARIABLES: Record<EmailTemplateKey, readonly string[]> = {
 };
 
 /**
- * A letter about the Programme, a pause or an account links to no casino, bonus, offer or comparison
- * page (Founder, 16 October 2026: the Programme ends in help). Only the marketing broadcast, which
- * is not a Programme letter, may link into the research section.
+ * No letter links to a casino, bonus, offer or comparison page, or to a partner route (Founder,
+ * 16 October 2026: the Programme ends in help). Accounts are Programme accounts and a broadcast can
+ * be aimed at Programme progress, so the marketing broadcast follows the same rule.
+ * `/catalog` is listed because it redirects to `/casinos`. The roots repeat the research section of
+ * `lib/research-access.ts` (which this module must not import); a test keeps the two lists equal.
  */
-const RESEARCH_SECTION_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:best-offers|casinos|casino|bonuses|compare|bonus-guide|wagering-calculator|outbound)(?:\/|$)/i;
+const RESEARCH_SECTION_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:best-offers|casinos|casino|catalog|bonuses|compare|bonus-guide|wagering-calculator|outbound)(?:\/|$)/i;
+const PARTNER_ROUTE_PATH = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:r|go)(?:\/|$)/i;
 
-function approvedStaticEmailUrl(value: string, key: EmailTemplateKey) {
+/** The link's path, decoded twice so an encoded route cannot hide; null when it cannot be read. */
+function decodedLinkPath(value: string) {
+  try {
+    let decodedPath = new URL(value, "https://b4gamble.com").pathname;
+    for (let index = 0; index < 2; index += 1) decodedPath = decodeURIComponent(decodedPath);
+    return decodedPath;
+  } catch {
+    return null;
+  }
+}
+
+function leadsToCasinoPages(path: string) {
+  return RESEARCH_SECTION_PATH.test(path) || PARTNER_ROUTE_PATH.test(path);
+}
+
+function approvedStaticEmailUrl(value: string) {
   try {
     const url = new URL(value);
-    let decodedPath = url.pathname;
-    try {
-      for (let index = 0; index < 2; index += 1) decodedPath = decodeURIComponent(decodedPath);
-    } catch { return false; }
+    const decodedPath = decodedLinkPath(value);
     return url.origin === "https://b4gamble.com"
       && !url.username
       && !url.password
-      && !/^\/(?:r|go)(?:\/|$)/i.test(decodedPath)
-      && (key === "MARKETING_BROADCAST" || !RESEARCH_SECTION_PATH.test(decodedPath));
+      && decodedPath !== null
+      && !leadsToCasinoPages(decodedPath);
   } catch {
     return false;
   }
+}
+
+function decodeHtmlEntities(value: string) {
+  const character = (codePoint: number, original: string) => (
+    Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : original
+  );
+  return value
+    .replace(/&#x([0-9a-f]{1,6});?/gi, (match, hex: string) => character(Number.parseInt(hex, 16), match))
+    .replace(/&#(\d{1,7});?/g, (match, decimal: string) => character(Number.parseInt(decimal, 10), match))
+    .replace(/&amp;/gi, "&");
+}
+
+/**
+ * True when a stored letter links to a casino page or a partner route, or carries a link that
+ * cannot be read. It is checked again on every render, so a version saved before 16 October 2026
+ * or written outside Admin (SQL, a migration) is never sent with such a link.
+ */
+export function emailTemplateLinksToCasinoPages(template: { subject: string; htmlBody: string; textBody: string }) {
+  const links: string[] = [];
+  for (const match of template.htmlBody.matchAll(/\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/gi)) {
+    links.push(match[1] ?? match[2] ?? match[3] ?? "");
+  }
+  for (const content of [template.subject, template.htmlBody, template.textBody]) {
+    for (const match of content.matchAll(/https?:\/\/[^\s<>"'()]+/gi)) links.push(match[0]);
+  }
+  return links
+    .map((link) => decodeHtmlEntities(link).trim())
+    .filter((link) => link && !/^{{\s*[A-Za-z_]+\s*}}$/.test(link))
+    .some((link) => {
+      const path = decodedLinkPath(link);
+      return path === null || leadsToCasinoPages(path);
+    });
 }
 
 function boundedText(value: unknown, maximum: number, field: string) {
@@ -122,13 +169,13 @@ export function sanitizeEmailTemplate(value: unknown) {
         throw new Error("Link variables must use one approved URL placeholder as the complete href");
       }
     }
-    if (!variables.length && !approvedStaticEmailUrl(match[2].trim(), key)) {
-      throw new Error("Static email links must use the canonical B4GAMBLE HTTPS origin and cannot be outbound routes or, outside the marketing broadcast, casino pages");
+    if (!variables.length && !approvedStaticEmailUrl(match[2].trim())) {
+      throw new Error("Static email links must use the canonical B4GAMBLE HTTPS origin and cannot be partner routes or casino pages");
     }
   }
   for (const match of textBody.matchAll(/https?:\/\/[^\s<>()]+/gi)) {
-    if (!approvedStaticEmailUrl(match[0], key)) {
-      throw new Error("Plain-text links must use the canonical B4GAMBLE HTTPS origin and, outside the marketing broadcast, cannot lead to casino pages");
+    if (!approvedStaticEmailUrl(match[0])) {
+      throw new Error("Plain-text links must use the canonical B4GAMBLE HTTPS origin and cannot lead to partner routes or casino pages");
     }
   }
   const protectedHtml = URL_VARIABLES.reduce(
@@ -145,7 +192,7 @@ export function sanitizeEmailTemplate(value: unknown) {
   for (const match of sanitizedHtml.matchAll(/<a\b[^>]*\bhref=(?:"([^"]*)"|'([^']*)')/gi)) {
     const href = (match[1] ?? match[2] ?? "").trim();
     const placeholder = /^https:\/\/template\.invalid\/__(action_url|programme_url|unsubscribe_url|plan_url)__$/.test(href);
-    if (!placeholder && !approvedStaticEmailUrl(href, key)) {
+    if (!placeholder && !approvedStaticEmailUrl(href)) {
       throw new Error("Sanitized email links must use an approved URL placeholder or the canonical B4GAMBLE HTTPS origin");
     }
   }
@@ -155,6 +202,9 @@ export function sanitizeEmailTemplate(value: unknown) {
   );
   if ([subject, htmlBody, textBody].some((content) => /{{\s*(email|user_id|password|token)\s*}}/i.test(content))) {
     throw new Error("Sensitive template variables are not allowed");
+  }
+  if (emailTemplateLinksToCasinoPages({ subject, htmlBody, textBody })) {
+    throw new Error("Email links cannot lead to partner routes or casino pages");
   }
   return { key, type, locale, subject, htmlBody, textBody };
 }
@@ -174,6 +224,9 @@ export function renderEmailTemplate(
   template: { subject: string; htmlBody: string; textBody: string },
   variables: Record<string, string>,
 ) {
+  if (emailTemplateLinksToCasinoPages(template)) {
+    throw new Error("Stored email template links to casino pages or a partner route");
+  }
   const subject = renderString(template.subject, variables, false);
   if (HEADER_CONTROL_PATTERN.test(subject)) {
     throw new Error("Rendered email subject contains line breaks or control characters");

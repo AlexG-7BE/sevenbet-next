@@ -70,6 +70,7 @@ export function PublicNavigation({
   commercialMobileBestOffersNavigation,
   commercialMobileBonusesNavigation,
   deferCommercialNavigation = false,
+  researchNavigation = true,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
@@ -83,6 +84,11 @@ export function PublicNavigation({
   commercialMobileBestOffersNavigation?: ReactNode;
   commercialMobileBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
+  /**
+   * False in the Programme's shell (Founder, 16 October 2026): the research links are not built at
+   * all there, not even behind the door, so no Programme document carries their addresses.
+   */
+  researchNavigation?: boolean;
 }) {
   const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
@@ -127,6 +133,7 @@ export function PublicNavigation({
         <nav className={styles.primaryNavigation} aria-label={messages.primaryNavigation}>
           {leadingGuideNavigation.map((item) => guideLink(item, "desktop"))}
           {PUBLIC_NAVIGATION.map((item) => {
+            if (!researchNavigation && "commercial" in item) return null;
             const commercialNavigation = deferredDesktopNavigation[item.href as keyof typeof deferredDesktopNavigation];
             if (deferCommercialNavigation && commercialNavigation !== undefined) {
               return <Fragment key={item.href}>{commercialNavigation}</Fragment>;
@@ -197,6 +204,7 @@ export function PublicNavigation({
             <nav className={styles.mobileRouteList} aria-label={messages.mobilePrimaryNavigation}>
               {leadingGuideNavigation.map((item) => guideLink(item, "mobile"))}
               {PUBLIC_NAVIGATION.map((item) => {
+                if (!researchNavigation && "commercial" in item) return null;
                 const commercialNavigation = deferredMobileNavigation[item.href as keyof typeof deferredMobileNavigation];
                 if (deferCommercialNavigation && commercialNavigation !== undefined) {
                   return <Fragment key={item.href}>{commercialNavigation}</Fragment>;

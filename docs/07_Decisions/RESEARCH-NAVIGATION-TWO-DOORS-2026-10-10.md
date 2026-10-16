@@ -208,7 +208,10 @@ no casino, offer, bonus, comparison or partner link to anyone, so that it ends i
 - **Door one stands, unchanged.** On a research page (`/best-offers`, `/casinos`, `/casino/…`,
   `/bonuses`, `/compare`, `/bonus-guide`, `/wagering-calculator`, `/outbound/…`) the menu shows
   the research links; everywhere else, the Programme included, it shows 10 Steps · Learn · Help.
-  `lib/research-access.ts` is `isResearchSectionRoute` alone.
+  `lib/research-access.ts` is `isResearchSectionRoute` alone. The Programme's own header and
+  footer are built without the research links at all (`researchNavigation={false}`), since the
+  Programme layout only ever renders Programme paths.
+- **No letter links to a casino page or a partner route**, the marketing broadcast included.
 - **Part 2 stands for now:** "Research responsibly" keeps its number 08 and its place at step 3.
   Whether it should stay there now that it opens nothing is an open question for the Founder.
 - **Supersedes** amendment 3's line that "the research menu opens from inside it, at step 3", and

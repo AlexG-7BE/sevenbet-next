@@ -25,6 +25,7 @@ export function PublicFooter({
   commercialBestOffersNavigation,
   commercialBonusesNavigation,
   deferCommercialNavigation = false,
+  researchNavigation = true,
 }: {
   /** The session cookie the document was rendered with, as in the header: it only picks the Programme link's label. */
   authenticated?: boolean;
@@ -34,6 +35,8 @@ export function PublicFooter({
   commercialBestOffersNavigation?: ReactNode;
   commercialBonusesNavigation?: ReactNode;
   deferCommercialNavigation?: boolean;
+  /** False in the Programme's shell: the footer is built without Best Offers, Casinos and Bonuses. */
+  researchNavigation?: boolean;
 }) {
   const shell = publicShellMessages(presentation.locale);
   const footer = publicFooterMessages(presentation.locale);
@@ -75,6 +78,7 @@ export function PublicFooter({
             <div className={styles.footerGroup} key={group.title}>
               <h2>{group.title}</h2>
               {group.links.map(([label, href]) => {
+                if (!researchNavigation && researchLinks.has(href)) return null;
                 const commercialNavigation = deferredCommercialLinks[href as keyof typeof deferredCommercialLinks];
                 if (deferCommercialNavigation && commercialNavigation !== undefined) {
                   return <span className={styles.footerNavigationSlot} key={href}>{commercialNavigation}</span>;
